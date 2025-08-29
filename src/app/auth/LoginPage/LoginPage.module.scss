@@ -1,0 +1,47 @@
+
+
+.loginPage {
+  @include m.flex-center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: v.$spacing-4;
+}
+
+.loginCard {
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+}
+
+.logo {
+  margin-bottom: v.$spacing-6;
+}
+
+.logoImage {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+}
+
+.title {
+  font-size: v.$font-size-2xl;
+  font-weight: v.$font-weight-bold;
+  color: v.$primary-blue;
+  margin-bottom: v.$spacing-4;
+}
+
+.subtitle {
+  color: v.$gray-600;
+  margin-bottom: v.$spacing-8;
+  line-height: 1.6;
+}
+
+.loginButton {
+  width: 100%;
+  margin-bottom: v.$spacing-6;
+}
+
+.footer {
+  font-size: v.$font-size-sm;
+  color: v.$gray-500;
+}

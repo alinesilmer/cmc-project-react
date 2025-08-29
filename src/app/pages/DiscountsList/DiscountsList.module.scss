@@ -1,0 +1,94 @@
+@import '../../../styles/variables.scss';
+@import '../../../styles/mixins.scss';
+
+.discountsPage {
+  display: flex;
+  min-height: 100vh;
+}
+
+.content {
+  flex: 1;
+  margin-left: 280px;
+  padding: $spacing-8;
+}
+
+.header {
+  @include flex-between;
+  margin-bottom: $spacing-6;
+  
+  @media (max-width: $breakpoint-md) {
+    flex-direction: column;
+    gap: $spacing-4;
+    align-items: flex-start;
+  }
+}
+
+.title {
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: $primary-blue;
+  margin-bottom: $spacing-2;
+}
+
+.subtitle {
+  color: $gray-600;
+  font-size: $font-size-base;
+}
+
+.tableCard {
+  padding: 0;
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+}
+
+.tableHeader {
+  display: grid;
+  grid-template-columns: 1fr 3fr 1fr 1fr 1.5fr;
+  gap: $spacing-4;
+  padding: $spacing-4 $spacing-6;
+  background-color: $gray-100;
+  font-weight: $font-weight-semibold;
+  font-size: $font-size-sm;
+  color: $gray-700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tableRow {
+  display: grid;
+  grid-template-columns: 1fr 3fr 1fr 1fr 1.5fr;
+  gap: $spacing-4;
+  padding: $spacing-4 $spacing-6;
+  border-bottom: 1px solid $gray-200;
+  align-items: center;
+  
+  &:hover {
+    background-color: $gray-50;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: $spacing-2;
+  align-items: center;
+}
+
+.editButton {
+  @include flex-center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background-color: transparent;
+  color: $gray-500;
+  border-radius: $border-radius-sm;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  
+  &:hover {
+    background-color: $gray-100;
+    color: $gray-700;
+  }
+}

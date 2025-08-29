@@ -1,0 +1,53 @@
+
+.card { @include m.card-base; padding: v.$spacing-5; margin-bottom: v.$spacing-6; }
+.header { display: flex; align-items: center; justify-content: space-between; padding-bottom: v.$spacing-3; border-bottom: 1px solid v.$gray-200; }
+.title { color: v.$primary-blue; font-weight: v.$font-weight-bold; font-size: v.$font-size-2xl; }
+.headerActions { display: inline-flex; gap: v.$spacing-2; }
+
+.btnGhost { @include m.button-base; background: v.$gray-100; color: v.$gray-800; padding: v.$spacing-2 v.$spacing-4; }
+.btnSuccess { @include m.button-base; background: v.$success-green; color: v.$white; padding: v.$spacing-2 v.$spacing-4; }
+.btnDanger { @include m.button-base; background: v.$danger-red; color: v.$white; padding: v.$spacing-2 v.$spacing-4; }
+
+.row { display: flex; flex-direction: column; gap: v.$spacing-4; padding: v.$spacing-4 0; }
+.colLabel { font-weight: v.$font-weight-semibold; color: v.$gray-800; }
+.meta { margin-top: v.$spacing-1; font-size: v.$font-size-sm; color: v.$gray-500; font-style: italic; }
+.colActions { display: inline-flex; gap: v.$spacing-2; align-items: center; }
+.btnPrimary { @include m.button-base; background: v.$primary-blue; color: v.$white; padding: v.$spacing-2 v.$spacing-4; }
+
+.tablesWrap { margin-top: v.$spacing-4; display: grid; gap: v.$spacing-4; }
+
+.modalBackdrop { position: fixed; inset: 0; background: rgba(15,23,42,.35); display: grid; place-items: center; z-index: 1002; }
+.modal { background: v.$white; border: 1px solid v.$gray-200; border-radius: v.$border-radius-lg; box-shadow: v.$shadow-xl; width: min(560px, 92vw); }
+.modalHeader { display: flex; align-items: center; justify-content: space-between; padding: v.$spacing-4 v.$spacing-5; border-bottom: 1px solid v.$gray-200; }
+.iconClose { background: transparent; border: 0; font-size: 22px; color: v.$gray-500; cursor: pointer; }
+.modalBody { padding: v.$spacing-5; }
+.error { margin-top: v.$spacing-3; color: v.$danger-red; font-size: v.$font-size-sm; }
+.modalFooter { display: flex; justify-content: flex-end; gap: v.$spacing-3; padding: v.$spacing-4 v.$spacing-5; border-top: 1px solid v.$gray-200; }
+
+/* prettier calendar */
+.datepicker {
+  --dp-radius: #{v.$border-radius-md};
+  .react-datepicker__month-container { font-family: inherit; }
+  .react-datepicker__header {
+    background: linear-gradient(135deg, v.$primary-blue, v.$primary-blue-dark);
+    border-top-left-radius: var(--dp-radius);
+    border-top-right-radius: var(--dp-radius);
+    border-bottom: none;
+  }
+  .react-datepicker__current-month,
+  .react-datepicker__day-name { color: v.$white; font-weight: v.$font-weight-medium; }
+  .react-datepicker {
+    border: 1px solid v.$gray-200;
+    border-radius: var(--dp-radius);
+    box-shadow: v.$shadow-md;
+  }
+  .react-datepicker__day {
+    border-radius: v.$border-radius-sm;
+    &:hover { background: v.$secondary-blue; }
+  }
+  .react-datepicker__day--selected,
+  .react-datepicker__day--keyboard-selected {
+    background: v.$primary-blue;
+    color: v.$white;
+  }
+}

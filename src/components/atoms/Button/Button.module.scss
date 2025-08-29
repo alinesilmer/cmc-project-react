@@ -1,0 +1,63 @@
+.button {
+  @include m.button-base;
+  
+  &.primary {
+    background-color: v.$primary-blue;
+    color: v.$white;
+    
+    &:hover:not(:disabled) {
+      background-color: v.$primary-blue-dark;
+    }
+  }
+  
+  &.secondary {
+    background-color: v.$gray-100;
+    color: v.$gray-700;
+    
+    &:hover:not(:disabled) {
+      background-color: v.$gray-200;
+    }
+  }
+  
+  &.success {
+    background-color: v.$success-green;
+    color: v.$white;
+    
+    &:hover:not(:disabled) {
+      background-color: v.$success-green;
+    }
+  }
+  
+  &.danger {
+    background-color: v.$danger-red;
+    color: v.$white;
+    
+    &:hover:not(:disabled) {
+      background-color: v.$danger-red;
+    }
+  }
+  
+  &.ghost {
+    background-color: transparent;
+    color: v.$primary-blue;
+    
+    &:hover:not(:disabled) {
+      background-color: v.$secondary-blue;
+    }
+  }
+  
+  &.sm {
+    padding: v.$spacing-2 v.$spacing-3;
+    font-size: v.$font-size-sm;
+  }
+  
+  &.md {
+    padding: v.$spacing-3 v.$spacing-4;
+    font-size: v.$font-size-base;
+  }
+  
+  &.lg {
+    padding: v.$spacing-4 v.$spacing-6;
+    font-size: v.$font-size-lg;
+  }
+}

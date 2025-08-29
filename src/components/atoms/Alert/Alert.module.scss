@@ -1,0 +1,107 @@
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  display: grid;
+  place-items: center;
+  z-index: 1002;
+}
+
+.alert {
+  background: v.$white;
+  border-radius: v.$border-radius-lg;
+  box-shadow: v.$shadow-xl;
+  border: 1px solid v.$gray-200;
+  width: min(520px, calc(100% - 2*#{v.$spacing-6}));
+  padding: v.$spacing-6;
+  position: relative;
+}
+
+.success { border-left: 4px solid v.$success-green; }
+.error   { border-left: 4px solid v.$danger-red; }
+.warning { border-left: 4px solid v.$warning-orange; }
+.info    { border-left: 4px solid v.$primary-blue; }
+
+.content {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: v.$spacing-4;
+  align-items: start;
+}
+
+.icon {
+  color: v.$primary-blue;
+}
+
+.title {
+  margin: 0 0 v.$spacing-2 0;
+  font-size: v.$font-size-xl;
+  font-weight: v.$font-weight-semibold;
+  color: v.$gray-900;
+}
+
+.message {
+  margin: 0;
+  font-size: v.$font-size-base;
+  color: v.$gray-600;
+  line-height: 1.5;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: v.$spacing-3;
+  margin-top: v.$spacing-6;
+}
+
+.btnPrimary {
+  background: v.$primary-blue;
+  color: v.$white;
+  border: 1px solid transparent;
+  border-radius: v.$border-radius-md;
+  padding: v.$spacing-2 v.$spacing-4;
+  font-weight: v.$font-weight-medium;
+  cursor: pointer;
+  transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
+
+  &:hover {
+    background: v.$primary-blue-dark;
+    transform: translateY(-1px);
+    box-shadow: v.$shadow-sm;
+  }
+}
+
+.btnSecondary {
+  background: v.$gray-100;
+  color: v.$gray-900;
+  border: 1px solid v.$gray-200;
+  border-radius: v.$border-radius-md;
+  padding: v.$spacing-2 v.$spacing-4;
+  font-weight: v.$font-weight-medium;
+  cursor: pointer;
+  transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
+
+  &:hover {
+    background: v.$gray-200;
+    transform: translateY(-1px);
+    box-shadow: v.$shadow-sm;
+  }
+}
+
+.closeIcon {
+  position: absolute;
+  top: v.$spacing-4;
+  right: v.$spacing-4;
+  background: transparent;
+  border: 0;
+  color: v.$gray-500;
+  cursor: pointer;
+
+  &:hover { color: v.$gray-700; }
+}
+
+.success .icon { color: v.$success-green; }
+.error   .icon { color: v.$danger-red; }
+.warning .icon { color: v.$warning-orange; }
+.info    .icon { color: v.$primary-blue; }

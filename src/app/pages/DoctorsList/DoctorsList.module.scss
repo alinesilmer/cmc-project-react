@@ -1,0 +1,76 @@
+@import '../../../styles/variables.scss';
+@import '../../../styles/mixins.scss';
+
+.doctorsPage {
+  display: flex;
+  min-height: 100vh;
+}
+
+.content {
+  flex: 1;
+  margin-left: 280px;
+  padding: $spacing-8;
+}
+
+.header {
+  @include flex-between;
+  margin-bottom: $spacing-6;
+  
+  @media (max-width: $breakpoint-md) {
+    flex-direction: column;
+    gap: $spacing-4;
+    align-items: flex-start;
+  }
+}
+
+.title {
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: $primary-blue;
+}
+
+.tableCard {
+  padding: 0;
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+}
+
+.tableHeader {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1.5fr 1.5fr 1.5fr;
+  gap: $spacing-4;
+  padding: $spacing-4 $spacing-6;
+  background-color: $gray-100;
+  font-weight: $font-weight-semibold;
+  font-size: $font-size-sm;
+  color: $gray-700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tableRow {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1.5fr 1.5fr 1.5fr;
+  gap: $spacing-4;
+  padding: $spacing-4 $spacing-6;
+  border-bottom: 1px solid $gray-200;
+  
+  &:hover {
+    background-color: $gray-50;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: $spacing-2;
+}
+
+.emptyState {
+  padding: $spacing-12;
+  text-align: center;
+  color: $gray-500;
+  font-style: italic;
+}

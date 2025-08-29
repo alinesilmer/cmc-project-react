@@ -1,0 +1,350 @@
+
+.container {
+  background: v.$white;
+  border-radius: v.$border-radius-lg;
+  box-shadow: v.$shadow-lg;
+  overflow: hidden;
+  border: 1px solid v.$gray-200;
+}
+
+.tableHeader {
+  background: linear-gradient(135deg, v.$primary-blue 0%, v.$primary-blue-dark 100%);
+  padding: v.$spacing-6 v.$spacing-8;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.headerContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: v.$spacing-6;
+}
+
+.periodInfo {
+  display: flex;
+  align-items: center;
+  gap: v.$spacing-3;
+}
+
+.periodLabel {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: v.$font-size-sm;
+  font-weight: v.$font-weight-medium;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+
+.periodBadge {
+  background: rgba(255, 255, 255, 0.15);
+  color: v.$white;
+  padding: v.$spacing-2 v.$spacing-4;
+  border-radius: v.$border-radius-md;
+  font-weight: v.$font-weight-semibold;
+  font-size: v.$font-size-base;
+  backdrop-filter: blur(10px);
+}
+
+.addButton {
+  @include m.button-base;
+  gap: v.$spacing-2;
+  background: rgba(255, 255, 255, 0.12);
+  color: v.$white;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: v.$spacing-3 v.$spacing-5;
+  border-radius: v.$border-radius-md;
+  font-weight: v.$font-weight-semibold;
+  backdrop-filter: blur(10px);
+  &:hover { background: rgba(255, 255, 255, 0.22); transform: translateY(-1px); }
+}
+
+.addIcon { font-size: 18px; font-weight: v.$font-weight-bold; }
+
+.tableContainer { background: v.$white; }
+
+.scrollWrapper {
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+}
+.scrollWrapper::-webkit-scrollbar { height: 8px; }
+.scrollWrapper::-webkit-scrollbar-track { background: v.$gray-100; border-radius: v.$border-radius-sm; }
+.scrollWrapper::-webkit-scrollbar-thumb { background: v.$gray-300; border-radius: v.$border-radius-sm; }
+.scrollWrapper::-webkit-scrollbar-thumb:hover { background: v.$gray-400; }
+
+.tableGrid {
+  display: grid;
+  grid-template-columns:
+    minmax(80px, .8fr)
+    minmax(180px, 1.5fr)
+    minmax(80px, .8fr)
+    minmax(120px, 1fr)
+    minmax(120px, 1fr)
+    minmax(100px, .9fr)
+    minmax(140px, 1.2fr)
+    minmax(180px, 1.6fr)
+    minmax(90px, .8fr)
+    minmax(70px, .6fr)
+    minmax(130px, 1fr)
+    minmax(110px, .9fr)
+    minmax(120px, .9fr)
+    minmax(140px, 1.1fr)
+    minmax(120px, 1fr)
+    minmax(160px, 1.1fr);
+  gap: v.$spacing-4;
+  align-items: center;
+  min-width: 1500px;
+}
+.tableGrid.withDetails {
+  grid-template-columns:
+    minmax(80px, .8fr)
+    minmax(180px, 1.5fr)
+    minmax(80px, .8fr)
+    minmax(120px, 1fr)
+    minmax(120px, 1fr)
+    minmax(100px, .9fr)
+    minmax(140px, 1.2fr)
+    minmax(180px, 1.6fr)
+    minmax(90px, .8fr)
+    minmax(70px, .6fr)
+    minmax(130px, 1fr)
+    minmax(110px, .9fr)
+    minmax(120px, .9fr)
+    minmax(140px, 1.1fr)
+    minmax(120px, 1fr)
+    minmax(160px, 1.1fr)
+    minmax(100px, .9fr)
+    minmax(120px, 1fr)
+    minmax(160px, 1.2fr)
+    minmax(120px, 1fr)
+    minmax(180px, 1.2fr);
+}
+
+.headerRow {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: linear-gradient(135deg, v.$gray-50 0%, v.$gray-100 100%);
+  padding: v.$spacing-5 v.$spacing-6;
+  border-bottom: 2px solid v.$gray-200;
+}
+
+.headerCell {
+  color: v.$gray-900;
+  font-weight: v.$font-weight-bold;
+  font-size: v.$font-size-sm;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  text-align: center;
+}
+
+.tableBody { background: v.$white; }
+
+.dataRow {
+  padding: v.$spacing-4 v.$spacing-6;
+  border-bottom: 1px solid v.$gray-100;
+  transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease;
+}
+.dataRow:hover,
+.dataRow.hovered {
+  background: v.$gray-50;
+  transform: translateY(-1px);
+  box-shadow: v.$shadow-sm;
+}
+.dataRow:last-child { border-bottom: 0; }
+
+.cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: v.$gray-800;
+  font-size: v.$font-size-sm;
+  font-weight: v.$font-weight-medium;
+  text-align: center;
+  min-height: 40px;
+}
+
+.nameCell,
+.obsCell {
+  justify-content: center;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.currency { color: v.$gray-500; font-weight: v.$font-weight-medium; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+.percentage { color: v.$primary-blue; font-weight: v.$font-weight-semibold; }
+.emptyValue { color: v.$gray-400; font-style: italic; }
+
+.typeBadge {
+  padding: v.$spacing-1 v.$spacing-2;
+  border-radius: v.$border-radius-sm;
+  font-size: v.$font-size-xs;
+  font-weight: v.$font-weight-semibold;
+  text-transform: uppercase;
+}
+.typeBadge.typeC { background: rgba(v.$success-green, .12); color: v.$success-green; }
+.typeBadge.typeD { background: rgba(v.$danger-red, .12); color: v.$danger-red; }
+.typeBadge.typeN { background: rgba(v.$gray-400, .12); color: v.$gray-600; }
+
+.inputWrapper { position: relative; display: flex; align-items: center; width: 100%; max-width: 120px; margin: 0 auto; }
+.currencySymbol { position: absolute; left: 12px; color: v.$gray-600; font-weight: v.$font-weight-semibold; z-index: 1; }
+.numberInput {
+  width: 100%;
+  padding: v.$spacing-2 v.$spacing-3 v.$spacing-2 28px;
+  border: 2px solid v.$gray-200;
+  border-radius: v.$border-radius-md;
+  font-size: v.$font-size-sm;
+  font-weight: v.$font-weight-medium;
+  text-align: center;
+  transition: all .2s ease;
+}
+.numberInput:focus { outline: none; border-color: v.$primary-blue; box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.12); }
+.numberInput:hover { border-color: v.$gray-300; }
+
+.actionButtons { display: inline-flex; gap: v.$spacing-2; justify-content: center; }
+.actionBtn {
+  @include m.button-base;
+  width: 36px;
+  height: 36px;
+  border-radius: v.$border-radius-md;
+  font-size: 16px;
+}
+.actionBtn.detailBtn { background: rgba(v.$primary-blue, .12); color: v.$primary-blue; }
+.actionBtn.detailBtn:hover { background: rgba(v.$primary-blue, .2); transform: scale(1.05); }
+.actionBtn.editBtn { background: rgba(v.$warning-orange, .12); color: v.$warning-orange; }
+.actionBtn.editBtn:hover { background: rgba(v.$warning-orange, .2); transform: scale(1.05); }
+.actionBtn.deleteBtn { background: rgba(v.$danger-red, .12); color: v.$danger-red; }
+.actionBtn.deleteBtn:hover { background: rgba(v.$danger-red, .2); transform: scale(1.05); }
+.actionIcon { font-size: 14px; }
+
+.tableFooter {
+  background: linear-gradient(135deg, v.$gray-50 0%, v.$gray-100 100%);
+  padding: v.$spacing-6 v.$spacing-8;
+  border-top: 1px solid v.$gray-200;
+}
+
+.footerContent { display: flex; justify-content: space-between; align-items: center; gap: v.$spacing-6; }
+.summary { display: inline-flex; align-items: center; gap: v.$spacing-2; }
+.summaryLabel { color: v.$gray-600; font-size: v.$font-size-sm; font-weight: v.$font-weight-medium; }
+.summaryValue { color: v.$gray-900; font-size: v.$font-size-base; font-weight: v.$font-weight-bold; }
+.totalAmount { display: inline-flex; align-items: center; gap: v.$spacing-3; }
+.totalLabel { color: v.$gray-600; font-size: v.$font-size-base; font-weight: v.$font-weight-semibold; }
+.totalValue { color: v.$success-green; font-size: v.$font-size-xl; font-weight: v.$font-weight-bold; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+.drawerBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: min(520px, 92vw);
+  height: 100vh;
+  background: v.$white;
+  border-left: 1px solid v.$gray-200;
+  box-shadow: v.$shadow-xl;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  border-top-left-radius: v.$border-radius-lg;
+  border-bottom-left-radius: v.$border-radius-lg;
+}
+
+.drawerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: v.$spacing-5 v.$spacing-6;
+  border-bottom: 1px solid v.$gray-200;
+  background: linear-gradient(135deg, v.$gray-50 0%, v.$gray-100 100%);
+}
+
+.drawerTitle { margin: 0; color: v.$gray-900; font-size: v.$font-size-xl; font-weight: v.$font-weight-bold; }
+
+.closeButton {
+  @include m.button-base;
+  width: 36px;
+  height: 36px;
+  background: v.$white;
+  color: v.$gray-600;
+  border: 1px solid v.$gray-300;
+  border-radius: v.$border-radius-md;
+  font-size: 18px;
+}
+.closeButton:hover { background: v.$gray-50; color: v.$danger-red; }
+
+.drawerBody { flex: 1; padding: v.$spacing-6; overflow-y: auto; display: grid; gap: v.$spacing-4; }
+
+.formGroup { display: flex; flex-direction: column; justify-content: left; align-items: left; gap: v.$spacing-2; }
+
+.formLabel { color: v.$gray-800; font-size: v.$font-size-sm; font-weight: v.$font-weight-semibold; }
+
+.formInput,
+.formSelect,
+.formTextarea {
+  @include m.input-base;
+  border-width: 2px;
+  border-color: v.$gray-200;
+  border-radius: v.$border-radius-md;
+  font-size: v.$font-size-sm;
+  font-weight: v.$font-weight-medium;
+  text-align: left;
+}
+
+.formInput{
+  width: 200px;
+  padding: v.$spacing-2;
+}
+.formTextarea { resize: vertical; min-height: 90px; font-family: inherit; }
+.formSelect {
+  cursor: pointer;
+  background-position: right 12px center;
+  background-repeat: no-repeat;
+  background-size: 16px;
+  padding-right: 40px;
+}
+
+.drawerFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: v.$spacing-3;
+  padding: v.$spacing-5 v.$spacing-6;
+  border-top: 1px solid v.$gray-200;
+  background: v.$gray-50;
+}
+
+.cancelButton {
+  @include m.button-base;
+  background: v.$white;
+  color: v.$gray-700;
+  border: 2px solid v.$gray-200;
+  padding: v.$spacing-3 v.$spacing-5;
+  border-radius: v.$border-radius-md;
+}
+.cancelButton:hover { background: v.$gray-50; border-color: v.$gray-300; }
+
+.saveButton {
+  @include m.button-base;
+  background: v.$primary-blue;
+  color: v.$white;
+  padding: v.$spacing-3 v.$spacing-5;
+  border-radius: v.$border-radius-md;
+  box-shadow: v.$shadow-sm;
+}
+.saveButton:hover { background: v.$primary-blue-dark; transform: translateY(-1px); box-shadow: v.$shadow-md; }
+
+@media (max-width: 768px) {
+  .headerContent { flex-direction: column; gap: v.$spacing-4; }
+  .footerContent { flex-direction: column; gap: v.$spacing-4; }
+  .drawer { width: 100vw; border-top-left-radius: 0; border-bottom-left-radius: 0; }
+  .tableHeader,
+  .drawerHeader,
+  .drawerBody,
+  .drawerFooter { padding-left: v.$spacing-4; padding-right: v.$spacing-4; }
+}

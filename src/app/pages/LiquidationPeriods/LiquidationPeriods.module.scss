@@ -1,0 +1,51 @@
+
+.liquidationPage {
+  display: flex;
+  min-height: 100vh;
+}
+
+.content {
+  margin-left: 280px;
+  width: calc(100% - 280px);
+  padding: v.$spacing-8;
+  max-width: 100%;
+}
+
+.header {
+  @include m.flex-between;
+  margin-bottom: v.$spacing-4;
+
+  @media (max-width: v.$breakpoint-md) {
+    flex-direction: column;
+    gap: v.$spacing-4;
+    align-items: flex-start;
+  }
+}
+
+.headerLeft {
+  display: flex;
+  gap: v.$spacing-4;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filters {
+  display: flex;
+  gap: v.$spacing-2;
+}
+
+.statusFilter {
+  padding: v.$spacing-2 v.$spacing-3;
+  border: 1px solid v.$gray-300;
+  border-radius: v.$border-radius-md;
+  font-size: v.$font-size-sm;
+}
+
+.addButton {
+  margin-bottom: v.$spacing-6;
+}
+
+.tableCard {
+  padding: 0;
+  overflow: hidden;
+}

@@ -1,0 +1,60 @@
+/* app/pages/InsuranceDetail/InsuranceDetail.module.scss */
+.page {
+  display: flex;
+  min-height: 100vh;
+}
+
+.content {
+  flex: 1;
+  margin-left: 280px;
+  width: calc(100% - 280px);
+  max-width: 100%;
+  padding: v.$spacing-8;
+}
+
+.header {
+  @include m.flex-between;
+  margin-bottom: v.$spacing-6;
+  gap: v.$spacing-4;
+  flex-wrap: wrap;
+}
+
+.headerRight {
+  display: inline-flex;
+  gap: v.$spacing-3;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.breadcrumb {
+  font-size: v.$font-size-sm;
+  color: v.$gray-500;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: v.$spacing-2;
+}
+
+.title {
+  font-size: v.$font-size-3xl;
+  font-weight: v.$font-weight-bold;
+  color: v.$gray-900;
+}
+
+.period {
+  color: v.$primary-blue;
+  font-weight: v.$font-weight-semibold;
+}
+
+.totalPill {
+  background: v.$secondary-blue;
+  color: v.$primary-blue;
+  border: 1px solid v.$gray-200;
+  padding: v.$spacing-2 v.$spacing-3;
+  border-radius: v.$border-radius-md;
+  font-size: v.$font-size-sm;
+}
+
+.tableSection {
+  display: grid;
+  gap: v.$spacing-6;
+}

@@ -1,0 +1,75 @@
+
+.dashboard {
+  display: flex;
+  min-height: 100vh;
+}
+
+.content {
+  flex: 1;
+  margin-left: 280px;
+  padding: v.$spacing-8;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: v.$spacing-12;
+}
+
+.welcome {
+  font-size: v.$font-size-4xl;
+  font-weight: v.$font-weight-bold;
+  color: v.$primary-blue;
+  margin-bottom: v.$spacing-4;
+}
+
+.subtitle {
+  font-size: v.$font-size-lg;
+  color: v.$gray-600;
+}
+
+.statusCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: v.$spacing-6;
+  margin-bottom: v.$spacing-12;
+}
+
+.statusCard {
+  text-align: center;
+  
+  h3 {
+    font-size: v.$font-size-sm;
+    color: v.$gray-600;
+    margin-bottom: v.$spacing-2;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+}
+
+.statusValue {
+  font-size: v.$font-size-2xl;
+  font-weight: v.$font-weight-bold;
+  color: v.$gray-900;
+}
+
+.quickActions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: v.$spacing-6;
+}
+
+.actionCard {
+  text-align: center;
+  padding: v.$spacing-8;
+}
+
+.actionIcon {
+  color: v.$primary-blue;
+  margin-bottom: v.$spacing-4;
+}
+
+.actionTitle {
+  font-size: v.$font-size-base;
+  font-weight: v.$font-weight-medium;
+  color: v.$gray-900;
+}
