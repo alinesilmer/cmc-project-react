@@ -3,102 +3,150 @@
 import type React from "react";
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
 import Sidebar from "../../../components/molecules/Sidebar/Sidebar";
 import SearchBar from "../../../components/molecules/SearchBar/SearchBar";
 import Card from "../../../components/atoms/Card/Card";
 import Button from "../../../components/atoms/Button/Button";
 import styles from "./LiquidationPeriods.module.scss";
-import PeriodsTable, {
-  type Period,
-} from "../../../components/molecules/PeriodsTable/PeriodsTable";
+import PeriodsTable, { type Period } from "../../../components/molecules/PeriodsTable/PeriodsTable";
 import Alert from "../../../components/atoms/Alert/Alert";
 
-const LiquidationPeriods: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<
-    "" | "EN CURSO" | "FINALIZADO"
-  >("");
-  const [periods, setPeriods] = useState<Period[]>([
-    {
-      id: 1,
-      period: "2024-05",
-      grossTotal: 140000,
-      discounts: 20000,
-      netTotal: 120000,
-      status: "EN CURSO",
-    },
-    {
-      id: 2,
-      period: "2024-04",
-      grossTotal: 95000,
-      discounts: 10000,
-      netTotal: 85000,
-      status: "FINALIZADO",
-    },
-    {
-      id: 3,
-      period: "2024-03",
-      grossTotal: 135000,
-      discounts: 18000,
-      netTotal: 117000,
-      status: "FINALIZADO",
-    },
-    {
-      id: 4,
-      period: "2024-02",
-      grossTotal: 110000,
-      discounts: 12000,
-      netTotal: 98000,
-      status: "FINALIZADO",
-    },
-    {
-      id: 5,
-      period: "2024-01",
-      grossTotal: 120000,
-      discounts: 15000,
-      netTotal: 105000,
-      status: "FINALIZADO",
-    },
-  ]);
+const API_BASE = (import.meta as any).env?.VITE_API_URL ?? "http://localhost:8000";
+const RESUMEN_URL = `${API_BASE}/api/liquidacion/resumen`;
 
+// ===== Helpers =====
+function parseYYYYMM(input: string): { anio: number; mes: number } | null {
+  const s = input.trim();
+  const m = s.match(/^(\d{4})-(0[1-9]|1[0-2])$/);
+  if (!m) return null;
+  return { anio: Number(m[1]), mes: Number(m[2]) };
+}
+function toNumber(x: unknown): number {
+  if (typeof x === "number") return x;
+  if (typeof x === "string") return Number.parseFloat(x);
+  return 0;
+}
+function estadoToLabel(e: unknown): "EN CURSO" | "FINALIZADO" {
+  return e === "a" ? "EN CURSO" : "FINALIZADO"; // a|c|e
+}
+function mapDtoToPeriod(dto: any): Period {
+  const bruto = toNumber(dto?.total_bruto);
+  const debitos = toNumber(dto?.total_debitos);
+  const deduccion = toNumber(dto?.total_deduccion);
+  const discounts = debitos + deduccion;
+  const neto = bruto - discounts;
+  const mm = String(dto?.mes ?? 1).padStart(2, "0");
+  const periodStr = `${dto?.anio ?? 1970}-${mm}`;
+  return {
+    id: Number(dto?.id ?? 0),
+    period: periodStr,
+    grossTotal: bruto,
+    discounts: discounts,
+    netTotal: neto,
+    status: estadoToLabel(dto?.estado),
+  };
+}
+
+const LiquidationPeriods: React.FC = () => {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"" | "EN CURSO" | "FINALIZADO">("");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [confirmRow, setConfirmRow] = useState<Period | null>(null);
+
+  // Filtros → query params backend
+  const parsed = parseYYYYMM(searchTerm);
+  const estadoBackend = statusFilter === "EN CURSO" ? "a" : statusFilter === "FINALIZADO" ? "c" : undefined;
+
+  // GET lista (devuelve DTO crudo)
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["resumen", { anio: parsed?.anio, mes: parsed?.mes, estado: estadoBackend }],
+    queryFn: async ({ queryKey }) => {
+      const [, params] = queryKey as [string, { anio?: number; mes?: number; estado?: string }];
+      const url = new URL(RESUMEN_URL);
+      if (params?.anio) url.searchParams.set("anio", String(params.anio));
+      if (params?.mes) url.searchParams.set("mes", String(params.mes));
+      if (params?.estado) url.searchParams.set("estado", params.estado);
+      url.searchParams.set("skip", "0");
+      url.searchParams.set("limit", "100");
+
+      const res = await fetch(url.toString(), { method: "GET" });
+      if (!res.ok) throw new Error(`Error ${res.status}: ${await res.text().catch(() => res.statusText)}`);
+      return (await res.json()) as any[];
+    },
+  });
+
+  const serverPeriods: Period[] = useMemo(() => {
+    if (!Array.isArray(data)) return [];
+    return data.map(mapDtoToPeriod);
+  }, [data]);
+
+  // Filtro adicional en UI (texto/estado — para búsquedas no YYYY-MM)
+  const filtered: Period[] = useMemo(() => {
+    const s = searchTerm.trim().toLowerCase();
+    return serverPeriods.filter((p) => {
+      const matchesSearch =
+        !s ||
+        p.period.toLowerCase().includes(s) ||
+        p.status?.toLowerCase().includes(s);
+      const matchesStatus = !statusFilter || p.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [serverPeriods, searchTerm, statusFilter]);
+
+  // POST crear resumen
+  const { mutate: createResumen, isPending: creating } = useMutation({
+    mutationFn: async ({ anio, mes }: { anio: number; mes: number }) => {
+      const res = await fetch(RESUMEN_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ anio, mes }), // estado default en backend
+      });
+      if (!res.ok) throw new Error(`Error ${res.status}: ${await res.text().catch(() => res.statusText)}`);
+      return (await res.json()) as any;
+    },
+    onSuccess: () => {
+      // Más simple y consistente: refetch de la lista
+      queryClient.invalidateQueries({ queryKey: ["resumen"] });
+      setErrorMsg(null);
+    },
+    onError: (e: any) => {
+      setErrorMsg(e?.message || "No se pudo crear el período");
+    },
+  });
+
+  // DELETE resumen
+  const { mutate: deleteResumen, isPending: deleting } = useMutation({
+    mutationFn: async (resumenId: number) => {
+      const res = await fetch(`${RESUMEN_URL}/${resumenId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(`Error ${res.status}: ${await res.text().catch(() => res.statusText)}`);
+      return resumenId;
+    },
+    onSuccess: () => {
+      setConfirmRow(null);
+      queryClient.invalidateQueries({ queryKey: ["resumen"] });
+    },
+    onError: (e: any) => {
+      setErrorMsg(e?.message || "No se pudo eliminar el período");
+    },
+  });
+
+  // Acciones UI
+  const handleAddPeriod = () => {
+    const now = new Date();
+    createResumen({ anio: now.getFullYear(), mes: now.getMonth() + 1 });
+  };
 
   const handleDelete = (row: Period) => setConfirmRow(row);
 
   const confirmDelete = () => {
     if (!confirmRow) return;
-    setPeriods((prev) => prev.filter((p) => p.id !== confirmRow.id));
-    setConfirmRow(null);
-  };
-
-  const filtered = useMemo(() => {
-    const s = searchTerm.trim().toLowerCase();
-    return periods.filter((p) => {
-      const matchesSearch =
-        !s ||
-        p.period.toLowerCase().includes(s) ||
-        p.status.toLowerCase().includes(s);
-      const matchesStatus = !statusFilter || p.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    });
-  }, [periods, searchTerm, statusFilter]);
-
-  const handleAddPeriod = () => {
-    const nextId = (periods.at(-1)?.id ?? 0) + 1;
-    const now = new Date();
-    const yyyy = now.getFullYear();
-    const mm = String(now.getMonth() + 1).padStart(2, "0");
-    setPeriods((prev) => [
-      {
-        id: nextId,
-        period: `${yyyy}-${mm}`,
-        grossTotal: 0,
-        discounts: 0,
-        netTotal: 0,
-        status: "EN CURSO",
-      },
-      ...prev,
-    ]);
+    deleteResumen(confirmRow.id);
   };
 
   return (
@@ -115,7 +163,7 @@ const LiquidationPeriods: React.FC = () => {
           <div className={styles.header}>
             <div className={styles.headerLeft}>
               <SearchBar
-                placeholder="Buscar período..."
+                placeholder="Buscar período (ej: 2025-07)..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -124,9 +172,7 @@ const LiquidationPeriods: React.FC = () => {
                   className={styles.statusFilter}
                   value={statusFilter}
                   onChange={(e) =>
-                    setStatusFilter(
-                      e.target.value as "" | "EN CURSO" | "FINALIZADO"
-                    )
+                    setStatusFilter(e.target.value as "" | "EN CURSO" | "FINALIZADO")
                   }
                 >
                   <option value="">TODOS</option>
@@ -136,20 +182,44 @@ const LiquidationPeriods: React.FC = () => {
               </div>
             </div>
 
-            <Button variant="primary" onClick={handleAddPeriod}>
-              Agregar Período
-            </Button>
+            <div className={styles.actions}>
+              <Button variant="secondary" onClick={() => refetch()}>
+                Refrescar
+              </Button>
+              <Button variant="primary" onClick={handleAddPeriod} disabled={creating}>
+                {creating ? "Creando..." : "Agregar Período"}
+              </Button>
+            </div>
           </div>
 
           <Card className={`${styles.tableCard} scale-in`}>
+            {isLoading && (
+              <Alert
+                type="info"
+                title="Cargando"
+                message="Obteniendo períodos desde el servidor…"
+                onClose={() => { }}
+              />
+            )}
+
+            {(isError || errorMsg) && (
+              <Alert
+                type="error"
+                title="Error"
+                message={(error as Error)?.message || errorMsg || "Error al cargar períodos"}
+                onClose={() => setErrorMsg(null)}
+              />
+            )}
+
             <PeriodsTable
               title="Períodos de Liquidación"
               data={filtered}
-              onSeeMore={(row) =>
-                alert(`Ver más sobre el período ${row.period}`)
-              }
+              getSeeLink={(row) => `/liquidation/${row.id}`}
+              getSeeState={(row) => ({ period: row.period })}
+              // ✅ ahora sí: el botón ❌ llama a esto
               onRequestDelete={handleDelete}
             />
+
             {confirmRow && (
               <Alert
                 type="warning"
@@ -158,7 +228,7 @@ const LiquidationPeriods: React.FC = () => {
                 onClose={() => setConfirmRow(null)}
                 onCancel={() => setConfirmRow(null)}
                 onConfirm={confirmDelete}
-                confirmLabel="Sí, eliminar"
+                confirmLabel={deleting ? "Eliminando..." : "Sí, eliminar"}
                 cancelLabel="Cancelar"
                 showActions
               />

@@ -26,10 +26,11 @@ function App() {
             <Route path="/social-works" element={<SocialWorksPage />} />
             <Route path="/liquidation" element={<LiquidationPage />} />
             <Route path="/discounts" element={<DiscountsPage />} />
-            <Route
+            <Route path="/liquidation/:id" element={<LiquidationCyclePage />} />
+            {/* <Route
               path="/liquidation-cycle"
               element={<LiquidationCyclePage />}
-            />
+            /> */}
             <Route path="/insurance-detail" element={<InsuranceDetail />} />
           </Routes>
         </AnimatePresence>

@@ -23,8 +23,8 @@ type Props = {
   title?: string;
   loading?: boolean;
   hideStatus?: boolean;
-  getSeeLink?: (row: Period) => string;
-  getSeeState?: (row: Period) => unknown;
+  getSeeLink?: (row: Period) => string;     // ← opcional
+  getSeeState?: (row: Period) => unknown;   // ← opcional
   deletable?: boolean;
   onDeleteTable?: () => void;
 };
@@ -49,18 +49,18 @@ async function exportPeriodsToExcel(
     ws.addRow(
       includeStatus
         ? {
-            period: r.period,
-            grossTotal: r.grossTotal,
-            discounts: r.discounts,
-            netTotal: r.netTotal,
-            status: r.status ?? "",
-          }
+          period: r.period,
+          grossTotal: r.grossTotal,
+          discounts: r.discounts,
+          netTotal: r.netTotal,
+          status: r.status ?? "",
+        }
         : {
-            period: r.period,
-            grossTotal: r.grossTotal,
-            discounts: r.discounts,
-            netTotal: r.netTotal,
-          }
+          period: r.period,
+          grossTotal: r.grossTotal,
+          discounts: r.discounts,
+          netTotal: r.netTotal,
+        }
     );
   });
 
@@ -82,6 +82,8 @@ const PeriodsTable: React.FC<Props> = ({
   hideStatus = false,
   deletable = false,
   onDeleteTable,
+  getSeeLink,
+  getSeeState,
 }) => {
   if (loading) {
     return (
@@ -132,66 +134,60 @@ const PeriodsTable: React.FC<Props> = ({
       </div>
 
       <div className={styles.body}>
-        {data.map((row, i) => (
-          <div
-            key={row.id ?? i}
-            className={`${styles.dataRow} ${
-              hideStatus ? styles.noStatus : ""
-            } fade-in`}
-            style={{ animationDelay: `${i * 40}ms` }}
-          >
-            <div>{row.period}</div>
-            <div>${row.grossTotal.toLocaleString()}</div>
-            <div>-${row.discounts.toLocaleString()}</div>
-            <div>${row.netTotal.toLocaleString()}</div>
+        {data.map((row, i) => {
+          const defaultSee = `/liquidation/${encodeURIComponent(String(row.id))}`;
+          const seeHref = getSeeLink ? getSeeLink(row) : defaultSee;
+          const seeState = getSeeState ? getSeeState(row) : undefined;
 
-            {!hideStatus && (
-              <div>
-                <span
-                  className={`${styles.status} ${
-                    row.status === "EN CURSO"
-                      ? styles.inProgress
-                      : styles.finished
-                  }`}
-                >
-                  {row.status}
-                </span>
-              </div>
-            )}
+          return (
+            <div
+              key={row.id ?? i}
+              className={`${styles.dataRow} ${hideStatus ? styles.noStatus : ""} fade-in`}
+              style={{ animationDelay: `${i * 40}ms` }}
+            >
+              <div>{row.period}</div>
+              <div>${row.grossTotal.toLocaleString("es-AR")}</div>
+              <div>- ${row.discounts.toLocaleString("es-AR")}</div>
+              <div>${row.netTotal.toLocaleString("es-AR")}</div>
 
-            <div className={styles.actions}>
-              <Button
-                variant="success"
-                size="sm"
-                onClick={() =>
-                  exportPeriodsToExcel(
-                    [row],
-                    `periodo_${row.period}.xlsx`,
-                    !hideStatus
-                  )
-                }
-              >
-                Exportar
-              </Button>
-
-              <Link to={"/liquidation-cycle"}>
-                <Button variant="primary" size="sm">
-                  Ver
-                </Button>
-              </Link>
-
-              {row.status === "EN CURSO" && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onRequestDelete?.(row)}
-                >
-                  ❌
-                </Button>
+              {!hideStatus && (
+                <div>
+                  <span
+                    className={`${styles.status} ${row.status === "EN CURSO" ? styles.inProgress : styles.finished}`}
+                  >
+                    {row.status}
+                  </span>
+                </div>
               )}
+
+              <div className={styles.actions}>
+                <Button
+                  variant="success"
+                  size="sm"
+                  onClick={() =>
+                    exportPeriodsToExcel([row], `periodo_${row.period}.xlsx`, !hideStatus)
+                  }
+                >
+                  Exportar
+                </Button>
+
+                <Link to={seeHref} state={seeState}>
+                  <Button variant="primary" size="sm">Ver</Button>
+                </Link>
+
+                {row.status === "EN CURSO" && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onRequestDelete?.(row)}
+                  >
+                    ❌
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
