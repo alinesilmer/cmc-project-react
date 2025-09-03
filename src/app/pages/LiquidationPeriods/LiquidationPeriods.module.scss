@@ -1,4 +1,5 @@
 
+
 .liquidationPage {
   display: flex;
   min-height: 100vh;
@@ -7,14 +8,13 @@
 .content {
   margin-left: 280px;
   width: calc(100% - 280px);
-  padding: v.$spacing-8;
+  padding: v.$spacing-6;
   max-width: 100%;
 }
 
 .header {
   @include m.flex-between;
   margin-bottom: v.$spacing-4;
-
   @media (max-width: v.$breakpoint-md) {
     flex-direction: column;
     gap: v.$spacing-4;
@@ -32,6 +32,7 @@
 .filters {
   display: flex;
   gap: v.$spacing-2;
+  align-items: center;
 }
 
 .statusFilter {
@@ -39,6 +40,7 @@
   border: 1px solid v.$gray-300;
   border-radius: v.$border-radius-md;
   font-size: v.$font-size-sm;
+  background: v.$white;
 }
 
 .addButton {
@@ -48,4 +50,70 @@
 .tableCard {
   padding: 0;
   overflow: hidden;
+  border-radius: v.$border-radius-lg;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  background: linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,1) 100%);
+  backdrop-filter: blur(6px);
+}
+
+.actions {
+  display: flex;
+  gap: v.$spacing-3;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filters :global(.MuiTextField-root) {
+  min-width: 180px;
+}
+
+.filters :global(.MuiOutlinedInput-root) {
+  border-radius: v.$border-radius-md;
+  background: v.$white;
+}
+
+.filters :global(.MuiOutlinedInput-notchedOutline) {
+  border-color: v.$gray-300;
+}
+
+.filters :global(.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline) {
+  border-color: v.$gray-400;
+}
+
+.filters :global(.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline) {
+  border-color: v.$primary-blue;
+  box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.12);
+}
+
+.filters :global(.MuiInputBase-input) {
+  font-size: v.$font-size-sm;
+}
+
+:global(.MuiPickersLayout-root) {
+  border-radius: v.$border-radius-lg;
+}
+
+:global(.MuiDateCalendar-root) {
+  padding: v.$spacing-2;
+}
+
+:global(.MuiPickersYear-yearButton),
+:global(.MuiPickersMonth-monthButton),
+:global(.MuiPickersDay-root) {
+  border-radius: v.$border-radius-md;
+}
+
+:global(.MuiPickersDay-root.Mui-selected),
+:global(.MuiPickersMonth-monthButton.Mui-selected),
+:global(.MuiPickersYear-yearButton.Mui-selected) {
+  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+:global(.scale-in) {
+  animation: scaleIn 300ms ease forwards;
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.98); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }

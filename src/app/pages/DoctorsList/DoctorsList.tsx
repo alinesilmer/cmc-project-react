@@ -1,24 +1,37 @@
+// app/pages/DoctorsList/DoctorsList.tsx
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "../../../components/molecules/Sidebar/Sidebar";
 import SearchBar from "../../../components/molecules/SearchBar/SearchBar";
 import Card from "../../../components/atoms/Card/Card";
 import Button from "../../../components/atoms/Button/Button";
 import styles from "./DoctorsList.module.scss";
 
+type DoctorRow = {
+  id: number;
+  memberNumber: string;
+  name: string;
+  provincialReg: string;
+  nationalReg: string;
+  hasDebt?: boolean;
+};
+
 const DoctorsList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
 
-  const doctors = [
+  const doctors: DoctorRow[] = [
     {
       id: 1,
       memberNumber: "001",
       name: "Dr. Juan Pérez",
       provincialReg: "MP001",
       nationalReg: "MN001",
+      hasDebt: true,
     },
     {
       id: 2,
@@ -26,6 +39,7 @@ const DoctorsList: React.FC = () => {
       name: "Dra. María González",
       provincialReg: "MP002",
       nationalReg: "MN002",
+      hasDebt: false,
     },
     {
       id: 3,
@@ -33,8 +47,20 @@ const DoctorsList: React.FC = () => {
       name: "Dr. Carlos Rodríguez",
       provincialReg: "MP003",
       nationalReg: "MN003",
+      hasDebt: false,
     },
   ];
+
+  const filtered = useMemo(() => {
+    const t = searchTerm.toLowerCase().trim();
+    return !t
+      ? doctors
+      : doctors.filter((d) =>
+          [d.memberNumber, d.name, d.provincialReg, d.nationalReg].some((v) =>
+            v.toLowerCase().includes(t)
+          )
+        );
+  }, [searchTerm]);
 
   return (
     <div className={styles.doctorsPage}>
@@ -65,23 +91,24 @@ const DoctorsList: React.FC = () => {
                 <div>ACCIONES</div>
               </div>
 
-              {doctors.length === 0 ? (
+              {filtered.length === 0 ? (
                 <div className={styles.emptyState}>
                   No se encontraron médicos o hubo un error de conexión.
                 </div>
               ) : (
-                doctors.map((doctor) => (
+                filtered.map((doctor) => (
                   <div key={doctor.id} className={styles.tableRow}>
                     <div>{doctor.memberNumber}</div>
-                    <div>{doctor.name}</div>
+                    <div className={styles.nameCell}>{doctor.name}</div>
                     <div>{doctor.provincialReg}</div>
                     <div>{doctor.nationalReg}</div>
                     <div className={styles.actions}>
-                      <Button size="sm" variant="outline">
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        onClick={() => navigate(`/doctors/${doctor.id}`)}
+                      >
                         Ver
-                      </Button>
-                      <Button size="sm" variant="primary">
-                        Editar
                       </Button>
                     </div>
                   </div>

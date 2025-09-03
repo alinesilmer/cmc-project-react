@@ -3,90 +3,133 @@
 import type React from "react";
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import Sidebar from "../../../components/molecules/Sidebar/Sidebar";
 import SearchBar from "../../../components/molecules/SearchBar/SearchBar";
 import Card from "../../../components/atoms/Card/Card";
 import Button from "../../../components/atoms/Button/Button";
 import styles from "./LiquidationPeriods.module.scss";
-import PeriodsTable, { type Period } from "../../../components/molecules/PeriodsTable/PeriodsTable";
+import PeriodsTable, {
+  type Period,
+} from "../../../components/molecules/PeriodsTable/PeriodsTable";
 import Alert from "../../../components/atoms/Alert/Alert";
 
-const API_BASE = (import.meta as any).env?.VITE_API_URL ?? "http://localhost:8000";
+type ServerEstado = "a" | "c" | "e" | string | null | undefined;
+
+interface ResumenDto {
+  id: number;
+  anio: number;
+  mes: number;
+  total_bruto: number | string | null | undefined;
+  total_debitos: number | string | null | undefined;
+  total_deduccion: number | string | null | undefined;
+  estado: ServerEstado;
+}
+
+type QueryParams = {
+  anio?: number;
+  mes?: number;
+  estado?: "a" | "c" | undefined;
+};
+
+const API_BASE =
+  (import.meta as ImportMeta).env.VITE_API_URL ?? "http://localhost:8000";
 const RESUMEN_URL = `${API_BASE}/api/liquidacion/resumen`;
 
-// ===== Helpers =====
 function parseYYYYMM(input: string): { anio: number; mes: number } | null {
   const s = input.trim();
   const m = s.match(/^(\d{4})-(0[1-9]|1[0-2])$/);
   if (!m) return null;
   return { anio: Number(m[1]), mes: Number(m[2]) };
 }
+
 function toNumber(x: unknown): number {
   if (typeof x === "number") return x;
-  if (typeof x === "string") return Number.parseFloat(x);
+  if (typeof x === "string") {
+    const n = Number.parseFloat(x);
+    return Number.isFinite(n) ? n : 0;
+  }
   return 0;
 }
-function estadoToLabel(e: unknown): "EN CURSO" | "FINALIZADO" {
-  return e === "a" ? "EN CURSO" : "FINALIZADO"; // a|c|e
+
+function estadoToLabel(e: ServerEstado): "EN CURSO" | "FINALIZADO" {
+  return e === "a" ? "EN CURSO" : "FINALIZADO";
 }
-function mapDtoToPeriod(dto: any): Period {
-  const bruto = toNumber(dto?.total_bruto);
-  const debitos = toNumber(dto?.total_debitos);
-  const deduccion = toNumber(dto?.total_deduccion);
+
+function isResumenDtoArray(data: unknown): data is ResumenDto[] {
+  return Array.isArray(data);
+}
+
+function mapDtoToPeriod(dto: ResumenDto): Period {
+  const bruto = toNumber(dto.total_bruto);
+  const debitos = toNumber(dto.total_debitos);
+  const deduccion = toNumber(dto.total_deduccion);
   const discounts = debitos + deduccion;
   const neto = bruto - discounts;
-  const mm = String(dto?.mes ?? 1).padStart(2, "0");
-  const periodStr = `${dto?.anio ?? 1970}-${mm}`;
+  const mm = String(dto.mes ?? 1).padStart(2, "0");
+  const periodStr = `${dto.anio ?? 1970}-${mm}`;
   return {
-    id: Number(dto?.id ?? 0),
+    id: Number(dto.id ?? 0),
     period: periodStr,
     grossTotal: bruto,
     discounts: discounts,
     netTotal: neto,
-    status: estadoToLabel(dto?.estado),
+    status: estadoToLabel(dto.estado),
   };
 }
 
 const LiquidationPeriods: React.FC = () => {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"" | "EN CURSO" | "FINALIZADO">("");
+  const [statusFilter, setStatusFilter] = useState<
+    "" | "EN CURSO" | "FINALIZADO"
+  >("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [confirmRow, setConfirmRow] = useState<Period | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState<Date | null>(null);
 
-  // Filtros → query params backend
   const parsed = parseYYYYMM(searchTerm);
-  const estadoBackend = statusFilter === "EN CURSO" ? "a" : statusFilter === "FINALIZADO" ? "c" : undefined;
+  const estadoBackend: QueryParams["estado"] =
+    statusFilter === "EN CURSO"
+      ? "a"
+      : statusFilter === "FINALIZADO"
+      ? "c"
+      : undefined;
 
-  // GET lista (devuelve DTO crudo)
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["resumen", { anio: parsed?.anio, mes: parsed?.mes, estado: estadoBackend }],
+    queryKey: [
+      "resumen",
+      { anio: parsed?.anio, mes: parsed?.mes, estado: estadoBackend },
+    ],
     queryFn: async ({ queryKey }) => {
-      const [, params] = queryKey as [string, { anio?: number; mes?: number; estado?: string }];
+      const [, params] = queryKey as [string, QueryParams];
       const url = new URL(RESUMEN_URL);
-      if (params?.anio) url.searchParams.set("anio", String(params.anio));
-      if (params?.mes) url.searchParams.set("mes", String(params.mes));
+      if (typeof params?.anio === "number")
+        url.searchParams.set("anio", String(params.anio));
+      if (typeof params?.mes === "number")
+        url.searchParams.set("mes", String(params.mes));
       if (params?.estado) url.searchParams.set("estado", params.estado);
       url.searchParams.set("skip", "0");
       url.searchParams.set("limit", "100");
-
       const res = await fetch(url.toString(), { method: "GET" });
-      if (!res.ok) throw new Error(`Error ${res.status}: ${await res.text().catch(() => res.statusText)}`);
-      return (await res.json()) as any[];
+      if (!res.ok)
+        throw new Error(
+          `Error ${res.status}: ${await res.text().catch(() => res.statusText)}`
+        );
+      const json: unknown = await res.json();
+      return json;
     },
   });
 
   const serverPeriods: Period[] = useMemo(() => {
-    if (!Array.isArray(data)) return [];
+    if (!isResumenDtoArray(data)) return [];
     return data.map(mapDtoToPeriod);
   }, [data]);
 
-  // Filtro adicional en UI (texto/estado — para búsquedas no YYYY-MM)
   const filtered: Period[] = useMemo(() => {
     const s = searchTerm.trim().toLowerCase();
     return serverPeriods.filter((p) => {
@@ -99,44 +142,53 @@ const LiquidationPeriods: React.FC = () => {
     });
   }, [serverPeriods, searchTerm, statusFilter]);
 
-  // POST crear resumen
   const { mutate: createResumen, isPending: creating } = useMutation({
     mutationFn: async ({ anio, mes }: { anio: number; mes: number }) => {
       const res = await fetch(RESUMEN_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ anio, mes }), // estado default en backend
+        body: JSON.stringify({ anio, mes }),
       });
-      if (!res.ok) throw new Error(`Error ${res.status}: ${await res.text().catch(() => res.statusText)}`);
-      return (await res.json()) as any;
+      if (!res.ok)
+        throw new Error(
+          `Error ${res.status}: ${await res.text().catch(() => res.statusText)}`
+        );
+      const json: unknown = await res.json();
+      return json;
     },
     onSuccess: () => {
-      // Más simple y consistente: refetch de la lista
       queryClient.invalidateQueries({ queryKey: ["resumen"] });
       setErrorMsg(null);
     },
-    onError: (e: any) => {
-      setErrorMsg(e?.message || "No se pudo crear el período");
+    onError: (e: unknown) => {
+      const msg =
+        e instanceof Error ? e.message : "No se pudo crear el período";
+      setErrorMsg(msg);
     },
   });
 
-  // DELETE resumen
   const { mutate: deleteResumen, isPending: deleting } = useMutation({
     mutationFn: async (resumenId: number) => {
-      const res = await fetch(`${RESUMEN_URL}/${resumenId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error(`Error ${res.status}: ${await res.text().catch(() => res.statusText)}`);
+      const res = await fetch(`${RESUMEN_URL}/${resumenId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok)
+        throw new Error(
+          `Error ${res.status}: ${await res.text().catch(() => res.statusText)}`
+        );
       return resumenId;
     },
     onSuccess: () => {
       setConfirmRow(null);
       queryClient.invalidateQueries({ queryKey: ["resumen"] });
     },
-    onError: (e: any) => {
-      setErrorMsg(e?.message || "No se pudo eliminar el período");
+    onError: (e: unknown) => {
+      const msg =
+        e instanceof Error ? e.message : "No se pudo eliminar el período";
+      setErrorMsg(msg);
     },
   });
 
-  // Acciones UI
   const handleAddPeriod = () => {
     const now = new Date();
     createResumen({ anio: now.getFullYear(), mes: now.getMonth() + 1 });
@@ -149,10 +201,18 @@ const LiquidationPeriods: React.FC = () => {
     deleteResumen(confirmRow.id);
   };
 
+  const handleCalendarChange = (value: Date | null) => {
+    setSelectedMonth(value);
+    if (value) {
+      const y = value.getFullYear();
+      const m = String(value.getMonth() + 1).padStart(2, "0");
+      setSearchTerm(`${y}-${m}`);
+    }
+  };
+
   return (
     <div className={styles.liquidationPage}>
       <Sidebar />
-
       <div className={styles.content}>
         <motion.div
           className="fade-in"
@@ -165,14 +225,33 @@ const LiquidationPeriods: React.FC = () => {
               <SearchBar
                 placeholder="Buscar período (ej: 2025-07)..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setSearchTerm(e.target.value)
+                }
               />
               <div className={styles.filters}>
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                  <DatePicker
+                    views={["year", "month"]}
+                    value={selectedMonth}
+                    onChange={handleCalendarChange}
+                    format="yyyy-MM"
+                    slotProps={{
+                      textField: {
+                        size: "small",
+                        placeholder: "Elegir mes",
+                        variant: "outlined",
+                      },
+                    }}
+                  />
+                </LocalizationProvider>
                 <select
                   className={styles.statusFilter}
                   value={statusFilter}
                   onChange={(e) =>
-                    setStatusFilter(e.target.value as "" | "EN CURSO" | "FINALIZADO")
+                    setStatusFilter(
+                      e.target.value as "" | "EN CURSO" | "FINALIZADO"
+                    )
                   }
                 >
                   <option value="">TODOS</option>
@@ -181,45 +260,47 @@ const LiquidationPeriods: React.FC = () => {
                 </select>
               </div>
             </div>
-
             <div className={styles.actions}>
               <Button variant="secondary" onClick={() => refetch()}>
                 Refrescar
               </Button>
-              <Button variant="primary" onClick={handleAddPeriod} disabled={creating}>
+              <Button
+                variant="primary"
+                onClick={handleAddPeriod}
+                disabled={creating}
+              >
                 {creating ? "Creando..." : "Agregar Período"}
               </Button>
             </div>
           </div>
-
           <Card className={`${styles.tableCard} scale-in`}>
             {isLoading && (
               <Alert
                 type="info"
                 title="Cargando"
                 message="Obteniendo períodos desde el servidor…"
-                onClose={() => { }}
+                onClose={() => {}}
               />
             )}
-
             {(isError || errorMsg) && (
               <Alert
                 type="error"
                 title="Error"
-                message={(error as Error)?.message || errorMsg || "Error al cargar períodos"}
+                message={
+                  (error as Error | undefined)?.message ||
+                  errorMsg ||
+                  "Error al cargar períodos"
+                }
                 onClose={() => setErrorMsg(null)}
               />
             )}
-
             <PeriodsTable
               title="Períodos de Liquidación"
               data={filtered}
               getSeeLink={(row) => `/liquidation/${row.id}`}
               getSeeState={(row) => ({ period: row.period })}
-              // ✅ ahora sí: el botón ❌ llama a esto
               onRequestDelete={handleDelete}
             />
-
             {confirmRow && (
               <Alert
                 type="warning"

@@ -1,6 +1,6 @@
 import type React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Users, DollarSign, Calendar } from "lucide-react";
+import { Home, Users, DollarSign } from "lucide-react";
 import styles from "./Sidebar.module.scss";
 
 const Sidebar: React.FC = () => {
@@ -10,17 +10,17 @@ const Sidebar: React.FC = () => {
     { path: "/dashboard", icon: Home, label: "Inicio" },
     { path: "/doctors", icon: Users, label: "Lista de Médicos" },
     { path: "/liquidation", icon: DollarSign, label: "Liquidación" },
-    { path: "/discounts", icon: Calendar, label: "Descuentos" },
   ];
 
   return (
     <div className={styles.sidebar}>
       <div className={styles.logo}>
         <img
-          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Captura%20de%20pantalla%202025-08-27%20213736-19MtVGs9R7PVKaN3PTA1TyGpis6tYG.png"
+          src="https://plus.unsplash.com/premium_photo-1689568126014-06fea9d5d341?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8cHJvZmlsZXxlbnwwfHwwfHx8MA%3D%3D"
           alt="CMC Logo"
           className={styles.logoImage}
         />
+        <p className={styles.username}>Nelson Vallejos</p>
       </div>
 
       <nav className={styles.nav}>

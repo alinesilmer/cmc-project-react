@@ -1,0 +1,163 @@
+
+.page { display: flex; min-height: 100vh; }
+.content { flex: 1; margin-left: 280px; padding: v.$spacing-8; }
+
+.topbar { @include m.flex-between; margin-bottom: v.$spacing-6; gap: v.$spacing-4; }
+
+.grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: v.$spacing-6;
+
+  @media (max-width: v.$breakpoint-lg) { grid-template-columns: 1fr; }
+}
+
+.gridWide {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: v.$spacing-6;
+  margin-top: v.$spacing-6;
+}
+
+.loadingCard, .errorCard {
+  display: grid; place-items: center;
+  padding: v.$spacing-12; gap: v.$spacing-3;
+}
+
+.loader {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 3px solid rgba(0,0,0,.1);
+  border-top-color: v.$primary-blue;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.infoCard { padding: v.$spacing-6; }
+.infoHeader {
+  display: grid; grid-template-columns: auto 1fr auto;
+  align-items: center; gap: v.$spacing-4; margin-bottom: v.$spacing-4;
+}
+.avatar {
+  width: 56px; height: 56px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: v.$gray-100; font-weight: v.$font-weight-bold; color: v.$gray-700;
+  font-size: v.$font-size-xl;
+}
+.name { margin: 0; }
+.sub { margin-top: 2px; color: v.$gray-600; font-size: v.$font-size-sm; }
+
+.badge {
+  padding: 0.25rem 0.6rem; border-radius: 999px;
+  font-size: v.$font-size-xs; border: 1px solid transparent;
+}
+.ok { background: rgba(0, 180, 90, .12); color: #0f7a3b; border-color: rgba(0, 180, 90, .25); }
+.debt { background: rgba(220, 50, 50, .12); color: #8f1b1b; border-color: rgba(220, 50, 50, .25); }
+
+.rows {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: v.$spacing-4; margin-top: v.$spacing-4;
+
+  @media (max-width: v.$breakpoint-md) { grid-template-columns: 1fr; }
+}
+.label { display: block; color: v.$gray-500; font-size: v.$font-size-xs; margin-bottom: 2px; }
+.value { color: v.$gray-800; }
+
+.debtSection { margin-top: v.$spacing-6; }
+.debtBox, .okBox {
+  margin-top: v.$spacing-3; padding: v.$spacing-4;
+  border: 1px dashed v.$gray-300; border-radius: v.$border-radius-lg;
+  display: grid; grid-template-columns: repeat(3, 1fr) auto;
+  align-items: end; gap: v.$spacing-4;
+
+  @media (max-width: v.$breakpoint-lg) { grid-template-columns: 1fr 1fr; }
+  @media (max-width: v.$breakpoint-sm) { grid-template-columns: 1fr; }
+}
+.okBox { grid-template-columns: 1fr; border-style: solid; border-color: rgba(0, 180, 90, .25); }
+
+.docsCard { padding: v.$spacing-6; }
+.docsHeader { @include m.flex-between; margin-bottom: v.$spacing-3; }
+.sectionTitle { font-size: v.$font-size-lg; font-weight: v.$font-weight-semibold; }
+
+.docList { display: flex; flex-direction: column; gap: v.$spacing-3; }
+.docItem {
+  display: grid; grid-template-columns: 1fr auto;
+  padding: v.$spacing-3; border: 1px solid v.$gray-200;
+  border-radius: v.$border-radius-md; align-items: center;
+
+  &:hover { background: v.$gray-50; }
+}
+.docLabel { font-weight: v.$font-weight-semibold; }
+.docName { color: v.$gray-600; font-size: v.$font-size-sm; }
+.docActions { display: flex; gap: v.$spacing-2; align-items: center; }
+.downloadLink { text-decoration: underline; font-size: v.$font-size-sm; &:hover { opacity: .8; } }
+.muted { color: v.$gray-500; font-style: italic; }
+.mutedSmall { color: v.$gray-500; font-size: v.$font-size-xs; }
+
+.statsCard { padding: v.$spacing-6; }
+.statsHeader { @include m.flex-between; margin-bottom: v.$spacing-4; }
+.chartsWrap {
+  display: grid; grid-template-columns: 1fr 1fr; gap: v.$spacing-6;
+  @media (max-width: v.$breakpoint-lg) { grid-template-columns: 1fr; }
+}
+.chartBox {
+  background: v.$gray-50; border: 1px solid v.$gray-200;
+  border-radius: v.$border-radius-md; padding: v.$spacing-4;
+}
+.chartTitle { margin-bottom: v.$spacing-2; font-weight: v.$font-weight-semibold; }
+
+.editCard { padding: v.$spacing-6; }
+.editHeader { @include m.flex-between; margin-bottom: v.$spacing-4; }
+
+.form { display: grid; gap: v.$spacing-4; }
+.formGrid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: v.$spacing-4;
+  @media (max-width: v.$breakpoint-md) { grid-template-columns: 1fr; }
+}
+.formField, .formFieldFull { display: grid; gap: 6px; }
+.formFieldFull { grid-column: 1 / -1; }
+.form input {
+  width: 100%; border: 1px solid v.$gray-300; border-radius: v.$border-radius-md;
+  padding: 10px 12px; font-size: v.$font-size-sm;
+  &:focus { outline: none; border-color: v.$primary-blue; box-shadow: 0 0 0 3px rgba(28, 100, 242, .12); }
+}
+
+.uploadWrap { display: grid; gap: v.$spacing-3; }
+.uploadHeader h4 { margin: 0; }
+.uploadRow input[type="file"] { font-size: v.$font-size-sm; }
+.newDocList { display: flex; flex-direction: column; gap: v.$spacing-2; }
+.newDocItem {
+  display: flex; align-items: center; justify-content: space-between;
+  border: 1px dashed v.$gray-300; border-radius: v.$border-radius-md;
+  padding: v.$spacing-2 v.$spacing-3;
+}
+.newDocName { font-size: v.$font-size-sm; color: v.$gray-700; }
+
+.actionsRow { display: flex; gap: v.$spacing-3; }
+
+.portal { position: fixed; inset: 0; z-index: 50; }
+.overlay { position: absolute; inset: 0; background: #000; }
+.popup {
+  position: absolute; left: 50%; top: 20%;
+  transform: translateX(-50%);
+  width: min(520px, 92vw);
+  background: #fff; border-radius: v.$border-radius-lg; border: 1px solid v.$gray-200;
+  box-shadow: 0 10px 30px rgba(0,0,0,.15);
+  padding: v.$spacing-6; display: grid; gap: v.$spacing-4;
+}
+.popupTitle { font-size: v.$font-size-lg; font-weight: v.$font-weight-semibold; margin: 0; color: rgb(198, 24, 24) }
+.popupText { color: v.$gray-700; }
+.popupButtons { display: flex; gap: v.$spacing-3; justify-content: flex-end; }
+
+.chartsWrap {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: v.$spacing-6;
+
+  @media (max-width: v.$breakpoint-lg) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chartBox:nth-child(3) {
+  grid-column: 1 / -1;
+}

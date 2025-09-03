@@ -13,16 +13,25 @@
 }
 
 .header {
-  @include m.flex-between;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: v.$spacing-6;
   margin-bottom: v.$spacing-6;
+
+  @media (max-width: v.$breakpoint-lg) {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
 }
+
+.headerInfo { display: grid; gap: v.$spacing-2; }
 
 .breadcrumb {
   font-size: v.$font-size-sm;
   color: v.$gray-500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: v.$spacing-2;
 }
 
 .title {
@@ -30,6 +39,22 @@
   font-weight: v.$font-weight-bold;
   color: v.$gray-900;
 }
+
+.subtotals {
+  display: flex; flex-wrap: wrap; gap: v.$spacing-3;
+  color: v.$gray-700; font-size: v.$font-size-sm;
+}
+.dot { color: v.$gray-400; }
+
+.headerControls {
+  display: flex; align-items: center; gap: v.$spacing-4; justify-self: end;
+
+  @media (max-width: v.$breakpoint-lg) {
+    justify-self: start; flex-wrap: wrap;
+  }
+}
+
+.headerButtons { display: flex; gap: v.$spacing-3; align-items: center; flex-wrap: wrap; }
 
 .tabs {
   display: flex;
@@ -39,12 +64,10 @@
 
 .tab {
   padding: v.$spacing-3 v.$spacing-6;
-  border: none;
-  background: none;
+  border: none; background: none;
   font-size: v.$font-size-base;
   font-weight: v.$font-weight-medium;
-  color: v.$gray-600;
-  cursor: pointer;
+  color: v.$gray-600; cursor: pointer;
   border-bottom: 2px solid transparent;
   transition: all 0.2s ease-in-out;
 
@@ -59,26 +82,91 @@
 .searchSection { margin-bottom: v.$spacing-6; }
 
 .socialWorksList {
-  display: flex;
-  flex-direction: column;
-  gap: v.$spacing-6;
+  display: flex; flex-direction: column; gap: v.$spacing-6;
 }
 
-.closeLiquidation{
-  background-color: black;
-  color: white;
-  padding: v.$spacing-4 v.$spacing-4;
+.emptyState {
+  padding: v.$spacing-10;
+  text-align: center;
+  color: v.$gray-600;
+  border: 1px dashed v.$gray-300;
+  border-radius: v.$border-radius-lg;
+  background: linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,1) 100%);
+}
+
+.closeLiquidation {
+  background-color: v.$gray-900;
+  color: v.$white;
+  padding: v.$spacing-3 v.$spacing-4;
   font-size: v.$font-size-base;
   border-radius: v.$border-radius-md;
   border: none;
   cursor: pointer;
+  transition: background-color .2s ease, transform .1s ease;
+
+  &:hover { background-color: v.$primary-blue; }
+  &:active { transform: translateY(1px); }
+  &:disabled { background-color: v.$gray-400; cursor: not-allowed; }
 }
 
-.closeLiquidation:hover{
-  background-color: v.$primary-blue;
+/* ===========================
+   Dialog & Calendar Styling
+   =========================== */
+
+:global(.MuiDialog-paper) {
+  border-radius: v.$border-radius-lg;
+  border: 1px solid v.$gray-200;
+  box-shadow: 0 20px 60px rgba(0,0,0,.18);
+  overflow: hidden;
 }
 
-.rightActions {
-  display: flex;
-  gap: v.$spacing-4;
+:global(.MuiDialogTitle-root) {
+  font-weight: v.$font-weight-bold;
+  font-size: v.$font-size-lg;
+  padding: v.$spacing-4 v.$spacing-5;
+  border-bottom: 1px solid v.$gray-200;
+}
+
+.dialogContent {
+  padding: v.$spacing-5 !important;
+  background: linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,1) 100%);
+  backdrop-filter: blur(6px);
+}
+
+.dialogActions {
+  padding: v.$spacing-4 v.$spacing-5 !important;
+  border-top: 1px solid v.$gray-200;
+  display: flex; justify-content: flex-end; gap: v.$spacing-3;
+}
+
+/* DatePicker input inside dialog */
+.dialogContent :global(.MuiTextField-root) { min-width: 100%; }
+.dialogContent :global(.MuiOutlinedInput-root) { border-radius: v.$border-radius-md; background: v.$white; }
+.dialogContent :global(.MuiOutlinedInput-notchedOutline) { border-color: v.$gray-300; }
+.dialogContent :global(.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline) { border-color: v.$gray-400; }
+.dialogContent :global(.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline) {
+  border-color: v.$primary-blue;
+  box-shadow: 0 0 0 3px rgba(0,112,243,0.12);
+}
+.dialogContent :global(.MuiInputBase-input) { font-size: v.$font-size-sm; }
+
+/* Calendar surface & chips */
+:global(.MuiPickersLayout-root) { border-radius: v.$border-radius-lg; }
+:global(.MuiDateCalendar-root) { padding: v.$spacing-2; }
+:global(.MuiPickersYear-yearButton),
+:global(.MuiPickersMonth-monthButton),
+:global(.MuiPickersDay-root) { border-radius: v.$border-radius-md; }
+
+/* Selected emphasis */
+:global(.MuiPickersDay-root.Mui-selected),
+:global(.MuiPickersMonth-monthButton.Mui-selected),
+:global(.MuiPickersYear-yearButton.Mui-selected) {
+  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+/* Hover cue */
+:global(.MuiPickersDay-root:hover),
+:global(.MuiPickersMonth-monthButton:hover),
+:global(.MuiPickersYear-yearButton:hover) {
+  filter: brightness(0.98);
 }

@@ -3,8 +3,15 @@
 
 import React, { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from "@mui/material";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import styles from "./InsuranceCard.module.scss";
 import InsuranceTable, {
   type Period as InsurancePeriod,
@@ -107,11 +114,7 @@ const InsuranceCard: React.FC<Props> = ({ name, onExport, onSummary }) => {
       <div className={styles.row}>
         <div className={styles.colLabel}>Período</div>
         <div className={styles.colActions}>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setOpenMonthModal(true)}
-          >
+          <Button variant="primary" onClick={() => setOpenMonthModal(true)}>
             Agregar período
           </Button>
         </div>
@@ -142,47 +145,40 @@ const InsuranceCard: React.FC<Props> = ({ name, onExport, onSummary }) => {
         })}
       </div>
 
-      {openMonthModal && (
-        <div className={styles.modalBackdrop}>
-          <motion.div
-            className={styles.modal}
-            initial={{ opacity: 0, scale: 0.98, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
+      <Dialog
+        open={openMonthModal}
+        onClose={() => setOpenMonthModal(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Seleccionar nuevo período</DialogTitle>
+        <DialogContent className={styles.dialogContent}>
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <DatePicker
+              views={["year", "month"]}
+              value={pickDate}
+              onChange={(d) => setPickDate(d)}
+              format="yyyy-MM"
+              slotProps={{
+                textField: { fullWidth: true, placeholder: "Elegir mes y año" },
+              }}
+            />
+          </LocalizationProvider>
+          {dupError && <div className={styles.error}>{dupError}</div>}
+        </DialogContent>
+        <DialogActions className={styles.dialogActions}>
+          <Button variant="secondary" onClick={() => setOpenMonthModal(false)}>
+            Cancelar
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleAddPeriod}
+            disabled={!pickDate}
           >
-            <div className={styles.modalHeader}>
-              <h4>Agregar período</h4>
-              <button
-                className={styles.iconClose}
-                onClick={() => setOpenMonthModal(false)}
-              >
-                ×
-              </button>
-            </div>
-            <div className={styles.modalBody}>
-              <DatePicker
-                selected={pickDate}
-                onChange={(d: Date | null) => setPickDate(d)}
-                dateFormat="yyyy-MM"
-                showMonthYearPicker
-                inline
-                calendarClassName={styles.datepicker}
-              />
-              {dupError && <div className={styles.error}>{dupError}</div>}
-            </div>
-            <div className={styles.modalFooter}>
-              <button
-                className={styles.btnGhost}
-                onClick={() => setOpenMonthModal(false)}
-              >
-                Cancelar
-              </button>
-              <button className={styles.btnPrimary} onClick={handleAddPeriod}>
-                Agregar
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
+            Agregar
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {confirmDeletePeriod && (
         <Alert

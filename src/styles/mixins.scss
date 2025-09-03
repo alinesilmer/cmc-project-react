@@ -1,4 +1,4 @@
-@import './variables.scss';
+@use './variables.scss' as v;
 
 @mixin flex-center {
   display: flex;
@@ -16,13 +16,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: $border-radius-md;
-  font-weight: $font-weight-medium;
+  border-radius: v.$border-radius-md;
+  font-weight: v.$font-weight-medium;
   transition: all 0.2s ease-in-out;
   cursor: pointer;
   border: none;
   text-decoration: none;
-  
+
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
@@ -30,46 +30,38 @@
 }
 
 @mixin card-base {
-  background: $white;
-  border-radius: $border-radius-lg;
-  box-shadow: $shadow-md;
-  border: 1px solid $gray-200;
+  background: v.$white;
+  border-radius: v.$border-radius-lg;
+  box-shadow: v.$shadow-md;
+  border: 1px solid v.$gray-200;
 }
 
 @mixin input-base {
   width: 100%;
-  padding: $spacing-3 $spacing-4;
-  border: 1px solid $gray-300;
-  border-radius: $border-radius-md;
-  font-size: $font-size-base;
+  padding: v.$spacing-3 v.$spacing-4;
+  border: 1px solid v.$gray-300;
+  border-radius: v.$border-radius-md;
+  font-size: v.$font-size-base;
   transition: border-color 0.2s ease-in-out;
-  
+
   &:focus {
     outline: none;
-    border-color: $primary-blue;
+    border-color: v.$primary-blue;
     box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.1);
   }
 }
 
-@mixin responsive($breakpoint) {
-  @if $breakpoint == sm {
-    @media (min-width: $breakpoint-sm) {
-      @content;
-    }
-  }
-  @if $breakpoint == md {
-    @media (min-width: $breakpoint-md) {
-      @content;
-    }
-  }
-  @if $breakpoint == lg {
-    @media (min-width: $breakpoint-lg) {
-      @content;
-    }
-  }
-  @if $breakpoint == xl {
-    @media (min-width: $breakpoint-xl) {
-      @content;
-    }
+/* ✅ Compare the PARAMETER, not v.$breakpoint */
+@mixin responsive($bp) {
+  @if $bp == sm {
+    @media (min-width: v.$breakpoint-sm) { @content; }
+  } @else if $bp == md {
+    @media (min-width: v.$breakpoint-md) { @content; }
+  } @else if $bp == lg {
+    @media (min-width: v.$breakpoint-lg) { @content; }
+  } @else if $bp == xl {
+    @media (min-width: v.$breakpoint-xl) { @content; }
+  } @else {
+    @warn 'Unknown breakpoint `#{$bp}`. Use sm | md | lg | xl.';
   }
 }

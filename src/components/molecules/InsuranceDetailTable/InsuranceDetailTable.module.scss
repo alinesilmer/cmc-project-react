@@ -172,6 +172,20 @@
   white-space: nowrap;
 }
 
+.obsButton {
+  all: unset;
+  cursor: pointer;
+  max-width: 100%;
+  color: v.$primary-blue-dark;
+  font-weight: v.$font-weight-medium;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.obsButton:hover { color: v.$primary-blue; }
+
 .currency { color: v.$gray-500; font-weight: v.$font-weight-medium; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
 .percentage { color: v.$primary-blue; font-weight: v.$font-weight-semibold; }
 .emptyValue { color: v.$gray-400; font-style: italic; }
@@ -187,7 +201,7 @@
 .typeBadge.typeD { background: rgba(v.$danger-red, .12); color: v.$danger-red; }
 .typeBadge.typeN { background: rgba(v.$gray-400, .12); color: v.$gray-600; }
 
-.inputWrapper { position: relative; display: flex; align-items: center; width: 100%; max-width: 120px; margin: 0 auto; }
+.inputWrapper { position: relative; display: flex; align-items: center; width: 100%; max-width: 160px; margin: 0 auto; }
 .currencySymbol { position: absolute; left: 12px; color: v.$gray-600; font-weight: v.$font-weight-semibold; z-index: 1; }
 .numberInput {
   width: 100%;
@@ -297,10 +311,8 @@
   text-align: left;
 }
 
-.formInput{
-  width: 200px;
-  padding: v.$spacing-2;
-}
+.formInput { width: 200px; padding: v.$spacing-2; }
+.formInputCurrency { padding-left: 28px; text-align: left; }
 .formTextarea { resize: vertical; min-height: 90px; font-family: inherit; }
 .formSelect {
   cursor: pointer;
@@ -338,6 +350,84 @@
   box-shadow: v.$shadow-sm;
 }
 .saveButton:hover { background: v.$primary-blue-dark; transform: translateY(-1px); box-shadow: v.$shadow-md; }
+
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.55);
+  backdrop-filter: blur(3px);
+  z-index: 1200;
+}
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(720px, 92vw);
+  max-height: min(78vh, 900px);
+  background: v.$white;
+  border: 1px solid v.$gray-200;
+  border-radius: v.$border-radius-xl;
+  box-shadow: 0 20px 60px rgba(2, 6, 23, 0.25), v.$shadow-xl;
+  z-index: 1201;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: v.$spacing-3;
+  padding: v.$spacing-4 v.$spacing-5;
+  background: linear-gradient(135deg, v.$gray-50 0%, v.$gray-100 100%);
+  border-bottom: 1px solid v.$gray-200;
+}
+
+.modalTitle {
+  margin: 0;
+  color: v.$gray-900;
+  font-size: v.$font-size-lg;
+  font-weight: v.$font-weight-bold;
+  letter-spacing: .2px;
+}
+
+.modalClose {
+  @include m.button-base;
+  width: 36px;
+  height: 36px;
+  background: v.$white;
+  color: v.$gray-600;
+  border: 1px solid v.$gray-300;
+  border-radius: v.$border-radius-md;
+  font-size: 18px;
+}
+.modalClose:hover { background: v.$gray-50; color: v.$danger-red; }
+
+.modalBody {
+  padding: v.$spacing-5;
+  color: v.$gray-800;
+  font-size: v.$font-size-base;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow: auto;
+  max-height: calc(78vh - 72px);
+}
+
+@media (max-width: 640px) {
+  .modal {
+    width: 100vw;
+    max-height: 85vh;
+    border-radius: v.$border-radius-lg;
+  }
+  .modalBody { padding: v.$spacing-4; }
+}
+
+
 
 @media (max-width: 768px) {
   .headerContent { flex-direction: column; gap: v.$spacing-4; }

@@ -1,53 +1,169 @@
 
-.card { @include m.card-base; padding: v.$spacing-5; margin-bottom: v.$spacing-6; }
-.header { display: flex; align-items: center; justify-content: space-between; padding-bottom: v.$spacing-3; border-bottom: 1px solid v.$gray-200; }
-.title { color: v.$primary-blue; font-weight: v.$font-weight-bold; font-size: v.$font-size-2xl; }
-.headerActions { display: inline-flex; gap: v.$spacing-2; }
+.card {
+  @include m.card-base;
+  padding: v.$spacing-5;
+  margin-bottom: v.$spacing-6;
+}
 
-.btnGhost { @include m.button-base; background: v.$gray-100; color: v.$gray-800; padding: v.$spacing-2 v.$spacing-4; }
-.btnSuccess { @include m.button-base; background: v.$success-green; color: v.$white; padding: v.$spacing-2 v.$spacing-4; }
-.btnDanger { @include m.button-base; background: v.$danger-red; color: v.$white; padding: v.$spacing-2 v.$spacing-4; }
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: v.$spacing-3;
+  border-bottom: 1px solid v.$gray-200;
+}
 
-.row { display: flex; flex-direction: column; gap: v.$spacing-4; padding: v.$spacing-4 0; }
-.colLabel { font-weight: v.$font-weight-semibold; color: v.$gray-800; }
-.meta { margin-top: v.$spacing-1; font-size: v.$font-size-sm; color: v.$gray-500; font-style: italic; }
-.colActions { display: inline-flex; gap: v.$spacing-2; align-items: center; }
-.btnPrimary { @include m.button-base; background: v.$primary-blue; color: v.$white; padding: v.$spacing-2 v.$spacing-4; }
+.title {
+  color: v.$primary-blue;
+  font-weight: v.$font-weight-bold;
+  font-size: v.$font-size-2xl;
+}
 
-.tablesWrap { margin-top: v.$spacing-4; display: grid; gap: v.$spacing-4; }
+.headerActions {
+  display: inline-flex;
+  gap: v.$spacing-2;
+}
 
-.modalBackdrop { position: fixed; inset: 0; background: rgba(15,23,42,.35); display: grid; place-items: center; z-index: 1002; }
-.modal { background: v.$white; border: 1px solid v.$gray-200; border-radius: v.$border-radius-lg; box-shadow: v.$shadow-xl; width: min(560px, 92vw); }
-.modalHeader { display: flex; align-items: center; justify-content: space-between; padding: v.$spacing-4 v.$spacing-5; border-bottom: 1px solid v.$gray-200; }
-.iconClose { background: transparent; border: 0; font-size: 22px; color: v.$gray-500; cursor: pointer; }
-.modalBody { padding: v.$spacing-5; }
-.error { margin-top: v.$spacing-3; color: v.$danger-red; font-size: v.$font-size-sm; }
-.modalFooter { display: flex; justify-content: flex-end; gap: v.$spacing-3; padding: v.$spacing-4 v.$spacing-5; border-top: 1px solid v.$gray-200; }
+.btnGhost {
+  @include m.button-base;
+  background: v.$gray-100;
+  color: v.$gray-800;
+  padding: v.$spacing-2 v.$spacing-4;
+}
 
-/* prettier calendar */
-.datepicker {
-  --dp-radius: #{v.$border-radius-md};
-  .react-datepicker__month-container { font-family: inherit; }
-  .react-datepicker__header {
-    background: linear-gradient(135deg, v.$primary-blue, v.$primary-blue-dark);
-    border-top-left-radius: var(--dp-radius);
-    border-top-right-radius: var(--dp-radius);
-    border-bottom: none;
-  }
-  .react-datepicker__current-month,
-  .react-datepicker__day-name { color: v.$white; font-weight: v.$font-weight-medium; }
-  .react-datepicker {
-    border: 1px solid v.$gray-200;
-    border-radius: var(--dp-radius);
-    box-shadow: v.$shadow-md;
-  }
-  .react-datepicker__day {
-    border-radius: v.$border-radius-sm;
-    &:hover { background: v.$secondary-blue; }
-  }
-  .react-datepicker__day--selected,
-  .react-datepicker__day--keyboard-selected {
-    background: v.$primary-blue;
-    color: v.$white;
-  }
+.btnSuccess {
+  @include m.button-base;
+  background: v.$success-green;
+  color: v.$white;
+  padding: v.$spacing-2 v.$spacing-4;
+}
+
+.btnDanger {
+  @include m.button-base;
+  background: v.$danger-red;
+  color: v.$white;
+  padding: v.$spacing-2 v.$spacing-4;
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: v.$spacing-4;
+  padding: v.$spacing-4 0;
+}
+
+.colLabel {
+  font-weight: v.$font-weight-semibold;
+  color: v.$gray-800;
+}
+
+.meta {
+  margin-top: v.$spacing-1;
+  font-size: v.$font-size-sm;
+  color: v.$gray-500;
+  font-style: italic;
+}
+
+.colActions {
+  display: inline-flex;
+  gap: v.$spacing-2;
+  align-items: center;
+}
+
+.btnPrimary {
+  @include m.button-base;
+  background: v.$primary-blue;
+  color: v.$white;
+  padding: v.$spacing-2 v.$spacing-4;
+}
+
+.tablesWrap {
+  margin-top: v.$spacing-4;
+  display: grid;
+  gap: v.$spacing-4;
+}
+
+.error {
+  margin-top: v.$spacing-3;
+  color: v.$danger-red;
+  font-size: v.$font-size-sm;
+}
+
+/* ===========================
+   Dialog & MUI DatePicker Styling
+   =========================== */
+
+.dialogContent {
+  padding: v.$spacing-5 !important;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.96) 0%,
+    rgba(255, 255, 255, 1) 100%
+  );
+  backdrop-filter: blur(6px);
+}
+
+.dialogActions {
+  padding: v.$spacing-4 v.$spacing-5 !important;
+  border-top: 1px solid v.$gray-200;
+  display: flex;
+  justify-content: flex-end;
+  gap: v.$spacing-3;
+}
+
+:global(.MuiDialog-paper) {
+  border-radius: v.$border-radius-lg;
+  border: 1px solid v.$gray-200;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+}
+
+:global(.MuiDialogTitle-root) {
+  font-weight: v.$font-weight-bold;
+  font-size: v.$font-size-lg;
+  padding: v.$spacing-4 v.$spacing-5;
+  border-bottom: 1px solid v.$gray-200;
+}
+
+:global(.MuiTextField-root) {
+  margin-top: v.$spacing-3;
+}
+
+:global(.MuiOutlinedInput-root) {
+  border-radius: v.$border-radius-md;
+  background: v.$white;
+}
+
+:global(.MuiOutlinedInput-notchedOutline) {
+  border-color: v.$gray-300;
+}
+
+:global(.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline) {
+  border-color: v.$gray-400;
+}
+
+:global(.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline) {
+  border-color: v.$primary-blue;
+  box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.12);
+}
+
+:global(.MuiInputBase-input) {
+  font-size: v.$font-size-sm;
+}
+
+:global(.MuiPickersLayout-root) {
+  border-radius: v.$border-radius-lg;
+}
+
+:global(.MuiDateCalendar-root) {
+  padding: v.$spacing-2;
+}
+
+:global(.MuiPickersYear-yearButton),
+:global(.MuiPickersMonth-monthButton) {
+  border-radius: v.$border-radius-md;
+}
+
+:global(.MuiPickersYear-yearButton.Mui-selected),
+:global(.MuiPickersMonth-monthButton.Mui-selected) {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 }

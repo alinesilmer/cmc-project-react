@@ -40,40 +40,16 @@ const currency = new Intl.NumberFormat("es-AR", {
   maximumFractionDigits: 2,
 });
 
-const makeBlank = (): InsuranceRow => ({
-  id: crypto.randomUUID(),
-  socio: "-",
-  nombreSocio: "-",
-  matri: "-",
-  nroOrden: "-",
-  fecha: new Date().toLocaleDateString("es-AR"),
-  codigo: "-",
-  nroAfiliado: "-",
-  afiliado: "-",
-  xCant: "1-1",
-  porcentaje: 100,
-  honorarios: 0,
-  gastos: 0,
-  coseguro: 0,
-  importe: 0,
-  pagado: 0,
-});
-
 const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
   const [drawerRow, setDrawerRow] = useState<InsuranceRow | null>(null);
   const [confirmRow, setConfirmRow] = useState<InsuranceRow | null>(null);
   const [hoveredRow, setHoveredRow] = useState<string | number | null>(null);
+  const [obsModal, setObsModal] = useState<string | null>(null);
 
-  const addRow = () => onChange([...rows, makeBlank()]);
   const updateRow = (id: InsuranceRow["id"], patch: Partial<InsuranceRow>) =>
     onChange(rows.map((r) => (r.id === id ? { ...r, ...patch } : r)));
   const removeRow = (id: InsuranceRow["id"]) =>
     onChange(rows.filter((r) => r.id !== id));
-
-  const totalImporte = useMemo(
-    () => rows.reduce((s, r) => s + (r.importe || 0), 0),
-    [rows]
-  );
 
   const showDetails = useMemo(
     () =>
@@ -94,7 +70,6 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
     >
-      {/* Enhanced Header */}
       <div className={styles.tableHeader}>
         <div className={styles.headerContent}>
           <div className={styles.periodInfo}>
@@ -104,10 +79,8 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
         </div>
       </div>
 
-      {/* Table Container */}
       <div className={styles.tableContainer}>
         <div className={styles.scrollWrapper}>
-          {/* Sticky Header */}
           <div
             className={`${styles.tableGrid} ${styles.headerRow} ${
               showDetails ? styles.withDetails : ""
@@ -128,7 +101,6 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
             <div className={styles.headerCell}>Coseguro</div>
             <div className={styles.headerCell}>Importe</div>
             <div className={styles.headerCell}>A Pagar</div>
-
             {showDetails && (
               <>
                 <div className={styles.headerCell}>Tipo</div>
@@ -137,11 +109,9 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
                 <div className={styles.headerCell}>Total</div>
               </>
             )}
-
             <div className={styles.headerCell}>Acciones</div>
           </div>
 
-          {/* Table Body */}
           <div className={styles.tableBody}>
             <AnimatePresence>
               {rows.map((row, index) => (
@@ -199,8 +169,6 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
                       ${currency.format(row.importe)}
                     </span>
                   </div>
-
-                  {/* Pagado */}
                   <div className={styles.cell}>
                     <span className={styles.currency}>
                       $
@@ -209,8 +177,6 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
                       )}
                     </span>
                   </div>
-
-                  {/* Detail Columns */}
                   {showDetails && (
                     <>
                       <div className={styles.cell}>
@@ -240,7 +206,12 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
                         title={row.obs || ""}
                       >
                         {row.obs && row.obs.trim() !== "" ? (
-                          row.obs
+                          <button
+                            className={styles.obsButton}
+                            onClick={() => setObsModal(row.obs!)}
+                          >
+                            {row.obs}
+                          </button>
                         ) : (
                           <span className={styles.emptyValue}>—</span>
                         )}
@@ -256,8 +227,6 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
                       </div>
                     </>
                   )}
-
-                  {/* Actions */}
                   <div className={styles.cell}>
                     <div className={styles.actionButtons}>
                       <motion.button
@@ -278,23 +247,15 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
         </div>
       </div>
 
-      {/* Enhanced Footer */}
       <div className={styles.tableFooter}>
         <div className={styles.footerContent}>
           <div className={styles.summary}>
             <span className={styles.summaryLabel}>Total de filas:</span>
             <span className={styles.summaryValue}>{rows.length}</span>
           </div>
-          <div className={styles.totalAmount}>
-            <span className={styles.totalLabel}>Total Importe:</span>
-            <span className={styles.totalValue}>
-              ${currency.format(totalImporte)}
-            </span>
-          </div>
         </div>
       </div>
 
-      {/* Enhanced Drawer */}
       <AnimatePresence>
         {drawerRow && (
           <>
@@ -346,7 +307,7 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
                   <div className={styles.inputWrapper}>
                     <span className={styles.currencySymbol}>$</span>
                     <input
-                      className={styles.formInput}
+                      className={`${styles.formInput} ${styles.formInputCurrency}`}
                       type="number"
                       min={0}
                       step="0.01"
@@ -354,7 +315,15 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
                       onChange={(e) =>
                         setDrawerRow({
                           ...drawerRow,
-                          monto: Number(e.target.value || 0),
+                          monto: Number.isFinite(e.currentTarget.valueAsNumber)
+                            ? e.currentTarget.valueAsNumber
+                            : 0,
+                          total:
+                            drawerRow.total !== undefined
+                              ? drawerRow.total
+                              : Number.isFinite(e.currentTarget.valueAsNumber)
+                              ? e.currentTarget.valueAsNumber
+                              : 0,
                         })
                       }
                     />
@@ -379,15 +348,21 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
                   <div className={styles.inputWrapper}>
                     <span className={styles.currencySymbol}>$</span>
                     <input
-                      className={styles.formInput}
+                      className={`${styles.formInput} ${styles.formInputCurrency}`}
                       type="number"
                       min={0}
                       step="0.01"
-                      value={drawerRow.total ?? drawerRow.monto ?? 0}
+                      value={
+                        drawerRow.total !== undefined
+                          ? drawerRow.total
+                          : drawerRow.monto ?? 0
+                      }
                       onChange={(e) =>
                         setDrawerRow({
                           ...drawerRow,
-                          total: Number(e.target.value || 0),
+                          total: Number.isFinite(e.currentTarget.valueAsNumber)
+                            ? e.currentTarget.valueAsNumber
+                            : 0,
                         })
                       }
                     />
@@ -412,7 +387,10 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
                       tipo: drawerRow.tipo ?? "N",
                       monto: drawerRow.monto ?? 0,
                       obs: drawerRow.obs ?? "",
-                      total: drawerRow.total ?? drawerRow.monto ?? 0,
+                      total:
+                        drawerRow.total !== undefined
+                          ? drawerRow.total
+                          : drawerRow.monto ?? 0,
                     };
                     updateRow(updatedRow.id, updatedRow);
                     setDrawerRow(null);
@@ -428,7 +406,39 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
         )}
       </AnimatePresence>
 
-      {/* Delete Confirmation */}
+      <AnimatePresence>
+        {obsModal && (
+          <>
+            <motion.div
+              className={styles.modalOverlay}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setObsModal(null)}
+            />
+            <motion.div
+              className={styles.modal}
+              role="dialog"
+              aria-modal="true"
+              initial={{ opacity: 0, scale: 0.98, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.98, y: 10 }}
+            >
+              <div className={styles.modalHeader}>
+                <h4 className={styles.modalTitle}>Observación</h4>
+                <button
+                  className={styles.modalClose}
+                  onClick={() => setObsModal(null)}
+                >
+                  ✕
+                </button>
+              </div>
+              <div className={styles.modalBody}>{obsModal}</div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {confirmRow && (
         <Alert
           type="warning"

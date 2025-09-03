@@ -9,6 +9,7 @@ import LiquidationPage from "./app/pages/LiquidationPeriods/LiquidationPeriods";
 import DiscountsPage from "./app/pages/DiscountsList/DiscountsList";
 import LiquidationCyclePage from "./app/pages/LiquidationCycle/LiquidationCycle";
 import InsuranceDetail from "./app/pages/InsuranceDetail/InsuranceDetail";
+import DoctorProfilePage from "./app/pages/DoctorProfilePage/DoctorProfilePage";
 
 // Components
 import Sidebar from "./components/molecules/Sidebar/Sidebar";
@@ -25,8 +26,12 @@ function App() {
             <Route path="/doctors" element={<DoctorsPage />} />
             <Route path="/social-works" element={<SocialWorksPage />} />
             <Route path="/liquidation" element={<LiquidationPage />} />
-            <Route path="/discounts" element={<DiscountsPage />} />
+            <Route path="/doctors/:id" element={<DoctorProfilePage />} />
             <Route path="/liquidation/:id" element={<LiquidationCyclePage />} />
+            <Route
+              path="/liquidation/:id/debitos"
+              element={<DiscountsPage />}
+            />
             {/* <Route
               path="/liquidation-cycle"
               element={<LiquidationCyclePage />}

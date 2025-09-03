@@ -1,5 +1,6 @@
-@import '../../../styles/variables.scss';
-@import '../../../styles/mixins.scss';
+// Optional (for editor hints only):
+// @use "@/styles/mixins.scss" as m;
+// @use "@/styles/variables.scss" as v;
 
 .doctorsPage {
   display: flex;
@@ -9,24 +10,24 @@
 .content {
   flex: 1;
   margin-left: 280px;
-  padding: $spacing-8;
+  padding: v.$spacing-8;
 }
 
 .header {
-  @include flex-between;
-  margin-bottom: $spacing-6;
-  
-  @media (max-width: $breakpoint-md) {
+  @include m.flex-between;
+  margin-bottom: v.$spacing-6;
+
+  @media (max-width: v.$breakpoint-md) {
     flex-direction: column;
-    gap: $spacing-4;
+    gap: v.$spacing-4;
     align-items: flex-start;
   }
 }
 
 .title {
-  font-size: $font-size-2xl;
-  font-weight: $font-weight-bold;
-  color: $primary-blue;
+  font-size: v.$font-size-2xl;
+  font-weight: v.$font-weight-bold;
+  color: v.$primary-blue;
 }
 
 .tableCard {
@@ -41,12 +42,12 @@
 .tableHeader {
   display: grid;
   grid-template-columns: 1fr 2fr 1.5fr 1.5fr 1.5fr;
-  gap: $spacing-4;
-  padding: $spacing-4 $spacing-6;
-  background-color: $gray-100;
-  font-weight: $font-weight-semibold;
-  font-size: $font-size-sm;
-  color: $gray-700;
+  gap: v.$spacing-4;
+  padding: v.$spacing-4 v.$spacing-6;
+  background-color: v.$gray-100;
+  font-weight: v.$font-weight-semibold;
+  font-size: v.$font-size-sm;
+  color: v.$gray-700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -54,23 +55,48 @@
 .tableRow {
   display: grid;
   grid-template-columns: 1fr 2fr 1.5fr 1.5fr 1.5fr;
-  gap: $spacing-4;
-  padding: $spacing-4 $spacing-6;
-  border-bottom: 1px solid $gray-200;
-  
+  gap: v.$spacing-4;
+  padding: v.$spacing-4 v.$spacing-6;
+  border-bottom: 1px solid v.$gray-200;
+
   &:hover {
-    background-color: $gray-50;
+    background-color: v.$gray-50;
   }
 }
 
 .actions {
   display: flex;
-  gap: $spacing-2;
+  gap: v.$spacing-2;
 }
 
 .emptyState {
-  padding: $spacing-12;
+  padding: v.$spacing-12;
   text-align: center;
-  color: $gray-500;
+  color: v.$gray-500;
   font-style: italic;
+}
+
+.nameCell {
+  display: flex;
+  align-items: center;
+  gap: v.$spacing-2;
+  flex-wrap: wrap;
+}
+
+.statusBadge {
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: v.$font-size-xs;
+}
+
+.ok {
+  background: rgba(0, 180, 90, 0.12);
+  color: #0f7a3b;
+  border: 1px solid rgba(0, 180, 90, 0.25);
+}
+
+.debt {
+  background: rgba(220, 50, 50, 0.12);
+  color: #8f1b1b;
+  border: 1px solid rgba(220, 50, 50, 0.25);
 }

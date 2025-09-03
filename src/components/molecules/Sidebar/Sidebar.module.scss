@@ -12,14 +12,22 @@
 
 .logo {
   @include m.flex-center;
+  flex-direction: column;
+  gap: 10px;
   margin-bottom: v.$spacing-8;
   padding-bottom: v.$spacing-6;
   border-bottom: 1px solid v.$gray-200;
+
+  .username {
+    font-size: v.$font-size-base;
+    font-weight: v.$font-weight-semibold;
+    color: v.$primary-blue-dark;
+  }
 }
 
 .logoImage {
-  width: 60px;
-  height: 60px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
 }
 

@@ -39,11 +39,11 @@ function mockRows(): InsuranceRow[] {
     gastos: 0,
     coseguro: 0,
     importe: 19443,
-    pagado: 0, // ahora es número ("A Pagar")
-    tipo: "N", // N | C | D
+    pagado: 0,
+    tipo: "N",
     monto: 0,
     obs: "",
-    total: 0, // este es el que suma el pill "Total Importe"
+    total: 0,
   };
 
   return Array.from({ length: 6 }).map((_, i) => ({
