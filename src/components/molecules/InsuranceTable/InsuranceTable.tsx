@@ -64,7 +64,6 @@ const InsuranceTable: React.FC<Props> = ({
   loading,
   onDeleteTable,
   seeDetailsLink,
-  seeDetailsState,
   onSeeDetails,
 }) => {
   if (loading) {
@@ -148,18 +147,6 @@ const InsuranceTable: React.FC<Props> = ({
               >
                 Exportar
               </Button>
-
-              {seeDetailsLink ? (
-                <Link to={seeDetailsLink} state={seeDetailsState}>
-                  <Button variant="secondary" size="sm">
-                    Ver
-                  </Button>
-                </Link>
-              ) : (
-                <Button variant="secondary" size="sm" onClick={onSeeDetails}>
-                  Ver
-                </Button>
-              )}
             </div>
           </div>
         ))}

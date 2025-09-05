@@ -2,8 +2,8 @@
 
 import type React from "react";
 import { useMemo, useState } from "react";
-import { motion } from "framer-motion";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+// ⬇ Keep the import here commented so ESLint doesn’t complain if you re-enable later
+// import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -35,9 +35,9 @@ type QueryParams = {
   estado?: "a" | "c" | undefined;
 };
 
-const API_BASE =
-  (import.meta as ImportMeta).env.VITE_API_URL ?? "http://localhost:8000";
-const RESUMEN_URL = `${API_BASE}/api/liquidacion/resumen`;
+// const API_BASE =
+//   (import.meta as ImportMeta).env.VITE_API_URL ?? "http://localhost:8000";
+// const RESUMEN_URL = `${API_BASE}/api/liquidacion/resumen`;
 
 function parseYYYYMM(input: string): { anio: number; mes: number } | null {
   const s = input.trim();
@@ -59,9 +59,9 @@ function estadoToLabel(e: ServerEstado): "EN CURSO" | "FINALIZADO" {
   return e === "a" ? "EN CURSO" : "FINALIZADO";
 }
 
-function isResumenDtoArray(data: unknown): data is ResumenDto[] {
-  return Array.isArray(data);
-}
+// function isResumenDtoArray(data: unknown): data is ResumenDto[] {
+//   return Array.isArray(data);
+// }
 
 function mapDtoToPeriod(dto: ResumenDto): Period {
   const bruto = toNumber(dto.total_bruto);
@@ -81,8 +81,62 @@ function mapDtoToPeriod(dto: ResumenDto): Period {
   };
 }
 
+/* ================================
+   FAKE DATA (para testear)
+   ================================ */
+const FAKE_RESUMEN: ResumenDto[] = [
+  {
+    id: 1,
+    anio: 2025,
+    mes: 1,
+    total_bruto: 1200000,
+    total_debitos: 100000,
+    total_deduccion: 50000,
+    estado: "c",
+  },
+  {
+    id: 2,
+    anio: 2025,
+    mes: 2,
+    total_bruto: 1300000,
+    total_debitos: 80000,
+    total_deduccion: 60000,
+    estado: "c",
+  },
+  {
+    id: 3,
+    anio: 2025,
+    mes: 3,
+    total_bruto: 1100000,
+    total_debitos: 90000,
+    total_deduccion: 40000,
+    estado: "c",
+  },
+  {
+    id: 4,
+    anio: 2025,
+    mes: 7,
+    total_bruto: 1500000,
+    total_debitos: 120000,
+    total_deduccion: 70000,
+    estado: "a",
+  },
+  {
+    id: 5,
+    anio: 2025,
+    mes: 8,
+    total_bruto: 1550000,
+    total_debitos: 110000,
+    total_deduccion: 65000,
+    estado: "a",
+  },
+];
+
+/* ===========================================
+   COMPONENTE con datos fake y API comentada
+   =========================================== */
 const LiquidationPeriods: React.FC = () => {
-  const queryClient = useQueryClient();
+  // const queryClient = useQueryClient(); // ⬅ API (comentado)
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<
@@ -92,6 +146,17 @@ const LiquidationPeriods: React.FC = () => {
   const [confirmRow, setConfirmRow] = useState<Period | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<Date | null>(null);
 
+  // Flags locales para simular estados de red
+  const [isLoading, setIsLoading] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  // Estado local con datos fake
+  const [rows, setRows] = useState<Period[]>(() =>
+    FAKE_RESUMEN.map(mapDtoToPeriod)
+  );
+
   const parsed = parseYYYYMM(searchTerm);
   const estadoBackend: QueryParams["estado"] =
     statusFilter === "EN CURSO"
@@ -100,6 +165,9 @@ const LiquidationPeriods: React.FC = () => {
       ? "c"
       : undefined;
 
+  /* ==========================================================
+     API ORIGINAL (React Query) — Comentada para mantenerla
+     ==========================================================
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: [
       "resumen",
@@ -118,7 +186,7 @@ const LiquidationPeriods: React.FC = () => {
       const res = await fetch(url.toString(), { method: "GET" });
       if (!res.ok)
         throw new Error(
-          `Error ${res.status}: ${await res.text().catch(() => res.statusText)}`
+          \`Error \${res.status}: \${await res.text().catch(() => res.statusText)}\`
         );
       const json: unknown = await res.json();
       return json;
@@ -130,18 +198,6 @@ const LiquidationPeriods: React.FC = () => {
     return data.map(mapDtoToPeriod);
   }, [data]);
 
-  const filtered: Period[] = useMemo(() => {
-    const s = searchTerm.trim().toLowerCase();
-    return serverPeriods.filter((p) => {
-      const matchesSearch =
-        !s ||
-        p.period.toLowerCase().includes(s) ||
-        p.status?.toLowerCase().includes(s);
-      const matchesStatus = !statusFilter || p.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    });
-  }, [serverPeriods, searchTerm, statusFilter]);
-
   const { mutate: createResumen, isPending: creating } = useMutation({
     mutationFn: async ({ anio, mes }: { anio: number; mes: number }) => {
       const res = await fetch(RESUMEN_URL, {
@@ -151,7 +207,7 @@ const LiquidationPeriods: React.FC = () => {
       });
       if (!res.ok)
         throw new Error(
-          `Error ${res.status}: ${await res.text().catch(() => res.statusText)}`
+          \`Error \${res.status}: \${await res.text().catch(() => res.statusText)}\`
         );
       const json: unknown = await res.json();
       return json;
@@ -169,12 +225,12 @@ const LiquidationPeriods: React.FC = () => {
 
   const { mutate: deleteResumen, isPending: deleting } = useMutation({
     mutationFn: async (resumenId: number) => {
-      const res = await fetch(`${RESUMEN_URL}/${resumenId}`, {
+      const res = await fetch(\`\${RESUMEN_URL}/\${resumenId}\`, {
         method: "DELETE",
       });
       if (!res.ok)
         throw new Error(
-          `Error ${res.status}: ${await res.text().catch(() => res.statusText)}`
+          \`Error \${res.status}: \${await res.text().catch(() => res.statusText)}\`
         );
       return resumenId;
     },
@@ -188,17 +244,108 @@ const LiquidationPeriods: React.FC = () => {
       setErrorMsg(msg);
     },
   });
+  ========================================================== */
+
+  // ====== Simulaciones locales (reemplazan temporalmente a la API) ======
+  const serverPeriods: Period[] = useMemo(() => {
+    // Si quisieras “filtrar” por query (anio/mes/estado) como haría el backend:
+    const byQuery = rows.filter((p) => {
+      const matchesYM =
+        !parsed ||
+        p.period === `${parsed.anio}-${String(parsed.mes).padStart(2, "0")}`;
+      const matchesEstado =
+        !estadoBackend ||
+        (estadoBackend === "a"
+          ? p.status === "EN CURSO"
+          : p.status === "FINALIZADO");
+      return matchesYM && matchesEstado;
+    });
+    return byQuery;
+  }, [rows, parsed, estadoBackend]);
+
+  const filtered: Period[] = useMemo(() => {
+    const s = searchTerm.trim().toLowerCase();
+    return serverPeriods.filter((p) => {
+      const matchesSearch =
+        !s ||
+        p.period.toLowerCase().includes(s) ||
+        p.status?.toLowerCase().includes(s);
+      const matchesStatus = !statusFilter || p.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [serverPeriods, searchTerm, statusFilter]);
+
+  const refetch = () => {
+    // Simula un “reload”
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+      setError(null);
+    }, 400);
+  };
 
   const handleAddPeriod = () => {
-    const now = new Date();
-    createResumen({ anio: now.getFullYear(), mes: now.getMonth() + 1 });
+    setCreating(true);
+    setErrorMsg(null);
+
+    setTimeout(() => {
+      try {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = now.getMonth() + 1;
+        const periodStr = `${y}-${String(m).padStart(2, "0")}`;
+
+        // Si ya existe el período actual, no lo dupliques
+        const already = rows.some((r) => r.period === periodStr);
+        if (already) {
+          setErrorMsg(`El período ${periodStr} ya existe.`);
+          setCreating(false);
+          return;
+        }
+
+        const nextId = rows.length ? Math.max(...rows.map((r) => r.id)) + 1 : 1;
+
+        const bruto = 1_500_000;
+        const debitos = 120_000;
+        const deduccion = 70_000;
+
+        const newRow: Period = {
+          id: nextId,
+          period: periodStr,
+          grossTotal: bruto,
+          discounts: debitos + deduccion,
+          netTotal: bruto - (debitos + deduccion),
+          status: "EN CURSO",
+        };
+
+        setRows((prev) => [newRow, ...prev]);
+      } catch (e) {
+        setErrorMsg(
+          e instanceof Error ? e.message : "No se pudo crear el período"
+        );
+      } finally {
+        setCreating(false);
+      }
+    }, 450);
   };
 
   const handleDelete = (row: Period) => setConfirmRow(row);
 
   const confirmDelete = () => {
     if (!confirmRow) return;
-    deleteResumen(confirmRow.id);
+    setDeleting(true);
+    setTimeout(() => {
+      try {
+        setRows((prev) => prev.filter((r) => r.id !== confirmRow.id));
+        setConfirmRow(null);
+      } catch (e) {
+        setErrorMsg(
+          e instanceof Error ? e.message : "No se pudo eliminar el período"
+        );
+      } finally {
+        setDeleting(false);
+      }
+    }, 450);
   };
 
   const handleCalendarChange = (value: Date | null) => {
@@ -214,11 +361,9 @@ const LiquidationPeriods: React.FC = () => {
     <div className={styles.liquidationPage}>
       <Sidebar />
       <div className={styles.content}>
-        <motion.div
+        <div
           className="fade-in"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          style={{ opacity: 1, transform: "translateY(0)" }}
         >
           <div className={styles.header}>
             <div className={styles.headerLeft}>
@@ -261,7 +406,7 @@ const LiquidationPeriods: React.FC = () => {
               </div>
             </div>
             <div className={styles.actions}>
-              <Button variant="secondary" onClick={() => refetch()}>
+              <Button variant="secondary" onClick={refetch}>
                 Refrescar
               </Button>
               <Button
@@ -273,23 +418,22 @@ const LiquidationPeriods: React.FC = () => {
               </Button>
             </div>
           </div>
+
           <Card className={`${styles.tableCard} scale-in`}>
             {isLoading && (
               <Alert
                 type="info"
                 title="Cargando"
-                message="Obteniendo períodos desde el servidor…"
+                message="Obteniendo períodos (modo demo)…"
                 onClose={() => {}}
               />
             )}
-            {(isError || errorMsg) && (
+            {(error || errorMsg) && (
               <Alert
                 type="error"
                 title="Error"
                 message={
-                  (error as Error | undefined)?.message ||
-                  errorMsg ||
-                  "Error al cargar períodos"
+                  error?.message || errorMsg || "Error al cargar períodos"
                 }
                 onClose={() => setErrorMsg(null)}
               />
@@ -315,7 +459,7 @@ const LiquidationPeriods: React.FC = () => {
               />
             )}
           </Card>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

@@ -1,9 +1,9 @@
 "use client";
 
 import type React from "react";
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+// import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
   Dialog,
@@ -22,7 +22,6 @@ import Alert from "../../../components/atoms/Alert/Alert";
 import styles from "./LiquidationCycle.module.scss";
 
 type InsuranceItem = { id: string; name: string };
-
 type ServerEstado = "a" | "c" | "e" | string | null | undefined;
 
 interface LiquidacionItem {
@@ -49,10 +48,11 @@ interface ResumenDetail {
   liquidaciones?: unknown;
 }
 
-const API_BASE =
-  (import.meta as ImportMeta).env.VITE_API_URL ?? "http://localhost:8000";
-const RESUMEN_URL = `${API_BASE}/api/liquidacion/resumen`;
+// const API_BASE =
+//   (import.meta as ImportMeta).env.VITE_API_URL ?? "http://localhost:8000";
+// const RESUMEN_URL = `${API_BASE}/api/liquidacion/resumen`;
 
+/* ========== Utils ========== */
 function toNumber(x: unknown): number {
   if (typeof x === "number") return x;
   if (typeof x === "string") {
@@ -99,6 +99,82 @@ function deriveInsurances(detail: ResumenDetail | undefined): InsuranceItem[] {
   return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
 }
 
+/* ================================
+   FAKE DETAILS aligned with list:
+   IDs 1..5 → 2025-01,02,03,07,08
+   ================================ */
+const FAKE_DETAILS: ResumenDetail[] = [
+  {
+    id: 1,
+    anio: 2025,
+    mes: 1,
+    estado: "c",
+    total_bruto: 1_200_000,
+    total_debitos: 100_000,
+    total_deduccion: 50_000,
+    liquidaciones: [
+      { obra_social_id: 1, obra_social_nombre: "IOSCOR" },
+      { obra_social_id: 2, obra_social_nombre: "PAMI" },
+      { obra_social_id: 3, obra_social_nombre: "OSDE" },
+    ],
+  },
+  {
+    id: 2,
+    anio: 2025,
+    mes: 2,
+    estado: "c",
+    total_bruto: 1_300_000,
+    total_debitos: 80_000,
+    total_deduccion: 60_000,
+    liquidaciones: [
+      { obra_social_id: 1, obra_social_nombre: "IOSCOR" },
+      { obra_social_id: 4, obra_social_nombre: "Swiss Medical" },
+      { obra_social_id: 5, obra_social_nombre: "UNNE" },
+    ],
+  },
+  {
+    id: 3,
+    anio: 2025,
+    mes: 3,
+    estado: "c",
+    total_bruto: 1_100_000,
+    total_debitos: 90_000,
+    total_deduccion: 40_000,
+    liquidaciones: [
+      { obra_social_id: 2, obra_social_nombre: "PAMI" },
+      { obra_social_id: 6, obra_social_nombre: "UTN" },
+    ],
+  },
+  {
+    id: 4,
+    anio: 2025,
+    mes: 7,
+    estado: "a",
+    total_bruto: 1_500_000,
+    total_debitos: 120_000,
+    total_deduccion: 70_000,
+    liquidaciones: [
+      { obra_social_id: 3, obra_social_nombre: "OSDE" },
+      { obra_social_id: 7, obra_social_nombre: "Galeno" },
+      { obra_social_id: 8, obra_social_nombre: "Sancor Salud" },
+    ],
+  },
+  {
+    id: 5,
+    anio: 2025,
+    mes: 8,
+    estado: "a",
+    total_bruto: 1_550_000,
+    total_debitos: 110_000,
+    total_deduccion: 65_000,
+    liquidaciones: [
+      { obra_social_id: 1, obra_social_nombre: "IOSCOR" },
+      { obra_social_id: 4, obra_social_nombre: "Swiss Medical" },
+      { obra_social_id: 9, obra_social_nombre: "IOSFA" },
+    ],
+  },
+];
+
 const LiquidationCycle: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -106,11 +182,38 @@ const LiquidationCycle: React.FC = () => {
 
   const [query, setQuery] = useState("");
   const [hidden, setHidden] = useState<Set<string>>(new Set());
-
   const [openAddPeriod, setOpenAddPeriod] = useState(false);
   const [pickerMonth, setPickerMonth] = useState<Date | null>(null);
   const [pickerError, setPickerError] = useState<string | null>(null);
 
+  // ===== Simulated fetch by :id =====
+  const [data, setData] = useState<ResumenDetail | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isError, setIsError] = useState<boolean>(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    setIsLoading(true);
+    setIsError(false);
+    setError(null);
+    const t = setTimeout(() => {
+      const nid = Number(id);
+      const found = Number.isFinite(nid)
+        ? FAKE_DETAILS.find((d) => d.id === nid)
+        : undefined;
+      if (found) {
+        setData(found);
+        setIsLoading(false);
+      } else {
+        setIsError(true);
+        setError(new Error("No se encontró el período solicitado."));
+        setIsLoading(false);
+      }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [id]);
+
+  /* ========= API REAL (comentada) =========
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["resumen-detail", id],
     queryFn: async (): Promise<ResumenDetail> => {
@@ -124,19 +227,12 @@ const LiquidationCycle: React.FC = () => {
     },
     enabled: !!id,
   });
+  ========================================= */
 
   const { periodTitle, estadoLabel } = useMemo(() => {
     const mm = String(data?.mes ?? 1).padStart(2, "0");
     const period = `${data?.anio ?? "----"}-${mm}`;
-    const d =
-      data?.anio && data?.mes
-        ? new Date(data.anio, (data.mes ?? 1) - 1, 1)
-        : null;
-    return {
-      periodTitle: period,
-      estadoLabel: estadoToLabel(data?.estado),
-      selectedDate: d,
-    };
+    return { periodTitle: period, estadoLabel: estadoToLabel(data?.estado) };
   }, [data]);
 
   const allInsurances = useMemo<InsuranceItem[]>(
@@ -168,6 +264,7 @@ const LiquidationCycle: React.FC = () => {
   const totalDeduccion = toNumber(data?.total_deduccion);
   const totalNeto = totalBruto - (totalDebitos + totalDeduccion);
 
+  /* ======= REAL (comentado) =======
   const findResumenIdByYearMonth = useCallback(
     async (anio: number, mes: number): Promise<number | null> => {
       const url = new URL(RESUMEN_URL);
@@ -181,6 +278,16 @@ const LiquidationCycle: React.FC = () => {
       if (!Array.isArray(arr) || arr.length === 0) return null;
       const first = arr[0] as { id?: number };
       return typeof first?.id === "number" ? first.id : null;
+    },
+    []
+  );
+  ================================ */
+
+  // Fake lookup consistent with FAKE_DETAILS above
+  const findResumenIdByYearMonth = useCallback(
+    async (anio: number, mes: number): Promise<number | null> => {
+      const match = FAKE_DETAILS.find((d) => d.anio === anio && d.mes === mes);
+      return match ? match.id : null;
     },
     []
   );
@@ -305,7 +412,7 @@ const LiquidationCycle: React.FC = () => {
             <Alert
               type="info"
               title="Cargando"
-              message="Obteniendo detalle del período..."
+              message="Obteniendo detalle del período (modo demo)…"
               onClose={() => {}}
             />
           )}
