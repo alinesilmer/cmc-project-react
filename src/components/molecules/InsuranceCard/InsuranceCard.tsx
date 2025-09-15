@@ -63,7 +63,7 @@ const InsuranceCard: React.FC<Props> = ({
   name,
   onExport,
   onSummary,
-  onDelete, // opcional
+  // onDelete, // opcional
   initialPeriods = [],
   osId,
   resumenId,

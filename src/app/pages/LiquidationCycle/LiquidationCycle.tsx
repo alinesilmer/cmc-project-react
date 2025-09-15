@@ -114,13 +114,13 @@ function toNumber(x: unknown): number {
   return 0;
 }
 
-function estadoToLabel(
-  e: ServerEstado
-): "EN CURSO" | "FINALIZADO" | "DESCONOCIDO" {
-  if (e === "a") return "EN CURSO";
-  if (e === "c" || e === "e") return "FINALIZADO";
-  return "DESCONOCIDO";
-}
+// function estadoToLabel(
+//   e: ServerEstado
+// ): "EN CURSO" | "FINALIZADO" | "DESCONOCIDO" {
+//   if (e === "a") return "EN CURSO";
+//   if (e === "c" || e === "e") return "FINALIZADO";
+//   return "DESCONOCIDO";
+// }
 
 function getLiquidacionesArray(x: unknown): LiquidacionItem[] {
   if (!Array.isArray(x)) return [];

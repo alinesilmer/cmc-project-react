@@ -1,7 +1,7 @@
 // app/pages/InsuranceDetail/InsuranceDetail.tsx
 "use client";
 
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import Sidebar from "../../../components/molecules/Sidebar/Sidebar";
@@ -422,10 +422,10 @@ useEffect(() => {
     [deleteDC, upsertDC]
   );
 
-  const totalImporte = useMemo(
-    () => rows.reduce((s, r) => s + (r.total ?? 0), 0),
-    [rows]
-  );
+  // const totalImporte = useMemo(
+  //   () => rows.reduce((s, r) => s + (r.total ?? 0), 0),
+  //   [rows]
+  // );
 
   return (
     <div className={styles.page}>

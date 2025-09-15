@@ -161,7 +161,7 @@ const DoctorProfilePage: React.FC = () => {
     };
   }, [id]);
 
-  const hasDebt = !!data?.hasDebt;
+  // const hasDebt = !!data?.hasDebt;
   const debtInfo = data?.debtDetail;
 
   // Genera plan de cuotas local (sólo UI)
