@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 // ⬇ Keep the import here commented so ESLint doesn’t complain if you re-enable later
 // import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
@@ -16,6 +16,9 @@ import PeriodsTable, {
   type Period,
 } from "../../../components/molecules/PeriodsTable/PeriodsTable";
 import Alert from "../../../components/atoms/Alert/Alert";
+
+import { getJSON } from "../../../lib/http";
+import { API_URL } from "../../../config/env";
 
 type ServerEstado = "a" | "c" | "e" | string | null | undefined;
 
@@ -34,10 +37,6 @@ type QueryParams = {
   mes?: number;
   estado?: "a" | "c" | undefined;
 };
-
-// const API_BASE =
-//   (import.meta as ImportMeta).env.VITE_API_URL ?? "http://localhost:8000";
-// const RESUMEN_URL = `${API_BASE}/api/liquidacion/resumen`;
 
 function parseYYYYMM(input: string): { anio: number; mes: number } | null {
   const s = input.trim();
@@ -59,10 +58,6 @@ function estadoToLabel(e: ServerEstado): "EN CURSO" | "FINALIZADO" {
   return e === "a" ? "EN CURSO" : "FINALIZADO";
 }
 
-// function isResumenDtoArray(data: unknown): data is ResumenDto[] {
-//   return Array.isArray(data);
-// }
-
 function mapDtoToPeriod(dto: ResumenDto): Period {
   const bruto = toNumber(dto.total_bruto);
   const debitos = toNumber(dto.total_debitos);
@@ -81,60 +76,8 @@ function mapDtoToPeriod(dto: ResumenDto): Period {
   };
 }
 
-/* ================================
-   FAKE DATA (para testear)
-   ================================ */
-const FAKE_RESUMEN: ResumenDto[] = [
-  {
-    id: 1,
-    anio: 2025,
-    mes: 1,
-    total_bruto: 1200000,
-    total_debitos: 100000,
-    total_deduccion: 50000,
-    estado: "c",
-  },
-  {
-    id: 2,
-    anio: 2025,
-    mes: 2,
-    total_bruto: 1300000,
-    total_debitos: 80000,
-    total_deduccion: 60000,
-    estado: "c",
-  },
-  {
-    id: 3,
-    anio: 2025,
-    mes: 3,
-    total_bruto: 1100000,
-    total_debitos: 90000,
-    total_deduccion: 40000,
-    estado: "c",
-  },
-  {
-    id: 4,
-    anio: 2025,
-    mes: 7,
-    total_bruto: 1500000,
-    total_debitos: 120000,
-    total_deduccion: 70000,
-    estado: "a",
-  },
-  {
-    id: 5,
-    anio: 2025,
-    mes: 8,
-    total_bruto: 1550000,
-    total_debitos: 110000,
-    total_deduccion: 65000,
-    estado: "a",
-  },
-];
+const RESUMEN_URL = `${API_URL.replace(/\/$/, "")}/api/liquidacion/resumen`;
 
-/* ===========================================
-   COMPONENTE con datos fake y API comentada
-   =========================================== */
 const LiquidationPeriods: React.FC = () => {
   // const queryClient = useQueryClient(); // ⬅ API (comentado)
 
@@ -152,10 +95,8 @@ const LiquidationPeriods: React.FC = () => {
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  // Estado local con datos fake
-  const [rows, setRows] = useState<Period[]>(() =>
-    FAKE_RESUMEN.map(mapDtoToPeriod)
-  );
+  // Datos cargados desde la API
+  const [rows, setRows] = useState<Period[]>([]);
 
   const parsed = parseYYYYMM(searchTerm);
   const estadoBackend: QueryParams["estado"] =
@@ -165,107 +106,49 @@ const LiquidationPeriods: React.FC = () => {
       ? "c"
       : undefined;
 
-  /* ==========================================================
-     API ORIGINAL (React Query) — Comentada para mantenerla
-     ==========================================================
-  const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: [
-      "resumen",
-      { anio: parsed?.anio, mes: parsed?.mes, estado: estadoBackend },
-    ],
-    queryFn: async ({ queryKey }) => {
-      const [, params] = queryKey as [string, QueryParams];
-      const url = new URL(RESUMEN_URL);
-      if (typeof params?.anio === "number")
-        url.searchParams.set("anio", String(params.anio));
-      if (typeof params?.mes === "number")
-        url.searchParams.set("mes", String(params.mes));
-      if (params?.estado) url.searchParams.set("estado", params.estado);
-      url.searchParams.set("skip", "0");
-      url.searchParams.set("limit", "100");
-      const res = await fetch(url.toString(), { method: "GET" });
-      if (!res.ok)
-        throw new Error(
-          \`Error \${res.status}: \${await res.text().catch(() => res.statusText)}\`
-        );
-      const json: unknown = await res.json();
-      return json;
-    },
-  });
+  const buildUrlWithParams = (params: QueryParams) => {
+    const url = new URL(RESUMEN_URL);
+    if (typeof params.anio === "number") url.searchParams.set("anio", String(params.anio));
+    if (typeof params.mes === "number") url.searchParams.set("mes", String(params.mes));
+    if (params.estado) url.searchParams.set("estado", params.estado);
+    url.searchParams.set("skip", "0");
+    url.searchParams.set("limit", "100");
+    return url.toString();
+  };
 
-  const serverPeriods: Period[] = useMemo(() => {
-    if (!isResumenDtoArray(data)) return [];
-    return data.map(mapDtoToPeriod);
-  }, [data]);
-
-  const { mutate: createResumen, isPending: creating } = useMutation({
-    mutationFn: async ({ anio, mes }: { anio: number; mes: number }) => {
-      const res = await fetch(RESUMEN_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ anio, mes }),
+  const fetchResumen = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    setErrorMsg(null);
+    try {
+      const url = buildUrlWithParams({
+        anio: parsed?.anio,
+        mes: parsed?.mes,
+        estado: estadoBackend,
       });
-      if (!res.ok)
-        throw new Error(
-          \`Error \${res.status}: \${await res.text().catch(() => res.statusText)}\`
-        );
-      const json: unknown = await res.json();
-      return json;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["resumen"] });
-      setErrorMsg(null);
-    },
-    onError: (e: unknown) => {
-      const msg =
-        e instanceof Error ? e.message : "No se pudo crear el período";
+      const json = await getJSON(url);
+      if (!Array.isArray(json)) {
+        throw new Error("Formato de respuesta inesperado del servidor");
+      }
+      const serverPeriods = (json as ResumenDto[]).map(mapDtoToPeriod);
+      setRows(serverPeriods);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Error al obtener períodos";
+      setError(new Error(msg));
       setErrorMsg(msg);
-    },
-  });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [parsed?.anio, parsed?.mes, estadoBackend]);
 
-  const { mutate: deleteResumen, isPending: deleting } = useMutation({
-    mutationFn: async (resumenId: number) => {
-      const res = await fetch(\`\${RESUMEN_URL}/\${resumenId}\`, {
-        method: "DELETE",
-      });
-      if (!res.ok)
-        throw new Error(
-          \`Error \${res.status}: \${await res.text().catch(() => res.statusText)}\`
-        );
-      return resumenId;
-    },
-    onSuccess: () => {
-      setConfirmRow(null);
-      queryClient.invalidateQueries({ queryKey: ["resumen"] });
-    },
-    onError: (e: unknown) => {
-      const msg =
-        e instanceof Error ? e.message : "No se pudo eliminar el período";
-      setErrorMsg(msg);
-    },
-  });
-  ========================================================== */
-
-  // ====== Simulaciones locales (reemplazan temporalmente a la API) ======
-  const serverPeriods: Period[] = useMemo(() => {
-    // Si quisieras “filtrar” por query (anio/mes/estado) como haría el backend:
-    const byQuery = rows.filter((p) => {
-      const matchesYM =
-        !parsed ||
-        p.period === `${parsed.anio}-${String(parsed.mes).padStart(2, "0")}`;
-      const matchesEstado =
-        !estadoBackend ||
-        (estadoBackend === "a"
-          ? p.status === "EN CURSO"
-          : p.status === "FINALIZADO");
-      return matchesYM && matchesEstado;
-    });
-    return byQuery;
-  }, [rows, parsed, estadoBackend]);
+  useEffect(() => {
+    // Carga inicial / recargas cuando cambia la query (anio/mes/estado)
+    fetchResumen();
+  }, [fetchResumen]);
 
   const filtered: Period[] = useMemo(() => {
     const s = searchTerm.trim().toLowerCase();
-    return serverPeriods.filter((p) => {
+    return rows.filter((p) => {
       const matchesSearch =
         !s ||
         p.period.toLowerCase().includes(s) ||
@@ -273,18 +156,14 @@ const LiquidationPeriods: React.FC = () => {
       const matchesStatus = !statusFilter || p.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
-  }, [serverPeriods, searchTerm, statusFilter]);
+  }, [rows, searchTerm, statusFilter]);
 
   const refetch = () => {
-    // Simula un “reload”
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      setError(null);
-    }, 400);
+    fetchResumen();
   };
 
   const handleAddPeriod = () => {
+    // por ahora mantiene la simulación local; reemplaza por POST cuando quieras
     setCreating(true);
     setErrorMsg(null);
 
@@ -295,7 +174,6 @@ const LiquidationPeriods: React.FC = () => {
         const m = now.getMonth() + 1;
         const periodStr = `${y}-${String(m).padStart(2, "0")}`;
 
-        // Si ya existe el período actual, no lo dupliques
         const already = rows.some((r) => r.period === periodStr);
         if (already) {
           setErrorMsg(`El período ${periodStr} ya existe.`);
@@ -424,7 +302,7 @@ const LiquidationPeriods: React.FC = () => {
               <Alert
                 type="info"
                 title="Cargando"
-                message="Obteniendo períodos (modo demo)…"
+                message="Obteniendo períodos…"
                 onClose={() => {}}
               />
             )}

@@ -1,0 +1,39 @@
+
+.panel { border:1px solid v.$gray-300; border-radius:8px; overflow:hidden; background:#fff; box-shadow:0 4px 14px rgba(0,0,0,.06); }
+.panelHead { background:#2b78e4; color:#fff; padding:10px 12px; font-weight:600; font-size:.95rem; }
+
+.tableWrap { overflow-x:auto; }
+.table { width:100%; border-collapse:separate; border-spacing:0; }
+
+thead th {
+  text-align:left; font-size:.82rem; color:v.$gray-700;
+  background:#f4f6f8; padding:10px 12px; border-bottom:1px solid v.$gray-300;
+}
+
+.tr td { padding:10px 12px; border-bottom:1px solid v.$gray-200; }
+.trOk { background:rgba(0,160,75,.06); }
+
+.tdOrden { white-space:nowrap; }
+.tdDni { white-space:nowrap; }
+.dniWrap { display:inline-flex; align-items:center; gap:6px; }
+.dni { font-weight:600; color:v.$gray-900; }
+.okIcon {
+  width:18px; height:18px; display:grid; place-items:center;
+  border:1px solid rgba(0,160,75,.25); background:rgba(0,160,75,.12);
+  color:#0b7a3b; border-radius:999px;
+}
+
+.tdObra, .tdCodigo, .tdCant, .tdFecha { white-space:nowrap; }
+.tdPct { white-space:nowrap; }
+
+.thActions, .tdActions { width:150px; text-align:right; }
+.tdActions { display:flex; gap:8px; justify-content:flex-end; }
+
+.btnEdit, .btnDelete {
+  height:26px; padding:0 10px; border-radius:6px; border:1px solid transparent;
+  font-size:.78rem; font-weight:600; cursor:pointer;
+}
+.btnEdit { background:#e6f0ff; color:#1f5fb6; border-color:#cfe0ff; }
+.btnDelete { background:#ffe7e7; color:#8f1b1b; border-color:#ffcfcf; }
+
+.empty { color:v.$gray-600; padding:16px 12px; text-align:center; }

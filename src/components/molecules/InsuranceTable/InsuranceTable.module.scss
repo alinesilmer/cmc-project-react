@@ -30,6 +30,19 @@
   font-weight: v.$font-weight-semibold;
   color: v.$primary-blue;
 }
+.stateBadge{
+  padding: 3px 10px;
+  border-radius: 6px;
+}
+.stateBadge.open{
+  background-color: v.$success-green;
+  color: v.$white;
+}
+
+.stateBadge.danger{
+  background-color: v.$danger-red;
+  color: v.$white;
+}
 
 .periodBadge {
   background: v.$secondary-blue;

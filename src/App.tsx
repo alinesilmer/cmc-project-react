@@ -13,6 +13,7 @@ import DoctorProfilePage from "./app/pages/DoctorProfilePage/DoctorProfilePage";
 
 // Components
 import Sidebar from "./components/molecules/Sidebar/Sidebar";
+import PadronIoscor from "./app/pages/PadronIoscor/PadronIoscor";
 
 function App() {
   return (
@@ -28,15 +29,16 @@ function App() {
             <Route path="/liquidation" element={<LiquidationPage />} />
             <Route path="/doctors/:id" element={<DoctorProfilePage />} />
             <Route path="/liquidation/:id" element={<LiquidationCyclePage />} />
+            <Route path="/padron-ioscor" element={<PadronIoscor />} />
+
             <Route
               path="/liquidation/:id/debitos"
               element={<DiscountsPage />}
             />
-            {/* <Route
-              path="/liquidation-cycle"
-              element={<LiquidationCyclePage />}
-            /> */}
-            <Route path="/insurance-detail" element={<InsuranceDetail />} />
+            <Route
+              path="/liquidation/:id/insurance/:osId/:period/:liquidacionId"
+              element={<InsuranceDetail />}
+            />
           </Routes>
         </AnimatePresence>
       </main>

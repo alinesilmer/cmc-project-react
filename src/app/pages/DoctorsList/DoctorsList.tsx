@@ -2,7 +2,7 @@
 "use client";
 
 import type React from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../../components/molecules/Sidebar/Sidebar";
@@ -13,54 +13,47 @@ import styles from "./DoctorsList.module.scss";
 
 type DoctorRow = {
   id: number;
-  memberNumber: string;
-  name: string;
-  provincialReg: string;
-  nationalReg: string;
-  hasDebt?: boolean;
+  nro_socio: number;
+  nombre: string;
+  matricula_prov: number;
+  documento: string;
 };
+
+const API_BASE = (import.meta as any).env?.VITE_API_URL ?? "http://localhost:8000";
+const MEDICOS_URL = (q: string) =>
+  `${API_BASE}/api/medicos${q ? `?q=${encodeURIComponent(q)}` : ""}`;
 
 const DoctorsList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [rows, setRows] = useState<DoctorRow[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [err, setErr] = useState<string | null>(null);
+
   const navigate = useNavigate();
 
-  const doctors: DoctorRow[] = [
-    {
-      id: 1,
-      memberNumber: "001",
-      name: "Dr. Juan Pérez",
-      provincialReg: "MP001",
-      nationalReg: "MN001",
-      hasDebt: true,
-    },
-    {
-      id: 2,
-      memberNumber: "002",
-      name: "Dra. María González",
-      provincialReg: "MP002",
-      nationalReg: "MN002",
-      hasDebt: false,
-    },
-    {
-      id: 3,
-      memberNumber: "003",
-      name: "Dr. Carlos Rodríguez",
-      provincialReg: "MP003",
-      nationalReg: "MN003",
-      hasDebt: false,
-    },
-  ];
+  useEffect(() => {
+    let ignore = false;
+    const controller = new AbortController();
 
-  const filtered = useMemo(() => {
-    const t = searchTerm.toLowerCase().trim();
-    return !t
-      ? doctors
-      : doctors.filter((d) =>
-          [d.memberNumber, d.name, d.provincialReg, d.nationalReg].some((v) =>
-            v.toLowerCase().includes(t)
-          )
-        );
+    (async () => {
+      setLoading(true);
+      setErr(null);
+      try {
+        const res = await fetch(MEDICOS_URL(searchTerm), { signal: controller.signal });
+        if (!res.ok) throw new Error(`Error ${res.status} al cargar médicos`);
+        const data: DoctorRow[] = await res.json();
+        if (!ignore) setRows(data);
+      } catch (e: any) {
+        if (!ignore && e?.name !== "AbortError") setErr(e?.message || "No se pudieron cargar los médicos");
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    })();
+
+    return () => { ignore = true; controller.abort(); };
   }, [searchTerm]);
+
+  const filtered = useMemo(() => rows, [rows]);
 
   return (
     <div className={styles.doctorsPage}>
@@ -74,11 +67,19 @@ const DoctorsList: React.FC = () => {
         >
           <div className={styles.header}>
             <h1 className={styles.title}>Listado de médicos</h1>
-            <SearchBar
-              placeholder="Buscar médico..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+            <div className={styles.actionsRight}>
+              <SearchBar
+                placeholder="Buscar médico..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <Button
+                variant="primary"
+                onClick={() => navigate("/doctors/new")}
+              >
+                Agregar médico
+              </Button>
+            </div>
           </div>
 
           <Card className={styles.tableCard}>
@@ -87,21 +88,25 @@ const DoctorsList: React.FC = () => {
                 <div>NRO SOCIO</div>
                 <div>NOMBRE</div>
                 <div>MATRÍCULA PROV.</div>
-                <div>MATRÍCULA NAC.</div>
+                <div>DNI</div>
                 <div>ACCIONES</div>
               </div>
 
-              {filtered.length === 0 ? (
+              {loading ? (
+                <div className={styles.loading}>Cargando…</div>
+              ) : err ? (
+                <div className={styles.emptyState}>{err}</div>
+              ) : filtered.length === 0 ? (
                 <div className={styles.emptyState}>
-                  No se encontraron médicos o hubo un error de conexión.
+                  No se encontraron médicos.
                 </div>
               ) : (
                 filtered.map((doctor) => (
                   <div key={doctor.id} className={styles.tableRow}>
-                    <div>{doctor.memberNumber}</div>
-                    <div className={styles.nameCell}>{doctor.name}</div>
-                    <div>{doctor.provincialReg}</div>
-                    <div>{doctor.nationalReg}</div>
+                    <div>{doctor.nro_socio}</div>
+                    <div className={styles.nameCell}>{doctor.nombre}</div>
+                    <div>{doctor.matricula_prov}</div>
+                    <div>{doctor.documento}</div>
                     <div className={styles.actions}>
                       <Button
                         size="sm"

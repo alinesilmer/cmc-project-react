@@ -170,3 +170,81 @@
 :global(.MuiPickersYear-yearButton:hover) {
   filter: brightness(0.98);
 }
+
+/* Carrusel de vistas */
+.viewport {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  min-height: 420px;
+}
+.carousel {
+  display: grid;
+  grid-template-columns: 100% 100%;
+  // width: 200%;
+}
+.pane {
+  padding: v.$spacing-4 0;
+  min-height: 420px;
+}
+
+/* Cabecera Débitos */
+.debitosHeader {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: v.$spacing-3;
+  margin-bottom: v.$spacing-3;
+  h2 { margin: 0; }
+}
+
+/* Grid de boxes */
+.debitosGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: v.$spacing-4;
+  @media (max-width: v.$breakpoint-lg) { grid-template-columns: 1fr; }
+}
+
+.box {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: v.$border-radius-md;
+  padding: v.$spacing-4;
+}
+.boxHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: v.$spacing-3;
+}
+
+/* Inputs sencillos para filtros en boxes */
+.input {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 6px 10px;
+  outline: none;
+  &:focus { border-color: v.$primary-blue; }
+}
+
+/* Tabla simple */
+.tableWrap { overflow-x: auto; }
+.simpleTable {
+  width: 100%;
+  border-collapse: collapse;
+  th, td { padding: 10px 12px; border-bottom: 1px solid #eee; text-align: left; }
+  thead tr { background: #f7f7f9; }
+}
+.ellipsis {
+  max-width: 360px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.muted { color: #666; }
+.mutedCenter { color: #777; text-align: center; padding: 12px; }
+.errorInline { color: #a00; margin-bottom: 8px; }
+
+/* Tabs activos (ya existentes; asegurate de tener .active) */
+.tab.active { color: v.$gray-900; border-bottom: 2px solid v.$primary-blue; }

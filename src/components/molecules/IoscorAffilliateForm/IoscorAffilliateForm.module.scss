@@ -1,0 +1,78 @@
+
+.panel { border:1px solid v.$gray-300; border-radius:8px; overflow:hidden; background:#fff; box-shadow:0 4px 14px rgba(0,0,0,.06); }
+.panelHead { display:flex; align-items:center; gap:8px; background:#2b78e4; color:#fff; padding:10px 12px; font-weight:600; }
+.headIcon { display:grid; place-items:center; }
+.headTitle { font-size:.95rem; }
+
+.panelBody { padding:12px; }
+.grid { display:grid; grid-template-columns: 1fr 1fr; gap:14px 18px; }
+.col { display:grid; gap:12px; min-width:0; }
+
+.field { display:grid; gap:6px; }
+.fieldRow { display:grid; grid-template-columns: 180px 1fr; gap:12px; }
+.shrink { grid-template-columns: unset; }
+
+.label { font-size:.82rem; color:v.$gray-700; }
+.input {
+  height:36px; border:1px solid v.$gray-300; border-radius:6px; padding:0 10px; outline:none;
+  &:focus { border-color:#2b78e4; box-shadow:0 0 0 3px rgba(43,120,228,.15); }
+}
+select.input { height:36px; }
+
+.withSuffix { position:relative; }
+.suffix {
+  position:absolute; right:6px; top:50%; transform:translateY(-50%);
+  width:24px; height:24px; display:grid; place-items:center;
+  border-radius:999px; border:1px solid v.$gray-300; color:v.$gray-500; background:#f9fafb;
+}
+.suffixOk { border-color:rgba(0,160,75,.25); background:rgba(0,160,75,.12); color:#0b7a3b; }
+
+.markWrap { border:1px dashed v.$gray-300; border-radius:6px; padding:10px; display:grid; gap:10px; }
+.markGrid { display:flex; gap:18px; }
+.checkRow { display:inline-flex; align-items:center; gap:8px; }
+
+.percentRow { display:grid; grid-template-columns: 24px 1fr 1fr 1fr; gap:8px; }
+.percentLabel { display:grid; place-items:center; color:v.$gray-700; font-weight:600; }
+
+.actions { display:flex; justify-content:flex-end; margin-top:10px; gap: 1rem }
+.btnSave {
+  height:36px; padding:0 14px; border-radius:6px; border:1px solid #1f5fb6;
+  background:#2b78e4; color:#fff; font-weight:600; cursor:pointer; transition:transform .04s ease;
+  &:disabled { opacity:.6; cursor:not-allowed; }
+  &:active:not(:disabled){ transform:translateY(1px); }
+}
+
+@media (max-width: 900px) {
+  .grid { grid-template-columns: 1fr; }
+  .fieldRow { grid-template-columns: 1fr; }
+}
+/* DatePicker wrappers */
+.dateWrap { position: relative; }
+.dateInput { width: 100%; }
+.datePopper { z-index: 50; }
+
+/* reuse existing combobox styles for both Código and Ob. Soc */
+.combo { position: relative; }
+.comboInput { padding-right: 34px; }
+.comboSuffix {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  width: 24px; height: 24px; display: grid; place-items: center;
+  border-radius: 999px; border: 1px solid v.$gray-300; color: v.$gray-500; background: #f9fafb;
+  cursor: pointer;
+}
+.suffixOk { border-color: rgba(0,160,75,.25); background: rgba(0,160,75,.12); color: #0b7a3b; }
+
+.comboList {
+  position: absolute; left: 0; right: 0; top: calc(100% + 4px);
+  background: #fff; border: 1px solid v.$gray-300; border-radius: 6px;
+  box-shadow: 0 10px 20px rgba(0,0,0,.08);
+  max-height: 220px; overflow: auto; z-index: 20;
+}
+.comboItem {
+  display: grid; grid-template-columns: 100px 1fr; gap: 8px;
+  padding: 8px 10px; cursor: pointer;
+  &:hover { background: #f4f6f8; }
+}
+.itemCode { font-weight: 600; color: v.$gray-900; }
+.itemLabel { color: v.$gray-700; }
+

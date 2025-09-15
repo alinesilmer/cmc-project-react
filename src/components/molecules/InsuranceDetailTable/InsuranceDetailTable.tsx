@@ -7,7 +7,7 @@ import styles from "./InsuranceDetailTable.module.scss";
 import Alert from "../../atoms/Alert/Alert";
 
 export type InsuranceRow = {
-  id: string | number;
+  det_id: string | number;      // DetalleLiquidacion.id
   socio: string | number;
   nombreSocio: string;
   matri: string | number;
@@ -25,7 +25,7 @@ export type InsuranceRow = {
   pagado: number;
   tipo?: "N" | "C" | "D";
   monto?: number;
-  obs?: string;
+  obs?: string | null;
   total?: number;
 };
 
@@ -33,6 +33,7 @@ type Props = {
   period: string;
   rows: InsuranceRow[];
   onChange: (rows: InsuranceRow[]) => void;
+  onSaveRow?: (row: InsuranceRow) => Promise<void> | void; // persistir DC
 };
 
 const currency = new Intl.NumberFormat("es-AR", {
@@ -40,16 +41,18 @@ const currency = new Intl.NumberFormat("es-AR", {
   maximumFractionDigits: 2,
 });
 
-const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
+const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange, onSaveRow }) => {
   const [drawerRow, setDrawerRow] = useState<InsuranceRow | null>(null);
   const [confirmRow, setConfirmRow] = useState<InsuranceRow | null>(null);
   const [hoveredRow, setHoveredRow] = useState<string | number | null>(null);
   const [obsModal, setObsModal] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const updateRow = (id: InsuranceRow["id"], patch: Partial<InsuranceRow>) =>
-    onChange(rows.map((r) => (r.id === id ? { ...r, ...patch } : r)));
-  const removeRow = (id: InsuranceRow["id"]) =>
-    onChange(rows.filter((r) => r.id !== id));
+  const updateRow = (id: InsuranceRow["det_id"], patch: Partial<InsuranceRow>) =>
+    onChange(rows.map((r) => (r.det_id === id ? { ...r, ...patch } : r)));
+  const removeRow = (id: InsuranceRow["det_id"]) =>
+    onChange(rows.filter((r) => r.det_id !== id));
 
   const showDetails = useMemo(
     () =>
@@ -57,7 +60,7 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
         (r) =>
           r.tipo !== undefined ||
           (r.monto !== undefined && r.monto !== 0) ||
-          (r.obs !== undefined && r.obs.trim() !== "") ||
+          (r.obs !== undefined && (r.obs ?? "").toString().trim() !== "") ||
           r.total !== undefined
       ),
     [rows]
@@ -70,6 +73,13 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
     >
+      {error && (
+        <div className={styles.errorBanner}>
+          {error}
+          <button onClick={() => setError(null)} className={styles.closeErr}>×</button>
+        </div>
+      )}
+
       <div className={styles.tableHeader}>
         <div className={styles.headerContent}>
           <div className={styles.periodInfo}>
@@ -100,7 +110,7 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
             <div className={styles.headerCell}>Gastos</div>
             <div className={styles.headerCell}>Coseguro</div>
             <div className={styles.headerCell}>Importe</div>
-            <div className={styles.headerCell}>A Pagar</div>
+            <div className={styles.headerCell}>Pagado</div>
             {showDetails && (
               <>
                 <div className={styles.headerCell}>Tipo</div>
@@ -116,22 +126,19 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
             <AnimatePresence>
               {rows.map((row, index) => (
                 <motion.div
-                  key={row.id}
+                  key={row.det_id}
                   className={`${styles.tableGrid} ${styles.dataRow} ${
                     showDetails ? styles.withDetails : ""
-                  } ${hoveredRow === row.id ? styles.hovered : ""}`}
+                  } ${hoveredRow === row.det_id ? styles.hovered : ""}`}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ delay: index * 0.05 }}
-                  onMouseEnter={() => setHoveredRow(row.id)}
+                  onMouseEnter={() => setHoveredRow(row.det_id)}
                   onMouseLeave={() => setHoveredRow(null)}
                 >
                   <div className={styles.cell}>{row.socio}</div>
-                  <div
-                    className={`${styles.cell} ${styles.nameCell}`}
-                    title={row.nombreSocio}
-                  >
+                  <div className={`${styles.cell} ${styles.nameCell}`} title={row.nombreSocio}>
                     {row.nombreSocio}
                   </div>
                   <div className={styles.cell}>{row.matri}</div>
@@ -139,10 +146,7 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
                   <div className={styles.cell}>{row.fecha}</div>
                   <div className={styles.cell}>{row.codigo}</div>
                   <div className={styles.cell}>{row.nroAfiliado}</div>
-                  <div
-                    className={`${styles.cell} ${styles.nameCell}`}
-                    title={row.afiliado}
-                  >
+                  <div className={`${styles.cell} ${styles.nameCell}`} title={row.afiliado}>
                     {row.afiliado}
                   </div>
                   <div className={styles.cell}>{row.xCant}</div>
@@ -150,42 +154,28 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
                     <span className={styles.percentage}>{row.porcentaje}%</span>
                   </div>
                   <div className={styles.cell}>
-                    <span className={styles.currency}>
-                      ${currency.format(row.honorarios)}
-                    </span>
+                    <span className={styles.currency}>${currency.format(row.honorarios)}</span>
+                  </div>
+                  <div className={styles.cell}>
+                    <span className={styles.currency}>${currency.format(row.gastos)}</span>
+                  </div>
+                  <div className={styles.cell}>
+                    <span className={styles.currency}>${currency.format(row.coseguro)}</span>
+                  </div>
+                  <div className={styles.cell}>
+                    <span className={styles.currency}>${currency.format(row.importe)}</span>
                   </div>
                   <div className={styles.cell}>
                     <span className={styles.currency}>
-                      ${currency.format(row.gastos)}
+                      ${currency.format(Number.isFinite(row.pagado) ? row.pagado : 0)}
                     </span>
                   </div>
-                  <div className={styles.cell}>
-                    <span className={styles.currency}>
-                      ${currency.format(row.coseguro)}
-                    </span>
-                  </div>
-                  <div className={styles.cell}>
-                    <span className={styles.currency}>
-                      ${currency.format(row.importe)}
-                    </span>
-                  </div>
-                  <div className={styles.cell}>
-                    <span className={styles.currency}>
-                      $
-                      {currency.format(
-                        Number.isFinite(row.pagado) ? row.pagado : 0
-                      )}
-                    </span>
-                  </div>
+
                   {showDetails && (
                     <>
                       <div className={styles.cell}>
                         {row.tipo ? (
-                          <span
-                            className={`${styles.typeBadge} ${
-                              styles[`type${row.tipo}`]
-                            }`}
-                          >
+                          <span className={`${styles.typeBadge} ${styles[`type${row.tipo}`]}`}>
                             {row.tipo}
                           </span>
                         ) : (
@@ -193,23 +183,15 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
                         )}
                       </div>
                       <div className={styles.cell}>
-                        {row.monto !== undefined && row.monto > 0 ? (
-                          <span className={styles.currency}>
-                            ${currency.format(row.monto)}
-                          </span>
-                        ) : (
+                        {row.tipo === "N" || !row.monto || Number(row.monto) <= 0 ? (
                           <span className={styles.emptyValue}>—</span>
+                        ) : (
+                          <span className={styles.currency}>${currency.format(Number(row.monto))}</span>
                         )}
                       </div>
-                      <div
-                        className={`${styles.cell} ${styles.obsCell}`}
-                        title={row.obs || ""}
-                      >
-                        {row.obs && row.obs.trim() !== "" ? (
-                          <button
-                            className={styles.obsButton}
-                            onClick={() => setObsModal(row.obs!)}
-                          >
+                      <div className={`${styles.cell} ${styles.obsCell}`} title={row.obs || ""}>
+                        {row.obs && row.obs.toString().trim() !== "" ? (
+                          <button className={styles.obsButton} onClick={() => setObsModal(String(row.obs))}>
                             {row.obs}
                           </button>
                         ) : (
@@ -218,15 +200,14 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
                       </div>
                       <div className={styles.cell}>
                         {row.total !== undefined ? (
-                          <span className={styles.currency}>
-                            ${currency.format(row.total)}
-                          </span>
+                          <span className={styles.currency}>${currency.format(row.total)}</span>
                         ) : (
                           <span className={styles.emptyValue}>—</span>
                         )}
                       </div>
                     </>
                   )}
+
                   <div className={styles.cell}>
                     <div className={styles.actionButtons}>
                       <motion.button
@@ -234,7 +215,7 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
                         onClick={() => setDrawerRow(row)}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        title="Editar"
+                        title="Editar débito/crédito"
                       >
                         <span className={styles.actionIcon}>✏️</span>
                       </motion.button>
@@ -264,7 +245,7 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setDrawerRow(null)}
+              onClick={() => !saving && setDrawerRow(null)}
             />
             <motion.aside
               className={styles.drawer}
@@ -274,10 +255,11 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
             >
               <div className={styles.drawerHeader}>
-                <h3 className={styles.drawerTitle}>Detalle de Fila</h3>
+                <h3 className={styles.drawerTitle}>Débito / Crédito</h3>
                 <button
                   className={styles.closeButton}
-                  onClick={() => setDrawerRow(null)}
+                  onClick={() => !saving && setDrawerRow(null)}
+                  disabled={saving}
                 >
                   ✕
                 </button>
@@ -290,11 +272,9 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
                     className={styles.formSelect}
                     value={drawerRow.tipo ?? "N"}
                     onChange={(e) =>
-                      setDrawerRow({
-                        ...drawerRow,
-                        tipo: e.target.value as "N" | "C" | "D",
-                      })
+                      setDrawerRow({ ...drawerRow, tipo: e.target.value as "N" | "C" | "D" })
                     }
+                    disabled={saving}
                   >
                     <option value="N">Nada (N)</option>
                     <option value="C">Crédito (C)</option>
@@ -318,14 +298,9 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
                           monto: Number.isFinite(e.currentTarget.valueAsNumber)
                             ? e.currentTarget.valueAsNumber
                             : 0,
-                          total:
-                            drawerRow.total !== undefined
-                              ? drawerRow.total
-                              : Number.isFinite(e.currentTarget.valueAsNumber)
-                              ? e.currentTarget.valueAsNumber
-                              : 0,
                         })
                       }
+                      disabled={saving}
                     />
                   </div>
                 </div>
@@ -337,66 +312,84 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
                     rows={4}
                     placeholder="Ingrese observaciones..."
                     value={drawerRow.obs ?? ""}
-                    onChange={(e) =>
-                      setDrawerRow({ ...drawerRow, obs: e.target.value })
-                    }
+                    onChange={(e) => setDrawerRow({ ...drawerRow, obs: e.target.value })}
+                    disabled={saving}
                   />
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>Total</label>
-                  <div className={styles.inputWrapper}>
-                    <span className={styles.currencySymbol}>$</span>
-                    <input
-                      className={`${styles.formInput} ${styles.formInputCurrency}`}
-                      type="number"
-                      min={0}
-                      step="0.01"
-                      value={
-                        drawerRow.total !== undefined
-                          ? drawerRow.total
-                          : drawerRow.monto ?? 0
-                      }
-                      onChange={(e) =>
-                        setDrawerRow({
-                          ...drawerRow,
-                          total: Number.isFinite(e.currentTarget.valueAsNumber)
-                            ? e.currentTarget.valueAsNumber
-                            : 0,
-                        })
-                      }
-                    />
-                  </div>
                 </div>
               </div>
 
               <div className={styles.drawerFooter}>
+                {drawerRow.tipo !== "N" && (drawerRow.monto ?? 0) > 0 && (
+                  <motion.button
+                    className={styles.cancelButton}
+                    onClick={async () => {
+                      if (!onSaveRow) return setDrawerRow(null);
+                      try {
+                        setSaving(true);
+                        // “Quitar DC” => setear N/0
+                        await onSaveRow({ ...drawerRow, tipo: "N", monto: 0, obs: "" });
+                        setDrawerRow(null);
+                      } catch (e: any) {
+                        setError(e?.message || "No se pudo quitar el débito/crédito");
+                      } finally {
+                        setSaving(false);
+                      }
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    disabled={saving}
+                  >
+                    Quitar débito/crédito
+                  </motion.button>
+                )}
+
                 <motion.button
                   className={styles.cancelButton}
                   onClick={() => setDrawerRow(null)}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
+                  disabled={saving}
                 >
                   Cancelar
                 </motion.button>
+
                 <motion.button
                   className={styles.saveButton}
-                  onClick={() => {
-                    const updatedRow = {
-                      ...drawerRow,
-                      tipo: drawerRow.tipo ?? "N",
-                      monto: drawerRow.monto ?? 0,
-                      obs: drawerRow.obs ?? "",
-                      total:
-                        drawerRow.total !== undefined
-                          ? drawerRow.total
-                          : drawerRow.monto ?? 0,
-                    };
-                    updateRow(updatedRow.id, updatedRow);
-                    setDrawerRow(null);
+                  onClick={async () => {
+                    if (!drawerRow) return;
+                    if (!onSaveRow) {
+                      // solo local
+                      const applied = {
+                        ...drawerRow,
+                        total:
+                          drawerRow.tipo === "D"
+                            ? drawerRow.importe - (drawerRow.monto ?? 0)
+                            : drawerRow.tipo === "C"
+                            ? drawerRow.importe + (drawerRow.monto ?? 0)
+                            : drawerRow.importe,
+                      };
+                      updateRow(applied.det_id, applied);
+                      setDrawerRow(null);
+                      return;
+                    }
+                    try {
+                      setSaving(true);
+                      await onSaveRow({
+                        ...drawerRow,
+                        tipo: drawerRow.tipo ?? "N",
+                        monto: drawerRow.monto ?? 0,
+                        obs: drawerRow.obs ?? "",
+                      });
+                      setDrawerRow(null);
+                    } catch (e: any) {
+                      setError(e?.message || "No se pudo guardar el débito/crédito");
+                    } finally {
+                      setSaving(false);
+                    }
                   }}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
+                  disabled={saving}
                 >
                   Guardar Cambios
                 </motion.button>
@@ -426,10 +419,7 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
             >
               <div className={styles.modalHeader}>
                 <h4 className={styles.modalTitle}>Observación</h4>
-                <button
-                  className={styles.modalClose}
-                  onClick={() => setObsModal(null)}
-                >
+                <button className={styles.modalClose} onClick={() => setObsModal(null)}>
                   ✕
                 </button>
               </div>
@@ -447,7 +437,7 @@ const InsuranceDetailTable: React.FC<Props> = ({ period, rows, onChange }) => {
           onClose={() => setConfirmRow(null)}
           onCancel={() => setConfirmRow(null)}
           onConfirm={() => {
-            removeRow(confirmRow.id);
+            removeRow(confirmRow.det_id);
             setConfirmRow(null);
           }}
           confirmLabel="Sí, eliminar"

@@ -1,6 +1,6 @@
 import type React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Users, DollarSign } from "lucide-react";
+import { Home, Users, DollarSign, Hospital } from "lucide-react";
 import styles from "./Sidebar.module.scss";
 
 const Sidebar: React.FC = () => {
@@ -10,6 +10,7 @@ const Sidebar: React.FC = () => {
     { path: "/dashboard", icon: Home, label: "Inicio" },
     { path: "/doctors", icon: Users, label: "Lista de Médicos" },
     { path: "/liquidation", icon: DollarSign, label: "Liquidación" },
+    { path: "/padron-ioscor", icon: Hospital, label: "Padron IOSCOR" },
   ];
 
   return (
