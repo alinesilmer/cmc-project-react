@@ -1,3 +1,4 @@
+// components/molecules/PeriodsTable/PeriodsTable.tsx
 "use client";
 
 import React from "react";
@@ -22,9 +23,13 @@ type Props = {
   className?: string;
   title?: string;
   loading?: boolean;
+
+  /** Ahora por defecto ocultamos la columna Estado para alinearlo con LiquidationPeriods */
   hideStatus?: boolean;
-  getSeeLink?: (row: Period) => string;     // ← opcional
-  getSeeState?: (row: Period) => unknown;   // ← opcional
+
+  getSeeLink?: (row: Period) => string;
+  getSeeState?: (row: Period) => unknown;
+
   deletable?: boolean;
   onDeleteTable?: () => void;
 };
@@ -49,18 +54,18 @@ async function exportPeriodsToExcel(
     ws.addRow(
       includeStatus
         ? {
-          period: r.period,
-          grossTotal: r.grossTotal,
-          discounts: r.discounts,
-          netTotal: r.netTotal,
-          status: r.status ?? "",
-        }
+            period: r.period,
+            grossTotal: r.grossTotal,
+            discounts: r.discounts,
+            netTotal: r.netTotal,
+            status: r.status ?? "",
+          }
         : {
-          period: r.period,
-          grossTotal: r.grossTotal,
-          discounts: r.discounts,
-          netTotal: r.netTotal,
-        }
+            period: r.period,
+            grossTotal: r.grossTotal,
+            discounts: r.discounts,
+            netTotal: r.netTotal,
+          }
     );
   });
 
@@ -79,7 +84,8 @@ const PeriodsTable: React.FC<Props> = ({
   className = "",
   title,
   loading,
-  hideStatus = false,
+  /** Por defecto true para ocultar la columna Estado */
+  hideStatus = true,
   deletable = false,
   onDeleteTable,
   getSeeLink,
@@ -122,9 +128,7 @@ const PeriodsTable: React.FC<Props> = ({
         </div>
       )}
 
-      <div
-        className={`${styles.headerRow} ${hideStatus ? styles.noStatus : ""}`}
-      >
+      <div className={`${styles.headerRow} ${hideStatus ? styles.noStatus : ""}`}>
         <div>Período</div>
         <div>Bruto</div>
         <div>Descuentos</div>
@@ -153,7 +157,9 @@ const PeriodsTable: React.FC<Props> = ({
               {!hideStatus && (
                 <div>
                   <span
-                    className={`${styles.status} ${row.status === "EN CURSO" ? styles.inProgress : styles.finished}`}
+                    className={`${styles.status} ${
+                      row.status === "EN CURSO" ? styles.inProgress : styles.finished
+                    }`}
                   >
                     {row.status}
                   </span>

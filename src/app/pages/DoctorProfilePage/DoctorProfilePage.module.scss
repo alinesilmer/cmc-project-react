@@ -1,5 +1,5 @@
 .page { display: flex; min-height: 100vh; }
-.content { flex: 1; margin-left: 280px; padding: v.$spacing-8; }
+.content { flex: 1; padding: v.$spacing-8; }
 .topbar { @include m.flex-between; margin-bottom: v.$spacing-6; gap: v.$spacing-4; }
 .backLink { color: v.$primary-blue; text-decoration: none; font-weight: 500; &:hover { text-decoration: underline; } }
 

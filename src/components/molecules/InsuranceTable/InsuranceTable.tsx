@@ -2,8 +2,8 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { saveAs } from "file-saver";
-import ExcelJS from "exceljs";
+// import { saveAs } from "file-saver";
+// import ExcelJS from "exceljs";
 import styles from "./InsuranceTable.module.scss";
 import Button from "../../atoms/Button/Button";
 import { Link } from "react-router-dom";
@@ -45,34 +45,34 @@ const LIQ_CERRAR     = (id: number | string) => `${API_BASE}/api/liquidacion/liq
 const LIQ_REABRIR    = (id: number | string) => `${API_BASE}/api/liquidacion/liquidaciones_por_os/${id}/reabrir`;      // reabrir simple (mismo id)
 const LIQ_REFACTURAR = (id: number | string) => `${API_BASE}/api/liquidacion/liquidaciones_por_os/${id}/refacturar`;   // nueva versión
 
-async function exportPeriodsToExcel(rows: Period[], filename = "periodo.xlsx") {
-  const wb = new ExcelJS.Workbook();
-  const ws = wb.addWorksheet("Períodos");
+// async function exportPeriodsToExcel(rows: Period[], filename = "periodo.xlsx") {
+//   const wb = new ExcelJS.Workbook();
+//   const ws = wb.addWorksheet("Períodos");
 
-  ws.columns = [
-    { header: "Período", key: "period", width: 12 },
-    { header: "Bruto", key: "grossTotal", width: 12 },
-    { header: "Débitos", key: "discounts", width: 14 },
-    { header: "Neto", key: "netTotal", width: 12 },
-    { header: "Nro. Factura", key: "nroLiquidacion", width: 18 },
-    { header: "Estado", key: "estado", width: 10 },
-  ] as ExcelJS.Column[];
+//   ws.columns = [
+//     { header: "Período", key: "period", width: 12 },
+//     { header: "Bruto", key: "grossTotal", width: 12 },
+//     { header: "Débitos", key: "discounts", width: 14 },
+//     { header: "Neto", key: "netTotal", width: 12 },
+//     { header: "Nro. Factura", key: "nroLiquidacion", width: 18 },
+//     { header: "Estado", key: "estado", width: 10 },
+//   ] as ExcelJS.Column[];
 
-  rows.forEach((r) =>
-    ws.addRow({
-      period: r.period,
-      grossTotal: r.grossTotal,
-      discounts: r.discounts,
-      netTotal: r.netTotal,
-      nroLiquidacion: r.nroLiquidacion ?? "",
-      estado: r.estado ?? "A",
-    })
-  );
+//   rows.forEach((r) =>
+//     ws.addRow({
+//       period: r.period,
+//       grossTotal: r.grossTotal,
+//       discounts: r.discounts,
+//       netTotal: r.netTotal,
+//       nroLiquidacion: r.nroLiquidacion ?? "",
+//       estado: r.estado ?? "A",
+//     })
+//   );
 
-  ws.getRow(1).font = { bold: true };
-  const buf = await wb.xlsx.writeBuffer();
-  saveAs(new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), filename);
-}
+//   ws.getRow(1).font = { bold: true };
+//   const buf = await wb.xlsx.writeBuffer();
+//   saveAs(new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), filename);
+// }
 
 const InsuranceTable: React.FC<Props> = ({
   periodLabel,
@@ -228,13 +228,13 @@ const InsuranceTable: React.FC<Props> = ({
             <Button variant="primary" size="sm" onClick={onSeeDetails}>Ver Detalles</Button>
           )}
 
-          <Button
+          {/* <Button
             variant="success"
             size="sm"
             onClick={() => exportPeriodsToExcel(data, `periodo_${periodLabel}.xlsx`)}
           >
             Exportar
-          </Button>
+          </Button> */}
 
           {isOpen ? (
             <Button

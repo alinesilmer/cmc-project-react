@@ -7,7 +7,6 @@ import { motion } from "framer-motion";
 import { Edit, Loader2, CheckCircle, AlertTriangle } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import Sidebar from "../../../components/molecules/Sidebar/Sidebar";
 import SearchBar from "../../../components/molecules/SearchBar/SearchBar";
 import Card from "../../../components/atoms/Card/Card";
 import Button from "../../../components/atoms/Button/Button";
@@ -147,7 +146,6 @@ const DiscountsList: React.FC = () => {
 
   return (
     <div className={styles.discountsPage}>
-      <Sidebar />
       <div className={styles.content}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}

@@ -15,11 +15,13 @@ import DoctorProfilePage from "./app/pages/DoctorProfilePage/DoctorProfilePage";
 import Sidebar from "./components/molecules/Sidebar/Sidebar";
 import PadronIoscor from "./app/pages/PadronIoscor/PadronIoscor";
 
+import styles from "./app.module.scss"
+
 function App() {
   return (
-    <div className="app">
+    <div className={styles.app}>
       <Sidebar />
-      <main className="main-content">
+      <main className={styles.main_content}>
         <AnimatePresence mode="wait">
           <Routes>
             <Route path="/" element={<Link to="/dashboard" replace />} />

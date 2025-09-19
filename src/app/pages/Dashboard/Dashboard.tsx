@@ -4,7 +4,6 @@ import type React from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Users, FileText, Calendar, DollarSign, Settings } from "lucide-react";
-import Sidebar from "../../../components/molecules/Sidebar/Sidebar";
 import Card from "../../../components/atoms/Card/Card";
 import styles from "./Dashboard.module.scss";
 
@@ -31,8 +30,6 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className={styles.dashboard}>
-      <Sidebar />
-
       <div className={styles.content}>
         <motion.div
           initial={{ opacity: 0, y: 10 }}

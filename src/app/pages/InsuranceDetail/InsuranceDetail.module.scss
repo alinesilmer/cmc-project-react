@@ -1,15 +1,16 @@
 /* app/pages/InsuranceDetail/InsuranceDetail.module.scss */
 .page {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+
 }
 
 .content {
-  flex: 1;
-  margin-left: 280px;
-  width: calc(100% - 280px);
-  max-width: 100%;
+  flex: 1 1 auto;
   padding: v.$spacing-8;
+  width: 100%;
+  height: 100dvh; /* garantiza el alto total */
+  display: flex;       /* para que wrapper_content pueda ocupar 100% */
 }
 
 .header {
@@ -17,6 +18,9 @@
   margin-bottom: v.$spacing-6;
   gap: v.$spacing-4;
   flex-wrap: wrap;
+  width: 100%;
+  flex: 0 0 auto;      /* no crece, no se contrae: toma su altura natural */
+
 }
 
 .headerRight {
@@ -44,7 +48,11 @@
   color: v.$primary-blue;
   font-weight: v.$font-weight-semibold;
 }
-
+.meta{
+  margin-top: .5rem;
+  display: flex;
+  gap: 1rem;
+}
 .totalPill {
   background: v.$secondary-blue;
   color: v.$primary-blue;
@@ -54,7 +62,65 @@
   font-size: v.$font-size-sm;
 }
 
-.tableSection {
-  display: grid;
-  gap: v.$spacing-6;
+.wrapper_content{
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  width: 100%;
+  // overflow: auto;
+}
+
+.tableSection{
+  flex: 1 1 auto;   /* ocupa el espacio disponible */
+  min-height: 0;    /* habilita el overflow en hijos */
+  overflow: hidden;   /* scrollea la tabla si excede */
+}
+
+
+// PAGINATOR
+.paginationBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border, rgba(0,0,0,0.08));
+  flex: 0 0 auto;
+}
+
+.pageInfo {
+  font-size: 0.95rem;
+  opacity: 0.9;
+}
+
+.pageControls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.pageSizeLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.95rem;
+}
+
+.pageSize {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border, rgba(0,0,0,0.12));
+  background: var(--surface, #fff);
+  outline: none;
+}
+
+.navButtons {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pageIndicator {
+  font-size: 0.95rem;
+  opacity: 0.9;
 }

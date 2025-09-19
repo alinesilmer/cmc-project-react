@@ -5,7 +5,6 @@ import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../../../components/molecules/Sidebar/Sidebar";
 import SearchBar from "../../../components/molecules/SearchBar/SearchBar";
 import Card from "../../../components/atoms/Card/Card";
 import Button from "../../../components/atoms/Button/Button";
@@ -57,8 +56,6 @@ const DoctorsList: React.FC = () => {
 
   return (
     <div className={styles.doctorsPage}>
-      <Sidebar />
-
       <div className={styles.content}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}

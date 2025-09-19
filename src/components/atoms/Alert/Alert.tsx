@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { X, CheckCircle, AlertCircle, AlertTriangle, Info } from "lucide-react";
 import styles from "./Alert.module.scss";
@@ -37,8 +39,30 @@ export default function Alert({
 }: AlertProps) {
   const Icon = icons[type];
 
-  return (
-    <div className={styles.backdrop}>
+  // Bloquea el scroll del body mientras el modal está abierto
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
+  // Cerrar con ESC
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose?.();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const content = (
+    <div
+      className={styles.backdrop}
+      role="presentation"
+      onClick={() => onClose?.()}
+    >
       <motion.div
         className={`${styles.alert} ${styles[type]}`}
         initial={{ opacity: 0, y: 20, scale: 0.98 }}
@@ -49,6 +73,8 @@ export default function Alert({
         aria-modal="true"
         aria-labelledby="alert-title"
         aria-describedby="alert-message"
+        // Evita que el click en el modal cierre por el backdrop
+        onClick={(e) => e.stopPropagation()}
       >
         <Button
           variant="ghost"
@@ -86,4 +112,10 @@ export default function Alert({
       </motion.div>
     </div>
   );
+
+  // Portal al body para que SIEMPRE cubra todo el viewport
+  if (typeof window !== "undefined") {
+    return createPortal(content, document.body);
+  }
+  return content;
 }

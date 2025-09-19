@@ -4,12 +4,14 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import Sidebar from "../../../components/molecules/Sidebar/Sidebar";
+// import Sidebar from "../../../components/molecules/Sidebar/Sidebar";
 import Button from "../../../components/atoms/Button/Button";
 import InsuranceTable, {
   type InsuranceRow,
 } from "../../../components/molecules/InsuranceDetailTable/InsuranceDetailTable";
 import styles from "./InsuranceDetail.module.scss";
+
+
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 
@@ -148,6 +150,98 @@ async function exportInsuranceRowsToExcel(period: string, rows: InsuranceRow[]) 
   saveAs(blob, `detalle_${period}.xlsx`);
 }
 
+// ---------------- exportar D/C a PDF ----------------
+async function exportDebCredToPDF(
+  period: string,
+  rows: InsuranceRow[],
+  insuranceName: string,
+  nroLiquidacion?: string
+) {
+  // Import dinámico (necesitás instalar deps: npm i jspdf jspdf-autotable)
+  const { jsPDF } = await import("jspdf");
+  const autoTable = (await import("jspdf-autotable")).default as any;
+
+  // Filtramos SOLO filas con DC válidos
+  const dcRows = rows.filter(
+    (r) => (r.tipo === "D" || r.tipo === "C") && Number(r.monto) > 0
+  );
+
+  // Early-return si no hay nada
+  if (dcRows.length === 0) {
+    alert("No hay débitos/créditos para exportar.");
+    return;
+  }
+
+  const doc = new jsPDF({
+    orientation: "landscape",
+    unit: "pt",
+    format: "A4",
+  });
+
+  // Encabezado
+  const left = 40;
+  let y = 40;
+  doc.setFontSize(14);
+  doc.text(`Débitos / Créditos — ${insuranceName}`, left, y);
+  y += 18;
+  doc.setFontSize(11);
+  doc.text(`Período: ${period}`, left, y);
+  if (nroLiquidacion) {
+    doc.text(`Nro. Liquidación: ${nroLiquidacion}`, left + 220, y);
+  }
+
+  // Tabla
+  const currency = new Intl.NumberFormat("es-AR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+  const head = [
+    ["Tipo", "Socio", "Nro de prestación", "Observaciones", "Monto", "Código"],
+  ];
+
+  const body = dcRows.map((r) => [
+    r.tipo ?? "",
+    `${r.socio} - ${r.nombreSocio}`.trim(),
+    String(r.nroOrden ?? ""),
+    (r.obs ?? "").toString(),
+    `$ ${currency.format(Number(r.monto ?? 0))}`,
+    String(r.codigo ?? ""),
+  ]);
+
+  autoTable(doc, {
+    startY: y + 14,
+    head,
+    body,
+    styles: { fontSize: 9, cellPadding: 6, halign: "left", valign: "middle" },
+    headStyles: { fillColor: [27, 86, 255], textColor: 255 },
+    columnStyles: {
+      0: { cellWidth: 40 },  // Tipo
+      1: { cellWidth: 200 }, // Socio
+      2: { cellWidth: 90 }, // Nro de prestación
+      3: { cellWidth: 200 }, // Observaciones
+      4: { cellWidth: 70, halign: "right" }, // Monto
+      5: { cellWidth: 70 }, // Código
+    },
+    didDrawPage: (data: any) => {
+      console.log(data)
+      // Footer con número de página
+      const pageSize = doc.internal.pageSize;
+      const pageHeight = pageSize.height ?? pageSize.getHeight();
+      const pageWidth = pageSize.width ?? pageSize.getWidth();
+      const page = (doc as any).internal.getNumberOfPages();
+      doc.setFontSize(9);
+      doc.text(
+        `Página ${page}`,
+        pageWidth - 60,
+        pageHeight - 16
+      );
+    },
+  });
+
+  doc.save(`debitos_creditos_${period}.pdf`);
+}
+
 type ResumenOS = {
   id: number;
   resumen_id: number;
@@ -158,9 +252,9 @@ type ResumenOS = {
   total_bruto: string;
   total_debitos: string;
   total_neto: string;
+  estado : string;
 };
 
-// ====== AÑADIR cerca de los helpers ======
 type ServerRowOut = {
   det_id: number;
   tipo: "N" | "D" | "C";
@@ -223,6 +317,7 @@ function applyServerRecalc(
         total_bruto: "0",
         total_debitos: "0",
         total_neto: "0",
+        estado : "A"
       };
     return {
       ...current,
@@ -233,6 +328,23 @@ function applyServerRecalc(
     };
   });
 }
+
+// const ALLOW_PAGE_SIZE_SELECT = false; // o false si querés ocultar el select y dejar 50 fijo
+
+// const PAGER_LABELS = {
+//   rowsPerPage: "Filas por página",
+//   page: "Página",
+//   of: "de",
+//   previous: "Anterior",
+//   next: "Siguiente",
+//   first: "«",
+//   last: "»",
+//   showing: "Mostrando",
+//   toSep: "–",
+//   ofTotal: "de",
+// } as const;
+
+
 
 const InsuranceDetail: React.FC = () => {
   // params esperados: /liquidation/:id/insurance/:osId/:period/:liquidacionId
@@ -258,20 +370,36 @@ const InsuranceDetail: React.FC = () => {
   // Resumen del período (para mostrar nro_liquidacion y totales)
   const [resumen, setResumen] = useState<ResumenOS | null>(null);
 
-  // --- Paginación ---
-  const [page, setPage] = useState(1);      // página 1-based
-  const [limit, setLimit] = useState(50);   // tamaño de página
-  const [total, setTotal] = useState(0);    // total de filas en el servidor
+  const [q, setQ] = useState("");
+  const isOpen = String(resumen?.estado ?? "A").trim().toUpperCase() === "A";
+  // const [debouncedQ, setDebouncedQ] = useState("");
 
-  const offset = (page - 1) * limit;
-  const totalPages = Math.max(1, Math.ceil(total / limit));
-  const canPrev = page > 1;
-  const canNext = page < totalPages;
+  // useEffect(() => {
+  //   const id = setTimeout(() => setDebouncedQ(q.trim()), 350);
+  //   return () => clearTimeout(id);
+  // }, [q]);
+
+  // useEffect(() => {
+  //   setPage(1);
+  // }, [debouncedQ]);
+
+  // --- Paginación ---
+  // const [page, setPage] = useState(1);      // página 1-based
+  // const [limit, setLimit] = useState(50);   // tamaño de página
+  // const [total, setTotal] = useState(0);    // total de filas en el servidor
+
+  // const offset = (page - 1) * limit;
+
+  // const totalPages = Math.max(1, Math.ceil((total || 0) / (limit || 1)));
+  // const canPrev = page > 1;
+  // const canNext = page < totalPages;
+  // const start = total === 0 ? 0 : (page - 1) * limit + 1;
+  // const end = total === 0 ? 0 : Math.min(page * limit, total);
+
   // ### Cargar solo el resumen por liquidacion_id
   useEffect(() => {
     let ignore = false;
     const controller = new AbortController();
-
     (async () => {
       setErr(null);
       try {
@@ -279,76 +407,36 @@ const InsuranceDetail: React.FC = () => {
         if (!r1.ok) throw new Error(`Error ${r1.status} al obtener resumen`);
         const resumenJson: ResumenOS = await r1.json();
         if (!ignore) setResumen(resumenJson);
-
-        // reset de paginación al cambiar de liq
-        if (!ignore) setPage(1);
       } catch (e: any) {
-        if (!ignore && e?.name !== "AbortError") {
-          setErr(e?.message || "No se pudo cargar el resumen.");
-        }
+        if (!ignore && e?.name !== "AbortError") setErr(e?.message || "No se pudo cargar el resumen.");
       }
     })();
-
-      return () => {
-        ignore = true;
-        controller.abort();
-      };
-    }, [liqId]);
+    return () => { ignore = true; controller.abort(); };
+  }, [liqId]);
 
   // ### Cargar vista de detalles paginada (offset/limit)
-useEffect(() => {
-  let ignore = false;
-  const controller = new AbortController();
-
-  (async () => {
-    setLoading(true);
-    setErr(null);
-    try {
-      const url = new URL(LIQ_DETALLES_VISTA(liqId));
-      url.searchParams.set("offset", String(offset));
-      url.searchParams.set("limit", String(limit));
-
-      const r2 = await fetch(url.toString(), { signal: controller.signal });
-      if (!r2.ok) throw new Error(`Error ${r2.status} al obtener detalle`);
-
-      // total desde headers
-      const hdrTotal = r2.headers.get("X-Total-Count");
-      const contentRange = r2.headers.get("Content-Range"); // ej: "items 0-49/874"
-      let totalFromServer = 0;
-      if (hdrTotal && !Number.isNaN(Number(hdrTotal))) {
-        totalFromServer = Number(hdrTotal);
-      } else if (contentRange) {
-        const m = contentRange.match(/\/(\d+)$/);
-        if (m?.[1]) totalFromServer = Number(m[1]);
-      }
-
-      const detalleVista = await r2.json();
-      const mapped: InsuranceRow[] = (detalleVista ?? []).map(coerceRow);
-
-      if (!ignore) {
-        setRows(mapped);
-        setTotal(totalFromServer || mapped.length); // fallback
-      }
-
-      // si el offset se fue de rango (p.ej. el server bajó el total), volvemos a la última página válida
-      if (!ignore && totalFromServer && offset >= totalFromServer && page > 1) {
-        const lastPage = Math.max(1, Math.ceil(totalFromServer / limit));
-        setPage(lastPage);
-      }
+  useEffect(() => {
+    let ignore = false;
+    const controller = new AbortController();
+    (async () => {
+      setLoading(true);
+      setErr(null);
+      try {
+        const url = new URL(LIQ_DETALLES_VISTA(liqId));
+        // SIN offset/limit ni q
+        const r2 = await fetch(url.toString(), { signal: controller.signal });
+        if (!r2.ok) throw new Error(`Error ${r2.status} al obtener detalle`);
+        const detalleVista = await r2.json();
+        const mapped: InsuranceRow[] = (detalleVista ?? []).map(coerceRow);
+        if (!ignore) setRows(mapped);
       } catch (e: any) {
-        if (!ignore && e?.name !== "AbortError") {
-          setErr(e?.message || "No se pudo cargar el detalle.");
-        }
+        if (!ignore && e?.name !== "AbortError") setErr(e?.message || "No se pudo cargar el detalle.");
       } finally {
         if (!ignore) setLoading(false);
       }
     })();
-
-    return () => {
-      ignore = true;
-      controller.abort();
-    };
-  }, [liqId, offset, limit]);
+    return () => { ignore = true; controller.abort(); };
+  }, [liqId]);
 
   // ### Crear/editar/eliminar DC por detalle
   // TIP: si tenés auth real, cambiá este userId (lo necesita el back al crear)
@@ -429,12 +517,13 @@ useEffect(() => {
 
   return (
     <div className={styles.page}>
-      <Sidebar />
+      {/* <Sidebar /> */}
       <div className={styles.content}>
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45 }}
+          className={styles.wrapper_content}
         >
           <div className={styles.header}>
             <div>
@@ -468,8 +557,28 @@ useEffect(() => {
                 onClick={() => exportInsuranceRowsToExcel(period, rows)}
                 disabled={loading || rows.length === 0}
               >
-                Exportar
+                Excel
               </Button>
+              <Button
+                variant="danger"
+                onClick={() =>
+                  exportDebCredToPDF(
+                    period,
+                    rows,
+                    insuranceName,
+                    resumen?.nro_liquidacion
+                  )
+                }
+                disabled={
+                  loading ||
+                  rows.every(
+                    (r) => !(r.tipo === "D" || r.tipo === "C") || !(Number(r.monto) > 0)
+                  )
+                }
+              >
+                PDF
+              </Button>
+
             </div>
           </div>
 
@@ -481,76 +590,13 @@ useEffect(() => {
                 period={period}
                 rows={rows}
                 onChange={setRows}
-                onSaveRow={handleSaveRow} // persiste DC (y refresca fila + resumen con respuesta del back)
+                onSaveRow={handleSaveRow}
+                loading={loading}
+                searchValue={q}
+                onSearchChange={(e) => setQ(e.target.value)}
+                canEdit={isOpen}
               />
             )}
-            {loading && <div className={styles.loadingBlock}>Cargando detalle…</div>}
-          </div>
-          <div className={styles.paginationBar}>
-            <div className={styles.pageInfo}>
-              Mostrando{" "}
-              <strong>
-                {total === 0 ? 0 : offset + 1}–{Math.min(offset + rows.length, total)}
-              </strong>{" "}
-              de <strong>{total}</strong>
-            </div>
-
-            <div className={styles.pageControls}>
-              <label className={styles.pageSizeLabel}>
-                Filas por página:&nbsp;
-                <select
-                  className={styles.pageSize}
-                  value={limit}
-                  onChange={(e) => {
-                    const v = Number(e.currentTarget.value);
-                    setLimit(v);
-                    setPage(1); // reset
-                  }}
-                  disabled={loading}
-                >
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                  <option value={200}>200</option>
-                </select>
-              </label>
-
-              <div className={styles.navButtons}>
-                <Button
-                  variant="secondary"
-                  onClick={() => setPage(1)}
-                  disabled={!canPrev || loading}
-                >
-                  «
-                </Button>
-                <Button
-                  variant="secondary"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={!canPrev || loading}
-                >
-                  Anterior
-                </Button>
-
-                <span className={styles.pageIndicator}>
-                  Página <strong>{page}</strong> / {totalPages}
-                </span>
-
-                <Button
-                  variant="secondary"
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={!canNext || loading}
-                >
-                  Siguiente
-                </Button>
-                <Button
-                  variant="secondary"
-                  onClick={() => setPage(totalPages)}
-                  disabled={!canNext || loading}
-                >
-                  »
-                </Button>
-              </div>
-            </div>
           </div>
         </motion.div>
       </div>

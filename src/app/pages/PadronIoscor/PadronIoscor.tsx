@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Sidebar from "../../../components/molecules/Sidebar/Sidebar";
 import Card from "../../../components/atoms/Card/Card";
 import IoscorAffilliateForm, {
   type PracticeInput,
@@ -136,7 +135,6 @@ export default function PadronIoscor() {
 
   return (
     <div className={styles.page}>
-      <Sidebar />
       <main className={styles.content}>
         <Card className={styles.card}>
           <section className={styles.layout}>

@@ -11,10 +11,7 @@ import {
   DialogContent,
   DialogActions,
 } from "@mui/material";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import Sidebar from "../../../components/molecules/Sidebar/Sidebar";
+
 import SearchBar from "../../../components/molecules/SearchBar/SearchBar";
 import Button from "../../../components/atoms/Button/Button";
 import InsuranceCard from "../../../components/molecules/InsuranceCard/InsuranceCard";
@@ -38,6 +35,13 @@ const GEN_ESP_URL = (resumenId: string | number, espId: string | number) =>
   `${API_BASE}/api/deducciones/${resumenId}/colegio/bulk_generar_especialidad/${espId}`;
 const APLICAR_URL = (resumenId: string | number) =>
   `${API_BASE}/api/deducciones/${resumenId}/colegio/aplicar`;
+
+// NUEVO: periodos disponibles por OS (CERRADO="C") y creación de liquidación
+const PERIODOS_DISP_URL = (osId: string | number, anio?: number) =>
+  `${API_BASE}/api/periodos/disponibles?obra_social_id=${osId}${
+    anio ? `&anio=${anio}` : ""
+  }`;
+const LIQ_CREAR_URL = `${API_BASE}/api/liquidacion/liquidaciones_por_os/crear`;
 
 // Paginación front
 const PAGE_SIZE = 18;
@@ -91,7 +95,7 @@ interface RawOS {
 /* ====== Tipos para Débitos de Colegio ====== */
 type DiscountRow = {
   id: string;          // descuentos.id
-  nro_colegio: string;     // descuentos.nombre
+  nro_colegio: string; // descuentos.nro_colegio
   concept: string;     // descuentos.nombre
   price: number;       // descuentos.precio
   percentage: number;  // descuentos.porcentaje
@@ -100,6 +104,14 @@ type DiscountRow = {
 type SpecialtyRow = {
   id: string;          // especialidad.ID
   name: string;        // especialidad.ESPECIALIDAD
+};
+
+type PeriodoDisp = {
+  ANIO: number;
+  MES: number;
+  NRO_FACT_1: string;
+  NRO_FACT_2: string;
+  CERRADO: "C" | string;
 };
 
 /* ========== Utils ========== */
@@ -113,14 +125,6 @@ function toNumber(x: unknown): number {
   }
   return 0;
 }
-
-// function estadoToLabel(
-//   e: ServerEstado
-// ): "EN CURSO" | "FINALIZADO" | "DESCONOCIDO" {
-//   if (e === "a") return "EN CURSO";
-//   if (e === "c" || e === "e") return "FINALIZADO";
-//   return "DESCONOCIDO";
-// }
 
 function getLiquidacionesArray(x: unknown): LiquidacionItem[] {
   if (!Array.isArray(x)) return [];
@@ -154,15 +158,6 @@ const LiquidationCycle: React.FC = () => {
 
   const [query, setQuery] = useState("");
   const [hidden, setHidden] = useState<Set<string>>(new Set());
-  const [openAddPeriod, setOpenAddPeriod] = useState(false);
-  const [pickerMonth, setPickerMonth] = useState<Date | null>(null);
-  const [pickerError, setPickerError] = useState<string | null>(null);
-
-  const [editOpen, setEditOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<DiscountRow | null>(null);
-  const [editPrice, setEditPrice] = useState<string>("");
-  const [editPct, setEditPct] = useState<string>("");
-  const [editErr, setEditErr] = useState<string | null>(null);
 
   // Previsualización (sigue como modal)
   const [openPreview, setOpenPreview] = useState(false);
@@ -196,6 +191,15 @@ const LiquidationCycle: React.FC = () => {
   const [confirmGen, setConfirmGen] = useState<null | { kind: "desc" | "esp"; id: string; name: string }>(null);
   const [genStatus, setGenStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [genError, setGenError] = useState<string | null>(null);
+
+  // ====== NUEVO: Agregar período por OS ======
+  const [openAddPeriod, setOpenAddPeriod] = useState(false);
+  const [addTargetOS, setAddTargetOS] = useState<string | null>(null);
+  const [periodosOS, setPeriodosOS] = useState<PeriodoDisp[]>([]);
+  const [addYear, setAddYear] = useState<number | "">("");
+  const [addMonth, setAddMonth] = useState<number | "">("");
+  const [addBusy, setAddBusy] = useState(false);
+  const [addErr, setAddErr] = useState<string | null>(null);
 
   // Fetch resumen
   useEffect(() => {
@@ -332,7 +336,7 @@ const LiquidationCycle: React.FC = () => {
     return (osList ?? [])
       .map((os) => {
         const id = String(os.NRO_OBRASOCIAL);
-        const name = (os.OBRA_SOCIAL ?? "").toString().trim() || `Obra Social ${id}`;
+        const name = `${id} ` + (os.OBRA_SOCIAL ?? "").toString().trim();
         return { id, name };
       })
       .sort((a, b) => a.name.localeCompare(b.name, "es"));
@@ -403,7 +407,6 @@ const LiquidationCycle: React.FC = () => {
     return map;
   }, [data?.liquidaciones, periodTitle]);
 
-
   const openEdit = (d: DiscountRow) => {
     setEditTarget(d);
     setEditPrice(String(d.price));
@@ -416,6 +419,12 @@ const LiquidationCycle: React.FC = () => {
     setEditTarget(null);
     setEditErr(null);
   };
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<DiscountRow | null>(null);
+  const [editPrice, setEditPrice] = useState<string>("");
+  const [editPct, setEditPct] = useState<string>("");
+  const [editErr, setEditErr] = useState<string | null>(null);
 
   const saveEdit = async () => {
     const priceVal = Number(String(editPrice).replace(",", "."));
@@ -441,7 +450,6 @@ const LiquidationCycle: React.FC = () => {
         const txt = await r.text().catch(() => "");
         throw new Error(txt || `Error ${r.status}`);
       }
-      // reflejar cambios en UI
       setDiscounts((prev) =>
         prev.map((x) =>
           x.id === editTarget.id ? { ...x, price: priceVal, percentage: pctVal } : x
@@ -484,30 +492,8 @@ const LiquidationCycle: React.FC = () => {
   const goNext = () => setPage((p) => Math.min(totalPages, p + 1));
   const goLast = () => setPage(totalPages);
 
-  // Buscar por año/mes
-  const findResumenIdByYearMonth = useCallback(
-    async (_anio: number, _mes: number): Promise<number | null> => null,
-    []
-  );
-
-  const handlePickerConfirm = async () => {
-    setPickerError(null);
-    if (!pickerMonth) return;
-    const y = pickerMonth.getFullYear();
-    const m = pickerMonth.getMonth() + 1;
-    const targetId = await findResumenIdByYearMonth(y, m);
-    if (targetId) {
-      setOpenAddPeriod(false);
-      navigate(`/liquidation/${targetId}`);
-    } else {
-      setPickerError("No existe una liquidación para el mes seleccionado.");
-    }
-  };
-
   // Tabs -> cambian la vista del carrusel
   const onTab = (tab: "obras" | "debitos") => setActiveView(tab);
-
-
 
   /* ================== PREVIEW DATA (modal) ================== */
   type PreviewRow = {
@@ -550,7 +536,17 @@ const LiquidationCycle: React.FC = () => {
       const osIdStr = String(osId);
       const osName = osNameById.get(osIdStr) ?? `OS ${osIdStr}`;
 
-      out.push({ osId: osIdStr, osName, periodo, estado, bruto, debitos, deduccion, neto, nro: (liq as any)?.nro_liquidacion ?? "" });
+      out.push({
+        osId: osIdStr,
+        osName,
+        periodo,
+        estado,
+        bruto,
+        debitos,
+        deduccion,
+        neto,
+        nro: (liq as any)?.nro_liquidacion ?? "",
+      });
     }
     return out.sort((a, b) => (a.estado === b.estado ? 0 : a.estado === "C" ? -1 : 1));
   }, [data?.liquidaciones, osNameById, periodTitle]);
@@ -564,7 +560,7 @@ const LiquidationCycle: React.FC = () => {
     const cerradasNeto = sum(c, "neto");
     const abiertasNeto = sum(a, "neto");
     const resumenDeduccion = toNumber(data?.total_deduccion);
-    const totalGeneral = cerradasNeto + abiertasNeto + resumenDeduccion;
+    const totalGeneral = (cerradasNeto + abiertasNeto) - resumenDeduccion;
 
     return { cerradasNeto, abiertasNeto, resumenDeduccion, totalGeneral };
   }, [previewRows, data?.total_deduccion]);
@@ -608,7 +604,7 @@ const LiquidationCycle: React.FC = () => {
         );
       }
 
-      // 3) Refrescar resumen (totales actualizados, incl. total_deduccion)
+      // 3) Refrescar resumen
       await reloadResumen();
       setGenStatus("done");
     } catch (e: any) {
@@ -623,9 +619,97 @@ const LiquidationCycle: React.FC = () => {
     setGenError(null);
   };
 
+  /* ====== NUEVO: abrir modal agregar período por OS ====== */
+  const openAddForOS = async (osId: string) => {
+    setAddErr(null);
+    setAddTargetOS(osId);
+    setOpenAddPeriod(true);
+    try {
+      const r = await fetch(PERIODOS_DISP_URL(osId));
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const list: PeriodoDisp[] = await r.json();
+
+      setPeriodosOS(list ?? []);
+
+      // preselección de año
+      const thisYear = new Date().getFullYear();
+      const years = Array.from(new Set((list ?? []).map((p) => Number(p.ANIO)))).sort((a, b) => b - a);
+      const defaultYear = years.includes(thisYear) ? thisYear : (years[0] ?? "");
+      setAddYear(defaultYear || "");
+      setAddMonth("");
+    } catch (e: any) {
+      setAddErr(e?.message || "No se pudieron cargar los períodos disponibles.");
+    }
+  };
+
+
+  const availableYears = useMemo(() => {
+    const thisY = new Date().getFullYear();
+    const ys = new Set<number>();
+    for (const p of periodosOS) {
+      const y = Number(p.ANIO);
+      if (y <= thisY) ys.add(y);
+    }
+    return Array.from(ys).sort((a, b) => b - a);
+  }, [periodosOS]);
+
+  const availableMonths = useMemo(() => {
+    if (addYear === "") return [];
+    const months = periodosOS
+      .filter((p) => Number(p.ANIO) === Number(addYear))
+      .map((p) => Number(p.MES));
+    return Array.from(new Set(months)).sort((a, b) => a - b);
+  }, [periodosOS, addYear]);
+
+  const handleCreateLiq = async () => {
+    setAddErr(null);
+    if (!id || !addTargetOS || addYear === "" || addMonth === "") return;
+
+    const row = periodosOS.find(
+      (p) => Number(p.ANIO) === Number(addYear) && Number(p.MES) === Number(addMonth)
+    );
+    if (!row) {
+      setAddErr("Período inválido.");
+      return;
+    }
+
+    // nro_liquidacion = "{NRO_FACT_1}-{NRO_FACT_2}"
+    const nro_liquidacion = `${row.NRO_FACT_1}-${row.NRO_FACT_2}`;
+
+    const payload = {
+      resumen_id: Number(id),
+      obra_social_id: Number(addTargetOS),
+      anio_periodo: Number(addYear),
+      mes_periodo: Number(addMonth),
+      nro_liquidacion,
+    };
+
+    setAddBusy(true);
+    try {
+      const r = await fetch(LIQ_CREAR_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!r.ok) {
+        const txt = await r.text().catch(() => "");
+        throw new Error(txt || `Error ${r.status} al crear la liquidación`);
+      }
+      await reloadResumen();
+      setOpenAddPeriod(false);
+      setAddTargetOS(null);
+      setPeriodosOS([]);
+      setAddYear("");
+      setAddMonth("");
+    } catch (e: any) {
+      setAddErr(e?.message || "No se pudo crear la liquidación.");
+    } finally {
+      setAddBusy(false);
+    }
+  };
+
   return (
     <div className={styles.liquidationCyclePage}>
-      <Sidebar />
       <div className={styles.content}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -690,24 +774,6 @@ const LiquidationCycle: React.FC = () => {
                   />
                 </div>
 
-                {pickerError && (
-                  <Alert
-                    type="warning"
-                    title="Sin resultados"
-                    message={pickerError}
-                    onClose={() => setPickerError(null)}
-                  />
-                )}
-
-                {isLoading && (
-                  <Alert
-                    type="info"
-                    title="Cargando"
-                    message="Obteniendo detalle del período…"
-                    onClose={() => {}}
-                  />
-                )}
-
                 {(isError || osError) && (
                   <Alert
                     type="error"
@@ -725,30 +791,41 @@ const LiquidationCycle: React.FC = () => {
                       )}
 
                       {pageItems.map((ins) => (
-                        <InsuranceCard
-                          key={ins.id}
-                          name={ins.name}
-                          osId={ins.id}
-                          resumenId={id!}
-                          initialPeriods={(rowsByOS[ins.id] ?? []).map((r) => ({
-                            period: r.periodo,
-                            grossTotal: r.bruto,
-                            discounts: r.descuentos,
-                            netTotal: r.neto,
-                            liquidacionId: r.liquidacionId,
-                            nroLiquidacion: r.nroLiquidacion,
-                            estado: r.estado,
-                          }))}
-                          onSummary={(periods) => console.log("Ver Resumen", ins.name, periods)}
-                          onExport={(periods) => console.log("Exportar", ins.name, periods)}
-                          onDelete={() => {
-                            setHidden((prev) => {
-                              const next = new Set(prev);
-                              next.add(ins.id);
-                              return next;
-                            });
-                          }}
-                        />
+                        <div key={ins.id} className={styles.socialWorkItem}>
+                          <InsuranceCard
+                            name={ins.name}
+                            osId={ins.id}
+                            resumenId={id!}
+                            initialPeriods={(rowsByOS[ins.id] ?? []).map((r) => ({
+                              period: r.periodo,
+                              grossTotal: r.bruto,
+                              discounts: r.descuentos,
+                              netTotal: r.neto,
+                              liquidacionId: r.liquidacionId,
+                              nroLiquidacion: r.nroLiquidacion,
+                              estado: r.estado,
+                            }))}
+                            onSummary={(periods) => console.log("Ver Resumen", ins.name, periods)}
+                            onExport={(periods) => console.log("Exportar", ins.name, periods)}
+                            onDelete={() => {
+                              setHidden((prev) => {
+                                const next = new Set(prev);
+                                next.add(ins.id);
+                                return next;
+                              });
+                            }}
+                            // NUEVO: acción para abrir modal de alta de período
+                            onAddPeriod={() => openAddForOS(ins.id)}
+                            onReload={reloadResumen}
+                          />
+                          {/* Si tu InsuranceCard aún no tiene el botón,
+                              podés mostrar uno debajo, de forma temporal: */}
+                          {/* <div className={styles.rowActions}>
+                            <Button variant="primary" size="sm" onClick={() => openAddForOS(ins.id)}>
+                              Agregar período
+                            </Button>
+                          </div> */}
+                        </div>
                       ))}
                     </div>
 
@@ -768,12 +845,20 @@ const LiquidationCycle: React.FC = () => {
                     )}
                   </>
                 )}
+
+                {isLoading && (
+                  <Alert
+                    type="info"
+                    title="Cargando"
+                    message="Obteniendo detalle del período…"
+                    onClose={() => {}}
+                  />
+                )}
               </div>
 
               {/* ===== Pane 2: Débitos de Colegio ===== */}
               <div className={styles.pane}>
                 <div className={styles.debitosHeader}>
-                  {/* <Button variant="ghost" onClick={() => setActiveView("obras")}>← Volver</Button> */}
                   <h2>Débitos de Colegio — Período {periodTitle}</h2>
                   <div />
                 </div>
@@ -1024,26 +1109,59 @@ const LiquidationCycle: React.FC = () => {
             </DialogActions>
           </Dialog>
 
-          {/* Modal: seleccionar nuevo período */}
+          {/* Modal: Agregar período por OS */}
           <Dialog open={openAddPeriod} onClose={() => setOpenAddPeriod(false)} maxWidth="xs" fullWidth>
-            <DialogTitle>Seleccionar nuevo período</DialogTitle>
-            <DialogContent className={styles.dialogContent}>
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DatePicker
-                  views={["year", "month"]}
-                  value={pickerMonth}
-                  onChange={(v) => setPickerMonth(v)}
-                  format="yyyy-MM"
-                  slotProps={{ textField: { fullWidth: true, placeholder: "Elegir mes y año" } }}
-                />
-              </LocalizationProvider>
+            <DialogTitle>Agregar período {addTargetOS ? `— OS ${addTargetOS}` : ""}</DialogTitle>
+            <DialogContent className={styles.dialogContent} dividers>
+              {addErr && <div className={styles.errorInline} style={{ marginBottom: 8 }}>{addErr}</div>}
+              <div className={styles.muted} style={{ marginTop: 6 }}>
+                Sólo se listan períodos <b>cerrados</b> de esta obra social que <b>aún no estan siendo liquidadas</b>.
+              </div>
+              <div className={styles.formRow}>
+                <label className={styles.label}>Año</label>
+                <select
+                  className={styles.input}
+                  value={addYear}
+                  onChange={(e) => {
+                    const v = e.target.value === "" ? "" : Number(e.target.value);
+                    setAddYear(v as any);
+                    setAddMonth("");
+                  }}
+                >
+                  <option value="">Seleccionar año…</option>
+                  {availableYears.map((y) => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={styles.formRow}>
+                <label className={styles.label}>Mes</label>
+                <select
+                  className={styles.input}
+                  value={addMonth}
+                  onChange={(e) => setAddMonth(e.target.value === "" ? "" : Number(e.target.value))}
+                  disabled={addYear === ""}
+                >
+                  <option value="">Seleccionar mes…</option>
+                  {availableMonths.map((m) => (
+                    <option key={m} value={m}>{String(m).padStart(2, "0")}</option>
+                  ))}
+                </select>
+                {/* <div className={styles.muted} style={{ marginTop: 6 }}>
+                  Sólo se listan meses con <code>CERRADO="C"</code> en Periodos.
+                </div> */}
+              </div>
             </DialogContent>
             <DialogActions className={styles.dialogActions}>
               <Button variant="secondary" onClick={() => setOpenAddPeriod(false)}>Cancelar</Button>
-              <Button variant="primary" onClick={handlePickerConfirm} disabled={!pickerMonth}>Confirmar</Button>
+              <Button variant="primary" onClick={handleCreateLiq} disabled={addYear === "" || addMonth === "" || addBusy}>
+                {addBusy ? "Creando…" : "Confirmar"}
+              </Button>
             </DialogActions>
           </Dialog>
 
+          {/* Modal: editar descuento */}
           <Dialog open={editOpen} onClose={closeEdit} maxWidth="xs" fullWidth>
             <DialogTitle>Editar descuento</DialogTitle>
             <DialogContent dividers>

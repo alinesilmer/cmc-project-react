@@ -8,7 +8,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
-import Sidebar from "../../../components/molecules/Sidebar/Sidebar";
 import Card from "../../../components/atoms/Card/Card";
 import Button from "../../../components/atoms/Button/Button";
 import styles from "./DoctorProfilePage.module.scss";
@@ -254,7 +253,6 @@ const DoctorProfilePage: React.FC = () => {
 
   return (
     <div className={styles.page}>
-      <Sidebar />
       <div className={styles.content}>
         <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
           <div className={styles.topbar}>

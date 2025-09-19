@@ -18,7 +18,7 @@ import InsuranceTable, {
   type Period as InsurancePeriod,
 } from "../InsuranceTable/InsuranceTable";
 import Button from "../../atoms/Button/Button";
-import { Link } from "react-router-dom";
+// import { Link } from "react-router-dom";
 import Alert from "../../atoms/Alert/Alert";
 
 type MonthKey = string;
@@ -36,16 +36,23 @@ type PeriodBucket = {
 
 type Props = {
   name: string;
-  onExport?: (periods: PeriodBucket[]) => void;
-  onSummary?: (periods: PeriodBucket[]) => void;
+  osId: string;
+  resumenId: string | number;
+  initialPeriods: Array<{
+    period: string;
+    grossTotal: number;
+    discounts: number;
+    netTotal: number;
+    liquidacionId?: string | number;
+    nroLiquidacion?: string;
+    estado?: "A" | "C";
+  }>;
+  onSummary?: (rows: any[]) => void;
+  onExport?: (rows: any[]) => void;
   onDelete?: () => void;
-
-  /** Precarga desde el padre (puede venir vacío) */
-  initialPeriods?: PeriodBucket[];
-
-  /** Necesarios para los POST/DELETE */
-  osId: number | string;      // NRO_OBRASOCIAL
-  resumenId: number | string; // params:id de la página
+  // NUEVO:
+  onAddPeriod?: () => void;
+  onReload?: () => void;
 };
 
 const fmtMonthKey = (d: Date) =>
@@ -62,11 +69,13 @@ const DELETE_LIQ_URL = (id: number | string) =>
 const InsuranceCard: React.FC<Props> = ({
   name,
   onExport,
-  onSummary,
+  // onSummary,
   // onDelete, // opcional
   initialPeriods = [],
   osId,
   resumenId,
+  onAddPeriod,
+  onReload
 }) => {
   // Estado interno de períodos, precargado desde props
   const [periods, setPeriods] = useState<PeriodBucket[]>(
@@ -76,7 +85,8 @@ const InsuranceCard: React.FC<Props> = ({
   // Si cambian las props, sincronizamos
   useEffect(() => {
     setPeriods([...(initialPeriods ?? [])].sort(sortByPeriodAsc));
-  }, [initialPeriods]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(initialPeriods)]);
 
   const [openMonthModal, setOpenMonthModal] = useState(false);
   const [pickDate, setPickDate] = useState<Date | null>(new Date());
@@ -182,11 +192,14 @@ const InsuranceCard: React.FC<Props> = ({
       setSaving(false);
     }
 
-    // actualizar estado front
+    // 1) Actualizo UI local (optimista)
     setPeriods((prev) =>
       prev.filter((p) => p.period !== confirmDeletePeriod.period)
     );
     setConfirmDeletePeriod(null);
+
+    // 2) Aviso al padre para que refresque el resumen (fuente de verdad)
+    onReload?.(); // 👈 IMPORTANTE
   };
 
   const orderedPeriods = useMemo(
@@ -203,7 +216,7 @@ const InsuranceCard: React.FC<Props> = ({
       <div className={styles.header}>
         <h3 className={styles.title}>{name}</h3>
         <div className={styles.headerActions}>
-          <Link to={"insurance-detail"}>
+          {/* <Link to={"insurance-detail"}>
             <Button
               variant="secondary"
               size="sm"
@@ -211,7 +224,7 @@ const InsuranceCard: React.FC<Props> = ({
             >
               Ver Resumen
             </Button>
-          </Link>
+          </Link> */}
           <Button
             variant="success"
             size="sm"
@@ -224,11 +237,13 @@ const InsuranceCard: React.FC<Props> = ({
 
       <div className={styles.row}>
         <div className={styles.colLabel}>Período</div>
-        <div className={styles.colActions}>
-          <Button variant="primary" onClick={() => setOpenMonthModal(true)}>
-            Agregar período
-          </Button>
-        </div>
+        {onAddPeriod && (
+          <div style={{ marginTop: 8 }}>
+            <Button variant="primary" size="sm" onClick={onAddPeriod}>
+              Agregar período
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className={styles.tablesWrap}>

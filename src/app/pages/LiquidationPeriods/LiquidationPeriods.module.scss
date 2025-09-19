@@ -1,13 +1,11 @@
 
 
 .liquidationPage {
-  display: flex;
+  // display: flex;
   min-height: 100vh;
 }
 
 .content {
-  margin-left: 280px;
-  width: calc(100% - 280px);
   padding: v.$spacing-6;
   max-width: 100%;
 }
