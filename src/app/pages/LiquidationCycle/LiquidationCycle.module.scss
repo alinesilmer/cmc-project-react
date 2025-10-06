@@ -1,20 +1,31 @@
 
 .liquidationCyclePage {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
 }
 
 .content {
   flex: 1;
   max-width: 100%;
   padding: v.$spacing-8;
+  height: 100%;
+}
+.wrapper_content{
+  height: 100%;
+  overflow-y: auto;
+  padding-right: 8px; /* Espacio para scrollbar */
+  display: flex;
+  flex-direction: column;
 }
 
 .header {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: v.$spacing-6;
+  // display: grid;
+  // grid-template-columns: 1fr auto;
+  // align-items: center;
+  // gap: v.$spacing-6;
+  display: flex;
+  flex: 0 0 auto;
+  justify-content: space-between;
   margin-bottom: v.$spacing-6;
 
   @media (max-width: v.$breakpoint-lg) {
@@ -57,6 +68,8 @@
 .tabs {
   display: flex;
   margin-bottom: v.$spacing-6;
+  flex: 0 0 auto;
+
   border-bottom: 1px solid v.$gray-200;
 }
 
@@ -174,16 +187,22 @@
   position: relative;
   overflow: hidden;
   width: 100%;
-  min-height: 420px;
+  flex: 1 1 auto;
+  // min-height: 420px;
 }
 .carousel {
-  display: grid;
-  grid-template-columns: 100% 100%;
-  // width: 200%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  
 }
 .pane {
-  padding: v.$spacing-4 0;
-  min-height: 420px;
+  padding: 1rem 0;
+    min-height: 420px;
+    overflow: auto;
+    min-width: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Cabecera Débitos */
@@ -246,3 +265,4 @@
 
 /* Tabs activos (ya existentes; asegurate de tener .active) */
 .tab.active { color: v.$gray-900; border-bottom: 2px solid v.$primary-blue; }
+

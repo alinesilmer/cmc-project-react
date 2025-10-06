@@ -4,9 +4,11 @@
   &.primary {
     background-color: v.$primary-blue;
     color: v.$white;
+    text-decoration: none;
     
     &:hover:not(:disabled) {
       background-color: v.$primary-blue-dark;
+      color: white;
     }
   }
   

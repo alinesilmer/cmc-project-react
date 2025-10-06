@@ -16,6 +16,9 @@ import Sidebar from "./components/molecules/Sidebar/Sidebar";
 import PadronIoscor from "./app/pages/PadronIoscor/PadronIoscor";
 
 import styles from "./app.module.scss"
+import Login from "./app/pages/Login/Login";
+import Info from "./app/pages/Info/Info";
+import Register from "./app/pages/Register/Register";
 
 function App() {
   return (
@@ -32,6 +35,9 @@ function App() {
             <Route path="/doctors/:id" element={<DoctorProfilePage />} />
             <Route path="/liquidation/:id" element={<LiquidationCyclePage />} />
             <Route path="/padron-ioscor" element={<PadronIoscor />} />
+            <Route path="/info" element={<Info />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
             <Route
               path="/liquidation/:id/debitos"

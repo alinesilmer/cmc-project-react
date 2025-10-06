@@ -1,0 +1,295 @@
+@import '../../../styles/variables.scss';
+
+/* ========= Base ========= */
+.page {
+  min-height: 100dvh;
+  background: white;
+  color: $gray-800;
+}
+
+.hero {
+   position: relative; 
+  padding: clamp(20px, 4vw, 40px);
+  background: white;
+  border-bottom: 1px solid $gray-200;
+}
+
+.heroContent {
+  margin: 0 auto;
+  max-width: 1100px;
+  padding: $spacing-12 $spacing-4;
+  h1 {
+    font-size: $font-size-3xl;
+    font-weight: $font-weight-bold;
+    color: $gray-900;
+    margin-bottom: $spacing-2;
+  }
+  p {
+    font-size: $font-size-lg;
+    line-height: 1.6;
+    color: $gray-600;
+  }
+}
+
+.heroActions {
+  margin-top: $spacing-6;
+  display: flex;
+  gap: $spacing-3;
+  flex-wrap: wrap;
+}
+
+.btnPrimary, .btnGhost {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: $border-radius-lg;
+  padding: $spacing-3 $spacing-5;
+  font-weight: $font-weight-semibold;
+  font-size: $font-size-base;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  box-shadow: $shadow-sm;
+  transition: transform .06s ease, background-color .2s ease, box-shadow .2s ease;
+}
+.btnPrimary {
+  background: linear-gradient(180deg, $primary-blue, $primary-blue-dark);
+  color: $white;
+  &:hover { transform: translateY(-1px); box-shadow: $shadow-md; }
+}
+.btnGhost {
+  background: $white;
+  color: $primary-blue-dark;
+  border-color: $gray-200;
+  &:hover { background: $gray-100; }
+}
+
+.content {
+  margin: 0 auto;
+  max-width: 1100px;
+  padding: $spacing-10 $spacing-4 $spacing-16;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $spacing-6;
+
+  @media (min-width: $breakpoint-lg) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.backButton {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 10;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: $primary-blue;
+  backdrop-filter: blur(8px);
+
+  color: white;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+
+  transition: transform 120ms ease, background 160ms ease, border-color 160ms ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    background: $primary-blue-dark;
+    border-color: rgba(255, 255, 255, 0.36);
+  }
+
+  &:active { transform: translateY(0); }
+
+  &:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.6);
+  }
+}
+
+.backIcon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+}
+
+.backLabel { font-weight: 600; }
+/* ========= Cards ========= */
+.card {
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-xl;
+  box-shadow: $shadow-md;
+  padding: $spacing-6;
+}
+
+.cardTitle {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
+  margin-bottom: $spacing-4;
+  color: $gray-900;
+}
+
+/* ========= Contact ========= */
+.contactGrid {
+  display: grid;
+  grid-template-columns: 1.2fr .8fr;
+  gap: $spacing-6;
+
+  @media (max-width: $breakpoint-md) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: $spacing-3;
+  margin: $spacing-2 0;
+  span { color: $gray-500; }
+  a { color: $primary-blue-dark; text-decoration: none; &:hover { text-decoration: underline; } }
+}
+
+.badges {
+  display: flex;
+  gap: $spacing-2;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.lozenge {
+  padding: .35rem .6rem;
+  border-radius: 999px;
+  font-size: $font-size-sm;
+  border: 1px solid $gray-200;
+  background: $gray-50;
+  color: $gray-700;
+}
+.lozengeBlue { background: $secondary-blue; color: $primary-blue-dark; }
+.lozengeGray { background: $gray-100; }
+
+/* ========= Sections ========= */
+.section {
+  padding: 0;
+}
+.sectionHeader {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-5 $spacing-6;
+  background: linear-gradient(180deg, $white, $gray-50);
+  border: 0;
+  border-bottom: 1px solid $gray-200;
+  border-radius: $border-radius-xl $border-radius-xl 0 0;
+  cursor: pointer;
+  text-align: left;
+
+  h3 {
+    margin: 0;
+    font-size: $font-size-xl;
+    font-weight: $font-weight-semibold;
+    color: $gray-900;
+  }
+}
+.sectionDot {
+  width: 10px; height: 10px; border-radius: 999px;
+  background: $primary-blue;
+  box-shadow: 0 0 0 4px rgba($primary-blue, .12);
+}
+.spacer { flex: 1; }
+.chev { color: $gray-500; }
+.sectionBody {
+  padding: $spacing-6;
+}
+
+/* ========= Requirements list ========= */
+.reqList {
+  list-style: none;
+  margin: 0; padding: 0;
+  display: grid;
+  gap: $spacing-3;
+}
+
+.reqItem {
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-lg;
+  padding: $spacing-4;
+  box-shadow: $shadow-sm;
+}
+
+.reqMain {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: $spacing-3;
+}
+
+.reqCheck {
+  margin-top: .2rem;
+  font-size: $font-size-xl;
+  color: $primary-blue;
+}
+
+.reqText {
+  display: grid;
+  gap: $spacing-1;
+}
+
+.reqLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-2;
+
+  strong { color: $gray-900; }
+  em { color: $gray-600; font-style: normal; }
+}
+
+.reqHint {
+  font-size: $font-size-sm;
+  color: $gray-500;
+}
+
+/* ========= Tags ========= */
+.tag {
+  border-radius: 999px;
+  padding: .2rem .5rem;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  border: 1px solid $gray-200;
+}
+.tag--obligatorio   { background: rgba($success-green, .1); color: $success-green; border-color: rgba($success-green, .3); }
+.tag--no-obligatorio{ background: rgba($gray-400, .12); color: $gray-600; }
+.tag--legalizado    { background: rgba($accent-blue, .15); color: $primary-blue-dark; border-color: rgba($accent-blue, .4); }
+.tag--simple        { background: $gray-100; color: $gray-600; }
+.tag--importante    { background: rgba($warning-orange, .12); color: $warning-orange; }
+
+/* ========= Fees ========= */
+.fees {
+  h3 {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-semibold;
+    margin-bottom: $spacing-4;
+  }
+}
+.feeRow {
+  display: flex;
+  justify-content: space-between;
+  border: 1px dashed $gray-300;
+  padding: $spacing-4 $spacing-5;
+  border-radius: $border-radius-md;
+  & + .feeRow { margin-top: $spacing-3; }
+  strong { font-size: $font-size-2xl; color: $gray-900; }
+}
+.feeNote {
+  margin-top: $spacing-3;
+  font-size: $font-size-sm;
+  color: $gray-500;
+}

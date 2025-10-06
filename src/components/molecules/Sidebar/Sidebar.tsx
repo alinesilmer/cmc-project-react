@@ -1,6 +1,6 @@
 import type React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Users, DollarSign, Hospital } from "lucide-react";
+import { Home, Stethoscope, DollarSign, Hospital, CircleUserRound } from "lucide-react";
 import styles from "./Sidebar.module.scss";
 
 const Sidebar: React.FC = () => {
@@ -8,9 +8,10 @@ const Sidebar: React.FC = () => {
 
   const menuItems = [
     { path: "/dashboard", icon: Home, label: "Inicio" },
-    { path: "/doctors", icon: Users, label: "Lista de Médicos" },
+    { path: "/doctors", icon: Stethoscope, label: "Lista de Médicos" },
     { path: "/liquidation", icon: DollarSign, label: "Liquidación" },
     { path: "/padron-ioscor", icon: Hospital, label: "Padron IOSCOR" },
+    { path: "/login", icon: CircleUserRound, label: "Inicio de Sesión" }
   ];
 
   return (

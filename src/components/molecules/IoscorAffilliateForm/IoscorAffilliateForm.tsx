@@ -1,8 +1,15 @@
 "use client";
 
+import type React from "react";
+
 import { useMemo, useRef, useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { IdCard, Check, ChevronDown } from "lucide-react";
+import {
+  Award as IdCard,
+  Check,
+  ChevronDown,
+  ExternalLink,
+} from "lucide-react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import styles from "./IoscorAffilliateForm.module.scss";
@@ -15,10 +22,10 @@ export type PracticeInput = {
   orderNumber?: string;
   cantidad: number;
   sesiones: number;
-  fecha: string; // ISO yyyy-mm-dd
-  codigo: string; // e.g. 420101
-  obraSocCode: string; // e.g. 304
-  obraSocName: string; // e.g. IOSCOR
+  fecha: string;
+  codigo: string;
+  obraSocCode: string;
+  obraSocName: string;
   ultimoNumero?: string;
   markHonorario: boolean;
   markGasto: boolean;
@@ -36,7 +43,7 @@ export type PracticeRowForEdit = {
   obraSocName: string;
   codigo: string;
   cantidad: number;
-  fecha: string; // ISO
+  fecha: string;
   orderMode: "Auto" | "Manual";
   orderNumber?: string;
   percHonorario?: number;
@@ -52,7 +59,7 @@ type Props = {
   loading?: boolean;
 };
 
-/* ---------------- Mock data for local comboboxes ---------------- */
+/* ---------------- Mock data ---------------- */
 const FAKE_CODES: Record<string, string> = {
   "420101": "CONSULTA COMÚN",
   "331001": "RADIOGRAFÍA",
@@ -61,10 +68,10 @@ const FAKE_CODES: Record<string, string> = {
 };
 
 const OBRA_SOC = [
-  { code: "304", name: "IOSCOR" },
-  { code: "101", name: "OSDE" },
-  { code: "221", name: "Swiss Medical" },
-  { code: "401", name: "Galeno" },
+  { code: "309", name: "Anatomía Patológica" },
+  { code: "312", name: "Commplementaria" },
+  { code: "315", name: "Traumatología" },
+  { code: "338", name: "Cardiocentro" },
 ];
 
 const onlyDigits = (v: string) => v.replace(/\D/g, "");
@@ -261,40 +268,207 @@ export default function IoscorAffilliateForm({
   };
 
   return (
-    <motion.form
-      onSubmit={submit}
-      className={styles.panel}
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
-    >
-      <div className={styles.panelHead}>
-        <div className={styles.headIcon}>
-          <IdCard size={16} />
-        </div>
-        <div className={styles.headTitle}>
-          {editingRow ? "Editar Práctica" : "Ingresar Nueva Práctica"}
-        </div>
+    <div className={styles.wrapper}>
+      <div className={styles.infoBanner}>
+        <p className={styles.bannerText}>
+          Para consultar por el estado de un afiliado, haga click aquí
+        </p>
+        <a
+          href="https://ioscor.gob.ar/beneficiarios/verifica_estado"
+          className={styles.bannerLink}
+        >
+          Consultar Estado
+          <ExternalLink size={16} />
+        </a>
       </div>
 
-      <div className={styles.panelBody}>
-        <div className={styles.grid}>
-          {/* LEFT */}
-          <div className={styles.col}>
-            <label className={styles.field}>
-              <span className={styles.label}>N° Doc.</span>
-              <input
-                className={styles.input}
-                value={dni}
-                onChange={(e) => setDni(e.target.value)}
-                inputMode="numeric"
-                placeholder="77.153.526"
-              />
-            </label>
+      <motion.form
+        onSubmit={submit}
+        className={styles.panel}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <div className={styles.panelHead}>
+          <div className={styles.headIcon}>
+            <IdCard size={20} />
+          </div>
+          <div className={styles.headTitle}>
+            {editingRow ? "Editar Práctica" : "Ingresar Nueva Práctica"}
+          </div>
+        </div>
 
-            <div className={styles.fieldRow}>
-              <label className={`${styles.field} ${styles.shrink}`}>
-                <span className={styles.label}>N° Orden</span>
+        <div className={styles.panelBody}>
+          <div className={styles.section}>
+            <h3 className={styles.sectionTitle}>Información del Paciente</h3>
+            <div className={styles.grid}>
+              <label className={styles.field}>
+                <span className={styles.label}>Número de Documento</span>
+                <input
+                  className={styles.input}
+                  value={dni}
+                  onChange={(e) => setDni(e.target.value)}
+                  inputMode="numeric"
+                  placeholder="77.153.526"
+                />
+              </label>
+
+              <label className={styles.field}>
+                <span className={styles.label}>Obra Social</span>
+                <div className={styles.combo} ref={obraBoxRef}>
+                  <input
+                    className={`${styles.input} ${styles.comboInput}`}
+                    value={obraInput}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setObraInput(v);
+                      setObraOpen(true);
+                      const dig = onlyDigits(v);
+                      if (dig) setObraSocCode(dig);
+                    }}
+                    onFocus={() => setObraOpen(true)}
+                    placeholder="304 - IOSCOR"
+                  />
+                  <div
+                    className={styles.comboSuffix}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      setObraOpen((v) => !v);
+                    }}
+                  >
+                    <ChevronDown size={16} />
+                  </div>
+
+                  {obraOpen && obraMatches.length > 0 && (
+                    <ul className={styles.comboList}>
+                      {obraMatches.map((o) => (
+                        <li
+                          key={o.code}
+                          className={styles.comboItem}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            handleObraPick(o.code, o.name);
+                          }}
+                        >
+                          <span className={styles.itemCode}>{o.code}</span>
+                          <span className={styles.itemLabel}>{o.name}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </label>
+
+              <label className={styles.field}>
+                <span className={styles.label}>Último Número</span>
+                <input
+                  className={styles.input}
+                  value={ultimoNumero}
+                  onChange={(e) => setUltimoNumero(e.target.value)}
+                  placeholder="715106"
+                />
+              </label>
+            </div>
+          </div>
+
+          <div className={styles.section}>
+            <h3 className={styles.sectionTitle}>Detalles de la Práctica</h3>
+            <div className={styles.grid}>
+              <label className={styles.field}>
+                <span className={styles.label}>Código de Práctica</span>
+                <div className={styles.combo} ref={codeBoxRef}>
+                  <input
+                    className={`${styles.input} ${styles.comboInput}`}
+                    value={codigoInput}
+                    onChange={(e) => {
+                      setCodigoInput(e.target.value);
+                      setCodeOpen(true);
+                      const dig = onlyDigits(e.target.value);
+                      if (FAKE_CODES[dig]) setCodigoValue(dig);
+                      else setCodigoValue("");
+                    }}
+                    onFocus={() => setCodeOpen(true)}
+                    placeholder="420101 / CONSULTA COMÚN"
+                  />
+                  <div
+                    className={`${styles.comboSuffix} ${
+                      isCodigoOk ? styles.suffixOk : ""
+                    }`}
+                    title={isCodigoOk ? "Código válido" : "Elegí un código"}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      setCodeOpen((v) => !v);
+                    }}
+                  >
+                    {isCodigoOk ? (
+                      <Check size={16} />
+                    ) : (
+                      <ChevronDown size={16} />
+                    )}
+                  </div>
+
+                  {codeOpen && codeMatches.length > 0 && (
+                    <ul className={styles.comboList}>
+                      {codeMatches.map(([code, label]) => (
+                        <li
+                          key={code}
+                          className={styles.comboItem}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            handleCodePick(code, label);
+                          }}
+                        >
+                          <span className={styles.itemCode}>{code}</span>
+                          <span className={styles.itemLabel}>{label}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </label>
+
+              <label className={styles.field}>
+                <span className={styles.label}>Fecha</span>
+                <div className={styles.dateWrap}>
+                  <DatePicker
+                    selected={fechaObj}
+                    onChange={(d) => d && setFechaObj(d)}
+                    dateFormat="dd/MM/yyyy"
+                    className={`${styles.input} ${styles.dateInput}`}
+                    popperClassName={styles.datePopper}
+                  />
+                </div>
+              </label>
+
+              <label className={styles.field}>
+                <span className={styles.label}>Cantidad</span>
+                <input
+                  className={styles.input}
+                  type="number"
+                  min={1}
+                  value={cantidad}
+                  onChange={(e) => setCantidad(Number(e.target.value))}
+                />
+              </label>
+
+              <label className={styles.field}>
+                <span className={styles.label}>Sesiones</span>
+                <input
+                  className={styles.input}
+                  type="number"
+                  min={1}
+                  value={sesiones}
+                  onChange={(e) => setSesiones(Number(e.target.value))}
+                />
+              </label>
+            </div>
+          </div>
+
+          <div className={styles.section}>
+            <h3 className={styles.sectionTitle}>Número de Orden</h3>
+            <div className={styles.orderGrid}>
+              <label className={styles.field}>
+                <span className={styles.label}>Modo</span>
                 <select
                   className={styles.input}
                   value={orderMode}
@@ -308,7 +482,7 @@ export default function IoscorAffilliateForm({
               </label>
 
               <label className={styles.field}>
-                <span className={styles.label}>Ingresar n° orden</span>
+                <span className={styles.label}>Número de Orden</span>
                 <input
                   className={styles.input}
                   disabled={orderMode !== "Manual"}
@@ -318,34 +492,11 @@ export default function IoscorAffilliateForm({
                 />
               </label>
             </div>
+          </div>
 
-            <div className={styles.fieldRow}>
-              <label className={`${styles.field} ${styles.shrink}`}>
-                <span className={styles.label}>Cant.</span>
-                <input
-                  className={styles.input}
-                  type="number"
-                  min={1}
-                  value={cantidad}
-                  onChange={(e) => setCantidad(Number(e.target.value))}
-                />
-              </label>
-
-              <label className={`${styles.field} ${styles.shrink}`}>
-                <span className={styles.label}>Ses.</span>
-                <input
-                  className={styles.input}
-                  type="number"
-                  min={1}
-                  value={sesiones}
-                  onChange={(e) => setSesiones(Number(e.target.value))}
-                />
-              </label>
-            </div>
-
-            {/* Marcar */}
+          <div className={styles.section}>
+            <h3 className={styles.sectionTitle}>Distribución de Porcentajes</h3>
             <div className={styles.markWrap}>
-              <span className={styles.label}>Marcar</span>
               <div className={styles.markGrid}>
                 <label className={styles.checkRow}>
                   <input
@@ -409,148 +560,27 @@ export default function IoscorAffilliateForm({
             </div>
           </div>
 
-          {/* RIGHT */}
-          <div className={styles.col}>
-            {/* Fecha (DatePicker) */}
-            <label className={styles.field}>
-              <span className={styles.label}>Fecha</span>
-              <div className={styles.dateWrap}>
-                <DatePicker
-                  selected={fechaObj}
-                  onChange={(d) => d && setFechaObj(d)}
-                  dateFormat="dd/MM/yyyy"
-                  className={`${styles.input} ${styles.dateInput}`}
-                  popperClassName={styles.datePopper}
-                />
-              </div>
-            </label>
-
-            {/* Código combobox */}
-            <label className={styles.field}>
-              <span className={styles.label}>Código</span>
-              <div className={`${styles.combo}`} ref={codeBoxRef}>
-                <input
-                  className={`${styles.input} ${styles.comboInput}`}
-                  value={codigoInput}
-                  onChange={(e) => {
-                    setCodigoInput(e.target.value);
-                    setCodeOpen(true);
-                    const dig = onlyDigits(e.target.value);
-                    if (FAKE_CODES[dig]) setCodigoValue(dig);
-                    else setCodigoValue("");
-                  }}
-                  onFocus={() => setCodeOpen(true)}
-                  placeholder="420101 / CONSULTA COMÚN"
-                />
-                <div
-                  className={`${styles.comboSuffix} ${
-                    isCodigoOk ? styles.suffixOk : ""
-                  }`}
-                  title={isCodigoOk ? "Código válido" : "Elegí un código"}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    setCodeOpen((v) => !v);
-                  }}
-                >
-                  {isCodigoOk ? <Check size={16} /> : <ChevronDown size={16} />}
-                </div>
-
-                {codeOpen && codeMatches.length > 0 && (
-                  <ul className={styles.comboList}>
-                    {codeMatches.map(([code, label]) => (
-                      <li
-                        key={code}
-                        className={styles.comboItem}
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          handleCodePick(code, label);
-                        }}
-                      >
-                        <span className={styles.itemCode}>{code}</span>
-                        <span className={styles.itemLabel}>{label}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </label>
-
-            {/* Ob. Soc combobox (single input) */}
-            <label className={styles.field}>
-              <span className={styles.label}>Ob. Soc</span>
-              <div className={styles.combo} ref={obraBoxRef}>
-                <input
-                  className={`${styles.input} ${styles.comboInput}`}
-                  value={obraInput}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setObraInput(v);
-                    setObraOpen(true);
-                    const dig = onlyDigits(v);
-                    if (dig) setObraSocCode(dig);
-                  }}
-                  onFocus={() => setObraOpen(true)}
-                  placeholder="304 - IOSCOR"
-                />
-                <div
-                  className={styles.comboSuffix}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    setObraOpen((v) => !v);
-                  }}
-                >
-                  <ChevronDown size={16} />
-                </div>
-
-                {obraOpen && obraMatches.length > 0 && (
-                  <ul className={styles.comboList}>
-                    {obraMatches.map((o) => (
-                      <li
-                        key={o.code}
-                        className={styles.comboItem}
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          handleObraPick(o.code, o.name);
-                        }}
-                      >
-                        <span className={styles.itemCode}>{o.code}</span>
-                        <span className={styles.itemLabel}>{o.name}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </label>
-
-            <label className={styles.field}>
-              <span className={styles.label}>Ult. nº</span>
-              <input
-                className={styles.input}
-                value={ultimoNumero}
-                onChange={(e) => setUltimoNumero(e.target.value)}
-                placeholder="715106"
-              />
-            </label>
+          <div className={styles.actions}>
+            {editingRow && (
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={onCancelEdit}
+                type="button"
+              >
+                Cancelar
+              </Button>
+            )}
+            <button className={styles.btnSave} disabled={!canSubmit}>
+              {loading
+                ? "Guardando..."
+                : editingRow
+                ? "Actualizar Práctica"
+                : "Guardar Práctica"}
+            </button>
           </div>
         </div>
-
-        {/* actions */}
-        <div className={styles.actions}>
-          {editingRow && (
-            <Button
-              variant="primary"
-              size="sm"
-              className={styles.btnGhost}
-              onClick={onCancelEdit}
-            >
-              Cancelar
-            </Button>
-          )}
-          <button className={styles.btnSave} disabled={!canSubmit}>
-            {loading ? "Guardando..." : editingRow ? "Actualizar" : "Guardar"}
-          </button>
-        </div>
-      </div>
-    </motion.form>
+      </motion.form>
+    </div>
   );
 }

@@ -151,3 +151,64 @@
 }
 
 .popupButtons { display: flex; gap: v.$spacing-3; justify-content: flex-end; }
+
+
+/* Conceptos */
+.conceptsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.conceptsList {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+.conceptCard {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  padding: 12px;
+}
+.conceptCard.danger {
+  background: #fff2f2; /* rojo muy claro */
+  border-color: #f5c2c2;
+}
+.conceptHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.conceptTitle { font-weight: 700; }
+.conceptSubtitle { font-size: 12px; color: #666; }
+
+.badge {
+  font-size: 12px;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-weight: 600;
+}
+.badgeOk {
+  background: #eef7ee;
+  color: #227a22;
+  border: 1px solid #cae7ca;
+}
+.badgeDanger {
+  background: #ffe9e9;
+  color: #a02222;
+  border: 1px solid #f5c2c2;
+}
+
+/* Reusos ya presentes */
+.tableWrap { overflow-x: auto; }
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  th, td { padding: 10px 12px; border-bottom: 1px solid #eee; text-align: left; }
+  thead tr { background: #f7f7f9; }
+}
+.muted { color: #666; }
+.mutedCenter { color: #777; text-align: center; padding: 12px; }
+.errorInline { color: #a00; margin-bottom: 8px; }

@@ -2,7 +2,14 @@
 "use client";
 
 import type React from "react";
-import { useMemo, useState, useCallback, useEffect } from "react";
+import {
+  useMemo,
+  useState,
+  useCallback,
+  useEffect,
+  useTransition,
+} from "react";
+import { flushSync } from "react-dom";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -26,17 +33,14 @@ const RESUMEN_BY_ID = (id: string | number) =>
   `${API_BASE}/api/liquidacion/resumen/${id}`;
 const OBRAS_SOCIALES_URL = `${API_BASE}/api/obras_social/`;
 
-// Débitos de colegio
+// Débitos de colegio (solo descuentos; se elimina Especialidades)
 const DESCUENTOS_URL = `${API_BASE}/api/descuentos`;
-const ESPECIALIDADES_URL = `${API_BASE}/api/especialidades`;
 const GEN_DESC_URL = (resumenId: string | number, descId: string | number) =>
   `${API_BASE}/api/deducciones/${resumenId}/colegio/bulk_generar_descuento/${descId}`;
-const GEN_ESP_URL = (resumenId: string | number, espId: string | number) =>
-  `${API_BASE}/api/deducciones/${resumenId}/colegio/bulk_generar_especialidad/${espId}`;
 const APLICAR_URL = (resumenId: string | number) =>
   `${API_BASE}/api/deducciones/${resumenId}/colegio/aplicar`;
 
-// NUEVO: periodos disponibles por OS (CERRADO="C") y creación de liquidación
+// Períodos disponibles por OS y creación de liquidación
 const PERIODOS_DISP_URL = (osId: string | number, anio?: number) =>
   `${API_BASE}/api/periodos/disponibles?obra_social_id=${osId}${
     anio ? `&anio=${anio}` : ""
@@ -92,18 +96,13 @@ interface RawOS {
   ID: number | string;
 }
 
-/* ====== Tipos para Débitos de Colegio ====== */
+/* ====== Tipos para Débitos de Colegio (sólo descuentos) ====== */
 type DiscountRow = {
-  id: string;          // descuentos.id
+  id: string; // descuentos.id
   nro_colegio: string; // descuentos.nro_colegio
-  concept: string;     // descuentos.nombre
-  price: number;       // descuentos.precio
-  percentage: number;  // descuentos.porcentaje
-};
-
-type SpecialtyRow = {
-  id: string;          // especialidad.ID
-  name: string;        // especialidad.ESPECIALIDAD
+  concept: string; // descuentos.nombre
+  price: number; // descuentos.precio
+  percentage: number; // descuentos.porcentaje
 };
 
 type PeriodoDisp = {
@@ -141,17 +140,13 @@ function mapDiscount(raw: any): DiscountRow {
   };
 }
 
-function mapSpecialty(raw: any): SpecialtyRow {
-  return {
-    id: String(raw?.id ?? raw?.ID ?? ""),
-    name: String(raw?.nombre ?? raw?.ESPECIALIDAD ?? raw?.name ?? "—"),
-  };
-}
-
 /* ================== Componente ================== */
 const LiquidationCycle: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+
+  // Transiciones no-urgentes (filtros, fetch de apoyo)
+  const [, startDeferrable] = useTransition();
 
   // Vista activa estilo “carrusel”
   const [activeView, setActiveView] = useState<"obras" | "debitos">("obras");
@@ -159,7 +154,7 @@ const LiquidationCycle: React.FC = () => {
   const [query, setQuery] = useState("");
   const [hidden, setHidden] = useState<Set<string>>(new Set());
 
-  // Previsualización (sigue como modal)
+  // Previsualización (modal)
   const [openPreview, setOpenPreview] = useState(false);
 
   // Paginación
@@ -175,24 +170,18 @@ const LiquidationCycle: React.FC = () => {
   const [osList, setOsList] = useState<RawOS[]>([]);
   const [osError, setOsError] = useState<string | null>(null);
 
-  // ====== Débitos de Colegio (en la “ventana” deslizante) ======
+  // ====== Débitos de Colegio (sólo descuentos) ======
   const [searchDiscount, setSearchDiscount] = useState("");
-  const [searchSpec, setSearchSpec] = useState("");
-
   const [discounts, setDiscounts] = useState<DiscountRow[]>([]);
-  const [specs, setSpecs] = useState<SpecialtyRow[]>([]);
-
   const [loadingDeb, setLoadingDeb] = useState(false);
-  const [loadingSpecs, setLoadingSpecs] = useState(false);
   const [debError, setDebError] = useState<string | null>(null);
-  const [specError, setSpecError] = useState<string | null>(null);
 
-  // confirm + generar
-  const [confirmGen, setConfirmGen] = useState<null | { kind: "desc" | "esp"; id: string; name: string }>(null);
+  // Confirm + generar (solo descuentos)
+  const [confirmGen, setConfirmGen] = useState<null | { id: string; name: string }>(null);
   const [genStatus, setGenStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [genError, setGenError] = useState<string | null>(null);
 
-  // ====== NUEVO: Agregar período por OS ======
+  // ====== Agregar período por OS ======
   const [openAddPeriod, setOpenAddPeriod] = useState(false);
   const [addTargetOS, setAddTargetOS] = useState<string | null>(null);
   const [periodosOS, setPeriodosOS] = useState<PeriodoDisp[]>([]);
@@ -257,14 +246,13 @@ const LiquidationCycle: React.FC = () => {
     };
   }, []);
 
-  // Cuando entro a la vista “debitos”, cargo descuentos + especialidades
+  // Cuando entro a la vista “debitos”, cargo descuentos
   useEffect(() => {
     if (activeView !== "debitos") return;
 
     let ignore = false;
     const controller = new AbortController();
 
-    // Descuentos
     (async () => {
       setLoadingDeb(true);
       setDebError(null);
@@ -272,7 +260,7 @@ const LiquidationCycle: React.FC = () => {
         const r = await fetch(DESCUENTOS_URL, { signal: controller.signal });
         if (!r.ok) {
           const txt = await r.text().catch(() => "");
-          throw new Error(`Descuentos HTTP ${r.status} ${txt ? `- ${txt}` : ""}`);
+          throw new Error(`Descuentos HTTP ${r.status}${txt ? ` - ${txt}` : ""}`);
         }
         const list = (await r.json()) as any[];
         if (!ignore) setDiscounts((list ?? []).map(mapDiscount));
@@ -280,25 +268,6 @@ const LiquidationCycle: React.FC = () => {
         if (!ignore) setDebError(e?.message || "No se pudo cargar descuentos.");
       } finally {
         if (!ignore) setLoadingDeb(false);
-      }
-    })();
-
-    // Especialidades
-    (async () => {
-      setLoadingSpecs(true);
-      setSpecError(null);
-      try {
-        const r = await fetch(ESPECIALIDADES_URL, { signal: controller.signal });
-        if (!r.ok) {
-          const txt = await r.text().catch(() => "");
-          throw new Error(`Especialidades HTTP ${r.status} ${txt ? `- ${txt}` : ""}`);
-        }
-        const list = (await r.json()) as any[];
-        if (!ignore) setSpecs((list ?? []).map(mapSpecialty));
-      } catch (e: any) {
-        if (!ignore) setSpecError(e?.message || "No se pudo cargar especialidades.");
-      } finally {
-        if (!ignore) setLoadingSpecs(false);
       }
     })();
 
@@ -407,24 +376,29 @@ const LiquidationCycle: React.FC = () => {
     return map;
   }, [data?.liquidaciones, periodTitle]);
 
-  const openEdit = (d: DiscountRow) => {
-    setEditTarget(d);
-    setEditPrice(String(d.price));
-    setEditPct(String(d.percentage));
-    setEditErr(null);
-    setEditOpen(true);
-  };
-  const closeEdit = () => {
-    setEditOpen(false);
-    setEditTarget(null);
-    setEditErr(null);
-  };
-
+  /* ====== Editar descuento ====== */
   const [editOpen, setEditOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<DiscountRow | null>(null);
   const [editPrice, setEditPrice] = useState<string>("");
   const [editPct, setEditPct] = useState<string>("");
   const [editErr, setEditErr] = useState<string | null>(null);
+
+  const openEdit = useCallback((d: DiscountRow) => {
+    // Commit inmediato para evitar delay perceptible
+    flushSync(() => {
+      setEditTarget(d);
+      setEditPrice(String(d.price));
+      setEditPct(String(d.percentage));
+      setEditErr(null);
+      setEditOpen(true);
+    });
+  }, []);
+
+  const closeEdit = useCallback(() => {
+    setEditOpen(false);
+    setEditTarget(null);
+    setEditErr(null);
+  }, []);
 
   const saveEdit = async () => {
     const priceVal = Number(String(editPrice).replace(",", "."));
@@ -492,8 +466,13 @@ const LiquidationCycle: React.FC = () => {
   const goNext = () => setPage((p) => Math.min(totalPages, p + 1));
   const goLast = () => setPage(totalPages);
 
-  // Tabs -> cambian la vista del carrusel
-  const onTab = (tab: "obras" | "debitos") => setActiveView(tab);
+  // Tabs -> cambian la vista del carrusel (apertura instantánea)
+  const onTabObras = useCallback(() => {
+    flushSync(() => setActiveView("obras"));
+  }, []);
+  const onTabDebitos = useCallback(() => {
+    flushSync(() => setActiveView("debitos"));
+  }, []);
 
   /* ================== PREVIEW DATA (modal) ================== */
   type PreviewRow = {
@@ -560,31 +539,26 @@ const LiquidationCycle: React.FC = () => {
     const cerradasNeto = sum(c, "neto");
     const abiertasNeto = sum(a, "neto");
     const resumenDeduccion = toNumber(data?.total_deduccion);
-    const totalGeneral = (cerradasNeto + abiertasNeto) - resumenDeduccion;
+    const totalGeneral = cerradasNeto + abiertasNeto - resumenDeduccion;
 
     return { cerradasNeto, abiertasNeto, resumenDeduccion, totalGeneral };
   }, [previewRows, data?.total_deduccion]);
 
-  // === acciones de generar ===
+  // === acciones de generar (solo descuentos) ===
   const doGenerate = async () => {
     if (!confirmGen || !id) return;
     setGenStatus("loading");
     setGenError(null);
 
     try {
-      const generateUrl =
-        confirmGen.kind === "desc"
-          ? GEN_DESC_URL(id, confirmGen.id)
-          : GEN_ESP_URL(id, confirmGen.id);
+      const generateUrl = GEN_DESC_URL(id, confirmGen.id);
 
-      // Body: para descuentos mandamos override de snapshot; para especialidad podés omitirlo
+      // Body: para descuentos mandamos override de snapshot si existe
       let body: any = undefined;
-      if (confirmGen.kind === "desc") {
-        const row = discounts.find((d) => d.id === confirmGen.id);
-        if (row) body = { monto: row.price, porcentaje: row.percentage };
-      }
+      const row = discounts.find((d) => d.id === confirmGen.id);
+      if (row) body = { monto: row.price, porcentaje: row.percentage };
 
-      // 1) Generar (cargar mes / actualizar saldos)
+      // 1) Generar
       const genRes = await fetch(generateUrl, {
         method: "POST",
         headers: body ? { "Content-Type": "application/json" } : undefined,
@@ -595,7 +569,7 @@ const LiquidationCycle: React.FC = () => {
         throw new Error(txt || `Error ${genRes.status} al generar`);
       }
 
-      // 2) Aplicar (consumir saldos según disponible)
+      // 2) Aplicar
       const aplRes = await fetch(APLICAR_URL(id), { method: "POST" });
       if (!aplRes.ok) {
         const txt = await aplRes.text().catch(() => "");
@@ -619,29 +593,37 @@ const LiquidationCycle: React.FC = () => {
     setGenError(null);
   };
 
-  /* ====== NUEVO: abrir modal agregar período por OS ====== */
-  const openAddForOS = async (osId: string) => {
+  /* ====== abrir modal agregar período por OS (instantáneo) ====== */
+  const openAddForOS = useCallback((osId: string) => {
     setAddErr(null);
-    setAddTargetOS(osId);
-    setOpenAddPeriod(true);
-    try {
-      const r = await fetch(PERIODOS_DISP_URL(osId));
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      const list: PeriodoDisp[] = await r.json();
-
-      setPeriodosOS(list ?? []);
-
-      // preselección de año
-      const thisYear = new Date().getFullYear();
-      const years = Array.from(new Set((list ?? []).map((p) => Number(p.ANIO)))).sort((a, b) => b - a);
-      const defaultYear = years.includes(thisYear) ? thisYear : (years[0] ?? "");
-      setAddYear(defaultYear || "");
+    flushSync(() => {
+      setAddTargetOS(osId);
+      setOpenAddPeriod(true);
+      setAddYear("");
       setAddMonth("");
-    } catch (e: any) {
-      setAddErr(e?.message || "No se pudieron cargar los períodos disponibles.");
-    }
-  };
+      setPeriodosOS([]);
+    });
 
+    // Fetch diferido (no bloquea la apertura)
+    startDeferrable(async () => {
+      try {
+        const r = await fetch(PERIODOS_DISP_URL(osId));
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const list: PeriodoDisp[] = await r.json();
+
+        setPeriodosOS(list ?? []);
+
+        const thisYear = new Date().getFullYear();
+        const years = Array.from(
+          new Set((list ?? []).map((p) => Number(p.ANIO)))
+        ).sort((a, b) => b - a);
+        const defaultYear = years.includes(thisYear) ? thisYear : years[0] ?? "";
+        setAddYear(defaultYear || "");
+      } catch (e: any) {
+        setAddErr(e?.message || "No se pudieron cargar los períodos disponibles.");
+      }
+    });
+  }, [startDeferrable]);
 
   const availableYears = useMemo(() => {
     const thisY = new Date().getFullYear();
@@ -673,7 +655,6 @@ const LiquidationCycle: React.FC = () => {
       return;
     }
 
-    // nro_liquidacion = "{NRO_FACT_1}-{NRO_FACT_2}"
     const nro_liquidacion = `${row.NRO_FACT_1}-${row.NRO_FACT_2}`;
 
     const payload = {
@@ -708,501 +689,518 @@ const LiquidationCycle: React.FC = () => {
     }
   };
 
+  // Callbacks estables para las tarjetas
+  const onDeleteOS = useCallback((osId: string) => {
+    setHidden((prev) => {
+      const next = new Set(prev);
+      next.add(osId);
+      return next;
+    });
+  }, []);
+
+  const onAddPeriodOS = useCallback(
+    (osId: string) => openAddForOS(osId),
+    [openAddForOS]
+  );
+
+  // Búsqueda sin bloquear UI
+  const onQueryChange = useCallback((v: string) => {
+    startDeferrable(() => setQuery(v));
+  }, [startDeferrable]);
+
   return (
     <div className={styles.liquidationCyclePage}>
       <div className={styles.content}>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className={styles.header}>
-            <div className={styles.headerInfo}>
-              <div className={styles.breadcrumb}>CICLO DE LIQUIDACIÓN</div>
-              <h1 className={styles.title}>Período {periodTitle}</h1>
-              <div className={styles.subtotals}>
-                <span><b>Bruto:</b> ${totalBruto.toLocaleString("es-AR")}</span>
-                <span className={styles.dot}>·</span>
-                <span><b>Débitos:</b> ${totalDebitos.toLocaleString("es-AR")}</span>
-                <span className={styles.dot}>·</span>
-                <span><b>Deducción:</b> ${totalDeduccion.toLocaleString("es-AR")}</span>
-                <span className={styles.dot}>·</span>
-                <span><b>Neto:</b> ${totalNeto.toLocaleString("es-AR")}</span>
+        <div className={styles.wrapper_content}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            style={{ display: "contents" }}
+          >
+            <div className={styles.header}>
+              <div className={styles.headerInfo}>
+                <div className={styles.breadcrumb}>CICLO DE LIQUIDACIÓN</div>
+                <h1 className={styles.title}>Período {periodTitle}</h1>
+                <div className={styles.subtotals}>
+                  <span><b>Bruto:</b> ${totalBruto.toLocaleString("es-AR")}</span>
+                  <span className={styles.dot}>·</span>
+                  <span><b>Débitos:</b> ${totalDebitos.toLocaleString("es-AR")}</span>
+                  <span className={styles.dot}>·</span>
+                  <span><b>Deducción:</b> ${totalDeduccion.toLocaleString("es-AR")}</span>
+                  <span className={styles.dot}>·</span>
+                  <span><b>Neto:</b> ${totalNeto.toLocaleString("es-AR")}</span>
+                </div>
+              </div>
+
+              <div className={styles.headerButtons}>
+                <Button
+                  variant="secondary"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    flushSync(() => setOpenPreview(true));
+                  }}
+                  onClick={() => setOpenPreview(true)} // fallback teclado
+                >
+                  Pre-Visualizar
+                </Button>
+                <Button variant="success" onClick={() => console.log("Exportar Todo", data)}>
+                  Exportar Todo
+                </Button>
               </div>
             </div>
 
-            <div className={styles.headerButtons}>
-              <Button variant="secondary" onClick={() => setOpenPreview(true)}>
-                Pre-Visualizar
-              </Button>
-              <Button variant="success" onClick={() => console.log("Exportar Todo", data)}>
-                Exportar Todo
-              </Button>
+            {/* Tabs controlan la vista del carrusel */}
+            <div className={styles.tabs}>
+              <button
+                className={`${styles.tab} ${activeView === "obras" ? styles.active : ""}`}
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  onTabObras();
+                }}
+                onClick={onTabObras}
+              >
+                Obras Sociales
+              </button>
+              <button
+                className={`${styles.tab} ${activeView === "debitos" ? styles.active : ""}`}
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  onTabDebitos();
+                }}
+                onClick={onTabDebitos}
+              >
+                Débitos de Colegio
+              </button>
             </div>
-          </div>
 
-          {/* Tabs controlan la vista del carrusel */}
-          <div className={styles.tabs}>
-            <button
-              className={`${styles.tab} ${activeView === "obras" ? styles.active : ""}`}
-              onClick={() => onTab("obras")}
-            >
-              Obras Sociales
-            </button>
-            <button
-              className={`${styles.tab} ${activeView === "debitos" ? styles.active : ""}`}
-              onClick={() => onTab("debitos")}
-            >
-              Débitos de Colegio
-            </button>
-          </div>
+            {/* Carrusel de vistas */}
+            <div className={styles.viewport}>
+              <motion.div
+                className={styles.carousel}
+                animate={{ x: activeView === "obras" ? "0%" : "-100%" }}
+                transition={{ type: "spring", stiffness: 280, damping: 28 }}
+              >
+                {/* ===== Pane 1: Obras Sociales ===== */}
+                <div className={styles.pane}>
+                  <div className={styles.searchSection}>
+                    <SearchBar
+                      placeholder="Buscar obra social..."
+                      value={query}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        onQueryChange(e.target.value)
+                      }
+                    />
+                  </div>
 
-          {/* Carrusel de vistas */}
-          <div className={styles.viewport}>
-            <motion.div
-              className={styles.carousel}
-              animate={{ x: activeView === "obras" ? "0%" : "-100%" }}
-              transition={{ type: "spring", stiffness: 280, damping: 28 }}
-            >
-              {/* ===== Pane 1: Obras Sociales ===== */}
-              <div className={styles.pane}>
-                <div className={styles.searchSection}>
-                  <SearchBar
-                    placeholder="Buscar obra social..."
-                    value={query}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
-                  />
+                  {(isError || osError) && (
+                    <Alert
+                      type="error"
+                      title="Error"
+                      message={(error as Error | undefined)?.message || osError || "No se pudo cargar la información"}
+                      onClose={() => navigate(-1)}
+                    />
+                  )}
+
+                  {!isLoading && !isError && !osError && (
+                    <>
+                      <div className={styles.socialWorksList}>
+                        {pageItems.length === 0 && (
+                          <div className={styles.emptyState}>No hay obras sociales para mostrar.</div>
+                        )}
+
+                        {pageItems.map((ins) => (
+                          <div key={ins.id} className={styles.socialWorkItem}>
+                            <InsuranceCard
+                              name={ins.name}
+                              osId={ins.id}
+                              resumenId={id!}
+                              initialPeriods={(rowsByOS[ins.id] ?? []).map((r) => ({
+                                period: r.periodo,
+                                grossTotal: r.bruto,
+                                discounts: r.descuentos,
+                                netTotal: r.neto,
+                                liquidacionId: r.liquidacionId,
+                                nroLiquidacion: r.nroLiquidacion,
+                                estado: r.estado,
+                              }))}
+                              onSummary={(periods) => console.log("Ver Resumen", ins.name, periods)}
+                              onExport={(periods) => console.log("Exportar", ins.name, periods)}
+                              onDelete={() => onDeleteOS(ins.id)}
+                              onAddPeriod={() => onAddPeriodOS(ins.id)}
+                              onReload={reloadResumen}
+                            />
+                          </div>
+                        ))}
+                      </div>
+
+                      {totalPages > 1 && (
+                        <div className={styles.pagination}>
+                          <div className={styles.paginationInfo}>
+                            Mostrando {start + 1}-{Math.min(end, totalItems)} de {totalItems}
+                          </div>
+                          <div className={styles.paginationButtons}>
+                            <Button variant="secondary" onClick={goFirst} disabled={currentPage === 1}>«</Button>
+                            <Button variant="secondary" onClick={goPrev} disabled={currentPage === 1}>Anterior</Button>
+                            <span className={styles.pageNumber}>Página {currentPage} / {totalPages}</span>
+                            <Button variant="secondary" onClick={goNext} disabled={currentPage === totalPages}>Siguiente</Button>
+                            <Button variant="secondary" onClick={goLast} disabled={currentPage === totalPages}>»</Button>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {isLoading && (
+                    <Alert
+                      type="info"
+                      title="Cargando"
+                      message="Obteniendo detalle del período…"
+                      onClose={() => {}}
+                    />
+                  )}
                 </div>
 
-                {(isError || osError) && (
-                  <Alert
-                    type="error"
-                    title="Error"
-                    message={(error as Error | undefined)?.message || osError || "No se pudo cargar la información"}
-                    onClose={() => navigate(-1)}
-                  />
-                )}
+                {/* ===== Pane 2: Débitos de Colegio (solo Descuentos) ===== */}
+                <div className={styles.pane}>
+                  <div className={styles.debitosHeader}>
+                    <h2>Débitos de Colegio — Período {periodTitle}</h2>
+                    <div />
+                  </div>
 
-                {!isLoading && !isError && !osError && (
-                  <>
-                    <div className={styles.socialWorksList}>
-                      {pageItems.length === 0 && (
-                        <div className={styles.emptyState}>No hay obras sociales para mostrar.</div>
-                      )}
-
-                      {pageItems.map((ins) => (
-                        <div key={ins.id} className={styles.socialWorkItem}>
-                          <InsuranceCard
-                            name={ins.name}
-                            osId={ins.id}
-                            resumenId={id!}
-                            initialPeriods={(rowsByOS[ins.id] ?? []).map((r) => ({
-                              period: r.periodo,
-                              grossTotal: r.bruto,
-                              discounts: r.descuentos,
-                              netTotal: r.neto,
-                              liquidacionId: r.liquidacionId,
-                              nroLiquidacion: r.nroLiquidacion,
-                              estado: r.estado,
-                            }))}
-                            onSummary={(periods) => console.log("Ver Resumen", ins.name, periods)}
-                            onExport={(periods) => console.log("Exportar", ins.name, periods)}
-                            onDelete={() => {
-                              setHidden((prev) => {
-                                const next = new Set(prev);
-                                next.add(ins.id);
-                                return next;
-                              });
-                            }}
-                            // NUEVO: acción para abrir modal de alta de período
-                            onAddPeriod={() => openAddForOS(ins.id)}
-                            onReload={reloadResumen}
-                          />
-                          {/* Si tu InsuranceCard aún no tiene el botón,
-                              podés mostrar uno debajo, de forma temporal: */}
-                          {/* <div className={styles.rowActions}>
-                            <Button variant="primary" size="sm" onClick={() => openAddForOS(ins.id)}>
-                              Agregar período
-                            </Button>
-                          </div> */}
-                        </div>
-                      ))}
-                    </div>
-
-                    {totalPages > 1 && (
-                      <div className={styles.pagination}>
-                        <div className={styles.paginationInfo}>
-                          Mostrando {start + 1}-{Math.min(end, totalItems)} de {totalItems}
-                        </div>
-                        <div className={styles.paginationButtons}>
-                          <Button variant="secondary" onClick={goFirst} disabled={currentPage === 1}>«</Button>
-                          <Button variant="secondary" onClick={goPrev} disabled={currentPage === 1}>Anterior</Button>
-                          <span className={styles.pageNumber}>Página {currentPage} / {totalPages}</span>
-                          <Button variant="secondary" onClick={goNext} disabled={currentPage === totalPages}>Siguiente</Button>
-                          <Button variant="secondary" onClick={goLast} disabled={currentPage === totalPages}>»</Button>
-                        </div>
+                  <div className={styles.debitosGrid} style={{ gridTemplateColumns: "1fr" }}>
+                    {/* BOX Descuentos */}
+                    <div className={styles.box}>
+                      <div className={styles.boxHeader}>
+                        <h4>Descuentos</h4>
+                        <input
+                          value={searchDiscount}
+                          onChange={(e) => setSearchDiscount(e.target.value)}
+                          placeholder="Buscar descuento…"
+                          className={styles.input}
+                          style={{ width: 240 }}
+                        />
                       </div>
-                    )}
+
+                      {debError && <div className={styles.errorInline}>Error: {debError}</div>}
+                      {loadingDeb ? (
+                        <div className={styles.muted}>Cargando descuentos…</div>
+                      ) : (
+                        <div className={styles.tableWrap}>
+                          <table className={styles.simpleTable}>
+                            <thead>
+                              <tr>
+                                <th>Nro concepto</th>
+                                <th>Concepto</th>
+                                <th>Precio</th>
+                                <th>%</th>
+                                <th>Acciones</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {discounts
+                                .filter((d) => {
+                                  const q = searchDiscount.trim().toLowerCase();
+                                  if (!q) return true;
+                                  return (
+                                    d.id.toLowerCase().includes(q) ||
+                                    d.concept.toLowerCase().includes(q)
+                                  );
+                                })
+                                .map((d) => (
+                                  <tr key={d.id}>
+                                    <td>{d.nro_colegio}</td>
+                                    <td className={styles.ellipsis}>{d.concept}</td>
+                                    <td>
+                                      ${d.price.toLocaleString("es-AR", { maximumFractionDigits: 2 })}
+                                    </td>
+                                    <td>{d.percentage}%</td>
+                                    <td style={{ display: "flex", gap: 8 }}>
+                                      <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onPointerDown={(e) => {
+                                          e.preventDefault();
+                                          openEdit(d);
+                                        }}
+                                        onClick={() => openEdit(d)} // fallback teclado
+                                      >
+                                        Editar
+                                      </Button>
+                                      <Button
+                                        variant="primary"
+                                        size="sm"
+                                        onPointerDown={(e) => {
+                                          e.preventDefault();
+                                          flushSync(() =>
+                                            setConfirmGen({ id: d.id, name: d.concept })
+                                          );
+                                        }}
+                                        onClick={() => setConfirmGen({ id: d.id, name: d.concept })}
+                                      >
+                                        Generar
+                                      </Button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              {discounts.length === 0 && (
+                                <tr>
+                                  <td colSpan={5} className={styles.mutedCenter}>Sin descuentos</td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+
+            {/* ===== MODAL: PREVISUALIZAR ===== */}
+            <Dialog
+              open={openPreview}
+              onClose={() => setOpenPreview(false)}
+              maxWidth="lg"
+              fullWidth
+              keepMounted
+              disableScrollLock
+              TransitionProps={{ timeout: 0 }}
+              BackdropProps={{ transitionDuration: 0 }}
+            >
+              <DialogTitle>Pre-visualización del período {periodTitle}</DialogTitle>
+              <DialogContent dividers className={styles.dialogContent}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 16 }}>
+                  <div style={{ background: "#f7f7f9", borderRadius: 8, padding: 12 }}>
+                    <div style={{ fontSize: 12, color: "#666" }}>Cerradas (Neto)</div>
+                    <div style={{ fontWeight: 700, fontSize: 18 }}>
+                      ${currency.format(totals.cerradasNeto)}
+                    </div>
+                  </div>
+                  <div style={{ background: "#f7f7f9", borderRadius: 8, padding: 12 }}>
+                    <div style={{ fontSize: 12, color: "#666" }}>Abiertas (Neto)</div>
+                    <div style={{ fontWeight: 700, fontSize: 18 }}>
+                      ${currency.format(totals.abiertasNeto)}
+                    </div>
+                  </div>
+                  <div style={{ background: "#f7f7f9", borderRadius: 8, padding: 12 }}>
+                    <div style={{ fontSize: 12, color: "#666" }}>Deducciones (Resumen)</div>
+                    <div style={{ fontWeight: 700, fontSize: 18 }}>
+                      ${currency.format(totals.resumenDeduccion)}
+                    </div>
+                  </div>
+                  <div style={{ background: "#eefaf0", borderRadius: 8, padding: 12 }}>
+                    <div style={{ fontSize: 12, color: "#2a7", fontWeight: 600 }}>TOTAL GENERAL</div>
+                    <div style={{ fontWeight: 800, fontSize: 20 }}>
+                      ${currency.format(totals.totalGeneral)}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                    <thead>
+                      <tr style={{ background: "#f0f2f5" }}>
+                        <th style={th}>Nro OS</th>
+                        <th style={th}>Obra Social</th>
+                        <th style={th}>Período</th>
+                        <th style={th}>Estado</th>
+                        <th style={th}>Bruto</th>
+                        <th style={th}>Débitos</th>
+                        <th style={th}>Total a pagar</th>
+                        <th style={th}>Nro Factura</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {previewRows.map((r, idx) => (
+                        <tr key={`${r.osId}-${r.periodo}-${idx}`} style={{ borderBottom: "1px solid #eee" }}>
+                          <td style={td}>{r.osId}</td>
+                          <td style={td}>{r.osName}</td>
+                          <td style={td}>{r.periodo}</td>
+                          <td style={{ ...td, fontWeight: 600, color: r.estado === "C" ? "#0a7" : "#c80" }}>
+                            {r.estado === "C" ? "CERRADA" : "ABIERTA"}
+                          </td>
+                          <td style={{ ...td, textAlign: "right" }}>${currency.format(r.bruto)}</td>
+                          <td style={{ ...td, textAlign: "right" }}>-${currency.format(r.debitos)}</td>
+                          <td style={{ ...td, textAlign: "right", fontWeight: 600 }}>
+                            ${currency.format(r.neto)}
+                          </td>
+                          <td style={td}>{r.nro || "—"}</td>
+                        </tr>
+                      ))}
+                      {previewRows.length === 0 && (
+                        <tr>
+                          <td colSpan={8} style={{ padding: 16, textAlign: "center", color: "#777" }}>
+                            No hay liquidaciones para mostrar.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </DialogContent>
+              <DialogActions className={styles.dialogActions}>
+                <Button variant="secondary" onClick={() => setOpenPreview(false)}>
+                  Cerrar
+                </Button>
+              </DialogActions>
+            </Dialog>
+
+            {/* Mini-modal de Confirmación / Progreso de Generación (sólo descuentos) */}
+            <Dialog
+              open={!!confirmGen}
+              onClose={closeGenModal}
+              maxWidth="xs"
+              fullWidth
+              keepMounted
+              disableScrollLock
+              TransitionProps={{ timeout: 0 }}
+              BackdropProps={{ transitionDuration: 0 }}
+            >
+              <DialogTitle>
+                {genStatus === "idle" && `Confirmar generación`}
+                {genStatus === "loading" && `Generando…`}
+                {genStatus === "done" && `¡Listo!`}
+                {genStatus === "error" && `Error`}
+              </DialogTitle>
+              <DialogContent dividers className={styles.dialogContent}>
+                {genStatus === "idle" && (
+                  <div>
+                    ¿Seguro que querés generar el descuento <strong>{confirmGen?.name}</strong> para el
+                    período <strong>{periodTitle}</strong>?
+                  </div>
+                )}
+                {genStatus === "loading" && <div>Procesando en el servidor…</div>}
+                {genStatus === "done" && <div>Se generó correctamente.</div>}
+                {genStatus === "error" && <div style={{ color: "#a00" }}>No se pudo generar: {genError}</div>}
+              </DialogContent>
+              <DialogActions className={styles.dialogActions}>
+                {genStatus === "idle" && (
+                  <>
+                    <Button variant="secondary" onClick={closeGenModal}>Cancelar</Button>
+                    <Button variant="primary" onClick={doGenerate}>Sí, generar</Button>
                   </>
                 )}
-
-                {isLoading && (
-                  <Alert
-                    type="info"
-                    title="Cargando"
-                    message="Obteniendo detalle del período…"
-                    onClose={() => {}}
-                  />
+                {genStatus === "loading" && (
+                  <Button variant="secondary" onClick={closeGenModal} disabled>Cancelar</Button>
                 )}
-              </div>
+                {(genStatus === "done" || genStatus === "error") && (
+                  <Button variant="primary" onClick={closeGenModal}>Aceptar</Button>
+                )}
+              </DialogActions>
+            </Dialog>
 
-              {/* ===== Pane 2: Débitos de Colegio ===== */}
-              <div className={styles.pane}>
-                <div className={styles.debitosHeader}>
-                  <h2>Débitos de Colegio — Período {periodTitle}</h2>
-                  <div />
+            {/* Modal: Agregar período por OS */}
+            <Dialog
+              open={openAddPeriod}
+              onClose={() => setOpenAddPeriod(false)}
+              maxWidth="xs"
+              fullWidth
+              keepMounted
+              disableScrollLock
+              TransitionProps={{ timeout: 0 }}
+              BackdropProps={{ transitionDuration: 0 }}
+            >
+              <DialogTitle>Agregar período {addTargetOS ? `— OS ${addTargetOS}` : ""}</DialogTitle>
+              <DialogContent className={styles.dialogContent} dividers>
+                {addErr && <div className={styles.errorInline} style={{ marginBottom: 8 }}>{addErr}</div>}
+                <div className={styles.muted} style={{ marginTop: 6 }}>
+                  Sólo se listan períodos <b>cerrados</b> de esta obra social que <b>aún no están siendo liquidados</b>.
                 </div>
-
-                <div className={styles.debitosGrid}>
-                  {/* BOX Descuentos */}
-                  <div className={styles.box}>
-                    <div className={styles.boxHeader}>
-                      <h4>Descuentos</h4>
-                      <input
-                        value={searchDiscount}
-                        onChange={(e) => setSearchDiscount(e.target.value)}
-                        placeholder="Buscar descuento…"
-                        className={styles.input}
-                        style={{ width: 240 }}
-                      />
-                    </div>
-
-                    {debError && <div className={styles.errorInline}>Error: {debError}</div>}
-                    {loadingDeb ? (
-                      <div className={styles.muted}>Cargando descuentos…</div>
-                    ) : (
-                      <div className={styles.tableWrap}>
-                        <table className={styles.simpleTable}>
-                          <thead>
-                            <tr>
-                              <th>Nro concepto</th>
-                              <th>Concepto</th>
-                              <th>Precio</th>
-                              <th>%</th>
-                              <th>Acciones</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {discounts
-                              .filter((d) => {
-                                const q = searchDiscount.trim().toLowerCase();
-                                if (!q) return true;
-                                return d.id.toLowerCase().includes(q) || d.concept.toLowerCase().includes(q);
-                              })
-                              .map((d) => (
-                                <tr key={d.id}>
-                                  <td>{d.nro_colegio}</td>
-                                  <td className={styles.ellipsis}>{d.concept}</td>
-                                  <td>${d.price.toLocaleString("es-AR", { maximumFractionDigits: 2 })}</td>
-                                  <td>{d.percentage}%</td>
-                                  <td style={{ display: "flex", gap: 8 }}>
-                                    <Button
-                                      variant="secondary"
-                                      size="sm"
-                                      onClick={() => openEdit(d)}
-                                    >
-                                      Editar
-                                    </Button>
-                                    <Button
-                                      variant="primary"
-                                      size="sm"
-                                      onClick={() => setConfirmGen({ kind: "desc", id: d.id, name: d.concept })}
-                                    >
-                                      Generar
-                                    </Button>
-                                  </td>
-                                </tr>
-                              ))}
-                            {discounts.length === 0 && (
-                              <tr><td colSpan={5} className={styles.mutedCenter}>Sin descuentos</td></tr>
-                            )}
-                          </tbody>
-
-                        </table>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* BOX Especialidades */}
-                  <div className={styles.box}>
-                    <div className={styles.boxHeader}>
-                      <h4>Especialidades</h4>
-                      <input
-                        value={searchSpec}
-                        onChange={(e) => setSearchSpec(e.target.value)}
-                        placeholder="Buscar especialidad…"
-                        className={styles.input}
-                        style={{ width: 240 }}
-                      />
-                    </div>
-
-                    {specError && <div className={styles.errorInline}>Error: {specError}</div>}
-                    {loadingSpecs ? (
-                      <div className={styles.muted}>Cargando especialidades…</div>
-                    ) : (
-                      <div className={styles.tableWrap}>
-                        <table className={styles.simpleTable}>
-                          <thead>
-                            <tr>
-                              <th>ID</th>
-                              <th>Especialidad</th>
-                              <th>Acciones</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {specs
-                              .filter((s) => {
-                                const q = searchSpec.trim().toLowerCase();
-                                if (!q) return true;
-                                return s.id.toLowerCase().includes(q) || s.name.toLowerCase().includes(q);
-                              })
-                              .map((s) => (
-                                <tr key={s.id}>
-                                  <td>{s.id}</td>
-                                  <td className={styles.ellipsis}>{s.name}</td>
-                                  <td>
-                                    <Button
-                                      variant="primary"
-                                      size="sm"
-                                      onClick={() => setConfirmGen({ kind: "esp", id: s.id, name: s.name })}
-                                    >
-                                      Generar
-                                    </Button>
-                                  </td>
-                                </tr>
-                              ))}
-                            {specs.length === 0 && (
-                              <tr><td colSpan={3} className={styles.mutedCenter}>Sin especialidades</td></tr>
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-
-          {/* ===== MODAL: PREVISUALIZAR ===== */}
-          <Dialog open={openPreview} onClose={() => setOpenPreview(false)} maxWidth="lg" fullWidth>
-            <DialogTitle>Pre-visualización del período {periodTitle}</DialogTitle>
-            <DialogContent dividers>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 16 }}>
-                <div style={{ background: "#f7f7f9", borderRadius: 8, padding: 12 }}>
-                  <div style={{ fontSize: 12, color: "#666" }}>Cerradas (Neto)</div>
-                  <div style={{ fontWeight: 700, fontSize: 18 }}>
-                    ${currency.format(totals.cerradasNeto)}
-                  </div>
-                </div>
-                <div style={{ background: "#f7f7f9", borderRadius: 8, padding: 12 }}>
-                  <div style={{ fontSize: 12, color: "#666" }}>Abiertas (Neto)</div>
-                  <div style={{ fontWeight: 700, fontSize: 18 }}>
-                    ${currency.format(totals.abiertasNeto)}
-                  </div>
-                </div>
-                <div style={{ background: "#f7f7f9", borderRadius: 8, padding: 12 }}>
-                  <div style={{ fontSize: 12, color: "#666" }}>Deducciones (Resumen)</div>
-                  <div style={{ fontWeight: 700, fontSize: 18 }}>
-                    ${currency.format(totals.resumenDeduccion)}
-                  </div>
-                </div>
-                <div style={{ background: "#eefaf0", borderRadius: 8, padding: 12 }}>
-                  <div style={{ fontSize: 12, color: "#2a7", fontWeight: 600 }}>TOTAL GENERAL</div>
-                  <div style={{ fontWeight: 800, fontSize: 20 }}>
-                    ${currency.format(totals.totalGeneral)}
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                  <thead>
-                    <tr style={{ background: "#f0f2f5" }}>
-                      <th style={th}>Nro OS</th>
-                      <th style={th}>Obra Social</th>
-                      <th style={th}>Período</th>
-                      <th style={th}>Estado</th>
-                      <th style={th}>Bruto</th>
-                      <th style={th}>Débitos</th>
-                      <th style={th}>Total a pagar</th>
-                      <th style={th}>Nro Factura</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {previewRows.map((r, idx) => (
-                      <tr key={`${r.osId}-${r.periodo}-${idx}`} style={{ borderBottom: "1px solid #eee" }}>
-                        <td style={td}>{r.osId}</td>
-                        <td style={td}>{r.osName}</td>
-                        <td style={td}>{r.periodo}</td>
-                        <td style={{ ...td, fontWeight: 600, color: r.estado === "C" ? "#0a7" : "#c80" }}>
-                          {r.estado === "C" ? "CERRADA" : "ABIERTA"}
-                        </td>
-                        <td style={{ ...td, textAlign: "right" }}>${currency.format(r.bruto)}</td>
-                        <td style={{ ...td, textAlign: "right" }}>-${currency.format(r.debitos)}</td>
-                        <td style={{ ...td, textAlign: "right", fontWeight: 600 }}>
-                          ${currency.format(r.neto)}
-                        </td>
-                        <td style={td}>{r.nro || "—"}</td>
-                      </tr>
+                <div className={styles.formRow}>
+                  <label className={styles.label}>Año</label>
+                  <select
+                    className={styles.input}
+                    value={addYear}
+                    onChange={(e) => {
+                      const v = e.target.value === "" ? "" : Number(e.target.value);
+                      setAddYear(v as any);
+                      setAddMonth("");
+                    }}
+                  >
+                    <option value="">Seleccionar año…</option>
+                    {availableYears.map((y) => (
+                      <option key={y} value={y}>{y}</option>
                     ))}
-                    {previewRows.length === 0 && (
-                      <tr>
-                        <td colSpan={8} style={{ padding: 16, textAlign: "center", color: "#777" }}>
-                          No hay liquidaciones para mostrar.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </DialogContent>
-            <DialogActions>
-              <Button variant="secondary" onClick={() => setOpenPreview(false)}>
-                Cerrar
-              </Button>
-            </DialogActions>
-          </Dialog>
-
-          {/* Mini-modal de Confirmación / Progreso de Generación */}
-          <Dialog open={!!confirmGen} onClose={closeGenModal} maxWidth="xs" fullWidth>
-            <DialogTitle>
-              {genStatus === "idle" && `Confirmar generación`}
-              {genStatus === "loading" && `Generando…`}
-              {genStatus === "done" && `¡Listo!`}
-              {genStatus === "error" && `Error`}
-            </DialogTitle>
-            <DialogContent dividers>
-              {genStatus === "idle" && (
-                <div>
-                  ¿Seguro que querés generar {confirmGen?.kind === "desc" ? "el descuento" : "la especialidad"}{" "}
-                  <strong>{confirmGen?.name}</strong> para el período <strong>{periodTitle}</strong>?
+                  </select>
                 </div>
-              )}
-              {genStatus === "loading" && <div>Procesando en el servidor…</div>}
-              {genStatus === "done" && <div>Se generó correctamente.</div>}
-              {genStatus === "error" && <div style={{ color: "#a00" }}>No se pudo generar: {genError}</div>}
-            </DialogContent>
-            <DialogActions>
-              {genStatus === "idle" && (
-                <>
-                  <Button variant="secondary" onClick={closeGenModal}>Cancelar</Button>
-                  <Button variant="primary" onClick={doGenerate}>Sí, generar</Button>
-                </>
-              )}
-              {genStatus === "loading" && (
-                <Button variant="secondary" onClick={closeGenModal} disabled>Cancelar</Button>
-              )}
-              {(genStatus === "done" || genStatus === "error") && (
-                <Button variant="primary" onClick={closeGenModal}>Aceptar</Button>
-              )}
-            </DialogActions>
-          </Dialog>
 
-          {/* Modal: Agregar período por OS */}
-          <Dialog open={openAddPeriod} onClose={() => setOpenAddPeriod(false)} maxWidth="xs" fullWidth>
-            <DialogTitle>Agregar período {addTargetOS ? `— OS ${addTargetOS}` : ""}</DialogTitle>
-            <DialogContent className={styles.dialogContent} dividers>
-              {addErr && <div className={styles.errorInline} style={{ marginBottom: 8 }}>{addErr}</div>}
-              <div className={styles.muted} style={{ marginTop: 6 }}>
-                Sólo se listan períodos <b>cerrados</b> de esta obra social que <b>aún no estan siendo liquidadas</b>.
-              </div>
-              <div className={styles.formRow}>
-                <label className={styles.label}>Año</label>
-                <select
-                  className={styles.input}
-                  value={addYear}
-                  onChange={(e) => {
-                    const v = e.target.value === "" ? "" : Number(e.target.value);
-                    setAddYear(v as any);
-                    setAddMonth("");
-                  }}
-                >
-                  <option value="">Seleccionar año…</option>
-                  {availableYears.map((y) => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
-                </select>
-              </div>
+                <div className={styles.formRow}>
+                  <label className={styles.label}>Mes</label>
+                  <select
+                    className={styles.input}
+                    value={addMonth}
+                    onChange={(e) => setAddMonth(e.target.value === "" ? "" : Number(e.target.value))}
+                    disabled={addYear === ""}
+                  >
+                    <option value="">Seleccionar mes…</option>
+                    {availableMonths.map((m) => (
+                      <option key={m} value={m}>{String(m).padStart(2, "0")}</option>
+                    ))}
+                  </select>
+                </div>
+              </DialogContent>
+              <DialogActions className={styles.dialogActions}>
+                <Button variant="secondary" onClick={() => setOpenAddPeriod(false)}>Cancelar</Button>
+                <Button variant="primary" onClick={handleCreateLiq} disabled={addYear === "" || addMonth === "" || addBusy}>
+                  {addBusy ? "Creando…" : "Confirmar"}
+                </Button>
+              </DialogActions>
+            </Dialog>
 
-              <div className={styles.formRow}>
-                <label className={styles.label}>Mes</label>
-                <select
-                  className={styles.input}
-                  value={addMonth}
-                  onChange={(e) => setAddMonth(e.target.value === "" ? "" : Number(e.target.value))}
-                  disabled={addYear === ""}
-                >
-                  <option value="">Seleccionar mes…</option>
-                  {availableMonths.map((m) => (
-                    <option key={m} value={m}>{String(m).padStart(2, "0")}</option>
-                  ))}
-                </select>
-                {/* <div className={styles.muted} style={{ marginTop: 6 }}>
-                  Sólo se listan meses con <code>CERRADO="C"</code> en Periodos.
-                </div> */}
-              </div>
-            </DialogContent>
-            <DialogActions className={styles.dialogActions}>
-              <Button variant="secondary" onClick={() => setOpenAddPeriod(false)}>Cancelar</Button>
-              <Button variant="primary" onClick={handleCreateLiq} disabled={addYear === "" || addMonth === "" || addBusy}>
-                {addBusy ? "Creando…" : "Confirmar"}
-              </Button>
-            </DialogActions>
-          </Dialog>
-
-          {/* Modal: editar descuento */}
-          <Dialog open={editOpen} onClose={closeEdit} maxWidth="xs" fullWidth>
-            <DialogTitle>Editar descuento</DialogTitle>
-            <DialogContent dividers>
-              <div className={styles.formRow}>
-                <label className={styles.label}>Precio</label>
-                <input
-                  className={styles.input}
-                  inputMode="decimal"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={editPrice}
-                  onChange={(e) => setEditPrice(e.target.value)}
-                  placeholder="0,00"
-                />
-              </div>
-              <div className={styles.formRow}>
-                <label className={styles.label}>Porcentaje</label>
-                <div className={styles.inputWithSuffix}>
+            {/* Modal: editar descuento */}
+            <Dialog
+              open={editOpen}
+              onClose={closeEdit}
+              maxWidth="xs"
+              fullWidth
+              keepMounted
+              disableScrollLock
+              TransitionProps={{ timeout: 0 }}
+              BackdropProps={{ transitionDuration: 0 }}
+            >
+              <DialogTitle>Editar descuento</DialogTitle>
+              <DialogContent dividers className={styles.dialogContent}>
+                <div className={styles.formRow}>
+                  <label className={styles.label}>Precio</label>
                   <input
                     className={styles.input}
                     inputMode="decimal"
                     type="number"
-                    step="0.1"
+                    step="0.01"
                     min="0"
-                    max="100"
-                    value={editPct}
-                    onChange={(e) => setEditPct(e.target.value)}
-                    placeholder="0"
+                    value={editPrice}
+                    onChange={(e) => setEditPrice(e.target.value)}
+                    placeholder="0,00"
                   />
-                  <span className={styles.suffix}>%</span>
                 </div>
-              </div>
-              {editErr && <div className={styles.errorInline}>{editErr}</div>}
-            </DialogContent>
-            <DialogActions>
-              <Button variant="secondary" onClick={closeEdit}>Cancelar</Button>
-              <Button variant="primary" onClick={saveEdit}>Guardar</Button>
-            </DialogActions>
-          </Dialog>
-        </motion.div>
+                <div className={styles.formRow}>
+                  <label className={styles.label}>Porcentaje</label>
+                  <div className={styles.inputWithSuffix}>
+                    <input
+                      className={styles.input}
+                      inputMode="decimal"
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="100"
+                      value={editPct}
+                      onChange={(e) => setEditPct(e.target.value)}
+                      placeholder="0"
+                    />
+                    <span className={styles.suffix}>%</span>
+                  </div>
+                </div>
+                {editErr && <div className={styles.errorInline}>{editErr}</div>}
+              </DialogContent>
+              <DialogActions className={styles.dialogActions}>
+                <Button variant="secondary" onClick={closeEdit}>Cancelar</Button>
+                <Button variant="primary" onClick={saveEdit}>Guardar</Button>
+              </DialogActions>
+            </Dialog>
+          </motion.div>
+        </div>
       </div>
     </div>
   );

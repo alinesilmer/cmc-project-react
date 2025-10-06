@@ -1,7 +1,5 @@
-
-
 .liquidationPage {
-  // display: flex;
+  // wrapper general de la página
   min-height: 100vh;
 }
 
@@ -61,57 +59,106 @@
   flex-wrap: wrap;
 }
 
-.filters :global(.MuiTextField-root) {
-  min-width: 180px;
-}
-
-.filters :global(.MuiOutlinedInput-root) {
-  border-radius: v.$border-radius-md;
-  background: v.$white;
-}
-
-.filters :global(.MuiOutlinedInput-notchedOutline) {
-  border-color: v.$gray-300;
-}
-
-.filters :global(.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline) {
-  border-color: v.$gray-400;
-}
-
+/* MUI tweaks (si reactivás el calendario) */
+.filters :global(.MuiTextField-root) { min-width: 180px; }
+.filters :global(.MuiOutlinedInput-root) { border-radius: v.$border-radius-md; background: v.$white; }
+.filters :global(.MuiOutlinedInput-notchedOutline) { border-color: v.$gray-300; }
+.filters :global(.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline) { border-color: v.$gray-400; }
 .filters :global(.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline) {
   border-color: v.$primary-blue;
   box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.12);
 }
-
-.filters :global(.MuiInputBase-input) {
-  font-size: v.$font-size-sm;
-}
-
-:global(.MuiPickersLayout-root) {
-  border-radius: v.$border-radius-lg;
-}
-
-:global(.MuiDateCalendar-root) {
-  padding: v.$spacing-2;
-}
-
+.filters :global(.MuiInputBase-input) { font-size: v.$font-size-sm; }
+:global(.MuiPickersLayout-root) { border-radius: v.$border-radius-lg; }
+:global(.MuiDateCalendar-root) { padding: v.$spacing-2; }
 :global(.MuiPickersYear-yearButton),
 :global(.MuiPickersMonth-monthButton),
-:global(.MuiPickersDay-root) {
-  border-radius: v.$border-radius-md;
-}
-
+:global(.MuiPickersDay-root) { border-radius: v.$border-radius-md; }
 :global(.MuiPickersDay-root.Mui-selected),
 :global(.MuiPickersMonth-monthButton.Mui-selected),
-:global(.MuiPickersYear-yearButton.Mui-selected) {
-  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-}
+:global(.MuiPickersYear-yearButton.Mui-selected) { box-shadow: 0 8px 20px rgba(0,0,0,0.12); }
 
-:global(.scale-in) {
-  animation: scaleIn 300ms ease forwards;
-}
-
+/* anim util */
+:global(.scale-in) { animation: scaleIn 300ms ease forwards; }
 @keyframes scaleIn {
   from { transform: scale(0.98); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
+}
+
+/* ===================== MODAL 100vw / 100vh ===================== */
+
+.modalBackdrop {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh; /* ocupa SIEMPRE todo el viewport, no el contenedor padre */
+  background: rgba(15, 23, 42, 0.35);
+  display: grid;
+  place-items: center;
+  z-index: 10000; /* por encima de todo */
+}
+
+.modalCard {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.15);
+  width: min(460px, calc(100vw - 32px)); /* usa vw para evitar dependencia del padre */
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: 16px 16px 12px;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.modalClose {
+  border: 0;
+  background: transparent;
+  font-size: 18px;
+  cursor: pointer;
+  opacity: .6;
+}
+
+.modalBody {
+  display: grid;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.formRow { display: grid; gap: 6px; }
+.label   { font-size: 12px; color: #555; }
+.input   { padding: 8px; border: 1px solid #e5e7eb; border-radius: 8px; }
+.muted   { font-size: 12px; color: #6b7280; margin-top: 4px; }
+
+.errorInline {
+  color: #b91c1c;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* Cuando el modal está abierto, neutralizamos transforms/filters que pueden romper position:fixed */
+.modalOpen :global(.scale-in) {
+  animation: none !important;
+  transform: none !important;
+}
+.modalOpen .content,
+.modalOpen .tableCard {
+  transform: none !important;
+  filter: none !important;
+  perspective: none !important;
+  will-change: auto !important;
+  overflow: visible !important;
 }
