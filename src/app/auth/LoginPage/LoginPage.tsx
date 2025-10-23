@@ -5,36 +5,47 @@ import type React from "react";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, LogIn } from "lucide-react";
+import { useAuth } from "../../../auth/AuthProvider";
+
 import Button from "../../../components/atoms/Button/Button";
 import Input from "../../../components/atoms/Input/Input";
 import Card from "../../../components/atoms/Card/Card";
 import styles from "./LoginPage.module.scss";
+import { useNavigate } from "react-router-dom";
 
-interface LoginPageProps {
-  onLogin: () => void;
-}
 
-export default function LoginPage({ onLogin }: LoginPageProps) {
-  const [username, setUsername] = useState("");
+export default function LoginPage() {
+  const [nroSocio, setNroSocio] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const { login } = useAuth();
+  const nav = useNavigate();
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setErrorMsg(null);
+    console.log(errorMsg)
+    const nro = Number(nroSocio.trim());
+    if (!nro || Number.isNaN(nro) || !password.trim()) {
+      setErrorMsg("Ingresá Nro. de socio y matrícula provincial.");
+      return;
+    }
 
-    // Simulate API call delay
-    setTimeout(() => {
-      // Hardcoded validation - any username/password works for now
-      if (username.trim() && password.trim()) {
-        onLogin();
-      } else {
-        alert("Por favor ingrese usuario y contraseña");
-      }
+    setIsLoading(true);
+    try {
+      await login(nro, password); // 👉 llama a /auth/login (el back setea cookies y devuelve access)
+      nav("/dashboard", { replace: true });
+    } catch (err) {
+      // Podés inspeccionar err.response?.data si querés mensajes del backend
+      setErrorMsg("Credenciales inválidas o servicio no disponible.");
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
+
 
   return (
     <div className={styles.loginPage}>
@@ -71,9 +82,9 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             <div className={styles.inputGroup}>
               <Input
                 type="text"
-                placeholder="Usuario"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Nro. de socio"
+                value={nroSocio}
+                onChange={(e) => setNroSocio(e.target.value)}
                 className={styles.input}
               />
             </div>
@@ -96,8 +107,11 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 </button>
               </div>
             </div>
-
+            {/* <button type="submit" style={{ display: "none" }} id="nativeSubmit">
+              nativo
+            </button> */}
             <Button
+              submit
               type="submit"
               size="lg"
               className={styles.loginButton}

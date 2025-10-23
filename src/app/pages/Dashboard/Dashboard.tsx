@@ -13,18 +13,18 @@ const Dashboard: React.FC = () => {
     "https://wa.me/5493794532335?text=¡Hola!,%20necesito%20soporte%20con%20el%20sistema%20de%20liquidación";
 
   const quickActions = [
-    { icon: Users, title: "Lista de Médicos", link: "/doctors" },
-    {
-      icon: FileText,
-      title: "Débitos de Obra Social",
-      link: `/dashboard`,
-    },
-    { icon: Calendar, title: "Lista de Períodos", link: "/liquidation" },
-    {
-      icon: DollarSign,
-      title: "Descuentos",
-      link: `/dashboard`,
-    },
+    { icon: Users, title: "Gestor de usuarios", link: "/users-manager" },
+    // {
+    //   icon: FileText,
+    //   title: "Débitos de Obra Social",
+    //   link: `/dashboard`,
+    // },
+    { icon: Calendar, title: "Liquidaciones", link: "/liquidation" },
+    // {
+    //   icon: DollarSign,
+    //   title: "Descuentos",
+    //   link: `/dashboard`,
+    // },
     { icon: Settings, title: "Soporte", link: whatsappUrl, external: true },
   ];
 

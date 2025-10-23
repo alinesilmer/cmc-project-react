@@ -2,11 +2,14 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import styles from "./Login.module.scss";
 import Button from "../../../components/atoms/Button/Button";
+import { useAuth } from "../../../auth/AuthProvider";
 
 function Login() {
   const [isMember, setIsMember] = useState<boolean | null>(null);
   const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const goMember = () => {
     setIsMember(true);
@@ -18,19 +21,33 @@ function Login() {
     navigate("/register");
   };
 
-  const login = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const form = e.currentTarget;
-    const fd = new FormData(form);
+    setError("");
+
+    const fd = new FormData(e.currentTarget);
     const u = String(fd.get("username") || "").trim();
     const p = String(fd.get("password") || "").trim();
 
-    if (u === "username" && p === "123") {
-      setError("");
-      form.reset();
+    const nro = Number(u);
+    if (!nro || Number.isNaN(nro) || !p) {
+      setError("Ingresá Nro. de socio y matrícula provincial.");
+      return;
+    }
 
-      window.location.replace("https://colegiomedicocorrientes.com/");
-      setError("Usuario o contraseña incorrectos.");
+    setLoading(true);
+    try {
+      await login(nro, p);                 // 👉 /auth/login del backend
+      navigate("/dashboard", { replace: true });
+    } catch (err: any) {
+      console.log(err)
+      const apiMsg =
+        err?.response?.data?.detail ??
+        err?.response?.data?.message ??
+        "Credenciales inválidas o servicio no disponible.";
+      setError(String(apiMsg));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -43,18 +60,18 @@ function Login() {
     <div className={styles.container}>
       <section className={styles.card}>
         {isMember && (
-        <button
-          type="button"
-          onClick={goBackToStart}
-          className={styles.backLink}
-          aria-label="Volver"
-          title="Volver"
-        >
-          ←
-        </button>
+          <button
+            type="button"
+            onClick={goBackToStart}
+            className={styles.backLink}
+            aria-label="Volver"
+            title="Volver"
+          >
+            ←
+          </button>
         )}
+
         <div className={styles.content}>
-          {/* Header row with back button at top-left */}
           <div className={styles.headerRow}>
             <div className={styles.title}>
               <h1 className={styles.heading}>
@@ -86,7 +103,7 @@ function Login() {
             )}
 
             {isMember && (
-              <form className={styles.loginForm} onSubmit={login} noValidate>
+              <form className={styles.loginForm} onSubmit={handleSubmit} noValidate>
                 {error && (
                   <div
                     className={styles.errorBox}
@@ -109,10 +126,11 @@ function Login() {
                   autoComplete="username"
                   required
                   onInput={() => setError("")}
+                  inputMode="numeric"
                 />
 
                 <label className={styles.label} htmlFor="pass">
-                  Matricula
+                  Matrícula
                 </label>
                 <input
                   id="pass"
@@ -127,17 +145,14 @@ function Login() {
 
                 <div className={styles.formActions}>
                   <Button
-                    className={styles.cta}
+                    submit            
                     variant="primary"
                     size="md"
-                    type="submit"
+                    className={styles.cta}
+                    disabled={loading}
+                    aria-busy={loading}
                   >
-                    <a
-                      href="https://colegiomedicocorrientes.com/"
-                      className={styles.goLogin}
-                    >
-                      Ingresar
-                    </a>
+                    {loading ? "Ingresando..." : "Ingresar"}
                   </Button>
                 </div>
               </form>
@@ -146,9 +161,9 @@ function Login() {
 
           <div className={styles.divider} aria-hidden />
           <div className={styles.bottomLinks}>
-            <Link to="/recover" className={styles.link}>
+            {/* <Link to="/recover" className={styles.link}>
               Recuperar cuenta
-            </Link>
+            </Link> */}
             {!isMember && (
               <Link to="/info" className={styles.linkMuted}>
                 Requisitos para Registrarse

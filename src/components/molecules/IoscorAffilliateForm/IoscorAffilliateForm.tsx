@@ -1,21 +1,19 @@
 "use client";
 
 import type React from "react";
-
 import { useMemo, useRef, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Award as IdCard,
   Check,
   ChevronDown,
-  ExternalLink,
+  X as ClearIcon,
 } from "lucide-react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import styles from "./IoscorAffilliateForm.module.scss";
 import Button from "../../atoms/Button/Button";
 
-/* ---------------- Types ---------------- */
 export type PracticeInput = {
   dni: string;
   orderMode: "Auto" | "Manual";
@@ -59,7 +57,6 @@ type Props = {
   loading?: boolean;
 };
 
-/* ---------------- Mock data ---------------- */
 const FAKE_CODES: Record<string, string> = {
   "420101": "CONSULTA COMÚN",
   "331001": "RADIOGRAFÍA",
@@ -68,15 +65,24 @@ const FAKE_CODES: Record<string, string> = {
 };
 
 const OBRA_SOC = [
-  { code: "309", name: "Anatomía Patológica" },
-  { code: "312", name: "Commplementaria" },
-  { code: "315", name: "Traumatología" },
-  { code: "338", name: "Cardiocentro" },
+  { code: "304", name: "IOScor" },
+  { code: "306", name: "IOScor (Plan Beta)" },
+  { code: "307", name: "IOScor (Plan Materno Inf.)" },
+  { code: "309", name: "IOScor (Anatomía Patológica)" },
+  { code: "292", name: "IOScor (Urología)" },
+  { code: "305", name: "IOScor (Interior)" },
+  { code: "312", name: "IOScor (Complementaria)" },
+  { code: "315", name: "IOScor (Traumatología)" },
+  { code: "316", name: "IOScor (Hemoterapia)" },
+  { code: "75", name: "IOScor (Alta Complejidad)" },
+  { code: "328", name: "IOSCOR (CLINICA DEL IBERA )" },
+  { code: "319", name: "IOSCOR (PRAC. INTERNADOS)" },
+  { code: "337", name: "IOSCOR (C.del NINO)" },
+  { code: "338", name: "IOSCOR (CARDIOCENTRO)" },
 ];
 
 const onlyDigits = (v: string) => v.replace(/\D/g, "");
 
-/* ================================================================== */
 export default function IoscorAffilliateForm({
   onCreate,
   onUpdate,
@@ -84,14 +90,34 @@ export default function IoscorAffilliateForm({
   onCancelEdit,
   loading,
 }: Props) {
-  /* ----- state (will be hydrated when editingRow changes) ----- */
+  const id = {
+    dni: "dni",
+    fecha: "fecha",
+    socio: "socio",
+    codigo: "codigo",
+    cant: "cant",
+    ses: "ses",
+    ordenModo: "orden_modo",
+    ordenNum: "orden_num",
+    obra: "obra",
+    ultimo: "ultimo",
+    markHonor: "mark_hon",
+    markGasto: "mark_gas",
+    markAyud: "mark_ayu",
+    percHon: "perc_hon",
+    percGas: "perc_gas",
+    percAyu: "perc_ayu",
+  };
+
   const [dni, setDni] = useState("");
-  const [orderMode, setOrderMode] = useState<"Auto" | "Manual">("Auto");
+  const [socio, setSocio] = useState("");
+
+  const [orderMode, setOrderMode] = useState<"Auto" | "Manual">("Manual");
   const [orderNumber, setOrderNumber] = useState("");
+
   const [cantidad, setCantidad] = useState<number>(1);
   const [sesiones, setSesiones] = useState<number>(1);
 
-  // Fecha (react-datepicker)
   const [fechaObj, setFechaObj] = useState<Date>(new Date());
   const fechaISO = useMemo(
     () =>
@@ -101,30 +127,25 @@ export default function IoscorAffilliateForm({
     [fechaObj]
   );
 
-  // CÓDIGO as single-input combobox
-  const [codigoInput, setCodigoInput] = useState("420101 / CONSULTA COMÚN");
-  const [codigoValue, setCodigoValue] = useState("420101");
+  const [codigoInput, setCodigoInput] = useState("");
+  const [codigoValue, setCodigoValue] = useState("");
   const [codeOpen, setCodeOpen] = useState(false);
   const codeBoxRef = useRef<HTMLDivElement | null>(null);
 
   const codeMatches = useMemo(() => {
     const q = codigoInput.toLowerCase().trim();
-    if (!q) return Object.entries(FAKE_CODES).slice(0, 8);
-    return Object.entries(FAKE_CODES)
-      .filter(
-        ([code, name]) => code.includes(q) || name.toLowerCase().includes(q)
-      )
-      .slice(0, 8);
+    if (!q) return Object.entries(FAKE_CODES);
+    return Object.entries(FAKE_CODES).filter(
+      ([c, n]) => c.includes(q) || n.toLowerCase().includes(q)
+    );
   }, [codigoInput]);
 
   const isCodigoOk = useMemo(() => !!FAKE_CODES[codigoValue], [codigoValue]);
-
   const handleCodePick = (code: string, label: string) => {
     setCodigoValue(code);
     setCodigoInput(`${code} / ${label}`);
     setCodeOpen(false);
   };
-
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
       if (!codeBoxRef.current) return;
@@ -134,47 +155,14 @@ export default function IoscorAffilliateForm({
     return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
-  // OBRA SOCIAL: single-input combobox (write or pick)
-  const [obraInput, setObraInput] = useState("304 - IOSCOR");
   const [obraSocCode, setObraSocCode] = useState("304");
-  const [obraOpen, setObraOpen] = useState(false);
-  const obraBoxRef = useRef<HTMLDivElement | null>(null);
-
-  const obraSocName =
-    OBRA_SOC.find((o) => o.code === obraSocCode)?.name ??
-    (obraInput.includes("-")
-      ? obraInput.split("-").slice(1).join("-").trim()
-      : "Personalizada");
-
-  const obraMatches = useMemo(() => {
-    const q = obraInput.toLowerCase().trim();
-    if (!q) return OBRA_SOC.slice(0, 8);
-    return OBRA_SOC.filter(
-      (o) =>
-        o.code.includes(q) ||
-        `${o.code} - ${o.name}`.toLowerCase().includes(q) ||
-        o.name.toLowerCase().includes(q)
-    ).slice(0, 8);
-  }, [obraInput]);
-
-  const handleObraPick = (code: string, label: string) => {
-    setObraSocCode(code);
-    setObraInput(`${code} - ${label}`);
-    setObraOpen(false);
-  };
-
-  useEffect(() => {
-    const onDocClick = (e: MouseEvent) => {
-      if (!obraBoxRef.current) return;
-      if (!obraBoxRef.current.contains(e.target as Node)) setObraOpen(false);
-    };
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, []);
+  const obraSocName = useMemo(
+    () => OBRA_SOC.find((o) => o.code === obraSocCode)?.name ?? "IOScor",
+    [obraSocCode]
+  );
 
   const [ultimoNumero, setUltimoNumero] = useState("");
 
-  // Marcar + %
   const [markHonorario, setMarkHonorario] = useState(true);
   const [markGasto, setMarkGasto] = useState(false);
   const [markAyudante, setMarkAyudante] = useState(false);
@@ -182,15 +170,13 @@ export default function IoscorAffilliateForm({
   const [percGasto, setPercGasto] = useState(100);
   const [percAyudante, setPercAyudante] = useState(100);
 
-  /* ----- hydrate form when editingRow changes ----- */
   useEffect(() => {
     if (!editingRow) return;
-
     setDni(editingRow.dni);
     setOrderMode(editingRow.orderMode);
     setOrderNumber(editingRow.orderNumber ?? "");
     setCantidad(editingRow.cantidad);
-    setSesiones(1); // not in row -> keep 1 or adapt if you store it
+    setSesiones(1);
     setFechaObj(new Date(editingRow.fecha));
     setCodigoValue(editingRow.codigo);
     setCodigoInput(
@@ -198,10 +184,7 @@ export default function IoscorAffilliateForm({
         ? `${editingRow.codigo} / ${FAKE_CODES[editingRow.codigo]}`
         : editingRow.codigo
     );
-
     setObraSocCode(editingRow.obraSocCode);
-    setObraInput(`${editingRow.obraSocCode} - ${editingRow.obraSocName}`);
-
     setUltimoNumero("");
     setMarkHonorario((editingRow.percHonorario ?? 0) > 0);
     setMarkGasto((editingRow.percGasto ?? 0) > 0);
@@ -211,7 +194,6 @@ export default function IoscorAffilliateForm({
     setPercAyudante(editingRow.percAyudante ?? 100);
   }, [editingRow]);
 
-  /* ----- validations ----- */
   const canSubmit = useMemo(() => {
     const dniOk = onlyDigits(dni).length >= 7;
     const cantOk = cantidad > 0;
@@ -221,7 +203,6 @@ export default function IoscorAffilliateForm({
     return dniOk && cantOk && sesOk && codOk && obraOk && !loading;
   }, [dni, cantidad, sesiones, codigoValue, obraSocCode, loading]);
 
-  /* ----- submit ----- */
   const toPayload = (): PracticeInput => ({
     dni: onlyDigits(dni),
     orderMode,
@@ -230,7 +211,7 @@ export default function IoscorAffilliateForm({
     sesiones,
     fecha: fechaISO,
     codigo: codigoValue,
-    obraSocCode: onlyDigits(obraSocCode),
+    obraSocCode,
     obraSocName,
     ultimoNumero: ultimoNumero.trim() || undefined,
     markHonorario,
@@ -244,14 +225,12 @@ export default function IoscorAffilliateForm({
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!canSubmit) return;
-
     const payload = toPayload();
-    if (editingRow) {
-      onUpdate(editingRow.id, payload);
-    } else {
+    if (editingRow) onUpdate(editingRow.id, payload);
+    else {
       onCreate(payload);
-      // soft reset (keep some defaults)
       setDni("");
+      setSocio("");
       setOrderNumber("");
       setCantidad(1);
       setSesiones(1);
@@ -269,318 +248,330 @@ export default function IoscorAffilliateForm({
 
   return (
     <div className={styles.wrapper}>
-      <div className={styles.infoBanner}>
-        <p className={styles.bannerText}>
-          Para consultar por el estado de un afiliado, haga click aquí
-        </p>
-        <a
-          href="https://ioscor.gob.ar/beneficiarios/verifica_estado"
-          className={styles.bannerLink}
-        >
-          Consultar Estado
-          <ExternalLink size={16} />
-        </a>
-      </div>
-
       <motion.form
         onSubmit={submit}
         className={styles.panel}
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: 0.2 }}
       >
         <div className={styles.panelHead}>
           <div className={styles.headIcon}>
-            <IdCard size={20} />
+            <IdCard size={18} />
           </div>
           <div className={styles.headTitle}>
-            {editingRow ? "Editar Práctica" : "Ingresar Nueva Práctica"}
+            Ingresar Nueva Practica - <b>Periodo Actual</b>
           </div>
         </div>
 
-        <div className={styles.panelBody}>
-          <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>Información del Paciente</h3>
-            <div className={styles.grid}>
-              <label className={styles.field}>
-                <span className={styles.label}>Número de Documento</span>
-                <input
-                  className={styles.input}
-                  value={dni}
-                  onChange={(e) => setDni(e.target.value)}
-                  inputMode="numeric"
-                  placeholder="77.153.526"
-                />
-              </label>
+        <div className={styles.formGrid}>
+          <label className={styles.labelCell} htmlFor={id.dni}>
+            N° Documento
+          </label>
+          <div className={styles.fieldCell}>
+            <input
+              id={id.dni}
+              className={styles.input}
+              value={dni}
+              onChange={(e) => setDni(e.target.value)}
+              inputMode="numeric"
+              placeholder="N° Documento"
+            />
+          </div>
 
-              <label className={styles.field}>
-                <span className={styles.label}>Obra Social</span>
-                <div className={styles.combo} ref={obraBoxRef}>
-                  <input
-                    className={`${styles.input} ${styles.comboInput}`}
-                    value={obraInput}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      setObraInput(v);
-                      setObraOpen(true);
-                      const dig = onlyDigits(v);
-                      if (dig) setObraSocCode(dig);
-                    }}
-                    onFocus={() => setObraOpen(true)}
-                    placeholder="304 - IOSCOR"
-                  />
-                  <div
-                    className={styles.comboSuffix}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      setObraOpen((v) => !v);
-                    }}
-                  >
-                    <ChevronDown size={16} />
-                  </div>
-
-                  {obraOpen && obraMatches.length > 0 && (
-                    <ul className={styles.comboList}>
-                      {obraMatches.map((o) => (
-                        <li
-                          key={o.code}
-                          className={styles.comboItem}
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            handleObraPick(o.code, o.name);
-                          }}
-                        >
-                          <span className={styles.itemCode}>{o.code}</span>
-                          <span className={styles.itemLabel}>{o.name}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </label>
-
-              <label className={styles.field}>
-                <span className={styles.label}>Último Número</span>
-                <input
-                  className={styles.input}
-                  value={ultimoNumero}
-                  onChange={(e) => setUltimoNumero(e.target.value)}
-                  placeholder="715106"
-                />
-              </label>
+          <label className={styles.labelCell} htmlFor={id.fecha}>
+            Fecha
+          </label>
+          <div className={styles.fieldCell}>
+            <div className={styles.dateWrap}>
+              <DatePicker
+                id={id.fecha}
+                selected={fechaObj}
+                onChange={(d) => d && setFechaObj(d)}
+                dateFormat="dd/MM/yyyy"
+                className={`${styles.input} ${styles.dateInput}`}
+                popperClassName={styles.datePopper}
+                placeholderText="Fecha"
+              />
             </div>
           </div>
 
-          <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>Detalles de la Práctica</h3>
-            <div className={styles.grid}>
-              <label className={styles.field}>
-                <span className={styles.label}>Código de Práctica</span>
-                <div className={styles.combo} ref={codeBoxRef}>
-                  <input
-                    className={`${styles.input} ${styles.comboInput}`}
-                    value={codigoInput}
-                    onChange={(e) => {
-                      setCodigoInput(e.target.value);
-                      setCodeOpen(true);
-                      const dig = onlyDigits(e.target.value);
-                      if (FAKE_CODES[dig]) setCodigoValue(dig);
-                      else setCodigoValue("");
-                    }}
-                    onFocus={() => setCodeOpen(true)}
-                    placeholder="420101 / CONSULTA COMÚN"
-                  />
-                  <div
-                    className={`${styles.comboSuffix} ${
-                      isCodigoOk ? styles.suffixOk : ""
-                    }`}
-                    title={isCodigoOk ? "Código válido" : "Elegí un código"}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      setCodeOpen((v) => !v);
-                    }}
-                  >
-                    {isCodigoOk ? (
-                      <Check size={16} />
-                    ) : (
-                      <ChevronDown size={16} />
-                    )}
-                  </div>
+          <label className={styles.labelCell} htmlFor={id.socio}>
+            N° Socio
+          </label>
+          <div className={styles.fieldCell}>
+            <div className={styles.combo}>
+              <input
+                id={id.socio}
+                className={`${styles.input} ${styles.comboInput}`}
+                value={socio}
+                onChange={(e) => setSocio(e.target.value)}
+                placeholder="Buscar socio"
+              />
+              {!!socio && (
+                <button
+                  type="button"
+                  className={styles.comboClear}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setSocio("")}
+                  title="Limpiar"
+                  aria-label="Limpiar socio"
+                >
+                  <ClearIcon size={14} />
+                </button>
+              )}
+            </div>
+          </div>
 
-                  {codeOpen && codeMatches.length > 0 && (
-                    <ul className={styles.comboList}>
-                      {codeMatches.map(([code, label]) => (
-                        <li
-                          key={code}
-                          className={styles.comboItem}
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            handleCodePick(code, label);
-                          }}
-                        >
-                          <span className={styles.itemCode}>{code}</span>
-                          <span className={styles.itemLabel}>{label}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </label>
-
-              <label className={styles.field}>
-                <span className={styles.label}>Fecha</span>
-                <div className={styles.dateWrap}>
-                  <DatePicker
-                    selected={fechaObj}
-                    onChange={(d) => d && setFechaObj(d)}
-                    dateFormat="dd/MM/yyyy"
-                    className={`${styles.input} ${styles.dateInput}`}
-                    popperClassName={styles.datePopper}
-                  />
-                </div>
-              </label>
-
-              <label className={styles.field}>
-                <span className={styles.label}>Cantidad</span>
+          <label className={styles.labelCell} htmlFor={id.codigo}>
+            Codigo
+          </label>
+          <div className={styles.fieldCell}>
+            <div className={styles.codeCluster}>
+              <div className={styles.combo} ref={codeBoxRef}>
                 <input
-                  className={styles.input}
+                  id={id.codigo}
+                  className={`${styles.input} ${styles.comboInput}`}
+                  value={codigoInput}
+                  onChange={(e) => {
+                    setCodigoInput(e.target.value);
+                    setCodeOpen(true);
+                    const dig = onlyDigits(e.target.value);
+                    setCodigoValue(FAKE_CODES[dig] ? dig : "");
+                  }}
+                  onFocus={() => setCodeOpen(true)}
+                  placeholder="Buscar codigo"
+                />
+                {!!codigoInput && (
+                  <button
+                    type="button"
+                    className={styles.comboClear}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => {
+                      setCodigoInput("");
+                      setCodigoValue("");
+                    }}
+                    title="Limpiar"
+                    aria-label="Limpiar código"
+                  >
+                    <ClearIcon size={14} />
+                  </button>
+                )}
+                <div
+                  className={`${styles.comboSuffix} ${
+                    isCodigoOk ? styles.suffixOk : ""
+                  }`}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    setCodeOpen((v) => !v);
+                  }}
+                  title={isCodigoOk ? "Código válido" : "Elegí un código"}
+                >
+                  {isCodigoOk ? <Check size={16} /> : <ChevronDown size={16} />}
+                </div>
+
+                {codeOpen && codeMatches.length > 0 && (
+                  <ul className={styles.comboList}>
+                    {codeMatches.map(([code, label]) => (
+                      <li
+                        key={code}
+                        className={styles.comboItem}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          handleCodePick(code, label);
+                        }}
+                      >
+                        <span className={styles.itemCode}>{code}</span>
+                        <span className={styles.itemLabel}>{label}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className={styles.miniInputs}>
+                <label htmlFor={id.cant} className={styles.miniLabel}>
+                  Cant.
+                </label>
+                <input
+                  id={id.cant}
+                  className={`${styles.input} ${styles.inputSm}`}
                   type="number"
                   min={1}
                   value={cantidad}
                   onChange={(e) => setCantidad(Number(e.target.value))}
                 />
-              </label>
-
-              <label className={styles.field}>
-                <span className={styles.label}>Sesiones</span>
+                <label htmlFor={id.ses} className={styles.miniLabel}>
+                  Ses.
+                </label>
                 <input
-                  className={styles.input}
+                  id={id.ses}
+                  className={`${styles.input} ${styles.inputSm}`}
                   type="number"
                   min={1}
                   value={sesiones}
                   onChange={(e) => setSesiones(Number(e.target.value))}
                 />
-              </label>
-            </div>
-          </div>
-
-          <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>Número de Orden</h3>
-            <div className={styles.orderGrid}>
-              <label className={styles.field}>
-                <span className={styles.label}>Modo</span>
-                <select
-                  className={styles.input}
-                  value={orderMode}
-                  onChange={(e) =>
-                    setOrderMode(e.target.value as "Auto" | "Manual")
-                  }
-                >
-                  <option>Auto</option>
-                  <option>Manual</option>
-                </select>
-              </label>
-
-              <label className={styles.field}>
-                <span className={styles.label}>Número de Orden</span>
-                <input
-                  className={styles.input}
-                  disabled={orderMode !== "Manual"}
-                  value={orderNumber}
-                  onChange={(e) => setOrderNumber(e.target.value)}
-                  placeholder="000123"
-                />
-              </label>
-            </div>
-          </div>
-
-          <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>Distribución de Porcentajes</h3>
-            <div className={styles.markWrap}>
-              <div className={styles.markGrid}>
-                <label className={styles.checkRow}>
-                  <input
-                    type="checkbox"
-                    checked={markHonorario}
-                    onChange={(e) => setMarkHonorario(e.target.checked)}
-                  />
-                  <span>Honorario</span>
-                </label>
-                <label className={styles.checkRow}>
-                  <input
-                    type="checkbox"
-                    checked={markGasto}
-                    onChange={(e) => setMarkGasto(e.target.checked)}
-                  />
-                  <span>Gasto</span>
-                </label>
-                <label className={styles.checkRow}>
-                  <input
-                    type="checkbox"
-                    checked={markAyudante}
-                    onChange={(e) => setMarkAyudante(e.target.checked)}
-                  />
-                  <span>Ayudante</span>
-                </label>
-              </div>
-
-              <div className={styles.percentRow}>
-                <span className={styles.percentLabel}>%</span>
-                <input
-                  className={styles.input}
-                  type="number"
-                  min={0}
-                  max={100}
-                  step={1}
-                  disabled={!markHonorario}
-                  value={percHonorario}
-                  onChange={(e) => setPercHonorario(Number(e.target.value))}
-                />
-                <input
-                  className={styles.input}
-                  type="number"
-                  min={0}
-                  max={100}
-                  step={1}
-                  disabled={!markGasto}
-                  value={percGasto}
-                  onChange={(e) => setPercGasto(Number(e.target.value))}
-                />
-                <input
-                  className={styles.input}
-                  type="number"
-                  min={0}
-                  max={100}
-                  step={1}
-                  disabled={!markAyudante}
-                  value={percAyudante}
-                  onChange={(e) => setPercAyudante(Number(e.target.value))}
-                />
               </div>
             </div>
           </div>
 
-          <div className={styles.actions}>
-            {editingRow && (
-              <Button
-                variant="secondary"
-                size="md"
-                onClick={onCancelEdit}
-                type="button"
+          <label className={styles.labelCell} htmlFor={id.ordenNum}>
+            N° Orden
+          </label>
+          <div className={styles.fieldCell}>
+            <div className={styles.orderRow}>
+              <select
+                id={id.ordenModo}
+                className={`${styles.input} ${styles.inputSelect}`}
+                value={orderMode}
+                onChange={(e) =>
+                  setOrderMode(e.target.value as "Auto" | "Manual")
+                }
               >
-                Cancelar
-              </Button>
-            )}
-            <button className={styles.btnSave} disabled={!canSubmit}>
-              {loading
-                ? "Guardando..."
-                : editingRow
-                ? "Actualizar Práctica"
-                : "Guardar Práctica"}
-            </button>
+                <option>Manual</option>
+                <option>Auto</option>
+              </select>
+              <input
+                id={id.ordenNum}
+                className={styles.input}
+                disabled={orderMode !== "Manual"}
+                value={orderNumber}
+                onChange={(e) => setOrderNumber(e.target.value)}
+                placeholder="Ingresar n° orden"
+              />
+            </div>
           </div>
+
+          <label className={styles.labelCell} htmlFor={id.obra}>
+            Ob. Soc
+          </label>
+          <div className={styles.fieldCell}>
+            <select
+              id={id.obra}
+              className={`${styles.input} ${styles.select}`}
+              value={obraSocCode}
+              onChange={(e) => setObraSocCode(e.target.value)}
+            >
+              {OBRA_SOC.map((o) => (
+                <option
+                  key={o.code}
+                  value={o.code}
+                >{`${o.code} - ${o.name}`}</option>
+              ))}
+            </select>
+          </div>
+
+          <span className={styles.labelCell}>Ult. n° guardado</span>
+          <div className={styles.fieldCell}>
+            <input
+              id={id.ultimo}
+              className={styles.input}
+              value={ultimoNumero}
+              onChange={(e) => setUltimoNumero(e.target.value)}
+              placeholder="N° orden"
+              disabled
+            />
+          </div>
+
+          <span className={styles.labelCell}>%</span>
+          <div className={styles.fieldCell}>
+            <div className={styles.percentRow}>
+              <input
+                id={id.percHon}
+                className={`${styles.input} ${styles.inputSm}`}
+                type="number"
+                min={0}
+                max={100}
+                step={1}
+                disabled={!markHonorario}
+                value={percHonorario}
+                onChange={(e) => setPercHonorario(Number(e.target.value))}
+              />
+              <input
+                id={id.percGas}
+                className={`${styles.input} ${styles.inputSm}`}
+                type="number"
+                min={0}
+                max={100}
+                step={1}
+                disabled={!markGasto}
+                value={percGasto}
+                onChange={(e) => setPercGasto(Number(e.target.value))}
+              />
+              <input
+                id={id.percAyu}
+                className={`${styles.input} ${styles.inputSm}`}
+                type="number"
+                min={0}
+                max={100}
+                step={1}
+                disabled={!markAyudante}
+                value={percAyudante}
+                onChange={(e) => setPercAyudante(Number(e.target.value))}
+              />
+            </div>
+          </div>
+
+          <span className={styles.labelCell}>Marcar</span>
+          <div className={styles.fieldCell}>
+            <div className={styles.markGrid}>
+              <label className={styles.checkRow} htmlFor={id.markHonor}>
+                <input
+                  id={id.markHonor}
+                  type="checkbox"
+                  checked={markHonorario}
+                  onChange={(e) => setMarkHonorario(e.target.checked)}
+                />
+                <span>Honorario</span>
+              </label>
+              <label className={styles.checkRow} htmlFor={id.markGasto}>
+                <input
+                  id={id.markGasto}
+                  type="checkbox"
+                  checked={markGasto}
+                  onChange={(e) => setMarkGasto(e.target.checked)}
+                />
+                <span>Gasto</span>
+              </label>
+              <label className={styles.checkRow} htmlFor={id.markAyud}>
+                <input
+                  id={id.markAyud}
+                  type="checkbox"
+                  checked={markAyudante}
+                  onChange={(e) => setMarkAyudante(e.target.checked)}
+                />
+                <span>Ayudante</span>
+              </label>
+            </div>
+          </div>
+
+          <div className={styles.emptyCell} />
+          <div className={styles.emptyCell} />
+        </div>
+
+        <div className={styles.actions}>
+          {editingRow && (
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={onCancelEdit}
+              type="button"
+            >
+              Cancelar
+            </Button>
+          )}
+          <button className={styles.btnSave} disabled={!canSubmit}>
+            {loading
+              ? "Guardando..."
+              : editingRow
+              ? "Actualizar Práctica"
+              : "Guardar"}
+          </button>
         </div>
       </motion.form>
     </div>
   );
 }
+
+// POST /api/ioscor/practicas  Content-Type: application/json  Body: PracticeInput

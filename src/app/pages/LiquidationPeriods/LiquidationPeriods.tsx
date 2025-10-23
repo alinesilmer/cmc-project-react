@@ -10,8 +10,7 @@ import styles from "./LiquidationPeriods.module.scss";
 import PeriodsTable, { type Period } from "../../../components/molecules/PeriodsTable/PeriodsTable";
 import Alert from "../../../components/atoms/Alert/Alert";
 
-import { getJSON } from "../../../lib/http";
-import { API_URL } from "../../../config/env";
+import { getJSON, postJSON } from "../../../lib/http";
 
 type ServerEstado = "a" | "c" | "e" | string | null | undefined;
 
@@ -25,11 +24,11 @@ interface ResumenDto {
   estado: ServerEstado;
 }
 
-type QueryParams = {
-  anio?: number;
-  mes?: number;
-  estado?: "a" | "c" | undefined;
-};
+// type QueryParams = {
+//   anio?: number;
+//   mes?: number;
+//   estado?: "a" | "c" | undefined;
+// };
 
 function parseYYYYMM(input: string): { anio: number; mes: number } | null {
   const s = (input || "").trim();
@@ -69,8 +68,7 @@ function mapDtoToPeriod(dto: ResumenDto): Period {
   };
 }
 
-const BASE = API_URL.replace(/\/$/, "");
-const RESUMEN_URL = `${BASE}/api/liquidacion/resumen`;
+const RESUMEN_URL = "/api/liquidacion/resumen";
 
 const LiquidationPeriods: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -111,27 +109,20 @@ const LiquidationPeriods: React.FC = () => {
 
   // filtros de búsqueda
   const parsed = parseYYYYMM(searchTerm);
-  const buildUrlWithParams = (params: QueryParams) => {
-    const url = new URL(RESUMEN_URL);
-    if (typeof params.anio === "number") url.searchParams.set("anio", String(params.anio));
-    if (typeof params.mes === "number") url.searchParams.set("mes", String(params.mes));
-    url.searchParams.set("skip", "0");
-    url.searchParams.set("limit", "100");
-    return url.toString();
-  };
 
   const fetchResumen = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     setErrorMsg(null);
     try {
-      const url = buildUrlWithParams({
-        anio: parsed?.anio,
-        mes: parsed?.mes,
-      });
-      const json = await getJSON(url);
+      const params: Record<string, any> = { skip: 0, limit: 100 };
+      if (parsed) {
+        params.anio = parsed.anio;
+        params.mes  = parsed.mes;
+      }
+      const json = await getJSON<ResumenDto[]>(RESUMEN_URL, params);
       if (!Array.isArray(json)) throw new Error("Formato de respuesta inesperado del servidor");
-      const serverPeriods = (json as ResumenDto[]).map(mapDtoToPeriod);
+      const serverPeriods = json.map(mapDtoToPeriod);
       setRows(serverPeriods);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Error al obtener períodos";
@@ -179,7 +170,10 @@ const LiquidationPeriods: React.FC = () => {
         const txt = await r.text().catch(() => "");
         throw new Error(txt || `Error ${r.status} al crear el período`);
       }
-      const created = (await r.json()) as ResumenDto;
+      const created = await postJSON<ResumenDto>(RESUMEN_URL, {
+        anio: Number(addYear),
+        mes : Number(addMonth),
+      });
       const newRow = mapDtoToPeriod(created);
       setRows((prev) => [newRow, ...prev].sort((a, b) => b.period.localeCompare(a.period)));
       setOpenAdd(false);

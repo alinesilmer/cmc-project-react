@@ -11,6 +11,7 @@ import InsuranceTable, {
 } from "../../../components/molecules/InsuranceDetailTable/InsuranceDetailTable";
 import styles from "./InsuranceDetail.module.scss";
 
+import { http, postJSON, delJSON } from "../../../lib/http";
 
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
@@ -21,24 +22,17 @@ type LocationState =
     }
   | undefined;
 
-const API_BASE =
-  (import.meta as any).env?.VITE_API_URL ?? "http://localhost:8000";
-
-// === Endpoints back ===
+/* ================== Endpoints (relativos, pasan por el proxy de Vite) ================== */
 const LIQ_RESUMEN = (liqId: string | number) =>
-  `${API_BASE}/api/liquidacion/liquidaciones_por_os/${liqId}`;
+  `/api/liquidacion/liquidaciones_por_os/${liqId}`;
 const LIQ_DETALLES_VISTA = (liqId: string | number) =>
-  `${API_BASE}/api/liquidacion/liquidaciones_por_os/${liqId}/detalles_vista`;
-
-// Débitos/Créditos por DETALLE (by_detalle)
+  `/api/liquidacion/liquidaciones_por_os/${liqId}/detalles_vista`;
 const DC_BY_DETALLE = (detalleId: string | number) =>
-  `${API_BASE}/api/debitos_creditos/by_detalle/${detalleId}`;
-
-
+  `/api/debitos_creditos/by_detalle/${detalleId}`;
 
 const currency = new Intl.NumberFormat("es-AR", { minimumFractionDigits: 0 });
 
-// ---------------- helpers de mapeo robustos ----------------
+/* ---------------- helpers de mapeo robustos ---------------- */
 function parseNumber(n: any, fallback = 0): number {
   if (n === null || n === undefined || n === "") return fallback;
   const v = Number(n);
@@ -46,9 +40,7 @@ function parseNumber(n: any, fallback = 0): number {
 }
 
 function normalizeTipo(raw: any): "N" | "C" | "D" {
-  // preferimos el nuevo campo 'tipo' si viene listo
   if (raw?.tipo === "N" || raw?.tipo === "C" || raw?.tipo === "D") return raw.tipo;
-  // fallback al viejo: tipo_dc ('d'|'c')
   const t = String(raw?.tipo_dc ?? "").toLowerCase();
   if (t === "d") return "D";
   if (t === "c") return "C";
@@ -61,15 +53,11 @@ function coerceRow(raw: any): InsuranceRow {
   const importe = parseNumber(raw.importe, 0);
   const pagado = parseNumber(raw.pagado, 0);
 
-  // monto preferido: 'monto', fallback: 'monto_dc'
   const monto = parseNumber(raw.monto ?? raw.monto_dc, 0);
-
-  // obs preferida: 'obs', fallback: 'obs_dc'
   const obs = raw.obs ?? raw.obs_dc ?? null;
 
   const tipo = normalizeTipo(raw);
 
-  // total: si el back no lo trae, lo calculamos acá (base importe)
   let total = raw.total;
   if (total === undefined || total === null) {
     total =
@@ -78,12 +66,10 @@ function coerceRow(raw: any): InsuranceRow {
       importe;
   }
 
-  // xCant: si no vino directo, lo armamos con cantidad/cantidad_tratamiento
   const xCant =
     raw.xCant ??
     `${parseNumber(raw.cantidad, 1)}-${parseNumber(raw.cantidad_tratamiento, 1)}`;
 
-  // Fecha a dd/mm/aaaa si vino en ISO
   const fechaStr =
     typeof raw.fecha === "string" && raw.fecha.length >= 8
       ? new Date(raw.fecha).toLocaleDateString("es-AR")
@@ -106,14 +92,14 @@ function coerceRow(raw: any): InsuranceRow {
     coseguro: parseNumber(raw.coseguro, 0),
     importe,
     pagado,
-    tipo,   // "N" default si no hay DC
-    monto,  // 0 default si no hay DC
-    obs,    // null default si no hay DC
+    tipo,
+    monto,
+    obs,
     total: parseNumber(total, importe),
   };
 }
 
-// ---------------- exportar a Excel ----------------
+/* ---------------- exportar a Excel ---------------- */
 async function exportInsuranceRowsToExcel(period: string, rows: InsuranceRow[]) {
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet(`Período ${period}`);
@@ -150,35 +136,31 @@ async function exportInsuranceRowsToExcel(period: string, rows: InsuranceRow[]) 
   saveAs(blob, `detalle_${period}.xlsx`);
 }
 
-// ---------------- exportar D/C a PDF ----------------
+/* ---------------- exportar D/C a PDF ---------------- */
 async function exportDebCredToPDF(
   period: string,
   rows: InsuranceRow[],
   insuranceName: string,
   nroLiquidacion?: string
 ) {
-  // Import dinámico (necesitás instalar deps: npm i jspdf jspdf-autotable)
   const { jsPDF } = await import("jspdf");
   const autoTable = (await import("jspdf-autotable")).default as any;
 
-  // Filtramos SOLO filas con DC válidos
   const dcRows = rows.filter(
     (r) => (r.tipo === "D" || r.tipo === "C") && Number(r.monto) > 0
   );
 
-  // Early-return si no hay nada
-  if (dcRows.length === 0) {
+  const sortedDCRows = dcRows.sort((a, b) =>
+    String(a.nombreSocio).toLowerCase().localeCompare(String(b.nombreSocio).toLowerCase())
+  );
+
+  if (sortedDCRows.length === 0) {
     alert("No hay débitos/créditos para exportar.");
     return;
   }
 
-  const doc = new jsPDF({
-    orientation: "landscape",
-    unit: "pt",
-    format: "A4",
-  });
+  const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "A4" });
 
-  // Encabezado
   const left = 40;
   let y = 40;
   doc.setFontSize(14);
@@ -186,21 +168,15 @@ async function exportDebCredToPDF(
   y += 18;
   doc.setFontSize(11);
   doc.text(`Período: ${period}`, left, y);
-  if (nroLiquidacion) {
-    doc.text(`Nro. Liquidación: ${nroLiquidacion}`, left + 220, y);
-  }
+  if (nroLiquidacion) doc.text(`Nro. Liquidación: ${nroLiquidacion}`, left + 220, y);
 
-  // Tabla
   const currency = new Intl.NumberFormat("es-AR", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
 
-  const head = [
-    ["Tipo", "Socio", "Nro de prestación", "Observaciones", "Monto", "Código"],
-  ];
-
-  const body = dcRows.map((r) => [
+  const head = [["Tipo", "Socio", "Nro de prestación", "Observaciones", "Monto", "Código"]];
+  const body = sortedDCRows.map((r) => [
     r.tipo ?? "",
     `${r.socio} - ${r.nombreSocio}`.trim(),
     String(r.nroOrden ?? ""),
@@ -216,26 +192,20 @@ async function exportDebCredToPDF(
     styles: { fontSize: 9, cellPadding: 6, halign: "left", valign: "middle" },
     headStyles: { fillColor: [27, 86, 255], textColor: 255 },
     columnStyles: {
-      0: { cellWidth: 40 },  // Tipo
-      1: { cellWidth: 200 }, // Socio
-      2: { cellWidth: 90 }, // Nro de prestación
-      3: { cellWidth: 200 }, // Observaciones
-      4: { cellWidth: 70, halign: "right" }, // Monto
-      5: { cellWidth: 70 }, // Código
+      0: { cellWidth: 40 },
+      1: { cellWidth: 200 },
+      2: { cellWidth: 90 },
+      3: { cellWidth: 200 },
+      4: { cellWidth: 70, halign: "right" },
+      5: { cellWidth: 70 },
     },
-    didDrawPage: (data: any) => {
-      console.log(data)
-      // Footer con número de página
+    didDrawPage: () => {
       const pageSize = doc.internal.pageSize;
       const pageHeight = pageSize.height ?? pageSize.getHeight();
       const pageWidth = pageSize.width ?? pageSize.getWidth();
       const page = (doc as any).internal.getNumberOfPages();
       doc.setFontSize(9);
-      doc.text(
-        `Página ${page}`,
-        pageWidth - 60,
-        pageHeight - 16
-      );
+      doc.text(`Página ${page}`, pageWidth - 60, pageHeight - 16);
     },
   });
 
@@ -252,7 +222,7 @@ type ResumenOS = {
   total_bruto: string;
   total_debitos: string;
   total_neto: string;
-  estado : string;
+  estado: string;
 };
 
 type ServerRowOut = {
@@ -285,7 +255,6 @@ function applyServerRecalc(
   setRowsFn: React.Dispatch<React.SetStateAction<InsuranceRow[]>>,
   setResumenFn: React.Dispatch<React.SetStateAction<ResumenOS | null>>
 ) {
-  // 1) Actualizar la fila en memoria
   const r = data.row;
   setRowsFn((prev) =>
     prev.map((item) =>
@@ -295,7 +264,6 @@ function applyServerRecalc(
             tipo: r.tipo,
             monto: r.monto,
             obs: r.obs ?? "",
-            // mantenemos importe/pagado por si el back decidió actualizarlos
             importe: r.importe ?? item.importe,
             pagado: r.pagado ?? item.pagado,
             total: r.total,
@@ -304,7 +272,6 @@ function applyServerRecalc(
     )
   );
 
-  // 2) Actualizar resumen de badges (usa tu shape ResumenOS)
   setResumenFn((prev) => {
     const current: ResumenOS =
       prev ?? {
@@ -317,7 +284,7 @@ function applyServerRecalc(
         total_bruto: "0",
         total_debitos: "0",
         total_neto: "0",
-        estado : "A"
+        estado: "A",
       };
     return {
       ...current,
@@ -328,23 +295,6 @@ function applyServerRecalc(
     };
   });
 }
-
-// const ALLOW_PAGE_SIZE_SELECT = false; // o false si querés ocultar el select y dejar 50 fijo
-
-// const PAGER_LABELS = {
-//   rowsPerPage: "Filas por página",
-//   page: "Página",
-//   of: "de",
-//   previous: "Anterior",
-//   next: "Siguiente",
-//   first: "«",
-//   last: "»",
-//   showing: "Mostrando",
-//   toSep: "–",
-//   ofTotal: "de",
-// } as const;
-
-
 
 const InsuranceDetail: React.FC = () => {
   // params esperados: /liquidation/:id/insurance/:osId/:period/:liquidacionId
@@ -372,101 +322,75 @@ const InsuranceDetail: React.FC = () => {
 
   const [q, setQ] = useState("");
   const isOpen = String(resumen?.estado ?? "A").trim().toUpperCase() === "A";
-  // const [debouncedQ, setDebouncedQ] = useState("");
 
-  // useEffect(() => {
-  //   const id = setTimeout(() => setDebouncedQ(q.trim()), 350);
-  //   return () => clearTimeout(id);
-  // }, [q]);
-
-  // useEffect(() => {
-  //   setPage(1);
-  // }, [debouncedQ]);
-
-  // --- Paginación ---
-  // const [page, setPage] = useState(1);      // página 1-based
-  // const [limit, setLimit] = useState(50);   // tamaño de página
-  // const [total, setTotal] = useState(0);    // total de filas en el servidor
-
-  // const offset = (page - 1) * limit;
-
-  // const totalPages = Math.max(1, Math.ceil((total || 0) / (limit || 1)));
-  // const canPrev = page > 1;
-  // const canNext = page < totalPages;
-  // const start = total === 0 ? 0 : (page - 1) * limit + 1;
-  // const end = total === 0 ? 0 : Math.min(page * limit, total);
-
-  // ### Cargar solo el resumen por liquidacion_id
+  // ### Cargar solo el resumen por liquidacion_id (mantengo loader/errores)
   useEffect(() => {
+    if (!liqId) return;
     let ignore = false;
     const controller = new AbortController();
     (async () => {
       setErr(null);
       try {
-        const r1 = await fetch(LIQ_RESUMEN(liqId), { signal: controller.signal });
-        if (!r1.ok) throw new Error(`Error ${r1.status} al obtener resumen`);
-        const resumenJson: ResumenOS = await r1.json();
-        if (!ignore) setResumen(resumenJson);
+        const { data } = await http.get<ResumenOS>(LIQ_RESUMEN(liqId), {
+          signal: controller.signal,
+        });
+        if (!ignore) setResumen(data);
       } catch (e: any) {
-        if (!ignore && e?.name !== "AbortError") setErr(e?.message || "No se pudo cargar el resumen.");
+        if (!ignore && e?.name !== "AbortError" && e?.code !== "ERR_CANCELED") {
+          setErr(e?.message || "No se pudo cargar el resumen.");
+        }
       }
     })();
-    return () => { ignore = true; controller.abort(); };
+    return () => {
+      ignore = true;
+      controller.abort();
+    };
   }, [liqId]);
 
-  // ### Cargar vista de detalles paginada (offset/limit)
+  // ### Cargar vista de detalles (mantengo loader/errores)
   useEffect(() => {
+    if (!liqId) return;
     let ignore = false;
     const controller = new AbortController();
     (async () => {
       setLoading(true);
       setErr(null);
       try {
-        const url = new URL(LIQ_DETALLES_VISTA(liqId));
-        // SIN offset/limit ni q
-        const r2 = await fetch(url.toString(), { signal: controller.signal });
-        if (!r2.ok) throw new Error(`Error ${r2.status} al obtener detalle`);
-        const detalleVista = await r2.json();
-        const mapped: InsuranceRow[] = (detalleVista ?? []).map(coerceRow);
+        const { data } = await http.get<any[]>(
+          LIQ_DETALLES_VISTA(liqId),
+          { signal: controller.signal }
+        );
+        const mapped: InsuranceRow[] = (data ?? []).map(coerceRow);
         if (!ignore) setRows(mapped);
       } catch (e: any) {
-        if (!ignore && e?.name !== "AbortError") setErr(e?.message || "No se pudo cargar el detalle.");
+        if (!ignore && e?.name !== "AbortError" && e?.code !== "ERR_CANCELED") {
+          setErr(e?.message || "No se pudo cargar el detalle.");
+        }
       } finally {
         if (!ignore) setLoading(false);
       }
     })();
-    return () => { ignore = true; controller.abort(); };
+    return () => {
+      ignore = true;
+      controller.abort();
+    };
   }, [liqId]);
 
-  // ### Crear/editar/eliminar DC por detalle
   // TIP: si tenés auth real, cambiá este userId (lo necesita el back al crear)
   const CURRENT_USER_ID = 10;
 
-  // ====== REEMPLAZÁ tus funciones upsertDC y deleteDC por estas ======
+  // ====== upsert y delete DC usando helpers ======
   const upsertDC = useCallback(
     async (
       detalleId: number | string,
       payload: { tipo: "D" | "C"; monto: number; observacion?: string }
     ) => {
-      const resp = await fetch(DC_BY_DETALLE(detalleId), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tipo: payload.tipo.toLowerCase(), // back usa 'd' | 'c'
-          monto: payload.monto,
-          observacion: payload.observacion ?? null,
-          created_by_user: CURRENT_USER_ID,
-        }),
+      const data = await postJSON<ServerRecalcOut>(DC_BY_DETALLE(detalleId), {
+        tipo: payload.tipo.toLowerCase(), // back usa 'd' | 'c'
+        monto: payload.monto,
+        observacion: payload.observacion ?? null,
+        created_by_user: CURRENT_USER_ID,
       });
-
-      if (!resp.ok) {
-        const t = await resp.text().catch(() => "");
-        throw new Error(
-          `Fallo guardar débito/crédito (${resp.status}): ${t || resp.statusText}`
-        );
-      }
-
-      const data: ServerRecalcOut = await resp.json();
       applyServerRecalc(data, setRows, setResumen);
       return data;
     },
@@ -474,19 +398,12 @@ const InsuranceDetail: React.FC = () => {
   );
 
   const deleteDC = useCallback(async (detalleId: number | string) => {
-    const resp = await fetch(DC_BY_DETALLE(detalleId), { method: "DELETE" });
-    if (!resp.ok) {
-      const t = await resp.text().catch(() => "");
-      throw new Error(
-        `Fallo eliminar débito/crédito (${resp.status}): ${t || resp.statusText}`
-      );
-    }
-    const data: ServerRecalcOut = await resp.json();
+    const data = await delJSON<ServerRecalcOut>(DC_BY_DETALLE(detalleId));
     applyServerRecalc(data, setRows, setResumen);
     return data;
   }, []);
 
-  // ### Integración con la tabla: al guardar desde el drawer (sin cálculo local)
+  // Guardar cambios desde la tabla (misma lógica)
   const handleSaveRow = useCallback(
     async (draft: InsuranceRow) => {
       const detalleId = draft.det_id;
@@ -509,11 +426,6 @@ const InsuranceDetail: React.FC = () => {
     },
     [deleteDC, upsertDC]
   );
-
-  // const totalImporte = useMemo(
-  //   () => rows.reduce((s, r) => s + (r.total ?? 0), 0),
-  //   [rows]
-  // );
 
   return (
     <div className={styles.page}>
@@ -549,9 +461,6 @@ const InsuranceDetail: React.FC = () => {
               )}
             </div>
             <div className={styles.headerRight}>
-              {/* <div className={styles.totalPill}>
-                Total Importe: <strong>${currency.format(totalImporte)}</strong>
-              </div> */}
               <Button
                 variant="success"
                 onClick={() => exportInsuranceRowsToExcel(period, rows)}
@@ -578,7 +487,6 @@ const InsuranceDetail: React.FC = () => {
               >
                 PDF
               </Button>
-
             </div>
           </div>
 

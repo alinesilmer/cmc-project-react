@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import styles from "./Info.module.scss";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 type Item = {
   id: string;

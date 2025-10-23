@@ -1,7 +1,7 @@
 /* Panel Container */
 .panel {
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 8px;
   overflow: hidden;
   background: #ffffff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
@@ -11,7 +11,7 @@
 .panelHead {
   background: linear-gradient(135deg, #5b2c6f 0%, #7b3f8f 100%);
   color: #ffffff;
-  padding: 16px 20px;
+  padding: 10px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -20,15 +20,15 @@
 
 .panelTitle {
   font-weight: 600;
-  font-size: 1.1rem;
+  font-size: 0.875rem;
   margin: 0;
   letter-spacing: -0.01em;
 }
 
 .panelCount {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   background: rgba(255, 255, 255, 0.2);
-  padding: 4px 12px;
+  padding: 3px 10px;
   border-radius: 20px;
   font-weight: 500;
 }
@@ -43,17 +43,17 @@
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  font-size: 0.9rem;
+  font-size: 0.75rem;
 }
 
 /* Table Header */
 .table thead th {
   text-align: left;
-  font-size: 0.8rem;
+  font-size: 0.6875rem;
   font-weight: 600;
   color: #6b7280;
   background: #f9fafb;
-  padding: 14px 16px;
+  padding: 10px 12px;
   border-bottom: 2px solid #e5e7eb;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -70,7 +70,7 @@
 }
 
 .tr td {
-  padding: 14px 16px;
+  padding: 10px 12px;
   border-bottom: 1px solid #f3f4f6;
   color: #374151;
 }
@@ -88,7 +88,7 @@
   white-space: nowrap;
   font-weight: 600;
   color: #5b2c6f;
-  font-size: 0.9rem;
+  font-size: 0.75rem;
 }
 
 /* DNI Column */
@@ -99,18 +99,18 @@
 .dniWrap {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .dni {
   font-weight: 600;
   color: #111827;
-  font-size: 0.95rem;
+  font-size: 0.8125rem;
 }
 
 .okIcon {
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   display: grid;
   place-items: center;
   border: 1.5px solid rgba(16, 185, 129, 0.3);
@@ -122,7 +122,7 @@
 
 /* Obra Social Column */
 .tdObra {
-  max-width: 200px;
+  max-width: 180px;
 }
 
 .obraWrap {
@@ -134,12 +134,12 @@
 .obraCode {
   font-weight: 600;
   color: #5b2c6f;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
 }
 
 .obraName {
   color: #6b7280;
-  font-size: 0.8rem;
+  font-size: 0.6875rem;
 }
 
 /* Other Columns */
@@ -148,6 +148,7 @@
 .tdFecha {
   white-space: nowrap;
   color: #4b5563;
+  font-size: 0.75rem;
 }
 
 .tdCodigo {
@@ -166,28 +167,28 @@
   display: inline-block;
   background: #f3f4f6;
   color: #374151;
-  padding: 4px 10px;
-  border-radius: 6px;
+  padding: 3px 8px;
+  border-radius: 4px;
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.6875rem;
   border: 1px solid #e5e7eb;
 }
 
 .pctEmpty {
   color: #d1d5db;
-  font-size: 1.2rem;
+  font-size: 1rem;
 }
 
 /* Actions Column */
 .thActions,
 .tdActions {
-  width: 160px;
+  width: 140px;
   text-align: right;
 }
 
 .tdActions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   justify-content: flex-end;
   align-items: center;
 }
@@ -195,11 +196,11 @@
 /* Action Buttons */
 .btnEdit,
 .btnDelete {
-  height: 32px;
-  padding: 0 14px;
-  border-radius: 6px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 4px;
   border: 1px solid transparent;
-  font-size: 0.8rem;
+  font-size: 0.6875rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -242,60 +243,218 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 48px 24px;
+  padding: 36px 20px;
   color: #9ca3af;
 }
 
 .emptyIcon {
-  width: 64px;
-  height: 64px;
+  width: 48px;
+  height: 48px;
   color: #d1d5db;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .emptyText {
-  font-size: 1rem;
+  font-size: 0.875rem;
   font-weight: 600;
   color: #6b7280;
   margin: 0 0 4px 0;
 }
 
 .emptyHint {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   color: #9ca3af;
   margin: 0;
 }
 
-/* Responsive Design */
+/* Responsive Design - Tablet */
+@media (max-width: 1024px) {
+  .table {
+    font-size: 0.6875rem;
+  }
+
+  .table thead th {
+    padding: 8px 10px;
+    font-size: 0.625rem;
+  }
+
+  .tr td {
+    padding: 8px 10px;
+  }
+
+  .tdObra {
+    max-width: 150px;
+  }
+
+  .obraName {
+    font-size: 0.625rem;
+  }
+
+  .btnEdit,
+  .btnDelete {
+    height: 26px;
+    padding: 0 10px;
+    font-size: 0.625rem;
+  }
+}
+
+/* Responsive Design - Mobile */
 @media (max-width: 768px) {
   .panelHead {
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
+    gap: 6px;
+    padding: 8px 12px;
+  }
+
+  .panelTitle {
+    font-size: 0.8125rem;
+  }
+
+  .panelCount {
+    font-size: 0.6875rem;
+    padding: 2px 8px;
   }
 
   .table {
-    font-size: 0.85rem;
+    font-size: 0.625rem;
   }
 
   .table thead th {
-    padding: 12px 10px;
-    font-size: 0.75rem;
+    padding: 6px 8px;
+    font-size: 0.5625rem;
   }
 
   .tr td {
-    padding: 12px 10px;
+    padding: 8px;
+  }
+
+  .dni {
+    font-size: 0.75rem;
+  }
+
+  .okIcon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .tdObra {
+    max-width: 120px;
+  }
+
+  .obraCode {
+    font-size: 0.6875rem;
+  }
+
+  .obraName {
+    font-size: 0.5625rem;
+  }
+
+  .tdCodigo,
+  .tdCant,
+  .tdFecha {
+    font-size: 0.6875rem;
+  }
+
+  .pctBadge {
+    padding: 2px 6px;
+    font-size: 0.625rem;
   }
 
   .tdActions {
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
+    width: 100%;
+  }
+
+  .thActions,
+  .tdActions {
+    width: 80px;
   }
 
   .btnEdit,
   .btnDelete {
     width: 100%;
-    height: 28px;
+    height: 24px;
+    font-size: 0.5625rem;
+    padding: 0 6px;
+  }
+
+  .emptyState {
+    padding: 24px 16px;
+  }
+
+  .emptyIcon {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 8px;
+  }
+
+  .emptyText {
     font-size: 0.75rem;
+  }
+
+  .emptyHint {
+    font-size: 0.6875rem;
+  }
+}
+
+/* Responsive Design - Small Mobile */
+@media (max-width: 480px) {
+  .table {
+    font-size: 0.5625rem;
+  }
+
+  .table thead th {
+    padding: 5px 6px;
+    font-size: 0.5rem;
+  }
+
+  .tr td {
+    padding: 6px;
+  }
+
+  .dni {
+    font-size: 0.6875rem;
+  }
+
+  .okIcon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .tdObra {
+    max-width: 100px;
+  }
+
+  .obraCode {
+    font-size: 0.625rem;
+  }
+
+  .obraName {
+    font-size: 0.5rem;
+  }
+
+  .tdCodigo,
+  .tdCant,
+  .tdFecha {
+    font-size: 0.625rem;
+  }
+
+  .pctBadge {
+    padding: 2px 5px;
+    font-size: 0.5625rem;
+  }
+
+  .thActions,
+  .tdActions {
+    width: 70px;
+  }
+
+  .btnEdit,
+  .btnDelete {
+    height: 22px;
+    font-size: 0.5rem;
+    padding: 0 4px;
   }
 }

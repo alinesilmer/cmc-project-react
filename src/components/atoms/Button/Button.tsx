@@ -10,13 +10,11 @@ interface ButtonProps {
   size?: "sm" | "md" | "lg";
   disabled?: boolean;
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
-  /** Opcional: para interacciones instantáneas (tabs, modales, etc.) */
   onPointerDown?: React.PointerEventHandler<HTMLButtonElement>;
-  /** Opcional: fallback si no usás Pointer Events */
   onMouseDown?: React.MouseEventHandler<HTMLButtonElement>;
   type?: "button" | "submit" | "reset";
   className?: string;
-
+  submit?: boolean;
   /** Permite pasar aria-*, data-*, id, title, etc. */
   [key: string]: any;
 }
@@ -30,13 +28,15 @@ const Button: React.FC<ButtonProps> = ({
   onPointerDown,
   onMouseDown,
   type = "button",
+  submit,
   className = "",
   ...rest
 }) => {
+  const computedType: "button" | "submit" | "reset" = submit ? "submit" : (type ?? "button");
   return (
     <motion.button
       className={`${styles.button} ${styles[variant]} ${styles[size]} ${className}`}
-      type={type}
+      type={computedType}
       disabled={disabled}
       onClick={onClick}
       onPointerDown={onPointerDown}

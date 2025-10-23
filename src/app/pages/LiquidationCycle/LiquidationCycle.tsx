@@ -25,27 +25,23 @@ import InsuranceCard from "../../../components/molecules/InsuranceCard/Insurance
 import Alert from "../../../components/atoms/Alert/Alert";
 import styles from "./LiquidationCycle.module.scss";
 
-/* ================== Config ================== */
-const API_BASE =
-  (import.meta as any).env?.VITE_API_URL ?? "http://localhost:8000";
+import { getJSON, postJSON, http } from "../../../lib/http";
 
-const RESUMEN_BY_ID = (id: string | number) =>
-  `${API_BASE}/api/liquidacion/resumen/${id}`;
-const OBRAS_SOCIALES_URL = `${API_BASE}/api/obras_social/`;
+/* ================== Config ================== */
+const RESUMEN_BY_ID = (id: string | number) => `/api/liquidacion/resumen/${id}`;
+const OBRAS_SOCIALES_URL = `/api/obras_social/`;
 
 // Débitos de colegio (solo descuentos; se elimina Especialidades)
-const DESCUENTOS_URL = `${API_BASE}/api/descuentos`;
+const DESCUENTOS_URL = `/api/descuentos`;
 const GEN_DESC_URL = (resumenId: string | number, descId: string | number) =>
-  `${API_BASE}/api/deducciones/${resumenId}/colegio/bulk_generar_descuento/${descId}`;
+  `/api/deducciones/${resumenId}/colegio/bulk_generar_descuento/${descId}`;
 const APLICAR_URL = (resumenId: string | number) =>
-  `${API_BASE}/api/deducciones/${resumenId}/colegio/aplicar`;
+  `/api/deducciones/${resumenId}/colegio/aplicar`;
 
 // Períodos disponibles por OS y creación de liquidación
 const PERIODOS_DISP_URL = (osId: string | number, anio?: number) =>
-  `${API_BASE}/api/periodos/disponibles?obra_social_id=${osId}${
-    anio ? `&anio=${anio}` : ""
-  }`;
-const LIQ_CREAR_URL = `${API_BASE}/api/liquidacion/liquidaciones_por_os/crear`;
+  `/api/periodos/disponibles?obra_social_id=${osId}${anio ? `&anio=${anio}` : ""}`;
+const LIQ_CREAR_URL = `/api/liquidacion/liquidaciones_por_os/crear`;
 
 // Paginación front
 const PAGE_SIZE = 18;
@@ -190,91 +186,71 @@ const LiquidationCycle: React.FC = () => {
   const [addBusy, setAddBusy] = useState(false);
   const [addErr, setAddErr] = useState<string | null>(null);
 
-  // Fetch resumen
+  // Fetch resumen (GET) con cancelación
   useEffect(() => {
-    let ignore = false;
+    if (!id) return;
     const controller = new AbortController();
-
     (async () => {
-      if (!id) return;
       setIsLoading(true);
       setIsError(false);
       setError(null);
       try {
-        const res = await fetch(RESUMEN_BY_ID(id), { signal: controller.signal });
-        if (!res.ok) throw new Error(`Error ${res.status} al obtener el resumen`);
-        const json: ResumenDetail = await res.json();
-        if (!ignore) setData(json);
+        const { data: json } = await http.get<ResumenDetail>(RESUMEN_BY_ID(id), {
+          signal: controller.signal,
+        });
+        setData(json);
       } catch (e: any) {
-        if (!ignore && e?.name !== "AbortError") {
+        if (e?.name !== "CanceledError" && e?.name !== "AbortError") {
           setIsError(true);
           setError(e instanceof Error ? e : new Error(String(e)));
         }
       } finally {
-        if (!ignore) setIsLoading(false);
+        setIsLoading(false);
       }
     })();
-
-    return () => {
-      ignore = true;
-      controller.abort();
-    };
+    return () => controller.abort();
   }, [id]);
 
-  // Fetch OS
+  // Fetch OS (GET) con helpers + cancelación
   useEffect(() => {
-    let ignore = false;
     const controller = new AbortController();
-
     (async () => {
       try {
-        const res = await fetch(OBRAS_SOCIALES_URL, { signal: controller.signal });
-        if (!res.ok) throw new Error(`Error ${res.status} al obtener obras sociales`);
-        const list: RawOS[] = await res.json();
-        if (!ignore) {
-          setOsList(list ?? []);
-          setOsError(null);
-        }
+        const { data: list } = await http.get<RawOS[]>(OBRAS_SOCIALES_URL, {
+          signal: controller.signal,
+        });
+        setOsList(list ?? []);
+        setOsError(null);
       } catch (e: any) {
-        if (!ignore && e?.name !== "AbortError") setOsError(String(e?.message || e));
+        if (e?.name !== "CanceledError" && e?.name !== "AbortError") {
+          setOsError(String(e?.message || e));
+        }
       }
     })();
-
-    return () => {
-      ignore = true;
-      controller.abort();
-    };
+    return () => controller.abort();
   }, []);
 
-  // Cuando entro a la vista “debitos”, cargo descuentos
+  // Cuando entro a la vista “debitos”, cargo descuentos (GET)
   useEffect(() => {
     if (activeView !== "debitos") return;
-
-    let ignore = false;
     const controller = new AbortController();
-
     (async () => {
       setLoadingDeb(true);
       setDebError(null);
       try {
-        const r = await fetch(DESCUENTOS_URL, { signal: controller.signal });
-        if (!r.ok) {
-          const txt = await r.text().catch(() => "");
-          throw new Error(`Descuentos HTTP ${r.status}${txt ? ` - ${txt}` : ""}`);
-        }
-        const list = (await r.json()) as any[];
-        if (!ignore) setDiscounts((list ?? []).map(mapDiscount));
+        const { data: list } = await http.get<any[]>(DESCUENTOS_URL, {
+          signal: controller.signal,
+        });
+        setDiscounts((list ?? []).map(mapDiscount));
       } catch (e: any) {
-        if (!ignore) setDebError(e?.message || "No se pudo cargar descuentos.");
+        if (e?.name !== "CanceledError" && e?.name !== "AbortError") {
+          setDebError(e?.message || "No se pudo cargar descuentos.");
+        }
       } finally {
-        if (!ignore) setLoadingDeb(false);
+        setLoadingDeb(false);
       }
     })();
-
-    return () => {
-      ignore = true;
-      controller.abort();
-    };
+    return () => controller.abort();
   }, [activeView]);
 
   // reset página al cambiar búsqueda
@@ -291,8 +267,8 @@ const LiquidationCycle: React.FC = () => {
 
   const reloadResumen = useCallback(async () => {
     if (!id) return;
-    const res = await fetch(RESUMEN_BY_ID(id));
-    if (res.ok) setData(await res.json());
+    const json = await getJSON<ResumenDetail>(RESUMEN_BY_ID(id));
+    setData(json);
   }, [id]);
 
   const totalBruto = toNumber(data?.total_bruto);
@@ -384,7 +360,6 @@ const LiquidationCycle: React.FC = () => {
   const [editErr, setEditErr] = useState<string | null>(null);
 
   const openEdit = useCallback((d: DiscountRow) => {
-    // Commit inmediato para evitar delay perceptible
     flushSync(() => {
       setEditTarget(d);
       setEditPrice(String(d.price));
@@ -415,15 +390,10 @@ const LiquidationCycle: React.FC = () => {
     if (!editTarget) return;
 
     try {
-      const r = await fetch(`${DESCUENTOS_URL}/${editTarget.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ precio: priceVal, porcentaje: pctVal }),
+      await http.patch(`${DESCUENTOS_URL}/${editTarget.id}`, {
+        precio: priceVal,
+        porcentaje: pctVal,
       });
-      if (!r.ok) {
-        const txt = await r.text().catch(() => "");
-        throw new Error(txt || `Error ${r.status}`);
-      }
       setDiscounts((prev) =>
         prev.map((x) =>
           x.id === editTarget.id ? { ...x, price: priceVal, percentage: pctVal } : x
@@ -466,7 +436,7 @@ const LiquidationCycle: React.FC = () => {
   const goNext = () => setPage((p) => Math.min(totalPages, p + 1));
   const goLast = () => setPage(totalPages);
 
-  // Tabs -> cambian la vista del carrusel (apertura instantánea)
+  // Tabs -> cambian la vista del carrusel
   const onTabObras = useCallback(() => {
     flushSync(() => setActiveView("obras"));
   }, []);
@@ -559,24 +529,10 @@ const LiquidationCycle: React.FC = () => {
       if (row) body = { monto: row.price, porcentaje: row.percentage };
 
       // 1) Generar
-      const genRes = await fetch(generateUrl, {
-        method: "POST",
-        headers: body ? { "Content-Type": "application/json" } : undefined,
-        body: body ? JSON.stringify(body) : undefined,
-      });
-      if (!genRes.ok) {
-        const txt = await genRes.text().catch(() => "");
-        throw new Error(txt || `Error ${genRes.status} al generar`);
-      }
+      await postJSON(generateUrl, body);
 
       // 2) Aplicar
-      const aplRes = await fetch(APLICAR_URL(id), { method: "POST" });
-      if (!aplRes.ok) {
-        const txt = await aplRes.text().catch(() => "");
-        throw new Error(
-          `Se generó, pero falló la aplicación: ${txt || `Error ${aplRes.status}`}`
-        );
-      }
+      await postJSON(APLICAR_URL(id));
 
       // 3) Refrescar resumen
       await reloadResumen();
@@ -593,37 +549,37 @@ const LiquidationCycle: React.FC = () => {
     setGenError(null);
   };
 
-  /* ====== abrir modal agregar período por OS (instantáneo) ====== */
-  const openAddForOS = useCallback((osId: string) => {
-    setAddErr(null);
-    flushSync(() => {
-      setAddTargetOS(osId);
-      setOpenAddPeriod(true);
-      setAddYear("");
-      setAddMonth("");
-      setPeriodosOS([]);
-    });
+  /* ====== abrir modal agregar período por OS ====== */
+  const openAddForOS = useCallback(
+    (osId: string) => {
+      setAddErr(null);
+      flushSync(() => {
+        setAddTargetOS(osId);
+        setOpenAddPeriod(true);
+        setAddYear("");
+        setAddMonth("");
+        setPeriodosOS([]);
+      });
 
-    // Fetch diferido (no bloquea la apertura)
-    startDeferrable(async () => {
-      try {
-        const r = await fetch(PERIODOS_DISP_URL(osId));
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        const list: PeriodoDisp[] = await r.json();
+      // Fetch diferido (no bloquea la apertura)
+      startDeferrable(async () => {
+        try {
+          const list = await getJSON<PeriodoDisp[]>(PERIODOS_DISP_URL(osId));
+          setPeriodosOS(list ?? []);
 
-        setPeriodosOS(list ?? []);
-
-        const thisYear = new Date().getFullYear();
-        const years = Array.from(
-          new Set((list ?? []).map((p) => Number(p.ANIO)))
-        ).sort((a, b) => b - a);
-        const defaultYear = years.includes(thisYear) ? thisYear : years[0] ?? "";
-        setAddYear(defaultYear || "");
-      } catch (e: any) {
-        setAddErr(e?.message || "No se pudieron cargar los períodos disponibles.");
-      }
-    });
-  }, [startDeferrable]);
+          const thisYear = new Date().getFullYear();
+          const years = Array.from(new Set((list ?? []).map((p) => Number(p.ANIO)))).sort(
+            (a, b) => b - a
+          );
+          const defaultYear = years.includes(thisYear) ? thisYear : years[0] ?? "";
+          setAddYear((defaultYear || "") as any);
+        } catch (e: any) {
+          setAddErr(e?.message || "No se pudieron cargar los períodos disponibles.");
+        }
+      });
+    },
+    [startDeferrable]
+  );
 
   const availableYears = useMemo(() => {
     const thisY = new Date().getFullYear();
@@ -667,15 +623,7 @@ const LiquidationCycle: React.FC = () => {
 
     setAddBusy(true);
     try {
-      const r = await fetch(LIQ_CREAR_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!r.ok) {
-        const txt = await r.text().catch(() => "");
-        throw new Error(txt || `Error ${r.status} al crear la liquidación`);
-      }
+      await postJSON(LIQ_CREAR_URL, payload);
       await reloadResumen();
       setOpenAddPeriod(false);
       setAddTargetOS(null);
@@ -704,9 +652,12 @@ const LiquidationCycle: React.FC = () => {
   );
 
   // Búsqueda sin bloquear UI
-  const onQueryChange = useCallback((v: string) => {
-    startDeferrable(() => setQuery(v));
-  }, [startDeferrable]);
+  const onQueryChange = useCallback(
+    (v: string) => {
+      startDeferrable(() => setQuery(v));
+    },
+    [startDeferrable]
+  );
 
   return (
     <div className={styles.liquidationCyclePage}>
@@ -740,7 +691,7 @@ const LiquidationCycle: React.FC = () => {
                     e.preventDefault();
                     flushSync(() => setOpenPreview(true));
                   }}
-                  onClick={() => setOpenPreview(true)} // fallback teclado
+                  onClick={() => setOpenPreview(true)}
                 >
                   Pre-Visualizar
                 </Button>
@@ -923,7 +874,7 @@ const LiquidationCycle: React.FC = () => {
                                           e.preventDefault();
                                           openEdit(d);
                                         }}
-                                        onClick={() => openEdit(d)} // fallback teclado
+                                        onClick={() => openEdit(d)}
                                       >
                                         Editar
                                       </Button>

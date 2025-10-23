@@ -9,6 +9,7 @@ import SearchBar from "../../../components/molecules/SearchBar/SearchBar";
 import Card from "../../../components/atoms/Card/Card";
 import Button from "../../../components/atoms/Button/Button";
 import styles from "./DoctorsList.module.scss";
+import { getJSON } from "../../../lib/http";
 
 type DoctorRow = {
   id: number;
@@ -18,9 +19,6 @@ type DoctorRow = {
   documento: string;
 };
 
-const API_BASE = (import.meta as any).env?.VITE_API_URL ?? "http://localhost:8000";
-const MEDICOS_URL = (q: string) =>
-  `${API_BASE}/api/medicos${q ? `?q=${encodeURIComponent(q)}` : ""}`;
 
 const DoctorsList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -38,9 +36,8 @@ const DoctorsList: React.FC = () => {
       setLoading(true);
       setErr(null);
       try {
-        const res = await fetch(MEDICOS_URL(searchTerm), { signal: controller.signal });
-        if (!res.ok) throw new Error(`Error ${res.status} al cargar médicos`);
-        const data: DoctorRow[] = await res.json();
+        const params = searchTerm ? { q: searchTerm } : undefined;
+        const data = await getJSON<DoctorRow[]>("/api/medicos", params);
         if (!ignore) setRows(data);
       } catch (e: any) {
         if (!ignore && e?.name !== "AbortError") setErr(e?.message || "No se pudieron cargar los médicos");

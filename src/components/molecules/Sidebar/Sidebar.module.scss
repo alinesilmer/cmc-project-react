@@ -1,33 +1,54 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Lexend:wght@100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+
 .sidebar {
-  width: 18vw;
+  position: sticky;
+  top: 0;
   height: 100vh;
+  width: 17vw;
   max-width: 300px;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
   background: v.$white;
   border-right: 1px solid v.$gray-200;
-  padding: v.$spacing-6;
-  
+  padding: v.$spacing-2 v.$spacing-3;
+  transition: width .2s ease;
+}
+
+.logoRow {
+  display: flex;
+  align-items: center;
+  gap: v.$spacing-2;
+  margin-bottom: v.$spacing-4;
+  padding-bottom: v.$spacing-4;
+  border-bottom: 1px solid v.$gray-200;
 }
 
 .logo {
   @include m.flex-center;
-  flex-direction: column;
   gap: 10px;
-  margin-bottom: v.$spacing-8;
-  padding-bottom: v.$spacing-6;
-  border-bottom: 1px solid v.$gray-200;
-
-  .username {
-    font-size: v.$font-size-base;
-    font-weight: v.$font-weight-semibold;
-    color: v.$primary-blue-dark;
-  }
 }
 
 .logoImage {
-  width: 80px;
-  height: 80px;
+  width: 50%;
+  height: 50%;
   border-radius: 50%;
+  object-fit: cover;
 }
+
+
+.toggle {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: v.$border-radius-md;
+  background: none;
+  border: none;
+  color: v.$gray-700;
+  transition: background .2s ease-in-out, color .2s ease-in-out;
+}
+.toggle:hover { background: v.$gray-200; color: v.$gray-900; }
 
 .nav {
   display: flex;
@@ -40,20 +61,83 @@
   align-items: center;
   gap: v.$spacing-3;
   padding: v.$spacing-3 v.$spacing-4;
-  border-radius: v.$border-radius-md;
+  font-family: "Open Sans", sans-serif;
+  font-size: v.$font-size-base;
+  font-weight: 500;
   color: v.$gray-600;
   text-decoration: none;
-  transition: all 0.2s ease-in-out;
-  
-  &:hover {
-    background-color: v.$gray-100;
-    color: v.$gray-900;
-  }
-  
-  &.active {
-    background-color: v.$secondary-blue;
-    color: v.$primary-blue;
-    font-weight: v.$font-weight-medium;
-  }
+  border-radius: v.$border-radius-md;
+  transition: background-color .15s ease, color .15s ease;
+}
+.navItem:hover { background-color: v.$gray-100; color: v.$gray-900; }
+.navItem.active { background-color: v.$secondary-blue; color: v.$primary-blue; font-weight: v.$font-weight-bold; }
+
+.itemLabel { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.spacer {
+  flex-grow: 1;
+  margin-top: 80px;
+  border-bottom: 1px solid v.$gray-200;
+}
+
+.config {
+  margin-top: auto;
+  padding: v.$spacing-4 0;
+  text-align: center;
+  font-size: v.$font-size-sm;
+  color: v.$gray-500;
+  border-bottom: 1px solid v.$gray-200;
+}
+.config a { color: v.$gray-600; text-decoration: none; transition: color .15s ease-in-out; }
+.config a:hover { color: v.$gray-900; }
+
+.configItem {
+  display: flex;
+  align-items: center;
+  gap: v.$spacing-3;
+  padding: v.$spacing-2 v.$spacing-4;
+  border-radius: v.$border-radius-md;
+  font-family: "Open Sans", sans-serif;
+  font-size: v.$font-size-base;
+  font-weight: 500;
+  color: v.$gray-600;
+  text-decoration: none;
+  transition: background-color .15s ease-in-out, color .15s ease-in-out;
+}
+.configItem:hover { background-color: v.$gray-100; color: v.$gray-900; }
+
+.footer {
+  margin-top: auto;
+  padding: v.$spacing-6 0;
+  text-align: center;
+  font-size: v.$font-size-xs;
+  color: v.$gray-500;
+}
+
+.collapsed {
+  width: 80px;
+  min-width: 80px;
+}
+.collapsed .navItem { justify-content: center; padding: v.$spacing-3 0; }
+.collapsed .navItem .itemLabel { display: none; }
+.collapsed .configItem { justify-content: center; }
+.collapsed .configItem .itemLabel { display: none; }
+.collapsed .footer .itemLabel { display: none; }
+.toggle { display: flex; justify-content: center; align-items: center;}
+
+@media (max-width: 1200px) {
+  .sidebar { min-width: 200px; }
+}
+@media (max-width: 1024px) {
+  .sidebar { width: 220px; min-width: 220px; }
+  .collapsed { width: 72px; min-width: 72px; }
+}
+@media (max-width: 768px) {
+  .sidebar { position: fixed; left: 0; top: 0; z-index: 40; width: 78vw; max-width: 300px; border-right: 1px solid v.$gray-200; }
+  .collapsed { width: 76px; min-width: 76px; }
+}
+@media (max-width: 480px) {
+  .sidebar { width: 82vw; }
+  .collapsed { width: 70px; min-width: 70px; }
 }
 

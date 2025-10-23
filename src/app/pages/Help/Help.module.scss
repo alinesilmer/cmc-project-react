@@ -1,0 +1,221 @@
+@import "../../../styles/variables.scss";
+
+/* Contenedor general */
+.wrap {
+    width: 100%;
+  min-height: 100vh;
+  background: $gray-200;
+}
+
+/* Hero superior */
+.hero {
+  position: relative;
+  background: linear-gradient(135deg, $primary-blue 0%, $accent-blue 100%);
+  color: $white;
+  padding: $spacing-8 0 $spacing-12;
+  overflow: hidden;
+}
+
+.brand {
+  font-weight: $font-weight-bold;
+  font-size: $font-size-xl;
+}
+
+.heroLinks {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+
+  a {
+    color: $white;
+    text-decoration: none;
+    font-weight: $font-weight-semibold;
+    opacity: 0.9;
+    transition: opacity .15s ease;
+
+    &:hover { opacity: 1; }
+  }
+}
+
+.btnGhost {
+  padding: $spacing-2 $spacing-4;
+  border-radius: $border-radius-sm;
+  border: 1px solid rgba($white, .6);
+  background: transparent;
+  color: $white;
+  font-weight: $font-weight-semibold;
+}
+
+.btnPrimary {
+  padding: $spacing-2 $spacing-4;
+  border-radius: $border-radius-sm;
+  background: $white;
+  color: $primary-blue-dark;
+  font-weight: $font-weight-bold;
+  box-shadow: $shadow-sm;
+}
+
+/* Título */
+.title {
+  margin: $spacing-8 auto 0;
+  padding: 0 $spacing-4;
+  max-width: 1100px;
+  text-align: center;
+  font-weight: $font-weight-bold;
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+}
+
+/* Buscador */
+.searchRow {
+  display: flex;
+  justify-content: center;
+  padding: $spacing-6 $spacing-4 0;
+}
+
+.search {
+  width: min(900px, 92%);
+  height: 52px;
+  border-radius: $border-radius-xl;
+  background: $white;
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: 0 $spacing-3;
+  box-shadow: $shadow-lg;
+
+  svg { color: $gray-500; }
+
+  input {
+    flex: 1 1 auto;
+    height: 100%;
+    border: none;
+    outline: none;
+    font-size: $font-size-lg;
+    color: $gray-800;
+    background: transparent;
+
+    &::placeholder { color: $gray-400; }
+  }
+}
+
+.searchBtn {
+  height: 38px;
+  padding: 0 $spacing-4;
+  border: none;
+  border-radius: $border-radius-md;
+  background: $primary-blue;
+  color: $white;
+  font-weight: $font-weight-bold;
+  box-shadow: $shadow-sm;
+  transition: background .15s ease;
+
+  &:hover { background: $primary-blue-dark; }
+}
+
+/* Búsquedas populares */
+.popular {
+  max-width: 1100px;
+  margin: $spacing-3 auto 0;
+  padding: 0 $spacing-4 $spacing-8;
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  color: $white;
+  opacity: .95;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-2;
+}
+
+.chip {
+  border: 1px solid rgba($white, .6);
+  background: rgba(255,255,255,.18);
+  color: $white;
+  font-weight: $font-weight-semibold;
+  border-radius: 999px;
+  padding: $spacing-2 $spacing-3;
+  box-shadow: $shadow-sm;
+  transition: transform .12s ease, background .12s ease;
+
+  &:hover { transform: translateY(-1px); background: rgba(255,255,255,.28); }
+}
+
+/* Contenido y tarjetas */
+.content {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: $spacing-10 $spacing-4;
+}
+
+.cardsRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: $spacing-4;
+}
+
+/* Tarjeta */
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-md;
+  padding: $spacing-6 $spacing-5;
+  text-decoration: none;
+  color: inherit;
+
+  flex: 0 1 340px;
+  max-width: 360px;
+  transition: transform .15s ease, box-shadow .15s ease;
+
+  &:hover { transform: translateY(-3px); box-shadow: $shadow-lg; }
+}
+
+.cardIcon {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: $spacing-4;
+  background: $secondary-blue;
+  color: $primary-blue-dark;
+}
+
+.cardTitle {
+  margin: 0 0 $spacing-2 0;
+  color: $primary-blue-dark;
+  font-weight: $font-weight-bold;
+  font-size: $font-size-2xl;
+}
+
+.cardDesc {
+  margin: 0;
+  color: $gray-600;
+  font-size: $font-size-lg;
+  line-height: 1.5;
+}
+
+/* Responsivo */
+@media (max-width: $breakpoint-lg) {
+  .card { flex-basis: 46%; max-width: 480px; }
+}
+
+@media (max-width: $breakpoint-md) {
+  .popular { flex-direction: column; align-items: flex-start; gap: $spacing-2; }
+  .card { flex-basis: 100%; max-width: none; }
+}
+
+@media (max-width: $breakpoint-sm) {
+  .search { height: 48px; }
+  .title { font-size: clamp(1.4rem, 6vw, 2rem); }
+}

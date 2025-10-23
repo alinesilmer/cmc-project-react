@@ -1,0 +1,209 @@
+@import '../../../styles/variables.scss';
+
+.container {
+  padding: $spacing-8;
+  max-width: 1400px;
+  margin: 0 auto;
+  background-color: $gray-50;
+  min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-8;
+}
+
+.title {
+  font-size: $font-size-4xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  margin: 0;
+}
+
+.backButton {
+  padding: $spacing-3 $spacing-5;
+  background-color: $white;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-lg;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  color: $gray-700;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: $gray-100;
+    border-color: $gray-400;
+  }
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: $spacing-6;
+  margin-bottom: $spacing-6;
+}
+
+.statCard {
+  background-color: $white;
+  padding: $spacing-6;
+  border-radius: $border-radius-xl;
+  box-shadow: $shadow-md;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.statValue {
+  font-size: $font-size-4xl;
+  font-weight: $font-weight-bold;
+  color: $primary-blue;
+}
+
+.statLabel {
+  font-size: $font-size-sm;
+  color: $gray-600;
+  font-weight: $font-weight-medium;
+}
+
+.searchBar {
+  margin-bottom: $spacing-6;
+}
+
+.searchInput {
+  width: 100%;
+  padding: $spacing-4;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-lg;
+  font-size: $font-size-base;
+  color: $gray-900;
+  transition: all 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: $primary-blue;
+    box-shadow: 0 0 0 3px rgba($primary-blue, 0.1);
+  }
+
+  &::placeholder {
+    color: $gray-400;
+  }
+}
+
+.tableContainer {
+  background-color: $white;
+  border-radius: $border-radius-xl;
+  box-shadow: $shadow-md;
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+
+  thead {
+    background-color: $gray-100;
+
+    tr {
+      th {
+        padding: $spacing-4;
+        text-align: left;
+        font-size: $font-size-sm;
+        font-weight: $font-weight-semibold;
+        color: $gray-700;
+        border-bottom: 1px solid $gray-200;
+      }
+    }
+  }
+
+  tbody {
+    tr {
+      transition: background-color 0.2s;
+
+      &:hover {
+        background-color: $gray-50;
+      }
+
+      td {
+        padding: $spacing-4;
+        font-size: $font-size-base;
+        color: $gray-900;
+        border-bottom: 1px solid $gray-200;
+      }
+
+      &:last-child td {
+        border-bottom: none;
+      }
+    }
+  }
+}
+
+.nameCell {
+  font-weight: $font-weight-semibold;
+}
+
+.memberTypeBadge {
+  display: inline-block;
+  padding: $spacing-1 $spacing-3;
+  background-color: $secondary-blue;
+  color: $primary-blue;
+  border-radius: $border-radius-md;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: $spacing-1 $spacing-3;
+  border-radius: $border-radius-md;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+}
+
+.statusActive {
+  background-color: lighten($success-green, 45%);
+  color: darken($success-green, 10%);
+}
+
+.statusInactive {
+  background-color: lighten($gray-400, 20%);
+  color: $gray-700;
+}
+
+.emptyState {
+  text-align: center;
+  padding: $spacing-16;
+  background-color: $white;
+  border-radius: $border-radius-xl;
+  box-shadow: $shadow-sm;
+  margin-top: $spacing-6;
+
+  p {
+    font-size: $font-size-lg;
+    color: $gray-500;
+    margin: 0;
+  }
+}
+
+@media (max-width: $breakpoint-md) {
+  .container {
+    padding: $spacing-4;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: $spacing-4;
+  }
+
+  .tableContainer {
+    overflow-x: auto;
+  }
+
+  .table {
+    min-width: 800px;
+  }
+}
