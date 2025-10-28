@@ -1,11 +1,12 @@
 "use client";
-// arriba de todo
-import { registerMedico, DOC_LABEL_MAP, uploadMedicoDocumento } from "./api";
+import { buildRegisterPayload, DOC_LABEL_MAP } from "../Register/api";
+import { registerMedicoAdmin, uploadMedicoDocumentoAdmin } from "./api";
+
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./Register.module.scss";
-import LayoutRegister from "./Layout/Layout";
-import Steps from "./Steps/Steps";
+import LayoutRegister from "../Register/Layout/Layout";
+import Steps from "../Register/Steps/Steps";
 import type { RegisterFormData } from "../../../types/register";
 import arPlaces from "../../../utils/ar-provinces-localities.json";
 import {
@@ -21,19 +22,6 @@ const stepsMeta = [
   { id: 3, title: "Datos Impositivos", icon: "📋" },
   { id: 4, title: "Resumen", icon: "✓" },
 ];
-// const LABEL_MAP: Record<string, string> = {
-//   docNumberImg: "documento",
-//   tituloImg: "titulo",
-//   matNacImg: "matricula_nac",
-//   matProvImg: "matricula_prov",
-//   resolucionImg: "resolucion",
-//   habMunicipal: "habilitacion_municipal",
-//   cuitImg: "cuit",
-//   condImpImg: "condicion_impositiva",
-//   anssalImg: "anssal",
-//   polizaImg: "malapraxis",
-//   cbuImg: "cbu",
-// };
 
 const initialForm: RegisterFormData = {
   // documentType: "",  
@@ -89,7 +77,7 @@ const Register: React.FC = () => {
   const [files, setFiles] = useState<Record<string, File | null>>({});
   const [fileErrs, setFileErrs] = useState<Record<string, string>>({});
 
-  const [askAdherente, setAskAdherente] = useState(true);
+  const [askAdherente, setAskAdherente] = useState(false);
   const [animData, setAnimData] = useState<object | null>(null);
 
   useEffect(() => {
@@ -181,14 +169,16 @@ const Register: React.FC = () => {
 
     try {
       // ✅ ahora registerMedico mapea internamente a RegisterPayload
-      const res = await registerMedico(formData);
-      const medicoId = res.medico_id;
-
-      // 📎 subidas
-      for (const [key, file] of Object.entries(files || {})) {
-        if (!(file instanceof File)) continue;
-        const label = DOC_LABEL_MAP[key]; // puede quedar undefined (se guarda igual en tabla documentos)
-        await uploadMedicoDocumento(medicoId, file, label);
+      const payload = buildRegisterPayload(formData);
+      // 2) alta admin
+      const { medico_id } = await registerMedicoAdmin(payload);  
+      // 3) adjuntos
+      const entries = Object.entries(files || {});
+      for (const [key, file] of entries) {
+      if (!(file instanceof File)) continue;
+      const label = DOC_LABEL_MAP[key as keyof typeof DOC_LABEL_MAP];
+      if (!label) continue;
+      await uploadMedicoDocumentoAdmin(medico_id, file, label);
       }
 
       navigate("/registro/enviado");
@@ -206,17 +196,17 @@ const Register: React.FC = () => {
         currentStep={currentStep}
         onBack={prevStep}
         showBack={currentStep > 1}
-        headerCta={
-          <button
-            className={styles.adherenteLink}
-            onClick={() => navigate("/adherente")}
-          >
-            Quiero ser socio adherente
-          </button>
-        }
+        // headerCta={
+        //   <button
+        //     className={styles.adherenteLink}
+        //     onClick={() => navigate("/adherente")}
+        //   >
+        //     Quiero ser socio adherente
+        //   </button>
+        // }
       >
         <div className={styles.actionBar}>
-          <button className={styles.backBtn} onClick={() => navigate("/login")}>
+          <button className={styles.backBtn} onClick={() => navigate("/users-manager")}>
             Cancelar
           </button>
         </div>

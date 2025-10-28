@@ -26,7 +26,7 @@ const LayoutRegister: React.FC<Props> = ({
       <aside className={styles.sideBar}>
         <div className={styles.progressSequence}>
           <div className={styles.logo}>
-            <img src="/placeholder.svg?height=60&width=100" alt="CMC" />
+            {/* <img src="/placeholder.svg?height=60&width=100" alt="CMC" /> */}
             <h1>Registro de Socio</h1>
           </div>
 
@@ -57,13 +57,13 @@ const LayoutRegister: React.FC<Props> = ({
 
       <main className={styles.main}>
         <header className={styles.headerBar}>
-          {showBack ? (
+          {/* {showBack ? (
             <button type="button" className={styles.backBtn} onClick={onBack}>
               ← Atrás
             </button>
           ) : (
             <span />
-          )}
+          )} */}
           <div className={styles.headerSpacer} />
           {headerCta}
         </header>

@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import styles from "./UsersList.module.scss";
 import { getJSON } from "../../../lib/http";
 import Button from "../../../components/atoms/Button/Button";
+import BackButton from "../../../components/atoms/BackButton/BackButton";
 
 const PAGE_SIZE = 50;
 
@@ -53,15 +54,15 @@ function toUserRow(m: any) {
   return {
     id: m?.ID ?? m?.id ?? m?.NRO_SOCIO ?? Math.random().toString(36).slice(2),
     name: m?.NOMBRE ?? m?.nombre ?? "—",
-    email: m?.MAIL_PARTICULAR ?? m?.email ?? "—",
+    email: m?.mail_particular ?? m?.email ?? "—",
     phone:
       m?.CELULAR ??
-      m?.TELEFONO_PARTICULAR ??
+      m?.tele_particular ??
       m?.telefono ??
       m?.phone ??
       "—",
     memberType, // "Socio" | "Socio Adherente"
-    joinDate: m?.FECHA_INGRESO ?? m?.joinDate ?? null,
+    joinDate: m?.fecha_ingreso ?? m?.joinDate ?? null,
     status, // "activo" | "inactivo" (solo para cards)
     matriculaProv: m?.MATRICULA_PROV ?? m?.matricula_prov ?? "—",
   };
@@ -101,7 +102,7 @@ const UsersList: React.FC = () => {
     if (!t) return users;
     return users.filter((u) => {
       const name = (u.name ?? "").toLowerCase();
-      const email = (u.email ?? "").toLowerCase();
+      const email = (u.mail ?? "").toLowerCase();
       return name.includes(t) || email.includes(t);
     });
   }, [users, searchTerm]);
@@ -118,34 +119,29 @@ const UsersList: React.FC = () => {
 
   return (
     <div className={styles.container}>
+      <BackButton />
       <div className={styles.header}>
+
         <h1 className={styles.title}>Listado de Usuarios</h1>
 
         <div>
-          <button
-            className={styles.backButton}
-            onClick={() => navigate("/users-manager")}
-          >
-            ← Volver al Dashboard
-          </button>
-
           {/* Botones extra, reusando la misma clase para no tocar estilos */}
-          <button
+          <Button
             className={styles.backButton}
-            onClick={() => navigate("/register")}
+            onClick={() => navigate("/register-socio")}
             style={{ marginLeft: 8 }}
             title="Crear socio (médico)"
           >
             + Agregar socio
-          </button>
-          <button
+          </Button>
+          {/* <button
             className={styles.backButton}
             onClick={() => navigate("/adherente")}
             style={{ marginLeft: 8 }}
             title="Crear socio adherente"
           >
             + Agregar adherente
-          </button>
+          </button> */}
         </div>
       </div>
 

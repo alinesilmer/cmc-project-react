@@ -1,6 +1,6 @@
 import type React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, Stethoscope, DollarSign, Hospital, CircleUserRound, UserCog, ChevronRight, ChevronLeft } from "lucide-react";
+import { UserLock ,Home, DollarSign, Hospital, CircleUserRound, UserCog, ChevronRight, ChevronLeft } from "lucide-react";
 import styles from "./Sidebar.module.scss";
 import { useAuth } from "../../../auth/AuthProvider";
 
@@ -17,7 +17,7 @@ const Sidebar: React.FC = () => {
 
   const baseItems = [
     { path: "/dashboard", icon: Home, label: "Inicio" },
-    // { path: "/doctors", icon: Stethoscope, label: "Lista de Médicos" },
+    { path: "/admin/permissions", icon: UserLock, label: "Permisos y roles" },
     { path: "/liquidation", icon: DollarSign, label: "Liquidación" },
     { path: "/padron-ioscor", icon: Hospital, label: "Padron IOSCOR" },
     // { path: "/config", icon: Cog, label: "Configuración" },                  // ← COMENTADO (punto 5)

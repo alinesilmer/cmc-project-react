@@ -6,6 +6,8 @@ import { useNavigate } from "react-router-dom";
 import type { Application, ApplicationStatus } from "../../../types/types";
 import styles from "./ApplicationsList.module.scss";
 import { getJSON } from "../../../../src/lib/http";
+import SearchBar from "../SearchBar/SearchBar";
+import BackButton from "../../atoms/BackButton/BackButton";
 
 
 export type ApplicationFromApi = {
@@ -103,11 +105,9 @@ const ApplicationsList: React.FC = () => {
 
   return (
     <div className={styles.container}>
+      <BackButton />
       <div className={styles.header}>
         <h1 className={styles.title}>Solicitudes de Socios</h1>
-        <button className={styles.backButton} onClick={() => navigate("/")}>
-          ← Volver al Dashboard
-        </button>
       </div>
 
       <div className={styles.toolbar}>
@@ -149,9 +149,8 @@ const ApplicationsList: React.FC = () => {
         </div>
 
         <div className={styles.searchBox}>
-          <input
-            type="search"
-            placeholder="Buscar por nombre, email o documento…"
+          <SearchBar
+            placeholder="Buscar por nombre, email o documento..."
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />

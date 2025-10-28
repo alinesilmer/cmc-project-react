@@ -15,6 +15,7 @@ import { http, postJSON, delJSON } from "../../../lib/http";
 
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
+import BackButton from "../../../components/atoms/BackButton/BackButton";
 
 type LocationState =
   | {
@@ -439,6 +440,8 @@ const InsuranceDetail: React.FC = () => {
         >
           <div className={styles.header}>
             <div>
+              <BackButton />
+
               <div className={styles.breadcrumb}>Detalle de Obra Social</div>
               <h1 className={styles.title}>
                 {insuranceName} — <span className={styles.period}>Período {period}</span>

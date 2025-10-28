@@ -15,46 +15,121 @@ import {
   LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip,
   ResponsiveContainer, BarChart, Bar, Legend,
 } from "recharts";
+import RequirePermission from "../../../auth/RequirePermission";
+import { getJSON, postJSON, patchJSON, putJSON, delJSON } from "../../../lib/http"; 
+import BackButton from "../../../components/atoms/BackButton/BackButton";
+/* ===== Etiquetas amistosas ===== */
+const ROLE_LABELS: Record<string, string> = {
+  admin: "Administrador/a",
+  medico: "Médico/a",
+  facturador: "Facturador/a",
+  liquidador: "Liquidador/a",
+  contador: "Contador/a",
+};
+const PERM_LABELS: Record<string, string> = {
+  "rbac:gestionar": "Gestionar permisos",
+  "medicos:ver": "Ver médicos",
+  "medicos:editar": "Editar médicos",
+  "facturas:abrir": "Abrir facturas",
+  "facturas:cerrar": "Cerrar facturas",
+  "facturas:refacturar": "Refacturar",
+  "liquidacion:ver": "Ver liquidaciones",
+  "liquidacion:procesar": "Procesar liquidaciones",
+  "contabilidad:ver": "Ver contabilidad",
+  "contabilidad:asientos": "Cargar asientos",
+};
+const permLabel = (code: string) =>
+  PERM_LABELS[code] ??
+  code
+    .split(":")
+    .pop()!
+    .replace(/[_.-]/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 
 /* ========= API ========= */
-const API_BASE = (import.meta as any).env?.VITE_API_URL ?? "http://localhost:8000";
-const M = (id: string | number) => `${API_BASE}/api/medicos/${id}`;
-const M_DEUDA = (id: string | number) => `${API_BASE}/api/medicos/${id}/deuda`;
-const M_DOCS = (id: string | number) => `${API_BASE}/api/medicos/${id}/documentos`;
-const M_STATS = (id: string | number, months = 6) => `${API_BASE}/api/medicos/${id}/stats?months=${months}`;
-const M_DEUDA_MANUAL = (id: string | number) => `${API_BASE}/api/medicos/${id}/deudas_manual`;
+const RBAC = `/api/admin/rbac`;
+const R_ROLES      = () => `${RBAC}/roles`;
+const R_PERMS      = () => `${RBAC}/permissions`;
+const R_USER_ROLES = (uid: number | string) => `${RBAC}/users/${uid}/roles`;
+const R_ADD_ROLE   = (uid: number | string, role: string) =>
+  `${RBAC}/users/${uid}/roles/${encodeURIComponent(role)}`;
+const R_DEL_ROLE   = (uid: number | string, role: string) =>
+  `${RBAC}/users/${uid}/roles/${encodeURIComponent(role)}`;
+const R_OVERRIDES  = (uid: number | string) =>
+  `${RBAC}/users/${uid}/permissions/overrides`;
+const R_SET_OVERRIDE = (uid: number | string, code: string, allow: boolean) =>
+  `${RBAC}/users/${uid}/permissions/${encodeURIComponent(code)}?allow=${allow ? "true" : "false"}`;
+// const R_CLR_OVERRIDE = (uid: number | string, code: string) =>
+//   `${RBAC}/users/${uid}/permissions/${encodeURIComponent(code)}`;
+const R_EFFECTIVE = (uid: number | string) =>
+  `${RBAC}/users/${uid}/permissions/effective`;
 
-// NUEVO
-const M_CONCEPTS = (id: string | number) => `${API_BASE}/api/medicos/${id}/conceptos`;        // desc agrupado por nro_colegio
-const M_ESPEC_ASOC = (id: string | number) => `${API_BASE}/api/medicos/${id}/especialidades`;  // lista adheridas
-const M_ASSOC = (id: string | number) => `${API_BASE}/api/medicos/${id}/ce_bundle`;            // PATCH add/remove
+const M              = (id: string | number) => `/api/medicos/${id}`;
+const M_DEUDA        = (id: string | number) => `/api/medicos/${id}/deuda`;
+const M_DOCS         = (id: string | number) => `/api/medicos/${id}/documentos`;
+const M_STATS        = (id: string | number, months = 6) =>
+  `/api/medicos/${id}/stats?months=${months}`;
+const M_DEUDA_MANUAL = (id: string | number) => `/api/medicos/${id}/deudas_manual`;
 
-// catálogos
-const DESCUENTOS_URL = `${API_BASE}/api/descuentos`;        // devuelve id, nro_colegio, nombre, ...
-const ESPECIALIDADES_URL = `${API_BASE}/api/especialidades`; // devuelve ID, ESPECIALIDAD, ...
+const M_CONCEPTS   = (id: string | number) => `/api/medicos/${id}/conceptos`;
+const M_ESPEC_ASOC = (id: string | number) => `/api/medicos/${id}/especialidades`;
+const M_ASSOC      = (id: string | number) => `/api/medicos/${id}/ce_bundle`;
+
+/* catálogos */
+const DESCUENTOS_URL     = "/api/descuentos";
+const ESPECIALIDADES_URL = "/api/especialidades/";
 
 /* ========= Tipos ========= */
 type DoctorDocument = { id: string; label: string; fileName: string; url: string };
 type DoctorProfile = {
-  id: number; memberNumber: string; name: string; provincialReg: string; nationalReg: string;
-  email?: string; phone?: string; specialty?: string; address?: string;
-  hasDebt: boolean; debtDetail?: { amount: number; lastInvoice?: string; since?: string };
+  id: number;
+  memberNumber: string;
+  name: string;
+  provincialReg: string;
+  nationalReg: string;
+  email?: string;
+  phone?: string;
+  specialty?: string;
+  address?: string;
+  hasDebt: boolean;
+  debtDetail?: { amount: number; lastInvoice?: string; since?: string };
   documents: DoctorDocument[];
 };
 
 type StatsPoint = { month: string; consultas: number; facturado: number; [k: string]: any };
-type TabKey = "datos" | "deudas" | "documentos" | "reportes" | "conceptos" | "especialidades";
-const currency = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
+type TabKey =
+  | "datos"
+  | "deudas"
+  | "documentos"
+  | "reportes"
+  | "conceptos"
+  | "especialidades"
+  | "permisos";
+
+const currency = new Intl.NumberFormat("es-AR", {
+  style: "currency",
+  currency: "ARS",
+  maximumFractionDigits: 0,
+});
 
 type Installment = { n: number; dueDate: string; amount: number };
-type DebtDraft = { concept: string; amount: number | ""; mode: "full" | "installments"; qty: number; firstDue: Date };
+type DebtDraft = {
+  concept: string;
+  amount: number | "";
+  mode: "full" | "installments";
+  qty: number;
+  firstDue: Date;
+};
 
 type ConceptApp = {
-  resumen_id: number; periodo: string; created_at?: string | null;
-  monto_aplicado: number; porcentaje_aplicado: number;
+  resumen_id: number;
+  periodo: string;
+  created_at?: string | null;
+  monto_aplicado: number;
+  porcentaje_aplicado: number;
 };
 type DoctorConcept = {
-  concepto_id: number;                 // nro_colegio
+  concepto_id: number; // nro_colegio
   concepto_nro_colegio?: number | null;
   concepto_nombre?: string | null;
   saldo: number;
@@ -64,14 +139,58 @@ type DoctorEspecialidad = { id: number; nombre?: string | null };
 
 type Option = { id: string; label: string }; // id = nro_colegio (para conceptos) / ID (para especialidad)
 
-async function fetchJSON<T = any>(url: string, init?: RequestInit): Promise<T> {
-  const r = await fetch(url, init);
-  if (!r.ok) throw new Error(await r.text().catch(() => `HTTP ${r.status}`));
-  return r.json();
+function parseBody(raw: any) {
+  if (raw == null) return undefined;
+  if (typeof raw === "string") {
+    try { return raw ? JSON.parse(raw) : undefined; } catch { return raw; }
+  }
+  // FormData / Blob / objetos ya serializados
+  return raw;
 }
+
+export async function fetchJSON<T = any>(url: string, init: RequestInit = {}): Promise<T> {
+  const method = (init.method || "GET").toUpperCase();
+  const body = parseBody((init as any).body);
+
+  switch (method) {
+    case "GET":
+      return getJSON<T>(url);
+
+    case "POST":
+      return postJSON<T>(url, body);
+
+    case "PATCH":
+      // Si tu patchJSON no acepta body, ajustalo aquí.
+      return patchJSON<T>(url, body);
+
+    case "PUT":
+      return putJSON<T>(url, body);
+
+    case "DELETE":
+      // Si tu deleteJSON no acepta body, cambialo por: return deleteJSON<T>(url);
+      return delJSON<T>(url);
+
+    default:
+      // Último recurso: tratamos cualquier otro método como POST con override
+      // (si tu backend lo soporta) — o creá el helper específico.
+      // @ts-ignore: algunos postJSON aceptan opciones extra
+      return getJSON<T>(url);
+  }
+}
+
+type Role = { name: string; description?: string };
+type Permission = { code: string; description?: string };
 
 const DoctorProfilePage: React.FC = () => {
   const { id } = useParams();
+
+  // perms
+  const [rolesAll, setRolesAll] = useState<Role[]>([]);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
+  const [permList, setPermList] = useState<Permission[]>([]);
+  const [overrides, setOverrides] = useState<Record<string, boolean>>({});
+  const [effective, setEffective] = useState<string[]>([]);
+  const [rbacLoading, setRbacLoading] = useState(false);
 
   const [data, setData] = useState<DoctorProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,7 +198,13 @@ const DoctorProfilePage: React.FC = () => {
 
   // deuda
   const [showAddDebt, setShowAddDebt] = useState(false);
-  const [draft, setDraft] = useState<DebtDraft>({ concept: "", amount: "", mode: "full", qty: 3, firstDue: new Date() });
+  const [draft, setDraft] = useState<DebtDraft>({
+    concept: "",
+    amount: "",
+    mode: "full",
+    qty: 3,
+    firstDue: new Date(),
+  });
 
   // stats
   const [stats, setStats] = useState<StatsPoint[]>([]);
@@ -97,7 +222,7 @@ const DoctorProfilePage: React.FC = () => {
 
   // catálogos
   const [descOptions, setDescOptions] = useState<Option[]>([]); // id = nro_colegio
-  const [espOptions, setEspOptions] = useState<Option[]>([]);   // id = Especialidad.ID
+  const [espOptions, setEspOptions] = useState<Option[]>([]); // id = Especialidad.ID
 
   // asociar modales
   const [assocDescOpen, setAssocDescOpen] = useState(false);
@@ -105,13 +230,25 @@ const DoctorProfilePage: React.FC = () => {
   const [assocDescBusy, setAssocDescBusy] = useState(false);
 
   const [assocEspOpen, setAssocEspOpen] = useState(false);
-  const [assocEspId, setAssocEspId] = useState<string>("");   // Especialidad.ID
+  const [assocEspId, setAssocEspId] = useState<string>(""); // Especialidad.ID
   const [assocEspBusy, setAssocEspBusy] = useState(false);
 
   // quitar busy
   const [rmConceptBusy, setRmConceptBusy] = useState<number | null>(null); // nro_colegio
-  const [rmEspBusy, setRmEspBusy] = useState<number | null>(null);         // Especialidad.ID
+  const [rmEspBusy, setRmEspBusy] = useState<number | null>(null); // Especialidad.ID
 
+  const [permBusy, setPermBusy] = useState<string | null>(null);
+
+  async function refreshPermState(uid: string | number) {
+    const [ovs, eff] = await Promise.all([
+      fetchJSON<{ code: string; allow: boolean }[]>(R_OVERRIDES(uid)),
+      fetchJSON<{ permissions: string[] }>(R_EFFECTIVE(uid)),
+    ]);
+    const map: Record<string, boolean> = {};
+    ovs.forEach((o) => { map[o.code] = o.allow; });
+    setOverrides(map);
+    setEffective(eff.permissions);
+  }
   /* ===== carga básica ===== */
   useEffect(() => {
     let alive = true;
@@ -138,21 +275,41 @@ const DoctorProfilePage: React.FC = () => {
           specialty: base.categoria ?? undefined,
           address: base.domicilio_consulta ?? undefined,
           hasDebt: Boolean(debt.has_debt),
-          debtDetail: { amount: Number(debt.amount || 0), lastInvoice: debt.last_invoice ?? undefined, since: debt.since ?? undefined },
-          documents: (docs as any[]).map((d) => ({ id: String(d.id), label: String(d.label ?? "-"), fileName: String(d.file_name ?? d.fileName ?? "archivo"), url: String(d.url ?? "#") })),
+          debtDetail: {
+            amount: Number(debt.amount || 0),
+            lastInvoice: debt.last_invoice ?? undefined,
+            since: debt.since ?? undefined,
+          },
+          documents: (docs as any[]).map((d) => ({
+            id: String(d.id),
+            label: String(d.label ?? "-"),
+            fileName: String(d.file_name ?? d.fileName ?? "archivo"),
+            url: String(d.url ?? "#"),
+          })),
         };
 
         // stats
         const dynKeysSet = new Set<string>();
         const stPoints: StatsPoint[] = (st as any[]).map((row) => {
-          const p: StatsPoint = { month: String(row.month), consultas: Number(row.consultas || 0), facturado: Number(row.facturado || 0) };
+          const p: StatsPoint = {
+            month: String(row.month),
+            consultas: Number(row.consultas || 0),
+            facturado: Number(row.facturado || 0),
+          };
           const obras = row.obras || {};
-          for (const k of Object.keys(obras)) { p[k] = Number(obras[k] || 0); dynKeysSet.add(k); }
+          for (const k of Object.keys(obras)) {
+            p[k] = Number(obras[k] || 0);
+            dynKeysSet.add(k);
+          }
           return p;
         });
         const totalsByKey: Record<string, number> = {};
-        for (const k of dynKeysSet) totalsByKey[k] = stPoints.reduce((a, r) => a + (Number(r[k]) || 0), 0);
-        const chosen = Object.entries(totalsByKey).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([k]) => k);
+        for (const k of dynKeysSet)
+          totalsByKey[k] = stPoints.reduce((a, r) => a + (Number(r[k]) || 0), 0);
+        const chosen = Object.entries(totalsByKey)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 6)
+          .map(([k]) => k);
 
         setData(profile);
         setStats(stPoints);
@@ -164,7 +321,9 @@ const DoctorProfilePage: React.FC = () => {
         if (alive) setLoading(false);
       }
     })();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [id]);
 
   /* ===== catálogos para selects (dedupe por clave correcta) ===== */
@@ -175,16 +334,20 @@ const DoctorProfilePage: React.FC = () => {
         if (descOptions.length === 0) {
           const ds = await fetchJSON<any[]>(DESCUENTOS_URL);
           if (alive) {
-            // tomar un único option por nro_colegio
             const seen = new Set<number>();
             const opts: Option[] = [];
             for (const d of ds || []) {
               const nro = Number(d.nro_colegio);
               if (!Number.isFinite(nro) || seen.has(nro)) continue;
               seen.add(nro);
-              opts.push({ id: String(nro), label: `${nro} — ${d.nombre ?? ""}`.trim() });
+              opts.push({
+                id: String(nro),
+                label: `${nro} — ${d.nombre ?? ""}`.trim(),
+              });
             }
-            setDescOptions(opts.sort((a, b) => Number(a.id) - Number(b.id)));
+            setDescOptions(
+              opts.sort((a, b) => Number(a.id) - Number(b.id))
+            );
           }
         }
         if (espOptions.length === 0) {
@@ -198,9 +361,13 @@ const DoctorProfilePage: React.FC = () => {
             setEspOptions(opts);
           }
         }
-      } catch { /* noop */ }
+      } catch {
+        /* noop */
+      }
     })();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [descOptions.length, espOptions.length]);
 
   /* ===== loaders por solapa ===== */
@@ -223,9 +390,10 @@ const DoctorProfilePage: React.FC = () => {
           porcentaje_aplicado: Number(a.porcentaje_aplicado || 0),
         })),
       }));
-      // dedupe defensivo por nro_colegio
       const seen = new Set<number>();
-      const uniq = norm.filter((r) => (seen.has(r.concepto_id) ? false : (seen.add(r.concepto_id), true)));
+      const uniq = norm.filter((r) =>
+        seen.has(r.concepto_id) ? false : (seen.add(r.concepto_id), true)
+      );
       setConcepts(uniq);
     } catch (e: any) {
       setConceptsErr(e?.message || "No se pudieron cargar los conceptos.");
@@ -240,9 +408,14 @@ const DoctorProfilePage: React.FC = () => {
     setEspecErr(null);
     try {
       const list = await fetchJSON<any[]>(M_ESPEC_ASOC(id));
-      const norm: DoctorEspecialidad[] = (list || []).map((r) => ({ id: Number(r.id), nombre: r.nombre ?? null }));
+      const norm: DoctorEspecialidad[] = (list || []).map((r) => ({
+        id: Number(r.id),
+        nombre: r.nombre ?? null,
+      }));
       const seen = new Set<number>();
-      const uniq = norm.filter((r) => (seen.has(r.id) ? false : (seen.add(r.id), true)));
+      const uniq = norm.filter((r) =>
+        seen.has(r.id) ? false : (seen.add(r.id), true)
+      );
       setEspecs(uniq);
     } catch (e: any) {
       setEspecErr(e?.message || "No se pudieron cargar las especialidades.");
@@ -257,17 +430,58 @@ const DoctorProfilePage: React.FC = () => {
     if (tab === "especialidades") loadEspec();
   }, [tab, id]);
 
+  useEffect(() => {
+    if (!id) return;
+    if (tab !== "permisos") return;
+    (async () => {
+      try {
+        setRbacLoading(true);
+        const [allRoles, rolesUsr, perms, ovs, eff] = await Promise.all([
+          fetchJSON<Role[]>(R_ROLES()),
+          fetchJSON<{ name: string }[]>(R_USER_ROLES(id)),
+          fetchJSON<Permission[]>(R_PERMS()),
+          fetchJSON<{ code: string; allow: boolean }[]>(R_OVERRIDES(id)),
+          fetchJSON<{ permissions: string[] }>(R_EFFECTIVE(id)),
+        ]);
+        setRolesAll(allRoles);
+        setUserRoles(rolesUsr.map((r) => r.name));
+        setPermList(perms);
+        const map: Record<string, boolean> = {};
+        ovs.forEach((o) => {
+          map[o.code] = o.allow;
+        });
+        setOverrides(map);
+        setEffective(eff.permissions);
+      } finally {
+        setRbacLoading(false);
+      }
+    })();
+  }, [tab, id]);
+
   /* ===== deuda ===== */
   const schedule = useMemo<Installment[] | undefined>(() => {
-    if (draft.mode !== "installments" || !draft.amount || draft.qty <= 0) return undefined;
+    if (draft.mode !== "installments" || !draft.amount || draft.qty <= 0)
+      return undefined;
     const total = Number(draft.amount);
     const base = Math.round((total / draft.qty) * 100) / 100;
     const arr: Installment[] = [];
-    const start = new Date(draft.firstDue); start.setHours(12, 0, 0, 0);
-    for (let i = 0; i < draft.qty; i++) { const d = new Date(start); d.setMonth(d.getMonth() + i); arr.push({ n: i + 1, dueDate: d.toISOString().slice(0, 10), amount: base }); }
+    const start = new Date(draft.firstDue);
+    start.setHours(12, 0, 0, 0);
+    for (let i = 0; i < draft.qty; i++) {
+      const d = new Date(start);
+      d.setMonth(d.getMonth() + i);
+      arr.push({
+        n: i + 1,
+        dueDate: d.toISOString().slice(0, 10),
+        amount: base,
+      });
+    }
     const sum = arr.reduce((a, it) => a + it.amount, 0);
     const diff = Math.round((total - sum) * 100) / 100;
-    if (diff !== 0) arr[arr.length - 1].amount = Math.round((arr[arr.length - 1].amount + diff) * 100) / 100;
+    if (diff !== 0)
+      arr[arr.length - 1].amount = Math.round(
+        (arr[arr.length - 1].amount + diff) * 100
+      ) / 100;
     return arr;
   }, [draft.mode, draft.amount, draft.qty, draft.firstDue]);
   const debtInfo = data?.debtDetail;
@@ -276,26 +490,55 @@ const DoctorProfilePage: React.FC = () => {
     if (!data) return;
     for (const doc of data.documents) {
       const a = document.createElement("a");
-      a.href = doc.url; a.download = doc.fileName; document.body.appendChild(a); a.click(); a.remove();
+      a.href = doc.url;
+      a.download = doc.fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
     }
   };
 
   const saveDebt = async () => {
     if (!id) return;
-    if (!draft.concept || draft.amount === "" || Number(draft.amount) <= 0) { alert("Completá concepto y monto."); return; }
+    if (!draft.concept || draft.amount === "" || Number(draft.amount) <= 0) {
+      alert("Completá concepto y monto.");
+      return;
+    }
     try {
-      const body = draft.mode === "full"
-        ? { concept: draft.concept, amount: Number(draft.amount), mode: "full" as const }
-        : { concept: draft.concept, amount: Number(draft.amount), mode: "installments" as const,
-            installments: (schedule ?? []).map((q) => ({ n: q.n, due_date: q.dueDate, amount: q.amount })) };
+      const body =
+        draft.mode === "full"
+          ? { concept: draft.concept, amount: Number(draft.amount), mode: "full" as const }
+          : {
+              concept: draft.concept,
+              amount: Number(draft.amount),
+              mode: "installments" as const,
+              installments: (schedule ?? []).map((q) => ({
+                n: q.n,
+                due_date: q.dueDate,
+                amount: q.amount,
+              })),
+            };
 
-      const res = await fetchJSON(M_DEUDA_MANUAL(id), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-      setData((prev) => prev ? { ...prev, hasDebt: !!res.has_debt, debtDetail: {
-        amount: Number(res.amount || 0),
-        lastInvoice: res.last_invoice ?? prev.debtDetail?.lastInvoice,
-        since: res.since ?? prev.debtDetail?.since,
-      }} : prev);
-      setShowAddDebt(false); setDraft({ concept: "", amount: "", mode: "full", qty: 3, firstDue: new Date() });
+      const res = await fetchJSON(M_DEUDA_MANUAL(id), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              hasDebt: !!res.has_debt,
+              debtDetail: {
+                amount: Number(res.amount || 0),
+                lastInvoice: res.last_invoice ?? prev.debtDetail?.lastInvoice,
+                since: res.since ?? prev.debtDetail?.since,
+              },
+            }
+          : prev
+      );
+      setShowAddDebt(false);
+      setDraft({ concept: "", amount: "", mode: "full", qty: 3, firstDue: new Date() });
     } catch (e: any) {
       alert(e?.message || "No se pudo crear la deuda.");
     }
@@ -326,19 +569,24 @@ const DoctorProfilePage: React.FC = () => {
       <div className={styles.content}>
         <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
           <div className={styles.topbar}>
-            <Link to="/doctors" className={styles.backLink}>← Volver</Link>
+            <BackButton />
             <div />
           </div>
 
           {loading ? (
-            <Card className={styles.loadingCard}><div className={styles.loader} aria-label="Cargando perfil…" /><p>Cargando perfil…</p></Card>
+            <Card className={styles.loadingCard}>
+              <div className={styles.loader} aria-label="Cargando perfil…" />
+              <p>Cargando perfil…</p>
+            </Card>
           ) : !data ? (
             <Card className={styles.errorCard}><p>No se encontró el profesional solicitado.</p></Card>
           ) : (
             <div className={styles.profileLayout}>
               <div className={styles.rightCol}>
                 <Card className={styles.headerCard}>
-                  <Link to={`/doctors/${data.id}/edit`} className={styles.editPencil} aria-label="Editar" title="Editar"><Pencil size={16} /></Link>
+                  <Link to={`/doctors/${data.id}/edit`} className={styles.editPencil} aria-label="Editar" title="Editar">
+                    <Pencil size={16} />
+                  </Link>
 
                   <div className={styles.profileHeader}>
                     <div className={styles.avatarSmall} aria-label={data.name}>
@@ -346,7 +594,11 @@ const DoctorProfilePage: React.FC = () => {
                     </div>
                     <div className={styles.headerMain}>
                       <h2 className={styles.name}>{data.name}</h2>
-                      <div className={styles.roleRow}><span className={styles.role}>{data.specialty || "—"}</span><span className={styles.dot}>•</span><span className={styles.location}>Corrientes, Capital</span></div>
+                      <div className={styles.roleRow}>
+                        <span className={styles.role}>{data.specialty || "—"}</span>
+                        <span className={styles.dot}>•</span>
+                        <span className={styles.location}>Corrientes, Capital</span>
+                      </div>
                       <div className={styles.headerMeta}>
                         <div className={styles.headerMetaItem}><span className={styles.headerMetaLabel}>ID:</span><span className={styles.headerMetaValue}>{data.id}</span></div>
                         <div className={styles.headerMetaItem}><span className={styles.headerMetaLabel}>Member #:</span><span className={styles.headerMetaValue}>{data.memberNumber}</span></div>
@@ -354,13 +606,43 @@ const DoctorProfilePage: React.FC = () => {
                     </div>
                   </div>
 
+                  {/* Tabs */}
                   <div className={styles.tabs}>
                     {tabs.map((t) => (
-                      <button key={t.key} className={`${styles.tab} ${tab === t.key ? styles.tabActive : ""}`} onClick={() => setTab(t.key)} aria-current={tab === t.key ? "page" : undefined}>
+                      <button
+                        key={t.key}
+                        className={`${styles.tab} ${tab === t.key ? styles.tabActive : ""}`}
+                        onClick={() => setTab(t.key)}
+                        aria-current={tab === t.key ? "page" : undefined}
+                      >
                         {t.label}
-                        {tab === t.key && (<motion.span layoutId="tab-underline" className={styles.tabUnderline} transition={{ type: "spring", stiffness: 420, damping: 30 }}/>)}
+                        {tab === t.key && (
+                          <motion.span
+                            layoutId="tab-underline"
+                            className={styles.tabUnderline}
+                            transition={{ type: "spring", stiffness: 420, damping: 30 }}
+                          />
+                        )}
                       </button>
                     ))}
+
+                    {/* Tab Permisos — sólo visible con permiso */}
+                    <RequirePermission scope="rbac:gestionar">
+                      <button
+                        className={`${styles.tab} ${tab === "permisos" ? styles.tabActive : ""}`}
+                        onClick={() => setTab("permisos")}
+                        aria-current={tab === "permisos" ? "page" : undefined}
+                      >
+                        Permisos
+                        {tab === "permisos" && (
+                          <motion.span
+                            layoutId="tab-underline"
+                            className={styles.tabUnderline}
+                            transition={{ type: "spring", stiffness: 420, damping: 30 }}
+                          />
+                        )}
+                      </button>
+                    </RequirePermission>
                   </div>
 
                   <AnimatePresence mode="wait">
@@ -424,13 +706,17 @@ const DoctorProfilePage: React.FC = () => {
                           <div className={styles.chartBox}>
                             <h4 className={styles.chartTitle}>Consultas por mes</h4>
                             <ResponsiveContainer width="100%" height={260}>
-                              <BarChart data={stats}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="month" /><YAxis /><Tooltip /><Bar dataKey="consultas" /></BarChart>
+                              <BarChart data={stats}>
+                                <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="month" /><YAxis /><Tooltip />
+                                <Bar dataKey="consultas" />
+                              </BarChart>
                             </ResponsiveContainer>
                           </div>
                           <div className={styles.chartBox}>
                             <h4 className={styles.chartTitle}>Obras sociales por mes</h4>
                             <ResponsiveContainer width="100%" height={320}>
-                              <LineChart data={stats}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="month" /><YAxis /><Tooltip /><Legend />
+                              <LineChart data={stats}>
+                                <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="month" /><YAxis /><Tooltip /><Legend />
                                 {statsKeys.map((k) => (<Line key={k} type="monotone" dataKey={k} name={k} dot={false} />))}
                               </LineChart>
                             </ResponsiveContainer>
@@ -439,7 +725,7 @@ const DoctorProfilePage: React.FC = () => {
                       </motion.div>
                     )}
 
-                    {/* === Conceptos (desc por nro_colegio) === */}
+                    {/* === Conceptos (descuentos por nro_colegio) === */}
                     {tab === "conceptos" && (
                       <motion.div key="tab-conceptos" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} className={styles.tabBody}>
                         <div className={styles.conceptsHeader}>
@@ -583,6 +869,132 @@ const DoctorProfilePage: React.FC = () => {
                         )}
                       </motion.div>
                     )}
+
+                    {/* === Permisos (solapa protegida) === */}
+                    {tab === "permisos" && (
+                      <RequirePermission scope="rbac:gestionar">
+                        <motion.div
+                          key="tab-permisos"
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 8 }}
+                          className={styles.tabBody}
+                        >
+                          <div className={styles.permsWrap}>
+                            {/* Roles del socio */}
+                            <div className={styles.tableWrap}>
+                              <h5 className={styles.section}>Roles del socio</h5>
+                              <table className={styles.table}>
+                                <thead><tr><th style={{ width: 60 }}>Tiene</th><th>Rol</th></tr></thead>
+                                <tbody>
+                                  {rbacLoading ? (
+                                    <tr><td colSpan={2} className={styles.mutedCenter}>⏳ Cargando…</td></tr>
+                                  ) : rolesAll.length === 0 ? (
+                                    <tr><td colSpan={2} className={styles.mutedCenter}>No hay roles</td></tr>
+                                  ) : (
+                                    rolesAll.map((r) => {
+                                      const checked = userRoles.includes(r.name);
+                                      return (
+                                        <tr key={r.name}>
+                                          <td>
+                                            <input
+                                              type="checkbox"
+                                              checked={checked}
+                                              onChange={async (e) => {
+                                                if (!id) return;
+                                                try {
+                                                  if (e.target.checked)
+                                                    await fetchJSON(R_ADD_ROLE(id, r.name), { method: "POST" });
+                                                  else
+                                                    await fetchJSON(R_DEL_ROLE(id, r.name), { method: "DELETE" });
+                                                  const rs = await fetchJSON<{ name: string }[]>(R_USER_ROLES(id));
+                                                  setUserRoles(rs.map((x) => x.name));
+                                                  const eff = await fetchJSON<{ permissions: string[] }>(R_EFFECTIVE(id));
+                                                  setEffective(eff.permissions);
+                                                } catch (err: any) {
+                                                  alert(err?.message || "No se pudo actualizar el rol");
+                                                }
+                                              }}
+                                            />
+                                          </td>
+                                          <td>{ROLE_LABELS[r.name] ?? r.name}</td>
+                                        </tr>
+                                      );
+                                    })
+                                  )}
+                                </tbody>
+                              </table>
+                            </div>
+
+                            {/* Overrides por permiso */}
+                            <div className={styles.tableWrap}>
+                              <h5 className={styles.section}>Permisos del usuario</h5>
+                              <table className={styles.table}>
+                                <thead>
+                                  <tr>
+                                    <th>Permiso</th>
+                                    <th style={{ width: 120, textAlign: "right" }}>Tiene</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {rbacLoading ? (
+                                    <tr>
+                                      <td colSpan={2} className={styles.mutedCenter}>⏳ Cargando…</td>
+                                    </tr>
+                                  ) : permList.length === 0 ? (
+                                    <tr>
+                                      <td colSpan={2} className={styles.mutedCenter}>Sin permisos definidos</td>
+                                    </tr>
+                                  ) : (
+                                    permList.map((p) => {
+                                      const eff = effective.includes(p.code);             // ¿lo tiene hoy?
+                                      const ov = overrides[p.code];                       // override actual (true/false/undefined)
+                                      const label = permLabel(p.code);
+
+                                      return (
+                                        <tr key={p.code}>
+                                          <td>
+                                            <div style={{ display: "flex", flexDirection: "column" }}>
+                                              <span>{label}</span>
+                                              <small style={{ opacity: 0.6 }}>{p.code}</small>
+                                            </div>
+                                          </td>
+                                          <td style={{ textAlign: "right" }}>
+                                            <input
+                                              type="checkbox"
+                                              checked={eff}
+                                              disabled={permBusy === p.code || rbacLoading}
+                                              onChange={async (e) => {
+                                                if (!id) return;
+                                                const next = e.target.checked;
+                                                try {
+                                                  setPermBusy(p.code);
+
+                                                  // Si tildo => forzamos allow.
+                                                  // Si destildo => forzamos deny.
+                                                  await fetchJSON(R_SET_OVERRIDE(id, p.code, next), { method: "POST" });
+
+                                                  // Refrescamos estado de overrides + effective
+                                                  await refreshPermState(id);
+                                                } catch (err: any) {
+                                                  alert(err?.message || "No se pudo actualizar el permiso.");
+                                                } finally {
+                                                  setPermBusy(null);
+                                                }
+                                              }}
+                                            />
+                                          </td>
+                                        </tr>
+                                      );
+                                    })
+                                  )}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </motion.div>
+                      </RequirePermission>
+                    )}
                   </AnimatePresence>
                 </Card>
               </div>
@@ -595,24 +1007,64 @@ const DoctorProfilePage: React.FC = () => {
       <AnimatePresence>
         {showAddDebt && (
           <div className={styles.portal}>
-            <motion.div className={styles.overlay} initial={{ opacity: 0 }} animate={{ opacity: 0.6 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} onClick={() => setShowAddDebt(false)} />
-            <motion.div className={styles.popup} role="dialog" aria-modal="true"
-              initial={{ opacity: 0, scale: 0.95, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 16 }} transition={{ type: "spring", stiffness: 240, damping: 22 }}>
+            <motion.div
+              className={styles.overlay}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.6 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setShowAddDebt(false)}
+            />
+            <motion.div
+              className={styles.popup}
+              role="dialog"
+              aria-modal="true"
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
+              transition={{ type: "spring", stiffness: 240, damping: 22 }}
+            >
               <div className={styles.popupHeader}>
                 <h3>Agregar deuda</h3>
-                <button className={styles.iconButton} onClick={() => setShowAddDebt(false)} aria-label="Cerrar"><X size={16} /></button>
+                <button className={styles.iconButton} onClick={() => setShowAddDebt(false)} aria-label="Cerrar">
+                  <X size={16} />
+                </button>
               </div>
 
               <div className={styles.modalGrid}>
-                <div className={styles.field}><label>Concepto</label>
-                  <input className={styles.input} value={draft.concept} onChange={(e) => setDraft((d) => ({ ...d, concept: e.target.value }))} placeholder="Cuota societaria / cargo manual" />
+                <div className={styles.field}>
+                  <label>Concepto</label>
+                  <input
+                    className={styles.input}
+                    value={draft.concept}
+                    onChange={(e) => setDraft((d) => ({ ...d, concept: e.target.value }))}
+                    placeholder="Cuota societaria / cargo manual"
+                  />
                 </div>
-                <div className={styles.field}><label>Monto total (ARS)</label>
-                  <input className={styles.input} type="number" value={draft.amount === "" ? "" : String(draft.amount)} onChange={(e) => setDraft((d) => ({ ...d, amount: e.target.value === "" ? "" : Number(e.target.value) }))} placeholder="0" />
+                <div className={styles.field}>
+                  <label>Monto total (ARS)</label>
+                  <input
+                    className={styles.input}
+                    type="number"
+                    value={draft.amount === "" ? "" : String(draft.amount)}
+                    onChange={(e) =>
+                      setDraft((d) => ({
+                        ...d,
+                        amount: e.target.value === "" ? "" : Number(e.target.value),
+                      }))
+                    }
+                    placeholder="0"
+                  />
                 </div>
-                <div className={styles.field}><label>Modo</label>
-                  <select className={styles.select} value={draft.mode} onChange={(e) => setDraft((d) => ({ ...d, mode: e.target.value as "full" | "installments" }))}>
+                <div className={styles.field}>
+                  <label>Modo</label>
+                  <select
+                    className={styles.select}
+                    value={draft.mode}
+                    onChange={(e) =>
+                      setDraft((d) => ({ ...d, mode: e.target.value as "full" | "installments" }))
+                    }
+                  >
                     <option value="full">Pago completo</option>
                     <option value="installments">En cuotas</option>
                   </select>
@@ -620,11 +1072,26 @@ const DoctorProfilePage: React.FC = () => {
 
                 {draft.mode === "installments" && (
                   <>
-                    <div className={styles.field}><label>Cantidad de cuotas</label>
-                      <input className={styles.input} type="number" value={draft.qty} onChange={(e) => setDraft((d) => ({ ...d, qty: Number(e.target.value) }))} />
+                    <div className={styles.field}>
+                      <label>Cantidad de cuotas</label>
+                      <input
+                        className={styles.input}
+                        type="number"
+                        value={draft.qty}
+                        onChange={(e) => setDraft((d) => ({ ...d, qty: Number(e.target.value) }))}
+                      />
                     </div>
-                    <div className={styles.field}><label>Primera fecha de vencimiento</label>
-                      <DatePicker selected={draft.firstDue} onChange={(d) => d && setDraft((s) => ({ ...s, firstDue: d }))} className={styles.dateInput} dateFormat="yyyy-MM-dd" placeholderText="Seleccionar fecha" closeOnScroll showPopperArrow={false}/>
+                    <div className={styles.field}>
+                      <label>Primera fecha de vencimiento</label>
+                      <DatePicker
+                        selected={draft.firstDue}
+                        onChange={(d) => d && setDraft((s) => ({ ...s, firstDue: d }))}
+                        className={styles.dateInput}
+                        dateFormat="yyyy-MM-dd"
+                        placeholderText="Seleccionar fecha"
+                        closeOnScroll
+                        showPopperArrow={false}
+                      />
                     </div>
                   </>
                 )}
@@ -632,8 +1099,13 @@ const DoctorProfilePage: React.FC = () => {
 
               {draft.mode === "installments" && (
                 <div className={styles.tableWrap}>
-                  <table className={styles.table}><thead><tr><th>#</th><th>Vencimiento</th><th>Importe</th></tr></thead>
-                    <tbody>{(schedule ?? []).map((q) => (<tr key={q.n}><td>{q.n}</td><td>{q.dueDate}</td><td>${q.amount.toLocaleString()}</td></tr>))}</tbody>
+                  <table className={styles.table}>
+                    <thead><tr><th>#</th><th>Vencimiento</th><th>Importe</th></tr></thead>
+                    <tbody>
+                      {(schedule ?? []).map((q) => (
+                        <tr key={q.n}><td>{q.n}</td><td>{q.dueDate}</td><td>${q.amount.toLocaleString()}</td></tr>
+                      ))}
+                    </tbody>
                   </table>
                 </div>
               )}
@@ -651,13 +1123,28 @@ const DoctorProfilePage: React.FC = () => {
       <AnimatePresence>
         {assocDescOpen && (
           <div className={styles.portal}>
-            <motion.div className={styles.overlay} initial={{ opacity: 0 }} animate={{ opacity: 0.6 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} onClick={() => setAssocDescOpen(false)} />
-            <motion.div className={styles.popup} role="dialog" aria-modal="true"
-              initial={{ opacity: 0, scale: 0.95, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 16 }} transition={{ type: "spring", stiffness: 240, damping: 22 }}>
+            <motion.div
+              className={styles.overlay}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.6 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setAssocDescOpen(false)}
+            />
+            <motion.div
+              className={styles.popup}
+              role="dialog"
+              aria-modal="true"
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
+              transition={{ type: "spring", stiffness: 240, damping: 22 }}
+            >
               <div className={styles.popupHeader}>
                 <h3>Asociar concepto</h3>
-                <button className={styles.iconButton} onClick={() => setAssocDescOpen(false)} aria-label="Cerrar"><X size={16} /></button>
+                <button className={styles.iconButton} onClick={() => setAssocDescOpen(false)} aria-label="Cerrar">
+                  <X size={16} />
+                </button>
               </div>
 
               <div className={styles.modalGrid}>
@@ -706,13 +1193,28 @@ const DoctorProfilePage: React.FC = () => {
       <AnimatePresence>
         {assocEspOpen && (
           <div className={styles.portal}>
-            <motion.div className={styles.overlay} initial={{ opacity: 0 }} animate={{ opacity: 0.6 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} onClick={() => setAssocEspOpen(false)} />
-            <motion.div className={styles.popup} role="dialog" aria-modal="true"
-              initial={{ opacity: 0, scale: 0.95, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 16 }} transition={{ type: "spring", stiffness: 240, damping: 22 }}>
+            <motion.div
+              className={styles.overlay}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.6 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setAssocEspOpen(false)}
+            />
+            <motion.div
+              className={styles.popup}
+              role="dialog"
+              aria-modal="true"
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
+              transition={{ type: "spring", stiffness: 240, damping: 22 }}
+            >
               <div className={styles.popupHeader}>
                 <h3>Agregar especialidad</h3>
-                <button className={styles.iconButton} onClick={() => setAssocEspOpen(false)} aria-label="Cerrar"><X size={16} /></button>
+                <button className={styles.iconButton} onClick={() => setAssocEspOpen(false)} aria-label="Cerrar">
+                  <X size={16} />
+                </button>
               </div>
 
               <div className={styles.modalGrid}>

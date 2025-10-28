@@ -26,6 +26,7 @@ import Alert from "../../../components/atoms/Alert/Alert";
 import styles from "./LiquidationCycle.module.scss";
 
 import { getJSON, postJSON, http } from "../../../lib/http";
+import BackButton from "../../../components/atoms/BackButton/BackButton";
 
 /* ================== Config ================== */
 const RESUMEN_BY_ID = (id: string | number) => `/api/liquidacion/resumen/${id}`;
@@ -671,6 +672,8 @@ const LiquidationCycle: React.FC = () => {
           >
             <div className={styles.header}>
               <div className={styles.headerInfo}>
+                <BackButton />
+                
                 <div className={styles.breadcrumb}>CICLO DE LIQUIDACIÓN</div>
                 <h1 className={styles.title}>Período {periodTitle}</h1>
                 <div className={styles.subtotals}>

@@ -28,6 +28,8 @@ import Config from "./app/pages/Config/Config";
 import Help from "./app/pages/Help/Help";
 import AdherenteForm from "./components/molecules/AdherenteForm/AdherenteForm";
 import UsersList from "./app/pages/UsersList/UsersList";
+import RegisterSocio from "./app/pages/RegisterSocio/RegisterSocio";
+import PermissionsManager from "./app/pages/PermissionsManager/PermissionsManager";
 
 function App() {
   const { user } = useAuth();
@@ -65,6 +67,8 @@ function App() {
               <Route path="/solicitudes" element={<ApplicationsList />} />
               <Route path="/solicitudes/:id" element={<ApplicationDetail />} />
               <Route path="/users" element={<UsersList />} />
+              <Route path="/register-socio" element={<RegisterSocio />} />
+              <Route path="/admin/permissions" element={<PermissionsManager />} />
               <Route path="/users-manager" element={<UsersManagerDashboard />} />
               <Route path="/config" element={<Config />} />
               <Route path="/help" element={<Help />} />

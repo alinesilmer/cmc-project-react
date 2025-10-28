@@ -68,7 +68,6 @@
 .tabBody { padding-top: v.$spacing-5; }
 
 /* Info grid */
-.section { margin: 0 0 v.$spacing-3 0; color: v.$gray-700; font-weight: v.$font-weight-semibold; }
 .infoGrid { display: grid; grid-template-columns: 1fr 1fr; gap: v.$spacing-3 v.$spacing-6;
   @media (max-width: v.$breakpoint-lg) { grid-template-columns: 1fr; } }
 .label { color: v.$gray-500; font-size: v.$font-size-sm; margin-right: 8px; }
@@ -212,3 +211,24 @@
 .muted { color: #666; }
 .mutedCenter { color: #777; text-align: center; padding: 12px; }
 .errorInline { color: #a00; margin-bottom: 8px; }
+
+.permsWrap{
+  display: flex;
+  width: 100%;
+  gap: 2rem;
+}
+
+.permsWrap .tableWrap {
+  flex: 2;
+}
+
+.permsWrap .tableWrap:first-child {
+  flex: 1;
+}
+
+.permsWrap .tableWrap > h5{
+  padding: 1rem;
+  color: v.$gray-700;
+  font-weight: v.$font-weight-semibold;
+
+}

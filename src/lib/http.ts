@@ -113,6 +113,12 @@ export const putJSON = async <T = unknown>(url: string, body?: any): Promise<T> 
   const { data } = await http.put(url, body ?? {});
   return data as T;
 };
+
+export const patchJSON = async <T = unknown>(url: string, body?: any): Promise<T> => {
+  const { data } = await http.patch(url, body ?? {});
+  return data as T;
+};
+
 export const delJSON = async <T = unknown>(url: string): Promise<T> => {
   const { data } = await http.delete(url);
   return data as T;
