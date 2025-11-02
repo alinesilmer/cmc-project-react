@@ -1,0 +1,88 @@
+@import "../../../styles/variables.scss";
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-sm $spacing-lg;
+  border-radius: $border-radius-xl;
+  font-weight: 600;
+  transition: all $transition-normal;
+  position: relative;
+  overflow: hidden;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .content {
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+    position: relative;
+    z-index: 1;
+  }
+
+  .icon {
+    display: flex;
+    align-items: center;
+    font-size: 1.2em;
+  }
+}
+
+.primary {
+  background-color: $primary-blue;
+  color: $primary-yellow-light;
+  box-shadow: $shadow-md;
+  font-weight: 400;
+  border-radius: 50px;
+  font-family: $font-playfair;
+  border: 1px solid $primary-yellow;
+
+  &:hover:not(:disabled) {
+    background-color: $primary-blue-dark;
+    box-shadow: $shadow-lg;
+  }
+}
+
+.secondary {
+  background-color: $accent-orange;
+  color: $white;
+  box-shadow: $shadow-md;
+
+  &:hover:not(:disabled) {
+    background-color: darken($accent-orange, 10%);
+    box-shadow: $shadow-lg;
+  }
+}
+
+.outline {
+  background-color: transparent;
+  color: $primary-blue;
+  border: 2px solid $primary-blue;
+
+  &:hover:not(:disabled) {
+    background-color: $primary-blue;
+    color: $white;
+  }
+}
+
+.small {
+  padding: $spacing-sm $spacing-lg;
+  font-size: $font-size-large;
+}
+
+.medium {
+  padding: $spacing-sm $spacing-md;
+  font-size: $font-size-small;
+}
+
+.large {
+  padding: $spacing-md $spacing-xl;
+  font-size: $font-size-large;
+}
+
+.fullWidth {
+  width: 100%;
+}

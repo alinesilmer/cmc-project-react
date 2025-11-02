@@ -3,14 +3,14 @@
 
 import type React from "react";
 import { useMemo, useState, useEffect, useCallback } from "react";
-import SearchBar from "../../../components/molecules/SearchBar/SearchBar";
-import Card from "../../../components/atoms/Card/Card";
-import Button from "../../../components/atoms/Button/Button";
+import SearchBar from "../../components/molecules/SearchBar/SearchBar";
+import Card from "../../components/atoms/Card/Card";
+import Button from "../../components/atoms/Button/Button";
 import styles from "./LiquidationPeriods.module.scss";
-import PeriodsTable, { type Period } from "../../../components/molecules/PeriodsTable/PeriodsTable";
-import Alert from "../../../components/atoms/Alert/Alert";
+import PeriodsTable, { type Period } from "../../components/molecules/PeriodsTable/PeriodsTable";
+import Alert from "../../components/atoms/Alert/Alert";
 
-import { getJSON, postJSON } from "../../../lib/http";
+import { getJSON, postJSON } from "../../lib/http";
 
 type ServerEstado = "a" | "c" | "e" | string | null | undefined;
 

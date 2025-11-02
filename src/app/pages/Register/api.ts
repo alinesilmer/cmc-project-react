@@ -1,6 +1,6 @@
 // src/app/auth/api.ts
-import { postJSON, getJSON, postForm } from "../../../../src/lib/http";
-import type { RegisterFormData } from "../../../types/register";
+import { postJSON, getJSON, postForm } from "../../lib/http";
+import type { RegisterFormData } from "../../types/register";
 /* ===== tipos ===== */
 export type RegisterPayload = {
   documentType: string;

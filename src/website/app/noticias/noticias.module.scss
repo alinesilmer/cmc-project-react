@@ -1,0 +1,17 @@
+@import '../../styles/variables';
+
+.noticiasPage { 
+  height: 100vh;
+  min-height: 100vh; 
+  padding: $spacing-xxl $spacing-md; }
+
+.container { max-width: 1280px; margin: 0 auto; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: $spacing-xl; }
+
+.loading, .empty { text-align: center; padding: $spacing-xxl; color: $gray; font-size: $font-size-large; }
+
+@media (max-width: $breakpoint-tablet) {
+  .noticiasPage { padding: $spacing-xl $spacing-md; }
+  .grid { grid-template-columns: 1fr; gap: $spacing-lg; }
+}

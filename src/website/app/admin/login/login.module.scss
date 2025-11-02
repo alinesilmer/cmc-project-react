@@ -1,0 +1,100 @@
+@import '../../../styles/variables';
+
+.loginPage {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, $primary-blue 0%, darken($primary-blue, 10%) 100%);
+  padding: $spacing-md;
+}
+
+.loginCard {
+  background-color: $white;
+  border-radius: $border-radius-lg;
+  padding: $spacing-xxl;
+  box-shadow: $shadow-lg;
+  width: 100%;
+  max-width: 600px;
+
+  h1 {
+    color: $primary-blue;
+    text-align: center;
+    font-size: $font-size-h3;
+    margin-bottom: $spacing-sm;
+    font-family: $font-normal;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: $gray;
+    font-size: $font-size-base;
+    margin-bottom: $spacing-xl;
+    font-family: $font-normal;
+  }
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.inputGroup {
+  position: relative;
+
+  .icon {
+    position: absolute;
+    left: $spacing-md;
+    top: 50%;
+    transform: translateY(-50%);
+    color: $gray;
+    font-size: 1rem;
+  }
+
+  input {
+    width: 100%;
+    padding: $spacing-md $spacing-md $spacing-md 3rem;
+    border: 2px solid lightgray;
+    border-radius: $border-radius-md;
+    font-size: $font-size-small;
+    font-family: $font-normal;
+    transition: border-color $transition-fast;
+
+    &:focus {
+      outline: none;
+      border-color: $primary-blue;
+    }
+  }
+}
+
+.error {
+  background-color: #fee;
+  color: #c33;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $border-radius-sm;
+  text-align: center;
+  font-size: $font-size-small;
+}
+
+.testCredentials {
+  background-color: lightgray;
+  padding: $spacing-md;
+  border-radius: $border-radius-sm;
+  font-size: $font-size-small;
+  text-align: center;
+
+  p {
+    margin: $spacing-xs 0;
+  }
+
+  strong {
+    color: $primary-blue;
+  }
+}
+
+@media (max-width: $breakpoint-mobile) {
+  .loginCard {
+    padding: $spacing-xl;
+  }
+}

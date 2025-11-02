@@ -1,0 +1,100 @@
+@import "../../../styles/variables";
+
+.card {
+  position: relative;
+  border-radius: $border-radius-xl;
+  padding: $spacing-xl;
+  min-height: 280px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform $transition-normal, box-shadow $transition-normal;
+  box-shadow: $shadow-sm;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.08;
+    z-index: 0;
+  }
+
+  &:hover {
+    transform: translateY(-6px);
+    box-shadow: $shadow-lg;
+  }
+
+  &.coral { background: linear-gradient(135deg, $service-coral 0%, lighten($service-coral, 20%) 100%); }
+  &.orange { background: linear-gradient(135deg, $service-orange 0%, $service-yellow 100%); }
+  &.teal { background: linear-gradient(135deg, $service-teal 0%, $service-green 100%); }
+  &.blue { background: linear-gradient(135deg, $service-blue 0%, lighten($service-blue, 18%) 100%); }
+  &.mint { background: linear-gradient(135deg, $light-green 0%, $service-green 100%); }
+}
+.cardWrapper{
+  text-decoration: none;
+}
+.content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.title {
+  font-family: $font-title;
+  font-size: clamp(18px, 1.5vw, 23px);
+  font-weight: 700;
+  color: $black;
+  margin-bottom: $spacing-sm;
+}
+
+.description {
+  font-family: $font-normal;
+  font-size: clamp(0.9rem, 1.2vw, 1rem);
+  color: rgba($black, 0.85);
+  line-height: 1.6;
+  margin-bottom: $spacing-lg;
+  flex: 1;
+}
+
+.button {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba($white, 0.92);
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: $shadow-md;
+  transition: transform $transition-fast, box-shadow $transition-fast;
+
+  svg { font-size: 1.5rem; color: $black; }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-lg;
+  }
+}
+
+.imageWrapper {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 52%;
+  height: 62%;
+  opacity: 0.28;
+  z-index: 1;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+}
+
+@media (max-width: $breakpoint-tablet) {
+  .card { min-height: 220px; padding: $spacing-lg; }
+  .imageWrapper { width: 58%; height: 58%; }
+}

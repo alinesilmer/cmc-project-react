@@ -1,3 +1,5 @@
+@import "../../styles/variables.scss";
+@import "../../styles/mixins.scss";
 
 .liquidationCyclePage {
   display: flex;
@@ -7,262 +9,260 @@
 .content {
   flex: 1;
   max-width: 100%;
-  padding: v.$spacing-8;
+  padding: $spacing-8;
   height: 100%;
 }
-.wrapper_content{
+
+.wrapper_content {
   height: 100%;
   overflow-y: auto;
-  padding-right: 8px; /* Espacio para scrollbar */
+  padding-right: 8px;
   display: flex;
   flex-direction: column;
 }
 
 .header {
-  // display: grid;
-  // grid-template-columns: 1fr auto;
-  // align-items: center;
-  // gap: v.$spacing-6;
   display: flex;
   flex: 0 0 auto;
   justify-content: space-between;
-  margin-bottom: v.$spacing-6;
+  margin-bottom: $spacing-6;
 
-  @media (max-width: v.$breakpoint-lg) {
+  @media (max-width: $breakpoint-lg) {
     grid-template-columns: 1fr;
     align-items: start;
   }
 }
 
-.headerInfo { display: grid; gap: v.$spacing-2; }
+.headerInfo { display: grid; gap: $spacing-2; }
 
 .breadcrumb {
-  font-size: v.$font-size-sm;
-  color: v.$gray-500;
+  font-size: $font-size-sm;
+  color: $gray-500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .title {
-  font-size: v.$font-size-3xl;
-  font-weight: v.$font-weight-bold;
-  color: v.$gray-900;
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
 }
 
 .subtotals {
-  display: flex; flex-wrap: wrap; gap: v.$spacing-3;
-  color: v.$gray-700; font-size: v.$font-size-sm;
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-3;
+  color: $gray-700;
+  font-size: $font-size-sm;
 }
-.dot { color: v.$gray-400; }
+
+.dot { color: $gray-400; }
 
 .headerControls {
-  display: flex; align-items: center; gap: v.$spacing-4; justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+  justify-self: end;
 
-  @media (max-width: v.$breakpoint-lg) {
-    justify-self: start; flex-wrap: wrap;
+  @media (max-width: $breakpoint-lg) {
+    justify-self: start;
+    flex-wrap: wrap;
   }
 }
 
-.headerButtons { display: flex; gap: v.$spacing-3; align-items: center; flex-wrap: wrap; }
+.headerButtons { display: flex; gap: $spacing-3; align-items: center; flex-wrap: wrap; }
 
 .tabs {
   display: flex;
-  margin-bottom: v.$spacing-6;
+  margin-bottom: $spacing-6;
   flex: 0 0 auto;
-
-  border-bottom: 1px solid v.$gray-200;
+  border-bottom: 1px solid $gray-200;
 }
 
 .tab {
-  padding: v.$spacing-3 v.$spacing-6;
-  border: none; background: none;
-  font-size: v.$font-size-base;
-  font-weight: v.$font-weight-medium;
-  color: v.$gray-600; cursor: pointer;
+  padding: $spacing-3 $spacing-6;
+  border: none;
+  background: none;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  color: $gray-600;
+  cursor: pointer;
   border-bottom: 2px solid transparent;
   transition: all 0.2s ease-in-out;
 
-  &:hover { color: v.$primary-blue; }
+  &:hover { color: $primary-blue; }
 
   &.active {
-    color: v.$primary-blue;
-    border-bottom-color: v.$primary-blue;
+    color: $primary-blue;
+    border-bottom-color: $primary-blue;
   }
 }
 
-.searchSection { margin-bottom: v.$spacing-6; }
+.searchSection { margin-bottom: $spacing-6; }
 
 .socialWorksList {
-  display: flex; flex-direction: column; gap: v.$spacing-6;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-6;
 }
 
 .emptyState {
-  padding: v.$spacing-10;
+  padding: $spacing-10;
   text-align: center;
-  color: v.$gray-600;
-  border: 1px dashed v.$gray-300;
-  border-radius: v.$border-radius-lg;
+  color: $gray-600;
+  border: 1px dashed $gray-300;
+  border-radius: $border-radius-lg;
   background: linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,1) 100%);
 }
 
 .closeLiquidation {
-  background-color: v.$gray-900;
-  color: v.$white;
-  padding: v.$spacing-3 v.$spacing-4;
-  font-size: v.$font-size-base;
-  border-radius: v.$border-radius-md;
+  background-color: $gray-900;
+  color: $white;
+  padding: $spacing-3 $spacing-4;
+  font-size: $font-size-base;
+  border-radius: $border-radius-md;
   border: none;
   cursor: pointer;
   transition: background-color .2s ease, transform .1s ease;
 
-  &:hover { background-color: v.$primary-blue; }
+  &:hover { background-color: $primary-blue; }
   &:active { transform: translateY(1px); }
-  &:disabled { background-color: v.$gray-400; cursor: not-allowed; }
+  &:disabled { background-color: $gray-400; cursor: not-allowed; }
 }
 
-/* ===========================
-   Dialog & Calendar Styling
-   =========================== */
-
 :global(.MuiDialog-paper) {
-  border-radius: v.$border-radius-lg;
-  border: 1px solid v.$gray-200;
+  border-radius: $border-radius-lg;
+  border: 1px solid $gray-200;
   box-shadow: 0 20px 60px rgba(0,0,0,.18);
   overflow: hidden;
 }
 
 :global(.MuiDialogTitle-root) {
-  font-weight: v.$font-weight-bold;
-  font-size: v.$font-size-lg;
-  padding: v.$spacing-4 v.$spacing-5;
-  border-bottom: 1px solid v.$gray-200;
+  font-weight: $font-weight-bold;
+  font-size: $font-size-lg;
+  padding: $spacing-4 $spacing-5;
+  border-bottom: 1px solid $gray-200;
 }
 
 .dialogContent {
-  padding: v.$spacing-5 !important;
+  padding: $spacing-5 !important;
   background: linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,1) 100%);
   backdrop-filter: blur(6px);
 }
 
 .dialogActions {
-  padding: v.$spacing-4 v.$spacing-5 !important;
-  border-top: 1px solid v.$gray-200;
-  display: flex; justify-content: flex-end; gap: v.$spacing-3;
+  padding: $spacing-4 $spacing-5 !important;
+  border-top: 1px solid $gray-200;
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-3;
 }
 
-/* DatePicker input inside dialog */
 .dialogContent :global(.MuiTextField-root) { min-width: 100%; }
-.dialogContent :global(.MuiOutlinedInput-root) { border-radius: v.$border-radius-md; background: v.$white; }
-.dialogContent :global(.MuiOutlinedInput-notchedOutline) { border-color: v.$gray-300; }
-.dialogContent :global(.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline) { border-color: v.$gray-400; }
+.dialogContent :global(.MuiOutlinedInput-root) { border-radius: $border-radius-md; background: $white; }
+.dialogContent :global(.MuiOutlinedInput-notchedOutline) { border-color: $gray-300; }
+.dialogContent :global(.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline) { border-color: $gray-400; }
 .dialogContent :global(.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline) {
-  border-color: v.$primary-blue;
+  border-color: $primary-blue;
   box-shadow: 0 0 0 3px rgba(0,112,243,0.12);
 }
-.dialogContent :global(.MuiInputBase-input) { font-size: v.$font-size-sm; }
+.dialogContent :global(.MuiInputBase-input) { font-size: $font-size-sm; }
 
-/* Calendar surface & chips */
-:global(.MuiPickersLayout-root) { border-radius: v.$border-radius-lg; }
-:global(.MuiDateCalendar-root) { padding: v.$spacing-2; }
+:global(.MuiPickersLayout-root) { border-radius: $border-radius-lg; }
+:global(.MuiDateCalendar-root) { padding: $spacing-2; }
 :global(.MuiPickersYear-yearButton),
 :global(.MuiPickersMonth-monthButton),
-:global(.MuiPickersDay-root) { border-radius: v.$border-radius-md; }
+:global(.MuiPickersDay-root) { border-radius: $border-radius-md; }
 
-/* Selected emphasis */
 :global(.MuiPickersDay-root.Mui-selected),
 :global(.MuiPickersMonth-monthButton.Mui-selected),
-:global(.MuiPickersYear-yearButton.Mui-selected) {
-  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-}
+:global(.MuiPickersYear-yearButton.Mui-selected) { box-shadow: 0 8px 20px rgba(0,0,0,0.12); }
 
-/* Hover cue */
 :global(.MuiPickersDay-root:hover),
 :global(.MuiPickersMonth-monthButton:hover),
-:global(.MuiPickersYear-yearButton:hover) {
-  filter: brightness(0.98);
-}
+:global(.MuiPickersYear-yearButton:hover) { filter: brightness(0.98); }
 
-/* Carrusel de vistas */
 .viewport {
   position: relative;
   overflow: hidden;
   width: 100%;
   flex: 1 1 auto;
-  // min-height: 420px;
 }
+
 .carousel {
   height: 100%;
   min-height: 0;
   display: flex;
-  
-}
-.pane {
-  padding: 1rem 0;
-    min-height: 420px;
-    overflow: auto;
-    min-width: 100%;
-    display: flex;
-    flex-direction: column;
 }
 
-/* Cabecera Débitos */
+.pane {
+  padding: 1rem 0;
+  min-height: 420px;
+  overflow: auto;
+  min-width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
 .debitosHeader {
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: v.$spacing-3;
-  margin-bottom: v.$spacing-3;
+  gap: $spacing-3;
+  margin-bottom: $spacing-3;
   h2 { margin: 0; }
 }
 
-/* Grid de boxes */
 .debitosGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: v.$spacing-4;
-  @media (max-width: v.$breakpoint-lg) { grid-template-columns: 1fr; }
+  gap: $spacing-4;
+
+  @media (max-width: $breakpoint-lg) { grid-template-columns: 1fr; }
 }
 
 .box {
   background: #fff;
   border: 1px solid #e5e7eb;
-  border-radius: v.$border-radius-md;
-  padding: v.$spacing-4;
+  border-radius: $border-radius-md;
+  padding: $spacing-4;
 }
+
 .boxHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: v.$spacing-3;
+  margin-bottom: $spacing-3;
 }
 
-/* Inputs sencillos para filtros en boxes */
 .input {
   border: 1px solid #ddd;
   border-radius: 6px;
   padding: 6px 10px;
   outline: none;
-  &:focus { border-color: v.$primary-blue; }
+
+  &:focus { border-color: $primary-blue; }
 }
 
-/* Tabla simple */
 .tableWrap { overflow-x: auto; }
+
 .simpleTable {
   width: 100%;
   border-collapse: collapse;
+
   th, td { padding: 10px 12px; border-bottom: 1px solid #eee; text-align: left; }
   thead tr { background: #f7f7f9; }
 }
+
 .ellipsis {
   max-width: 360px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .muted { color: #666; }
 .mutedCenter { color: #777; text-align: center; padding: 12px; }
 .errorInline { color: #a00; margin-bottom: 8px; }
 
-/* Tabs activos (ya existentes; asegurate de tener .active) */
-.tab.active { color: v.$gray-900; border-bottom: 2px solid v.$primary-blue; }
-
+.tab.active { color: $gray-900; border-bottom: 2px solid $primary-blue; }

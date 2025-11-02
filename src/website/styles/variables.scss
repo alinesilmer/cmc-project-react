@@ -1,0 +1,84 @@
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600&display=swap");
+
+// Colores principales
+$primary-blue: #173f70;
+$primary-blue-dark: #0c2a52;
+$primary-blue-shadow: #374b68;
+$primary-blue-lighter: #1b4c88;
+$accent-blue: #5a79e1;
+$light-blue: #e8f0ff;
+$primary-yellow: #feeda2;
+$primary-yellow-light: #f4e5a8;
+$primary-green: #32a374;
+$primary-green-dark: #38906c;
+$light-green: #9ac9b6;
+
+//REEMPLAZAR
+$primary-teal: #2d6a6a;
+$primary-light-blue: #a8d5ff;
+$accent-pink: #f0ea78;
+$accent-orange: #30669b;
+$accent-coral: #ff6b6b;
+
+// Colores de servicios
+$service-green: #b8e6d5;
+$service-yellow: #f4d35e;
+$service-pink: #f4c2d8;
+$service-coral: #ff9999;
+$service-orange: #ffb366;
+$service-gradient: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+$service-blue: #90caf9;
+$service-teal: #4db6ac;
+
+// Colores neutros
+$white: #ffffff;
+$light-gray: rgb(194, 194, 194);
+$gray: #666666;
+$dark-gray: #333333;
+$black: #000000;
+
+// Tipografía
+$font-size-base: 16px;
+$font-size-small: 14px;
+$font-size-large: 18px;
+$font-size-h1: 5.5rem;
+$font-size-h2: 3rem;
+$font-size-h3: 2.25rem;
+$font-size-h4: 1.75rem;
+
+$font-normal: "Open Sans", sans-serif;
+$font-title: "Archivo Black", sans-serif;
+$font-playfair: "Playfair Display", serif;
+
+// Espaciado
+$spacing-xs: 0.5rem;
+$spacing-sm: 1rem;
+$spacing-md: 1.5rem;
+$spacing-lg: 2rem;
+$spacing-xl: 3rem;
+$spacing-xxl: 4rem;
+$spacing-2xl: 3.5rem;
+
+// Bordes
+$border-radius-sm: 8px;
+$border-radius-md: 12px;
+$border-radius-lg: 20px;
+$border-radius-xl: 30px;
+
+// Sombras
+$shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+$shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
+$shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.2);
+
+// Breakpoints
+$breakpoint-mobile: 480px;
+$breakpoint-tablet: 768px;
+$breakpoint-desktop: 1024px;
+$breakpoint-wide: 1280px;
+
+// Transiciones
+$transition-fast: 0.2s ease;
+$transition-normal: 0.3s ease;
+$transition-slow: 0.5s ease;

@@ -7,9 +7,9 @@ import { motion } from "framer-motion";
 import { Edit, Loader2, CheckCircle, AlertTriangle } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import SearchBar from "../../../components/molecules/SearchBar/SearchBar";
-import Card from "../../../components/atoms/Card/Card";
-import Button from "../../../components/atoms/Button/Button";
+import SearchBar from "../../components/molecules/SearchBar/SearchBar";
+import Card from "../../components/atoms/Card/Card";
+import Button from "../../components/atoms/Button/Button";
 import styles from "./DiscountsList.module.scss";
 
 type Discount = {

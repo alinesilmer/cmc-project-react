@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import Card from "../../../components/atoms/Card/Card";
+import Card from "../../components/atoms/Card/Card";
 import IoscorAffilliateForm, {
   type PracticeInput,
   type PracticeRowForEdit,
-} from "../../../components/molecules/IoscorAffilliateForm/IoscorAffilliateForm";
+} from "../../components/molecules/IoscorAffilliateForm/IoscorAffilliateForm";
 import IoscorAffilliateTable, {
   type PracticeRow,
-} from "../../../components/molecules/IoscorAffilliateTable/IoscorAffilliateTable";
+} from "../../components/molecules/IoscorAffilliateTable/IoscorAffilliateTable";
 import styles from "./PadronIoscor.module.scss";
 
 /* Local padrón mock */

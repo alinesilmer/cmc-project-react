@@ -1,6 +1,6 @@
 // src/app/pages/RegisterSocio/api.ts
-import { postJSON, postForm } from "../../../../src/lib/http";
-import type { RegisterFormData } from "../../../types/register";
+import { postJSON, postForm } from "../../lib/http";
+import type { RegisterFormData } from "../../types/register";
 import { buildRegisterPayload } from "../Register/api";
 
 export type RegisterResponse = { medico_id: number };

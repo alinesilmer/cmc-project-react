@@ -1,0 +1,277 @@
+@import "../../../styles/variables.scss";
+
+.hero {
+  position: relative;
+  background: white;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -20%;
+    right: -10%;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    left: -15%;
+    width: 700px;
+    height: 700px;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+}
+
+.wrap {
+  position: relative;
+  z-index: 1;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: $spacing-xl $spacing-lg;
+}
+
+.bigCard {
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba($white, 0.15);
+  color: black;
+  padding: clamp($spacing-xl, 6vw, $spacing-2xl);
+  border-radius: $border-radius-lg;
+  position: relative;
+  min-height: 400px;
+  box-shadow: 
+    0 20px 60px rgba($black, 0.3),
+    0 0 0 1px rgba($white, 0.1) inset;
+  width: 100%;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+      0 25px 70px rgba($black, 0.35),
+      0 0 0 1px rgba($white, 0.15) inset;
+  }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle at top left, rgba($primary-yellow, 0.2) 0%, transparent 70%);
+    pointer-events: none;
+  }
+}
+
+.bigCardTitle {
+  font-family: $font-title;
+  font-size: clamp(2rem, 4vw, 4rem);
+  line-height: 0.95;
+  letter-spacing: -1px;
+  text-align: left;
+  color: black;
+  margin: 0 0 $spacing-lg 0;
+  font-weight: 700;
+}
+
+.tagline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-lg;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, 
+    rgba($primary-yellow, 0.25) 0%, 
+    rgba($primary-yellow, 0.15) 100%
+  );
+  color: black;
+  font-family: $font-normal;
+  font-size: $font-size-small;
+  font-weight: 600;
+  border: 1px solid rgba($primary-yellow, 0.4);
+  backdrop-filter: blur(5px);
+  box-shadow: 0 4px 12px rgba($black, 0.15);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: linear-gradient(135deg, 
+      rgba($primary-yellow, 0.35) 0%, 
+      rgba($primary-yellow, 0.25) 100%
+    );
+    border-color: rgba($primary-yellow, 0.6);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba($black, 0.2);
+  }
+}
+
+.lead {
+  max-width: 55ch;
+  font-family: $font-normal;
+  font-size: clamp(13px, 1.2vw, 16px);
+  line-height: 1.7;
+  color: black;
+  margin-bottom: $spacing-xl;
+  text-shadow: 0 2px 8px rgba($black, 0.2);
+}
+
+.ctaRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+  
+  a {
+    text-decoration: none;
+    transition: transform 0.2s ease;
+    
+    &:hover {
+      transform: translateY(-2px);
+    }
+  }
+}
+
+.bigCard img {
+  position: absolute;
+  right: 5%;
+  bottom: 0;
+  width: clamp(240px, 30vw, 400px);
+  height: auto;
+  transition: transform 0.3s ease;
+  z-index: 2;
+  
+  &:hover {
+    transform: translateY(-8px);
+  }
+}
+
+.cardsContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: $spacing-lg;
+  margin-top: $spacing-2xl;
+  
+  > * {
+    animation: fadeInUp 0.6s ease backwards;
+    
+    @for $i from 1 through 4 {
+      &:nth-child(#{$i}) {
+        animation-delay: #{$i * 0.1}s;
+      }
+    }
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: $breakpoint-desktop) {
+  .bigCard { 
+    min-height: 380px; 
+    padding-right: clamp($spacing-xl, 10vw, $spacing-2xl); 
+  }
+  
+  .bigCard img { 
+    right: 3%; 
+    width: clamp(220px, 35vw, 320px);
+  }
+  
+  .cardsContainer {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+}
+
+@media (max-width: $breakpoint-tablet) {
+  .wrap {
+    padding: $spacing-lg $spacing-md;
+  }
+  
+  .bigCard { 
+    padding: $spacing-xl $spacing-lg;
+    min-height: 420px;
+  }
+  
+  .bigCard img { 
+    right: 2%; 
+    width: clamp(200px, 40vw, 280px);
+  }
+  
+  .bigCardTitle {
+    font-size: clamp(2rem, 6vw, 3.5rem);
+  }
+}
+
+@media (max-width: $breakpoint-mobile) {
+  .hero {
+    &::before,
+    &::after {
+      display: none;
+    }
+  }
+  
+  .wrap {
+    padding: $spacing-md;
+  }
+  
+  .bigCard {
+    padding: $spacing-lg;
+    min-height: 360px;
+  }
+  
+  .bigCardTitle {
+    font-size: clamp(1.8rem, 8vw, 2.5rem);
+    margin-bottom: $spacing-md;
+  }
+  
+  .lead {
+    font-size: 0.95rem;
+    margin-bottom: $spacing-lg;
+  }
+  
+  .ctaRow { 
+    flex-direction: column; 
+    align-items: stretch; 
+    gap: $spacing-sm;
+    
+    a {
+      width: 100%;
+      
+      button {
+        width: 100%;
+      }
+    }
+  }
+  
+  .bigCard img {
+    right: 0;
+    width: clamp(160px, 45vw, 220px);
+    opacity: 0.85;
+  }
+  
+  .cardsContainer { 
+    gap: $spacing-md;
+    grid-template-columns: 1fr;
+    margin-top: $spacing-xl;
+  }
+}

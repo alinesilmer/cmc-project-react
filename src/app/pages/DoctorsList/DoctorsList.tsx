@@ -5,11 +5,11 @@ import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import SearchBar from "../../../components/molecules/SearchBar/SearchBar";
-import Card from "../../../components/atoms/Card/Card";
-import Button from "../../../components/atoms/Button/Button";
+import SearchBar from "../../components/molecules/SearchBar/SearchBar";
+import Card from "../../components/atoms/Card/Card";
+import Button from "../../components/atoms/Button/Button";
 import styles from "./DoctorsList.module.scss";
-import { getJSON } from "../../../lib/http";
+import { getJSON } from "../../lib/http";
 
 type DoctorRow = {
   id: number;

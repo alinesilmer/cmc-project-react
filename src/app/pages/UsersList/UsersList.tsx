@@ -3,9 +3,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./UsersList.module.scss";
-import { getJSON } from "../../../lib/http";
-import Button from "../../../components/atoms/Button/Button";
-import BackButton from "../../../components/atoms/BackButton/BackButton";
+import { getJSON } from "../../lib/http";
+import Button from "../../components/atoms/Button/Button";
+import BackButton from "../../components/atoms/BackButton/BackButton";
 
 const PAGE_SIZE = 50;
 

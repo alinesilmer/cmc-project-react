@@ -1,0 +1,241 @@
+@import "../../styles/variables.scss";
+
+.page {
+  min-height: 100vh;
+  background: $white;
+}
+
+.hero {
+  position: relative;
+  background: linear-gradient(135deg, $primary-blue 0%, $primary-blue-lighter 100%);
+  padding: clamp($spacing-xxl, 7vw, 5rem) clamp($spacing-md, 4vw, $spacing-lg);
+  text-align: center;
+  overflow: hidden;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba($accent-blue, 0.2) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    left: -5%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba($primary-yellow, 0.12) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  
+  h1 {
+    font-family: $font-playfair;
+    font-size: clamp(2.25rem, 4.5vw, 3.5rem);
+    font-weight: 800;
+    color: $white;
+    margin: 0 0 $spacing-sm 0;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    position: relative;
+    z-index: 1;
+  }
+  
+  p {
+    font-family: $font-normal;
+    font-size: clamp(1rem, 1.6vw, 1.2rem);
+    color: rgba($white, 0.9);
+    margin: 0 auto;
+    max-width: 55ch;
+    line-height: 1.6;
+    position: relative;
+    z-index: 1;
+  }
+}
+
+.tabs {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: $white;
+  border-bottom: 2px solid rgba($primary-blue, 0.1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  
+  display: flex;
+  justify-content: center;
+  gap: $spacing-xs;
+  padding: $spacing-md clamp($spacing-md, 4vw, $spacing-lg);
+  overflow-x: auto;
+  
+  a {
+    appearance: none;
+    text-decoration: none;
+    font-family: $font-title;
+    color: $gray;
+    font-weight: 600;
+    font-size: clamp(0.9rem, 1.2vw, 1rem);
+    white-space: nowrap;
+    
+    padding: 0.7rem 1.4rem;
+    border-radius: $border-radius-lg;
+    border: 2px solid transparent;
+    background: transparent;
+    transition: all $transition-normal;
+    position: relative;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 50%;
+      transform: translateX(-50%) scaleX(0);
+      width: 80%;
+      height: 3px;
+      background: $primary-blue;
+      border-radius: 2px;
+      transition: transform $transition-normal;
+    }
+    
+    &:hover {
+      background: rgba($primary-blue, 0.06);
+      color: $primary-blue;
+      transform: translateY(-1px);
+    }
+    
+    &.active {
+      background: linear-gradient(135deg, rgba($primary-blue, 0.12) 0%, rgba($accent-blue, 0.08) 100%);
+      color: $primary-blue;
+      border-color: rgba($primary-blue, 0.2);
+      font-weight: 700;
+      
+      &::after {
+        transform: translateX(-50%) scaleX(1);
+      }
+    }
+  }
+}
+
+.content {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: clamp($spacing-xl, 6vw, $spacing-xxl) clamp($spacing-md, 4vw, $spacing-lg);
+  
+  article {
+    background: $white;
+    border: 1px solid rgba($primary-blue, 0.12);
+    border-radius: $border-radius-xl;
+    box-shadow: 
+      0 4px 16px rgba($primary-blue, 0.06),
+      0 1px 4px rgba(0, 0, 0, 0.04);
+    padding: clamp($spacing-lg, 5vw, $spacing-xxl);
+    position: relative;
+    overflow: hidden;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, $primary-blue 0%, $accent-blue 50%, $primary-green 100%);
+    }
+    
+    h2 {
+      font-family: $font-title;
+      font-size: clamp(1.5rem, 2.8vw, 2rem);
+      color: $primary-blue-dark;
+      margin: 0 0 $spacing-lg 0;
+      letter-spacing: -0.01em;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    
+    p {
+      font-family: $font-normal;
+      color: $gray;
+      line-height: 1.7;
+      font-size: clamp(0.95rem, 1.3vw, 1.05rem);
+      margin-bottom: $spacing-md;
+    }
+    
+    ul {
+      margin: $spacing-lg 0;
+      padding-left: 0;
+      list-style: none;
+      
+      li {
+        font-family: $font-normal;
+        color: $gray;
+        line-height: 1.7;
+        font-size: clamp(0.95rem, 1.3vw, 1.05rem);
+        margin-bottom: $spacing-sm;
+        padding-left: $spacing-lg;
+        position: relative;
+        
+        &::before {
+          content: '✓';
+          position: absolute;
+          left: 0;
+          color: $primary-green;
+          font-weight: 700;
+          font-size: 1.1em;
+        }
+      }
+    }
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: clamp($spacing-md, 3vw, $spacing-lg);
+  
+  > .col-4 {
+    grid-column: span 4;
+  }
+  > .col-6 {
+    grid-column: span 6;
+  }
+  > .col-12 {
+    grid-column: span 12;
+  }
+  
+  @media (max-width: $breakpoint-desktop) {
+    > .col-4,
+    > .col-6 {
+      grid-column: span 6;
+    }
+  }
+  
+  @media (max-width: $breakpoint-tablet) {
+    grid-template-columns: 1fr;
+    > * {
+      grid-column: auto;
+    }
+  }
+}
+
+@media (max-width: $breakpoint-mobile) {
+  .tabs {
+    justify-content: flex-start;
+    padding: $spacing-sm $spacing-md;
+    gap: $spacing-xs;
+    
+    a {
+      padding: 0.6rem 1.1rem;
+      font-size: 0.9rem;
+    }
+  }
+  
+  .content {
+    padding: $spacing-lg $spacing-md;
+  }
+}

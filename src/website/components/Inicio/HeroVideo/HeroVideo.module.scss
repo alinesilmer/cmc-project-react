@@ -1,0 +1,99 @@
+@import '../../../styles/variables';
+
+.heroSection {
+  position: relative;
+  width: 100%;
+  height: 90vh;
+  overflow: hidden;
+}
+
+/* Reutilizamos la clase existente como contenedor del carrusel */
+.backgroundVideo {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+  overflow: hidden;
+}
+
+/* Slides del carrusel */
+.slide {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transform: scale(1.06);
+  transition: opacity 900ms ease, transform 1800ms ease;
+  will-change: opacity, transform;
+}
+
+.active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 1;
+}
+
+.content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: grid;
+  align-content: end;
+  gap: clamp(2rem, 3vw, 2.5rem);
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 7rem clamp(1rem, 4vw, 4rem);
+  color: white;
+}
+
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+}
+
+.title {
+  font-family: $font-playfair;
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: .2px;
+  font-size: clamp(2rem, 6vw, 4rem);
+  max-width: 18ch;
+  text-shadow: 8px 8px 30px rgba(0,0,0,.25);
+}
+
+.subtitle {
+  font-family: $font-normal;
+  font-size: clamp(1.3rem, 1.7vw, 1.5rem);
+  font-weight: 400;
+  line-height: 1.7;
+  max-width: 60ch;
+  color: rgba(255,255,255,.92);
+}
+
+.ctaRow { display: flex; align-items: center; gap: .8rem; }
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: .9rem 1.2rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: .95rem;
+  color: #fff;
+  background: linear-gradient(135deg, #ff7aa3, #ff5c7a);
+  border: 1px solid rgba(255,255,255,.3);
+  box-shadow: 0 16px 36px rgba(255,92,122,.25);
+  transition: transform .16s ease, box-shadow .16s ease, filter .16s ease;
+}
+
+.cta:hover { transform: translateY(-2px); box-shadow: 0 20px 46px rgba(255,92,122,.32); }
+
+@media (max-width: 768px) {
+  .content { padding: 0 1.25rem; }
+}

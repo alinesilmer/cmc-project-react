@@ -1,97 +1,93 @@
-/* app/pages/InsuranceDetail/InsuranceDetail.module.scss */
+@import "../../styles/variables.scss";
+@import "../../styles/mixins.scss";
+
 .page {
   display: flex;
   height: 100vh;
-
 }
 
 .content {
   flex: 1 1 auto;
-  padding: v.$spacing-8;
+  padding: $spacing-8;
   width: 100%;
-  height: 100dvh; /* garantiza el alto total */
-  display: flex;       /* para que wrapper_content pueda ocupar 100% */
+  height: 100dvh;
+  display: flex;
 }
 
 .header {
-  @include m.flex-between;
-  margin-bottom: v.$spacing-6;
-  gap: v.$spacing-4;
+  @include flex-between;
+  margin-bottom: $spacing-6;
+  gap: $spacing-4;
   flex-wrap: wrap;
   width: 100%;
-  flex: 0 0 auto;      /* no crece, no se contrae: toma su altura natural */
-
+  flex: 0 0 auto;
 }
 
 .headerRight {
   display: inline-flex;
-  gap: v.$spacing-3;
+  gap: $spacing-3;
   align-items: center;
   flex-wrap: wrap;
 }
 
 .breadcrumb {
-  font-size: v.$font-size-sm;
-  color: v.$gray-500;
+  font-size: $font-size-sm;
+  color: $gray-500;
   text-transform: uppercase;
   letter-spacing: .5px;
-  margin-bottom: v.$spacing-2;
+  margin-bottom: $spacing-2;
 }
 
 .title {
-  font-size: v.$font-size-3xl;
-  font-weight: v.$font-weight-bold;
-  color: v.$gray-900;
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
 }
 
 .period {
-  color: v.$primary-blue;
-  font-weight: v.$font-weight-semibold;
+  color: $primary-blue;
+  font-weight: $font-weight-semibold;
 }
-.meta{
+
+.meta {
   margin-top: .5rem;
   display: flex;
   gap: 1rem;
 }
+
 .totalPill {
-  background: v.$secondary-blue;
-  color: v.$primary-blue;
-  border: 1px solid v.$gray-200;
-  padding: v.$spacing-2 v.$spacing-3;
-  border-radius: v.$border-radius-md;
-  font-size: v.$font-size-sm;
+  background: $secondary-blue;
+  color: $primary-blue;
+  border: 1px solid $gray-200;
+  padding: $spacing-2 $spacing-3;
+  border-radius: $border-radius-md;
+  font-size: $font-size-sm;
 }
 
-.wrapper_content{
+.wrapper_content {
   display: flex;
   flex-direction: column;
   min-height: 100%;
   width: 100%;
-  // overflow: auto;
 }
 
-.tableSection{
-  flex: 1 1 auto;   /* ocupa el espacio disponible */
-  min-height: 0;    /* habilita el overflow en hijos */
-  overflow: hidden;   /* scrollea la tabla si excede */
+.tableSection {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
 }
 
-
-// PAGINATOR
 .paginationBar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   padding: 12px 0;
-  border-top: 1px solid var(--border, rgba(0,0,0,0.08));
+  border-top: 1px solid $gray-200;
   flex: 0 0 auto;
 }
 
-.pageInfo {
-  font-size: 0.95rem;
-  opacity: 0.9;
-}
+.pageInfo { font-size: 0.95rem; opacity: 0.9; }
 
 .pageControls {
   display: flex;
@@ -109,8 +105,8 @@
 .pageSize {
   padding: 6px 10px;
   border-radius: 8px;
-  border: 1px solid var(--border, rgba(0,0,0,0.12));
-  background: var(--surface, #fff);
+  border: 1px solid $gray-300;
+  background: $white;
   outline: none;
 }
 
@@ -120,7 +116,4 @@
   gap: 8px;
 }
 
-.pageIndicator {
-  font-size: 0.95rem;
-  opacity: 0.9;
-}
+.pageIndicator { font-size: 0.95rem; opacity: 0.9; }

@@ -12,21 +12,21 @@ import InsuranceDetail from "./app/pages/InsuranceDetail/InsuranceDetail";
 import DoctorProfilePage from "./app/pages/DoctorProfilePage/DoctorProfilePage";
 
 // Components
-import Sidebar from "./components/molecules/Sidebar/Sidebar";
+import Sidebar from "./app/components/molecules/Sidebar/Sidebar";
 import PadronIoscor from "./app/pages/PadronIoscor/PadronIoscor";
 
 import styles from "./app.module.scss"
 import Login from "./app/pages/Login/Login";
 import Info from "./app/pages/Info/Info";
 import Register from "./app/pages/Register/Register";
-import RequireAuth from "./auth/RequireAuth";
-import { useAuth } from "./auth/AuthProvider";
-import ApplicationsList from "./components/molecules/ApplicationsList/ApplicationsList";
-import ApplicationDetail from "./components/molecules/ApplicationDetail/ApplicationDetail";
+import RequireAuth from "./app/auth/RequireAuth";
+import { useAuth } from "./app/auth/AuthProvider";
+import ApplicationsList from "./app/components/molecules/ApplicationsList/ApplicationsList";
+import ApplicationDetail from "./app/components/molecules/ApplicationDetail/ApplicationDetail";
 import UsersManagerDashboard from "./app/pages/UsersManagerDashboard/UsersManagerDashboard";
 import Config from "./app/pages/Config/Config";
 import Help from "./app/pages/Help/Help";
-import AdherenteForm from "./components/molecules/AdherenteForm/AdherenteForm";
+import AdherenteForm from "./app/components/molecules/AdherenteForm/AdherenteForm";
 import UsersList from "./app/pages/UsersList/UsersList";
 import RegisterSocio from "./app/pages/RegisterSocio/RegisterSocio";
 import PermissionsManager from "./app/pages/PermissionsManager/PermissionsManager";

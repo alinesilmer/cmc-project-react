@@ -8,16 +8,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
-import Card from "../../../components/atoms/Card/Card";
-import Button from "../../../components/atoms/Button/Button";
+import Card from "../../components/atoms/Card/Card";
+import Button from "../../components/atoms/Button/Button";
 import styles from "./DoctorProfilePage.module.scss";
 import {
   LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip,
   ResponsiveContainer, BarChart, Bar, Legend,
 } from "recharts";
-import RequirePermission from "../../../auth/RequirePermission";
-import { getJSON, postJSON, patchJSON, putJSON, delJSON } from "../../../lib/http"; 
-import BackButton from "../../../components/atoms/BackButton/BackButton";
+import RequirePermission from "../../auth/RequirePermission";
+import { getJSON, postJSON, patchJSON, putJSON, delJSON } from "../../lib/http"; 
+import BackButton from "../../components/atoms/BackButton/BackButton";
 /* ===== Etiquetas amistosas ===== */
 const ROLE_LABELS: Record<string, string> = {
   admin: "Administrador/a",

@@ -1,6 +1,5 @@
-// Optional (for editor intellisense only):
-// @use "@/styles/mixins.scss" as m;
-// @use "@/styles/variables.scss" as v;
+@import "../../styles/variables.scss";
+@import "../../styles/mixins.scss";
 
 .socialWorkPage {
   display: flex;
@@ -10,40 +9,42 @@
 .content {
   flex: 1;
   margin-left: 280px;
-  padding: v.$spacing-8;
+  padding: $spacing-8;
 }
 
 .header {
   text-align: center;
-  margin-bottom: v.$spacing-8;
+  margin-bottom: $spacing-8;
 }
 
 .title {
-  font-size: v.$font-size-2xl;
-  font-weight: v.$font-weight-bold;
-  color: v.$white;
-  background-color: v.$primary-blue;
-  padding: v.$spacing-4 v.$spacing-6;
-  border-radius: v.$border-radius-lg;
-  margin-bottom: v.$spacing-6;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: $white;
+  background-color: $primary-blue;
+  padding: $spacing-4 $spacing-6;
+  border-radius: $border-radius-lg;
+  margin-bottom: $spacing-6;
 }
 
 .socialWorksGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: v.$spacing-6;
+  gap: $spacing-6;
 }
 
 .socialWorkCard {
   text-align: center;
-  padding: v.$spacing-8;
+  padding: $spacing-8;
   min-height: 200px;
-  @include m.flex-center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   flex-direction: column;
 }
 
 .logoContainer {
-  margin-bottom: v.$spacing-4;
+  margin-bottom: $spacing-4;
 }
 
 .logo {
@@ -53,7 +54,7 @@
 }
 
 .socialWorkName {
-  font-size: v.$font-size-lg;
-  font-weight: v.$font-weight-semibold;
-  color: v.$gray-900;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $gray-900;
 }

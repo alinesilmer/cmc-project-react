@@ -6,13 +6,13 @@ import { useNavigate } from "react-router-dom";
 import styles from "./Register.module.scss";
 import LayoutRegister from "./Layout/Layout";
 import Steps from "./Steps/Steps";
-import type { RegisterFormData } from "../../../types/register";
-import arPlaces from "../../../utils/ar-provinces-localities.json";
+import type { RegisterFormData } from "../../types/register";
+import arPlaces from "../../utils/ar-provinces-localities.json";
 import {
   sanitizeField,
   validateStep as validateStepUtil,
   getInputProps,
-} from "../../../utils/validations";
+} from "../../utils/validations";
 import Lottie from "lottie-react";
 
 const stepsMeta = [
@@ -96,7 +96,7 @@ const Register: React.FC = () => {
     if (!askAdherente) return;
     (async () => {
       try {
-        const mod = await import("../../../assets/adherente.json");
+        const mod = await import("../../assets/adherente.json");
         setAnimData(mod.default as object);
       } catch {
         setAnimData(null);

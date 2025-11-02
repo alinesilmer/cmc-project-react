@@ -1,0 +1,119 @@
+@import "../../../styles/variables.scss";
+
+.carousel {
+  position: relative;
+  width: 100%;
+  margin: $spacing-lg auto;
+  overflow: hidden;
+}
+
+.track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 280px;
+  gap: $spacing-md;
+  align-items: stretch;
+  transition: transform .45s ease;
+  will-change: transform;
+}
+
+.card {
+  background: $white;
+  border: 1px solid $light-gray;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-md;
+  padding: $spacing-md;
+  display: grid;
+  gap: $spacing-sm;
+  cursor: zoom-in;
+}
+
+.media {
+  width: 100%;
+  aspect-ratio: 16/10;
+  border-radius: $border-radius-md;
+  overflow: hidden;
+  background: lighten($light-gray, 12%);
+  img, video { width: 100%; height: 100%; object-fit: cover; display: block; }
+}
+
+.name { font-weight: 700; color: $dark-gray; }
+.spec { color: $gray; font-size: $font-size-small; }
+
+.nav {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  button {
+    pointer-events: all;
+    border: 0;
+    background: rgba(0,0,0,.5);
+    color: $white;
+    width: 40px; height: 40px; border-radius: 50%;
+    margin: 0 $spacing-md;
+    cursor: pointer;
+  }
+}
+
+@media (max-width: $breakpoint-tablet) {
+  .track { grid-auto-columns: 82vw; }
+}
+
+/* Modal */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+  display: grid;
+  place-items: center;
+  z-index: 60;
+}
+
+.modalDialog {
+  position: relative;
+  width: min(96vw, 800px);
+  max-height: 92vh;
+  background: $white;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-lg;
+  padding: $spacing-md;
+  display: grid;
+  gap: $spacing-sm;
+}
+
+.modalClose {
+  position: absolute;
+  top: $spacing-sm;
+  right: $spacing-sm;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0,0,0,.6);
+  color: $white;
+  cursor: pointer;
+}
+
+.modalMedia {
+  width: 100%;
+  max-height: calc(92vh - 120px);
+  display: grid;
+  place-items: center;
+  img, video {
+    max-width: 100%;
+    max-height: 100%;
+    display: block;
+    border-radius: $border-radius-md;
+    background: #000;
+  }
+}
+
+.modalCaption {
+  text-align: center;
+  color: $dark-gray;
+  font-weight: 600;
+}

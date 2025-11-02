@@ -1,0 +1,231 @@
+@import "../../../styles/variables.scss";
+
+/* --- Contenedor & espaciado --- */
+.wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: $spacing-xxl $spacing-lg;
+
+  @media (max-width: $breakpoint-tablet) {
+    padding: $spacing-xl $spacing-md;
+  }
+  @media (max-width: $breakpoint-mobile) {
+    padding: $spacing-lg $spacing-sm;
+  }
+}
+
+/* --- Header: título + acciones --- */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+
+  h2 {
+    margin: 0;
+    font-family: $font-title;
+    font-size: clamp(1.25rem, 2.2vw, 1.6rem);
+    letter-spacing: -0.02em;
+    color: $dark-gray;
+  }
+}
+
+/* --- Lista / grid --- */
+.grid {
+  display: grid;
+  gap: $spacing-sm;
+
+  /* Cabecera sticky opcional (aplícalo a tu encabezado si lo necesitas) */
+  .row--header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: linear-gradient(
+      180deg,
+      rgba($light-gray, 0.14) 0%,
+      rgba($light-gray, 0.04) 100%
+    );
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba($light-gray, 0.7);
+    box-shadow: none;
+    font-weight: 700;
+
+    /* Suavizar tipografía en header */
+    > * { color: $dark-gray; }
+  }
+}
+
+/* --- Fila --- */
+.row {
+  display: grid;
+  grid-template-columns: 60px 1fr 1fr 120px 96px 120px 160px; /* un poco más aire */
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-md;
+  border: 1px solid rgba($light-gray, 0.8);
+  border-radius: $border-radius-md;
+  background: $white;
+  box-shadow: $shadow-sm;
+  transition: transform $transition-fast, box-shadow $transition-fast, border-color $transition-fast;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: $shadow-md;
+    border-color: rgba($light-gray, 0.95);
+  }
+
+  /* Tipografía base de celdas */
+  > * {
+    font-size: $font-size-base;
+    color: $gray;
+  }
+
+  /* Primera columna (preview) sutilmente separada */
+  > :first-child {
+    align-self: center;
+  }
+
+  /* Última columna (acciones) alineada a la derecha por defecto */
+  .actions {
+    justify-content: flex-end;
+  }
+}
+
+/* --- Preview / miniatura --- */
+.thumb {
+  width: 60px;
+  height: 40px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: lighten($light-gray, 14%);
+  box-shadow: inset 0 0 0 1px rgba($light-gray, 0.5);
+}
+
+/* --- Acciones --- */
+.actions {
+  display: flex;
+  gap: $spacing-sm;
+  justify-content: flex-end;
+
+  /* Asegura mejor alineación de botones pequeños */
+  > * {
+    line-height: 1;
+  }
+}
+
+/* --- Formulario de alta/edición --- */
+.form {
+  display: grid;
+  gap: $spacing-md;
+  margin-top: $spacing-lg;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+
+  background: $white;
+  border: 1px solid rgba($light-gray, 0.7);
+  border-radius: $border-radius-lg;
+  padding: clamp($spacing-lg, 3.5vw, $spacing-xxl);
+  box-shadow: $shadow-md;
+
+  input[type="text"],
+  input[type="number"],
+  input[type="url"],
+  select,
+  textarea {
+    width: 100%;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid rgba($light-gray, 0.9);
+    border-radius: $border-radius-sm;
+    background: $white;
+    transition: border-color $transition-fast, box-shadow $transition-fast;
+    font-size: $font-size-base;
+
+    &:focus {
+      outline: none;
+      border-color: $primary-blue;
+      box-shadow: 0 0 0 3px rgba($primary-blue, 0.12);
+    }
+  }
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    color: $dark-gray;
+    user-select: none;
+  }
+
+  textarea {
+    min-height: 110px;
+  }
+
+  .wide {
+    grid-column: 1 / -1;
+  }
+}
+
+/* --- Responsive --- */
+@media (max-width: $breakpoint-desktop) {
+  .row {
+    grid-template-columns: 60px 1fr 1fr 100px 84px 110px 140px;
+  }
+}
+
+@media (max-width: $breakpoint-tablet) {
+  .row {
+    grid-template-columns: 50px 1fr 1fr;
+    grid-auto-rows: minmax(20px, auto);
+    padding: $spacing-sm;
+
+    /* Reorganización en tarjetas */
+    > :nth-child(4), /* Orden */
+    > :nth-child(5), /* Activo */
+    > :nth-child(6), /* Tipo */
+    > :nth-child(7)  /* Acciones */
+    {
+      grid-column: 2 / -1;
+    }
+
+    .actions {
+      justify-content: flex-start;
+      flex-wrap: wrap;
+      gap: $spacing-xs;
+    }
+  }
+
+  .form {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: $breakpoint-mobile) {
+  .row {
+    grid-template-columns: 44px 1fr;
+    gap: $spacing-xs;
+  }
+
+  .thumb {
+    width: 44px;
+    height: 34px;
+    border-radius: 8px;
+  }
+
+  .form {
+    grid-template-columns: 1fr;
+    padding: $spacing-lg;
+  }
+}
+
+/* --- Utilidades sutiles (opcional) --- */
+.muted { color: lighten($gray, 12%); }
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .28rem .55rem;
+  font-size: $font-size-small;
+  border-radius: 999px;
+  background: rgba($primary-blue, .08);
+  color: $primary-blue;
+  border: 1px solid rgba($primary-blue, .18);
+}

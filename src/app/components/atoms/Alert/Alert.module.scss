@@ -1,0 +1,99 @@
+@import "@/app/styles/variables.scss";
+@import "@/app/styles/mixins.scss";
+
+.backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  /* Asegura ocupar SIEMPRE todo el viewport */
+  width: 100vw;
+  height: 100vh; // fallback
+  /* En móviles modernos, 100dvh respeta barras dinámicas */
+  @supports (height: 100dvh) {
+    height: 100dvh;
+  }
+
+  background: rgba(15, 23, 42, 0.35);
+  display: grid;
+  place-items: center;
+  /* Padding para que el modal no pegue contra los bordes */
+  padding: clamp(12px, 2vw, 24px);
+  z-index: 1002;
+}
+
+.alert {
+  background: $white;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-xl;
+  border: 1px solid $gray-200;
+
+  /* Ancho máximo “card”, nunca full width */
+  width: min(520px, 100%);
+  /* Que nunca se pase de la altura disponible */
+  max-height: 90vh; // fallback
+  @supports (height: 100dvh) {
+    max-height: 90dvh;
+  }
+  overflow: auto;
+
+  padding: $spacing-6;
+  position: relative;
+}
+
+.success { border-left: 4px solid $success-green; }
+.error   { border-left: 4px solid $danger-red; }
+.warning { border-left: 4px solid $warning-orange; }
+.info    { border-left: 4px solid $primary-blue; }
+
+.content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.icon { color: $primary-blue; 
+  width: 50%;
+  max-width: 200px;
+}
+
+.title {
+  margin: 0 0 $spacing-2 0;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
+  color: $gray-900;
+  text-align: center;
+}
+
+.message {
+  margin: 0;
+  font-size: $font-size-base;
+  color: $gray-600;
+  line-height: 1.5;
+  text-align: center;
+
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: $spacing-3;
+  margin-top: $spacing-6;
+}
+
+.closeIcon {
+  position: absolute;
+  top: $spacing-4;
+  right: $spacing-4;
+  background: transparent;
+  border: 0;
+  color: $gray-500;
+  cursor: pointer;
+
+  &:hover { color: $gray-700; }
+}
+
+.success .icon { color: $success-green; }
+.error   .icon { color: $danger-red; }
+.warning .icon { color: $warning-orange; }
+.info    .icon { color: $primary-blue; }

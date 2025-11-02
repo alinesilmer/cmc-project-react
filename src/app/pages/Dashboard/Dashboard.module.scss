@@ -1,3 +1,4 @@
+@import "../../styles/variables.scss";
 
 .dashboard {
   display: flex;
@@ -6,47 +7,56 @@
 
 .content {
   flex: 1;
-  padding: v.$spacing-10;
+  padding: $spacing-10;
   background: linear-gradient(180deg, #fff 0%, #fff 65%, rgba(249, 250, 251, 0.8) 100%);
+
+  @media (max-width: $breakpoint-md) { padding: $spacing-8; }
+  @media (max-width: $breakpoint-sm) { padding: $spacing-6; }
 }
 
 .header {
   text-align: center;
-  margin-bottom: v.$spacing-12;
+  margin-bottom: $spacing-12;
+
+  @media (max-width: $breakpoint-sm) { margin-bottom: $spacing-8; }
 }
 
 .welcome {
   font-size: clamp(28px, 2.6vw, 40px);
-  font-weight: 800px;
-  color: v.$gray-900;
-  margin-bottom: v.$spacing-3;
+  font-weight: bold;
+  color: $gray-900;
+  margin-bottom: $spacing-3;
   letter-spacing: .3px;
 }
 
 .subtitle {
-  font-size: v.$font-size-lg;
-  color: v.$gray-600;
+  font-size: $font-size-lg;
+  color: $gray-600;
+
+  @media (max-width: $breakpoint-sm) { font-size: $font-size-base; }
 }
 
 .statusCards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: v.$spacing-6;
-  margin-bottom: v.$spacing-10;
+  gap: $spacing-6;
+  margin-bottom: $spacing-10;
+
+  @media (max-width: $breakpoint-sm) { gap: $spacing-4; }
 }
 
 .statusCard {
   text-align: center;
-  padding: v.$spacing-6;
-  border-radius: v.$border-radius-xl;
+  padding: $spacing-6;
+  border-radius: $border-radius-xl;
   background: #fff;
-  border: 1px solid v.$gray-200;
+  border: 1px solid $gray-200;
   box-shadow: 0 8px 24px rgba(2, 6, 23, .06);
 
   h3 {
-    font-size: v.$font-size-xs;
-    color: v.$gray-600;
-    margin-bottom: v.$spacing-2;
+    font-size: $font-size-xs;
+    color: $gray-600;
+    margin-bottom: $spacing-2;
     text-transform: uppercase;
     letter-spacing: .6px;
   }
@@ -54,25 +64,25 @@
 
 .statusValue {
   font-size: clamp(20px, 1.8vw, 28px);
-  font-weight: v.$font-weight-bold;
-  color: v.$gray-900;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
 }
 
 .quickActions {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: v.$spacing-6;
+  gap: $spacing-6;
+
+  @media (max-width: $breakpoint-sm) { gap: $spacing-4; }
 }
 
-.actionLink {
-  text-decoration: none;
-}
+.actionLink { text-decoration: none; }
 
 .actionCard {
   position: relative;
   isolation: isolate;
   height: 200px;
-  padding: v.$spacing-8;
+  padding: $spacing-8;
   border-radius: 22px;
   box-shadow: 0 14px 40px rgba(2, 6, 23, .08);
   border: 0;
@@ -80,6 +90,8 @@
   align-content: space-between;
   transition: transform .25s ease, box-shadow .25s ease, filter .25s ease;
   overflow: hidden;
+
+  @media (max-width: $breakpoint-sm) { height: 180px; padding: $spacing-6; }
 }
 
 .actionCard::after {
@@ -98,18 +110,12 @@
   filter: saturate(1.05);
 }
 
-.actionTop {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.actionIcon {
-  opacity: .9;
-}
+.actionTop { display: flex; justify-content: flex-end; }
+.actionIcon { opacity: .9; }
 
 .actionTitle {
   font-size: clamp(16px, 1.2vw, 18px);
-  font-weight: v.$font-weight-bold;
+  font-weight: $font-weight-bold;
   color: #fff;
 }
 
@@ -120,39 +126,19 @@
   width: fit-content;
   padding: 6px 12px;
   border-radius: 999px;
-  font-size: v.$font-size-xs;
-  font-weight: v.$font-weight-semibold;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
   color: rgba(255, 255, 255, .95);
   background: rgba(255, 255, 255, .18);
   backdrop-filter: blur(6px);
 }
 
-/* Tile palettes */
-.tileYellow {
-  background: linear-gradient(135deg, #ffe08a 0%, #ffd050 100%);
-  .actionIcon { color: #8c6d00; }
-}
-
-.tilePink {
-  background: linear-gradient(135deg, #ff7ab8 0%, #ff5fa1 100%);
-  .actionIcon { color: #7a0f45; }
-}
-
-.tilePurple {
-  background: linear-gradient(135deg, #a68cff 0%, #7b61ff 100%);
-  .actionIcon { color: #312266; }
-}
-
-.tileBlue {
-  background: linear-gradient(135deg, #7ecbff 0%, #4aa7ff 100%);
-  .actionIcon { color: #0b4473; }
-}
-
-.tileOrange {
-  background: linear-gradient(135deg, #ffb680 0%, #ff8e57 100%);
-  .actionIcon { color: #6b2a07; }
-}
+.tileYellow { background: linear-gradient(135deg, #ffe08a 0%, #ffd050 100%); .actionIcon { color: #8c6d00; } }
+.tilePink   { background: linear-gradient(135deg, #ff7ab8 0%, #ff5fa1 100%); .actionIcon { color: #7a0f45; } }
+.tilePurple { background: linear-gradient(135deg, #a68cff 0%, #7b61ff 100%); .actionIcon { color: #312266; } }
+.tileBlue   { background: linear-gradient(135deg, #7ecbff 0%, #4aa7ff 100%); .actionIcon { color: #0b4473; } }
+.tileOrange { background: linear-gradient(135deg, #ffb680 0%, #ff8e57 100%); .actionIcon { color: #6b2a07; } }
 
 @media (max-width: 900px) {
-  .content { margin-left: 0; padding: v.$spacing-6; }
+  .content { padding: $spacing-6; }
 }

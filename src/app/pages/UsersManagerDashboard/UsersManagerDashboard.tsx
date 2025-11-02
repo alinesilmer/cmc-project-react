@@ -3,11 +3,11 @@
 import type React from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./UsersManagerDashboard.module.scss";
-import MetricCard from "../../../components/molecules/MetricCard/MetricCard";
-import LineChart from "../../../components/molecules/LineChart/LineChart";
+import MetricCard from "../../components/molecules/MetricCard/MetricCard";
+import LineChart from "../../components/molecules/LineChart/LineChart";
 // import type { ApplicationStatus } from "../../../types/types";
 import { useEffect, useState } from "react";
-import { getJSON } from "../../../lib/http";
+import { getJSON } from "../../lib/http";
 
 
 // type MedicoRow = {

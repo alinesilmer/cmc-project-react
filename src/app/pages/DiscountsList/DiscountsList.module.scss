@@ -1,3 +1,6 @@
+@import "../../styles/variables.scss";
+@import "../../styles/mixins.scss";
+
 
 .discountsPage {
   display: flex;
@@ -7,50 +10,56 @@
 .content {
   flex: 1;
   margin-left: 280px;
-  padding: v.$spacing-8;
+  padding: $spacing-8;
+
+  @media (max-width: $breakpoint-md) {
+    margin-left: 0;
+  }
 }
 
 .header {
-  @include m.flex-between;
-  margin-bottom: v.$spacing-6;
+  @include flex-between;
+  margin-bottom: $spacing-6;
 
-  @media (max-width: v.$breakpoint-md) {
+  @media (max-width: $breakpoint-md) {
     flex-direction: column;
-    gap: v.$spacing-4;
+    gap: $spacing-4;
     align-items: flex-start;
   }
 }
 
 .title {
-  font-size: v.$font-size-2xl;
-  font-weight: v.$font-weight-bold;
-  color: v.$primary-blue;
-  margin-bottom: v.$spacing-1;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: $primary-blue;
+  margin-bottom: $spacing-1;
 }
 
 .subtitle {
-  color: v.$gray-600;
-  font-size: v.$font-size-base;
+  color: $gray-600;
+  font-size: $font-size-base;
 }
 
 .tableCard {
   padding: 0;
   overflow: hidden;
-  border-radius: v.$border-radius-lg;
-  box-shadow: v.$shadow-md;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-md;
 }
 
-.table { width: 100%; }
+.table {
+  width: 100%;
+}
 
 .tableHeader {
   display: grid;
   grid-template-columns: 1fr 3fr 1fr 1fr 1.5fr;
-  gap: v.$spacing-4;
-  padding: v.$spacing-4 v.$spacing-6;
-  background: linear-gradient(135deg, v.$gray-50, v.$gray-100);
-  font-weight: v.$font-weight-semibold;
-  font-size: v.$font-size-sm;
-  color: v.$gray-700;
+  gap: $spacing-4;
+  padding: $spacing-4 $spacing-6;
+  background: linear-gradient(135deg, $gray-50, $gray-100);
+  font-weight: $font-weight-semibold;
+  font-size: $font-size-sm;
+  color: $gray-700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -58,13 +67,15 @@
 .tableRow {
   display: grid;
   grid-template-columns: 1fr 3fr 1fr 1fr 1.5fr;
-  gap: v.$spacing-4;
-  padding: v.$spacing-4 v.$spacing-6;
-  border-bottom: 1px solid v.$gray-200;
+  gap: $spacing-4;
+  padding: $spacing-4 $spacing-6;
+  border-bottom: 1px solid $gray-200;
   align-items: center;
-  transition: background-color .2s ease;
+  transition: background-color 0.2s ease;
 
-  &:hover { background-color: v.$gray-50; }
+  &:hover {
+    background-color: $gray-50;
+  }
 }
 
 .conceptCell {
@@ -73,103 +84,123 @@
   white-space: nowrap;
 }
 
-.actions { display: flex; gap: v.$spacing-2; align-items: center; }
+.actions {
+  display: flex;
+  gap: $spacing-2;
+  align-items: center;
+}
 
 .editButton {
-  @include m.flex-center;
+  @include flex-center;
   width: 32px;
   height: 32px;
   border: none;
   background-color: transparent;
-  color: v.$gray-500;
-  border-radius: v.$border-radius-sm;
+  color: $gray-500;
+  border-radius: $border-radius-sm;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
 
-  &:hover { background-color: v.$gray-100; color: v.$gray-700; }
+  &:hover {
+    background-color: $gray-100;
+    color: $gray-700;
+  }
 }
 
 .emptyState {
-  padding: v.$spacing-8;
+  padding: $spacing-8;
   text-align: center;
-  color: v.$gray-600;
+  color: $gray-600;
 }
 
-/* Centered modal */
 .modalBackdrop {
   position: fixed;
   inset: 0;
-  background: rgba(9,14,24,.45);
+  background: rgba(9, 14, 24, 0.45);
   backdrop-filter: blur(2px);
   display: grid;
   place-items: center;
   z-index: 1002;
-  padding: v.$spacing-6;
+  padding: $spacing-6;
 }
 
 .modal {
-  background: v.$white;
-  border: 1px solid v.$gray-200;
-  border-radius: v.$border-radius-xl;
-  box-shadow: 0 24px 80px rgba(0,0,0,.22);
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-xl;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.22);
   width: min(520px, 92vw);
   overflow: hidden;
 }
 
-.modalSmall { width: min(420px, 92vw); }
+.modalSmall {
+  width: min(420px, 92vw);
+}
 
 .modalHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: v.$spacing-4 v.$spacing-5;
-  background: linear-gradient(135deg, v.$primary-blue, v.$primary-blue-dark);
-  color: v.$white;
+  padding: $spacing-4 $spacing-5;
+  background: linear-gradient(135deg, $primary-blue, $primary-blue-dark);
+  color: $white;
 }
 
 .modalHeaderBar {
   height: 6px;
   width: 100%;
-  background: linear-gradient(90deg, v.$primary-blue, v.$primary-blue-dark);
+  background: linear-gradient(90deg, $primary-blue, $primary-blue-dark);
 }
 
-.modalTitle { font-size: v.$font-size-xl; font-weight: v.$font-weight-semibold; }
+.modalTitle {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
+}
 
 .iconClose {
-  background: rgba(255,255,255,.15);
+  background: rgba(255, 255, 255, 0.15);
   border: 0;
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  color: v.$white;
+  color: $white;
   cursor: pointer;
-  transition: background-color .15s ease;
+  transition: background-color 0.15s ease;
 }
-.iconClose:hover { background: rgba(255,255,255,.25); }
+.iconClose:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
 
 .modalBody {
-  padding: v.$spacing-5;
-  background: linear-gradient(180deg, rgba(255,255,255,.96) 0%, rgba(255,255,255,1) 100%);
+  padding: $spacing-5;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 1) 100%);
 }
 
 .modalBodyCenter {
   @extend .modalBody;
   display: grid;
   place-items: center;
-  gap: v.$spacing-3;
+  gap: $spacing-3;
   min-height: 220px;
   text-align: center;
 }
 
-.modalMessageStrong { font-size: v.$font-size-lg; color: v.$gray-900; font-weight: v.$font-weight-semibold; }
-.modalHint { font-size: v.$font-size-sm; color: v.$gray-600; }
+.modalMessageStrong {
+  font-size: $font-size-lg;
+  color: $gray-900;
+  font-weight: $font-weight-semibold;
+}
+.modalHint {
+  font-size: $font-size-sm;
+  color: $gray-600;
+}
 
 .modalFooter {
   display: flex;
   justify-content: flex-end;
-  gap: v.$spacing-3;
-  padding: v.$spacing-4 v.$spacing-5;
-  border-top: 1px solid v.$gray-200;
+  gap: $spacing-3;
+  padding: $spacing-4 $spacing-5;
+  border-top: 1px solid $gray-200;
 }
 
 .modalFooterCenter {
@@ -178,91 +209,143 @@
 }
 
 .btnGhost {
-  @include m.button-base;
-  background: v.$gray-100;
-  color: v.$gray-800;
-  padding: v.$spacing-2 v.$spacing-4;
+   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $border-radius-md;
+  font-weight: $font-weight-medium;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  background: $gray-100;
+  color: $gray-800;
+  padding: $spacing-2 $spacing-4;
 }
 
 .btnPrimary {
-  @include m.button-base;
-  background: v.$primary-blue;
-  color: v.$white;
-  padding: v.$spacing-2 v.$spacing-4;
+   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $border-radius-md;
+  font-weight: $font-weight-medium;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  background: $primary-blue;
+  color: $white;
+  padding: $spacing-2 $spacing-4;
 }
 
-/* Modern spinning loader */
 .spinner {
   animation: spin 0.9s linear infinite;
-  color: v.$primary-blue;
-  filter: drop-shadow(0 6px 16px rgba(0,0,0,.12));
+  color: $primary-blue;
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.12));
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 .successIcon {
-  color: v.$success-green;
-  filter: drop-shadow(0 6px 16px rgba(0,0,0,.12));
+  color: $success-green;
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.12));
 }
 
-/* Edit form */
-.formRow { display: grid; gap: v.$spacing-2; margin-bottom: v.$spacing-4; }
-.label { font-size: v.$font-size-sm; color: v.$gray-700; font-weight: v.$font-weight-medium; }
+.formRow {
+  display: grid;
+  gap: $spacing-2;
+  margin-bottom: $spacing-4;
+}
+.label {
+  font-size: $font-size-sm;
+  color: $gray-700;
+  font-weight: $font-weight-medium;
+}
 .input {
   width: 100%;
-  border: 1px solid v.$gray-300;
-  border-radius: v.$border-radius-md;
-  padding: v.$spacing-2 v.$spacing-3;
-  font-size: v.$font-size-base;
-  background: v.$white;
-  transition: box-shadow .15s ease, border-color .15s ease;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-md;
+  padding: $spacing-2 $spacing-3;
+  font-size: $font-size-base;
+  background: $white;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+
   &:focus {
     outline: none;
-    border-color: v.$primary-blue;
-    box-shadow: 0 0 0 3px rgba(0,112,243,.12);
+    border-color: $primary-blue;
+    box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.12);
   }
 }
 
-.inputWithSuffix { position: relative;
-  .input { padding-right: 2.25rem; }
+.inputWithSuffix {
+  position: relative;
+
+  .input {
+    padding-right: 2.25rem;
+  }
+
   .suffix {
-    position: absolute; right: .5rem; top: 50%; transform: translateY(-50%);
-    color: v.$gray-600; font-size: v.$font-size-sm;
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: $gray-600;
+    font-size: $font-size-sm;
   }
 }
 
-.error { margin-top: v.$spacing-1; color: v.$danger-red; font-size: v.$font-size-sm; }
+.error {
+  margin-top: $spacing-1;
+  color: $danger-red;
+  font-size: $font-size-sm;
+}
 
 .warningIcon {
-  color: v.$danger-red;
-  filter: drop-shadow(0 6px 16px rgba(0,0,0,.12));
+  color: $danger-red;
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.12));
 }
 
 .confirmText {
-  font-size: v.$font-size-sm;
-  color: v.$gray-600;
+  font-size: $font-size-sm;
+  color: $gray-600;
 }
 
 .tabs {
   display: flex;
-  margin-bottom: v.$spacing-6;
-  border-bottom: 1px solid v.$gray-200;
+  margin-bottom: $spacing-6;
+  border-bottom: 1px solid $gray-200;
 }
 .tab {
-  padding: v.$spacing-3 v.$spacing-6;
+  padding: $spacing-3 $spacing-6;
   border: none;
   background: none;
-  font-size: v.$font-size-base;
-  font-weight: v.$font-weight-medium;
-  color: v.$gray-600;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  color: $gray-600;
   cursor: pointer;
   border-bottom: 2px solid transparent;
   transition: all 0.2s ease-in-out;
 
-  &:hover { color: v.$primary-blue; }
+  &:hover {
+    color: $primary-blue;
+  }
 
   &.active {
-    color: v.$primary-blue;
-    border-bottom-color: v.$primary-blue;
+    color: $primary-blue;
+    border-bottom-color: $primary-blue;
   }
 }

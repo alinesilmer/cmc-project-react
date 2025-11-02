@@ -1,9 +1,9 @@
 "use client";
 import React from "react";
 import styles from "./Steps.module.scss";
-import HelpButton from "../../../../components/atoms/HelpButton/HelpButton";
-import PdfUpload from "../../../../components/atoms/PdfUpload/PdfUpload";
-import type { RegisterFormData } from "../../../../types/register";
+import HelpButton from "../../../components/atoms/HelpButton/HelpButton";
+import PdfUpload from "../../../components/atoms/PdfUpload/PdfUpload";
+import type { RegisterFormData } from "../../../types/register";
 
 type Props = {
   step: 1 | 2 | 3 | 4;

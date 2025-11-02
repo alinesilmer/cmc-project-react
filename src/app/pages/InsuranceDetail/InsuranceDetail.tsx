@@ -5,17 +5,17 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 // import Sidebar from "../../../components/molecules/Sidebar/Sidebar";
-import Button from "../../../components/atoms/Button/Button";
+import Button from "../../components/atoms/Button/Button";
 import InsuranceTable, {
   type InsuranceRow,
-} from "../../../components/molecules/InsuranceDetailTable/InsuranceDetailTable";
+} from "../../components/molecules/InsuranceDetailTable/InsuranceDetailTable";
 import styles from "./InsuranceDetail.module.scss";
 
-import { http, postJSON, delJSON } from "../../../lib/http";
+import { http, postJSON, delJSON } from "../../lib/http";
 
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
-import BackButton from "../../../components/atoms/BackButton/BackButton";
+import BackButton from "../../components/atoms/BackButton/BackButton";
 
 type LocationState =
   | {

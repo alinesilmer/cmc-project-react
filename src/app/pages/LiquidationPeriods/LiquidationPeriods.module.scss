@@ -1,52 +1,52 @@
-.liquidationPage {
-  // wrapper general de la página
-  min-height: 100vh;
-}
+@import "../../styles/variables.scss";
+@import "../../styles/mixins.scss";
+
+
+.liquidationPage { min-height: 100vh; }
 
 .content {
-  padding: v.$spacing-6;
+  padding: $spacing-6;
   max-width: 100%;
 }
 
 .header {
-  @include m.flex-between;
-  margin-bottom: v.$spacing-4;
-  @media (max-width: v.$breakpoint-md) {
+  @include flex-between;
+  margin-bottom: $spacing-4;
+
+  @media (max-width: $breakpoint-md) {
     flex-direction: column;
-    gap: v.$spacing-4;
+    gap: $spacing-4;
     align-items: flex-start;
   }
 }
 
 .headerLeft {
   display: flex;
-  gap: v.$spacing-4;
+  gap: $spacing-4;
   align-items: center;
   flex-wrap: wrap;
 }
 
 .filters {
   display: flex;
-  gap: v.$spacing-2;
+  gap: $spacing-2;
   align-items: center;
 }
 
 .statusFilter {
-  padding: v.$spacing-2 v.$spacing-3;
-  border: 1px solid v.$gray-300;
-  border-radius: v.$border-radius-md;
-  font-size: v.$font-size-sm;
-  background: v.$white;
+  padding: $spacing-2 $spacing-3;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-md;
+  font-size: $font-size-sm;
+  background: $white;
 }
 
-.addButton {
-  margin-bottom: v.$spacing-6;
-}
+.addButton { margin-bottom: $spacing-6; }
 
 .tableCard {
   padding: 0;
   overflow: hidden;
-  border-radius: v.$border-radius-lg;
+  border-radius: $border-radius-lg;
   box-shadow: 0 10px 30px rgba(0,0,0,0.08);
   background: linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,1) 100%);
   backdrop-filter: blur(6px);
@@ -54,55 +54,54 @@
 
 .actions {
   display: flex;
-  gap: v.$spacing-3;
+  gap: $spacing-3;
   align-items: center;
   flex-wrap: wrap;
 }
 
-/* MUI tweaks (si reactivás el calendario) */
 .filters :global(.MuiTextField-root) { min-width: 180px; }
-.filters :global(.MuiOutlinedInput-root) { border-radius: v.$border-radius-md; background: v.$white; }
-.filters :global(.MuiOutlinedInput-notchedOutline) { border-color: v.$gray-300; }
-.filters :global(.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline) { border-color: v.$gray-400; }
+.filters :global(.MuiOutlinedInput-root) { border-radius: $border-radius-md; background: $white; }
+.filters :global(.MuiOutlinedInput-notchedOutline) { border-color: $gray-300; }
+.filters :global(.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline) { border-color: $gray-400; }
 .filters :global(.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline) {
-  border-color: v.$primary-blue;
-  box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.12);
+  border-color: $primary-blue;
+  box-shadow: 0 0 0 3px rgba(0,112,243,0.12);
 }
-.filters :global(.MuiInputBase-input) { font-size: v.$font-size-sm; }
-:global(.MuiPickersLayout-root) { border-radius: v.$border-radius-lg; }
-:global(.MuiDateCalendar-root) { padding: v.$spacing-2; }
+.filters :global(.MuiInputBase-input) { font-size: $font-size-sm; }
+
+:global(.MuiPickersLayout-root) { border-radius: $border-radius-lg; }
+:global(.MuiDateCalendar-root) { padding: $spacing-2; }
 :global(.MuiPickersYear-yearButton),
 :global(.MuiPickersMonth-monthButton),
-:global(.MuiPickersDay-root) { border-radius: v.$border-radius-md; }
+:global(.MuiPickersDay-root) { border-radius: $border-radius-md; }
+
 :global(.MuiPickersDay-root.Mui-selected),
 :global(.MuiPickersMonth-monthButton.Mui-selected),
 :global(.MuiPickersYear-yearButton.Mui-selected) { box-shadow: 0 8px 20px rgba(0,0,0,0.12); }
 
-/* anim util */
 :global(.scale-in) { animation: scaleIn 300ms ease forwards; }
+
 @keyframes scaleIn {
   from { transform: scale(0.98); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
 
-/* ===================== MODAL 100vw / 100vh ===================== */
-
 .modalBackdrop {
   position: fixed;
   top: 0; left: 0;
   width: 100vw;
-  height: 100vh; /* ocupa SIEMPRE todo el viewport, no el contenedor padre */
+  height: 100vh;
   background: rgba(15, 23, 42, 0.35);
   display: grid;
   place-items: center;
-  z-index: 10000; /* por encima de todo */
+  z-index: 10000;
 }
 
 .modalCard {
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0,0,0,.15);
-  width: min(460px, calc(100vw - 32px)); /* usa vw para evitar dependencia del padre */
+  width: min(460px, calc(100vw - 32px));
   max-height: calc(100vh - 32px);
   overflow: auto;
   padding: 16px 16px 12px;
@@ -130,9 +129,9 @@
 }
 
 .formRow { display: grid; gap: 6px; }
-.label   { font-size: 12px; color: #555; }
-.input   { padding: 8px; border: 1px solid #e5e7eb; border-radius: 8px; }
-.muted   { font-size: 12px; color: #6b7280; margin-top: 4px; }
+.label { font-size: 12px; color: #555; }
+.input { padding: 8px; border: 1px solid #e5e7eb; border-radius: 8px; }
+.muted { font-size: 12px; color: #6b7280; margin-top: 4px; }
 
 .errorInline {
   color: #b91c1c;
@@ -149,7 +148,6 @@
   margin-top: 12px;
 }
 
-/* Cuando el modal está abierto, neutralizamos transforms/filters que pueden romper position:fixed */
 .modalOpen :global(.scale-in) {
   animation: none !important;
   transform: none !important;

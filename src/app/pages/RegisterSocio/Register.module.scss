@@ -1,8 +1,8 @@
-/* Register.module.scss */
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-@import "../../../styles/variables.scss";
-@import "../../../styles/mixins.scss";
+@import "@/app/styles/variables.scss";
+@import "@/app/styles/mixins.scss";
 
 .container {
   display: flex;
@@ -383,7 +383,6 @@
   border-top: 1px solid #e5e7eb;
 }
 
-@import "../../../styles/variables.scss";
 
 .actionBar {
   display: flex;

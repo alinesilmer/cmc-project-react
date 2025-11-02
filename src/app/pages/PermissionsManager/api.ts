@@ -1,4 +1,4 @@
-import { getJSON, postJSON, delJSON } from "../../../lib/http";
+import { getJSON, postJSON, delJSON } from "../../lib/http";
 
 export type Role = { id: number; name: string; description?: string };
 export type Permission = { id?: number; code: string; description?: string };

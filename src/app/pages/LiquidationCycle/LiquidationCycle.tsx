@@ -19,14 +19,14 @@ import {
   DialogActions,
 } from "@mui/material";
 
-import SearchBar from "../../../components/molecules/SearchBar/SearchBar";
-import Button from "../../../components/atoms/Button/Button";
-import InsuranceCard from "../../../components/molecules/InsuranceCard/InsuranceCard";
-import Alert from "../../../components/atoms/Alert/Alert";
+import SearchBar from "../../components/molecules/SearchBar/SearchBar";
+import Button from "../../components/atoms/Button/Button";
+import InsuranceCard from "../../components/molecules/InsuranceCard/InsuranceCard";
+import Alert from "../../components/atoms/Alert/Alert";
 import styles from "./LiquidationCycle.module.scss";
 
-import { getJSON, postJSON, http } from "../../../lib/http";
-import BackButton from "../../../components/atoms/BackButton/BackButton";
+import { getJSON, postJSON, http } from "../../lib/http";
+import BackButton from "../../components/atoms/BackButton/BackButton";
 
 /* ================== Config ================== */
 const RESUMEN_BY_ID = (id: string | number) => `/api/liquidacion/resumen/${id}`;

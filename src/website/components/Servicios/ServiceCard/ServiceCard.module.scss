@@ -1,0 +1,87 @@
+@import "../../../styles/variables.scss";
+
+.card {
+  border-radius: $border-radius-lg;
+  padding: $spacing-xl;
+  position: relative;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: $shadow-md;
+  transition: all $transition-normal;
+  cursor: pointer;
+
+  &:hover {
+    box-shadow: $shadow-lg;
+  }
+}
+
+.content {
+  flex: 1;
+}
+
+.title {
+  font-size: $font-size-h4;
+  margin-bottom: $spacing-sm;
+  color: $dark-gray;
+}
+
+.description {
+  font-size: $font-size-small;
+  color: $gray;
+  line-height: 1.6;
+  margin-bottom: $spacing-md;
+}
+
+.illustration {
+  margin-top: $spacing-md;
+  opacity: 0.3;
+  font-size: 4rem;
+}
+
+.button {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: $primary-blue;
+  color: $white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: $shadow-md;
+  transition: all $transition-normal;
+  align-self: flex-start;
+
+  &:hover {
+    background-color: darken($primary-blue, 10%);
+  }
+}
+
+.green {
+  background-color: $service-green;
+}
+
+.yellow {
+  background-color: $service-yellow;
+}
+
+.pink {
+  background-color: $service-pink;
+}
+
+.blue {
+  background-color: $service-blue;
+}
+
+@media (max-width: $breakpoint-tablet) {
+  .card {
+    min-height: 240px;
+    padding: $spacing-lg;
+  }
+
+  .title {
+    font-size: $font-size-h3;
+  }
+}

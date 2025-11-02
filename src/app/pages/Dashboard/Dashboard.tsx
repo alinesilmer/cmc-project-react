@@ -4,7 +4,7 @@ import type React from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Users, Calendar, Settings } from "lucide-react";
-import Card from "../../../components/atoms/Card/Card";
+import Card from "../../components/atoms/Card/Card";
 import styles from "./Dashboard.module.scss";
 
 const Dashboard: React.FC = () => {

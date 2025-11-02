@@ -2,9 +2,9 @@
 
 import type React from "react";
 import { motion } from "framer-motion";
-import Sidebar from "../../../components/molecules/Sidebar/Sidebar";
-import SearchBar from "../../../components/molecules/SearchBar/SearchBar";
-import Card from "../../../components/atoms/Card/Card";
+import Sidebar from "../../components/molecules/Sidebar/Sidebar";
+import SearchBar from "../../components/molecules/SearchBar/SearchBar";
+import Card from "../../components/atoms/Card/Card";
 import styles from "./SocialWorkSection.module.scss";
 
 const SocialWorkSelection: React.FC = () => {

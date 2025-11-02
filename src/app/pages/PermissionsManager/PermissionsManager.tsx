@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import RequirePermission from "../../../auth/RequirePermission";
+import RequirePermission from "../../auth/RequirePermission";
 import s from "./PermissionsManager.module.scss";
 
 import {
@@ -11,8 +11,8 @@ import {
   addPermToRole,
   removePermFromRole,
 } from "./api";
-import BackButton from "../../../components/atoms/BackButton/BackButton";
-import SearchBar from "../../../components/molecules/SearchBar/SearchBar";
+import BackButton from "../../components/atoms/BackButton/BackButton";
+import SearchBar from "../../components/molecules/SearchBar/SearchBar";
 
 // ---------- Mapeo visual de permisos ----------
 // Categorías por prefijo de código (mostrar ≠ almacenar)

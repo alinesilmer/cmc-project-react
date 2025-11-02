@@ -1,0 +1,24 @@
+@import "../../../styles/variables.scss";
+
+.servicesGrid {
+  padding: $spacing-xl $spacing-md;
+}
+
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: $spacing-lg;
+}
+
+@media (max-width: $breakpoint-tablet) {
+  .servicesGrid {
+    padding: $spacing-lg $spacing-md;
+  }
+
+  .container {
+    grid-template-columns: 1fr;
+    gap: $spacing-md;
+  }
+}

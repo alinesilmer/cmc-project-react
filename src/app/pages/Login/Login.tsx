@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import styles from "./Login.module.scss";
-import Button from "../../../components/atoms/Button/Button";
-import { useAuth } from "../../../auth/AuthProvider";
+import Button from "../../components/atoms/Button/Button";
+import { useAuth } from "../../auth/AuthProvider";
 
 function Login() {
   const [isMember, setIsMember] = useState<boolean | null>(null);

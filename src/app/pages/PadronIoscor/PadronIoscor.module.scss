@@ -1,12 +1,14 @@
+@import "../../styles/variables.scss";
+@import "../../styles/mixins.scss";
 
-.page { display:flex; min-height:100vh; background:v.$gray-50; }
-.content { flex:1; padding:v.$spacing-6; }
-.card { max-width:1200px; margin:0 auto; padding:v.$spacing-5; }
+.page { display:flex; min-height:100vh; background:$gray-50; }
+.content { flex:1; padding:$spacing-6; }
+.card { max-width:1200px; margin:0 auto; padding:$spacing-5; }
 
 .layout {
   display:grid;
   grid-template-columns: 1fr;
-  gap:v.$spacing-5;
+  gap:$spacing-5;
 }
 
 .left, .right { min-width:0; }

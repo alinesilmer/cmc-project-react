@@ -17,17 +17,6 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  css: {
-    preprocessorOptions: {
-      scss: {
-        additionalData: `
-  @use "@/styles/mixins.scss"   as m;
-  @use "@/styles/variables.scss" as v;
-  @use "@/styles/animations.scss" as a;
-`,
-      },
-    },
-  },
 })
 
 // curl.exe -i -c jar.txt -H "Content-Type: application/json" `--data '{ "nro_socio": 81520, "password": "81520" }' `http://127.0.0.1:8000/auth/login

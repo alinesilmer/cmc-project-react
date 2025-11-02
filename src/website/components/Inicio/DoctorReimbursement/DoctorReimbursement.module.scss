@@ -1,0 +1,135 @@
+.section {
+  padding: 6rem 0;
+  background-color: color-mix(in srgb, var(--secondary) 30%, transparent);
+
+  @media (min-width: 1024px) {
+    padding: 8rem 0;
+  }
+}
+
+.container {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 4rem;
+
+  @media (min-width: 1024px) {
+    margin-bottom: 5rem;
+  }
+}
+
+.title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: var(--foreground);
+  margin-bottom: 1rem;
+  text-wrap: balance;
+
+  @media (min-width: 640px) {
+    font-size: 2.25rem;
+  }
+
+  @media (min-width: 1024px) {
+    font-size: 3rem;
+  }
+}
+
+.subtitle {
+  font-size: 1.125rem;
+  color: var(--muted-foreground);
+  max-width: 48rem;
+  margin: 0 auto;
+  text-wrap: pretty;
+}
+
+.grid {
+  display: grid;
+  gap: 1.5rem;
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: 1024px) {
+    gap: 2rem;
+  }
+}
+
+.card {
+  position: relative;
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 20px 25px -5px color-mix(in srgb, var(--primary) 5%, transparent);
+  }
+}
+
+.imageContainer {
+  position: relative;
+  height: 16rem;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+
+  .card:hover img {
+    transform: scale(1.05);
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, var(--card), color-mix(in srgb, var(--card) 50%, transparent), transparent);
+  }
+}
+
+.content {
+  padding: 2rem;
+}
+
+.cardTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--foreground);
+  margin-bottom: 0.75rem;
+  text-wrap: balance;
+}
+
+.cardDescription {
+  color: var(--muted-foreground);
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.numberBadge {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  width: 3rem;
+  height: 3rem;
+  background-color: color-mix(in srgb, var(--background) 90%, transparent);
+  backdrop-filter: blur(8px);
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  span {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+}

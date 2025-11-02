@@ -1,0 +1,109 @@
+@import '../../styles/variables.scss';
+
+.editorWrapper {
+  border: 2px solid $border-color;
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+  
+  :global {
+    .ql-toolbar {
+      background: white;
+      border: none;
+      border-bottom: 2px solid $border-color;
+      padding: 1rem;
+    }
+    
+    .ql-container {
+      border: none;
+      font-family: inherit;
+      font-size: 1rem;
+    }
+    
+    .ql-editor {
+      min-height: 400px;
+      padding: 1.5rem;
+      font-size: 1rem;
+      line-height: 1.8;
+      
+      &.ql-blank::before {
+        color: rgba(black, 0.4);
+        font-style: normal;
+      }
+      
+      h1, h2, h3 {
+        color: black;
+        font-weight: 700;
+        margin: 1.5rem 0 1rem;
+      }
+      
+      h1 { font-size: 2rem; }
+      h2 { font-size: 1.5rem; }
+      h3 { font-size: 1.25rem; }
+      
+      p {
+        margin-bottom: 1rem;
+      }
+      
+      a {
+        color: $primary-teal;
+        text-decoration: underline;
+      }
+      
+      img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        margin: 1rem 0;
+      }
+    }
+    
+    .ql-stroke {
+      stroke: black;
+    }
+    
+    .ql-fill {
+      fill: black;
+    }
+    
+    .ql-picker-label {
+      color: black;
+    }
+    
+    button:hover,
+    button:focus {
+      .ql-stroke {
+        stroke: $primary-teal;
+      }
+      
+      .ql-fill {
+        fill: $primary-teal;
+      }
+    }
+    
+    .ql-active {
+      .ql-stroke {
+        stroke: $primary-teal !important;
+      }
+      
+      .ql-fill {
+        fill: $primary-teal !important;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .editorWrapper {
+    :global {
+      .ql-toolbar {
+        padding: 0.75rem;
+      }
+      
+      .ql-editor {
+        min-height: 300px;
+        padding: 1rem;
+      }
+    }
+  }
+}
