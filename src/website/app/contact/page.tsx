@@ -1,109 +1,44 @@
-import { motion } from "framer-motion";
-import {
-  FiMapPin,
-  FiMail,
-  FiClock,
-  FiInstagram,
-  FiFacebook,
-  FiHeadphones,
-} from "react-icons/fi";
+import { FiMapPin, FiMail, FiPhone } from "react-icons/fi";
 import styles from "./contact.module.scss";
 import PageHero from "../../components/UI/Hero/Hero";
 
 export default function Contacto() {
-  const medios = [
-    { icon: <FiMail />,  titulo: "Email",    primario: "Link al correo"},
-  ];
-  const redes = [
-    { icon: <FiInstagram />, nombre: "Instagram", url: "#" },
-    { icon: <FiFacebook />,  nombre: "Facebook",  url: "#" },
-  ];
-  const horarios = [
-    { dia: "Lunes a Viernes ", rango: "   08:00–18:00" },
-    { dia: "Sábados",         rango: "09:00–13:00" },
-    { dia: "Feriados",        rango: "Cerrado" },
-  ];
-
   return (
     <div className={styles.page}>
-        <PageHero
+      <PageHero
         title="Contacto"
         subtitle="¿Tenés consultas? Estamos para ayudarte"
-        backgroundImage="https://i.pinimg.com/736x/45/79/6d/45796d42a084a0d5d2675b189de92721.jpg"
+        backgroundImage="https://res.cloudinary.com/dcfkgepmp/image/upload/v1762129462/contactbg_dcrwvz.png"
       />
-      <section className={styles.hero}>
-        <div className={styles.heroGridBg} aria-hidden="true" />
-        <div className={styles.heroContent}>
-          <motion.div
-            className={styles.heroText}
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45 }}
-          >
-            <h1 className={styles.heroTitle}>¿Tenés consultas? Estamos para ayudarte</h1>
-            <p className={styles.heroSubtitle}>
-              Canales de contacto para socios, profesionales y público en general.
+
+      <section className={styles.contactStrip}>
+        <div className={styles.contactContainer}>
+          <div className={styles.col}>
+            <div className={styles.colIcon}><FiMapPin /></div>
+            <h3 className={styles.colTitle}>VISITANOS</h3>
+            <p className={styles.colText}>
+              Estamos en el centro de la ciudad. Podés acercarte para realizar consultas y trámites.
             </p>
-            <div className={styles.infoGrid}>
-              <div className={styles.infoCard}>
-                <div className={styles.infoIcon}><FiMapPin /></div>
-                <div className={styles.infoContent}>
-                  <h3 className={styles.infoTitle}>Ubicación</h3>
-                  <p className={styles.infoText}>
-                    Colegio Médico de Corrientes<br />
-                    Dirección de ejemplo 123<br />
-                    Corrientes, Argentina
-                  </p>
-                </div>
-              </div>
+            <a href="#" className={styles.colHighlight}>Carlos Pellegrini 1785, Corrientes, AR</a>
+          </div>
 
-              <div className={styles.infoCard}>
-                <div className={styles.infoIcon}><FiClock /></div>
-                <div className={styles.infoContent}>
-                  <h3 className={styles.infoTitle}>Horarios</h3>
-                  {horarios.map((h, i) => (
-                    <p key={i} className={styles.infoText}>
-                      <span className={styles.day}>{h.dia}</span>
-                      <span className={styles.hours}>{h.rango}</span>
-                    </p>
-                  ))}
-                </div>
-              </div>
+          <div className={styles.col}>
+            <div className={styles.colIcon}><FiPhone /></div>
+            <h3 className={styles.colTitle}>LLAMANOS</h3>
+            <p className={styles.colText}>
+              Comunicate con nuestro equipo para turnos, información y consultas generales.
+            </p>
+            <a href="tel:+543794722121" className={styles.colHighlight}>+54 3794 722121</a>
+          </div>
 
-              <div className={styles.infoCard}>
-                <div className={styles.infoIcon}><FiHeadphones /></div>
-                <div className={styles.infoContent}>
-                  <h3 className={styles.infoTitle}>Redes</h3>
-                  <div className={styles.socialLinks}>
-                    {redes.map((r, i) => (
-                      <a key={i} href={r.url} className={styles.socialLink} aria-label={r.nombre} target="_blank" rel="noreferrer">
-                        {r.icon}
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {medios.map((m, i) => (
-                <div key={i} className={styles.infoCard}>
-                  <div className={styles.infoIcon}>{m.icon}</div>
-                  <div className={styles.infoContent}>
-                    <h3 className={styles.infoTitle}>{m.titulo}</h3>
-                    <p className={styles.infoText}>{m.primario}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
-          <motion.div
-            className={styles.Image}
-            initial={{ opacity: 0, x: 22 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.45, delay: 0.1 }}
-          >
-            {/*<img src="https://i.pinimg.com/1200x/c9/ef/a2/c9efa22d3d889cc91f5d988bedbe1430.jpg" alt="image"/>*/}
-            </motion.div>
+          <div className={styles.col}>
+            <div className={styles.colIcon}><FiMail /></div>
+            <h3 className={styles.colTitle}>CONTACTANOS</h3>
+            <p className={styles.colText}>
+              Escribinos y te responderemos a la brevedad. Incluí tu nombre y motivo del contacto.
+            </p>
+            <a href="mailto:secretariacolegiomedicoctes@gmail.com" className={styles.colHighlight}>secretariacolegiomedicoctes@gmail.com</a>
+          </div>
         </div>
       </section>
 

@@ -1,6 +1,5 @@
 @import "../../styles/variables.scss";
 
-/* ---------------- Mixins ---------------- */
 @mixin container($max) {
   max-width: $max;
   margin: 0 auto;
@@ -8,16 +7,16 @@
 }
 
 @mixin split-grid {
-  display: grid;
-  grid-template-columns: 240px 1fr;
+  display: flex;
   gap: $spacing-xl;
-  align-items: start;
+  align-items: flex-start;
+  flex-wrap: nowrap;
+  > *:first-child { flex: 0 0 240px; }
+  > *:last-child  { flex: 1 1 auto; min-width: 0; }
 }
 
-/* ---------------- Page ---------------- */
 .page { background: $white; }
 
-/* ---------------- Hero ---------------- */
 .hero {
   position: relative;
   padding: clamp($spacing-xxl, 10vw, 6rem) $spacing-lg $spacing-xl;
@@ -66,11 +65,9 @@
   }
 }
 
-/* ---------------- Generic wraps ---------------- */
 .wrap       { @include container(1100px); }
 .wrapNarrow { @include container(900px); }
 
-/* ---------------- Sections ---------------- */
 .sectionWhite { padding: clamp($spacing-xl, 6vw, $spacing-2xl) 0; background: $white; }
 
 .sectionGray  {
@@ -80,41 +77,44 @@
 
 .sectionPromo {
   padding: clamp($spacing-xl, 7vw, $spacing-2xl) 0;
-  background: linear-gradient(180deg, $white 0%, rgba($light-blue, .4) 100%);
+  background: none;
   position: relative;
 
   &::before {
     content: '';
     position: absolute; inset: 0;
-    background: radial-gradient(circle at 50% 0%, rgba($primary-blue, 0.05) 0%, transparent 60%);
     pointer-events: none;
   }
 }
 
-.sectionHeader { margin-bottom: $spacing-lg; }
+.sectionHeader { margin-bottom: $spacing-lg;  font-family: $font-playfair; }
 
 .sectionLabel {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 0.85rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
+  text-align: center;
   color: $primary-blue;
   margin-bottom: $spacing-xs;
   padding: $spacing-xs $spacing-sm;
   background: rgba($primary-blue, 0.08);
   border-radius: $border-radius-sm;
+   font-family: $font-normal;
 }
 
 .h2 {
   margin: $spacing-xs 0 $spacing-sm 0;
-  font-family: $font-title;
+  font-family: $font-playfair;
   font-size: clamp(1.75rem, 3.5vw, 2.5rem);
   color: $primary-blue-dark;
   letter-spacing: -.01em;
   font-weight: 700;
 }
-.h2Center { text-align: center; margin: $spacing-xs 0 $spacing-sm 0; @extend .h2; }
+.h2Center { text-align: center; margin: $spacing-xs 0 $spacing-sm 0; @extend .h2; font-family: $font-playfair; }
 
 .lead { margin: 0; color: $gray; font-size: clamp(1.05rem, 1.6vw, 1.2rem); line-height: 1.7; }
 
@@ -123,11 +123,11 @@
   color: $gray;
   text-align: center;
   max-width: 70ch;
-  font-size: clamp(1rem, 1.5vw, 1.1rem);
+  font-size: clamp(0.7rem, 1.2vw, 0.9rem);
   line-height: 1.7;
+  font-family: $font-normal;
 }
 
-/* ---------------- Band (Mission) ---------------- */
 .bandBlue {
   background: $primary-blue;
   color: $white;
@@ -146,25 +146,25 @@
   .wrapSplit { @include container(1100px); @include split-grid; position: relative; z-index: 1; }
 
   .bandTitle {
-    font-weight: 700; font-size: 1.1rem; letter-spacing: .02em;
+    font-weight: 700; font-size: 1.1rem; letter-spacing: .02em; font-family: $font-normal;
     text-transform: uppercase; color: rgba($white, .95);
-    display: flex; align-items: center; gap: $spacing-sm;
+    display: inline-flex; align-items: center; gap: $spacing-sm;
   }
 
   .bandIcon { font-size: 1.5rem; display: inline-block; }
 
   .bandText {
     p {
+      font-family: $font-normal;
       margin: 0 0 $spacing-md 0;
       color: rgba($white, .95);
       line-height: 1.75;
-      font-size: 1.05rem;
+      font-size: 0.95rem;
     }
     p:last-child { margin-bottom: 0; }
   }
 }
 
-/* ---------------- Band (Vision + Image) ---------------- */
 .bandBlueWithImage {
   background: $primary-blue-dark;
   color: $white;
@@ -176,7 +176,7 @@
   .bandTitle {
     font-weight: 700; font-size: 1.1rem; letter-spacing: .02em;
     text-transform: uppercase; color: rgba($white, .95);
-    display: flex; align-items: center; gap: $spacing-sm;
+    display: inline-flex; align-items: center; gap: $spacing-sm; font-family: $font-normal;
   }
 
   .bandIcon { font-size: 1.5rem; display: inline-block; }
@@ -186,7 +186,8 @@
       margin: 0 0 $spacing-md 0;
       color: rgba($white, .95);
       line-height: 1.75;
-      font-size: 1.05rem;
+      font-family: $font-normal;
+      font-size: 0.95rem;
     }
     p:last-child { margin-bottom: 0; }
   }
@@ -217,10 +218,10 @@
   }
 }
 
-/* ---------------- Values ---------------- */
 .valuesGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
   gap: $spacing-lg;
   margin-top: $spacing-lg;
 }
@@ -229,6 +230,7 @@
   background: linear-gradient(135deg, $white 0%, rgba($light-blue, 0.3) 100%);
   border-radius: $border-radius-md;
   padding: $spacing-lg;
+  max-width: 300px;
   text-align: center;
   border: 1px solid rgba($primary-blue, 0.1);
   box-shadow: $shadow-sm;
@@ -239,43 +241,42 @@
   .valueIcon { font-size: 2.5rem; margin-bottom: $spacing-sm; }
 
   h3 {
-    font-family: $font-title;
-    font-size: 1.25rem;
+    font-family: $font-normal;
+    font-size: $font-size-large;
     font-weight: 600;
     color: $primary-blue-dark;
     margin: 0 0 $spacing-xs 0;
   }
 
-  p { color: $gray; font-size: 0.95rem; line-height: 1.6; margin: 0; }
+  p { color: $gray; font-size: 0.95rem; line-height: 1.6; margin: 0;  font-size: $font-size-small; }
 }
 
-/* ---------------- Info Grid (Comisiones / Tribunal) ---------------- */
 .infoGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: $spacing-xl;
   margin-top: $spacing-md;
+  > * { flex: 1 1 320px; min-width: 320px; }
 }
 
 .infoCard {
   background: $white;
   border-radius: $border-radius-lg;
   padding: $spacing-xl;
-  border-top: 4px solid $primary-blue; /* was $accent-teal (undefined) */
+  border-top: 4px solid $primary-blue;
   box-shadow: $shadow-md;
   transition: all $transition-normal;
 
   &:hover { transform: translateY(-4px); box-shadow: $shadow-lg; }
-
   &:nth-child(2) { border-top-color: $primary-teal; }
 }
 
 .infoCardHeader {
-  display: flex; align-items: center; gap: $spacing-md; margin-bottom: $spacing-md;
+  display: flex; align-items: center; justify-content: center; gap: $spacing-md; margin-bottom: $spacing-md;
 
   .infoIcon { font-size: 2rem; flex-shrink: 0; }
   h2 {
-    font-family: $font-title;
+    font-family: $font-playfair;
     font-size: 1.5rem;
     font-weight: 600;
     color: $primary-blue-dark;
@@ -283,23 +284,21 @@
   }
 }
 
-.infoCard p { color: $gray; line-height: 1.7; margin: 0; font-size: 1rem; }
+.infoCard p { color: $gray; line-height: 1.7; margin: 0; font-size: 1rem; text-align: center;  font-family: $font-normal;}
 
-/* ---------------- Responsive ---------------- */
 @media (max-width: $breakpoint-desktop) {
   .bandBlue .wrapSplit,
-  .bandBlueWithImage .wrapSplit { grid-template-columns: 1fr; gap: $spacing-md; }
-
-  .valuesGrid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: $spacing-md; }
+  .bandBlueWithImage .wrapSplit { flex-direction: column; gap: $spacing-md; }
+  .bandBlue .wrapSplit > *:first-child,
+  .bandBlueWithImage .wrapSplit > *:first-child { flex-basis: auto; }
+  .valuesGrid { gap: $spacing-md; }
 }
 
 @media (max-width: $breakpoint-tablet) {
   .wrap, .wrapNarrow { padding: 0 $spacing-md; }
-
-  .hero { padding: $spacing-xxl $spacing-md $spacing-xl;
-    .heroDecor { display: none; }
-  }
-
-  .infoGrid { grid-template-columns: 1fr; gap: $spacing-lg; }
-  .valuesGrid { grid-template-columns: 1fr; }
+  .hero { padding: $spacing-xxl $spacing-md $spacing-xl; .heroDecor { display: none; } }
+  .infoGrid { gap: $spacing-lg; }
+  .infoGrid > * { flex-basis: 100%; min-width: 0; }
+  .valuesGrid { gap: $spacing-md; }
+  .valuesGrid > * { flex-basis: 100%; min-width: 0; }
 }

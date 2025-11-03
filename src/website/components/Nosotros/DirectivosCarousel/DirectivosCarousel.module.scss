@@ -93,8 +93,8 @@
 }
 
 .name {
-  font-family: $font-title;
-  font-size: 1.25rem;
+  font-family: $font-normal;
+  font-size: $font-size-large;
   font-weight: 700;
   color: $primary-blue-dark;
   margin-bottom: $spacing-xs;
@@ -103,11 +103,11 @@
 
 .role {
   color: $primary-blue;
-  font-size: $font-size-base;
-  font-weight: 600;
+  font-family: $font-normal;
+  font-size: 0.8rem;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  font-size: 0.875rem;
 }
 
 .navButton {

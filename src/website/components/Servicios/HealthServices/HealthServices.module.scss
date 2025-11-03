@@ -26,6 +26,7 @@
 
 .title {
     font-size: $font-size-h1;
+    font-family: $font-playfair;
   font-weight: 700;
   color: $primary-blue;
   margin-bottom: 1rem;
@@ -41,7 +42,7 @@
 }
 
 .subtitle {
-  font-size: $font-size-large;
+  font-size: $font-size-base;
   color: $primary-blue-dark;
   font-family: $font-normal;
   max-width: 48rem;

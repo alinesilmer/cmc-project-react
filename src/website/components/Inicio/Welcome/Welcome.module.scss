@@ -2,223 +2,324 @@
 
 .hero {
   position: relative;
-  background: white;
   overflow: hidden;
+  min-height: 100vh;
+ display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   
   &::before {
     content: '';
     position: absolute;
-    top: -20%;
-    right: -10%;
-    width: 600px;
-    height: 600px;
+    top: -10%;
+    right: -5%;
+    width: 500px;
+    height: 500px;
     border-radius: 50%;
     pointer-events: none;
+    filter: blur(40px);
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -15%;
+    left: -10%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba($primary-green, 0.06) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    filter: blur(50px);
+  }
+}
+
+.wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  z-index: 1;
+  max-width: 1400px;
+  margin: 0 1rem;
+  padding: $spacing-2xl 0;
+  width: 100%;
+}
+
+.bigCard {
+  background: linear-gradient(135deg, 
+    rgba($white, 0.95) 0%, 
+    rgba($light-blue, 0.4) 100%
+  );
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba($primary-blue, 0.1);
+  padding: clamp($spacing-2xl, 7vw, 5rem);
+  border-radius: $border-radius-xl;
+  position: relative;
+  min-height: 500px;
+  box-shadow: 
+    0 30px 80px rgba($primary-blue, 0.12),
+    0 10px 30px rgba($black, 0.08),
+    inset 0 1px 0 rgba($white, 0.8);
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2xl;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -20%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba($primary-yellow, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+    filter: blur(60px);
   }
   
   &::after {
     content: '';
     position: absolute;
     bottom: -30%;
-    left: -15%;
-    width: 700px;
-    height: 700px;
-    border-radius: 50%;
+    right: -10%;
+    width: 350px;
+    height: 350px;
+    background: radial-gradient(circle, rgba($primary-green, 0.1) 0%, transparent 70%);
     pointer-events: none;
+    filter: blur(50px);
   }
 }
 
-.wrap {
+.contentWrapper {
   position: relative;
-  z-index: 1;
-  max-width: 100%;
-  margin: 0 auto;
-  padding: $spacing-xl $spacing-lg;
-}
-
-.bigCard {
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba($white, 0.15);
-  color: black;
-  padding: clamp($spacing-xl, 6vw, $spacing-2xl);
-  border-radius: $border-radius-lg;
-  position: relative;
-  min-height: 400px;
-  box-shadow: 
-    0 20px 60px rgba($black, 0.3),
-    0 0 0 1px rgba($white, 0.1) inset;
-  width: 100%;
-  overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 
-      0 25px 70px rgba($black, 0.35),
-      0 0 0 1px rgba($white, 0.15) inset;
-  }
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 200px;
-    height: 200px;
-    background: radial-gradient(circle at top left, rgba($primary-yellow, 0.2) 0%, transparent 70%);
-    pointer-events: none;
-  }
+  z-index: 2;
+  flex: 1;
+  max-width: 600px;
 }
 
 .bigCardTitle {
-  font-family: $font-title;
-  font-size: clamp(2rem, 4vw, 4rem);
-  line-height: 0.95;
-  letter-spacing: -1px;
+  font-family: $font-playfair;
+  font-size: clamp(1.5rem, 4vw, 3.5rem);
+  line-height: 1.1;
+  letter-spacing: -2px;
   text-align: left;
-  color: black;
-  margin: 0 0 $spacing-lg 0;
-  font-weight: 700;
+  background: linear-gradient(135deg, $primary-blue 0%, $primary-blue-lighter 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 $spacing-xl 0;
+  font-weight: 900;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -12px;
+    left: 0;
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(90deg, $primary-yellow 0%, transparent 100%);
+    border-radius: 2px;
+  }
 }
 
 .tagline {
   display: flex;
   flex-wrap: wrap;
   gap: $spacing-sm;
-  margin-bottom: $spacing-lg;
+  margin-bottom: $spacing-xl;
 }
 
 .badge {
   display: inline-flex;
   align-items: center;
   gap: $spacing-xs;
-  padding: 0.5rem 1rem;
+  padding: 0.65rem 1.25rem;
   border-radius: 999px;
   background: linear-gradient(135deg, 
-    rgba($primary-yellow, 0.25) 0%, 
-    rgba($primary-yellow, 0.15) 100%
+    rgba($primary-yellow, 0.9) 0%, 
+    rgba($primary-yellow-light, 0.8) 100%
   );
-  color: black;
+  color: $primary-blue-dark;
   font-family: $font-normal;
   font-size: $font-size-small;
-  font-weight: 600;
-  border: 1px solid rgba($primary-yellow, 0.4);
-  backdrop-filter: blur(5px);
-  box-shadow: 0 4px 12px rgba($black, 0.15);
-  transition: all 0.3s ease;
+  font-weight: 700;
+  border: 2px solid rgba($primary-yellow, 0.6);
+  box-shadow: 
+    0 4px 15px rgba($primary-yellow, 0.3),
+    inset 0 1px 0 rgba($white, 0.5);
+  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba($white, 0.3), transparent);
+    transition: left 0.6s ease;
+  }
   
   &:hover {
     background: linear-gradient(135deg, 
-      rgba($primary-yellow, 0.35) 0%, 
-      rgba($primary-yellow, 0.25) 100%
+      rgba($primary-yellow, 1) 0%, 
+      rgba($primary-yellow-light, 0.95) 100%
     );
-    border-color: rgba($primary-yellow, 0.6);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba($black, 0.2);
+    border-color: rgba($primary-yellow, 0.8);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 
+      0 8px 25px rgba($primary-yellow, 0.4),
+      inset 0 1px 0 rgba($white, 0.6);
+    
+    &::before {
+      left: 100%;
+    }
   }
+}
+
+.badgeIcon {
+  font-size: 0.9rem;
 }
 
 .lead {
   max-width: 55ch;
   font-family: $font-normal;
-  font-size: clamp(13px, 1.2vw, 16px);
-  line-height: 1.7;
-  color: black;
+  font-size: clamp(1rem, 1.2vw, 1.125rem);
+  line-height: 1.8;
+  color: $primary-blue-dark;
   margin-bottom: $spacing-xl;
-  text-shadow: 0 2px 8px rgba($black, 0.2);
+  font-weight: 400;
+  letter-spacing: 0.01em;
 }
 
 .ctaRow {
   display: flex;
   align-items: center;
   gap: $spacing-md;
-  margin-bottom: $spacing-lg;
   
   a {
     text-decoration: none;
-    transition: transform 0.2s ease;
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
     
     &:hover {
+      transform: translateY(-4px);
+    }
+    
+    &:active {
       transform: translateY(-2px);
     }
   }
 }
 
+.buttonIcon {
+  font-size: 1rem;
+  margin-right: 0.5rem;
+}
+
 .bigCard img {
-  position: absolute;
-  right: 5%;
-  bottom: 0;
-  width: clamp(240px, 30vw, 400px);
+  position: relative;
+  z-index: 3;
+  width: clamp(280px, 32vw, 450px);
   height: auto;
-  transition: transform 0.3s ease;
-  z-index: 2;
-  
-  &:hover {
-    transform: translateY(-8px);
-  }
+  filter: drop-shadow(0 20px 40px rgba($primary-blue, 0.2));
+  flex-shrink: 0;
+}
+
+.decorativeElements {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.floatingCircle1 {
+  position: absolute;
+  top: 10%;
+  right: 15%;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba($accent-blue, 0.2), rgba($primary-green, 0.15));
+  filter: blur(2px);
+}
+
+.floatingCircle2 {
+  position: absolute;
+  bottom: 15%;
+  left: 10%;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba($primary-yellow, 0.2), rgba($primary-green, 0.15));
+  filter: blur(3px);
 }
 
 .cardsContainer {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: $spacing-lg;
-  margin-top: $spacing-2xl;
-  
-  > * {
-    animation: fadeInUp 0.6s ease backwards;
-    
-    @for $i from 1 through 4 {
-      &:nth-child(#{$i}) {
-        animation-delay: #{$i * 0.1}s;
-      }
-    }
-  }
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: $spacing-sm;
+  margin-top: $spacing-2xl * 1.5;
 }
 
 @media (max-width: $breakpoint-desktop) {
   .bigCard { 
-    min-height: 380px; 
-    padding-right: clamp($spacing-xl, 10vw, $spacing-2xl); 
+    min-height: 450px;
+    padding: clamp($spacing-xl, 6vw, $spacing-2xl);
+    gap: $spacing-xl;
   }
   
   .bigCard img { 
-    right: 3%; 
-    width: clamp(220px, 35vw, 320px);
+    width: clamp(240px, 35vw, 380px);
   }
   
   .cardsContainer {
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: $spacing-lg;
   }
 }
 
 @media (max-width: $breakpoint-tablet) {
+  .hero {
+    min-height: auto;
+    padding: $spacing-xl 0;
+  }
+  
   .wrap {
-    padding: $spacing-lg $spacing-md;
+    padding: $spacing-xl $spacing-lg;
   }
   
   .bigCard { 
-    padding: $spacing-xl $spacing-lg;
-    min-height: 420px;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: $spacing-2xl $spacing-xl;
+    min-height: auto;
+    gap: $spacing-lg;
+  }
+  
+  .contentWrapper {
+    max-width: 100%;
   }
   
   .bigCard img { 
-    right: 2%; 
-    width: clamp(200px, 40vw, 280px);
+    width: clamp(220px, 50vw, 320px);
+    align-self: center;
   }
   
   .bigCardTitle {
-    font-size: clamp(2rem, 6vw, 3.5rem);
+    font-size: clamp(1.2rem, 5vw, 1.5rem);
+    letter-spacing: -1.5px;
+  }
+  
+  .cardsContainer {
+    margin-top: $spacing-2xl;
+    gap: $spacing-md;
   }
 }
 
@@ -226,26 +327,46 @@
   .hero {
     &::before,
     &::after {
-      display: none;
+      opacity: 0.5;
     }
   }
   
   .wrap {
-    padding: $spacing-md;
+    padding: $spacing-lg $spacing-md;
   }
   
   .bigCard {
-    padding: $spacing-lg;
-    min-height: 360px;
+    padding: $spacing-xl $spacing-lg;
+    border-radius: $border-radius-lg;
   }
   
   .bigCardTitle {
-    font-size: clamp(1.8rem, 8vw, 2.5rem);
-    margin-bottom: $spacing-md;
+    font-size: clamp(2rem, 9vw, 2.8rem);
+    margin-bottom: $spacing-lg;
+    letter-spacing: -1px;
+    
+    &::after {
+      width: 60px;
+      height: 3px;
+    }
+  }
+  
+  .tagline {
+    gap: $spacing-xs;
+  }
+  
+  .badge {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+  }
+  
+  .badgeIcon {
+    font-size: 0.75rem;
   }
   
   .lead {
     font-size: 0.95rem;
+    line-height: 1.7;
     margin-bottom: $spacing-lg;
   }
   
@@ -259,14 +380,18 @@
       
       button {
         width: 100%;
+        justify-content: center;
       }
     }
   }
   
   .bigCard img {
-    right: 0;
-    width: clamp(160px, 45vw, 220px);
-    opacity: 0.85;
+    width: clamp(180px, 60vw, 260px);
+  }
+  
+  .floatingCircle1,
+  .floatingCircle2 {
+    display: none;
   }
   
   .cardsContainer { 

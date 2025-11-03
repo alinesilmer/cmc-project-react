@@ -1,4 +1,4 @@
-import MedicosCarousel from "../../components/Nosotros/MedicosCarousel/MedicosCarousel"
+import TribunalEticaCarousel from "../../components/Nosotros/TribunalEticaCarousel/TribunalEticaCarousel";
 import DirectivosCarousel from "../../components/Nosotros/DirectivosCarousel/DirectivosCarousel"
 import styles from "./nosotros.module.scss"
 import PageHero from "../../components/UI/Hero/Hero";
@@ -9,7 +9,7 @@ export default function NosotrosPage() {
        <PageHero
         title="Nosotros"
         subtitle="Conocé nuestra historia, misión, visión y los valores que nos guían."
-        backgroundImage="https://i.pinimg.com/1200x/e8/d9/29/e8d9299c4850c5f45ca246ddfcc2089d.jpg"
+        backgroundImage="https://res.cloudinary.com/dcfkgepmp/image/upload/v1762131766/usbg_h8pd8r.png"
       />
     
 
@@ -106,11 +106,22 @@ export default function NosotrosPage() {
             <span className={styles.sectionLabel}>Nuestro equipo</span>
             <h2 className={styles.h2Center}>Directivos</h2>
           </div>
-          <p className={styles.pCenter}>Conocé al equipo que lidera el Colegio y representa a la comunidad médica.</p>
         </div>
         <div className={styles.wrap}>
           <DirectivosCarousel />
         </div>
+      </section>
+
+ {/* CARRUSEL TRIBUNAL ÉTICA */}
+      <section className={styles.sectionGray}>
+        <div className={styles.wrapNarrow}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.h2Center}>Tribunal de Ética</h2>
+          </div>
+        </div>
+        <div className={styles.wrap}>
+<TribunalEticaCarousel/>
+ </div>
       </section>
 
       {/* COMISIONES Y TRIBUNAL */}
@@ -120,40 +131,17 @@ export default function NosotrosPage() {
             <div className={styles.infoCard}>
               <div className={styles.infoCardHeader}>
                 <span className={styles.infoIcon}>📋</span>
-                <h2>Comisiones</h2>
+                <h2>Estatuto</h2>
               </div>
               <p>
-                Las comisiones trabajan por áreas específicas para impulsar proyectos y atender necesidades puntuales de
-                la comunidad. Próximamente publicaremos la composición y agenda de cada comisión.
-              </p>
-            </div>
-            <div className={styles.infoCard}>
-              <div className={styles.infoCardHeader}>
-                <span className={styles.infoIcon}>⚖️</span>
-                <h2>Tribunal de Ética</h2>
-              </div>
-              <p>
-                Órgano encargado de velar por el cumplimiento de los principios éticos de la profesión. Su labor
-                garantiza el ejercicio responsable y el respeto a las normativas vigentes.
+                Haga <a href="https://colegiomedicodecorrientes.org/wp-content/uploads/2014/10/EstatutoCMC.pdf">click_aqui</a> para descargar la versión online del Estatuto del Colegio Médico de Corrientes.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CARRUSEL MÉDICOS PROMO */}
-      <section className={styles.sectionPromo}>
-        <div className={styles.wrapNarrow}>
-          <div className={styles.sectionHeader}>
-            <span className={styles.sectionLabel}>Nuestra comunidad</span>
-            <h2 className={styles.h2Center}>Médicos asociados</h2>
-          </div>
-         
-        </div>
-        <div className={styles.wrap}>
-          <MedicosCarousel />
-        </div>
-      </section>
+     
     </div>
   )
 }

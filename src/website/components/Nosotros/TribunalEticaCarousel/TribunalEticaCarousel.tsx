@@ -1,30 +1,27 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import styles from "./DirectivosCarousel.module.scss"
+import styles from "../DirectivosCarousel/DirectivosCarousel.module.scss";
 
 type Directivo = {
   id: string
   nombre: string
   cargo: string
-  avatar: string // URL
+  avatar: string 
 }
 
 const MOCK: Directivo[] = [
-  { id: "1", nombre: "Dr. Pedro Espinoza", cargo: "Presidente", avatar: "https://i.pravatar.cc/240?img=5" },
-  { id: "2", nombre: "Dr. Jorge Kundycki", cargo: "Vicepresidente", avatar: "https://i.pravatar.cc/240?img=15" },
-  { id: "3", nombre: "Dr. José Vladimiro Stancoff", cargo: "Secretario General", avatar: "https://i.pravatar.cc/240?img=11" },
-  { id: "4", nombre: "Dra. Mónica Vega", cargo: "Secretaria de Actas", avatar: "https://i.pravatar.cc/240?img=9" },
-  { id: "5", nombre: "Dr. Enrique Guerzovich", cargo: "Secretario de Hacienda", avatar: "https://i.pravatar.cc/240?img=23" },
-  { id: "6", nombre: "Dr. Walter Pilchik", cargo: "Secretario de Prensa", avatar: "https://i.pravatar.cc/240?img=14" },
-  { id: "7", nombre: "Dr. Bernardo Benítez", cargo: "Vocal Titular 1", avatar: "https://i.pravatar.cc/240?img=12" },
-  { id: "8", nombre: "Dr. Diego Centurión", cargo: "Vocal Titular 2", avatar: "https://i.pravatar.cc/240?img=18" },
-  { id: "9", nombre: "Dr. Pablo Collantes", cargo: "Vocal Titular 3", avatar: "https://i.pravatar.cc/240?img=8" },
-  { id: "10", nombre: "Dra. María del Carmen Gauna de Solís", cargo: "Vocal Suplente 1", avatar: "https://i.pravatar.cc/240?img=7" },
-  { id: "11", nombre: "Dr. Ramón Alberto Blanco", cargo: "Vocal Suplente 2", avatar: "https://i.pravatar.cc/240?img=6" },
+  { id: "1", nombre: "Dr. Veloso Omar Alfredo", cargo: "Miembro Titular", avatar: "https://i.pravatar.cc/240?img=5" },
+  { id: "2", nombre: "Dr. Ramirez Vergara Héctor", cargo: "Miembro Titular", avatar: "https://i.pravatar.cc/240?img=15" },
+  { id: "3", nombre: "Dr. Estigarribia Emilio Francisco", cargo: "Miembro Titular", avatar: "https://i.pravatar.cc/240?img=11" },
+  { id: "4", nombre: "Dra. Leiva Sandra", cargo: "Miembro Titular", avatar: "https://i.pravatar.cc/240?img=9" },
+  { id: "5", nombre: "Dr. Aragües Alegre Valentín", cargo: "Miembro Titular", avatar: "https://i.pravatar.cc/240?img=23" },
+  { id: "6", nombre: "Dr. Chunga Angulo Ramón Alberto", cargo: "Miembro Suplente", avatar: "https://i.pravatar.cc/240?img=14" },
+  { id: "7", nombre: "Dr. Ninamango Diaz Rodolfo", cargo: "Miembro Suplente", avatar: "https://i.pravatar.cc/240?img=12" },
+  { id: "8", nombre: "Dr. Martínez Ramón", cargo: "Miembro Suplente", avatar: "https://i.pravatar.cc/240?img=18" },
 ]
 
-export default function DirectivosCarousel() {
+export default function TribunalEticaCarousel() {
   const [items] = useState<Directivo[]>(MOCK)
   const [idx, setIdx] = useState(0)
   const trackRef = useRef<HTMLDivElement>(null)
