@@ -1,0 +1,9 @@
+@import "../../styles/variables.scss";
+
+.quintaWrap {
+  display: flex;
+  flex-direction: column;
+  padding: $spacing-xl $spacing-lg;
+  background: $white;
+  min-height: 100vh;
+}

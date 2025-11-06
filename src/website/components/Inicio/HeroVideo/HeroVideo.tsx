@@ -69,7 +69,7 @@ export const HeroVideo: FC = () => {
         >
         
           <a href="https://colegiomedicocorrientes.com/">
-          <Button variant="primary" size="large">
+          <Button variant="primary" size="xlg">
             Entrar a Validar
           </Button>
           </a>

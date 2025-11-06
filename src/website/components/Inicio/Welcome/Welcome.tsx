@@ -44,8 +44,8 @@ export default function Welcome() {
             </motion.p>
 
             <motion.div className={styles.ctaRow}>
-              <Link to="/auth/register">
-                <Button variant="secondary" size="small">
+              <Link to="https://cmc-project-react.vercel.app">
+                <Button variant="primary" size="large">
                   <FaUserPlus className={styles.buttonIcon} />
                   Asociarme
                 </Button>
@@ -54,8 +54,9 @@ export default function Welcome() {
           </div>
 
           <motion.img
-            src="https://png.pngtree.com/png-vector/20240205/ourmid/pngtree-professional-doctor-with-order-png-image_11626748.png"
+            src="https://i.pinimg.com/1200x/9e/a1/c9/9ea1c9ea2380bb6da2755458db9021e4.jpg"
             alt="Profesional de la salud"
+            className={styles.imgDecor}
             whileHover={{
               scale: 1.05,
               y: -10,

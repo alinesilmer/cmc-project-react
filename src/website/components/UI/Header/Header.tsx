@@ -46,43 +46,10 @@ export default function Header() {
 
           <nav className={styles.desktopNav}>
             <Link to="/" className={styles.navLink} onClick={closeAll}>Inicio</Link>
+             <Link to="/nosotros" className={styles.navLink} onClick={closeAll}>Nosotros</Link>
 
-            <div
-              className={`${styles.navItem} ${styles.hasDropdown}`}
-              onMouseEnter={() => setOpenDropdown("nosotros")}
-              onMouseLeave={() => setOpenDropdown(null)}
-            >
-              <div className={styles.parentRow}>
-                <Link to="/nosotros" className={styles.navLink} onClick={closeAll}>Nosotros</Link>
-                <button
-                  className={styles.caretBtn}
-                  aria-haspopup="true"
-                  aria-expanded={openDropdown === "nosotros"}
-                  aria-controls="dd-nosotros"
-                  onClick={() => setOpenDropdown((v) => (v === "nosotros" ? null : "nosotros"))}
-                >
-                  <FiChevronDown aria-hidden="true" />
-                </button>
-              </div>
 
-              <AnimatePresence>
-                {openDropdown === "nosotros" && (
-                  <motion.ul
-                    id="dd-nosotros"
-                    className={styles.dropdown}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 8 }}
-                    transition={{ duration: 0.18 }}
-                  >
-                    <li><Link to="/nosotros/historia" className={styles.subLink} onClick={closeAll}>Historia</Link></li>
-                    <li><Link to="/nosotros/comisiones" className={styles.subLink} onClick={closeAll}>Comisiones</Link></li>
-                    <li><Link to="/nosotros/tribunal-de-etica" className={styles.subLink} onClick={closeAll}>Tribunal de Ética</Link></li>
-                    <li><Link to="/nosotros/estatuto" className={styles.subLink} onClick={closeAll}>Estatuto</Link></li>
-                  </motion.ul>
-                )}
-              </AnimatePresence>
-            </div>
+             
 
             <div
               className={`${styles.navItem} ${styles.hasDropdown}`}
@@ -114,16 +81,17 @@ export default function Header() {
                   >
                     <li><Link to="/servicios/socios" className={styles.subLink} onClick={closeAll}>Socios</Link></li>
                     <li><Link to="/servicios/seguro-medico" className={styles.subLink} onClick={closeAll}>Seguro médico</Link></li>
-                    <li><Link to="/servicios/convenios" className={styles.subLink} onClick={closeAll}>Convenios</Link></li>
-                    <li><Link to="/servicios/quinta" className={styles.subLink} onClick={closeAll}>Quinta</Link></li>
+                    <li><Link to="/convenios" className={styles.subLink} onClick={closeAll}>Convenios</Link></li>
+                    <li><Link to="/quinta" className={styles.subLink} onClick={closeAll}>Quinta</Link></li>
                     <li><Link to="/servicios/facturacion-online" className={styles.subLink} onClick={closeAll}>Facturación online</Link></li>
                     <li><Link to="/servicios/beneficios" className={styles.subLink} onClick={closeAll}>Beneficios</Link></li>
-                    <li><Link to="/servicios/galeria" className={styles.subLink} onClick={closeAll}>Galería de fotos y videos</Link></li>
+                    <li><Link to="/galeria" className={styles.subLink} onClick={closeAll}>Galería de fotos y videos</Link></li>
                   </motion.ul>
                 )}
               </AnimatePresence>
             </div>
 
+            <Link to="/cursoscap" className={styles.navLink} onClick={closeAll}>Cursos/Capacitaciones</Link>
             <Link to="/noticias" className={styles.navLink} onClick={closeAll}>Noticias</Link>
             <Link to="/contacto" className={styles.navLink} onClick={closeAll}>Contacto</Link>
           </nav>
@@ -170,39 +138,8 @@ export default function Header() {
               </button>
 
               <Link to="/" onClick={closeAll} className={styles.mobileLink}>Inicio</Link>
-
-              <div className={styles.mobileGroup}>
-                <button
-                  className={styles.mobileGroupBtn}
-                  onClick={() => setMobileOpen((p) => ({ ...p, nosotros: !p.nosotros }))}
-                  aria-expanded={mobileOpen.nosotros}
-                  aria-controls="m-nosotros"
-                >
-                  <span>Nosotros</span>
-                  <FiChevronDown
-                    className={`${styles.chevron} ${mobileOpen.nosotros ? styles.chevronOpen : ""}`}
-                    aria-hidden="true"
-                  />
-                </button>
-
-                <AnimatePresence initial={false}>
-                  {mobileOpen.nosotros && (
-                    <motion.div
-                      id="m-nosotros"
-                      className={styles.mobileSubmenu}
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <Link to="/nosotros/historia" onClick={closeAll}>Historia</Link>
-                      <Link to="/nosotros/comisiones" onClick={closeAll}>Comisiones</Link>
-                      <Link to="/nosotros/tribunal-de-etica" onClick={closeAll}>Tribunal de Ética</Link>
-                      <Link to="/nosotros/estatuto" onClick={closeAll}>Estatuto</Link>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+               <Link to="/nosotros" onClick={closeAll} className={styles.mobileLink}>Nosotros</Link>
+             
 
               <div className={styles.mobileGroup}>
                 <button

@@ -1,0 +1,90 @@
+@import "../../../styles/variables.scss";
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  padding: $spacing-xl $spacing-lg;
+  background: $white;
+  font-family: $font-normal;
+}
+
+.card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: $spacing-lg;
+  border: 1px solid rgba($primary-blue, 0.15);
+  border-radius: $border-radius-lg;
+  background: linear-gradient(135deg, $primary-blue 0%, $primary-blue-dark 100%);
+  color: $white;
+  padding: $spacing-xl;
+  box-shadow: $shadow-md;
+}
+
+.texto {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  flex: 1;
+}
+
+.titulo {
+  font-family: $font-playfair;
+  font-size: $font-size-h2;
+  letter-spacing: -0.3px;
+  color: $white;
+}
+
+.descripcion {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: rgba($white, 0.95);
+}
+
+.boton {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: $spacing-sm;
+  background: $primary-yellow;
+  color: $dark-gray;
+  border-radius: $border-radius-lg;
+  padding: 0.9rem 1.25rem;
+  text-decoration: none;
+  font-weight: 700;
+  box-shadow: $shadow-sm;
+  border: 1px solid rgba($black, 0.05);
+  transition: transform $transition-fast, box-shadow $transition-fast, background $transition-fast;
+}
+
+.boton:hover {
+  transform: translateY(-2px);
+  box-shadow: $shadow-lg;
+  background: $primary-yellow-light;
+}
+
+.icono {
+  font-size: 1.1rem;
+}
+
+.botonTexto {
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: $breakpoint-tablet) {
+  .wrapper { padding: $spacing-lg $spacing-md; }
+  .card { padding: $spacing-lg; }
+}
+
+@media (max-width: $breakpoint-mobile) {
+  .card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: $spacing-md;
+  }
+  .boton {
+    justify-content: center;
+    width: 100%;
+  }
+}

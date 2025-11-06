@@ -1,0 +1,113 @@
+@import "../../../styles/variables.scss";
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+  padding: $spacing-xl $spacing-lg;
+  background: $white;
+  color: $dark-gray;
+  font-family: $font-normal;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  text-align: center;
+}
+
+.title {
+  font-family: $font-playfair;
+  font-size: $font-size-h2;
+  color: $primary-blue;
+  letter-spacing: -0.3px;
+}
+
+.subtitle {
+  font-size: $font-size-base;
+  color: $gray;
+}
+
+.list {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: $spacing-lg;
+  align-items: stretch;
+}
+
+.item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: $spacing-md;
+  background: $white;
+  border: 1px solid rgba($primary-blue, 0.15);
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-sm;
+  padding: $spacing-md $spacing-lg;
+  text-decoration: none;
+  color: inherit;
+  transition: transform $transition-fast, box-shadow $transition-fast, border-color $transition-fast, background $transition-fast;
+  flex: 1 1 calc(20% - #{$spacing-lg});
+  max-width: calc(20% - #{$spacing-lg});
+}
+
+.item:hover {
+  transform: translateY(-3px);
+  box-shadow: $shadow-md;
+  border-color: rgba($primary-blue, 0.25);
+  background: $primary-blue;
+  color: $primary-yellow;
+}
+
+.logoBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: $border-radius-md;
+  background: none;
+}
+
+
+.logo {
+  max-width: 80%;
+  max-height: 80%;
+  object-fit: contain;
+}
+
+.name {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  font-weight: 700;
+  color: $primary-blue;
+  line-height: 1.2;
+}
+
+.name:hover{
+color: $primary-yellow;
+}
+
+@media (max-width: $breakpoint-wide) {
+  .item { flex: 1 1 calc(25% - #{$spacing-lg}); max-width: calc(25% - #{$spacing-lg}); }
+}
+
+@media (max-width: $breakpoint-desktop) {
+  .item { flex: 1 1 calc(33.33% - #{$spacing-lg}); max-width: calc(33.33% - #{$spacing-lg}); }
+}
+
+@media (max-width: $breakpoint-tablet) {
+  .wrapper { padding: $spacing-lg $spacing-md; }
+  .item { flex: 1 1 calc(50% - #{$spacing-lg}); max-width: calc(50% - #{$spacing-lg}); }
+  .logoBox { width: 56px; height: 56px; }
+}
+
+@media (max-width: $breakpoint-mobile) {
+  .list { gap: $spacing-md; }
+  .item { flex: 1 1 100%; max-width: 100%; padding: $spacing-md; }
+  .logoBox { width: 52px; height: 52px; }
+}

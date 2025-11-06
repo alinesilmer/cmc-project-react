@@ -47,13 +47,13 @@
 }
 
 .secondary {
-  background-color: $accent-orange;
-  color: $white;
+  background-color: $primary-yellow;
+  color: $black;
   box-shadow: $shadow-md;
   border: none;
 
   &:hover:not(:disabled) {
-    background-color: darken($accent-orange, 10%);
+    background-color: $primary-yellow;
     box-shadow: $shadow-lg;
   }
 }
@@ -86,4 +86,9 @@
 
 .fullWidth {
   width: 100%;
+}
+
+.xlg {
+  padding: $spacing-lg $spacing-xl;
+  font-size: $font-size-h2;
 }

@@ -1,13 +1,9 @@
 @import "../../../styles/variables.scss";
 
 :root {
-  --category-card-h: 380px;
-  --category-card-h-tablet: 360px;
-  --category-card-h-mobile: 340px;
-  --card-expand-max: 1200px;
-  --content-collapsed: 9.5rem;
-  --expand-speed: 900ms;
-  --expand-ease: cubic-bezier(.16, 1, .3, 1);
+  --category-card-h: 360px;
+  --category-card-h-tablet: 340px;
+  --category-card-h-mobile: 320px;
 }
 
 .card {
@@ -22,36 +18,21 @@
   text-decoration: none;
   overflow: hidden;
   cursor: pointer;
-  transition:
-    box-shadow 300ms ease,
-    max-height var(--expand-speed) var(--expand-ease),
-    padding 300ms ease;
-  will-change: max-height;
+  border: 1px solid rgba($white, 0.28);
   box-shadow:
-    0 4px 20px rgba($black, 0.08),
-    inset 0 1px 0 rgba($white, 0.5);
-  border: 1px solid rgba($white, 0.3);
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, transparent 0%, rgba($white, 0.1) 100%);
-    opacity: 0;
-    transition: opacity 300ms ease;
-  }
+    0 4px 18px rgba($black, 0.08),
+    inset 0 1px 0 rgba($white, 0.4);
+  transition: box-shadow 220ms ease, transform 220ms ease, background-position 220ms ease;
 
   &:hover {
-    z-index: 5;
     box-shadow:
-      0 12px 40px rgba($black, 0.15),
-      inset 0 1px 0 rgba($white, 0.6);
-    max-height: var(--card-expand-max);
-    padding-bottom: calc($spacing-xl + 2px);
+      0 10px 26px rgba($black, 0.14),
+      inset 0 1px 0 rgba($white, 0.45);
+  }
 
-    &::before { opacity: 1; }
-    .iconWrapper { transform: scale(1.06) rotate(3deg); }
-    .decorativeCircle { transform: scale(1.3); opacity: 0.28; }
+  &:focus-visible {
+    outline: 2px solid rgba($white, 0.9);
+    outline-offset: 3px;
   }
 }
 
@@ -64,14 +45,16 @@
   border-radius: $border-radius-md;
   background: rgba($white, 0.9);
   margin-bottom: $spacing-md;
-  transition: transform 280ms ease;
+  transition: transform 220ms ease, box-shadow 220ms ease;
   box-shadow: 0 4px 12px rgba($black, 0.1);
   position: relative;
   z-index: 2;
+
+  .card:hover & { transform: translateY(-2px); }
 }
 
 .icon {
-  font-size: 1.75rem;
+  font-size: 1.7rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -80,53 +63,39 @@
 .content {
   position: relative;
   z-index: 2;
-  overflow: hidden;
   flex: 1;
-  max-height: var(--content-collapsed);
-  transition:
-    max-height var(--expand-speed) var(--expand-ease),
-    -webkit-mask-position var(--expand-speed) var(--expand-ease),
-    mask-position var(--expand-speed) var(--expand-ease);
-  -webkit-mask-image: linear-gradient(to bottom, #000 78%, rgba(0,0,0,0) 100%);
-  mask-image: linear-gradient(to bottom, #000 78%, rgba(0,0,0,0) 100%);
-  -webkit-mask-size: 100% 200%;
-  mask-size: 100% 200%;
-  -webkit-mask-position: 0 0%;
-  mask-position: 0 0%;
-}
-
-.card:hover .content {
-  max-height: 9999px;
-  -webkit-mask-position: 0 100%;
-  mask-position: 0 100%;
 }
 
 .title {
   font-family: $font-title;
-  font-size: 1.3rem;
+  font-size: clamp(1.15rem, 1.2vw + 1rem, 1.5rem);
   font-weight: 700;
   margin-bottom: $spacing-sm;
   color: $white;
-  line-height: 1.3;
-  letter-spacing: -0.5px;
+  line-height: 1.25;
+  letter-spacing: -0.3px;
 }
 
 .description {
   font-family: $font-normal;
-  font-size: $font-size-small;
+  font-size: clamp(0.95rem, 0.6vw + 0.8rem, 1.05rem);
   line-height: 1.6;
-  color: rgba($white, 0.9);
+  color: rgba($white, 0.92);
   margin-bottom: $spacing-md;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  -webkit-line-clamp: 4;
 }
 
 .arrow {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
-  background: rgba($white, 0.2);
+  background: rgba($white, 0.22);
   color: $white;
   font-size: 1rem;
   align-self: flex-end;
@@ -134,6 +103,9 @@
   backdrop-filter: blur(10px);
   position: relative;
   z-index: 2;
+  transition: transform 220ms ease, background 220ms ease, color 220ms ease;
+
+  .card:hover & { transform: translateX(6px); }
 }
 
 .decorativeCircle {
@@ -143,10 +115,12 @@
   width: 200px;
   height: 200px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba($white, 0.15) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba($white, 0.16) 0%, transparent 70%);
   pointer-events: none;
-  transition: transform 300ms ease, opacity 300ms ease;
+  transition: transform 220ms ease, opacity 220ms ease;
   z-index: 1;
+
+  .card:hover & { transform: scale(1.03) translate(2px, -2px); opacity: 0.95; }
 }
 
 .teal {
@@ -179,16 +153,16 @@
   .icon { color: darken($service-yellow, 30%); }
 }
 
+/* Responsivo */
 @media (max-width: $breakpoint-tablet) {
   .card {
     height: var(--category-card-h-tablet);
     max-height: var(--category-card-h-tablet);
     padding: $spacing-lg;
   }
-  .iconWrapper { width: 55px; height: 55px; }
+  .iconWrapper { width: 56px; height: 56px; }
   .icon { font-size: 1.5rem; }
-  .title { font-size: 1.5rem; }
-  .description { font-size: 0.9rem; }
+  .description { -webkit-line-clamp: 5; }
 }
 
 @media (max-width: $breakpoint-mobile) {
@@ -197,8 +171,18 @@
     max-height: var(--category-card-h-mobile);
     padding: $spacing-md;
   }
-  .iconWrapper { width: 50px; height: 50px; }
+  .iconWrapper { width: 52px; height: 52px; }
   .icon { font-size: 1.35rem; }
-  .title { font-size: 1.35rem; }
-  .arrow { width: 36px; height: 36px; font-size: 0.9rem; }
+  .title { font-size: clamp(1.1rem, 3.5vw, 1.3rem); }
+  .description { font-size: 0.95rem; -webkit-line-clamp: 6; }
+  .arrow { width: 38px; height: 38px; font-size: 0.95rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .iconWrapper,
+  .arrow,
+  .decorativeCircle {
+    transition: none !important;
+  }
 }

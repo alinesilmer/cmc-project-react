@@ -7,7 +7,7 @@ import styles from "./Button.module.scss";
 interface ButtonProps {
   children: React.ReactNode;
   variant?: "primary" | "secondary" | "success" | "danger" | "ghost";
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xlg";
   disabled?: boolean;
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
   onPointerDown?: React.PointerEventHandler<HTMLButtonElement>;
@@ -15,7 +15,6 @@ interface ButtonProps {
   type?: "button" | "submit" | "reset";
   className?: string;
   submit?: boolean;
-  /** Permite pasar aria-*, data-*, id, title, etc. */
   [key: string]: any;
 }
 
