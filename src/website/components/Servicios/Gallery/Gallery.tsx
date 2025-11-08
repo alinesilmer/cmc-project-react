@@ -8,8 +8,8 @@ type Tipo = "foto" | "video"
 export type MediaItem = {
   id: string
   tipo: Tipo
-  src: string
-  miniatura?: string
+  src: string            
+  miniatura?: string     
   titulo?: string
   fecha?: string
   etiquetas?: string[]
@@ -19,11 +19,32 @@ type GalleryProps = {
   items: MediaItem[]
 }
 
+/* RUTAS A MAPEAR  */
+const MEDIA_ROUTES = {
+  base: "/media/galeria",    // ej: "https://cdn.tu-dominio.com/galeria"
+  foto: "fotos",
+  video: "videos",
+  thumb: "thumbs",
+}
+
+/* Helpers de ruteo */
+const isAbsolute = (u: string) => /^(https?:)?\/\//.test(u) || u.startsWith("/")
+const trimLeadingSlash = (p: string) => p.replace(/^\/+/, "")
+
+function buildUrl(kind: Tipo, pathOrUrl: string, asThumb = false) {
+  if (!pathOrUrl) return ""
+  if (isAbsolute(pathOrUrl)) return pathOrUrl
+  const folder = asThumb ? MEDIA_ROUTES.thumb : (kind === "foto" ? MEDIA_ROUTES.foto : MEDIA_ROUTES.video)
+  return `${MEDIA_ROUTES.base}/${folder}/${trimLeadingSlash(pathOrUrl)}`
+}
+
 export default function Gallery({ items }: GalleryProps) {
   const [busqueda, setBusqueda] = useState("")
   const [filtro, setFiltro] = useState<"todo" | Tipo>("todo")
   const [abierta, setAbierta] = useState(false)
   const [indice, setIndice] = useState(0)
+
+  // TODO backend: GET /api/galeria?tipo=&search= para traer items
 
   const contadores = useMemo(() => {
     const f = items.filter(i => i.tipo === "foto").length
@@ -38,13 +59,8 @@ export default function Gallery({ items }: GalleryProps) {
       .filter(i => (q ? (i.titulo || "").toLowerCase().includes(q) || (i.etiquetas || []).join(" ").toLowerCase().includes(q) : true))
   }, [items, busqueda, filtro])
 
-  const abrir = (idx: number) => {
-    setIndice(idx)
-    setAbierta(true)
-  }
-
+  const abrir = (idx: number) => { setIndice(idx); setAbierta(true) }
   const cerrar = () => setAbierta(false)
-
   const anterior = () => setIndice(i => (i - 1 + visibles.length) % visibles.length)
   const siguiente = () => setIndice(i => (i + 1) % visibles.length)
 
@@ -72,13 +88,14 @@ export default function Gallery({ items }: GalleryProps) {
           <h2 className={styles.h2}>Galería</h2>
           <p className={styles.sub}>Fotos y videos del Colegio Médico de Corrientes.</p>
         </div>
+
         <div className={styles.controles}>
           <div className={styles.filtros}>
             <button
               className={`${styles.pill} ${filtro === "todo" ? styles.activa : ""}`}
               onClick={() => setFiltro("todo")}
             >
-              Todo {visibles.length === items.length && `(${items.length})`}
+              Todo {items.length > 0 && `(${items.length})`}
             </button>
             <button
               className={`${styles.pill} ${filtro === "foto" ? styles.activa : ""}`}
@@ -93,6 +110,7 @@ export default function Gallery({ items }: GalleryProps) {
               Videos ({contadores.videos})
             </button>
           </div>
+
           <div className={styles.busqueda}>
             <input
               className={styles.input}
@@ -106,9 +124,15 @@ export default function Gallery({ items }: GalleryProps) {
         </div>
       </div>
 
+      {items.length === 0 && (
+        <div className={styles.vacio}>
+          <p>No hay contenido cargado</p>
+        </div>
+      )}
+
       <div className={styles.items} role="list">
         {visibles.map((item, idx) => {
-          const thumb = item.miniatura || item.src
+          const thumb = buildUrl(item.tipo, item.miniatura || item.src, true)
           return (
             <button
               role="listitem"
@@ -141,7 +165,7 @@ export default function Gallery({ items }: GalleryProps) {
         })}
       </div>
 
-      {visibles.length === 0 && (
+      {visibles.length === 0 && items.length > 0 && (
         <div className={styles.vacio}>
           <p>No hay resultados para tu búsqueda</p>
         </div>
@@ -155,9 +179,18 @@ export default function Gallery({ items }: GalleryProps) {
             <button className={styles.navDer} onClick={siguiente} aria-label="Siguiente">›</button>
             <div className={styles.viewer}>
               {actual.tipo === "foto" ? (
-                <img src={actual.src} alt={actual.titulo || "Imagen"} className={styles.full} />
+                <img
+                  src={buildUrl(actual.tipo, actual.src)}
+                  alt={actual.titulo || "Imagen"}
+                  className={styles.full}
+                />
               ) : (
-                <video src={actual.src} className={styles.full} controls playsInline />
+                <video
+                  src={buildUrl(actual.tipo, actual.src)}
+                  className={styles.full}
+                  controls
+                  playsInline
+                />
               )}
             </div>
             <div className={styles.caption}>

@@ -6,6 +6,7 @@ import styles from "./Header.module.scss";
 import logo from "../../../assets/images/logoCMC.png";
 import SearchBar from "../SearchBar/SearchBar";
 
+
 export default function Header() {
   const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -13,6 +14,7 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState({ nosotros: false, servicios: false });
   const [searchOpen, setSearchOpen] = useState(false);
   const [solid, setSolid] = useState(pathname !== "/");
+
 
   useEffect(() => {
     const onScroll = () => {
@@ -57,7 +59,7 @@ export default function Header() {
               onMouseLeave={() => setOpenDropdown(null)}
             >
               <div className={styles.parentRow}>
-                <Link to="/notFound" className={styles.navLink} onClick={closeAll}>Servicios</Link>
+                <Link to="/servicios" className={styles.navLink} onClick={closeAll}>Servicios</Link>
                 <button
                   className={styles.caretBtn}
                   aria-haspopup="true"
@@ -79,8 +81,12 @@ export default function Header() {
                     exit={{ opacity: 0, y: 8 }}
                     transition={{ duration: 0.18 }}
                   >
-                    <li><Link to="/servicios/socios" className={styles.subLink} onClick={closeAll}>Socios</Link></li>
-                    <li><Link to="/servicios/seguro-medico" className={styles.subLink} onClick={closeAll}>Seguro médico</Link></li>
+                    <li><Link   to={`https://wa.me/543794404497?text=${encodeURIComponent("Hola, quisiera información para asociarme al Colegio Médico de Corrientes, por favor. ¡Gracias!.")}`}
+    className={styles.subLink}
+    onClick={closeAll}
+    target="_blank"
+    rel="noopener noreferrer">Quiero ser Socio</Link></li>
+                    <li><Link to="/seguros" className={styles.subLink} onClick={closeAll}>Seguro médico</Link></li>
                     <li><Link to="/convenios" className={styles.subLink} onClick={closeAll}>Convenios</Link></li>
                     <li><Link to="/quinta" className={styles.subLink} onClick={closeAll}>Quinta</Link></li>
                     <li><Link to="/servicios/facturacion-online" className={styles.subLink} onClick={closeAll}>Facturación online</Link></li>
@@ -166,7 +172,7 @@ export default function Header() {
                       transition={{ duration: 0.2 }}
                     >
                       <Link to="/servicios/socios" onClick={closeAll}>Socios</Link>
-                      <Link to="/servicios/seguro-medico" onClick={closeAll}>Seguro médico</Link>
+                      <Link to="/seguros" onClick={closeAll}>Seguro médico</Link>
                       <Link to="/servicios/convenios" onClick={closeAll}>Convenios</Link>
                       <Link to="/servicios/quinta" onClick={closeAll}>Quinta</Link>
                       <Link to="/servicios/facturacion-online" onClick={closeAll}>Facturación online</Link>
@@ -185,7 +191,6 @@ export default function Header() {
         </AnimatePresence>
       </header>
 
-      {/* This spacer ensures page content starts below the fixed header */}
       <div className={styles.offset} aria-hidden="true" />
 
       <SearchBar open={searchOpen} onClose={() => setSearchOpen(false)} />

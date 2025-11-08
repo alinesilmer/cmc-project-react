@@ -3,88 +3,254 @@
 .wrapper {
   display: flex;
   flex-direction: column;
-  padding: $spacing-xl $spacing-lg;
-  background: $white;
+  gap: $spacing-xl;
+  padding: $spacing-xxl $spacing-xl;
+  background: linear-gradient(180deg, rgba($light-blue, 0.25) 0%, $white 100%);
   font-family: $font-normal;
 }
 
-.card {
+.header {
   display: flex;
   flex-direction: row;
-  align-items: center;
-  gap: $spacing-lg;
-  border: 1px solid rgba($primary-blue, 0.15);
-  border-radius: $border-radius-lg;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: $spacing-xl;
+  border: 1px solid rgba($primary-blue, 0.12);
+  border-radius: $border-radius-xl;
   background: linear-gradient(135deg, $primary-blue 0%, $primary-blue-dark 100%);
   color: $white;
-  padding: $spacing-xl;
-  box-shadow: $shadow-md;
+  padding: $spacing-2xl;
+  box-shadow: 0 20px 60px rgba($primary-blue, 0.28);
+  position: relative;
+  overflow: hidden;
 }
 
-.texto {
+.headLeft {
   display: flex;
   flex-direction: column;
-  gap: $spacing-sm;
+  gap: $spacing-md;
   flex: 1;
+  z-index: 1;
+}
+
+.headRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  min-width: 220px;
+  position: relative;
+  z-index: 0;
 }
 
 .titulo {
   font-family: $font-playfair;
-  font-size: $font-size-h2;
+  font-size: clamp(2rem, 3vw, 2.75rem);
   letter-spacing: -0.3px;
   color: $white;
+  margin: 0;
 }
 
 .descripcion {
   font-size: 1.05rem;
-  line-height: 1.6;
-  color: rgba($white, 0.95);
+  line-height: 1.7;
+  color: rgba($white, 0.96);
+  margin: 0;
+  max-width: 58ch;
 }
 
-.boton {
+.ctaRow {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+  margin-top: $spacing-sm;
+}
+
+.iconInline {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.badge {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: 0.6rem 1rem;
+  border-radius: 999px;
+  background: rgba($primary-yellow, 0.95);
+  color: $dark-gray;
+  font-weight: 800;
+  box-shadow: 0 6px 18px rgba($primary-yellow, 0.35);
+  margin-left: auto;
+}
+
+.heroGlow {
+  position: absolute;
+  right: -40px;
+  top: -60px;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba($accent-blue, 0.35), transparent 60%);
+  animation: float 7s ease-in-out infinite;
+}
+
+.heroGlow2 {
+  position: absolute;
+  left: -60px;
+  bottom: -80px;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 70% 70%, rgba($primary-yellow, 0.18), transparent 60%);
+  animation: float 9s ease-in-out infinite reverse;
+}
+
+.infoPanel {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+  border: 1px solid rgba($primary-blue, 0.12);
+  border-radius: $border-radius-xl;
+  background: linear-gradient(180deg, rgba($light-blue, 0.4) 0%, rgba($white, 0.9) 100%);
+  padding: $spacing-2xl;
+  box-shadow: 0 16px 40px rgba($primary-blue, 0.12);
+}
+
+.infoHeader {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-md;
+}
+
+.infoTitleWrap {
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: $spacing-sm;
-  background: $primary-yellow;
-  color: $dark-gray;
-  border-radius: $border-radius-lg;
-  padding: 0.9rem 1.25rem;
-  text-decoration: none;
-  font-weight: 700;
-  box-shadow: $shadow-sm;
-  border: 1px solid rgba($black, 0.05);
-  transition: transform $transition-fast, box-shadow $transition-fast, background $transition-fast;
+  color: $primary-blue;
 }
 
-.boton:hover {
-  transform: translateY(-2px);
-  box-shadow: $shadow-lg;
-  background: $primary-yellow-light;
+.infoTitle {
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin: 0;
 }
 
-.icono {
-  font-size: 1.1rem;
-}
-
-.botonTexto {
-  display: flex;
+.infoChip {
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: $primary-blue;
+  color: $primary-yellow;
+  font-weight: 800;
+  font-size: 0.85rem;
+  box-shadow: $shadow-sm;
+}
+
+.infoList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: $dark-gray;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.contactBox {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-lg;
+  padding: $spacing-lg;
+  border-radius: $border-radius-lg;
+  background: linear-gradient(135deg, rgba($primary-yellow, 0.2) 0%, rgba($primary-yellow, 0.08) 100%);
+  border: 2px solid rgba($primary-yellow, 0.35);
+}
+
+.contactLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.contactLabel {
+  color: $gray;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.contactPhone {
+  color: $primary-blue-dark;
+  font-weight: 800;
+  text-decoration: none;
+  transition: color $transition-fast, transform $transition-fast;
+}
+
+.contactPhone:hover {
+  color: $accent-blue;
+  transform: translateY(-1px);
+}
+
+.contactRight {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: right;
+}
+
+.attnLabel {
+  color: $gray;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.attnText {
+  font-weight: 800;
+  color: $primary-blue;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(-14px) translateX(8px); }
+}
+
+@media (max-width: $breakpoint-desktop) {
+  .wrapper { padding: $spacing-xl $spacing-lg; }
+  .header { padding: $spacing-xl; }
+  .infoPanel { padding: $spacing-xl; }
 }
 
 @media (max-width: $breakpoint-tablet) {
-  .wrapper { padding: $spacing-lg $spacing-md; }
-  .card { padding: $spacing-lg; }
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: $spacing-lg;
+  }
+  .headRight { min-width: auto; width: 100%; align-items: flex-start; }
+  .badge { margin-left: 0; }
+  .contactBox { flex-direction: column; align-items: flex-start; text-align: left; }
+  .contactRight { text-align: left; align-items: flex-start; }
 }
 
 @media (max-width: $breakpoint-mobile) {
-  .card {
-    flex-direction: column;
-    align-items: stretch;
-    gap: $spacing-md;
-  }
-  .boton {
-    justify-content: center;
-    width: 100%;
-  }
+  .wrapper { padding: $spacing-lg $spacing-md; }
+  .header { padding: $spacing-lg; }
+  .infoPanel { padding: $spacing-lg; }
+  .ctaRow { width: 100%; }
+  .ctaRow > * { flex: 1 1 auto; }
 }

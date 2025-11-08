@@ -1,0 +1,87 @@
+@import "../../../styles/variables.scss";
+
+.card {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background-color: var(--card);
+  border: 1px solid rgba($primary-blue, 0.18);
+  border-radius: $border-radius-lg;
+  padding: $spacing-xl;
+  box-shadow: $shadow-sm;
+  transition: transform $transition-normal, box-shadow $transition-normal, border-color $transition-normal, background $transition-normal;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: $shadow-lg;
+  border-color: rgba($primary-blue, 0.28);
+  background: linear-gradient(180deg, $white 0%, $light-blue 100%);
+}
+
+.linkWrap {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  gap: 0;
+}
+
+.icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: $border-radius-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: $spacing-md;
+  font-size: 1.6rem;
+  background-color: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: $primary-blue;
+  transition: background $transition-fast, color $transition-fast;
+}
+
+.card:hover .icon {
+  background: $primary-blue;
+  color: $primary-yellow;
+}
+
+.cardTitle {
+  font-size: $font-size-large;
+  font-weight: 700;
+  color: var(--foreground);
+  font-family: $font-normal;
+  margin-bottom: $spacing-xs;
+}
+
+.cardDescription {
+  font-size: $font-size-base;
+  color: var(--muted-foreground);
+  font-family: $font-normal;
+  line-height: 1.6;
+}
+
+.hoverIndicator {
+  position: absolute;
+  right: $spacing-lg;
+  bottom: $spacing-lg;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  opacity: 0;
+  transition: opacity $transition-fast;
+}
+
+.card:hover .hoverIndicator {
+  opacity: 1;
+}
+
+.hoverIndicator svg {
+  width: 1rem;
+  height: 1rem;
+  color: var(--accent);
+}

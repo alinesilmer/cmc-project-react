@@ -115,7 +115,7 @@ export default function AdminMedicosPromo() {
   return (
     <div className={styles.wrap}>
       <div className={styles.header}>
-        <h2>“Nuestros médicos asociados” — Carrusel (máx. 10 activos)</h2>
+        {/* <h2>“Nuestros médicos asociados” — Carrusel (máx. 10 activos)</h2> */}
         
       </div>
 

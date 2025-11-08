@@ -1,6 +1,8 @@
 import TribunalEticaCarousel from "../../components/Nosotros/TribunalEticaCarousel/TribunalEticaCarousel";
 import DirectivosCarousel from "../../components/Nosotros/DirectivosCarousel/DirectivosCarousel"
 import styles from "./nosotros.module.scss"
+import { FaHeart, FaHandshake, FaLightbulb} from "react-icons/fa";
+import { FaMagnifyingGlass } from "react-icons/fa6";
 import PageHero from "../../components/UI/Hero/Hero";
 
 export default function NosotrosPage() {
@@ -76,22 +78,22 @@ export default function NosotrosPage() {
           </div>
           <div className={styles.valuesGrid}>
             <div className={styles.valueCard}>
-              <div className={styles.valueIcon}>💙</div>
+              <div className={styles.valueIcon}><FaHeart color="#f3de83ff"/></div>
               <h3>Compromiso</h3>
               <p>Con la comunidad y la ética profesional.</p>
             </div>
             <div className={styles.valueCard}>
-              <div className={styles.valueIcon}>🔍</div>
+              <div className={styles.valueIcon}><FaMagnifyingGlass color="#173f70"/></div>
               <h3>Transparencia</h3>
               <p>En la gestión y en la comunicación.</p>
             </div>
             <div className={styles.valueCard}>
-              <div className={styles.valueIcon}>🤝</div>
+              <div className={styles.valueIcon}><FaHandshake color="#f3de83ff"/></div>
               <h3>Colaboración</h3>
               <p>Trabajo colaborativo y enfoque en la mejora continua.</p>
             </div>
             <div className={styles.valueCard}>
-              <div className={styles.valueIcon}>💡</div>
+              <div className={styles.valueIcon}><FaLightbulb color="#173f70"/></div>
               <h3>Innovación</h3>
               <p>Para brindar mejores servicios y experiencias.</p>
             </div>
@@ -100,7 +102,7 @@ export default function NosotrosPage() {
       </section>
 
       {/* CARRUSEL DIRECTIVOS */}
-      <section className={styles.sectionGray}>
+      {/* <section className={styles.sectionGray}>
         <div className={styles.wrapNarrow}>
           <div className={styles.sectionHeader}>
             <span className={styles.sectionLabel}>Nuestro equipo</span>
@@ -110,10 +112,10 @@ export default function NosotrosPage() {
         <div className={styles.wrap}>
           <DirectivosCarousel />
         </div>
-      </section>
+      </section> */}
 
  {/* CARRUSEL TRIBUNAL ÉTICA */}
-      <section className={styles.sectionGray}>
+      {/* <section className={styles.sectionGray}>
         <div className={styles.wrapNarrow}>
           <div className={styles.sectionHeader}>
             <h2 className={styles.h2Center}>Tribunal de Ética</h2>
@@ -122,9 +124,9 @@ export default function NosotrosPage() {
         <div className={styles.wrap}>
 <TribunalEticaCarousel/>
  </div>
-      </section>
+      </section> */}
 
-      {/* COMISIONES Y TRIBUNAL */}
+      {/* COMISIONES Y TRIBUNAL
       <section className={styles.sectionWhite}>
         <div className={styles.wrap}>
           <div className={styles.infoGrid}>
@@ -139,7 +141,7 @@ export default function NosotrosPage() {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
      
     </div>

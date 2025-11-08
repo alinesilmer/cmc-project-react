@@ -11,6 +11,9 @@ function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
 
+  const ETICA_PDF = "https://colegiomedicocorrientes.com/CMC092025.pdf";
+
+  
   const goMember = () => {
     setIsMember(true);
     setError("");
@@ -73,6 +76,15 @@ function Login() {
 
         <div className={styles.content}>
           <div className={styles.headerRow}>
+            <h3 className={styles.ethicsTitle}>
+          <a
+            href={ETICA_PDF}
+            download="Valores_Eticos_Minimos.pdf"
+            className={styles.ethicsLink}
+          >
+            Ver Valores Éticos Mínimos
+          </a>
+        </h3>
             <div className={styles.title}>
               <h1 className={styles.heading}>
                 {isMember ? "¡Bienvenido!" : "Inicio de Sesión"}

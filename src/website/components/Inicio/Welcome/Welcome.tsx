@@ -2,10 +2,12 @@
 
 import { Link } from "react-router-dom"
 import { motion } from "framer-motion"
-import { FaUserPlus, FaFileInvoiceDollar, FaCheckCircle, FaNewspaper, FaEnvelope } from "react-icons/fa"
+import { FaUserPlus, FaFileInvoiceDollar, FaCheckCircle, FaNewspaper, FaYoutube } from "react-icons/fa"
 import styles from "./Welcome.module.scss"
 import Button from "../../../components/UI/Button/Button"
 import CategoryCard from "../../../components/UI/CategoryCard/CategoryCard"
+
+const ETICA_PDF = "https://colegiomedicocorrientes.com/CMC092025.pdf"
 
 export default function Welcome() {
   const containerVariants = {
@@ -50,6 +52,12 @@ export default function Welcome() {
                   Asociarme
                 </Button>
               </Link>
+
+              <a href={ETICA_PDF} download="Valores_Eticos_Minimos.pdf">
+                <Button variant="secondary" size="large">
+                  Ver Valores Éticos Mínimos
+                </Button>
+              </a>
             </motion.div>
           </div>
 
@@ -122,11 +130,11 @@ export default function Welcome() {
           </motion.div>
           <motion.div>
             <CategoryCard
-              title="Contacto"
-              description="Horarios, teléfonos y canales de atención para ayudarte."
+              title="Tutoriales para Validar"
+              description="Tutoriales para utilizar el sistema, facturación y validación."
               color="mint"
               href="/contacto"
-              icon={<FaEnvelope />}
+              icon={<FaYoutube />}
             />
           </motion.div>
         </motion.div>

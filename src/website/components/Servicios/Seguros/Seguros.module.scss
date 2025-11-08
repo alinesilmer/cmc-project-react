@@ -1,0 +1,130 @@
+@import "../../../styles/variables.scss";
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  padding: clamp($spacing-lg, 5vw, $spacing-2xl) clamp($spacing-md, 5vw, $spacing-2xl);
+  background: white;
+  font-family: $font-normal;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  gap: clamp($spacing-lg, 4vw, $spacing-2xl);
+  align-items: center;
+  justify-content: center;
+  border-radius: $border-radius-md;
+  overflow: hidden;
+  background: $primary-blue;
+  color: $white;
+  padding: clamp($spacing-xl, 5vw, $spacing-2xl);
+  box-shadow: 0 30px 70px rgba($primary-blue, 0.35);
+  isolation: isolate;
+}
+
+.left {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  flex: 1.2;
+  z-index: 1;
+}
+
+.badge {
+  align-self: flex-start;
+  background: rgba($primary-yellow, 0.95);
+  color: $dark-gray;
+  font-weight: 800;
+  font-size: 0.85rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  box-shadow: 0 6px 18px rgba($primary-yellow, 0.35);
+}
+
+.titulo {
+  font-family: $font-playfair;
+  font-size: $font-size-h3;
+  letter-spacing: -0.3px;
+  color: $white;
+  margin: 0;
+  text-shadow: 0 2px 20px rgba($black, 0.15);
+}
+
+.descripcion {
+  font-size: $font-size-base;
+  line-height: 1.7;
+  color: rgba($white, 0.95);
+  max-width: 58ch;
+}
+
+.ctaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+  margin-top: $spacing-sm;
+}
+
+.icono {
+  font-size: 1.1rem;
+}
+
+.right {
+  position: relative;
+  flex: 0.8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $border-radius-lg;
+  overflow: hidden;
+}
+
+.kpi {
+  display: grid;
+  place-items: center;
+  background: white;
+  gap: $spacing-xs;
+  padding: $spacing-lg $spacing-xl;
+  border: 1px solid rgba($white, 0.25);
+  border-radius: $border-radius-lg;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 20px 50px rgba($black, 0.25);
+}
+
+.kpiBig {
+  font-family: $font-playfair;
+  font-size: clamp(1.6rem, 1.1rem + 2.2vw, 2.6rem);
+  letter-spacing: 2px;
+  color: $white;
+}
+
+.kpiSub {
+  font-size: 0.9rem;
+  color: rgba($white, 0.85);
+}
+
+.decor {
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(40% 40% at 15% 20%, rgba($primary-yellow, 0.18) 0%, transparent 70%),
+    radial-gradient(45% 45% at 85% 70%, rgba($accent-blue, 0.22) 0%, transparent 70%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@media (max-width: $breakpoint-desktop) {
+  .card { padding: $spacing-xl; }
+}
+
+@media (max-width: $breakpoint-tablet) {
+  .card { flex-direction: column; }
+  .right { min-height: 220px; }
+  .ctaRow a { width: 100%; }
+}
+
+@media (max-width: $breakpoint-mobile) {
+  .wrapper { padding: $spacing-lg $spacing-md; }
+  .kpi { padding: $spacing-md $spacing-lg; }
+}

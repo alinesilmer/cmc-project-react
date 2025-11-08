@@ -73,6 +73,16 @@
   color: rgba(255,255,255,.92);
 }
 
+.ethicsLink{
+display: flex;
+justify-content: flex-end;
+text-decoration: none;
+color: white;
+font-size: $font-size-large;
+text-shadow: 8px 8px 30px rgba(0,0,0,.25);
+font-family: $font-playfair;
+}
+
 .ctaRow { display: flex; align-items: center; gap: .8rem; }
 
 .cta {

@@ -7,3 +7,26 @@
   background: $white;
   min-height: 100vh;
 }
+
+
+.cta{
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 3rem;
+justify-content: center;
+margin: 2rem 0;
+}
+
+.subtitle{
+font-family: $font-playfair;
+color: $primary-blue;
+font-size: $font-size-h4;
+text-align: center;
+}
+
+.otherOption{
+    font-family: $font-normal;
+    color: gray;
+    font-size: $font-size-base;
+}

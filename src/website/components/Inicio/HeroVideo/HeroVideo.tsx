@@ -1,20 +1,18 @@
 import type { FC } from "react";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FiAward, FiUsers, FiHeart } from "react-icons/fi";
+import { FiAward, FiUsers } from "react-icons/fi";
 import Pill from "../../../components/UI/Pill/Pill";
 import Button from "../../../components/UI/Button/Button";
 import styles from "./HeroVideo.module.scss";
 
 const IMAGES = [
   "https://i.pinimg.com/736x/fd/d3/d8/fdd3d83d55b928e22d751fbc1edcc012.jpg",
-  "https://i.pinimg.com/1200x/12/65/5a/12655a0a44d613abc434ea1cc548a5f5.jpg",
+  "https://res.cloudinary.com/dcfkgepmp/image/upload/v1762471702/quintacmc3_s6sffw.jpg",
   "https://i.pinimg.com/736x/01/bf/d8/01bfd827a566e504c3b5a1202f30be4f.jpg",
 ];
 
 export const HeroVideo: FC = () => {
-  const navigate = useNavigate();
   const [idx, setIdx] = useState(0);
 
   useEffect(() => {
@@ -41,6 +39,8 @@ export const HeroVideo: FC = () => {
       <div className={styles.overlay} />
 
       <div className={styles.content}>
+      
+
         <motion.div
           className={styles.pills}
           initial={{ opacity: 0, y: 10 }}
@@ -48,8 +48,7 @@ export const HeroVideo: FC = () => {
           transition={{ duration: 0.6, delay: 0.15 }}
         >
           <Pill icon={<FiAward />} text="70+ años de servicio" />
-          <Pill icon={<FiUsers />} text="400+ obras sociales" />
-          <Pill icon={<FiHeart />} text="4000+ vidas impactadas" />
+          <Pill icon={<FiUsers />} text="70+ obras sociales" />
         </motion.div>
 
         <motion.h1
@@ -67,12 +66,12 @@ export const HeroVideo: FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.45 }}
         >
-        
           <a href="https://colegiomedicocorrientes.com/">
-          <Button variant="primary" size="xlg">
-            Entrar a Validar
-          </Button>
+            <Button variant="primary" size="xlg">
+              Entrar a Validar
+            </Button>
           </a>
+        
         </motion.div>
       </div>
     </section>

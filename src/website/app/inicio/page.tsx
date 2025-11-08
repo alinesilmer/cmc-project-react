@@ -19,9 +19,9 @@ export default function Home() {
          {/* CARRUSEL MÉDICOS PROMO */}
       <section className={styles.sectionPromo}>
         <div className={styles.wrapNarrow}>
-          <div className={styles.sectionHeader}>
-            <h2 className={styles.h2Center}>Médicos asociados</h2>
-          </div>
+          {/* <div className={styles.sectionHeader}>
+            {/* <h2 className={styles.h2Center}>Médicos asociados</h2> */}
+          {/* </div> */}
          
         </div>
         <div className={styles.wrap}>

@@ -3,7 +3,6 @@
 import type React from "react"
 
 import { motion } from "framer-motion"
-import { FiArrowRight } from "react-icons/fi"
 import styles from "./ServiceCard.module.scss"
 
 interface ServiceCardProps {
@@ -30,9 +29,6 @@ export default function ServiceCard({ title, description, color, icon, delay = 0
         {icon && <div className={styles.illustration}>{icon}</div>}
       </div>
 
-      <motion.button className={styles.button} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-        <FiArrowRight />
-      </motion.button>
     </motion.div>
   )
 }
