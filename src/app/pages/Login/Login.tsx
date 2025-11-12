@@ -75,7 +75,9 @@ function Login() {
       }
 
       if (isDoctor(me.scopes)) {
-        const next = `/menu.php?nro_socio1=${encodeURIComponent(me.nro_socio)}`;
+        const next = `/menu.php?nro_socio1=${encodeURIComponent(
+          Number(me.nro_socio)
+        )}`;
         const { data } = await http.get("/auth/legacy/sso-link", {
           params: { next },
         });

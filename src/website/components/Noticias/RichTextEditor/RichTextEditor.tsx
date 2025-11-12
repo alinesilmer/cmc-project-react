@@ -1,61 +1,77 @@
-"use client"
+"use client";
 
-import { useEffect, useRef } from "react"
-import styles from "./RichTextEditor.module.scss"
+import { useEffect, useRef } from "react";
+import styles from "./RichTextEditor.module.scss";
+// ✅ usamos el CSS de Quill, no el de react-quill
+import "quill/dist/quill.snow.css";
 
 interface RichTextEditorProps {
-  value: string
-  onChange: (value: string) => void
-  placeholder?: string
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
 }
 
-export default function RichTextEditor({ value, onChange, placeholder }: RichTextEditorProps) {
-  const quillRef = useRef<any>(null)
-  const editorRef = useRef<HTMLDivElement>(null)
+export default function RichTextEditor({
+  value,
+  onChange,
+  placeholder,
+}: RichTextEditorProps) {
+  const quillRef = useRef<any>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && editorRef.current && !quillRef.current) {
-      import("react-quill").then((module) => {
-        const ReactQuill = module.default
-        import("react-quill/dist/quill.snow.css")
+    let disposed = false;
 
-        const Quill = require("quill")
+    (async () => {
+      if (
+        typeof window === "undefined" ||
+        !editorRef.current ||
+        quillRef.current
+      )
+        return;
 
-        const toolbarOptions = [
-          [{ header: [1, 2, 3, false] }],
-          ["bold", "italic", "underline", "strike"],
-          [{ list: "ordered" }, { list: "bullet" }],
-          [{ color: [] }, { background: [] }],
-          ["link", "image"],
-          ["clean"],
-        ]
+      // ✅ import dinámico ESM; evitá `require(...)` en Vite
+      const { default: Quill } = await import("quill");
 
-        quillRef.current = new Quill(editorRef.current, {
-          theme: "snow",
-          modules: {
-            toolbar: toolbarOptions,
-          },
-          placeholder: placeholder || "Escribí el contenido de la noticia...",
-        })
+      const toolbarOptions = [
+        [{ header: [1, 2, 3, false] }],
+        ["bold", "italic", "underline", "strike"],
+        [{ list: "ordered" }, { list: "bullet" }],
+        [{ color: [] }, { background: [] }],
+        ["link", "image"],
+        ["clean"],
+      ];
 
-        quillRef.current.root.innerHTML = value
+      if (disposed) return;
 
-        quillRef.current.on("text-change", () => {
-          onChange(quillRef.current.root.innerHTML)
-        })
-      })
-    }
-  }, [])
+      quillRef.current = new Quill(editorRef.current, {
+        theme: "snow",
+        modules: { toolbar: toolbarOptions },
+        placeholder: placeholder || "Escribí el contenido de la noticia...",
+      });
+
+      quillRef.current.root.innerHTML = value || "";
+
+      quillRef.current.on("text-change", () => {
+        onChange(quillRef.current.root.innerHTML);
+      });
+    })();
+
+    return () => {
+      disposed = true;
+      quillRef.current = null;
+    };
+  }, [placeholder, onChange]);
 
   useEffect(() => {
     if (quillRef.current && quillRef.current.root.innerHTML !== value) {
-      quillRef.current.root.innerHTML = value
+      quillRef.current.root.innerHTML = value || "";
     }
-  }, [value])
+  }, [value]);
 
   return (
     <div className={styles.editorWrapper}>
       <div ref={editorRef} className={styles.editor} />
     </div>
-  )
+  );
 }

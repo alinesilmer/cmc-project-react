@@ -16,8 +16,8 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "next/image": path.resolve(__dirname, "src/website/shims/next-image.tsx"),
     },
   },
+  optimizeDeps: { include: ["react-quill"] },
 });
-
-// curl.exe -i -c jar.txt -H "Content-Type: application/json" `--data '{ "nro_socio": 81520, "password": "81520" }' `http://127.0.0.1:8000/auth/login

@@ -5,7 +5,12 @@
     { "path": "./tsconfig.node.json" }
   ],
   "compilerOptions": {
-    "strict": true,
-    "skipLibCheck": true
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "next/image": ["src/website/shims/next-image.tsx"] // <- shim
+    }
   }
 }

@@ -1,17 +1,15 @@
-
-
-import type { RegisterFormData } from "../app/types/register";
+import type { RegisterFormData } from "../types/register";
 
 export type Step = 1 | 2 | 3 | 4;
 
 type ErrorMap = Partial<Record<keyof RegisterFormData, string>>;
 
 const LIMITS = {
-    dni: 8,
-    maxAgeYears: 100,
-    minAgeYears: 20,
-    cuit: 11,
-    cbu: 22, 
+  dni: 8,
+  maxAgeYears: 100,
+  minAgeYears: 20,
+  cuit: 11,
+  cbu: 22,
 };
 
 const NUMERIC_ONLY_FIELDS: (keyof RegisterFormData)[] = [
@@ -30,9 +28,7 @@ const LETTERS_ONLY_FIELDS: (keyof RegisterFormData)[] = [
   "lastName",
 ];
 
-const ALPHANUM_SPACE_ONLY_FIELDS: (keyof RegisterFormData)[] = [
-  "address",
-];
+const ALPHANUM_SPACE_ONLY_FIELDS: (keyof RegisterFormData)[] = ["address"];
 
 // ──────────────────────────────────────────────
 // Sanitizers
@@ -54,15 +50,19 @@ export function sanitizeField(
   rawValue: string | boolean
 ): string {
   const value = String(rawValue ?? "");
-  if ((NUMERIC_ONLY_FIELDS as string[]).includes(name as string)) return stripNonDigits(value);
-  if ((LETTERS_ONLY_FIELDS as string[]).includes(name as string)) return stripNonLettersAndSpaces(value);
-  if ((ALPHANUM_SPACE_ONLY_FIELDS as string[]).includes(name as string)) return stripNonAlnumSpaces(value);
+  if ((NUMERIC_ONLY_FIELDS as string[]).includes(name as string))
+    return stripNonDigits(value);
+  if ((LETTERS_ONLY_FIELDS as string[]).includes(name as string))
+    return stripNonLettersAndSpaces(value);
+  if ((ALPHANUM_SPACE_ONLY_FIELDS as string[]).includes(name as string))
+    return stripNonAlnumSpaces(value);
   if (name === "email") return value.trim();
   return value;
 }
 
-
-export function getInputProps(name: keyof RegisterFormData | string): Record<string, unknown> {
+export function getInputProps(
+  name: keyof RegisterFormData | string
+): Record<string, unknown> {
   if ((NUMERIC_ONLY_FIELDS as string[]).includes(name as string)) {
     const props: Record<string, unknown> = {
       inputMode: "numeric",
@@ -114,25 +114,30 @@ export function validateBirthDate(dateStr: string, now = new Date()): string {
 
   if (dob > today) return "La fecha no puede ser futura";
   if (dob > youngestAllowedDOB) return `Edad no válida`;
-  if (dob < oldestAllowedDOB) return `Edad no válida (> ${LIMITS.maxAgeYears} años)`;
+  if (dob < oldestAllowedDOB)
+    return `Edad no válida (> ${LIMITS.maxAgeYears} años)`;
 
   return "";
 }
 
-
-export function validateField(name: keyof RegisterFormData | string, rawValue: string): string {
+export function validateField(
+  name: keyof RegisterFormData | string,
+  rawValue: string
+): string {
   const value = String(rawValue ?? "").trim();
 
   switch (name) {
     case "documentNumber":
       if (!value) return "Ingrese número de documento";
       if (!/^\d+$/.test(value)) return "Solo números";
-      if (value.length !== LIMITS.dni) return `Debe tener ${LIMITS.dni} dígitos`;
+      if (value.length !== LIMITS.dni)
+        return `Debe tener ${LIMITS.dni} dígitos`;
       return "";
 
     case "firstName":
     case "lastName":
-      if (!value) return name === "firstName" ? "Ingrese nombre" : "Ingrese apellido";
+      if (!value)
+        return name === "firstName" ? "Ingrese nombre" : "Ingrese apellido";
       if (!/^[\p{L}\s]+$/u.test(value)) return "Solo letras y espacios";
       return "";
 
@@ -149,7 +154,8 @@ export function validateField(name: keyof RegisterFormData | string, rawValue: s
 
     case "address":
       if (!value) return ""; // optional
-      if (!/^[\p{L}\d\s]+$/u.test(value)) return "Solo letras y números (sin símbolos)";
+      if (!/^[\p{L}\d\s]+$/u.test(value))
+        return "Solo letras y números (sin símbolos)";
       return "";
 
     case "phone":

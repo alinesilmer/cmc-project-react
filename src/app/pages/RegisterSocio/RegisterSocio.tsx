@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import styles from "./Register.module.scss";
 import LayoutRegister from "../Register/Layout/Layout";
 import Steps from "../Register/Steps/Steps";
-import type { RegisterFormData } from "../../types/register";
+import type { RegisterFormData, SpecialtyItem } from "../../types/register";
 import arPlaces from "../../utils/ar-provinces-localities.json";
 import {
   sanitizeField,
@@ -15,6 +15,7 @@ import {
   getInputProps,
 } from "../../utils/validations";
 import Lottie from "lottie-react";
+type SpecialtyOption = { id: number; id_colegio_espe: number; nombre: string };
 
 const stepsMeta = [
   { id: 1, title: "Datos Personales", icon: "👤" },
@@ -24,12 +25,12 @@ const stepsMeta = [
 ];
 
 const initialForm: RegisterFormData = {
-  // documentType: "",  
+  // documentType: "",
   documentNumber: "", // ✓
   firstName: "", // ✓
   lastName: "", // ✓
   gender: "", // ✓
-  birthDate: "", 
+  birthDate: "",
   province: "", // ✓
   locality: "", // ✓
   postalCode: "", // ✓
@@ -37,15 +38,15 @@ const initialForm: RegisterFormData = {
   phone: "", // ✓
   mobile: "", // ✓
   email: "", // ✓
-  title: "",// ✓
+  title: "", // ✓
   nationalLicense: "", // ✓
-  nationalLicenseDate: "",// ✓
+  nationalLicenseDate: "", // ✓
   provincialLicense: "", // ✓
   provincialLicenseDate: "", // ✓
   graduationDate: "", // ✓
   specialty: "", // ✓
   resolutionNumber: "", // ✓
-  resolutionDate: "", // ✓ 
+  resolutionDate: "", // ✓
   officeAddress: "", // ✓
   officePhone: "", // ✓
   cuit: "", // ✓
@@ -53,11 +54,11 @@ const initialForm: RegisterFormData = {
   anssalExpiry: "", // ✓
   malpracticeCompany: "", // ✓
   malpracticeExpiry: "", // ✓
-  taxCondition: "", 
+  taxCondition: "",
   cbu: "", // ✓
   malpracticeCoverage: "", // ✓
   coverageExpiry: "", // ✓
-  observations: "", 
+  observations: "",
 };
 
 const Register: React.FC = () => {
@@ -71,7 +72,9 @@ const Register: React.FC = () => {
 
   const [provinces, setProvinces] = useState<string[]>([]);
   const [localities, setLocalities] = useState<string[]>([]);
-  const [specialties, setSpecialties] = useState<string[]>([]);
+  // const [specialties, setSpecialties] = useState<string[]>([]);
+  const [specialties, setSpecialties] = useState<SpecialtyOption[]>([]);
+  const [specItems, setSpecItems] = useState<SpecialtyItem[]>([]);
   const localitiesCache = useRef<Map<string, string[]>>(new Map());
 
   const [files, setFiles] = useState<Record<string, File | null>>({});
@@ -98,7 +101,8 @@ const Register: React.FC = () => {
         a.localeCompare(b, "es", { sensitivity: "base" })
       )
     );
-    setSpecialties([
+
+    const base = [
       "No tiene especialidad",
       "Cardiología",
       "Dermatología",
@@ -111,7 +115,16 @@ const Register: React.FC = () => {
       "Psiquiatría",
       "Traumatología",
       "Urología",
-    ]);
+    ];
+
+    // ✅ convertir string[] -> SpecialtyOption[]
+    setSpecialties(
+      base.map((nombre, idx) => ({
+        id: idx + 1,
+        id_colegio_espe: 0, // si luego traés el real desde API, lo reemplazás
+        nombre,
+      }))
+    );
   }, []);
 
   useEffect(() => {
@@ -154,7 +167,6 @@ const Register: React.FC = () => {
   const prevStep = () =>
     setCurrentStep((p) => (p > 1 ? ((p - 1) as 1 | 2 | 3 | 4) : p));
 
-  
   const submitAll = async () => {
     const allErrors = {
       ...validateStepUtil(1, formData),
@@ -171,19 +183,22 @@ const Register: React.FC = () => {
       // ✅ ahora registerMedico mapea internamente a RegisterPayload
       const payload = buildRegisterPayload(formData);
       // 2) alta admin
-      const { medico_id } = await registerMedicoAdmin(payload);  
+      const { medico_id } = await registerMedicoAdmin(payload);
       // 3) adjuntos
       const entries = Object.entries(files || {});
       for (const [key, file] of entries) {
-      if (!(file instanceof File)) continue;
-      const label = DOC_LABEL_MAP[key as keyof typeof DOC_LABEL_MAP];
-      if (!label) continue;
-      await uploadMedicoDocumentoAdmin(medico_id, file, label);
+        if (!(file instanceof File)) continue;
+        const label = DOC_LABEL_MAP[key as keyof typeof DOC_LABEL_MAP];
+        if (!label) continue;
+        await uploadMedicoDocumentoAdmin(medico_id, file, label);
       }
 
       navigate("/registro/enviado");
     } catch (e: any) {
-      const msg = e?.response?.data?.detail ?? e?.message ?? "No se pudo enviar la solicitud";
+      const msg =
+        e?.response?.data?.detail ??
+        e?.message ??
+        "No se pudo enviar la solicitud";
       alert(typeof msg === "string" ? msg : JSON.stringify(msg));
       console.error("register error:", e);
     }
@@ -206,7 +221,10 @@ const Register: React.FC = () => {
         // }
       >
         <div className={styles.actionBar}>
-          <button className={styles.backBtn} onClick={() => navigate("/users-manager")}>
+          <button
+            className={styles.backBtn}
+            onClick={() => navigate("/users-manager")}
+          >
             Cancelar
           </button>
         </div>
@@ -218,6 +236,8 @@ const Register: React.FC = () => {
           provinces={provinces}
           localities={localities}
           specialties={specialties}
+          specItems={specItems}
+          setSpecItems={setSpecItems}
           onChange={onChange}
           getInputProps={getInputProps}
           files={files}
