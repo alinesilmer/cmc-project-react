@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import styles from "./Register.module.scss";
 import LayoutRegister from "./Layout/Layout";
 import Steps from "./Steps/Steps";
-import type { RegisterFormData } from "../../types/register";
+import type { RegisterFormData, SpecialtyItem } from "../../types/register";
 import arPlaces from "../../utils/ar-provinces-localities.json";
 import {
   sanitizeField,
@@ -14,6 +14,7 @@ import {
   getInputProps,
 } from "../../utils/validations";
 import Lottie from "lottie-react";
+import { getJSON } from "../../lib/http";
 
 const stepsMeta = [
   { id: 1, title: "Datos Personales", icon: "👤" },
@@ -36,12 +37,12 @@ const stepsMeta = [
 // };
 
 const initialForm: RegisterFormData = {
-  // documentType: "",  
+  // documentType: "",
   documentNumber: "", // ✓
   firstName: "", // ✓
   lastName: "", // ✓
   gender: "", // ✓
-  birthDate: "", 
+  birthDate: "",
   province: "", // ✓
   locality: "", // ✓
   postalCode: "", // ✓
@@ -49,15 +50,15 @@ const initialForm: RegisterFormData = {
   phone: "", // ✓
   mobile: "", // ✓
   email: "", // ✓
-  title: "",// ✓
+  title: "", // ✓
   nationalLicense: "", // ✓
-  nationalLicenseDate: "",// ✓
+  nationalLicenseDate: "", // ✓
   provincialLicense: "", // ✓
   provincialLicenseDate: "", // ✓
   graduationDate: "", // ✓
   specialty: "", // ✓
   resolutionNumber: "", // ✓
-  resolutionDate: "", // ✓ 
+  resolutionDate: "", // ✓
   officeAddress: "", // ✓
   officePhone: "", // ✓
   cuit: "", // ✓
@@ -65,17 +66,37 @@ const initialForm: RegisterFormData = {
   anssalExpiry: "", // ✓
   malpracticeCompany: "", // ✓
   malpracticeExpiry: "", // ✓
-  taxCondition: "", 
+  taxCondition: "",
   cbu: "", // ✓
   malpracticeCoverage: "", // ✓
   coverageExpiry: "", // ✓
-  observations: "", 
+  observations: "",
 };
+type EspecialidadDTO = { id: number; id_colegio_espe: number; nombre: string };
+
+type UISpecialty = { id: number; id_colegio_espe: number; nombre: string };
+
+// normalizador robusto (acepta strings u objetos variados)
+const normalizeSpecialties = (data: any[]): UISpecialty[] =>
+  (Array.isArray(data) ? data : []).map((it, idx) => {
+    if (typeof it === "string") {
+      // si tu backend devuelve sólo nombres, usamos índices como IDs (ajusta si tenés mapeo real)
+      const n = idx + 1;
+      return { id: n, id_colegio_espe: n, nombre: it };
+    }
+    return {
+      id: Number(it.id ?? it.ID ?? idx + 1),
+      id_colegio_espe: Number(
+        it.id_colegio_espe ?? it.ID_COLEGIO_ESPE ?? it.id ?? idx + 1
+      ),
+      nombre: String(it.nombre ?? it.NOMBRE ?? it.name ?? ""),
+    };
+  });
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
 
-  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [formData, setFormData] = useState<RegisterFormData>(initialForm);
   const [errors, setErrors] = useState<
     Partial<Record<keyof RegisterFormData, string>>
@@ -83,10 +104,12 @@ const Register: React.FC = () => {
 
   const [provinces, setProvinces] = useState<string[]>([]);
   const [localities, setLocalities] = useState<string[]>([]);
-  const [specialties, setSpecialties] = useState<string[]>([]);
+  const [specialties, setSpecialties] = useState<EspecialidadDTO[]>([]);
   const localitiesCache = useRef<Map<string, string[]>>(new Map());
 
   const [files, setFiles] = useState<Record<string, File | null>>({});
+  const [specItems, setSpecItems] = useState<SpecialtyItem[]>([]);
+
   const [fileErrs, setFileErrs] = useState<Record<string, string>>({});
 
   const [askAdherente, setAskAdherente] = useState(true);
@@ -105,25 +128,14 @@ const Register: React.FC = () => {
   }, [askAdherente]);
 
   useEffect(() => {
-    setProvinces(
-      Object.keys(arPlaces as Record<string, string[]>).sort((a, b) =>
-        a.localeCompare(b, "es", { sensitivity: "base" })
-      )
-    );
-    setSpecialties([
-      "No tiene especialidad",
-      "Cardiología",
-      "Dermatología",
-      "Endocrinología",
-      "Gastroenterología",
-      "Ginecología",
-      "Neurología",
-      "Oftalmología",
-      "Pediatría",
-      "Psiquiatría",
-      "Traumatología",
-      "Urología",
-    ]);
+    (async () => {
+      try {
+        const data = await getJSON<UISpecialty[]>("/api/especialidades/");
+        setSpecialties(data);
+      } catch (e) {
+        setSpecialties([]);
+      }
+    })();
   }, []);
 
   useEffect(() => {
@@ -159,14 +171,13 @@ const Register: React.FC = () => {
   };
 
   const nextStep = () => {
-    if (validateStep(currentStep))
-      setCurrentStep((p) => (p < 4 ? ((p + 1) as 1 | 2 | 3 | 4) : p));
+    if (validateStep(step))
+      setStep((p) => (p < 4 ? ((p + 1) as 1 | 2 | 3 | 4) : p));
   };
 
   const prevStep = () =>
-    setCurrentStep((p) => (p > 1 ? ((p - 1) as 1 | 2 | 3 | 4) : p));
+    setStep((p) => (p > 1 ? ((p - 1) as 1 | 2 | 3 | 4) : p));
 
-  
   const submitAll = async () => {
     const allErrors = {
       ...validateStepUtil(1, formData),
@@ -175,25 +186,61 @@ const Register: React.FC = () => {
     };
     if (Object.keys(allErrors).length) {
       setErrors(allErrors);
-      setCurrentStep(1);
+      setStep(1);
       return;
     }
 
     try {
-      // ✅ ahora registerMedico mapea internamente a RegisterPayload
-      const res = await registerMedico(formData);
+      // Mapa rapido id_tabla => id_colegio_espe desde el dropdown
+      const colegioById: Record<number, number> = Object.fromEntries(
+        (specialties || []).map((s) => [
+          Number(s.id),
+          Number(s.id_colegio_espe),
+        ])
+      );
+
+      // 1) Principal (si existe)
+      const mainId = Number(formData.specialty || 0);
+      const mainItem = mainId
+        ? {
+            id_colegio_espe: colegioById[mainId] || 0,
+            n_resolucion: formData.resolutionNumber || undefined,
+            fecha_resolucion: formData.resolutionDate || undefined,
+            adjunto: undefined,
+          }
+        : undefined;
+
+      // 2) Extras (ya vienen con id_colegio_espe en specItems)
+      const extras = (specItems || []).map((it, idx) => ({
+        id_colegio_espe: Number(it.id_colegio_espe),
+        n_resolucion: it.resolutionNumber || undefined,
+        fecha_resolucion: it.resolutionDate || undefined,
+        adjunto: undefined,
+      }));
+
+      const specialtiesPayload = [
+        ...(mainItem ? [mainItem] : []),
+        ...extras,
+      ].slice(0, 6);
+
+      // Enviar specialties junto con el form
+      const res = await registerMedico(formData, specialtiesPayload);
       const medicoId = res.medico_id;
 
-      // 📎 subidas
+      // Subir adjuntos
       for (const [key, file] of Object.entries(files || {})) {
         if (!(file instanceof File)) continue;
-        const label = DOC_LABEL_MAP[key]; // puede quedar undefined (se guarda igual en tabla documentos)
+        // Usa mapping si existe, o manda el key tal cual (p.ej. "resolucion_1")
+        const label = DOC_LABEL_MAP[key] ?? key;
         await uploadMedicoDocumento(medicoId, file, label);
       }
 
       navigate("/registro/enviado");
     } catch (e: any) {
-      const msg = e?.response?.data?.detail ?? e?.message ?? "No se pudo enviar la solicitud";
+      const msg =
+        e?.response?.data?.detail ??
+        e?.message ??
+        "No se pudo enviar la solicitud";
       alert(typeof msg === "string" ? msg : JSON.stringify(msg));
       console.error("register error:", e);
     }
@@ -203,9 +250,9 @@ const Register: React.FC = () => {
     <>
       <LayoutRegister
         steps={stepsMeta}
-        currentStep={currentStep}
+        currentStep={step}
         onBack={prevStep}
-        showBack={currentStep > 1}
+        showBack={step > 1}
         headerCta={
           <button
             className={styles.adherenteLink}
@@ -222,7 +269,7 @@ const Register: React.FC = () => {
         </div>
 
         <Steps
-          step={currentStep}
+          step={step}
           formData={formData}
           errors={errors}
           provinces={provinces}
@@ -234,17 +281,19 @@ const Register: React.FC = () => {
           setFiles={setFiles}
           fileErrs={fileErrs}
           setFileErrs={setFileErrs}
+          specItems={specItems}
+          setSpecItems={setSpecItems}
         />
 
         <div className={styles.nav}>
-          {currentStep > 1 ? (
+          {step > 1 ? (
             <button className={styles.prev} onClick={prevStep}>
               ← Atrás
             </button>
           ) : (
             <span />
           )}
-          {currentStep < 4 ? (
+          {step < 4 ? (
             <button className={styles.next} onClick={nextStep}>
               Siguiente →
             </button>

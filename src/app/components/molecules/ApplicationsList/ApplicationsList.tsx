@@ -5,10 +5,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Application, ApplicationStatus } from "../../../types/types";
 import styles from "./ApplicationsList.module.scss";
-import { getJSON } from "../../../../shared/lib/http";
+import { getJSON } from "../../../lib/http";
 import SearchBar from "../SearchBar/SearchBar";
 import BackButton from "../../atoms/BackButton/BackButton";
-
 
 export type ApplicationFromApi = {
   id: number;
@@ -35,7 +34,9 @@ async function listSolicitudes(params?: {
 const ApplicationsList: React.FC = () => {
   const navigate = useNavigate();
 
-  const [activeFilter, setActiveFilter] = useState<ApplicationStatus | "todas">("todas");
+  const [activeFilter, setActiveFilter] = useState<ApplicationStatus | "todas">(
+    "todas"
+  );
   const [apps, setApps] = useState<Application[]>([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -68,12 +69,15 @@ const ApplicationsList: React.FC = () => {
         }));
         setApps(mapped);
       } catch (e: any) {
-        if (!ignore) setErr(e?.message || "No se pudieron cargar las solicitudes");
+        if (!ignore)
+          setErr(e?.message || "No se pudieron cargar las solicitudes");
       } finally {
         if (!ignore) setLoading(false);
       }
     })();
-    return () => { ignore = true; };
+    return () => {
+      ignore = true;
+    };
   }, [activeFilter, q]);
 
   const filtered = useMemo(() => apps, [apps]); // el back ya filtra por estado y q
@@ -98,9 +102,15 @@ const ApplicationsList: React.FC = () => {
     return colors[status];
   };
 
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("es-AR", { day: "numeric", month: "long" });
+  const formatDateYMD = (ymd: string): string => {
+    const [y, m, d] = ymd.split("-").map(Number);
+    // Creamos la fecha en horario local (mediodía para evitar DST edge cases)
+    const local = new Date(y, (m ?? 1) - 1, d ?? 1, 12, 0, 0, 0);
+    return local.toLocaleDateString("es-AR", {
+      day: "2-digit",
+      month: "long",
+      timeZone: "America/Argentina/Buenos_Aires",
+    });
   };
 
   return (
@@ -113,37 +123,59 @@ const ApplicationsList: React.FC = () => {
       <div className={styles.toolbar}>
         <div className={styles.filters}>
           <button
-            className={`${styles.filterButton} ${activeFilter === "todas" ? styles.active : ""}`}
+            className={`${styles.filterButton} ${
+              activeFilter === "todas" ? styles.active : ""
+            }`}
             onClick={() => setActiveFilter("todas")}
           >
             Todas
           </button>
           <button
-            className={`${styles.filterButton} ${activeFilter === "nueva" ? styles.active : ""}`}
+            className={`${styles.filterButton} ${
+              activeFilter === "nueva" ? styles.active : ""
+            }`}
             onClick={() => setActiveFilter("nueva")}
           >
-            <span className={styles.dot} style={{ backgroundColor: "#f59e0b" }} />
+            <span
+              className={styles.dot}
+              style={{ backgroundColor: "#f59e0b" }}
+            />
             Nuevas
           </button>
           <button
-            className={`${styles.filterButton} ${activeFilter === "pendiente" ? styles.active : ""}`}
+            className={`${styles.filterButton} ${
+              activeFilter === "pendiente" ? styles.active : ""
+            }`}
             onClick={() => setActiveFilter("pendiente")}
           >
-            <span className={styles.dot} style={{ backgroundColor: "#4f7cff" }} />
+            <span
+              className={styles.dot}
+              style={{ backgroundColor: "#4f7cff" }}
+            />
             Pendientes
           </button>
           <button
-            className={`${styles.filterButton} ${activeFilter === "aprobada" ? styles.active : ""}`}
+            className={`${styles.filterButton} ${
+              activeFilter === "aprobada" ? styles.active : ""
+            }`}
             onClick={() => setActiveFilter("aprobada")}
           >
-            <span className={styles.dot} style={{ backgroundColor: "#21b356" }} />
+            <span
+              className={styles.dot}
+              style={{ backgroundColor: "#21b356" }}
+            />
             Aprobadas
           </button>
           <button
-            className={`${styles.filterButton} ${activeFilter === "rechazada" ? styles.active : ""}`}
+            className={`${styles.filterButton} ${
+              activeFilter === "rechazada" ? styles.active : ""
+            }`}
             onClick={() => setActiveFilter("rechazada")}
           >
-            <span className={styles.dot} style={{ backgroundColor: "#ef4444" }} />
+            <span
+              className={styles.dot}
+              style={{ backgroundColor: "#ef4444" }}
+            />
             Rechazadas
           </button>
         </div>
@@ -166,7 +198,9 @@ const ApplicationsList: React.FC = () => {
             {filtered.map((application) => (
               <div
                 key={application.id}
-                className={`${styles.card} ${getCardColor(application.status)} fade-in`}
+                className={`${styles.card} ${getCardColor(
+                  application.status
+                )} fade-in`}
               >
                 <div className={styles.cardImage}>
                   <div className={styles.avatarPlaceholder}>
@@ -179,9 +213,13 @@ const ApplicationsList: React.FC = () => {
                   <p className={styles.cardDescription}>{application.email}</p>
 
                   <div className={styles.cardTags}>
-                    <span className={styles.tag}>{getStatusLabel(application.status)}</span>
+                    <span className={styles.tag}>
+                      {getStatusLabel(application.status)}
+                    </span>
                     {application.memberType && (
-                      <span className={styles.tag}>{application.memberType}</span>
+                      <span className={styles.tag}>
+                        {application.memberType}
+                      </span>
                     )}
                   </div>
 
@@ -189,7 +227,9 @@ const ApplicationsList: React.FC = () => {
                     <div className={styles.dateInfo}>
                       <span className={styles.dateLabel}>Enviada</span>
                       <span className={styles.dateValue}>
-                        {application.submittedDate ? formatDate(application.submittedDate) : "-"}
+                        {application.submittedDate
+                          ? formatDateYMD(application.submittedDate)
+                          : "-"}
                       </span>
                     </div>
                     <button
@@ -210,7 +250,8 @@ const ApplicationsList: React.FC = () => {
                 No hay solicitudes{" "}
                 {activeFilter !== "todas"
                   ? `en estado "${
-                      activeFilter.charAt(0).toUpperCase() + activeFilter.slice(1)
+                      activeFilter.charAt(0).toUpperCase() +
+                      activeFilter.slice(1)
                     }"`
                   : ""}
               </p>

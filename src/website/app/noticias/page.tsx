@@ -3,7 +3,10 @@ import { useNavigate } from "react-router-dom";
 import NoticiaCard from "../../components/Noticias/NoticiaCard/NoticiaCard";
 import PageHero from "../../components/UI/Hero/Hero";
 import hero from "../../assets/images/heroImg.png";
-import { api } from "../../lib/api";
+// import { api } from "../../lib/api";
+import { listNews } from "../../lib/news.client";
+// import { mediaUrl } from "../../lib/media";
+
 import type { Noticia } from "../../types";
 import styles from "./noticias.module.scss";
 
@@ -18,8 +21,15 @@ export default function NoticiasPage() {
 
   const cargarNoticias = async () => {
     try {
-      const data = await api.obtenerNoticias();
-      setNoticias(data);
+      const data = await listNews();
+      const normalized = data.map((n: any) => ({
+        ...n,
+        fechaCreacion: n.fecha_creacion ?? n.fechaCreacion ?? null,
+        fechaActualizacion:
+          n.fecha_actualizacion ?? n.fechaActualizacion ?? null,
+      }));
+      setNoticias(normalized);
+      console.log(noticias);
     } catch (error) {
       console.error("Error al cargar noticias:", error);
     } finally {

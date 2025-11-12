@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Lexend:wght@100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Lexend:wght@100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
 @import "@/app/styles/variables.scss";
 @import "@/app/styles/mixins.scss";
 
@@ -14,7 +14,7 @@
   background: $white;
   border-right: 1px solid $gray-200;
   padding: $spacing-2 $spacing-3;
-  transition: width .2s ease;
+  transition: width 0.2s ease;
 }
 
 .logoRow {
@@ -40,7 +40,6 @@
   object-fit: cover;
 }
 
-
 .toggle {
   width: 34px;
   height: 34px;
@@ -50,9 +49,12 @@
   background: none;
   border: none;
   color: $gray-700;
-  transition: background .2s ease-in-out, color .2s ease-in-out;
+  transition: background 0.2s ease-in-out, color 0.2s ease-in-out;
 }
-.toggle:hover { background: $gray-200; color: $gray-900; }
+.toggle:hover {
+  background: $gray-200;
+  color: $gray-900;
+}
 
 .nav {
   display: flex;
@@ -71,12 +73,23 @@
   color: $gray-600;
   text-decoration: none;
   border-radius: $border-radius-md;
-  transition: background-color .15s ease, color .15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
-.navItem:hover { background-color: $gray-100; color: $gray-900; }
-.navItem.active { background-color: $secondary-blue; color: $primary-blue; font-weight: $font-weight-bold; }
+.navItem:hover {
+  background-color: $gray-100;
+  color: $gray-900;
+}
+.navItem.active {
+  background-color: $secondary-blue;
+  color: $primary-blue;
+  font-weight: $font-weight-bold;
+}
 
-.itemLabel { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.itemLabel {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 .spacer {
   flex-grow: 1;
@@ -92,8 +105,14 @@
   color: $gray-500;
   border-bottom: 1px solid $gray-200;
 }
-.config a { color: $gray-600; text-decoration: none; transition: color .15s ease-in-out; }
-.config a:hover { color: $gray-900; }
+.config a {
+  color: $gray-600;
+  text-decoration: none;
+  transition: color 0.15s ease-in-out;
+}
+.config a:hover {
+  color: $gray-900;
+}
 
 .configItem {
   display: flex;
@@ -106,9 +125,12 @@
   font-weight: 500;
   color: $gray-600;
   text-decoration: none;
-  transition: background-color .15s ease-in-out, color .15s ease-in-out;
+  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
 }
-.configItem:hover { background-color: $gray-100; color: $gray-900; }
+.configItem:hover {
+  background-color: $gray-100;
+  color: $gray-900;
+}
 
 .footer {
   margin-top: auto;
@@ -122,26 +144,64 @@
   width: 80px;
   min-width: 80px;
 }
-.collapsed .navItem { justify-content: center; padding: $spacing-3 0; }
-.collapsed .navItem .itemLabel { display: none; }
-.collapsed .configItem { justify-content: center; }
-.collapsed .configItem .itemLabel { display: none; }
-.collapsed .footer .itemLabel { display: none; }
-.toggle { display: flex; justify-content: center; align-items: center;}
+.collapsed .navItem {
+  justify-content: center;
+  padding: $spacing-3 0;
+}
+.collapsed .navItem .itemLabel {
+  display: none;
+}
+.collapsed .configItem {
+  justify-content: center;
+}
+.collapsed .configItem .itemLabel {
+  display: none;
+}
+.collapsed .footer .itemLabel {
+  display: none;
+}
+.toggle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
 @media (max-width: 1200px) {
-  .sidebar { min-width: 200px; }
+  .sidebar {
+    min-width: 200px;
+  }
 }
 @media (max-width: 1024px) {
-  .sidebar { width: 220px; min-width: 220px; }
-  .collapsed { width: 72px; min-width: 72px; }
+  .sidebar {
+    width: 220px;
+    min-width: 220px;
+  }
+  .collapsed {
+    width: 72px;
+    min-width: 72px;
+  }
 }
 @media (max-width: 768px) {
-  .sidebar { position: fixed; left: 0; top: 0; z-index: 40; width: 78vw; max-width: 300px; border-right: 1px solid $gray-200; }
-  .collapsed { width: 76px; min-width: 76px; }
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 40;
+    width: 78vw;
+    max-width: 300px;
+    border-right: 1px solid $gray-200;
+  }
+  .collapsed {
+    width: 76px;
+    min-width: 76px;
+  }
 }
 @media (max-width: 480px) {
-  .sidebar { width: 82vw; }
-  .collapsed { width: 70px; min-width: 70px; }
+  .sidebar {
+    width: 82vw;
+  }
+  .collapsed {
+    width: 70px;
+    min-width: 70px;
+  }
 }
-

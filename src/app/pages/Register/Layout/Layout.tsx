@@ -56,18 +56,6 @@ const LayoutRegister: React.FC<Props> = ({
       </aside>
 
       <main className={styles.main}>
-        <header className={styles.headerBar}>
-          {/* {showBack ? (
-            <button type="button" className={styles.backBtn} onClick={onBack}>
-              ← Atrás
-            </button>
-          ) : (
-            <span />
-          )} */}
-          <div className={styles.headerSpacer} />
-          {headerCta}
-        </header>
-
         <section className={styles.body}>{children}</section>
       </main>
     </div>

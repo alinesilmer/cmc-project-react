@@ -46,6 +46,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  padding: 30px;
 }
 
 .headerBar {
@@ -71,7 +72,9 @@
 .headerSpacer { flex: 1; }
 
 .body {
-  padding: 0 1.25rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
 /* Responsive */

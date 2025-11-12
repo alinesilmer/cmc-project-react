@@ -11,9 +11,10 @@
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 280px;
+  // padding: 10px;
   gap: $spacing-md;
   align-items: stretch;
-  transition: transform .45s ease;
+  transition: transform 0.45s ease;
   will-change: transform;
 }
 
@@ -21,7 +22,7 @@
   background: $white;
   border: 1px solid $light-gray;
   border-radius: $border-radius-lg;
-  box-shadow: $shadow-md;
+  // box-shadow: $shadow-md;
   padding: $spacing-md;
   display: grid;
   gap: $spacing-sm;
@@ -34,11 +35,23 @@
   border-radius: $border-radius-md;
   overflow: hidden;
   background: lighten($light-gray, 12%);
-  img, video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  img,
+  video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
 }
 
-.name { font-weight: 700; color: $dark-gray; }
-.spec { color: $gray; font-size: $font-size-small; }
+.name {
+  font-weight: 700;
+  color: $dark-gray;
+}
+.spec {
+  color: $gray;
+  font-size: $font-size-small;
+}
 
 .nav {
   position: absolute;
@@ -51,38 +64,50 @@
   button {
     pointer-events: all;
     border: 0;
-    background: rgba(0,0,0,.5);
+    background: rgba(0, 0, 0, 0.5);
     color: $white;
-    width: 40px; height: 40px; border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
     margin: 0 $spacing-md;
     cursor: pointer;
   }
 }
 
 @media (max-width: $breakpoint-tablet) {
-  .track { grid-auto-columns: 82vw; }
+  .track {
+    grid-auto-columns: 82vw;
+  }
 }
 
 /* Modal */
 .modalBackdrop {
   position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.6);
-  display: grid;
-  place-items: center;
+  // inset: 0;
+  width: 100%;
+  bottom: 0;
+  left: 0;
+  background: rgba(0, 0, 0, 0.6);
+  height: calc(100vh - 100px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
   z-index: 60;
 }
 
 .modalDialog {
   position: relative;
   width: min(96vw, 800px);
-  max-height: 92vh;
+  height: calc(80vh - 100px);
   background: $white;
   border-radius: $border-radius-lg;
   box-shadow: $shadow-lg;
   padding: $spacing-md;
-  display: grid;
-  gap: $spacing-sm;
+  // display: grid;
+  // gap: $spacing-sm;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .modalClose {
@@ -93,19 +118,23 @@
   height: 40px;
   border: 0;
   border-radius: 50%;
-  background: rgba(0,0,0,.6);
+  background: rgba(0, 0, 0, 0.6);
   color: $white;
   cursor: pointer;
 }
 
 .modalMedia {
   width: 100%;
-  max-height: calc(92vh - 120px);
-  display: grid;
-  place-items: center;
-  img, video {
-    max-width: 100%;
-    max-height: 100%;
+  max-height: 90%;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  img,
+  video {
+    height: 100%;
+    width: 100%;
+    object-fit: contain;
     display: block;
     border-radius: $border-radius-md;
     background: #000;
@@ -115,5 +144,6 @@
 .modalCaption {
   text-align: center;
   color: $dark-gray;
+  flex: 0 0 auto;
   font-weight: 600;
 }

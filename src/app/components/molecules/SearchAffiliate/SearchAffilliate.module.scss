@@ -1,31 +1,29 @@
-@import "@/app/styles/variables.scss";
-@import "@/app/styles/mixins.scss";
 
 .container {
   max-width: 500px;
   margin: 4rem auto;
-  padding: $spacing-6;
+  padding: v.$spacing-6;
   background: #fff;
-  border: 1px solid $gray-200;
-  border-radius: $border-radius-lg;
+  border: 1px solid v.$gray-200;
+  border-radius: v.$border-radius-lg;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   text-align: center;
 }
 
 .title {
   font-size: 1.5rem;
-  font-weight: $font-weight-semibold;
-  margin-bottom: $spacing-5;
-  color: $gray-800;
+  font-weight: v.$font-weight-semibold;
+  margin-bottom: v.$spacing-5;
+  color: v.$gray-800;
 }
 
 .form {
   display: flex;
-  gap: $spacing-3;
+  gap: v.$spacing-3;
   justify-content: center;
   align-items: center;
 
-  @media (max-width: $breakpoint-sm) {
+  @media (max-width: v.$breakpoint-sm) {
     flex-direction: column;
     align-items: stretch;
   }
@@ -34,22 +32,22 @@
 .search {
   flex: 1;
   padding: 0.75rem 1rem;
-  border: 1px solid $gray-300;
-  border-radius: $border-radius-md;
+  border: 1px solid v.$gray-300;
+  border-radius: v.$border-radius-md;
   font-size: 1rem;
   outline: none;
   transition: border-color 0.2s ease;
 
   &:focus {
-    border-color: $primary-blue;
+    border-color: v.$primary-blue;
     box-shadow: 0 0 0 3px rgba(42, 126, 238, 0.15);
   }
 }
 
 .button {
   padding: 0.75rem 1.5rem;
-  font-weight: $font-weight-medium;
-  border-radius: $border-radius-md;
+  font-weight: v.$font-weight-medium;
+  border-radius: v.$border-radius-md;
   transition: transform 0.15s ease;
 
   &:hover {

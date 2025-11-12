@@ -2,7 +2,7 @@
 @import "@/app/styles/mixins.scss";
 
 .card {
- background: $white;
+  background: $white;
   border-radius: $border-radius-lg;
   box-shadow: $shadow-md;
   border: 1px solid $gray-200;
@@ -30,7 +30,7 @@
 }
 
 .btnGhost {
-    display: inline-flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: $border-radius-md;
@@ -50,7 +50,7 @@
 }
 
 .btnSuccess {
-   display: inline-flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: $border-radius-md;
@@ -70,7 +70,7 @@
 }
 
 .btnDanger {
-    display: inline-flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: $border-radius-md;
@@ -115,7 +115,7 @@
 }
 
 .btnPrimary {
-    display: inline-flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: $border-radius-md;

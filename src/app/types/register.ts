@@ -1,3 +1,11 @@
+export type SpecialtyItem = {
+  // guardamos el ID_COLEGIO_ESPE directo (recomendado)
+  id_colegio_espe: number;
+  resolutionNumber?: string;
+  resolutionDate?: string; // dd-MM-yyyy en UI (lo formateamos al mandar)
+  fileKey?: string;        // ej: "resolucion_1"
+};
+
 export interface RegisterFormData {
   // documentType: string;
   documentNumber: string;
@@ -38,4 +46,5 @@ export interface RegisterFormData {
   coverageExpiry: string;
 
   observations: string;
+  specialties?: SpecialtyItem[];
 }

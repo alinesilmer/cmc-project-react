@@ -1,27 +1,70 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import styles from "./Steps.module.scss";
 import HelpButton from "../../../components/atoms/HelpButton/HelpButton";
 import PdfUpload from "../../../components/atoms/PdfUpload/PdfUpload";
-import type { RegisterFormData } from "../../../types/register";
+import type { RegisterFormData, SpecialtyItem } from "../../../types/register";
 
-type Props = {
-  step: 1 | 2 | 3 | 4;
-  formData: RegisterFormData;
-  errors: Partial<Record<keyof RegisterFormData, string>>;
-  provinces: string[];
-  localities: string[];
-  specialties: string[];
-  onChange: (field: keyof RegisterFormData, value: string | boolean) => void;
-  getInputProps: (
-    k: keyof RegisterFormData
-  ) => React.InputHTMLAttributes<HTMLInputElement>;
-  files: Record<string, File | null>;
-  setFiles: React.Dispatch<React.SetStateAction<Record<string, File | null>>>;
-  fileErrs: Record<string, string>;
-  setFileErrs: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { es } from "date-fns/locale";
+import Button from "../../../components/atoms/Button/Button";
+
+// -------------------- utils fecha (dd-MM-yyyy ↔ Date) --------------------
+const dateToStr = (d: Date | null) => {
+  if (!d) return "";
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yy = d.getFullYear();
+  return `${dd}-${mm}-${yy}`;
+};
+const strToDate = (v?: string | null): Date | null => {
+  if (!v) return null;
+  const [dd, mm, yy] = v.split("-").map(Number);
+  if (!dd || !mm || !yy) return null;
+  // 12hs para evitar problemas de DST
+  return new Date(yy, mm - 1, dd, 12, 0, 0, 0);
 };
 
+// -------------------- DateField controlado --------------------
+const DateField: React.FC<{
+  value: string;
+  onChange: (val: string) => void;
+  error?: string;
+  placeholder?: string;
+}> = ({ value, onChange, error, placeholder = "dd-mm-aaaa" }) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <DatePicker
+      selected={strToDate(value)}
+      onChange={(d) => {
+        onChange(dateToStr(d));
+        setOpen(false);
+      }}
+      open={open}
+      onFocus={() => setOpen(true)}
+      onInputClick={() => setOpen(true)}
+      onClickOutside={() => setOpen(false)}
+      shouldCloseOnSelect
+      onKeyDown={(e) => e.preventDefault()}
+      dateFormat="dd-MM-yyyy"
+      locale={es}
+      showMonthDropdown
+      showYearDropdown
+      dropdownMode="select"
+      // Evita clipping por overflow/z-index
+      popperContainer={({ children }) => (
+        <div style={{ zIndex: 9999 }}>{children}</div>
+      )}
+      popperPlacement="bottom-start"
+      placeholderText={placeholder}
+      className={`${styles.input ?? ""} ${error ? styles.error : ""}`}
+    />
+  );
+};
+
+// -------------------- FieldWithAttach --------------------
 const FieldWithAttach: React.FC<{
   label: string;
   htmlFor?: string;
@@ -32,31 +75,65 @@ const FieldWithAttach: React.FC<{
   <div className={`${styles.formGroup} ${styles.withAttach}`}>
     <div className={styles.labelRow}>
       <label htmlFor={htmlFor}>{label}</label>
+      <div className={styles.fieldGrow}>{children}</div>
     </div>
     <div className={styles.fieldRow}>
-      <div className={styles.fieldGrow}>{children}</div>
       <div className={styles.attachCell}>{attach}</div>
     </div>
     {error && <span className={styles.errorText}>{error}</span>}
   </div>
 );
 
-const Steps: React.FC<Props> = ({
-  step,
-  formData,
-  errors,
-  provinces,
-  localities,
-  specialties,
-  onChange,
-  getInputProps,
-  setFiles,
-  fileErrs,
-  setFileErrs,
-}) => {
+// -------------------- Props --------------------
+type Props = {
+  step: 1 | 2 | 3 | 4;
+  formData: RegisterFormData;
+  errors: Partial<Record<keyof RegisterFormData, string>>;
+  provinces: string[];
+  localities: string[];
+  specialties: { id: number; id_colegio_espe: number; nombre: string }[];
+  onChange: (field: keyof RegisterFormData, value: string | boolean) => void;
+  getInputProps: (
+    k: keyof RegisterFormData
+  ) => React.InputHTMLAttributes<HTMLInputElement>;
+  files: Record<string, File | null>;
+  setFiles: React.Dispatch<React.SetStateAction<Record<string, File | null>>>;
+  fileErrs: Record<string, string>;
+  setFileErrs: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  specItems: SpecialtyItem[];
+  setSpecItems: React.Dispatch<React.SetStateAction<SpecialtyItem[]>>;
+};
+
+// const MAX_SPECS = 6;
+
+const Steps: React.FC<Props> = (props) => {
+  const {
+    step,
+    formData,
+    errors,
+    provinces,
+    localities,
+    specialties,
+    specItems,
+    setSpecItems,
+    onChange,
+    getInputProps,
+    setFiles,
+    files,
+    fileErrs,
+    setFileErrs,
+  } = props;
+
+  // Fallbacks seguros
+  const specialtiesSafe = Array.isArray(specialties) ? specialties : [];
+  const specItemsSafe = Array.isArray(specItems) ? specItems : [];
+
   const attach = (key: string, label: string) => (
     <PdfUpload
+      key={key}
       label={label}
+      value={files[key] ?? null}
+      maxMb={20}
       onFileSelect={(f) => {
         setFiles((p) => ({ ...p, [key]: f }));
         setFileErrs((p) => ({ ...p, [key]: f ? "" : "Debe subir un archivo" }));
@@ -66,14 +143,51 @@ const Steps: React.FC<Props> = ({
           ...p,
           [key]:
             reason === "type"
-              ? "El archivo debe ser PDF."
-              : "El archivo excede 10MB.",
+              ? "Archivo inválido (solo PDF o imagen)."
+              : "El archivo excede 20MB.",
         }));
       }}
       error={fileErrs[key]}
     />
   );
 
+  const addSpec = () => {
+    const nextIdx = specItems.length + 2; // 2..6 (1 es la principal)
+    const newKey = `resolucion_${nextIdx}`;
+    setSpecItems((prev) => [
+      ...prev,
+      {
+        id_colegio_espe: 0,
+        resolutionNumber: "",
+        resolutionDate: "",
+        fileKey: newKey,
+      },
+    ]);
+    // 👇 importantísimo: que arranque vacío
+    setFiles((prev) => ({ ...prev, [newKey]: null }));
+  };
+
+  const removeSpec = (idxToRemove: number) => {
+    setSpecItems((prev) => {
+      const removed = prev[idxToRemove]?.fileKey;
+      const next = prev.filter((_, i) => i !== idxToRemove);
+      // reindexar a 2..N
+      const reindexed = next.map((it, i) => ({
+        ...it,
+        fileKey: `resolucion_${i + 2}`,
+      }));
+      // limpiar archivo del que se fue
+      setFiles((prevFiles) => {
+        if (!removed) return prevFiles;
+        const copy = { ...prevFiles };
+        delete copy[removed];
+        return copy;
+      });
+      return reindexed;
+    });
+  };
+
+  // -------------------- Step 1: Datos Personales --------------------
   if (step === 1)
     return (
       <div className={styles.stepContent}>
@@ -81,30 +195,6 @@ const Steps: React.FC<Props> = ({
           <h2>Datos Personales</h2>
           <HelpButton />
         </div>
-
-        {/* <div className={styles.formGroup}>
-          <label>Tipo de Documento *</label>
-          <select
-            value={formData.documentType}
-            onChange={(e) => onChange("documentType", e.target.value)}
-            className={errors.documentType ? styles.error : ""}
-          >
-            <option value="">Seleccionar...</option>
-            {[
-              "Documento Único",
-              "Libreta de Enrolamiento",
-              "Libreta Cívica",
-              "Otro",
-            ].map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-          {errors.documentType && (
-            <span className={styles.errorText}>{errors.documentType}</span>
-          )}
-        </div> */}
 
         <FieldWithAttach
           label="Número de Documento *"
@@ -167,15 +257,11 @@ const Steps: React.FC<Props> = ({
 
         <div className={styles.formGroup}>
           <label>Fecha de Nacimiento *</label>
-          <input
-            type="date"
+          <DateField
             value={formData.birthDate}
-            onChange={(e) => onChange("birthDate", e.target.value)}
-            className={errors.birthDate ? styles.error : ""}
+            onChange={(v) => onChange("birthDate", v)}
+            error={errors.birthDate}
           />
-          {errors.birthDate && (
-            <span className={styles.errorText}>{errors.birthDate}</span>
-          )}
         </div>
 
         <div className={styles.formGroup}>
@@ -282,6 +368,7 @@ const Steps: React.FC<Props> = ({
       </div>
     );
 
+  // -------------------- Step 2: Datos Profesionales --------------------
   if (step === 2)
     return (
       <div className={styles.stepContent}>
@@ -309,10 +396,9 @@ const Steps: React.FC<Props> = ({
 
           <div className={styles.formGroup}>
             <label>Fecha de Recibido *</label>
-            <input
-              type="date"
+            <DateField
               value={formData.graduationDate}
-              onChange={(e) => onChange("graduationDate", e.target.value)}
+              onChange={(v) => onChange("graduationDate", v)}
             />
           </div>
 
@@ -334,10 +420,9 @@ const Steps: React.FC<Props> = ({
 
           <div className={styles.formGroup}>
             <label>Fecha Matrícula Nacional *</label>
-            <input
-              type="date"
+            <DateField
               value={formData.nationalLicenseDate}
-              onChange={(e) => onChange("nationalLicenseDate", e.target.value)}
+              onChange={(v) => onChange("nationalLicenseDate", v)}
             />
           </div>
 
@@ -357,58 +442,171 @@ const Steps: React.FC<Props> = ({
 
           <div className={styles.formGroup}>
             <label>Fecha Matrícula Provincial *</label>
-            <input
-              type="date"
+            <DateField
               value={formData.provincialLicenseDate}
-              onChange={(e) =>
-                onChange("provincialLicenseDate", e.target.value)
-              }
+              onChange={(v) => onChange("provincialLicenseDate", v)}
             />
           </div>
+          <div className={`${styles.formGroup} ${styles.especialidadGroup}`}>
+            <div className={styles.formGroup}>
+              <label>Especialidad *</label>
+              <select
+                value={String(formData.specialty || "")}
+                onChange={(e) => onChange("specialty", e.target.value)} // guarda ID_COLEGIO_ESPE como string
+                className={errors.specialty ? styles.error : ""}
+              >
+                <option value="">Seleccionar...</option>
+                {specialtiesSafe.map((s) => (
+                  <option key={`main-${s.id}`} value={s.id_colegio_espe}>
+                    {s.nombre}
+                  </option>
+                ))}
+              </select>
+              {errors.specialty && (
+                <span className={styles.errorText}>{errors.specialty}</span>
+              )}
+            </div>
 
-          <div className={styles.formGroup}>
-            <label>Especialidad *</label>
-            <select
-              value={formData.specialty}
-              onChange={(e) => onChange("specialty", e.target.value)}
-              className={errors.specialty ? styles.error : ""}
+            {/* Fecha de Resolución (principal) */}
+            <div className={styles.formGroup}>
+              <label>Fecha de Resolución</label>
+              <DateField
+                value={formData.resolutionDate}
+                onChange={(v) => onChange("resolutionDate", v)}
+              />
+            </div>
+            <FieldWithAttach
+              label="Número de Resolución"
+              htmlFor="nResol"
+              attach={attach("resolucion_1", "Adjuntar resolución")}
+              error={errors.resolutionNumber}
             >
-              <option value="">Seleccionar...</option>
-              {specialties.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-            {errors.specialty && (
-              <span className={styles.errorText}>{errors.specialty}</span>
-            )}
-          </div>
+              <input
+                id="nResol"
+                type="text"
+                value={formData.resolutionNumber}
+                onChange={(e) => onChange("resolutionNumber", e.target.value)}
+                placeholder="Número de resolución"
+                {...getInputProps("resolutionNumber")}
+                className={errors.resolutionNumber ? styles.error : ""}
+              />
+            </FieldWithAttach>
 
-          <FieldWithAttach
-            label="Número de Resolución"
-            htmlFor="nResol"
-            attach={attach("resolucionImg", "Adjuntar resolución")}
-            error={errors.resolutionNumber}
-          >
-            <input
-              id="nResol"
-              type="text"
-              value={formData.resolutionNumber}
-              onChange={(e) => onChange("resolutionNumber", e.target.value)}
-              placeholder="Número de resolución"
-              {...getInputProps("resolutionNumber")}
-              className={errors.resolutionNumber ? styles.error : ""}
-            />
-          </FieldWithAttach>
+            {specItemsSafe.map((row, idx) => {
+              const fileKey = row.fileKey || `resolucion_${idx + 2}`;
+              return (
+                <div
+                  key={fileKey}
+                  className={`${styles.formGroup} ${styles.especialidadGroup}`}
+                >
+                  <div className={styles.formGroup}>
+                    <label>Especialidad #{idx + 2}</label>
+                    <select
+                      value={String(row.id_colegio_espe || "")}
+                      onChange={(e) => {
+                        const value = e.target.value
+                          ? Number(e.target.value)
+                          : 0;
+                        setSpecItems((prev) => {
+                          const copy = Array.isArray(prev) ? [...prev] : [];
+                          copy[idx] = {
+                            ...(copy[idx] || {}),
+                            id_colegio_espe: value,
+                          };
+                          return copy;
+                        });
+                      }}
+                    >
+                      <option value="">Seleccionar...</option>
+                      {specialtiesSafe.map((s) => (
+                        <option
+                          key={`extra-${idx}-${s.id_colegio_espe}`}
+                          value={s.id_colegio_espe}
+                        >
+                          {s.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-          <div className={styles.formGroup}>
-            <label>Fecha de Resolución *</label>
-            <input
-              type="date"
-              value={formData.resolutionDate}
-              onChange={(e) => onChange("resolutionDate", e.target.value)}
-            />
+                  <div className={styles.formGroup}>
+                    <label>Fecha de Resolución</label>
+                    <DateField
+                      value={row.resolutionDate || ""}
+                      onChange={(v) =>
+                        setSpecItems((prev) => {
+                          const copy = Array.isArray(prev) ? [...prev] : [];
+                          copy[idx] = {
+                            ...(copy[idx] || {}),
+                            resolutionDate: v,
+                          };
+                          return copy;
+                        })
+                      }
+                    />
+                  </div>
+
+                  <FieldWithAttach
+                    label="Número de Resolución"
+                    htmlFor={`nResol_extra_${idx}`}
+                    attach={attach(fileKey, "Adjuntar resolución")}
+                  >
+                    <input
+                      id={`nResol_extra_${idx}`}
+                      type="text"
+                      value={row.resolutionNumber || ""}
+                      onChange={(e) =>
+                        setSpecItems((prev) => {
+                          const copy = Array.isArray(prev) ? [...prev] : [];
+                          copy[idx] = {
+                            ...(copy[idx] || {}),
+                            resolutionNumber: e.target.value,
+                          };
+                          return copy;
+                        })
+                      }
+                      placeholder="Número de resolución"
+                    />
+                  </FieldWithAttach>
+
+                  <div className={styles.actionsInline}>
+                    {/* <button type="button" onClick={() => removeSpec(idx)} className={styles.removeBtn}>
+                      Quitar
+                    </button> */}
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      type="button"
+                      onClick={() => removeSpec(idx)}
+                      className={styles.removeBtn}
+                    >
+                      Quitar
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* --- Especialidades extra (hasta completar 6 en total) --- */}
+            <div
+              className={`${styles.formGroup} ${styles.especialidadGroupMoreBoton}`}
+            >
+              {/* <button type="button" onClick={addSpec} className={styles.addBtn}>
+                Agregar especialidad
+              </button> */}
+              <Button
+                type="button"
+                onClick={addSpec}
+                className={styles.addBtn}
+                variant="primary"
+              >
+                Agregar especialidad
+              </Button>
+              <small className={styles.note}>
+                Si posee más de 6 especialidades, comunicarse con el colegio
+                médico.
+              </small>
+            </div>
           </div>
 
           <FieldWithAttach
@@ -443,6 +641,7 @@ const Steps: React.FC<Props> = ({
       </div>
     );
 
+  // -------------------- Step 3: Datos Impositivos --------------------
   if (step === 3)
     return (
       <div className={styles.stepContent}>
@@ -511,10 +710,9 @@ const Steps: React.FC<Props> = ({
 
           <div className={styles.formGroup}>
             <label>Vencimiento ANSSAL</label>
-            <input
-              type="date"
+            <DateField
               value={formData.anssalExpiry}
-              onChange={(e) => onChange("anssalExpiry", e.target.value)}
+              onChange={(v) => onChange("anssalExpiry", v)}
             />
           </div>
 
@@ -534,10 +732,9 @@ const Steps: React.FC<Props> = ({
 
           <div className={styles.formGroup}>
             <label>Vencimiento Mala Praxis</label>
-            <input
-              type="date"
+            <DateField
               value={formData.malpracticeExpiry}
-              onChange={(e) => onChange("malpracticeExpiry", e.target.value)}
+              onChange={(v) => onChange("malpracticeExpiry", v)}
             />
           </div>
 
@@ -560,10 +757,9 @@ const Steps: React.FC<Props> = ({
 
           <div className={styles.formGroup}>
             <label>Vencimiento de Cobertura</label>
-            <input
-              type="date"
+            <DateField
               value={formData.coverageExpiry}
-              onChange={(e) => onChange("coverageExpiry", e.target.value)}
+              onChange={(v) => onChange("coverageExpiry", v)}
             />
           </div>
 
@@ -587,6 +783,7 @@ const Steps: React.FC<Props> = ({
       </div>
     );
 
+  // -------------------- Step 4: Resumen --------------------
   return (
     <div className={styles.stepContent}>
       <h2>Resumen y Observaciones</h2>
@@ -597,10 +794,6 @@ const Steps: React.FC<Props> = ({
           <div>
             <strong>Nombre:</strong> {formData.firstName} {formData.lastName}
           </div>
-          {/* <div>
-            <strong>Documento:</strong> {formData.documentType}{" "}
-            {formData.documentNumber}
-          </div> */}
           <div>
             <strong>Email:</strong> {formData.email}
           </div>

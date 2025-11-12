@@ -1,13 +1,17 @@
-// src/auth/AuthProvider.tsx
+// src/auth/AuthProvider.tsx  (ajusta paths si tu árbol es /app/)
 import { createContext, useContext, useMemo, useState, useEffect } from "react";
-import { login as apiLogin, logout as apiLogout } from "./api";
-import type { User } from "./api";
+import {
+  login as apiLogin,
+  logout as apiLogout,
+  me as apiMe,
+  type User,
+} from "./api";
 import { http } from "../lib/http";
 import { getCookie, setAccessToken } from "../auth/token";
 
 type AuthCtx = {
   user: User | null;
-  login: (nroSocio: number, password: string) => Promise<void>;
+  login: (nroSocio: number, password: string) => Promise<User>;
   logout: () => Promise<void>;
   ready: boolean;
 };
@@ -18,52 +22,63 @@ export const useAuth = () => {
   if (!ctx) throw new Error("useAuth must be used within <AuthProvider>");
   return ctx;
 };
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [ready, setReady] = useState(false);
 
-  // ➊ Al montar: pre-cargar cache (opcional, mejora UX)
+  // precarga (pero OJO: no es fuente de verdad)
   useEffect(() => {
     const cached = sessionStorage.getItem("me");
     if (cached) {
-      try { setUser(JSON.parse(cached) as User); } catch {}
+      try {
+        setUser(JSON.parse(cached) as User);
+      } catch {}
     }
   }, []);
 
   const login = async (nroSocio: number, password: string) => {
     const u = await apiLogin(nroSocio, password);
     setUser(u);
-    // ➋ Guardar en cache tras login
     sessionStorage.setItem("me", JSON.stringify(u));
+    return u;
   };
 
   const logout = async () => {
-    await apiLogout();            // POST /auth/logout
+    await apiLogout();
     setUser(null);
     setAccessToken(null);
     sessionStorage.removeItem("me");
+    delete http.defaults.headers.common["Authorization"];
   };
 
-  // Boot de sesión tras F5: refresh → /auth/me
   useEffect(() => {
     (async () => {
       try {
         const csrf = getCookie("csrf_token");
-        if (!csrf) { setReady(true); return; }
+        // 💡 si NO hay cookies ni Authorization => no hay sesión válida
+        const hasAuthHeader = !!http.defaults.headers.common["Authorization"];
+        if (!csrf && !hasAuthHeader) {
+          setUser(null);
+          sessionStorage.removeItem("me");
+          setAccessToken(null);
+          delete http.defaults.headers.common["Authorization"];
+          setReady(true);
+          return;
+        }
 
-        // 1) refresh
-        const r = await http.post("/auth/refresh", null, {
-          headers: { "X-CSRF-Token": csrf },
-        });
+        // si hay csrf, intentamos refresh
+        if (csrf) {
+          const r = await http.post("/auth/refresh", null, {
+            headers: { "X-CSRF-Token": csrf },
+          });
+          setAccessToken(r.data.access_token);
+          http.defaults.headers.common[
+            "Authorization"
+          ] = `Bearer ${r.data.access_token}`;
+        }
 
-        // 2) fija token en memoria + default header (clave para /auth/me)
-        setAccessToken(r.data.access_token);
-        http.defaults.headers.common["Authorization"] = `Bearer ${r.data.access_token}`;
-
-        // 3) ahora sí /me
-        const me = await http.get("/auth/me");
-        const u = me.data.user as User;
+        // fuente de verdad
+        const u = await apiMe();
         setUser(u);
         sessionStorage.setItem("me", JSON.stringify(u));
       } catch {
@@ -77,6 +92,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })();
   }, []);
 
-  const value = useMemo(() => ({ user, login, logout, ready }), [user, ready]);
+  const value = useMemo(
+    () => ({ user, login, logout, ready, isAuthenticated: !!user }),
+    [user, ready]
+  );
+
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

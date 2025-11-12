@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FiMail, FiLock } from "react-icons/fi";
@@ -6,7 +6,15 @@ import Button from "../../../components/UI/Button/Button";
 import { api } from "../../../lib/api";
 import styles from "./login.module.scss";
 
-export default function LoginPage() {
+export default function AdminLoginRedirect() {
+  const nav = useNavigate();
+  useEffect(() => {
+    nav("/panel/login", { replace: true });
+  }, [nav]);
+  return null;
+}
+
+export function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -70,12 +78,20 @@ export default function LoginPage() {
 
           {error && <div className={styles.error}>{error}</div>}
 
-          <Button type="submit" variant="primary" size="medium" fullWidth disabled={loading}>
+          <Button
+            type="submit"
+            variant="primary"
+            size="medium"
+            fullWidth
+            disabled={loading}
+          >
             {loading ? "Ingresando..." : "Ingresar"}
           </Button>
 
           <div className={styles.testCredentials}>
-            <p><strong>Credenciales de prueba:</strong></p>
+            <p>
+              <strong>Credenciales de prueba:</strong>
+            </p>
             <p>Email: admin@colegiomedico.com</p>
             <p>Contraseña: admin123</p>
           </div>

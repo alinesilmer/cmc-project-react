@@ -2,7 +2,7 @@
 @import "@/app/styles/mixins.scss";
 
 .tableWrap {
-background: $white;
+  background: $white;
   border-radius: $border-radius-lg;
   box-shadow: $shadow-md;
   border: 1px solid $gray-200;
@@ -35,16 +35,16 @@ background: $white;
   font-weight: $font-weight-semibold;
   color: $primary-blue;
 }
-.stateBadge{
+.stateBadge {
   padding: 3px 10px;
   border-radius: 6px;
 }
-.stateBadge.open{
+.stateBadge.open {
   background-color: $success-green;
   color: $white;
 }
 
-.stateBadge.danger{
+.stateBadge.danger {
   background-color: $danger-red;
   color: $white;
 }
@@ -76,7 +76,8 @@ background: $white;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: transform .15s ease, background .15s ease, color .15s ease, box-shadow .15s ease;
+  transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease,
+    box-shadow 0.15s ease;
 
   &:hover {
     background: $gray-50;
@@ -101,12 +102,13 @@ background: $white;
   width: 100%;
 }
 
-.noStatus { grid-template-columns:
-  minmax(120px, 1.2fr)
-  minmax(90px, 1fr)
-  minmax(110px, 1.1fr)
-  minmax(90px, 1fr)
-  minmax(160px, 1.4fr);
+.noStatus {
+  grid-template-columns:
+    minmax(120px, 1.2fr)
+    minmax(90px, 1fr)
+    minmax(110px, 1.1fr)
+    minmax(90px, 1fr)
+    minmax(160px, 1.4fr);
 }
 
 .headerRow {
@@ -115,16 +117,19 @@ background: $white;
   font-weight: $font-weight-semibold;
   font-size: $font-size-sm;
   text-transform: uppercase;
-  letter-spacing: .5px;
+  letter-spacing: 0.5px;
   text-align: center;
 }
 
-.body { display: grid; width: 100%; }
+.body {
+  display: grid;
+  width: 100%;
+}
 
 .dataRow {
   background-color: $white;
   border-bottom: 1px solid $gray-200;
-  transition: background-color .2s ease, transform .2s ease;
+  transition: background-color 0.2s ease, transform 0.2s ease;
 
   &:hover {
     background-color: $gray-50;
@@ -148,7 +153,8 @@ background: $white;
   flex-wrap: wrap;
 }
 
-.loading, .empty {
+.loading,
+.empty {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -159,7 +165,8 @@ background: $white;
 }
 
 .spinner {
-  width: 20px; height: 20px;
+  width: 20px;
+  height: 20px;
   border: 2px solid $gray-300;
   border-top: 2px solid $primary-blue;
   border-radius: 50%;
@@ -167,4 +174,8 @@ background: $white;
   margin-right: $spacing-3;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

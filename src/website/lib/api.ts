@@ -1,24 +1,64 @@
 // website/src/lib/api.ts
-const BASE = import.meta.env.VITE_API_URL_BASE ?? "http://localhost:5000";
+const BASE = import.meta.env.VITE_API_URL_BASE ?? "http://127.0.0.1:8000";
 
 export type ISODateString = string;
 
-export interface Usuario { email: string; nombre: string; role: string; }
-export interface Noticia {
-  id: string; titulo: string; contenido: string; resumen: string;
-  autor: string; publicada: boolean; fechaCreacion: ISODateString;
-  fechaActualizacion: ISODateString; imagen?: string; archivo?: string;
+export interface Usuario {
+  email: string;
+  nombre: string;
+  role: string;
 }
-export interface NoticiaCreate { titulo: string; contenido: string; resumen: string; imagen?: string; archivo?: string; publicada?: boolean; }
-export interface NoticiaUpdate { titulo?: string; contenido?: string; resumen?: string; imagen?: string; archivo?: string; publicada?: boolean; }
-export interface LoginResponse { token: string; user: Usuario; mensaje?: string; }
-export interface VerifyResponse { valido: boolean; user?: Usuario; }
+export interface Noticia {
+  id: string;
+  titulo: string;
+  contenido: string;
+  resumen: string;
+  autor: string;
+  publicada: boolean;
+  fechaCreacion: ISODateString;
+  fechaActualizacion: ISODateString;
+  imagen?: string;
+  archivo?: string;
+}
+export interface NoticiaCreate {
+  titulo: string;
+  contenido: string;
+  resumen: string;
+  imagen?: string;
+  archivo?: string;
+  publicada?: boolean;
+}
+export interface NoticiaUpdate {
+  titulo?: string;
+  contenido?: string;
+  resumen?: string;
+  imagen?: string;
+  archivo?: string;
+  publicada?: boolean;
+}
+export interface LoginResponse {
+  token: string;
+  user: Usuario;
+  mensaje?: string;
+}
+export interface VerifyResponse {
+  valido: boolean;
+  user?: Usuario;
+}
 
-async function fetchJson<T>(input: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(input, init);
+async function fetchJson<T>(url: string, init: RequestInit = {}): Promise<T> {
+  const res = await fetch(url, {
+    ...init,
+    mode: "cors",
+    credentials: "include", // ✅ necesario por cookies/JWT
+    headers: {
+      Accept: "application/json",
+      ...(init.headers || {}),
+    },
+  });
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`HTTP ${res.status} ${res.statusText} — ${text}`);
+    const text = await res.text();
+    throw new Error(text || `HTTP ${res.status}`);
   }
   return (await res.json()) as T;
 }
@@ -45,31 +85,87 @@ export const api = {
     });
   },
   obtenerNoticias() {
-    return fetchJson<Noticia[]>(`${BASE}/api/noticias`, { cache: "no-store" });
+    return fetchJson<Noticia[]>(`${BASE}/api/noticias/`, { cache: "no-store" });
   },
   obtenerNoticia(id: string) {
-    return fetchJson<Noticia>(`${BASE}/api/noticias/${encodeURIComponent(id)}`, { cache: "no-store" });
+    return fetchJson<NoticiaDetail>(
+      `${BASE}/api/noticias/${encodeURIComponent(id)}`,
+      { cache: "no-store" }
+    );
   },
-  crearNoticia(token: string, noticia: NoticiaCreate) {
-    return fetchJson<{ mensaje: string; id: string; noticia: Noticia }>(`${BASE}/api/noticias`, {
+  crearNoticia(
+    token: string,
+    fields: {
+      titulo: string;
+      resumen: string;
+      contenido: string;
+      publicada?: boolean;
+      autor?: string;
+    },
+    files?: File[]
+  ) {
+    const fd = new FormData();
+    Object.entries(fields).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) fd.append(k, String(v));
+    });
+    (files ?? []).forEach((f) => fd.append("adjuntos", f));
+    return fetchJson<NoticiaDetail>(`${BASE}/api/noticias/`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify(noticia),
+      headers: { Authorization: `Bearer ${token}` },
+      body: fd,
     });
   },
-  actualizarNoticia(token: string, id: string, noticia: NoticiaUpdate) {
-    return fetchJson<{ mensaje: string }>(`${BASE}/api/noticias/${encodeURIComponent(id)}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify(noticia),
-    });
+  actualizarNoticia(
+    token: string,
+    id: string,
+    fields?: {
+      titulo?: string;
+      resumen?: string;
+      contenido?: string;
+      publicada?: boolean;
+      autor?: string;
+    },
+    files?: File[],
+    opts?: {
+      eliminar_imagen?: boolean;
+      eliminar_archivo?: boolean;
+      eliminar_documento_ids?: number[];
+    }
+  ) {
+    const fd = new FormData();
+    if (fields) {
+      Object.entries(fields).forEach(([k, v]) => {
+        if (v !== undefined && v !== null) fd.append(k, String(v));
+      });
+    }
+    (files ?? []).forEach((f) => fd.append("adjuntos", f));
+    if (opts?.eliminar_imagen) fd.append("eliminar_imagen", "true");
+    if (opts?.eliminar_archivo) fd.append("eliminar_archivo", "true");
+    if (opts?.eliminar_documento_ids?.length) {
+      fd.append(
+        "eliminar_documento_ids",
+        opts.eliminar_documento_ids.join(",")
+      );
+    }
+    return fetchJson<{ mensaje: string }>(
+      `${BASE}/api/noticias/${encodeURIComponent(id)}`,
+      {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      }
+    );
   },
   eliminarNoticia(token: string, id: string) {
-    return fetchJson<{ mensaje: string }>(`${BASE}/api/noticias/${encodeURIComponent(id)}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    return fetchJson<{ mensaje: string }>(
+      `${BASE}/api/noticias/${encodeURIComponent(id)}`,
+      {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
   },
+
   async subirArchivo(token: string, file: File) {
     const form = new FormData();
     form.append("file", file);
@@ -82,16 +178,40 @@ export const api = {
       const text = await res.text().catch(() => "");
       throw new Error(`HTTP ${res.status} ${res.statusText} — ${text}`);
     }
-    const json = (await res.json()) as { url: string; mimetype: string; filename: string };
+    const json = (await res.json()) as {
+      url: string;
+      mimetype: string;
+      filename: string;
+    };
     return { ...json, url: abs(json.url) };
+  },
+
+  listarDocumentosNoticia(id: string) {
+    return fetchJson<DocumentoNoticias[]>(
+      `${BASE}/api/noticias/${encodeURIComponent(id)}/documentos`
+    );
+  },
+  eliminarDocumentoNoticia(token: string, id: string, docId: number) {
+    return fetchJson<{ mensaje: string }>(
+      `${BASE}/api/noticias/${encodeURIComponent(id)}/documentos/${docId}`,
+      {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
   },
 };
 
 // ---- Médicos promo ----
 export type MediaType = "image" | "video";
 export interface MedicoPromo {
-  id: string; nombre: string; especialidad: string;
-  mediaUrl?: string; mediaType?: MediaType; orden: number; activo: boolean;
+  id: string;
+  nombre: string;
+  especialidad: string;
+  mediaUrl?: string;
+  mediaType?: MediaType;
+  orden: number;
+  activo: boolean;
   createdAt: string;
 }
 export type MedicoPromoCreate = Omit<MedicoPromo, "id" | "createdAt">;
@@ -109,7 +229,10 @@ export const medicosPromo = {
   async create(token: string, payload: MedicoPromoCreate) {
     const r = await fetch(`${BASE}/api/medicos-promo`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify(payload),
     });
     if (!r.ok) throw new Error((await r.json()).message || "Error creando");
@@ -120,10 +243,14 @@ export const medicosPromo = {
   async update(token: string, id: string, payload: Partial<MedicoPromo>) {
     const r = await fetch(`${BASE}/api/medicos-promo/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify(payload),
     });
-    if (!r.ok) throw new Error((await r.json()).message || "Error actualizando");
+    if (!r.ok)
+      throw new Error((await r.json()).message || "Error actualizando");
     return r.json();
   },
   async remove(token: string, id: string) {
@@ -147,3 +274,16 @@ export const medicosPromo = {
     return { ...json, url: abs(json.url) };
   },
 };
+
+export interface DocumentoNoticias {
+  id: number;
+  label?: string | null;
+  original_name: string;
+  filename: string;
+  content_type?: string | null;
+  size?: number | null;
+  path: string;
+}
+export interface NoticiaDetail extends Noticia {
+  documentos: DocumentoNoticias[];
+}

@@ -5,20 +5,36 @@ import { motion, AnimatePresence } from "framer-motion";
 import styles from "./Header.module.scss";
 import logo from "../../../assets/images/logoCMC.png";
 import SearchBar from "../SearchBar/SearchBar";
-
+import { useAuth } from "../../../../app/auth/AuthProvider";
+import { isWebEditor } from "../../../../app/auth/roles";
+// import RequirePermission from "../../../../app/auth/RequirePermission";
 
 export default function Header() {
   const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [openDropdown, setOpenDropdown] = useState<null | "nosotros" | "servicios">(null);
-  const [mobileOpen, setMobileOpen] = useState({ nosotros: false, servicios: false });
+  const [openDropdown, setOpenDropdown] = useState<
+    null | "nosotros" | "servicios"
+  >(null);
+  const [mobileOpen, setMobileOpen] = useState({
+    nosotros: false,
+    servicios: false,
+  });
   const [searchOpen, setSearchOpen] = useState(false);
   const [solid, setSolid] = useState(pathname !== "/");
+  const { user } = useAuth();
 
+  const targetHref = !user
+    ? "/panel/login"
+    : isWebEditor(user.scopes)
+    ? "/admin/dashboard-web"
+    : "http://127.0.0.1:8085/principal.php";
 
   useEffect(() => {
     const onScroll = () => {
-      if (pathname !== "/") { setSolid(true); return; }
+      if (pathname !== "/") {
+        setSolid(true);
+        return;
+      }
       const threshold = window.innerHeight - 80;
       setSolid(window.scrollY >= threshold);
     };
@@ -27,8 +43,8 @@ export default function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, [pathname]);
 
-  const toggleMobileGroup = (key: "nosotros" | "servicios") =>
-    setMobileOpen((p) => ({ ...p, [key]: !p[key] }));
+  // const toggleMobileGroup = (key: "nosotros" | "servicios") =>
+  //   setMobileOpen((p) => ({ ...p, [key]: !p[key] }));
 
   const closeAll = () => {
     setMenuOpen(false);
@@ -47,11 +63,12 @@ export default function Header() {
           </Link>
 
           <nav className={styles.desktopNav}>
-            <Link to="/" className={styles.navLink} onClick={closeAll}>Inicio</Link>
-             <Link to="/nosotros" className={styles.navLink} onClick={closeAll}>Nosotros</Link>
-
-
-             
+            <Link to="/" className={styles.navLink} onClick={closeAll}>
+              Inicio
+            </Link>
+            <Link to="/nosotros" className={styles.navLink} onClick={closeAll}>
+              Nosotros
+            </Link>
 
             <div
               className={`${styles.navItem} ${styles.hasDropdown}`}
@@ -59,13 +76,23 @@ export default function Header() {
               onMouseLeave={() => setOpenDropdown(null)}
             >
               <div className={styles.parentRow}>
-                <Link to="/servicios" className={styles.navLink} onClick={closeAll}>Servicios</Link>
+                <Link
+                  to="/servicios"
+                  className={styles.navLink}
+                  onClick={closeAll}
+                >
+                  Servicios
+                </Link>
                 <button
                   className={styles.caretBtn}
                   aria-haspopup="true"
                   aria-expanded={openDropdown === "servicios"}
                   aria-controls="dd-servicios"
-                  onClick={() => setOpenDropdown((v) => (v === "servicios" ? null : "servicios"))}
+                  onClick={() =>
+                    setOpenDropdown((v) =>
+                      v === "servicios" ? null : "servicios"
+                    )
+                  }
                 >
                   <FiChevronDown aria-hidden="true" />
                 </button>
@@ -81,25 +108,87 @@ export default function Header() {
                     exit={{ opacity: 0, y: 8 }}
                     transition={{ duration: 0.18 }}
                   >
-                    <li><Link   to={`https://wa.me/543794404497?text=${encodeURIComponent("Hola, quisiera información para asociarme al Colegio Médico de Corrientes, por favor. ¡Gracias!.")}`}
-    className={styles.subLink}
-    onClick={closeAll}
-    target="_blank"
-    rel="noopener noreferrer">Quiero ser Socio</Link></li>
-                    <li><Link to="/seguros" className={styles.subLink} onClick={closeAll}>Seguro médico</Link></li>
-                    <li><Link to="/convenios" className={styles.subLink} onClick={closeAll}>Convenios</Link></li>
-                    <li><Link to="/quinta" className={styles.subLink} onClick={closeAll}>Quinta</Link></li>
-                    <li><Link to="/servicios/facturacion-online" className={styles.subLink} onClick={closeAll}>Facturación online</Link></li>
-                    <li><Link to="/servicios/beneficios" className={styles.subLink} onClick={closeAll}>Beneficios</Link></li>
-                    <li><Link to="/galeria" className={styles.subLink} onClick={closeAll}>Galería de fotos y videos</Link></li>
+                    <li>
+                      <Link
+                        to={`https://wa.me/543794404497?text=${encodeURIComponent(
+                          "Hola, quisiera información para asociarme al Colegio Médico de Corrientes, por favor. ¡Gracias!."
+                        )}`}
+                        className={styles.subLink}
+                        onClick={closeAll}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Quiero ser Socio
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/seguros"
+                        className={styles.subLink}
+                        onClick={closeAll}
+                      >
+                        Seguro médico
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/convenios"
+                        className={styles.subLink}
+                        onClick={closeAll}
+                      >
+                        Convenios
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/quinta"
+                        className={styles.subLink}
+                        onClick={closeAll}
+                      >
+                        Quinta
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/servicios/facturacion-online"
+                        className={styles.subLink}
+                        onClick={closeAll}
+                      >
+                        Facturación online
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/servicios/beneficios"
+                        className={styles.subLink}
+                        onClick={closeAll}
+                      >
+                        Beneficios
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/galeria"
+                        className={styles.subLink}
+                        onClick={closeAll}
+                      >
+                        Galería de fotos y videos
+                      </Link>
+                    </li>
                   </motion.ul>
                 )}
               </AnimatePresence>
             </div>
 
-            <Link to="/cursoscap" className={styles.navLink} onClick={closeAll}>Cursos/Capacitaciones</Link>
-            <Link to="/noticias" className={styles.navLink} onClick={closeAll}>Noticias</Link>
-            <Link to="/contacto" className={styles.navLink} onClick={closeAll}>Contacto</Link>
+            <Link to="/cursoscap" className={styles.navLink} onClick={closeAll}>
+              Cursos/Capacitaciones
+            </Link>
+            <Link to="/noticias" className={styles.navLink} onClick={closeAll}>
+              Noticias
+            </Link>
+            <Link to="/contacto" className={styles.navLink} onClick={closeAll}>
+              Contacto
+            </Link>
           </nav>
 
           <div className={styles.actions}>
@@ -110,9 +199,15 @@ export default function Header() {
             >
               <FiSearch />
             </button>
-            <Link to="/admin/login" className={styles.loginLink} onClick={closeAll}>
-              <FiUser />
-            </Link>
+            {user && (
+              <Link
+                to={targetHref}
+                className={styles.loginLink}
+                onClick={closeAll}
+              >
+                <FiUser />
+              </Link>
+            )}
           </div>
 
           <button
@@ -137,26 +232,40 @@ export default function Header() {
               transition={{ duration: 0.25 }}
             >
               <button
-                onClick={() => { setSearchOpen(true); setMenuOpen(false); }}
+                onClick={() => {
+                  setSearchOpen(true);
+                  setMenuOpen(false);
+                }}
                 className={styles.mobileLink}
               >
                 Buscar
               </button>
 
-              <Link to="/" onClick={closeAll} className={styles.mobileLink}>Inicio</Link>
-               <Link to="/nosotros" onClick={closeAll} className={styles.mobileLink}>Nosotros</Link>
-             
+              <Link to="/" onClick={closeAll} className={styles.mobileLink}>
+                Inicio
+              </Link>
+              <Link
+                to="/nosotros"
+                onClick={closeAll}
+                className={styles.mobileLink}
+              >
+                Nosotros
+              </Link>
 
               <div className={styles.mobileGroup}>
                 <button
                   className={styles.mobileGroupBtn}
-                  onClick={() => setMobileOpen((p) => ({ ...p, servicios: !p.servicios }))}
+                  onClick={() =>
+                    setMobileOpen((p) => ({ ...p, servicios: !p.servicios }))
+                  }
                   aria-expanded={mobileOpen.servicios}
                   aria-controls="m-servicios"
                 >
                   <span>Servicios</span>
                   <FiChevronDown
-                    className={`${styles.chevron} ${mobileOpen.servicios ? styles.chevronOpen : ""}`}
+                    className={`${styles.chevron} ${
+                      mobileOpen.servicios ? styles.chevronOpen : ""
+                    }`}
                     aria-hidden="true"
                   />
                 </button>
@@ -171,21 +280,56 @@ export default function Header() {
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <Link to="/servicios/socios" onClick={closeAll}>Socios</Link>
-                      <Link to="/seguros" onClick={closeAll}>Seguro médico</Link>
-                      <Link to="/servicios/convenios" onClick={closeAll}>Convenios</Link>
-                      <Link to="/servicios/quinta" onClick={closeAll}>Quinta</Link>
-                      <Link to="/servicios/facturacion-online" onClick={closeAll}>Facturación online</Link>
-                      <Link to="/servicios/beneficios" onClick={closeAll}>Beneficios</Link>
-                      <Link to="/servicios/galeria" onClick={closeAll}>Galería de fotos y videos</Link>
+                      <Link to="/servicios/socios" onClick={closeAll}>
+                        Socios
+                      </Link>
+                      <Link to="/seguros" onClick={closeAll}>
+                        Seguro médico
+                      </Link>
+                      <Link to="/servicios/convenios" onClick={closeAll}>
+                        Convenios
+                      </Link>
+                      <Link to="/servicios/quinta" onClick={closeAll}>
+                        Quinta
+                      </Link>
+                      <Link
+                        to="/servicios/facturacion-online"
+                        onClick={closeAll}
+                      >
+                        Facturación online
+                      </Link>
+                      <Link to="/servicios/beneficios" onClick={closeAll}>
+                        Beneficios
+                      </Link>
+                      <Link to="/servicios/galeria" onClick={closeAll}>
+                        Galería de fotos y videos
+                      </Link>
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
 
-              <Link to="/noticias" onClick={closeAll} className={styles.mobileLink}>Noticias</Link>
-              <Link to="/contacto" onClick={closeAll} className={styles.mobileLink}>Contacto</Link>
-              <Link to="/not-found" onClick={closeAll} className={styles.mobileLink}>Ingresar</Link>
+              <Link
+                to="/noticias"
+                onClick={closeAll}
+                className={styles.mobileLink}
+              >
+                Noticias
+              </Link>
+              <Link
+                to="/contacto"
+                onClick={closeAll}
+                className={styles.mobileLink}
+              >
+                Contacto
+              </Link>
+              <Link
+                to="/not-found"
+                onClick={closeAll}
+                className={styles.mobileLink}
+              >
+                Ingresar
+              </Link>
             </motion.div>
           )}
         </AnimatePresence>

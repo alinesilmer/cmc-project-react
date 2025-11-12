@@ -1,0 +1,186 @@
+@import "@/app/styles/variables.scss";
+@import "@/app/styles/mixins.scss";
+
+.tableWrap {
+  background: $white;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-md;
+  border: 1px solid $gray-200;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 0;
+  position: relative;
+}
+
+.tableTitle {
+  position: relative;
+  padding: $spacing-4 $spacing-6;
+  background-color: $gray-100;
+  border-bottom: 1px solid $gray-200;
+  text-align: center;
+}
+
+.tableTitleText {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $primary-blue;
+}
+
+.titleClose {
+  position: absolute;
+  right: $spacing-4;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  border-radius: $border-radius-md;
+  border: 1px solid $gray-300;
+  background: $white;
+  color: $gray-700;
+  cursor: pointer;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .15s ease, background .15s ease, color .15s ease, box-shadow .15s ease;
+
+  &:hover {
+    background: $gray-50;
+    color: $danger-red;
+    box-shadow: $shadow-sm;
+    transform: translateY(-50%) scale(1.05);
+  }
+}
+
+.headerRow,
+.dataRow {
+  display: grid;
+  grid-template-columns:
+    minmax(120px, 1.2fr)
+    minmax(90px, 1fr)
+    minmax(110px, 1.1fr)
+    minmax(90px, 1fr)
+    minmax(100px, 1fr)
+    minmax(140px, 1.2fr);
+  gap: $spacing-4;
+  padding: $spacing-4 $spacing-6;
+  align-items: center;
+  width: 100%;
+}
+
+.noStatus {
+  grid-template-columns:
+    minmax(120px, 1.2fr)
+    minmax(90px, 1fr)
+    minmax(110px, 1.1fr)
+    minmax(90px, 1fr)
+    minmax(160px, 1.4fr);
+}
+
+.headerRow {
+  background: linear-gradient(135deg, $primary-blue, $primary-blue-dark);
+  color: $white;
+  font-weight: $font-weight-semibold;
+  font-size: $font-size-sm;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  text-align: center;
+}
+
+.body { display: grid; width: 100%; }
+
+.dataRow {
+  background-color: $white;
+  border-bottom: 1px solid $gray-200;
+  transition: background-color .2s ease, transform .2s ease;
+
+  &:hover {
+    background-color: $gray-50;
+    transform: translateY(-1px);
+    box-shadow: $shadow-sm;
+  }
+
+  > div {
+    text-align: center;
+    font-size: $font-size-sm;
+    color: $gray-800;
+    min-width: 0;
+  }
+}
+
+.status {
+  padding: $spacing-1 $spacing-2;
+  border-radius: $border-radius-sm;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  text-transform: uppercase;
+  display: inline-block;
+}
+
+.inProgress { color: $white; background-color: $primary-blue; }
+.finished   { background-color: $gray-800; color: $white; }
+
+.actions {
+  display: inline-flex;
+  gap: $spacing-3;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.footer {
+  display: flex;
+  justify-content: center;
+  padding: $spacing-4 $spacing-6;
+  background-color: $gray-50;
+  border-top: 1px solid $gray-200;
+}
+
+.exportAll {
+   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $border-radius-md;
+  font-weight: $font-weight-medium;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  padding: $spacing-2 $spacing-4;
+  background: $black;
+  color: $white;
+  font-size: $font-size-sm;
+
+  &:hover {
+    background: $success-green;
+    transform: translateY(-1px);
+    box-shadow: $shadow-sm;
+  }
+}
+
+.loading, .empty {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: $spacing-12;
+  color: $gray-500;
+  font-size: $font-size-sm;
+  text-align: center;
+}
+
+.spinner {
+  width: 20px; height: 20px;
+  border: 2px solid $gray-300;
+  border-top: 2px solid $primary-blue;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: $spacing-3;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }

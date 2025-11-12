@@ -40,10 +40,18 @@
   position: relative;
 }
 
-.success { border-left: 4px solid $success-green; }
-.error   { border-left: 4px solid $danger-red; }
-.warning { border-left: 4px solid $warning-orange; }
-.info    { border-left: 4px solid $primary-blue; }
+.success {
+  border-left: 4px solid $success-green;
+}
+.error {
+  border-left: 4px solid $danger-red;
+}
+.warning {
+  border-left: 4px solid $warning-orange;
+}
+.info {
+  border-left: 4px solid $primary-blue;
+}
 
 .content {
   display: flex;
@@ -52,7 +60,8 @@
   align-items: center;
 }
 
-.icon { color: $primary-blue; 
+.icon {
+  color: $primary-blue;
   width: 50%;
   max-width: 200px;
 }
@@ -71,7 +80,6 @@
   color: $gray-600;
   line-height: 1.5;
   text-align: center;
-
 }
 
 .actions {
@@ -90,10 +98,20 @@
   color: $gray-500;
   cursor: pointer;
 
-  &:hover { color: $gray-700; }
+  &:hover {
+    color: $gray-700;
+  }
 }
 
-.success .icon { color: $success-green; }
-.error   .icon { color: $danger-red; }
-.warning .icon { color: $warning-orange; }
-.info    .icon { color: $primary-blue; }
+.success .icon {
+  color: $success-green;
+}
+.error .icon {
+  color: $danger-red;
+}
+.warning .icon {
+  color: $warning-orange;
+}
+.info .icon {
+  color: $primary-blue;
+}

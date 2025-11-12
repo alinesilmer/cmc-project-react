@@ -1,0 +1,167 @@
+/* Palette & type similar to the screenshot (mint/teal on light grey) */
+$mint: #7db7ad;
+$mint-dark: #5c9c92;
+$ink: #2d2f31;
+$muted: #6b7280;
+$line: #e6e8eb;
+$bg: #f7f8fa;
+$white: #ffffff;
+
+.wrap {
+  min-height: 100vh;
+  background: $bg;
+  padding: 24px;
+}
+
+/* Top bar like the “Search” button on the left in the screenshot */
+.topBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  & > :first-child { margin-right: auto; }
+}
+.searchBtn {
+  background: $mint;
+  color: $white;
+  border: 0;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: .15s ease;
+  &:hover { background: $mint-dark; }
+}
+
+/* Card */
+.card {
+  max-width: 980px;
+  margin: 0 auto;
+  background: $white;
+  border: 1px solid $line;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.04);
+  padding: 22px 24px;
+}
+
+/* Logo block */
+.logoBlock {
+  text-align: center;
+  margin-bottom: 18px;
+}
+.logoMark {
+  width: 56px; height: 56px; margin: 0 auto 8px;
+  background: linear-gradient(135deg, #c3e6de, #a3d2c9);
+  border-radius: 10px;
+}
+.brand { margin: 0; font-size: 1.1rem; color: $ink; letter-spacing: .02em; }
+.brandMeta { margin: 4px 0 0; color: $muted; font-size: .85rem; }
+
+/* Section title + divider like the screenshot */
+.sectionRow {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 12px;
+}
+.sectionTitle {
+  margin: 12px 0 6px;
+  color: $mint-dark;
+  font-size: .95rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.addLink {
+  background: transparent;
+  border: 0;
+  color: $mint-dark;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+.hr {
+  height: 1px;
+  width: 100%;
+  background: $line;
+  margin-bottom: 10px;
+}
+
+/* Two-column layout */
+.twoCol {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 24px;
+}
+@media (max-width: 860px) { .twoCol { grid-template-columns: 1fr; } }
+
+.row { display: flex; flex-direction: column; gap: 8px; }
+.label { font-weight: 700; color: $muted; font-size: .9rem; }
+
+.input, .textarea, select.input {
+  width: 100%;
+  border: 1px solid $line;
+  background: #fbfbfc;
+  color: $ink;
+  border-radius: 4px;
+  padding: 10px 12px;
+  font: inherit;
+  transition: .15s ease;
+  &::placeholder { color: #9aa0a6; }
+  &:focus { outline: none; border-color: $mint; box-shadow: 0 0 0 3px rgba(125,183,173,.18); background: $white; }
+}
+.textarea { resize: vertical; }
+
+.nameRow {
+  display: grid;
+  grid-template-columns: 120px 1fr 1fr;
+  gap: 8px;
+}
+.addressCluster { position: relative; }
+.searchIcon {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px; height: 32px; border-radius: 4px;
+  border: 1px solid $line; background: $white; cursor: pointer;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid $line;
+  margin-top: 20px;
+}
+.primary {
+  background: $mint; color: $white; border: 0; border-radius: 6px;
+  padding: .7rem 1.2rem; font-weight: 800; cursor: pointer; transition: .15s ease;
+  &:hover { background: $mint-dark; }
+}
+.secondary {
+  background: #eef1f5; color: $ink; border: 0; border-radius: 6px;
+  padding: .7rem 1.2rem; font-weight: 700; cursor: pointer;
+  &:hover { background: #e6ebf1; }
+}
+
+/* ——— Modals ——— */
+.modalOverlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.35);
+  display: grid; place-items: center; z-index: 999;
+}
+.modalCard {
+  width: min(520px, 92vw);
+  background: $white;
+  border-radius: 10px;
+  border: 1px solid $line;
+  padding: 20px;
+  box-shadow: 0 18px 42px rgba(0,0,0,.18);
+}
+.modalTitle { margin: 0 0 6px; font-size: 1.1rem; color: $ink; }
+.modalText { margin: 0 0 14px; color: $muted; }
+.modalActions { display: flex; justify-content: flex-end; gap: 10px; }
+.btnReject {
+  background: #f1c0c0; color: #7a2828; border: 0; border-radius: 6px;
+  padding: .6rem 1rem; font-weight: 800; cursor: pointer;
+  &:hover { background: #ebb1b1; }
+}

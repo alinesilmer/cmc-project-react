@@ -8,7 +8,7 @@ import styles from "./Button.module.scss";
 interface ButtonProps {
   children?: React.ReactNode;
   onClick?: () => void;
-  variant: "primary" | "secondary" | "outline";
+  variant: "primary" | "secondary" | "outline" | "default";
   size: "small" | "medium" | "large" | "xlg";
   icon?: React.ReactNode;
   type?: "button" | "submit" | "reset";

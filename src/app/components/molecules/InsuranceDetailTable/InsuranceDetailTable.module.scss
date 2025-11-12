@@ -7,17 +7,20 @@
   box-shadow: $shadow-lg;
   overflow: hidden;
   border: 1px solid $gray-200;
-  display:flex;
+  display: flex;
   flex-direction: column;
   height: 100%;
 }
 
 .tableHeader {
-  background: linear-gradient(135deg, $primary-blue 0%, $primary-blue-dark 100%);
+  background: linear-gradient(
+    135deg,
+    $primary-blue 0%,
+    $primary-blue-dark 100%
+  );
   padding: $spacing-4 $spacing-6;
   border-bottom: 1px solid rgba(255, 255, 255, 0.15);
   flex: 0 0 auto;
-
 }
 
 .headerContent {
@@ -38,7 +41,7 @@
   font-size: $font-size-sm;
   font-weight: $font-weight-medium;
   text-transform: uppercase;
-  letter-spacing: .5px;
+  letter-spacing: 0.5px;
 }
 
 .periodBadge {
@@ -52,20 +55,7 @@
 }
 
 .addButton {
-    display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: $border-radius-md;
-  font-weight: $font-weight-medium;
-  transition: all 0.2s ease-in-out;
-  cursor: pointer;
-  border: none;
-  text-decoration: none;
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+  // @include m.button-base;
   gap: $spacing-2;
   background: rgba(255, 255, 255, 0.12);
   color: $white;
@@ -74,13 +64,19 @@
   border-radius: $border-radius-md;
   font-weight: $font-weight-semibold;
   backdrop-filter: blur(10px);
-  &:hover { background: rgba(255, 255, 255, 0.22); transform: translateY(-1px); }
+  &:hover {
+    background: rgba(255, 255, 255, 0.22);
+    transform: translateY(-1px);
+  }
 }
 
-.addIcon { font-size: 18px; font-weight: $font-weight-bold; }
+.addIcon {
+  font-size: 18px;
+  font-weight: $font-weight-bold;
+}
 
-.tableContainer { 
-  background: $white; 
+.tableContainer {
+  background: $white;
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
@@ -92,27 +88,37 @@
   overflow-y: visible;
   -webkit-overflow-scrolling: touch;
 }
-.scrollWrapper::-webkit-scrollbar { height: 8px; }
-.scrollWrapper::-webkit-scrollbar-track { background: $gray-100; border-radius: $border-radius-sm; }
-.scrollWrapper::-webkit-scrollbar-thumb { background: $gray-300; border-radius: $border-radius-sm; }
-.scrollWrapper::-webkit-scrollbar-thumb:hover { background: $gray-400; }
+.scrollWrapper::-webkit-scrollbar {
+  height: 8px;
+}
+.scrollWrapper::-webkit-scrollbar-track {
+  background: $gray-100;
+  border-radius: $border-radius-sm;
+}
+.scrollWrapper::-webkit-scrollbar-thumb {
+  background: $gray-300;
+  border-radius: $border-radius-sm;
+}
+.scrollWrapper::-webkit-scrollbar-thumb:hover {
+  background: $gray-400;
+}
 
 .tableGrid {
   display: grid;
   grid-template-columns:
-    minmax(80px, .8fr)
+    minmax(80px, 0.8fr)
     minmax(180px, 1.5fr)
-    minmax(80px, .8fr)
+    minmax(80px, 0.8fr)
     minmax(120px, 1fr)
     minmax(120px, 1fr)
-    minmax(100px, .9fr)
+    minmax(100px, 0.9fr)
     minmax(140px, 1.2fr)
     minmax(180px, 1.6fr)
-    minmax(90px, .8fr)
-    minmax(70px, .6fr)
+    minmax(90px, 0.8fr)
+    minmax(70px, 0.6fr)
     minmax(130px, 1fr)
-    minmax(110px, .9fr)
-    minmax(120px, .9fr)
+    minmax(110px, 0.9fr)
+    minmax(120px, 0.9fr)
     minmax(140px, 1.1fr)
     minmax(120px, 1fr)
     minmax(160px, 1.1fr);
@@ -122,23 +128,23 @@
 }
 .tableGrid.withDetails {
   grid-template-columns:
-    minmax(80px, .8fr)
+    minmax(80px, 0.8fr)
     minmax(180px, 1.5fr)
-    minmax(80px, .8fr)
+    minmax(80px, 0.8fr)
     minmax(120px, 1fr)
     minmax(120px, 1fr)
-    minmax(100px, .9fr)
+    minmax(100px, 0.9fr)
     minmax(140px, 1.2fr)
     minmax(180px, 1.6fr)
-    minmax(90px, .8fr)
-    minmax(70px, .6fr)
+    minmax(90px, 0.8fr)
+    minmax(70px, 0.6fr)
     minmax(130px, 1fr)
-    minmax(110px, .9fr)
-    minmax(120px, .9fr)
+    minmax(110px, 0.9fr)
+    minmax(120px, 0.9fr)
     minmax(140px, 1.1fr)
     minmax(120px, 1fr)
     minmax(160px, 1.1fr)
-    minmax(100px, .9fr)
+    minmax(100px, 0.9fr)
     minmax(120px, 1fr)
     minmax(160px, 1.2fr)
     minmax(120px, 1fr)
@@ -159,16 +165,19 @@
   font-weight: $font-weight-bold;
   font-size: $font-size-sm;
   text-transform: uppercase;
-  letter-spacing: .5px;
+  letter-spacing: 0.5px;
   text-align: center;
 }
 
-.tableBody { background: $white; }
+.tableBody {
+  background: $white;
+}
 
 .dataRow {
   padding: $spacing-2 $spacing-3;
   border-bottom: 1px solid $gray-100;
-  transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease,
+    background-color 0.2s ease;
 }
 .dataRow:hover,
 .dataRow.hovered {
@@ -176,7 +185,9 @@
   transform: translateY(-1px);
   box-shadow: $shadow-sm;
 }
-.dataRow:last-child { border-bottom: 0; }
+.dataRow:last-child {
+  border-bottom: 0;
+}
 
 .cell {
   display: flex;
@@ -210,11 +221,24 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.obsButton:hover { color: $primary-blue; }
+.obsButton:hover {
+  color: $primary-blue;
+}
 
-.currency { color: $gray-500; font-weight: $font-weight-medium; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-.percentage { color: $primary-blue; font-weight: $font-weight-semibold; }
-.emptyValue { color: $gray-400; font-style: italic; }
+.currency {
+  color: $gray-500;
+  font-weight: $font-weight-medium;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+}
+.percentage {
+  color: $primary-blue;
+  font-weight: $font-weight-semibold;
+}
+.emptyValue {
+  color: $gray-400;
+  font-style: italic;
+}
 
 .typeBadge {
   padding: $spacing-1 $spacing-2;
@@ -223,12 +247,34 @@
   font-weight: $font-weight-semibold;
   text-transform: uppercase;
 }
-.typeBadge.typeC { background: rgba($success-green, .12); color: $success-green; }
-.typeBadge.typeD { background: rgba($danger-red, .12); color: $danger-red; }
-.typeBadge.typeN { background: rgba($gray-400, .12); color: $gray-600; }
+.typeBadge.typeC {
+  background: rgba($success-green, 0.12);
+  color: $success-green;
+}
+.typeBadge.typeD {
+  background: rgba($danger-red, 0.12);
+  color: $danger-red;
+}
+.typeBadge.typeN {
+  background: rgba($gray-400, 0.12);
+  color: $gray-600;
+}
 
-.inputWrapper { position: relative; display: flex; align-items: center; width: 100%; max-width: 160px; margin: 0 auto; }
-.currencySymbol { position: absolute; left: 12px; color: $gray-600; font-weight: $font-weight-semibold; z-index: 1; }
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 160px;
+  margin: 0 auto;
+}
+.currencySymbol {
+  position: absolute;
+  left: 12px;
+  color: $gray-600;
+  font-weight: $font-weight-semibold;
+  z-index: 1;
+}
 .numberInput {
   width: 100%;
   padding: $spacing-2 $spacing-3 $spacing-2 28px;
@@ -237,54 +283,102 @@
   font-size: $font-size-sm;
   font-weight: $font-weight-medium;
   text-align: center;
-  transition: all .2s ease;
+  transition: all 0.2s ease;
 }
-.numberInput:focus { outline: none; border-color: $primary-blue; box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.12); }
-.numberInput:hover { border-color: $gray-300; }
+.numberInput:focus {
+  outline: none;
+  border-color: $primary-blue;
+  box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.12);
+}
+.numberInput:hover {
+  border-color: $gray-300;
+}
 
-.actionButtons { display: inline-flex; gap: $spacing-2; justify-content: center; }
-.actionBtn {
-    display: inline-flex;
-  align-items: center;
+.actionButtons {
+  display: inline-flex;
+  gap: $spacing-2;
   justify-content: center;
-  border-radius: $border-radius-md;
-  font-weight: $font-weight-medium;
-  transition: all 0.2s ease-in-out;
-  cursor: pointer;
-  border: none;
-  text-decoration: none;
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+}
+.actionBtn {
+  // @include m.button-base;
   width: 36px;
   height: 36px;
   border-radius: $border-radius-md;
   font-size: 16px;
 }
-.actionBtn.detailBtn { background: rgba($primary-blue, .12); color: $primary-blue; }
-.actionBtn.detailBtn:hover { background: rgba($primary-blue, .2); transform: scale(1.05); }
-.actionBtn.editBtn { background: rgba($warning-orange, .12); color: $warning-orange; }
-.actionBtn.editBtn:hover { background: rgba($warning-orange, .2); transform: scale(1.05); }
-.actionBtn.deleteBtn { background: rgba($danger-red, .12); color: $danger-red; }
-.actionBtn.deleteBtn:hover { background: rgba($danger-red, .2); transform: scale(1.05); }
-.actionIcon { font-size: 14px; }
+.actionBtn.detailBtn {
+  background: rgba($primary-blue, 0.12);
+  color: $primary-blue;
+}
+.actionBtn.detailBtn:hover {
+  background: rgba($primary-blue, 0.2);
+  transform: scale(1.05);
+}
+.actionBtn.editBtn {
+  background: rgba($warning-orange, 0.12);
+  color: $warning-orange;
+}
+.actionBtn.editBtn:hover {
+  background: rgba($warning-orange, 0.2);
+  transform: scale(1.05);
+}
+.actionBtn.deleteBtn {
+  background: rgba($danger-red, 0.12);
+  color: $danger-red;
+}
+.actionBtn.deleteBtn:hover {
+  background: rgba($danger-red, 0.2);
+  transform: scale(1.05);
+}
+.actionIcon {
+  font-size: 14px;
+}
 
 .tableFooter {
   background: linear-gradient(135deg, $gray-50 0%, $gray-100 100%);
   padding: $spacing-6 $spacing-8;
   border-top: 1px solid $gray-200;
-  flex: 0 0 auto;      /* no crece, no se contrae: toma su altura natural */
+  flex: 0 0 auto; /* no crece, no se contrae: toma su altura natural */
 }
 
-.footerContent { display: flex; justify-content: space-between; align-items: center; gap: $spacing-6; }
-.summary { display: inline-flex; align-items: center; gap: $spacing-2; }
-.summaryLabel { color: $gray-600; font-size: $font-size-sm; font-weight: $font-weight-medium; }
-.summaryValue { color: $gray-900; font-size: $font-size-base; font-weight: $font-weight-bold; }
-.totalAmount { display: inline-flex; align-items: center; gap: $spacing-3; }
-.totalLabel { color: $gray-600; font-size: $font-size-base; font-weight: $font-weight-semibold; }
-.totalValue { color: $success-green; font-size: $font-size-xl; font-weight: $font-weight-bold; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+.footerContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $spacing-6;
+}
+.summary {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+.summaryLabel {
+  color: $gray-600;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+}
+.summaryValue {
+  color: $gray-900;
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+}
+.totalAmount {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-3;
+}
+.totalLabel {
+  color: $gray-600;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+}
+.totalValue {
+  color: $success-green;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+}
 
 .drawerBackdrop {
   position: fixed;
@@ -319,23 +413,15 @@
   background: linear-gradient(135deg, $gray-50 0%, $gray-100 100%);
 }
 
-.drawerTitle { margin: 0; color: $gray-900; font-size: $font-size-xl; font-weight: $font-weight-bold; }
+.drawerTitle {
+  margin: 0;
+  color: $gray-900;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+}
 
 .closeButton {
-    display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: $border-radius-md;
-  font-weight: $font-weight-medium;
-  transition: all 0.2s ease-in-out;
-  cursor: pointer;
-  border: none;
-  text-decoration: none;
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+  // @include m.button-base;
   width: 36px;
   height: 36px;
   background: $white;
@@ -344,29 +430,37 @@
   border-radius: $border-radius-md;
   font-size: 18px;
 }
-.closeButton:hover { background: $gray-50; color: $danger-red; }
+.closeButton:hover {
+  background: $gray-50;
+  color: $danger-red;
+}
 
-.drawerBody { flex: 1; padding: $spacing-6; overflow-y: auto; display: grid; gap: $spacing-4; }
+.drawerBody {
+  flex: 1;
+  padding: $spacing-6;
+  overflow-y: auto;
+  display: grid;
+  gap: $spacing-4;
+}
 
-.formGroup { display: flex; flex-direction: column; justify-content: left; align-items: left; gap: $spacing-2; }
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  justify-content: left;
+  align-items: left;
+  gap: $spacing-2;
+}
 
-.formLabel { color: $gray-800; font-size: $font-size-sm; font-weight: $font-weight-semibold; }
+.formLabel {
+  color: $gray-800;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+}
 
 .formInput,
 .formSelect,
 .formTextarea {
-  width: 100%;
-  padding: $spacing-3 $spacing-4;
-  border: 1px solid $gray-300;
-  border-radius: $border-radius-md;
-  font-size: $font-size-base;
-  transition: border-color 0.2s ease-in-out;
-
-  &:focus {
-    outline: none;
-    border-color: $primary-blue;
-    box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.1);
-  }
+  // @include m.input-base;
   border-width: 2px;
   border-color: $gray-200;
   border-radius: $border-radius-md;
@@ -375,9 +469,19 @@
   text-align: left;
 }
 
-.formInput { width: 200px; padding: $spacing-2; }
-.formInputCurrency { padding-left: 28px; text-align: left; }
-.formTextarea { resize: vertical; min-height: 90px; font-family: inherit; }
+.formInput {
+  width: 200px;
+  padding: $spacing-2;
+}
+.formInputCurrency {
+  padding-left: 28px;
+  text-align: left;
+}
+.formTextarea {
+  resize: vertical;
+  min-height: 90px;
+  font-family: inherit;
+}
 .formSelect {
   cursor: pointer;
   background-position: right 12px center;
@@ -396,51 +500,31 @@
 }
 
 .cancelButton {
-    display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: $border-radius-md;
-  font-weight: $font-weight-medium;
-  transition: all 0.2s ease-in-out;
-  cursor: pointer;
-  border: none;
-  text-decoration: none;
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+  // @include m.button-base;
   background: $white;
   color: $gray-700;
   border: 2px solid $gray-200;
   padding: $spacing-3 $spacing-5;
   border-radius: $border-radius-md;
 }
-.cancelButton:hover { background: $gray-50; border-color: $gray-300; }
+.cancelButton:hover {
+  background: $gray-50;
+  border-color: $gray-300;
+}
 
 .saveButton {
-    display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: $border-radius-md;
-  font-weight: $font-weight-medium;
-  transition: all 0.2s ease-in-out;
-  cursor: pointer;
-  border: none;
-  text-decoration: none;
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+  // @include m.button-base;
   background: $primary-blue;
   color: $white;
   padding: $spacing-3 $spacing-5;
   border-radius: $border-radius-md;
   box-shadow: $shadow-sm;
 }
-.saveButton:hover { background: $primary-blue-dark; transform: translateY(-1px); box-shadow: $shadow-md; }
-
+.saveButton:hover {
+  background: $primary-blue-dark;
+  transform: translateY(-1px);
+  box-shadow: $shadow-md;
+}
 
 .modalOverlay {
   position: fixed;
@@ -482,24 +566,11 @@
   color: $gray-900;
   font-size: $font-size-lg;
   font-weight: $font-weight-bold;
-  letter-spacing: .2px;
+  letter-spacing: 0.2px;
 }
 
 .modalClose {
-    display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: $border-radius-md;
-  font-weight: $font-weight-medium;
-  transition: all 0.2s ease-in-out;
-  cursor: pointer;
-  border: none;
-  text-decoration: none;
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+  // @include m.button-base;
   width: 36px;
   height: 36px;
   background: $white;
@@ -508,7 +579,10 @@
   border-radius: $border-radius-md;
   font-size: 18px;
 }
-.modalClose:hover { background: $gray-50; color: $danger-red; }
+.modalClose:hover {
+  background: $gray-50;
+  color: $danger-red;
+}
 
 .modalBody {
   padding: $spacing-5;
@@ -527,26 +601,39 @@
     max-height: 85vh;
     border-radius: $border-radius-lg;
   }
-  .modalBody { padding: $spacing-4; }
+  .modalBody {
+    padding: $spacing-4;
+  }
 }
 
-
-
 @media (max-width: 768px) {
-  .headerContent { flex-direction: column; gap: $spacing-4; }
-  .footerContent { flex-direction: column; gap: $spacing-4; }
-  .drawer { width: 100vw; border-top-left-radius: 0; border-bottom-left-radius: 0; }
+  .headerContent {
+    flex-direction: column;
+    gap: $spacing-4;
+  }
+  .footerContent {
+    flex-direction: column;
+    gap: $spacing-4;
+  }
+  .drawer {
+    width: 100vw;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
   .tableHeader,
   .drawerHeader,
   .drawerBody,
-  .drawerFooter { padding-left: $spacing-4; padding-right: $spacing-4; }
+  .drawerFooter {
+    padding-left: $spacing-4;
+    padding-right: $spacing-4;
+  }
 }
 
 /* OVERLAY DE CARGA */
 .loadingOverlay {
   position: absolute;
   inset: 0;
-  background: rgba(255,255,255,0.72);
+  background: rgba(255, 255, 255, 0.72);
   backdrop-filter: blur(2px);
   display: flex;
   flex-direction: column;
@@ -560,7 +647,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 3px solid rgba(0,0,0,0.1);
+  border: 3px solid rgba(0, 0, 0, 0.1);
   border-top-color: $primary-blue;
   animation: spin 0.8s linear infinite;
 }
@@ -571,17 +658,38 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-
-.headerActions { display: inline-flex; align-items: center; gap: 12px; }
-.headerSearch { min-width: 260px; width: clamp(240px, 32vw, 420px); }
-.searchSpinner { width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.5);border-top-color:#fff;animation:spin .8s linear infinite; }
-.headerStickyWrap { position: sticky; top: 0; z-index: 10; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-
+.headerActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+.headerSearch {
+  min-width: 260px;
+  width: clamp(240px, 32vw, 420px);
+}
+.searchSpinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-top-color: #fff;
+  animation: spin 0.8s linear infinite;
+}
+.headerStickyWrap {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 .rowContext {
   margin: $spacing-4 $spacing-6 0;
@@ -622,7 +730,7 @@
   color: $gray-600;
   font-size: $font-size-xs;
   text-transform: uppercase;
-  letter-spacing: .4px;
+  letter-spacing: 0.4px;
 }
 
 .ctxValue {
@@ -662,14 +770,16 @@
 .totalValue {
   color: $gray-900;
   font-weight: $font-weight-bold;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
 }
 
 .totalValueMuted {
   color: $gray-700;
   white-space: nowrap;
   font-weight: $font-weight-semibold;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
 }
 
 .rowTotalPreview {
@@ -693,7 +803,8 @@
   color: $gray-900;
   font-size: $font-size-lg;
   font-weight: $font-weight-bold;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
 }
 
 .previewDelta {
@@ -706,9 +817,9 @@
 
 .deltaPositive {
   color: $success-green;
-  background: rgba($success-green, .12);
+  background: rgba($success-green, 0.12);
 }
 .deltaNegative {
   color: $danger-red;
-  background: rgba($danger-red, .12);
+  background: rgba($danger-red, 0.12);
 }

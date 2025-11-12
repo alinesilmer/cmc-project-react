@@ -12,8 +12,8 @@ interface MetricCardProps {
 const MetricCard: React.FC<MetricCardProps> = ({
   title,
   value,
-  change,
-  trend,
+  // change,
+  // trend,
   color,
 }) => {
   const cardColorClass = {
@@ -23,16 +23,16 @@ const MetricCard: React.FC<MetricCardProps> = ({
     green: styles.cardGreen,
   }[color];
 
-  const trendClass = trend === "up" ? styles.trendUp : styles.trendDown;
-  const trendIcon = trend === "up" ? "↑" : "↓";
+  // const trendClass = trend === "up" ? styles.trendUp : styles.trendDown;
+  // const trendIcon = trend === "up" ? "↑" : "↓";
 
   return (
     <div className={`${styles.card} ${cardColorClass}`}>
       <h3 className={styles.title}>{title}</h3>
       <p className={styles.value}>{value}</p>
-      <span className={`${styles.change} ${trendClass}`}>
+      {/* <span className={`${styles.change} ${trendClass}`}>
         {trendIcon} {change}
-      </span>
+      </span> */}
     </div>
   );
 };

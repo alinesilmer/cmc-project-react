@@ -2,7 +2,6 @@
 
 $header-h: 100px;
 
-
 .offset {
   height: $header-h;
 }
@@ -43,7 +42,9 @@ $header-h: 100px;
   color: $primary-blue;
   transition: transform $transition-fast;
 
-  &:hover { transform: scale(1.05); }
+  &:hover {
+    transform: scale(1.05);
+  }
 
   .logoIcon {
     display: flex;
@@ -67,7 +68,8 @@ $header-h: 100px;
   align-items: center;
   gap: $spacing-xl;
 
-  a, .navLink {
+  a,
+  .navLink {
     color: $dark-gray;
     font-weight: 500;
     font-size: $font-size-small;
@@ -78,7 +80,7 @@ $header-h: 100px;
     text-decoration: none;
 
     &::after {
-      content: '';
+      content: "";
       position: absolute;
       bottom: 2px;
       left: 0;
@@ -91,24 +93,46 @@ $header-h: 100px;
     &:hover,
     &:focus-visible {
       color: $primary-blue;
-      &::after { width: 100%; }
+      &::after {
+        width: 100%;
+      }
     }
   }
 
-  .navItem { position: relative; display: flex; align-items: center; }
+  .navItem {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
 
   .hasDropdown {
-    .parentRow { display: inline-flex; align-items: center; gap: $spacing-xs; }
+    .parentRow {
+      display: inline-flex;
+      align-items: center;
+      gap: $spacing-xs;
+    }
 
     .caretBtn {
-      background: none; border: 0; padding: 0; margin: 0;
-      display: inline-flex; align-items: center; justify-content: center;
-      line-height: 0; cursor: pointer; color: $dark-gray;
+      background: none;
+      border: 0;
+      padding: 0;
+      margin: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 0;
+      cursor: pointer;
+      color: $dark-gray;
       transition: transform $transition-fast, color $transition-fast;
       touch-action: manipulation;
 
-      &:hover, &:focus-visible { color: $primary-yellow; }
-      &[aria-expanded="true"] { transform: rotate(180deg); }
+      &:hover,
+      &:focus-visible {
+        color: $primary-yellow;
+      }
+      &[aria-expanded="true"] {
+        transform: rotate(180deg);
+      }
     }
 
     .dropdown {
@@ -125,7 +149,9 @@ $header-h: 100px;
       list-style: none;
 
       li {
-        margin: 0; padding: 0; text-decoration: none;
+        margin: 0;
+        padding: 0;
+        text-decoration: none;
 
         .subLink {
           display: block;
@@ -136,7 +162,8 @@ $header-h: 100px;
           transition: background-color $transition-fast, color $transition-fast;
           white-space: nowrap;
 
-          &:hover, &:focus-visible {
+          &:hover,
+          &:focus-visible {
             background-color: rgb(242, 242, 242);
             color: $primary-blue;
           }
@@ -162,23 +189,39 @@ $header-h: 100px;
     font-weight: 500;
     transition: color $transition-fast;
 
-    &:hover, &:focus-visible { color: $accent-orange; }
+    &:hover,
+    &:focus-visible {
+      color: $accent-orange;
+    }
   }
 }
 
 .searchIconBtn {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 38px; height: 38px;
-   font-size: $font-size-large;
-  background: $white; color: $dark-gray; border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  font-size: $font-size-large;
+  background: $white;
+  color: $dark-gray;
+  border: none;
   transition: background-color $transition-fast, color $transition-fast;
 }
-.searchIconBtn:hover, .searchIconBtn:focus-visible { color: $primary-blue; }
+.searchIconBtn:hover,
+.searchIconBtn:focus-visible {
+  color: $primary-blue;
+}
 
 /* ===== Mobile toggle ===== */
 .menuToggle {
-  display: none; background: none; border: 0;
-  font-size: 1.5rem; color: $dark-gray; line-height: 0; cursor: pointer;
+  display: none;
+  background: none;
+  border: 0;
+  font-size: 1.5rem;
+  color: $dark-gray;
+  line-height: 0;
+  cursor: pointer;
 }
 
 /* ===== Mobile Menu ===== */
@@ -197,33 +240,57 @@ $header-h: 100px;
     transition: background-color $transition-fast, color $transition-fast;
     border-bottom: 1px solid $light-gray;
 
-    &:hover { background-color: $light-gray; color: $primary-blue; }
+    &:hover {
+      background-color: $light-gray;
+      color: $primary-blue;
+    }
   }
 
   .mobileGroup {
     border-bottom: 1px solid $light-gray;
 
     .mobileGroupBtn {
-      width: 100%; text-align: left;
-      background: none; border: 0; padding: $spacing-md $spacing-lg;
-      display: flex; align-items: center; justify-content: space-between;
-      color: $light-gray; cursor: pointer;
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: 0;
+      padding: $spacing-md $spacing-lg;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: $light-gray;
+      cursor: pointer;
       transition: background-color $transition-fast, color $transition-fast;
 
-      &:hover, &:focus-visible { background-color: $light-gray; color: $primary-blue; }
+      &:hover,
+      &:focus-visible {
+        background-color: $light-gray;
+        color: $primary-blue;
+      }
     }
 
-    .chevron { transition: transform $transition-fast; }
-    .chevronOpen { transform: rotate(180deg); }
+    .chevron {
+      transition: transform $transition-fast;
+    }
+    .chevronOpen {
+      transform: rotate(180deg);
+    }
 
     .mobileSubmenu {
       overflow: hidden;
       a {
-        display: block; padding: $spacing-sm $spacing-xl;
-        color: $dark-gray; font-weight: 500; border-top: 1px dashed $light-gray;
+        display: block;
+        padding: $spacing-sm $spacing-xl;
+        color: $dark-gray;
+        font-weight: 500;
+        border-top: 1px dashed $light-gray;
         transition: background-color $transition-fast, color $transition-fast;
 
-        &:hover, &:focus-visible { background-color: $light-gray; color: $accent-orange; }
+        &:hover,
+        &:focus-visible {
+          background-color: $light-gray;
+          color: $accent-orange;
+        }
       }
     }
   }
@@ -231,7 +298,13 @@ $header-h: 100px;
 
 /* ===== Responsive ===== */
 @media (max-width: $breakpoint-tablet) {
-  .desktopNav { display: none; }
-  .actions { display: none; }
-  .menuToggle { display: inline-flex; }
+  .desktopNav {
+    display: none;
+  }
+  .actions {
+    display: none;
+  }
+  .menuToggle {
+    display: inline-flex;
+  }
 }

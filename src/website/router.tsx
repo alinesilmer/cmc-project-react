@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import RequireWebEditor from "../app/auth/RequireWebEditor";
 
 const Home = lazy(() => import("./app/inicio/page"));
 const Contacto = lazy(() => import("./app/contact/page"));
@@ -7,6 +8,8 @@ const NoticiasPage = lazy(() => import("./app/noticias/page"));
 const NoticiaDetail = lazy(() => import("./app/noticias/[id]/page"));
 const AdminLogin = lazy(() => import("./app/admin/login/page"));
 const AdminDashboard = lazy(() => import("./app/admin/dashboard/page"));
+const Forbidden403 = lazy(() => import("./app/forbidden403/Forbidden403"));
+
 import Header from "./components/UI/Header/Header";
 import Footer from "./components/UI/Footer/Footer";
 import NosotrosPage from "./app/nosotros/page";
@@ -22,7 +25,7 @@ import SegurosPage from "./app/seguros/page";
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
   useEffect(() => {
-    if (hash) return;            
+    if (hash) return;
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, [pathname, hash]);
   return null;
@@ -35,6 +38,15 @@ export default function WebRoutes() {
       <ScrollToTop />
 
       <Routes>
+        {/* 403 opcional */}
+        <Route path="/403" element={<Forbidden403 />} />
+        {/* RUTAS PROTEGIDAS */}
+        <Route element={<RequireWebEditor forbidAs403={false} />}>
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/dashboard-web" element={<AdminDashboard />} />
+          {/* <Route path="/admin/posts" element={<PostsList />} /> */}
+        </Route>
+
         <Route path="/" element={<Home />} />
         <Route path="/contacto" element={<Contacto />} />
         <Route path="/noticias" element={<NoticiasPage />} />
@@ -42,19 +54,17 @@ export default function WebRoutes() {
         <Route path="/nosotros" element={<NosotrosPage />} />
         <Route path="/servicios" element={<Servicios />} />
         <Route path="/notFound" element={<NotFound />} />
-
-
-         <Route path="/galeria" element={<GaleriaPage />} />
-         <Route path="/convenios" element={<ConveniosPage />} />
-         <Route path="/quinta" element={<QuintaPage />} />
-          <Route path="/cursoscap" element={<CursosCapacitacionesPage />} />
-           <Route path="/seguros" element={<SegurosPage />} />
-
+        <Route path="/galeria" element={<GaleriaPage />} />
+        <Route path="/convenios" element={<ConveniosPage />} />
+        <Route path="/quinta" element={<QuintaPage />} />
+        <Route path="/cursoscap" element={<CursosCapacitacionesPage />} />
+        <Route path="/seguros" element={<SegurosPage />} />
         {/* Admin */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        {/* ✅ alias nuevo */}
+        <Route path="/admin/dashboard-web" element={<AdminDashboard />} />
         <Route path="/admin/medicos-promo" element={<AdminMedicosPromo />} />
-
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

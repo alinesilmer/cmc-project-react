@@ -1,25 +1,24 @@
-"use client";
-
+// src/website/components/Noticias/NoticiaCard/NoticiaCard.tsx
 import { motion } from "framer-motion";
 import { FiCalendar, FiUser, FiArrowRight } from "react-icons/fi";
 import styles from "./NoticiaCard.module.scss";
-import type { Noticia } from "../../../types/index";
+import type { Noticia } from "../../../types";
 
 interface NoticiaCardProps {
   noticia: Noticia;
   onClick: () => void;
 }
 
-type TimestampLike = { toDate: () => Date };
-type Dateish = string | number | Date | TimestampLike;
+type Dateish = string | number | Date | null | undefined;
 
 function formatearFecha(fecha: Dateish): string {
+  if (!fecha) return "";
   let d: Date;
-  if (typeof fecha === "string" || typeof fecha === "number")
+  if (fecha instanceof Date) d = fecha;
+  else if (typeof fecha === "string" || typeof fecha === "number")
     d = new Date(fecha);
-  else if (fecha instanceof Date) d = fecha;
-  else d = fecha.toDate();
-
+  else return "";
+  if (isNaN(d.getTime())) return "";
   return d.toLocaleDateString("es-AR", {
     year: "numeric",
     month: "long",
@@ -28,15 +27,14 @@ function formatearFecha(fecha: Dateish): string {
 }
 
 export default function NoticiaCard({ noticia, onClick }: NoticiaCardProps) {
-  const archivo = noticia.archivo ?? "";
-  const isPdf = archivo.toLowerCase().endsWith(".pdf");
+  const portada =
+    (noticia.portada && noticia.portada.trim()) || "/placeholder.svg";
 
-  const imgSrc =
-    noticia.imagen && noticia.imagen.trim()
-      ? noticia.imagen
-      : isPdf
-      ? "/pdfImage.jpg"
-      : "/placeholder.svg";
+  const fecha =
+    formatearFecha((noticia as any).fechaCreacion) ||
+    formatearFecha((noticia as any).fecha_creacion);
+
+  const autor = noticia.autor || "Colegio Médico de Corrientes";
 
   return (
     <motion.article
@@ -46,15 +44,12 @@ export default function NoticiaCard({ noticia, onClick }: NoticiaCardProps) {
       viewport={{ once: true }}
       whileHover={{ y: -5 }}
       onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onClick()}
     >
       <div className={styles.image}>
-        <img
-          src={imgSrc}
-          alt={isPdf ? `${noticia.titulo} (PDF)` : noticia.titulo}
-          width={60}
-          height={60}
-        />
-        {isPdf && <span className={styles.pdfBadge}>PDF</span>}
+        <img src={portada} alt={noticia.titulo} />
       </div>
 
       <div className={styles.content}>
@@ -64,15 +59,15 @@ export default function NoticiaCard({ noticia, onClick }: NoticiaCardProps) {
         <div className={styles.meta}>
           <span className={styles.metaItem}>
             <FiCalendar />
-            {formatearFecha(noticia.fechaCreacion as Dateish)}
+            {fecha}
           </span>
           <span className={styles.metaItem}>
             <FiUser />
-            {noticia.autor}
+            {autor}
           </span>
         </div>
 
-        <button className={styles.readMore}>
+        <button className={styles.readMore} type="button">
           Leer más <FiArrowRight />
         </button>
       </div>

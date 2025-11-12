@@ -7,10 +7,10 @@
   padding: $spacing-sm $spacing-lg;
   border-radius: $border-radius-xl;
   font-weight: 600;
-  transition: all $transition-normal;
+  transition: all $transition-fast;
   position: relative;
   overflow: hidden;
-
+  cursor: pointer;
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
@@ -69,9 +69,20 @@
   }
 }
 
+.default {
+  // background-color: transparent;
+  color: $primary-blue;
+  border: 2px solid $primary-blue;
+  cursor: pointer;
+  // &:hover:not(:disabled) {
+  //   background-color: $primary-blue;
+  //   color: $white;
+  // }
+}
+
 .small {
-  padding: $spacing-sm $spacing-lg;
-  font-size: $font-size-large;
+  padding: 5px 10px;
+  font-size: $font-size-small;
 }
 
 .medium {

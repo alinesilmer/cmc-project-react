@@ -7,7 +7,7 @@ import styles from "./Button.module.scss";
 interface ButtonProps {
   children: React.ReactNode;
   variant?: "primary" | "secondary" | "success" | "danger" | "ghost";
-  size?: "sm" | "md" | "lg" | "xlg";
+  size?: "sm" | "md" | "lg";
   disabled?: boolean;
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
   onPointerDown?: React.PointerEventHandler<HTMLButtonElement>;
@@ -15,6 +15,7 @@ interface ButtonProps {
   type?: "button" | "submit" | "reset";
   className?: string;
   submit?: boolean;
+  /** Permite pasar aria-*, data-*, id, title, etc. */
   [key: string]: any;
 }
 
@@ -40,8 +41,8 @@ const Button: React.FC<ButtonProps> = ({
       onClick={onClick}
       onPointerDown={onPointerDown}
       onMouseDown={onMouseDown}
-      whileHover={{ scale: disabled ? 1 : 0.9 }}
-      whileTap={{ scale: disabled ? 1 : 0.85 }}
+      whileHover={{ scale: disabled ? 1 : 0.95 }}
+      whileTap={{ scale: disabled ? 1 : 0.95 }}
       transition={{ duration: 0.01 }}
       {...rest}
     >

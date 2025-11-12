@@ -1,6 +1,15 @@
 import type React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { UserLock ,Home, DollarSign, Hospital, CircleUserRound, UserCog, ChevronRight, ChevronLeft } from "lucide-react";
+import {
+  UserLock,
+  Home,
+  DollarSign,
+  Hospital,
+  CircleUserRound,
+  UserCog,
+  ChevronRight,
+  ChevronLeft,
+} from "lucide-react";
 import styles from "./Sidebar.module.scss";
 import { useAuth } from "../../../auth/AuthProvider";
 
@@ -8,35 +17,65 @@ import Logo from "../../../../../public/logoCMC.png";
 
 import Button from "../../atoms/Button/Button";
 import { useState } from "react";
+import RequirePermission from "../../../auth/RequirePermission";
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
-  const { user ,logout } = useAuth();
+  const { user, logout } = useAuth();
   const nav = useNavigate();
   const [wrapped, setWrapped] = useState(false);
-
+  const base = "/panel";
   const baseItems = [
-    { path: "/dashboard", icon: Home, label: "Inicio" },
-    { path: "/admin/permissions", icon: UserLock, label: "Permisos y roles" },
-    { path: "/liquidation", icon: DollarSign, label: "Liquidación" },
-    { path: "/padron-ioscor", icon: Hospital, label: "Padron IOSCOR" },
+    { path: `${base}/dashboard`, icon: Home, label: "Inicio" },
+    {
+      path: `${base}/admin/permissions`,
+      icon: UserLock,
+      label: "Permisos y roles",
+      perms: ["rbac:gestionar"],
+    },
+    {
+      path: `${base}/liquidation`,
+      icon: DollarSign,
+      label: "Liquidación",
+      perms: ["liquidacion:leer", "liquidacion:ver"],
+    },
+    {
+      path: `${base}/padron-ioscor`,
+      icon: Hospital,
+      label: "Padron IOSCOR",
+      perms: ["facturacion_ioscor:leer"],
+    },
+    {
+      path: `${base}/users-manager`,
+      icon: UserCog,
+      label: "Gestión de Usuarios",
+      perms: ["medicos:leer"],
+    },
     // { path: "/config", icon: Cog, label: "Configuración" },                  // ← COMENTADO (punto 5)
     // { path: "/help", icon: MessageCircleQuestionMark, label: "Ayuda" },       // ← COMENTADO (punto 5)
-    { path: "/users-manager", icon: UserCog, label: "Gestión de Usuarios"},
   ];
 
   // Agregar “Inicio de Sesión” solo si NO hay user
   const menuItems = !user
-    ? [...baseItems, { path: "/login", icon: CircleUserRound, label: "Inicio de Sesión" }]
+    ? [
+        ...baseItems,
+        {
+          path: `${base}/login`,
+          icon: CircleUserRound,
+          label: "Inicio de Sesión",
+        },
+      ]
     : baseItems;
 
   const onClick = async () => {
     try {
       await logout();
     } finally {
-      nav("/login", { replace: true });
+      nav(`${base}/login`, { replace: true });
     }
   };
+  const isActivePath = (curr: string, target: string) =>
+    curr === target || curr.startsWith(target + "/");
 
   return (
     <div className={`${styles.sidebar} ${wrapped ? styles.collapsed : ""}`}>
@@ -59,9 +98,9 @@ const Sidebar: React.FC = () => {
       <nav className={styles.nav}>
         {menuItems.map((item) => {
           const Icon = item.icon;
-          const isActive = location.pathname === item.path;
+          const isActive = isActivePath(location.pathname, item.path);
 
-          return (
+          const linkEl = (
             <Link
               key={item.path}
               to={item.path}
@@ -70,6 +109,16 @@ const Sidebar: React.FC = () => {
               <Icon size={20} />
               <span className={styles.itemLabel}>{item.label}</span>
             </Link>
+          );
+
+          // Si no hay permisos requeridos, render directo
+          if (!item.perms || item.perms.length === 0) return linkEl;
+
+          // Si hay permisos, envolver con RequirePermission (anyOf)
+          return (
+            <RequirePermission key={item.path} anyOf={item.perms}>
+              {linkEl}
+            </RequirePermission>
           );
         })}
       </nav>
@@ -84,11 +133,7 @@ const Sidebar: React.FC = () => {
           <MessageCircleQuestionMark size={20} />
           <span className={styles.itemLabel}>Ayuda</span>
         </Link> */}
-        <Button
-          variant="danger"
-          onClick={onClick}
-          size="sm"
-        >
+        <Button variant="danger" onClick={onClick} size="sm">
           Cerrar sesión
         </Button>
       </div>

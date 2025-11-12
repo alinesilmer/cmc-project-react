@@ -20,6 +20,29 @@ export type RegisterPayload = {
   cbu?: string | null;
   condicionImpositiva?: string | null;
   observations?: string | null;
+
+  provincialLicense?: string | null;
+  nationalLicense?: string | null;
+  graduationDate?: string | null;
+  specialty?: string | null;
+  resolutionNumber?: string | null;
+  provincialLicenseDate?: string | null;
+  nationalLicenseDate?: string | null;
+  resolutionDate?: string | null;
+  birthDate?: string | null;
+  anssal?: string | null;
+  anssalExpiry?: string | null;
+  malpracticeCompany?: string | null;
+  malpracticeExpiry?: string | null;
+  malpracticeCoverage?: string | null;
+  coverageExpiry?: string | null;
+  taxCondition?: string | null;
+  specialties?: {
+    id_colegio_espe: number;
+    n_resolucion?: string | null;
+    fecha_resolucion?: string | null;
+    adjunto?: string | null;
+  }[];
 };
 
 export function buildRegisterPayload(form: any): RegisterPayload {
@@ -41,6 +64,22 @@ export function buildRegisterPayload(form: any): RegisterPayload {
     cbu: form.cbu || null,
     condicionImpositiva: form.taxCondition || null,
     observations: form.observations || null,
+    provincialLicense: form.provincialLicense || null,
+    nationalLicense: form.nationalLicense || null,
+    graduationDate: form.graduationDate || null,
+    specialty: form.specialty || null,
+    resolutionNumber: form.resolutionNumber || null,
+    provincialLicenseDate: form.provincialLicenseDate || null,
+    nationalLicenseDate: form.nationalLicenseDate || null,
+    resolutionDate: form.resolutionDate || null,
+    birthDate: form.birthDate || null,
+    anssal: form.anssal || null,
+    anssalExpiry: form.anssalExpiry || null,
+    malpracticeCompany: form.malpracticeCompany || null,
+    malpracticeExpiry: form.malpracticeExpiry || null,
+    malpracticeCoverage: form.malpracticeCoverage || null,
+    coverageExpiry: form.coverageExpiry || null,
+    taxCondition: form.taxCondition || null,
   };
 }
 
@@ -67,15 +106,31 @@ export type DocLabel =
 /* ===== endpoints ===== */
 
 export async function registerMedico(
-  input: RegisterFormData | RegisterPayload
+  input: RegisterFormData | RegisterPayload,
+  specialtiesPayload?: RegisterPayload["specialties"]
 ): Promise<RegisterResponse> {
-  const payload: RegisterPayload =
-    (input as any).documentType ? (input as RegisterPayload) : buildRegisterPayload(input);
+  const payload: RegisterPayload = (input as any).documentType
+    ? (input as RegisterPayload)
+    : buildRegisterPayload(input);
+
+  if (specialtiesPayload && specialtiesPayload.length) {
+    payload.specialties = specialtiesPayload.map((it) => ({
+      id_colegio_espe: Number(it.id_colegio_espe),
+      n_resolucion: it.n_resolucion ?? null,
+      fecha_resolucion: it.fecha_resolucion ?? null,
+      adjunto: it.adjunto ?? null,
+    }));
+  }
+
   return await postJSON<RegisterResponse>("/api/medicos/register", payload);
 }
 
 // ⬇ queda igual, pero asegúrate de NO setear Content-Type a mano
-export async function uploadMedicoDocumento(medicoId: number, file: File, label?: string) {
+export async function uploadMedicoDocumento(
+  medicoId: number,
+  file: File,
+  label?: string
+) {
   const fd = new FormData();
   fd.append("file", file, file.name);
   if (label) fd.append("label", label);
@@ -98,8 +153,7 @@ export const DOC_LABEL_MAP: Record<string, string> = {
   anssalImg: "anssal",
   polizaImg: "malapraxis",
   cbuImg: "cbu",
-}
-
+};
 
 // opcional: listar solicitudes si armás panel admin
 export async function listSolicitudes(params?: {
@@ -168,7 +222,10 @@ function inferLabelFromKey(k: string): DocLabel | null {
  * Envía el registro y sube adjuntos.
  * NO maneja toasts ni loaders: lo hacés en tu Register.tsx como ya tenés.
  */
-export async function sendRegister(formData: any, files: Record<string, File | null>) {
+export async function sendRegister(
+  formData: any,
+  files: Record<string, File | null>
+) {
   // 1) registrar
   const payload = buildRegisterPayload(formData);
   const { medico_id } = await registerMedico(payload);

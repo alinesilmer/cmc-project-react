@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import styles from "./Login.module.scss";
 import Button from "../../components/atoms/Button/Button";
 import { useAuth } from "../../auth/AuthProvider";
+import { isWebEditor } from "../../auth/roles";
+import { http } from "../../lib/http";
 
 function Login() {
   const [isMember, setIsMember] = useState<boolean | null>(null);
@@ -10,10 +12,25 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
+  const hasLegacyAccess = (scopes?: string[]) =>
+    !!scopes?.some((s) =>
+      [
+        "legacy:access",
+        "legacy:facturador",
+        "facturador",
+        "facturas:ver",
+      ].includes(s)
+    );
+
+  const isDoctor = (scopes?: string[]) =>
+    !!scopes?.some(
+      (s) =>
+        typeof s === "string" &&
+        /^(medicos?|legacy:(doctor|medico))(:|$)/i.test(s.trim())
+    );
 
   const ETICA_PDF = "https://colegiomedicocorrientes.com/CMC092025.pdf";
 
-  
   const goMember = () => {
     setIsMember(true);
     setError("");
@@ -21,7 +38,7 @@ function Login() {
 
   const goRegister = () => {
     setIsMember(false);
-    navigate("/register");
+    navigate("/panel/register");
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -40,10 +57,38 @@ function Login() {
 
     setLoading(true);
     try {
-      await login(nro, p);                 // 👉 /auth/login del backend
-      navigate("/dashboard", { replace: true });
+      const me = await login(nro, p); // ahora devuelve el User
+      // if (isWebEditor(me.scopes)) {
+      //   navigate("/admin/dashboard-web", { replace: true });
+      // } else {
+      //   navigate("/panel/dashboard", { replace: true });
+      // }
+      console.log(me);
+      if (hasLegacyAccess(me.scopes)) {
+        console.log("wepsss");
+        // pedimos al backend un enlace de SSO hacia el legacy
+        const { data } = await http.get("/auth/legacy/sso-link", {
+          params: { next: "/principal.php" }, // o la primera página del legacy
+        });
+        window.location.href = data.url; // redirige al legacy con sesión abierta
+        return;
+      }
+
+      if (isDoctor(me.scopes)) {
+        const next = `/menu.php?nro_socio1=${encodeURIComponent(me.nro_socio)}`;
+        const { data } = await http.get("/auth/legacy/sso-link", {
+          params: { next },
+        });
+        window.location.href = data.url;
+        return;
+      }
+
+      if (isWebEditor(me.scopes)) {
+        navigate("/admin/dashboard-web", { replace: true });
+      } else {
+        navigate("/panel/dashboard", { replace: true });
+      }
     } catch (err: any) {
-      console.log(err)
       const apiMsg =
         err?.response?.data?.detail ??
         err?.response?.data?.message ??
@@ -76,16 +121,10 @@ function Login() {
 
         <div className={styles.content}>
           <div className={styles.headerRow}>
-            <h3 className={styles.ethicsTitle}>
-          <a
-            href={ETICA_PDF}
-            download="Valores_Eticos_Minimos.pdf"
-            className={styles.ethicsLink}
-          >
-            Ver Valores Éticos Mínimos
-          </a>
-        </h3>
             <div className={styles.title}>
+              <Link to="/" className={styles.linkBackToLanding}>
+                Volver a la pagina
+              </Link>
               <h1 className={styles.heading}>
                 {isMember ? "¡Bienvenido!" : "Inicio de Sesión"}
               </h1>
@@ -115,7 +154,11 @@ function Login() {
             )}
 
             {isMember && (
-              <form className={styles.loginForm} onSubmit={handleSubmit} noValidate>
+              <form
+                className={styles.loginForm}
+                onSubmit={handleSubmit}
+                noValidate
+              >
                 {error && (
                   <div
                     className={styles.errorBox}
@@ -157,7 +200,7 @@ function Login() {
 
                 <div className={styles.formActions}>
                   <Button
-                    submit            
+                    submit
                     variant="primary"
                     size="md"
                     className={styles.cta}
@@ -177,14 +220,24 @@ function Login() {
               Recuperar cuenta
             </Link> */}
             {!isMember && (
-              <Link to="/info" className={styles.linkMuted}>
+              <Link to="/panel/info" className={styles.linkMuted}>
                 Requisitos para Registrarse
               </Link>
             )}
           </div>
         </div>
-
-        <aside className={styles.media} aria-hidden />
+        <aside className={styles.media} aria-hidden>
+          <h3 className={styles.ethicsTitle}>
+            <a
+              href={ETICA_PDF}
+              download="Valores_Eticos_Minimos.pdf"
+              className={styles.ethicsLink}
+              target="__blank"
+            >
+              Ver Valores Éticos Mínimos
+            </a>
+          </h3>
+        </aside>
       </section>
     </div>
   );

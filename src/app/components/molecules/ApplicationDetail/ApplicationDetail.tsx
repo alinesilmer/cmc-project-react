@@ -6,7 +6,8 @@ import { useNavigate, useParams } from "react-router-dom";
 // import type { Application } from "../../../types/types";
 import styles from "./ApplicationDetail.module.scss";
 import SuccessModal from "../SuccessModal/SuccessModal";
-import { getJSON, postJSON } from "../../../../shared/lib/http";
+import { getJSON, postJSON } from "../../../lib/http";
+import BackButton from "../../../components/atoms/BackButton/BackButton";
 
 
 export type SolicitudListItem = {
@@ -146,12 +147,8 @@ const ApplicationDetail: React.FC = () => {
       <div className={styles.container}>
         <div className={styles.notFound}>
           <h2>Solicitud no encontrada</h2>
-          <button
-            onClick={() => navigate("/solicitudes")}
-            className={styles.backButton}
-          >
-            Volver a Solicitudes
-          </button>
+          <BackButton />
+          
         </div>
       </div>
     );
@@ -168,9 +165,7 @@ const ApplicationDetail: React.FC = () => {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <button className={styles.backButton} onClick={() => navigate("/solicitudes")}>
-          ← Volver a Solicitudes
-        </button>
+        <BackButton />
       </div>
 
       <div className={styles.content}>

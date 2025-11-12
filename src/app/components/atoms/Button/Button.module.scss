@@ -2,7 +2,7 @@
 @import "@/app/styles/mixins.scss";
 
 .button {
-    display: inline-flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: $border-radius-md;
@@ -16,32 +16,31 @@
     opacity: 0.5;
     cursor: not-allowed;
   }
-  
+
   &.primary {
     background-color: $primary-blue;
     color: $white;
     text-decoration: none;
-    
+
     &:hover:not(:disabled) {
       background-color: $primary-blue-dark;
       color: white;
     }
   }
-  
+
   &.secondary {
     background-color: $gray-100;
     color: $gray-700;
-    
+
     &:hover:not(:disabled) {
       background-color: $gray-200;
     }
   }
-  
-   
+
   &.secondary {
     background-color: $gray-100;
     color: $gray-700;
-    
+
     &:hover:not(:disabled) {
       background-color: $gray-200;
     }
@@ -49,43 +48,42 @@
   &.success {
     background-color: $success-green;
     color: $white;
-    
+
     &:hover:not(:disabled) {
       background-color: $success-green;
     }
   }
-  
+
   &.danger {
     background-color: $danger-red;
     color: $white;
-    
+
     &:hover:not(:disabled) {
       background-color: $danger-red;
     }
   }
-  
+
   &.ghost {
     background-color: transparent;
     color: $primary-blue;
-    
+
     &:hover:not(:disabled) {
       background-color: $secondary-blue;
     }
   }
-  
+
   &.sm {
     padding: $spacing-2 $spacing-3;
     font-size: $font-size-sm;
   }
-  
+
   &.md {
     padding: $spacing-3 $spacing-4;
     font-size: $font-size-base;
   }
-  
+
   &.lg {
     padding: $spacing-4 $spacing-6;
     font-size: $font-size-lg;
   }
-
 }
