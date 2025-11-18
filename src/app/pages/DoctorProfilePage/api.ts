@@ -197,6 +197,47 @@ export async function getMedicoDetail(id: number | string) {
   return getJSON<DoctorProfile>(MEDICOS(id));
 }
 
+export const UPDATE_WHITELIST = [
+  // personales
+  "name",
+  "nombre_",
+  "apellido",
+  "sexo",
+  "documento",
+  "cuit",
+  "fecha_nac",
+  "existe",
+  "provincia",
+  "localidad",
+  "codigo_postal",
+  "domicilio_particular",
+  "tele_particular",
+  "celular_particular",
+  "mail_particular",
+
+  // profesionales
+  "nro_socio",
+  "categoria",
+  "titulo",
+  "matricula_prov",
+  "matricula_nac",
+  "fecha_recibido",
+  "fecha_matricula",
+  "domicilio_consulta",
+  "telefono_consulta",
+
+  // impositivos
+  "condicion_impositiva",
+  "anssal",
+  "cobertura",
+  "vencimiento_anssal",
+  "malapraxis",
+  "vencimiento_malapraxis",
+  "vencimiento_cobertura",
+  "cbu",
+  "observacion",
+] as const;
+
 export const updateMedico = (
   id: string | number,
   payload: Record<string, any>

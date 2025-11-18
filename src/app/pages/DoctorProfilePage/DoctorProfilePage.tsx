@@ -1,8 +1,8 @@
 // app/pages/DoctorProfile/DoctorProfilePage.tsx
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import { Pencil, Plus, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import DatePicker from "react-datepicker";
@@ -21,7 +21,6 @@ import type {
   Role,
   Permission,
   Option,
-  AssocEspMode,
   Especialidad,
 } from "./api";
 
@@ -43,81 +42,84 @@ import {
   setOverride,
   getEffective,
   updateMedico,
+  UPDATE_WHITELIST,
 } from "./api";
+
+const WL = new Set<string>(UPDATE_WHITELIST as unknown as string[]);
+
+const DATE_FIELDS = new Set([
+  "fecha_nac",
+  "fecha_recibido",
+  "fecha_matricula",
+  "fecha_resolucion",
+  "vencimiento_anssal",
+  "vencimiento_malapraxis",
+  "vencimiento_cobertura",
+]);
+
+// si NO querés que alguno sea numérico, simplemente sacalo de acá.
+const INT_FIELDS = new Set([
+  "anssal",
+  "cobertura",
+  "nro_socio",
+  "matricula_prov",
+  "matricula_nac",
+]);
+
+// ====== HELPERS CHIQUITOS ======
 const isBlankish = (v: any) =>
   v === undefined || v === null || (typeof v === "string" && v.trim() === "");
+const isDashish = (v: any) => typeof v === "string" && /^-+$/.test(v.trim());
 
-const isDashish = (v: any) =>
-  typeof v === "string" && ["—", "-", "N/A", "n/a"].includes(v.trim());
-
-const toYmd2 = (d: any): string | null => {
-  if (!d) return null;
-  // d puede venir como Date, "YYYY-MM-DD" o "dd-MM-yyyy"
-  if (d instanceof Date && !isNaN(d.getTime())) {
+const toYmd2 = (v: any): string | null => {
+  if (!v) return null;
+  if (v instanceof Date && !isNaN(v as any)) {
+    const d = v as Date;
     const mm = String(d.getMonth() + 1).padStart(2, "0");
     const dd = String(d.getDate()).padStart(2, "0");
     return `${d.getFullYear()}-${mm}-${dd}`;
   }
-  if (typeof d === "string") {
-    const s = d.trim();
-    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s; // ya OK
-    // dd-MM-yyyy → yyyy-MM-dd
-    const m = s.match(/^(\d{2})-(\d{2})-(\d{4})$/);
-    if (m) return `${m[3]}-${m[2]}-${m[1]}`;
-  }
-  return null;
+  const s = String(v).trim();
+  if (!s) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s; // ya viene yyyy-mm-dd
+  const m = s.match(/^(\d{2})-(\d{2})-(\d{4})$/); // dd-mm-yyyy
+  if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+  return s; // lo dejas pasar y el back lo normaliza si quiere
 };
 
-const normalizePatch = (raw: Record<string, any>) => {
+// ====== EL ÚNICO NORMALIZE QUE NECESITÁS ======
+export function normalizePatch(input: Record<string, any>) {
   const out: Record<string, any> = {};
-  Object.entries(raw || {}).forEach(([k, v]) => {
-    if (isBlankish(v) || isDashish(v)) {
+
+  for (const [k, raw] of Object.entries(input || {})) {
+    // 1) fuera lo que no esté en la whitelist
+    if (!WL.has(k)) continue;
+
+    // 2) "" o "-----" -> null
+    if (isBlankish(raw) || isDashish(raw)) {
       out[k] = null;
-      return;
+      continue;
     }
 
-    // fechas conocidas
-    if (
-      [
-        "fecha_nac",
-        "fecha_recibido",
-        "fecha_matricula",
-        "fecha_resolucion",
-        "vencimiento_anssal",
-        "vencimiento_malapraxis",
-        "vencimiento_cobertura",
-      ].includes(k)
-    ) {
-      out[k] = toYmd2(v);
-      return;
+    // 3) fechas
+    if (DATE_FIELDS.has(k)) {
+      out[k] = toYmd2(raw);
+      continue;
     }
 
-    // enteros comunes que a veces vienen como string
-    if (
-      [
-        "anssal",
-        "cobertura",
-        "nro_socio",
-        "matricula_prov",
-        "matricula_nac",
-      ].includes(k)
-    ) {
-      const s = String(v).replace(/\./g, "").replace(/,/g, "").trim();
+    // 4) enteros "amigables"
+    if (INT_FIELDS.has(k)) {
+      const s = String(raw).replace(/\./g, "").replace(/,/g, "").trim();
       out[k] = /^\d+$/.test(s) ? Number(s) : null;
-      return;
+      continue;
     }
 
-    out[k] = v;
-  });
+    // 5) default: lo que venga
+    out[k] = raw;
+  }
+
   return out;
-};
-// function formatDDMMYYYY(d: Date | null | undefined) {
-//   if (!d) return "";
-//   const dd = String(d.getDate()).padStart(2, "0");
-//   const mm = String(d.getMonth() + 1).padStart(2, "0");
-//   const yyyy = String(d.getFullYear());
-//   return `${dd}-${mm}-${yyyy}`;
-// }
+}
 
 function toYmd(d?: Date | null): string | null {
   if (!d) return null;
@@ -894,6 +896,8 @@ const DoctorProfilePage: React.FC = () => {
                                   Object.entries(draft).forEach(([k, v]) => {
                                     if (v !== undefined) payload[k] = v;
                                   });
+                                  console.log("Queriendo editar");
+                                  console.log(normalizePatch(payload));
                                   await updateMedico(
                                     data.id,
                                     normalizePatch(payload)
