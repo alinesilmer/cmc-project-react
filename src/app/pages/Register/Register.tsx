@@ -24,7 +24,7 @@ const RegisterPage: React.FC = () => {
         setSpecialties([]);
       }
       try {
-        const mod = await import("../../assets/adherente.json");
+        const mod = await import("../../assets/adherenteDoctor.json");
         setAnimData(mod.default);
       } catch {
         setAnimData(null);

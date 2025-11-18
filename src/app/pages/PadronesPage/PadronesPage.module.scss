@@ -1,0 +1,13 @@
+.page {
+  min-height: 100vh;
+  background: #f9fafb;
+}
+
+.formWrapper {
+  transition: filter 0.3s;
+
+  &.blurred {
+    filter: blur(4px);
+    pointer-events: none;
+  }
+}

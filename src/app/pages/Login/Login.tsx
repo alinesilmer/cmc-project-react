@@ -41,6 +41,10 @@ function Login() {
     navigate("/panel/register");
   };
 
+  const goObrasSociales = () => {
+    navigate("/panel/obras-sociales");
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
@@ -60,15 +64,6 @@ function Login() {
       const me = await login(nro, p);
       console.log(me);
 
-      // if (hasLegacyAccess(me.scopes)) {
-      //   console.log("wepsss");
-      //   // pedimos al backend un enlace de SSO hacia el legacy
-      //   const { data } = await http.get("/auth/legacy/sso-link", {
-      //     params: { next: "/principal.php" }, // o la primera página del legacy
-      //   });
-      //   window.location.href = data.url; // redirige al legacy con sesión abierta
-      //   return;
-      // }
       if (isWebEditor(me.scopes)) {
         navigate("/admin/dashboard-web", { replace: true });
         return;
@@ -84,9 +79,9 @@ function Login() {
         window.location.href = data.url;
       } else if (me.role != "medico") {
         const { data } = await http.get("/auth/legacy/sso-link", {
-          params: { next: "/principal.php" }, // o la primera página del legacy
+          params: { next: "/principal.php" },
         });
-        window.location.href = data.url; // redirige al legacy con sesión abierta
+        window.location.href = data.url;
       }
     } catch (err: any) {
       const apiMsg =
@@ -106,6 +101,11 @@ function Login() {
 
   return (
     <div className={styles.container}>
+      <div className={styles.btnBack}>
+        <Link to="/" className={styles.linkBackToLanding}>
+                Volver a la página
+              </Link>
+              </div>
       <section className={styles.card}>
         {isMember && (
           <button
@@ -122,9 +122,6 @@ function Login() {
         <div className={styles.content}>
           <div className={styles.headerRow}>
             <div className={styles.title}>
-              <Link to="/" className={styles.linkBackToLanding}>
-                Volver a la pagina
-              </Link>
               <h1 className={styles.heading}>
                 {isMember ? "¡Bienvenido!" : "Inicio de Sesión"}
               </h1>
@@ -149,6 +146,9 @@ function Login() {
                 </Button>
                 <Button variant="secondary" size="md" onClick={goRegister}>
                   Quiero ser socio
+                </Button>
+                <Button variant="third" size="md" onClick={goObrasSociales}>
+                  Asociarme como Obra Social
                 </Button>
               </>
             )}
@@ -216,9 +216,6 @@ function Login() {
 
           <div className={styles.divider} aria-hidden />
           <div className={styles.bottomLinks}>
-            {/* <Link to="/recover" className={styles.link}>
-              Recuperar cuenta
-            </Link> */}
             {!isMember && (
               <Link to="/panel/info" className={styles.linkMuted}>
                 Requisitos para Registrarse
@@ -231,7 +228,6 @@ function Login() {
             <a
               href={ETICA_PDF}
               download="Valores_Eticos_Minimos.pdf"
-              className={styles.ethicsLink}
               target="__blank"
             >
               Ver Valores Éticos Mínimos

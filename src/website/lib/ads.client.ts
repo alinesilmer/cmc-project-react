@@ -44,8 +44,8 @@ export async function createAd(
   fd.append("medico_id", String(fields.medico_id));
   fd.append("activo", String(fields.activo ?? true));
   fd.append("adjunto", file);
-  const { data } = await http.post("/api/publicidad-medicos/", fd);
-  return data as PubAd;
+  // const { data } = await http.post("/api/publicidad-medicos/", fd);
+  // return data as PubAd;
 }
 
 export async function updateAd(

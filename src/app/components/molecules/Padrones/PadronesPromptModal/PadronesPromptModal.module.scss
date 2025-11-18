@@ -1,0 +1,89 @@
+@import "../../../../styles/variables.scss";
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.modal {
+  background: #fff;
+  width: 100%;
+  max-width: 520px;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  padding: 24px;
+  position: relative;
+}
+
+.close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border: 0;
+  background: transparent;
+  font-size: 24px;
+  cursor: pointer;
+  color: #6b7280;
+}
+
+.animWrap {
+  display: grid;
+  place-items: center;
+  margin-bottom: 8px;
+}
+
+.fallback {
+  font-size: 64px;
+}
+
+.title {
+  margin: 0 0 6px 0;
+  font-size: 20px;
+  color: #111827;
+  text-align: center;
+}
+
+.msg {
+  margin: 0 0 16px 0;
+  color: #4b5563;
+  text-align: center;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.primary {
+  background: #1d4ed8;
+  color: #fff;
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primary:hover {
+  background: #153ead;
+}
+
+.secondary {
+  background: #f3f4f6;
+  color: #111827;
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.secondary:hover {
+  background: #e5e7eb;
+}

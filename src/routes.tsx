@@ -26,7 +26,9 @@ import Login from "./app/pages/Login/Login";
 import Register from "./app/pages/Register/Register";
 import Info from "./app/pages/Info/Info";
 import AdherenteForm from "./app/components/molecules/AdherenteForm/AdherenteForm";
-
+import ObrasSocialesRegisterPage from "./app/pages/ObrasSocialesRegisterPage/ObrasSocialesRegisterPage";
+import PadronesPage
+ from "./app/pages/PadronesPage/PadronesPage";
 // WEBSITE
 import WebRoutes from "./website/router";
 
@@ -39,6 +41,7 @@ export default function RootRoutes() {
 
         {/* Auth pages for app */}
         <Route path="/panel/login" element={<Login />} />
+        <Route path="/panel/register-os" element={<ObrasSocialesRegisterPage />} />
         <Route path="/panel/register" element={<Register />} />
         <Route path="/panel/info" element={<Info />} />
         <Route path="/panel/adherente" element={<AdherenteForm />} />
@@ -60,6 +63,7 @@ export default function RootRoutes() {
               element={<LiquidationCyclePage />}
             />
             <Route path="/panel/padron-ioscor" element={<PadronIoscor />} />
+            <Route path="/panel/padrones" element={<PadronesPage />} />
             <Route
               path="/panel/liquidation/:id/debitos"
               element={<DiscountsPage />}
