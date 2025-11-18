@@ -135,9 +135,9 @@ export const HeroVideo: FC = () => {
           transition={{ duration: 0.7, delay: 0.45 }}
         >
           {/* <a href="/panel/login"> */}
-          <button className={styles.cta} onClick={handleEntrarValidar}>
+          <Button variant="primary" size="xlg" onClick={handleEntrarValidar}>
             Entrar a Validar
-          </button>
+          </Button>
           {/* </a> */}
         </motion.div>
       </div>

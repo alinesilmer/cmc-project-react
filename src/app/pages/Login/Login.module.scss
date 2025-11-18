@@ -9,12 +9,20 @@
   min-height: 100dvh;
   width: 100%;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-image: url("https://i.pinimg.com/736x/42/3b/a5/423ba5391ab4b1c912b125da7c604f7a.jpg");
+  background-color: rgb(241, 241, 241);
   background-size: cover;
+  gap: 3rem;
   padding: $spacing-6;
 }
+
+.btnBack {
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
 
 .card {
   width: min(100%, 950px);
@@ -36,6 +44,7 @@
 .media {
   flex: 1 1 50%;
 }
+
 
 .content {
   display: flex;
@@ -150,17 +159,20 @@
   }
 }
 
+
 .media h3 a {
-  padding: 8px 20px;
-  border: 2px solid #3b5fd9;
-  background-color: #e2e8f0;
+  padding: 2rem 3rem;
+  background-color: $black;
   border-radius: 8px;
   text-decoration: none;
-  color: #0f172a;
+  color: white;
+  font-weight: 700;
+  border-radius: 1rem;
+  font-size: $font-size-3xl;
 }
 
 .media h3 a:hover {
-  color: #3b5fd9;
+  background-color: $primary-blue-dark;
 }
 
 .loginForm {
@@ -177,6 +189,7 @@
     margin-top: $spacing-3;
   }
 }
+
 
 .label {
   font-size: $font-size-sm;
@@ -335,7 +348,6 @@
   text-decoration: none;
   color: #0f172a;
   font-weight: 500;
-  width: 100%;
 }
 
 .linkBackToLanding:hover {

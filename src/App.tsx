@@ -30,6 +30,9 @@ import AdherenteForm from "./app/components/molecules/AdherenteForm/AdherenteFor
 import UsersList from "./app/pages/UsersList/UsersList";
 import RegisterSocio from "./app/pages/RegisterSocio/RegisterSocio";
 import PermissionsManager from "./app/pages/PermissionsManager/PermissionsManager";
+import ObrasSocialesRegisterPage from "./app/pages/ObrasSocialesRegisterPage/ObrasSocialesRegisterPage";
+import PadronesPage from "./app/pages/PadronesPage/PadronesPage";
+
 
 function App() {
   const { user } = useAuth();
@@ -60,8 +63,10 @@ function App() {
               <Route path="/doctors/:id" element={<DoctorProfilePage />} />
               <Route path="/social-works" element={<SocialWorksPage />} />
               <Route path="/liquidation" element={<LiquidationPage />} />
+              <Route path="/panel/register-os" element={<ObrasSocialesRegisterPage />} />
               <Route path="/liquidation/:id" element={<LiquidationCyclePage />} />
               <Route path="/padron-ioscor" element={<PadronIoscor />} />
+              <Route path="/panel/padrones" element={<PadronesPage />} />
               <Route path="/liquidation/:id/debitos" element={<DiscountsPage />} />
               <Route path="/liquidation/:id/insurance/:osId/:period/:liquidacionId" element={<InsuranceDetail />} />
               <Route path="/solicitudes" element={<ApplicationsList />} />

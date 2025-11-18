@@ -6,7 +6,7 @@ import styles from "./Button.module.scss";
 
 interface ButtonProps {
   children: React.ReactNode;
-  variant?: "primary" | "secondary" | "success" | "danger" | "ghost";
+  variant?: "primary" | "secondary" | "success" | "danger" | "ghost" | "third";
   size?: "sm" | "md" | "lg";
   disabled?: boolean;
   onClick?: React.MouseEventHandler<HTMLButtonElement>;

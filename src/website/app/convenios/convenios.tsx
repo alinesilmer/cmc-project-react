@@ -6,15 +6,12 @@ import styles from "./convenios.module.scss";
 import Button from "../../components/UI/Button/Button";
 
 const adicionalesNombres: string[] = [
-  "AAMM (ASCARGMUTMOTO)",
-  "AMMECO",
   "ASCMUTUAL PROTECCION FAMILIAR",
   "ASOCIACIÓN MUTUAL SANCOR",
   "ASSISTRAVEL",
   "AVALIAN",
   "BOREAL SALUD",
   "BRAMED SRL",
-  "COMECOR (AMUR)",
   "CONDUCTORES NAVALES",
   "CONFERENCIA EPISCOPAL ARG",
   "DASUTEN",
