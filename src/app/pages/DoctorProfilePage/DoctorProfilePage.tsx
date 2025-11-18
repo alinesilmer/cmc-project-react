@@ -11,180 +11,154 @@ import "react-datepicker/dist/react-datepicker.css";
 import Card from "../../components/atoms/Card/Card";
 import Button from "../../components/atoms/Button/Button";
 import styles from "./DoctorProfilePage.module.scss";
-import {
-  LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip,
-  ResponsiveContainer, BarChart, Bar, Legend,
-} from "recharts";
+
 import RequirePermission from "../../auth/RequirePermission";
-import { getJSON, postJSON, patchJSON, putJSON, delJSON } from "../../lib/http"; 
 import BackButton from "../../components/atoms/BackButton/BackButton";
-/* ===== Etiquetas amistosas ===== */
-const ROLE_LABELS: Record<string, string> = {
-  admin: "Administrador/a",
-  medico: "Médico/a",
-  facturador: "Facturador/a",
-  liquidador: "Liquidador/a",
-  contador: "Contador/a",
-};
-const PERM_LABELS: Record<string, string> = {
-  "rbac:gestionar": "Gestionar permisos",
-  "medicos:ver": "Ver médicos",
-  "medicos:editar": "Editar médicos",
-  "facturas:abrir": "Abrir facturas",
-  "facturas:cerrar": "Cerrar facturas",
-  "facturas:refacturar": "Refacturar",
-  "liquidacion:ver": "Ver liquidaciones",
-  "liquidacion:procesar": "Procesar liquidaciones",
-  "contabilidad:ver": "Ver contabilidad",
-  "contabilidad:asientos": "Cargar asientos",
-};
-const permLabel = (code: string) =>
-  PERM_LABELS[code] ??
-  code
-    .split(":")
-    .pop()!
-    .replace(/[_.-]/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+import type {
+  DoctorProfile,
+  DoctorDocument,
+  DoctorEspecialidad,
+  Role,
+  Permission,
+  Option,
+  AssocEspMode,
+  Especialidad,
+} from "./api";
 
-/* ========= API ========= */
-const RBAC = `/api/admin/rbac`;
-const R_ROLES      = () => `${RBAC}/roles`;
-const R_PERMS      = () => `${RBAC}/permissions`;
-const R_USER_ROLES = (uid: number | string) => `${RBAC}/users/${uid}/roles`;
-const R_ADD_ROLE   = (uid: number | string, role: string) =>
-  `${RBAC}/users/${uid}/roles/${encodeURIComponent(role)}`;
-const R_DEL_ROLE   = (uid: number | string, role: string) =>
-  `${RBAC}/users/${uid}/roles/${encodeURIComponent(role)}`;
-const R_OVERRIDES  = (uid: number | string) =>
-  `${RBAC}/users/${uid}/permissions/overrides`;
-const R_SET_OVERRIDE = (uid: number | string, code: string, allow: boolean) =>
-  `${RBAC}/users/${uid}/permissions/${encodeURIComponent(code)}?allow=${allow ? "true" : "false"}`;
-// const R_CLR_OVERRIDE = (uid: number | string, code: string) =>
-//   `${RBAC}/users/${uid}/permissions/${encodeURIComponent(code)}`;
-const R_EFFECTIVE = (uid: number | string) =>
-  `${RBAC}/users/${uid}/permissions/effective`;
+import {
+  getMedicoDetail,
+  getMedicoDocumentos,
+  getMedicoEspecialidades,
+  getListEspecialidades,
+  addMedicoEspecialidad,
+  editMedicoEspecialidad,
+  removeMedicoEspecialidad,
+  uploadDocumento,
+  listRoles,
+  listPermissions,
+  getUserRoles,
+  addUserRole,
+  delUserRole,
+  getOverrides,
+  setOverride,
+  getEffective,
+  updateMedico,
+} from "./api";
+const isBlankish = (v: any) =>
+  v === undefined || v === null || (typeof v === "string" && v.trim() === "");
 
-const M              = (id: string | number) => `/api/medicos/${id}`;
-const M_DEUDA        = (id: string | number) => `/api/medicos/${id}/deuda`;
-const M_DOCS         = (id: string | number) => `/api/medicos/${id}/documentos`;
-const M_STATS        = (id: string | number, months = 6) =>
-  `/api/medicos/${id}/stats?months=${months}`;
-const M_DEUDA_MANUAL = (id: string | number) => `/api/medicos/${id}/deudas_manual`;
+const isDashish = (v: any) =>
+  typeof v === "string" && ["—", "-", "N/A", "n/a"].includes(v.trim());
 
-const M_CONCEPTS   = (id: string | number) => `/api/medicos/${id}/conceptos`;
-const M_ESPEC_ASOC = (id: string | number) => `/api/medicos/${id}/especialidades`;
-const M_ASSOC      = (id: string | number) => `/api/medicos/${id}/ce_bundle`;
-
-/* catálogos */
-const DESCUENTOS_URL     = "/api/descuentos";
-const ESPECIALIDADES_URL = "/api/especialidades/";
-
-/* ========= Tipos ========= */
-type DoctorDocument = { id: string; label: string; fileName: string; url: string };
-type DoctorProfile = {
-  id: number;
-  memberNumber: string;
-  name: string;
-  provincialReg: string;
-  nationalReg: string;
-  email?: string;
-  phone?: string;
-  specialty?: string;
-  address?: string;
-  hasDebt: boolean;
-  debtDetail?: { amount: number; lastInvoice?: string; since?: string };
-  documents: DoctorDocument[];
+const toYmd2 = (d: any): string | null => {
+  if (!d) return null;
+  // d puede venir como Date, "YYYY-MM-DD" o "dd-MM-yyyy"
+  if (d instanceof Date && !isNaN(d.getTime())) {
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${d.getFullYear()}-${mm}-${dd}`;
+  }
+  if (typeof d === "string") {
+    const s = d.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s; // ya OK
+    // dd-MM-yyyy → yyyy-MM-dd
+    const m = s.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+    if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+  }
+  return null;
 };
 
-type StatsPoint = { month: string; consultas: number; facturado: number; [k: string]: any };
+const normalizePatch = (raw: Record<string, any>) => {
+  const out: Record<string, any> = {};
+  Object.entries(raw || {}).forEach(([k, v]) => {
+    if (isBlankish(v) || isDashish(v)) {
+      out[k] = null;
+      return;
+    }
+
+    // fechas conocidas
+    if (
+      [
+        "fecha_nac",
+        "fecha_recibido",
+        "fecha_matricula",
+        "fecha_resolucion",
+        "vencimiento_anssal",
+        "vencimiento_malapraxis",
+        "vencimiento_cobertura",
+      ].includes(k)
+    ) {
+      out[k] = toYmd2(v);
+      return;
+    }
+
+    // enteros comunes que a veces vienen como string
+    if (
+      [
+        "anssal",
+        "cobertura",
+        "nro_socio",
+        "matricula_prov",
+        "matricula_nac",
+      ].includes(k)
+    ) {
+      const s = String(v).replace(/\./g, "").replace(/,/g, "").trim();
+      out[k] = /^\d+$/.test(s) ? Number(s) : null;
+      return;
+    }
+
+    out[k] = v;
+  });
+  return out;
+};
+// function formatDDMMYYYY(d: Date | null | undefined) {
+//   if (!d) return "";
+//   const dd = String(d.getDate()).padStart(2, "0");
+//   const mm = String(d.getMonth() + 1).padStart(2, "0");
+//   const yyyy = String(d.getFullYear());
+//   return `${dd}-${mm}-${yyyy}`;
+// }
+
+function toYmd(d?: Date | null): string | null {
+  if (!d) return null;
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+const fmt = (v: any) =>
+  v === undefined || v === null || v === "" ? "—" : String(v);
+const fmtDate = (s?: string | null) =>
+  s ? new Date(s).toLocaleDateString("es-AR") : "—";
+
 type TabKey =
   | "datos"
-  | "deudas"
+  // | "deudas"
   | "documentos"
-  | "reportes"
+  // | "reportes"
   | "conceptos"
   | "especialidades"
   | "permisos";
 
-const currency = new Intl.NumberFormat("es-AR", {
-  style: "currency",
-  currency: "ARS",
-  maximumFractionDigits: 0,
-});
-
-type Installment = { n: number; dueDate: string; amount: number };
-type DebtDraft = {
-  concept: string;
-  amount: number | "";
-  mode: "full" | "installments";
-  qty: number;
-  firstDue: Date;
-};
-
-type ConceptApp = {
-  resumen_id: number;
-  periodo: string;
-  created_at?: string | null;
-  monto_aplicado: number;
-  porcentaje_aplicado: number;
-};
-type DoctorConcept = {
-  concepto_id: number; // nro_colegio
-  concepto_nro_colegio?: number | null;
-  concepto_nombre?: string | null;
-  saldo: number;
-  aplicaciones: ConceptApp[];
-};
-type DoctorEspecialidad = { id: number; nombre?: string | null };
-
-type Option = { id: string; label: string }; // id = nro_colegio (para conceptos) / ID (para especialidad)
-
-function parseBody(raw: any) {
-  if (raw == null) return undefined;
-  if (typeof raw === "string") {
-    try { return raw ? JSON.parse(raw) : undefined; } catch { return raw; }
-  }
-  // FormData / Blob / objetos ya serializados
-  return raw;
-}
-
-export async function fetchJSON<T = any>(url: string, init: RequestInit = {}): Promise<T> {
-  const method = (init.method || "GET").toUpperCase();
-  const body = parseBody((init as any).body);
-
-  switch (method) {
-    case "GET":
-      return getJSON<T>(url);
-
-    case "POST":
-      return postJSON<T>(url, body);
-
-    case "PATCH":
-      // Si tu patchJSON no acepta body, ajustalo aquí.
-      return patchJSON<T>(url, body);
-
-    case "PUT":
-      return putJSON<T>(url, body);
-
-    case "DELETE":
-      // Si tu deleteJSON no acepta body, cambialo por: return deleteJSON<T>(url);
-      return delJSON<T>(url);
-
-    default:
-      // Último recurso: tratamos cualquier otro método como POST con override
-      // (si tu backend lo soporta) — o creá el helper específico.
-      // @ts-ignore: algunos postJSON aceptan opciones extra
-      return getJSON<T>(url);
-  }
-}
-
-type Role = { name: string; description?: string };
-type Permission = { code: string; description?: string };
-
 const DoctorProfilePage: React.FC = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
+  const medicoId = id!;
 
-  // perms
+  const [tab, setTab] = useState<TabKey>("datos");
+
+  // perfil
+  const [data, setData] = useState<DoctorProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Editar perfil
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // mantenemos un draft parcial; solo mandamos lo que cambia
+  const [draft, setDraft] = useState<Partial<DoctorProfile>>({});
+
+  // rbac
   const [rolesAll, setRolesAll] = useState<Role[]>([]);
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [permList, setPermList] = useState<Permission[]>([]);
@@ -192,131 +166,151 @@ const DoctorProfilePage: React.FC = () => {
   const [effective, setEffective] = useState<string[]>([]);
   const [rbacLoading, setRbacLoading] = useState(false);
 
-  const [data, setData] = useState<DoctorProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<TabKey>("datos");
-
-  // deuda
-  const [showAddDebt, setShowAddDebt] = useState(false);
-  const [draft, setDraft] = useState<DebtDraft>({
-    concept: "",
-    amount: "",
-    mode: "full",
-    qty: 3,
-    firstDue: new Date(),
-  });
-
-  // stats
-  const [stats, setStats] = useState<StatsPoint[]>([]);
-  const [statsKeys, setStatsKeys] = useState<string[]>([]);
-
-  // conceptos (desc por nro_colegio)
-  const [concepts, setConcepts] = useState<DoctorConcept[]>([]);
-  const [conceptsLoading, setConceptsLoading] = useState(false);
-  const [conceptsErr, setConceptsErr] = useState<string | null>(null);
-
   // especialidades
   const [especs, setEspecs] = useState<DoctorEspecialidad[]>([]);
-  const [especLoading, setEspecLoading] = useState(false);
+  const [espLoading, setEspLoading] = useState(false);
   const [especErr, setEspecErr] = useState<string | null>(null);
+  // conceptos (desc por nro_colegio)
+  // const [concepts, setConcepts] = useState<DoctorConcept[]>([]);
+  // const [conceptsLoading, setConceptsLoading] = useState(false);
+  // const [conceptsErr, setConceptsErr] = useState<string | null>(null);
+
+  // documentos
+  const [docs, setDocs] = useState<DoctorDocument[]>([]);
+  const [docsLoading, setDocsLoading] = useState(false);
 
   // catálogos
-  const [descOptions, setDescOptions] = useState<Option[]>([]); // id = nro_colegio
-  const [espOptions, setEspOptions] = useState<Option[]>([]); // id = Especialidad.ID
+  // const [descOptions, setDescOptions] = useState<Option[]>([]); // id = nro_colegio
+  // const [espOptions, setEspOptions] = useState<Option[]>([]); // id = Especialidad.ID
 
   // asociar modales
-  const [assocDescOpen, setAssocDescOpen] = useState(false);
-  const [assocDescId, setAssocDescId] = useState<string>(""); // nro_colegio
-  const [assocDescBusy, setAssocDescBusy] = useState(false);
+  // const [assocDescOpen, setAssocDescOpen] = useState(false);
+  // const [assocDescId, setAssocDescId] = useState<string>(""); // nro_colegio
+  // const [assocDescBusy, setAssocDescBusy] = useState(false);
+  const [rmEspBusy, setRmEspBusy] = useState<number | null>(null); // Especialidad.ID
 
   const [assocEspOpen, setAssocEspOpen] = useState(false);
   const [assocEspId, setAssocEspId] = useState<string>(""); // Especialidad.ID
   const [assocEspBusy, setAssocEspBusy] = useState(false);
 
+  const [assocEspResol, setAssocEspResol] = useState<string>(""); // N° resolución
+  // const [assocEspFecha, setAssocEspFecha] = useState<Date | null>(null); // Fecha resolución
+  // const [assocEspAdjId, setAssocEspAdjId] = useState<string>(""); // ID del Documento (opcional)
+  // const [assocEspMode, setAssocEspMode] = useState<AssocEspMode>("add");
+  // const [assocEspEditId, setAssocEspEditId] = useState<number | null>(null);
+
+  // ---- AGREGAR especialidads
+  const [assocEspDate, setAssocEspDate] = useState<Date | null>(null);
+  const [assocEspFile, setAssocEspFile] = useState<File | null>(null);
+
+  // ---- EDITAR especialidad
+  const [editEspOpen, setEditEspOpen] = useState(false);
+  const [editEspId, setEditEspId] = useState<number | null>(null); // id_colegio
+  const [editEspResol, setEditEspResol] = useState("");
+  const [editEspDate, setEditEspDate] = useState<Date | null>(null);
+  const [editEspFile, setEditEspFile] = useState<File | null>(null);
+  const [editEspBusy, setEditEspBusy] = useState(false);
+
   // quitar busy
-  const [rmConceptBusy, setRmConceptBusy] = useState<number | null>(null); // nro_colegio
-  const [rmEspBusy, setRmEspBusy] = useState<number | null>(null); // Especialidad.ID
+  // const [rmConceptBusy, setRmConceptBusy] = useState<number | null>(null); // nro_colegio
+  const [espOptions, setEspOptions] = useState<Option[]>([]);
+  // const [permBusy, setPermBusy] = useState<string | null>(null);
 
-  const [permBusy, setPermBusy] = useState<string | null>(null);
-
-  async function refreshPermState(uid: string | number) {
-    const [ovs, eff] = await Promise.all([
-      fetchJSON<{ code: string; allow: boolean }[]>(R_OVERRIDES(uid)),
-      fetchJSON<{ permissions: string[] }>(R_EFFECTIVE(uid)),
-    ]);
-    const map: Record<string, boolean> = {};
-    ovs.forEach((o) => { map[o.code] = o.allow; });
-    setOverrides(map);
-    setEffective(eff.permissions);
+  async function loadEspec() {
+    setEspLoading(true);
+    try {
+      const r = await getMedicoEspecialidades(medicoId);
+      setEspecs(r);
+    } finally {
+      setEspLoading(false);
+    }
   }
-  /* ===== carga básica ===== */
+
+  function setField<K extends keyof DoctorProfile>(
+    key: K,
+    val: DoctorProfile[K]
+  ) {
+    setDraft((d) => ({ ...d, [key]: val }));
+  }
+
+  const RText = (key: keyof DoctorProfile, placeholder = "") => (
+    <input
+      className={styles.input}
+      value={(draft[key] as any) ?? ""}
+      onChange={(e) => setField(key, e.target.value as any)}
+      placeholder={placeholder}
+    />
+  );
+
+  // input numérico
+  const RNumber = (key: keyof DoctorProfile) => (
+    <input
+      className={styles.input}
+      value={(draft[key] as any) ?? ""}
+      onChange={(e) =>
+        setField(
+          key,
+          e.target.value === "" ? ("" as any) : (Number(e.target.value) as any)
+        )
+      }
+      inputMode="numeric"
+    />
+  );
+
+  // selector sexo (si aplicara)
+  const RSexo = (key: keyof DoctorProfile = "sexo") => (
+    <select
+      className={styles.select}
+      value={(draft[key] as any) ?? ""}
+      onChange={(e) => setField(key, e.target.value as any)}
+    >
+      <option value="">—</option>
+      <option value="M">Masculino</option>
+      <option value="F">Femenino</option>
+    </select>
+  );
+
+  const RCondicion_impositiva = (
+    key: keyof DoctorProfile = "condicion_impositiva"
+  ) => (
+    <select
+      className={styles.select}
+      value={(draft[key] as any) ?? ""}
+      onChange={(e) => setField(key, e.target.value as any)}
+    >
+      <option value="">—</option>
+      <option value="Monotributista">Monotributista</option>
+      <option value="Responsable Inscripto">Responsable Inscripto</option>
+      <option value="Exento">Exento</option>
+      <option value="Rentas">Rentas</option>
+    </select>
+  );
+
+  // fecha con DatePicker (almacenamos en draft como string "YYYY-MM-DD")
+  const RDate = (key: keyof DoctorProfile) => {
+    const curr = draft[key] as string | null | undefined;
+    const asDate = curr ? new Date(curr) : null;
+    return (
+      <DatePicker
+        selected={asDate}
+        onChange={(d) => setField(key, toYmd(d) as any)}
+        className={styles.dateInput}
+        dateFormat="dd-MM-yyyy"
+        placeholderText="dd-MM-aaaa"
+        closeOnScroll
+        showPopperArrow={false}
+      />
+    );
+  };
+
   useEffect(() => {
     let alive = true;
     (async () => {
-      if (!id) return;
       setLoading(true);
       try {
-        const [base, debt, docs, st] = await Promise.all([
-          fetchJSON(M(id)),
-          fetchJSON(M_DEUDA(id)),
-          fetchJSON(M_DOCS(id)),
-          fetchJSON(M_STATS(id, 6)),
-        ]);
+        const d = await getMedicoDetail(medicoId);
         if (!alive) return;
-
-        const profile: DoctorProfile = {
-          id: Number(base.id),
-          memberNumber: String(base.nro_socio ?? ""),
-          name: String(base.nombre ?? "—"),
-          provincialReg: String(base.matricula_prov ?? ""),
-          nationalReg: String(base.matricula_nac ?? ""),
-          email: base.mail_particular ?? undefined,
-          phone: base.telefono_consulta ?? undefined,
-          specialty: base.categoria ?? undefined,
-          address: base.domicilio_consulta ?? undefined,
-          hasDebt: Boolean(debt.has_debt),
-          debtDetail: {
-            amount: Number(debt.amount || 0),
-            lastInvoice: debt.last_invoice ?? undefined,
-            since: debt.since ?? undefined,
-          },
-          documents: (docs as any[]).map((d) => ({
-            id: String(d.id),
-            label: String(d.label ?? "-"),
-            fileName: String(d.file_name ?? d.fileName ?? "archivo"),
-            url: String(d.url ?? "#"),
-          })),
-        };
-
-        // stats
-        const dynKeysSet = new Set<string>();
-        const stPoints: StatsPoint[] = (st as any[]).map((row) => {
-          const p: StatsPoint = {
-            month: String(row.month),
-            consultas: Number(row.consultas || 0),
-            facturado: Number(row.facturado || 0),
-          };
-          const obras = row.obras || {};
-          for (const k of Object.keys(obras)) {
-            p[k] = Number(obras[k] || 0);
-            dynKeysSet.add(k);
-          }
-          return p;
-        });
-        const totalsByKey: Record<string, number> = {};
-        for (const k of dynKeysSet)
-          totalsByKey[k] = stPoints.reduce((a, r) => a + (Number(r[k]) || 0), 0);
-        const chosen = Object.entries(totalsByKey)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 6)
-          .map(([k]) => k);
-
-        setData(profile);
-        setStats(stPoints);
-        setStatsKeys(chosen);
-      } catch (e) {
-        console.error(e);
-        setData(null);
+        setData(d);
       } finally {
         if (alive) setLoading(false);
       }
@@ -324,250 +318,109 @@ const DoctorProfilePage: React.FC = () => {
     return () => {
       alive = false;
     };
-  }, [id]);
+  }, [medicoId]);
 
-  /* ===== catálogos para selects (dedupe por clave correcta) ===== */
   useEffect(() => {
+    if (tab !== "permisos") return;
     let alive = true;
     (async () => {
+      setRbacLoading(true);
       try {
-        if (descOptions.length === 0) {
-          const ds = await fetchJSON<any[]>(DESCUENTOS_URL);
-          if (alive) {
-            const seen = new Set<number>();
-            const opts: Option[] = [];
-            for (const d of ds || []) {
-              const nro = Number(d.nro_colegio);
-              if (!Number.isFinite(nro) || seen.has(nro)) continue;
-              seen.add(nro);
-              opts.push({
-                id: String(nro),
-                label: `${nro} — ${d.nombre ?? ""}`.trim(),
-              });
-            }
-            setDescOptions(
-              opts.sort((a, b) => Number(a.id) - Number(b.id))
-            );
-          }
-        }
-        if (espOptions.length === 0) {
-          const esps = await fetchJSON<any[]>(ESPECIALIDADES_URL);
-          if (alive) {
-            const opts: Option[] = (esps || []).map((s) => {
-              const id = String(s.id ?? s.ID);
-              const name = s.nombre ?? s.ESPECIALIDAD ?? "";
-              return { id, label: `${id} — ${name}`.trim() };
-            });
-            setEspOptions(opts);
-          }
-        }
-      } catch {
-        /* noop */
+        const [allRoles, userRs, permsAll, ovs, eff] = await Promise.all([
+          listRoles(),
+          getUserRoles(medicoId),
+          listPermissions(),
+          getOverrides(medicoId),
+          getEffective(medicoId),
+        ]);
+        if (!alive) return;
+        setRolesAll(allRoles);
+        setUserRoles(userRs.map((r) => r.name));
+        setPermList(permsAll);
+        const map: Record<string, boolean> = {};
+        ovs.forEach((o) => (map[o.code] = o.allow));
+        setOverrides(map);
+        setEffective(eff.permissions);
+      } finally {
+        if (alive) setRbacLoading(false);
       }
     })();
     return () => {
       alive = false;
     };
-  }, [descOptions.length, espOptions.length]);
-
-  /* ===== loaders por solapa ===== */
-  const loadConcepts = async () => {
-    if (!id) return;
-    setConceptsLoading(true);
-    setConceptsErr(null);
-    try {
-      const list = await fetchJSON<any[]>(M_CONCEPTS(id)); // cada item -> nro_colegio
-      const norm: DoctorConcept[] = (list || []).map((c) => ({
-        concepto_id: Number(c.concepto_id), // nro_colegio
-        concepto_nro_colegio: Number(c.concepto_nro_colegio ?? c.concepto_id),
-        concepto_nombre: c.concepto_nombre ?? null,
-        saldo: Number(c.saldo || 0),
-        aplicaciones: (c.aplicaciones || []).map((a: any) => ({
-          resumen_id: Number(a.resumen_id),
-          periodo: String(a.periodo || ""),
-          created_at: a.created_at ? String(a.created_at) : null,
-          monto_aplicado: Number(a.monto_aplicado || 0),
-          porcentaje_aplicado: Number(a.porcentaje_aplicado || 0),
-        })),
-      }));
-      const seen = new Set<number>();
-      const uniq = norm.filter((r) =>
-        seen.has(r.concepto_id) ? false : (seen.add(r.concepto_id), true)
-      );
-      setConcepts(uniq);
-    } catch (e: any) {
-      setConceptsErr(e?.message || "No se pudieron cargar los conceptos.");
-    } finally {
-      setConceptsLoading(false);
-    }
-  };
-
-  const loadEspec = async () => {
-    if (!id) return;
-    setEspecLoading(true);
-    setEspecErr(null);
-    try {
-      const list = await fetchJSON<any[]>(M_ESPEC_ASOC(id));
-      const norm: DoctorEspecialidad[] = (list || []).map((r) => ({
-        id: Number(r.id),
-        nombre: r.nombre ?? null,
-      }));
-      const seen = new Set<number>();
-      const uniq = norm.filter((r) =>
-        seen.has(r.id) ? false : (seen.add(r.id), true)
-      );
-      setEspecs(uniq);
-    } catch (e: any) {
-      setEspecErr(e?.message || "No se pudieron cargar las especialidades.");
-    } finally {
-      setEspecLoading(false);
-    }
-  };
+  }, [tab, medicoId]);
 
   useEffect(() => {
-    if (!id) return;
-    if (tab === "conceptos") loadConcepts();
-    if (tab === "especialidades") loadEspec();
-  }, [tab, id]);
-
-  useEffect(() => {
-    if (!id) return;
-    if (tab !== "permisos") return;
+    if (tab !== "especialidades") return;
+    let alive = true;
     (async () => {
+      setEspLoading(true);
       try {
-        setRbacLoading(true);
-        const [allRoles, rolesUsr, perms, ovs, eff] = await Promise.all([
-          fetchJSON<Role[]>(R_ROLES()),
-          fetchJSON<{ name: string }[]>(R_USER_ROLES(id)),
-          fetchJSON<Permission[]>(R_PERMS()),
-          fetchJSON<{ code: string; allow: boolean }[]>(R_OVERRIDES(id)),
-          fetchJSON<{ permissions: string[] }>(R_EFFECTIVE(id)),
-        ]);
-        setRolesAll(allRoles);
-        setUserRoles(rolesUsr.map((r) => r.name));
-        setPermList(perms);
-        const map: Record<string, boolean> = {};
-        ovs.forEach((o) => {
-          map[o.code] = o.allow;
-        });
-        setOverrides(map);
-        setEffective(eff.permissions);
+        const r = await getMedicoEspecialidades(medicoId);
+        if (!alive) return;
+        setEspecs(r);
       } finally {
-        setRbacLoading(false);
+        if (alive) setEspLoading(false);
       }
     })();
-  }, [tab, id]);
+    return () => {
+      alive = false;
+    };
+  }, [tab, medicoId]);
 
-  /* ===== deuda ===== */
-  const schedule = useMemo<Installment[] | undefined>(() => {
-    if (draft.mode !== "installments" || !draft.amount || draft.qty <= 0)
-      return undefined;
-    const total = Number(draft.amount);
-    const base = Math.round((total / draft.qty) * 100) / 100;
-    const arr: Installment[] = [];
-    const start = new Date(draft.firstDue);
-    start.setHours(12, 0, 0, 0);
-    for (let i = 0; i < draft.qty; i++) {
-      const d = new Date(start);
-      d.setMonth(d.getMonth() + i);
-      arr.push({
-        n: i + 1,
-        dueDate: d.toISOString().slice(0, 10),
-        amount: base,
-      });
-    }
-    const sum = arr.reduce((a, it) => a + it.amount, 0);
-    const diff = Math.round((total - sum) * 100) / 100;
-    if (diff !== 0)
-      arr[arr.length - 1].amount = Math.round(
-        (arr[arr.length - 1].amount + diff) * 100
-      ) / 100;
-    return arr;
-  }, [draft.mode, draft.amount, draft.qty, draft.firstDue]);
-  const debtInfo = data?.debtDetail;
+  useEffect(() => {
+    if (tab !== "documentos") return;
+    let alive = true;
+    (async () => {
+      setDocsLoading(true);
+      try {
+        const r = await getMedicoDocumentos(medicoId);
+        if (!alive) return;
+        setDocs(r);
+      } finally {
+        if (alive) setDocsLoading(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [tab, medicoId]);
 
-  const handleDownloadAll = async () => {
-    if (!data) return;
-    for (const doc of data.documents) {
-      const a = document.createElement("a");
-      a.href = doc.url;
-      a.download = doc.fileName;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    }
-  };
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const list = await getListEspecialidades(); // ← tu endpoint real
+        if (!alive) return;
 
-  const saveDebt = async () => {
-    if (!id) return;
-    if (!draft.concept || draft.amount === "" || Number(draft.amount) <= 0) {
-      alert("Completá concepto y monto.");
-      return;
-    }
-    try {
-      const body =
-        draft.mode === "full"
-          ? { concept: draft.concept, amount: Number(draft.amount), mode: "full" as const }
-          : {
-              concept: draft.concept,
-              amount: Number(draft.amount),
-              mode: "installments" as const,
-              installments: (schedule ?? []).map((q) => ({
-                n: q.n,
-                due_date: q.dueDate,
-                amount: q.amount,
-              })),
-            };
+        // IMPORTANTE: muchas veces el backend usa como "id de colegio" un campo distinto.
+        // Tomamos id_colegio_espe si viene; si no, caemos a id.
+        const opts = (list || []).map((e: Especialidad) => ({
+          id: String(e.id_colegio_espe ?? e.id),
+          label: e.nombre || `ID ${e.id}`,
+        }));
 
-      const res = await fetchJSON(M_DEUDA_MANUAL(id), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      setData((prev) =>
-        prev
-          ? {
-              ...prev,
-              hasDebt: !!res.has_debt,
-              debtDetail: {
-                amount: Number(res.amount || 0),
-                lastInvoice: res.last_invoice ?? prev.debtDetail?.lastInvoice,
-                since: res.since ?? prev.debtDetail?.since,
-              },
-            }
-          : prev
-      );
-      setShowAddDebt(false);
-      setDraft({ concept: "", amount: "", mode: "full", qty: 3, firstDue: new Date() });
-    } catch (e: any) {
-      alert(e?.message || "No se pudo crear la deuda.");
-    }
-  };
+        setEspOptions(opts);
+      } catch (err) {
+        // si querés, podés dejar un fallback silencioso
+        setEspOptions([]);
+        console.error("No se pudo cargar especialidades:", err);
+      }
+    })();
 
-  /* ===== disponibles (filtrar los ya asociados) ===== */
-  const descAvailable = useMemo(() => {
-    const taken = new Set(concepts.map((c) => c.concepto_id)); // nro_colegio
-    return descOptions.filter((o) => !taken.has(Number(o.id)));
-  }, [descOptions, concepts]);
-
-  const espAvailable = useMemo(() => {
-    const taken = new Set(especs.map((e) => e.id));
-    return espOptions.filter((o) => !taken.has(Number(o.id)));
-  }, [espOptions, especs]);
-
-  const tabs: { key: TabKey; label: string }[] = [
-    { key: "datos", label: "Datos" },
-    { key: "deudas", label: "Deudas" },
-    { key: "documentos", label: "Documentos" },
-    { key: "reportes", label: "Reportes" },
-    { key: "conceptos", label: "Conceptos" },
-    { key: "especialidades", label: "Especialidades" },
-  ];
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   return (
     <div className={styles.page}>
       <div className={styles.content}>
-        <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+        >
           <div className={styles.topbar}>
             <BackButton />
             <div />
@@ -579,66 +432,82 @@ const DoctorProfilePage: React.FC = () => {
               <p>Cargando perfil…</p>
             </Card>
           ) : !data ? (
-            <Card className={styles.errorCard}><p>No se encontró el profesional solicitado.</p></Card>
+            <Card className={styles.errorCard}>
+              <p>No se encontró el profesional solicitado.</p>
+            </Card>
           ) : (
             <div className={styles.profileLayout}>
               <div className={styles.rightCol}>
                 <Card className={styles.headerCard}>
-                  <Link to={`/doctors/${data.id}/edit`} className={styles.editPencil} aria-label="Editar" title="Editar">
-                    <Pencil size={16} />
-                  </Link>
-
                   <div className={styles.profileHeader}>
                     <div className={styles.avatarSmall} aria-label={data.name}>
-                      {data.name?.split(" ").map((w) => w[0]).slice(0, 2).join("")}
+                      {data.name
+                        ?.split(" ")
+                        .map((w) => w[0])
+                        .slice(0, 2)
+                        .join("")}
                     </div>
                     <div className={styles.headerMain}>
                       <h2 className={styles.name}>{data.name}</h2>
                       <div className={styles.roleRow}>
-                        <span className={styles.role}>{data.specialty || "—"}</span>
+                        <span className={styles.location}>N° socio:</span>
+                        <span className={styles.role}>
+                          {data.nro_socio || "—"}
+                        </span>
                         <span className={styles.dot}>•</span>
-                        <span className={styles.location}>Corrientes, Capital</span>
+                        <span className={styles.location}>
+                          Mat. provincial:
+                        </span>
+                        <span className={styles.role}>
+                          {data.matricula_prov}
+                        </span>
                       </div>
-                      <div className={styles.headerMeta}>
-                        <div className={styles.headerMetaItem}><span className={styles.headerMetaLabel}>ID:</span><span className={styles.headerMetaValue}>{data.id}</span></div>
-                        <div className={styles.headerMetaItem}><span className={styles.headerMetaLabel}>Member #:</span><span className={styles.headerMetaValue}>{data.memberNumber}</span></div>
-                      </div>
+                      {/* <div className={styles.headerMeta}>
+                        <div className={styles.headerMetaItem}>
+                          <span className={styles.headerMetaLabel}>
+                            Teléfono:
+                          </span>
+                          <span className={styles.headerMetaValue}>
+                            {data.telefono_consulta}
+                          </span>
+                        </div>
+                      </div> */}
                     </div>
                   </div>
 
                   {/* Tabs */}
                   <div className={styles.tabs}>
-                    {tabs.map((t) => (
+                    {(
+                      ["datos", "documentos", "especialidades"] as TabKey[]
+                    ).map((k) => (
                       <button
-                        key={t.key}
-                        className={`${styles.tab} ${tab === t.key ? styles.tabActive : ""}`}
-                        onClick={() => setTab(t.key)}
-                        aria-current={tab === t.key ? "page" : undefined}
+                        key={k}
+                        className={`${styles.tab} ${
+                          tab === k ? styles.tabActive : ""
+                        }`}
+                        onClick={() => setTab(k)}
                       >
-                        {t.label}
-                        {tab === t.key && (
+                        {k[0].toUpperCase() + k.slice(1)}
+                        {tab === k && (
                           <motion.span
                             layoutId="tab-underline"
                             className={styles.tabUnderline}
-                            transition={{ type: "spring", stiffness: 420, damping: 30 }}
                           />
                         )}
                       </button>
                     ))}
-
-                    {/* Tab Permisos — sólo visible con permiso */}
                     <RequirePermission scope="rbac:gestionar">
                       <button
-                        className={`${styles.tab} ${tab === "permisos" ? styles.tabActive : ""}`}
+                        className={`${styles.tab} ${
+                          tab === "permisos" ? styles.tabActive : ""
+                        }`}
                         onClick={() => setTab("permisos")}
-                        aria-current={tab === "permisos" ? "page" : undefined}
                       >
                         Permisos
                         {tab === "permisos" && (
                           <motion.span
                             layoutId="tab-underline"
                             className={styles.tabUnderline}
-                            transition={{ type: "spring", stiffness: 420, damping: 30 }}
                           />
                         )}
                       </button>
@@ -647,50 +516,531 @@ const DoctorProfilePage: React.FC = () => {
 
                   <AnimatePresence mode="wait">
                     {/* === Datos === */}
-                    {tab === "datos" && (
-                      <motion.div key="tab-datos" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} className={styles.tabBody}>
+                    {tab === "datos" && data && (
+                      <motion.div
+                        key="tab-datos"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 8 }}
+                        className={styles.tabBody}
+                      >
+                        {/* ===== Datos personales ===== */}
+                        <button
+                          type="button"
+                          className={styles.editPencil}
+                          aria-label={isEditing ? "Cancelar edición" : "Editar"}
+                          title={isEditing ? "Cancelar edición" : "Editar"}
+                          onClick={() => {
+                            if (!isEditing) {
+                              // entrar en modo edición: clonar datos actuales
+                              setDraft({ ...data });
+                              setIsEditing(true);
+                            } else {
+                              // cancelar
+                              setIsEditing(false);
+                              setDraft({});
+                            }
+                          }}
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <h5 className={styles.section}>Datos personales</h5>
                         <div className={styles.infoGrid}>
-                          <div><span className={styles.label}>Teléfono:</span><a className={styles.link} href={`tel:${data.phone}`}>{data.phone ?? "—"}</a></div>
-                          <div><span className={styles.label}>Dirección:</span><span>{data.address ?? "—"}</span></div>
-                          <div><span className={styles.label}>E-mail:</span><a className={styles.link} href={`mailto:${data.email}`}>{data.email ?? "—"}</a></div>
-                        </div>
-                        <div className={styles.infoGrid}>
-                          <div />
-                          <div><span className={styles.label}>Matrículas:</span><span>MP {data.provincialReg} · MN {data.nationalReg}</span></div>
-                          <div><span className={styles.label}>Estado:</span><span className={`${styles.badge} ${data.hasDebt ? styles.debt : styles.ok}`}>{data.hasDebt ? "Con deuda" : "Al día"}</span></div>
-                        </div>
-                      </motion.div>
-                    )}
+                          <div>
+                            <span className={styles.label}>
+                              Nombre (registro)
+                            </span>
+                            {isEditing ? (
+                              RText("name")
+                            ) : (
+                              <span>{fmt(data.name)}</span>
+                            )}
+                          </div>
+                          <div>
+                            <span className={styles.label}>Nombre</span>
+                            {isEditing ? (
+                              RText("nombre_")
+                            ) : (
+                              <span>{fmt(data.nombre_)}</span>
+                            )}
+                          </div>
+                          <div>
+                            <span className={styles.label}>Apellido</span>
+                            {isEditing ? (
+                              RText("apellido")
+                            ) : (
+                              <span>{fmt(data.apellido)}</span>
+                            )}
+                          </div>
 
-                    {/* === Deudas === */}
-                    {tab === "deudas" && (
-                      <motion.div key="tab-deudas" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} className={styles.tabBody}>
-                        <div className={styles.debtBox}>
-                          <div><span className={styles.label}>Monto adeudado</span><p className={styles.value}>{debtInfo ? currency.format(debtInfo.amount) : data.hasDebt ? "—" : "0"}</p></div>
-                          <div><span className={styles.label}>Última aplicación</span><p className={styles.value}>{debtInfo?.lastInvoice ?? "—"}</p></div>
-                          <div><span className={styles.label}>En mora desde</span><p className={styles.value}>{debtInfo?.since ?? "—"}</p></div>
-                          <div className={styles.debtActions}><Button variant="primary" onClick={() => setShowAddDebt(true)}><Plus size={16} />&nbsp;Agregar deuda</Button></div>
+                          <div>
+                            <span className={styles.label}>Sexo</span>
+                            {isEditing ? (
+                              RSexo("sexo")
+                            ) : (
+                              <span>{fmt(data.sexo)}</span>
+                            )}
+                          </div>
+                          <div>
+                            <span className={styles.label}>Documento</span>
+                            {isEditing ? (
+                              RText("documento")
+                            ) : (
+                              <span>{fmt(data.documento)}</span>
+                            )}
+                          </div>
+
+                          <div>
+                            <span className={styles.label}>CUIT</span>
+                            {isEditing ? (
+                              RText("cuit")
+                            ) : (
+                              <span>{fmt(data.cuit)}</span>
+                            )}
+                          </div>
+                          <div>
+                            <span className={styles.label}>
+                              Fecha de nacimiento
+                            </span>
+                            {isEditing ? (
+                              RDate("fecha_nac")
+                            ) : (
+                              <span>{fmtDate(data.fecha_nac)}</span>
+                            )}
+                          </div>
+                          <div>
+                            <span className={styles.label}>Estado</span>
+                            <span>
+                              {data.existe
+                                ? data.existe.toUpperCase() === "S"
+                                  ? "Activo"
+                                  : "Inactivo"
+                                : "—"}
+                            </span>
+                          </div>
+
+                          <div>
+                            <span className={styles.label}>Provincia</span>
+                            {isEditing ? (
+                              RText("provincia")
+                            ) : (
+                              <span>{fmt(data.provincia)}</span>
+                            )}
+                          </div>
+                          <div>
+                            <span className={styles.label}>Localidad</span>
+                            {isEditing ? (
+                              RText("localidad")
+                            ) : (
+                              <span>{fmt(data.localidad)}</span>
+                            )}
+                          </div>
+                          <div>
+                            <span className={styles.label}>Código postal</span>
+                            {isEditing ? (
+                              RText("codigo_postal")
+                            ) : (
+                              <span>{fmt(data.codigo_postal)}</span>
+                            )}
+                          </div>
+
+                          <div>
+                            <span className={styles.label}>
+                              Domicilio particular
+                            </span>
+                            {isEditing ? (
+                              RText("domicilio_particular")
+                            ) : (
+                              <span>{fmt(data.domicilio_particular)}</span>
+                            )}
+                          </div>
+                          <div>
+                            <span className={styles.label}>
+                              Tel. particular
+                            </span>
+                            {isEditing ? (
+                              RText("tele_particular")
+                            ) : (
+                              <span>{fmt(data.tele_particular)}</span>
+                            )}
+                          </div>
+                          <div>
+                            <span className={styles.label}>
+                              Celular particular
+                            </span>
+                            {isEditing ? (
+                              RText("celular_particular")
+                            ) : (
+                              <span>{fmt(data.celular_particular)}</span>
+                            )}
+                          </div>
+
+                          <div>
+                            <span className={styles.label}>
+                              E-mail particular
+                            </span>
+                            {isEditing ? (
+                              RText("mail_particular")
+                            ) : (
+                              <a
+                                className={styles.link}
+                                href={
+                                  data.mail_particular
+                                    ? `mailto:${data.mail_particular}`
+                                    : undefined
+                                }
+                              >
+                                {fmt(data.mail_particular)}
+                              </a>
+                            )}
+                          </div>
                         </div>
+
+                        {/* ===== Datos profesionales ===== */}
+                        <h5
+                          className={styles.section}
+                          style={{ marginTop: 24 }}
+                        >
+                          Datos profesionales
+                        </h5>
+                        <div className={styles.infoGrid}>
+                          <div>
+                            <span className={styles.label}>Nº socio</span>
+                            {isEditing ? (
+                              RText("nro_socio")
+                            ) : (
+                              <span>{fmt(data.nro_socio)}</span>
+                            )}
+                          </div>
+                          <div>
+                            <span className={styles.label}>Categoría</span>
+                            {isEditing ? (
+                              RText("categoria")
+                            ) : (
+                              <span>{fmt(data.categoria)}</span>
+                            )}
+                          </div>
+                          <div>
+                            <span className={styles.label}>Título</span>
+                            {isEditing ? (
+                              RText("titulo")
+                            ) : (
+                              <span>{fmt(data.titulo)}</span>
+                            )}
+                          </div>
+
+                          <div>
+                            <span className={styles.label}>
+                              Matrícula prov.
+                            </span>
+                            {isEditing ? (
+                              RText("matricula_prov")
+                            ) : (
+                              <span>{fmt(data.matricula_prov)}</span>
+                            )}
+                          </div>
+                          <div>
+                            <span className={styles.label}>Matrícula nac.</span>
+                            {isEditing ? (
+                              RText("matricula_nac")
+                            ) : (
+                              <span>{fmt(data.matricula_nac)}</span>
+                            )}
+                          </div>
+                          <div>
+                            <span className={styles.label}>Fecha recibido</span>
+                            {isEditing ? (
+                              RText("fecha_recibido")
+                            ) : (
+                              <span>{fmt(data.fecha_recibido)}</span>
+                            )}
+                          </div>
+
+                          <div>
+                            <span className={styles.label}>
+                              Fecha matrícula
+                            </span>
+                            {isEditing ? (
+                              RText("fecha_matricula")
+                            ) : (
+                              <span>{fmt(data.fecha_matricula)}</span>
+                            )}
+                          </div>
+
+                          <div>
+                            <span className={styles.label}>
+                              Domicilio de consulta
+                            </span>
+                            {isEditing ? (
+                              RText("domicilio_consulta")
+                            ) : (
+                              <span>{fmt(data.domicilio_consulta)}</span>
+                            )}
+                          </div>
+                          <div>
+                            <span className={styles.label}>Tel. consulta</span>
+                            {isEditing ? (
+                              RText("telefono_consulta")
+                            ) : (
+                              <span>{fmt(data.telefono_consulta)}</span>
+                            )}
+                          </div>
+                          {/* <div>
+                            <span className={styles.label}>Especialidad</span>
+                            <span>{fmt(data.specialty)}</span>
+                          </div> */}
+                        </div>
+
+                        {/* ===== Datos impositivos ===== */}
+                        <h5
+                          className={styles.section}
+                          style={{ marginTop: 24 }}
+                        >
+                          Datos impositivos
+                        </h5>
+                        <div className={styles.infoGrid}>
+                          <div>
+                            <span className={styles.label}>
+                              Condición impositiva
+                            </span>
+                            {isEditing ? (
+                              RCondicion_impositiva("condicion_impositiva")
+                            ) : (
+                              <span>{fmt(data.condicion_impositiva)}</span>
+                            )}
+                          </div>
+                          <div>
+                            <span className={styles.label}>ANSSAL</span>
+                            {isEditing ? (
+                              RNumber("anssal")
+                            ) : (
+                              <span>{fmt(data.anssal)}</span>
+                            )}
+                          </div>
+                          <div>
+                            <span className={styles.label}>Venc. ANSSAL</span>
+                            {isEditing ? (
+                              RDate("vencimiento_anssal")
+                            ) : (
+                              <span>{fmt(data.vencimiento_anssal)}</span>
+                            )}
+                          </div>
+
+                          <div>
+                            <span className={styles.label}>Malapraxis</span>
+                            {isEditing ? (
+                              RText("malapraxis")
+                            ) : (
+                              <span>{fmt(data.malapraxis)}</span>
+                            )}
+                          </div>
+                          <div>
+                            <span className={styles.label}>
+                              Venc. malapraxis
+                            </span>
+                            {isEditing ? (
+                              RDate("vencimiento_malapraxis")
+                            ) : (
+                              <span>{fmt(data.vencimiento_malapraxis)}</span>
+                            )}
+                          </div>
+                          <div>
+                            <span className={styles.label}>Cobertura</span>
+                            {isEditing ? (
+                              RNumber("cobertura")
+                            ) : (
+                              <span>{fmt(data.cobertura)}</span>
+                            )}
+                          </div>
+
+                          <div>
+                            <span className={styles.label}>
+                              Venc. cobertura
+                            </span>
+                            {isEditing ? (
+                              RDate("vencimiento_cobertura")
+                            ) : (
+                              <span>{fmt(data.vencimiento_cobertura)}</span>
+                            )}
+                          </div>
+                          <div>
+                            <span className={styles.label}>CBU</span>
+                            {isEditing ? (
+                              RText("cbu")
+                            ) : (
+                              <span>{fmt(data.cbu)}</span>
+                            )}
+                          </div>
+                          <div>
+                            <span className={styles.label}>Observación</span>
+                            {isEditing ? (
+                              RText("observacion")
+                            ) : (
+                              <span>{fmt(data.observacion)}</span>
+                            )}
+                          </div>
+                        </div>
+                        {isEditing && (
+                          <div className={styles.editActions}>
+                            <Button
+                              variant="primary"
+                              disabled={saving}
+                              onClick={async () => {
+                                if (!data) return;
+                                try {
+                                  setSaving(true);
+                                  // armamos payload solo con campos presentes en draft
+                                  const payload: Record<string, any> = {};
+                                  Object.entries(draft).forEach(([k, v]) => {
+                                    if (v !== undefined) payload[k] = v;
+                                  });
+                                  await updateMedico(
+                                    data.id,
+                                    normalizePatch(payload)
+                                  );
+                                  const fresh = await getMedicoDetail(
+                                    String(data.id)
+                                  );
+                                  setData(fresh);
+                                  setIsEditing(false);
+                                  setDraft({});
+                                } catch (e: any) {
+                                  alert(
+                                    e?.message ||
+                                      "No se pudo guardar los cambios."
+                                  );
+                                } finally {
+                                  setSaving(false);
+                                }
+                              }}
+                            >
+                              {saving ? "Guardando…" : "Guardar cambios"}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              onClick={() => {
+                                setIsEditing(false);
+                                setDraft({});
+                              }}
+                            >
+                              Cancelar
+                            </Button>
+                          </div>
+                        )}
                       </motion.div>
                     )}
 
                     {/* === Documentos === */}
-                    {tab === "documentos" && (
-                      <motion.div key="tab-documentos" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} className={styles.tabBody}>
+                    {/* {tab === "documentos" && (
+                      <motion.div
+                        key="tab-documentos"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 8 }}
+                        className={styles.tabBody}
+                      >
                         <div className={styles.docsHeaderInline}>
                           <h5 className={styles.section}>Documentación</h5>
-                          <Button variant="primary" onClick={handleDownloadAll}>Descargar todo</Button>
+                          <Button variant="primary" onClick={handleDownloadAll}>
+                            Descargar todo
+                          </Button>
                         </div>
                         {data.documents.length === 0 ? (
-                          <p className={styles.muted}>No hay documentos cargados.</p>
+                          <p className={styles.muted}>
+                            No hay documentos cargados.
+                          </p>
                         ) : (
                           <ul className={styles.docList}>
                             {data.documents.map((doc) => (
                               <li key={doc.id} className={styles.docItem}>
-                                <div><p className={styles.docLabel}>{doc.label}</p><p className={styles.docName}>{doc.fileName}</p></div>
+                                <div>
+                                  <p className={styles.docLabel}>
+                                    {doc.pretty_label || doc.label}
+                                  </p>
+                                  <p className={styles.docName}>
+                                    {doc.file_name || doc.file_name}
+                                  </p>
+                                </div>
                                 <div className={styles.docActions}>
-                                  <a className={styles.downloadLink} href={doc.url} download>Descargar</a>
-                                  <Button size="sm" variant="ghost" onClick={() => window.open(doc.url, "_blank")}>Ver</Button>
+                                  <Button
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={() => {
+                                      const href = doc.url;
+                                      if (href)
+                                        window.open(
+                                          href,
+                                          "_blank",
+                                          "noopener,noreferrer"
+                                        );
+                                    }}
+                                  >
+                                    Descargar
+                                  </Button>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </motion.div>
+                    )} */}
+                    {tab === "documentos" && (
+                      <motion.div
+                        key="docs"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 8 }}
+                        className={styles.tabBody}
+                      >
+                        <div className={styles.docsHeaderInline}>
+                          <h5 className={styles.section}>Documentación</h5>
+                          <Button
+                            variant="primary"
+                            onClick={() => {
+                              docs.forEach((d) => {
+                                const a = document.createElement("a");
+                                a.href = d.url;
+                                a.download = d.file_name;
+                                document.body.appendChild(a);
+                                a.click();
+                                a.remove();
+                              });
+                            }}
+                          >
+                            Descargar todo
+                          </Button>
+                        </div>
+
+                        {docsLoading ? (
+                          <p className={styles.muted}>Cargando…</p>
+                        ) : docs.length === 0 ? (
+                          <p className={styles.muted}>No hay documentos.</p>
+                        ) : (
+                          <ul className={styles.docList}>
+                            {docs.map((doc) => (
+                              <li key={doc.id} className={styles.docItem}>
+                                <div>
+                                  <p className={styles.docLabel}>
+                                    {doc.pretty_label || doc.label}
+                                  </p>
+                                  <p className={styles.docName}>
+                                    {doc.file_name}
+                                  </p>
+                                </div>
+                                <div className={styles.docActions}>
+                                  <Button
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={() =>
+                                      window.open(
+                                        doc.url,
+                                        "_blank",
+                                        "noopener,noreferrer"
+                                      )
+                                    }
+                                  >
+                                    Descargar
+                                  </Button>
                                 </div>
                               </li>
                             ))}
@@ -699,136 +1049,67 @@ const DoctorProfilePage: React.FC = () => {
                       </motion.div>
                     )}
 
-                    {/* === Reportes === */}
-                    {tab === "reportes" && (
-                      <motion.div key="tab-reportes" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} className={styles.tabBody}>
-                        <div className={styles.chartsWrap}>
-                          <div className={styles.chartBox}>
-                            <h4 className={styles.chartTitle}>Consultas por mes</h4>
-                            <ResponsiveContainer width="100%" height={260}>
-                              <BarChart data={stats}>
-                                <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="month" /><YAxis /><Tooltip />
-                                <Bar dataKey="consultas" />
-                              </BarChart>
-                            </ResponsiveContainer>
-                          </div>
-                          <div className={styles.chartBox}>
-                            <h4 className={styles.chartTitle}>Obras sociales por mes</h4>
-                            <ResponsiveContainer width="100%" height={320}>
-                              <LineChart data={stats}>
-                                <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="month" /><YAxis /><Tooltip /><Legend />
-                                {statsKeys.map((k) => (<Line key={k} type="monotone" dataKey={k} name={k} dot={false} />))}
-                              </LineChart>
-                            </ResponsiveContainer>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {/* === Conceptos (descuentos por nro_colegio) === */}
-                    {tab === "conceptos" && (
-                      <motion.div key="tab-conceptos" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} className={styles.tabBody}>
-                        <div className={styles.conceptsHeader}>
-                          <h5 className={styles.section}>Conceptos asociados</h5>
-                          <Button variant="primary" onClick={() => { setAssocDescOpen(true); setAssocDescId(""); }}>
-                            <Plus size={16} />&nbsp;Asociar concepto
-                          </Button>
-                        </div>
-
-                        {conceptsLoading && <p className={styles.muted}>Cargando conceptos…</p>}
-                        {conceptsErr && <p className={styles.errorInline}>{conceptsErr}</p>}
-
-                        {!conceptsLoading && !conceptsErr && (
-                          concepts.length === 0 ? (
-                            <p className={styles.muted}>Este médico no tiene conceptos asociados.</p>
-                          ) : (
-                            <div className={styles.conceptsList}>
-                              {concepts.map((c) => {
-                                const danger = Number(c.saldo || 0) !== 0;
-                                const removing = rmConceptBusy === c.concepto_id; // nro_colegio
-                                return (
-                                  <div key={`nro-${c.concepto_id}`} className={`${styles.conceptCard} ${danger ? styles.danger : ""}`}>
-                                    <div className={styles.conceptHeader}>
-                                      <div className={styles.conceptTitle}>
-                                        {c.concepto_nro_colegio ?? c.concepto_id} — {c.concepto_nombre ?? "—"}
-                                      </div>
-                                      <div className={styles.conceptHeaderRight}>
-                                        <div className={`${styles.badge} ${danger ? styles.badgeDanger : styles.badgeOk}`}>
-                                          Saldo: {currency.format(Number(c.saldo || 0))}
-                                        </div>
-                                        <Button
-                                          size="sm" variant="danger" disabled={removing}
-                                          onClick={async () => {
-                                            if (!id) return;
-                                            try {
-                                              setRmConceptBusy(c.concepto_id);
-                                              await fetchJSON(M_ASSOC(id), {
-                                                method: "PATCH",
-                                                headers: { "Content-Type": "application/json" },
-                                                body: JSON.stringify({ concepto_tipo: "desc", concepto_id: c.concepto_id, op: "remove" }),
-                                              });
-                                              await loadConcepts();
-                                            } catch (e: any) {
-                                              alert(e?.message || "No se pudo quitar el concepto.");
-                                            } finally {
-                                              setRmConceptBusy(null);
-                                            }
-                                          }}
-                                        >
-                                          {removing ? "Quitando…" : "Quitar"}
-                                        </Button>
-                                      </div>
-                                    </div>
-
-                                    <div className={styles.tableWrap}>
-                                      <table className={styles.table}>
-                                        <thead><tr><th>Resumen ID</th><th>Período</th><th>Fecha</th><th>Monto aplicado</th><th>% aplicado</th></tr></thead>
-                                        <tbody>
-                                          {(c.aplicaciones || []).length === 0 ? (
-                                            <tr><td colSpan={5} className={styles.mutedCenter}>Sin aplicaciones</td></tr>
-                                          ) : (
-                                            c.aplicaciones.map((a, idx) => (
-                                              <tr key={`app-${c.concepto_id}-${idx}`}>
-                                                <td>{a.resumen_id}</td>
-                                                <td>{a.periodo}</td>
-                                                <td>{a.created_at ? new Date(a.created_at).toLocaleString() : "—"}</td>
-                                                <td>${Number(a.monto_aplicado).toLocaleString("es-AR", { maximumFractionDigits: 2 })}</td>
-                                                <td>{Number(a.porcentaje_aplicado).toLocaleString("es-AR", { maximumFractionDigits: 2 })}%</td>
-                                              </tr>
-                                            ))
-                                          )}
-                                        </tbody>
-                                      </table>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )
-                        )}
-                      </motion.div>
-                    )}
-
                     {/* === Especialidades === */}
                     {tab === "especialidades" && (
-                      <motion.div key="tab-especialidades" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} className={styles.tabBody}>
+                      <motion.div
+                        key="tab-especialidades"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 8 }}
+                        className={styles.tabBody}
+                      >
                         <div className={styles.conceptsHeader}>
-                          <h5 className={styles.section}>Especialidades adheridas</h5>
-                          <Button variant="primary" onClick={() => { setAssocEspOpen(true); setAssocEspId(""); }}>
-                            <Plus size={16} />&nbsp;Agregar especialidad
+                          <h5 className={styles.section}>
+                            Especialidades adheridas
+                          </h5>
+                          {/* si mantenés el flujo de agregar, dejá este botón */}
+                          <Button
+                            variant="primary"
+                            onClick={() => {
+                              setAssocEspOpen(true);
+                              setAssocEspId("");
+                              setAssocEspResol("");
+                              setAssocEspDate(null);
+                              setAssocEspFile(null);
+                            }}
+                          >
+                            <Plus size={16} />
+                            &nbsp;Agregar especialidad
                           </Button>
                         </div>
 
-                        {especLoading && <p className={styles.muted}>Cargando especialidades…</p>}
-                        {especErr && <p className={styles.errorInline}>{especErr}</p>}
+                        {espLoading && (
+                          <p className={styles.muted}>
+                            Cargando especialidades…
+                          </p>
+                        )}
+                        {especErr && (
+                          <p className={styles.errorInline}>{especErr}</p>
+                        )}
 
-                        {!especLoading && !especErr && (
+                        {!espLoading && !especErr && (
                           <div className={styles.tableWrap}>
                             <table className={styles.table}>
-                              <thead><tr><th>ID</th><th>Especialidad</th><th>Acciones</th></tr></thead>
+                              <thead>
+                                <tr>
+                                  <th>ID colegio</th>
+                                  <th>Especialidad</th>
+                                  <th>N° resolución</th>
+                                  <th>Fecha resolución</th>
+                                  <th>Adjunto</th>
+                                  <th style={{ width: 120 }}>Acciones</th>
+                                </tr>
+                              </thead>
                               <tbody>
                                 {(especs || []).length === 0 ? (
-                                  <tr><td colSpan={3} className={styles.mutedCenter}>Sin especialidades asociadas.</td></tr>
+                                  <tr>
+                                    <td
+                                      colSpan={6}
+                                      className={styles.mutedCenter}
+                                    >
+                                      Sin especialidades asociadas.
+                                    </td>
+                                  </tr>
                                 ) : (
                                   especs.map((r) => {
                                     const removing = rmEspBusy === r.id;
@@ -836,27 +1117,83 @@ const DoctorProfilePage: React.FC = () => {
                                       <tr key={r.id}>
                                         <td>{r.id}</td>
                                         <td>{r.nombre ?? `ID ${r.id}`}</td>
+                                        <td>{r.n_resolucion ?? "—"}</td>
+                                        <td>
+                                          {r.fecha_resolucion
+                                            ? new Date(
+                                                r.fecha_resolucion
+                                              ).toLocaleDateString("es-AR")
+                                            : "—"}
+                                        </td>
+                                        <td>
+                                          {r.adjunto_url ? (
+                                            <Button
+                                              size="sm"
+                                              variant="primary"
+                                              onClick={() => {
+                                                const href = r.adjunto_url;
+                                                if (href)
+                                                  window.open(
+                                                    href,
+                                                    "_blank",
+                                                    "noopener,noreferrer"
+                                                  );
+                                              }}
+                                              title="Abrir adjunto en una nueva pestaña"
+                                              style={{ padding: "4px 8px" }}
+                                            >
+                                              Ver adjunto
+                                            </Button>
+                                          ) : (
+                                            "—"
+                                          )}
+                                        </td>
                                         <td>
                                           <Button
-                                            size="sm" variant="danger" disabled={removing}
+                                            size="sm"
+                                            variant="danger"
+                                            disabled={removing}
                                             onClick={async () => {
                                               if (!id) return;
                                               try {
                                                 setRmEspBusy(r.id);
-                                                await fetchJSON(M_ASSOC(id), {
-                                                  method: "PATCH",
-                                                  headers: { "Content-Type": "application/json" },
-                                                  body: JSON.stringify({ concepto_tipo: "esp", concepto_id: r.id, op: "remove" }),
-                                                });
+                                                await removeMedicoEspecialidad(
+                                                  id,
+                                                  r.id
+                                                ); // r.id es el id_colegio que mostrás como "ID colegio"
                                                 await loadEspec();
                                               } catch (e: any) {
-                                                alert(e?.message || "No se pudo quitar la especialidad.");
+                                                alert(
+                                                  e?.message ||
+                                                    "No se pudo quitar la especialidad."
+                                                );
                                               } finally {
                                                 setRmEspBusy(null);
                                               }
                                             }}
                                           >
                                             {removing ? "Quitando…" : "Quitar"}
+                                          </Button>
+
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => {
+                                              // pre-cargar datos del item
+                                              setEditEspId(r.id);
+                                              setEditEspResol(
+                                                r.n_resolucion ?? ""
+                                              );
+                                              setEditEspFile(null);
+                                              // si viene "YYYY-MM-DD" del back, lo pasamos a Date
+                                              const d = r.fecha_resolucion
+                                                ? new Date(r.fecha_resolucion)
+                                                : null;
+                                              setEditEspDate(d);
+                                              setEditEspOpen(true);
+                                            }}
+                                          >
+                                            Editar
                                           </Button>
                                         </td>
                                       </tr>
@@ -874,123 +1211,129 @@ const DoctorProfilePage: React.FC = () => {
                     {tab === "permisos" && (
                       <RequirePermission scope="rbac:gestionar">
                         <motion.div
-                          key="tab-permisos"
+                          key="rbac"
                           initial={{ opacity: 0, y: 8 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: 8 }}
-                          className={styles.tabBody}
+                          className={`${styles.tabBody} ${styles.perms}`}
                         >
-                          <div className={styles.permsWrap}>
-                            {/* Roles del socio */}
-                            <div className={styles.tableWrap}>
-                              <h5 className={styles.section}>Roles del socio</h5>
-                              <table className={styles.table}>
-                                <thead><tr><th style={{ width: 60 }}>Tiene</th><th>Rol</th></tr></thead>
-                                <tbody>
-                                  {rbacLoading ? (
-                                    <tr><td colSpan={2} className={styles.mutedCenter}>⏳ Cargando…</td></tr>
-                                  ) : rolesAll.length === 0 ? (
-                                    <tr><td colSpan={2} className={styles.mutedCenter}>No hay roles</td></tr>
-                                  ) : (
-                                    rolesAll.map((r) => {
-                                      const checked = userRoles.includes(r.name);
-                                      return (
-                                        <tr key={r.name}>
-                                          <td>
-                                            <input
-                                              type="checkbox"
-                                              checked={checked}
-                                              onChange={async (e) => {
-                                                if (!id) return;
-                                                try {
-                                                  if (e.target.checked)
-                                                    await fetchJSON(R_ADD_ROLE(id, r.name), { method: "POST" });
-                                                  else
-                                                    await fetchJSON(R_DEL_ROLE(id, r.name), { method: "DELETE" });
-                                                  const rs = await fetchJSON<{ name: string }[]>(R_USER_ROLES(id));
-                                                  setUserRoles(rs.map((x) => x.name));
-                                                  const eff = await fetchJSON<{ permissions: string[] }>(R_EFFECTIVE(id));
-                                                  setEffective(eff.permissions);
-                                                } catch (err: any) {
-                                                  alert(err?.message || "No se pudo actualizar el rol");
-                                                }
-                                              }}
-                                            />
-                                          </td>
-                                          <td>{ROLE_LABELS[r.name] ?? r.name}</td>
-                                        </tr>
-                                      );
-                                    })
-                                  )}
-                                </tbody>
-                              </table>
-                            </div>
-
-                            {/* Overrides por permiso */}
-                            <div className={styles.tableWrap}>
-                              <h5 className={styles.section}>Permisos del usuario</h5>
-                              <table className={styles.table}>
-                                <thead>
+                          <div className={styles.tableWrap}>
+                            <h5 className={styles.section}>Roles</h5>
+                            <table className={styles.table}>
+                              <tbody>
+                                {rbacLoading ? (
                                   <tr>
-                                    <th>Permiso</th>
-                                    <th style={{ width: 120, textAlign: "right" }}>Tiene</th>
+                                    <td className={styles.mutedCenter}>
+                                      Cargando…
+                                    </td>
                                   </tr>
-                                </thead>
-                                <tbody>
-                                  {rbacLoading ? (
-                                    <tr>
-                                      <td colSpan={2} className={styles.mutedCenter}>⏳ Cargando…</td>
-                                    </tr>
-                                  ) : permList.length === 0 ? (
-                                    <tr>
-                                      <td colSpan={2} className={styles.mutedCenter}>Sin permisos definidos</td>
-                                    </tr>
-                                  ) : (
-                                    permList.map((p) => {
-                                      const eff = effective.includes(p.code);             // ¿lo tiene hoy?
-                                      const ov = overrides[p.code];                       // override actual (true/false/undefined)
-                                      const label = permLabel(p.code);
+                                ) : rolesAll.length === 0 ? (
+                                  <tr>
+                                    <td className={styles.mutedCenter}>
+                                      Sin roles
+                                    </td>
+                                  </tr>
+                                ) : (
+                                  rolesAll.map((r) => {
+                                    const checked = userRoles.includes(r.name);
+                                    return (
+                                      <tr key={r.name}>
+                                        <td>
+                                          <input
+                                            type="checkbox"
+                                            checked={checked}
+                                            onChange={async (e) => {
+                                              if (e.target.checked)
+                                                await addUserRole(
+                                                  medicoId,
+                                                  r.name
+                                                );
+                                              else
+                                                await delUserRole(
+                                                  medicoId,
+                                                  r.name
+                                                );
+                                              const rs = await getUserRoles(
+                                                medicoId
+                                              );
+                                              setUserRoles(
+                                                rs.map((x) => x.name)
+                                              );
+                                              const eff = await getEffective(
+                                                medicoId
+                                              );
+                                              setEffective(eff.permissions);
+                                            }}
+                                          />
+                                        </td>
+                                        <td>
+                                          {r.name.charAt(0).toUpperCase() +
+                                            r.name.slice(1)}
+                                        </td>
+                                      </tr>
+                                    );
+                                  })
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
 
-                                      return (
-                                        <tr key={p.code}>
-                                          <td>
-                                            <div style={{ display: "flex", flexDirection: "column" }}>
-                                              <span>{label}</span>
-                                              <small style={{ opacity: 0.6 }}>{p.code}</small>
-                                            </div>
-                                          </td>
-                                          <td style={{ textAlign: "right" }}>
-                                            <input
-                                              type="checkbox"
-                                              checked={eff}
-                                              disabled={permBusy === p.code || rbacLoading}
-                                              onChange={async (e) => {
-                                                if (!id) return;
-                                                const next = e.target.checked;
-                                                try {
-                                                  setPermBusy(p.code);
-
-                                                  // Si tildo => forzamos allow.
-                                                  // Si destildo => forzamos deny.
-                                                  await fetchJSON(R_SET_OVERRIDE(id, p.code, next), { method: "POST" });
-
-                                                  // Refrescamos estado de overrides + effective
-                                                  await refreshPermState(id);
-                                                } catch (err: any) {
-                                                  alert(err?.message || "No se pudo actualizar el permiso.");
-                                                } finally {
-                                                  setPermBusy(null);
-                                                }
-                                              }}
-                                            />
-                                          </td>
-                                        </tr>
-                                      );
-                                    })
-                                  )}
-                                </tbody>
-                              </table>
-                            </div>
+                          <div className={styles.tableWrap}>
+                            <h5 className={styles.section}>Permisos</h5>
+                            <table className={styles.table}>
+                              <tbody>
+                                {rbacLoading ? (
+                                  <tr>
+                                    <td className={styles.mutedCenter}>
+                                      Cargando…
+                                    </td>
+                                  </tr>
+                                ) : permList.length === 0 ? (
+                                  <tr>
+                                    <td className={styles.mutedCenter}>
+                                      Sin permisos
+                                    </td>
+                                  </tr>
+                                ) : (
+                                  permList.map((p) => {
+                                    const has = effective.includes(p.code);
+                                    return (
+                                      <tr key={p.code}>
+                                        <td>{p.description}</td>
+                                        <td style={{ textAlign: "right" }}>
+                                          <input
+                                            type="checkbox"
+                                            checked={has}
+                                            onChange={async (e) => {
+                                              await setOverride(
+                                                medicoId,
+                                                p.code,
+                                                e.target.checked
+                                              );
+                                              const eff = await getEffective(
+                                                medicoId
+                                              );
+                                              setEffective(eff.permissions);
+                                              const ovs = await getOverrides(
+                                                medicoId
+                                              );
+                                              const map: Record<
+                                                string,
+                                                boolean
+                                              > = {};
+                                              ovs.forEach(
+                                                (o) => (map[o.code] = o.allow)
+                                              );
+                                              setOverrides(map);
+                                            }}
+                                          />
+                                        </td>
+                                      </tr>
+                                    );
+                                  })
+                                )}
+                              </tbody>
+                            </table>
                           </div>
                         </motion.div>
                       </RequirePermission>
@@ -1002,192 +1345,6 @@ const DoctorProfilePage: React.FC = () => {
           )}
         </motion.div>
       </div>
-
-      {/* ===== Modal agregar deuda ===== */}
-      <AnimatePresence>
-        {showAddDebt && (
-          <div className={styles.portal}>
-            <motion.div
-              className={styles.overlay}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.6 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={() => setShowAddDebt(false)}
-            />
-            <motion.div
-              className={styles.popup}
-              role="dialog"
-              aria-modal="true"
-              initial={{ opacity: 0, scale: 0.95, y: 16 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 16 }}
-              transition={{ type: "spring", stiffness: 240, damping: 22 }}
-            >
-              <div className={styles.popupHeader}>
-                <h3>Agregar deuda</h3>
-                <button className={styles.iconButton} onClick={() => setShowAddDebt(false)} aria-label="Cerrar">
-                  <X size={16} />
-                </button>
-              </div>
-
-              <div className={styles.modalGrid}>
-                <div className={styles.field}>
-                  <label>Concepto</label>
-                  <input
-                    className={styles.input}
-                    value={draft.concept}
-                    onChange={(e) => setDraft((d) => ({ ...d, concept: e.target.value }))}
-                    placeholder="Cuota societaria / cargo manual"
-                  />
-                </div>
-                <div className={styles.field}>
-                  <label>Monto total (ARS)</label>
-                  <input
-                    className={styles.input}
-                    type="number"
-                    value={draft.amount === "" ? "" : String(draft.amount)}
-                    onChange={(e) =>
-                      setDraft((d) => ({
-                        ...d,
-                        amount: e.target.value === "" ? "" : Number(e.target.value),
-                      }))
-                    }
-                    placeholder="0"
-                  />
-                </div>
-                <div className={styles.field}>
-                  <label>Modo</label>
-                  <select
-                    className={styles.select}
-                    value={draft.mode}
-                    onChange={(e) =>
-                      setDraft((d) => ({ ...d, mode: e.target.value as "full" | "installments" }))
-                    }
-                  >
-                    <option value="full">Pago completo</option>
-                    <option value="installments">En cuotas</option>
-                  </select>
-                </div>
-
-                {draft.mode === "installments" && (
-                  <>
-                    <div className={styles.field}>
-                      <label>Cantidad de cuotas</label>
-                      <input
-                        className={styles.input}
-                        type="number"
-                        value={draft.qty}
-                        onChange={(e) => setDraft((d) => ({ ...d, qty: Number(e.target.value) }))}
-                      />
-                    </div>
-                    <div className={styles.field}>
-                      <label>Primera fecha de vencimiento</label>
-                      <DatePicker
-                        selected={draft.firstDue}
-                        onChange={(d) => d && setDraft((s) => ({ ...s, firstDue: d }))}
-                        className={styles.dateInput}
-                        dateFormat="yyyy-MM-dd"
-                        placeholderText="Seleccionar fecha"
-                        closeOnScroll
-                        showPopperArrow={false}
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {draft.mode === "installments" && (
-                <div className={styles.tableWrap}>
-                  <table className={styles.table}>
-                    <thead><tr><th>#</th><th>Vencimiento</th><th>Importe</th></tr></thead>
-                    <tbody>
-                      {(schedule ?? []).map((q) => (
-                        <tr key={q.n}><td>{q.n}</td><td>{q.dueDate}</td><td>${q.amount.toLocaleString()}</td></tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              <div className={styles.popupButtons}>
-                <Button variant="primary" onClick={saveDebt}>Guardar deuda</Button>
-                <Button variant="ghost" onClick={() => setShowAddDebt(false)}>Cancelar</Button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* ===== Modal asociar concepto (nro_colegio) ===== */}
-      <AnimatePresence>
-        {assocDescOpen && (
-          <div className={styles.portal}>
-            <motion.div
-              className={styles.overlay}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.6 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={() => setAssocDescOpen(false)}
-            />
-            <motion.div
-              className={styles.popup}
-              role="dialog"
-              aria-modal="true"
-              initial={{ opacity: 0, scale: 0.95, y: 16 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 16 }}
-              transition={{ type: "spring", stiffness: 240, damping: 22 }}
-            >
-              <div className={styles.popupHeader}>
-                <h3>Asociar concepto</h3>
-                <button className={styles.iconButton} onClick={() => setAssocDescOpen(false)} aria-label="Cerrar">
-                  <X size={16} />
-                </button>
-              </div>
-
-              <div className={styles.modalGrid}>
-                <div className={styles.field}>
-                  <label>Descuento (nro colegio)</label>
-                  <select className={styles.select} value={assocDescId} onChange={(e) => setAssocDescId(e.target.value)}>
-                    <option value="">Seleccionar…</option>
-                    {descAvailable.map((o) => (<option key={o.id} value={o.id}>{o.label}</option>))}
-                  </select>
-                </div>
-              </div>
-
-              <div className={styles.popupButtons}>
-                <Button
-                  variant="primary"
-                  disabled={!assocDescId || assocDescBusy}
-                  onClick={async () => {
-                    if (!id || !assocDescId) return;
-                    try {
-                      setAssocDescBusy(true);
-                      await fetchJSON(M_ASSOC(id), {
-                        method: "PATCH",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ concepto_tipo: "desc", concepto_id: Number(assocDescId), op: "add" }), // nro_colegio
-                      });
-                      await loadConcepts();
-                      setAssocDescOpen(false);
-                      setAssocDescId("");
-                    } catch (e: any) {
-                      alert(e?.message || "No se pudo asociar el concepto.");
-                    } finally {
-                      setAssocDescBusy(false);
-                    }
-                  }}
-                >
-                  {assocDescBusy ? "Asociando…" : "Asociar"}
-                </Button>
-                <Button variant="ghost" onClick={() => setAssocDescOpen(false)}>Cancelar</Button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
       {/* ===== Modal asociar especialidad ===== */}
       <AnimatePresence>
@@ -1212,7 +1369,11 @@ const DoctorProfilePage: React.FC = () => {
             >
               <div className={styles.popupHeader}>
                 <h3>Agregar especialidad</h3>
-                <button className={styles.iconButton} onClick={() => setAssocEspOpen(false)} aria-label="Cerrar">
+                <button
+                  className={styles.iconButton}
+                  onClick={() => setAssocEspOpen(false)}
+                  aria-label="Cerrar"
+                >
                   <X size={16} />
                 </button>
               </div>
@@ -1220,10 +1381,52 @@ const DoctorProfilePage: React.FC = () => {
               <div className={styles.modalGrid}>
                 <div className={styles.field}>
                   <label>Especialidad</label>
-                  <select className={styles.select} value={assocEspId} onChange={(e) => setAssocEspId(e.target.value)}>
+                  <select
+                    className={styles.select}
+                    value={assocEspId}
+                    onChange={(e) => setAssocEspId(e.target.value)}
+                  >
                     <option value="">Seleccionar…</option>
-                    {espAvailable.map((o) => (<option key={o.id} value={o.id}>{o.label}</option>))}
+                    {espOptions.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.label}
+                      </option>
+                    ))}
                   </select>
+                </div>
+
+                <div className={styles.field}>
+                  <label>N° de resolución</label>
+                  <input
+                    className={styles.input}
+                    value={assocEspResol}
+                    onChange={(e) => setAssocEspResol(e.target.value)}
+                    placeholder="Ej: 12345/2024"
+                  />
+                </div>
+
+                <div className={styles.field}>
+                  <label>Fecha de resolución</label>
+                  <DatePicker
+                    selected={assocEspDate}
+                    onChange={(d) => setAssocEspDate(d)}
+                    className={styles.dateInput}
+                    dateFormat="dd-MM-yyyy"
+                    placeholderText="dd-MM-aaaa"
+                    closeOnScroll
+                    showPopperArrow={false}
+                  />
+                </div>
+
+                <div className={styles.field}>
+                  <label>Adjunto (PDF/JPG/PNG)</label>
+                  <input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={(e) =>
+                      setAssocEspFile(e.target.files?.[0] ?? null)
+                    }
+                  />
                 </div>
               </div>
 
@@ -1235,24 +1438,175 @@ const DoctorProfilePage: React.FC = () => {
                     if (!id || !assocEspId) return;
                     try {
                       setAssocEspBusy(true);
-                      await fetchJSON(M_ASSOC(id), {
-                        method: "PATCH",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ concepto_tipo: "esp", concepto_id: Number(assocEspId), op: "add" }),
+
+                      // 1) si hay archivo, subir y obtener adjunto_id
+                      let adjuntoId: number | null = null;
+                      if (assocEspFile) {
+                        adjuntoId = await uploadDocumento(id, assocEspFile);
+                      }
+
+                      // 2) armar payload para tu endpoint POST /especialidades
+                      await addMedicoEspecialidad(id, {
+                        id_colegio: Number(assocEspId),
+                        n_resolucion: assocEspResol?.trim() || null,
+                        fecha_resolucion: toYmd(assocEspDate),
+                        adjunto_id: adjuntoId,
                       });
+
+                      // 3) refrescar y cerrar
                       await loadEspec();
                       setAssocEspOpen(false);
-                      setAssocEspId("");
                     } catch (e: any) {
-                      alert(e?.message || "No se pudo asociar la especialidad.");
+                      alert(
+                        e?.message || "No se pudo asociar la especialidad."
+                      );
                     } finally {
                       setAssocEspBusy(false);
                     }
                   }}
                 >
-                  {assocEspBusy ? "Asociando…" : "Asociar"}
+                  {assocEspBusy ? "Guardando…" : "Asociar"}
                 </Button>
-                <Button variant="ghost" onClick={() => setAssocEspOpen(false)}>Cancelar</Button>
+                <Button variant="ghost" onClick={() => setAssocEspOpen(false)}>
+                  Cancelar
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {editEspOpen && (
+          <div className={styles.portal}>
+            <motion.div
+              className={styles.overlay}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.6 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setEditEspOpen(false)}
+            />
+            <motion.div
+              className={styles.popup}
+              role="dialog"
+              aria-modal="true"
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
+              transition={{ type: "spring", stiffness: 240, damping: 22 }}
+            >
+              <div className={styles.popupHeader}>
+                <h3>Editar especialidad</h3>
+                <button
+                  className={styles.iconButton}
+                  onClick={() => setEditEspOpen(false)}
+                  aria-label="Cerrar"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className={styles.modalGrid}>
+                <div className={styles.field}>
+                  <label>Especialidad</label>
+                  <select
+                    className={styles.select}
+                    value={String(editEspId ?? "")}
+                    disabled
+                  >
+                    <option value="">Seleccionar…</option>
+                    {espOptions.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                  <small className={styles.muted}>
+                    La especialidad no puede cambiarse en edición.
+                  </small>
+                </div>
+
+                <div className={styles.field}>
+                  <label>N° de resolución</label>
+                  <input
+                    className={styles.input}
+                    value={editEspResol}
+                    onChange={(e) => setEditEspResol(e.target.value)}
+                    placeholder="Ej: 12345/2024"
+                  />
+                </div>
+
+                <div className={styles.field}>
+                  <label>Fecha de resolución</label>
+                  <DatePicker
+                    selected={editEspDate}
+                    onChange={(d) => setEditEspDate(d)}
+                    className={styles.dateInput}
+                    dateFormat="dd-MM-yyyy"
+                    placeholderText="dd-MM-aaaa"
+                    closeOnScroll
+                    showPopperArrow={false}
+                  />
+                </div>
+
+                <div className={styles.field}>
+                  <label>Adjunto (reemplazar)</label>
+                  <input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={(e) =>
+                      setEditEspFile(e.target.files?.[0] ?? null)
+                    }
+                  />
+                  <small className={styles.muted}>
+                    Si subís un archivo, reemplaza al existente.
+                  </small>
+                </div>
+              </div>
+
+              <div className={styles.popupButtons}>
+                <Button
+                  variant="primary"
+                  disabled={!editEspId || editEspBusy}
+                  onClick={async () => {
+                    if (!id || !editEspId) return;
+                    try {
+                      setEditEspBusy(true);
+
+                      // 1) si hay archivo nuevo, subir y obtener adjunto_id
+                      let adjuntoId: number | null | undefined = undefined;
+                      if (editEspFile) {
+                        adjuntoId = await uploadDocumento(id, editEspFile);
+                      }
+
+                      // 2) armar payload para tu endpoint PATCH /especialidades/:id_colegio
+                      await editMedicoEspecialidad(id, editEspId, {
+                        n_resolucion: editEspResol?.trim() || null,
+                        fecha_resolucion: toYmd(editEspDate),
+                        // solo enviamos adjunto_id si hay uno nuevo, para no sobreescribir a null accidentalmente.
+                        ...(adjuntoId !== undefined
+                          ? { adjunto_id: adjuntoId }
+                          : {}),
+                      });
+
+                      // 3) refrescar y cerrar
+                      await loadEspec();
+                      setEditEspOpen(false);
+                    } catch (e: any) {
+                      alert(
+                        e?.message || "No se pudo actualizar la especialidad."
+                      );
+                    } finally {
+                      setEditEspBusy(false);
+                    }
+                  }}
+                >
+                  {editEspBusy ? "Guardando…" : "Guardar cambios"}
+                </Button>
+                <Button variant="ghost" onClick={() => setEditEspOpen(false)}>
+                  Cancelar
+                </Button>
               </div>
             </motion.div>
           </div>

@@ -17,9 +17,9 @@ const LayoutRegister: React.FC<Props> = ({
   steps,
   currentStep,
   children,
-  headerCta,
-  showBack = false,
-  onBack,
+  // headerCta,
+  // showBack = false,
+  // onBack,
 }) => {
   return (
     <div className={styles.layout}>

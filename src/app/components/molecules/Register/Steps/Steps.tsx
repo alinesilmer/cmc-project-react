@@ -1,14 +1,17 @@
 "use client";
 import React, { useState } from "react";
 import styles from "./Steps.module.scss";
-import HelpButton from "../../../components/atoms/HelpButton/HelpButton";
-import PdfUpload from "../../../components/atoms/PdfUpload/PdfUpload";
-import type { RegisterFormData, SpecialtyItem } from "../../../types/register";
+import HelpButton from "../../../../components/atoms/HelpButton/HelpButton";
+import PdfUpload from "../../../../components/atoms/PdfUpload/PdfUpload";
+import type {
+  RegisterFormData,
+  SpecialtyItem,
+} from "../../../../types/register";
 
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { es } from "date-fns/locale";
-import Button from "../../../components/atoms/Button/Button";
+import Button from "../../../../components/atoms/Button/Button";
 
 // -------------------- utils fecha (dd-MM-yyyy ↔ Date) --------------------
 const dateToStr = (d: Date | null) => {
@@ -244,7 +247,6 @@ const Steps: React.FC<Props> = (props) => {
           <select
             value={formData.gender}
             onChange={(e) => onChange("gender", e.target.value)}
-            className={errors.gender ? styles.error : ""}
           >
             <option value="">Seleccionar...</option>
             <option value="F">Femenino</option>

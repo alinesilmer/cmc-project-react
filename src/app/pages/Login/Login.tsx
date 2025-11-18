@@ -12,22 +12,22 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
-  const hasLegacyAccess = (scopes?: string[]) =>
-    !!scopes?.some((s) =>
-      [
-        "legacy:access",
-        "legacy:facturador",
-        "facturador",
-        "facturas:ver",
-      ].includes(s)
-    );
+  // const hasLegacyAccess = (scopes?: string[]) =>
+  //   !!scopes?.some((s) =>
+  //     [
+  //       "legacy:access",
+  //       "legacy:facturador",
+  //       "facturador",
+  //       "facturas:ver",
+  //     ].includes(s)
+  //   );
 
-  const isDoctor = (scopes?: string[]) =>
-    !!scopes?.some(
-      (s) =>
-        typeof s === "string" &&
-        /^(medicos?|legacy:(doctor|medico))(:|$)/i.test(s.trim())
-    );
+  // const isDoctor = (scopes?: string[]) =>
+  //   !!scopes?.some(
+  //     (s) =>
+  //       typeof s === "string" &&
+  //       /^(medicos?|legacy:(doctor|medico))(:|$)/i.test(s.trim())
+  //   );
 
   const ETICA_PDF = "https://colegiomedicocorrientes.com/CMC092025.pdf";
 
@@ -57,24 +57,24 @@ function Login() {
 
     setLoading(true);
     try {
-      const me = await login(nro, p); // ahora devuelve el User
-      // if (isWebEditor(me.scopes)) {
-      //   navigate("/admin/dashboard-web", { replace: true });
-      // } else {
-      //   navigate("/panel/dashboard", { replace: true });
-      // }
+      const me = await login(nro, p);
       console.log(me);
-      if (hasLegacyAccess(me.scopes)) {
-        console.log("wepsss");
-        // pedimos al backend un enlace de SSO hacia el legacy
-        const { data } = await http.get("/auth/legacy/sso-link", {
-          params: { next: "/principal.php" }, // o la primera página del legacy
-        });
-        window.location.href = data.url; // redirige al legacy con sesión abierta
+
+      // if (hasLegacyAccess(me.scopes)) {
+      //   console.log("wepsss");
+      //   // pedimos al backend un enlace de SSO hacia el legacy
+      //   const { data } = await http.get("/auth/legacy/sso-link", {
+      //     params: { next: "/principal.php" }, // o la primera página del legacy
+      //   });
+      //   window.location.href = data.url; // redirige al legacy con sesión abierta
+      //   return;
+      // }
+      if (isWebEditor(me.scopes)) {
+        navigate("/admin/dashboard-web", { replace: true });
         return;
       }
 
-      if (isDoctor(me.scopes)) {
+      if (me.role == "medico") {
         const next = `/menu.php?nro_socio1=${encodeURIComponent(
           Number(me.nro_socio)
         )}`;
@@ -82,13 +82,11 @@ function Login() {
           params: { next },
         });
         window.location.href = data.url;
-        return;
-      }
-
-      if (isWebEditor(me.scopes)) {
-        navigate("/admin/dashboard-web", { replace: true });
-      } else {
-        navigate("/panel/dashboard", { replace: true });
+      } else if (me.role != "medico") {
+        const { data } = await http.get("/auth/legacy/sso-link", {
+          params: { next: "/principal.php" }, // o la primera página del legacy
+        });
+        window.location.href = data.url; // redirige al legacy con sesión abierta
       }
     } catch (err: any) {
       const apiMsg =

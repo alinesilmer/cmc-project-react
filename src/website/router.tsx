@@ -40,13 +40,26 @@ export default function WebRoutes() {
       <Routes>
         {/* 403 opcional */}
         <Route path="/403" element={<Forbidden403 />} />
-        {/* RUTAS PROTEGIDAS */}
-        <Route element={<RequireWebEditor forbidAs403={false} />}>
+
+        {/* Admin: login SIEMPRE público */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+
+        {/* Admin: rutas protegidas para web editor */}
+        <Route
+          element={
+            <RequireWebEditor
+              redirectUnauthedTo="/panel/login" // si no está logueado
+              forbidAs403={false} // si no tiene scope web:editor → /panel/dashboard
+            />
+          }
+        >
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          {/* alias que usás desde el login de la app */}
           <Route path="/admin/dashboard-web" element={<AdminDashboard />} />
-          {/* <Route path="/admin/posts" element={<PostsList />} /> */}
+          <Route path="/admin/medicos-promo" element={<AdminMedicosPromo />} />
         </Route>
 
+        {/* Rutas públicas */}
         <Route path="/" element={<Home />} />
         <Route path="/contacto" element={<Contacto />} />
         <Route path="/noticias" element={<NoticiasPage />} />
@@ -59,12 +72,7 @@ export default function WebRoutes() {
         <Route path="/quinta" element={<QuintaPage />} />
         <Route path="/cursoscap" element={<CursosCapacitacionesPage />} />
         <Route path="/seguros" element={<SegurosPage />} />
-        {/* Admin */}
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        {/* ✅ alias nuevo */}
-        <Route path="/admin/dashboard-web" element={<AdminDashboard />} />
-        <Route path="/admin/medicos-promo" element={<AdminMedicosPromo />} />
+
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

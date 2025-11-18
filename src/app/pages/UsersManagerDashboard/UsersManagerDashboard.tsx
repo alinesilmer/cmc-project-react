@@ -4,11 +4,10 @@ import type React from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./UsersManagerDashboard.module.scss";
 import MetricCard from "../../components/molecules/MetricCard/MetricCard";
-import LineChart from "../../components/molecules/LineChart/LineChart";
+// import LineChart from "../../components/molecules/LineChart/LineChart";
 // import type { ApplicationStatus } from "../../../types/types";
 import { useEffect, useState } from "react";
 import { getJSON } from "../../lib/http";
-
 
 // type MedicoRow = {
 //   id: number;
@@ -26,32 +25,40 @@ import { getJSON } from "../../lib/http";
 
 const UsersManagerDashboard: React.FC = () => {
   const navigate = useNavigate();
-// Métricas
+  // Métricas
   const [totalSocios, setTotalSocios] = useState<number>(0);
   const [nuevas, setNuevas] = useState<number>(0);
   const [pendientes, setPendientes] = useState<number>(0);
   const [aprobadas, setAprobadas] = useState<number>(0);
 
-  const chartData = [
-    { month: "Ene", value: 45 },
-    { month: "Feb", value: 52 },
-    { month: "Mar", value: 48 },
-    { month: "Abr", value: 61 },
-    { month: "May", value: 55 },
-    { month: "Jun", value: 67 },
-  ];
-  
- useEffect(() => {
+  // const chartData = [
+  //   { month: "Ene", value: 45 },
+  //   { month: "Feb", value: 52 },
+  //   { month: "Mar", value: 48 },
+  //   { month: "Abr", value: 61 },
+  //   { month: "May", value: 55 },
+  //   { month: "Jun", value: 67 },
+  // ];
+
+  useEffect(() => {
     let ignore = false;
 
     (async () => {
       try {
         // 1) Total de socios (nuevo endpoint)
-        const { count } = await getJSON<{ count: number }>("/api/medicos/count");
+        const { count } = await getJSON<{ count: number }>(
+          "/api/medicos/count"
+        );
         if (!ignore) setTotalSocios(count ?? 0);
 
         // 2) Solicitudes: conteos reales (nuevo endpoint)
-        type Counts = { total: number; nueva: number; pendiente: number; aprobada: number; rechazada: number };
+        type Counts = {
+          total: number;
+          nueva: number;
+          pendiente: number;
+          aprobada: number;
+          rechazada: number;
+        };
         const stats = await getJSON<Counts>("/api/solicitudes/stats/counts");
         if (!ignore) {
           setNuevas(stats.nueva ?? 0);
@@ -63,7 +70,9 @@ const UsersManagerDashboard: React.FC = () => {
       }
     })();
 
-    return () => { ignore = true; };
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   return (
@@ -111,7 +120,7 @@ const UsersManagerDashboard: React.FC = () => {
       <div className={styles.actionsGrid}>
         <div
           className={`${styles.actionCard} ${styles.actionCardPrimary}`}
-          onClick={() => navigate("/solicitudes")}
+          onClick={() => navigate("/panel/solicitudes")}
         >
           <div className={styles.actionIcon}>📋</div>
           <h3 className={styles.actionTitle}>Solicitudes de Socios</h3>
@@ -123,7 +132,7 @@ const UsersManagerDashboard: React.FC = () => {
 
         <div
           className={styles.actionCard}
-          onClick={() => navigate("/users")}
+          onClick={() => navigate("/panel/users")}
         >
           <div className={styles.actionIcon}>👥</div>
           <h3 className={styles.actionTitle}>Usuarios</h3>
@@ -134,10 +143,10 @@ const UsersManagerDashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className={styles.chartSection}>
+      {/* <div className={styles.chartSection}>
         <h2 className={styles.sectionTitle}>Nuevos Socios por Mes</h2>
         <LineChart data={chartData} />
-      </div>
+      </div> */}
     </div>
   );
 };

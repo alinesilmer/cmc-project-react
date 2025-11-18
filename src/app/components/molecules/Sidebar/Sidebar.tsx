@@ -33,12 +33,12 @@ const Sidebar: React.FC = () => {
       label: "Permisos y roles",
       perms: ["rbac:gestionar"],
     },
-    {
-      path: `${base}/liquidation`,
-      icon: DollarSign,
-      label: "Liquidación",
-      perms: ["liquidacion:leer", "liquidacion:ver"],
-    },
+    // {
+    //   path: `${base}/liquidation`,
+    //   icon: DollarSign,
+    //   label: "Liquidación",
+    //   perms: ["liquidacion:leer", "liquidacion:ver"],
+    // },
     {
       path: `${base}/padron-ioscor`,
       icon: Hospital,

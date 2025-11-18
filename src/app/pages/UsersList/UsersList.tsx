@@ -9,103 +9,111 @@ import BackButton from "../../components/atoms/BackButton/BackButton";
 
 const PAGE_SIZE = 50;
 
-async function fetchPaged<T>(endpoint: string): Promise<T[]> {
-  const all: T[] = [];
-  let skip = 0;
-  while (true) {
-    // Tu API usa limit/skip = 50 por página
-    const page = await getJSON<T[]>(`${endpoint}?limit=${PAGE_SIZE}&skip=${skip}`);
-    if (!Array.isArray(page) || page.length === 0) break;
-    all.push(...page);
-    if (page.length < PAGE_SIZE) break;
-    skip += PAGE_SIZE;
-  }
-  return all;
-}
+type MedicoRow = {
+  id: number;
+  nro_socio: number | null;
+  nombre: string;
+  mail_particular?: string | null;
+  tele_particular?: string | null;
+  fecha_ingreso?: string | null;
+  MATRICULA_PROV?: string | number | null;
+  EXISTE?: string | null;
+  // TIPO_SOCIO?: string | null;
+  // tipo_socio?: string | null;
+  NRO_SOCIO?: number | null;
+  TIPO?: string | null;
+  tipo?: string | null;
+  ES_ADHERENTE?: string | number | boolean | null;
+  es_adherente?: string | number | boolean | null;
+  adherente?: string | number | boolean | null;
+  activo?: boolean | number; // <- llega 0/1 o bool
+  existe?: string | null;
+};
 
 // Mapea un registro de tu API de médicos a la forma que usa la tabla
-function toUserRow(m: any) {
-  // Reglas robustas para "Tipo de Socio":
-  // 1) Si existe un campo textual con "adherente" => Adherente
-  // 2) Si hay flags tipo ES_ADHERENTE (S/true/1) => Adherente
-  // 3) En caso contrario => Socio (por defecto), para evitar falsos adherentes
-  const tipoRaw =
-    (m?.TIPO_SOCIO ??
-      m?.tipo_socio ??
-      m?.TIPO ??
-      m?.tipo ??
-      "").toString().toLowerCase();
-  const esAdherenteTexto = tipoRaw.includes("adherente");
+function toUserRow(m: MedicoRow | any) {
+  // status desde backend (prioritario)
+  const isActive =
+    typeof m?.activo !== "undefined"
+      ? Boolean(Number(m.activo))
+      : (m?.EXISTE ?? m?.existe ?? "").toString().toUpperCase().trim() === "S";
 
-  const flag = (m?.ES_ADHERENTE ?? m?.es_adherente ?? m?.adherente ?? "")
-    .toString()
-    .toLowerCase()
-    .trim();
-  const esAdherenteFlag =
-    flag === "s" || flag === "1" || flag === "true" || flag === "si";
-
-  const memberType = esAdherenteTexto || esAdherenteFlag ? "Socio Adherente" : "Socio";
-
-  // Estado para las cards (activo/inactivo) según EXISTE o status
-  const existe =
-    (m?.EXISTE ?? m?.existe ?? "").toString().toUpperCase().trim() === "S";
-  const status = existe ? "activo" : "inactivo";
+  const status = isActive ? "activo" : "inactivo";
 
   return {
     id: m?.ID ?? m?.id ?? m?.NRO_SOCIO ?? Math.random().toString(36).slice(2),
+    nro_socio: m?.NRO_SOCIO ?? m?.nro_socio ?? null,
     name: m?.NOMBRE ?? m?.nombre ?? "—",
     email: m?.mail_particular ?? m?.email ?? "—",
-    phone:
-      m?.CELULAR ??
-      m?.tele_particular ??
-      m?.telefono ??
-      m?.phone ??
-      "—",
-    memberType, // "Socio" | "Socio Adherente"
+    phone: m?.tele_particular ?? "—",
     joinDate: m?.fecha_ingreso ?? m?.joinDate ?? null,
-    status, // "activo" | "inactivo" (solo para cards)
+    status,
     matriculaProv: m?.MATRICULA_PROV ?? m?.matricula_prov ?? "—",
   };
 }
 
+type UserRow = ReturnType<typeof toUserRow>;
+
 const UsersList: React.FC = () => {
   const navigate = useNavigate();
 
-  // Cambiamos mock por datos reales (sin tocar tus clases/estructura)
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Paginación
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(1);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let ignore = false;
-    (async () => {
+
+    async function load() {
+      setLoading(true);
+      setError(null);
+
       try {
-        setLoading(true);
-        const medicos = await fetchPaged("/api/medicos");
-        const rows = medicos.map(toUserRow);
-        if (!ignore) setUsers(rows);
-      } catch (e) {
+        const skip = (page - 1) * PAGE_SIZE;
+
+        const params = new URLSearchParams();
+        params.set("limit", PAGE_SIZE.toString());
+        params.set("skip", skip.toString());
+        const q = searchTerm.trim();
+        if (q) params.set("q", q);
+
+        // La API devuelve un array simple de médicos
+        const data = await getJSON<MedicoRow[]>(
+          `/api/medicos?${params.toString()}`
+        );
+
+        const items = (data ?? []).map(toUserRow);
+
+        if (!ignore) {
+          setUsers(items);
+          setHasMore(items.length === PAGE_SIZE);
+        }
+      } catch (e: any) {
         console.error(e);
-        if (!ignore) setUsers([]);
+        if (!ignore) {
+          setUsers([]);
+          setError("Error al cargar usuarios");
+          setHasMore(false);
+        }
       } finally {
         if (!ignore) setLoading(false);
       }
-    })();
+    }
+
+    load();
+
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [page, searchTerm]);
 
-  const filteredUsers = useMemo(() => {
-    const t = searchTerm.trim().toLowerCase();
-    if (!t) return users;
-    return users.filter((u) => {
-      const name = (u.name ?? "").toLowerCase();
-      const email = (u.mail ?? "").toLowerCase();
-      return name.includes(t) || email.includes(t);
-    });
-  }, [users, searchTerm]);
+  // Ya no filtramos en memoria una lista gigante; el filtro va al backend (q)
+  const filteredUsers = users;
 
   // Conteos reales para las cards
   const activeUsers = useMemo(
@@ -121,34 +129,24 @@ const UsersList: React.FC = () => {
     <div className={styles.container}>
       <BackButton />
       <div className={styles.header}>
-
         <h1 className={styles.title}>Listado de Usuarios</h1>
 
         <div>
-          {/* Botones extra, reusando la misma clase para no tocar estilos */}
           <Button
             className={styles.backButton}
-            onClick={() => navigate("/register-socio")}
+            onClick={() => navigate("/panel/register-socio")}
             style={{ marginLeft: 8 }}
             title="Crear socio (médico)"
           >
             + Agregar socio
           </Button>
-          {/* <button
-            className={styles.backButton}
-            onClick={() => navigate("/adherente")}
-            style={{ marginLeft: 8 }}
-            title="Crear socio adherente"
-          >
-            + Agregar adherente
-          </button> */}
         </div>
       </div>
 
       <div className={styles.statsGrid}>
         <div className={styles.statCard}>
           <span className={styles.statValue}>{users.length}</span>
-          <span className={styles.statLabel}>Total Usuarios</span>
+          <span className={styles.statLabel}>Total Usuarios (página)</span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statValue}>{activeUsers}</span>
@@ -165,7 +163,10 @@ const UsersList: React.FC = () => {
           type="text"
           placeholder="Buscar por nombre o email..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => {
+            setPage(1); // al cambiar búsqueda, volvemos a la página 1
+            setSearchTerm(e.target.value);
+          }}
           className={styles.searchInput}
         />
       </div>
@@ -174,22 +175,27 @@ const UsersList: React.FC = () => {
         <table className={styles.table}>
           <thead>
             <tr>
+              <th>Nro Socio</th>
               <th>Nombre</th>
               <th>Email</th>
               <th>Teléfono</th>
-              <th>Tipo de Socio</th>
               <th>Fecha de Ingreso</th>
               <th>Matrícula Provincial</th>
-              <th style={{ width: 120 }}>Acciones</th> {/* ← NUEVO */}
+              <th style={{ width: 120 }}>Acciones</th>
             </tr>
           </thead>
 
           <tbody>
-            {/* Loader centrado mientras carga, manteniendo headers */}
             {loading ? (
               <tr>
                 <td colSpan={7} style={{ textAlign: "center", padding: 12 }}>
                   ⏳ Cargando…
+                </td>
+              </tr>
+            ) : error ? (
+              <tr>
+                <td colSpan={7} style={{ textAlign: "center", padding: 12 }}>
+                  {error}
                 </td>
               </tr>
             ) : filteredUsers.length === 0 ? (
@@ -201,16 +207,12 @@ const UsersList: React.FC = () => {
             ) : (
               filteredUsers.map((user) => (
                 <tr key={user.id}>
+                  <td>{user.nro_socio ?? "—"}</td>
                   <td className={styles.nameCell}>{user.name}</td>
                   <td>{user.email}</td>
                   <td>{user.phone}</td>
                   <td>
-                    <span className={styles.memberTypeBadge}>
-                      {user.memberType}
-                    </span>
-                  </td>
-                  <td>
-                    {user.joinDate
+                    {user.joinDate && !user.joinDate.startsWith("0000")
                       ? new Date(user.joinDate).toLocaleDateString("es-AR")
                       : "—"}
                   </td>
@@ -224,7 +226,7 @@ const UsersList: React.FC = () => {
                       title="Ver / editar"
                       onClick={() => {
                         const targetId = user.id ?? user.nro_socio;
-                        if (targetId) navigate(`/doctors/${targetId}`);
+                        if (targetId) navigate(`/panel/doctors/${targetId}`);
                       }}
                     >
                       Ver / editar
@@ -237,7 +239,37 @@ const UsersList: React.FC = () => {
         </table>
       </div>
 
-      {!loading && filteredUsers.length === 0 && (
+      {/* Controles de paginación */}
+      <div
+        style={{
+          display: "flex",
+          gap: 8,
+          justifyContent: "flex-end",
+          marginTop: 12,
+        }}
+      >
+        <Button
+          className={styles.backButton}
+          type="button"
+          disabled={page === 1 || loading}
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+        >
+          Anterior
+        </Button>
+
+        <span style={{ alignSelf: "center" }}>Página {page}</span>
+
+        <Button
+          className={styles.backButton}
+          type="button"
+          disabled={!hasMore || loading}
+          onClick={() => setPage((p) => p + 1)}
+        >
+          Siguiente
+        </Button>
+      </div>
+
+      {!loading && filteredUsers.length === 0 && !error && (
         <div className={styles.emptyState}>
           <p>No se encontraron usuarios que coincidan con la búsqueda</p>
         </div>

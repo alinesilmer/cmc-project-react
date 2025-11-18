@@ -7,6 +7,7 @@ export type RegisterPayload = {
   documentNumber: string;
   firstName: string;
   lastName: string;
+  gender?: string | null;
   email?: string | null;
   phone?: string | null;
   mobile?: string | null;
@@ -37,6 +38,7 @@ export type RegisterPayload = {
   malpracticeCoverage?: string | null;
   coverageExpiry?: string | null;
   taxCondition?: string | null;
+
   specialties?: {
     id_colegio_espe: number;
     n_resolucion?: string | null;
@@ -51,6 +53,8 @@ export function buildRegisterPayload(form: any): RegisterPayload {
     documentNumber: String(form.documentNumber || "").trim(),
     firstName: String(form.firstName || "").trim(),
     lastName: String(form.lastName || "").trim(),
+    gender: form.gender || null, // ← 👈 agregar
+
     email: form.email || null,
     phone: form.phone || null,
     mobile: form.mobile || null,
@@ -64,10 +68,16 @@ export function buildRegisterPayload(form: any): RegisterPayload {
     cbu: form.cbu || null,
     condicionImpositiva: form.taxCondition || null,
     observations: form.observations || null,
+
     provincialLicense: form.provincialLicense || null,
     nationalLicense: form.nationalLicense || null,
     graduationDate: form.graduationDate || null,
+
+    // OJO: si tu <select> guarda id_colegio_espe en form.specialty,
+    // el backend ya lo maneja en el "fallback" robusto que te pasé.
+    // Si en el front ya envías specialties[] mejor aún.
     specialty: form.specialty || null,
+
     resolutionNumber: form.resolutionNumber || null,
     provincialLicenseDate: form.provincialLicenseDate || null,
     nationalLicenseDate: form.nationalLicenseDate || null,

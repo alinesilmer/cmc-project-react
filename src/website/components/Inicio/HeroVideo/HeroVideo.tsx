@@ -74,13 +74,7 @@ export const HeroVideo: FC = () => {
 
     const me = user!;
     let next = "/principal.php";
-    const isMedico =
-      me.role?.toLowerCase() === "medico" ||
-      me.scopes?.some(
-        (s: string) =>
-          s === "medico" || s === "legacy:doctor" || s.startsWith("medicos:")
-      );
-
+    const isMedico = me.role?.toLowerCase() === "medico";
     if (isMedico && me.nro_socio) {
       next = `/menu.php?nro_socio1=${encodeURIComponent(String(me.nro_socio))}`;
     }

@@ -1,4 +1,4 @@
-@import '../../../styles/variables.scss';
+@import "../../../styles/variables.scss";
 
 .container {
   min-height: 100vh;
@@ -39,12 +39,17 @@
   padding: $spacing-8;
   box-shadow: $shadow-md;
 }
+.card__header {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 30px;
+}
 
 .title {
   font-size: $font-size-3xl;
   font-weight: $font-weight-bold;
   color: $gray-900;
-  margin: 0 0 $spacing-8 0;
 }
 
 .section {
@@ -60,12 +65,25 @@
 }
 
 .sectionTitle {
-  font-size: $font-size-xl;
+  font-size: $font-size-2xl;
   font-weight: $font-weight-semibold;
-  color: $gray-900;
-  margin: 0 0 $spacing-5 0;
+  color: $primary-blue-dark;
+  // border-bottom: 1px solid $gray-200;
+  padding-bottom: 8px;
+  // margin: 0 0 $spacing-5 0;
 }
-
+.subTitle:first-child {
+  margin-top: 20px;
+}
+.subTitle {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $primary-blue-dark;
+  margin-top: 40px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid $gray-200;
+  padding-bottom: 4px;
+}
 .infoGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -75,7 +93,7 @@
 .infoItem {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
+  gap: $spacing-1;
 }
 
 .label {
@@ -196,6 +214,12 @@
 .buttonSecondary {
   background-color: $gray-200;
   color: $gray-700;
+  width: fit-content;
+  padding: 2px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 4px;
 
   &:hover {
     background-color: $gray-300;

@@ -7,6 +7,7 @@ import { FaWhatsapp } from "react-icons/fa";
 import Button from "../../../components/UI/Button/Button";
 import AdminMedicosPromo from "../MedicosPromo/MedicosPromo";
 import styles from "./dashboard.module.scss";
+import { useAuth } from "../../../../app/auth/AuthProvider";
 
 import {
   listNews,
@@ -42,6 +43,7 @@ const PAGE_SIZE = 10;
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   // ---- Tabs (Noticias por defecto) ----
   const [tab, setTab] = useState<Tab>("noticias");
@@ -283,10 +285,12 @@ export default function DashboardPage() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("usuario");
-    navigate("/panel/login");
+  const handleLogout = async () => {
+    try {
+      await logout(); // 👉 llama a /auth/logout y limpia cookies + contexto + sessionStorage
+    } finally {
+      navigate("/panel/login", { replace: true }); // volvés al login unificado
+    }
   };
 
   // Compartir

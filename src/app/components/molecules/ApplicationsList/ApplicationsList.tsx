@@ -234,7 +234,9 @@ const ApplicationsList: React.FC = () => {
                     </div>
                     <button
                       className={styles.viewButton}
-                      onClick={() => navigate(`/solicitudes/${application.id}`)}
+                      onClick={() =>
+                        navigate(`/panel/solicitudes/${application.id}`)
+                      }
                     >
                       Ver Solicitud
                     </button>
