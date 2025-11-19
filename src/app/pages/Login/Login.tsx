@@ -42,7 +42,7 @@ function Login() {
   };
 
   const goObrasSociales = () => {
-    navigate("/panel/obras-sociales");
+    navigate("/panel/register-os");
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -103,9 +103,9 @@ function Login() {
     <div className={styles.container}>
       <div className={styles.btnBack}>
         <Link to="/" className={styles.linkBackToLanding}>
-                Volver a la página
-              </Link>
-              </div>
+          Volver a la página
+        </Link>
+      </div>
       <section className={styles.card}>
         {isMember && (
           <button
