@@ -1,7 +1,7 @@
 import React from "react";
 import LayoutRegister from "../Register/Layout/Layout";
 import ObrasSocialesSteps from "./ObrasSocialesSteps/ObrasSocialesSteps";
-import styles from "../register/Register.module.scss";
+import styles from "../Register/Register.module.scss";
 import { useNavigate } from "react-router-dom";
 import { useObrasSocialesForm } from "../../../hooks/register/useObrasSocialesForm";
 
@@ -11,7 +11,7 @@ const stepsMeta = [
   { id: 3, title: "Documentación", icon: "📄" },
 ];
 
-const ObrasSocialesRegister: React.FC = () => { 
+const ObrasSocialesRegister: React.FC = () => {
   const nav = useNavigate();
   const form = useObrasSocialesForm();
 
@@ -23,10 +23,7 @@ const ObrasSocialesRegister: React.FC = () => {
       showBack={form.step > 1}
     >
       <div className={styles.actionBar}>
-        <button
-          className={styles.backBtn}
-          onClick={() => nav("/panel/login")}
-        >
+        <button className={styles.backBtn} onClick={() => nav("/panel/login")}>
           Cancelar
         </button>
       </div>
