@@ -7,7 +7,19 @@ import logo from "../../../assets/images/logoCMC.png";
 import SearchBar from "../SearchBar/SearchBar";
 import { useAuth } from "../../../../app/auth/AuthProvider";
 import { isWebEditor } from "../../../../app/auth/roles";
-// import RequirePermission from "../../../../app/auth/RequirePermission";
+
+// === NUEVO: helper para SSO hacia el legacy usando VITE_URL_BASE_LEGACY ===
+const LEGACY_BASE =
+  (import.meta.env.VITE_URL_BASE_LEGACY as string | undefined) ??
+  "https://legacy.colegiomedicocorrientes.com"; // fallback seguro
+
+const ssoToLegacy = (path: string) => {
+  const base = LEGACY_BASE.replace(/\/+$/, "");
+  const nextPath = path.startsWith("/") ? path : `/${path}`;
+  return `${base}/sso_to_new.php?next=${encodeURIComponent(nextPath)}`;
+};
+
+const isExternalHref = (href: string) => /^https?:\/\//i.test(href);
 
 export default function Header() {
   const { pathname } = useLocation();
@@ -27,7 +39,7 @@ export default function Header() {
     ? "/panel/login"
     : isWebEditor(user.scopes)
     ? "/admin/dashboard-web"
-    : "http://127.0.0.1:8085/principal.php";
+    : ssoToLegacy("/panel/dashboard");
 
   useEffect(() => {
     const onScroll = () => {
@@ -200,13 +212,13 @@ export default function Header() {
               <FiSearch />
             </button>
             {user && (
-              <Link
-                to={targetHref}
+              <a
+                href={targetHref}
                 className={styles.loginLink}
                 onClick={closeAll}
               >
                 <FiUser />
-              </Link>
+              </a>
             )}
           </div>
 
