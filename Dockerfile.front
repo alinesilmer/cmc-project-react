@@ -1,0 +1,15 @@
+FROM node:20-alpine AS build
+WORKDIR /web
+COPY package*.json ./
+RUN npm ci
+COPY . .
+ARG VITE_API_URL
+ARG URL_BASE_LEGACY
+ENV VITE_API_URL=${VITE_API_URL}
+ENV VITE_URL_BASE_LEGACY=${VITE_URL_BASE_LEGACY}
+RUN npm run build   # genera /web/dist
+
+FROM alpine:3.20
+WORKDIR /
+COPY --from=build /web/dist /out
+CMD ["sh","-c","mkdir -p /srv/web && rm -rf /srv/web/* && cp -r /out/* /srv/web/ && echo 'Front copiado' && sleep infinity"]
