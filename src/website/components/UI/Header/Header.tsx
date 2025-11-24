@@ -7,19 +7,14 @@ import logo from "../../../assets/images/logoCMC.png";
 import SearchBar from "../SearchBar/SearchBar";
 import { useAuth } from "../../../../app/auth/AuthProvider";
 import { isWebEditor } from "../../../../app/auth/roles";
+import { http } from "../../../../app/lib/http"; // tu axios instance con credentials
 
 // === NUEVO: helper para SSO hacia el legacy usando VITE_URL_BASE_LEGACY ===
 const LEGACY_BASE =
   (import.meta.env.VITE_URL_BASE_LEGACY as string | undefined) ??
   "https://legacy.colegiomedicocorrientes.com"; // fallback seguro
 
-const ssoToLegacy = (path: string) => {
-  const base = LEGACY_BASE.replace(/\/+$/, "");
-  const nextPath = path.startsWith("/") ? path : `/${path}`;
-  return `${base}/sso_to_new.php?next=${encodeURIComponent(nextPath)}`;
-};
-
-const isExternalHref = (href: string) => /^https?:\/\//i.test(href);
+const legacyFallback = `${LEGACY_BASE.replace(/\/+$/, "")}/principal.php`;
 
 export default function Header() {
   const { pathname } = useLocation();
@@ -35,13 +30,33 @@ export default function Header() {
   const [solid, setSolid] = useState(pathname !== "/");
   const { user } = useAuth();
 
+  const [legacyUrl, setLegacyUrl] = useState<string>(legacyFallback);
+  useEffect(() => {
+    // si está logueado y NO es web editor, buscamos link SSO al legacy
+    if (user && !isWebEditor(user.scopes)) {
+      http
+        .get<{ url: string }>("/auth/legacy/sso-link", {
+          params: { next: "/principal.php" },
+          withCredentials: true,
+        })
+        .then(({ data }) => {
+          if (data?.url) setLegacyUrl(data.url);
+        })
+        .catch(() => setLegacyUrl(legacyFallback));
+    } else {
+      setLegacyUrl(legacyFallback);
+    }
+  }, [user]);
+
   const targetHref = !user
     ? "/panel/login"
     : isWebEditor(user.scopes)
     ? "/admin/dashboard-web"
-    : ssoToLegacy("/panel/dashboard");
+    : legacyUrl; // <- ahora es la URL firmada cuando está disponible
 
   useEffect(() => {
+    console.log("legacy =", import.meta.env.VITE_URL_BASE_LEGACY);
+
     const onScroll = () => {
       if (pathname !== "/") {
         setSolid(true);
