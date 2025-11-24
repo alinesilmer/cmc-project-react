@@ -90,7 +90,7 @@ const RegisterBase: React.FC<Props> = ({
         </div>
       </LayoutRegister>
 
-      {mode === "public" && showAdherentePrompt && rf.askAdherente && (
+      {/* {mode === "public" && showAdherentePrompt && rf.askAdherente && (
         <div
           className={styles.modalOverlay}
           onClick={() => rf.setAskAdherente(false)}
@@ -150,7 +150,7 @@ const RegisterBase: React.FC<Props> = ({
             </div>
           </div>
         </div>
-      )}
+      )} */}
     </>
   );
 };
