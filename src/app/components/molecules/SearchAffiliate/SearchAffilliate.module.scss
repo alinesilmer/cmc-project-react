@@ -1,4 +1,3 @@
-
 .container {
   max-width: 500px;
   margin: 4rem auto;
@@ -8,13 +7,28 @@
   border-radius: v.$border-radius-lg;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   text-align: center;
+
+  @media (max-width: v.$breakpoint-md) {
+    margin: 3rem auto;
+    padding: v.$spacing-5;
+  }
+
+  @media (max-width: v.$breakpoint-sm) {
+    max-width: 100%;
+    margin: 2rem v.$spacing-3;
+    padding: v.$spacing-4;
+  }
 }
 
 .title {
-  font-size: 1.5rem;
+  font-size: clamp(1.25rem, 2.6vw, 1.5rem);
   font-weight: v.$font-weight-semibold;
   margin-bottom: v.$spacing-5;
   color: v.$gray-800;
+
+  @media (max-width: v.$breakpoint-sm) {
+    margin-bottom: v.$spacing-4;
+  }
 }
 
 .form {
@@ -22,6 +36,10 @@
   gap: v.$spacing-3;
   justify-content: center;
   align-items: center;
+
+  @media (max-width: v.$breakpoint-md) {
+    gap: v.$spacing-2;
+  }
 
   @media (max-width: v.$breakpoint-sm) {
     flex-direction: column;
@@ -36,11 +54,20 @@
   border-radius: v.$border-radius-md;
   font-size: 1rem;
   outline: none;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
   &:focus {
     border-color: v.$primary-blue;
     box-shadow: 0 0 0 3px rgba(42, 126, 238, 0.15);
+  }
+
+  @media (max-width: v.$breakpoint-md) {
+    font-size: 0.95rem;
+    padding: 0.7rem 0.9rem;
+  }
+
+  @media (max-width: v.$breakpoint-sm) {
+    width: 100%;
   }
 }
 
@@ -49,8 +76,18 @@
   font-weight: v.$font-weight-medium;
   border-radius: v.$border-radius-md;
   transition: transform 0.15s ease;
+  white-space: nowrap;
 
   &:hover {
     transform: translateY(-1px);
+  }
+
+  @media (max-width: v.$breakpoint-md) {
+    padding: 0.7rem 1.25rem;
+  }
+
+  @media (max-width: v.$breakpoint-sm) {
+    width: 100%;
+    text-align: center;
   }
 }

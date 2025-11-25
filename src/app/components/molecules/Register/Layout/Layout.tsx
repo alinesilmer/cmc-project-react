@@ -27,7 +27,7 @@ const LayoutRegister: React.FC<Props> = ({
         <div className={styles.progressSequence}>
           <div className={styles.logo}>
             {/* <img src="/placeholder.svg?height=60&width=100" alt="CMC" /> */}
-            <h1>Registro de Socio</h1>
+            <h1>Registro</h1>
           </div>
 
           <div className={styles.stepsList}>

@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Lexend:wght@100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Lexend:wght@100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap");
 @import "@/app/styles/variables.scss";
 @import "@/app/styles/mixins.scss";
 
@@ -6,15 +6,18 @@
   position: sticky;
   top: 0;
   height: 100vh;
-  width: 100%;
   max-width: 300px;
-  min-width: 220px;
   display: flex;
   flex-direction: column;
   background: $white;
   border-right: 1px solid $gray-200;
   padding: $spacing-2 $spacing-3;
-  transition: width 0.2s ease;
+  z-index: 40;
+  transition:
+    width 0.25s ease,
+    padding 0.2s ease,
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
 .logoRow {
@@ -43,17 +46,20 @@
 .toggle {
   width: 34px;
   height: 34px;
-  display: grid;
-  place-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   border-radius: $border-radius-md;
   background: none;
   border: none;
   color: $gray-700;
-  transition: background 0.2s ease-in-out, color 0.2s ease-in-out;
+  transition: background 0.2s ease-in-out, color 0.2s ease-in-out, transform 0.2s ease;
 }
+
 .toggle:hover {
   background: $gray-200;
   color: $gray-900;
+  transform: translateY(-1px);
 }
 
 .nav {
@@ -75,10 +81,12 @@
   border-radius: $border-radius-md;
   transition: background-color 0.15s ease, color 0.15s ease;
 }
+
 .navItem:hover {
   background-color: $gray-100;
   color: $gray-900;
 }
+
 .navItem.active {
   background-color: $secondary-blue;
   color: $primary-blue;
@@ -105,11 +113,13 @@
   color: $gray-500;
   border-bottom: 1px solid $gray-200;
 }
+
 .config a {
   color: $gray-600;
   text-decoration: none;
   transition: color 0.15s ease-in-out;
 }
+
 .config a:hover {
   color: $gray-900;
 }
@@ -127,6 +137,7 @@
   text-decoration: none;
   transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
 }
+
 .configItem:hover {
   background-color: $gray-100;
   color: $gray-900;
@@ -142,28 +153,27 @@
 
 .collapsed {
   width: 80px;
-  min-width: 80px;
 }
+
 .collapsed .navItem {
   justify-content: center;
   padding: $spacing-3 0;
 }
+
 .collapsed .navItem .itemLabel {
   display: none;
 }
+
 .collapsed .configItem {
   justify-content: center;
 }
+
 .collapsed .configItem .itemLabel {
   display: none;
 }
+
 .collapsed .footer .itemLabel {
   display: none;
-}
-.toggle {
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 @media (max-width: 1200px) {
@@ -171,37 +181,72 @@
     min-width: 200px;
   }
 }
+
 @media (max-width: 1024px) {
   .sidebar {
     width: 220px;
     min-width: 220px;
   }
+
   .collapsed {
     width: 72px;
     min-width: 72px;
   }
+
+  .navItem {
+    padding: $spacing-3 $spacing-3;
+  }
+
+  .configItem {
+    padding: $spacing-2 $spacing-3;
+  }
 }
+
 @media (max-width: 768px) {
   .sidebar {
-    position: fixed;
+    // position: fixed;
     left: 0;
     top: 0;
-    z-index: 40;
+    height: 100%;
     width: 78vw;
     max-width: 300px;
     border-right: 1px solid $gray-200;
+    box-shadow: $shadow-lg;
+    padding: $spacing-3;
   }
+
+  .logoRow {
+    padding-bottom: $spacing-3;
+    margin-bottom: $spacing-3;
+  }
+
   .collapsed {
     width: 76px;
     min-width: 76px;
   }
 }
+
 @media (max-width: 480px) {
   .sidebar {
     width: 82vw;
+    padding: $spacing-2 $spacing-3;
   }
+
   .collapsed {
     width: 70px;
     min-width: 70px;
+  }
+
+  .navItem {
+    font-size: $font-size-sm;
+    padding: $spacing-2 $spacing-3;
+  }
+
+  .configItem {
+    font-size: $font-size-sm;
+  }
+
+  .footer {
+    padding: $spacing-4 1rem;
   }
 }

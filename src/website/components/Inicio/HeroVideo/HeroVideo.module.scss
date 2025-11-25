@@ -103,5 +103,8 @@ font-family: $font-playfair;
 .cta:hover { transform: translateY(-2px); box-shadow: 0 20px 46px rgba(255,92,122,.32); }
 
 @media (max-width: 768px) {
-  .content { padding: 0 1.25rem; }
+  .content { padding: 4rem 1.25rem; text-align: center; justify-content: center; align-items: center;}
+  .pills {text-align: center; justify-content: center; align-items: center;}
+  .title {text-align: center; justify-content: center; align-items: center; max-width: 100%}
+  .ctaRow {text-align: center; justify-content: center; align-items: center;}
 }

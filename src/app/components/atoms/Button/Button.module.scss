@@ -24,18 +24,18 @@
 
     &:hover:not(:disabled) {
       background-color: $primary-blue-dark;
-      color: white;
+      color: $white;
     }
   }
 
-   &.third {
+  &.third {
     background-color: $black;
     color: $white;
     text-decoration: none;
 
     &:hover:not(:disabled) {
       background-color: $primary-blue-dark;
-      color: white;
+      color: $white;
     }
   }
 
@@ -48,14 +48,6 @@
     }
   }
 
-  &.secondary {
-    background-color: $gray-100;
-    color: $gray-700;
-
-    &:hover:not(:disabled) {
-      background-color: $gray-200;
-    }
-  }
   &.success {
     background-color: $success-green;
     color: $white;
@@ -96,5 +88,33 @@
   &.lg {
     padding: $spacing-4 $spacing-6;
     font-size: $font-size-lg;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    &.lg {
+      padding: $spacing-3 $spacing-5;
+      font-size: $font-size-base;
+    }
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    width: 100%;
+    max-width: 100%;
+    justify-content: center;
+
+    &.sm {
+      padding: $spacing-2 $spacing-3;
+      font-size: $font-size-xs;
+    }
+
+    &.md {
+      padding: $spacing-2 $spacing-4;
+      font-size: $font-size-sm;
+    }
+
+    &.lg {
+      padding: $spacing-3 $spacing-4;
+      font-size: $font-size-base;
+    }
   }
 }

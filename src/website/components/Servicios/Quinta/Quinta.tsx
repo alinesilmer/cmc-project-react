@@ -49,8 +49,6 @@ export default function Quinta({
             <Calendar size={18} />
             <span>Temporada de pileta</span>
           </div>
-          <div className={styles.heroGlow} />
-          <div className={styles.heroGlow2} />
         </div>
       </div>
 

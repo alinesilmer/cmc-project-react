@@ -37,6 +37,8 @@
 .tableWrap {
   overflow-x: auto;
   background: #ffffff;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table {
@@ -269,6 +271,10 @@
 
 /* Responsive Design - Tablet */
 @media (max-width: 1024px) {
+  .panel {
+    border-radius: 6px;
+  }
+
   .table {
     font-size: 0.6875rem;
   }
@@ -300,6 +306,10 @@
 
 /* Responsive Design - Mobile */
 @media (max-width: 768px) {
+  .panel {
+    border-radius: 6px;
+  }
+
   .panelHead {
     flex-direction: column;
     align-items: flex-start;
@@ -401,6 +411,10 @@
 
 /* Responsive Design - Small Mobile */
 @media (max-width: 480px) {
+  .panel {
+    border-radius: 4px;
+  }
+
   .table {
     font-size: 0.5625rem;
   }

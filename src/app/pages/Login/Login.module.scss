@@ -16,17 +16,28 @@
   background-size: cover;
   gap: 3rem;
   padding: $spacing-6;
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-4;
+    gap: $spacing-4;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-3;
+    gap: $spacing-3;
+  }
 }
 
 .btnBack {
+  display: flex;
   align-items: flex-start;
   justify-content: flex-start;
 }
 
-
 .card {
   width: min(100%, 950px);
-  height: 560px;
+  min-height: 560px;
+  height: auto;
   background: $white;
   display: flex;
   align-items: stretch;
@@ -35,16 +46,26 @@
   overflow: hidden;
 
   @media (max-width: $breakpoint-lg) {
-    height: auto;
+    margin-top: 5rem;
     flex-direction: column;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    margin-top: 5rem;
+    border-radius: 0;
+    box-shadow: none;
+    width: 100%;
   }
 }
 
 .content,
 .media {
   flex: 1 1 50%;
+  
+  @media (max-width: $breakpoint-lg) {
+    flex: 1 1 auto;
+  }
 }
-
 
 .content {
   display: flex;
@@ -53,8 +74,19 @@
   padding: $spacing-12;
   gap: $spacing-6;
 
-  @media (max-width: $breakpoint-md) {
+  @media (max-width: $breakpoint-lg) {
     padding: $spacing-8;
+    gap: $spacing-5;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-6;
+    gap: $spacing-4;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-4;
+    gap: $spacing-3;
   }
 }
 
@@ -64,6 +96,11 @@
   text-align: center;
   justify-content: center;
   gap: $spacing-4;
+
+  @media (max-width: $breakpoint-md) {
+    flex-direction: column;
+    gap: $spacing-3;
+  }
 }
 
 .title {
@@ -77,18 +114,29 @@
 
 .heading {
   margin: 0;
-  font-size: clamp(1.6rem, 2.8vw, 2rem);
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
   font-weight: $font-weight-bold;
   letter-spacing: -0.02em;
   color: $gray-900;
-  text-align: left;
+  text-align: center;
+  line-height: 1.2;
+
+  @media (min-width: $breakpoint-lg) {
+    text-align: left;
+  }
 }
 
 .subtitle {
-  margin-top: -$spacing-2;
+  margin-top: 0;
   color: $gray-600;
-  font-size: $font-size-lg;
-  text-align: left;
+  font-size: clamp($font-size-base, 1.5vw, $font-size-lg);
+  text-align: center;
+  line-height: 1.5;
+
+  @media (min-width: $breakpoint-lg) {
+    text-align: left;
+    margin-top: -$spacing-2;
+  }
 }
 
 .fork {
@@ -99,6 +147,11 @@
   width: 100%;
   max-width: 420px;
   gap: $spacing-4;
+
+  @media (max-width: $breakpoint-md) {
+    max-width: 100%;
+    gap: $spacing-3;
+  }
 }
 
 .divider {
@@ -113,6 +166,12 @@
   justify-content: flex-start;
   gap: $spacing-4;
   flex-wrap: wrap;
+
+  @media (min-width: $breakpoint-md) {
+    flex-direction: row;
+    justify-content: space-between;
+    text-align: left;
+  }
 
   .link {
     color: $gray-900;
@@ -141,6 +200,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  min-height: 400px;
+
   &::after {
     content: "";
     position: absolute;
@@ -154,21 +215,35 @@
   }
 
   @media (max-width: $breakpoint-lg) {
-    height: 240px;
+    min-height: 280px;
     order: -1;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    min-height: 240px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    min-height: 200px;
   }
 }
 
-
 .media h3 a {
-  padding: 2rem 3rem;
+  padding: clamp(0.75rem, 2vw, 2rem) clamp(1.25rem, 3vw, 3rem);
   background-color: $black;
-  border-radius: 8px;
+  border-radius: clamp(0.5rem, 1.5vw, 1rem);
   text-decoration: none;
   color: white;
   font-weight: 700;
-  border-radius: 1rem;
-  font-size: $font-size-3xl;
+  font-size: clamp($font-size-lg, 3vw, $font-size-3xl);
+  transition: background-color 0.2s ease;
+  display: inline-block;
+  white-space: nowrap;
+
+  @media (max-width: $breakpoint-sm) {
+    white-space: normal;
+    text-align: center;
+  }
 }
 
 .media h3 a:hover {
@@ -187,9 +262,23 @@
 
   button {
     margin-top: $spacing-3;
+    width: 100%;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-3;
+    gap: $spacing-2;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-3;
+    gap: $spacing-2;
+    
+    button {
+      margin-top: $spacing-2;
+    }
   }
 }
-
 
 .label {
   font-size: $font-size-sm;
@@ -201,11 +290,19 @@
   text-decoration: none;
   color: white;
 }
+
 .formActions {
   display: flex;
   align-items: center;
   gap: $spacing-4;
   margin-top: $spacing-2;
+
+  @media (max-width: $breakpoint-md) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: $spacing-3;
+    margin-top: $spacing-1;
+  }
 }
 
 .cta {
@@ -214,6 +311,8 @@
   cursor: pointer;
   text-decoration: underline;
   width: 100%;
+  transition: color 0.15s ease;
+
   &:hover {
     color: $primary-blue-dark;
   }
@@ -256,8 +355,17 @@
   }
 
   @media (max-width: $breakpoint-md) {
-    top: $spacing-6;
-    left: $spacing-6;
+    top: $spacing-4;
+    left: $spacing-4;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    top: $spacing-3;
+    left: $spacing-3;
+    width: 32px;
+    min-width: 32px;
+    height: 32px;
+    font-size: $font-size-base;
   }
 }
 
@@ -269,6 +377,11 @@
   padding: $spacing-3 $spacing-4;
   margin-bottom: $spacing-2;
   font-size: $font-size-sm;
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-2 $spacing-3;
+    font-size: clamp(0.75rem, 2vw, $font-size-sm);
+  }
 }
 
 .isInvalid {
@@ -295,6 +408,12 @@
     border-color: $accent-blue;
     box-shadow: 0 0 0 3px rgba($primary-blue, 0.15);
   }
+
+  @media (max-width: $breakpoint-sm) {
+    height: 44px;
+    padding: 0 $spacing-3;
+    font-size: $font-size-base;
+  }
 }
 
 :focus-visible {
@@ -311,6 +430,7 @@
 .scale-in {
   animation: scaleIn 0.2s ease-out;
 }
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -343,13 +463,15 @@
 .linkBackToLanding {
   text-align: center;
   border: 1px solid #4f7cff;
-  padding: 6px;
+  padding: clamp(4px, 1vw, 6px);
   border-radius: 8px;
   text-decoration: none;
   color: #0f172a;
   font-weight: 500;
-}
+  font-size: clamp($font-size-sm, 2vw, $font-size-base);
+  transition: outline 0.15s ease;
 
-.linkBackToLanding:hover {
-  outline: 1px solid #4f7cff;
+  &:hover {
+    outline: 1px solid #4f7cff;
+  }
 }

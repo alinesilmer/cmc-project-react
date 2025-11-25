@@ -4,73 +4,69 @@ import ObrasSociales from "../../components/Servicios/ObrasSociales/ObrasSociale
 import type { ObraSocial } from "../../components/Servicios/ObrasSociales/ObrasSociales";
 import styles from "./convenios.module.scss";
 import Button from "../../components/UI/Button/Button";
+import { Link } from "react-router-dom";
 
 const adicionalesNombres: string[] = [
-  "ASCMUTUAL PROTECCION FAMILIAR",
-  "ASOCIACIÓN MUTUAL SANCOR",
-  "ASSISTRAVEL",
-  "AVALIAN",
-  "BOREAL SALUD",
-  "BRAMED SRL",
-  "CONDUCTORES NAVALES",
-  "CONFERENCIA EPISCOPAL ARG",
-  "DASUTEN",
-  "FARMACIA",
-  "GALENO",
-  "GERDANNA SA",
-  "GRUPO MELD SALUD",
-  "INDDEL",
-  "IOSCOR",
-  "IOSFA",
-  "LUIS PASTEUR",
-  "MEDICUS",
-  "MEDIFE",
-  "MEPLIFE SALUD",
-  "MTRABDE METALURGICO",
-  "NOBIS MEDICAL",
-  "NUEVA MUTUAL SERV-MEDICAL WORK",
-  "OBRA SOCIAL DE FUTBOLISTAS",
-  "OMINT SA",
-  "OPDEA",
-  "OSEMM",
-  "OSETYA",
-  "OSAPM",
-  "OSCTCP",
-  "OSDEPYM",
-  "OSDOP",
-  "OSFFENTOS",
-  "OSJERA",
-  "OSMATA",
-  "OSPEP - OBRA SOCIAL DEL PERSONAL DE PANAD",
-  "OSPERYHRA",
-  "OSPIL",
-  "OSPIM",
-  "OSPM",
-  "OSPPRA",
-  "OSPSA",
-  "OSPTA",
-  "OSPTV",
-  "OSSEG",
-  "OSSACRA",
-  "OSSIMRA",
-  "OSTEL",
-  "OSTRAC",
-  "OSTPCHPY ARA",
-  "OSTV",
-  "PATRONES DE CABOTAJE",
-  "POLICÍA FEDERAL",
-  "PREVENCIÓN SALUD SA",
-  "PROGRAMAS MEDICOS SOC ARG DE CONSULTO",
-  "S A M A",
-  "SADAIC",
-  "SCIS",
-  "SPF",
-  "SUPERINTENDENCIA RIESGO DEL TRABAJO",
-  "SWISS MEDICAL",
-  "UDEL PERSONAL CIVIL DE LA NAC",
-  "UNIÓN OBRERA METALÚRGICA",
-  "UNIÓN PERSONAL",
-  "UNNE",
+"ASCMUTUAL PROTECCION FAMILIAR",
+"ASOCIACIÓN MUTUAL SANCOR",
+"ASSISTRAVEL",
+"AVALIAN",
+"BOREAL SALUD",
+"BRAMED SRL",
+"CONFERENCIA EPISCOPAL ARG",
+"DASUTEN",
+"FARMACIA",
+"GALENO",
+"GERDANNA SA",
+"GRUPO MELD SALUD",
+"IOSCOR",
+"IOSFA",
+"LUIS PASTEUR",
+"MEDICUS",
+"MEDIFE",
+"MEPLIFE SALUD",
+"MTRABDE METALURGICO",
+"NOBIS MEDICAL",
+"NUEVA MUTUAL SERV-MEDICAL WORK",
+"OBRA SOCIAL DE FUTBOLISTAS",
+"OMINT SA",
+"OPDEA",
+"OSAPM",
+"OSCTCP",
+"OSDEPYM",
+"OSDOP",
+"OSEMM",
+"OSETYA",
+"OSFFENTOS",
+"OSJERA",
+"OSMATA",
+"OSPEP - OBRA SOCIAL DEL PERSONAL DE PANAD",
+"OSPERYHRA",
+"OSPIL",
+"OSPIM",
+"OSPM",
+"OSPPRA",
+"OSPSA",
+"OSPTA",
+"OSPTV",
+"OSSEG",
+"OSSACRA",
+"OSSIMRA",
+"OSTPCHPY ARA",
+"OSTRAC",
+"PATRONES DE CABOTAJE",
+"POLICÍA FEDERAL",
+"PREVENCIÓN SALUD SA",
+"PROGRAMAS MEDICOS SOC ARG DE CONSULTO",
+"SADAIC",
+"SCIS",
+"SPF",
+"SUPERINTENDENCIA RIESGO DEL TRABAJO",
+"SWISS MEDICAL",
+"UDEL PERSONAL CIVIL DE LA NAC",
+"UNIÓN OBRERA METALÚRGICA",
+"UNIÓN PERSONAL",
+"UNNE",
 ];
 
 const adicionales: ObraSocial[] = adicionalesNombres.map(
@@ -110,19 +106,16 @@ export default function ConveniosPage() {
           ¡Hacé click en el botón de abajo!
         </h2>
 
-        <a
-          href={WA_LINK}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Chatear por WhatsApp"
+        <Link
+           to = '/panel/register-os'
         >
           <Button variant="primary" size="large">
             Quiero firmar convenio
           </Button>
-        </a>
+        </Link>
 
         <p className={styles.otherOption}>
-          Enviar carta de presentación al{" "}
+          Si tienes inconvenientes llenando nuestro formulario, por favor, enviar <br/> carta de presentación al{" "}
           <a
             href={MAILTO_LINK}
             className={styles.link}

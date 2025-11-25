@@ -1,24 +1,38 @@
 @import "../../styles/variables.scss";
 
-/* Contenedor general */
 .wrap {
-    width: 100%;
+  width: 100%;
   min-height: 100vh;
   background: $gray-200;
 }
 
-/* Hero superior */
 .hero {
   position: relative;
   background: linear-gradient(135deg, $primary-blue 0%, $accent-blue 100%);
   color: $white;
   padding: $spacing-8 0 $spacing-12;
   overflow: hidden;
+
+  @media (max-width: $breakpoint-lg) {
+    padding: $spacing-6 0 $spacing-10;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-5 0 $spacing-8;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-4 0 $spacing-6;
+  }
 }
 
 .brand {
   font-weight: $font-weight-bold;
   font-size: $font-size-xl;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-lg;
+  }
 }
 
 .heroLinks {
@@ -31,19 +45,36 @@
     text-decoration: none;
     font-weight: $font-weight-semibold;
     opacity: 0.9;
-    transition: opacity .15s ease;
+    transition: opacity 0.15s ease;
 
-    &:hover { opacity: 1; }
+    &:hover {
+      opacity: 1;
+    }
+  }
+
+  @media (max-width: $breakpoint-md) {
+    gap: $spacing-3;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    justify-content: center;
+    text-align: center;
   }
 }
 
 .btnGhost {
   padding: $spacing-2 $spacing-4;
   border-radius: $border-radius-sm;
-  border: 1px solid rgba($white, .6);
+  border: 1px solid rgba($white, 0.6);
   background: transparent;
   color: $white;
   font-weight: $font-weight-semibold;
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-2 $spacing-3;
+    font-size: $font-size-sm;
+  }
 }
 
 .btnPrimary {
@@ -53,9 +84,13 @@
   color: $primary-blue-dark;
   font-weight: $font-weight-bold;
   box-shadow: $shadow-sm;
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-2 $spacing-3;
+    font-size: $font-size-sm;
+  }
 }
 
-/* Título */
 .title {
   margin: $spacing-8 auto 0;
   padding: 0 $spacing-4;
@@ -63,13 +98,29 @@
   text-align: center;
   font-weight: $font-weight-bold;
   font-size: clamp(1.6rem, 4vw, 2.4rem);
+
+  @media (max-width: $breakpoint-md) {
+    margin-top: $spacing-6;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: clamp(1.4rem, 6vw, 2rem);
+    padding: 0 $spacing-3;
+  }
 }
 
-/* Buscador */
 .searchRow {
   display: flex;
   justify-content: center;
   padding: $spacing-6 $spacing-4 0;
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-5 $spacing-3 0;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-4 $spacing-3 0;
+  }
 }
 
 .search {
@@ -83,7 +134,9 @@
   padding: 0 $spacing-3;
   box-shadow: $shadow-lg;
 
-  svg { color: $gray-500; }
+  svg {
+    color: $gray-500;
+  }
 
   input {
     flex: 1 1 auto;
@@ -94,7 +147,29 @@
     color: $gray-800;
     background: transparent;
 
-    &::placeholder { color: $gray-400; }
+    &::placeholder {
+      color: $gray-400;
+    }
+  }
+
+  @media (max-width: $breakpoint-md) {
+    height: 48px;
+
+    input {
+      font-size: $font-size-base;
+    }
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    flex-direction: column;
+    align-items: stretch;
+    height: auto;
+    padding: $spacing-3;
+    gap: $spacing-2;
+
+    input {
+      height: 40px;
+    }
   }
 }
 
@@ -107,12 +182,23 @@
   color: $white;
   font-weight: $font-weight-bold;
   box-shadow: $shadow-sm;
-  transition: background .15s ease;
+  transition: background 0.15s ease;
 
-  &:hover { background: $primary-blue-dark; }
+  &:hover {
+    background: $primary-blue-dark;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    height: 36px;
+    padding: 0 $spacing-3;
+    font-size: $font-size-sm;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    width: 100%;
+  }
 }
 
-/* Búsquedas populares */
 .popular {
   max-width: 1100px;
   margin: $spacing-3 auto 0;
@@ -121,33 +207,61 @@
   align-items: center;
   gap: $spacing-3;
   color: $white;
-  opacity: .95;
+  opacity: 0.95;
+
+  @media (max-width: $breakpoint-md) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: $spacing-2;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: 0 $spacing-3 $spacing-6;
+  }
 }
 
 .chips {
   display: flex;
   flex-wrap: wrap;
   gap: $spacing-2;
+
+  @media (max-width: $breakpoint-sm) {
+    width: 100%;
+  }
 }
 
 .chip {
-  border: 1px solid rgba($white, .6);
-  background: rgba(255,255,255,.18);
+  border: 1px solid rgba($white, 0.6);
+  background: rgba(255, 255, 255, 0.18);
   color: $white;
   font-weight: $font-weight-semibold;
   border-radius: 999px;
   padding: $spacing-2 $spacing-3;
   box-shadow: $shadow-sm;
-  transition: transform .12s ease, background .12s ease;
+  transition: transform 0.12s ease, background 0.12s ease;
 
-  &:hover { transform: translateY(-1px); background: rgba(255,255,255,.28); }
+  &:hover {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.28);
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-sm;
+  }
 }
 
-/* Contenido y tarjetas */
 .content {
   max-width: 1100px;
   margin: 0 auto;
   padding: $spacing-10 $spacing-4;
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-8 $spacing-3;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-6 $spacing-3;
+  }
 }
 
 .cardsRow {
@@ -155,15 +269,17 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: $spacing-4;
+
+  @media (max-width: $breakpoint-sm) {
+    gap: $spacing-3;
+  }
 }
 
-/* Tarjeta */
 .card {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-
   background: $white;
   border: 1px solid $gray-200;
   border-radius: $border-radius-lg;
@@ -171,12 +287,28 @@
   padding: $spacing-6 $spacing-5;
   text-decoration: none;
   color: inherit;
-
   flex: 0 1 340px;
   max-width: 360px;
-  transition: transform .15s ease, box-shadow .15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 
-  &:hover { transform: translateY(-3px); box-shadow: $shadow-lg; }
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: $shadow-lg;
+  }
+
+  @media (max-width: $breakpoint-lg) {
+    flex-basis: 46%;
+    max-width: 480px;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    flex-basis: 100%;
+    max-width: none;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-4 $spacing-3;
+  }
 }
 
 .cardIcon {
@@ -189,6 +321,12 @@
   margin-bottom: $spacing-4;
   background: $secondary-blue;
   color: $primary-blue-dark;
+
+  @media (max-width: $breakpoint-sm) {
+    width: 56px;
+    height: 56px;
+    margin-bottom: $spacing-3;
+  }
 }
 
 .cardTitle {
@@ -196,6 +334,14 @@
   color: $primary-blue-dark;
   font-weight: $font-weight-bold;
   font-size: $font-size-2xl;
+
+  @media (max-width: $breakpoint-md) {
+    font-size: $font-size-xl;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-lg;
+  }
 }
 
 .cardDesc {
@@ -203,19 +349,42 @@
   color: $gray-600;
   font-size: $font-size-lg;
   line-height: 1.5;
+
+  @media (max-width: $breakpoint-md) {
+    font-size: $font-size-base;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-sm;
+  }
 }
 
-/* Responsivo */
 @media (max-width: $breakpoint-lg) {
-  .card { flex-basis: 46%; max-width: 480px; }
+  .card {
+    flex-basis: 46%;
+    max-width: 480px;
+  }
 }
 
 @media (max-width: $breakpoint-md) {
-  .popular { flex-direction: column; align-items: flex-start; gap: $spacing-2; }
-  .card { flex-basis: 100%; max-width: none; }
+  .popular {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: $spacing-2;
+  }
+
+  .card {
+    flex-basis: 100%;
+    max-width: none;
+  }
 }
 
 @media (max-width: $breakpoint-sm) {
-  .search { height: 48px; }
-  .title { font-size: clamp(1.4rem, 6vw, 2rem); }
+  .search {
+    height: 48px;
+  }
+
+  .title {
+    font-size: clamp(1.4rem, 6vw, 2rem);
+  }
 }

@@ -7,15 +7,13 @@
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  // max-width: 1400px;
-  // margin: 0 auto;
-  // background-color: $gray-50;
 }
 
 .header {
   flex: 0 0 auto;
   display: flex;
   flex-direction: column;
+  gap: $spacing-2;
 }
 
 .title {
@@ -24,6 +22,7 @@
   color: $gray-900;
   margin: 0;
 }
+
 .subtitle {
   font-size: $font-size-lg;
   color: $gray-600;
@@ -60,27 +59,30 @@
   font-weight: $font-weight-medium;
 }
 
-
 .searchInput {
   border: 1px solid #ddd;
-  border-radius: .5rem;
+  border-radius: 0.5rem;
   padding: 6px 15px;
   outline: none;
-  &:focus { border-color: $primary-blue; }
+
+  &:focus {
+    border-color: $primary-blue;
+  }
 }
 
 .tableContainer {
-    display: flex;
-    width: 100%;
-    gap: 2rem;
-    flex: 1 1 auto;
-    // min-height: 0;
-    overflow: hidden;
+  display: flex;
+  width: 100%;
+  gap: 2rem;
+  flex: 1 1 auto;
+  overflow: hidden;
 }
-.groupSide{
+
+.groupSide {
   flex: 1;
 }
-.permsSide{
+
+.permsSide {
   flex: 2;
   display: flex;
   flex-direction: column;
@@ -177,22 +179,79 @@
   }
 }
 
+/* LG down */
+@media (max-width: $breakpoint-lg) {
+  .container {
+    padding: $spacing-6;
+  }
+
+  .title {
+    font-size: $font-size-3xl;
+  }
+
+  .statsGrid {
+    gap: $spacing-4;
+  }
+}
+
+/* MD down */
 @media (max-width: $breakpoint-md) {
   .container {
     padding: $spacing-4;
   }
 
   .header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: $spacing-4;
+    gap: $spacing-3;
+  }
+
+  .title {
+    font-size: $font-size-2xl;
+  }
+
+  .subtitle {
+    font-size: $font-size-base;
   }
 
   .tableContainer {
-    overflow-x: auto;
+    flex-direction: column;
+    gap: $spacing-4;
+    overflow: visible;
+  }
+
+  .groupSide,
+  .permsSide {
+    flex: none;
   }
 
   .table {
-    min-width: 800px;
+    min-width: 100%;
+  }
+}
+
+/* SM down */
+@media (max-width: $breakpoint-sm) {
+  .container {
+    padding: $spacing-3;
+    gap: $spacing-4;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .statCard {
+    padding: $spacing-4;
+  }
+
+  .searchInput {
+    width: 100%;
+  }
+
+  .emptyState {
+    padding: $spacing-10;
+
+    p {
+      font-size: $font-size-base;
+    }
   }
 }

@@ -40,12 +40,12 @@ const Sidebar: React.FC = () => {
     //   label: "Liquidación",
     //   perms: ["liquidacion:leer", "liquidacion:ver"],
     // },
-    {
-      path: `${base}/padron-ioscor`,
-      icon: Hospital,
-      label: "Padron IOSCOR",
-      perms: ["facturacion_ioscor:leer"],
-    },
+    // {
+    //   path: `${base}/padron-ioscor`,
+    //   icon: Hospital,
+    //   label: "Padron IOSCOR",
+    //   perms: ["facturacion_ioscor:leer"],
+    // },
     {
       path: `${base}/users-manager`,
       icon: UserCog,
@@ -140,7 +140,7 @@ const Sidebar: React.FC = () => {
           <MessageCircleQuestionMark size={20} />
           <span className={styles.itemLabel}>Ayuda</span>
         </Link> */}
-        <Button variant="danger" onClick={onClick} size="sm">
+        <Button variant="danger" className={styles.dangerbtn} onClick={onClick} size="sm">
           Cerrar sesión
         </Button>
       </div>

@@ -1,9 +1,18 @@
 @import "../../../../styles/variables.scss";
 
 .container {
-  max-width: 900px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 24px;
+
+  @media (max-width: $breakpoint-md) {
+    max-width: 100%;
+    padding: 20px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: 16px 12px;
+  }
 }
 
 .header {
@@ -13,6 +22,14 @@
     margin: 0 0 8px 0;
     font-size: 28px;
     color: #111827;
+
+    @media (max-width: $breakpoint-md) {
+      font-size: 24px;
+    }
+
+    @media (max-width: $breakpoint-sm) {
+      font-size: 20px;
+    }
   }
 }
 
@@ -20,12 +37,29 @@
   margin: 0;
   color: #6b7280;
   font-size: 16px;
+
+  @media (max-width: $breakpoint-md) {
+    font-size: 15px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: 14px;
+  }
 }
 
 .insuranceList {
   display: grid;
   gap: 12px;
   margin-bottom: 24px;
+
+  @media (min-width: $breakpoint-md) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    gap: 10px;
+    margin-bottom: 20px;
+  }
 }
 
 .insuranceItem {
@@ -48,6 +82,21 @@
     height: 20px;
     cursor: pointer;
   }
+
+  @media (max-width: $breakpoint-md) {
+    padding: 14px;
+    gap: 10px;
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: 12px;
+    align-items: flex-start;
+  }
 }
 
 .insuranceInfo {
@@ -60,11 +109,27 @@
   font-weight: 600;
   color: #111827;
   font-size: 16px;
+
+  @media (max-width: $breakpoint-md) {
+    font-size: 15px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: 14px;
+  }
 }
 
 .insuranceCode {
   font-size: 14px;
   color: #6b7280;
+
+  @media (max-width: $breakpoint-md) {
+    font-size: 13px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: 12px;
+  }
 }
 
 .helpBox {
@@ -73,24 +138,60 @@
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 24px;
+
+  @media (max-width: $breakpoint-md) {
+    padding: 14px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: 12px;
+    margin-bottom: 20px;
+  }
 }
 
 .helpText {
   margin: 0 0 8px 0;
   color: #1e40af;
   font-size: 14px;
+
+  @media (max-width: $breakpoint-md) {
+    font-size: 13px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: 12px;
+  }
 }
 
 .helpContact {
   margin: 4px 0;
   color: #1e40af;
   font-size: 14px;
+
+  @media (max-width: $breakpoint-md) {
+    font-size: 13px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: 12px;
+  }
 }
 
 .actions {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
+
+  @media (max-width: $breakpoint-md) {
+    gap: 10px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    flex-direction: column-reverse;
+    justify-content: center;
+    align-items: stretch;
+    gap: 8px;
+  }
 }
 
 .previewBtn {
@@ -102,6 +203,7 @@
   font-weight: 600;
   cursor: pointer;
   font-size: 16px;
+  transition: background 0.15s ease, transform 0.12s ease;
 
   &:hover:not(:disabled) {
     background: #e5e7eb;
@@ -110,6 +212,16 @@
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    padding: 10px 20px;
+    font-size: 15px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    width: 100%;
+    font-size: 14px;
   }
 }
 
@@ -122,6 +234,7 @@
   font-weight: 700;
   cursor: pointer;
   font-size: 16px;
+  transition: background 0.15s ease, transform 0.12s ease;
 
   &:hover:not(:disabled) {
     background: #153ead;
@@ -130,6 +243,16 @@
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    padding: 10px 20px;
+    font-size: 15px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    width: 100%;
+    font-size: 14px;
   }
 }
 
@@ -140,11 +263,21 @@
   display: grid;
   place-items: center;
   z-index: 2000;
+  padding: 16px;
+
+  @media (max-width: $breakpoint-md) {
+    padding: 12px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: 10px;
+  }
 }
 
 .warningModal {
   background: #fff;
   max-width: 480px;
+  width: 100%;
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
@@ -153,12 +286,41 @@
     margin: 0 0 12px 0;
     font-size: 20px;
     color: #111827;
+
+    @media (max-width: $breakpoint-md) {
+      font-size: 18px;
+    }
+
+    @media (max-width: $breakpoint-sm) {
+      font-size: 16px;
+    }
   }
 
   p {
     margin: 0 0 20px 0;
     color: #4b5563;
     line-height: 1.6;
+    font-size: 14px;
+
+    @media (max-width: $breakpoint-md) {
+      font-size: 13px;
+    }
+
+    @media (max-width: $breakpoint-sm) {
+      font-size: 12px;
+      margin-bottom: 16px;
+    }
+  }
+
+  @media (max-width: $breakpoint-md) {
+    padding: 20px;
+    border-radius: 14px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    max-width: 100%;
+    padding: 16px 14px;
+    border-radius: 12px;
   }
 }
 
@@ -166,6 +328,16 @@
   display: flex;
   gap: 12px;
   justify-content: flex-end;
+
+  @media (max-width: $breakpoint-md) {
+    gap: 10px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 8px;
+  }
 }
 
 .cancelBtn {
@@ -176,9 +348,18 @@
   padding: 10px 20px;
   font-weight: 600;
   cursor: pointer;
+  font-size: 14px;
 
   &:hover {
     background: #e5e7eb;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    padding: 9px 18px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    width: 100%;
   }
 }
 
@@ -190,8 +371,17 @@
   padding: 10px 20px;
   font-weight: 700;
   cursor: pointer;
+  font-size: 14px;
 
   &:hover {
     background: #153ead;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    padding: 9px 18px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    width: 100%;
   }
 }

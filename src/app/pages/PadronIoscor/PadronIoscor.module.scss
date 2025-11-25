@@ -1,14 +1,80 @@
 @import "../../styles/variables.scss";
 @import "../../styles/mixins.scss";
 
-.page { display:flex; min-height:100vh; background:$gray-50; }
-.content { flex:1; padding:$spacing-6; }
-.card { max-width:1200px; margin:0 auto; padding:$spacing-5; }
+.page {
+  display: flex;
+  min-height: 100vh;
+  background: $gray-50;
 
-.layout {
-  display:grid;
-  grid-template-columns: 1fr;
-  gap:$spacing-5;
+  @media (max-width: $breakpoint-md) {
+    min-height: 100dvh;
+  }
 }
 
-.left, .right { min-width:0; }
+.content {
+  flex: 1;
+  padding: $spacing-6;
+
+  @media (max-width: $breakpoint-lg) {
+    padding: $spacing-5;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-4;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-3;
+  }
+}
+
+.card {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: $spacing-5;
+  background: $white;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-md;
+
+  @media (max-width: $breakpoint-lg) {
+    padding: $spacing-4;
+    border-radius: $border-radius-md;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-3;
+    box-shadow: $shadow-sm;
+  }
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $spacing-5;
+
+  @media (min-width: $breakpoint-md) {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    gap: $spacing-6;
+  }
+
+  @media (min-width: $breakpoint-lg) {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr);
+  }
+}
+
+.left,
+.right {
+  min-width: 0;
+}
+
+.left {
+  @media (max-width: $breakpoint-sm) {
+    order: 1;
+  }
+}
+
+.right {
+  @media (max-width: $breakpoint-sm) {
+    order: 2;
+  }
+}

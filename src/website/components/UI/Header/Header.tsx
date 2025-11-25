@@ -175,7 +175,7 @@ export default function Header() {
                         Quinta
                       </Link>
                     </li>
-                    <li>
+                    {/* <li>
                       <Link
                         to="/servicios/facturacion-online"
                         className={styles.subLink}
@@ -192,7 +192,7 @@ export default function Header() {
                       >
                         Beneficios
                       </Link>
-                    </li>
+                    </li> */}
                     <li>
                       <Link
                         to="/galeria"
@@ -258,15 +258,6 @@ export default function Header() {
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.25 }}
             >
-              <button
-                onClick={() => {
-                  setSearchOpen(true);
-                  setMenuOpen(false);
-                }}
-                className={styles.mobileLink}
-              >
-                Buscar
-              </button>
 
               <Link to="/" onClick={closeAll} className={styles.mobileLink}>
                 Inicio
@@ -307,28 +298,36 @@ export default function Header() {
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <Link to="/servicios/socios" onClick={closeAll}>
+                      <Link
+                        to={`https://wa.me/543794404497?text=${encodeURIComponent(
+                          "Hola, quisiera información para asociarme al Colegio Médico de Corrientes, por favor. ¡Gracias!."
+                        )}`}
+                        className={styles.subLink}
+                        onClick={closeAll}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         Socios
                       </Link>
                       <Link to="/seguros" onClick={closeAll}>
                         Seguro médico
                       </Link>
-                      <Link to="/servicios/convenios" onClick={closeAll}>
+                      <Link to="/convenios" onClick={closeAll}>
                         Convenios
                       </Link>
-                      <Link to="/servicios/quinta" onClick={closeAll}>
+                      <Link to="/quinta" onClick={closeAll}>
                         Quinta
                       </Link>
-                      <Link
+                      {/* <Link
                         to="/servicios/facturacion-online"
                         onClick={closeAll}
                       >
                         Facturación online
-                      </Link>
-                      <Link to="/servicios/beneficios" onClick={closeAll}>
+                      </Link> */}
+                      {/* <Link to="/servicios/beneficios" onClick={closeAll}>
                         Beneficios
-                      </Link>
-                      <Link to="/servicios/galeria" onClick={closeAll}>
+                      </Link> */}
+                      <Link to="/galeria" onClick={closeAll}>
                         Galería de fotos y videos
                       </Link>
                     </motion.div>
@@ -336,6 +335,9 @@ export default function Header() {
                 </AnimatePresence>
               </div>
 
+ <Link to="/cursoscap" className={styles.mobileLink} onClick={closeAll}>
+              Cursos/Capacitaciones
+            </Link>
               <Link
                 to="/noticias"
                 onClick={closeAll}

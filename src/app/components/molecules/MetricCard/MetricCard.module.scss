@@ -1,4 +1,4 @@
-@import '../../../styles/variables.scss';
+@import "../../../styles/variables.scss";
 
 .card {
   background-color: $white;
@@ -6,10 +6,25 @@
   border-radius: $border-radius-xl;
   box-shadow: $shadow-md;
   transition: all 0.3s;
+  width: 100%;
 
   &:hover {
     transform: translateY(-2px);
     box-shadow: $shadow-lg;
+  }
+
+  @media (max-width: $breakpoint-lg) {
+    padding: $spacing-5;
+    border-radius: $border-radius-lg;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-4;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-3;
+    box-shadow: $shadow-sm;
   }
 }
 
@@ -34,6 +49,11 @@
   color: $gray-600;
   margin: 0 0 $spacing-3 0;
   font-weight: $font-weight-medium;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-xs;
+    margin-bottom: $spacing-2;
+  }
 }
 
 .value {
@@ -41,6 +61,14 @@
   font-weight: $font-weight-bold;
   color: $gray-900;
   margin: 0 0 $spacing-2 0;
+
+  @media (max-width: $breakpoint-md) {
+    font-size: $font-size-3xl;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-2xl;
+  }
 }
 
 .change {
@@ -49,6 +77,11 @@
   display: inline-flex;
   align-items: center;
   gap: $spacing-1;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-xs;
+    gap: 0 $spacing-5;
+  }
 }
 
 .trendUp {

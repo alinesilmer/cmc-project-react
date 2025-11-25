@@ -160,10 +160,11 @@ color: white; }
   .top {
     grid-template-columns: 1fr;
     gap: $spacing-xl;
+    text-align: center;
   }
   .contactBar {
     grid-template-columns: 1fr;
     gap: $spacing-md;
-    .social { margin-left: 0; justify-content: flex-start; }
+    .social { margin-left: 0; justify-content: center; }
   }
 }

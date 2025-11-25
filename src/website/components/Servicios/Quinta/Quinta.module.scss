@@ -5,7 +5,7 @@
   flex-direction: column;
   gap: $spacing-xl;
   padding: $spacing-xxl $spacing-xl;
-  background: linear-gradient(180deg, rgba($light-blue, 0.25) 0%, $white 100%);
+  background: white;
   font-family: $font-normal;
 }
 
@@ -86,27 +86,6 @@
   margin-left: auto;
 }
 
-.heroGlow {
-  position: absolute;
-  right: -40px;
-  top: -60px;
-  width: 280px;
-  height: 280px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, rgba($accent-blue, 0.35), transparent 60%);
-  animation: float 7s ease-in-out infinite;
-}
-
-.heroGlow2 {
-  position: absolute;
-  left: -60px;
-  bottom: -80px;
-  width: 320px;
-  height: 320px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 70% 70%, rgba($primary-yellow, 0.18), transparent 60%);
-  animation: float 9s ease-in-out infinite reverse;
-}
 
 .infoPanel {
   display: flex;

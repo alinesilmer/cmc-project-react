@@ -43,27 +43,20 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease,
-    box-shadow 0.15s ease;
+  transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
 
-  &:hover {
-    background: $gray-50;
-    color: $danger-red;
-    box-shadow: $shadow-sm;
-    transform: translateY(-50%) scale(1.05);
-  }
+.titleClose:hover {
+  background: $gray-50;
+  color: $danger-red;
+  box-shadow: $shadow-sm;
+  transform: translateY(-50%) scale(1.05);
 }
 
 .headerRow,
 .dataRow {
   display: grid;
-  grid-template-columns:
-    minmax(120px, 1.2fr)
-    minmax(90px, 1fr)
-    minmax(110px, 1.1fr)
-    minmax(90px, 1fr)
-    minmax(100px, 1fr)
-    minmax(140px, 1.2fr);
+  grid-template-columns: minmax(120px, 1.2fr) minmax(90px, 1fr) minmax(110px, 1.1fr) minmax(90px, 1fr) minmax(100px, 1fr) minmax(140px, 1.2fr);
   gap: $spacing-4;
   padding: $spacing-4 $spacing-6;
   align-items: center;
@@ -71,12 +64,7 @@
 }
 
 .noStatus {
-  grid-template-columns:
-    minmax(120px, 1.2fr)
-    minmax(90px, 1fr)
-    minmax(110px, 1.1fr)
-    minmax(90px, 1fr)
-    minmax(160px, 1.4fr);
+  grid-template-columns: minmax(120px, 1.2fr) minmax(90px, 1fr) minmax(110px, 1.1fr) minmax(90px, 1fr) minmax(160px, 1.4fr);
 }
 
 .headerRow {
@@ -98,19 +86,19 @@
   background-color: $white;
   border-bottom: 1px solid $gray-200;
   transition: background-color 0.2s ease, transform 0.2s ease;
+}
 
-  &:hover {
-    background-color: $gray-50;
-    transform: translateY(-1px);
-    box-shadow: $shadow-sm;
-  }
+.dataRow:hover {
+  background-color: $gray-50;
+  transform: translateY(-1px);
+  box-shadow: $shadow-sm;
+}
 
-  > div {
-    text-align: center;
-    font-size: $font-size-sm;
-    color: $gray-800;
-    min-width: 0;
-  }
+.dataRow > div {
+  text-align: center;
+  font-size: $font-size-sm;
+  color: $gray-800;
+  min-width: 0;
 }
 
 .status {
@@ -126,6 +114,7 @@
   color: $white;
   background-color: $primary-blue;
 }
+
 .finished {
   background-color: $gray-800;
   color: $white;
@@ -139,7 +128,7 @@
   flex-wrap: wrap;
 }
 
-.footer {
+.footerTable {
   display: flex;
   justify-content: center;
   padding: $spacing-4 $spacing-6;
@@ -157,21 +146,21 @@
   cursor: pointer;
   border: none;
   text-decoration: none;
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
   padding: $spacing-2 $spacing-4;
   background: $black;
   color: $white;
   font-size: $font-size-sm;
+}
 
-  &:hover {
-    background: $success-green;
-    transform: translateY(-1px);
-    box-shadow: $shadow-sm;
-  }
+.exportAll:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.exportAll:hover {
+  background: $success-green;
+  transform: translateY(-1px);
+  box-shadow: $shadow-sm;
 }
 
 .loading,
@@ -198,5 +187,64 @@
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 1024px) {
+  .tableTitle {
+    padding: $spacing-3 $spacing-4;
+  }
+  .headerRow,
+  .dataRow {
+    padding: $spacing-3 $spacing-4;
+    gap: $spacing-3;
+  }
+  .tableTitleText {
+    font-size: $font-size-base;
+  }
+}
+
+@media (max-width: 768px) {
+  .headerRow,
+  .dataRow {
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+    column-gap: $spacing-3;
+    row-gap: $spacing-2;
+    padding: $spacing-3 $spacing-3;
+  }
+  .noStatus {
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+  }
+  .headerRow {
+    font-size: $font-size-xs;
+  }
+  .dataRow > div {
+    font-size: $font-size-xs;
+    text-align: left;
+  }
+  .footerTable {
+    padding: $spacing-3 $spacing-3;
+  }
+  .exportAll {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .tableTitle {
+    padding: $spacing-3 $spacing-3;
+  }
+  .titleClose {
+    right: $spacing-3;
+  }
+  .headerRow,
+  .dataRow {
+    padding: $spacing-2 $spacing-3;
+    gap: $spacing-2;
+  }
+  .loading,
+  .empty {
+    padding: $spacing-8;
   }
 }

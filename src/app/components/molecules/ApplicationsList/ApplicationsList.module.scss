@@ -7,6 +7,19 @@
   margin: 0 auto;
   background-color: $gray-50;
   min-height: 100vh;
+
+  @media (max-width: $breakpoint-lg) {
+    padding: $spacing-6;
+    max-width: 1200px;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-4;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-3;
+  }
 }
 
 .header {
@@ -14,6 +27,18 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: $spacing-8;
+
+  @media (max-width: $breakpoint-md) {
+    flex-direction: column-reverse;
+    align-items: flex-start;
+    gap: $spacing-3;
+    margin-bottom: $spacing-6;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    gap: $spacing-2;
+    margin-bottom: $spacing-4;
+  }
 }
 
 .title {
@@ -22,6 +47,19 @@
   color: $gray-900;
   margin: 0;
   margin-top: 1rem;
+
+  @media (max-width: $breakpoint-lg) {
+    font-size: $font-size-3xl;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    font-size: $font-size-2xl;
+    margin-top: 0.5rem;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-xl;
+  }
 }
 
 .backButton {
@@ -39,6 +77,16 @@
     background-color: $gray-100;
     border-color: $gray-400;
   }
+
+  @media (max-width: $breakpoint-md) {
+    align-self: stretch;
+    text-align: center;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    width: 100%;
+    font-size: $font-size-sm;
+  }
 }
 
 .filters {
@@ -46,6 +94,17 @@
   gap: $spacing-3;
   margin-bottom: $spacing-6;
   flex-wrap: wrap;
+
+  @media (max-width: $breakpoint-md) {
+    gap: $spacing-2;
+    margin-bottom: $spacing-5;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: $spacing-2;
+  }
 }
 
 .filterButton {
@@ -76,6 +135,16 @@
       background-color: $white !important;
     }
   }
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-2 $spacing-4;
+    font-size: $font-size-sm;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 .dot {
@@ -91,6 +160,22 @@
   gap: $spacing-6;
   margin-bottom: $spacing-8;
   margin-top: 1rem;
+
+  @media (max-width: $breakpoint-lg) {
+    gap: $spacing-5;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    grid-template-columns: 1fr 1fr;
+    gap: $spacing-4;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    grid-template-columns: 1fr;
+    gap: $spacing-3;
+    margin-top: $spacing-4;
+    margin-bottom: $spacing-6;
+  }
 }
 
 .card {
@@ -106,6 +191,14 @@
     transform: translateY(-4px);
     box-shadow: $shadow-xl;
   }
+
+  @media (max-width: $breakpoint-md) {
+    border-radius: $border-radius-lg;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    box-shadow: $shadow-sm;
+  }
 }
 
 .cardImage {
@@ -115,6 +208,14 @@
   justify-content: center;
   position: relative;
   overflow: hidden;
+
+  @media (max-width: $breakpoint-md) {
+    height: 140px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    height: 120px;
+  }
 }
 
 .cardYellow .cardImage {
@@ -146,6 +247,18 @@
   font-weight: $font-weight-bold;
   color: $white;
   border: 3px solid rgba(255, 255, 255, 0.5);
+
+  @media (max-width: $breakpoint-md) {
+    width: 72px;
+    height: 72px;
+    font-size: $font-size-3xl;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    width: 64px;
+    height: 64px;
+    font-size: $font-size-2xl;
+  }
 }
 
 .cardContent {
@@ -153,6 +266,14 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-4;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-3;
+  }
 }
 
 .cardTitle {
@@ -160,12 +281,25 @@
   font-weight: $font-weight-bold;
   color: $gray-900;
   margin: 0 0 $spacing-2 0;
+
+  @media (max-width: $breakpoint-md) {
+    font-size: $font-size-lg;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-base;
+  }
 }
 
 .cardDescription {
   font-size: $font-size-sm;
   color: $gray-600;
   margin: 0 0 $spacing-4 0;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-xs;
+    margin-bottom: $spacing-3;
+  }
 }
 
 .cardTags {
@@ -191,6 +325,12 @@
   margin-top: auto;
   padding-top: $spacing-4;
   border-top: 1px solid $gray-200;
+  gap: $spacing-3;
+
+  @media (max-width: $breakpoint-sm) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 .dateInfo {
@@ -230,6 +370,11 @@
   &:active {
     transform: scale(0.98);
   }
+
+  @media (max-width: $breakpoint-sm) {
+    width: 100%;
+    text-align: center;
+  }
 }
 
 .emptyState {
@@ -244,17 +389,27 @@
     color: $gray-500;
     margin: 0;
   }
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-12;
+
+    p {
+      font-size: $font-size-base;
+    }
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-10;
+
+    p {
+      font-size: $font-size-sm;
+    }
+  }
 }
 
 @media (max-width: $breakpoint-md) {
   .container {
     padding: $spacing-4;
-  }
-
-  .header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: $spacing-4;
   }
 
   .cardsGrid {
