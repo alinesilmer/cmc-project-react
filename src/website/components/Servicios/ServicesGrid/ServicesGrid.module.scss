@@ -8,6 +8,8 @@
   max-width: 1280px;
   margin: 0 auto;
   display: grid;
+  align-items: center;
+  justify-content: center;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: $spacing-lg;
 }

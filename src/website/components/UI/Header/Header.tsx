@@ -352,13 +352,14 @@ export default function Header() {
               >
                 Contacto
               </Link>
-              <Link
-                to="/not-found"
-                onClick={closeAll}
+               {user && (
+              <a
+                href={targetHref}
                 className={styles.mobileLink}
+                onClick={closeAll}
               >
                 Ingresar
-              </Link>
+              </a>)}
             </motion.div>
           )}
         </AnimatePresence>

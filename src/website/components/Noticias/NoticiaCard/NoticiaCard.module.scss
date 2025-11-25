@@ -16,7 +16,6 @@
   }
 }
 
-
 .content {
   padding: $spacing-lg;
   flex: 1;
@@ -77,7 +76,7 @@
 }
 
 .image {
-  position: relative; 
+  position: relative;
   width: 100%;
   height: 250px;
   overflow: hidden;
@@ -108,3 +107,71 @@
   letter-spacing: .5px;
 }
 
+/* Desktop down */
+@media (max-width: $breakpoint-desktop) {
+  .content {
+    padding: $spacing-md;
+  }
+
+  .image {
+    height: 220px;
+  }
+}
+
+/* Tablet down */
+@media (max-width: $breakpoint-tablet) {
+  .card {
+    border-radius: $border-radius-md;
+  }
+
+  .content {
+    padding: $spacing-md;
+  }
+
+  .title {
+    font-size: $font-size-large;
+  }
+
+  .resumen {
+    font-size: $font-size-small;
+  }
+
+  .meta {
+    gap: $spacing-sm;
+  }
+
+  .image {
+    height: 200px;
+  }
+}
+
+/* Mobile down */
+@media (max-width: $breakpoint-mobile) {
+  .content {
+    padding: $spacing-sm $spacing-md;
+  }
+
+  .title {
+    font-size: $font-size-base;
+    margin-bottom: $spacing-xs;
+  }
+
+  .resumen {
+    font-size: $font-size-small;
+    margin-bottom: $spacing-sm;
+  }
+
+  .meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .image {
+    height: 180px;
+  }
+
+  .pdfBadge {
+    font-size: 11px;
+    padding: 3px 7px;
+  }
+}

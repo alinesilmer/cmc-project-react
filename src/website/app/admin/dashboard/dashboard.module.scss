@@ -93,20 +93,22 @@
 
 .list {
   display: flex;
-  // flex-direction: column;
-  gap: $spacing-md;
   flex-wrap: wrap;
+  gap: $spacing-md;
 }
 
 .noticiaItem {
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
-  align-items: center;
+  width: clamp(260px, 30vw, 360px);
+  min-height: 180px;
   padding: $spacing-md;
   border: 2px solid lightgray;
   border-radius: $border-radius-md;
   transition: all $transition-fast;
-  min-width: 280px;
+  background: $white;
+
   &:hover {
     border-color: $primary-blue;
     box-shadow: $shadow-sm;
@@ -114,34 +116,45 @@
 }
 
 .noticiaContent {
-  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
 
   h3 {
+    margin: 0;
     color: $dark-gray;
-    margin-bottom: $spacing-xs;
     font-size: $font-size-large;
   }
 
   p {
+    margin: 0;
     color: $gray;
     font-size: $font-size-small;
+    white-space: pre-wrap;
   }
 }
 
 .noticiaActions {
   display: flex;
+  justify-content: flex-end;
   gap: $spacing-sm;
+  margin-top: $spacing-sm;
 
   button {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: lightgray;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
-    transition: all $transition-fast;
+    border: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: #eee;
+    cursor: pointer;
+    transition: background $transition-fast;
+
+    &:hover {
+      background: #ddd;
+    }
 
     &:first-child {
       color: $primary-blue;
@@ -171,9 +184,7 @@
   }
 
   .noticiaItem {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: $spacing-md;
+    width: 100%;
   }
 
   .noticiaActions {
@@ -181,6 +192,7 @@
     justify-content: flex-end;
   }
 }
+
 .toolbar {
   display: flex;
   gap: 0.5rem;
@@ -197,7 +209,7 @@
 
 .textarea {
   width: 100%;
-  white-space: pre-wrap; // respeta saltos
+  white-space: pre-wrap;
 }
 
 .preview {
@@ -206,47 +218,46 @@
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 0.75rem;
   background: #fafafa;
-
-  // tipografía/espacios agradables
   line-height: 1.6;
 
   p {
     margin: 0 0 0.9rem;
   }
+
   h1,
   h2,
   h3 {
     margin: 1rem 0 0.5rem;
   }
+
   ul,
   ol {
     margin: 0.75rem 0 0.75rem 1.25rem;
   }
+
   blockquote {
     margin: 0.75rem 0;
     padding-left: 0.75rem;
     border-left: 3px solid #ddd;
     color: #555;
   }
+
   a {
     color: #0a66c2;
     text-decoration: underline;
   }
 }
 
-.noticiaContent p {
-  white-space: pre-wrap;
-}
 .wrapperTabsTittle {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
+
 .tabs {
   display: flex;
   gap: $spacing-sm;
   align-items: center;
-  // margin: 0 $spacing-md;
 }
 
 .tab {
@@ -270,68 +281,6 @@
   color: $primary-blue;
 }
 
-.list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $spacing-md;
-}
-
-.noticiaItem {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  width: clamp(260px, 30vw, 360px);
-  min-height: 180px;
-  padding: $spacing-md;
-  border: 2px solid lightgray;
-  border-radius: $border-radius-md;
-  transition: all $transition-fast;
-  background: $white;
-
-  &:hover {
-    border-color: $primary-blue;
-    box-shadow: $shadow-sm;
-  }
-}
-
-.noticiaContent {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-xs;
-  h3 {
-    margin: 0;
-  }
-  p {
-    margin: 0;
-    white-space: pre-wrap;
-  }
-}
-
-.noticiaActions {
-  display: flex;
-  justify-content: flex-end;
-  gap: $spacing-sm;
-  margin-top: $spacing-sm;
-
-  button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 0;
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    background: #eee;
-    cursor: pointer;
-    transition: background $transition-fast;
-
-    &:hover {
-      background: #ddd;
-    }
-  }
-}
-
-/* opcional */
 .tabContent {
   padding-top: $spacing-md;
 }
@@ -423,6 +372,7 @@
   &:hover {
     background: #f5f5f5;
   }
+
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
@@ -440,6 +390,7 @@
   flex-direction: column;
   gap: 8px;
 }
+
 .attachItem {
   display: flex;
   align-items: center;
@@ -448,12 +399,142 @@
   border: 1px solid #e5e7eb;
   border-radius: 8px;
 }
+
 .attachInfo a {
   text-decoration: none;
 }
+
 .removeBtn {
   background: transparent;
   border: none;
   color: #c00;
   cursor: pointer;
+}
+
+@media (max-width: $breakpoint-desktop) {
+  .header {
+    padding: 24px 40px;
+  }
+
+  .container {
+    padding: 40px;
+    padding-top: 20px;
+  }
+
+  .form,
+  .noticias {
+    padding: $spacing-lg;
+  }
+}
+
+@media (max-width: $breakpoint-tablet) {
+  .header {
+    flex-direction: column;
+    gap: $spacing-md;
+    text-align: center;
+    padding: 20px 24px;
+  }
+
+  .container {
+    padding: 24px 20px 32px;
+  }
+
+  .filtersBar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: $spacing-sm;
+  }
+
+  .searchGroup {
+    width: 100%;
+
+    input[type="search"] {
+      min-width: 0;
+      width: 100%;
+    }
+  }
+
+  .rightActions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .pager {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .pagerNav {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .tabs {
+    flex-wrap: wrap;
+  }
+
+  .form,
+  .noticias {
+    padding: $spacing-lg;
+  }
+
+  .noticiaItem {
+    width: 100%;
+  }
+}
+
+@media (max-width: $breakpoint-mobile) {
+  .header {
+    align-items: flex-start;
+    padding: 16px 16px 20px;
+  }
+
+  .container {
+    padding: 20px 16px 28px;
+  }
+
+  .form,
+  .noticias {
+    padding: $spacing-md;
+  }
+
+  .filtersBar {
+    gap: $spacing-sm;
+  }
+
+  .rightActions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: $spacing-sm;
+  }
+
+  .pageSize {
+    justify-content: space-between;
+  }
+
+  .pagerInfo {
+    font-size: 0.85rem;
+  }
+
+  .pagerNav {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .toolbar {
+    flex-wrap: wrap;
+  }
+
+  .wrapperTabsTittle {
+    gap: 6px;
+  }
+
+  .tab {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.85rem;
+  }
+
+  .noticiaItem {
+    min-height: auto;
+  }
 }

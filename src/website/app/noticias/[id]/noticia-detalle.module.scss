@@ -45,6 +45,7 @@
   margin-bottom: $spacing-xl;
   padding-bottom: $spacing-lg;
   border-bottom: 2px solid $light-gray;
+  flex-wrap: wrap;
 }
 
 .metaItem {
@@ -98,20 +99,6 @@
   font-size: $font-size-large;
 }
 
-@media (max-width: $breakpoint-tablet) {
-  .article {
-    padding: $spacing-lg;
-  }
-
-  .image {
-    height: 250px;
-  }
-
-  .content {
-    font-size: $font-size-base;
-  }
-}
-
 .pdfViewer {
   margin: $spacing-xl 0;
 }
@@ -145,5 +132,107 @@
   .downloadBtn {
     background: $primary-blue;
     color: $white;
+  }
+}
+
+/* Desktop down */
+@media (max-width: $breakpoint-desktop) {
+  .noticiaDetalle {
+    padding: $spacing-lg $spacing-md;
+  }
+
+  .article {
+    padding: $spacing-xl;
+  }
+
+  .image {
+    height: 320px;
+  }
+}
+
+/* Tablet down */
+@media (max-width: $breakpoint-tablet) {
+  .noticiaDetalle {
+    padding: $spacing-lg $spacing-sm;
+  }
+
+  .article {
+    padding: $spacing-lg;
+    margin-top: $spacing-lg;
+  }
+
+  .image {
+    height: 260px;
+  }
+
+  .title {
+    font-size: $font-size-h4;
+  }
+
+  .meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: $spacing-sm;
+  }
+
+  .content {
+    font-size: $font-size-base;
+  }
+
+  .pdfObject {
+    height: 60vh;
+  }
+}
+
+/* Mobile down */
+@media (max-width: $breakpoint-mobile) {
+  .noticiaDetalle {
+    padding: $spacing-md $spacing-xs;
+    min-height: 100vh;
+  }
+
+  .article {
+    padding: $spacing-md;
+    border-radius: $border-radius-md;
+    box-shadow: $shadow-sm;
+  }
+
+  .image {
+    height: 220px;
+    margin-bottom: $spacing-lg;
+  }
+
+  .title {
+    font-size: $font-size-large;
+    margin-bottom: $spacing-md;
+  }
+
+  .meta {
+    margin-bottom: $spacing-lg;
+    padding-bottom: $spacing-md;
+  }
+
+  .content {
+    font-size: $font-size-small;
+  }
+
+  .loading,
+  .error {
+    padding: $spacing-xl;
+    font-size: $font-size-base;
+  }
+
+  .pdfObject {
+    height: 50vh;
+  }
+
+  .pdfActions {
+    flex-direction: column;
+    align-items: stretch;
+
+    a {
+      text-align: center;
+      width: 100%;
+    }
   }
 }
