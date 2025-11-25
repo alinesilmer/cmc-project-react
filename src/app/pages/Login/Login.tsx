@@ -29,7 +29,8 @@ function Login() {
   //       /^(medicos?|legacy:(doctor|medico))(:|$)/i.test(s.trim())
   //   );
 
-  const ETICA_PDF = "https://colegiomedicocorrientes.com/CMC092025.pdf";
+  const ETICA_PDF =
+    "https://legacy.colegiomedicocorrientes.com/valores_cmc_11_2025.pdf";
 
   const goMember = () => {
     setIsMember(true);
