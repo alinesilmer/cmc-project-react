@@ -1,0 +1,28 @@
+# VCS / CI
+.git
+.github
+.gitignore
+*.md
+
+# Node
+node_modules
+dist
+build
+.cache
+coverage
+npm-debug.log*
+yarn-error.log*
+
+# SO / editor
+.DS_Store
+Thumbs.db
+.vscode
+.idea
+
+# Monorepo (por si el contexto quedó más arriba)
+api
+legacy
+reverse-proxy
+uploads
+**/*.zip
+    
