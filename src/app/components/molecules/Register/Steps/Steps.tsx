@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React from "react";
 import styles from "./Steps.module.scss";
 import HelpButton from "../../../../components/atoms/HelpButton/HelpButton";
 import PdfUpload from "../../../../components/atoms/PdfUpload/PdfUpload";
@@ -8,62 +8,80 @@ import type {
   SpecialtyItem,
 } from "../../../../types/register";
 
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import { es } from "date-fns/locale";
 import Button from "../../../../components/atoms/Button/Button";
+import { DatePicker } from "rsuite";
+import "rsuite/DatePicker/styles/index.css";
 
 // -------------------- utils fecha (dd-MM-yyyy ↔ Date) --------------------
-const dateToStr = (d: Date | null) => {
-  if (!d) return "";
+const dateToStr = (d: Date | null): string => {
+  if (!d || Number.isNaN(d.getTime())) return "";
   const dd = String(d.getDate()).padStart(2, "0");
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   const yy = d.getFullYear();
   return `${dd}-${mm}-${yy}`;
 };
+
 const strToDate = (v?: string | null): Date | null => {
   if (!v) return null;
-  const [dd, mm, yy] = v.split("-").map(Number);
-  if (!dd || !mm || !yy) return null;
-  // 12hs para evitar problemas de DST
-  return new Date(yy, mm - 1, dd, 12, 0, 0, 0);
+  const s = v.trim();
+  if (!s) return null;
+
+  // Caso 1: ISO tipo YYYY-MM-DD (lo que te puede volver del API)
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+    const [yearStr, monthStr, dayStr] = s.split("-").slice(0, 3);
+    const year = Number(yearStr);
+    const month = Number(monthStr);
+    const day = Number(dayStr);
+    if (!year || !month || !day) return null;
+    // pongo 12hs para evitar quilombos de DST
+    return new Date(year, month - 1, day, 12, 0, 0, 0);
+  }
+
+  // Caso 2: dd-MM-yyyy o dd/MM/yyyy (como lo ves en la UI)
+  const sep = s.includes("/") ? "/" : "-";
+  const parts = s.split(sep);
+  if (parts.length !== 3) return null;
+
+  const [dayStr, monthStr, yearStr] = parts;
+  const day = Number(dayStr);
+  const month = Number(monthStr);
+  const year = Number(yearStr);
+  if (!day || !month || !year) return null;
+
+  return new Date(year, month - 1, day, 12, 0, 0, 0);
 };
 
-// -------------------- DateField controlado --------------------
-const DateField: React.FC<{
+// -------------------- DateField controlado (rsuite) --------------------
+type DateFieldProps = {
   value: string;
   onChange: (val: string) => void;
   error?: string;
   placeholder?: string;
-}> = ({ value, onChange, error, placeholder = "dd-mm-aaaa" }) => {
-  const [open, setOpen] = useState(false);
+};
 
+const DateField: React.FC<DateFieldProps> = ({
+  value,
+  // onChange,
+  error,
+  placeholder = "dd-mm-aaaa",
+}) => {
   return (
-    <DatePicker
-      selected={strToDate(value)}
-      onChange={(d) => {
-        onChange(dateToStr(d));
-        setOpen(false);
-      }}
-      open={open}
-      onFocus={() => setOpen(true)}
-      onInputClick={() => setOpen(true)}
-      onClickOutside={() => setOpen(false)}
-      shouldCloseOnSelect
-      onKeyDown={(e) => e.preventDefault()}
-      dateFormat="dd-MM-yyyy"
-      locale={es}
-      showMonthDropdown
-      showYearDropdown
-      dropdownMode="select"
-      // Evita clipping por overflow/z-index
-      popperContainer={({ children }) => (
-        <div style={{ zIndex: 9999 }}>{children}</div>
-      )}
-      popperPlacement="bottom-start"
-      placeholderText={placeholder}
-      className={`${styles.input ?? ""} ${error ? styles.error : ""}`}
-    />
+    <div>
+      <DatePicker
+        value={strToDate(value)}
+        // onChange={(d: Date | null) => {
+        //   // mapeamos Date → string para guardar en formData
+        //   onChange(dateToStr(d));
+        // }}
+        format="dd-MM-yyyy"
+        oneTap
+        placeholder={placeholder}
+        style={{ width: "100%" }}
+        cleanable
+        className={error ? styles.error : undefined}
+      />
+      {error && <span className={styles.errorText}>{error}</span>}
+    </div>
   );
 };
 
