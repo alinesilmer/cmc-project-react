@@ -1,4 +1,4 @@
-// src/website/components/MedicosCarousel/MedicosCarousel.tsx
+// src/website/components/Nosotros/MedicosCarousel/MedicosCarousel.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FiChevronLeft, FiChevronRight, FiX } from "react-icons/fi";
 import styles from "./MedicosCarousel.module.scss";
@@ -9,9 +9,8 @@ type ModalState = { open: boolean; url: string; title: string };
 
 export default function MedicosCarousel() {
   const [items, setItems] = useState<PubAd[]>([]);
-  // índice virtual (arranca en el centro para permitir ir a ambos lados)
-  const [vIdx, setVIdx] = useState(0);
-  const [animating, setAnimating] = useState(true);
+  const [index, setIndex] = useState(0); // índice de la primera card visible
+  const [visibleCount, setVisibleCount] = useState(1); // cuántas cards entran en viewport
   const [modal, setModal] = useState<ModalState>({
     open: false,
     url: "",
@@ -23,15 +22,14 @@ export default function MedicosCarousel() {
   const gapRef = useRef<number>(16);
   const autoplayRef = useRef<number | null>(null);
 
-  // Cargar publicidades activas (máx 10)
+  // ==== CARGA PUBLICIDADES ====
   useEffect(() => {
     (async () => {
       try {
         const rows = await listAds({ activo: true });
-        const slice = rows.slice(0, 10);
+        const slice = rows.slice(0, 10); // máximo 10
         setItems(slice);
-        // seteamos índice al centro (bloque 2 de 3)
-        setVIdx(slice.length); // bloque central
+        setIndex(0);
       } catch (e) {
         console.error("No se pudieron cargar las publicidades:", e);
         setItems([]);
@@ -39,7 +37,31 @@ export default function MedicosCarousel() {
     })();
   }, []);
 
-  // Medir card width + gap para un desplazamiento exacto en px
+  const LEN = items.length;
+
+  // ==== BREAKPOINTS → visibleCount (1 / 2 / 3) ====
+  useEffect(() => {
+    const calcVisible = () => {
+      const w = window.innerWidth;
+      if (w >= 1200) setVisibleCount(3); // desktop
+      else if (w >= 768) setVisibleCount(2); // tablet
+      else setVisibleCount(1); // mobile
+    };
+    calcVisible();
+    window.addEventListener("resize", calcVisible);
+    return () => window.removeEventListener("resize", calcVisible);
+  }, []);
+
+  // puede scrollear solo si hay MÁS items que los que entran
+  const canScroll = LEN > visibleCount;
+
+  // clamp del índice cuando cambian cantidad de items o visibles
+  useEffect(() => {
+    const maxIndex = Math.max(0, LEN - visibleCount);
+    setIndex((prev) => Math.min(prev, maxIndex));
+  }, [LEN, visibleCount]);
+
+  // ==== MEDIR ANCHO CARD + GAP (para mover en px) ====
   const measure = () => {
     const track = trackRef.current;
     if (!track) return;
@@ -48,13 +70,11 @@ export default function MedicosCarousel() {
       cardWRef.current = first.offsetWidth;
     }
     const cs = getComputedStyle(track);
-    // para grid, usar column-gap/gap; para flex, gap
     const g = parseFloat((cs as any).columnGap || cs.gap || "16");
-    gapRef.current = isNaN(g) ? 16 : g;
+    gapRef.current = Number.isNaN(g) ? 16 : g;
   };
 
   useEffect(() => {
-    // medir tras el render
     const id = requestAnimationFrame(measure);
     const onResize = () => measure();
     window.addEventListener("resize", onResize);
@@ -62,67 +82,50 @@ export default function MedicosCarousel() {
       cancelAnimationFrame(id);
       window.removeEventListener("resize", onResize);
     };
-  }, [items.length]);
+  }, [LEN, visibleCount]);
 
-  // Lista renderizada con clones (triple)
-  const triple = useMemo(() => {
-    if (!items.length) return [];
-    return [...items, ...items, ...items];
-  }, [items]);
-
-  const LEN = items.length; // original
-  const TOTAL = triple.length; // 3 * LEN
-
-  // Transform calculado en px
+  // ==== TRANSFORM EN PX SEGÚN INDEX ====
   const transform = useMemo(() => {
     const step = cardWRef.current + gapRef.current;
-    const x = -vIdx * step;
+    const x = -index * step;
     return `translateX(${x}px)`;
-  }, [vIdx]);
+  }, [index]);
 
-  // Autoplay
-  useEffect(() => {
-    if (LEN <= 1) return;
-    autoplayRef.current = window.setInterval(() => {
-      goNext();
-    }, 4000);
-    return () => {
-      if (autoplayRef.current) clearInterval(autoplayRef.current);
-      autoplayRef.current = null;
-    };
-  }, [LEN]);
-
-  // Handlers next/prev
+  // ==== NAVEGACIÓN (sin clones, con wrap) ====
   const goNext = () => {
-    if (!LEN) return;
-    setAnimating(true);
-    setVIdx((i) => i + 1);
+    if (!canScroll) return;
+    setIndex((prev) => {
+      const maxIndex = Math.max(0, LEN - visibleCount);
+      return prev >= maxIndex ? 0 : prev + 1;
+    });
   };
 
   const goPrev = () => {
-    if (!LEN) return;
-    setAnimating(true);
-    setVIdx((i) => i - 1);
+    if (!canScroll) return;
+    setIndex((prev) => {
+      const maxIndex = Math.max(0, LEN - visibleCount);
+      return prev <= 0 ? maxIndex : prev - 1;
+    });
   };
 
-  // Al terminar la transición: si salimos del bloque central, saltamos sin animación
-  const onTransitionEnd = () => {
-    if (!LEN) return;
-    // si pasamos del final del bloque central (>= 2*LEN), saltamos atrás LEN
-    if (vIdx >= 2 * LEN) {
-      setAnimating(false);
-      setVIdx((i) => i - LEN);
-      // reactivar animación en el siguiente frame
-      requestAnimationFrame(() => setAnimating(true));
-    }
-    // si pasamos al bloque anterior (< LEN), saltamos adelante LEN
-    else if (vIdx < LEN) {
-      setAnimating(false);
-      setVIdx((i) => i + LEN);
-      requestAnimationFrame(() => setAnimating(true));
-    }
-  };
+  // ==== AUTOPLAY ====
+  useEffect(() => {
+    if (!canScroll) return;
+    autoplayRef.current = window.setInterval(() => {
+      setIndex((prev) => {
+        const maxIndex = Math.max(0, LEN - visibleCount);
+        return prev >= maxIndex ? 0 : prev + 1;
+      });
+    }, 4000);
+    return () => {
+      if (autoplayRef.current != null) {
+        clearInterval(autoplayRef.current);
+        autoplayRef.current = null;
+      }
+    };
+  }, [canScroll, LEN, visibleCount]);
 
+  // ==== MODAL ====
   const openModal = (ad: PubAd) => {
     setModal({
       open: true,
@@ -130,7 +133,13 @@ export default function MedicosCarousel() {
       title: ad.medico_nombre || `Médico #${ad.medico_id}`,
     });
   };
-  const closeModal = () => setModal({ open: false, url: "", title: "" });
+
+  const closeModal = () =>
+    setModal({
+      open: false,
+      url: "",
+      title: "",
+    });
 
   if (LEN === 0) return null;
 
@@ -139,14 +148,19 @@ export default function MedicosCarousel() {
       <div
         className={styles.carousel}
         onMouseEnter={() => {
-          if (autoplayRef.current) {
+          if (autoplayRef.current != null) {
             clearInterval(autoplayRef.current);
             autoplayRef.current = null;
           }
         }}
         onMouseLeave={() => {
-          if (LEN > 1 && !autoplayRef.current) {
-            autoplayRef.current = window.setInterval(goNext, 4000);
+          if (canScroll && autoplayRef.current == null) {
+            autoplayRef.current = window.setInterval(() => {
+              setIndex((prev) => {
+                const maxIndex = Math.max(0, LEN - visibleCount);
+                return prev >= maxIndex ? 0 : prev + 1;
+              });
+            }, 4000);
           }
         }}
       >
@@ -155,11 +169,10 @@ export default function MedicosCarousel() {
           ref={trackRef}
           style={{
             transform,
-            transition: animating ? "transform .45s ease" : "none",
+            transition: "transform .45s ease",
           }}
-          onTransitionEnd={onTransitionEnd}
         >
-          {triple.map((ad, i) => (
+          {items.map((ad, i) => (
             <article
               key={`${ad.id}-${i}`}
               className={styles.card}
@@ -184,7 +197,8 @@ export default function MedicosCarousel() {
           ))}
         </div>
 
-        {LEN > 1 && (
+        {/* Flechas solo si hay MÁS items que los que entran en el viewport */}
+        {canScroll && (
           <div className={styles.nav} aria-hidden="false">
             <button aria-label="Anterior" onClick={goPrev}>
               <FiChevronLeft />

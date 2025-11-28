@@ -1,22 +1,22 @@
 @import "../../../styles/variables.scss";
 
-.carousel {
-  position: relative;
-  width: 100%;
-  margin: $spacing-lg auto;
-  overflow: hidden;
-}
+// .carousel {
+//   position: relative;
+//   width: 100%;
+//   margin: $spacing-lg auto;
+//   overflow: hidden;
+// }
 
-.track {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 280px;
-  // padding: 10px;
-  gap: $spacing-md;
-  align-items: stretch;
-  transition: transform 0.45s ease;
-  will-change: transform;
-}
+// .track {
+//   display: grid;
+//   grid-auto-flow: column;
+//   grid-auto-columns: 280px;
+//   // padding: 10px;
+//   gap: $spacing-md;
+//   align-items: stretch;
+//   transition: transform 0.45s ease;
+//   will-change: transform;
+// }
 
 .card {
   background: $white;
@@ -24,7 +24,7 @@
   border-radius: $border-radius-lg;
   // box-shadow: $shadow-md;
   padding: $spacing-md;
-  display: grid;
+  // display: grid;
   gap: $spacing-sm;
   cursor: zoom-in;
 }
@@ -47,6 +47,7 @@
 .name {
   font-weight: 700;
   color: $dark-gray;
+  text-align: center;
 }
 .spec {
   color: $gray;
@@ -146,4 +147,36 @@
   color: $dark-gray;
   flex: 0 0 auto;
   font-weight: 600;
+}
+.carousel {
+  position: relative;
+  overflow: hidden;
+}
+
+.track {
+  display: flex;
+  gap: 1rem; // lo lee el JS
+  will-change: transform;
+}
+
+/* Mobile: 1 card */
+.card {
+  flex: 0 0 100%;
+  max-width: 100%;
+}
+
+/* Tablet: 2 cards */
+@media (min-width: 768px) {
+  .card {
+    flex: 0 0 calc(50% - 0.5rem);
+    max-width: calc(50% - 0.5rem);
+  }
+}
+
+/* Desktop: 3 cards */
+@media (min-width: 1200px) {
+  .card {
+    flex: 0 0 calc(33.333% - 0.7rem);
+    max-width: calc(33.333% - 0.7rem);
+  }
 }
