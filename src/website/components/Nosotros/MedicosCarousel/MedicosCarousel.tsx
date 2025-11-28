@@ -9,8 +9,10 @@ type ModalState = { open: boolean; url: string; title: string };
 
 export default function MedicosCarousel() {
   const [items, setItems] = useState<PubAd[]>([]);
-  const [index, setIndex] = useState(0); // índice de la primera card visible
-  const [visibleCount, setVisibleCount] = useState(1); // cuántas cards entran en viewport
+  // índice de la PRIMER card visible
+  const [index, setIndex] = useState(0);
+  // cuántas cards entran en el viewport (1 / 2 / 3)
+  const [visibleCount, setVisibleCount] = useState(1);
   const [modal, setModal] = useState<ModalState>({
     open: false,
     url: "",
@@ -91,12 +93,12 @@ export default function MedicosCarousel() {
     return `translateX(${x}px)`;
   }, [index]);
 
-  // ==== NAVEGACIÓN (sin clones, con wrap) ====
+  // ==== NAVEGACIÓN (SIN CLONES, con wrap) ====
   const goNext = () => {
     if (!canScroll) return;
     setIndex((prev) => {
       const maxIndex = Math.max(0, LEN - visibleCount);
-      return prev >= maxIndex ? 0 : prev + 1;
+      return prev >= maxIndex ? 0 : prev + 1; // último -> vuelve al primero
     });
   };
 
@@ -104,19 +106,21 @@ export default function MedicosCarousel() {
     if (!canScroll) return;
     setIndex((prev) => {
       const maxIndex = Math.max(0, LEN - visibleCount);
-      return prev <= 0 ? maxIndex : prev - 1;
+      return prev <= 0 ? maxIndex : prev - 1; // primero -> salta al último bloque
     });
   };
 
-  // ==== AUTOPLAY ====
+  // ==== AUTOPLAY CADA 2s (solo si hay flechas) ====
   useEffect(() => {
     if (!canScroll) return;
+
     autoplayRef.current = window.setInterval(() => {
       setIndex((prev) => {
         const maxIndex = Math.max(0, LEN - visibleCount);
         return prev >= maxIndex ? 0 : prev + 1;
       });
-    }, 4000);
+    }, 2000); // 2 segundos
+
     return () => {
       if (autoplayRef.current != null) {
         clearInterval(autoplayRef.current);
@@ -160,7 +164,7 @@ export default function MedicosCarousel() {
                 const maxIndex = Math.max(0, LEN - visibleCount);
                 return prev >= maxIndex ? 0 : prev + 1;
               });
-            }, 4000);
+            }, 2000);
           }
         }}
       >
