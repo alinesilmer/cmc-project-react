@@ -213,6 +213,9 @@ export default function Header() {
             <Link to="/noticias" className={styles.navLink} onClick={closeAll}>
               Noticias
             </Link>
+            <Link to="/medicos-asociados" className={styles.navLink} onClick={closeAll}>
+              Médicos Asociados
+            </Link>
             <Link to="/contacto" className={styles.navLink} onClick={closeAll}>
               Contacto
             </Link>

@@ -1,0 +1,93 @@
+@import "../../styles/variables.scss";
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xl;
+  padding: $spacing-xxl $spacing-lg;
+  background: $white;
+  color: $dark-gray;
+  font-family: $font-normal;
+}
+
+
+.title {
+  font-family: $font-playfair;
+  font-size: $font-size-h2;
+  letter-spacing: -0.5px;
+  color: $white;
+}
+
+.subtitle {
+  font-size: clamp(1rem, 1.1vw + 0.8rem, 1.2rem);
+  color: rgba($white, 0.95);
+}
+
+.heroStats {
+  display: flex;
+  flex-direction: row;
+  gap: $spacing-xl;
+  z-index: 1;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.statNum {
+  font-weight: 800;
+  font-size: 1.6rem;
+  color: $primary-yellow;
+}
+
+.statLbl {
+  font-size: 0.95rem;
+  color: rgba($white, 0.9);
+}
+
+.heroGlow {
+  position: absolute;
+  right: -60px;
+  top: -80px;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba($accent-blue, 0.35), transparent 60%);
+  opacity: 0.9;
+}
+
+.cards {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: $spacing-lg;
+}
+
+.item {
+  display: flex;
+  flex: 1 1 calc(25% - #{$spacing-lg});
+  max-width: calc(25% - #{$spacing-lg});
+}
+
+@media (max-width: $breakpoint-wide) {
+  .item { flex: 1 1 calc(33.33% - #{$spacing-lg}); max-width: calc(33.33% - #{$spacing-lg}); }
+}
+
+@media (max-width: $breakpoint-desktop) {
+  .wrapper { padding: $spacing-xl $spacing-lg; }
+  .hero { padding: $spacing-lg; }
+}
+
+@media (max-width: $breakpoint-tablet) {
+  .hero { flex-direction: column; align-items: flex-start; gap: $spacing-md; }
+  .heroStats { gap: $spacing-lg; }
+  .item { flex: 1 1 calc(50% - #{$spacing-lg}); max-width: calc(50% - #{$spacing-lg}); }
+}
+
+@media (max-width: $breakpoint-mobile) {
+  .wrapper { padding: $spacing-lg $spacing-md; }
+  .cards { gap: $spacing-md; }
+  .item { flex: 1 1 100%; max-width: 100%; }
+}

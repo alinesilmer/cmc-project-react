@@ -21,6 +21,7 @@ import ConveniosPage from "./app/convenios/convenios";
 import QuintaPage from "./app/quinta/quinta";
 import CursosCapacitacionesPage from "./app/cursoscap/page";
 import SegurosPage from "./app/seguros/page";
+import Asociados from "./app/asociados/page";
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
@@ -72,6 +73,7 @@ export default function WebRoutes() {
         <Route path="/quinta" element={<QuintaPage />} />
         <Route path="/cursoscap" element={<CursosCapacitacionesPage />} />
         <Route path="/seguros" element={<SegurosPage />} />
+        <Route path="/medicos-asociados" element={<Asociados />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
