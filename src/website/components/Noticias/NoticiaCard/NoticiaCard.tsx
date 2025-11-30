@@ -1,4 +1,3 @@
-// src/website/components/Noticias/NoticiaCard/NoticiaCard.tsx
 import { motion } from "framer-motion";
 import { FiCalendar, FiUser, FiArrowRight } from "react-icons/fi";
 import styles from "./NoticiaCard.module.scss";
@@ -28,7 +27,7 @@ function formatearFecha(fecha: Dateish): string {
 
 export default function NoticiaCard({ noticia, onClick }: NoticiaCardProps) {
   const portada =
-    (noticia.portada && noticia.portada.trim()) || "/placeholder.svg";
+    (noticia.portada && noticia.portada.trim()) || "https://res.cloudinary.com/dcfkgepmp/image/upload/v1764076138/20251125_1004_Portada_M%C3%A9dica_Moderna_simple_compose_01kaxhrn6nfm2t5ftq9htn6c9v_q4kx1d.png";
 
   const fecha =
     formatearFecha((noticia as any).fechaCreacion) ||

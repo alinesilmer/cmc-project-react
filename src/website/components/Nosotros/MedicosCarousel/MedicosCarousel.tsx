@@ -29,7 +29,7 @@ export default function MedicosCarousel() {
     (async () => {
       try {
         const rows = await listAds({ activo: true });
-        const slice = rows.slice(0, 10); // máximo 10
+        const slice = rows.slice(0, 60); // máximo 10
         setItems(slice);
         setIndex(0);
       } catch (e) {

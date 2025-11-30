@@ -55,7 +55,7 @@ export default function Welcome() {
 
               <a href={ETICA_PDF} download="Valores_Eticos_Minimos.pdf">
                 <Button variant="secondary" size="large">
-                  Ver Valores Éticos Mínimos
+                  Ver Boletín Informativo
                 </Button>
               </a>
             </motion.div>

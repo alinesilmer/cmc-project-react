@@ -44,12 +44,7 @@ export default function Quinta({
             </a>
           </div>
         </div>
-        <div className={styles.headRight}>
-          <div className={styles.badge}>
-            <Calendar size={18} />
-            <span>Temporada de pileta</span>
-          </div>
-        </div>
+        
       </div>
 
       <div className={styles.infoPanel}>
