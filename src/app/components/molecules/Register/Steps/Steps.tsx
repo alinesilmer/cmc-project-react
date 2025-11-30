@@ -3,6 +3,7 @@ import React from "react";
 import styles from "./Steps.module.scss";
 import HelpButton from "../../../../components/atoms/HelpButton/HelpButton";
 import PdfUpload from "../../../../components/atoms/PdfUpload/PdfUpload";
+import esES from "rsuite/locales/es_ES";
 import type {
   RegisterFormData,
   SpecialtyItem,
@@ -61,23 +62,27 @@ type DateFieldProps = {
 
 const DateField: React.FC<DateFieldProps> = ({
   value,
-  // onChange,
+  onChange,
   error,
   placeholder = "dd-mm-aaaa",
 }) => {
   return (
-    <div>
+    <div className={styles.formGroup}>
       <DatePicker
-        value={strToDate(value)}
-        // onChange={(d: Date | null) => {
-        //   // mapeamos Date → string para guardar en formData
-        //   onChange(dateToStr(d));
-        // }}
+        // 👇 se usa SOLO al montar el componente
+        defaultValue={strToDate(value)}
+        // 👇 cada vez que el usuario elige una fecha válida,
+        // avisamos al form en formato string
+        onChange={(d: Date | null) => {
+          onChange(dateToStr(d));
+        }}
+        locale={esES.DatePicker}
         format="dd-MM-yyyy"
         oneTap
         placeholder={placeholder}
-        style={{ width: "100%" }}
+        style={{ width: "100%", height: "100%" }}
         cleanable
+        size="lg"
         className={error ? styles.error : undefined}
       />
       {error && <span className={styles.errorText}>{error}</span>}
