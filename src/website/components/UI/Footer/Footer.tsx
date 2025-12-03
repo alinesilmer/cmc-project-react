@@ -43,9 +43,9 @@ export default function Footer() {
         <nav className={styles.linksCol} aria-label="Enlaces rápidos">
           <h4>Enlaces Rápidos</h4>
           <ul>
-            <li><Link to="/faqs">FAQs</Link></li>
-            <li><Link to="/turnos">Registro</Link></li>
-            <li><Link to="/noticias">Últimas noticias</Link></li>
+            <li><Link to="/cursoscap">Cursos/Capacitaciones</Link></li>
+            <li><Link to="/blog">Blog</Link></li>
+            <li><Link to="/medicos-asociados">Médicos asociados</Link></li>
           </ul>
         </nav>
 

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import styles from "./PadronesForm.module.scss";
+import EmailConsentModal from "../EmailConsentModal/EmailConsentModal";
 
 type Insurance = {
   id: string;
@@ -77,45 +78,86 @@ type Props = {
 };
 
 const PadronesForm: React.FC<Props> = ({ onPreview, onSubmit }) => {
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [showWarning, setShowWarning] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [showWarning, setShowWarning] = useState(false)
+  const [showEmailConsent, setShowEmailConsent] = useState(false)
+  const [pendingInsuranceId, setPendingInsuranceId] = useState<string | null>(null)
+  const [pendingInsuranceName, setPendingInsuranceName] = useState("")
+
+  const insurances: Insurance[] = [
+    { id: "1", name: "Unne", code: "123" },
+    { id: "2", name: "Swiss Medical", code: "456" },
+    { id: "3", name: "Other Insurance", code: "789" },
+  ]
+
+  const requiresEmailConsent = (insuranceName: string): boolean => {
+    const upperName = insuranceName.toUpperCase()
+    return upperName.includes("UNNE") || upperName.includes("SWISS MEDICAL")
+  }
 
   const toggleInsurance = (id: string) => {
+    const insurance = insurances.find((ins) => ins.id === id)
+    if (!insurance) return
+
+    if (!selected.has(id) && requiresEmailConsent(insurance.name)) {
+      setPendingInsuranceId(id)
+      setPendingInsuranceName(insurance.name)
+      setShowEmailConsent(true)
+      return
+    }
+
     setSelected((prev) => {
-      const newSet = new Set(prev);
+      const newSet = new Set(prev)
       if (newSet.has(id)) {
-        newSet.delete(id);
+        newSet.delete(id)
       } else {
-        newSet.add(id);
+        newSet.add(id)
       }
-      return newSet;
-    });
-  };
+      return newSet
+    })
+  }
+
+  const handleEmailConsentAccept = () => {
+    if (pendingInsuranceId) {
+      setSelected((prev) => {
+        const newSet = new Set(prev)
+        newSet.add(pendingInsuranceId)
+        return newSet
+      })
+    }
+    setShowEmailConsent(false)
+    setPendingInsuranceId(null)
+    setPendingInsuranceName("")
+  }
+
+  const handleEmailConsentCancel = () => {
+    setShowEmailConsent(false)
+    setPendingInsuranceId(null)
+    setPendingInsuranceName("")
+  }
 
   const handlePreview = () => {
-    onPreview(Array.from(selected));
-  };
+    onPreview(Array.from(selected))
+  }
 
   const handleSubmit = () => {
     if (selected.size === 0) {
-      alert("Por favor, seleccione al menos una obra social.");
-      return;
+      alert("Por favor, seleccione al menos una obra social.")
+      return
     }
-    setShowWarning(true);
-  };
+    setShowWarning(true)
+  }
 
   const confirmSubmit = () => {
-    onSubmit(Array.from(selected));
-    setShowWarning(false);
-  };
+    onSubmit(Array.from(selected))
+    setShowWarning(false)
+  }
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <h2>Seleccionar Obras Sociales</h2>
-        <p className={styles.subtitle}>
-          Marque las obras sociales con las que trabajará
-        </p>
+        <p className={styles.subtitle}>Marque las obras sociales con las que trabajará</p>
       </div>
 
       <div className={styles.insuranceList}>
@@ -134,59 +176,14 @@ const PadronesForm: React.FC<Props> = ({ onPreview, onSubmit }) => {
         ))}
       </div>
 
-      <div className={styles.helpBox}>
-        <p className={styles.helpText}>
-          Si tiene algún inconveniente o consulta, por favor comuníquese con:
-        </p>
-        <p className={styles.helpContact}>
-          <strong>Colegio Médico de Corrientes</strong>
-        </p>
-        <p className={styles.helpContact}>📞 (0379) 442-3456</p>
-        <p className={styles.helpContact}>📧 info@cmcorrientes.org.ar</p>
-      </div>
-
-      <div className={styles.actions}>
-        <button
-          className={styles.previewBtn}
-          onClick={handlePreview}
-          disabled={selected.size === 0}
-        >
-          Previsualizar
-        </button>
-        <button
-          className={styles.submitBtn}
-          onClick={handleSubmit}
-          disabled={selected.size === 0}
-        >
-          Enviar
-        </button>
-      </div>
-
-      {showWarning && (
-        <div className={styles.warningOverlay}>
-          <div className={styles.warningModal}>
-            <h3>⚠️ Confirmar Envío</h3>
-            <p>
-              Por favor, verifique que toda la información sea correcta antes de
-              enviar. Una vez enviado, el formulario será procesado por el equipo
-              administrativo.
-            </p>
-            <div className={styles.warningActions}>
-              <button
-                className={styles.cancelBtn}
-                onClick={() => setShowWarning(false)}
-              >
-                Revisar
-              </button>
-              <button className={styles.confirmBtn} onClick={confirmSubmit}>
-                Confirmar y Enviar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <EmailConsentModal
+        open={showEmailConsent}
+        insuranceName={pendingInsuranceName}
+        onAccept={handleEmailConsentAccept}
+        onCancel={handleEmailConsentCancel}
+      />
     </div>
-  );
-};
+  )
+}
 
-export default PadronesForm;
+export default PadronesForm
