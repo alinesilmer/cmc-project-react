@@ -1,5 +1,5 @@
 // src/app/register/hooks/useRegisterForm.ts
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { RegisterFormData, SpecialtyItem } from "../../types/register";
 import arPlaces from "../../utils/ar-provinces-localities.json";
@@ -16,9 +16,16 @@ import {
   DOC_LABEL_MAP,
 } from "../../pages/Register/api";
 
-import { registerMedicoAdmin as registerAdmin } from "../../pages/RegisterSocio/api";
+// ⬇️ NUEVO: mini API admin
+import {
+  saveContinueAdmin,
+  // opcional: setExisteAdmin,
+} from "../../pages/RegisterSocio/api";
 
 type Mode = "public" | "admin";
+
+// Cambiá esto si tu ruta de detalle es otra (p.ej. "/panel/medicos")
+const DETAIL_ROUTE_PREFIX = "/doctors";
 
 export function useRegisterForm(
   mode: Mode,
@@ -76,7 +83,10 @@ export function useRegisterForm(
     Boolean(opts?.showAdherentePrompt)
   );
 
-  // Provincias (derívalas si ya las tenés en otro lado)
+  // ⬇️ NUEVO: id del médico creado/actualizado en admin
+  const [medicoId, setMedicoId] = useState<number | null>(null);
+
+  // Provincias
   useEffect(() => {
     const provs = Object.keys(arPlaces || {}).sort((a, b) =>
       a.localeCompare(b, "es", { sensitivity: "base" })
@@ -122,9 +132,9 @@ export function useRegisterForm(
   };
   const prevStep = () => setStep((p) => (p > 1 ? ((p - 1) as any) : p));
 
-  // Construye specialties payload desde principal + extras
+  // Construye specialties payload desde principal + extras (se usa solo en público)
   const buildSpecialtiesPayload = () => {
-    const mainColegioId = Number(formData.specialty || 0); // ya es ID_COLEGIO_ESPE
+    const mainColegioId = Number(formData.specialty || 0);
     const mainItem = mainColegioId
       ? {
           id_colegio_espe: mainColegioId,
@@ -144,45 +154,155 @@ export function useRegisterForm(
     return [...(mainItem ? [mainItem] : []), ...extras].slice(0, 6);
   };
 
-  // Submit unificado (usa endpoint según mode)
-  const submitAll = async () => {
-    const allErrors = {
-      ...validateStepUtil(1, formData),
-      ...validateStepUtil(2, formData),
-      ...validateStepUtil(3, formData),
+  // ⬇️ NUEVO: helper para no mandar strings vacíos
+  const toUndef = (v?: string) => (v && `${v}`.trim() !== "" ? v : undefined);
+
+  // ⬇️ NUEVO: payload parcial (admin)
+  const buildPartialPayload = () => {
+    return {
+      // Identificación
+      documentType: toUndef((formData as any).documentType), // si existiera
+      documentNumber: toUndef(formData.documentNumber),
+      firstName: toUndef(formData.firstName),
+      lastName: toUndef(formData.lastName),
+      gender: toUndef(formData.gender),
+      birthDate: toUndef(formData.birthDate),
+
+      // Contacto
+      phone: toUndef(formData.phone || formData.mobile),
+      altPhone: toUndef(formData.mobile),
+      email: toUndef(formData.email),
+
+      // Domicilio
+      address: toUndef(formData.address),
+      province: toUndef(formData.province),
+      locality: toUndef(formData.locality),
+      postalCode: toUndef(formData.postalCode),
+
+      // Profesionales (mapeo a tu backend)
+      matriculaNac: toUndef(formData.nationalLicense),
+      matriculaProv: toUndef(formData.provincialLicense),
+      // joinDate: toUndef(formData.graduationDate), // si querés mapearlo
+
+      // Fiscales / Seguros
+      cuit: toUndef(formData.cuit),
+      taxCondition: toUndef(formData.taxCondition),
+      anssal: toUndef(formData.anssal),
+      anssalExpiry: toUndef(formData.anssalExpiry),
+      malpracticeCompany: toUndef(formData.malpracticeCompany),
+      malpracticeExpiry: toUndef(formData.malpracticeExpiry),
+      cbu: toUndef(formData.cbu),
+
+      // Otros
+      observations: toUndef(formData.observations),
     };
-    if (Object.keys(allErrors).length) {
-      setErrors(allErrors);
-      setStep(1);
-      return;
-    }
+  };
+
+  // ⬇️ NUEVO: Guardar y continuar (ADMIN)
+  const saveAndContinue = async () => {
+    if (mode !== "admin") return;
+
+    // Validá el paso actual (no rompemos tu UX)
+    if (!validateStep(step)) return;
+
+    const payload = buildPartialPayload();
 
     try {
-      const specialtiesPayload = buildSpecialtiesPayload();
-
-      // Llamada al endpoint correcto
-      const apiCall =
-        mode === "admin"
-          ? (form: any, specs: any[]) => registerAdmin(form, specs)
-          : (form: any, specs: any[]) => registerPublic(form, specs);
-
-      const { medico_id } = await apiCall(formData, specialtiesPayload);
-
-      // Adjuntos
-      for (const [key, file] of Object.entries(files || {})) {
-        if (!(file instanceof File)) continue;
-        const label = DOC_LABEL_MAP[key] ?? key;
-        await uploadMedicoDocumento(medico_id, file, label);
-      }
-      mode === "admin" ? navigate("/panel/solicitudes") : navigate("/");
+      const res = await saveContinueAdmin(
+        medicoId ? { medico_id: medicoId, ...payload } : payload
+      );
+      if (!medicoId) setMedicoId(res.medico_id);
+      // Avanzamos solo si el botón es "Guardar y continuar"
+      setStep((s) => (s < 4 ? ((s + 1) as any) : s));
     } catch (e: any) {
       const msg =
         e?.response?.data?.detail ??
         e?.message ??
-        "No se pudo enviar la solicitud";
+        "No se pudo guardar el borrador";
       alert(typeof msg === "string" ? msg : JSON.stringify(msg));
-      console.error("register error:", e);
+      console.error("saveAndContinue error:", e);
     }
+  };
+
+  // ⬇️ NUEVO: Guardar y terminar (ADMIN) — guarda, sube adjuntos (si hay) y redirige al detalle
+  const saveAndFinish = async () => {
+    if (mode !== "admin") return;
+
+    // Asegurá que exista el médico y que el último step quede guardado
+    if (!medicoId) {
+      await saveAndContinue();
+    } else {
+      // si cambió algo en el último paso y querés forzar guardado:
+      const payload = buildPartialPayload();
+      if (Object.values(payload).some((v) => v !== undefined)) {
+        try {
+          await saveContinueAdmin({ medico_id: medicoId, ...payload });
+        } catch (e) {
+          // si falla el guardado final, igual evitamos quedar en limbo
+          console.error("final patch failed:", e);
+        }
+      }
+    }
+
+    // Subí adjuntos si fueron cargados en el wizard
+    try {
+      if (medicoId) {
+        for (const [key, file] of Object.entries(files || {})) {
+          if (!(file instanceof File)) continue;
+          const label = DOC_LABEL_MAP[key] ?? key;
+          await uploadMedicoDocumento(medicoId, file, label);
+        }
+      }
+    } catch (e) {
+      console.warn("Documentos con error, continúo con la redirección:", e);
+      // Igual redireccionamos: luego puede usar "Agregar documento" en el perfil
+    }
+
+    // Redirigir al detalle del médico
+    navigate(`${DETAIL_ROUTE_PREFIX}/${medicoId!}`);
+  };
+
+  // Submit unificado (público intacto; admin redirige a saveAndFinish para compatibilidad)
+  const submitAll = async () => {
+    // Público: igual que antes
+    if (mode === "public") {
+      const allErrors = {
+        ...validateStepUtil(1, formData),
+        ...validateStepUtil(2, formData),
+        ...validateStepUtil(3, formData),
+      };
+      if (Object.keys(allErrors).length) {
+        setErrors(allErrors);
+        setStep(1);
+        return;
+      }
+
+      try {
+        const specialtiesPayload = buildSpecialtiesPayload();
+        const { medico_id } = await registerPublic(
+          formData,
+          specialtiesPayload
+        );
+
+        for (const [key, file] of Object.entries(files || {})) {
+          if (!(file instanceof File)) continue;
+          const label = DOC_LABEL_MAP[key] ?? key;
+          await uploadMedicoDocumento(medico_id, file, label);
+        }
+        navigate("/");
+      } catch (e: any) {
+        const msg =
+          e?.response?.data?.detail ??
+          e?.message ??
+          "No se pudo enviar la solicitud";
+        alert(typeof msg === "string" ? msg : JSON.stringify(msg));
+        console.error("register (public) error:", e);
+      }
+      return;
+    }
+
+    // Admin: para no romper componentes que aún llaman submitAll()
+    await saveAndFinish();
   };
 
   return {
@@ -214,7 +334,13 @@ export function useRegisterForm(
     onChange,
     getInputProps,
 
-    // acción final
+    // NUEVO: flujo admin
+    medicoId,
+    setMedicoId,
+    saveAndContinue,
+    saveAndFinish,
+
+    // acción final (público intacto, admin delega)
     submitAll,
   };
 }

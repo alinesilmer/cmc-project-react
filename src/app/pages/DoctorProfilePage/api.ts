@@ -1,5 +1,12 @@
 // src/app/lib/api.ts
-import { getJSON, postJSON, patchJSON, delJSON, putJSON } from "../../lib/http";
+import {
+  getJSON,
+  postJSON,
+  patchJSON,
+  delJSON,
+  putJSON,
+  postForm,
+} from "../../lib/http";
 
 /* ===== Tipos mínimos (podés ampliar) ===== */
 export type DoctorDocument = {
@@ -344,3 +351,60 @@ export const uploadDocumento = async (
 // Listar especialidades
 export const getListEspecialidades = () =>
   getJSON<Especialidad[]>(ESPECIALIDADES());
+
+// PATCH /medicos/:id/existe
+export const setMedicoExiste = (id: string | number, existe: "S" | "N") =>
+  patchJSON(`/api/medicos/${id}/existe`, { existe });
+
+// DELETE /medicos/:id
+export const deleteMedico = (id: string | number) =>
+  delJSON(`/api/medicos/${id}`);
+
+// GET /medicos/documentos/labels  -> string[]
+export const getDocumentoLabels = () =>
+  getJSON<string[]>(`/api/medicos/documentos/labels`);
+
+// === NUEVO: eliminar documento ===
+export const deleteMedicoDocumento = (
+  medicoId: string | number,
+  docId: number | string
+) => delJSON(`/api/medicos/${medicoId}/documentos/${docId}`);
+
+// === NUEVO: mapear/limpiar campo attach_* del listado_medico ===
+// PATCH /api/medicos/:id/attach  body: { field: "attach_titulo", doc_id: 123 | null }
+export const setMedicoAttach = (
+  medicoId: string | number,
+  attachField: string, // ej "attach_titulo"
+  docId: number
+) =>
+  patchJSON(`/api/medicos/${medicoId}/attach`, {
+    field: attachField,
+    doc_id: docId,
+  });
+
+export const clearMedicoAttach = (
+  medicoId: string | number,
+  attachField: string
+) =>
+  patchJSON(`/api/medicos/${medicoId}/attach`, {
+    field: attachField,
+    doc_id: null,
+  });
+
+// --- ajustar: devolver el documento creado ---
+export async function addMedicoDocumento(
+  medicoId: string | number,
+  file: File,
+  label: string // guardá acá "titulo", "dni", etc. (SIN attach_)
+): Promise<DoctorDocument> {
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("label", label);
+
+  const res = await fetch(`/api/medicos/${medicoId}/documentos`, {
+    method: "POST",
+    body: fd,
+  });
+  if (!res.ok) throw new Error("No se pudo agregar el documento.");
+  return res.json() as Promise<DoctorDocument>;
+}

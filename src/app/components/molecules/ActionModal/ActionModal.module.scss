@@ -1,0 +1,81 @@
+/* app/components/molecules/ActionModal/ActionModal.module.scss */
+
+/* ===== Zoom modal sync con backdrop (muy rápido) ===== */
+:root {
+  --amodal-dur: 120ms; /* velocidad del zoom */
+  --amodal-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Neutralizamos transiciones internas de RSuite para este modal */
+:global(.amodal-zoom.rs-modal .rs-anim-fade),
+:global(.amodal-zoom.rs-modal-backdrop) {
+  transition: none !important;
+}
+
+/* Backdrop: fade in/out sincronizado usando nuestras clases de fase */
+@keyframes amodalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes amodalFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+:global(.amodal-zoom.am-in.rs-modal-backdrop) {
+  animation: amodalFadeIn var(--amodal-dur) var(--amodal-ease) both;
+}
+:global(.amodal-zoom.am-out.rs-modal-backdrop) {
+  animation: amodalFadeOut var(--amodal-dur) var(--amodal-ease) both;
+}
+
+/* Dialog: zoom in/out + leve fade */
+@keyframes amodalZoomIn {
+  from {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes amodalZoomOut {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+}
+
+:global(.amodal-zoom.rs-modal .rs-modal-dialog) {
+  transform-origin: 50% 40vh;
+  will-change: transform, opacity;
+}
+
+/* Entrando / saliendo: usamos am-in / am-out propias */
+:global(.amodal-zoom.am-in.rs-modal .rs-modal-dialog) {
+  animation: amodalZoomIn var(--amodal-dur) var(--amodal-ease) both;
+}
+:global(.amodal-zoom.am-out.rs-modal .rs-modal-dialog) {
+  animation: amodalZoomOut var(--amodal-dur) var(--amodal-ease) both;
+}
+
+/* Respeto a usuarios con “reduced motion” */
+@media (prefers-reduced-motion: reduce) {
+  :global(.amodal-zoom.rs-modal-backdrop),
+  :global(.amodal-zoom.rs-modal .rs-modal-dialog) {
+    animation: none !important;
+  }
+}

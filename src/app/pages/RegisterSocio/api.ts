@@ -1,5 +1,5 @@
 // src/app/auth/api.ts
-import { postJSON, getJSON, postForm } from "../../lib/http";
+import { postJSON, getJSON, postForm, patchJSON } from "../../lib/http";
 import type { RegisterFormData } from "../../types/register";
 /* ===== tipos ===== */
 export type RegisterPayload = {
@@ -214,4 +214,15 @@ export async function sendRegister(
   }
 
   return { medico_id };
+}
+
+export async function saveContinueAdmin(
+  body: any
+): Promise<{ medico_id: number; ok: boolean }> {
+  return postJSON("/api/medicos/admin/save-continue", body);
+}
+
+// Si querés exponer el toggle desde acá (lo vas a usar en el ProfileHeader)
+export async function setExisteAdmin(medicoId: number, existe: "S" | "N") {
+  return patchJSON(`/api/medicos/${medicoId}/existe`, { existe });
 }

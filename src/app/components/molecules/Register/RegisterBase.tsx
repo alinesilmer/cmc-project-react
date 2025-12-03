@@ -1,4 +1,3 @@
-// src/app/register/components/RegisterBase.tsx
 "use client";
 import React from "react";
 import LayoutRegister from "./Layout/Layout";
@@ -12,7 +11,7 @@ type Props = {
   mode: "public" | "admin";
   showAdherentePrompt?: boolean; // sólo para público
   stepsMeta: { id: number; title: string; icon: string }[];
-  specialties: { id: number; id_colegio_espe: number; nombre: string }[]; // pásalas desde el page
+  specialties: { id: number; id_colegio_espe: number; nombre: string }[];
   adherenteAnim?: object | null;
 };
 
@@ -70,6 +69,7 @@ const RegisterBase: React.FC<Props> = ({
           setSpecItems={rf.setSpecItems}
         />
 
+        {/* NAV: cambia según modo y step */}
         <div className={styles.nav}>
           {rf.step > 1 ? (
             <button className={styles.prev} onClick={rf.prevStep}>
@@ -78,13 +78,28 @@ const RegisterBase: React.FC<Props> = ({
           ) : (
             <span />
           )}
-          {rf.step < 4 ? (
-            <button className={styles.next} onClick={rf.nextStep}>
-              Siguiente →
+
+          {mode === "public" ? (
+            // --- PÚBLICO: igual que antes ---
+            rf.step < 4 ? (
+              <button className={styles.next} onClick={rf.nextStep}>
+                Siguiente →
+              </button>
+            ) : (
+              <button className={styles.submit} onClick={rf.submitAll}>
+                Enviar Solicitud
+              </button>
+            )
+          ) : // --- ADMIN ---
+          rf.step < 4 ? (
+            // Pasos 1–3: sólo Guardar y continuar
+            <button className={styles.next} onClick={rf.saveAndContinue}>
+              Guardar y continuar →
             </button>
           ) : (
-            <button className={styles.submit} onClick={rf.submitAll}>
-              Enviar Solicitud
+            // Paso 4: Guardar y terminar
+            <button className={styles.submit} onClick={rf.saveAndFinish}>
+              Guardar y terminar
             </button>
           )}
         </div>

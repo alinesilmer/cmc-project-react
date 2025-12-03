@@ -2,8 +2,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { Pencil, Plus, X } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -43,7 +43,64 @@ import {
   getEffective,
   updateMedico,
   UPDATE_WHITELIST,
+  setMedicoExiste,
+  deleteMedico,
+  getDocumentoLabels,
+  addMedicoDocumento,
+  // ⬇️ nuevos helpers
+  deleteMedicoDocumento,
+  setMedicoAttach,
+  clearMedicoAttach,
 } from "./api";
+
+import { Modal, Toggle, Notification } from "rsuite";
+import "rsuite/Modal/styles/index.css";
+import "rsuite/Toggle/styles/index.css";
+import { Animation } from "rsuite";
+import ActionModal from "../../components/molecules/ActionModal/ActionModal";
+import { useNotify } from "../../hooks/useNotify";
+
+/* ===================== helpers labels ===================== */
+// Mapa de claves attach_* → etiqueta legible
+const ATTACH_PRETTY: Record<string, string> = {
+  attach_titulo: "Título",
+  attach_matricula_nac: "Matrícula nacional",
+  attach_matricula_prov: "Matrícula provincial",
+  attach_resolucion: "Resolución",
+  attach_habilitacion_municipal: "Habilitación municipal",
+  attach_cuit: "CUIT",
+  attach_condicion_impositiva: "Condición impositiva",
+  attach_anssal: "ANSSAL",
+  attach_malapraxis: "Malapraxis",
+  attach_cbu: "CBU",
+  attach_dni: "Documento",
+};
+
+const ATTACH_KEYS = Object.keys(ATTACH_PRETTY);
+
+// quita prefijo attach_ y normaliza
+const stripAttach = (k: string) => k.replace(/^attach_/, "").toLowerCase();
+
+// devuelve un “bonito” para una key attach_* o un label “libre”
+function prettyFromAnyLabel(label: string) {
+  if (label.startsWith("attach_")) return ATTACH_PRETTY[label] ?? label;
+  // para labels tipo "titulo" -> "Título", "constancia_especial" -> "Constancia especial"
+  const words = label.replace(/_/g, " ").toLowerCase().split(" ");
+  const cap = words
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(" ");
+  // casos conocidos
+  return cap.replace(/\bDni\b/, "Documento").replace(/\bCuit\b/, "CUIT");
+}
+
+// “formatea” opciones: value=attach_* u "otro", label visible bonito
+const formatOption = (opt: string) =>
+  opt === "otro" ? "Otro" : ATTACH_PRETTY[opt] ?? opt;
+
+// normaliza para comparar (quita attach_ y pasa a lower)
+const normalizeForCompare = (label: string) => stripAttach(label);
+
+/* ========================================================== */
 
 const WL = new Set<string>(UPDATE_WHITELIST as unknown as string[]);
 
@@ -57,7 +114,6 @@ const DATE_FIELDS = new Set([
   "vencimiento_cobertura",
 ]);
 
-// si NO querés que alguno sea numérico, simplemente sacalo de acá.
 const INT_FIELDS = new Set([
   "anssal",
   "cobertura",
@@ -66,7 +122,6 @@ const INT_FIELDS = new Set([
   "matricula_nac",
 ]);
 
-// ====== HELPERS CHIQUITOS ======
 const isBlankish = (v: any) =>
   v === undefined || v === null || (typeof v === "string" && v.trim() === "");
 const isDashish = (v: any) => typeof v === "string" && /^-+$/.test(v.trim());
@@ -81,43 +136,31 @@ const toYmd2 = (v: any): string | null => {
   }
   const s = String(v).trim();
   if (!s) return null;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s; // ya viene yyyy-mm-dd
-  const m = s.match(/^(\d{2})-(\d{2})-(\d{4})$/); // dd-mm-yyyy
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const m = s.match(/^(\d{2})-(\d{2})-(\d{4})$/);
   if (m) return `${m[3]}-${m[2]}-${m[1]}`;
-  return s; // lo dejas pasar y el back lo normaliza si quiere
+  return s;
 };
 
-// ====== EL ÚNICO NORMALIZE QUE NECESITÁS ======
 export function normalizePatch(input: Record<string, any>) {
   const out: Record<string, any> = {};
-
   for (const [k, raw] of Object.entries(input || {})) {
-    // 1) fuera lo que no esté en la whitelist
     if (!WL.has(k)) continue;
-
-    // 2) "" o "-----" -> null
     if (isBlankish(raw) || isDashish(raw)) {
       out[k] = null;
       continue;
     }
-
-    // 3) fechas
     if (DATE_FIELDS.has(k)) {
       out[k] = toYmd2(raw);
       continue;
     }
-
-    // 4) enteros "amigables"
     if (INT_FIELDS.has(k)) {
       const s = String(raw).replace(/\./g, "").replace(/,/g, "").trim();
       out[k] = /^\d+$/.test(s) ? Number(s) : null;
       continue;
     }
-
-    // 5) default: lo que venga
     out[k] = raw;
   }
-
   return out;
 }
 
@@ -136,16 +179,18 @@ const fmtDate = (s?: string | null) =>
 
 type TabKey =
   | "datos"
-  // | "deudas"
   | "documentos"
-  // | "reportes"
   | "conceptos"
   | "especialidades"
   | "permisos";
 
+const DEFAULT_LABELS = [...ATTACH_KEYS, "otro"];
+
 const DoctorProfilePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const medicoId = id!;
+  const nav = useNavigate();
+  const notify = useNotify();
 
   const [tab, setTab] = useState<TabKey>("datos");
 
@@ -153,11 +198,9 @@ const DoctorProfilePage: React.FC = () => {
   const [data, setData] = useState<DoctorProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Editar perfil
+  // Edición
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-
-  // mantenemos un draft parcial; solo mandamos lo que cambia
   const [draft, setDraft] = useState<Partial<DoctorProfile>>({});
 
   // rbac
@@ -172,59 +215,76 @@ const DoctorProfilePage: React.FC = () => {
   const [especs, setEspecs] = useState<DoctorEspecialidad[]>([]);
   const [espLoading, setEspLoading] = useState(false);
   const [especErr, setEspecErr] = useState<string | null>(null);
-  // conceptos (desc por nro_colegio)
-  // const [concepts, setConcepts] = useState<DoctorConcept[]>([]);
-  // const [conceptsLoading, setConceptsLoading] = useState(false);
-  // const [conceptsErr, setConceptsErr] = useState<string | null>(null);
+  const [rmEspBusy, setRmEspBusy] = useState<number | null>(null);
+
+  const [assocEspOpen, setAssocEspOpen] = useState(false);
+  const [assocEspId, setAssocEspId] = useState<string>("");
+  const [assocEspBusy, setAssocEspBusy] = useState(false);
+  const [assocEspResol, setAssocEspResol] = useState("");
+  const [assocEspDate, setAssocEspDate] = useState<Date | null>(null);
+  const [assocEspFile, setAssocEspFile] = useState<File | null>(null);
+
+  const [delEspOpen, setDelEspOpen] = useState(false);
+  const [espToDelete, setEspToDelete] = useState<DoctorEspecialidad | null>(
+    null
+  );
+  const [delEspBusy, setDelEspBusy] = useState(false);
+
+  // const [editEspOpen, setEditEspOpen] = useState(false);
+  // const [editEspId, setEditEspId] = useState<number | null>(null);
+  // const [editEspResol, setEditEspResol] = useState("");
+  // const [editEspDate, setEditEspDate] = useState<Date | null>(null);
+  // const [editEspFile, setEditEspFile] = useState<File | null>(null);
+  // const [editEspBusy, setEditEspBusy] = useState(false);
+  const [espOptions, setEspOptions] = useState<Option[]>([]);
 
   // documentos
   const [docs, setDocs] = useState<DoctorDocument[]>([]);
   const [docsLoading, setDocsLoading] = useState(false);
 
-  // catálogos
-  // const [descOptions, setDescOptions] = useState<Option[]>([]); // id = nro_colegio
-  // const [espOptions, setEspOptions] = useState<Option[]>([]); // id = Especialidad.ID
+  // estado socio + eliminar socio
+  const [existe, setExiste] = useState<"S" | "N">("N");
+  const [toggleBusy, setToggleBusy] = useState(false);
+  const [delOpen, setDelOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
-  // asociar modales
-  // const [assocDescOpen, setAssocDescOpen] = useState(false);
-  // const [assocDescId, setAssocDescId] = useState<string>(""); // nro_colegio
-  // const [assocDescBusy, setAssocDescBusy] = useState(false);
-  const [rmEspBusy, setRmEspBusy] = useState<number | null>(null); // Especialidad.ID
+  // agregar doc
+  const [docOpen, setDocOpen] = useState(false);
+  const [docLabel, setDocLabel] = useState<string>("attach_titulo"); // value attach_* u "otro"
+  const [docCustom, setDocCustom] = useState<string>("");
+  const [docFile, setDocFile] = useState<File | null>(null);
+  const [docBusy, setDocBusy] = useState(false);
+  const [labelOptions, setLabelOptions] = useState<string[]>(DEFAULT_LABELS);
 
-  const [assocEspOpen, setAssocEspOpen] = useState(false);
-  const [assocEspId, setAssocEspId] = useState<string>(""); // Especialidad.ID
-  const [assocEspBusy, setAssocEspBusy] = useState(false);
+  // reemplazo si ya existe ese tipo attach_*
+  const [replaceOpen, setReplaceOpen] = useState(false);
+  const [replacePretty, setReplacePretty] = useState<string>("");
+  const [pendingUpload, setPendingUpload] = useState<{
+    attachKey: string | null; // ej attach_titulo, o null si "otro"
+    labelNormalized: string; // ej "titulo"
+    file: File;
+  } | null>(null);
 
-  const [assocEspResol, setAssocEspResol] = useState<string>(""); // N° resolución
-  // const [assocEspFecha, setAssocEspFecha] = useState<Date | null>(null); // Fecha resolución
-  // const [assocEspAdjId, setAssocEspAdjId] = useState<string>(""); // ID del Documento (opcional)
-  // const [assocEspMode, setAssocEspMode] = useState<AssocEspMode>("add");
-  // const [assocEspEditId, setAssocEspEditId] = useState<number | null>(null);
+  // eliminar doc individual
+  const [delDocOpen, setDelDocOpen] = useState(false);
+  const [docToDelete, setDocToDelete] = useState<DoctorDocument | null>(null);
+  const [delDocBusy, setDelDocBusy] = useState(false);
 
-  // ---- AGREGAR especialidads
-  const [assocEspDate, setAssocEspDate] = useState<Date | null>(null);
-  const [assocEspFile, setAssocEspFile] = useState<File | null>(null);
-
-  // ---- EDITAR especialidad
-  const [editEspOpen, setEditEspOpen] = useState(false);
-  const [editEspId, setEditEspId] = useState<number | null>(null); // id_colegio
-  const [editEspResol, setEditEspResol] = useState("");
-  const [editEspDate, setEditEspDate] = useState<Date | null>(null);
-  const [editEspFile, setEditEspFile] = useState<File | null>(null);
-  const [editEspBusy, setEditEspBusy] = useState(false);
-
-  // quitar busy
-  // const [rmConceptBusy, setRmConceptBusy] = useState<number | null>(null); // nro_colegio
-  const [espOptions, setEspOptions] = useState<Option[]>([]);
-  // const [permBusy, setPermBusy] = useState<string | null>(null);
-
-  async function loadEspec() {
-    setEspLoading(true);
+  async function confirmDeleteEsp() {
+    if (!espToDelete || !id) return;
     try {
-      const r = await getMedicoEspecialidades(medicoId);
-      setEspecs(r);
+      setDelEspBusy(true);
+      setRmEspBusy(espToDelete.id); // opcional: para reflejar "Quitando…" en la fila
+      await removeMedicoEspecialidad(id, espToDelete.id);
+      const rr = await getMedicoEspecialidades(medicoId);
+      setEspecs(rr);
+      setDelEspOpen(false);
+      setEspToDelete(null);
+    } catch (e: any) {
+      alert(e?.message || "No se pudo quitar la especialidad.");
     } finally {
-      setEspLoading(false);
+      setDelEspBusy(false);
+      setRmEspBusy(null);
     }
   }
 
@@ -244,7 +304,6 @@ const DoctorProfilePage: React.FC = () => {
     />
   );
 
-  // input numérico
   const RNumber = (key: keyof DoctorProfile) => (
     <input
       className={styles.input}
@@ -259,7 +318,6 @@ const DoctorProfilePage: React.FC = () => {
     />
   );
 
-  // selector sexo (si aplicara)
   const RSexo = (key: keyof DoctorProfile = "sexo") => (
     <select
       className={styles.select}
@@ -288,7 +346,6 @@ const DoctorProfilePage: React.FC = () => {
     </select>
   );
 
-  // fecha con DatePicker (almacenamos en draft como string "YYYY-MM-DD")
   const RDate = (key: keyof DoctorProfile) => {
     const curr = draft[key] as string | null | undefined;
     const asDate = curr ? new Date(curr) : null;
@@ -305,6 +362,7 @@ const DoctorProfilePage: React.FC = () => {
     );
   };
 
+  // Load perfil
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -313,6 +371,7 @@ const DoctorProfilePage: React.FC = () => {
         const d = await getMedicoDetail(medicoId);
         if (!alive) return;
         setData(d);
+        if (d?.existe) setExiste(d.existe.toUpperCase() === "S" ? "S" : "N");
       } finally {
         if (alive) setLoading(false);
       }
@@ -322,6 +381,7 @@ const DoctorProfilePage: React.FC = () => {
     };
   }, [medicoId]);
 
+  // Permisos tab
   useEffect(() => {
     if (tab !== "permisos") return;
     let alive = true;
@@ -352,6 +412,7 @@ const DoctorProfilePage: React.FC = () => {
     };
   }, [tab, medicoId]);
 
+  // Especialidades tab
   useEffect(() => {
     if (tab !== "especialidades") return;
     let alive = true;
@@ -370,6 +431,7 @@ const DoctorProfilePage: React.FC = () => {
     };
   }, [tab, medicoId]);
 
+  // Documentos tab
   useEffect(() => {
     if (tab !== "documentos") return;
     let alive = true;
@@ -388,32 +450,229 @@ const DoctorProfilePage: React.FC = () => {
     };
   }, [tab, medicoId]);
 
+  // Catálogo de especialidades
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
-        const list = await getListEspecialidades(); // ← tu endpoint real
+        const list = await getListEspecialidades();
         if (!alive) return;
-
-        // IMPORTANTE: muchas veces el backend usa como "id de colegio" un campo distinto.
-        // Tomamos id_colegio_espe si viene; si no, caemos a id.
         const opts = (list || []).map((e: Especialidad) => ({
           id: String(e.id_colegio_espe ?? e.id),
           label: e.nombre || `ID ${e.id}`,
         }));
-
         setEspOptions(opts);
       } catch (err) {
-        // si querés, podés dejar un fallback silencioso
         setEspOptions([]);
         console.error("No se pudo cargar especialidades:", err);
       }
     })();
-
     return () => {
       alive = false;
     };
   }, []);
+
+  // Catálogo de labels de documentos
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const labels = await getDocumentoLabels().catch(() => DEFAULT_LABELS);
+        if (!alive) return;
+        const final = labels?.length ? labels : DEFAULT_LABELS;
+        // garantizamos que sean solo attach_* conocidos + "otro"
+        const cleaned = final.filter(
+          (k) => k === "otro" || ATTACH_KEYS.includes(k)
+        );
+        setLabelOptions(cleaned.length ? cleaned : DEFAULT_LABELS);
+        setDocLabel((cleaned[0] as string) || "attach_titulo");
+      } catch {
+        setLabelOptions(DEFAULT_LABELS);
+        setDocLabel("attach_titulo");
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  async function reloadDocs() {
+    setDocsLoading(true);
+    try {
+      const r = await getMedicoDocumentos(medicoId);
+      setDocs(r);
+    } finally {
+      setDocsLoading(false);
+    }
+  }
+
+  // ====== flujo subir (y eventualmente reemplazar) documento ======
+  const tryUploadDocumento = async () => {
+    if (!docFile) return;
+
+    const attachKey = docLabel !== "otro" ? docLabel : null; // ej attach_titulo o null
+    const labelNormalized =
+      docLabel === "otro"
+        ? docCustom.trim().toLowerCase().replace(/\s+/g, "_")
+        : stripAttach(docLabel); // guardamos sin attach_
+
+    // si es un attach_* y ya existe un doc con ese “tipo”, pedimos confirmación
+    if (attachKey) {
+      const exists = docs.find(
+        (d) => normalizeForCompare(d.label) === labelNormalized
+      );
+      if (exists) {
+        setPendingUpload({ attachKey, labelNormalized, file: docFile });
+        setReplacePretty(ATTACH_PRETTY[attachKey] || attachKey);
+        setReplaceOpen(true);
+        return; // frenamos hasta confirmación
+      }
+    }
+
+    await performUploadAndMap({
+      attachKey,
+      labelNormalized,
+      file: docFile,
+    });
+  };
+
+  const performUploadAndMap = async (payload: {
+    attachKey: string | null;
+    labelNormalized: string;
+    file: File;
+  }) => {
+    const { attachKey, labelNormalized, file } = payload;
+    setDocBusy(true);
+    try {
+      // 1) subir y crear registro documento con label NORMALIZADO (sin attach_)
+      const created = await addMedicoDocumento(medicoId, file, labelNormalized); // -> DoctorDocument
+
+      // 2) si corresponde a un attach_* mapear ese doc al campo unitario
+      if (attachKey) {
+        await setMedicoAttach(medicoId, attachKey, created.id);
+      }
+
+      // 3) refrescar listado
+      await reloadDocs();
+
+      // limpiar modal
+      setDocOpen(false);
+      setDocFile(null);
+      setDocCustom("");
+    } finally {
+      setDocBusy(false);
+    }
+  };
+
+  const handleConfirmReplace = async () => {
+    if (!pendingUpload) return;
+    try {
+      // borrar el existente de ese tipo (si lo encontramos de nuevo)
+      const existing = docs.find(
+        (d) => normalizeForCompare(d.label) === pendingUpload.labelNormalized
+      );
+      if (existing) {
+        await deleteMedicoDocumento(medicoId, existing.id);
+      }
+      // subir nuevo y mapear
+      await performUploadAndMap(pendingUpload);
+    } catch (e: any) {
+      alert(e?.message || "No se pudo reemplazar el documento.");
+    } finally {
+      setPendingUpload(null);
+      setReplaceOpen(false);
+    }
+  };
+
+  // ====== eliminar doc individual ======
+  const askDeleteDoc = (doc: DoctorDocument) => {
+    setDocToDelete(doc);
+    setDelDocOpen(true);
+  };
+
+  const confirmDeleteDoc = async () => {
+    if (!docToDelete) return;
+    try {
+      setDelDocBusy(true);
+      // si el doc corresponde a un attach conocido, limpiar el campo
+      const normalized = normalizeForCompare(docToDelete.label); // ej "titulo"
+      const attachKey = ATTACH_KEYS.find((k) => stripAttach(k) === normalized); // ej "attach_titulo"
+      if (attachKey) {
+        await clearMedicoAttach(medicoId, attachKey);
+      }
+      await deleteMedicoDocumento(medicoId, docToDelete.id);
+      await reloadDocs();
+      setDelDocOpen(false);
+      setDocToDelete(null);
+    } catch (e: any) {
+      alert(e?.message || "No se pudo eliminar el documento.");
+    } finally {
+      setDelDocBusy(false);
+    }
+  };
+
+  function AnimatedModal({
+    open,
+    onClose,
+    size = "sm",
+    title,
+    children,
+  }: {
+    open: boolean;
+    onClose: () => void;
+    size?: "xs" | "sm" | "md" | "lg" | "full";
+    title: React.ReactNode;
+    children: React.ReactNode;
+  }) {
+    // Montado real del Modal (para no desmontarlo hasta que termine la animación)
+    const [mounted, setMounted] = React.useState(open);
+    const [show, setShow] = React.useState(open);
+
+    // cuando cambia `open`, disparo entrada/salida
+    React.useEffect(() => {
+      if (open) {
+        setMounted(true);
+        // dejar un microtick para que Transition capte el cambio a `in=true`
+        requestAnimationFrame(() => setShow(true));
+      } else {
+        setShow(false);
+      }
+    }, [open]);
+
+    return (
+      <Modal
+        open={mounted}
+        onClose={() => setShow(false)}
+        size={size}
+        className={styles.animatedModal}
+        // callbacks de cierre si clicás el backdrop o la X
+      >
+        <Modal.Header>
+          <Modal.Title>{title}</Modal.Title>
+        </Modal.Header>
+
+        {/* Transición personalizada */}
+        <Animation.Transition
+          in={show}
+          timeout={220}
+          enteringClassName="slideUp-entering"
+          enteredClassName="slideUp-entered"
+          exitingClassName="slideUp-exiting"
+          exitedClassName="slideUp-exited"
+          onExited={() => {
+            setMounted(false);
+            onClose(); // sincronizo con el estado padre
+          }}
+        >
+          {/* envoltorio para aplicar transform/opacity */}
+          <div className="slideUp-sheet">
+            <Modal.Body>{children}</Modal.Body>
+            <Modal.Footer />
+          </div>
+        </Animation.Transition>
+      </Modal>
+    );
+  }
 
   return (
     <div className={styles.page}>
@@ -449,6 +708,7 @@ const DoctorProfilePage: React.FC = () => {
                         .slice(0, 2)
                         .join("")}
                     </div>
+
                     <div className={styles.headerMain}>
                       <h2 className={styles.name}>{data.name}</h2>
                       <div className={styles.roleRow}>
@@ -464,16 +724,52 @@ const DoctorProfilePage: React.FC = () => {
                           {data.matricula_prov}
                         </span>
                       </div>
-                      {/* <div className={styles.headerMeta}>
-                        <div className={styles.headerMetaItem}>
-                          <span className={styles.headerMetaLabel}>
-                            Teléfono:
-                          </span>
-                          <span className={styles.headerMetaValue}>
-                            {data.telefono_consulta}
-                          </span>
-                        </div>
-                      </div> */}
+                    </div>
+
+                    {/* Toggle + eliminar socio */}
+                    <div className={styles.headerActions}>
+                      <div
+                        className={styles.toggleWrap}
+                        title="Habilitar / Inhabilitar socio"
+                      >
+                        <span
+                          className={styles.muted}
+                          style={{ marginRight: 8 }}
+                        >
+                          {existe === "S" ? "Habilitado" : "Inhabilitado"}
+                        </span>
+                        <Toggle
+                          checked={existe === "S"}
+                          loading={toggleBusy}
+                          onChange={async (checked: boolean) => {
+                            try {
+                              setToggleBusy(true);
+                              const next = checked ? "S" : "N";
+                              await setMedicoExiste(medicoId, next);
+                              setExiste(next);
+                              setData((d) =>
+                                d ? ({ ...d, existe: next } as any) : d
+                              );
+                            } catch (e: any) {
+                              alert(
+                                e?.message || "No se pudo actualizar el estado."
+                              );
+                            } finally {
+                              setToggleBusy(false);
+                            }
+                          }}
+                        />
+                      </div>
+
+                      <Button
+                        variant="danger"
+                        onClick={() => setDelOpen(true)}
+                        title="Eliminar socio"
+                        style={{ marginLeft: 12 }}
+                      >
+                        <Trash2 size={16} />
+                        &nbsp;Eliminar socio
+                      </Button>
                     </div>
                   </div>
 
@@ -526,7 +822,6 @@ const DoctorProfilePage: React.FC = () => {
                         exit={{ opacity: 0, y: 8 }}
                         className={styles.tabBody}
                       >
-                        {/* ===== Datos personales ===== */}
                         <button
                           type="button"
                           className={styles.editPencil}
@@ -534,11 +829,9 @@ const DoctorProfilePage: React.FC = () => {
                           title={isEditing ? "Cancelar edición" : "Editar"}
                           onClick={() => {
                             if (!isEditing) {
-                              // entrar en modo edición: clonar datos actuales
                               setDraft({ ...data });
                               setIsEditing(true);
                             } else {
-                              // cancelar
                               setIsEditing(false);
                               setDraft({});
                             }
@@ -546,6 +839,7 @@ const DoctorProfilePage: React.FC = () => {
                         >
                           <Pencil size={16} />
                         </button>
+
                         <h5 className={styles.section}>Datos personales</h5>
                         <div className={styles.infoGrid}>
                           <div>
@@ -574,7 +868,6 @@ const DoctorProfilePage: React.FC = () => {
                               <span>{fmt(data.apellido)}</span>
                             )}
                           </div>
-
                           <div>
                             <span className={styles.label}>Sexo</span>
                             {isEditing ? (
@@ -591,7 +884,6 @@ const DoctorProfilePage: React.FC = () => {
                               <span>{fmt(data.documento)}</span>
                             )}
                           </div>
-
                           <div>
                             <span className={styles.label}>CUIT</span>
                             {isEditing ? (
@@ -698,7 +990,7 @@ const DoctorProfilePage: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* ===== Datos profesionales ===== */}
+                        {/* Profesionales */}
                         <h5
                           className={styles.section}
                           style={{ marginTop: 24 }}
@@ -730,7 +1022,6 @@ const DoctorProfilePage: React.FC = () => {
                               <span>{fmt(data.titulo)}</span>
                             )}
                           </div>
-
                           <div>
                             <span className={styles.label}>
                               Matrícula prov.
@@ -757,7 +1048,6 @@ const DoctorProfilePage: React.FC = () => {
                               <span>{fmt(data.fecha_recibido)}</span>
                             )}
                           </div>
-
                           <div>
                             <span className={styles.label}>
                               Fecha matrícula
@@ -768,11 +1058,12 @@ const DoctorProfilePage: React.FC = () => {
                               <span>{fmt(data.fecha_matricula)}</span>
                             )}
                           </div>
-
                           <div>
                             <span className={styles.label}>
                               Domicilio de consulta
                             </span>
+                          </div>
+                          <div>
                             {isEditing ? (
                               RText("domicilio_consulta")
                             ) : (
@@ -787,13 +1078,9 @@ const DoctorProfilePage: React.FC = () => {
                               <span>{fmt(data.telefono_consulta)}</span>
                             )}
                           </div>
-                          {/* <div>
-                            <span className={styles.label}>Especialidad</span>
-                            <span>{fmt(data.specialty)}</span>
-                          </div> */}
                         </div>
 
-                        {/* ===== Datos impositivos ===== */}
+                        {/* Impositivos */}
                         <h5
                           className={styles.section}
                           style={{ marginTop: 24 }}
@@ -827,7 +1114,6 @@ const DoctorProfilePage: React.FC = () => {
                               <span>{fmt(data.vencimiento_anssal)}</span>
                             )}
                           </div>
-
                           <div>
                             <span className={styles.label}>Malapraxis</span>
                             {isEditing ? (
@@ -854,7 +1140,6 @@ const DoctorProfilePage: React.FC = () => {
                               <span>{fmt(data.cobertura)}</span>
                             )}
                           </div>
-
                           <div>
                             <span className={styles.label}>
                               Venc. cobertura
@@ -882,6 +1167,7 @@ const DoctorProfilePage: React.FC = () => {
                             )}
                           </div>
                         </div>
+
                         {isEditing && (
                           <div className={styles.editActions}>
                             <Button
@@ -891,13 +1177,11 @@ const DoctorProfilePage: React.FC = () => {
                                 if (!data) return;
                                 try {
                                   setSaving(true);
-                                  // armamos payload solo con campos presentes en draft
                                   const payload: Record<string, any> = {};
                                   Object.entries(draft).forEach(([k, v]) => {
                                     if (v !== undefined) payload[k] = v;
                                   });
-                                  console.log("Queriendo editar");
-                                  console.log(normalizePatch(payload));
+                                  console.log("PATCH payload:", payload);
                                   await updateMedico(
                                     data.id,
                                     normalizePatch(payload)
@@ -935,59 +1219,6 @@ const DoctorProfilePage: React.FC = () => {
                     )}
 
                     {/* === Documentos === */}
-                    {/* {tab === "documentos" && (
-                      <motion.div
-                        key="tab-documentos"
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 8 }}
-                        className={styles.tabBody}
-                      >
-                        <div className={styles.docsHeaderInline}>
-                          <h5 className={styles.section}>Documentación</h5>
-                          <Button variant="primary" onClick={handleDownloadAll}>
-                            Descargar todo
-                          </Button>
-                        </div>
-                        {data.documents.length === 0 ? (
-                          <p className={styles.muted}>
-                            No hay documentos cargados.
-                          </p>
-                        ) : (
-                          <ul className={styles.docList}>
-                            {data.documents.map((doc) => (
-                              <li key={doc.id} className={styles.docItem}>
-                                <div>
-                                  <p className={styles.docLabel}>
-                                    {doc.pretty_label || doc.label}
-                                  </p>
-                                  <p className={styles.docName}>
-                                    {doc.file_name || doc.file_name}
-                                  </p>
-                                </div>
-                                <div className={styles.docActions}>
-                                  <Button
-                                    variant="primary"
-                                    size="sm"
-                                    onClick={() => {
-                                      const href = doc.url;
-                                      if (href)
-                                        window.open(
-                                          href,
-                                          "_blank",
-                                          "noopener,noreferrer"
-                                        );
-                                    }}
-                                  >
-                                    Descargar
-                                  </Button>
-                                </div>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </motion.div>
-                    )} */}
                     {tab === "documentos" && (
                       <motion.div
                         key="docs"
@@ -998,21 +1229,36 @@ const DoctorProfilePage: React.FC = () => {
                       >
                         <div className={styles.docsHeaderInline}>
                           <h5 className={styles.section}>Documentación</h5>
-                          <Button
-                            variant="primary"
-                            onClick={() => {
-                              docs.forEach((d) => {
-                                const a = document.createElement("a");
-                                a.href = d.url;
-                                a.download = d.file_name;
-                                document.body.appendChild(a);
-                                a.click();
-                                a.remove();
-                              });
-                            }}
-                          >
-                            Descargar todo
-                          </Button>
+                          <div className={styles.docActionsRight}>
+                            <Button
+                              variant="primary"
+                              onClick={() => {
+                                docs.forEach((d) => {
+                                  const a = document.createElement("a");
+                                  a.href = d.url;
+                                  a.download = d.file_name;
+                                  document.body.appendChild(a);
+                                  a.click();
+                                  a.remove();
+                                });
+                              }}
+                            >
+                              Descargar todo
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              style={{ marginLeft: 8 }}
+                              onClick={() => {
+                                setDocFile(null);
+                                setDocCustom("");
+                                setDocLabel(labelOptions[0] || "attach_titulo");
+                                setDocOpen(true);
+                              }}
+                            >
+                              <Plus size={16} />
+                              &nbsp;Agregar documento
+                            </Button>
+                          </div>
                         </div>
 
                         {docsLoading ? (
@@ -1025,7 +1271,7 @@ const DoctorProfilePage: React.FC = () => {
                               <li key={doc.id} className={styles.docItem}>
                                 <div>
                                   <p className={styles.docLabel}>
-                                    {doc.pretty_label || doc.label}
+                                    {prettyFromAnyLabel(doc.label)}
                                   </p>
                                   <p className={styles.docName}>
                                     {doc.file_name}
@@ -1045,6 +1291,14 @@ const DoctorProfilePage: React.FC = () => {
                                   >
                                     Descargar
                                   </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    style={{ marginLeft: 8 }}
+                                    onClick={() => askDeleteDoc(doc)}
+                                  >
+                                    Eliminar
+                                  </Button>
                                 </div>
                               </li>
                             ))}
@@ -1053,7 +1307,7 @@ const DoctorProfilePage: React.FC = () => {
                       </motion.div>
                     )}
 
-                    {/* === Especialidades === */}
+                    {/* === Especialidades === (sin cambios funcionales) */}
                     {tab === "especialidades" && (
                       <motion.div
                         key="tab-especialidades"
@@ -1066,7 +1320,6 @@ const DoctorProfilePage: React.FC = () => {
                           <h5 className={styles.section}>
                             Especialidades adheridas
                           </h5>
-                          {/* si mantenés el flujo de agregar, dejá este botón */}
                           <Button
                             variant="primary"
                             onClick={() => {
@@ -1143,7 +1396,7 @@ const DoctorProfilePage: React.FC = () => {
                                                     "noopener,noreferrer"
                                                   );
                                               }}
-                                              title="Abrir adjunto en una nueva pestaña"
+                                              title="Abrir adjunto"
                                               style={{ padding: "4px 8px" }}
                                             >
                                               Ver adjunto
@@ -1157,47 +1410,12 @@ const DoctorProfilePage: React.FC = () => {
                                             size="sm"
                                             variant="danger"
                                             disabled={removing}
-                                            onClick={async () => {
-                                              if (!id) return;
-                                              try {
-                                                setRmEspBusy(r.id);
-                                                await removeMedicoEspecialidad(
-                                                  id,
-                                                  r.id
-                                                ); // r.id es el id_colegio que mostrás como "ID colegio"
-                                                await loadEspec();
-                                              } catch (e: any) {
-                                                alert(
-                                                  e?.message ||
-                                                    "No se pudo quitar la especialidad."
-                                                );
-                                              } finally {
-                                                setRmEspBusy(null);
-                                              }
+                                            onClick={() => {
+                                              setEspToDelete(r);
+                                              setDelEspOpen(true);
                                             }}
                                           >
                                             {removing ? "Quitando…" : "Quitar"}
-                                          </Button>
-
-                                          <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            onClick={() => {
-                                              // pre-cargar datos del item
-                                              setEditEspId(r.id);
-                                              setEditEspResol(
-                                                r.n_resolucion ?? ""
-                                              );
-                                              setEditEspFile(null);
-                                              // si viene "YYYY-MM-DD" del back, lo pasamos a Date
-                                              const d = r.fecha_resolucion
-                                                ? new Date(r.fecha_resolucion)
-                                                : null;
-                                              setEditEspDate(d);
-                                              setEditEspOpen(true);
-                                            }}
-                                          >
-                                            Editar
                                           </Button>
                                         </td>
                                       </tr>
@@ -1211,7 +1429,7 @@ const DoctorProfilePage: React.FC = () => {
                       </motion.div>
                     )}
 
-                    {/* === Permisos (solapa protegida) === */}
+                    {/* === Permisos === */}
                     {tab === "permisos" && (
                       <RequirePermission scope="rbac:gestionar">
                         <motion.div
@@ -1350,272 +1568,293 @@ const DoctorProfilePage: React.FC = () => {
         </motion.div>
       </div>
 
-      {/* ===== Modal asociar especialidad ===== */}
-      <AnimatePresence>
-        {assocEspOpen && (
-          <div className={styles.portal}>
-            <motion.div
-              className={styles.overlay}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.6 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={() => setAssocEspOpen(false)}
+      {/* ===== Modal: Agregar documento ===== */}
+      <ActionModal
+        open={docOpen}
+        onClose={() => setDocOpen(false)}
+        size="sm"
+        title="Agregar documento"
+        confirmText="Subir"
+        confirmDisabled={!docFile || (docLabel === "otro" && !docCustom.trim())}
+        onConfirm={async () => {
+          try {
+            await tryUploadDocumento(); // mantiene el modal abierto si abre 'reemplazar'
+            // Si se subió sin reemplazo: avisá éxito y cerrá
+            // (performUploadAndMap cierra el modal; si querés notificar ahí, movelo adentro)
+            notify.success(
+              "Documento agregado",
+              "El archivo se subió correctamente."
+            );
+          } catch (e: any) {
+            notify.error("No se pudo agregar el documento", e?.message);
+            throw e; // mantiene abierto
+          }
+        }}
+      >
+        <div className={styles.rsField}>
+          <label>Tipo de documento</label>
+          <select
+            className={styles.select}
+            value={docLabel}
+            onChange={(e) => setDocLabel(e.target.value)}
+          >
+            {(labelOptions || DEFAULT_LABELS).map((l) => (
+              <option key={l} value={l}>
+                {formatOption(l)}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {docLabel === "otro" && (
+          <div className={styles.rsField}>
+            <label>Descripción (label)</label>
+            <input
+              className={styles.input}
+              value={docCustom}
+              onChange={(e) => setDocCustom(e.target.value)}
+              placeholder="Ej: constancia_especial"
             />
-            <motion.div
-              className={styles.popup}
-              role="dialog"
-              aria-modal="true"
-              initial={{ opacity: 0, scale: 0.95, y: 16 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 16 }}
-              transition={{ type: "spring", stiffness: 240, damping: 22 }}
-            >
-              <div className={styles.popupHeader}>
-                <h3>Agregar especialidad</h3>
-                <button
-                  className={styles.iconButton}
-                  onClick={() => setAssocEspOpen(false)}
-                  aria-label="Cerrar"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-
-              <div className={styles.modalGrid}>
-                <div className={styles.field}>
-                  <label>Especialidad</label>
-                  <select
-                    className={styles.select}
-                    value={assocEspId}
-                    onChange={(e) => setAssocEspId(e.target.value)}
-                  >
-                    <option value="">Seleccionar…</option>
-                    {espOptions.map((o) => (
-                      <option key={o.id} value={o.id}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className={styles.field}>
-                  <label>N° de resolución</label>
-                  <input
-                    className={styles.input}
-                    value={assocEspResol}
-                    onChange={(e) => setAssocEspResol(e.target.value)}
-                    placeholder="Ej: 12345/2024"
-                  />
-                </div>
-
-                <div className={styles.field}>
-                  <label>Fecha de resolución</label>
-                  <DatePicker
-                    selected={assocEspDate}
-                    onChange={(d) => setAssocEspDate(d)}
-                    className={styles.dateInput}
-                    dateFormat="dd-MM-yyyy"
-                    placeholderText="dd-MM-aaaa"
-                    closeOnScroll
-                    showPopperArrow={false}
-                  />
-                </div>
-
-                <div className={styles.field}>
-                  <label>Adjunto (PDF/JPG/PNG)</label>
-                  <input
-                    type="file"
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={(e) =>
-                      setAssocEspFile(e.target.files?.[0] ?? null)
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className={styles.popupButtons}>
-                <Button
-                  variant="primary"
-                  disabled={!assocEspId || assocEspBusy}
-                  onClick={async () => {
-                    if (!id || !assocEspId) return;
-                    try {
-                      setAssocEspBusy(true);
-
-                      // 1) si hay archivo, subir y obtener adjunto_id
-                      let adjuntoId: number | null = null;
-                      if (assocEspFile) {
-                        adjuntoId = await uploadDocumento(id, assocEspFile);
-                      }
-
-                      // 2) armar payload para tu endpoint POST /especialidades
-                      await addMedicoEspecialidad(id, {
-                        id_colegio: Number(assocEspId),
-                        n_resolucion: assocEspResol?.trim() || null,
-                        fecha_resolucion: toYmd(assocEspDate),
-                        adjunto_id: adjuntoId,
-                      });
-
-                      // 3) refrescar y cerrar
-                      await loadEspec();
-                      setAssocEspOpen(false);
-                    } catch (e: any) {
-                      alert(
-                        e?.message || "No se pudo asociar la especialidad."
-                      );
-                    } finally {
-                      setAssocEspBusy(false);
-                    }
-                  }}
-                >
-                  {assocEspBusy ? "Guardando…" : "Asociar"}
-                </Button>
-                <Button variant="ghost" onClick={() => setAssocEspOpen(false)}>
-                  Cancelar
-                </Button>
-              </div>
-            </motion.div>
+            <small className={styles.muted}>
+              Se guardará como etiqueta{" "}
+              <code>
+                {docCustom.trim().toLowerCase().replace(/\s+/g, "_") ||
+                  "constancia_especial"}
+              </code>
+            </small>
           </div>
         )}
-      </AnimatePresence>
 
-      <AnimatePresence>
-        {editEspOpen && (
-          <div className={styles.portal}>
-            <motion.div
-              className={styles.overlay}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.6 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={() => setEditEspOpen(false)}
-            />
-            <motion.div
-              className={styles.popup}
-              role="dialog"
-              aria-modal="true"
-              initial={{ opacity: 0, scale: 0.95, y: 16 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 16 }}
-              transition={{ type: "spring", stiffness: 240, damping: 22 }}
+        <div className={styles.rsField}>
+          <label>Archivo</label>
+          <input
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png"
+            onChange={(e) => setDocFile(e.target.files?.[0] ?? null)}
+          />
+        </div>
+      </ActionModal>
+
+      {/* ===== Modal: Reemplazar documento de mismo tipo ===== */}
+      <ActionModal
+        open={replaceOpen}
+        onClose={() => {
+          setReplaceOpen(false);
+          setPendingUpload(null);
+        }}
+        size="xs"
+        title="Reemplazar documento"
+        confirmText="Reemplazar"
+        onConfirm={async () => {
+          try {
+            await handleConfirmReplace();
+            notify.success("Documento reemplazado", "Se actualizó el archivo.");
+          } catch (e: any) {
+            notify.error("No se pudo reemplazar el documento", e?.message);
+            throw e;
+          }
+        }}
+      >
+        <p style={{ lineHeight: 1.5 }}>
+          Ya existe un documento del tipo <strong>{replacePretty}</strong>. Si
+          continuás, el archivo actual será <strong>reemplazado</strong>.
+        </p>
+        <p>¿Querés continuar?</p>
+      </ActionModal>
+
+      {/* ===== Modal: Confirmar eliminación de doc ===== */}
+      <ActionModal
+        open={delDocOpen}
+        onClose={() => setDelDocOpen(false)}
+        size="xs"
+        title="Eliminar documento"
+        confirmText="Eliminar"
+        onConfirm={async () => {
+          if (!docToDelete) return;
+          try {
+            // limpiar mapping attach_* si corresponde
+            const normalized = normalizeForCompare(docToDelete.label);
+            const attachKey = ATTACH_KEYS.find(
+              (k) => stripAttach(k) === normalized
+            );
+            if (attachKey) {
+              await clearMedicoAttach(medicoId, attachKey);
+            }
+            await deleteMedicoDocumento(medicoId, docToDelete.id);
+            await reloadDocs();
+            setDocToDelete(null);
+            notify.success("Documento eliminado");
+          } catch (e: any) {
+            notify.error("No se pudo eliminar el documento", e?.message);
+            throw e;
+          }
+        }}
+      >
+        <p>
+          ¿Seguro que querés eliminar{" "}
+          <strong>
+            {docToDelete
+              ? prettyFromAnyLabel(docToDelete.label)
+              : "este documento"}
+          </strong>
+          ?
+        </p>
+      </ActionModal>
+
+      {/* ===== Modal: Agregar especialidad ===== */}
+      <ActionModal
+        open={assocEspOpen}
+        onClose={() => setAssocEspOpen(false)}
+        size="lg"
+        title="Agregar especialidad"
+        confirmText="Asociar"
+        confirmDisabled={!assocEspId}
+        onConfirm={async () => {
+          if (!id || !assocEspId) return;
+          try {
+            let adjuntoId: number | null = null;
+            if (assocEspFile) {
+              adjuntoId = await uploadDocumento(id, assocEspFile);
+            }
+            await addMedicoEspecialidad(id, {
+              id_colegio: Number(assocEspId),
+              n_resolucion: assocEspResol?.trim() || null,
+              fecha_resolucion: toYmd(assocEspDate),
+              adjunto_id: adjuntoId,
+            });
+            const rr = await getMedicoEspecialidades(medicoId);
+            setEspecs(rr);
+            setAssocEspId("");
+            setAssocEspResol("");
+            setAssocEspDate(null);
+            setAssocEspFile(null);
+            notify.success("Especialidad asociada");
+          } catch (e: any) {
+            notify.error("No se pudo asociar la especialidad", e?.message);
+            throw e; // mantiene abierto
+          }
+        }}
+      >
+        <div className={styles.modalGrid}>
+          <div className={styles.field}>
+            <label>Especialidad</label>
+            <select
+              className={styles.select}
+              value={assocEspId}
+              onChange={(e) => setAssocEspId(e.target.value)}
             >
-              <div className={styles.popupHeader}>
-                <h3>Editar especialidad</h3>
-                <button
-                  className={styles.iconButton}
-                  onClick={() => setEditEspOpen(false)}
-                  aria-label="Cerrar"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-
-              <div className={styles.modalGrid}>
-                <div className={styles.field}>
-                  <label>Especialidad</label>
-                  <select
-                    className={styles.select}
-                    value={String(editEspId ?? "")}
-                    disabled
-                  >
-                    <option value="">Seleccionar…</option>
-                    {espOptions.map((o) => (
-                      <option key={o.id} value={o.id}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
-                  <small className={styles.muted}>
-                    La especialidad no puede cambiarse en edición.
-                  </small>
-                </div>
-
-                <div className={styles.field}>
-                  <label>N° de resolución</label>
-                  <input
-                    className={styles.input}
-                    value={editEspResol}
-                    onChange={(e) => setEditEspResol(e.target.value)}
-                    placeholder="Ej: 12345/2024"
-                  />
-                </div>
-
-                <div className={styles.field}>
-                  <label>Fecha de resolución</label>
-                  <DatePicker
-                    selected={editEspDate}
-                    onChange={(d) => setEditEspDate(d)}
-                    className={styles.dateInput}
-                    dateFormat="dd-MM-yyyy"
-                    placeholderText="dd-MM-aaaa"
-                    closeOnScroll
-                    showPopperArrow={false}
-                  />
-                </div>
-
-                <div className={styles.field}>
-                  <label>Adjunto (reemplazar)</label>
-                  <input
-                    type="file"
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={(e) =>
-                      setEditEspFile(e.target.files?.[0] ?? null)
-                    }
-                  />
-                  <small className={styles.muted}>
-                    Si subís un archivo, reemplaza al existente.
-                  </small>
-                </div>
-              </div>
-
-              <div className={styles.popupButtons}>
-                <Button
-                  variant="primary"
-                  disabled={!editEspId || editEspBusy}
-                  onClick={async () => {
-                    if (!id || !editEspId) return;
-                    try {
-                      setEditEspBusy(true);
-
-                      // 1) si hay archivo nuevo, subir y obtener adjunto_id
-                      let adjuntoId: number | null | undefined = undefined;
-                      if (editEspFile) {
-                        adjuntoId = await uploadDocumento(id, editEspFile);
-                      }
-
-                      // 2) armar payload para tu endpoint PATCH /especialidades/:id_colegio
-                      await editMedicoEspecialidad(id, editEspId, {
-                        n_resolucion: editEspResol?.trim() || null,
-                        fecha_resolucion: toYmd(editEspDate),
-                        // solo enviamos adjunto_id si hay uno nuevo, para no sobreescribir a null accidentalmente.
-                        ...(adjuntoId !== undefined
-                          ? { adjunto_id: adjuntoId }
-                          : {}),
-                      });
-
-                      // 3) refrescar y cerrar
-                      await loadEspec();
-                      setEditEspOpen(false);
-                    } catch (e: any) {
-                      alert(
-                        e?.message || "No se pudo actualizar la especialidad."
-                      );
-                    } finally {
-                      setEditEspBusy(false);
-                    }
-                  }}
-                >
-                  {editEspBusy ? "Guardando…" : "Guardar cambios"}
-                </Button>
-                <Button variant="ghost" onClick={() => setEditEspOpen(false)}>
-                  Cancelar
-                </Button>
-              </div>
-            </motion.div>
+              <option value="">Seleccionar…</option>
+              {espOptions.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
           </div>
-        )}
-      </AnimatePresence>
+
+          <div className={styles.field}>
+            <label>N° de resolución</label>
+            <input
+              className={styles.input}
+              value={assocEspResol}
+              onChange={(e) => setAssocEspResol(e.target.value)}
+              placeholder="Ej: 12345/2024"
+            />
+          </div>
+
+          <div className={styles.field}>
+            <label>Fecha de resolución</label>
+            <DatePicker
+              selected={assocEspDate}
+              onChange={(d) => setAssocEspDate(d)}
+              className={styles.dateInput}
+              dateFormat="dd-MM-yyyy"
+              placeholderText="dd-MM-aaaa"
+              closeOnScroll
+              showPopperArrow={false}
+            />
+          </div>
+
+          <div className={styles.field}>
+            <label>Adjunto (PDF/JPG/PNG)</label>
+            <input
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png"
+              onChange={(e) => setAssocEspFile(e.target.files?.[0] ?? null)}
+            />
+          </div>
+        </div>
+      </ActionModal>
+
+      {/* ===== Modal: Eliminar socio ===== */}
+      <ActionModal
+        open={delOpen}
+        onClose={() => setDelOpen(false)}
+        size="xs"
+        title="Eliminar socio"
+        confirmText="Eliminar definitivamente"
+        onConfirm={async () => {
+          try {
+            await deleteMedico(medicoId);
+            notify.success("Socio eliminado");
+            setDelOpen(false);
+            nav("/doctors");
+          } catch (e: any) {
+            notify.error("No se pudo eliminar el socio", e?.message);
+            throw e;
+          }
+        }}
+      >
+        <div>
+          <p style={{ lineHeight: 1.5 }}>
+            <strong>Atención:</strong> esta acción es{" "}
+            <strong>definitiva</strong>. Si eliminás al socio,{" "}
+            <u>no vas a poder deshacerla</u>.
+          </p>
+          <p>¿Querés continuar?</p>
+        </div>
+      </ActionModal>
+
+      {/* ===== Modal: Confirmar quitar especialidad ===== */}
+      <ActionModal
+        open={delEspOpen}
+        onClose={() => {
+          setDelEspOpen(false);
+          setEspToDelete(null);
+        }}
+        size="xs"
+        title="Quitar especialidad"
+        confirmText="Confirmar"
+        onConfirm={async () => {
+          if (!id || !espToDelete) return;
+          try {
+            await removeMedicoEspecialidad(id, espToDelete.id);
+            const rr = await getMedicoEspecialidades(medicoId);
+            setEspecs(rr);
+            setEspToDelete(null);
+
+            notify.success("Especialidad quitada");
+          } catch (e: any) {
+            notify.error("No se pudo quitar la especialidad", e?.message);
+            throw e;
+          }
+        }}
+      >
+        <p style={{ lineHeight: 1.5 }}>
+          Vas a quitar la especialidad{" "}
+          <strong>
+            {espToDelete
+              ? espToDelete.nombre ?? `ID ${espToDelete.id}`
+              : "seleccionada"}
+          </strong>{" "}
+          (ID colegio: {espToDelete?.id}).
+        </p>
+        <p style={{ marginTop: 8 }}>
+          Esta acción solo desvincula la especialidad del profesional; no
+          elimina la especialidad del catálogo.
+        </p>
+        <p style={{ marginTop: 8 }}>¿Querés continuar?</p>
+      </ActionModal>
     </div>
   );
 };

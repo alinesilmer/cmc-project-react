@@ -1,0 +1,40 @@
+:root {
+  --toast-gap: 16px;
+  --toast-z: 2147483000;
+}
+
+/* v6: .rs-toast-container | v5: .rs-toaster  */
+:where(.rs-toast-container, .rs-toaster) {
+  position: fixed !important;
+  z-index: var(--toast-z) !important;
+  pointer-events: none;
+}
+
+/* los toasts sí reciben eventos */
+:where(.rs-toast-container, .rs-toaster) .rs-notification {
+  pointer-events: auto;
+}
+
+/* bottomEnd por defecto */
+.rs-toast-container-bottomEnd,
+.rs-toaster-bottomEnd {
+  right: var(--toast-gap) !important;
+  bottom: var(--toast-gap) !important;
+  left: auto !important;
+  top: auto !important;
+}
+
+/* Si tu build mete el mount element, evitá que afecte layout */
+.rs-toaster-mount-element {
+  position: relative; /* no interfiere con fixed internos */
+  height: 0; /* previene empujar layout aunque haya hijos */
+}
+
+/* Por si algún anim usa transform en html/body/root */
+html,
+body,
+#root {
+  transform: none !important;
+  filter: none !important;
+  perspective: none !important;
+}

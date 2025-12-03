@@ -68,11 +68,26 @@ h5.section {
   margin-bottom: 10px;
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  margin-left: auto;
+}
+
 .profileHeader {
   display: flex;
   gap: $spacing-5;
   align-items: center;
 }
+
+.toggleWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .avatarSmall {
   width: 88px;
   height: 88px;
@@ -536,4 +551,11 @@ h5.section {
   padding: 1rem;
   color: $gray-700;
   font-weight: $font-weight-semibold;
+}
+
+.rsField {
+  margin-bottom: 16px;
+  display: flex;
+  gap: 10px;
+  flex-direction: column;
 }
