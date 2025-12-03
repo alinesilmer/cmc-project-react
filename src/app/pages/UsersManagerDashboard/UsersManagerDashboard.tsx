@@ -117,28 +117,31 @@ const UsersManagerDashboard: React.FC = () => {
         />
       </div>
 
-      <div className={styles.actionsGrid}>
+     <div className={styles.actionsGrid}>
         <div
           className={`${styles.actionCard} ${styles.actionCardPrimary}`}
           onClick={() => navigate("/panel/solicitudes")}
         >
           <div className={styles.actionIcon}>📋</div>
           <h3 className={styles.actionTitle}>Solicitudes de Socios</h3>
-          <p className={styles.actionDescription}>
-            Revisá, aprobá o rechazá solicitudes pendientes.
-          </p>
+          <p className={styles.actionDescription}>Revisá, aprobá o rechazá solicitudes pendientes.</p>
           <button className={styles.actionButton}>Ver Solicitudes →</button>
         </div>
 
         <div
-          className={styles.actionCard}
-          onClick={() => navigate("/panel/users")}
+          className={`${styles.actionCard} ${styles.actionCardSecondary}`}
+          onClick={() => navigate("/panel/admin-padrones")}
         >
+          <div className={styles.actionIcon}>📑</div>
+          <h3 className={styles.actionTitle}>Solicitudes de Padrones</h3>
+          <p className={styles.actionDescription}>Revisá y gestioná las solicitudes de obras sociales.</p>
+          <button className={styles.actionButton}>Ver Padrones →</button>
+        </div>
+
+        <div className={styles.actionCard} onClick={() => navigate("/panel/users")}>
           <div className={styles.actionIcon}>👥</div>
           <h3 className={styles.actionTitle}>Usuarios</h3>
-          <p className={styles.actionDescription}>
-            Gestioná la base de socios activos.
-          </p>
+          <p className={styles.actionDescription}>Gestioná la base de socios activos.</p>
           <button className={styles.actionButton}>Ver Usuarios →</button>
         </div>
       </div>

@@ -34,6 +34,7 @@ import ObrasSocialesRegisterPage from "./app/pages/ObrasSocialesRegisterPage/Obr
 import PadronesPage from "./app/pages/PadronesPage/PadronesPage";
 
 
+
 function App() {
   const { user } = useAuth();
   const location = useLocation();

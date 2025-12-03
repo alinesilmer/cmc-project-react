@@ -1,0 +1,450 @@
+@import "../../styles/variables.scss";
+@import "../../styles/animations.scss";
+
+.container {
+  padding: $spacing-8;
+  max-width: 1400px;
+  margin: 0 auto;
+  background-color: $gray-50;
+  min-height: 100vh;
+
+  @media (max-width: $breakpoint-lg) {
+    padding: $spacing-6;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-4;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-3;
+  }
+}
+
+.header {
+  margin-bottom: $spacing-6;
+
+  @media (max-width: $breakpoint-md) {
+    margin-bottom: $spacing-5;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    margin-bottom: $spacing-4;
+  }
+}
+
+.title {
+  font-size: $font-size-4xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  margin: 0 0 $spacing-2 0;
+  margin-top: 1rem;
+
+  @media (max-width: $breakpoint-lg) {
+    font-size: $font-size-3xl;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    font-size: $font-size-2xl;
+    margin-top: 0.5rem;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-xl;
+  }
+}
+
+.subtitle {
+  font-size: $font-size-base;
+  color: $gray-600;
+  margin: 0;
+
+  @media (max-width: $breakpoint-md) {
+    font-size: $font-size-sm;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-xs;
+  }
+}
+
+.filters {
+  display: flex;
+  gap: $spacing-3;
+  margin-bottom: $spacing-6;
+  flex-wrap: wrap;
+
+  @media (max-width: $breakpoint-md) {
+    gap: $spacing-2;
+    margin-bottom: $spacing-5;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    flex-direction: column;
+    gap: $spacing-2;
+  }
+}
+
+.filterButton {
+  padding: $spacing-3 $spacing-5;
+  background-color: $white;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-lg;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  color: $gray-700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+
+  &:hover {
+    background-color: $gray-100;
+    border-color: $gray-400;
+  }
+
+  &.active {
+    background-color: $primary-blue;
+    color: $white;
+    border-color: $primary-blue;
+
+    .dot {
+      background-color: $white !important;
+    }
+  }
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-2 $spacing-4;
+    font-size: $font-size-sm;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: $spacing-6;
+  margin-bottom: $spacing-8;
+
+  @media (max-width: $breakpoint-lg) {
+    gap: $spacing-5;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    grid-template-columns: 1fr 1fr;
+    gap: $spacing-4;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    grid-template-columns: 1fr;
+    gap: $spacing-3;
+  }
+}
+
+.card {
+  background: $white;
+  border-radius: $border-radius-xl;
+  box-shadow: $shadow-md;
+  overflow: hidden;
+  transition: all 0.3s;
+  animation: fadeIn 0.5s ease-out;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: $shadow-xl;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    border-radius: $border-radius-lg;
+  }
+}
+
+.cardHeader {
+  padding: $spacing-5;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: $spacing-3;
+  border-bottom: 1px solid $gray-200;
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-4;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-3;
+    flex-direction: column;
+  }
+}
+
+.doctorInfo {
+  display: flex;
+  gap: $spacing-3;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+
+  @media (max-width: $breakpoint-sm) {
+    width: 100%;
+  }
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, $primary-blue 0%, #153ead 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $white;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  flex-shrink: 0;
+
+  @media (max-width: $breakpoint-sm) {
+    width: 40px;
+    height: 40px;
+    font-size: $font-size-lg;
+  }
+}
+
+.doctorName {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  margin: 0 0 $spacing-1 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  @media (max-width: $breakpoint-md) {
+    font-size: $font-size-base;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-sm;
+  }
+}
+
+.doctorEmail {
+  font-size: $font-size-sm;
+  color: $gray-600;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-xs;
+  }
+}
+
+.statusBadge {
+  padding: $spacing-2 $spacing-3;
+  border-radius: $border-radius-md;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+
+  @media (max-width: $breakpoint-sm) {
+    align-self: flex-start;
+  }
+}
+
+.statusPending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.statusApproved {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.statusRejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.cardBody {
+  padding: $spacing-5;
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-4;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-3;
+  }
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-3;
+
+  @media (max-width: $breakpoint-sm) {
+    margin-bottom: $spacing-2;
+  }
+}
+
+.label {
+  font-size: $font-size-sm;
+  color: $gray-600;
+  font-weight: $font-weight-medium;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-xs;
+  }
+}
+
+.value {
+  font-size: $font-size-sm;
+  color: $gray-900;
+  font-weight: $font-weight-semibold;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-xs;
+  }
+}
+
+.insurancePreview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-2;
+  margin-top: $spacing-4;
+
+  @media (max-width: $breakpoint-sm) {
+    margin-top: $spacing-3;
+  }
+}
+
+.insuranceTag {
+  padding: $spacing-1 $spacing-3;
+  background: $gray-100;
+  border-radius: $border-radius-md;
+  font-size: $font-size-xs;
+  color: $gray-700;
+  font-weight: $font-weight-medium;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+}
+
+.cardFooter {
+  padding: $spacing-4 $spacing-5;
+  border-top: 1px solid $gray-200;
+  background: $gray-50;
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-3 $spacing-4;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-3;
+  }
+}
+
+.reviewButton {
+  width: 100%;
+  padding: $spacing-3 $spacing-4;
+  background: $primary-blue;
+  color: $white;
+  border: none;
+  border-radius: $border-radius-lg;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #153ead;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  @media (max-width: $breakpoint-md) {
+    font-size: $font-size-sm;
+    padding: $spacing-2 $spacing-3;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-sm;
+  }
+}
+
+.loading,
+.error {
+  text-align: center;
+  padding: $spacing-12;
+  background: $white;
+  border-radius: $border-radius-xl;
+  box-shadow: $shadow-sm;
+  font-size: $font-size-lg;
+  color: $gray-600;
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-10;
+    font-size: $font-size-base;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-8;
+    font-size: $font-size-sm;
+  }
+}
+
+.error {
+  color: #dc2626;
+}
+
+.emptyState {
+  text-align: center;
+  padding: $spacing-16;
+  background: $white;
+  border-radius: $border-radius-xl;
+  box-shadow: $shadow-sm;
+
+  p {
+    font-size: $font-size-lg;
+    color: $gray-500;
+    margin: 0;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-12;
+
+    p {
+      font-size: $font-size-base;
+    }
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-10;
+
+    p {
+      font-size: $font-size-sm;
+    }
+  }
+}
