@@ -216,6 +216,9 @@ export default function Header() {
             <Link to="/medicos-asociados" className={styles.navLink} onClick={closeAll}>
               Médicos Asociados
             </Link>
+            <Link to="/blog" className={styles.navLink} onClick={closeAll}>
+              Blog 
+            </Link>
             <Link to="/contacto" className={styles.navLink} onClick={closeAll}>
               Contacto
             </Link>
@@ -321,15 +324,6 @@ export default function Header() {
                       <Link to="/quinta" onClick={closeAll}>
                         Quinta
                       </Link>
-                      {/* <Link
-                        to="/servicios/facturacion-online"
-                        onClick={closeAll}
-                      >
-                        Facturación online
-                      </Link> */}
-                      {/* <Link to="/servicios/beneficios" onClick={closeAll}>
-                        Beneficios
-                      </Link> */}
                       <Link to="/galeria" onClick={closeAll}>
                         Galería de fotos y videos
                       </Link>
@@ -347,6 +341,25 @@ export default function Header() {
                 className={styles.mobileLink}
               >
                 Noticias
+              </Link>
+                <Link
+                to="/medicos-asociados"
+                onClick={closeAll}
+                className={styles.mobileLink}
+              >
+                Médicos Asociados
+              </Link>
+              <Link
+                to="/contacto"
+                onClick={closeAll}
+                className={styles.mobileLink}
+              ></Link>
+                <Link
+                to="/blog"
+                onClick={closeAll}
+                className={styles.mobileLink}
+              >
+                Blog
               </Link>
               <Link
                 to="/contacto"

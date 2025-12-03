@@ -29,6 +29,8 @@ import AdherenteForm from "./app/components/molecules/AdherenteForm/AdherenteFor
 import ObrasSocialesRegisterPage from "./app/pages/ObrasSocialesRegisterPage/ObrasSocialesRegisterPage";
 import PadronesPage
  from "./app/pages/PadronesPage/PadronesPage";
+ import AdminPadrones from "./app/pages/AdminPadrones/AdminPadrones";
+ import AdminPadronesDetail from "./app/pages/AdminPadronesDetail/AdminPadronesDetail";
 // WEBSITE
 import WebRoutes from "./website/router";
 
@@ -38,6 +40,8 @@ export default function RootRoutes() {
       <Routes>
         {/* Public website*/}
         <Route path="/*" element={<WebRoutes />} />
+           <Route path="/panel/admin-padrones" element={<AdminPadrones />} />
+            <Route path="/panel/admin-padrones-detail" element={<AdminPadronesDetail />} />
 
         {/* Auth pages for app */}
         <Route path="/panel/login" element={<Login />} />
@@ -45,6 +49,7 @@ export default function RootRoutes() {
         <Route path="/panel/register" element={<Register />} />
         <Route path="/panel/info" element={<Info />} />
         <Route path="/panel/adherente" element={<AdherenteForm />} />
+        
 
         {/* Protected app */}
         <Route element={<RequireAuth />}>
