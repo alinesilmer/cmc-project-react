@@ -84,11 +84,6 @@ const PadronesForm: React.FC<Props> = ({ onPreview, onSubmit }) => {
   const [pendingInsuranceId, setPendingInsuranceId] = useState<string | null>(null)
   const [pendingInsuranceName, setPendingInsuranceName] = useState("")
 
-  const insurances: Insurance[] = [
-    { id: "1", name: "Unne", code: "123" },
-    { id: "2", name: "Swiss Medical", code: "456" },
-    { id: "3", name: "Other Insurance", code: "789" },
-  ]
 
   const requiresEmailConsent = (insuranceName: string): boolean => {
     const upperName = insuranceName.toUpperCase()

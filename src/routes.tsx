@@ -40,8 +40,7 @@ export default function RootRoutes() {
       <Routes>
         {/* Public website*/}
         <Route path="/*" element={<WebRoutes />} />
-           <Route path="/panel/admin-padrones" element={<AdminPadrones />} />
-            <Route path="/panel/admin-padrones-detail" element={<AdminPadronesDetail />} />
+           
 
         {/* Auth pages for app */}
         <Route path="/panel/login" element={<Login />} />
@@ -95,6 +94,8 @@ export default function RootRoutes() {
             <Route path="/panel/config" element={<Config />} />
             <Route path="/panel/help" element={<Help />} />
           </Route>
+          <Route path="/panel/admin-padrones" element={<AdminPadrones />} />
+            <Route path="/panel/admin-padrones-detail" element={<AdminPadronesDetail />} />
         </Route>
 
         {/* Fallback */}
