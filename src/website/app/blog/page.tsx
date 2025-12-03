@@ -15,27 +15,27 @@ export default function BlogsPage() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    cargarBlogs();
-  }, []);
+  // useEffect(() => {
+  //   cargarBlogs();
+  // }, []);
 
-  const cargarBlogs = async () => {
-    try {
-      const data = await listNews();
-      const normalized = data.map((n: any) => ({
-        ...n,
-        fechaCreacion: n.fecha_creacion ?? n.fechaCreacion ?? null,
-        fechaActualizacion:
-          n.fecha_actualizacion ?? n.fechaActualizacion ?? null,
-      }));
-      setBlogs(normalized);
-      console.log(Blogs);
-    } catch (error) {
-      console.error("Error al cargar Blogs:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const cargarBlogs = async () => {
+  //   try {
+  //     const data = await listNews();
+  //     const normalized = data.map((n: any) => ({
+  //       ...n,
+  //       fechaCreacion: n.fecha_creacion ?? n.fechaCreacion ?? null,
+  //       fechaActualizacion:
+  //         n.fecha_actualizacion ?? n.fechaActualizacion ?? null,
+  //     }));
+  //     setBlogs(normalized);
+  //     console.log(Blogs);
+  //   } catch (error) {
+  //     console.error("Error al cargar Blogs:", error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   return (
     <div>
@@ -54,13 +54,13 @@ export default function BlogsPage() {
             </div>
           ) : (
             <div className={styles.grid}>
-              {Blogs.map((Blog) => (
+              {/* {Blogs.map((Blog) => (
                 <BlogCard
                   key={Blog.id}
                   noticia={Blog}
                   onClick={() => navigate(`/Blogs/${Blog.id}`)}
                 />
-              ))}
+              ))} */}
             </div>
           )}
         </div>
