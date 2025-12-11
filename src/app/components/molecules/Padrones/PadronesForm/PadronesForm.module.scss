@@ -178,210 +178,96 @@
 }
 
 .actions {
+  margin-top: 1.5rem;
   display: flex;
-  gap: 12px;
+  gap: 1rem;
   justify-content: flex-end;
-
-  @media (max-width: $breakpoint-md) {
-    gap: 10px;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    flex-direction: column-reverse;
-    justify-content: center;
-    align-items: stretch;
-    gap: 8px;
-  }
+  flex-wrap: wrap;
 }
 
-.previewBtn {
-  background: #f3f4f6;
-  color: #111827;
-  border: 0;
-  border-radius: 10px;
-  padding: 12px 24px;
-  font-weight: 600;
+.previewButton {
+  padding: 0.6rem 1.2rem;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  font-size: 0.9rem;
   cursor: pointer;
-  font-size: 16px;
-  transition: background 0.15s ease, transform 0.12s ease;
-
-  &:hover:not(:disabled) {
-    background: #e5e7eb;
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  @media (max-width: $breakpoint-md) {
-    padding: 10px 20px;
-    font-size: 15px;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    width: 100%;
-    font-size: 14px;
-  }
 }
 
-.submitBtn {
-  background: #1d4ed8;
+.submitButton {
+  padding: 0.6rem 1.4rem;
+  border-radius: 999px;
+  border: none;
+  background: #0061a8;
   color: #fff;
-  border: 0;
-  border-radius: 10px;
-  padding: 12px 24px;
-  font-weight: 700;
+  font-weight: 600;
+  font-size: 0.9rem;
   cursor: pointer;
-  font-size: 16px;
-  transition: background 0.15s ease, transform 0.12s ease;
-
-  &:hover:not(:disabled) {
-    background: #153ead;
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  @media (max-width: $breakpoint-md) {
-    padding: 10px 20px;
-    font-size: 15px;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    width: 100%;
-    font-size: 14px;
-  }
 }
 
 .warningOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: grid;
-  place-items: center;
-  z-index: 2000;
-  padding: 16px;
-
-  @media (max-width: $breakpoint-md) {
-    padding: 12px;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    padding: 10px;
-  }
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
 }
 
 .warningModal {
-  background: #fff;
-  max-width: 480px;
+  background: #ffffff;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  max-width: 420px;
   width: 100%;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-
-  h3 {
-    margin: 0 0 12px 0;
-    font-size: 20px;
-    color: #111827;
-
-    @media (max-width: $breakpoint-md) {
-      font-size: 18px;
-    }
-
-    @media (max-width: $breakpoint-sm) {
-      font-size: 16px;
-    }
-  }
-
-  p {
-    margin: 0 0 20px 0;
-    color: #4b5563;
-    line-height: 1.6;
-    font-size: 14px;
-
-    @media (max-width: $breakpoint-md) {
-      font-size: 13px;
-    }
-
-    @media (max-width: $breakpoint-sm) {
-      font-size: 12px;
-      margin-bottom: 16px;
-    }
-  }
-
-  @media (max-width: $breakpoint-md) {
-    padding: 20px;
-    border-radius: 14px;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    max-width: 100%;
-    padding: 16px 14px;
-    border-radius: 12px;
-  }
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.35);
 }
 
 .warningActions {
+  margin-top: 1.5rem;
   display: flex;
-  gap: 12px;
   justify-content: flex-end;
-
-  @media (max-width: $breakpoint-md) {
-    gap: 10px;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    flex-direction: column-reverse;
-    align-items: stretch;
-    gap: 8px;
-  }
+  gap: 0.75rem;
 }
 
-.cancelBtn {
-  background: #f3f4f6;
-  color: #111827;
-  border: 0;
-  border-radius: 10px;
-  padding: 10px 20px;
+.cancelButton,
+.confirmButton {
+  padding: 0.5rem 1.2rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.cancelButton {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+}
+
+.confirmButton {
+  border: none;
+  background: #16a34a;
+  color: #ffffff;
   font-weight: 600;
-  cursor: pointer;
-  font-size: 14px;
-
-  &:hover {
-    background: #e5e7eb;
-  }
-
-  @media (max-width: $breakpoint-md) {
-    padding: 9px 18px;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    width: 100%;
-  }
 }
 
-.confirmBtn {
-  background: #1d4ed8;
-  color: #fff;
-  border: 0;
-  border-radius: 10px;
-  padding: 10px 20px;
-  font-weight: 700;
+.downloadActions {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.downloadButton {
+  padding: 0.5rem 1.1rem;
+  font-size: 0.85rem;
+  border-radius: 999px;
+  border: 1px solid #d4d4d8;
+  background: #f9fafb;
   cursor: pointer;
-  font-size: 14px;
 
   &:hover {
-    background: #153ead;
-  }
-
-  @media (max-width: $breakpoint-md) {
-    padding: 9px 18px;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    width: 100%;
+    background: #eef2ff;
   }
 }

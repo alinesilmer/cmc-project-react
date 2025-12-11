@@ -11,8 +11,6 @@ import { http } from "../../../../app/lib/http";
 import { getCookie } from "../../../../app/auth/token";
 
 const IMAGES = [
-  "https://res.cloudinary.com/dcfkgepmp/image/upload/v1764767791/doctorsday_3_g9ckdh.png",
-   "https://res.cloudinary.com/dcfkgepmp/image/upload/v1764042689/WhatsApp_Image_2025-11-25_at_12.01.18_AM_1_ilbmu2.jpg",
   "https://i.pinimg.com/736x/fd/d3/d8/fdd3d83d55b928e22d751fbc1edcc012.jpg",
   "https://res.cloudinary.com/dcfkgepmp/image/upload/v1762471702/quintacmc3_s6sffw.jpg",
   "https://i.pinimg.com/736x/01/bf/d8/01bfd827a566e504c3b5a1202f30be4f.jpg",

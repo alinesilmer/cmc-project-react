@@ -1,6 +1,15 @@
+"use client";
+
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { saveAs } from "file-saver";
+
 import styles from "./PadronesForm.module.scss";
 import EmailConsentModal from "../EmailConsentModal/EmailConsentModal";
+import SuccessModal from "../../SuccessModal/SuccessModal";
+import Alert from "../../../atoms/Alert/Alert";
 
 type Insurance = {
   id: string;
@@ -71,88 +80,215 @@ const insurances: Insurance[] = [
   { id: "60", name: "UNNE", code: "OS060" },
 ];
 
-
 type Props = {
   onPreview: (selected: string[]) => void;
   onSubmit: (selected: string[]) => void;
 };
 
-const PadronesForm: React.FC<Props> = ({ onPreview, onSubmit }) => {
-  const [selected, setSelected] = useState<Set<string>>(new Set())
-  const [showWarning, setShowWarning] = useState(false)
-  const [showEmailConsent, setShowEmailConsent] = useState(false)
-  const [pendingInsuranceId, setPendingInsuranceId] = useState<string | null>(null)
-  const [pendingInsuranceName, setPendingInsuranceName] = useState("")
+type AlertType = "success" | "error" | "warning" | "info";
 
+const PadronesForm: React.FC<Props> = ({ onPreview, onSubmit }) => {
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [showEmailConsent, setShowEmailConsent] = useState(false);
+  const [pendingInsuranceId, setPendingInsuranceId] = useState<string | null>(null);
+  const [pendingInsuranceName, setPendingInsuranceName] = useState("");
+
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | undefined>();
+
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertType, setAlertType] = useState<AlertType>("info");
+  const [alertTitle, setAlertTitle] = useState("");
+  const [alertMessage, setAlertMessage] = useState("");
+  const [alertShowActions, setAlertShowActions] = useState(false);
+  const [alertOnConfirm, setAlertOnConfirm] = useState<(() => void) | null>(null);
+
+  const navigate = useNavigate();
 
   const requiresEmailConsent = (insuranceName: string): boolean => {
-    const upperName = insuranceName.toUpperCase()
-    return upperName.includes("UNNE") || upperName.includes("SWISS MEDICAL")
-  }
+    const upperName = insuranceName.toUpperCase();
+    return upperName.includes("UNNE") || upperName.includes("SWISS MEDICAL");
+  };
 
   const toggleInsurance = (id: string) => {
-    const insurance = insurances.find((ins) => ins.id === id)
-    if (!insurance) return
+    const insurance = insurances.find((ins) => ins.id === id);
+    if (!insurance) return;
 
     if (!selected.has(id) && requiresEmailConsent(insurance.name)) {
-      setPendingInsuranceId(id)
-      setPendingInsuranceName(insurance.name)
-      setShowEmailConsent(true)
-      return
+      setPendingInsuranceId(id);
+      setPendingInsuranceName(insurance.name);
+      setShowEmailConsent(true);
+      return;
     }
 
     setSelected((prev) => {
-      const newSet = new Set(prev)
+      const newSet = new Set(prev);
       if (newSet.has(id)) {
-        newSet.delete(id)
+        newSet.delete(id);
       } else {
-        newSet.add(id)
+        newSet.add(id);
       }
-      return newSet
-    })
-  }
+      return newSet;
+    });
+  };
 
   const handleEmailConsentAccept = () => {
     if (pendingInsuranceId) {
       setSelected((prev) => {
-        const newSet = new Set(prev)
-        newSet.add(pendingInsuranceId)
-        return newSet
-      })
+        const newSet = new Set(prev);
+        newSet.add(pendingInsuranceId);
+        return newSet;
+      });
     }
-    setShowEmailConsent(false)
-    setPendingInsuranceId(null)
-    setPendingInsuranceName("")
-  }
+    setShowEmailConsent(false);
+    setPendingInsuranceId(null);
+    setPendingInsuranceName("");
+  };
 
   const handleEmailConsentCancel = () => {
-    setShowEmailConsent(false)
-    setPendingInsuranceId(null)
-    setPendingInsuranceName("")
-  }
+    setShowEmailConsent(false);
+    setPendingInsuranceId(null);
+    setPendingInsuranceName("");
+  };
 
   const handlePreview = () => {
-    onPreview(Array.from(selected))
-  }
+    if (selected.size === 0) {
+      setAlertType("info");
+      setAlertTitle("No hay obras sociales seleccionadas");
+      setAlertMessage(
+        "Seleccioná al menos una obra social para poder ver la previsualización de los padrones."
+      );
+      setAlertShowActions(false);
+      setAlertOnConfirm(null);
+      setAlertOpen(true);
+      return;
+    }
+    onPreview(Array.from(selected));
+  };
+
+  const confirmSubmit = () => {
+    const selectedIds = Array.from(selected);
+    onSubmit(selectedIds);
+
+    const selectedNames = insurances
+      .filter((ins) => selectedIds.includes(ins.id))
+      .map((ins) => ins.name);
+
+    let msg: string;
+    if (selectedNames.length === 1) {
+      msg = `Se envió el padrón de la obra social ${selectedNames[0]}.`;
+    } else if (selectedNames.length > 1 && selectedNames.length <= 3) {
+      msg = `Se enviaron los padrones de: ${selectedNames.join(", ")}.`;
+    } else {
+      msg = `Se enviaron los padrones de ${selectedNames.length} obras sociales seleccionadas.`;
+    }
+
+    setSuccessMessage(
+      msg +
+        " Nuestro equipo del Colegio Médico de Corrientes revisará la información a la brevedad."
+    );
+    setShowSuccess(true);
+    // si querés limpiar la selección:
+    // setSelected(new Set());
+  };
 
   const handleSubmit = () => {
     if (selected.size === 0) {
-      alert("Por favor, seleccione al menos una obra social.")
-      return
+      setAlertType("warning");
+      setAlertTitle("Seleccioná al menos una obra social");
+      setAlertMessage(
+        "Para enviar los padrones, primero tenés que marcar al menos una obra social con la que trabajás."
+      );
+      setAlertShowActions(false);
+      setAlertOnConfirm(null);
+      setAlertOpen(true);
+      return;
     }
-    setShowWarning(true)
-  }
 
-  const confirmSubmit = () => {
-    onSubmit(Array.from(selected))
-    setShowWarning(false)
-  }
+    setAlertType("warning");
+    setAlertTitle("¿Confirmar envío de padrones?");
+    setAlertMessage(
+      "Se enviarán los padrones de las obras sociales seleccionadas al Colegio Médico de Corrientes. ¿Querés continuar?"
+    );
+    setAlertShowActions(true);
+    setAlertOnConfirm(() => confirmSubmit);
+    setAlertOpen(true);
+  };
+
+  const handleSuccessClose = () => {
+    setShowSuccess(false);
+    navigate("/"); // ⬅️ volver al Home
+  };
+
+  const getSelectedRows = () =>
+    insurances
+      .filter((ins) => selected.has(ins.id))
+      .map((ins) => [ins.code, ins.name]);
+
+  const handleDownloadCsv = () => {
+    if (selected.size === 0) {
+      setAlertType("info");
+      setAlertTitle("No hay datos para exportar");
+      setAlertMessage(
+        "Seleccioná al menos una obra social para generar el archivo CSV con los padrones."
+      );
+      setAlertShowActions(false);
+      setAlertOnConfirm(null);
+      setAlertOpen(true);
+      return;
+    }
+
+    const header = ["Código", "Obra social"];
+    const rows = getSelectedRows();
+    const csv = [header, ...rows]
+      .map((row) =>
+        row
+          .map((field) => `"${String(field).replace(/"/g, '""')}"`)
+          .join(";")
+      )
+      .join("\n");
+
+    const blob = new Blob([csv], {
+      type: "text/csv;charset=utf-8;",
+    });
+    saveAs(blob, "padrones-obras-sociales.csv");
+  };
+
+  const handleDownloadPdf = () => {
+    if (selected.size === 0) {
+      setAlertType("info");
+      setAlertTitle("No hay datos para exportar");
+      setAlertMessage(
+        "Seleccioná al menos una obra social para generar el PDF con los padrones."
+      );
+      setAlertShowActions(false);
+      setAlertOnConfirm(null);
+      setAlertOpen(true);
+      return;
+    }
+
+    const rows = getSelectedRows();
+    const doc = new jsPDF();
+
+    doc.setFontSize(14);
+    doc.text("Padrones - Obras sociales seleccionadas", 14, 18);
+
+    autoTable(doc, {
+      head: [["Código", "Obra social"]],
+      body: rows,
+      startY: 26,
+    });
+
+    doc.save("padrones-obras-sociales.pdf");
+  };
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <h2>Seleccionar Obras Sociales</h2>
-        <p className={styles.subtitle}>Marque las obras sociales con las que trabajará</p>
+        <p className={styles.subtitle}>
+          Marque las obras sociales con las que trabajará
+        </p>
       </div>
 
       <div className={styles.insuranceList}>
@@ -165,11 +301,80 @@ const PadronesForm: React.FC<Props> = ({ onPreview, onSubmit }) => {
             />
             <div className={styles.insuranceInfo}>
               <span className={styles.insuranceName}>{insurance.name}</span>
-              <span className={styles.insuranceCode}>Código: {insurance.code}</span>
+              <span className={styles.insuranceCode}>
+                Código: {insurance.code}
+              </span>
             </div>
           </label>
         ))}
       </div>
+
+      {/* BOTONES DE ACCIÓN */}
+      <div className={styles.actions}>
+        <button
+          type="button"
+          className={styles.previewButton}
+          onClick={handlePreview}
+        >
+          Ver previsualización
+        </button>
+        <button
+          type="button"
+          className={styles.submitButton}
+          onClick={handleSubmit}
+        >
+          Enviar formulario
+        </button>
+      </div>
+
+      {/* DESCARGAS */}
+      <div className={styles.downloadActions}>
+        <button
+          type="button"
+          className={styles.downloadButton}
+          onClick={handleDownloadCsv}
+        >
+          Descargar CSV
+        </button>
+        <button
+          type="button"
+          className={styles.downloadButton}
+          onClick={handleDownloadPdf}
+        >
+          Descargar PDF
+        </button>
+      </div>
+
+      {/* MODAL DE ÉXITO CON MENSAJE PERSONALIZADO */}
+      <SuccessModal
+        open={showSuccess}
+        onClose={handleSuccessClose}
+        title="¡Padrones enviados con éxito!"
+        message={successMessage}
+      />
+
+      {/* ALERTA GENÉRICA CUSTOM */}
+      {alertOpen && (
+        <Alert
+          type={alertType}
+          title={alertTitle}
+          message={alertMessage}
+          showActions={alertShowActions}
+          confirmLabel="Confirmar"
+          cancelLabel="Cancelar"
+          onClose={() => setAlertOpen(false)}
+          onCancel={() => setAlertOpen(false)}
+          onConfirm={
+            alertOnConfirm
+              ? () => {
+                  const fn = alertOnConfirm;
+                  setAlertOpen(false);
+                  fn();
+                }
+              : undefined
+          }
+        />
+      )}
 
       <EmailConsentModal
         open={showEmailConsent}
@@ -178,7 +383,7 @@ const PadronesForm: React.FC<Props> = ({ onPreview, onSubmit }) => {
         onCancel={handleEmailConsentCancel}
       />
     </div>
-  )
-}
+  );
+};
 
-export default PadronesForm
+export default PadronesForm;

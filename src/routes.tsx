@@ -40,6 +40,8 @@ export default function RootRoutes() {
       <Routes>
         {/* Public website*/}
         <Route path="/*" element={<WebRoutes />} />
+        
+            <Route path="/panel/padrones" element={<PadronesPage />} />
            
 
         {/* Auth pages for app */}
@@ -67,7 +69,6 @@ export default function RootRoutes() {
               element={<LiquidationCyclePage />}
             />
             <Route path="/panel/padron-ioscor" element={<PadronIoscor />} />
-            <Route path="/panel/padrones" element={<PadronesPage />} />
             <Route
               path="/panel/liquidation/:id/debitos"
               element={<DiscountsPage />}
