@@ -13,7 +13,7 @@ const Dashboard: React.FC = () => {
     "https://wa.me/5493794532335?text=¡Hola!,%20necesito%20soporte%20con%20el%20sistema%20de%20liquidación";
 
   const quickActions = [
-    { icon: Users, title: "Gestor de usuarios", link: "panel/users-manager" },
+    { icon: Users, title: "Gestor de usuarios", link: "/panel/users-manager" },
     // {
     //   icon: FileText,
     //   title: "Débitos de Obra Social",
