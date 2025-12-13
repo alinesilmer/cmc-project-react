@@ -79,21 +79,21 @@ export default function Footer() {
           </a>
         </div>
 
-        <a className={styles.contactItem} href="tel:+543794427421">
+        <a className={styles.contactItem} href="tel:+543794722121">
           <span className={styles.iconWrap}>
             <FiPhone />
           </span>
-          <span>+54 3794 42-7421</span>
+          <span>+54 3794722121</span>
         </a>
 
         <a
           className={styles.contactItem}
-          href="mailto:secretaria@colegiomedicodecorrientes.com"
+          href="mailto:secretaria@colegiomedicocorrientes.com"
         >
           <span className={styles.iconWrap}>
             <FiMail />
           </span>
-          <span>secretaria@colegiomedicodecorrientes.com</span>
+          <span>secretaria@colegiomedicocorrientes.com</span>
         </a>
 
         <div className={styles.social}>
