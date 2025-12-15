@@ -128,7 +128,7 @@ const UsersManagerDashboard: React.FC = () => {
           <button className={styles.actionButton}>Ver Solicitudes →</button>
         </div>
 
-        <div
+        {/* <div
           className={`${styles.actionCard} ${styles.actionCardSecondary}`}
           onClick={() => navigate("/panel/admin-padrones")}
         >
@@ -136,7 +136,7 @@ const UsersManagerDashboard: React.FC = () => {
           <h3 className={styles.actionTitle}>Solicitudes de Padrones</h3>
           <p className={styles.actionDescription}>Revisá y gestioná las solicitudes de obras sociales.</p>
           <button className={styles.actionButton}>Ver Padrones →</button>
-        </div>
+        </div> */}
 
         <div className={styles.actionCard} onClick={() => navigate("/panel/users")}>
           <div className={styles.actionIcon}>👥</div>
