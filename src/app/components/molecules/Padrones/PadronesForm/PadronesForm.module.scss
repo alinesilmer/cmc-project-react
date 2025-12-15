@@ -16,19 +16,19 @@
 }
 
 .header {
-  margin-bottom: 24px;
+  margin-bottom: 18px;
 
   h2 {
-    margin: 0 0 8px 0;
-    font-size: 28px;
+    margin: 0 0 6px 0;
+    font-size: 26px;
     color: #111827;
 
     @media (max-width: $breakpoint-md) {
-      font-size: 24px;
+      font-size: 22px;
     }
 
     @media (max-width: $breakpoint-sm) {
-      font-size: 20px;
+      font-size: 19px;
     }
   }
 }
@@ -36,92 +36,7 @@
 .subtitle {
   margin: 0;
   color: #6b7280;
-  font-size: 16px;
-
-  @media (max-width: $breakpoint-md) {
-    font-size: 15px;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    font-size: 14px;
-  }
-}
-
-.insuranceList {
-  display: grid;
-  gap: 12px;
-  margin-bottom: 24px;
-
-  @media (min-width: $breakpoint-md) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    gap: 10px;
-    margin-bottom: 20px;
-  }
-}
-
-.insuranceItem {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
-    border-color: #1d4ed8;
-    background: #f9fafb;
-  }
-
-  input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-  }
-
-  @media (max-width: $breakpoint-md) {
-    padding: 14px;
-    gap: 10px;
-
-    input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
-    }
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    padding: 12px;
-    align-items: flex-start;
-  }
-}
-
-.insuranceInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.insuranceName {
-  font-weight: 600;
-  color: #111827;
-  font-size: 16px;
-
-  @media (max-width: $breakpoint-md) {
-    font-size: 15px;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    font-size: 14px;
-  }
-}
-
-.insuranceCode {
   font-size: 14px;
-  color: #6b7280;
 
   @media (max-width: $breakpoint-md) {
     font-size: 13px;
@@ -132,30 +47,169 @@
   }
 }
 
+.searchRow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 0 0 10px 0;
+}
+
+.searchInput {
+  flex: 1;
+  padding: 9px 12px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  outline: none;
+  font-size: 13px;
+  background: #fff;
+
+  &:focus {
+    border-color: #1d4ed8;
+    box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
+  }
+}
+
+.clearSearch {
+  padding: 9px 12px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  cursor: pointer;
+  font-size: 12px;
+
+  &:hover {
+    background: #f9fafb;
+  }
+}
+
+.searchMeta {
+  margin: 0 0 12px 0;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.noResults {
+  padding: 14px;
+  border: 1px dashed #d1d5db;
+  border-radius: 12px;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.insuranceList {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+
+  @media (min-width: $breakpoint-md) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+}
+
+.insuranceItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  cursor: pointer;
+  background: #ffffff;
+  transition: transform 0.12s ease, border-color 0.12s ease,
+    box-shadow 0.12s ease, background 0.12s ease;
+
+  &:hover {
+    border-color: rgba(29, 78, 216, 0.45);
+    background: #fbfdff;
+    box-shadow: 0 6px 18px rgba(17, 24, 39, 0.06);
+    transform: translateY(-1px);
+  }
+
+  input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    margin-top: 2px;
+    flex: 0 0 auto;
+    accent-color: #1d4ed8;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    padding: 10px;
+    gap: 9px;
+
+    input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: 9px 10px;
+  }
+}
+
+.insuranceInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.insuranceName {
+  font-weight: 600;
+  color: #111827;
+  font-size: 13px;
+  line-height: 1.2;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: 12.5px;
+  }
+}
+
+.insuranceCode {
+  font-size: 11.5px;
+  color: #6b7280;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: 11px;
+  }
+}
+
 .helpBox {
   background: #f0f9ff;
   border: 1px solid #bfdbfe;
   border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 24px;
+  padding: 14px;
+  margin-bottom: 18px;
 
   @media (max-width: $breakpoint-md) {
-    padding: 14px;
+    padding: 13px;
   }
 
   @media (max-width: $breakpoint-sm) {
     padding: 12px;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
   }
 }
 
 .helpText {
   margin: 0 0 8px 0;
   color: #1e40af;
-  font-size: 14px;
+  font-size: 13px;
 
   @media (max-width: $breakpoint-md) {
-    font-size: 13px;
+    font-size: 12.5px;
   }
 
   @media (max-width: $breakpoint-sm) {
@@ -166,10 +220,10 @@
 .helpContact {
   margin: 4px 0;
   color: #1e40af;
-  font-size: 14px;
+  font-size: 13px;
 
   @media (max-width: $breakpoint-md) {
-    font-size: 13px;
+    font-size: 12.5px;
   }
 
   @media (max-width: $breakpoint-sm) {
@@ -178,31 +232,39 @@
 }
 
 .actions {
-  margin-top: 1.5rem;
+  margin-top: 1rem;
   display: flex;
-  gap: 1rem;
+  gap: 0.75rem;
   justify-content: flex-end;
   flex-wrap: wrap;
 }
 
 .previewButton {
-  padding: 0.6rem 1.2rem;
+  padding: 0.55rem 1.05rem;
   border-radius: 999px;
   border: 1px solid #cbd5e1;
   background: #fff;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   cursor: pointer;
+
+  &:hover {
+    background: #f8fafc;
+  }
 }
 
 .submitButton {
-  padding: 0.6rem 1.4rem;
+  padding: 0.55rem 1.15rem;
   border-radius: 999px;
   border: none;
   background: #0061a8;
   color: #fff;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   cursor: pointer;
+
+  &:hover {
+    filter: brightness(0.98);
+  }
 }
 
 .warningOverlay {
@@ -252,16 +314,16 @@
 }
 
 .downloadActions {
-  margin-top: 1.25rem;
+  margin-top: 0.9rem;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 0.6rem;
   justify-content: flex-end;
 }
 
 .downloadButton {
-  padding: 0.5rem 1.1rem;
-  font-size: 0.85rem;
+  padding: 0.45rem 0.95rem;
+  font-size: 0.82rem;
   border-radius: 999px;
   border: 1px solid #d4d4d8;
   background: #f9fafb;

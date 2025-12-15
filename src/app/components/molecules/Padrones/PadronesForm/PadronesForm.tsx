@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -87,10 +87,23 @@ type Props = {
 
 type AlertType = "success" | "error" | "warning" | "info";
 
+const normalize = (s: string) =>
+  s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+
 const PadronesForm: React.FC<Props> = ({ onPreview, onSubmit }) => {
   const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  // ✅ Search
+  const [query, setQuery] = useState("");
+
   const [showEmailConsent, setShowEmailConsent] = useState(false);
-  const [pendingInsuranceId, setPendingInsuranceId] = useState<string | null>(null);
+  const [pendingInsuranceId, setPendingInsuranceId] = useState<string | null>(
+    null
+  );
   const [pendingInsuranceName, setPendingInsuranceName] = useState("");
 
   const [showSuccess, setShowSuccess] = useState(false);
@@ -101,7 +114,9 @@ const PadronesForm: React.FC<Props> = ({ onPreview, onSubmit }) => {
   const [alertTitle, setAlertTitle] = useState("");
   const [alertMessage, setAlertMessage] = useState("");
   const [alertShowActions, setAlertShowActions] = useState(false);
-  const [alertOnConfirm, setAlertOnConfirm] = useState<(() => void) | null>(null);
+  const [alertOnConfirm, setAlertOnConfirm] = useState<(() => void) | null>(
+    null
+  );
 
   const navigate = useNavigate();
 
@@ -109,6 +124,17 @@ const PadronesForm: React.FC<Props> = ({ onPreview, onSubmit }) => {
     const upperName = insuranceName.toUpperCase();
     return upperName.includes("UNNE") || upperName.includes("SWISS MEDICAL");
   };
+
+  const filteredInsurances = useMemo(() => {
+    const q = normalize(query);
+    if (!q) return insurances;
+
+    return insurances.filter((ins) => {
+      const name = normalize(ins.name);
+      const code = normalize(ins.code);
+      return name.includes(q) || code.includes(q);
+    });
+  }, [query]);
 
   const toggleInsurance = (id: string) => {
     const insurance = insurances.find((ins) => ins.id === id);
@@ -123,11 +149,8 @@ const PadronesForm: React.FC<Props> = ({ onPreview, onSubmit }) => {
 
     setSelected((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
-      } else {
-        newSet.add(id);
-      }
+      if (newSet.has(id)) newSet.delete(id);
+      else newSet.add(id);
       return newSet;
     });
   };
@@ -188,8 +211,6 @@ const PadronesForm: React.FC<Props> = ({ onPreview, onSubmit }) => {
         " Nuestro equipo del Colegio Médico de Corrientes revisará la información a la brevedad."
     );
     setShowSuccess(true);
-    // si querés limpiar la selección:
-    // setSelected(new Set());
   };
 
   const handleSubmit = () => {
@@ -217,7 +238,7 @@ const PadronesForm: React.FC<Props> = ({ onPreview, onSubmit }) => {
 
   const handleSuccessClose = () => {
     setShowSuccess(false);
-    navigate("/"); // ⬅️ volver al Home
+    navigate("/");
   };
 
   const getSelectedRows = () =>
@@ -248,9 +269,7 @@ const PadronesForm: React.FC<Props> = ({ onPreview, onSubmit }) => {
       )
       .join("\n");
 
-    const blob = new Blob([csv], {
-      type: "text/csv;charset=utf-8;",
-    });
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     saveAs(blob, "padrones-obras-sociales.csv");
   };
 
@@ -291,22 +310,53 @@ const PadronesForm: React.FC<Props> = ({ onPreview, onSubmit }) => {
         </p>
       </div>
 
+      {/* ✅ SEARCH BAR */}
+      <div className={styles.searchRow}>
+        <input
+          className={styles.searchInput}
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Buscar por nombre o código (ej: Swiss, OS056)…"
+          aria-label="Buscar obra social"
+        />
+        {query.trim().length > 0 && (
+          <button
+            type="button"
+            className={styles.clearSearch}
+            onClick={() => setQuery("")}
+          >
+            Limpiar
+          </button>
+        )}
+      </div>
+
+      <p className={styles.searchMeta}>
+        Mostrando {filteredInsurances.length} de {insurances.length}
+      </p>
+
       <div className={styles.insuranceList}>
-        {insurances.map((insurance) => (
-          <label key={insurance.id} className={styles.insuranceItem}>
-            <input
-              type="checkbox"
-              checked={selected.has(insurance.id)}
-              onChange={() => toggleInsurance(insurance.id)}
-            />
-            <div className={styles.insuranceInfo}>
-              <span className={styles.insuranceName}>{insurance.name}</span>
-              <span className={styles.insuranceCode}>
-                Código: {insurance.code}
-              </span>
-            </div>
-          </label>
-        ))}
+        {filteredInsurances.length === 0 ? (
+          <div className={styles.noResults}>
+            No se encontraron obras sociales para “{query}”.
+          </div>
+        ) : (
+          filteredInsurances.map((insurance) => (
+            <label key={insurance.id} className={styles.insuranceItem}>
+              <input
+                type="checkbox"
+                checked={selected.has(insurance.id)}
+                onChange={() => toggleInsurance(insurance.id)}
+              />
+              <div className={styles.insuranceInfo}>
+                <span className={styles.insuranceName}>{insurance.name}</span>
+                <span className={styles.insuranceCode}>
+                  Código: {insurance.code}
+                </span>
+              </div>
+            </label>
+          ))
+        )}
       </div>
 
       {/* BOTONES DE ACCIÓN */}

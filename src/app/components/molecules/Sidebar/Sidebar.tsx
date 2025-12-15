@@ -52,12 +52,6 @@ const Sidebar: React.FC = () => {
       label: "Gestión de Usuarios",
       perms: ["medicos:leer"],
     },
-    {
-      path: `${base}/padrones`,
-      icon: LayoutList,
-      label: "Padrones",
-      perms: ["facturacion_ioscor:leer"],
-    },
     // { path: "/config", icon: Cog, label: "Configuración" },                  // ← COMENTADO (punto 5)
     // { path: "/help", icon: MessageCircleQuestionMark, label: "Ayuda" },       // ← COMENTADO (punto 5)
   ];

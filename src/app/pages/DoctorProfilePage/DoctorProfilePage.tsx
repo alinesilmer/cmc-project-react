@@ -59,6 +59,7 @@ import "rsuite/Toggle/styles/index.css";
 import { Animation } from "rsuite";
 import ActionModal from "../../components/molecules/ActionModal/ActionModal";
 import { useNotify } from "../../hooks/useNotify";
+import PadronesForm from "../../components/molecules/Padrones/PadronesForm/PadronesForm";
 
 /* ===================== helpers labels ===================== */
 // Mapa de claves attach_* → etiqueta legible
@@ -180,8 +181,9 @@ const fmtDate = (s?: string | null) =>
 type TabKey =
   | "datos"
   | "documentos"
-  | "conceptos"
+  | "conceptos" 
   | "especialidades"
+  | "padrones"
   | "permisos";
 
 const DEFAULT_LABELS = [...ATTACH_KEYS, "otro"];
@@ -776,7 +778,7 @@ const DoctorProfilePage: React.FC = () => {
                   {/* Tabs */}
                   <div className={styles.tabs}>
                     {(
-                      ["datos", "documentos", "especialidades"] as TabKey[]
+                      ["datos", "documentos", "especialidades", "padrones"] as TabKey[]
                     ).map((k) => (
                       <button
                         key={k}
@@ -1428,7 +1430,23 @@ const DoctorProfilePage: React.FC = () => {
                         )}
                       </motion.div>
                     )}
-
+{/* === Padrones === */}
+{tab === "padrones" && (
+  <motion.div
+    key="tab-padrones"
+    initial={{ opacity: 0, y: 8 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: 8 }}
+    className={`${styles.tabBodyPadrones}`}
+  >
+    <div className={styles.padronesWrap}>
+      <PadronesForm
+        onPreview={(selected: string[]) => console.log("Preview:", selected)}
+        onSubmit={(selected: string[]) => console.log("Submit:", selected)}
+      />
+    </div>
+  </motion.div>
+)}
                     {/* === Permisos === */}
                     {tab === "permisos" && (
                       <RequirePermission scope="rbac:gestionar">
