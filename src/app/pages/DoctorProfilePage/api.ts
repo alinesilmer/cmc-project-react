@@ -339,12 +339,11 @@ export const uploadDocumento = async (
   // cambiá "file" por el correcto.
   fd.set("file", file);
 
-  const res = await fetch(`/api/medicos/${medicoId}/documentos`, {
-    method: "POST",
-    body: fd,
-  });
-  if (!res.ok) throw new Error("No se pudo subir el archivo");
-  const data = await res.json(); // { id: number, ... }
+  const data = await postForm<{ id: number }>(
+    `/api/medicos/${medicoId}/documentos`,
+    fd
+  );
+
   return Number(data.id);
 };
 
@@ -401,10 +400,5 @@ export async function addMedicoDocumento(
   fd.append("file", file);
   fd.append("label", label);
 
-  const res = await fetch(`/api/medicos/${medicoId}/documentos`, {
-    method: "POST",
-    body: fd,
-  });
-  if (!res.ok) throw new Error("No se pudo agregar el documento.");
-  return res.json() as Promise<DoctorDocument>;
+  return postForm<DoctorDocument>(`/api/medicos/${medicoId}/documentos`, fd);
 }
