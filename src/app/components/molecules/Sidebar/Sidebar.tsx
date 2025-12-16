@@ -14,7 +14,7 @@ import {
 import styles from "./Sidebar.module.scss";
 import { useAuth } from "../../../auth/AuthProvider";
 
-import Logo from "../../../../../public/logoCMC.png";
+import Logo from "../../../assets/logoCMC.png";
 
 import Button from "../../atoms/Button/Button";
 import { useState } from "react";

@@ -11,7 +11,6 @@ export default function ServiciosPage() {
     { icon: <ShieldCheck size={22} />, title: "Seguro médico", description: "Coberturas y asistencia para profesionales.", href: "/servicios/seguro-medico" },
     { icon: <Handshake size={22} />, title: "Convenios", description: "Obras Sociales con acuerdo vigente.", href: "/convenios" },
     { icon: <Home size={22} />, title: "Quinta", description: "Alquiler y requisitos de la Quinta.", href: "/quinta" },
-    { icon: <Receipt size={22} />, title: "Facturación online", description: "Herramientas para liquidar y facturar.", href: "/servicios/facturacion-online" },
     { icon: <Images size={22} />, title: "Galería de fotos y videos", description: "Eventos y vida institucional.", href: "/galeria" },
   ]
 

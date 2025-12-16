@@ -1,5 +1,4 @@
-@import "@/app/styles/variables.scss";
-@import "@/app/styles/mixins.scss";
+@use "@/app/styles/all.scss" as *;
 
 .tableWrap {
   background: $white;

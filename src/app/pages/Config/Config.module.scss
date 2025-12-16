@@ -57,7 +57,7 @@ $err: #ef4444;
 }
 
 .btnGhost:hover {
-  border-color: darken($border, 6%);
+  border-color: $border;
 }
 
 .tabs {

@@ -46,7 +46,7 @@ export default function Welcome() {
             </motion.p>
 
             <motion.div className={styles.ctaRow}>
-              <Link to="https://cmc-project-react.vercel.app">
+              <Link to="/login">
                 <Button variant="primary" size="large">
                   <FaUserPlus className={styles.buttonIcon} />
                   Asociarme
@@ -112,10 +112,10 @@ export default function Welcome() {
           </motion.div>
           <motion.div >
             <CategoryCard
-              title="Entrar a Validar"
-              description="Recepción de Facturación"
+              title="Médicos Asociados"
+              description="Conocé a nuestros socios"
               color="orange"
-              href="https://colegiomedicocorrientes.com/"
+              href="/medicos-asociados"
               icon={<FaCheckCircle />}
             />
           </motion.div>

@@ -1,4 +1,4 @@
-@import "../../../../styles/variables.scss";
+@use "@/app/styles/all.scss" as *;
 
 .container {
   max-width: 1200px;

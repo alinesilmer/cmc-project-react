@@ -2,7 +2,7 @@
 
 .wrapper { position: relative; min-height: 100vh; display: grid; place-items: center; padding: $spacing-xxl $spacing-md; background: #efefef; overflow: hidden; }
 .bgDecor { display: none; }
-.card { position: relative; width: min(760px, 100%); padding: clamp($spacing-xl, 4vw, $spacing-2xl); border-radius: $border-radius-xl; background: linear-gradient(135deg, lighten($primary-blue, 8%), darken($primary-blue, 6%)); color: $white; box-shadow: 0 24px 60px rgba(13, 42, 77, 0.25), 0 6px 18px rgba(13, 42, 77, 0.18); text-align: center; border: 1px solid rgba(255,255,255,.16); overflow: hidden; }
+.card { position: relative; width: min(760px, 100%); padding: clamp($spacing-xl, 4vw, $spacing-2xl); border-radius: $border-radius-xl; background: linear-gradient(135deg, $primary-blue, $primary-blue); color: $white; box-shadow: 0 24px 60px rgba(13, 42, 77, 0.25), 0 6px 18px rgba(13, 42, 77, 0.18); text-align: center; border: 1px solid rgba(255,255,255,.16); overflow: hidden; }
 .badge { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); width: 66px; height: 66px; border-radius: 16px; display: grid; place-items: center; color: #0d2a4d; background: linear-gradient(135deg, #f5c046, #ffd27a); box-shadow: 0 10px 30px rgba(245,192,70,.45); font-size: 1.4rem; border: 1px solid rgba(0,0,0,.06); z-index: 10; }
 .code { margin: $spacing-md 0 0; font-size: clamp(64px, 12vw, 120px); letter-spacing: .04em; line-height: 1; font-weight: 800; color: rgba(255,255,255,.96); }
 .title { margin: $spacing-sm 0 $spacing-md; font-size: clamp($font-size-h4, 2.6vw, $font-size-h2); font-weight: 700; color: rgba(255,255,255,.97); }

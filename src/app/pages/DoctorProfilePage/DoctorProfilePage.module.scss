@@ -1,5 +1,4 @@
-@import "../../styles/variables.scss";
-@import "../../styles/mixins.scss";
+@use "@/app/styles/all.scss" as *;
 
 .page {
   display: flex;
@@ -14,7 +13,9 @@
 }
 
 .topbar {
-  @include flex-between;
+ display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: $spacing-6;
   gap: $spacing-4;
 }
@@ -312,7 +313,9 @@ h5.section {
 }
 
 .docsHeaderInline {
-  @include flex-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: $spacing-3;
 }
 

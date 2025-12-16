@@ -55,7 +55,7 @@
   align-self: flex-start;
 
   &:hover {
-    background-color: darken($primary-blue, 10%);
+    background-color: $primary-blue;
   }
 }
 

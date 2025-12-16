@@ -1,4 +1,4 @@
-@import "../../styles/variables.scss";
+@use "@/app/styles/all.scss" as *;
 
 .container {
   padding: $spacing-8;
@@ -169,12 +169,12 @@
 }
 
 .statusActive {
-  background-color: lighten($success-green, 45%);
-  color: darken($success-green, 10%);
+  background-color: $success-green;
+  color: $success-green;
 }
 
 .statusInactive {
-  background-color: lighten($gray-400, 20%);
+  background-color: $gray-400;
   color: $gray-700;
 }
 

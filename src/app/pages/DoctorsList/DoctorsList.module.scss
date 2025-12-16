@@ -1,6 +1,4 @@
-
-@import "../../styles/variables.scss";
-@import "../../styles/mixins.scss";
+@use "@/app/styles/all.scss" as *;
 
 .doctorsPage {
   display: flex;
@@ -13,7 +11,9 @@
 }
 
 .header {
-  @include flex-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: $spacing-6;
 
   @media (max-width: $breakpoint-md) {

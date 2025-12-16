@@ -1,4 +1,4 @@
-@import "../../../styles/variables.scss";
+@use "@/app/styles/all.scss" as *;
 
 .container {
   min-height: 100vh;
@@ -120,23 +120,23 @@
 }
 
 .badgeNueva {
-  background-color: lighten($warning-orange, 35%);
-  color: darken($warning-orange, 10%);
+  background-color: $warning-orange;
+  color: $warning-orange;
 }
 
 .badgePendiente {
   background-color: rgb(206, 218, 248);
-  color: darken($primary-blue, 10%);
+  color: $primary-blue;
 }
 
 .badgeAprobada {
-  background-color: lighten($success-green, 45%);
-  color: darken($success-green, 10%);
+  background-color: $success-green;
+  color: $success-green;
 }
 
 .badgeRechazada {
-  background-color: lighten($danger-red, 35%);
-  color: darken($danger-red, 10%);
+  background-color: $danger-red;
+  color: $danger-red;
 }
 
 .form {
@@ -233,7 +233,7 @@
   color: $white;
 
   &:hover {
-    background-color: darken($danger-red, 10%);
+    background-color: $danger-red;
   }
 }
 

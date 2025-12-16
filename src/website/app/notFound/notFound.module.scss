@@ -1,4 +1,5 @@
-@import "../../styles/variables.scss";
+@use "@/website/styles/all.scss" as *;
+@use "sass:color";
 
 .wrapper {
   min-height: calc(100vh - 120px);
@@ -25,8 +26,9 @@
   display: grid;
   place-items: center;
   color: $primary-blue;
-  background: mix($primary-blue, $white, 10%);
-  border: 1px solid mix($primary-blue, $white, 30%);
+background: color.mix($primary-blue, $white, $weight: 10%);
+border: 1px solid color.mix($primary-blue, $white, $weight: 30%);
+
   border-radius: $border-radius-md;
 }
 

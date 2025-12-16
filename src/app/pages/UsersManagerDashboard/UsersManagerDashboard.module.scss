@@ -1,5 +1,4 @@
-@import "../../styles/variables.scss";
-@import '../../styles/animations.scss';
+@use "@/app/styles/all.scss" as *;
 
 .container {
   padding: $spacing-8;

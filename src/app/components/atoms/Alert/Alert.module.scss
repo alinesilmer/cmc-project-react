@@ -1,24 +1,20 @@
-@import "@/app/styles/variables.scss";
-@import "@/app/styles/mixins.scss";
+@use "@/app/styles/all.scss" as *;
 
 .backdrop {
   position: fixed;
   top: 0;
   left: 0;
-  /* Asegura ocupar SIEMPRE todo el viewport */
   width: 100vw;
-  height: 100vh; // fallback
-  /* En móviles modernos, 100dvh respeta barras dinámicas */
-  @supports (height: 100dvh) {
-    height: 100dvh;
-  }
-
+  height: 100vh;
   background: rgba(15, 23, 42, 0.35);
   display: grid;
   place-items: center;
-  /* Padding para que el modal no pegue contra los bordes */
   padding: clamp(12px, 2vw, 24px);
   z-index: 1002;
+
+  @supports (height: 100dvh) {
+    height: 100dvh;
+  }
 }
 
 .alert {
@@ -26,29 +22,29 @@
   border-radius: $border-radius-lg;
   box-shadow: $shadow-xl;
   border: 1px solid $gray-200;
-
-  /* Ancho máximo “card”, nunca full width */
   width: min(520px, 100%);
-  /* Que nunca se pase de la altura disponible */
-  max-height: 90vh; // fallback
+  max-height: 90vh;
+  overflow: auto;
+  padding: $spacing-6;
+  position: relative;
+
   @supports (height: 100dvh) {
     max-height: 90dvh;
   }
-  overflow: auto;
-
-  padding: $spacing-6;
-  position: relative;
 }
 
 .success {
   border-left: 4px solid $success-green;
 }
+
 .error {
   border-left: 4px solid $danger-red;
 }
+
 .warning {
   border-left: 4px solid $warning-orange;
 }
+
 .info {
   border-left: 4px solid $primary-blue;
 }
@@ -106,12 +102,15 @@
 .success .icon {
   color: $success-green;
 }
+
 .error .icon {
   color: $danger-red;
 }
+
 .warning .icon {
   color: $warning-orange;
 }
+
 .info .icon {
   color: $primary-blue;
 }

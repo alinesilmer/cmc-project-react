@@ -1,4 +1,4 @@
-@import "../../../styles/variables.scss";
+@use "@/website/styles/all.scss" as *;
 
 :root {
   --category-card-h: 360px;
@@ -123,34 +123,41 @@
   .card:hover & { transform: scale(1.03) translate(2px, -2px); opacity: 0.95; }
 }
 
+/* ✅ FIXED gradients (removed the broken commas) */
 .teal {
-  background: linear-gradient(135deg, $primary-teal 0%, darken($primary-teal, 10%) 100%);
+  background-color: $primary-teal;
+  background-image: linear-gradient(135deg, $primary-teal 0%, $primary-teal 100%);
   .icon { color: $primary-teal; }
 }
 
 .orange {
-  background: linear-gradient(135deg, $accent-orange 0%, darken($accent-orange, 10%) 100%);
+  background-color: $accent-orange;
+  background-image: linear-gradient(135deg, $accent-orange 0%, $accent-orange 100%);
   .icon { color: $accent-orange; }
 }
 
 .blue {
-  background: linear-gradient(135deg, $primary-blue 0%, $primary-blue-dark 100%);
+  background-color: $primary-blue;
+  background-image: linear-gradient(135deg, $primary-blue 0%, $primary-blue-dark 100%);
   .icon { color: $primary-blue; }
 }
 
 .mint {
-  background: linear-gradient(135deg, $primary-green 0%, $primary-green-dark 100%);
+  background-color: $primary-green;
+  background-image: linear-gradient(135deg, $primary-green 0%, $primary-green-dark 100%);
   .icon { color: $primary-green; }
 }
 
 .green {
-  background: linear-gradient(135deg, $service-green 0%, darken($service-green, 15%) 100%);
-  .icon { color: darken($service-green, 20%); }
+  background-color: $service-green;
+  background-image: linear-gradient(135deg, $service-green 0%, $service-green 100%);
+  .icon { color: $service-green; }
 }
 
 .yellow {
-  background: linear-gradient(135deg, $service-yellow 0%, darken($service-yellow, 10%) 100%);
-  .icon { color: darken($service-yellow, 30%); }
+  background-color: $service-yellow;
+  background-image: linear-gradient(135deg, $service-yellow 0%, $service-yellow 100%);
+  .icon { color: $service-yellow; }
 }
 
 /* Responsivo */

@@ -1,5 +1,4 @@
-@import '../../../styles/variables.scss';
-@import '../../../styles/animations.scss';
+@use "@/app/styles/all.scss" as *;
 
 .container {
   padding: $spacing-8;
@@ -363,7 +362,7 @@
   transition: all 0.2s;
 
   &:hover {
-    background-color: darken($warning-orange, 10%);
+    background-color: $warning-orange;
     transform: scale(1.05);
   }
 

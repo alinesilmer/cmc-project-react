@@ -281,7 +281,7 @@ const Info: React.FC = () => {
           <div className={styles.heroActions}>
             <a
               className={styles.btnPrimary}
-              href="mailto:secretariacolegiomedicoctes@gmail.com?subject=Consulta%20Socio%20Prestador"
+              href="mailto:secretaria@colegiomedicocorrientes.com?subject=Consulta%20Socio%20Prestador"
             >
               Consultar por email
             </a>
@@ -311,8 +311,8 @@ const Info: React.FC = () => {
               </p>
               <p className={styles.kv}>
                 <span>Email</span>
-                <a href="mailto:secretariacolegiomedicoctes@gmail.com">
-                  secretariacolegiomedicoctes@gmail.com
+                <a href="mailto:secretaria@colegiomedicocorrientes.com">
+                  secretaria@colegiomedicocorrientes.com
                 </a>
               </p>
             </div>

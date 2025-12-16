@@ -37,7 +37,7 @@ export default function Contacto() {
             <p className={styles.colText}>
               Escribinos y te responderemos a la brevedad. Incluí tu nombre y motivo del contacto.
             </p>
-            <a href="mailto:secretariacolegiomedicoctes@gmail.com" className={styles.colHighlight}>secretariacolegiomedicoctes@gmail.com</a>
+            <a href="mailto:secretaria@colegiomedicocorrientes.com" className={styles.colHighlight}>secretaria@colegiomedicocorrientes.com</a>
           </div>
         </div>
       </section>
