@@ -14,7 +14,7 @@ import {
 import styles from "./Sidebar.module.scss";
 import { useAuth } from "../../../auth/AuthProvider";
 
-import Logo from "../../../assets/logoCMC.png";
+import Logo from "../../../assets/logonavidad.png";
 
 import Button from "../../atoms/Button/Button";
 import { useState } from "react";
@@ -50,6 +50,12 @@ const Sidebar: React.FC = () => {
       path: `${base}/users-manager`,
       icon: UserCog,
       label: "Gestión de Usuarios",
+      perms: ["medicos:leer"],
+    },
+     {
+      path: `https://legacy.colegiomedicocorrientes.com/principal.php`,
+      icon: LayoutList,
+      label: "Sistema Fabián",
       perms: ["medicos:leer"],
     },
     // { path: "/config", icon: Cog, label: "Configuración" },                  // ← COMENTADO (punto 5)

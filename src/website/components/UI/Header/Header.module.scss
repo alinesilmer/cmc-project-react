@@ -43,14 +43,14 @@ $header-h: 100px;
   transition: transform $transition-fast;
 
   &:hover {
-    transform: scale(1.05);
+    transform: scale(1.15);
   }
 
   .logoIcon {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 80px;
+    width: 100px;
     padding: 0;
     margin: 0;
 
