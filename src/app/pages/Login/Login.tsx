@@ -5,6 +5,7 @@ import Button from "../../components/atoms/Button/Button";
 import { useAuth } from "../../auth/AuthProvider";
 import { isWebEditor } from "../../auth/roles";
 import { http } from "../../lib/http";
+import pdf from "../../assets/CMC - 12 2025 .pdf";
 
 function Login() {
   const [isMember, setIsMember] = useState<boolean | null>(null);
@@ -227,8 +228,8 @@ function Login() {
         <aside className={styles.media} aria-hidden>
           <h3 className={styles.ethicsTitle}>
             <a
-              href={ETICA_PDF}
-              download="Valores_Eticos_Minimos.pdf"
+              href={pdf}
+              download={pdf}
               target="__blank"
             >
               Ver Valores Éticos Mínimos

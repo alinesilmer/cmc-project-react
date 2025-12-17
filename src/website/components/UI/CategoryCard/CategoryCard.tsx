@@ -7,7 +7,7 @@ import styles from "./CategoryCard.module.scss"
 interface CategoryCardProps {
   title: string
   description: string
-  color: "teal" | "orange" | "blue" | "mint" | "green" | "yellow"
+  color: "red" | "gold" | "blue" | "mint" | "green" | "yellow"
   href: string
   icon?: React.ReactNode
 }

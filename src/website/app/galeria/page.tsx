@@ -42,22 +42,13 @@ const mockItems: MediaItem[] = [
     etiquetas: ["quinta"],
   },
   {
-    id: "v1",
-    tipo: "foto",
-    src: "https://res.cloudinary.com/dcfkgepmp/image/upload/v1762471701/quintacmc10_ykkf5p.jpg",
-    miniatura: "https://res.cloudinary.com/dcfkgepmp/image/upload/v1762471701/quintacmc10_ykkf5p.jpg",
-    titulo: "Mensaje institucional",
-    fecha: "2025-07-20",
-    etiquetas: ["institucional", "video"],
-  },
-  {
     id: "p5",
-    tipo: "video",
-    src: "https://www.youtube.com/watch?v=_GkShRlpE4s",
-    miniatura: "https://res.cloudinary.com/dcfkgepmp/image/upload/v1762129462/contactbg_dcrwvz.png",
-    titulo: "Acto día del médico",
-    fecha: "2025-12-03",
-    etiquetas: ["acto", "celebración"],
+    tipo: "foto",
+    src: "https://res.cloudinary.com/dcfkgepmp/image/upload/v1765899938/WhatsApp_Image_2025-12-15_at_8.08.39_PM_1_jz02ez.jpg",
+    miniatura: "https://res.cloudinary.com/dcfkgepmp/image/upload/v1765899937/WhatsApp_Image_2025-12-15_at_8.08.40_PM_1_e46aef.jpg",
+    titulo: "Remodelaciones del Quincho",
+    fecha: "2025-12-16",
+    etiquetas: ["quincho", "refacciones"],
   },
 ]
 

@@ -105,7 +105,7 @@ export default function Welcome() {
             <CategoryCard
               title="Recepción y Liquidación de Facturación"
               description="Recepción y Liquidación de Facturación"
-              color="teal"
+              color="red"
               href="https://comecorammeco.com/web/"
               icon={<FaFileInvoiceDollar />}
             />
@@ -114,7 +114,7 @@ export default function Welcome() {
             <CategoryCard
               title="Médicos Asociados"
               description="Conocé a nuestros socios"
-              color="orange"
+              color="mint"
               href="/medicos-asociados"
               icon={<FaCheckCircle />}
             />
@@ -123,7 +123,7 @@ export default function Welcome() {
             <CategoryCard
               title="Noticias"
               description="Actualizaciones, comunicados y eventos del Colegio."
-              color="blue"
+              color="gold"
               href="/noticias"
               icon={<FaNewspaper />}
             />
@@ -132,7 +132,7 @@ export default function Welcome() {
             <CategoryCard
               title="Tutoriales para Validar"
               description="Tutoriales para utilizar el sistema, facturación y validación."
-              color="mint"
+              color="blue"
               href="/contacto"
               icon={<FaYoutube />}
             />

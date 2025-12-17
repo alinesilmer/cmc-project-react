@@ -160,6 +160,19 @@
   .icon { color: $service-yellow; }
 }
 
+.red {
+  background-color: #a51720;
+  background-image: linear-gradient(135deg, #a51720 0%, #a51720 100%);
+  .icon { color: #a51720; }
+}
+
+.gold{
+  background-color: #D4AF37;
+  background-image: linear-gradient(135deg, #D4AF37 0%, #D4AF37 100%);
+  .icon { color: #D4AF37; }
+}
+
+
 /* Responsivo */
 @media (max-width: $breakpoint-tablet) {
   .card {
