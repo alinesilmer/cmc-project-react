@@ -22,11 +22,13 @@
   color: $gray-900;
   margin: 0;
 }
+
 .subtitle {
   font-size: $font-size-lg;
   color: $gray-600;
   margin: 0;
 }
+
 .backButton {
   padding: $spacing-3 $spacing-5;
   background-color: $white;
@@ -45,8 +47,8 @@
 }
 
 .statsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: $spacing-6;
   margin-bottom: $spacing-6;
 }
@@ -60,6 +62,8 @@
   flex-direction: column;
   align-items: center;
   gap: $spacing-2;
+  flex: 1 1 220px;
+  min-width: 220px;
 }
 
 .statValue {
@@ -150,34 +154,6 @@
   font-weight: $font-weight-semibold;
 }
 
-.memberTypeBadge {
-  display: inline-block;
-  padding: $spacing-1 $spacing-3;
-  background-color: $secondary-blue;
-  color: $primary-blue;
-  border-radius: $border-radius-md;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
-}
-
-.statusBadge {
-  display: inline-block;
-  padding: $spacing-1 $spacing-3;
-  border-radius: $border-radius-md;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
-}
-
-.statusActive {
-  background-color: $success-green;
-  color: $success-green;
-}
-
-.statusInactive {
-  background-color: $gray-400;
-  color: $gray-700;
-}
-
 .emptyState {
   text-align: center;
   padding: $spacing-16;
@@ -191,6 +167,198 @@
     color: $gray-500;
     margin: 0;
   }
+}
+
+/* ===== Export / Filters modal ===== */
+.exportModal {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-5;
+}
+
+.exportDivider {
+  height: 1px;
+  background: $gray-200;
+}
+
+.exportSectionTitle {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-800;
+  letter-spacing: 0.01em;
+}
+
+.exportQuickRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-3;
+}
+
+.exportCardsGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-4;
+}
+
+.exportCard {
+  flex: 1 1 320px;
+  min-width: 260px;
+
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-xl;
+  box-shadow: $shadow-sm;
+  padding: $spacing-5;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    border-color: $gray-300;
+    box-shadow: $shadow-md;
+  }
+
+  &:active {
+    transform: translateY(0px);
+  }
+}
+
+.exportCardTitle {
+  align-items: center;
+  text-align: center;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+}
+
+
+.exportNavRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+}
+
+.exportBackLink {
+  border: none;
+  background: transparent;
+  color: $gray-700;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  padding: 0;
+
+  &:hover {
+    color: $gray-900;
+    text-decoration: underline;
+  }
+}
+
+.exportBreadcrumb {
+  font-size: $font-size-sm;
+  color: $gray-700;
+
+  b {
+    color: $gray-900;
+  }
+}
+
+.exportGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-4;
+}
+
+.exportField {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  flex: 1 1 320px;
+  min-width: 260px;
+}
+
+.exportLabel {
+  font-size: $font-size-sm;
+  color: $gray-700;
+  font-weight: $font-weight-medium;
+}
+
+.exportInput,
+.exportSelect {
+  width: 100%;
+  padding: $spacing-3 $spacing-4;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-lg;
+  font-size: $font-size-base;
+  color: $gray-900;
+  background: $white;
+  transition: all 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: $gray-600;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
+  }
+
+  &::placeholder {
+    color: $gray-400;
+  }
+}
+
+.exportActionsRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-4;
+}
+
+.exportActionsLeft {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-3;
+}
+
+.exportActionsRight {
+  display: flex;
+  gap: $spacing-3;
+}
+
+.exportError {
+  margin-top: $spacing-3;
+  padding: $spacing-4;
+  border-radius: $border-radius-xl;
+  border: 1px solid rgba(255, 0, 0, 0.22);
+  background: rgba(255, 0, 0, 0.06);
+  color: $gray-900;
+  font-size: $font-size-sm;
+}
+
+.exportHint {
+  margin-top: $spacing-3;
+  font-size: $font-size-xs;
+  color: $gray-600;
+  line-height: 1.45;
+
+  b {
+    color: $gray-800;
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.paginationBar {
+  display: flex;
+  gap: $spacing-3;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: $spacing-4;
+  flex-wrap: wrap;
+}
+
+.pageLabel {
+  font-size: $font-size-sm;
+  color: $gray-700;
 }
 
 @media (max-width: $breakpoint-md) {
@@ -210,5 +378,24 @@
 
   .table {
     min-width: 800px;
+  }
+
+  .exportField {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .exportActionsRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .exportActionsRight {
+    justify-content: flex-end;
+  }
+
+  .exportCard {
+    flex: 1 1 100%;
+    min-width: 0;
   }
 }

@@ -1,0 +1,31 @@
+@use "@/app/styles/all.scss" as *;
+
+.container {
+  padding: $spacing-8;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+h1 {
+  margin-bottom: $spacing-6;
+  font-size: $font-size-3xl;
+}
+
+.fileInput {
+  margin-bottom: $spacing-6;
+}
+
+.actions {
+  display: flex;
+  gap: $spacing-4;
+  margin-bottom: $spacing-4;
+
+  @media (max-width: $breakpoint-sm) {
+    flex-direction: column;
+  }
+}
+
+.result {
+  color: $gray-700;
+  margin-top: $spacing-4;
+}

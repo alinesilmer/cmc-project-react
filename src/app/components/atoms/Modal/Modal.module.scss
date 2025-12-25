@@ -1,9 +1,13 @@
+@use "@/app/styles/all.scss" as *;
+
 .overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
+  align-items: center;
+  justify-content: center;
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
   z-index: 1000;
@@ -11,12 +15,12 @@
 
 .modal {
   position: fixed;
-  top: 50%;
-  left: 50%;
+  top: 10%;
+  left: 25%;
   transform: translate(-50%, -50%);
-  background: v.$color-white;
-  border-radius: v.$border-radius-lg;
-  box-shadow: v.$shadow-xl;
+  background: $white;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-xl;
   z-index: 1001;
   max-height: 90vh;
   overflow: hidden;
@@ -43,27 +47,27 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: v.$spacing-lg;
-  border-bottom: 1px solid v.$color-gray-200;
+  padding: $spacing-6;
+  border-bottom: 1px solid $gray-200;
 }
 
 .title {
   margin: 0;
-  font-size: v.$font-size-xl;
-  font-weight: v.$font-weight-semibold;
-  color: v.$color-gray-900;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
+  color: $gray-900;
 }
 
 .closeButton {
-  color: v.$color-gray-500;
-  
+  color: $gray-500;
+
   &:hover {
-    color: v.$color-gray-700;
+    color: $gray-700;
   }
 }
 
 .content {
-  padding: v.$spacing-lg;
+  padding: $spacing-6;
   overflow-y: auto;
   flex: 1;
 }

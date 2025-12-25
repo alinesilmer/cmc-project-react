@@ -31,6 +31,7 @@ import PadronesPage
  from "./app/pages/PadronesPage/PadronesPage";
  import AdminPadrones from "./app/pages/AdminPadrones/AdminPadrones";
  import AdminPadronesDetail from "./app/pages/AdminPadronesDetail/AdminPadronesDetail";
+ import Boletin from "./app/pages/Boletin/Boletin";
 // WEBSITE
 import WebRoutes from "./website/router";
 
@@ -42,6 +43,7 @@ export default function RootRoutes() {
         <Route path="/*" element={<WebRoutes />} />
         
             <Route path="/panel/padrones" element={<PadronesPage />} />
+            <Route path="/panel/boletin" element={<Boletin />} />
            
 
         {/* Auth pages for app */}
