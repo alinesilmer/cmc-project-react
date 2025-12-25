@@ -1,3 +1,5 @@
+export type TipoPublicacion = "Blog" | "Noticia" | "Curso";
+
 export interface Noticia {
   id: string;
   titulo: string;
@@ -8,6 +10,7 @@ export interface Noticia {
   fechaCreacion: Date | string;
   fechaActualizacion: Date | string;
   portada?: string;
+  tipo: TipoPublicacion;
 }
 
 export interface Usuario {

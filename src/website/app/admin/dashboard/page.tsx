@@ -16,6 +16,7 @@ import {
   removeNews,
   getNewsById,
   removeNewsDoc,
+  type TipoPublicacion,
 } from "../../../lib/news.client";
 
 import type { Noticia } from "../../../types";
@@ -61,11 +62,13 @@ export default function DashboardPage() {
     resumen: string;
     contenido: string;
     publicada: boolean;
+    tipo: TipoPublicacion;
   }>({
     titulo: "",
     resumen: "",
     contenido: "",
     publicada: true,
+    tipo: "Noticia", // default
   });
 
   // Portada (single)
@@ -85,17 +88,18 @@ export default function DashboardPage() {
   // ---- Filtro + paginado (cliente) ----
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
+  const [tipo, setTipo] = useState<TipoPublicacion | "Todos">("Todos");
 
   // Cargar noticias cuando la pestaña activa es "noticias"
   useEffect(() => {
     if (tab !== "noticias") return;
     void cargarNoticias();
-  }, [tab]);
+  }, [tab, tipo]);
 
   const cargarNoticias = async () => {
     try {
       setLoading(true);
-      const data = await listNews();
+      const data = await listNews(tipo === "Todos" ? undefined : { tipo });
       setNoticias(data);
     } catch (error) {
       console.error("Error al cargar noticias:", error);
@@ -202,6 +206,7 @@ export default function DashboardPage() {
         resumen: formData.resumen,
         contenido: formData.contenido,
         publicada: formData.publicada,
+        tipo: formData.tipo,
       };
 
       if (editingId) {
@@ -233,6 +238,7 @@ export default function DashboardPage() {
       resumen: "",
       contenido: "",
       publicada: true,
+      tipo: "Noticia",
     });
     // limpiar portada
     if (portadaPreview && portadaPreview.startsWith("blob:")) {
@@ -255,6 +261,7 @@ export default function DashboardPage() {
       resumen: n.resumen,
       contenido: (n as any).contenido || "",
       publicada: (n as any).publicada ?? true,
+      tipo: (n as any).tipo ?? "Noticia", // ✅
     });
 
     // Portada existente (string absoluto/relativo). No la pasamos como File,
@@ -396,6 +403,18 @@ export default function DashboardPage() {
                   onChange={(e) => setQ(e.target.value)}
                 />
               </div>
+              <div className={styles.selectGroup}>
+                <label className={styles.selectLabel}>Tipo</label>
+                <select
+                  value={tipo}
+                  onChange={(e) => setTipo(e.target.value as any)}
+                  className={styles.select}
+                >
+                  <option value="Todos">Todos</option>
+                  <option value="Noticia">Noticia</option>
+                  <option value="Blog">Blog</option>
+                </select>
+              </div>
 
               <div className={styles.rightActions}>
                 <Button
@@ -413,6 +432,7 @@ export default function DashboardPage() {
                         resumen: "",
                         contenido: "",
                         publicada: true,
+                        tipo: "Noticia",
                       });
                       // limpiar portada
                       if (
@@ -485,6 +505,26 @@ export default function DashboardPage() {
                         </label>
                       </div>
                       <label>Contenido (Markdown)</label>
+                    </div>
+
+                    <div className={styles.inputGroup}>
+                      <label>Tipo</label>
+                      <select
+                        value={formData.tipo}
+                        onChange={(e) =>
+                          setFormData((p) => ({
+                            ...p,
+                            tipo: e.target.value as TipoPublicacion,
+                          }))
+                        }
+                        className={styles.select}
+                      >
+                        <option value="Noticia">Noticia</option>
+                        <option value="Blog">Blog</option>
+                      </select>
+                      <p className={styles.helpText}>
+                        Elegí si esta publicación es una Noticia o un Blog.
+                      </p>
                     </div>
 
                     <div className={styles.toolbar}>
@@ -718,6 +758,9 @@ Párrafo 2 (línea en blanco entre párrafos).
                         <div className={styles.noticiaContent}>
                           <h3>{n.titulo}</h3>
                           <p>{n.resumen}</p>
+                          <span className={styles.badge}>
+                            {(n as any).tipo ?? "Noticia"}
+                          </span>
                         </div>
                         <div className={styles.noticiaActions}>
                           <button
