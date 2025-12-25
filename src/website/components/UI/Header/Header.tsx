@@ -207,17 +207,21 @@ export default function Header() {
               </AnimatePresence>
             </div>
 
-            <Link to="/cursoscap" className={styles.navLink} onClick={closeAll}>
+            <Link to="/cursos" className={styles.navLink} onClick={closeAll}>
               Cursos/Capacitaciones
             </Link>
             <Link to="/noticias" className={styles.navLink} onClick={closeAll}>
               Noticias
             </Link>
-            <Link to="/medicos-asociados" className={styles.navLink} onClick={closeAll}>
+            <Link
+              to="/medicos-asociados"
+              className={styles.navLink}
+              onClick={closeAll}
+            >
               Médicos Asociados
             </Link>
-            <Link to="/blog" className={styles.navLink} onClick={closeAll}>
-              Blog 
+            <Link to="/blogs" className={styles.navLink} onClick={closeAll}>
+              Blog
             </Link>
             <Link to="/contacto" className={styles.navLink} onClick={closeAll}>
               Contacto
@@ -264,7 +268,6 @@ export default function Header() {
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.25 }}
             >
-
               <Link to="/" onClick={closeAll} className={styles.mobileLink}>
                 Inicio
               </Link>
@@ -332,9 +335,13 @@ export default function Header() {
                 </AnimatePresence>
               </div>
 
- <Link to="/cursoscap" className={styles.mobileLink} onClick={closeAll}>
-              Cursos/Capacitaciones
-            </Link>
+              <Link
+                to="/cursos"
+                className={styles.mobileLink}
+                onClick={closeAll}
+              >
+                Cursos/Capacitaciones
+              </Link>
               <Link
                 to="/noticias"
                 onClick={closeAll}
@@ -342,7 +349,7 @@ export default function Header() {
               >
                 Noticias
               </Link>
-                <Link
+              <Link
                 to="/medicos-asociados"
                 onClick={closeAll}
                 className={styles.mobileLink}
@@ -354,8 +361,8 @@ export default function Header() {
                 onClick={closeAll}
                 className={styles.mobileLink}
               ></Link>
-                <Link
-                to="/blog"
+              <Link
+                to="/blogs"
                 onClick={closeAll}
                 className={styles.mobileLink}
               >
@@ -368,14 +375,15 @@ export default function Header() {
               >
                 Contacto
               </Link>
-               {user && (
-              <a
-                href={targetHref}
-                className={styles.mobileLink}
-                onClick={closeAll}
-              >
-                Ingresar
-              </a>)}
+              {user && (
+                <a
+                  href={targetHref}
+                  className={styles.mobileLink}
+                  onClick={closeAll}
+                >
+                  Ingresar
+                </a>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

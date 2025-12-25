@@ -1,22 +1,24 @@
-// src/website/lib/news.client.ts
 import { getJSON, http } from "../../app/lib/http";
-// import type { Noticia, NoticiaDetail, NoticiaCreate } from "./api";
-import type { Noticia, NoticiaDetail } from "../types/index"; // usa tus tipos locales
+import type { Noticia, NoticiaDetail } from "../types/index";
 
 function adaptNewsDetail(n: any): NoticiaDetail {
   if (!n || typeof n !== "object") return n;
   return {
     ...n,
+    // normalizo fechas
     fechaCreacion: n.fechaCreacion ?? n.fecha_creacion ?? null,
     fechaActualizacion: n.fechaActualizacion ?? n.fecha_actualizacion ?? null,
   };
 }
+
+export type TipoPublicacion = "Blog" | "Noticia" | "Curso";
 
 //#region TYPES
 type CreateFields = {
   titulo: string;
   resumen: string;
   contenido: string;
+  tipo: TipoPublicacion; // ✅ importante
   publicada?: boolean;
   autor?: string;
 };
@@ -24,21 +26,26 @@ type CreateFields = {
 type UpdateFields = Partial<CreateFields>;
 
 type SaveOptions = {
-  portada?: File | null; // ✅ NUEVO (single)
-  adjuntos?: File[]; // ✅ múltiples
-  clearPortada?: boolean; // ✅ para limpiar portada
-  deleteDocIds?: number[]; // ✅ borrar docs
+  portada?: File | null;
+  adjuntos?: File[];
+  clearPortada?: boolean;
+  deleteDocIds?: number[];
 };
 //#endregion
 
-// Listado público (ya paginado/ordenado por backend)
-export const listNews = () => getJSON<Noticia[]>("/api/noticias/");
+export const listNews = (params?: { tipo?: TipoPublicacion }) => {
+  const qs = params?.tipo ? `?tipo=${encodeURIComponent(params.tipo)}` : "";
+  return getJSON<Noticia[]>(`/api/noticias/${qs}`);
+};
+
+export const listCourses = () => listNews({ tipo: "Curso" });
 
 export async function createNews(fields: CreateFields, opts?: SaveOptions) {
   const fd = new FormData();
   fd.append("titulo", fields.titulo);
   fd.append("resumen", fields.resumen);
   fd.append("contenido", fields.contenido);
+  fd.append("tipo", fields.tipo); // ✅ NUEVO
   if (typeof fields.publicada !== "undefined") {
     fd.append("publicada", String(!!fields.publicada));
   }
@@ -51,7 +58,6 @@ export async function createNews(fields: CreateFields, opts?: SaveOptions) {
   return adaptNewsDetail(data);
 }
 
-// Actualizar noticia (multipart para poder agregar adjuntos nuevos)
 export async function updateNews(
   id: string | number,
   fields: UpdateFields,
@@ -61,6 +67,7 @@ export async function updateNews(
   if (fields.titulo !== undefined) fd.append("titulo", fields.titulo);
   if (fields.resumen !== undefined) fd.append("resumen", fields.resumen);
   if (fields.contenido !== undefined) fd.append("contenido", fields.contenido);
+  if (fields.tipo !== undefined) fd.append("tipo", fields.tipo); // ✅ NUEVO
   if (fields.publicada !== undefined)
     fd.append("publicada", String(!!fields.publicada));
   if (fields.autor !== undefined) fd.append("autor", fields.autor || "");
@@ -87,7 +94,6 @@ export async function removeNews(id: string | number) {
   return data;
 }
 
-// (Opcional) borrar un documento puntual de una noticia
 export async function removeNewsDoc(
   noticiaId: string | number,
   docId: string | number

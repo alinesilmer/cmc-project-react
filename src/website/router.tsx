@@ -19,10 +19,13 @@ import NotFound from "./app/notFound/notFound";
 import GaleriaPage from "./app/galeria/page";
 import ConveniosPage from "./app/convenios/convenios";
 import QuintaPage from "./app/quinta/quinta";
-import CursosCapacitacionesPage from "./app/cursoscap/page";
+// import CursosCapacitacionesPage from "./app/cursoscap/page";
+import CursosPage from "./app/cursoscap/page";
+import CursoDetailPage from "./app/cursoscap/[id]/page";
 import SegurosPage from "./app/seguros/page";
 import Asociados from "./app/asociados/page";
 import Blog from "./app/blog/page";
+import BlogDetailPage from "./app/blog/[id]/page";
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
@@ -66,16 +69,19 @@ export default function WebRoutes() {
         <Route path="/contacto" element={<Contacto />} />
         <Route path="/noticias" element={<NoticiasPage />} />
         <Route path="/noticias/:id" element={<NoticiaDetail />} />
+        <Route path="/cursos" element={<CursosPage />} />
+        <Route path="/cursos/:id" element={<CursoDetailPage />} />
         <Route path="/nosotros" element={<NosotrosPage />} />
         <Route path="/servicios" element={<Servicios />} />
         <Route path="/notFound" element={<NotFound />} />
         <Route path="/galeria" element={<GaleriaPage />} />
         <Route path="/convenios" element={<ConveniosPage />} />
         <Route path="/quinta" element={<QuintaPage />} />
-        <Route path="/cursoscap" element={<CursosCapacitacionesPage />} />
+        {/* <Route path="/cursoscap" element={<CursosCapacitacionesPage />} /> */}
         <Route path="/seguros" element={<SegurosPage />} />
         <Route path="/medicos-asociados" element={<Asociados />} />
-        <Route path="/blog" element={<Blog />} />
+        <Route path="/blogs" element={<Blog />} />
+        <Route path="/blogs/:id" element={<BlogDetailPage />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

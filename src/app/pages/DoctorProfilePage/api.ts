@@ -402,3 +402,43 @@ export async function addMedicoDocumento(
 
   return postForm<DoctorDocument>(`/api/medicos/${medicoId}/documentos`, fd);
 }
+
+export type ObraSocial = {
+  NRO_OBRA_SOCIAL: number;
+  NOMBRE: string;
+  CODIGO?: string | null;
+};
+
+export type Padron = {
+  ID: number;
+  NRO_SOCIO: number;
+  NRO_OBRASOCIAL: number;
+  CATEGORIA?: string | null;
+  ESPECIALIDAD?: string | null;
+  TELEFONO_CONSULTA?: string | null;
+  MATRICULA_PROV?: number | null;
+  MATRICULA_NAC?: number | null;
+  NOMBRE?: string | null;
+  MARCA?: string | null;
+};
+
+export const fetchObrasSociales = (marca: string = "S") =>
+  getJSON<ObraSocial[]>(
+    `/api/padrones/catalogo?marca=${encodeURIComponent(marca)}`
+  );
+
+export const fetchPadrones = (nroSocio: string | number) =>
+  getJSON<Padron[]>(`/api/padrones/${nroSocio}`);
+
+export const addPadronByOS = (
+  nroSocio: string | number,
+  nroOS: number,
+  body?: Partial<Padron>
+) =>
+  putJSON<Padron>(
+    `/api/padrones/${nroSocio}/obras-sociales/${nroOS}`,
+    body ?? {}
+  );
+
+export const removePadronByOS = (nroSocio: string | number, nroOS: number) =>
+  delJSON<void>(`/api/padrones/${nroSocio}/obras-sociales/${nroOS}`);

@@ -1,7 +1,7 @@
 // app/pages/DoctorProfile/DoctorProfilePage.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -22,6 +22,8 @@ import type {
   Permission,
   Option,
   Especialidad,
+  ObraSocial,
+  Padron,
 } from "./api";
 
 import {
@@ -51,6 +53,10 @@ import {
   deleteMedicoDocumento,
   setMedicoAttach,
   clearMedicoAttach,
+  fetchObrasSociales,
+  fetchPadrones,
+  addPadronByOS,
+  removePadronByOS,
 } from "./api";
 
 import { Modal, Toggle, Notification } from "rsuite";
@@ -181,7 +187,7 @@ const fmtDate = (s?: string | null) =>
 type TabKey =
   | "datos"
   | "documentos"
-  | "conceptos" 
+  | "conceptos"
   | "especialidades"
   | "padrones"
   | "permisos";
@@ -778,7 +784,12 @@ const DoctorProfilePage: React.FC = () => {
                   {/* Tabs */}
                   <div className={styles.tabs}>
                     {(
-                      ["datos", "documentos", "especialidades", "padrones"] as TabKey[]
+                      [
+                        "datos",
+                        "documentos",
+                        "especialidades",
+                        "padrones",
+                      ] as TabKey[]
                     ).map((k) => (
                       <button
                         key={k}
@@ -1430,23 +1441,20 @@ const DoctorProfilePage: React.FC = () => {
                         )}
                       </motion.div>
                     )}
-{/* === Padrones === */}
-{tab === "padrones" && (
-  <motion.div
-    key="tab-padrones"
-    initial={{ opacity: 0, y: 8 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: 8 }}
-    className={`${styles.tabBodyPadrones}`}
-  >
-    <div className={styles.padronesWrap}>
-      <PadronesForm
-        onPreview={(selected: string[]) => console.log("Preview:", selected)}
-        onSubmit={(selected: string[]) => console.log("Submit:", selected)}
-      />
-    </div>
-  </motion.div>
-)}
+                    {/* === Padrones === */}
+                    {tab === "padrones" && (
+                      <motion.div
+                        key="tab-padrones"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 8 }}
+                        className={`${styles.tabBodyPadrones}`}
+                      >
+                        <div className={styles.padronesWrap}>
+                          <PadronesForm medicoId={medicoId} />
+                        </div>
+                      </motion.div>
+                    )}
                     {/* === Permisos === */}
                     {tab === "permisos" && (
                       <RequirePermission scope="rbac:gestionar">

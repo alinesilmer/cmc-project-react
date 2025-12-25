@@ -14,6 +14,7 @@ export default function NoticiasPage() {
   const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  // const [tipo, setTipo] = useState<TipoPublicacion | "Todos">("Todos");
 
   useEffect(() => {
     cargarNoticias();
@@ -21,7 +22,8 @@ export default function NoticiasPage() {
 
   const cargarNoticias = async () => {
     try {
-      const data = await listNews();
+      setLoading(true);
+      const data = await listNews({ tipo: "Noticia" });
       const normalized = data.map((n: any) => ({
         ...n,
         fechaCreacion: n.fecha_creacion ?? n.fechaCreacion ?? null,
@@ -29,7 +31,6 @@ export default function NoticiasPage() {
           n.fecha_actualizacion ?? n.fechaActualizacion ?? null,
       }));
       setNoticias(normalized);
-      console.log(noticias);
     } catch (error) {
       console.error("Error al cargar noticias:", error);
     } finally {
@@ -46,6 +47,22 @@ export default function NoticiasPage() {
       />
       <main className={styles.noticiasPage}>
         <div className={styles.container}>
+          {/* filtro por tipo */}
+          {/* <div className={styles.filtersBar}>
+            <label className={styles.filterLabel}>
+              Tipo
+              <select
+                value={tipo}
+                onChange={(e) => setTipo(e.target.value as any)}
+                className={styles.filterSelect}
+              >
+                <option value="Todos">Todos</option>
+                <option value="Noticia">Noticia</option>
+                <option value="Blog">Blog</option>
+              </select>
+            </label>
+          </div> */}
+
           {loading ? (
             <div className={styles.loading}>Cargando noticias...</div>
           ) : noticias.length === 0 ? (
