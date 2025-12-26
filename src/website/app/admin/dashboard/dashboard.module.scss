@@ -132,6 +132,14 @@
     font-size: $font-size-small;
     white-space: pre-wrap;
   }
+  span {
+    font-size: clamp(12px, 0.7vw, 15px);
+    color: $light-blue;
+    background-color: #0a66c2;
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    width: fit-content;
+  }
 }
 
 .noticiaActions {
@@ -288,8 +296,8 @@
 .filtersBar {
   display: flex;
   gap: $spacing-md;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-end;
+  // justify-content: space-between;
   margin-bottom: $spacing-md;
   flex-wrap: wrap;
 }
@@ -315,7 +323,20 @@
   }
 }
 
+// .input,
+.select {
+  width: 100%;
+  height: 40px;
+  border: 1px solid rgba(128, 128, 128, 0.284);
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem;
+
+  background: #fff;
+  font: inherit;
+}
+
 .rightActions {
+  margin-left: auto;
   display: flex;
   gap: $spacing-md;
   align-items: center;
