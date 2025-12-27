@@ -366,7 +366,7 @@ export default function DashboardPage() {
               }`}
               onClick={() => setTab("noticias")}
             >
-              Noticias
+              Publicaciones
             </button>
             <button
               className={`${styles.tab} ${
@@ -413,6 +413,7 @@ export default function DashboardPage() {
                   <option value="Todos">Todos</option>
                   <option value="Noticia">Noticia</option>
                   <option value="Blog">Blog</option>
+                  <option value="Curso">Curso</option>
                 </select>
               </div>
 
@@ -450,7 +451,7 @@ export default function DashboardPage() {
                     }
                   }}
                 >
-                  {showForm ? "Cancelar" : "Nueva Noticia"}
+                  {showForm ? "Cancelar" : "Nuevo"}
                 </Button>
               </div>
             </div>
@@ -521,9 +522,10 @@ export default function DashboardPage() {
                       >
                         <option value="Noticia">Noticia</option>
                         <option value="Blog">Blog</option>
+                        <option value="Curso">Curso</option>
                       </select>
                       <p className={styles.helpText}>
-                        Elegí si esta publicación es una Noticia o un Blog.
+                        Elegí si esta publicación es una Noticia, Blog o Curso.
                       </p>
                     </div>
 
@@ -736,7 +738,7 @@ Párrafo 2 (línea en blanco entre párrafos).
 
             {/* Listado + paginado */}
             <div className={styles.noticias}>
-              <h2>Noticias publicadas</h2>
+              <h2>Pubicaciones</h2>
               {loading ? (
                 <p>Cargando...</p>
               ) : filteredNoticias.length === 0 ? (
