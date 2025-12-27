@@ -43,7 +43,7 @@ export default function RootRoutes() {
         <Route path="/*" element={<WebRoutes />} />
         
             <Route path="/panel/padrones" element={<PadronesPage />} />
-            <Route path="/panel/boletin" element={<Boletin />} />
+         
            
 
         {/* Auth pages for app */}
@@ -94,6 +94,7 @@ export default function RootRoutes() {
               path="/panel/users-manager"
               element={<UsersManagerDashboard />}
             />
+               <Route path="/panel/boletin" element={<Boletin />} />
             <Route path="/panel/config" element={<Config />} />
             <Route path="/panel/help" element={<Help />} />
           </Route>

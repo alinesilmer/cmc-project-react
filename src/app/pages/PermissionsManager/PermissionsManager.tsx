@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import RequirePermission from "../../auth/RequirePermission";
 import s from "./PermissionsManager.module.scss";
 

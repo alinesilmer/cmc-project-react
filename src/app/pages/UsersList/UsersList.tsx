@@ -1,17 +1,16 @@
-"use client";
+"use client"
 
-import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import styles from "./UsersList.module.scss";
-import { getJSON } from "../../lib/http";
-import Button from "../../components/atoms/Button/Button";
-import BackButton from "../../components/atoms/BackButton/BackButton";
-import Modal from "../../components/atoms/Modal/Modal";
+import type React from "react"
+import { useEffect, useMemo, useState } from "react"
+import styles from "./UsersList.module.scss"
+import { getJSON } from "../../lib/http"
+import Button from "../../components/atoms/Button/Button"
+import BackButton from "../../components/atoms/BackButton/BackButton"
+import Modal from "../../components/atoms/Modal/Modal"
+import FilterModal from "../../components/molecules/FilterModal/FilterModal"
 
-import ExcelJS from "exceljs";
-import { saveAs } from "file-saver";
-
-const PAGE_SIZE = 50;
+import ExcelJS from "exceljs"
+import { saveAs } from "file-saver"
 
 const FIELD_MAP: Record<string, string> = {
   name: "NOMBRE",
@@ -29,8 +28,6 @@ const FIELD_MAP: Record<string, string> = {
   tele_particular: "TELE_PARTICULAR",
   celular_particular: "CELULAR_PARTICULAR",
   mail_particular: "MAIL_PARTICULAR",
-
-  // profesionales
   nro_socio: "NRO_SOCIO",
   categoria: "categoria",
   titulo: "titulo",
@@ -40,8 +37,6 @@ const FIELD_MAP: Record<string, string> = {
   fecha_matricula: "FECHA_MATRICULA",
   domicilio_consulta: "DOMICILIO_CONSULTA",
   telefono_consulta: "TELEFONO_CONSULTA",
-
-  // impositivos
   condicion_impositiva: "condicion_impositiva",
   anssal: "ANSSAL",
   cobertura: "COBERTURA",
@@ -51,263 +46,295 @@ const FIELD_MAP: Record<string, string> = {
   vencimiento_cobertura: "VENCIMIENTO_COBERTURA",
   cbu: "cbu",
   observacion: "OBSERVACION",
-};
+}
 
-type MedicoRow = Record<string, any>;
+type MedicoRow = Record<string, any>
 
 function safeText(v: any) {
-  if (v === null || typeof v === "undefined") return "";
-  return String(v);
+  if (v === null || typeof v === "undefined") return ""
+  return String(v)
 }
 
 function startOfDay(d: Date) {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
+  const x = new Date(d)
+  x.setHours(0, 0, 0, 0)
+  return x
 }
+
+function endOfDay(d: Date) {
+  const x = new Date(d)
+  x.setHours(23, 59, 59, 999)
+  return x
+}
+
 function addDays(d: Date, days: number) {
-  const x = new Date(d);
-  x.setDate(x.getDate() + days);
-  return x;
+  const x = new Date(d)
+  x.setDate(x.getDate() + days)
+  return x
 }
+
 function parseDateAny(v: any): Date | null {
-  if (!v) return null;
-  const s = String(v).trim();
-  if (!s || s.startsWith("0000")) return null;
-  const iso = s.length >= 10 ? s.slice(0, 10) : s;
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? null : startOfDay(d);
+  if (!v) return null
+  const s = String(v).trim()
+  if (!s || s.startsWith("0000")) return null
+
+  const iso = s.length >= 10 ? s.slice(0, 10) : s
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime()) ? null : startOfDay(d)
 }
+
 function formatDateES(v: any) {
-  const d = parseDateAny(v);
-  if (!d) return "";
-  return d.toLocaleDateString("es-AR");
+  const d = parseDateAny(v)
+  if (!d) return ""
+  return d.toLocaleDateString("es-AR")
 }
 
 function getValue(row: any, key: string) {
-  if (!row) return "";
-  if (key in row) return row[key];
+  if (!row) return ""
+  if (key in row) return row[key]
 
-  const upper = key.toUpperCase();
-  if (upper in row) return row[upper];
-  const lower = key.toLowerCase();
-  if (lower in row) return row[lower];
+  const upper = key.toUpperCase()
+  if (upper in row) return row[upper]
+  const lower = key.toLowerCase()
+  if (lower in row) return row[lower]
 
-  const mapped = FIELD_MAP[key];
+  const mapped = FIELD_MAP[key]
   if (mapped) {
-    if (mapped in row) return row[mapped];
-    const mappedUpper = mapped.toUpperCase();
-    if (mappedUpper in row) return row[mappedUpper];
-    const mappedLower = mapped.toLowerCase();
-    if (mappedLower in row) return row[mappedLower];
+    if (mapped in row) return row[mapped]
+    const mappedUpper = mapped.toUpperCase()
+    if (mappedUpper in row) return row[mappedUpper]
+    const mappedLower = mapped.toLowerCase()
+    if (mappedLower in row) return row[mappedLower]
   }
 
-  return "";
+  return ""
 }
 
 function normalizeBool(v: any): boolean {
-  if (typeof v === "boolean") return v;
-  if (typeof v === "number") return v !== 0;
+  if (typeof v === "boolean") return v
+  if (typeof v === "number") return v !== 0
   if (typeof v === "string") {
-    const t = v.trim().toUpperCase();
-    return ["1", "S", "SI", "TRUE", "T", "Y", "YES"].includes(t);
+    const t = v.trim().toUpperCase()
+    return ["1", "S", "SI", "TRUE", "T", "Y", "YES"].includes(t)
   }
-  return false;
+  return false
 }
 
 function isActiveRow(row: any): boolean {
-  if (typeof row?.activo !== "undefined") return Boolean(Number(row.activo));
-  const ex = (getValue(row, "existe") ?? "").toString().trim().toUpperCase();
-  return ex === "S";
+  if (typeof row?.activo !== "undefined") return Boolean(Number(row.activo))
+  const ex = (getValue(row, "existe") ?? "").toString().trim().toUpperCase()
+  return ex === "S"
 }
 
 function normalizeAdherente(row: any): boolean | null {
-  const raw = getValue(row, "adherente") ?? getValue(row, "ES_ADHERENTE") ?? getValue(row, "es_adherente");
-  if (raw === null || typeof raw === "undefined" || raw === "") return null;
-  if (typeof raw === "boolean") return raw;
-  if (typeof raw === "number") return Boolean(raw);
+  const raw = getValue(row, "adherente") ?? getValue(row, "ES_ADHERENTE") ?? getValue(row, "es_adherente")
+  if (raw === null || typeof raw === "undefined" || raw === "") return null
+  if (typeof raw === "boolean") return raw
+  if (typeof raw === "number") return Boolean(raw)
   if (typeof raw === "string") {
-    const t = raw.trim().toUpperCase();
-    if (["1", "S", "SI", "TRUE"].includes(t)) return true;
-    if (["0", "N", "NO", "FALSE"].includes(t)) return false;
+    const t = raw.trim().toUpperCase()
+    if (["1", "S", "SI", "TRUE"].includes(t)) return true
+    if (["0", "N", "NO", "FALSE"].includes(t)) return false
   }
-  return null;
+  return null
 }
 
 function isEmptyLike(v: any) {
-  if (v === null || typeof v === "undefined") return true;
-  const s = String(v).trim();
-  return s === "" || s === "0" || s.toUpperCase() === "NULL";
+  if (v === null || typeof v === "undefined") return true
+  const s = String(v).trim()
+  return s === "" || s === "0" || s.toUpperCase() === "NULL"
 }
 
 function includesCI(hay: any, needle: string) {
-  const a = String(hay ?? "").toLowerCase();
-  const b = String(needle ?? "").toLowerCase();
-  return b ? a.includes(b) : true;
+  const a = String(hay ?? "").toLowerCase()
+  const b = String(needle ?? "").toLowerCase()
+  return b ? a.includes(b) : true
 }
 
 async function exportToExcelBW(args: {
-  filename: string;
-  title: string;
-  subtitle?: string;
-  columns: Array<{ key: string; header: string }>;
-  rows: any[];
+  filename: string
+  title: string
+  subtitle?: string
+  columns: Array<{ key: string; header: string }>
+  rows: any[]
+  logoFile?: File | null
 }) {
-  const { filename, title, subtitle, columns, rows } = args;
+  const { filename, title, subtitle, columns, rows, logoFile } = args
 
-  const wb = new ExcelJS.Workbook();
-  wb.creator = "CMC";
-  wb.created = new Date();
+  const wb = new ExcelJS.Workbook()
+  wb.creator = "Colegio Médico de Corrientes"
+  wb.created = new Date()
 
   const ws = wb.addWorksheet("Export", {
-    views: [{ state: "frozen", ySplit: 6 }],
+    views: [{ state: "frozen", ySplit: 7 }],
     pageSetup: { orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
-  });
+  })
 
-  const colCount = Math.max(1, columns.length);
+  const colCount = Math.max(1, columns.length)
+  const logoCols = colCount >= 8 ? 3 : colCount >= 5 ? 2 : 1
 
-  const logoCols = colCount >= 8 ? 3 : colCount >= 5 ? 2 : 1;
+  if (logoFile) {
+    try {
+      const arrayBuffer = await logoFile.arrayBuffer()
+      const ext = logoFile.name.split(".").pop()?.toLowerCase() || "png"
 
-  ws.mergeCells(1, 1, 3, logoCols);
-  const logoCell = ws.getCell(1, 1);
-  logoCell.value = "LOGO";
-  logoCell.alignment = { horizontal: "center", vertical: "middle" };
-  logoCell.font = { bold: true, size: 12, color: { argb: "FF000000" } };
+      const imageId = wb.addImage({
+        buffer: arrayBuffer,
+        extension: ext as any,
+      })
 
-  ws.mergeCells(1, logoCols + 1, 2, colCount);
-  const titleCell = ws.getCell(1, logoCols + 1);
-  titleCell.value = title;
-  titleCell.font = { bold: true, size: 16, color: { argb: "FF000000" } };
-  titleCell.alignment = { horizontal: "center", vertical: "middle" };
-
-  ws.mergeCells(3, logoCols + 1, 3, colCount);
-  const metaCell = ws.getCell(3, logoCols + 1);
-  const meta = `Generado: ${new Date().toLocaleString("es-AR")}${subtitle ? ` · ${subtitle}` : ""}`;
-  metaCell.value = meta;
-  metaCell.font = { size: 10, color: { argb: "FF000000" } };
-  metaCell.alignment = { horizontal: "center", vertical: "middle" };
-
-  ws.getRow(1).height = 28;
-  ws.getRow(2).height = 18;
-  ws.getRow(3).height = 18;
-
-  // const topBorder = {
-  //   top: { style: "thin", color: { argb: "FF000000" } },
-  //   left: { style: "thin", color: { argb: "FF000000" } },
-  //   bottom: { style: "thin", color: { argb: "FF000000" } },
-  //   right: { style: "thin", color: { argb: "FF000000" } },
-  // };
-  // for (let r = 1; r <= 3; r++) {
-  //   for (let c = 1; c <= colCount; c++) {
-  //     ws.getCell(r, c).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFFFFF" } };
-  //   }
-  // }
-
-  ws.getRow(4).height = 8;
-
-  const headerRowIdx = 5;
-  const headerRow = ws.getRow(headerRowIdx);
-  headerRow.values = ["", ...columns.map((c) => c.header)];
-  headerRow.height = 20;
-
-  for (let c = 1; c <= colCount; c++) {
-    const cell = ws.getCell(headerRowIdx, c);
-    cell.font = { bold: true, size: 11, color: { argb: "FF000000" } };
-    cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
-    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF0F0F0" } }; 
+      ws.addImage(imageId, {
+        tl: { col: 0.2, row: 0.2 },
+        ext: { width: 120, height: 120 },
+      })
+    } catch (err) {
+      console.error("Error loading logo:", err)
+    }
   }
 
-  const dataStart = 6;
+  ws.mergeCells(1, 1, 4, logoCols)
+  const logoCell = ws.getCell(1, 1)
+  logoCell.alignment = { horizontal: "center", vertical: "middle" }
+
+  ws.mergeCells(1, logoCols + 1, 2, colCount)
+  const mainTitleCell = ws.getCell(1, logoCols + 1)
+  mainTitleCell.value = "Colegio Médico de Corrientes"
+  mainTitleCell.font = { bold: true, size: 18, color: { argb: "FF0B4F8A" } }
+  mainTitleCell.alignment = { horizontal: "center", vertical: "middle" }
+
+  ws.mergeCells(3, logoCols + 1, 3, colCount)
+  const subtitleCell = ws.getCell(3, logoCols + 1)
+  subtitleCell.value = title
+  subtitleCell.font = { bold: true, size: 14, color: { argb: "FF333333" } }
+  subtitleCell.alignment = { horizontal: "center", vertical: "middle" }
+
+  ws.mergeCells(4, logoCols + 1, 4, colCount)
+  const metaCell = ws.getCell(4, logoCols + 1)
+  const meta = `Generado: ${new Date().toLocaleString("es-AR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  })}${subtitle ? ` · ${subtitle}` : ""}`
+  metaCell.value = meta
+  metaCell.font = { size: 10, color: { argb: "FF666666" }, italic: true }
+  metaCell.alignment = { horizontal: "center", vertical: "middle" }
+
+  ws.getRow(1).height = 32
+  ws.getRow(2).height = 20
+  ws.getRow(3).height = 22
+  ws.getRow(4).height = 18
+  ws.getRow(5).height = 8
+
+  const headerRowIdx = 6
+  const headerRow = ws.getRow(headerRowIdx)
+  headerRow.values = ["", ...columns.map((c) => c.header)]
+  headerRow.height = 24
+
+  for (let c = 1; c <= colCount; c++) {
+    const cell = ws.getCell(headerRowIdx, c)
+    cell.font = { bold: true, size: 11, color: { argb: "FFFFFFFF" } }
+    cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true }
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF0B4F8A" } }
+    cell.border = {
+      top: { style: "thin", color: { argb: "FF999999" } },
+      left: { style: "thin", color: { argb: "FF999999" } },
+      bottom: { style: "thin", color: { argb: "FF999999" } },
+      right: { style: "thin", color: { argb: "FF999999" } },
+    }
+  }
+
+  const dataStart = 7
 
   const normCellValue = (row: any, key: string) => {
-    const v = getValue(row, key);
+    const v = getValue(row, key)
 
-    if (key.startsWith("vencimiento_") || key.startsWith("fecha_")) return formatDateES(v);
+    if (key.startsWith("vencimiento_") || key.startsWith("fecha_")) return formatDateES(v)
+    if (key === "malapraxis") return normalizeBool(v) ? "SI" : "NO"
 
-    if (key === "malapraxis") return normalizeBool(v) ? "SI" : "NO";
-
-    return safeText(v);
-  };
+    return safeText(v)
+  }
 
   rows.forEach((r, i) => {
-    const excelRowIdx = dataStart + i;
-    const vals = columns.map((c) => normCellValue(r, c.key));
-    ws.getRow(excelRowIdx).values = ["", ...vals];
+    const excelRowIdx = dataStart + i
+    const vals = columns.map((c) => normCellValue(r, c.key))
+    ws.getRow(excelRowIdx).values = ["", ...vals]
+    ws.getRow(excelRowIdx).height = 20
 
-    const zebra = i % 2 === 0 ? "FFFFFFFF" : "FFFAFAFA"; 
+    const zebra = i % 2 === 0 ? "FFFFFFFF" : "FFF8F9FA"
     for (let c = 1; c <= colCount; c++) {
-      const cell = ws.getCell(excelRowIdx, c);
-      cell.font = { size: 10, color: { argb: "FF000000" } };
-      cell.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
-      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: zebra } };
+      const cell = ws.getCell(excelRowIdx, c)
+      cell.font = { size: 10, color: { argb: "FF333333" } }
+      cell.alignment = { horizontal: "left", vertical: "middle", wrapText: true }
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: zebra } }
+      cell.border = {
+        top: { style: "thin", color: { argb: "FFE0E0E0" } },
+        left: { style: "thin", color: { argb: "FFE0E0E0" } },
+        bottom: { style: "thin", color: { argb: "FFE0E0E0" } },
+        right: { style: "thin", color: { argb: "FFE0E0E0" } },
+      }
     }
-  });
+  })
 
-  
   columns.forEach((col, idx) => {
-    const c = idx + 1;
-    const headerLen = (col.header ?? "").length;
-    let maxLen = headerLen;
+    const c = idx + 1
+    const headerLen = (col.header ?? "").length
+    let maxLen = headerLen
 
     for (let i = 0; i < Math.min(rows.length, 500); i++) {
-      const v = safeText(normCellValue(rows[i], col.key));
-      maxLen = Math.max(maxLen, v.length);
+      const v = safeText(normCellValue(rows[i], col.key))
+      maxLen = Math.max(maxLen, v.length)
     }
 
-    ws.getColumn(c).width = Math.min(42, Math.max(10, maxLen + 2));
-  });
+    ws.getColumn(c).width = Math.min(50, Math.max(12, maxLen + 3))
+  })
 
-  
   ws.autoFilter = {
     from: { row: headerRowIdx, column: 1 },
     to: { row: headerRowIdx, column: colCount },
-  };
+  }
 
-  const buf = await wb.xlsx.writeBuffer();
+  const buf = await wb.xlsx.writeBuffer()
   saveAs(
     new Blob([buf], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     }),
-    filename
-  );
+    filename,
+  )
 }
 
 function downloadBlob(filename: string, mime: string, content: string) {
-  const blob = new Blob([content], { type: mime });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  const blob = new Blob([content], { type: mime })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
 }
 
 function toCSV(rows: any[], columns: Array<{ key: string; header: string }>) {
-  const headers = columns.map((c) => c.header);
+  const headers = columns.map((c) => c.header)
 
   const escapeCSV = (s: string) => {
-    const needs = /[",\n\r;]/.test(s);
-    const normalized = s.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-    const quoted = normalized.replace(/"/g, '""');
-    return needs ? `"${quoted}"` : quoted;
-  };
+    const needs = /[",\n\r;]/.test(s)
+    const normalized = s.replace(/\r\n/g, "\n").replace(/\r/g, "\n")
+    const quoted = normalized.replace(/"/g, '""')
+    return needs ? `"${quoted}"` : quoted
+  }
 
   const lines = [
     headers.join(";"),
-    ...rows.map((r) =>
-      columns
-        .map((c) => escapeCSV(String(getValue(r, c.key) ?? "")))
-        .join(";")
-    ),
-  ];
+    ...rows.map((r) => columns.map((c) => escapeCSV(String(getValue(r, c.key) ?? ""))).join(";")),
+  ]
 
-  return "\uFEFF" + lines.join("\n");
+  return "\uFEFF" + lines.join("\n")
 }
 
-/** ====== Presets ====== */
-type ExportGroupId = "vencimientos" | "contactabilidad" | "calidad" | "administrativos";
+type ExportGroupId = "vencimientos" | "contactabilidad" | "calidad" | "administrativos"
 type ExportPresetId =
   | "malapraxis_vencida"
   | "malapraxis_por_vencer"
@@ -319,71 +346,115 @@ type ExportPresetId =
   | "datos_incompletos"
   | "sin_cuit_o_cbu"
   | "altas_recientes"
-  | "por_zona";
+  | "por_zona"
 
 type PresetParams = {
-  q?: string;
-  status?: "" | "activo" | "inactivo";
-  adherente?: "" | "si" | "no";
-  provincia?: string;
-  localidad?: string;
+  q?: string
+  status?: "" | "activo" | "inactivo"
+  adherente?: "" | "si" | "no"
+  provincia?: string
+  localidad?: string
+  dias?: number
+  fechaDesde?: string
+  fechaHasta?: string
+  logoUrl?: string
+}
 
-  dias?: number; 
-  fechaDesde?: string; 
-  fechaHasta?: string; 
-};
-
-const GROUPS: Array<{ id: ExportGroupId; title: string;}> = [
-  { id: "vencimientos", title: "Vencimientos / Cumplimiento"},
-  { id: "contactabilidad", title: "Contactabilidad"},
+const GROUPS: Array<{ id: ExportGroupId; title: string }> = [
+  { id: "vencimientos", title: "Vencimientos / Cumplimiento" },
+  { id: "contactabilidad", title: "Contactabilidad" },
   { id: "calidad", title: "Calidad de padrón" },
   { id: "administrativos", title: "Administrativos / Matrícula" },
-];
+]
 
-const PRESETS: Record<
-  ExportPresetId,
-  { group: ExportGroupId; title: string; columns: string[] }
-> = {
-  // A) Vencimientos
+const PRESETS: Record<ExportPresetId, { group: ExportGroupId; title: string; columns: string[] }> = {
   malapraxis_vencida: {
     group: "vencimientos",
     title: "Malapraxis vencida",
-    columns: ["apellido", "nombre_", "documento", "matricula_prov", "mail_particular", "celular_particular", "vencimiento_malapraxis"],
+    columns: [
+      "apellido",
+      "nombre_",
+      "documento",
+      "matricula_prov",
+      "mail_particular",
+      "celular_particular",
+      "vencimiento_malapraxis",
+    ],
   },
   malapraxis_por_vencer: {
     group: "vencimientos",
     title: "Malapraxis por vencer",
-    columns: ["apellido", "nombre_", "documento", "matricula_prov", "mail_particular", "celular_particular", "vencimiento_malapraxis"],
+    columns: [
+      "apellido",
+      "nombre_",
+      "documento",
+      "matricula_prov",
+      "mail_particular",
+      "celular_particular",
+      "vencimiento_malapraxis",
+    ],
   },
   anssal_vencido: {
     group: "vencimientos",
     title: "ANSSAL vencido",
-    columns: ["apellido", "nombre_", "documento", "matricula_prov", "anssal", "vencimiento_anssal", "mail_particular", "celular_particular"],
+    columns: [
+      "apellido",
+      "nombre_",
+      "documento",
+      "matricula_prov",
+      "anssal",
+      "vencimiento_anssal",
+      "mail_particular",
+      "celular_particular",
+    ],
   },
   anssal_por_vencer: {
     group: "vencimientos",
     title: "ANSSAL por vencer",
-    columns: ["apellido", "nombre_", "documento", "matricula_prov", "anssal", "vencimiento_anssal", "mail_particular", "celular_particular"],
+    columns: [
+      "apellido",
+      "nombre_",
+      "documento",
+      "matricula_prov",
+      "anssal",
+      "vencimiento_anssal",
+      "mail_particular",
+      "celular_particular",
+    ],
   },
   cobertura_vencida: {
     group: "vencimientos",
     title: "Cobertura vencida",
-    columns: ["apellido", "nombre_", "documento", "matricula_prov", "cobertura", "vencimiento_cobertura", "mail_particular", "celular_particular"],
+    columns: [
+      "apellido",
+      "nombre_",
+      "documento",
+      "matricula_prov",
+      "cobertura",
+      "vencimiento_cobertura",
+      "mail_particular",
+      "celular_particular",
+    ],
   },
   cobertura_por_vencer: {
     group: "vencimientos",
     title: "Cobertura por vencer",
-    columns: ["apellido", "nombre_", "documento", "matricula_prov", "cobertura", "vencimiento_cobertura", "mail_particular", "celular_particular"],
+    columns: [
+      "apellido",
+      "nombre_",
+      "documento",
+      "matricula_prov",
+      "cobertura",
+      "vencimiento_cobertura",
+      "mail_particular",
+      "celular_particular",
+    ],
   },
-
-  // B) Contactabilidad
   contactables: {
     group: "contactabilidad",
     title: "Contactables (mail o celular)",
     columns: ["apellido", "nombre_", "nro_socio", "mail_particular", "celular_particular", "provincia", "localidad"],
   },
-
-  // C) Calidad
   datos_incompletos: {
     group: "calidad",
     title: "Datos críticos incompletos",
@@ -394,29 +465,47 @@ const PRESETS: Record<
     title: "Sin CUIT o sin CBU",
     columns: ["apellido", "nombre_", "documento", "cuit", "cbu", "condicion_impositiva"],
   },
-
-  // D) Administrativos
   altas_recientes: {
     group: "administrativos",
     title: "Altas recientes (por fecha_matricula)",
-    columns: ["apellido", "nombre_", "documento", "matricula_prov", "fecha_matricula", "categoria", "provincia", "localidad"],
+    columns: [
+      "apellido",
+      "nombre_",
+      "documento",
+      "matricula_prov",
+      "fecha_matricula",
+      "categoria",
+      "provincia",
+      "localidad",
+    ],
   },
   por_zona: {
     group: "administrativos",
     title: "Por zona (Provincia/Localidad)",
-    columns: ["apellido", "nombre_", "documento", "matricula_prov", "mail_particular", "celular_particular", "provincia", "localidad", "domicilio_particular", "codigo_postal"],
+    columns: [
+      "apellido",
+      "nombre_",
+      "documento",
+      "matricula_prov",
+      "mail_particular",
+      "celular_particular",
+      "provincia",
+      "localidad",
+      "domicilio_particular",
+      "codigo_postal",
+    ],
   },
-};
+}
 
 function presetColumns(presetId: ExportPresetId) {
   return PRESETS[presetId].columns.map((k) => ({
     key: k,
     header: FIELD_MAP[k] ?? k,
-  }));
+  }))
 }
 
 function applyExtraFilters(row: any, says: PresetParams) {
-  const q = (says.q ?? "").trim();
+  const q = (says.q ?? "").trim()
   if (q) {
     const ok =
       includesCI(getValue(row, "apellido"), q) ||
@@ -425,149 +514,144 @@ function applyExtraFilters(row: any, says: PresetParams) {
       includesCI(getValue(row, "mail_particular"), q) ||
       includesCI(getValue(row, "documento"), q) ||
       includesCI(getValue(row, "matricula_prov"), q) ||
-      includesCI(getValue(row, "nro_socio"), q);
-    if (!ok) return false;
+      includesCI(getValue(row, "nro_socio"), q)
+    if (!ok) return false
   }
 
   if (says.status) {
-    const st = isActiveRow(row) ? "activo" : "inactivo";
-    if (st !== says.status) return false;
+    const st = isActiveRow(row) ? "activo" : "inactivo"
+    if (st !== says.status) return false
   }
 
   if (says.adherente) {
-    const a = normalizeAdherente(row);
-    if (says.adherente === "si" && a !== true) return false;
-    if (says.adherente === "no" && a !== false) return false;
+    const a = normalizeAdherente(row)
+    if (says.adherente === "si" && a !== true) return false
+    if (says.adherente === "no" && a !== false) return false
   }
 
-  const prov = (says.provincia ?? "").trim();
+  const prov = (says.provincia ?? "").trim()
   if (prov) {
-    if (!includesCI(getValue(row, "provincia"), prov)) return false;
+    if (!includesCI(getValue(row, "provincia"), prov)) return false
   }
 
-  const loc = (says.localidad ?? "").trim();
+  const loc = (says.localidad ?? "").trim()
   if (loc) {
-    if (!includesCI(getValue(row, "localidad"), loc)) return false;
+    if (!includesCI(getValue(row, "localidad"), loc)) return false
   }
 
-  return true;
+  return true
 }
 
 function baseFilterForPreset(presetId: ExportPresetId, row: any, params: PresetParams) {
-  const today = startOfDay(new Date());
+  const today = startOfDay(new Date())
 
-  const dateBeforeToday = (key: string) => {
-    const d = parseDateAny(getValue(row, key));
-    return d ? d.getTime() < today.getTime() : false;
-  };
+  const hasCustomRange = Boolean(params.fechaDesde?.trim()) || Boolean(params.fechaHasta?.trim())
+  const from = params.fechaDesde?.trim() ? startOfDay(new Date(params.fechaDesde)) : today
+  const to = params.fechaHasta?.trim()
+    ? endOfDay(new Date(params.fechaHasta))
+    : endOfDay(addDays(today, Math.max(1, Number(params.dias ?? 30))))
 
-  const dateBetween = (key: string, from: Date, to: Date) => {
-    const d = parseDateAny(getValue(row, key));
-    if (!d) return false;
-    return d.getTime() >= from.getTime() && d.getTime() <= to.getTime();
-  };
+  const dateBefore = (key: string, cutoff: Date) => {
+    const d = parseDateAny(getValue(row, key))
+    return d ? d.getTime() < cutoff.getTime() : false
+  }
+
+  const dateBetween = (key: string, a: Date, b: Date) => {
+    const d = parseDateAny(getValue(row, key))
+    if (!d) return false
+    return d.getTime() >= a.getTime() && d.getTime() <= b.getTime()
+  }
 
   switch (presetId) {
     case "malapraxis_vencida": {
-      const mp = normalizeBool(getValue(row, "malapraxis"));
-      return mp && dateBeforeToday("vencimiento_malapraxis");
+      const mp = normalizeBool(getValue(row, "malapraxis"))
+      const cutoff = params.fechaDesde?.trim() ? from : today
+      return mp && dateBefore("vencimiento_malapraxis", cutoff)
     }
     case "malapraxis_por_vencer": {
-      const mp = normalizeBool(getValue(row, "malapraxis"));
-      const n = Math.max(1, Number(params.dias ?? 30));
-      return mp && dateBetween("vencimiento_malapraxis", today, addDays(today, n));
+      const mp = normalizeBool(getValue(row, "malapraxis"))
+      return mp && dateBetween("vencimiento_malapraxis", hasCustomRange ? from : today, hasCustomRange ? to : to)
     }
-
-    case "anssal_vencido":
-      return dateBeforeToday("vencimiento_anssal");
-
+    case "anssal_vencido": {
+      const cutoff = params.fechaDesde?.trim() ? from : today
+      return dateBefore("vencimiento_anssal", cutoff)
+    }
     case "anssal_por_vencer": {
-      const n = Math.max(1, Number(params.dias ?? 30));
-      return dateBetween("vencimiento_anssal", today, addDays(today, n));
+      return dateBetween("vencimiento_anssal", hasCustomRange ? from : today, hasCustomRange ? to : to)
     }
-
-    case "cobertura_vencida":
-      return dateBeforeToday("vencimiento_cobertura");
-
+    case "cobertura_vencida": {
+      const cutoff = params.fechaDesde?.trim() ? from : today
+      return dateBefore("vencimiento_cobertura", cutoff)
+    }
     case "cobertura_por_vencer": {
-      const n = Math.max(1, Number(params.dias ?? 30));
-      return dateBetween("vencimiento_cobertura", today, addDays(today, n));
+      return dateBetween("vencimiento_cobertura", hasCustomRange ? from : today, hasCustomRange ? to : to)
     }
-
     case "contactables": {
-      const mail = String(getValue(row, "mail_particular") ?? "").trim();
-      const cel = String(getValue(row, "celular_particular") ?? "").trim();
-      return Boolean(mail) || Boolean(cel);
+      const mail = String(getValue(row, "mail_particular") ?? "").trim()
+      const cel = String(getValue(row, "celular_particular") ?? "").trim()
+      return Boolean(mail) || Boolean(cel)
     }
-
     case "datos_incompletos": {
       const missing =
         isEmptyLike(getValue(row, "documento")) ||
         isEmptyLike(getValue(row, "apellido")) ||
         isEmptyLike(getValue(row, "nombre_")) ||
         isEmptyLike(getValue(row, "provincia")) ||
-        isEmptyLike(getValue(row, "localidad"));
-      return missing;
+        isEmptyLike(getValue(row, "localidad"))
+      return missing
     }
-
     case "sin_cuit_o_cbu": {
-      return isEmptyLike(getValue(row, "cuit")) || isEmptyLike(getValue(row, "cbu"));
+      return isEmptyLike(getValue(row, "cuit")) || isEmptyLike(getValue(row, "cbu"))
     }
-
     case "altas_recientes": {
-      const fd = params.fechaDesde?.trim();
-      const fh = params.fechaHasta?.trim();
-      const from = fd ? startOfDay(new Date(fd)) : addDays(today, -30);
-      const to = fh ? startOfDay(new Date(fh)) : today;
-      return dateBetween("fecha_matricula", from, to);
+      const a = params.fechaDesde?.trim() ? from : addDays(today, -30)
+      const b = params.fechaHasta?.trim() ? to : endOfDay(today)
+      return dateBetween("fecha_matricula", a, b)
     }
-
     case "por_zona":
-      return true;
-
+      return true
     default:
-      return true;
+      return true
   }
 }
 
 function sortForPreset(presetId: ExportPresetId, rows: any[]) {
   const dateKeyAsc = (key: string) => (a: any, b: any) => {
-    const da = parseDateAny(getValue(a, key));
-    const db = parseDateAny(getValue(b, key));
-    if (!da && !db) return 0;
-    if (!da) return 1;
-    if (!db) return -1;
-    return da.getTime() - db.getTime();
-  };
+    const da = parseDateAny(getValue(a, key))
+    const db = parseDateAny(getValue(b, key))
+    if (!da && !db) return 0
+    if (!da) return 1
+    if (!db) return -1
+    return da.getTime() - db.getTime()
+  }
 
   const textAsc = (key: string) => (a: any, b: any) => {
-    const aa = String(getValue(a, key) ?? "").toLowerCase();
-    const bb = String(getValue(b, key) ?? "").toLowerCase();
-    return aa.localeCompare(bb, "es");
-  };
+    const aa = String(getValue(a, key) ?? "").toLowerCase()
+    const bb = String(getValue(b, key) ?? "").toLowerCase()
+    return aa.localeCompare(bb, "es")
+  }
 
   switch (presetId) {
     case "malapraxis_vencida":
     case "malapraxis_por_vencer":
-      return rows.sort(dateKeyAsc("vencimiento_malapraxis"));
+      return rows.sort(dateKeyAsc("vencimiento_malapraxis"))
     case "anssal_vencido":
     case "anssal_por_vencer":
-      return rows.sort(dateKeyAsc("vencimiento_anssal"));
+      return rows.sort(dateKeyAsc("vencimiento_anssal"))
     case "cobertura_vencida":
     case "cobertura_por_vencer":
-      return rows.sort(dateKeyAsc("vencimiento_cobertura"));
+      return rows.sort(dateKeyAsc("vencimiento_cobertura"))
     case "altas_recientes":
-      return rows.sort(dateKeyAsc("fecha_matricula"));
+      return rows.sort(dateKeyAsc("fecha_matricula"))
     default:
-      return rows.sort(textAsc("apellido"));
+      return rows.sort(textAsc("apellido"))
   }
 }
 
 function toUserRow(m: any) {
-  const status = isActiveRow(m) ? "activo" : "inactivo";
-  const a = normalizeAdherente(m);
-
-  const os = (m?.obra_social ?? m?.OBRA_SOCIAL ?? "").toString().trim();
+  const status = isActiveRow(m) ? "activo" : "inactivo"
+  const a = normalizeAdherente(m)
+  const os = (m?.obra_social ?? m?.OBRA_SOCIAL ?? "").toString().trim()
 
   return {
     id: m?.ID ?? m?.id ?? m?.NRO_SOCIO ?? Math.random().toString(36).slice(2),
@@ -580,28 +664,70 @@ function toUserRow(m: any) {
     matriculaProv: m?.MATRICULA_PROV ?? m?.matricula_prov ?? "—",
     adherente: a,
     obraSocial: os || "—",
-  };
+  }
 }
-type UserRow = ReturnType<typeof toUserRow>;
+
+type UserRow = ReturnType<typeof toUserRow>
+
+type FilterSelection = {
+  columns: string[]
+  vencimientos: {
+    malapraxisVencida: boolean
+    malapraxisPorVencer: boolean
+    anssalVencido: boolean
+    anssalPorVencer: boolean
+    coberturaVencida: boolean
+    coberturaPorVencer: boolean
+    fechaDesde?: string
+    fechaHasta?: string
+    dias: number
+  }
+  otros: {
+    sexo: string
+    estado: string
+    adherente: string
+    provincia: string
+    localidad: string
+    especialidad: string
+    categoria: string
+    condicionImpositiva: string
+    fechaIngresoDesde: string
+    fechaIngresoHasta: string
+  }
+}
+
+const AVAILABLE_COLUMNS = [
+  { key: "apellido", label: "Apellido" },
+  { key: "nombre_", label: "Nombre" },
+  { key: "sexo", label: "Sexo" },
+  { key: "documento", label: "Documento" },
+  { key: "mail_particular", label: "Mail" },
+  { key: "tele_particular", label: "Teléfono" },
+  { key: "celular_particular", label: "Celular" },
+  { key: "matricula_prov", label: "Matrícula Provincial" },
+  { key: "matricula_nac", label: "Matrícula Nacional" },
+  { key: "domicilio_consulta", label: "Domicilio Consultorio" },
+  { key: "telefono_consulta", label: "Teléfono Consultorio" },
+  { key: "provincia", label: "Provincia" },
+  { key: "localidad", label: "Localidad" },
+  { key: "categoria", label: "Categoría" },
+  { key: "condicion_impositiva", label: "Condición Impositiva" },
+]
 
 const UsersList: React.FC = () => {
-  const navigate = useNavigate();
+  const [users, setUsers] = useState<UserRow[]>([])
+  const [rawUsers, setRawUsers] = useState<MedicoRow[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+  const [searchTerm, setSearchTerm] = useState("")
 
-  const [users, setUsers] = useState<UserRow[]>([]);
-  const [rawUsers, setRawUsers] = useState<MedicoRow[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [error, setError] = useState<string | null>(null)
 
-  const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState(1);
-  const [error, setError] = useState<string | null>(null);
+  const [isExportOpen, setIsExportOpen] = useState(false)
+  const [exportLoading, setExportLoading] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
 
-  const [isExportOpen, setIsExportOpen] = useState(false);
-  const [exportLoading, setExportLoading] = useState(false);
-  const [exportError, setExportError] = useState<string | null>(null);
-
-  const [selectedGroup, setSelectedGroup] = useState<ExportGroupId | null>(null);
-  const [selectedPreset, setSelectedPreset] = useState<ExportPresetId | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<ExportGroupId | null>(null)
+  const [selectedPreset, setSelectedPreset] = useState<ExportPresetId | null>(null)
   const [presetParams, setPresetParams] = useState<PresetParams>({
     dias: 30,
     q: "",
@@ -611,11 +737,65 @@ const UsersList: React.FC = () => {
     localidad: "",
     fechaDesde: "",
     fechaHasta: "",
-  });
+    logoUrl: "https://example.com/logo.png",
+  })
+
+  const [filters, setFilters] = useState<FilterSelection>({
+    columns: ["apellido", "nombre_", "documento", "mail_particular"],
+    vencimientos: {
+      malapraxisVencida: false,
+      malapraxisPorVencer: false,
+      anssalVencido: false,
+      anssalPorVencer: false,
+      coberturaVencida: false,
+      coberturaPorVencer: false,
+      dias: 30,
+    },
+    otros: {
+      sexo: "",
+      estado: "",
+      adherente: "",
+      provincia: "",
+      localidad: "",
+      especialidad: "",
+      categoria: "",
+      condicionImpositiva: "",
+      fechaIngresoDesde: "",
+      fechaIngresoHasta: "",
+    },
+  })
+
+  const resetFilters = () => {
+    setFilters({
+      columns: ["apellido", "nombre_", "documento", "mail_particular"],
+      vencimientos: {
+        malapraxisVencida: false,
+        malapraxisPorVencer: false,
+        anssalVencido: false,
+        anssalPorVencer: false,
+        coberturaVencida: false,
+        coberturaPorVencer: false,
+        dias: 30,
+      },
+      otros: {
+        sexo: "",
+        estado: "",
+        adherente: "",
+        provincia: "",
+        localidad: "",
+        especialidad: "",
+        categoria: "",
+        condicionImpositiva: "",
+        fechaIngresoDesde: "",
+        fechaIngresoHasta: "",
+      },
+    })
+    setExportError(null)
+  }
 
   const resetExportWizard = () => {
-    setSelectedGroup(null);
-    setSelectedPreset(null);
+    setSelectedGroup(null)
+    setSelectedPreset(null)
     setPresetParams({
       dias: 30,
       q: "",
@@ -625,536 +805,359 @@ const UsersList: React.FC = () => {
       localidad: "",
       fechaDesde: "",
       fechaHasta: "",
-    });
-    setExportError(null);
-  };
+      logoUrl: "https://example.com/logo.png",
+    })
+    setExportError(null)
+  }
 
   useEffect(() => {
-    let ignore = false;
+    let ignore = false
 
     async function load() {
-      setLoading(true);
-      setError(null);
+      setLoading(true)
+      setError(null)
 
       try {
-        const skip = (page - 1) * PAGE_SIZE;
-        const params = new URLSearchParams();
-        params.set("limit", PAGE_SIZE.toString());
-        params.set("skip", skip.toString());
+        const data = await getJSON<MedicoRow[]>("/api/medicos")
 
-        const q = searchTerm.trim();
-        if (q) params.set("q", q);
+        if (ignore) return
 
-        const data = await getJSON<MedicoRow[]>(`/api/medicos?${params.toString()}`);
-        const raw = data ?? [];
-        const items = raw.map(toUserRow);
-
-        if (!ignore) {
-          setRawUsers(raw);
-          setUsers(items);
-          setHasMore(items.length === PAGE_SIZE);
-        }
-      } catch (e: any) {
-        console.error(e);
-        if (!ignore) {
-          setRawUsers([]);
-          setUsers([]);
-          setError("Error al cargar usuarios");
-          setHasMore(false);
-        }
+        setRawUsers(data)
+        setUsers(data.map(toUserRow))
+      } catch (err: any) {
+        if (ignore) return
+        setError(err?.message || "Error al cargar los datos")
       } finally {
-        if (!ignore) setLoading(false);
+        if (!ignore) setLoading(false)
       }
     }
 
-    load();
+    load()
     return () => {
-      ignore = true;
-    };
-  }, [page, searchTerm]);
-
-  const filteredUsers = users;
-
-  const activeUsers = useMemo(() => users.filter((u) => u.status === "activo").length, [users]);
-  const inactiveUsers = useMemo(() => users.filter((u) => u.status === "inactivo").length, [users]);
-
-  const exportExcelCurrentPageBW = async () => {
-    try {
-      setExportLoading(true);
-      setExportError(null);
-
-      const cols = [
-        { key: "apellido", header: FIELD_MAP.apellido ?? "apellido" },
-        { key: "nombre_", header: FIELD_MAP.nombre_ ?? "nombre_" },
-        { key: "documento", header: FIELD_MAP.documento ?? "DOCUMENTO" },
-        { key: "nro_socio", header: FIELD_MAP.nro_socio ?? "NRO_SOCIO" },
-        { key: "mail_particular", header: FIELD_MAP.mail_particular ?? "MAIL_PARTICULAR" },
-        { key: "celular_particular", header: FIELD_MAP.celular_particular ?? "CELULAR_PARTICULAR" },
-        { key: "provincia", header: FIELD_MAP.provincia ?? "PROVINCIA" },
-        { key: "localidad", header: FIELD_MAP.localidad ?? "localidad" },
-      ];
-
-      await exportToExcelBW({
-        filename: `usuarios_pagina_${page}.xlsx`,
-        title: "Listado de Usuarios (Página)",
-        subtitle: `Página ${page}`,
-        columns: cols,
-        rows: rawUsers,
-      });
-    } catch (e) {
-      console.error(e);
-      setExportError("No se pudo generar el Excel (página).");
-    } finally {
-      setExportLoading(false);
+      ignore = true
     }
-  };
+  }, [])
 
-  const exportCSVCurrentPage = () => {
-    const cols = [
-      { key: "apellido", header: FIELD_MAP.apellido ?? "apellido" },
-      { key: "nombre_", header: FIELD_MAP.nombre_ ?? "nombre_" },
-      { key: "documento", header: FIELD_MAP.documento ?? "DOCUMENTO" },
-      { key: "nro_socio", header: FIELD_MAP.nro_socio ?? "NRO_SOCIO" },
-      { key: "mail_particular", header: FIELD_MAP.mail_particular ?? "MAIL_PARTICULAR" },
-      { key: "celular_particular", header: FIELD_MAP.celular_particular ?? "CELULAR_PARTICULAR" },
-      { key: "provincia", header: FIELD_MAP.provincia ?? "PROVINCIA" },
-      { key: "localidad", header: FIELD_MAP.localidad ?? "localidad" },
-    ];
-    const csv = toCSV(rawUsers, cols);
-    downloadBlob(`usuarios_pagina_${page}.csv`, "text/csv;charset=utf-8", csv);
-  };
+  const filteredUsers = useMemo(() => {
+    if (!searchTerm.trim()) return users
+    const s = searchTerm.toLowerCase()
+    return users.filter(
+      (u) =>
+        u.name.toLowerCase().includes(s) ||
+        u.email.toLowerCase().includes(s) ||
+        String(u.nro_socio ?? "")
+          .toLowerCase()
+          .includes(s) ||
+        u.matriculaProv.toLowerCase().includes(s),
+    )
+  }, [users, searchTerm])
 
-  const fetchAllForPreset = async () => {
-    const params = new URLSearchParams();
-    params.set("limit", "100000");
-    params.set("skip", "0");
+  const visibleUsers = filteredUsers
 
-    const data = await getJSON<MedicoRow[]>(`/api/medicos?${params.toString()}`);
-    return data ?? [];
-  };
+  const handleExportWithFilters = async (format: "xlsx" | "csv", logoFile: File | null) => {
+    if (filters.columns.length === 0) {
+      setExportError("Debe seleccionar al menos una columna para exportar")
+      return
+    }
 
-  const exportPresetExcel = async () => {
-    if (!selectedPreset) return;
-
-    setExportLoading(true);
-    setExportError(null);
+    setExportLoading(true)
+    setExportError(null)
 
     try {
-      const all = await fetchAllForPreset();
+      const today = startOfDay(new Date())
 
-      const filtered = all
-        .filter((r) => baseFilterForPreset(selectedPreset, r, presetParams))
-        .filter((r) => applyExtraFilters(r, presetParams));
+      const hasCustomRange =
+        Boolean(filters.vencimientos.fechaDesde?.trim()) || Boolean(filters.vencimientos.fechaHasta?.trim())
+      const from = filters.vencimientos.fechaDesde?.trim()
+        ? startOfDay(new Date(filters.vencimientos.fechaDesde))
+        : today
+      const to = filters.vencimientos.fechaHasta?.trim()
+        ? endOfDay(new Date(filters.vencimientos.fechaHasta))
+        : endOfDay(addDays(today, Math.max(1, Number(filters.vencimientos.dias ?? 30))))
 
-      const sorted = sortForPreset(selectedPreset, filtered);
+      const filtered = rawUsers.filter((row) => {
+        if (filters.vencimientos.malapraxisVencida) {
+          const mp = normalizeBool(getValue(row, "malapraxis"))
+          const d = parseDateAny(getValue(row, "vencimiento_malapraxis"))
+          const cutoff = filters.vencimientos.fechaDesde?.trim() ? from : today
+          if (!mp || !d || d.getTime() >= cutoff.getTime()) return false
+        }
 
-      const cols = presetColumns(selectedPreset);
-      const preset = PRESETS[selectedPreset];
+        if (filters.vencimientos.malapraxisPorVencer) {
+          const mp = normalizeBool(getValue(row, "malapraxis"))
+          const d = parseDateAny(getValue(row, "vencimiento_malapraxis"))
+          const a = hasCustomRange ? from : today
+          const b = hasCustomRange ? to : to
+          if (!mp || !d || d.getTime() < a.getTime() || d.getTime() > b.getTime()) return false
+        }
 
-      const subtitleParts: string[] = [];
-      if (selectedPreset.endsWith("por_vencer")) subtitleParts.push(`N=${presetParams.dias ?? 30} días`);
-      if (selectedPreset === "altas_recientes") {
-        if (presetParams.fechaDesde) subtitleParts.push(`Desde ${formatDateES(presetParams.fechaDesde)}`);
-        if (presetParams.fechaHasta) subtitleParts.push(`Hasta ${formatDateES(presetParams.fechaHasta)}`);
+        if (filters.vencimientos.anssalVencido) {
+          const d = parseDateAny(getValue(row, "vencimiento_anssal"))
+          const cutoff = filters.vencimientos.fechaDesde?.trim() ? from : today
+          if (!d || d.getTime() >= cutoff.getTime()) return false
+        }
+
+        if (filters.vencimientos.anssalPorVencer) {
+          const d = parseDateAny(getValue(row, "vencimiento_anssal"))
+          const a = hasCustomRange ? from : today
+          const b = hasCustomRange ? to : to
+          if (!d || d.getTime() < a.getTime() || d.getTime() > b.getTime()) return false
+        }
+
+        if (filters.vencimientos.coberturaVencida) {
+          const d = parseDateAny(getValue(row, "vencimiento_cobertura"))
+          const cutoff = filters.vencimientos.fechaDesde?.trim() ? from : today
+          if (!d || d.getTime() >= cutoff.getTime()) return false
+        }
+
+        if (filters.vencimientos.coberturaPorVencer) {
+          const d = parseDateAny(getValue(row, "vencimiento_cobertura"))
+          const a = hasCustomRange ? from : today
+          const b = hasCustomRange ? to : to
+          if (!d || d.getTime() < a.getTime() || d.getTime() > b.getTime()) return false
+        }
+
+        if (filters.otros.estado) {
+          const st = isActiveRow(row) ? "activo" : "inactivo"
+          if (st !== filters.otros.estado) return false
+        }
+
+        if (filters.otros.adherente) {
+          const a = normalizeAdherente(row)
+          if (filters.otros.adherente === "si" && a !== true) return false
+          if (filters.otros.adherente === "no" && a !== false) return false
+        }
+
+        if (filters.otros.provincia) {
+          if (!includesCI(getValue(row, "provincia"), filters.otros.provincia)) return false
+        }
+
+        if (filters.otros.localidad) {
+          if (!includesCI(getValue(row, "localidad"), filters.otros.localidad)) return false
+        }
+
+        if (filters.otros.sexo) {
+          if (!includesCI(getValue(row, "sexo"), filters.otros.sexo)) return false
+        }
+
+        if (filters.otros.categoria) {
+          if (!includesCI(getValue(row, "categoria"), filters.otros.categoria)) return false
+        }
+
+        if (filters.otros.condicionImpositiva) {
+          if (!includesCI(getValue(row, "condicion_impositiva"), filters.otros.condicionImpositiva)) return false
+        }
+
+        if (filters.otros.fechaIngresoDesde) {
+          const d = parseDateAny(getValue(row, "fecha_ingreso"))
+          const f = startOfDay(new Date(filters.otros.fechaIngresoDesde))
+          if (!d || d.getTime() < f.getTime()) return false
+        }
+
+        if (filters.otros.fechaIngresoHasta) {
+          const d = parseDateAny(getValue(row, "fecha_ingreso"))
+          const t = endOfDay(new Date(filters.otros.fechaIngresoHasta))
+          if (!d || d.getTime() > t.getTime()) return false
+        }
+
+        return true
+      })
+
+      if (filtered.length === 0) {
+        setExportError("No hay registros que coincidan con los filtros seleccionados")
+        setExportLoading(false)
+        return
       }
-      if (presetParams.provincia) subtitleParts.push(`Provincia: ${presetParams.provincia}`);
-      if (presetParams.localidad) subtitleParts.push(`Localidad: ${presetParams.localidad}`);
-      if (presetParams.status) subtitleParts.push(`Estado: ${presetParams.status}`);
-      if (presetParams.adherente) subtitleParts.push(`Adherente: ${presetParams.adherente}`);
 
-      const subtitle = subtitleParts.length ? subtitleParts.join(" · ") : undefined;
+      const cols = filters.columns.map((k) => ({
+        key: k,
+        header: FIELD_MAP[k] ?? AVAILABLE_COLUMNS.find((c) => c.key === k)?.label ?? k,
+      }))
 
-      const ymd = new Date().toISOString().slice(0, 10);
-      await exportToExcelBW({
-        filename: `${selectedPreset}_${ymd}.xlsx`,
-        title: preset.title,
-        subtitle,
-        columns: cols,
-        rows: sorted,
-      });
-    } catch (e: any) {
-      console.error(e);
-      setExportError("No se pudo descargar el Excel. Revisá el endpoint /api/medicos y los campos.");
+      const fname = `export_${new Date().toISOString().slice(0, 10)}`
+
+      if (format === "xlsx") {
+        await exportToExcelBW({
+          filename: `${fname}.xlsx`,
+          title: "Listado de Médicos",
+          subtitle: `${filtered.length} registro${filtered.length !== 1 ? "s" : ""}`,
+          columns: cols,
+          rows: filtered,
+          logoFile: logoFile,
+        })
+      } else {
+        const csv = toCSV(filtered, cols)
+        downloadBlob(`${fname}.csv`, "text/csv;charset=utf-8", csv)
+      }
+
+      setIsExportOpen(false)
+      resetFilters()
+    } catch (err: any) {
+      setExportError(err?.message || "Error al exportar")
     } finally {
-      setExportLoading(false);
+      setExportLoading(false)
     }
-  };
+  }
 
-  const exportPresetCSV = async () => {
-    if (!selectedPreset) return;
-    setExportLoading(true);
-    setExportError(null);
+  const handleExportPreset = async (format: "xlsx" | "csv") => {
+    if (!selectedPreset) {
+      setExportError("Seleccione un preset")
+      return
+    }
+
+    setExportLoading(true)
+    setExportError(null)
 
     try {
-      const all = await fetchAllForPreset();
+      const preset = PRESETS[selectedPreset]
+      const filtered = rawUsers.filter((r) => {
+        if (!baseFilterForPreset(selectedPreset, r, presetParams)) return false
+        if (!applyExtraFilters(r, presetParams)) return false
+        return true
+      })
 
-      const filtered = all
-        .filter((r) => baseFilterForPreset(selectedPreset, r, presetParams))
-        .filter((r) => applyExtraFilters(r, presetParams));
+      const sorted = sortForPreset(selectedPreset, filtered)
 
-      const sorted = sortForPreset(selectedPreset, filtered);
+      if (sorted.length === 0) {
+        setExportError("No hay registros que coincidan con los filtros seleccionados")
+        setExportLoading(false)
+        return
+      }
 
-      const cols = presetColumns(selectedPreset);
-      const csv = toCSV(sorted, cols);
-      downloadBlob(`${selectedPreset}.csv`, "text/csv;charset=utf-8", csv);
-    } catch (e) {
-      console.error(e);
-      setExportError("No se pudo descargar el CSV.");
+      const cols = presetColumns(selectedPreset)
+      const fname = `${selectedPreset}_${new Date().toISOString().slice(0, 10)}`
+
+      if (format === "xlsx") {
+        await exportToExcelBW({
+          filename: `${fname}.xlsx`,
+          title: preset.title,
+          subtitle: `${sorted.length} registro${sorted.length !== 1 ? "s" : ""}`,
+          columns: cols,
+          rows: sorted,
+          logoFile: null,
+        })
+      } else {
+        const csv = toCSV(sorted, cols)
+        downloadBlob(`${fname}.csv`, "text/csv;charset=utf-8", csv)
+      }
+
+      setIsExportOpen(false)
+      resetExportWizard()
+    } catch (err: any) {
+      setExportError(err?.message || "Error al exportar")
     } finally {
-      setExportLoading(false);
+      setExportLoading(false)
     }
-  };
+  }
 
-  const presetsForGroup = useMemo(() => {
-    if (!selectedGroup) return [];
-    return (Object.keys(PRESETS) as ExportPresetId[]).filter((id) => PRESETS[id].group === selectedGroup);
-  }, [selectedGroup]);
+  if (loading) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.emptyState}>
+          <p>Cargando usuarios...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.emptyState}>
+          <p>Error: {error}</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className={styles.container}>
-      <BackButton />
-
       <div className={styles.header}>
-        <h1 className={styles.title}>Listado de Usuarios</h1>
-
         <div>
-          <Button
-            className={styles.backButton}
-            variant="third"
-            style={{ marginLeft: 8 }}
-            title="Filtrar y descargar"
-            onClick={() => {
-              resetExportWizard();
-              setIsExportOpen(true);
-            }}
-          >
-            Filtrar y Descargar
-          </Button>
-
-          <Button className={styles.backButton} onClick={() => navigate("/panel/register-socio")} style={{ marginLeft: 8 }} title="Crear socio (médico)">
-            + Agregar socio
-          </Button>
+          <h1 className={styles.title}>Usuarios</h1>
+          <p className={styles.subtitle}>Gestión de médicos asociados</p>
+        </div>
+        <div className={styles.headerActions}>
+          <BackButton />
+        
         </div>
       </div>
 
       <div className={styles.statsGrid}>
         <div className={styles.statCard}>
-          <span className={styles.statValue}>{users.length}</span>
-          <span className={styles.statLabel}>Total Usuarios (página)</span>
+          <div className={styles.statValue}>{users.length}</div>
+          <div className={styles.statLabel}>Total de usuarios</div>
         </div>
         <div className={styles.statCard}>
-          <span className={styles.statValue}>{activeUsers}</span>
-          <span className={styles.statLabel}>Activos</span>
+          <div className={styles.statValue}>{users.filter((u) => u.status === "activo").length}</div>
+          <div className={styles.statLabel}>Activos</div>
         </div>
         <div className={styles.statCard}>
-          <span className={styles.statValue}>{inactiveUsers}</span>
-          <span className={styles.statLabel}>Inactivos</span>
+          <div className={styles.statValue}>{filteredUsers.length}</div>
+          <div className={styles.statLabel}>Filtrados</div>
         </div>
       </div>
 
       <div className={styles.searchBar}>
         <input
           type="text"
-          placeholder="Buscar por nombre o email..."
-          value={searchTerm}
-          onChange={(e) => {
-            setPage(1);
-            setSearchTerm(e.target.value);
-          }}
           className={styles.searchInput}
+          placeholder="Buscar por nombre, email, matrícula o número de socio..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
 
-      <div className={styles.tableContainer}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Nro Socio</th>
-              <th>Nombre</th>
-              <th>Email</th>
-              <th>Teléfono</th>
-              <th>Fecha de Ingreso</th>
-              <th>Matrícula Provincial</th>
-              <th style={{ width: 120 }}>Acciones</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {loading ? (
+      {filteredUsers.length === 0 ? (
+        <div className={styles.emptyState}>
+          <p>No se encontraron usuarios</p>
+        </div>
+      ) : (
+        <div className={styles.tableContainer}>
+          <table className={styles.table}>
+            <thead>
               <tr>
-                <td colSpan={7} style={{ textAlign: "center", padding: 12 }}>
-                  ⏳ Cargando…
-                </td>
+                <th>Nro. Socio</th>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Teléfono</th>
+                <th>Matrícula</th>
+                <th>Estado</th>
               </tr>
-            ) : error ? (
-              <tr>
-                <td colSpan={7} style={{ textAlign: "center", padding: 12 }}>
-                  {error}
-                </td>
-              </tr>
-            ) : filteredUsers.length === 0 ? (
-              <tr>
-                <td colSpan={7} style={{ textAlign: "center", padding: 12 }}>
-                  No se encontraron usuarios que coincidan con la búsqueda
-                </td>
-              </tr>
-            ) : (
-              filteredUsers.map((user) => (
+            </thead>
+            <tbody>
+              {visibleUsers.map((user) => (
                 <tr key={user.id}>
                   <td>{user.nro_socio ?? "—"}</td>
                   <td className={styles.nameCell}>{user.name}</td>
                   <td>{user.email}</td>
                   <td>{user.phone}</td>
-                  <td>{user.joinDate && !String(user.joinDate).startsWith("0000") ? new Date(user.joinDate).toLocaleDateString("es-AR") : "—"}</td>
-                  <td>{user.matriculaProv ?? "—"}</td>
+                  <td>{user.matriculaProv}</td>
                   <td>
-                    <Button
-                      className={styles.backButton}
-                      variant="primary"
-                      type="button"
-                      style={{ padding: "4px 8px", fontSize: 12 }}
-                      title="Ver / editar"
-                      onClick={() => {
-                        const targetId = user.id ?? user.nro_socio;
-                        if (targetId) navigate(`/panel/doctors/${targetId}`);
-                      }}
-                    >
-                      Ver / editar
-                    </Button>
+                    <span className={user.status === "activo" ? styles.statusActive : styles.statusInactive}>
+                      {user.status}
+                    </span>
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <div className={styles.paginationBar}>
-        <Button className={styles.backButton} type="button" disabled={page === 1 || loading} onClick={() => setPage((p) => Math.max(1, p - 1))}>
-          Anterior
-        </Button>
-
-        <span className={styles.pageLabel}>Página {page}</span>
-
-        <Button className={styles.backButton} type="button" disabled={!hasMore || loading} onClick={() => setPage((p) => p + 1)}>
-          Siguiente
-        </Button>
-      </div>
-
-      {!loading && filteredUsers.length === 0 && !error && (
-        <div className={styles.emptyState}>
-          <p>No se encontraron usuarios que coincidan con la búsqueda</p>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 
-      <Modal
-        isOpen={isExportOpen}
-        onClose={() => setIsExportOpen(false)}
-        title="Filtrar y Descargar"
-        size="large"
-      >
-        <div className={styles.exportModal}>
-          {/* Quick actions (página) */}
-          <div className={styles.exportQuickRow}>
-            <Button variant="third" type="button" disabled={exportLoading} onClick={exportCSVCurrentPage}>
-              Exportar CSV 
-            </Button>
-          </div>
-
-          <div className={styles.exportDivider} />
-
-          {/* STEP 1: grupos */}
-          {!selectedGroup && (
-            <>
-              <div className={styles.exportSectionTitle}>Elegí una temática</div>
-              <div className={styles.exportCardsGrid}>
-                {GROUPS.map((g) => (
-                  <button
-                    key={g.id}
-                    type="button"
-                    className={styles.exportCard}
-                    onClick={() => setSelectedGroup(g.id)}
-                  >
-                    <div className={styles.exportCardTitle}>{g.title}</div>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-
-          {/* STEP 2: presets */}
-          {selectedGroup && !selectedPreset && (
-            <>
-              <div className={styles.exportNavRow}>
-                <button type="button" className={styles.exportBackLink} onClick={() => setSelectedGroup(null)}>
-                  ← Volver
-                </button>
-                <div className={styles.exportBreadcrumb}>
-                  {GROUPS.find((g) => g.id === selectedGroup)?.title}
-                </div>
-              </div>
-
-              <div className={styles.exportSectionTitle}>Elegí el listado</div>
-
-              <div className={styles.exportCardsGrid}>
-                {presetsForGroup.map((pid) => (
-                  <button
-                    key={pid}
-                    type="button"
-                    className={styles.exportCard}
-                    onClick={() => setSelectedPreset(pid)}
-                  >
-                    <div className={styles.exportCardTitle}>{PRESETS[pid].title}</div>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-
-          {/* STEP 3: inputs opcionales */}
-          {selectedGroup && selectedPreset && (
-            <>
-              <div className={styles.exportNavRow}>
-                <button type="button" className={styles.exportBackLink} onClick={() => setSelectedPreset(null)}>
-                  ← Volver
-                </button>
-                <div className={styles.exportBreadcrumb}>
-                  {GROUPS.find((g) => g.id === selectedGroup)?.title} · <b>{PRESETS[selectedPreset].title}</b>
-                </div>
-              </div>
-
-              {/* Inputs específicos */}
-              {(selectedPreset.endsWith("por_vencer") || selectedPreset === "altas_recientes" || selectedPreset === "por_zona") && (
-                <>
-                  <div className={styles.exportSectionTitle}>Parámetros (opcionales)</div>
-
-                  <div className={styles.exportGrid}>
-                    {selectedPreset.endsWith("por_vencer") && (
-                      <div className={styles.exportField}>
-                        <label className={styles.exportLabel}>Ventana de días</label>
-                        <select
-                          className={styles.exportSelect}
-                          value={String(presetParams.dias ?? 30)}
-                          onChange={(e) => setPresetParams((p) => ({ ...p, dias: Number(e.target.value) }))}
-                        >
-                          <option value="30">30 días</option>
-                          <option value="60">60 días</option>
-                          <option value="90">90 días</option>
-                        </select>
-                      </div>
-                    )}
-
-                    {selectedPreset === "altas_recientes" && (
-                      <>
-                        <div className={styles.exportField}>
-                          <label className={styles.exportLabel}>Fecha matrícula desde</label>
-                          <input
-                            type="date"
-                            value={presetParams.fechaDesde ?? ""}
-                            onChange={(e) => setPresetParams((p) => ({ ...p, fechaDesde: e.target.value }))}
-                            className={styles.exportInput}
-                          />
-                        </div>
-
-                        <div className={styles.exportField}>
-                          <label className={styles.exportLabel}>Fecha matrícula hasta</label>
-                          <input
-                            type="date"
-                            value={presetParams.fechaHasta ?? ""}
-                            onChange={(e) => setPresetParams((p) => ({ ...p, fechaHasta: e.target.value }))}
-                            className={styles.exportInput}
-                          />
-                        </div>
-                      </>
-                    )}
-
-                    {(selectedPreset === "por_zona" || selectedPreset === "altas_recientes" || selectedPreset === "contactables") && (
-                      <>
-                        <div className={styles.exportField}>
-                          <label className={styles.exportLabel}>Provincia</label>
-                          <input
-                            value={presetParams.provincia ?? ""}
-                            onChange={(e) => setPresetParams((p) => ({ ...p, provincia: e.target.value }))}
-                            placeholder="Ej: Corrientes"
-                            className={styles.exportInput}
-                          />
-                        </div>
-
-                        <div className={styles.exportField}>
-                          <label className={styles.exportLabel}>Localidad</label>
-                          <input
-                            value={presetParams.localidad ?? ""}
-                            onChange={(e) => setPresetParams((p) => ({ ...p, localidad: e.target.value }))}
-                            placeholder="Ej: Capital"
-                            className={styles.exportInput}
-                          />
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </>
-              )}
-
-              {/* Extras comunes */}
-              <div className={styles.exportSectionTitle}>Filtros extra (opcionales)</div>
-              <div className={styles.exportGrid}>
-
-                <div className={styles.exportField}>
-                  <label className={styles.exportLabel}>Estado</label>
-                  <select
-                    value={presetParams.status ?? ""}
-                    onChange={(e) => setPresetParams((p) => ({ ...p, status: e.target.value as any }))}
-                    className={styles.exportSelect}
-                  >
-                    <option value="">Todos</option>
-                    <option value="activo">Activos</option>
-                    <option value="inactivo">Inactivos</option>
-                  </select>
-                </div>
-
-                <div className={styles.exportField}>
-                  <label className={styles.exportLabel}>Adherente</label>
-                  <select
-                    value={presetParams.adherente ?? ""}
-                    onChange={(e) => setPresetParams((p) => ({ ...p, adherente: e.target.value as any }))}
-                    className={styles.exportSelect}
-                  >
-                    <option value="">Todos</option>
-                    <option value="si">Sí</option>
-                    <option value="no">No</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className={styles.exportActionsRow}>
-                <div className={styles.exportActionsLeft}>
-                  <Button variant="third" type="button" disabled={exportLoading} onClick={exportPresetCSV}>
-                   Exportar CSV
-                  </Button>
-                </div>
-
-                <div className={styles.exportActionsRight}>
-                  <Button
-                    variant="third"
-                    type="button"
-                    onClick={() => setIsExportOpen(false)}
-                    disabled={exportLoading}
-                  >
-                    Cerrar
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
-
-          {exportError && <div className={styles.exportError}>{exportError}</div>}
-
-         
-        </div>
+      <Modal isOpen={isExportOpen} onClose={() => setIsExportOpen(false)} title="Filtrar y descargar" size="large">
+        <FilterModal
+          filters={filters}
+          setFilters={setFilters}
+          exportError={exportError}
+          exportLoading={exportLoading}
+          onExport={handleExportWithFilters}
+          onClose={() => setIsExportOpen(false)}
+          resetFilters={resetFilters}
+        />
       </Modal>
     </div>
-  );
-};
+  )
+}
 
-export default UsersList;
+export default UsersList

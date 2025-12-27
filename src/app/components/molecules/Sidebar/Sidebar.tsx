@@ -4,7 +4,6 @@ import {
   UserLock,
   Home,
   DollarSign,
-  Hospital,
   CircleUserRound,
   UserCog,
   ChevronRight,
@@ -56,6 +55,12 @@ const Sidebar: React.FC = () => {
       path: `https://legacy.colegiomedicocorrientes.com/principal.php`,
       icon: LayoutList,
       label: "Sistema Fabián",
+      perms: ["medicos:leer"],
+    },
+    {
+      path: `${base}/boletin`,
+      icon: DollarSign,
+      label: "Ranking O.S.",
       perms: ["medicos:leer"],
     },
     // { path: "/config", icon: Cog, label: "Configuración" },                  // ← COMENTADO (punto 5)

@@ -6,6 +6,10 @@
   margin: 0 auto;
   background-color: $gray-50;
   min-height: 100vh;
+  
+  @media (max-width: 768px) {
+    padding: $spacing-4;
+  }
 }
 
 .header {
@@ -14,6 +18,28 @@
   align-items: center;
   margin-bottom: $spacing-8;
   margin-top: 1rem;
+  gap: $spacing-4;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: $spacing-6;
+  }
+}
+
+.headerActions {
+  display: flex;
+  gap: $spacing-3;
+  flex-wrap: wrap;
+  
+  @media (max-width: 768px) {
+    width: 100%;
+    
+    button {
+      flex: 1;
+      min-width: 120px;
+    }
+  }
 }
 
 .title {
@@ -21,12 +47,20 @@
   font-weight: $font-weight-bold;
   color: $gray-900;
   margin: 0;
+  
+  @media (max-width: 768px) {
+    font-size: $font-size-3xl;
+  }
 }
 
 .subtitle {
   font-size: $font-size-lg;
   color: $gray-600;
   margin: 0;
+  
+  @media (max-width: 768px) {
+    font-size: $font-size-base;
+  }
 }
 
 .backButton {
@@ -44,6 +78,11 @@
     background-color: $gray-100;
     border-color: $gray-400;
   }
+  
+  @media (max-width: 480px) {
+    width: 100%;
+    padding: $spacing-3 $spacing-4;
+  }
 }
 
 .statsGrid {
@@ -51,6 +90,14 @@
   flex-wrap: wrap;
   gap: $spacing-6;
   margin-bottom: $spacing-6;
+  
+  @media (max-width: 768px) {
+    gap: $spacing-4;
+  }
+  
+  @media (max-width: 480px) {
+    gap: $spacing-3;
+  }
 }
 
 .statCard {
@@ -64,18 +111,38 @@
   gap: $spacing-2;
   flex: 1 1 220px;
   min-width: 220px;
+  
+  @media (max-width: 768px) {
+    flex: 1 1 calc(50% - #{$spacing-2});
+    min-width: 0;
+    padding: $spacing-5;
+  }
+  
+  @media (max-width: 480px) {
+    flex: 1 1 100%;
+    padding: $spacing-4;
+  }
 }
 
 .statValue {
   font-size: $font-size-4xl;
   font-weight: $font-weight-bold;
   color: $primary-blue;
+  
+  @media (max-width: 768px) {
+    font-size: $font-size-3xl;
+  }
 }
 
 .statLabel {
   font-size: $font-size-sm;
   color: $gray-600;
   font-weight: $font-weight-medium;
+  text-align: center;
+  
+  @media (max-width: 480px) {
+    font-size: $font-size-xs;
+  }
 }
 
 .searchBar {
@@ -100,6 +167,11 @@
   &::placeholder {
     color: $gray-400;
   }
+  
+  @media (max-width: 768px) {
+    padding: $spacing-3;
+    font-size: $font-size-sm;
+  }
 }
 
 .tableContainer {
@@ -107,11 +179,20 @@
   border-radius: $border-radius-xl;
   box-shadow: $shadow-md;
   overflow: hidden;
+  
+  @media (max-width: 768px) {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
+  
+  @media (max-width: 768px) {
+    min-width: 800px;
+  }
 
   thead {
     background-color: $gray-100;
@@ -124,6 +205,12 @@
         font-weight: $font-weight-semibold;
         color: $gray-700;
         border-bottom: 1px solid $gray-200;
+        white-space: nowrap;
+        
+        @media (max-width: 768px) {
+          padding: $spacing-3;
+          font-size: $font-size-xs;
+        }
       }
     }
   }
@@ -141,6 +228,11 @@
         font-size: $font-size-base;
         color: $gray-900;
         border-bottom: 1px solid $gray-200;
+        
+        @media (max-width: 768px) {
+          padding: $spacing-3;
+          font-size: $font-size-sm;
+        }
       }
 
       &:last-child td {
@@ -152,6 +244,28 @@
 
 .nameCell {
   font-weight: $font-weight-semibold;
+}
+
+.statusActive {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: $border-radius-lg;
+  background-color: #d4edda;
+  color: #155724;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  text-transform: capitalize;
+}
+
+.statusInactive {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: $border-radius-lg;
+  background-color: #f8d7da;
+  color: #721c24;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  text-transform: capitalize;
 }
 
 .emptyState {
@@ -167,235 +281,12 @@
     color: $gray-500;
     margin: 0;
   }
-}
-
-/* ===== Export / Filters modal ===== */
-.exportModal {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-5;
-}
-
-.exportDivider {
-  height: 1px;
-  background: $gray-200;
-}
-
-.exportSectionTitle {
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
-  color: $gray-800;
-  letter-spacing: 0.01em;
-}
-
-.exportQuickRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $spacing-3;
-}
-
-.exportCardsGrid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $spacing-4;
-}
-
-.exportCard {
-  flex: 1 1 320px;
-  min-width: 260px;
-
-  background: $white;
-  border: 1px solid $gray-200;
-  border-radius: $border-radius-xl;
-  box-shadow: $shadow-sm;
-  padding: $spacing-5;
-  text-align: left;
-  cursor: pointer;
-  transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
-
-  &:hover {
-    transform: translateY(-1px);
-    border-color: $gray-300;
-    box-shadow: $shadow-md;
-  }
-
-  &:active {
-    transform: translateY(0px);
-  }
-}
-
-.exportCardTitle {
-  align-items: center;
-  text-align: center;
-  font-size: $font-size-lg;
-  font-weight: $font-weight-bold;
-  color: $gray-900;
-}
-
-
-.exportNavRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: $spacing-3;
-}
-
-.exportBackLink {
-  border: none;
-  background: transparent;
-  color: $gray-700;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
-  cursor: pointer;
-  padding: 0;
-
-  &:hover {
-    color: $gray-900;
-    text-decoration: underline;
-  }
-}
-
-.exportBreadcrumb {
-  font-size: $font-size-sm;
-  color: $gray-700;
-
-  b {
-    color: $gray-900;
-  }
-}
-
-.exportGrid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $spacing-4;
-}
-
-.exportField {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-2;
-  flex: 1 1 320px;
-  min-width: 260px;
-}
-
-.exportLabel {
-  font-size: $font-size-sm;
-  color: $gray-700;
-  font-weight: $font-weight-medium;
-}
-
-.exportInput,
-.exportSelect {
-  width: 100%;
-  padding: $spacing-3 $spacing-4;
-  border: 1px solid $gray-300;
-  border-radius: $border-radius-lg;
-  font-size: $font-size-base;
-  color: $gray-900;
-  background: $white;
-  transition: all 0.2s;
-
-  &:focus {
-    outline: none;
-    border-color: $gray-600;
-    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
-  }
-
-  &::placeholder {
-    color: $gray-400;
-  }
-}
-
-.exportActionsRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: $spacing-4;
-}
-
-.exportActionsLeft {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $spacing-3;
-}
-
-.exportActionsRight {
-  display: flex;
-  gap: $spacing-3;
-}
-
-.exportError {
-  margin-top: $spacing-3;
-  padding: $spacing-4;
-  border-radius: $border-radius-xl;
-  border: 1px solid rgba(255, 0, 0, 0.22);
-  background: rgba(255, 0, 0, 0.06);
-  color: $gray-900;
-  font-size: $font-size-sm;
-}
-
-.exportHint {
-  margin-top: $spacing-3;
-  font-size: $font-size-xs;
-  color: $gray-600;
-  line-height: 1.45;
-
-  b {
-    color: $gray-800;
-    font-weight: $font-weight-semibold;
-  }
-}
-
-.paginationBar {
-  display: flex;
-  gap: $spacing-3;
-  justify-content: flex-end;
-  align-items: center;
-  margin-top: $spacing-4;
-  flex-wrap: wrap;
-}
-
-.pageLabel {
-  font-size: $font-size-sm;
-  color: $gray-700;
-}
-
-@media (max-width: $breakpoint-md) {
-  .container {
-    padding: $spacing-4;
-  }
-
-  .header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: $spacing-4;
-  }
-
-  .tableContainer {
-    overflow-x: auto;
-  }
-
-  .table {
-    min-width: 800px;
-  }
-
-  .exportField {
-    flex: 1 1 100%;
-    min-width: 0;
-  }
-
-  .exportActionsRow {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .exportActionsRight {
-    justify-content: flex-end;
-  }
-
-  .exportCard {
-    flex: 1 1 100%;
-    min-width: 0;
+  
+  @media (max-width: 768px) {
+    padding: $spacing-10;
+    
+    p {
+      font-size: $font-size-base;
+    }
   }
 }
