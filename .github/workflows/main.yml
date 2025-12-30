@@ -42,17 +42,3 @@ jobs:
             git fetch --all
             git reset --hard origin/master
             git rev-parse --short HEAD
-
-      # 3) Rebuild & restart solo el servicio front
-      - name: Rebuild & restart front
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT }}
-          script: |
-            set -euo pipefail
-            cd "${{ secrets.COMPOSE_DIR }}"
-            docker compose up -d --no-deps --build --force-recreate front
-            docker compose ps front
