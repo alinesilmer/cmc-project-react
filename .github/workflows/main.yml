@@ -1,44 +1,51 @@
-name: CD Front
+name: Build & Deploy Front
 
 on:
   push:
     branches: [ master ]
-  workflow_dispatch:
-
-concurrency:
-  group: cd-front
-  cancel-in-progress: true
 
 jobs:
-  deploy:
+  build-deploy:
     runs-on: ubuntu-latest
     steps:
-      # 1) Chequeo conexión SSH al VPS
-      - name: SSH check (VPS up?)
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT }}
-          script: |
-            set -euo pipefail
-            echo "Host:" $(hostname)
-            echo "Uptime:" $(uptime)
-            docker --version
-            docker compose version
+      - uses: actions/checkout@v4
 
-      # 2) Actualizar código del FRONT en el VPS (git fetch/reset)
-      - name: Update front code (git fetch/reset)
-        uses: appleboy/ssh-action@v1.2.0
+      - uses: actions/setup-node@v4
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT }}
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: cmc_front/package-lock.json
+
+      - name: Install deps
+        working-directory: cmc_front
+        run: npm ci --no-audit --no-fund
+
+      - name: Build
+        working-directory: cmc_front
+        env:
+          VITE_API_URL: https://api.colegiomedicocorrientes.com
+          VITE_URL_BASE_LEGACY: https://legacy.colegiomedicocorrientes.com
+        run: npm run build
+
+      - name: Pack dist
+        working-directory: cmc_front
+        run: tar -C dist -czf dist.tgz .
+
+      - name: Upload to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "cmc_front/dist.tgz"
+          target: "/home/${{ secrets.VPS_USER }}/dist.tgz"
+
+      - name: Unpack into Docker volume
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            set -euo pipefail
-            cd "${{ secrets.FRONT_DIR }}"
-            git fetch --all
-            git reset --hard origin/master
-            git rev-parse --short HEAD
+            docker run --rm -v web_dist:/srv/web -v /home/${{ secrets.VPS_USER }}:/in alpine sh -lc 'rm -rf /srv/web/* && mkdir -p /srv/web && tar -C /srv/web -xzf /in/dist.tgz'
+            docker exec caddy caddy reload --config /etc/caddy/Caddyfile || true
