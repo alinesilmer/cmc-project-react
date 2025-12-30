@@ -1079,7 +1079,7 @@ const UsersList: React.FC = () => {
         </div>
         <div className={styles.headerActions}>
           <BackButton />
-        
+          <Button onClick={() => setIsExportOpen(true)}>Filtrar y Exportar</Button>
         </div>
       </div>
 

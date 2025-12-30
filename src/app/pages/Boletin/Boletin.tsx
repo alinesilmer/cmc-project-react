@@ -217,6 +217,7 @@ export default function Boletin() {
                       </div>
                     </th>
                     <th className={styles.thName}>Obra Social</th>
+                    <th className={styles.thAmount}>Modalidad Atención</th>
                     <th className={styles.thAmount}>Valor Consulta</th>
                   </tr>
                 </thead>
