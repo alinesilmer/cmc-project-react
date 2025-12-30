@@ -13,7 +13,7 @@ import {
 import styles from "./Sidebar.module.scss";
 import { useAuth } from "../../../auth/AuthProvider";
 
-import Logo from "../../../assets/logonavidad.png";
+import Logo from "../../../assets/logoanionuevo.png";
 
 import Button from "../../atoms/Button/Button";
 import { useState } from "react";

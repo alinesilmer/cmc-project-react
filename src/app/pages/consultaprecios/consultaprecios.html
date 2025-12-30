@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consultar Precios</title>
+  <link rel="stylesheet" href="consultaprecios.css">
+</head>
+<body>
+  <!-- Modal 1: Seleccionar Obra Social -->
+  <div class="modal-overlay" id="modal1">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h1 class="modal-title">Consultar Precios</h1>
+        <button class="close-btn" onclick="closeModal('modal1')">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="obraSocial" class="form-label">Elija Obra Social</label>
+          <div class="select-wrapper">
+            <select id="obraSocial" class="form-select">
+              <option value="411">411</option>
+              <option value="412">412</option>
+              <option value="413">413</option>
+            </select>
+            <svg class="select-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+        
+        <button class="btn-primary" onclick="showModal('modal2')">
+          Seleccionar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Código Prestación -->
+  <div class="modal-overlay hidden" id="modal2">
+    <div class="modal-card modal-large">
+      <div class="modal-header">
+        <button class="back-btn" onclick="showModal('modal1')">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M12 5L7 10L12 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Volver
+        </button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="codigoPrestacion" class="form-label">Código Prestación</label>
+          <div class="select-wrapper">
+            <select id="codigoPrestacion" class="form-select">
+              <option value="p">p</option>
+              <option value="a">a</option>
+              <option value="b">b</option>
+            </select>
+            <svg class="select-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+        
+        <button class="btn-primary" onclick="showResults()">
+          Mostrar
+        </button>
+
+        <!-- Results Section -->
+        <div class="results-card hidden" id="results">
+          <div class="results-header">
+            <h2 class="results-title">Obra Social</h2>
+          </div>
+          
+          <div class="info-grid">
+            <div class="info-item highlight">
+              <span class="info-label">Asociación</span>
+              <span class="info-value">Asociación Mutual Sancor</span>
+            </div>
+            
+            <div class="info-item">
+              <span class="info-label">Código Prestación</span>
+              <span class="info-value">0</span>
+            </div>
+            
+            <div class="info-item">
+              <span class="info-label">Descripción</span>
+              <span class="info-value">-</span>
+            </div>
+            
+            <div class="info-item price-item">
+              <span class="info-label">Honorario</span>
+              <span class="info-value price">$ 0</span>
+            </div>
+            
+            <div class="info-item price-item">
+              <span class="info-label">Gasto</span>
+              <span class="info-value price">$ 0</span>
+            </div>
+            
+            <div class="info-item price-item">
+              <span class="info-label">Ayudante</span>
+              <span class="info-value price">$ 0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="consultaprecios.js"></script>
+</body>
+</html>
