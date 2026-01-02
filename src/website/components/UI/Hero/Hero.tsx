@@ -1,20 +1,16 @@
-import type { StaticImageData } from "next/image";
 import styles from "./Hero.module.scss";
 
 interface HeroProps {
   title: string;
   subtitle: string;
-  backgroundImage: string | StaticImageData;
+  backgroundImage: string;
 }
 
 const Hero = ({ title, subtitle, backgroundImage }: HeroProps) => {
-  const bgSrc =
-    typeof backgroundImage === "string" ? backgroundImage : backgroundImage.src;
-
   return (
     <section
       className={styles.hero}
-      style={{ backgroundImage: `url(${bgSrc})` }}
+      style={{ backgroundImage: `url(${backgroundImage})` }}
     >
       <div className={styles.overlay}>
         <div className={styles.content}>

@@ -1,7 +1,4 @@
-"use client";
-
 import { motion } from "framer-motion";
-import Image from "next/image";
 import styles from "./DoctorReimbursement.module.scss";
 
 export default function DoctorBenefits() {
@@ -67,10 +64,11 @@ export default function DoctorBenefits() {
             >
               {/* Image */}
               <div className={styles.imageContainer}>
-                <Image
+                <img
                   src={benefit.image || "/placeholder.svg"}
                   alt={benefit.title}
-                  fill
+                  loading="lazy"
+                  className={styles.image}
                 />
               </div>
 

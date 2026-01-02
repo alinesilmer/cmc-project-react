@@ -848,7 +848,7 @@ const UsersList: React.FC = () => {
         String(u.nro_socio ?? "")
           .toLowerCase()
           .includes(s) ||
-        u.matriculaProv.toLowerCase().includes(s),
+       String(u.matriculaProv ?? "").toLowerCase().includes(s),
     )
   }, [users, searchTerm])
 
