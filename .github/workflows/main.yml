@@ -4,41 +4,55 @@ on:
   push:
     branches: [ master ]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: front-deploy
+  cancel-in-progress: true
+
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node (cache npm)
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
-          cache-dependency-path: cmc_front/package-lock.json
+          node-version: 20                 # LTS
+          cache: npm
+          cache-dependency-path: cmc-project-react/package-lock.json
 
       - name: Install deps
-        working-directory: cmc_front
+        working-directory: cmc-project-react
         run: npm ci --no-audit --no-fund
 
       - name: Build
-        working-directory: cmc_front
+        working-directory: cmc-project-react
         env:
           VITE_API_URL: https://api.colegiomedicocorrientes.com
           VITE_URL_BASE_LEGACY: https://legacy.colegiomedicocorrientes.com
         run: npm run build
 
       - name: Pack dist
-        working-directory: cmc_front
-        run: tar -C dist -czf dist.tgz .
+        id: pack
+        working-directory: cmc-project-react
+        run: |
+          TGZ="dist_$(date +%Y%m%d_%H%M%S)_${GITHUB_SHA::7}.tgz"
+          tar -C dist -czf "$TGZ" .
+          echo "tgz=$TGZ" >> "$GITHUB_OUTPUT"
 
-      - name: Upload to VPS
+      - name: Upload to VPS (scp)
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "cmc_front/dist.tgz"
-          target: "/home/${{ secrets.VPS_USER }}/dist.tgz"
+          source: "cmc-project-react/${{ steps.pack.outputs.tgz }}"  
+          target: "/home/${{ secrets.VPS_USER }}/cmc"                  
 
       - name: Unpack into Docker volume
         uses: appleboy/ssh-action@v1.0.3
@@ -47,5 +61,9 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            docker run --rm -v web_dist:/srv/web -v /home/${{ secrets.VPS_USER }}:/in alpine sh -lc 'rm -rf /srv/web/* && mkdir -p /srv/web && tar -C /srv/web -xzf /in/dist.tgz'
+            set -euo pipefail
+            TGZ="/home/${{ secrets.VPS_USER }}/cmc/${{ steps.pack.outputs.tgz }}"
+            docker run --rm -v web_dist:/srv/web -v /home/${{ secrets.VPS_USER }}/cmc:/in alpine \
+              sh -lc 'rm -rf /srv/web/* && mkdir -p /srv/web && tar -C /srv/web -xzf /in/${{ steps.pack.outputs.tgz }}'
             docker exec caddy caddy reload --config /etc/caddy/Caddyfile || true
+            docker run --rm -v web_dist:/srv/web alpine sh -lc 'ls -lah /srv/web | head -n 20'
