@@ -49,22 +49,22 @@ jobs:
       - name: Upload to VPS (scp)
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "${{ steps.pack.outputs.tgz }}" 
-          target: "/home/${{ secrets.VPS_USER }}/cmc"
+          target: "${{ secrets.COMPOSE_DIR }}"
 
       - name: Unpack into Docker volume
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             set -euo pipefail
-            TGZ="/home/${{ secrets.VPS_USER }}/cmc/${{ steps.pack.outputs.tgz }}"
-            docker run --rm -v web_dist:/srv/web -v /home/${{ secrets.VPS_USER }}/cmc:/in alpine \
+            TGZ="/home/${{ secrets.SSH_USER }}/cmc/${{ steps.pack.outputs.tgz }}"
+            docker run --rm -v web_dist:/srv/web -v /home/${{ secrets.SSH_USER }}/cmc:/in alpine \
               sh -lc 'rm -rf /srv/web/* && mkdir -p /srv/web && tar -C /srv/web -xzf /in/${{ steps.pack.outputs.tgz }}'
             docker exec caddy caddy reload --config /etc/caddy/Caddyfile || true
             docker run --rm -v web_dist:/srv/web alpine sh -lc 'ls -lah /srv/web | head -n 20'
