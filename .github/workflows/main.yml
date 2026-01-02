@@ -22,16 +22,16 @@ jobs:
       - name: Setup Node (cache npm)
         uses: actions/setup-node@v4
         with:
-          node-version: 20                 # LTS
+          node-version: 20
           cache: npm
-          cache-dependency-path: cmc-project-react/package-lock.json
+          cache-dependency-path: package-lock.json 
 
       - name: Install deps
-        working-directory: cmc-project-react
+        working-directory: .
         run: npm ci --no-audit --no-fund
 
       - name: Build
-        working-directory: cmc-project-react
+        working-directory: .
         env:
           VITE_API_URL: https://api.colegiomedicocorrientes.com
           VITE_URL_BASE_LEGACY: https://legacy.colegiomedicocorrientes.com
@@ -39,9 +39,10 @@ jobs:
 
       - name: Pack dist
         id: pack
-        working-directory: cmc-project-react
+        working-directory: .
         run: |
           TGZ="dist_$(date +%Y%m%d_%H%M%S)_${GITHUB_SHA::7}.tgz"
+          # empaqueta el contenido de dist/ sin el directorio padre
           tar -C dist -czf "$TGZ" .
           echo "tgz=$TGZ" >> "$GITHUB_OUTPUT"
 
@@ -51,8 +52,8 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "cmc-project-react/${{ steps.pack.outputs.tgz }}"  
-          target: "/home/${{ secrets.VPS_USER }}/cmc"                  
+          source: "${{ steps.pack.outputs.tgz }}" 
+          target: "/home/${{ secrets.VPS_USER }}/cmc"
 
       - name: Unpack into Docker volume
         uses: appleboy/ssh-action@v1.0.3
