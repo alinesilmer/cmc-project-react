@@ -1,9 +1,6 @@
-"use client";
-
 import { motion } from "framer-motion";
 import { FiCheckCircle } from "react-icons/fi";
 import styles from "./MeetDoctors.module.scss";
-import Image from "next/image";
 
 export default function MeetDoctors() {
   const testimonials = [
@@ -62,7 +59,7 @@ export default function MeetDoctors() {
         </motion.div>
 
         <div className={styles.grid}>
-          {testimonials.map((testimonial, index) => (
+          {testimonials.map((t, index) => (
             <motion.div
               key={index}
               className={styles.testimonialCard}
@@ -73,20 +70,21 @@ export default function MeetDoctors() {
               whileHover={{ y: -10 }}
             >
               <div className={styles.imageWrapper}>
-                <Image
-                  src={testimonial.image || "/placeholder.svg"}
-                  alt={testimonial.name}
-                  width={600}
-                  height={700}
+                <img
+                  src={t.image || "/placeholder.svg"}
+                  alt={t.name}
+                  loading="lazy"
+                  className={styles.image}
                 />
                 <div className={styles.checkmark}>
                   <FiCheckCircle />
                 </div>
               </div>
+
               <div className={styles.info}>
-                <h3 className={styles.name}>{testimonial.name}</h3>
-                <p className={styles.specialty}>{testimonial.specialty}</p>
-                <p className={styles.testimonial}>{testimonial.testimonial}</p>
+                <h3 className={styles.name}>{t.name}</h3>
+                <p className={styles.specialty}>{t.specialty}</p>
+                <p className={styles.testimonial}>{t.testimonial}</p>
               </div>
             </motion.div>
           ))}
