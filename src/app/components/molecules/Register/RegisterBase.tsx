@@ -44,12 +44,21 @@ const RegisterBase: React.FC<Props> = ({
         }
       >
         <div className={styles.actionBar}>
-          <button
-            className={styles.backBtn}
-            onClick={() => nav("/panel/login")}
-          >
-            Cancelar
-          </button>
+          {mode == "admin" ? (
+            <button
+              className={styles.backBtn}
+              onClick={() => nav("/panel/dashboard")}
+            >
+              Cancelar
+            </button>
+          ) : (
+            <button
+              className={styles.backBtn}
+              onClick={() => nav("/panel/login")}
+            >
+              Cancelar
+            </button>
+          )}
         </div>
 
         <Steps
