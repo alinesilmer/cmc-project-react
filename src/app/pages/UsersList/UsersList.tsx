@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import styles from "./UsersList.module.scss";
 import { getJSON } from "../../lib/http";
 import Button from "../../components/atoms/Button/Button";
@@ -63,28 +63,25 @@ type UserRow = ReturnType<typeof toUserRow>;
 const UsersList: React.FC = () => {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [rawUsers, setRawUsers] = useState<MedicoRow[]>([]);
+  const [basePage, setBasePage] = useState<MedicoRow[]>([]); // ← guarda la primera página (sin q)
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [remoteMode, setRemoteMode] = useState(false); // ← si true: ya usamos resultados del backend para la búsqueda
   const navigate = useNavigate();
 
   const [error, setError] = useState<string | null>(null);
 
   const [isExportOpen, setIsExportOpen] = useState(false);
 
-  // Export: usamos el hook (saca toda la “cocina” fuera del componente)
-  const {
-    exportLoading,
-    exportError,
-    setExportError,
-    onExportWithFilters,
-    // onExportPreset // <- cuando quieras usar presets, ya está disponible
-  } = useMedicosExport();
+  // Export: usamos el hook
+  const { exportLoading, exportError, setExportError, onExportWithFilters } =
+    useMedicosExport();
 
   const [filters, setFilters] = useState<FilterSelection>(initialFilters);
 
   const resetFilters = () => {
     setFilters({
-      columns: ["apellido", "nombre_", "documento", "mail_particular"],
+      columns: ["name", "documento", "mail_particular"], // ← si cambiás columnas, asegurate de tener "name"
       vencimientos: {
         malapraxisVencida: false,
         malapraxisPorVencer: false,
@@ -113,20 +110,21 @@ const UsersList: React.FC = () => {
   };
 
   const resetExportWizard = () => {
-    // Si más adelante usás presets, dejá acá sus estados iniciales
     setExportError(null);
   };
 
+  // --------- Carga inicial (página base sin q) ----------
   useEffect(() => {
     let ignore = false;
 
-    async function load() {
+    async function loadBase() {
       setLoading(true);
       setError(null);
 
       try {
         const data = await getJSON<MedicoRow[]>("/api/medicos?limit=200");
         if (ignore) return;
+        setBasePage(data);
         setRawUsers(data);
         setUsers(data.map(toUserRow));
       } catch (err: any) {
@@ -137,14 +135,61 @@ const UsersList: React.FC = () => {
       }
     }
 
-    load();
+    loadBase();
     return () => {
       ignore = true;
     };
   }, []);
 
+  // --------- BÚSQUEDA REMOTA con debounce ----------
+  const debounceRef = useRef<number | null>(null);
+  useEffect(() => {
+    const q = searchTerm.trim();
+
+    // si q vacío → restauramos la página base sin pedir al backend
+    if (!q) {
+      setRemoteMode(false);
+      setRawUsers(basePage);
+      setUsers(basePage.map(toUserRow));
+      return;
+    }
+
+    // para no saturar la API: mínimo 2 chars (ajustable)
+    const MIN_CHARS = 2;
+    if (q.length < MIN_CHARS) {
+      setRemoteMode(false);
+      setRawUsers(basePage);
+      setUsers(basePage.map(toUserRow));
+      return;
+    }
+
+    // debounce 300ms
+    if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    debounceRef.current = window.setTimeout(async () => {
+      try {
+        // el endpoint ya soporta ?q y respeta limit<=200
+        const url = `/api/medicos?q=${encodeURIComponent(q)}&limit=200`;
+        const data = await getJSON<MedicoRow[]>(url);
+        setRemoteMode(true);
+        setRawUsers(data);
+        setUsers(data.map(toUserRow));
+      } catch (err) {
+        // ante error, no rompas la UI: quedate con la base
+        setRemoteMode(false);
+        setRawUsers(basePage);
+        setUsers(basePage.map(toUserRow));
+      }
+    }, 300);
+
+    return () => {
+      if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, basePage]);
+
+  // --------- Filtro local (solo si NO estamos en remoteMode) ----------
   const filteredUsers = useMemo(() => {
-    if (!searchTerm.trim()) return users;
+    if (remoteMode || !searchTerm.trim()) return users; // ya vienen del backend
     const s = searchTerm.toLowerCase();
     return users.filter(
       (u) =>
@@ -157,7 +202,7 @@ const UsersList: React.FC = () => {
           .toLowerCase()
           .includes(s)
     );
-  }, [users, searchTerm]);
+  }, [users, searchTerm, remoteMode]);
 
   const visibleUsers = filteredUsers;
 

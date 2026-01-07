@@ -8,7 +8,7 @@ import {
   UserCog,
   ChevronRight,
   ChevronLeft,
-  LayoutList
+  LayoutList,
 } from "lucide-react";
 import styles from "./Sidebar.module.scss";
 import { useAuth } from "../../../auth/AuthProvider";
@@ -33,12 +33,12 @@ const Sidebar: React.FC = () => {
       label: "Permisos y roles",
       perms: ["rbac:gestionar"],
     },
-    // {
-    //   path: `${base}/liquidation`,
-    //   icon: DollarSign,
-    //   label: "Liquidación",
-    //   perms: ["liquidacion:leer", "liquidacion:ver"],
-    // },
+    {
+      path: `${base}/liquidation`,
+      icon: DollarSign,
+      label: "Liquidación",
+      perms: ["liquidacion:leer", "liquidacion:ver"],
+    },
     // {
     //   path: `${base}/padron-ioscor`,
     //   icon: Hospital,
@@ -51,7 +51,7 @@ const Sidebar: React.FC = () => {
       label: "Gestión de Usuarios",
       perms: ["medicos:leer"],
     },
-     {
+    {
       path: `https://legacy.colegiomedicocorrientes.com/principal.php`,
       icon: LayoutList,
       label: "Sistema Fabián",
@@ -145,7 +145,12 @@ const Sidebar: React.FC = () => {
           <MessageCircleQuestionMark size={20} />
           <span className={styles.itemLabel}>Ayuda</span>
         </Link> */}
-        <Button variant="danger" className={styles.dangerbtn} onClick={onClick} size="sm">
+        <Button
+          variant="danger"
+          className={styles.dangerbtn}
+          onClick={onClick}
+          size="sm"
+        >
           Cerrar sesión
         </Button>
       </div>
