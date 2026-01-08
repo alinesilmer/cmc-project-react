@@ -4,12 +4,11 @@ import type React from "react";
 import { useRef, useState, useEffect } from "react";
 import styles from "./FilterModal.module.scss";
 import Button from "../../../../website/components/UI/Button/Button";
-import type { FilterSelection } from "../../../types/filters"; // <-- mismo origen de tipos
-import { getJSON } from "../../../lib/http"; // <-- usa tu helper
+import type { FilterSelection } from "../../../types/filters";
+import { getJSON } from "../../../lib/http";
 
-// NOTA: 'name' mapea a NOMBRE (campo de listado_medico)
 const AVAILABLE_COLUMNS = [
-  { key: "nombre", label: "Nombre completo" }, // <-- reemplaza Apellido/Nombre
+  { key: "nombre", label: "Nombre completo" },
   { key: "sexo", label: "Sexo" },
   { key: "documento", label: "Documento" },
   { key: "mail_particular", label: "Mail" },
@@ -22,6 +21,7 @@ const AVAILABLE_COLUMNS = [
   { key: "provincia", label: "Provincia" },
   { key: "localidad", label: "Localidad" },
   { key: "categoria", label: "Categoría" },
+  { key: "especialidad", label: "Especialidad" },
   { key: "condicion_impositiva", label: "Condición Impositiva" },
 ];
 
@@ -53,13 +53,10 @@ const FilterModal: React.FC<FilterModalProps> = ({
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ---- Estado y carga de especialidades con getJSON ----
   type EspecialidadOption = { value: string; label: string };
   const [espLoading, setEspLoading] = useState(false);
   const [espError, setEspError] = useState<string | null>(null);
-  const [especialidades, setEspecialidades] = useState<EspecialidadOption[]>(
-    []
-  );
+  const [especialidades, setEspecialidades] = useState<EspecialidadOption[]>([]);
 
   useEffect(() => {
     let abort = false;
@@ -95,8 +92,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
           : [];
         if (!abort) setEspecialidades(opts);
       } catch (err: any) {
-        if (!abort)
-          setEspError(err?.message || "No se pudo cargar especialidades");
+        if (!abort) setEspError(err?.message || "No se pudo cargar especialidades");
       } finally {
         if (!abort) setEspLoading(false);
       }
@@ -136,6 +132,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
     if (filters.otros.sexo) count++;
     if (filters.otros.categoria) count++;
     if (filters.otros.condicionImpositiva) count++;
+    if (filters.otros.especialidad) count++;
     if (filters.otros.fechaIngresoDesde) count++;
     if (filters.otros.fechaIngresoHasta) count++;
     return count;
@@ -152,7 +149,6 @@ const FilterModal: React.FC<FilterModalProps> = ({
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // "dias" es number obligatorio; usamos 0 como "sin rango"
   const onChangeDias: React.ChangeEventHandler<HTMLSelectElement> = (e) => {
     const n = Number(e.target.value);
     setFilters((prev) => ({
@@ -163,11 +159,13 @@ const FilterModal: React.FC<FilterModalProps> = ({
 
   const fmtDias = (dias: number) => (dias > 0 ? ` (${dias}d)` : "");
 
+  const especialidadLabel = (val: string) =>
+    especialidades.find((o) => o.value === val)?.label ?? val;
+
   return (
     <div className={styles.exportModalNew}>
       <div className={styles.exportContent}>
         <div className={styles.filterSections}>
-          {/* Sección: Columnas */}
           <div className={styles.filterSection}>
             <button
               className={styles.filterSectionHeader}
@@ -175,10 +173,9 @@ const FilterModal: React.FC<FilterModalProps> = ({
               type="button"
             >
               <span>Por Columnas</span>
-              <span className={styles.chevron}>
-                {expandedSections.columns ? "▲" : "▼"}
-              </span>
+              <span className={styles.chevron}>{expandedSections.columns ? "▲" : "▼"}</span>
             </button>
+
             {expandedSections.columns && (
               <div className={styles.filterSectionContent}>
                 <div className={styles.checkboxGrid}>
@@ -198,7 +195,6 @@ const FilterModal: React.FC<FilterModalProps> = ({
             )}
           </div>
 
-          {/* Sección: Vencimientos */}
           <div className={styles.filterSection}>
             <button
               className={styles.filterSectionHeader}
@@ -210,11 +206,11 @@ const FilterModal: React.FC<FilterModalProps> = ({
                 {expandedSections.vencimientos ? "▲" : "▼"}
               </span>
             </button>
+
             {expandedSections.vencimientos && (
               <div className={styles.filterSectionContent}>
                 <div className={styles.vencimientosContent}>
                   <div className={styles.checkboxColumn}>
-                    {/* ... (sin cambios en los checkboxes de vencimientos) ... */}
                     <label className={styles.checkboxLabel}>
                       <input
                         type="checkbox"
@@ -232,6 +228,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                       />
                       <span>Mala Praxis Vencida</span>
                     </label>
+
                     <label className={styles.checkboxLabel}>
                       <input
                         type="checkbox"
@@ -249,6 +246,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                       />
                       <span>Mala Praxis a Vencer</span>
                     </label>
+
                     <label className={styles.checkboxLabel}>
                       <input
                         type="checkbox"
@@ -266,6 +264,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                       />
                       <span>ANSSAL Vencida</span>
                     </label>
+
                     <label className={styles.checkboxLabel}>
                       <input
                         type="checkbox"
@@ -283,6 +282,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                       />
                       <span>ANSSAL a Vencer</span>
                     </label>
+
                     <label className={styles.checkboxLabel}>
                       <input
                         type="checkbox"
@@ -300,6 +300,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                       />
                       <span>Cobertura Vencida</span>
                     </label>
+
                     <label className={styles.checkboxLabel}>
                       <input
                         type="checkbox"
@@ -328,10 +329,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                         onChange={(e) =>
                           setFilters((prev) => ({
                             ...prev,
-                            vencimientos: {
-                              ...prev.vencimientos,
-                              fechaDesde: e.target.value,
-                            },
+                            vencimientos: { ...prev.vencimientos, fechaDesde: e.target.value },
                           }))
                         }
                       />
@@ -342,10 +340,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                         onChange={(e) =>
                           setFilters((prev) => ({
                             ...prev,
-                            vencimientos: {
-                              ...prev.vencimientos,
-                              fechaHasta: e.target.value,
-                            },
+                            vencimientos: { ...prev.vencimientos, fechaHasta: e.target.value },
                           }))
                         }
                       />
@@ -369,7 +364,6 @@ const FilterModal: React.FC<FilterModalProps> = ({
             )}
           </div>
 
-          {/* Sección: Otros */}
           <div className={styles.filterSection}>
             <button
               className={styles.filterSectionHeader}
@@ -377,10 +371,9 @@ const FilterModal: React.FC<FilterModalProps> = ({
               type="button"
             >
               <span>Otros</span>
-              <span className={styles.chevron}>
-                {expandedSections.otros ? "▲" : "▼"}
-              </span>
+              <span className={styles.chevron}>{expandedSections.otros ? "▲" : "▼"}</span>
             </button>
+
             {expandedSections.otros && (
               <div className={styles.filterSectionContent}>
                 <div className={styles.otrosGrid}>
@@ -468,7 +461,6 @@ const FilterModal: React.FC<FilterModalProps> = ({
                     />
                   </div>
 
-                  {/* Especialidad (select con API) */}
                   <div className={styles.exportField}>
                     <label className={styles.exportLabel}>Especialidad</label>
                     <select
@@ -477,27 +469,17 @@ const FilterModal: React.FC<FilterModalProps> = ({
                       onChange={(e) =>
                         setFilters((prev) => ({
                           ...prev,
-                          otros: {
-                            ...prev.otros,
-                            especialidad: e.target.value,
-                          },
+                          otros: { ...prev.otros, especialidad: e.target.value },
                         }))
                       }
                       disabled={espLoading || !!espError}
                     >
-                      <option value="">
-                        {espLoading ? "Cargando..." : "Todas"}
-                      </option>
+                      <option value="">{espLoading ? "Cargando..." : "Todas"}</option>
                       {espError ? (
-                        <option value="" disabled>
-                          {`Error: ${espError}`}
-                        </option>
+                        <option value="" disabled>{`Error: ${espError}`}</option>
                       ) : (
                         especialidades.map((opt) => (
-                          <option
-                            key={`${opt.value}-${opt.label}`}
-                            value={opt.value}
-                          >
+                          <option key={`${opt.value}-${opt.label}`} value={opt.value}>
                             {opt.label}
                           </option>
                         ))
@@ -505,7 +487,6 @@ const FilterModal: React.FC<FilterModalProps> = ({
                     </select>
                   </div>
 
-                  {/* Categoría (A/B/C) */}
                   <div className={styles.exportField}>
                     <label className={styles.exportLabel}>Categoría</label>
                     <select
@@ -525,36 +506,26 @@ const FilterModal: React.FC<FilterModalProps> = ({
                     </select>
                   </div>
 
-                  {/* Condición impositiva */}
                   <div className={styles.exportField}>
-                    <label className={styles.exportLabel}>
-                      Condición Impositiva
-                    </label>
+                    <label className={styles.exportLabel}>Condición Impositiva</label>
                     <select
                       className={styles.exportSelect}
                       value={filters.otros.condicionImpositiva || ""}
                       onChange={(e) =>
                         setFilters((prev) => ({
                           ...prev,
-                          otros: {
-                            ...prev.otros,
-                            condicionImpositiva: e.target.value,
-                          },
+                          otros: { ...prev.otros, condicionImpositiva: e.target.value },
                         }))
                       }
                     >
                       <option value="">Todas</option>
                       <option value="Monotributista">Monotributista</option>
-                      <option value="Responsable Inscripto">
-                        Responsable Inscripto
-                      </option>
+                      <option value="Responsable Inscripto">Responsable Inscripto</option>
                     </select>
                   </div>
 
                   <div className={styles.exportField}>
-                    <label className={styles.exportLabel}>
-                      Fecha Ingreso Desde
-                    </label>
+                    <label className={styles.exportLabel}>Fecha Ingreso Desde</label>
                     <input
                       type="date"
                       className={styles.exportInput}
@@ -562,19 +533,14 @@ const FilterModal: React.FC<FilterModalProps> = ({
                       onChange={(e) =>
                         setFilters((prev) => ({
                           ...prev,
-                          otros: {
-                            ...prev.otros,
-                            fechaIngresoDesde: e.target.value,
-                          },
+                          otros: { ...prev.otros, fechaIngresoDesde: e.target.value },
                         }))
                       }
                     />
                   </div>
 
                   <div className={styles.exportField}>
-                    <label className={styles.exportLabel}>
-                      Fecha Ingreso Hasta
-                    </label>
+                    <label className={styles.exportLabel}>Fecha Ingreso Hasta</label>
                     <input
                       type="date"
                       className={styles.exportInput}
@@ -582,10 +548,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                       onChange={(e) =>
                         setFilters((prev) => ({
                           ...prev,
-                          otros: {
-                            ...prev.otros,
-                            fechaIngresoHasta: e.target.value,
-                          },
+                          otros: { ...prev.otros, fechaIngresoHasta: e.target.value },
                         }))
                       }
                     />
@@ -596,12 +559,9 @@ const FilterModal: React.FC<FilterModalProps> = ({
           </div>
         </div>
 
-        {/* Resumen de filtros seleccionados */}
         <div className={styles.selectedFilters}>
           <h3 className={styles.selectedFiltersTitle}>Filtros seleccionados</h3>
-          <div className={styles.selectedFiltersCount}>
-            {activeFiltersCount()} filtros activos
-          </div>
+          <div className={styles.selectedFiltersCount}>{activeFiltersCount()} filtros activos</div>
 
           <div className={styles.selectedFiltersList}>
             {filters.columns.length > 0 && (
@@ -615,9 +575,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                   </div>
                 ))}
                 {filters.columns.length > 3 && (
-                  <div className={styles.selectedFilterItem}>
-                    +{filters.columns.length - 3} más
-                  </div>
+                  <div className={styles.selectedFilterItem}>+{filters.columns.length - 3} más</div>
                 )}
               </div>
             )}
@@ -629,25 +587,17 @@ const FilterModal: React.FC<FilterModalProps> = ({
               filters.vencimientos.coberturaVencida ||
               filters.vencimientos.coberturaPorVencer) && (
               <div className={styles.selectedFilterGroup}>
-                <div className={styles.selectedFilterGroupTitle}>
-                  Vencimientos
-                </div>
+                <div className={styles.selectedFilterGroupTitle}>Vencimientos</div>
                 {filters.vencimientos.malapraxisVencida && (
-                  <div className={styles.selectedFilterItem}>
-                    Mala Praxis Vencida
-                  </div>
+                  <div className={styles.selectedFilterItem}>Mala Praxis Vencida</div>
                 )}
                 {filters.vencimientos.malapraxisPorVencer && (
                   <div className={styles.selectedFilterItem}>
-                    {`Mala Praxis por Vencer${fmtDias(
-                      filters.vencimientos.dias
-                    )}`}
+                    {`Mala Praxis por Vencer${fmtDias(filters.vencimientos.dias)}`}
                   </div>
                 )}
                 {filters.vencimientos.anssalVencido && (
-                  <div className={styles.selectedFilterItem}>
-                    ANSSAL Vencido
-                  </div>
+                  <div className={styles.selectedFilterItem}>ANSSAL Vencido</div>
                 )}
                 {filters.vencimientos.anssalPorVencer && (
                   <div className={styles.selectedFilterItem}>
@@ -655,15 +605,11 @@ const FilterModal: React.FC<FilterModalProps> = ({
                   </div>
                 )}
                 {filters.vencimientos.coberturaVencida && (
-                  <div className={styles.selectedFilterItem}>
-                    Cobertura Vencida
-                  </div>
+                  <div className={styles.selectedFilterItem}>Cobertura Vencida</div>
                 )}
                 {filters.vencimientos.coberturaPorVencer && (
                   <div className={styles.selectedFilterItem}>
-                    {`Cobertura por Vencer${fmtDias(
-                      filters.vencimientos.dias
-                    )}`}
+                    {`Cobertura por Vencer${fmtDias(filters.vencimientos.dias)}`}
                   </div>
                 )}
               </div>
@@ -680,34 +626,22 @@ const FilterModal: React.FC<FilterModalProps> = ({
               <div className={styles.selectedFilterGroup}>
                 <div className={styles.selectedFilterGroupTitle}>Otros</div>
                 {filters.otros.estado && (
-                  <div className={styles.selectedFilterItem}>
-                    Estado: {filters.otros.estado}
-                  </div>
+                  <div className={styles.selectedFilterItem}>Estado: {filters.otros.estado}</div>
                 )}
                 {filters.otros.adherente && (
-                  <div className={styles.selectedFilterItem}>
-                    Adherente: {filters.otros.adherente}
-                  </div>
+                  <div className={styles.selectedFilterItem}>Adherente: {filters.otros.adherente}</div>
                 )}
                 {filters.otros.provincia && (
-                  <div className={styles.selectedFilterItem}>
-                    Provincia: {filters.otros.provincia}
-                  </div>
+                  <div className={styles.selectedFilterItem}>Provincia: {filters.otros.provincia}</div>
                 )}
                 {filters.otros.localidad && (
-                  <div className={styles.selectedFilterItem}>
-                    Localidad: {filters.otros.localidad}
-                  </div>
+                  <div className={styles.selectedFilterItem}>Localidad: {filters.otros.localidad}</div>
                 )}
                 {filters.otros.sexo && (
-                  <div className={styles.selectedFilterItem}>
-                    Sexo: {filters.otros.sexo}
-                  </div>
+                  <div className={styles.selectedFilterItem}>Sexo: {filters.otros.sexo}</div>
                 )}
                 {filters.otros.categoria && (
-                  <div className={styles.selectedFilterItem}>
-                    Categoría: {filters.otros.categoria}
-                  </div>
+                  <div className={styles.selectedFilterItem}>Categoría: {filters.otros.categoria}</div>
                 )}
                 {filters.otros.condicionImpositiva && (
                   <div className={styles.selectedFilterItem}>
@@ -716,30 +650,23 @@ const FilterModal: React.FC<FilterModalProps> = ({
                 )}
                 {filters.otros.especialidad && (
                   <div className={styles.selectedFilterItem}>
-                    Especialidad: {filters.otros.especialidad}
+                    Especialidad: {especialidadLabel(filters.otros.especialidad)}
                   </div>
                 )}
               </div>
             )}
 
             {activeFiltersCount() === 0 && (
-              <div className={styles.noFilters}>
-                No hay filtros seleccionados
-              </div>
+              <div className={styles.noFilters}>No hay filtros seleccionados</div>
             )}
           </div>
 
-          <button
-            className={styles.clearFiltersButton}
-            onClick={resetFilters}
-            type="button"
-          >
+          <button className={styles.clearFiltersButton} onClick={resetFilters} type="button">
             Limpiar filtros
           </button>
         </div>
       </div>
 
-      {/* Logo */}
       <div className={styles.logoSection}>
         <label className={styles.exportLabel}>Logo (opcional)</label>
         <input
@@ -749,6 +676,11 @@ const FilterModal: React.FC<FilterModalProps> = ({
           className={styles.fileInput}
           onChange={handleFileChange}
         />
+        {logoFile && (
+          <button className={styles.clearFiltersButton} onClick={handleRemoveLogo} type="button">
+            Quitar logo
+          </button>
+        )}
       </div>
 
       {exportError && <div className={styles.exportError}>{exportError}</div>}
@@ -775,3 +707,4 @@ const FilterModal: React.FC<FilterModalProps> = ({
 };
 
 export default FilterModal;
+

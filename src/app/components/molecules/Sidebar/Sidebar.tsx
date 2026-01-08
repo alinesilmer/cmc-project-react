@@ -9,6 +9,7 @@ import {
   ChevronRight,
   ChevronLeft,
   LayoutList,
+  Newspaper
 } from "lucide-react";
 import styles from "./Sidebar.module.scss";
 import { useAuth } from "../../../auth/AuthProvider";
@@ -61,6 +62,12 @@ const Sidebar: React.FC = () => {
       path: `${base}/boletin`,
       icon: DollarSign,
       label: "Ranking O.S.",
+      perms: ["medicos:leer"],
+    },
+     {
+      path: `${base}/afiliadospadron`,
+      icon: Newspaper,
+      label: "Padrones",
       perms: ["medicos:leer"],
     },
     // { path: "/config", icon: Cog, label: "Configuración" },                  // ← COMENTADO (punto 5)
