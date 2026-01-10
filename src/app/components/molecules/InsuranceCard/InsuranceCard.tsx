@@ -24,7 +24,7 @@ import Alert from "../../atoms/Alert/Alert";
 type MonthKey = string;
 
 type PeriodBucket = {
-  period: MonthKey;     // "YYYY-MM"
+  period: MonthKey; // "YYYY-MM"
   grossTotal: number;
   discounts: number;
   netTotal: number;
@@ -61,7 +61,8 @@ const fmtMonthKey = (d: Date) =>
 const sortByPeriodAsc = (a: PeriodBucket, b: PeriodBucket) =>
   a.period.localeCompare(b.period);
 
-const API_BASE = (import.meta as any).env?.VITE_API_URL ?? "http://localhost:8000";
+const API_BASE =
+  (import.meta as any).env?.VITE_API_URL ?? "http://localhost:8000";
 const CREATE_LIQ_URL = `${API_BASE}/api/liquidacion/liquidaciones_por_os/crear`;
 const DELETE_LIQ_URL = (id: number | string) =>
   `${API_BASE}/api/liquidacion/liquidaciones_por_os/${id}`;
@@ -75,11 +76,11 @@ const InsuranceCard: React.FC<Props> = ({
   osId,
   resumenId,
   onAddPeriod,
-  onReload
+  onReload,
 }) => {
   // Estado interno de períodos, precargado desde props
-  const [periods, setPeriods] = useState<PeriodBucket[]>(
-    () => [...(initialPeriods ?? [])].sort(sortByPeriodAsc)
+  const [periods, setPeriods] = useState<PeriodBucket[]>(() =>
+    [...(initialPeriods ?? [])].sort(sortByPeriodAsc)
   );
 
   // Si cambian las props, sincronizamos
@@ -182,7 +183,9 @@ const InsuranceCard: React.FC<Props> = ({
         const res = await fetch(DELETE_LIQ_URL(lid), { method: "DELETE" });
         if (!res.ok) {
           const txt = await res.text().catch(() => "");
-          throw new Error(`Error ${res.status}: ${txt || "no se pudo eliminar"}`);
+          throw new Error(
+            `Error ${res.status}: ${txt || "no se pudo eliminar"}`
+          );
         }
       } catch (e: any) {
         setSaving(false);
@@ -264,13 +267,15 @@ const InsuranceCard: React.FC<Props> = ({
               title="Período:"
               periodLabel={b.period}
               data={[oneRow]}
-              seeDetailsLink={`/liquidation/${resumenId}/insurance/${osId}/${b.period}/${oneRow.liquidacionId ?? b.liquidacionId}`}
+              seeDetailsLink={`/panel/liquidation/${resumenId}/insurance/${osId}/${
+                b.period
+              }/${oneRow.liquidacionId ?? b.liquidacionId}`}
               seeDetailsState={{ insurance: name }}
               onDeleteTable={() => setConfirmDeletePeriod(b)}
               // 🔗 sincronización con el card (y por ende con la página)
               onRowStateChange={(next) =>
-                setPeriods(prev =>
-                  prev.map(p =>
+                setPeriods((prev) =>
+                  prev.map((p) =>
                     p.liquidacionId === next.liquidacionId
                       ? {
                           ...p,
@@ -285,7 +290,7 @@ const InsuranceCard: React.FC<Props> = ({
                 )
               }
               onAddVersion={(newRow) =>
-                setPeriods(prev => {
+                setPeriods((prev) => {
                   const toAdd: PeriodBucket = {
                     period: newRow.period,
                     grossTotal: newRow.grossTotal,
@@ -295,7 +300,9 @@ const InsuranceCard: React.FC<Props> = ({
                     nroLiquidacion: newRow.nroLiquidacion,
                     estado: newRow.estado,
                   };
-                  return [...prev, toAdd].sort((a, b) => a.period.localeCompare(b.period));
+                  return [...prev, toAdd].sort((a, b) =>
+                    a.period.localeCompare(b.period)
+                  );
                 })
               }
             />

@@ -41,7 +41,9 @@ const APLICAR_URL = (resumenId: string | number) =>
 
 // Períodos disponibles por OS y creación de liquidación
 const PERIODOS_DISP_URL = (osId: string | number, anio?: number) =>
-  `/api/periodos/disponibles?obra_social_id=${osId}${anio ? `&anio=${anio}` : ""}`;
+  `/api/periodos/disponibles?obra_social_id=${osId}${
+    anio ? `&anio=${anio}` : ""
+  }`;
 const LIQ_CREAR_URL = `/api/liquidacion/liquidaciones_por_os/crear`;
 
 // Paginación front
@@ -174,8 +176,13 @@ const LiquidationCycle: React.FC = () => {
   const [debError, setDebError] = useState<string | null>(null);
 
   // Confirm + generar (solo descuentos)
-  const [confirmGen, setConfirmGen] = useState<null | { id: string; name: string }>(null);
-  const [genStatus, setGenStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [confirmGen, setConfirmGen] = useState<null | {
+    id: string;
+    name: string;
+  }>(null);
+  const [genStatus, setGenStatus] = useState<
+    "idle" | "loading" | "done" | "error"
+  >("idle");
   const [genError, setGenError] = useState<string | null>(null);
 
   // ====== Agregar período por OS ======
@@ -196,9 +203,12 @@ const LiquidationCycle: React.FC = () => {
       setIsError(false);
       setError(null);
       try {
-        const { data: json } = await http.get<ResumenDetail>(RESUMEN_BY_ID(id), {
-          signal: controller.signal,
-        });
+        const { data: json } = await http.get<ResumenDetail>(
+          RESUMEN_BY_ID(id),
+          {
+            signal: controller.signal,
+          }
+        );
         setData(json);
       } catch (e: any) {
         if (e?.name !== "CanceledError" && e?.name !== "AbortError") {
@@ -292,7 +302,10 @@ const LiquidationCycle: React.FC = () => {
   const osNameById = useMemo(() => {
     const m = new Map<string, string>();
     for (const os of osList ?? []) {
-      m.set(String(os.NRO_OBRASOCIAL), (os.OBRA_SOCIAL ?? "").toString().trim());
+      m.set(
+        String(os.NRO_OBRASOCIAL),
+        (os.OBRA_SOCIAL ?? "").toString().trim()
+      );
     }
     return m;
   }, [osList]);
@@ -397,7 +410,9 @@ const LiquidationCycle: React.FC = () => {
       });
       setDiscounts((prev) =>
         prev.map((x) =>
-          x.id === editTarget.id ? { ...x, price: priceVal, percentage: pctVal } : x
+          x.id === editTarget.id
+            ? { ...x, price: priceVal, percentage: pctVal }
+            : x
         )
       );
       closeEdit();
@@ -411,7 +426,9 @@ const LiquidationCycle: React.FC = () => {
     const q = (query ?? "").trim().toLowerCase();
     return allInsurances
       .filter((i) => !hidden.has(i.id))
-      .filter((i) => (i.name || `Obra Social ${i.id}`).toLowerCase().includes(q));
+      .filter((i) =>
+        (i.name || `Obra Social ${i.id}`).toLowerCase().includes(q)
+      );
   }, [allInsurances, hidden, query]);
 
   /* ======= ORDEN: primero las que tienen liquidaciones ======= */
@@ -482,7 +499,8 @@ const LiquidationCycle: React.FC = () => {
           ? toNumber(liq.total_neto)
           : bruto - (debitos + deduccion);
 
-      const estado = String(liq.estado ?? "A").toUpperCase() === "C" ? "C" : "A";
+      const estado =
+        String(liq.estado ?? "A").toUpperCase() === "C" ? "C" : "A";
       const osIdStr = String(osId);
       const osName = osNameById.get(osIdStr) ?? `OS ${osIdStr}`;
 
@@ -498,7 +516,9 @@ const LiquidationCycle: React.FC = () => {
         nro: (liq as any)?.nro_liquidacion ?? "",
       });
     }
-    return out.sort((a, b) => (a.estado === b.estado ? 0 : a.estado === "C" ? -1 : 1));
+    return out.sort((a, b) =>
+      a.estado === b.estado ? 0 : a.estado === "C" ? -1 : 1
+    );
   }, [data?.liquidaciones, osNameById, periodTitle]);
 
   const totals = useMemo(() => {
@@ -522,6 +542,7 @@ const LiquidationCycle: React.FC = () => {
     setGenError(null);
 
     try {
+      console.log("id:", id, "confirmGen:", confirmGen);
       const generateUrl = GEN_DESC_URL(id, confirmGen.id);
 
       // Body: para descuentos mandamos override de snapshot si existe
@@ -569,13 +590,17 @@ const LiquidationCycle: React.FC = () => {
           setPeriodosOS(list ?? []);
 
           const thisYear = new Date().getFullYear();
-          const years = Array.from(new Set((list ?? []).map((p) => Number(p.ANIO)))).sort(
-            (a, b) => b - a
-          );
-          const defaultYear = years.includes(thisYear) ? thisYear : years[0] ?? "";
+          const years = Array.from(
+            new Set((list ?? []).map((p) => Number(p.ANIO)))
+          ).sort((a, b) => b - a);
+          const defaultYear = years.includes(thisYear)
+            ? thisYear
+            : years[0] ?? "";
           setAddYear((defaultYear || "") as any);
         } catch (e: any) {
-          setAddErr(e?.message || "No se pudieron cargar los períodos disponibles.");
+          setAddErr(
+            e?.message || "No se pudieron cargar los períodos disponibles."
+          );
         }
       });
     },
@@ -605,7 +630,8 @@ const LiquidationCycle: React.FC = () => {
     if (!id || !addTargetOS || addYear === "" || addMonth === "") return;
 
     const row = periodosOS.find(
-      (p) => Number(p.ANIO) === Number(addYear) && Number(p.MES) === Number(addMonth)
+      (p) =>
+        Number(p.ANIO) === Number(addYear) && Number(p.MES) === Number(addMonth)
     );
     if (!row) {
       setAddErr("Período inválido.");
@@ -673,17 +699,25 @@ const LiquidationCycle: React.FC = () => {
             <div className={styles.header}>
               <div className={styles.headerInfo}>
                 <BackButton />
-                
+
                 <div className={styles.breadcrumb}>CICLO DE LIQUIDACIÓN</div>
                 <h1 className={styles.title}>Período {periodTitle}</h1>
                 <div className={styles.subtotals}>
-                  <span><b>Bruto:</b> ${totalBruto.toLocaleString("es-AR")}</span>
+                  <span>
+                    <b>Bruto:</b> ${totalBruto.toLocaleString("es-AR")}
+                  </span>
                   <span className={styles.dot}>·</span>
-                  <span><b>Débitos:</b> ${totalDebitos.toLocaleString("es-AR")}</span>
+                  <span>
+                    <b>Débitos:</b> ${totalDebitos.toLocaleString("es-AR")}
+                  </span>
                   <span className={styles.dot}>·</span>
-                  <span><b>Deducción:</b> ${totalDeduccion.toLocaleString("es-AR")}</span>
+                  <span>
+                    <b>Deducción:</b> ${totalDeduccion.toLocaleString("es-AR")}
+                  </span>
                   <span className={styles.dot}>·</span>
-                  <span><b>Neto:</b> ${totalNeto.toLocaleString("es-AR")}</span>
+                  <span>
+                    <b>Neto:</b> ${totalNeto.toLocaleString("es-AR")}
+                  </span>
                 </div>
               </div>
 
@@ -698,7 +732,10 @@ const LiquidationCycle: React.FC = () => {
                 >
                   Pre-Visualizar
                 </Button>
-                <Button variant="success" onClick={() => console.log("Exportar Todo", data)}>
+                <Button
+                  variant="success"
+                  onClick={() => console.log("Exportar Todo", data)}
+                >
                   Exportar Todo
                 </Button>
               </div>
@@ -707,7 +744,9 @@ const LiquidationCycle: React.FC = () => {
             {/* Tabs controlan la vista del carrusel */}
             <div className={styles.tabs}>
               <button
-                className={`${styles.tab} ${activeView === "obras" ? styles.active : ""}`}
+                className={`${styles.tab} ${
+                  activeView === "obras" ? styles.active : ""
+                }`}
                 onPointerDown={(e) => {
                   e.preventDefault();
                   onTabObras();
@@ -717,7 +756,9 @@ const LiquidationCycle: React.FC = () => {
                 Obras Sociales
               </button>
               <button
-                className={`${styles.tab} ${activeView === "debitos" ? styles.active : ""}`}
+                className={`${styles.tab} ${
+                  activeView === "debitos" ? styles.active : ""
+                }`}
                 onPointerDown={(e) => {
                   e.preventDefault();
                   onTabDebitos();
@@ -751,7 +792,11 @@ const LiquidationCycle: React.FC = () => {
                     <Alert
                       type="error"
                       title="Error"
-                      message={(error as Error | undefined)?.message || osError || "No se pudo cargar la información"}
+                      message={
+                        (error as Error | undefined)?.message ||
+                        osError ||
+                        "No se pudo cargar la información"
+                      }
                       onClose={() => navigate(-1)}
                     />
                   )}
@@ -760,7 +805,9 @@ const LiquidationCycle: React.FC = () => {
                     <>
                       <div className={styles.socialWorksList}>
                         {pageItems.length === 0 && (
-                          <div className={styles.emptyState}>No hay obras sociales para mostrar.</div>
+                          <div className={styles.emptyState}>
+                            No hay obras sociales para mostrar.
+                          </div>
                         )}
 
                         {pageItems.map((ins) => (
@@ -769,17 +816,23 @@ const LiquidationCycle: React.FC = () => {
                               name={ins.name}
                               osId={ins.id}
                               resumenId={id!}
-                              initialPeriods={(rowsByOS[ins.id] ?? []).map((r) => ({
-                                period: r.periodo,
-                                grossTotal: r.bruto,
-                                discounts: r.descuentos,
-                                netTotal: r.neto,
-                                liquidacionId: r.liquidacionId,
-                                nroLiquidacion: r.nroLiquidacion,
-                                estado: r.estado,
-                              }))}
-                              onSummary={(periods) => console.log("Ver Resumen", ins.name, periods)}
-                              onExport={(periods) => console.log("Exportar", ins.name, periods)}
+                              initialPeriods={(rowsByOS[ins.id] ?? []).map(
+                                (r) => ({
+                                  period: r.periodo,
+                                  grossTotal: r.bruto,
+                                  discounts: r.descuentos,
+                                  netTotal: r.neto,
+                                  liquidacionId: r.liquidacionId,
+                                  nroLiquidacion: r.nroLiquidacion,
+                                  estado: r.estado,
+                                })
+                              )}
+                              onSummary={(periods) =>
+                                console.log("Ver Resumen", ins.name, periods)
+                              }
+                              onExport={(periods) =>
+                                console.log("Exportar", ins.name, periods)
+                              }
                               onDelete={() => onDeleteOS(ins.id)}
                               onAddPeriod={() => onAddPeriodOS(ins.id)}
                               onReload={reloadResumen}
@@ -791,14 +844,41 @@ const LiquidationCycle: React.FC = () => {
                       {totalPages > 1 && (
                         <div className={styles.pagination}>
                           <div className={styles.paginationInfo}>
-                            Mostrando {start + 1}-{Math.min(end, totalItems)} de {totalItems}
+                            Mostrando {start + 1}-{Math.min(end, totalItems)} de{" "}
+                            {totalItems}
                           </div>
                           <div className={styles.paginationButtons}>
-                            <Button variant="secondary" onClick={goFirst} disabled={currentPage === 1}>«</Button>
-                            <Button variant="secondary" onClick={goPrev} disabled={currentPage === 1}>Anterior</Button>
-                            <span className={styles.pageNumber}>Página {currentPage} / {totalPages}</span>
-                            <Button variant="secondary" onClick={goNext} disabled={currentPage === totalPages}>Siguiente</Button>
-                            <Button variant="secondary" onClick={goLast} disabled={currentPage === totalPages}>»</Button>
+                            <Button
+                              variant="secondary"
+                              onClick={goFirst}
+                              disabled={currentPage === 1}
+                            >
+                              «
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              onClick={goPrev}
+                              disabled={currentPage === 1}
+                            >
+                              Anterior
+                            </Button>
+                            <span className={styles.pageNumber}>
+                              Página {currentPage} / {totalPages}
+                            </span>
+                            <Button
+                              variant="secondary"
+                              onClick={goNext}
+                              disabled={currentPage === totalPages}
+                            >
+                              Siguiente
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              onClick={goLast}
+                              disabled={currentPage === totalPages}
+                            >
+                              »
+                            </Button>
                           </div>
                         </div>
                       )}
@@ -822,7 +902,10 @@ const LiquidationCycle: React.FC = () => {
                     <div />
                   </div>
 
-                  <div className={styles.debitosGrid} style={{ gridTemplateColumns: "1fr" }}>
+                  <div
+                    className={styles.debitosGrid}
+                    style={{ gridTemplateColumns: "1fr" }}
+                  >
                     {/* BOX Descuentos */}
                     <div className={styles.box}>
                       <div className={styles.boxHeader}>
@@ -836,7 +919,11 @@ const LiquidationCycle: React.FC = () => {
                         />
                       </div>
 
-                      {debError && <div className={styles.errorInline}>Error: {debError}</div>}
+                      {debError && (
+                        <div className={styles.errorInline}>
+                          Error: {debError}
+                        </div>
+                      )}
                       {loadingDeb ? (
                         <div className={styles.muted}>Cargando descuentos…</div>
                       ) : (
@@ -864,9 +951,14 @@ const LiquidationCycle: React.FC = () => {
                                 .map((d) => (
                                   <tr key={d.id}>
                                     <td>{d.nro_colegio}</td>
-                                    <td className={styles.ellipsis}>{d.concept}</td>
+                                    <td className={styles.ellipsis}>
+                                      {d.concept}
+                                    </td>
                                     <td>
-                                      ${d.price.toLocaleString("es-AR", { maximumFractionDigits: 2 })}
+                                      $
+                                      {d.price.toLocaleString("es-AR", {
+                                        maximumFractionDigits: 2,
+                                      })}
                                     </td>
                                     <td>{d.percentage}%</td>
                                     <td style={{ display: "flex", gap: 8 }}>
@@ -887,10 +979,18 @@ const LiquidationCycle: React.FC = () => {
                                         onPointerDown={(e) => {
                                           e.preventDefault();
                                           flushSync(() =>
-                                            setConfirmGen({ id: d.id, name: d.concept })
+                                            setConfirmGen({
+                                              id: d.id,
+                                              name: d.concept,
+                                            })
                                           );
                                         }}
-                                        onClick={() => setConfirmGen({ id: d.id, name: d.concept })}
+                                        onClick={() =>
+                                          setConfirmGen({
+                                            id: d.id,
+                                            name: d.concept,
+                                          })
+                                        }
                                       >
                                         Generar
                                       </Button>
@@ -899,7 +999,12 @@ const LiquidationCycle: React.FC = () => {
                                 ))}
                               {discounts.length === 0 && (
                                 <tr>
-                                  <td colSpan={5} className={styles.mutedCenter}>Sin descuentos</td>
+                                  <td
+                                    colSpan={5}
+                                    className={styles.mutedCenter}
+                                  >
+                                    Sin descuentos
+                                  </td>
                                 </tr>
                               )}
                             </tbody>
@@ -923,29 +1028,72 @@ const LiquidationCycle: React.FC = () => {
               TransitionProps={{ timeout: 0 }}
               BackdropProps={{ transitionDuration: 0 }}
             >
-              <DialogTitle>Pre-visualización del período {periodTitle}</DialogTitle>
+              <DialogTitle>
+                Pre-visualización del período {periodTitle}
+              </DialogTitle>
               <DialogContent dividers className={styles.dialogContent}>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 16 }}>
-                  <div style={{ background: "#f7f7f9", borderRadius: 8, padding: 12 }}>
-                    <div style={{ fontSize: 12, color: "#666" }}>Cerradas (Neto)</div>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(4, 1fr)",
+                    gap: 12,
+                    marginBottom: 16,
+                  }}
+                >
+                  <div
+                    style={{
+                      background: "#f7f7f9",
+                      borderRadius: 8,
+                      padding: 12,
+                    }}
+                  >
+                    <div style={{ fontSize: 12, color: "#666" }}>
+                      Cerradas (Neto)
+                    </div>
                     <div style={{ fontWeight: 700, fontSize: 18 }}>
                       ${currency.format(totals.cerradasNeto)}
                     </div>
                   </div>
-                  <div style={{ background: "#f7f7f9", borderRadius: 8, padding: 12 }}>
-                    <div style={{ fontSize: 12, color: "#666" }}>Abiertas (Neto)</div>
+                  <div
+                    style={{
+                      background: "#f7f7f9",
+                      borderRadius: 8,
+                      padding: 12,
+                    }}
+                  >
+                    <div style={{ fontSize: 12, color: "#666" }}>
+                      Abiertas (Neto)
+                    </div>
                     <div style={{ fontWeight: 700, fontSize: 18 }}>
                       ${currency.format(totals.abiertasNeto)}
                     </div>
                   </div>
-                  <div style={{ background: "#f7f7f9", borderRadius: 8, padding: 12 }}>
-                    <div style={{ fontSize: 12, color: "#666" }}>Deducciones (Resumen)</div>
+                  <div
+                    style={{
+                      background: "#f7f7f9",
+                      borderRadius: 8,
+                      padding: 12,
+                    }}
+                  >
+                    <div style={{ fontSize: 12, color: "#666" }}>
+                      Deducciones (Resumen)
+                    </div>
                     <div style={{ fontWeight: 700, fontSize: 18 }}>
                       ${currency.format(totals.resumenDeduccion)}
                     </div>
                   </div>
-                  <div style={{ background: "#eefaf0", borderRadius: 8, padding: 12 }}>
-                    <div style={{ fontSize: 12, color: "#2a7", fontWeight: 600 }}>TOTAL GENERAL</div>
+                  <div
+                    style={{
+                      background: "#eefaf0",
+                      borderRadius: 8,
+                      padding: 12,
+                    }}
+                  >
+                    <div
+                      style={{ fontSize: 12, color: "#2a7", fontWeight: 600 }}
+                    >
+                      TOTAL GENERAL
+                    </div>
                     <div style={{ fontWeight: 800, fontSize: 20 }}>
                       ${currency.format(totals.totalGeneral)}
                     </div>
@@ -968,16 +1116,35 @@ const LiquidationCycle: React.FC = () => {
                     </thead>
                     <tbody>
                       {previewRows.map((r, idx) => (
-                        <tr key={`${r.osId}-${r.periodo}-${idx}`} style={{ borderBottom: "1px solid #eee" }}>
+                        <tr
+                          key={`${r.osId}-${r.periodo}-${idx}`}
+                          style={{ borderBottom: "1px solid #eee" }}
+                        >
                           <td style={td}>{r.osId}</td>
                           <td style={td}>{r.osName}</td>
                           <td style={td}>{r.periodo}</td>
-                          <td style={{ ...td, fontWeight: 600, color: r.estado === "C" ? "#0a7" : "#c80" }}>
+                          <td
+                            style={{
+                              ...td,
+                              fontWeight: 600,
+                              color: r.estado === "C" ? "#0a7" : "#c80",
+                            }}
+                          >
                             {r.estado === "C" ? "CERRADA" : "ABIERTA"}
                           </td>
-                          <td style={{ ...td, textAlign: "right" }}>${currency.format(r.bruto)}</td>
-                          <td style={{ ...td, textAlign: "right" }}>-${currency.format(r.debitos)}</td>
-                          <td style={{ ...td, textAlign: "right", fontWeight: 600 }}>
+                          <td style={{ ...td, textAlign: "right" }}>
+                            ${currency.format(r.bruto)}
+                          </td>
+                          <td style={{ ...td, textAlign: "right" }}>
+                            -${currency.format(r.debitos)}
+                          </td>
+                          <td
+                            style={{
+                              ...td,
+                              textAlign: "right",
+                              fontWeight: 600,
+                            }}
+                          >
                             ${currency.format(r.neto)}
                           </td>
                           <td style={td}>{r.nro || "—"}</td>
@@ -985,7 +1152,14 @@ const LiquidationCycle: React.FC = () => {
                       ))}
                       {previewRows.length === 0 && (
                         <tr>
-                          <td colSpan={8} style={{ padding: 16, textAlign: "center", color: "#777" }}>
+                          <td
+                            colSpan={8}
+                            style={{
+                              padding: 16,
+                              textAlign: "center",
+                              color: "#777",
+                            }}
+                          >
                             No hay liquidaciones para mostrar.
                           </td>
                         </tr>
@@ -995,7 +1169,10 @@ const LiquidationCycle: React.FC = () => {
                 </div>
               </DialogContent>
               <DialogActions className={styles.dialogActions}>
-                <Button variant="secondary" onClick={() => setOpenPreview(false)}>
+                <Button
+                  variant="secondary"
+                  onClick={() => setOpenPreview(false)}
+                >
                   Cerrar
                 </Button>
               </DialogActions>
@@ -1021,26 +1198,41 @@ const LiquidationCycle: React.FC = () => {
               <DialogContent dividers className={styles.dialogContent}>
                 {genStatus === "idle" && (
                   <div>
-                    ¿Seguro que querés generar el descuento <strong>{confirmGen?.name}</strong> para el
-                    período <strong>{periodTitle}</strong>?
+                    ¿Seguro que querés generar el descuento{" "}
+                    <strong>{confirmGen?.name}</strong> para el período{" "}
+                    <strong>{periodTitle}</strong>?
                   </div>
                 )}
-                {genStatus === "loading" && <div>Procesando en el servidor…</div>}
+                {genStatus === "loading" && (
+                  <div>Procesando en el servidor…</div>
+                )}
                 {genStatus === "done" && <div>Se generó correctamente.</div>}
-                {genStatus === "error" && <div style={{ color: "#a00" }}>No se pudo generar: {genError}</div>}
+                {genStatus === "error" && (
+                  <div style={{ color: "#a00" }}>
+                    No se pudo generar: {genError}
+                  </div>
+                )}
               </DialogContent>
               <DialogActions className={styles.dialogActions}>
                 {genStatus === "idle" && (
                   <>
-                    <Button variant="secondary" onClick={closeGenModal}>Cancelar</Button>
-                    <Button variant="primary" onClick={doGenerate}>Sí, generar</Button>
+                    <Button variant="secondary" onClick={closeGenModal}>
+                      Cancelar
+                    </Button>
+                    <Button variant="primary" onClick={doGenerate}>
+                      Sí, generar
+                    </Button>
                   </>
                 )}
                 {genStatus === "loading" && (
-                  <Button variant="secondary" onClick={closeGenModal} disabled>Cancelar</Button>
+                  <Button variant="secondary" onClick={closeGenModal} disabled>
+                    Cancelar
+                  </Button>
                 )}
                 {(genStatus === "done" || genStatus === "error") && (
-                  <Button variant="primary" onClick={closeGenModal}>Aceptar</Button>
+                  <Button variant="primary" onClick={closeGenModal}>
+                    Aceptar
+                  </Button>
                 )}
               </DialogActions>
             </Dialog>
@@ -1056,11 +1248,21 @@ const LiquidationCycle: React.FC = () => {
               TransitionProps={{ timeout: 0 }}
               BackdropProps={{ transitionDuration: 0 }}
             >
-              <DialogTitle>Agregar período {addTargetOS ? `— OS ${addTargetOS}` : ""}</DialogTitle>
+              <DialogTitle>
+                Agregar período {addTargetOS ? `— OS ${addTargetOS}` : ""}
+              </DialogTitle>
               <DialogContent className={styles.dialogContent} dividers>
-                {addErr && <div className={styles.errorInline} style={{ marginBottom: 8 }}>{addErr}</div>}
+                {addErr && (
+                  <div
+                    className={styles.errorInline}
+                    style={{ marginBottom: 8 }}
+                  >
+                    {addErr}
+                  </div>
+                )}
                 <div className={styles.muted} style={{ marginTop: 6 }}>
-                  Sólo se listan períodos <b>cerrados</b> de esta obra social que <b>aún no están siendo liquidados</b>.
+                  Sólo se listan períodos <b>cerrados</b> de esta obra social
+                  que <b>aún no están siendo liquidados</b>.
                 </div>
                 <div className={styles.formRow}>
                   <label className={styles.label}>Año</label>
@@ -1068,14 +1270,17 @@ const LiquidationCycle: React.FC = () => {
                     className={styles.input}
                     value={addYear}
                     onChange={(e) => {
-                      const v = e.target.value === "" ? "" : Number(e.target.value);
+                      const v =
+                        e.target.value === "" ? "" : Number(e.target.value);
                       setAddYear(v as any);
                       setAddMonth("");
                     }}
                   >
                     <option value="">Seleccionar año…</option>
                     {availableYears.map((y) => (
-                      <option key={y} value={y}>{y}</option>
+                      <option key={y} value={y}>
+                        {y}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -1085,19 +1290,34 @@ const LiquidationCycle: React.FC = () => {
                   <select
                     className={styles.input}
                     value={addMonth}
-                    onChange={(e) => setAddMonth(e.target.value === "" ? "" : Number(e.target.value))}
+                    onChange={(e) =>
+                      setAddMonth(
+                        e.target.value === "" ? "" : Number(e.target.value)
+                      )
+                    }
                     disabled={addYear === ""}
                   >
                     <option value="">Seleccionar mes…</option>
                     {availableMonths.map((m) => (
-                      <option key={m} value={m}>{String(m).padStart(2, "0")}</option>
+                      <option key={m} value={m}>
+                        {String(m).padStart(2, "0")}
+                      </option>
                     ))}
                   </select>
                 </div>
               </DialogContent>
               <DialogActions className={styles.dialogActions}>
-                <Button variant="secondary" onClick={() => setOpenAddPeriod(false)}>Cancelar</Button>
-                <Button variant="primary" onClick={handleCreateLiq} disabled={addYear === "" || addMonth === "" || addBusy}>
+                <Button
+                  variant="secondary"
+                  onClick={() => setOpenAddPeriod(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={handleCreateLiq}
+                  disabled={addYear === "" || addMonth === "" || addBusy}
+                >
                   {addBusy ? "Creando…" : "Confirmar"}
                 </Button>
               </DialogActions>
@@ -1149,8 +1369,12 @@ const LiquidationCycle: React.FC = () => {
                 {editErr && <div className={styles.errorInline}>{editErr}</div>}
               </DialogContent>
               <DialogActions className={styles.dialogActions}>
-                <Button variant="secondary" onClick={closeEdit}>Cancelar</Button>
-                <Button variant="primary" onClick={saveEdit}>Guardar</Button>
+                <Button variant="secondary" onClick={closeEdit}>
+                  Cancelar
+                </Button>
+                <Button variant="primary" onClick={saveEdit}>
+                  Guardar
+                </Button>
               </DialogActions>
             </Dialog>
           </motion.div>
