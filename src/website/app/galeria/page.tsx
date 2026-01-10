@@ -8,6 +8,8 @@ const QUINTA_FOLDER_TITLE = "Quinta y Quincho"
 const QUINTA_FOLDER_DATE = "2025-09-16"
 const FIESTA_MED_2025 = "Fiesta del Día del Médico 2025"
 const FIESTA_MED_2025_DATE = "2025-12-06"
+const PILETA_QUINTA = "PILETA HABILITADA"
+const PILETA_QUINTA_DATE = "2026-01-10"
 
 const mockItems: MediaItem[] = [
   {
@@ -128,6 +130,16 @@ const mockItems: MediaItem[] = [
       "https://res.cloudinary.com/dcfkgepmp/image/upload/v1767475583/DSC_0032_mddz88.jpg",
     titulo: FIESTA_MED_2025,
     fecha: FIESTA_MED_2025_DATE,
+    etiquetas: ["médicos", "fiesta"],
+  },
+      {
+    id: "p14",
+    tipo: "video",
+    src: "https://res.cloudinary.com/dcfkgepmp/video/upload/v1768073408/WhatsApp_Video_2026-01-10_at_3.28.50_PM_dycqjb.mp4",
+    miniatura:
+      "https://res.cloudinary.com/dcfkgepmp/video/upload/v1768073408/WhatsApp_Video_2026-01-10_at_3.28.50_PM_dycqjb.mp4",
+    titulo: PILETA_QUINTA,
+    fecha: PILETA_QUINTA_DATE,
     etiquetas: ["médicos", "fiesta"],
   },
 ]
