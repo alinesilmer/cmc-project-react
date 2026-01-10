@@ -83,7 +83,7 @@ const ObrasSocialesSteps: React.FC<Props> = (props) => {
           </div>
 
           <div className={styles.formGroup}>
-            <label>Nombre Fantasía</label>
+            <label>Nombre *</label>
             <input
               type="text"
               value={formData.nombreFantasia}

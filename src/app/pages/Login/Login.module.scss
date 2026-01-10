@@ -461,16 +461,17 @@
 
 .linkBackToLanding {
   text-align: center;
+  background-color: black;
   border: 1px solid #4f7cff;
-  padding: clamp(4px, 1vw, 6px);
+  padding: clamp(10px, 1vw, 12px);
   border-radius: 8px;
   text-decoration: none;
-  color: #0f172a;
-  font-weight: 500;
+  color: white;
+  font-weight: 600;
   font-size: clamp($font-size-sm, 2vw, $font-size-base);
   transition: outline 0.15s ease;
 
   &:hover {
-    outline: 1px solid #4f7cff;
+    background-color: $primary-blue;
   }
 }

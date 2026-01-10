@@ -32,6 +32,7 @@ import RegisterSocio from "./app/pages/RegisterSocio/RegisterSocio";
 import PermissionsManager from "./app/pages/PermissionsManager/PermissionsManager";
 import ObrasSocialesRegisterPage from "./app/pages/ObrasSocialesRegisterPage/ObrasSocialesRegisterPage";
 import PadronesPage from "./app/pages/PadronesPage/PadronesPage";
+import AfiliadosPorObraSocialPage from "./app/pages/AfiliadosPorObraSocialPage/AfiliadosPorObraSocialPage";
 
 
 
@@ -60,6 +61,7 @@ function App() {
             <Route element={<RequireAuth />}>
               <Route path="/" element={<Link to="/dashboard" replace />} />
               <Route path="/dashboard" element={<DashboardPage />} />
+               <Route path="/afiliadospadron" element={<AfiliadosPorObraSocialPage />} />
               <Route path="/doctors" element={<DoctorsPage />} />
               <Route path="/doctors/:id" element={<DoctorProfilePage />} />
               <Route path="/social-works" element={<SocialWorksPage />} />

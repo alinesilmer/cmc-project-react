@@ -2,28 +2,18 @@
 
 
 .container {
-  min-height: 100vh;
-  background: $gray-50;
-  padding: $spacing-8 $spacing-4;
-
-  @media (max-width: $breakpoint-md) {
-    padding: $spacing-6 $spacing-3;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-4 $spacing-2;
-  }
-}
-
-.wrapper {
-  max-width: 1000px;
+  padding: $spacing-8;
+  max-width: 1400px;
   margin: 0 auto;
+  background-color: $gray-50;
+  min-height: 100vh;
 }
 
 // Header Section
 .header {
-  text-align: center;
+  text-align: left;
   margin-bottom: $spacing-8;
+  animation: fadeIn 0.5s ease-out;
 
   @media (max-width: $breakpoint-sm) {
     margin-bottom: $spacing-6;
@@ -33,42 +23,15 @@
 .headerContent {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: $spacing-4;
-}
-
-.iconWrapper {
-  width: 64px;
-  height: 64px;
-  background: rgb(40, 54, 112);
-  border-radius: $border-radius-xl;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: $shadow-lg;
-
-  @media (max-width: $breakpoint-sm) {
-    width: 56px;
-    height: 56px;
-  }
-}
-
-.icon {
-  width: 36px;
-  height: 36px;
-  color: $white;
-
-  @media (max-width: $breakpoint-sm) {
-    width: 32px;
-    height: 32px;
-  }
+  align-items: flex-start;
+  gap: $spacing-1;
 }
 
 .title {
   font-size: $font-size-4xl;
   font-weight: $font-weight-bold;
   color: $gray-900;
-  margin: 0;
+  margin: 0 0 $spacing-2 0;
 
   @media (max-width: $breakpoint-md) {
     font-size: $font-size-3xl;
@@ -80,10 +43,8 @@
 }
 
 .subtitle {
-  font-size: $font-size-lg;
+    font-size: $font-size-lg;
   color: $gray-600;
-  max-width: 600px;
-  line-height: 1.6;
   margin: 0;
 
   @media (max-width: $breakpoint-sm) {

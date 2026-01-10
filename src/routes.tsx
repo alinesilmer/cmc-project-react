@@ -32,6 +32,7 @@ import PadronesPage
  import AdminPadrones from "./app/pages/AdminPadrones/AdminPadrones";
  import AdminPadronesDetail from "./app/pages/AdminPadronesDetail/AdminPadronesDetail";
  import Boletin from "./app/pages/Boletin/Boletin";
+ import AfiliadosPorObraSocialPage from "./app/pages/AfiliadosPorObraSocialPage/AfiliadosPorObraSocialPage";
 // WEBSITE
 import WebRoutes from "./website/router";
 
@@ -52,6 +53,7 @@ export default function RootRoutes() {
         <Route path="/panel/register" element={<Register />} />
         <Route path="/panel/info" element={<Info />} />
         <Route path="/panel/adherente" element={<AdherenteForm />} />
+         
         
 
         {/* Protected app */}
@@ -70,6 +72,7 @@ export default function RootRoutes() {
               path="/panel/liquidation/:id"
               element={<LiquidationCyclePage />}
             />
+            <Route path="/panel/afiliadospadron" element={<AfiliadosPorObraSocialPage />} />
             <Route path="/panel/padron-ioscor" element={<PadronIoscor />} />
             <Route
               path="/panel/liquidation/:id/debitos"
@@ -101,6 +104,7 @@ export default function RootRoutes() {
           <Route path="/panel/admin-padrones" element={<AdminPadrones />} />
             <Route path="/panel/admin-padrones-detail" element={<AdminPadronesDetail />} />
         </Route>
+        
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
