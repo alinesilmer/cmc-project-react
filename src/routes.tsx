@@ -1,9 +1,8 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 
-// APP (management system)
+// APP
 import RequireAuth from "./app/auth/RequireAuth";
-// import AppLayout from "./app/components/molecules/Sidebar/Sidebar";
 import AppLayout from "./app/components/molecules/AppLayout/AppLayout";
 import DashboardPage from "./app/pages/Dashboard/Dashboard";
 import DoctorsPage from "./app/pages/DoctorsList/DoctorsList";
@@ -27,12 +26,12 @@ import Register from "./app/pages/Register/Register";
 import Info from "./app/pages/Info/Info";
 import AdherenteForm from "./app/components/molecules/AdherenteForm/AdherenteForm";
 import ObrasSocialesRegisterPage from "./app/pages/ObrasSocialesRegisterPage/ObrasSocialesRegisterPage";
-import PadronesPage
- from "./app/pages/PadronesPage/PadronesPage";
- import AdminPadrones from "./app/pages/AdminPadrones/AdminPadrones";
- import AdminPadronesDetail from "./app/pages/AdminPadronesDetail/AdminPadronesDetail";
- import Boletin from "./app/pages/Boletin/Boletin";
- import AfiliadosPorObraSocialPage from "./app/pages/AfiliadosPorObraSocialPage/AfiliadosPorObraSocialPage";
+import PadronesPage from "./app/pages/PadronesPage/PadronesPage";
+import AdminPadrones from "./app/pages/AdminPadrones/AdminPadrones";
+import AdminPadronesDetail from "./app/pages/AdminPadronesDetail/AdminPadronesDetail";
+import Boletin from "./app/pages/Boletin/Boletin";
+import AfiliadosPorObraSocialPage from "./app/pages/AfiliadosPorObraSocialPage/AfiliadosPorObraSocialPage";
+
 // WEBSITE
 import WebRoutes from "./website/router";
 
@@ -40,73 +39,66 @@ export default function RootRoutes() {
   return (
     <AnimatePresence mode="wait">
       <Routes>
-        {/* Public website*/}
+        {/* Website público */}
         <Route path="/*" element={<WebRoutes />} />
-        
-            <Route path="/panel/padrones" element={<PadronesPage />} />
-         
-           
 
-        {/* Auth pages for app */}
+        {/* Páginas públicas del panel (sin auth) */}
         <Route path="/panel/login" element={<Login />} />
-        <Route path="/panel/register-os" element={<ObrasSocialesRegisterPage />} />
+        <Route
+          path="/panel/register-os"
+          element={<ObrasSocialesRegisterPage />}
+        />
         <Route path="/panel/register" element={<Register />} />
         <Route path="/panel/info" element={<Info />} />
         <Route path="/panel/adherente" element={<AdherenteForm />} />
-         
-        
+        <Route path="/panel/padrones" element={<PadronesPage />} />
 
-        {/* Protected app */}
+        {/* Zona protegida */}
         <Route element={<RequireAuth />}>
           <Route path="/panel" element={<AppLayout />}>
+            {/* index de /panel */}
+            <Route index element={<Navigate to="dashboard" replace />} />
+
+            {/* 👇 RUTAS RELATIVAS (sin /panel al inicio) */}
+            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="doctors" element={<DoctorsPage />} />
+            <Route path="doctors/:id" element={<DoctorProfilePage />} />
+            <Route path="social-works" element={<SocialWorksPage />} />
+            <Route path="liquidation" element={<LiquidationPage />} />
+            <Route path="liquidation/:id" element={<LiquidationCyclePage />} />
+            <Route path="liquidation/:id/debitos" element={<DiscountsPage />} />
             <Route
-              path="/panel"
-              element={<Navigate to="/panel/dashboard" replace />}
-            />
-            <Route path="/panel/dashboard" element={<DashboardPage />} />
-            <Route path="/panel/doctors" element={<DoctorsPage />} />
-            <Route path="/panel/doctors/:id" element={<DoctorProfilePage />} />
-            <Route path="/panel/social-works" element={<SocialWorksPage />} />
-            <Route path="/panel/liquidation" element={<LiquidationPage />} />
-            <Route
-              path="/panel/liquidation/:id"
-              element={<LiquidationCyclePage />}
-            />
-            <Route path="/panel/afiliadospadron" element={<AfiliadosPorObraSocialPage />} />
-            <Route path="/panel/padron-ioscor" element={<PadronIoscor />} />
-            <Route
-              path="/panel/liquidation/:id/debitos"
-              element={<DiscountsPage />}
-            />
-            <Route
-              path="/panel/liquidation/:id/insurance/:osId/:period/:liquidacionId"
+              path="liquidation/:id/insurance/:osId/:period/:liquidacionId"
               element={<InsuranceDetail />}
             />
-            <Route path="/panel/solicitudes" element={<ApplicationsList />} />
             <Route
-              path="/panel/solicitudes/:id"
-              element={<ApplicationDetail />}
+              path="afiliadospadron"
+              element={<AfiliadosPorObraSocialPage />}
             />
-            <Route path="/panel/users" element={<UsersList />} />
-            <Route path="/panel/register-socio" element={<RegisterSocio />} />
-            <Route
-              path="/panel/admin/permissions"
-              element={<PermissionsManager />}
-            />
-            <Route
-              path="/panel/users-manager"
-              element={<UsersManagerDashboard />}
-            />
-               <Route path="/panel/boletin" element={<Boletin />} />
-            <Route path="/panel/config" element={<Config />} />
-            <Route path="/panel/help" element={<Help />} />
-          </Route>
-          <Route path="/panel/admin-padrones" element={<AdminPadrones />} />
-            <Route path="/panel/admin-padrones-detail" element={<AdminPadronesDetail />} />
-        </Route>
-        
+            <Route path="padron-ioscor" element={<PadronIoscor />} />
+            <Route path="solicitudes" element={<ApplicationsList />} />
+            <Route path="solicitudes/:id" element={<ApplicationDetail />} />
+            <Route path="users" element={<UsersList />} />
+            <Route path="register-socio" element={<RegisterSocio />} />
+            <Route path="admin/permissions" element={<PermissionsManager />} />
+            <Route path="users-manager" element={<UsersManagerDashboard />} />
+            <Route path="boletin" element={<Boletin />} />
+            <Route path="config" element={<Config />} />
+            <Route path="help" element={<Help />} />
 
-        {/* Fallback */}
+            {/* Catch-all **dentro** de /panel */}
+            <Route path="*" element={<Navigate to="dashboard" replace />} />
+          </Route>
+
+          {/* Otras protegidas fuera del layout /panel */}
+          <Route path="/panel/admin-padrones" element={<AdminPadrones />} />
+          <Route
+            path="/panel/admin-padrones-detail"
+            element={<AdminPadronesDetail />}
+          />
+        </Route>
+
+        {/* Fallback global (opcional, casi nunca se dispara con WebRoutes arriba) */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AnimatePresence>

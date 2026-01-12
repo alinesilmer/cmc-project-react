@@ -435,7 +435,7 @@ export const addPadronByOS = (
   nroOS: number,
   body?: Partial<Padron>
 ) =>
-  putJSON<Padron>(
+  postJSON<Padron>(
     `/api/padrones/${nroSocio}/obras-sociales/${nroOS}`,
     body ?? {}
   );
