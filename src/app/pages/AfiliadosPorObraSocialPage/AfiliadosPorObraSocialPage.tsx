@@ -8,7 +8,7 @@ import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
 import { Users, Search, FileSpreadsheet, FileText, ChevronDown, X } from "lucide-react"
 
-import styles from "./AfiliadosPorObraSocialPage.module.scss"
+import styles from "./PrestadorsPorObraSocialPage.module.scss"
 import Button from "../../../website/components/UI/Button/Button"
 
 type ObraSocial = {
@@ -18,9 +18,9 @@ type ObraSocial = {
   ACTIVA?: "S" | "N" | string
 }
 
-type Afiliado = {
-  nro_afiliado?: string | number | null
-  afiliado?: string | number | null
+type Prestador = {
+  nro_Prestador?: string | number | null
+  Prestador?: string | number | null
 
   nombre?: string | null
   apellido_nombre?: string | null
@@ -48,7 +48,7 @@ const API_BASE =
 
 const ENDPOINTS = {
   obrasSociales: `${API_BASE}/obras-sociales`,
-  afiliadosByOS: (nroOS: number) => `${API_BASE}/obras-sociales/${nroOS}/afiliados`,
+  PrestadorsByOS: (nroOS: number) => `${API_BASE}/obras-sociales/${nroOS}/Prestadors`,
 }
 
 function fmtDate(d: Date) {
@@ -70,31 +70,31 @@ function safeStr(v: unknown) {
   return String(v)
 }
 
-function pickNombre(a: Afiliado) {
+function pickNombre(a: Prestador) {
   return a.apellido_nombre ?? a.ape_nom ?? a.nombre ?? ""
 }
 
-function pickNroAfiliado(a: Afiliado) {
-  return a.nro_afiliado ?? a.afiliado ?? ""
+function pickNroPrestador(a: Prestador) {
+  return a.nro_Prestador ?? a.Prestador ?? ""
 }
 
-function pickDocumento(a: Afiliado) {
+function pickDocumento(a: Prestador) {
   return a.documento ?? a.dni ?? ""
 }
 
-function pickPlan(a: Afiliado) {
+function pickPlan(a: Prestador) {
   return a.plan ?? a.categoria ?? ""
 }
 
-function pickAlta(a: Afiliado) {
+function pickAlta(a: Prestador) {
   return a.fecha_alta ?? a.alta ?? ""
 }
 
-function pickBaja(a: Afiliado) {
+function pickBaja(a: Prestador) {
   return a.fecha_baja ?? a.baja ?? ""
 }
 
-function pickEstado(a: Afiliado) {
+function pickEstado(a: Prestador) {
   if (a.estado) return a.estado
   const baja = pickBaja(a)
   return baja ? "INACTIVO" : "ACTIVO"
@@ -107,21 +107,21 @@ async function fetchObrasSocialesActivas(): Promise<ObraSocial[]> {
   return Array.isArray(data) ? data : []
 }
 
-async function fetchAfiliadosByOS(nroOS: number): Promise<Afiliado[]> {
-  const { data } = await axios.get(ENDPOINTS.afiliadosByOS(nroOS))
+async function fetchPrestadorsByOS(nroOS: number): Promise<Prestador[]> {
+  const { data } = await axios.get(ENDPOINTS.PrestadorsByOS(nroOS))
   return Array.isArray(data) ? data : []
 }
 
-const AfiliadosPorObraSocialPage = () => {
+const PrestadorsPorObraSocialPage = () => {
   const [obras, setObras] = useState<ObraSocial[]>([])
   const [loadingObras, setLoadingObras] = useState(true)
   const [errorObras, setErrorObras] = useState<string | null>(null)
 
   const [selectedOS, setSelectedOS] = useState<ObraSocial | null>(null)
 
-  const [afiliados, setAfiliados] = useState<Afiliado[]>([])
-  const [loadingAfiliados, setLoadingAfiliados] = useState(false)
-  const [errorAfiliados, setErrorAfiliados] = useState<string | null>(null)
+  const [Prestadors, setPrestadors] = useState<Prestador[]>([])
+  const [loadingPrestadors, setLoadingPrestadors] = useState(false)
+  const [errorPrestadors, setErrorPrestadors] = useState<string | null>(null)
 
   const [osQuery, setOsQuery] = useState("")
   const [tableQuery, setTableQuery] = useState("")
@@ -164,30 +164,30 @@ const AfiliadosPorObraSocialPage = () => {
     return () => document.removeEventListener("mousedown", onDocClick)
   }, [osDropdownOpen])
 
-  // Load Afiliados when OS changes
+  // Load Prestadors when OS changes
   useEffect(() => {
     if (!selectedOS?.NRO_OBRA_SOCIAL) {
-      setAfiliados([])
-      setErrorAfiliados(null)
+      setPrestadors([])
+      setErrorPrestadors(null)
       return
     }
 
     let alive = true
     ;(async () => {
       try {
-        setLoadingAfiliados(true)
-        setErrorAfiliados(null)
+        setLoadingPrestadors(true)
+        setErrorPrestadors(null)
         setTableQuery("")
-        const rows = await fetchAfiliadosByOS(selectedOS.NRO_OBRA_SOCIAL)
+        const rows = await fetchPrestadorsByOS(selectedOS.NRO_OBRA_SOCIAL)
         if (!alive) return
-        setAfiliados(rows)
+        setPrestadors(rows)
       } catch (e) {
         if (!alive) return
-        setErrorAfiliados("No se pudieron cargar los afiliados de esta obra social.")
-        setAfiliados([])
+        setErrorPrestadors("No se pudieron cargar los Prestadors de esta obra social.")
+        setPrestadors([])
       } finally {
         if (!alive) return
-        setLoadingAfiliados(false)
+        setLoadingPrestadors(false)
       }
     })()
 
@@ -209,22 +209,22 @@ const AfiliadosPorObraSocialPage = () => {
   }, [obras, osQuery])
 
   // Filter affiliates table
-  const filteredAfiliados = useMemo(() => {
+  const filteredPrestadors = useMemo(() => {
     const q = normalize(tableQuery)
-    if (!q) return afiliados
+    if (!q) return Prestadors
 
-    return afiliados.filter((a) => {
-      const nro = normalize(safeStr(pickNroAfiliado(a)))
+    return Prestadors.filter((a) => {
+      const nro = normalize(safeStr(pickNroPrestador(a)))
       const nom = normalize(safeStr(pickNombre(a)))
       const doc = normalize(safeStr(pickDocumento(a)))
       const plan = normalize(safeStr(pickPlan(a)))
       return nro.includes(q) || nom.includes(q) || doc.includes(q) || plan.includes(q)
     })
-  }, [afiliados, tableQuery])
+  }, [Prestadors, tableQuery])
 
   function getExportRows() {
-    return filteredAfiliados.map((a) => ({
-      nro_afiliado: safeStr(pickNroAfiliado(a)),
+    return filteredPrestadors.map((a) => ({
+      nro_Prestador: safeStr(pickNroPrestador(a)),
       nombre: safeStr(pickNombre(a)),
       documento: safeStr(pickDocumento(a)),
       plan: safeStr(pickPlan(a)),
@@ -236,7 +236,7 @@ const AfiliadosPorObraSocialPage = () => {
 
   async function downloadExcel() {
     if (!selectedOS) return
-    if (filteredAfiliados.length === 0) {
+    if (filteredPrestadors.length === 0) {
       window.alert("No hay datos para exportar con el filtro actual.")
       return
     }
@@ -246,7 +246,7 @@ const AfiliadosPorObraSocialPage = () => {
     wb.creator = "CMC"
     wb.created = new Date()
 
-    const ws = wb.addWorksheet("Afiliados", {
+    const ws = wb.addWorksheet("Prestadors", {
       views: [{ state: "frozen", ySplit: 6 }],
       pageSetup: { fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
     })
@@ -260,8 +260,8 @@ const AfiliadosPorObraSocialPage = () => {
     }
 
     ws.columns = [
-      { header: "N° Afiliado", key: "nro_afiliado", width: 14 },
-      { header: "Afiliado", key: "nombre", width: 42 },
+      { header: "N° Prestador", key: "nro_Prestador", width: 14 },
+      { header: "Prestador", key: "nombre", width: 42 },
       { header: "Documento", key: "documento", width: 16 },
       { header: "Plan", key: "plan", width: 18 },
       { header: "Alta", key: "alta", width: 14 },
@@ -270,7 +270,7 @@ const AfiliadosPorObraSocialPage = () => {
     ]
 
     ws.mergeCells("A2:G2")
-    ws.getCell("A2").value = "Afiliados por Obra Social"
+    ws.getCell("A2").value = "Prestadors por Obra Social"
     ws.getCell("A2").font = {
       name: "Calibri",
       size: 16,
@@ -289,7 +289,7 @@ const AfiliadosPorObraSocialPage = () => {
     ws.getRow(4).height = 6
 
     const headerRow = 6
-    ws.getRow(headerRow).values = ["N° Afiliado", "Afiliado", "Documento", "Plan", "Alta", "Baja", "Estado"]
+    ws.getRow(headerRow).values = ["N° Prestador", "Prestador", "Documento", "Plan", "Alta", "Baja", "Estado"]
     ws.getRow(headerRow).height = 20
 
     const tableBorder = {
@@ -342,28 +342,28 @@ const AfiliadosPorObraSocialPage = () => {
       new Blob([buf], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       }),
-      `afiliados_${osCode}_${fmtDate(new Date())}.xlsx`,
+      `Prestadors_${osCode}_${fmtDate(new Date())}.xlsx`,
     )
   }
 
   function downloadPdf() {
     if (!selectedOS) return
-    if (filteredAfiliados.length === 0) {
+    if (filteredPrestadors.length === 0) {
       window.alert("No hay datos para exportar con el filtro actual.")
       return
     }
 
     const osCode = selectedOS.CODIGO ?? `OS${String(selectedOS.NRO_OBRA_SOCIAL).padStart(3, "0")}`
-    const rows = getExportRows().map((r) => [r.nro_afiliado, r.nombre, r.documento, r.plan, r.alta, r.baja, r.estado])
+    const rows = getExportRows().map((r) => [r.nro_Prestador, r.nombre, r.documento, r.plan, r.alta, r.baja, r.estado])
 
     const doc = new jsPDF({ orientation: "landscape" })
     doc.setFontSize(14)
-    doc.text("Afiliados por Obra Social", 14, 14)
+    doc.text("Prestadors por Obra Social", 14, 14)
     doc.setFontSize(11)
     doc.text(`${selectedOS.NOMBRE} (${osCode}) • ${fmtDate(new Date())} • Filas: ${rows.length}`, 14, 22)
 
     autoTable(doc, {
-      head: [["N° Afiliado", "Afiliado", "Documento", "Plan", "Alta", "Baja", "Estado"]],
+      head: [["N° Prestador", "Prestador", "Documento", "Plan", "Alta", "Baja", "Estado"]],
       body: rows,
       startY: 28,
       styles: {
@@ -390,7 +390,7 @@ const AfiliadosPorObraSocialPage = () => {
       },
     })
 
-    doc.save(`afiliados_${osCode}_${fmtDate(new Date())}.pdf`)
+    doc.save(`Prestadors_${osCode}_${fmtDate(new Date())}.pdf`)
   }
 
   function selectOS(os: ObraSocial) {
@@ -407,9 +407,9 @@ const AfiliadosPorObraSocialPage = () => {
       <div className={styles.wrapper}>
         <header className={styles.header}>
           <div className={styles.headerContent}>
-            <h1 className={styles.title}>Afiliados por Obra Social</h1>
+            <h1 className={styles.title}>Prestadors por Obra Social</h1>
             <p className={styles.subtitle}>
-              Seleccioná una obra social, buscá afiliados y descargá los resultados en PDF o Excel
+              Seleccioná una obra social, buscá Prestadors y descargá los resultados en PDF o Excel
             </p>
           </div>
         </header>
@@ -417,7 +417,7 @@ const AfiliadosPorObraSocialPage = () => {
         <div className={styles.card}>
           <div className={styles.cardHeader}>
             <p className={styles.cardDescription}>
-              Mostrando {filteredAfiliados.length} {filteredAfiliados.length === 1 ? "afiliado" : "afiliados"}
+              Mostrando {filteredPrestadors.length} {filteredPrestadors.length === 1 ? "Prestador" : "Prestadors"}
             </p>
           </div>
 
@@ -499,7 +499,7 @@ const AfiliadosPorObraSocialPage = () => {
                   variant="secondary"
                   size="medium"
                   onClick={downloadPdf}
-                  disabled={!selectedOS || loadingAfiliados || filteredAfiliados.length === 0}
+                  disabled={!selectedOS || loadingPrestadors || filteredPrestadors.length === 0}
                 >
                   <FileText size={18} />
                   <span>Descargar PDF</span>
@@ -509,7 +509,7 @@ const AfiliadosPorObraSocialPage = () => {
                   variant="primary"
                   size="medium"
                   onClick={downloadExcel}
-                  disabled={!selectedOS || loadingAfiliados || filteredAfiliados.length === 0}
+                  disabled={!selectedOS || loadingPrestadors || filteredPrestadors.length === 0}
                 >
                   <FileSpreadsheet size={18} />
                   <span>Descargar Excel</span>
@@ -524,9 +524,9 @@ const AfiliadosPorObraSocialPage = () => {
                   className={styles.searchInput}
                   value={tableQuery}
                   onChange={(e) => setTableQuery(e.target.value)}
-                  placeholder="Buscar por nombre, N° afiliado, documento o plan…"
-                  disabled={!selectedOS || loadingAfiliados}
-                  aria-label="Buscar afiliado"
+                  placeholder="Buscar por nombre, N° Prestador, documento o plan…"
+                  disabled={!selectedOS || loadingPrestadors}
+                  aria-label="Buscar Prestador"
                 />
                 {tableQuery.trim() && (
                   <button
@@ -546,26 +546,26 @@ const AfiliadosPorObraSocialPage = () => {
                 <Users size={48} className={styles.emptyIcon} />
                 <h3 className={styles.emptyTitle}>Seleccioná una obra social</h3>
                 <p className={styles.emptyMessage}>
-                  Elegí una obra social del menú desplegable para ver el listado de afiliados 
+                  Elegí una obra social del menú desplegable para ver el listado de Prestadors 
                 </p>
               </div>
-            ) : loadingAfiliados ? (
+            ) : loadingPrestadors ? (
               <div className={styles.loadingState}>
                 <div className={styles.progressBar}>
                   <div className={styles.progressFill} />
                 </div>
-                <p className={styles.loadingText}>Cargando afiliados…</p>
+                <p className={styles.loadingText}>Cargando Prestadors…</p>
               </div>
-            ) : errorAfiliados ? (
+            ) : errorPrestadors ? (
               <div className={styles.errorMessage}>
-                <span>{errorAfiliados}</span>
+                <span>{errorPrestadors}</span>
               </div>
             ) : (
               <>
                 <div className={styles.resultsHeader}>
                   <p className={styles.resultsCount}>
-                    Mostrando <strong>{filteredAfiliados.length}</strong> de <strong>{afiliados.length}</strong>{" "}
-                    afiliados
+                    Mostrando <strong>{filteredPrestadors.length}</strong> de <strong>{Prestadors.length}</strong>{" "}
+                    Prestadors
                   </p>
                   <span className={styles.resultsInfo}>
                     {selectedOS.NOMBRE} ({selectedCode})
@@ -578,7 +578,7 @@ const AfiliadosPorObraSocialPage = () => {
                       <tr>
                         <th>
                           <div className={styles.thContent}>
-                            <span>N° Afiliado</span>
+                            <span>N° Prestador</span>
                           </div>
                         </th>
                         <th>
@@ -614,15 +614,15 @@ const AfiliadosPorObraSocialPage = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredAfiliados.length === 0 ? (
+                      {filteredPrestadors.length === 0 ? (
                         <tr>
                           <td colSpan={7} className={styles.noResults}>
-                            No se encontraron afiliados que coincidan con "{tableQuery}"
+                            No se encontraron Prestadors que coincidan con "{tableQuery}"
                           </td>
                         </tr>
                       ) : (
-                        filteredAfiliados.map((a, idx) => {
-                          const nro = safeStr(pickNroAfiliado(a))
+                        filteredPrestadors.map((a, idx) => {
+                          const nro = safeStr(pickNroPrestador(a))
                           const nom = safeStr(pickNombre(a))
                           const doc = safeStr(pickDocumento(a))
                           const plan = safeStr(pickPlan(a))
@@ -662,4 +662,4 @@ const AfiliadosPorObraSocialPage = () => {
   )
 }
 
-export default AfiliadosPorObraSocialPage
+export default PrestadorsPorObraSocialPage
