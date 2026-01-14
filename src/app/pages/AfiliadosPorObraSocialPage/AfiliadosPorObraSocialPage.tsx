@@ -18,6 +18,7 @@ import {
 import styles from "./AfiliadosPorObraSocialPage.module.scss";
 import Button from "../../../website/components/UI/Button/Button";
 import { useLocation, useNavigate } from "react-router-dom";
+import Logo from "../../assets/logoCMC.png";
 
 type ObraSocial = {
   NRO_OBRA_SOCIAL: number;
@@ -27,18 +28,16 @@ type ObraSocial = {
 };
 
 type Socio = {
-  id?: number | string | null; // <-- NUEVO
+  id?: number | string | null;
   nro_socio?: string | number | null;
   socio?: string | number | null;
-
   nombre?: string | null;
   apellido_nombre?: string | null;
   ape_nom?: string | null;
-
   matricula_prov?: string | number | null;
   estado?: string | null;
-
   telefono_consulta?: string | null;
+  especialidad?: string | null;
 };
 
 const API_BASE =
@@ -47,9 +46,7 @@ const API_BASE =
   "/api";
 
 const ENDPOINTS = {
-  // Lista de OS desde tu router raíz de obras sociales
   obrasSociales: `${API_BASE}/api/obras_social/`,
-  // Médicos por OS (padrones)
   medicosByOS: (nroOS: number) =>
     `${API_BASE}/api/padrones/obras-sociales/${nroOS}/medicos`,
 };
@@ -73,44 +70,26 @@ function safeStr(v: unknown) {
   return String(v);
 }
 
-function pickNombre(a: Socio) {
-  return a.apellido_nombre ?? a.ape_nom ?? a.nombre ?? "";
+function pickNombre(p: Socio) {
+  return p.apellido_nombre ?? p.ape_nom ?? p.nombre ?? "";
 }
 
-function pickNroAfiliado(a: Socio) {
-  return a.nro_socio ?? a.socio ?? "";
+function pickNroPrestador(p: Socio) {
+  return p.nro_socio ?? p.socio ?? "";
 }
 
-function pickMatriculaProv(a: Socio) {
-  return a.matricula_prov ?? "";
+function pickMatriculaProv(p: Socio) {
+  return p.matricula_prov ?? "";
 }
-function pickTelefonoConsulta(a: Socio) {
-  return a.telefono_consulta ?? "";
-}
-// function joinPath(...parts: Array<string | number | null | undefined>) {
-//   const cleaned = parts.filter(Boolean).map((p) =>
-//     String(p)
-//       // quita llaves o espacios errantes
-//       .replace(/[{}\s]+/g, "")
-//       // quita slashes de extremos
-//       .replace(/^\/+|\/+$/g, "")
-//   );
-//   return "/" + cleaned.join("/");
-// }
 
-// function goToDoctorPadrones(id: unknown) {
-//   const v = String(id ?? "").trim();
-//   if (!v) {
-//     window.alert("se encontró el ID del médico.");
-//     console.log("ID del médico:", v);
-//     console.log(`/panel/doctors/${v}?tab=padrones`);
-//     return;
-//   }
-//   const url = `/panel/doctors/${v}?tab=padrones`;
-//   // opcional: console.log(url);
-//   window.location.href = url;
-// }
-/** Mapea la salida de list_obras_sociales al shape que usa el front */
+function pickTelefonoConsulta(p: Socio) {
+  return p.telefono_consulta ?? "";
+}
+
+function pickEspecialidad(p: Socio) {
+  return p.especialidad ?? "";
+}
+
 function mapObraSocialRawToOS(raw: any): ObraSocial {
   const nro =
     raw?.NRO_OBRA_SOCIAL ??
@@ -135,21 +114,16 @@ function mapObraSocialRawToOS(raw: any): ObraSocial {
   };
 }
 
-/** GET /obras-sociales  (con filtro opcional, si quisieras usar OBRA_SOCIAL en el futuro) */
 async function fetchObrasSociales(): Promise<ObraSocial[]> {
-  const { data } = await axios.get(ENDPOINTS.obrasSociales, {
-    // params: { OBRA_SOCIAL: "..." },
-    // withCredentials: true, // descomentar si usás cookies/sesión
-  });
+  const { data } = await axios.get(ENDPOINTS.obrasSociales);
   const arr = Array.isArray(data) ? data : [];
   return arr
     .map(mapObraSocialRawToOS)
     .sort((a, b) => a.NOMBRE.localeCompare(b.NOMBRE));
 }
 
-/** Descarga TODAS las páginas del endpoint /padrones/obras-sociales/{nro_os}/medicos */
 async function fetchMedicosAllPages(nroOS: number): Promise<Socio[]> {
-  const PAGE_SIZE = 200; // tu backend permite size ≤ 200
+  const PAGE_SIZE = 200;
   let page = 1;
   let total = Infinity;
   const out: Socio[] = [];
@@ -169,6 +143,7 @@ async function fetchMedicosAllPages(nroOS: number): Promise<Socio[]> {
       const nombre = it?.NOMBRE ?? null;
       const matricula_prov = it?.MATRICULA_PROV ?? null;
       const telefono_consulta = it?.TELEFONO_CONSULTA ?? null;
+      const especialidad = it?.ESPECIALIDAD ?? null;
 
       out.push({
         id,
@@ -179,12 +154,13 @@ async function fetchMedicosAllPages(nroOS: number): Promise<Socio[]> {
         nombre: nombre,
         matricula_prov: matricula_prov,
         telefono_consulta: telefono_consulta,
+        especialidad: especialidad,
       });
     }
 
     if (items.length === 0) break;
     page += 1;
-    if (page > 10000) break; // safety
+    if (page > 10000) break;
   }
 
   return out;
@@ -197,9 +173,9 @@ const AfiliadosPorObraSocialPage = () => {
 
   const [selectedOS, setSelectedOS] = useState<ObraSocial | null>(null);
 
-  const [afiliados, setAfiliados] = useState<Socio[]>([]);
-  const [loadingAfiliados, setLoadingAfiliados] = useState(false);
-  const [errorAfiliados, setErrorAfiliados] = useState<string | null>(null);
+  const [prestador, setPrestadores] = useState<Socio[]>([]);
+  const [loadingPrestadores, setLoadingPrestadores] = useState(false);
+  const [errorPrestadores, setErrorPrestadores] = useState<string | null>(null);
 
   const [osQuery, setOsQuery] = useState("");
   const [tableQuery, setTableQuery] = useState("");
@@ -259,33 +235,33 @@ const AfiliadosPorObraSocialPage = () => {
     return () => document.removeEventListener("mousedown", onDocClick);
   }, [osDropdownOpen]);
 
-  // Cargar afiliados (médicos del padrón) cuando cambia la OS
+  // Cargar prestadores (médicos del padrón) cuando cambia la OS
   useEffect(() => {
     if (!selectedOS?.NRO_OBRA_SOCIAL) {
-      setAfiliados([]);
-      setErrorAfiliados(null);
+      setPrestadores([]);
+      setErrorPrestadores(null);
       return;
     }
 
     let alive = true;
     (async () => {
       try {
-        setLoadingAfiliados(true);
-        setErrorAfiliados(null);
+        setLoadingPrestadores(true);
+        setErrorPrestadores(null);
         setTableQuery("");
 
         const rows = await fetchMedicosAllPages(selectedOS.NRO_OBRA_SOCIAL);
         if (!alive) return;
-        setAfiliados(rows);
+        setPrestadores(rows);
       } catch (e) {
         if (!alive) return;
-        setErrorAfiliados(
-          "No se pudieron cargar los afiliados de esta obra social."
+        setErrorPrestadores(
+          "No se pudieron cargar los prestadores de esta obra social."
         );
-        setAfiliados([]);
+        setPrestadores([]);
       } finally {
         if (!alive) return;
-        setLoadingAfiliados(false);
+        setLoadingPrestadores(false);
       }
     })();
 
@@ -309,33 +285,39 @@ const AfiliadosPorObraSocialPage = () => {
   }, [obras, osQuery]);
 
   // Filtrado de tabla client-side
-  const filteredAfiliados = useMemo(() => {
+  const filteredPrestadores = useMemo(() => {
     const q = normalize(tableQuery);
-    if (!q) return afiliados;
+    if (!q) return prestador;
 
-    return afiliados.filter((a) => {
-      const nro = normalize(safeStr(pickNroAfiliado(a)));
+    return prestador.filter((a) => {
+      const nro = normalize(safeStr(pickNroPrestador(a)));
       const nom = normalize(safeStr(pickNombre(a)));
       const mat = normalize(safeStr(pickMatriculaProv(a)));
       const tel = normalize(safeStr(pickTelefonoConsulta(a)));
+      const esp = normalize(safeStr(pickEspecialidad(a)));
       return (
-        nro.includes(q) || nom.includes(q) || mat.includes(q) || tel.includes(q)
+        nro.includes(q) ||
+        nom.includes(q) ||
+        mat.includes(q) ||
+        tel.includes(q) ||
+        esp.includes(q)
       );
     });
-  }, [afiliados, tableQuery]);
+  }, [prestador, tableQuery]);
 
   function getExportRows() {
-    return filteredAfiliados.map((a) => ({
-      nro_socio: safeStr(pickNroAfiliado(a)),
+    return filteredPrestadores.map((a) => ({
+      nro_socio: safeStr(pickNroPrestador(a)),
       nombre: safeStr(pickNombre(a)),
       matricula_prov: safeStr(pickMatriculaProv(a)),
       telefono_consulta: safeStr(pickTelefonoConsulta(a)),
+      especialidad: safeStr(pickEspecialidad(a)),
     }));
   }
 
   async function downloadExcel() {
     if (!selectedOS) return;
-    if (filteredAfiliados.length === 0) {
+    if (filteredPrestadores.length === 0) {
       window.alert("No hay datos para exportar con el filtro actual.");
       return;
     }
@@ -345,7 +327,7 @@ const AfiliadosPorObraSocialPage = () => {
     wb.creator = "CMC";
     wb.created = new Date();
 
-    const ws = wb.addWorksheet("Afiliados", {
+    const ws = wb.addWorksheet("Prestadores", {
       views: [{ state: "frozen", ySplit: 6 }],
       pageSetup: { fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
     });
@@ -355,18 +337,18 @@ const AfiliadosPorObraSocialPage = () => {
       black: "FF111111",
       white: "FFFFFFFF",
       gray100: "FFF7F7F7",
-      gray200: "FFE5E5E5",
     };
 
     ws.columns = [
       { header: "N° Socio", key: "nro_socio", width: 14 },
-      { header: "Socio", key: "nombre", width: 42 },
+      { header: "Prestador", key: "nombre", width: 42 },
       { header: "Matricula Prov", key: "matricula_prov", width: 16 },
       { header: "Telefono", key: "telefono_consulta", width: 18 },
+      { header: "Especialidad", key: "especialidad", width: 28 },
     ];
 
-    ws.mergeCells("A2:G2");
-    ws.getCell("A2").value = "Afiliados por Obra Social";
+    ws.mergeCells("A2:E2");
+    ws.getCell("A2").value = "Prestadores por Obra Social";
     ws.getCell("A2").font = {
       name: "Calibri",
       size: 16,
@@ -375,18 +357,14 @@ const AfiliadosPorObraSocialPage = () => {
     };
     ws.getCell("A2").alignment = { vertical: "middle", horizontal: "left" };
 
-    ws.mergeCells("A3:G3");
+    ws.mergeCells("A3:E3");
     const osCode =
       selectedOS.CODIGO ??
       `OS${String(selectedOS.NRO_OBRA_SOCIAL).padStart(3, "0")}`;
     ws.getCell("A3").value = `${
       selectedOS.NOMBRE
     } (${osCode}) • Generado: ${fmtDate(new Date())} • Filas: ${rows.length}`;
-    ws.getCell("A3").font = {
-      name: "Calibri",
-      size: 11,
-      color: { argb: C.black },
-    };
+    ws.getCell("A3").font = { name: "Calibri", size: 11, color: { argb: C.black } };
     ws.getCell("A3").alignment = { vertical: "middle", horizontal: "left" };
 
     ws.getRow(4).height = 6;
@@ -394,9 +372,10 @@ const AfiliadosPorObraSocialPage = () => {
     const headerRow = 6;
     ws.getRow(headerRow).values = [
       "N° Socio",
-      "Socio",
+      "Prestador",
       "Matricula Prov",
       "Telefono",
+      "Especialidad",
     ];
     ws.getRow(headerRow).height = 20;
 
@@ -408,17 +387,8 @@ const AfiliadosPorObraSocialPage = () => {
     };
 
     ws.getRow(headerRow).eachCell((cell) => {
-      cell.font = {
-        name: "Calibri",
-        size: 11,
-        bold: true,
-        color: { argb: C.white },
-      };
-      cell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: C.black },
-      };
+      cell.font = { name: "Calibri", size: 11, bold: true, color: { argb: C.white } };
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: C.black } };
       cell.alignment = { vertical: "middle", horizontal: "center" };
       cell.border = tableBorder;
     });
@@ -431,23 +401,15 @@ const AfiliadosPorObraSocialPage = () => {
 
       row.eachCell((cell, col) => {
         cell.font = { name: "Calibri", size: 11, color: { argb: C.black } };
-        cell.fill = {
-          type: "pattern",
-          pattern: "solid",
-          fgColor: { argb: zebraFill },
-        };
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: zebraFill } };
         cell.border = tableBorder;
 
-        if (col === 2) {
+        if (col === 2 || col === 5) {
           cell.alignment = {
             vertical: "middle",
             horizontal: "left",
             wrapText: true,
           };
-        } else if (col === 5 || col === 6) {
-          cell.alignment = { vertical: "middle", horizontal: "center" };
-        } else if (col === 3) {
-          cell.alignment = { vertical: "middle", horizontal: "center" };
         } else {
           cell.alignment = { vertical: "middle", horizontal: "center" };
         }
@@ -457,7 +419,7 @@ const AfiliadosPorObraSocialPage = () => {
     const endRow = ws.lastRow?.number ?? headerRow + 1;
     ws.autoFilter = {
       from: { row: headerRow, column: 1 },
-      to: { row: endRow, column: 7 },
+      to: { row: endRow, column: 5 },
     };
 
     ws.getRow(1).height = 6;
@@ -467,13 +429,13 @@ const AfiliadosPorObraSocialPage = () => {
       new Blob([buf], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       }),
-      `afiliados_${osCode}_${fmtDate(new Date())}.xlsx`
+      `prestadores_${osCode}_${fmtDate(new Date())}.xlsx`
     );
   }
 
   function downloadPdf() {
     if (!selectedOS) return;
-    if (filteredAfiliados.length === 0) {
+    if (filteredPrestadores.length === 0) {
       window.alert("No hay datos para exportar con el filtro actual.");
       return;
     }
@@ -481,54 +443,111 @@ const AfiliadosPorObraSocialPage = () => {
     const osCode =
       selectedOS.CODIGO ??
       `OS${String(selectedOS.NRO_OBRA_SOCIAL).padStart(3, "0")}`;
+
     const rows = getExportRows().map((r) => [
       r.nro_socio,
       r.nombre,
       r.matricula_prov,
       r.telefono_consulta,
+      r.especialidad,
     ]);
 
     const doc = new jsPDF({ orientation: "landscape" });
-    doc.setFontSize(14);
-    doc.text("Afiliados por Obra Social", 14, 14);
-    doc.setFontSize(11);
-    doc.text(
-      `${selectedOS.NOMBRE} (${osCode}) • ${fmtDate(new Date())} • Filas: ${
-        rows.length
-      }`,
-      14,
-      22
-    );
+
+    const FOOTER_EMAIL = "padrones@colegiomedicocorrientes.com";
+    const FOOTER_PHONE = "+54 3794 252323";
+
+    const LOGO_DATA_URL = Logo;
+    const HEADER_TOP = 10;
+    const HEADER_HEIGHT = 30;
+    const FOOTER_HEIGHT = 14;
+
+    function drawHeader() {
+      const pageWidth = doc.internal.pageSize.getWidth();
+
+      const logoX = 14;
+      const logoY = HEADER_TOP;
+      const logoW = 22;
+      const logoH = 28;
+
+      if (LOGO_DATA_URL) {
+        try {
+          doc.addImage(LOGO_DATA_URL, "PNG", logoX, logoY, logoW, logoH);
+        } catch {
+          doc.setDrawColor(0);
+          doc.rect(logoX, logoY, logoW, logoH);
+          doc.setFontSize(10);
+          doc.text("CMC", logoX + 4, logoY + 11);
+        }
+      } else {
+        doc.setDrawColor(0);
+        doc.rect(logoX, logoY, logoW, logoH);
+        doc.setFontSize(10);
+        doc.text("CMC", logoX + 4, logoY + 11);
+      }
+
+      doc.setTextColor(0);
+
+      doc.setFontSize(14);
+      doc.text("Colegio Médico de Corrientes", logoX + logoW + 8, logoY + 7);
+
+      doc.setFontSize(12);
+      doc.text("Listado por Prestadores", logoX + logoW + 8, logoY + 14);
+
+      doc.setFontSize(10);
+      doc.text(
+        `${selectedOS?.NOMBRE} (${osCode}) • ${fmtDate(new Date())} • Filas: ${rows.length}`,
+        logoX + logoW + 8,
+        logoY + 21
+      );
+
+      doc.setDrawColor(0);
+      doc.line(14, HEADER_TOP + HEADER_HEIGHT - 2, pageWidth - 14, HEADER_TOP + HEADER_HEIGHT - 2);
+    }
+
+    function drawFooter() {
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const pageNumber = doc.internal.pages.length;
+
+      doc.setDrawColor(0);
+      doc.line(14, pageHeight - FOOTER_HEIGHT, pageWidth - 14, pageHeight - FOOTER_HEIGHT);
+
+      doc.setFontSize(9);
+      doc.setTextColor(0);
+
+      const y = pageHeight - 6;
+      doc.text(`Mail: ${FOOTER_EMAIL}`, 14, y);
+      doc.text(`Tel: ${FOOTER_PHONE}`, 14 + 70, y);
+      doc.text(`Página ${pageNumber}`, pageWidth - 14, y, { align: "right" });
+    }
 
     autoTable(doc, {
-      head: [["N° Socio", "Socio", "Matricula Prov", "Telefono"]],
+      head: [["N° Socio", "Prestador", "Matricula Prov", "Telefono", "Especialidad"]],
       body: rows,
-      startY: 28,
-      styles: {
-        fontSize: 9,
-        cellPadding: 3,
-        valign: "middle",
-      },
+      startY: HEADER_TOP + HEADER_HEIGHT + 6,
+      margin: { top: HEADER_TOP + HEADER_HEIGHT + 6, bottom: FOOTER_HEIGHT + 4, left: 14, right: 14 },
+      styles: { fontSize: 8, cellPadding: 3, valign: "middle" },
       headStyles: {
         fillColor: [17, 17, 17],
         textColor: [255, 255, 255],
         fontStyle: "bold",
       },
-      alternateRowStyles: {
-        fillColor: [247, 247, 247],
-      },
+      alternateRowStyles: { fillColor: [247, 247, 247] },
       columnStyles: {
-        0: { cellWidth: 26 },
-        1: { cellWidth: 86 },
-        2: { cellWidth: 28 },
-        3: { cellWidth: 30 },
-        4: { cellWidth: 22 },
-        5: { cellWidth: 22 },
-        6: { cellWidth: 22 },
+        0: { cellWidth: 22 },
+        1: { cellWidth: 74 },
+        2: { cellWidth: 26 },
+        3: { cellWidth: 28 },
+        4: { cellWidth: 62 },
+      },
+      didDrawPage: () => {
+        drawHeader();
+        drawFooter();
       },
     });
 
-    doc.save(`afiliados_${osCode}_${fmtDate(new Date())}.pdf`);
+    doc.save(`prestadores_${osCode}_${fmtDate(new Date())}.pdf`);
   }
 
   function selectOS(os: ObraSocial) {
@@ -537,8 +556,7 @@ const AfiliadosPorObraSocialPage = () => {
   }
 
   const selectedCode = selectedOS
-    ? selectedOS.CODIGO ??
-      `OS${String(selectedOS.NRO_OBRA_SOCIAL).padStart(3, "0")}`
+    ? selectedOS.CODIGO ?? `OS${String(selectedOS.NRO_OBRA_SOCIAL).padStart(3, "0")}`
     : "";
 
   return (
@@ -546,9 +564,9 @@ const AfiliadosPorObraSocialPage = () => {
       <div className={styles.wrapper}>
         <header className={styles.header}>
           <div className={styles.headerContent}>
-            <h1 className={styles.title}>Afiliados por Obra Social</h1>
+            <h1 className={styles.title}>Prestadores por Obra Social</h1>
             <p className={styles.subtitle}>
-              Seleccioná una obra social, buscá afiliados y descargá los
+              Seleccioná una obra social, buscá prestadores y descargá los
               resultados en PDF o Excel
             </p>
           </div>
@@ -557,8 +575,8 @@ const AfiliadosPorObraSocialPage = () => {
         <div className={styles.card}>
           <div className={styles.cardHeader}>
             <p className={styles.cardDescription}>
-              Mostrando {filteredAfiliados.length}{" "}
-              {filteredAfiliados.length === 1 ? "socio" : "socios"}
+              Mostrando {filteredPrestadores.length}{" "}
+              {filteredPrestadores.length === 1 ? "prestador" : "prestadores"}
             </p>
           </div>
 
@@ -661,8 +679,8 @@ const AfiliadosPorObraSocialPage = () => {
                   onClick={downloadPdf}
                   disabled={
                     !selectedOS ||
-                    loadingAfiliados ||
-                    filteredAfiliados.length === 0
+                    loadingPrestadores ||
+                    filteredPrestadores.length === 0
                   }
                 >
                   <FileText size={18} />
@@ -675,8 +693,8 @@ const AfiliadosPorObraSocialPage = () => {
                   onClick={downloadExcel}
                   disabled={
                     !selectedOS ||
-                    loadingAfiliados ||
-                    filteredAfiliados.length === 0
+                    loadingPrestadores ||
+                    filteredPrestadores.length === 0
                   }
                 >
                   <FileSpreadsheet size={18} />
@@ -692,9 +710,9 @@ const AfiliadosPorObraSocialPage = () => {
                   className={styles.searchInput}
                   value={tableQuery}
                   onChange={(e) => setTableQuery(e.target.value)}
-                  placeholder="Buscar por nombre, N° socio, documento o plan…"
-                  disabled={!selectedOS || loadingAfiliados}
-                  aria-label="Buscar socio"
+                  placeholder="Buscar por nombre, N° socio, matrícula, teléfono o especialidad…"
+                  disabled={!selectedOS || loadingPrestadores}
+                  aria-label="Buscar prestador"
                 />
                 {tableQuery.trim() && (
                   <button
@@ -712,35 +730,30 @@ const AfiliadosPorObraSocialPage = () => {
             {!selectedOS ? (
               <div className={styles.emptyState}>
                 <Users size={48} className={styles.emptyIcon} />
-                <h3 className={styles.emptyTitle}>
-                  Seleccioná una obra social
-                </h3>
+                <h3 className={styles.emptyTitle}>Seleccioná una obra social</h3>
                 <p className={styles.emptyMessage}>
                   Elegí una obra social del menú desplegable para ver el listado
-                  de afiliados
+                  de prestadores
                 </p>
               </div>
-            ) : loadingAfiliados ? (
+            ) : loadingPrestadores ? (
               <div className={styles.loadingState}>
                 <div className={styles.progressBar}>
                   <div className={styles.progressFill} />
                 </div>
-                <p className={styles.loadingText}>Cargando afiliados…</p>
+                <p className={styles.loadingText}>Cargando prestadores…</p>
               </div>
-            ) : errorAfiliados ? (
+            ) : errorPrestadores ? (
               <div className={styles.errorMessage}>
-                <span>{errorAfiliados}</span>
+                <span>{errorPrestadores}</span>
               </div>
             ) : (
               <>
                 <div className={styles.resultsHeader}>
                   <p className={styles.resultsCount}>
-                    Mostrando <strong>{filteredAfiliados.length}</strong> de{" "}
-                    <strong>{afiliados.length}</strong> afiliados
+                    Mostrando <strong>{filteredPrestadores.length}</strong> de{" "}
+                    <strong>{prestador.length}</strong> prestadores
                   </p>
-                  <span className={styles.resultsInfo}>
-                    {selectedOS.NOMBRE} ({selectedCode})
-                  </span>
                 </div>
 
                 <div className={styles.tableWrapper}>
@@ -769,25 +782,31 @@ const AfiliadosPorObraSocialPage = () => {
                         </th>
                         <th>
                           <div className={styles.thContent}>
+                            <span>Especialidad</span>
+                          </div>
+                        </th>
+                        <th>
+                          <div className={styles.thContent}>
                             <span>Acciones</span>
                           </div>
                         </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredAfiliados.length === 0 ? (
+                      {filteredPrestadores.length === 0 ? (
                         <tr>
-                          <td colSpan={7} className={styles.noResults}>
-                            No se encontraron afiliados que coincidan con "
+                          <td colSpan={6} className={styles.noResults}>
+                            No se encontraron prestadores que coincidan con "
                             {tableQuery}"
                           </td>
                         </tr>
                       ) : (
-                        filteredAfiliados.map((a, idx) => {
-                          const nro = safeStr(pickNroAfiliado(a));
-                          const nom = safeStr(pickNombre(a));
-                          const mat = safeStr(pickMatriculaProv(a));
-                          const tel = safeStr(pickTelefonoConsulta(a));
+                        filteredPrestadores.map((p, idx) => {
+                          const nro = safeStr(pickNroPrestador(p));
+                          const nom = safeStr(pickNombre(p));
+                          const mat = safeStr(pickMatriculaProv(p));
+                          const tel = safeStr(pickTelefonoConsulta(p));
+                          const esp = safeStr(pickEspecialidad(p));
 
                           return (
                             <tr key={`${nro}-${mat}-${idx}`}>
@@ -795,13 +814,14 @@ const AfiliadosPorObraSocialPage = () => {
                               <td className={styles.tdName}>{nom}</td>
                               <td>{mat}</td>
                               <td>{tel}</td>
+                              <td>{esp}</td>
                               <td>
                                 <Button
                                   type="button"
                                   variant="secondary"
                                   size="small"
-                                  onClick={() => goToDoctorPadrones(a.id)}
-                                  disabled={!a.id}
+                                  onClick={() => goToDoctorPadrones(p.id)}
+                                  disabled={!p.id}
                                 >
                                   Editar
                                 </Button>
