@@ -128,7 +128,9 @@ const PeriodsTable: React.FC<Props> = ({
         </div>
       )}
 
-      <div className={`${styles.headerRow} ${hideStatus ? styles.noStatus : ""}`}>
+      <div
+        className={`${styles.headerRow} ${hideStatus ? styles.noStatus : ""}`}
+      >
         <div>Período</div>
         <div>Bruto</div>
         <div>Descuentos</div>
@@ -139,14 +141,18 @@ const PeriodsTable: React.FC<Props> = ({
 
       <div className={styles.body}>
         {data.map((row, i) => {
-          const defaultSee = `/liquidation/${encodeURIComponent(String(row.id))}`;
+          const defaultSee = `/panel/liquidation/${encodeURIComponent(
+            String(row.id)
+          )}`;
           const seeHref = getSeeLink ? getSeeLink(row) : defaultSee;
           const seeState = getSeeState ? getSeeState(row) : undefined;
 
           return (
             <div
               key={row.id ?? i}
-              className={`${styles.dataRow} ${hideStatus ? styles.noStatus : ""} fade-in`}
+              className={`${styles.dataRow} ${
+                hideStatus ? styles.noStatus : ""
+              } fade-in`}
               style={{ animationDelay: `${i * 40}ms` }}
             >
               <div>{row.period}</div>
@@ -158,7 +164,9 @@ const PeriodsTable: React.FC<Props> = ({
                 <div>
                   <span
                     className={`${styles.status} ${
-                      row.status === "EN CURSO" ? styles.inProgress : styles.finished
+                      row.status === "EN CURSO"
+                        ? styles.inProgress
+                        : styles.finished
                     }`}
                   >
                     {row.status}
@@ -171,14 +179,20 @@ const PeriodsTable: React.FC<Props> = ({
                   variant="success"
                   size="sm"
                   onClick={() =>
-                    exportPeriodsToExcel([row], `periodo_${row.period}.xlsx`, !hideStatus)
+                    exportPeriodsToExcel(
+                      [row],
+                      `periodo_${row.period}.xlsx`,
+                      !hideStatus
+                    )
                   }
                 >
                   Exportar
                 </Button>
 
                 <Link to={seeHref} state={seeState}>
-                  <Button variant="primary" size="sm">Ver</Button>
+                  <Button variant="primary" size="sm">
+                    Ver
+                  </Button>
                 </Link>
 
                 {row.status === "EN CURSO" && (

@@ -7,7 +7,6 @@ import autoTable from "jspdf-autotable";
 import { saveAs } from "file-saver";
 
 import styles from "./PadronesForm.module.scss";
-// ❌ Se quita EmailConsentModal
 import SuccessModal from "../../SuccessModal/SuccessModal";
 import Alert from "../../../atoms/Alert/Alert";
 
@@ -38,7 +37,21 @@ const normalize = (s: string) =>
     .replace(/[\u0300-\u036f]/g, "")
     .trim();
 
+// helper pequeño para tolerar ambos nombres en el padrón
+function padronOSId(p: Padron): number {
+  return Number(
+    (p as any)?.NRO_OBRA_SOCIAL ??
+      (p as any)?.NRO_OBRASOCIAL ??
+      (p as any)?.nro_obra_social ??
+      (p as any)?.nro_obrasocial ??
+      0
+  );
+}
+
 const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
+  const [loading, setLoading] = useState(true);
+  const [pendingOS, setPendingOS] = useState<Set<number>>(new Set());
+
   // 📚 Catálogo
   const [catalog, setCatalog] = useState<ObraSocial[]>([]);
   // 🔗 Vínculos existentes
@@ -46,6 +59,7 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
   // ✅ Selección por NRO_OBRA_SOCIAL
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const notify = useNotify();
+  const opSeqRef = React.useRef(0);
 
   // 🔎 Search
   const [query, setQuery] = useState("");
@@ -68,31 +82,58 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
   // CARGA INICIAL
   // ─────────────────────────────────────────────────────────────
   useEffect(() => {
+    let alive = true;
     (async () => {
-      const [cat, prs] = await Promise.all([
-        fetchObrasSociales("S"),
-        fetchPadrones(medicoId),
-      ]);
-      setCatalog(cat);
-      setPadrones(prs);
-      setSelected(new Set(prs.map((p) => p.NRO_OBRASOCIAL)));
+      try {
+        setLoading(true);
+        const [cat, prs] = await Promise.all([
+          fetchObrasSociales("S"),
+          fetchPadrones(medicoId),
+        ]);
+        if (!alive) return;
+        setCatalog(cat);
+        setPadrones(prs);
+
+        const s = new Set<number>();
+        prs.forEach((p) => {
+          const id = padronOSId(p);
+          if (id) s.add(id);
+        });
+        setSelected(s);
+      } finally {
+        if (alive) setLoading(false);
+      }
     })();
+    return () => {
+      alive = false;
+    };
   }, [medicoId]);
 
   // ─────────────────────────────────────────────────────────────
-  // SEARCH
+  // SEARCH + ORDEN (asociadas primero)
   // ─────────────────────────────────────────────────────────────
   const filteredCatalog = useMemo(() => {
     const q = normalize(query);
-    if (!q) return catalog;
-    return catalog.filter((os) => {
-      const name = normalize(os.NOMBRE);
-      const code = normalize(
-        os.CODIGO ?? `OS${String(os.NRO_OBRA_SOCIAL).padStart(3, "0")}`
-      );
-      return name.includes(q) || code.includes(q);
+    const base = q
+      ? catalog.filter((os) => {
+          const name = normalize(os.NOMBRE);
+          const code = normalize(
+            os.CODIGO ?? `OS${String(os.NRO_OBRA_SOCIAL).padStart(3, "0")}`
+          );
+          return name.includes(q) || code.includes(q);
+        })
+      : catalog.slice();
+
+    // 👉 asociadas primero, luego alfabético por nombre
+    base.sort((a, b) => {
+      const aSel = selected.has(a.NRO_OBRA_SOCIAL);
+      const bSel = selected.has(b.NRO_OBRA_SOCIAL);
+      if (aSel !== bSel) return aSel ? -1 : 1;
+      return a.NOMBRE.localeCompare(b.NOMBRE);
     });
-  }, [catalog, query]);
+
+    return base;
+  }, [catalog, query, selected]);
 
   // ─────────────────────────────────────────────────────────────
   // CHECKBOX: crea/borra en server y notifica
@@ -102,6 +143,11 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
     willSelect: boolean,
     osName: string
   ) {
+    // marcar OS como pendiente
+    setPendingOS((prev) => new Set(prev).add(nroOS));
+    // registrar nº de operación para evitar pisadas con respuestas viejas
+    const myOp = ++opSeqRef.current;
+
     try {
       if (willSelect) {
         await addPadronByOS(medicoId, nroOS);
@@ -110,12 +156,22 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
         await removePadronByOS(medicoId, nroOS);
         notify.info(`Se quitó la obra social N° ${nroOS}.`);
       }
-      // refresh para mantener IDs correctos
+
+      // refrescar desde el server
       const fresh = await fetchPadrones(medicoId);
+
+      // si mientras tanto hubo otra operación más nueva, NO pisamos
+      if (myOp !== opSeqRef.current) return;
+
       setPadrones(fresh);
-      setSelected(new Set(fresh.map((p) => p.NRO_OBRASOCIAL)));
+      const s = new Set<number>();
+      fresh.forEach((p) => {
+        const id = padronOSId(p);
+        if (id) s.add(id);
+      });
+      setSelected(s);
     } catch (e) {
-      // revertir selección si falló
+      // revertir optimista si falló
       setSelected((prev) => {
         const copy = new Set(prev);
         if (willSelect) copy.delete(nroOS);
@@ -131,10 +187,20 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
       setAlertShowActions(false);
       setAlertOnConfirm(null);
       setAlertOpen(true);
+    } finally {
+      // quitar de pendientes
+      setPendingOS((prev) => {
+        const copy = new Set(prev);
+        copy.delete(nroOS);
+        return copy;
+      });
     }
   }
 
   const handleToggle = (nroOS: number, name: string) => {
+    if (loading) return; // aún cargando
+    if (pendingOS.has(nroOS)) return; // ya hay una op en vuelo para esta OS
+
     const willSelect = !selected.has(nroOS);
 
     // Optimista
@@ -330,6 +396,7 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
                 <input
                   type="checkbox"
                   checked={checked}
+                  disabled={loading || pendingOS.has(os.NRO_OBRA_SOCIAL)}
                   onChange={() => handleToggle(os.NRO_OBRA_SOCIAL, os.NOMBRE)}
                 />
                 <div className={styles.insuranceInfo}>
@@ -341,24 +408,6 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
           })
         )}
       </div>
-
-      {/* BOTONES DE ACCIÓN (opcionales) */}
-      {/* <div className={styles.actions}>
-        <button
-          type="button"
-          className={styles.previewButton}
-          onClick={handlePreview}
-        >
-          Ver previsualización
-        </button>
-        <button
-          type="button"
-          className={styles.submitButton}
-          onClick={handleSubmit}
-        >
-          Enviar formulario
-        </button>
-      </div> */}
 
       {/* DESCARGAS */}
       <div className={styles.downloadActions}>

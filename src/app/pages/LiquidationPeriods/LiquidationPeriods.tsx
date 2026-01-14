@@ -7,7 +7,9 @@ import SearchBar from "../../components/molecules/SearchBar/SearchBar";
 import Card from "../../components/atoms/Card/Card";
 import Button from "../../components/atoms/Button/Button";
 import styles from "./LiquidationPeriods.module.scss";
-import PeriodsTable, { type Period } from "../../components/molecules/PeriodsTable/PeriodsTable";
+import PeriodsTable, {
+  type Period,
+} from "../../components/molecules/PeriodsTable/PeriodsTable";
 import Alert from "../../components/atoms/Alert/Alert";
 
 import { getJSON, postJSON } from "../../lib/http";
@@ -95,7 +97,9 @@ const LiquidationPeriods: React.FC = () => {
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = openAdd ? "hidden" : prev || "";
-    return () => { document.body.style.overflow = prev; };
+    return () => {
+      document.body.style.overflow = prev;
+    };
   }, [openAdd]);
 
   // Años para el selector (desde año actual-5 a actual+2)
@@ -105,7 +109,10 @@ const LiquidationPeriods: React.FC = () => {
     for (let i = y + 2; i >= y - 5; i--) out.push(i);
     return out;
   }, []);
-  const monthOptions = useMemo(() => Array.from({ length: 12 }, (_, i) => i + 1), []);
+  const monthOptions = useMemo(
+    () => Array.from({ length: 12 }, (_, i) => i + 1),
+    []
+  );
 
   // filtros de búsqueda
   const parsed = parseYYYYMM(searchTerm);
@@ -118,10 +125,11 @@ const LiquidationPeriods: React.FC = () => {
       const params: Record<string, any> = { skip: 0, limit: 100 };
       if (parsed) {
         params.anio = parsed.anio;
-        params.mes  = parsed.mes;
+        params.mes = parsed.mes;
       }
       const json = await getJSON<ResumenDto[]>(RESUMEN_URL, params);
-      if (!Array.isArray(json)) throw new Error("Formato de respuesta inesperado del servidor");
+      if (!Array.isArray(json))
+        throw new Error("Formato de respuesta inesperado del servidor");
       const serverPeriods = json.map(mapDtoToPeriod);
       setRows(serverPeriods);
     } catch (e) {
@@ -160,25 +168,51 @@ const LiquidationPeriods: React.FC = () => {
       return;
     }
     setAddBusy(true);
+    const anio = Number(addYear);
+    const mes = Number(addMonth);
+
     try {
-      const r = await fetch(RESUMEN_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ anio: Number(addYear), mes: Number(addMonth) }),
-      });
-      if (!r.ok) {
-        const txt = await r.text().catch(() => "");
-        throw new Error(txt || `Error ${r.status} al crear el período`);
-      }
-      const created = await postJSON<ResumenDto>(RESUMEN_URL, {
-        anio: Number(addYear),
-        mes : Number(addMonth),
-      });
+      // ✅ ÚNICA llamada de creación
+      const created = await postJSON<ResumenDto>(RESUMEN_URL, { anio, mes });
       const newRow = mapDtoToPeriod(created);
-      setRows((prev) => [newRow, ...prev].sort((a, b) => b.period.localeCompare(a.period)));
+      setRows((prev) =>
+        [newRow, ...prev].sort((a, b) => b.period.localeCompare(a.period))
+      );
       setOpenAdd(false);
-    } catch (e: any) {
-      setAddErr(e?.message || "No se pudo crear el período");
+    } catch (err: any) {
+      // Si el back responde 409, buscamos el existente y lo mostramos en la lista
+      const status = err?.response?.status ?? err?.status;
+      if (status === 409) {
+        try {
+          const arr = await getJSON<ResumenDto[]>(RESUMEN_URL, {
+            anio,
+            mes,
+            limit: 1,
+          });
+          if (Array.isArray(arr) && arr.length) {
+            const existing = mapDtoToPeriod(arr[0]);
+            setRows((prev) => {
+              const already = prev.some((p) => p.id === existing.id);
+              const list = already ? prev : [existing, ...prev];
+              return list.sort((a, b) => b.period.localeCompare(a.period));
+            });
+            // Podés cerrar directo si querés:
+            setOpenAdd(false);
+            return;
+          }
+        } catch {
+          // ignoramos: mostramos mensaje genérico abajo
+        }
+        setAddErr(
+          `Ya existe un resumen para ${anio}-${String(mes).padStart(2, "0")}.`
+        );
+      } else {
+        const msg =
+          err?.response?.data?.detail ||
+          err?.message ||
+          "Error al crear el período";
+        setAddErr(typeof msg === "string" ? msg : "Error al crear el período");
+      }
     } finally {
       setAddBusy(false);
     }
@@ -194,7 +228,9 @@ const LiquidationPeriods: React.FC = () => {
         setRows((prev) => prev.filter((r) => r.id !== confirmRow.id));
         setConfirmRow(null);
       } catch (e) {
-        setErrorMsg(e instanceof Error ? e.message : "No se pudo eliminar el período");
+        setErrorMsg(
+          e instanceof Error ? e.message : "No se pudo eliminar el período"
+        );
       } finally {
         setDeleting(false);
       }
@@ -202,15 +238,22 @@ const LiquidationPeriods: React.FC = () => {
   };
 
   return (
-    <div className={`${styles.liquidationPage} ${openAdd ? styles.modalOpen : ""}`}>
+    <div
+      className={`${styles.liquidationPage} ${openAdd ? styles.modalOpen : ""}`}
+    >
       <div className={styles.content}>
-        <div className="fade-in" style={{ opacity: 1, transform: "translateY(0)" }}>
+        <div
+          className="fade-in"
+          style={{ opacity: 1, transform: "translateY(0)" }}
+        >
           <div className={styles.header}>
             <div className={styles.headerLeft}>
               <SearchBar
                 placeholder="Buscar período (ej: 2025-07)..."
                 value={searchTerm}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setSearchTerm(e.target.value)
+                }
               />
             </div>
             <div className={styles.actions}>
@@ -222,13 +265,20 @@ const LiquidationPeriods: React.FC = () => {
 
           <Card className={`${styles.tableCard} scale-in`}>
             {isLoading && (
-              <Alert type="info" title="Cargando" message="Obteniendo períodos…" onClose={() => {}} />
+              <Alert
+                type="info"
+                title="Cargando"
+                message="Obteniendo períodos…"
+                onClose={() => {}}
+              />
             )}
             {(error || errorMsg) && (
               <Alert
                 type="error"
                 title="Error"
-                message={error?.message || errorMsg || "Error al cargar períodos"}
+                message={
+                  error?.message || errorMsg || "Error al cargar períodos"
+                }
                 onClose={() => setErrorMsg(null)}
               />
             )}
@@ -236,7 +286,7 @@ const LiquidationPeriods: React.FC = () => {
             <PeriodsTable
               title="Períodos de Liquidación"
               data={filtered}
-              getSeeLink={(row) => `/liquidation/${row.id}`}
+              getSeeLink={(row) => `/panel/liquidation/${row.id}`}
               getSeeState={(row) => ({ period: row.period })}
               onRequestDelete={handleDelete}
               hideStatus={true} // la columna de estado no se muestra
@@ -267,10 +317,17 @@ const LiquidationPeriods: React.FC = () => {
           aria-modal="true"
           onClick={() => !addBusy && setOpenAdd(false)}
         >
-          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+          <div
+            className={styles.modalCard}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className={styles.modalHeader}>
               <h3>Nuevo período</h3>
-              <button className={styles.modalClose} onClick={() => setOpenAdd(false)} aria-label="Cerrar">
+              <button
+                className={styles.modalClose}
+                onClick={() => setOpenAdd(false)}
+                aria-label="Cerrar"
+              >
                 ✕
               </button>
             </div>
@@ -283,11 +340,17 @@ const LiquidationPeriods: React.FC = () => {
                 <select
                   className={styles.input}
                   value={addYear}
-                  onChange={(e) => setAddYear(e.target.value === "" ? "" : Number(e.target.value))}
+                  onChange={(e) =>
+                    setAddYear(
+                      e.target.value === "" ? "" : Number(e.target.value)
+                    )
+                  }
                 >
                   <option value="">Seleccionar año…</option>
                   {yearOptions.map((y) => (
-                    <option key={y} value={y}>{y}</option>
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -297,7 +360,11 @@ const LiquidationPeriods: React.FC = () => {
                 <select
                   className={styles.input}
                   value={addMonth}
-                  onChange={(e) => setAddMonth(e.target.value === "" ? "" : Number(e.target.value))}
+                  onChange={(e) =>
+                    setAddMonth(
+                      e.target.value === "" ? "" : Number(e.target.value)
+                    )
+                  }
                 >
                   <option value="">Seleccionar mes…</option>
                   {monthOptions.map((m) => (
@@ -307,16 +374,25 @@ const LiquidationPeriods: React.FC = () => {
                   ))}
                 </select>
                 <div className={styles.muted}>
-                  Se creará el período en estado <b>abierto</b> con totales en 0.
+                  Se creará el período en estado <b>abierto</b> con totales en
+                  0.
                 </div>
               </div>
             </div>
 
             <div className={styles.modalActions}>
-              <Button variant="secondary" onClick={() => setOpenAdd(false)} disabled={addBusy}>
+              <Button
+                variant="secondary"
+                onClick={() => setOpenAdd(false)}
+                disabled={addBusy}
+              >
                 Cancelar
               </Button>
-              <Button variant="primary" onClick={handleCreateWithYearMonth} disabled={addBusy || addYear === "" || addMonth === ""}>
+              <Button
+                variant="primary"
+                onClick={handleCreateWithYearMonth}
+                disabled={addBusy || addYear === "" || addMonth === ""}
+              >
                 {addBusy ? "Creando…" : "Crear"}
               </Button>
             </div>

@@ -1,8 +1,7 @@
-
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import DatePicker from "react-datepicker";
@@ -199,6 +198,7 @@ const DoctorProfilePage: React.FC = () => {
   const medicoId = id!;
   const nav = useNavigate();
   const notify = useNotify();
+  const location = useLocation();
 
   const [tab, setTab] = useState<TabKey>("datos");
 
@@ -369,6 +369,19 @@ const DoctorProfilePage: React.FC = () => {
       />
     );
   };
+
+  useEffect(() => {
+    const fromPath = (location.state as any)?.fromPath as string | undefined;
+    const cameFromAfiliados =
+      (typeof fromPath === "string" &&
+        fromPath.includes("/panel/afiliadospadron")) ||
+      sessionStorage.getItem("cmc_open_padrones_next") === "1";
+
+    if (!cameFromAfiliados) return;
+
+    sessionStorage.removeItem("cmc_open_padrones_next");
+    setTab("padrones"); // 👈 listo: abre el tab Padrones
+  }, []);
 
   // Load perfil
   useEffect(() => {
@@ -782,7 +795,7 @@ const DoctorProfilePage: React.FC = () => {
                   </div>
 
                   {/* Tabs */}
-                  <div className={styles.tabs}>
+                  <div className={styles.tabs} id="doctor-tabs-root">
                     {(
                       [
                         "datos",
@@ -1455,6 +1468,7 @@ const DoctorProfilePage: React.FC = () => {
                         </div>
                       </motion.div>
                     )}
+
                     {/* === Permisos === */}
                     {tab === "permisos" && (
                       <RequirePermission scope="rbac:gestionar">
