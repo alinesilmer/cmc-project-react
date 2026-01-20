@@ -33,6 +33,8 @@ import PermissionsManager from "./app/pages/PermissionsManager/PermissionsManage
 import ObrasSocialesRegisterPage from "./app/pages/ObrasSocialesRegisterPage/ObrasSocialesRegisterPage";
 import PadronesPage from "./app/pages/PadronesPage/PadronesPage";
 import AfiliadosPorObraSocialPage from "./app/pages/AfiliadosPorObraSocialPage/AfiliadosPorObraSocialPage";
+import GenerarBoletin from "./app/pages/GenerarBoletin/GenerarBoletin";
+
 
 
 
@@ -66,6 +68,7 @@ function App() {
               <Route path="/doctors/:id" element={<DoctorProfilePage />} />
               <Route path="/social-works" element={<SocialWorksPage />} />
               <Route path="/liquidation" element={<LiquidationPage />} />
+              <Route path="/generar-boletin" element={<GenerarBoletin />} />
               <Route path="/panel/register-os" element={<ObrasSocialesRegisterPage />} />
               <Route path="/liquidation/:id" element={<LiquidationCyclePage />} />
               <Route path="/padron-ioscor" element={<PadronIoscor />} />
