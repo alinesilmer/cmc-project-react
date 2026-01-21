@@ -819,7 +819,6 @@ const GenerarBoletin = () => {
 
         const subtitle = [
           `VIGENCIA ${vigenciaLabel}`,
-          os.nivel != null ? `NIVEL ${os.nivel}` : null,
         ]
           .filter(Boolean)
           .join("  |  ");
