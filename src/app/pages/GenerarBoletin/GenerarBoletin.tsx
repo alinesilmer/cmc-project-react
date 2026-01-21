@@ -1,6 +1,13 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, useRef, useMemo, forwardRef } from "react";
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  useMemo,
+  forwardRef,
+} from "react";
 import axios from "axios";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -21,7 +28,11 @@ const API_BASE_RAW =
   "";
 
 const API_BASE = String(API_BASE_RAW || "").replace(/\/+$/, "");
-const API_ROOT = API_BASE ? (API_BASE.endsWith("/api") ? API_BASE : `${API_BASE}/api`) : "/api";
+const API_ROOT = API_BASE
+  ? API_BASE.endsWith("/api")
+    ? API_BASE
+    : `${API_BASE}/api`
+  : "/api";
 
 const ENDPOINTS = {
   valoresBoletin: `${API_ROOT}/valores/boletin`,
@@ -94,7 +105,8 @@ function parseISODateLocal(s: string | null | undefined): Date | null {
   const y = Number(m[1]);
   const mo = Number(m[2]);
   const d = Number(m[3]);
-  if (!Number.isFinite(y) || !Number.isFinite(mo) || !Number.isFinite(d)) return null;
+  if (!Number.isFinite(y) || !Number.isFinite(mo) || !Number.isFinite(d))
+    return null;
   return new Date(y, mo - 1, d);
 }
 
@@ -105,7 +117,10 @@ function isoKey(s: string | null | undefined): number {
 }
 
 function formatMonthYearFromDate(dt: Date): string {
-  return new Intl.DateTimeFormat("es-AR", { month: "long", year: "numeric" }).format(dt);
+  return new Intl.DateTimeFormat("es-AR", {
+    month: "long",
+    year: "numeric",
+  }).format(dt);
 }
 
 function formatDDMMYYYYFromDate(dt: Date): string {
@@ -138,13 +153,15 @@ function parseDateDDMMYYYY(input: string): Date | null {
   const mo = Number(m[2]);
   const y = Number(m[3]);
 
-  if (!Number.isFinite(d) || !Number.isFinite(mo) || !Number.isFinite(y)) return null;
+  if (!Number.isFinite(d) || !Number.isFinite(mo) || !Number.isFinite(y))
+    return null;
   if (y < 1900 || y > 3000) return null;
   if (mo < 1 || mo > 12) return null;
   if (d < 1 || d > 31) return null;
 
   const dt = new Date(y, mo - 1, d);
-  if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
+  if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d)
+    return null;
   return dt;
 }
 
@@ -183,8 +200,12 @@ function normalizeRow(r: any): ApiBoletinRow {
     gastos_radiologico: safeNum(r?.gastos_radiologico ?? r?.GASTOS_RADIOLOGICO),
     gastos_bioquimicos: safeNum(r?.gastos_bioquimicos ?? r?.GASTOS_BIOQUIMICOS),
     otros_gastos: safeNum(r?.otros_gastos ?? r?.OTROS_GASTOS),
-    galeno_cirugia_adultos: safeNum(r?.galeno_cirugia_adultos ?? r?.GALENO_CIRUGIA_ADULTOS),
-    galeno_cirugia_infantil: safeNum(r?.galeno_cirugia_infantil ?? r?.GALENO_CIRUGIA_INFANTIL),
+    galeno_cirugia_adultos: safeNum(
+      r?.galeno_cirugia_adultos ?? r?.GALENO_CIRUGIA_ADULTOS
+    ),
+    galeno_cirugia_infantil: safeNum(
+      r?.galeno_cirugia_infantil ?? r?.GALENO_CIRUGIA_INFANTIL
+    ),
     consulta_especial: safeNum(r?.consulta_especial ?? r?.CONSULTA_ESPECIAL),
 
     categoria_a: (r?.categoria_a ?? r?.CATEGORIA_A ?? null) as string | null,
@@ -199,7 +220,9 @@ async function fetchValoresBoletin(params?: QueryParams): Promise<ApiBoletinRow[
   return arr.map(normalizeRow);
 }
 
-function buildPerOS(rows: ApiBoletinRow[]): { items: ObraSocialBoletin[]; lastISO: string | null } {
+function buildPerOS(
+  rows: ApiBoletinRow[]
+): { items: ObraSocialBoletin[]; lastISO: string | null } {
   const byOS = new Map<number, ApiBoletinRow[]>();
   let lastISO: string | null = null;
   let lastKey = -1;
@@ -290,7 +313,10 @@ function axiosErrorMessage(e: any): string {
   return "Error al consultar el backend";
 }
 
-function buildIndexBodyTwoCol(items: ObraSocialBoletin[], detailsStartPage: number): Array<Array<string>> {
+function buildIndexBodyTwoCol(
+  items: ObraSocialBoletin[],
+  detailsStartPage: number
+): Array<Array<string>> {
   const rows: Array<Array<string>> = [];
   for (let i = 0; i < items.length; i += 2) {
     const a = items[i];
@@ -341,9 +367,18 @@ type DateInputProps = {
 };
 
 const VigenciaDateInput = forwardRef<HTMLInputElement, DateInputProps>(
-  ({ value, onClick, onChange, onBlur, disabled, placeholder, className, hasError }, ref) => {
+  (
+    { value, onClick, onChange, onBlur, disabled, placeholder, className, hasError },
+    ref
+  ) => {
     return (
-      <div className={[styles.dateField, hasError ? styles.dateFieldError : "", className || ""].join(" ")}>
+      <div
+        className={[
+          styles.dateField,
+          hasError ? styles.dateFieldError : "",
+          className || "",
+        ].join(" ")}
+      >
         <input
           ref={ref}
           type="text"
@@ -505,7 +540,16 @@ const GenerarBoletin = () => {
         const logoY = 3;
 
         if (logoDataUrl) {
-          doc.addImage(logoDataUrl, "PNG", logoX, logoY, logoSize, logoSize, undefined, "FAST");
+          doc.addImage(
+            logoDataUrl,
+            "PNG",
+            logoX,
+            logoY,
+            logoSize,
+            logoSize,
+            undefined,
+            "FAST"
+          );
         } else {
           doc.setFillColor(...accentColor);
           doc.circle(margin + 8, 15, 8, "F");
@@ -549,7 +593,9 @@ const GenerarBoletin = () => {
 
         doc.setFont("helvetica", "bold");
         doc.setTextColor(...primaryColor);
-        doc.text(`${pageNum} / ${total}`, pageWidth - margin, footerY, { align: "right" });
+        doc.text(`${pageNum} / ${total}`, pageWidth - margin, footerY, {
+          align: "right",
+        });
       };
 
       const centerX = pageWidth / 2;
@@ -580,7 +626,13 @@ const GenerarBoletin = () => {
       doc.setFontSize(12);
       doc.setTextColor(...mediumGray);
 
-      const block = ["VALORIZACIÓN DE", "CONSULTAS Y PRÁCTICAS", "DE LAS DIFERENTES", "ENTIDADES QUE", "SE FACTURAN POR"];
+      const block = [
+        "VALORIZACIÓN DE",
+        "CONSULTAS Y PRÁCTICAS",
+        "DE LAS DIFERENTES",
+        "ENTIDADES QUE",
+        "SE FACTURAN POR",
+      ];
 
       let y = 142;
       for (const line of block) {
@@ -591,12 +643,19 @@ const GenerarBoletin = () => {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(13);
       doc.setTextColor(...primaryColor);
-      doc.text("COLEGIO MÉDICO DE CORRIENTES", centerX, y + 6, { align: "center" });
+      doc.text("COLEGIO MÉDICO DE CORRIENTES", centerX, y + 6, {
+        align: "center",
+      });
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
       doc.setTextColor(...mediumGray);
-      doc.text(`Vigencia: ${vigenciaLabel}  |  ${vigenciaMonthYear}`, centerX, y + 18, { align: "center" });
+      doc.text(
+        `Vigencia: ${vigenciaLabel}  |  ${vigenciaMonthYear}`,
+        centerX,
+        y + 18,
+        { align: "center" }
+      );
 
       addFooter(1, totalPages);
 
@@ -690,7 +749,10 @@ const GenerarBoletin = () => {
           3: { cellWidth: 12, halign: "center" },
         },
         didParseCell: (data) => {
-          if (data.section === "body" && (data.column.index === 1 || data.column.index === 3)) {
+          if (
+            data.section === "body" &&
+            (data.column.index === 1 || data.column.index === 3)
+          ) {
             const txt = String(data.cell.raw ?? "").trim();
             if (txt) {
               data.cell.styles.fillColor = lightGray as any;
@@ -726,7 +788,9 @@ const GenerarBoletin = () => {
           const pageNum = parseInt(pageStr, 10);
           if (Number.isNaN(pageNum)) return;
 
-          doc.link(data.cell.x, data.cell.y, data.cell.width, data.cell.height, { pageNumber: pageNum });
+          doc.link(data.cell.x, data.cell.y, data.cell.width, data.cell.height, {
+            pageNumber: pageNum,
+          });
         },
       });
 
@@ -734,7 +798,9 @@ const GenerarBoletin = () => {
         const os = boletinData[i];
         const currentPage = detailsStartPage + i;
 
-        safeSetProgress(30 + Math.floor((i / Math.max(1, boletinData.length)) * 65));
+        safeSetProgress(
+          30 + Math.floor((i / Math.max(1, boletinData.length)) * 65)
+        );
 
         doc.addPage();
         addHeader(currentPage, totalPages);
@@ -751,7 +817,10 @@ const GenerarBoletin = () => {
         doc.setFont("helvetica", "normal");
         doc.setTextColor(...mediumGray);
 
-        const subtitle = [`VIGENCIA ${vigenciaLabel}`, os.nivel != null ? `NIVEL ${os.nivel}` : null]
+        const subtitle = [
+          `VIGENCIA ${vigenciaLabel}`,
+          os.nivel != null ? `NIVEL ${os.nivel}` : null,
+        ]
           .filter(Boolean)
           .join("  |  ");
 
@@ -763,12 +832,14 @@ const GenerarBoletin = () => {
         doc.setFont("helvetica", "bold");
         doc.setTextColor(...primaryColor);
         doc.text("Valores de Referencia", margin, currentY);
-        currentY += 5;
+        currentY += 6;
 
         const valuesData: Array<[string, string]> = [
           ["Consulta", `$${formatCurrency(os.consulta)}`],
           ...(os.consultaEspecial > 0
-            ? ([["Consulta Especial", `$${formatCurrency(os.consultaEspecial)}`]] as Array<[string, string]>)
+            ? ([["Consulta Especial", `$${formatCurrency(os.consultaEspecial)}`]] as Array<
+                [string, string]
+              >)
             : []),
           ["Galeno Quirúrgico", `$${formatCurrency(os.galenoQuirurgico)}`],
           ["Gastos Quirúrgicos", `$${formatCurrency(os.gastosQuirurgicos)}`],
@@ -781,25 +852,27 @@ const GenerarBoletin = () => {
           ["Galeno Cirugía Infantil", `$${formatCurrency(os.galenoCirugiaInfantil)}`],
         ];
 
+        // ✅ TABLA A ANCHO COMPLETO (ocupa el espacio restante)
         autoTable(doc, {
           startY: currentY,
           body: valuesData,
-          margin: { left: margin, right: margin + contentWidth / 2 + 10 },
-          tableWidth: contentWidth / 2 - 5,
+          margin: { left: margin, right: margin, bottom: 22 },
+          tableWidth: contentWidth,
           styles: {
-            fontSize: 9,
-            cellPadding: 4,
+            fontSize: 10,
+            cellPadding: 5,
             textColor: primaryColor,
             lineColor: lightGray,
             lineWidth: 0.1,
           },
           columnStyles: {
-            0: { fontStyle: "normal", textColor: mediumGray },
-            1: { fontStyle: "bold", halign: "right" },
+            0: { fontStyle: "normal", textColor: mediumGray, cellWidth: contentWidth * 0.68 },
+            1: { fontStyle: "bold", halign: "right", cellWidth: contentWidth * 0.32 },
           },
           alternateRowStyles: { fillColor: [248, 250, 252] },
         });
 
+        /* ✅ COMENTADO (NO ELIMINAR): AUTORIZACIONES
         const rightColX = margin + contentWidth / 2 + 5;
         const boxWidth = contentWidth / 2 - 5;
 
@@ -816,7 +889,9 @@ const GenerarBoletin = () => {
         const autorizacionesText = normalizeText(os.autorizaciones?.trim() ? os.autorizaciones : "—", 400);
         const autorizacionesLines = doc.splitTextToSize(autorizacionesText, boxWidth - 10);
         doc.text(autorizacionesLines, rightColX + 5, currentY + 18);
+        */
 
+        /* ✅ COMENTADO (NO ELIMINAR): ANEXO IV
         const anexoY = currentY + 50;
         doc.setFillColor(...lightGray);
         doc.setTextColor(...primaryColor);
@@ -832,7 +907,9 @@ const GenerarBoletin = () => {
         const anexoText = normalizeText(os.anexoIV?.trim() ? os.anexoIV : "—", 450);
         const anexoLines = doc.splitTextToSize(anexoText, boxWidth - 10);
         doc.text(anexoLines, rightColX + 5, anexoY + 18);
+        */
 
+        /* ✅ COMENTADO (NO ELIMINAR): INFORMACIÓN ADICIONAL
         const addInfoY = 175;
 
         doc.setFillColor(255, 255, 255);
@@ -861,7 +938,9 @@ const GenerarBoletin = () => {
           doc.text(item[1], margin + 55, infoY2);
           infoY2 += 8;
         });
+        */
 
+        /* ✅ COMENTADO (NO ELIMINAR): RECORDATORIOS
         const normasY = addInfoY + 60;
         doc.setFillColor(...lightGray);
         doc.roundedRect(margin, normasY, contentWidth, 30, 3, 3, "F");
@@ -877,6 +956,7 @@ const GenerarBoletin = () => {
         const normasText = normalizeText(os.normas?.trim() ? os.normas : "—", 700);
         const normasLines = doc.splitTextToSize(normasText, contentWidth - 20);
         doc.text(normasLines, margin + 10, normasY + 20);
+        */
 
         addFooter(currentPage, totalPages);
       }
@@ -896,7 +976,9 @@ const GenerarBoletin = () => {
     <div className={styles.container}>
       <div className={styles.header}>
         <h1 className={styles.title}>Boletín de Valores</h1>
-        <p className={styles.subtitle}>Genera el documento oficial con los valores de referencia para todas las Obras Sociales</p>
+        <p className={styles.subtitle}>
+          Genera el documento oficial con los valores de referencia para todas las Obras Sociales
+        </p>
       </div>
 
       <div className={styles.info}>
@@ -1001,7 +1083,7 @@ const GenerarBoletin = () => {
           </>
         )}
       </Button>
-    </div>
+      </div>
     </div>
   );
 };
