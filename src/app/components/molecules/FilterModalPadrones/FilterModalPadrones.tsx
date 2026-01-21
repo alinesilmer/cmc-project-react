@@ -375,14 +375,6 @@ const FilterModalPadrones: React.FC<FilterModalProps> = ({
           >
             {exportLoading ? "Exportando..." : "Descargar Excel"}
           </Button>
-          <Button
-            onClick={() => onExport("csv", logoFile)}
-            disabled={exportLoading}
-            variant="secondary"
-            size="medium"
-          >
-            {exportLoading ? "Exportando..." : "Descargar CSV"}
-          </Button>
         </div>
         <div className={styles.exportActionsRight}>
           <Button onClick={onClose} variant="secondary" size="medium">
