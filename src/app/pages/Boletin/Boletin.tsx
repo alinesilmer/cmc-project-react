@@ -30,6 +30,7 @@ const money = new Intl.NumberFormat("es-AR", {
   maximumFractionDigits: 2,
 });
 
+
 const API_BASE_RAW =
   (import.meta as any).env?.VITE_API_BASE_URL ??
   (import.meta as any).env?.VITE_API_URL ??
@@ -270,10 +271,7 @@ export default function Boletin() {
       {/* Actions Card */}
       <div className={styles.card}>
         <div className={styles.cardHeader}>
-          <h2 className={styles.cardTitle}>Información</h2>
-          <p className={styles.cardDescription}>
-            Se toma la última fila por Obra Social y se ordena por valor de consulta (descendente).
-          </p>
+          <h2 className={styles.cardTitle}>Descargas</h2>
         </div>
 
         <div className={styles.cardContent}>
