@@ -30,6 +30,10 @@ type Prestador = {
   estado?: string | null;
   telefono_consulta?: string | null;
   especialidad?: string | null;
+
+  // PARA PDFs
+  domicilio_consulta?: string | null; // DOMICILIO_CONSULTA
+  mail_particular?: string | null; // MAIL_PARTICULAR
 };
 
 const API_BASE =
@@ -41,6 +45,14 @@ const ENDPOINTS = {
   obrasSociales: `${API_BASE}/api/obras_social/`,
   medicosByOS: (nroOS: number) =>
     `${API_BASE}/api/padrones/obras-sociales/${nroOS}/medicos`,
+
+  // 🔧 AJUSTÁ ESTO a tu backend real si hace falta.
+  // Se prueban en orden hasta que alguno responda 200.
+  prestadorDetailCandidates: (id: string) => [
+    `${API_BASE}/api/prestadores/${id}`,
+    `${API_BASE}/api/medicos/${id}`,
+    `${API_BASE}/api/doctores/${id}`,
+  ],
 };
 
 function fmtDate(d: Date) {
@@ -82,6 +94,22 @@ function pickEspecialidad(p: Prestador) {
   return p.especialidad ?? "";
 }
 
+function pickDomicilioConsulta(p: Prestador) {
+  return p.domicilio_consulta ?? "";
+}
+
+function pickMailParticular(p: Prestador) {
+  return p.mail_particular ?? "";
+}
+
+// Mostrar mail SOLO para UNNE y SWISS MEDICAL
+function shouldShowMailForOS(os: ObraSocial | null) {
+  const name = safeStr(os?.NOMBRE);
+  if (!name) return false;
+  const n = normalize(name);
+  return n.includes("unne") || n.includes("swiss medical") || n.includes("swissmedical");
+}
+
 function mapObraSocialRawToOS(raw: any): ObraSocial {
   const nro =
     raw?.NRO_OBRA_SOCIAL ??
@@ -114,13 +142,68 @@ async function fetchObrasSociales(): Promise<ObraSocial[]> {
     .sort((a, b) => a.NOMBRE.localeCompare(b.NOMBRE));
 }
 
+// Por si el backend manda el prestador anidado
+function unwrapPrestadorSource(it: any) {
+  return it?.prestador ?? it?.medico ?? it?.doctor ?? it?.data ?? it?.item ?? it;
+}
+
 function mapItemToPrestador(it: any): Prestador {
-  const id = it?.ID ?? it?.id ?? null;
-  const nro = it?.NRO_SOCIO ?? null;
-  const nombre = it?.NOMBRE ?? null;
-  const matricula_prov = it?.MATRICULA_PROV ?? null;
-  const telefono_consulta = it?.TELEFONO_CONSULTA ?? null;
-  const especialidad = it?.ESPECIALIDAD ?? null;
+  const src = unwrapPrestadorSource(it);
+
+  const id = src?.ID ?? src?.id ?? it?.ID ?? it?.id ?? null;
+  const nro =
+    src?.NRO_SOCIO ??
+    src?.nro_socio ??
+    src?.SOCIO ??
+    src?.socio ??
+    it?.NRO_SOCIO ??
+    it?.nro_socio ??
+    it?.SOCIO ??
+    it?.socio ??
+    null;
+
+  const nombre =
+    src?.NOMBRE ??
+    src?.nombre ??
+    it?.NOMBRE ??
+    it?.nombre ??
+    null;
+
+  const matricula_prov =
+    src?.MATRICULA_PROV ??
+    src?.matricula_prov ??
+    it?.MATRICULA_PROV ??
+    it?.matricula_prov ??
+    null;
+
+  const telefono_consulta =
+    src?.TELEFONO_CONSULTA ??
+    src?.telefono_consulta ??
+    it?.TELEFONO_CONSULTA ??
+    it?.telefono_consulta ??
+    null;
+
+  const especialidad =
+    src?.ESPECIALIDAD ??
+    src?.especialidad ??
+    it?.ESPECIALIDAD ??
+    it?.especialidad ??
+    null;
+
+  // ✅ Estos son los que querés en PDFs (si vienen, los tomamos)
+  const domicilio_consulta =
+    src?.DOMICILIO_CONSULTA ??
+    src?.domicilio_consulta ??
+    it?.DOMICILIO_CONSULTA ??
+    it?.domicilio_consulta ??
+    null;
+
+  const mail_particular =
+    src?.MAIL_PARTICULAR ??
+    src?.mail_particular ??
+    it?.MAIL_PARTICULAR ??
+    it?.mail_particular ??
+    null;
 
   return {
     id,
@@ -128,9 +211,11 @@ function mapItemToPrestador(it: any): Prestador {
     socio: nro,
     apellido_nombre: nombre,
     nombre: nombre,
-    matricula_prov: matricula_prov,
-    telefono_consulta: telefono_consulta,
-    especialidad: especialidad,
+    matricula_prov,
+    telefono_consulta,
+    especialidad,
+    domicilio_consulta,
+    mail_particular,
   };
 }
 
@@ -145,6 +230,7 @@ async function fetchPrestadoresAllPages(nroOS: number): Promise<Prestador[]> {
       params: { page, size: PAGE_SIZE },
     });
 
+    // Si el backend devuelve array directo
     if (Array.isArray(data)) {
       return data.map(mapItemToPrestador);
     }
@@ -159,6 +245,100 @@ async function fetchPrestadoresAllPages(nroOS: number): Promise<Prestador[]> {
 
     page += 1;
     if (page > 10000) break;
+  }
+
+  return out;
+}
+
+// ---- Enriquecimiento SOLO para PDF (performance) ----
+
+// Cache global por id (evita refetch)
+const contactoCache = new Map<string, Pick<Prestador, "domicilio_consulta" | "mail_particular">>();
+
+async function fetchContactoById(id: string) {
+  // cache
+  const cached = contactoCache.get(id);
+  if (cached) return cached;
+
+  const urls = ENDPOINTS.prestadorDetailCandidates(id);
+
+  for (const url of urls) {
+    try {
+      const { data } = await axios.get(url);
+      const src = unwrapPrestadorSource(data);
+
+      const domicilio_consulta =
+        src?.DOMICILIO_CONSULTA ?? src?.domicilio_consulta ?? data?.DOMICILIO_CONSULTA ?? data?.domicilio_consulta ?? null;
+
+      const mail_particular =
+        src?.MAIL_PARTICULAR ?? src?.mail_particular ?? data?.MAIL_PARTICULAR ?? data?.mail_particular ?? null;
+
+      const payload = { domicilio_consulta, mail_particular };
+      contactoCache.set(id, payload);
+      return payload;
+    } catch {
+      // probamos el siguiente candidato
+    }
+  }
+
+  const payload = { domicilio_consulta: null, mail_particular: null };
+  contactoCache.set(id, payload);
+  return payload;
+}
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = new Array(items.length) as any;
+  let i = 0;
+
+  async function worker() {
+    while (true) {
+      const idx = i++;
+      if (idx >= items.length) return;
+      results[idx] = await fn(items[idx]);
+    }
+  }
+
+  const workers = Array.from({ length: Math.max(1, limit) }, () => worker());
+  await Promise.all(workers);
+  return results;
+}
+
+async function enrichForPdf(rows: Prestador[], showMail: boolean): Promise<Prestador[]> {
+  // solo los que realmente necesitan datos
+  const need = rows
+    .map((p, idx) => ({ p, idx }))
+    .filter(({ p }) => {
+      const missAddr = !safeStr(p.domicilio_consulta).trim();
+      const missMail = showMail && !safeStr(p.mail_particular).trim();
+      return (missAddr || missMail) && !!p.id;
+    });
+
+  if (need.length === 0) return rows;
+
+  // Concurrencia limitada (cuidar backend)
+  const fetched = await mapWithConcurrency(
+    need,
+    6,
+    async ({ p, idx }) => {
+      const id = String(p.id);
+      const c = await fetchContactoById(id);
+      return { idx, c };
+    }
+  );
+
+  // merge
+  const out = rows.slice();
+  for (const { idx, c } of fetched) {
+    const prev = out[idx];
+    out[idx] = {
+      ...prev,
+      domicilio_consulta: safeStr(prev.domicilio_consulta).trim() ? prev.domicilio_consulta : c.domicilio_consulta,
+      mail_particular: safeStr(prev.mail_particular).trim() ? prev.mail_particular : c.mail_particular,
+    };
   }
 
   return out;
@@ -180,6 +360,8 @@ const AfiliadosPorObraSocialPage = () => {
 
   const [osDropdownOpen, setOsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+
+  const [exportingPdf, setExportingPdf] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -304,6 +486,7 @@ const AfiliadosPorObraSocialPage = () => {
     });
   }, [prestadores, tableQuery]);
 
+  // EXCEL: no se toca (requisito: solo PDFs)
   function getExportRows() {
     return filteredPrestadores.map((p) => ({
       nro_socio: safeStr(pickNroPrestador(p)),
@@ -432,7 +615,8 @@ const AfiliadosPorObraSocialPage = () => {
     );
   }
 
-  function downloadPdf() {
+  // PDF normal (async) + enrich SOLO si faltan campos
+  async function downloadPdf() {
     if (!selectedOS) return;
     if (filteredPrestadores.length === 0) {
       window.alert("No hay datos para exportar con el filtro actual.");
@@ -443,123 +627,210 @@ const AfiliadosPorObraSocialPage = () => {
       selectedOS.CODIGO ??
       `OS${String(selectedOS.NRO_OBRA_SOCIAL).padStart(3, "0")}`;
 
-    const rows = getExportRows().map((r) => [
-      r.nro_socio,
-      r.nombre,
-      r.matricula_prov,
-      r.telefono_consulta,
-      r.especialidad,
-    ]);
+    const showMail = shouldShowMailForOS(selectedOS);
 
-    const doc = new jsPDF({ orientation: "landscape" });
-    doc.setFontSize(14);
-    doc.text("Prestadores por Obra Social", 14, 14);
-    doc.setFontSize(11);
-    doc.text(
-      `${selectedOS.NOMBRE} (${osCode}) • ${fmtDate(new Date())} • Filas: ${rows.length}`,
-      14,
-      22
-    );
+    try {
+      setExportingPdf(true);
 
-    autoTable(doc, {
-      head: [["N° Socio", "Prestador", "Matricula Prov", "Telefono", "Especialidad"]],
-      body: rows,
-      startY: 28,
-      styles: { fontSize: 8, cellPadding: 3, valign: "middle" },
-      headStyles: {
-        fillColor: [17, 17, 17],
-        textColor: [255, 255, 255],
-        fontStyle: "bold",
-      },
-      alternateRowStyles: { fillColor: [247, 247, 247] },
-      columnStyles: {
-        0: { cellWidth: 22 },
-        1: { cellWidth: 74 },
-        2: { cellWidth: 26 },
-        3: { cellWidth: 28 },
-        4: { cellWidth: 62 },
-      },
-    });
+      const enriched = await enrichForPdf(filteredPrestadores, showMail);
 
-    doc.save(`prestadores_${osCode}_${fmtDate(new Date())}.pdf`);
-  }
+      const head = [
+        [
+          "N° Socio",
+          "Prestador",
+          "Matricula Prov",
+          "Telefono",
+          "Especialidad",
+          "Dirección consultorio",
+          ...(showMail ? ["Correo electrónico"] : []),
+        ],
+      ];
 
-  function downloadPdfByEspecialidad() {
-    if (!selectedOS) return;
-    if (filteredPrestadores.length === 0) {
-      window.alert("No hay datos para exportar con el filtro actual.");
-      return;
-    }
+      const body = enriched.map((p) => {
+        const row = [
+          safeStr(pickNroPrestador(p)),
+          safeStr(pickNombre(p)),
+          safeStr(pickMatriculaProv(p)),
+          safeStr(pickTelefonoConsulta(p)),
+          safeStr(pickEspecialidad(p)),
+          safeStr(pickDomicilioConsulta(p)),
+        ];
+        if (showMail) row.push(safeStr(pickMailParticular(p)));
+        return row;
+      });
 
-    const osCode =
-      selectedOS.CODIGO ??
-      `OS${String(selectedOS.NRO_OBRA_SOCIAL).padStart(3, "0")}`;
-
-    const groups = new Map<string, Prestador[]>();
-    for (const p of filteredPrestadores) {
-      const raw = safeStr(pickEspecialidad(p)).trim();
-      const key = raw ? raw : "Sin especialidad";
-      const arr = groups.get(key) ?? [];
-      arr.push(p);
-      groups.set(key, arr);
-    }
-
-    const keys = Array.from(groups.keys()).sort((a, b) => a.localeCompare(b, "es"));
-    for (const k of keys) {
-      const arr = groups.get(k)!;
-      arr.sort((a, b) => safeStr(pickNombre(a)).localeCompare(safeStr(pickNombre(b)), "es"));
-    }
-
-    const doc = new jsPDF({ orientation: "landscape" });
-
-    keys.forEach((esp, idx) => {
-      if (idx > 0) doc.addPage();
-
-      const arr = groups.get(esp)!;
-
+      const doc = new jsPDF({ orientation: "landscape" });
       doc.setFontSize(14);
       doc.text("Prestadores por Obra Social", 14, 14);
-
       doc.setFontSize(11);
       doc.text(
-        `${selectedOS.NOMBRE} (${osCode}) • ${fmtDate(new Date())} • ${arr.length} ${
-          arr.length === 1 ? "prestador" : "prestadores"
-        }`,
+        `${selectedOS.NOMBRE} (${osCode}) • ${fmtDate(new Date())} • Filas: ${body.length}`,
         14,
         22
       );
 
-      doc.setFontSize(11);
-      doc.text(`Especialidad: ${esp}`, 14, 28);
-
-      const body = arr.map((p) => [
-        safeStr(pickNroPrestador(p)),
-        safeStr(pickNombre(p)),
-        safeStr(pickMatriculaProv(p)),
-        safeStr(pickTelefonoConsulta(p)),
-      ]);
-
       autoTable(doc, {
-        head: [["N° Socio", "Prestador", "Matricula Prov", "Telefono"]],
+        head,
         body,
-        startY: 34,
-        styles: { fontSize: 8, cellPadding: 3, valign: "middle" },
+        startY: 28,
+        styles: {
+          fontSize: 7,
+          cellPadding: 2,
+          valign: "middle",
+          overflow: "linebreak",
+        },
         headStyles: {
           fillColor: [17, 17, 17],
           textColor: [255, 255, 255],
           fontStyle: "bold",
         },
         alternateRowStyles: { fillColor: [247, 247, 247] },
-        columnStyles: {
-          0: { cellWidth: 24 },
-          1: { cellWidth: 110 },
-          2: { cellWidth: 30 },
-          3: { cellWidth: 32 },
-        },
+        columnStyles: showMail
+          ? {
+              0: { cellWidth: 18 },
+              1: { cellWidth: 55 },
+              2: { cellWidth: 22 },
+              3: { cellWidth: 24 },
+              4: { cellWidth: 45 },
+              5: { cellWidth: 65 },
+              6: { cellWidth: 32 },
+            }
+          : {
+              0: { cellWidth: 20 },
+              1: { cellWidth: 60 },
+              2: { cellWidth: 24 },
+              3: { cellWidth: 26 },
+              4: { cellWidth: 50 },
+              5: { cellWidth: 85 },
+            },
       });
-    });
 
-    doc.save(`prestadores_${osCode}_por_especialidad_${fmtDate(new Date())}.pdf`);
+      doc.save(`prestadores_${osCode}_${fmtDate(new Date())}.pdf`);
+    } finally {
+      setExportingPdf(false);
+    }
+  }
+
+  // PDF por especialidad (async) + enrich SOLO si faltan campos
+  async function downloadPdfByEspecialidad() {
+    if (!selectedOS) return;
+    if (filteredPrestadores.length === 0) {
+      window.alert("No hay datos para exportar con el filtro actual.");
+      return;
+    }
+
+    const osCode =
+      selectedOS.CODIGO ??
+      `OS${String(selectedOS.NRO_OBRA_SOCIAL).padStart(3, "0")}`;
+
+    const showMail = shouldShowMailForOS(selectedOS);
+
+    try {
+      setExportingPdf(true);
+
+      const enrichedAll = await enrichForPdf(filteredPrestadores, showMail);
+
+      const groups = new Map<string, Prestador[]>();
+      for (const p of enrichedAll) {
+        const raw = safeStr(pickEspecialidad(p)).trim();
+        const key = raw ? raw : "Sin especialidad";
+        const arr = groups.get(key) ?? [];
+        arr.push(p);
+        groups.set(key, arr);
+      }
+
+      const keys = Array.from(groups.keys()).sort((a, b) => a.localeCompare(b, "es"));
+      for (const k of keys) {
+        const arr = groups.get(k)!;
+        arr.sort((a, b) =>
+          safeStr(pickNombre(a)).localeCompare(safeStr(pickNombre(b)), "es")
+        );
+      }
+
+      const doc = new jsPDF({ orientation: "landscape" });
+
+      keys.forEach((esp, idx) => {
+        if (idx > 0) doc.addPage();
+
+        const arr = groups.get(esp)!;
+
+        doc.setFontSize(14);
+        doc.text("Prestadores por Obra Social", 14, 14);
+
+        doc.setFontSize(11);
+        doc.text(
+          `${selectedOS.NOMBRE} (${osCode}) • ${fmtDate(new Date())} • ${arr.length} ${
+            arr.length === 1 ? "prestador" : "prestadores"
+          }`,
+          14,
+          22
+        );
+
+        doc.setFontSize(11);
+        doc.text(`Especialidad: ${esp}`, 14, 28);
+
+        const head = [
+          [
+            "N° Socio",
+            "Prestador",
+            "Matricula Prov",
+            "Telefono",
+            "Dirección consultorio",
+            ...(showMail ? ["Correo electrónico"] : []),
+          ],
+        ];
+
+        const body = arr.map((p) => {
+          const row = [
+            safeStr(pickNroPrestador(p)),
+            safeStr(pickNombre(p)),
+            safeStr(pickMatriculaProv(p)),
+            safeStr(pickTelefonoConsulta(p)),
+            safeStr(pickDomicilioConsulta(p)),
+          ];
+          if (showMail) row.push(safeStr(pickMailParticular(p)));
+          return row;
+        });
+
+        autoTable(doc, {
+          head,
+          body,
+          startY: 34,
+          styles: {
+            fontSize: 7,
+            cellPadding: 2,
+            valign: "middle",
+            overflow: "linebreak",
+          },
+          headStyles: {
+            fillColor: [17, 17, 17],
+            textColor: [255, 255, 255],
+            fontStyle: "bold",
+          },
+          alternateRowStyles: { fillColor: [247, 247, 247] },
+          columnStyles: showMail
+            ? {
+                0: { cellWidth: 18 },
+                1: { cellWidth: 70 },
+                2: { cellWidth: 24 },
+                3: { cellWidth: 26 },
+                4: { cellWidth: 95 },
+                5: { cellWidth: 32 },
+              }
+            : {
+                0: { cellWidth: 20 },
+                1: { cellWidth: 85 },
+                2: { cellWidth: 26 },
+                3: { cellWidth: 30 },
+                4: { cellWidth: 104 },
+              },
+        });
+      });
+
+      doc.save(`prestadores_${osCode}_por_especialidad_${fmtDate(new Date())}.pdf`);
+    } finally {
+      setExportingPdf(false);
+    }
   }
 
   function selectOS(os: ObraSocial) {
@@ -579,8 +850,7 @@ const AfiliadosPorObraSocialPage = () => {
   }
 
   const selectedCode = selectedOS
-    ? selectedOS.CODIGO ??
-      `OS${String(selectedOS.NRO_OBRA_SOCIAL).padStart(3, "0")}`
+    ? selectedOS.CODIGO ?? `OS${String(selectedOS.NRO_OBRA_SOCIAL).padStart(3, "0")}`
     : "";
 
   return (
@@ -590,8 +860,7 @@ const AfiliadosPorObraSocialPage = () => {
           <div className={styles.headerContent}>
             <h1 className={styles.title}>Prestadores por Obra Social</h1>
             <p className={styles.subtitle}>
-              Buscá una obra social, filtrá prestadores y descargá los resultados
-              en PDF o Excel
+              Buscá una obra social, filtrá prestadores y descargá los resultados en PDF o Excel
             </p>
           </div>
         </header>
@@ -644,24 +913,18 @@ const AfiliadosPorObraSocialPage = () => {
                   <div className={styles.dropdown}>
                     <div className={styles.dropdownList}>
                       {loadingObras ? (
-                        <div className={styles.emptyMessage}>
-                          Cargando obras sociales…
-                        </div>
+                        <div className={styles.emptyMessage}>Cargando obras sociales…</div>
                       ) : errorObras ? (
                         <div className={styles.errorMessage}>
                           <span>{errorObras}</span>
                         </div>
                       ) : filteredOS.length === 0 ? (
-                        <div className={styles.emptyMessage}>
-                          Sin resultados para "{osQuery}"
-                        </div>
+                        <div className={styles.emptyMessage}>Sin resultados para "{osQuery}"</div>
                       ) : (
                         filteredOS.map((os) => {
                           const code =
-                            os.CODIGO ??
-                            `OS${String(os.NRO_OBRA_SOCIAL).padStart(3, "0")}`;
-                          const active =
-                            selectedOS?.NRO_OBRA_SOCIAL === os.NRO_OBRA_SOCIAL;
+                            os.CODIGO ?? `OS${String(os.NRO_OBRA_SOCIAL).padStart(3, "0")}`;
+                          const active = selectedOS?.NRO_OBRA_SOCIAL === os.NRO_OBRA_SOCIAL;
                           return (
                             <button
                               key={os.NRO_OBRA_SOCIAL}
@@ -671,12 +934,8 @@ const AfiliadosPorObraSocialPage = () => {
                               }`}
                               onClick={() => selectOS(os)}
                             >
-                              <span className={styles.dropdownItemName}>
-                                {os.NOMBRE}
-                              </span>
-                              <span className={styles.dropdownItemCode}>
-                                {code}
-                              </span>
+                              <span className={styles.dropdownItemName}>{os.NOMBRE}</span>
+                              <span className={styles.dropdownItemCode}>{code}</span>
                             </button>
                           );
                         })
@@ -695,11 +954,12 @@ const AfiliadosPorObraSocialPage = () => {
                   disabled={
                     !selectedOS ||
                     loadingPrestadores ||
+                    exportingPdf ||
                     filteredPrestadores.length === 0
                   }
                 >
                   <FileText size={18} />
-                  <span>Descargar PDF</span>
+                  <span>{exportingPdf ? "Generando…" : "Descargar PDF"}</span>
                 </Button>
 
                 <Button
@@ -710,11 +970,12 @@ const AfiliadosPorObraSocialPage = () => {
                   disabled={
                     !selectedOS ||
                     loadingPrestadores ||
+                    exportingPdf ||
                     filteredPrestadores.length === 0
                   }
                 >
                   <FileText size={18} />
-                  <span>PDF por especialidad</span>
+                  <span>{exportingPdf ? "Generando…" : "PDF por especialidad"}</span>
                 </Button>
 
                 <Button
@@ -722,11 +983,7 @@ const AfiliadosPorObraSocialPage = () => {
                   variant="primary"
                   size="medium"
                   onClick={downloadExcel}
-                  disabled={
-                    !selectedOS ||
-                    loadingPrestadores ||
-                    filteredPrestadores.length === 0
-                  }
+                  disabled={!selectedOS || loadingPrestadores || filteredPrestadores.length === 0}
                 >
                   <FileSpreadsheet size={18} />
                   <span>Descargar Excel</span>
@@ -763,8 +1020,7 @@ const AfiliadosPorObraSocialPage = () => {
                 <Users size={48} className={styles.emptyIcon} />
                 <h3 className={styles.emptyTitle}>Buscá una obra social</h3>
                 <p className={styles.emptyMessage}>
-                  Escribí el nombre o el código para seleccionar una obra social y
-                  ver el listado de prestadores
+                  Escribí el nombre o el código para seleccionar una obra social y ver el listado de prestadores
                 </p>
               </div>
             ) : loadingPrestadores ? (
@@ -830,8 +1086,7 @@ const AfiliadosPorObraSocialPage = () => {
                       {filteredPrestadores.length === 0 ? (
                         <tr>
                           <td colSpan={6} className={styles.noResults}>
-                            No se encontraron prestadores que coincidan con "
-                            {tableQuery}"
+                            No se encontraron prestadores que coincidan con "{tableQuery}"
                           </td>
                         </tr>
                       ) : (
