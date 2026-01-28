@@ -4,8 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import { Users, Search, FileSpreadsheet, FileText, X } from "lucide-react";
 
 import styles from "./AfiliadosPorObraSocialPage.module.scss";
@@ -47,7 +45,6 @@ const ENDPOINTS = {
     `${API_BASE}/api/padrones/obras-sociales/${nroOS}/medicos`,
 
   // 🔧 AJUSTÁ ESTO a tu backend real si hace falta.
-  // Se prueban en orden hasta que alguno responda 200.
   prestadorDetailCandidates: (id: string) => [
     `${API_BASE}/api/prestadores/${id}`,
     `${API_BASE}/api/medicos/${id}`,
@@ -121,9 +118,7 @@ function mapObraSocialRawToOS(raw: any): ObraSocial {
     raw?.NOMBRE ?? raw?.OBRA_SOCIAL ?? raw?.obra_social ?? raw?.nombre ?? "";
   const codigo =
     raw?.CODIGO ??
-    (Number.isFinite(Number(nro))
-      ? `OS${String(Number(nro)).padStart(3, "0")}`
-      : null);
+    (Number.isFinite(Number(nro)) ? `OS${String(Number(nro)).padStart(3, "0")}` : null);
   const activa = raw?.ACTIVA ?? raw?.MARCA ?? undefined;
 
   return {
@@ -137,9 +132,7 @@ function mapObraSocialRawToOS(raw: any): ObraSocial {
 async function fetchObrasSociales(): Promise<ObraSocial[]> {
   const { data } = await axios.get(ENDPOINTS.obrasSociales);
   const arr = Array.isArray(data) ? data : [];
-  return arr
-    .map(mapObraSocialRawToOS)
-    .sort((a, b) => a.NOMBRE.localeCompare(b.NOMBRE));
+  return arr.map(mapObraSocialRawToOS).sort((a, b) => a.NOMBRE.localeCompare(b.NOMBRE));
 }
 
 // Por si el backend manda el prestador anidado
@@ -162,12 +155,7 @@ function mapItemToPrestador(it: any): Prestador {
     it?.socio ??
     null;
 
-  const nombre =
-    src?.NOMBRE ??
-    src?.nombre ??
-    it?.NOMBRE ??
-    it?.nombre ??
-    null;
+  const nombre = src?.NOMBRE ?? src?.nombre ?? it?.NOMBRE ?? it?.nombre ?? null;
 
   const matricula_prov =
     src?.MATRICULA_PROV ??
@@ -184,11 +172,7 @@ function mapItemToPrestador(it: any): Prestador {
     null;
 
   const especialidad =
-    src?.ESPECIALIDAD ??
-    src?.especialidad ??
-    it?.ESPECIALIDAD ??
-    it?.especialidad ??
-    null;
+    src?.ESPECIALIDAD ?? src?.especialidad ?? it?.ESPECIALIDAD ?? it?.especialidad ?? null;
 
   // ✅ Estos son los que querés en PDFs (si vienen, los tomamos)
   const domicilio_consulta =
@@ -228,12 +212,10 @@ async function fetchPrestadoresAllPages(nroOS: number): Promise<Prestador[]> {
   while (true) {
     const { data } = await axios.get(ENDPOINTS.medicosByOS(nroOS), {
       params: { page, size: PAGE_SIZE },
+      timeout: 25_000,
     });
 
-    // Si el backend devuelve array directo
-    if (Array.isArray(data)) {
-      return data.map(mapItemToPrestador);
-    }
+    if (Array.isArray(data)) return data.map(mapItemToPrestador);
 
     const items = Array.isArray(data?.items) ? data.items : [];
     total = Number.isFinite(data?.total) ? Number(data.total) : total;
@@ -250,13 +232,36 @@ async function fetchPrestadoresAllPages(nroOS: number): Promise<Prestador[]> {
   return out;
 }
 
-// ---- Enriquecimiento SOLO para PDF (performance) ----
+// ==========================
+// PDF: lazy-load de librerías
+// ==========================
+async function loadPdfLibs(): Promise<{ JsPDF: any; autoTable: any }> {
+  const jspdfMod: any = await import("jspdf");
+  const autotableMod: any = await import("jspdf-autotable");
 
-// Cache global por id (evita refetch)
-const contactoCache = new Map<string, Pick<Prestador, "domicilio_consulta" | "mail_particular">>();
+  const JsPDF = jspdfMod?.jsPDF ?? jspdfMod?.default ?? jspdfMod;
+  const autoTable = autotableMod?.default ?? autotableMod;
 
-async function fetchContactoById(id: string) {
-  // cache
+  return { JsPDF, autoTable };
+}
+
+// ==========================
+// Enriquecimiento SOLO para PDF (performance + no cuelga)
+// ==========================
+const PDF_REQ_TIMEOUT_MS = 12_000;
+const PDF_CONTACT_CONCURRENCY = 4;
+const PDF_ENRICH_MAX = 700;
+const CONTACT_CACHE_MAX = 5000;
+
+type ContactoPayload = Pick<Prestador, "domicilio_consulta" | "mail_particular">;
+const contactoCache = new Map<string, ContactoPayload>();
+
+function cacheSetContacto(id: string, payload: ContactoPayload) {
+  if (contactoCache.size > CONTACT_CACHE_MAX) contactoCache.clear();
+  contactoCache.set(id, payload);
+}
+
+async function fetchContactoById(id: string, signal?: AbortSignal): Promise<ContactoPayload> {
   const cached = contactoCache.get(id);
   if (cached) return cached;
 
@@ -264,31 +269,45 @@ async function fetchContactoById(id: string) {
 
   for (const url of urls) {
     try {
-      const { data } = await axios.get(url);
+      const { data } = await axios.get(url, {
+        signal,
+        timeout: PDF_REQ_TIMEOUT_MS,
+      } as any);
+
       const src = unwrapPrestadorSource(data);
 
       const domicilio_consulta =
-        src?.DOMICILIO_CONSULTA ?? src?.domicilio_consulta ?? data?.DOMICILIO_CONSULTA ?? data?.domicilio_consulta ?? null;
+        src?.DOMICILIO_CONSULTA ??
+        src?.domicilio_consulta ??
+        data?.DOMICILIO_CONSULTA ??
+        data?.domicilio_consulta ??
+        null;
 
       const mail_particular =
-        src?.MAIL_PARTICULAR ?? src?.mail_particular ?? data?.MAIL_PARTICULAR ?? data?.mail_particular ?? null;
+        src?.MAIL_PARTICULAR ??
+        src?.mail_particular ??
+        data?.MAIL_PARTICULAR ??
+        data?.mail_particular ??
+        null;
 
-      const payload = { domicilio_consulta, mail_particular };
-      contactoCache.set(id, payload);
+      const payload: ContactoPayload = { domicilio_consulta, mail_particular };
+      cacheSetContacto(id, payload);
       return payload;
-    } catch {
-      // probamos el siguiente candidato
+    } catch (e: any) {
+      if (signal?.aborted) throw e;
+      // probamos siguiente candidato
     }
   }
 
-  const payload = { domicilio_consulta: null, mail_particular: null };
-  contactoCache.set(id, payload);
+  const payload: ContactoPayload = { domicilio_consulta: null, mail_particular: null };
+  cacheSetContacto(id, payload);
   return payload;
 }
 
 async function mapWithConcurrency<T, R>(
   items: T[],
   limit: number,
+  signal: AbortSignal | undefined,
   fn: (item: T) => Promise<R>
 ): Promise<R[]> {
   const results: R[] = new Array(items.length) as any;
@@ -296,9 +315,16 @@ async function mapWithConcurrency<T, R>(
 
   async function worker() {
     while (true) {
+      if (signal?.aborted) return;
       const idx = i++;
       if (idx >= items.length) return;
-      results[idx] = await fn(items[idx]);
+
+      try {
+        results[idx] = await fn(items[idx]);
+      } catch (e: any) {
+        if (signal?.aborted) return;
+        results[idx] = null as any;
+      }
     }
   }
 
@@ -307,9 +333,12 @@ async function mapWithConcurrency<T, R>(
   return results;
 }
 
-async function enrichForPdf(rows: Prestador[], showMail: boolean): Promise<Prestador[]> {
-  // solo los que realmente necesitan datos
-  const need = rows
+async function enrichForPdf(
+  rows: Prestador[],
+  showMail: boolean,
+  signal?: AbortSignal
+): Promise<Prestador[]> {
+  const needAll = rows
     .map((p, idx) => ({ p, idx }))
     .filter(({ p }) => {
       const missAddr = !safeStr(p.domicilio_consulta).trim();
@@ -317,32 +346,49 @@ async function enrichForPdf(rows: Prestador[], showMail: boolean): Promise<Prest
       return (missAddr || missMail) && !!p.id;
     });
 
-  if (need.length === 0) return rows;
+  if (needAll.length === 0) return rows;
+  if (signal?.aborted) return rows;
 
-  // Concurrencia limitada (cuidar backend)
+  const need = needAll.slice(0, PDF_ENRICH_MAX);
+  const skipped = needAll.length - need.length;
+
+  if (skipped > 0) {
+    console.warn(
+      `[PDF] Enriquecimiento limitado a ${PDF_ENRICH_MAX}. Se omiten ${skipped} contactos para evitar sobrecarga.`
+    );
+  }
+
   const fetched = await mapWithConcurrency(
     need,
-    6,
+    PDF_CONTACT_CONCURRENCY,
+    signal,
     async ({ p, idx }) => {
       const id = String(p.id);
-      const c = await fetchContactoById(id);
+      const c = await fetchContactoById(id, signal);
       return { idx, c };
     }
   );
 
-  // merge
   const out = rows.slice();
-  for (const { idx, c } of fetched) {
+  for (const item of fetched) {
+    if (!item) continue;
+    const { idx, c } = item as any;
     const prev = out[idx];
     out[idx] = {
       ...prev,
-      domicilio_consulta: safeStr(prev.domicilio_consulta).trim() ? prev.domicilio_consulta : c.domicilio_consulta,
-      mail_particular: safeStr(prev.mail_particular).trim() ? prev.mail_particular : c.mail_particular,
+      domicilio_consulta: safeStr(prev.domicilio_consulta).trim()
+        ? prev.domicilio_consulta
+        : c.domicilio_consulta,
+      mail_particular: safeStr(prev.mail_particular).trim()
+        ? prev.mail_particular
+        : c.mail_particular,
     };
   }
 
   return out;
 }
+
+type ExportingPdfMode = null | "pdf" | "pdf_by_especialidad";
 
 const AfiliadosPorObraSocialPage = () => {
   const [obras, setObras] = useState<ObraSocial[]>([]);
@@ -361,7 +407,9 @@ const AfiliadosPorObraSocialPage = () => {
   const [osDropdownOpen, setOsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
-  const [exportingPdf, setExportingPdf] = useState(false);
+  // ✅ Ahora el loading es por tipo de export
+  const [exportingPdf, setExportingPdf] = useState<ExportingPdfMode>(null);
+  const pdfAbortRef = useRef<AbortController | null>(null);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -459,9 +507,7 @@ const AfiliadosPorObraSocialPage = () => {
 
     return obras.filter((os) => {
       const name = normalize(os.NOMBRE ?? "");
-      const code = normalize(
-        os.CODIGO ?? `OS${String(os.NRO_OBRA_SOCIAL).padStart(3, "0")}`
-      );
+      const code = normalize(os.CODIGO ?? `OS${String(os.NRO_OBRA_SOCIAL).padStart(3, "0")}`);
       return name.includes(q) || code.includes(q);
     });
   }, [obras, osQuery]);
@@ -476,17 +522,11 @@ const AfiliadosPorObraSocialPage = () => {
       const mat = normalize(safeStr(pickMatriculaProv(p)));
       const tel = normalize(safeStr(pickTelefonoConsulta(p)));
       const esp = normalize(safeStr(pickEspecialidad(p)));
-      return (
-        nro.includes(q) ||
-        nom.includes(q) ||
-        mat.includes(q) ||
-        tel.includes(q) ||
-        esp.includes(q)
-      );
+      return nro.includes(q) || nom.includes(q) || mat.includes(q) || tel.includes(q) || esp.includes(q);
     });
   }, [prestadores, tableQuery]);
 
-  // EXCEL: no se toca (requisito: solo PDFs)
+  // EXCEL: no se toca
   function getExportRows() {
     return filteredPrestadores.map((p) => ({
       nro_socio: safeStr(pickNroPrestador(p)),
@@ -530,36 +570,22 @@ const AfiliadosPorObraSocialPage = () => {
     ];
 
     const osCode =
-      selectedOS.CODIGO ??
-      `OS${String(selectedOS.NRO_OBRA_SOCIAL).padStart(3, "0")}`;
+      selectedOS.CODIGO ?? `OS${String(selectedOS.NRO_OBRA_SOCIAL).padStart(3, "0")}`;
 
     ws.mergeCells("A2:E2");
     ws.getCell("A2").value = "Prestadores por Obra Social";
-    ws.getCell("A2").font = {
-      name: "Calibri",
-      size: 16,
-      bold: true,
-      color: { argb: C.titleBlue },
-    };
+    ws.getCell("A2").font = { name: "Calibri", size: 16, bold: true, color: { argb: C.titleBlue } };
     ws.getCell("A2").alignment = { vertical: "middle", horizontal: "left" };
 
     ws.mergeCells("A3:E3");
-    ws.getCell("A3").value = `${
-      selectedOS.NOMBRE
-    } (${osCode}) • Generado: ${fmtDate(new Date())} • Filas: ${rows.length}`;
+    ws.getCell("A3").value = `${selectedOS.NOMBRE} (${osCode}) • Generado: ${fmtDate(new Date())} • Filas: ${rows.length}`;
     ws.getCell("A3").font = { name: "Calibri", size: 11, color: { argb: C.black } };
     ws.getCell("A3").alignment = { vertical: "middle", horizontal: "left" };
 
     ws.getRow(4).height = 6;
 
     const headerRow = 6;
-    ws.getRow(headerRow).values = [
-      "N° Socio",
-      "Prestador",
-      "Matricula Prov",
-      "Telefono",
-      "Especialidad",
-    ];
+    ws.getRow(headerRow).values = ["N° Socio", "Prestador", "Matricula Prov", "Telefono", "Especialidad"];
     ws.getRow(headerRow).height = 20;
 
     const tableBorder = {
@@ -587,11 +613,7 @@ const AfiliadosPorObraSocialPage = () => {
         cell.border = tableBorder;
 
         if (col === 2 || col === 5) {
-          cell.alignment = {
-            vertical: "middle",
-            horizontal: "left",
-            wrapText: true,
-          };
+          cell.alignment = { vertical: "middle", horizontal: "left", wrapText: true };
         } else {
           cell.alignment = { vertical: "middle", horizontal: "center" };
         }
@@ -599,23 +621,16 @@ const AfiliadosPorObraSocialPage = () => {
     });
 
     const endRow = ws.lastRow?.number ?? headerRow + 1;
-    ws.autoFilter = {
-      from: { row: headerRow, column: 1 },
-      to: { row: endRow, column: 5 },
-    };
-
+    ws.autoFilter = { from: { row: headerRow, column: 1 }, to: { row: endRow, column: 5 } };
     ws.getRow(1).height = 6;
 
     const buf = await wb.xlsx.writeBuffer();
     saveAs(
-      new Blob([buf], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      }),
+      new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }),
       `prestadores_${osCode}_${fmtDate(new Date())}.xlsx`
     );
   }
 
-  // PDF normal (async) + enrich SOLO si faltan campos
   async function downloadPdf() {
     if (!selectedOS) return;
     if (filteredPrestadores.length === 0) {
@@ -623,28 +638,32 @@ const AfiliadosPorObraSocialPage = () => {
       return;
     }
 
-    const osCode =
-      selectedOS.CODIGO ??
-      `OS${String(selectedOS.NRO_OBRA_SOCIAL).padStart(3, "0")}`;
-
+    const osCode = selectedOS.CODIGO ?? `OS${String(selectedOS.NRO_OBRA_SOCIAL).padStart(3, "0")}`;
     const showMail = shouldShowMailForOS(selectedOS);
 
+    // abort export anterior si existía
+    pdfAbortRef.current?.abort();
+    const controller = new AbortController();
+    pdfAbortRef.current = controller;
+
     try {
-      setExportingPdf(true);
+      setExportingPdf("pdf");
 
-      const enriched = await enrichForPdf(filteredPrestadores, showMail);
+      const { JsPDF, autoTable } = await loadPdfLibs();
+      if (controller.signal.aborted) return;
 
-      const head = [
-        [
-          "N° Socio",
-          "Prestador",
-          "Matricula Prov",
-          "Telefono",
-          "Especialidad",
-          "Dirección consultorio",
-          ...(showMail ? ["Correo electrónico"] : []),
-        ],
-      ];
+      const enriched = await enrichForPdf(filteredPrestadores, showMail, controller.signal);
+      if (controller.signal.aborted) return;
+
+      const head = [[
+        "N° Socio",
+        "Prestador",
+        "Matricula Prov",
+        "Telefono",
+        "Especialidad",
+        "Dirección consultorio",
+        ...(showMail ? ["Correo electrónico"] : []),
+      ]];
 
       const body = enriched.map((p) => {
         const row = [
@@ -659,31 +678,27 @@ const AfiliadosPorObraSocialPage = () => {
         return row;
       });
 
-      const doc = new jsPDF({ orientation: "landscape" });
-      doc.setFontSize(14);
-      doc.text("Prestadores por Obra Social", 14, 14);
-      doc.setFontSize(11);
-      doc.text(
-        `${selectedOS.NOMBRE} (${osCode}) • ${fmtDate(new Date())} • Filas: ${body.length}`,
-        14,
-        22
-      );
+      const doc = new JsPDF({ orientation: "landscape", compress: true });
+
+      const drawHeader = () => {
+        doc.setFontSize(14);
+        doc.text("Prestadores por Obra Social", 14, 14);
+        doc.setFontSize(11);
+        doc.text(
+          `${selectedOS.NOMBRE} (${osCode}) • ${fmtDate(new Date())} • Filas: ${body.length}`,
+          14,
+          22
+        );
+      };
 
       autoTable(doc, {
         head,
         body,
         startY: 28,
-        styles: {
-          fontSize: 7,
-          cellPadding: 2,
-          valign: "middle",
-          overflow: "linebreak",
-        },
-        headStyles: {
-          fillColor: [17, 17, 17],
-          textColor: [255, 255, 255],
-          fontStyle: "bold",
-        },
+        margin: { top: 26 },
+        didDrawPage: drawHeader,
+        styles: { fontSize: 7, cellPadding: 2, valign: "middle", overflow: "linebreak" },
+        headStyles: { fillColor: [17, 17, 17], textColor: [255, 255, 255], fontStyle: "bold" },
         alternateRowStyles: { fillColor: [247, 247, 247] },
         columnStyles: showMail
           ? {
@@ -705,13 +720,20 @@ const AfiliadosPorObraSocialPage = () => {
             },
       });
 
-      doc.save(`prestadores_${osCode}_${fmtDate(new Date())}.pdf`);
+      if (controller.signal.aborted) return;
+
+      const blob = doc.output("blob");
+      saveAs(blob, `prestadores_${osCode}_${fmtDate(new Date())}.pdf`);
+    } catch (e: any) {
+      if (controller.signal.aborted) return;
+      console.error(e);
+      window.alert("No se pudo generar el PDF. Probá filtrar más o exportar Excel.");
     } finally {
-      setExportingPdf(false);
+      if (pdfAbortRef.current === controller) pdfAbortRef.current = null;
+      setExportingPdf(null);
     }
   }
 
-  // PDF por especialidad (async) + enrich SOLO si faltan campos
   async function downloadPdfByEspecialidad() {
     if (!selectedOS) return;
     if (filteredPrestadores.length === 0) {
@@ -719,16 +741,21 @@ const AfiliadosPorObraSocialPage = () => {
       return;
     }
 
-    const osCode =
-      selectedOS.CODIGO ??
-      `OS${String(selectedOS.NRO_OBRA_SOCIAL).padStart(3, "0")}`;
-
+    const osCode = selectedOS.CODIGO ?? `OS${String(selectedOS.NRO_OBRA_SOCIAL).padStart(3, "0")}`;
     const showMail = shouldShowMailForOS(selectedOS);
 
-    try {
-      setExportingPdf(true);
+    pdfAbortRef.current?.abort();
+    const controller = new AbortController();
+    pdfAbortRef.current = controller;
 
-      const enrichedAll = await enrichForPdf(filteredPrestadores, showMail);
+    try {
+      setExportingPdf("pdf_by_especialidad");
+
+      const { JsPDF, autoTable } = await loadPdfLibs();
+      if (controller.signal.aborted) return;
+
+      const enrichedAll = await enrichForPdf(filteredPrestadores, showMail, controller.signal);
+      if (controller.signal.aborted) return;
 
       const groups = new Map<string, Prestador[]>();
       for (const p of enrichedAll) {
@@ -747,38 +774,38 @@ const AfiliadosPorObraSocialPage = () => {
         );
       }
 
-      const doc = new jsPDF({ orientation: "landscape" });
+      const doc = new JsPDF({ orientation: "landscape", compress: true });
 
       keys.forEach((esp, idx) => {
         if (idx > 0) doc.addPage();
 
         const arr = groups.get(esp)!;
 
-        doc.setFontSize(14);
-        doc.text("Prestadores por Obra Social", 14, 14);
+        const drawHeader = () => {
+          doc.setFontSize(14);
+          doc.text("Prestadores por Obra Social", 14, 14);
 
-        doc.setFontSize(11);
-        doc.text(
-          `${selectedOS.NOMBRE} (${osCode}) • ${fmtDate(new Date())} • ${arr.length} ${
-            arr.length === 1 ? "prestador" : "prestadores"
-          }`,
-          14,
-          22
-        );
+          doc.setFontSize(11);
+          doc.text(
+            `${selectedOS.NOMBRE} (${osCode}) • ${fmtDate(new Date())} • ${arr.length} ${
+              arr.length === 1 ? "prestador" : "prestadores"
+            }`,
+            14,
+            22
+          );
 
-        doc.setFontSize(11);
-        doc.text(`Especialidad: ${esp}`, 14, 28);
+          doc.setFontSize(11);
+          doc.text(`Especialidad: ${esp}`, 14, 28);
+        };
 
-        const head = [
-          [
-            "N° Socio",
-            "Prestador",
-            "Matricula Prov",
-            "Telefono",
-            "Dirección consultorio",
-            ...(showMail ? ["Correo electrónico"] : []),
-          ],
-        ];
+        const head = [[
+          "N° Socio",
+          "Prestador",
+          "Matricula Prov",
+          "Telefono",
+          "Dirección consultorio",
+          ...(showMail ? ["Correo electrónico"] : []),
+        ]];
 
         const body = arr.map((p) => {
           const row = [
@@ -796,17 +823,10 @@ const AfiliadosPorObraSocialPage = () => {
           head,
           body,
           startY: 34,
-          styles: {
-            fontSize: 7,
-            cellPadding: 2,
-            valign: "middle",
-            overflow: "linebreak",
-          },
-          headStyles: {
-            fillColor: [17, 17, 17],
-            textColor: [255, 255, 255],
-            fontStyle: "bold",
-          },
+          margin: { top: 32 },
+          didDrawPage: drawHeader,
+          styles: { fontSize: 7, cellPadding: 2, valign: "middle", overflow: "linebreak" },
+          headStyles: { fillColor: [17, 17, 17], textColor: [255, 255, 255], fontStyle: "bold" },
           alternateRowStyles: { fillColor: [247, 247, 247] },
           columnStyles: showMail
             ? {
@@ -827,9 +847,17 @@ const AfiliadosPorObraSocialPage = () => {
         });
       });
 
-      doc.save(`prestadores_${osCode}_por_especialidad_${fmtDate(new Date())}.pdf`);
+      if (controller.signal.aborted) return;
+
+      const blob = doc.output("blob");
+      saveAs(blob, `prestadores_${osCode}_por_especialidad_${fmtDate(new Date())}.pdf`);
+    } catch (e: any) {
+      if (controller.signal.aborted) return;
+      console.error(e);
+      window.alert("No se pudo generar el PDF por especialidad. Probá filtrar más o exportar Excel.");
     } finally {
-      setExportingPdf(false);
+      if (pdfAbortRef.current === controller) pdfAbortRef.current = null;
+      setExportingPdf(null);
     }
   }
 
@@ -841,17 +869,22 @@ const AfiliadosPorObraSocialPage = () => {
   }
 
   function clearOS() {
+    pdfAbortRef.current?.abort();
+
     setSelectedOS(null);
     setPrestadores([]);
     setErrorPrestadores(null);
     setTableQuery("");
     setOsQuery("");
     setOsDropdownOpen(false);
+    setExportingPdf(null);
   }
 
   const selectedCode = selectedOS
     ? selectedOS.CODIGO ?? `OS${String(selectedOS.NRO_OBRA_SOCIAL).padStart(3, "0")}`
     : "";
+
+  const isExportingAnyPdf = exportingPdf !== null;
 
   return (
     <div className={styles.container}>
@@ -954,12 +987,12 @@ const AfiliadosPorObraSocialPage = () => {
                   disabled={
                     !selectedOS ||
                     loadingPrestadores ||
-                    exportingPdf ||
+                    isExportingAnyPdf ||
                     filteredPrestadores.length === 0
                   }
                 >
                   <FileText size={18} />
-                  <span>{exportingPdf ? "Generando…" : "Descargar PDF"}</span>
+                  <span>{exportingPdf === "pdf" ? "Generando…" : "Descargar PDF"}</span>
                 </Button>
 
                 <Button
@@ -970,12 +1003,14 @@ const AfiliadosPorObraSocialPage = () => {
                   disabled={
                     !selectedOS ||
                     loadingPrestadores ||
-                    exportingPdf ||
+                    isExportingAnyPdf ||
                     filteredPrestadores.length === 0
                   }
                 >
                   <FileText size={18} />
-                  <span>{exportingPdf ? "Generando…" : "PDF por especialidad"}</span>
+                  <span>
+                    {exportingPdf === "pdf_by_especialidad" ? "Generando…" : "PDF por especialidad"}
+                  </span>
                 </Button>
 
                 <Button
@@ -983,7 +1018,9 @@ const AfiliadosPorObraSocialPage = () => {
                   variant="primary"
                   size="medium"
                   onClick={downloadExcel}
-                  disabled={!selectedOS || loadingPrestadores || filteredPrestadores.length === 0}
+                  disabled={
+                    !selectedOS || loadingPrestadores || isExportingAnyPdf || filteredPrestadores.length === 0
+                  }
                 >
                   <FileSpreadsheet size={18} />
                   <span>Descargar Excel</span>
