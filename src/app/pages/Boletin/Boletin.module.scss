@@ -1,6 +1,5 @@
 @use "@/app/styles/all.scss" as *;
 
-
 .container {
   padding: $spacing-8;
   max-width: 1400px;
@@ -9,7 +8,6 @@
   min-height: 100vh;
 }
 
-// Header Section
 .header {
   text-align: left;
   margin-bottom: $spacing-8;
@@ -43,7 +41,7 @@
 }
 
 .subtitle {
-    font-size: $font-size-lg;
+  font-size: $font-size-lg;
   color: $gray-600;
   margin: 0;
 
@@ -53,7 +51,6 @@
   }
 }
 
-// Card Component
 .card {
   background: $white;
   border: 1px solid $gray-200;
@@ -106,103 +103,6 @@
   }
 }
 
-// Upload Section
-.hiddenInput {
-  display: none;
-}
-
-.uploadSection {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-4;
-  margin-bottom: $spacing-6;
-}
-
-.uploadButton {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: $spacing-3;
-  padding: $spacing-8;
-  border: 2px dashed $gray-300;
-  border-radius: $border-radius-lg;
-  background: $gray-50;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    border-color: $primary-blue;
-    background: $secondary-blue;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-6 $spacing-4;
-    gap: $spacing-2;
-  }
-}
-
-.uploadIcon {
-  width: 48px;
-  height: 48px;
-  color: $primary-blue;
-
-  @media (max-width: $breakpoint-sm) {
-    width: 40px;
-    height: 40px;
-  }
-}
-
-.uploadText {
-  font-size: $font-size-lg;
-  font-weight: $font-weight-medium;
-  color: $gray-700;
-
-  @media (max-width: $breakpoint-sm) {
-    font-size: $font-size-base;
-    text-align: center;
-  }
-}
-
-.fileInfo {
-  display: flex;
-  align-items: center;
-  gap: $spacing-3;
-  padding: $spacing-4;
-  background: $secondary-blue;
-  border: 1px solid $primary-blue;
-  border-radius: $border-radius-md;
-
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-3;
-    gap: $spacing-2;
-  }
-}
-
-.fileIcon {
-  width: 24px;
-  height: 24px;
-  color: $primary-blue;
-  flex-shrink: 0;
-
-  @media (max-width: $breakpoint-sm) {
-    width: 20px;
-    height: 20px;
-  }
-}
-
-.fileName {
-  font-size: $font-size-base;
-  font-weight: $font-weight-medium;
-  color: $gray-900;
-  word-break: break-all;
-
-  @media (max-width: $breakpoint-sm) {
-    font-size: $font-size-sm;
-  }
-}
-
-// Actions
 .actions {
   display: flex;
   gap: $spacing-4;
@@ -214,7 +114,6 @@
   }
 }
 
-// Progress Bar
 .progressBar {
   width: 100%;
   height: 4px;
@@ -245,7 +144,6 @@
   }
 }
 
-// Error Message
 .errorMessage {
   display: flex;
   align-items: center;
@@ -271,7 +169,6 @@
   flex-shrink: 0;
 }
 
-// Results Section
 .resultsHeader {
   display: flex;
   justify-content: space-between;
@@ -342,14 +239,13 @@
   }
 }
 
-// Table
 .tableWrapper {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 
   @media (max-width: $breakpoint-md) {
     margin: 0 (-$spacing-6);
-    
+
     &::-webkit-scrollbar {
       height: 8px;
     }
@@ -375,7 +271,7 @@
   border-spacing: 0;
 
   @media (max-width: $breakpoint-md) {
-    min-width: 600px;
+    min-width: 700px;
   }
 }
 
@@ -422,6 +318,15 @@
   }
 }
 
+/* ✅ NUEVA COLUMNA N° */
+.thNumber {
+  width: 110px;
+
+  @media (max-width: $breakpoint-sm) {
+    width: 90px;
+  }
+}
+
 .thName {
   min-width: 250px;
 }
@@ -463,6 +368,13 @@
   font-weight: $font-weight-bold;
 }
 
+/* ✅ NUEVO TD N° */
+.tdNumber {
+  font-weight: $font-weight-semibold;
+  color: $gray-700;
+  font-variant-numeric: tabular-nums;
+}
+
 .rankBadge {
   display: inline-flex;
   align-items: center;
@@ -486,21 +398,18 @@
 .rankFirst {
   background: #ffffff;
   border: 1px solid #eed15b;
-  color: $white;
   box-shadow: 0 2px 8px rgba($warning-orange, 0.3);
 }
 
 .rankSecond {
   background: #ffffff;
   border: 1px solid $gray-400;
-  color: $white;
   box-shadow: 0 2px 8px rgba($gray-400, 0.3);
 }
 
 .rankThird {
   background: #ffffff;
   border: 1px solid #cd7f32;
-  color: $white;
   box-shadow: 0 2px 8px rgba(#cd7f32, 0.3);
 }
 

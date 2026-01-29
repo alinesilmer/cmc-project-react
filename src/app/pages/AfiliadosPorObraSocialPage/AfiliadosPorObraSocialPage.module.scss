@@ -33,32 +33,6 @@
   gap: 5px;
 }
 
-.iconWrapper {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, rgb(40, 54, 112) 0%, rgb(60, 80, 150) 100%);
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 10px 30px rgba(40, 54, 112, 0.3);
-
-  @media (max-width: 768px) {
-    width: 64px;
-    height: 64px;
-  }
-}
-
-.icon {
-  width: 44px;
-  height: 44px;
-  color: white;
-
-  @media (max-width: 768px) {
-    width: 36px;
-    height: 36px;
-  }
-}
 
 .title {
   font-size: $font-size-4xl;

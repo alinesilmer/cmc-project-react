@@ -8,6 +8,8 @@ import styles from "./HeroVideo.module.scss";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../../app/auth/AuthProvider";
 import { http } from "../../../../app/lib/http";
+import InfoHero from "../InfoHero/InfoHero";
+import { Info } from "lucide-react";
 
 const IMAGES = [
   "https://res.cloudinary.com/dcfkgepmp/image/upload/v1767383257/White_Gold_And_Black_Modern_Happy_New_Year_Facebook_Cover_wyceso.png",
@@ -23,49 +25,6 @@ export const HeroVideo: FC = () => {
   const { user, ready } = useAuth();
   const isAuthenticated = ready && !!user;
 
-  // const handleEntrarValidar = async () => {
-  //   // si no hay user, directo al login
-  //   if (!isAuthenticated) {
-  //     navigate("/panel/login");
-  //     return;
-  //   }
-
-  //   // opcional: intenta refrescar si hay csrf (por si la SPA quedó abierta)
-  //   try {
-  //     const csrf = getCookie("csrf_token");
-  //     if (csrf) {
-  //       await http.post("/auth/refresh", null, {
-  //         headers: { "X-CSRF-Token": csrf },
-  //       });
-  //     }
-  //   } catch {
-  //     navigate("/panel/login");
-  //     return;
-  //   }
-
-  //   const me = user!;
-  //   let next = "/principal.php";
-  //   const isMedico =
-  //     me.role?.toLowerCase() === "medico" ||
-  //     me.scopes?.some(
-  //       (s: string) =>
-  //         s === "medico" || s === "legacy:doctor" || s.startsWith("medicos:")
-  //     );
-
-  //   if (isMedico && me.nro_socio) {
-  //     next = `/menu.php?nro_socio1=${encodeURIComponent(String(me.nro_socio))}`;
-  //   }
-
-  //   try {
-  //     const { data } = await http.get("/auth/legacy/sso-link", {
-  //       params: { next },
-  //     });
-  //     window.location.href = data.url;
-  //   } catch {
-  //     // 401 o lo que sea => mandá al login
-  //     navigate("/panel/login");
-  //   }
-  // };
   const handleEntrarValidar = async () => {
     if (!isAuthenticated) {
       navigate("/panel/login");
@@ -134,13 +93,28 @@ export const HeroVideo: FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.45 }}
         >
-          {/* <a href="/panel/login"> */}
           <Button variant="primary" size="xlg" onClick={handleEntrarValidar}>
             Entrar a Validar
           </Button>
-          {/* </a> */}
         </motion.div>
       </div>
+
+      {/* ✅ NOW it will actually show (positioned above overlay) */}
+      <div className={styles.rightSide}>
+        <InfoHero
+          items={[
+            {
+              title: "¡ATENCIÓN!",
+              description:
+                "Les recordamos que todo el mes de enero la atención es de 7 a 14 hs",
+            },
+          ]}
+        />
+      </div>
+
+      <button type="button" className={styles.infoIcon} aria-label="Info">
+        <Info />
+      </button>
     </section>
   );
 };

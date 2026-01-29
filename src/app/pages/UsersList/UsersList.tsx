@@ -16,7 +16,6 @@ import { useMedicosExport } from "./useMedicosExport";
 
 type MedicoRow = Record<string, unknown>;
 
-/** Helpers mínimos que necesita toUserRow */
 function normalizeBool(v: any): boolean {
   if (typeof v === "boolean") return v;
   if (typeof v === "number") return v !== 0;

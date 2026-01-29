@@ -64,6 +64,12 @@ const Sidebar: React.FC = () => {
       label: "Ranking O.S.",
       perms: ["medicos:leer"],
     },
+    {
+      path: `${base}/generar-boletin`,
+      icon: DollarSign,
+      label: "Generar Boletín",
+      perms: ["medicos:leer"],
+    },
      {
       path: `${base}/afiliadospadron`,
       icon: Newspaper,
