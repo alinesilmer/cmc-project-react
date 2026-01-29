@@ -1,4 +1,3 @@
-// components/molecules/InsuranceCard/InsuranceCard.tsx
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -80,7 +79,7 @@ const InsuranceCard: React.FC<Props> = ({
 }) => {
   // Estado interno de períodos, precargado desde props
   const [periods, setPeriods] = useState<PeriodBucket[]>(() =>
-    [...(initialPeriods ?? [])].sort(sortByPeriodAsc)
+    [...(initialPeriods ?? [])].sort(sortByPeriodAsc),
   );
 
   // Si cambian las props, sincronizamos
@@ -100,7 +99,7 @@ const InsuranceCard: React.FC<Props> = ({
 
   const monthSet = useMemo(
     () => new Set(periods.map((p) => p.period)),
-    [periods]
+    [periods],
   );
 
   // Crear período -> POST
@@ -184,7 +183,7 @@ const InsuranceCard: React.FC<Props> = ({
         if (!res.ok) {
           const txt = await res.text().catch(() => "");
           throw new Error(
-            `Error ${res.status}: ${txt || "no se pudo eliminar"}`
+            `Error ${res.status}: ${txt || "no se pudo eliminar"}`,
           );
         }
       } catch (e: any) {
@@ -197,7 +196,7 @@ const InsuranceCard: React.FC<Props> = ({
 
     // 1) Actualizo UI local (optimista)
     setPeriods((prev) =>
-      prev.filter((p) => p.period !== confirmDeletePeriod.period)
+      prev.filter((p) => p.period !== confirmDeletePeriod.period),
     );
     setConfirmDeletePeriod(null);
 
@@ -207,7 +206,7 @@ const InsuranceCard: React.FC<Props> = ({
 
   const orderedPeriods = useMemo(
     () => [...periods].sort(sortByPeriodAsc),
-    [periods]
+    [periods],
   );
 
   return (
@@ -285,8 +284,8 @@ const InsuranceCard: React.FC<Props> = ({
                           discounts: next.discounts,
                           netTotal: next.netTotal,
                         }
-                      : p
-                  )
+                      : p,
+                  ),
                 )
               }
               onAddVersion={(newRow) =>
@@ -301,7 +300,7 @@ const InsuranceCard: React.FC<Props> = ({
                     estado: newRow.estado,
                   };
                   return [...prev, toAdd].sort((a, b) =>
-                    a.period.localeCompare(b.period)
+                    a.period.localeCompare(b.period),
                   );
                 })
               }

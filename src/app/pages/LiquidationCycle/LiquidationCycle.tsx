@@ -32,10 +32,11 @@ import BackButton from "../../components/atoms/BackButton/BackButton";
 const RESUMEN_BY_ID = (id: string | number) => `/api/liquidacion/resumen/${id}`;
 const OBRAS_SOCIALES_URL = `/api/obras_social/`;
 
-// Débitos de colegio (solo descuentos; se elimina Especialidades)
 const DESCUENTOS_URL = `/api/descuentos`;
+
 const GEN_DESC_URL = (resumenId: string | number, descId: string | number) =>
   `/api/deducciones/${resumenId}/colegio/bulk_generar_descuento/${descId}`;
+
 const APLICAR_URL = (resumenId: string | number) =>
   `/api/deducciones/${resumenId}/colegio/aplicar`;
 
@@ -207,9 +208,10 @@ const LiquidationCycle: React.FC = () => {
           RESUMEN_BY_ID(id),
           {
             signal: controller.signal,
-          }
+          },
         );
         setData(json);
+        console.log("Resumen data:", json);
       } catch (e: any) {
         if (e?.name !== "CanceledError" && e?.name !== "AbortError") {
           setIsError(true);
@@ -304,7 +306,7 @@ const LiquidationCycle: React.FC = () => {
     for (const os of osList ?? []) {
       m.set(
         String(os.NRO_OBRASOCIAL),
-        (os.OBRA_SOCIAL ?? "").toString().trim()
+        (os.OBRA_SOCIAL ?? "").toString().trim(),
       );
     }
     return m;
@@ -412,8 +414,8 @@ const LiquidationCycle: React.FC = () => {
         prev.map((x) =>
           x.id === editTarget.id
             ? { ...x, price: priceVal, percentage: pctVal }
-            : x
-        )
+            : x,
+        ),
       );
       closeEdit();
     } catch (e: any) {
@@ -427,7 +429,7 @@ const LiquidationCycle: React.FC = () => {
     return allInsurances
       .filter((i) => !hidden.has(i.id))
       .filter((i) =>
-        (i.name || `Obra Social ${i.id}`).toLowerCase().includes(q)
+        (i.name || `Obra Social ${i.id}`).toLowerCase().includes(q),
       );
   }, [allInsurances, hidden, query]);
 
@@ -517,7 +519,7 @@ const LiquidationCycle: React.FC = () => {
       });
     }
     return out.sort((a, b) =>
-      a.estado === b.estado ? 0 : a.estado === "C" ? -1 : 1
+      a.estado === b.estado ? 0 : a.estado === "C" ? -1 : 1,
     );
   }, [data?.liquidaciones, osNameById, periodTitle]);
 
@@ -591,20 +593,20 @@ const LiquidationCycle: React.FC = () => {
 
           const thisYear = new Date().getFullYear();
           const years = Array.from(
-            new Set((list ?? []).map((p) => Number(p.ANIO)))
+            new Set((list ?? []).map((p) => Number(p.ANIO))),
           ).sort((a, b) => b - a);
           const defaultYear = years.includes(thisYear)
             ? thisYear
-            : years[0] ?? "";
+            : (years[0] ?? "");
           setAddYear((defaultYear || "") as any);
         } catch (e: any) {
           setAddErr(
-            e?.message || "No se pudieron cargar los períodos disponibles."
+            e?.message || "No se pudieron cargar los períodos disponibles.",
           );
         }
       });
     },
-    [startDeferrable]
+    [startDeferrable],
   );
 
   const availableYears = useMemo(() => {
@@ -631,7 +633,8 @@ const LiquidationCycle: React.FC = () => {
 
     const row = periodosOS.find(
       (p) =>
-        Number(p.ANIO) === Number(addYear) && Number(p.MES) === Number(addMonth)
+        Number(p.ANIO) === Number(addYear) &&
+        Number(p.MES) === Number(addMonth),
     );
     if (!row) {
       setAddErr("Período inválido.");
@@ -675,7 +678,7 @@ const LiquidationCycle: React.FC = () => {
 
   const onAddPeriodOS = useCallback(
     (osId: string) => openAddForOS(osId),
-    [openAddForOS]
+    [openAddForOS],
   );
 
   // Búsqueda sin bloquear UI
@@ -683,7 +686,7 @@ const LiquidationCycle: React.FC = () => {
     (v: string) => {
       startDeferrable(() => setQuery(v));
     },
-    [startDeferrable]
+    [startDeferrable],
   );
 
   return (
@@ -825,7 +828,7 @@ const LiquidationCycle: React.FC = () => {
                                   liquidacionId: r.liquidacionId,
                                   nroLiquidacion: r.nroLiquidacion,
                                   estado: r.estado,
-                                })
+                                }),
                               )}
                               onSummary={(periods) =>
                                 console.log("Ver Resumen", ins.name, periods)
@@ -982,7 +985,7 @@ const LiquidationCycle: React.FC = () => {
                                             setConfirmGen({
                                               id: d.id,
                                               name: d.concept,
-                                            })
+                                            }),
                                           );
                                         }}
                                         onClick={() =>
@@ -1292,7 +1295,7 @@ const LiquidationCycle: React.FC = () => {
                     value={addMonth}
                     onChange={(e) =>
                       setAddMonth(
-                        e.target.value === "" ? "" : Number(e.target.value)
+                        e.target.value === "" ? "" : Number(e.target.value),
                       )
                     }
                     disabled={addYear === ""}

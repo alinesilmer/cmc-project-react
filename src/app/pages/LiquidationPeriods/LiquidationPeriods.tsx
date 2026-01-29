@@ -26,12 +26,6 @@ interface ResumenDto {
   estado: ServerEstado;
 }
 
-// type QueryParams = {
-//   anio?: number;
-//   mes?: number;
-//   estado?: "a" | "c" | undefined;
-// };
-
 function parseYYYYMM(input: string): { anio: number; mes: number } | null {
   const s = (input || "").trim();
   const m = s.match(/^(\d{4})-(0[1-9]|1[0-2])$/);
@@ -111,7 +105,7 @@ const LiquidationPeriods: React.FC = () => {
   }, []);
   const monthOptions = useMemo(
     () => Array.from({ length: 12 }, (_, i) => i + 1),
-    []
+    [],
   );
 
   // filtros de búsqueda
@@ -176,7 +170,7 @@ const LiquidationPeriods: React.FC = () => {
       const created = await postJSON<ResumenDto>(RESUMEN_URL, { anio, mes });
       const newRow = mapDtoToPeriod(created);
       setRows((prev) =>
-        [newRow, ...prev].sort((a, b) => b.period.localeCompare(a.period))
+        [newRow, ...prev].sort((a, b) => b.period.localeCompare(a.period)),
       );
       setOpenAdd(false);
     } catch (err: any) {
@@ -204,7 +198,7 @@ const LiquidationPeriods: React.FC = () => {
           // ignoramos: mostramos mensaje genérico abajo
         }
         setAddErr(
-          `Ya existe un resumen para ${anio}-${String(mes).padStart(2, "0")}.`
+          `Ya existe un resumen para ${anio}-${String(mes).padStart(2, "0")}.`,
         );
       } else {
         const msg =
@@ -229,7 +223,7 @@ const LiquidationPeriods: React.FC = () => {
         setConfirmRow(null);
       } catch (e) {
         setErrorMsg(
-          e instanceof Error ? e.message : "No se pudo eliminar el período"
+          e instanceof Error ? e.message : "No se pudo eliminar el período",
         );
       } finally {
         setDeleting(false);
@@ -342,7 +336,7 @@ const LiquidationPeriods: React.FC = () => {
                   value={addYear}
                   onChange={(e) =>
                     setAddYear(
-                      e.target.value === "" ? "" : Number(e.target.value)
+                      e.target.value === "" ? "" : Number(e.target.value),
                     )
                   }
                 >
@@ -362,7 +356,7 @@ const LiquidationPeriods: React.FC = () => {
                   value={addMonth}
                   onChange={(e) =>
                     setAddMonth(
-                      e.target.value === "" ? "" : Number(e.target.value)
+                      e.target.value === "" ? "" : Number(e.target.value),
                     )
                   }
                 >

@@ -23,11 +23,12 @@ type LocationState =
     }
   | undefined;
 
-/* ================== Endpoints (relativos, pasan por el proxy de Vite) ================== */
 const LIQ_RESUMEN = (liqId: string | number) =>
   `/api/liquidacion/liquidaciones_por_os/${liqId}`;
+
 const LIQ_DETALLES_VISTA = (liqId: string | number) =>
   `/api/liquidacion/liquidaciones_por_os/${liqId}/detalles_vista`;
+
 const DC_BY_DETALLE = (detalleId: string | number) =>
   `/api/debitos_creditos/by_detalle/${detalleId}`;
 
@@ -41,7 +42,8 @@ function parseNumber(n: any, fallback = 0): number {
 }
 
 function normalizeTipo(raw: any): "N" | "C" | "D" {
-  if (raw?.tipo === "N" || raw?.tipo === "C" || raw?.tipo === "D") return raw.tipo;
+  if (raw?.tipo === "N" || raw?.tipo === "C" || raw?.tipo === "D")
+    return raw.tipo;
   const t = String(raw?.tipo_dc ?? "").toLowerCase();
   if (t === "d") return "D";
   if (t === "c") return "C";
@@ -62,9 +64,7 @@ function coerceRow(raw: any): InsuranceRow {
   let total = raw.total;
   if (total === undefined || total === null) {
     total =
-      tipo === "D" ? importe - monto :
-      tipo === "C" ? importe + monto :
-      importe;
+      tipo === "D" ? importe - monto : tipo === "C" ? importe + monto : importe;
   }
 
   const xCant =
@@ -74,7 +74,7 @@ function coerceRow(raw: any): InsuranceRow {
   const fechaStr =
     typeof raw.fecha === "string" && raw.fecha.length >= 8
       ? new Date(raw.fecha).toLocaleDateString("es-AR")
-      : (raw.fecha || "");
+      : raw.fecha || "";
 
   return {
     det_id,
@@ -101,7 +101,10 @@ function coerceRow(raw: any): InsuranceRow {
 }
 
 /* ---------------- exportar a Excel ---------------- */
-async function exportInsuranceRowsToExcel(period: string, rows: InsuranceRow[]) {
+async function exportInsuranceRowsToExcel(
+  period: string,
+  rows: InsuranceRow[],
+) {
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet(`Período ${period}`);
 
@@ -142,17 +145,19 @@ async function exportDebCredToPDF(
   period: string,
   rows: InsuranceRow[],
   insuranceName: string,
-  nroLiquidacion?: string
+  nroLiquidacion?: string,
 ) {
   const { jsPDF } = await import("jspdf");
   const autoTable = (await import("jspdf-autotable")).default as any;
 
   const dcRows = rows.filter(
-    (r) => (r.tipo === "D" || r.tipo === "C") && Number(r.monto) > 0
+    (r) => (r.tipo === "D" || r.tipo === "C") && Number(r.monto) > 0,
   );
 
   const sortedDCRows = dcRows.sort((a, b) =>
-    String(a.nombreSocio).toLowerCase().localeCompare(String(b.nombreSocio).toLowerCase())
+    String(a.nombreSocio)
+      .toLowerCase()
+      .localeCompare(String(b.nombreSocio).toLowerCase()),
   );
 
   if (sortedDCRows.length === 0) {
@@ -169,14 +174,17 @@ async function exportDebCredToPDF(
   y += 18;
   doc.setFontSize(11);
   doc.text(`Período: ${period}`, left, y);
-  if (nroLiquidacion) doc.text(`Nro. Liquidación: ${nroLiquidacion}`, left + 220, y);
+  if (nroLiquidacion)
+    doc.text(`Nro. Liquidación: ${nroLiquidacion}`, left + 220, y);
 
   const currency = new Intl.NumberFormat("es-AR", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
 
-  const head = [["Tipo", "Socio", "Nro de prestación", "Observaciones", "Monto", "Código"]];
+  const head = [
+    ["Tipo", "Socio", "Nro de prestación", "Observaciones", "Monto", "Código"],
+  ];
   const body = sortedDCRows.map((r) => [
     r.tipo ?? "",
     `${r.socio} - ${r.nombreSocio}`.trim(),
@@ -254,7 +262,7 @@ type ServerRecalcOut = {
 function applyServerRecalc(
   data: ServerRecalcOut,
   setRowsFn: React.Dispatch<React.SetStateAction<InsuranceRow[]>>,
-  setResumenFn: React.Dispatch<React.SetStateAction<ResumenOS | null>>
+  setResumenFn: React.Dispatch<React.SetStateAction<ResumenOS | null>>,
 ) {
   const r = data.row;
   setRowsFn((prev) =>
@@ -269,24 +277,23 @@ function applyServerRecalc(
             pagado: r.pagado ?? item.pagado,
             total: r.total,
           }
-        : item
-    )
+        : item,
+    ),
   );
 
   setResumenFn((prev) => {
-    const current: ResumenOS =
-      prev ?? {
-        id: data.resumen.liquidacion_id,
-        resumen_id: 0,
-        obra_social_id: 0,
-        mes_periodo: 0,
-        anio_periodo: 0,
-        nro_liquidacion: data.resumen.nro_liquidacion ?? "",
-        total_bruto: "0",
-        total_debitos: "0",
-        total_neto: "0",
-        estado: "A",
-      };
+    const current: ResumenOS = prev ?? {
+      id: data.resumen.liquidacion_id,
+      resumen_id: 0,
+      obra_social_id: 0,
+      mes_periodo: 0,
+      anio_periodo: 0,
+      nro_liquidacion: data.resumen.nro_liquidacion ?? "",
+      total_bruto: "0",
+      total_debitos: "0",
+      total_neto: "0",
+      estado: "A",
+    };
     return {
       ...current,
       nro_liquidacion: data.resumen.nro_liquidacion ?? current.nro_liquidacion,
@@ -322,7 +329,10 @@ const InsuranceDetail: React.FC = () => {
   const [resumen, setResumen] = useState<ResumenOS | null>(null);
 
   const [q, setQ] = useState("");
-  const isOpen = String(resumen?.estado ?? "A").trim().toUpperCase() === "A";
+  const isOpen =
+    String(resumen?.estado ?? "A")
+      .trim()
+      .toUpperCase() === "A";
 
   // ### Cargar solo el resumen por liquidacion_id (mantengo loader/errores)
   useEffect(() => {
@@ -357,10 +367,9 @@ const InsuranceDetail: React.FC = () => {
       setLoading(true);
       setErr(null);
       try {
-        const { data } = await http.get<any[]>(
-          LIQ_DETALLES_VISTA(liqId),
-          { signal: controller.signal }
-        );
+        const { data } = await http.get<any[]>(LIQ_DETALLES_VISTA(liqId), {
+          signal: controller.signal,
+        });
         const mapped: InsuranceRow[] = (data ?? []).map(coerceRow);
         if (!ignore) setRows(mapped);
       } catch (e: any) {
@@ -384,7 +393,7 @@ const InsuranceDetail: React.FC = () => {
   const upsertDC = useCallback(
     async (
       detalleId: number | string,
-      payload: { tipo: "D" | "C"; monto: number; observacion?: string }
+      payload: { tipo: "D" | "C"; monto: number; observacion?: string },
     ) => {
       const data = await postJSON<ServerRecalcOut>(DC_BY_DETALLE(detalleId), {
         tipo: payload.tipo.toLowerCase(), // back usa 'd' | 'c'
@@ -395,7 +404,7 @@ const InsuranceDetail: React.FC = () => {
       applyServerRecalc(data, setRows, setResumen);
       return data;
     },
-    []
+    [],
   );
 
   const deleteDC = useCallback(async (detalleId: number | string) => {
@@ -425,7 +434,7 @@ const InsuranceDetail: React.FC = () => {
         observacion: draft.obs || undefined,
       });
     },
-    [deleteDC, upsertDC]
+    [deleteDC, upsertDC],
   );
 
   return (
@@ -444,7 +453,8 @@ const InsuranceDetail: React.FC = () => {
 
               <div className={styles.breadcrumb}>Detalle de Obra Social</div>
               <h1 className={styles.title}>
-                {insuranceName} — <span className={styles.period}>Período {period}</span>
+                {insuranceName} —{" "}
+                <span className={styles.period}>Período {period}</span>
               </h1>
               {resumen && (
                 <div className={styles.meta}>
@@ -452,13 +462,22 @@ const InsuranceDetail: React.FC = () => {
                     Nro. Liquidación: <strong>{resumen.nro_liquidacion}</strong>
                   </span>
                   <span className={styles.periodBadge}>
-                    Bruto: <strong>${currency.format(parseNumber(resumen.total_bruto))}</strong>
+                    Bruto:{" "}
+                    <strong>
+                      ${currency.format(parseNumber(resumen.total_bruto))}
+                    </strong>
                   </span>
                   <span className={styles.periodBadge}>
-                    Débitos: <strong>${currency.format(parseNumber(resumen.total_debitos))}</strong>
+                    Débitos:{" "}
+                    <strong>
+                      ${currency.format(parseNumber(resumen.total_debitos))}
+                    </strong>
                   </span>
                   <span className={styles.periodBadge}>
-                    Neto: <strong>${currency.format(parseNumber(resumen.total_neto))}</strong>
+                    Neto:{" "}
+                    <strong>
+                      ${currency.format(parseNumber(resumen.total_neto))}
+                    </strong>
                   </span>
                 </div>
               )}
@@ -478,13 +497,15 @@ const InsuranceDetail: React.FC = () => {
                     period,
                     rows,
                     insuranceName,
-                    resumen?.nro_liquidacion
+                    resumen?.nro_liquidacion,
                   )
                 }
                 disabled={
                   loading ||
                   rows.every(
-                    (r) => !(r.tipo === "D" || r.tipo === "C") || !(Number(r.monto) > 0)
+                    (r) =>
+                      !(r.tipo === "D" || r.tipo === "C") ||
+                      !(Number(r.monto) > 0),
                   )
                 }
               >
