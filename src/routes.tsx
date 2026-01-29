@@ -53,6 +53,8 @@ export default function RootRoutes() {
         <Route path="/panel/info" element={<Info />} />
         <Route path="/panel/adherente" element={<AdherenteForm />} />
         <Route path="/panel/padrones" element={<PadronesPage />} />
+         <Route path="generar-boletin" element={<GenerarBoletin />} />
+       
 
         {/* Zona protegida */}
         <Route element={<RequireAuth />}>
@@ -65,7 +67,10 @@ export default function RootRoutes() {
             <Route path="doctors" element={<DoctorsPage />} />
             <Route path="doctors/:id" element={<DoctorProfilePage />} />
             <Route path="social-works" element={<SocialWorksPage />} />
-            <Route path="generar-boletin" element={<GenerarBoletin />} />
+               <Route
+              path="afiliadospadron"
+              element={<AfiliadosPorObraSocialPage />}
+            />
             <Route path="liquidation" element={<LiquidationPage />} />
             <Route path="liquidation/:id" element={<LiquidationCyclePage />} />
             <Route path="liquidation/:id/debitos" element={<DiscountsPage />} />
@@ -73,10 +78,7 @@ export default function RootRoutes() {
               path="liquidation/:id/insurance/:osId/:period/:liquidacionId"
               element={<InsuranceDetail />}
             />
-            <Route
-              path="afiliadospadron"
-              element={<AfiliadosPorObraSocialPage />}
-            />
+          
             <Route path="padron-ioscor" element={<PadronIoscor />} />
             <Route path="solicitudes" element={<ApplicationsList />} />
             <Route path="solicitudes/:id" element={<ApplicationDetail />} />

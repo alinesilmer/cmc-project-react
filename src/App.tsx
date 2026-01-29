@@ -60,6 +60,7 @@ function App() {
       >
         <AnimatePresence mode="wait">
           <Routes>
+          
             <Route element={<RequireAuth />}>
               <Route path="/" element={<Link to="/dashboard" replace />} />
               <Route path="/dashboard" element={<DashboardPage />} />
@@ -68,7 +69,8 @@ function App() {
               <Route path="/doctors/:id" element={<DoctorProfilePage />} />
               <Route path="/social-works" element={<SocialWorksPage />} />
               <Route path="/liquidation" element={<LiquidationPage />} />
-              <Route path="/generar-boletin" element={<GenerarBoletin />} />
+            <Route path="/generar-boletin" element={<GenerarBoletin />} />
+              <Route path="/afiliadospadron" element={<AfiliadosPorObraSocialPage />} />
               <Route path="/panel/register-os" element={<ObrasSocialesRegisterPage />} />
               <Route path="/liquidation/:id" element={<LiquidationCyclePage />} />
               <Route path="/padron-ioscor" element={<PadronIoscor />} />

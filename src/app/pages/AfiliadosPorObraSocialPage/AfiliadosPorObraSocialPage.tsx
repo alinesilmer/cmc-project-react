@@ -27,6 +27,11 @@ type Prestador = {
   matricula_prov?: string | number | null;
   estado?: string | null;
   telefono_consulta?: string | null;
+
+  // ✅ NUEVO: lista de especialidades (del backend: ESPECIALIDADES: string[])
+  especialidades?: string[] | null;
+
+  // compat por si algún backend viejo manda una sola
   especialidad?: string | null;
 
   // PARA PDFs
@@ -87,8 +92,73 @@ function pickTelefonoConsulta(p: Prestador) {
   return p.telefono_consulta ?? "";
 }
 
+// ==========================
+// ✅ ESPECIALIDADES: lista + mostrar hasta 3
+// Regla: si hay varias y una es "MEDICO", se elimina "MEDICO".
+// Si solo hay "MEDICO", se mantiene.
+// ==========================
+function coerceToStringArray(v: any): string[] {
+  if (!v) return [];
+  if (Array.isArray(v)) return v.map((x) => safeStr(x));
+  if (typeof v === "string") {
+    const s = v.trim();
+    if (!s) return [];
+    if (/[;,|]/.test(s)) return s.split(/[;,|]/g).map((x) => x.trim());
+    return [s];
+  }
+  return [];
+}
+
+function cleanEspecialidades(arr: string[]): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+
+  for (const raw of arr) {
+    const t = safeStr(raw).trim();
+    if (!t) continue;
+
+    // por si llega "0" como "no tiene"
+    if (t === "0") continue;
+
+    const key = normalize(t);
+    if (!key) continue;
+    if (seen.has(key)) continue;
+
+    seen.add(key);
+    out.push(t);
+  }
+
+  return out;
+}
+
+function stripMedicoWhenMultiple(list: string[]): string[] {
+  if (list.length <= 1) return list;
+
+  // si hay más de 1, sacamos "medico"
+  const filtered = list.filter((x) => normalize(x) !== "medico");
+  return filtered.length ? filtered : list;
+}
+
+function pickEspecialidadesList(p: Prestador): string[] {
+  const list = Array.isArray(p.especialidades) ? p.especialidades : [];
+  const cleaned = cleanEspecialidades(list);
+
+  if (cleaned.length) return stripMedicoWhenMultiple(cleaned);
+
+  const single = safeStr(p.especialidad).trim();
+  const singleClean = single ? cleanEspecialidades([single]) : [];
+  return stripMedicoWhenMultiple(singleClean);
+}
+
+// 🔎 Para búsqueda (todas, ya con regla de MEDICO aplicada)
+function pickEspecialidadesAll(p: Prestador) {
+  return pickEspecialidadesList(p).join(", ");
+}
+
+// 👀 Para mostrar (hasta 3)
 function pickEspecialidad(p: Prestador) {
-  return p.especialidad ?? "";
+  const list = pickEspecialidadesList(p);
+  return list.slice(0, 3).join(", ");
 }
 
 function pickDomicilioConsulta(p: Prestador) {
@@ -171,10 +241,22 @@ function mapItemToPrestador(it: any): Prestador {
     it?.telefono_consulta ??
     null;
 
-  const especialidad =
+  // ✅ ESPECIALIDADES lista
+  const especialidadesRaw =
+    src?.ESPECIALIDADES ??
+    src?.especialidades ??
+    it?.ESPECIALIDADES ??
+    it?.especialidades ??
+    null;
+
+  // compat: ESPECIALIDAD single
+  const especialidadSingle =
     src?.ESPECIALIDAD ?? src?.especialidad ?? it?.ESPECIALIDAD ?? it?.especialidad ?? null;
 
-  // ✅ Estos son los que querés en PDFs (si vienen, los tomamos)
+  const especialidades = cleanEspecialidades(coerceToStringArray(especialidadesRaw));
+  const especialidad = especialidades[0] ?? (especialidadSingle ? safeStr(especialidadSingle) : null);
+
+  // PDFs
   const domicilio_consulta =
     src?.DOMICILIO_CONSULTA ??
     src?.domicilio_consulta ??
@@ -197,7 +279,10 @@ function mapItemToPrestador(it: any): Prestador {
     nombre: nombre,
     matricula_prov,
     telefono_consulta,
+
+    especialidades,
     especialidad,
+
     domicilio_consulta,
     mail_particular,
   };
@@ -269,10 +354,13 @@ async function fetchContactoById(id: string, signal?: AbortSignal): Promise<Cont
 
   for (const url of urls) {
     try {
-      const { data } = await axios.get(url, {
-        signal,
-        timeout: PDF_REQ_TIMEOUT_MS,
-      } as any);
+      const { data } = await axios.get(
+        url,
+        {
+          signal,
+          timeout: PDF_REQ_TIMEOUT_MS,
+        } as any
+      );
 
       const src = unwrapPrestadorSource(data);
 
@@ -295,7 +383,6 @@ async function fetchContactoById(id: string, signal?: AbortSignal): Promise<Cont
       return payload;
     } catch (e: any) {
       if (signal?.aborted) throw e;
-      // probamos siguiente candidato
     }
   }
 
@@ -407,7 +494,6 @@ const AfiliadosPorObraSocialPage = () => {
   const [osDropdownOpen, setOsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
-  // ✅ Ahora el loading es por tipo de export
   const [exportingPdf, setExportingPdf] = useState<ExportingPdfMode>(null);
   const pdfAbortRef = useRef<AbortController | null>(null);
 
@@ -521,18 +607,28 @@ const AfiliadosPorObraSocialPage = () => {
       const nom = normalize(safeStr(pickNombre(p)));
       const mat = normalize(safeStr(pickMatriculaProv(p)));
       const tel = normalize(safeStr(pickTelefonoConsulta(p)));
-      const esp = normalize(safeStr(pickEspecialidad(p)));
-      return nro.includes(q) || nom.includes(q) || mat.includes(q) || tel.includes(q) || esp.includes(q);
+
+      // 🔎 busca por todas las especialidades, con la regla de MEDICO aplicada
+      const espAll = normalize(safeStr(pickEspecialidadesAll(p)));
+
+      return (
+        nro.includes(q) ||
+        nom.includes(q) ||
+        mat.includes(q) ||
+        tel.includes(q) ||
+        espAll.includes(q)
+      );
     });
   }, [prestadores, tableQuery]);
 
-  // EXCEL: no se toca
+  // EXCEL
   function getExportRows() {
     return filteredPrestadores.map((p) => ({
       nro_socio: safeStr(pickNroPrestador(p)),
       nombre: safeStr(pickNombre(p)),
       matricula_prov: safeStr(pickMatriculaProv(p)),
       telefono_consulta: safeStr(pickTelefonoConsulta(p)),
+      // ✅ hasta 3 + sin MEDICO si hay otras
       especialidad: safeStr(pickEspecialidad(p)),
     }));
   }
@@ -566,7 +662,7 @@ const AfiliadosPorObraSocialPage = () => {
       { header: "Prestador", key: "nombre", width: 42 },
       { header: "Matricula Prov", key: "matricula_prov", width: 16 },
       { header: "Telefono", key: "telefono_consulta", width: 18 },
-      { header: "Especialidad", key: "especialidad", width: 28 },
+      { header: "Especialidades", key: "especialidad", width: 34 },
     ];
 
     const osCode =
@@ -585,7 +681,7 @@ const AfiliadosPorObraSocialPage = () => {
     ws.getRow(4).height = 6;
 
     const headerRow = 6;
-    ws.getRow(headerRow).values = ["N° Socio", "Prestador", "Matricula Prov", "Telefono", "Especialidad"];
+    ws.getRow(headerRow).values = ["N° Socio", "Prestador", "Matricula Prov", "Telefono", "Especialidades"];
     ws.getRow(headerRow).height = 20;
 
     const tableBorder = {
@@ -641,7 +737,6 @@ const AfiliadosPorObraSocialPage = () => {
     const osCode = selectedOS.CODIGO ?? `OS${String(selectedOS.NRO_OBRA_SOCIAL).padStart(3, "0")}`;
     const showMail = shouldShowMailForOS(selectedOS);
 
-    // abort export anterior si existía
     pdfAbortRef.current?.abort();
     const controller = new AbortController();
     pdfAbortRef.current = controller;
@@ -660,7 +755,7 @@ const AfiliadosPorObraSocialPage = () => {
         "Prestador",
         "Matricula Prov",
         "Telefono",
-        "Especialidad",
+        "Especialidades",
         "Dirección consultorio",
         ...(showMail ? ["Correo electrónico"] : []),
       ]];
@@ -671,7 +766,7 @@ const AfiliadosPorObraSocialPage = () => {
           safeStr(pickNombre(p)),
           safeStr(pickMatriculaProv(p)),
           safeStr(pickTelefonoConsulta(p)),
-          safeStr(pickEspecialidad(p)),
+          safeStr(pickEspecialidad(p)), // ✅ aplica regla MEDICO + máximo 3
           safeStr(pickDomicilioConsulta(p)),
         ];
         if (showMail) row.push(safeStr(pickMailParticular(p)));
@@ -706,17 +801,17 @@ const AfiliadosPorObraSocialPage = () => {
               1: { cellWidth: 55 },
               2: { cellWidth: 22 },
               3: { cellWidth: 24 },
-              4: { cellWidth: 45 },
-              5: { cellWidth: 65 },
-              6: { cellWidth: 32 },
+              4: { cellWidth: 52 }, // especialidades
+              5: { cellWidth: 62 }, // dirección
+              6: { cellWidth: 32 }, // mail
             }
           : {
               0: { cellWidth: 20 },
               1: { cellWidth: 60 },
               2: { cellWidth: 24 },
               3: { cellWidth: 26 },
-              4: { cellWidth: 50 },
-              5: { cellWidth: 85 },
+              4: { cellWidth: 60 }, // especialidades
+              5: { cellWidth: 95 }, // dirección
             },
       });
 
@@ -757,16 +852,42 @@ const AfiliadosPorObraSocialPage = () => {
       const enrichedAll = await enrichForPdf(filteredPrestadores, showMail, controller.signal);
       if (controller.signal.aborted) return;
 
-      const groups = new Map<string, Prestador[]>();
+      // ✅ agrupar por cada especialidad (ya con regla: si tiene otras, MEDICO no se incluye)
+      const groups = new Map<string, Prestador[]>(); // key = normalize(label)
+      const labelByKey = new Map<string, string>(); // key -> label original
+
+      const sinKey = normalize("Sin especialidad");
+      labelByKey.set(sinKey, "Sin especialidad");
+
       for (const p of enrichedAll) {
-        const raw = safeStr(pickEspecialidad(p)).trim();
-        const key = raw ? raw : "Sin especialidad";
-        const arr = groups.get(key) ?? [];
-        arr.push(p);
-        groups.set(key, arr);
+        const list = pickEspecialidadesList(p); // ✅ regla aplicada acá
+        if (list.length === 0) {
+          const arr = groups.get(sinKey) ?? [];
+          arr.push(p);
+          groups.set(sinKey, arr);
+          continue;
+        }
+
+        for (const esp of list) {
+          const label = safeStr(esp).trim();
+          if (!label) continue;
+          const key = normalize(label);
+          if (!key) continue;
+
+          if (!labelByKey.has(key)) labelByKey.set(key, label);
+
+          const arr = groups.get(key) ?? [];
+          arr.push(p);
+          groups.set(key, arr);
+        }
       }
 
-      const keys = Array.from(groups.keys()).sort((a, b) => a.localeCompare(b, "es"));
+      // ordenar grupos por label
+      const keys = Array.from(groups.keys()).sort((a, b) =>
+        safeStr(labelByKey.get(a)).localeCompare(safeStr(labelByKey.get(b)), "es")
+      );
+
+      // ordenar cada grupo por nombre
       for (const k of keys) {
         const arr = groups.get(k)!;
         arr.sort((a, b) =>
@@ -776,10 +897,11 @@ const AfiliadosPorObraSocialPage = () => {
 
       const doc = new JsPDF({ orientation: "landscape", compress: true });
 
-      keys.forEach((esp, idx) => {
+      keys.forEach((k, idx) => {
         if (idx > 0) doc.addPage();
 
-        const arr = groups.get(esp)!;
+        const arr = groups.get(k)!;
+        const espLabel = safeStr(labelByKey.get(k));
 
         const drawHeader = () => {
           doc.setFontSize(14);
@@ -795,7 +917,7 @@ const AfiliadosPorObraSocialPage = () => {
           );
 
           doc.setFontSize(11);
-          doc.text(`Especialidad: ${esp}`, 14, 28);
+          doc.text(`Especialidad: ${espLabel}`, 14, 28);
         };
 
         const head = [[
@@ -803,6 +925,7 @@ const AfiliadosPorObraSocialPage = () => {
           "Prestador",
           "Matricula Prov",
           "Telefono",
+          "Especialidades",
           "Dirección consultorio",
           ...(showMail ? ["Correo electrónico"] : []),
         ]];
@@ -813,6 +936,7 @@ const AfiliadosPorObraSocialPage = () => {
             safeStr(pickNombre(p)),
             safeStr(pickMatriculaProv(p)),
             safeStr(pickTelefonoConsulta(p)),
+            safeStr(pickEspecialidad(p)), // ✅ regla MEDICO + máximo 3
             safeStr(pickDomicilioConsulta(p)),
           ];
           if (showMail) row.push(safeStr(pickMailParticular(p)));
@@ -831,18 +955,20 @@ const AfiliadosPorObraSocialPage = () => {
           columnStyles: showMail
             ? {
                 0: { cellWidth: 18 },
-                1: { cellWidth: 70 },
+                1: { cellWidth: 62 },
                 2: { cellWidth: 24 },
                 3: { cellWidth: 26 },
-                4: { cellWidth: 95 },
-                5: { cellWidth: 32 },
+                4: { cellWidth: 55 }, // especialidades
+                5: { cellWidth: 88 }, // dirección
+                6: { cellWidth: 32 }, // mail
               }
             : {
                 0: { cellWidth: 20 },
-                1: { cellWidth: 85 },
+                1: { cellWidth: 78 },
                 2: { cellWidth: 26 },
                 3: { cellWidth: 30 },
-                4: { cellWidth: 104 },
+                4: { cellWidth: 60 }, // especialidades
+                5: { cellWidth: 104 }, // dirección
               },
         });
       });
@@ -1019,7 +1145,10 @@ const AfiliadosPorObraSocialPage = () => {
                   size="medium"
                   onClick={downloadExcel}
                   disabled={
-                    !selectedOS || loadingPrestadores || isExportingAnyPdf || filteredPrestadores.length === 0
+                    !selectedOS ||
+                    loadingPrestadores ||
+                    isExportingAnyPdf ||
+                    filteredPrestadores.length === 0
                   }
                 >
                   <FileSpreadsheet size={18} />
@@ -1109,7 +1238,7 @@ const AfiliadosPorObraSocialPage = () => {
                         </th>
                         <th>
                           <div className={styles.thContent}>
-                            <span>Especialidad</span>
+                            <span>Especialidades</span>
                           </div>
                         </th>
                         <th>
@@ -1132,7 +1261,7 @@ const AfiliadosPorObraSocialPage = () => {
                           const nom = safeStr(pickNombre(p));
                           const mat = safeStr(pickMatriculaProv(p));
                           const tel = safeStr(pickTelefonoConsulta(p));
-                          const esp = safeStr(pickEspecialidad(p));
+                          const esp = safeStr(pickEspecialidad(p)); // ✅ regla MEDICO + máximo 3
 
                           return (
                             <tr key={`${nro}-${mat}-${idx}`}>
