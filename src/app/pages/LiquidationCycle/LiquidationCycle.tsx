@@ -641,14 +641,14 @@ const LiquidationCycle: React.FC = () => {
       return;
     }
 
-    const nro_liquidacion = `${row.NRO_FACT_1}-${row.NRO_FACT_2}`;
+    const nro_factura = `${row.NRO_FACT_1}-${row.NRO_FACT_2}`;
 
     const payload = {
       resumen_id: Number(id),
       obra_social_id: Number(addTargetOS),
       anio_periodo: Number(addYear),
       mes_periodo: Number(addMonth),
-      nro_liquidacion,
+      nro_factura: nro_factura,
     };
 
     setAddBusy(true);
