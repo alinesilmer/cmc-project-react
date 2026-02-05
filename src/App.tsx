@@ -34,6 +34,7 @@ import ObrasSocialesRegisterPage from "./app/pages/ObrasSocialesRegisterPage/Obr
 import PadronesPage from "./app/pages/PadronesPage/PadronesPage";
 import AfiliadosPorObraSocialPage from "./app/pages/AfiliadosPorObraSocialPage/AfiliadosPorObraSocialPage";
 import GenerarBoletin from "./app/pages/GenerarBoletin/GenerarBoletin";
+import PadronSucio from "./app/pages/PadronSucio/PadronSucio";
 
 
 
@@ -70,7 +71,7 @@ function App() {
               <Route path="/social-works" element={<SocialWorksPage />} />
               <Route path="/liquidation" element={<LiquidationPage />} />
             <Route path="/generar-boletin" element={<GenerarBoletin />} />
-              <Route path="/afiliadospadron" element={<AfiliadosPorObraSocialPage />} />
+              <Route path="/padronsucio" element={<PadronSucio />} />
               <Route path="/panel/register-os" element={<ObrasSocialesRegisterPage />} />
               <Route path="/liquidation/:id" element={<LiquidationCyclePage />} />
               <Route path="/padron-ioscor" element={<PadronIoscor />} />

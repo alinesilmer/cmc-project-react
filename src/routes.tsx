@@ -20,6 +20,7 @@ import RegisterSocio from "./app/pages/RegisterSocio/RegisterSocio";
 import PermissionsManager from "./app/pages/PermissionsManager/PermissionsManager";
 import UsersManagerDashboard from "./app/pages/UsersManagerDashboard/UsersManagerDashboard";
 import Config from "./app/pages/Config/Config";
+import PadronSucio from "./app/pages/PadronSucio/PadronSucio";
 import Help from "./app/pages/Help/Help";
 import Login from "./app/pages/Login/Login";
 import Register from "./app/pages/Register/Register";
@@ -67,6 +68,7 @@ export default function RootRoutes() {
             <Route path="doctors" element={<DoctorsPage />} />
             <Route path="doctors/:id" element={<DoctorProfilePage />} />
             <Route path="social-works" element={<SocialWorksPage />} />
+             <Route path="padronsucio" element={<PadronSucio />} />
                <Route
               path="afiliadospadron"
               element={<AfiliadosPorObraSocialPage />}

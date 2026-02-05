@@ -9,7 +9,9 @@ import {
   ChevronRight,
   ChevronLeft,
   LayoutList,
-  Newspaper
+  Newspaper,
+  Paperclip,
+  NotebookText
 } from "lucide-react";
 import styles from "./Sidebar.module.scss";
 import { useAuth } from "../../../auth/AuthProvider";
@@ -66,7 +68,7 @@ const Sidebar: React.FC = () => {
     },
     {
       path: `${base}/generar-boletin`,
-      icon: DollarSign,
+      icon: NotebookText,
       label: "Generar Boletín",
       perms: ["medicos:leer"],
     },
@@ -74,6 +76,12 @@ const Sidebar: React.FC = () => {
       path: `${base}/afiliadospadron`,
       icon: Newspaper,
       label: "Padrones",
+      perms: ["medicos:leer"],
+    },
+      {
+      path: `${base}/padronsucio`,
+      icon: Paperclip,
+      label: "Padrón Sucio",
       perms: ["medicos:leer"],
     },
     // { path: "/config", icon: Cog, label: "Configuración" },                  // ← COMENTADO (punto 5)

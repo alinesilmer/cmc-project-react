@@ -1,0 +1,326 @@
+@use "@/app/styles/all.scss" as *;
+
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
+  padding: 30px 24px;
+
+  @media (max-width: 768px) {
+    padding: 32px 16px;
+  }
+}
+
+.wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+// Header Section
+.header {
+  margin-bottom: $spacing-8;
+  animation: fadeIn 0.5s ease-out;
+  text-align: start;
+
+  @media (max-width: 768px) {
+    margin-bottom: 32px;
+  }
+}
+
+.headerContent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.title {
+  font-size: $font-size-4xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+
+  @media (max-width: 768px) {
+    font-size: 32px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 28px;
+  }
+}
+
+.subtitle {
+  font-size: $font-size-lg;
+  color: $gray-600;
+  margin: 0;
+
+  @media (max-width: 768px) {
+    font-size: 16px;
+    padding: 0 16px;
+  }
+}
+
+// Card Component
+.card {
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+
+  @media (max-width: 768px) {
+    border-radius: 20px;
+  }
+}
+
+.cardHeader {
+  padding: 32px 32px 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  background: linear-gradient(180deg, rgba(40, 54, 112, 0.02) 0%, transparent 100%);
+
+  @media (max-width: 768px) {
+    padding: 24px 20px 18px;
+  }
+}
+
+.cardDescription {
+  font-size: 15px;
+  color: rgb(107, 114, 128);
+  margin: 0;
+
+  @media (max-width: 768px) {
+    font-size: 14px;
+  }
+}
+
+.cardContent {
+  padding: 32px;
+
+  @media (max-width: 768px) {
+    padding: 20px;
+  }
+}
+
+// Actions Row
+.topRow {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 18px;
+
+  @media (max-width: 968px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+
+  @media (max-width: 968px) {
+    width: 100%;
+  }
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+  }
+}
+
+// Search Row
+.searchWrapper {
+  position: relative;
+  margin-bottom: 18px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  color: rgb(107, 114, 128);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 16px 50px 16px 52px;
+  border: 2px solid rgba(0, 0, 0, 0.12);
+  border-radius: 14px;
+  font-size: 15px;
+  font-family: inherit;
+  background: white;
+  transition: all 0.2s ease;
+
+  &::placeholder {
+    color: rgb(156, 163, 175);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: rgb(40, 54, 112);
+    box-shadow: 0 0 0 4px rgba(40, 54, 112, 0.1);
+  }
+
+  &:disabled {
+    background: rgba(0, 0, 0, 0.03);
+    cursor: not-allowed;
+  }
+}
+
+.clearBtn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.05);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  color: rgb(107, 114, 128);
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: rgb(17, 24, 39);
+  }
+}
+
+// Loading / Error
+.loadingState {
+  text-align: center;
+  padding: 48px 24px;
+  margin-top: 8px;
+}
+
+.progressBar {
+  width: 100%;
+  max-width: 400px;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 0 auto 16px;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, rgb(40, 54, 112) 0%, rgb(60, 80, 150) 100%);
+  border-radius: 999px;
+  animation: progress 1.5s ease-in-out infinite;
+}
+
+@keyframes progress {
+  0% {
+    width: 0%;
+    margin-left: 0%;
+  }
+  50% {
+    width: 50%;
+    margin-left: 25%;
+  }
+  100% {
+    width: 0%;
+    margin-left: 100%;
+  }
+}
+
+.loadingText {
+  font-size: 15px;
+  color: rgb(107, 114, 128);
+  margin: 0;
+}
+
+.errorMessage {
+  padding: 16px 20px;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-radius: 12px;
+  color: rgb(185, 28, 28);
+  font-size: 15px;
+  font-weight: 600;
+  margin-top: 12px;
+}
+
+// Table
+.tableWrapper {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 16px;
+  overflow: hidden;
+  background: white;
+
+  @media (max-width: 968px) {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+
+  @media (max-width: 968px) {
+    min-width: 800px;
+  }
+
+  thead {
+    background: rgb(42, 60, 116);
+
+    tr {
+      border-bottom: 2px solid rgb(40, 54, 112);
+    }
+
+    th {
+      padding: 18px 16px;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 800;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      transition: background-color 0.2s ease;
+
+      &:nth-child(even) {
+        background: rgba(0, 0, 0, 0.02);
+      }
+
+      &:hover {
+        background: rgba(40, 54, 112, 0.05);
+      }
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+
+    td {
+      padding: 16px;
+      font-size: 14px;
+      color: rgb(17, 24, 39);
+    }
+  }
+}
+
+.tdName {
+  font-weight: 600;
+}
+
+.noResults {
+  text-align: center !important;
+  padding: 48px 24px !important;
+  color: rgb(107, 114, 128) !important;
+  font-style: italic;
+}
