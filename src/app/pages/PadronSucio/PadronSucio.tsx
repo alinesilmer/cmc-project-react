@@ -46,8 +46,16 @@ const ENDPOINTS = {
     `${API_BASE}/api/medicos/${id}`,
     `${API_BASE}/api/doctores/${id}`,
   ],
+
+  // ✅ para buscar externos por nro_socio (api/medicos)
+  prestadorByNroSocioCandidates: (nro: string) => [
+    `${API_BASE}/api/medicos?nro_socio=${encodeURIComponent(nro)}`,
+    `${API_BASE}/api/medicos?NRO_SOCIO=${encodeURIComponent(nro)}`,
+    `${API_BASE}/api/medicos/${encodeURIComponent(nro)}`,
+  ],
 };
 
+// Fuente de padrón (NO se muestra)
 const SOURCE_OS_ID = Number((import.meta as any).env?.VITE_PADRON_SOURCE_OS_ID ?? 0);
 const SOURCE_OS_NAME_KEY = "asociacion mutual sancor";
 
@@ -139,8 +147,26 @@ function pickEspecialidadesRawList(p: Prestador): string[] {
 
 // ==========================
 // Servicios detection
+// - "Diagnóstico por imagen" es SERVICIO SOLO para NRO_SOCIO específicos.
+// - Para el resto: ESPECIALIDAD "Diagnóstico por Imagen".
+// - Ecografía siempre servicio (pero NO ecografista/s).
 // ==========================
-function isServiceLabel(label: string) {
+const DIAG_IMG_SERVICE_ONLY_NRO_SOCIO = new Set(["9975", "9761", "9727", "9674"]);
+
+function pickNroSocioAsKey(p: Prestador): string {
+  const v = pickNroPrestador(p);
+  const s = safeStr(v).trim();
+  return s.replace(/\.0$/, "");
+}
+
+function canonicalLabel(label: string) {
+  const k = normalize(label);
+  if (k.includes("diagnostico por imagen")) return "Diagnóstico por Imagen";
+  if (k.includes("ecografia")) return "Ecografía";
+  return safeStr(label).trim();
+}
+
+function isServiceLabelForPrestador(p: Prestador, label: string) {
   const key = normalize(label);
   if (!key) return false;
 
@@ -148,10 +174,13 @@ function isServiceLabel(label: string) {
   if (key.includes("ecografista")) return false;
   if (key.includes("ecografistas")) return false;
 
-  if (key.includes("diagnostico por imagen")) return true;
-  if (key.includes("ecodoppler")) return true;
+  // Diagnóstico por imagen: servicio solo para algunos NRO_SOCIO
+  if (key.includes("diagnostico por imagen")) {
+    const nro = pickNroSocioAsKey(p);
+    return DIAG_IMG_SERVICE_ONLY_NRO_SOCIO.has(nro);
+  }
 
-  if (key.includes("doppler")) return true;
+  // Ecografía: siempre servicio
   if (key.includes("ecografia")) return true;
 
   return false;
@@ -164,12 +193,13 @@ function splitEspecialidadesYServicios(p: Prestador) {
   const servicios: string[] = [];
 
   for (const lab of raw) {
-    if (isServiceLabel(lab)) servicios.push(lab);
-    else especialidades.push(lab);
+    const canon = canonicalLabel(lab);
+    if (isServiceLabelForPrestador(p, canon)) servicios.push(canon);
+    else especialidades.push(canon);
   }
 
   return {
-    especialidades,
+    especialidades: cleanEspecialidades(especialidades),
     servicios: cleanEspecialidades(servicios),
   };
 }
@@ -306,6 +336,38 @@ async function fetchPrestadoresAllPages(nroOS: number): Promise<Prestador[]> {
 }
 
 // ==========================
+// ✅ externos por nro_socio (api/medicos)
+// ==========================
+async function fetchPrestadorByNroSocio(nro: string): Promise<Prestador | null> {
+  const urls = ENDPOINTS.prestadorByNroSocioCandidates(nro);
+
+  for (const url of urls) {
+    try {
+      const { data } = await axios.get(url, { timeout: 15_000 });
+
+      if (Array.isArray(data)) {
+        const first = data[0];
+        if (first) return mapItemToPrestador(first);
+        continue;
+      }
+
+      if (Array.isArray(data?.items)) {
+        const first = data.items[0];
+        if (first) return mapItemToPrestador(first);
+        continue;
+      }
+
+      if (data) return mapItemToPrestador(data);
+    } catch {
+      // probamos el siguiente candidato
+    }
+  }
+
+  console.warn(`[EXTRA] No se encontró prestador para nro_socio=${nro} en api/medicos.`);
+  return null;
+}
+
+// ==========================
 // PDF libs lazy
 // ==========================
 async function loadPdfLibs(): Promise<{ JsPDF: any; autoTable: any }> {
@@ -406,9 +468,7 @@ async function enrichForPdf(rows: Prestador[], signal?: AbortSignal): Promise<Pr
     const prev = out[idx];
     out[idx] = {
       ...prev,
-      domicilio_consulta: safeStr(prev.domicilio_consulta).trim()
-        ? prev.domicilio_consulta
-        : c.domicilio_consulta,
+      domicilio_consulta: safeStr(prev.domicilio_consulta).trim() ? prev.domicilio_consulta : c.domicilio_consulta,
     };
   }
   return out;
@@ -448,7 +508,7 @@ function dedupPrestadoresKeepMostEspecialidades(rows: Prestador[]): Prestador[] 
 }
 
 // ======================================================
-// ✅ LOGO: convertir import a dataURL (lo que necesita jsPDF)
+// LOGO: convertir import a dataURL (jsPDF lo necesita)
 // ======================================================
 async function toDataURL(assetUrl: string): Promise<string> {
   const res = await fetch(assetUrl);
@@ -475,8 +535,8 @@ function drawLogo(doc: any, logoDataUrl: string) {
   try {
     const pageW = doc.internal.pageSize.getWidth?.() ?? 297;
 
-    const w = 28;
-    const h = 28;
+    const w = 28; // ancho
+    const h = 28; // alto
     const x = pageW - 14 - w;
     const y = 8;
 
@@ -484,6 +544,96 @@ function drawLogo(doc: any, logoDataUrl: string) {
   } catch (e) {
     console.warn("No se pudo dibujar el logo en el PDF:", e);
   }
+}
+
+// ✅ FIX: número de página SOLO se dibuja al final (para no duplicar texto)
+// además, limpia el área para evitar “fantasmas”
+function drawPageNumber(doc: any, totalPages: number) {
+  try {
+    const pageW = doc.internal.pageSize.getWidth?.() ?? 297;
+    const pageH = doc.internal.pageSize.getHeight?.() ?? 210;
+
+    const current =
+      doc.internal.getCurrentPageInfo?.().pageNumber ??
+      doc.getCurrentPageInfo?.().pageNumber ??
+      1;
+
+    const text = `Página ${current} / ${totalPages}`;
+
+    // limpiar área (fondo blanco)
+    doc.setFillColor(255, 255, 255);
+    doc.rect(pageW - 80, pageH - 14, 70, 10, "F");
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(9);
+    doc.text(text, pageW - 14, pageH - 8, { align: "right" });
+  } catch {
+    // no-op
+  }
+}
+
+// ======================================================
+// ✅ SERVICIOS MANUALES (van dentro de Servicios, NO como categoría aparte)
+// ======================================================
+type ManualServiceRow = {
+  nro_socio: string;
+  prestador: string;
+  matricula: string;
+  direccion: string;
+  telefono: string;
+  servicio: string;
+};
+
+const MANUAL_SERVICES: ManualServiceRow[] = [
+  {
+    nro_socio: "9931",
+    prestador: "CENTRO RADIOLOGICO(COLLANTES)",
+    matricula: "159",
+    direccion: "SAN MARTIN 1656",
+    telefono: "4463973",
+    servicio: "Servicio",
+  },
+  {
+    nro_socio: "9951",
+    prestador: "SERV.ECODIAG.DRAS VAZQUEZ/BLAN",
+    matricula: "1013",
+    direccion: "3 DE ABRIL 869,CTRO.MEDICO",
+    telefono: "4230508",
+    servicio: "Servicio",
+  },
+  {
+    nro_socio: "9901",
+    prestador: "INST.HEMOTERAPIA",
+    matricula: "1780",
+    direccion: "CORDOBA 666",
+    telefono: "4430078",
+    servicio: "Servicio",
+  },
+  {
+    nro_socio: "9696",
+    prestador: "CARDIOCOR - AVALOS VICTOR",
+    matricula: "3572",
+    direccion: "San Juan 975 3 piso y Junin 824 1 piso",
+    telefono: "2147483647",
+    servicio: "Servicio",
+  },
+];
+
+const EXTRA_SERVICE_NROS_FROM_API = ["9696"];
+
+function manualToPrestador(m: ManualServiceRow): Prestador {
+  return {
+    id: null,
+    nro_socio: m.nro_socio,
+    socio: m.nro_socio,
+    apellido_nombre: m.prestador,
+    nombre: m.prestador,
+    matricula_prov: m.matricula,
+    telefono_consulta: m.telefono,
+    domicilio_consulta: m.direccion,
+    especialidades: null,
+    especialidad: null,
+  };
 }
 
 type ExportingPdfMode = null | "pdf";
@@ -496,7 +646,6 @@ const PadronSucio = () => {
   const [exportingPdf, setExportingPdf] = useState<ExportingPdfMode>(null);
   const pdfAbortRef = useRef<AbortController | null>(null);
 
-  // ✅ logo listo para jsPDF
   const [logoDataUrl, setLogoDataUrl] = useState<string>("");
 
   useEffect(() => {
@@ -504,7 +653,6 @@ const PadronSucio = () => {
 
     (async () => {
       try {
-        // Cargar logo (no bloquea si falla)
         try {
           const d = await toDataURL(Logo as unknown as string);
           if (alive) setLogoDataUrl(d);
@@ -605,6 +753,40 @@ const PadronSucio = () => {
         }
       }
 
+      const diagServiceLabel = "Diagnóstico por Imagen";
+      const diagKey = normalize(diagServiceLabel);
+      if (!serviceLabelByKey.has(diagKey)) serviceLabelByKey.set(diagKey, diagServiceLabel);
+      const diagArr = serviceGroups.get(diagKey) ?? [];
+      for (const m of MANUAL_SERVICES) {
+        diagArr.push(manualToPrestador(m));
+      }
+      serviceGroups.set(diagKey, diagArr);
+
+      for (const nro of EXTRA_SERVICE_NROS_FROM_API) {
+        const found = await fetchPrestadorByNroSocio(nro);
+        if (found) {
+          const enrichedOne = await enrichForPdf([found], controller.signal);
+          const finalOne = enrichedOne[0] ?? found;
+
+          const list = serviceGroups.get(diagKey) ?? [];
+          list.push(finalOne);
+          serviceGroups.set(diagKey, list);
+        }
+      }
+
+      const dedupByNro = (arr: Prestador[]) => {
+        const seen = new Set<string>();
+        const out: Prestador[] = [];
+        for (const p of arr) {
+          const k = pickNroSocioAsKey(p);
+          if (!k) continue;
+          if (seen.has(k)) continue;
+          seen.add(k);
+          out.push(p);
+        }
+        return out;
+      };
+
       const keys = Array.from(groups.keys()).sort((a, b) =>
         safeStr(labelByKey.get(a)).localeCompare(safeStr(labelByKey.get(b)), "es")
       );
@@ -616,26 +798,23 @@ const PadronSucio = () => {
         safeStr(serviceLabelByKey.get(a)).localeCompare(safeStr(serviceLabelByKey.get(b)), "es")
       );
       for (const k of serviceKeys) {
-        serviceGroups.get(k)!.sort((a, b) => safeStr(pickNombre(a)).localeCompare(safeStr(pickNombre(b)), "es"));
+        serviceGroups.set(k, dedupByNro(serviceGroups.get(k) ?? []));
+        serviceGroups
+          .get(k)!
+          .sort((a, b) => safeStr(pickNombre(a)).localeCompare(safeStr(pickNombre(b)), "es"));
       }
 
       const doc = new JsPDF({ orientation: "landscape", compress: true });
 
-      const head = [[
-        "N° Socio",
-        "Prestador",
-        "Matricula Prov",
-        "Telefono",
-        "Especialidades",
-        "Dirección consultorio",
-      ]];
+      const headEspecialidades = [
+        ["N° Socio", "Prestador", "Matricula Prov", "Telefono", "Especialidades", "Dirección consultorio"],
+      ];
 
       const drawHeaderCommon = (subtitle: string) => {
-        // ✅ Logo en TODAS las páginas (didDrawPage lo llama en cada página)
         drawLogo(doc, logoDataUrl);
 
         doc.setFontSize(16);
-        doc.text("Padrón Sucio", 14, 14);
+        doc.text("Padrón", 14, 14);
 
         doc.setFontSize(11);
         doc.text("Prestadores del Colegio Médico de Corrientes", 14, 22);
@@ -644,55 +823,93 @@ const PadronSucio = () => {
         doc.text(`${fmtDate(new Date())} • ${subtitle}`, 14, 28);
       };
 
-      keys.forEach((k, idx) => {
-        if (idx > 0) doc.addPage();
+      const BODY: any[] = [];
 
-        const arr = groups.get(k)!;
-        const espLabel = safeStr(labelByKey.get(k));
+      for (const k of keys) {
+        const label = safeStr(labelByKey.get(k));
+        const arr = groups.get(k) ?? [];
+        if (arr.length === 0) continue;
 
-        const body = arr.map((p) => [
-          safeStr(pickNroPrestador(p)),
-          safeStr(pickNombre(p)),
-          safeStr(pickMatriculaProv(p)),
-          safeStr(pickTelefonoConsulta(p)),
-          pickEspecialidadTop3WithoutServicesOrMedico(p),
-          safeStr(pickDomicilioConsulta(p)),
-        ]);
+        BODY.push(["", "", "", "", `Especialidad: ${label}`, ""]);
 
-        autoTable(doc, {
-          head,
-          body,
-          startY: 34,
-          margin: { top: 32 },
-          didDrawPage: () => {
-            drawHeaderCommon(
-              `${arr.length} ${arr.length === 1 ? "prestador" : "prestadores"} • Especialidad: ${espLabel}`
-            );
-          },
-          styles: { fontSize: 7, cellPadding: 2, valign: "middle", overflow: "linebreak" },
-          headStyles: { fillColor: [17, 17, 17], textColor: [255, 255, 255], fontStyle: "bold" },
-          alternateRowStyles: { fillColor: [247, 247, 247] },
-          columnStyles: {
-            0: { cellWidth: 20 },
-            1: { cellWidth: 78 },
-            2: { cellWidth: 26 },
-            3: { cellWidth: 30 },
-            4: { cellWidth: 60 },
-            5: { cellWidth: 104 },
-          },
-        });
+        for (const p of arr) {
+          BODY.push([
+            safeStr(pickNroPrestador(p)),
+            safeStr(pickNombre(p)),
+            safeStr(pickMatriculaProv(p)),
+            safeStr(pickTelefonoConsulta(p)),
+            pickEspecialidadTop3WithoutServicesOrMedico(p),
+            safeStr(pickDomicilioConsulta(p)),
+          ]);
+        }
+
+        BODY.push(["", "", "", "", "", ""]);
+      }
+
+      autoTable(doc, {
+        head: headEspecialidades,
+        body: BODY,
+        startY: 34,
+        margin: { top: 32 },
+        didDrawPage: () => {
+          drawHeaderCommon("Listado por especialidad");
+          // ❌ NO dibujar nro de hoja acá (así evitamos “Página Página ...”)
+        },
+        styles: { fontSize: 7, cellPadding: 2, valign: "middle", overflow: "linebreak" },
+        headStyles: { fillColor: [17, 17, 17], textColor: [255, 255, 255], fontStyle: "bold" },
+        alternateRowStyles: { fillColor: [247, 247, 247] },
+        columnStyles: {
+          0: { cellWidth: 20 },
+          1: { cellWidth: 78 },
+          2: { cellWidth: 26 },
+          3: { cellWidth: 30 },
+          4: { cellWidth: 60 },
+          5: { cellWidth: 104 },
+        },
+        didParseCell: (data: any) => {
+          const raw = data.row?.raw;
+
+          const isSectionRow =
+            data.section === "body" &&
+            Array.isArray(raw) &&
+            typeof raw[4] === "string" &&
+            raw[4].startsWith("Especialidad: ");
+
+          const isSpacerRow =
+            data.section === "body" &&
+            Array.isArray(raw) &&
+            raw.every((x: any) => safeStr(x) === "");
+
+          if (isSectionRow) {
+            if (data.column.index === 0) {
+              data.cell.colSpan = 6;
+              data.cell.text = [safeStr(raw[4])];
+              data.cell.styles.fontStyle = "normal";
+              data.cell.styles.fontSize = 10;
+              data.cell.styles.fillColor = [255, 255, 255];
+              data.cell.styles.textColor = [0, 0, 0];
+              data.cell.styles.cellPadding = { top: 3, right: 2, bottom: 3, left: 2 };
+            } else {
+              data.cell.text = [""];
+              data.cell.styles.fillColor = [255, 255, 255];
+              data.cell.styles.lineWidth = 0;
+            }
+          }
+
+          if (isSpacerRow) {
+            data.cell.styles.fillColor = [255, 255, 255];
+            data.cell.styles.textColor = [255, 255, 255];
+            data.cell.styles.lineWidth = 0;
+            data.cell.styles.minCellHeight = 4;
+          }
+        },
       });
 
       doc.addPage();
 
-      const servicesHead = [[
-        "N° Socio",
-        "Prestador",
-        "Matricula Prov",
-        "Telefono",
-        "Servicio",
-        "Dirección consultorio",
-      ]];
+      const servicesHead = [
+        ["N° Socio", "Prestador", "Matricula Prov", "Telefono", "Servicio", "Dirección consultorio"],
+      ];
 
       const servicesBody: any[] = [];
 
@@ -701,7 +918,7 @@ const PadronSucio = () => {
         const arr = serviceGroups.get(k) ?? [];
         if (arr.length === 0) continue;
 
-        servicesBody.push(["", "", "", "", `SERVICIO: ${label}`, ""]);
+        servicesBody.push(["", "", "", "", `Servicio: ${label}`, ""]);
 
         for (const p of arr) {
           servicesBody.push([
@@ -713,6 +930,8 @@ const PadronSucio = () => {
             safeStr(pickDomicilioConsulta(p)),
           ]);
         }
+
+        servicesBody.push(["", "", "", "", "", ""]);
       }
 
       if (servicesBody.length === 0) {
@@ -725,7 +944,8 @@ const PadronSucio = () => {
         startY: 34,
         margin: { top: 32 },
         didDrawPage: () => {
-          drawHeaderCommon("Servicios asociados a Colegio Médico de Corrientes");
+          drawHeaderCommon("Servicios asociados");
+          // ❌ NO dibujar nro de hoja acá (lo hacemos al final, una sola vez)
         },
         styles: { fontSize: 7, cellPadding: 2, valign: "middle", overflow: "linebreak" },
         headStyles: { fillColor: [17, 17, 17], textColor: [255, 255, 255], fontStyle: "bold" },
@@ -740,16 +960,53 @@ const PadronSucio = () => {
         },
         didParseCell: (data: any) => {
           const raw = data.row?.raw;
-          if (data.section === "body" && Array.isArray(raw) && safeStr(raw[4]).startsWith("SERVICIO: ")) {
-            data.cell.styles.fontStyle = "bold";
-            data.cell.colSpan = 6;
+
+          const isSectionRow =
+            data.section === "body" &&
+            Array.isArray(raw) &&
+            typeof raw[4] === "string" &&
+            raw[4].startsWith("Servicio: ");
+
+          const isSpacerRow =
+            data.section === "body" &&
+            Array.isArray(raw) &&
+            raw.every((x: any) => safeStr(x) === "");
+
+          if (isSectionRow) {
+            if (data.column.index === 0) {
+              data.cell.colSpan = 6;
+              data.cell.text = [safeStr(raw[4])];
+              data.cell.styles.fontStyle = "normal";
+              data.cell.styles.fontSize = 10;
+              data.cell.styles.fillColor = [255, 255, 255];
+              data.cell.styles.textColor = [0, 0, 0];
+              data.cell.styles.cellPadding = { top: 3, right: 2, bottom: 3, left: 2 };
+            } else {
+              data.cell.text = [""];
+              data.cell.styles.fillColor = [255, 255, 255];
+              data.cell.styles.lineWidth = 0;
+            }
+          }
+
+          if (isSpacerRow) {
+            data.cell.styles.fillColor = [255, 255, 255];
+            data.cell.styles.textColor = [255, 255, 255];
+            data.cell.styles.lineWidth = 0;
+            data.cell.styles.minCellHeight = 4;
           }
         },
       });
 
       if (controller.signal.aborted) return;
 
-      saveAs(doc.output("blob"), `padron_sucio_${fmtDate(new Date())}.pdf`);
+      // ✅ DIBUJAR FOOTER UNA SOLA VEZ, CON TOTAL CORRECTO (evita duplicado “Página Página ...”)
+      const totalPages = doc.getNumberOfPages?.() ?? 1;
+      for (let p = 1; p <= totalPages; p++) {
+        doc.setPage(p);
+        drawPageNumber(doc, totalPages);
+      }
+
+      saveAs(doc.output("blob"), `padron_${fmtDate(new Date())}.pdf`);
     } catch (e: any) {
       if (controller.signal.aborted) return;
       console.error(e);
