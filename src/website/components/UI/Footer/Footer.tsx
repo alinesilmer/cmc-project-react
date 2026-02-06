@@ -7,7 +7,7 @@ import {
   FiMail,
 } from "react-icons/fi";
 import styles from "./Footer.module.scss";
-import logo from "../../../assets/images/logoanionuevo.png";
+import logo from "../../../assets/images/logoCMC.png";
 
 export default function Footer() {
   return (

@@ -9,7 +9,7 @@
 .exportContent {
   display: flex;
   gap: $spacing-6;
-  
+
   @media (max-width: 1024px) {
     flex-direction: column;
   }
@@ -46,7 +46,7 @@
   &:hover {
     background: $gray-50;
   }
-  
+
   @media (max-width: 768px) {
     padding: $spacing-3 $spacing-4;
     font-size: $font-size-sm;
@@ -62,7 +62,7 @@
   padding: $spacing-5;
   border-top: 1px solid $gray-200;
   background: $gray-50;
-  
+
   @media (max-width: 768px) {
     padding: $spacing-4;
   }
@@ -70,9 +70,9 @@
 
 .checkboxGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: $spacing-3;
-  
+
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
     gap: $spacing-2;
@@ -87,7 +87,7 @@
   font-size: $font-size-sm;
   color: $gray-800;
   user-select: none;
-  
+
   &:hover {
     color: $gray-900;
   }
@@ -100,84 +100,89 @@
   accent-color: $primary-blue;
 }
 
-.vencimientosContent {
-  display: flex;
-  gap: $spacing-6;
-  
-  @media (max-width: 768px) {
-    flex-direction: column;
-    gap: $spacing-4;
+/* =========================
+   VENCIMIENTOS (nuevo look)
+========================= */
+.vencTopHint {
+  font-size: $font-size-sm;
+  color: $gray-700;
+  margin-bottom: $spacing-4;
+}
+
+.vencCards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: $spacing-4;
+  margin-bottom: $spacing-4;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
   }
 }
 
-.checkboxColumn {
-  flex: 1;
+.vencCard {
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-xl;
+  padding: $spacing-4;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.04);
+}
+
+.vencCardTitle {
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  margin-bottom: $spacing-3;
+}
+
+.vencCardChecks {
   display: flex;
   flex-direction: column;
   gap: $spacing-3;
 }
 
-.vencimientosInputs {
-  display: flex;
-  flex-direction: column;
+.vencRangeBox {
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-xl;
+  padding: $spacing-4;
+}
+
+.vencRangeTitle {
+  font-weight: $font-weight-semibold;
+  color: $gray-900;
+  margin-bottom: $spacing-3;
+}
+
+.vencRangeGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: $spacing-3;
-  min-width: 200px;
-  
-  @media (max-width: 768px) {
-    min-width: 0;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
   }
 }
 
-.dateInputRow {
+.vencRangeField {
   display: flex;
+  flex-direction: column;
   gap: $spacing-2;
-  
-  @media (max-width: 480px) {
-    flex-direction: column;
-  }
 }
 
-.dateInput {
-  flex: 1;
-  padding: $spacing-2 $spacing-3;
-  border: 1px solid $gray-300;
-  border-radius: $border-radius-lg;
-  font-size: $font-size-sm;
-  color: $gray-900;
-  background: $white;
-  
-  &:focus {
-    outline: none;
-    border-color: $primary-blue;
-    box-shadow: 0 0 0 3px rgba($primary-blue, 0.1);
-  }
+.vencRangeHint {
+  margin-top: $spacing-3;
+  font-size: $font-size-xs;
+  color: $gray-600;
 }
 
-.diasPill {
-  display: flex;
-  justify-content: center;
-}
-
-.diasSelect {
-  padding: $spacing-2 $spacing-3;
-  border: 1px solid $gray-300;
-  border-radius: 20px;
-  font-size: $font-size-sm;
-  color: $gray-900;
-  background: $white;
-  cursor: pointer;
-  
-  &:focus {
-    outline: none;
-    border-color: $primary-blue;
-  }
-}
-
+/* =========================
+   OTROS
+========================= */
 .otrosGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: $spacing-4;
-  
+
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
     gap: $spacing-3;
@@ -216,13 +221,65 @@
   &::placeholder {
     color: $gray-400;
   }
-  
+
   @media (max-width: 768px) {
     padding: $spacing-3;
     font-size: $font-size-sm;
   }
 }
 
+.dateInput {
+  padding: $spacing-2 $spacing-3;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-lg;
+  font-size: $font-size-sm;
+  color: $gray-900;
+  background: $white;
+
+  &:focus {
+    outline: none;
+    border-color: $primary-blue;
+    box-shadow: 0 0 0 3px rgba($primary-blue, 0.1);
+  }
+}
+
+.diasSelect {
+  padding: $spacing-2 $spacing-3;
+  border: 1px solid $gray-300;
+  border-radius: 20px;
+  font-size: $font-size-sm;
+  color: $gray-900;
+  background: $white;
+  cursor: pointer;
+
+  &:focus {
+    outline: none;
+    border-color: $primary-blue;
+  }
+}
+
+/* =========================
+   FALTANTES (nuevo)
+========================= */
+.faltantesBox {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+.faltantesGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-3;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================
+   Selected Filters (derecha)
+========================= */
 .selectedFilters {
   width: 300px;
   background: $gray-50;
@@ -234,12 +291,12 @@
   gap: $spacing-4;
   max-height: 600px;
   overflow-y: auto;
-  
+
   @media (max-width: 1024px) {
     width: 100%;
     max-height: 400px;
   }
-  
+
   @media (max-width: 768px) {
     padding: $spacing-4;
   }
@@ -250,7 +307,7 @@
   font-weight: $font-weight-bold;
   color: $gray-900;
   margin: 0;
-  
+
   @media (max-width: 768px) {
     font-size: $font-size-base;
   }
@@ -318,83 +375,6 @@
   }
 }
 
-.logoSection {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-2;
-  padding: $spacing-4;
-  background: $gray-50;
-  border-radius: $border-radius-lg;
-  border: 1px solid $gray-200;
-  
-  @media (max-width: 768px) {
-    padding: $spacing-3;
-  }
-}
-
-.fileInput {
-  padding: $spacing-3;
-  border: 1px solid $gray-300;
-  border-radius: $border-radius-lg;
-  font-size: $font-size-sm;
-  color: $gray-900;
-  background: $white;
-  cursor: pointer;
-
-  &::-webkit-file-upload-button {
-    padding: $spacing-2 $spacing-4;
-    background: $gray-100;
-    border: 1px solid $gray-300;
-    border-radius: $border-radius-lg;
-    font-size: $font-size-sm;
-    font-weight: $font-weight-medium;
-    color: $gray-700;
-    cursor: pointer;
-    margin-right: $spacing-3;
-    
-    &:hover {
-      background: $gray-200;
-    }
-  }
-}
-
-.logoPreview {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: $spacing-3;
-  background: $white;
-  border: 1px solid $gray-300;
-  border-radius: $border-radius-lg;
-  gap: $spacing-3;
-}
-
-.logoFileName {
-  font-size: $font-size-sm;
-  color: $gray-700;
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.removeLogoButton {
-  padding: $spacing-1 $spacing-2;
-  background: $gray-100;
-  border: 1px solid $gray-300;
-  border-radius: $border-radius-lg;
-  font-size: $font-size-sm;
-  color: $gray-700;
-  cursor: pointer;
-  transition: all 0.2s;
-  flex-shrink: 0;
-
-  &:hover {
-    background: $gray-200;
-    border-color: $gray-400;
-  }
-}
-
 .exportError {
   margin-top: $spacing-3;
   padding: $spacing-4;
@@ -403,7 +383,7 @@
   background: rgba(255, 0, 0, 0.06);
   color: $gray-900;
   font-size: $font-size-sm;
-  
+
   @media (max-width: 768px) {
     padding: $spacing-3;
     font-size: $font-size-xs;
@@ -416,11 +396,11 @@
   align-items: center;
   justify-content: space-between;
   gap: $spacing-4;
-  
+
   @media (max-width: 768px) {
     flex-direction: column;
     align-items: stretch;
-    
+
     button {
       width: 100%;
     }
@@ -431,11 +411,11 @@
   display: flex;
   flex-wrap: wrap;
   gap: $spacing-3;
-  
+
   @media (max-width: 768px) {
     flex-direction: column;
     width: 100%;
-    
+
     button {
       width: 100%;
     }
@@ -445,10 +425,10 @@
 .exportActionsRight {
   display: flex;
   gap: $spacing-3;
-  
+
   @media (max-width: 768px) {
     width: 100%;
-    
+
     button {
       width: 100%;
     }

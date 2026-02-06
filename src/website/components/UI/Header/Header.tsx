@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { FiUser, FiMenu, FiX, FiChevronDown, FiSearch } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import styles from "./Header.module.scss";
-import logo from "../../../assets/images/logoanionuevo.png";
+import logo from "../../../assets/images/logoCMC.png";
 import SearchBar from "../SearchBar/SearchBar";
 import { useAuth } from "../../../../app/auth/AuthProvider";
 import { isWebEditor } from "../../../../app/auth/roles";

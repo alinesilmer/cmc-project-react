@@ -11,12 +11,13 @@ import {
   LayoutList,
   Newspaper,
   Paperclip,
-  NotebookText
+  NotebookText,
+  User2Icon
 } from "lucide-react";
 import styles from "./Sidebar.module.scss";
 import { useAuth } from "../../../auth/AuthProvider";
 
-import Logo from "../../../assets/logoanionuevo.png";
+import Logo from "../../../assets/logoCMC.png";
 
 import Button from "../../atoms/Button/Button";
 import { useState } from "react";
@@ -51,7 +52,13 @@ const Sidebar: React.FC = () => {
     {
       path: `${base}/users-manager`,
       icon: UserCog,
-      label: "Gestión de Usuarios",
+      label: "Gestión de Socios",
+      perms: ["medicos:leer"],
+    },
+     {
+      path: `${base}/users`,
+      icon: User2Icon,
+      label: "Listado de Socios",
       perms: ["medicos:leer"],
     },
     {
@@ -66,12 +73,12 @@ const Sidebar: React.FC = () => {
       label: "Ranking O.S.",
       perms: ["medicos:leer"],
     },
-    {
-      path: `${base}/generar-boletin`,
-      icon: NotebookText,
-      label: "Generar Boletín",
-      perms: ["medicos:leer"],
-    },
+    // {
+    //   path: `${base}/generar-boletin`,
+    //   icon: NotebookText,
+    //   label: "Generar Boletín",
+    //   perms: ["medicos:leer"],
+    // },
      {
       path: `${base}/afiliadospadron`,
       icon: Newspaper,
@@ -81,7 +88,7 @@ const Sidebar: React.FC = () => {
       {
       path: `${base}/padronsucio`,
       icon: Paperclip,
-      label: "Padrón Sucio",
+      label: "Listado de Prestadores",
       perms: ["medicos:leer"],
     },
     // { path: "/config", icon: Cog, label: "Configuración" },                  // ← COMENTADO (punto 5)

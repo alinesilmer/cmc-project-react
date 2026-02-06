@@ -140,9 +140,9 @@ const UsersManagerDashboard: React.FC = () => {
 
         <div className={styles.actionCard} onClick={() => navigate("/panel/users")}>
           <div className={styles.actionIcon}>👥</div>
-          <h3 className={styles.actionTitle}>Usuarios</h3>
+          <h3 className={styles.actionTitle}>Socios</h3>
           <p className={styles.actionDescription}>Gestioná la base de socios activos.</p>
-          <button className={styles.actionButton}>Ver Usuarios →</button>
+          <button className={styles.actionButton}>Ver Socios →</button>
         </div>
       </div>
 

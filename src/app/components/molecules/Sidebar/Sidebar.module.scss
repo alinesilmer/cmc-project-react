@@ -24,8 +24,8 @@
   display: flex;
   align-items: center;
   gap: $spacing-2;
-  margin-bottom: $spacing-4;
-  padding-bottom: $spacing-4;
+  margin-bottom: $spacing-2;
+  padding-bottom: $spacing-2;
   border-bottom: 1px solid $gray-200;
 }
 
@@ -33,12 +33,12 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 10px;
+  gap: 5px;
 }
 
 .logoImage {
-  width: 50%;
-  height: 50%;
+  width: 40%;
+  height: 40%;
   border-radius: 50%;
   object-fit: cover;
 }
