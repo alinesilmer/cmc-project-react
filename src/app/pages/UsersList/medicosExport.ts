@@ -282,6 +282,12 @@ export function isMissingField(row: Record<string, unknown>, field: MissingField
     return joined === "" || joined === "sin especialidad" || joined === "sinespecialidad";
   }
   const raw = pickFirst(row, MISSING_KEYS[field] ?? []);
+
+   if (field === "mail_particular") {
+    const s = String(raw ?? "").trim();
+    if (s === "@") return true;
+  }
+  
   return isEmptyValue(raw);
 }
 

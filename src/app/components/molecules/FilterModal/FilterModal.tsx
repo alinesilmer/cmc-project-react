@@ -503,7 +503,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
           {/* ===================== FALTANTES ===================== */}
           <div className={styles.filterSection}>
             <button className={styles.filterSectionHeader} onClick={() => toggleSection("faltantes")} type="button">
-              <span>Faltantes</span>
+              <span>Faltantes o Presentes</span>
               <span className={styles.chevron}>{expandedSections.faltantes ? "▲" : "▼"}</span>
             </button>
 

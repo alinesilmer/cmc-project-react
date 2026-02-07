@@ -46,20 +46,38 @@ async function fetchAllMedicos(qsBase: string, pageSize = 10_000) {
 function applyClientOnlyFilters(rows: MedicoRow[], filters: FilterSelection) {
   let out = rows;
 
-  // ✅ FALTANTES
-  if (filters.faltantes?.enabled) {
-    const field = filters.faltantes.field as MissingFieldKey;
-    const mode = filters.faltantes.mode;
-    out = out.filter((r) => {
-      const miss = isMissingField(r, field);
-      return mode === "missing" ? miss : !miss;
-    });
-  }
+ // FALTANTES
+if (filters.faltantes?.enabled) {
+  const field = filters.faltantes.field as MissingFieldKey;
+  const mode = filters.faltantes.mode;
 
-  // ✅ Checkbox "Con mala praxis" -> empresa NO vacía
+  const isValidEmail = (v: unknown) => {
+    const s = String(v ?? "").trim();
+    if (!s) return false;
+    if (s === "@") return false;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s);
+  };
+
+  out = out.filter((r) => {
+    // Caso especial: mail_particular
+    if (field === "mail_particular") {
+      const raw = getCellValue(r, "mail_particular"); 
+      if (mode === "missing") {
+        // faltante si vacío o "@" o no válido
+        return !isValidEmail(raw);
+      }
+      return isValidEmail(raw);
+    }
+
+    const miss = isMissingField(r, field);
+    return mode === "missing" ? miss : !miss;
+  });
+}
+
+
   if (filters.otros?.conMalapraxis) {
     out = out.filter((r) => {
-      const v = getCellValue(r, "malapraxis"); // empresa
+      const v = getCellValue(r, "malapraxis"); 
       return String(v ?? "").trim() !== "";
     });
   }
@@ -81,16 +99,12 @@ export function useMedicosExport() {
     setExportError(null);
 
     try {
-      // ✅ nro_socio siempre primero
       const colsKeys = ["nro_socio", ...filters.columns.filter((c) => c !== "nro_socio")];
 
-      // QS (sin limit/skip)
       const qsBase = buildQS({ ...mapUIToQuery(filters) });
 
-      // traer todo desde backend
       const rowsRaw = await fetchAllMedicos(qsBase, 10_000);
 
-      // aplicar filtros client-only
       const rows = applyClientOnlyFilters(rowsRaw, filters);
 
       const cols = colsKeys.map((key) => ({ key, header: labelFor(key) }));
