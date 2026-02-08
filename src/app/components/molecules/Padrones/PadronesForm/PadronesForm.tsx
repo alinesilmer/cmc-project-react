@@ -20,6 +20,7 @@ import {
   type Padron,
 } from "../../../../pages/DoctorProfilePage/api";
 import { useNotify } from "../../../../hooks/useNotify";
+import Button from "../../../atoms/Button/Button";
 
 // ✅ Props
 type Props = {
@@ -214,6 +215,111 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
     void persistToggle(nroOS, willSelect, name);
   };
 
+  const allFilteredSelected = useMemo(() => {
+    if (filteredCatalog.length === 0) return false;
+    return filteredCatalog.every((os) => selected.has(os.NRO_OBRA_SOCIAL));
+  }, [filteredCatalog, selected]);
+
+  const anyFilteredSelected = useMemo(() => {
+    return filteredCatalog.some((os) => selected.has(os.NRO_OBRA_SOCIAL));
+  }, [filteredCatalog, selected]);
+
+  // procesado en serie para no reventar el server con 200 requests simultáneas
+  async function bulkApplyForList(list: ObraSocial[], willSelect: boolean) {
+    if (loading) return;
+    if (list.length === 0) return;
+
+    // bloquear mientras corre
+    setLoading(true);
+    // marcar todas como pendientes (deshabilita checkboxes)
+    setPendingOS((prev) => {
+      const copy = new Set(prev);
+      list.forEach((os) => copy.add(os.NRO_OBRA_SOCIAL));
+      return copy;
+    });
+
+    // Optimista
+    setSelected((prev) => {
+      const copy = new Set(prev);
+      list.forEach((os) => {
+        const id = os.NRO_OBRA_SOCIAL;
+        if (willSelect) copy.add(id);
+        else copy.delete(id);
+      });
+      return copy;
+    });
+
+    // "operación" bulk (evita pisadas raras)
+    const myOp = ++opSeqRef.current;
+
+    try {
+      for (const os of list) {
+        const id = os.NRO_OBRA_SOCIAL;
+        const isSel = selected.has(id);
+        // si ya está en el estado deseado, salteá
+        if (willSelect && isSel) continue;
+        if (!willSelect && !isSel) continue;
+
+        if (willSelect) await addPadronByOS(medicoId, id);
+        else await removePadronByOS(medicoId, id);
+      }
+
+      const fresh = await fetchPadrones(medicoId);
+      if (myOp !== opSeqRef.current) return;
+
+      setPadrones(fresh);
+      const s = new Set<number>();
+      fresh.forEach((p) => {
+        const id = padronOSId(p);
+        if (id) s.add(id);
+      });
+      setSelected(s);
+
+      if (willSelect) notify.success("Se agregaron las obras sociales.");
+      else notify.info("Se quitaron las obras sociales.");
+    } catch (e) {
+      notify.error("No se pudieron aplicar los cambios masivos.");
+      setAlertType("error");
+      setAlertTitle("No se pudo actualizar");
+      setAlertMessage(
+        "Ocurrió un problema aplicando cambios masivos. Intentá nuevamente."
+      );
+      setAlertShowActions(false);
+      setAlertOnConfirm(null);
+      setAlertOpen(true);
+
+      // refrescar para volver al estado real del server
+      try {
+        const fresh = await fetchPadrones(medicoId);
+        if (myOp !== opSeqRef.current) return;
+        setPadrones(fresh);
+        const s = new Set<number>();
+        fresh.forEach((p) => {
+          const id = padronOSId(p);
+          if (id) s.add(id);
+        });
+        setSelected(s);
+      } catch {
+        // si también falla, dejamos el estado optimista (y el usuario reintenta)
+      }
+    } finally {
+      setPendingOS((prev) => {
+        const copy = new Set(prev);
+        list.forEach((os) => copy.delete(os.NRO_OBRA_SOCIAL));
+        return copy;
+      });
+      setLoading(false);
+    }
+  }
+
+  const handleSelectAllFiltered = () => {
+    void bulkApplyForList(filteredCatalog, true);
+  };
+
+  const handleClearAllFiltered = () => {
+    void bulkApplyForList(filteredCatalog, false);
+  };
+
   // ─────────────────────────────────────────────────────────────
   // PREVIEW / SUBMIT (opcionales)
   // ─────────────────────────────────────────────────────────────
@@ -376,6 +482,38 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
           </button>
         )}
       </div>
+
+      {/* ✅ Acciones masivas
+      <div className={styles.bulkActions}>
+        <Button
+          type="button"
+          variant="secondary"
+          className={styles.bulkButton}
+          disabled={loading || filteredCatalog.length === 0 || allFilteredSelected}
+          onClick={handleSelectAllFiltered}
+          title={
+            query.trim()
+              ? "Seleccionar todas las obras sociales filtradas"
+              : "Seleccionar todas las obras sociales"
+          }
+        >
+          {query.trim() ? "Seleccionar filtradas" : "Seleccionar todas"}
+        </Button>
+
+        <Button
+          type="button"
+          className={styles.bulkButtonSecondary}
+          disabled={loading || filteredCatalog.length === 0 || !anyFilteredSelected}
+          onClick={handleClearAllFiltered}
+          title={
+            query.trim()
+              ? "Quitar todas las obras sociales filtradas"
+              : "Quitar todas las obras sociales"
+          }
+        >
+          {query.trim() ? "Quitar filtradas" : "Quitar todas"}
+        </Button>
+      </div> */}
 
       <p className={styles.searchMeta}>
         Mostrando {filteredCatalog.length} de {catalog.length}

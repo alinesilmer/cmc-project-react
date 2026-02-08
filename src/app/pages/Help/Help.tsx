@@ -91,7 +91,7 @@ const Help: React.FC = () => {
       id: "equipo",
       icono: <Users size={36} />,
       titulo: "Gestionar equipo",
-      descripcion: "Altas de usuarios, roles, accesos y auditoría.",
+      descripcion: "Altas de socios, roles, accesos y auditoría.",
       href: "/ayuda/equipo",
     },
   ];

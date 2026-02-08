@@ -1,607 +1,375 @@
-// src/app/lib/medicosExport.ts
+// src/app/pages/UsersList/medicosExport.ts
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
-import type { FilterSelection } from "../../types/filters";
+import type { FilterSelection, MissingFieldKey } from "../../types/filters";
 
-export const FIELD_MAP: Record<string, string> = {
-  nombre: "NOMBRE",
-  nombre_: "nombre_",
-  apellido: "apellido",
-  sexo: "SEXO",
-  documento: "DOCUMENTO",
-  cuit: "CUIT",
-  fecha_nac: "FECHA_NAC",
-  existe: "EXISTE",
-  provincia: "PROVINCIA",
-  localidad: "localidad",
-  codigo_postal: "CODIGO_POSTAL",
-  domicilio_particular: "DOMICILIO_PARTICULAR",
-  tele_particular: "TELE_PARTICULAR",
-  celular_particular: "CELULAR_PARTICULAR",
-  mail_particular: "MAIL_PARTICULAR",
-  nro_socio: "NRO_SOCIO",
-  categoria: "categoria",
-  titulo: "titulo",
-  matricula_prov: "MATRICULA_PROV",
-  matricula_nac: "MATRICULA_NAC",
-  fecha_recibido: "FECHA_RECIBIDO",
-  fecha_matricula: "FECHA_MATRICULA",
-  domicilio_consulta: "DOMICILIO_CONSULTA",
-  telefono_consulta: "TELEFONO_CONSULTA",
-  condicion_impositiva: "condicion_impositiva",
-  anssal: "ANSSAL",
-  cobertura: "COBERTURA",
-  vencimiento_anssal: "VENCIMIENTO_ANSSAL",
-  malapraxis: "MALAPRAXIS",
-  vencimiento_malapraxis: "VENCIMIENTO_MALAPRAXIS",
-  vencimiento_cobertura: "VENCIMIENTO_COBERTURA",
-  cbu: "cbu",
-  observacion: "OBSERVACION",
+export type ExportColumn = { key: string; header: string };
+export type ExportExcelArgs = {
+  filename: string;
+  title: string;
+  subtitle?: string;
+  columns: ExportColumn[];
+  rows: Record<string, unknown>[];
+  logoFile: File | null;
 };
 
-export const HEADER_LABELS: Record<string, string> = {
-  apellido: "Apellido",
-  nombre_: "Nombre",
-  sexo: "Sexo",
-  documento: "DNI",
-  cuit: "CUIT",
-  fecha_nac: "Fecha de Nacimiento",
-  existe: "Estado",
-  provincia: "Provincia",
-  localidad: "Localidad",
-  codigo_postal: "Código Postal",
-  domicilio_particular: "Domicilio Particular",
-  tele_particular: "Teléfono",
-  celular_particular: "Celular",
-  mail_particular: "Email",
-  nro_socio: "N° de Socio",
-  categoria: "Categoría",
-  titulo: "Título",
-  matricula_prov: "Matrícula Provincial",
-  matricula_nac: "Matrícula Nacional",
-  fecha_recibido: "Fecha de Recibido",
-  fecha_matricula: "Fecha de Matrícula",
-  domicilio_consulta: "Domicilio Consultorio",
-  telefono_consulta: "Teléfono Consultorio",
-  condicion_impositiva: "Condición Impositiva",
-  anssal: "ANSSAL",
-  cobertura: "Cobertura",
-  vencimiento_anssal: "Vencimiento ANSSAL",
-  malapraxis: "Mala Praxis",
-  vencimiento_malapraxis: "Vencimiento Mala Praxis",
-  vencimiento_cobertura: "Vencimiento Cobertura",
-  cbu: "CBU",
-  observacion: "Observación",
-};
-
-export function defaultPretty(key: string) {
-  return key
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase())
-    .replace(/\bCuit\b/, "CUIT")
-    .replace(/\bCbu\b/, "CBU")
-    .replace(/\bAnssal\b/, "ANSSAL");
+/* =========================
+   Normalizers + Especialidades
+========================= */
+export function normalizeText(v: any): string {
+  return String(v ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
 }
 
-export function labelFor(key: string) {
-  return HEADER_LABELS[key] ?? defaultPretty(key);
+function safeStr(v: any) {
+  return v === null || v === undefined ? "" : String(v);
 }
 
-export function safeText(v: any) {
-  if (v === null || typeof v === "undefined") return "";
-  return String(v).trim();
+// ✅ Mejora: si ESPECIALIDADES viene como array de objetos, intentamos extraer nombre/descripcion.
+function coerceToStringArray(v: any): string[] {
+  if (!v) return [];
+
+  if (Array.isArray(v)) {
+    return v
+      .map((x) => {
+        if (x && typeof x === "object") {
+          const obj: any = x;
+          return (
+            obj?.nombre ??
+            obj?.NOMBRE ??
+            obj?.descripcion ??
+            obj?.DESCRIPCION ??
+            obj?.detalle ??
+            obj?.DETALLE ??
+            obj?.especialidad ??
+            obj?.ESPECIALIDAD ??
+            safeStr(obj)
+          );
+        }
+        return safeStr(x);
+      })
+      .map((s) => safeStr(s));
+  }
+
+  if (typeof v === "string") {
+    const s = v.trim();
+    if (!s) return [];
+    if (/[;,|]/.test(s)) return s.split(/[;,|]/g).map((x) => x.trim());
+    return [s];
+  }
+
+  return [safeStr(v)];
 }
 
-export function startOfDay(d: Date) {
+function cleanEspecialidades(arr: string[]): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+
+  for (const raw of arr) {
+    const t = safeStr(raw).trim();
+    if (!t) continue;
+    if (t === "0") continue;
+
+    const key = normalizeText(t);
+    if (!key) continue;
+    if (seen.has(key)) continue;
+
+    seen.add(key);
+    out.push(t);
+  }
+  return out;
+}
+
+function stripMedicoWhenMultiple(list: string[]): string[] {
+  if (list.length <= 1) return list;
+  const filtered = list.filter((x) => normalizeText(x) !== "medico");
+  return filtered.length ? filtered : list;
+}
+
+/**
+ * ✅ Regla como tu PDF:
+ * - Si hay varias y una es "médico", se elimina "médico"
+ * - Si no hay nada (o “Sin especialidad”) => ["médico"]
+ */
+export function getEspecialidadesList(row: any): string[] {
+  const raw =
+    row?.ESPECIALIDADES ??
+    row?.especialidades ??
+    row?.ESPECIALIDAD ??
+    row?.especialidad ??
+    row?.especialidad_nombre ??
+    row?.ESPECIALIDAD_NOMBRE ??
+    null;
+
+  let list = cleanEspecialidades(coerceToStringArray(raw));
+
+  const hasSin = list.some((t) => {
+    const n = normalizeText(t);
+    return n === "sin especialidad" || n === "sinespecialidad";
+  });
+
+  if (hasSin || list.length === 0) list = ["médico"];
+  return stripMedicoWhenMultiple(list);
+}
+
+// ✅ MOSTRAR TODAS (sin slice), separadas como en PDF (coma)
+export function formatEspecialidades(row: any): string {
+  return getEspecialidadesList(row).join(", ");
+}
+
+/* =========================
+   Date helpers (exportados)
+========================= */
+export function parseDateAny(v: any): Date | null {
+  if (!v) return null;
+  if (v instanceof Date) return isNaN(v.getTime()) ? null : v;
+
+  if (typeof v === "number") {
+    const ms = v < 10_000_000_000 ? v * 1000 : v;
+    const d = new Date(ms);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  const s = String(v).trim();
+  if (!s) return null;
+
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) {
+    const dd = Number(m[1]);
+    const mm = Number(m[2]) - 1;
+    const yy = Number(m[3]);
+    const d = new Date(yy, mm, dd);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+export function startOfDay(d: Date): Date {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
   return x;
 }
 
-export function endOfDay(d: Date) {
+export function addDays(d: Date, n: number): Date {
   const x = new Date(d);
-  x.setHours(23, 59, 59, 999);
+  x.setDate(x.getDate() + n);
   return x;
 }
 
-export function addDays(d: Date, days: number) {
-  const x = new Date(d);
-  x.setDate(x.getDate() + days);
-  return x;
+export function inRange(d: Date, from?: Date | null, to?: Date | null): boolean {
+  const t = d.getTime();
+  if (from && t < from.getTime()) return false;
+  if (to && t > to.getTime()) return false;
+  return true;
 }
 
-export function parseDateAny(v: any): Date | null {
-  if (!v) return null;
-  const s = String(v).trim();
-  if (!s || s.startsWith("0000")) return null;
-  const iso = s.length >= 10 ? s.slice(0, 10) : s;
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? null : startOfDay(d);
+/* =========================
+   Common utils
+========================= */
+function isEmptyValue(v: any): boolean {
+  if (v === null || typeof v === "undefined") return true;
+  if (typeof v === "string") return v.trim() === "";
+  if (Array.isArray(v)) return v.length === 0;
+  return false;
 }
 
-export function formatDateES(v: any) {
-  if (!v) return "";
-  const s = String(v).trim();
-  if (s === "1900-01-01" || s.startsWith("0000-00-00")) return "";
-  const d = new Date(s);
-  if (Number.isNaN(d.getTime())) return s;
-  const dd = String(d.getDate()).padStart(2, "0");
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const yyyy = d.getFullYear();
-  return `${dd}/${mm}/${yyyy}`;
-}
-
-export function getValue(row: any, key: string) {
-  if (!row) return "";
-  if (key in row) return row[key];
-
-  const upper = key.toUpperCase();
-  if (upper in row) return row[upper];
-  const lower = key.toLowerCase();
-  if (lower in row) return row[lower];
-
-  const mapped = FIELD_MAP[key];
-  if (mapped) {
-    if (mapped in row) return row[mapped];
-    const mappedUpper = mapped.toUpperCase();
-    if (mappedUpper in row) return row[mappedUpper];
-    const mappedLower = mapped.toLowerCase();
-    if (mappedLower in row) return row[mappedLower];
+function pickFirst(row: any, keys: string[]) {
+  for (const k of keys) {
+    const v = row?.[k];
+    if (!isEmptyValue(v)) return v;
   }
   return "";
 }
 
-export function normalizeBool(v: any): boolean {
-  if (typeof v === "boolean") return v;
-  if (typeof v === "number") return v !== 0;
-  if (typeof v === "string") {
-    const t = v.trim().toUpperCase();
-    return ["1", "S", "SI", "TRUE", "T", "Y", "YES"].includes(t);
+/* =========================
+   Field maps (backend compatible)
+========================= */
+const KEYMAP: Record<string, string[]> = {
+  nro_socio: ["nro_socio", "NRO_SOCIO", "SOCIO", "socio"],
+  nombre: ["nombre", "NOMBRE", "apellido_nombre", "APELLIDO_NOMBRE", "ape_nom", "APE_NOM"],
+  sexo: ["sexo", "SEXO"],
+  documento: ["documento", "DOCUMENTO", "dni", "DNI", "nro_doc", "NRO_DOC"],
+  mail_particular: ["mail_particular", "MAIL_PARTICULAR", "email", "EMAIL", "mail", "MAIL"],
+  tele_particular: ["tele_particular", "TELE_PARTICULAR", "telefono", "TELEFONO"],
+  celular_particular: ["celular_particular", "CELULAR_PARTICULAR", "celular", "CELULAR"],
+  matricula_prov: ["matricula_prov", "MATRICULA_PROV", "mat_prov", "MAT_PROV"],
+  matricula_nac: ["matricula_nac", "MATRICULA_NAC", "mat_nac", "MAT_NAC"],
+  domicilio_consulta: ["domicilio_consulta", "DOMICILIO_CONSULTA"],
+  telefono_consulta: ["telefono_consulta", "TELEFONO_CONSULTA", "tel_consulta", "TEL_CONSULTA"],
+  provincia: ["provincia", "PROVINCIA"],
+  categoria: ["categoria", "CATEGORIA"],
+  condicion_impositiva: ["condicion_impositiva", "CONDICION_IMPOSITIVA", "condicionImpositiva"],
+
+  // ✅ empresa malapraxis
+  malapraxis: ["malapraxis", "MALAPRAXIS", "malapraxis_empresa", "MALAPRAXIS_EMPRESA"],
+
+  // ✅ vencimientos (Pydantic + DB)
+  vencimiento_malapraxis: [
+    "vencimiento_malapraxis",
+    "VENCIMIENTO_MALAPRAXIS",
+    "malapraxis_vencimiento",
+    "MALAPRAXIS_VENCIMIENTO",
+    "malapraxis_vto",
+    "MALAPRAXIS_VTO",
+    "vto_malapraxis",
+    "VTO_MALAPRAXIS",
+    "fecha_venc_malapraxis",
+  ],
+  vencimiento_anssal: [
+    "vencimiento_anssal",
+    "VENCIMIENTO_ANSSAL",
+    "anssal_vencimiento",
+    "ANSSAL_VENCIMIENTO",
+    "anssal_vto",
+    "ANSSAL_VTO",
+    "vto_anssal",
+    "VTO_ANSSAL",
+    "fecha_venc_anssal",
+  ],
+  vencimiento_cobertura: [
+    "vencimiento_cobertura",
+    "VENCIMIENTO_COBERTURA",
+    "cobertura_vencimiento",
+    "COBERTURA_VENCIMIENTO",
+    "cobertura_vto",
+    "COBERTURA_VTO",
+    "vto_cobertura",
+    "VTO_COBERTURA",
+    "fecha_venc_cobertura",
+  ],
+};
+
+export function getCellValue(row: Record<string, unknown>, key: string): any {
+  if (key === "especialidad") return formatEspecialidades(row);
+
+  const keys = KEYMAP[key];
+  if (keys) return pickFirst(row, keys);
+
+  return (row as any)?.[key] ?? "";
+}
+
+/* =========================
+   Missing fields
+========================= */
+const MISSING_KEYS: Record<MissingFieldKey, string[]> = {
+  telefono_consulta: KEYMAP.telefono_consulta,
+  domicilio_consulta: KEYMAP.domicilio_consulta,
+  mail_particular: KEYMAP.mail_particular,
+  tele_particular: KEYMAP.tele_particular,
+  celular_particular: KEYMAP.celular_particular,
+  matricula_prov: KEYMAP.matricula_prov,
+  matricula_nac: KEYMAP.matricula_nac,
+  provincia: KEYMAP.provincia,
+  categoria: KEYMAP.categoria,
+  especialidad: ["ESPECIALIDADES", "especialidades", "ESPECIALIDAD", "especialidad", "ESPECIALIDAD_NOMBRE", "especialidad_nombre"],
+  condicion_impositiva: KEYMAP.condicion_impositiva,
+  malapraxis: KEYMAP.malapraxis,
+};
+
+export function isMissingField(row: Record<string, unknown>, field: MissingFieldKey): boolean {
+  if (field === "especialidad") {
+    const joined = normalizeText(formatEspecialidades(row));
+    return joined === "" || joined === "sin especialidad" || joined === "sinespecialidad";
   }
-  return false;
-}
+  const raw = pickFirst(row, MISSING_KEYS[field] ?? []);
 
-export function isActiveRow(row: any): boolean {
-  if (typeof row?.activo !== "undefined") return Boolean(Number(row.activo));
-  const ex = (getValue(row, "existe") ?? "").toString().trim().toUpperCase();
-  return ex === "S";
-}
-
-export function normalizeAdherente(row: any): boolean | null {
-  const raw =
-    getValue(row, "adherente") ??
-    getValue(row, "ES_ADHERENTE") ??
-    getValue(row, "es_adherente");
-  if (raw === null || typeof raw === "undefined" || raw === "") return null;
-  if (typeof raw === "boolean") return raw;
-  if (typeof raw === "number") return Boolean(raw);
-  if (typeof raw === "string") {
-    const t = raw.trim().toUpperCase();
-    if (["1", "S", "SI", "TRUE"].includes(t)) return true;
-    if (["0", "N", "NO", "FALSE"].includes(t)) return false;
+   if (field === "mail_particular") {
+    const s = String(raw ?? "").trim();
+    if (s === "@") return true;
   }
-  return null;
+  
+  return isEmptyValue(raw);
 }
 
-export function isEmptyLike(v: any) {
-  if (v === null || typeof v === "undefined") return true;
-  const s = String(v).trim();
-  return s === "" || s === "0" || s.toUpperCase() === "NULL";
-}
-
-export function includesCI(hay: any, needle: string) {
-  const a = String(hay ?? "").toLowerCase();
-  const b = String(needle ?? "").toLowerCase();
-  return b ? a.includes(b) : true;
-}
-
-export function buildQS(
-  params: Record<string, string | number | undefined | null>
-) {
-  const sp = new URLSearchParams();
-  Object.entries(params).forEach(([k, v]) => {
-    if (v === undefined || v === null) return;
-    const s = String(v).trim();
-    if (s !== "") sp.set(k, s);
-  });
-  return sp.toString();
-}
-
-export function mapUIToQuery(f: FilterSelection) {
-  const estado =
-    f.otros.estado === "activo"
-      ? "activos"
-      : f.otros.estado === "inactivo"
-      ? "inactivos"
-      : undefined;
-
+/* =========================
+   Query mapping (backend)
+========================= */
+export function mapUIToQuery(filters: FilterSelection) {
   return {
-    estado,
-    sexo: f.otros.sexo || undefined,
-    provincia: f.otros.provincia || undefined,
-    localidad: f.otros.localidad || undefined,
-    categoria: f.otros.categoria || undefined,
-    condicion_impositiva: f.otros.condicionImpositiva || undefined,
-    fecha_ingreso_desde: f.otros.fechaIngresoDesde || undefined,
-    fecha_ingreso_hasta: f.otros.fechaIngresoHasta || undefined,
+    sexo: filters.otros.sexo || undefined,
+    estado: filters.otros.estado || undefined,
+    adherente: filters.otros.adherente || undefined,
+    provincia: filters.otros.provincia || undefined,
+    especialidad: filters.otros.especialidad || undefined,
+    categoria: filters.otros.categoria || undefined,
+    condicion_impositiva: filters.otros.condicionImpositiva || undefined,
+    fecha_ingreso_desde: filters.otros.fechaIngresoDesde || undefined,
+    fecha_ingreso_hasta: filters.otros.fechaIngresoHasta || undefined,
 
-    malapraxis_vencida: f.vencimientos.malapraxisVencida ? 1 : undefined,
-    malapraxis_por_vencer: f.vencimientos.malapraxisPorVencer ? 1 : undefined,
-    anssal_vencido: f.vencimientos.anssalVencido ? 1 : undefined,
-    anssal_por_vencer: f.vencimientos.anssalPorVencer ? 1 : undefined,
-    cobertura_vencida: f.vencimientos.coberturaVencida ? 1 : undefined,
-    cobertura_por_vencer: f.vencimientos.coberturaPorVencer ? 1 : undefined,
-
-    por_vencer_dias: f.vencimientos.dias || undefined,
-    vencimientos_desde: f.vencimientos.fechaDesde || undefined,
-    vencimientos_hasta: f.vencimientos.fechaHasta || undefined,
-
-    skip: 0,
+    malapraxis_vencida: filters.vencimientos.malapraxisVencida ? "1" : undefined,
+    malapraxis_por_vencer: filters.vencimientos.malapraxisPorVencer ? "1" : undefined,
+    anssal_vencido: filters.vencimientos.anssalVencido ? "1" : undefined,
+    anssal_por_vencer: filters.vencimientos.anssalPorVencer ? "1" : undefined,
+    cobertura_vencida: filters.vencimientos.coberturaVencida ? "1" : undefined,
+    cobertura_por_vencer: filters.vencimientos.coberturaPorVencer ? "1" : undefined,
+    vto_desde: filters.vencimientos.fechaDesde || undefined,
+    vto_hasta: filters.vencimientos.fechaHasta || undefined,
+    vto_dias: filters.vencimientos.dias > 0 ? String(filters.vencimientos.dias) : undefined,
   };
 }
 
-// export async function exportToExcelBW(args: {
-//   filename: string;
-//   title: string;
-//   subtitle?: string;
-//   columns: Array<{ key: string; header: string }>;
-//   rows: any[];
-//   logoFile?: File | null;
-// }) {
-//   const { filename, title, subtitle, columns, rows, logoFile } = args;
-
-//   const wb = new ExcelJS.Workbook();
-//   wb.creator = "Colegio Médico de Corrientes";
-//   wb.created = new Date();
-
-//   const ws = wb.addWorksheet("Export", {
-//     views: [{ state: "frozen", ySplit: 7 }],
-//     pageSetup: {
-//       orientation: "landscape",
-//       fitToPage: true,
-//       fitToWidth: 1,
-//       fitToHeight: 0,
-//     },
-//   });
-
-//   const colCount = Math.max(1, columns.length);
-//   const logoCols = colCount >= 8 ? 3 : colCount >= 5 ? 2 : 1;
-
-//   if (logoFile) {
-//     try {
-//       const arrayBuffer = await logoFile.arrayBuffer();
-//       const ext = logoFile.name.split(".").pop()?.toLowerCase() || "png";
-
-//       const imageId = wb.addImage({
-//         buffer: arrayBuffer,
-//         extension: ext as any,
-//       });
-//       ws.addImage(imageId, {
-//         tl: { col: 0.2, row: 0.2 },
-//         ext: { width: 120, height: 120 },
-//       });
-//     } catch (err) {
-//       console.error("Error loading logo:", err);
-//     }
-//   }
-
-//   ws.mergeCells(1, 1, 4, logoCols);
-//   ws.getCell(1, 1).alignment = { horizontal: "center", vertical: "middle" };
-
-//   ws.mergeCells(1, logoCols + 1, 2, colCount);
-//   const mainTitleCell = ws.getCell(1, logoCols + 1);
-//   mainTitleCell.value = "Colegio Médico de Corrientes";
-//   mainTitleCell.font = { bold: true, size: 18, color: { argb: "FF0B4F8A" } };
-//   mainTitleCell.alignment = { horizontal: "center", vertical: "middle" };
-
-//   ws.mergeCells(3, logoCols + 1, 3, colCount);
-//   const subtitleCell = ws.getCell(3, logoCols + 1);
-//   subtitleCell.value = title;
-//   subtitleCell.font = { bold: true, size: 14, color: { argb: "FF333333" } };
-//   subtitleCell.alignment = { horizontal: "center", vertical: "middle" };
-
-//   ws.mergeCells(4, logoCols + 1, 4, colCount);
-//   const metaCell = ws.getCell(4, logoCols + 1);
-//   const meta = `Generado: ${new Date().toLocaleString("es-AR", {
-//     day: "2-digit",
-//     month: "2-digit",
-//     year: "numeric",
-//     hour: "2-digit",
-//     minute: "2-digit",
-//   })}${subtitle ? ` · ${subtitle}` : ""}`;
-//   metaCell.value = meta;
-//   metaCell.font = { size: 10, color: { argb: "FF666666" }, italic: true };
-//   metaCell.alignment = { horizontal: "center", vertical: "middle" };
-
-//   ws.getRow(1).height = 32;
-//   ws.getRow(2).height = 20;
-//   ws.getRow(3).height = 22;
-//   ws.getRow(4).height = 18;
-//   ws.getRow(5).height = 8;
-
-//   const headerRowIdx = 6;
-//   const headerRow = ws.getRow(headerRowIdx);
-//   headerRow.values = ["", ...columns.map((c) => c.header)];
-//   headerRow.height = 24;
-
-//   for (let c = 1; c <= colCount; c++) {
-//     const cell = ws.getCell(headerRowIdx, c);
-//     cell.font = { bold: true, size: 11, color: { argb: "FFFFFFFF" } };
-//     cell.alignment = {
-//       horizontal: "center",
-//       vertical: "middle",
-//       wrapText: true,
-//     };
-//     cell.fill = {
-//       type: "pattern",
-//       pattern: "solid",
-//       fgColor: { argb: "FF0B4F8A" },
-//     };
-//     cell.border = {
-//       top: { style: "thin", color: { argb: "FF999999" } },
-//       left: { style: "thin", color: { argb: "FF999999" } },
-//       bottom: { style: "thin", color: { argb: "FF999999" } },
-//       right: { style: "thin", color: { argb: "FF999999" } },
-//     };
-//   }
-
-//   const dataStart = 7;
-//   const normCellValue = (row: any, key: string) => {
-//     const v = getValue(row, key);
-//     if (key.startsWith("vencimiento_") || key.startsWith("fecha_"))
-//       return formatDateES(v);
-//     if (key === "malapraxis") return normalizeBool(v) ? "SI" : "NO";
-//     return safeText(v);
-//   };
-
-//   rows.forEach((r, i) => {
-//     const excelRowIdx = dataStart + i;
-//     const vals = columns.map((c) => normCellValue(r, c.key));
-//     ws.getRow(excelRowIdx).values = ["", ...vals];
-//     ws.getRow(excelRowIdx).height = 20;
-
-//     const zebra = i % 2 === 0 ? "FFFFFFFF" : "FFF8F9FA";
-//     for (let c = 1; c <= colCount; c++) {
-//       const cell = ws.getCell(excelRowIdx, c);
-//       cell.font = { size: 10, color: { argb: "FF333333" } };
-//       cell.alignment = {
-//         horizontal: "left",
-//         vertical: "middle",
-//         wrapText: true,
-//       };
-//       cell.fill = {
-//         type: "pattern",
-//         pattern: "solid",
-//         fgColor: { argb: zebra },
-//       };
-//       cell.border = {
-//         top: { style: "thin", color: { argb: "FFE0E0E0" } },
-//         left: { style: "thin", color: { argb: "FFE0E0E0" } },
-//         bottom: { style: "thin", color: { argb: "FFE0E0E0" } },
-//         right: { style: "thin", color: { argb: "FFE0E0E0" } },
-//       };
-//     }
-//   });
-
-//   columns.forEach((col, idx) => {
-//     const c = idx + 1;
-//     const headerLen = (col.header ?? "").length;
-//     let maxLen = headerLen;
-//     for (let i = 0; i < Math.min(rows.length, 500); i++) {
-//       const v = safeText(normCellValue(rows[i], col.key));
-//       maxLen = Math.max(maxLen, v.length);
-//     }
-//     ws.getColumn(c).width = Math.min(50, Math.max(12, maxLen + 3));
-//   });
-
-//   ws.autoFilter = {
-//     from: { row: headerRowIdx, column: 1 },
-//     to: { row: headerRowIdx, column: colCount },
-//   };
-
-//   const buf = await wb.xlsx.writeBuffer();
-//   saveAs(
-//     new Blob([buf], {
-//       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-//     }),
-//     filename
-//   );
-// }
-
-export async function exportToExcelBW(args: {
-  filename: string;
-  title: string;
-  subtitle?: string;
-  columns: Array<{ key: string; header: string }>;
-  rows: any[];
-  logoFile?: File | null;
-}) {
-  const { filename, title, subtitle, columns, rows, logoFile } = args;
-
-  const wb = new ExcelJS.Workbook();
-  wb.creator = "Colegio Médico de Corrientes";
-  wb.created = new Date();
-
-  const ws = wb.addWorksheet("Export", {
-    views: [{ state: "frozen", ySplit: 6 }], // congela hasta el header (fila 6)
-    pageSetup: {
-      orientation: "landscape",
-      fitToPage: true,
-      fitToWidth: 1,
-      fitToHeight: 0,
-    },
-  });
-
-  const colCount = Math.max(1, columns.length);
-  const logoCols = colCount >= 8 ? 3 : colCount >= 5 ? 2 : 1;
-
-  // Logo opcional
-  if (logoFile) {
-    try {
-      const arrayBuffer = await logoFile.arrayBuffer();
-      const ext = logoFile.name.split(".").pop()?.toLowerCase() || "png";
-      const imageId = wb.addImage({
-        buffer: arrayBuffer,
-        extension: ext as any,
-      });
-      ws.addImage(imageId, {
-        tl: { col: 0.2, row: 0.2 },
-        ext: { width: 120, height: 120 },
-      });
-    } catch (err) {
-      console.error("Error loading logo:", err);
-    }
+export function buildQS(obj: Record<string, any>) {
+  const parts: string[] = [];
+  for (const [k, v] of Object.entries(obj)) {
+    if (typeof v === "undefined" || v === null || v === "") continue;
+    parts.push(`${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`);
   }
-
-  // Encabezado superior
-  ws.mergeCells(1, 1, 4, logoCols);
-  ws.getCell(1, 1).alignment = { horizontal: "center", vertical: "middle" };
-
-  ws.mergeCells(1, logoCols + 1, 2, colCount);
-  const mainTitleCell = ws.getCell(1, logoCols + 1);
-  mainTitleCell.value = "Colegio Médico de Corrientes";
-  mainTitleCell.font = { bold: true, size: 18, color: { argb: "FF0B4F8A" } };
-  mainTitleCell.alignment = { horizontal: "center", vertical: "middle" };
-
-  ws.mergeCells(3, logoCols + 1, 3, colCount);
-  const subtitleCell = ws.getCell(3, logoCols + 1);
-  subtitleCell.value = title;
-  subtitleCell.font = { bold: true, size: 14, color: { argb: "FF333333" } };
-  subtitleCell.alignment = { horizontal: "center", vertical: "middle" };
-
-  ws.mergeCells(4, logoCols + 1, 4, colCount);
-  const metaCell = ws.getCell(4, logoCols + 1);
-  const meta = `Generado: ${new Date().toLocaleString("es-AR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  })}${subtitle ? ` · ${subtitle}` : ""}`;
-  metaCell.value = meta;
-  metaCell.font = { size: 10, color: { argb: "FF666666" }, italic: true };
-  metaCell.alignment = { horizontal: "center", vertical: "middle" };
-
-  ws.getRow(1).height = 32;
-  ws.getRow(2).height = 20;
-  ws.getRow(3).height = 22;
-  ws.getRow(4).height = 18;
-  ws.getRow(5).height = 8;
-
-  // Fila de encabezados (sin columna vacía al inicio)
-  const headerRowIdx = 6;
-  const headerRow = ws.getRow(headerRowIdx);
-  headerRow.values = columns.map((c) => c.header);
-  headerRow.height = 24;
-
-  for (let c = 1; c <= colCount; c++) {
-    const cell = ws.getCell(headerRowIdx, c);
-    cell.font = { bold: true, size: 11, color: { argb: "FFFFFFFF" } };
-    cell.alignment = {
-      horizontal: "center",
-      vertical: "middle",
-      wrapText: true,
-    };
-    cell.fill = {
-      type: "pattern",
-      pattern: "solid",
-      fgColor: { argb: "FF0B4F8A" },
-    };
-    cell.border = {
-      top: { style: "thin", color: { argb: "FF999999" } },
-      left: { style: "thin", color: { argb: "FF999999" } },
-      bottom: { style: "thin", color: { argb: "FF999999" } },
-      right: { style: "thin", color: { argb: "FF999999" } },
-    };
-  }
-
-  // Datos
-  const dataStart = headerRowIdx + 1;
-
-  const normCellValue = (row: any, key: string) => {
-    const v = getValue(row, key);
-    if (key.startsWith("vencimiento_") || key.startsWith("fecha_"))
-      return formatDateES(v);
-    if (key === "malapraxis") return normalizeBool(v) ? "SI" : "NO";
-    return safeText(v);
-  };
-
-  rows.forEach((r, i) => {
-    const excelRowIdx = dataStart + i;
-    const vals = columns.map((c) => normCellValue(r, c.key));
-    ws.getRow(excelRowIdx).values = vals; // sin columna vacía
-    ws.getRow(excelRowIdx).height = 20;
-
-    const zebra = i % 2 === 0 ? "FFFFFFFF" : "FFF8F9FA";
-    for (let c = 1; c <= colCount; c++) {
-      const cell = ws.getCell(excelRowIdx, c);
-      cell.font = { size: 10, color: { argb: "FF333333" } };
-      cell.alignment = {
-        horizontal: "left",
-        vertical: "middle",
-        wrapText: true,
-      };
-      cell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: zebra },
-      };
-      cell.border = {
-        top: { style: "thin", color: { argb: "FFE0E0E0" } },
-        left: { style: "thin", color: { argb: "FFE0E0E0" } },
-        bottom: { style: "thin", color: { argb: "FFE0E0E0" } },
-        right: { style: "thin", color: { argb: "FFE0E0E0" } },
-      };
-    }
-  });
-
-  // Auto ancho por columna (en base a header + todas las filas)
-  for (let idx = 0; idx < columns.length; idx++) {
-    const key = columns[idx].key;
-    const headerLen = (columns[idx].header ?? "").length;
-    let maxLen = headerLen;
-
-    for (let i = 0; i < rows.length; i++) {
-      const val = safeText(normCellValue(rows[i], key));
-      maxLen = Math.max(maxLen, val.length);
-    }
-
-    // heurística razonable: 1 char ~ 1 unidad de ancho. +2 de margen.
-    ws.getColumn(idx + 1).width = Math.min(60, Math.max(10, maxLen + 2));
-  }
-
-  ws.autoFilter = {
-    from: { row: headerRowIdx, column: 1 },
-    to: { row: headerRowIdx, column: colCount },
-  };
-
-  const buf = await wb.xlsx.writeBuffer();
-  saveAs(
-    new Blob([buf], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    }),
-    filename
-  );
+  return parts.join("&");
 }
 
-export function toCSV(
-  rows: any[],
-  columns: Array<{ key: string; header: string }>
-) {
-  const headers = columns.map((c) => c.header);
-  const escapeCSV = (s: string) => {
-    const needs = /[",\n\r;]/.test(s);
-    const normalized = s.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-    const quoted = normalized.replace(/"/g, '""');
-    return needs ? `"${quoted}"` : quoted;
+/* =========================
+   Labels
+========================= */
+export function labelFor(key: string) {
+  const map: Record<string, string> = {
+    nro_socio: "N° Socio",
+    nombre: "Nombre completo",
+    sexo: "Sexo",
+    documento: "Documento",
+    mail_particular: "Mail",
+    tele_particular: "Teléfono",
+    celular_particular: "Celular",
+    matricula_prov: "Matrícula Provincial",
+    matricula_nac: "Matrícula Nacional",
+    domicilio_consulta: "Domicilio Consultorio",
+    telefono_consulta: "Teléfono Consultorio",
+    provincia: "Provincia",
+    categoria: "Categoría",
+    especialidad: "Especialidades",
+    condicion_impositiva: "Condición Impositiva",
+
+    malapraxis: "Mala Praxis (empresa)",
+
+    vencimiento_malapraxis: "Venc. Mala Praxis",
+    vencimiento_anssal: "Venc. ANSSAL",
+    vencimiento_cobertura: "Venc. Cobertura",
   };
-  const lines = [
-    headers.join(";"),
-    ...rows.map((r) =>
-      columns.map((c) => escapeCSV(String(getValue(r, c.key) ?? ""))).join(";")
-    ),
-  ];
-  return "\uFEFF" + lines.join("\n");
+  return map[key] ?? key;
+}
+
+/* =========================
+   CSV helpers
+========================= */
+function csvEscape(v: any) {
+  const s = String(v ?? "");
+  if (/[",\n\r;]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+export function toCSV(rows: Record<string, unknown>[], cols: ExportColumn[]) {
+  const header = cols.map((c) => csvEscape(c.header)).join(",");
+  const lines = rows.map((r) => cols.map((c) => csvEscape(getCellValue(r, c.key))).join(","));
+  return [header, ...lines].join("\n");
 }
 
 export function downloadBlob(filename: string, mime: string, content: string) {
@@ -614,4 +382,187 @@ export function downloadBlob(filename: string, mime: string, content: string) {
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+}
+
+/* =========================
+   Excel Export (FIX columnas + especialidades)
+========================= */
+async function fileToBase64(file: File): Promise<{ base64: string; extension: "png" | "jpeg" }> {
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+
+  const ext: "png" | "jpeg" =
+    dataUrl.includes("image/jpeg") || dataUrl.includes("image/jpg") ? "jpeg" : "png";
+
+  const base64 = dataUrl.split(",")[1] ?? "";
+  return { base64, extension: ext };
+}
+
+function fmtDateTime(d = new Date()) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+export async function exportToExcelBW(args: ExportExcelArgs) {
+  const wb = new ExcelJS.Workbook();
+  wb.creator = "CMC";
+  wb.created = new Date();
+
+  const ws = wb.addWorksheet("Médicos", {
+    pageSetup: { fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
+  });
+
+  // Column setup (✅ NO ponemos header acá para que no cree header fantasma)
+  ws.columns = args.columns.map((c) => {
+    const w =
+      c.key === "nombre"
+        ? 44
+        : c.key === "especialidad"
+        ? 42
+        : c.key === "domicilio_consulta"
+        ? 44
+        : c.key === "mail_particular"
+        ? 32
+        : c.key === "malapraxis"
+        ? 26
+        : c.key === "nro_socio"
+        ? 14
+        : c.key.startsWith("vencimiento_")
+        ? 18
+        : 20;
+
+    return { key: c.key, width: w };
+  });
+
+  const totalCols = Math.max(1, args.columns.length);
+  const lastColLetter = ws.getColumn(totalCols).letter;
+
+  // Header rows layout
+  const ROW_LOGO = 1;
+  const ROW_TITLE = 2;
+  const ROW_SUB = 3;
+  const ROW_META = 4;
+  const ROW_SPACER = 5;
+  const ROW_TABLE_HEADER = 6;
+
+  // Freeze until header row
+  ws.views = [{ state: "frozen", ySplit: ROW_TABLE_HEADER }];
+
+  // Heights
+  ws.getRow(ROW_LOGO).height = 42;
+  ws.getRow(ROW_TITLE).height = 28;
+  ws.getRow(ROW_SUB).height = 18;
+  ws.getRow(ROW_META).height = 16;
+  ws.getRow(ROW_SPACER).height = 6;
+
+  // Logo
+  if (args.logoFile) {
+    const { base64, extension } = await fileToBase64(args.logoFile);
+    const imgId = wb.addImage({ base64, extension });
+
+    ws.addImage(imgId, {
+      tl: { col: 0, row: 0 },
+      ext: { width: 140, height: 42 },
+    });
+  }
+
+  // Title centered
+  ws.mergeCells(`A${ROW_TITLE}:${lastColLetter}${ROW_TITLE}`);
+  ws.getCell(`A${ROW_TITLE}`).value = args.title;
+  ws.getCell(`A${ROW_TITLE}`).font = { name: "Calibri", size: 18, bold: true, color: { argb: "FF0B1F3A" } };
+  ws.getCell(`A${ROW_TITLE}`).alignment = { vertical: "middle", horizontal: "center" };
+
+  // Subtitle centered
+  ws.mergeCells(`A${ROW_SUB}:${lastColLetter}${ROW_SUB}`);
+  ws.getCell(`A${ROW_SUB}`).value = args.subtitle ?? "";
+  ws.getCell(`A${ROW_SUB}`).font = { name: "Calibri", size: 11, color: { argb: "FF111111" } };
+  ws.getCell(`A${ROW_SUB}`).alignment = { vertical: "middle", horizontal: "center" };
+
+  // Meta row
+  if (totalCols >= 4) {
+    ws.mergeCells(`A${ROW_META}:C${ROW_META}`);
+    ws.getCell(`A${ROW_META}`).value = "Generado";
+    ws.getCell(`A${ROW_META}`).font = { name: "Calibri", size: 10, italic: true, color: { argb: "FF333333" } };
+    ws.getCell(`A${ROW_META}`).alignment = { vertical: "middle", horizontal: "left" };
+
+    ws.mergeCells(`D${ROW_META}:${lastColLetter}${ROW_META}`);
+    ws.getCell(`D${ROW_META}`).value = fmtDateTime(new Date());
+    ws.getCell(`D${ROW_META}`).font = { name: "Calibri", size: 10, italic: true, color: { argb: "FF333333" } };
+    ws.getCell(`D${ROW_META}`).alignment = { vertical: "middle", horizontal: "right" };
+  } else {
+    ws.mergeCells(`A${ROW_META}:${lastColLetter}${ROW_META}`);
+    ws.getCell(`A${ROW_META}`).value = `Generado: ${fmtDateTime(new Date())}`;
+    ws.getCell(`A${ROW_META}`).font = { name: "Calibri", size: 10, italic: true, color: { argb: "FF333333" } };
+    ws.getCell(`A${ROW_META}`).alignment = { vertical: "middle", horizontal: "left" };
+  }
+
+  // Borders
+  const border = {
+    top: { style: "thin" as const, color: { argb: "FF111111" } },
+    left: { style: "thin" as const, color: { argb: "FF111111" } },
+    bottom: { style: "thin" as const, color: { argb: "FF111111" } },
+    right: { style: "thin" as const, color: { argb: "FF111111" } },
+  };
+
+  // ✅ Header row: escribir celda por celda (NO values con null)
+  const headerRow = ws.getRow(ROW_TABLE_HEADER);
+  headerRow.height = 22;
+
+  for (let i = 1; i <= totalCols; i++) {
+    const c = args.columns[i - 1];
+    const cell = headerRow.getCell(i);
+    cell.value = c.header;
+    cell.font = { name: "Calibri", size: 11, bold: true, color: { argb: "FFFFFFFF" } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF111111" } };
+    cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+    cell.border = border;
+  }
+
+  // ✅ Data rows: agregar por objeto (por key) para que jamás se corran
+  for (let i = 0; i < args.rows.length; i++) {
+    const r = args.rows[i];
+
+    const obj: Record<string, any> = {};
+    for (const col of args.columns) {
+      obj[col.key] = getCellValue(r, col.key);
+    }
+
+    const excelRow = ws.addRow(obj);
+    excelRow.height = 18;
+
+    const zebra = i % 2 === 0 ? "FFFFFFFF" : "FFF7F7F7";
+
+    // Estilizar TODAS las columnas aunque estén vacías
+    for (let col = 1; col <= totalCols; col++) {
+      const key = args.columns[col - 1]?.key;
+      const cell = excelRow.getCell(col);
+
+      cell.font = { name: "Calibri", size: 11, color: { argb: "FF111111" } };
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: zebra } };
+      cell.border = border;
+
+      if (key === "nombre" || key === "especialidad" || key === "domicilio_consulta" || key === "mail_particular" || key === "malapraxis") {
+        cell.alignment = { vertical: "middle", horizontal: "left", wrapText: true };
+      } else {
+        cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+      }
+    }
+  }
+
+  // AutoFilter
+  const endRow = ws.lastRow?.number ?? ROW_TABLE_HEADER;
+  ws.autoFilter = {
+    from: { row: ROW_TABLE_HEADER, column: 1 },
+    to: { row: endRow, column: totalCols },
+  };
+
+  const buf = await wb.xlsx.writeBuffer();
+  saveAs(
+    new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }),
+    args.filename
+  );
 }

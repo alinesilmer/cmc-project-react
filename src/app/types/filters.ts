@@ -1,36 +1,66 @@
-// src/app/types/filters.ts
+// types for FilterModal 
+
+
+export type MissingFieldKey =
+  | "telefono_consulta"
+  | "domicilio_consulta"
+  | "mail_particular"
+  | "tele_particular"
+  | "celular_particular"
+  | "matricula_prov"
+  | "matricula_nac"
+  | "provincia"
+  // ❌ localidad removida
+  | "categoria"
+  | "especialidad"
+  | "condicion_impositiva"
+  | "malapraxis"; // ✅ empresa malapraxis
+
+export type FaltantesFilter = {
+  enabled: boolean;
+  field: MissingFieldKey;
+  mode: "missing" | "present";
+};
+
+export type VencimientosFilter = {
+  malapraxisVencida: boolean;
+  malapraxisPorVencer: boolean;
+  anssalVencido: boolean;
+  anssalPorVencer: boolean;
+  coberturaVencida: boolean;
+  coberturaPorVencer: boolean;
+
+  // ventana
+  fechaDesde: string;
+  fechaHasta: string;
+  dias: number; // 0 = sin rango
+};
+
+export type OtrosFilter = {
+  sexo: string;
+  estado: "" | "activo" | "inactivo";
+  adherente: "" | "si" | "no";
+  provincia: string;
+  // ❌ localidad removida
+  especialidad: string;
+  categoria: string;
+  condicionImpositiva: string;
+  fechaIngresoDesde: string;
+  fechaIngresoHasta: string;
+
+  // ✅ check "Con mala praxis" (empresa asociada)
+  conMalapraxis: boolean;
+};
 
 export type FilterSelection = {
   columns: string[];
-  vencimientos: {
-    malapraxisVencida: boolean;
-    malapraxisPorVencer: boolean;
-    anssalVencido: boolean;
-    anssalPorVencer: boolean;
-    coberturaVencida: boolean;
-    coberturaPorVencer: boolean;
-    fechaDesde?: string;
-    fechaHasta?: string;
-    // 0 = sin rango rápido; 30/60/90 = próximos N días
-    dias: number;
-  };
-  otros: {
-    sexo: string;
-    estado: string;
-    adherente: string;
-    provincia: string;
-    localidad: string;
-    especialidad: string;
-    categoria: string;
-    condicionImpositiva: string;
-    fechaIngresoDesde: string;
-    fechaIngresoHasta: string;
-  };
+  vencimientos: VencimientosFilter;
+  otros: OtrosFilter;
+  faltantes: FaltantesFilter;
 };
 
-// Estado inicial coherente con el tipo (dias = 0 => “sin rango”)
 export const initialFilters: FilterSelection = {
-  columns: [],
+  columns: ["nombre", "documento", "mail_particular", "matricula_prov", "especialidad", "malapraxis"],
   vencimientos: {
     malapraxisVencida: false,
     malapraxisPorVencer: false,
@@ -47,11 +77,16 @@ export const initialFilters: FilterSelection = {
     estado: "",
     adherente: "",
     provincia: "",
-    localidad: "",
     especialidad: "",
     categoria: "",
     condicionImpositiva: "",
     fechaIngresoDesde: "",
     fechaIngresoHasta: "",
+    conMalapraxis: false,
+  },
+  faltantes: {
+    enabled: false,
+    field: "mail_particular",
+    mode: "missing",
   },
 };
