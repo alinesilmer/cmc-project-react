@@ -2,6 +2,7 @@
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import type { FilterSelection, MissingFieldKey } from "../../types/filters";
+import { getEspecialidadNameById } from "../../lib/especialidadesCatalog";
 
 export type ExportColumn = { key: string; header: string };
 export type ExportExcelArgs = {
@@ -14,7 +15,7 @@ export type ExportExcelArgs = {
 };
 
 /* =========================
-   Normalizers + Especialidades
+   Normalizers
 ========================= */
 export function normalizeText(v: any): string {
   return String(v ?? "")
@@ -28,40 +29,54 @@ function safeStr(v: any) {
   return v === null || v === undefined ? "" : String(v);
 }
 
-// ✅ Mejora: si ESPECIALIDADES viene como array de objetos, intentamos extraer nombre/descripcion.
+function isEmptyValue(v: any): boolean {
+  if (v === null || typeof v === "undefined") return true;
+  if (typeof v === "string") return v.trim() === "";
+  if (Array.isArray(v)) return v.length === 0;
+  return false;
+}
+
+function pickFirst(row: any, keys: string[]) {
+  for (const k of keys) {
+    const v = row?.[k];
+    if (!isEmptyValue(v)) return v;
+  }
+  return "";
+}
+
+/* =========================
+   ✅ ESPECIALIDADES (DEFINITIVO)
+   Backend /api/medicos devuelve IDs:
+   nro_especialidad..nro_especialidad6
+   => traducimos ID->NOMBRE con el catálogo
+========================= */
+
+const ESPEC_ID_KEYS = [
+  "nro_especialidad",
+  "nro_especialidad2",
+  "nro_especialidad3",
+  "nro_especialidad4",
+  "nro_especialidad5",
+  "nro_especialidad6",
+  "NRO_ESPECIALIDAD",
+  "NRO_ESPECIALIDAD2",
+  "NRO_ESPECIALIDAD3",
+  "NRO_ESPECIALIDAD4",
+  "NRO_ESPECIALIDAD5",
+  "NRO_ESPECIALIDAD6",
+];
+
 function coerceToStringArray(v: any): string[] {
   if (!v) return [];
-
-  if (Array.isArray(v)) {
-    return v
-      .map((x) => {
-        if (x && typeof x === "object") {
-          const obj: any = x;
-          return (
-            obj?.nombre ??
-            obj?.NOMBRE ??
-            obj?.descripcion ??
-            obj?.DESCRIPCION ??
-            obj?.detalle ??
-            obj?.DETALLE ??
-            obj?.especialidad ??
-            obj?.ESPECIALIDAD ??
-            safeStr(obj)
-          );
-        }
-        return safeStr(x);
-      })
-      .map((s) => safeStr(s));
-  }
-
+  if (Array.isArray(v)) return v.map((x) => safeStr(x)).filter(Boolean);
   if (typeof v === "string") {
     const s = v.trim();
     if (!s) return [];
-    if (/[;,|]/.test(s)) return s.split(/[;,|]/g).map((x) => x.trim());
+    if (/[;,|]/.test(s)) return s.split(/[;,|]/g).map((x) => x.trim()).filter(Boolean);
     return [s];
   }
-
-  return [safeStr(v)];
+  if (typeof v === "number") return [String(v)];
+  return [safeStr(v)].filter(Boolean);
 }
 
 function cleanEspecialidades(arr: string[]): string[] {
@@ -75,8 +90,11 @@ function cleanEspecialidades(arr: string[]): string[] {
 
     const key = normalizeText(t);
     if (!key) continue;
-    if (seen.has(key)) continue;
 
+    // ignorar "sin especialidad"
+    if (key === "sin especialidad" || key === "sinespecialidad") continue;
+
+    if (seen.has(key)) continue;
     seen.add(key);
     out.push(t);
   }
@@ -89,33 +107,72 @@ function stripMedicoWhenMultiple(list: string[]): string[] {
   return filtered.length ? filtered : list;
 }
 
+function collectEspecialidadIds(row: any): string[] {
+  const ids: string[] = [];
+
+  for (const k of ESPEC_ID_KEYS) {
+    const v = row?.[k];
+    if (v === null || v === undefined) continue;
+
+    // puede venir number o string
+    const s = String(v).trim();
+    if (!s || s === "0") continue;
+
+    ids.push(s);
+  }
+
+  // dedup manteniendo orden
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const id of ids) {
+    const key = String(id);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(key);
+  }
+  return out;
+}
+
 /**
- * ✅ Regla como tu PDF:
- * - Si hay varias y una es "médico", se elimina "médico"
- * - Si no hay nada (o “Sin especialidad”) => ["médico"]
+ * ✅ Regla final:
+ * - Tomar IDs (nro_especialidad..6)
+ * - Traducir a nombres con catálogo
+ * - Si el catálogo todavía no está, como fallback mostramos los IDs (no vacío)
+ * - Si queda vacío o viene "sin especialidad" => ["médico"]
+ * - Si hay varias y una es "médico" => sacar "médico"
+ * - Si además el backend alguna vez manda ESPECIALIDADES (nombres) también los incorporamos
  */
 export function getEspecialidadesList(row: any): string[] {
-  const raw =
+  const ids = collectEspecialidadIds(row);
+
+  // 1) ids -> nombres
+  const fromIds = ids
+    .map((id) => getEspecialidadNameById(id) ?? id) // fallback al id para no quedar vacío
+    .flatMap((x) => coerceToStringArray(x));
+
+  // 2) compat: si alguna respuesta trae nombres ya resueltos
+  const rawCombined =
     row?.ESPECIALIDADES ??
     row?.especialidades ??
     row?.ESPECIALIDAD ??
     row?.especialidad ??
-    row?.especialidad_nombre ??
     row?.ESPECIALIDAD_NOMBRE ??
+    row?.especialidad_nombre ??
     null;
 
-  let list = cleanEspecialidades(coerceToStringArray(raw));
+  const fromCombined = coerceToStringArray(rawCombined);
 
-  const hasSin = list.some((t) => {
-    const n = normalizeText(t);
-    return n === "sin especialidad" || n === "sinespecialidad";
-  });
+  let list = cleanEspecialidades([...fromIds, ...fromCombined]);
 
-  if (hasSin || list.length === 0) list = ["médico"];
-  return stripMedicoWhenMultiple(list);
+  // si no quedó nada => médico
+  if (list.length === 0) list = ["médico"];
+
+  // regla "médico" si hay otras
+  list = stripMedicoWhenMultiple(list);
+
+  return list;
 }
 
-// ✅ MOSTRAR TODAS (sin slice), separadas como en PDF (coma)
 export function formatEspecialidades(row: any): string {
   return getEspecialidadesList(row).join(", ");
 }
@@ -174,25 +231,7 @@ export function inRange(d: Date, from?: Date | null, to?: Date | null): boolean 
 }
 
 /* =========================
-   Common utils
-========================= */
-function isEmptyValue(v: any): boolean {
-  if (v === null || typeof v === "undefined") return true;
-  if (typeof v === "string") return v.trim() === "";
-  if (Array.isArray(v)) return v.length === 0;
-  return false;
-}
-
-function pickFirst(row: any, keys: string[]) {
-  for (const k of keys) {
-    const v = row?.[k];
-    if (!isEmptyValue(v)) return v;
-  }
-  return "";
-}
-
-/* =========================
-   Field maps (backend compatible)
+   Field maps
 ========================= */
 const KEYMAP: Record<string, string[]> = {
   nro_socio: ["nro_socio", "NRO_SOCIO", "SOCIO", "socio"],
@@ -210,10 +249,8 @@ const KEYMAP: Record<string, string[]> = {
   categoria: ["categoria", "CATEGORIA"],
   condicion_impositiva: ["condicion_impositiva", "CONDICION_IMPOSITIVA", "condicionImpositiva"],
 
-  // ✅ empresa malapraxis
   malapraxis: ["malapraxis", "MALAPRAXIS", "malapraxis_empresa", "MALAPRAXIS_EMPRESA"],
 
-  // ✅ vencimientos (Pydantic + DB)
   vencimiento_malapraxis: [
     "vencimiento_malapraxis",
     "VENCIMIENTO_MALAPRAXIS",
@@ -250,7 +287,7 @@ const KEYMAP: Record<string, string[]> = {
 };
 
 export function getCellValue(row: Record<string, unknown>, key: string): any {
-  if (key === "especialidad") return formatEspecialidades(row);
+  if (key === "especialidad" || key === "especialidades") return formatEspecialidades(row);
 
   const keys = KEYMAP[key];
   if (keys) return pickFirst(row, keys);
@@ -271,28 +308,31 @@ const MISSING_KEYS: Record<MissingFieldKey, string[]> = {
   matricula_nac: KEYMAP.matricula_nac,
   provincia: KEYMAP.provincia,
   categoria: KEYMAP.categoria,
-  especialidad: ["ESPECIALIDADES", "especialidades", "ESPECIALIDAD", "especialidad", "ESPECIALIDAD_NOMBRE", "especialidad_nombre"],
+  especialidad: [
+    ...ESPEC_ID_KEYS, // ✅ ids reales
+    "ESPECIALIDADES",
+    "especialidades",
+    "ESPECIALIDAD",
+    "especialidad",
+  ],
   condicion_impositiva: KEYMAP.condicion_impositiva,
   malapraxis: KEYMAP.malapraxis,
 };
 
 export function isMissingField(row: Record<string, unknown>, field: MissingFieldKey): boolean {
-  if (field === "especialidad") {
-    const joined = normalizeText(formatEspecialidades(row));
-    return joined === "" || joined === "sin especialidad" || joined === "sinespecialidad";
-  }
-  const raw = pickFirst(row, MISSING_KEYS[field] ?? []);
+  if (field === "especialidad") return getEspecialidadesList(row).length === 0;
 
-   if (field === "mail_particular") {
+  const raw = pickFirst(row, MISSING_KEYS[field] ?? []);
+  if (field === "mail_particular") {
     const s = String(raw ?? "").trim();
     if (s === "@") return true;
   }
-  
   return isEmptyValue(raw);
 }
 
 /* =========================
    Query mapping (backend)
+   ✅ NO mandamos "especialidad" porque /api/medicos no lo soporta (422)
 ========================= */
 export function mapUIToQuery(filters: FilterSelection) {
   return {
@@ -300,7 +340,6 @@ export function mapUIToQuery(filters: FilterSelection) {
     estado: filters.otros.estado || undefined,
     adherente: filters.otros.adherente || undefined,
     provincia: filters.otros.provincia || undefined,
-    especialidad: filters.otros.especialidad || undefined,
     categoria: filters.otros.categoria || undefined,
     condicion_impositiva: filters.otros.condicionImpositiva || undefined,
     fecha_ingreso_desde: filters.otros.fechaIngresoDesde || undefined,
@@ -347,9 +386,7 @@ export function labelFor(key: string) {
     categoria: "Categoría",
     especialidad: "Especialidades",
     condicion_impositiva: "Condición Impositiva",
-
     malapraxis: "Mala Praxis (empresa)",
-
     vencimiento_malapraxis: "Venc. Mala Praxis",
     vencimiento_anssal: "Venc. ANSSAL",
     vencimiento_cobertura: "Venc. Cobertura",
@@ -385,7 +422,7 @@ export function downloadBlob(filename: string, mime: string, content: string) {
 }
 
 /* =========================
-   Excel Export (FIX columnas + especialidades)
+   Excel Export
 ========================= */
 async function fileToBase64(file: File): Promise<{ base64: string; extension: "png" | "jpeg" }> {
   const dataUrl = await new Promise<string>((resolve, reject) => {
@@ -416,7 +453,6 @@ export async function exportToExcelBW(args: ExportExcelArgs) {
     pageSetup: { fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
   });
 
-  // Column setup (✅ NO ponemos header acá para que no cree header fantasma)
   ws.columns = args.columns.map((c) => {
     const w =
       c.key === "nombre"
@@ -441,7 +477,6 @@ export async function exportToExcelBW(args: ExportExcelArgs) {
   const totalCols = Math.max(1, args.columns.length);
   const lastColLetter = ws.getColumn(totalCols).letter;
 
-  // Header rows layout
   const ROW_LOGO = 1;
   const ROW_TITLE = 2;
   const ROW_SUB = 3;
@@ -449,17 +484,14 @@ export async function exportToExcelBW(args: ExportExcelArgs) {
   const ROW_SPACER = 5;
   const ROW_TABLE_HEADER = 6;
 
-  // Freeze until header row
   ws.views = [{ state: "frozen", ySplit: ROW_TABLE_HEADER }];
 
-  // Heights
   ws.getRow(ROW_LOGO).height = 42;
   ws.getRow(ROW_TITLE).height = 28;
   ws.getRow(ROW_SUB).height = 18;
   ws.getRow(ROW_META).height = 16;
   ws.getRow(ROW_SPACER).height = 6;
 
-  // Logo
   if (args.logoFile) {
     const { base64, extension } = await fileToBase64(args.logoFile);
     const imgId = wb.addImage({ base64, extension });
@@ -470,19 +502,16 @@ export async function exportToExcelBW(args: ExportExcelArgs) {
     });
   }
 
-  // Title centered
   ws.mergeCells(`A${ROW_TITLE}:${lastColLetter}${ROW_TITLE}`);
   ws.getCell(`A${ROW_TITLE}`).value = args.title;
   ws.getCell(`A${ROW_TITLE}`).font = { name: "Calibri", size: 18, bold: true, color: { argb: "FF0B1F3A" } };
   ws.getCell(`A${ROW_TITLE}`).alignment = { vertical: "middle", horizontal: "center" };
 
-  // Subtitle centered
   ws.mergeCells(`A${ROW_SUB}:${lastColLetter}${ROW_SUB}`);
   ws.getCell(`A${ROW_SUB}`).value = args.subtitle ?? "";
   ws.getCell(`A${ROW_SUB}`).font = { name: "Calibri", size: 11, color: { argb: "FF111111" } };
   ws.getCell(`A${ROW_SUB}`).alignment = { vertical: "middle", horizontal: "center" };
 
-  // Meta row
   if (totalCols >= 4) {
     ws.mergeCells(`A${ROW_META}:C${ROW_META}`);
     ws.getCell(`A${ROW_META}`).value = "Generado";
@@ -500,7 +529,6 @@ export async function exportToExcelBW(args: ExportExcelArgs) {
     ws.getCell(`A${ROW_META}`).alignment = { vertical: "middle", horizontal: "left" };
   }
 
-  // Borders
   const border = {
     top: { style: "thin" as const, color: { argb: "FF111111" } },
     left: { style: "thin" as const, color: { argb: "FF111111" } },
@@ -508,7 +536,6 @@ export async function exportToExcelBW(args: ExportExcelArgs) {
     right: { style: "thin" as const, color: { argb: "FF111111" } },
   };
 
-  // ✅ Header row: escribir celda por celda (NO values con null)
   const headerRow = ws.getRow(ROW_TABLE_HEADER);
   headerRow.height = 22;
 
@@ -522,7 +549,6 @@ export async function exportToExcelBW(args: ExportExcelArgs) {
     cell.border = border;
   }
 
-  // ✅ Data rows: agregar por objeto (por key) para que jamás se corran
   for (let i = 0; i < args.rows.length; i++) {
     const r = args.rows[i];
 
@@ -536,7 +562,6 @@ export async function exportToExcelBW(args: ExportExcelArgs) {
 
     const zebra = i % 2 === 0 ? "FFFFFFFF" : "FFF7F7F7";
 
-    // Estilizar TODAS las columnas aunque estén vacías
     for (let col = 1; col <= totalCols; col++) {
       const key = args.columns[col - 1]?.key;
       const cell = excelRow.getCell(col);
@@ -553,7 +578,6 @@ export async function exportToExcelBW(args: ExportExcelArgs) {
     }
   }
 
-  // AutoFilter
   const endRow = ws.lastRow?.number ?? ROW_TABLE_HEADER;
   ws.autoFilter = {
     from: { row: ROW_TABLE_HEADER, column: 1 },

@@ -1,169 +1,144 @@
+"use client";
 
 import { useState } from "react";
-import { getJSONLong } from "../../lib/http";
-import type { FilterSelection, MissingFieldKey } from "../../types/filters";
+import { getJSON } from "../../lib/http";
+import type { FilterSelection } from "../../types/filters";
+
 import {
   buildQS,
-  exportToExcelBW,
-  labelFor,
   mapUIToQuery,
+  labelFor,
   toCSV,
   downloadBlob,
-  getCellValue,
-  isMissingField,
+  exportToExcelBW,
 } from "./medicosExport";
-import {
-  presetColumns,
-  sortForPreset,
-  baseFilterForPreset,
-  applyExtraFilters,
-  type ExportPresetId,
-  type PresetParams,
-} from "./medicosPresets";
 
-type MedicoRow = Record<string, unknown>;
+import { hasEspecialidadesCatalog, setEspecialidadesCatalog } from "../../lib/especialidadesCatalog";
 
-async function fetchAllMedicos(qsBase: string, pageSize = 10_000) {
-  const all: MedicoRow[] = [];
-  let skip = 0;
-  const TIMEOUT_PER_PAGE = 120_000;
+type Format = "xlsx" | "csv";
 
-  while (true) {
-    const qs = `${qsBase}&limit=${pageSize}&skip=${skip}`;
-    const url = `/api/medicos/all?${qs}`;
-    const page = await getJSONLong<MedicoRow[]>(url, TIMEOUT_PER_PAGE);
-
-    if (!Array.isArray(page) || page.length === 0) break;
-
-    all.push(...page);
-    if (page.length < pageSize) break;
-    skip += page.length;
-  }
-
-  return all;
+function stamp() {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(
+    d.getMinutes()
+  )}${pad(d.getSeconds())}`;
 }
 
-function applyClientOnlyFilters(rows: MedicoRow[], filters: FilterSelection) {
-  let out = rows;
-
- // FALTANTES
-if (filters.faltantes?.enabled) {
-  const field = filters.faltantes.field as MissingFieldKey;
-  const mode = filters.faltantes.mode;
-
-  const isValidEmail = (v: unknown) => {
-    const s = String(v ?? "").trim();
-    if (!s) return false;
-    if (s === "@") return false;
-    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s);
-  };
-
-  out = out.filter((r) => {
-    // Caso especial: mail_particular
-    if (field === "mail_particular") {
-      const raw = getCellValue(r, "mail_particular"); 
-      if (mode === "missing") {
-        // faltante si vacío o "@" o no válido
-        return !isValidEmail(raw);
-      }
-      return isValidEmail(raw);
-    }
-
-    const miss = isMissingField(r, field);
-    return mode === "missing" ? miss : !miss;
-  });
+// Normaliza key por si en algún lado te quedó "especialidades"
+function normalizeColKey(k: string) {
+  if (k === "especialidades") return "especialidad";
+  return k;
 }
 
+function parseEspecialidadFilter(v: string): { mode: "none" | "id" | "name"; value: string } {
+  const s = String(v ?? "").trim();
+  if (!s) return { mode: "none", value: "" };
+  if (s.startsWith("id:")) return { mode: "id", value: s.slice(3).trim() };
+  if (s.startsWith("name:")) return { mode: "name", value: s.slice(5).trim() };
+  // fallback: si te quedó guardado un id “pelado”
+  if (/^\d+$/.test(s)) return { mode: "id", value: s };
+  return { mode: "name", value: s };
+}
 
-  if (filters.otros?.conMalapraxis) {
-    out = out.filter((r) => {
-      const v = getCellValue(r, "malapraxis"); 
-      return String(v ?? "").trim() !== "";
-    });
-  }
+function rowHasEspecialidadId(row: any, id: string): boolean {
+  const want = String(id).trim();
+  if (!want || want === "0") return true;
 
-  return out;
+  const keys = [
+    "nro_especialidad",
+    "nro_especialidad2",
+    "nro_especialidad3",
+    "nro_especialidad4",
+    "nro_especialidad5",
+    "nro_especialidad6",
+    "NRO_ESPECIALIDAD",
+    "NRO_ESPECIALIDAD2",
+    "NRO_ESPECIALIDAD3",
+    "NRO_ESPECIALIDAD4",
+    "NRO_ESPECIALIDAD5",
+    "NRO_ESPECIALIDAD6",
+  ];
+
+  return keys.some((k) => String(row?.[k] ?? "").trim() === want);
+}
+
+async function ensureEspecialidadesCatalogLoaded() {
+  if (hasEspecialidadesCatalog()) return;
+
+  // si no está cargado, lo cargamos acá para que el Excel NUNCA salga vacío
+  const data = await getJSON<any[]>("/api/especialidades/");
+  const opts = Array.isArray(data)
+    ? data.map((e: any) => {
+        const rawVal = e?.id ?? e?.ID ?? e?.codigo ?? e?.CODIGO ?? e?.value ?? "";
+        const rawLabel =
+          e?.nombre ??
+          e?.NOMBRE ??
+          e?.descripcion ??
+          e?.DESCRIPCION ??
+          e?.detalle ??
+          e?.DETALLE ??
+          e?.label ??
+          e?.name ??
+          rawVal;
+
+        const v = String(rawVal ?? "").trim();
+        const l = String(rawLabel ?? "").trim();
+        return { value: v || l, label: l || v };
+      })
+    : [];
+
+  setEspecialidadesCatalog(opts);
 }
 
 export function useMedicosExport() {
   const [exportLoading, setExportLoading] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
 
-  async function onExportWithFilters(format: "xlsx" | "csv", filters: FilterSelection, logoFile: File | null) {
-    if (!filters.columns || filters.columns.length === 0) {
-      setExportError("Seleccioná al menos una columna");
-      return false;
-    }
-
+  async function onExportWithFilters(format: Format, filters: FilterSelection, logoFile: File | null) {
     setExportLoading(true);
     setExportError(null);
 
     try {
-      const colsKeys = ["nro_socio", ...filters.columns.filter((c) => c !== "nro_socio")];
+      // ✅ Asegura catálogo antes de exportar (clave)
+      await ensureEspecialidadesCatalogLoaded();
 
-      const qsBase = buildQS({ ...mapUIToQuery(filters) });
+      // ✅ armamos query con tus filtros (sin especialidad para evitar 422)
+      const queryObj = mapUIToQuery(filters);
+      const qs = buildQS({ ...queryObj, limit: 50000 });
 
-      const rowsRaw = await fetchAllMedicos(qsBase, 10_000);
+      const url = `/api/medicos?${qs}`;
+      let rows = await getJSON<any[]>(url);
 
-      const rows = applyClientOnlyFilters(rowsRaw, filters);
+      if (!Array.isArray(rows)) throw new Error("La API no devolvió una lista de médicos.");
 
-      const cols = colsKeys.map((key) => ({ key, header: labelFor(key) }));
-      const fnameDate = new Date().toISOString().slice(0, 10);
+      // ✅ filtro de especialidad SE APLICA LOCAL (por id)
+      const esp = parseEspecialidadFilter(filters.otros.especialidad || "");
+      if (esp.mode === "id") {
+        rows = rows.filter((r) => rowHasEspecialidadId(r, esp.value));
+      }
+      // si fuera name:... (viejo), lo dejamos sin filtrar para no romper (o lo implementamos luego)
 
-      if (format === "xlsx") {
-        await exportToExcelBW({
-          filename: `medicos_${fnameDate}.xlsx`,
-          title: "Prestadores del Colegio Médico de Corrientes",
-          subtitle: `${rows.length} registros`,
-          columns: cols,
-          rows,
-          logoFile,
-        });
-      } else {
+      // ✅ columnas seleccionadas
+      const selectedCols = (filters.columns ?? []).map(normalizeColKey);
+      const cols = selectedCols.map((key) => ({ key, header: labelFor(key) }));
+
+      const filenameBase = `medicos_${stamp()}`;
+
+      if (format === "csv") {
         const csv = toCSV(rows, cols);
-        downloadBlob(`medicos_${fnameDate}.csv`, "text/csv;charset=utf-8", csv);
+        downloadBlob(`${filenameBase}.csv`, "text/csv;charset=utf-8", csv);
+        return true;
       }
 
-      return true;
-    } catch (e: any) {
-      setExportError(e?.message || "Error al exportar");
-      return false;
-    } finally {
-      setExportLoading(false);
-    }
-  }
-
-  async function onExportPreset(format: "xlsx" | "csv", presetId: ExportPresetId, rawUsers: MedicoRow[], presetParams: PresetParams) {
-    setExportLoading(true);
-    setExportError(null);
-
-    try {
-      const filtered = rawUsers.filter(
-        (r) => baseFilterForPreset(presetId, r, presetParams) && applyExtraFilters(r, presetParams)
-      );
-      const sorted = sortForPreset(presetId, filtered);
-
-      if (sorted.length === 0) {
-        setExportError("No hay registros que coincidan con los filtros seleccionados");
-        return false;
-      }
-
-      const cols = presetColumns(presetId);
-      const fname = `${presetId}_${new Date().toISOString().slice(0, 10)}`;
-
-      if (format === "xlsx") {
-        await exportToExcelBW({
-          filename: `${fname}.xlsx`,
-          title: "Prestadores del Colegio Médico de Corrientes",
-          subtitle: `${sorted.length} registro${sorted.length !== 1 ? "s" : ""}`,
-          columns: cols,
-          rows: sorted,
-          logoFile: null,
-        });
-      } else {
-        const csv = toCSV(sorted, cols);
-        downloadBlob(`${fname}.csv`, "text/csv;charset=utf-8", csv);
-      }
+      await exportToExcelBW({
+        filename: `${filenameBase}.xlsx`,
+        title: "Colegio Médico de Corrientes",
+        subtitle: "Listado de médicos",
+        columns: cols,
+        rows,
+        logoFile,
+      });
 
       return true;
     } catch (e: any) {
@@ -179,6 +154,5 @@ export function useMedicosExport() {
     exportError,
     setExportError,
     onExportWithFilters,
-    onExportPreset,
   };
 }
