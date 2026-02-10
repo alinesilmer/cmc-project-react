@@ -1,5 +1,3 @@
-
-
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { saveAs } from "file-saver";
@@ -25,7 +23,7 @@ type Prestador = {
   apellido_nombre?: string | null;
   ape_nom?: string | null;
   matricula_prov?: string | number | null;
-  telefono_consulta?: string | null;
+  telefono_consulta?: any;
 
   especialidades?: string[] | null;
   especialidad?: string | null;
@@ -41,7 +39,8 @@ const API_BASE =
 
 const ENDPOINTS = {
   obrasSociales: `${API_BASE}/api/obras_social/`,
-  medicosByOS: (nroOS: number) => `${API_BASE}/api/padrones/obras-sociales/${nroOS}/medicos`,
+  medicosByOS: (nroOS: number) =>
+    `${API_BASE}/api/padrones/obras-sociales/${nroOS}/medicos`,
   prestadorDetailCandidates: (id: string) => [
     `${API_BASE}/api/prestadores/${id}`,
     `${API_BASE}/api/medicos/${id}`,
@@ -75,6 +74,29 @@ const normalize = (s: string) =>
 function safeStr(v: unknown) {
   if (v === null || v === undefined) return "";
   return String(v);
+}
+
+function cleanText(v: unknown) {
+  return safeStr(v)
+    .replace(/^'+/, "")
+    .replace(/[\u0000-\u001F\u007F-\u009F]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function digitsOnly(v: unknown) {
+  const s = cleanText(v);
+  return s.replace(/\D+/g, "");
+}
+
+// ✅ Heurística: detectar teléfono “malo/truncado”
+function isBadPhone(raw: unknown) {
+  const d = digitsOnly(raw);
+  if (!d) return true;
+  if (d === "0") return true;
+  if (d === "2147483647") return true; // int32 max (dato roto/casteado)
+  if (d.length <= 4) return true; // típico truncado (ej "3794")
+  return false;
 }
 
 function pickNombre(p: Prestador) {
@@ -259,8 +281,13 @@ function mapItemToPrestador(it: any): Prestador {
   const nombre = src?.NOMBRE ?? src?.nombre ?? it?.NOMBRE ?? it?.nombre ?? null;
 
   const matricula_prov =
-    src?.MATRICULA_PROV ?? src?.matricula_prov ?? it?.MATRICULA_PROV ?? it?.matricula_prov ?? null;
+    src?.MATRICULA_PROV ??
+    src?.matricula_prov ??
+    it?.MATRICULA_PROV ??
+    it?.matricula_prov ??
+    null;
 
+  // 👇 ojo: esto puede venir truncado. Lo arreglamos por enrichment.
   const telefono_consulta =
     src?.TELEFONO_CONSULTA ??
     src?.telefono_consulta ??
@@ -357,14 +384,21 @@ async function fetchPrestadorByNroSocio(nro: string): Promise<Prestador | null> 
 }
 
 // ==========================
-// Enriquecimiento SOLO EXCEL (mismo que PDF)
+// Enriquecimiento SOLO EXCEL
+// ✅ AHORA TRAE TAMBIÉN TELEFONO (para arreglar truncados)
 // ==========================
 const XLSX_REQ_TIMEOUT_MS = 12_000;
 const XLSX_CONTACT_CONCURRENCY = 4;
 const XLSX_ENRICH_MAX = 700;
+const CONTACT_CACHE_MAX = 5000;
 
-type ContactoPayload = Pick<Prestador, "domicilio_consulta">;
+type ContactoPayload = Pick<Prestador, "domicilio_consulta" | "telefono_consulta">;
 const contactoCache = new Map<string, ContactoPayload>();
+
+function cacheSetContacto(id: string, payload: ContactoPayload) {
+  if (contactoCache.size > CONTACT_CACHE_MAX) contactoCache.clear();
+  contactoCache.set(id, payload);
+}
 
 async function fetchContactoById(id: string, signal?: AbortSignal): Promise<ContactoPayload> {
   const cached = contactoCache.get(id);
@@ -384,16 +418,28 @@ async function fetchContactoById(id: string, signal?: AbortSignal): Promise<Cont
         data?.domicilio_consulta ??
         null;
 
-      const payload: ContactoPayload = { domicilio_consulta };
-      contactoCache.set(id, payload);
+      // ✅ IMPORTANTE: traer teléfono del endpoint detalle (puede venir como TELEFONO_CONSULTA o TELE_PARTICULAR)
+      const telefono_consulta =
+        src?.TELEFONO_CONSULTA ??
+        src?.telefono_consulta ??
+        src?.TELE_PARTICULAR ??
+        src?.tele_particular ??
+        data?.TELEFONO_CONSULTA ??
+        data?.telefono_consulta ??
+        data?.TELE_PARTICULAR ??
+        data?.tele_particular ??
+        null;
+
+      const payload: ContactoPayload = { domicilio_consulta, telefono_consulta };
+      cacheSetContacto(id, payload);
       return payload;
     } catch (e: any) {
       if (signal?.aborted) throw e;
     }
   }
 
-  const payload: ContactoPayload = { domicilio_consulta: null };
-  contactoCache.set(id, payload);
+  const payload: ContactoPayload = { domicilio_consulta: null, telefono_consulta: null };
+  cacheSetContacto(id, payload);
   return payload;
 }
 
@@ -428,27 +474,46 @@ async function mapWithConcurrency<T, R>(
 async function enrichForExcel(rows: Prestador[], signal?: AbortSignal): Promise<Prestador[]> {
   const needAll = rows
     .map((p, idx) => ({ p, idx }))
-    .filter(({ p }) => !safeStr(p.domicilio_consulta).trim() && !!p.id);
+    .filter(({ p }) => {
+      const missAddr = !cleanText(p.domicilio_consulta).trim() && !!p.id;
+      const badTel = isBadPhone(p.telefono_consulta) && !!p.id;
+      return missAddr || badTel;
+    });
 
   if (needAll.length === 0) return rows;
   if (signal?.aborted) return rows;
 
   const need = needAll.slice(0, XLSX_ENRICH_MAX);
-  const fetched = await mapWithConcurrency(need, XLSX_CONTACT_CONCURRENCY, signal, async ({ p, idx }) => {
-    const c = await fetchContactoById(String(p.id), signal);
-    return { idx, c };
-  });
+
+  const fetched = await mapWithConcurrency(
+    need,
+    XLSX_CONTACT_CONCURRENCY,
+    signal,
+    async ({ p, idx }) => {
+      const c = await fetchContactoById(String(p.id), signal);
+      return { idx, c };
+    }
+  );
 
   const out = rows.slice();
   for (const item of fetched) {
     if (!item) continue;
     const { idx, c } = item as any;
     const prev = out[idx];
+
+    const prevTelBad = isBadPhone(prev.telefono_consulta);
+    const newTelBad = isBadPhone(c.telefono_consulta);
+
     out[idx] = {
       ...prev,
-      domicilio_consulta: safeStr(prev.domicilio_consulta).trim() ? prev.domicilio_consulta : c.domicilio_consulta,
+      domicilio_consulta: cleanText(prev.domicilio_consulta)
+        ? prev.domicilio_consulta
+        : c.domicilio_consulta,
+      // ✅ si el tel del listado está truncado/roto, reemplazalo por el del detalle
+      telefono_consulta: prevTelBad && !newTelBad ? c.telefono_consulta : prev.telefono_consulta,
     };
   }
+
   return out;
 }
 
@@ -499,7 +564,6 @@ async function toPngBase64(assetUrl: string): Promise<string> {
     reader.readAsDataURL(blob);
   });
 
-  // data:image/png;base64,XXXX
   const idx = dataUrl.indexOf("base64,");
   return idx >= 0 ? dataUrl.slice(idx + "base64,".length) : dataUrl;
 }
@@ -511,7 +575,7 @@ function tryImageTypeFromDataUrl(dataUrl: string): "png" | "jpeg" {
 }
 
 // ======================================================
-// ✅ SERVICIOS MANUALES (van dentro de Servicios)
+// ✅ SERVICIOS MANUALES
 // ======================================================
 type ManualServiceRow = {
   nro_socio: string;
@@ -576,7 +640,6 @@ const PadronSucio = () => {
   const [exporting, setExporting] = useState<ExportingMode>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  const [logoDataUrl, setLogoDataUrl] = useState<string>("");
   const [logoType, setLogoType] = useState<"png" | "jpeg">("png");
   const [logoBase64, setLogoBase64] = useState<string>("");
 
@@ -596,7 +659,6 @@ const PadronSucio = () => {
             reader.readAsDataURL(blob);
           });
           if (alive) {
-            setLogoDataUrl(dataUrl);
             setLogoType(tryImageTypeFromDataUrl(dataUrl));
             setLogoBase64(await toPngBase64(Logo as unknown as string));
           }
@@ -647,6 +709,16 @@ const PadronSucio = () => {
       return;
     }
 
+    // ✅ LOG pedido (tal cual)
+    console.log(
+      "[TEL RAW SAMPLE]",
+      prestadores.slice(0, 10).map((p) => ({
+        raw: p.telefono_consulta,
+        str: String(p.telefono_consulta),
+        digits: String(p.telefono_consulta ?? "").replace(/\D+/g, ""),
+      }))
+    );
+
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -654,13 +726,24 @@ const PadronSucio = () => {
     try {
       setExporting("excel");
 
+      // ✅ CLAVE: re-enriquecer trayendo teléfono real desde endpoint detalle
       const enrichedAll = await enrichForExcel(prestadores, controller.signal);
       if (controller.signal.aborted) return;
+
+      // 🔎 debug post-enrichment (para comprobar que el truncado se corrige)
+      console.log(
+        "[TEL AFTER ENRICH SAMPLE]",
+        enrichedAll.slice(0, 10).map((p) => ({
+          id: p.id,
+          raw: p.telefono_consulta,
+          digits: String(p.telefono_consulta ?? "").replace(/\D+/g, ""),
+        }))
+      );
 
       const enrichedDedup = dedupPrestadoresKeepMostEspecialidades(enrichedAll);
 
       // -----------------------
-      // Agrupación igual que PDF
+      // Agrupación (igual que antes)
       // -----------------------
       const groups = new Map<string, Prestador[]>();
       const labelByKey = new Map<string, string>();
@@ -699,7 +782,7 @@ const PadronSucio = () => {
         }
       }
 
-      // ✅ Manuales dentro de Diagnóstico por Imagen
+      // Manuales dentro de Diagnóstico por Imagen
       const diagServiceLabel = "Diagnóstico por Imagen";
       const diagKey = normalize(diagServiceLabel);
       if (!serviceLabelByKey.has(diagKey)) serviceLabelByKey.set(diagKey, diagServiceLabel);
@@ -708,7 +791,7 @@ const PadronSucio = () => {
       for (const m of MANUAL_SERVICES) diagArr.push(manualToPrestador(m));
       serviceGroups.set(diagKey, diagArr);
 
-      // ✅ Traer 9696 desde api/medicos y meterlo también en Diagnóstico por Imagen
+      // Traer 9696 y meterlo en Diagnóstico por Imagen
       for (const nro of EXTRA_SERVICE_NROS_FROM_API) {
         const found = await fetchPrestadorByNroSocio(nro);
         if (found) {
@@ -739,7 +822,9 @@ const PadronSucio = () => {
         safeStr(labelByKey.get(a)).localeCompare(safeStr(labelByKey.get(b)), "es")
       );
       for (const k of keys) {
-        groups.get(k)!.sort((a, b) => safeStr(pickNombre(a)).localeCompare(safeStr(pickNombre(b)), "es"));
+        groups.get(k)!.sort((a, b) =>
+          safeStr(pickNombre(a)).localeCompare(safeStr(pickNombre(b)), "es")
+        );
       }
 
       const serviceKeys = Array.from(serviceGroups.keys()).sort((a, b) =>
@@ -747,23 +832,56 @@ const PadronSucio = () => {
       );
       for (const k of serviceKeys) {
         serviceGroups.set(k, dedupByNro(serviceGroups.get(k) ?? []));
-        serviceGroups.get(k)!.sort((a, b) => safeStr(pickNombre(a)).localeCompare(safeStr(pickNombre(b)), "es"));
+        serviceGroups.get(k)!.sort((a, b) =>
+          safeStr(pickNombre(a)).localeCompare(safeStr(pickNombre(b)), "es")
+        );
       }
 
       // -----------------------
-      // Excel (2 hojas, como PDF: especialidades + servicios)
+      // Excel
       // -----------------------
       const wb = new ExcelJS.Workbook();
       wb.creator = "CMC";
       wb.created = new Date();
 
-      const headerTitle = "Padrón";
-      const headerSub = "Prestadores del Colegio Médico de Corrientes";
-
-      // estilos helpers
       const headerFill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF111111" } } as const;
       const headerFont = { bold: true, color: { argb: "FFFFFFFF" } } as const;
-      const sectionFont = { bold: false } as const;
+
+      function setRichText(cell: ExcelJS.Cell, text: string) {
+        cell.value = { richText: [{ text }] } as any;
+      }
+
+      function setTextCell(cell: ExcelJS.Cell, raw: unknown, align: "center" | "left" = "center") {
+        const v = cleanText(raw);
+        setRichText(cell, v);
+        cell.numFmt = "@";
+        cell.alignment = { vertical: "middle", horizontal: align, wrapText: true } as any;
+      }
+
+      function setPhoneCell(cell: ExcelJS.Cell, raw: unknown) {
+        const d = digitsOnly(raw);
+        const v = d || cleanText(raw);
+        setRichText(cell, v);
+        cell.numFmt = "@";
+        cell.alignment = { vertical: "middle", horizontal: "center", wrapText: false } as any;
+      }
+
+      const tableBorder = {
+        top: { style: "thin" as const, color: { argb: "FFDDDDDD" } },
+        left: { style: "thin" as const, color: { argb: "FFDDDDDD" } },
+        bottom: { style: "thin" as const, color: { argb: "FFDDDDDD" } },
+        right: { style: "thin" as const, color: { argb: "FFDDDDDD" } },
+      };
+
+      function styleDataRow(row: ExcelJS.Row, idx: number) {
+        row.height = 18;
+        const zebra = idx % 2 === 0 ? "FFFFFFFF" : "FFF7F7F7";
+        row.eachCell((cell) => {
+          cell.font = { size: 11 };
+          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: zebra } };
+          cell.border = tableBorder;
+        });
+      }
 
       function setupSheet(ws: ExcelJS.Worksheet, subtitle: string) {
         ws.pageSetup = {
@@ -774,46 +892,38 @@ const PadronSucio = () => {
           margins: { left: 0.3, right: 0.3, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 },
         };
 
-        // columnas (mismo “ancho visual” que PDF)
         ws.columns = [
-          { key: "nro", width: 12 },
-          { key: "prestador", width: 38 },
-          { key: "mat", width: 14 },
-          { key: "tel", width: 16 },
-          { key: "esp", width: 32 },
-          { key: "dir", width: 48 },
+          { width: 14 },
+          { width: 42 },
+          { width: 16 },
+          { width: 24 },
+          { width: 34 },
+          { width: 52 },
         ];
 
-        // Logo (arriba derecha) + título/subtítulo/fecha
+        [1, 3, 4].forEach((c) => {
+          ws.getColumn(c).numFmt = "@";
+        });
+
         try {
           if (logoBase64) {
-            const imgId = wb.addImage({
-              base64: logoBase64,
-              extension: logoType,
-            });
-            // posición aproximada (col F, filas 1-3)
-            ws.addImage(imgId, {
-              tl: { col: 5.35, row: 0.1 },
-              ext: { width: 110, height: 110 },
-            });
+            const imgId = wb.addImage({ base64: logoBase64, extension: logoType });
+            ws.addImage(imgId, { tl: { col: 5.35, row: 0.1 }, ext: { width: 110, height: 110 } });
           }
-        } catch (e) {
-          console.warn("No se pudo insertar logo en Excel:", e);
-        }
+        } catch {}
 
         ws.mergeCells("A1:F1");
-        ws.getCell("A1").value = headerTitle;
+        ws.getCell("A1").value = "Padrón";
         ws.getCell("A1").font = { size: 16, bold: true };
 
         ws.mergeCells("A2:F2");
-        ws.getCell("A2").value = headerSub;
-        ws.getCell("A2").font = { size: 11, bold: false };
+        ws.getCell("A2").value = "Prestadores del Colegio Médico de Corrientes";
+        ws.getCell("A2").font = { size: 11 };
 
         ws.mergeCells("A3:F3");
         ws.getCell("A3").value = `${fmtDate(new Date())} • ${subtitle}`;
-        ws.getCell("A3").font = { size: 10, bold: false };
+        ws.getCell("A3").font = { size: 10 };
 
-        // Header tabla
         const headerRow = ws.addRow([
           "N° Socio",
           "Prestador",
@@ -823,6 +933,7 @@ const PadronSucio = () => {
           "Dirección consultorio",
         ]);
         headerRow.height = 20;
+
         headerRow.eachCell((cell) => {
           cell.fill = headerFill as any;
           cell.font = headerFont as any;
@@ -835,115 +946,84 @@ const PadronSucio = () => {
           };
         });
 
-        // congelar filas título+header
         ws.views = [{ state: "frozen", ySplit: 4 }];
-
-        // Footer con numeración
         ws.headerFooter.oddFooter = "&R&P / &N";
       }
 
-      // Hoja 1: Especialidades
       const ws1 = wb.addWorksheet("Especialidades");
       setupSheet(ws1, "Listado por especialidad");
 
-      const sectionStyle = (row: ExcelJS.Row) => {
-        row.font = { ...sectionFont, size: 10 };
-        row.alignment = { vertical: "middle", horizontal: "left", wrapText: true };
-      };
-
-      const dataStyle = (row: ExcelJS.Row, idx: number) => {
-        row.font = { size: 11 };
-        row.alignment = { vertical: "middle", horizontal: "left", wrapText: true };
-        if (idx % 2 === 0) {
-          row.eachCell((cell) => {
-            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF7F7F7" } };
-          });
-        }
-      };
-
-      let rIndex = 0;
+      let zebraIdx = 0;
 
       for (const k of keys) {
         const label = safeStr(labelByKey.get(k));
         const arr = groups.get(k) ?? [];
         if (arr.length === 0) continue;
 
-        const sectionRow = ws1.addRow(["", "", "", "", `Especialidad: ${label}`, ""]);
+        const sectionRow = ws1.addRow([`Especialidad: ${label}`]);
         ws1.mergeCells(sectionRow.number, 1, sectionRow.number, 6);
-        sectionRow.getCell(1).value = `Especialidad: ${label}`;
-        sectionStyle(sectionRow);
+        sectionRow.font = { size: 10 };
+        sectionRow.alignment = { vertical: "middle", horizontal: "left", wrapText: true } as any;
 
         for (const p of arr) {
-          const row = ws1.addRow([
-            safeStr(pickNroPrestador(p)),
-            safeStr(pickNombre(p)),
-            safeStr(pickMatriculaProv(p)),
-            safeStr(pickTelefonoConsulta(p)),
-            pickEspecialidadTop3WithoutServicesOrMedico(p),
-            safeStr(pickDomicilioConsulta(p)),
-          ]);
-          dataStyle(row, rIndex++);
+          const row = ws1.addRow(["", "", "", "", "", ""]);
+
+          setTextCell(row.getCell(1), pickNroPrestador(p), "center");
+          setTextCell(row.getCell(2), pickNombre(p), "left");
+          setTextCell(row.getCell(3), pickMatriculaProv(p), "center");
+
+          // ✅ ahora ya viene del enrichment con el tel completo
+          setPhoneCell(row.getCell(4), pickTelefonoConsulta(p));
+
+          setTextCell(row.getCell(5), pickEspecialidadTop3WithoutServicesOrMedico(p), "left");
+          setTextCell(row.getCell(6), pickDomicilioConsulta(p), "left");
+
+          styleDataRow(row, zebraIdx++);
         }
 
-        // spacer
-        ws1.addRow(["", "", "", "", "", ""]);
+        ws1.addRow([""]);
       }
 
-      // Hoja 2: Servicios
       const ws2 = wb.addWorksheet("Servicios");
       setupSheet(ws2, "Servicios asociados");
 
-      rIndex = 0;
+      zebraIdx = 0;
+
       for (const k of serviceKeys) {
         const label = safeStr(serviceLabelByKey.get(k));
         const arr = serviceGroups.get(k) ?? [];
         if (arr.length === 0) continue;
 
-        const sectionRow = ws2.addRow(["", "", "", "", `Servicio: ${label}`, ""]);
+        const sectionRow = ws2.addRow([`Servicio: ${label}`]);
         ws2.mergeCells(sectionRow.number, 1, sectionRow.number, 6);
-        sectionRow.getCell(1).value = `Servicio: ${label}`;
-        sectionStyle(sectionRow);
+        sectionRow.font = { size: 10 };
+        sectionRow.alignment = { vertical: "middle", horizontal: "left", wrapText: true } as any;
 
         for (const p of arr) {
-          const row = ws2.addRow([
-            safeStr(pickNroPrestador(p)),
-            safeStr(pickNombre(p)),
-            safeStr(pickMatriculaProv(p)),
-            safeStr(pickTelefonoConsulta(p)),
-            label,
-            safeStr(pickDomicilioConsulta(p)),
-          ]);
-          dataStyle(row, rIndex++);
+          const row = ws2.addRow(["", "", "", "", "", ""]);
+
+          setTextCell(row.getCell(1), pickNroPrestador(p), "center");
+          setTextCell(row.getCell(2), pickNombre(p), "left");
+          setTextCell(row.getCell(3), pickMatriculaProv(p), "center");
+
+          setPhoneCell(row.getCell(4), pickTelefonoConsulta(p));
+
+          setTextCell(row.getCell(5), label, "left");
+          setTextCell(row.getCell(6), pickDomicilioConsulta(p), "left");
+
+          styleDataRow(row, zebraIdx++);
         }
 
-        ws2.addRow(["", "", "", "", "", ""]);
+        ws2.addRow([""]);
       }
 
-      // Bordes livianos a toda la tabla (desde header row en adelante)
-      const applyGrid = (ws: ExcelJS.Worksheet) => {
-        const startRow = 4; // fila header
-        for (let i = startRow; i <= ws.rowCount; i++) {
-          const row = ws.getRow(i);
-          row.eachCell((cell) => {
-            cell.border = cell.border ?? {
-              top: { style: "thin", color: { argb: "FFDDDDDD" } },
-              left: { style: "thin", color: { argb: "FFDDDDDD" } },
-              bottom: { style: "thin", color: { argb: "FFDDDDDD" } },
-              right: { style: "thin", color: { argb: "FFDDDDDD" } },
-            };
-          });
-        }
-      };
-      applyGrid(ws1);
-      applyGrid(ws2);
-
-      // Descargar
       const buffer = await wb.xlsx.writeBuffer();
-      const blob = new Blob([buffer], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      });
-
-      saveAs(blob, `padron_${fmtDate(new Date())}.xlsx`);
+      saveAs(
+        new Blob([buffer], {
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        }),
+        `padron_${fmtDate(new Date())}.xlsx`
+      );
     } catch (e: any) {
       if (controller.signal.aborted) return;
       console.error(e);
