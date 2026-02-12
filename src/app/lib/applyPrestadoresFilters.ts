@@ -162,7 +162,6 @@ export function applyPrestadoresFilters(rows: PrestadorRow[], filters: FilterSel
   // Pre-normalizamos (mejor rendimiento)
   const fSexo = normalize(filters.otros.sexo);
   const fProv = normalize(filters.otros.provincia);
-  const fLoc = normalize(filters.otros.localidad);
   const fCat = normalize(filters.otros.categoria);
   const fCI = normalize(filters.otros.condicionImpositiva);
   const fEsp = String(filters.otros.especialidad || "");
@@ -193,7 +192,6 @@ export function applyPrestadoresFilters(rows: PrestadorRow[], filters: FilterSel
     if (fSexo && !normalize(pickFirst(row, ["sexo", "SEXO"])).includes(fSexo)) return false;
 
     if (fProv && !normalize(pickFirst(row, ["provincia", "PROVINCIA"])).includes(fProv)) return false;
-    if (fLoc && !normalize(pickFirst(row, ["localidad", "LOCALIDAD"])).includes(fLoc)) return false;
 
     if (filters.otros.categoria) {
       const cat = normalize(pickFirst(row, ["categoria", "CATEGORIA"]));

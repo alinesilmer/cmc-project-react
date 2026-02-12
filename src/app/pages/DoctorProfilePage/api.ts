@@ -59,6 +59,7 @@ export type DoctorProfile = {
   domicilio_particular?: string | null;
   tele_particular?: string | null;
   celular_particular?: string | null;
+  fecha_ingreso?: string | null;
 
   // profesionales extra
   titulo?: string | null;
@@ -221,6 +222,7 @@ export const UPDATE_WHITELIST = [
   "tele_particular",
   "celular_particular",
   "mail_particular",
+   "fecha_ingreso",
 
   // profesionales
   "nro_socio",

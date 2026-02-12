@@ -18,12 +18,13 @@ const AVAILABLE_COLUMNS = [
   { key: "matricula_prov", label: "Matrícula Provincial" },
   { key: "matricula_nac", label: "Matrícula Nacional" },
   { key: "domicilio_consulta", label: "Domicilio Consultorio" },
+  { key: "fecha_ingreso", label: "Fecha de Ingreso" },
   { key: "telefono_consulta", label: "Teléfono Consultorio" },
   { key: "provincia", label: "Provincia" },
   { key: "categoria", label: "Categoría" },
   { key: "especialidad", label: "Especialidad" },
   { key: "condicion_impositiva", label: "Condición Impositiva" },
-  { key: "malapraxis", label: "Mala Praxis (empresa)" },
+  { key: "malapraxis", label: "Mala Praxis" },
   { key: "vencimiento_malapraxis", label: "Venc. Mala Praxis" },
   { key: "vencimiento_anssal", label: "Venc. ANSSAL" },
   { key: "vencimiento_cobertura", label: "Venc. Cobertura" },
@@ -41,7 +42,7 @@ const missingLabelByKey: Record<MissingFieldKey, string> = {
   categoria: "Categoría",
   especialidad: "Especialidad",
   condicion_impositiva: "Condición impositiva",
-  malapraxis: "Mala praxis (empresa)",
+  malapraxis: "Mala praxis",
 };
 
 interface FilterModalProps {

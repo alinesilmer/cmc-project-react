@@ -1,420 +1,455 @@
+// src/app/pages/UsersList/useMedicosExport.ts
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
+
+import type { FilterSelection, MedicoRow } from "./medicosExport";
+import { DEFAULT_HEADERS, buildQS, mapUIToQuery, filterRowsForExport, getCellValue } from "./medicosExport";
 import { getJSON } from "../../lib/http";
-import type { FilterSelection } from "../../types/filters";
 
-import {
-  labelFor,
-  toCSV,
-  downloadBlob,
-  exportToExcelBW,
-  normalizeText,
-  parseDateAny,
-  startOfDay,
-  addDays,
-  inRange,
-  isMissingField,
-} from "./medicosExport";
+type ExportFormat = "xlsx" | "csv";
 
-import {
-  hasEspecialidadesCatalog,
-  setEspecialidadesCatalog,
-} from "../../lib/especialidadesCatalog";
+function readToken(): string | null {
+  const keys = ["token", "access_token", "auth_token", "jwt", "cmc_token"];
+  for (const k of keys) {
+    const v = localStorage.getItem(k) || sessionStorage.getItem(k);
+    if (v && v.trim()) return v.trim();
+  }
+  return null;
+}
 
-// -------------------------
-// helpers
-// -------------------------
-type Format = "xlsx" | "csv";
+async function fetchJSONWithToken<T>(url: string): Promise<T> {
+  const token = readToken();
 
-function stamp() {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+    headers["X-Token"] = token; // in case backend expects it
+  }
+
+  const res = await fetch(url, {
+    method: "GET",
+    headers,
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Export request failed (${res.status}): ${text || res.statusText}`);
+  }
+
+  return (await res.json()) as T;
+}
+
+function safeId(row: any): string {
+  const id = row?.id ?? row?.ID ?? row?.nro_socio ?? row?.NRO_SOCIO ?? "";
+  return String(id ?? "");
+}
+
+function csvEscape(v: any): string {
+  const s = String(v ?? "");
+  if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+async function readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
+  return await file.arrayBuffer();
+}
+
+function guessImageExtension(mime: string): "png" | "jpeg" {
+  const t = (mime || "").toLowerCase();
+  if (t.includes("jpeg") || t.includes("jpg")) return "jpeg";
+  return "png";
+}
+
+function todayISO(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function humanDateTime(): string {
   const d = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(
-    d.getHours()
-  )}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+  // keep it stable and simple
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mi = String(d.getMinutes()).padStart(2, "0");
+  return `${dd}/${mm}/${yyyy} ${hh}:${mi}`;
 }
 
-function safeStr(v: any) {
-  return v === null || v === undefined ? "" : String(v);
-}
+function buildFiltersSummary(filters: FilterSelection): string[] {
+  const lines: string[] = [];
+  const o = filters.otros;
+  const v = filters.vencimientos;
 
-function buildQS(obj: Record<string, any>) {
-  const parts: string[] = [];
-  for (const [k, v] of Object.entries(obj)) {
-    if (v === undefined || v === null || v === "") continue;
-    parts.push(`${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`);
-  }
-  return parts.join("&");
-}
-
-function normalizeColKey(k: string) {
-  // por si quedó en algún lado "especialidades"
-  if (k === "especialidades") return "especialidad";
-  return k;
-}
-
-// -------------------------
-// ✅ Especialidad filter por ID (nro_especialidad..6)
-// -------------------------
-function parseEspecialidadFilter(v: string): { mode: "none" | "id"; value: string } {
-  const s = String(v ?? "").trim();
-  if (!s) return { mode: "none", value: "" };
-
-  if (s.startsWith("id:")) return { mode: "id", value: s.slice(3).trim() };
-
-  // fallback si guardaste el id pelado
-  if (/^\d+$/.test(s)) return { mode: "id", value: s };
-
-  // si venía name:... no lo usamos acá (para no romper)
-  return { mode: "none", value: "" };
-}
-
-function rowHasEspecialidadId(row: any, id: string): boolean {
-  const want = String(id ?? "").trim();
-  if (!want || want === "0") return true;
-
-  const keys = [
-    "nro_especialidad",
-    "nro_especialidad2",
-    "nro_especialidad3",
-    "nro_especialidad4",
-    "nro_especialidad5",
-    "nro_especialidad6",
-    "NRO_ESPECIALIDAD",
-    "NRO_ESPECIALIDAD2",
-    "NRO_ESPECIALIDAD3",
-    "NRO_ESPECIALIDAD4",
-    "NRO_ESPECIALIDAD5",
-    "NRO_ESPECIALIDAD6",
-  ];
-
-  return keys.some((k) => String(row?.[k] ?? "").trim() === want);
-}
-
-// -------------------------
-// ✅ Catalog loader (para que Excel nunca salga vacío)
-// -------------------------
-async function ensureEspecialidadesCatalogLoaded() {
-  if (hasEspecialidadesCatalog()) return;
-
-  const data = await getJSON<any[]>("/api/especialidades/");
-  const opts = Array.isArray(data)
-    ? data
-        .map((e: any) => {
-          const rawVal = e?.id ?? e?.ID ?? e?.codigo ?? e?.CODIGO ?? e?.value ?? "";
-          const rawLabel =
-            e?.nombre ??
-            e?.NOMBRE ??
-            e?.descripcion ??
-            e?.DESCRIPCION ??
-            e?.detalle ??
-            e?.DETALLE ??
-            e?.label ??
-            e?.name ??
-            rawVal;
-
-          const v = String(rawVal ?? "").trim();
-          const l = String(rawLabel ?? "").trim();
-          return { value: v || l, label: l || v };
-        })
-        .filter((x) => x.value && x.value !== "0")
-    : [];
-
-  setEspecialidadesCatalog(opts);
-}
-
-// -------------------------
-// ✅ Fetch all medicos WITHOUT filters (evita 422)
-//   - intenta page/size
-//   - si falla, intenta skip/limit
-//   - fallback: sin params
-// -------------------------
-async function fetchMedicosAll(): Promise<any[]> {
-  const PAGE_SIZE = 1000;
-
-  async function fetchWithPageSize(): Promise<any[]> {
-    let page = 1;
-    const out: any[] = [];
-    let total: number | null = null;
-
-    while (true) {
-      const qs = buildQS({ page, size: PAGE_SIZE });
-      const data = await getJSON<any>(`/api/medicos?${qs}`);
-
-      if (Array.isArray(data)) return data;
-
-      const items = Array.isArray(data?.items) ? data.items : [];
-      const t = Number.isFinite(data?.total) ? Number(data.total) : null;
-
-      for (const it of items) out.push(it);
-      if (t !== null) total = t;
-
-      if (items.length === 0) break;
-      if (total !== null && out.length >= total) break;
-
-      page += 1;
-      if (page > 10000) break;
-    }
-
-    return out;
-  }
-
-  async function fetchWithSkipLimit(): Promise<any[]> {
-    let skip = 0;
-    const out: any[] = [];
-    let total: number | null = null;
-
-    while (true) {
-      const qs = buildQS({ skip, limit: PAGE_SIZE });
-      const data = await getJSON<any>(`/api/medicos?${qs}`);
-
-      if (Array.isArray(data)) return data;
-
-      const items = Array.isArray(data?.items) ? data.items : [];
-      const t = Number.isFinite(data?.total) ? Number(data.total) : null;
-
-      for (const it of items) out.push(it);
-      if (t !== null) total = t;
-
-      if (items.length === 0) break;
-      if (total !== null && out.length >= total) break;
-
-      skip += PAGE_SIZE;
-      if (skip > 50_000_000) break;
-    }
-
-    return out;
-  }
-
-  try {
-    return await fetchWithPageSize();
-  } catch {
-    try {
-      return await fetchWithSkipLimit();
-    } catch {
-      const data = await getJSON<any>("/api/medicos");
-      if (Array.isArray(data)) return data;
-      if (Array.isArray(data?.items)) return data.items;
-      return [];
-    }
-  }
-}
-
-// -------------------------
-// ✅ Client-side filters (para no depender del backend)
-// -------------------------
-function isActive(row: any): boolean {
-  const b = row?.activo ?? row?.ACTIVO;
-  if (typeof b === "boolean") return b;
-
-  const ex = String(row?.existe ?? row?.EXISTE ?? "").trim().toUpperCase();
-  if (!ex) return true;
-  return ex === "S" || ex === "SI" || ex === "1" || ex === "Y" || ex === "TRUE";
-}
-
-function pickField(row: any, candidates: string[]) {
-  for (const k of candidates) {
-    const v = row?.[k];
-    if (v !== null && v !== undefined && String(v).trim() !== "") return v;
-  }
-  return "";
-}
-
-function matchTextIncludes(rowVal: any, q: string) {
-  if (!q) return true;
-  return normalizeText(rowVal).includes(q);
-}
-
-function applyClientFilters(rows: any[], filters: FilterSelection): any[] {
-  let out = rows.slice();
+  const push = (label: string, value?: any) => {
+    const s = String(value ?? "").trim();
+    if (!s) return;
+    lines.push(`${label}: ${s}`);
+  };
 
   // Otros
-  const sexo = String(filters.otros.sexo ?? "").trim();
-  if (sexo) {
-    const q = normalizeText(sexo);
-    out = out.filter((r) => normalizeText(pickField(r, ["sexo", "SEXO"])) === q);
+  push("Estado", o.estado);
+  push("Sexo", o.sexo);
+  push("Adherente", o.adherente);
+  push("Provincia", o.provincia);
+  push("Categoría", o.categoria);
+  push("Condición Impositiva", o.condicionImpositiva);
+  push("Especialidad", o.especialidad);
+  if (o.fechaIngresoDesde || o.fechaIngresoHasta) {
+    lines.push(`Fecha ingreso: ${o.fechaIngresoDesde || "—"} → ${o.fechaIngresoHasta || "—"}`);
+  }
+  if ((o as any).conMalapraxis) lines.push("Con mala praxis: Sí");
+
+  // Vencimientos flags
+  const vflags: string[] = [];
+  if (v.malapraxisVencida) vflags.push("Mala praxis vencida");
+  if (v.malapraxisPorVencer) vflags.push("Mala praxis por vencer");
+  if (v.anssalVencido) vflags.push("ANSSAL vencida");
+  if (v.anssalPorVencer) vflags.push("ANSSAL por vencer");
+  if (v.coberturaVencida) vflags.push("Cobertura vencida");
+  if (v.coberturaPorVencer) vflags.push("Cobertura por vencer");
+  if (vflags.length) lines.push(`Vencimientos: ${vflags.join(" · ")}`);
+
+  // Window
+  if (v.fechaDesde || v.fechaHasta || (v.dias && v.dias > 0)) {
+    const window =
+      v.fechaDesde || v.fechaHasta
+        ? `Rango: ${v.fechaDesde || "—"} → ${v.fechaHasta || "—"}`
+        : `Próximos días: ${v.dias}`;
+    lines.push(`Ventana “por vencer”: ${window}`);
   }
 
-  const provincia = String(filters.otros.provincia ?? "").trim();
-  if (provincia) {
-    const q = normalizeText(provincia);
-    out = out.filter((r) => matchTextIncludes(pickField(r, ["provincia", "PROVINCIA"]), q));
-  }
-
-  const categoria = String(filters.otros.categoria ?? "").trim();
-  if (categoria) {
-    const q = normalizeText(categoria);
-    out = out.filter((r) => normalizeText(pickField(r, ["categoria", "CATEGORIA"])) === q);
-  }
-
-  const condImp = String(filters.otros.condicionImpositiva ?? "").trim();
-  if (condImp) {
-    const q = normalizeText(condImp);
-    out = out.filter((r) =>
-      normalizeText(pickField(r, ["condicion_impositiva", "CONDICION_IMPOSITIVA"])) === q
-    );
-  }
-
-  if (filters.otros.estado) {
-    out = out.filter((r) => (filters.otros.estado === "activo" ? isActive(r) : !isActive(r)));
-  }
-
-  // Fecha ingreso
-  const fiDesde = parseDateAny(filters.otros.fechaIngresoDesde);
-  const fiHasta = parseDateAny(filters.otros.fechaIngresoHasta);
-  if (fiDesde || fiHasta) {
-    const d0 = fiDesde ? startOfDay(fiDesde) : null;
-    const d1 = fiHasta ? startOfDay(fiHasta) : null;
-    out = out.filter((r) => {
-      const d = parseDateAny(pickField(r, ["fecha_ingreso", "FECHA_INGRESO"]));
-      if (!d) return false;
-      return inRange(startOfDay(d), d0, d1);
-    });
-  }
-
-  // Solo con mala praxis (empresa)
-  if (filters.otros.conMalapraxis) {
-    out = out.filter((r) => {
-      const v = safeStr(pickField(r, ["malapraxis", "MALAPRAXIS", "malapraxis_empresa", "MALAPRAXIS_EMPRESA"])).trim();
-      return !!v && v !== "0";
-    });
-  }
-
-  // ✅ Especialidad por ID (local)
-  const esp = parseEspecialidadFilter(filters.otros.especialidad || "");
-  if (esp.mode === "id" && esp.value) {
-    out = out.filter((r) => rowHasEspecialidadId(r, esp.value));
-  }
-
-  // Faltantes / presentes
-  if (filters.faltantes.enabled) {
-    out = out.filter((r) => {
-      const miss = isMissingField(r, filters.faltantes.field);
-      return filters.faltantes.mode === "missing" ? miss : !miss;
-    });
-  }
-
-  // Vencimientos (OR entre condiciones seleccionadas)
-  const today = startOfDay(new Date());
-
-  const rangeFrom =
-    filters.vencimientos.fechaDesde ? startOfDay(parseDateAny(filters.vencimientos.fechaDesde) as any) : null;
-  const rangeTo =
-    filters.vencimientos.fechaHasta ? startOfDay(parseDateAny(filters.vencimientos.fechaHasta) as any) : null;
-
-  const dias = Number(filters.vencimientos.dias || 0);
-  const porVencerEnd = rangeTo
-    ? rangeTo
-    : dias > 0
-    ? addDays(today, dias)
-    : null;
-
-  const anyVtoSelected =
-    filters.vencimientos.malapraxisVencida ||
-    filters.vencimientos.malapraxisPorVencer ||
-    filters.vencimientos.anssalVencido ||
-    filters.vencimientos.anssalPorVencer ||
-    filters.vencimientos.coberturaVencida ||
-    filters.vencimientos.coberturaPorVencer;
-
-  if (anyVtoSelected) {
-    out = out.filter((r) => {
-      const vtoMal = parseDateAny(pickField(r, ["vencimiento_malapraxis", "VENCIMIENTO_MALAPRAXIS"]));
-      const vtoAns = parseDateAny(pickField(r, ["vencimiento_anssal", "VENCIMIENTO_ANSSAL"]));
-      const vtoCob = parseDateAny(pickField(r, ["vencimiento_cobertura", "VENCIMIENTO_COBERTURA"]));
-
-      const malCond =
-        (filters.vencimientos.malapraxisVencida && vtoMal && startOfDay(vtoMal).getTime() < today.getTime()) ||
-        (filters.vencimientos.malapraxisPorVencer &&
-          vtoMal &&
-          startOfDay(vtoMal).getTime() >= today.getTime() &&
-          (!porVencerEnd ? true : inRange(startOfDay(vtoMal), rangeFrom ?? today, porVencerEnd)));
-
-      const ansCond =
-        (filters.vencimientos.anssalVencido && vtoAns && startOfDay(vtoAns).getTime() < today.getTime()) ||
-        (filters.vencimientos.anssalPorVencer &&
-          vtoAns &&
-          startOfDay(vtoAns).getTime() >= today.getTime() &&
-          (!porVencerEnd ? true : inRange(startOfDay(vtoAns), rangeFrom ?? today, porVencerEnd)));
-
-      const cobCond =
-        (filters.vencimientos.coberturaVencida && vtoCob && startOfDay(vtoCob).getTime() < today.getTime()) ||
-        (filters.vencimientos.coberturaPorVencer &&
-          vtoCob &&
-          startOfDay(vtoCob).getTime() >= today.getTime() &&
-          (!porVencerEnd ? true : inRange(startOfDay(vtoCob), rangeFrom ?? today, porVencerEnd)));
-
-      // OR: si seleccionaste varias, entra con cualquiera
-      return Boolean(malCond || ansCond || cobCond);
-    });
-  }
-
-  return out;
+  if (!lines.length) lines.push("Sin filtros (export completo).");
+  return lines;
 }
 
-// -------------------------
-// Hook
-// -------------------------
+function applySheetDesign(ws: ExcelJS.Worksheet, headerRowIndex: number, colCount: number) {
+  // Page / print
+  ws.pageSetup = {
+    orientation: "landscape",
+    fitToPage: true,
+    fitToWidth: 1,
+    fitToHeight: 0,
+    paperSize: 9, // A4
+    margins: {
+      left: 0.35,
+      right: 0.35,
+      top: 0.6,
+      bottom: 0.6,
+      header: 0.3,
+      footer: 0.3,
+    },
+  };
+
+  // Freeze header row
+  ws.views = [{ state: "frozen", ySplit: headerRowIndex }];
+
+  // Auto filter on header row
+  const lastColLetter = ws.getColumn(colCount).letter;
+  ws.autoFilter = {
+    from: { row: headerRowIndex, column: 1 },
+    to: { row: headerRowIndex, column: colCount },
+  };
+
+  // Header row style
+  const headerRow = ws.getRow(headerRowIndex);
+  headerRow.height = 22;
+  headerRow.eachCell({ includeEmpty: true }, (cell) => {
+    cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+    cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1F2937" } }; // dark slate
+    cell.border = {
+      top: { style: "thin", color: { argb: "FF9CA3AF" } },
+      left: { style: "thin", color: { argb: "FF9CA3AF" } },
+      bottom: { style: "thin", color: { argb: "FF9CA3AF" } },
+      right: { style: "thin", color: { argb: "FF9CA3AF" } },
+    };
+  });
+}
+
+function applyZebraAndBorders(
+  ws: ExcelJS.Worksheet,
+  startRow: number,
+  endRow: number,
+  colCount: number
+) {
+  for (let r = startRow; r <= endRow; r++) {
+    const row = ws.getRow(r);
+    row.height = 18;
+
+    const isAlt = (r - startRow) % 2 === 1;
+    for (let c = 1; c <= colCount; c++) {
+      const cell = row.getCell(c);
+
+      cell.alignment = { vertical: "middle", horizontal: "left", wrapText: true };
+      cell.border = {
+        top: { style: "thin", color: { argb: "FFE5E7EB" } },
+        left: { style: "thin", color: { argb: "FFE5E7EB" } },
+        bottom: { style: "thin", color: { argb: "FFE5E7EB" } },
+        right: { style: "thin", color: { argb: "FFE5E7EB" } },
+      };
+
+      if (isAlt) {
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF9FAFB" } }; // very light
+      }
+    }
+  }
+}
+
+function setColumnFormats(ws: ExcelJS.Worksheet, selectedColumns: string[]) {
+  // Try to format date-like columns nicely.
+  // We don’t force conversion if your value is text, but if it is Date/ISO it’ll render well.
+  const dateKeys = new Set(["fecha_ingreso", "anssal", "malapraxis", "cobertura", "vencimiento_anssal", "vencimiento_malapraxis", "vencimiento_cobertura"]);
+  selectedColumns.forEach((k, idx) => {
+    if (dateKeys.has(k)) {
+      const col = ws.getColumn(idx + 1);
+      col.numFmt = "dd/mm/yyyy";
+      col.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+    }
+    if (k === "documento" || k.includes("matricula") || k.includes("nro_socio")) {
+      // Keep as text to avoid scientific notation / losing leading zeros
+      const col = ws.getColumn(idx + 1);
+      col.numFmt = "@";
+    }
+  });
+}
+
+function autoWidth(ws: ExcelJS.Worksheet) {
+  ws.columns = ws.columns.map((col) => {
+    let maxLen = 10;
+    col.eachCell?.({ includeEmpty: true }, (cell) => {
+      const v = cell.value;
+      const s = v == null ? "" : String(v);
+      if (s.length > maxLen) maxLen = s.length;
+    });
+    col.width = Math.min(Math.max(maxLen + 2, 12), 60);
+    return col;
+  });
+}
+
 export function useMedicosExport() {
   const [exportLoading, setExportLoading] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
 
-  async function onExportWithFilters(
-    format: Format,
-    filters: FilterSelection,
-    logoFile: File | null
-  ) {
-    setExportLoading(true);
-    setExportError(null);
+  const onExportWithFilters = useCallback(
+    async (format: ExportFormat, filters: FilterSelection, logoFile: File | null): Promise<boolean> => {
+      setExportLoading(true);
+      setExportError(null);
 
-    try {
-      // ✅ catálogo SIEMPRE antes del export (para especialidades)
-      await ensureEspecialidadesCatalogLoaded();
+      try {
+        const selectedColumns = (filters.columns ?? []).slice();
+        if (!selectedColumns.length) {
+          setExportError("Seleccioná al menos una columna");
+          return false;
+        }
 
-      // ✅ traer TODO sin filtros (evita 422)
-      const all = await fetchMedicosAll();
-      if (!Array.isArray(all) || all.length === 0) {
-        throw new Error("No se recibieron médicos desde /api/medicos.");
-      }
+        // Fetch all rows (paged)
+        const pageSize = 2000;
+        const maxPages = 40;
 
-      // ✅ aplicar filtros localmente (incluye especialidad por ID)
-      const rows = applyClientFilters(all, filters);
+        const queryParams = mapUIToQuery(filters);
+        let all: MedicoRow[] = [];
 
-      // ✅ columnas
-      const selectedCols = (filters.columns ?? []).map(normalizeColKey);
-      const cols = selectedCols.map((key) => ({ key, header: labelFor(key) }));
+        let offset = 0;
+        let lastPageFirstId = "";
+        let lastPageLastId = "";
 
-      const filenameBase = `medicos_${stamp()}`;
+        for (let page = 0; page < maxPages; page++) {
+          const qs = buildQS({ ...queryParams, limit: pageSize, offset });
+          const url = `/api/medicos/all?${qs}`;
 
-      if (format === "csv") {
-        const csv = toCSV(rows, cols);
-        downloadBlob(`${filenameBase}.csv`, "text/csv;charset=utf-8", csv);
+          let payload: any;
+          try {
+            payload = await getJSON<any>(url);
+          } catch (e: any) {
+            const msg = String(e?.message || "");
+            if (msg.includes("401") || msg.toLowerCase().includes("token") || msg.toLowerCase().includes("falta")) {
+              payload = await fetchJSONWithToken<any>(url);
+            } else {
+              throw e;
+            }
+          }
+
+          const rows: MedicoRow[] = Array.isArray(payload)
+            ? payload
+            : Array.isArray(payload?.items)
+              ? payload.items
+              : Array.isArray(payload?.data)
+                ? payload.data
+                : [];
+
+          if (!rows.length) break;
+
+          const firstId = safeId(rows[0]);
+          const lastId = safeId(rows[rows.length - 1]);
+
+          if (page > 0 && firstId === lastPageFirstId && lastId === lastPageLastId) break;
+
+          lastPageFirstId = firstId;
+          lastPageLastId = lastId;
+
+          all = all.concat(rows);
+
+          if (rows.length < pageSize) break;
+          offset += pageSize;
+        }
+
+        // Apply client-side filters too
+        const filtered = filterRowsForExport(all, filters);
+
+        const dateStr = todayISO();
+        const filenameBase = `Medicos_${dateStr}`;
+
+        if (format === "csv") {
+          const headers = selectedColumns.map((k) => DEFAULT_HEADERS[k as keyof typeof DEFAULT_HEADERS] ?? String(k));
+          const lines: string[] = [];
+          lines.push(headers.map(csvEscape).join(","));
+
+          for (const r of filtered) {
+            const line = selectedColumns.map((k) => csvEscape(getCellValue(r, k as keyof typeof DEFAULT_HEADERS)));
+            lines.push(line.join(","));
+          }
+
+          const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+          saveAs(blob, `${filenameBase}.csv`);
+          return true;
+        }
+
+        // ==========================
+        // XLSX (PRETTY)
+        // ==========================
+        const wb = new ExcelJS.Workbook();
+        wb.creator = "CMC";
+        wb.created = new Date();
+
+        const ws = wb.addWorksheet("Medicos");
+
+        // Build nice header block (logo + title + meta + filters)
+        const colCount = selectedColumns.length;
+
+        // Reserve some header rows
+        // Row 1: title (merged)
+        // Row 2: subtitle/meta
+        // Row 3-5: filters summary
+        // Row 6: spacer
+        // Row 7: table header
+        let headerRowIndex = 7;
+
+        // Title
+        ws.getRow(1).height = 26;
+        ws.getCell(1, 1).value = "Listado de Médicos";
+        ws.getCell(1, 1).font = { bold: true, size: 18 };
+        ws.getCell(1, 1).alignment = { vertical: "middle", horizontal: "left" };
+        ws.mergeCells(1, 1, 1, Math.max(6, colCount));
+
+        // Meta
+        ws.getRow(2).height = 18;
+        ws.getCell(2, 1).value = `Generado: ${humanDateTime()}  ·  Registros: ${filtered.length}`;
+        ws.getCell(2, 1).font = { size: 11, color: { argb: "FF374151" } };
+        ws.getCell(2, 1).alignment = { vertical: "middle", horizontal: "left" };
+        ws.mergeCells(2, 1, 2, Math.max(6, colCount));
+
+        // Filters summary (up to 3 lines, rest grouped)
+        const summary = buildFiltersSummary(filters);
+        const maxLines = 3;
+        const shown = summary.slice(0, maxLines);
+        const rest = summary.slice(maxLines);
+
+        const summaryLines = rest.length
+          ? [...shown, `+ ${rest.length} filtro(s) más...`]
+          : shown;
+
+        for (let i = 0; i < 3; i++) {
+          const rowN = 3 + i;
+          ws.getRow(rowN).height = 16;
+          ws.getCell(rowN, 1).value = summaryLines[i] ?? "";
+          ws.getCell(rowN, 1).font = { size: 10, color: { argb: "FF4B5563" } };
+          ws.getCell(rowN, 1).alignment = { vertical: "middle", horizontal: "left", wrapText: true };
+          ws.mergeCells(rowN, 1, rowN, Math.max(6, colCount));
+        }
+
+        // Spacer
+        ws.getRow(6).height = 8;
+        ws.mergeCells(6, 1, 6, Math.max(6, colCount));
+
+        // Logo
+        if (logoFile) {
+          try {
+            const buf = await readFileAsArrayBuffer(logoFile);
+            const ext = guessImageExtension(logoFile.type);
+
+            const imgId = wb.addImage({ buffer: buf, extension: ext });
+
+            // Place logo at top-right-ish without breaking merged cells
+            // Put it around columns (Math.max(6,colCount)-3)
+            const anchorCol = Math.max(1, Math.max(6, colCount) - 3);
+            ws.addImage(imgId, {
+              tl: { col: anchorCol - 1, row: 0 }, // 0-indexed internally
+              ext: { width: 170, height: 55 },
+            });
+          } catch {
+            // ignore logo errors
+          }
+        }
+
+        // Table header row
+        const headers = selectedColumns.map((k) => DEFAULT_HEADERS[k as keyof typeof DEFAULT_HEADERS] ?? String(k));
+        ws.getRow(headerRowIndex).values = headers as any;
+
+        // Data rows
+        let rIndex = headerRowIndex + 1;
+        for (const row of filtered) {
+          ws.getRow(rIndex).values = selectedColumns.map((k) => getCellValue(row, k as keyof typeof DEFAULT_HEADERS)) as any;
+          rIndex++;
+        }
+
+        // Styling
+        applySheetDesign(ws, headerRowIndex, colCount);
+        setColumnFormats(ws, selectedColumns);
+
+        const dataStart = headerRowIndex + 1;
+        const dataEnd = Math.max(dataStart, rIndex - 1);
+        if (dataEnd >= dataStart) {
+          applyZebraAndBorders(ws, dataStart, dataEnd, colCount);
+        }
+
+        // Slight border box around the header block
+        for (let rr = 1; rr <= 5; rr++) {
+          const row = ws.getRow(rr);
+          for (let cc = 1; cc <= Math.max(6, colCount); cc++) {
+            const cell = row.getCell(cc);
+            cell.border = {
+              bottom: { style: "thin", color: { argb: "FFE5E7EB" } },
+            };
+          }
+        }
+
+        // Column widths
+        autoWidth(ws);
+
+        // Export
+        const out = await wb.xlsx.writeBuffer();
+        saveAs(
+          new Blob([out], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          }),
+          `${filenameBase}.xlsx`
+        );
+
         return true;
+      } catch (e: any) {
+        const msg = e?.message || "Error desconocido exportando";
+        setExportError(msg);
+        return false;
+      } finally {
+        setExportLoading(false);
       }
+    },
+    []
+  );
 
-      await exportToExcelBW({
-        filename: `${filenameBase}.xlsx`,
-        title: "Colegio Médico de Corrientes",
-        subtitle: `Listado de médicos • Filas: ${rows.length}`,
-        columns: cols,
-        rows,
-        logoFile,
-      });
-
-      return true;
-    } catch (e: any) {
-      setExportError(e?.message || "Error al exportar");
-      return false;
-    } finally {
-      setExportLoading(false);
-    }
-  }
-
-  return {
-    exportLoading,
-    exportError,
-    setExportError,
-    onExportWithFilters,
-  };
+  return { exportLoading, exportError, setExportError, onExportWithFilters };
 }

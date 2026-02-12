@@ -392,6 +392,7 @@ const DoctorProfilePage: React.FC = () => {
         const d = await getMedicoDetail(medicoId);
         if (!alive) return;
         setData(d);
+        console.log(d);
         if (d?.existe) setExiste(d.existe.toUpperCase() === "S" ? "S" : "N");
       } finally {
         if (alive) setLoading(false);
@@ -1012,6 +1013,19 @@ const DoctorProfilePage: React.FC = () => {
                               >
                                 {fmt(data.mail_particular)}
                               </a>
+                            )}
+                          </div>
+
+                             <div>
+                            <span className={styles.label}>
+                              Fecha de Ingreso
+                            </span>
+                          </div>
+                          <div>
+                            {isEditing ? (
+                              RText("fecha_ingreso")
+                            ) : (
+                              <span>{fmt(data.fecha_ingreso)}</span>
                             )}
                           </div>
                         </div>
