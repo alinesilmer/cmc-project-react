@@ -5,44 +5,81 @@ export type ExportColumnKey =
   | "id"
   | "nro_socio"
   | "nombre"
-  | "sexo"
+  | "matricula_prov"
+  | "matricula_nac"
   | "documento"
   | "mail_particular"
   | "tele_particular"
   | "celular_particular"
   | "telefono_consulta"
   | "domicilio_consulta"
-  | "matricula_prov"
-  | "matricula_nac"
+  | "activo"
+  | "sexo"
   | "provincia"
   | "categoria"
-  | "especialidad"
   | "adherente"
   | "condicion_impositiva"
   | "fecha_ingreso"
+  | "especialidad"
+  | "anssal"
   | "malapraxis"
+  | "cobertura"
   | "vencimiento_malapraxis"
   | "vencimiento_anssal"
-  | "vencimiento_cobertura"
-  | "anssal"
-  | "cobertura"
-  | "activo";
+  | "vencimiento_cobertura";
 
-export type ExportColumn = { key: ExportColumnKey | string; header: string };
+export type FilterSelection = {
+  columns: string[];
+  otros: {
+    sexo?: string | null;
+    estado?: string | null;
+    adherente?: string | null;
+    provincia?: string | null;
+    categoria?: string | null;
+    especialidad?: string | null; // "id:123" or text
+    condicionImpositiva?: string | null;
+
+    fechaIngresoDesde?: string | null; // YYYY-MM-DD
+    fechaIngresoHasta?: string | null; // YYYY-MM-DD
+
+    conMalapraxis?: boolean;
+  };
+  vencimientos: {
+    dias: number; // 0..N
+    fechaDesde?: string | null; // YYYY-MM-DD
+    fechaHasta?: string | null; // YYYY-MM-DD
+
+    malapraxisVencida?: boolean;
+    malapraxisPorVencer?: boolean;
+
+    anssalVencido?: boolean;
+    anssalPorVencer?: boolean;
+
+    coberturaVencida?: boolean;
+    coberturaPorVencer?: boolean;
+  };
+  faltantes: {
+    enabled: boolean;
+    field: any;
+    mode: "missing" | "present";
+  };
+};
+
 export type MedicoRow = Record<string, unknown>;
 
 /**
- * KEYMAP: tries multiple possible keys for each "canonical" export key
+ * ✅ KEYMAP: tries multiple possible keys for each "canonical" export key
+ * so export doesn't break if backend/transform changes casing or naming.
  */
-export const KEYMAP: Record<string, string[]> = {
+export const KEYMAP: Record<ExportColumnKey, string[]> = {
   id: ["id", "ID", "Id"],
-
   nro_socio: ["nro_socio", "NRO_SOCIO", "socio", "SOCIO"],
+
   nombre: ["nombre", "NOMBRE", "ape_nom", "apellido_nombre", "APELLIDO_NOMBRE", "APE_NOM"],
+  matricula_prov: ["matricula_prov", "MATRICULA_PROV", "matricula", "MATRICULA"],
+  matricula_nac: ["matricula_nac", "MATRICULA_NAC"],
 
-  sexo: ["sexo", "SEXO"],
   documento: ["documento", "DOCUMENTO", "dni", "DNI"],
-
   mail_particular: ["mail_particular", "MAIL_PARTICULAR", "email", "EMAIL", "mail", "MAIL"],
 
   tele_particular: ["tele_particular", "TELE_PARTICULAR", "telefono_particular", "TELEFONO_PARTICULAR"],
@@ -58,25 +95,21 @@ export const KEYMAP: Record<string, string[]> = {
   ],
   domicilio_consulta: ["domicilio_consulta", "DOMICILIO_CONSULTA"],
 
-  matricula_prov: ["matricula_prov", "MATRICULA_PROV", "matricula", "MATRICULA"],
-  matricula_nac: ["matricula_nac", "MATRICULA_NAC"],
+  activo: ["activo", "ACTIVO", "estado", "ESTADO", "EXISTE", "existe"],
 
+  sexo: ["sexo", "SEXO"],
   provincia: ["provincia", "PROVINCIA"],
   categoria: ["categoria", "CATEGORIA"],
   adherente: ["adherente", "ADHERENTE", "ES_ADHERENTE", "es_adherente"],
-
   condicion_impositiva: ["condicion_impositiva", "CONDICION_IMPOSITIVA", "condicionImpositiva"],
 
   fecha_ingreso: ["fecha_ingreso", "FECHA_INGRESO", "fechaIngreso", "FECHAINGRESO"],
 
-  // especialidades (compat)
   especialidad: [
     "especialidad",
     "ESPECIALIDAD",
     "especialidades",
     "ESPECIALIDADES",
-    "especialidad_nombre",
-    "ESPECIALIDAD_NOMBRE",
     "especialidad1",
     "especialidad2",
     "especialidad3",
@@ -85,13 +118,31 @@ export const KEYMAP: Record<string, string[]> = {
     "ESPECIALIDAD3",
   ],
 
-  // vencimientos (compat)
+  anssal: ["anssal", "ANSSAL", "anssal_vto", "ANSSAL_VTO", "anssalVto", "vencimiento_anssal", "VENCIMIENTO_ANSSAL"],
+  malapraxis: [
+    "malapraxis",
+    "MALAPRAXIS",
+    "malapraxis_empresa",
+    "MALAPRAXIS_EMPRESA",
+    "malapraxisEmpresa",
+    "MALAPRAXIS_EMPRESA_NOMBRE",
+  ],
+  cobertura: [
+    "cobertura",
+    "COBERTURA",
+    "cobertura_vto",
+    "COBERTURA_VTO",
+    "coberturaVto",
+    "vencimiento_cobertura",
+    "VENCIMIENTO_COBERTURA",
+  ],
+
   vencimiento_malapraxis: [
     "vencimiento_malapraxis",
     "VENCIMIENTO_MALAPRAXIS",
     "malapraxis_vencimiento",
-    "malapraxis_vto",
     "MALAPRAXIS_VENCIMIENTO",
+    "malapraxis_vto",
     "MALAPRAXIS_VTO",
     "vto_malapraxis",
     "VTO_MALAPRAXIS",
@@ -100,8 +151,8 @@ export const KEYMAP: Record<string, string[]> = {
     "vencimiento_anssal",
     "VENCIMIENTO_ANSSAL",
     "anssal_vencimiento",
-    "anssal_vto",
     "ANSSAL_VENCIMIENTO",
+    "anssal_vto",
     "ANSSAL_VTO",
     "vto_anssal",
     "VTO_ANSSAL",
@@ -110,61 +161,47 @@ export const KEYMAP: Record<string, string[]> = {
     "vencimiento_cobertura",
     "VENCIMIENTO_COBERTURA",
     "cobertura_vencimiento",
-    "cobertura_vto",
     "COBERTURA_VENCIMIENTO",
+    "cobertura_vto",
     "COBERTURA_VTO",
     "vto_cobertura",
     "VTO_COBERTURA",
   ],
-
-  malapraxis: ["malapraxis", "MALAPRAXIS", "malapraxis_empresa", "MALAPRAXIS_EMPRESA"],
-  anssal: ["anssal", "ANSSAL", "anssal_vto", "ANSSAL_VTO", "anssalVto"],
-  cobertura: ["cobertura", "COBERTURA", "cobertura_vto", "COBERTURA_VTO", "coberturaVto"],
-
-  activo: ["activo", "ACTIVO", "estado", "ESTADO", "EXISTE", "existe"],
 };
 
-export const DEFAULT_HEADERS: Record<string, string> = {
+export const DEFAULT_HEADERS: Record<ExportColumnKey, string> = {
   id: "ID",
   nro_socio: "N° Socio",
-  nombre: "Nombre completo",
-  sexo: "Sexo",
+  nombre: "Nombre",
+  matricula_prov: "Matrícula Prov.",
+  matricula_nac: "Matrícula Nac.",
   documento: "Documento",
-  mail_particular: "Mail",
+  mail_particular: "Email",
   tele_particular: "Teléfono",
   celular_particular: "Celular",
   telefono_consulta: "Teléfono Consultorio",
   domicilio_consulta: "Domicilio Consultorio",
-  matricula_prov: "Matrícula Provincial",
-  matricula_nac: "Matrícula Nacional",
+  activo: "Activo",
+  sexo: "Sexo",
   provincia: "Provincia",
   categoria: "Categoría",
-  especialidad: "Especialidad",
-  condicion_impositiva: "Condición Impositiva",
   adherente: "Adherente",
-  fecha_ingreso: "Fecha de Ingreso",
+  condicion_impositiva: "Condición Impositiva",
+  fecha_ingreso: "Fecha Ingreso",
+  especialidad: "Especialidades",
+  anssal: "ANSSAL",
   malapraxis: "Mala Praxis",
+  cobertura: "Cobertura",
   vencimiento_malapraxis: "Venc. Mala Praxis",
   vencimiento_anssal: "Venc. ANSSAL",
   vencimiento_cobertura: "Venc. Cobertura",
-  anssal: "ANSSAL",
-  cobertura: "Cobertura",
-  activo: "Activo",
 };
 
 function isNil(v: unknown) {
   return v === null || v === undefined || v === "";
 }
 
-export function normalizeText(v: any): string {
-  return String(v ?? "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim();
-}
-
-export function toCleanString(v: unknown): string {
+function toCleanString(v: unknown): string {
   if (isNil(v)) return "";
   if (typeof v === "string") return v.trim();
   if (typeof v === "number" || typeof v === "boolean") return String(v);
@@ -177,10 +214,10 @@ export function toCleanString(v: unknown): string {
 }
 
 /**
- * Return best value for a key (supports canonical keymap)
+ * Return best value for a canonical export key, checking multiple key variants.
  */
-export function pickValue(row: MedicoRow, key: string): string {
-  const candidates = KEYMAP[key] ?? [key];
+export function pickValue(row: MedicoRow, canonicalKey: ExportColumnKey): string {
+  const candidates = KEYMAP[canonicalKey] ?? [canonicalKey];
   for (const k of candidates) {
     const v = (row as any)?.[k];
     if (!isNil(v)) return toCleanString(v);
@@ -189,75 +226,11 @@ export function pickValue(row: MedicoRow, key: string): string {
 }
 
 /**
- * For presets + other modules: return raw best value (not stringified)
+ * ✅ Map UI filters -> backend query params for GET /api/medicos/all
  */
-export function getCellValue(row: MedicoRow, key: string): any {
-  const candidates = KEYMAP[key] ?? [key];
-  for (const k of candidates) {
-    const v = (row as any)?.[k];
-    if (!isNil(v)) return v;
-  }
-  return "";
-}
-
-/* ===== Date helpers (used by presets) ===== */
-export function parseDateAny(v: any): Date | null {
-  if (!v) return null;
-  if (v instanceof Date) return isNaN(v.getTime()) ? null : v;
-
-  if (typeof v === "number") {
-    const ms = v < 10_000_000_000 ? v * 1000 : v;
-    const d = new Date(ms);
-    return isNaN(d.getTime()) ? null : d;
-  }
-
-  const s = String(v).trim();
-  if (!s) return null;
-
-  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
-    const d = new Date(s);
-    return isNaN(d.getTime()) ? null : d;
-  }
-
-  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (m) {
-    const dd = Number(m[1]);
-    const mm = Number(m[2]) - 1;
-    const yy = Number(m[3]);
-    const d = new Date(yy, mm, dd);
-    return isNaN(d.getTime()) ? null : d;
-  }
-
-  const d = new Date(s);
-  return isNaN(d.getTime()) ? null : d;
-}
-
-export function startOfDay(d: Date): Date {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
-}
-
-export function addDays(d: Date, n: number): Date {
-  const x = new Date(d);
-  x.setDate(x.getDate() + n);
-  return x;
-}
-
-export function inRange(d: Date, from?: Date | null, to?: Date | null): boolean {
-  const t = d.getTime();
-  if (from && t < from.getTime()) return false;
-  if (to && t > to.getTime()) return false;
-  return true;
-}
-
-/**
- * Map UI filters -> backend query params for GET /api/medicos/all
- * (only includes params that are safe to send; backend may ignore unknowns)
- */
-export function mapUIToQuery(filters: any) {
-  const otros = filters?.otros ?? {};
-  const v = filters?.vencimientos ?? {};
+export function mapUIToQuery(filters: FilterSelection) {
+  const otros = filters?.otros ?? ({} as FilterSelection["otros"]);
+  const v = filters?.vencimientos ?? ({} as FilterSelection["vencimientos"]);
 
   return {
     sexo: otros.sexo || undefined,
@@ -267,8 +240,13 @@ export function mapUIToQuery(filters: any) {
     categoria: otros.categoria || undefined,
     condicion_impositiva: otros.condicionImpositiva || undefined,
 
+    // especialidad: si viene "id:123" mandamos solo "123" (o mandá el string completo si tu backend espera otro formato)
+    especialidad: otros.especialidad?.startsWith("id:") ? otros.especialidad.slice(3) : otros.especialidad || undefined,
+
     fecha_ingreso_desde: otros.fechaIngresoDesde || undefined,
     fecha_ingreso_hasta: otros.fechaIngresoHasta || undefined,
+
+    con_malapraxis: otros.conMalapraxis ? "1" : undefined,
 
     malapraxis_vencida: v.malapraxisVencida ? "1" : undefined,
     malapraxis_por_vencer: v.malapraxisPorVencer ? "1" : undefined,

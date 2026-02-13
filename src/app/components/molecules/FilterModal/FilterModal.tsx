@@ -13,7 +13,7 @@ const AVAILABLE_COLUMNS = [
   { key: "sexo", label: "Sexo" },
   { key: "documento", label: "Documento" },
   { key: "mail_particular", label: "Mail" },
-  { key: "tele_particular", label: "Teléfono" },
+  { key: "telefono_particular", label: "Teléfono" },
   { key: "celular_particular", label: "Celular" },
   { key: "matricula_prov", label: "Matrícula Provincial" },
   { key: "matricula_nac", label: "Matrícula Nacional" },
