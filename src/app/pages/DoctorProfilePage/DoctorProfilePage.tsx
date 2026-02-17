@@ -48,7 +48,6 @@ import {
   deleteMedico,
   getDocumentoLabels,
   addMedicoDocumento,
-  // ⬇️ nuevos helpers
   deleteMedicoDocumento,
   setMedicoAttach,
   clearMedicoAttach,
@@ -67,7 +66,6 @@ import { useNotify } from "../../hooks/useNotify";
 import PadronesForm from "../../components/molecules/Padrones/PadronesForm/PadronesForm";
 
 /* ===================== helpers labels ===================== */
-// Mapa de claves attach_* → etiqueta legible
 const ATTACH_PRETTY: Record<string, string> = {
   attach_titulo: "Título",
   attach_matricula_nac: "Matrícula nacional",
@@ -84,31 +82,39 @@ const ATTACH_PRETTY: Record<string, string> = {
 
 const ATTACH_KEYS = Object.keys(ATTACH_PRETTY);
 
-// quita prefijo attach_ y normaliza
 const stripAttach = (k: string) => k.replace(/^attach_/, "").toLowerCase();
 
-// devuelve un “bonito” para una key attach_* o un label “libre”
 function prettyFromAnyLabel(label: string) {
   if (label.startsWith("attach_")) return ATTACH_PRETTY[label] ?? label;
-  // para labels tipo "titulo" -> "Título", "constancia_especial" -> "Constancia especial"
   const words = label.replace(/_/g, " ").toLowerCase().split(" ");
   const cap = words
     .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
     .join(" ");
-  // casos conocidos
   return cap.replace(/\bDni\b/, "Documento").replace(/\bCuit\b/, "CUIT");
 }
 
-// “formatea” opciones: value=attach_* u "otro", label visible bonito
 const formatOption = (opt: string) =>
   opt === "otro" ? "Otro" : ATTACH_PRETTY[opt] ?? opt;
 
-// normaliza para comparar (quita attach_ y pasa a lower)
 const normalizeForCompare = (label: string) => stripAttach(label);
 
 /* ========================================================== */
 
+type DoctorProfileX = DoctorProfile & { fecha_ingreso?: string | null };
+
+const getFechaIngreso = (obj: any): string | null => {
+  const v =
+    obj?.fecha_ingreso ??
+    obj?.fechaIngreso ??
+    obj?.FECHA_INGRESO ??
+    obj?.fec_ingreso ??
+    obj?.FEC_INGRESO ??
+    null;
+  return v === undefined ? null : v;
+};
+
 const WL = new Set<string>(UPDATE_WHITELIST as unknown as string[]);
+WL.add("fecha_ingreso");
 
 const DATE_FIELDS = new Set([
   "fecha_nac",
@@ -118,6 +124,7 @@ const DATE_FIELDS = new Set([
   "vencimiento_anssal",
   "vencimiento_malapraxis",
   "vencimiento_cobertura",
+  "fecha_ingreso",
 ]);
 
 const INT_FIELDS = new Set([
@@ -202,16 +209,13 @@ const DoctorProfilePage: React.FC = () => {
 
   const [tab, setTab] = useState<TabKey>("datos");
 
-  // perfil
-  const [data, setData] = useState<DoctorProfile | null>(null);
+  const [data, setData] = useState<DoctorProfileX | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Edición
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [draft, setDraft] = useState<Partial<DoctorProfile>>({});
+  const [draft, setDraft] = useState<Partial<DoctorProfileX>>({});
 
-  // rbac
   const [rolesAll, setRolesAll] = useState<Role[]>([]);
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [permList, setPermList] = useState<Permission[]>([]);
@@ -219,7 +223,6 @@ const DoctorProfilePage: React.FC = () => {
   const [effective, setEffective] = useState<string[]>([]);
   const [rbacLoading, setRbacLoading] = useState(false);
 
-  // especialidades
   const [especs, setEspecs] = useState<DoctorEspecialidad[]>([]);
   const [espLoading, setEspLoading] = useState(false);
   const [especErr, setEspecErr] = useState<string | null>(null);
@@ -238,42 +241,31 @@ const DoctorProfilePage: React.FC = () => {
   );
   const [delEspBusy, setDelEspBusy] = useState(false);
 
-  // const [editEspOpen, setEditEspOpen] = useState(false);
-  // const [editEspId, setEditEspId] = useState<number | null>(null);
-  // const [editEspResol, setEditEspResol] = useState("");
-  // const [editEspDate, setEditEspDate] = useState<Date | null>(null);
-  // const [editEspFile, setEditEspFile] = useState<File | null>(null);
-  // const [editEspBusy, setEditEspBusy] = useState(false);
   const [espOptions, setEspOptions] = useState<Option[]>([]);
 
-  // documentos
   const [docs, setDocs] = useState<DoctorDocument[]>([]);
   const [docsLoading, setDocsLoading] = useState(false);
 
-  // estado socio + eliminar socio
   const [existe, setExiste] = useState<"S" | "N">("N");
   const [toggleBusy, setToggleBusy] = useState(false);
   const [delOpen, setDelOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  // agregar doc
   const [docOpen, setDocOpen] = useState(false);
-  const [docLabel, setDocLabel] = useState<string>("attach_titulo"); // value attach_* u "otro"
+  const [docLabel, setDocLabel] = useState<string>("attach_titulo");
   const [docCustom, setDocCustom] = useState<string>("");
   const [docFile, setDocFile] = useState<File | null>(null);
   const [docBusy, setDocBusy] = useState(false);
   const [labelOptions, setLabelOptions] = useState<string[]>(DEFAULT_LABELS);
 
-  // reemplazo si ya existe ese tipo attach_*
   const [replaceOpen, setReplaceOpen] = useState(false);
   const [replacePretty, setReplacePretty] = useState<string>("");
   const [pendingUpload, setPendingUpload] = useState<{
-    attachKey: string | null; // ej attach_titulo, o null si "otro"
-    labelNormalized: string; // ej "titulo"
+    attachKey: string | null;
+    labelNormalized: string;
     file: File;
   } | null>(null);
 
-  // eliminar doc individual
   const [delDocOpen, setDelDocOpen] = useState(false);
   const [docToDelete, setDocToDelete] = useState<DoctorDocument | null>(null);
   const [delDocBusy, setDelDocBusy] = useState(false);
@@ -282,7 +274,7 @@ const DoctorProfilePage: React.FC = () => {
     if (!espToDelete || !id) return;
     try {
       setDelEspBusy(true);
-      setRmEspBusy(espToDelete.id); // opcional: para reflejar "Quitando…" en la fila
+      setRmEspBusy(espToDelete.id);
       await removeMedicoEspecialidad(id, espToDelete.id);
       const rr = await getMedicoEspecialidades(medicoId);
       setEspecs(rr);
@@ -296,14 +288,14 @@ const DoctorProfilePage: React.FC = () => {
     }
   }
 
-  function setField<K extends keyof DoctorProfile>(
+  function setField<K extends keyof DoctorProfileX>(
     key: K,
-    val: DoctorProfile[K]
+    val: DoctorProfileX[K]
   ) {
     setDraft((d) => ({ ...d, [key]: val }));
   }
 
-  const RText = (key: keyof DoctorProfile, placeholder = "") => (
+  const RText = (key: keyof DoctorProfileX, placeholder = "") => (
     <input
       className={styles.input}
       value={(draft[key] as any) ?? ""}
@@ -312,7 +304,7 @@ const DoctorProfilePage: React.FC = () => {
     />
   );
 
-  const RNumber = (key: keyof DoctorProfile) => (
+  const RNumber = (key: keyof DoctorProfileX) => (
     <input
       className={styles.input}
       value={(draft[key] as any) ?? ""}
@@ -326,7 +318,7 @@ const DoctorProfilePage: React.FC = () => {
     />
   );
 
-  const RSexo = (key: keyof DoctorProfile = "sexo") => (
+  const RSexo = (key: keyof DoctorProfileX = "sexo" as any) => (
     <select
       className={styles.select}
       value={(draft[key] as any) ?? ""}
@@ -339,7 +331,7 @@ const DoctorProfilePage: React.FC = () => {
   );
 
   const RCondicion_impositiva = (
-    key: keyof DoctorProfile = "condicion_impositiva"
+    key: keyof DoctorProfileX = "condicion_impositiva" as any
   ) => (
     <select
       className={styles.select}
@@ -354,7 +346,7 @@ const DoctorProfilePage: React.FC = () => {
     </select>
   );
 
-  const RDate = (key: keyof DoctorProfile) => {
+  const RDate = (key: keyof DoctorProfileX) => {
     const curr = draft[key] as string | null | undefined;
     const asDate = curr ? new Date(curr) : null;
     return (
@@ -380,20 +372,24 @@ const DoctorProfilePage: React.FC = () => {
     if (!cameFromAfiliados) return;
 
     sessionStorage.removeItem("cmc_open_padrones_next");
-    setTab("padrones"); // 👈 listo: abre el tab Padrones
+    setTab("padrones");
   }, []);
 
-  // Load perfil
   useEffect(() => {
     let alive = true;
     (async () => {
       setLoading(true);
       try {
-        const d = await getMedicoDetail(medicoId);
+        const raw = (await getMedicoDetail(medicoId)) as any;
         if (!alive) return;
-        setData(d);
-        console.log(d);
-        if (d?.existe) setExiste(d.existe.toUpperCase() === "S" ? "S" : "N");
+        const normalized = {
+          ...raw,
+          fecha_ingreso: getFechaIngreso(raw),
+        } as DoctorProfileX;
+        setData(normalized);
+        console.log(normalized);
+        if (normalized?.existe)
+          setExiste(normalized.existe.toUpperCase() === "S" ? "S" : "N");
       } finally {
         if (alive) setLoading(false);
       }
@@ -403,7 +399,6 @@ const DoctorProfilePage: React.FC = () => {
     };
   }, [medicoId]);
 
-  // Permisos tab
   useEffect(() => {
     if (tab !== "permisos") return;
     let alive = true;
@@ -434,7 +429,6 @@ const DoctorProfilePage: React.FC = () => {
     };
   }, [tab, medicoId]);
 
-  // Especialidades tab
   useEffect(() => {
     if (tab !== "especialidades") return;
     let alive = true;
@@ -453,7 +447,6 @@ const DoctorProfilePage: React.FC = () => {
     };
   }, [tab, medicoId]);
 
-  // Documentos tab
   useEffect(() => {
     if (tab !== "documentos") return;
     let alive = true;
@@ -472,7 +465,6 @@ const DoctorProfilePage: React.FC = () => {
     };
   }, [tab, medicoId]);
 
-  // Catálogo de especialidades
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -480,8 +472,8 @@ const DoctorProfilePage: React.FC = () => {
         const list = await getListEspecialidades();
         if (!alive) return;
         const opts = (list || []).map((e: Especialidad) => ({
-          id: String(e.id_colegio_espe ?? e.id),
-          label: e.nombre || `ID ${e.id}`,
+          id: String((e as any).id_colegio_espe ?? (e as any).id),
+          label: (e as any).nombre || `ID ${(e as any).id}`,
         }));
         setEspOptions(opts);
       } catch (err) {
@@ -494,7 +486,6 @@ const DoctorProfilePage: React.FC = () => {
     };
   }, []);
 
-  // Catálogo de labels de documentos
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -502,7 +493,6 @@ const DoctorProfilePage: React.FC = () => {
         const labels = await getDocumentoLabels().catch(() => DEFAULT_LABELS);
         if (!alive) return;
         const final = labels?.length ? labels : DEFAULT_LABELS;
-        // garantizamos que sean solo attach_* conocidos + "otro"
         const cleaned = final.filter(
           (k) => k === "otro" || ATTACH_KEYS.includes(k)
         );
@@ -528,17 +518,15 @@ const DoctorProfilePage: React.FC = () => {
     }
   }
 
-  // ====== flujo subir (y eventualmente reemplazar) documento ======
   const tryUploadDocumento = async () => {
     if (!docFile) return;
 
-    const attachKey = docLabel !== "otro" ? docLabel : null; // ej attach_titulo o null
+    const attachKey = docLabel !== "otro" ? docLabel : null;
     const labelNormalized =
       docLabel === "otro"
         ? docCustom.trim().toLowerCase().replace(/\s+/g, "_")
-        : stripAttach(docLabel); // guardamos sin attach_
+        : stripAttach(docLabel);
 
-    // si es un attach_* y ya existe un doc con ese “tipo”, pedimos confirmación
     if (attachKey) {
       const exists = docs.find(
         (d) => normalizeForCompare(d.label) === labelNormalized
@@ -547,7 +535,7 @@ const DoctorProfilePage: React.FC = () => {
         setPendingUpload({ attachKey, labelNormalized, file: docFile });
         setReplacePretty(ATTACH_PRETTY[attachKey] || attachKey);
         setReplaceOpen(true);
-        return; // frenamos hasta confirmación
+        return;
       }
     }
 
@@ -566,18 +554,14 @@ const DoctorProfilePage: React.FC = () => {
     const { attachKey, labelNormalized, file } = payload;
     setDocBusy(true);
     try {
-      // 1) subir y crear registro documento con label NORMALIZADO (sin attach_)
-      const created = await addMedicoDocumento(medicoId, file, labelNormalized); // -> DoctorDocument
+      const created = await addMedicoDocumento(medicoId, file, labelNormalized);
 
-      // 2) si corresponde a un attach_* mapear ese doc al campo unitario
       if (attachKey) {
         await setMedicoAttach(medicoId, attachKey, created.id);
       }
 
-      // 3) refrescar listado
       await reloadDocs();
 
-      // limpiar modal
       setDocOpen(false);
       setDocFile(null);
       setDocCustom("");
@@ -589,14 +573,12 @@ const DoctorProfilePage: React.FC = () => {
   const handleConfirmReplace = async () => {
     if (!pendingUpload) return;
     try {
-      // borrar el existente de ese tipo (si lo encontramos de nuevo)
       const existing = docs.find(
         (d) => normalizeForCompare(d.label) === pendingUpload.labelNormalized
       );
       if (existing) {
         await deleteMedicoDocumento(medicoId, existing.id);
       }
-      // subir nuevo y mapear
       await performUploadAndMap(pendingUpload);
     } catch (e: any) {
       alert(e?.message || "No se pudo reemplazar el documento.");
@@ -606,7 +588,6 @@ const DoctorProfilePage: React.FC = () => {
     }
   };
 
-  // ====== eliminar doc individual ======
   const askDeleteDoc = (doc: DoctorDocument) => {
     setDocToDelete(doc);
     setDelDocOpen(true);
@@ -616,9 +597,8 @@ const DoctorProfilePage: React.FC = () => {
     if (!docToDelete) return;
     try {
       setDelDocBusy(true);
-      // si el doc corresponde a un attach conocido, limpiar el campo
-      const normalized = normalizeForCompare(docToDelete.label); // ej "titulo"
-      const attachKey = ATTACH_KEYS.find((k) => stripAttach(k) === normalized); // ej "attach_titulo"
+      const normalized = normalizeForCompare(docToDelete.label);
+      const attachKey = ATTACH_KEYS.find((k) => stripAttach(k) === normalized);
       if (attachKey) {
         await clearMedicoAttach(medicoId, attachKey);
       }
@@ -646,15 +626,12 @@ const DoctorProfilePage: React.FC = () => {
     title: React.ReactNode;
     children: React.ReactNode;
   }) {
-    // Montado real del Modal (para no desmontarlo hasta que termine la animación)
     const [mounted, setMounted] = React.useState(open);
     const [show, setShow] = React.useState(open);
 
-    // cuando cambia `open`, disparo entrada/salida
     React.useEffect(() => {
       if (open) {
         setMounted(true);
-        // dejar un microtick para que Transition capte el cambio a `in=true`
         requestAnimationFrame(() => setShow(true));
       } else {
         setShow(false);
@@ -667,13 +644,11 @@ const DoctorProfilePage: React.FC = () => {
         onClose={() => setShow(false)}
         size={size}
         className={styles.animatedModal}
-        // callbacks de cierre si clicás el backdrop o la X
       >
         <Modal.Header>
           <Modal.Title>{title}</Modal.Title>
         </Modal.Header>
 
-        {/* Transición personalizada */}
         <Animation.Transition
           in={show}
           timeout={220}
@@ -683,10 +658,9 @@ const DoctorProfilePage: React.FC = () => {
           exitedClassName="slideUp-exited"
           onExited={() => {
             setMounted(false);
-            onClose(); // sincronizo con el estado padre
+            onClose();
           }}
         >
-          {/* envoltorio para aplicar transform/opacity */}
           <div className="slideUp-sheet">
             <Modal.Body>{children}</Modal.Body>
             <Modal.Footer />
@@ -736,19 +710,16 @@ const DoctorProfilePage: React.FC = () => {
                       <div className={styles.roleRow}>
                         <span className={styles.location}>N° socio:</span>
                         <span className={styles.role}>
-                          {data.nro_socio || "—"}
+                          {(data as any).nro_socio || "—"}
                         </span>
                         <span className={styles.dot}>•</span>
-                        <span className={styles.location}>
-                          Mat. provincial:
-                        </span>
+                        <span className={styles.location}>Mat. provincial:</span>
                         <span className={styles.role}>
-                          {data.matricula_prov}
+                          {(data as any).matricula_prov}
                         </span>
                       </div>
                     </div>
 
-                    {/* Toggle + eliminar socio */}
                     <div className={styles.headerActions}>
                       <div
                         className={styles.toggleWrap}
@@ -795,15 +766,9 @@ const DoctorProfilePage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Tabs */}
                   <div className={styles.tabs} id="doctor-tabs-root">
                     {(
-                      [
-                        "datos",
-                        "documentos",
-                        "especialidades",
-                        "padrones",
-                      ] as TabKey[]
+                      ["datos", "documentos", "especialidades", "padrones"] as TabKey[]
                     ).map((k) => (
                       <button
                         key={k}
@@ -840,7 +805,6 @@ const DoctorProfilePage: React.FC = () => {
                   </div>
 
                   <AnimatePresence mode="wait">
-                    {/* === Datos === */}
                     {tab === "datos" && data && (
                       <motion.div
                         key="tab-datos"
@@ -856,7 +820,10 @@ const DoctorProfilePage: React.FC = () => {
                           title={isEditing ? "Cancelar edición" : "Editar"}
                           onClick={() => {
                             if (!isEditing) {
-                              setDraft({ ...data });
+                              setDraft({
+                                ...(data as any),
+                                fecha_ingreso: getFechaIngreso(data),
+                              });
                               setIsEditing(true);
                             } else {
                               setIsEditing(false);
@@ -876,7 +843,7 @@ const DoctorProfilePage: React.FC = () => {
                             {isEditing ? (
                               RText("name")
                             ) : (
-                              <span>{fmt(data.name)}</span>
+                              <span>{fmt((data as any).name)}</span>
                             )}
                           </div>
                           <div>
@@ -884,7 +851,7 @@ const DoctorProfilePage: React.FC = () => {
                             {isEditing ? (
                               RText("nombre_")
                             ) : (
-                              <span>{fmt(data.nombre_)}</span>
+                              <span>{fmt((data as any).nombre_)}</span>
                             )}
                           </div>
                           <div>
@@ -892,7 +859,7 @@ const DoctorProfilePage: React.FC = () => {
                             {isEditing ? (
                               RText("apellido")
                             ) : (
-                              <span>{fmt(data.apellido)}</span>
+                              <span>{fmt((data as any).apellido)}</span>
                             )}
                           </div>
                           <div>
@@ -900,7 +867,7 @@ const DoctorProfilePage: React.FC = () => {
                             {isEditing ? (
                               RSexo("sexo")
                             ) : (
-                              <span>{fmt(data.sexo)}</span>
+                              <span>{fmt((data as any).sexo)}</span>
                             )}
                           </div>
                           <div>
@@ -908,7 +875,7 @@ const DoctorProfilePage: React.FC = () => {
                             {isEditing ? (
                               RText("documento")
                             ) : (
-                              <span>{fmt(data.documento)}</span>
+                              <span>{fmt((data as any).documento)}</span>
                             )}
                           </div>
                           <div>
@@ -916,7 +883,7 @@ const DoctorProfilePage: React.FC = () => {
                             {isEditing ? (
                               RText("cuit")
                             ) : (
-                              <span>{fmt(data.cuit)}</span>
+                              <span>{fmt((data as any).cuit)}</span>
                             )}
                           </div>
                           <div>
@@ -926,14 +893,15 @@ const DoctorProfilePage: React.FC = () => {
                             {isEditing ? (
                               RDate("fecha_nac")
                             ) : (
-                              <span>{fmtDate(data.fecha_nac)}</span>
+                              <span>{fmtDate((data as any).fecha_nac)}</span>
                             )}
                           </div>
                           <div>
                             <span className={styles.label}>Estado</span>
                             <span>
-                              {data.existe
-                                ? data.existe.toUpperCase() === "S"
+                              {(data as any).existe
+                                ? String((data as any).existe).toUpperCase() ===
+                                  "S"
                                   ? "Activo"
                                   : "Inactivo"
                                 : "—"}
@@ -945,7 +913,7 @@ const DoctorProfilePage: React.FC = () => {
                             {isEditing ? (
                               RText("provincia")
                             ) : (
-                              <span>{fmt(data.provincia)}</span>
+                              <span>{fmt((data as any).provincia)}</span>
                             )}
                           </div>
                           <div>
@@ -953,7 +921,7 @@ const DoctorProfilePage: React.FC = () => {
                             {isEditing ? (
                               RText("localidad")
                             ) : (
-                              <span>{fmt(data.localidad)}</span>
+                              <span>{fmt((data as any).localidad)}</span>
                             )}
                           </div>
                           <div>
@@ -961,7 +929,7 @@ const DoctorProfilePage: React.FC = () => {
                             {isEditing ? (
                               RText("codigo_postal")
                             ) : (
-                              <span>{fmt(data.codigo_postal)}</span>
+                              <span>{fmt((data as any).codigo_postal)}</span>
                             )}
                           </div>
 
@@ -972,17 +940,17 @@ const DoctorProfilePage: React.FC = () => {
                             {isEditing ? (
                               RText("domicilio_particular")
                             ) : (
-                              <span>{fmt(data.domicilio_particular)}</span>
+                              <span>
+                                {fmt((data as any).domicilio_particular)}
+                              </span>
                             )}
                           </div>
                           <div>
-                            <span className={styles.label}>
-                              Tel. particular
-                            </span>
+                            <span className={styles.label}>Tel. particular</span>
                             {isEditing ? (
                               RText("tele_particular")
                             ) : (
-                              <span>{fmt(data.tele_particular)}</span>
+                              <span>{fmt((data as any).tele_particular)}</span>
                             )}
                           </div>
                           <div>
@@ -992,7 +960,9 @@ const DoctorProfilePage: React.FC = () => {
                             {isEditing ? (
                               RText("celular_particular")
                             ) : (
-                              <span>{fmt(data.celular_particular)}</span>
+                              <span>
+                                {fmt((data as any).celular_particular)}
+                              </span>
                             )}
                           </div>
 
@@ -1006,35 +976,29 @@ const DoctorProfilePage: React.FC = () => {
                               <a
                                 className={styles.link}
                                 href={
-                                  data.mail_particular
-                                    ? `mailto:${data.mail_particular}`
+                                  (data as any).mail_particular
+                                    ? `mailto:${(data as any).mail_particular}`
                                     : undefined
                                 }
                               >
-                                {fmt(data.mail_particular)}
+                                {fmt((data as any).mail_particular)}
                               </a>
                             )}
                           </div>
 
-                             <div>
+                          <div>
                             <span className={styles.label}>
                               Fecha de Ingreso
                             </span>
-                          </div>
-                          <div>
                             {isEditing ? (
-                              RText("fecha_ingreso")
+                              RDate("fecha_ingreso")
                             ) : (
-                              <span>{fmt(data.fecha_ingreso)}</span>
+                              <span>{fmtDate(getFechaIngreso(data))}</span>
                             )}
                           </div>
                         </div>
 
-                        {/* Profesionales */}
-                        <h5
-                          className={styles.section}
-                          style={{ marginTop: 24 }}
-                        >
+                        <h5 className={styles.section} style={{ marginTop: 24 }}>
                           Datos profesionales
                         </h5>
                         <div className={styles.infoGrid}>
@@ -1043,7 +1007,7 @@ const DoctorProfilePage: React.FC = () => {
                             {isEditing ? (
                               RText("nro_socio")
                             ) : (
-                              <span>{fmt(data.nro_socio)}</span>
+                              <span>{fmt((data as any).nro_socio)}</span>
                             )}
                           </div>
                           <div>
@@ -1051,7 +1015,7 @@ const DoctorProfilePage: React.FC = () => {
                             {isEditing ? (
                               RText("categoria")
                             ) : (
-                              <span>{fmt(data.categoria)}</span>
+                              <span>{fmt((data as any).categoria)}</span>
                             )}
                           </div>
                           <div>
@@ -1059,17 +1023,15 @@ const DoctorProfilePage: React.FC = () => {
                             {isEditing ? (
                               RText("titulo")
                             ) : (
-                              <span>{fmt(data.titulo)}</span>
+                              <span>{fmt((data as any).titulo)}</span>
                             )}
                           </div>
                           <div>
-                            <span className={styles.label}>
-                              Matrícula prov.
-                            </span>
+                            <span className={styles.label}>Matrícula prov.</span>
                             {isEditing ? (
                               RText("matricula_prov")
                             ) : (
-                              <span>{fmt(data.matricula_prov)}</span>
+                              <span>{fmt((data as any).matricula_prov)}</span>
                             )}
                           </div>
                           <div>
@@ -1077,7 +1039,7 @@ const DoctorProfilePage: React.FC = () => {
                             {isEditing ? (
                               RText("matricula_nac")
                             ) : (
-                              <span>{fmt(data.matricula_nac)}</span>
+                              <span>{fmt((data as any).matricula_nac)}</span>
                             )}
                           </div>
                           <div>
@@ -1085,17 +1047,15 @@ const DoctorProfilePage: React.FC = () => {
                             {isEditing ? (
                               RText("fecha_recibido")
                             ) : (
-                              <span>{fmt(data.fecha_recibido)}</span>
+                              <span>{fmt((data as any).fecha_recibido)}</span>
                             )}
                           </div>
                           <div>
-                            <span className={styles.label}>
-                              Fecha matrícula
-                            </span>
+                            <span className={styles.label}>Fecha matrícula</span>
                             {isEditing ? (
                               RText("fecha_matricula")
                             ) : (
-                              <span>{fmt(data.fecha_matricula)}</span>
+                              <span>{fmt((data as any).fecha_matricula)}</span>
                             )}
                           </div>
                           <div>
@@ -1107,7 +1067,7 @@ const DoctorProfilePage: React.FC = () => {
                             {isEditing ? (
                               RText("domicilio_consulta")
                             ) : (
-                              <span>{fmt(data.domicilio_consulta)}</span>
+                              <span>{fmt((data as any).domicilio_consulta)}</span>
                             )}
                           </div>
                           <div>
@@ -1115,16 +1075,12 @@ const DoctorProfilePage: React.FC = () => {
                             {isEditing ? (
                               RText("telefono_consulta")
                             ) : (
-                              <span>{fmt(data.telefono_consulta)}</span>
+                              <span>{fmt((data as any).telefono_consulta)}</span>
                             )}
                           </div>
                         </div>
 
-                        {/* Impositivos */}
-                        <h5
-                          className={styles.section}
-                          style={{ marginTop: 24 }}
-                        >
+                        <h5 className={styles.section} style={{ marginTop: 24 }}>
                           Datos impositivos
                         </h5>
                         <div className={styles.infoGrid}>
@@ -1135,7 +1091,9 @@ const DoctorProfilePage: React.FC = () => {
                             {isEditing ? (
                               RCondicion_impositiva("condicion_impositiva")
                             ) : (
-                              <span>{fmt(data.condicion_impositiva)}</span>
+                              <span>
+                                {fmt((data as any).condicion_impositiva)}
+                              </span>
                             )}
                           </div>
                           <div>
@@ -1143,7 +1101,7 @@ const DoctorProfilePage: React.FC = () => {
                             {isEditing ? (
                               RNumber("anssal")
                             ) : (
-                              <span>{fmt(data.anssal)}</span>
+                              <span>{fmt((data as any).anssal)}</span>
                             )}
                           </div>
                           <div>
@@ -1151,7 +1109,7 @@ const DoctorProfilePage: React.FC = () => {
                             {isEditing ? (
                               RDate("vencimiento_anssal")
                             ) : (
-                              <span>{fmt(data.vencimiento_anssal)}</span>
+                              <span>{fmt((data as any).vencimiento_anssal)}</span>
                             )}
                           </div>
                           <div>
@@ -1159,7 +1117,7 @@ const DoctorProfilePage: React.FC = () => {
                             {isEditing ? (
                               RText("malapraxis")
                             ) : (
-                              <span>{fmt(data.malapraxis)}</span>
+                              <span>{fmt((data as any).malapraxis)}</span>
                             )}
                           </div>
                           <div>
@@ -1169,7 +1127,9 @@ const DoctorProfilePage: React.FC = () => {
                             {isEditing ? (
                               RDate("vencimiento_malapraxis")
                             ) : (
-                              <span>{fmt(data.vencimiento_malapraxis)}</span>
+                              <span>
+                                {fmt((data as any).vencimiento_malapraxis)}
+                              </span>
                             )}
                           </div>
                           <div>
@@ -1177,17 +1137,17 @@ const DoctorProfilePage: React.FC = () => {
                             {isEditing ? (
                               RNumber("cobertura")
                             ) : (
-                              <span>{fmt(data.cobertura)}</span>
+                              <span>{fmt((data as any).cobertura)}</span>
                             )}
                           </div>
                           <div>
-                            <span className={styles.label}>
-                              Venc. cobertura
-                            </span>
+                            <span className={styles.label}>Venc. cobertura</span>
                             {isEditing ? (
                               RDate("vencimiento_cobertura")
                             ) : (
-                              <span>{fmt(data.vencimiento_cobertura)}</span>
+                              <span>
+                                {fmt((data as any).vencimiento_cobertura)}
+                              </span>
                             )}
                           </div>
                           <div>
@@ -1195,7 +1155,7 @@ const DoctorProfilePage: React.FC = () => {
                             {isEditing ? (
                               RText("cbu")
                             ) : (
-                              <span>{fmt(data.cbu)}</span>
+                              <span>{fmt((data as any).cbu)}</span>
                             )}
                           </div>
                           <div>
@@ -1203,7 +1163,7 @@ const DoctorProfilePage: React.FC = () => {
                             {isEditing ? (
                               RText("observacion")
                             ) : (
-                              <span>{fmt(data.observacion)}</span>
+                              <span>{fmt((data as any).observacion)}</span>
                             )}
                           </div>
                         </div>
@@ -1221,14 +1181,17 @@ const DoctorProfilePage: React.FC = () => {
                                   Object.entries(draft).forEach(([k, v]) => {
                                     if (v !== undefined) payload[k] = v;
                                   });
-                                  console.log("PATCH payload:", payload);
                                   await updateMedico(
-                                    data.id,
+                                    (data as any).id,
                                     normalizePatch(payload)
                                   );
-                                  const fresh = await getMedicoDetail(
-                                    String(data.id)
-                                  );
+                                  const rawFresh = (await getMedicoDetail(
+                                    String((data as any).id)
+                                  )) as any;
+                                  const fresh = {
+                                    ...rawFresh,
+                                    fecha_ingreso: getFechaIngreso(rawFresh),
+                                  } as DoctorProfileX;
                                   setData(fresh);
                                   setIsEditing(false);
                                   setDraft({});
@@ -1258,7 +1221,6 @@ const DoctorProfilePage: React.FC = () => {
                       </motion.div>
                     )}
 
-                    {/* === Documentos === */}
                     {tab === "documentos" && (
                       <motion.div
                         key="docs"
@@ -1347,7 +1309,6 @@ const DoctorProfilePage: React.FC = () => {
                       </motion.div>
                     )}
 
-                    {/* === Especialidades === (sin cambios funcionales) */}
                     {tab === "especialidades" && (
                       <motion.div
                         key="tab-especialidades"
@@ -1468,7 +1429,7 @@ const DoctorProfilePage: React.FC = () => {
                         )}
                       </motion.div>
                     )}
-                    {/* === Padrones === */}
+
                     {tab === "padrones" && (
                       <motion.div
                         key="tab-padrones"
@@ -1483,7 +1444,6 @@ const DoctorProfilePage: React.FC = () => {
                       </motion.div>
                     )}
 
-                    {/* === Permisos === */}
                     {tab === "permisos" && (
                       <RequirePermission scope="rbac:gestionar">
                         <motion.div
@@ -1622,7 +1582,6 @@ const DoctorProfilePage: React.FC = () => {
         </motion.div>
       </div>
 
-      {/* ===== Modal: Agregar documento ===== */}
       <ActionModal
         open={docOpen}
         onClose={() => setDocOpen(false)}
@@ -1632,16 +1591,14 @@ const DoctorProfilePage: React.FC = () => {
         confirmDisabled={!docFile || (docLabel === "otro" && !docCustom.trim())}
         onConfirm={async () => {
           try {
-            await tryUploadDocumento(); // mantiene el modal abierto si abre 'reemplazar'
-            // Si se subió sin reemplazo: avisá éxito y cerrá
-            // (performUploadAndMap cierra el modal; si querés notificar ahí, movelo adentro)
+            await tryUploadDocumento();
             notify.success(
               "Documento agregado",
               "El archivo se subió correctamente."
             );
           } catch (e: any) {
             notify.error("No se pudo agregar el documento", e?.message);
-            throw e; // mantiene abierto
+            throw e;
           }
         }}
       >
@@ -1689,7 +1646,6 @@ const DoctorProfilePage: React.FC = () => {
         </div>
       </ActionModal>
 
-      {/* ===== Modal: Reemplazar documento de mismo tipo ===== */}
       <ActionModal
         open={replaceOpen}
         onClose={() => {
@@ -1716,7 +1672,6 @@ const DoctorProfilePage: React.FC = () => {
         <p>¿Querés continuar?</p>
       </ActionModal>
 
-      {/* ===== Modal: Confirmar eliminación de doc ===== */}
       <ActionModal
         open={delDocOpen}
         onClose={() => setDelDocOpen(false)}
@@ -1726,7 +1681,6 @@ const DoctorProfilePage: React.FC = () => {
         onConfirm={async () => {
           if (!docToDelete) return;
           try {
-            // limpiar mapping attach_* si corresponde
             const normalized = normalizeForCompare(docToDelete.label);
             const attachKey = ATTACH_KEYS.find(
               (k) => stripAttach(k) === normalized
@@ -1755,7 +1709,6 @@ const DoctorProfilePage: React.FC = () => {
         </p>
       </ActionModal>
 
-      {/* ===== Modal: Agregar especialidad ===== */}
       <ActionModal
         open={assocEspOpen}
         onClose={() => setAssocEspOpen(false)}
@@ -1785,7 +1738,7 @@ const DoctorProfilePage: React.FC = () => {
             notify.success("Especialidad asociada");
           } catch (e: any) {
             notify.error("No se pudo asociar la especialidad", e?.message);
-            throw e; // mantiene abierto
+            throw e;
           }
         }}
       >
@@ -1840,7 +1793,6 @@ const DoctorProfilePage: React.FC = () => {
         </div>
       </ActionModal>
 
-      {/* ===== Modal: Eliminar socio ===== */}
       <ActionModal
         open={delOpen}
         onClose={() => setDelOpen(false)}
@@ -1869,7 +1821,6 @@ const DoctorProfilePage: React.FC = () => {
         </div>
       </ActionModal>
 
-      {/* ===== Modal: Confirmar quitar especialidad ===== */}
       <ActionModal
         open={delEspOpen}
         onClose={() => {
@@ -1904,8 +1855,8 @@ const DoctorProfilePage: React.FC = () => {
           (ID colegio: {espToDelete?.id}).
         </p>
         <p style={{ marginTop: 8 }}>
-          Esta acción solo desvincula la especialidad del profesional; no
-          elimina la especialidad del catálogo.
+          Esta acción solo desvincula la especialidad del profesional; no elimina
+          la especialidad del catálogo.
         </p>
         <p style={{ marginTop: 8 }}>¿Querés continuar?</p>
       </ActionModal>

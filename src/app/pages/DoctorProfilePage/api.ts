@@ -222,7 +222,7 @@ export const UPDATE_WHITELIST = [
   "tele_particular",
   "celular_particular",
   "mail_particular",
-   "fecha_ingreso",
+  "fecha_ingreso",
 
   // profesionales
   "nro_socio",
