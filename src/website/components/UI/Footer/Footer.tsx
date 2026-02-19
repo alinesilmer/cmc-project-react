@@ -83,7 +83,7 @@ export default function Footer() {
           <span className={styles.iconWrap}>
             <FiPhone />
           </span>
-          <span>+54 3794722121</span>
+          <span>+54 3794252323</span>
         </a>
 
         <a

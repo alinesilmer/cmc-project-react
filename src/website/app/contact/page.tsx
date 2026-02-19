@@ -28,7 +28,7 @@ export default function Contacto() {
             <p className={styles.colText}>
               Comunicate con nuestro equipo para turnos, información y consultas generales.
             </p>
-            <a href="tel:+543794722121" className={styles.colHighlight}>+54 3794 722121</a>
+            <a href="tel:+543794252323" className={styles.colHighlight}>+54 3794 252323</a>
           </div>
 
           <div className={styles.col}>
