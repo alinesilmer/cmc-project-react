@@ -73,9 +73,9 @@ function toUserRow(m: any) {
     id: m?.ID ?? m?.id ?? m?.NRO_SOCIO ?? Math.random().toString(36).slice(2),
     nro_socio: m?.NRO_SOCIO ?? m?.nro_socio ?? null,
     name: m?.NOMBRE ?? m?.nombre ?? "—",
-    email: m?.mail_particular ?? m?.email ?? "—",
-    phone: m?.tele_particular ?? "—",
-    joinDate: (m?.fecha_ingreso ?? m?.joinDate) ?? null,
+    email: m?.mail_particular ?? m?.MAIL_PARTICULAR ?? m?.email ?? "—",
+    phone: m?.tele_particular ?? m?.TELE_PARTICULAR ?? "—",
+    joinDate: (m?.fecha_ingreso ?? m?.FECHA_INGRESO ?? m?.joinDate) ?? null,
     status,
     matriculaProv: m?.MATRICULA_PROV ?? m?.matricula_prov ?? "—",
     adherente: a,
@@ -86,70 +86,102 @@ function toUserRow(m: any) {
 type UserRow = ReturnType<typeof toUserRow>;
 
 /* ================================
-   Especialidades múltiples (reglas)
+   ✅ Especialidades múltiples (FIX REAL)
+   - Lee especialidad1..especialidadN
+   - Dedup
+   - Quita "médico" si hay otras
 ================================ */
+function splitTokens(v: any): string[] {
+  if (isEmptyValue(v)) return [];
+  if (Array.isArray(v)) return v.map((x) => String(x ?? "").trim()).filter(Boolean);
+  if (typeof v === "string") {
+    const s = v.trim();
+    if (!s) return [];
+    return s.split(/[,;|]/g).map((x) => x.trim()).filter(Boolean);
+  }
+  return [String(v).trim()].filter(Boolean);
+}
+
+function collectEspecialidadColumns(row: any, max = 12): any[] {
+  const out: any[] = [];
+  const pushKey = (k: string) => {
+    const v = row?.[k];
+    if (!isEmptyValue(v)) out.push(v);
+  };
+
+  for (let i = 1; i <= max; i++) {
+    // especialidad1 / ESPECIALIDAD1
+    pushKey(`especialidad${i}`);
+    pushKey(`ESPECIALIDAD${i}`);
+
+    // especialidad_1 / ESPECIALIDAD_1
+    pushKey(`especialidad_${i}`);
+    pushKey(`ESPECIALIDAD_${i}`);
+
+    // especialidad1_nombre / ESPECIALIDAD1_NOMBRE
+    pushKey(`especialidad${i}_nombre`);
+    pushKey(`ESPECIALIDAD${i}_NOMBRE`);
+
+    // especialidad_1_nombre / ESPECIALIDAD_1_NOMBRE
+    pushKey(`especialidad_${i}_nombre`);
+    pushKey(`ESPECIALIDAD_${i}_NOMBRE`);
+  }
+
+  return out;
+}
+
 function getEspecialidadesTokens(row: any): string[] {
-  const raw =
-    row?.ESPECIALIDADES ??
-    row?.especialidades ??
-    row?.ESPECIALIDAD ??
-    row?.especialidad ??
-    row?.ESPECIALIDAD_NOMBRE ??
-    row?.especialidad_nombre;
+  const tokensRaw: string[] = [];
 
-  let tokens: string[] = [];
+  // ✅ 1) columnas especialidad1..N (tu caso real)
+  const cols = collectEspecialidadColumns(row, 12);
+  for (const v of cols) tokensRaw.push(...splitTokens(v));
 
-  if (Array.isArray(raw) && raw.length && typeof raw[0] === "object") {
-    for (const x of raw) {
-      const name =
-        x?.nombre ?? x?.NOMBRE ?? x?.label ?? x?.descripcion ?? x?.DESCRIPCION;
-      if (!isEmptyValue(name)) tokens.push(String(name));
-    }
-  } else if (Array.isArray(raw)) {
-    tokens = raw.map((x) => String(x ?? "").trim()).filter(Boolean);
-  } else if (!isEmptyValue(raw)) {
-    if (typeof raw === "string") {
-      tokens.push(...raw.split(/[,;|]/).map((s) => s.trim()).filter(Boolean));
-    } else {
-      tokens.push(String(raw));
-    }
-  }
+  // ✅ 2) compat: si backend manda "ESPECIALIDADES" como string/array
+  const rawCombined =
+    (row as any)?.ESPECIALIDADES ??
+    (row as any)?.especialidades ??
+    (row as any)?.ESPECIALIDAD ??
+    (row as any)?.especialidad ??
+    (row as any)?.ESPECIALIDAD_NOMBRE ??
+    (row as any)?.especialidad_nombre ??
+    null;
 
-  const norm = (s: string) => normalizeText(s);
+  for (const v of splitTokens(rawCombined)) tokensRaw.push(v);
 
-  const hasSin = tokens.some((t) => {
-    const n = norm(t);
-    return n === "sin especialidad" || n === "sinespecialidad";
-  });
-
-  if (hasSin || tokens.length === 0) tokens = ["médico"];
-
-  // dedup
+  // limpiar + dedup
   const seen = new Set<string>();
-  const dedup: string[] = [];
-  for (const t of tokens) {
-    const n = norm(t);
-    if (!seen.has(n)) {
-      seen.add(n);
-      dedup.push(t);
-    }
-  }
-  tokens = dedup;
+  const out: string[] = [];
 
-  const hasMedico = tokens.some((t) => norm(t) === "medico");
-  if (hasMedico && tokens.length > 1) {
-    tokens = tokens.filter((t) => norm(t) !== "medico");
+  for (const t0 of tokensRaw) {
+    const t = String(t0 ?? "").trim();
+    if (!t) continue;
+    if (t === "0") continue;
+
+    const n = normalizeText(t);
+    if (!n) continue;
+
+    // ✅ NO queremos que "Sin especialidad" cuente como especialidad
+    if (n === "sin especialidad" || n === "sinespecialidad") continue;
+
+    if (seen.has(n)) continue;
+    seen.add(n);
+    out.push(t);
   }
 
-  return tokens;
+  // ✅ regla: si hay más de 1 y existe "médico", se elimina
+  const hasMedico = out.some((x) => normalizeText(x) === "medico");
+  if (hasMedico && out.length > 1) {
+    return out.filter((x) => normalizeText(x) !== "medico");
+  }
+
+  return out;
 }
 
 function matchEspecialidad(row: any, selected: string): boolean {
   if (!selected) return true;
 
   const sel = normalizeText(selected);
-
-  // match por id o por texto: si selected es "12" y tokens tienen "12" o "cardiologia"
   const tokens = getEspecialidadesTokens(row);
 
   return tokens.some((t) => {
@@ -259,16 +291,29 @@ const MISSING_FIELD_KEYS: Record<MissingFieldKey, string[]> = {
   matricula_nac: ["matricula_nac", "MATRICULA_NAC"],
   provincia: ["provincia", "PROVINCIA"],
   categoria: ["categoria", "CATEGORIA"],
-  especialidad: ["especialidad", "ESPECIALIDAD", "especialidades", "ESPECIALIDADES"],
+
+  // ✅ incluimos variantes, pero igual la lógica principal está en getEspecialidadesTokens()
+  especialidad: [
+    "especialidad",
+    "ESPECIALIDAD",
+    "especialidades",
+    "ESPECIALIDADES",
+    "especialidad1",
+    "especialidad2",
+    "especialidad3",
+    "ESPECIALIDAD1",
+    "ESPECIALIDAD2",
+    "ESPECIALIDAD3",
+  ],
+
   condicion_impositiva: ["condicion_impositiva", "CONDICION_IMPOSITIVA", "condicionImpositiva"],
   malapraxis: ["MALAPRAXIS", "malapraxis", "MALAPRAXIS_EMPRESA", "malapraxis_empresa"],
 };
 
 function isMissingField(row: MedicoRow, field: MissingFieldKey): boolean {
   if (field === "especialidad") {
-    const tokens = getEspecialidadesTokens(row);
-    const joined = normalizeText(tokens.join(", "));
-    return joined === "" || joined === "sin especialidad" || joined === "sinespecialidad";
+    // ✅ missing real: si no hay tokens (NO inventamos “médico”)
+    return getEspecialidadesTokens(row).length === 0;
   }
   const raw = pickFirst(row, MISSING_FIELD_KEYS[field]);
   return isEmptyValue(raw);
@@ -329,7 +374,6 @@ function applyMedicosFilters(rows: MedicoRow[], filters: FilterSelection): Medic
       if (!pv.includes(provNorm)) return false;
     }
 
-
     if (o.categoria) {
       const cat = normalizeText(pickFirst(row, ["categoria", "CATEGORIA"]));
       if (cat !== catNorm) return false;
@@ -342,6 +386,7 @@ function applyMedicosFilters(rows: MedicoRow[], filters: FilterSelection): Medic
       if (ci !== ciNorm) return false;
     }
 
+    // ✅ filtro por especialidad contra TODAS las especialidades del médico
     if (o.especialidad && !matchEspecialidad(row, o.especialidad)) return false;
 
     if (o.estado === "activo" && !isActiveRow(row)) return false;
@@ -677,70 +722,60 @@ const UsersList: React.FC = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{ flex: 1 }}
           />
-
-        
         </div>
-
       </div>
 
-      
-        <div className={styles.tableContainer}>
-          <table className={styles.table}>
-            <thead>
+      <div className={styles.tableContainer}>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>Nro. Socio</th>
+              <th>Nombre</th>
+              <th>Email</th>
+              <th>Teléfono</th>
+              <th>Matrícula</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {visibleUsers.length === 0 ? (
               <tr>
-                <th>Nro. Socio</th>
-                <th>Nombre</th>
-                <th>Email</th>
-                <th>Teléfono</th>
-                <th>Matrícula</th>
-                <th>Estado</th>
-                <th>Acciones</th>
+                <td colSpan={7} style={{ padding: 16, textAlign: "center" }}>
+                  No hay resultados con los filtros actuales.
+                </td>
               </tr>
-            </thead>
-           <tbody>
-  {visibleUsers.length === 0 ? (
-    <tr>
-      <td colSpan={7} style={{ padding: 16, textAlign: "center" }}>
-        No hay resultados con los filtros actuales.
-      </td>
-    </tr>
-  ) : (
-    visibleUsers.map((user) => (
-      <tr key={user.id}>
-        <td>{user.nro_socio ?? "—"}</td>
-        <td className={styles.nameCell}>{user.name}</td>
-        <td>{user.email}</td>
-        <td>{user.phone}</td>
-        <td>{user.matriculaProv}</td>
-        <td>
-          <span className={user.status === "activo" ? styles.statusActive : styles.statusInactive}>
-            {user.status}
-          </span>
-        </td>
-        <td>
-          <Button
-            size="sm"
-            variant="primary"
-            onClick={() => navigate(`/panel/doctors/${user.id}`)}
-            aria-label={`Ver más de ${user.name}`}
-          >
-            Ver más
-          </Button>
-        </td>
-      </tr>
-    ))
-  )}
-</tbody>
+            ) : (
+              visibleUsers.map((user) => (
+                <tr key={user.id}>
+                  <td>{user.nro_socio ?? "—"}</td>
+                  <td className={styles.nameCell}>{user.name}</td>
+                  <td>{user.email}</td>
+                  <td>{user.phone}</td>
+                  <td>{user.matriculaProv}</td>
+                  <td>
+                    <span className={user.status === "activo" ? styles.statusActive : styles.statusInactive}>
+                      {user.status}
+                    </span>
+                  </td>
+                  <td>
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      onClick={() => navigate(`/panel/doctors/${user.id}`)}
+                      aria-label={`Ver más de ${user.name}`}
+                    >
+                      Ver más
+                    </Button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
 
-          </table>
-        </div>
-
-      <Modal
-        isOpen={isExportOpen}
-        onClose={() => setIsExportOpen(false)}
-        title="Filtrar y descargar"
-        size="large"
-      >
+      <Modal isOpen={isExportOpen} onClose={() => setIsExportOpen(false)} title="Filtrar y descargar" size="large">
         <FilterModal
           filters={filters}
           setFilters={setFilters}

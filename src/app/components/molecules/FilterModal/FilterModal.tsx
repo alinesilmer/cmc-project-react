@@ -6,27 +6,25 @@ import styles from "./FilterModal.module.scss";
 import Button from "../../atoms/Button/Button";
 import type { FilterSelection, MissingFieldKey } from "../../../types/filters";
 import { getJSON } from "../../../lib/http";
+import { setEspecialidadesCatalog } from "../../../lib/especialidadesCatalog";
 
 const AVAILABLE_COLUMNS = [
   { key: "nombre", label: "Nombre completo" },
   { key: "sexo", label: "Sexo" },
   { key: "documento", label: "Documento" },
   { key: "mail_particular", label: "Mail" },
-  { key: "tele_particular", label: "Teléfono" },
+  { key: "telefono_particular", label: "Teléfono" },
   { key: "celular_particular", label: "Celular" },
   { key: "matricula_prov", label: "Matrícula Provincial" },
   { key: "matricula_nac", label: "Matrícula Nacional" },
   { key: "domicilio_consulta", label: "Domicilio Consultorio" },
+  { key: "fecha_ingreso", label: "Fecha de Ingreso" },
   { key: "telefono_consulta", label: "Teléfono Consultorio" },
   { key: "provincia", label: "Provincia" },
   { key: "categoria", label: "Categoría" },
   { key: "especialidad", label: "Especialidad" },
   { key: "condicion_impositiva", label: "Condición Impositiva" },
-
-  // ✅ empresa
-  { key: "malapraxis", label: "Mala Praxis (empresa)" },
-
-  // ✅ vencimientos exportables
+  { key: "malapraxis", label: "Mala Praxis" },
   { key: "vencimiento_malapraxis", label: "Venc. Mala Praxis" },
   { key: "vencimiento_anssal", label: "Venc. ANSSAL" },
   { key: "vencimiento_cobertura", label: "Venc. Cobertura" },
@@ -44,7 +42,7 @@ const missingLabelByKey: Record<MissingFieldKey, string> = {
   categoria: "Categoría",
   especialidad: "Especialidad",
   condicion_impositiva: "Condición impositiva",
-  malapraxis: "Mala praxis (empresa)",
+  malapraxis: "Mala praxis",
 };
 
 interface FilterModalProps {
@@ -56,6 +54,8 @@ interface FilterModalProps {
   onClose: () => void;
   resetFilters: () => void;
 }
+
+type EspecialidadOption = { value: string; label: string };
 
 const FilterModal: React.FC<FilterModalProps> = ({
   filters,
@@ -73,7 +73,6 @@ const FilterModal: React.FC<FilterModalProps> = ({
     faltantes: false,
   });
 
-  type EspecialidadOption = { value: string; label: string };
   const [espLoading, setEspLoading] = useState(false);
   const [espError, setEspError] = useState<string | null>(null);
   const [especialidades, setEspecialidades] = useState<EspecialidadOption[]>([]);
@@ -84,16 +83,36 @@ const FilterModal: React.FC<FilterModalProps> = ({
     async function loadEspecialidades() {
       setEspLoading(true);
       setEspError(null);
+
       try {
         const data = await getJSON<any[]>("/api/especialidades/");
         const opts: EspecialidadOption[] = Array.isArray(data)
-          ? data.map((e: any) => {
-              const rawVal = e?.id ?? e?.ID ?? e?.codigo ?? e?.CODIGO ?? e?.value ?? e?.nombre ?? e?.NOMBRE;
-              const rawLabel = e?.nombre ?? e?.NOMBRE ?? e?.descripcion ?? e?.DESCRIPCION ?? e?.detalle ?? e?.DETALLE ?? rawVal;
-              return { value: String(rawVal ?? ""), label: String(rawLabel ?? "") };
-            })
+          ? data
+              .map((e: any) => {
+                const rawVal = e?.id ?? e?.ID ?? e?.codigo ?? e?.CODIGO ?? e?.value ?? "";
+                const rawLabel =
+                  e?.nombre ??
+                  e?.NOMBRE ??
+                  e?.descripcion ??
+                  e?.DESCRIPCION ??
+                  e?.detalle ??
+                  e?.DETALLE ??
+                  e?.label ??
+                  e?.name ??
+                  rawVal;
+
+                const v = String(rawVal ?? "").trim();
+                const l = String(rawLabel ?? "").trim();
+                return { value: v || l, label: l || v };
+              })
+              .filter((x) => x.value && x.value !== "0")
           : [];
-        if (!abort) setEspecialidades(opts);
+
+        // ✅ guarda local + global (export usa global)
+        if (!abort) {
+          setEspecialidades(opts);
+          setEspecialidadesCatalog(opts);
+        }
       } catch (err: any) {
         if (!abort) setEspError(err?.message || "No se pudo cargar especialidades");
       } finally {
@@ -129,7 +148,6 @@ const FilterModal: React.FC<FilterModalProps> = ({
   const activeFiltersCount = () => {
     let count = 0;
 
-    // vencimientos
     if (filters.vencimientos.malapraxisVencida) count++;
     if (filters.vencimientos.malapraxisPorVencer) count++;
     if (filters.vencimientos.anssalVencido) count++;
@@ -140,7 +158,6 @@ const FilterModal: React.FC<FilterModalProps> = ({
     if (filters.vencimientos.fechaHasta) count++;
     if (filters.vencimientos.dias > 0) count++;
 
-    // otros
     if (filters.otros.estado) count++;
     if (filters.otros.adherente) count++;
     if (filters.otros.provincia) count++;
@@ -152,13 +169,34 @@ const FilterModal: React.FC<FilterModalProps> = ({
     if (filters.otros.fechaIngresoHasta) count++;
     if (filters.otros.conMalapraxis) count++;
 
-    // faltantes
     if (filters.faltantes.enabled) count++;
 
     return count;
   };
 
-  const especialidadLabel = (val: string) => especialidades.find((o) => o.value === val)?.label ?? val;
+  const especialidadLabel = (val: string) => {
+    if (!val) return "";
+    if (val.startsWith("id:")) {
+      const id = val.slice(3);
+      return especialidades.find((o) => o.value === id)?.label ?? id;
+    }
+    return val;
+  };
+
+  const onChangeEspecialidad: React.ChangeEventHandler<HTMLSelectElement> = (e) => {
+    const picked = e.target.value; // "" o id
+    if (!picked) {
+      setFilters((prev) => ({ ...prev, otros: { ...prev.otros, especialidad: "" } }));
+      return;
+    }
+    setFilters((prev) => ({ ...prev, otros: { ...prev.otros, especialidad: `id:${picked}` } }));
+  };
+
+  const selectedEspecialidadIdForSelect = (() => {
+    const v = filters.otros.especialidad || "";
+    if (v.startsWith("id:")) return v.slice(3);
+    return "";
+  })();
 
   return (
     <div className={styles.exportModalNew}>
@@ -424,14 +462,12 @@ const FilterModal: React.FC<FilterModalProps> = ({
                     />
                   </div>
 
-              
-
                   <div className={styles.exportField}>
                     <label className={styles.exportLabel}>Especialidad</label>
                     <select
                       className={styles.exportSelect}
-                      value={filters.otros.especialidad || ""}
-                      onChange={(e) => setFilters((prev) => ({ ...prev, otros: { ...prev.otros, especialidad: e.target.value } }))}
+                      value={selectedEspecialidadIdForSelect}
+                      onChange={onChangeEspecialidad}
                       disabled={espLoading || !!espError}
                     >
                       <option value="">{espLoading ? "Cargando..." : "Todas"}</option>
@@ -445,6 +481,12 @@ const FilterModal: React.FC<FilterModalProps> = ({
                         ))
                       )}
                     </select>
+
+                    {filters.otros.especialidad && (
+                      <div style={{ marginTop: 6, fontSize: 12, opacity: 0.85 }}>
+                        Seleccionado: <b>{especialidadLabel(filters.otros.especialidad)}</b>
+                      </div>
+                    )}
                   </div>
 
                   <div className={styles.exportField}>
@@ -577,69 +619,12 @@ const FilterModal: React.FC<FilterModalProps> = ({
           <div className={styles.selectedFiltersCount}>{activeFiltersCount()} filtros activos</div>
 
           <div className={styles.selectedFiltersList}>
-            {filters.columns.length > 0 && (
-              <div className={styles.selectedFilterGroup}>
-                <div className={styles.selectedFilterGroupTitle}>Columnas ({filters.columns.length})</div>
-                {filters.columns.slice(0, 4).map((col) => (
-                  <div key={col} className={styles.selectedFilterItem}>
-                    {AVAILABLE_COLUMNS.find((c) => c.key === col)?.label || col}
-                  </div>
-                ))}
-                {filters.columns.length > 4 && (
-                  <div className={styles.selectedFilterItem}>+{filters.columns.length - 4} más</div>
-                )}
-              </div>
-            )}
-
-            {(filters.otros.estado ||
-              filters.otros.adherente ||
-              filters.otros.provincia ||
-              filters.otros.sexo ||
-              filters.otros.categoria ||
-              filters.otros.condicionImpositiva ||
-              filters.otros.especialidad ||
-              filters.otros.conMalapraxis) && (
+            {(filters.otros.especialidad) && (
               <div className={styles.selectedFilterGroup}>
                 <div className={styles.selectedFilterGroupTitle}>Otros</div>
-                {filters.otros.estado && <div className={styles.selectedFilterItem}>Estado: {filters.otros.estado}</div>}
-                {filters.otros.adherente && <div className={styles.selectedFilterItem}>Adherente: {filters.otros.adherente}</div>}
-                {filters.otros.provincia && <div className={styles.selectedFilterItem}>Provincia: {filters.otros.provincia}</div>}
-                {filters.otros.sexo && <div className={styles.selectedFilterItem}>Sexo: {filters.otros.sexo}</div>}
-                {filters.otros.categoria && <div className={styles.selectedFilterItem}>Categoría: {filters.otros.categoria}</div>}
-                {filters.otros.condicionImpositiva && (
-                  <div className={styles.selectedFilterItem}>Cond. Imp.: {filters.otros.condicionImpositiva}</div>
-                )}
-                {filters.otros.especialidad && (
-                  <div className={styles.selectedFilterItem}>Especialidad: {especialidadLabel(filters.otros.especialidad)}</div>
-                )}
-                {filters.otros.conMalapraxis && <div className={styles.selectedFilterItem}>Solo con mala praxis</div>}
-              </div>
-            )}
-
-            {filters.faltantes.enabled && (
-              <div className={styles.selectedFilterGroup}>
-                <div className={styles.selectedFilterGroupTitle}>Faltantes</div>
                 <div className={styles.selectedFilterItem}>
-                  {missingLabelByKey[filters.faltantes.field]} —{" "}
-                  {filters.faltantes.mode === "missing" ? "Mostrar faltantes" : "Mostrar presentes"}
+                  Especialidad: {especialidadLabel(filters.otros.especialidad)}
                 </div>
-              </div>
-            )}
-
-            {(filters.vencimientos.malapraxisVencida ||
-              filters.vencimientos.malapraxisPorVencer ||
-              filters.vencimientos.anssalVencido ||
-              filters.vencimientos.anssalPorVencer ||
-              filters.vencimientos.coberturaVencida ||
-              filters.vencimientos.coberturaPorVencer) && (
-              <div className={styles.selectedFilterGroup}>
-                <div className={styles.selectedFilterGroupTitle}>Vencimientos</div>
-                {filters.vencimientos.malapraxisVencida && <div className={styles.selectedFilterItem}>Mala praxis vencida</div>}
-                {filters.vencimientos.malapraxisPorVencer && <div className={styles.selectedFilterItem}>Mala praxis por vencer</div>}
-                {filters.vencimientos.anssalVencido && <div className={styles.selectedFilterItem}>ANSSAL vencida</div>}
-                {filters.vencimientos.anssalPorVencer && <div className={styles.selectedFilterItem}>ANSSAL por vencer</div>}
-                {filters.vencimientos.coberturaVencida && <div className={styles.selectedFilterItem}>Cobertura vencida</div>}
-                {filters.vencimientos.coberturaPorVencer && <div className={styles.selectedFilterItem}>Cobertura por vencer</div>}
               </div>
             )}
 
@@ -659,7 +644,6 @@ const FilterModal: React.FC<FilterModalProps> = ({
           <Button onClick={() => onExport("xlsx", null)} disabled={exportLoading} variant="primary" size="md">
             {exportLoading ? "Exportando..." : "Descargar Excel"}
           </Button>
-
         </div>
 
         <div className={styles.exportActionsRight}>

@@ -1,219 +1,142 @@
 // src/app/pages/UsersList/medicosExport.ts
-import ExcelJS from "exceljs";
-import { saveAs } from "file-saver";
-import type { FilterSelection, MissingFieldKey } from "../../types/filters";
+// Helpers + mapping for Medicos export (/api/medicos/all)
 
-export type ExportColumn = { key: string; header: string };
-export type ExportExcelArgs = {
-  filename: string;
-  title: string;
-  subtitle?: string;
-  columns: ExportColumn[];
-  rows: Record<string, unknown>[];
-  logoFile: File | null;
+export type ExportColumnKey =
+  | "id"
+  | "nro_socio"
+  | "nombre"
+  | "matricula_prov"
+  | "matricula_nac"
+  | "documento"
+  | "mail_particular"
+  | "tele_particular"
+  | "celular_particular"
+  | "telefono_consulta"
+  | "domicilio_consulta"
+  | "activo"
+  | "sexo"
+  | "provincia"
+  | "categoria"
+  | "adherente"
+  | "condicion_impositiva"
+  | "fecha_ingreso"
+  | "especialidad"
+  | "anssal"
+  | "malapraxis"
+  | "cobertura"
+  | "vencimiento_malapraxis"
+  | "vencimiento_anssal"
+  | "vencimiento_cobertura";
+
+export type FilterSelection = {
+  columns: string[];
+  otros: {
+    sexo?: string | null;
+    estado?: string | null;
+    adherente?: string | null;
+    provincia?: string | null;
+    categoria?: string | null;
+    especialidad?: string | null; // "id:123" or text
+    condicionImpositiva?: string | null;
+
+    fechaIngresoDesde?: string | null; // YYYY-MM-DD
+    fechaIngresoHasta?: string | null; // YYYY-MM-DD
+
+    conMalapraxis?: boolean;
+  };
+  vencimientos: {
+    dias: number; // 0..N
+    fechaDesde?: string | null; // YYYY-MM-DD
+    fechaHasta?: string | null; // YYYY-MM-DD
+
+    malapraxisVencida?: boolean;
+    malapraxisPorVencer?: boolean;
+
+    anssalVencido?: boolean;
+    anssalPorVencer?: boolean;
+
+    coberturaVencida?: boolean;
+    coberturaPorVencer?: boolean;
+  };
+  faltantes: {
+    enabled: boolean;
+    field: any;
+    mode: "missing" | "present";
+  };
 };
 
-/* =========================
-   Normalizers + Especialidades
-========================= */
-export function normalizeText(v: any): string {
-  return String(v ?? "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim();
-}
-
-function safeStr(v: any) {
-  return v === null || v === undefined ? "" : String(v);
-}
-
-// ✅ Mejora: si ESPECIALIDADES viene como array de objetos, intentamos extraer nombre/descripcion.
-function coerceToStringArray(v: any): string[] {
-  if (!v) return [];
-
-  if (Array.isArray(v)) {
-    return v
-      .map((x) => {
-        if (x && typeof x === "object") {
-          const obj: any = x;
-          return (
-            obj?.nombre ??
-            obj?.NOMBRE ??
-            obj?.descripcion ??
-            obj?.DESCRIPCION ??
-            obj?.detalle ??
-            obj?.DETALLE ??
-            obj?.especialidad ??
-            obj?.ESPECIALIDAD ??
-            safeStr(obj)
-          );
-        }
-        return safeStr(x);
-      })
-      .map((s) => safeStr(s));
-  }
-
-  if (typeof v === "string") {
-    const s = v.trim();
-    if (!s) return [];
-    if (/[;,|]/.test(s)) return s.split(/[;,|]/g).map((x) => x.trim());
-    return [s];
-  }
-
-  return [safeStr(v)];
-}
-
-function cleanEspecialidades(arr: string[]): string[] {
-  const out: string[] = [];
-  const seen = new Set<string>();
-
-  for (const raw of arr) {
-    const t = safeStr(raw).trim();
-    if (!t) continue;
-    if (t === "0") continue;
-
-    const key = normalizeText(t);
-    if (!key) continue;
-    if (seen.has(key)) continue;
-
-    seen.add(key);
-    out.push(t);
-  }
-  return out;
-}
-
-function stripMedicoWhenMultiple(list: string[]): string[] {
-  if (list.length <= 1) return list;
-  const filtered = list.filter((x) => normalizeText(x) !== "medico");
-  return filtered.length ? filtered : list;
-}
+export type MedicoRow = Record<string, unknown>;
 
 /**
- * ✅ Regla como tu PDF:
- * - Si hay varias y una es "médico", se elimina "médico"
- * - Si no hay nada (o “Sin especialidad”) => ["médico"]
+ * ✅ KEYMAP: tries multiple possible keys for each "canonical" export key
+ * so export doesn't break if backend/transform changes casing or naming.
  */
-export function getEspecialidadesList(row: any): string[] {
-  const raw =
-    row?.ESPECIALIDADES ??
-    row?.especialidades ??
-    row?.ESPECIALIDAD ??
-    row?.especialidad ??
-    row?.especialidad_nombre ??
-    row?.ESPECIALIDAD_NOMBRE ??
-    null;
+export const KEYMAP: Record<ExportColumnKey, string[]> = {
+  id: ["id", "ID", "Id"],
+  nro_socio: ["nro_socio", "NRO_SOCIO", "socio", "SOCIO"],
 
-  let list = cleanEspecialidades(coerceToStringArray(raw));
+  nombre: ["nombre", "NOMBRE", "ape_nom", "apellido_nombre", "APELLIDO_NOMBRE", "APE_NOM"],
+  matricula_prov: ["matricula_prov", "MATRICULA_PROV", "matricula", "MATRICULA"],
+  matricula_nac: ["matricula_nac", "MATRICULA_NAC"],
 
-  const hasSin = list.some((t) => {
-    const n = normalizeText(t);
-    return n === "sin especialidad" || n === "sinespecialidad";
-  });
-
-  if (hasSin || list.length === 0) list = ["médico"];
-  return stripMedicoWhenMultiple(list);
-}
-
-// ✅ MOSTRAR TODAS (sin slice), separadas como en PDF (coma)
-export function formatEspecialidades(row: any): string {
-  return getEspecialidadesList(row).join(", ");
-}
-
-/* =========================
-   Date helpers (exportados)
-========================= */
-export function parseDateAny(v: any): Date | null {
-  if (!v) return null;
-  if (v instanceof Date) return isNaN(v.getTime()) ? null : v;
-
-  if (typeof v === "number") {
-    const ms = v < 10_000_000_000 ? v * 1000 : v;
-    const d = new Date(ms);
-    return isNaN(d.getTime()) ? null : d;
-  }
-
-  const s = String(v).trim();
-  if (!s) return null;
-
-  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
-    const d = new Date(s);
-    return isNaN(d.getTime()) ? null : d;
-  }
-
-  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (m) {
-    const dd = Number(m[1]);
-    const mm = Number(m[2]) - 1;
-    const yy = Number(m[3]);
-    const d = new Date(yy, mm, dd);
-    return isNaN(d.getTime()) ? null : d;
-  }
-
-  const d = new Date(s);
-  return isNaN(d.getTime()) ? null : d;
-}
-
-export function startOfDay(d: Date): Date {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
-}
-
-export function addDays(d: Date, n: number): Date {
-  const x = new Date(d);
-  x.setDate(x.getDate() + n);
-  return x;
-}
-
-export function inRange(d: Date, from?: Date | null, to?: Date | null): boolean {
-  const t = d.getTime();
-  if (from && t < from.getTime()) return false;
-  if (to && t > to.getTime()) return false;
-  return true;
-}
-
-/* =========================
-   Common utils
-========================= */
-function isEmptyValue(v: any): boolean {
-  if (v === null || typeof v === "undefined") return true;
-  if (typeof v === "string") return v.trim() === "";
-  if (Array.isArray(v)) return v.length === 0;
-  return false;
-}
-
-function pickFirst(row: any, keys: string[]) {
-  for (const k of keys) {
-    const v = row?.[k];
-    if (!isEmptyValue(v)) return v;
-  }
-  return "";
-}
-
-/* =========================
-   Field maps (backend compatible)
-========================= */
-const KEYMAP: Record<string, string[]> = {
-  nro_socio: ["nro_socio", "NRO_SOCIO", "SOCIO", "socio"],
-  nombre: ["nombre", "NOMBRE", "apellido_nombre", "APELLIDO_NOMBRE", "ape_nom", "APE_NOM"],
-  sexo: ["sexo", "SEXO"],
-  documento: ["documento", "DOCUMENTO", "dni", "DNI", "nro_doc", "NRO_DOC"],
+  documento: ["documento", "DOCUMENTO", "dni", "DNI"],
   mail_particular: ["mail_particular", "MAIL_PARTICULAR", "email", "EMAIL", "mail", "MAIL"],
-  tele_particular: ["tele_particular", "TELE_PARTICULAR", "telefono", "TELEFONO"],
+
+  tele_particular: ["tele_particular", "TELE_PARTICULAR", "telefono_particular", "TELEFONO_PARTICULAR"],
   celular_particular: ["celular_particular", "CELULAR_PARTICULAR", "celular", "CELULAR"],
-  matricula_prov: ["matricula_prov", "MATRICULA_PROV", "mat_prov", "MAT_PROV"],
-  matricula_nac: ["matricula_nac", "MATRICULA_NAC", "mat_nac", "MAT_NAC"],
+
+  telefono_consulta: [
+    "telefono_consulta",
+    "TELEFONO_CONSULTA",
+    "tel_consulta",
+    "TEL_CONSULTA",
+    "telefonoConsulta",
+    "TELEFONOCONSULTA",
+  ],
   domicilio_consulta: ["domicilio_consulta", "DOMICILIO_CONSULTA"],
-  telefono_consulta: ["telefono_consulta", "TELEFONO_CONSULTA", "tel_consulta", "TEL_CONSULTA"],
+
+  activo: ["activo", "ACTIVO", "estado", "ESTADO", "EXISTE", "existe"],
+
+  sexo: ["sexo", "SEXO"],
   provincia: ["provincia", "PROVINCIA"],
   categoria: ["categoria", "CATEGORIA"],
+  adherente: ["adherente", "ADHERENTE", "ES_ADHERENTE", "es_adherente"],
   condicion_impositiva: ["condicion_impositiva", "CONDICION_IMPOSITIVA", "condicionImpositiva"],
 
-  // ✅ empresa malapraxis
-  malapraxis: ["malapraxis", "MALAPRAXIS", "malapraxis_empresa", "MALAPRAXIS_EMPRESA"],
+  fecha_ingreso: ["fecha_ingreso", "FECHA_INGRESO", "fechaIngreso", "FECHAINGRESO"],
 
-  // ✅ vencimientos (Pydantic + DB)
+  especialidad: [
+    "especialidad",
+    "ESPECIALIDAD",
+    "especialidades",
+    "ESPECIALIDADES",
+    "especialidad1",
+    "especialidad2",
+    "especialidad3",
+    "ESPECIALIDAD1",
+    "ESPECIALIDAD2",
+    "ESPECIALIDAD3",
+  ],
+
+  anssal: ["anssal", "ANSSAL", "anssal_vto", "ANSSAL_VTO", "anssalVto", "vencimiento_anssal", "VENCIMIENTO_ANSSAL"],
+  malapraxis: [
+    "malapraxis",
+    "MALAPRAXIS",
+    "malapraxis_empresa",
+    "MALAPRAXIS_EMPRESA",
+    "malapraxisEmpresa",
+    "MALAPRAXIS_EMPRESA_NOMBRE",
+  ],
+  cobertura: [
+    "cobertura",
+    "COBERTURA",
+    "cobertura_vto",
+    "COBERTURA_VTO",
+    "coberturaVto",
+    "vencimiento_cobertura",
+    "VENCIMIENTO_COBERTURA",
+  ],
+
   vencimiento_malapraxis: [
     "vencimiento_malapraxis",
     "VENCIMIENTO_MALAPRAXIS",
@@ -223,7 +146,6 @@ const KEYMAP: Record<string, string[]> = {
     "MALAPRAXIS_VTO",
     "vto_malapraxis",
     "VTO_MALAPRAXIS",
-    "fecha_venc_malapraxis",
   ],
   vencimiento_anssal: [
     "vencimiento_anssal",
@@ -234,7 +156,6 @@ const KEYMAP: Record<string, string[]> = {
     "ANSSAL_VTO",
     "vto_anssal",
     "VTO_ANSSAL",
-    "fecha_venc_anssal",
   ],
   vencimiento_cobertura: [
     "vencimiento_cobertura",
@@ -245,324 +166,111 @@ const KEYMAP: Record<string, string[]> = {
     "COBERTURA_VTO",
     "vto_cobertura",
     "VTO_COBERTURA",
-    "fecha_venc_cobertura",
   ],
 };
 
-export function getCellValue(row: Record<string, unknown>, key: string): any {
-  if (key === "especialidad") return formatEspecialidades(row);
-
-  const keys = KEYMAP[key];
-  if (keys) return pickFirst(row, keys);
-
-  return (row as any)?.[key] ?? "";
-}
-
-/* =========================
-   Missing fields
-========================= */
-const MISSING_KEYS: Record<MissingFieldKey, string[]> = {
-  telefono_consulta: KEYMAP.telefono_consulta,
-  domicilio_consulta: KEYMAP.domicilio_consulta,
-  mail_particular: KEYMAP.mail_particular,
-  tele_particular: KEYMAP.tele_particular,
-  celular_particular: KEYMAP.celular_particular,
-  matricula_prov: KEYMAP.matricula_prov,
-  matricula_nac: KEYMAP.matricula_nac,
-  provincia: KEYMAP.provincia,
-  categoria: KEYMAP.categoria,
-  especialidad: ["ESPECIALIDADES", "especialidades", "ESPECIALIDAD", "especialidad", "ESPECIALIDAD_NOMBRE", "especialidad_nombre"],
-  condicion_impositiva: KEYMAP.condicion_impositiva,
-  malapraxis: KEYMAP.malapraxis,
+export const DEFAULT_HEADERS: Record<ExportColumnKey, string> = {
+  id: "ID",
+  nro_socio: "N° Socio",
+  nombre: "Nombre",
+  matricula_prov: "Matrícula Prov.",
+  matricula_nac: "Matrícula Nac.",
+  documento: "Documento",
+  mail_particular: "Email",
+  tele_particular: "Teléfono",
+  celular_particular: "Celular",
+  telefono_consulta: "Teléfono Consultorio",
+  domicilio_consulta: "Domicilio Consultorio",
+  activo: "Activo",
+  sexo: "Sexo",
+  provincia: "Provincia",
+  categoria: "Categoría",
+  adherente: "Adherente",
+  condicion_impositiva: "Condición Impositiva",
+  fecha_ingreso: "Fecha Ingreso",
+  especialidad: "Especialidades",
+  anssal: "ANSSAL",
+  malapraxis: "Mala Praxis",
+  cobertura: "Cobertura",
+  vencimiento_malapraxis: "Venc. Mala Praxis",
+  vencimiento_anssal: "Venc. ANSSAL",
+  vencimiento_cobertura: "Venc. Cobertura",
 };
 
-export function isMissingField(row: Record<string, unknown>, field: MissingFieldKey): boolean {
-  if (field === "especialidad") {
-    const joined = normalizeText(formatEspecialidades(row));
-    return joined === "" || joined === "sin especialidad" || joined === "sinespecialidad";
-  }
-  const raw = pickFirst(row, MISSING_KEYS[field] ?? []);
-
-   if (field === "mail_particular") {
-    const s = String(raw ?? "").trim();
-    if (s === "@") return true;
-  }
-  
-  return isEmptyValue(raw);
+function isNil(v: unknown) {
+  return v === null || v === undefined || v === "";
 }
 
-/* =========================
-   Query mapping (backend)
-========================= */
+function toCleanString(v: unknown): string {
+  if (isNil(v)) return "";
+  if (typeof v === "string") return v.trim();
+  if (typeof v === "number" || typeof v === "boolean") return String(v);
+  if (v instanceof Date) return v.toISOString().slice(0, 10);
+  try {
+    return JSON.stringify(v);
+  } catch {
+    return String(v);
+  }
+}
+
+/**
+ * Return best value for a canonical export key, checking multiple key variants.
+ */
+export function pickValue(row: MedicoRow, canonicalKey: ExportColumnKey): string {
+  const candidates = KEYMAP[canonicalKey] ?? [canonicalKey];
+  for (const k of candidates) {
+    const v = (row as any)?.[k];
+    if (!isNil(v)) return toCleanString(v);
+  }
+  return "";
+}
+
+/**
+ * ✅ Map UI filters -> backend query params for GET /api/medicos/all
+ */
 export function mapUIToQuery(filters: FilterSelection) {
+  const otros = filters?.otros ?? ({} as FilterSelection["otros"]);
+  const v = filters?.vencimientos ?? ({} as FilterSelection["vencimientos"]);
+
   return {
-    sexo: filters.otros.sexo || undefined,
-    estado: filters.otros.estado || undefined,
-    adherente: filters.otros.adherente || undefined,
-    provincia: filters.otros.provincia || undefined,
-    especialidad: filters.otros.especialidad || undefined,
-    categoria: filters.otros.categoria || undefined,
-    condicion_impositiva: filters.otros.condicionImpositiva || undefined,
-    fecha_ingreso_desde: filters.otros.fechaIngresoDesde || undefined,
-    fecha_ingreso_hasta: filters.otros.fechaIngresoHasta || undefined,
+    sexo: otros.sexo || undefined,
+    estado: otros.estado || undefined,
+    adherente: otros.adherente || undefined,
+    provincia: otros.provincia || undefined,
+    categoria: otros.categoria || undefined,
+    condicion_impositiva: otros.condicionImpositiva || undefined,
 
-    malapraxis_vencida: filters.vencimientos.malapraxisVencida ? "1" : undefined,
-    malapraxis_por_vencer: filters.vencimientos.malapraxisPorVencer ? "1" : undefined,
-    anssal_vencido: filters.vencimientos.anssalVencido ? "1" : undefined,
-    anssal_por_vencer: filters.vencimientos.anssalPorVencer ? "1" : undefined,
-    cobertura_vencida: filters.vencimientos.coberturaVencida ? "1" : undefined,
-    cobertura_por_vencer: filters.vencimientos.coberturaPorVencer ? "1" : undefined,
-    vto_desde: filters.vencimientos.fechaDesde || undefined,
-    vto_hasta: filters.vencimientos.fechaHasta || undefined,
-    vto_dias: filters.vencimientos.dias > 0 ? String(filters.vencimientos.dias) : undefined,
+    // especialidad: si viene "id:123" mandamos solo "123" (o mandá el string completo si tu backend espera otro formato)
+    especialidad: otros.especialidad?.startsWith("id:") ? otros.especialidad.slice(3) : otros.especialidad || undefined,
+
+    fecha_ingreso_desde: otros.fechaIngresoDesde || undefined,
+    fecha_ingreso_hasta: otros.fechaIngresoHasta || undefined,
+
+    con_malapraxis: otros.conMalapraxis ? "1" : undefined,
+
+    malapraxis_vencida: v.malapraxisVencida ? "1" : undefined,
+    malapraxis_por_vencer: v.malapraxisPorVencer ? "1" : undefined,
+
+    anssal_vencido: v.anssalVencido ? "1" : undefined,
+    anssal_por_vencer: v.anssalPorVencer ? "1" : undefined,
+
+    cobertura_vencida: v.coberturaVencida ? "1" : undefined,
+    cobertura_por_vencer: v.coberturaPorVencer ? "1" : undefined,
+
+    por_vencer_dias: v.dias && v.dias > 0 ? String(v.dias) : undefined,
+    vencimientos_desde: v.fechaDesde || undefined,
+    vencimientos_hasta: v.fechaHasta || undefined,
   };
 }
 
-export function buildQS(obj: Record<string, any>) {
-  const parts: string[] = [];
-  for (const [k, v] of Object.entries(obj)) {
-    if (typeof v === "undefined" || v === null || v === "") continue;
-    parts.push(`${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`);
-  }
-  return parts.join("&");
-}
-
-/* =========================
-   Labels
-========================= */
-export function labelFor(key: string) {
-  const map: Record<string, string> = {
-    nro_socio: "N° Socio",
-    nombre: "Nombre completo",
-    sexo: "Sexo",
-    documento: "Documento",
-    mail_particular: "Mail",
-    tele_particular: "Teléfono",
-    celular_particular: "Celular",
-    matricula_prov: "Matrícula Provincial",
-    matricula_nac: "Matrícula Nacional",
-    domicilio_consulta: "Domicilio Consultorio",
-    telefono_consulta: "Teléfono Consultorio",
-    provincia: "Provincia",
-    categoria: "Categoría",
-    especialidad: "Especialidades",
-    condicion_impositiva: "Condición Impositiva",
-
-    malapraxis: "Mala Praxis (empresa)",
-
-    vencimiento_malapraxis: "Venc. Mala Praxis",
-    vencimiento_anssal: "Venc. ANSSAL",
-    vencimiento_cobertura: "Venc. Cobertura",
-  };
-  return map[key] ?? key;
-}
-
-/* =========================
-   CSV helpers
-========================= */
-function csvEscape(v: any) {
-  const s = String(v ?? "");
-  if (/[",\n\r;]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
-  return s;
-}
-
-export function toCSV(rows: Record<string, unknown>[], cols: ExportColumn[]) {
-  const header = cols.map((c) => csvEscape(c.header)).join(",");
-  const lines = rows.map((r) => cols.map((c) => csvEscape(getCellValue(r, c.key))).join(","));
-  return [header, ...lines].join("\n");
-}
-
-export function downloadBlob(filename: string, mime: string, content: string) {
-  const blob = new Blob([content], { type: mime });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
-/* =========================
-   Excel Export (FIX columnas + especialidades)
-========================= */
-async function fileToBase64(file: File): Promise<{ base64: string; extension: "png" | "jpeg" }> {
-  const dataUrl = await new Promise<string>((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(String(r.result));
-    r.onerror = reject;
-    r.readAsDataURL(file);
+/**
+ * Build URLSearchParams skipping undefined / null / empty.
+ */
+export function buildQS(params: Record<string, unknown>) {
+  const sp = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => {
+    if (v === undefined || v === null || v === "") return;
+    sp.set(k, String(v));
   });
-
-  const ext: "png" | "jpeg" =
-    dataUrl.includes("image/jpeg") || dataUrl.includes("image/jpg") ? "jpeg" : "png";
-
-  const base64 = dataUrl.split(",")[1] ?? "";
-  return { base64, extension: ext };
-}
-
-function fmtDateTime(d = new Date()) {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-export async function exportToExcelBW(args: ExportExcelArgs) {
-  const wb = new ExcelJS.Workbook();
-  wb.creator = "CMC";
-  wb.created = new Date();
-
-  const ws = wb.addWorksheet("Médicos", {
-    pageSetup: { fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
-  });
-
-  // Column setup (✅ NO ponemos header acá para que no cree header fantasma)
-  ws.columns = args.columns.map((c) => {
-    const w =
-      c.key === "nombre"
-        ? 44
-        : c.key === "especialidad"
-        ? 42
-        : c.key === "domicilio_consulta"
-        ? 44
-        : c.key === "mail_particular"
-        ? 32
-        : c.key === "malapraxis"
-        ? 26
-        : c.key === "nro_socio"
-        ? 14
-        : c.key.startsWith("vencimiento_")
-        ? 18
-        : 20;
-
-    return { key: c.key, width: w };
-  });
-
-  const totalCols = Math.max(1, args.columns.length);
-  const lastColLetter = ws.getColumn(totalCols).letter;
-
-  // Header rows layout
-  const ROW_LOGO = 1;
-  const ROW_TITLE = 2;
-  const ROW_SUB = 3;
-  const ROW_META = 4;
-  const ROW_SPACER = 5;
-  const ROW_TABLE_HEADER = 6;
-
-  // Freeze until header row
-  ws.views = [{ state: "frozen", ySplit: ROW_TABLE_HEADER }];
-
-  // Heights
-  ws.getRow(ROW_LOGO).height = 42;
-  ws.getRow(ROW_TITLE).height = 28;
-  ws.getRow(ROW_SUB).height = 18;
-  ws.getRow(ROW_META).height = 16;
-  ws.getRow(ROW_SPACER).height = 6;
-
-  // Logo
-  if (args.logoFile) {
-    const { base64, extension } = await fileToBase64(args.logoFile);
-    const imgId = wb.addImage({ base64, extension });
-
-    ws.addImage(imgId, {
-      tl: { col: 0, row: 0 },
-      ext: { width: 140, height: 42 },
-    });
-  }
-
-  // Title centered
-  ws.mergeCells(`A${ROW_TITLE}:${lastColLetter}${ROW_TITLE}`);
-  ws.getCell(`A${ROW_TITLE}`).value = args.title;
-  ws.getCell(`A${ROW_TITLE}`).font = { name: "Calibri", size: 18, bold: true, color: { argb: "FF0B1F3A" } };
-  ws.getCell(`A${ROW_TITLE}`).alignment = { vertical: "middle", horizontal: "center" };
-
-  // Subtitle centered
-  ws.mergeCells(`A${ROW_SUB}:${lastColLetter}${ROW_SUB}`);
-  ws.getCell(`A${ROW_SUB}`).value = args.subtitle ?? "";
-  ws.getCell(`A${ROW_SUB}`).font = { name: "Calibri", size: 11, color: { argb: "FF111111" } };
-  ws.getCell(`A${ROW_SUB}`).alignment = { vertical: "middle", horizontal: "center" };
-
-  // Meta row
-  if (totalCols >= 4) {
-    ws.mergeCells(`A${ROW_META}:C${ROW_META}`);
-    ws.getCell(`A${ROW_META}`).value = "Generado";
-    ws.getCell(`A${ROW_META}`).font = { name: "Calibri", size: 10, italic: true, color: { argb: "FF333333" } };
-    ws.getCell(`A${ROW_META}`).alignment = { vertical: "middle", horizontal: "left" };
-
-    ws.mergeCells(`D${ROW_META}:${lastColLetter}${ROW_META}`);
-    ws.getCell(`D${ROW_META}`).value = fmtDateTime(new Date());
-    ws.getCell(`D${ROW_META}`).font = { name: "Calibri", size: 10, italic: true, color: { argb: "FF333333" } };
-    ws.getCell(`D${ROW_META}`).alignment = { vertical: "middle", horizontal: "right" };
-  } else {
-    ws.mergeCells(`A${ROW_META}:${lastColLetter}${ROW_META}`);
-    ws.getCell(`A${ROW_META}`).value = `Generado: ${fmtDateTime(new Date())}`;
-    ws.getCell(`A${ROW_META}`).font = { name: "Calibri", size: 10, italic: true, color: { argb: "FF333333" } };
-    ws.getCell(`A${ROW_META}`).alignment = { vertical: "middle", horizontal: "left" };
-  }
-
-  // Borders
-  const border = {
-    top: { style: "thin" as const, color: { argb: "FF111111" } },
-    left: { style: "thin" as const, color: { argb: "FF111111" } },
-    bottom: { style: "thin" as const, color: { argb: "FF111111" } },
-    right: { style: "thin" as const, color: { argb: "FF111111" } },
-  };
-
-  // ✅ Header row: escribir celda por celda (NO values con null)
-  const headerRow = ws.getRow(ROW_TABLE_HEADER);
-  headerRow.height = 22;
-
-  for (let i = 1; i <= totalCols; i++) {
-    const c = args.columns[i - 1];
-    const cell = headerRow.getCell(i);
-    cell.value = c.header;
-    cell.font = { name: "Calibri", size: 11, bold: true, color: { argb: "FFFFFFFF" } };
-    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF111111" } };
-    cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
-    cell.border = border;
-  }
-
-  // ✅ Data rows: agregar por objeto (por key) para que jamás se corran
-  for (let i = 0; i < args.rows.length; i++) {
-    const r = args.rows[i];
-
-    const obj: Record<string, any> = {};
-    for (const col of args.columns) {
-      obj[col.key] = getCellValue(r, col.key);
-    }
-
-    const excelRow = ws.addRow(obj);
-    excelRow.height = 18;
-
-    const zebra = i % 2 === 0 ? "FFFFFFFF" : "FFF7F7F7";
-
-    // Estilizar TODAS las columnas aunque estén vacías
-    for (let col = 1; col <= totalCols; col++) {
-      const key = args.columns[col - 1]?.key;
-      const cell = excelRow.getCell(col);
-
-      cell.font = { name: "Calibri", size: 11, color: { argb: "FF111111" } };
-      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: zebra } };
-      cell.border = border;
-
-      if (key === "nombre" || key === "especialidad" || key === "domicilio_consulta" || key === "mail_particular" || key === "malapraxis") {
-        cell.alignment = { vertical: "middle", horizontal: "left", wrapText: true };
-      } else {
-        cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
-      }
-    }
-  }
-
-  // AutoFilter
-  const endRow = ws.lastRow?.number ?? ROW_TABLE_HEADER;
-  ws.autoFilter = {
-    from: { row: ROW_TABLE_HEADER, column: 1 },
-    to: { row: endRow, column: totalCols },
-  };
-
-  const buf = await wb.xlsx.writeBuffer();
-  saveAs(
-    new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }),
-    args.filename
-  );
+  return sp.toString();
 }

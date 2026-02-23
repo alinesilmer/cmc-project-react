@@ -9,6 +9,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     base: "/", // se sirve en raíz del dominio/subdominio
+    assetsInclude: ["**/*.xlsx", "**/*.pdf"],
     build: {
       outDir: path.resolve(__dirname, "dist"), // <<--- siempre "dist"
       emptyOutDir: true,

@@ -98,7 +98,7 @@ const AdherenteForm: React.FC = () => {
           <div className={styles.logoMark} />
           <h1 className={styles.brand}>Colegio Médico de Corrientes</h1>
           <p className={styles.brandMeta}>
-            Junín 1234 · Corrientes · +54 379 444 000 · info@colegiomedico.com
+            Corrientes · +54 379 425 2323 
           </p>
         </div>
 

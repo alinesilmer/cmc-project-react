@@ -287,10 +287,10 @@ const Info: React.FC = () => {
             </a>
             <a
               className={styles.btnGhost}
-              href="tel:+543794722121"
+              href="tel:+543794252323"
               aria-label="Llamar al número de contacto"
             >
-              Llamar: 3794-722121
+              Llamar: 3794-252323
             </a>
           </div>
         </div>
@@ -307,7 +307,7 @@ const Info: React.FC = () => {
               </p>
               <p className={styles.kv}>
                 <span>Teléfono</span>
-                <a href="tel:+543794722121">3794-722121</a>
+                <a href="tel:+543794252323">3794-252323</a>
               </p>
               <p className={styles.kv}>
                 <span>Email</span>
