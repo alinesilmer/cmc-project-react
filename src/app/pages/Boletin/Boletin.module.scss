@@ -103,6 +103,55 @@
   }
 }
 
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  margin-bottom: $spacing-5;
+  max-width: 320px;
+}
+
+.fieldLabel {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-700;
+}
+
+.fieldInput {
+  padding: $spacing-3 $spacing-4;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-md;
+  font-size: $font-size-base;
+  color: $gray-900;
+  background: $white;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &::placeholder {
+    color: $gray-400;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $primary-blue;
+    box-shadow: 0 0 0 3px rgba($primary-blue, 0.1);
+  }
+}
+
+.fieldInputError {
+  border-color: $danger-red;
+
+  &:focus {
+    border-color: $danger-red;
+    box-shadow: 0 0 0 3px rgba($danger-red, 0.1);
+  }
+}
+
+.fieldError {
+  font-size: $font-size-sm;
+  color: $danger-red;
+  margin: 0;
+}
+
 .actions {
   display: flex;
   gap: $spacing-4;

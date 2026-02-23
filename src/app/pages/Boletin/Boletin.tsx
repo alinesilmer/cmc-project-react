@@ -1,6 +1,5 @@
 "use client";
 
-import type React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import styles from "./Boletin.module.scss";
@@ -8,19 +7,25 @@ import Button from "../../../website/components/UI/Button/Button";
 
 type ApiBoletinRow = {
   id: number;
+  codigos: string;
   nro_obrasocial: number;
   obra_social: string | null;
-  nivel: number;
-  fecha_cambio: string;
-  consulta: number;
+  honorarios_a: number;
+  honorarios_b: number;
+  honorarios_c: number;
+  gastos: number;
+  ayudante_a: number;
+  ayudante_b: number;
+  ayudante_c: number;
+  c_p_h_s: string;
+  fecha_cambio: string | null; // "YYYY-MM-DD" o null
 };
 
 type RankedOS = {
   nro: number;
   nombre: string;
-  consulta: number;
-  fechaCambioISO: string | null;
-  nivel: number | null;
+  honorariosA: number;
+  fechaCambio: string | null;
 };
 
 const money = new Intl.NumberFormat("es-AR", {
@@ -29,7 +34,6 @@ const money = new Intl.NumberFormat("es-AR", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
-
 
 const API_BASE_RAW =
   (import.meta as any).env?.VITE_API_BASE_URL ??
@@ -48,21 +52,13 @@ const ENDPOINTS = {
   valoresBoletin: `${API_ROOT}/valores/boletin`,
 };
 
-function parseISODateLocal(s: string | null | undefined): Date | null {
-  if (!s) return null;
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s).trim());
-  if (!m) return null;
-  const y = Number(m[1]);
-  const mo = Number(m[2]);
-  const d = Number(m[3]);
-  if (!Number.isFinite(y) || !Number.isFinite(mo) || !Number.isFinite(d)) return null;
-  return new Date(y, mo - 1, d);
-}
-
-function isoKey(s: string | null | undefined): number {
-  const dt = parseISODateLocal(s);
-  if (!dt) return -1;
-  return dt.getFullYear() * 10000 + (dt.getMonth() + 1) * 100 + dt.getDate();
+// Parsea "YYYY-MM-DD" y devuelve un número comparable (YYYYMMDD)
+function parseDateKey(s: string | null | undefined): number {
+  if (!s) return -1;
+  const str = String(s).trim();
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str);
+  if (m) return Number(m[1]) * 10000 + Number(m[2]) * 100 + Number(m[3]);
+  return -1;
 }
 
 function safeNum(v: any): number {
@@ -85,54 +81,58 @@ function normalizeText(s: any, maxLen = 160): string {
 
 function normalizeRow(r: any): ApiBoletinRow {
   return {
-    id: Number(r?.id ?? r?.ID ?? 0),
-    nro_obrasocial: Number(r?.nro_obrasocial ?? r?.NRO_OBRASOCIAL ?? 0),
-    obra_social: (r?.obra_social ?? r?.OBRA_SOCIAL ?? null) as string | null,
-    nivel: Number(r?.nivel ?? r?.NIVEL ?? 0),
-    fecha_cambio: String(r?.fecha_cambio ?? r?.FECHA_CAMBIO ?? ""),
-    consulta: safeNum(r?.consulta ?? r?.CONSULTA),
+    id: Number(r?.id ?? 0),
+    codigos: String(r?.codigos ?? ""),
+    nro_obrasocial: Number(r?.nro_obrasocial ?? 0),
+    obra_social: (r?.obra_social ?? null) as string | null,
+    honorarios_a: safeNum(r?.honorarios_a),
+    honorarios_b: safeNum(r?.honorarios_b),
+    honorarios_c: safeNum(r?.honorarios_c),
+    gastos: safeNum(r?.gastos),
+    ayudante_a: safeNum(r?.ayudante_a),
+    ayudante_b: safeNum(r?.ayudante_b),
+    ayudante_c: safeNum(r?.ayudante_c),
+    c_p_h_s: String(r?.c_p_h_s ?? ""),
+    fecha_cambio: r?.fecha_cambio ?? null,
   };
 }
 
-async function fetchValoresBoletin(): Promise<ApiBoletinRow[]> {
-  const { data } = await axios.get(ENDPOINTS.valoresBoletin);
-  const arr = Array.isArray(data) ? data : [];
-  return arr.map(normalizeRow);
+async function fetchValoresBoletin(codigo: string): Promise<ApiBoletinRow[]> {
+  const all: ApiBoletinRow[] = [];
+  let page = 1;
+  const size = 500;
+
+  while (true) {
+    const { data } = await axios.get(ENDPOINTS.valoresBoletin, {
+      params: { codigo, page, size },
+    });
+    const arr = Array.isArray(data) ? data : [];
+    all.push(...arr.map(normalizeRow));
+    if (arr.length < size) break;
+    page++;
+  }
+
+  return all;
 }
 
-// Tomamos 1 fila por OS: la más nueva por fecha_cambio (y desempates por nivel / id)
+// El backend ya devuelve 1 fila por OS (menor id), pero agrupamos igual como defensa
 function buildLatestPerOS(rows: ApiBoletinRow[]): RankedOS[] {
-  const byOS = new Map<number, ApiBoletinRow[]>();
+  const byOS = new Map<number, ApiBoletinRow>();
 
   for (const r of rows) {
     if (!r?.nro_obrasocial) continue;
-    const arr = byOS.get(r.nro_obrasocial) ?? [];
-    arr.push(r);
-    byOS.set(r.nro_obrasocial, arr);
+    const existing = byOS.get(r.nro_obrasocial);
+    if (!existing || r.id < existing.id) {
+      byOS.set(r.nro_obrasocial, r);
+    }
   }
 
-  const items: RankedOS[] = [];
-
-  for (const [nro, arr] of byOS.entries()) {
-    arr.sort((a, b) => {
-      const dk = isoKey(b.fecha_cambio) - isoKey(a.fecha_cambio);
-      if (dk !== 0) return dk;
-      const nk = (b.nivel ?? 0) - (a.nivel ?? 0);
-      if (nk !== 0) return nk;
-      return (b.id ?? 0) - (a.id ?? 0);
-    });
-
-    const top = arr[0];
-    items.push({
-      nro,
-      nombre: normalizeText(top.obra_social ?? `OS ${nro}`),
-      consulta: top.consulta ?? 0,
-      fechaCambioISO: top.fecha_cambio || null,
-      nivel: Number.isFinite(top.nivel) ? top.nivel : null,
-    });
-  }
-
-  return items;
+  return Array.from(byOS.entries()).map(([nro, row]) => ({
+    nro,
+    nombre: normalizeText(row.obra_social ?? `OS ${nro}`),
+    honorariosA: row.honorarios_a,
+    fechaCambio: row.fecha_cambio ?? null,
+  }));
 }
 
 function axiosErrorMessage(e: any): string {
@@ -143,13 +143,12 @@ function axiosErrorMessage(e: any): string {
   return "Error al consultar el backend";
 }
 
-// Export: intenta XLSX (si existe), si no -> CSV (Excel lo abre igual)
 async function exportRankingToExcel(items: RankedOS[]) {
   const rows = items.map((x, i) => ({
     Ranking: i + 1,
     "N° Obra Social": x.nro,
     "Obra Social": x.nombre,
-    "Valor Consulta": x.consulta,
+    "Importe": x.honorariosA,
   }));
 
   try {
@@ -161,7 +160,7 @@ async function exportRankingToExcel(items: RankedOS[]) {
     return;
   } catch {
     // fallback CSV
-    const header = ["Ranking", "N° Obra Social", "Obra Social", "Valor Consulta"];
+    const header = ["Ranking", "N° Obra Social", "Obra Social", "Importe"];
     const lines = [
       header.join(","),
       ...rows.map((r) =>
@@ -169,7 +168,7 @@ async function exportRankingToExcel(items: RankedOS[]) {
           r.Ranking,
           r["N° Obra Social"],
           `"${String(r["Obra Social"]).replaceAll(`"`, `""`)}"`,
-          String(r["Valor Consulta"]).replace(".", ","),
+          String(r["Importe"]).replace(".", ","),
         ].join(",")
       ),
     ];
@@ -192,6 +191,9 @@ export default function Boletin() {
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [codigo, setCodigo] = useState("420101");
+
+  const codigoVacio = codigo.trim() === "";
 
   useEffect(() => {
     mountedRef.current = true;
@@ -200,15 +202,16 @@ export default function Boletin() {
     };
   }, []);
 
-  const load = async () => {
+  const load = async (codigoActual: string) => {
+    if (codigoActual.trim() === "") return;
     setLoading(true);
     setError(null);
     try {
-      const rows = await fetchValoresBoletin();
+      const rows = await fetchValoresBoletin(codigoActual.trim());
       const latest = buildLatestPerOS(rows);
       if (!mountedRef.current) return;
       setData(latest);
-      if (latest.length === 0) setError("No se detectaron items desde el backend.");
+      if (latest.length === 0) setError("No se encontraron resultados para ese código.");
     } catch (e: any) {
       if (!mountedRef.current) return;
       setError(axiosErrorMessage(e));
@@ -220,13 +223,13 @@ export default function Boletin() {
   };
 
   useEffect(() => {
-    void load();
+    void load(codigo);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Ranking: más caro -> más barato
   const ordered = useMemo(
-    () => [...data].sort((a, b) => b.consulta - a.consulta),
+    () => [...data].sort((a, b) => b.honorariosA - a.honorariosA),
     [data]
   );
 
@@ -246,13 +249,14 @@ export default function Boletin() {
     });
   }, [ordered, query]);
 
-  const handleRefresh = async () => {
+  const handleConsultar = async () => {
     setQuery("");
-    await load();
+    setData([]);
+    await load(codigo);
   };
 
   const handleDownload = async () => {
-    if (ordered.length === 0) return;
+    if (codigoVacio || ordered.length === 0) return;
     await exportRankingToExcel(ordered);
   };
 
@@ -263,7 +267,7 @@ export default function Boletin() {
         <div className={styles.headerContent}>
           <h1 className={styles.title}>Ranking de Obras Sociales</h1>
           <p className={styles.subtitle}>
-            Ranking automático usando <b>número</b>, <b>nombre</b> y <b>valor de consulta</b> de las Obras Sociales.
+            Ranking automático por <b>Importe</b> según el código nomenclador ingresado.
           </p>
         </div>
       </div>
@@ -271,13 +275,44 @@ export default function Boletin() {
       {/* Actions Card */}
       <div className={styles.card}>
         <div className={styles.cardHeader}>
-          <h2 className={styles.cardTitle}>Descargas</h2>
+          <h2 className={styles.cardTitle}>Consulta</h2>
         </div>
 
         <div className={styles.cardContent}>
-          <div className={styles.actions}>
+          <div className={styles.fieldGroup}>
+            <label htmlFor="codigoInput" className={styles.fieldLabel}>
+              Código nomenclador
+            </label>
+            <input
+              id="codigoInput"
+              type="text"
+              value={codigo}
+              onChange={(e) => setCodigo(e.target.value)}
+              placeholder="Ej: 420101"
+              className={`${styles.fieldInput} ${codigoVacio ? styles.fieldInputError : ""}`}
+            />
+            {codigoVacio && (
+              <p className={styles.fieldError}>
+                Debe ingresar un código nomenclador para consultar datos.
+              </p>
+            )}
+          </div>
 
-            <Button size="medium" variant="secondary" onClick={handleDownload} disabled={ordered.length === 0 || loading}>
+          <div className={styles.actions}>
+            <Button
+              size="medium"
+              variant="secondary"
+              onClick={handleConsultar}
+              disabled={loading || codigoVacio}
+            >
+              Consultar
+            </Button>
+            <Button
+              size="medium"
+              variant="secondary"
+              onClick={handleDownload}
+              disabled={ordered.length === 0 || loading || codigoVacio}
+            >
               Descargar Excel
             </Button>
           </div>
@@ -357,7 +392,7 @@ export default function Boletin() {
                   </th>
                   <th className={styles.thNumber}>N°</th>
                   <th className={styles.thName}>Obra Social</th>
-                  <th className={styles.thAmount}>Valor Consulta</th>
+                  <th className={styles.thAmount}>Importe</th>
                 </tr>
               </thead>
 
@@ -384,7 +419,7 @@ export default function Boletin() {
 
                       <td className={styles.tdNumber}>{row.nro}</td>
                       <td className={styles.tdName}>{row.nombre}</td>
-                      <td className={styles.tdAmount}>{money.format(row.consulta)}</td>
+                      <td className={styles.tdAmount}>{money.format(row.honorariosA)}</td>
                     </tr>
                   );
                 })}
