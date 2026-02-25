@@ -2,8 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
+import { saveAs } from "file-saver";
 import styles from "./Boletin.module.scss";
 import Button from "../../../website/components/UI/Button/Button";
+import logo from "../../assets/logoCMC.png";
 
 type ApiBoletinRow = {
   id: number;
@@ -18,14 +22,19 @@ type ApiBoletinRow = {
   ayudante_b: number;
   ayudante_c: number;
   c_p_h_s: string;
-  fecha_cambio: string | null; // "YYYY-MM-DD" o null
+  fecha_cambio: string | null;
 };
 
 type RankedOS = {
   nro: number;
   nombre: string;
   honorariosA: number;
-  fechaCambio: string | null;
+};
+
+type RankedEntry = {
+  row: RankedOS;
+  rank: number;
+  rankLabel: string;
 };
 
 const money = new Intl.NumberFormat("es-AR", {
@@ -52,19 +61,28 @@ const ENDPOINTS = {
   valoresBoletin: `${API_ROOT}/valores/boletin`,
 };
 
-// Parsea "YYYY-MM-DD" y devuelve un número comparable (YYYYMMDD)
-function parseDateKey(s: string | null | undefined): number {
-  if (!s) return -1;
-  const str = String(s).trim();
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str);
-  if (m) return Number(m[1]) * 10000 + Number(m[2]) * 100 + Number(m[3]);
-  return -1;
-}
+const CMC_NAME = "Colegio Médico de Corrientes";
+const CMC_PHONE = String(
+  (import.meta as any).env?.VITE_CMC_PHONE ?? "(0379) 425 2323"
+);
+const CMC_EMAIL = String(
+  (import.meta as any).env?.VITE_CMC_EMAIL ?? "auditoria@colegiomedicocorrientes.com"
+);
+const CMC_LOGO_SRC =
+  String((import.meta as any).env?.VITE_CMC_LOGO_URL || "") || logo;
 
 function safeNum(v: any): number {
   if (typeof v === "number" && Number.isFinite(v)) return v;
   if (typeof v === "string") {
-    const n = Number(v.replace(",", "."));
+    const raw = v.trim();
+    if (!raw) return 0;
+    let normalized = raw;
+    if (raw.includes(",")) {
+      normalized = raw.replace(/\./g, "").replace(",", ".");
+    } else if (/^\d{1,3}(\.\d{3})+$/.test(raw)) {
+      normalized = raw.replace(/\./g, "");
+    }
+    const n = Number(normalized);
     return Number.isFinite(n) ? n : 0;
   }
   return 0;
@@ -115,7 +133,6 @@ async function fetchValoresBoletin(codigo: string): Promise<ApiBoletinRow[]> {
   return all;
 }
 
-// El backend ya devuelve 1 fila por OS (menor id), pero agrupamos igual como defensa
 function buildLatestPerOS(rows: ApiBoletinRow[]): RankedOS[] {
   const byOS = new Map<number, ApiBoletinRow>();
 
@@ -131,8 +148,41 @@ function buildLatestPerOS(rows: ApiBoletinRow[]): RankedOS[] {
     nro,
     nombre: normalizeText(row.obra_social ?? `OS ${nro}`),
     honorariosA: row.honorarios_a,
-    fechaCambio: row.fecha_cambio ?? null,
   }));
+}
+
+function buildRankedEntries(items: RankedOS[]): RankedEntry[] {
+  const sorted = [...items].sort((a, b) => {
+    if (b.honorariosA !== a.honorariosA) return b.honorariosA - a.honorariosA;
+    const byName = a.nombre.localeCompare(b.nombre, "es", { sensitivity: "base" });
+    if (byName !== 0) return byName;
+    return a.nro - b.nro;
+  });
+
+  let distinctRank = 0;
+  let lastAmount: number | null = null;
+
+  return sorted.map((row) => {
+    if (lastAmount === null || row.honorariosA !== lastAmount) {
+      distinctRank += 1;
+      lastAmount = row.honorariosA;
+    }
+
+    const rankLabel =
+      distinctRank === 1
+        ? "🥇"
+        : distinctRank === 2
+        ? "🥈"
+        : distinctRank === 3
+        ? "🥉"
+        : String(distinctRank);
+
+    return {
+      row,
+      rank: distinctRank,
+      rankLabel,
+    };
+  });
 }
 
 function axiosErrorMessage(e: any): string {
@@ -143,12 +193,16 @@ function axiosErrorMessage(e: any): string {
   return "Error al consultar el backend";
 }
 
-async function exportRankingToExcel(items: RankedOS[]) {
-  const rows = items.map((x, i) => ({
-    Ranking: i + 1,
-    "N° Obra Social": x.nro,
-    "Obra Social": x.nombre,
-    "Importe": x.honorariosA,
+function csvEscape(value: string): string {
+  return `"${String(value).replace(/"/g, `""`)}"`;
+}
+
+async function exportRankingToExcel(items: RankedEntry[]) {
+  const rows = items.map((x) => ({
+    Ranking: x.rankLabel,
+    "N° Obra Social": x.row.nro,
+    "Obra Social": x.row.nombre,
+    Importe: x.row.honorariosA,
   }));
 
   try {
@@ -159,16 +213,15 @@ async function exportRankingToExcel(items: RankedOS[]) {
     xlsx.writeFile(wb, "ranking_obras_sociales.xlsx");
     return;
   } catch {
-    // fallback CSV
     const header = ["Ranking", "N° Obra Social", "Obra Social", "Importe"];
     const lines = [
       header.join(","),
       ...rows.map((r) =>
         [
-          r.Ranking,
+          csvEscape(r.Ranking),
           r["N° Obra Social"],
-          `"${String(r["Obra Social"]).replaceAll(`"`, `""`)}"`,
-          String(r["Importe"]).replace(".", ","),
+          csvEscape(r["Obra Social"]),
+          String(r.Importe).replace(".", ","),
         ].join(",")
       ),
     ];
@@ -182,6 +235,124 @@ async function exportRankingToExcel(items: RankedOS[]) {
     a.remove();
     URL.revokeObjectURL(url);
   }
+}
+
+async function loadImageAsDataUrl(src: string): Promise<string | null> {
+  try {
+    if (!src) return null;
+    if (src.startsWith("data:image/")) return src;
+    const response = await fetch(src, { cache: "no-store" });
+    if (!response.ok) return null;
+    const blob = await response.blob();
+    return await new Promise<string | null>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(typeof reader.result === "string" ? reader.result : null);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+function getImageFormatFromDataUrl(dataUrl: string): "PNG" | "JPEG" | "WEBP" {
+  const lower = dataUrl.toLowerCase();
+  if (lower.startsWith("data:image/jpeg") || lower.startsWith("data:image/jpg")) return "JPEG";
+  if (lower.startsWith("data:image/webp")) return "WEBP";
+  return "PNG";
+}
+
+function formatDateTimeNow(): string {
+  return new Intl.DateTimeFormat("es-AR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(new Date());
+}
+
+async function exportRankingToPdf(items: RankedEntry[], codigo: string) {
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const logoDataUrl = await loadImageAsDataUrl(CMC_LOGO_SRC);
+
+  if (logoDataUrl) {
+    const imageFormat = getImageFormatFromDataUrl(logoDataUrl);
+    doc.addImage(logoDataUrl, imageFormat, 14, 12, 18, 18);
+  }
+
+  const textStartX = logoDataUrl ? 38 : 14;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.setTextColor(42, 60, 116);
+  doc.text(CMC_NAME, textStartX, 18);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(80, 80, 80);
+  doc.text(`Tel: ${CMC_PHONE}`, textStartX, 24);
+  doc.text(`Email: ${CMC_EMAIL}`, textStartX, 29);
+
+  doc.setDrawColor(42, 60, 116);
+  doc.line(14, 34, pageWidth - 14, 34);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.setTextColor(30, 30, 30);
+  doc.text("Ranking de Obras Sociales", 14, 43);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(90, 90, 90);
+  doc.text(`Código nomenclador: ${codigo}`, 14, 49);
+  doc.text(`Generado: ${formatDateTimeNow()}`, pageWidth - 14, 49, { align: "right" });
+
+  autoTable(doc, {
+    startY: 56,
+    head: [["Ranking", "N°", "Obra Social", "Importe"]],
+    body: items.map((x) => [
+      x.rankLabel,
+      String(x.row.nro),
+      x.row.nombre,
+      money.format(x.row.honorariosA),
+    ]),
+    margin: { left: 14, right: 14 },
+    styles: {
+      font: "helvetica",
+      fontSize: 10,
+      cellPadding: 3,
+      textColor: [40, 40, 40],
+      lineColor: [225, 225, 225],
+      lineWidth: 0.1,
+    },
+    headStyles: {
+      fillColor: [42, 60, 116],
+      textColor: [255, 255, 255],
+      fontStyle: "bold",
+    },
+    columnStyles: {
+      0: { halign: "center", cellWidth: 24 },
+      1: { halign: "left", cellWidth: 28 },
+      2: { halign: "left" },
+      3: { halign: "right", cellWidth: 38 },
+    },
+    alternateRowStyles: {
+      fillColor: [248, 250, 252],
+    },
+  });
+
+  const finalY = (doc as any).lastAutoTable?.finalY ?? 56;
+
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(9);
+  doc.setTextColor(110, 110, 110);
+  doc.text(
+    "Empates de importe comparten la misma posición y la misma medalla en el top 3.",
+    14,
+    Math.min(finalY + 8, 285)
+  );
+
+  const blob = doc.output("blob");
+  saveAs(blob, `ranking_obras_sociales_${codigo.trim() || "codigo"}.pdf`);
 }
 
 export default function Boletin() {
@@ -224,30 +395,19 @@ export default function Boletin() {
 
   useEffect(() => {
     void load(codigo);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Ranking: más caro -> más barato
-  const ordered = useMemo(
-    () => [...data].sort((a, b) => b.honorariosA - a.honorariosA),
-    [data]
-  );
-
-  const rankByNro = useMemo(() => {
-    const m = new Map<number, number>();
-    ordered.forEach((x, i) => m.set(x.nro, i + 1));
-    return m;
-  }, [ordered]);
+  const ranked = useMemo(() => buildRankedEntries(data), [data]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return ordered;
-    return ordered.filter((x) => {
-      const name = x.nombre.toLowerCase();
-      const nro = String(x.nro);
+    if (!q) return ranked;
+    return ranked.filter(({ row }) => {
+      const name = row.nombre.toLowerCase();
+      const nro = String(row.nro);
       return name.includes(q) || nro.includes(q);
     });
-  }, [ordered, query]);
+  }, [ranked, query]);
 
   const handleConsultar = async () => {
     setQuery("");
@@ -255,14 +415,23 @@ export default function Boletin() {
     await load(codigo);
   };
 
-  const handleDownload = async () => {
-    if (codigoVacio || ordered.length === 0) return;
-    await exportRankingToExcel(ordered);
+  const handleDownloadExcel = async () => {
+    if (codigoVacio || ranked.length === 0) return;
+    await exportRankingToExcel(ranked);
+  };
+
+  const handleDownloadPdf = async () => {
+    if (codigoVacio || ranked.length === 0) return;
+    try {
+      setError(null);
+      await exportRankingToPdf(ranked, codigo);
+    } catch (e: any) {
+      setError(`No se pudo generar el PDF. ${e?.message ? String(e.message) : ""}`.trim());
+    }
   };
 
   return (
     <div className={styles.container}>
-      {/* Header */}
       <div className={styles.header}>
         <div className={styles.headerContent}>
           <h1 className={styles.title}>Ranking de Obras Sociales</h1>
@@ -272,7 +441,6 @@ export default function Boletin() {
         </div>
       </div>
 
-      {/* Actions Card */}
       <div className={styles.card}>
         <div className={styles.cardHeader}>
           <h2 className={styles.cardTitle}>Consulta</h2>
@@ -310,10 +478,18 @@ export default function Boletin() {
             <Button
               size="medium"
               variant="secondary"
-              onClick={handleDownload}
-              disabled={ordered.length === 0 || loading || codigoVacio}
+              onClick={handleDownloadExcel}
+              disabled={ranked.length === 0 || loading || codigoVacio}
             >
               Descargar Excel
+            </Button>
+            <Button
+              size="medium"
+              variant="secondary"
+              onClick={handleDownloadPdf}
+              disabled={ranked.length === 0 || loading || codigoVacio}
+            >
+              Descargar PDF
             </Button>
           </div>
 
@@ -339,8 +515,7 @@ export default function Boletin() {
         </div>
       </div>
 
-      {/* Results */}
-      {ordered.length > 0 && (
+      {ranked.length > 0 && (
         <div className={styles.card}>
           <div className={styles.cardHeader}>
             <div className={styles.resultsHeader}>
@@ -397,8 +572,7 @@ export default function Boletin() {
               </thead>
 
               <tbody>
-                {filtered.map((row) => {
-                  const rank = rankByNro.get(row.nro) ?? 0;
+                {filtered.map(({ row, rank, rankLabel }) => {
                   return (
                     <tr key={row.nro}>
                       <td className={styles.tdRank}>
@@ -413,7 +587,7 @@ export default function Boletin() {
                               : ""
                           }`}
                         >
-                          {rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : rank}
+                          {rankLabel}
                         </span>
                       </td>
 

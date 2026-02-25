@@ -1,4 +1,4 @@
-// src/app/lib/api.ts
+
 import {
   getJSON,
   postJSON,
