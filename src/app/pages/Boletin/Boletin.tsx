@@ -269,6 +269,43 @@ function formatDateTimeNow(): string {
   }).format(new Date());
 }
 
+function drawPdfRankBadge(
+  doc: jsPDF,
+  rank: number,
+  cell: { x: number; y: number; width: number; height: number }
+) {
+  const centerX = cell.x + cell.width / 2;
+  const centerY = cell.y + cell.height / 2 + 0.7;
+
+  if (rank >= 1 && rank <= 3) {
+    const medalFill =
+      rank === 1 ? [234, 179, 8] : rank === 2 ? [148, 163, 184] : [180, 83, 9];
+    const medalStroke =
+      rank === 1 ? [161, 98, 7] : rank === 2 ? [100, 116, 139] : [124, 45, 18];
+
+    doc.setFillColor(37, 99, 235);
+    doc.rect(centerX - 3.2, centerY - 6.8, 2.2, 4.2, "F");
+    doc.setFillColor(220, 38, 38);
+    doc.rect(centerX + 1.0, centerY - 6.8, 2.2, 4.2, "F");
+
+    doc.setFillColor(medalFill[0], medalFill[1], medalFill[2]);
+    doc.setDrawColor(medalStroke[0], medalStroke[1], medalStroke[2]);
+    doc.setLineWidth(0.3);
+    doc.circle(centerX, centerY - 0.2, 3.3, "FD");
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.text(String(rank), centerX, centerY + 0.9, { align: "center" });
+    return;
+  }
+
+  doc.setTextColor(60, 60, 60);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text(String(rank), centerX, centerY + 0.8, { align: "center" });
+}
+
 async function exportRankingToPdf(items: RankedEntry[], codigo: string) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -310,7 +347,7 @@ async function exportRankingToPdf(items: RankedEntry[], codigo: string) {
     startY: 56,
     head: [["Ranking", "N°", "Obra Social", "Importe"]],
     body: items.map((x) => [
-      x.rankLabel,
+      "",
       String(x.row.nro),
       x.row.nombre,
       money.format(x.row.honorariosA),
@@ -323,11 +360,13 @@ async function exportRankingToPdf(items: RankedEntry[], codigo: string) {
       textColor: [40, 40, 40],
       lineColor: [225, 225, 225],
       lineWidth: 0.1,
+      valign: "middle",
     },
     headStyles: {
       fillColor: [42, 60, 116],
       textColor: [255, 255, 255],
       fontStyle: "bold",
+      valign: "middle",
     },
     columnStyles: {
       0: { halign: "center", cellWidth: 24 },
@@ -337,6 +376,17 @@ async function exportRankingToPdf(items: RankedEntry[], codigo: string) {
     },
     alternateRowStyles: {
       fillColor: [248, 250, 252],
+    },
+    didDrawCell: (data) => {
+      if (data.section !== "body" || data.column.index !== 0) return;
+      const entry = items[data.row.index];
+      if (!entry) return;
+      drawPdfRankBadge(doc, entry.rank, {
+        x: data.cell.x,
+        y: data.cell.y,
+        width: data.cell.width,
+        height: data.cell.height,
+      });
     },
   });
 
