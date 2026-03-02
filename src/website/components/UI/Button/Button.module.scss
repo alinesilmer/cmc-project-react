@@ -37,24 +37,24 @@
   box-shadow: $shadow-md;
   font-weight: 400;
   border-radius: 50px;
-  font-family: $font-playfair;
   border: 1px solid $primary-yellow;
 
   &:hover:not(:disabled) {
     background-color: $primary-blue-dark;
-    box-shadow: $shadow-lg;
+    box-shadow: $shadow-md;
   }
 }
 
 .secondary {
   background-color: $primary-yellow;
-  color: $black;
+  color: $primary-blue;
+  border: 1px solid #dec348;
   box-shadow: $shadow-md;
   border: none;
 
   &:hover:not(:disabled) {
-    background-color: $primary-yellow;
-    box-shadow: $shadow-lg;
+    background-color: #e0d39c;
+    box-shadow: $shadow-md;
   }
 }
 
@@ -70,24 +70,19 @@
 }
 
 .default {
-  // background-color: transparent;
   color: $primary-blue;
   border: 2px solid $primary-blue;
   cursor: pointer;
-  // &:hover:not(:disabled) {
-  //   background-color: $primary-blue;
-  //   color: $white;
-  // }
 }
 
 .small {
   padding: 5px 10px;
-  font-size: $font-size-small;
+  font-size: 12px;
 }
 
 .medium {
-  padding: $spacing-sm $spacing-md;
-  font-size: $font-size-small;
+  padding: $spacing-md $spacing-xl;
+  font-size: 16px;
 }
 
 .large {

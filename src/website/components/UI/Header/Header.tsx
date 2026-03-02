@@ -1,18 +1,17 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { FiUser, FiMenu, FiX, FiChevronDown, FiSearch } from "react-icons/fi";
+import { FiUser, FiMenu, FiX, FiChevronDown } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import styles from "./Header.module.scss";
 import logo from "../../../assets/images/logoCMC.png";
-import SearchBar from "../SearchBar/SearchBar";
 import { useAuth } from "../../../../app/auth/AuthProvider";
 import { isWebEditor } from "../../../../app/auth/roles";
-import { http } from "../../../../app/lib/http"; // tu axios instance con credentials
+import { http } from "../../../../app/lib/http"; 
 
 // === NUEVO: helper para SSO hacia el legacy usando VITE_URL_BASE_LEGACY ===
 const LEGACY_BASE =
   (import.meta.env.VITE_URL_BASE_LEGACY as string | undefined) ??
-  "https://legacy.colegiomedicocorrientes.com"; // fallback seguro
+  "https://legacy.colegiomedicocorrientes.com"; 
 
 const legacyFallback = `${LEGACY_BASE.replace(/\/+$/, "")}/principal.php`;
 
@@ -26,7 +25,6 @@ export default function Header() {
     nosotros: false,
     servicios: false,
   });
-  const [searchOpen, setSearchOpen] = useState(false);
   const [solid, setSolid] = useState(pathname !== "/");
   const { user } = useAuth();
 
@@ -52,7 +50,7 @@ export default function Header() {
     ? "/panel/login"
     : isWebEditor(user.scopes)
     ? "/admin/dashboard-web"
-    : legacyUrl; // <- ahora es la URL firmada cuando está disponible
+    : legacyUrl; 
 
   useEffect(() => {
     console.log("legacy =", import.meta.env.VITE_URL_BASE_LEGACY);
@@ -229,13 +227,7 @@ export default function Header() {
           </nav>
 
           <div className={styles.actions}>
-            <button
-              className={styles.searchIconBtn}
-              onClick={() => setSearchOpen(true)}
-              aria-label="Abrir búsqueda"
-            >
-              <FiSearch />
-            </button>
+            
             {user && (
               <a
                 href={targetHref}
@@ -391,7 +383,6 @@ export default function Header() {
 
       <div className={styles.offset} aria-hidden="true" />
 
-      <SearchBar open={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
   );
 }

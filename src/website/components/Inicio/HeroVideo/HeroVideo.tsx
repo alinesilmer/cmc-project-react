@@ -99,9 +99,9 @@ export const HeroVideo: FC = () => {
 
     
 
-      <button type="button" className={styles.infoIcon} aria-label="Info">
+      {/* <button type="button" className={styles.infoIcon} aria-label="Info">
         <Info />
-      </button>
+      </button> */}
     </section>
   );
 };

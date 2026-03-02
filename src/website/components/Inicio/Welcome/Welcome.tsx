@@ -47,14 +47,14 @@ export default function Welcome() {
 
             <motion.div className={styles.ctaRow}>
               <Link to="/login">
-                <Button variant="primary" size="large">
+                <Button variant="primary" size="medium">
                   <FaUserPlus className={styles.buttonIcon} />
                   Asociarme
                 </Button>
               </Link>
 
               <a href={ETICA_PDF} download="Valores_Eticos_Minimos.pdf">
-                <Button variant="secondary" size="large">
+                <Button variant="secondary" size="medium">
                   Ver Boletín Informativo
                 </Button>
               </a>
