@@ -39,6 +39,7 @@ export type InsuranceRow = {
   monto?: number;
   obs?: string | null;
   total?: number;
+  debitos_creditos_list?: Array<{ dc_id: number; tipo: "D" | "C"; monto: number; obs: string | null }>;
 };
 
 type Props = {
@@ -123,12 +124,18 @@ const DataRow = memo(function DataRow({
       {showDetails && (
         <>
           <div className={styles.cell}>
-            {row.tipo ? (
+            {row.debitos_creditos_list && row.debitos_creditos_list.length > 0 ? (
+              <span className={`${styles.typeBadge} ${styles[`type${row.tipo ?? "N"}`]}`}>
+                {row.debitos_creditos_list.length === 1
+                  ? `1 D/C`
+                  : `${row.debitos_creditos_list.length} D/C`}
+              </span>
+            ) : row.tipo && row.tipo !== "N" ? (
               <span className={`${styles.typeBadge} ${styles[`type${row.tipo}`]}`}>
                 {row.tipo}
               </span>
             ) : (
-              <span className={styles.emptyValue}>—</span>
+              <span className={styles.emptyValue}>N</span>
             )}
           </div>
           <div className={styles.cell}>

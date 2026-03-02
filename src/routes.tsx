@@ -33,6 +33,8 @@ import AdminPadronesDetail from "./app/pages/AdminPadronesDetail/AdminPadronesDe
 import Boletin from "./app/pages/Boletin/Boletin";
 import AfiliadosPorObraSocialPage from "./app/pages/AfiliadosPorObraSocialPage/AfiliadosPorObraSocialPage";
 import GenerarBoletin from "./app/pages/GenerarBoletin/GenerarBoletin";
+import LiquidacionMedicoPage from "./app/pages/LiquidacionMedico/LiquidacionMedico";
+import RecibosPage from "./app/pages/Recibos/Recibos";
 
 // WEBSITE
 import WebRoutes from "./website/router";
@@ -80,6 +82,8 @@ export default function RootRoutes() {
               path="liquidation/:id/insurance/:osId/:period/:liquidacionId"
               element={<InsuranceDetail />}
             />
+            <Route path="liquidation/:id/medicos" element={<LiquidacionMedicoPage />} />
+            <Route path="liquidation/:id/recibos" element={<RecibosPage />} />
           
             <Route path="padron-ioscor" element={<PadronIoscor />} />
             <Route path="solicitudes" element={<ApplicationsList />} />

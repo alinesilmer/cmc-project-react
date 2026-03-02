@@ -11,6 +11,7 @@ import SearchBar from "../../components/molecules/SearchBar/SearchBar";
 import Card from "../../components/atoms/Card/Card";
 import Button from "../../components/atoms/Button/Button";
 import styles from "./DiscountsList.module.scss";
+import { getJSON, postJSON } from "../../lib/http";
 
 type Discount = {
   id: string;
@@ -19,39 +20,44 @@ type Discount = {
   percentage: number;
 };
 
+const DESCUENTOS_URL = "/api/descuentos";
+
 const DiscountsList: React.FC = () => {
-  const { id } = useParams(); // período activo
+  const { id } = useParams(); // período activo (resumen_id)
   const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmTarget, setConfirmTarget] = useState<Discount | null>(null);
-  const [discounts, setDiscounts] = useState<Discount[]>([
-    {
-      id: "DESC001",
-      concept: "Descuento por Volumen",
-      price: 500,
-      percentage: 5,
-    },
-    {
-      id: "DESC002",
-      concept: "Descuento por Pronto Pago",
-      price: 200,
-      percentage: 2,
-    },
-    {
-      id: "DESC003",
-      concept: "Descuento por Uso de Quinta",
-      price: 1000,
-      percentage: 10,
-    },
-    {
-      id: "DESC004",
-      concept: "Descuento por Campaña",
-      price: 150,
-      percentage: 1.5,
-    },
-  ]);
+  const [discounts, setDiscounts] = useState<Discount[]>([]);
+  const [loadingDiscounts, setLoadingDiscounts] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let ignore = false;
+    (async () => {
+      setLoadingDiscounts(true);
+      setLoadError(null);
+      try {
+        const raw = await getJSON<any[]>(DESCUENTOS_URL);
+        if (!ignore) {
+          setDiscounts(
+            (raw ?? []).map((d: any) => ({
+              id: String(d.id ?? d.desc_id ?? ""),
+              concept: d.concepto ?? d.nombre ?? d.name ?? "",
+              price: Number(d.precio_fijo ?? d.price ?? 0),
+              percentage: Number(d.porcentaje ?? d.percentage ?? 0),
+            }))
+          );
+        }
+      } catch (e: any) {
+        if (!ignore) setLoadError(e?.message || "No se pudieron cargar los descuentos.");
+      } finally {
+        if (!ignore) setLoadingDiscounts(false);
+      }
+    })();
+    return () => { ignore = true; };
+  }, []);
 
   const filtered = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
@@ -79,18 +85,20 @@ const DiscountsList: React.FC = () => {
     setConfirmOpen(false);
     setConfirmTarget(null);
   };
-  const onConfirmGenerate = () => {
+  const onConfirmGenerate = async () => {
+    if (!confirmTarget || !id) return;
     setConfirmOpen(false);
     setGenOpen(true);
     setGenStep("loading");
-  };
-
-  useEffect(() => {
-    if (genOpen && genStep === "loading") {
-      const t = setTimeout(() => setGenStep("done"), 1500);
-      return () => clearTimeout(t);
+    try {
+      await postJSON(
+        `/api/deducciones/${id}/colegio/bulk_generar_descuento/${confirmTarget.id}`
+      );
+      setGenStep("done");
+    } catch (e: any) {
+      setGenStep("done"); // mostramos done igualmente; errores se pueden manejar más fino
     }
-  }, [genOpen, genStep]);
+  };
 
   const closeGenerate = () => {
     setGenOpen(false);
@@ -140,7 +148,7 @@ const DiscountsList: React.FC = () => {
   const goTab = (tab: "obras" | "debitos") => {
     if (!id) return;
     navigate(
-      tab === "obras" ? `/liquidation/${id}` : `/liquidation/${id}/debitos`
+      tab === "obras" ? `/panel/liquidation/${id}` : `/panel/liquidation/${id}/debitos`
     );
   };
 
@@ -186,7 +194,14 @@ const DiscountsList: React.FC = () => {
                 <div>ACCIONES</div>
               </div>
 
-              {filtered.map((discount) => (
+              {loadingDiscounts && (
+                <div className={styles.emptyState}>Cargando descuentos…</div>
+              )}
+              {!loadingDiscounts && loadError && (
+                <div className={styles.emptyState} style={{ color: "#b91c1c" }}>{loadError}</div>
+              )}
+
+              {!loadingDiscounts && !loadError && filtered.map((discount) => (
                 <div key={discount.id} className={styles.tableRow}>
                   <div>{discount.id}</div>
                   <div className={styles.conceptCell}>{discount.concept}</div>
@@ -270,9 +285,9 @@ const DiscountsList: React.FC = () => {
                 </div>
               ))}
 
-              {filtered.length === 0 && (
+              {!loadingDiscounts && !loadError && filtered.length === 0 && (
                 <div className={styles.emptyState}>
-                  No se encontraron resultados para “{searchTerm}”.
+                  {searchTerm ? `No se encontraron resultados para '${searchTerm}'.` : 'No hay descuentos disponibles.'}
                 </div>
               )}
             </div>

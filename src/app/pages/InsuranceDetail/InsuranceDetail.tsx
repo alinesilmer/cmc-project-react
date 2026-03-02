@@ -11,7 +11,7 @@ import InsuranceTable, {
 } from "../../components/molecules/InsuranceDetailTable/InsuranceDetailTable";
 import styles from "./InsuranceDetail.module.scss";
 
-import { http, postJSON, delJSON } from "../../lib/http";
+import { http, postJSON, putJSON, delJSON } from "../../lib/http";
 
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
@@ -30,7 +30,10 @@ const LIQ_DETALLES_VISTA = (liqId: string | number) =>
   `/api/liquidacion/liquidaciones_por_os/${liqId}/detalles_vista`;
 
 const DC_BY_DETALLE = (detalleId: string | number) =>
-  `/api/debitos_creditos/by_detalle/${detalleId}`;
+  `/api/debitos/by_detalle/${detalleId}`;
+
+const DC_DELETE = (dcId: string | number) => `/api/debitos/dc/${dcId}`;
+const DC_EDIT   = (dcId: string | number) => `/api/debitos/dc/${dcId}`;
 
 const currency = new Intl.NumberFormat("es-AR", { minimumFractionDigits: 0 });
 
@@ -56,10 +59,16 @@ function coerceRow(raw: any): InsuranceRow {
   const importe = parseNumber(raw.importe, 0);
   const pagado = parseNumber(raw.pagado, 0);
 
-  const monto = parseNumber(raw.monto ?? raw.monto_dc, 0);
-  const obs = raw.obs ?? raw.obs_dc ?? null;
+  // API v2: debitos_creditos_list es un array de DCs por prestación
+  const dcList: Array<{ dc_id: number; tipo: "D" | "C"; monto: number; obs: string | null }> =
+    Array.isArray(raw.debitos_creditos_list) ? raw.debitos_creditos_list : [];
 
-  const tipo = normalizeTipo(raw);
+  const firstDC = dcList[0] ?? null;
+  const monto = firstDC ? parseNumber(firstDC.monto, 0) : parseNumber(raw.monto ?? raw.monto_dc, 0);
+  const obs = firstDC ? (firstDC.obs ?? null) : (raw.obs ?? raw.obs_dc ?? null);
+  const tipo: "N" | "C" | "D" = firstDC
+    ? (firstDC.tipo as "D" | "C")
+    : normalizeTipo(raw);
 
   let total = raw.total;
   if (total === undefined || total === null) {
@@ -97,6 +106,7 @@ function coerceRow(raw: any): InsuranceRow {
     monto,
     obs,
     total: parseNumber(total, importe),
+    debitos_creditos_list: dcList,
   };
 }
 
@@ -394,21 +404,34 @@ const InsuranceDetail: React.FC = () => {
     async (
       detalleId: number | string,
       payload: { tipo: "D" | "C"; monto: number; observacion?: string },
+      dcId?: number | string,
     ) => {
-      const data = await postJSON<ServerRecalcOut>(DC_BY_DETALLE(detalleId), {
-        tipo: payload.tipo.toLowerCase(), // back usa 'd' | 'c'
-        monto: payload.monto,
-        observacion: payload.observacion ?? null,
-        created_by_user: CURRENT_USER_ID,
-      });
+      let data: ServerRecalcOut;
+      if (dcId != null) {
+        // Editar DC existente
+        data = await putJSON<ServerRecalcOut>(DC_EDIT(dcId), {
+          tipo: payload.tipo.toLowerCase(),
+          monto: payload.monto,
+          observacion: payload.observacion ?? null,
+        });
+      } else {
+        // Crear nuevo DC
+        data = await postJSON<ServerRecalcOut>(DC_BY_DETALLE(detalleId), {
+          tipo: payload.tipo.toLowerCase(),
+          monto: payload.monto,
+          observacion: payload.observacion ?? null,
+          created_by_user: CURRENT_USER_ID,
+        });
+      }
       applyServerRecalc(data, setRows, setResumen);
       return data;
     },
     [],
   );
 
-  const deleteDC = useCallback(async (detalleId: number | string) => {
-    const data = await delJSON<ServerRecalcOut>(DC_BY_DETALLE(detalleId));
+  const deleteDC = useCallback(async (detalleId: number | string, dcId?: number | string) => {
+    const url = dcId != null ? DC_DELETE(dcId) : DC_BY_DETALLE(detalleId);
+    const data = await delJSON<ServerRecalcOut>(url);
     applyServerRecalc(data, setRows, setResumen);
     return data;
   }, []);
@@ -421,18 +444,24 @@ const InsuranceDetail: React.FC = () => {
         throw new Error("No se pudo determinar el ID del detalle (det_id).");
       }
 
-      // Sin DC => DELETE
+      // Sin DC => DELETE (si hay dc_id, borramos por dc_id; si no, por detalle)
       if (draft.tipo === "N" || !draft.monto || Number(draft.monto) <= 0) {
-        await deleteDC(detalleId);
+        const firstDcId = draft.debitos_creditos_list?.[0]?.dc_id;
+        await deleteDC(detalleId, firstDcId);
         return;
       }
 
-      // Con DC => POST (upsert)
-      await upsertDC(detalleId, {
-        tipo: draft.tipo as "D" | "C",
-        monto: Number(draft.monto),
-        observacion: draft.obs || undefined,
-      });
+      // Con DC => upsert (edita el primer DC si existe, sino crea)
+      const firstDcId = draft.debitos_creditos_list?.[0]?.dc_id;
+      await upsertDC(
+        detalleId,
+        {
+          tipo: draft.tipo as "D" | "C",
+          monto: Number(draft.monto),
+          observacion: draft.obs || undefined,
+        },
+        firstDcId,
+      );
     },
     [deleteDC, upsertDC],
   );

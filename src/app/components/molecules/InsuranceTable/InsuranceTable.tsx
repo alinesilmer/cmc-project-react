@@ -7,6 +7,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import styles from "./InsuranceTable.module.scss";
 import Button from "../../atoms/Button/Button";
 import { Link } from "react-router-dom";
+import { postJSON, http } from "../../../lib/http";
 
 export type Period = {
   id: number | string;
@@ -40,10 +41,9 @@ type Props = {
   onAddVersion?: (row: Period) => void;      // tras refacturar (nueva versión)
 };
 
-const API_BASE = (import.meta as any).env?.VITE_API_URL ?? "http://localhost:8000";
-const LIQ_CERRAR     = (id: number | string) => `${API_BASE}/api/liquidacion/liquidaciones_por_os/${id}/cerrar`;
-const LIQ_REABRIR    = (id: number | string) => `${API_BASE}/api/liquidacion/liquidaciones_por_os/${id}/reabrir`;      // reabrir simple (mismo id)
-const LIQ_REFACTURAR = (id: number | string) => `${API_BASE}/api/liquidacion/liquidaciones_por_os/${id}/refacturar`;   // nueva versión
+const LIQ_CERRAR     = (id: number | string) => `/api/liquidacion/liquidaciones_por_os/${id}/cerrar`;
+const LIQ_REABRIR    = (id: number | string) => `/api/liquidacion/liquidaciones_por_os/${id}/reabrir`;
+const LIQ_REFACTURAR = (id: number | string) => `/api/liquidacion/liquidaciones_por_os/${id}/refacturar`;
 
 // async function exportPeriodsToExcel(rows: Period[], filename = "periodo.xlsx") {
 //   const wb = new ExcelJS.Workbook();
@@ -130,8 +130,7 @@ const InsuranceTable: React.FC<Props> = ({
     if (!row?.liquidacionId) return;
     setBusyId(row.liquidacionId);
     try {
-      const r = await fetch(LIQ_CERRAR(row.liquidacionId), { method: "POST" });
-      if (!r.ok) throw new Error(`No se pudo cerrar (HTTP ${r.status})`);
+      await postJSON(LIQ_CERRAR(row.liquidacionId));
       const next: Period = { ...row, estado: "C" };
       setSelfRow(next);         // UI inmediata
       onRowStateChange?.(next); // sincroniza con el padre
@@ -146,9 +145,7 @@ const InsuranceTable: React.FC<Props> = ({
     if (!row?.liquidacionId) return;
     setBusyId(row.liquidacionId);
     try {
-      const r = await fetch(LIQ_REABRIR(row.liquidacionId), { method: "POST" });
-      if (!r.ok) throw new Error(`No se pudo reabrir (HTTP ${r.status})`);
-      const data = await r.json();
+      const data = await http.post(LIQ_REABRIR(row.liquidacionId)).then(r => r.data);
       const next: Period = {
         ...row,
         estado: String(data?.estado ?? "A").toUpperCase() as "A" | "C",
@@ -176,13 +173,10 @@ const InsuranceTable: React.FC<Props> = ({
 
     setBusyId(row.liquidacionId);
     try {
-      const r = await fetch(LIQ_REFACTURAR(row.liquidacionId), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nro_liquidacion: base.trim() }),
+      const nueva = await postJSON<any>(LIQ_REFACTURAR(row.liquidacionId), {
+        punto_venta: "0001",
+        nro_factura: base.trim(),
       });
-      if (!r.ok) throw new Error(`No se pudo refacturar (HTTP ${r.status})`);
-      const nueva = await r.json(); // nueva liquidación (versión+1)
 
       const newRow: Period = {
         id: nueva?.id,
