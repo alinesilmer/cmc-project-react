@@ -741,6 +741,18 @@ const LiquidationCycle: React.FC = () => {
                 >
                   Exportar Todo
                 </Button>
+                <Button
+                  variant="primary"
+                  onClick={() => navigate(`/panel/liquidation/${id}/medicos`)}
+                >
+                  Liq. Médico →
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={() => navigate(`/panel/liquidation/${id}/recibos`)}
+                >
+                  Recibos →
+                </Button>
               </div>
             </div>
 
