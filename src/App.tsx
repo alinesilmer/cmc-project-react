@@ -10,6 +10,7 @@ import DiscountsPage from "./app/pages/DiscountsList/DiscountsList";
 import LiquidationCyclePage from "./app/pages/LiquidationCycle/LiquidationCycle";
 import InsuranceDetail from "./app/pages/InsuranceDetail/InsuranceDetail";
 import DoctorProfilePage from "./app/pages/DoctorProfilePage/DoctorProfilePage";
+import Facturacion from "./app/pages/facturacion/Facturacion";
 
 // Components
 import Sidebar from "./app/components/molecules/Sidebar/Sidebar";
@@ -35,6 +36,7 @@ import PadronesPage from "./app/pages/PadronesPage/PadronesPage";
 import AfiliadosPorObraSocialPage from "./app/pages/AfiliadosPorObraSocialPage/AfiliadosPorObraSocialPage";
 import GenerarBoletin from "./app/pages/GenerarBoletin/GenerarBoletin";
 import PadronSucio from "./app/pages/PadronSucio/PadronSucio";
+import CargaFacturacion from "./app/pages/facturacion/CargaFacturacion/CargaFacturacion";
 
 
 
@@ -75,6 +77,8 @@ function App() {
               <Route path="/panel/register-os" element={<ObrasSocialesRegisterPage />} />
               <Route path="/liquidation/:id" element={<LiquidationCyclePage />} />
               <Route path="/padron-ioscor" element={<PadronIoscor />} />
+             <Route path="/facturacion" element={<Facturacion />} />
+<Route path="/facturacion/carga" element={<CargaFacturacion />} />
               <Route path="/panel/padrones" element={<PadronesPage />} />
               <Route path="/liquidation/:id/debitos" element={<DiscountsPage />} />
               <Route path="/liquidation/:id/insurance/:osId/:period/:liquidacionId" element={<InsuranceDetail />} />

@@ -135,7 +135,7 @@ export default function Header() {
                   >
                     <li>
                       <Link
-                        to={`https://wa.me/543794404497?text=${encodeURIComponent(
+                        to={`https://wa.me/543794252323?text=${encodeURIComponent(
                           "Hola, quisiera información para asociarme al Colegio Médico de Corrientes, por favor. ¡Gracias!."
                         )}`}
                         className={styles.subLink}

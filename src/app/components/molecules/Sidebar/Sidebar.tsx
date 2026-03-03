@@ -91,6 +91,12 @@ const Sidebar: React.FC = () => {
       label: "Listado de Prestadores",
       perms: ["medicos:leer"],
     },
+     {
+      path: `${base}/facturacion`,
+      icon: Paperclip,
+      label: "Facturación",
+      perms: ["medicos:leer"],
+    },
     // { path: "/config", icon: Cog, label: "Configuración" },                  // ← COMENTADO (punto 5)
     // { path: "/help", icon: MessageCircleQuestionMark, label: "Ayuda" },       // ← COMENTADO (punto 5)
   ];
