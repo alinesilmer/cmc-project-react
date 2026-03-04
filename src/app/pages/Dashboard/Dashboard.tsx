@@ -79,28 +79,7 @@ const Dashboard: React.FC = () => {
     return typeof found === "string" ? found.trim() : "";
   }, [user]);
 
-  const stats: StatCard[] = [
-    {
-      label: "Período activo",
-      value: activePeriod,
-      tone: "teal",
-    },
-    {
-      label: "Estado del período",
-      value: periodStatus,
-      tone: "purple",
-    },
-    {
-      label: "Módulos visibles",
-      value: "9",
-      tone: "pink",
-    },
-    {
-      label: "Cierre estimado",
-      value: closingDate,
-      tone: "lavender",
-    },
-  ];
+  
 
   const mainActions: QuickAction[] = [
     {
@@ -110,7 +89,7 @@ const Dashboard: React.FC = () => {
         "Gestioná períodos, cierres, débitos y recibos desde el módulo principal.",
       link: "/panel/liquidation",
       accent: "teal",
-      badge: "Principal",
+      badge: "Operativo",
     },
     {
       icon: NotebookText,
@@ -164,7 +143,7 @@ const Dashboard: React.FC = () => {
         "Consultá el listado operativo de prestadores y referencias rápidas.",
       link: "/panel/padronsucio",
       accent: "pink",
-      badge: "Soporte",
+      badge: "Consulta",
     },
     {
       icon: ShieldCheck,
@@ -319,39 +298,7 @@ const Dashboard: React.FC = () => {
           </div>
         </motion.section>
 
-        <motion.section
-          className={styles.statsGrid}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.24, delay: 0.05 }}
-        >
-          {stats.map((stat, index) => (
-            <div
-              key={stat.label}
-              className={`${styles.statCard} ${styles[`stat${stat.tone}`]}`}
-            >
-              <div className={styles.statCardInner}>
-                <span className={styles.statLabel}>{stat.label}</span>
-                <strong className={styles.statValue}>{stat.value}</strong>
-              </div>
-
-              <div className={styles.statAccent}>
-                <span />
-                <span />
-              </div>
-
-              <motion.div
-                className={styles.statPulse}
-                initial={{ scale: 0.94, opacity: 0.6 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{
-                  duration: 0.5,
-                  delay: 0.08 + index * 0.03,
-                }}
-              />
-            </div>
-          ))}
-        </motion.section>
+      
 
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
