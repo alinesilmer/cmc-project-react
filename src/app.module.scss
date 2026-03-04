@@ -8,3 +8,27 @@
     height: 100vh;
     overflow: auto;
 }
+
+body {
+  font-family: $font-normal;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+button,
+.cardTitle,
+.title,
+.sectionTitle {
+  font-family: $font-title;
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+}

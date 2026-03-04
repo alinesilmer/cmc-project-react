@@ -218,9 +218,6 @@ export default function Header() {
             >
               Médicos Asociados
             </Link>
-            <Link to="/blogs" className={styles.navLink} onClick={closeAll}>
-              Blog
-            </Link>
             <Link to="/contacto" className={styles.navLink} onClick={closeAll}>
               Contacto
             </Link>

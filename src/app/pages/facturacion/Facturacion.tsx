@@ -18,7 +18,7 @@ const sections: FacturacionSection[] = [
     {
         title: "Cierre de Períodos Facturista",
         description: "Realizá el cierre de períodos y control de facturación.",
-        route: "cierre-periodos-facturista",
+        route: "cierre-periodo",
         variant: "secondary",
     },
     {
@@ -30,37 +30,13 @@ const sections: FacturacionSection[] = [
     {
         title: "Listado por Obra Social - Colegio",
         description: "Visualizá la facturación agrupada por obra social.",
-        route: "listado-por-obra-social-colegio",
+        route: "listado-por-obra-social",
         variant: "secondary",
     },
     {
         title: "Validación",
         description: "Ingresá al módulo de validación de datos y prestaciones.",
         route: "validacion",
-        variant: "primary",
-    },
-    {
-        title: "IOSCOR",
-        description: "Accedé a las herramientas y procesos asociados a IOSCOR.",
-        route: "ioscor",
-        variant: "secondary",
-    },
-    {
-        title: "Boreal Archivo Plano",
-        description: "Generá y gestioná el archivo plano correspondiente a Boreal.",
-        route: "boreal-archivo-plano",
-        variant: "primary",
-    },
-    {
-        title: "Plano UTN",
-        description: "Accedé a la generación y revisión del plano UTN.",
-        route: "plano-utn",
-        variant: "secondary",
-    },
-    {
-        title: "OMINT Archivo Plano",
-        description: "Gestioná el archivo plano correspondiente a OMINT.",
-        route: "omint-archivo-plano",
         variant: "primary",
     },
 ];

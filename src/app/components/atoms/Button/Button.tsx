@@ -1,54 +1,95 @@
 "use client";
 
 import type React from "react";
-import { motion } from "framer-motion";
+import { forwardRef } from "react";
 import styles from "./Button.module.scss";
 
-interface ButtonProps {
+type ButtonVariant =
+  | "primary"
+  | "secondary"
+  | "success"
+  | "danger"
+  | "ghost"
+  | "third";
+
+type ButtonSize = "sm" | "md" | "lg";
+
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
-  variant?: "primary" | "secondary" | "success" | "danger" | "ghost" | "third";
-  size?: "sm" | "md" | "lg";
-  disabled?: boolean;
-  onClick?: React.MouseEventHandler<HTMLButtonElement>;
-  onPointerDown?: React.PointerEventHandler<HTMLButtonElement>;
-  onMouseDown?: React.MouseEventHandler<HTMLButtonElement>;
-  type?: "button" | "submit" | "reset";
-  className?: string;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   submit?: boolean;
-  /** Permite pasar aria-*, data-*, id, title, etc. */
-  [key: string]: any;
+  isLoading?: boolean;
+  fullWidth?: boolean;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+  className?: string;
 }
 
-const Button: React.FC<ButtonProps> = ({
-  children,
-  variant = "primary",
-  size = "md",
-  disabled = false,
-  onClick,
-  onPointerDown,
-  onMouseDown,
-  type = "button",
-  submit,
-  className = "",
-  ...rest
-}) => {
-  const computedType: "button" | "submit" | "reset" = submit ? "submit" : (type ?? "button");
-  return (
-    <motion.button
-      className={`${styles.button} ${styles[variant]} ${styles[size]} ${className}`}
-      type={computedType}
-      disabled={disabled}
-      onClick={onClick}
-      onPointerDown={onPointerDown}
-      onMouseDown={onMouseDown}
-      whileHover={{ scale: disabled ? 1 : 0.95 }}
-      whileTap={{ scale: disabled ? 1 : 0.95 }}
-      transition={{ duration: 0.01 }}
-      {...rest}
-    >
-      {children}
-    </motion.button>
-  );
-};
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    {
+      children,
+      variant = "primary",
+      size = "md",
+      disabled = false,
+      type = "button",
+      submit,
+      isLoading = false,
+      fullWidth = false,
+      leftIcon,
+      rightIcon,
+      className = "",
+      ...rest
+    },
+    ref
+  ) => {
+    const computedType: "button" | "submit" | "reset" = submit
+      ? "submit"
+      : type;
+
+    const isDisabled = disabled || isLoading;
+
+    const buttonClassName = [
+      styles.button,
+      styles[variant],
+      styles[size],
+      fullWidth ? styles.fullWidth : "",
+      isLoading ? styles.loading : "",
+      className,
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    return (
+      <button
+        ref={ref}
+        className={buttonClassName}
+        type={computedType}
+        disabled={isDisabled}
+        aria-busy={isLoading || undefined}
+        {...rest}
+      >
+        {isLoading ? (
+          <span className={styles.spinner} aria-hidden="true" />
+        ) : leftIcon ? (
+          <span className={styles.icon} aria-hidden="true">
+            {leftIcon}
+          </span>
+        ) : null}
+
+        <span className={styles.content}>{children}</span>
+
+        {!isLoading && rightIcon ? (
+          <span className={styles.icon} aria-hidden="true">
+            {rightIcon}
+          </span>
+        ) : null}
+      </button>
+    );
+  }
+);
+
+Button.displayName = "Button";
 
 export default Button;

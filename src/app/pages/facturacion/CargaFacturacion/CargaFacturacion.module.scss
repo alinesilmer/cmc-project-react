@@ -2,7 +2,7 @@
 
 .container {
   padding: $spacing-8;
-  max-width: 1400px;
+  max-width: auto;
   margin: 0 auto;
   background-color: $gray-50;
   min-height: 100vh;
@@ -18,68 +18,31 @@
   font-weight: $font-weight-bold;
   color: $gray-900;
   margin: 0 0 $spacing-2 0;
+  line-height: 1.15;
 }
 
 .subtitle {
   font-size: $font-size-lg;
   color: $gray-600;
   margin: 0;
+  line-height: 1.6;
 }
 
-.topInfoGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: $spacing-6;
-  margin-bottom: $spacing-8;
-}
-
-.infoCard {
-  background-color: $white;
-  border-radius: $border-radius-xl;
-  box-shadow: $shadow-md;
-  padding: $spacing-6;
-  border: 1px solid rgba($primary-blue, 0.08);
-  animation: fadeIn 0.5s ease-out 0.1s backwards;
-}
-
-.infoLabel {
-  display: block;
-  font-size: $font-size-base;
-  font-weight: $font-weight-semibold;
-  color: $gray-600;
-  margin-bottom: $spacing-2;
-}
-
-.infoValue {
-  display: block;
-  font-size: $font-size-lg;
-  font-weight: $font-weight-bold;
-  color: $gray-900;
-  line-height: 1.4;
-}
-
-.contentGrid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(320px, 420px);
-  gap: $spacing-6;
-  align-items: start;
-}
-
-.formCard,
-.summaryCard {
+.formCard {
   background-color: $white;
   border-radius: $border-radius-xl;
   box-shadow: $shadow-md;
   padding: $spacing-8;
-  animation: fadeIn 0.5s ease-out 0.2s backwards;
+  animation: fadeIn 0.5s ease-out 0.15s backwards;
+  border: 1px solid rgba($primary-blue, 0.08);
+}
+
+.formSection {
+  width: 100%;
 }
 
 .sectionHeader {
   margin-bottom: $spacing-6;
-}
-
-.sectionHeaderSecondary {
-  margin-bottom: $spacing-4;
 }
 
 .sectionTitle {
@@ -87,6 +50,7 @@
   font-weight: $font-weight-bold;
   color: $gray-900;
   margin: 0 0 $spacing-2 0;
+  line-height: 1.2;
 }
 
 .sectionDescription {
@@ -94,13 +58,6 @@
   color: $gray-600;
   margin: 0;
   line-height: 1.6;
-}
-
-.subsectionTitle {
-  font-size: $font-size-lg;
-  font-weight: $font-weight-bold;
-  color: $gray-900;
-  margin: 0;
 }
 
 .fieldGrid {
@@ -113,6 +70,7 @@
   display: flex;
   flex-direction: column;
   gap: $spacing-2;
+  min-width: 0;
 }
 
 .formGroupFull {
@@ -120,6 +78,7 @@
   display: flex;
   flex-direction: column;
   gap: $spacing-2;
+  min-width: 0;
 }
 
 .label {
@@ -133,19 +92,25 @@
 .select {
   width: 100%;
   min-height: 48px;
-  border: 1px solid rgba($primary-blue, 0.15);
+  border: 1px solid lightgray;
   border-radius: $border-radius-lg;
   background-color: $white;
   padding: 0 $spacing-4;
   font-size: $font-size-base;
   color: $gray-900;
-  transition: all 0.2s;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   box-sizing: border-box;
+  appearance: none;
 
   &:focus {
     outline: none;
     border-color: rgba($primary-blue, 0.5);
     box-shadow: 0 0 0 4px rgba($primary-blue, 0.08);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
   }
 }
 
@@ -154,20 +119,8 @@
 }
 
 .helperText {
-  font-size: $font-size-base;
+  font-size: $font-size-sm;
   color: $gray-600;
-  line-height: 1.5;
-}
-
-.inlineAlert {
-  width: 100%;
-  border-radius: $border-radius-lg;
-  padding: $spacing-4;
-  background-color: rgba(255, 91, 91, 0.12);
-  border: 1px solid rgba(255, 91, 91, 0.28);
-  color: #c62828;
-  font-size: $font-size-base;
-  font-weight: $font-weight-semibold;
   line-height: 1.5;
 }
 
@@ -177,129 +130,34 @@
   padding: 0 $spacing-4;
   display: flex;
   align-items: center;
-  background-color: rgba($success-green, 0.1);
-  border: 1px solid rgba($success-green, 0.25);
+  background: linear-gradient(
+    135deg,
+    rgba($success-green, 0.1),
+    rgba($primary-blue, 0.06)
+  );
+  border: 1px solid rgba($success-green, 0.22);
   font-size: $font-size-lg;
   font-weight: $font-weight-bold;
   color: $gray-900;
+  box-sizing: border-box;
 }
 
 .separator {
   height: 1px;
-  background-color: rgba($primary-blue, 0.14);
+  background-color: rgba($primary-blue, 0.12);
   margin: $spacing-8 0;
 }
 
-.dateGrid {
-  display: grid;
-  grid-template-columns: 90px 90px 140px;
-  gap: $spacing-3;
-}
-
-.summaryCard {
-  position: sticky;
-  top: $spacing-8;
-}
-
-.summaryBlock {
-  margin-bottom: $spacing-5;
-}
-
-.summaryLabel {
-  display: block;
-  font-size: $font-size-base;
-  font-weight: $font-weight-semibold;
-  color: $gray-600;
-  margin-bottom: $spacing-2;
-}
-
-.summaryValue {
-  font-size: $font-size-base;
-  color: $gray-900;
-  margin: 0;
-  line-height: 1.6;
-  font-weight: $font-weight-semibold;
-}
-
-.statusBadgeWrapper {
-  margin-bottom: $spacing-6;
-}
-
-.statusBadge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 36px;
-  padding: 0 $spacing-4;
-  border-radius: 999px;
-  font-size: $font-size-base;
-  font-weight: $font-weight-semibold;
-}
-
-.statusBadgeSuccess {
-  background-color: rgba($success-green, 0.12);
-  color: $success-green;
-  border: 1px solid rgba($success-green, 0.24);
-}
-
-.statusBadgeError {
-  background-color: rgba(255, 91, 91, 0.12);
-  color: #c62828;
-  border: 1px solid rgba(255, 91, 91, 0.28);
-}
-
-.totalCard {
-  background: linear-gradient(
-    135deg,
-    rgba($primary-blue, 0.08),
-    rgba($success-green, 0.08)
-  );
-  border-radius: $border-radius-xl;
-  padding: $spacing-6;
-  margin-bottom: $spacing-6;
-  border: 1px solid rgba($primary-blue, 0.08);
-}
-
-.totalLabel {
-  display: block;
-  font-size: $font-size-base;
-  color: $gray-600;
-  margin-bottom: $spacing-2;
-  font-weight: $font-weight-semibold;
-}
-
-.totalValue {
-  display: block;
-  font-size: $font-size-2xl;
-  font-weight: $font-weight-bold;
-  color: $gray-900;
-  line-height: 1.2;
-}
-
-.summaryMeta {
+.actions {
   display: flex;
-  flex-direction: column;
-  gap: $spacing-4;
-  margin-bottom: $spacing-6;
-}
-
-.metaRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: $spacing-4;
-  font-size: $font-size-base;
-  color: $gray-600;
-
-  strong {
-    color: $gray-900;
-    font-weight: $font-weight-bold;
-  }
+  justify-content: flex-end;
+  margin-top: $spacing-8;
 }
 
 .submitButton {
-  width: 100%;
   min-height: 52px;
+  min-width: 240px;
+  padding: 0 $spacing-6;
   border: none;
   border-radius: $border-radius-lg;
   background-color: $primary-blue;
@@ -307,13 +165,27 @@
   font-size: $font-size-base;
   font-weight: $font-weight-semibold;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
   box-shadow: $shadow-md;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background-color: $primary-blue-dark;
     box-shadow: $shadow-xl;
     transform: translateY(-2px);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow:
+      $shadow-md,
+      0 0 0 4px rgba($primary-blue, 0.14);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+    transform: none;
+    box-shadow: $shadow-md;
   }
 }
 
@@ -322,27 +194,89 @@
     padding: $spacing-4;
   }
 
-  .topInfoGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .contentGrid {
-    grid-template-columns: 1fr;
+  .formCard {
+    padding: $spacing-6;
   }
 
   .fieldGrid {
     grid-template-columns: 1fr;
+    gap: $spacing-4;
   }
 
   .formGroupFull {
     grid-column: auto;
   }
 
-  .dateGrid {
-    grid-template-columns: 1fr;
+  .actions {
+    justify-content: stretch;
   }
 
-  .summaryCard {
-    position: static;
+  .submitButton {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: $spacing-3;
+  }
+
+  .header {
+    margin-bottom: $spacing-6;
+  }
+
+  .title {
+    font-size: $font-size-3xl;
+  }
+
+  .subtitle {
+    font-size: $font-size-base;
+  }
+
+  .formCard {
+    padding: $spacing-4;
+    border-radius: $border-radius-lg;
+  }
+
+  .sectionHeader {
+    margin-bottom: $spacing-4;
+  }
+
+  .sectionTitle {
+    font-size: $font-size-xl;
+  }
+
+  .sectionDescription {
+    font-size: $font-size-sm;
+  }
+
+  .input,
+  .select,
+  .valueBox {
+    min-height: 46px;
+    padding: 0 $spacing-3;
+    font-size: $font-size-sm;
+  }
+
+  .label {
+    font-size: $font-size-sm;
+  }
+
+  .helperText {
+    font-size: $font-size-xs;
+  }
+
+  .separator {
+    margin: $spacing-6 0;
+  }
+
+  .actions {
+    margin-top: $spacing-6;
+  }
+
+  .submitButton {
+    min-height: 48px;
+    font-size: $font-size-sm;
   }
 }

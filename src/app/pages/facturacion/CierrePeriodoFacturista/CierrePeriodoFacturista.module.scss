@@ -1,0 +1,686 @@
+@use "@/app/styles/all.scss" as *;
+
+.container {
+  padding: $spacing-8;
+  max-width: 1120px;
+  margin: 0 auto;
+  background-color: $gray-50;
+  min-height: 100vh;
+}
+
+.header {
+  margin-bottom: $spacing-8;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.title {
+  margin: 0 0 $spacing-2 0;
+  font-size: $font-size-4xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  line-height: 1.15;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: $font-size-lg;
+  color: $gray-600;
+  line-height: 1.6;
+}
+
+.filterCard,
+.mainCard,
+.totalCard,
+.emptyStateCard {
+  background-color: $white;
+  border: 1px solid rgba($primary-blue, 0.08);
+  border-radius: $border-radius-xl;
+  box-shadow: $shadow-md;
+}
+
+.filterCard {
+  padding: $spacing-6;
+  margin-bottom: $spacing-6;
+  animation: fadeIn 0.5s ease-out 0.08s backwards;
+}
+
+.filterTopRow {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: $spacing-5;
+}
+
+.filterGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.6fr);
+  gap: $spacing-5;
+  align-items: start;
+}
+
+.filterMain {
+  min-width: 0;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: $spacing-4;
+  align-items: end;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  min-width: 0;
+}
+
+.label {
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $primary-blue;
+  line-height: 1.2;
+}
+
+.input,
+.select {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid rgba($primary-blue, 0.15);
+  border-radius: $border-radius-lg;
+  background-color: $white;
+  padding: 0 $spacing-4;
+  font-size: $font-size-base;
+  color: $gray-900;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    border-color: rgba($primary-blue, 0.5);
+    box-shadow: 0 0 0 4px rgba($primary-blue, 0.08);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+}
+
+.inputIconWrap {
+  position: relative;
+  width: 100%;
+}
+
+.inputIcon {
+  position: absolute;
+  left: $spacing-4;
+  top: 50%;
+  transform: translateY(-50%);
+  color: $gray-500;
+  pointer-events: none;
+}
+
+.inputIconWrap .input {
+  padding-left: 46px;
+}
+
+.helperText {
+  font-size: $font-size-sm;
+  color: $gray-600;
+  line-height: 1.5;
+}
+
+.filterSideInfo {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $spacing-4;
+}
+
+.sideInfoCard {
+  border: 1px solid rgba($gray-200, 0.9);
+  border-radius: $border-radius-lg;
+  padding: $spacing-4;
+  background-color: $gray-50;
+}
+
+.sideInfoLabel {
+  display: block;
+  margin-bottom: $spacing-2;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-600;
+}
+
+.sideInfoValue {
+  display: block;
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  word-break: break-word;
+}
+
+.backButton,
+.primaryButton,
+.primaryMutedButton,
+.secondaryButton,
+.dangerButton {
+  min-height: 48px;
+  border: none;
+  border-radius: $border-radius-lg;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+  padding: 0 $spacing-5;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease,
+    opacity 0.2s ease;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+    transform: none;
+  }
+}
+
+.backButton {
+  background-color: $white;
+  color: $gray-900;
+  border: 1px solid rgba($primary-blue, 0.2);
+  box-shadow: $shadow-sm;
+
+  &:hover:not(:disabled) {
+    background-color: $gray-100;
+    box-shadow: $shadow-md;
+    transform: translateY(-1px);
+  }
+}
+
+.primaryButton {
+  background-color: $primary-blue;
+  color: $white;
+  box-shadow: $shadow-md;
+
+  &:hover:not(:disabled) {
+    background-color: $primary-blue-dark;
+    box-shadow: $shadow-xl;
+    transform: translateY(-1px);
+  }
+}
+
+.primaryMutedButton {
+  background-color: rgba($primary-blue, 0.82);
+  color: $white;
+  box-shadow: $shadow-md;
+
+  &:hover:not(:disabled) {
+    background-color: rgba($primary-blue-dark, 0.94);
+    box-shadow: $shadow-xl;
+    transform: translateY(-1px);
+  }
+}
+
+.secondaryButton {
+  background-color: $gray-100;
+  color: $gray-900;
+  border: 1px solid rgba($gray-300, 0.9);
+
+  &:hover:not(:disabled) {
+    background-color: $gray-200;
+    transform: translateY(-1px);
+  }
+}
+
+.dangerButton {
+  background-color: #ef4444;
+  color: $white;
+  box-shadow: $shadow-md;
+
+  &:hover:not(:disabled) {
+    background-color: #dc2626;
+    box-shadow: $shadow-xl;
+    transform: translateY(-1px);
+  }
+}
+
+.mainCard {
+  padding: $spacing-8;
+  animation: fadeIn 0.5s ease-out 0.14s backwards;
+}
+
+.sectionBlock {
+  width: 100%;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $spacing-4;
+  margin-bottom: $spacing-5;
+}
+
+.sectionHeaderText {
+  min-width: 0;
+}
+
+.sectionTitle {
+  margin: 0 0 $spacing-2 0;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  line-height: 1.2;
+}
+
+.sectionDescription {
+  margin: 0;
+  font-size: $font-size-base;
+  color: $gray-600;
+  line-height: 1.6;
+}
+
+.statusBadge {
+  min-height: 36px;
+  padding: 0 $spacing-4;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  white-space: nowrap;
+}
+
+.statusBadgeSuccess {
+  background-color: rgba($success-green, 0.12);
+  color: $success-green;
+  border: 1px solid rgba($success-green, 0.22);
+}
+
+.statusBadgeDanger {
+  background-color: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.22);
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $spacing-4;
+}
+
+.infoItem {
+  border: 1px solid rgba($gray-200, 0.9);
+  border-radius: $border-radius-lg;
+  padding: $spacing-4;
+  background-color: $gray-50;
+}
+
+.infoLabel {
+  display: block;
+  margin-bottom: $spacing-2;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-600;
+}
+
+.infoValue {
+  display: block;
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.formLayout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $spacing-4;
+}
+
+.actionRow {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: $spacing-4;
+}
+
+.sectionDivider {
+  height: 1px;
+  background-color: rgba($primary-blue, 0.12);
+  margin: $spacing-8 0;
+}
+
+.inlineWarning,
+.inlineError {
+  margin: $spacing-3 0 0 0;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  line-height: 1.5;
+}
+
+.inlineWarning {
+  color: #b45309;
+}
+
+.inlineError {
+  color: #dc2626;
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.uploadPanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: $spacing-4;
+  align-items: center;
+}
+
+.filePreview {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  min-width: 0;
+  border: 1px dashed rgba($primary-blue, 0.22);
+  border-radius: $border-radius-lg;
+  background-color: rgba($primary-blue, 0.03);
+  padding: $spacing-4;
+}
+
+.fileIconBox {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: $border-radius-lg;
+  background-color: $white;
+  border: 1px solid rgba($gray-200, 0.9);
+  color: $primary-blue;
+}
+
+.fileTextBlock {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fileName {
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $gray-900;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fileMeta {
+  font-size: $font-size-sm;
+  color: $gray-600;
+  line-height: 1.4;
+}
+
+.uploadActions {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  min-width: 210px;
+}
+
+.dangerCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-4;
+  padding: $spacing-5;
+  border-radius: $border-radius-xl;
+  background: linear-gradient(
+    135deg,
+    rgba(239, 68, 68, 0.05),
+    rgba(239, 68, 68, 0.02)
+  );
+  border: 1px solid rgba(239, 68, 68, 0.15);
+}
+
+.dangerContent {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-3;
+  min-width: 0;
+}
+
+.dangerIcon {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: $border-radius-lg;
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+.dangerText {
+  min-width: 0;
+}
+
+.dangerTitle {
+  margin: 0 0 $spacing-1 0;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+}
+
+.dangerDescription {
+  margin: 0;
+  font-size: $font-size-base;
+  color: $gray-600;
+  line-height: 1.6;
+}
+
+.totalCard {
+  margin-top: $spacing-6;
+  padding: $spacing-6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-4;
+  background: linear-gradient(
+    135deg,
+    rgba($success-green, 0.12),
+    rgba($primary-blue, 0.06)
+  );
+  border-color: rgba($success-green, 0.2);
+  animation: fadeIn 0.5s ease-out 0.2s backwards;
+}
+
+.totalLabel {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $gray-700;
+}
+
+.totalValue {
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  line-height: 1.1;
+  text-align: right;
+}
+
+.emptyStateCard {
+  padding: $spacing-8;
+  text-align: center;
+  animation: fadeIn 0.5s ease-out 0.16s backwards;
+}
+
+.emptyStateTitle {
+  margin: 0 0 $spacing-2 0;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+}
+
+.emptyStateDescription {
+  margin: 0;
+  font-size: $font-size-base;
+  color: $gray-600;
+  line-height: 1.6;
+}
+
+@media (max-width: 1024px) {
+  .container {
+    padding: $spacing-6;
+  }
+
+  .filterGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .infoGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .mainCard {
+    padding: $spacing-6;
+  }
+
+  .totalValue {
+    font-size: $font-size-2xl;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: $spacing-4;
+  }
+
+  .header {
+    margin-bottom: $spacing-6;
+  }
+
+  .title {
+    font-size: $font-size-3xl;
+  }
+
+  .subtitle {
+    font-size: $font-size-base;
+  }
+
+  .filterCard,
+  .mainCard,
+  .emptyStateCard {
+    padding: $spacing-5;
+  }
+
+  .formRow,
+  .formLayout,
+  .uploadPanel {
+    grid-template-columns: 1fr;
+  }
+
+  .primaryButton,
+  .primaryMutedButton,
+  .secondaryButton,
+  .dangerButton,
+  .backButton {
+    width: 100%;
+  }
+
+  .uploadActions {
+    min-width: 0;
+  }
+
+  .sectionHeader,
+  .dangerCard,
+  .totalCard {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .statusBadge {
+    align-self: flex-start;
+  }
+
+  .totalValue {
+    text-align: left;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: $spacing-3;
+  }
+
+  .title {
+    font-size: $font-size-2xl;
+  }
+
+  .subtitle {
+    font-size: $font-size-sm;
+  }
+
+  .filterCard,
+  .mainCard,
+  .totalCard,
+  .emptyStateCard {
+    padding: $spacing-4;
+    border-radius: $border-radius-lg;
+  }
+
+  .sectionTitle,
+  .emptyStateTitle {
+    font-size: $font-size-xl;
+  }
+
+  .label,
+  .sectionDescription,
+  .dangerDescription {
+    font-size: $font-size-sm;
+  }
+
+  .input,
+  .select,
+  .backButton,
+  .primaryButton,
+  .primaryMutedButton,
+  .secondaryButton,
+  .dangerButton {
+    min-height: 46px;
+    font-size: $font-size-sm;
+  }
+
+  .helperText,
+  .fileMeta,
+  .infoLabel,
+  .sideInfoLabel,
+  .inlineWarning,
+  .inlineError {
+    font-size: $font-size-xs;
+  }
+
+  .filePreview,
+  .infoItem,
+  .sideInfoCard,
+  .dangerCard {
+    padding: $spacing-3;
+  }
+
+  .totalLabel {
+    font-size: $font-size-base;
+  }
+
+  .totalValue {
+    font-size: $font-size-xl;
+  }
+}

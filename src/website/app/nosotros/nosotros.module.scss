@@ -1,19 +1,6 @@
 @use "@/website/styles/all.scss" as *;
 
-@mixin container($max) {
-  max-width: $max;
-  margin: 0 auto;
-  padding: 0 $spacing-lg;
-}
 
-@mixin split-grid {
-  display: flex;
-  gap: $spacing-xl;
-  align-items: flex-start;
-  flex-wrap: nowrap;
-  > *:first-child { flex: 0 0 240px; }
-  > *:last-child  { flex: 1 1 auto; min-width: 0; }
-}
 
 .page { background: $white; }
 
@@ -32,7 +19,6 @@
     pointer-events: none;
   }
 
-  .wrap { @include container(1100px); position: relative; z-index: 1; }
 
   .heroContent {
     h1 {
@@ -65,8 +51,6 @@
   }
 }
 
-.wrap       { @include container(1100px); }
-.wrapNarrow { @include container(900px); }
 
 .sectionWhite { padding: clamp($spacing-xl, 6vw, $spacing-2xl) 0; background: $white; }
 
@@ -143,7 +127,6 @@
     pointer-events: none;
   }
 
-  .wrapSplit { @include container(1100px); @include split-grid; position: relative; z-index: 1; }
 
   .bandTitle {
     font-weight: 700; font-size: 1.1rem; letter-spacing: .02em; font-family: $font-normal;
@@ -171,7 +154,6 @@
   padding: clamp($spacing-xl, 7vw, $spacing-2xl) 0;
   position: relative;
 
-  .wrapSplit { @include container(1100px); @include split-grid; margin-bottom: $spacing-xl; }
 
   .bandTitle {
     font-weight: 700; font-size: 1.1rem; letter-spacing: .02em;
@@ -193,7 +175,6 @@
   }
 
   .visionImage {
-    @include container(1100px);
 
     .imageWrapper {
       position: relative;

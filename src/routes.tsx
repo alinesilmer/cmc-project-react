@@ -39,6 +39,8 @@ import RecibosPage from "./app/pages/Recibos/Recibos";
 // Facturación
 import Facturacion from "./app/pages/facturacion/Facturacion";
 import CargaFacturacion from "./app/pages/facturacion/CargaFacturacion/CargaFacturacion";
+import CierrePeriodoFacturista from "./app/pages/facturacion/CierrePeriodoFacturista/CierrePeriodoFacturista";
+import ListadoOSFacturacion from "./app/pages/facturacion/ListadoOSFacturacion/ListadoOSFacturacion";
 
 // WEBSITE
 import WebRoutes from "./website/router";
@@ -100,6 +102,8 @@ export default function RootRoutes() {
             <Route path="facturacion">
               <Route index element={<Facturacion />} /> {/* /panel/facturacion */}
               <Route path="carga" element={<CargaFacturacion />} /> {/* /panel/facturacion/carga */}
+              <Route path="cierre-periodo" element={<CierrePeriodoFacturista />} /> {/* /panel/facturacion/cierre-periodo */}
+              <Route path="listado-por-obra-social" element={<ListadoOSFacturacion />} /> {/* /panel/facturacion/listado-por-obra-social */}
 
               {/* futuras subrutas */}
               {/* <Route path="cierre-periodos-facturista" element={<TuPagina />} /> */}

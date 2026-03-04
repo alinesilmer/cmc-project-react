@@ -64,18 +64,6 @@ export default function Quinta({
         </ul>
 
         <div className={styles.contactBox}>
-          <div className={styles.contactLeft}>
-            <span className={styles.contactLabel}>Reservas anticipadas</span>
-            <a
-              href={WA_LINK}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.contactPhone}
-              aria-label="Contactar a Natalia Rojas por WhatsApp"
-            >
-              3794-404497 · Sra. Natalia Rojas
-            </a>
-          </div>
           <div className={styles.contactRight}>
             <span className={styles.attnLabel}>Atención</span>
             <span className={styles.attnText}>Lunes a viernes · 08:00 a 14:00</span>

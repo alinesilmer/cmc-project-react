@@ -37,7 +37,8 @@ import AfiliadosPorObraSocialPage from "./app/pages/AfiliadosPorObraSocialPage/A
 import GenerarBoletin from "./app/pages/GenerarBoletin/GenerarBoletin";
 import PadronSucio from "./app/pages/PadronSucio/PadronSucio";
 import CargaFacturacion from "./app/pages/facturacion/CargaFacturacion/CargaFacturacion";
-
+import CierrePeriodoFacturista from "./app/pages/facturacion/CierrePeriodoFacturista/CierrePeriodoFacturista";
+import ListadoOSFacturacion from "./app/pages/facturacion/ListadoOSFacturacion/ListadoOSFacturacion";
 
 
 
@@ -79,6 +80,8 @@ function App() {
               <Route path="/padron-ioscor" element={<PadronIoscor />} />
              <Route path="/facturacion" element={<Facturacion />} />
 <Route path="/facturacion/carga" element={<CargaFacturacion />} />
+<Route path="/facturacion/cierre-periodo" element={<CierrePeriodoFacturista />} />
+<Route path="/facturacion/listado-por-obra-social" element={<ListadoOSFacturacion />} />
               <Route path="/panel/padrones" element={<PadronesPage />} />
               <Route path="/liquidation/:id/debitos" element={<DiscountsPage />} />
               <Route path="/liquidation/:id/insurance/:osId/:period/:liquidacionId" element={<InsuranceDetail />} />

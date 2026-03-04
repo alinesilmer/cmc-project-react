@@ -1,201 +1,268 @@
-import type React from "react";
+import { useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import type { LucideIcon } from "lucide-react";
 import {
-  UserLock,
   Home,
   DollarSign,
   CircleUserRound,
   UserCog,
   ChevronRight,
   ChevronLeft,
-  LayoutList,
   Newspaper,
   Paperclip,
   NotebookText,
-  User2Icon
+  BookUser,
+  Medal,
+  LogOut,
+  Monitor,
+  ShieldUser
 } from "lucide-react";
+
 import styles from "./Sidebar.module.scss";
 import { useAuth } from "../../../auth/AuthProvider";
-
+import RequirePermission from "../../../auth/RequirePermission";
 import Logo from "../../../assets/logoCMC.png";
 
-import Button from "../../atoms/Button/Button";
-import { useState } from "react";
-import RequirePermission from "../../../auth/RequirePermission";
+type NavItem = {
+  path: string;
+  icon: LucideIcon;
+  label: string;
+  perms?: string[];
+  external?: boolean;
+};
 
-const Sidebar: React.FC = () => {
-  const location = useLocation();
-  const { user, logout } = useAuth();
-  const nav = useNavigate();
-  const [wrapped, setWrapped] = useState(false);
-  const base = "/panel";
-  const baseItems = [
-    { path: `${base}/dashboard`, icon: Home, label: "Inicio" },
-    {
-      path: `${base}/admin/permissions`,
-      icon: UserLock,
-      label: "Permisos y roles",
-      perms: ["rbac:gestionar"],
-    },
-    {
-      path: `${base}/liquidation`,
-      icon: DollarSign,
-      label: "Liquidación",
-      perms: ["liquidacion:leer", "liquidacion:ver"],
-    },
-    // {
-    //   path: `${base}/padron-ioscor`,
-    //   icon: Hospital,
-    //   label: "Padron IOSCOR",
-    //   perms: ["facturacion_ioscor:leer"],
-    // },
-    {
-      path: `${base}/users-manager`,
-      icon: UserCog,
-      label: "Gestión de Socios",
-      perms: ["medicos:leer"],
-    },
-     {
-      path: `${base}/users`,
-      icon: User2Icon,
-      label: "Listado de Socios",
-      perms: ["medicos:leer"],
-    },
-    {
-      path: `https://legacy.colegiomedicocorrientes.com/principal.php`,
-      icon: LayoutList,
-      label: "Sistema Fabián",
-      perms: ["medicos:leer"],
-    },
-    {
-      path: `${base}/boletin`,
-      icon: DollarSign,
-      label: "Ranking O.S.",
-      perms: ["medicos:leer"],
-    },
-    // {
-    //   path: `${base}/generar-boletin`,
-    //   icon: NotebookText,
-    //   label: "Generar Boletín",
-    //   perms: ["medicos:leer"],
-    // },
-     {
-      path: `${base}/afiliadospadron`,
-      icon: Newspaper,
-      label: "Padrones",
-      perms: ["medicos:leer"],
-    },
+type NavSection = {
+  title: string;
+  items: NavItem[];
+};
+
+const base = "/panel";
+
+// Static config outside component for better performance.
+const NAV_SECTIONS: NavSection[] = [
+  {
+    title: "Principal",
+    items: [
+      { path: `${base}/dashboard`, icon: Home, label: "Inicio" },
       {
-      path: `${base}/padronsucio`,
-      icon: Paperclip,
-      label: "Listado de Prestadores",
-      perms: ["medicos:leer"],
-    },
-     {
-      path: `${base}/facturacion`,
-      icon: Paperclip,
-      label: "Facturación",
-      perms: ["medicos:leer"],
-    },
-    // { path: "/config", icon: Cog, label: "Configuración" },                  // ← COMENTADO (punto 5)
-    // { path: "/help", icon: MessageCircleQuestionMark, label: "Ayuda" },       // ← COMENTADO (punto 5)
-  ];
+        path: `${base}/liquidation`,
+        icon: DollarSign,
+        label: "Liquidación",
+        perms: ["liquidacion:leer", "liquidacion:ver"],
+      },
+      // {
+      //   path: `${base}/facturacion`,
+      //   icon: NotebookText,
+      //   label: "Facturación",
+      //   perms: ["medicos:leer"],
+      // },
+      {
+        path: `${base}/boletin`,
+        icon: Medal,
+        label: "Ranking O.S.",
+        perms: ["medicos:leer"],
+      },
+    ],
+  },
+  {
+    title: "Gestión",
+    items: [
+      {
+        path: `${base}/users-manager`,
+        icon: UserCog,
+        label: "Gestión de Socios",
+        perms: ["medicos:leer"],
+      },
+      {
+        path: `${base}/users`,
+        icon: BookUser,
+        label: "Listado de Socios",
+        perms: ["medicos:leer"],
+      },
+      {
+        path: `${base}/afiliadospadron`,
+        icon: Newspaper,
+        label: "Padrones",
+        perms: ["medicos:leer"],
+      },
+      {
+        path: `${base}/padronsucio`,
+        icon: Paperclip,
+        label: "Listado de Prestadores",
+        perms: ["medicos:leer"],
+      },
+      {
+        path: `${base}/admin/permissions`,
+        icon: ShieldUser,
+        label: "Permisos y roles",
+        perms: ["rbac:gestionar"],
+      },
+    ],
+  },
+  {
+    title: "Herramientas",
+    items: [
+      {
+        path: "https://legacy.colegiomedicocorrientes.com/principal.php",
+        icon: Monitor,
+        label: "Sistema Fabián",
+        perms: ["medicos:leer"],
+        external: true,
+      },
+    ],
+  },
+];
 
-  // Agregar “Inicio de Sesión” solo si NO hay user
-  const menuItems = !user
-    ? [
-        ...baseItems,
-        {
-          path: `${base}/login`,
-          icon: CircleUserRound,
-          label: "Inicio de Sesión",
-        },
-      ]
-    : baseItems;
+const isActivePath = (currentPath: string, targetPath: string) =>
+  currentPath === targetPath || currentPath.startsWith(`${targetPath}/`);
 
-  const onClick = async () => {
+const Sidebar = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const [collapsed, setCollapsed] = useState(false);
+
+  const isAuthenticated = Boolean(user);
+
+  const authLabel = isAuthenticated ? "Cerrar sesión" : "Iniciar sesión";
+  const authIcon = isAuthenticated ? LogOut : CircleUserRound;
+
+  const footerText = useMemo(
+    () => `© ${new Date().getFullYear()} CMC. Todos los derechos reservados.`,
+    []
+  );
+
+  const handleAuthAction = async () => {
+    if (!isAuthenticated) {
+      navigate(`${base}/login`);
+      return;
+    }
+
     try {
       await logout();
     } finally {
-      nav(`${base}/login`, { replace: true });
+      navigate(`${base}/login`, { replace: true });
     }
   };
-  const isActivePath = (curr: string, target: string) =>
-    curr === target || curr.startsWith(target + "/");
+
+  const renderNavItem = (item: NavItem) => {
+    const Icon = item.icon;
+    const isActive = item.external
+      ? false
+      : isActivePath(location.pathname, item.path);
+
+    const commonClassName = `${styles.navItem} ${isActive ? styles.active : ""}`;
+    const commonTooltip = collapsed ? item.label : undefined;
+
+    const content = item.external ? (
+      <a
+        href={item.path}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={commonClassName}
+        title={commonTooltip}
+        data-tooltip={commonTooltip}
+        aria-label={item.label}
+      >
+        <span className={styles.iconWrap}>
+          <Icon size={18} />
+        </span>
+        <span className={styles.itemLabel}>{item.label}</span>
+      </a>
+    ) : (
+      <Link
+        to={item.path}
+        className={commonClassName}
+        aria-current={isActive ? "page" : undefined}
+        title={commonTooltip}
+        data-tooltip={commonTooltip}
+      >
+        <span className={styles.iconWrap}>
+          <Icon size={18} />
+        </span>
+        <span className={styles.itemLabel}>{item.label}</span>
+      </Link>
+    );
+
+    if (!item.perms || item.perms.length === 0) {
+      return <li key={item.path}>{content}</li>;
+    }
+
+    return (
+      <RequirePermission key={item.path} anyOf={item.perms}>
+        <li>{content}</li>
+      </RequirePermission>
+    );
+  };
+
+  const AuthIcon = authIcon;
 
   return (
-    <div className={`${styles.sidebar} ${wrapped ? styles.collapsed : ""}`}>
-      <div className={styles.toggle}>
+    <aside
+      className={`${styles.sidebar} ${collapsed ? styles.collapsed : ""}`}
+      aria-label="Navegación lateral"
+    >
+      <div className={styles.windowBar}>
+        <div className={styles.windowDots} aria-hidden="true">
+          <span className={`${styles.dot} ${styles.dotRed}`} />
+          <span className={`${styles.dot} ${styles.dotYellow}`} />
+          <span className={`${styles.dot} ${styles.dotGreen}`} />
+        </div>
+
         <button
           type="button"
-          className={styles.toggle}
-          onClick={() => setWrapped((v) => !v)}
-          aria-label={wrapped ? "Expandir" : "Contraer"}
+          className={styles.collapseButton}
+          onClick={() => setCollapsed((prev) => !prev)}
+          aria-label={collapsed ? "Expandir menú" : "Contraer menú"}
+          title={collapsed ? "Expandir menú" : "Contraer menú"}
         >
-          {wrapped ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+          {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
         </button>
       </div>
-      <div className={styles.logoRow}>
-        <div className={styles.logo}>
+
+      <div className={styles.brandCard}>
+        <div className={styles.logoShell}>
           <img src={Logo} alt="CMC Logo" className={styles.logoImage} />
+        </div>
+
+        <div className={styles.brandText}>
+          <strong className={styles.brandTitle}>Colegio Médico</strong>
+          <span className={styles.brandSubtitle}>Panel de gestión</span>
         </div>
       </div>
 
       <nav className={styles.nav}>
-        {menuItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = isActivePath(location.pathname, item.path);
+        {NAV_SECTIONS.map((section, sectionIndex) => (
+          <div className={styles.navSection} key={section.title}>
+            <p className={styles.navSectionTitle}>{section.title}</p>
 
-          const linkEl = (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`${styles.navItem} ${isActive ? styles.active : ""}`}
-            >
-              <Icon size={20} />
-              <span className={styles.itemLabel}>{item.label}</span>
-            </Link>
-          );
+            <ul className={styles.navList}>{section.items.map(renderNavItem)}</ul>
 
-          // Si no hay permisos requeridos, render directo
-          if (!item.perms || item.perms.length === 0) return linkEl;
-
-          // Si hay permisos, envolver con RequirePermission (anyOf)
-          return (
-            <RequirePermission key={item.path} anyOf={item.perms}>
-              {linkEl}
-            </RequirePermission>
-          );
-        })}
+            {sectionIndex < NAV_SECTIONS.length - 1 && (
+              <div className={styles.sectionDivider} aria-hidden="true" />
+            )}
+          </div>
+        ))}
       </nav>
 
-      <div className={styles.spacer} />
-      <div className={styles.config}>
-        {/* <Link to="/config" className={styles.configItem}>
-          <Cog size={20} />
-          <span className={styles.itemLabel}>Configuración</span>
-        </Link>
-        <Link to="/help" className={styles.configItem}>
-          <MessageCircleQuestionMark size={20} />
-          <span className={styles.itemLabel}>Ayuda</span>
-        </Link> */}
-        <Button
-          variant="danger"
-          className={styles.dangerbtn}
-          onClick={onClick}
-          size="sm"
+      <div className={styles.accountPanel}>
+
+        <button
+          type="button"
+          className={styles.authButton}
+          onClick={handleAuthAction}
+          aria-label={authLabel}
+          title={collapsed ? authLabel : undefined}
         >
-          Cerrar sesión
-        </Button>
+          <AuthIcon size={18} />
+          <span className={styles.authButtonText}>{authLabel}</span>
+        </button>
       </div>
 
       <footer className={styles.footer}>
-        <p className={styles.itemLabel}>
-          &copy; 2025 CMC. Todos los <br />
-          derechos reservados.
-        </p>
+        <p className={styles.footerText}>{footerText}</p>
       </footer>
-    </div>
+    </aside>
   );
 };
 
