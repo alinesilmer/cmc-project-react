@@ -305,15 +305,15 @@
 }
 
 .cta {
-  color: $primary-blue;
+  color: white;
   font-weight: $font-weight-semibold;
   cursor: pointer;
-  text-decoration: underline;
+  text-decoration: none;
   width: 100%;
   transition: color 0.15s ease;
 
   &:hover {
-    color: $primary-blue-dark;
+    color: $white;
   }
 }
 

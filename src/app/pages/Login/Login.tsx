@@ -144,14 +144,14 @@ function Login() {
                   size="md"
                   onClick={goMember}
                 >
-                  Soy socio
+                  Iniciar Sesión
                 </Button>
-                <Button variant="secondary" size="md" onClick={goRegister}>
+                {/* <Button variant="secondary" size="md" onClick={goRegister}>
                   Quiero ser socio
-                </Button>
-                <Button variant="third" size="md" onClick={goObrasSociales}>
+                </Button> */}
+                {/* <Button variant="third" size="md" onClick={goObrasSociales}>
                   Asociarme como Obra Social
-                </Button>
+                </Button> */}
               </>
             )}
 
