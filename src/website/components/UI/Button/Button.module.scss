@@ -33,7 +33,7 @@
 
 .primary {
   background-color: $primary-blue;
-  color: white;
+  color: $primary-yellow-light;
   box-shadow: $shadow-md;
   font-weight: 400;
   border-radius: 50px;
@@ -70,7 +70,7 @@
 }
 
 .default {
-  color: $white;
+  color: $primary-blue;
   border: 2px solid $primary-blue;
   cursor: pointer;
 }

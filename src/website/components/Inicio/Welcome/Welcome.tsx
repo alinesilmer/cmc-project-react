@@ -1,144 +1,153 @@
-"use client"
+"use client";
 
-import { Link } from "react-router-dom"
-import { motion } from "framer-motion"
-import { FaUserPlus, FaFileInvoiceDollar, FaCheckCircle, FaNewspaper, FaYoutube } from "react-icons/fa"
-import styles from "./Welcome.module.scss"
-import Button from "../../../components/UI/Button/Button"
-import CategoryCard from "../../../components/UI/CategoryCard/CategoryCard"
+import type { ReactNode } from "react";
+import { Link } from "react-router-dom";
+import {
+  FaUserPlus,
+  FaFileInvoiceDollar,
+  FaCheckCircle,
+  FaNewspaper,
+  FaYoutube,
+  FaArrowRight,
+} from "react-icons/fa";
+import styles from "./Welcome.module.scss";
+import Button from "../../../components/UI/Button/Button";
 
-const ETICA_PDF = "https://colegiomedicocorrientes.com/CMC092025.pdf"
+const ETICA_PDF = "https://colegiomedicocorrientes.com/CMC092025.pdf";
+
+type QuickCard = {
+  title: string;
+  description: string;
+  href: string;
+  icon: ReactNode;
+};
+
+const CARDS: QuickCard[] = [
+  {
+    title: "Recepción y Liquidación de Facturación",
+    description: "Ingresá al portal de facturación y liquidación.",
+    href: "https://comecorammeco.com/web/",
+    icon: <FaFileInvoiceDollar />,
+  },
+  {
+    title: "Médicos Asociados",
+    description: "Conocé a nuestros socios y especialidades.",
+    href: "/medicos-asociados",
+    icon: <FaCheckCircle />,
+  },
+  {
+    title: "Noticias",
+    description: "Comunicados, novedades y eventos del Colegio.",
+    href: "/noticias",
+    icon: <FaNewspaper />,
+  },
+  {
+    title: "Tutoriales para Validar",
+    description: "Guías y ayuda para validación y uso del sistema.",
+    href: "/contacto",
+    icon: <FaYoutube />,
+  },
+];
+
+function isExternal(href: string) {
+  return /^https?:\/\//i.test(href);
+}
 
 export default function Welcome() {
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.15,
-        delayChildren: 0.2,
-      },
-    },
-  }
   return (
     <section className={styles.hero}>
-      <motion.div className={styles.wrap} initial="hidden" animate="visible" variants={containerVariants}>
-        <motion.div className={styles.bigCard} >
-          <div className={styles.contentWrapper}>
-            <motion.h2 className={styles.bigCardTitle}>
-              Comunidad <br/> Médica
-            </motion.h2>
+      <div className={styles.wrap}>
+        <div className={styles.heroCard}>
+          <div className={styles.left}>
+            <h1 className={styles.title}>
+              Donde la <span className={styles.emphasis}>comunidad</span> <br />
+              y el <span className={styles.emphasis}>bienestar</span> se unen
+            </h1>
 
-            <motion.div className={styles.tagline} >
-              <span className={styles.badge}>
-                <FaFileInvoiceDollar className={styles.badgeIcon} />
-                Servicio de trámites
-              </span>
-              <span className={styles.badge}>
-                <FaCheckCircle className={styles.badgeIcon} />
-                Acompañamiento profesional
-              </span>
-            </motion.div>
+            <p className={styles.lead}>
+              Si buscás una forma simple y confiable de gestionar tu práctica,
+              estamos para acompañarte. Unite al Colegio y accedé a servicios,
+              beneficios y soporte que facilitan tu día a día.
+            </p>
 
-            <motion.p className={styles.lead} >
-              Si buscás una forma simple y confiable de gestionar tu práctica, estamos para acompañarte. Unite al
-              Colegio y accedé a servicios, beneficios y soporte que facilitan tu día a día.
-            </motion.p>
-
-            <motion.div className={styles.ctaRow}>
-              <Link to="/login">
+            <div className={styles.ctaRow}>
+              <Link to="/login" className={styles.ctaLink}>
                 <Button variant="primary" size="medium">
                   <FaUserPlus className={styles.buttonIcon} />
                   Asociarme
                 </Button>
               </Link>
 
-              <a href={ETICA_PDF} download="Valores_Eticos_Minimos.pdf">
-                <Button variant="secondary" size="medium">
+              <a
+                className={styles.ctaLink}
+                href={ETICA_PDF}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button variant="default" size="medium">
                   Ver Boletín Informativo
                 </Button>
               </a>
-            </motion.div>
+            </div>
           </div>
 
-          <motion.img
-            src="https://i.pinimg.com/1200x/9e/a1/c9/9ea1c9ea2380bb6da2755458db9021e4.jpg"
-            alt="Profesional de la salud"
-            className={styles.imgDecor}
-            whileHover={{
-              scale: 1.05,
-              y: -10,
-              transition: { duration: 0.3 },
-            }}
-          />
-
-          <div className={styles.decorativeElements}>
-            <motion.div
-              className={styles.floatingCircle1}
-              animate={{
-                y: [0, -20, 0],
-                rotate: [0, 180, 360],
-              }}
-              transition={{
-                duration: 20,
-                repeat: Number.POSITIVE_INFINITY,
-                ease: "linear",
-              }}
-            />
-            <motion.div
-              className={styles.floatingCircle2}
-              animate={{
-                y: [0, 20, 0],
-                rotate: [360, 180, 0],
-              }}
-              transition={{
-                duration: 25,
-                repeat: Number.POSITIVE_INFINITY,
-                ease: "linear",
-              }}
-            />
+          <div className={styles.right} aria-hidden="true">
+            <div className={styles.imageFrame}>
+              <img
+                src="https://i.pinimg.com/1200x/9e/a1/c9/9ea1c9ea2380bb6da2755458db9021e4.jpg"
+                alt=""
+                loading="lazy"
+                decoding="async"
+                className={styles.image}
+              />
+            </div>
           </div>
-        </motion.div>
 
-        <motion.div className={styles.cardsContainer} variants={containerVariants}>
-          <motion.div>
-            <CategoryCard
-              title="Recepción y Liquidación de Facturación"
-              description="Recepción y Liquidación de Facturación"
-              color="red"
-              href="https://comecorammeco.com/web/"
-              icon={<FaFileInvoiceDollar />}
-            />
-          </motion.div>
-          <motion.div >
-            <CategoryCard
-              title="Médicos Asociados"
-              description="Conocé a nuestros socios"
-              color="mint"
-              href="/medicos-asociados"
-              icon={<FaCheckCircle />}
-            />
-          </motion.div>
-          <motion.div>
-            <CategoryCard
-              title="Noticias"
-              description="Actualizaciones, comunicados y eventos del Colegio."
-              color="gold"
-              href="/noticias"
-              icon={<FaNewspaper />}
-            />
-          </motion.div>
-          <motion.div>
-            <CategoryCard
-              title="Tutoriales para Validar"
-              description="Tutoriales para utilizar el sistema, facturación y validación."
-              color="blue"
-              href="/contacto"
-              icon={<FaYoutube />}
-            />
-          </motion.div>
-        </motion.div>
-      </motion.div>
+          <div className={styles.cardsHeader}>
+            <h2 className={styles.cardsTitle}>Accesos rápidos</h2>
+          </div>
+
+          <div className={styles.cardsGrid} role="list">
+            {CARDS.map((card) => {
+              const content = (
+                <div className={styles.card}>
+                  <div className={styles.cardTop}>
+                    <div className={styles.cardIcon} aria-hidden="true">
+                      {card.icon}
+                    </div>
+                    <FaArrowRight className={styles.cardArrow} aria-hidden="true" />
+                  </div>
+
+                  <h3 className={styles.cardTitle}>{card.title}</h3>
+                  <p className={styles.cardDesc}>{card.description}</p>
+                </div>
+              );
+
+              return isExternal(card.href) ? (
+                <a
+                  key={card.title}
+                  href={card.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.cardLink}
+                  role="listitem"
+                >
+                  {content}
+                </a>
+              ) : (
+                <Link
+                  key={card.title}
+                  to={card.href}
+                  className={styles.cardLink}
+                  role="listitem"
+                >
+                  {content}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </div>
     </section>
-  )
+  );
 }

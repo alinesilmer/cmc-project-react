@@ -737,17 +737,6 @@
   }
 }
 
-.resultsInfo {
-  display: inline-flex;
-  align-items: center;
-  min-height: 32px;
-  padding: 0 $spacing-3;
-  background: rgba($primary-blue, 0.08);
-  border-radius: 999px;
-  color: $primary-blue;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
-}
 
 .tableWrapper {
   border: 1px solid rgba($gray-200, 0.95);
