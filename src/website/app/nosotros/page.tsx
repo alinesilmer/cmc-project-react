@@ -1,149 +1,157 @@
-import TribunalEticaCarousel from "../../components/Nosotros/TribunalEticaCarousel/TribunalEticaCarousel";
-import DirectivosCarousel from "../../components/Nosotros/DirectivosCarousel/DirectivosCarousel"
-import styles from "./nosotros.module.scss"
-import { FaHeart, FaHandshake, FaLightbulb} from "react-icons/fa";
+import styles from "./nosotros.module.scss";
+import { FaHeart, FaHandshake, FaLightbulb } from "react-icons/fa";
 import { FaMagnifyingGlass } from "react-icons/fa6";
 import PageHero from "../../components/UI/Hero/Hero";
+
+const VALUES = [
+  {
+    title: "Compromiso",
+    description: "Con la comunidad y la ética profesional.",
+    Icon: FaHeart,
+    tone: "warm",
+  },
+  {
+    title: "Transparencia",
+    description: "En la gestión y en la comunicación.",
+    Icon: FaMagnifyingGlass,
+    tone: "cool",
+  },
+  {
+    title: "Colaboración",
+    description: "Trabajo colaborativo y enfoque en la mejora continua.",
+    Icon: FaHandshake,
+    tone: "warm",
+  },
+  {
+    title: "Innovación",
+    description: "Para brindar mejores servicios y experiencias.",
+    Icon: FaLightbulb,
+    tone: "cool",
+  },
+] as const;
 
 export default function NosotrosPage() {
   return (
     <div className={styles.page}>
-       <PageHero
+      <PageHero
         title="Nosotros"
         subtitle="Conocé nuestra historia, misión, visión y los valores que nos guían."
         backgroundImage="https://res.cloudinary.com/dcfkgepmp/image/upload/v1762131766/usbg_h8pd8r.png"
       />
-    
 
-      {/* HISTORIA */}
       <section className={styles.sectionWhite}>
         <div className={styles.wrapNarrow}>
           <div className={styles.sectionHeader}>
-            <span className={styles.sectionLabel}>Nuestra trayectoria</span>
             <h2 className={styles.h2}>Historia</h2>
           </div>
+
           <p className={styles.lead}>
-            Desde nuestros inicios, trabajamos para fortalecer la comunidad médica de Corrientes, promoviendo el
-            desarrollo profesional y el acceso a servicios que faciliten la práctica diaria.
+            Desde nuestros inicios, trabajamos para fortalecer la comunidad
+            médica de Corrientes, promoviendo el desarrollo profesional y el
+            acceso a servicios que faciliten la práctica diaria.
           </p>
+
+          <div className={styles.highlightGrid} role="list">
+            <div className={styles.highlightCard} role="listitem">
+              <span className={styles.highlightLabel}>Institución</span>
+              <span className={styles.highlightValue}>Acompañamiento</span>
+              <span className={styles.highlightDesc}>
+                Cercanía y soporte para la práctica profesional.
+              </span>
+            </div>
+
+            <div className={styles.highlightCard} role="listitem">
+              <span className={styles.highlightLabel}>Gestión</span>
+              <span className={styles.highlightValue}>Servicios</span>
+              <span className={styles.highlightDesc}>
+                Herramientas y procesos para simplificar trámites.
+              </span>
+            </div>
+
+            <div className={styles.highlightCard} role="listitem">
+              <span className={styles.highlightLabel}>Comunidad</span>
+              <span className={styles.highlightValue}>Vínculos</span>
+              <span className={styles.highlightDesc}>
+                Red profesional y colaboración con el sistema de salud.
+              </span>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* MISIÓN (franja azul) */}
       <section className={styles.bandBlue}>
-        <div className={styles.wrapSplit}>
-          <div className={styles.bandTitle}>
-            <span className={styles.bandIcon}>🎯</span>
-            Nuestra misión
-          </div>
-          <div className={styles.bandText}>
-            <p>
-              Acompañar a las y los profesionales de la salud brindando herramientas, representación y servicios que
-              potencien su crecimiento, con foco en la calidad, la transparencia y el compromiso social.
-            </p>
-            <p>
-              Impulsamos iniciativas que mejoren las condiciones del ejercicio profesional y promuevan el bienestar de
-              la comunidad.
-            </p>
-          </div>
-        </div>
-        <div className={styles.bandDecor}></div>
-      </section>
-
-      {/* VISIÓN (franja azul con imagen) */}
-      <section className={styles.bandBlueWithImage}>
-        <div className={styles.wrapSplit}>
-          <div className={styles.bandTitle}>
-            <span className={styles.bandIcon}>🔭</span>
-            Nuestra visión
-          </div>
-          <div className={styles.bandText}>
-            <p>
-              Ser una institución de referencia en innovación y calidad de servicios, fortaleciendo lazos con entidades
-              públicas y privadas para generar impacto positivo y sostenido en el sistema de salud.
-            </p>
-            <p>Construimos una red colaborativa que fomenta el desarrollo continuo y la excelencia.</p>
-          </div>
-        </div>
-
-       
-      </section>
-
-      {/* VALORES */}
-      <section className={styles.sectionWhite}>
-        <div className={styles.wrapNarrow}>
-          <div className={styles.sectionHeader}>
-            <span className={styles.sectionLabel}>Lo que nos define</span>
-            <h2 className={styles.h2}>Nuestros valores</h2>
-          </div>
-          <div className={styles.valuesGrid}>
-            <div className={styles.valueCard}>
-              <div className={styles.valueIcon}><FaHeart color="#f3de83ff"/></div>
-              <h3>Compromiso</h3>
-              <p>Con la comunidad y la ética profesional.</p>
-            </div>
-            <div className={styles.valueCard}>
-              <div className={styles.valueIcon}><FaMagnifyingGlass color="#173f70"/></div>
-              <h3>Transparencia</h3>
-              <p>En la gestión y en la comunicación.</p>
-            </div>
-            <div className={styles.valueCard}>
-              <div className={styles.valueIcon}><FaHandshake color="#f3de83ff"/></div>
-              <h3>Colaboración</h3>
-              <p>Trabajo colaborativo y enfoque en la mejora continua.</p>
-            </div>
-            <div className={styles.valueCard}>
-              <div className={styles.valueIcon}><FaLightbulb color="#173f70"/></div>
-              <h3>Innovación</h3>
-              <p>Para brindar mejores servicios y experiencias.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CARRUSEL DIRECTIVOS */}
-      {/* <section className={styles.sectionGray}>
-        <div className={styles.wrapNarrow}>
-          <div className={styles.sectionHeader}>
-            <span className={styles.sectionLabel}>Nuestro equipo</span>
-            <h2 className={styles.h2Center}>Directivos</h2>
-          </div>
-        </div>
         <div className={styles.wrap}>
-          <DirectivosCarousel />
-        </div>
-      </section> */}
+          <div className={styles.bandGrid}>
+            <div className={styles.bandAside}>
+              <span className={styles.bandKicker}>Nuestra misión</span>
+              <h3 className={styles.bandHeading}>🎯 En qué trabajamos</h3>
+            </div>
 
- {/* CARRUSEL TRIBUNAL ÉTICA */}
-      {/* <section className={styles.sectionGray}>
-        <div className={styles.wrapNarrow}>
-          <div className={styles.sectionHeader}>
-            <h2 className={styles.h2Center}>Tribunal de Ética</h2>
-          </div>
-        </div>
-        <div className={styles.wrap}>
-<TribunalEticaCarousel/>
- </div>
-      </section> */}
-
-      {/* COMISIONES Y TRIBUNAL
-      <section className={styles.sectionWhite}>
-        <div className={styles.wrap}>
-          <div className={styles.infoGrid}>
-            <div className={styles.infoCard}>
-              <div className={styles.infoCardHeader}>
-                <span className={styles.infoIcon}>📋</span>
-                <h2>Estatuto</h2>
-              </div>
+            <div className={styles.bandBody}>
               <p>
-                Haga <a href="https://colegiomedicodecorrientes.org/wp-content/uploads/2014/10/EstatutoCMC.pdf">click_aqui</a> para descargar la versión online del Estatuto del Colegio Médico de Corrientes.
+                Acompañar a las y los profesionales de la salud brindando
+                herramientas, representación y servicios que potencien su
+                crecimiento, con foco en la calidad, la transparencia y el
+                compromiso social.
+              </p>
+              <p>
+                Impulsamos iniciativas que mejoren las condiciones del ejercicio
+                profesional y promuevan el bienestar de la comunidad.
               </p>
             </div>
           </div>
         </div>
-      </section> */}
+      </section>
 
-     
+      <section className={styles.bandBlueWithImage}>
+        <div className={styles.wrap}>
+          <div className={styles.bandGrid}>
+            <div className={styles.bandAside}>
+              <span className={styles.bandKicker}>Nuestra visión</span>
+              <h3 className={styles.bandHeading}>🔭 Hacia dónde vamos</h3>
+            </div>
+
+            <div className={styles.bandBody}>
+              <p>
+                Ser una institución de referencia en innovación y calidad de
+                servicios, fortaleciendo lazos con entidades públicas y privadas
+                para generar impacto positivo y sostenido en el sistema de
+                salud.
+              </p>
+              <p>
+                Construimos una red colaborativa que fomenta el desarrollo
+                continuo y la excelencia.
+              </p>
+            </div>
+
+          
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.sectionWhite}>
+        <div className={styles.wrapNarrow}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.h2}>Nuestros valores</h2>
+          </div>
+
+          <div className={styles.valuesGrid} role="list">
+            {VALUES.map(({ title, description, Icon, tone }) => (
+              <article
+                key={title}
+                className={`${styles.valueCard} ${styles[tone]}`}
+                role="listitem"
+              >
+                <div className={styles.valueIcon} aria-hidden="true">
+                  <Icon />
+                </div>
+                <h3 className={styles.valueTitle}>{title}</h3>
+                <p className={styles.valueText}>{description}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
     </div>
-  )
+  );
 }

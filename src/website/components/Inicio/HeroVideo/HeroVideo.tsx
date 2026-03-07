@@ -85,7 +85,6 @@ export const HeroVideo: FC = () => {
       <div className={styles.overlay} aria-hidden="true" />
 
       <div className={styles.content}>
-        {/* Center block like the screenshot */}
         <div className={styles.centerBlock}>
           <div className={styles.pills}>
             <Pill icon={<FiAward />} text="70+ años de servicio" />
@@ -101,14 +100,12 @@ export const HeroVideo: FC = () => {
             </Button>
           </div>
 
-          {/* Optional: keeps semantics and helps preloading */}
           <link rel="preload" as="image" href={activeSrc} />
         </div>
 
       
       </div>
 
-      {/* ✅ NO top-right ribbon / badge */}
     </section>
   );
 };

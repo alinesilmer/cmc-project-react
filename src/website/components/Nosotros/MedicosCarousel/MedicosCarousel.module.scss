@@ -1,43 +1,95 @@
 @use "@/website/styles/all.scss" as *;
 
-
-// .carousel {
-//   position: relative;
-//   width: 100%;
-//   margin: $spacing-lg auto;
-//   overflow: hidden;
-// }
-
-// .track {
-//   display: grid;
-//   grid-auto-flow: column;
-//   grid-auto-columns: 280px;
-//   // padding: 10px;
-//   gap: $spacing-md;
-//   align-items: stretch;
-//   transition: transform 0.45s ease;
-//   will-change: transform;
-// }
-
-.card {
-  background: $white;
-  border: 1px solid $light-gray;
-  border-radius: $border-radius-lg;
-  // box-shadow: $shadow-md;
-  padding: $spacing-md;
-  // display: grid;
-  gap: $spacing-sm;
-  cursor: zoom-in;
+.carousel {
+  position: relative;
+  width: 100%;
+  margin: $spacing-md auto;
 }
 
+.viewport {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.track {
+  display: flex;
+  gap: $spacing-sm;         /* smaller gap */
+  padding: 0 $spacing-sm;   /* smaller side padding */
+  align-items: stretch;
+}
+
+/* Smaller cards */
+.card {
+  flex: 0 0 74vw;     /* was 78vw */
+  max-width: 74vw;
+
+  background: $white;
+  border: 1px solid rgba($primary-blue, 0.1);
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-sm;
+
+  padding: $spacing-sm;     /* was md */
+  display: grid;
+  gap: $spacing-sm;
+
+  scroll-snap-align: start;
+  cursor: zoom-in;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+
+  transition: transform $transition-fast, box-shadow $transition-fast,
+    border-color $transition-fast;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-md;
+    border-color: rgba($primary-blue, 0.18);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: $shadow-sm;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba($primary-blue, 0.14), $shadow-md;
+  }
+}
+
+@media (min-width: 768px) {
+  .card {
+    flex-basis: calc(50% - (#{$spacing-sm} / 2));
+    max-width: calc(50% - (#{$spacing-sm} / 2));
+  }
+}
+
+@media (min-width: 1200px) {
+  .card {
+    flex-basis: calc(33.333% - (#{$spacing-sm} * 2 / 3));
+    max-width: calc(33.333% - (#{$spacing-sm} * 2 / 3));
+  }
+}
+
+/* Media: slightly tighter */
 .media {
   width: 100%;
-  aspect-ratio: 16/10;
+  aspect-ratio: 16 / 10;
   border-radius: $border-radius-md;
   overflow: hidden;
   background: $light-gray;
-  img,
-  video {
+
+  img {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -46,15 +98,15 @@
 }
 
 .name {
-  font-weight: 700;
-  color: $dark-gray;
+  font-family: $font-title;
+  font-weight: 800;
+  color: $primary-blue-dark;
   text-align: center;
-}
-.spec {
-  color: $gray;
-  font-size: $font-size-small;
+  font-size: $font-size-small; /* smaller text */
+  line-height: 1.2;
 }
 
+/* Nav arrows: smaller + cleaner */
 .nav {
   position: absolute;
   inset: 0;
@@ -65,77 +117,122 @@
 
   button {
     pointer-events: all;
-    border: 0;
-    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    background: rgba(0, 0, 0, 0.52);
     color: $white;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    margin: 0 $spacing-md;
+
+    width: 40px;   /* was 44 */
+    height: 40px;  /* was 44 */
+    border-radius: 999px;
+
+    display: grid;
+    place-items: center;
+
+    margin: 0 $spacing-sm;
     cursor: pointer;
+
+    transition: transform $transition-fast, background $transition-fast,
+      opacity $transition-fast;
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    &:hover {
+      transform: translateY(-1px);
+      background: rgba(0, 0, 0, 0.62);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
   }
 }
 
-@media (max-width: $breakpoint-tablet) {
-  .track {
-    grid-auto-columns: 82vw;
+@media (max-width: 768px) {
+  .nav {
+    display: none;
   }
 }
 
-/* Modal */
+/* =========================
+   MODAL (on top of everything)
+   ========================= */
+
 .modalBackdrop {
   position: fixed;
-  // inset: 0;
-  width: 100%;
-  bottom: 0;
-  left: 0;
-  background: rgba(0, 0, 0, 0.6);
-  height: calc(100vh - 100px);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 60;
+
+  /* ✅ higher than any navbar */
+  z-index: 999999;
+
+  padding: $spacing-md;
 }
 
 .modalDialog {
   position: relative;
-  width: min(96vw, 800px);
-  height: calc(80vh - 100px);
+  width: min(94vw, 920px);
+  max-height: 90vh;
+
   background: $white;
   border-radius: $border-radius-lg;
-  box-shadow: $shadow-lg;
-  padding: $spacing-md;
-  // display: grid;
-  // gap: $spacing-sm;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
 }
 
 .modalClose {
   position: absolute;
   top: $spacing-sm;
   right: $spacing-sm;
+
   width: 40px;
   height: 40px;
   border: 0;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.6);
+  border-radius: 999px;
+
+  background: rgba(0, 0, 0, 0.62);
   color: $white;
+
   cursor: pointer;
+  display: grid;
+  place-items: center;
+
+  transition: transform $transition-fast, background $transition-fast;
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.74);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
 }
 
 .modalMedia {
   width: 100%;
-  max-height: 90%;
-  flex: 1 1 auto;
+  background: #000;
   display: flex;
   align-items: center;
   justify-content: center;
-  img,
-  video {
-    height: 100%;
+  padding: $spacing-md;
+
+  img {
     width: 100%;
+    height: auto;
+    max-height: 72vh;
     object-fit: contain;
     display: block;
     border-radius: $border-radius-md;
@@ -144,40 +241,41 @@
 }
 
 .modalCaption {
+  padding: $spacing-md;
   text-align: center;
-  color: $dark-gray;
-  flex: 0 0 auto;
-  font-weight: 600;
-}
-.carousel {
-  position: relative;
-  overflow: hidden;
+  color: $primary-blue-dark;
+  font-family: $font-title;
+  font-weight: 800;
+  font-size: $font-size-base;
 }
 
-.track {
-  display: flex;
-  gap: 1rem; // lo lee el JS
-  will-change: transform;
-}
+@media (max-width: $breakpoint-mobile) {
+  .modalBackdrop {
+    padding: $spacing-sm;
+  }
 
-/* Mobile: 1 card */
-.card {
-  flex: 0 0 100%;
-  max-width: 100%;
-}
+  .modalMedia {
+    padding: $spacing-sm;
+  }
 
-/* Tablet: 2 cards */
-@media (min-width: 768px) {
-  .card {
-    flex: 0 0 calc(50% - 0.5rem);
-    max-width: calc(50% - 0.5rem);
+  .modalCaption {
+    padding: $spacing-sm;
+    font-size: $font-size-small;
   }
 }
 
-/* Desktop: 3 cards */
-@media (min-width: 1200px) {
-  .card {
-    flex: 0 0 calc(33.333% - 0.7rem);
-    max-width: calc(33.333% - 0.7rem);
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .nav button,
+  .modalClose {
+    transition: none;
+  }
+
+  .card:hover {
+    transform: none;
+  }
+
+  .viewport {
+    scroll-behavior: auto;
   }
 }

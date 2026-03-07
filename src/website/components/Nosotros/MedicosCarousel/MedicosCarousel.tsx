@@ -1,4 +1,3 @@
-// src/website/components/Nosotros/MedicosCarousel/MedicosCarousel.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FiChevronLeft, FiChevronRight, FiX } from "react-icons/fi";
 import styles from "./MedicosCarousel.module.scss";
@@ -7,29 +6,30 @@ import type { PubAd } from "../../../lib/ads.client";
 
 type ModalState = { open: boolean; url: string; title: string };
 
+
+
 export default function MedicosCarousel() {
   const [items, setItems] = useState<PubAd[]>([]);
-  // índice de la PRIMER card visible
   const [index, setIndex] = useState(0);
-  // cuántas cards entran en el viewport (1 / 2 / 3)
   const [visibleCount, setVisibleCount] = useState(1);
-  const [modal, setModal] = useState<ModalState>({
-    open: false,
-    url: "",
-    title: "",
-  });
+  const [modal, setModal] = useState<ModalState>({ open: false, url: "", title: "" });
 
+  const viewportRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
-  const cardWRef = useRef<number>(280);
-  const gapRef = useRef<number>(16);
-  const autoplayRef = useRef<number | null>(null);
 
-  // ==== CARGA PUBLICIDADES ====
+  const cardWRef = useRef<number>(0);
+  const gapRef = useRef<number>(16);
+  const stepRef = useRef<number>(0);
+
+  const autoplayRef = useRef<number | null>(null);
+  const ignoreScrollRef = useRef(false);
+  const scrollRafRef = useRef<number | null>(null);
+
   useEffect(() => {
     (async () => {
       try {
         const rows = await listAds({ activo: true });
-        const slice = rows.slice(0, 60); // máximo 10
+        const slice = rows.slice(0, 60);
         setItems(slice);
         setIndex(0);
       } catch (e) {
@@ -41,64 +41,81 @@ export default function MedicosCarousel() {
 
   const LEN = items.length;
 
-  // ==== BREAKPOINTS → visibleCount (1 / 2 / 3) ====
   useEffect(() => {
     const calcVisible = () => {
       const w = window.innerWidth;
-      if (w >= 1200) setVisibleCount(3); // desktop
-      else if (w >= 768) setVisibleCount(2); // tablet
-      else setVisibleCount(1); // mobile
+      if (w >= 1200) setVisibleCount(3);
+      else if (w >= 768) setVisibleCount(2);
+      else setVisibleCount(1);
     };
     calcVisible();
-    window.addEventListener("resize", calcVisible);
+    window.addEventListener("resize", calcVisible, { passive: true });
     return () => window.removeEventListener("resize", calcVisible);
   }, []);
 
-  // puede scrollear solo si hay MÁS items que los que entran
   const canScroll = LEN > visibleCount;
 
-  // clamp del índice cuando cambian cantidad de items o visibles
   useEffect(() => {
     const maxIndex = Math.max(0, LEN - visibleCount);
     setIndex((prev) => Math.min(prev, maxIndex));
   }, [LEN, visibleCount]);
 
-  // ==== MEDIR ANCHO CARD + GAP (para mover en px) ====
   const measure = () => {
     const track = trackRef.current;
-    if (!track) return;
+    const viewport = viewportRef.current;
+    if (!track || !viewport) return;
+
     const first = track.querySelector<HTMLElement>("[data-card]");
-    if (first) {
-      cardWRef.current = first.offsetWidth;
-    }
+    if (first) cardWRef.current = first.getBoundingClientRect().width;
+
     const cs = getComputedStyle(track);
     const g = parseFloat((cs as any).columnGap || cs.gap || "16");
     gapRef.current = Number.isNaN(g) ? 16 : g;
+
+    stepRef.current = Math.max(1, cardWRef.current + gapRef.current);
   };
 
   useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+
+    const ro = new ResizeObserver(() => measure());
+    ro.observe(track);
+
     const id = requestAnimationFrame(measure);
-    const onResize = () => measure();
-    window.addEventListener("resize", onResize);
+    window.addEventListener("resize", measure, { passive: true });
+
     return () => {
       cancelAnimationFrame(id);
-      window.removeEventListener("resize", onResize);
+      window.removeEventListener("resize", measure);
+      ro.disconnect();
     };
   }, [LEN, visibleCount]);
 
-  // ==== TRANSFORM EN PX SEGÚN INDEX ====
-  const transform = useMemo(() => {
-    const step = cardWRef.current + gapRef.current;
-    const x = -index * step;
-    return `translateX(${x}px)`;
-  }, [index]);
+  const scrollToIndex = (i: number, behavior: ScrollBehavior = "smooth") => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
 
-  // ==== NAVEGACIÓN (SIN CLONES, con wrap) ====
+    const step = stepRef.current || 1;
+    ignoreScrollRef.current = true;
+    viewport.scrollTo({ left: i * step, behavior });
+
+    window.setTimeout(() => {
+      ignoreScrollRef.current = false;
+    }, behavior === "smooth" ? 350 : 0);
+  };
+
+  useEffect(() => {
+    if (!canScroll) return;
+    scrollToIndex(index, "smooth");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index, canScroll]);
+
   const goNext = () => {
     if (!canScroll) return;
     setIndex((prev) => {
       const maxIndex = Math.max(0, LEN - visibleCount);
-      return prev >= maxIndex ? 0 : prev + 1; // último -> vuelve al primero
+      return prev >= maxIndex ? 0 : prev + 1;
     });
   };
 
@@ -106,30 +123,70 @@ export default function MedicosCarousel() {
     if (!canScroll) return;
     setIndex((prev) => {
       const maxIndex = Math.max(0, LEN - visibleCount);
-      return prev <= 0 ? maxIndex : prev - 1; // primero -> salta al último bloque
+      return prev <= 0 ? maxIndex : prev - 1;
     });
   };
 
-  // ==== AUTOPLAY CADA 2s (solo si hay flechas) ====
-  useEffect(() => {
-    if (!canScroll) return;
+  const prefersReducedMotion = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
+  }, []);
+
+  const stopAutoplay = () => {
+    if (autoplayRef.current != null) {
+      clearInterval(autoplayRef.current);
+      autoplayRef.current = null;
+    }
+  };
+
+  const startAutoplay = () => {
+    if (!canScroll || prefersReducedMotion) return;
+    if (autoplayRef.current != null) return;
 
     autoplayRef.current = window.setInterval(() => {
       setIndex((prev) => {
         const maxIndex = Math.max(0, LEN - visibleCount);
         return prev >= maxIndex ? 0 : prev + 1;
       });
-    }, 2000); // 2 segundos
+    }, 2600);
+  };
 
-    return () => {
-      if (autoplayRef.current != null) {
-        clearInterval(autoplayRef.current);
-        autoplayRef.current = null;
-      }
+  useEffect(() => {
+    stopAutoplay();
+    startAutoplay();
+    return () => stopAutoplay();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canScroll, LEN, visibleCount, prefersReducedMotion]);
+
+  useEffect(() => {
+    const onVis = () => {
+      if (document.hidden) stopAutoplay();
+      else startAutoplay();
     };
-  }, [canScroll, LEN, visibleCount]);
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canScroll, LEN, visibleCount, prefersReducedMotion]);
 
-  // ==== MODAL ====
+  const onScroll = () => {
+    if (!canScroll) return;
+    if (ignoreScrollRef.current) return;
+
+    if (scrollRafRef.current != null) return;
+    scrollRafRef.current = requestAnimationFrame(() => {
+      scrollRafRef.current = null;
+
+      const viewport = viewportRef.current;
+      const step = stepRef.current || 1;
+      if (!viewport) return;
+
+      const nextIndex = Math.round(viewport.scrollLeft / step);
+      const maxIndex = Math.max(0, LEN - visibleCount);
+      const clamped = Math.min(Math.max(0, nextIndex), maxIndex);
+      setIndex((prev) => (prev === clamped ? prev : clamped));
+    });
+  };
+
   const openModal = (ad: PubAd) => {
     setModal({
       open: true,
@@ -138,12 +195,24 @@ export default function MedicosCarousel() {
     });
   };
 
-  const closeModal = () =>
-    setModal({
-      open: false,
-      url: "",
-      title: "",
-    });
+  const closeModal = () => setModal({ open: false, url: "", title: "" });
+
+  useEffect(() => {
+    if (!modal.open) return;
+
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeModal();
+    };
+    window.addEventListener("keydown", onKey);
+
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [modal.open]);
 
   if (LEN === 0) return null;
 
@@ -151,63 +220,45 @@ export default function MedicosCarousel() {
     <>
       <div
         className={styles.carousel}
-        onMouseEnter={() => {
-          if (autoplayRef.current != null) {
-            clearInterval(autoplayRef.current);
-            autoplayRef.current = null;
-          }
-        }}
-        onMouseLeave={() => {
-          if (canScroll && autoplayRef.current == null) {
-            autoplayRef.current = window.setInterval(() => {
-              setIndex((prev) => {
-                const maxIndex = Math.max(0, LEN - visibleCount);
-                return prev >= maxIndex ? 0 : prev + 1;
-              });
-            }, 2000);
-          }
-        }}
+        onPointerEnter={stopAutoplay}
+        onPointerLeave={startAutoplay}
       >
-        <div
-          className={styles.track}
-          ref={trackRef}
-          style={{
-            transform,
-            transition: "transform .45s ease",
-          }}
-        >
-          {items.map((ad, i) => (
-            <article
-              key={`${ad.id}-${i}`}
-              className={styles.card}
-              data-card
-              onClick={() => openModal(ad)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) =>
-                (e.key === "Enter" || e.key === " ") && openModal(ad)
-              }
-            >
-              <div className={styles.media}>
-                <img
-                  src={ad.adjunto_path || "/placeholder.svg"}
-                  alt={ad.medico_nombre || `Médico #${ad.medico_id}`}
-                />
-              </div>
-              <div className={styles.name}>
-                {ad.medico_nombre || `Médico #${ad.medico_id}`}
-              </div>
-            </article>
-          ))}
+        <div className={styles.viewport} ref={viewportRef} onScroll={onScroll}>
+          <div className={styles.track} ref={trackRef}>
+            {items.map((ad, i) => (
+              <article
+                key={`${ad.id}-${i}`}
+                className={styles.card}
+                data-card
+                role="button"
+                tabIndex={0}
+                onClick={() => openModal(ad)}
+                onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && openModal(ad)}
+              >
+                <div className={styles.media}>
+                  <img
+                    src={ad.adjunto_path || "/placeholder.svg"}
+                    alt={ad.medico_nombre || `Médico #${ad.medico_id}`}
+                    loading={i < visibleCount ? "eager" : "lazy"}
+                    decoding="async"
+                    draggable={false}
+                  />
+                </div>
+
+                <div className={styles.name}>
+                  {ad.medico_nombre || `Médico #${ad.medico_id}`}
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
 
-        {/* Flechas solo si hay MÁS items que los que entran en el viewport */}
         {canScroll && (
           <div className={styles.nav} aria-hidden="false">
-            <button aria-label="Anterior" onClick={goPrev}>
+            <button type="button" aria-label="Anterior" onClick={goPrev}>
               <FiChevronLeft />
             </button>
-            <button aria-label="Siguiente" onClick={goNext}>
+            <button type="button" aria-label="Siguiente" onClick={goNext}>
               <FiChevronRight />
             </button>
           </div>
@@ -221,17 +272,22 @@ export default function MedicosCarousel() {
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
+            aria-label={modal.title}
           >
             <button
+              type="button"
               className={styles.modalClose}
               onClick={closeModal}
               aria-label="Cerrar"
+              autoFocus
             >
               <FiX />
             </button>
+
             <div className={styles.modalMedia}>
-              <img src={modal.url} alt={modal.title} />
+              <img src={modal.url} alt={modal.title} decoding="async" />
             </div>
+
             <div className={styles.modalCaption}>{modal.title}</div>
           </div>
         </div>
