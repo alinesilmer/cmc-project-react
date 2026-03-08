@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import {
-  FiFacebook,
   FiInstagram,
   FiMapPin,
   FiPhone,
@@ -96,11 +95,8 @@ export default function Footer() {
         </a>
 
         <div className={styles.social}>
-          <a href="#" aria-label="Facebook">
-            <FiFacebook />
-          </a>
           <a
-            href="https://www.instagram.com/colegiomedicodecorrientes/"
+            href="https://www.instagram.com/colegiomedicoctes/"
             aria-label="Instagram"
             target="_blank"
             rel="noreferrer"

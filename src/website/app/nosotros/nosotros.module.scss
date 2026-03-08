@@ -14,6 +14,14 @@
   }
 }
 
+.h2Center {
+   font-family: $font-playfair;
+  font-weight: 700;
+  color: $primary-blue;
+  font-size: clamp(1.25rem, 2vw, 2rem);
+  text-align: center;
+}
+
 .wrapNarrow {
   max-width: 920px;
   margin: 0 auto;

@@ -7,11 +7,10 @@ import Hero from "../../components/UI/Hero/Hero";
 
 export default function ServiciosPage() {
   const secciones = [
-    { icon: <Users size={22} />, title: "Socios", description: "Gestiones, altas, credenciales y más.", href: "/servicios/socios" },
     { icon: <ShieldCheck size={22} />, title: "Seguro médico", description: "Coberturas y asistencia para profesionales.", href: "/servicios/seguro-medico" },
     { icon: <Handshake size={22} />, title: "Convenios", description: "Obras Sociales con acuerdo vigente.", href: "/convenios" },
-    { icon: <Home size={22} />, title: "Quinta", description: "Alquiler y requisitos de la Quinta.", href: "/quinta" },
-    { icon: <Images size={22} />, title: "Galería de fotos y videos", description: "Eventos y vida institucional.", href: "/galeria" },
+    { icon: <Home size={22} />, title: "Quinta", description: "Alquiler y requisitos para el uso de la Quinta.", href: "/quinta" },
+    { icon: <Images size={22} />, title: "Galería de fotos y videos", description: "Multimedia de eventos y vida institucional.", href: "/galeria" },
   ]
 
   return (

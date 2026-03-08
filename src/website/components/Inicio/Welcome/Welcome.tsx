@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
   FaUserPlus,
@@ -54,6 +54,22 @@ function isExternal(href: string) {
 }
 
 export default function Welcome() {
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [openDropdown, setOpenDropdown] = useState<
+      null | "nosotros" | "servicios"
+    >(null);
+    const [mobileOpen, setMobileOpen] = useState({
+      nosotros: false,
+      servicios: false,
+    });
+    
+    
+const closeAll = () => {
+    setMenuOpen(false);
+    setOpenDropdown(null);
+    setMobileOpen({ nosotros: false, servicios: false });
+  };
+
   return (
     <section className={styles.hero}>
       <div className={styles.wrap}>
@@ -71,12 +87,20 @@ export default function Welcome() {
             </p>
 
             <div className={styles.ctaRow}>
-              <Link to="/login" className={styles.ctaLink}>
-                <Button variant="primary" size="medium">
+              <Link
+                        to={`https://wa.me/543794252323?text=${encodeURIComponent(
+                          "Hola, quisiera información para asociarme al Colegio Médico de Corrientes, por favor. ¡Gracias!."
+                        )}`}
+                        className={styles.subLink}
+                        onClick={closeAll}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Button variant="primary" size="medium">
                   <FaUserPlus className={styles.buttonIcon} />
                   Asociarme
                 </Button>
-              </Link>
+                      </Link>
 
               <a
                 className={styles.ctaLink}

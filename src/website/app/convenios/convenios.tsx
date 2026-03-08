@@ -5,6 +5,7 @@ import type { ObraSocial } from "../../components/Servicios/ObrasSociales/ObrasS
 import styles from "./convenios.module.scss";
 import Button from "../../components/UI/Button/Button";
 import { Link } from "react-router-dom";
+import { useState } from "react";
 
 const adicionalesNombres: string[] = [
 "ASCMUTUAL PROTECCION FAMILIAR",
@@ -91,6 +92,21 @@ const MAILTO_LINK = `mailto:${EMAIL}?subject=${encodeURIComponent(
 )}`;
 
 export default function ConveniosPage() {
+   const [menuOpen, setMenuOpen] = useState(false);
+      const [openDropdown, setOpenDropdown] = useState<
+        null | "nosotros" | "servicios"
+      >(null);
+      const [mobileOpen, setMobileOpen] = useState({
+        nosotros: false,
+        servicios: false,
+      });
+      
+      
+  const closeAll = () => {
+      setMenuOpen(false);
+      setOpenDropdown(null);
+      setMobileOpen({ nosotros: false, servicios: false });
+    };
   return (
     <div className={styles.galeriaWrap}>
       <ObrasSociales
@@ -106,13 +122,20 @@ export default function ConveniosPage() {
           ¡Hacé click en el botón de abajo!
         </h2>
 
-        <Link
-           to = '/panel/register-os'
-        >
-          <Button variant="primary" size="large">
+         <Link
+                        to={`https://wa.me/543794252323?text=${encodeURIComponent(
+                          "Hola, quisiera información para firmar convenio con el Colegio Médico de Corrientes, por favor. ¡Gracias!."
+                        )}`}
+                        className={styles.subLink}
+                        onClick={closeAll}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                         <Button variant="primary" size="large">
             Quiero firmar convenio
           </Button>
-        </Link>
+                      </Link>
+          
 
         <p className={styles.otherOption}>
           Si tienes inconvenientes llenando nuestro formulario, por favor, enviar <br/> carta de presentación al{" "}
