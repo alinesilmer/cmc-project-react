@@ -304,10 +304,10 @@
 }
 
 .label {
-  font-family: "Raleway", sans-serif;
-  font-size: $font-size-sm;
+  font-family: "Arimo", sans-serif;
+  font-size: $font-size-lg;
   color: $gray-700;
-  font-weight: $font-weight-semibold;
+  font-weight: 500;
 }
 
 .input {
@@ -317,8 +317,8 @@
   background: $white;
   padding: 0 $spacing-4;
 
-  font-family: "Raleway", sans-serif;
-  font-size: $font-size-base;
+  font-family: "Arimo", sans-serif;
+  font-size: $font-size-lg;
   font-weight: $font-weight-semibold;
   color: $gray-900;
 
