@@ -19,7 +19,7 @@
   font-weight: 700;
   color: $primary-blue;
   font-size: clamp(1.25rem, 2vw, 2rem);
-  text-align: center;
+  text-align: start;
 }
 
 .wrapNarrow {
@@ -61,13 +61,11 @@
 }
 
 .h2 {
-  margin: 0;
-  font-family: $font-title;
-  font-weight: 800;
-  color: $primary-blue-dark;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-  font-size: clamp(1.6rem, 3.2vw, 2.35rem);
+   font-family: $font-playfair;
+  font-weight: 700;
+  color: $primary-blue;
+  text-align: start;
+  font-size: clamp(1.25rem, 2vw, 2rem);
 }
 
 .lead {

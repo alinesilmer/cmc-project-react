@@ -297,7 +297,7 @@ export default function Header() {
                       transition={{ duration: 0.2 }}
                     >
                       <Link
-                        to={`https://wa.me/543794404497?text=${encodeURIComponent(
+                        to={`https://wa.me/543794252323?text=${encodeURIComponent(
                           "Hola, quisiera información para asociarme al Colegio Médico de Corrientes, por favor. ¡Gracias!."
                         )}`}
                         className={styles.subLink}
@@ -344,18 +344,6 @@ export default function Header() {
                 className={styles.mobileLink}
               >
                 Médicos Asociados
-              </Link>
-              <Link
-                to="/contacto"
-                onClick={closeAll}
-                className={styles.mobileLink}
-              ></Link>
-              <Link
-                to="/blogs"
-                onClick={closeAll}
-                className={styles.mobileLink}
-              >
-                Blog
               </Link>
               <Link
                 to="/contacto"

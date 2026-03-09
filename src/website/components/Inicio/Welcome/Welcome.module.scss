@@ -25,7 +25,7 @@
     "cardsGrid cardsGrid";
   gap: $spacing-xl;
 
-  padding: 150px 100px;
+  padding: 150px 120px;
   background: $light-blue;
   overflow: hidden;
 
@@ -147,11 +147,11 @@
 }
 
 .cardsTitle {
-  margin: 0;
-  font-family: $font-title;
-  font-weight: 800;
-  color: $primary-blue-dark;
-  font-size: clamp(1.35rem, 2.4vw, 1.85rem);
+   font-family: $font-playfair;
+  font-weight: 700;
+  color: $primary-blue;
+  text-align: start;
+  font-size: clamp(1.25rem, 2vw, 2rem);
 }
 
 .cardsGrid {

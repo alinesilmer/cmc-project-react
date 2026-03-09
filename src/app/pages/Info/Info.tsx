@@ -271,7 +271,7 @@ const Info: React.FC = () => {
           <span className={styles.backLabel}>Volver</span>
         </button>
         <div className={styles.heroContent}>
-          <h1>Requisitos de Ingreso — Socio Prestador</h1>
+          <h1>Requisitos de Ingreso <br/> Socio Prestador</h1>
           <p>
             Presentá la documentación para incorporarte como prestador del{" "}
             <strong>Colegio Médico de Corrientes</strong>. Organizamos todo en

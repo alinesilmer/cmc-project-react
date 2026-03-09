@@ -19,8 +19,7 @@ export default function HealthServices() {
       <div className={styles.container}>
         <div className={styles.header}>
           <h2 className={styles.title}>Nuestros Servicios</h2>
-          <p className={styles.subtitle}>Herramientas y servicios diseñados para simplificar su práctica médica</p>
-        </div>
+           </div>
 
         <div className={styles.list} role="list">
           {services.map((s, i) => (

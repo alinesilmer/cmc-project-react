@@ -6,6 +6,7 @@ import { useAuth } from "../../auth/AuthProvider";
 import { isWebEditor } from "../../auth/roles";
 import { http } from "../../lib/http";
 import pdf from "../../assets/CMC - 12 2025 .pdf";
+import Header from "../../../website/components/UI/Header/Header";
 
 function Login() {
   const [isMember, setIsMember] = useState<boolean | null>(null);
@@ -103,11 +104,8 @@ function Login() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.btnBack}>
-        <Link to="/" className={styles.linkBackToLanding}>
-          Volver a la página
-        </Link>
-      </div>
+      <Header />
+      
       <section className={styles.card}>
         {isMember && (
           <button
@@ -129,8 +127,8 @@ function Login() {
               </h1>
               <p className={styles.subtitle}>
                 {isMember
-                  ? "Ingresá con tu usuario y contraseña"
-                  : "¿Cómo desea ingresar?"}
+                  ? "Ingresá con tu número de socio y matrícula."
+                  : "¡Haz click en el botón de abajo!"}
               </p>
             </div>
           </div>
@@ -146,6 +144,19 @@ function Login() {
                 >
                   Iniciar Sesión
                 </Button>
+                <Button
+                className={styles.cta}
+                  variant="third"
+                  size="md">
+            <a
+              href={pdf}
+              download={pdf}
+              target="__blank"
+              className={styles.linkMuted}
+            >
+              Ver Valores Éticos Mínimos
+            </a>
+            </Button>
                 {/* <Button variant="secondary" size="md" onClick={goRegister}>
                   Quiero ser socio
                 </Button> */}
@@ -211,6 +222,7 @@ function Login() {
                   >
                     {loading ? "Ingresando..." : "Ingresar"}
                   </Button>
+                  
                 </div>
               </form>
             )}
@@ -226,15 +238,7 @@ function Login() {
           </div>
         </div>
         <aside className={styles.media} aria-hidden>
-          <h3 className={styles.ethicsTitle}>
-            <a
-              href={pdf}
-              download={pdf}
-              target="__blank"
-            >
-              Ver Valores Éticos Mínimos
-            </a>
-          </h3>
+        
         </aside>
       </section>
     </div>
