@@ -39,6 +39,7 @@ import PadronSucio from "./app/pages/PadronSucio/PadronSucio";
 import CargaFacturacion from "./app/pages/facturacion/CargaFacturacion/CargaFacturacion";
 import CierrePeriodoFacturista from "./app/pages/facturacion/CierrePeriodoFacturista/CierrePeriodoFacturista";
 import ListadoOSFacturacion from "./app/pages/facturacion/ListadoOSFacturacion/ListadoOSFacturacion";
+import CrearPadron from "./app/pages/CrearPadron/CrearPadron";
 
 
 
@@ -96,7 +97,7 @@ function App() {
             </Route>
             <Route path="/info" element={<Info />} />
             <Route path="/adherente" element={<AdherenteForm />} />
-
+<Route path="/crear-padron" element={<CrearPadron />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
