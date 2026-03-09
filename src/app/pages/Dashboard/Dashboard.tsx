@@ -16,10 +16,8 @@ import {
   Trophy,
   UserCog,
   Users,
-  UserSquare2,
   ExternalLink,
   ArrowRight,
-  CircleDashed,
 } from "lucide-react";
 import { useAuth } from "../../auth/AuthProvider";
 import styles from "./Dashboard.module.scss";
@@ -27,7 +25,7 @@ import styles from "./Dashboard.module.scss";
 type StatCard = {
   label: string;
   value: string;
-  tone: "teal" | "purple" | "pink" | "lavender";
+  tone: "blue" | "gold" | "amber" | "darkblue";
 };
 
 type QuickAction = {
@@ -35,7 +33,7 @@ type QuickAction = {
   title: string;
   description: string;
   link: string;
-  accent: "teal" | "purple" | "pink" | "amber" | "blue";
+  accent:  "blue" | "gold" | "amber" | "darkblue";
   badge: string;
   external?: boolean;
 };
@@ -79,8 +77,6 @@ const Dashboard: React.FC = () => {
     return typeof found === "string" ? found.trim() : "";
   }, [user]);
 
-  
-
   const mainActions: QuickAction[] = [
     {
       icon: CalendarDays,
@@ -88,7 +84,7 @@ const Dashboard: React.FC = () => {
       description:
         "Gestioná períodos, cierres, débitos y recibos desde el módulo principal.",
       link: "/panel/liquidation",
-      accent: "teal",
+      accent: "darkblue",
       badge: "Operativo",
     },
     {
@@ -97,7 +93,7 @@ const Dashboard: React.FC = () => {
       description:
         "Ingresá a carga, listados, cierres y herramientas de facturación.",
       link: "/panel/facturacion",
-      accent: "purple",
+      accent: "blue",
       badge: "Operativo",
     },
     {
@@ -106,7 +102,7 @@ const Dashboard: React.FC = () => {
       description:
         "Administrá altas, cambios y seguimiento general de socios.",
       link: "/panel/users-manager",
-      accent: "pink",
+      accent: "amber",
       badge: "Gestión",
     },
     {
@@ -115,7 +111,7 @@ const Dashboard: React.FC = () => {
       description:
         "Consultá y revisá rápidamente el padrón completo de socios.",
       link: "/panel/users",
-      accent: "amber",
+      accent: "gold",
       badge: "Consulta",
     },
     {
@@ -124,7 +120,7 @@ const Dashboard: React.FC = () => {
       description:
         "Accedé a padrones y cruces de información por obra social.",
       link: "/panel/afiliadospadron",
-      accent: "blue",
+      accent: "darkblue",
       badge: "Datos",
     },
     {
@@ -133,7 +129,7 @@ const Dashboard: React.FC = () => {
       description:
         "Visualizá comparativas, importes y desempeño por obra social.",
       link: "/panel/boletin",
-      accent: "purple",
+      accent: "blue",
       badge: "Análisis",
     },
     {
@@ -142,7 +138,7 @@ const Dashboard: React.FC = () => {
       description:
         "Consultá el listado operativo de prestadores y referencias rápidas.",
       link: "/panel/padronsucio",
-      accent: "pink",
+      accent: "amber",
       badge: "Consulta",
     },
     {
@@ -151,7 +147,7 @@ const Dashboard: React.FC = () => {
       description:
         "Configurá accesos, permisos y perfiles de uso del sistema.",
       link: "/panel/admin/permissions",
-      accent: "amber",
+      accent: "gold",
       badge: "Seguridad",
     },
   ];
@@ -163,7 +159,7 @@ const Dashboard: React.FC = () => {
       description:
         "Abrí el sistema legado en una nueva pestaña para tareas históricas.",
       link: "https://legacy.colegiomedicocorrientes.com/principal.php",
-      accent: "blue",
+      accent: "darkblue",
       badge: "Legacy",
       external: true,
     },
@@ -173,7 +169,7 @@ const Dashboard: React.FC = () => {
       description:
         "Contactá soporte rápido por WhatsApp para resolver incidencias.",
       link: whatsappUrl,
-      accent: "teal",
+      accent: "amber",
       badge: "Ayuda",
       external: true,
     },
@@ -210,8 +206,6 @@ const Dashboard: React.FC = () => {
             <ArrowRight size={18} className={styles.cardArrow} />
           )}
         </div>
-
-        <div className={styles.cardDecoration} />
       </motion.div>
     );
 
@@ -246,7 +240,6 @@ const Dashboard: React.FC = () => {
           transition={{ duration: 0.24 }}
         >
           <div className={styles.heroText}>
-            <span className={styles.heroEyebrow}>Panel principal</span>
 
             <h1 className={styles.welcome}>
               {greeting}
@@ -293,12 +286,8 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
             </div>
-
-            
           </div>
         </motion.section>
-
-      
 
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
