@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { saveAs } from "file-saver";
-import { FileText } from "lucide-react";
+import { FileSpreadsheet } from "lucide-react";
+import ExcelJS from "exceljs";
 
 import styles from "../PadronSucio/PadronSucio.module.scss";
 import Button from "../../components/atoms/Button/Button";
@@ -46,8 +47,6 @@ const ENDPOINTS = {
     `${API_BASE}/api/medicos/${id}`,
     `${API_BASE}/api/doctores/${id}`,
   ],
-
-  // ✅ para buscar externos por nro_socio (api/medicos)
   prestadorByNroSocioCandidates: (nro: string) => [
     `${API_BASE}/api/medicos?nro_socio=${encodeURIComponent(nro)}`,
     `${API_BASE}/api/medicos?NRO_SOCIO=${encodeURIComponent(nro)}`,
@@ -147,9 +146,6 @@ function pickEspecialidadesRawList(p: Prestador): string[] {
 
 // ==========================
 // Servicios detection
-// - "Diagnóstico por imagen" es SERVICIO SOLO para NRO_SOCIO específicos.
-// - Para el resto: ESPECIALIDAD "Diagnóstico por Imagen".
-// - Ecografía siempre servicio (pero NO ecografista/s).
 // ==========================
 const DIAG_IMG_SERVICE_ONLY_NRO_SOCIO = new Set(["9975", "9761", "9727", "9674"]);
 
@@ -170,17 +166,14 @@ function isServiceLabelForPrestador(p: Prestador, label: string) {
   const key = normalize(label);
   if (!key) return false;
 
-  // excluir ecografista(s)
   if (key.includes("ecografista")) return false;
   if (key.includes("ecografistas")) return false;
 
-  // Diagnóstico por imagen: servicio solo para algunos NRO_SOCIO
   if (key.includes("diagnostico por imagen")) {
     const nro = pickNroSocioAsKey(p);
     return DIAG_IMG_SERVICE_ONLY_NRO_SOCIO.has(nro);
   }
 
-  // Ecografía: siempre servicio
   if (key.includes("ecografia")) return true;
 
   return false;
@@ -204,7 +197,6 @@ function splitEspecialidadesYServicios(p: Prestador) {
   };
 }
 
-// Para PDF/table: top 3 sin servicios, si vacío => Médico
 function pickEspecialidadTop3WithoutServicesOrMedico(p: Prestador) {
   const { especialidades } = splitEspecialidadesYServicios(p);
   const top = especialidades.slice(0, 3).join(", ");
@@ -335,9 +327,6 @@ async function fetchPrestadoresAllPages(nroOS: number): Promise<Prestador[]> {
   return out;
 }
 
-// ==========================
-// ✅ externos por nro_socio (api/medicos)
-// ==========================
 async function fetchPrestadorByNroSocio(nro: string): Promise<Prestador | null> {
   const urls = ENDPOINTS.prestadorByNroSocioCandidates(nro);
 
@@ -359,7 +348,7 @@ async function fetchPrestadorByNroSocio(nro: string): Promise<Prestador | null> 
 
       if (data) return mapItemToPrestador(data);
     } catch {
-      // probamos el siguiente candidato
+      // next
     }
   }
 
@@ -368,22 +357,11 @@ async function fetchPrestadorByNroSocio(nro: string): Promise<Prestador | null> 
 }
 
 // ==========================
-// PDF libs lazy
+// Enriquecimiento SOLO EXCEL (mismo que PDF)
 // ==========================
-async function loadPdfLibs(): Promise<{ JsPDF: any; autoTable: any }> {
-  const jspdfMod: any = await import("jspdf");
-  const autotableMod: any = await import("jspdf-autotable");
-  const JsPDF = jspdfMod?.jsPDF ?? jspdfMod?.default ?? jspdfMod;
-  const autoTable = autotableMod?.default ?? autotableMod;
-  return { JsPDF, autoTable };
-}
-
-// ==========================
-// Enriquecimiento SOLO PDF
-// ==========================
-const PDF_REQ_TIMEOUT_MS = 12_000;
-const PDF_CONTACT_CONCURRENCY = 4;
-const PDF_ENRICH_MAX = 700;
+const XLSX_REQ_TIMEOUT_MS = 12_000;
+const XLSX_CONTACT_CONCURRENCY = 4;
+const XLSX_ENRICH_MAX = 700;
 
 type ContactoPayload = Pick<Prestador, "domicilio_consulta">;
 const contactoCache = new Map<string, ContactoPayload>();
@@ -396,7 +374,7 @@ async function fetchContactoById(id: string, signal?: AbortSignal): Promise<Cont
 
   for (const url of urls) {
     try {
-      const { data } = await axios.get(url, { signal, timeout: PDF_REQ_TIMEOUT_MS } as any);
+      const { data } = await axios.get(url, { signal, timeout: XLSX_REQ_TIMEOUT_MS } as any);
       const src = unwrapPrestadorSource(data);
 
       const domicilio_consulta =
@@ -447,7 +425,7 @@ async function mapWithConcurrency<T, R>(
   return results;
 }
 
-async function enrichForPdf(rows: Prestador[], signal?: AbortSignal): Promise<Prestador[]> {
+async function enrichForExcel(rows: Prestador[], signal?: AbortSignal): Promise<Prestador[]> {
   const needAll = rows
     .map((p, idx) => ({ p, idx }))
     .filter(({ p }) => !safeStr(p.domicilio_consulta).trim() && !!p.id);
@@ -455,8 +433,8 @@ async function enrichForPdf(rows: Prestador[], signal?: AbortSignal): Promise<Pr
   if (needAll.length === 0) return rows;
   if (signal?.aborted) return rows;
 
-  const need = needAll.slice(0, PDF_ENRICH_MAX);
-  const fetched = await mapWithConcurrency(need, PDF_CONTACT_CONCURRENCY, signal, async ({ p, idx }) => {
+  const need = needAll.slice(0, XLSX_ENRICH_MAX);
+  const fetched = await mapWithConcurrency(need, XLSX_CONTACT_CONCURRENCY, signal, async ({ p, idx }) => {
     const c = await fetchContactoById(String(p.id), signal);
     return { idx, c };
   });
@@ -508,72 +486,32 @@ function dedupPrestadoresKeepMostEspecialidades(rows: Prestador[]): Prestador[] 
 }
 
 // ======================================================
-// LOGO: convertir import a dataURL (jsPDF lo necesita)
+// LOGO: convertir import a base64 para ExcelJS
 // ======================================================
-async function toDataURL(assetUrl: string): Promise<string> {
+async function toPngBase64(assetUrl: string): Promise<string> {
   const res = await fetch(assetUrl);
   const blob = await res.blob();
 
-  return await new Promise((resolve, reject) => {
+  const dataUrl = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));
     reader.onerror = reject;
     reader.readAsDataURL(blob);
   });
+
+  // data:image/png;base64,XXXX
+  const idx = dataUrl.indexOf("base64,");
+  return idx >= 0 ? dataUrl.slice(idx + "base64,".length) : dataUrl;
 }
 
-function guessImageFormat(dataUrl: string): "PNG" | "JPEG" {
+function tryImageTypeFromDataUrl(dataUrl: string): "png" | "jpeg" {
   const s = dataUrl.toLowerCase();
-  if (s.startsWith("data:image/jpeg") || s.startsWith("data:image/jpg")) return "JPEG";
-  return "PNG";
-}
-
-function drawLogo(doc: any, logoDataUrl: string) {
-  const logo = safeStr(logoDataUrl).trim();
-  if (!logo) return;
-
-  try {
-    const pageW = doc.internal.pageSize.getWidth?.() ?? 297;
-
-    const w = 28; // ancho
-    const h = 28; // alto
-    const x = pageW - 14 - w;
-    const y = 8;
-
-    doc.addImage(logo, guessImageFormat(logo), x, y, w, h);
-  } catch (e) {
-    console.warn("No se pudo dibujar el logo en el PDF:", e);
-  }
-}
-
-// ✅ FIX: número de página SOLO se dibuja al final (para no duplicar texto)
-// además, limpia el área para evitar “fantasmas”
-function drawPageNumber(doc: any, totalPages: number) {
-  try {
-    const pageW = doc.internal.pageSize.getWidth?.() ?? 297;
-    const pageH = doc.internal.pageSize.getHeight?.() ?? 210;
-
-    const current =
-      doc.internal.getCurrentPageInfo?.().pageNumber ??
-      doc.getCurrentPageInfo?.().pageNumber ??
-      1;
-
-    const text = `Página ${current} / ${totalPages}`;
-
-    // limpiar área (fondo blanco)
-    doc.setFillColor(255, 255, 255);
-    doc.rect(pageW - 80, pageH - 14, 70, 10, "F");
-
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(9);
-    doc.text(text, pageW - 14, pageH - 8, { align: "right" });
-  } catch {
-    // no-op
-  }
+  if (s.startsWith("data:image/jpeg") || s.startsWith("data:image/jpg")) return "jpeg";
+  return "png";
 }
 
 // ======================================================
-// ✅ SERVICIOS MANUALES (van dentro de Servicios, NO como categoría aparte)
+// ✅ SERVICIOS MANUALES (van dentro de Servicios)
 // ======================================================
 type ManualServiceRow = {
   nro_socio: string;
@@ -609,14 +547,6 @@ const MANUAL_SERVICES: ManualServiceRow[] = [
     telefono: "4430078",
     servicio: "Servicio",
   },
-  {
-    nro_socio: "9696",
-    prestador: "CARDIOCOR - AVALOS VICTOR",
-    matricula: "3572",
-    direccion: "San Juan 975 3 piso y Junin 824 1 piso",
-    telefono: "2147483647",
-    servicio: "Servicio",
-  },
 ];
 
 const EXTRA_SERVICE_NROS_FROM_API = ["9696"];
@@ -636,26 +566,40 @@ function manualToPrestador(m: ManualServiceRow): Prestador {
   };
 }
 
-type ExportingPdfMode = null | "pdf";
+type ExportingMode = null | "excel";
 
-const CrearPadron = () => {
+const GenerarExcel = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [prestadores, setPrestadores] = useState<Prestador[]>([]);
-  const [exportingPdf, setExportingPdf] = useState<ExportingPdfMode>(null);
-  const pdfAbortRef = useRef<AbortController | null>(null);
+  const [exporting, setExporting] = useState<ExportingMode>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const [logoDataUrl, setLogoDataUrl] = useState<string>("");
+  const [logoType, setLogoType] = useState<"png" | "jpeg">("png");
+  const [logoBase64, setLogoBase64] = useState<string>("");
 
   useEffect(() => {
     let alive = true;
 
     (async () => {
       try {
+        // logo
         try {
-          const d = await toDataURL(Logo as unknown as string);
-          if (alive) setLogoDataUrl(d);
+          const res = await fetch(Logo as unknown as string);
+          const blob = await res.blob();
+          const dataUrl = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result));
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+          if (alive) {
+            setLogoDataUrl(dataUrl);
+            setLogoType(tryImageTypeFromDataUrl(dataUrl));
+            setLogoBase64(await toPngBase64(Logo as unknown as string));
+          }
         } catch (e) {
           console.warn("No se pudo cargar logo:", e);
         }
@@ -697,27 +641,27 @@ const CrearPadron = () => {
     };
   }, []);
 
-  async function downloadPdfPadronGeneral() {
+  async function generarExcel() {
     if (prestadores.length === 0) {
       window.alert("No hay datos para exportar.");
       return;
     }
 
-    pdfAbortRef.current?.abort();
+    abortRef.current?.abort();
     const controller = new AbortController();
-    pdfAbortRef.current = controller;
+    abortRef.current = controller;
 
     try {
-      setExportingPdf("pdf");
+      setExporting("excel");
 
-      const { JsPDF, autoTable } = await loadPdfLibs();
-      if (controller.signal.aborted) return;
-
-      const enrichedAll = await enrichForPdf(prestadores, controller.signal);
+      const enrichedAll = await enrichForExcel(prestadores, controller.signal);
       if (controller.signal.aborted) return;
 
       const enrichedDedup = dedupPrestadoresKeepMostEspecialidades(enrichedAll);
 
+      // -----------------------
+      // Agrupación igual que PDF
+      // -----------------------
       const groups = new Map<string, Prestador[]>();
       const labelByKey = new Map<string, string>();
 
@@ -730,6 +674,7 @@ const CrearPadron = () => {
       for (const p of enrichedDedup) {
         const { especialidades, servicios } = splitEspecialidadesYServicios(p);
 
+        // Especialidades
         if (especialidades.length === 0) {
           (groups.get(medicoKey) ?? groups.set(medicoKey, []).get(medicoKey)!).push(p);
         } else {
@@ -742,6 +687,7 @@ const CrearPadron = () => {
           }
         }
 
+        // Servicios
         if (servicios.length) {
           for (const serv of servicios) {
             const label = safeStr(serv).trim();
@@ -753,19 +699,20 @@ const CrearPadron = () => {
         }
       }
 
+      // ✅ Manuales dentro de Diagnóstico por Imagen
       const diagServiceLabel = "Diagnóstico por Imagen";
       const diagKey = normalize(diagServiceLabel);
       if (!serviceLabelByKey.has(diagKey)) serviceLabelByKey.set(diagKey, diagServiceLabel);
+
       const diagArr = serviceGroups.get(diagKey) ?? [];
-      for (const m of MANUAL_SERVICES) {
-        diagArr.push(manualToPrestador(m));
-      }
+      for (const m of MANUAL_SERVICES) diagArr.push(manualToPrestador(m));
       serviceGroups.set(diagKey, diagArr);
 
+      // ✅ Traer 9696 desde api/medicos y meterlo también en Diagnóstico por Imagen
       for (const nro of EXTRA_SERVICE_NROS_FROM_API) {
         const found = await fetchPrestadorByNroSocio(nro);
         if (found) {
-          const enrichedOne = await enrichForPdf([found], controller.signal);
+          const enrichedOne = await enrichForExcel([found], controller.signal);
           const finalOne = enrichedOne[0] ?? found;
 
           const list = serviceGroups.get(diagKey) ?? [];
@@ -787,6 +734,7 @@ const CrearPadron = () => {
         return out;
       };
 
+      // Ordenar
       const keys = Array.from(groups.keys()).sort((a, b) =>
         safeStr(labelByKey.get(a)).localeCompare(safeStr(labelByKey.get(b)), "es")
       );
@@ -799,41 +747,134 @@ const CrearPadron = () => {
       );
       for (const k of serviceKeys) {
         serviceGroups.set(k, dedupByNro(serviceGroups.get(k) ?? []));
-        serviceGroups
-          .get(k)!
-          .sort((a, b) => safeStr(pickNombre(a)).localeCompare(safeStr(pickNombre(b)), "es"));
+        serviceGroups.get(k)!.sort((a, b) => safeStr(pickNombre(a)).localeCompare(safeStr(pickNombre(b)), "es"));
       }
 
-      const doc = new JsPDF({ orientation: "landscape", compress: true });
+      // -----------------------
+      // Excel (2 hojas, como PDF: especialidades + servicios)
+      // -----------------------
+      const wb = new ExcelJS.Workbook();
+      wb.creator = "CMC";
+      wb.created = new Date();
 
-      const headEspecialidades = [
-        ["N° Socio", "Prestador", "Matricula Prov", "Telefono", "Especialidades", "Dirección consultorio"],
-      ];
+      const headerTitle = "Padrón";
+      const headerSub = "Prestadores del Colegio Médico de Corrientes";
 
-      const drawHeaderCommon = (subtitle: string) => {
-        drawLogo(doc, logoDataUrl);
+      // estilos helpers
+      const headerFill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF111111" } } as const;
+      const headerFont = { bold: true, color: { argb: "FFFFFFFF" } } as const;
+      const sectionFont = { bold: false } as const;
 
-        doc.setFontSize(16);
-        doc.text("Padrón", 14, 14);
+      function setupSheet(ws: ExcelJS.Worksheet, subtitle: string) {
+        ws.pageSetup = {
+          orientation: "landscape",
+          fitToPage: true,
+          fitToWidth: 1,
+          fitToHeight: 0,
+          margins: { left: 0.3, right: 0.3, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 },
+        };
 
-        doc.setFontSize(11);
-        doc.text("Prestadores del Colegio Médico de Corrientes", 14, 22);
+        // columnas (mismo “ancho visual” que PDF)
+        ws.columns = [
+          { key: "nro", width: 12 },
+          { key: "prestador", width: 38 },
+          { key: "mat", width: 14 },
+          { key: "tel", width: 16 },
+          { key: "esp", width: 32 },
+          { key: "dir", width: 48 },
+        ];
 
-        doc.setFontSize(10);
-        doc.text(`${fmtDate(new Date())} • ${subtitle}`, 14, 28);
+        // Logo (arriba derecha) + título/subtítulo/fecha
+        try {
+          if (logoBase64) {
+            const imgId = wb.addImage({
+              base64: logoBase64,
+              extension: logoType,
+            });
+            // posición aproximada (col F, filas 1-3)
+            ws.addImage(imgId, {
+              tl: { col: 5.35, row: 0.1 },
+              ext: { width: 110, height: 110 },
+            });
+          }
+        } catch (e) {
+          console.warn("No se pudo insertar logo en Excel:", e);
+        }
+
+        ws.mergeCells("A1:F1");
+        ws.getCell("A1").value = headerTitle;
+        ws.getCell("A1").font = { size: 16, bold: true };
+
+        ws.mergeCells("A2:F2");
+        ws.getCell("A2").value = headerSub;
+        ws.getCell("A2").font = { size: 11, bold: false };
+
+        ws.mergeCells("A3:F3");
+        ws.getCell("A3").value = `${fmtDate(new Date())} • ${subtitle}`;
+        ws.getCell("A3").font = { size: 10, bold: false };
+
+        // Header tabla
+        const headerRow = ws.addRow([
+          "N° Socio",
+          "Prestador",
+          "Matricula Prov",
+          "Telefono",
+          subtitle.includes("Servicios") ? "Servicio" : "Especialidades",
+          "Dirección consultorio",
+        ]);
+        headerRow.height = 20;
+        headerRow.eachCell((cell) => {
+          cell.fill = headerFill as any;
+          cell.font = headerFont as any;
+          cell.alignment = { vertical: "middle", horizontal: "left", wrapText: true };
+          cell.border = {
+            top: { style: "thin", color: { argb: "FF111111" } },
+            left: { style: "thin", color: { argb: "FF111111" } },
+            bottom: { style: "thin", color: { argb: "FF111111" } },
+            right: { style: "thin", color: { argb: "FF111111" } },
+          };
+        });
+
+        // congelar filas título+header
+        ws.views = [{ state: "frozen", ySplit: 4 }];
+
+        // Footer con numeración
+        ws.headerFooter.oddFooter = "&R&P / &N";
+      }
+
+      // Hoja 1: Especialidades
+      const ws1 = wb.addWorksheet("Especialidades");
+      setupSheet(ws1, "Listado por especialidad");
+
+      const sectionStyle = (row: ExcelJS.Row) => {
+        row.font = { ...sectionFont, size: 10 };
+        row.alignment = { vertical: "middle", horizontal: "left", wrapText: true };
       };
 
-      const BODY: any[] = [];
+      const dataStyle = (row: ExcelJS.Row, idx: number) => {
+        row.font = { size: 11 };
+        row.alignment = { vertical: "middle", horizontal: "left", wrapText: true };
+        if (idx % 2 === 0) {
+          row.eachCell((cell) => {
+            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF7F7F7" } };
+          });
+        }
+      };
+
+      let rIndex = 0;
 
       for (const k of keys) {
         const label = safeStr(labelByKey.get(k));
         const arr = groups.get(k) ?? [];
         if (arr.length === 0) continue;
 
-        BODY.push(["", "", "", "", `Especialidad: ${label}`, ""]);
+        const sectionRow = ws1.addRow(["", "", "", "", `Especialidad: ${label}`, ""]);
+        ws1.mergeCells(sectionRow.number, 1, sectionRow.number, 6);
+        sectionRow.getCell(1).value = `Especialidad: ${label}`;
+        sectionStyle(sectionRow);
 
         for (const p of arr) {
-          BODY.push([
+          const row = ws1.addRow([
             safeStr(pickNroPrestador(p)),
             safeStr(pickNombre(p)),
             safeStr(pickMatriculaProv(p)),
@@ -841,87 +882,30 @@ const CrearPadron = () => {
             pickEspecialidadTop3WithoutServicesOrMedico(p),
             safeStr(pickDomicilioConsulta(p)),
           ]);
+          dataStyle(row, rIndex++);
         }
 
-        BODY.push(["", "", "", "", "", ""]);
+        // spacer
+        ws1.addRow(["", "", "", "", "", ""]);
       }
 
-      autoTable(doc, {
-        head: headEspecialidades,
-        body: BODY,
-        startY: 34,
-        margin: { top: 32 },
-        didDrawPage: () => {
-          drawHeaderCommon("Listado por especialidad");
-          // ❌ NO dibujar nro de hoja acá (así evitamos “Página Página ...”)
-        },
-        styles: { fontSize: 7, cellPadding: 2, valign: "middle", overflow: "linebreak" },
-        headStyles: { fillColor: [17, 17, 17], textColor: [255, 255, 255], fontStyle: "bold" },
-        alternateRowStyles: { fillColor: [247, 247, 247] },
-        columnStyles: {
-          0: { cellWidth: 20 },
-          1: { cellWidth: 78 },
-          2: { cellWidth: 26 },
-          3: { cellWidth: 30 },
-          4: { cellWidth: 60 },
-          5: { cellWidth: 104 },
-        },
-        didParseCell: (data: any) => {
-          const raw = data.row?.raw;
+      // Hoja 2: Servicios
+      const ws2 = wb.addWorksheet("Servicios");
+      setupSheet(ws2, "Servicios asociados");
 
-          const isSectionRow =
-            data.section === "body" &&
-            Array.isArray(raw) &&
-            typeof raw[4] === "string" &&
-            raw[4].startsWith("Especialidad: ");
-
-          const isSpacerRow =
-            data.section === "body" &&
-            Array.isArray(raw) &&
-            raw.every((x: any) => safeStr(x) === "");
-
-          if (isSectionRow) {
-            if (data.column.index === 0) {
-              data.cell.colSpan = 6;
-              data.cell.text = [safeStr(raw[4])];
-              data.cell.styles.fontStyle = "normal";
-              data.cell.styles.fontSize = 10;
-              data.cell.styles.fillColor = [255, 255, 255];
-              data.cell.styles.textColor = [0, 0, 0];
-              data.cell.styles.cellPadding = { top: 3, right: 2, bottom: 3, left: 2 };
-            } else {
-              data.cell.text = [""];
-              data.cell.styles.fillColor = [255, 255, 255];
-              data.cell.styles.lineWidth = 0;
-            }
-          }
-
-          if (isSpacerRow) {
-            data.cell.styles.fillColor = [255, 255, 255];
-            data.cell.styles.textColor = [255, 255, 255];
-            data.cell.styles.lineWidth = 0;
-            data.cell.styles.minCellHeight = 4;
-          }
-        },
-      });
-
-      doc.addPage();
-
-      const servicesHead = [
-        ["N° Socio", "Prestador", "Matricula Prov", "Telefono", "Servicio", "Dirección consultorio"],
-      ];
-
-      const servicesBody: any[] = [];
-
+      rIndex = 0;
       for (const k of serviceKeys) {
         const label = safeStr(serviceLabelByKey.get(k));
         const arr = serviceGroups.get(k) ?? [];
         if (arr.length === 0) continue;
 
-        servicesBody.push(["", "", "", "", `Servicio: ${label}`, ""]);
+        const sectionRow = ws2.addRow(["", "", "", "", `Servicio: ${label}`, ""]);
+        ws2.mergeCells(sectionRow.number, 1, sectionRow.number, 6);
+        sectionRow.getCell(1).value = `Servicio: ${label}`;
+        sectionStyle(sectionRow);
 
         for (const p of arr) {
-          servicesBody.push([
+          const row = ws2.addRow([
             safeStr(pickNroPrestador(p)),
             safeStr(pickNombre(p)),
             safeStr(pickMatriculaProv(p)),
@@ -929,95 +913,48 @@ const CrearPadron = () => {
             label,
             safeStr(pickDomicilioConsulta(p)),
           ]);
+          dataStyle(row, rIndex++);
         }
 
-        servicesBody.push(["", "", "", "", "", ""]);
+        ws2.addRow(["", "", "", "", "", ""]);
       }
 
-      if (servicesBody.length === 0) {
-        servicesBody.push(["", "", "", "", "Sin servicios asociados", ""]);
-      }
+      // Bordes livianos a toda la tabla (desde header row en adelante)
+      const applyGrid = (ws: ExcelJS.Worksheet) => {
+        const startRow = 4; // fila header
+        for (let i = startRow; i <= ws.rowCount; i++) {
+          const row = ws.getRow(i);
+          row.eachCell((cell) => {
+            cell.border = cell.border ?? {
+              top: { style: "thin", color: { argb: "FFDDDDDD" } },
+              left: { style: "thin", color: { argb: "FFDDDDDD" } },
+              bottom: { style: "thin", color: { argb: "FFDDDDDD" } },
+              right: { style: "thin", color: { argb: "FFDDDDDD" } },
+            };
+          });
+        }
+      };
+      applyGrid(ws1);
+      applyGrid(ws2);
 
-      autoTable(doc, {
-        head: servicesHead,
-        body: servicesBody,
-        startY: 34,
-        margin: { top: 32 },
-        didDrawPage: () => {
-          drawHeaderCommon("Servicios asociados");
-          // ❌ NO dibujar nro de hoja acá (lo hacemos al final, una sola vez)
-        },
-        styles: { fontSize: 7, cellPadding: 2, valign: "middle", overflow: "linebreak" },
-        headStyles: { fillColor: [17, 17, 17], textColor: [255, 255, 255], fontStyle: "bold" },
-        alternateRowStyles: { fillColor: [247, 247, 247] },
-        columnStyles: {
-          0: { cellWidth: 20 },
-          1: { cellWidth: 78 },
-          2: { cellWidth: 26 },
-          3: { cellWidth: 30 },
-          4: { cellWidth: 70 },
-          5: { cellWidth: 84 },
-        },
-        didParseCell: (data: any) => {
-          const raw = data.row?.raw;
-
-          const isSectionRow =
-            data.section === "body" &&
-            Array.isArray(raw) &&
-            typeof raw[4] === "string" &&
-            raw[4].startsWith("Servicio: ");
-
-          const isSpacerRow =
-            data.section === "body" &&
-            Array.isArray(raw) &&
-            raw.every((x: any) => safeStr(x) === "");
-
-          if (isSectionRow) {
-            if (data.column.index === 0) {
-              data.cell.colSpan = 6;
-              data.cell.text = [safeStr(raw[4])];
-              data.cell.styles.fontStyle = "normal";
-              data.cell.styles.fontSize = 10;
-              data.cell.styles.fillColor = [255, 255, 255];
-              data.cell.styles.textColor = [0, 0, 0];
-              data.cell.styles.cellPadding = { top: 3, right: 2, bottom: 3, left: 2 };
-            } else {
-              data.cell.text = [""];
-              data.cell.styles.fillColor = [255, 255, 255];
-              data.cell.styles.lineWidth = 0;
-            }
-          }
-
-          if (isSpacerRow) {
-            data.cell.styles.fillColor = [255, 255, 255];
-            data.cell.styles.textColor = [255, 255, 255];
-            data.cell.styles.lineWidth = 0;
-            data.cell.styles.minCellHeight = 4;
-          }
-        },
+      // Descargar
+      const buffer = await wb.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
 
-      if (controller.signal.aborted) return;
-
-      // ✅ DIBUJAR FOOTER UNA SOLA VEZ, CON TOTAL CORRECTO (evita duplicado “Página Página ...”)
-      const totalPages = doc.getNumberOfPages?.() ?? 1;
-      for (let p = 1; p <= totalPages; p++) {
-        doc.setPage(p);
-        drawPageNumber(doc, totalPages);
-      }
-
-      saveAs(doc.output("blob"), `padron_${fmtDate(new Date())}.pdf`);
+      saveAs(blob, `padron_${fmtDate(new Date())}.xlsx`);
     } catch (e: any) {
       if (controller.signal.aborted) return;
       console.error(e);
-      window.alert("No se pudo generar el PDF.");
+      window.alert("No se pudo generar el Excel.");
     } finally {
-      if (pdfAbortRef.current === controller) pdfAbortRef.current = null;
-      setExportingPdf(null);
+      if (abortRef.current === controller) abortRef.current = null;
+      setExporting(null);
     }
   }
 
-  const isExporting = exportingPdf !== null;
+  const isExporting = exporting !== null;
 
   return (
     <div className={styles.container}>
@@ -1025,11 +962,11 @@ const CrearPadron = () => {
         <Button
           type="button"
           variant="primary"
-          onClick={downloadPdfPadronGeneral}
+          onClick={generarExcel}
           disabled={loading || !!error || isExporting || prestadores.length === 0}
         >
-          <FileText size={18} />
-          <span>{exportingPdf === "pdf" ? "Generando…" : "Generar PDF"}</span>
+          <FileSpreadsheet size={18} />
+          <span>{exporting === "excel" ? "Generando…" : "Generar Excel"}</span>
         </Button>
 
         {error ? <p className={styles.errorMessage}>{error}</p> : null}
@@ -1038,4 +975,4 @@ const CrearPadron = () => {
   );
 };
 
-export default CrearPadron;
+export default GenerarExcel;
