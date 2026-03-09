@@ -35,6 +35,7 @@ import AfiliadosPorObraSocialPage from "./app/pages/AfiliadosPorObraSocialPage/A
 import GenerarBoletin from "./app/pages/GenerarBoletin/GenerarBoletin";
 import LiquidacionMedicoPage from "./app/pages/LiquidacionMedico/LiquidacionMedico";
 import RecibosPage from "./app/pages/Recibos/Recibos";
+import CrearPadron from "./app/pages/CrearPadron/CrearPadron";
 
 // Facturación
 import Facturacion from "./app/pages/facturacion/Facturacion";
@@ -97,6 +98,7 @@ export default function RootRoutes() {
             <Route path="boletin" element={<Boletin />} />
             <Route path="config" element={<Config />} />
             <Route path="help" element={<Help />} />
+           <Route path="crear-padron" element={<CrearPadron />} />
 
             {/* Facturación */}
             <Route path="facturacion">

@@ -62,6 +62,12 @@ const NAV_SECTIONS: NavSection[] = [
         label: "Ranking O.S.",
         perms: ["medicos:leer"],
       },
+       {
+        path: `${base}/crear-padron`,
+        icon: Medal,
+        label: "Crear Padrón",
+        perms: ["medicos:leer"],
+      },
     ],
   },
   {
