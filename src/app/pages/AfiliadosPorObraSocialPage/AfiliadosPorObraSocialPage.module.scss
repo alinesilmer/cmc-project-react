@@ -2,129 +2,254 @@
 
 .container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
-  padding: 30px 24px;
+  padding: $spacing-8 $spacing-6;
+  background:
+    radial-gradient(circle at top right, rgba($primary-blue, 0.08), transparent 24%),
+    radial-gradient(circle at top left, rgba($success-green, 0.05), transparent 22%),
+    linear-gradient(180deg, $white 0%, $gray-50 62%, $gray-100 100%);
 
-  @media (max-width: 768px) {
-    padding: 32px 16px;
+  @media (max-width: $breakpoint-lg) {
+    padding: $spacing-6 $spacing-5;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    min-height: 100dvh;
+    padding: $spacing-5 $spacing-4;
+  }
+
+  @media (max-width: 480px) {
+    padding: $spacing-4 $spacing-3;
   }
 }
 
 .wrapper {
-  max-width: 1200px;
+  max-width: 1320px;
   margin: 0 auto;
 }
 
-// Header Section
-.header {
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 420px);
+  gap: $spacing-6;
+  align-items: center;
   margin-bottom: $spacing-8;
-  animation: fadeIn 0.5s ease-out;
-  text-align: start;
+  padding: $spacing-8;
+  border-radius: $border-radius-xl;
+  border: 1px solid rgba($primary-blue, 0.1);
+  background: linear-gradient(
+    135deg,
+    rgba($secondary-blue, 0.95) 0%,
+    rgba($white, 0.98) 100%
+  );
+  box-shadow: $shadow-lg;
 
-  @media (max-width: 768px) {
-    margin-bottom: 32px;
+  @media (max-width: $breakpoint-lg) {
+    grid-template-columns: 1fr;
+    padding: $spacing-6;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    margin-bottom: $spacing-6;
+    padding: $spacing-5;
   }
 }
 
-.headerContent {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 5px;
+.heroMain {
+  min-width: 0;
 }
 
+.heroEyebrow {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 $spacing-3;
+  border-radius: 999px;
+  margin-bottom: $spacing-4;
+  background: rgba($primary-blue, 0.08);
+  color: $primary-blue;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
 
 .title {
-  font-size: $font-size-4xl;
+  margin: 0 0 $spacing-3 0;
+  font-size: clamp(1.8rem, 2vw, 2.4rem);
+  line-height: 1.08;
   font-weight: $font-weight-bold;
   color: $gray-900;
 
-  @media (max-width: 768px) {
-    font-size: 32px;
+  @media (max-width: $breakpoint-sm) {
+    font-size: 1.5rem;
   }
 
   @media (max-width: 480px) {
-    font-size: 28px;
+    font-size: 1.35rem;
   }
 }
 
 .subtitle {
-  font-size: $font-size-lg;
-  color: $gray-600;
   margin: 0;
+  max-width: 760px;
+  font-size: $font-size-lg;
+  line-height: 1.7;
+  color: $gray-600;
 
-  @media (max-width: 768px) {
-    font-size: 16px;
-    padding: 0 16px;
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-base;
   }
 }
 
-// Card Component
-.card {
-  background: white;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 24px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
+.heroStats {
+  display: grid;
+  gap: $spacing-4;
 
-  @media (max-width: 768px) {
-    border-radius: 20px;
+  @media (max-width: $breakpoint-lg) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+
+  @media (max-width: $breakpoint-md) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.statCard {
+  position: relative;
+  overflow: hidden;
+  padding: $spacing-5;
+  border-radius: $border-radius-lg;
+  background: $white;
+  border: 1px solid rgba($primary-blue, 0.08);
+  box-shadow: $shadow-md;
+}
+
+.statCard::after {
+  content: "";
+  position: absolute;
+  right: -20px;
+  bottom: -20px;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: rgba($primary-blue, 0.06);
+}
+
+.statLabel {
+  position: relative;
+  z-index: 1;
+  display: block;
+  margin-bottom: $spacing-2;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-500;
+}
+
+.statValue {
+  position: relative;
+  z-index: 1;
+  display: block;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.card {
+  background: $white;
+  border: 1px solid rgba($primary-blue, 0.08);
+  border-radius: $border-radius-xl;
+  box-shadow: $shadow-lg;
+  overflow: visible;
 }
 
 .cardHeader {
-  padding: 32px 32px 24px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  background: linear-gradient(180deg, rgba(40, 54, 112, 0.02) 0%, transparent 100%);
+  padding: $spacing-6 $spacing-8 $spacing-5;
+  border-bottom: 1px solid rgba($gray-200, 0.9);
+  background: linear-gradient(
+    180deg,
+    rgba($primary-blue, 0.03) 0%,
+    rgba($white, 0.96) 100%
+  );
 
-  @media (max-width: 768px) {
-    padding: 24px 20px 18px;
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-5 $spacing-6 $spacing-4;
+  }
+
+  @media (max-width: 480px) {
+    padding: $spacing-4;
+  }
+}
+
+.cardHeaderContent {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $spacing-4;
+
+  @media (max-width: $breakpoint-md) {
+    flex-direction: column;
   }
 }
 
 .cardTitle {
-  font-size: 28px;
-  font-weight: 800;
-  color: rgb(17, 24, 39);
-  margin: 0 0 8px;
-
-  @media (max-width: 768px) {
-    font-size: 24px;
-  }
+  margin: 0 0 $spacing-2 0;
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  line-height: 1.15;
 }
 
 .cardDescription {
-  font-size: 15px;
-  color: rgb(107, 114, 128);
   margin: 0;
+  font-size: $font-size-base;
+  color: $gray-600;
+  line-height: 1.65;
+}
 
-  @media (max-width: 768px) {
-    font-size: 14px;
+.selectedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 $spacing-4;
+  border-radius: 999px;
+  background: rgba($primary-blue, 0.08);
+  color: $primary-blue;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  white-space: nowrap;
+
+  @media (max-width: $breakpoint-md) {
+    white-space: normal;
   }
 }
 
 .cardContent {
-  padding: 32px;
+  padding: $spacing-8;
 
-  @media (max-width: 768px) {
-    padding: 20px;
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-6;
+  }
+
+  @media (max-width: 480px) {
+    padding: $spacing-4;
   }
 }
 
-// Top Row - Selector & Actions
 .topRow {
   display: flex;
-  gap: 16px;
+  gap: $spacing-4;
   align-items: flex-start;
-  margin-bottom: 24px;
+  margin-bottom: $spacing-6;
 
-  @media (max-width: 968px) {
+  @media (max-width: 980px) {
     flex-direction: column;
     align-items: stretch;
   }
 }
 
-// OS Picker / Dropdown
 .osPicker {
   position: relative;
   flex: 1;
@@ -136,62 +261,65 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 16px 20px;
-  background: white;
-  border: 2px solid rgba(0, 0, 0, 0.12);
-  border-radius: 16px;
+  gap: $spacing-3;
+  padding: $spacing-4 $spacing-5;
+  background: $white;
+  border: 1px solid rgba($gray-300, 0.95);
+  border-radius: $border-radius-lg;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
   font-family: inherit;
 
   &:hover:not(:disabled) {
-    border-color: rgb(40, 54, 112);
-    box-shadow: 0 4px 12px rgba(40, 54, 112, 0.15);
+    border-color: rgba($primary-blue, 0.45);
+    box-shadow: 0 0 0 4px rgba($primary-blue, 0.06);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: rgba($primary-blue, 0.55);
+    box-shadow: 0 0 0 4px rgba($primary-blue, 0.1);
   }
 
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
   }
-
-  &:focus {
-    outline: none;
-    border-color: rgb(40, 54, 112);
-    box-shadow: 0 0 0 4px rgba(40, 54, 112, 0.1);
-  }
 }
 
 .osButtonContent {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: $spacing-1;
   text-align: left;
   flex: 1;
   min-width: 0;
 }
 
 .osButtonLabel {
-  font-size: 12px;
-  font-weight: 600;
-  color: rgb(107, 114, 128);
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: $gray-500;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.04em;
 }
 
 .osButtonValue {
-  font-size: 15px;
-  font-weight: 700;
-  color: rgb(50, 50, 130);
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .chevron {
-  width: 20px;
-  height: 20px;
-  color: rgb(107, 114, 128);
+  width: 18px;
+  height: 18px;
+  color: $gray-500;
   transition: transform 0.2s ease;
   flex-shrink: 0;
 }
@@ -200,97 +328,114 @@
   transform: rotate(180deg);
 }
 
-// Dropdown
 .dropdown {
   position: absolute;
-  z-index: 100;
-  top: calc(100% + 12px);
+  z-index: 50;
+  top: calc(100% + 10px);
   left: 0;
   right: 0;
-  background: white;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  background: $white;
+  border: 1px solid rgba($gray-300, 0.9);
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-xl;
   overflow: hidden;
+
+  @media (max-width: 980px) {
+    position: static;
+    margin-top: $spacing-3;
+  }
 }
 
 .dropdownSearch {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  position: relative;
+  gap: $spacing-2;
+  padding: $spacing-4;
+  border-bottom: 1px solid rgba($gray-200, 0.9);
 }
 
 .searchIconSmall {
   position: absolute;
-  left: 28px;
+  left: $spacing-6;
   width: 18px;
   height: 18px;
-  color: rgb(107, 114, 128);
+  color: $gray-500;
   pointer-events: none;
 }
 
 .dropdownInput {
   flex: 1;
-  padding: 12px 16px 12px 44px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 12px;
-  font-size: 14px;
+  min-height: 46px;
+  padding: 0 $spacing-4 0 2.7rem;
+  border: 1px solid rgba($gray-300, 0.95);
+  border-radius: $border-radius-md;
+  font-size: $font-size-base;
   font-family: inherit;
-  background: white;
-  transition: all 0.2s ease;
+  background: $white;
+  color: $gray-900;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 
   &::placeholder {
-    color: rgb(156, 163, 175);
+    color: $gray-400;
   }
 
   &:focus {
     outline: none;
-    border-color: rgb(40, 54, 112);
-    box-shadow: 0 0 0 3px rgba(40, 54, 112, 0.1);
+    border-color: rgba($primary-blue, 0.55);
+    box-shadow: 0 0 0 3px rgba($primary-blue, 0.08);
   }
 }
 
+.dropdownMeta {
+  padding: $spacing-3 $spacing-4;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: $gray-500;
+  background: rgba($gray-50, 0.9);
+  border-bottom: 1px solid rgba($gray-200, 0.8);
+}
+
 .clearBtn {
-  padding: 8px;
-  background: rgba(0, 0, 0, 0.05);
+  width: 32px;
+  height: 32px;
+  background: $gray-100;
   border: none;
-  border-radius: 8px;
+  border-radius: $border-radius-sm;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
-  color: rgb(107, 114, 128);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+  color: $gray-500;
+  flex-shrink: 0;
 
   &:hover {
-    background: rgba(0, 0, 0, 0.1);
-    color: rgb(17, 24, 39);
+    background: $gray-200;
+    color: $gray-900;
   }
 }
 
 .dropdownList {
-  max-height: 380px;
+  max-height: 360px;
   overflow-y: auto;
-  padding: 8px;
+  padding: $spacing-2;
 
   &::-webkit-scrollbar {
     width: 8px;
   }
 
   &::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba($gray-200, 0.45);
   }
 
   &::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 4px;
-
-    &:hover {
-      background: rgba(0, 0, 0, 0.3);
-    }
+    background: rgba($gray-400, 0.8);
+    border-radius: 999px;
   }
 }
 
@@ -299,20 +444,24 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 14px 16px;
-  background: white;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 12px;
+  gap: $spacing-3;
+  padding: $spacing-3 $spacing-4;
+  background: $white;
+  border: 1px solid rgba($gray-200, 0.9);
+  border-radius: $border-radius-md;
   cursor: pointer;
-  margin-bottom: 6px;
-  transition: all 0.2s ease;
+  margin-bottom: $spacing-2;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
   font-family: inherit;
   text-align: left;
 
   &:hover {
-    background: rgba(40, 54, 112, 0.05);
-    border-color: rgba(40, 54, 112, 0.3);
+    background: rgba($secondary-blue, 0.9);
+    border-color: rgba($primary-blue, 0.28);
+    transform: translateY(-1px);
   }
 
   &:last-child {
@@ -321,41 +470,33 @@
 }
 
 .dropdownItemActive {
-  background: rgba(40, 54, 112, 0.08);
-  border-color: rgb(40, 54, 112);
-  font-weight: 700;
+  background: rgba($primary-blue, 0.08);
+  border-color: rgba($primary-blue, 0.4);
 }
 
 .dropdownItemName {
-  font-size: 14px;
-  font-weight: 600;
-  color: rgb(17, 24, 39);
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-900;
   flex: 1;
   min-width: 0;
 }
 
 .dropdownItemCode {
-  font-size: 13px;
-  font-weight: 600;
-  color: rgb(107, 114, 128);
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: $gray-500;
   flex-shrink: 0;
 }
 
-.emptyMessage {
-  padding: 24px 16px;
-  text-align: center;
-  color: rgb(107, 114, 128);
-  font-size: 14px;
-}
-
-// Actions
 .actions {
   display: flex;
-  gap: 12px;
+  gap: $spacing-3;
   flex-shrink: 0;
 
-  @media (max-width: 968px) {
+  @media (max-width: 980px) {
     width: 100%;
+    flex-wrap: wrap;
   }
 
   @media (max-width: 480px) {
@@ -363,152 +504,179 @@
   }
 }
 
-.actionBtn {
-  display: flex;
+.actionBtn,
+.actionBtnPrimary {
+  min-height: 46px;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 14px 24px;
-  background: white;
-  border: 2px solid rgba(0, 0, 0, 0.12);
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 700;
+  justify-content: center;
+  gap: $spacing-2;
+  padding: 0 $spacing-5;
+  border-radius: $border-radius-lg;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
   font-family: inherit;
-  color: rgb(17, 24, 39);
   cursor: pointer;
-  transition: all 0.2s ease;
   white-space: nowrap;
-
-  &:hover:not(:disabled) {
-    background: rgba(0, 0, 0, 0.03);
-    border-color: rgba(0, 0, 0, 0.2);
-    transform: translateY(-1px);
-  }
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
 
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.55;
     cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
   }
 
-  @media (max-width: 968px) {
-    flex: 1;
-    justify-content: center;
+  @media (max-width: 980px) {
+    flex: 1 1 calc(50% - #{$spacing-3});
+  }
+
+  @media (max-width: 480px) {
+    width: 100%;
+    flex: none;
+  }
+}
+
+.actionBtn {
+  background: $white;
+  border: 1px solid rgba($gray-300, 0.95);
+  color: $gray-800;
+
+  &:hover:not(:disabled) {
+    background: $gray-100;
+    transform: translateY(-1px);
   }
 }
 
 .actionBtnPrimary {
-  @extend .actionBtn;
-  background: linear-gradient(135deg, rgb(40, 54, 112) 0%, rgb(60, 80, 150) 100%);
-  border-color: rgb(40, 54, 112);
-  color: white;
+  background: linear-gradient(
+    135deg,
+    $primary-blue 0%,
+    $primary-blue-dark 100%
+  );
+  border: 1px solid transparent;
+  color: $white;
+  box-shadow: $shadow-md;
 
   &:hover:not(:disabled) {
-    background: linear-gradient(135deg, rgb(50, 64, 132) 0%, rgb(70, 90, 170) 100%);
-    box-shadow: 0 8px 24px rgba(40, 54, 112, 0.3);
     transform: translateY(-2px);
+    box-shadow: $shadow-lg;
   }
 }
 
-// Search Row
 .searchWrapper {
   position: relative;
-  margin-bottom: 24px;
+  margin-bottom: $spacing-6;
 }
 
 .searchIcon {
   position: absolute;
-  left: 18px;
+  left: $spacing-4;
   top: 50%;
   transform: translateY(-50%);
-  width: 20px;
-  height: 20px;
-  color: rgb(107, 114, 128);
+  width: 18px;
+  height: 18px;
+  color: $gray-500;
   pointer-events: none;
 }
 
 .searchInput {
   width: 100%;
-  padding: 16px 50px 16px 52px;
-  border: 2px solid rgba(0, 0, 0, 0.12);
-  border-radius: 14px;
-  font-size: 15px;
+  min-height: 50px;
+  padding: 0 2.8rem 0 2.8rem;
+  border: 1px solid rgba($gray-300, 0.95);
+  border-radius: $border-radius-lg;
+  font-size: $font-size-base;
   font-family: inherit;
-  background: white;
-  transition: all 0.2s ease;
+  background: $white;
+  color: $gray-900;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+  box-sizing: border-box;
 
   &::placeholder {
-    color: rgb(156, 163, 175);
+    color: $gray-400;
   }
 
   &:focus {
     outline: none;
-    border-color: rgb(40, 54, 112);
-    box-shadow: 0 0 0 4px rgba(40, 54, 112, 0.1);
+    border-color: rgba($primary-blue, 0.55);
+    box-shadow: 0 0 0 4px rgba($primary-blue, 0.08);
   }
 
   &:disabled {
-    background: rgba(0, 0, 0, 0.03);
+    background: $gray-100;
     cursor: not-allowed;
   }
 }
 
 .searchWrapper .clearBtn {
   position: absolute;
-  right: 12px;
+  right: $spacing-3;
   top: 50%;
   transform: translateY(-50%);
 }
 
-// Empty & Loading States
 .emptyState {
   text-align: center;
-  padding: 64px 24px;
-  background: linear-gradient(135deg, rgba(40, 54, 112, 0.02) 0%, transparent 100%);
-  border: 2px dashed rgba(0, 0, 0, 0.12);
-  border-radius: 16px;
-  margin-top: 24px;
+  padding: $spacing-12 $spacing-6;
+  background: linear-gradient(
+    135deg,
+    rgba($primary-blue, 0.03) 0%,
+    rgba($white, 0.98) 100%
+  );
+  border: 1px dashed rgba($gray-300, 0.95);
+  border-radius: $border-radius-lg;
 }
 
 .emptyIcon {
-  color: rgb(40, 54, 112);
-  margin-bottom: 16px;
-  opacity: 0.7;
+  color: $primary-blue;
+  margin-bottom: $spacing-4;
+  opacity: 0.8;
 }
 
 .emptyTitle {
-  font-size: 22px;
-  font-weight: 800;
-  color: rgb(17, 24, 39);
-  margin: 0 0 12px;
+  margin: 0 0 $spacing-3 0;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
 }
 
 .emptyMessage {
-  font-size: 15px;
-  color: rgb(107, 114, 128);
-  max-width: 480px;
   margin: 0 auto;
-  line-height: 1.6;
+  max-width: 520px;
+  font-size: $font-size-base;
+  color: $gray-600;
+  line-height: 1.7;
 }
 
 .loadingState {
   text-align: center;
-  padding: 48px 24px;
-  margin-top: 24px;
+  padding: $spacing-10 $spacing-6;
 }
 
 .progressBar {
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   height: 6px;
-  background: rgba(0, 0, 0, 0.08);
+  background: rgba($gray-300, 0.55);
   border-radius: 999px;
   overflow: hidden;
-  margin: 0 auto 16px;
+  margin: 0 auto $spacing-4;
 }
 
 .progressFill {
   height: 100%;
-  background: linear-gradient(90deg, rgb(40, 54, 112) 0%, rgb(60, 80, 150) 100%);
+  background: linear-gradient(
+    90deg,
+    $primary-blue 0%,
+    $accent-blue 100%
+  );
   border-radius: 999px;
   animation: progress 1.5s ease-in-out infinite;
 }
@@ -529,82 +697,69 @@
 }
 
 .loadingText {
-  font-size: 15px;
-  color: rgb(107, 114, 128);
   margin: 0;
+  font-size: $font-size-base;
+  color: $gray-600;
 }
 
 .errorMessage {
-  padding: 16px 20px;
-  background: rgba(220, 38, 38, 0.08);
-  border: 1px solid rgba(220, 38, 38, 0.3);
-  border-radius: 12px;
-  color: rgb(185, 28, 28);
-  font-size: 15px;
-  font-weight: 600;
-  margin-top: 24px;
+  padding: $spacing-4 $spacing-5;
+  background: rgba($danger-red, 0.08);
+  border: 1px solid rgba($danger-red, 0.22);
+  border-radius: $border-radius-md;
+  color: $danger-red;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  line-height: 1.6;
 }
 
-// Results Header
 .resultsHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: $spacing-4;
+  margin-bottom: $spacing-5;
 
-  @media (max-width: 768px) {
+  @media (max-width: $breakpoint-md) {
     flex-direction: column;
     align-items: flex-start;
   }
 }
 
 .resultsCount {
-  font-size: 14px;
-  color: rgb(107, 114, 128);
   margin: 0;
+  font-size: $font-size-sm;
+  color: $gray-500;
 
   strong {
-    color: rgb(17, 24, 39);
-    font-weight: 700;
+    color: $gray-900;
+    font-weight: $font-weight-bold;
   }
 }
 
-.resultsInfo {
-  font-size: 13px;
-  font-weight: 600;
-  color: rgb(107, 114, 128);
-  padding: 6px 14px;
-  background: rgba(40, 54, 112, 0.08);
-  border-radius: 999px;
-}
 
-// Table
 .tableWrapper {
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 16px;
+  border: 1px solid rgba($gray-200, 0.95);
+  border-radius: $border-radius-lg;
   overflow: hidden;
-  background: white;
+  background: $white;
+  box-shadow: $shadow-sm;
 
-  @media (max-width: 968px) {
+  @media (max-width: 980px) {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
 
     &::-webkit-scrollbar {
-      height: 10px;
+      height: 8px;
     }
 
     &::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.05);
+      background: rgba($gray-200, 0.45);
     }
 
     &::-webkit-scrollbar-thumb {
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 5px;
-
-      &:hover {
-        background: rgba(0, 0, 0, 0.3);
-      }
+      background: rgba($gray-400, 0.8);
+      border-radius: 999px;
     }
   }
 }
@@ -613,45 +768,40 @@
   width: 100%;
   border-collapse: collapse;
 
-  @media (max-width: 968px) {
-    min-width: 800px;
+  @media (max-width: 980px) {
+    min-width: 860px;
   }
 
   thead {
-    background: rgb(42, 60, 116);
-    
-    tr {
-      border-bottom: 2px solid rgb(40, 54, 112);
-    }
+    background: linear-gradient(
+      135deg,
+      $primary-blue-dark 0%,
+      $primary-blue 100%
+    );
 
     th {
-      padding: 18px 16px;
+      padding: $spacing-4;
       text-align: left;
-      font-size: 13px;
-      font-weight: 800;
-      color: white;
+      font-size: $font-size-xs;
+      font-weight: $font-weight-bold;
+      color: $white;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.04em;
       white-space: nowrap;
-
-      @media (max-width: 768px) {
-        padding: 14px 12px;
-        font-size: 12px;
-      }
     }
   }
 
   tbody {
     tr {
-      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-      transition: background-color 0.2s ease;
+      border-bottom: 1px solid rgba($gray-200, 0.75);
+      transition: background-color 0.18s ease;
 
       &:nth-child(even) {
-        background: rgba(0, 0, 0, 0.02);
+        background: rgba($gray-50, 0.85);
       }
 
       &:hover {
-        background: rgba(40, 54, 112, 0.05);
+        background: rgba($secondary-blue, 0.7);
       }
 
       &:last-child {
@@ -660,57 +810,85 @@
     }
 
     td {
-      padding: 16px;
-      font-size: 14px;
-      color: rgb(17, 24, 39);
-
-      @media (max-width: 768px) {
-        padding: 12px;
-        font-size: 13px;
-      }
+      padding: $spacing-4;
+      font-size: $font-size-sm;
+      color: $gray-800;
+      vertical-align: middle;
     }
   }
 }
 
-.thContent {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.tdName {
+  font-weight: $font-weight-semibold;
+  color: $gray-900;
 }
 
-.tdName {
-  font-weight: 600;
+.rowButton {
+  min-height: 34px;
+  padding: 0 $spacing-4;
+  border: 1px solid rgba($gray-300, 0.95);
+  border-radius: $border-radius-md;
+  background: $white;
+  color: $gray-800;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: $gray-100;
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
 }
 
 .noResults {
   text-align: center !important;
-  padding: 48px 24px !important;
-  color: rgb(107, 114, 128) !important;
+  padding: $spacing-10 $spacing-5 !important;
+  color: $gray-500 !important;
   font-style: italic;
 }
 
-// Badge
-.badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  white-space: nowrap;
+@media (max-width: $breakpoint-md) {
+  .cardTitle {
+    font-size: $font-size-2xl;
+  }
+
+  .table thead th,
+  .table tbody td {
+    padding: $spacing-3;
+  }
 }
 
-.badgeActive {
-  background: rgba(16, 185, 129, 0.12);
-  color: rgb(5, 150, 105);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-}
+@media (max-width: 480px) {
+  .hero,
+  .card {
+    border-radius: $border-radius-lg;
+  }
 
-.badgeInactive {
-  background: rgba(107, 114, 128, 0.12);
-  color: rgb(75, 85, 99);
-  border: 1px solid rgba(107, 114, 128, 0.3);
+  .heroStats {
+    gap: $spacing-3;
+  }
+
+  .statCard,
+  .cardHeader,
+  .cardContent {
+    padding-left: $spacing-4;
+    padding-right: $spacing-4;
+  }
+
+  .emptyState {
+    padding: $spacing-8 $spacing-4;
+  }
+
+  .emptyTitle {
+    font-size: $font-size-xl;
+  }
 }

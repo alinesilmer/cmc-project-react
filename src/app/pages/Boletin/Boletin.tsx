@@ -518,7 +518,7 @@ export default function Boletin() {
 
           <div className={styles.actions}>
             <Button
-              size="medium"
+              size="small"
               variant="secondary"
               onClick={handleConsultar}
               disabled={loading || codigoVacio}
@@ -526,7 +526,7 @@ export default function Boletin() {
               Consultar
             </Button>
             <Button
-              size="medium"
+              size="small"
               variant="secondary"
               onClick={handleDownloadExcel}
               disabled={ranked.length === 0 || loading || codigoVacio}
@@ -534,7 +534,7 @@ export default function Boletin() {
               Descargar Excel
             </Button>
             <Button
-              size="medium"
+              size="small"
               variant="secondary"
               onClick={handleDownloadPdf}
               disabled={ranked.length === 0 || loading || codigoVacio}

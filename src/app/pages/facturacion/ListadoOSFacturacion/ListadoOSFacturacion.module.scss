@@ -1,0 +1,697 @@
+@use "@/app/styles/all.scss" as *;
+
+.container {
+  padding: $spacing-8;
+  max-width: 1500px;
+  margin: 0 auto;
+  background-color: $gray-50;
+  min-height: 100vh;
+}
+
+.header {
+  margin-bottom: $spacing-8;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.headerTop {
+  margin-bottom: $spacing-5;
+}
+
+.headerMain {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $spacing-5;
+}
+
+.title {
+  margin: 0 0 $spacing-2 0;
+  font-size: $font-size-4xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  line-height: 1.1;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: $font-size-lg;
+  color: $gray-600;
+  line-height: 1.6;
+  max-width: 860px;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.periodCard,
+.tableCard,
+.summaryCard {
+  background-color: $white;
+  border: 1px solid rgba($primary-blue, 0.08);
+  border-radius: $border-radius-xl;
+  box-shadow: $shadow-md;
+}
+
+.periodCard {
+  padding: $spacing-6;
+  margin-bottom: $spacing-6;
+  animation: fadeIn 0.5s ease-out 0.08s backwards;
+}
+
+.periodGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: $spacing-4;
+}
+
+.periodItem {
+  background-color: $gray-50;
+  border: 1px solid rgba($gray-200, 0.9);
+  border-radius: $border-radius-lg;
+  padding: $spacing-4;
+  min-width: 0;
+}
+
+.periodLabel {
+  display: block;
+  margin-bottom: $spacing-2;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-600;
+}
+
+.periodValue {
+  display: block;
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 $spacing-3;
+  border-radius: 999px;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+}
+
+.statusOpen {
+  background-color: rgba($success-green, 0.12);
+  color: $success-green;
+  border: 1px solid rgba($success-green, 0.22);
+}
+
+.statusClosed {
+  background-color: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.22);
+}
+
+.backButton,
+.primaryButton,
+.secondaryButton,
+.softActionButton,
+.pageButton {
+  min-height: 46px;
+  border: none;
+  border-radius: $border-radius-lg;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+  padding: 0 $spacing-5;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease,
+    opacity 0.2s ease;
+
+  &:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+.backButton,
+.secondaryButton,
+.softActionButton,
+.pageButton {
+  background-color: $white;
+  color: $gray-900;
+  border: 1px solid rgba($gray-300, 0.9);
+
+  &:hover:not(:disabled) {
+    background-color: $gray-100;
+    transform: translateY(-1px);
+  }
+}
+
+.primaryButton {
+  background-color: $primary-blue;
+  color: $white;
+  box-shadow: $shadow-md;
+
+  &:hover:not(:disabled) {
+    background-color: $primary-blue-dark;
+    box-shadow: $shadow-xl;
+    transform: translateY(-1px);
+  }
+}
+
+.softActionButton {
+  min-height: 40px;
+  padding: 0 $spacing-4;
+  font-size: $font-size-sm;
+}
+
+.pageButton {
+  width: 42px;
+  min-width: 42px;
+  padding: 0;
+}
+
+.tableCard {
+  padding: $spacing-3;
+  animation: fadeIn 0.5s ease-out 0.12s backwards;
+}
+
+.tableToolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: $spacing-4;
+  margin-bottom: $spacing-5;
+}
+
+.tableHeading {
+  min-width: 0;
+}
+
+.tableTitle {
+  margin: 0 0 $spacing-2 0;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  line-height: 1.2;
+}
+
+.tableSubtitle {
+  margin: 0;
+  font-size: $font-size-base;
+  color: $gray-600;
+  line-height: 1.5;
+}
+
+.toolbarControls {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.searchBox {
+  position: relative;
+  width: min(440px, 100%);
+}
+
+.searchIcon {
+  position: absolute;
+  left: $spacing-4;
+  top: 50%;
+  transform: translateY(-50%);
+  color: $gray-500;
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid rgba($primary-blue, 0.15);
+  border-radius: $border-radius-lg;
+  background-color: $white;
+  padding: 0 $spacing-4 0 46px;
+  font-size: $font-size-base;
+  color: $gray-900;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    border-color: rgba($primary-blue, 0.5);
+    box-shadow: 0 0 0 4px rgba($primary-blue, 0.08);
+  }
+}
+
+.pageSizeBox {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.pageSizeLabel {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-600;
+}
+
+.pageSizeSelect {
+  min-height: 44px;
+  border: 1px solid rgba($gray-300, 0.9);
+  border-radius: $border-radius-lg;
+  background-color: $white;
+  padding: 0 $spacing-3;
+  font-size: $font-size-sm;
+  color: $gray-900;
+}
+
+.selectionBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-4;
+  margin-bottom: $spacing-4;
+  padding: $spacing-4;
+  background: linear-gradient(
+    135deg,
+    rgba($primary-blue, 0.04),
+    rgba($success-green, 0.04)
+  );
+  border: 1px solid rgba($primary-blue, 0.08);
+  border-radius: $border-radius-lg;
+}
+
+.selectionInfo {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+  flex-wrap: wrap;
+}
+
+.selectionCount {
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+}
+
+.selectionAmount {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-600;
+}
+
+.selectionExportHint {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $primary-blue;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: $border-radius-xl;
+  border: 1px solid rgba($gray-200, 0.9);
+}
+
+.table {
+  width: 100%;
+  min-width: 1380px;
+  border-collapse: separate;
+  border-spacing: 0;
+  background-color: $white;
+
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background-color: #f6f4fb;
+    color: $gray-600;
+    font-size: 12px;
+    font-weight: $font-weight-bold;
+    letter-spacing: 0.02em;
+    text-align: left;
+    padding: $spacing-4;
+    border-bottom: 1px solid rgba($gray-200, 0.9);
+    white-space: nowrap;
+  }
+
+  tbody td {
+    padding: $spacing-4;
+    font-size: $font-size-sm;
+    color: $gray-700;
+    border-bottom: 1px solid rgba($gray-200, 0.7);
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    transition: background-color 0.18s ease;
+  }
+
+  tbody tr:hover {
+    background-color: rgba($primary-blue, 0.025);
+  }
+}
+
+.checkboxCol {
+  width: 56px;
+  min-width: 56px;
+  text-align: center !important;
+}
+
+.checkboxLabel {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  input:checked + .customCheckbox {
+    background-color: #7c3aed;
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12);
+  }
+
+  input:checked + .customCheckbox::after {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.customCheckbox {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  border: 1.5px solid rgba($gray-400, 0.9);
+  background-color: $white;
+  position: relative;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 8px;
+    height: 4px;
+    border-left: 2px solid $white;
+    border-bottom: 2px solid $white;
+    transform: rotate(-45deg) scale(0.7);
+    transform-origin: center;
+    opacity: 0;
+    top: -1px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+}
+
+.rowSelected {
+  background-color: rgba(124, 58, 237, 0.05);
+}
+
+.rowMarked {
+  background-color: rgba(245, 158, 11, 0.09);
+}
+
+.textCellStrong {
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+}
+
+.amountStrong {
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+}
+
+.roleBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 0 $spacing-3;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: $font-weight-bold;
+  color: #6d28d9;
+  background-color: rgba(124, 58, 237, 0.08);
+  border: 1px solid rgba(124, 58, 237, 0.14);
+}
+
+.rowActions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.iconButton {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba($gray-300, 0.9);
+  border-radius: 10px;
+  background-color: $white;
+  color: $gray-700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
+
+  &:hover {
+    background-color: $gray-100;
+    color: $gray-900;
+    transform: translateY(-1px);
+  }
+}
+
+.iconDanger {
+  color: #dc2626;
+}
+
+.iconSuccess {
+  color: #2563eb;
+  background-color: rgba(37, 99, 235, 0.06);
+  border-color: rgba(37, 99, 235, 0.16);
+}
+
+.emptyCell {
+  text-align: center;
+  padding: $spacing-8 !important;
+  color: $gray-500 !important;
+  font-weight: $font-weight-semibold;
+}
+
+.tableFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-4;
+  margin-top: $spacing-5;
+}
+
+.footerStats {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+  flex-wrap: wrap;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-600;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+}
+
+.pageIndicator {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-700;
+}
+
+.summaryGrid {
+  margin-top: $spacing-6;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: $spacing-4;
+}
+
+.summaryCard {
+  padding: $spacing-5;
+}
+
+.summaryLabel {
+  display: block;
+  margin-bottom: $spacing-2;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-600;
+}
+
+.summaryValue {
+  display: block;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  line-height: 1.2;
+}
+
+@media (max-width: 1200px) {
+  .container {
+    padding: $spacing-6;
+  }
+
+  .headerMain,
+  .tableToolbar,
+  .tableFooter {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .headerActions,
+  .toolbarControls {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .periodGrid,
+  .summaryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: $spacing-4;
+  }
+
+  .header {
+    margin-bottom: $spacing-6;
+  }
+
+  .title {
+    font-size: $font-size-3xl;
+  }
+
+  .subtitle {
+    font-size: $font-size-base;
+  }
+
+  .periodCard,
+  .tableCard {
+    padding: $spacing-5;
+  }
+
+  .selectionBar,
+  .selectionInfo {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .searchBox {
+    width: 100%;
+  }
+
+  .headerActions,
+  .toolbarControls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .primaryButton,
+  .secondaryButton,
+  .backButton {
+    width: 100%;
+  }
+
+  .periodGrid,
+  .summaryGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .summaryValue {
+    font-size: $font-size-xl;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: $spacing-3;
+  }
+
+  .title {
+    font-size: $font-size-2xl;
+  }
+
+  .subtitle {
+    font-size: $font-size-sm;
+  }
+
+  .periodCard,
+  .tableCard,
+  .summaryCard {
+    border-radius: $border-radius-lg;
+  }
+
+  .periodCard,
+  .tableCard,
+  .summaryCard {
+    padding: $spacing-4;
+  }
+
+  .tableTitle {
+    font-size: $font-size-xl;
+  }
+
+  .tableSubtitle,
+  .periodLabel,
+  .selectionAmount,
+  .selectionExportHint,
+  .footerStats,
+  .pageIndicator,
+  .summaryLabel {
+    font-size: $font-size-xs;
+  }
+
+  .searchInput,
+  .pageSizeSelect,
+  .backButton,
+  .primaryButton,
+  .secondaryButton,
+  .softActionButton {
+    min-height: 44px;
+    font-size: $font-size-sm;
+  }
+
+  .summaryValue {
+    font-size: $font-size-lg;
+  }
+}

@@ -1,126 +1,239 @@
 @use "@/app/styles/all.scss" as *;
 
-
 .page {
   min-height: 100dvh;
-  background: $white;
+  background: $gray-50;
   color: $gray-800;
 }
 
+/* =========================
+   HERO
+   ========================= */
+
 .hero {
   position: relative;
-  padding: clamp(20px, 4vw, 40px);
   background: $white;
   border-bottom: 1px solid $gray-200;
+  padding: $spacing-10 $spacing-4 $spacing-6;
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-8 $spacing-4 $spacing-5;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-6 $spacing-3 $spacing-4;
+  }
 }
 
 .heroContent {
   margin: 0 auto;
   max-width: 1100px;
-  padding: $spacing-12 $spacing-4;
+  display: grid;
+  gap: $spacing-4;
 
   h1 {
-    font-size: $font-size-3xl;
+    margin: 2rem 0;
+    font-family: "Manrope", sans-serif;
+    font-size: clamp(#{$font-size-3xl}, 2.4vw, #{$font-size-4xl});
     font-weight: $font-weight-bold;
     color: $gray-900;
-    margin-bottom: $spacing-2;
-
-    @media (max-width: $breakpoint-sm) { font-size: $font-size-2xl; }
+    line-height: 1.12;
+    letter-spacing: -0.02em;
   }
 
   p {
+    margin: 0;
+    font-family: "Raleway", sans-serif;
     font-size: $font-size-lg;
-    line-height: 1.6;
+    line-height: 1.75;
     color: $gray-600;
+    max-width: 72ch;
 
-    @media (max-width: $breakpoint-sm) { font-size: $font-size-base; }
+    @media (max-width: $breakpoint-sm) {
+      font-size: $font-size-base;
+    }
   }
-
-  @media (max-width: $breakpoint-md) { padding: $spacing-10 $spacing-4; }
-  @media (max-width: $breakpoint-sm) { padding: $spacing-8 $spacing-3; }
 }
 
 .heroActions {
-  margin-top: $spacing-6;
+  margin-top: $spacing-4;
   display: flex;
   gap: $spacing-3;
   flex-wrap: wrap;
+  align-items: center;
+
+  @media (max-width: $breakpoint-sm) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
-.btnPrimary, .btnGhost {
+.btnPrimary,
+.btnGhost {
   appearance: none;
   border: 1px solid transparent;
-  border-radius: $border-radius-lg;
-  padding: $spacing-3 $spacing-5;
-  font-weight: $font-weight-semibold;
-  font-size: $font-size-base;
-  cursor: pointer;
-  text-decoration: none;
+  border-radius: 999px;
+  padding: $spacing-3 $spacing-6;
+  min-height: 44px;
+
   display: inline-flex;
   align-items: center;
-  box-shadow: $shadow-sm;
-  transition: transform .06s ease, background-color .2s ease, box-shadow .2s ease;
+  justify-content: center;
+  gap: $spacing-2;
+
+  font-family: "Manrope", sans-serif;
+  font-weight: $font-weight-semibold;
+  font-size: $font-size-base;
+  line-height: 1;
+
+  text-decoration: none;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: $shadow-md;
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: $shadow-sm;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba($primary-blue, 0.14), $shadow-md;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    width: 100%;
+  }
 }
+
 .btnPrimary {
-  background: linear-gradient(180deg, $primary-blue, $primary-blue-dark);
+  background-color: $primary-blue;
   color: $white;
-  &:hover { transform: translateY(-1px); box-shadow: $shadow-md; }
+  border-color: rgba($primary-blue-dark, 0.18);
+  box-shadow:
+    $shadow-sm,
+    inset 0 1px 0 rgba($white, 0.18);
+
+  &:hover {
+    background-color: $primary-blue-dark;
+    color: $white;
+  }
 }
+
 .btnGhost {
   background: $white;
   color: $primary-blue-dark;
   border-color: $gray-200;
-  &:hover { background: $gray-100; }
+  box-shadow: none;
+
+  &:hover {
+    background: $gray-100;
+    border-color: rgba($gray-300, 0.95);
+    box-shadow: none;
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 4px rgba($primary-blue, 0.12);
+  }
 }
+
+/* =========================
+   BACK BUTTON
+   ========================= */
+
+.backButton {
+  position: absolute;
+  top: $spacing-4;
+  left: $spacing-4;
+  z-index: 10;
+
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+
+  padding: $spacing-2 $spacing-3;
+  border-radius: 999px;
+
+  border: 1px solid rgba($primary-blue, 0.22);
+  background: rgba($primary-blue, 0.96);
+  color: $white;
+
+  font-family: "Manrope", sans-serif;
+  font-size: $font-size-sm;
+  line-height: 1;
+  cursor: pointer;
+
+  box-shadow: $shadow-sm;
+  transition:
+    transform 0.16s ease,
+    background-color 0.16s ease,
+    box-shadow 0.16s ease,
+    border-color 0.16s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    background: $primary-blue-dark;
+    border-color: rgba($primary-blue, 0.3);
+    box-shadow: $shadow-md;
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: $shadow-sm;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba($primary-blue, 0.16), $shadow-md;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    top: $spacing-3;
+    left: $spacing-3;
+  }
+}
+
+.backIcon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+}
+
+.backLabel {
+  font-weight: $font-weight-semibold;
+}
+
+/* =========================
+   CONTENT
+   ========================= */
 
 .content {
   margin: 0 auto;
   max-width: 1100px;
   padding: $spacing-10 $spacing-4 $spacing-16;
   display: grid;
-  grid-template-columns: 1fr;
   gap: $spacing-6;
 
-  @media (min-width: $breakpoint-lg) { grid-template-columns: 1fr; }
-  @media (max-width: $breakpoint-md) { padding: $spacing-8 $spacing-4 $spacing-12; }
-  @media (max-width: $breakpoint-sm) { padding: $spacing-6 $spacing-3 $spacing-10; }
-}
-
-.backButton {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  z-index: 10;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  background: $primary-blue;
-  backdrop-filter: blur(8px);
-  color: $white;
-  font-size: 14px;
-  line-height: 1;
-  cursor: pointer;
-  transition: transform 120ms ease, background 160ms ease, border-color 160ms ease;
-
-  &:hover {
-    transform: translateY(-1px);
-    background: $primary-blue-dark;
-    border-color: rgba(255, 255, 255, 0.36);
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-8 $spacing-4 $spacing-12;
   }
 
-  &:active { transform: translateY(0); }
-
-  &:focus-visible {
-    outline: 0;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.6);
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-6 $spacing-3 $spacing-10;
   }
 }
-
-.backIcon { width: 18px; height: 18px; flex: 0 0 18px; }
-.backLabel { font-weight: 600; }
 
 .card {
   background: $white;
@@ -128,31 +241,63 @@
   border-radius: $border-radius-xl;
   box-shadow: $shadow-md;
   padding: $spacing-6;
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-5;
+  }
 }
 
 .cardTitle {
+  margin: 0 0 $spacing-4 0;
+  font-family: "Manrope", sans-serif;
   font-size: $font-size-xl;
-  font-weight: $font-weight-semibold;
-  margin-bottom: $spacing-4;
+  font-weight: $font-weight-bold;
   color: $gray-900;
+  letter-spacing: -0.01em;
 }
+
+/* =========================
+   CONTACT GRID
+   ========================= */
 
 .contactGrid {
   display: grid;
-  grid-template-columns: 1.2fr .8fr;
+  grid-template-columns: 1.2fr 0.8fr;
   gap: $spacing-6;
 
-  @media (max-width: $breakpoint-md) { grid-template-columns: 1fr; }
+  @media (max-width: $breakpoint-md) {
+    grid-template-columns: 1fr;
+  }
 }
 
 .kv {
   display: grid;
-  grid-template-columns: 140px 1fr;
+  grid-template-columns: 160px 1fr;
   gap: $spacing-3;
-  margin: $spacing-2 0;
+  padding: $spacing-2 0;
+  border-bottom: 1px solid rgba($gray-200, 0.75);
 
-  span { color: $gray-500; }
-  a { color: $primary-blue-dark; text-decoration: none; &:hover { text-decoration: underline; } }
+  &:last-child {
+    border-bottom: none;
+  }
+
+  span {
+    color: $gray-500;
+    font-family: "Raleway", sans-serif;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+  }
+
+  a {
+    color: $primary-blue-dark;
+    text-decoration: none;
+    font-family: "Raleway", sans-serif;
+    font-weight: $font-weight-semibold;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
 
   @media (max-width: $breakpoint-sm) {
     grid-template-columns: 1fr;
@@ -168,17 +313,33 @@
 }
 
 .lozenge {
-  padding: .35rem .6rem;
+  padding: 0.35rem 0.6rem;
   border-radius: 999px;
   font-size: $font-size-sm;
   border: 1px solid $gray-200;
   background: $gray-50;
   color: $gray-700;
+  font-family: "Manrope", sans-serif;
+  font-weight: $font-weight-semibold;
 }
-.lozengeBlue { background: $secondary-blue; color: $primary-blue-dark; }
-.lozengeGray { background: $gray-100; }
 
-.section { padding: 0; }
+.lozengeBlue {
+  background: $secondary-blue;
+  color: $primary-blue-dark;
+  border-color: rgba($primary-blue, 0.16);
+}
+
+.lozengeGray {
+  background: $gray-100;
+}
+
+/* =========================
+   COLLAPSIBLE SECTION
+   ========================= */
+
+.section {
+  padding: 0;
+}
 
 .sectionHeader {
   width: 100%;
@@ -186,35 +347,80 @@
   align-items: center;
   gap: $spacing-3;
   padding: $spacing-5 $spacing-6;
-  background: linear-gradient(180deg, $white, $gray-50);
-  border: 0;
-  border-bottom: 1px solid $gray-200;
-  border-radius: $border-radius-xl $border-radius-xl 0 0;
+
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-xl;
   cursor: pointer;
   text-align: left;
 
-  h3 {
-    margin: 0;
-    font-size: $font-size-xl;
-    font-weight: $font-weight-semibold;
-    color: $gray-900;
+  box-shadow: $shadow-sm;
+  transition:
+    background-color 0.16s ease,
+    box-shadow 0.16s ease,
+    border-color 0.16s ease;
+
+  &:hover {
+    background: $gray-50;
+    border-color: $gray-300;
+    box-shadow: $shadow-md;
   }
 
-  @media (max-width: $breakpoint-sm) { padding: $spacing-4 $spacing-5; }
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba($primary-blue, 0.12), $shadow-md;
+  }
+
+  h3 {
+    margin: 0;
+    font-family: "Manrope", sans-serif;
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    color: $gray-900;
+    letter-spacing: -0.01em;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-4 $spacing-5;
+  }
 }
 
 .sectionDot {
-  width: 10px; height: 10px; border-radius: 999px;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
   background: $primary-blue;
-  box-shadow: 0 0 0 4px rgba($primary-blue, .12);
+  box-shadow: 0 0 0 4px rgba($primary-blue, 0.12);
 }
-.spacer { flex: 1; }
-.chev { color: $gray-500; }
-.sectionBody { padding: $spacing-6; }
+
+.spacer {
+  flex: 1;
+}
+
+.chev {
+  color: $gray-500;
+}
+
+.sectionBody {
+  padding: $spacing-5 $spacing-6;
+  border: 1px solid $gray-200;
+  border-top: none;
+  border-radius: 0 0 $border-radius-xl $border-radius-xl;
+  background: $white;
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-4 $spacing-5;
+  }
+}
+
+/* =========================
+   REQUIREMENTS LIST
+   ========================= */
 
 .reqList {
   list-style: none;
-  margin: 0; padding: 0;
+  margin: 0;
+  padding: 0;
   display: grid;
   gap: $spacing-3;
 }
@@ -239,12 +445,15 @@
 }
 
 .reqCheck {
-  margin-top: .2rem;
+  margin-top: 0.2rem;
   font-size: $font-size-xl;
   color: $primary-blue;
 }
 
-.reqText { display: grid; gap: $spacing-1; }
+.reqText {
+  display: grid;
+  gap: $spacing-1;
+}
 
 .reqLine {
   display: flex;
@@ -252,42 +461,98 @@
   align-items: center;
   gap: $spacing-2;
 
-  strong { color: $gray-900; }
-  em { color: $gray-600; font-style: normal; }
+  strong {
+    color: $gray-900;
+    font-family: "Manrope", sans-serif;
+    font-weight: $font-weight-bold;
+  }
+
+  em {
+    color: $gray-600;
+    font-style: normal;
+    font-family: "Raleway", sans-serif;
+    font-weight: $font-weight-semibold;
+  }
 }
 
-.reqHint { font-size: $font-size-sm; color: $gray-500; }
+.reqHint {
+  font-size: $font-size-sm;
+  color: $gray-500;
+  font-family: "Raleway", sans-serif;
+}
+
+/* =========================
+   TAGS
+   ========================= */
 
 .tag {
   border-radius: 999px;
-  padding: .2rem .5rem;
+  padding: 0.2rem 0.5rem;
   font-size: $font-size-xs;
   font-weight: $font-weight-medium;
   border: 1px solid $gray-200;
+  font-family: "Manrope", sans-serif;
 }
-.tag--obligatorio   { background: rgba($success-green, .1); color: $success-green; border-color: rgba($success-green, .3); }
-.tag--no-obligatorio{ background: rgba($gray-400, .12); color: $gray-600; }
-.tag--legalizado    { background: rgba($accent-blue, .15); color: $primary-blue-dark; border-color: rgba($accent-blue, .4); }
-.tag--simple        { background: $gray-100; color: $gray-600; }
-.tag--importante    { background: rgba($warning-orange, .12); color: $warning-orange; }
+
+.tag--obligatorio {
+  background: rgba($success-green, 0.1);
+  color: $success-green;
+  border-color: rgba($success-green, 0.3);
+}
+
+.tag--no-obligatorio {
+  background: rgba($gray-400, 0.12);
+  color: $gray-600;
+}
+
+.tag--legalizado {
+  background: rgba($accent-blue, 0.15);
+  color: $primary-blue-dark;
+  border-color: rgba($accent-blue, 0.4);
+}
+
+.tag--simple {
+  background: $gray-100;
+  color: $gray-600;
+}
+
+.tag--importante {
+  background: rgba($warning-orange, 0.12);
+  color: $warning-orange;
+}
+
+/* =========================
+   FEES
+   ========================= */
 
 .fees {
   h3 {
+    margin: 0 0 $spacing-4 0;
+    font-family: "Manrope", sans-serif;
     font-size: $font-size-xl;
-    font-weight: $font-weight-semibold;
-    margin-bottom: $spacing-4;
+    font-weight: $font-weight-bold;
+    color: $gray-900;
   }
 }
 
 .feeRow {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   border: 1px dashed $gray-300;
   padding: $spacing-4 $spacing-5;
   border-radius: $border-radius-md;
 
-  & + .feeRow { margin-top: $spacing-3; }
-  strong { font-size: $font-size-2xl; color: $gray-900; }
+  & + .feeRow {
+    margin-top: $spacing-3;
+  }
+
+  strong {
+    font-size: $font-size-2xl;
+    color: $gray-900;
+    font-family: "Manrope", sans-serif;
+    font-weight: $font-weight-bold;
+  }
 
   @media (max-width: $breakpoint-sm) {
     flex-direction: column;
@@ -300,4 +565,20 @@
   margin-top: $spacing-3;
   font-size: $font-size-sm;
   color: $gray-500;
+  font-family: "Raleway", sans-serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btnPrimary,
+  .btnGhost,
+  .backButton,
+  .sectionHeader {
+    transition: none;
+  }
+
+  .btnPrimary:hover,
+  .btnGhost:hover,
+  .backButton:hover {
+    transform: none;
+  }
 }

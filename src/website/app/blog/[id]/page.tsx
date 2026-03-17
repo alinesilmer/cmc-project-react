@@ -111,12 +111,6 @@ export default function BlogDetailPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          {/* Portada (opcional) */}
-          {noticia.portada && (
-            <div className={styles.image}>
-              <img src={noticia.portada} alt={noticia.titulo} />
-            </div>
-          )}
 
           <h1 className={styles.title}>{noticia.titulo}</h1>
 

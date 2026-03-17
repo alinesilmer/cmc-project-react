@@ -1,19 +1,19 @@
 @use "@/app/styles/all.scss" as *;
 
+
 :root {
-  --login-side: url("../../assets/bg.png");
+  --login-side: url("https://res.cloudinary.com/dcfkgepmp/image/upload/v1773162585/bg_o4owy8.png");
 }
 
 .container {
   min-height: 100dvh;
   width: 100%;
+  background: url("https://res.cloudinary.com/dcfkgepmp/image/upload/v1773162591/bg-login_nmgskk.png");
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  background-color: rgb(241, 241, 241);
-  background-size: cover;
-  gap: 3rem;
+  justify-content: flex-start;
+  gap: $spacing-6;
   padding: $spacing-6;
 
   @media (max-width: $breakpoint-md) {
@@ -27,51 +27,39 @@
   }
 }
 
-.btnBack {
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-}
-
+/* Card container (grid for stable layout) */
 .card {
-  width: min(100%, 950px);
-  min-height: 560px;
-  height: auto;
+  width: min(100%, 980px);
   background: $white;
-  display: flex;
-  align-items: stretch;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-xl;
   box-shadow: $shadow-xl;
-  position: relative;
   overflow: hidden;
+  position: relative;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr);
+  min-height: 560px;
 
   @media (max-width: $breakpoint-lg) {
-    margin-top: 5rem;
-    flex-direction: column;
+    grid-template-columns: 1fr;
+    min-height: unset;
   }
 
   @media (max-width: $breakpoint-sm) {
-    margin-top: 5rem;
-    border-radius: 0;
-    box-shadow: none;
     width: 100%;
-  }
-}
-
-.content,
-.media {
-  flex: 1 1 50%;
-  
-  @media (max-width: $breakpoint-lg) {
-    flex: 1 1 auto;
+    border-radius: $border-radius-xl;
+    box-shadow: $shadow-lg;
   }
 }
 
 .content {
   display: flex;
-  justify-content: space-between;
   flex-direction: column;
-  padding: $spacing-12;
+  justify-content: space-between;
+  align-items: center;
   gap: $spacing-6;
+  padding: $spacing-12;
 
   @media (max-width: $breakpoint-lg) {
     padding: $spacing-8;
@@ -92,60 +80,63 @@
 .headerRow {
   display: flex;
   align-items: center;
-  text-align: center;
   justify-content: center;
-  gap: $spacing-4;
 
-  @media (max-width: $breakpoint-md) {
-    flex-direction: column;
-    gap: $spacing-3;
+  @media (min-width: $breakpoint-lg) {
+    justify-content: center;
   }
 }
 
 .title {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
+  display: grid;
   gap: $spacing-2;
+  text-align: center;
+
+  @media (min-width: $breakpoint-lg) {
+    text-align: left;
+  }
 }
 
 .heading {
-  margin: 0;
-  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  margin: 2rem 0 0 0;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-family: "Manrope", sans-serif;
+  font-size: clamp(#{$font-size-3xl}, 2.4vw, 2rem);
   font-weight: $font-weight-bold;
   letter-spacing: -0.02em;
   color: $gray-900;
-  text-align: center;
-  line-height: 1.2;
+  line-height: 1.15;
 
-  @media (min-width: $breakpoint-lg) {
-    text-align: left;
-  }
+  @media (max-width: $breakpoint-sm) {
+      margin: 0;
+    }
 }
 
 .subtitle {
-  margin-top: 0;
-  color: $gray-600;
-  font-size: clamp($font-size-base, 1.5vw, $font-size-lg);
+  margin: 0;
+    align-items: center;
+  justify-content: center;
   text-align: center;
-  line-height: 1.5;
+  font-family: "Raleway", sans-serif;
+  color: $gray-600;
+  font-size: clamp(#{$font-size-base}, 1.4vw, #{$font-size-lg});
+  line-height: 1.6;
 
-  @media (min-width: $breakpoint-lg) {
-    text-align: left;
-    margin-top: -$spacing-2;
-  }
+  
 }
 
 .fork {
-  display: flex;
-  flex-direction: column;
-  align-self: center;
-  justify-content: center;
+  display: grid;
+  gap: $spacing-4;
   width: 100%;
   max-width: 420px;
-  gap: $spacing-4;
+  margin: 0 auto;
+
+  @media (min-width: $breakpoint-lg) {
+    margin: 0;
+  }
 
   @media (max-width: $breakpoint-md) {
     max-width: 100%;
@@ -156,172 +147,80 @@
 .divider {
   height: 1px;
   background: $gray-200;
+  opacity: 0.9;
 }
 
 .bottomLinks {
   display: flex;
+  align-items: center;
+  justify-content: center;
   flex-direction: column;
+  gap: $spacing-3;
   text-align: center;
-  justify-content: flex-start;
-  gap: $spacing-4;
-  flex-wrap: wrap;
 
   @media (min-width: $breakpoint-md) {
     flex-direction: row;
     justify-content: space-between;
-    text-align: left;
-  }
-
-  .link {
-    color: $gray-900;
-    font-weight: $font-weight-semibold;
-    text-decoration: none;
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-  .linkMuted {
-    color: $gray-600;
-    text-decoration: none;
-
-    &:hover {
-      text-decoration: underline;
-    }
+    text-align: center;
   }
 }
 
+
+/* === Media side === */
 .media {
   background-image: var(--login-side);
   background-size: cover;
   background-position: center;
   position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 400px;
 
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+
+  padding: $spacing-6;
+  min-height: 560px;
+
+  /* subtle overlay, no gradients */
   &::after {
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(
-      90deg,
-      rgba($black, 0) 0%,
-      rgba($black, 0.06) 100%
-    );
+    background: rgba($black, 0.18);
     pointer-events: none;
   }
 
   @media (max-width: $breakpoint-lg) {
-    min-height: 280px;
-    order: -1;
-  }
-
-  @media (max-width: $breakpoint-md) {
     min-height: 240px;
+    order: -1;
+    align-items: center;
+    padding: $spacing-5;
   }
 
   @media (max-width: $breakpoint-sm) {
     min-height: 200px;
+    padding: $spacing-4;
   }
 }
 
-.media h3 a {
-  padding: clamp(0.75rem, 2vw, 2rem) clamp(1.25rem, 3vw, 3rem);
-  background-color: $black;
-  border-radius: clamp(0.5rem, 1.5vw, 1rem);
-  text-decoration: none;
-  color: white;
-  font-weight: 700;
-  font-size: clamp($font-size-lg, 3vw, $font-size-3xl);
-  transition: background-color 0.2s ease;
-  display: inline-block;
-  white-space: nowrap;
-
-  @media (max-width: $breakpoint-sm) {
-    white-space: normal;
-    text-align: center;
-  }
-}
-
-.media h3 a:hover {
-  background-color: $primary-blue-dark;
-}
-
-.loginForm {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-3;
-  padding: $spacing-4;
-  border: 1px solid $gray-200;
-  border-radius: $border-radius-lg;
-  background: $gray-50;
-  animation: fadeIn 0.25s ease-out;
-
-  button {
-    margin-top: $spacing-3;
-    width: 100%;
-  }
-
-  @media (max-width: $breakpoint-md) {
-    padding: $spacing-3;
-    gap: $spacing-2;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-3;
-    gap: $spacing-2;
-    
-    button {
-      margin-top: $spacing-2;
-    }
-  }
-}
-
-.label {
-  font-size: $font-size-sm;
-  color: $gray-700;
-  font-weight: $font-weight-medium;
-}
-
-.goLogin {
-  text-decoration: none;
-  color: white;
-}
-
-.formActions {
-  display: flex;
-  align-items: center;
-  gap: $spacing-4;
-  margin-top: $spacing-2;
-
-  @media (max-width: $breakpoint-md) {
-    flex-direction: column;
-    align-items: stretch;
-    gap: $spacing-3;
-    margin-top: $spacing-1;
-  }
-}
-
-.cta {
-  color: $primary-blue;
+.linkMuted {
+  color: $white;
+  font-family: "Raleway", sans-serif;
   font-weight: $font-weight-semibold;
-  cursor: pointer;
-  text-decoration: underline;
-  width: 100%;
-  transition: color 0.15s ease;
+  text-decoration: none;
+  font-size: $font-size-base;
 
   &:hover {
-    color: $primary-blue-dark;
+    text-decoration: underline;
+    color: $white;
   }
 }
 
+/* === Back arrow (only when isMember=true) === */
 .backLink {
   position: absolute;
-  top: 1.5rem;
-  left: 1.5rem;
-  z-index: 2;
+  top: $spacing-4;
+  left: $spacing-4;
+  z-index: 5;
 
   display: inline-flex;
   align-items: center;
@@ -330,32 +229,36 @@
   width: 36px;
   min-width: 36px;
   height: 36px;
-  border-radius: 50%;
+  border-radius: 999px;
 
-  background-color: $white;
+  background: $white;
   color: $primary-blue;
-  border: 1px solid $primary-blue;
+  border: 1px solid rgba($primary-blue, 0.5);
+
   font-size: $font-size-lg;
   cursor: pointer;
   text-decoration: none;
+
   box-shadow: $shadow-sm;
-  transition: background-color 0.15s ease, color 0.15s ease,
-    border-color 0.15s ease, transform 0.06s ease;
+  transition: transform 0.14s ease, background-color 0.14s ease, color 0.14s ease,
+    border-color 0.14s ease, box-shadow 0.14s ease;
 
   &:hover {
-    background-color: $primary-blue-dark;
+    transform: translateY(-1px);
+    background: $primary-blue-dark;
     color: $white;
     border-color: $primary-blue-dark;
-    transform: translateY(-1px);
-  }
-  &:focus-visible {
-    outline: 3px solid rgba($primary-blue, 0.35);
-    outline-offset: 2px;
+    box-shadow: $shadow-md;
   }
 
-  @media (max-width: $breakpoint-md) {
-    top: $spacing-4;
-    left: $spacing-4;
+  &:active {
+    transform: translateY(0);
+    box-shadow: $shadow-sm;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba($primary-blue, 0.18), $shadow-md;
   }
 
   @media (max-width: $breakpoint-sm) {
@@ -368,24 +271,33 @@
   }
 }
 
-.errorBox {
-  background: rgba($danger-red, 0.08);
-  border: 1px solid $danger-red;
-  color: $danger-red;
-  border-radius: $border-radius-md;
-  padding: $spacing-3 $spacing-4;
-  margin-bottom: $spacing-2;
-  font-size: $font-size-sm;
+/* === Form === */
+.loginForm {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+
+  padding: $spacing-5;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-lg;
+  background: $white;
+  box-shadow: $shadow-sm;
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-4;
+    gap: $spacing-2;
+  }
 
   @media (max-width: $breakpoint-sm) {
-    padding: $spacing-2 $spacing-3;
-    font-size: clamp(0.75rem, 2vw, $font-size-sm);
+    padding: $spacing-3;
   }
 }
 
-.isInvalid {
-  border-color: $danger-red !important;
-  box-shadow: 0 0 0 3px rgba($danger-red, 0.12) !important;
+.label {
+  font-family: "Arimo", sans-serif;
+  font-size: $font-size-lg;
+  color: $gray-700;
+  font-weight: 500;
 }
 
 .input {
@@ -394,84 +306,66 @@
   border: 1px solid $gray-300;
   background: $white;
   padding: 0 $spacing-4;
-  font-size: $font-size-base;
+
+  font-family: "Arimo", sans-serif;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
   color: $gray-900;
-  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+
+  transition: box-shadow 0.14s ease, border-color 0.14s ease;
 
   &::placeholder {
     color: $gray-400;
+    font-weight: $font-weight-medium;
   }
 
   &:focus {
     outline: none;
-    border-color: $accent-blue;
+    border-color: rgba($primary-blue, 0.65);
     box-shadow: 0 0 0 3px rgba($primary-blue, 0.15);
   }
 
   @media (max-width: $breakpoint-sm) {
-    height: 44px;
     padding: 0 $spacing-3;
-    font-size: $font-size-base;
   }
 }
 
-:focus-visible {
-  outline: 3px solid rgba($primary-blue, 0.35);
-  outline-offset: 2px;
+.isInvalid {
+  border-color: $danger-red !important;
+  box-shadow: 0 0 0 3px rgba($danger-red, 0.14) !important;
 }
 
-.fade-in {
-  animation: fadeIn 0.3s ease-out;
-}
-.slide-in {
-  animation: slideIn 0.3s ease-out;
-}
-.scale-in {
-  animation: scaleIn 0.2s ease-out;
-}
+.errorBox {
+  background: rgba($danger-red, 0.08);
+  border: 1px solid rgba($danger-red, 0.55);
+  color: $danger-red;
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-@keyframes slideIn {
-  from {
-    transform: translateY(6px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-@keyframes scaleIn {
-  from {
-    transform: scale(0.98);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
+  border-radius: $border-radius-md;
+  padding: $spacing-3 $spacing-4;
+  margin-bottom: $spacing-1;
+
+  font-family: "Raleway", sans-serif;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  line-height: 1.5;
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-2 $spacing-3;
   }
 }
 
-.linkBackToLanding {
-  text-align: center;
-  background-color: black;
-  border: 1px solid #4f7cff;
-  padding: clamp(10px, 1vw, 12px);
-  border-radius: 8px;
-  text-decoration: none;
-  color: white;
-  font-weight: 600;
-  font-size: clamp($font-size-sm, 2vw, $font-size-base);
-  transition: outline 0.15s ease;
+.formActions {
+  display: flex;
+  gap: $spacing-3;
+  margin-top: $spacing-2;
 
-  &:hover {
-    background-color: $primary-blue;
+  @media (max-width: $breakpoint-md) {
+    flex-direction: column;
+    align-items: stretch;
+    margin-top: $spacing-1;
   }
+}
+
+.cta {
+  width: 100%;
 }

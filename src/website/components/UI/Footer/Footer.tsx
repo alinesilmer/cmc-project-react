@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import {
-  FiFacebook,
   FiInstagram,
   FiMapPin,
   FiPhone,
@@ -44,7 +43,6 @@ export default function Footer() {
           <h4>Enlaces Rápidos</h4>
           <ul>
             <li><Link to="/cursoscap">Cursos/Capacitaciones</Link></li>
-            <li><Link to="/blog">Blog</Link></li>
             <li><Link to="/medicos-asociados">Médicos asociados</Link></li>
           </ul>
         </nav>
@@ -97,11 +95,8 @@ export default function Footer() {
         </a>
 
         <div className={styles.social}>
-          <a href="#" aria-label="Facebook">
-            <FiFacebook />
-          </a>
           <a
-            href="https://www.instagram.com/colegiomedicodecorrientes/"
+            href="https://www.instagram.com/colegiomedicoctes/"
             aria-label="Instagram"
             target="_blank"
             rel="noreferrer"

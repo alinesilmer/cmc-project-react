@@ -1,119 +1,317 @@
 @use "@/app/styles/all.scss" as *;
 
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: $border-radius-md;
-  font-weight: $font-weight-medium;
-  transition: all 0.2s ease-in-out;
-  cursor: pointer;
-  border: none;
+  gap: $spacing-2;
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-family: inherit;
+  font-weight: $font-weight-semibold;
+  line-height: 1;
+  letter-spacing: 0.01em;
   text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  appearance: none;
+  background-clip: padding-box;
+  box-shadow:
+    0 6px 16px rgba($gray-900, 0.08),
+    inset 0 1px 0 rgba($white, 0.18);
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease,
+    opacity 0.16s ease;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow:
+      0 10px 20px rgba($gray-900, 0.1),
+      inset 0 1px 0 rgba($white, 0.1);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow:
+      0 4px 10px rgba($gray-900, 0.08),
+      inset 0 1px 0 rgba($white, 0.08);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 4px rgba($primary-blue, 0.12),
+      0 10px 20px rgba($gray-900, 0.08);
+  }
 
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
   }
+}
 
-  &.primary {
-    background-color: $primary-blue;
+.content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  text-align: center;
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+    display: block;
+  }
+}
+
+.spinner {
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-right-color: currentColor;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+.loading {
+  pointer-events: none;
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+/* Variants */
+
+.primary {
+  background-color: $primary-blue;
+  color: $white;
+  border-color: rgba($primary-blue-dark, 0.24);
+  box-shadow:
+    0 8px 18px rgba($primary-blue, 0.22),
+    inset 0 1px 0 rgba($white, 0.14);
+
+  &:hover:not(:disabled) {
+    background-color: $primary-blue-dark;
     color: $white;
-    text-decoration: none;
-
-    &:hover:not(:disabled) {
-      background-color: $primary-blue-dark;
-      color: $white;
-    }
+    border-color: rgba($primary-blue-dark, 0.34);
+    box-shadow:
+      0 10px 22px rgba($primary-blue-dark, 0.22),
+      inset 0 1px 0 rgba($white, 0.1);
   }
 
-  &.third {
-    background-color: $black;
+  &:focus-visible {
+    box-shadow:
+      0 0 0 4px rgba($primary-blue, 0.14),
+      0 10px 22px rgba($primary-blue-dark, 0.18);
+  }
+}
+
+.third {
+  background-color: $gray-900;
+  color: $white;
+  border-color: rgba($black, 0.3);
+  box-shadow:
+    0 10px 22px rgba($black, 0.14),
+    inset 0 1px 0 rgba($white, 0.05);
+
+  &:hover:not(:disabled) {
+    background-color: $gray-800;
     color: $white;
-    text-decoration: none;
+    border-color: rgba($black, 0.38);
+    box-shadow:
+      0 12px 24px rgba($black, 0.16),
+      inset 0 1px 0 rgba($white, 0.04);
+  }
 
-    &:hover:not(:disabled) {
-      background-color: $primary-blue-dark;
-      color: $white;
+  &:focus-visible {
+    box-shadow:
+      0 0 0 4px rgba($gray-700, 0.18),
+      0 12px 24px rgba($black, 0.14);
+  }
+}
+
+.secondary {
+  background-color: $white;
+  color: $gray-900;
+  border-color: rgba($gray-300, 0.95);
+  box-shadow:
+    0 6px 16px rgba($gray-300, 0.24),
+    inset 0 1px 0 rgba($white, 0.9);
+
+  &:hover:not(:disabled) {
+    background-color: $white;
+    color: $gray-900;
+    border-color: rgba($gray-500, 0.65);
+    box-shadow:
+      0 8px 18px rgba($gray-300, 0.22),
+      inset 0 1px 0 rgba($white, 0.9);
+  }
+}
+
+.success {
+  background-color: $white;
+  color: $success-green;
+  border-color: rgba($success-green, 0.32);
+  box-shadow:
+    0 6px 16px rgba($gray-900, 0.05),
+    inset 0 1px 0 rgba($white, 0.9);
+
+  &:hover:not(:disabled) {
+    background-color: rgba($success-green, 0.06);
+    color: $success-green;
+    border-color: rgba($success-green, 0.45);
+    box-shadow:
+      0 8px 18px rgba($success-green, 0.08),
+      inset 0 1px 0 rgba($white, 0.7);
+  }
+
+  &:focus-visible {
+    box-shadow:
+      0 0 0 4px rgba($success-green, 0.14),
+      0 8px 18px rgba($success-green, 0.08);
+  }
+}
+
+.danger {
+  background-color: $white;
+  color: $danger-red;
+  border-color: rgba($danger-red, 0.3);
+  box-shadow:
+    0 6px 16px rgba($gray-900, 0.05),
+    inset 0 1px 0 rgba($white, 0.9);
+
+  &:hover:not(:disabled) {
+    background-color: rgba($danger-red, 0.05);
+    color: $danger-red;
+    border-color: rgba($danger-red, 0.42);
+    box-shadow:
+      0 8px 18px rgba($danger-red, 0.08),
+      inset 0 1px 0 rgba($white, 0.7);
+  }
+
+  &:focus-visible {
+    box-shadow:
+      0 0 0 4px rgba($danger-red, 0.14),
+      0 8px 18px rgba($danger-red, 0.08);
+  }
+}
+
+.ghost {
+  background-color: transparent;
+  color: $gray-800;
+  border-color: rgba($gray-400, 0.6);
+  box-shadow: none;
+
+  &:hover:not(:disabled) {
+    background-color: rgba($gray-100, 0.8);
+    color: $gray-900;
+    border-color: rgba($gray-500, 0.7);
+    box-shadow: none;
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 4px rgba($gray-400, 0.12);
+  }
+}
+
+/* Sizes */
+
+.sm {
+  min-height: 2rem;
+  padding: $spacing-2 $spacing-4;
+  font-size: $font-size-sm;
+}
+
+.md {
+  min-height: 2.5rem;
+  padding: $spacing-3 $spacing-5;
+  font-size: $font-size-base;
+}
+
+.lg {
+  min-height: 3rem;
+  padding: $spacing-4 $spacing-6;
+  font-size: $font-size-lg;
+}
+
+@media (max-width: $breakpoint-md) {
+  .lg {
+    min-height: 2.75rem;
+    padding: $spacing-3 $spacing-5;
+    font-size: $font-size-base;
+  }
+}
+
+@media (max-width: $breakpoint-sm) {
+  .button {
+    max-width: 100%;
+    white-space: normal;
+    line-height: 1.2;
+  }
+
+  .content {
+    width: auto;
+    text-align: center;
+  }
+
+  .icon {
+    svg {
+      width: 0.95rem;
+      height: 0.95rem;
     }
   }
 
-  &.secondary {
-    background-color: $gray-100;
-    color: $gray-700;
-
-    &:hover:not(:disabled) {
-      background-color: $gray-200;
-    }
-  }
-
-  &.success {
-    background-color: $success-green;
-    color: $white;
-
-    &:hover:not(:disabled) {
-      background-color: $success-green;
-    }
-  }
-
-  &.danger {
-    background-color: $danger-red;
-    color: $white;
-
-    &:hover:not(:disabled) {
-      background-color: $danger-red;
-    }
-  }
-
-  &.ghost {
-    background-color: transparent;
-    color: $primary-blue;
-
-    &:hover:not(:disabled) {
-      background-color: $secondary-blue;
-    }
-  }
-
-  &.sm {
+  .sm {
+    min-height: 2rem;
     padding: $spacing-2 $spacing-3;
+    font-size: $font-size-xs;
+  }
+
+  .md {
+    min-height: 2.35rem;
+    padding: $spacing-2 $spacing-4;
     font-size: $font-size-sm;
   }
 
-  &.md {
+  .lg {
+    min-height: 2.65rem;
     padding: $spacing-3 $spacing-4;
     font-size: $font-size-base;
   }
+}
 
-  &.lg {
-    padding: $spacing-4 $spacing-6;
-    font-size: $font-size-lg;
+@media (max-width: 480px) {
+  .button {
+    gap: $spacing-2;
   }
 
-  @media (max-width: $breakpoint-md) {
-    &.lg {
-      padding: $spacing-3 $spacing-5;
-      font-size: $font-size-base;
-    }
-  }
-
-  @media (max-width: $breakpoint-sm) {
+  .fullWidth {
     width: 100%;
-    max-width: 100%;
-    justify-content: center;
-
-    &.sm {
-      padding: $spacing-2 $spacing-3;
-      font-size: $font-size-xs;
-    }
-
-    &.md {
-      padding: $spacing-2 $spacing-4;
-      font-size: $font-size-sm;
-    }
-
-    &.lg {
-      padding: $spacing-3 $spacing-4;
-      font-size: $font-size-base;
-    }
   }
 }

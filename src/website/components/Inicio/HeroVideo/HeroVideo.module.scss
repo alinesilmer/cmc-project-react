@@ -3,8 +3,18 @@
 .heroSection {
   position: relative;
   width: 100%;
-  height: 90vh;
+  height: min(90vh, 860px);
+  min-height: 600px;
   overflow: hidden;
+
+  @media (max-width: 768px) {
+    height: 100dvh;
+    min-height: 600px;
+  }
+
+  @media (max-width: 480px) {
+    min-height: 560px;
+  }
 }
 
 .backgroundVideo {
@@ -22,10 +32,10 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+
   opacity: 0;
-  transform: scale(1.06);
-  transition: opacity 900ms ease, transform 1800ms ease;
-  will-change: opacity, transform;
+  transform: scale(1.04);
+  transition: opacity 800ms ease, transform 1600ms ease;
 }
 
 .active {
@@ -36,27 +46,38 @@
 .overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
   z-index: 1;
+  background: rgba(0, 0, 0, 0.55);
 }
 
 .content {
   position: relative;
   z-index: 2;
   height: 100%;
-  display: grid;
-  align-content: end;
-  gap: clamp(2rem, 3vw, 2.5rem);
   max-width: 1200px;
-  margin: 0 70px;
-  padding: 7rem clamp(1rem, 4vw, 4rem);
-  color: white;
+  margin: 0 auto;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  align-items: center;
+
+  padding: clamp(1.5rem, 4vw, 3.5rem);
+  padding-bottom: clamp(1.2rem, 4vw, 2.5rem);
+  color: $white;
+}
+
+.centerBlock {
+  display: grid;
+  justify-items: start;
+  text-align: center;
+  gap: clamp(0.9rem, 1.8vw, 1.3rem);
+  padding-top: clamp(1rem, 4vh, 2.25rem);
 }
 
 .pills {
   display: flex;
   flex-wrap: wrap;
   gap: 0.6rem;
+  justify-content: center;
 }
 
 .title {
@@ -64,151 +85,127 @@
   font-weight: 500;
   line-height: 1.05;
   letter-spacing: 0.2px;
-  font-size: clamp(2rem, 6vw, 4rem);
-  max-width: 18ch;
-  text-shadow: 8px 8px 30px rgba(0, 0, 0, 0.25);
+  font-size: clamp(2rem, 5vw, 3.6rem);
+  max-width: 22ch;
+  text-align: start;
+  text-shadow: 0 10px 26px rgba(0, 0, 0, 0.22);
+  margin: 1rem 0;
+
+  @media (max-width: 480px) {
+    max-width: 100%;
+    text-align: center;
+  }
 }
 
 .subtitle {
   font-family: $font-normal;
-  font-size: clamp(1.3rem, 1.7vw, 1.5rem);
+  font-size: clamp(1.05rem, 1.55vw, 1.35rem);
   font-weight: 400;
   line-height: 1.7;
-  max-width: 60ch;
+  max-width: 64ch;
   color: rgba(255, 255, 255, 0.92);
-}
+  text-shadow: 0 10px 22px rgba(0, 0, 0, 0.16);
 
-.ethicsLink {
-  display: flex;
-  justify-content: flex-end;
-  text-decoration: none;
-  color: white;
-  font-size: $font-size-large;
-  text-shadow: 8px 8px 30px rgba(0, 0, 0, 0.25);
-  font-family: $font-playfair;
+   @media (max-width: 480px) {
+    text-align: center;
+  }
 }
 
 .ctaRow {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
-}
-
-.cta {
-  display: inline-flex;
-  align-items: center;
   justify-content: center;
-  padding: 0.9rem 1.2rem;
-  border-radius: 999px;
-  font-weight: 700;
-  font-size: 0.95rem;
-  color: #fff;
-  background: linear-gradient(135deg, #ff7aa3, #ff5c7a);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 16px 36px rgba(255, 92, 122, 0.25);
-  transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+
+  @media (max-width: 480px) {
+    width: 100%;
+    flex-direction: column;
+
+    :global(button) {
+      width: 100%;
+    }
+  }
 }
 
-.cta:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 20px 46px rgba(255, 92, 122, 0.32);
+/* Bottom cards (like the screenshot) */
+.featureRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(0.75rem, 1.4vw, 1.1rem);
+  align-items: stretch;
+  padding-bottom: clamp(0.25rem, 1.5vh, 0.75rem);
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
 }
 
-/* ✅ THIS is the missing piece: right-side card must be positioned */
-.rightSide {
-  position: absolute;
-  z-index: 3;
-  right: clamp(64px, 5vw, 92px); /* leaves room for the infoIcon */
-  top: 50%;
-  transform: translateY(-50%);
+.featureCard {
   display: flex;
-  justify-content: flex-end;
   align-items: center;
-  pointer-events: auto;
+  gap: 0.9rem;
+
+  padding: 1rem 1.1rem;
+  border-radius: 14px;
+
+  /* Dark card with subtle border, like Duke screenshot */
+  background: rgba(10, 10, 10, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+
+  /* Subtle shadow, avoid heavy effects for performance */
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+
+  @media (max-width: 900px) {
+    padding: 0.95rem 1rem;
+  }
 }
 
-/* your existing infoIcon */
-.infoIcon {
-  position: absolute;
-  right: 18px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 3;
-
-  width: 46px;
-  height: 46px;
-  border-radius: 999px;
-
+.featureIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
   display: grid;
   place-items: center;
 
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-
-  color: rgba(255, 255, 255, 0.95);
-  cursor: pointer;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.16);
 
   svg {
-    width: 20px;
-    height: 20px;
-  }
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.18);
-    border-color: rgba(255, 255, 255, 0.55);
-  }
-
-  &:active {
-    transform: translateY(-50%) scale(0.98);
+    width: 18px;
+    height: 18px;
+    color: rgba(255, 255, 255, 0.92);
   }
 }
 
-@media (max-width: 768px) {
-  .content {
-    padding: 4rem 1.25rem;
-    text-align: center;
-    justify-content: center;
-    align-items: center;
-  }
+.featureText {
+  min-width: 0;
+  display: grid;
+  gap: 0.2rem;
+}
 
-  .pills {
-    text-align: center;
-    justify-content: center;
-    align-items: center;
-  }
+.featureTitle {
+  margin: 0;
+  font-family: $font-normal;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.96);
+  line-height: 1.2;
+}
 
-  .title {
-    text-align: center;
-    justify-content: center;
-    align-items: center;
-    max-width: 100%;
-  }
+.featureDesc {
+  margin: 0;
+  font-family: $font-normal;
+  font-weight: 400;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.82);
+}
 
-  .ctaRow {
-    text-align: center;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .rightSide {
-    right: 12px;
-    left: 12px;
-    top: auto;
-    bottom: 68px; /* sits above the infoIcon */
+/* Performance / accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .slide {
+    transition: none;
     transform: none;
-    justify-content: center;
-  }
-
-  .infoIcon {
-    right: 12px;
-    top: auto;
-    bottom: 14px;
-    transform: none;
-
-    &:active {
-      transform: scale(0.98);
-    }
   }
 }

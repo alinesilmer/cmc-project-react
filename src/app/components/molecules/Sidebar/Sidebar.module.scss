@@ -1,252 +1,737 @@
 @use "@/app/styles/all.scss" as *;
 @import url("https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Lexend:wght@100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap");
 
-
 .sidebar {
   position: sticky;
-  top: 0;
-  height: 100vh;
-  max-width: 300px;
+  top: 12px;
+  height: calc(100vh - 24px);
+  width: 290px;
+  min-width: 290px;
   display: flex;
   flex-direction: column;
   background: $white;
-  border-right: 1px solid $gray-200;
-  padding: $spacing-2 $spacing-3;
+  border: 1px solid rgba($gray-200, 0.9);
+  border-radius: 28px;
+  padding: $spacing-3;
+  margin: 12px;
+  box-shadow:
+    0 8px 30px rgba(15, 23, 42, 0.06),
+    0 2px 10px rgba(15, 23, 42, 0.04);
   z-index: 40;
   transition:
     width 0.25s ease,
+    min-width 0.25s ease,
     padding 0.2s ease,
     transform 0.25s ease,
     box-shadow 0.25s ease;
+  overflow: hidden;
+  font-family: "Open Sans", sans-serif;
 }
 
-.logoRow {
+.mobileMenuButton {
+  display: none;
+}
+
+.mobileOverlay {
+  display: none;
+}
+
+.windowBar {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  margin-bottom: $spacing-2;
-  padding-bottom: $spacing-2;
-  border-bottom: 1px solid $gray-200;
+  justify-content: space-between;
+  gap: $spacing-3;
+  min-height: 40px;
+  margin-bottom: $spacing-3;
+  padding: 0 $spacing-1;
 }
 
-.logo {
+.windowDots {
   display: flex;
-  justify-content: center;
   align-items: center;
-  gap: 5px;
+  gap: 7px;
 }
 
-.logoImage {
-  width: 40%;
-  height: 40%;
+.windowActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  object-fit: cover;
 }
 
-.toggle {
-  width: 34px;
-  height: 34px;
-  display: flex;
-  justify-content: center;
+.dotRed {
+  background: $primary-blue;
+}
+
+.dotYellow {
+  background: #f5c542;
+}
+
+.dotGreen {
+  background: black;
+}
+
+.collapseButton,
+.mobileCloseButton {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
   align-items: center;
-  border-radius: $border-radius-md;
-  background: none;
+  justify-content: center;
   border: none;
+  border-radius: 14px;
+  background: $gray-100;
   color: $gray-700;
-  transition: background 0.2s ease-in-out, color 0.2s ease-in-out, transform 0.2s ease;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &:hover {
+    background: $gray-200;
+    color: $gray-900;
+    transform: translateY(-1px);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba($primary-blue, 0.12);
+  }
 }
 
-.toggle:hover {
-  background: $gray-200;
-  color: $gray-900;
-  transform: translateY(-1px);
+.mobileCloseButton {
+  display: none;
 }
 
-.nav {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-2;
-}
-
-.navItem {
+.brandCard {
   display: flex;
   align-items: center;
   gap: $spacing-3;
-  padding: $spacing-3 $spacing-4;
-  font-family: "Open Sans", sans-serif;
+  min-height: 76px;
+  padding: $spacing-3;
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba($gray-50, 0.95), $white);
+  border: 1px solid rgba($gray-200, 0.8);
+  margin-bottom: $spacing-4;
+}
+
+.logoShell {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: $white;
+  border: 1px solid rgba($gray-200, 0.9);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.logoImage {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.brandText {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brandTitle {
   font-size: $font-size-base;
-  font-weight: 500;
-  color: $gray-600;
-  text-decoration: none;
-  border-radius: $border-radius-md;
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
-
-.navItem:hover {
-  background-color: $gray-100;
-  color: $gray-900;
-}
-
-.navItem.active {
-  background-color: $secondary-blue;
-  color: $primary-blue;
   font-weight: $font-weight-bold;
+  color: $gray-900;
+  line-height: 1.2;
+}
+
+.brandSubtitle {
+  font-size: $font-size-sm;
+  color: $gray-500;
+  line-height: 1.3;
+}
+
+.nav {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba($gray-300, 0.9);
+    border-radius: 999px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+.navSection {
+  display: flex;
+  flex-direction: column;
+}
+
+.navSectionTitle {
+  margin: 0 0 $spacing-2 0;
+  padding: 0 $spacing-2;
+  font-size: 11px;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: $gray-400;
+}
+
+.navList,
+.subNavList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.navList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sectionDivider {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba($gray-200, 0.9),
+    transparent
+  );
+  margin: $spacing-4 0;
+}
+
+.navItem,
+.groupButton,
+.subNavItem {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  text-decoration: none;
+  color: $gray-600;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+  font-family: inherit;
+}
+
+.navItem,
+.groupButton {
+  min-height: 50px;
+  padding: 0 $spacing-3;
+  border-radius: 16px;
+
+  &:hover {
+    background: $gray-100;
+    color: $gray-900;
+    transform: translateX(2px);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba($primary-blue, 0.12);
+  }
+}
+
+.groupItem {
+  display: flex;
+  flex-direction: column;
+}
+
+.groupMain {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-3;
+  flex: 1;
+}
+
+.groupButton {
+  justify-content: space-between;
+  text-align: left;
+}
+
+.groupChevron {
+  flex-shrink: 0;
+  color: $gray-400;
+  transition:
+    transform 0.2s ease,
+    color 0.2s ease;
+}
+
+.groupChevronOpen {
+  transform: rotate(180deg);
+  color: $gray-700;
+}
+
+.subNavList {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  margin-left: 18px;
+  padding-left: 18px;
+  border-left: 1px solid rgba($gray-200, 0.9);
+  transition:
+    max-height 0.24s ease,
+    opacity 0.2s ease,
+    margin-top 0.2s ease;
+}
+
+.subNavListOpen {
+  max-height: 420px;
+  opacity: 1;
+  margin-top: 6px;
+}
+
+.subNavItem {
+  min-height: 42px;
+  padding: 0 $spacing-3;
+  border-radius: 14px;
+  font-size: $font-size-sm;
+
+  &:hover {
+    background: rgba($gray-100, 0.9);
+    color: $gray-900;
+    transform: translateX(2px);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba($primary-blue, 0.12);
+  }
+}
+
+.iconWrap {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease;
 }
 
 .itemLabel {
+  min-width: 0;
+  font-size: $font-size-base;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.spacer {
-  flex-grow: 1;
-  margin-top: 80px;
-  border-bottom: 1px solid $gray-200;
-}
-
-.config {
-  margin-top: auto;
-  padding: $spacing-4 0;
-  text-align: center;
-  font-size: $font-size-sm;
-  color: $gray-500;
-  border-bottom: 1px solid $gray-200;
-}
-
-.config a {
-  color: $gray-600;
-  text-decoration: none;
-  transition: color 0.15s ease-in-out;
-}
-
-.config a:hover {
+.active {
+  background: linear-gradient(
+    180deg,
+    rgba($gray-100, 0.9),
+    rgba($gray-100, 0.75)
+  );
   color: $gray-900;
+  box-shadow: inset 0 0 0 1px rgba($gray-200, 0.9);
+
+  .iconWrap {
+    background: $white;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  }
+
+  .itemLabel {
+    font-weight: $font-weight-bold;
+  }
 }
 
-.configItem {
+.groupButtonOpen {
+  .groupChevron {
+    color: $gray-700;
+  }
+}
+
+.accountPanel {
+  margin-top: $spacing-4;
+  padding-top: $spacing-4;
+  border-top: 1px solid rgba($gray-200, 0.9);
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: $spacing-3;
-  padding: $spacing-2 $spacing-4;
-  border-radius: $border-radius-md;
-  font-family: "Open Sans", sans-serif;
-  font-size: $font-size-base;
-  font-weight: 500;
-  color: $gray-600;
-  text-decoration: none;
-  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
 }
 
-.configItem:hover {
-  background-color: $gray-100;
-  color: $gray-900;
+.authButton {
+  width: 100%;
+  min-height: 48px;
+  border: none;
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+  padding: 0 $spacing-4;
+  background: $gray-900;
+  color: $white;
+  cursor: pointer;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    background-color 0.18s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.14);
+    background: rgb(196, 3, 3);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow:
+      0 8px 18px rgba(15, 23, 42, 0.14),
+      0 0 0 4px rgba($primary-blue, 0.14);
+  }
+}
+
+.authButtonText {
+  white-space: nowrap;
 }
 
 .footer {
-  margin-top: auto;
-  padding: $spacing-6 0;
+  margin-top: $spacing-4;
+  padding-top: $spacing-3;
+}
+
+.footerText {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: $gray-400;
   text-align: center;
-  font-size: $font-size-xs;
-  color: $gray-500;
 }
 
+/* Collapsed desktop */
 .collapsed {
-  width: 80px;
+  width: 96px;
+  min-width: 96px;
+  padding: $spacing-3 $spacing-2;
 }
 
-.collapsed .navItem {
-  justify-content: center;
-  padding: $spacing-3 0;
-}
-
-.collapsed .navItem .itemLabel {
-  display: none;
-}
-
-.collapsed .configItem {
+.collapsed .windowBar {
   justify-content: center;
 }
 
-.collapsed .configItem .itemLabel {
+.collapsed .windowDots {
   display: none;
 }
 
-.collapsed .footer .itemLabel {
+.collapsed .brandCard {
+  justify-content: center;
+  padding: $spacing-2;
+}
+
+.collapsed .brandText,
+.collapsed .navSectionTitle,
+.collapsed .itemLabel,
+.collapsed .footerText,
+.collapsed .authButtonText,
+.collapsed .groupChevron {
   display: none;
 }
 
+.collapsed .navItem,
+.collapsed .groupButton {
+  width: 52px;
+  min-height: 52px;
+  margin: 0 auto;
+  padding: 0;
+  justify-content: center;
+  border-radius: 16px;
+}
+
+.collapsed .groupMain {
+  flex: 0 0 auto;
+}
+
+.collapsed .subNavList {
+  display: none;
+}
+
+.collapsed .iconWrap {
+  width: 36px;
+  height: 36px;
+}
+
+.collapsed .sectionDivider {
+  margin: $spacing-3 0;
+}
+
+.collapsed .accountPanel {
+  align-items: center;
+}
+
+.collapsed .authButton {
+  width: 52px;
+  min-width: 52px;
+  padding: 0;
+  border-radius: 16px;
+}
+
+/* Tooltips when collapsed */
+.collapsed .navItem[data-tooltip]:hover::after,
+.collapsed .navItem[data-tooltip]:focus-visible::after,
+.collapsed .groupButton[data-tooltip]:hover::after,
+.collapsed .groupButton[data-tooltip]:focus-visible::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: $gray-900;
+  color: $white;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.14);
+  z-index: 30;
+}
+
+/* Tablet */
 @media (max-width: 1200px) {
   .sidebar {
-    min-width: 200px;
+    width: 260px;
+    min-width: 260px;
+  }
+
+  .collapsed {
+    width: 90px;
+    min-width: 90px;
   }
 }
 
 @media (max-width: 1024px) {
   .sidebar {
-    width: 220px;
-    min-width: 220px;
+    width: 236px;
+    min-width: 236px;
+    margin: 10px;
+    border-radius: 24px;
   }
 
   .collapsed {
-    width: 72px;
-    min-width: 72px;
+    width: 84px;
+    min-width: 84px;
   }
 
-  .navItem {
-    padding: $spacing-3 $spacing-3;
+  .navItem,
+  .groupButton {
+    min-height: 48px;
   }
 
-  .configItem {
-    padding: $spacing-2 $spacing-3;
+  .brandCard {
+    min-height: 70px;
   }
 }
 
+/* Mobile and small tablets */
 @media (max-width: 768px) {
-  .sidebar {
-    // position: fixed;
-    left: 0;
-    top: 0;
-    height: 100%;
-    width: 78vw;
-    max-width: 300px;
-    border-right: 1px solid $gray-200;
-    box-shadow: $shadow-lg;
-    padding: $spacing-3;
+  .mobileMenuButton {
+    position: fixed;
+    top: 14px;
+    left: 14px;
+    width: 48px;
+    height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba($gray-200, 0.9);
+    border-radius: 16px;
+    background: rgba($white, 0.95);
+    backdrop-filter: blur(12px);
+    color: $gray-900;
+    box-shadow:
+      0 12px 28px rgba(15, 23, 42, 0.14),
+      0 2px 10px rgba(15, 23, 42, 0.08);
+    cursor: pointer;
+    z-index: 82;
+    transition:
+      transform 0.18s ease,
+      box-shadow 0.18s ease,
+      background-color 0.18s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow:
+        0 16px 30px rgba(15, 23, 42, 0.16),
+        0 2px 10px rgba(15, 23, 42, 0.1);
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow:
+        0 16px 30px rgba(15, 23, 42, 0.16),
+        0 0 0 4px rgba($primary-blue, 0.16);
+    }
   }
 
-  .logoRow {
-    padding-bottom: $spacing-3;
+  .mobileOverlay {
+    position: fixed;
+    inset: 0;
+    display: block;
+    background: rgba(15, 23, 42, 0.36);
+    opacity: 0;
+    pointer-events: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    z-index: 79;
+    transition: opacity 0.22s ease;
+  }
+
+  .mobileOverlayVisible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(88vw, 340px);
+    min-width: 0;
+    height: 100dvh;
+    margin: 0;
+    padding: $spacing-3;
+    border-radius: 0 26px 26px 0;
+    transform: translateX(-105%);
+    box-shadow:
+      0 20px 45px rgba(15, 23, 42, 0.18),
+      0 6px 18px rgba(15, 23, 42, 0.12);
+    z-index: 81;
+    will-change: transform;
+  }
+
+  .mobileOpen {
+    transform: translateX(0);
+  }
+
+  .windowBar {
     margin-bottom: $spacing-3;
   }
 
-  .collapsed {
-    width: 76px;
-    min-width: 76px;
+  .windowDots {
+    display: none;
+  }
+
+  .mobileCloseButton {
+    display: inline-flex;
+  }
+
+  .collapseButton {
+    display: none;
+  }
+
+  .brandCard {
+    margin-bottom: $spacing-4;
+  }
+
+  .nav {
+    padding-right: 4px;
+  }
+
+  .navSectionTitle,
+  .itemLabel,
+  .footerText,
+  .authButtonText,
+  .groupChevron {
+    display: block;
+  }
+
+  .navItem,
+  .groupButton {
+    width: 100%;
+    min-height: 50px;
+    margin: 0;
+    padding: 0 $spacing-3;
+    justify-content: flex-start;
+  }
+
+  .groupMain {
+    flex: 1;
+  }
+
+  .subNavList {
+    display: block;
+  }
+
+  .authButton {
+    width: 100%;
+    min-width: 0;
+    padding: 0 $spacing-4;
   }
 }
 
 @media (max-width: 480px) {
+  .mobileMenuButton {
+    top: 10px;
+    left: 10px;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+  }
+
   .sidebar {
-    width: 82vw;
-    padding: $spacing-2 $spacing-3;
+    width: min(92vw, 320px);
+    padding: 10px;
+    border-radius: 0 22px 22px 0;
   }
 
-  .collapsed {
-    width: 70px;
-    min-width: 70px;
+  .brandCard {
+    padding: $spacing-2;
+    border-radius: 18px;
   }
 
-  .navItem {
-    font-size: $font-size-sm;
-    padding: $spacing-2 $spacing-3;
+  .navItem,
+  .groupButton {
+    min-height: 48px;
+    border-radius: 14px;
   }
 
-  .configItem {
-    font-size: $font-size-sm;
+  .subNavItem {
+    min-height: 40px;
+    border-radius: 12px;
   }
 
-  .footer {
-    padding: $spacing-4 1rem;
+  .authButton {
+    min-height: 46px;
+    border-radius: 14px;
   }
 }

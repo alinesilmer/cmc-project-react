@@ -1,0 +1,114 @@
+@use "@/app/styles/all.scss" as *;
+
+.container {
+  padding: $spacing-8;
+  max-width: 1400px;
+  margin: 0 auto;
+  background-color: $gray-50;
+  min-height: 100vh;
+}
+
+.header {
+  margin-bottom: $spacing-8;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.title {
+  font-size: $font-size-4xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  margin: 0 0 $spacing-2 0;
+}
+
+.subtitle {
+  font-size: $font-size-lg;
+  color: $gray-600;
+  margin: 0;
+}
+
+.actionsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: $spacing-6;
+}
+
+.actionCard {
+  background-color: $white;
+  padding: $spacing-8;
+  border-radius: $border-radius-xl;
+  box-shadow: $shadow-md;
+  cursor: pointer;
+  transition: all 0.3s;
+  animation: fadeIn 0.5s ease-out 0.2s backwards;
+  border: none;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: 230px;
+  width: 100%;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: $shadow-xl;
+  }
+
+  &:focus-visible {
+    outline: 3px solid rgba($primary-blue, 0.2);
+    outline-offset: 2px;
+  }
+}
+
+.actionCardPrimary {
+  border-top: 4px solid $primary-blue;
+}
+
+.actionCardSecondary {
+  border-top: 4px solid $success-green;
+}
+
+.actionTitle {
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  margin: 0 0 $spacing-3 0;
+  line-height: 1.25;
+}
+
+.actionDescription {
+  font-size: $font-size-base;
+  color: $gray-600;
+  margin: 0 0 $spacing-6 0;
+  line-height: 1.6;
+}
+
+.actionButton {
+  margin-top: auto;
+  padding: $spacing-3 $spacing-6;
+  background-color: $primary-blue;
+  border-radius: $border-radius-lg;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $white;
+  transition: all 0.2s;
+  width: 100%;
+  text-align: center;
+}
+
+.actionCard:hover .actionButton {
+  background-color: $primary-blue-dark;
+}
+
+@media (max-width: $breakpoint-md) {
+  .container {
+    padding: $spacing-4;
+  }
+
+  .actionsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .actionCard {
+    min-height: auto;
+  }
+}

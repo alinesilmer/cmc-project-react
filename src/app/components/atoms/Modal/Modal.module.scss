@@ -50,14 +50,6 @@
   color: $gray-900;
 }
 
-.closeButton {
-  color: $gray-500;
-
-  &:hover {
-    color: $gray-700;
-  }
-}
-
 .content {
   padding: $spacing-6;
   overflow-y: auto;

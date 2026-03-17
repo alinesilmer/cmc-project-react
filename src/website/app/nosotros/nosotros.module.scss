@@ -1,304 +1,333 @@
 @use "@/website/styles/all.scss" as *;
 
-@mixin container($max) {
-  max-width: $max;
+.page {
+  background: $white;
+}
+
+.wrap {
+  max-width: 1200px;
   margin: 0 auto;
   padding: 0 $spacing-lg;
-}
 
-@mixin split-grid {
-  display: flex;
-  gap: $spacing-xl;
-  align-items: flex-start;
-  flex-wrap: nowrap;
-  > *:first-child { flex: 0 0 240px; }
-  > *:last-child  { flex: 1 1 auto; min-width: 0; }
-}
-
-.page { background: $white; }
-
-.hero {
-  position: relative;
-  padding: clamp($spacing-xxl, 10vw, 6rem) $spacing-lg $spacing-xl;
-  background: linear-gradient(135deg, $primary-blue-dark 0%, $primary-blue 50%, $primary-blue-lighter 100%);
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute; inset: 0;
-    background:
-      radial-gradient(circle at 20% 50%, rgba($accent-blue, 0.2) 0%, transparent 50%),
-      radial-gradient(circle at 80% 80%, rgba($primary-yellow, 0.1) 0%, transparent 50%);
-    pointer-events: none;
-  }
-
-  .wrap { @include container(1100px); position: relative; z-index: 1; }
-
-  .heroContent {
-    h1 {
-      font-family: $font-playfair;
-      font-size: clamp(2.5rem, 5vw, 4rem);
-      font-weight: 800;
-      color: $white;
-      margin: 0 0 $spacing-md 0;
-      letter-spacing: -0.02em;
-      line-height: 1.1;
-    }
-    p {
-      color: rgba($white, 0.95);
-      font-size: clamp(1.05rem, 1.8vw, 1.25rem);
-      max-width: 60ch;
-      line-height: 1.6;
-      margin: 0;
-    }
-  }
-
-  .heroDecor {
-    position: absolute;
-    right: 5%;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 200px; height: 200px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba($primary-yellow, 0.15) 0%, transparent 70%);
-    pointer-events: none;
+  @media (max-width: $breakpoint-tablet) {
+    padding: 0 $spacing-md;
   }
 }
 
-.wrap       { @include container(1100px); }
-.wrapNarrow { @include container(900px); }
+.h2Center {
+   font-family: $font-playfair;
+  font-weight: 700;
+  color: $primary-blue;
+  font-size: clamp(1.25rem, 2vw, 2rem);
+  text-align: start;
+}
 
-.sectionWhite { padding: clamp($spacing-xl, 6vw, $spacing-2xl) 0; background: $white; }
+.wrapNarrow {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 0 $spacing-lg;
 
-.sectionGray  {
+  @media (max-width: $breakpoint-tablet) {
+    padding: 0 $spacing-md;
+  }
+}
+
+.sectionWhite {
   padding: clamp($spacing-xl, 6vw, $spacing-2xl) 0;
-  background: linear-gradient(180deg, #fafbfc 0%, #f5f7fa 100%);
+  background: $white;
 }
 
-.sectionPromo {
-  padding: clamp($spacing-xl, 7vw, $spacing-2xl) 0;
-  background: none;
-  position: relative;
-
-  &::before {
-    content: '';
-    position: absolute; inset: 0;
-    pointer-events: none;
-  }
+.sectionHeader {
+  display: grid;
+  gap: $spacing-xs;
+  margin-bottom: $spacing-lg;
 }
-
-.sectionHeader { margin-bottom: $spacing-lg;  font-family: $font-playfair; }
 
 .sectionLabel {
   display: inline-flex;
+  width: fit-content;
   align-items: center;
   justify-content: center;
-  font-size: 0.85rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  text-align: center;
-  color: $primary-blue;
-  margin-bottom: $spacing-xs;
   padding: $spacing-xs $spacing-sm;
+  border-radius: 999px;
   background: rgba($primary-blue, 0.08);
-  border-radius: $border-radius-sm;
-   font-family: $font-normal;
+  border: 1px solid rgba($primary-blue, 0.12);
+  color: $primary-blue-dark;
+  font-family: $font-normal;
+  font-size: $font-size-small;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .h2 {
-  margin: $spacing-xs 0 $spacing-sm 0;
-  font-family: $font-playfair;
-  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
-  color: $primary-blue-dark;
-  letter-spacing: -.01em;
+   font-family: $font-playfair;
   font-weight: 700;
+  color: $primary-blue;
+  text-align: start;
+  font-size: clamp(1.25rem, 2vw, 2rem);
 }
-.h2Center { text-align: center; margin: $spacing-xs 0 $spacing-sm 0; @extend .h2; font-family: $font-playfair; }
 
-.lead { margin: 0; color: $gray; font-size: clamp(1.05rem, 1.6vw, 1.2rem); line-height: 1.7; }
-
-.pCenter {
-  margin: 0 auto;
-  color: $gray;
-  text-align: center;
-  max-width: 70ch;
-  font-size: clamp(0.7rem, 1.2vw, 0.9rem);
-  line-height: 1.7;
+.lead {
+  margin: 0;
   font-family: $font-normal;
+  color: rgba($dark-gray, 0.92);
+  font-size: $font-size-large;
+  line-height: 1.8;
+}
+
+.highlightGrid {
+  margin-top: $spacing-lg;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: $spacing-md;
+
+  @media (max-width: $breakpoint-desktop) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: $breakpoint-tablet) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.highlightCard {
+  border-radius: $border-radius-lg;
+  background: $white;
+  border: 1px solid rgba($primary-blue, 0.12);
+  box-shadow: $shadow-sm;
+  padding: $spacing-lg;
+  display: grid;
+  gap: 0.35rem;
+
+  transition: transform $transition-fast, box-shadow $transition-fast,
+    border-color $transition-fast;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-md;
+    border-color: rgba($primary-blue, 0.18);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+    &:hover {
+      transform: none;
+    }
+  }
+}
+
+.highlightLabel {
+  font-family: $font-normal;
+  font-size: $font-size-small;
+  color: rgba($gray, 0.95);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.highlightValue {
+  font-family: $font-title;
+  font-weight: 800;
+  color: $primary-blue-dark;
+  font-size: 1.05rem;
+  line-height: 1.2;
+}
+
+.highlightDesc {
+  font-family: $font-normal;
+  color: rgba($gray, 0.95);
+  font-size: $font-size-small;
+  line-height: 1.6;
 }
 
 .bandBlue {
+  padding: clamp($spacing-xl, 7vw, $spacing-2xl) 0;
   background: $primary-blue;
   color: $white;
-  padding: clamp($spacing-xl, 7vw, $spacing-2xl) 0;
-  position: relative;
-  overflow: hidden;
-
-  .bandDecor {
-    position: absolute;
-    right: -100px; bottom: -100px;
-    width: 300px; height: 300px; border-radius: 50%;
-    background: radial-gradient(circle, rgba($primary-blue-lighter, 0.2) 0%, transparent 70%);
-    pointer-events: none;
-  }
-
-  .wrapSplit { @include container(1100px); @include split-grid; position: relative; z-index: 1; }
-
-  .bandTitle {
-    font-weight: 700; font-size: 1.1rem; letter-spacing: .02em; font-family: $font-normal;
-    text-transform: uppercase; color: rgba($white, .95);
-    display: inline-flex; align-items: center; gap: $spacing-sm;
-  }
-
-  .bandIcon { font-size: 1.5rem; display: inline-block; }
-
-  .bandText {
-    p {
-      font-family: $font-normal;
-      margin: 0 0 $spacing-md 0;
-      color: rgba($white, .95);
-      line-height: 1.75;
-      font-size: 0.95rem;
-    }
-    p:last-child { margin-bottom: 0; }
-  }
 }
 
 .bandBlueWithImage {
+  padding: clamp($spacing-xl, 7vw, $spacing-2xl) 0;
   background: $primary-blue-dark;
   color: $white;
-  padding: clamp($spacing-xl, 7vw, $spacing-2xl) 0;
-  position: relative;
+}
 
-  .wrapSplit { @include container(1100px); @include split-grid; margin-bottom: $spacing-xl; }
+.bandGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: $spacing-xl;
+  align-items: start;
 
-  .bandTitle {
-    font-weight: 700; font-size: 1.1rem; letter-spacing: .02em;
-    text-transform: uppercase; color: rgba($white, .95);
-    display: inline-flex; align-items: center; gap: $spacing-sm; font-family: $font-normal;
+  @media (max-width: $breakpoint-tablet) {
+    grid-template-columns: 1fr;
+    gap: $spacing-md;
+  }
+}
+
+.visionGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr) minmax(260px, 0.9fr);
+  gap: $spacing-xl;
+  align-items: center;
+
+  @media (max-width: $breakpoint-desktop) {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    .visionImage {
+      display: none;
+    }
   }
 
-  .bandIcon { font-size: 1.5rem; display: inline-block; }
-
-  .bandText {
-    p {
-      margin: 0 0 $spacing-md 0;
-      color: rgba($white, .95);
-      line-height: 1.75;
-      font-family: $font-normal;
-      font-size: 0.95rem;
+  @media (max-width: $breakpoint-tablet) {
+    grid-template-columns: 1fr;
+    gap: $spacing-md;
+    .visionImage {
+      display: none;
     }
-    p:last-child { margin-bottom: 0; }
   }
+}
 
-  .visionImage {
-    @include container(1100px);
+.bandAside {
+  display: grid;
+  gap: $spacing-xs;
+}
 
-    .imageWrapper {
-      position: relative;
-      border-radius: $border-radius-lg;
-      overflow: hidden;
-      box-shadow: $shadow-lg;
+.bandKicker {
+  font-family: $font-normal;
+  font-size: $font-size-small;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba($white, 0.85);
+}
 
-      &::after {
-        content: '';
-        position: absolute; inset: 0;
-        border: 1px solid rgba($white, 0.2);
-        border-radius: $border-radius-lg;
-        pointer-events: none;
-      }
+.bandHeading {
+  margin: 0;
+  font-family: $font-title;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: $white;
+  font-size: clamp(1.2rem, 2.2vw, 1.6rem);
+  line-height: 1.15;
+}
 
-      img {
-        width: 100%; height: auto; display: block;
-        transition: transform $transition-slow;
-      }
-      &:hover img { transform: scale(1.05); }
-    }
+.bandBody {
+  display: grid;
+  gap: $spacing-md;
+
+  p {
+    margin: 0;
+    font-family: $font-normal;
+    color: rgba($white, 0.92);
+    line-height: 1.8;
+    font-size: $font-size-base;
+  }
+}
+
+.visionImage {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.imageWrapper {
+  width: 100%;
+  border-radius: $border-radius-lg;
+  overflow: hidden;
+  border: 1px solid rgba($white, 0.18);
+  box-shadow: $shadow-lg;
+  background: rgba(0, 0, 0, 0.2);
+
+  img {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
   }
 }
 
 .valuesGrid {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: $spacing-lg;
   margin-top: $spacing-lg;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: $spacing-md;
+
+  @media (max-width: $breakpoint-desktop) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: $breakpoint-tablet) {
+    grid-template-columns: 1fr;
+  }
 }
 
 .valueCard {
-  background: linear-gradient(135deg, $white 0%, rgba($light-blue, 0.3) 100%);
-  border-radius: $border-radius-md;
-  padding: $spacing-lg;
-  max-width: 300px;
-  text-align: center;
-  border: 1px solid rgba($primary-blue, 0.1);
-  box-shadow: $shadow-sm;
-  transition: all $transition-normal;
-
-  &:hover { transform: translateY(-4px); box-shadow: $shadow-lg; border-color: $primary-blue; }
-
-  .valueIcon { font-size: 2.5rem; margin-bottom: $spacing-sm; }
-
-  h3 {
-    font-family: $font-normal;
-    font-size: $font-size-large;
-    font-weight: 600;
-    color: $primary-blue-dark;
-    margin: 0 0 $spacing-xs 0;
-  }
-
-  p { color: $gray; font-size: 0.95rem; line-height: 1.6; margin: 0;  font-size: $font-size-small; }
-}
-
-.infoGrid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $spacing-xl;
-  margin-top: $spacing-md;
-  > * { flex: 1 1 320px; min-width: 320px; }
-}
-
-.infoCard {
-  background: $white;
   border-radius: $border-radius-lg;
-  padding: $spacing-xl;
-  border-top: 4px solid $primary-blue;
-  box-shadow: $shadow-md;
-  transition: all $transition-normal;
+  background: $white;
+  border: 1px solid rgba($primary-blue, 0.12);
+  box-shadow: $shadow-sm;
+  padding: $spacing-lg;
+  display: grid;
+  gap: $spacing-sm;
+  text-align: left;
 
-  &:hover { transform: translateY(-4px); box-shadow: $shadow-lg; }
-  &:nth-child(2) { border-top-color: $primary-teal; }
-}
+  transition: transform $transition-fast, box-shadow $transition-fast,
+    border-color $transition-fast;
 
-.infoCardHeader {
-  display: flex; align-items: center; justify-content: center; gap: $spacing-md; margin-bottom: $spacing-md;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-md;
+    border-color: rgba($primary-blue, 0.18);
+  }
 
-  .infoIcon { font-size: 2rem; flex-shrink: 0; }
-  h2 {
-    font-family: $font-playfair;
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: $primary-blue-dark;
-    margin: 0;
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+    &:hover {
+      transform: none;
+    }
   }
 }
 
-.infoCard p { color: $gray; line-height: 1.7; margin: 0; font-size: 1rem; text-align: center;  font-family: $font-normal;}
+.valueIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba($primary-blue, 0.14);
+  background: rgba($primary-blue, 0.06);
+  color: $primary-blue-dark;
 
-@media (max-width: $breakpoint-desktop) {
-  .bandBlue .wrapSplit,
-  .bandBlueWithImage .wrapSplit { flex-direction: column; gap: $spacing-md; }
-  .bandBlue .wrapSplit > *:first-child,
-  .bandBlueWithImage .wrapSplit > *:first-child { flex-basis: auto; }
-  .valuesGrid { gap: $spacing-md; }
+  svg {
+    width: 18px;
+    height: 18px;
+  }
 }
 
-@media (max-width: $breakpoint-tablet) {
-  .wrap, .wrapNarrow { padding: 0 $spacing-md; }
-  .hero { padding: $spacing-xxl $spacing-md $spacing-xl; .heroDecor { display: none; } }
-  .infoGrid { gap: $spacing-lg; }
-  .infoGrid > * { flex-basis: 100%; min-width: 0; }
-  .valuesGrid { gap: $spacing-md; }
-  .valuesGrid > * { flex-basis: 100%; min-width: 0; }
+.valueTitle {
+  margin: 0;
+  font-family: $font-title;
+  font-weight: 800;
+  color: $primary-blue-dark;
+  font-size: 1.05rem;
+  line-height: 1.2;
+}
+
+.valueText {
+  margin: 0;
+  font-family: $font-normal;
+  color: rgba($gray, 0.95);
+  font-size: $font-size-small;
+  line-height: 1.65;
+}
+
+.warm .valueIcon {
+  background: rgba($primary-yellow, 0.45);
+  border-color: rgba($primary-yellow, 0.7);
+  color: $primary-blue-dark;
+}
+
+.cool .valueIcon {
+  background: rgba($primary-blue, 0.08);
+  border-color: rgba($primary-blue, 0.18);
+  color: $primary-blue-dark;
 }

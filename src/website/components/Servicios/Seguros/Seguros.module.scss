@@ -126,5 +126,8 @@
 
 @media (max-width: $breakpoint-mobile) {
   .wrapper { padding: $spacing-lg $spacing-md; }
-  .kpi { padding: $spacing-md $spacing-lg; }
+  .kpi { width: 90%; padding: $spacing-md $spacing-lg; }
+  img {
+    width: 200px;
+  }
 }
