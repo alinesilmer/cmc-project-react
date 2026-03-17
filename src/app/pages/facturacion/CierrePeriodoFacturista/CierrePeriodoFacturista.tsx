@@ -1,14 +1,25 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import {
   ArrowLeft,
-  Filter,
+  Building2,
+  ChevronDown,
   FileText,
-  Upload,
-  Save,
-  AlertTriangle,
+  Filter,
   Lock,
+  Save,
   Search,
+  Upload,
+  AlertTriangle,
+  X,
 } from "lucide-react";
 import styles from "./CierrePeriodoFacturista.module.scss";
 
@@ -19,6 +30,7 @@ type SocialWorkOption = {
   name: string;
   cuit: string;
   tipoFactura: string;
+  searchText: string;
 };
 
 type PeriodInfo = {
@@ -35,9 +47,65 @@ type PeriodInfo = {
   nroFacturaHasta: string;
 };
 
-const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024;
+type SearchableOption = {
+  id: string;
+  primary: string;
+  secondary?: string;
+  meta?: string;
+  searchText: string;
+};
 
-const sanitizeInteger = (value: string) => value.replace(/\D/g, "").slice(0, 12);
+type SearchableSelectProps = {
+  inputId: string;
+  label: string;
+  placeholder: string;
+  searchPlaceholder: string;
+  emptyMessage: string;
+  loadingMessage: string;
+  helperText?: string;
+  disabled?: boolean;
+  loading?: boolean;
+  error?: string | null;
+  isOpen: boolean;
+  setIsOpen: (next: boolean) => void;
+  query: string;
+  onQueryChange: (value: string) => void;
+  options: SearchableOption[];
+  selected: SearchableOption | null;
+  onSelect: (option: SearchableOption) => void;
+  onClear?: () => void;
+  resultsText?: string;
+};
+
+const API_BASE =
+  (import.meta as any).env?.VITE_API_URL?.toString?.() ||
+  (import.meta as any).env?.VITE_API_BASE?.toString?.() ||
+  "/api";
+
+const ENDPOINTS = {
+  obrasSociales: `${API_BASE}/api/obras_social/`,
+};
+
+const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024;
+const MAX_IDLE_OS_RESULTS = 80;
+
+const cx = (...classes: Array<string | false | null | undefined>) =>
+  classes.filter(Boolean).join(" ");
+
+const normalize = (value: string) =>
+  value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+
+const safeStr = (value: unknown) => {
+  if (value === null || value === undefined) return "";
+  return String(value);
+};
+
+const sanitizeInteger = (value: string) =>
+  value.replace(/\D/g, "").slice(0, 12);
 
 const formatCurrency = (value: number) =>
   value.toLocaleString("es-AR", {
@@ -54,72 +122,51 @@ const formatDisplayDate = (isoDate: string) => {
   return date.toLocaleDateString("es-AR");
 };
 
-/**
- * TODO backend:
- * Reemplazar por endpoint real.
- *
- * Recomendado por performance:
- * exponer un endpoint único que reemplace el viejo:
- * SELECT * FROM obras_sociales ORDER BY OBRA_SOCIAL ASC
- *
- * Debe devolver:
- * - NRO_OBRASOCIAL
- * - OBRA_SOCIAL
- * - CUIT
- * - TIPO_FACT
- */
+const mapObraSocialRawToOption = (raw: any): SocialWorkOption => {
+  const code = safeStr(
+    raw?.NRO_OBRA_SOCIAL ??
+      raw?.NRO_OBRASOCIAL ??
+      raw?.nro_obra_social ??
+      raw?.nro_obrasocial
+  ).trim();
+
+  const name = safeStr(
+    raw?.NOMBRE ?? raw?.OBRA_SOCIAL ?? raw?.obra_social ?? raw?.nombre
+  ).trim();
+
+  const cuit = safeStr(raw?.CUIT ?? raw?.cuit).trim();
+  const tipoFactura = safeStr(
+    raw?.TIPO_FACT ?? raw?.TIPO_FACTURA ?? raw?.tipo_fact ?? raw?.tipoFactura
+  ).trim();
+
+  return {
+    code,
+    name,
+    cuit,
+    tipoFactura,
+    searchText: normalize(`${code} ${name} ${cuit} ${tipoFactura}`),
+  };
+};
+
 const fetchSocialWorks = async (
   signal?: AbortSignal
 ): Promise<SocialWorkOption[]> => {
-  // Ejemplo sugerido:
-  // const res = await fetch("/api/facturacion/obras-sociales", { signal, credentials: "include" });
-  // if (!res.ok) throw new Error("No se pudo cargar la lista de obras sociales");
-  // return res.json();
+  const { data } = await axios.get(ENDPOINTS.obrasSociales, {
+    signal,
+    timeout: 20_000,
+  } as any);
 
-  await new Promise((resolve) => setTimeout(resolve, 250));
+  const array = Array.isArray(data) ? data : [];
 
-  if (signal?.aborted) {
-    throw new DOMException("Aborted", "AbortError");
-  }
-
-  return [
-    {
-      code: "151",
-      name: "OSDEL PODER JUDICIAL",
-      cuit: "30636196858",
-      tipoFactura: "B",
-    },
-    {
-      code: "137",
-      name: "ASOCIACION MUTUAL SANCOR",
-      cuit: "30712345678",
-      tipoFactura: "B",
-    },
-    {
-      code: "304",
-      name: "IOSCOR",
-      cuit: "30999888777",
-      tipoFactura: "B",
-    },
-    {
-      code: "411",
-      name: "OMINT",
-      cuit: "30555111222",
-      tipoFactura: "A",
-    },
-  ];
+  return array
+    .map(mapObraSocialRawToOption)
+    .filter((item) => item.code && item.name)
+    .sort((a, b) => a.name.localeCompare(b.name, "es"));
 };
 
 /**
  * TODO backend:
  * Reemplazar por endpoint real que traiga el período abierto de la obra social.
- *
- * Ideal por performance y simplicidad:
- * combinar en un solo endpoint lo que en legacy hoy sale de:
- * - periodos WHERE CERRADO='A' AND NRO_OBRA_SOCIAL=...
- * - obras_sociales WHERE NRO_OBRASOCIAL=...
- *
- * Debe validar permisos y devolver null si no hay período abierto.
  */
 const fetchOpenPeriodBySocialWork = async (
   socialWorkCode: string,
@@ -144,8 +191,8 @@ const fetchOpenPeriodBySocialWork = async (
     obraSocialNombre: selected.name,
     periodo: "2 - 2026",
     estado: "ABIERTO",
-    tipoFactura: selected.tipoFactura,
-    cuit: selected.cuit,
+    tipoFactura: selected.tipoFactura || "B",
+    cuit: selected.cuit || "—",
     fechaApertura: "2026-02-06",
     totalAcumulado: 42059901.66,
     nroFacturaDesde: "0",
@@ -156,11 +203,6 @@ const fetchOpenPeriodBySocialWork = async (
 /**
  * TODO backend:
  * POST real para guardar rango de factura.
- * Debe revalidar:
- * - que el período siga abierto
- * - que el usuario tenga permisos
- * - que el rango sea válido
- * - que no exista colisión de numeración
  */
 const saveInvoiceRangeRequest = async (_payload: {
   periodId: string;
@@ -174,11 +216,6 @@ const saveInvoiceRangeRequest = async (_payload: {
 /**
  * TODO backend:
  * Subir PDF usando FormData + HTTPS.
- * Validar del lado servidor:
- * - autenticación
- * - MIME real
- * - tamaño
- * - asociación correcta al período
  */
 const uploadInvoicePdfRequest = async (_payload: {
   periodId: string;
@@ -191,10 +228,6 @@ const uploadInvoicePdfRequest = async (_payload: {
 /**
  * TODO backend:
  * Acción crítica.
- * Debe cerrar el período sólo si:
- * - sigue abierto
- * - el usuario tiene permisos
- * - el estado del proceso permite el cierre
  */
 const closePeriodRequest = async (_payload: {
   periodId: string;
@@ -203,14 +236,230 @@ const closePeriodRequest = async (_payload: {
   await new Promise((resolve) => setTimeout(resolve, 500));
 };
 
+function SearchableSelect({
+  inputId,
+  label,
+  placeholder,
+  searchPlaceholder,
+  emptyMessage,
+  loadingMessage,
+  helperText,
+  disabled = false,
+  loading = false,
+  error = null,
+  isOpen,
+  setIsOpen,
+  query,
+  onQueryChange,
+  options,
+  selected,
+  onSelect,
+  onClear,
+  resultsText,
+}: SearchableSelectProps) {
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    searchInputRef.current?.focus();
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (!rootRef.current) return;
+      if (!rootRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [isOpen, setIsOpen]);
+
+  const hasClear = Boolean(selected || query.trim());
+
+  return (
+    <div className={styles.fieldGroup}>
+      <label htmlFor={inputId} className={styles.label}>
+        {label}
+      </label>
+
+      <div
+        ref={rootRef}
+        className={cx(
+          styles.combobox,
+          isOpen && styles.comboboxOpen,
+          disabled && styles.comboboxDisabled
+        )}
+      >
+        <div className={styles.comboboxControl}>
+          <button
+            id={inputId}
+            type="button"
+            className={cx(styles.comboboxButton, selected && styles.comboboxFilled)}
+            onClick={() => {
+              if (!disabled) {
+                setIsOpen(!isOpen);
+              }
+            }}
+            aria-expanded={isOpen}
+            aria-haspopup="listbox"
+            aria-controls={`${inputId}-listbox`}
+            disabled={disabled}
+          >
+            <span className={styles.comboboxMain}>
+              <span className={styles.comboboxIcon}>
+                <Building2 size={18} />
+              </span>
+
+              <span className={styles.comboboxText}>
+                <span
+                  className={cx(
+                    styles.comboboxValue,
+                    !selected && styles.comboboxPlaceholder
+                  )}
+                >
+                  {selected ? selected.primary : placeholder}
+                </span>
+
+                <span className={styles.comboboxMeta}>
+                  {selected
+                    ? [selected.secondary, selected.meta].filter(Boolean).join(" • ")
+                    : helperText || "Seleccioná una opción"}
+                </span>
+              </span>
+            </span>
+
+            <span className={styles.comboboxActions}>
+              <ChevronDown
+                size={18}
+                className={cx(styles.chevron, isOpen && styles.chevronOpen)}
+              />
+            </span>
+          </button>
+
+          {hasClear && onClear ? (
+            <button
+              type="button"
+              className={styles.clearIconButton}
+              onClick={onClear}
+              aria-label={`Limpiar ${label}`}
+              title={`Limpiar ${label}`}
+            >
+              <X size={15} />
+            </button>
+          ) : null}
+        </div>
+
+        {isOpen ? (
+          <div className={styles.dropdown}>
+            <div className={styles.dropdownSearch}>
+              <Search className={styles.dropdownSearchIcon} size={16} />
+              <input
+                ref={searchInputRef}
+                className={styles.dropdownInput}
+                value={query}
+                onChange={(event) => onQueryChange(event.target.value)}
+                placeholder={searchPlaceholder}
+                inputMode="search"
+                autoComplete="off"
+              />
+            </div>
+
+            <div className={styles.dropdownMetaBar}>
+              {loading ? (
+                <span>{loadingMessage}</span>
+              ) : error ? (
+                <span>{error}</span>
+              ) : (
+                <span>{resultsText ?? `${options.length} resultado(s)`}</span>
+              )}
+            </div>
+
+            <div
+              id={`${inputId}-listbox`}
+              className={styles.dropdownList}
+              role="listbox"
+            >
+              {loading ? (
+                <div className={styles.dropdownEmpty}>{loadingMessage}</div>
+              ) : error ? (
+                <div className={styles.dropdownError}>{error}</div>
+              ) : options.length === 0 ? (
+                <div className={styles.dropdownEmpty}>{emptyMessage}</div>
+              ) : (
+                options.map((option) => {
+                  const active = selected?.id === option.id;
+
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      role="option"
+                      aria-selected={active}
+                      className={cx(
+                        styles.dropdownItem,
+                        active && styles.dropdownItemActive
+                      )}
+                      onClick={() => {
+                        onSelect(option);
+                        setIsOpen(false);
+                      }}
+                    >
+                      <span className={styles.dropdownItemPrimary}>
+                        {option.primary}
+                      </span>
+                      {(option.secondary || option.meta) && (
+                        <span className={styles.dropdownItemSecondary}>
+                          {[option.secondary, option.meta]
+                            .filter(Boolean)
+                            .join(" • ")}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      <span className={styles.helperText}>
+        {loading ? loadingMessage : error ? error : helperText}
+      </span>
+    </div>
+  );
+}
+
 const CierrePeriodoFacturista = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const filterAbortRef = useRef<AbortController | null>(null);
 
   const [socialWorks, setSocialWorks] = useState<SocialWorkOption[]>([]);
   const [isLoadingSocialWorks, setIsLoadingSocialWorks] = useState(true);
+  const [socialWorksError, setSocialWorksError] = useState<string | null>(null);
 
-  const [socialWorkInput, setSocialWorkInput] = useState("");
+  const [selectedSocialWork, setSelectedSocialWork] =
+    useState<SocialWorkOption | null>(null);
+  const [socialWorkOpen, setSocialWorkOpen] = useState(false);
+  const [socialWorkQuery, setSocialWorkQuery] = useState("");
+
   const [periodInfo, setPeriodInfo] = useState<PeriodInfo | null>(null);
 
   const [invoiceFrom, setInvoiceFrom] = useState("");
@@ -225,26 +474,29 @@ const CierrePeriodoFacturista = () => {
   const [isUploadingPdf, setIsUploadingPdf] = useState(false);
   const [isClosingPeriod, setIsClosingPeriod] = useState(false);
 
+  const deferredSocialWorkQuery = useDeferredValue(socialWorkQuery);
+
   useEffect(() => {
     const controller = new AbortController();
 
     const loadSocialWorks = async () => {
       try {
         setIsLoadingSocialWorks(true);
+        setSocialWorksError(null);
 
         const data = await fetchSocialWorks(controller.signal);
-        setSocialWorks(data);
+        if (controller.signal.aborted) return;
 
-        // UX: si hay datos, precargar el primer código para que el usuario parta de algo.
-        if (data.length > 0) {
-          setSocialWorkInput(data[0].code);
-        }
+        setSocialWorks(data);
       } catch (error) {
         if ((error as Error).name !== "AbortError") {
           setSocialWorks([]);
+          setSocialWorksError("No se pudieron cargar las obras sociales.");
         }
       } finally {
-        setIsLoadingSocialWorks(false);
+        if (!controller.signal.aborted) {
+          setIsLoadingSocialWorks(false);
+        }
       }
     };
 
@@ -253,10 +505,71 @@ const CierrePeriodoFacturista = () => {
     return () => controller.abort();
   }, []);
 
-  const matchedSocialWork = useMemo(() => {
-    const normalized = socialWorkInput.trim();
-    return socialWorks.find((item) => item.code === normalized) ?? null;
-  }, [socialWorks, socialWorkInput]);
+  useEffect(() => {
+    return () => {
+      filterAbortRef.current?.abort();
+    };
+  }, []);
+
+  const socialWorkOptions = useMemo<SearchableOption[]>(
+    () =>
+      socialWorks.map((item) => ({
+        id: item.code,
+        primary: item.name,
+        secondary: item.code ? `Código ${item.code}` : undefined,
+        meta: [item.cuit && `CUIT ${item.cuit}`, item.tipoFactura && `Factura ${item.tipoFactura}`]
+          .filter(Boolean)
+          .join(" • "),
+        searchText: item.searchText,
+      })),
+    [socialWorks]
+  );
+
+  const selectedSocialWorkOption = useMemo<SearchableOption | null>(() => {
+    if (!selectedSocialWork) return null;
+
+    return {
+      id: selectedSocialWork.code,
+      primary: selectedSocialWork.name,
+      secondary: selectedSocialWork.code
+        ? `Código ${selectedSocialWork.code}`
+        : undefined,
+      meta: [
+        selectedSocialWork.cuit && `CUIT ${selectedSocialWork.cuit}`,
+        selectedSocialWork.tipoFactura &&
+          `Factura ${selectedSocialWork.tipoFactura}`,
+      ]
+        .filter(Boolean)
+        .join(" • "),
+      searchText: selectedSocialWork.searchText,
+    };
+  }, [selectedSocialWork]);
+
+  const filteredSocialWorkOptions = useMemo(() => {
+    const query = normalize(deferredSocialWorkQuery);
+
+    if (!query) {
+      return socialWorkOptions.slice(0, MAX_IDLE_OS_RESULTS);
+    }
+
+    return socialWorkOptions.filter((option) =>
+      option.searchText.includes(query)
+    );
+  }, [deferredSocialWorkQuery, socialWorkOptions]);
+
+  const socialWorkResultsText = useMemo(() => {
+    const query = normalize(deferredSocialWorkQuery);
+
+    if (!query && socialWorkOptions.length > filteredSocialWorkOptions.length) {
+      return `Mostrando ${filteredSocialWorkOptions.length} de ${socialWorkOptions.length}. Escribí para filtrar más.`;
+    }
+
+    return `${filteredSocialWorkOptions.length} resultado(s)`;
+  }, [
+    deferredSocialWorkQuery,
+    filteredSocialWorkOptions.length,
+    socialWorkOptions.length,
+  ]);
 
   const isLocked = periodInfo?.estado === "CERRADO";
 
@@ -274,18 +587,43 @@ const CierrePeriodoFacturista = () => {
     navigate(-1);
   }, [navigate]);
 
-  const handleFilter = useCallback(async () => {
-    const code = socialWorkInput.trim();
+  const handleSelectSocialWork = useCallback(
+    (option: SearchableOption) => {
+      const next = socialWorks.find((item) => item.code === option.id) ?? null;
 
-    if (!code || isFiltering) {
-      return;
-    }
-
-    if (!matchedSocialWork) {
-      setFilterError("Seleccioná una obra social válida desde la lista.");
+      setSelectedSocialWork(next);
+      setSocialWorkQuery("");
+      setFilterError("");
+      setFileError("");
+      setSelectedPdf(null);
       setPeriodInfo(null);
+      setInvoiceFrom("");
+      setInvoiceTo("");
+    },
+    [socialWorks]
+  );
+
+  const handleClearSocialWork = useCallback(() => {
+    filterAbortRef.current?.abort();
+    setSelectedSocialWork(null);
+    setSocialWorkQuery("");
+    setSocialWorkOpen(false);
+    setFilterError("");
+    setFileError("");
+    setSelectedPdf(null);
+    setPeriodInfo(null);
+    setInvoiceFrom("");
+    setInvoiceTo("");
+  }, []);
+
+  const handleFilter = useCallback(async () => {
+    if (!selectedSocialWork || isFiltering) {
       return;
     }
+
+    filterAbortRef.current?.abort();
+    const controller = new AbortController();
+    filterAbortRef.current = controller;
 
     setFilterError("");
     setSelectedPdf(null);
@@ -294,7 +632,13 @@ const CierrePeriodoFacturista = () => {
     try {
       setIsFiltering(true);
 
-      const data = await fetchOpenPeriodBySocialWork(code, socialWorks);
+      const data = await fetchOpenPeriodBySocialWork(
+        selectedSocialWork.code,
+        socialWorks,
+        controller.signal
+      );
+
+      if (controller.signal.aborted) return;
 
       if (!data) {
         setPeriodInfo(null);
@@ -307,18 +651,22 @@ const CierrePeriodoFacturista = () => {
       setPeriodInfo(data);
       setInvoiceFrom(data.nroFacturaDesde);
       setInvoiceTo(data.nroFacturaHasta);
+    } catch (error) {
+      if ((error as Error).name !== "AbortError") {
+        setPeriodInfo(null);
+        setInvoiceFrom("");
+        setInvoiceTo("");
+        setFilterError("No se pudo consultar el período abierto.");
+      }
     } finally {
-      setIsFiltering(false);
+      if (filterAbortRef.current === controller) {
+        filterAbortRef.current = null;
+      }
+      if (!controller.signal.aborted) {
+        setIsFiltering(false);
+      }
     }
-  }, [isFiltering, matchedSocialWork, socialWorkInput, socialWorks]);
-
-  const handleSocialWorkInputChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setSocialWorkInput(sanitizeInteger(event.target.value).slice(0, 6));
-      setFilterError("");
-    },
-    []
-  );
+  }, [isFiltering, selectedSocialWork, socialWorks]);
 
   const handleInvoiceFromChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -359,7 +707,6 @@ const CierrePeriodoFacturista = () => {
         return;
       }
 
-      // Seguridad: esto mejora UX, pero el backend debe validar nuevamente todo.
       setSelectedPdf(nextFile);
     },
     []
@@ -470,53 +817,54 @@ const CierrePeriodoFacturista = () => {
             <ArrowLeft size={18} />
             <span>Volver</span>
           </button>
+
+          {selectedSocialWork ? (
+            <div className={styles.selectedBadge}>
+              <Building2 size={16} />
+              <span>{selectedSocialWork.name}</span>
+            </div>
+          ) : null}
         </div>
 
         <div className={styles.filterGrid}>
           <div className={styles.filterMain}>
             <div className={styles.formRow}>
-              <div className={styles.fieldGroup}>
-                <label className={styles.label} htmlFor="socialWorkCode">
-                  Obra social
-                </label>
-                <div className={styles.inputIconWrap}>
-                  <Search size={18} className={styles.inputIcon} />
-                  <input
-                    id="socialWorkCode"
-                    list="socialWorksList"
-                    className={styles.input}
-                    value={socialWorkInput}
-                    onChange={handleSocialWorkInputChange}
-                    placeholder="Código de obra social"
-                    inputMode="numeric"
-                    autoComplete="off"
-                    disabled={isLoadingSocialWorks || isFiltering}
-                  />
-                </div>
-
-                <datalist id="socialWorksList">
-                  {socialWorks.map((item) => (
-                    <option key={item.code} value={item.code}>
-                      {item.name}
-                    </option>
-                  ))}
-                </datalist>
-
-                <span className={styles.helperText}>
-                  {isLoadingSocialWorks
-                    ? "Cargando obras sociales..."
-                    : matchedSocialWork
-                    ? matchedSocialWork.name
-                    : "Escribí o elegí un código válido desde la lista."}
-                </span>
-              </div>
+              <SearchableSelect
+                inputId="socialWorkCode"
+                label="Obra social"
+                placeholder="Seleccioná una obra social"
+                searchPlaceholder="Buscar por nombre, código, CUIT o tipo…"
+                emptyMessage={
+                  socialWorkQuery.trim()
+                    ? `Sin resultados para "${socialWorkQuery}"`
+                    : "No hay obras sociales disponibles"
+                }
+                loadingMessage="Cargando obras sociales..."
+                helperText={
+                  selectedSocialWork
+                    ? `Código ${selectedSocialWork.code}`
+                    : "Elegí una obra social desde la base de datos."
+                }
+                disabled={isLoadingSocialWorks || isFiltering}
+                loading={isLoadingSocialWorks}
+                error={socialWorksError}
+                isOpen={socialWorkOpen}
+                setIsOpen={setSocialWorkOpen}
+                query={socialWorkQuery}
+                onQueryChange={setSocialWorkQuery}
+                options={filteredSocialWorkOptions}
+                selected={selectedSocialWorkOption}
+                onSelect={handleSelectSocialWork}
+                onClear={handleClearSocialWork}
+                resultsText={socialWorkResultsText}
+              />
 
               <button
                 type="button"
                 className={styles.primaryButton}
                 onClick={handleFilter}
                 disabled={
-                  isLoadingSocialWorks || isFiltering || !socialWorkInput.trim()
+                  isLoadingSocialWorks || isFiltering || !selectedSocialWork
                 }
               >
                 <Filter size={18} />
@@ -533,14 +881,16 @@ const CierrePeriodoFacturista = () => {
             <div className={styles.sideInfoCard}>
               <span className={styles.sideInfoLabel}>CUIT</span>
               <strong className={styles.sideInfoValue}>
-                {periodInfo?.cuit || matchedSocialWork?.cuit || "—"}
+                {periodInfo?.cuit || selectedSocialWork?.cuit || "—"}
               </strong>
             </div>
 
             <div className={styles.sideInfoCard}>
               <span className={styles.sideInfoLabel}>Tipo factura</span>
               <strong className={styles.sideInfoValue}>
-                {periodInfo?.tipoFactura || matchedSocialWork?.tipoFactura || "—"}
+                {periodInfo?.tipoFactura ||
+                  selectedSocialWork?.tipoFactura ||
+                  "—"}
               </strong>
             </div>
           </div>
@@ -554,10 +904,6 @@ const CierrePeriodoFacturista = () => {
               <div className={styles.sectionHeader}>
                 <div className={styles.sectionHeaderText}>
                   <h2 className={styles.sectionTitle}>Contexto del período</h2>
-                  <p className={styles.sectionDescription}>
-                    Vista rápida del período abierto asociado a la obra social
-                    seleccionada.
-                  </p>
                 </div>
 
                 <span
@@ -605,10 +951,7 @@ const CierrePeriodoFacturista = () => {
             <div className={styles.sectionBlock}>
               <div className={styles.sectionHeaderText}>
                 <h2 className={styles.sectionTitle}>Números de factura</h2>
-                <p className={styles.sectionDescription}>
-                  Actualizá el rango a utilizar. El backend debe revalidar estado,
-                  unicidad y consistencia antes de guardar.
-                </p>
+               
               </div>
 
               <div className={styles.formLayout}>
@@ -672,10 +1015,7 @@ const CierrePeriodoFacturista = () => {
             <div className={styles.sectionBlock}>
               <div className={styles.sectionHeaderText}>
                 <h2 className={styles.sectionTitle}>PDF de factura</h2>
-                <p className={styles.sectionDescription}>
-                  Adjuntá el comprobante en PDF. El frontend filtra tipo y tamaño,
-                  pero el backend debe volver a validar el archivo.
-                </p>
+               
               </div>
 
               <input
@@ -694,7 +1034,9 @@ const CierrePeriodoFacturista = () => {
 
                   <div className={styles.fileTextBlock}>
                     <strong className={styles.fileName}>
-                      {selectedPdf ? selectedPdf.name : "Ningún archivo seleccionado"}
+                      {selectedPdf
+                        ? selectedPdf.name
+                        : "Ningún archivo seleccionado"}
                     </strong>
                     <span className={styles.fileMeta}>
                       {selectedPdf

@@ -4,7 +4,9 @@
   padding: $spacing-8;
   max-width: 1120px;
   margin: 0 auto;
-  background-color: $gray-50;
+  background:
+    radial-gradient(circle at top right, rgba($primary-blue, 0.04), transparent 24%),
+    $gray-50;
   min-height: 100vh;
 }
 
@@ -26,6 +28,7 @@
   font-size: $font-size-lg;
   color: $gray-600;
   line-height: 1.6;
+  max-width: 800px;
 }
 
 .filterCard,
@@ -46,8 +49,28 @@
 
 .filterTopRow {
   display: flex;
-  justify-content: flex-start;
+  justify-content: space-between;
+  align-items: center;
+  gap: $spacing-3;
   margin-bottom: $spacing-5;
+}
+
+.selectedBadge {
+  min-height: 38px;
+  padding: 0 $spacing-4;
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  border-radius: 999px;
+  background: rgba($primary-blue, 0.06);
+  color: $primary-blue-dark;
+  border: 1px solid rgba($primary-blue, 0.1);
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .filterGrid {
@@ -92,13 +115,17 @@
   padding: 0 $spacing-4;
   font-size: $font-size-base;
   color: $gray-900;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
   box-sizing: border-box;
 
   &:focus {
     outline: none;
     border-color: rgba($primary-blue, 0.5);
     box-shadow: 0 0 0 4px rgba($primary-blue, 0.08);
+    transform: translateY(-1px);
   }
 
   &:disabled {
@@ -107,28 +134,310 @@
   }
 }
 
-.inputIconWrap {
-  position: relative;
-  width: 100%;
-}
-
-.inputIcon {
-  position: absolute;
-  left: $spacing-4;
-  top: 50%;
-  transform: translateY(-50%);
-  color: $gray-500;
-  pointer-events: none;
-}
-
-.inputIconWrap .input {
-  padding-left: 46px;
-}
-
 .helperText {
   font-size: $font-size-sm;
   color: $gray-600;
   line-height: 1.5;
+}
+
+.combobox {
+  position: relative;
+}
+
+.comboboxOpen {
+  z-index: 18;
+}
+
+.comboboxDisabled {
+  opacity: 0.92;
+}
+
+.comboboxControl {
+  position: relative;
+}
+
+.comboboxButton {
+  width: 100%;
+  min-height: 54px;
+  border: 1px solid rgba($primary-blue, 0.15);
+  border-radius: $border-radius-lg;
+  background: $white;
+  padding: 0 52px 0 $spacing-4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease,
+    background-color 0.2s ease;
+
+  &:hover:not(:disabled) {
+    border-color: rgba($primary-blue, 0.26);
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: rgba($primary-blue, 0.5);
+    box-shadow: 0 0 0 4px rgba($primary-blue, 0.08);
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+.comboboxFilled {
+  background: linear-gradient(180deg, rgba($primary-blue, 0.02), $white);
+}
+
+.comboboxMain {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+}
+
+.comboboxIcon {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: rgba($primary-blue, 0.08);
+  color: $primary-blue;
+}
+
+.comboboxText {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+
+.comboboxValue {
+  color: $gray-900;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.comboboxPlaceholder {
+  color: $gray-400;
+  font-weight: $font-weight-medium;
+}
+
+.comboboxMeta {
+  color: $gray-500;
+  font-size: $font-size-sm;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.comboboxActions {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.clearIconButton {
+  position: absolute;
+  top: 50%;
+  right: 38px;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  background: rgba($gray-200, 0.8);
+  color: $gray-600;
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
+
+  &:hover {
+    background: rgba($gray-300, 0.95);
+    color: $gray-900;
+    transform: translateY(-50%) scale(1.03);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba($primary-blue, 0.12);
+  }
+}
+
+.chevron {
+  color: $gray-500;
+  transition: transform 0.2s ease;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.dropdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 10px);
+  overflow: hidden;
+  border-radius: 22px;
+  background: rgba($white, 0.98);
+  border: 1px solid rgba($primary-blue, 0.1);
+  box-shadow:
+    0 24px 40px rgba(15, 23, 42, 0.12),
+    0 8px 18px rgba(15, 23, 42, 0.05);
+  backdrop-filter: blur(12px);
+}
+
+.dropdownSearch {
+  position: relative;
+  padding: $spacing-3;
+  border-bottom: 1px solid rgba($gray-200, 0.9);
+}
+
+.dropdownSearchIcon {
+  position: absolute;
+  left: 26px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: $gray-400;
+  pointer-events: none;
+}
+
+.dropdownInput {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid rgba($gray-200, 0.95);
+  border-radius: 16px;
+  background: $gray-50;
+  padding: 0 $spacing-4 0 42px;
+  color: $gray-900;
+  font-size: $font-size-sm;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
+  box-sizing: border-box;
+
+  &::placeholder {
+    color: $gray-400;
+  }
+
+  &:focus {
+    outline: none;
+    background: $white;
+    border-color: rgba($primary-blue, 0.42);
+    box-shadow: 0 0 0 4px rgba($primary-blue, 0.08);
+  }
+}
+
+.dropdownMetaBar {
+  padding: 10px $spacing-4;
+  border-bottom: 1px solid rgba($gray-200, 0.75);
+  background: rgba($gray-50, 0.8);
+  color: $gray-500;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+}
+
+.dropdownList {
+  max-height: 280px;
+  overflow-y: auto;
+  padding: $spacing-2;
+
+  &::-webkit-scrollbar {
+    width: 7px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba($gray-300, 0.9);
+    border-radius: 999px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+.dropdownItem {
+  width: 100%;
+  border: none;
+  background: transparent;
+  border-radius: 16px;
+  padding: 12px $spacing-3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background-color 0.18s ease,
+    transform 0.18s ease;
+
+  &:hover {
+    background: rgba($primary-blue, 0.06);
+    transform: translateX(2px);
+  }
+
+  &:focus-visible {
+    outline: none;
+    background: rgba($primary-blue, 0.06);
+    box-shadow: inset 0 0 0 1px rgba($primary-blue, 0.18);
+  }
+}
+
+.dropdownItemActive {
+  background:
+    linear-gradient(180deg, rgba($primary-blue, 0.08), rgba($primary-blue, 0.04));
+  box-shadow: inset 0 0 0 1px rgba($primary-blue, 0.12);
+}
+
+.dropdownItemPrimary {
+  width: 100%;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  line-height: 1.35;
+}
+
+.dropdownItemSecondary {
+  width: 100%;
+  font-size: $font-size-xs;
+  line-height: 1.45;
+  color: $gray-500;
+}
+
+.dropdownEmpty,
+.dropdownError {
+  padding: $spacing-4;
+  font-size: $font-size-sm;
+  line-height: 1.6;
+}
+
+.dropdownEmpty {
+  color: $gray-500;
+}
+
+.dropdownError {
+  color: #dc2626;
 }
 
 .filterSideInfo {
@@ -141,7 +450,8 @@
   border: 1px solid rgba($gray-200, 0.9);
   border-radius: $border-radius-lg;
   padding: $spacing-4;
-  background-color: $gray-50;
+  background:
+    linear-gradient(180deg, rgba($gray-50, 0.96), rgba($white, 0.98));
 }
 
 .sideInfoLabel {
@@ -149,7 +459,7 @@
   margin-bottom: $spacing-2;
   font-size: $font-size-sm;
   font-weight: $font-weight-semibold;
-  color: $gray-600;
+  color: $primary-blue;
 }
 
 .sideInfoValue {
@@ -325,9 +635,9 @@
 .infoLabel {
   display: block;
   margin-bottom: $spacing-2;
-  font-size: $font-size-sm;
+  font-size: $font-size-base;
   font-weight: $font-weight-semibold;
-  color: $gray-600;
+  color: $primary-blue;
 }
 
 .infoValue {
@@ -603,7 +913,8 @@
 
   .sectionHeader,
   .dangerCard,
-  .totalCard {
+  .totalCard,
+  .filterTopRow {
     flex-direction: column;
     align-items: flex-start;
   }
@@ -614,6 +925,10 @@
 
   .totalValue {
     text-align: left;
+  }
+
+  .selectedBadge {
+    white-space: normal;
   }
 }
 
@@ -657,6 +972,38 @@
   .secondaryButton,
   .dangerButton {
     min-height: 46px;
+    font-size: $font-size-sm;
+  }
+
+  .comboboxButton {
+    min-height: 50px;
+    padding-left: $spacing-3;
+    padding-right: 46px;
+  }
+
+  .clearIconButton {
+    right: 34px;
+  }
+
+  .comboboxIcon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .comboboxValue {
+    font-size: $font-size-sm;
+  }
+
+  .comboboxMeta {
+    font-size: $font-size-xs;
+  }
+
+  .dropdown {
+    border-radius: 18px;
+  }
+
+  .dropdownInput {
+    min-height: 42px;
     font-size: $font-size-sm;
   }
 
