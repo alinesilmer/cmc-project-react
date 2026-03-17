@@ -13,10 +13,12 @@ import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 
 const RESUMEN_BY_ID = (id: string | number) => `/api/liquidacion/resumen/${id}`;
-const LIQ_MEDICO_LIST = (id: string | number) =>
-  `/api/liquidacion/resumen/${id}/liquidacion_medico`;
+const LIQ_MEDICO_LIST = (id: string | number, skip: number, limit: number) =>
+  `/api/liquidacion/resumen/${id}/liquidacion_medico?skip=${skip}&limit=${limit}`;
 const LIQ_MEDICO_GENERAR = (id: string | number) =>
   `/api/liquidacion/resumen/${id}/generar_liquidacion_medico`;
+
+const PAGE_SIZE = 50;
 
 type MedicoRow = {
   nro_socio: number | string;
@@ -27,6 +29,21 @@ type MedicoRow = {
   deducciones: number;
   neto_a_pagar: number;
   estado: string;
+};
+
+type ApiTotales = {
+  total_medicos: number;
+  total_bruto: string;
+  total_debitos: string;
+  total_creditos: string;
+  total_reconocido: string;
+  total_deducciones: string;
+  total_neto_a_pagar: string;
+};
+
+type MedicoListResponse = {
+  totales: ApiTotales;
+  items: any[];
 };
 
 type ResumenBasic = {
@@ -41,7 +58,7 @@ const fmt = (n: number | string | null | undefined) =>
 
 function parseMedico(raw: any): MedicoRow {
   return {
-    nro_socio: raw.nro_socio ?? raw.medico_id ?? raw.id ?? "—",
+    nro_socio: raw.medico_id ?? raw.nro_socio ?? raw.id ?? "—",
     bruto: Number(raw.bruto ?? 0),
     debitos: Number(raw.debitos ?? 0),
     creditos: Number(raw.creditos ?? 0),
@@ -58,8 +75,14 @@ const LiquidacionMedico: React.FC = () => {
 
   const [resumen, setResumen] = useState<ResumenBasic | null>(null);
   const [rows, setRows] = useState<MedicoRow[]>([]);
+  const [apiTotales, setApiTotales] = useState<ApiTotales | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Paginación
+  const [page, setPage] = useState(1);
+  const totalMedicos = apiTotales?.total_medicos ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalMedicos / PAGE_SIZE));
 
   // Modal confirmar generar
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -67,17 +90,19 @@ const LiquidacionMedico: React.FC = () => {
   const [genResult, setGenResult] = useState<{ total_medicos: number } | null>(null);
   const [genError, setGenError] = useState<string | null>(null);
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (currentPage: number) => {
     if (!id) return;
     setLoading(true);
     setError(null);
+    const skip = (currentPage - 1) * PAGE_SIZE;
     try {
       const [resumenData, medicoData] = await Promise.all([
         getJSON<ResumenBasic>(RESUMEN_BY_ID(id)),
-        getJSON<any[]>(LIQ_MEDICO_LIST(id)),
+        getJSON<MedicoListResponse>(LIQ_MEDICO_LIST(id, skip, PAGE_SIZE)),
       ]);
       setResumen(resumenData);
-      setRows((medicoData ?? []).map(parseMedico));
+      setApiTotales(medicoData.totales);
+      setRows((medicoData.items ?? []).map(parseMedico));
     } catch (e: any) {
       setError(e?.message || "No se pudo cargar la liquidación médica.");
     } finally {
@@ -86,8 +111,13 @@ const LiquidacionMedico: React.FC = () => {
   }, [id]);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    loadData(page);
+  }, [loadData, page]);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages) return;
+    setPage(newPage);
+  };
 
   const handleGenerar = async () => {
     if (!id) return;
@@ -96,7 +126,8 @@ const LiquidacionMedico: React.FC = () => {
     try {
       const result = await postJSON<{ total_medicos: number }>(LIQ_MEDICO_GENERAR(id));
       setGenResult(result);
-      await loadData();
+      setPage(1);
+      await loadData(1);
     } catch (e: any) {
       setGenError(e?.message || "No se pudo generar la liquidación médica.");
     } finally {
@@ -131,18 +162,6 @@ const LiquidacionMedico: React.FC = () => {
   const periodTitle = resumen
     ? `${resumen.anio}-${String(resumen.mes).padStart(2, "0")}`
     : "—";
-
-  const totals = rows.reduce(
-    (acc, r) => ({
-      bruto: acc.bruto + r.bruto,
-      debitos: acc.debitos + r.debitos,
-      creditos: acc.creditos + r.creditos,
-      reconocido: acc.reconocido + r.reconocido,
-      deducciones: acc.deducciones + r.deducciones,
-      neto_a_pagar: acc.neto_a_pagar + r.neto_a_pagar,
-    }),
-    { bruto: 0, debitos: 0, creditos: 0, reconocido: 0, deducciones: 0, neto_a_pagar: 0 }
-  );
 
   return (
     <div className={styles.page}>
@@ -228,22 +247,73 @@ const LiquidacionMedico: React.FC = () => {
                         </tr>
                       ))}
                     </tbody>
-                    {rows.length > 0 && (
+                    {apiTotales && rows.length > 0 && (
                       <tfoot>
                         <tr className={styles.totalsRow}>
-                          <td><strong>TOTAL</strong></td>
-                          <td className={styles.numCell}><strong>${fmt(totals.bruto)}</strong></td>
-                          <td className={styles.numCell}><strong>-${fmt(totals.debitos)}</strong></td>
-                          <td className={styles.numCell}><strong>+${fmt(totals.creditos)}</strong></td>
-                          <td className={styles.numCell}><strong>${fmt(totals.reconocido)}</strong></td>
-                          <td className={styles.numCell}><strong>-${fmt(totals.deducciones)}</strong></td>
-                          <td className={styles.numCell}><strong>${fmt(totals.neto_a_pagar)}</strong></td>
+                          <td><strong>TOTAL ({apiTotales.total_medicos} médicos)</strong></td>
+                          <td className={styles.numCell}><strong>${fmt(apiTotales.total_bruto)}</strong></td>
+                          <td className={styles.numCell}><strong>-${fmt(apiTotales.total_debitos)}</strong></td>
+                          <td className={styles.numCell}><strong>+${fmt(apiTotales.total_creditos)}</strong></td>
+                          <td className={styles.numCell}><strong>${fmt(apiTotales.total_reconocido)}</strong></td>
+                          <td className={styles.numCell}><strong>-${fmt(apiTotales.total_deducciones)}</strong></td>
+                          <td className={styles.numCell}><strong>${fmt(apiTotales.total_neto_a_pagar)}</strong></td>
                           <td />
                         </tr>
                       </tfoot>
                     )}
                   </table>
                 </div>
+
+                {totalPages > 1 && (
+                  <div className={styles.pagination}>
+                    <span className={styles.paginationInfo}>
+                      Página {page} de {totalPages} — {totalMedicos} médicos
+                    </span>
+                    <div className={styles.paginationControls}>
+                      <button
+                        className={styles.pageBtn}
+                        onClick={() => handlePageChange(1)}
+                        disabled={page === 1}
+                      >
+                        «
+                      </button>
+                      <button
+                        className={styles.pageBtn}
+                        onClick={() => handlePageChange(page - 1)}
+                        disabled={page === 1}
+                      >
+                        ‹
+                      </button>
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        const start = Math.max(1, Math.min(page - 2, totalPages - 4));
+                        const p = start + i;
+                        return (
+                          <button
+                            key={p}
+                            className={`${styles.pageBtn} ${p === page ? styles.pageBtnActive : ""}`}
+                            onClick={() => handlePageChange(p)}
+                          >
+                            {p}
+                          </button>
+                        );
+                      })}
+                      <button
+                        className={styles.pageBtn}
+                        onClick={() => handlePageChange(page + 1)}
+                        disabled={page === totalPages}
+                      >
+                        ›
+                      </button>
+                      <button
+                        className={styles.pageBtn}
+                        onClick={() => handlePageChange(totalPages)}
+                        disabled={page === totalPages}
+                      >
+                        »
+                      </button>
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </Card>
