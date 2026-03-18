@@ -8,8 +8,7 @@ import { saveAs } from "file-saver";
 import type { ExportColumnKey, MedicoRow } from "./medicosExport";
 import { DEFAULT_HEADERS, mapUIToQuery, pickValue } from "./medicosExport";
 
-// ✅ IMPORTANT: use your existing axios instance (DO NOT CHANGE LIB)
-import { http } from "../../lib/http";
+import { getJSON } from "../../lib/http";
 import type { FilterSelection } from "../../types/filters";
 
 type ExportFormat = "xlsx" | "csv";
@@ -76,14 +75,7 @@ export function useMedicosExport() {
           skip: 0,
         };
 
-        // ✅ CRITICAL: same-origin request (NO CORS) but keep your axios interceptors/token/refresh
-        // This makes the request go to:  https://colegiomedicocorrientes.com/api/medicos/all
-        // instead of:                  https://api.colegiomedicocorrientes.com/api/medicos/all
-        const { data: payload } = await http.get<any>("/api/medicos/all", {
-          baseURL: "", // 👈 SAME ORIGIN ONLY HERE (NO LIB CHANGE)
-          params,
-          withCredentials: true,
-        });
+        const payload = await getJSON<any>("/api/medicos/all", params);
 
         const rows: MedicoRow[] = Array.isArray(payload)
           ? payload

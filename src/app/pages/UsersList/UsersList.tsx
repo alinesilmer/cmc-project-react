@@ -3,7 +3,7 @@
 import type React from "react";
 import { useEffect, useMemo, useState, useRef } from "react";
 import styles from "./UsersList.module.scss";
-import { http } from "../../lib/http";
+import { getJSON } from "../../lib/http";
 import Button from "../../components/atoms/Button/Button";
 import BackButton from "../../components/atoms/BackButton/BackButton";
 import Modal from "../../components/atoms/Modal/Modal";
@@ -591,11 +591,7 @@ const UsersList: React.FC = () => {
       if (q.length >= 2) params.q = q;
 
       try {
-        const { data } = await http.get<MedicoRow[]>("/api/medicos/all", {
-          baseURL: "",
-          params,
-          withCredentials: true,
-        });
+        const data = await getJSON<MedicoRow[]>("/api/medicos/all", params);
         if (cancelled) return;
         const rows: MedicoRow[] = Array.isArray(data) ? data : [];
         if (rows.length > 0) console.log("[DEBUG] primer row keys:", Object.keys(rows[0]), "\n[DEBUG] primer row:", JSON.stringify(rows[0]));
