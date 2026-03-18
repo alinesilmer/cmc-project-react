@@ -51,6 +51,7 @@ interface FilterModalProps {
   exportError: string | null;
   exportLoading: boolean;
   onExport: (format: "xlsx" | "csv", logoFile: File | null) => void;
+  onApply: () => void;
   onClose: () => void;
   resetFilters: () => void;
 }
@@ -63,6 +64,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
   exportError,
   exportLoading,
   onExport,
+  onApply,
   onClose,
   resetFilters,
 }) => {
@@ -89,7 +91,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
         const opts: EspecialidadOption[] = Array.isArray(data)
           ? data
               .map((e: any) => {
-                const rawVal = e?.id ?? e?.ID ?? e?.codigo ?? e?.CODIGO ?? e?.value ?? "";
+                const rawVal = e?.id_colegio_espe ?? e?.id ?? e?.ID ?? e?.codigo ?? e?.CODIGO ?? e?.value ?? "";
                 const rawLabel =
                   e?.nombre ??
                   e?.NOMBRE ??
@@ -167,7 +169,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
     if (filters.otros.especialidad) count++;
     if (filters.otros.fechaIngresoDesde) count++;
     if (filters.otros.fechaIngresoHasta) count++;
-    if (filters.otros.conMalapraxis) count++;
+    if (filters.otros.tieneMalapraxis) count++;
 
     if (filters.faltantes.enabled) count++;
 
@@ -519,6 +521,21 @@ const FilterModal: React.FC<FilterModalProps> = ({
                   </div>
 
                   <div className={styles.exportField}>
+                    <label className={styles.exportLabel}>Mala Praxis</label>
+                    <select
+                      className={styles.exportSelect}
+                      value={filters.otros.tieneMalapraxis || ""}
+                      onChange={(e) =>
+                        setFilters((prev) => ({ ...prev, otros: { ...prev.otros, tieneMalapraxis: e.target.value as any } }))
+                      }
+                    >
+                      <option value="">Todos</option>
+                      <option value="true">Con mala praxis</option>
+                      <option value="false">Sin mala praxis</option>
+                    </select>
+                  </div>
+
+                  <div className={styles.exportField}>
                     <label className={styles.exportLabel}>Fecha Ingreso Desde</label>
                     <input
                       type="date"
@@ -641,7 +658,10 @@ const FilterModal: React.FC<FilterModalProps> = ({
 
       <div className={styles.exportActionsRow}>
         <div className={styles.exportActionsLeft}>
-          <Button onClick={() => onExport("xlsx", null)} disabled={exportLoading} variant="primary" size="md">
+          <Button onClick={onApply} variant="primary" size="md">
+            Filtrar
+          </Button>
+          <Button onClick={() => onExport("xlsx", null)} disabled={exportLoading} variant="secondary" size="md">
             {exportLoading ? "Exportando..." : "Descargar Excel"}
           </Button>
         </div>

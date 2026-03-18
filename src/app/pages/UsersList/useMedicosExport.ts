@@ -73,7 +73,7 @@ export function useMedicosExport() {
         const params = {
           ...mapUIToQuery(filters as any),
           limit: 2000,
-          offset: 0,
+          skip: 0,
         };
 
         // ✅ CRITICAL: same-origin request (NO CORS) but keep your axios interceptors/token/refresh

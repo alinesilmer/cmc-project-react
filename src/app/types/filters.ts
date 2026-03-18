@@ -41,15 +41,12 @@ export type OtrosFilter = {
   estado: "" | "activo" | "inactivo";
   adherente: "" | "si" | "no";
   provincia: string;
-  // ❌ localidad removida
   especialidad: string;
   categoria: string;
   condicionImpositiva: string;
   fechaIngresoDesde: string;
   fechaIngresoHasta: string;
-
-  // ✅ check "Con mala praxis" (empresa asociada)
-  conMalapraxis: boolean;
+  tieneMalapraxis: "" | "true" | "false";
 };
 
 export type FilterSelection = {
@@ -82,7 +79,7 @@ export const initialFilters: FilterSelection = {
     condicionImpositiva: "",
     fechaIngresoDesde: "",
     fechaIngresoHasta: "",
-    conMalapraxis: false,
+    tieneMalapraxis: "",
   },
   faltantes: {
     enabled: false,

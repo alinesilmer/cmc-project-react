@@ -1,5 +1,6 @@
 // src/app/pages/UsersList/medicosExport.ts
 // Helpers + mapping for Medicos export (/api/medicos/all)
+import { getEspecialidadNameById } from "../../lib/especialidadesCatalog";
 
 export type ExportColumnKey =
   | "id"
@@ -42,7 +43,7 @@ export type FilterSelection = {
     fechaIngresoDesde?: string | null; // YYYY-MM-DD
     fechaIngresoHasta?: string | null; // YYYY-MM-DD
 
-    conMalapraxis?: boolean;
+    tieneMalapraxis?: string | null; // "" | "true" | "false"
   };
   vencimientos: {
     dias: number; // 0..N
@@ -213,10 +214,31 @@ function toCleanString(v: unknown): string {
   }
 }
 
+function pickSpecialidadValue(row: MedicoRow): string {
+  const nroKeys = [
+    "nro_especialidad",
+    "nro_especialidad2",
+    "nro_especialidad3",
+    "nro_especialidad4",
+    "nro_especialidad5",
+    "nro_especialidad6",
+  ];
+  const names: string[] = [];
+  for (const k of nroKeys) {
+    const v = (row as any)?.[k];
+    if (!v || v === 0 || v === "0") continue;
+    const name = getEspecialidadNameById(v);
+    names.push(name ?? String(v));
+  }
+  return names.join(", ");
+}
+
 /**
  * Return best value for a canonical export key, checking multiple key variants.
  */
 export function pickValue(row: MedicoRow, canonicalKey: ExportColumnKey): string {
+  if (canonicalKey === "especialidad") return pickSpecialidadValue(row);
+
   const candidates = KEYMAP[canonicalKey] ?? [canonicalKey];
   for (const k of candidates) {
     const v = (row as any)?.[k];
@@ -232,21 +254,29 @@ export function mapUIToQuery(filters: FilterSelection) {
   const otros = filters?.otros ?? ({} as FilterSelection["otros"]);
   const v = filters?.vencimientos ?? ({} as FilterSelection["vencimientos"]);
 
+  // La API espera "activos" / "inactivos" (plural), la UI usa "activo" / "inactivo"
+  const estadoMap: Record<string, string> = { activo: "activos", inactivo: "inactivos" };
+  const estadoParam = otros.estado ? (estadoMap[otros.estado] ?? otros.estado) : undefined;
+
+  // La API usa nro_especialidad (int), no el string "especialidad"
+  const espRaw = otros.especialidad;
+  const nroEspecialidad = (() => {
+    if (!espRaw) return undefined;
+    const id = espRaw.startsWith("id:") ? Number(espRaw.slice(3)) : NaN;
+    return !isNaN(id) && id > 0 ? id : undefined;
+  })();
+
   return {
     sexo: otros.sexo || undefined,
-    estado: otros.estado || undefined,
-    adherente: otros.adherente || undefined,
+    estado: estadoParam,
     provincia: otros.provincia || undefined,
     categoria: otros.categoria || undefined,
     condicion_impositiva: otros.condicionImpositiva || undefined,
-
-    // especialidad: si viene "id:123" mandamos solo "123" (o mandá el string completo si tu backend espera otro formato)
-    especialidad: otros.especialidad?.startsWith("id:") ? otros.especialidad.slice(3) : otros.especialidad || undefined,
+    nro_especialidad: nroEspecialidad,
+    tiene_malapraxis: otros.tieneMalapraxis || undefined,
 
     fecha_ingreso_desde: otros.fechaIngresoDesde || undefined,
     fecha_ingreso_hasta: otros.fechaIngresoHasta || undefined,
-
-    con_malapraxis: otros.conMalapraxis ? "1" : undefined,
 
     malapraxis_vencida: v.malapraxisVencida ? "1" : undefined,
     malapraxis_por_vencer: v.malapraxisPorVencer ? "1" : undefined,
