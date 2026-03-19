@@ -37,19 +37,17 @@ export type VencimientosFilter = {
 };
 
 export type OtrosFilter = {
+  cuit: string;
   sexo: string;
   estado: "" | "activo" | "inactivo";
   adherente: "" | "si" | "no";
   provincia: string;
-  // ❌ localidad removida
   especialidad: string;
   categoria: string;
   condicionImpositiva: string;
   fechaIngresoDesde: string;
   fechaIngresoHasta: string;
-
-  // ✅ check "Con mala praxis" (empresa asociada)
-  conMalapraxis: boolean;
+  tieneMalapraxis: "" | "true" | "false";
 };
 
 export type FilterSelection = {
@@ -73,6 +71,7 @@ export const initialFilters: FilterSelection = {
     dias: 0,
   },
   otros: {
+    cuit:"",
     sexo: "",
     estado: "",
     adherente: "",
@@ -82,7 +81,7 @@ export const initialFilters: FilterSelection = {
     condicionImpositiva: "",
     fechaIngresoDesde: "",
     fechaIngresoHasta: "",
-    conMalapraxis: false,
+    tieneMalapraxis: "",
   },
   faltantes: {
     enabled: false,

@@ -219,3 +219,263 @@
 .muted { color: $gray-500; }
 .successMsg { color: #065f46; font-weight: 600; margin: 0; }
 .errorMsg { color: #b91c1c; margin: 0; }
+
+/* Columna toggle expand */
+.thToggle { width: 36px; }
+.tdToggle { width: 36px; text-align: center; }
+
+.toggleBtn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 10px;
+  color: $gray-500;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+
+  &:hover { color: #1b56ff; background: #eef2ff; }
+}
+
+.rowExpanded { background: #f5f8ff !important; }
+
+/* Fila de detalle expandido */
+.detailRow {
+  background: #f5f8ff;
+  &:hover { background: #f5f8ff !important; }
+}
+
+.detailCell {
+  padding: 0 !important;
+  border-bottom: 2px solid #dbeafe;
+}
+
+.detailWrap {
+  padding: 16px 20px;
+}
+
+/* Nombre médico */
+.medicoHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  color: $gray-900;
+}
+
+.medicoSocio {
+  font-size: 11px;
+  color: $gray-500;
+  background: #f0f2f5;
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+
+/* Grid de dos columnas */
+.detailGrid {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 0;
+
+  @media (max-width: $breakpoint-md) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.detailLeft {
+  padding-right: 20px;
+  border-right: 1px solid #dbeafe;
+
+  @media (max-width: $breakpoint-md) {
+    padding-right: 0;
+    border-right: none;
+    border-bottom: 1px solid #dbeafe;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+  }
+}
+
+.detailRight {
+  padding-left: 20px;
+
+  @media (max-width: $breakpoint-md) {
+    padding-left: 0;
+  }
+}
+
+.detailSectionTitle {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #1b56ff;
+  margin-bottom: 8px;
+}
+
+.detailSectionTitleMt { margin-top: 16px; }
+
+.detailEmpty  { font-size: 12px; color: $gray-500; margin: 0; }
+.detailLoading { font-size: 12px; color: $gray-500; padding: 16px 20px; margin: 0; }
+.detailError  { font-size: 12px; color: #b91c1c; padding: 16px 20px; margin: 0; }
+
+/* Bloque por OS */
+.liqEntry {
+  margin-bottom: 12px;
+  border: 1px solid #e0e7ff;
+  border-radius: 8px;
+  overflow: hidden;
+
+  &:last-child { margin-bottom: 0; }
+}
+
+.liqEntryHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #eef2ff;
+  padding: 6px 10px;
+  gap: 8px;
+}
+
+.liqOS   { font-size: 12px; font-weight: 700; color: #1d4ed8; }
+.liqMeta { font-size: 11px; color: $gray-500; }
+
+/* Tabla interna */
+.innerTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+
+  th {
+    background: #eef2ff;
+    color: #1d4ed8;
+    padding: 6px 10px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 11px;
+  }
+
+  td {
+    padding: 5px 10px;
+    border-bottom: 1px solid #f0f2f5;
+    color: $gray-700;
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+}
+
+.dcGroupRow td { background: #fafafa; font-size: 11px; }
+.dcItemRow  td { font-size: 11px; color: $gray-500; }
+.dcItemLabel   { padding-left: 18px !important; }
+
+.liqReconocidoRow td {
+  background: #f0f4ff;
+  border-top: 1px solid #c7d7fe;
+}
+
+/* Resumen financiero */
+.financialLines {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.financialLine {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: $gray-700;
+  padding: 3px 0;
+}
+
+.financialLineSub {
+  border-top: 1px solid #dbeafe;
+  padding-top: 6px;
+  margin-top: 2px;
+}
+
+.financialLineTotal {
+  border-top: 2px solid #1b56ff;
+  padding-top: 6px;
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1b56ff;
+}
+
+.negative { color: #b91c1c; }
+.positive { color: #065f46; }
+
+/* Filtro estado */
+.filterSelect {
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 13px;
+  color: $gray-700;
+  background: #fff;
+  cursor: pointer;
+
+  &:focus { outline: 2px solid #1b56ff; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+/* Paginación */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-top: 1px solid #f0f2f5;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.paginationInfo {
+  font-size: 12px;
+  color: $gray-500;
+}
+
+.paginationControls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pageBtn {
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  color: $gray-700;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover:not(:disabled) {
+    background: #f0f4ff;
+    border-color: #1b56ff;
+    color: #1b56ff;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.pageNumber {
+  min-width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1b56ff;
+  color: #fff;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}

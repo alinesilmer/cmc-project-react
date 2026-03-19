@@ -11,6 +11,8 @@ import FilterModal from "../../components/molecules/FilterModal/FilterModal";
 import { useNavigate } from "react-router-dom";
 import type { FilterSelection, MissingFieldKey } from "../../types/filters";
 import { initialFilters } from "../../types/filters";
+import { mapUIToQuery } from "./medicosExport";
+import { getEspecialidadNameById } from "../../lib/especialidadesCatalog";
 
 import { useMedicosExport } from "./useMedicosExport";
 
@@ -70,9 +72,9 @@ function toUserRow(m: any) {
   const os = String(m?.obra_social ?? m?.OBRA_SOCIAL ?? "").trim();
 
   return {
-    id: m?.ID ?? m?.id ?? m?.NRO_SOCIO ?? Math.random().toString(36).slice(2),
-    nro_socio: m?.NRO_SOCIO ?? m?.nro_socio ?? null,
-    name: m?.NOMBRE ?? m?.nombre ?? "—",
+    id: m?.id ?? m?.ID ?? null,
+    nro_socio: m?.nro_socio ?? m?.NRO_SOCIO ?? null,
+    name: m?.nombre ?? m?.NOMBRE ?? "—",
     email: m?.mail_particular ?? m?.MAIL_PARTICULAR ?? m?.email ?? "—",
     phone: m?.tele_particular ?? m?.TELE_PARTICULAR ?? "—",
     joinDate: (m?.fecha_ingreso ?? m?.FECHA_INGRESO ?? m?.joinDate) ?? null,
@@ -181,6 +183,24 @@ function getEspecialidadesTokens(row: any): string[] {
 function matchEspecialidad(row: any, selected: string): boolean {
   if (!selected) return true;
 
+  // Cuando viene "id:X" del selector, comparar directamente contra nro_especialidad
+  if (selected.startsWith("id:")) {
+    const numId = Number(selected.slice(3));
+    if (!isNaN(numId) && numId > 0) {
+      const nroKeys = [
+        "nro_especialidad",
+        "nro_especialidad2",
+        "nro_especialidad3",
+        "nro_especialidad4",
+        "nro_especialidad5",
+        "nro_especialidad6",
+      ];
+      return nroKeys.some((k) => Number(row?.[k]) === numId);
+    }
+    return false;
+  }
+
+  // Fallback texto libre
   const sel = normalizeText(selected);
   const tokens = getEspecialidadesTokens(row);
 
@@ -245,6 +265,8 @@ function inRange(d: Date, from?: Date | null, to?: Date | null): boolean {
 
 const VENC_KEYS = {
   malapraxis: [
+    "vencimiento_malapraxis",  // nombre real de la API
+    "VENCIMIENTO_MALAPRAXIS",
     "malapraxis_vencimiento",
     "malapraxis_vto",
     "vto_malapraxis",
@@ -254,6 +276,8 @@ const VENC_KEYS = {
     "VTO_MALAPRAXIS",
   ],
   anssal: [
+    "vencimiento_anssal",      // nombre real de la API
+    "VENCIMIENTO_ANSSAL",
     "anssal_vencimiento",
     "anssal_vto",
     "vto_anssal",
@@ -263,6 +287,8 @@ const VENC_KEYS = {
     "VTO_ANSSAL",
   ],
   cobertura: [
+    "vencimiento_cobertura",   // nombre real de la API
+    "VENCIMIENTO_COBERTURA",
     "cobertura_vencimiento",
     "cobertura_vto",
     "vto_cobertura",
@@ -312,8 +338,21 @@ const MISSING_FIELD_KEYS: Record<MissingFieldKey, string[]> = {
 
 function isMissingField(row: MedicoRow, field: MissingFieldKey): boolean {
   if (field === "especialidad") {
-    // ✅ missing real: si no hay tokens (NO inventamos “médico”)
-    return getEspecialidadesTokens(row).length === 0;
+    // Chequear tokens por nombre
+    if (getEspecialidadesTokens(row).length > 0) return false;
+    // También chequear campos nro_especialidad numéricos (formato API)
+    const nroKeys = [
+      "nro_especialidad",
+      "nro_especialidad2",
+      "nro_especialidad3",
+      "nro_especialidad4",
+      "nro_especialidad5",
+      "nro_especialidad6",
+    ];
+    return !nroKeys.some((k) => {
+      const v = (row as any)?.[k];
+      return v !== null && v !== undefined && v !== 0 && v !== "0" && v !== "";
+    });
   }
   const raw = pickFirst(row, MISSING_FIELD_KEYS[field]);
   return isEmptyValue(raw);
@@ -358,10 +397,14 @@ function applyMedicosFilters(rows: MedicoRow[], filters: FilterSelection): Medic
       if (filters.faltantes.mode === "present" && missing) return false;
     }
 
-    // checkbox malapraxis (presencia)
-    if (o.conMalapraxis) {
-      const mp = pickFirst(row, ["MALAPRAXIS", "malapraxis", "MALAPRAXIS_EMPRESA", "malapraxis_empresa"]);
-      if (String(mp ?? "").trim() === "") return false;
+    // tiene_malapraxis
+    if (o.tieneMalapraxis === "true") {
+      const mp = String(pickFirst(row, ["malapraxis", "MALAPRAXIS"]) ?? "").trim();
+      if (mp === "" || mp.toUpperCase() === "A") return false;
+    }
+    if (o.tieneMalapraxis === "false") {
+      const mp = String(pickFirst(row, ["malapraxis", "MALAPRAXIS"]) ?? "").trim();
+      if (mp !== "" && mp.toUpperCase() !== "A") return false;
     }
 
     if (o.sexo) {
@@ -467,13 +510,15 @@ function matchesQuickSearch(row: any, q: string) {
   );
 }
 
+const PAGE_SIZE = 50;
+
 const UsersList: React.FC = () => {
-  const [users, setUsers] = useState<UserRow[]>([]);
   const [rawUsers, setRawUsers] = useState<MedicoRow[]>([]);
-  const [basePage, setBasePage] = useState<MedicoRow[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [initialized, setInitialized] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [remoteMode, setRemoteMode] = useState(false);
+  const [page, setPage] = useState(0);
+  const [isLastPage, setIsLastPage] = useState(false);
   const navigate = useNavigate();
 
   const [error, setError] = useState<string | null>(null);
@@ -481,7 +526,10 @@ const UsersList: React.FC = () => {
 
   const { exportLoading, exportError, setExportError, onExportWithFilters } = useMedicosExport();
 
+  // draft: lo que hay en el modal (no aplicado todavía)
   const [filters, setFilters] = useState<FilterSelection>(initialFilters);
+  // committed: lo que se envió al servidor al clickear "Filtrar"
+  const [committedFilters, setCommittedFilters] = useState<FilterSelection>(initialFilters);
 
   // ✅ Cache del logo en File (solo 1 fetch)
   const logoFilePromiseRef = useRef<Promise<File | null> | null>(null);
@@ -492,11 +540,8 @@ const UsersList: React.FC = () => {
       try {
         const res = await fetch(LogoCMCUrl);
         const blob = await res.blob();
-
         const type = blob.type || "image/png";
-        const ext =
-          type.includes("png") ? "png" : type.includes("jpeg") || type.includes("jpg") ? "jpg" : "img";
-
+        const ext = type.includes("png") ? "png" : type.includes("jpeg") || type.includes("jpg") ? "jpg" : "img";
         return new File([blob], `logo.${ext}`, { type });
       } catch {
         return null;
@@ -511,157 +556,180 @@ const UsersList: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function handleApplyFilters() {
+    setPage(0);
+    setCommittedFilters(filters);
+    setIsExportOpen(false);
+  }
+
   const resetFilters = () => {
-    setFilters({
-      columns: ["nombre", "documento", "mail_particular", "matricula_prov", "especialidad"],
-      vencimientos: {
-        malapraxisVencida: false,
-        malapraxisPorVencer: false,
-        anssalVencido: false,
-        anssalPorVencer: false,
-        coberturaVencida: false,
-        coberturaPorVencer: false,
-        fechaDesde: "",
-        fechaHasta: "",
-        dias: 0,
-      },
-      otros: {
-        sexo: "",
-        estado: "",
-        adherente: "",
-        provincia: "",
-        especialidad: "",
-        categoria: "",
-        condicionImpositiva: "",
-        fechaIngresoDesde: "",
-        fechaIngresoHasta: "",
-        conMalapraxis: false,
-      },
-      faltantes: {
-        enabled: false,
-        field: "telefono_consulta",
-        mode: "missing",
-      },
-    });
+    setFilters(initialFilters);
+    setCommittedFilters(initialFilters);
+    setPage(0);
     setExportError(null);
   };
 
-  // --------- Carga inicial (página base sin q) ----------
-  useEffect(() => {
-    let ignore = false;
-
-    async function loadBase() {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const data = await getJSON<MedicoRow[]>("/api/medicos?limit=200");
-        if (ignore) return;
-        setBasePage(data);
-        setRawUsers(data);
-        setUsers(data.map(toUserRow));
-      } catch (err: any) {
-        if (ignore) return;
-        setError(err?.message || "Error al cargar los datos");
-      } finally {
-        if (!ignore) setLoading(false);
-      }
-    }
-
-    loadBase();
-    return () => {
-      ignore = true;
-    };
-  }, []);
-
-  // --------- BÚSQUEDA REMOTA con debounce ----------
+  // --------- Fetch server-side: se dispara al cambiar committedFilters, searchTerm o page ----------
   const debounceRef = useRef<number | null>(null);
   useEffect(() => {
-    const q = searchTerm.trim();
-
-    if (!q) {
-      setRemoteMode(false);
-      setRawUsers(basePage);
-      setUsers(basePage.map(toUserRow));
-      return;
-    }
-
-    const MIN_CHARS = 2;
-    if (q.length < MIN_CHARS) {
-      setRemoteMode(false);
-      setRawUsers(basePage);
-      setUsers(basePage.map(toUserRow));
-      return;
-    }
+    let cancelled = false;
 
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
     debounceRef.current = window.setTimeout(async () => {
+      if (cancelled) return;
+
+      setLoading(true);
+      setError(null);
+
+      const q = searchTerm.trim();
+      const filterParams = mapUIToQuery(committedFilters as any);
+      const params: Record<string, unknown> = {
+        ...filterParams,
+        skip: page * PAGE_SIZE,
+        limit: PAGE_SIZE,
+      };
+      if (q.length >= 2) params.q = q;
+
       try {
-        const url = `/api/medicos?q=${encodeURIComponent(q)}&limit=200`;
-        const data = await getJSON<MedicoRow[]>(url);
-        setRemoteMode(true);
-        setRawUsers(data);
-        setUsers(data.map(toUserRow));
-      } catch {
-        setRemoteMode(false);
-        setRawUsers(basePage);
-        setUsers(basePage.map(toUserRow));
+        const data = await getJSON<MedicoRow[]>("/api/medicos/all", params);
+        if (cancelled) return;
+        const rows: MedicoRow[] = Array.isArray(data) ? data : [];
+        if (rows.length > 0) console.log("[DEBUG] primer row keys:", Object.keys(rows[0]), "\n[DEBUG] primer row:", JSON.stringify(rows[0]));
+        setRawUsers(rows);
+        setIsLastPage(rows.length < PAGE_SIZE);
+        setInitialized(true);
+      } catch (err: any) {
+        if (cancelled) return;
+        setError(err?.message || "Error al cargar los datos");
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     }, 300);
 
     return () => {
+      cancelled = true;
       if (debounceRef.current) window.clearTimeout(debounceRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm, basePage]);
+  }, [committedFilters, searchTerm, page]);
 
+  // El servidor ya aplica la mayoría de los filtros; client-only: adherente, tieneMalapraxis (belt-and-suspenders)
   const filteredUsers = useMemo(() => {
-    const q = searchTerm.trim();
-    let rows = rawUsers;
+    return applyMedicosFilters(rawUsers, committedFilters).map(toUserRow);
+  }, [rawUsers, committedFilters]);
 
-    if (!remoteMode && q) {
-      rows = rows.filter((r: any) => matchesQuickSearch(r, q));
-    }
-
-    rows = applyMedicosFilters(rows, filters);
-    return rows.map(toUserRow);
-  }, [rawUsers, searchTerm, remoteMode, filters]);
-
-  const visibleUsers = filteredUsers;
+  function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setSearchTerm(e.target.value);
+    setPage(0);
+  }
 
   async function handleExportWithFilters(format: "xlsx" | "csv", _ignoredLogo: File | null) {
     if (!filters.columns || filters.columns.length === 0) {
       setExportError("Seleccioná al menos una columna");
       return;
     }
-
-    // ✅ nro_socio siempre primero
     const cols = ["nro_socio", ...filters.columns.filter((c) => c !== "nro_socio")];
     const fixed: FilterSelection = { ...filters, columns: cols };
-
-    // ✅ LOGO FIJO SIEMPRE
     const fixedLogo = await getFixedLogoFile();
-
     const ok = await onExportWithFilters(format, fixed, fixedLogo);
     if (ok) setIsExportOpen(false);
   }
 
-  const missingLabelByKey: Record<MissingFieldKey, string> = {
-    telefono_consulta: "Teléfono consultorio",
-    domicilio_consulta: "Domicilio consultorio",
-    mail_particular: "Mail",
-    tele_particular: "Teléfono particular",
-    celular_particular: "Celular",
-    matricula_prov: "Matrícula provincial",
-    matricula_nac: "Matrícula nacional",
-    provincia: "Provincia",
-    categoria: "Categoría",
-    especialidad: "Especialidad",
-    condicion_impositiva: "Condición impositiva",
-    malapraxis: "Mala praxis",
-  };
+  // ---- Chips de filtros activos ----
+  type FilterChip = { key: string; label: string };
 
-  if (loading) {
+  const activeChips = useMemo((): FilterChip[] => {
+    const chips: FilterChip[] = [];
+    const o = committedFilters.otros;
+    const v = committedFilters.vencimientos;
+    const f = committedFilters.faltantes;
+
+    if (o.estado) chips.push({ key: "estado", label: `Estado: ${o.estado === "activo" ? "Activo" : "Inactivo"}` });
+    if (o.sexo) chips.push({ key: "sexo", label: `Sexo: ${o.sexo.toUpperCase()}` });
+    if (o.provincia) chips.push({ key: "provincia", label: `Provincia: ${o.provincia}` });
+    if (o.especialidad) {
+      const id = o.especialidad.startsWith("id:") ? o.especialidad.slice(3) : null;
+      const name = id ? (getEspecialidadNameById(id) ?? id) : o.especialidad;
+      chips.push({ key: "especialidad", label: `Especialidad: ${name}` });
+    }
+    if (o.categoria) chips.push({ key: "categoria", label: `Categoría: ${o.categoria}` });
+    if (o.condicionImpositiva) chips.push({ key: "condicionImpositiva", label: `Cond. imp.: ${o.condicionImpositiva}` });
+    if (o.tieneMalapraxis) chips.push({ key: "tieneMalapraxis", label: o.tieneMalapraxis === "true" ? "Con mala praxis" : "Sin mala praxis" });
+    if (o.adherente) chips.push({ key: "adherente", label: `Adherente: ${o.adherente === "si" ? "Sí" : "No"}` });
+    if (o.fechaIngresoDesde || o.fechaIngresoHasta) {
+      const label = [o.fechaIngresoDesde && `desde ${o.fechaIngresoDesde}`, o.fechaIngresoHasta && `hasta ${o.fechaIngresoHasta}`].filter(Boolean).join(" ");
+      chips.push({ key: "fechaIngreso", label: `Ingreso: ${label}` });
+    }
+
+    if (v.malapraxisVencida) chips.push({ key: "malapraxisVencida", label: "Mala praxis vencida" });
+    if (v.malapraxisPorVencer) chips.push({ key: "malapraxisPorVencer", label: "Mala praxis por vencer" });
+    if (v.anssalVencido) chips.push({ key: "anssalVencido", label: "ANSSAL vencida" });
+    if (v.anssalPorVencer) chips.push({ key: "anssalPorVencer", label: "ANSSAL por vencer" });
+    if (v.coberturaVencida) chips.push({ key: "coberturaVencida", label: "Cobertura vencida" });
+    if (v.coberturaPorVencer) chips.push({ key: "coberturaPorVencer", label: "Cobertura por vencer" });
+    if (v.dias > 0) chips.push({ key: "dias", label: `Próximos ${v.dias} días` });
+    if (v.fechaDesde || v.fechaHasta) {
+      const label = [v.fechaDesde && `desde ${v.fechaDesde}`, v.fechaHasta && `hasta ${v.fechaHasta}`].filter(Boolean).join(" ");
+      chips.push({ key: "fechaVenc", label: `Venc.: ${label}` });
+    }
+
+    if (f.enabled) {
+      const fieldLabels: Record<string, string> = {
+        telefono_consulta: "Tel. consultorio", domicilio_consulta: "Domicilio cons.",
+        mail_particular: "Mail", tele_particular: "Tel. particular",
+        celular_particular: "Celular", matricula_prov: "Matrícula prov.",
+        matricula_nac: "Matrícula nac.", provincia: "Provincia",
+        categoria: "Categoría", especialidad: "Especialidad",
+        condicion_impositiva: "Cond. imp.", malapraxis: "Mala praxis",
+      };
+      chips.push({ key: "faltantes", label: `${f.mode === "missing" ? "Sin" : "Con"} ${fieldLabels[f.field] ?? f.field}` });
+    }
+
+    return chips;
+  }, [committedFilters]);
+
+  function removeFilterChip(chipKey: string) {
+    const patchOtros = (patch: Partial<typeof initialFilters.otros>) =>
+      (prev: FilterSelection): FilterSelection => ({
+        ...prev,
+        otros: { ...prev.otros, ...patch },
+      });
+    const patchVenc = (patch: Partial<typeof initialFilters.vencimientos>) =>
+      (prev: FilterSelection): FilterSelection => ({
+        ...prev,
+        vencimientos: { ...prev.vencimientos, ...patch },
+      });
+
+    const updates: Record<string, (prev: FilterSelection) => FilterSelection> = {
+      estado: patchOtros({ estado: "" }),
+      sexo: patchOtros({ sexo: "" }),
+      provincia: patchOtros({ provincia: "" }),
+      especialidad: patchOtros({ especialidad: "" }),
+      categoria: patchOtros({ categoria: "" }),
+      condicionImpositiva: patchOtros({ condicionImpositiva: "" }),
+      tieneMalapraxis: patchOtros({ tieneMalapraxis: "" }),
+      adherente: patchOtros({ adherente: "" }),
+      fechaIngreso: patchOtros({ fechaIngresoDesde: "", fechaIngresoHasta: "" }),
+      malapraxisVencida: patchVenc({ malapraxisVencida: false }),
+      malapraxisPorVencer: patchVenc({ malapraxisPorVencer: false }),
+      anssalVencido: patchVenc({ anssalVencido: false }),
+      anssalPorVencer: patchVenc({ anssalPorVencer: false }),
+      coberturaVencida: patchVenc({ coberturaVencida: false }),
+      coberturaPorVencer: patchVenc({ coberturaPorVencer: false }),
+      dias: patchVenc({ dias: 0 }),
+      fechaVenc: patchVenc({ fechaDesde: "", fechaHasta: "" }),
+      faltantes: (prev) => ({ ...prev, faltantes: { ...prev.faltantes, enabled: false } }),
+    };
+
+    const updater = updates[chipKey];
+    if (!updater) return;
+
+    setFilters(updater);
+    setCommittedFilters(updater);
+    setPage(0);
+  }
+
+  if (loading && !initialized) {
     return (
       <div className={styles.container}>
         <div className={styles.emptyState}>
@@ -671,7 +739,7 @@ const UsersList: React.FC = () => {
     );
   }
 
-  if (error) {
+  if (error && !initialized) {
     return (
       <div className={styles.container}>
         <div className={styles.emptyState}>
@@ -699,31 +767,62 @@ const UsersList: React.FC = () => {
 
       <div className={styles.statsGrid}>
         <div className={styles.statCard}>
-          <div className={styles.statValue}>{users.length}</div>
-          <div className={styles.statLabel}>Total de socios</div>
-        </div>
-        <div className={styles.statCard}>
-          <div className={styles.statValue}>{users.filter((u) => u.status === "activo").length}</div>
-          <div className={styles.statLabel}>Activos</div>
+          <div className={styles.statValue}>{filteredUsers.filter((u) => u.status === "activo").length}</div>
+          <div className={styles.statLabel}>Activos (pág.)</div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statValue}>{filteredUsers.length}</div>
-          <div className={styles.statLabel}>Filtrados</div>
+          <div className={styles.statLabel}>En esta página</div>
+        </div>
+        <div className={styles.statCard}>
+          <div className={styles.statValue}>
+            {page + 1}{isLastPage ? "" : "+"}
+          </div>
+          <div className={styles.statLabel}>Página</div>
         </div>
       </div>
 
       <div className={styles.searchBar}>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <input
-            type="text"
-            className={styles.searchInput}
-            placeholder="Buscar por nombre, email, matrícula o número de socio..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ flex: 1 }}
-          />
-        </div>
+        <input
+          type="text"
+          className={styles.searchInput}
+          placeholder="Buscar por nombre, matrícula o número de socio..."
+          value={searchTerm}
+          onChange={handleSearchChange}
+        />
       </div>
+
+      {activeChips.length > 0 && (
+        <div className={styles.chipsRow}>
+          {activeChips.map((chip) => (
+            <span key={chip.key} className={styles.chip}>
+              {chip.label}
+              <button
+                className={styles.chipRemove}
+                onClick={() => removeFilterChip(chip.key)}
+                aria-label={`Quitar filtro ${chip.label}`}
+              >
+                ×
+              </button>
+            </span>
+          ))}
+          <button className={styles.chipClearAll} onClick={resetFilters}>
+            Limpiar todo
+          </button>
+        </div>
+      )}
+
+      {loading && initialized && (
+        <div style={{ textAlign: "center", padding: "8px 0", opacity: 0.6, fontSize: 13 }}>
+          Cargando...
+        </div>
+      )}
+
+      {error && initialized && (
+        <div style={{ textAlign: "center", padding: "8px 0", color: "red", fontSize: 13 }}>
+          {error}
+        </div>
+      )}
 
       <div className={styles.tableContainer}>
         <table className={styles.table}>
@@ -739,14 +838,14 @@ const UsersList: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {visibleUsers.length === 0 ? (
+            {filteredUsers.length === 0 ? (
               <tr>
                 <td colSpan={7} style={{ padding: 16, textAlign: "center" }}>
                   No hay resultados con los filtros actuales.
                 </td>
               </tr>
             ) : (
-              visibleUsers.map((user) => (
+              filteredUsers.map((user) => (
                 <tr key={user.id}>
                   <td>{user.nro_socio ?? "—"}</td>
                   <td className={styles.nameCell}>{user.name}</td>
@@ -775,6 +874,32 @@ const UsersList: React.FC = () => {
         </table>
       </div>
 
+      <div className={styles.pagination}>
+        <button
+          className={styles.pageBtn}
+          onClick={() => setPage(0)}
+          disabled={page === 0 || loading}
+          aria-label="Primera página"
+        >
+          ««
+        </button>
+        <button
+          className={styles.pageBtn}
+          onClick={() => setPage((p) => Math.max(0, p - 1))}
+          disabled={page === 0 || loading}
+        >
+          ‹ Anterior
+        </button>
+        <span className={styles.pageInfo}>Página {page + 1}</span>
+        <button
+          className={styles.pageBtn}
+          onClick={() => setPage((p) => p + 1)}
+          disabled={isLastPage || loading}
+        >
+          Siguiente ›
+        </button>
+      </div>
+
       <Modal isOpen={isExportOpen} onClose={() => setIsExportOpen(false)} title="Filtrar y descargar" size="large">
         <FilterModal
           filters={filters}
@@ -782,6 +907,7 @@ const UsersList: React.FC = () => {
           exportError={exportError}
           exportLoading={exportLoading}
           onExport={handleExportWithFilters}
+          onApply={handleApplyFilters}
           onClose={() => setIsExportOpen(false)}
           resetFilters={resetFilters}
         />
