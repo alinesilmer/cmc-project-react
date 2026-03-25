@@ -5,7 +5,7 @@ import Button from "../../components/atoms/Button/Button";
 import { useAuth } from "../../auth/AuthProvider";
 import { isWebEditor } from "../../auth/roles";
 import { http } from "../../lib/http";
-import pdf from "../../assets/CMC - 12 2025 .pdf";
+import pdf from "../../assets/CMC - 03 2026 .pdf";
 import Header from "../../../website/components/UI/Header/Header";
 
 function Login() {
