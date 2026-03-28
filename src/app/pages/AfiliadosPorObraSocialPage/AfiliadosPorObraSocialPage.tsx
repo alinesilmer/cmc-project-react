@@ -693,17 +693,36 @@ const AfiliadosPorObraSocialPage = () => {
       matricula_prov: safeStr(pickMatriculaProv(p)),
       telefono_consulta: safeStr(pickTelefonoConsulta(p)),
       especialidad: safeStr(pickEspecialidad(p)),
+       domicilio_consulta: safeStr(pickDomicilioConsulta(p)),
     }));
   }
 
   async function downloadExcel() {
-    if (!selectedOS) return;
-    if (filteredPrestadores.length === 0) {
-      window.alert("No hay datos para exportar con el filtro actual.");
-      return;
-    }
+  if (!selectedOS) return;
+  if (filteredPrestadores.length === 0) {
+    window.alert("No hay datos para exportar con el filtro actual.");
+    return;
+  }
 
-    const rows = getExportRows();
+  const controller = new AbortController();
+
+  try {
+    // 👇 MISMA LÓGICA QUE PDF (CLAVE)
+    const enriched = await enrichForPdf(
+      filteredPrestadores,
+      false,
+      controller.signal
+    );
+
+    const rows = enriched.map((p) => ({
+      nro_socio: safeStr(pickNroPrestador(p)),
+      nombre: safeStr(pickNombre(p)),
+      matricula_prov: safeStr(pickMatriculaProv(p)),
+      telefono_consulta: safeStr(pickTelefonoConsulta(p)),
+      especialidad: safeStr(pickEspecialidad(p)),
+      domicilio_consulta: safeStr(pickDomicilioConsulta(p)),
+    }));
+
     const wb = new ExcelJS.Workbook();
     wb.creator = "CMC";
     wb.created = new Date();
@@ -726,9 +745,10 @@ const AfiliadosPorObraSocialPage = () => {
       { header: "Matricula Prov", key: "matricula_prov", width: 16 },
       { header: "Telefono", key: "telefono_consulta", width: 18 },
       { header: "Especialidades", key: "especialidad", width: 34 },
+      { header: "Dirección consultorio", key: "domicilio_consulta", width: 50 },
     ];
 
-    ws.mergeCells("A2:E2");
+    ws.mergeCells("A2:F2");
     ws.getCell("A2").value = "Prestadores por Obra Social";
     ws.getCell("A2").font = {
       name: "Calibri",
@@ -736,36 +756,24 @@ const AfiliadosPorObraSocialPage = () => {
       bold: true,
       color: { argb: C.titleBlue },
     };
-    ws.getCell("A2").alignment = {
-      vertical: "middle",
-      horizontal: "left",
-    };
 
-    ws.mergeCells("A3:E3");
+    ws.mergeCells("A3:F3");
     ws.getCell("A3").value = `${selectedOS.NOMBRE} (${selectedCode}) • Generado: ${fmtDate(
       new Date()
     )} • Filas: ${rows.length}`;
-    ws.getCell("A3").font = {
-      name: "Calibri",
-      size: 11,
-      color: { argb: C.black },
-    };
-    ws.getCell("A3").alignment = {
-      vertical: "middle",
-      horizontal: "left",
-    };
 
     ws.getRow(4).height = 6;
 
     const headerRow = 6;
+
     ws.getRow(headerRow).values = [
       "N° Socio",
       "Prestador",
       "Matricula Prov",
       "Telefono",
       "Especialidades",
+      "Dirección consultorio",
     ];
-    ws.getRow(headerRow).height = 20;
 
     const tableBorder = {
       top: { style: "thin" as const, color: { argb: C.black } },
@@ -775,35 +783,21 @@ const AfiliadosPorObraSocialPage = () => {
     };
 
     ws.getRow(headerRow).eachCell((cell) => {
-      cell.font = {
-        name: "Calibri",
-        size: 11,
-        bold: true,
-        color: { argb: C.white },
-      };
+      cell.font = { bold: true, color: { argb: C.white } };
       cell.fill = {
         type: "pattern",
         pattern: "solid",
         fgColor: { argb: C.black },
       };
-      cell.alignment = {
-        vertical: "middle",
-        horizontal: "center",
-      };
+      cell.alignment = { vertical: "middle", horizontal: "center" };
       cell.border = tableBorder;
     });
 
     rows.forEach((r, idx) => {
       const row = ws.addRow(r);
-      row.height = 18;
       const zebraFill = idx % 2 === 0 ? C.white : C.gray100;
 
       row.eachCell((cell, col) => {
-        cell.font = {
-          name: "Calibri",
-          size: 11,
-          color: { argb: C.black },
-        };
         cell.fill = {
           type: "pattern",
           pattern: "solid",
@@ -811,7 +805,8 @@ const AfiliadosPorObraSocialPage = () => {
         };
         cell.border = tableBorder;
 
-        if (col === 2 || col === 5) {
+        // 👇 CLAVE: incluir columna 6
+        if (col === 2 || col === 5 || col === 6) {
           cell.alignment = {
             vertical: "middle",
             horizontal: "left",
@@ -827,21 +822,25 @@ const AfiliadosPorObraSocialPage = () => {
     });
 
     const endRow = ws.lastRow?.number ?? headerRow + 1;
+
     ws.autoFilter = {
       from: { row: headerRow, column: 1 },
-      to: { row: endRow, column: 5 },
+      to: { row: endRow, column: 6 },
     };
 
-    ws.getRow(1).height = 6;
-
     const buf = await wb.xlsx.writeBuffer();
+
     saveAs(
       new Blob([buf], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       }),
       `prestadores_${selectedCode}_${fmtDate(new Date())}.xlsx`
     );
+  } catch (e) {
+    console.error(e);
+    window.alert("Error al generar Excel");
   }
+}
 
   async function downloadPdf() {
     if (!selectedOS) return;
