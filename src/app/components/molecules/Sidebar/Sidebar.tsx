@@ -303,6 +303,13 @@ const NAV_SECTIONS: NavSection[] = [
         label: "Listado de Prestadores",
         perms: ["medicos:leer"],
       },
+       {
+            kind: "item",
+            path: `${base}/crear-padron`,
+            icon: UserCog,
+            label: "Generar Lista Cerrada",
+            perms: ["medicos:leer"],
+          },
         {
         kind: "item",
         path: `${base}/boletin`,
