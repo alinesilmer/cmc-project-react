@@ -45,6 +45,7 @@ import ListadoOSFacturacion from "./app/pages/facturacion/ListadoOSFacturacion/L
 
 // WEBSITE
 import WebRoutes from "./website/router";
+import GenerarExcel from "./app/pages/CrearPadronExcel/CrearPadronExcel";
 
 export default function RootRoutes() {
   return (
@@ -99,6 +100,7 @@ export default function RootRoutes() {
             <Route path="config" element={<Config />} />
             <Route path="help" element={<Help />} />
            <Route path="crear-padron" element={<CrearPadron />} />
+          <Route path="crear-excel" element={<GenerarExcel />} />
 
             {/* Facturación */}
             <Route path="facturacion">

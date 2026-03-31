@@ -31,16 +31,7 @@ import {
   Building2,
   ClipboardList,
   BadgeCheck,
-  NotepadTextDashed,
-  CircleDollarSign,
   File,
-  FileStack,
-  Shredder,
-  BookMarked,
-  PackageSearch,
-  FileUpIcon,
-  CircleDashed,
-  CircleDotDashedIcon,
 } from "lucide-react";
 
 import styles from "./Sidebar.module.scss";
@@ -306,8 +297,15 @@ const NAV_SECTIONS: NavSection[] = [
        {
             kind: "item",
             path: `${base}/crear-padron`,
-            icon: UserCog,
+            icon: File,
             label: "Generar Lista Cerrada",
+            perms: ["medicos:leer"],
+          },
+           {
+            kind: "item",
+            path: `${base}/crear-excel`,
+            icon: File,
+            label: "Generar Excel Lista",
             perms: ["medicos:leer"],
           },
         {

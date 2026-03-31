@@ -40,6 +40,7 @@ import CargaFacturacion from "./app/pages/facturacion/CargaFacturacion/CargaFact
 import CierrePeriodoFacturista from "./app/pages/facturacion/CierrePeriodoFacturista/CierrePeriodoFacturista";
 import ListadoOSFacturacion from "./app/pages/facturacion/ListadoOSFacturacion/ListadoOSFacturacion";
 import CrearPadron from "./app/pages/CrearPadron/CrearPadron";
+import GenerarExcel from "./app/pages/CrearPadronExcel/CrearPadronExcel";
 
 
 
@@ -98,6 +99,7 @@ function App() {
             <Route path="/info" element={<Info />} />
             <Route path="/adherente" element={<AdherenteForm />} />
 <Route path="/crear-padron" element={<CrearPadron />} />
+<Route path="/crear-excel" element={<GenerarExcel />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
