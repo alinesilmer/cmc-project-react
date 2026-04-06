@@ -9,64 +9,163 @@ import {
 } from "./boletinConsultaComun.constants";
 import {
   normalizeText,
-  safeNum,
   parseFecha,
+  safeNum,
 } from "./boletinConsultaComun.helpers";
 import type {
   ApiBoletinRow,
   ConsultaComunItem,
 } from "./boletinConsultaComun.types";
 
+function pickFirst<T = unknown>(
+  obj: Record<string, unknown>,
+  keys: string[],
+  fallback?: T
+): T | undefined {
+  for (const key of keys) {
+    const value = obj[key];
+    if (value !== undefined && value !== null) {
+      return value as T;
+    }
+  }
+  return fallback;
+}
+
 export function normalizeRow(input: unknown): ApiBoletinRow {
   const row = (input ?? {}) as Record<string, unknown>;
 
+  const fechaCambioRaw = pickFirst(row, [
+    "fecha_cambio",
+    "FECHA_CAMBIO",
+    "fechaCambio",
+    "updated_at",
+    "UPDATED_AT",
+    "updatedAt",
+    "fecha",
+    "FECHA",
+  ]);
+
   return {
-    id: Number(row.id ?? row.ID ?? row.pk ?? 0),
+    id: Number(
+      pickFirst(row, ["id", "ID", "pk", "Pk", "PK"], 0)
+    ),
+
     codigos: String(
-      row.codigos ??
-        row.codigo ??
-        row.cod_nom ??
-        row.cod_nomenclador ??
-        CONSULTA_COMUN_CODE
-    ),
+      pickFirst(row, [
+        "codigos",
+        "CODIGOS",
+        "codigo",
+        "CODIGO",
+        "cod_nom",
+        "COD_NOM",
+        "cod_nomenclador",
+        "COD_NOMENCLADOR",
+      ], CONSULTA_COMUN_CODE)
+    ).trim(),
+
     nro_obrasocial: Number(
-      row.nro_obrasocial ??
-        row.nro_obra_social ??
-        row.nroOS ??
-        row.obra_social_numero ??
-        0
+      pickFirst(row, [
+        "nro_obrasocial",
+        "NRO_OBRASOCIAL",
+        "nro_obra_social",
+        "NRO_OBRA_SOCIAL",
+        "nroOS",
+        "obra_social_numero",
+        "OBRA_SOCIAL_NUMERO",
+      ], 0)
     ),
+
     obra_social:
-      row.obra_social != null
-        ? String(row.obra_social)
-        : row.nombre_obra_social != null
-        ? String(row.nombre_obra_social)
-        : row.obraSocial != null
-        ? String(row.obraSocial)
-        : row.nombre != null
-        ? String(row.nombre)
+      pickFirst<string | null>(row, [
+        "obra_social",
+        "OBRA_SOCIAL",
+        "nombre_obra_social",
+        "NOMBRE_OBRA_SOCIAL",
+        "obraSocial",
+        "nombre",
+        "NOMBRE",
+      ], null) != null
+        ? String(
+            pickFirst(row, [
+              "obra_social",
+              "OBRA_SOCIAL",
+              "nombre_obra_social",
+              "NOMBRE_OBRA_SOCIAL",
+              "obraSocial",
+              "nombre",
+              "NOMBRE",
+            ])
+          )
         : null,
+
     honorarios_a: safeNum(
-      row.honorarios_a ?? row.honorariosA ?? row.valor ?? row.importe ?? 0
+      pickFirst(row, [
+        "honorarios_a",
+        "HONORARIOS_A",
+        "honorariosA",
+        "valor",
+        "VALOR",
+        "importe",
+        "IMPORTE",
+      ], 0)
     ),
-    honorarios_b: safeNum(row.honorarios_b ?? row.honorariosB ?? 0),
-    honorarios_c: safeNum(row.honorarios_c ?? row.honorariosC ?? 0),
-    gastos: safeNum(row.gastos ?? 0),
-    ayudante_a: safeNum(row.ayudante_a ?? row.ayudanteA ?? 0),
-    ayudante_b: safeNum(row.ayudante_b ?? row.ayudanteB ?? 0),
-    ayudante_c: safeNum(row.ayudante_c ?? row.ayudanteC ?? 0),
-    c_p_h_s: String(row.c_p_h_s ?? row.tipo ?? ""),
+
+    honorarios_b: safeNum(
+      pickFirst(row, [
+        "honorarios_b",
+        "HONORARIOS_B",
+        "honorariosB",
+      ], 0)
+    ),
+
+    honorarios_c: safeNum(
+      pickFirst(row, [
+        "honorarios_c",
+        "HONORARIOS_C",
+        "honorariosC",
+      ], 0)
+    ),
+
+    gastos: safeNum(
+      pickFirst(row, ["gastos", "GASTOS"], 0)
+    ),
+
+    ayudante_a: safeNum(
+      pickFirst(row, [
+        "ayudante_a",
+        "AYUDANTE_A",
+        "ayudanteA",
+      ], 0)
+    ),
+
+    ayudante_b: safeNum(
+      pickFirst(row, [
+        "ayudante_b",
+        "AYUDANTE_B",
+        "ayudanteB",
+      ], 0)
+    ),
+
+    ayudante_c: safeNum(
+      pickFirst(row, [
+        "ayudante_c",
+        "AYUDANTE_C",
+        "ayudanteC",
+      ], 0)
+    ),
+
+    c_p_h_s: String(
+      pickFirst(row, [
+        "c_p_h_s",
+        "C_P_H_S",
+        "tipo",
+        "TIPO",
+      ], "")
+    ).trim(),
+
     fecha_cambio:
-      row.fecha_cambio != null
-        ? String(row.fecha_cambio)
-        : row.fechaCambio != null
-        ? String(row.fechaCambio)
-        : row.updated_at != null
-        ? String(row.updated_at)
-        : row.updatedAt != null
-        ? String(row.updatedAt)
-        : row.fecha != null
-        ? String(row.fecha)
+      fechaCambioRaw != null && String(fechaCambioRaw).trim() !== ""
+        ? String(fechaCambioRaw).trim()
         : null,
   };
 }
@@ -78,15 +177,35 @@ export function extractRowsFromPayload(payload: unknown): unknown[] | null {
   const obj = payload as Record<string, unknown>;
 
   if (Array.isArray(obj.results)) return obj.results;
+  if (Array.isArray(obj.RESULTS)) return obj.RESULTS;
+
   if (Array.isArray(obj.items)) return obj.items;
+  if (Array.isArray(obj.ITEMS)) return obj.ITEMS;
+
   if (Array.isArray(obj.data)) return obj.data;
+  if (Array.isArray(obj.DATA)) return obj.DATA;
+
   if (Array.isArray(obj.rows)) return obj.rows;
+  if (Array.isArray(obj.ROWS)) return obj.ROWS;
 
   if (obj.data && typeof obj.data === "object") {
     const dataObj = obj.data as Record<string, unknown>;
     if (Array.isArray(dataObj.results)) return dataObj.results;
+    if (Array.isArray(dataObj.RESULTS)) return dataObj.RESULTS;
     if (Array.isArray(dataObj.items)) return dataObj.items;
+    if (Array.isArray(dataObj.ITEMS)) return dataObj.ITEMS;
     if (Array.isArray(dataObj.rows)) return dataObj.rows;
+    if (Array.isArray(dataObj.ROWS)) return dataObj.ROWS;
+  }
+
+  if (obj.DATA && typeof obj.DATA === "object") {
+    const dataObj = obj.DATA as Record<string, unknown>;
+    if (Array.isArray(dataObj.results)) return dataObj.results;
+    if (Array.isArray(dataObj.RESULTS)) return dataObj.RESULTS;
+    if (Array.isArray(dataObj.items)) return dataObj.items;
+    if (Array.isArray(dataObj.ITEMS)) return dataObj.ITEMS;
+    if (Array.isArray(dataObj.rows)) return dataObj.rows;
+    if (Array.isArray(dataObj.ROWS)) return dataObj.ROWS;
   }
 
   return null;
@@ -114,23 +233,19 @@ export function filterRowsByCodigo(
   return matched.length > 0 ? matched : rows;
 }
 
-function isMoreRecentRow(candidate: ApiBoletinRow, current: ApiBoletinRow): boolean {
-  const candidateDate = parseFecha(candidate.fecha_cambio);
-  const currentDate = parseFecha(current.fecha_cambio);
+function compareRowsByRecency(a: ApiBoletinRow, b: ApiBoletinRow): number {
+  const aDate = parseFecha(a.fecha_cambio);
+  const bDate = parseFecha(b.fecha_cambio);
 
-  // Prefer the row with the newest FECHA_CAMBIO
-  if (candidateDate != null && currentDate != null) {
-    if (candidateDate !== currentDate) {
-      return candidateDate > currentDate;
-    }
-  } else if (candidateDate != null && currentDate == null) {
-    return true;
-  } else if (candidateDate == null && currentDate != null) {
-    return false;
+  if (aDate != null && bDate != null) {
+    if (aDate !== bDate) return aDate - bDate;
+  } else if (aDate != null && bDate == null) {
+    return 1;
+  } else if (aDate == null && bDate != null) {
+    return -1;
   }
 
-  // Fallback: if same date or no date, prefer the الأكبر/newer id
-  return candidate.id > current.id;
+  return a.id - b.id;
 }
 
 export function buildLatestPerOS(rows: ApiBoletinRow[]): ConsultaComunItem[] {
@@ -141,7 +256,12 @@ export function buildLatestPerOS(rows: ApiBoletinRow[]): ConsultaComunItem[] {
 
     const current = latestByOS.get(row.nro_obrasocial);
 
-    if (!current || isMoreRecentRow(row, current)) {
+    if (!current) {
+      latestByOS.set(row.nro_obrasocial, row);
+      continue;
+    }
+
+    if (compareRowsByRecency(row, current) > 0) {
       latestByOS.set(row.nro_obrasocial, row);
     }
   }
@@ -248,24 +368,18 @@ export async function fetchConsultaComun(
   for (let page = 1; page <= MAX_API_PAGES; page += 1) {
     const pageRows = await requestBoletinPage(page, signal);
 
-    if (pageRows.length === 0) {
-      break;
-    }
+    if (pageRows.length === 0) break;
 
     const signature = `${pageRows.length}-${pageRows[0]?.id ?? "x"}-${
       pageRows[pageRows.length - 1]?.id ?? "y"
     }`;
 
-    if (signature === previousSignature) {
-      break;
-    }
+    if (signature === previousSignature) break;
 
     previousSignature = signature;
     rows.push(...pageRows);
 
-    if (pageRows.length < PAGE_SIZE) {
-      break;
-    }
+    if (pageRows.length < PAGE_SIZE) break;
   }
 
   const filteredRows = filterRowsByCodigo(rows, CONSULTA_COMUN_CODE);
