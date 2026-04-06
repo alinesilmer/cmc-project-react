@@ -31,7 +31,9 @@ import {
   Building2,
   ClipboardList,
   BadgeCheck,
+  CircleDollarSign,
   File,
+  FileBoxIcon,
 } from "lucide-react";
 
 import styles from "./Sidebar.module.scss";
@@ -188,19 +190,19 @@ const NAV_SECTIONS: NavSection[] = [
       //     },
       //   ],
       // },
-      //  {
-      //   kind: "group",
-      //   id: "valores",
-      //   icon: CircleDollarSign,
-      //   label: "Valores",
-      //   children: [
-      //     {
-      //       kind: "item",
-      //       path: `${base}/users-manager`,
-      //       icon: File,
-      //       label: "Boletín Galenos",
-      //       perms: ["medicos:leer"],
-      //     },
+        {
+         kind: "group",
+         id: "valores",
+         icon: CircleDollarSign,
+         label: "Valores",
+         children: [
+           {
+             kind: "item",
+             path: `${base}/boletin-consulta-comun`,
+             icon: FileBoxIcon,
+             label: "Boletín Mensual",
+             perms: ["medicos:leer"],
+           },
       //     {
       //       kind: "item",
       //       path: `${base}/users`,
@@ -250,8 +252,8 @@ const NAV_SECTIONS: NavSection[] = [
       //       label: "Valores Historial",
       //       perms: ["medicos:leer"],
       //     },
-      //   ],
-      // },
+         ],
+       },
       {
         kind: "group",
         id: "socios",

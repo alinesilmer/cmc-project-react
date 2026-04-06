@@ -41,6 +41,7 @@ import CierrePeriodoFacturista from "./app/pages/facturacion/CierrePeriodoFactur
 import ListadoOSFacturacion from "./app/pages/facturacion/ListadoOSFacturacion/ListadoOSFacturacion";
 import CrearPadron from "./app/pages/CrearPadron/CrearPadron";
 import GenerarExcel from "./app/pages/CrearPadronExcel/CrearPadronExcel";
+import BoletinConsultaComun from "./app/pages/BoletinConsultaComun/BoletinConsultaComun";
 
 
 
@@ -100,6 +101,7 @@ function App() {
             <Route path="/adherente" element={<AdherenteForm />} />
 <Route path="/crear-padron" element={<CrearPadron />} />
 <Route path="/crear-excel" element={<GenerarExcel />} />
+<Route path="/boletin-consulta-comun" element={<BoletinConsultaComun />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 

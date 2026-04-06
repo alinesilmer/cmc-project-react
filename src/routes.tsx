@@ -46,15 +46,12 @@ import ListadoOSFacturacion from "./app/pages/facturacion/ListadoOSFacturacion/L
 // WEBSITE
 import WebRoutes from "./website/router";
 import GenerarExcel from "./app/pages/CrearPadronExcel/CrearPadronExcel";
+import BoletinConsultaComun from "./app/pages/BoletinConsultaComun/BoletinConsultaComun";
 
 export default function RootRoutes() {
   return (
     <AnimatePresence mode="wait">
       <Routes>
-        {/* Website público */}
-        <Route path="/*" element={<WebRoutes />} />
-
-        {/* Públicas del panel */}
         <Route path="/panel/login" element={<Login />} />
         <Route path="/panel/register-os" element={<ObrasSocialesRegisterPage />} />
         <Route path="/panel/register" element={<Register />} />
@@ -63,13 +60,10 @@ export default function RootRoutes() {
         <Route path="/panel/padrones" element={<PadronesPage />} />
         <Route path="/generar-boletin" element={<GenerarBoletin />} />
 
-        {/* Protegidas */}
         <Route element={<RequireAuth />}>
           <Route path="/panel" element={<AppLayout />}>
-            {/* Redirect base */}
-            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route index element={<Navigate to="/panel/dashboard" replace />} />
 
-            {/* Dashboard / core */}
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="doctors" element={<DoctorsPage />} />
             <Route path="doctors/:id" element={<DoctorProfilePage />} />
@@ -77,7 +71,6 @@ export default function RootRoutes() {
             <Route path="padronsucio" element={<PadronSucio />} />
             <Route path="afiliadospadron" element={<AfiliadosPorObraSocialPage />} />
 
-            {/* Liquidación */}
             <Route path="liquidation" element={<LiquidationPage />} />
             <Route path="liquidation/:id" element={<LiquidationCyclePage />} />
             <Route path="liquidation/:id/debitos" element={<DiscountsPage />} />
@@ -88,7 +81,6 @@ export default function RootRoutes() {
             <Route path="liquidation/:id/medicos" element={<LiquidacionMedicoPage />} />
             <Route path="liquidation/:id/recibos" element={<RecibosPage />} />
 
-            {/* Otros módulos */}
             <Route path="padron-ioscor" element={<PadronIoscor />} />
             <Route path="solicitudes" element={<ApplicationsList />} />
             <Route path="solicitudes/:id" element={<ApplicationDetail />} />
@@ -99,38 +91,25 @@ export default function RootRoutes() {
             <Route path="boletin" element={<Boletin />} />
             <Route path="config" element={<Config />} />
             <Route path="help" element={<Help />} />
-           <Route path="crear-padron" element={<CrearPadron />} />
-          <Route path="crear-excel" element={<GenerarExcel />} />
+            <Route path="crear-padron" element={<CrearPadron />} />
+            <Route path="crear-excel" element={<GenerarExcel />} />
+            <Route path="boletin-consulta-comun" element={<BoletinConsultaComun />} />
 
-            {/* Facturación */}
             <Route path="facturacion">
-              <Route index element={<Facturacion />} /> {/* /panel/facturacion */}
-              <Route path="carga" element={<CargaFacturacion />} /> {/* /panel/facturacion/carga */}
-              <Route path="cierre-periodo" element={<CierrePeriodoFacturista />} /> {/* /panel/facturacion/cierre-periodo */}
-              <Route path="listado-por-obra-social" element={<ListadoOSFacturacion />} /> {/* /panel/facturacion/listado-por-obra-social */}
-
-              {/* futuras subrutas */}
-              {/* <Route path="cierre-periodos-facturista" element={<TuPagina />} /> */}
-              {/* <Route path="listado-por-medico" element={<TuPagina />} /> */}
-              {/* <Route path="listado-por-obra-social-colegio" element={<TuPagina />} /> */}
-              {/* <Route path="validacion" element={<TuPagina />} /> */}
-              {/* <Route path="ioscor" element={<TuPagina />} /> */}
-              {/* <Route path="boreal-archivo-plano" element={<TuPagina />} /> */}
-              {/* <Route path="plano-utn" element={<TuPagina />} /> */}
-              {/* <Route path="omint-archivo-plano" element={<TuPagina />} /> */}
+              <Route index element={<Facturacion />} />
+              <Route path="carga" element={<CargaFacturacion />} />
+              <Route path="cierre-periodo" element={<CierrePeriodoFacturista />} />
+              <Route path="listado-por-obra-social" element={<ListadoOSFacturacion />} />
             </Route>
 
-            {/* Fallback interno */}
-            <Route path="*" element={<Navigate to="dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/panel/dashboard" replace />} />
           </Route>
 
-          {/* Protegidas fuera del layout */}
           <Route path="/panel/admin-padrones" element={<AdminPadrones />} />
           <Route path="/panel/admin-padrones-detail" element={<AdminPadronesDetail />} />
         </Route>
 
-        {/* Fallback global */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/*" element={<WebRoutes />} />
       </Routes>
     </AnimatePresence>
   );
