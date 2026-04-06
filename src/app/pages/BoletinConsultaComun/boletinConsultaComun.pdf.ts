@@ -16,7 +16,6 @@ import {
   formatApiDate,
   formatGeneratedDate,
   getImageFormat,
-  getMostRecentLabel,
   normalizeText,
 } from "./boletinConsultaComun.helpers";
 import type { ConsultaComunItem } from "./boletinConsultaComun.types";
@@ -30,6 +29,10 @@ export async function generateConsultaComunPdf(items: ConsultaComunItem[]) {
   const generatedAt = new Date();
   const generatedAtLabel = formatGeneratedDate(generatedAt);
   const logoDataUrl = await fetchAsDataUrl(CMC_LOGO_SRC);
+  const mes = generatedAt
+  .toLocaleString("es-AR", { month: "long" })
+  .toUpperCase();
+
 
   const doc = new jsPDF({
     orientation: "portrait",
@@ -100,6 +103,14 @@ export async function generateConsultaComunPdf(items: ConsultaComunItem[]) {
     doc.setFontSize(8.8);
     doc.text(CMC_SUBTITLE, logoDataUrl ? marginX + 16 : marginX, 16);
 
+   
+
+    doc.setFont("helvetica", "normal");
+doc.setFontSize(8.8);
+doc.text(mes, pageWidth - marginX, 16, { align: "right" });
+
+
+
     doc.setTextColor(...palette.text);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
@@ -135,7 +146,7 @@ export async function generateConsultaComunPdf(items: ConsultaComunItem[]) {
     doc.setTextColor(...palette.white);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(22);
-    doc.text("Boletín Informativo de Valores Auditoría", pageWidth / 2, 58, { align: "center" });
+    doc.text("Boletín Informativo de Valores", pageWidth / 2, 58, { align: "center" });
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(12);

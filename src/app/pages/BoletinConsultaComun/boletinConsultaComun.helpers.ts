@@ -52,7 +52,7 @@ export function buildPdfFilename(date: Date): string {
   const yyyy = date.getFullYear();
   const mm = String(date.getMonth() + 1).padStart(2, "0");
   const dd = String(date.getDate()).padStart(2, "0");
-  return `consulta-comun-obras-sociales-${yyyy}${mm}${dd}.pdf`;
+  return `Boletín-Informativo-${yyyy}${mm}${dd}.pdf`;
 }
 
 export function formatGeneratedDate(date: Date): string {

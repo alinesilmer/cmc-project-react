@@ -1,6 +1,6 @@
 import logo from "../../assets/logoCMC.png";
 
-export const CONSULTA_COMUN_CODE = "420101";
+export const CONSULTA_COMUN_CODE = "420351";
 export const PAGE_SIZE = 500;
 export const MAX_API_PAGES = 50;
 
