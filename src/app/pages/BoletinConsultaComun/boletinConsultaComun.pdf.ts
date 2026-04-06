@@ -107,7 +107,7 @@ export async function generateConsultaComunPdf(items: ConsultaComunItem[]) {
 
     doc.setFont("helvetica", "normal");
 doc.setFontSize(8.8);
-doc.text(mes, pageWidth - marginX, 16, { align: "right" });
+doc.text(mes, pageWidth - marginX, 10, { align: "right" });
 
 
 

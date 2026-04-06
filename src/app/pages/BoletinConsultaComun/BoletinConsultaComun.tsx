@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useDeferredValue, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   FileDown,
   RefreshCcw,
@@ -10,29 +10,16 @@ import styles from "./BoletinConsultaComun.module.scss";
 import Button from "../../../website/components/UI/Button/Button";
 
 import {
-  CMC_EMAIL,
-  CMC_LOGO_SRC,
-  CMC_NAME,
-  CMC_PHONE,
   CONSULTA_COMUN_CODE,
   shortDateFormatter,
-  moneyFormatter,
 } from "./boletinConsultaComun.constants";
-import { getErrorMessage } from "./boletinConsultaComun.api";
-import {
-  getMostRecentLabel,
-  normalizeText,
-  formatApiDate,
-} from "./boletinConsultaComun.helpers";
 import { generateConsultaComunPdf } from "./boletinConsultaComun.pdf";
 import { useConsultaComunQuery } from "./useConsultaComunQuery";
 
 export default function BoletinConsultaComun() {
-  const [search, setSearch] = useState("");
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
-  const deferredSearch = useDeferredValue(search);
 
   const {
     data = [],
@@ -42,19 +29,8 @@ export default function BoletinConsultaComun() {
     refetch,
   } = useConsultaComunQuery();
 
-  const filteredData = useMemo(() => {
-    const q = normalizeText(deferredSearch).toLowerCase();
-    if (!q) return data;
+  
 
-    return data.filter((item) => {
-      return (
-        item.nombre.toLowerCase().includes(q) || String(item.nro).includes(q)
-      );
-    });
-  }, [data, deferredSearch]);
-
-  const errorMessage = error ? getErrorMessage(error) : null;
-  const mostRecentDateLabel = useMemo(() => getMostRecentLabel(data), [data]);
 
   const handleDownloadPdf = useCallback(async () => {
     if (data.length === 0 || isGeneratingPdf) return;

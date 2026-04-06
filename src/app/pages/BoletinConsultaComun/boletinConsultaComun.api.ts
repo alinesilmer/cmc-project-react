@@ -7,7 +7,11 @@ import {
   OBSERVATIONS_BY_OS,
   PAGE_SIZE,
 } from "./boletinConsultaComun.constants";
-import { normalizeText, safeNum } from "./boletinConsultaComun.helpers";
+import {
+  normalizeText,
+  safeNum,
+  parseFecha,
+} from "./boletinConsultaComun.helpers";
 import type {
   ApiBoletinRow,
   ConsultaComunItem,
@@ -110,20 +114,39 @@ export function filterRowsByCodigo(
   return matched.length > 0 ? matched : rows;
 }
 
+function isMoreRecentRow(candidate: ApiBoletinRow, current: ApiBoletinRow): boolean {
+  const candidateDate = parseFecha(candidate.fecha_cambio);
+  const currentDate = parseFecha(current.fecha_cambio);
+
+  // Prefer the row with the newest FECHA_CAMBIO
+  if (candidateDate != null && currentDate != null) {
+    if (candidateDate !== currentDate) {
+      return candidateDate > currentDate;
+    }
+  } else if (candidateDate != null && currentDate == null) {
+    return true;
+  } else if (candidateDate == null && currentDate != null) {
+    return false;
+  }
+
+  // Fallback: if same date or no date, prefer the الأكبر/newer id
+  return candidate.id > current.id;
+}
+
 export function buildLatestPerOS(rows: ApiBoletinRow[]): ConsultaComunItem[] {
-  const firstByOS = new Map<number, ApiBoletinRow>();
+  const latestByOS = new Map<number, ApiBoletinRow>();
 
   for (const row of rows) {
     if (!row.nro_obrasocial) continue;
 
-    const current = firstByOS.get(row.nro_obrasocial);
+    const current = latestByOS.get(row.nro_obrasocial);
 
-    if (!current || row.id < current.id) {
-      firstByOS.set(row.nro_obrasocial, row);
+    if (!current || isMoreRecentRow(row, current)) {
+      latestByOS.set(row.nro_obrasocial, row);
     }
   }
 
-  return Array.from(firstByOS.entries())
+  return Array.from(latestByOS.entries())
     .map(([nro, row]) => ({
       nro,
       nombre: normalizeText(row.obra_social ?? `OS ${nro}`),
