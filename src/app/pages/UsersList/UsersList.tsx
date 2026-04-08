@@ -397,6 +397,12 @@ function applyMedicosFilters(rows: MedicoRow[], filters: FilterSelection): Medic
       if (filters.faltantes.mode === "present" && missing) return false;
     }
 
+    // cuit (partial match, normalized)
+    if (o.cuit) {
+      const cuit = normalizeText(pickFirst(row, ["cuit", "CUIT", "cuil", "CUIL"]));
+      if (!cuit.includes(normalizeText(o.cuit))) return false;
+    }
+
     // tiene_malapraxis
     if (o.tieneMalapraxis === "true") {
       const mp = String(pickFirst(row, ["malapraxis", "MALAPRAXIS"]) ?? "").trim();
@@ -594,7 +600,6 @@ const UsersList: React.FC = () => {
         const data = await getJSON<MedicoRow[]>("/api/medicos/all", params);
         if (cancelled) return;
         const rows: MedicoRow[] = Array.isArray(data) ? data : [];
-        if (rows.length > 0) console.log("[DEBUG] primer row keys:", Object.keys(rows[0]), "\n[DEBUG] primer row:", JSON.stringify(rows[0]));
         setRawUsers(rows);
         setIsLastPage(rows.length < PAGE_SIZE);
         setInitialized(true);
@@ -630,6 +635,11 @@ const UsersList: React.FC = () => {
     }
     const cols = ["nro_socio", ...filters.columns.filter((c) => c !== "nro_socio")];
     const fixed: FilterSelection = { ...filters, columns: cols };
+
+    // Commit draft filters so the table reflects what was exported.
+    setCommittedFilters(fixed);
+    setPage(0);
+
     const fixedLogo = await getFixedLogoFile();
     const ok = await onExportWithFilters(format, fixed, fixedLogo);
     if (ok) setIsExportOpen(false);

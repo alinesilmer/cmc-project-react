@@ -57,6 +57,22 @@ export type FilterSelection = {
   faltantes: FaltantesFilter;
 };
 
+/** Human-readable labels for each MissingFieldKey — shared across filter UI and summary. */
+export const MISSING_FIELD_LABELS: Record<MissingFieldKey, string> = {
+  telefono_consulta: "Teléfono consultorio",
+  domicilio_consulta: "Domicilio consultorio",
+  mail_particular: "Mail",
+  tele_particular: "Teléfono particular",
+  celular_particular: "Celular",
+  matricula_prov: "Matrícula provincial",
+  matricula_nac: "Matrícula nacional",
+  provincia: "Provincia",
+  categoria: "Categoría",
+  especialidad: "Especialidad",
+  condicion_impositiva: "Condición impositiva",
+  malapraxis: "Mala praxis",
+};
+
 export const initialFilters: FilterSelection = {
   columns: ["nombre", "documento", "mail_particular", "matricula_prov", "especialidad", "malapraxis"],
   vencimientos: {

@@ -189,6 +189,11 @@ export function applyPrestadoresFilters(rows: PrestadorRow[], filters: FilterSel
     // -----------------------------
     // OTROS (según tu tipo actual)
     // -----------------------------
+    if (filters.otros.cuit) {
+      const cuit = normalize(pickFirst(row, ["cuit", "CUIT", "cuil", "CUIL"]));
+      if (!cuit.includes(normalize(filters.otros.cuit))) return false;
+    }
+
     if (fSexo && !normalize(pickFirst(row, ["sexo", "SEXO"])).includes(fSexo)) return false;
 
     if (fProv && !normalize(pickFirst(row, ["provincia", "PROVINCIA"])).includes(fProv)) return false;

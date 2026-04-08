@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import NoticiaCard from "../../components/Noticias/NoticiaCard/NoticiaCard";
 import PageHero from "../../components/UI/Hero/Hero";
-// import hero from "../../assets/images/heroImg.png";
 // import { api } from "../../lib/api";
 import { listNews } from "../../lib/news.client";
 // import { mediaUrl } from "../../lib/media";
