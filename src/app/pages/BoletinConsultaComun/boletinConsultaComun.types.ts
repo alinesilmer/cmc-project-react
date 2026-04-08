@@ -21,3 +21,6 @@ export type ConsultaComunItem = {
   fechaCambio: string | null;
   observaciones: string[];
 };
+
+/** One text observation per obra social, keyed by nro_obrasocial. */
+export type ObservacionesMap = Record<number, string>;

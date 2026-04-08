@@ -392,6 +392,300 @@
   color: #98a2b3;
 }
 
+/* ── Templates manager ─────────────────────────────────── */
+
+.templatesSection {
+  margin-bottom: 20px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: #f8fafc;
+  border: 1px solid #e4eaf3;
+}
+
+.templatesLabel {
+  margin: 0 0 12px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #203769;
+}
+
+.templatesHint {
+  font-weight: 400;
+  color: #7b8798;
+}
+
+.templatesRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 32px;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+.templatesEmpty {
+  font-size: 0.86rem;
+  color: #98a2b3;
+  font-style: italic;
+}
+
+.templateChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(49, 92, 184, 0.22);
+  background: rgba(49, 92, 184, 0.07);
+  overflow: hidden;
+  max-width: 320px;
+}
+
+.templateChipText {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px 10px 5px 12px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: #264b92;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px;
+  transition: background-color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background: rgba(49, 92, 184, 0.1);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+}
+
+.templateChipRemove {
+  background: none;
+  border: none;
+  border-left: 1px solid rgba(49, 92, 184, 0.15);
+  cursor: pointer;
+  padding: 5px 9px;
+  color: #7b8798;
+  display: inline-flex;
+  align-items: center;
+  transition: color 0.15s ease, background-color 0.15s ease;
+  flex-shrink: 0;
+
+  &:hover {
+    color: #b42318;
+    background: rgba(180, 35, 24, 0.07);
+  }
+}
+
+.addTemplateRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.addTemplateInput {
+  flex: 1;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid #d8e0eb;
+  background: #fff;
+  padding: 0 14px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: #243241;
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &:focus {
+    border-color: #315cb8;
+    box-shadow: 0 0 0 3px rgba(49, 92, 184, 0.1);
+  }
+
+  &::placeholder {
+    color: #a0acbe;
+  }
+
+  &:disabled {
+    background: #f4f6f8;
+    opacity: 0.6;
+  }
+}
+
+.addTemplateBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(49, 92, 184, 0.28);
+  background: rgba(49, 92, 184, 0.08);
+  color: #264b92;
+  font-size: 0.88rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background: rgba(49, 92, 184, 0.14);
+    border-color: rgba(49, 92, 184, 0.4);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+/* ── Inline template chips (inside edit row) ───────────── */
+
+.inlineTemplates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.inlineTemplatesLabel {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #5d6778;
+  margin-right: 2px;
+  white-space: nowrap;
+}
+
+.inlineTemplateChip {
+  background: #fff;
+  border: 1px solid rgba(49, 92, 184, 0.25);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 0.83rem;
+  font-family: inherit;
+  color: #264b92;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+
+  &:hover {
+    background: rgba(49, 92, 184, 0.1);
+    border-color: rgba(49, 92, 184, 0.4);
+  }
+}
+
+/* ── Observation edit row ──────────────────────────────── */
+
+.colAction {
+  width: 52px;
+}
+
+.actionCell {
+  text-align: center;
+}
+
+.editIconBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px 7px;
+  color: #7b8798;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    color: #315cb8;
+    background: rgba(49, 92, 184, 0.1);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.editRowCell {
+  padding: 18px 20px;
+  background: rgba(234, 241, 252, 0.45);
+  border-left: 3px solid #315cb8;
+}
+
+.editRowLabel {
+  margin: 0 0 12px;
+  font-size: 0.91rem;
+  color: #5d6778;
+}
+
+.obsTextarea {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid #c6d5ee;
+  padding: 10px 14px;
+  font-size: 0.93rem;
+  font-family: inherit;
+  color: #243241;
+  resize: vertical;
+  min-height: 80px;
+  max-height: 180px;
+  outline: none;
+  background: #fff;
+  box-sizing: border-box;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &:focus {
+    border-color: #315cb8;
+    box-shadow: 0 0 0 3px rgba(49, 92, 184, 0.11);
+  }
+
+  &::placeholder {
+    color: #a0acbe;
+  }
+}
+
+.editRowMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.charCount {
+  font-size: 0.8rem;
+  color: #98a2b3;
+}
+
+.editRowActions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ─────────────────────────────────────────────────────── */
+
 @keyframes spin {
   to {
     transform: rotate(360deg);

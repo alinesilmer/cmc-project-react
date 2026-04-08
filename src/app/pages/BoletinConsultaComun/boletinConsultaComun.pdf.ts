@@ -1,5 +1,3 @@
-import autoTable from "jspdf-autotable";
-
 import {
   CMC_EMAIL,
   CMC_LOGO_SRC,
@@ -30,9 +28,8 @@ export async function generateConsultaComunPdf(items: ConsultaComunItem[]) {
   const generatedAtLabel = formatGeneratedDate(generatedAt);
   const logoDataUrl = await fetchAsDataUrl(CMC_LOGO_SRC);
   const mes = generatedAt
-  .toLocaleString("es-AR", { month: "long" })
-  .toUpperCase();
-
+    .toLocaleString("es-AR", { month: "long" })
+    .toUpperCase();
 
   const doc = new jsPDF({
     orientation: "portrait",
@@ -103,13 +100,9 @@ export async function generateConsultaComunPdf(items: ConsultaComunItem[]) {
     doc.setFontSize(8.8);
     doc.text(CMC_SUBTITLE, logoDataUrl ? marginX + 16 : marginX, 16);
 
-   
-
     doc.setFont("helvetica", "normal");
-doc.setFontSize(8.8);
-doc.text(mes, pageWidth - marginX, 10, { align: "right" });
-
-
+    doc.setFontSize(8.8);
+    doc.text(mes, pageWidth - marginX, 10, { align: "right" });
 
     doc.setTextColor(...palette.text);
     doc.setFont("helvetica", "bold");
@@ -146,7 +139,9 @@ doc.text(mes, pageWidth - marginX, 10, { align: "right" });
     doc.setTextColor(...palette.white);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(22);
-    doc.text("Boletín Informativo de Valores", pageWidth / 2, 58, { align: "center" });
+    doc.text("Boletín Informativo de Valores", pageWidth / 2, 58, {
+      align: "center",
+    });
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(12);
@@ -158,8 +153,6 @@ doc.text(mes, pageWidth - marginX, 10, { align: "right" });
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.text(CMC_NAME, pageWidth / 2, 96, { align: "center" });
-
-   
 
     doc.setFillColor(...palette.softBlue);
     doc.roundedRect(24, 118, pageWidth - 48, 54, 4, 4, "F");
@@ -174,7 +167,6 @@ doc.text(mes, pageWidth - marginX, 10, { align: "right" });
     doc.text(`Código nomenclador: ${CONSULTA_COMUN_CODE}`, 32, 141);
     doc.text(`Fecha de generación: ${generatedAtLabel}`, 32, 149);
     doc.text(`Cantidad de obras sociales: ${items.length}`, 32, 157);
-    
 
     doc.setDrawColor(...palette.line);
     doc.setLineWidth(0.35);
@@ -190,7 +182,6 @@ doc.text(mes, pageWidth - marginX, 10, { align: "right" });
     doc.setTextColor(...palette.muted);
     doc.text(`Email: ${CMC_EMAIL}`, 24, 212);
     doc.text(`Teléfono: ${CMC_PHONE}`, 24, 220);
-
   }
 
   function drawIndexPages() {
@@ -244,8 +235,6 @@ doc.text(mes, pageWidth - marginX, 10, { align: "right" });
 
         y += 10;
       });
-
-      
     }
   }
 
@@ -270,64 +259,20 @@ doc.text(mes, pageWidth - marginX, 10, { align: "right" });
     doc.setTextColor(...palette.green);
     doc.text(moneyFormatter.format(item.valor), marginX + 6, 68);
 
-    autoTable(doc, {
-      startY: 83,
-      margin: { left: marginX, right: marginX },
-      theme: "grid",
-      head: [["Campo", "Detalle"]],
-      body: [
-        ["N° Obra Social", String(item.nro)],
-        ["Obra Social", item.nombre],
-        ["Código nomenclador", CONSULTA_COMUN_CODE],
-        ["Práctica", "Consulta Común"],
-        ["Valor", moneyFormatter.format(item.valor)],
-        ["Fecha informada", formatApiDate(item.fechaCambio)],
-      ],
-      styles: {
-        font: "helvetica",
-        fontSize: 10,
-        cellPadding: 3.2,
-        textColor: [...palette.text],
-        lineColor: [...palette.line],
-        lineWidth: 0.2,
-      },
-      headStyles: {
-        fillColor: [...palette.navy],
-        textColor: [...palette.white],
-        fontStyle: "bold",
-      },
-      columnStyles: {
-        0: {
-          fontStyle: "bold",
-          fillColor: [248, 250, 252],
-          cellWidth: 48,
-        },
-        1: {
-          cellWidth: "auto",
-        },
-      },
-      alternateRowStyles: {
-        fillColor: [252, 253, 255],
-      },
-    });
-
-    const finalY =
-      ((doc as any).lastAutoTable?.finalY as number | undefined) ?? 132;
-
     doc.setDrawColor(...palette.line);
-    doc.line(marginX, finalY + 8, pageWidth - marginX, finalY + 8);
+    doc.line(marginX, 83, pageWidth - marginX, 83);
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     doc.setTextColor(...palette.text);
-    doc.text("Observaciones", marginX, finalY + 18);
+    doc.text("Observaciones", marginX, 93);
 
     const observations =
       item.observaciones.length > 0
         ? item.observaciones
         : ["Sin observaciones particulares."];
 
-    let obsY = finalY + 28;
+    let obsY = 103;
 
     observations.slice(0, 4).forEach((obs) => {
       const lines = fitLines(doc.splitTextToSize(`• ${obs}`, 172) as string[], 3);
