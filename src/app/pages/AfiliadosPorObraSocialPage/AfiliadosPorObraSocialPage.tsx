@@ -18,7 +18,6 @@ import {
   FileText,
   Search,
   Sparkles,
-  Users,
   X,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -1157,32 +1156,9 @@ const AfiliadosPorObraSocialPage = () => {
           <div className={styles.heroMain}>
             <span className={styles.heroEyebrow}>Padrones</span>
             <h1 className={styles.title}>Prestadores por Obra Social</h1>
-            <p className={styles.subtitle}>
-              Seleccioná una obra social, filtrá prestadores y exportá el
-              resultado en PDF o Excel con una interfaz más clara y rápida.
-            </p>
           </div>
 
-          <div className={styles.heroStats}>
-            <div className={styles.statCard}>
-              <span className={styles.statLabel}>Obra social</span>
-              <strong className={styles.statValue}>
-                {selectedOS ? selectedCode : "Sin seleccionar"}
-              </strong>
-            </div>
-
-            <div className={styles.statCard}>
-              <span className={styles.statLabel}>Prestadores</span>
-              <strong className={styles.statValue}>{filteredPrestadores.length}</strong>
-            </div>
-
-            <div className={styles.statCard}>
-              <span className={styles.statLabel}>Exportación</span>
-              <strong className={styles.statValue}>
-                {isExportingAnyPdf ? "Procesando…" : "Disponible"}
-              </strong>
-            </div>
-          </div>
+         
         </section>
 
         <section className={styles.card}>
@@ -1196,15 +1172,7 @@ const AfiliadosPorObraSocialPage = () => {
                 </p>
               </div>
 
-              {selectedOS ? (
-                <div className={styles.selectedBadge}>
-                  <Sparkles size={14} />
-                  <span>
-                    {selectedOS.NOMBRE} ({selectedCode})
-                  </span>
-                </div>
-              ) : null}
-            </div>
+             </div>
           </div>
 
           <div className={styles.cardContent}>
@@ -1219,13 +1187,7 @@ const AfiliadosPorObraSocialPage = () => {
                 >
                   <div className={styles.osButtonContent}>
                     <span className={styles.osButtonLabel}>Obra social</span>
-                    <span className={styles.osButtonValue}>
-                      {loadingObras
-                        ? "Cargando obras sociales…"
-                        : selectedOS
-                        ? `${selectedOS.NOMBRE} (${selectedCode})`
-                        : "Seleccioná una obra social"}
-                    </span>
+                   
                   </div>
 
                   <ChevronDown
@@ -1261,20 +1223,7 @@ const AfiliadosPorObraSocialPage = () => {
                       )}
                     </div>
 
-                    <div className={styles.dropdownMeta}>
-                      {loadingObras ? (
-                        <span>Cargando…</span>
-                      ) : errorObras ? (
-                        <span>Error al cargar</span>
-                      ) : hiddenOsCount > 0 ? (
-                        <span>
-                          Mostrando {filteredOS.length} de {obras.length}. Escribí
-                          para filtrar más.
-                        </span>
-                      ) : (
-                        <span>{filteredOS.length} resultado(s)</span>
-                      )}
-                    </div>
+                   
 
                     <div className={styles.dropdownList}>
                       {loadingObras ? (
@@ -1382,10 +1331,7 @@ const AfiliadosPorObraSocialPage = () => {
               <div className={styles.emptyState}>
                 <Building2 size={46} className={styles.emptyIcon} />
                 <h3 className={styles.emptyTitle}>Seleccioná una obra social</h3>
-                <p className={styles.emptyMessage}>
-                  Abrí el selector superior, buscá por nombre o código y accedé
-                  al listado completo de prestadores.
-                </p>
+                
               </div>
             ) : loadingPrestadores ? (
               <div className={styles.loadingState}>

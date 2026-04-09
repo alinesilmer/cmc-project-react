@@ -30,7 +30,9 @@ type Prestador = {
   especialidad?: string | null;
 
   domicilio_consulta?: string | null;
+  cuit?: string | null;
   mail_particular?: string | null;
+  codigo_postal?: string | null;
 };
 
 const API_BASE =
@@ -90,6 +92,15 @@ function pickTelefonoConsulta(p: Prestador) {
 }
 function pickDomicilioConsulta(p: Prestador) {
   return p.domicilio_consulta ?? "";
+}
+function pickCuit(p: Prestador) {
+  return p.cuit ?? "";
+}
+function pickMailParticular(p: Prestador) {
+  return p.mail_particular ?? "";
+}
+function pickCodigoPostal(p: Prestador) {
+  return p.codigo_postal ?? "";
 }
 
 // ==========================
@@ -283,6 +294,27 @@ function mapItemToPrestador(it: any): Prestador {
     it?.domicilio_consulta ??
     null;
 
+  const cuit =
+    src?.CUIT ??
+    src?.cuit ??
+    it?.CUIT ??
+    it?.cuit ??
+    null;
+
+  const mail_particular =
+    src?.MAIL_PARTICULAR ??
+    src?.mail_particular ??
+    it?.MAIL_PARTICULAR ??
+    it?.mail_particular ??
+    null;
+
+  const codigo_postal =
+    src?.CODIGO_POSTAL ??
+    src?.codigo_postal ??
+    it?.CODIGO_POSTAL ??
+    it?.codigo_postal ??
+    null;
+
   return {
     id,
     nro_socio: nro,
@@ -294,6 +326,9 @@ function mapItemToPrestador(it: any): Prestador {
     especialidades,
     especialidad,
     domicilio_consulta,
+    cuit,
+    mail_particular,
+    codigo_postal,
   };
 }
 
@@ -362,7 +397,7 @@ const XLSX_REQ_TIMEOUT_MS = 12_000;
 const XLSX_CONTACT_CONCURRENCY = 4;
 const XLSX_ENRICH_MAX = 700;
 
-type ContactoPayload = Pick<Prestador, "domicilio_consulta">;
+type ContactoPayload = Pick<Prestador, "domicilio_consulta" | "cuit" | "mail_particular" | "codigo_postal">;
 const contactoCache = new Map<string, ContactoPayload>();
 
 async function fetchContactoById(id: string, signal?: AbortSignal): Promise<ContactoPayload> {
@@ -383,7 +418,28 @@ async function fetchContactoById(id: string, signal?: AbortSignal): Promise<Cont
         data?.domicilio_consulta ??
         null;
 
-      const payload: ContactoPayload = { domicilio_consulta };
+      const cuit =
+        src?.CUIT ??
+        src?.cuit ??
+        data?.CUIT ??
+        data?.cuit ??
+        null;
+
+      const mail_particular =
+        src?.MAIL_PARTICULAR ??
+        src?.mail_particular ??
+        data?.MAIL_PARTICULAR ??
+        data?.mail_particular ??
+        null;
+
+      const codigo_postal =
+        src?.CODIGO_POSTAL ??
+        src?.codigo_postal ??
+        data?.CODIGO_POSTAL ??
+        data?.codigo_postal ??
+        null;
+
+      const payload: ContactoPayload = { domicilio_consulta, cuit, mail_particular, codigo_postal };
       contactoCache.set(id, payload);
       return payload;
     } catch (e: any) {
@@ -391,7 +447,7 @@ async function fetchContactoById(id: string, signal?: AbortSignal): Promise<Cont
     }
   }
 
-  const payload: ContactoPayload = { domicilio_consulta: null };
+  const payload: ContactoPayload = { domicilio_consulta: null, cuit: null, mail_particular: null, codigo_postal: null };
   contactoCache.set(id, payload);
   return payload;
 }
@@ -427,7 +483,15 @@ async function mapWithConcurrency<T, R>(
 async function enrichForExcel(rows: Prestador[], signal?: AbortSignal): Promise<Prestador[]> {
   const needAll = rows
     .map((p, idx) => ({ p, idx }))
-    .filter(({ p }) => !safeStr(p.domicilio_consulta).trim() && !!p.id);
+    .filter(({ p }) =>
+      !!p.id &&
+      (
+        !safeStr(p.domicilio_consulta).trim() ||
+        !safeStr(p.cuit).trim() ||
+        !safeStr(p.mail_particular).trim() ||
+        !safeStr(p.codigo_postal).trim()
+      )
+    );
 
   if (needAll.length === 0) return rows;
   if (signal?.aborted) return rows;
@@ -446,6 +510,9 @@ async function enrichForExcel(rows: Prestador[], signal?: AbortSignal): Promise<
     out[idx] = {
       ...prev,
       domicilio_consulta: safeStr(prev.domicilio_consulta).trim() ? prev.domicilio_consulta : c.domicilio_consulta,
+      cuit: safeStr(prev.cuit).trim() ? prev.cuit : c.cuit,
+      mail_particular: safeStr(prev.mail_particular).trim() ? prev.mail_particular : c.mail_particular,
+      codigo_postal: safeStr(prev.codigo_postal).trim() ? prev.codigo_postal : c.codigo_postal,
     };
   }
   return out;
@@ -773,12 +840,15 @@ const GenerarExcel = () => {
           margins: { left: 0.3, right: 0.3, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 },
         };
 
-        // columnas (mismo “ancho visual” que PDF)
+        // columnas (mismo "ancho visual" que PDF)
         ws.columns = [
           { key: "nro", width: 12 },
           { key: "prestador", width: 38 },
           { key: "mat", width: 14 },
           { key: "tel", width: 16 },
+          { key: "cuit", width: 16 },
+          { key: "mail", width: 28 },
+          { key: "cp", width: 14 },
           { key: "esp", width: 32 },
           { key: "dir", width: 48 },
         ];
@@ -790,9 +860,9 @@ const GenerarExcel = () => {
               base64: logoBase64,
               extension: logoType,
             });
-            // posición aproximada (col F, filas 1-3)
+            // posición aproximada (col I, filas 1-3)
             ws.addImage(imgId, {
-              tl: { col: 5.35, row: 0.1 },
+              tl: { col: 8.35, row: 0.1 },
               ext: { width: 110, height: 110 },
             });
           }
@@ -800,15 +870,15 @@ const GenerarExcel = () => {
           console.warn("No se pudo insertar logo en Excel:", e);
         }
 
-        ws.mergeCells("A1:F1");
+        ws.mergeCells("A1:I1");
         ws.getCell("A1").value = headerTitle;
         ws.getCell("A1").font = { size: 16, bold: true };
 
-        ws.mergeCells("A2:F2");
+        ws.mergeCells("A2:I2");
         ws.getCell("A2").value = headerSub;
         ws.getCell("A2").font = { size: 11, bold: false };
 
-        ws.mergeCells("A3:F3");
+        ws.mergeCells("A3:I3");
         ws.getCell("A3").value = `${fmtDate(new Date())} • ${subtitle}`;
         ws.getCell("A3").font = { size: 10, bold: false };
 
@@ -818,6 +888,9 @@ const GenerarExcel = () => {
           "Prestador",
           "Matricula Prov",
           "Telefono",
+          "CUIT",
+          "Mail",
+          "Código Postal",
           subtitle.includes("Servicios") ? "Servicio" : "Especialidades",
           "Dirección consultorio",
         ]);
@@ -867,8 +940,8 @@ const GenerarExcel = () => {
         const arr = groups.get(k) ?? [];
         if (arr.length === 0) continue;
 
-        const sectionRow = ws1.addRow(["", "", "", "", `Especialidad: ${label}`, ""]);
-        ws1.mergeCells(sectionRow.number, 1, sectionRow.number, 6);
+        const sectionRow = ws1.addRow(["", "", "", "", "", "", "", `Especialidad: ${label}`, ""]);
+        ws1.mergeCells(sectionRow.number, 1, sectionRow.number, 9);
         sectionRow.getCell(1).value = `Especialidad: ${label}`;
         sectionStyle(sectionRow);
 
@@ -878,6 +951,9 @@ const GenerarExcel = () => {
             safeStr(pickNombre(p)),
             safeStr(pickMatriculaProv(p)),
             safeStr(pickTelefonoConsulta(p)),
+            safeStr(pickCuit(p)),
+            safeStr(pickMailParticular(p)),
+            safeStr(pickCodigoPostal(p)),
             pickEspecialidadTop3WithoutServicesOrMedico(p),
             safeStr(pickDomicilioConsulta(p)),
           ]);
@@ -885,7 +961,7 @@ const GenerarExcel = () => {
         }
 
         // spacer
-        ws1.addRow(["", "", "", "", "", ""]);
+        ws1.addRow(["", "", "", "", "", "", "", "", ""]);
       }
 
       // Hoja 2: Servicios
@@ -898,8 +974,8 @@ const GenerarExcel = () => {
         const arr = serviceGroups.get(k) ?? [];
         if (arr.length === 0) continue;
 
-        const sectionRow = ws2.addRow(["", "", "", "", `Servicio: ${label}`, ""]);
-        ws2.mergeCells(sectionRow.number, 1, sectionRow.number, 6);
+        const sectionRow = ws2.addRow(["", "", "", "", "", "", "", `Servicio: ${label}`, ""]);
+        ws2.mergeCells(sectionRow.number, 1, sectionRow.number, 9);
         sectionRow.getCell(1).value = `Servicio: ${label}`;
         sectionStyle(sectionRow);
 
@@ -909,13 +985,16 @@ const GenerarExcel = () => {
             safeStr(pickNombre(p)),
             safeStr(pickMatriculaProv(p)),
             safeStr(pickTelefonoConsulta(p)),
+            safeStr(pickCuit(p)),
+            safeStr(pickMailParticular(p)),
+            safeStr(pickCodigoPostal(p)),
             label,
             safeStr(pickDomicilioConsulta(p)),
           ]);
           dataStyle(row, rIndex++);
         }
 
-        ws2.addRow(["", "", "", "", "", ""]);
+        ws2.addRow(["", "", "", "", "", "", "", "", ""]);
       }
 
       // Bordes livianos a toda la tabla (desde header row en adelante)

@@ -1,118 +1,96 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import ObrasSociales from "../../components/Servicios/ObrasSociales/ObrasSociales";
 import type { ObraSocial } from "../../components/Servicios/ObrasSociales/ObrasSociales";
 import styles from "./convenios.module.scss";
 import Button from "../../components/UI/Button/Button";
 import { Link } from "react-router-dom";
-import { useState } from "react";
 
-const adicionalesNombres: string[] = [
-"ASCMUTUAL PROTECCION FAMILIAR",
-"ASOCIACIÓN MUTUAL SANCOR",
-"ASSISTRAVEL",
-"AVALIAN",
-"BOREAL SALUD",
-"BRAMED SRL",
-"CONFERENCIA EPISCOPAL ARG",
-"DASUTEN",
-"FARMACIA",
-"GALENO",
-"GERDANNA SA",
-"GRUPO MELD SALUD",
-"IOSCOR",
-"IOSFA",
-"LUIS PASTEUR",
-"MEDICUS",
-"MEDIFE",
-"MEPLIFE SALUD",
-"MTRABDE METALURGICO",
-"NOBIS MEDICAL",
-"NUEVA MUTUAL SERV-MEDICAL WORK",
-"OBRA SOCIAL DE FUTBOLISTAS",
-"OMINT SA",
-"OPDEA",
-"OSAPM",
-"OSCTCP",
-"OSDEPYM",
-"OSDOP",
-"OSEMM",
-"OSETYA",
-"OSFFENTOS",
-"OSJERA",
-"OSMATA",
-"OSPEP - OBRA SOCIAL DEL PERSONAL DE PANAD",
-"OSPERYHRA",
-"OSPIL",
-"OSPIM",
-"OSPM",
-"OSPPRA",
-"OSPSA",
-"OSPTA",
-"OSPTV",
-"OSSEG",
-"OSSACRA",
-"OSSIMRA",
-"OSTPCHPY ARA",
-"OSTRAC",
-"PATRONES DE CABOTAJE",
-"POLICÍA FEDERAL",
-"PREVENCIÓN SALUD SA",
-"PROGRAMAS MEDICOS SOC ARG DE CONSULTO",
-"SADAIC",
-"SCIS",
-"SPF",
-"SUPERINTENDENCIA RIESGO DEL TRABAJO",
-"SWISS MEDICAL",
-"UDEL PERSONAL CIVIL DE LA NAC",
-"UNIÓN OBRERA METALÚRGICA",
-"UNIÓN PERSONAL",
-"UNNE",
-];
+// ─── API config ───────────────────────────────────────────────────────────────
+// In dev, use "" so the Vite proxy handles /api/* → backend (avoids CORS).
+// In prod, use VITE_API_URL as the absolute base (e.g. https://api.example.com).
+const API_BASE: string = import.meta.env.DEV
+  ? ""
+  : ((import.meta.env.VITE_API_URL as string | undefined) ?? "");
 
-const adicionales: ObraSocial[] = adicionalesNombres.map(
-  (nombre, i) =>
-    ({
-      id: `os${12 + i + 1}`,
-      nombre,
-    } as ObraSocial)
-);
+const OBRAS_SOCIALES_URL = `${API_BASE}/api/obras_social/`;
 
-const mockObras: ObraSocial[] = [...adicionales];
-
-// contacto
+// ─── Contact constants ────────────────────────────────────────────────────────
 const EMAIL = "auditoria@colegiomedicocorrientes.com";
-const PHONE_AR = "543794252323";
-const WA_MSG = "Hola, quiero coordinar para firmar un convenio con el CMC.";
-const WA_LINK = `https://wa.me/${PHONE_AR}?text=${encodeURIComponent(WA_MSG)}`;
+const WA_NUMBER = "543794252323";
+const WA_LINK = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(
+  "Hola, quisiera información para firmar convenio con el Colegio Médico de Corrientes, por favor. ¡Gracias!."
+)}`;
 const MAILTO_LINK = `mailto:${EMAIL}?subject=${encodeURIComponent(
   "Carta de presentación - Convenio"
 )}&body=${encodeURIComponent(
   "Hola, adjunto carta de presentación para evaluar convenio. Gracias."
 )}`;
 
+// ─── API response normalizer ──────────────────────────────────────────────────
+function normalizeObrasSociales(data: unknown): ObraSocial[] {
+  const items = Array.isArray(data)
+    ? data
+    : Array.isArray((data as any)?.items)
+    ? (data as any).items
+    : Array.isArray((data as any)?.results)
+    ? (data as any).results
+    : [];
+
+  return items
+    .map((item: any, i: number) => {
+      const nombre = String(
+        item?.nombre ?? item?.NOMBRE ?? item?.name ?? item?.razon_social ?? ""
+      ).trim();
+      if (!nombre) return null;
+      return {
+        id: String(item?.id ?? item?.ID ?? item?.nro ?? `os-${i}`),
+        nombre,
+        href: item?.href ?? item?.url ?? item?.link ?? undefined,
+      } as ObraSocial;
+    })
+    .filter((x: ObraSocial | null): x is ObraSocial => x !== null);
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function ConveniosPage() {
-   const [menuOpen, setMenuOpen] = useState(false);
-      const [openDropdown, setOpenDropdown] = useState<
-        null | "nosotros" | "servicios"
-      >(null);
-      const [mobileOpen, setMobileOpen] = useState({
-        nosotros: false,
-        servicios: false,
+  const [obras, setObras] = useState<ObraSocial[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let aborted = false;
+
+    fetch(OBRAS_SOCIALES_URL, { headers: { Accept: "application/json" } })
+      .then((res) => {
+        if (!res.ok) throw new Error(`Error ${res.status} al obtener convenios.`);
+        return res.json() as Promise<unknown>;
+      })
+      .then((data) => {
+        if (aborted) return;
+        setObras(normalizeObrasSociales(data));
+        setLoading(false);
+      })
+      .catch(() => {
+        if (aborted) return;
+        setError("No se pudieron cargar los convenios. Intente más tarde.");
+        setLoading(false);
       });
-      
-      
-  const closeAll = () => {
-      setMenuOpen(false);
-      setOpenDropdown(null);
-      setMobileOpen({ nosotros: false, servicios: false });
+
+    return () => {
+      aborted = true;
     };
+  }, []);
+
   return (
     <div className={styles.galeriaWrap}>
       <ObrasSociales
         titulo="Convenios con Obras Sociales"
         subtitulo="Coberturas y convenios vigentes con el Colegio Médico de Corrientes"
-        obras={mockObras}
+        obras={obras}
+        loading={loading}
+        error={error}
       />
 
       <div className={styles.cta}>
@@ -122,28 +100,20 @@ export default function ConveniosPage() {
           ¡Hacé click en el botón de abajo!
         </h2>
 
-         <Link
-                        to={`https://wa.me/543794252323?text=${encodeURIComponent(
-                          "Hola, quisiera información para firmar convenio con el Colegio Médico de Corrientes, por favor. ¡Gracias!."
-                        )}`}
-                        className={styles.subLink}
-                        onClick={closeAll}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                         <Button variant="primary" size="large">
+        <Link
+          to={WA_LINK}
+          className={styles.subLink}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Button variant="primary" size="large">
             Quiero firmar convenio
           </Button>
-                      </Link>
-          
+        </Link>
 
         <p className={styles.otherOption}>
-          Si tienes inconvenientes llenando nuestro formulario, por favor, enviar <br/> carta de presentación al{" "}
-          <a
-            href={MAILTO_LINK}
-            className={styles.link}
-            aria-label="Enviar mail"
-          >
+          Si tienes inconvenientes, por favor enviar carta de presentación al{" "}
+          <a href={MAILTO_LINK} className={styles.link} aria-label="Enviar mail">
             {EMAIL}
           </a>{" "}
           y/o mensaje de WhatsApp al{" "}

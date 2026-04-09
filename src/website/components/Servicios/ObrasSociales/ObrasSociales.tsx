@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import styles from "./ObrasSociales.module.scss"
 
 export type ObraSocial = {
@@ -13,12 +13,16 @@ type Props = {
   titulo?: string
   subtitulo?: string
   obras: ObraSocial[]
+  loading?: boolean
+  error?: string | null
 }
 
 export default function ObrasSociales({
   titulo = "Convenios con Obras Sociales",
   subtitulo = "Coberturas y convenios vigentes con el Colegio Médico de Corrientes",
   obras,
+  loading = false,
+  error = null,
 }: Props) {
   const [isVisible, setIsVisible] = useState(false)
 
@@ -38,10 +42,26 @@ export default function ObrasSociales({
         {subtitulo && <p className={styles.subtitle}>{subtitulo}</p>}
       </div>
 
-      <div className={styles.list} role="list">
-        {obras.map((o, index) => {
-          if (o.href) {
-            return (
+      {loading && (
+        <p className={styles.statusMsg} aria-live="polite">
+          Cargando convenios…
+        </p>
+      )}
+
+      {!loading && error && (
+        <p className={styles.statusMsg} role="alert">
+          {error}
+        </p>
+      )}
+
+      {!loading && !error && obras.length === 0 && (
+        <p className={styles.statusMsg}>No hay convenios disponibles en este momento.</p>
+      )}
+
+      {!loading && !error && obras.length > 0 && (
+        <div className={styles.list} role="list">
+          {obras.map((o, index) =>
+            o.href ? (
               <a
                 key={o.id}
                 href={o.href}
@@ -52,27 +72,22 @@ export default function ObrasSociales({
                 style={{ animationDelay: `${index * 0.05}s` }}
                 aria-label={`Abrir detalles de ${o.nombre}`}
               >
-               
                 <div className={styles.name}>{o.nombre}</div>
-              
               </a>
+            ) : (
+              <div
+                key={o.id}
+                role="listitem"
+                className={`${styles.item} ${isVisible ? styles.itemVisible : ""}`}
+                style={{ animationDelay: `${index * 0.05}s` }}
+                aria-label={o.nombre}
+              >
+                <div className={styles.name}>{o.nombre}</div>
+              </div>
             )
-          }
-
-          return (
-            <div
-              key={o.id}
-              role="listitem"
-              className={`${styles.item} ${isVisible ? styles.itemVisible : ""}`}
-              style={{ animationDelay: `${index * 0.05}s` }}
-              aria-label={o.nombre}
-            >
-             
-              <div className={styles.name}>{o.nombre}</div>
-            </div>
-          )
-        })}
-      </div>
+          )}
+        </div>
+      )}
     </section>
   )
 }

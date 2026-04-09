@@ -208,23 +208,6 @@
   line-height: 1.65;
 }
 
-.selectedBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 36px;
-  padding: 0 $spacing-4;
-  border-radius: 999px;
-  background: rgba($primary-blue, 0.08);
-  color: $primary-blue;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
-  white-space: nowrap;
-
-  @media (max-width: $breakpoint-md) {
-    white-space: normal;
-  }
-}
 
 .cardContent {
   padding: $spacing-8;

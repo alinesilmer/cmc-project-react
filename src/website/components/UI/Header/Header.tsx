@@ -53,8 +53,6 @@ export default function Header() {
     : legacyUrl; 
 
   useEffect(() => {
-    console.log("legacy =", import.meta.env.VITE_URL_BASE_LEGACY);
-
     const onScroll = () => {
       if (pathname !== "/") {
         setSolid(true);
@@ -67,9 +65,6 @@ export default function Header() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, [pathname]);
-
-  // const toggleMobileGroup = (key: "nosotros" | "servicios") =>
-  //   setMobileOpen((p) => ({ ...p, [key]: !p[key] }));
 
   const closeAll = () => {
     setMenuOpen(false);

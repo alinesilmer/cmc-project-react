@@ -15,7 +15,6 @@ import Footer from "./components/UI/Footer/Footer";
 import NosotrosPage from "./app/nosotros/page";
 import AdminMedicosPromo from "./app/admin/MedicosPromo/MedicosPromo";
 import Servicios from "./app/servicios/page";
-import NotFound from "./app/notFound/notFound";
 import GaleriaPage from "./app/galeria/page";
 import ConveniosPage from "./app/convenios/convenios";
 import QuintaPage from "./app/quinta/quinta";
@@ -73,7 +72,6 @@ export default function WebRoutes() {
         <Route path="/cursos/:id" element={<CursoDetailPage />} />
         <Route path="/nosotros" element={<NosotrosPage />} />
         <Route path="/servicios" element={<Servicios />} />
-        <Route path="/notFound" element={<NotFound />} />
         <Route path="/galeria" element={<GaleriaPage />} />
         <Route path="/convenios" element={<ConveniosPage />} />
         <Route path="/quinta" element={<QuintaPage />} />

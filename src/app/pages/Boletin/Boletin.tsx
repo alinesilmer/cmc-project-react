@@ -482,14 +482,7 @@ export default function Boletin() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <div className={styles.headerContent}>
-          <h1 className={styles.title}>Ranking de Obras Sociales</h1>
-          <p className={styles.subtitle}>
-            Ranking automático por <b>Importe</b> según el código nomenclador ingresado.
-          </p>
-        </div>
-      </div>
+     
 
       <div className={styles.card}>
         <div className={styles.cardHeader}>
@@ -570,12 +563,8 @@ export default function Boletin() {
           <div className={styles.cardHeader}>
             <div className={styles.resultsHeader}>
               <div>
-                <h2 className={styles.cardTitle}>Ranking Generado</h2>
-                <p className={styles.resultsCount}>
-                  {filtered.length} obra{filtered.length !== 1 ? "s" : ""} social
-                  {filtered.length !== 1 ? "es" : ""} encontrada
-                  {filtered.length !== 1 ? "s" : ""}
-                </p>
+                <h2 className={styles.cardTitle}>Ranking de Obras Sociales</h2>
+              
               </div>
 
               <div className={styles.searchWrapper}>

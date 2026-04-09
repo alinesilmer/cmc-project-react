@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
   FaUserPlus,
@@ -14,6 +14,9 @@ import styles from "./Welcome.module.scss";
 import Button from "../../../components/UI/Button/Button";
 
 const ETICA_PDF = "https://colegiomedicocorrientes.com/CMC092025.pdf";
+const WA_LINK = `https://wa.me/543794252323?text=${encodeURIComponent(
+  "Hola, quisiera información para asociarme al Colegio Médico de Corrientes, por favor. ¡Gracias!."
+)}`;
 
 type QuickCard = {
   title: string;
@@ -54,22 +57,6 @@ function isExternal(href: string) {
 }
 
 export default function Welcome() {
-    const [menuOpen, setMenuOpen] = useState(false);
-    const [openDropdown, setOpenDropdown] = useState<
-      null | "nosotros" | "servicios"
-    >(null);
-    const [mobileOpen, setMobileOpen] = useState({
-      nosotros: false,
-      servicios: false,
-    });
-    
-    
-const closeAll = () => {
-    setMenuOpen(false);
-    setOpenDropdown(null);
-    setMobileOpen({ nosotros: false, servicios: false });
-  };
-
   return (
     <section className={styles.hero}>
       <div className={styles.wrap}>
@@ -87,20 +74,17 @@ const closeAll = () => {
             </p>
 
             <div className={styles.ctaRow}>
-              <Link
-                        to={`https://wa.me/543794252323?text=${encodeURIComponent(
-                          "Hola, quisiera información para asociarme al Colegio Médico de Corrientes, por favor. ¡Gracias!."
-                        )}`}
-                        className={styles.subLink}
-                        onClick={closeAll}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Button variant="primary" size="medium">
+              <a
+                href={WA_LINK}
+                className={styles.subLink}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button variant="primary" size="medium">
                   <FaUserPlus className={styles.buttonIcon} />
                   Asociarme
                 </Button>
-                      </Link>
+              </a>
 
               <a
                 className={styles.ctaLink}

@@ -32,8 +32,10 @@ import {
   ClipboardList,
   BadgeCheck,
   CircleDollarSign,
-  File,
   FileBoxIcon,
+  FileText,
+  FileSpreadsheet,
+  PencilRuler,
 } from "lucide-react";
 
 import styles from "./Sidebar.module.scss";
@@ -120,14 +122,14 @@ const NAV_SECTIONS: NavSection[] = [
         label: "Liquidación",
         perms: ["liquidacion:leer", "liquidacion:ver"],
       },
-      {
-        kind: "group",
-        id: "facturacion",
-        icon: NotebookIcon,
-        label: "Facturación",
-        perms: ["medicos:leer"],
-        children: FACTURACION_CHILDREN,
-      },
+      // {
+      //   kind: "group",
+      //   id: "facturacion",
+      //   icon: NotebookIcon,
+      //   label: "Facturación",
+      //   perms: ["medicos:leer"],
+      //   children: FACTURACION_CHILDREN,
+      // },
     ],
   },
   {
@@ -254,6 +256,27 @@ const NAV_SECTIONS: NavSection[] = [
       //     },
          ],
        },
+       {
+        kind: "group",
+        id: "auditoria",
+        icon: PencilRuler,
+        label: "Auditoría",
+        children: [
+       {
+            kind: "item",
+            path: `${base}/crear-padron`,
+            icon: FileText,
+            label: "Generar Lista Cerrada",
+            perms: ["medicos:leer"],
+          },
+           {
+            kind: "item",
+            path: `${base}/crear-excel`,
+            icon: FileSpreadsheet,
+            label: "Generar Excel Lista",
+            perms: ["medicos:leer"],
+          },
+        ]},
       {
         kind: "group",
         id: "socios",
@@ -296,20 +319,6 @@ const NAV_SECTIONS: NavSection[] = [
         label: "Listado de Prestadores",
         perms: ["medicos:leer"],
       },
-       {
-            kind: "item",
-            path: `${base}/crear-padron`,
-            icon: File,
-            label: "Generar Lista Cerrada",
-            perms: ["medicos:leer"],
-          },
-           {
-            kind: "item",
-            path: `${base}/crear-excel`,
-            icon: File,
-            label: "Generar Excel Lista",
-            perms: ["medicos:leer"],
-          },
         {
         kind: "item",
         path: `${base}/boletin`,
@@ -651,9 +660,7 @@ const Sidebar = () => {
       >
         <div className={styles.windowBar}>
           <div className={styles.windowDots} aria-hidden="true">
-            <span className={`${styles.dot} ${styles.dotRed}`} />
-            <span className={`${styles.dot} ${styles.dotYellow}`} />
-            <span className={`${styles.dot} ${styles.dotGreen}`} />
+             <img src={Logo} alt="CMC Logo" className={styles.logoImage} />
           </div>
 
           <div className={styles.windowActions}>
@@ -679,16 +686,7 @@ const Sidebar = () => {
           </div>
         </div>
 
-        <div className={styles.brandCard}>
-          <div className={styles.logoShell}>
-            <img src={Logo} alt="CMC Logo" className={styles.logoImage} />
-          </div>
-
-          <div className={styles.brandText}>
-            <strong className={styles.brandTitle}>Colegio Médico</strong>
-            <span className={styles.brandSubtitle}>Panel de gestión</span>
-          </div>
-        </div>
+       
 
         <nav className={styles.nav}>
           {NAV_SECTIONS.map((section, sectionIndex) => (

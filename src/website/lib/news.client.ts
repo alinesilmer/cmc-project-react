@@ -18,7 +18,7 @@ type CreateFields = {
   titulo: string;
   resumen: string;
   contenido: string;
-  tipo: TipoPublicacion; // ✅ importante
+  tipo: TipoPublicacion;
   publicada?: boolean;
   autor?: string;
 };
