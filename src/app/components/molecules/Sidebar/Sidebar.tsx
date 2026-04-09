@@ -26,7 +26,6 @@ import {
   Menu,
   X,
   Users,
-  NotebookIcon,
   CalendarDays,
   Building2,
   ClipboardList,
@@ -36,6 +35,7 @@ import {
   FileText,
   FileSpreadsheet,
   PencilRuler,
+  Users2,
 } from "lucide-react";
 
 import styles from "./Sidebar.module.scss";
@@ -317,6 +317,13 @@ const NAV_SECTIONS: NavSection[] = [
         path: `${base}/padronsucio`,
         icon: Paperclip,
         label: "Listado de Prestadores",
+        perms: ["medicos:leer"],
+      },
+       {
+        kind: "item",
+        path: `${base}/padron-swiss`,
+        icon: Users2,
+        label: "Padrón Swiss Medical",
         perms: ["medicos:leer"],
       },
         {

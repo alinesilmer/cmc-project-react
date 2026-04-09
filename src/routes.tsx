@@ -47,6 +47,7 @@ import ListadoOSFacturacion from "./app/pages/facturacion/ListadoOSFacturacion/L
 import WebRoutes from "./website/router";
 import GenerarExcel from "./app/pages/CrearPadronExcel/CrearPadronExcel";
 import BoletinConsultaComun from "./app/pages/BoletinConsultaComun/BoletinConsultaComun";
+import PadronSwiss from "./app/pages/PadronSwiss/PadronSwiss";
 
 export default function RootRoutes() {
   return (
@@ -93,6 +94,7 @@ export default function RootRoutes() {
             <Route path="help" element={<Help />} />
             <Route path="crear-padron" element={<CrearPadron />} />
             <Route path="crear-excel" element={<GenerarExcel />} />
+             <Route path="padron-swiss" element={<PadronSwiss />} />
             <Route path="boletin-consulta-comun" element={<BoletinConsultaComun />} />
 
             <Route path="facturacion">
