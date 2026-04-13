@@ -42,7 +42,7 @@ export default function Footer() {
         <nav className={styles.linksCol} aria-label="Enlaces rápidos">
           <h4>Enlaces Rápidos</h4>
           <ul>
-            <li><Link to="/cursoscap">Cursos/Capacitaciones</Link></li>
+            <li><Link to="/cursos">Cursos/Capacitaciones</Link></li>
             <li><Link to="/medicos-asociados">Médicos asociados</Link></li>
           </ul>
         </nav>
@@ -109,6 +109,18 @@ export default function Footer() {
       {/* Bottom */}
       <div className={styles.bottom}>
         <p>© {new Date().getFullYear()} Colegio Médico de Corrientes — Todos los derechos reservados.</p>
+        <p className={styles.metaDev}>
+  Desarrollado por{" "}
+  <a
+    href="https://wa.me/5493794532535"
+    target="_blank"
+    rel="noopener noreferrer"
+    className={styles.linkMetaDev}
+  >
+    DevHorizon
+  </a>
+  .
+</p>
       </div>
     </footer>
   );

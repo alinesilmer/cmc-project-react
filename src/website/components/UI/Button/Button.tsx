@@ -1,19 +1,17 @@
-"use client";
-
 import type React from "react";
-
 import { motion } from "framer-motion";
 import styles from "./Button.module.scss";
 
 interface ButtonProps {
   children?: React.ReactNode;
   onClick?: () => void;
-  variant: "primary" | "secondary" | "outline" | "default";
-  size: "small" | "medium" | "large" | "xlg";
+  variant?: "primary" | "secondary" | "outline" | "default" | "ghost";
+  size?: "small" | "medium" | "large" | "xlg";
   icon?: React.ReactNode;
   type?: "button" | "submit" | "reset";
   disabled?: boolean;
   fullWidth?: boolean;
+  className?: string;
 }
 
 export default function Button({
@@ -25,18 +23,20 @@ export default function Button({
   type = "button",
   disabled = false,
   fullWidth = false,
+  className,
 }: ButtonProps) {
   return (
     <motion.button
-      className={`${styles.button} ${styles[variant]} ${styles[size]} ${
+      className={`${styles.button} ${styles[variant ?? "primary"]} ${styles[size ?? "medium"]} ${
         fullWidth ? styles.fullWidth : ""
-      }`}
+      } ${className ?? ""}`}
       onClick={onClick}
       type={type}
       disabled={disabled}
-      whileHover={{ scale: disabled ? 1 : 1.05 }}
-      whileTap={{ scale: disabled ? 1 : 0.95 }}
-      transition={{ duration: 0.2 }}
+      aria-disabled={disabled}
+      whileHover={{ scale: disabled ? 1 : 1.02 }}
+      whileTap={{ scale: disabled ? 1 : 0.97 }}
+      transition={{ type: "spring", stiffness: 380, damping: 28 }}
     >
       <span className={styles.content}>
         {children}

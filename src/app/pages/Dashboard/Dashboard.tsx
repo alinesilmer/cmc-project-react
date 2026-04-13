@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../auth/AuthProvider";
 import styles from "./Dashboard.module.scss";
+import Button from "../../components/atoms/Button/Button";
 
 
 type QuickAction = {
@@ -242,17 +243,23 @@ const Dashboard: React.FC = () => {
 
             <div className={styles.heroActions}>
               <Link to="https://legacy.colegiomedicocorrientes.com/principal.php" className={styles.primaryHeroButton}>
+              <Button variant="secondary" size="md">
                 Volver al Sistema de Fabián
+                </Button>
               </Link>
-
+              
+              
               <a
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={styles.secondaryHeroButton}
               >
+                <Button variant="secondary" size="md">
                 Contactar soporte
+                </Button>
               </a>
+              
             </div>
           </div>
 

@@ -588,7 +588,7 @@ const GenerarBoletin = () => {
         doc.setFontSize(8);
         doc.setTextColor(...mediumGray);
         doc.setFont("helvetica", "normal");
-        doc.text("auditoria@colegiomedicocorrientes.com", margin, footerY);
+        doc.text("auditoriacolegiomedico23@gmail.com", margin, footerY);
         doc.text("Tel: (3794) 722-121", margin + 70, footerY);
 
         doc.setFont("helvetica", "bold");

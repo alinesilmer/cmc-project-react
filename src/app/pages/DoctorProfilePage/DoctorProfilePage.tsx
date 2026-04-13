@@ -185,6 +185,20 @@ function toYmd(d?: Date | null): string | null {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+// Parse a YYYY-MM-DD string as LOCAL midnight (not UTC).
+// new Date("2024-01-15") parses as UTC midnight which in AR (UTC-3) becomes
+// Jan 14 at 21:00 — the datepicker then shows the wrong day.
+function parseLocalDate(s: string): Date {
+  const parts = s.split("-");
+  if (parts.length === 3) {
+    const y = Number(parts[0]);
+    const m = Number(parts[1]);
+    const d = Number(parts[2]);
+    if (y && m && d) return new Date(y, m - 1, d);
+  }
+  return new Date(s);
+}
+
 const fmt = (v: any) =>
   v === undefined || v === null || v === "" ? "—" : String(v);
 const fmtDate = (s?: string | null) =>
@@ -348,7 +362,7 @@ const DoctorProfilePage: React.FC = () => {
 
   const RDate = (key: keyof DoctorProfileX) => {
     const curr = draft[key] as string | null | undefined;
-    const asDate = curr ? new Date(curr) : null;
+    const asDate = curr ? parseLocalDate(curr) : null;
     return (
       <DatePicker
         selected={asDate}

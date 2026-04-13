@@ -92,7 +92,7 @@
 }
 
 .highlightCard {
-  border-radius: $border-radius-lg;
+  border-radius: $border-radius-md;
   background: $white;
   border: 1px solid rgba($primary-blue, 0.12);
   box-shadow: $shadow-sm;
@@ -198,7 +198,7 @@
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba($white, 0.85);
+  color: rgba($primary-yellow, 0.85);
 }
 
 .bandHeading {
@@ -206,7 +206,7 @@
   font-family: $font-title;
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: $white;
+  color: $primary-yellow;
   font-size: clamp(1.2rem, 2.2vw, 1.6rem);
   line-height: 1.15;
 }
@@ -261,7 +261,7 @@
 }
 
 .valueCard {
-  border-radius: $border-radius-lg;
+  border-radius: $border-radius-sm;
   background: $white;
   border: 1px solid rgba($primary-blue, 0.12);
   box-shadow: $shadow-sm;
@@ -290,7 +290,7 @@
 .valueIcon {
   width: 44px;
   height: 44px;
-  border-radius: 14px;
+  border-radius: $border-radius-sm;
   display: grid;
   place-items: center;
   border: 1px solid rgba($primary-blue, 0.14);

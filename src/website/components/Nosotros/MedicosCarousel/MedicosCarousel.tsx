@@ -232,8 +232,14 @@ export default function MedicosCarousel() {
                 data-card
                 role="button"
                 tabIndex={0}
+                aria-label={`Ver publicidad de ${ad.medico_nombre || `Médico #${ad.medico_id}`}`}
                 onClick={() => openModal(ad)}
-                onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && openModal(ad)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    openModal(ad);
+                  }
+                }}
               >
                 <div className={styles.media}>
                   <img

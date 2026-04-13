@@ -1,4 +1,4 @@
-import { getJSON, http } from "../../app/lib/http";
+import { getJSON, http } from "./http";
 import type { Noticia, NoticiaDetail } from "../types/index";
 
 function adaptNewsDetail(n: any): NoticiaDetail {
@@ -11,7 +11,7 @@ function adaptNewsDetail(n: any): NoticiaDetail {
   };
 }
 
-export type TipoPublicacion = "Blog" | "Noticia" | "Curso";
+export type TipoPublicacion =  "Noticia" | "Curso";
 
 //#region TYPES
 type CreateFields = {

@@ -130,13 +130,9 @@ export default function Header() {
                   >
                     <li>
                       <Link
-                        to={`https://wa.me/543794252323?text=${encodeURIComponent(
-                          "Hola, quisiera información para asociarme al Colegio Médico de Corrientes, por favor. ¡Gracias!."
-                        )}`}
+                        to="/socios"
                         className={styles.subLink}
                         onClick={closeAll}
-                        target="_blank"
-                        rel="noopener noreferrer"
                       >
                         Quiero ser Socio
                       </Link>
@@ -168,24 +164,6 @@ export default function Header() {
                         Quinta
                       </Link>
                     </li>
-                    {/* <li>
-                      <Link
-                        to="/servicios/facturacion-online"
-                        className={styles.subLink}
-                        onClick={closeAll}
-                      >
-                        Facturación online
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/servicios/beneficios"
-                        className={styles.subLink}
-                        onClick={closeAll}
-                      >
-                        Beneficios
-                      </Link>
-                    </li> */}
                     <li>
                       <Link
                         to="/galeria"
@@ -292,15 +270,11 @@ export default function Header() {
                       transition={{ duration: 0.2 }}
                     >
                       <Link
-                        to={`https://wa.me/543794252323?text=${encodeURIComponent(
-                          "Hola, quisiera información para asociarme al Colegio Médico de Corrientes, por favor. ¡Gracias!."
-                        )}`}
+                        to="/socios"
                         className={styles.subLink}
                         onClick={closeAll}
-                        target="_blank"
-                        rel="noopener noreferrer"
                       >
-                        Socios
+                        Quiero ser Socio
                       </Link>
                       <Link to="/seguros" onClick={closeAll}>
                         Seguro médico

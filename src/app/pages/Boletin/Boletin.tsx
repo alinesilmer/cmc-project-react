@@ -6,7 +6,7 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { saveAs } from "file-saver";
 import styles from "./Boletin.module.scss";
-import Button from "../../../website/components/UI/Button/Button";
+import Button from "../../components/atoms/Button/Button";
 import logo from "../../assets/logoCMC.png";
 
 type ApiBoletinRow = {
@@ -66,7 +66,7 @@ const CMC_PHONE = String(
   (import.meta as any).env?.VITE_CMC_PHONE ?? "(0379) 425 2323"
 );
 const CMC_EMAIL = String(
-  (import.meta as any).env?.VITE_CMC_EMAIL ?? "auditoria@colegiomedicocorrientes.com"
+  (import.meta as any).env?.VITE_CMC_EMAIL ?? "auditoriacolegiomedico23@gmail.com"
 );
 const CMC_LOGO_SRC =
   String((import.meta as any).env?.VITE_CMC_LOGO_URL || "") || logo;
@@ -511,24 +511,24 @@ export default function Boletin() {
 
           <div className={styles.actions}>
             <Button
-              size="small"
-              variant="secondary"
+              size="md"
+              variant="primary"
               onClick={handleConsultar}
               disabled={loading || codigoVacio}
             >
               Consultar
             </Button>
             <Button
-              size="small"
-              variant="secondary"
+              size="md"
+              variant="success"
               onClick={handleDownloadExcel}
               disabled={ranked.length === 0 || loading || codigoVacio}
             >
               Descargar Excel
             </Button>
             <Button
-              size="small"
-              variant="secondary"
+              size="md"
+              variant="danger"
               onClick={handleDownloadPdf}
               disabled={ranked.length === 0 || loading || codigoVacio}
             >

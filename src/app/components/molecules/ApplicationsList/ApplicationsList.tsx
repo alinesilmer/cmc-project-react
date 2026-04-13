@@ -7,7 +7,6 @@ import type { Application, ApplicationStatus } from "../../../types/types";
 import styles from "./ApplicationsList.module.scss";
 import { getJSON } from "../../../lib/http";
 import SearchBar from "../SearchBar/SearchBar";
-import BackButton from "../../atoms/BackButton/BackButton";
 
 export type ApplicationFromApi = {
   id: number;
@@ -115,7 +114,6 @@ const ApplicationsList: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <BackButton />
       <div className={styles.header}>
         <h1 className={styles.title}>Solicitudes de Socios</h1>
       </div>

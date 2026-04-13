@@ -7,7 +7,7 @@ export type User = {
   nro_socio?: number | null;
   nombre: string;
   scopes: string[];
-  role?: string | null; // ⬅️ NUEVO
+  role?: string | null; 
 };
 
 function normalizeUser(raw: any): User {
@@ -20,7 +20,7 @@ function normalizeUser(raw: any): User {
       : raw?.scopes
       ? [raw.scopes]
       : [],
-    role: raw?.role ?? null, // ⬅️ AQUÍ entra el role del backend
+    role: raw?.role ?? null, 
   };
 }
 
@@ -45,7 +45,7 @@ export async function login(
   const { data } = await httpBare.post("/auth/login", { nro_socio, password });
   setAccessToken(data.access_token);
   http.defaults.headers.common["Authorization"] = `Bearer ${data.access_token}`;
-  return normalizeUser(data.user); // ⬅️ ACÁ va tu "const me = { ... }"
+  return normalizeUser(data.user); 
 }
 
 export async function me(): Promise<User> {

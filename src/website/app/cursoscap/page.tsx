@@ -12,6 +12,11 @@ export default function CursosPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    document.title = "Cursos y Capacitaciones | Colegio Médico de Corrientes";
+    return () => { document.title = "Colegio Médico de Corrientes"; };
+  }, []);
+
+  useEffect(() => {
     void cargar();
   }, []);
 

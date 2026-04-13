@@ -23,19 +23,18 @@
 
 .track {
   display: flex;
-  gap: $spacing-sm;         /* smaller gap */
-  padding: 0 $spacing-sm;   /* smaller side padding */
+  gap: $spacing-sm;         
+  padding: 0 $spacing-sm;  
   align-items: stretch;
 }
 
-/* Smaller cards */
 .card {
-  flex: 0 0 74vw;     /* was 78vw */
+  flex: 0 0 74vw;     
   max-width: 74vw;
 
   background: $white;
   border: 1px solid rgba($primary-blue, 0.1);
-  border-radius: $border-radius-lg;
+  border-radius: $border-radius-sm;
   box-shadow: $shadow-sm;
 
   padding: $spacing-sm;     /* was md */
@@ -157,7 +156,7 @@
 }
 
 /* =========================
-   MODAL (on top of everything)
+   MODAL 
    ========================= */
 
 .modalBackdrop {
@@ -169,7 +168,6 @@
   justify-content: center;
   align-items: center;
 
-  /* ✅ higher than any navbar */
   z-index: 999999;
 
   padding: $spacing-md;
@@ -181,7 +179,7 @@
   max-height: 90vh;
 
   background: $white;
-  border-radius: $border-radius-lg;
+  border-radius: $border-radius-sm;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -235,7 +233,7 @@
     max-height: 72vh;
     object-fit: contain;
     display: block;
-    border-radius: $border-radius-md;
+    border-radius: $border-radius-sm;
     background: #000;
   }
 }

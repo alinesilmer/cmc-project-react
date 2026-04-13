@@ -34,9 +34,9 @@ const PadronSucio = () => {
               <div className={styles.actions}>
                 
 
-                <Button type="button" variant="primary" onClick={downloadExcel}>
-                  <Download size={18} />
-                  <span>Descargar Excel</span>
+                <Button type="button" variant="success" onClick={downloadExcel}>
+                  <Download size={18} className="margin-right: 8px"/>
+                  Descargar Excel
                 </Button>
               </div>
             </div>

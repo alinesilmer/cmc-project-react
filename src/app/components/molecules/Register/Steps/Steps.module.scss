@@ -2,7 +2,6 @@
 
 .stepContent {
   display: flex;
-  // flex-direction: column;
   gap: 10px;
   width: 100%;
   flex-wrap: wrap;
@@ -14,7 +13,7 @@
   flex: 1 1 100%;
 }
 .topTitle h2 {
-  margin: 0;
+  margin-bottom: 2rem;
   font-size: 1.75rem;
   font-weight: 700;
   color: #1f2937;
@@ -22,7 +21,6 @@
 
 .formGrid {
   display: flex;
-  // flex-direction: column;
   gap: 10px;
   width: 100%;
   flex-wrap: wrap;
@@ -47,7 +45,7 @@
   border: 1px #d1d5db;
   border-style: dashed;
   padding: 20px;
-  border-radius: 8px;
+  border-radius: $border-radius-sm;
 }
 .formGroup.especialidadGroupMoreBoton {
   flex: 1 1 100%;
@@ -58,7 +56,7 @@
   border: 1px #d1d5db;
   border-style: dashed;
   padding: 20px;
-  border-radius: 8px;
+  border-radius: $border-radius-sm;
 }
 .formGroup.especialidadGroup .formGroup.especialidadGroup {
   border: none;
@@ -90,7 +88,7 @@
 .formGroup textarea {
   padding: 0.75rem 1rem;
   border: 2px solid #e5e7eb;
-  border-radius: 0.5rem;
+  border-radius: $border-radius-sm;
   font-size: 1rem;
   font-family: inherit;
   transition: 0.2s ease;
@@ -115,7 +113,6 @@
   font-weight: 500;
 }
 
-// .labelRow { margin-bottom:.5rem; }
 .fieldRow {
   display: flex;
   flex-direction: column;
@@ -152,13 +149,13 @@
 .summaryGrid div {
   padding: 0.6rem;
   background: #f9fafb;
-  border-radius: 0.4rem;
+  border-radius: $border-radius-sm;
   font-size: 0.92rem;
 }
 
 .infoBox {
   padding: 1.25rem;
-  border-radius: 0.75rem;
+  border-radius: $border-radius-sm;
   margin-top: 1.25rem;
   background: #f8fafc;
   border: 1px solid #e5e7eb;
@@ -186,6 +183,68 @@
   color: #3d5fcc;
 }
 
+/* ---- Missing utility classes referenced in Steps.tsx ---- */
+
+/* Container that right-aligns inline actions (e.g. "Quitar" button) */
+.actionsInline {
+  flex: 1 1 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+/* Small helper text below specialty group */
+.note {
+  font-size: 0.78rem;
+  color: #6b7280;
+  line-height: 1.4;
+  font-style: italic;
+}
+
+.addBtn {
+  flex-shrink: 0;
+}
+
+.removeBtn {
+  flex-shrink: 0;
+}
+
+.labelRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.formGroup input,
+.formGroup select,
+.formGroup textarea {
+  cursor: text;
+}
+
+.formGroup select {
+  cursor: pointer;
+}
+
+.formGroup input[disabled],
+.formGroup select[disabled],
+.formGroup textarea[disabled] {
+  cursor: not-allowed;
+  background: #f3f4f6;
+  color: #9ca3af;
+}
+
+.formGroup.especialidadGroup {
+  background: #fafafa;
+}
+
+.summaryGrid div {
+  border: 1px solid #e5e7eb;
+}
+
+/* ---- Responsive ---- */
 @media (max-width: 768px) {
   .formGrid {
     grid-template-columns: 1fr;
@@ -198,5 +257,11 @@
   }
   .topTitle h2 {
     font-size: 1.4rem;
+  }
+  .formGroup.especialidadGroup {
+    flex-direction: column;
+  }
+  .actionsInline {
+    justify-content: flex-start;
   }
 }

@@ -1,23 +1,15 @@
-"use client";
-
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { FiMessageCircle, FiMail, FiCheckCircle } from "react-icons/fi";
 import ObrasSociales from "../../components/Servicios/ObrasSociales/ObrasSociales";
 import type { ObraSocial } from "../../components/Servicios/ObrasSociales/ObrasSociales";
-import styles from "./convenios.module.scss";
+import PageHero from "../../components/UI/Hero/Hero";
 import Button from "../../components/UI/Button/Button";
-import { Link } from "react-router-dom";
+import { http } from "../../../app/lib/http";
+import styles from "./convenios.module.scss";
 
-// ─── API config ───────────────────────────────────────────────────────────────
-// In dev, use "" so the Vite proxy handles /api/* → backend (avoids CORS).
-// In prod, use VITE_API_URL as the absolute base (e.g. https://api.example.com).
-const API_BASE: string = import.meta.env.DEV
-  ? ""
-  : ((import.meta.env.VITE_API_URL as string | undefined) ?? "");
-
-const OBRAS_SOCIALES_URL = `${API_BASE}/api/obras_social/`;
-
-// ─── Contact constants ────────────────────────────────────────────────────────
-const EMAIL = "auditoria@colegiomedicocorrientes.com";
+// ─── Constants ────────────────────────────────────────────────────────────────
+const EMAIL = "auditoriacolegiomedico23@gmail.com";
 const WA_NUMBER = "543794252323";
 const WA_LINK = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(
   "Hola, quisiera información para firmar convenio con el Colegio Médico de Corrientes, por favor. ¡Gracias!."
@@ -28,9 +20,11 @@ const MAILTO_LINK = `mailto:${EMAIL}?subject=${encodeURIComponent(
   "Hola, adjunto carta de presentación para evaluar convenio. Gracias."
 )}`;
 
-// ─── API response normalizer ──────────────────────────────────────────────────
+const EASE = [0.22, 1, 0.36, 1] as const;
+
+// ─── Normalizer — matches backend shape: { NRO_OBRA_SOCIAL, NOMBRE, ... } ────
 function normalizeObrasSociales(data: unknown): ObraSocial[] {
-  const items = Array.isArray(data)
+  const items: unknown[] = Array.isArray(data)
     ? data
     : Array.isArray((data as any)?.items)
     ? (data as any).items
@@ -39,18 +33,30 @@ function normalizeObrasSociales(data: unknown): ObraSocial[] {
     : [];
 
   return items
-    .map((item: any, i: number) => {
+    .map((item: any, i: number): ObraSocial | null => {
       const nombre = String(
-        item?.nombre ?? item?.NOMBRE ?? item?.name ?? item?.razon_social ?? ""
+        item?.NOMBRE ??
+        item?.nombre ??
+        item?.OBRA_SOCIAL ??
+        item?.obra_social ??
+        item?.name ??
+        item?.razon_social ??
+        ""
       ).trim();
       if (!nombre) return null;
-      return {
-        id: String(item?.id ?? item?.ID ?? item?.nro ?? `os-${i}`),
-        nombre,
-        href: item?.href ?? item?.url ?? item?.link ?? undefined,
-      } as ObraSocial;
+
+      const id = String(
+        item?.NRO_OBRA_SOCIAL ??
+        item?.NRO_OBRASOCIAL ??
+        item?.nro_obra_social ??
+        item?.id ??
+        item?.ID ??
+        `os-${i}`
+      );
+
+      return { id, nombre, href: item?.href ?? item?.url ?? undefined };
     })
-    .filter((x: ObraSocial | null): x is ObraSocial => x !== null);
+    .filter((x): x is ObraSocial => x !== null);
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -62,12 +68,9 @@ export default function ConveniosPage() {
   useEffect(() => {
     let aborted = false;
 
-    fetch(OBRAS_SOCIALES_URL, { headers: { Accept: "application/json" } })
-      .then((res) => {
-        if (!res.ok) throw new Error(`Error ${res.status} al obtener convenios.`);
-        return res.json() as Promise<unknown>;
-      })
-      .then((data) => {
+    http
+      .get("/api/obras_social/")
+      .then(({ data }) => {
         if (aborted) return;
         setObras(normalizeObrasSociales(data));
         setLoading(false);
@@ -78,56 +81,90 @@ export default function ConveniosPage() {
         setLoading(false);
       });
 
-    return () => {
-      aborted = true;
-    };
+    return () => { aborted = true; };
   }, []);
 
   return (
-    <div className={styles.galeriaWrap}>
+    <div className={styles.page}>
+      
+
+      {/* ── Obras sociales list ───────────────────────────────────────────── */}
       <ObrasSociales
-        titulo="Convenios con Obras Sociales"
+        titulo="Obras Sociales"
         subtitulo="Coberturas y convenios vigentes con el Colegio Médico de Corrientes"
         obras={obras}
         loading={loading}
         error={error}
       />
 
-      <div className={styles.cta}>
-        <h2 className={styles.subtitle}>
-          ¿Sos una Obra Social o empresa que quiere unirse al equipo de Colegio
-          Médico de Corrientes? <br />
-          ¡Hacé click en el botón de abajo!
-        </h2>
+      {/* ── CTA band ─────────────────────────────────────────────────────── */}
+      <section className={styles.ctaBand}>
+        <div className={styles.ctaContainer}>
 
-        <Link
-          to={WA_LINK}
-          className={styles.subLink}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Button variant="primary" size="large">
-            Quiero firmar convenio
-          </Button>
-        </Link>
-
-        <p className={styles.otherOption}>
-          Si tienes inconvenientes, por favor enviar carta de presentación al{" "}
-          <a href={MAILTO_LINK} className={styles.link} aria-label="Enviar mail">
-            {EMAIL}
-          </a>{" "}
-          y/o mensaje de WhatsApp al{" "}
-          <a
-            href={WA_LINK}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.link}
-            aria-label="Abrir WhatsApp"
+          <motion.div
+            className={styles.ctaLeft}
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.65, ease: EASE }}
           >
-            379 425 2323
-          </a>
-        </p>
-      </div>
+            <h2 className={styles.ctaTitle}>
+              ¿Sos una Obra Social que quiere firmar convenio con nosotros?
+            </h2>
+            <p className={styles.ctaLead}>
+              Si sos una Obra Social o empresa interesada en establecer un convenio,
+              contactanos por WhatsApp o enviá tu carta de presentación por correo.
+            </p>
+
+           
+          </motion.div>
+
+          <motion.div
+            className={styles.ctaRight}
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.65, ease: EASE, delay: 0.1 }}
+          >
+            <div className={styles.ctaCard}>
+              <div className={styles.ctaOption}>
+                <div className={styles.ctaOptionIcon} aria-hidden="true">
+                  <FiMessageCircle />
+                </div>
+                <div className={styles.ctaOptionBody}>
+                  <p className={styles.ctaOptionLabel}>WhatsApp</p>
+                  <p className={styles.ctaOptionDesc}>
+                    Contacto directo y rápido con nuestro equipo
+                  </p>
+                </div>
+              </div>
+
+              <a href={WA_LINK} target="_blank" rel="noopener noreferrer" className={styles.ctaLink}>
+                <Button variant="primary" size="large" fullWidth>
+                  Quiero firmar convenio
+                </Button>
+              </a>
+
+              <div className={styles.divider} aria-hidden="true">
+                <span>o también podés escribirnos</span>
+              </div>
+
+              <div className={styles.ctaOption}>
+                <div className={styles.ctaOptionIcon} aria-hidden="true">
+                  <FiMail />
+                </div>
+                <div className={styles.ctaOptionBody}>
+                  <p className={styles.ctaOptionLabel}>Correo electrónico</p>
+                  <a href={MAILTO_LINK} className={styles.ctaEmail}>
+                    {EMAIL}
+                  </a>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+        </div>
+      </section>
     </div>
   );
 }

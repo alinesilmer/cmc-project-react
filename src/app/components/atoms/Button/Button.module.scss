@@ -109,20 +109,16 @@
 /* Variants */
 
 .primary {
-  background-color: $primary-blue;
-  color: $white;
-  border-color: rgba($primary-blue-dark, 0.24);
-  box-shadow:
-    0 8px 18px rgba($primary-blue, 0.22),
-    inset 0 1px 0 rgba($white, 0.14);
+  background-color: $primary-blue-dark;
+  color: #ffffff;
+  box-shadow: $shadow-md;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid $primary-blue-darker;
 
   &:hover:not(:disabled) {
-    background-color: $primary-blue-dark;
-    color: $white;
-    border-color: rgba($primary-blue-dark, 0.34);
-    box-shadow:
-      0 10px 22px rgba($primary-blue-dark, 0.22),
-      inset 0 1px 0 rgba($white, 0.1);
+    background-color: $primary-blue-darker;
+    box-shadow: $shadow-md;
   }
 
   &:focus-visible {
@@ -157,20 +153,15 @@
 }
 
 .secondary {
-  background-color: $white;
-  color: $gray-900;
-  border-color: rgba($gray-300, 0.95);
-  box-shadow:
-    0 6px 16px rgba($gray-300, 0.24),
-    inset 0 1px 0 rgba($white, 0.9);
+  background-color: $primary-yellow-light;
+  color:$primary-yellow-dark; 
+  border-color: #d0c182;
+  font-weight: 600;
+  
 
   &:hover:not(:disabled) {
-    background-color: $white;
-    color: $gray-900;
-    border-color: rgba($gray-500, 0.65);
-    box-shadow:
-      0 8px 18px rgba($gray-300, 0.22),
-      inset 0 1px 0 rgba($white, 0.9);
+    background-color: #d3c17a;
+    color: #4d4521;
   }
 }
 
@@ -243,15 +234,13 @@
 /* Sizes */
 
 .sm {
-  min-height: 2rem;
-  padding: $spacing-2 $spacing-4;
-  font-size: $font-size-sm;
+  padding: 15px 20px;
+  font-size: 12px;
 }
 
 .md {
-  min-height: 2.5rem;
-  padding: $spacing-3 $spacing-5;
-  font-size: $font-size-base;
+  padding: $spacing-4 $spacing-5;
+ font-size: $font-size-base;
 }
 
 .lg {
@@ -288,15 +277,13 @@
   }
 
   .sm {
-    min-height: 2rem;
-    padding: $spacing-2 $spacing-3;
-    font-size: $font-size-xs;
+    padding: 15px 20px;
+  font-size: 12px;
   }
 
   .md {
-    min-height: 2.35rem;
-    padding: $spacing-2 $spacing-4;
-    font-size: $font-size-sm;
+  padding: $spacing-3 $spacing-4;
+  font-size: $font-size-base;
   }
 
   .lg {

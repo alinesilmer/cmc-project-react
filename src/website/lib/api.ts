@@ -1,5 +1,11 @@
 // website/src/lib/api.ts
-const BASE = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
+// NOTE (L9): The Noticia, DocumentoNoticias, NoticiaDetail, and Usuario types
+// defined below overlap with src/website/types/index.ts. The canonical
+// consumer types live in types/index.ts (used by pages and components).
+// These definitions serve the admin API client and include admin-only shapes
+// (NoticiaCreate, NoticiaUpdate, LoginResponse, VerifyResponse). If the
+// two sets drift, align them in types/index.ts first.
+const BASE = import.meta.env.VITE_API_URL_BASE ?? "http://127.0.0.1:8000";
 
 export type ISODateString = string;
 

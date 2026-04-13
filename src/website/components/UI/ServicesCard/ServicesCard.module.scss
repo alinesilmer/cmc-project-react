@@ -6,7 +6,7 @@
   position: relative;
   background-color: var(--card);
   border: 1px solid rgba($primary-blue, 0.18);
-  border-radius: $border-radius-lg;
+  border-radius: $border-radius-md;
   padding: $spacing-xl;
   box-shadow: $shadow-sm;
   transition: transform $transition-normal, box-shadow $transition-normal, border-color $transition-normal, background $transition-normal;
@@ -16,7 +16,6 @@
   transform: translateY(-4px);
   box-shadow: $shadow-lg;
   border-color: rgba($primary-blue, 0.28);
-  background: linear-gradient(180deg, $white 0%, $light-blue 100%);
 }
 
 .linkWrap {
@@ -30,14 +29,14 @@
 .icon {
   width: 3.5rem;
   height: 3.5rem;
-  border-radius: $border-radius-md;
+  border-radius: $border-radius-sm;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: $spacing-md;
-  font-size: 1.6rem;
+  font-size: $font-size-h4;
   background-color: color-mix(in srgb, var(--accent) 12%, transparent);
-  color: $primary-blue;
+  color: $primary-yellow-dark;
   transition: background $transition-fast, color $transition-fast;
 }
 
@@ -49,7 +48,7 @@
 .cardTitle {
   font-size: $font-size-large;
   font-weight: 700;
-  color: var(--foreground);
+  color: $primary-blue;
   font-family: $font-normal;
   margin-bottom: $spacing-xs;
 }

@@ -45,7 +45,13 @@ export default function NoticiaCard({ noticia, onClick }: NoticiaCardProps) {
       onClick={onClick}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onClick()}
+      aria-label={`Leer noticia: ${noticia.titulo}`}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
     >
       <div className={styles.image}>
         <img src={portada} alt={noticia.titulo} />

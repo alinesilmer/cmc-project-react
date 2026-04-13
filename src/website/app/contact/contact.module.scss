@@ -1,94 +1,172 @@
-@import '../../styles/variables.scss';
+@use "@/website/styles/all.scss" as *;
 
-.page { min-height: 100vh; background: $white; }
-
-.contactStrip {
+.page {
+  min-height: 100vh;
   background: $white;
-  padding: clamp($spacing-xl, 6vw, $spacing-xxl) 0;
 }
 
-.contactContainer {
-  width: min(1100px, 92%);
+// ── Main content section ──────────────────────────────────────────────────────
+.section {
+  background: $white;
+  padding: clamp(3rem, 7vw, 5.5rem) 0;
+}
+
+.container {
+  width: min(1180px, 92%);
   margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  background: $white;
-  border-radius: $border-radius-xl;
-  border: 1px solid rgba($black, .08);
-  box-shadow: 0 10px 26px rgba($black, .06);
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: clamp(2.5rem, 5vw, 5rem);
+  align-items: start;
+
+  @media (max-width: $breakpoint-tablet) {
+    grid-template-columns: 1fr;
+    gap: $spacing-xl;
+  }
+}
+
+// ── Left: info column ─────────────────────────────────────────────────────────
+.infoCol {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.eyebrow {
+  margin: 0;
+  font-family: $font-normal;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba($primary-blue, 0.5);
+}
+
+.infoTitle {
+  margin: 0;
+  font-family: $font-title;
+  font-weight: 800;
+ font-size: clamp(1.25rem, 2vw, 2rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: $primary-blue;
+}
+
+.infoLead {
+  margin: 0;
+  font-family: $font-normal;
+  font-size: clamp(0.9rem, 1.05vw, 1rem);
+  line-height: 1.78;
+  color: rgba($dark-gray, 0.78);
+  max-width: 48ch;
+}
+
+// ── Contact list ──────────────────────────────────────────────────────────────
+.contactList {
+  list-style: none;
+  margin: $spacing-sm 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid rgba($primary-blue-dark, 0.1);
+  border-radius: $border-radius-sm;
   overflow: hidden;
 }
 
-.col {
-  padding: clamp($spacing-lg, 3.5vw, $spacing-xxl);
-  text-align: center;
+.contactItem {
   display: flex;
-  flex-direction: column;
-  gap: .6rem;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-md $spacing-lg;
   background: $white;
+  transition: background $transition-fast;
+
+  & + & {
+    border-top: 1px solid rgba($primary-blue-dark, 0.1);
+  }
+
+  &:hover { background: rgba($primary-blue, 0.025); }
+
+  @media (max-width: $breakpoint-mobile) {
+    padding: $spacing-sm $spacing-md;
+  }
 }
 
-.col + .col { border-left: 1px solid rgba($black, .06); }
-
-.colIcon {
-  width: 58px;
-  height: 58px;
-  margin: 0 auto .2rem;
+.itemIcon {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
   display: grid;
   place-items: center;
-  border-radius: 14px;
-  color: $accent-orange;
-  background: color-mix(in srgb, $accent-orange 10%, #fff);
-  border: 1px solid color-mix(in srgb, $accent-orange 28%, #fff);
-  font-size: 1.4rem;
+  background: rgba($primary-blue, 0.06);
+  border: 1px solid rgba($primary-blue, 0.1);
+  border-radius: $border-radius-sm;
+  color: $primary-blue;
+
+  svg {
+    width: 19px;
+    height: 19px;
+  }
 }
 
-.colTitle {
-  font-family: $font-playfair;
-  font-size: $font-size-large;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: $black;
-  opacity: .9;
-  margin: .2rem 0 .1rem;
+.itemBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
 }
 
-.colText {
+.itemLabel {
   font-family: $font-normal;
-  color: gray;
-  font-size: .9rem;
-  line-height: 1.7;
-  width: min(44ch, 100%);
-  margin: 0 auto;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba($gray, 0.7);
 }
 
-.colHighlight {
-  display: inline-block;
-   font-family: $font-normal;
-  margin-top: .35rem;
+.itemValue {
+  font-family: $font-title;
+  font-size: clamp(0.85rem, 1vw, 0.95rem);
   font-weight: 700;
-  color: $accent-orange;
+  color: $primary-blue;
   text-decoration: none;
+  word-break: break-all;
+  transition: color $transition-fast;
+
+  &:hover { color: $primary-blue; }
+  &:focus-visible {
+    outline: 2px solid $primary-blue;
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
 }
 
-.colHighlight:hover { text-decoration: underline; }
-
-.mapSection {
-  background: $white;
+// ── Right: map column ─────────────────────────────────────────────────────────
+.mapCol {
+  position: sticky;
+  top: 5rem;
 }
 
-.mapContainer {
-  width: 100%;
-  margin: 0 auto;
-  height: 100%;
-  border-top: 1px solid rgba($black, .06);
-}
-
-.mapEmbed {
+.mapWrap {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9;
-  background: rgba($light-gray, .3);
+  aspect-ratio: 4 / 3;
+  border-radius: $border-radius-sm;
+  overflow: hidden;
+  border: 1px solid rgba($primary-blue, 0.1);
+  box-shadow: $shadow-md;
+  background: rgba($light-gray, 0.25);
+
+  @media (max-width: $breakpoint-tablet) {
+    aspect-ratio: 16 / 9;
+    position: static;
+  }
+
+  @media (max-width: $breakpoint-mobile) {
+    aspect-ratio: 4 / 3;
+  }
 }
 
 .mapIframe {
@@ -97,11 +175,69 @@
   width: 100%;
   height: 100%;
   border: 0;
+  display: block;
 }
 
+.mapFallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-sm;
+  padding: $spacing-lg;
+  text-align: center;
+}
 
-@media (max-width: $breakpoint-tablet) {
-  .contactContainer { grid-template-columns: 1fr; }
-  .col + .col { border-left: 0; border-top: 1px solid rgba($black, .06); }
-  .mapEmbed { aspect-ratio: 4 / 3; }
+.mapFallbackIcon {
+  color: $primary-blue;
+  opacity: 0.5;
+}
+
+.mapFallbackText {
+  margin: 0;
+  font-family: $font-normal;
+  font-size: 0.88rem;
+  color: rgba($gray, 0.85);
+  max-width: 34ch;
+  line-height: 1.65;
+}
+
+// ── "Cómo llegar" chip ────────────────────────────────────────────────────────
+.mapChip {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.38rem 0.8rem;
+  border-radius: 6px;
+  background: $white;
+  border: 1px solid rgba($primary-blue, 0.15);
+  font-family: $font-title;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: $primary-blue-dark;
+  text-decoration: none;
+  box-shadow: $shadow-sm;
+  transition: box-shadow $transition-fast, border-color $transition-fast;
+
+  &:hover {
+    box-shadow: $shadow-md;
+    border-color: rgba($primary-blue, 0.28);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary-blue;
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contactItem { transition: none; }
+  .itemValue   { transition: none; }
+  .mapChip     { transition: none; }
 }

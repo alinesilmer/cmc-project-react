@@ -16,7 +16,6 @@ import { getEspecialidadNameById } from "../../lib/especialidadesCatalog";
 
 import { useMedicosExport } from "./useMedicosExport";
 
-// ✅ LOGO FIJO DESDE ASSETS
 import LogoCMCUrl from "../../assets/logoCMC.png";
 
 type MedicoRow = Record<string, unknown>;
@@ -70,13 +69,13 @@ function toUserRow(m: any) {
   const status = isActiveRow(m) ? "activo" : "inactivo";
   const a = normalizeAdherente(m);
   const os = String(m?.obra_social ?? m?.OBRA_SOCIAL ?? "").trim();
-
+//"telefono_consulta", "TELEFONO_CONSULTA", "tel_consulta", "TEL_CONSULTA"
   return {
     id: m?.id ?? m?.ID ?? null,
     nro_socio: m?.nro_socio ?? m?.NRO_SOCIO ?? null,
     name: m?.nombre ?? m?.NOMBRE ?? "—",
     email: m?.mail_particular ?? m?.MAIL_PARTICULAR ?? m?.email ?? "—",
-    phone: m?.tele_particular ?? m?.TELE_PARTICULAR ?? "—",
+    phone: m?.telefono_consulta ?? m?.TELEFONO_CONSULTA ?? m?.tel_consulta ?? m.TEL_CONSULTA ?? "—",
     joinDate: (m?.fecha_ingreso ?? m?.FECHA_INGRESO ?? m?.joinDate) ?? null,
     status,
     matriculaProv: m?.MATRICULA_PROV ?? m?.matricula_prov ?? "—",
@@ -768,7 +767,7 @@ const UsersList: React.FC = () => {
         </div>
         <div className={styles.headerActions}>
           <BackButton />
-          <Button variant="primary" onClick={() => navigate("/panel/register-socio")}>
+          <Button variant="secondary" onClick={() => navigate("/panel/register-socio")}>
             Agregar socio
           </Button>
           <Button onClick={() => setIsExportOpen(true)}>Filtrar y Exportar</Button>
@@ -868,14 +867,13 @@ const UsersList: React.FC = () => {
                     </span>
                   </td>
                   <td>
-                    <Button
-                      size="sm"
-                      variant="primary"
+                    <button
+                      className={styles.rowButton}
                       onClick={() => navigate(`/panel/doctors/${user.id}`)}
                       aria-label={`Ver más de ${user.name}`}
                     >
-                      Ver más
-                    </Button>
+                      Ver
+                    </button>
                   </td>
                 </tr>
               ))

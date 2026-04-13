@@ -4,22 +4,34 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: $spacing-sm $spacing-lg;
-  border-radius: 8px;
+  border-radius: 5px;
+  font-family: $font-title;
   font-weight: 600;
-  transition: all $transition-fast;
+  letter-spacing: 0.015em;
+  line-height: 1;
   position: relative;
   overflow: hidden;
   cursor: pointer;
-  &:disabled {
-    opacity: 0.5;
+  border: none;
+  transition: background $transition-fast, box-shadow $transition-fast,
+    border-color $transition-fast, color $transition-fast;
+
+  &:disabled,
+  &[aria-disabled="true"] {
+    opacity: 0.48;
     cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary-blue;
+    outline-offset: 3px;
   }
 
   .content {
     display: flex;
     align-items: center;
-    gap: $spacing-xs;
+    gap: 0.5rem;
     position: relative;
     z-index: 1;
   }
@@ -27,34 +39,40 @@
   .icon {
     display: flex;
     align-items: center;
-    font-size: 1.2em;
+    font-size: 1.1em;
   }
 }
 
+// ── Variants ──────────────────────────────────────────────────────────────────
+
 .primary {
-  background-color: $primary-blue;
+  background: $primary-blue;
   color: $primary-yellow-light;
+  font-weight: 600;
+  border: 1px solid rgba(#c9a94a, 0.48);
   box-shadow: $shadow-md;
-  font-weight: 400;
-  border-radius: 50px;
-  border: 1px solid $primary-yellow;
 
   &:hover:not(:disabled) {
-    background-color: $primary-blue-dark;
+    background: #0c2243;
     box-shadow: $shadow-md;
+    border-color: rgba(#c9a94a, 0.75);
+  }
+
+  &:focus-visible {
+    outline-color: rgba(255, 255, 255, 0.85);
   }
 }
 
 .secondary {
   background-color: $primary-yellow;
-  color: $primary-blue;
-  border: 1px solid #dec348;
+  color: #685c29;
+  border: 1px solid rgba(#dec348, 0.6);
   box-shadow: $shadow-md;
-  border: none;
 
   &:hover:not(:disabled) {
     background-color: #e0d39c;
-    box-shadow: $shadow-md;
+    box-shadow: $shadow-lg;
+    color: #4d4521;
   }
 }
 
@@ -70,31 +88,69 @@
 }
 
 .default {
-  color: $primary-blue;
-  border: 2px solid $primary-blue;
-  cursor: pointer;
+  background-color: transparent;
+  color: $primary-blue-dark;
+  border: 1.5px solid rgba($primary-blue, 0.45);
+
+  &:hover:not(:disabled) {
+    background-color: rgba($primary-blue, 0.06);
+    border-color: $primary-blue;
+  }
 }
 
+// Ghost — designed for use on dark/image backgrounds
+.ghost {
+  background-color: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.92);
+  border: 1.5px solid rgba(255, 255, 255, 0.42);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+
+  &:hover:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.72);
+    color: $white;
+  }
+
+  &:focus-visible {
+    outline-color: rgba(255, 255, 255, 0.85);
+  }
+}
+
+// ── Sizes ─────────────────────────────────────────────────────────────────────
+
 .small {
-  padding: 5px 10px;
-  font-size: 12px;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.8rem;
+  min-height: 2rem;
 }
 
 .medium {
-  padding: $spacing-md $spacing-xl;
-  font-size: 16px;
+  padding: 0.65rem 1.35rem;
+  font-size: 0.9rem;
+  min-height: 2.4rem;
 }
 
 .large {
-  padding: $spacing-md $spacing-xl;
-  font-size: $font-size-large;
-}
-
-.fullWidth {
-  width: 100%;
+  padding: 0.8rem 1.65rem;
+  font-size: 1rem;
+  min-height: 2.8rem;
 }
 
 .xlg {
-  padding: $spacing-lg $spacing-xl;
-  font-size: $font-size-h2;
+  padding: 1.5rem 3.1rem;
+  font-size: $font-size-large;
+  min-height: 3.1rem;
+  border-radius: 10px;
+}
+
+
+
+.fullWidth {
+  width: 100%;
+  justify-content: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button { transition: none; }
 }

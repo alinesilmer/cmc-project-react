@@ -1,5 +1,3 @@
-"use client"
-
 import styles from "./asociados.module.scss"
 import MedicosCarousel from "../../components/Nosotros/MedicosCarousel/MedicosCarousel";
 import Hero from "../../components/UI/Hero/Hero";

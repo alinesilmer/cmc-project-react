@@ -1,4 +1,3 @@
-// src/auth/AuthProvider.tsx  (ajusta paths si tu árbol es /app/)
 import { createContext, useContext, useMemo, useState, useEffect } from "react";
 import {
   login as apiLogin,

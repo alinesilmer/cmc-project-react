@@ -1,4 +1,4 @@
-export type TipoPublicacion = "Blog" | "Noticia" | "Curso";
+export type TipoPublicacion = "Noticia" | "Curso";
 
 export interface Noticia {
   id: string;

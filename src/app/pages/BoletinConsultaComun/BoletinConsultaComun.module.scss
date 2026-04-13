@@ -1,3 +1,5 @@
+@use "@/app/styles/all.scss" as *;
+
 .container {
   display: flex;
   flex-direction: column;
@@ -19,14 +21,12 @@
 
 .heroLeft,
 .contactCard,
-.panel,
-.metaCard {
+.panel {
   background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(209, 219, 233, 0.9);
-  box-shadow:
-    0 14px 40px rgba(24, 39, 75, 0.08),
-    0 2px 8px rgba(24, 39, 75, 0.04);
+   box-shadow: $shadow-md;
 }
+
+
 
 .heroLeft {
   border-radius: 8px;
@@ -121,7 +121,7 @@
 }
 
 .panel {
-  border-radius: 26px;
+  border-radius: 8px;
   padding: 24px;
 }
 
@@ -168,8 +168,9 @@
 }
 
 .metaCard {
-  border-radius: 18px;
+  border-radius: 8px;
   padding: 16px 18px;
+  border: 1px solid $gray-300;
 }
 
 .metaLabel {
@@ -182,7 +183,7 @@
 .metaValue {
   display: block;
   font-size: 1rem;
-  font-weight: 800;
+  font-weight: 700;
   color: #203769;
 }
 
@@ -203,7 +204,7 @@
 .searchInput {
   width: 100%;
   height: 48px;
-  border-radius: 14px;
+  border-radius: 8px;
   border: 1px solid #d8e0eb;
   background: #fff;
   padding: 0 16px 0 42px;
@@ -284,7 +285,7 @@
 
 .tableWrapper {
   overflow: auto;
-  border-radius: 18px;
+  border-radius: 8px;
   border: 1px solid #dce4ef;
   background: #fff;
 }
@@ -300,10 +301,10 @@
   position: sticky;
   top: 0;
   z-index: 2;
-  background: linear-gradient(180deg, #203769 0%, #294988 100%);
-  color: #fff;
-  font-size: 0.88rem;
-  font-weight: 800;
+  background:  $primary-blue-dark;
+  color: white;
+  font-size: $font-size-base;
+  font-weight: 700;
   text-align: left;
   padding: 14px 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -313,7 +314,7 @@
 .table tbody td {
   padding: 14px 16px;
   border-bottom: 1px solid #edf1f6;
-  font-size: 0.95rem;
+  font-size: $font-size-base;
   vertical-align: middle;
 }
 
@@ -351,17 +352,17 @@
 
 .nameCell {
   color: #243241;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .numberCell {
   color: #315cb8;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .amountCell {
   color: #0b7b59;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.01em;
 }
 
@@ -397,9 +398,9 @@
 .templatesSection {
   margin-bottom: 20px;
   padding: 16px 18px;
-  border-radius: 16px;
+  border-radius: 8px;
   background: #f8fafc;
-  border: 1px solid #e4eaf3;
+  border: 1px solid $gray-300;
 }
 
 .templatesLabel {
@@ -492,7 +493,7 @@
 .addTemplateInput {
   flex: 1;
   height: 38px;
-  border-radius: 10px;
+  border-radius: 8px;
   border: 1px solid #d8e0eb;
   background: #fff;
   padding: 0 14px;
@@ -525,7 +526,7 @@
   gap: 6px;
   height: 38px;
   padding: 0 16px;
-  border-radius: 10px;
+  border-radius: 8px;
   border: 1px solid rgba(49, 92, 184, 0.28);
   background: rgba(49, 92, 184, 0.08);
   color: #264b92;
@@ -570,12 +571,12 @@
 .inlineTemplateChip {
   background: #fff;
   border: 1px solid rgba(49, 92, 184, 0.25);
-  border-radius: 999px;
+  border-radius: 8px;
   padding: 4px 12px;
   font-size: 0.83rem;
   font-family: inherit;
   color: #264b92;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
   max-width: 240px;
@@ -639,7 +640,7 @@
 
 .obsTextarea {
   width: 100%;
-  border-radius: 10px;
+  border-radius: 8px;
   border: 1px solid #c6d5ee;
   padding: 10px 14px;
   font-size: 0.93rem;

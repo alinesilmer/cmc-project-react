@@ -256,27 +256,7 @@ const NAV_SECTIONS: NavSection[] = [
       //     },
          ],
        },
-       {
-        kind: "group",
-        id: "auditoria",
-        icon: PencilRuler,
-        label: "Auditoría",
-        children: [
-       {
-            kind: "item",
-            path: `${base}/crear-padron`,
-            icon: FileText,
-            label: "Generar Lista Cerrada",
-            perms: ["medicos:leer"],
-          },
-           {
-            kind: "item",
-            path: `${base}/crear-excel`,
-            icon: FileSpreadsheet,
-            label: "Generar Excel Lista",
-            perms: ["medicos:leer"],
-          },
-        ]},
+      
       {
         kind: "group",
         id: "socios",
@@ -285,9 +265,9 @@ const NAV_SECTIONS: NavSection[] = [
         children: [
           {
             kind: "item",
-            path: `${base}/users-manager`,
+            path: `${base}/solicitudes`,
             icon: UserCog,
-            label: "Gestión de Socios",
+            label: "Solicitudes de Registro",
             perms: ["medicos:leer"],
           },
           {
@@ -312,6 +292,13 @@ const NAV_SECTIONS: NavSection[] = [
         label: "Padrones",
         perms: ["medicos:leer"],
       },
+       {
+        kind: "item",
+        path: `${base}/boletin`,
+        icon: Medal,
+        label: "Ranking O.S.",
+        perms: ["medicos:leer"],
+      },
       {
         kind: "item",
         path: `${base}/padronsucio`,
@@ -326,13 +313,6 @@ const NAV_SECTIONS: NavSection[] = [
         label: "Padrón Swiss Medical",
         perms: ["medicos:leer"],
       },
-        {
-        kind: "item",
-        path: `${base}/boletin`,
-        icon: Medal,
-        label: "Ranking O.S.",
-        perms: ["medicos:leer"],
-      },
         ],
       },
     ],
@@ -340,6 +320,27 @@ const NAV_SECTIONS: NavSection[] = [
   {
     title: "Herramientas",
     items: [
+       {
+        kind: "group",
+        id: "otros",
+        icon: PencilRuler,
+        label: "Otros",
+        children: [
+       {
+            kind: "item",
+            path: `${base}/crear-padron`,
+            icon: FileText,
+            label: "Generar Lista Cerrada",
+            perms: ["medicos:leer"],
+          },
+           {
+            kind: "item",
+            path: `${base}/crear-excel`,
+            icon: FileSpreadsheet,
+            label: "Generar Excel Lista",
+            perms: ["medicos:leer"],
+          },
+        ]},
        {
         kind: "item",
         path: `${base}/admin/permissions`,
@@ -355,6 +356,7 @@ const NAV_SECTIONS: NavSection[] = [
         perms: ["medicos:leer"],
         external: true,
       },
+      
     ],
   },
 ];
@@ -389,6 +391,11 @@ const Sidebar = () => {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
     getInitialOpenGroups(NAV_SECTIONS, location.pathname)
   );
+  const [tooltip, setTooltip] = useState<{
+    label: string;
+    top: number;
+    left: number;
+  } | null>(null);
 
   const isAuthenticated = Boolean(user);
 
@@ -461,6 +468,15 @@ const Sidebar = () => {
     };
   }, [mobileOpen]);
 
+  // Clear floating tooltip whenever the sidebar expands or mobile closes
+  useEffect(() => {
+    if (!collapsed) setTooltip(null);
+  }, [collapsed]);
+
+  useEffect(() => {
+    if (mobileOpen) setTooltip(null);
+  }, [mobileOpen]);
+
   useEffect(() => {
     if (!mobileOpen) return;
 
@@ -530,7 +546,15 @@ const Sidebar = () => {
         .filter(Boolean)
         .join(" ");
 
-      const tooltip = collapsed ? item.label : undefined;
+      const titleAttr = collapsed ? item.label : undefined;
+
+      const handleTipEnter = collapsed
+        ? (e: React.MouseEvent<HTMLElement>) => {
+            const r = e.currentTarget.getBoundingClientRect();
+            setTooltip({ label: item.label, top: r.top + r.height / 2, left: r.right + 8 });
+          }
+        : undefined;
+      const handleTipLeave = collapsed ? () => setTooltip(null) : undefined;
 
       const content = item.external ? (
         <a
@@ -538,9 +562,10 @@ const Sidebar = () => {
           target="_blank"
           rel="noopener noreferrer"
           className={className}
-          title={tooltip}
-          data-tooltip={tooltip}
+          title={titleAttr}
           aria-label={item.label}
+          onMouseEnter={handleTipEnter}
+          onMouseLeave={handleTipLeave}
         >
           <span className={styles.iconWrap}>
             <Icon size={nested ? 16 : 18} />
@@ -552,8 +577,9 @@ const Sidebar = () => {
           to={item.path}
           className={className}
           aria-current={isActive ? "page" : undefined}
-          title={tooltip}
-          data-tooltip={tooltip}
+          title={titleAttr}
+          onMouseEnter={handleTipEnter}
+          onMouseLeave={handleTipLeave}
         >
           <span className={styles.iconWrap}>
             <Icon size={nested ? 16 : 18} />
@@ -577,7 +603,15 @@ const Sidebar = () => {
       const GroupIcon = entry.icon;
       const open = Boolean(openGroups[entry.id]);
       const active = isGroupActive(location.pathname, entry);
-      const tooltip = collapsed ? entry.label : undefined;
+      const titleAttrGroup = collapsed ? entry.label : undefined;
+
+      const handleGroupTipEnter = collapsed
+        ? (e: React.MouseEvent<HTMLButtonElement>) => {
+            const r = e.currentTarget.getBoundingClientRect();
+            setTooltip({ label: entry.label, top: r.top + r.height / 2, left: r.right + 8 });
+          }
+        : undefined;
+      const handleGroupTipLeave = collapsed ? () => setTooltip(null) : undefined;
 
       const node = (
         <li key={entry.id} className={styles.groupItem}>
@@ -593,8 +627,9 @@ const Sidebar = () => {
             onClick={() => handleToggleGroup(entry.id)}
             aria-expanded={open}
             aria-controls={`sidebar-group-${entry.id}`}
-            title={tooltip}
-            data-tooltip={tooltip}
+            title={titleAttrGroup}
+            onMouseEnter={handleGroupTipEnter}
+            onMouseLeave={handleGroupTipLeave}
           >
             <span className={styles.groupMain}>
               <span className={styles.iconWrap}>
@@ -727,6 +762,17 @@ const Sidebar = () => {
         <footer className={styles.footer}>
           <p className={styles.footerText}>{footerText}</p>
         </footer>
+
+        {/* Fixed tooltip rendered only in collapsed desktop mode */}
+        {collapsed && tooltip && (
+          <div
+            className={styles.fixedTooltip}
+            style={{ top: tooltip.top, left: tooltip.left }}
+            aria-hidden="true"
+          >
+            {tooltip.label}
+          </div>
+        )}
       </aside>
     </>
   );

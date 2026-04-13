@@ -1,46 +1,38 @@
+@use "@/app/styles/all.scss" as *;
+
+
 .helpButton {
   position: fixed;
-  top: 1rem;
-  right: 1rem;
-  background: green;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.75rem;
-  font-weight: 500;
+  top: 0.75rem;
+  right: 1.25rem;
+  border-radius: $border-radius-sm;
   cursor: pointer;
-  display: flex;
-  align-items: center;
   gap: 0.375rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s ease;
-  z-index: 100;
+  white-space: nowrap;
+  z-index: 110;
 
   svg {
     width: 1rem;
     height: 1rem;
+    flex-shrink: 0;
   }
 
-  &:hover {
-    background-color: #2563eb;
-    transform: translateY(-1px);
-    box-shadow: 0 6px 8px -1px rgba(0, 0, 0, 0.15);
-  }
 
   &:active {
     transform: translateY(0);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.35);
   }
 }
 
 @media (max-width: 768px) {
   .helpButton {
-    position: fixed;
-    top: 0.75rem;
+    top: 0.6rem;
     right: 0.75rem;
-    padding: 0.375rem 0.5rem;
-    font-size: 0.625rem;
-    
+
     svg {
       width: 0.875rem;
       height: 0.875rem;

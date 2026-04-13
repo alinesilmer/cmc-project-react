@@ -4,7 +4,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { FileDown, Pencil, Plus, RefreshCcw, Search, X } from "lucide-react";
 
 import styles from "./BoletinConsultaComun.module.scss";
-import Button from "../../../website/components/UI/Button/Button";
+import Button from "../../components/atoms/Button/Button";
 
 import {
   CONSULTA_COMUN_CODE,
@@ -140,7 +140,7 @@ export default function BoletinConsultaComun() {
 
           <div className={styles.actions}>
             <Button
-              size="small"
+              size="md"
               variant="secondary"
               onClick={() => void refetch()}
               disabled={isLoading || isFetching || isGeneratingPdf}
@@ -152,8 +152,8 @@ export default function BoletinConsultaComun() {
             </Button>
 
             <Button
-              size="small"
-              variant="secondary"
+              size="md"
+              variant="danger"
               onClick={() => void handleDownloadPdf()}
               disabled={
                 isLoading ||
@@ -372,11 +372,11 @@ export default function BoletinConsultaComun() {
 
                           <div className={styles.editRowMeta}>
                             <span className={styles.charCount}>
-                              {editDraft.length}/400 caracteres
+                              {editDraft.length}/400 carácteres
                             </span>
                             <div className={styles.editRowActions}>
                               <Button
-                                size="small"
+                                size="md"
                                 variant="secondary"
                                 onClick={handleCancelEdit}
                                 disabled={savingNro === item.nro}
@@ -384,7 +384,7 @@ export default function BoletinConsultaComun() {
                                 Cancelar
                               </Button>
                               <Button
-                                size="small"
+                                size="md"
                                 variant="primary"
                                 onClick={() => void handleSave(item.nro)}
                                 disabled={savingNro === item.nro}

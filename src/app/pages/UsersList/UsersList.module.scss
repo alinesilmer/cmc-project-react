@@ -55,7 +55,7 @@
 }
 
 .subtitle {
-  font-size: $font-size-lg;
+   font-size: $font-size-base;
   color: $gray-600;
   margin: 0;
   
@@ -104,7 +104,7 @@
 .statCard {
   background-color: $white;
   padding: $spacing-6;
-  border-radius: $border-radius-xl;
+  border-radius: $border-radius-md;
   box-shadow: $shadow-md;
   display: flex;
   flex-direction: column;
@@ -154,7 +154,7 @@
   width: 100%;
   padding: $spacing-4;
   border: 1px solid $gray-300;
-  border-radius: $border-radius-lg;
+  border-radius: $border-radius-md;
   font-size: $font-size-base;
   color: $gray-900;
   transition: all 0.2s;
@@ -177,7 +177,7 @@
 
 .tableContainer {
   background-color: $white;
-  border-radius: $border-radius-xl;
+  border-radius: $border-radius-md;
   box-shadow: $shadow-md;
   overflow: hidden;
   
@@ -196,7 +196,7 @@
   }
 
   thead {
-    background-color: $gray-100;
+    background-color: $primary-blue-dark;
 
     tr {
       th {
@@ -204,7 +204,7 @@
         text-align: left;
         font-size: $font-size-sm;
         font-weight: $font-weight-semibold;
-        color: $gray-700;
+        color: $white;
         border-bottom: 1px solid $gray-200;
         white-space: nowrap;
         
@@ -243,6 +243,33 @@
   }
 }
 
+
+.rowButton {
+  min-height: 34px;
+  padding: 0 $spacing-4;
+  border: 1px solid rgba($gray-300, 0.95);
+  border-radius: $border-radius-md;
+  background: $white;
+  color: $gray-800;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: $gray-100;
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
 .nameCell {
   font-weight: $font-weight-semibold;
 }
@@ -250,7 +277,7 @@
 .statusActive {
   display: inline-block;
   padding: 4px 12px;
-  border-radius: $border-radius-lg;
+  border-radius: $border-radius-md;
   background-color: #d4edda;
   color: #155724;
   font-size: $font-size-xs;
@@ -261,7 +288,7 @@
 .statusInactive {
   display: inline-block;
   padding: 4px 12px;
-  border-radius: $border-radius-lg;
+  border-radius: $border-radius-md;
   background-color: #f8d7da;
   color: #721c24;
   font-size: $font-size-xs;

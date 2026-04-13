@@ -27,12 +27,12 @@
   }
 }
 
-/* Card container (grid for stable layout) */
+/* Card container*/
 .card {
   width: min(100%, 980px);
   background: $white;
   border: 1px solid $gray-200;
-  border-radius: $border-radius-xl;
+  border-radius: $border-radius-sm;
   box-shadow: $shadow-xl;
   overflow: hidden;
   position: relative;
@@ -229,7 +229,7 @@
   width: 36px;
   min-width: 36px;
   height: 36px;
-  border-radius: 999px;
+  border-radius: $border-radius-sm;
 
   background: $white;
   color: $primary-blue;
@@ -279,7 +279,7 @@
 
   padding: $spacing-5;
   border: 1px solid $gray-200;
-  border-radius: $border-radius-lg;
+  border-radius: $border-radius-sm;
   background: $white;
   box-shadow: $shadow-sm;
 
@@ -302,7 +302,7 @@
 
 .input {
   height: 44px;
-  border-radius: $border-radius-md;
+  border-radius: $border-radius-sm;
   border: 1px solid $gray-300;
   background: $white;
   padding: 0 $spacing-4;

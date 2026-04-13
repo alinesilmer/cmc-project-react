@@ -66,7 +66,7 @@ const PadronSwiss = () => {
           <div className={styles.cardContent}>
             <div className={styles.topRow}>
               <div className={styles.actions}>
-                <Button type="button" variant="primary" onClick={downloadExcel}>
+                <Button type="button" variant="success" onClick={downloadExcel}>
                   <Download size={18} />
                   <span>Descargar Excel</span>
                 </Button>

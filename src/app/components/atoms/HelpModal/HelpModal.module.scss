@@ -1,3 +1,5 @@
+@use "@/app/styles/all.scss" as *;
+
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -13,8 +15,8 @@
 }
 
 .modalContent {
-  background: white;
-  border-radius: 12px;
+  background: $white;
+  border-radius: $border-radius-sm;
   max-width: 500px;
   width: 100%;
   max-height: 90vh;
@@ -39,11 +41,11 @@
   align-items: center;
   justify-content: space-between;
   padding: 1.5rem 1.5rem 1rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid lightgray;
 
   h3 {
     margin: 0;
-    color: #111827;
+    color: black;
     font-size: 1.25rem;
     font-weight: 600;
   }
@@ -59,8 +61,8 @@
   transition: color 0.2s ease;
 
   &:hover {
-    color: #374151;
-    background-color: #f3f4f6;
+    color: black;
+    background-color: $white;
   }
 }
 
@@ -82,9 +84,9 @@
   flex-shrink: 0;
   width: 2rem;
   height: 2rem;
-  background-color: #3b82f6;
-  color: white;
-  border-radius: 50%;
+  background-color: $primary-blue-dark;
+  color: $white;
+  border-radius: $border-radius-sm;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -113,11 +115,11 @@
   padding: 1rem;
   background-color: #f0f9ff;
   border-radius: 8px;
-  border-left: 4px solid #3b82f6;
+  border-left: 4px solid $primary-blue-dark;
 
   h4 {
     margin: 0 0 0.75rem 0;
-    color: #1e40af;
+    color: $primary-blue-darker;
     font-size: 0.875rem;
     font-weight: 600;
   }

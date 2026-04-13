@@ -137,7 +137,7 @@
 .heroActions {
   display: flex;
   align-items: center;
-  gap: $spacing-3;
+  gap: 1rem;
   flex-wrap: wrap;
   margin-top: $spacing-6;
 }
@@ -145,10 +145,10 @@
 .primaryHeroButton,
 .secondaryHeroButton {
   min-height: 48px;
-  padding: 0 $spacing-5;
   border-radius: 8px;
   font-size: $font-size-base;
-  font-weight: $font-weight-semibold;
+  color: white;
+  font-weight: 500;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
@@ -160,29 +160,9 @@
     border-color 0.2s ease;
 }
 
-.primaryHeroButton {
-  background: linear-gradient(135deg, #f7e9aa 0%, #f4e5a8 100%);
-  color: #173f70;
-  box-shadow: 0 12px 28px rgba(12, 42, 82, 0.18);
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 16px 34px rgba(12, 42, 82, 0.24);
-  }
-}
-
 .secondaryHeroButton {
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  backdrop-filter: blur(8px);
-
-  &:hover {
-    transform: translateY(-2px);
-    background: rgba(255, 255, 255, 0.18);
-  }
+  color: black;
 }
-
 
 .section {
   margin-bottom: $spacing-8;

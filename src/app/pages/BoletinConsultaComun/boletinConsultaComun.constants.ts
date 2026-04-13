@@ -10,7 +10,7 @@ export const CMC_PHONE = String(
 );
 export const CMC_EMAIL = String(
   (import.meta as any).env?.VITE_CMC_EMAIL ??
-    "auditoria@colegiomedicocorrientes.com"
+    "auditoriacolegiomedico23@gmail.com"
 );
 export const CMC_SUBTITLE = "Sujeto a cambios por actualizaciones permanentes";
 export const CMC_LOGO_SRC =

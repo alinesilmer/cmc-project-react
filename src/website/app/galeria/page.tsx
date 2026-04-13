@@ -1,9 +1,10 @@
-"use client"
-
+import { motion } from "framer-motion"
 import Gallery from "../../components/Servicios/Gallery/Gallery"
 import type { MediaItem } from "../../components/Servicios/Gallery/Gallery"
 import styles from "./galeria.module.scss"
 
+// TODO (M4): Replace static mockItems with a dynamic fetch from the API once a
+// gallery endpoint is available. Keep this array as the fallback/seed until then.
 const QUINTA_FOLDER_TITLE = "Quinta y Quincho"
 const QUINTA_FOLDER_DATE = "2025-09-16"
 const FIESTA_MED_2025 = "Fiesta del Día del Médico 2025"
@@ -146,8 +147,13 @@ const mockItems: MediaItem[] = [
 
 export default function GaleriaPage() {
   return (
-    <div className={styles.galeriaWrap}>
+    <motion.div
+      className={styles.galeriaWrap}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+    >
       <Gallery items={mockItems} />
-    </div>
+    </motion.div>
   )
 }

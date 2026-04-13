@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 
 import { motion } from "framer-motion"
@@ -8,12 +6,12 @@ import styles from "./ServiceCard.module.scss"
 interface ServiceCardProps {
   title: string
   description: string
-  color: "green" | "yellow" | "pink" | "blue"
+  color?: "green" | "yellow" | "pink" | "blue"
   icon?: React.ReactNode
   delay?: number
 }
 
-export default function ServiceCard({ title, description, color, icon, delay = 0 }: ServiceCardProps) {
+export default function ServiceCard({ title, description, color = "blue", icon, delay = 0 }: ServiceCardProps) {
   return (
     <motion.div
       className={`${styles.card} ${styles[color]}`}

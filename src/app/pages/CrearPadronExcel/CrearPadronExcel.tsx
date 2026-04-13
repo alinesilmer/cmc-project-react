@@ -960,7 +960,7 @@ const GenerarExcel = () => {
       <div >
         <Button
           type="button"
-          variant="primary"
+          variant="success"
           onClick={generarExcel}
           disabled={loading || !!error || isExporting || prestadores.length === 0}
         >
