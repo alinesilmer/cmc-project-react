@@ -1,3 +1,5 @@
+@use "@/website/styles/all.scss" as *;
+
 .hero {
   position: relative;
   height: 560px;
@@ -19,7 +21,6 @@
   }
 }
 
-/* Background image in its own layer so the zoom animation is isolated */
 .bg {
   position: absolute;
   inset: 0;
@@ -40,7 +41,6 @@
   }
 }
 
-/* Multi-stop gradient: light at top, rich at bottom for text legibility */
 .overlay {
   position: absolute;
   inset: 0;
@@ -56,7 +56,7 @@
   position: relative;
   z-index: 1;
   text-align: center;
-  color: #fff;
+  color: $white;
   max-width: 820px;
   padding: 0 2rem;
 
@@ -67,11 +67,11 @@
 
 .title {
   font-family: var(--font-heading);
-  font-size: 3rem;
+  font-size: $font-size-hero;
   font-weight: 700;
   letter-spacing: 2.5px;
   text-transform: uppercase;
-  color: #fff;
+  color: $white;
   margin: 0 0 0.6rem;
   text-shadow: 0 2px 24px rgba(0, 0, 0, 0.45);
   line-height: 1.15;
@@ -91,7 +91,6 @@
   }
 }
 
-/* Thin accent line between title and subtitle */
 .divider {
   width: 52px;
   height: 3px;
@@ -102,7 +101,7 @@
 }
 
 .subtitle {
-  font-size: 1.2rem;
+  font-size: $font-size-large;
   font-weight: 400;
   line-height: 1.65;
   color: rgba(255, 255, 255, 0.9);

@@ -19,7 +19,7 @@
 }
 
 .subtitle {
-  font-size: clamp(1rem, 1.1vw + 0.8rem, 1.2rem);
+  font-size: $font-size-large;
   color: rgba($white, 0.95);
 }
 

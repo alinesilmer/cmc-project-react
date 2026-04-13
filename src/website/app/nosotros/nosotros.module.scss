@@ -65,7 +65,7 @@
   font-weight: 700;
   color: $primary-blue;
   text-align: start;
-  font-size: clamp(1.25rem, 2vw, 2rem);
+  font-size: $font-size-subtitle;
 }
 
 .lead {
@@ -207,7 +207,7 @@
   font-weight: 800;
   letter-spacing: -0.02em;
   color: $primary-yellow;
-  font-size: clamp(1.2rem, 2.2vw, 1.6rem);
+  font-size: $font-size-h4;
   line-height: 1.15;
 }
 
@@ -305,7 +305,7 @@
 
 .valueTitle {
   margin: 0;
-  font-family: $font-title;
+  font-family: $font-size-card-title;
   font-weight: 800;
   color: $primary-blue-dark;
   font-size: 1.05rem;

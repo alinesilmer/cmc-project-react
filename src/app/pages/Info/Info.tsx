@@ -325,39 +325,7 @@ const Info: React.FC = () => {
             secciones claras con etiquetas para que sepas qué es legalizado,
             obligatorio y qué es copia simple.
           </motion.p>
-          <motion.div variants={fadeUp} className={styles.heroActions}>
-            <Button
-            size="xlg"
-            variant="secondary"
-            onClick={() =>
-              window.open("https://wa.me/543794252323?text=Hola%20Colegio%20M%C3%A9dico%20Corrientes%2C%20tengo%20una%20consulta%20sobre%20los%20requisitos%20de%20ingreso%20como%20socio-prestador.", "_blank")
-            }
-            aria-label="Contactar por WhatsApp"
-          >
-            <a
-              className={styles.link}
-              href="mailto:secretaria@colegiomedicocorrientes.com?subject=Consulta%20Socio%20Prestador"
-            >
-              Consultar por email
-            </a>
-            </Button>
-             <Button
-            size="xlg"
-            variant="secondary"
-            onClick={() =>
-              window.open("https://wa.me/543794252323?text=Hola%20Colegio%20M%C3%A9dico%20Corrientes%2C%20tengo%20una%20consulta%20sobre%20los%20requisitos%20de%20ingreso%20como%20socio-prestador.", "_blank")
-            }
-            aria-label="Contactar por WhatsApp"
-          >
-            <a
-              className={styles.link}
-              href="tel:+543794252323"
-              aria-label="Llamar al número de contacto"
-            >
-              Llamar: 3794-252323
-            </a>
-            </Button>
-          </motion.div>
+         
           
         </motion.div>
       </header>
@@ -411,10 +379,10 @@ const Info: React.FC = () => {
                 <div>
                   <span className={styles.contactKey}>Email</span>
                   <a
-                    href="mailto:secretaria@colegiomedicocorrientes.com"
+                    href="mailto:auditoriacolegiomedico23@gmail.com"
                     className={styles.contactVal}
                   >
-                    secretaria@colegiomedicocorrientes.com
+                    auditoriacolegiomedico23@gmail.com
                   </a>
                 </div>
               </div>
@@ -480,6 +448,39 @@ const Info: React.FC = () => {
             momento de presentar la documentación.
           </p>
         </motion.section>
+         <motion.div variants={fadeUp} className={styles.heroActions}>
+            <Button
+            size="xlg"
+            variant="secondary"
+            onClick={() =>
+              window.open("https://wa.me/543794252323?text=Hola%20Colegio%20M%C3%A9dico%20Corrientes%2C%20tengo%20una%20consulta%20sobre%20los%20requisitos%20de%20ingreso%20como%20socio-prestador.", "_blank")
+            }
+            aria-label="Contactar por WhatsApp"
+          >
+            <a
+              className={styles.link}
+              href="mailto:auditoriacolegiomedico23@gmail.com?subject=Consulta%20Socio%20Prestador"
+            >
+              Consultar por email
+            </a>
+            </Button>
+             <Button
+            size="xlg"
+            variant="secondary"
+            onClick={() =>
+              window.open("https://wa.me/543794252323?text=Hola%20Colegio%20M%C3%A9dico%20Corrientes%2C%20tengo%20una%20consulta%20sobre%20los%20requisitos%20de%20ingreso%20como%20socio-prestador.", "_blank")
+            }
+            aria-label="Contactar por WhatsApp"
+          >
+            <a
+              className={styles.link}
+              href="tel:+543794252323"
+              aria-label="Llamar al número de contacto"
+            >
+              Llamar: 3794-252323
+            </a>
+            </Button>
+          </motion.div>
       </main>
     </div>
   );

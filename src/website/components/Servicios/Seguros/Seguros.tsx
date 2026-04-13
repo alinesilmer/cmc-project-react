@@ -18,7 +18,6 @@ type Props = {
 export default function Seguros({
   titulo = "Convenios de Seguros del Colegio Médico",
   descripcion = "Colegio Médico de Corrientes tiene convenio de seguro con la empresa NOBLE. Para mayor información comunicarse por WhatsApp.",
-  pdfUrl,
   whatsAppNumber = "543794404497",
   whatsAppLabel = "Consultar por WhatsApp",
   whatsAppMessage = "Hola, quiero más información sobre los convenios de seguros del Colegio Médico.",
