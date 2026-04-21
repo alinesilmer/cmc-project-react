@@ -61,32 +61,8 @@
   }
 }
 
-.backButton {
-  padding: $spacing-3 $spacing-5;
-  background-color: $white;
-  border: 1px solid $gray-300;
-  border-radius: $border-radius-lg;
-  font-size: $font-size-base;
-  font-weight: $font-weight-medium;
-  color: $gray-700;
-  cursor: pointer;
-  transition: all 0.2s;
 
-  &:hover {
-    background-color: $gray-100;
-    border-color: $gray-400;
-  }
 
-  @media (max-width: $breakpoint-md) {
-    align-self: stretch;
-    text-align: center;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    width: 100%;
-    font-size: $font-size-sm;
-  }
-}
 
 .filters {
   display: flex;
@@ -110,7 +86,7 @@
   padding: $spacing-3 $spacing-5;
   background-color: $white;
   border: 1px solid $gray-300;
-  border-radius: $border-radius-lg;
+  border-radius: $border-radius-sm;
   font-size: $font-size-base;
   font-weight: $font-weight-medium;
   color: $gray-700;
@@ -126,7 +102,7 @@
   }
 
   &.active {
-    background-color: $primary-blue;
+    background-color: $primary-blue-dark;
     color: $white;
     border-color: $primary-blue;
 
@@ -179,7 +155,7 @@
 
 .card {
   background-color: $white;
-  border-radius: $border-radius-xl;
+  border-radius: $border-radius-md;
   overflow: hidden;
   box-shadow: $shadow-md;
   transition: all 0.3s;
@@ -354,7 +330,7 @@
   padding: $spacing-2 $spacing-5;
   background-color: $warning-orange;
   border: none;
-  border-radius: $border-radius-lg;
+  border-radius: $border-radius-md;
   font-size: $font-size-sm;
   font-weight: $font-weight-semibold;
   color: $white;
@@ -380,7 +356,7 @@
   text-align: center;
   padding: $spacing-16;
   background-color: $white;
-  border-radius: $border-radius-xl;
+  border-radius: $border-radius-md;
   box-shadow: $shadow-sm;
 
   p {

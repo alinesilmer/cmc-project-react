@@ -12,20 +12,18 @@ const Forbidden403 = lazy(() => import("./app/forbidden403/Forbidden403"));
 
 import Header from "./components/UI/Header/Header";
 import Footer from "./components/UI/Footer/Footer";
+import Chatbot from "./components/Chatbot/Chatbot";
 import NosotrosPage from "./app/nosotros/page";
 import AdminMedicosPromo from "./app/admin/MedicosPromo/MedicosPromo";
 import Servicios from "./app/servicios/page";
-import NotFound from "./app/notFound/notFound";
 import GaleriaPage from "./app/galeria/page";
 import ConveniosPage from "./app/convenios/convenios";
 import QuintaPage from "./app/quinta/quinta";
-// import CursosCapacitacionesPage from "./app/cursoscap/page";
 import CursosPage from "./app/cursoscap/page";
 import CursoDetailPage from "./app/cursoscap/[id]/page";
 import SegurosPage from "./app/seguros/page";
 import Asociados from "./app/asociados/page";
-import Blog from "./app/blog/page";
-import BlogDetailPage from "./app/blog/[id]/page";
+import InfoPage from "../app/pages/Info/Info";
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
@@ -46,22 +44,23 @@ export default function WebRoutes() {
         {/* 403 opcional */}
         <Route path="/403" element={<Forbidden403 />} />
 
-        {/* Admin: login SIEMPRE público */}
+        {/* Admin: login público */}
         <Route path="/admin/login" element={<AdminLogin />} />
 
         {/* Admin: rutas protegidas para web editor */}
         <Route
           element={
             <RequireWebEditor
-              redirectUnauthedTo="/panel/login" // si no está logueado
-              forbidAs403={false} // si no tiene scope web:editor → /panel/dashboard
+              redirectUnauthedTo="/panel/login" 
+              forbidAs403={false} 
             />
           }
         >
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          {/* alias que usás desde el login de la app */}
-          <Route path="/admin/dashboard-web" element={<AdminDashboard />} />
+          
           <Route path="/admin/medicos-promo" element={<AdminMedicosPromo />} />
+         <Route path="/admin/dashboard-web" element={<AdminDashboard />} />
+         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          
         </Route>
 
         {/* Rutas públicas */}
@@ -73,20 +72,19 @@ export default function WebRoutes() {
         <Route path="/cursos/:id" element={<CursoDetailPage />} />
         <Route path="/nosotros" element={<NosotrosPage />} />
         <Route path="/servicios" element={<Servicios />} />
-        <Route path="/notFound" element={<NotFound />} />
         <Route path="/galeria" element={<GaleriaPage />} />
         <Route path="/convenios" element={<ConveniosPage />} />
         <Route path="/quinta" element={<QuintaPage />} />
-        {/* <Route path="/cursoscap" element={<CursosCapacitacionesPage />} /> */}
         <Route path="/seguros" element={<SegurosPage />} />
         <Route path="/medicos-asociados" element={<Asociados />} />
-        <Route path="/blogs" element={<Blog />} />
-        <Route path="/blogs/:id" element={<BlogDetailPage />} />
+        <Route path="/socios" element={<InfoPage />} />
+     
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
+      <Chatbot />
       <Footer />
     </Suspense>
   );

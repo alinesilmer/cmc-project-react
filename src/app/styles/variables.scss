@@ -1,13 +1,19 @@
 @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Raleway:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap");
 
 // Colors
-$primary-blue: #3f64d0;
-$primary-blue-dark: #2c47a1;
-$accent-blue: #5771c9;
+$primary-blue: #173f70;
+$primary-blue-darker: #0c2a52;
+$primary-blue-shadow: #374b68;
+$primary-blue-lighter: #1b4c88;
+$accent-blue: #5a79e1;
+$primary-blue-dark: #3455c1;
+$primary-yellow: #f7e9aa;
+$primary-yellow-light: #f5eac0;
+$primary-yellow-dark: #4d441a;
 $secondary-blue: #e8f0ff;
-$success-green: #21b356;
+$success-green: #1d9148;
 $warning-orange: #f59e0b;
-$danger-red: #ef4444;
+$danger-red: #cc2a2a;
 $gray-50: #f8fafc;
 $gray-100: #f1f5f9;
 $gray-200: #e2e8f0;
@@ -23,8 +29,8 @@ $black: #000000;
 
 // Typography
 $font-size-xs: 0.63rem;
-$font-size-sm: 0.71rem;
-$font-size-base: 0.76rem;
+$font-size-sm: 0.76rem;
+$font-size-base: 0.86rem;
 $font-size-lg: 1rem;
 $font-size-xl: 1.08rem;
 $font-size-2xl: 1.26rem;
@@ -48,6 +54,7 @@ $spacing-10: 2.25rem;
 $spacing-12: 2.7rem;
 $spacing-16: 3.6rem;
 $spacing-20: 4.5rem;
+
 
 // Border radius
 $border-radius-sm: 0.3375rem;

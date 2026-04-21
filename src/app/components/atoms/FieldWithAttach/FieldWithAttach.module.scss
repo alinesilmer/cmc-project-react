@@ -1,4 +1,4 @@
-@import "../../../styles/variables.scss";
+@use "../../../styles/variables" as *;
 .formGroup { display:flex; flex-direction:column; }
 .withAttach {}
 .labelRow { display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-bottom:.5rem; }

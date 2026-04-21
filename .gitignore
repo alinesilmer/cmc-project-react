@@ -29,3 +29,11 @@ dist-ssr
 
 Dockerfile
 Caddyfile
+
+.claude/
+.CAMBIOS_LIQUIDACION
+.CLAUDE
+.liquidacion_dev
+.liquidacion
+.instructions
+docs/

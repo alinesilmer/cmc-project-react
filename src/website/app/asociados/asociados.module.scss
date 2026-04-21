@@ -19,32 +19,8 @@
 }
 
 .subtitle {
-  font-size: clamp(1rem, 1.1vw + 0.8rem, 1.2rem);
+  font-size: $font-size-large;
   color: rgba($white, 0.95);
-}
-
-.heroStats {
-  display: flex;
-  flex-direction: row;
-  gap: $spacing-xl;
-  z-index: 1;
-}
-
-.stat {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-}
-
-.statNum {
-  font-weight: 800;
-  font-size: 1.6rem;
-  color: $primary-yellow;
-}
-
-.statLbl {
-  font-size: 0.95rem;
-  color: rgba($white, 0.9);
 }
 
 .heroGlow {

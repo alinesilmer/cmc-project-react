@@ -70,7 +70,7 @@ export function useMedicosExport() {
 
         // ✅ build backend params
         const params = {
-          ...mapUIToQuery(filters as any),
+          ...mapUIToQuery(filters),
           limit: 2000,
           skip: 0,
         };

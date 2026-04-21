@@ -16,7 +16,6 @@ import { getEspecialidadNameById } from "../../lib/especialidadesCatalog";
 
 import { useMedicosExport } from "./useMedicosExport";
 
-// ✅ LOGO FIJO DESDE ASSETS
 import LogoCMCUrl from "../../assets/logoCMC.png";
 
 type MedicoRow = Record<string, unknown>;
@@ -70,13 +69,13 @@ function toUserRow(m: any) {
   const status = isActiveRow(m) ? "activo" : "inactivo";
   const a = normalizeAdherente(m);
   const os = String(m?.obra_social ?? m?.OBRA_SOCIAL ?? "").trim();
-
+//"telefono_consulta", "TELEFONO_CONSULTA", "tel_consulta", "TEL_CONSULTA"
   return {
     id: m?.id ?? m?.ID ?? null,
     nro_socio: m?.nro_socio ?? m?.NRO_SOCIO ?? null,
     name: m?.nombre ?? m?.NOMBRE ?? "—",
     email: m?.mail_particular ?? m?.MAIL_PARTICULAR ?? m?.email ?? "—",
-    phone: m?.tele_particular ?? m?.TELE_PARTICULAR ?? "—",
+    phone: m?.telefono_consulta ?? m?.TELEFONO_CONSULTA ?? m?.tel_consulta ?? m.TEL_CONSULTA ?? "—",
     joinDate: (m?.fecha_ingreso ?? m?.FECHA_INGRESO ?? m?.joinDate) ?? null,
     status,
     matriculaProv: m?.MATRICULA_PROV ?? m?.matricula_prov ?? "—",
@@ -397,6 +396,12 @@ function applyMedicosFilters(rows: MedicoRow[], filters: FilterSelection): Medic
       if (filters.faltantes.mode === "present" && missing) return false;
     }
 
+    // cuit (partial match, normalized)
+    if (o.cuit) {
+      const cuit = normalizeText(pickFirst(row, ["cuit", "CUIT", "cuil", "CUIL"]));
+      if (!cuit.includes(normalizeText(o.cuit))) return false;
+    }
+
     // tiene_malapraxis
     if (o.tieneMalapraxis === "true") {
       const mp = String(pickFirst(row, ["malapraxis", "MALAPRAXIS"]) ?? "").trim();
@@ -594,7 +599,6 @@ const UsersList: React.FC = () => {
         const data = await getJSON<MedicoRow[]>("/api/medicos/all", params);
         if (cancelled) return;
         const rows: MedicoRow[] = Array.isArray(data) ? data : [];
-        if (rows.length > 0) console.log("[DEBUG] primer row keys:", Object.keys(rows[0]), "\n[DEBUG] primer row:", JSON.stringify(rows[0]));
         setRawUsers(rows);
         setIsLastPage(rows.length < PAGE_SIZE);
         setInitialized(true);
@@ -630,6 +634,11 @@ const UsersList: React.FC = () => {
     }
     const cols = ["nro_socio", ...filters.columns.filter((c) => c !== "nro_socio")];
     const fixed: FilterSelection = { ...filters, columns: cols };
+
+    // Commit draft filters so the table reflects what was exported.
+    setCommittedFilters(fixed);
+    setPage(0);
+
     const fixedLogo = await getFixedLogoFile();
     const ok = await onExportWithFilters(format, fixed, fixedLogo);
     if (ok) setIsExportOpen(false);
@@ -758,7 +767,7 @@ const UsersList: React.FC = () => {
         </div>
         <div className={styles.headerActions}>
           <BackButton />
-          <Button variant="primary" onClick={() => navigate("/panel/register-socio")}>
+          <Button variant="secondary" onClick={() => navigate("/panel/register-socio")}>
             Agregar socio
           </Button>
           <Button onClick={() => setIsExportOpen(true)}>Filtrar y Exportar</Button>
@@ -858,14 +867,13 @@ const UsersList: React.FC = () => {
                     </span>
                   </td>
                   <td>
-                    <Button
-                      size="sm"
-                      variant="primary"
+                    <button
+                      className={styles.rowButton}
                       onClick={() => navigate(`/panel/doctors/${user.id}`)}
                       aria-label={`Ver más de ${user.name}`}
                     >
-                      Ver más
-                    </Button>
+                      Ver
+                    </button>
                   </td>
                 </tr>
               ))

@@ -2,10 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import NoticiaCard from "../../components/Noticias/NoticiaCard/NoticiaCard";
 import PageHero from "../../components/UI/Hero/Hero";
-import hero from "../../assets/images/heroImg.png";
-// import { api } from "../../lib/api";
 import { listNews } from "../../lib/news.client";
-// import { mediaUrl } from "../../lib/media";
 
 import type { Noticia } from "../../types";
 import styles from "./noticias.module.scss";
@@ -14,7 +11,11 @@ export default function NoticiasPage() {
   const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  // const [tipo, setTipo] = useState<TipoPublicacion | "Todos">("Todos");
+
+  useEffect(() => {
+    document.title = "Noticias | Colegio Médico de Corrientes";
+    return () => { document.title = "Colegio Médico de Corrientes"; };
+  }, []);
 
   useEffect(() => {
     cargarNoticias();
@@ -43,25 +44,10 @@ export default function NoticiasPage() {
       <PageHero
         title="NOTICIAS"
         subtitle="Descubre las últimas novedades en el Colegio Médico de Corrientes"
-        backgroundImage={hero}
+        backgroundImage="https://res.cloudinary.com/dcfkgepmp/image/upload/q_auto/f_auto/v1775665371/heroImg_fus7an.png"
       />
       <main className={styles.noticiasPage}>
         <div className={styles.container}>
-          {/* filtro por tipo */}
-          {/* <div className={styles.filtersBar}>
-            <label className={styles.filterLabel}>
-              Tipo
-              <select
-                value={tipo}
-                onChange={(e) => setTipo(e.target.value as any)}
-                className={styles.filterSelect}
-              >
-                <option value="Todos">Todos</option>
-                <option value="Noticia">Noticia</option>
-                <option value="Blog">Blog</option>
-              </select>
-            </label>
-          </div> */}
 
           {loading ? (
             <div className={styles.loading}>Cargando noticias...</div>

@@ -4,9 +4,9 @@ import { useAuth } from "./AuthProvider";
 import { isWebEditor } from "./roles";
 
 type Props = {
-  // si querés otro destino cuando NO está logueado
+  // otro destino cuando NO está logueado
   redirectUnauthedTo?: string;
-  // si querés mostrar 403 en vez de redirigir al panel
+  // mostrar 403 en vez de redirigir al panel
   forbidAs403?: boolean;
 };
 
@@ -17,7 +17,7 @@ export default function RequireWebEditor({
   const { user, ready } = useAuth();
   const loc = useLocation();
 
-  if (!ready) return null; // o spinner
+  if (!ready) return null; // spinner
 
   if (!user) {
     return <Navigate to={redirectUnauthedTo} replace state={{ from: loc }} />;

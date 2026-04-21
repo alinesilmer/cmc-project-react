@@ -13,20 +13,16 @@ import {
   NotebookText,
   Paperclip,
   ShieldCheck,
-  Trophy,
   UserCog,
   Users,
   ExternalLink,
   ArrowRight,
+  Medal,
 } from "lucide-react";
 import { useAuth } from "../../auth/AuthProvider";
 import styles from "./Dashboard.module.scss";
+import Button from "../../components/atoms/Button/Button";
 
-type StatCard = {
-  label: string;
-  value: string;
-  tone: "blue" | "gold" | "amber" | "darkblue";
-};
 
 type QuickAction = {
   icon: LucideIcon;
@@ -41,9 +37,7 @@ type QuickAction = {
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
 
-  const activePeriod = "202507";
-  const periodStatus = "No Liquidado";
-  const closingDate = "30/07/2025";
+  
   const whatsappUrl =
     "https://wa.me/5493794532335?text=¡Hola!,%20necesito%20soporte%20con%20el%20sistema%20de%20liquidación";
 
@@ -124,7 +118,7 @@ const Dashboard: React.FC = () => {
       badge: "Datos",
     },
     {
-      icon: Trophy,
+      icon: Medal,
       title: "Ranking O.S.",
       description:
         "Visualizá comparativas, importes y desempeño por obra social.",
@@ -185,9 +179,7 @@ const Dashboard: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.28, delay: index * 0.03 }}
       >
-        <div className={styles.cardGlow} />
         <div className={styles.cardHeader}>
-          <span className={styles.cardBadge}>{action.badge}</span>
           <div className={styles.cardIconWrap}>
             <Icon size={22} className={styles.cardIcon} />
           </div>
@@ -199,7 +191,6 @@ const Dashboard: React.FC = () => {
         </div>
 
         <div className={styles.cardFooter}>
-          <span className={styles.cardLinkText}>Abrir módulo</span>
           {action.external ? (
             <ExternalLink size={18} className={styles.cardArrow} />
           ) : (
@@ -247,46 +238,32 @@ const Dashboard: React.FC = () => {
             </h1>
 
             <p className={styles.subtitle}>
-              Accedé rápido a los módulos más usados del sistema y mantené a la
-              vista el estado general del período operativo.
+              Accedé rápido a los módulos más usados del sistema
             </p>
 
             <div className={styles.heroActions}>
-              <Link to="/panel/facturacion" className={styles.primaryHeroButton}>
-                Ir a Facturación
+              <Link to="https://legacy.colegiomedicocorrientes.com/principal.php" className={styles.primaryHeroButton}>
+              <Button variant="secondary" size="md">
+                Volver al Sistema de Fabián
+                </Button>
               </Link>
-
+              
+              
               <a
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={styles.secondaryHeroButton}
               >
+                <Button variant="secondary" size="md">
                 Contactar soporte
+                </Button>
               </a>
+              
             </div>
           </div>
 
-          <div className={styles.heroVisual} aria-hidden="true">
-            <div className={styles.visualOrbLarge} />
-            <div className={styles.visualOrbSmall} />
-            <div className={styles.visualPanel}>
-              <div className={styles.visualPanelTop}>
-                <span className={styles.visualDot} />
-                <span className={styles.visualDot} />
-                <span className={styles.visualDot} />
-              </div>
-
-              <div className={styles.visualMockGrid}>
-                <div className={styles.mockCardTall} />
-                <div className={styles.mockStack}>
-                  <div className={styles.mockCardWide} />
-                  <div className={styles.mockCardSmall} />
-                  <div className={styles.mockCardSmallAlt} />
-                </div>
-              </div>
-            </div>
-          </div>
+         
         </motion.section>
 
         <section className={styles.section}>

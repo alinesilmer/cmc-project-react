@@ -1,93 +1,159 @@
 @use "@/website/styles/all.scss" as *;
 
-.hero {
+// ── Section wrapper ───────────────────────────────────────────────────────────
+.section {
   width: 100%;
-  min-height: 100vh;
-  background: $white;
-
-  @media (max-width: $breakpoint-tablet) {
-    min-height: 100dvh;
-  }
+  background: linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.12),
+      rgba(0, 0, 0, 0.12)
+    ),
+    $primary-blue;
 }
 
-.wrap {
-  width: 100%;
-  max-width: 100%;
+.container {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  gap: $spacing-2xl;
+  max-width: 1340px;
+  margin: 0 auto;
+  padding: clamp(4rem, 9vw, 7.5rem) clamp(1rem, 3.5vw, 3.5rem);
 }
 
-.heroCard {
-  width: 100%;
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
-  grid-template-areas:
-    "left right"
-    "cardsHeader cardsHeader"
-    "cardsGrid cardsGrid";
-  gap: $spacing-xl;
-
-  padding: 150px 120px;
-  background: $light-blue;
-  overflow: hidden;
-
-  @media (max-width: $breakpoint-desktop) {
-    padding: $spacing-lg;
-    gap: $spacing-lg;
-  }
-
-  @media (max-width: $breakpoint-tablet) {
-    grid-template-columns: 1fr;
-    grid-template-areas:
-      "left"
-      "right"
-      "cardsHeader"
-      "cardsGrid";
-    gap: $spacing-md;
-    padding: $spacing-md;
-  }
+// ── Section heading ───────────────────────────────────────────────────────────
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  max-width: 56ch;
+  text-align: center;
 }
 
-.left {
-  grid-area: left;
-  display: grid;
-  align-content: center;
-  gap: $spacing-md;
-  min-width: 0;
+.eyebrow {
+  margin: 0;
+  font-family: $font-normal;
+  font-size: clamp(0.7rem, 0.85vw, 0.8rem);
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba($primary-blue, 0.55);
 }
 
 .title {
   margin: 0;
   font-family: $font-title;
-  font-weight: 800;
-  color: $primary-blue-dark;
-  line-height: 1.02;
-  letter-spacing: -0.02em;
-  font-size: clamp(2rem, 4.6vw, 3.35rem);
-  max-width: 22ch;
+  font-weight: 700;
+  color: $primary-yellow-light;
+  line-height: 1.06;
+  text-align: start;
+  letter-spacing: 0.02em;
+  font-size: $font-size-title;
+}
 
-  @media (max-width: $breakpoint-tablet) {
-    max-width: 100%;
+
+
+// ── Hero section wrapper ──────────────────────────
+.heroSection {
+  position: relative;
+  width: 100%;
+  min-height: clamp(120px, 16vw, 200px);
+  display: flex;
+  align-items: center;
+}
+
+.heroDeco {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  width: clamp(180px, 22vw, 290px);
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+  object-fit: contain;
+
+  @media (max-width: $breakpoint-desktop) {
+    display: none;
   }
 }
 
-.emphasis {
-  font-family: $font-playfair;
-  font-weight: 600;
-  font-style: italic;
-  color: $primary-blue;
+
+// ── 6 institutional benefit cards ─────────────────────────────────────────────
+.benefitsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: $spacing-sm;
+
+  @media (max-width: $breakpoint-desktop) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: $breakpoint-mobile) {
+    grid-template-columns: 1fr;
+    gap: $spacing-sm;
+  }
 }
 
-.lead {
+.benefitCard {
+  background: $white;
+  border: 1px solid rgba($primary-blue, 0.08);
+  border-radius: $border-radius-sm;
+  padding: $spacing-lg;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  box-shadow: $shadow-sm;
+  transition: transform $transition-fast, box-shadow $transition-fast,
+    border-color $transition-fast;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: $shadow-md;
+    border-color: rgba($primary-blue, 0.18);
+  }
+
+  @media (max-width: $breakpoint-mobile) { padding: $spacing-md; }
+}
+
+.benefitIcon {
+  width: 46px;
+  height: 46px;
+  border-radius: $border-radius-sm;
+  display: grid;
+  place-items: center;
+  background: rgba($primary-blue, 0.06);
+  border: 1px solid rgba($primary-blue, 0.1);
+  flex-shrink: 0;
+
+  svg {
+    width: 20px;
+    height: 20px;
+    color: $primary-blue-dark;
+  }
+}
+
+.benefitTitle {
+  margin: 0;
+  font-family: $font-title;
+  font-weight: 700;
+  color: $primary-blue-dark;
+  font-size: $font-size-card-title;
+  line-height: 1.25;
+}
+
+.benefitDesc {
   margin: 0;
   font-family: $font-normal;
-  font-size: clamp(0.95rem, 1.1vw, 1.05rem);
-  line-height: 1.75;
-  color: rgba($dark-gray, 0.92);
-  max-width: 68ch;
+  color: $font-gray;
+  font-size: $font-size-small;
+  line-height: 1.65;
 }
 
+// ── CTA row ───────────────────────────────────────────────────────────────────
 .ctaRow {
   display: flex;
-  gap: $spacing-sm;
+  justify-content: center;
+  gap: $spacing-lg;
   flex-wrap: wrap;
   align-items: center;
 
@@ -99,66 +165,39 @@
 
 .ctaLink {
   text-decoration: none;
+  display: inline-flex;
+  margin-top: 1rem;
+  
 
   @media (max-width: $breakpoint-mobile) {
     width: 100%;
+
+    :global(button) { width: 100%; }
   }
 }
 
 .buttonIcon {
-  margin-right: 0.5rem;
+  margin-right: 0.4rem;
 }
 
-.right {
-  grid-area: right;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-
-  @media (max-width: $breakpoint-tablet) {
-    justify-content: center;
-  }
+// ── Quick-access section ──────────────────────────────────────────────────────
+.quickHeader {
+  padding-top: $spacing-sm;
+  border-top: 1px solid rgba($primary-blue, 0.1);
 }
 
-.imageFrame {
-  width: 100%;
-  max-width: 520px;
-  aspect-ratio: 16 / 10;
-  border-radius: $border-radius-xl;
-  overflow: hidden;
-  background: $white;
-  border: 1px solid rgba($primary-blue, 0.12);
-  box-shadow: $shadow-lg;
-}
-
-.image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.cardsHeader {
-  grid-area: cardsHeader;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: $spacing-sm;
-  margin-top: $spacing-md;
-}
-
-.cardsTitle {
-   font-family: $font-playfair;
+.quickTitle {
+  margin: 3rem 0 0 0;
+  font-family: $font-title;
   font-weight: 700;
-  color: $primary-blue;
-  text-align: start;
-  font-size: clamp(1.25rem, 2vw, 2rem);
+  color: $primary-yellow-light;
+  font-size: $font-size-subtitle;
 }
 
-.cardsGrid {
-  grid-area: cardsGrid;
+.quickGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: $spacing-md;
+  gap: $spacing-sm;
 
   @media (max-width: $breakpoint-desktop) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -169,17 +208,18 @@
   }
 }
 
-.cardLink {
+.quickCardLink {
   text-decoration: none;
   color: inherit;
   display: block;
+  height: 100%;
 }
 
-.card {
+.quickCard {
   height: 100%;
-  border-radius: $border-radius-lg;
+  border-radius: $border-radius-sm;
   background: $white;
-  border: 1px solid rgba($primary-blue, 0.1);
+  border: 1px solid rgba($primary-blue, 0.09);
   box-shadow: $shadow-md;
   padding: $spacing-lg;
   display: grid;
@@ -188,72 +228,75 @@
     border-color $transition-fast;
 
   &:hover {
-    transform: translateY(-2px);
+    transform: translateY(-3px);
     box-shadow: $shadow-lg;
-    border-color: rgba($primary-blue, 0.18);
+    border-color: rgba($primary-blue, 0.2);
   }
 
-  &:active {
-    transform: translateY(0);
-    box-shadow: $shadow-md;
-  }
+  &:active { transform: translateY(-1px); }
 
-  @media (max-width: $breakpoint-mobile) {
-    padding: $spacing-md;
-  }
+  @media (max-width: $breakpoint-mobile) { padding: $spacing-md; }
 }
 
-.cardTop {
+.quickCardTop {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: $spacing-sm;
 }
 
-.cardIcon {
-  width: 46px;
-  height: 46px;
-  border-radius: 14px;
+.quickCardIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   display: grid;
   place-items: center;
   background: rgba($primary-blue, 0.06);
-  border: 1px solid rgba($primary-blue, 0.12);
+  border: 1px solid rgba($primary-blue, 0.1);
+  flex-shrink: 0;
 
   svg {
-    width: 20px;
-    height: 20px;
-    color: rgba($primary-blue-dark, 0.92);
+    width: 19px;
+    height: 19px;
+    color: $primary-blue-dark;
   }
 }
 
-.cardArrow {
-  opacity: 0.55;
-  color: rgba($primary-blue-dark, 0.9);
+.quickCardArrow {
+  color: rgba($primary-blue, 0.4);
+  transition: transform $transition-fast, color $transition-fast;
+
+  .quickCard:hover & {
+    transform: translateX(3px);
+    color: $primary-blue;
+  }
 }
 
-.cardTitle {
+.quickCardTitle {
   margin: 0;
   font-family: $font-title;
-  font-weight: 800;
+  font-weight: 700;
   color: $primary-blue-dark;
-  font-size: 1.02rem;
-  line-height: 1.25;
+  font-size: $font-size-card-title;
+  line-height: 1.3;
 }
 
-.cardDesc {
+.quickCardDesc {
   margin: 0;
   font-family: $font-normal;
-  color: rgba($gray, 0.95);
+  color: $font-gray;
   font-size: $font-size-small;
   line-height: 1.6;
 }
 
+// ── Reduced motion ────────────────────────────────────────────────────────────
 @media (prefers-reduced-motion: reduce) {
-  .card {
+  .benefitCard,
+  .quickCard {
     transition: none;
+
+    &:hover { transform: none; }
   }
 
-  .card:hover {
-    transform: none;
-  }
+  .quickCardArrow { transition: none; }
 }

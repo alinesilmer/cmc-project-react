@@ -26,7 +26,6 @@ import {
   Menu,
   X,
   Users,
-  NotebookIcon,
   CalendarDays,
   Building2,
   ClipboardList,
@@ -35,6 +34,12 @@ import {
   RotateCcw,
   Wallet,
   Plus,
+  CircleDollarSign,
+  FileBoxIcon,
+  FileText,
+  FileSpreadsheet,
+  PencilRuler,
+  Users2,
 } from "lucide-react";
 
 import styles from "./Sidebar.module.scss";
@@ -108,7 +113,6 @@ const FACTURACION_CHILDREN: NavItem[] = [
   },
 ];
 
-
 const NAV_SECTIONS: NavSection[] = [
   {
     title: "Principal",
@@ -158,19 +162,141 @@ const NAV_SECTIONS: NavSection[] = [
           },
         ],
       },
-      {
-        kind: "group",
-        id: "facturacion",
-        icon: NotebookIcon,
-        label: "Facturación",
-        perms: ["medicos:leer"],
-        children: FACTURACION_CHILDREN,
-      },
+      // {
+      //   kind: "group",
+      //   id: "facturacion",
+      //   icon: NotebookIcon,
+      //   label: "Facturación",
+      //   perms: ["medicos:leer"],
+      //   children: FACTURACION_CHILDREN,
+      // },
     ],
   },
   {
     title: "Gestión",
     items: [
+      //  {
+      //   kind: "group",
+      //   id: "auditoria",
+      //   icon: NotepadTextDashed,
+      //   label: "Auditoria",
+      //   children: [
+      //     {
+      //       kind: "item",
+      //       path: `${base}/users-manager`,
+      //       icon: UserCog,
+      //       label: "Doctor y Nomenclador",
+      //       perms: ["medicos:leer"],
+      //     },
+      //     {
+      //       kind: "item",
+      //       path: `${base}/users`,
+      //       icon: BookUser,
+      //       label: "Especialidad",
+      //       perms: ["medicos:leer"],
+      //     },
+      //      {
+      //       kind: "item",
+      //       path: `${base}/users-manager`,
+      //       icon: UserCog,
+      //       label: "Nomenclador",
+      //       perms: ["medicos:leer"],
+      //     },
+      //      {
+      //       kind: "item",
+      //       path: `${base}/users-manager`,
+      //       icon: UserCog,
+      //       label: "Obra Social",
+      //       perms: ["medicos:leer"],
+      //     },
+      //      {
+      //       kind: "item",
+      //       path: `${base}/users-manager`,
+      //       icon: UserCog,
+      //       label: "Nomenclador y Obra Social",
+      //       perms: ["medicos:leer"],
+      //     },
+      //      {
+      //       kind: "item",
+      //       path: `${base}/users-manager`,
+      //       icon: UserCog,
+      //       label: "Períodos Cerrados",
+      //       perms: ["medicos:leer"],
+      //     },
+      //      {
+      //       kind: "item",
+      //       path: `${base}/users-manager`,
+      //       icon: UserCog,
+      //       label: "Prestaciones Cargadas",
+      //       perms: ["medicos:leer"],
+      //     },
+      //   ],
+      // },
+      {
+        kind: "group",
+        id: "valores",
+        icon: CircleDollarSign,
+        label: "Valores",
+        children: [
+          {
+            kind: "item",
+            path: `${base}/boletin-consulta-comun`,
+            icon: FileBoxIcon,
+            label: "Boletín Mensual",
+            perms: ["medicos:leer"],
+          },
+          //     {
+          //       kind: "item",
+          //       path: `${base}/users`,
+          //       icon: FileStack,
+          //       label: "Boletín Galenos Historial",
+          //       perms: ["medicos:leer"],
+          //     },
+          //      {
+          //       kind: "item",
+          //       path: `${base}/users-manager`,
+          //       icon: Shredder,
+          //       label: "Modificar Valores",
+          //       perms: ["medicos:leer"],
+          //     },
+          //      {
+          //       kind: "item",
+          //       path: `${base}/users-manager`,
+          //       icon: BookMarked,
+          //       label: "Nomeclados Nacional",
+          //       perms: ["medicos:leer"],
+          //     },
+          //      {
+          //       kind: "item",
+          //       path: `${base}/users-manager`,
+          //       icon: CircleDashed,
+          //       label: "Nivel 7",
+          //       perms: ["medicos:leer"],
+          //     },
+          //      {
+          //       kind: "item",
+          //       path: `${base}/users-manager`,
+          //       icon: CircleDotDashedIcon,
+          //       label: "Nivel 10",
+          //       perms: ["medicos:leer"],
+          //     },
+          //      {
+          //       kind: "item",
+          //       path: `${base}/users-manager`,
+          //       icon: FileUpIcon,
+          //       label: "Importar Valores",
+          //       perms: ["medicos:leer"],
+          //     },
+          //     {
+          //       kind: "item",
+          //       path: `${base}/users-manager`,
+          //       icon: PackageSearch,
+          //       label: "Valores Historial",
+          //       perms: ["medicos:leer"],
+          //     },
+        ],
+      },
+
       {
         kind: "group",
         id: "socios",
@@ -179,9 +305,9 @@ const NAV_SECTIONS: NavSection[] = [
         children: [
           {
             kind: "item",
-            path: `${base}/users-manager`,
+            path: `${base}/solicitudes`,
             icon: UserCog,
-            label: "Gestión de Socios",
+            label: "Solicitudes de Registro",
             perms: ["medicos:leer"],
           },
           {
@@ -199,27 +325,34 @@ const NAV_SECTIONS: NavSection[] = [
         icon: HeartHandshakeIcon,
         label: "Padrones",
         children: [
-            {
-        kind: "item",
-        path: `${base}/afiliadospadron`,
-        icon: Newspaper,
-        label: "Padrones",
-        perms: ["medicos:leer"],
-      },
-      {
-        kind: "item",
-        path: `${base}/padronsucio`,
-        icon: Paperclip,
-        label: "Listado de Prestadores",
-        perms: ["medicos:leer"],
-      },
-        {
-        kind: "item",
-        path: `${base}/boletin`,
-        icon: Medal,
-        label: "Ranking O.S.",
-        perms: ["medicos:leer"],
-      },
+          {
+            kind: "item",
+            path: `${base}/afiliadospadron`,
+            icon: Newspaper,
+            label: "Padrones",
+            perms: ["medicos:leer"],
+          },
+          {
+            kind: "item",
+            path: `${base}/boletin`,
+            icon: Medal,
+            label: "Ranking O.S.",
+            perms: ["medicos:leer"],
+          },
+          {
+            kind: "item",
+            path: `${base}/padronsucio`,
+            icon: Paperclip,
+            label: "Listado de Prestadores",
+            perms: ["medicos:leer"],
+          },
+          {
+            kind: "item",
+            path: `${base}/padron-swiss`,
+            icon: Users2,
+            label: "Padrón Swiss Medical",
+            perms: ["medicos:leer"],
+          },
         ],
       },
     ],
@@ -227,7 +360,29 @@ const NAV_SECTIONS: NavSection[] = [
   {
     title: "Herramientas",
     items: [
-       {
+      {
+        kind: "group",
+        id: "otros",
+        icon: PencilRuler,
+        label: "Otros",
+        children: [
+          {
+            kind: "item",
+            path: `${base}/crear-padron`,
+            icon: FileText,
+            label: "Generar Lista Cerrada",
+            perms: ["medicos:leer"],
+          },
+          {
+            kind: "item",
+            path: `${base}/crear-excel`,
+            icon: FileSpreadsheet,
+            label: "Generar Excel Lista",
+            perms: ["medicos:leer"],
+          },
+        ],
+      },
+      {
         kind: "item",
         path: `${base}/admin/permissions`,
         icon: ShieldUser,
@@ -274,8 +429,13 @@ const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
-    getInitialOpenGroups(NAV_SECTIONS, location.pathname)
+    getInitialOpenGroups(NAV_SECTIONS, location.pathname),
   );
+  const [tooltip, setTooltip] = useState<{
+    label: string;
+    top: number;
+    left: number;
+  } | null>(null);
 
   const isAuthenticated = Boolean(user);
 
@@ -284,7 +444,7 @@ const Sidebar = () => {
 
   const footerText = useMemo(
     () => `© ${new Date().getFullYear()} CMC. Todos los derechos reservados.`,
-    []
+    [],
   );
 
   useEffect(() => {
@@ -348,6 +508,15 @@ const Sidebar = () => {
     };
   }, [mobileOpen]);
 
+  // Clear floating tooltip whenever the sidebar expands or mobile closes
+  useEffect(() => {
+    if (!collapsed) setTooltip(null);
+  }, [collapsed]);
+
+  useEffect(() => {
+    if (mobileOpen) setTooltip(null);
+  }, [mobileOpen]);
+
   useEffect(() => {
     if (!mobileOpen) return;
 
@@ -387,7 +556,7 @@ const Sidebar = () => {
         [groupId]: !prev[groupId],
       }));
     },
-    [collapsed]
+    [collapsed],
   );
 
   const wrapWithPermission = useCallback(
@@ -400,7 +569,7 @@ const Sidebar = () => {
         </RequirePermission>
       );
     },
-    []
+    [],
   );
 
   const renderNavItem = useCallback(
@@ -417,7 +586,19 @@ const Sidebar = () => {
         .filter(Boolean)
         .join(" ");
 
-      const tooltip = collapsed ? item.label : undefined;
+      const titleAttr = collapsed ? item.label : undefined;
+
+      const handleTipEnter = collapsed
+        ? (e: React.MouseEvent<HTMLElement>) => {
+            const r = e.currentTarget.getBoundingClientRect();
+            setTooltip({
+              label: item.label,
+              top: r.top + r.height / 2,
+              left: r.right + 8,
+            });
+          }
+        : undefined;
+      const handleTipLeave = collapsed ? () => setTooltip(null) : undefined;
 
       const content = item.external ? (
         <a
@@ -425,9 +606,10 @@ const Sidebar = () => {
           target="_blank"
           rel="noopener noreferrer"
           className={className}
-          title={tooltip}
-          data-tooltip={tooltip}
+          title={titleAttr}
           aria-label={item.label}
+          onMouseEnter={handleTipEnter}
+          onMouseLeave={handleTipLeave}
         >
           <span className={styles.iconWrap}>
             <Icon size={nested ? 16 : 18} />
@@ -439,8 +621,9 @@ const Sidebar = () => {
           to={item.path}
           className={className}
           aria-current={isActive ? "page" : undefined}
-          title={tooltip}
-          data-tooltip={tooltip}
+          title={titleAttr}
+          onMouseEnter={handleTipEnter}
+          onMouseLeave={handleTipLeave}
         >
           <span className={styles.iconWrap}>
             <Icon size={nested ? 16 : 18} />
@@ -452,7 +635,7 @@ const Sidebar = () => {
       const node = <li key={item.path}>{content}</li>;
       return wrapWithPermission(node, item.perms, item.path);
     },
-    [collapsed, location.pathname, wrapWithPermission]
+    [collapsed, location.pathname, wrapWithPermission],
   );
 
   const renderNavEntry = useCallback(
@@ -464,7 +647,21 @@ const Sidebar = () => {
       const GroupIcon = entry.icon;
       const open = Boolean(openGroups[entry.id]);
       const active = isGroupActive(location.pathname, entry);
-      const tooltip = collapsed ? entry.label : undefined;
+      const titleAttrGroup = collapsed ? entry.label : undefined;
+
+      const handleGroupTipEnter = collapsed
+        ? (e: React.MouseEvent<HTMLButtonElement>) => {
+            const r = e.currentTarget.getBoundingClientRect();
+            setTooltip({
+              label: entry.label,
+              top: r.top + r.height / 2,
+              left: r.right + 8,
+            });
+          }
+        : undefined;
+      const handleGroupTipLeave = collapsed
+        ? () => setTooltip(null)
+        : undefined;
 
       const node = (
         <li key={entry.id} className={styles.groupItem}>
@@ -480,8 +677,9 @@ const Sidebar = () => {
             onClick={() => handleToggleGroup(entry.id)}
             aria-expanded={open}
             aria-controls={`sidebar-group-${entry.id}`}
-            title={tooltip}
-            data-tooltip={tooltip}
+            title={titleAttrGroup}
+            onMouseEnter={handleGroupTipEnter}
+            onMouseLeave={handleGroupTipLeave}
           >
             <span className={styles.groupMain}>
               <span className={styles.iconWrap}>
@@ -519,7 +717,7 @@ const Sidebar = () => {
       openGroups,
       renderNavItem,
       wrapWithPermission,
-    ]
+    ],
   );
 
   return (
@@ -554,9 +752,7 @@ const Sidebar = () => {
       >
         <div className={styles.windowBar}>
           <div className={styles.windowDots} aria-hidden="true">
-            <span className={`${styles.dot} ${styles.dotRed}`} />
-            <span className={`${styles.dot} ${styles.dotYellow}`} />
-            <span className={`${styles.dot} ${styles.dotGreen}`} />
+            <img src={Logo} alt="CMC Logo" className={styles.logoImage} />
           </div>
 
           <div className={styles.windowActions}>
@@ -577,19 +773,12 @@ const Sidebar = () => {
               aria-label={collapsed ? "Expandir menú" : "Contraer menú"}
               title={collapsed ? "Expandir menú" : "Contraer menú"}
             >
-              {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+              {collapsed ? (
+                <ChevronRight size={18} />
+              ) : (
+                <ChevronLeft size={18} />
+              )}
             </button>
-          </div>
-        </div>
-
-        <div className={styles.brandCard}>
-          <div className={styles.logoShell}>
-            <img src={Logo} alt="CMC Logo" className={styles.logoImage} />
-          </div>
-
-          <div className={styles.brandText}>
-            <strong className={styles.brandTitle}>Colegio Médico</strong>
-            <span className={styles.brandSubtitle}>Panel de gestión</span>
           </div>
         </div>
 
@@ -625,6 +814,17 @@ const Sidebar = () => {
         <footer className={styles.footer}>
           <p className={styles.footerText}>{footerText}</p>
         </footer>
+
+        {/* Fixed tooltip rendered only in collapsed desktop mode */}
+        {collapsed && tooltip && (
+          <div
+            className={styles.fixedTooltip}
+            style={{ top: tooltip.top, left: tooltip.left }}
+            aria-hidden="true"
+          >
+            {tooltip.label}
+          </div>
+        )}
       </aside>
     </>
   );

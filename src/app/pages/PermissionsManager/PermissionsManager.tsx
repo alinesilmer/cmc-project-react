@@ -10,7 +10,6 @@ import {
   addPermToRole,
   removePermFromRole,
 } from "./api";
-import BackButton from "../../components/atoms/BackButton/BackButton";
 import SearchBar from "../../components/molecules/SearchBar/SearchBar";
 
 // ---------- Mapeo visual de permisos ----------
@@ -119,7 +118,7 @@ const PermissionsManager: React.FC = () => {
   return (
     <RequirePermission scope="rbac:gestionar">
       <div className={s.container}>
-        <BackButton />
+        
         
         <div className={s.header}>
           <h1 className={s.title}>Gestor de Permisos</h1>

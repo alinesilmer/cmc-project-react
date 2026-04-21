@@ -10,13 +10,10 @@
   display: flex;
   flex-direction: column;
   background: $white;
-  border: 1px solid rgba($gray-200, 0.9);
-  border-radius: 28px;
+  border-radius: 8px;
+  border-right: 1px solid rgba($gray-200, 0.9);
   padding: $spacing-3;
   margin: 12px;
-  box-shadow:
-    0 8px 30px rgba(15, 23, 42, 0.06),
-    0 2px 10px rgba(15, 23, 42, 0.04);
   z-index: 40;
   transition:
     width 0.25s ease,
@@ -46,35 +43,7 @@
   padding: 0 $spacing-1;
 }
 
-.windowDots {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
 
-.windowActions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.dotRed {
-  background: $primary-blue;
-}
-
-.dotYellow {
-  background: #f5c542;
-}
-
-.dotGreen {
-  background: black;
-}
 
 .collapseButton,
 .mobileCloseButton {
@@ -84,7 +53,7 @@
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: 14px;
+  border-radius: 8px;
   background: $gray-100;
   color: $gray-700;
   cursor: pointer;
@@ -116,27 +85,14 @@
   gap: $spacing-3;
   min-height: 76px;
   padding: $spacing-3;
-  border-radius: 20px;
-  background: linear-gradient(180deg, rgba($gray-50, 0.95), $white);
-  border: 1px solid rgba($gray-200, 0.8);
+  border-radius: 8px;
   margin-bottom: $spacing-4;
 }
 
-.logoShell {
-  width: 48px;
-  height: 48px;
-  flex-shrink: 0;
-  border-radius: 16px;
-  display: grid;
-  place-items: center;
-  background: $white;
-  border: 1px solid rgba($gray-200, 0.9);
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
-}
 
 .logoImage {
-  width: 30px;
-  height: 30px;
+  width: 60px;
+  height: 60px;
   object-fit: contain;
   border-radius: 10px;
 }
@@ -165,6 +121,7 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden; /* prevent horizontal scrollbar from tooltip overflow */
   padding-right: 2px;
 
   &::-webkit-scrollbar {
@@ -184,12 +141,13 @@
 .navSection {
   display: flex;
   flex-direction: column;
+  margin-top: 1.5rem;
 }
 
 .navSectionTitle {
   margin: 0 0 $spacing-2 0;
   padding: 0 $spacing-2;
-  font-size: 11px;
+  font-size: $font-size-sm;
   font-weight: $font-weight-bold;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -228,6 +186,7 @@
   display: flex;
   align-items: center;
   gap: $spacing-3;
+  font-size: $font-size-sm;
   text-decoration: none;
   color: $gray-600;
   border: none;
@@ -245,7 +204,7 @@
 .groupButton {
   min-height: 50px;
   padding: 0 $spacing-3;
-  border-radius: 16px;
+  border-radius: 8px;
 
   &:hover {
     background: $gray-100;
@@ -312,7 +271,7 @@
 .subNavItem {
   min-height: 42px;
   padding: 0 $spacing-3;
-  border-radius: 14px;
+  border-radius: 8px;
   font-size: $font-size-sm;
 
   &:hover {
@@ -343,7 +302,7 @@
 
 .itemLabel {
   min-width: 0;
-  font-size: $font-size-base;
+  font-size: $font-size-sm;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -388,7 +347,7 @@
   width: 100%;
   min-height: 48px;
   border: none;
-  border-radius: 16px;
+  border-radius: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -437,8 +396,8 @@
 
 /* Collapsed desktop */
 .collapsed {
-  width: 96px;
-  min-width: 96px;
+  width: 100px;
+  min-width: 100px;
   padding: $spacing-3 $spacing-2;
 }
 
@@ -471,7 +430,7 @@
   margin: 0 auto;
   padding: 0;
   justify-content: center;
-  border-radius: 16px;
+  border-radius: 8px;
 }
 
 .collapsed .groupMain {
@@ -499,29 +458,36 @@
   width: 52px;
   min-width: 52px;
   padding: 0;
-  border-radius: 16px;
+  border-radius: 8px;
 }
 
-/* Tooltips when collapsed */
-.collapsed .navItem[data-tooltip]:hover::after,
-.collapsed .navItem[data-tooltip]:focus-visible::after,
-.collapsed .groupButton[data-tooltip]:hover::after,
-.collapsed .groupButton[data-tooltip]:focus-visible::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  left: calc(100% + 10px);
-  top: 50%;
+/* Prevent translateX jitter on hover in collapsed mode */
+.collapsed .navItem:hover,
+.collapsed .groupButton:hover {
+  transform: none;
+}
+
+/* JS-driven tooltip for collapsed sidebar — rendered with position:fixed so it
+   escapes overflow:hidden without causing horizontal scrollbar */
+.fixedTooltip {
+  position: fixed;
   transform: translateY(-50%);
   background: $gray-900;
   color: $white;
-  padding: 8px 10px;
+  padding: 7px 11px;
   border-radius: 10px;
   font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
   pointer-events: none;
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.14);
-  z-index: 30;
+  z-index: 200;
+  animation: tooltipIn 0.12s ease;
+}
+
+@keyframes tooltipIn {
+  from { opacity: 0; transform: translateY(-50%) translateX(-4px); }
+  to   { opacity: 1; transform: translateY(-50%) translateX(0); }
 }
 
 /* Tablet */
@@ -542,7 +508,7 @@
     width: 236px;
     min-width: 236px;
     margin: 10px;
-    border-radius: 24px;
+    border-radius: 8px;
   }
 
   .collapsed {
@@ -572,13 +538,11 @@
     align-items: center;
     justify-content: center;
     border: 1px solid rgba($gray-200, 0.9);
-    border-radius: 16px;
+    border-radius: 8px;
     background: rgba($white, 0.95);
     backdrop-filter: blur(12px);
     color: $gray-900;
-    box-shadow:
-      0 12px 28px rgba(15, 23, 42, 0.14),
-      0 2px 10px rgba(15, 23, 42, 0.08);
+    box-shadow: $shadow-md;
     cursor: pointer;
     z-index: 82;
     transition:
@@ -630,11 +594,9 @@
     height: 100dvh;
     margin: 0;
     padding: $spacing-3;
-    border-radius: 0 26px 26px 0;
+    border-radius: 0 8px 8px 0;
     transform: translateX(-105%);
-    box-shadow:
-      0 20px 45px rgba(15, 23, 42, 0.18),
-      0 6px 18px rgba(15, 23, 42, 0.12);
+    box-shadow: $shadow-md;
     z-index: 81;
     will-change: transform;
   }
@@ -705,13 +667,13 @@
     left: 10px;
     width: 44px;
     height: 44px;
-    border-radius: 14px;
+    border-radius: 8px;
   }
 
   .sidebar {
     width: min(92vw, 320px);
     padding: 10px;
-    border-radius: 0 22px 22px 0;
+    border-radius: 0 8px 8px 0;
   }
 
   .brandCard {
@@ -722,16 +684,16 @@
   .navItem,
   .groupButton {
     min-height: 48px;
-    border-radius: 14px;
+    border-radius: 8px;
   }
 
   .subNavItem {
     min-height: 40px;
-    border-radius: 12px;
+    border-radius: 8px;
   }
 
   .authButton {
     min-height: 46px;
-    border-radius: 14px;
+    border-radius: 8px;
   }
 }

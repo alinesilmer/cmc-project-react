@@ -1,3 +1,9 @@
+/*this page is for the "Padrón Sucio" section, 
+ which allows users to view and download a PDF and Excel file containing 
+ the list of medical providers registered with the Colegio Médico de Corrientes. 
+ The PDF is embedded in an iframe for easy viewing, 
+ and the Excel file can be downloaded with a single click. */
+
 "use client";
 
 import { saveAs } from "file-saver";
@@ -9,13 +15,9 @@ import PadronPdf from "../../assets/prestadores_padron.pdf";
 
 const TITLE = "Prestadores del Colegio Médico de Corrientes";
 
-// ✅ desde /public
 const PadronXlsxUrl = "/prestadores_listado.xlsx";
 
 const PadronSucio = () => {
-  function downloadPdf() {
-    saveAs(PadronPdf as unknown as string, `${TITLE}.pdf`);
-  }
 
   function downloadExcel() {
     saveAs(PadronXlsxUrl, `${TITLE}.xlsx`);
@@ -24,24 +26,17 @@ const PadronSucio = () => {
   return (
     <div className={styles.container}>
       <div className={styles.wrapper}>
-        <div className={styles.header}>
-          <div className={styles.headerContent}>
-            <h1 className={styles.title}>{TITLE}</h1>
-          </div>
-        </div>
+        
 
         <div className={styles.card}>
           <div className={styles.cardContent}>
             <div className={styles.topRow}>
               <div className={styles.actions}>
-                <Button type="button" variant="primary" onClick={downloadPdf}>
-                  <Download size={18} />
-                  <span>Descargar PDF</span>
-                </Button>
+                
 
-                <Button type="button" variant="primary" onClick={downloadExcel}>
-                  <Download size={18} />
-                  <span>Descargar Excel</span>
+                <Button type="button" variant="success" onClick={downloadExcel}>
+                  <Download size={18} className="margin-right: 8px"/>
+                  Descargar Excel
                 </Button>
               </div>
             </div>

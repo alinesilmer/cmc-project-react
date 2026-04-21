@@ -1,5 +1,3 @@
-"use client"
-
 import { useEffect, useRef } from "react"
 import { Link } from "react-router-dom"
 import { X, Calendar, Clock, Users, MapPin, MonitorPlay, BookOpen, DollarSign, ArrowRight, Award } from "lucide-react"
@@ -41,12 +39,24 @@ export default function CourseCapDetail({ open, onClose, curso }: Props) {
 
   if (!open || !curso) return null
 
-  const fFecha = (iso: string) =>
-    new Date(iso).toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" })
-  const fPrecio = (m: number) =>
-    m === 0
-      ? "Gratis"
-      : new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(m)
+  const fFecha = (iso: string) => {
+    try {
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return iso;
+      return d.toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" });
+    } catch {
+      return iso;
+    }
+  };
+  const fPrecio = (m: number) => {
+    if (typeof m !== "number" || isNaN(m)) return "–";
+    if (m === 0) return "Gratis";
+    try {
+      return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(m);
+    } catch {
+      return `$${m}`;
+    }
+  };
 
   return (
     <div className={styles.overlay} role="dialog" aria-modal="true" aria-labelledby="modal-title">

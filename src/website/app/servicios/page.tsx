@@ -1,11 +1,15 @@
-"use client"
-
-import { Users, ShieldCheck, Handshake, Home, Receipt, Gift, Images } from "lucide-react"
+import { useEffect } from "react"
+import { ShieldCheck, Handshake, Home, Receipt, Gift, Images } from "lucide-react"
 import styles from "./servicios.module.scss"
 import ServiceCard from "../../components/UI/ServicesCard/ServicesCard";
 import Hero from "../../components/UI/Hero/Hero";
 
 export default function ServiciosPage() {
+  useEffect(() => {
+    document.title = "Servicios | Colegio Médico de Corrientes";
+    return () => { document.title = "Colegio Médico de Corrientes"; };
+  }, []);
+
   const secciones = [
     { icon: <ShieldCheck size={22} />, title: "Seguro médico", description: "Coberturas y asistencia para profesionales.", href: "/servicios/seguro-medico" },
     { icon: <Handshake size={22} />, title: "Convenios", description: "Obras Sociales con acuerdo vigente.", href: "/convenios" },

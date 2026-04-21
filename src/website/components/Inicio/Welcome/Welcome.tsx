@@ -1,7 +1,14 @@
-"use client";
-
-import { useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import {
+  FiUserCheck,
+  FiShield,
+  FiBookOpen,
+  FiAward,
+  FiHeadphones,
+  FiUsers,
+} from "react-icons/fi";
 import {
   FaUserPlus,
   FaFileInvoiceDollar,
@@ -12,17 +19,50 @@ import {
 } from "react-icons/fa";
 import styles from "./Welcome.module.scss";
 import Button from "../../../components/UI/Button/Button";
+import stethoscopeDeco from "../../../assets/images/stethoscope-deco.png";
 
-const ETICA_PDF = "https://colegiomedicocorrientes.com/CMC092025.pdf";
+const ETICA_PDF = "https://legacy.colegiomedicocorrientes.com/valores_cmc_11_2025.pdf";
 
-type QuickCard = {
-  title: string;
-  description: string;
-  href: string;
-  icon: ReactNode;
-};
+// ── 6 institutional benefit cards ─────────────────────────────────────────────
+type BenefitCard = { icon: ReactNode; title: string; description: string };
 
-const CARDS: QuickCard[] = [
+const BENEFITS: BenefitCard[] = [
+  {
+    icon: <FiUserCheck />,
+    title: "Ejercicio legal",
+    description: "Matrícula e inscripción con pleno respaldo institucional.",
+  },
+  {
+    icon: <FiShield />,
+    title: "Defensa profesional",
+    description: "Representación de los intereses y necesidades de los médicos.",
+  },
+  {
+    icon: <FiBookOpen />,
+    title: "Formación continua",
+    description: "Cursos, jornadas y actualizaciones profesionales permanentes.",
+  },
+  {
+    icon: <FiAward />,
+    title: "Ética y calidad",
+    description: "Compromiso con la buena práctica médica y la excelencia.",
+  },
+  {
+    icon: <FiHeadphones />,
+    title: "Servicios y asesoramiento",
+    description: "Apoyo administrativo e institucional a cada colegiado.",
+  },
+  {
+    icon: <FiUsers />,
+    title: "Comunidad médica",
+    description: "Participación, conexión y pertenencia al Colegio.",
+  },
+];
+
+// ── 4 quick-access cards ─────────────────────────────────────────────────────
+type QuickCard = { title: string; description: string; href: string; icon: ReactNode };
+
+const QUICK_CARDS: QuickCard[] = [
   {
     title: "Recepción y Liquidación de Facturación",
     description: "Ingresá al portal de facturación y liquidación.",
@@ -49,128 +89,137 @@ const CARDS: QuickCard[] = [
   },
 ];
 
+const EASE = [0.22, 1, 0.36, 1] as const;
+
 function isExternal(href: string) {
   return /^https?:\/\//i.test(href);
 }
 
 export default function Welcome() {
-    const [menuOpen, setMenuOpen] = useState(false);
-    const [openDropdown, setOpenDropdown] = useState<
-      null | "nosotros" | "servicios"
-    >(null);
-    const [mobileOpen, setMobileOpen] = useState({
-      nosotros: false,
-      servicios: false,
-    });
-    
-    
-const closeAll = () => {
-    setMenuOpen(false);
-    setOpenDropdown(null);
-    setMobileOpen({ nosotros: false, servicios: false });
-  };
-
   return (
-    <section className={styles.hero}>
-      <div className={styles.wrap}>
-        <div className={styles.heroCard}>
-          <div className={styles.left}>
-            <h1 className={styles.title}>
-              Donde la <span className={styles.emphasis}>comunidad</span> <br />
-              y el <span className={styles.emphasis}>bienestar</span> se unen
-            </h1>
+    <section className={styles.section}>
+      <div className={styles.container}>
 
-            <p className={styles.lead}>
-              Si buscás una forma simple y confiable de gestionar tu práctica,
-              estamos para acompañarte. Unite al Colegio y accedé a servicios,
-              beneficios y soporte que facilitan tu día a día.
-            </p>
+        {/* ── Section heading + decorative image ─────────────────────────── */}
+        <div className={styles.heroSection}>
+          <motion.div
+            className={styles.header}
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-70px" }}
+            transition={{ duration: 0.65, ease: EASE }}
+          >
+            <h2 className={styles.title}>Donde la <i>comunidad</i> y el <i>bienestar</i> se unen</h2>
+          </motion.div>
 
-            <div className={styles.ctaRow}>
-              <Link
-                        to={`https://wa.me/543794252323?text=${encodeURIComponent(
-                          "Hola, quisiera información para asociarme al Colegio Médico de Corrientes, por favor. ¡Gracias!."
-                        )}`}
-                        className={styles.subLink}
-                        onClick={closeAll}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Button variant="primary" size="medium">
-                  <FaUserPlus className={styles.buttonIcon} />
-                  Asociarme
-                </Button>
-                      </Link>
+          <motion.img
+            src={stethoscopeDeco}
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+            className={styles.heroDeco}
+            style={{ y: "-50%" }}
+            initial={{ opacity: 0, x: 24 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-70px" }}
+            transition={{ duration: 0.75, ease: EASE, delay: 0.2 }}
+          />
+        </div>
 
+        {/* ── 6 benefit cards ─────────────────────────────────────────────── */}
+        <div className={styles.benefitsGrid} role="list">
+          {BENEFITS.map((b, i) => (
+            <motion.div
+              key={b.title}
+              className={styles.benefitCard}
+              role="listitem"
+              initial={{ opacity: 0, y: 18 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{ duration: 0.5, ease: EASE, delay: i * 0.07 }}
+            >
+              <div className={styles.benefitIcon} aria-hidden="true">{b.icon}</div>
+              <h3 className={styles.benefitTitle}>{b.title}</h3>
+              <p className={styles.benefitDesc}>{b.description}</p>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* ── CTA row ─────────────────────────────────────────────────────── */}
+        <motion.div
+          className={styles.ctaRow}
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-40px" }}
+          transition={{ duration: 0.55, ease: EASE, delay: 0.15 }}
+        >
+          <Link to="/socios" className={styles.ctaLink}>
+            <Button variant="secondary" size="xlg">
+              <FaUserPlus className={styles.buttonIcon} />
+              Asociarme
+            </Button>
+          </Link>
+          <a href={ETICA_PDF} className={styles.ctaLink} target="_blank" rel="noopener noreferrer">
+            <Button variant="secondary" size="xlg">
+              Ver Boletín Informativo
+            </Button>
+          </a>
+        </motion.div>
+
+        {/* ── Quick-access cards ───────────────────────────────────────────── */}
+        <motion.div
+          className={styles.quickHeader}
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.55, ease: EASE }}
+        >
+          <h3 className={styles.quickTitle}>Accesos rápidos</h3>
+        </motion.div>
+
+        <div className={styles.quickGrid} role="list">
+          {QUICK_CARDS.map((card, i) => {
+            const inner = (
+              <div className={styles.quickCard}>
+                <div className={styles.quickCardTop}>
+                  <div className={styles.quickCardIcon} aria-hidden="true">{card.icon}</div>
+                  <FaArrowRight className={styles.quickCardArrow} aria-hidden="true" />
+                </div>
+                <h4 className={styles.quickCardTitle}>{card.title}</h4>
+                <p className={styles.quickCardDesc}>{card.description}</p>
+              </div>
+            );
+
+            const link = isExternal(card.href) ? (
               <a
-                className={styles.ctaLink}
-                href={ETICA_PDF}
+                href={card.href}
                 target="_blank"
                 rel="noopener noreferrer"
+                className={styles.quickCardLink}
+                role="listitem"
               >
-                <Button variant="default" size="medium">
-                  Ver Boletín Informativo
-                </Button>
+                {inner}
               </a>
-            </div>
-          </div>
+            ) : (
+              <Link to={card.href} className={styles.quickCardLink} role="listitem">
+                {inner}
+              </Link>
+            );
 
-          <div className={styles.right} aria-hidden="true">
-            <div className={styles.imageFrame}>
-              <img
-                src="https://i.pinimg.com/1200x/9e/a1/c9/9ea1c9ea2380bb6da2755458db9021e4.jpg"
-                alt=""
-                loading="lazy"
-                decoding="async"
-                className={styles.image}
-              />
-            </div>
-          </div>
-
-          <div className={styles.cardsHeader}>
-            <h2 className={styles.cardsTitle}>Accesos rápidos</h2>
-          </div>
-
-          <div className={styles.cardsGrid} role="list">
-            {CARDS.map((card) => {
-              const content = (
-                <div className={styles.card}>
-                  <div className={styles.cardTop}>
-                    <div className={styles.cardIcon} aria-hidden="true">
-                      {card.icon}
-                    </div>
-                    <FaArrowRight className={styles.cardArrow} aria-hidden="true" />
-                  </div>
-
-                  <h3 className={styles.cardTitle}>{card.title}</h3>
-                  <p className={styles.cardDesc}>{card.description}</p>
-                </div>
-              );
-
-              return isExternal(card.href) ? (
-                <a
-                  key={card.title}
-                  href={card.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={styles.cardLink}
-                  role="listitem"
-                >
-                  {content}
-                </a>
-              ) : (
-                <Link
-                  key={card.title}
-                  to={card.href}
-                  className={styles.cardLink}
-                  role="listitem"
-                >
-                  {content}
-                </Link>
-              );
-            })}
-          </div>
+            return (
+              <motion.div
+                key={card.title}
+                initial={{ opacity: 0, y: 18 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-40px" }}
+                transition={{ duration: 0.5, ease: EASE, delay: i * 0.07 }}
+              >
+                {link}
+              </motion.div>
+            );
+          })}
         </div>
+
       </div>
     </section>
   );

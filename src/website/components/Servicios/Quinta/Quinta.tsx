@@ -1,10 +1,11 @@
-"use client"
-
 import React from "react"
+import { motion } from "framer-motion"
 import { FaDownload } from "react-icons/fa"
-import { Calendar, Info, Phone } from "lucide-react"
+import { Info, Phone } from "lucide-react"
 import styles from "./Quinta.module.scss"
 import Button from "../../UI/Button/Button"
+
+const EASE = [0.22, 1, 0.36, 1] as const
 
 type Props = {
   titulo?: string
@@ -25,29 +26,39 @@ export default function Quinta({
 }: Props) {
   return (
     <section className={styles.wrapper} aria-label="Quinta del Colegio">
-      <div className={styles.header}>
+      <motion.div
+        className={styles.header}
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: EASE }}
+      >
         <div className={styles.headLeft}>
           <h3 className={styles.titulo}>{titulo}</h3>
           <p className={styles.descripcion}>{descripcion}</p>
           <div className={styles.ctaRow}>
             <a href={pdfUrl} download aria-label="Descargar PDF con requisitos">
-              <Button variant="secondary" size="large">
+              <Button variant="secondary" size="xlg">
                 <FaDownload className={styles.iconInline} />
                 <span>{etiquetaBoton}</span>
               </Button>
             </a>
             <a href={WA_LINK} target="_blank" rel="noopener noreferrer" aria-label="Reservar por WhatsApp">
-              <Button variant="primary" size="large">
+              <Button variant="secondary" size="xlg">
                 <Phone className={styles.iconInline} />
                 <span>Reservar por WhatsApp</span>
               </Button>
             </a>
           </div>
         </div>
-        
-      </div>
 
-      <div className={styles.infoPanel}>
+      </motion.div>
+
+      <motion.div
+        className={styles.infoPanel}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: EASE, delay: 0.18 }}
+      >
         <div className={styles.infoHeader}>
           <div className={styles.infoTitleWrap}>
             <Info size={20} />
@@ -57,8 +68,8 @@ export default function Quinta({
         </div>
 
         <ul className={styles.infoList}>
-          <li>Para usar la pileta e instalaciones, estar al día con la cuota societaria.</li>
-          <li>Realizar el trámite del carnet de socio. Se avisará cuándo podrán acercarse por la sede: Pellegrini 1785.</li>
+          <li>Para usar la pileta e instalaciones, se debe estar al día con la cuota societaria.</li>
+          <li>Realizar el trámite del carnet de socio. Acercarse por la sede: Pellegrini 1785.</li>
           <li>Se avisará también el inicio de la temporada de pileta. Estar atentos a las publicaciones.</li>
           <li>Muchas gracias — Comisión Directiva.</li>
         </ul>
@@ -69,7 +80,7 @@ export default function Quinta({
             <span className={styles.attnText}>Lunes a viernes · 08:00 a 14:00</span>
           </div>
         </div>
-      </div>
+      </motion.div>
     </section>
   )
 }

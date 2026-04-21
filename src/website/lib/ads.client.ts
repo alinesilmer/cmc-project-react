@@ -1,4 +1,4 @@
-import { getJSON, http } from "../../app/lib/http"; // ajusta la ruta a tu helper http
+import { getJSON, http } from "./http";
 
 export type PubAd = {
   id: number;

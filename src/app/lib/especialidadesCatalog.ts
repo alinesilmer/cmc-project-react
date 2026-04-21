@@ -23,3 +23,8 @@ export function getEspecialidadNameById(id: any): string | null {
   if (!key || key === "0") return null;
   return map.get(key) ?? null;
 }
+
+/** Returns all cached options — used to seed local state without re-fetching. */
+export function getEspecialidadesCatalog(): EspecialidadOption[] {
+  return Array.from(map.entries()).map(([value, label]) => ({ value, label }));
+}

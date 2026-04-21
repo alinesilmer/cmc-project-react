@@ -1,5 +1,3 @@
-"use client";
-
 import { useMemo } from "react";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
@@ -11,8 +9,12 @@ type Props = {
 
 export default function NoticiaContent({ contenido, className }: Props) {
   const html = useMemo(() => {
-    const raw = marked.parse(contenido, { gfm: true, breaks: true }) as string;
-    return DOMPurify.sanitize(raw);
+    try {
+      const raw = marked.parse(contenido, { gfm: true, breaks: true }) as string;
+      return DOMPurify.sanitize(raw);
+    } catch {
+      return contenido.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
   }, [contenido]);
 
   return (

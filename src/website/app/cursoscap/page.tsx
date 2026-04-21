@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import NoticiaCard from "../../components/Noticias/NoticiaCard/NoticiaCard";
 import PageHero from "../../components/UI/Hero/Hero";
-import hero from "../../assets/images/heroImg.png";
 import { listCourses } from "../../lib/news.client";
 import type { Noticia } from "../../types";
 import styles from "./cursoscap.module.scss";
@@ -11,6 +10,11 @@ export default function CursosPage() {
   const [items, setItems] = useState<Noticia[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = "Cursos y Capacitaciones | Colegio Médico de Corrientes";
+    return () => { document.title = "Colegio Médico de Corrientes"; };
+  }, []);
 
   useEffect(() => {
     void cargar();
@@ -39,7 +43,7 @@ export default function CursosPage() {
       <PageHero
         title="CURSOS"
         subtitle="Formación y actualización profesional del Colegio Médico de Corrientes"
-        backgroundImage={hero}
+        backgroundImage="https://res.cloudinary.com/dcfkgepmp/image/upload/q_auto/f_auto/v1775665371/heroImg_fus7an.png"
       />
       <main className={styles.noticiasPage}>
         <div className={styles.container}>

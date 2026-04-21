@@ -1,33 +1,200 @@
 @use "@/website/styles/all.scss" as *;
 
-.galeriaWrap {
-  display: flex;
-  flex-direction: column;
-  padding: $spacing-xl $spacing-lg;
+.page {
   background: $white;
   min-height: 100vh;
 }
 
-
-.cta{
-display: flex;
-flex-direction: column;
-align-items: center;
-gap: 3rem;
-justify-content: center;
-margin: 2rem 0;
+// ── CTA band ──────────────────────────────────────────────────────────────────
+.ctaBand {
+  background: $light-blue;
+  border-top: 1px solid rgba($primary-blue, 0.08);
+  padding: clamp(3rem, 7vw, 5.5rem) 0;
 }
 
-.subtitle{
-font-family: $font-playfair;
-color: $primary-blue;
-font-size: $font-size-h4;
-text-align: center;
+.ctaContainer {
+  width: min(1180px, 92%);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: clamp(2.5rem, 5vw, 5rem);
+  align-items: center;
+
+  @media (max-width: $breakpoint-tablet) {
+    grid-template-columns: 1fr;
+    gap: $spacing-xl;
+  }
 }
 
-.otherOption{
+// ── Left column ───────────────────────────────────────────────────────────────
+.ctaLeft {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.ctaEyebrow {
+  margin: 0;
+  font-family: $font-normal;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba($primary-blue, 0.52);
+}
+
+.ctaTitle {
+  margin: 0;
+  font-family: $font-title;
+  font-weight: 800;
+  font-size: clamp(1.25rem, 2vw, 2rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: $primary-blue-dark;
+  max-width: 22ch;
+}
+
+.ctaLead {
+  margin: 0;
+  font-family: $font-normal;
+  font-size: clamp(0.9rem, 1.05vw, 1rem);
+  line-height: 1.78;
+  color: rgba($dark-gray, 0.8);
+  max-width: 52ch;
+}
+
+.ctaBenefits {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.ctaBenefit {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: $font-normal;
+  font-size: 0.9rem;
+  color: rgba($dark-gray, 0.85);
+}
+
+.checkIcon {
+  flex-shrink: 0;
+  width: 17px;
+  height: 17px;
+  color: $primary-blue;
+}
+
+// ── Right column: card ────────────────────────────────────────────────────────
+.ctaRight {
+  display: flex;
+  flex-direction: column;
+}
+
+.ctaCard {
+  background: $white;
+  border: 1px solid rgba($primary-blue, 0.1);
+  border-radius: $border-radius-sm;
+  box-shadow: $shadow-lg;
+  padding: $spacing-xl;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+
+  @media (max-width: $breakpoint-mobile) {
+    padding: $spacing-lg;
+  }
+}
+
+.ctaOption {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-md;
+}
+
+.ctaOptionIcon {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  background: rgba($primary-blue, 0.06);
+  border: 1px solid rgba($primary-blue, 0.1);
+  border-radius: 8px;
+  color: $primary-blue;
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.ctaOptionBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.ctaOptionLabel {
+  margin: 0;
+  font-family: $font-title;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: $primary-blue-dark;
+}
+
+.ctaOptionDesc {
+  margin: 0;
+  font-family: $font-normal;
+  font-size: 0.82rem;
+  color: rgba($gray, 0.8);
+  line-height: 1.5;
+}
+
+.ctaLink {
+  text-decoration: none;
+  display: block;
+}
+
+.ctaEmail {
+  font-family: $font-title;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: $primary-blue;
+  text-decoration: none;
+  word-break: break-all;
+  transition: color $transition-fast;
+
+  &:hover { color: $primary-blue-dark; text-decoration: underline; }
+  &:focus-visible { outline: 2px solid $primary-blue; outline-offset: 2px; border-radius: 2px; }
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  color: rgba($gray, 0.5);
+
+  &::before,
+  &::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: rgba($primary-blue, 0.1);
+  }
+
+  span {
     font-family: $font-normal;
-    color: gray;
-    text-align: center;
-    font-size: $font-size-base;
+    color: rgba($gray, 0.8);
+    font-size: 0.78rem;
+    white-space: nowrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ctaEmail { transition: none; }
 }

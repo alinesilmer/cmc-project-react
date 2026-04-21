@@ -121,7 +121,7 @@
 
 .title {
   font-family: $font-playfair;
-  font-size: $font-size-h2;
+  font-size: clamp(1.25rem, 2vw, 2rem);
   color: $primary-blue;
   letter-spacing: -0.3px;
   font-weight: 700;
@@ -155,7 +155,7 @@
   gap: $spacing-md;
   background: $white;
   border: 1px solid rgba($primary-blue, 0.15);
-  border-radius: $border-radius-md;
+  border-radius: $border-radius-sm;
   box-shadow: $shadow-sm;
   padding: $spacing-md $spacing-lg;
   text-decoration: none;
@@ -329,4 +329,11 @@
     height: 250px;
     filter: blur(60px);
   }
+}
+
+.statusMsg {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #666;
+  font-size: 1rem;
 }

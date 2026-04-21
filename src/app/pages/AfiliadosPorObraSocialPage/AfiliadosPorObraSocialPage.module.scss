@@ -3,10 +3,7 @@
 .container {
   min-height: 100vh;
   padding: $spacing-8 $spacing-6;
-  background:
-    radial-gradient(circle at top right, rgba($primary-blue, 0.08), transparent 24%),
-    radial-gradient(circle at top left, rgba($success-green, 0.05), transparent 22%),
-    linear-gradient(180deg, $white 0%, $gray-50 62%, $gray-100 100%);
+  background-color: $gray-50;
 
   @media (max-width: $breakpoint-lg) {
     padding: $spacing-6 $spacing-5;
@@ -34,14 +31,9 @@
   align-items: center;
   margin-bottom: $spacing-8;
   padding: $spacing-8;
-  border-radius: $border-radius-xl;
+  border-radius: $border-radius-sm;
   border: 1px solid rgba($primary-blue, 0.1);
-  background: linear-gradient(
-    135deg,
-    rgba($secondary-blue, 0.95) 0%,
-    rgba($white, 0.98) 100%
-  );
-  box-shadow: $shadow-lg;
+  box-shadow: $shadow-md;
 
   @media (max-width: $breakpoint-lg) {
     grid-template-columns: 1fr;
@@ -63,7 +55,7 @@
   align-items: center;
   min-height: 28px;
   padding: 0 $spacing-3;
-  border-radius: 999px;
+  border-radius: $border-radius-sm;
   margin-bottom: $spacing-4;
   background: rgba($primary-blue, 0.08);
   color: $primary-blue;
@@ -75,7 +67,7 @@
 
 .title {
   margin: 0 0 $spacing-3 0;
-  font-size: clamp(1.8rem, 2vw, 2.4rem);
+  font-size: $font-size-2xl;
   line-height: 1.08;
   font-weight: $font-weight-bold;
   color: $gray-900;
@@ -92,7 +84,7 @@
 .subtitle {
   margin: 0;
   max-width: 760px;
-  font-size: $font-size-lg;
+  font-size: $font-size-base;
   line-height: 1.7;
   color: $gray-600;
 
@@ -118,7 +110,7 @@
   position: relative;
   overflow: hidden;
   padding: $spacing-5;
-  border-radius: $border-radius-lg;
+  border-radius: $border-radius-sm;
   background: $white;
   border: 1px solid rgba($primary-blue, 0.08);
   box-shadow: $shadow-md;
@@ -151,7 +143,7 @@
   display: block;
   font-size: $font-size-2xl;
   font-weight: $font-weight-bold;
-  color: $gray-900;
+  color: $primary-blue-dark;
   line-height: 1.2;
   word-break: break-word;
 }
@@ -159,8 +151,8 @@
 .card {
   background: $white;
   border: 1px solid rgba($primary-blue, 0.08);
-  border-radius: $border-radius-xl;
-  box-shadow: $shadow-lg;
+  border-radius: $border-radius-sm;
+  box-shadow: $shadow-md;
   overflow: visible;
 }
 
@@ -208,23 +200,6 @@
   line-height: 1.65;
 }
 
-.selectedBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 36px;
-  padding: 0 $spacing-4;
-  border-radius: 999px;
-  background: rgba($primary-blue, 0.08);
-  color: $primary-blue;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
-  white-space: nowrap;
-
-  @media (max-width: $breakpoint-md) {
-    white-space: normal;
-  }
-}
 
 .cardContent {
   padding: $spacing-8;
@@ -265,7 +240,7 @@
   padding: $spacing-4 $spacing-5;
   background: $white;
   border: 1px solid rgba($gray-300, 0.95);
-  border-radius: $border-radius-lg;
+  border-radius: $border-radius-md;
   cursor: pointer;
   transition:
     border-color 0.2s ease,
@@ -489,6 +464,17 @@
   flex-shrink: 0;
 }
 
+.actionsPanel {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  flex-shrink: 0;
+
+  @media (max-width: 980px) {
+    width: 100%;
+  }
+}
+
 .actions {
   display: flex;
   gap: $spacing-3;
@@ -501,6 +487,45 @@
 
   @media (max-width: 480px) {
     flex-direction: column;
+  }
+}
+
+.exportOptions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+  flex-wrap: wrap;
+  padding: $spacing-4 $spacing-1;
+}
+
+.exportOptionsLabel {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: $gray-500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.exportToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-700;
+  cursor: pointer;
+  user-select: none;
+
+  input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    accent-color: $primary-blue;
+    cursor: pointer;
+  }
+
+  &:hover {
+    color: $primary-blue;
   }
 }
 
@@ -740,7 +765,7 @@
 
 .tableWrapper {
   border: 1px solid rgba($gray-200, 0.95);
-  border-radius: $border-radius-lg;
+  border-radius: $border-radius-md;
   overflow: hidden;
   background: $white;
   box-shadow: $shadow-sm;
@@ -773,11 +798,7 @@
   }
 
   thead {
-    background: linear-gradient(
-      135deg,
-      $primary-blue-dark 0%,
-      $primary-blue 100%
-    );
+    background: $primary-blue-dark;
 
     th {
       padding: $spacing-4;
@@ -891,4 +912,77 @@
   .emptyTitle {
     font-size: $font-size-xl;
   }
+}
+
+// ─── Pagination ───────────────────────────────────────────────────────────────
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+  margin-top: $spacing-5;
+  padding: $spacing-3 0;
+  flex-wrap: wrap;
+}
+
+.paginationPages {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.paginationBtn {
+  min-width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 $spacing-2;
+  border: 1px solid rgba($gray-300, 0.95);
+  border-radius: $border-radius-md;
+  background: $white;
+  color: $gray-700;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
+
+  &:hover:not(:disabled):not(.paginationBtnActive) {
+    background: $gray-100;
+    border-color: rgba($primary-blue, 0.3);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.paginationBtnActive {
+  background: $primary-blue;
+  border-color: $primary-blue;
+  color: $white;
+  cursor: default;
+
+  &:hover {
+    background: $primary-blue;
+  }
+}
+
+.paginationEllipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 36px;
+  font-size: $font-size-sm;
+  color: $gray-400;
+  user-select: none;
 }

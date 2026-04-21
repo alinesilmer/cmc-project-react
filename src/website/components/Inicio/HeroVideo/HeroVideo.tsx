@@ -1,7 +1,6 @@
 import type { FC } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { FiAward, FiUsers, FiShield } from "react-icons/fi";
-import Pill from "../../../components/UI/Pill/Pill";
+import { motion } from "framer-motion";
 import Button from "../../../components/UI/Button/Button";
 import styles from "./HeroVideo.module.scss";
 import { useNavigate } from "react-router-dom";
@@ -12,72 +11,50 @@ const IMAGES = [
   "https://i.pinimg.com/736x/fd/d3/d8/fdd3d83d55b928e22d751fbc1edcc012.jpg",
   "https://res.cloudinary.com/dcfkgepmp/image/upload/v1762471702/quintacmc3_s6sffw.jpg",
   "https://i.pinimg.com/736x/01/bf/d8/01bfd827a566e504c3b5a1202f30be4f.jpg",
-];
-
-const FEATURES = [
-  {
-    icon: FiAward,
-    title: "Trayectoria",
-    description: "70+ años acompañando a la comunidad médica.",
-  },
-  {
-    icon: FiUsers,
-    title: "Obras Sociales",
-    description: "Acceso a múltiples convenios y servicios.",
-  },
-  {
-    icon: FiShield,
-    title: "Validación",
-    description: "Ingresá al sistema para validar y gestionar.",
-  },
 ] as const;
+
+const EASE = [0.22, 1, 0.36, 1] as const;
 
 export const HeroVideo: FC = () => {
   const [idx, setIdx] = useState(0);
   const navigate = useNavigate();
-
   const { user, ready } = useAuth();
   const isAuthenticated = ready && !!user;
 
   const handleEntrarValidar = async () => {
-    if (!isAuthenticated) {
-      navigate("/panel/login");
-      return;
-    }
-
+    if (!isAuthenticated) { navigate("/panel/login"); return; }
     const me = user!;
     let next = "/principal.php";
-    const isMedico = me.role?.toLowerCase() === "medico";
-    if (isMedico && me.nro_socio) {
+    if (me.role?.toLowerCase() === "medico" && me.nro_socio) {
       next = `/menu.php?nro_socio1=${encodeURIComponent(String(me.nro_socio))}`;
     }
-
-    const { data } = await http.get("/auth/legacy/sso-link", { params: { next } });
-    window.location.href = data.url;
+    try {
+      const { data } = await http.get("/auth/legacy/sso-link", { params: { next } });
+      window.location.href = data.url;
+    } catch {
+      navigate("/panel/login");
+    }
   };
 
   useEffect(() => {
-    const t = window.setInterval(() => {
-      setIdx((i) => (i + 1) % IMAGES.length);
-    }, 8000);
+    const t = window.setInterval(() => setIdx((i) => (i + 1) % IMAGES.length), 8000);
     return () => window.clearInterval(t);
   }, []);
 
   const activeSrc = useMemo(() => IMAGES[idx], [idx]);
 
   return (
-    <section className={styles.heroSection} aria-label="Hero">
-      <div className={styles.backgroundVideo} aria-hidden="true">
+    <section className={styles.hero} aria-label="Hero principal">
+      <div className={styles.slides} aria-hidden="true">
         {IMAGES.map((src, i) => (
           <img
             key={src}
             src={src}
             alt=""
-            className={`${styles.slide} ${i === idx ? styles.active : ""}`}
+            className={`${styles.slide} ${i === idx ? styles.slideActive : ""}`}
             loading={i === 0 ? "eager" : "lazy"}
             decoding="async"
-            // @ts-expect-error fetchpriority supported in modern browsers
-            fetchpriority={i === 0 ? "high" : "low"}
+            fetchPriority={i === 0 ? "high" : "auto"}
           />
         ))}
       </div>
@@ -85,27 +62,43 @@ export const HeroVideo: FC = () => {
       <div className={styles.overlay} aria-hidden="true" />
 
       <div className={styles.content}>
-        <div className={styles.centerBlock}>
-          <div className={styles.pills}>
-            <Pill icon={<FiAward />} text="70+ años de servicio" />
-            <Pill icon={<FiUsers />} text="70+ obras sociales" />
-          </div>
+        <div className={styles.body}>
 
-          <h1 className={styles.title}>Colegio Médico de Corrientes</h1>
+          <motion.h1
+            className={styles.title}
+            initial={{ opacity: 0, y: 22 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.72, ease: EASE, delay: 0.18 }}
+          >
+            La institución que respalda tu práctica
+          </motion.h1>
 
+          <motion.p
+            className={styles.subtitle}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.65, ease: EASE, delay: 0.3 }}
+          >
+            Representamos y protegemos a los médicos de Corrientes hace más de 70 años.
+            Accedé a convenios, servicios y gestión en un solo lugar.
+          </motion.p>
 
-          <div className={styles.ctaRow}>
-            <Button variant="primary" size="xlg" onClick={handleEntrarValidar}>
+          <motion.div
+            className={styles.cta}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: EASE, delay: 0.44 }}
+          >
+            <Button variant="secondary" size="xlg" onClick={handleEntrarValidar}>
               Entrar a Validar
             </Button>
-          </div>
-
-          <link rel="preload" as="image" href={activeSrc} />
+          </motion.div>
         </div>
 
-      
+
       </div>
 
+      <link rel="preload" as="image" href={activeSrc} />
     </section>
   );
 };

@@ -39,7 +39,7 @@
   width: 100px;
   height: 60px;
   margin-bottom: 1rem;
-  border-radius: 0.75rem;
+  border-radius: $border-radius-sm;
   object-fit: contain;
 }
 
@@ -62,7 +62,7 @@
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  border-radius: 0.75rem;
+  border-radius: $border-radius-sm;
   transition: all 0.3s ease;
   position: relative;
 }
@@ -74,27 +74,27 @@
   bottom: -24px;
   width: 2px;
   height: 24px;
-  background: #e5e7eb;
+  background: $white;
   transition: background 0.3s ease;
 }
 
 .stepItem.active {
-  background: #eff6ff;
+  background: $white;
 }
 
 .stepItem.active .stepIcon {
-  background: #4f7cff;
-  color: #ffffff;
+  background: $primary-blue;
+  color: $white;
   transform: scale(1.1);
 }
 
 .stepItem.active .stepTitle {
-  color: #4f7cff;
+  color: $primary-blue;
   font-weight: 600;
 }
 
 .stepItem.active::after {
-  background: #4f7cff;
+  background: $primary-blue;
 }
 
 .stepItem.completed .stepIcon {
@@ -113,7 +113,7 @@
 .stepIcon {
   width: 44px;
   height: 44px;
-  border-radius: 50%;
+  border-radius: $border-radius-sm;
   background: #e5e7eb;
   display: flex;
   align-items: center;
@@ -158,7 +158,7 @@
   width: 900px;
   margin: 0;
   background: white;
-  border-radius: 1rem;
+  border-radius: $border-radius-sm;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   overflow: hidden;
 }
@@ -215,7 +215,7 @@
 .formGroup textarea {
   padding: 0.75rem 1rem;
   border: 2px solid #e5e7eb;
-  border-radius: 0.5rem;
+  border-radius: $border-radius-sm;
   font-size: 1rem;
   font-family: inherit;
   transition: all 0.3s ease;
@@ -397,32 +397,20 @@
   background: #fff;
   color: #374151;
   padding: .6rem 1rem;
-  border-radius: .6rem;
+  border-radius: $border-radius-sm;
   font-weight: 600;
   transition: .2s ease;
+  cursor: pointer;
+  font-size: 0.875rem;
 }
-.backBtn:hover { background: #f9fafb; transform: translateY(-1px); }
+.backBtn:hover { background: #f9fafb; transform: translateY(-1px); border-color: #9ca3af; }
 .backBtn:active { transform: translateY(0); }
 
-.adherenteLink {
-  appearance: none;
-  border: none;
-  background: #1d4ed8;
-  color: #fff;
-  padding: .6rem 1rem;
-  border-radius: .6rem;
-  font-weight: 700;
-  transition: .2s ease;
-  white-space: nowrap;
-}
-.adherenteLink:hover { background: #153eab; transform: translateY(-1px); }
-.adherenteLink:active { transform: translateY(0); }
 
 .nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #f9fafb;
   border-top: 1px solid #e5e7eb;
   padding: 1rem 1.5rem;
   border-radius: 0 0 1rem 1rem;
@@ -436,6 +424,9 @@
   border-radius: .6rem;
   font-weight: 700;
   transition: .2s ease;
+  cursor: pointer;
+  font-size: 0.9rem;
+  min-width: 120px;
 }
 
 .prev {
@@ -474,7 +465,7 @@
   width: 100%;
   max-width: 520px;
   background: #fff;
-  border-radius: 1rem;
+  border-radius: $border-radius-sm;
   box-shadow: 0 25px 50px -12px rgba(0,0,0,.25);
   padding: 1.25rem 1.25rem 1rem;
   text-align: center;
@@ -517,7 +508,7 @@
   appearance: none;
   border: none;
   padding: .75rem 1rem;
-  border-radius: .65rem;
+  border-radius: $border-radius-sm;
   font-weight: 700;
   transition: .2s ease;
 }
@@ -545,7 +536,7 @@
 .submitButton {
   padding: 0.75rem 1.5rem;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: $border-radius-sm;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -630,7 +621,7 @@
 
 .infoBox {
   padding: 1.5rem;
-  border-radius: 0.75rem;
+  border-radius: $border-radius-sm;
   margin-top: 2rem;
 }
 

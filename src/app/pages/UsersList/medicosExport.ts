@@ -1,6 +1,8 @@
 // src/app/pages/UsersList/medicosExport.ts
 // Helpers + mapping for Medicos export (/api/medicos/all)
 import { getEspecialidadNameById } from "../../lib/especialidadesCatalog";
+import type { FilterSelection } from "../../types/filters";
+export type { FilterSelection };
 
 export type ExportColumnKey =
   | "id"
@@ -29,42 +31,6 @@ export type ExportColumnKey =
   | "vencimiento_anssal"
   | "vencimiento_cobertura";
 
-export type FilterSelection = {
-  columns: string[];
-  otros: {
-    sexo?: string | null;
-    estado?: string | null;
-    adherente?: string | null;
-    provincia?: string | null;
-    categoria?: string | null;
-    especialidad?: string | null; // "id:123" or text
-    condicionImpositiva?: string | null;
-
-    fechaIngresoDesde?: string | null; // YYYY-MM-DD
-    fechaIngresoHasta?: string | null; // YYYY-MM-DD
-
-    tieneMalapraxis?: string | null; // "" | "true" | "false"
-  };
-  vencimientos: {
-    dias: number; // 0..N
-    fechaDesde?: string | null; // YYYY-MM-DD
-    fechaHasta?: string | null; // YYYY-MM-DD
-
-    malapraxisVencida?: boolean;
-    malapraxisPorVencer?: boolean;
-
-    anssalVencido?: boolean;
-    anssalPorVencer?: boolean;
-
-    coberturaVencida?: boolean;
-    coberturaPorVencer?: boolean;
-  };
-  faltantes: {
-    enabled: boolean;
-    field: any;
-    mode: "missing" | "present";
-  };
-};
 
 export type MedicoRow = Record<string, unknown>;
 

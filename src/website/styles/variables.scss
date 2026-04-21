@@ -12,6 +12,7 @@ $accent-blue: #5a79e1;
 $light-blue: #e8f0ff;
 $primary-yellow: #f7e9aa;
 $primary-yellow-light: #f4e5a8;
+$primary-yellow-dark: rgb(176, 156, 64);
 $primary-green: #32a374;
 $primary-green-dark: #38906c;
 $light-green: #9ac9b6;
@@ -36,6 +37,7 @@ $service-teal: #4db6ac;
 // Colores neutros
 $white: #ffffff;
 $light-gray: rgb(194, 194, 194);
+$font-gray: rgb(134, 134, 134);
 $gray: #666666;
 $dark-gray: #333333;
 $black: #000000;
@@ -43,11 +45,15 @@ $black: #000000;
 // Tipografía
 $font-size-base: 16px * $ui-scale;
 $font-size-small: 15px * $ui-scale;
-$font-size-large: 18px * $ui-scale;
+$font-size-large: 22px * $ui-scale;
 $font-size-h1: 5.5rem * $ui-scale;
 $font-size-h2: 3rem * $ui-scale;
 $font-size-h3: 2.25rem * $ui-scale;
 $font-size-h4: 1.75rem * $ui-scale;
+$font-size-title: clamp(1.9rem, 3.8vw, 3rem);
+$font-size-subtitle: clamp(1.25rem, 2vw, 2rem);
+$font-size-card-title: clamp(0.9rem, 1.1vw, 1rem);
+$font-size-hero: 3rem;
 
 $font-normal: "Arimo", sans-serif;
 $font-title: "Manrope", sans-serif;
