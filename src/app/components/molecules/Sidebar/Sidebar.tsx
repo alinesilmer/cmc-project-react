@@ -30,6 +30,10 @@ import {
   Building2,
   ClipboardList,
   BadgeCheck,
+  ArrowLeftRight,
+  RotateCcw,
+  Wallet,
+  Plus,
   CircleDollarSign,
   FileBoxIcon,
   FileText,
@@ -111,7 +115,6 @@ const FACTURACION_CHILDREN: NavItem[] = [
   },
 ];
 
-
 const NAV_SECTIONS: NavSection[] = [
   {
     title: "Principal",
@@ -123,6 +126,43 @@ const NAV_SECTIONS: NavSection[] = [
         icon: DollarSign,
         label: "Liquidación",
         perms: ["liquidacion:leer", "liquidacion:ver"],
+      },
+      {
+        kind: "item",
+        path: `${base}/debitos-creditos`,
+        icon: ArrowLeftRight,
+        label: "Débitos y Créditos",
+        perms: ["liquidacion:leer", "liquidacion:ver"],
+      },
+      {
+        kind: "item",
+        path: `${base}/refacturaciones`,
+        icon: RotateCcw,
+        label: "Refacturaciones",
+        perms: ["liquidacion:leer", "liquidacion:ver"],
+      },
+      {
+        kind: "group",
+        id: "deducciones",
+        icon: Wallet,
+        label: "Deducciones",
+        perms: ["liquidacion:leer", "liquidacion:ver"],
+        children: [
+          {
+            kind: "item",
+            path: `${base}/deducciones`,
+            icon: Wallet,
+            label: "Lista",
+            perms: ["liquidacion:leer", "liquidacion:ver"],
+          },
+          {
+            kind: "item",
+            path: `${base}/deducciones/nueva`,
+            icon: Plus,
+            label: "Nueva deducción",
+            perms: ["liquidacion:leer", "liquidacion:ver"],
+          },
+        ],
       },
       // {
       //   kind: "group",
@@ -351,28 +391,29 @@ const NAV_SECTIONS: NavSection[] = [
   {
     title: "Herramientas",
     items: [
-       {
+      {
         kind: "group",
         id: "otros",
         icon: PencilRuler,
         label: "Otros",
         children: [
-       {
+          {
             kind: "item",
             path: `${base}/crear-padron`,
             icon: FileText,
             label: "Generar Lista Cerrada",
             perms: ["medicos:leer"],
           },
-           {
+          {
             kind: "item",
             path: `${base}/crear-excel`,
             icon: FileSpreadsheet,
             label: "Generar Excel Lista",
             perms: ["medicos:leer"],
           },
-        ]},
-       {
+        ],
+      },
+      {
         kind: "item",
         path: `${base}/admin/permissions`,
         icon: ShieldUser,
@@ -387,7 +428,6 @@ const NAV_SECTIONS: NavSection[] = [
         perms: ["medicos:leer"],
         external: true,
       },
-      
     ],
   },
 ];
@@ -420,7 +460,7 @@ const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
-    getInitialOpenGroups(NAV_SECTIONS, location.pathname)
+    getInitialOpenGroups(NAV_SECTIONS, location.pathname),
   );
   const [tooltip, setTooltip] = useState<{
     label: string;
@@ -435,7 +475,7 @@ const Sidebar = () => {
 
   const footerText = useMemo(
     () => `© ${new Date().getFullYear()} CMC. Todos los derechos reservados.`,
-    []
+    [],
   );
 
   useEffect(() => {
@@ -547,7 +587,7 @@ const Sidebar = () => {
         [groupId]: !prev[groupId],
       }));
     },
-    [collapsed]
+    [collapsed],
   );
 
   const wrapWithPermission = useCallback(
@@ -560,7 +600,7 @@ const Sidebar = () => {
         </RequirePermission>
       );
     },
-    []
+    [],
   );
 
   const renderNavItem = useCallback(
@@ -582,7 +622,11 @@ const Sidebar = () => {
       const handleTipEnter = collapsed
         ? (e: React.MouseEvent<HTMLElement>) => {
             const r = e.currentTarget.getBoundingClientRect();
-            setTooltip({ label: item.label, top: r.top + r.height / 2, left: r.right + 8 });
+            setTooltip({
+              label: item.label,
+              top: r.top + r.height / 2,
+              left: r.right + 8,
+            });
           }
         : undefined;
       const handleTipLeave = collapsed ? () => setTooltip(null) : undefined;
@@ -622,7 +666,7 @@ const Sidebar = () => {
       const node = <li key={item.path}>{content}</li>;
       return wrapWithPermission(node, item.perms, item.path);
     },
-    [collapsed, location.pathname, wrapWithPermission]
+    [collapsed, location.pathname, wrapWithPermission],
   );
 
   const renderNavEntry = useCallback(
@@ -639,10 +683,16 @@ const Sidebar = () => {
       const handleGroupTipEnter = collapsed
         ? (e: React.MouseEvent<HTMLButtonElement>) => {
             const r = e.currentTarget.getBoundingClientRect();
-            setTooltip({ label: entry.label, top: r.top + r.height / 2, left: r.right + 8 });
+            setTooltip({
+              label: entry.label,
+              top: r.top + r.height / 2,
+              left: r.right + 8,
+            });
           }
         : undefined;
-      const handleGroupTipLeave = collapsed ? () => setTooltip(null) : undefined;
+      const handleGroupTipLeave = collapsed
+        ? () => setTooltip(null)
+        : undefined;
 
       const node = (
         <li key={entry.id} className={styles.groupItem}>
@@ -698,7 +748,7 @@ const Sidebar = () => {
       openGroups,
       renderNavItem,
       wrapWithPermission,
-    ]
+    ],
   );
 
   return (
@@ -733,7 +783,7 @@ const Sidebar = () => {
       >
         <div className={styles.windowBar}>
           <div className={styles.windowDots} aria-hidden="true">
-             <img src={Logo} alt="CMC Logo" className={styles.logoImage} />
+            <img src={Logo} alt="CMC Logo" className={styles.logoImage} />
           </div>
 
           <div className={styles.windowActions}>
@@ -754,12 +804,14 @@ const Sidebar = () => {
               aria-label={collapsed ? "Expandir menú" : "Contraer menú"}
               title={collapsed ? "Expandir menú" : "Contraer menú"}
             >
-              {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+              {collapsed ? (
+                <ChevronRight size={18} />
+              ) : (
+                <ChevronLeft size={18} />
+              )}
             </button>
           </div>
         </div>
-
-       
 
         <nav className={styles.nav}>
           {NAV_SECTIONS.map((section, sectionIndex) => (

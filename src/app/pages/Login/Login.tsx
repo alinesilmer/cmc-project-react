@@ -5,7 +5,7 @@ import Button from "../../components/atoms/Button/Button";
 import { useAuth } from "../../auth/AuthProvider";
 import { isWebEditor } from "../../auth/roles";
 import { http } from "../../lib/http";
-import pdf from "../../assets/CMC - 03 2026 .pdf";
+import pdf from "../../assets/CMC_03_2026.pdf";
 import Header from "../../../website/components/UI/Header/Header";
 
 function Login() {
@@ -30,7 +30,6 @@ function Login() {
   //       typeof s === "string" &&
   //       /^(medicos?|legacy:(doctor|medico))(:|$)/i.test(s.trim())
   //   );
-
 
   const goMember = () => {
     setIsMember(true);
@@ -72,7 +71,7 @@ function Login() {
 
       if (me.role == "medico") {
         const next = `/menu.php?nro_socio1=${encodeURIComponent(
-          Number(me.nro_socio)
+          Number(me.nro_socio),
         )}`;
         const { data } = await http.get("/auth/legacy/sso-link", {
           params: { next },
@@ -103,7 +102,7 @@ function Login() {
   return (
     <div className={styles.container}>
       <Header />
-      
+
       <section className={styles.card}>
         {isMember && (
           <button
@@ -142,19 +141,16 @@ function Login() {
                 >
                   Iniciar Sesión
                 </Button>
-                <Button
-                className={styles.cta}
-                  variant="third"
-                  size="md">
-            <a
-              href={pdf}
-              download={pdf}
-              target="__blank"
-              className={styles.linkMuted}
-            >
-              Ver Valores Éticos Mínimos
-            </a>
-            </Button>
+                <Button className={styles.cta} variant="third" size="md">
+                  <a
+                    href={pdf}
+                    download={pdf}
+                    target="__blank"
+                    className={styles.linkMuted}
+                  >
+                    Ver Valores Éticos Mínimos
+                  </a>
+                </Button>
                 {/* <Button variant="secondary" size="md" onClick={goRegister}>
                   Quiero ser socio
                 </Button> */}
@@ -220,7 +216,6 @@ function Login() {
                   >
                     {loading ? "Ingresando..." : "Ingresar"}
                   </Button>
-                  
                 </div>
               </form>
             )}
@@ -235,9 +230,7 @@ function Login() {
             )}
           </div>
         </div>
-        <aside className={styles.media} aria-hidden>
-        
-        </aside>
+        <aside className={styles.media} aria-hidden></aside>
       </section>
     </div>
   );

@@ -153,3 +153,8 @@ export const delJSON = async <T = unknown>(url: string): Promise<T> => {
   const { data } = await http.delete(url);
   return data as T;
 };
+
+export const delJSONBody = async <T = unknown>(url: string, body?: any): Promise<T> => {
+  const { data } = await http.delete(url, { data: body ?? {} });
+  return data as T;
+};

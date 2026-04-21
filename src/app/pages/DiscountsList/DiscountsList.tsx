@@ -47,16 +47,19 @@ const DiscountsList: React.FC = () => {
               concept: d.concepto ?? d.nombre ?? d.name ?? "",
               price: Number(d.precio_fijo ?? d.price ?? 0),
               percentage: Number(d.porcentaje ?? d.percentage ?? 0),
-            }))
+            })),
           );
         }
       } catch (e: any) {
-        if (!ignore) setLoadError(e?.message || "No se pudieron cargar los descuentos.");
+        if (!ignore)
+          setLoadError(e?.message || "No se pudieron cargar los descuentos.");
       } finally {
         if (!ignore) setLoadingDiscounts(false);
       }
     })();
-    return () => { ignore = true; };
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const filtered = useMemo(() => {
@@ -64,7 +67,7 @@ const DiscountsList: React.FC = () => {
     if (!q) return discounts;
     return discounts.filter(
       (d) =>
-        d.id.toLowerCase().includes(q) || d.concept.toLowerCase().includes(q)
+        d.id.toLowerCase().includes(q) || d.concept.toLowerCase().includes(q),
     );
   }, [discounts, searchTerm]);
 
@@ -92,7 +95,7 @@ const DiscountsList: React.FC = () => {
     setGenStep("loading");
     try {
       await postJSON(
-        `/api/deducciones/${id}/colegio/bulk_generar_descuento/${confirmTarget.id}`
+        `/api/deducciones/${id}/colegio/bulk_generar_descuento/${confirmTarget.id}`,
       );
       setGenStep("done");
     } catch (e: any) {
@@ -132,8 +135,8 @@ const DiscountsList: React.FC = () => {
     if (!editId) return;
     setDiscounts((prev) =>
       prev.map((d) =>
-        d.id === editId ? { ...d, price: priceVal, percentage: pctVal } : d
-      )
+        d.id === editId ? { ...d, price: priceVal, percentage: pctVal } : d,
+      ),
     );
     closeEdit();
   };
@@ -148,7 +151,9 @@ const DiscountsList: React.FC = () => {
   const goTab = (tab: "obras" | "debitos") => {
     if (!id) return;
     navigate(
-      tab === "obras" ? `/panel/liquidation/${id}` : `/panel/liquidation/${id}/debitos`
+      tab === "obras"
+        ? `/panel/liquidation/${id}`
+        : `/panel/liquidation/${id}/debitos`,
     );
   };
 
@@ -198,96 +203,102 @@ const DiscountsList: React.FC = () => {
                 <div className={styles.emptyState}>Cargando descuentos…</div>
               )}
               {!loadingDiscounts && loadError && (
-                <div className={styles.emptyState} style={{ color: "#b91c1c" }}>{loadError}</div>
+                <div className={styles.emptyState} style={{ color: "#b91c1c" }}>
+                  {loadError}
+                </div>
               )}
 
-              {!loadingDiscounts && !loadError && filtered.map((discount) => (
-                <div key={discount.id} className={styles.tableRow}>
-                  <div>{discount.id}</div>
-                  <div className={styles.conceptCell}>{discount.concept}</div>
-                  <div>{currency(discount.price)}</div>
-                  <div>{discount.percentage}%</div>
-                  <div className={styles.actions}>
-                    <Button
-                      size="sm"
-                      variant="primary"
-                      onClick={() => openConfirm(discount)}
-                    >
-                      Generar
-                    </Button>
-
-                    {confirmOpen && (
-                      <div
-                        className={styles.modalBackdrop}
-                        role="dialog"
-                        aria-modal="true"
+              {!loadingDiscounts &&
+                !loadError &&
+                filtered.map((discount) => (
+                  <div key={discount.id} className={styles.tableRow}>
+                    <div>{discount.id}</div>
+                    <div className={styles.conceptCell}>{discount.concept}</div>
+                    <div>{currency(discount.price)}</div>
+                    <div>{discount.percentage}%</div>
+                    <div className={styles.actions}>
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        onClick={() => openConfirm(discount)}
                       >
-                        <motion.div
-                          className={`${styles.modal} ${styles.modalSmall}`}
-                          initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          transition={{
-                            type: "spring",
-                            stiffness: 260,
-                            damping: 20,
-                          }}
-                        >
-                          <div className={styles.modalHeader}>
-                            <h4 className={styles.modalTitle}>
-                              Confirmar generación
-                            </h4>
-                            <button
-                              className={styles.iconClose}
-                              onClick={closeConfirm}
-                              aria-label="Cerrar"
-                            >
-                              ×
-                            </button>
-                          </div>
-                          <div className={styles.modalBodyCenter}>
-                            <AlertTriangle
-                              className={styles.warningIcon}
-                              size={42}
-                            />
-                            <div className={styles.modalMessageStrong}>
-                              ¿Seguro que querés generar los descuentos?
-                            </div>
-                            <div className={styles.confirmText}>
-                              {confirmTarget?.id} • {confirmTarget?.concept}
-                            </div>
-                          </div>
-                          <div className={styles.modalFooterCenter}>
-                            <button
-                              className={styles.btnGhost}
-                              onClick={closeConfirm}
-                            >
-                              Cancelar
-                            </button>
-                            <button
-                              className={styles.btnPrimary}
-                              onClick={onConfirmGenerate}
-                            >
-                              Sí, generar
-                            </button>
-                          </div>
-                        </motion.div>
-                      </div>
-                    )}
+                        Generar
+                      </Button>
 
-                    <button
-                      className={styles.editButton}
-                      onClick={() => openEdit(discount)}
-                      aria-label="Editar"
-                    >
-                      <Edit size={16} />
-                    </button>
+                      {confirmOpen && (
+                        <div
+                          className={styles.modalBackdrop}
+                          role="dialog"
+                          aria-modal="true"
+                        >
+                          <motion.div
+                            className={`${styles.modal} ${styles.modalSmall}`}
+                            initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            transition={{
+                              type: "spring",
+                              stiffness: 260,
+                              damping: 20,
+                            }}
+                          >
+                            <div className={styles.modalHeader}>
+                              <h4 className={styles.modalTitle}>
+                                Confirmar generación
+                              </h4>
+                              <button
+                                className={styles.iconClose}
+                                onClick={closeConfirm}
+                                aria-label="Cerrar"
+                              >
+                                ×
+                              </button>
+                            </div>
+                            <div className={styles.modalBodyCenter}>
+                              <AlertTriangle
+                                className={styles.warningIcon}
+                                size={42}
+                              />
+                              <div className={styles.modalMessageStrong}>
+                                ¿Seguro que querés generar los descuentos?
+                              </div>
+                              <div className={styles.confirmText}>
+                                {confirmTarget?.id} • {confirmTarget?.concept}
+                              </div>
+                            </div>
+                            <div className={styles.modalFooterCenter}>
+                              <button
+                                className={styles.btnGhost}
+                                onClick={closeConfirm}
+                              >
+                                Cancelar
+                              </button>
+                              <button
+                                className={styles.btnPrimary}
+                                onClick={onConfirmGenerate}
+                              >
+                                Sí, generar
+                              </button>
+                            </div>
+                          </motion.div>
+                        </div>
+                      )}
+
+                      <button
+                        className={styles.editButton}
+                        onClick={() => openEdit(discount)}
+                        aria-label="Editar"
+                      >
+                        <Edit size={16} />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
 
               {!loadingDiscounts && !loadError && filtered.length === 0 && (
                 <div className={styles.emptyState}>
-                  {searchTerm ? `No se encontraron resultados para '${searchTerm}'.` : 'No hay descuentos disponibles.'}
+                  {searchTerm
+                    ? `No se encontraron resultados para '${searchTerm}'.`
+                    : "No hay descuentos disponibles."}
                 </div>
               )}
             </div>
