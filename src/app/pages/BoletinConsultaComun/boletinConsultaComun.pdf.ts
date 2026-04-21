@@ -10,8 +10,6 @@ import {
 import {
   buildPdfFilename,
   fetchAsDataUrl,
-  fitLines,
-  formatApiDate,
   formatGeneratedDate,
   getImageFormat,
   normalizeText,
@@ -272,16 +270,32 @@ export async function generateConsultaComunPdf(items: ConsultaComunItem[]) {
         ? item.observaciones
         : ["Sin observaciones particulares."];
 
+    const lineHeight = 5.4;
+    const blockPad = 4;
+    const safeBottomY = pageHeight - 22;
+    const textWidth = pageWidth - marginX * 2 - 6;
     let obsY = 103;
 
-    observations.slice(0, 4).forEach((obs) => {
-      const lines = fitLines(doc.splitTextToSize(`• ${obs}`, 172) as string[], 3);
+    for (const obs of observations) {
+      const lines = doc.splitTextToSize(`• ${obs}`, textWidth) as string[];
+      const blockHeight = lines.length * lineHeight + blockPad;
+
+      if (obsY + blockHeight > safeBottomY) {
+        doc.addPage();
+        drawHeaderSection(
+          item.nombre,
+          `Consulta Común · Código ${CONSULTA_COMUN_CODE}`,
+          true
+        );
+        obsY = 50;
+      }
+
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9.7);
       doc.setTextColor(...palette.muted);
-      doc.text(lines, marginX + 2, obsY);
-      obsY += Math.max(8, lines.length * 4.8);
-    });
+      doc.text(lines, marginX + 3, obsY);
+      obsY += blockHeight;
+    }
 
     doc.setFont("helvetica", "italic");
     doc.setFontSize(8.6);

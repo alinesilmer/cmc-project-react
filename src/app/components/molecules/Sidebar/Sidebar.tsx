@@ -36,6 +36,8 @@ import {
   FileSpreadsheet,
   PencilRuler,
   Users2,
+  ClipboardPlus,
+  HousePlus,
 } from "lucide-react";
 
 import styles from "./Sidebar.module.scss";
@@ -205,6 +207,13 @@ const NAV_SECTIONS: NavSection[] = [
              label: "Boletín Mensual",
              perms: ["medicos:leer"],
            },
+            {
+        kind: "item",
+        path: `${base}/boletin`,
+        icon: Medal,
+        label: "Ranking O.S.",
+        perms: ["medicos:leer"],
+      },
       //     {
       //       kind: "item",
       //       path: `${base}/users`,
@@ -277,6 +286,35 @@ const NAV_SECTIONS: NavSection[] = [
             label: "Listado de Socios",
             perms: ["medicos:leer"],
           },
+          {
+            kind: "item",
+            path: `${base}/especialidades`,
+            icon: ClipboardPlus,
+            label: "Especialidades",
+            perms: ["medicos:leer"],
+          },
+        ],
+      },
+        {
+        kind: "group",
+        id: "convenios",
+        icon: Building2,
+        label: "Convenios",
+        children: [
+          {
+            kind: "item",
+            path: `${base}/convenios/obras-sociales`,
+            icon: ClipboardList,
+            label: "Listado de Obras Sociales",
+            perms: ["medicos:leer"],
+          },
+          {
+            kind: "item",
+            path: `${base}/convenios/obras-sociales/alta`,
+            icon: HousePlus,
+            label: "Alta Obra Social",
+            perms: ["medicos:leer"],
+          },
         ],
       },
       {
@@ -290,13 +328,6 @@ const NAV_SECTIONS: NavSection[] = [
         path: `${base}/afiliadospadron`,
         icon: Newspaper,
         label: "Padrones",
-        perms: ["medicos:leer"],
-      },
-       {
-        kind: "item",
-        path: `${base}/boletin`,
-        icon: Medal,
-        label: "Ranking O.S.",
         perms: ["medicos:leer"],
       },
       {

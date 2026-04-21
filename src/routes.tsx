@@ -48,6 +48,10 @@ import WebRoutes from "./website/router";
 import GenerarExcel from "./app/pages/CrearPadronExcel/CrearPadronExcel";
 import BoletinConsultaComun from "./app/pages/BoletinConsultaComun/BoletinConsultaComun";
 import PadronSwiss from "./app/pages/PadronSwiss/PadronSwiss";
+import ObrasSocialesListado from "./app/pages/ObrasSociales/ObrasSocialesListado/ObrasSocialesListado";
+import ObrasSocialesForm from "./app/pages/ObrasSociales/ObrasSocialesForm/ObrasSocialesForm";
+import ObrasSocialesDetalle from "./app/pages/ObrasSociales/ObrasSocialesDetalle/ObrasSocialesDetalle";
+import EspecialidadesPage from "./app/pages/Especialidades/EspecialidadesPage";
 
 export default function RootRoutes() {
   return (
@@ -96,6 +100,15 @@ export default function RootRoutes() {
             <Route path="crear-excel" element={<GenerarExcel />} />
              <Route path="padron-swiss" element={<PadronSwiss />} />
             <Route path="boletin-consulta-comun" element={<BoletinConsultaComun />} />
+
+            <Route path="especialidades" element={<EspecialidadesPage />} />
+
+            <Route path="convenios/obras-sociales">
+              <Route index element={<ObrasSocialesListado />} />
+              <Route path="alta" element={<ObrasSocialesForm />} />
+              <Route path=":id" element={<ObrasSocialesDetalle />} />
+              <Route path=":id/editar" element={<ObrasSocialesForm />} />
+            </Route>
 
             <Route path="facturacion">
               <Route index element={<Facturacion />} />

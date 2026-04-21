@@ -273,7 +273,7 @@ export function buildLatestPerOS(rows: ApiBoletinRow[]): ConsultaComunItem[] {
       valor: row.honorarios_a,
       fechaCambio: row.fecha_cambio,
       observaciones: [...(OBSERVATIONS_BY_OS[nro] ?? [])].map((x) =>
-        normalizeText(x, 400)
+        normalizeText(x, 1000)
       ),
     }))
     .sort((a, b) => {

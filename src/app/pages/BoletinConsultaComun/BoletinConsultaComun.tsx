@@ -262,7 +262,7 @@ export default function BoletinConsultaComun() {
               value={newTemplate}
               onChange={(e) => setNewTemplate(e.target.value)}
               onKeyDown={handleNewTemplateKeyDown}
-              maxLength={400}
+              maxLength={1000}
               disabled={isSavingTemplate}
             />
             <button
@@ -364,7 +364,7 @@ export default function BoletinConsultaComun() {
                             className={styles.obsTextarea}
                             value={editDraft}
                             onChange={(e) => setEditDraft(e.target.value)}
-                            maxLength={400}
+                            maxLength={1000}
                             placeholder="Ingrese la observación… (déjela vacía para eliminarla)"
                             // eslint-disable-next-line jsx-a11y/no-autofocus
                             autoFocus
@@ -372,7 +372,7 @@ export default function BoletinConsultaComun() {
 
                           <div className={styles.editRowMeta}>
                             <span className={styles.charCount}>
-                              {editDraft.length}/400 carácteres
+                              {editDraft.length}/1000 carácteres
                             </span>
                             <div className={styles.editRowActions}>
                               <Button

@@ -18,7 +18,8 @@ import {
   type ChatLink,
   type WhatsAppDept,
 } from "./chatbot.config";
-import { sanitizeInput, matchIntent, buildWhatsAppUrl } from "./chatbot.engine";
+import { sanitizeInput, matchIntent, buildWhatsAppUrl, extractObrasSocialesQuery } from "./chatbot.engine";
+import { checkObraSocial, fetchPrecioConsultaInfo, fetchPrecioConsultaPorOS } from "./chatbot.service";
 import styles from "./Chatbot.module.scss";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -70,6 +71,7 @@ export default function Chatbot() {
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     try {
@@ -97,6 +99,9 @@ export default function Chatbot() {
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
+  // Cancel any pending async lookup on unmount
+  useEffect(() => () => { abortRef.current?.abort(); }, []);
+
   // ── Message flow ─────────────────────────────────────────────────────────────
 
   const pushBot = useCallback(
@@ -107,9 +112,15 @@ export default function Chatbot() {
   );
 
   const handleSend = useCallback(
-    (rawText: string) => {
+    async (rawText: string) => {
       const clean = sanitizeInput(rawText);
       if (!clean) return;
+
+      // Cancel any in-flight lookup from a previous message
+      abortRef.current?.abort();
+      const ac = new AbortController();
+      abortRef.current = ac;
+      const { signal } = ac;
 
       setChipsVisible(false);
       setMessages((prev) => [
@@ -119,25 +130,119 @@ export default function Chatbot() {
       setInputValue("");
       setIsTyping(true);
 
-      const timer = setTimeout(() => {
+      // Simulate typing delay (non-blocking; abortable)
+      await new Promise<void>((resolve) => {
+        const t = setTimeout(resolve, TYPING_DELAY_MS);
+        signal.addEventListener("abort", () => { clearTimeout(t); resolve(); }, { once: true });
+      });
+
+      if (signal.aborted) return;
+
+      const intent = matchIntent(clean);
+
+      if (!intent) {
         setIsTyping(false);
-        const intent = matchIntent(clean);
-        if (intent) {
-          pushBot({
-            text: intent.answer,
-            links: intent.links,
-            whatsapp: intent.whatsapp,
-          });
+        pushBot({
+          text: FALLBACK_MESSAGE,
+          links: [{ label: "Contacto", href: "/contacto" }],
+          whatsapp: "auditoria",
+        });
+        return;
+      }
+
+      // ── Async: check if a specific obra social has convenio ────────────────
+      if (intent.asyncAction === "check_obra_social") {
+        const osQuery = extractObrasSocialesQuery(clean);
+
+        if (osQuery) {
+          const result = await checkObraSocial(osQuery, signal);
+          if (signal.aborted) return;
+          setIsTyping(false);
+
+          if (result === null) {
+            // API unreachable — fall back to generic answer
+            pushBot({ text: intent.answer, links: intent.links, whatsapp: intent.whatsapp });
+          } else if (result.found && result.name) {
+            pushBot({
+              text: `Sí, ${result.name} tiene convenio vigente con el Colegio Médico de Corrientes.`,
+              links: [{ label: "Ver Convenios", href: "/convenios" }],
+            });
+          } else {
+            // Cap displayed query to avoid showing excessive user text
+            const display = osQuery.slice(0, 50);
+            pushBot({
+              text: `No encontré "${display}" entre las obras sociales con convenio. Verificá el nombre o consultá el listado completo.`,
+              links: [{ label: "Ver Convenios", href: "/convenios" }],
+            });
+          }
+          return;
+        }
+
+        // No specific name extracted — generic answer
+        setIsTyping(false);
+        pushBot({ text: intent.answer, links: intent.links, whatsapp: intent.whatsapp });
+        return;
+      }
+
+      // ── Async: fetch precio consulta común ────────────────────────────────
+      if (intent.asyncAction === "get_precio_consulta") {
+        const osQuery = extractObrasSocialesQuery(clean);
+
+        if (osQuery) {
+          // User specified an obra social — look up its specific price
+          const result = await fetchPrecioConsultaPorOS(osQuery, signal);
+          if (signal.aborted) return;
+          setIsTyping(false);
+
+          if (result === null) {
+            pushBot({
+              text: "No se pudo obtener la información en este momento. Contactate con Auditoría.",
+              whatsapp: "auditoria",
+            });
+          } else if (!result.osFound) {
+            const display = osQuery.slice(0, 50);
+            pushBot({
+              text: `No encontré "${display}" entre las obras sociales con convenio. Verificá el nombre o consultá el listado.`,
+              links: [{ label: "Ver Convenios", href: "/convenios" }],
+            });
+          } else if (result.valorFound && result.valorFormatted) {
+            const fecha = result.fechaCambio ? ` (actualizado: ${result.fechaCambio})` : "";
+            pushBot({
+              text: `El valor de la consulta para ${result.osName} es ${result.valorFormatted}${fecha}.`,
+            });
+          } else {
+            // OS exists in convenios but no price row available
+            pushBot({
+              text: `${result.osName} está en nuestros convenios, pero el valor de consulta no está disponible en este momento. Consultá con Auditoría.`,
+              whatsapp: "auditoria",
+            });
+          }
+          return;
+        }
+
+        // No OS specified — generic availability check
+        const available = await fetchPrecioConsultaInfo(signal);
+        if (signal.aborted) return;
+        setIsTyping(false);
+
+        if (available) {
+          pushBot({ text: intent.answer, links: intent.links, whatsapp: intent.whatsapp });
         } else {
           pushBot({
-            text: FALLBACK_MESSAGE,
-            links: [{ label: "Contacto", href: "/contacto" }],
+            text: "El valor de la consulta no está disponible en este momento. Contactate con Auditoría.",
             whatsapp: "auditoria",
           });
         }
-      }, TYPING_DELAY_MS);
+        return;
+      }
 
-      return () => clearTimeout(timer);
+      // ── Synchronous intent ────────────────────────────────────────────────
+      setIsTyping(false);
+      pushBot({
+        text: intent.answer,
+        links: intent.links,
+        whatsapp: intent.whatsapp,
+      });
     },
     [pushBot]
   );

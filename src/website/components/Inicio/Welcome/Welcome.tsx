@@ -21,7 +21,7 @@ import styles from "./Welcome.module.scss";
 import Button from "../../../components/UI/Button/Button";
 import stethoscopeDeco from "../../../assets/images/stethoscope-deco.png";
 
-const ETICA_PDF = "https://legacy.colegiomedicocorrientes.com/valores_cmc_11_2025.pdf";
+const ETICA_PDF = "https://legacy.colegiomedicocorrientes.com/CMC_03_2026.pdf";
 
 // ── 6 institutional benefit cards ─────────────────────────────────────────────
 type BenefitCard = { icon: ReactNode; title: string; description: string };

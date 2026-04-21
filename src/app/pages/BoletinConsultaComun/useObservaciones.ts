@@ -83,7 +83,7 @@ export function useObservaciones() {
 
   const saveObservacion = useCallback(
     async (nro: number, texto: string): Promise<void> => {
-      await saveMutation.mutateAsync({ nro, texto: texto.trim().slice(0, 400) });
+      await saveMutation.mutateAsync({ nro, texto: texto.trim().slice(0, 1000) });
     },
     [saveMutation]
   );
@@ -102,7 +102,7 @@ export function useObservaciones() {
 
   const addTemplate = useCallback(
     async (texto: string): Promise<void> => {
-      const trimmed = texto.trim().slice(0, 400);
+      const trimmed = texto.trim().slice(0, 1000);
       if (!trimmed) return;
       await addTemplateMutation.mutateAsync(trimmed);
     },
