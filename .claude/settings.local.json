@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(npx tsc:*)",
+      "Bash(find C:UserslautaDocumentsweb_app_cmccmc-project-reactsrcapppagesPagos -type f -name *.tsx -o -name *.ts -o -name *.jsx -o -name *.js)",
+      "Bash(xargs grep:*)"
     ]
   }
 }

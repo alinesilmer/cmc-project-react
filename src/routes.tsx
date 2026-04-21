@@ -7,10 +7,6 @@ import AppLayout from "./app/components/molecules/AppLayout/AppLayout";
 import DashboardPage from "./app/pages/Dashboard/Dashboard";
 import DoctorsPage from "./app/pages/DoctorsList/DoctorsList";
 import SocialWorksPage from "./app/pages/SocialWorkSection/SocialWorkSection";
-import LiquidationPage from "./app/pages/LiquidationPeriods/LiquidationPeriods";
-import DiscountsPage from "./app/pages/DiscountsList/DiscountsList";
-import LiquidationCyclePage from "./app/pages/LiquidationCycle/LiquidationCycle";
-import InsuranceDetail from "./app/pages/InsuranceDetail/InsuranceDetail";
 import DoctorProfilePage from "./app/pages/DoctorProfilePage/DoctorProfilePage";
 import PadronIoscor from "./app/pages/PadronIoscor/PadronIoscor";
 import ApplicationsList from "./app/components/molecules/ApplicationsList/ApplicationsList";
@@ -33,9 +29,18 @@ import AdminPadronesDetail from "./app/pages/AdminPadronesDetail/AdminPadronesDe
 import Boletin from "./app/pages/Boletin/Boletin";
 import AfiliadosPorObraSocialPage from "./app/pages/AfiliadosPorObraSocialPage/AfiliadosPorObraSocialPage";
 import GenerarBoletin from "./app/pages/GenerarBoletin/GenerarBoletin";
-import LiquidacionMedicoPage from "./app/pages/LiquidacionMedico/LiquidacionMedico";
-import RecibosPage from "./app/pages/Recibos/Recibos";
 import CrearPadron from "./app/pages/CrearPadron/CrearPadron";
+
+// Liquidación (nuevo módulo)
+import PagosList from "./app/pages/Pagos/PagosList/PagosList";
+import PagoDetalle from "./app/pages/Pagos/PagoDetalle/PagoDetalle";
+import FacturaDetalle from "./app/pages/Pagos/FacturaDetalle/FacturaDetalle";
+import LoteDetalle from "./app/pages/Pagos/LoteDetalle/LoteDetalle";
+import LoteDetalleSinFactura from "./app/pages/Pagos/LoteDetalle/LoteDetalleSinFactura";
+import DebitosCreditos from "./app/pages/Pagos/DebitosCreditos/DebitosCreditos";
+import RefacturacionesList from "./app/pages/Pagos/RefacturacionesList/RefacturacionesList";
+import DeduccionesList from "./app/pages/Deducciones/DeduccionesList";
+import NuevaDeduccion from "./app/pages/Deducciones/NuevaDeduccion";
 
 // Facturación
 import Facturacion from "./app/pages/facturacion/Facturacion";
@@ -77,15 +82,20 @@ export default function RootRoutes() {
             <Route path="afiliadospadron" element={<AfiliadosPorObraSocialPage />} />
 
             {/* Liquidación */}
-            <Route path="liquidation" element={<LiquidationPage />} />
-            <Route path="liquidation/:id" element={<LiquidationCyclePage />} />
-            <Route path="liquidation/:id/debitos" element={<DiscountsPage />} />
-            <Route
-              path="liquidation/:id/insurance/:osId/:period/:liquidacionId"
-              element={<InsuranceDetail />}
-            />
-            <Route path="liquidation/:id/medicos" element={<LiquidacionMedicoPage />} />
-            <Route path="liquidation/:id/recibos" element={<RecibosPage />} />
+            <Route path="liquidation" element={<PagosList />} />
+            <Route path="liquidation/:pagoId" element={<PagoDetalle />} />
+            <Route path="liquidation/:pagoId/facturas/:liquidacionId" element={<FacturaDetalle />} />
+
+            {/* Débitos y Créditos (independiente) */}
+            <Route path="debitos-creditos" element={<DebitosCreditos />} />
+            <Route path="debitos-creditos/:loteId" element={<LoteDetalle />} />
+            <Route path="debitos-creditos-sin-factura/:loteId" element={<LoteDetalleSinFactura />} />
+
+            {/* Refacturaciones (independiente) */}
+            <Route path="refacturaciones" element={<RefacturacionesList />} />
+            <Route path="refacturaciones/:loteId" element={<LoteDetalle />} />
+            <Route path="deducciones" element={<DeduccionesList />} />
+            <Route path="deducciones/nueva" element={<NuevaDeduccion />} />
 
             {/* Otros módulos */}
             <Route path="padron-ioscor" element={<PadronIoscor />} />

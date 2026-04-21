@@ -31,6 +31,10 @@ import {
   Building2,
   ClipboardList,
   BadgeCheck,
+  ArrowLeftRight,
+  RotateCcw,
+  Wallet,
+  Plus,
 } from "lucide-react";
 
 import styles from "./Sidebar.module.scss";
@@ -116,6 +120,43 @@ const NAV_SECTIONS: NavSection[] = [
         icon: DollarSign,
         label: "Liquidación",
         perms: ["liquidacion:leer", "liquidacion:ver"],
+      },
+      {
+        kind: "item",
+        path: `${base}/debitos-creditos`,
+        icon: ArrowLeftRight,
+        label: "Débitos y Créditos",
+        perms: ["liquidacion:leer", "liquidacion:ver"],
+      },
+      {
+        kind: "item",
+        path: `${base}/refacturaciones`,
+        icon: RotateCcw,
+        label: "Refacturaciones",
+        perms: ["liquidacion:leer", "liquidacion:ver"],
+      },
+      {
+        kind: "group",
+        id: "deducciones",
+        icon: Wallet,
+        label: "Deducciones",
+        perms: ["liquidacion:leer", "liquidacion:ver"],
+        children: [
+          {
+            kind: "item",
+            path: `${base}/deducciones`,
+            icon: Wallet,
+            label: "Lista",
+            perms: ["liquidacion:leer", "liquidacion:ver"],
+          },
+          {
+            kind: "item",
+            path: `${base}/deducciones/nueva`,
+            icon: Plus,
+            label: "Nueva deducción",
+            perms: ["liquidacion:leer", "liquidacion:ver"],
+          },
+        ],
       },
       {
         kind: "group",

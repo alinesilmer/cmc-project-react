@@ -1,0 +1,423 @@
+@use "@/app/styles/all.scss" as *;
+
+.page {
+  height: 100vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: $spacing-6;
+  gap: 1rem;
+}
+
+.content {
+  width: 100%;
+  flex: 1 1 auto;
+  overflow: auto;
+}
+.content > div {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+  margin-bottom: $spacing-4;
+  flex: 0 0 auto;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: $font-size-2xl;
+}
+
+.errorBanner {
+  margin-bottom: 12px;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  border-radius: $border-radius-md;
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+.layout {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.mainPanel {
+  width: 100%;
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+}
+
+.filtersCard {
+  margin-bottom: 14px;
+  padding: 14px;
+  flex: 0 0 auto;
+}
+
+.filtersRow {
+  display: flex;
+  gap: 10px;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 20%;
+}
+.filterGroup:nth-child(1) {
+  width: 30%;
+}
+.filterGroup:nth-child(4),
+.filterGroup:nth-child(5) {
+  width: 15%;
+}
+
+.filterGroup label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: $gray-600;
+  font-weight: 600;
+}
+
+.filterGroup select {
+  height: 37px;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-md;
+  padding: 0 10px;
+  font-size: 13px;
+  outline: none;
+  background: #fff;
+}
+
+.filterGroup select:focus {
+  border-color: #1b56ff;
+}
+
+.filterGroup :global(.MuiOutlinedInput-root) {
+  height: 37px;
+  padding: 0 32px 0 0 !important;
+  font-size: 13px;
+  border-radius: $border-radius-md;
+}
+
+.filterGroup :global(.MuiAutocomplete-input) {
+  padding: 0 10px !important;
+  height: 100%;
+  box-sizing: border-box;
+  font-size: 13px;
+}
+
+.filterActions {
+  display: flex;
+  gap: 8px;
+}
+
+.tableCard {
+  padding: 0;
+  min-height: 0;
+  overflow: hidden;
+  flex: 1 1 auto;
+  display: flex;
+}
+
+.loadingState {
+  padding: 24px;
+  color: #64748b;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+// Fila en estado de carga (optimistic single-row refresh)
+.rowLoading {
+  pointer-events: none;
+
+  // Todas las celdas: fondo gris claro
+  td {
+    background-color: rgba(226, 232, 240, 0.55) !important;
+    transition: background-color 0.15s;
+  }
+
+  // Celdas de datos (todas menos la última — acciones): efecto borroso
+  td:not(:last-child) > * {
+    filter: blur(1px);
+    opacity: 0.5;
+    transition: filter 0.15s, opacity 0.15s;
+  }
+
+  // No aplicar hover de la tabla mientras carga
+  &:hover td {
+    background-color: rgba(226, 232, 240, 0.55) !important;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.tableWrap {
+  overflow: auto;
+  width: 100%;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  background: linear-gradient(135deg, #1b56ff 0%, #0a3fd4 100%);
+  color: #fff;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eef2ff;
+  font-size: 13px;
+  color: #0f172a;
+  vertical-align: middle;
+}
+
+.table tbody tr:hover {
+  background: #f8faff;
+}
+
+.numCell {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.badgePendiente {
+  background: #e5e7eb;
+  color: #334155;
+}
+
+.badgeVencida {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.badgeEnPago {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.badgeAplicado {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.badgeCancelado {
+  background: #f1f5f9;
+  color: #7f1d1d;
+  text-decoration: line-through;
+}
+
+.rowActions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.rowActions button {
+  border: 1px solid #dbeafe;
+  background: #fff;
+  border-radius: 8px;
+  color: #1e3a8a;
+  font-size: 11px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.rowActions button:hover {
+  background: #eff6ff;
+}
+
+.rowActions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.noActions {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.emptyCell {
+  text-align: center;
+  color: #64748b;
+  padding: 22px !important;
+}
+
+.paginationBar {
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  z-index: 80;
+}
+
+.paginationBar button {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.paginationBar button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.paginationBar span {
+  font-size: 13px;
+  color: #334155;
+}
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modalCard {
+  width: min(100%, 430px);
+  background: #fff;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.modalHeader {
+  padding: 14px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modalHeader h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.modalHeader button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.modalBody {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modalBody p {
+  margin: 0;
+  font-size: 13px;
+  color: #334155;
+}
+
+.modalBody label {
+  font-size: 12px;
+  color: #475569;
+}
+
+.modalBody input {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  height: 36px;
+  padding: 0 10px;
+}
+
+.modalActions {
+  padding: 12px 16px 16px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.errorInline {
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+@media (max-width: 1280px) {
+  .filtersRow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .content {
+    padding: 12px;
+  }
+
+  .filtersRow {
+    grid-template-columns: 1fr;
+  }
+
+  .filterActions {
+    grid-column: auto;
+  }
+
+  .groupRow {
+    grid-template-columns: 1fr 1fr;
+  }
+}

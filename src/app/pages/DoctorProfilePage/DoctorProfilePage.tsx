@@ -23,6 +23,7 @@ import type {
   Especialidad,
   ObraSocial,
   Padron,
+  SocioDescuento,
 } from "./api";
 
 import {
@@ -55,7 +56,15 @@ import {
   fetchPadrones,
   addPadronByOS,
   removePadronByOS,
+  getSociosDescuento,
+  createSocioDescuento,
+  patchSocioDescuento,
+  deleteSocioDescuento,
+  fetchDescuentosConceptos,
+  searchMedicosForPagador,
 } from "./api";
+import AppSearchSelect from "../../components/atoms/AppSearchSelect/AppSearchSelect";
+import type { AppSearchSelectOption } from "../../components/atoms/AppSearchSelect/AppSearchSelect";
 
 import { Modal, Toggle, Notification } from "rsuite";
 import "rsuite/Modal/styles/index.css";
@@ -190,6 +199,40 @@ const fmt = (v: any) =>
 const fmtDate = (s?: string | null) =>
   s ? new Date(s).toLocaleDateString("es-AR") : "—";
 
+// Standalone pagador select with own query/options state
+const PagadorSelect: React.FC<{
+  value: number | null;
+  disabled?: boolean;
+  onChange: (v: number | null) => void;
+}> = ({ value, disabled, onChange }) => {
+  const [query, setQuery] = useState("");
+  const [options, setOptions] = useState<AppSearchSelectOption[]>([]);
+
+  useEffect(() => {
+    let alive = true;
+    searchMedicosForPagador(query).then((medicos) => {
+      if (!alive) return;
+      setOptions(
+        medicos.map((m) => ({
+          id: m.id,
+          label: m.nro_socio != null ? `${m.nro_socio} - ${m.nombre}` : m.nombre,
+        }))
+      );
+    }).catch(() => { if (alive) setOptions([]); });
+    return () => { alive = false; };
+  }, [query]);
+
+  return (
+    <AppSearchSelect
+      options={options}
+      value={value}
+      disabled={disabled}
+      onQueryChange={setQuery}
+      onChange={onChange}
+    />
+  );
+};
+
 type TabKey =
   | "datos"
   | "documentos"
@@ -269,6 +312,19 @@ const DoctorProfilePage: React.FC = () => {
   const [delDocOpen, setDelDocOpen] = useState(false);
   const [docToDelete, setDocToDelete] = useState<DoctorDocument | null>(null);
   const [delDocBusy, setDelDocBusy] = useState(false);
+
+  // ===== Conceptos (SocioDescuento) state =====
+  const [sociosDescuento, setSociosDescuento] = useState<SocioDescuento[]>([]);
+  const [sdLoading, setSdLoading] = useState(false);
+  const [sdError, setSdError] = useState<string | null>(null);
+  const [conceptOptions, setConceptOptions] = useState<AppSearchSelectOption[]>([]);
+  const [patchingId, setPatchingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  // new row state
+  const [newRowOpen, setNewRowOpen] = useState(false);
+  const [newConceptId, setNewConceptId] = useState<number | null>(null);
+  const [newPagadorId, setNewPagadorId] = useState<number | null>(null);
+  const [savingNew, setSavingNew] = useState(false);
 
   async function confirmDeleteEsp() {
     if (!espToDelete || !id) return;
@@ -507,6 +563,86 @@ const DoctorProfilePage: React.FC = () => {
       alive = false;
     };
   }, []);
+
+  // ===== Conceptos useEffects =====
+  useEffect(() => {
+    if (tab !== "conceptos") return;
+    let alive = true;
+    (async () => {
+      setSdLoading(true);
+      setSdError(null);
+      try {
+        const [rows, descuentos] = await Promise.all([
+          getSociosDescuento(medicoId),
+          fetchDescuentosConceptos(),
+        ]);
+        if (!alive) return;
+        setSociosDescuento(rows);
+        setConceptOptions(
+          descuentos.map((d) => ({
+            id: d.id,
+            label: d.nro_colegio ? `${d.nro_colegio} - ${d.nombre}` : d.nombre,
+          }))
+        );
+      } catch (e: any) {
+        if (alive) setSdError(e?.message || "Error al cargar conceptos");
+      } finally {
+        if (alive) setSdLoading(false);
+      }
+    })();
+    return () => { alive = false; };
+  }, [tab, medicoId]);
+
+  async function handlePatchSocioDescuento(
+    id: number,
+    field: "descuento_id" | "pagador_medico_id",
+    value: number | null
+  ) {
+    setPatchingId(id);
+    try {
+      const updated = await patchSocioDescuento(id, { [field]: value });
+      setSociosDescuento((prev) => prev.map((sd) => (sd.id === id ? updated : sd)));
+      notify.success("Concepto actualizado");
+    } catch (e: any) {
+      notify.error(e?.message || "Error al actualizar");
+    } finally {
+      setPatchingId(null);
+    }
+  }
+
+  async function handleDeleteSocioDescuento(id: number) {
+    setDeletingId(id);
+    try {
+      await deleteSocioDescuento(id);
+      setSociosDescuento((prev) => prev.filter((sd) => sd.id !== id));
+      notify.success("Concepto eliminado");
+    } catch (e: any) {
+      notify.error(e?.message || "Error al eliminar");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  async function handleSaveNewSocioDescuento() {
+    if (!newConceptId) return;
+    setSavingNew(true);
+    try {
+      const created = await createSocioDescuento({
+        medico_id: Number(medicoId),
+        descuento_id: newConceptId,
+        pagador_medico_id: newPagadorId ?? null,
+      });
+      setSociosDescuento((prev) => [...prev, created]);
+      setNewRowOpen(false);
+      setNewConceptId(null);
+      setNewPagadorId(null);
+      notify.success("Concepto agregado");
+    } catch (e: any) {
+      notify.error(e?.message || "Error al guardar");
+    } finally {
+      setSavingNew(false);
+    }
+  }
 
   async function reloadDocs() {
     setDocsLoading(true);
@@ -768,7 +904,7 @@ const DoctorProfilePage: React.FC = () => {
 
                   <div className={styles.tabs} id="doctor-tabs-root">
                     {(
-                      ["datos", "documentos", "especialidades", "padrones"] as TabKey[]
+                      ["datos", "documentos", "especialidades", "conceptos", "padrones"] as TabKey[]
                     ).map((k) => (
                       <button
                         key={k}
@@ -1422,6 +1558,135 @@ const DoctorProfilePage: React.FC = () => {
                                       </tr>
                                     );
                                   })
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+
+                    {tab === "conceptos" && (
+                      <motion.div
+                        key="tab-conceptos"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 8 }}
+                        className={styles.tabBody}
+                      >
+                        <div className={styles.conceptsHeader}>
+                          <h5 className={styles.section}>Conceptos asignados</h5>
+                          {!newRowOpen && (
+                            <Button
+                              variant="primary"
+                              onClick={() => {
+                                setNewRowOpen(true);
+                                setNewConceptId(null);
+                                setNewPagadorId(null);
+                              }}
+                            >
+                              <Plus size={16} />
+                              &nbsp;Agregar
+                            </Button>
+                          )}
+                        </div>
+
+                        {sdLoading && <p className={styles.muted}>Cargando conceptos…</p>}
+                        {sdError && <p className={styles.errorInline}>{sdError}</p>}
+
+                        {!sdLoading && !sdError && (
+                          <div className={styles.tableWrap}>
+                            <table className={styles.table}>
+                              <thead>
+                                <tr>
+                                  <th style={{ width: "40%" }}>Concepto</th>
+                                  <th style={{ width: "40%" }}>Pagador</th>
+                                  <th style={{ width: 120 }}>Acciones</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {newRowOpen && (
+                                  <tr>
+                                    <td>
+                                      <AppSearchSelect
+                                        options={conceptOptions}
+                                        value={newConceptId}
+                                        onChange={(v) => setNewConceptId(v as number | null)}
+                                      />
+                                    </td>
+                                    <td>
+                                      <PagadorSelect
+                                        value={newPagadorId}
+                                        onChange={(v) => setNewPagadorId(v)}
+                                      />
+                                    </td>
+                                    <td>
+                                      <div style={{ display: "flex", gap: 6 }}>
+                                        <Button
+                                          variant="primary"
+                                          disabled={!newConceptId || savingNew}
+                                          onClick={handleSaveNewSocioDescuento}
+                                        >
+                                          {savingNew ? "Guardando…" : "Guardar"}
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          onClick={() => {
+                                            setNewRowOpen(false);
+                                            setNewConceptId(null);
+                                            setNewPagadorId(null);
+                                          }}
+                                        >
+                                          Cancelar
+                                        </Button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                )}
+                                {sociosDescuento.length === 0 && !newRowOpen ? (
+                                  <tr>
+                                    <td colSpan={3} className={styles.mutedCenter}>
+                                      Sin conceptos asignados.
+                                    </td>
+                                  </tr>
+                                ) : (
+                                  sociosDescuento.map((sd) => (
+                                    <tr key={sd.id}>
+                                      <td style={{ minWidth: 200 }}>
+                                        <AppSearchSelect
+                                          options={conceptOptions}
+                                          value={sd.descuento_id}
+                                          disabled={patchingId === sd.id}
+                                          onChange={(v) => {
+                                            if (v != null && Number(v) !== sd.descuento_id) {
+                                              handlePatchSocioDescuento(sd.id, "descuento_id", Number(v));
+                                            }
+                                          }}
+                                        />
+                                      </td>
+                                      <td style={{ minWidth: 200 }}>
+                                        <PagadorSelect
+                                          value={sd.pagador_medico_id}
+                                          disabled={patchingId === sd.id}
+                                          onChange={(v) => {
+                                            if (v !== sd.pagador_medico_id) {
+                                              handlePatchSocioDescuento(sd.id, "pagador_medico_id", v);
+                                            }
+                                          }}
+                                        />
+                                      </td>
+                                      <td>
+                                        <button
+                                          className={styles.iconButton}
+                                          title="Eliminar"
+                                          disabled={deletingId === sd.id}
+                                          onClick={() => handleDeleteSocioDescuento(sd.id)}
+                                        >
+                                          <Trash2 size={15} />
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  ))
                                 )}
                               </tbody>
                             </table>

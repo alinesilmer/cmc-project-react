@@ -1,0 +1,550 @@
+@use "@/app/styles/all.scss" as *;
+
+.page {
+  min-height: 100vh;
+}
+
+.content {
+  padding: $spacing-6;
+  max-width: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: $spacing-4;
+  gap: $spacing-4;
+  flex-wrap: wrap;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+}
+
+.headerActions {
+  display: flex;
+  gap: $spacing-3;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.breadcrumb {
+  font-size: $font-size-xs;
+  color: $gray-500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.title {
+  font-size: $font-size-2xl;
+  font-weight: 700;
+  color: $gray-900;
+  margin: 0;
+}
+
+.chips {
+  display: flex;
+  gap: $spacing-2;
+  flex-wrap: wrap;
+  margin-top: $spacing-2;
+  align-items: center;
+}
+
+.chip {
+  padding: 4px 12px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 500;
+  background: $secondary-blue;
+  color: $primary-blue;
+  border: 1px solid $gray-200;
+}
+.chipRed {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+.chipGreen {
+  background: #d1fae5;
+  color: #065f46;
+  border-color: #a7f3d0;
+}
+.chipRefac {
+  background: #f3e8ff;
+  color: #6d28d9;
+  border-color: #ddd6fe;
+}
+
+/* Estado badge */
+.estadoBadge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.estadoA {
+  background: #d1fae5;
+  color: #065f46;
+}
+.estadoC {
+  background: #fef9c3;
+  color: #78350f;
+}
+.estadoL {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.estadoAP {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.errorBanner {
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  padding: 12px 16px;
+  border-radius: $border-radius-md;
+  margin-bottom: $spacing-4;
+  font-size: 13px;
+}
+
+/* Search panel */
+.searchPanel {
+  padding: 0;
+  overflow: hidden;
+  border-radius: $border-radius-lg;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  background: #fff;
+  margin-bottom: $spacing-4;
+  display: flex;
+  flex-direction: column;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid #f0f2f5;
+}
+
+.panelTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: $gray-800;
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.countBadge {
+  background: $secondary-blue;
+  color: $primary-blue;
+  border-radius: 99px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.searchRow {
+  padding: 12px 16px;
+}
+
+.searchInput {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 14px;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-md;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+  &:focus {
+    border-color: #1b56ff;
+    box-shadow: 0 0 0 3px rgba(27, 86, 255, 0.08);
+  }
+  &::placeholder {
+    color: $gray-400;
+  }
+}
+
+.resultsWrap {
+  overflow-x: auto;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid #f0f2f5;
+  border-bottom-color: transparent;
+  // border-radius: 10px;
+  width: 100%;
+}
+
+.clickableRow {
+  cursor: pointer;
+  &:hover {
+    background: #f0f4ff !important;
+  }
+}
+
+.selectedRow {
+  background: #e0eaff !important;
+  td {
+    font-weight: 500;
+  }
+}
+
+/* Inline form */
+.formInline {
+  display: flex;
+  gap: $spacing-4;
+  padding: 12px 16px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  // border: 1px solid #475569;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 130px;
+}
+
+.formGroupGrow {
+  flex: 1;
+  min-width: 200px;
+}
+
+.submitRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: $spacing-3;
+  padding: 10px 16px 14px;
+  // border-top: 1px solid #f0f2f5;
+}
+
+.selectedBadge {
+  font-size: 12px;
+  color: #065f46;
+  background: #d1fae5;
+  border: 1px solid #a7f3d0;
+  padding: 4px 12px;
+  border-radius: 99px;
+  font-weight: 500;
+}
+
+/* Ajustes panel */
+.tableCard {
+  padding: 0;
+  overflow: hidden;
+  border-radius: $border-radius-lg;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  background: #fff;
+}
+
+.panelToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid #f0f2f5;
+}
+
+.exportActions {
+  display: flex;
+  gap: $spacing-2;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    background: linear-gradient(135deg, #1b56ff 0%, #0a3fd4 100%);
+    color: #fff;
+    padding: 11px 12px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 9px 12px;
+    font-size: 12px;
+    border-bottom: 1px solid #f0f2f5;
+    vertical-align: middle;
+  }
+
+  tbody tr:hover {
+    background: #f7f9ff;
+  }
+}
+
+.tableSearch th {
+  background: transparent;
+  color: #1b56ff;
+}
+.numCell {
+  text-align: right;
+}
+
+.emptyCell {
+  padding: 40px;
+  text-align: center;
+  color: $gray-500;
+  font-size: $font-size-sm;
+}
+
+.loadingState {
+  padding: 40px;
+  text-align: center;
+  color: $gray-500;
+}
+
+/* Tipo badge */
+.tipoBadge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.tipoD {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.tipoC {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.negative {
+  color: #b91c1c;
+}
+.positive {
+  color: #065f46;
+}
+
+.origenBadge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.rowActions {
+  display: flex;
+  gap: 6px;
+}
+
+.totalsRow {
+  background: #f8fafc;
+  font-weight: 700;
+  td {
+    font-size: 12px;
+    border-top: 2px solid #e2e8f0;
+  }
+  padding: 10px 20px;
+}
+
+/* Modal */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+}
+
+.modalCard {
+  background: #fff;
+  border-radius: $border-radius-lg;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #f0f2f5;
+
+  h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: $gray-900;
+  }
+}
+
+.modalClose {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: $gray-500;
+  padding: 4px 8px;
+  border-radius: 4px;
+  &:hover {
+    background: #f1f5f9;
+  }
+}
+
+.modalBody {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-size: 13px;
+  color: $gray-700;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.modalActions {
+  padding: 14px 20px 18px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  border-top: 1px solid #f0f2f5;
+}
+
+.errorInline {
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  padding: 10px 14px;
+  border-radius: $border-radius-md;
+  font-size: 13px;
+}
+
+/* Form */
+.formRow {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.formLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: $gray-600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.formInput {
+  padding: 8px 12px;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-md;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+  box-sizing: border-box;
+  &:focus {
+    border-color: #1b56ff;
+  }
+  &:disabled {
+    background: #f8fafc;
+    cursor: not-allowed;
+  }
+}
+
+/* Tipo toggle */
+.tipoToggle {
+  display: flex;
+  gap: 8px;
+}
+
+.tipoBtn {
+  flex: 1;
+  padding: 8px;
+  border: 2px solid $gray-300;
+  border-radius: $border-radius-md;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: $gray-700;
+  transition: all 0.15s;
+  &:hover {
+    border-color: #1b56ff;
+  }
+}
+
+.tipoBtnActive {
+  border-color: #b91c1c;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-weight: 700;
+}
+
+.tipoBtnActiveC {
+  border-color: #065f46;
+  background: #d1fae5;
+  color: #065f46;
+  font-weight: 700;
+}
+
+/* Autocomplete */
+.autocompleteWrap {
+  position: relative;
+}
+
+.autocompleteDropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-md;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.acItem {
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  &:hover {
+    background: #f0f4ff;
+  }
+  & + & {
+    border-top: 1px solid #f0f2f5;
+  }
+}
+
+.medicoSelected {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #065f46;
+  background: #d1fae5;
+  padding: 4px 10px;
+  border-radius: 4px;
+}

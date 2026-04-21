@@ -444,3 +444,79 @@ export const addPadronByOS = (
 
 export const removePadronByOS = (nroSocio: string | number, nroOS: number) =>
   delJSON<void>(`/api/padrones/${nroSocio}/obras-sociales/${nroOS}`);
+
+// #region ===== Socios Descuento (Conceptos) =====
+
+export type SocioDescuento = {
+  id: number;
+  medico_id: number;
+  medico_nombre: string | null;
+  medico_nro_socio: number | null;
+  descuento_id: number;
+  descuento_nombre: string | null;
+  descuento_precio: number | null;
+  descuento_porcentaje: number | null;
+  pagador_medico_id: number | null;
+  pagador_nombre: string | null;
+  pagador_nro_socio: number | null;
+  fecha_alta: string | null;
+  fecha_baja: string | null;
+};
+
+export type DescuentoConcept = {
+  id: number;
+  nombre: string;
+  nro_colegio: string | null;
+};
+
+export type MedicoSearchOption = {
+  id: number;
+  nro_socio: number | null;
+  nombre: string;
+};
+
+export const getSociosDescuento = (medicoId: string | number) =>
+  getJSON<SocioDescuento[]>(`/api/deducciones/socios`, { medico_id: medicoId, activos_only: false });
+
+export const createSocioDescuento = (payload: {
+  medico_id: number;
+  descuento_id: number;
+  pagador_medico_id?: number | null;
+}) => postJSON<SocioDescuento>(`/api/deducciones/socios`, payload);
+
+export const patchSocioDescuento = (
+  id: number,
+  payload: { descuento_id?: number; pagador_medico_id?: number | null }
+) => patchJSON<SocioDescuento>(`/api/deducciones/socios/${id}`, payload);
+
+export const deleteSocioDescuento = (id: number) =>
+  delJSON<void>(`/api/deducciones/socios/${id}`);
+
+export const fetchDescuentosConceptos = async (): Promise<DescuentoConcept[]> => {
+  const raw = await getJSON<any[]>("/api/descuentos");
+  return (raw ?? [])
+    .map((d) => ({
+      id: Number(d?.id ?? d?.desc_id ?? 0),
+      nombre: String(d?.nombre ?? d?.concepto ?? d?.name ?? "").trim(),
+      nro_colegio: d?.nro_colegio != null ? String(d.nro_colegio).trim() : null,
+    }))
+    .filter((d) => d.id > 0 && d.nombre.length > 0)
+    .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+};
+
+export const searchMedicosForPagador = async (query: string): Promise<MedicoSearchOption[]> => {
+  const params: Record<string, unknown> = { limit: 50, skip: 0 };
+  const q = query.trim();
+  if (q.length >= 2) params.q = q;
+  const raw = await getJSON<any[]>("/api/medicos/all", params);
+  return (raw ?? [])
+    .map((m) => ({
+      id: Number(m?.id ?? m?.ID ?? 0),
+      nro_socio: m?.nro_socio != null ? Number(m.nro_socio) : m?.NRO_SOCIO != null ? Number(m.NRO_SOCIO) : null,
+      nombre: String(m?.nombre ?? m?.NOMBRE ?? "").trim(),
+    }))
+    .filter((m) => m.id > 0 && m.nombre.length > 0)
+    .slice(0, 50);
+};
+
+// #endregion

@@ -1,0 +1,111 @@
+@use "@/app/styles/all.scss" as *;
+
+.wrap {
+  position: relative;
+  width: 100%;
+}
+
+.inputWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  &.disabled { opacity: 0.6; pointer-events: none; }
+}
+
+.input {
+  width: 100%;
+  padding: 8px 32px 8px 12px;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-md;
+  font-size: 13px;
+  outline: none;
+  background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  box-sizing: border-box;
+
+  &:focus {
+    border-color: #1b56ff;
+    box-shadow: 0 0 0 3px rgba(27, 86, 255, 0.1);
+  }
+
+  &::placeholder { color: $gray-400; }
+}
+
+.clearBtn {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: $gray-400;
+  font-size: 12px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  line-height: 1;
+  transition: color 0.15s, background 0.15s;
+
+  &:hover {
+    color: $gray-700;
+    background: $gray-100;
+  }
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-md;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 200;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.option {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 9px 12px;
+  cursor: pointer;
+  transition: background 0.1s;
+
+  &:not(:last-child) {
+    border-bottom: 1px solid #f0f2f5;
+  }
+
+  &:hover {
+    background: #f0f4ff;
+  }
+
+  &.optionSelected {
+    background: #ebf0ff;
+  }
+}
+
+.optionCode {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1b56ff;
+  min-width: 36px;
+  flex-shrink: 0;
+}
+
+.optionName {
+  font-size: 13px;
+  color: $gray-800;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.noResults {
+  padding: 14px 12px;
+  text-align: center;
+  font-size: 13px;
+  color: $gray-400;
+}
