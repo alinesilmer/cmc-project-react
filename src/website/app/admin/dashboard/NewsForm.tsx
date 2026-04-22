@@ -32,6 +32,7 @@ export type NewsFormProps = {
     publicada: boolean;
     tipo: TipoPublicacion;
     portadaUrl?: string;
+    badge?: string;
   };
   onSuccess: () => void;
   onCancel: () => void;
@@ -49,6 +50,7 @@ export default function NewsForm({
     contenido: initialValues?.contenido ?? "",
     publicada: initialValues?.publicada ?? true,
     tipo: (initialValues?.tipo ?? "Noticia") as TipoPublicacion,
+    badge: initialValues?.badge ?? "",
   });
 
   const [portadaFile, setPortadaFile] = useState<File | null>(null);
@@ -66,11 +68,14 @@ export default function NewsForm({
   const portadaInputRef = useRef<HTMLInputElement>(null);
   const adjuntosInputRef = useRef<HTMLInputElement>(null);
 
-  // Load existing docs when editing
+  // Load existing docs and badge when editing
   useEffect(() => {
     if (!editingId) return;
     getNewsById(editingId)
-      .then((detail) => setExistingDocs(detail.documentos ?? []))
+      .then((detail) => {
+        setExistingDocs(detail.documentos ?? []);
+        setFormData((prev) => ({ ...prev, badge: detail.badge ?? "" }));
+      })
       .catch((e) => console.error("No se pudo cargar documentos:", e));
   }, [editingId]);
 
@@ -157,6 +162,7 @@ export default function NewsForm({
         contenido: formData.contenido,
         publicada: formData.publicada,
         tipo: formData.tipo,
+        badge: formData.badge,
       };
       if (editingId) {
         await updateNews(editingId, payload, {
@@ -254,6 +260,23 @@ export default function NewsForm({
               </label>
             </div>
           </div>
+        </div>
+
+        {/* ── Badge opcional ── */}
+        <div className={styles.inputGroup}>
+          <label htmlFor="news-badge">Etiqueta (opcional)</label>
+          <input
+            id="news-badge"
+            type="text"
+            list="badge-suggestions"
+            value={formData.badge}
+            onChange={(e) => setFormData((p) => ({ ...p, badge: e.target.value }))}
+            placeholder="Ej: Normas Operativas"
+            maxLength={60}
+          />
+          <datalist id="badge-suggestions">
+            <option value="Normas Operativas" />
+          </datalist>
         </div>
 
         {/* ── Contenido Markdown ── */}

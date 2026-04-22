@@ -113,6 +113,10 @@ export default function NoticiaDetallePage() {
         >
          
 
+          {noticia.badge && (
+            <span className={styles.badge}>{noticia.badge}</span>
+          )}
+
           <h1 className={styles.title}>{noticia.titulo}</h1>
 
           <div className={styles.meta}>

@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ClipboardPlus, Pencil, Plus, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, ClipboardPlus, Pencil, Plus, Search } from "lucide-react";
+
+const PAGE_SIZE = 20;
 import ActionModal from "../../components/molecules/ActionModal/ActionModal";
 import {
   getEspecialidades,
@@ -39,6 +41,7 @@ export default function EspecialidadesPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -90,6 +93,14 @@ export default function EspecialidadesPage() {
         String(it.id_colegio_espe).includes(q)
     );
   }, [items, searchTerm]);
+
+  // ── Pagination ───────────────────────────────────────────────────────────────
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm]);
 
   // ── Open modal helpers ───────────────────────────────────────────────────────
   const openCreate = () => {
@@ -215,16 +226,14 @@ export default function EspecialidadesPage() {
           <table className={s.table}>
             <thead>
               <tr>
-                <th>ID</th>
                 <th>ID Colegio</th>
                 <th>Nombre</th>
                 <th className={s.actionsCol}>Acción</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((item) => (
+              {paginated.map((item) => (
                 <tr key={item.id}>
-                  <td className={s.idCell}>{item.id}</td>
                   <td className={s.idCell}>{item.id_colegio_espe}</td>
                   <td className={s.nameCell}>{item.nombre}</td>
                   <td className={s.actionsCol}>
@@ -247,6 +256,31 @@ export default function EspecialidadesPage() {
         )}
       </div>
 
+      {/* Pagination */}
+      {!loading && totalPages > 1 && (
+        <div className={s.pagination} role="navigation" aria-label="Paginación">
+          <button
+            className={s.pageBtn}
+            onClick={() => setPage((p) => p - 1)}
+            disabled={page === 1}
+            aria-label="Página anterior"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <span className={s.pageInfo}>
+            Página {page} de {totalPages}
+          </span>
+          <button
+            className={s.pageBtn}
+            onClick={() => setPage((p) => p + 1)}
+            disabled={page === totalPages}
+            aria-label="Página siguiente"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      )}
+
       {/* Create / Edit modal */}
       <ActionModal
         open={modalOpen}
@@ -258,21 +292,6 @@ export default function EspecialidadesPage() {
         cancelText="Cancelar"
       >
         <div className={s.modalBody}>
-          {/* ID — read-only, shown in edit mode only */}
-          {editing && (
-            <div className={s.field}>
-              <span className={s.label}>ID</span>
-              <input
-                type="text"
-                className={`${s.input} ${s.inputReadonly}`}
-                value={editing.id}
-                readOnly
-                aria-label="ID (solo lectura)"
-              />
-              <span className={s.fieldHint}>Asignado por el sistema, no editable.</span>
-            </div>
-          )}
-
           {/* ID Colegio */}
           <div className={s.field}>
             <label className={s.label} htmlFor="modal-id-colegio">

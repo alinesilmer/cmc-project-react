@@ -32,6 +32,19 @@
   }
 }
 
+.badge {
+  display: inline-block;
+  background: $primary-blue;
+  color: $white;
+  font-size: $font-size-small;
+  font-weight: 700;
+  padding: 4px 14px;
+  border-radius: 20px;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+  margin-bottom: $spacing-md;
+}
+
 .title {
   color: $primary-blue;
   margin-bottom: $spacing-lg;

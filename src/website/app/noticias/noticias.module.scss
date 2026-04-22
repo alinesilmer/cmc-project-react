@@ -10,6 +10,34 @@
   margin: 0 auto;
 }
 
+.filterRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: $spacing-lg;
+}
+
+.filterBtn {
+  padding: 8px 20px;
+  border-radius: 20px;
+  border: 2px solid $primary-blue;
+  background: transparent;
+  color: $primary-blue;
+  font-size: $font-size-small;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+
+  &:hover {
+    background: $primary-blue;
+    color: $white;
+  }
+}
+
+.filterBtnActive {
+  background: $primary-blue;
+  color: $white;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));

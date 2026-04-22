@@ -55,6 +55,9 @@ export default function NoticiaCard({ noticia, onClick }: NoticiaCardProps) {
     >
       <div className={styles.image}>
         <img src={portada} alt={noticia.titulo} />
+        {noticia.badge && (
+          <span className={styles.badge}>{noticia.badge}</span>
+        )}
       </div>
 
       <div className={styles.content}>

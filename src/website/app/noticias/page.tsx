@@ -10,6 +10,7 @@ import styles from "./noticias.module.scss";
 export default function NoticiasPage() {
   const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [loading, setLoading] = useState(true);
+  const [soloConEtiqueta, setSoloConEtiqueta] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -48,6 +49,17 @@ export default function NoticiasPage() {
       />
       <main className={styles.noticiasPage}>
         <div className={styles.container}>
+          {!loading && noticias.some((n) => n.badge) && (
+            <div className={styles.filterRow}>
+              <button
+                type="button"
+                className={`${styles.filterBtn} ${soloConEtiqueta ? styles.filterBtnActive : ""}`}
+                onClick={() => setSoloConEtiqueta((v) => !v)}
+              >
+                {soloConEtiqueta ? "Mostrar todas" : "Solo con etiqueta"}
+              </button>
+            </div>
+          )}
 
           {loading ? (
             <div className={styles.loading}>Cargando noticias...</div>
@@ -57,13 +69,15 @@ export default function NoticiasPage() {
             </div>
           ) : (
             <div className={styles.grid}>
-              {noticias.map((noticia) => (
-                <NoticiaCard
-                  key={noticia.id}
-                  noticia={noticia}
-                  onClick={() => navigate(`/noticias/${noticia.id}`)}
-                />
-              ))}
+              {noticias
+                .filter((n) => !soloConEtiqueta || Boolean(n.badge))
+                .map((noticia) => (
+                  <NoticiaCard
+                    key={noticia.id}
+                    noticia={noticia}
+                    onClick={() => navigate(`/noticias/${noticia.id}`)}
+                  />
+                ))}
             </div>
           )}
         </div>

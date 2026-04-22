@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
+  Camera,
   ChevronLeft,
   Save,
   Upload,
@@ -254,12 +255,16 @@ function AsociadasSelector({
 // ─── File validation ──────────────────────────────────────────────────────────
 
 function validateDocFile(f: File): string | null {
-  if (
-    !["application/pdf", "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    ].includes(f.type)
-  )
-    return "Solo se aceptan archivos PDF o Word (.pdf, .doc, .docx).";
+  const allowed = [
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+  ];
+  if (!allowed.includes(f.type))
+    return "Solo se aceptan PDF, Word o imágenes (JPG, PNG).";
   if (f.size > 10 * 1024 * 1024)
     return "El archivo no puede superar los 10 MB.";
   return null;
@@ -281,6 +286,7 @@ function DocRow({ obraId, tipo, existing, onUploaded, onQueue, queued }: DocRowP
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
 
   const handleUpload = async () => {
     if (!file || !obraId) return;
@@ -290,6 +296,7 @@ function DocRow({ obraId, tipo, existing, onUploaded, onQueue, queued }: DocRowP
       await uploadDocumento(obraId, tipo, file);
       setFile(null);
       if (inputRef.current) inputRef.current.value = "";
+      if (cameraRef.current) cameraRef.current.value = "";
       onUploaded();
     } catch {
       setUploadError("No se pudo subir el archivo. Intentá de nuevo.");
@@ -333,14 +340,28 @@ function DocRow({ obraId, tipo, existing, onUploaded, onQueue, queued }: DocRowP
       )}
 
       <div className={s.uploadArea}>
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".pdf,.doc,.docx"
-          onChange={handleFileChange}
-          className={s.fileInput}
-          aria-label={`Seleccionar archivo para ${TIPO_DOCUMENTO_LABELS[tipo]}`}
-        />
+        <div className={s.uploadInputRow}>
+          <input
+            ref={inputRef}
+            type="file"
+            accept=".pdf,.doc,.docx"
+            onChange={handleFileChange}
+            className={s.fileInput}
+            aria-label={`Seleccionar archivo para ${TIPO_DOCUMENTO_LABELS[tipo]}`}
+          />
+          <label className={s.cameraBtn}>
+            <Camera size={14} aria-hidden="true" />
+            Tomar foto
+            <input
+              ref={cameraRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              style={{ display: "none" }}
+              onChange={handleFileChange}
+            />
+          </label>
+        </div>
 
         {!obraId && queued && (
           <div className={s.queuedFile}>
@@ -367,7 +388,7 @@ function DocRow({ obraId, tipo, existing, onUploaded, onQueue, queued }: DocRowP
               <button
                 type="button"
                 className={s.contactoRemoveBtn}
-                onClick={() => { setFile(null); if (inputRef.current) inputRef.current.value = ""; }}
+                onClick={() => { setFile(null); if (inputRef.current) inputRef.current.value = ""; if (cameraRef.current) cameraRef.current.value = ""; }}
                 aria-label="Quitar archivo"
               >
                 <X size={14} />
@@ -550,13 +571,26 @@ function OtrosDocList({ obraId, existingDocs, onReload, onQueueChange }: OtrosDo
           )}
 
           <div className={s.uploadArea}>
-            <input
-              type="file"
-              accept=".pdf,.doc,.docx"
-              className={s.fileInput}
-              onChange={(e) => handleFileChange(entry.tempId, e)}
-              aria-label={`Seleccionar archivo para ${entry.nombreCustom || "documento personalizado"}`}
-            />
+            <div className={s.uploadInputRow}>
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx"
+                className={s.fileInput}
+                onChange={(e) => handleFileChange(entry.tempId, e)}
+                aria-label={`Seleccionar archivo para ${entry.nombreCustom || "documento personalizado"}`}
+              />
+              <label className={s.cameraBtn}>
+                <Camera size={14} aria-hidden="true" />
+                Tomar foto
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  style={{ display: "none" }}
+                  onChange={(e) => handleFileChange(entry.tempId, e)}
+                />
+              </label>
+            </div>
 
             {!obraId && entry.file && (
               <div className={s.queuedFile}>

@@ -276,6 +276,47 @@
   }
 }
 
+// ─── Pagination ───────────────────────────────────────────────────────────────
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-3;
+}
+
+.pageBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: $border-radius-md;
+  border: 1px solid $gray-300;
+  background-color: $white;
+  color: $gray-700;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+
+  &:hover:not(:disabled) {
+    background-color: $secondary-blue;
+    color: $primary-blue;
+    border-color: $primary-blue;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+}
+
+.pageInfo {
+  font-size: $font-size-sm;
+  color: $gray-600;
+  min-width: 110px;
+  text-align: center;
+}
+
 // ─── Modal form ───────────────────────────────────────────────────────────────
 
 .modalBody {

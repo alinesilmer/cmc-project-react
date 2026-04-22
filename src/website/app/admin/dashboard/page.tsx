@@ -26,6 +26,7 @@ type EditInitialValues = {
   publicada: boolean;
   tipo: TipoPublicacion;
   portadaUrl?: string;
+  badge?: string;
 };
 
 const PAGE_SIZE = 10;
@@ -91,6 +92,7 @@ export default function DashboardPage() {
       publicada: n.publicada ?? true,
       tipo: n.tipo ?? "Noticia",
       portadaUrl: n.portada || "",
+      badge: n.badge ?? "",
     });
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
