@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Eye, Pencil, Trash2, RefreshCw, ClipboardList } from "lucide-react";
+import { Plus, Search, Eye, Pencil, Trash2, RefreshCw, ClipboardList, Download } from "lucide-react";
 import { listObrasSociales, deleteObraSocial } from "../obrasSociales.api";
 import type { ObraSocialListItem } from "../obrasSociales.types";
+import ExportPanel from "../export/ExportPanel";
 import s from "./ObrasSocialesListado.module.scss";
+import Button from "../../../components/atoms/Button/Button";
 
 const PAGE_SIZE = 15;
 
@@ -26,6 +28,7 @@ export default function ObrasSocialesListado() {
   const [page, setPage] = useState(1);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [showExport, setShowExport] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -95,8 +98,9 @@ export default function ObrasSocialesListado() {
         </div>
 
         <div className={s.headerActions}>
-          <button
-            type="button"
+          <Button
+             variant="ghost"
+            size="sm"
             className={s.btnSecondary}
             onClick={load}
             disabled={loading}
@@ -105,7 +109,18 @@ export default function ObrasSocialesListado() {
           >
             <RefreshCw size={16} className={loading ? s.spinning : ""} />
             <span className={s.btnLabel}>Actualizar</span>
-          </button>
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            className={s.btnSecondary}
+            onClick={() => setShowExport(true)}
+            disabled={loading || items.length === 0}
+            title="Exportar"
+          >
+            <Download size={16} />
+            <span className={s.btnLabel}>Exportables</span>
+          </Button>
           <button
             type="button"
             className={s.btnPrimary}
@@ -201,7 +216,7 @@ export default function ObrasSocialesListado() {
                     <span className={s.contactLine}>{os.emails?.[0]?.valor ?? "—"}</span>
                     <span className={s.contactLine}>{os.telefonos?.[0]?.valor ?? ""}</span>
                   </td>
-                  <td className={s.hideMd}>{formatFecha(os.fecha_alta_convenio)}</td>
+                  <td className={s.hideMd}>{os.fecha_alta_convenio ? formatFecha(os.fecha_alta_convenio) : ''}</td>
                   <td>
                     <div className={s.actions}>
                       <button
@@ -270,6 +285,11 @@ export default function ObrasSocialesListado() {
             Siguiente ›
           </button>
         </div>
+      )}
+
+      {/* Export panel */}
+      {showExport && (
+        <ExportPanel items={items} onClose={() => setShowExport(false)} />
       )}
 
       {/* Confirm delete modal */}

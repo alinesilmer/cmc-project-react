@@ -83,9 +83,6 @@
   align-items: center;
   gap: $spacing-2;
   padding: $spacing-3 $spacing-5;
-  background-color: $white;
-  color: $gray-700;
-  border: 1px solid $gray-300;
   border-radius: $border-radius-md;
   font-size: $font-size-sm;
   font-weight: $font-weight-medium;
@@ -93,10 +90,7 @@
   transition: background-color 0.18s, border-color 0.18s;
   white-space: nowrap;
 
-  &:hover {
-    background-color: $gray-50;
-    border-color: $gray-400;
-  }
+
 
   &:disabled {
     opacity: 0.55;
@@ -193,106 +187,129 @@
 .tableWrapper {
   background-color: $white;
   border-radius: $border-radius-sm;
-  box-shadow: $shadow-md;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.07), 0 4px 16px rgba(73,60,104,0.07);
   overflow: hidden;
   overflow-x: auto;
+  border: 1px solid rgba(137,124,172,0.14);
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: auto;
 
   thead tr {
-    background-color: #816eb0;
-    border-bottom: 2px solid $gray-200;
+    background: linear-gradient(135deg, #6b5b9b 0%, #816eb0 100%);
 
     th {
-      padding: $spacing-4 $spacing-5;
+      padding: $spacing-3 $spacing-4;
       text-align: left;
-      font-size: $font-size-xs;
+      font-size: 10px;
       font-weight: $font-weight-semibold;
-      color: white;
+      color: rgba(255,255,255,0.92);
       text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.07em;
       white-space: nowrap;
+
+      &:first-child { padding-left: $spacing-5; }
+      &:last-child  { padding-right: $spacing-5; }
     }
   }
 
   tbody tr {
-    border-bottom: 1px solid $gray-100;
-    transition: background-color 0.15s;
+    border-bottom: 1px solid rgba(137,124,172,0.1);
+    transition: background-color 0.12s;
 
-    &:last-child {
-      border-bottom: none;
+    &:last-child { border-bottom: none; }
+
+    &:nth-child(even) {
+      background-color: rgba(137,124,172,0.03);
     }
 
     &:hover {
-      background-color: $gray-50;
+      background-color: rgba(137,124,172,0.08);
     }
 
     td {
-      padding: $spacing-4 $spacing-5;
-      font-size: $font-size-base;
-      color: $gray-800;
+      padding: $spacing-2 $spacing-4;
+      font-size: $font-size-sm;
+      color: $gray-700;
       vertical-align: middle;
+
+      &:first-child { padding-left: $spacing-5; }
+      &:last-child  { padding-right: $spacing-5; }
     }
   }
 }
 
 .actionsCol {
-  width: 120px;
+  width: 104px;
   text-align: right !important;
 }
 
 .nroCell {
   font-variant-numeric: tabular-nums;
-  color: $gray-500;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
+  color: $gray-400;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
   white-space: nowrap;
+  letter-spacing: 0.02em;
+  min-width: 36px;
 }
 
 .nameCell {
   display: block;
   font-weight: $font-weight-semibold;
+  font-size: $font-size-sm;
   color: $gray-900;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px;
 }
 
 .denoCell {
   display: block;
-  font-size: $font-size-xs;
-  color: $gray-500;
-  margin-top: $spacing-1;
+  font-size: 11px;
+  color: $gray-400;
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px;
 }
 
 .badgeA {
   display: inline-block;
-  padding: $spacing-1 $spacing-3;
-   background-color: #cdc2e8;
-  color: #493c68;
-  border-radius: $border-radius-md;
-  font-size: $font-size-xs;
+  padding: 2px $spacing-2;
+  background-color: rgba(205,194,232,0.4);
+  color: #5c4d85;
+  border: 1px solid rgba(137,124,172,0.3);
+  border-radius: $border-radius-sm;
+  font-size: 10px;
   font-weight: $font-weight-semibold;
   white-space: nowrap;
+  letter-spacing: 0.02em;
 }
-
 
 .badgeB {
   display: inline-block;
-  padding: $spacing-1 $spacing-3;
-  background-color: rgb(254, 250, 219);
-  color: #938a54;
-  border-radius: $border-radius-md;
-  font-size: $font-size-xs;
+  padding: 2px $spacing-2;
+  background-color: rgba(254,250,219,0.7);
+  color: #7a7240;
+  border: 1px solid rgba(200,188,100,0.3);
+  border-radius: $border-radius-sm;
+  font-size: 10px;
   font-weight: $font-weight-semibold;
   white-space: nowrap;
+  letter-spacing: 0.02em;
 }
 
 .contactLine {
   display: block;
-  font-size: $font-size-xs;
-  color: $gray-600;
-  line-height: 1.5;
+  font-size: 11px;
+  color: $gray-500;
+  line-height: 1.45;
 }
 
 // ─── Responsive hide helpers ──────────────────────────────────────────────────
@@ -321,26 +338,26 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: $spacing-2;
+  gap: $spacing-1;
 }
 
 .iconBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: $border-radius-md;
   border: 1px solid $gray-200;
   background-color: $white;
-  color: $gray-600;
+  color: $gray-500;
   cursor: pointer;
-  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+  transition: background-color 0.12s, color 0.12s, border-color 0.12s;
 
   &:hover {
-    background-color: rgba(173, 162, 198, 0.18);
-    color: #897CAC;
-    border-color: #897CAC;
+    background-color: rgba(173, 162, 198, 0.15);
+    color: #7B6CA8;
+    border-color: rgba(137,124,172,0.5);
   }
 
   &:disabled {

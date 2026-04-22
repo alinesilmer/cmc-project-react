@@ -101,6 +101,15 @@ function normalizeListItem(raw: any, i: number): ObraSocialListItem | null {
     nombre,
     denominacion: raw.denominacion ?? `${id} — ${nombre}`,
     condicion_iva: condicionIva,
+    marca: raw.marca ?? raw.MARCA ?? null,
+    ver_valor: raw.ver_valor ?? raw.VER_VALOR ?? null,
+    cuit: raw.cuit ?? raw.CUIT ?? null,
+    direccion_real: raw.direccion_real ?? raw.DIRECCION ?? null,
+    plazo_vencimiento: raw.plazo_vencimiento != null
+      ? Number(raw.plazo_vencimiento)
+      : raw.PLAZO_VENCIMIENTO != null
+      ? Number(raw.PLAZO_VENCIMIENTO)
+      : null,
     emails: raw.emails ?? (emailVal ? [{ valor: emailVal, etiqueta: "" }] : []),
     telefonos: raw.telefonos ?? (telVal ? [{ valor: telVal, etiqueta: "" }] : []),
     fecha_alta_convenio: raw.fecha_alta_convenio ?? raw.FECHA_ALTA ?? null,

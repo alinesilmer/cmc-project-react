@@ -141,6 +141,8 @@ export const INTENTS: Intent[] = [
       "hacen convenio con",
       "estan en convenio",
       "esta en convenio",
+      "tienen convenio con",
+      "tiene colegio convenio con"
     ],
     answer:
       "El Colegio tiene convenios con diversas obras sociales. " +

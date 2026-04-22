@@ -206,9 +206,8 @@ export default function Chatbot() {
               links: [{ label: "Ver Convenios", href: "/convenios" }],
             });
           } else if (result.valorFound && result.valorFormatted) {
-            const fecha = result.fechaCambio ? ` (actualizado: ${result.fechaCambio})` : "";
             pushBot({
-              text: `El valor de la consulta para ${result.osName} es ${result.valorFormatted}${fecha}.`,
+              text: `El valor de la consulta para ${result.osName} es ${result.valorFormatted}`,
             });
           } else {
             // OS exists in convenios but no price row available

@@ -86,6 +86,11 @@ export interface ObraSocialListItem {
   nombre: string;
   denominacion: string;
   condicion_iva?: CondicionIVA | null;
+  marca?: string | null;
+  ver_valor?: string | null;
+  cuit?: string | null;
+  direccion_real?: string | null;
+  plazo_vencimiento?: number | null;
   emails: ContactoEntry[];
   telefonos: ContactoEntry[];
   fecha_alta_convenio?: string | null;
