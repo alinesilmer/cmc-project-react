@@ -170,7 +170,7 @@ export function validateObraSocialForm(data: ObraSocialFormData): FormErrors {
     errors.nombre = "El nombre es obligatorio.";
 
   if (data.cuit.trim() && !/^\d{2}-\d{8}-\d{1}$/.test(data.cuit.trim()))
-    errors.cuit = "El formato debe ser XX-XXXXXXXX-X (ej: 30-12345678-9).";
+    errors.cuit = "El CUIT debe tener 11 dígitos.";
 
   if (data.plazo_vencimiento === "otro" && !data.plazo_custom.trim())
     errors.plazo_custom = "Ingresá el plazo personalizado.";

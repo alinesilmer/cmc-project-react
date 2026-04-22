@@ -252,6 +252,15 @@ function AsociadasSelector({
   );
 }
 
+// ─── CUIT auto-format ─────────────────────────────────────────────────────────
+
+function formatCUIT(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 10) return `${digits.slice(0, 2)}-${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}-${digits.slice(2, 10)}-${digits.slice(10)}`;
+}
+
 // ─── File validation ──────────────────────────────────────────────────────────
 
 function validateDocFile(f: File): string | null {
@@ -685,7 +694,7 @@ export default function ObrasSocialesForm() {
         setForm({
           nro_obra_social: String(data.nro_obra_social),
           nombre: data.nombre,
-          cuit: data.cuit ?? "",
+          cuit: formatCUIT(data.cuit ?? ""),
           direccion_real: data.direccion_real ?? "",
           condicion_iva: data.condicion_iva ?? "",
           df_tipo: dfTipo,
@@ -899,8 +908,8 @@ export default function ObrasSocialesForm() {
                 inputMode="numeric"
                 className={`${s.input} ${errors.cuit ? s.inputError : ""}`}
                 value={form.cuit}
-                onChange={(e) => set("cuit", e.target.value)}
-                placeholder="Ej: 30-12345678-9"
+                onChange={(e) => set("cuit", formatCUIT(e.target.value))}
+                placeholder="Ej: 30123456789"
                 maxLength={13}
               />
               <FieldError msg={errors.cuit} />
