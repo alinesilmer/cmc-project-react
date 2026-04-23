@@ -1,7 +1,7 @@
 import { getJSON, postJSON, patchJSON } from "../../lib/http";
 import type { Especialidad, EspecialidadPayload } from "./especialidades.types";
 
-const BASE = "/api/especialidades";
+const BASE = "/api/especialidades/";
 
 /**
  * GET /api/especialidades
