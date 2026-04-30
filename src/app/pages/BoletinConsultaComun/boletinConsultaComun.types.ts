@@ -14,12 +14,22 @@ export type ApiBoletinRow = {
   fecha_cambio: string | null;
 };
 
+export type GalenoValues = {
+  quirurgico: number;
+  practica: number;
+  radiologico: number;
+  cirugiaAdultos: number;
+  cirugiaInfantil: number;
+};
+
 export type ConsultaComunItem = {
   nro: number;
   nombre: string;
   valor: number;
   fechaCambio: string | null;
   observaciones: string[];
+  /** Populated from backend but not rendered in the UI table — export only. */
+  galeno: GalenoValues;
 };
 
 /** One text observation per obra social, keyed by nro_obrasocial. */

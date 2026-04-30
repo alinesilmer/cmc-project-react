@@ -111,16 +111,18 @@
   position: absolute;
   top: 10px;
   left: 10px;
-  background: $primary-blue;
-  color: $white;
+  background: $primary-yellow;
+  color: #685c29;
+  border: 1px solid rgba(#dec348, 0.7);
   font-size: 11px;
   font-weight: 700;
-  padding: 4px 10px;
+  padding: 4px 12px;
   border-radius: 20px;
-  letter-spacing: .4px;
+  letter-spacing: .5px;
   text-transform: uppercase;
   pointer-events: none;
   white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 /* Desktop down */

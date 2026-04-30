@@ -3,6 +3,7 @@ import axios from "axios";
 import {
   BOLETIN_ENDPOINTS,
   CONSULTA_COMUN_CODE,
+  EXCLUDED_OS,
   MAX_API_PAGES,
   OBSERVATIONS_BY_OS,
   PAGE_SIZE,
@@ -167,6 +168,7 @@ export function normalizeRow(input: unknown): ApiBoletinRow {
       fechaCambioRaw != null && String(fechaCambioRaw).trim() !== ""
         ? String(fechaCambioRaw).trim()
         : null,
+
   };
 }
 
@@ -252,7 +254,7 @@ export function buildLatestPerOS(rows: ApiBoletinRow[]): ConsultaComunItem[] {
   const latestByOS = new Map<number, ApiBoletinRow>();
 
   for (const row of rows) {
-    if (!row.nro_obrasocial) continue;
+    if (!row.nro_obrasocial || EXCLUDED_OS.has(row.nro_obrasocial)) continue;
 
     const current = latestByOS.get(row.nro_obrasocial);
 
@@ -275,6 +277,13 @@ export function buildLatestPerOS(rows: ApiBoletinRow[]): ConsultaComunItem[] {
       observaciones: [...(OBSERVATIONS_BY_OS[nro] ?? [])].map((x) =>
         normalizeText(x, 1000)
       ),
+      galeno: {
+        quirurgico: 0,
+        practica: 0,
+        radiologico: 0,
+        cirugiaAdultos: 0,
+        cirugiaInfantil: 0,
+      },
     }))
     .sort((a, b) => {
       const byName = a.nombre.localeCompare(b.nombre, "es", {

@@ -352,7 +352,7 @@
 
 .nameCell {
   color: #243241;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .numberCell {
@@ -375,22 +375,138 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 32px;
+  min-width: 50px;
   height: 28px;
   padding: 0 10px;
   border-radius: 999px;
-  font-size: 0.85rem;
-  font-weight: 800;
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
 .obsBadge {
   background: rgba(49, 92, 184, 0.12);
   color: #315cb8;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color 0.15s ease, color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background: rgba(49, 92, 184, 0.2);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.obsBadgeActive {
+  background: #315cb8;
+  color: #fff;
+
+  &:hover:not(:disabled) {
+    background: #264b92;
+  }
 }
 
 .obsBadgeEmpty {
   background: #f4f6f8;
   color: #98a2b3;
+}
+
+/* ── Observation view row ──────────────────────────────── */
+
+.obsViewCell {
+  padding: 0;
+  background: #f4f8ff;
+  border-left: 3px solid #315cb8;
+  border-bottom: 2px solid #dce4ef;
+}
+
+.obsViewInner {
+  padding: 16px 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.obsViewToolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.obsViewTitle {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #7b8798;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.obsViewEditBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(49, 92, 184, 0.3);
+  background: rgba(49, 92, 184, 0.07);
+  color: #264b92;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    background: rgba(49, 92, 184, 0.14);
+    border-color: rgba(49, 92, 184, 0.45);
+  }
+}
+
+.obsBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.obsItem,
+.obsItemPlain {
+  padding: 11px 16px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #e4eaf3;
+}
+
+.obsItemPlain {
+  border-left: 3px solid #dce4ef;
+}
+
+.obsItem {
+  border-left: 3px solid #315cb8;
+}
+
+.obsItemHeader {
+  display: block;
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: #203769;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 5px;
+}
+
+.obsItemBody {
+  display: block;
+  font-size: 0.94rem;
+  color: #3d4d60;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 /* ── Templates manager ─────────────────────────────────── */

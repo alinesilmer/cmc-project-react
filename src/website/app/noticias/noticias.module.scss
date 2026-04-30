@@ -12,30 +12,61 @@
 
 .filterRow {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
   margin-bottom: $spacing-lg;
 }
 
-.filterBtn {
-  padding: 8px 20px;
-  border-radius: 20px;
-  border: 2px solid $primary-blue;
-  background: transparent;
-  color: $primary-blue;
+.filterLabel {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   font-size: $font-size-small;
   font-weight: 600;
+  color: $gray;
+  user-select: none;
+
+  svg {
+    font-size: 1rem;
+  }
+}
+
+.filterBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(#dec348, 0.5);
+  background: $primary-yellow;
+  color: #685c29;
+  font-size: $font-size-small;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.18s, color 0.18s;
+  letter-spacing: 0.3px;
+  transition: background 0.18s, box-shadow 0.18s, border-color 0.18s;
+  box-shadow: $shadow-sm;
 
   &:hover {
-    background: $primary-blue;
-    color: $white;
+    background: #e0d39c;
+    border-color: rgba(#dec348, 0.8);
+    box-shadow: $shadow-md;
+    color: #4d4521;
   }
 }
 
 .filterBtnActive {
-  background: $primary-blue;
-  color: $white;
+  background: #e0d39c;
+  border-color: rgba(#b09c40, 0.7);
+  color: #4d4521;
+  box-shadow: $shadow-md;
+}
+
+.filterBtnIcon {
+  font-size: 0.85rem;
+  flex-shrink: 0;
 }
 
 .grid {

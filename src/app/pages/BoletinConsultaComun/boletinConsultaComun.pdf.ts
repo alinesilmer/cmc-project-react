@@ -236,6 +236,14 @@ export async function generateConsultaComunPdf(items: ConsultaComunItem[]) {
     }
   }
 
+  /** Strips stray regex/template artifacts from raw observation text. */
+  function cleanObs(raw: string): string {
+    return raw
+      .replace(/^[\s)?(|\\[\]{}]+/, "")
+      .replace(/[\s)?(|\\[\]{}]+$/, "")
+      .trim();
+  }
+
   function drawDetailPage(item: ConsultaComunItem) {
     doc.addPage();
     drawHeaderSection(
@@ -244,67 +252,142 @@ export async function generateConsultaComunPdf(items: ConsultaComunItem[]) {
       true
     );
 
+    // ── Main value card ──────────────────────────────────────────
     doc.setFillColor(...palette.softBlue);
-    doc.roundedRect(marginX, 50, pageWidth - marginX * 2, 24, 3, 3, "F");
+    doc.roundedRect(marginX, 48, pageWidth - marginX * 2, 22, 3, 3, "F");
 
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(9.4);
+    doc.setFontSize(8.5);
     doc.setTextColor(...palette.muted);
-    doc.text("Valor vigente", marginX + 6, 58);
+    doc.text("Valor vigente · Consulta Común", marginX + 6, 55.5);
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(20);
     doc.setTextColor(...palette.green);
-    doc.text(moneyFormatter.format(item.valor), marginX + 6, 68);
+    doc.text(moneyFormatter.format(item.valor), marginX + 6, 65);
+
+    // ── GALENO values (always render, defensive fallback for stale cache) ──
+    const galeno = item.galeno ?? {
+      quirurgico: 0,
+      practica: 0,
+      radiologico: 0,
+      cirugiaAdultos: 0,
+      cirugiaInfantil: 0,
+    };
+    const galenoEntries: [string, number][] = [
+      ["Quirúrgico", galeno.quirurgico],
+      ["Práctica", galeno.practica],
+      ["Radiológico", galeno.radiologico],
+      ["Cirugía Adultos", galeno.cirugiaAdultos],
+      ["Cirugía Infantil", galeno.cirugiaInfantil],
+    ];
+
+    let curY = 76;
 
     doc.setDrawColor(...palette.line);
-    doc.line(marginX, 83, pageWidth - marginX, 83);
+    doc.line(marginX, curY, pageWidth - marginX, curY);
+    curY += 8;
 
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.setTextColor(...palette.text);
-    doc.text("Observaciones", marginX, 93);
+    doc.setFontSize(10);
+    doc.setTextColor(...palette.navy);
+    doc.text("Valores GALENO", marginX, curY);
+    curY += 7;
 
-    const observations =
-      item.observaciones.length > 0
-        ? item.observaciones
-        : ["Sin observaciones particulares."];
+    const colW = (pageWidth - marginX * 2) / galenoEntries.length;
+    const galenoCardH = 17;
 
-    const lineHeight = 5.4;
-    const blockPad = 4;
-    const safeBottomY = pageHeight - 22;
-    const textWidth = pageWidth - marginX * 2 - 6;
-    let obsY = 103;
-
-    for (const obs of observations) {
-      const lines = doc.splitTextToSize(`• ${obs}`, textWidth) as string[];
-      const blockHeight = lines.length * lineHeight + blockPad;
-
-      if (obsY + blockHeight > safeBottomY) {
-        doc.addPage();
-        drawHeaderSection(
-          item.nombre,
-          `Consulta Común · Código ${CONSULTA_COMUN_CODE}`,
-          true
-        );
-        obsY = 50;
-      }
+    galenoEntries.forEach(([label, val], i) => {
+      const cx = marginX + i * colW;
+      doc.setFillColor(...palette.softBlue);
+      doc.roundedRect(cx, curY, colW - 2, galenoCardH, 2, 2, "F");
 
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(9.7);
+      doc.setFontSize(7.2);
       doc.setTextColor(...palette.muted);
-      doc.text(lines, marginX + 3, obsY);
-      obsY += blockHeight;
-    }
+      doc.text(label, cx + 3.5, curY + 5.5);
 
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(8.6);
-    doc.setTextColor(...palette.muted);
-    doc.text(
-      "Documento informativo generado desde el módulo de valores.",
-      marginX,
-      pageHeight - 18
-    );
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      doc.setTextColor(...palette.green);
+      doc.text(moneyFormatter.format(val), cx + 3.5, curY + 13.5);
+    });
+
+    curY += galenoCardH + 6;
+
+    doc.setDrawColor(...palette.line);
+    doc.line(marginX, curY, pageWidth - marginX, curY);
+    curY += 8;
+
+    // ── Observations ─────────────────────────────────────────────
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10.5);
+    doc.setTextColor(...palette.navy);
+    doc.text("Observaciones", marginX, curY);
+    curY += 8;
+
+    const rawObs = item.observaciones.map(cleanObs).filter(Boolean);
+    const safeBottomY = pageHeight - 22;
+    const borderW = 3.5;
+    const cardPadX = 7;
+    const cardPadY = 5;
+    const textX = marginX + borderW + cardPadX;
+    // Right edge of card minus right padding — must be set with font active.
+    const cardRight = pageWidth - marginX - 6;
+    const textWidth = cardRight - textX;
+    // Line height derived from font metrics: 9.5pt × 1.15 factor ≈ 4.6mm; keep
+    // a small overhead so the card is always tall enough to contain the text.
+    const lineH = 5.2;
+
+    // Set font NOW so splitTextToSize uses correct glyph widths.
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9.5);
+
+    if (rawObs.length === 0) {
+      doc.setFillColor(...palette.softBlue);
+      doc.roundedRect(marginX, curY, pageWidth - marginX * 2, 14, 2, 2, "F");
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(9.5);
+      doc.setTextColor(...palette.muted);
+      doc.text(
+        "Sin observaciones particulares para esta obra social.",
+        marginX + 6,
+        curY + 9
+      );
+      curY += 20;
+    } else {
+      for (const obs of rawObs) {
+        // splitTextToSize must be called with font already active.
+        const lines = doc.splitTextToSize(obs, textWidth) as string[];
+        const cardH = lines.length * lineH + cardPadY * 2;
+
+        if (curY + cardH > safeBottomY) {
+          doc.addPage();
+          drawHeaderSection(
+            item.nombre,
+            `Consulta Común · Código ${CONSULTA_COMUN_CODE}`,
+            true
+          );
+          curY = 50;
+        }
+
+        // Card background
+        doc.setFillColor(...palette.softBlue);
+        doc.roundedRect(marginX, curY, pageWidth - marginX * 2, cardH, 2, 2, "F");
+
+        // Left accent strip (inset 1mm top/bottom to stay within rounded corners)
+        doc.setFillColor(...palette.blue);
+        doc.rect(marginX, curY + 1, borderW, cardH - 2, "F");
+
+        // Text — maxWidth acts as a hard clip guard for unbreakable long tokens.
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9.5);
+        doc.setTextColor(...palette.text);
+        doc.text(lines, textX, curY + cardPadY + lineH - 0.8, { maxWidth: textWidth });
+
+        curY += cardH + 5;
+      }
+    }
   }
 
   drawCover();

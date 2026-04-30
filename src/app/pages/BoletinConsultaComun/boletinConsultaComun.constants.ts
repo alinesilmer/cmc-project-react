@@ -16,6 +16,9 @@ export const CMC_SUBTITLE = "Sujeto a cambios por actualizaciones permanentes";
 export const CMC_LOGO_SRC =
   String((import.meta as any).env?.VITE_CMC_LOGO_URL || "") || logo;
 
+/** Obras sociales excluded from UI, PDF, and Excel. */
+export const EXCLUDED_OS = new Set([30, 377, 388, 380, 435, 216]);
+
 export const OBSERVATIONS_BY_OS: Readonly<Record<number, readonly string[]>> =
   Object.freeze({
     // 75: ["Solo aplica bajo autorización previa."],

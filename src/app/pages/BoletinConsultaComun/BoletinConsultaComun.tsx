@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useMemo, useRef, useState } from "react";
 import { FileDown, Pencil, Plus, RefreshCcw, Search, X } from "lucide-react";
 
 import styles from "./BoletinConsultaComun.module.scss";
@@ -12,15 +12,59 @@ import {
   shortDateFormatter,
 } from "./boletinConsultaComun.constants";
 import { generateConsultaComunPdf } from "./boletinConsultaComun.pdf";
+import { generateConsultaComunExcel } from "./boletinConsultaComun.excel";
 import { useConsultaComunQuery } from "./useConsultaComunQuery";
+import { useGalenoQuery } from "./useGalenoQuery";
 import { useObservaciones } from "./useObservaciones";
 import { formatApiDate } from "./boletinConsultaComun.helpers";
+import type { GalenoValues } from "./boletinConsultaComun.types";
+
+const ZERO_GALENO: GalenoValues = {
+  quirurgico: 0,
+  practica: 0,
+  radiologico: 0,
+  cirugiaAdultos: 0,
+  cirugiaInfantil: 0,
+};
+
+type ObsLine =
+  | { type: "header"; label: string; body: string }
+  | { type: "text"; body: string };
+
+function parseObsLines(raw: string): ObsLine[] {
+  const cleaned = raw
+    .replace(/^[\s)?(|\\[\]{}]+/, "")
+    .replace(/[\s)?(|\\[\]{}]+$/, "")
+    .trim();
+
+  if (!cleaned) return [];
+
+  return cleaned
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map((line): ObsLine => {
+      const colonIdx = line.indexOf(":");
+      if (colonIdx > 2 && colonIdx < line.length - 1) {
+        const before = line.slice(0, colonIdx).trim();
+        const after = line.slice(colonIdx + 1).trim();
+        const letters = (before.match(/[a-záéíóúüñA-ZÁÉÍÓÚÜÑ]/g) ?? []).length;
+        const uppers = (before.match(/[A-ZÁÉÍÓÚÜÑ]/g) ?? []).length;
+        if (letters > 0 && uppers / letters >= 0.55 && before.length >= 3) {
+          return { type: "header", label: before, body: after };
+        }
+      }
+      return { type: "text", body: line };
+    });
+}
 
 export default function BoletinConsultaComun() {
-  const [pdfError, setPdfError] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isGeneratingExcel, setIsGeneratingExcel] = useState(false);
   const [search, setSearch] = useState("");
   const [editingNro, setEditingNro] = useState<number | null>(null);
+  const [viewingObsNro, setViewingObsNro] = useState<number | null>(null);
   const [editDraft, setEditDraft] = useState("");
   const [newTemplate, setNewTemplate] = useState("");
   const newTemplateInputRef = useRef<HTMLInputElement>(null);
@@ -32,6 +76,8 @@ export default function BoletinConsultaComun() {
     isFetching,
     refetch,
   } = useConsultaComunQuery();
+
+  const { data: galenoMap } = useGalenoQuery();
 
   const {
     observaciones,
@@ -54,8 +100,22 @@ export default function BoletinConsultaComun() {
     [data, search]
   );
 
+  /** Items with real observations + real GALENO values — used only for PDF/Excel. */
+  const dataForExport = useMemo(
+    () =>
+      data.map((item) => ({
+        ...item,
+        observaciones: observaciones[item.nro]
+          ? [observaciones[item.nro]]
+          : item.observaciones,
+        galeno: galenoMap?.get(item.nro) ?? ZERO_GALENO,
+      })),
+    [data, observaciones, galenoMap]
+  );
+
   const handleEdit = useCallback(
     (nro: number) => {
+      setViewingObsNro(null);
       setEditingNro(nro);
       setEditDraft(observaciones[nro] ?? "");
     },
@@ -75,7 +135,10 @@ export default function BoletinConsultaComun() {
     setEditDraft("");
   }, []);
 
-  /** Applies a template text to the current textarea (replaces content). */
+  const handleToggleObsView = useCallback((nro: number) => {
+    setViewingObsNro((prev) => (prev === nro ? null : nro));
+  }, []);
+
   const handleApplyTemplate = useCallback((texto: string) => {
     setEditDraft(texto);
   }, []);
@@ -96,25 +159,13 @@ export default function BoletinConsultaComun() {
   );
 
   const handleDownloadPdf = useCallback(async () => {
-    if (data.length === 0 || isGeneratingPdf) return;
-
-    // Merge locally-stored observations into each item before generating.
-    // Once the backend is wired, `observaciones` will already contain
-    // server-persisted data and this merge remains valid.
-    const dataWithObs = data.map((item) => ({
-      ...item,
-      observaciones: observaciones[item.nro]
-        ? [observaciones[item.nro]]
-        : item.observaciones,
-    }));
-
-    setPdfError(null);
+    if (dataForExport.length === 0 || isGeneratingPdf) return;
+    setExportError(null);
     setIsGeneratingPdf(true);
-
     try {
-      await generateConsultaComunPdf(dataWithObs);
+      await generateConsultaComunPdf(dataForExport);
     } catch (err) {
-      setPdfError(
+      setExportError(
         err instanceof Error
           ? `No se pudo generar el PDF. ${err.message}`
           : "No se pudo generar el PDF."
@@ -122,7 +173,24 @@ export default function BoletinConsultaComun() {
     } finally {
       setIsGeneratingPdf(false);
     }
-  }, [data, observaciones, isGeneratingPdf]);
+  }, [dataForExport, isGeneratingPdf]);
+
+  const handleDownloadExcel = useCallback(async () => {
+    if (dataForExport.length === 0 || isGeneratingExcel) return;
+    setExportError(null);
+    setIsGeneratingExcel(true);
+    try {
+      await generateConsultaComunExcel(dataForExport, observaciones);
+    } catch (err) {
+      setExportError(
+        err instanceof Error
+          ? `No se pudo generar el Excel. ${err.message}`
+          : "No se pudo generar el Excel."
+      );
+    } finally {
+      setIsGeneratingExcel(false);
+    }
+  }, [dataForExport, observaciones, isGeneratingExcel]);
 
   return (
     <div className={styles.container}>
@@ -155,16 +223,23 @@ export default function BoletinConsultaComun() {
               size="md"
               variant="danger"
               onClick={() => void handleDownloadPdf()}
-              disabled={
-                isLoading ||
-                isFetching ||
-                isGeneratingPdf ||
-                data.length === 0
-              }
+              disabled={isLoading || isFetching || isGeneratingPdf || data.length === 0}
             >
               <span className={styles.buttonInner}>
                 <FileDown size={16} />
                 {isGeneratingPdf ? "Generando PDF..." : "Descargar PDF"}
+              </span>
+            </Button>
+
+            <Button
+              size="md"
+              variant="ghost"
+              onClick={() => void handleDownloadExcel()}
+              disabled={isLoading || isFetching || isGeneratingExcel || data.length === 0}
+            >
+              <span className={styles.buttonInner}>
+                <FileDown size={16} />
+                {isGeneratingExcel ? "Generando Excel..." : "Descargar Excel"}
               </span>
             </Button>
           </div>
@@ -175,17 +250,14 @@ export default function BoletinConsultaComun() {
             <span className={styles.metaLabel}>Práctica</span>
             <span className={styles.metaValue}>Consulta Común</span>
           </div>
-
           <div className={styles.metaCard}>
             <span className={styles.metaLabel}>Código</span>
             <span className={styles.metaValue}>{CONSULTA_COMUN_CODE}</span>
           </div>
-
           <div className={styles.metaCard}>
             <span className={styles.metaLabel}>Obras sociales</span>
             <span className={styles.metaValue}>{data.length}</span>
           </div>
-
           <div className={styles.metaCard}>
             <span className={styles.metaLabel}>Fecha del documento</span>
             <span className={styles.metaValue}>
@@ -194,7 +266,7 @@ export default function BoletinConsultaComun() {
           </div>
         </div>
 
-        {pdfError && <div className={styles.errorBox}>{pdfError}</div>}
+        {exportError && <div className={styles.errorBox}>{exportError}</div>}
       </section>
 
       {/* ── Observations panel ── */}
@@ -244,7 +316,6 @@ export default function BoletinConsultaComun() {
                 </button>
               </span>
             ))}
-
             {templates.length === 0 && (
               <span className={styles.templatesEmpty}>
                 Sin plantillas. Agregue una observación de uso frecuente.
@@ -252,7 +323,6 @@ export default function BoletinConsultaComun() {
             )}
           </div>
 
-          {/* Add template input */}
           <div className={styles.addTemplateRow}>
             <input
               ref={newTemplateInputRef}
@@ -341,7 +411,6 @@ export default function BoletinConsultaComun() {
                             </strong>
                           </p>
 
-                          {/* Template quick-apply chips (inline, contextual) */}
                           {templates.length > 0 && (
                             <div className={styles.inlineTemplates}>
                               <span className={styles.inlineTemplatesLabel}>
@@ -389,9 +458,7 @@ export default function BoletinConsultaComun() {
                                 onClick={() => void handleSave(item.nro)}
                                 disabled={savingNro === item.nro}
                               >
-                                {savingNro === item.nro
-                                  ? "Guardando…"
-                                  : "Guardar"}
+                                {savingNro === item.nro ? "Guardando…" : "Guardar"}
                               </Button>
                             </div>
                           </div>
@@ -401,40 +468,88 @@ export default function BoletinConsultaComun() {
                   }
 
                   const hasObs = Boolean(observaciones[item.nro]);
+                  const isViewingObs = viewingObsNro === item.nro;
 
                   return (
-                    <tr key={item.nro}>
-                      <td className={styles.numberCell}>{item.nro}</td>
-                      <td className={styles.nameCell}>{item.nombre}</td>
-                      <td className={styles.amountCell}>
-                        {moneyFormatter.format(item.valor)}
-                      </td>
-                      <td className={styles.dateCell}>
-                        {formatApiDate(item.fechaCambio)}
-                      </td>
-                      <td className={styles.obsCell}>
-                        {hasObs ? (
-                          <span
-                            className={styles.obsBadge}
-                            title={observaciones[item.nro]}
+                    <Fragment key={item.nro}>
+                      <tr>
+                        <td className={styles.numberCell}>{item.nro}</td>
+                        <td className={styles.nameCell}>{item.nombre}</td>
+                        <td className={styles.amountCell}>
+                          {moneyFormatter.format(item.valor)}
+                        </td>
+                        <td className={styles.dateCell}>
+                          {formatApiDate(item.fechaCambio)}
+                        </td>
+                        <td className={styles.obsCell}>
+                          {hasObs ? (
+                            <button
+                              className={`${styles.obsBadge} ${isViewingObs ? styles.obsBadgeActive : ""}`}
+                              onClick={() => handleToggleObsView(item.nro)}
+                              disabled={editingNro !== null}
+                              title={isViewingObs ? "Cerrar observación" : "Ver observación"}
+                            >
+                              {isViewingObs ? "Cerrar" : "Ver"}
+                            </button>
+                          ) : (
+                            <span className={styles.obsBadgeEmpty}>—</span>
+                          )}
+                        </td>
+                        <td className={styles.actionCell}>
+                          <button
+                            className={styles.editIconBtn}
+                            onClick={() => handleEdit(item.nro)}
+                            title="Editar observación"
+                            disabled={editingNro !== null}
                           >
-                            Sí
-                          </span>
-                        ) : (
-                          <span className={styles.obsBadgeEmpty}>—</span>
-                        )}
-                      </td>
-                      <td className={styles.actionCell}>
-                        <button
-                          className={styles.editIconBtn}
-                          onClick={() => handleEdit(item.nro)}
-                          title="Editar observación"
-                          disabled={editingNro !== null}
-                        >
-                          <Pencil size={15} />
-                        </button>
-                      </td>
-                    </tr>
+                            <Pencil size={15} />
+                          </button>
+                        </td>
+                      </tr>
+
+                      {isViewingObs && hasObs && (
+                        <tr>
+                          <td colSpan={6} className={styles.obsViewCell}>
+                            <div className={styles.obsViewInner}>
+                              <div className={styles.obsViewToolbar}>
+                                <span className={styles.obsViewTitle}>
+                                  Observación · {item.nombre}
+                                </span>
+                                <button
+                                  className={styles.obsViewEditBtn}
+                                  onClick={() => handleEdit(item.nro)}
+                                >
+                                  <Pencil size={13} />
+                                  Editar
+                                </button>
+                              </div>
+
+                              <div className={styles.obsBlock}>
+                                {parseObsLines(observaciones[item.nro] ?? "").map(
+                                  (line, i) =>
+                                    line.type === "header" ? (
+                                      <div key={i} className={styles.obsItem}>
+                                        <span className={styles.obsItemHeader}>
+                                          {line.label}
+                                        </span>
+                                        <span className={styles.obsItemBody}>
+                                          {line.body}
+                                        </span>
+                                      </div>
+                                    ) : (
+                                      <div key={i} className={styles.obsItemPlain}>
+                                        <span className={styles.obsItemBody}>
+                                          {line.body}
+                                        </span>
+                                      </div>
+                                    )
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
                   );
                 })}
               </tbody>
