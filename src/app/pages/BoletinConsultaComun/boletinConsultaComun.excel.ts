@@ -18,8 +18,12 @@ export async function generateConsultaComunExcel(
     "Fecha Cambio": formatApiDate(item.fechaCambio),
     "Observación": observaciones[item.nro] ?? "",
     "GALENO Quirúrgico": item.galeno.quirurgico,
+    "Gastos Quirúrgicos": item.galeno.gastosQuirurgicos,
     "GALENO Práctica": item.galeno.practica,
     "GALENO Radiológico": item.galeno.radiologico,
+    "Gastos Radiológico": item.galeno.gastosRadiologico,
+    "Gastos Bioquímicos": item.galeno.gastosBioquimicos,
+    "Otros Gastos": item.galeno.otrosGastos,
     "GALENO Cirugía Adultos": item.galeno.cirugiaAdultos,
     "GALENO Cirugía Infantil": item.galeno.cirugiaInfantil,
   }));

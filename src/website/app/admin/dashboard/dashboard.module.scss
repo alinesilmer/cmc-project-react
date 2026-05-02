@@ -734,6 +734,217 @@
   margin: 2px 0 0;
 }
 
+// ─── Valores Éticos section ────────────────────────────────────────────────────
+
+.eticaSection {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+  background: $white;
+  border-radius: $border-radius-sm;
+  padding: $spacing-xl;
+  box-shadow: $shadow-sm;
+  border: 1px solid #eaecf0;
+  max-width: 680px;
+}
+
+.eticaHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  h2 {
+    margin: 0;
+    color: $primary-blue;
+    font-size: $font-size-h4;
+  }
+}
+
+.eticaDesc {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.eticaCurrent {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: 10px 14px;
+  border: 1.5px solid #dde2ec;
+  border-radius: $border-radius-sm;
+  background: #f8fafc;
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+.eticaCurrentIcon {
+  font-size: 1.4rem;
+  color: $primary-blue;
+  flex-shrink: 0;
+}
+
+.eticaCurrentLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #8a99b3;
+}
+
+.eticaCurrentName {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: $dark-gray;
+}
+
+.eticaDropzone {
+  border: 2px dashed #c5cfe0;
+  border-radius: $border-radius-sm;
+  background: #f8fafc;
+  padding: $spacing-xl $spacing-lg;
+  cursor: pointer;
+  transition: border-color $transition-fast, background $transition-fast;
+  position: relative;
+
+  &:hover {
+    border-color: $primary-blue;
+    background: #f0f4ff;
+  }
+}
+
+.eticaDropzoneActive {
+  border-color: $primary-blue;
+  background: #eef3ff;
+}
+
+.eticaDropzoneFilled {
+  border-style: solid;
+  border-color: $primary-blue;
+  background: #f0f5ff;
+}
+
+.eticaFileInput {
+  display: none;
+}
+
+.eticaDropzoneEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.eticaUploadIcon {
+  color: #8a99b3;
+}
+
+.eticaDropzoneText {
+  margin: 0;
+  font-size: 0.92rem;
+  color: #374151;
+
+  span {
+    color: $primary-blue;
+    font-weight: 600;
+    text-decoration: underline;
+  }
+}
+
+.eticaDropzoneHint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #8a99b3;
+}
+
+.eticaFilePreview {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+
+  svg { color: $primary-blue; flex-shrink: 0; }
+}
+
+.eticaFileName {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: $dark-gray;
+  flex: 1;
+  word-break: break-all;
+}
+
+.eticaFileSize {
+  font-size: 0.8rem;
+  color: #8a99b3;
+  flex-shrink: 0;
+}
+
+.eticaRemoveFile {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #dc2626;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: 4px;
+  transition: background $transition-fast;
+  flex-shrink: 0;
+
+  &:hover { background: #fee2e2; }
+}
+
+.eticaActions {
+  display: flex;
+  gap: $spacing-sm;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.eticaUploadBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0.55rem 1.2rem;
+  border-radius: $border-radius-sm;
+  border: none;
+  background: $primary-blue;
+  color: $white;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background $transition-fast, opacity $transition-fast;
+
+  &:hover:not(:disabled) { background: $primary-blue-dark; }
+  &:disabled { opacity: 0.45; cursor: not-allowed; }
+}
+
+.eticaCancelBtn {
+  padding: 0.55rem 1rem;
+  border-radius: $border-radius-sm;
+  border: 1.5px solid #dde2ec;
+  background: $white;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: border-color $transition-fast, background $transition-fast;
+
+  &:hover {
+    border-color: $primary-blue;
+    background: #f0f4ff;
+  }
+}
+
 // ─── Responsive: desktop (≤1024px) ────────────────────────────────────────────
 
 @media (max-width: $breakpoint-desktop) {

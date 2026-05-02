@@ -20,6 +20,11 @@ export type GalenoValues = {
   radiologico: number;
   cirugiaAdultos: number;
   cirugiaInfantil: number;
+  gastosQuirurgicos: number;
+  /** Legacy DB column name: gastos_radiologico (singular). */
+  gastosRadiologico: number;
+  gastosBioquimicos: number;
+  otrosGastos: number;
 };
 
 export type ConsultaComunItem = {

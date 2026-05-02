@@ -21,8 +21,6 @@ import styles from "./Welcome.module.scss";
 import Button from "../../../components/UI/Button/Button";
 import stethoscopeDeco from "../../../assets/images/stethoscope-deco.png";
 
-const ETICA_PDF = "https://legacy.colegiomedicocorrientes.com/CMC_03_2026.pdf";
-
 // ── 6 institutional benefit cards ─────────────────────────────────────────────
 type BenefitCard = { icon: ReactNode; title: string; description: string };
 
@@ -159,11 +157,6 @@ export default function Welcome() {
               Asociarme
             </Button>
           </Link>
-          <a href={ETICA_PDF} className={styles.ctaLink} target="_blank" rel="noopener noreferrer">
-            <Button variant="secondary" size="xlg">
-              Ver Boletín Informativo
-            </Button>
-          </a>
         </motion.div>
 
         {/* ── Quick-access cards ───────────────────────────────────────────── */}
@@ -221,6 +214,8 @@ export default function Welcome() {
         </div>
 
       </div>
+
+
     </section>
   );
 }

@@ -6,6 +6,7 @@ import { FaWhatsapp } from "react-icons/fa";
 import Button from "../../../components/UI/Button/Button";
 import AdminMedicosPromo from "../MedicosPromo/MedicosPromo";
 import NewsForm from "./NewsForm";
+import ValoresEticos from "./ValoresEticos";
 import styles from "./dashboard.module.scss";
 import { useAuth } from "../../../../app/auth/AuthProvider";
 
@@ -17,7 +18,7 @@ import {
 
 import type { Noticia } from "../../../types";
 
-type Tab = "noticias" | "promo";
+type Tab = "noticias" | "promo" | "etica";
 
 type EditInitialValues = {
   titulo: string;
@@ -198,6 +199,12 @@ export default function DashboardPage() {
               onClick={() => setTab("promo")}
             >
               Publicidad de doctores
+            </Button>
+            <Button
+              className={`${styles.tab} ${tab === "etica" ? styles.active : ""}`}
+              onClick={() => setTab("etica")}
+            >
+              Valores Éticos
             </Button>
           </div>
         </div>
@@ -438,6 +445,12 @@ export default function DashboardPage() {
         {tab === "promo" && (
           <div className={styles.tabContent}>
             <AdminMedicosPromo />
+          </div>
+        )}
+
+        {tab === "etica" && (
+          <div className={styles.tabContent}>
+            <ValoresEticos />
           </div>
         )}
       </div>

@@ -25,12 +25,19 @@ export const OBSERVATIONS_BY_OS: Readonly<Record<number, readonly string[]>> =
     // 292: ["Importe sujeto a última actualización del convenio."],
   });
 
-export const moneyFormatter = new Intl.NumberFormat("es-AR", {
+const _moneyFormatter = new Intl.NumberFormat("es-AR", {
   style: "currency",
   currency: "ARS",
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
+
+export const moneyFormatter = {
+  format: (value: number) => {
+    const n = Number(value);
+    return _moneyFormatter.format(Number.isFinite(n) ? n : 0);
+  },
+};
 
 export const shortDateFormatter = new Intl.DateTimeFormat("es-AR", {
   dateStyle: "short",

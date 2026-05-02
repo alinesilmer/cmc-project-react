@@ -147,25 +147,6 @@ export async function generateConsultaComunPdf(items: ConsultaComunItem[]) {
       align: "center",
     });
 
-    doc.setTextColor(...palette.text);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-    doc.text(CMC_NAME, pageWidth / 2, 96, { align: "center" });
-
-    doc.setFillColor(...palette.softBlue);
-    doc.roundedRect(24, 118, pageWidth - 48, 54, 4, 4, "F");
-
-    doc.setTextColor(...palette.text);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text("Detalle del documento", 32, 131);
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10.2);
-    doc.text(`Código nomenclador: ${CONSULTA_COMUN_CODE}`, 32, 141);
-    doc.text(`Fecha de generación: ${generatedAtLabel}`, 32, 149);
-    doc.text(`Cantidad de obras sociales: ${items.length}`, 32, 157);
-
     doc.setDrawColor(...palette.line);
     doc.setLineWidth(0.35);
     doc.line(24, 188, pageWidth - 24, 188);
@@ -248,7 +229,7 @@ export async function generateConsultaComunPdf(items: ConsultaComunItem[]) {
     doc.addPage();
     drawHeaderSection(
       item.nombre,
-      `Consulta Común · Código ${CONSULTA_COMUN_CODE}`,
+      `Consulta Común`,
       true
     );
 
@@ -273,6 +254,10 @@ export async function generateConsultaComunPdf(items: ConsultaComunItem[]) {
       radiologico: 0,
       cirugiaAdultos: 0,
       cirugiaInfantil: 0,
+      gastosQuirurgicos: 0,
+      gastosRadiologico: 0,
+      gastosBioquimicos: 0,
+      otrosGastos: 0,
     };
     const galenoEntries: [string, number][] = [
       ["Quirúrgico", galeno.quirurgico],
@@ -280,6 +265,12 @@ export async function generateConsultaComunPdf(items: ConsultaComunItem[]) {
       ["Radiológico", galeno.radiologico],
       ["Cirugía Adultos", galeno.cirugiaAdultos],
       ["Cirugía Infantil", galeno.cirugiaInfantil],
+    ];
+    const gastosEntries: [string, number][] = [
+      ["G. Quirúrgicos", galeno.gastosQuirurgicos],
+      ["G. Radiológico", galeno.gastosRadiologico],
+      ["G. Bioquímicos", galeno.gastosBioquimicos],
+      ["Otros Gastos", galeno.otrosGastos],
     ];
 
     let curY = 76;
@@ -291,7 +282,7 @@ export async function generateConsultaComunPdf(items: ConsultaComunItem[]) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
     doc.setTextColor(...palette.navy);
-    doc.text("Valores GALENO", marginX, curY);
+    doc.text("Valores GENERALES", marginX, curY);
     curY += 7;
 
     const colW = (pageWidth - marginX * 2) / galenoEntries.length;
@@ -301,6 +292,26 @@ export async function generateConsultaComunPdf(items: ConsultaComunItem[]) {
       const cx = marginX + i * colW;
       doc.setFillColor(...palette.softBlue);
       doc.roundedRect(cx, curY, colW - 2, galenoCardH, 2, 2, "F");
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.2);
+      doc.setTextColor(...palette.muted);
+      doc.text(label, cx + 3.5, curY + 5.5);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      doc.setTextColor(...palette.green);
+      doc.text(moneyFormatter.format(val), cx + 3.5, curY + 13.5);
+    });
+
+    curY += galenoCardH + 4;
+
+    const gastosColW = (pageWidth - marginX * 2) / gastosEntries.length;
+
+    gastosEntries.forEach(([label, val], i) => {
+      const cx = marginX + i * gastosColW;
+      doc.setFillColor(...palette.softBlue);
+      doc.roundedRect(cx, curY, gastosColW - 2, galenoCardH, 2, 2, "F");
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(7.2);
@@ -365,7 +376,7 @@ export async function generateConsultaComunPdf(items: ConsultaComunItem[]) {
           doc.addPage();
           drawHeaderSection(
             item.nombre,
-            `Consulta Común · Código ${CONSULTA_COMUN_CODE}`,
+            `Consulta Común`,
             true
           );
           curY = 50;

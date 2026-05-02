@@ -69,6 +69,10 @@ export async function fetchGalenoMap(): Promise<GalenoMap> {
       radiologico: row.galeno_radiologico ?? 0,
       cirugiaAdultos: row.galeno_cirugia_adultos ?? 0,
       cirugiaInfantil: row.galeno_cirugia_infantil ?? 0,
+      gastosQuirurgicos: row.gastos_quirurgicos ?? 0,
+      gastosRadiologico: row.gastos_radiologico ?? 0,
+      gastosBioquimicos: row.gastos_bioquimicos ?? 0,
+      otrosGastos: row.otros_gastos ?? 0,
     });
   }
 

@@ -91,7 +91,7 @@ export default function ConveniosPage() {
       {/* ── Obras sociales list ───────────────────────────────────────────── */}
       <ObrasSociales
         titulo="Obras Sociales"
-        subtitulo="Coberturas y convenios vigentes con el Colegio Médico de Corrientes"
+        subtitulo="Convenios vigentes con el Colegio Médico de Corrientes"
         obras={obras}
         loading={loading}
         error={error}

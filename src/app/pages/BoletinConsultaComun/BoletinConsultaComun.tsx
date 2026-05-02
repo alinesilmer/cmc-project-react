@@ -25,6 +25,10 @@ const ZERO_GALENO: GalenoValues = {
   radiologico: 0,
   cirugiaAdultos: 0,
   cirugiaInfantil: 0,
+  gastosQuirurgicos: 0,
+  gastosRadiologico: 0,
+  gastosBioquimicos: 0,
+  otrosGastos: 0,
 };
 
 type ObsLine =
