@@ -7,6 +7,8 @@ import {
   MAX_API_PAGES,
   OBSERVATIONS_BY_OS,
   PAGE_SIZE,
+  SWISS_MEDICAL_CODE,
+  SWISS_MEDICAL_NOMBRE,
 } from "./boletinConsultaComun.constants";
 import {
   normalizeText,
@@ -324,7 +326,8 @@ export function getErrorMessage(error: unknown): string {
 export async function fetchBoletinPage(
   endpoint: string,
   page: number,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  codigo: string = CONSULTA_COMUN_CODE
 ): Promise<ApiBoletinRow[]> {
   const response = await axios.get(endpoint, {
     signal,
@@ -334,7 +337,7 @@ export async function fetchBoletinPage(
       Accept: "application/json",
     },
     params: {
-      codigo: CONSULTA_COMUN_CODE,
+      codigo,
       page,
       size: PAGE_SIZE,
     },
@@ -351,13 +354,14 @@ export async function fetchBoletinPage(
 
 export async function requestBoletinPage(
   page: number,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  codigo: string = CONSULTA_COMUN_CODE
 ): Promise<ApiBoletinRow[]> {
   let lastError: unknown = null;
 
   for (const endpoint of BOLETIN_ENDPOINTS) {
     try {
-      return await fetchBoletinPage(endpoint, page, signal);
+      return await fetchBoletinPage(endpoint, page, signal, codigo);
     } catch (error) {
       lastError = error;
     }
@@ -368,14 +372,15 @@ export async function requestBoletinPage(
     : new Error("No se pudo consultar el endpoint de valores.");
 }
 
-export async function fetchConsultaComun(
+async function fetchAllPagesForCode(
+  codigo: string,
   signal?: AbortSignal
-): Promise<ConsultaComunItem[]> {
+): Promise<ApiBoletinRow[]> {
   const rows: ApiBoletinRow[] = [];
   let previousSignature = "";
 
   for (let page = 1; page <= MAX_API_PAGES; page += 1) {
-    const pageRows = await requestBoletinPage(page, signal);
+    const pageRows = await requestBoletinPage(page, signal, codigo);
 
     if (pageRows.length === 0) break;
 
@@ -391,6 +396,28 @@ export async function fetchConsultaComun(
     if (pageRows.length < PAGE_SIZE) break;
   }
 
-  const filteredRows = filterRowsByCodigo(rows, CONSULTA_COMUN_CODE);
-  return buildLatestPerOS(filteredRows);
+  return rows;
+}
+
+export async function fetchConsultaComun(
+  signal?: AbortSignal
+): Promise<ConsultaComunItem[]> {
+  // Fetch consulta común (420351) and Swiss Medical (42010100) in parallel.
+  const [consultaRows, swissRows] = await Promise.all([
+    fetchAllPagesForCode(CONSULTA_COMUN_CODE, signal),
+    fetchAllPagesForCode(SWISS_MEDICAL_CODE, signal).catch(() => [] as ApiBoletinRow[]),
+  ]);
+
+  // Apply name override for Swiss Medical rows that have no obra_social set.
+  const swissNormalized = swissRows.map((row) =>
+    row.obra_social ? row : { ...row, obra_social: SWISS_MEDICAL_NOMBRE }
+  );
+
+  // Merge: consulta común rows first, Swiss Medical fills in missing OS entries.
+  const consultaFiltered = filterRowsByCodigo(consultaRows, CONSULTA_COMUN_CODE);
+  const knownOS = new Set(consultaFiltered.map((r) => r.nro_obrasocial));
+  const swissOnly = swissNormalized.filter((r) => !knownOS.has(r.nro_obrasocial));
+
+  const allRows = [...consultaFiltered, ...swissOnly];
+  return buildLatestPerOS(allRows);
 }

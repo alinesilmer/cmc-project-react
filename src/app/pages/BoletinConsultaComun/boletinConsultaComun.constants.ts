@@ -1,6 +1,8 @@
 import logo from "../../assets/logoCMC.png";
 
 export const CONSULTA_COMUN_CODE = "420351";
+export const SWISS_MEDICAL_CODE = "42010100";
+export const SWISS_MEDICAL_NOMBRE = "Swiss Medical";
 export const PAGE_SIZE = 500;
 export const MAX_API_PAGES = 50;
 

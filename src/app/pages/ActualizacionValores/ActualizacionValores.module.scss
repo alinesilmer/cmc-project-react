@@ -1,0 +1,479 @@
+@use "@/app/styles/all.scss" as *;
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+  background:
+    radial-gradient(circle at top right, rgba(49, 92, 184, 0.08), transparent 22%),
+    linear-gradient(180deg, #f7f9fc 0%, #f3f6fb 100%);
+  min-height: 100%;
+  color: #243241;
+}
+
+// ── Header ────────────────────────────────────────────────────────────────────
+
+.header {
+  padding-bottom: 4px;
+}
+
+.title {
+  margin: 0 0 8px;
+  font-size: clamp(1.6rem, 2vw, 2.2rem);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: #203769;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 0.98rem;
+  color: #5d6778;
+  line-height: 1.6;
+  max-width: 760px;
+}
+
+// ── Panel ─────────────────────────────────────────────────────────────────────
+
+.panel {
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 10px;
+  padding: 24px;
+  box-shadow: $shadow-md;
+}
+
+.panelTitle {
+  margin: 0 0 6px;
+  font-size: 1.18rem;
+  font-weight: 800;
+  color: #203769;
+}
+
+.panelDescription {
+  margin: 0 0 18px;
+  color: #687486;
+  font-size: 0.93rem;
+  line-height: 1.55;
+  max-width: 780px;
+}
+
+// ── Search bar ────────────────────────────────────────────────────────────────
+
+.searchBar {
+  position: relative;
+  margin-bottom: 14px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #7b8798;
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  height: 44px;
+  border-radius: 8px;
+  border: 1px solid #d8e0eb;
+  background: #fff;
+  padding: 0 14px 0 42px;
+  font-size: 0.95rem;
+  color: #243241;
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+
+  &:focus {
+    border-color: #315cb8;
+    box-shadow: 0 0 0 3px rgba(49, 92, 184, 0.1);
+  }
+}
+
+// ── OS list ───────────────────────────────────────────────────────────────────
+
+.osList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid #e8edf5;
+  border-radius: 8px;
+  padding: 6px;
+  background: #fafbfd;
+}
+
+.osItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+
+  &:hover {
+    background: rgba(49, 92, 184, 0.06);
+  }
+}
+
+.osItemSelected {
+  background: rgba(49, 92, 184, 0.1) !important;
+  outline: 1.5px solid rgba(49, 92, 184, 0.3);
+}
+
+.osNro {
+  flex: 0 0 auto;
+  min-width: 48px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #315cb8;
+  background: rgba(49, 92, 184, 0.1);
+  border-radius: 4px;
+  padding: 2px 7px;
+  text-align: center;
+}
+
+.osNombre {
+  font-size: 0.93rem;
+  color: #243241;
+  font-weight: 500;
+}
+
+// ── Selected info bar ─────────────────────────────────────────────────────────
+
+.selectedInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: rgba(49, 92, 184, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(49, 92, 184, 0.15);
+  flex-wrap: wrap;
+}
+
+.successText {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #107c57;
+  flex: 1;
+}
+
+.loadingText {
+  font-size: 0.88rem;
+  color: #7b8798;
+  flex: 1;
+}
+
+.errorText {
+  font-size: 0.88rem;
+  color: #c0392b;
+  flex: 1;
+}
+
+.hint {
+  font-size: 0.88rem;
+  color: #7b8798;
+  margin: 8px 4px;
+}
+
+// ── Percentage row ────────────────────────────────────────────────────────────
+
+.pctRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.pctInputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.pctInput {
+  width: 130px;
+  height: 42px;
+  border-radius: 8px;
+  border: 1px solid #d8e0eb;
+  background: #fff;
+  padding: 0 36px 0 14px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #203769;
+  outline: none;
+  transition: border-color 0.15s;
+  -moz-appearance: textfield;
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+  }
+
+  &:focus {
+    border-color: #315cb8;
+    box-shadow: 0 0 0 3px rgba(49, 92, 184, 0.1);
+  }
+}
+
+.pctSymbol {
+  position: absolute;
+  right: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #315cb8;
+  pointer-events: none;
+}
+
+// ── Preview table ─────────────────────────────────────────────────────────────
+
+.previewSection {
+  margin-top: 18px;
+}
+
+.previewHint {
+  margin: 0 0 10px;
+  font-size: 0.88rem;
+  color: #687486;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #e4eaf3;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+
+  th {
+    background: #f0f4fb;
+    color: #3a5080;
+    font-weight: 700;
+    padding: 10px 12px;
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 1px solid #dce4f0;
+  }
+
+  td {
+    padding: 9px 12px;
+    border-bottom: 1px solid #edf1f8;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  tr:hover td {
+    background: rgba(49, 92, 184, 0.03);
+  }
+}
+
+.codeCell {
+  font-weight: 700;
+  color: #315cb8;
+}
+
+.oldVal {
+  color: #9aaabb;
+  text-decoration: line-through;
+  font-size: 0.82rem;
+}
+
+.arrow {
+  color: #bcc8d8;
+  font-size: 0.8rem;
+  margin: 0 2px;
+}
+
+.moreRows {
+  text-align: center;
+  color: #9aaabb;
+  font-style: italic;
+  padding: 10px !important;
+}
+
+// ── Edit card ─────────────────────────────────────────────────────────────────
+
+.editCard {
+  margin-top: 12px;
+  border: 1.5px solid rgba(49, 92, 184, 0.2);
+  border-radius: 10px;
+  padding: 20px;
+  background: rgba(49, 92, 184, 0.02);
+}
+
+.editHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.editCode {
+  font-size: 0.95rem;
+  color: #243241;
+}
+
+.clearBtn {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  color: #9aaabb;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 4px;
+
+  &:hover {
+    color: #c0392b;
+  }
+}
+
+.editGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.editField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.editLabel {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #5d6778;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.editInput {
+  height: 40px;
+  border-radius: 7px;
+  border: 1px solid #d8e0eb;
+  background: #fff;
+  padding: 0 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #203769;
+  outline: none;
+  transition: border-color 0.15s;
+  -moz-appearance: textfield;
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+  }
+
+  &:focus {
+    border-color: #315cb8;
+    box-shadow: 0 0 0 3px rgba(49, 92, 184, 0.1);
+  }
+}
+
+.editActions {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+// ── Vigencia date ─────────────────────────────────────────────────────────────
+
+.vigenciaField {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.vigenciaLabel {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #5d6778;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.vigenciaInput {
+  height: 40px;
+  border-radius: 7px;
+  border: 1px solid #d8e0eb;
+  background: #fff;
+  padding: 0 10px;
+  font-size: 0.93rem;
+  color: #203769;
+  outline: none;
+  transition: border-color 0.15s;
+  cursor: pointer;
+
+  &:focus {
+    border-color: #315cb8;
+    box-shadow: 0 0 0 3px rgba(49, 92, 184, 0.1);
+  }
+}
+
+// ── Status boxes ──────────────────────────────────────────────────────────────
+
+.successBox {
+  margin-top: 14px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: rgba(16, 124, 87, 0.08);
+  border: 1px solid rgba(16, 124, 87, 0.2);
+  color: #0b7b59;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.warnBox {
+  margin-top: 14px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: rgba(230, 126, 34, 0.08);
+  border: 1px solid rgba(230, 126, 34, 0.2);
+  color: #9a5b00;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.errorBox {
+  margin-top: 14px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: rgba(192, 57, 43, 0.07);
+  border: 1px solid rgba(192, 57, 43, 0.18);
+  color: #c0392b;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+// ── Shared ────────────────────────────────────────────────────────────────────
+
+.buttonInner {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}

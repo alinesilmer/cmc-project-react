@@ -254,6 +254,13 @@ const NAV_SECTIONS: NavSection[] = [
         label: "Ranking O.S.",
         perms: ["medicos:leer"],
       },
+      // {
+      //   kind: "item",
+      //   path: `${base}/actualizacion-valores`,
+      //   icon: PencilRuler,
+      //   label: "Actualización de Valores",
+      //   perms: ["medicos:leer"],
+      // },
       //     {
       //       kind: "item",
       //       path: `${base}/users`,

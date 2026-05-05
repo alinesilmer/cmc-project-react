@@ -52,6 +52,7 @@ import ListadoOSFacturacion from "./app/pages/facturacion/ListadoOSFacturacion/L
 import WebRoutes from "./website/router";
 import GenerarExcel from "./app/pages/CrearPadronExcel/CrearPadronExcel";
 import BoletinConsultaComun from "./app/pages/BoletinConsultaComun/BoletinConsultaComun";
+import ActualizacionValores from "./app/pages/ActualizacionValores/ActualizacionValores";
 import PadronSwiss from "./app/pages/PadronSwiss/PadronSwiss";
 import ObrasSocialesListado from "./app/pages/ObrasSociales/ObrasSocialesListado/ObrasSocialesListado";
 import ObrasSocialesForm from "./app/pages/ObrasSociales/ObrasSocialesForm/ObrasSocialesForm";
@@ -125,6 +126,10 @@ export default function RootRoutes() {
             <Route
               path="boletin-consulta-comun"
               element={<BoletinConsultaComun />}
+            />
+            <Route
+              path="actualizacion-valores"
+              element={<ActualizacionValores />}
             />
 
             <Route path="especialidades" element={<EspecialidadesPage />} />
