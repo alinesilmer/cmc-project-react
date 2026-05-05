@@ -11,7 +11,7 @@ export async function generateConsultaComunExcel(
     import("file-saver"),
   ]);
 
-  const rows = items.map((item) => ({
+  const rows = [...items].sort((a, b) => b.valor - a.valor).map((item) => ({
     "N°": item.nro,
     "Obra Social": item.nombre,
     [`Valor (${CONSULTA_COMUN_CODE})`]: item.valor,

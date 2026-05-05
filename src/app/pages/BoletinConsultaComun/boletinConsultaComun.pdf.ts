@@ -17,6 +17,8 @@ import {
 import type { ConsultaComunItem } from "./boletinConsultaComun.types";
 
 export async function generateConsultaComunPdf(items: ConsultaComunItem[]) {
+  items = [...items].sort((a, b) => b.valor - a.valor);
+
   const [{ jsPDF }, { saveAs }] = await Promise.all([
     import("jspdf"),
     import("file-saver"),
