@@ -228,9 +228,7 @@ export async function generateConsultaComunPdf(items: ConsultaComunItem[]) {
   function drawDetailPage(item: ConsultaComunItem) {
     doc.addPage();
     drawHeaderSection(
-      item.nombre,
-      `Consulta Común`,
-      true
+      item.nombre
     );
 
     // ── Main value card ──────────────────────────────────────────
@@ -240,7 +238,7 @@ export async function generateConsultaComunPdf(items: ConsultaComunItem[]) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8.5);
     doc.setTextColor(...palette.muted);
-    doc.text("Valor vigente · Consulta Común", marginX + 6, 55.5);
+    doc.text("Valor vigente", marginX + 6, 55.5);
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(20);
@@ -375,9 +373,7 @@ export async function generateConsultaComunPdf(items: ConsultaComunItem[]) {
         if (curY + cardH > safeBottomY) {
           doc.addPage();
           drawHeaderSection(
-            item.nombre,
-            `Consulta Común`,
-            true
+            item.nombre
           );
           curY = 50;
         }
