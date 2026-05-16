@@ -53,11 +53,16 @@ import WebRoutes from "./website/router";
 import GenerarExcel from "./app/pages/CrearPadronExcel/CrearPadronExcel";
 import BoletinConsultaComun from "./app/pages/BoletinConsultaComun/BoletinConsultaComun";
 import ActualizacionValores from "./app/pages/ActualizacionValores/ActualizacionValores";
+import TablaValores from "./app/pages/TablaValores/TablaValores";
 import PadronSwiss from "./app/pages/PadronSwiss/PadronSwiss";
 import ObrasSocialesListado from "./app/pages/ObrasSociales/ObrasSocialesListado/ObrasSocialesListado";
 import ObrasSocialesForm from "./app/pages/ObrasSociales/ObrasSocialesForm/ObrasSocialesForm";
 import ObrasSocialesDetalle from "./app/pages/ObrasSociales/ObrasSocialesDetalle/ObrasSocialesDetalle";
 import EspecialidadesPage from "./app/pages/Especialidades/EspecialidadesPage";
+import GestionCodigos from "./app/pages/GestionCodigos/GestionCodigos";
+import TablaGinecologia from "./app/pages/TablaGinecologia/TablaGinecologia";
+import BoletinGalenos from "./app/pages/BoletinGalenos/BoletinGalenos";
+import ImportarValoresCSV from "./app/pages/ImportarValoresCSV/ImportarValoresCSV";
 
 export default function RootRoutes() {
   return (
@@ -130,6 +135,26 @@ export default function RootRoutes() {
             <Route
               path="actualizacion-valores"
               element={<ActualizacionValores />}
+            />
+            <Route
+              path="tabla-valores"
+              element={<TablaValores />}
+            />
+            <Route
+              path="gestion-codigos"
+              element={<GestionCodigos />}
+            />
+            <Route
+              path="tabla-ginecologia"
+              element={<TablaGinecologia />}
+            />
+            <Route
+              path="boletin-galenos"
+              element={<BoletinGalenos />}
+            />
+            <Route
+              path="importar-valores-csv"
+              element={<ImportarValoresCSV />}
             />
 
             <Route path="especialidades" element={<EspecialidadesPage />} />

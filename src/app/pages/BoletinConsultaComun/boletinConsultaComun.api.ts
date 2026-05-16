@@ -48,6 +48,12 @@ export function normalizeRow(input: unknown): ApiBoletinRow {
     "FECHA",
   ]);
 
+  const fechaVigenciaRaw = pickFirst(row, [
+    "fecha_vigencia",
+    "FECHA_VIGENCIA",
+    "fechaVigencia",
+  ]);
+
   return {
     id: Number(
       pickFirst(row, ["id", "ID", "pk", "Pk", "PK"], 0)
@@ -169,6 +175,11 @@ export function normalizeRow(input: unknown): ApiBoletinRow {
     fecha_cambio:
       fechaCambioRaw != null && String(fechaCambioRaw).trim() !== ""
         ? String(fechaCambioRaw).trim()
+        : null,
+
+    fecha_vigencia:
+      fechaVigenciaRaw != null && String(fechaVigenciaRaw).trim() !== ""
+        ? String(fechaVigenciaRaw).trim()
         : null,
 
   };

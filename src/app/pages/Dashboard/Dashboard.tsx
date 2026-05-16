@@ -149,7 +149,7 @@ const Dashboard: React.FC = () => {
   const utilityActions: QuickAction[] = [
     {
       icon: LayoutDashboard,
-      title: "Sistema Fabián",
+      title: "Sistema Viejo",
       description:
         "Abrí el sistema legado en una nueva pestaña para tareas históricas.",
       link: "https://legacy.colegiomedicocorrientes.com/principal.php",

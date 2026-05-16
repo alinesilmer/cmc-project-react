@@ -1,0 +1,120 @@
+@use "../../../styles/variables" as *;
+
+// Height reserved by the contact bar + strip
+$bar-height: 72px;
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(10, 22, 45, 0.78);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.modal {
+  position: relative;
+  width: min(420px, 94vw);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow:
+    0 40px 100px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  background: #fff;
+}
+
+/* ── Image — always shows the full ad, no cropping ───────────────────────── */
+.imageWrapper {
+  width: 100%;
+  // Fixed height = whatever fits the viewport minus the bar below
+  height: calc(92vh - #{$bar-height} - 4px);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center top;
+    display: block;
+    background: #fff;
+  }
+}
+
+/* ── Contact bar ─────────────────────────────────────────────────────────── */
+.contactBar {
+  flex-shrink: 0;
+  height: $bar-height;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0 1rem;
+  background: linear-gradient(135deg, $primary-blue-dark 0%, $primary-blue 100%);
+}
+
+.contactLabel {
+  flex-shrink: 0;
+  font-family: $font-normal;
+  font-size: 1rem;
+  font-weight: 700;
+  color: white;
+  white-space: nowrap;
+}
+
+.contactBtns {
+  display: flex;
+  gap: 0.45rem;
+  flex: 1;
+  min-width: 0;
+}
+
+
+/* ── Close button ────────────────────────────────────────────────────────── */
+.closeBtn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(10, 22, 45, 0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: $white;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  transition:
+    background $transition-fast,
+    transform $transition-fast,
+    box-shadow $transition-fast;
+
+  svg {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2.5;
+  }
+
+  &:hover {
+    background: rgba(10, 22, 45, 0.85);
+    transform: scale(1.1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  }
+
+  &:active { transform: scale(0.95); }
+
+  &:focus-visible {
+    outline: 2px solid $primary-yellow;
+    outline-offset: 2px;
+  }
+}
+
+

@@ -12,6 +12,7 @@ export type ApiBoletinRow = {
   ayudante_c: number;
   c_p_h_s: string;
   fecha_cambio: string | null;
+  fecha_vigencia: string | null;
 };
 
 export type GalenoValues = {
