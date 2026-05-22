@@ -12,6 +12,20 @@ export type ApiBoletinRow = {
   ayudante_c: number;
   c_p_h_s: string;
   fecha_cambio: string | null;
+  fecha_vigencia: string | null;
+};
+
+export type GalenoValues = {
+  quirurgico: number;
+  practica: number;
+  radiologico: number;
+  cirugiaAdultos: number;
+  cirugiaInfantil: number;
+  gastosQuirurgicos: number;
+  /** Legacy DB column name: gastos_radiologico (singular). */
+  gastosRadiologico: number;
+  gastosBioquimicos: number;
+  otrosGastos: number;
 };
 
 export type ConsultaComunItem = {
@@ -20,6 +34,8 @@ export type ConsultaComunItem = {
   valor: number;
   fechaCambio: string | null;
   observaciones: string[];
+  /** Populated from backend but not rendered in the UI table — export only. */
+  galeno: GalenoValues;
 };
 
 /** One text observation per obra social, keyed by nro_obrasocial. */

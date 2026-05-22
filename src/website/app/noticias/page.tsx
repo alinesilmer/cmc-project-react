@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { FiFilter, FiX } from "react-icons/fi";
 import NoticiaCard from "../../components/Noticias/NoticiaCard/NoticiaCard";
 import PageHero from "../../components/UI/Hero/Hero";
 import { listNews } from "../../lib/news.client";
@@ -10,6 +11,7 @@ import styles from "./noticias.module.scss";
 export default function NoticiasPage() {
   const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [loading, setLoading] = useState(true);
+  const [badgeFiltro, setBadgeFiltro] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -48,6 +50,29 @@ export default function NoticiasPage() {
       />
       <main className={styles.noticiasPage}>
         <div className={styles.container}>
+          {!loading && (() => {
+            const badges = Array.from(new Set(noticias.map((n) => n.badge).filter(Boolean))) as string[];
+            return badges.length > 0 ? (
+              <div className={styles.filterRow}>
+                <span className={styles.filterLabel}>
+                  <FiFilter />
+                  Filtrar:
+                </span>
+                {badges.map((b) => (
+                  <button
+                    key={b}
+                    type="button"
+                    className={`${styles.filterBtn} ${badgeFiltro === b ? styles.filterBtnActive : ""}`}
+                    onClick={() => setBadgeFiltro((prev) => (prev === b ? null : b))}
+                    aria-pressed={badgeFiltro === b}
+                  >
+                    {b}
+                    {badgeFiltro === b && <FiX className={styles.filterBtnIcon} />}
+                  </button>
+                ))}
+              </div>
+            ) : null;
+          })()}
 
           {loading ? (
             <div className={styles.loading}>Cargando noticias...</div>
@@ -57,13 +82,15 @@ export default function NoticiasPage() {
             </div>
           ) : (
             <div className={styles.grid}>
-              {noticias.map((noticia) => (
-                <NoticiaCard
-                  key={noticia.id}
-                  noticia={noticia}
-                  onClick={() => navigate(`/noticias/${noticia.id}`)}
-                />
-              ))}
+              {noticias
+                .filter((n) => !badgeFiltro || n.badge === badgeFiltro)
+                .map((noticia) => (
+                  <NoticiaCard
+                    key={noticia.id}
+                    noticia={noticia}
+                    onClick={() => navigate(`/noticias/${noticia.id}`)}
+                  />
+                ))}
             </div>
           )}
         </div>

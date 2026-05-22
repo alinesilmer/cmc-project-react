@@ -1,6 +1,8 @@
 import logo from "../../assets/logoCMC.png";
 
 export const CONSULTA_COMUN_CODE = "420351";
+export const SWISS_MEDICAL_CODE = "42010100";
+export const SWISS_MEDICAL_NOMBRE = "Swiss Medical";
 export const PAGE_SIZE = 500;
 export const MAX_API_PAGES = 50;
 
@@ -16,18 +18,28 @@ export const CMC_SUBTITLE = "Sujeto a cambios por actualizaciones permanentes";
 export const CMC_LOGO_SRC =
   String((import.meta as any).env?.VITE_CMC_LOGO_URL || "") || logo;
 
+/** Obras sociales excluded from UI, PDF, and Excel. */
+export const EXCLUDED_OS = new Set([30, 377, 388, 380, 435, 216]);
+
 export const OBSERVATIONS_BY_OS: Readonly<Record<number, readonly string[]>> =
   Object.freeze({
     // 75: ["Solo aplica bajo autorización previa."],
     // 292: ["Importe sujeto a última actualización del convenio."],
   });
 
-export const moneyFormatter = new Intl.NumberFormat("es-AR", {
+const _moneyFormatter = new Intl.NumberFormat("es-AR", {
   style: "currency",
   currency: "ARS",
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
+
+export const moneyFormatter = {
+  format: (value: number) => {
+    const n = Number(value);
+    return _moneyFormatter.format(Number.isFinite(n) ? n : 0);
+  },
+};
 
 export const shortDateFormatter = new Intl.DateTimeFormat("es-AR", {
   dateStyle: "short",

@@ -11,6 +11,7 @@ export interface Noticia {
   fechaActualizacion: Date | string;
   portada?: string;
   tipo: TipoPublicacion;
+  badge?: string;
 }
 
 export interface Usuario {

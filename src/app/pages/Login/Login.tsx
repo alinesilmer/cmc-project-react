@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Download } from "lucide-react";
 import styles from "./Login.module.scss";
 import Button from "../../components/atoms/Button/Button";
+import Modal from "../../components/atoms/Modal/Modal";
 import { useAuth } from "../../auth/AuthProvider";
 import { isWebEditor } from "../../auth/roles";
 import { http } from "../../lib/http";
@@ -12,6 +14,7 @@ function Login() {
   const [isMember, setIsMember] = useState<boolean | null>(null);
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [isPdfOpen, setIsPdfOpen] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
   // const hasLegacyAccess = (scopes?: string[]) =>
@@ -141,15 +144,13 @@ function Login() {
                 >
                   Iniciar Sesión
                 </Button>
-                <Button className={styles.cta} variant="third" size="md">
-                  <a
-                    href={pdf}
-                    download={pdf}
-                    target="__blank"
-                    className={styles.linkMuted}
-                  >
-                    Ver Valores Éticos Mínimos
-                  </a>
+                <Button
+                  className={styles.cta}
+                  variant="third"
+                  size="md"
+                  onClick={() => setIsPdfOpen(true)}
+                >
+                  Ver Valores Éticos Mínimos
                 </Button>
                 {/* <Button variant="secondary" size="md" onClick={goRegister}>
                   Quiero ser socio
@@ -232,6 +233,24 @@ function Login() {
         </div>
         <aside className={styles.media} aria-hidden></aside>
       </section>
+      <Modal
+        isOpen={isPdfOpen}
+        onClose={() => setIsPdfOpen(false)}
+        title="Valores Éticos Mínimos"
+        size="large"
+      >
+        <div className={styles.pdfModal}>
+          <iframe
+            src={pdf}
+            title="Valores Éticos Mínimos"
+            className={styles.pdfFrame}
+          />
+          <a href={pdf} download className={styles.pdfDownload}>
+            <Download size={16} />
+            Descargar PDF
+          </a>
+        </div>
+      </Modal>
     </div>
   );
 }

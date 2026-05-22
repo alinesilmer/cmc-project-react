@@ -734,6 +734,424 @@
   margin: 2px 0 0;
 }
 
+// ─── Valores Éticos section ────────────────────────────────────────────────────
+
+.eticaSection {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+  background: $white;
+  border-radius: $border-radius-sm;
+  padding: $spacing-xl;
+  box-shadow: $shadow-sm;
+  border: 1px solid #eaecf0;
+  max-width: 680px;
+}
+
+.eticaHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  h2 {
+    margin: 0;
+    color: $primary-blue;
+    font-size: $font-size-h4;
+  }
+}
+
+.eticaDesc {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.eticaCurrent {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: 10px 14px;
+  border: 1.5px solid #dde2ec;
+  border-radius: $border-radius-sm;
+  background: #f8fafc;
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+.eticaCurrentIcon {
+  font-size: 1.4rem;
+  color: $primary-blue;
+  flex-shrink: 0;
+}
+
+.eticaCurrentLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #8a99b3;
+}
+
+.eticaCurrentName {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: $dark-gray;
+}
+
+.eticaDropzone {
+  border: 2px dashed #c5cfe0;
+  border-radius: $border-radius-sm;
+  background: #f8fafc;
+  padding: $spacing-xl $spacing-lg;
+  cursor: pointer;
+  transition: border-color $transition-fast, background $transition-fast;
+  position: relative;
+
+  &:hover {
+    border-color: $primary-blue;
+    background: #f0f4ff;
+  }
+}
+
+.eticaDropzoneActive {
+  border-color: $primary-blue;
+  background: #eef3ff;
+}
+
+.eticaDropzoneFilled {
+  border-style: solid;
+  border-color: $primary-blue;
+  background: #f0f5ff;
+}
+
+.eticaFileInput {
+  display: none;
+}
+
+.eticaDropzoneEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.eticaUploadIcon {
+  color: #8a99b3;
+}
+
+.eticaDropzoneText {
+  margin: 0;
+  font-size: 0.92rem;
+  color: #374151;
+
+  span {
+    color: $primary-blue;
+    font-weight: 600;
+    text-decoration: underline;
+  }
+}
+
+.eticaDropzoneHint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #8a99b3;
+}
+
+.eticaFilePreview {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+
+  svg { color: $primary-blue; flex-shrink: 0; }
+}
+
+.eticaFileName {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: $dark-gray;
+  flex: 1;
+  word-break: break-all;
+}
+
+.eticaFileSize {
+  font-size: 0.8rem;
+  color: #8a99b3;
+  flex-shrink: 0;
+}
+
+.eticaRemoveFile {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #dc2626;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: 4px;
+  transition: background $transition-fast;
+  flex-shrink: 0;
+
+  &:hover { background: #fee2e2; }
+}
+
+.eticaActions {
+  display: flex;
+  gap: $spacing-sm;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.eticaUploadBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0.55rem 1.2rem;
+  border-radius: $border-radius-sm;
+  border: none;
+  background: $primary-blue;
+  color: $white;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background $transition-fast, opacity $transition-fast;
+
+  &:hover:not(:disabled) { background: $primary-blue-dark; }
+  &:disabled { opacity: 0.45; cursor: not-allowed; }
+}
+
+.eticaCancelBtn {
+  padding: 0.55rem 1rem;
+  border-radius: $border-radius-sm;
+  border: 1.5px solid #dde2ec;
+  background: $white;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: border-color $transition-fast, background $transition-fast;
+
+  &:hover {
+    border-color: $primary-blue;
+    background: #f0f4ff;
+  }
+}
+
+.eticaCurrentDate {
+  font-size: 0.78rem;
+  color: #8a99b3;
+}
+
+.eticaCurrentObs {
+  font-size: 0.82rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.eticaCurrentEmpty {
+  font-size: 0.88rem;
+  color: #8a99b3;
+  font-style: italic;
+}
+
+.eticaLoadingText {
+  font-size: 0.88rem;
+  color: #8a99b3;
+}
+
+.eticaViewLink {
+  margin-left: auto;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: $primary-blue;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+
+  &:hover { text-decoration: underline; }
+}
+
+.eticaObsField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+}
+
+.eticaObsTextarea {
+  resize: vertical;
+  min-height: 56px;
+  border: 1.5px solid #dde2ec;
+  border-radius: $border-radius-sm;
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: $dark-gray;
+  background: #fafbfc;
+  transition: border-color $transition-fast;
+
+  &:focus {
+    outline: none;
+    border-color: $primary-blue;
+    background: $white;
+  }
+}
+
+.eticaBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: $border-radius-sm;
+  font-size: 0.9rem;
+  font-weight: 500;
+
+  button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    flex-shrink: 0;
+    padding: 0 4px;
+  }
+}
+
+.eticaSuccessBanner {
+  background: #f0fdf4;
+  border: 1.5px solid #bbf7d0;
+  color: #166534;
+
+  button { color: #166534; }
+}
+
+.eticaErrorBanner {
+  background: #fef2f2;
+  border: 1.5px solid #fecaca;
+  color: #991b1b;
+
+  button { color: #991b1b; }
+}
+
+.eticaHistorial {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1.5px solid #eaecf0;
+  padding-top: $spacing-lg;
+}
+
+.eticaHistorialToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: $primary-blue;
+  padding: 0;
+
+  &:hover { text-decoration: underline; }
+}
+
+.eticaHistorialList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eticaHistorialItem {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: 10px 14px;
+  border: 1.5px solid #eaecf0;
+  border-radius: $border-radius-sm;
+  background: #fafbfc;
+}
+
+.eticaHistorialMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.eticaHistorialName {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: $dark-gray;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.eticaHistorialDate {
+  font-size: 0.78rem;
+  color: #8a99b3;
+}
+
+.eticaHistorialObs {
+  font-size: 0.8rem;
+  color: #6b7280;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.eticaHistorialActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.eticaDeleteBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #dc2626;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background $transition-fast;
+
+  &:hover { background: #fee2e2; }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+}
+
+.eticaNoData {
+  font-size: 0.88rem;
+  color: #8a99b3;
+  text-align: center;
+  padding: 12px 0;
+  margin: 0;
+}
+
 // ─── Responsive: desktop (≤1024px) ────────────────────────────────────────────
 
 @media (max-width: $breakpoint-desktop) {

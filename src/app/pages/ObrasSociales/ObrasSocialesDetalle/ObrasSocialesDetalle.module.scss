@@ -1,0 +1,993 @@
+@use "@/app/styles/all.scss" as *;
+
+.container {
+  padding: $spacing-8;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-6;
+  min-height: 100%;
+}
+
+.loadingPage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-16;
+  gap: $spacing-4;
+  color: $gray-500;
+  font-size: $font-size-base;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid $gray-200;
+  border-top-color: #5b5377;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// ─── Header ───────────────────────────────────────────────────────────────────
+
+.pageHeader {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-2 $spacing-3;
+  background: none;
+  border: none;
+  color: $gray-600;
+  font-size: $font-size-sm;
+  cursor: pointer;
+  border-radius: $border-radius-md;
+  transition: color 0.15s, background-color 0.15s;
+  align-self: flex-start;
+
+  &:hover {
+    color: #6f6591;
+    background-color: #e7e3f4;
+  }
+}
+
+.titleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $spacing-4;
+  flex-wrap: wrap;
+}
+
+.titleLeft {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+}
+
+.titleIcon {
+  width: 56px;
+  height: 56px;
+  background-color: #e7e3f4;
+ color: #786c99;
+  border-radius: $border-radius-sm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: $font-size-4xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.titleSub {
+  font-size: $font-size-sm;
+  color: $gray-500;
+  margin: $spacing-1 0 0;
+}
+
+.editBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-3 $spacing-5;
+  background-color: $white;
+  color: #6f6591;
+  border: 1px solid #6f6591;
+  border-radius: $border-radius-md;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  text-decoration: none;
+  transition: background-color 0.18s;
+  white-space: nowrap;
+  align-self: flex-start;
+
+  &:hover {
+    background-color: #cdc3ed;
+  }
+}
+
+.badgeRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $spacing-3;
+}
+
+.badgeA {
+  display: inline-block;
+  padding: $spacing-2 $spacing-4;
+  background-color: #cdc2e8;
+  color: #493c68;
+  border-radius: $border-radius-sm;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+}
+
+.badgeB {
+  display: inline-block;
+  padding: $spacing-2 $spacing-4;
+  background-color: rgb(254, 250, 219);
+  color: #938a54;
+  border-radius: $border-radius-sm;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+}
+
+.badgeNeutral {
+  display: inline-block;
+  padding: $spacing-2 $spacing-4;
+  background-color: $gray-100;
+  color: $gray-700;
+  border-radius: $border-radius-sm;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+}
+
+// ─── Content grid ─────────────────────────────────────────────────────────────
+
+.contentGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-5;
+  align-items: start;
+
+  @media (max-width: $breakpoint-lg) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  background-color: $white;
+  border-radius: $border-radius-sm;
+  box-shadow: $shadow-md;
+  padding: $spacing-6;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-5;
+}
+
+.cardFull {
+  grid-column: 1 / -1;
+}
+
+.cardTitle {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: #574e76;
+  margin: 0;
+  padding-bottom: $spacing-4;
+  border-bottom: 1px solid #d6d1eac0;
+}
+
+// ─── Info rows ────────────────────────────────────────────────────────────────
+
+.infoGroup {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+}
+
+.infoRow {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-3;
+}
+
+.infoIcon {
+  color: #665b83;
+  flex-shrink: 0;
+  margin-top: 1px;
+  display: flex;
+}
+
+.infoContent {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  min-width: 0;
+}
+
+.infoLabel {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: $gray-500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.infoValue {
+  font-size: $font-size-base;
+  color: $gray-800;
+  word-break: break-word;
+}
+
+// ─── Relations ────────────────────────────────────────────────────────────────
+
+.relationsGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-8;
+}
+
+.relationBlock {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+.relationLabel {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-600;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.asociadasList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+.relationLink {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  color: #574e76;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  text-decoration: none;
+  padding: $spacing-2 $spacing-3;
+  border-radius: $border-radius-md;
+  border: 1px solid $secondary-blue;
+  background-color: #dfd9f3;
+  transition: background-color 0.15s, border-color 0.15s;
+
+  &:hover {
+    background-color: #bab4ce;
+    border-color: #dfd9f3;
+  }
+}
+
+// ─── Documents ────────────────────────────────────────────────────────────────
+
+.emptyDocs {
+  font-size: $font-size-base;
+  color: $gray-500;
+  margin: 0;
+}
+
+.inlineLink {
+  color: $primary-blue;
+  text-decoration: underline;
+}
+
+.docGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: $spacing-4;
+}
+
+.docCard {
+  background-color: $gray-50;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-lg;
+  padding: $spacing-5;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+.docCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+  flex-wrap: wrap;
+}
+
+.docCardTipo {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-800;
+}
+
+.docActiveBadge {
+  display: inline-block;
+  padding: $spacing-1 $spacing-3;
+  background-color: #b9a7e9;
+  color: #493c68;
+  border-radius: $border-radius-sm;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+}
+
+.docLink {
+  font-size: $font-size-sm;
+  color: $primary-blue;
+  text-decoration: underline;
+  word-break: break-all;
+
+  &:hover {
+    color: #6B5F8A;
+  }
+}
+
+.docEmpty {
+  font-size: $font-size-sm;
+  color: $gray-400;
+  font-style: italic;
+}
+
+.historyToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-1 $spacing-3;
+  background: none;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-md;
+  font-size: $font-size-xs;
+  color: $gray-600;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: background-color 0.15s;
+
+  &:hover {
+    background-color: $white;
+  }
+}
+
+.historyList {
+  list-style: none;
+  margin: 0;
+  padding: $spacing-3;
+  background-color: $white;
+  border-radius: $border-radius-md;
+  border: 1px solid $gray-200;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+.historyItem {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  padding-bottom: $spacing-3;
+  border-bottom: 1px solid $gray-100;
+
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+}
+
+.historyItemHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+  flex-wrap: wrap;
+}
+
+.historyVersion {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: $primary-blue;
+}
+
+.historyDate {
+  font-size: $font-size-xs;
+  color: $gray-500;
+}
+
+.historyNota {
+  font-size: $font-size-xs;
+  color: $gray-500;
+  font-style: italic;
+  margin: 0;
+}
+
+// ─── Error ────────────────────────────────────────────────────────────────────
+
+.errorBanner {
+  padding: $spacing-4 $spacing-5;
+  background-color: #fff0f0;
+  border: 1px solid #fca5a5;
+  border-radius: $border-radius-md;
+  color: $danger-red;
+  font-size: $font-size-base;
+}
+
+// ─── Responsive ───────────────────────────────────────────────────────────────
+
+@media (max-width: $breakpoint-md) {
+  .container {
+    padding: $spacing-5;
+    gap: $spacing-4;
+  }
+
+  .title {
+    font-size: $font-size-3xl;
+  }
+
+  .docGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: $breakpoint-sm) {
+  .container {
+    padding: $spacing-4;
+    gap: $spacing-4;
+  }
+
+  .title {
+    font-size: $font-size-2xl;
+  }
+
+  .titleIcon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .badgeRow {
+    gap: $spacing-2;
+  }
+}
+
+// ─── Tabs ─────────────────────────────────────────────────────────────────────
+
+.tabs {
+  display: flex;
+  gap: $spacing-6;
+  border-bottom: 1px solid $gray-200;
+}
+
+.tab {
+  position: relative;
+  padding: 10px 0;
+  background: transparent;
+  border: 0;
+  color: $gray-600;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+
+  &:hover {
+    color: $gray-900;
+  }
+}
+
+.tabActive {
+  color: $gray-900;
+}
+
+.tabUnderline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: #6f6591;
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tabUnderline {
+    transition: none !important;
+  }
+}
+
+// ─── Historial container ──────────────────────────────────────────────────────
+
+.historialContainer {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-5;
+}
+
+.historialToggleRow {
+  display: flex;
+  gap: $spacing-3;
+  flex-wrap: wrap;
+}
+
+.historialToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-2 $spacing-4;
+  background-color: $white;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-md;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $gray-600;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+
+  &:hover {
+    background-color: $gray-50;
+    border-color: $gray-400;
+  }
+}
+
+.historialToggleBtnActive {
+  background-color: #e7e3f4;
+  border-color: #9d91c2;
+  color: #574e76;
+}
+
+.hLoadingState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-3;
+  padding: $spacing-12;
+  color: $gray-500;
+  font-size: $font-size-base;
+}
+
+.spinIcon {
+  animation: spin 0.8s linear infinite;
+}
+
+.hEmptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-3;
+  padding: $spacing-12;
+  color: $gray-400;
+  font-size: $font-size-base;
+  text-align: center;
+}
+
+// ─── Porcentual timeline ──────────────────────────────────────────────────────
+
+.porcentualList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background-color: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-md;
+  overflow: hidden;
+  box-shadow: $shadow-sm;
+}
+
+.porcentualItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-4;
+  padding: $spacing-4 $spacing-5;
+  border-bottom: 1px solid $gray-100;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background-color: $gray-50;
+  }
+}
+
+.porcentualLeft {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  min-width: 0;
+}
+
+.porcentualDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #9d91c2;
+  flex-shrink: 0;
+}
+
+.porcentualInfo {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  min-width: 0;
+}
+
+.porcentualDate {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-800;
+}
+
+.porcentualCount {
+  font-size: $font-size-xs;
+  color: $gray-500;
+}
+
+.porcentualRight {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  flex-shrink: 0;
+}
+
+.porcentualPct {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-600;
+}
+
+.porcentualPctUp {
+  color: #16a34a;
+}
+
+.porcentualPctDown {
+  color: #dc2626;
+}
+
+.porcentualPctNa {
+  font-size: $font-size-xs;
+  color: $gray-400;
+  font-style: italic;
+}
+
+.porcentualVerBtn {
+  padding: $spacing-1 $spacing-3;
+  background: none;
+  border: 1px solid #9d91c2;
+  border-radius: $border-radius-sm;
+  font-size: $font-size-xs;
+  color: #574e76;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s;
+
+  &:hover {
+    background-color: #e7e3f4;
+  }
+}
+
+// ─── Por fecha section ────────────────────────────────────────────────────────
+
+.porFechaSection {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+}
+
+.porFechaHeader {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-4 $spacing-5;
+  background-color: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-md;
+  box-shadow: $shadow-sm;
+  flex-wrap: wrap;
+}
+
+.porFechaLabel {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-700;
+  white-space: nowrap;
+}
+
+.porFechaSelect {
+  padding: $spacing-2 $spacing-3;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-md;
+  font-size: $font-size-sm;
+  color: $gray-800;
+  background-color: $white;
+  cursor: pointer;
+  min-width: 180px;
+
+  &:focus {
+    outline: none;
+    border-color: #9d91c2;
+    box-shadow: 0 0 0 2px #e7e3f4;
+  }
+}
+
+.availableDates {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $spacing-2;
+}
+
+.availableDatesLabel {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: $gray-500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.dateChip {
+  padding: $spacing-1 $spacing-3;
+  background-color: $gray-100;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-sm;
+  font-size: $font-size-xs;
+  color: $gray-700;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+
+  &:hover {
+    background-color: $gray-200;
+  }
+}
+
+.dateChipActive {
+  background-color: #e7e3f4;
+  border-color: #9d91c2;
+  color: #574e76;
+  font-weight: $font-weight-semibold;
+}
+
+// ─── Table toolbar ────────────────────────────────────────────────────────────
+
+.hToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+  flex-wrap: wrap;
+}
+
+.hToolbarLeft {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  flex-wrap: wrap;
+}
+
+.filterBar {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.filterIcon {
+  position: absolute;
+  left: $spacing-3;
+  color: $gray-400;
+  pointer-events: none;
+}
+
+.filterInput {
+  padding: $spacing-2 $spacing-3 $spacing-2 $spacing-8;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-md;
+  font-size: $font-size-sm;
+  color: $gray-800;
+  background-color: $white;
+  width: 200px;
+
+  &:focus {
+    outline: none;
+    border-color: #9d91c2;
+    box-shadow: 0 0 0 2px #e7e3f4;
+  }
+}
+
+.filterClear {
+  position: absolute;
+  right: $spacing-2;
+  background: none;
+  border: none;
+  color: $gray-400;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+
+  &:hover {
+    color: $gray-700;
+  }
+}
+
+.countBadge {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: $gray-500;
+  background-color: $gray-100;
+  padding: $spacing-1 $spacing-3;
+  border-radius: $border-radius-sm;
+  white-space: nowrap;
+}
+
+.exportBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-2 $spacing-4;
+  background-color: $white;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-md;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $gray-700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s, border-color 0.15s;
+
+  &:hover:not(:disabled) {
+    background-color: $gray-50;
+    border-color: $gray-400;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// ─── Historial table ──────────────────────────────────────────────────────────
+
+.tableContainer {
+  overflow-x: auto;
+  border-radius: $border-radius-md;
+  box-shadow: $shadow-sm;
+  border: 1px solid $gray-200;
+}
+
+.hTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: $font-size-sm;
+  background-color: $white;
+
+  thead {
+    background-color: $gray-50;
+    border-bottom: 1px solid $gray-200;
+
+    th {
+      padding: $spacing-3 $spacing-4;
+      font-size: $font-size-xs;
+      font-weight: $font-weight-semibold;
+      color: $gray-600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      white-space: nowrap;
+      user-select: none;
+
+      &:hover {
+        background-color: $gray-100;
+      }
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid $gray-100;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      &:hover {
+        background-color: $gray-50;
+      }
+    }
+
+    td {
+      padding: $spacing-3 $spacing-4;
+      color: $gray-800;
+    }
+  }
+}
+
+.thInner {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+}
+
+.thRight {
+  text-align: right;
+}
+
+.tdCode {
+  font-family: monospace;
+  font-size: $font-size-xs;
+  color: $gray-700;
+  white-space: nowrap;
+}
+
+.tdRight {
+  text-align: right;
+}
+
+.tdMoney {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: $gray-800;
+}
+
+.tdDate {
+  white-space: nowrap;
+  color: $gray-600;
+  font-size: $font-size-xs;
+}
+
+.tdNull {
+  color: $gray-400;
+}
+
+.sortIconNeutral {
+  color: $gray-400;
+  opacity: 0.6;
+}
+
+.sortIconActive {
+  color: #6f6591;
+}

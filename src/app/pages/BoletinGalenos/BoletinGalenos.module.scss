@@ -1,0 +1,81 @@
+$navy:     #1a2f5a;
+$blue:     #2f5bb7;
+$border:   #e2e8f0;
+$text-3:   #64748b;
+$green:    #166534;
+$green-bg: #f0fdf4;
+$green-brd:#bbf7d0;
+$radius-md: 11px;
+$shadow-sm: 0 1px 3px rgba(15,30,70,.06), 0 3px 10px rgba(15,30,70,.05);
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 28px 32px 64px;
+  min-height: 100%;
+  background:
+    radial-gradient(ellipse at 80% 0%, rgba(47,91,183,.055) 0%, transparent 52%),
+    linear-gradient(170deg, #f5f8fd 0%, #eef3fb 100%);
+
+  @media (max-width: 768px) { padding: 20px 16px 48px; gap: 18px; }
+  @media (max-width: 480px) { padding: 16px 12px 40px; }
+}
+
+// ─── Header ───────────────────────────────────────────────────────────────────
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-bottom: 18px;
+  border-bottom: 2px solid $navy;
+
+  @media (max-width: 480px) { flex-direction: column; align-items: flex-start; }
+}
+
+.eyebrow {
+  margin: 0 0 3px;
+  font-size: .65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: $text-3;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(1.3rem, 2.4vw, 1.85rem);
+  font-weight: 900;
+  letter-spacing: -.035em;
+  color: $navy;
+  line-height: 1.1;
+}
+
+.savedBanner {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: $green-bg;
+  border: 1.5px solid $green-brd;
+  color: $green;
+  border-radius: $radius-md;
+  padding: 9px 16px;
+  font-size: .82rem;
+  font-weight: 700;
+  box-shadow: $shadow-sm;
+  flex-shrink: 0;
+
+  @media (max-width: 480px) { width: 100%; justify-content: center; }
+}
+
+// ─── Stacked layout ──────────────────────────────────────────────────────────
+.layout {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.formPanel  { width: 100%; }
+.tablePanel { width: 100%; }

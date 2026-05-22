@@ -21,6 +21,7 @@ type CreateFields = {
   tipo: TipoPublicacion;
   publicada?: boolean;
   autor?: string;
+  badge?: string;
 };
 
 type UpdateFields = Partial<CreateFields>;
@@ -50,6 +51,7 @@ export async function createNews(fields: CreateFields, opts?: SaveOptions) {
     fd.append("publicada", String(!!fields.publicada));
   }
   if (fields.autor) fd.append("autor", fields.autor);
+  if (fields.badge !== undefined) fd.append("badge", fields.badge);
 
   if (opts?.portada) fd.append("portada", opts.portada);
   (opts?.adjuntos ?? []).forEach((f) => fd.append("adjuntos", f));
@@ -71,6 +73,7 @@ export async function updateNews(
   if (fields.publicada !== undefined)
     fd.append("publicada", String(!!fields.publicada));
   if (fields.autor !== undefined) fd.append("autor", fields.autor || "");
+  if (fields.badge !== undefined) fd.append("badge", fields.badge);
 
   if (opts?.clearPortada) fd.append("limpiar_portada", "true");
   if (opts?.portada) fd.append("portada", opts.portada);
