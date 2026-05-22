@@ -14,18 +14,34 @@ import TabDeducciones from "./tabs/TabDeducciones";
 import TabResumen from "./tabs/TabResumen";
 import TabVistaPreviaPago from "./tabs/TabVistaPreviaPago";
 import TabRecibos from "./tabs/TabRecibos";
+import TabExportables from "./tabs/TabExportables";
 
 const PAGO_URL = (id: string | number) => `/api/pagos/${id}`;
 const CERRAR_URL = (id: string | number) => `/api/pagos/${id}/cerrar`;
 const REABRIR_URL = (id: string | number) => `/api/pagos/${id}/reabrir`;
 
-type Tab = "facturas" | "deducciones" | "preview" | "medico" | "recibos";
-const TABS: { key: Tab; label: string }[] = [
+type Tab =
+  | "facturas"
+  | "deducciones"
+  | "preview"
+  | "medico"
+  | "recibos"
+  | "exportables";
+const TABS: {
+  key: Tab;
+  label: string;
+  disabledWhen?: (p: import("../types").Pago | null) => boolean;
+}[] = [
   { key: "facturas", label: "Facturas" },
   { key: "deducciones", label: "Deducciones" },
   { key: "preview", label: "Vista Previa" },
   { key: "medico", label: "Por Médico" },
   { key: "recibos", label: "Recibos" },
+  {
+    key: "exportables",
+    label: "Exportables",
+    disabledWhen: (p) => p?.estado !== "C",
+  },
 ];
 
 const PagoDetalle: React.FC = () => {
@@ -43,7 +59,9 @@ const PagoDetalle: React.FC = () => {
 
   // Cerrar / Reabrir
   const [actionBusy, setActionBusy] = useState(false);
-  const [confirmAction, setConfirmAction] = useState<"cerrar" | "reabrir" | null>(null);
+  const [confirmAction, setConfirmAction] = useState<
+    "cerrar" | "reabrir" | null
+  >(null);
 
   // Editar descripción
   const [editDescOpen, setEditDescOpen] = useState(false);
@@ -68,23 +86,38 @@ const PagoDetalle: React.FC = () => {
     }
   }, [pagoId, navigate]);
 
-  useEffect(() => { fetchPago(); }, [fetchPago]);
+  useEffect(() => {
+    fetchPago();
+  }, [fetchPago]);
 
   const handleAction = async () => {
     if (!pagoId || !confirmAction) return;
     setActionBusy(true);
     try {
-      const url = confirmAction === "cerrar" ? CERRAR_URL(pagoId) : REABRIR_URL(pagoId);
+      const url =
+        confirmAction === "cerrar" ? CERRAR_URL(pagoId) : REABRIR_URL(pagoId);
       const updated = await postJSON<Pago>(url);
       setPago(updated);
-      notify(confirmAction === "cerrar" ? "Pago cerrado correctamente." : "Pago reabierto correctamente.");
+      notify(
+        confirmAction === "cerrar"
+          ? "Pago cerrado correctamente."
+          : "Pago reabierto correctamente.",
+      );
       setConfirmAction(null);
     } catch (e: any) {
       const detail = e?.response?.data?.detail;
       if (typeof detail === "object" && detail?.pago_id) {
-        notify(`${detail.message ?? "Conflicto"} Ver pago #${detail.pago_id}.`, "error");
+        notify(
+          `${detail.message ?? "Conflicto"} Ver pago #${detail.pago_id}.`,
+          "error",
+        );
       } else {
-        notify(typeof detail === "string" ? detail : e?.message ?? "Error al cambiar estado.", "error");
+        notify(
+          typeof detail === "string"
+            ? detail
+            : (e?.message ?? "Error al cambiar estado."),
+          "error",
+        );
       }
     } finally {
       setActionBusy(false);
@@ -100,12 +133,17 @@ const PagoDetalle: React.FC = () => {
     if (!pagoId) return;
     setSavingDesc(true);
     try {
-      const updated = await putJSON<Pago>(PAGO_URL(pagoId), { descripcion: editDesc.trim() || null });
+      const updated = await putJSON<Pago>(PAGO_URL(pagoId), {
+        descripcion: editDesc.trim() || null,
+      });
       setPago(updated);
       setEditDescOpen(false);
       notify("Descripción guardada.");
     } catch (e: any) {
-      notify(e?.response?.data?.detail ?? e?.message ?? "Error al guardar.", "error");
+      notify(
+        e?.response?.data?.detail ?? e?.message ?? "Error al guardar.",
+        "error",
+      );
     } finally {
       setSavingDesc(false);
     }
@@ -117,14 +155,22 @@ const PagoDetalle: React.FC = () => {
     if (!pago) return null;
     if (pago.estado === "A") {
       return (
-        <Button variant="primary" onClick={() => setConfirmAction("cerrar")} disabled={actionBusy}>
+        <Button
+          variant="primary"
+          onClick={() => setConfirmAction("cerrar")}
+          disabled={actionBusy}
+        >
           Cerrar pago
         </Button>
       );
     }
     // Estado C: botón reabrir (si hay recibos, el backend devolverá 409)
     return (
-      <Button variant="secondary" onClick={() => setConfirmAction("reabrir")} disabled={actionBusy}>
+      <Button
+        variant="secondary"
+        onClick={() => setConfirmAction("reabrir")}
+        disabled={actionBusy}
+      >
         Reabrir pago
       </Button>
     );
@@ -155,32 +201,50 @@ const PagoDetalle: React.FC = () => {
               <div className={styles.titleRow}>
                 <h1 className={styles.title}>Pago — {periodTitle}</h1>
                 {pago && (
-                  <span className={`${styles.badge} ${pago.estado === "A" ? styles.estadoA : styles.estadoC}`}>
+                  <span
+                    className={`${styles.badge} ${pago.estado === "A" ? styles.estadoA : styles.estadoC}`}
+                  >
                     {pago.estado === "A" ? "Abierto" : "Cerrado"}
                   </span>
                 )}
                 {pago?.estado === "A" && (
                   <Tooltip title="Editar descripción" placement="top">
-                    <button className={styles.editDescBtn} onClick={openEditDesc} aria-label="Editar descripción">✏️</button>
+                    <button
+                      className={styles.editDescBtn}
+                      onClick={openEditDesc}
+                      aria-label="Editar descripción"
+                    >
+                      ✏️
+                    </button>
                   </Tooltip>
                 )}
               </div>
               {pago?.descripcion && (
-                <span style={{ fontSize: 13, color: "#64748b", marginTop: 2 }}>{pago.descripcion}</span>
+                <span style={{ fontSize: 13, color: "#64748b", marginTop: 2 }}>
+                  {pago.descripcion}
+                </span>
               )}
               {pago && (
                 <div className={styles.chips}>
-                  <span className={styles.chip}>Bruto: ${fmt(pago.total_bruto)}</span>
-                  <span className={`${styles.chip} ${styles.chipRed}`}>Débitos: -${fmt(pago.total_debitos)}</span>
-                  <span className={`${styles.chip} ${styles.chipGreen}`}>Créditos: +${fmt(pago.total_creditos)}</span>
-                  <span className={`${styles.chip} ${styles.chipRed}`}>Deducciones: -${fmt(pago.total_deduccion)}</span>
-                  <span className={styles.chip} style={{ fontWeight: 700 }}>Neto: ${fmt(pago.total_neto)}</span>
+                  <span className={styles.chip}>
+                    Bruto: ${fmt(pago.total_bruto)}
+                  </span>
+                  <span className={`${styles.chip} ${styles.chipRed}`}>
+                    Débitos: -${fmt(pago.total_debitos)}
+                  </span>
+                  <span className={`${styles.chip} ${styles.chipGreen}`}>
+                    Créditos: +${fmt(pago.total_creditos)}
+                  </span>
+                  <span className={`${styles.chip} ${styles.chipRed}`}>
+                    Deducciones: -${fmt(pago.total_deduccion)}
+                  </span>
+                  <span className={styles.chip} style={{ fontWeight: 700 }}>
+                    Neto: ${fmt(pago.total_neto)}
+                  </span>
                 </div>
               )}
             </div>
-            <div className={styles.headerActions}>
-              {renderActionButton()}
-            </div>
+            <div className={styles.headerActions}>{renderActionButton()}</div>
           </div>
 
           {error && <div className={styles.errorBanner}>{error}</div>}
@@ -188,26 +252,59 @@ const PagoDetalle: React.FC = () => {
           {/* Tabs */}
           <div className={styles.tabsWrap}>
             <div className={styles.tabs}>
-              {TABS.map((t) => (
-                <button
-                  key={t.key}
-                  className={`${styles.tab} ${activeTab === t.key ? styles.tabActive : ""}`}
-                  onClick={() => setTab(t.key)}
-                >
-                  {t.label}
-                </button>
-              ))}
+              {TABS.map((t) => {
+                const isDisabled = t.disabledWhen?.(pago) ?? false;
+                return (
+                  <button
+                    key={t.key}
+                    className={`${styles.tab} ${activeTab === t.key ? styles.tabActive : ""} ${isDisabled ? styles.tabDisabled : ""}`}
+                    onClick={() => {
+                      if (!isDisabled) setTab(t.key);
+                    }}
+                    disabled={isDisabled}
+                    title={
+                      isDisabled
+                        ? "Solo disponible cuando el pago está cerrado"
+                        : undefined
+                    }
+                  >
+                    {t.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           {/* Contenido del tab activo */}
           {pago && pagoId && (
             <>
-              {activeTab === "facturas" && <TabFacturas pago={pago} pagoId={Number(pagoId)} onPagoChange={setPago} onRefresh={fetchPago} />}
-              {activeTab === "deducciones" && <TabDeducciones pago={pago} pagoId={Number(pagoId)} onRefresh={fetchPago} />}
-              {activeTab === "preview" && <TabResumen pagoId={Number(pagoId)} />}
-              {activeTab === "medico" && <TabVistaPreviaPago pago={pago} pagoId={Number(pagoId)} />}
-              {activeTab === "recibos" && <TabRecibos pago={pago} pagoId={Number(pagoId)} />}
+              {activeTab === "facturas" && (
+                <TabFacturas
+                  pago={pago}
+                  pagoId={Number(pagoId)}
+                  onPagoChange={setPago}
+                  onRefresh={fetchPago}
+                />
+              )}
+              {activeTab === "deducciones" && (
+                <TabDeducciones
+                  pago={pago}
+                  pagoId={Number(pagoId)}
+                  onRefresh={fetchPago}
+                />
+              )}
+              {activeTab === "preview" && (
+                <TabResumen pagoId={Number(pagoId)} />
+              )}
+              {activeTab === "medico" && (
+                <TabVistaPreviaPago pago={pago} pagoId={Number(pagoId)} />
+              )}
+              {activeTab === "recibos" && (
+                <TabRecibos pago={pago} pagoId={Number(pagoId)} />
+              )}
+              {activeTab === "exportables" && (
+                <TabExportables pago={pago} pagoId={Number(pagoId)} />
+              )}
             </>
           )}
         </motion.div>
@@ -218,8 +315,16 @@ const PagoDetalle: React.FC = () => {
         <div className={styles.modalBackdrop} role="dialog" aria-modal="true">
           <div className={styles.modalCard}>
             <div className={styles.modalHeader}>
-              <h3>{confirmAction === "cerrar" ? "Cerrar Pago" : "Reabrir Pago"}</h3>
-              <button className={styles.modalClose} onClick={() => setConfirmAction(null)} aria-label="Cerrar">✕</button>
+              <h3>
+                {confirmAction === "cerrar" ? "Cerrar Pago" : "Reabrir Pago"}
+              </h3>
+              <button
+                className={styles.modalClose}
+                onClick={() => setConfirmAction(null)}
+                aria-label="Cerrar"
+              >
+                ✕
+              </button>
             </div>
             <div className={styles.modalBody}>
               {!actionBusy && (
@@ -232,9 +337,23 @@ const PagoDetalle: React.FC = () => {
               {actionBusy && <p className={styles.muted}>Procesando…</p>}
             </div>
             <div className={styles.modalActions}>
-              <Button variant="secondary" onClick={() => setConfirmAction(null)} disabled={actionBusy}>Cancelar</Button>
-              <Button variant="primary" onClick={handleAction} disabled={actionBusy}>
-                {actionBusy ? "Procesando…" : confirmAction === "cerrar" ? "Sí, cerrar" : "Sí, reabrir"}
+              <Button
+                variant="secondary"
+                onClick={() => setConfirmAction(null)}
+                disabled={actionBusy}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleAction}
+                disabled={actionBusy}
+              >
+                {actionBusy
+                  ? "Procesando…"
+                  : confirmAction === "cerrar"
+                    ? "Sí, cerrar"
+                    : "Sí, reabrir"}
               </Button>
             </div>
           </div>
@@ -247,7 +366,13 @@ const PagoDetalle: React.FC = () => {
           <div className={styles.modalCard}>
             <div className={styles.modalHeader}>
               <h3>Editar Descripción</h3>
-              <button className={styles.modalClose} onClick={() => setEditDescOpen(false)} aria-label="Cerrar">✕</button>
+              <button
+                className={styles.modalClose}
+                onClick={() => setEditDescOpen(false)}
+                aria-label="Cerrar"
+              >
+                ✕
+              </button>
             </div>
             <div className={styles.modalBody}>
               <div className={styles.formRow}>
@@ -263,8 +388,18 @@ const PagoDetalle: React.FC = () => {
               </div>
             </div>
             <div className={styles.modalActions}>
-              <Button variant="secondary" onClick={() => setEditDescOpen(false)} disabled={savingDesc}>Cancelar</Button>
-              <Button variant="primary" onClick={handleSaveDesc} disabled={savingDesc}>
+              <Button
+                variant="secondary"
+                onClick={() => setEditDescOpen(false)}
+                disabled={savingDesc}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleSaveDesc}
+                disabled={savingDesc}
+              >
                 {savingDesc ? "Guardando…" : "Guardar"}
               </Button>
             </div>

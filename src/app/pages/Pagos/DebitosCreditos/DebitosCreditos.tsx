@@ -16,8 +16,6 @@ import {
   type PeriodoDisp,
   type LoteAjuste,
   mesLabel,
-  osId,
-  osNombre,
   MESES,
 } from "../types";
 import AppSearchSelect from "../../../components/atoms/AppSearchSelect/AppSearchSelect";
@@ -463,8 +461,8 @@ const DebitosCreditos: React.FC = () => {
                 <label className={styles.filterLabel}>Obra Social</label>
                 <AppSearchSelect
                   options={obras.map((o) => ({
-                    id: String(osId(o)),
-                    label: `${osId(o)} — ${osNombre(o)}`,
+                    id: String(o.nro_obra_social),
+                    label: `${o.nro_obra_social} - ${o.nombre}`,
                   }))}
                   value={filterOs || null}
                   onChange={(val) => setFilterOs(val ? String(val) : "")}
@@ -579,8 +577,8 @@ const DebitosCreditos: React.FC = () => {
                 <label className={styles.formLabel}>Obra Social</label>
                 <AppSearchSelect
                   options={obras.map((o) => ({
-                    id: String(osId(o)),
-                    label: `${osId(o)} — ${osNombre(o)}`,
+                    id: String(o.nro_obra_social),
+                    label: `${o.nro_obra_social} - ${o.nombre}`,
                   }))}
                   value={addSfOs || null}
                   onChange={(val) => setAddSfOs(val ? String(val) : "")}
@@ -674,32 +672,52 @@ const DebitosCreditos: React.FC = () => {
                   </p>
                   <div className={styles.deleteInfoBox}>
                     <div className={styles.deleteInfoRow}>
-                      <span className={styles.deleteInfoLabel}>Obra Social</span>
-                      <span>{deleteTarget.obra_social_nombre} (#{deleteTarget.obra_social_id})</span>
+                      <span className={styles.deleteInfoLabel}>
+                        Obra Social
+                      </span>
+                      <span>
+                        {deleteTarget.obra_social_nombre} (#
+                        {deleteTarget.obra_social_id})
+                      </span>
                     </div>
                     <div className={styles.deleteInfoRow}>
                       <span className={styles.deleteInfoLabel}>Período</span>
-                      <span>{mesLabel(deleteTarget.mes_periodo)} {deleteTarget.anio_periodo}</span>
+                      <span>
+                        {mesLabel(deleteTarget.mes_periodo)}{" "}
+                        {deleteTarget.anio_periodo}
+                      </span>
                     </div>
                     <div className={styles.deleteInfoRow}>
                       <span className={styles.deleteInfoLabel}>Tipo</span>
-                      <span>{deleteTarget.tipo === "sin_factura" ? "Sin Factura" : "Normal"}</span>
+                      <span>
+                        {deleteTarget.tipo === "sin_factura"
+                          ? "Sin Factura"
+                          : "Normal"}
+                      </span>
                     </div>
                     {deleteTarget.nro_factura && (
                       <div className={styles.deleteInfoRow}>
-                        <span className={styles.deleteInfoLabel}>Nro. Factura</span>
-                        <span style={{ fontFamily: "monospace" }}>{deleteTarget.nro_factura}</span>
+                        <span className={styles.deleteInfoLabel}>
+                          Nro. Factura
+                        </span>
+                        <span style={{ fontFamily: "monospace" }}>
+                          {deleteTarget.nro_factura}
+                        </span>
                       </div>
                     )}
                     <div className={styles.deleteInfoRow}>
                       <span className={styles.deleteInfoLabel}>Estado</span>
-                      <span className={`${styles.estadoBadge} ${estadoClass(deleteTarget.estado)}`}>
+                      <span
+                        className={`${styles.estadoBadge} ${estadoClass(deleteTarget.estado)}`}
+                      >
                         {estadoLabel(deleteTarget.estado)}
                       </span>
                     </div>
                   </div>
                   <div className={styles.deleteWarning}>
-                    <strong>⚠ Atención:</strong> todos los ajustes (débitos y créditos) asociados a este lote serán eliminados de forma permanente y no podrán recuperarse.
+                    <strong>⚠ Atención:</strong> todos los ajustes (débitos y
+                    créditos) asociados a este lote serán eliminados de forma
+                    permanente y no podrán recuperarse.
                   </div>
                 </div>
                 <div className={styles.modalActions}>
@@ -719,10 +737,15 @@ const DebitosCreditos: React.FC = () => {
                   <p style={{ margin: 0 }}>
                     ¿Confirmás que querés eliminar definitivamente el lote de{" "}
                     <strong>{deleteTarget.obra_social_nombre}</strong> —{" "}
-                    <strong>{mesLabel(deleteTarget.mes_periodo)} {deleteTarget.anio_periodo}</strong>?
+                    <strong>
+                      {mesLabel(deleteTarget.mes_periodo)}{" "}
+                      {deleteTarget.anio_periodo}
+                    </strong>
+                    ?
                   </p>
                   <div className={styles.deleteWarning}>
-                    Esta acción <strong>no se puede deshacer</strong>. Todos los ajustes asociados a este lote se eliminarán permanentemente.
+                    Esta acción <strong>no se puede deshacer</strong>. Todos los
+                    ajustes asociados a este lote se eliminarán permanentemente.
                   </div>
                 </div>
                 <div className={styles.modalActions}>
@@ -774,8 +797,8 @@ const DebitosCreditos: React.FC = () => {
                 <label className={styles.formLabel}>Obra Social</label>
                 <AppSearchSelect
                   options={obras.map((o) => ({
-                    id: String(osId(o)),
-                    label: `${osId(o)} — ${osNombre(o)}`,
+                    id: String(o.nro_obra_social),
+                    label: `${o.nro_obra_social} - ${o.nombre}`,
                   }))}
                   value={addOs || null}
                   onChange={(val) => handleAddOsChange(val ? String(val) : "")}

@@ -4,16 +4,29 @@ import { getJSON, postJSON, delJSON } from "../../../../lib/http";
 import { useAppSnackbar } from "../../../../hooks/useAppSnackbar";
 import Button from "../../../../components/atoms/Button/Button";
 import SelectableTable from "../../../../components/molecules/SelectableTable/SelectableTable";
-import type { ActionDef, ColumnDef } from "../../../../components/molecules/SelectableTable/types";
+import type {
+  ActionDef,
+  ColumnDef,
+} from "../../../../components/molecules/SelectableTable/types";
 import styles from "./tabs.module.scss";
-import { type Pago, type Liquidacion, type ObraSocial, type PeriodoDisp, fmt, mesLabel, osId, osNombre } from "../../types";
+import {
+  type Pago,
+  type Liquidacion,
+  type ObraSocial,
+  type PeriodoDisp,
+  fmt,
+  mesLabel,
+} from "../../types";
 import AppSearchSelect from "../../../../components/atoms/AppSearchSelect/AppSearchSelect";
 
-const LIQUIDACIONES_URL = (pagoId: number) => `/api/liquidacion/liquidaciones_por_os/?pago_id=${pagoId}`;
+const LIQUIDACIONES_URL = (pagoId: number) =>
+  `/api/liquidacion/liquidaciones_por_os/?pago_id=${pagoId}`;
 const CREAR_LIQ_URL = "/api/liquidacion/liquidaciones_por_os/crear";
-const DEL_LIQ_URL = (id: number) => `/api/liquidacion/liquidaciones_por_os/${id}`;
+const DEL_LIQ_URL = (id: number) =>
+  `/api/liquidacion/liquidaciones_por_os/${id}`;
 const OBRAS_SOCIALES_URL = "/api/obras_social/";
-const PERIODOS_DISP_URL = (id: number) => `/api/periodos/disponibles?obra_social_id=${id}`;
+const PERIODOS_DISP_URL = (id: number) =>
+  `/api/periodos/disponibles?obra_social_id=${id}`;
 
 type Props = {
   pago: Pago;
@@ -55,7 +68,9 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
     }
   }, [pagoId]);
 
-  useEffect(() => { fetchRows(); }, [fetchRows]);
+  useEffect(() => {
+    fetchRows();
+  }, [fetchRows]);
 
   const openAddModal = async () => {
     setSelectedOS("");
@@ -68,8 +83,11 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
       try {
         const data = await getJSON<ObraSocial[]>(OBRAS_SOCIALES_URL);
         setObrasSociales(Array.isArray(data) ? data : []);
-      } catch { /* ignore */ }
-      finally { setLoadingOS(false); }
+      } catch {
+        /* ignore */
+      } finally {
+        setLoadingOS(false);
+      }
     }
   };
 
@@ -84,13 +102,20 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
     try {
       const data = await getJSON<PeriodoDisp[]>(PERIODOS_DISP_URL(numVal));
       setPeriodos(Array.isArray(data) ? data : []);
-    } catch { setPeriodos([]); }
-    finally { setLoadingPeriodos(false); }
+    } catch {
+      setPeriodos([]);
+    } finally {
+      setLoadingPeriodos(false);
+    }
   };
 
   const handlePeriodoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
-    if (!val) { setSelectedMes(""); setSelectedAnio(""); return; }
+    if (!val) {
+      setSelectedMes("");
+      setSelectedAnio("");
+      return;
+    }
     const [anio, mes] = val.split("-").map(Number);
     setSelectedAnio(anio);
     setSelectedMes(mes);
@@ -115,7 +140,12 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
       onRefresh?.();
     } catch (e: any) {
       const detail = e?.response?.data?.detail;
-      notify(typeof detail === "string" ? detail : e?.message ?? "Error al agregar la factura.", "error");
+      notify(
+        typeof detail === "string"
+          ? detail
+          : (e?.message ?? "Error al agregar la factura."),
+        "error",
+      );
     } finally {
       setAdding(false);
     }
@@ -149,13 +179,17 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
       key: "total_debitos",
       header: "Débitos",
       alignRight: true,
-      render: (r) => <span className={styles.negative}>-${fmt(r.total_debitos)}</span>,
+      render: (r) => (
+        <span className={styles.negative}>-${fmt(r.total_debitos)}</span>
+      ),
     },
     {
       key: "total_creditos",
       header: "Créditos",
       alignRight: true,
-      render: (r) => <span className={styles.positive}>+${fmt(r.total_creditos)}</span>,
+      render: (r) => (
+        <span className={styles.positive}>+${fmt(r.total_creditos)}</span>
+      ),
     },
     {
       key: "total_neto",
@@ -170,7 +204,10 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
         <Button
           size="sm"
           variant="secondary"
-          onClick={(e) => { e.stopPropagation(); navigate(`/panel/liquidation/${pagoId}/facturas/${r.id}`); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/panel/liquidation/${pagoId}/facturas/${r.id}`);
+          }}
         >
           Ver
         </Button>
@@ -189,13 +226,20 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
           isAllowed: () => isOpen,
         },
       ],
-      confirmMessage: (n) => `¿Quitar ${n} factura${n !== 1 ? "s" : ""} del pago?`,
+      confirmMessage: (n) =>
+        `¿Quitar ${n} factura${n !== 1 ? "s" : ""} del pago?`,
       onSuccess: (ok, fail) => {
         if (ok) {
-          notify(`${ok} factura${ok !== 1 ? "s quitadas" : " quitada"} del pago.`);
+          notify(
+            `${ok} factura${ok !== 1 ? "s quitadas" : " quitada"} del pago.`,
+          );
           onRefresh?.();
         }
-        if (fail) notify(`${fail} no pudo${fail !== 1 ? "ron" : ""} quitarse.`, "error");
+        if (fail)
+          notify(
+            `${fail} no pudo${fail !== 1 ? "ron" : ""} quitarse.`,
+            "error",
+          );
       },
     },
   ];
@@ -220,24 +264,45 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
         columns={columns}
         actions={bulkActions}
         isSelectable={() => isOpen}
-        emptyMessage={isOpen ? "No hay facturas. Agregá una para comenzar." : "No hay facturas. El pago está cerrado."}
+        emptyMessage={
+          isOpen
+            ? "No hay facturas. Agregá una para comenzar."
+            : "No hay facturas. El pago está cerrado."
+        }
         loading={loading}
         onActionComplete={fetchRows}
       />
 
       {/* Modal agregar */}
       {addOpen && (
-        <div className={styles.modalBackdrop} role="dialog" aria-modal="true" onClick={() => !adding && setAddOpen(false)}>
-          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+        <div
+          className={styles.modalBackdrop}
+          role="dialog"
+          aria-modal="true"
+          onClick={() => !adding && setAddOpen(false)}
+        >
+          <div
+            className={styles.modalCard}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className={styles.modalHeader}>
               <h3>Agregar Factura</h3>
-              <button className={styles.modalClose} onClick={() => setAddOpen(false)} aria-label="Cerrar">✕</button>
+              <button
+                className={styles.modalClose}
+                onClick={() => setAddOpen(false)}
+                aria-label="Cerrar"
+              >
+                ✕
+              </button>
             </div>
             <div className={styles.modalBody}>
               <div className={styles.formRow}>
                 <label className={styles.formLabel}>Obra Social</label>
                 <AppSearchSelect
-                  options={obrasSociales.map((os) => ({ id: String(osId(os)), label: `${osId(os)} — ${osNombre(os)}` }))}
+                  options={obrasSociales.map((os) => ({
+                    id: String(os.nro_obra_social),
+                    label: `${os.nro_obra_social} - ${os.nombre}`,
+                  }))}
                   value={selectedOS !== "" ? String(selectedOS) : null}
                   onChange={handleOSSelect}
                   loading={loadingOS}
@@ -247,30 +312,55 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
               <div className={styles.formRow}>
                 <label className={styles.formLabel}>Período disponible</label>
                 {!selectedOS ? (
-                  <span style={{ fontSize: 12, color: "#94a3b8" }}>Seleccioná una obra social primero.</span>
+                  <span style={{ fontSize: 12, color: "#94a3b8" }}>
+                    Seleccioná una obra social primero.
+                  </span>
                 ) : loadingPeriodos ? (
-                  <span style={{ fontSize: 13, color: "#64748b" }}>Cargando períodos…</span>
+                  <span style={{ fontSize: 13, color: "#64748b" }}>
+                    Cargando períodos…
+                  </span>
                 ) : (
                   <select
                     className={styles.formSelect}
-                    value={selectedAnio && selectedMes ? `${selectedAnio}-${selectedMes}` : ""}
+                    value={
+                      selectedAnio && selectedMes
+                        ? `${selectedAnio}-${selectedMes}`
+                        : ""
+                    }
                     onChange={handlePeriodoChange}
                     disabled={adding}
                   >
                     <option value="">Seleccioná un período…</option>
                     {periodos.map((p) => (
-                      <option key={`${getPeriodoAnio(p)}-${getPeriodoMes(p)}`} value={`${getPeriodoAnio(p)}-${getPeriodoMes(p)}`}>
+                      <option
+                        key={`${getPeriodoAnio(p)}-${getPeriodoMes(p)}`}
+                        value={`${getPeriodoAnio(p)}-${getPeriodoMes(p)}`}
+                      >
                         {mesLabel(getPeriodoMes(p))} {getPeriodoAnio(p)}
                       </option>
                     ))}
-                    {periodos.length === 0 && <option disabled>Sin períodos disponibles</option>}
+                    {periodos.length === 0 && (
+                      <option disabled>Sin períodos disponibles</option>
+                    )}
                   </select>
                 )}
               </div>
             </div>
             <div className={styles.modalActions}>
-              <Button variant="secondary" onClick={() => setAddOpen(false)} disabled={adding}>Cancelar</Button>
-              <Button variant="primary" onClick={handleAdd} disabled={adding || !selectedOS || !selectedMes || !selectedAnio}>
+              <Button
+                variant="secondary"
+                onClick={() => setAddOpen(false)}
+                disabled={adding}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleAdd}
+                disabled={
+                  adding || !selectedOS || !selectedMes || !selectedAnio
+                }
+              >
                 {adding ? "Agregando…" : "Agregar"}
               </Button>
             </div>

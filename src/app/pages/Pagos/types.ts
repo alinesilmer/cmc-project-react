@@ -87,10 +87,8 @@ export type Descuento = {
 };
 
 export type ObraSocial = {
-  NRO_OBRA_SOCIAL?: number;
-  NRO_OBRASOCIAL?: number;
-  NOMBRE?: string;       // some endpoints
-  OBRA_SOCIAL?: string;  // most endpoints
+  nro_obra_social?: number;
+  nombre?: string;
 };
 
 /** Período disponible devuelto por /api/periodos/disponibles */
@@ -103,17 +101,23 @@ export type PeriodoDisp = {
 };
 
 export const MESES = [
-  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
 ];
 export const mesLabel = (m: number) => MESES[(m - 1) % 12] ?? String(m);
 
-export const currency = new Intl.NumberFormat("es-AR", { minimumFractionDigits: 0 });
+export const currency = new Intl.NumberFormat("es-AR", {
+  minimumFractionDigits: 0,
+});
 export const fmt = (n: number | string | null | undefined) =>
   currency.format(Number(n ?? 0));
-
-export const osId = (os: ObraSocial): number =>
-  (os.NRO_OBRA_SOCIAL ?? os.NRO_OBRASOCIAL ?? 0) as number;
-
-export const osNombre = (os: ObraSocial): string =>
-  os.OBRA_SOCIAL ?? os.NOMBRE ?? "";
