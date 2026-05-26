@@ -1,0 +1,8 @@
+@use "@/website/styles/all.scss" as *;
+
+.pageWrap {
+  display: flex;
+  flex-direction: column;
+  background: $white;
+  min-height: 100vh;
+}

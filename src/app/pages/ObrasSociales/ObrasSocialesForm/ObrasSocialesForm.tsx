@@ -286,26 +286,45 @@ interface DocRowProps {
   tipo: TipoDocumento;
   existing?: Documento;
   onUploaded: () => void;
-  onQueue: (tipo: TipoDocumento, file: File | null) => void;
-  queued?: File;
+  onQueue: (tipo: TipoDocumento, files: File[]) => void;
+  queued?: File[];
 }
 
 function DocRow({ obraId, tipo, existing, onUploaded, onQueue, queued }: DocRowProps) {
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
 
+  const clearInputs = () => {
+    if (inputRef.current) inputRef.current.value = "";
+    if (cameraRef.current) cameraRef.current.value = "";
+  };
+
+  const handleDelete = async () => {
+    if (!obraId || !existing) return;
+    setDeleting(true);
+    setUploadError(null);
+    try {
+      await deleteDocumento(obraId, existing.id);
+      onUploaded();
+    } catch {
+      setUploadError("No se pudo eliminar el documento.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const handleUpload = async () => {
-    if (!file || !obraId) return;
+    if (!files.length || !obraId) return;
     setUploading(true);
     setUploadError(null);
     try {
-      await uploadDocumento(obraId, tipo, file);
-      setFile(null);
-      if (inputRef.current) inputRef.current.value = "";
-      if (cameraRef.current) cameraRef.current.value = "";
+      await Promise.all(files.map((f) => uploadDocumento(obraId, tipo, f)));
+      setFiles([]);
+      clearInputs();
       onUploaded();
     } catch {
       setUploadError("No se pudo subir el archivo. Intentá de nuevo.");
@@ -315,16 +334,26 @@ function DocRow({ obraId, tipo, existing, onUploaded, onQueue, queued }: DocRowP
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    const err = validateDocFile(f);
-    if (err) { setUploadError(err); return; }
+    const fileList = Array.from(e.target.files ?? []);
+    if (!fileList.length) return;
+    for (const f of fileList) {
+      const err = validateDocFile(f);
+      if (err) { setUploadError(err); return; }
+    }
     setUploadError(null);
     if (obraId) {
-      setFile(f);
+      setFiles((prev) => [...prev, ...fileList]);
     } else {
-      onQueue(tipo, f);
+      onQueue(tipo, fileList);
     }
+  };
+
+  const removeFile = (index: number) => {
+    setFiles((prev) => {
+      const next = prev.filter((_, i) => i !== index);
+      if (!next.length) clearInputs();
+      return next;
+    });
   };
 
   return (
@@ -338,14 +367,27 @@ function DocRow({ obraId, tipo, existing, onUploaded, onQueue, queued }: DocRowP
       </div>
 
       {existing && (
-        <a
-          href={existing.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={s.docFileLink}
-        >
-          {TIPO_DOCUMENTO_LABELS[tipo]}
-        </a>
+        <div className={s.existingFileRow}>
+          <a
+            href={existing.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={s.docFileLink}
+          >
+            {TIPO_DOCUMENTO_LABELS[tipo]}
+          </a>
+          <button
+            type="button"
+            className={s.docHistoryBtn}
+            onClick={handleDelete}
+            disabled={deleting}
+            aria-label="Eliminar documento"
+            title="Eliminar documento"
+          >
+            <Trash2 size={13} />
+            {deleting ? "Eliminando…" : "Eliminar"}
+          </button>
+        </div>
       )}
 
       <div className={s.uploadArea}>
@@ -354,6 +396,7 @@ function DocRow({ obraId, tipo, existing, onUploaded, onQueue, queued }: DocRowP
             ref={inputRef}
             type="file"
             accept=".pdf,.doc,.docx"
+            multiple
             onChange={handleFileChange}
             className={s.fileInput}
             aria-label={`Seleccionar archivo para ${TIPO_DOCUMENTO_LABELS[tipo]}`}
@@ -365,43 +408,40 @@ function DocRow({ obraId, tipo, existing, onUploaded, onQueue, queued }: DocRowP
               ref={cameraRef}
               type="file"
               accept="image/*"
-              capture="environment"
+              multiple
               style={{ display: "none" }}
               onChange={handleFileChange}
             />
           </label>
         </div>
 
-        {!obraId && queued && (
-          <div className={s.queuedFile}>
-            <span className={s.queuedFileName}>{queued.name}</span>
-            <span className={s.queuedNote}>Se subirá al guardar</span>
-            <button
-              type="button"
-              className={s.contactoRemoveBtn}
-              onClick={() => {
-                if (inputRef.current) inputRef.current.value = "";
-                onQueue(tipo, null);
-              }}
-              aria-label="Quitar archivo"
-            >
-              <X size={14} />
-            </button>
+        {!obraId && queued && queued.length > 0 && (
+          <div className={s.queuedFileList}>
+            {queued.map((f, i) => (
+              <div key={i} className={s.queuedFile}>
+                <span className={s.queuedFileName}>{f.name}</span>
+                <span className={s.queuedNote}>Se subirá al guardar</span>
+              </div>
+            ))}
           </div>
         )}
 
-        {obraId && file && (
+        {obraId && files.length > 0 && (
           <>
-            <div className={s.queuedFile}>
-              <span className={s.queuedFileName}>{file.name}</span>
-              <button
-                type="button"
-                className={s.contactoRemoveBtn}
-                onClick={() => { setFile(null); if (inputRef.current) inputRef.current.value = ""; if (cameraRef.current) cameraRef.current.value = ""; }}
-                aria-label="Quitar archivo"
-              >
-                <X size={14} />
-              </button>
+            <div className={s.queuedFileList}>
+              {files.map((f, i) => (
+                <div key={i} className={s.queuedFile}>
+                  <span className={s.queuedFileName}>{f.name}</span>
+                  <button
+                    type="button"
+                    className={s.contactoRemoveBtn}
+                    onClick={() => removeFile(i)}
+                    aria-label="Quitar archivo"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ))}
             </div>
             <button
               type="button"
@@ -410,7 +450,11 @@ function DocRow({ obraId, tipo, existing, onUploaded, onQueue, queued }: DocRowP
               disabled={uploading}
             >
               <Upload size={14} />
-              {uploading ? "Subiendo…" : existing ? "Reemplazar archivo" : "Subir archivo"}
+              {uploading
+                ? "Subiendo…"
+                : existing
+                ? `Subir ${files.length > 1 ? `${files.length} archivos` : "archivo"}`
+                : `Subir ${files.length > 1 ? `${files.length} archivos` : "archivo"}`}
             </button>
           </>
         )}
@@ -504,11 +548,30 @@ function OtrosDocList({ obraId, existingDocs, onReload, onQueueChange }: OtrosDo
   };
 
   const handleFileChange = (tempId: string, e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    const err = validateDocFile(f);
-    if (err) { updateEntry(tempId, { uploadError: err }); return; }
-    updateEntry(tempId, { file: f, uploadError: undefined });
+    const fileList = Array.from(e.target.files ?? []);
+    if (!fileList.length) return;
+
+    for (const f of fileList) {
+      const err = validateDocFile(f);
+      if (err) { updateEntry(tempId, { uploadError: err }); return; }
+    }
+
+    // First file goes to the current entry
+    updateEntry(tempId, { file: fileList[0], uploadError: undefined });
+
+    // Each additional file becomes a new entry
+    if (fileList.length > 1) {
+      setEntries((prev) => {
+        const newEntries: OtroEntry[] = fileList.slice(1).map((f) => ({
+          tempId: crypto.randomUUID(),
+          nombreCustom: "",
+          file: f,
+        }));
+        const next = [...prev, ...newEntries];
+        notifyQueue(next);
+        return next;
+      });
+    }
   };
 
   const handleUpload = async (tempId: string) => {
@@ -594,7 +657,7 @@ function OtrosDocList({ obraId, existingDocs, onReload, onQueueChange }: OtrosDo
                 <input
                   type="file"
                   accept="image/*"
-                  capture="environment"
+                  multiple
                   style={{ display: "none" }}
                   onChange={(e) => handleFileChange(entry.tempId, e)}
                 />
@@ -668,7 +731,7 @@ export default function ObrasSocialesForm() {
   // Documentos
   const [documentos, setDocumentos] = useState<Documento[]>([]);
   const [reloadDocsTrigger, setReloadDocsTrigger] = useState(0);
-  const [pendingFixed, setPendingFixed] = useState<Map<TipoDocumento, File>>(new Map());
+  const [pendingFixed, setPendingFixed] = useState<Map<TipoDocumento, File[]>>(new Map());
   const [pendingOtros, setPendingOtros] = useState<Array<{ nombreCustom: string; file: File }>>([]);
 
   // ── Load existing data (edit mode) ──────────────────────────────────────────
@@ -792,8 +855,8 @@ export default function ObrasSocialesForm() {
       } else {
         const created = await createObraSocial(payload);
         const uploads: Promise<unknown>[] = [];
-        pendingFixed.forEach((file, tipo) => {
-          uploads.push(uploadDocumento(created.id, tipo, file));
+        pendingFixed.forEach((fileArr, tipo) => {
+          fileArr.forEach((file) => uploads.push(uploadDocumento(created.id, tipo, file)));
         });
         pendingOtros.forEach((entry) => {
           uploads.push(uploadDocumento(created.id, "otros", entry.file, entry.nombreCustom));
@@ -1305,10 +1368,10 @@ export default function ObrasSocialesForm() {
                   obraId={savedId}
                   existing={existing}
                   onUploaded={() => setReloadDocsTrigger((n) => n + 1)}
-                  onQueue={(t, file) => {
+                  onQueue={(t, files) => {
                     setPendingFixed((prev) => {
                       const next = new Map(prev);
-                      if (file) next.set(t, file);
+                      if (files.length) next.set(t, [...(prev.get(t) ?? []), ...files]);
                       else next.delete(t);
                       return next;
                     });
