@@ -69,3 +69,6 @@ const API_ROOT = API_BASE
   : "/api";
 
 export const BOLETIN_ENDPOINTS = [`${API_ROOT}/valores/boletin`];
+
+export const SWISS_MEDICAL_NRO_OS = 256;
+export const SWISS_NOMENCLADO_URL = `${API_ROOT}/valores/nomenclado-swiss`;

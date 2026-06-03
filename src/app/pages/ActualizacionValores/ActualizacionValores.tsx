@@ -18,7 +18,13 @@ import {
   normalizeRow,
 } from "../BoletinConsultaComun/boletinConsultaComun.api";
 import type { ApiBoletinRow } from "../BoletinConsultaComun/boletinConsultaComun.types";
-import { moneyFormatter, BOLETIN_ENDPOINTS } from "../BoletinConsultaComun/boletinConsultaComun.constants";
+import {
+  moneyFormatter,
+  BOLETIN_ENDPOINTS,
+  SWISS_MEDICAL_NRO_OS,
+  SWISS_MEDICAL_NOMBRE,
+  SWISS_NOMENCLADO_URL,
+} from "../BoletinConsultaComun/boletinConsultaComun.constants";
 
 const BOLETIN_URL = BOLETIN_ENDPOINTS[0];
 
@@ -41,6 +47,60 @@ async function fetchRowsForOS(
     if (rows.length < 500) break;
   }
   return allRows;
+}
+
+type SwissApiRow = {
+  id: number;
+  codigo: string;
+  c_p_h_s: string | null;
+  descripcion: string | null;
+  honorarios_a: number;
+  gastos: number;
+  ayudante_a: number;
+};
+
+function swissRowToApiBoletinRow(r: SwissApiRow): ApiBoletinRow {
+  return {
+    id: r.id,
+    codigos: r.codigo,
+    nro_obrasocial: SWISS_MEDICAL_NRO_OS,
+    obra_social: SWISS_MEDICAL_NOMBRE,
+    c_p_h_s: r.c_p_h_s ?? "",
+    honorarios_a: r.honorarios_a,
+    honorarios_b: r.honorarios_a,
+    honorarios_c: r.honorarios_a,
+    gastos: r.gastos,
+    ayudante_a: r.ayudante_a,
+    ayudante_b: r.ayudante_a,
+    ayudante_c: r.ayudante_a,
+    fecha_cambio: null,
+    fecha_vigencia: null,
+  };
+}
+
+async function fetchRowsForSwiss(signal?: AbortSignal): Promise<ApiBoletinRow[]> {
+  const allRows: ApiBoletinRow[] = [];
+  for (let page = 1; page <= 50; page++) {
+    const response = await http.get(SWISS_NOMENCLADO_URL, {
+      signal,
+      timeout: 20000,
+      params: { page, size: 500 },
+    });
+    const raw: SwissApiRow[] = Array.isArray(response.data)
+      ? response.data
+      : (response.data?.results ?? []);
+    if (!raw.length) break;
+    allRows.push(...raw.map(swissRowToApiBoletinRow));
+    if (raw.length < 500) break;
+  }
+  return allRows;
+}
+
+async function updateSwissRow(
+  id: number,
+  values: { honorarios_a?: number; gastos?: number; ayudante_a?: number }
+): Promise<void> {
+  await http.patch(`${SWISS_NOMENCLADO_URL}/${id}`, values);
 }
 
 type NewRowValues = Omit<ApiBoletinRow, "id">;
@@ -154,7 +214,8 @@ export default function ActualizacionValores() {
 
   const { data: rows = [], isLoading: isLoadingRows, refetch: refetchRows } = useQuery({
     queryKey: ["valores-actualizacion", selectedNroOS],
-    queryFn: ({ signal }) => fetchRowsForOS(selectedNroOS!, signal),
+    queryFn: ({ signal }) =>
+      isSwiss ? fetchRowsForSwiss(signal) : fetchRowsForOS(selectedNroOS!, signal),
     enabled: selectedNroOS != null,
     staleTime: 5 * 60 * 1000,
   });
@@ -172,6 +233,8 @@ export default function ActualizacionValores() {
     () => osList.find((os) => os.nro_obra_social === selectedNroOS)?.nombre ?? "",
     [osList, selectedNroOS]
   );
+
+  const isSwiss = selectedNroOS === SWISS_MEDICAL_NRO_OS;
 
   const pctNum = useMemo(() => {
     const n = parseFloat(pct.replace(",", "."));
@@ -352,17 +415,25 @@ export default function ActualizacionValores() {
       for (const row of rows) {
         if (excludedCodes.has(row.codigos) || isInExcludedRange(row.codigos)) continue;
         try {
-          await createRow(row, {
-            honorarios_a: applyPct(row.honorarios_a, pctNum),
-            honorarios_b: applyPct(row.honorarios_b, pctNum),
-            honorarios_c: applyPct(row.honorarios_c, pctNum),
-            gastos:       applyPct(row.gastos, pctNum),
-            ayudante_a:   applyPct(row.ayudante_a, pctNum),
-            ayudante_b:   applyPct(row.ayudante_b, pctNum),
-            ayudante_c:   applyPct(row.ayudante_c, pctNum),
-            fecha_cambio,
-            fecha_vigencia,
-          });
+          if (isSwiss) {
+            await updateSwissRow(row.id, {
+              honorarios_a: applyPct(row.honorarios_a, pctNum),
+              gastos:       applyPct(row.gastos, pctNum),
+              ayudante_a:   applyPct(row.ayudante_a, pctNum),
+            });
+          } else {
+            await createRow(row, {
+              honorarios_a: applyPct(row.honorarios_a, pctNum),
+              honorarios_b: applyPct(row.honorarios_b, pctNum),
+              honorarios_c: applyPct(row.honorarios_c, pctNum),
+              gastos:       applyPct(row.gastos, pctNum),
+              ayudante_a:   applyPct(row.ayudante_a, pctNum),
+              ayudante_b:   applyPct(row.ayudante_b, pctNum),
+              ayudante_c:   applyPct(row.ayudante_c, pctNum),
+              fecha_cambio,
+              fecha_vigencia,
+            });
+          }
           ok++;
         } catch { fail++; }
       }
@@ -386,17 +457,25 @@ export default function ActualizacionValores() {
       const fecha_vigencia = pctCodeFechaVigencia || null;
       for (const row of pctCodeSelected) {
         try {
-          await createRow(row, {
-            honorarios_a: applyPct(row.honorarios_a, pctCodeNum),
-            honorarios_b: applyPct(row.honorarios_b, pctCodeNum),
-            honorarios_c: applyPct(row.honorarios_c, pctCodeNum),
-            gastos:       applyPct(row.gastos, pctCodeNum),
-            ayudante_a:   applyPct(row.ayudante_a, pctCodeNum),
-            ayudante_b:   applyPct(row.ayudante_b, pctCodeNum),
-            ayudante_c:   applyPct(row.ayudante_c, pctCodeNum),
-            fecha_cambio,
-            fecha_vigencia,
-          });
+          if (isSwiss) {
+            await updateSwissRow(row.id, {
+              honorarios_a: applyPct(row.honorarios_a, pctCodeNum),
+              gastos:       applyPct(row.gastos, pctCodeNum),
+              ayudante_a:   applyPct(row.ayudante_a, pctCodeNum),
+            });
+          } else {
+            await createRow(row, {
+              honorarios_a: applyPct(row.honorarios_a, pctCodeNum),
+              honorarios_b: applyPct(row.honorarios_b, pctCodeNum),
+              honorarios_c: applyPct(row.honorarios_c, pctCodeNum),
+              gastos:       applyPct(row.gastos, pctCodeNum),
+              ayudante_a:   applyPct(row.ayudante_a, pctCodeNum),
+              ayudante_b:   applyPct(row.ayudante_b, pctCodeNum),
+              ayudante_c:   applyPct(row.ayudante_c, pctCodeNum),
+              fecha_cambio,
+              fecha_vigencia,
+            });
+          }
           ok++;
         } catch { fail++; }
       }
@@ -422,17 +501,25 @@ export default function ActualizacionValores() {
       const fecha_vigencia = rangeFechaVigencia || null;
       for (const row of rangeRows) {
         try {
-          await createRow(row, {
-            honorarios_a: applyPct(row.honorarios_a, rangePctNum),
-            honorarios_b: applyPct(row.honorarios_b, rangePctNum),
-            honorarios_c: applyPct(row.honorarios_c, rangePctNum),
-            gastos:       applyPct(row.gastos, rangePctNum),
-            ayudante_a:   applyPct(row.ayudante_a, rangePctNum),
-            ayudante_b:   applyPct(row.ayudante_b, rangePctNum),
-            ayudante_c:   applyPct(row.ayudante_c, rangePctNum),
-            fecha_cambio,
-            fecha_vigencia,
-          });
+          if (isSwiss) {
+            await updateSwissRow(row.id, {
+              honorarios_a: applyPct(row.honorarios_a, rangePctNum),
+              gastos:       applyPct(row.gastos, rangePctNum),
+              ayudante_a:   applyPct(row.ayudante_a, rangePctNum),
+            });
+          } else {
+            await createRow(row, {
+              honorarios_a: applyPct(row.honorarios_a, rangePctNum),
+              honorarios_b: applyPct(row.honorarios_b, rangePctNum),
+              honorarios_c: applyPct(row.honorarios_c, rangePctNum),
+              gastos:       applyPct(row.gastos, rangePctNum),
+              ayudante_a:   applyPct(row.ayudante_a, rangePctNum),
+              ayudante_b:   applyPct(row.ayudante_b, rangePctNum),
+              ayudante_c:   applyPct(row.ayudante_c, rangePctNum),
+              fecha_cambio,
+              fecha_vigencia,
+            });
+          }
           ok++;
         } catch { fail++; }
       }
@@ -452,17 +539,22 @@ export default function ActualizacionValores() {
       if (!selectedRow || !editValues) return;
       const honA = parseFloat(editValues.honorarios_a) || 0;
       const aydA = parseFloat(editValues.ayudante_a) || 0;
-      await createRow(selectedRow, {
-        honorarios_a: honA,
-        honorarios_b: honA,
-        honorarios_c: honA,
-        gastos:       parseFloat(editValues.gastos) || 0,
-        ayudante_a:   aydA,
-        ayudante_b:   aydA,
-        ayudante_c:   aydA,
-        fecha_cambio:   (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; })(),
-        fecha_vigencia: editFechaVigencia || null,
-      });
+      const gastos = parseFloat(editValues.gastos) || 0;
+      if (isSwiss) {
+        await updateSwissRow(selectedRow.id, { honorarios_a: honA, gastos, ayudante_a: aydA });
+      } else {
+        await createRow(selectedRow, {
+          honorarios_a: honA,
+          honorarios_b: honA,
+          honorarios_c: honA,
+          gastos,
+          ayudante_a:   aydA,
+          ayudante_b:   aydA,
+          ayudante_c:   aydA,
+          fecha_cambio:   (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; })(),
+          fecha_vigencia: editFechaVigencia || null,
+        });
+      }
     },
     onSuccess: () => {
       void refetchRows();
@@ -474,9 +566,10 @@ export default function ActualizacionValores() {
   const panicMutation = useMutation({
     mutationFn: async () => {
       let deleted = 0, fail = 0;
+      const deleteBase = isSwiss ? SWISS_NOMENCLADO_URL : BOLETIN_URL;
       for (const row of panicTargets) {
         try {
-          await http.delete(`${BOLETIN_URL}/${row.id}`);
+          await http.delete(`${deleteBase}/${row.id}`);
           deleted++;
         } catch { fail++; }
       }

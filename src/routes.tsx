@@ -59,6 +59,7 @@ import ObrasSocialesListado from "./app/pages/ObrasSociales/ObrasSocialesListado
 import ObrasSocialesForm from "./app/pages/ObrasSociales/ObrasSocialesForm/ObrasSocialesForm";
 import ObrasSocialesDetalle from "./app/pages/ObrasSociales/ObrasSocialesDetalle/ObrasSocialesDetalle";
 import EspecialidadesPage from "./app/pages/Especialidades/EspecialidadesPage";
+import ServiciosPage from "./app/pages/Servicios/ServiciosPage";
 import GestionCodigos from "./app/pages/GestionCodigos/GestionCodigos";
 import TablaGinecologia from "./app/pages/TablaGinecologia/TablaGinecologia";
 import BoletinGalenos from "./app/pages/BoletinGalenos/BoletinGalenos";
@@ -158,6 +159,7 @@ export default function RootRoutes() {
             />
 
             <Route path="especialidades" element={<EspecialidadesPage />} />
+            <Route path="servicios" element={<ServiciosPage />} />
 
             <Route path="convenios/obras-sociales">
               <Route index element={<ObrasSocialesListado />} />

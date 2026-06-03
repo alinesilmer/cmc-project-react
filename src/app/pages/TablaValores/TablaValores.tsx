@@ -16,7 +16,14 @@ import {
   normalizeRow,
 } from "../BoletinConsultaComun/boletinConsultaComun.api";
 import type { ApiBoletinRow } from "../BoletinConsultaComun/boletinConsultaComun.types";
-import { moneyFormatter, BOLETIN_ENDPOINTS } from "../BoletinConsultaComun/boletinConsultaComun.constants";
+import {
+  moneyFormatter,
+  BOLETIN_ENDPOINTS,
+  SWISS_MEDICAL_NRO_OS,
+  SWISS_MEDICAL_NOMBRE,
+  SWISS_NOMENCLADO_URL,
+} from "../BoletinConsultaComun/boletinConsultaComun.constants";
+import { http } from "../../lib/http";
 
 const BOLETIN_URL = BOLETIN_ENDPOINTS[0];
 
@@ -41,17 +48,58 @@ async function fetchRowsForOS(
   return allRows;
 }
 
+type SwissApiRow = {
+  id: number;
+  codigo: string;
+  c_p_h_s: string | null;
+  descripcion: string | null;
+  honorarios_a: number;
+  gastos: number;
+  ayudante_a: number;
+};
+
+async function fetchRowsForSwiss(signal?: AbortSignal): Promise<ApiBoletinRow[]> {
+  const allRows: ApiBoletinRow[] = [];
+  for (let page = 1; page <= 50; page++) {
+    const response = await http.get(SWISS_NOMENCLADO_URL, {
+      signal,
+      timeout: 20000,
+      params: { page, size: 500 },
+    });
+    const raw: SwissApiRow[] = Array.isArray(response.data)
+      ? response.data
+      : (response.data?.results ?? []);
+    if (!raw.length) break;
+    allRows.push(
+      ...raw.map((r): ApiBoletinRow => ({
+        id: r.id,
+        codigos: r.codigo,
+        nro_obrasocial: SWISS_MEDICAL_NRO_OS,
+        obra_social: SWISS_MEDICAL_NOMBRE,
+        c_p_h_s: r.c_p_h_s ?? "",
+        honorarios_a: r.honorarios_a,
+        honorarios_b: r.honorarios_a,
+        honorarios_c: r.honorarios_a,
+        gastos: r.gastos,
+        ayudante_a: r.ayudante_a,
+        ayudante_b: r.ayudante_a,
+        ayudante_c: r.ayudante_a,
+        fecha_cambio: null,
+        fecha_vigencia: null,
+      }))
+    );
+    if (raw.length < 500) break;
+  }
+  return allRows;
+}
+
 // ─── Column definitions ───────────────────────────────────────────────────────
 
 const COLS = [
   { key: "codigos",      label: "Código",   numeric: false },
   { key: "honorarios_a", label: "Hon. A",   numeric: true  },
-  { key: "honorarios_b", label: "Hon. B",   numeric: true  },
-  { key: "honorarios_c", label: "Hon. C",   numeric: true  },
   { key: "gastos",       label: "Gastos",   numeric: true  },
   { key: "ayudante_a",   label: "Ayud. A",  numeric: true  },
-  { key: "ayudante_b",   label: "Ayud. B",  numeric: true  },
-  { key: "ayudante_c",   label: "Ayud. C",  numeric: true  },
   { key: "fecha_cambio", label: "Vigencia", numeric: false },
 ] as const;
 
@@ -68,20 +116,13 @@ async function exportToExcel(rows: ApiBoletinRow[], osName: string, nroOS: numbe
   const data = rows.map((r) => ({
     "Código":       r.codigos,
     "Honorarios A": r.honorarios_a,
-    "Honorarios B": r.honorarios_b,
-    "Honorarios C": r.honorarios_c,
     "Gastos":       r.gastos,
     "Ayudante A":   r.ayudante_a,
-    "Ayudante B":   r.ayudante_b,
-    "Ayudante C":   r.ayudante_c,
     "Vigencia":     r.fecha_cambio ?? "",
   }));
 
   const ws = utils.json_to_sheet(data);
-  ws["!cols"] = [
-    { wch: 14 }, { wch: 13 }, { wch: 13 }, { wch: 13 },
-    { wch: 13 }, { wch: 13 }, { wch: 13 }, { wch: 13 }, { wch: 13 },
-  ];
+  ws["!cols"] = [{ wch: 14 }, { wch: 13 }, { wch: 13 }, { wch: 13 }, { wch: 13 }];
 
   const wb = utils.book_new();
   utils.book_append_sheet(wb, ws, "Valores");
@@ -129,9 +170,12 @@ export default function TablaValores() {
     staleTime: 10 * 60 * 1000,
   });
 
+  const isSwiss = selectedNroOS === SWISS_MEDICAL_NRO_OS;
+
   const { data: rows = [], isLoading: isLoadingRows } = useQuery({
     queryKey: ["tabla-valores", selectedNroOS],
-    queryFn: ({ signal }) => fetchRowsForOS(selectedNroOS!, signal),
+    queryFn: ({ signal }) =>
+      isSwiss ? fetchRowsForSwiss(signal) : fetchRowsForOS(selectedNroOS!, signal),
     enabled: selectedNroOS != null,
     staleTime: 5 * 60 * 1000,
   });
@@ -153,6 +197,7 @@ export default function TablaValores() {
     () => osList.find((os) => os.nro_obra_social === selectedNroOS)?.nombre ?? "",
     [osList, selectedNroOS]
   );
+
 
   const displayRows = useMemo(() => {
     let result = rows;
@@ -397,19 +442,23 @@ export default function TablaValores() {
                 <tbody>
                   {displayRows.map((row) => (
                     <tr key={row.id}>
-                      <td className={styles.tdCode}>{row.codigos}</td>
-                      <td className={`${styles.tdRight} ${styles.tdMoney}`}>{moneyFormatter.format(row.honorarios_a)}</td>
-                      <td className={`${styles.tdRight} ${styles.tdMoney}`}>{moneyFormatter.format(row.honorarios_b)}</td>
-                      <td className={`${styles.tdRight} ${styles.tdMoney}`}>{moneyFormatter.format(row.honorarios_c)}</td>
-                      <td className={`${styles.tdRight} ${styles.tdMoney}`}>{moneyFormatter.format(row.gastos)}</td>
-                      <td className={`${styles.tdRight} ${styles.tdMoney}`}>{moneyFormatter.format(row.ayudante_a)}</td>
-                      <td className={`${styles.tdRight} ${styles.tdMoney}`}>{moneyFormatter.format(row.ayudante_b)}</td>
-                      <td className={`${styles.tdRight} ${styles.tdMoney}`}>{moneyFormatter.format(row.ayudante_c)}</td>
-                      <td className={styles.tdDate}>
-                        {row.fecha_cambio
-                          ? <span>{row.fecha_cambio}</span>
-                          : <span className={styles.tdNull}>—</span>}
-                      </td>
+                      {COLS.map((col) => {
+                        if (col.key === "codigos")
+                          return <td key={col.key} className={styles.tdCode}>{row.codigos}</td>;
+                        if (col.key === "fecha_cambio")
+                          return (
+                            <td key={col.key} className={styles.tdDate}>
+                              {row.fecha_cambio
+                                ? <span>{row.fecha_cambio}</span>
+                                : <span className={styles.tdNull}>—</span>}
+                            </td>
+                          );
+                        return (
+                          <td key={col.key} className={`${styles.tdRight} ${styles.tdMoney}`}>
+                            {moneyFormatter.format(row[col.key] as number)}
+                          </td>
+                        );
+                      })}
                     </tr>
                   ))}
                 </tbody>
