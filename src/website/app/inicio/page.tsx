@@ -1,13 +1,13 @@
 import Welcome from "../../components/Inicio/Welcome/Welcome";
 import HealthServices from "../../components/Servicios/HealthServices/HealthServices";
 import { HeroVideo } from "../../components/Inicio/HeroVideo/HeroVideo";
-import PromoModal from "../../components/Inicio/PromoModal/PromoModal";
-
-import promoImage from "../../../app/assets/ad-prevencion.jpeg";
+// import PromoModal from "../../components/Inicio/PromoModal/PromoModal";
+// import promoImage from "../../../app/assets/ad-prevencion.jpeg";
 
 export default function Home() {
   return (
     <>
+      {/* PromoModal desactivado — descomentar para volver a mostrar
       <PromoModal
         imageSrc={promoImage}
         imageAlt="Gran convenio exclusivo — Prevención Salud de SANCOR SEGUROS"
@@ -17,6 +17,7 @@ export default function Home() {
         ]}
         storageKey="cmc-promo-prevencion-v1"
       />
+      */}
       <HeroVideo />
       <main>
         <Welcome />
