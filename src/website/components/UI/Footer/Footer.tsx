@@ -34,6 +34,7 @@ export default function Footer() {
             <li><Link to="/noticias">Noticias</Link></li>
             <li><Link to="/nosotros">Nosotros</Link></li>
             <li><Link to="/servicios">Servicios</Link></li>
+            <li><Link to="/preguntas-frecuentes">Preguntas Frecuentes</Link></li>
             <li><Link to="/contacto">Contacto</Link></li>
           </ul>
         </nav>

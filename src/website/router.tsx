@@ -25,6 +25,7 @@ import SegurosPage from "./app/seguros/page";
 import Asociados from "./app/asociados/page";
 import InfoPage from "../app/pages/Info/Info";
 import PrevencionSaludPage from "./app/prevencion-salud/page";
+import PreguntasFrecuentesPage from "./app/preguntas-frecuentes/page";
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
@@ -80,6 +81,7 @@ export default function WebRoutes() {
         <Route path="/medicos-asociados" element={<Asociados />} />
         <Route path="/socios" element={<InfoPage />} />
         <Route path="/prevencion-salud" element={<PrevencionSaludPage />} />
+        <Route path="/preguntas-frecuentes" element={<PreguntasFrecuentesPage />} />
      
 
         {/* Fallback */}

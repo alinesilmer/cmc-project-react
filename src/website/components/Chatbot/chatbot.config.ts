@@ -32,12 +32,12 @@ export const CONVENIO_WA_LINK =
 
 export const GREETING =
   "¡Hola! Soy el asistente del Colegio Médico de Corrientes. " +
-  "Puedo ayudarte con información sobre nuestros servicios, la quinta, " +
-  "cursos, convenios y más. ¿En qué puedo ayudarte?";
+  "Puedo ayudarle con información sobre nuestros servicios, la quinta, " +
+  "cursos, convenios y más. ¿En qué puedo ayudarle?";
 
 export const FALLBACK_MESSAGE =
   "Lo siento, no tengo información sobre ese tema. " +
-  "Para consultas personalizadas, podés contactarnos por WhatsApp " +
+  "Para consultas personalizadas, puede contactarnos por WhatsApp " +
   "o visitarnos en nuestra página de contacto.";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -48,7 +48,14 @@ export interface ChatLink {
   external?: boolean;
 }
 
-export type AsyncAction = "check_obra_social" | "get_precio_consulta";
+export type AsyncAction = "check_obra_social";
+
+export interface MenuOption {
+  /** Visible label on the button */
+  label: string;
+  /** Pre-filled query sent to the engine when the user clicks */
+  query: string;
+}
 
 export interface Intent {
   id: string;
@@ -59,11 +66,71 @@ export interface Intent {
   whatsapp?: WhatsAppDept;
   /** When set, Chatbot.tsx performs an async API lookup before answering */
   asyncAction?: AsyncAction;
+  /** When set, renders clickable numbered option buttons below the answer */
+  menuOptions?: MenuOption[];
 }
 
 // ─── Intent definitions ───────────────────────────────────────────────────────
 
 export const INTENTS: Intent[] = [
+  {
+    id: "medicus_menu",
+    keywords: [
+      "medicus fuerzas",
+      "medicus gendarmeria",
+      "medicus prefectura",
+      "medicus seguridad",
+      "fuerzas seguridad medicus",
+      "gendarmeria prefectura medicus",
+    ],
+    chipLabel: "MEDICUS Fuerzas de Seguridad",
+    answer:
+      "Sobre MEDICUS — Fuerzas de Seguridad (Gendarmería Nacional y Prefectura Naval), " +
+      "¿qué desea consultar?",
+    menuOptions: [
+      {
+        label: "1. Planes MS1 y MS2",
+        query: "Cuáles son los planes MS1 y MS2 de MEDICUS",
+      },
+      {
+        label: "2. Copagos del plan MS1",
+        query: "Cuáles son los copagos MS1 MEDICUS",
+      },
+      {
+        label: "3. Exclusiones de copago",
+        query: "Quiénes están excluidos del copago MEDICUS",
+      },
+      {
+        label: "4. Autorizaciones y facturación",
+        query: "Cómo pedir autorización MEDICUS y cómo facturar",
+      },
+    ],
+    links: [
+      { label: "Ver Preguntas Frecuentes", href: "/preguntas-frecuentes" },
+    ],
+  },
+  {
+    id: "ordenes",
+    keywords: [
+      "presentacion de ordenes",
+      "presentar ordenes",
+      "ordenes medicas",
+      "cuando presento",
+      "fecha ordenes",
+      "plazo ordenes",
+      "vencimiento ordenes",
+      "orden medica",
+      "dia 20",
+      "hasta cuando",
+      "cuando hay que presentar",
+    ],
+    chipLabel: "Presentación de órdenes",
+    answer:
+      "Tiene hasta el 20 de cada mes para presentar sus órdenes en el " +
+      "Colegio Médico de Corrientes. Las presentaciones fuera de término " +
+      "no son aceptadas.",
+  },
+
   {
     id: "asociarme",
     keywords: [
@@ -73,9 +140,9 @@ export const INTENTS: Intent[] = [
     ],
     chipLabel: "Cómo asociarme",
     answer:
-      "Para asociarte al Colegio Médico de Corrientes podés consultar los " +
+      "Para asociarse al Colegio Médico de Corrientes puede consultar los " +
       "requisitos e información en la sección Socios de nuestro sitio. " +
-      "Para iniciar el trámite o resolver dudas específicas, contactá " +
+      "Para iniciar el trámite o resolver dudas específicas, contacte " +
       "directamente al área de Padrones.",
     links: [{ label: "Información para socios", href: "/socios" }],
     whatsapp: "padrones",
@@ -90,7 +157,7 @@ export const INTENTS: Intent[] = [
     answer:
       "El Colegio cuenta con una Quinta para el esparcimiento de sus " +
       "colegiados. Es un espacio de recreación disponible para los médicos " +
-      "matriculados y sus familias. Podés ver todos los detalles y " +
+      "matriculados y sus familias. Puede ver todos los detalles y " +
       "comodidades en la sección dedicada.",
     links: [{ label: "Ver la Quinta", href: "/quinta" }],
   },
@@ -102,7 +169,7 @@ export const INTENTS: Intent[] = [
     ],
     chipLabel: "Galería",
     answer:
-      "En nuestra Galería podés ver imágenes de eventos, actividades " +
+      "En nuestra Galería puede ver imágenes de eventos, actividades " +
       "e instalaciones del Colegio Médico de Corrientes.",
     links: [{ label: "Ver Galería", href: "/galeria" }],
   },
@@ -146,7 +213,7 @@ export const INTENTS: Intent[] = [
     ],
     answer:
       "El Colegio tiene convenios con diversas obras sociales. " +
-      "Consultá el listado completo en la sección Convenios.",
+      "Consulte el listado completo en la sección Convenios.",
     links: [{ label: "Ver Convenios", href: "/convenios" }],
     asyncAction: "check_obra_social",
   },
@@ -165,8 +232,8 @@ export const INTENTS: Intent[] = [
     ],
     chipLabel: "Firmar convenio",
     answer:
-      `Si sos una Obra Social o empresa interesada en firmar convenio, ` +
-      `podés contactarnos por WhatsApp o enviando tu carta de presentación ` +
+      `Si es una Obra Social o empresa interesada en firmar convenio, ` +
+      `puede contactarnos por WhatsApp o enviando su carta de presentación ` +
       `por correo a ${CONVENIO_EMAIL}.`,
     links: [
       { label: "WhatsApp — Convenio", href: CONVENIO_WA_LINK, external: true },
@@ -183,9 +250,18 @@ export const INTENTS: Intent[] = [
     chipLabel: "Obras sociales",
     answer:
       "El Colegio tiene convenios con diversas obras sociales y prepagas. " +
-      "En la sección Convenios podés consultar el listado completo y los " +
-      "detalles de cada acuerdo.",
-    links: [{ label: "Ver Convenios", href: "/convenios" }],
+      "¿Qué desea consultar?",
+    links: [{ label: "Ver listado de convenios", href: "/convenios" }],
+    menuOptions: [
+      {
+        label: "¿Tiene convenio mi obra social?",
+        query: "tiene convenio con mi obra social",
+      },
+      {
+        label: "Firmar convenio con el Colegio",
+        query: "quiero firmar convenio",
+      },
+    ],
   },
   {
     id: "servicios",
@@ -198,7 +274,7 @@ export const INTENTS: Intent[] = [
       "El Colegio Médico ofrece: matrícula e inscripción con respaldo " +
       "institucional, defensa profesional, formación continua, ética y " +
       "calidad, asesoramiento administrativo e institucional, y comunidad " +
-      "médica activa. Conocé el detalle completo en la sección Servicios.",
+      "médica activa. Conozca el detalle completo en la sección Servicios.",
     links: [{ label: "Ver Servicios", href: "/servicios" }],
   },
   {
@@ -211,7 +287,7 @@ export const INTENTS: Intent[] = [
     chipLabel: "Cursos",
     answer:
       "El Colegio organiza cursos, jornadas y actividades de capacitación " +
-      "continua para sus colegiados. Consultá la agenda actualizada en la " +
+      "continua para sus colegiados. Consulte la agenda actualizada en la " +
       "sección Cursos.",
     links: [{ label: "Ver Cursos", href: "/cursos" }],
   },
@@ -235,7 +311,7 @@ export const INTENTS: Intent[] = [
       "profesional",
     ],
     answer:
-      "En el directorio de Médicos Asociados podés buscar profesionales " +
+      "En el directorio de Médicos Asociados puede buscar profesionales " +
       "matriculados en el Colegio por nombre o especialidad.",
     links: [{ label: "Médicos Asociados", href: "/medicos-asociados" }],
   },
@@ -247,7 +323,7 @@ export const INTENTS: Intent[] = [
     ],
     answer:
       "El Colegio brinda información sobre seguros para los médicos " +
-      "colegiados. Consultá la sección Seguros para más detalles.",
+      "colegiados. Consulte la sección Seguros para más detalles.",
     links: [{ label: "Ver Seguros", href: "/seguros" }],
   },
   {
@@ -259,7 +335,7 @@ export const INTENTS: Intent[] = [
     ],
     chipLabel: "Contacto",
     answer:
-      "Podés comunicarte con el Colegio a través de nuestra página de " +
+      "Puede comunicarse con el Colegio a través de nuestra página de " +
       "Contacto o por WhatsApp con el área de Auditoría para consultas " +
       "generales.",
     links: [{ label: "Página de Contacto", href: "/contacto" }],
@@ -272,7 +348,7 @@ export const INTENTS: Intent[] = [
       "ig", "redes",
     ],
     answer:
-      "Seguinos en Instagram para estar al tanto de las novedades, " +
+      "Síganos en Instagram para estar al tanto de las novedades, " +
       "eventos y comunicados del Colegio Médico de Corrientes.",
     links: [
       {
@@ -305,8 +381,8 @@ export const INTENTS: Intent[] = [
       "no puedo loguearme",
     ],
     answer:
-      "Recordá que el usuario es tu número de socio y la contraseña es tu " +
-      "matrícula provincial. Si el problema continúa, contactate con " +
+      "Recuerde que el usuario es su número de socio y la contraseña es su " +
+      "matrícula provincial. Si el problema continúa, contacte con " +
       "Auditoría para recibir asistencia.",
     links: [
       { label: "Ir al sistema", href: APPROVED_LINKS.login, external: true },
@@ -329,7 +405,7 @@ export const INTENTS: Intent[] = [
       "matricula contrasena",
     ],
     answer:
-      "Para acceder al sistema usá tu número de socio como usuario y tu " +
+      "Para acceder al sistema use su número de socio como usuario y su " +
       "matrícula provincial como contraseña.",
     links: [
       { label: "Ir al sistema", href: APPROVED_LINKS.login, external: true },
@@ -341,14 +417,24 @@ export const INTENTS: Intent[] = [
       "login", "ingresar sistema", "panel", "acceso sistema", "facturacion",
       "liquidacion", "validar", "portal sistema", "sistema gestion",
     ],
+    chipLabel: "Panel de acceso",
     answer:
-      "Para acceder al sistema de gestión, facturación o validación podés " +
-      "ingresar desde el portal de acceso.",
+      "¿Con qué necesita ayuda para acceder al sistema?",
     links: [
       {
-        label: "Ingresar al sistema",
+        label: "Ir al sistema",
         href: APPROVED_LINKS.login,
         external: true,
+      },
+    ],
+    menuOptions: [
+      {
+        label: "¿Cuál es mi usuario y contraseña?",
+        query: "como inicio sesion credenciales usuario",
+      },
+      {
+        label: "No puedo acceder al sistema",
+        query: "no puedo entrar al sistema",
       },
     ],
   },
@@ -360,21 +446,22 @@ export const INTENTS: Intent[] = [
     ],
     answer:
       "El Colegio Médico de Corrientes es la institución que representa " +
-      "y nuclea a los profesionales médicos de la provincia. Conocé más " +
+      "y nuclea a los profesionales médicos de la provincia. Conozca más " +
       "sobre nuestra historia, misión y autoridades.",
     links: [{ label: "Nosotros", href: "/nosotros" }],
   },
   {
-    id: "contacto",
+    id: "horarios",
     keywords: [
-      "contacto", "horario de atención",
-      "horario", "atencion", "en qué horario atienden",
+      "horario de atencion",
+      "en que horario atienden",
+      "que horario tienen",
+      "cuando atienden",
+      "a que hora abren",
     ],
-    chipLabel: "Contacto",
     answer:
-      "Los horarios de atención es de " +
-      "de lunes a viernes de 7:00 a 15:00 horas." +
-      ". Más información se encuentra disponibles en la sección Contacto.",
+      "El horario de atención del Colegio es de lunes a viernes de 7:00 a 15:00 horas. " +
+      "Para más información puede visitar la sección Contacto.",
     links: [{ label: "Contacto", href: "/contacto" }],
   },
 
@@ -397,39 +484,119 @@ export const INTENTS: Intent[] = [
       "hay un error en el sitio",
     ],
     answer:
-      "Si encontraste un error en el sitio, podés reportarlo al área de " +
+      "Si encontró un error en el sitio, puede reportarlo al área de " +
       `Auditoría por WhatsApp o por correo a ${WHATSAPP_NUMBERS.auditoria.email}.`,
     whatsapp: "auditoria",
   },
 
-  // ── Pricing ───────────────────────────────────────────────────────────────────
+  // ── MEDICUS — Fuerzas de Seguridad (sub-intents) ─────────────────────────────
 
   {
-    id: "precio_consulta",
+    id: "medicus_planes",
     keywords: [
-      "cuanto cuesta la consulta",
-      "cuanto cuesta con",
-      "precio de la consulta",
-      "precio para",
-      "valor de la consulta",
-      "valor para",
-      "honorario de la consulta",
-      "honorario para",
-      "tarifa consulta",
-      "precio consulta",
-      "valor consulta",
-      "cuanto cobran",
-      "cuanto cobra con",
-      "cuanto es la consulta",
-      "cuanto vale la consulta",
+      "planes ms1",
+      "plan ms1",
+      "plan ms2",
+      "ms1 y ms2",
+      "que es ms1",
+      "que es ms2",
+      "diferencia ms1",
+      "cobertura ms1",
+      "cobertura ms2",
+      "internacion ms1",
+      "internacion ms2",
+      "cuales son los planes ms1",
     ],
     answer:
-      "El valor de la consulta (código 420351) varía según la obra " +
-      "social y se actualiza periódicamente. Consultá con Auditoría para " +
-      "conocer el importe vigente para tu cobertura.",
-    whatsapp: "auditoria",
-    asyncAction: "get_precio_consulta",
+      "MEDICUS incorporó afiliados de las Fuerzas de Seguridad Nacionales " +
+      "(Gendarmería y Prefectura) desde el 1° de junio de 2026. Los planes son:\n\n" +
+      "• MS1: tiene copagos en consultas y prácticas ambulatorias. " +
+      "Internación en habitación compartida.\n" +
+      "• MS2: sin copagos. Internación en habitación individual.\n\n" +
+      "Los afiliados deben presentar credencial vigente de MEDICUS.",
+    links: [
+      { label: "Ver Preguntas Frecuentes", href: "/preguntas-frecuentes" },
+    ],
   },
+  {
+    id: "medicus_copagos",
+    keywords: [
+      "copago medicus",
+      "copagos medicus",
+      "copago ms1",
+      "copagos ms1",
+      "cuanto paga medicus",
+      "cuanto es el copago",
+      "tabla copago",
+      "valor copago",
+      "cuales son los copagos ms1",
+    ],
+    answer:
+      "Copagos vigentes del Plan MS1 (desde junio 2026):\n\n" +
+      "• $35.000 — Cirugías ambulatorias, endoscopías, CPRE, broncoscopías.\n" +
+      "• $20.000 — Consultas médicas, especialistas, psicología, ecografías, " +
+      "tomografías, resonancias, imágenes especiales, laboratorio (por receta), " +
+      "odontología, y prácticas de cardiología, dermatología, ginecología, " +
+      "oftalmología, traumatología y otras especialidades.\n" +
+      "• $10.000 — Radiología (por receta), fonoaudiología, kinesiología, nutrición.\n\n" +
+      "El Plan MS2 no tiene copagos.",
+    links: [
+      { label: "Ver Preguntas Frecuentes", href: "/preguntas-frecuentes" },
+    ],
+  },
+  {
+    id: "medicus_exclusiones",
+    keywords: [
+      "excluidos del copago",
+      "excluido copago",
+      "exclusion copago",
+      "exclusiones medicus",
+      "sin copago medicus",
+      "quienes no pagan",
+      "quienes estan excluidos",
+      "oncologia copago",
+      "embarazo copago",
+      "cud copago",
+    ],
+    answer:
+      "Están excluidos de copagos en el Plan MS1:\n\n" +
+      "• Pacientes oncológicos u oncohematológicos.\n" +
+      "• Pacientes en cuidados paliativos.\n" +
+      "• HIV, diálisis, trasplantados, tratamientos de fertilidad.\n" +
+      "• Plan materno infantil: embarazo, parto, puerperio y niños hasta 3 años.\n" +
+      "• Titulares de CUD (Certificado Único de Discapacidad).\n\n" +
+      "También excluidas en contexto preventivo: PAP y mamografía.\n" +
+      "Las prestaciones realizadas en guardia sí llevan copago.",
+    links: [
+      { label: "Ver Preguntas Frecuentes", href: "/preguntas-frecuentes" },
+    ],
+  },
+  {
+    id: "medicus_autorizaciones",
+    keywords: [
+      "autorizacion medicus",
+      "autorizaciones medicus",
+      "autorizar medicus",
+      "como autorizo medicus",
+      "facturar medicus",
+      "facturacion medicus",
+      "receta medicus",
+      "membrete medicus",
+      "como pedir autorizacion medicus",
+      "autorizacionesplanms",
+    ],
+    answer:
+      "Para solicitar autorizaciones de MEDICUS — Fuerzas de Seguridad:\n\n" +
+      "📧 autorizacionesplanms@medicus.com.ar\n" +
+      "📱 El afiliado también puede tramitarla por la app de MEDICUS.\n\n" +
+      "Para facturar: las prestaciones deben registrarse en recetario con " +
+      "membrete profesional. En cada orden debe constar el importe percibido " +
+      "en concepto de copago cuando corresponda.",
+    links: [
+      { label: "Ver Preguntas Frecuentes", href: "/preguntas-frecuentes" },
+    ],
+  },
+
 ];
 
 // ─── Quick-reply chips (derived from intents with chipLabel) ──────────────────
