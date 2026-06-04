@@ -42,12 +42,6 @@ import RefacturacionesList from "./app/pages/Pagos/RefacturacionesList/Refactura
 import DeduccionesList from "./app/pages/Deducciones/DeduccionesList";
 import NuevaDeduccion from "./app/pages/Deducciones/NuevaDeduccion";
 
-// Facturación
-import Facturacion from "./app/pages/facturacion/Facturacion";
-import CargaFacturacion from "./app/pages/facturacion/CargaFacturacion/CargaFacturacion";
-import CierrePeriodoFacturista from "./app/pages/facturacion/CierrePeriodoFacturista/CierrePeriodoFacturista";
-import ListadoOSFacturacion from "./app/pages/facturacion/ListadoOSFacturacion/ListadoOSFacturacion";
-
 // WEBSITE
 import WebRoutes from "./website/router";
 import GenerarExcel from "./app/pages/CrearPadronExcel/CrearPadronExcel";
@@ -164,19 +158,6 @@ export default function RootRoutes() {
               <Route path="alta" element={<ObrasSocialesForm />} />
               <Route path=":id" element={<ObrasSocialesDetalle />} />
               <Route path=":id/editar" element={<ObrasSocialesForm />} />
-            </Route>
-
-            <Route path="facturacion">
-              <Route index element={<Facturacion />} />
-              <Route path="carga" element={<CargaFacturacion />} />
-              <Route
-                path="cierre-periodo"
-                element={<CierrePeriodoFacturista />}
-              />
-              <Route
-                path="listado-por-obra-social"
-                element={<ListadoOSFacturacion />}
-              />
             </Route>
 
             <Route
