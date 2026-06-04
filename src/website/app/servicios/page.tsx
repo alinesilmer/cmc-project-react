@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import { ShieldCheck, Handshake, Home, Receipt, Gift, Images } from "lucide-react"
+import { ShieldCheck, Handshake, Home, Receipt, Gift, Images, HeartHandshake } from "lucide-react"
 import styles from "./servicios.module.scss"
 import ServiceCard from "../../components/UI/ServicesCard/ServicesCard";
 import Hero from "../../components/UI/Hero/Hero";
@@ -15,6 +15,7 @@ export default function ServiciosPage() {
     { icon: <Handshake size={22} />, title: "Convenios", description: "Obras Sociales con acuerdo vigente.", href: "/convenios" },
     { icon: <Home size={22} />, title: "Quinta", description: "Alquiler y requisitos para el uso de la Quinta.", href: "/quinta" },
     { icon: <Images size={22} />, title: "Galería de fotos y videos", description: "Multimedia de eventos y vida institucional.", href: "/galeria" },
+    { icon: <HeartHandshake size={22} />, title: "Prevención Salud", description: "Descuento exclusivo en planes de obra social para socios.", href: "/prevencion-salud" },
   ]
 
   return (

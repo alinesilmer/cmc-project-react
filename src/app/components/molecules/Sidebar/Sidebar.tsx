@@ -266,6 +266,13 @@ const NAV_SECTIONS: NavSection[] = [
             label: "Especialidades",
             perms: ["medicos:leer"],
           },
+          {
+            kind: "item",
+            path: `${base}/servicios`,
+            icon: Building2,
+            label: "Servicios",
+            perms: ["medicos:leer"],
+          },
         ],
       },
       {

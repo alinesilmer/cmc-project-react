@@ -1,0 +1,138 @@
+@use "@/website/styles/all.scss" as *;
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xl;
+  padding: $spacing-xxl $spacing-xl;
+  background: white;
+  font-family: $font-normal;
+}
+
+// ── Header ──────────────────────────────────────────────────────────────────
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  background: $primary-blue;
+  color: $white;
+  border-radius: $border-radius-sm;
+  padding: $spacing-2xl;
+  box-shadow: 0 20px 60px rgba($primary-blue, 0.28);
+  position: relative;
+  overflow: hidden;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.9rem;
+  border-radius: $border-radius-sm;
+  background: rgba($primary-yellow, 0.95);
+  color: $dark-gray;
+  font-weight: 800;
+  font-size: 0.82rem;
+  letter-spacing: 0.3px;
+  width: fit-content;
+}
+
+.titulo {
+  font-family: $font-playfair;
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  letter-spacing: -0.3px;
+  color: $primary-yellow;
+  margin: 0;
+}
+
+.descripcion {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: rgba($white, 0.96);
+  margin: 0;
+  max-width: 62ch;
+}
+
+.ctaRow {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+  margin-top: $spacing-sm;
+}
+
+// ── Body layout ──────────────────────────────────────────────────────────────
+
+.body {
+  display: flex;
+  flex-direction: column;
+}
+
+// ── Benefits panel ───────────────────────────────────────────────────────────
+
+.benefitsPanel {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+  padding: $spacing-xl;
+  border: 1px solid rgba($primary-blue, 0.12);
+  border-radius: $border-radius-sm;
+  background: $white;
+  box-shadow: 0 16px 40px rgba($primary-blue, 0.12);
+}
+
+.benefitsTitle {
+  font-family: $font-title;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: $primary-blue;
+  margin: 0;
+}
+
+.benefitsList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.benefitItem {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-sm;
+  color: $dark-gray;
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.checkIcon {
+  color: $primary-green;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+
+// ── Responsive ───────────────────────────────────────────────────────────────
+
+@media (max-width: $breakpoint-desktop) {
+  .wrapper { padding: $spacing-xl $spacing-lg; }
+  .header  { padding: $spacing-xl; }
+}
+
+@media (max-width: $breakpoint-tablet) {
+  .ctaRow {
+    flex-direction: column;
+  }
+  .ctaRow > * {
+    width: 100%;
+  }
+}
+
+@media (max-width: $breakpoint-mobile) {
+  .wrapper       { padding: $spacing-lg $spacing-md; }
+  .header        { padding: $spacing-lg; }
+  .benefitsPanel { padding: $spacing-lg; }
+  .contactBox    { padding: $spacing-md; }
+}

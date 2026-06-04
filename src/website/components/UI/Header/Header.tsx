@@ -173,6 +173,15 @@ export default function Header() {
                         Galería de fotos y videos
                       </Link>
                     </li>
+                    <li>
+                      <Link
+                        to="/prevencion-salud"
+                        className={styles.subLink}
+                        onClick={closeAll}
+                      >
+                        Prevención Salud
+                      </Link>
+                    </li>
                   </motion.ul>
                 )}
               </AnimatePresence>
@@ -287,6 +296,9 @@ export default function Header() {
                       </Link>
                       <Link to="/galeria" onClick={closeAll}>
                         Galería de fotos y videos
+                      </Link>
+                      <Link to="/prevencion-salud" onClick={closeAll}>
+                        Prevención Salud
                       </Link>
                     </motion.div>
                   )}

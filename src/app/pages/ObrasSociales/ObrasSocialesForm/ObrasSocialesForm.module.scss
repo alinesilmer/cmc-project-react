@@ -543,6 +543,13 @@
   flex-wrap: wrap;
 }
 
+.existingFileRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  flex-wrap: wrap;
+}
+
 .docFileLink {
   font-size: $font-size-sm;
   color: #897CAC;
@@ -702,6 +709,12 @@
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   color: $gray-700;
+}
+
+.queuedFileList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
 }
 
 .queuedFile {
