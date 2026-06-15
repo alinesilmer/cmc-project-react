@@ -48,6 +48,10 @@ const HIDDEN_PATHS = ["/admin", "/403", "/panel"];
 const TYPING_DELAY_MS = 650;
 const DIALOG_ID = "cmc-chat-dialog";
 
+// Rate limit: max 10 user messages per 60 seconds
+const RATE_LIMIT_MAX = 10;
+const RATE_LIMIT_WINDOW_MS = 60_000;
+
 let _msgId = 0;
 const nextId = () => `m${++_msgId}`;
 
@@ -71,6 +75,7 @@ export default function Chatbot() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const msgTimestampsRef = useRef<number[]>([]);
 
 
   // Scroll to latest message
@@ -126,6 +131,19 @@ export default function Chatbot() {
     async (rawText: string) => {
       const clean = sanitizeInput(rawText);
       if (!clean) return;
+
+      // Rate limit: drop messages beyond the window threshold
+      const now = Date.now();
+      msgTimestampsRef.current = msgTimestampsRef.current.filter(
+        (t) => now - t < RATE_LIMIT_WINDOW_MS
+      );
+      if (msgTimestampsRef.current.length >= RATE_LIMIT_MAX) {
+        pushBot({
+          text: "Ha enviado demasiados mensajes en poco tiempo. Por favor espere un momento antes de continuar.",
+        });
+        return;
+      }
+      msgTimestampsRef.current.push(now);
 
       abortRef.current?.abort();
       const ac = new AbortController();

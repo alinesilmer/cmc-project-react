@@ -43,10 +43,12 @@ import {
   ClipboardPlus,
   HousePlus,
   Table2,
-  Tags,
   Flower2,
-  BookOpen,
-  FileUp,
+  FileCode2,
+  Sigma,
+  TrendingUp,
+  Search,
+  GitMerge,
 } from "lucide-react";
 
 import styles from "./Sidebar.module.scss";
@@ -125,6 +127,19 @@ const NAV_SECTIONS: NavSection[] = [
     title: "Principal",
     items: [
       { kind: "item", path: `${base}/dashboard`, icon: Home, label: "Inicio" },
+      // {
+      //   kind: "group",
+      //   id: "facturacion",
+      //   icon: NotebookIcon,
+      //   label: "Facturación",
+      //   perms: ["medicos:leer"],
+      //   children: FACTURACION_CHILDREN,
+      // },
+    ],
+  },
+  {
+    title: "Liquidación",
+    items: [
       {
         kind: "item",
         path: `${base}/liquidation`,
@@ -137,13 +152,6 @@ const NAV_SECTIONS: NavSection[] = [
         path: `${base}/debitos-creditos`,
         icon: ArrowLeftRight,
         label: "Débitos y Créditos",
-        perms: ["liquidacion:leer", "liquidacion:ver"],
-      },
-      {
-        kind: "item",
-        path: `${base}/refacturaciones`,
-        icon: RotateCcw,
-        label: "Refacturaciones",
         perms: ["liquidacion:leer", "liquidacion:ver"],
       },
       {
@@ -169,18 +177,22 @@ const NAV_SECTIONS: NavSection[] = [
           },
         ],
       },
-      // {
-      //   kind: "group",
-      //   id: "facturacion",
-      //   icon: NotebookIcon,
-      //   label: "Facturación",
-      //   perms: ["medicos:leer"],
-      //   children: FACTURACION_CHILDREN,
-      // },
     ],
   },
   {
-    title: "Gestión",
+    title: "Refacturación",
+    items: [
+      {
+        kind: "item",
+        path: `${base}/refacturaciones`,
+        icon: RotateCcw,
+        label: "Refacturaciones",
+        perms: ["liquidacion:leer", "liquidacion:ver"],
+      },
+    ],
+  },
+  {
+    title: "Gestión de Socios",
     items: [
       //  {
       //   kind: "group",
@@ -351,42 +363,6 @@ const NAV_SECTIONS: NavSection[] = [
             label: "Actualización de Valores",
             perms: ["medicos:leer"],
           },
-          {
-            kind: "item",
-            path: `${base}/gestion-codigos`,
-            icon: Tags,
-            label: "Gestión de Códigos",
-            perms: ["medicos:leer"],
-          },
-          {
-            kind: "item",
-            path: `${base}/importar-valores-csv`,
-            icon: FileUp,
-            label: "Actualizar valores CSV",
-            perms: ["medicos:leer"],
-          },
-        ],
-      },
-      {
-        kind: "group",
-        id: "nomenclador",
-        icon: BookOpen,
-        label: "Nomenclador",
-        children: [
-          {
-            kind: "item",
-            path: `${base}/tabla-ginecologia`,
-            icon: Table2,
-            label: "Tabla Ginecología",
-            perms: ["medicos:leer"],
-          },
-          {
-            kind: "item",
-            path: `${base}/boletin-galenos`,
-            icon: ClipboardPlus,
-            label: "Boletín Galenos",
-            perms: ["medicos:leer"],
-          },
         ],
       },
       {
@@ -410,6 +386,65 @@ const NAV_SECTIONS: NavSection[] = [
             perms: ["medicos:leer"],
           },
         ],
+      },
+    ],
+  },
+  {
+    title: "Galenos",
+    items: [
+      {
+        kind: "item",
+        path: `${base}/nomenclador/galenos`,
+        icon: Sigma,
+        label: "Galenos",
+        perms: ["medicos:leer"],
+      },
+      {
+        kind: "item",
+        path: `${base}/nomenclador/actualizar-precios`,
+        icon: TrendingUp,
+        label: "Actualizar Unidades",
+        perms: ["medicos:leer"],
+      },
+    ],
+  },
+  {
+    title: "Gestión de Códigos",
+    items: [
+      {
+        kind: "item",
+        path: `${base}/nomenclador/codigos`,
+        icon: FileCode2,
+        label: "Catálogo Códigos CMC",
+        perms: ["medicos:leer"],
+      },
+      {
+        kind: "item",
+        path: `${base}/nomenclador/por-obra-social`,
+        icon: Building2,
+        label: "Por Obra Social",
+        perms: ["medicos:leer"],
+      },
+      {
+        kind: "item",
+        path: `${base}/nomenclador/consulta-valores`,
+        icon: Search,
+        label: "Consulta de Valores",
+        perms: ["medicos:leer"],
+      },
+      {
+        kind: "item",
+        path: `${base}/nomenclador/consulta-precios`,
+        icon: DollarSign,
+        label: "Consulta de Precios",
+        perms: ["medicos:leer"],
+      },
+      {
+        kind: "item",
+        path: `${base}/nomenclador/homologador`,
+        icon: GitMerge,
+        label: "Homologador",
+        perms: ["medicos:leer"],
       },
     ],
   },
@@ -477,15 +512,33 @@ const getInitialOpenGroups = (sections: NavSection[], currentPath: string) => {
   return next;
 };
 
+const DOCTOR_NAV_SECTIONS: NavSection[] = [
+  {
+    title: "Consultas",
+    items: [
+      {
+        kind: "item",
+        path: `${base}/nomenclador/consulta-precios`,
+        icon: DollarSign,
+        label: "Consulta de Precios",
+      },
+    ],
+  },
+];
+
 const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
+  const isDoctor = user?.ingresar === "D";
+
+  const activeSections = isDoctor ? DOCTOR_NAV_SECTIONS : NAV_SECTIONS;
+
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
-    getInitialOpenGroups(NAV_SECTIONS, location.pathname),
+    getInitialOpenGroups(activeSections, location.pathname),
   );
   const [tooltip, setTooltip] = useState<{
     label: string;
@@ -504,7 +557,7 @@ const Sidebar = () => {
   );
 
   useEffect(() => {
-    const activeGroups = getInitialOpenGroups(NAV_SECTIONS, location.pathname);
+    const activeGroups = getInitialOpenGroups(activeSections, location.pathname);
 
     if (Object.keys(activeGroups).length === 0) return;
 
@@ -839,7 +892,7 @@ const Sidebar = () => {
         </div>
 
         <nav className={styles.nav}>
-          {NAV_SECTIONS.map((section, sectionIndex) => (
+          {activeSections.map((section, sectionIndex) => (
             <div className={styles.navSection} key={section.title}>
               <p className={styles.navSectionTitle}>{section.title}</p>
 
@@ -847,7 +900,7 @@ const Sidebar = () => {
                 {section.items.map((entry) => renderNavEntry(entry))}
               </ul>
 
-              {sectionIndex < NAV_SECTIONS.length - 1 && (
+              {sectionIndex < activeSections.length - 1 && (
                 <div className={styles.sectionDivider} aria-hidden="true" />
               )}
             </div>

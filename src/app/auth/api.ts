@@ -7,7 +7,10 @@ export type User = {
   nro_socio?: number | null;
   nombre: string;
   scopes: string[];
-  role?: string | null; 
+  role?: string | null;
+  /** 'D' = médico; otros valores = personal administrativo */
+  ingresar?: string | null;
+  especialidad_id?: number | null;
 };
 
 function normalizeUser(raw: any): User {
@@ -20,7 +23,9 @@ function normalizeUser(raw: any): User {
       : raw?.scopes
       ? [raw.scopes]
       : [],
-    role: raw?.role ?? null, 
+    role: raw?.role ?? null,
+    ingresar: raw?.ingresar ?? raw?.INGRESAR ?? null,
+    especialidad_id: raw?.especialidad_id ?? raw?.ESPECIALIDAD_ID ?? null,
   };
 }
 

@@ -104,6 +104,10 @@ export const INTENTS: Intent[] = [
         label: "4. Autorizaciones y facturación",
         query: "Cómo pedir autorización MEDICUS y cómo facturar",
       },
+      {
+        label: "5. Usuario y contraseña",
+        query: "credenciales osfa iosfa usuario contrasena validacion",
+      },
     ],
     links: [
       { label: "Ver Preguntas Frecuentes", href: "/preguntas-frecuentes" },
@@ -167,7 +171,6 @@ export const INTENTS: Intent[] = [
       "galeria", "fotos", "fotografias", "imagenes", "album",
       "eventos fotografias", "ver fotos",
     ],
-    chipLabel: "Galería",
     answer:
       "En nuestra Galería puede ver imágenes de eventos, actividades " +
       "e instalaciones del Colegio Médico de Corrientes.",
@@ -269,7 +272,6 @@ export const INTENTS: Intent[] = [
       "servicio", "servicios", "beneficio", "beneficios", "que ofrecen",
       "que hace el colegio", "prestaciones", "ventajas", "que incluye",
     ],
-    chipLabel: "Servicios",
     answer:
       "El Colegio Médico ofrece: matrícula e inscripción con respaldo " +
       "institucional, defensa profesional, formación continua, ética y " +
@@ -284,7 +286,6 @@ export const INTENTS: Intent[] = [
       "seminario", "taller", "congreso", "actualizacion", "educacion continua",
       "capacitarse",
     ],
-    chipLabel: "Cursos",
     answer:
       "El Colegio organiza cursos, jornadas y actividades de capacitación " +
       "continua para sus colegiados. Consulte la agenda actualizada en la " +
@@ -465,6 +466,59 @@ export const INTENTS: Intent[] = [
     links: [{ label: "Contacto", href: "/contacto" }],
   },
 
+  {
+    id: "autorizaciones_practicas",
+    keywords: [
+      "autorización",
+      "autorizacion",
+      "practica lleva autorizacion",
+      "práctica lleva autorización",
+      "necesita autorizacion",
+      "necesita autorización",
+      "requiere autorizacion",
+      "requiere autorización",
+      "como saber si autorizo",
+      "tengo que pedir autorizacion",
+      "normativas",
+      "normas practicas",
+    ],
+    chipLabel: "Autorizaciones de prácticas",
+    answer:
+      "Para consultar si una práctica requiere autorización previa, ingrese " +
+      "al sector Normativas de nuestra página web, donde encontrará el " +
+      "listado actualizado de prácticas y sus requerimientos.",
+    links: [{ label: "Ver Normativas", href: "/normativas" }],
+  },
+
+  {
+    id: "consultar_valores_os",
+    keywords: [
+      "consultar valores",
+      "valor prestaciones",
+      "precio obra social",
+      "precios obra social",
+      "consultar precios",
+      "cuanto paga",
+      "cuanto cobra",
+      "arancel obra social",
+      "aranceles",
+      "valor por codigo",
+      "precio por codigo",
+      "como consulto precios",
+      "como veo los precios",
+      "ver valores obras sociales",
+    ],
+    chipLabel: "¿Cómo consultar valores?",
+    answer:
+      "Para consultar los valores de prestaciones por obra social y código:\n\n" +
+      "1. Ingrese al sistema con su usuario y contraseña.\n" +
+      "2. Diríjase a la sección «Valor Prestaciones».\n" +
+      "3. Seleccione la obra social y el código que desea consultar.",
+    links: [
+      { label: "Ingresar al sistema", href: APPROVED_LINKS.login, external: true },
+    ],
+  },
+
   // ── Errors / support ──────────────────────────────────────────────────────────
 
   {
@@ -567,6 +621,32 @@ export const INTENTS: Intent[] = [
       "• Titulares de CUD (Certificado Único de Discapacidad).\n\n" +
       "También excluidas en contexto preventivo: PAP y mamografía.\n" +
       "Las prestaciones realizadas en guardia sí llevan copago.",
+    links: [
+      { label: "Ver Preguntas Frecuentes", href: "/preguntas-frecuentes" },
+    ],
+  },
+  {
+    id: "medicus_osfa",
+    keywords: [
+      "credenciales osfa",
+      "credenciales iosfa",
+      "usuario osfa",
+      "contrasena osfa",
+      "clave osfa",
+      "usuario iosfa",
+      "contrasena iosfa",
+      "clave iosfa",
+      "osfa validacion",
+      "iosfa validacion",
+      "credenciales osfa iosfa usuario contrasena validacion",
+      "fuerzas armadas usuario",
+      "fuerzas armadas contrasena",
+    ],
+    answer:
+      "Para ingresar al sistema de validación de OSFA (ex IOSFA — Fuerzas Armadas), " +
+      "tanto el usuario como la contraseña son el CUIT del Colegio Médico con guiones:\n\n" +
+      "👤 Usuario: 3-57319069-2\n" +
+      "🔑 Contraseña: 3-57319069-2",
     links: [
       { label: "Ver Preguntas Frecuentes", href: "/preguntas-frecuentes" },
     ],

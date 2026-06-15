@@ -31,12 +31,21 @@ const SECTIONS: FaqSection[] = [
         a: "Para asociarte, podés consultar los requisitos e información en la sección Socios de nuestro sitio. Para iniciar el trámite o resolver dudas específicas, contactá directamente al área de Padrones.",
       },
       {
-        q: "¿Cuál es el usuario y la contraseña para ingresar al sistema?",
-        a: "El usuario es tu número de socio y la contraseña es tu matrícula provincial. Si el problema continúa, contactate con el área de Auditoría para recibir asistencia.",
-      },
-      {
         q: "¿En qué horario atiende el Colegio?",
         a: "El horario de atención es de lunes a viernes de 7:00 a 15:00 horas.",
+      },
+      {
+        q: "¿Cómo sé si una práctica requiere autorización previa?",
+        a: "Para consultar si una práctica requiere autorización, ingresá al sector Normativas de nuestra página web, donde encontrarás el listado actualizado de prácticas y sus requerimientos.",
+      },
+      {
+        q: "¿Cómo consulto los valores de prestaciones de una obra social?",
+        a: [
+          "Para consultar los valores por obra social y código:",
+          "1. Ingresá al sistema con tu usuario y contraseña.",
+          "2. Dirigite a la sección «Valor Prestaciones».",
+          "3. Seleccioná la obra social y el código que deseás consultar.",
+        ],
       },
       {
         q: "¿Cómo puedo verificar si una obra social tiene convenio?",
@@ -100,6 +109,14 @@ const SECTIONS: FaqSection[] = [
           "📧 autorizacionesplanms@medicus.com.ar",
           "📱 El afiliado también puede tramitar la autorización a través de la app de MEDICUS.",
           "Se recomienda hacer la solicitud y que el afiliado gestione la autorización por la app o por el correo informado.",
+        ],
+      },
+      {
+        q: "¿Cuál es el usuario y la contraseña para validar en OSFA (ex IOSFA — Fuerzas Armadas)?",
+        a: [
+          "Para ingresar al sistema de validación de OSFA (ex IOSFA — Fuerzas Armadas), tanto el usuario como la contraseña son el CUIT del Colegio Médico, escrito con guiones:",
+          "👤 Usuario: 3-57319069-2",
+          "🔑 Contraseña: 3-57319069-2",
         ],
       },
     ],
