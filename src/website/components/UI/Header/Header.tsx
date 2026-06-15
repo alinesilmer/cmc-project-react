@@ -182,6 +182,15 @@ export default function Header() {
                         Prevención Salud
                       </Link>
                     </li>
+                    <li>
+                      <Link
+                        to="/preguntas-frecuentes"
+                        className={styles.subLink}
+                        onClick={closeAll}
+                      >
+                        Preguntas Frecuentes
+                      </Link>
+                    </li>
                   </motion.ul>
                 )}
               </AnimatePresence>
@@ -299,6 +308,9 @@ export default function Header() {
                       </Link>
                       <Link to="/prevencion-salud" onClick={closeAll}>
                         Prevención Salud
+                      </Link>
+                      <Link to="/preguntas-frecuentes" onClick={closeAll}>
+                        Preguntas Frecuentes
                       </Link>
                     </motion.div>
                   )}

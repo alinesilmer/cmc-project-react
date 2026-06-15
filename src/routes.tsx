@@ -54,10 +54,15 @@ import ObrasSocialesForm from "./app/pages/ObrasSociales/ObrasSocialesForm/Obras
 import ObrasSocialesDetalle from "./app/pages/ObrasSociales/ObrasSocialesDetalle/ObrasSocialesDetalle";
 import EspecialidadesPage from "./app/pages/Especialidades/EspecialidadesPage";
 import ServiciosPage from "./app/pages/Servicios/ServiciosPage";
-import GestionCodigos from "./app/pages/GestionCodigos/GestionCodigos";
 import TablaGinecologia from "./app/pages/TablaGinecologia/TablaGinecologia";
 import BoletinGalenos from "./app/pages/BoletinGalenos/BoletinGalenos";
-import ImportarValoresCSV from "./app/pages/ImportarValoresCSV/ImportarValoresCSV";
+import NomencladorCodigos from "./app/pages/NomencladorNacional/NomencladorCodigos/NomencladorCodigos";
+import ConsultaValores from "./app/pages/NomencladorNacional/ConsultaValores/ConsultaValores";
+import ConsultaPrecios from "./app/pages/NomencladorNacional/ConsultaPrecios/ConsultaPrecios";
+import Homologador from "./app/pages/NomencladorNacional/Homologador/Homologador";
+import NomencladorPorOS from "./app/pages/NomencladorNacional/NomencladorPorOS/NomencladorPorOS";
+import NomencladorGalenos from "./app/pages/NomencladorNacional/NomencladorGalenos/NomencladorGalenos";
+import ActualizarPreciosGalenos from "./app/pages/NomencladorNacional/ActualizarPreciosGalenos/ActualizarPreciosGalenos";
 
 export default function RootRoutes() {
   return (
@@ -136,10 +141,6 @@ export default function RootRoutes() {
               element={<TablaValores />}
             />
             <Route
-              path="gestion-codigos"
-              element={<GestionCodigos />}
-            />
-            <Route
               path="tabla-ginecologia"
               element={<TablaGinecologia />}
             />
@@ -147,10 +148,14 @@ export default function RootRoutes() {
               path="boletin-galenos"
               element={<BoletinGalenos />}
             />
-            <Route
-              path="importar-valores-csv"
-              element={<ImportarValoresCSV />}
-            />
+            {/* Nomenclador Nacional */}
+            <Route path="nomenclador/codigos" element={<NomencladorCodigos />} />
+            <Route path="nomenclador/por-obra-social" element={<NomencladorPorOS />} />
+            <Route path="nomenclador/galenos" element={<NomencladorGalenos />} />
+            <Route path="nomenclador/actualizar-precios" element={<ActualizarPreciosGalenos />} />
+            <Route path="nomenclador/consulta-valores" element={<ConsultaValores />} />
+            <Route path="nomenclador/consulta-precios" element={<ConsultaPrecios />} />
+            <Route path="nomenclador/homologador" element={<Homologador />} />
 
             <Route path="especialidades" element={<EspecialidadesPage />} />
             <Route path="servicios" element={<ServiciosPage />} />

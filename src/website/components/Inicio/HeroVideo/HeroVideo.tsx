@@ -92,6 +92,13 @@ export const HeroVideo: FC = () => {
             <Button variant="secondary" size="xlg" onClick={handleEntrarValidar}>
               Entrar a Validar
             </Button>
+            <Button
+              variant="primary"
+              size="xlg"
+              onClick={() => window.dispatchEvent(new CustomEvent("cmc:open-chatbot"))}
+            >
+              💬 Chatbot
+            </Button>
           </motion.div>
         </div>
 

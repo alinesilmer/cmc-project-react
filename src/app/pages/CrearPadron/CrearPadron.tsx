@@ -31,6 +31,10 @@ type Prestador = {
 
   domicilio_consulta?: string | null;
   mail_particular?: string | null;
+
+  dni?: string | null;
+  fecha_nacimiento?: string | null;
+  tele_particular?: string | null;
 };
 
 const API_BASE =
@@ -292,6 +296,24 @@ function mapItemToPrestador(it: any): Prestador {
     it?.domicilio_consulta ??
     null;
 
+  // documento → DNI (API returns string cast from numeric)
+  const dni = safeStr(
+    src?.documento ?? src?.DOCUMENTO ?? src?.DNI ?? src?.dni ??
+    it?.documento ?? it?.DOCUMENTO ?? it?.DNI ?? it?.dni ?? ""
+  ).trim() || null;
+
+  // fecha_nac → fecha de nacimiento (ISO "YYYY-MM-DD" or null)
+  const fecha_nacimiento =
+    src?.fecha_nac ?? src?.FECHA_NAC ??
+    src?.FECHA_NACIMIENTO ?? src?.fecha_nacimiento ??
+    it?.fecha_nac ?? it?.FECHA_NAC ??
+    it?.FECHA_NACIMIENTO ?? it?.fecha_nacimiento ?? null;
+
+  const tele_particular = safeStr(
+    src?.tele_particular ?? src?.TELE_PARTICULAR ??
+    it?.tele_particular ?? it?.TELE_PARTICULAR ?? ""
+  ).trim() || null;
+
   return {
     id,
     nro_socio: nro,
@@ -303,6 +325,9 @@ function mapItemToPrestador(it: any): Prestador {
     especialidades,
     especialidad,
     domicilio_consulta,
+    dni,
+    fecha_nacimiento,
+    tele_particular,
   };
 }
 
@@ -477,6 +502,105 @@ async function enrichForPdf(rows: Prestador[], signal?: AbortSignal): Promise<Pr
 // ======================================================
 // DEDUP
 // ======================================================
+// ── Fecha formatter — T00:00:00 prevents timezone shift ──────────────────────
+function formatFechaNac(raw: string | null | undefined): string {
+  const s = safeStr(raw).trim();
+  if (!s) return "";
+  try {
+    const d = new Date(s + "T00:00:00");
+    if (isNaN(d.getTime())) return s;
+    return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
+  } catch {
+    return s;
+  }
+}
+
+// ── Excel enrichment — fetches all four fields from GET /api/medicos/{id} ────
+
+type ExcelContactoPayload = {
+  domicilio_consulta: string | null;
+  documento: string | null;
+  fecha_nac: string | null;
+  tele_particular: string | null;
+};
+
+const excelContactoCache = new Map<string, ExcelContactoPayload>();
+
+async function fetchExcelContactoById(
+  id: string,
+  signal?: AbortSignal
+): Promise<ExcelContactoPayload> {
+  const cached = excelContactoCache.get(id);
+  if (cached) return cached;
+
+  const urls = [
+    `${API_BASE}/api/medicos/${id}`,
+    ...ENDPOINTS.prestadorDetailCandidates(id),
+  ];
+
+  for (const url of urls) {
+    try {
+      const { data } = await axios.get(url, { signal, timeout: PDF_REQ_TIMEOUT_MS } as any);
+      const src = unwrapPrestadorSource(data);
+
+      const payload: ExcelContactoPayload = {
+        domicilio_consulta:
+          safeStr(src?.domicilio_consulta ?? data?.domicilio_consulta ?? "").trim() || null,
+        documento:
+          safeStr(src?.documento ?? data?.documento ?? "").trim() || null,
+        fecha_nac:
+          src?.fecha_nac ?? data?.fecha_nac ?? null,
+        tele_particular:
+          safeStr(src?.tele_particular ?? data?.tele_particular ?? "").trim() || null,
+      };
+      excelContactoCache.set(id, payload);
+      return payload;
+    } catch (e: any) {
+      if (signal?.aborted) throw e;
+    }
+  }
+
+  const empty: ExcelContactoPayload = {
+    domicilio_consulta: null,
+    documento: null,
+    fecha_nac: null,
+    tele_particular: null,
+  };
+  excelContactoCache.set(id, empty);
+  return empty;
+}
+
+async function enrichForExcel(rows: Prestador[], signal?: AbortSignal): Promise<Prestador[]> {
+  const need = rows.map((p, idx) => ({ p, idx })).filter(({ p }) => !!p.id);
+  if (need.length === 0) return rows;
+  if (signal?.aborted) return rows;
+
+  const fetched = await mapWithConcurrency(
+    need,
+    PDF_CONTACT_CONCURRENCY,
+    signal,
+    async ({ p, idx }) => {
+      const c = await fetchExcelContactoById(String(p.id), signal);
+      return { idx, c };
+    }
+  );
+
+  const out = rows.slice();
+  for (const item of fetched) {
+    if (!item) continue;
+    const { idx, c } = item as any;
+    const prev = out[idx];
+    out[idx] = {
+      ...prev,
+      domicilio_consulta: safeStr(prev.domicilio_consulta).trim() || c.domicilio_consulta,
+      dni:               safeStr(prev.dni).trim()               || c.documento,
+      fecha_nacimiento:  c.fecha_nac ?? prev.fecha_nacimiento,
+      tele_particular:   c.tele_particular ?? prev.tele_particular,
+    };
+  }
+  return out;
+}
+
 function dedupPrestadoresKeepMostEspecialidades(rows: Prestador[]): Prestador[] {
   const bestByKey = new Map<string, Prestador>();
 
@@ -644,7 +768,9 @@ const CrearPadron = () => {
 
   const [prestadores, setPrestadores] = useState<Prestador[]>([]);
   const [exportingPdf, setExportingPdf] = useState<ExportingPdfMode>(null);
+  const [exportingExcel, setExportingExcel] = useState(false);
   const pdfAbortRef = useRef<AbortController | null>(null);
+  const excelAbortRef = useRef<AbortController | null>(null);
 
   const [logoDataUrl, setLogoDataUrl] = useState<string>("");
 
@@ -1017,7 +1143,115 @@ const CrearPadron = () => {
     }
   }
 
-  const isExporting = exportingPdf !== null;
+  async function downloadExcelPorEspecialidad() {
+    if (prestadores.length === 0) {
+      window.alert("No hay datos para exportar.");
+      return;
+    }
+
+    excelAbortRef.current?.abort();
+    const controller = new AbortController();
+    excelAbortRef.current = controller;
+
+    try {
+      setExportingExcel(true);
+
+      const enriched = await enrichForExcel(prestadores, controller.signal);
+      if (controller.signal.aborted) return;
+
+      const enrichedDedup = dedupPrestadoresKeepMostEspecialidades(enriched);
+
+      const ExcelJSMod: any = await import("exceljs");
+      const ExcelJS = ExcelJSMod?.default ?? ExcelJSMod;
+      const workbook = new ExcelJS.Workbook();
+      const sheet = workbook.addWorksheet("Por Especialidad");
+
+      sheet.columns = [
+        { header: "DNI", key: "dni", width: 15 },
+        { header: "Nombre", key: "nombre", width: 38 },
+        { header: "Dirección consultorio", key: "direccion", width: 42 },
+        { header: "Teléfono", key: "telefono", width: 20 },
+        { header: "Fecha de nacimiento", key: "fecha_nacimiento", width: 22 },
+      ];
+
+      // Style header row
+      const headerRow = sheet.getRow(1);
+      headerRow.font = { bold: true, color: { argb: "FFFFFFFF" } };
+      headerRow.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF111111" } };
+      headerRow.alignment = { vertical: "middle" };
+
+      // Group by especialidad
+      const groups = new Map<string, { label: string; rows: Prestador[] }>();
+
+      for (const p of enrichedDedup) {
+        const { especialidades } = splitEspecialidadesYServicios(p);
+        const espList = especialidades.length > 0 ? especialidades : ["Médico"];
+
+        for (const esp of espList) {
+          const label = safeStr(esp).trim() || "Médico";
+          const key = normalize(label);
+          if (!groups.has(key)) groups.set(key, { label, rows: [] });
+          groups.get(key)!.rows.push(p);
+        }
+      }
+
+      // Sort groups alphabetically
+      const sortedKeys = Array.from(groups.keys()).sort((a, b) =>
+        safeStr(groups.get(a)?.label).localeCompare(safeStr(groups.get(b)?.label), "es")
+      );
+
+      for (const key of sortedKeys) {
+        const { label, rows } = groups.get(key)!;
+
+        // Dedup within group and sort by name
+        const seen = new Set<string>();
+        const uniqueRows = rows.filter((p) => {
+          const k = normalize(safeStr(pickNombre(p)) + safeStr(p.id ?? pickNroPrestador(p)));
+          if (seen.has(k)) return false;
+          seen.add(k);
+          return true;
+        });
+        uniqueRows.sort((a, b) =>
+          safeStr(pickNombre(a)).localeCompare(safeStr(pickNombre(b)), "es")
+        );
+
+        // Section header row
+        const sectionRow = sheet.addRow([`Especialidad: ${label}`, "", "", "", ""]);
+        sectionRow.font = { bold: true, size: 11 };
+        sectionRow.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFE8E8E8" } };
+        sheet.mergeCells(`A${sectionRow.number}:E${sectionRow.number}`);
+
+        // Data rows
+        for (const p of uniqueRows) {
+          sheet.addRow({
+            dni: safeStr(p.dni),
+            nombre: safeStr(pickNombre(p)),
+            direccion: safeStr(pickDomicilioConsulta(p)),
+            telefono: safeStr(p.tele_particular) || safeStr(pickTelefonoConsulta(p)),
+            fecha_nacimiento: formatFechaNac(p.fecha_nacimiento),
+          });
+        }
+
+        // Empty separator row
+        sheet.addRow([]);
+      }
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      saveAs(blob, `socios_por_especialidad_${fmtDate(new Date())}.xlsx`);
+    } catch (e: any) {
+      if (controller.signal.aborted) return;
+      console.error(e);
+      window.alert("No se pudo generar el Excel.");
+    } finally {
+      if (excelAbortRef.current === controller) excelAbortRef.current = null;
+      setExportingExcel(false);
+    }
+  }
+
+  const isExporting = exportingPdf !== null || exportingExcel;
 
   return (
     <div className={styles.container}>
@@ -1030,6 +1264,16 @@ const CrearPadron = () => {
         >
           <FileText size={18} />
           <span>{exportingPdf === "pdf" ? "Generando…" : "Generar PDF"}</span>
+        </Button>
+
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={downloadExcelPorEspecialidad}
+          disabled={loading || !!error || isExporting || prestadores.length === 0}
+        >
+          <FileText size={18} />
+          <span>{exportingExcel ? "Generando Excel…" : "Descargar Excel por Especialidad"}</span>
         </Button>
 
         {error ? <p className={styles.errorMessage}>{error}</p> : null}

@@ -1,21 +1,12 @@
 @use "../../styles/variables" as *;
 
-// ─── Fixed root container ─────────────────────────────────────────────────────
+// ─── FAB container (fixed corner) ────────────────────────────────────────────
 
 .root {
   position: fixed;
   bottom: 28px;
   right: 24px;
   z-index: 9500;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 12px;
-  pointer-events: none; 
-
-  > * {
-    pointer-events: auto;
-  }
 
   @media (max-width: $breakpoint-mobile) {
     bottom: 16px;
@@ -23,11 +14,61 @@
   }
 }
 
+// ─── FAB button ───────────────────────────────────────────────────────────────
+
+.fab {
+  height: 46px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: $primary-blue-dark;
+  border: 2px solid $primary-yellow;
+  color: $primary-yellow;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 18px rgba($primary-blue, 0.48);
+  transition: box-shadow $transition-fast, background $transition-fast;
+  white-space: nowrap;
+
+  &:hover {
+    box-shadow: 0 6px 26px rgba($primary-blue, 0.62);
+    background: $primary-blue;
+  }
+
+  @media (max-width: $breakpoint-mobile) {
+    height: 42px;
+    padding: 0 14px;
+  }
+}
+
+.fabLabel {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  line-height: 1;
+}
+
+.fabIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+}
+
+// ─── Backdrop (expanded mode only) ───────────────────────────────────────────
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.52);
+  z-index: 9600;
+  // No onClick — clicks absorbed but chat does NOT close
+}
+
 // ─── Chat window ──────────────────────────────────────────────────────────────
 
 .window {
-  width: 460px;
-  max-height: 520px;
   display: flex;
   flex-direction: column;
   background: #fff;
@@ -36,7 +77,16 @@
     0 12px 40px rgba(0, 0, 0, 0.16),
     0 2px 8px rgba(0, 0, 0, 0.06);
   overflow: hidden;
-  transform-origin: bottom right;
+}
+
+// Normal (corner) position
+.windowNormal {
+  position: fixed;
+  bottom: 86px;
+  right: 24px;
+  width: 460px;
+  max-height: 520px;
+  z-index: 9510;
 
   @media (max-width: $breakpoint-tablet) {
     width: 320px;
@@ -46,8 +96,22 @@
   @media (max-width: $breakpoint-mobile) {
     width: calc(100vw - 28px);
     max-height: 72vh;
+    right: 14px;
+    bottom: 70px;
     border-radius: 14px;
   }
+}
+
+// Expanded (centered modal) position
+.windowExpanded {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(720px, 95vw);
+  height: fit-content;
+  max-height: 85vh;
+  z-index: 9700;
+  border-radius: 16px;
 }
 
 // ─── Header ───────────────────────────────────────────────────────────────────
@@ -69,6 +133,13 @@
   min-width: 0;
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
 .avatar {
   width: 36px;
   height: 36px;
@@ -78,10 +149,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.6rem;
-  font-weight: 800;
-  color: #fff;
-  letter-spacing: 0.5px;
   flex-shrink: 0;
 }
 
@@ -117,6 +184,7 @@
   }
 }
 
+.expandBtn,
 .closeBtn {
   background: rgba(255, 255, 255, 0.12);
   border: none;
@@ -128,7 +196,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  font-size: 0.95rem;
   flex-shrink: 0;
   transition: background $transition-fast;
 
@@ -147,7 +215,6 @@
   flex-direction: column;
   gap: 8px;
 
-  // Thin custom scrollbar
   &::-webkit-scrollbar       { width: 4px; }
   &::-webkit-scrollbar-track { background: transparent; }
   &::-webkit-scrollbar-thumb { background: #dde2ec; border-radius: 4px; }
@@ -182,6 +249,7 @@
 
 .bubbleText {
   margin: 0;
+  white-space: pre-line;
 }
 
 // ─── Link pills inside bot bubbles ────────────────────────────────────────────
@@ -226,6 +294,41 @@
   }
 }
 
+// ─── Numbered menu options inside bot bubbles ─────────────────────────────────
+
+.menuOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 9px;
+}
+
+.menuOptionBtn {
+  display: block;
+  width: 100%;
+  padding: 6px 11px;
+  background: #fff;
+  border: 1.5px solid $primary-blue;
+  border-radius: $border-radius-sm;
+  color: $primary-blue;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background $transition-fast, color $transition-fast;
+  line-height: 1.4;
+
+  &:hover:not(:disabled) {
+    background: $primary-blue;
+    color: #fff;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
 // ─── Typing indicator ─────────────────────────────────────────────────────────
 
 .typingBubble {
@@ -267,13 +370,15 @@
   border-top: 1px solid #eaecf0;
   background: #fafbfc;
   flex-shrink: 0;
-  overflow-x: auto;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
+  max-height: 92px;
+  overflow-y: auto;
 
-  // Hide scrollbar (still scrollable)
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-  &::-webkit-scrollbar { display: none; }
+  scrollbar-width: thin;
+  scrollbar-color: #dde2ec transparent;
+  &::-webkit-scrollbar       { width: 3px; height: 3px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background: #dde2ec; border-radius: 4px; }
 }
 
 .chip {
@@ -352,38 +457,4 @@
     background: #cbd5e1;
     cursor: not-allowed;
   }
-}
-
-// ─── FAB  ─────────────────────────────────────────────
-
-.fab {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: $primary-blue-dark;
-  border: 1px solid $primary-yellow;
-  color: $primary-yellow;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 18px rgba($primary-blue, 0.48);
-  flex-shrink: 0;
-  transition: box-shadow $transition-fast;
-
-  &:hover {
-    box-shadow: 0 6px 26px rgba($primary-blue, 0.62);
-  }
-
-  @media (max-width: $breakpoint-mobile) {
-    width: 50px;
-    height: 50px;
-  }
-}
-
-.fabIcon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.35rem;
 }
