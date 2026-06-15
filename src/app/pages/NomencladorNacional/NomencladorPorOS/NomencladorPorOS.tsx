@@ -412,7 +412,9 @@ export default function NomencladorPorOS() {
                                 <strong>{c.concepto}</strong>
                                 {c.galeno_id
                                   ? ` × ${c.cantidad}`
-                                  : ` ${fmt.format(parseFloat(c.valor_unitario ?? "0"))}`
+                                  : c.valor_unitario == null
+                                  ? " Por presupuesto"
+                                  : ` ${fmt.format(parseFloat(c.valor_unitario))}`
                                 }
                                 {c.opcional && " (opc)"}
                               </span>
@@ -437,9 +439,11 @@ export default function NomencladorPorOS() {
                   <div key={v.id} className={styles.card}>
                     <div className={styles.cardTop}>
                       <span className={styles.codeCell}>{v.codigo}</span>
-                      <span className={styles.priceCell}>{fmt.format(sumValor(v))}</span>
+                      <span className={styles.priceCell}>
+                        {v.por_presupuesto === 1 ? "Por presupuesto" : fmt.format(sumValor(v))}
+                      </span>
                     </div>
-                    <p className={styles.cardDesc}>{v.descripcion ?? ""}</p>
+                    <p className={styles.cardDesc}>{resolvedDesc(v)}</p>
                     <div className={styles.cardActions}>
                       <button className={styles.btnDanger} onClick={() => handleDelete(v)}>
                         <Trash2 size={12} /> Cerrar
