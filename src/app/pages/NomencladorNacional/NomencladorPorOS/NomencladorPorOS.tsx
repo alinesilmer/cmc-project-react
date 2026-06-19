@@ -10,6 +10,7 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react";
+// Plus kept for the "Agregar código" button
 import { AnimatePresence, motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 
@@ -22,6 +23,7 @@ import {
   listNomenclador,
   getNomencladorById,
 } from "../nomenclador.api";
+import ConfirmModal from "../../../components/atoms/ConfirmModal/ConfirmModal";
 import { listObrasSociales } from "../../ObrasSociales/obrasSociales.api";
 import type {
   ValorOut,
@@ -52,8 +54,16 @@ type ValorForm = {
 
 const fmt = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 2 });
 
-function emptyComp(modalidad: ModalidadValor): ComponenteForm {
-  return { concepto: "Honorarios", galeno_id: null, cantidad: "", valor_unitario: "", opcional: false };
+const FIXED_CONCEPTOS: ComponenteForm["concepto"][] = ["Honorarios", "Gastos", "Ayudante"];
+
+function initComps(): ComponenteForm[] {
+  return FIXED_CONCEPTOS.map((concepto) => ({
+    concepto,
+    galeno_id: null,
+    cantidad: "",
+    valor_unitario: "",
+    opcional: concepto !== "Honorarios",
+  }));
 }
 
 function today() {
@@ -88,7 +98,7 @@ export default function NomencladorPorOS() {
     nomencladorLabel: "",
     modalidad: "calculable",
     vigencia_desde: today(),
-    componentes: [emptyComp("calculable")],
+    componentes: initComps(),
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -100,6 +110,7 @@ export default function NomencladorPorOS() {
   const nomDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ValorOut | null>(null);
 
   const { data: osList = [] } = useQuery({
     queryKey: ["obras-sociales"],
@@ -226,14 +237,6 @@ export default function NomencladorPorOS() {
 
   // ─── Components ───────────────────────────────────────────────────────────
 
-  function addComp() {
-    setForm((prev) => ({ ...prev, componentes: [...prev.componentes, emptyComp(prev.modalidad)] }));
-  }
-
-  function removeComp(idx: number) {
-    setForm((prev) => ({ ...prev, componentes: prev.componentes.filter((_, i) => i !== idx) }));
-  }
-
   function updateComp<K extends keyof ComponenteForm>(idx: number, key: K, value: ComponenteForm[K]) {
     setForm((prev) => {
       const comps = [...prev.componentes];
@@ -248,13 +251,21 @@ export default function NomencladorPorOS() {
     const errs: Record<string, string> = {};
     if (!form.nomencladorId) errs.nomenclador = "Seleccioná un código";
     if (!form.vigencia_desde) errs.vigencia_desde = "Requerido";
-    if (form.componentes.length === 0) errs.componentes = "Agregá al menos un componente";
-    form.componentes.forEach((c, i) => {
-      if (form.modalidad === "calculable") {
-        if (!c.galeno_id) errs[`comp_${i}_galeno`] = "Seleccioná un galeno";
-      } else {
-        if (!c.valor_unitario.trim() || isNaN(parseFloat(c.valor_unitario))) errs[`comp_${i}_valor`] = "Valor inválido";
-      }
+    // Only Honorarios (index 0) is required
+    const hon = form.componentes[0];
+    if (form.modalidad === "calculable") {
+      if (!hon.galeno_id) errs["comp_0_galeno"] = "Seleccioná un galeno";
+    } else {
+      if (!hon.valor_unitario.trim() || isNaN(parseFloat(hon.valor_unitario)))
+        errs["comp_0_valor"] = "Valor inválido";
+    }
+    // Validate optional components only if they have partial input
+    form.componentes.slice(1).forEach((c, i) => {
+      const idx = i + 1;
+      if (form.modalidad === "calculable" && c.cantidad && !c.galeno_id)
+        errs[`comp_${idx}_galeno`] = "Seleccioná un galeno";
+      if (form.modalidad === "fijo" && c.valor_unitario.trim() && isNaN(parseFloat(c.valor_unitario)))
+        errs[`comp_${idx}_valor`] = "Valor inválido";
     });
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -264,7 +275,12 @@ export default function NomencladorPorOS() {
     if (!validate() || !selectedNroOS) return;
     setSaving(true);
     try {
-      const componentes: ComponentePayload[] = form.componentes.map((c, i) => ({
+      const filled = form.componentes.filter((c, i) => {
+        if (i === 0) return true; // Honorarios always included
+        if (form.modalidad === "calculable") return c.galeno_id != null;
+        return c.valor_unitario.trim() !== "" && !isNaN(parseFloat(c.valor_unitario));
+      });
+      const componentes: ComponentePayload[] = filled.map((c, i) => ({
         concepto: c.concepto,
         galeno_id: form.modalidad === "calculable" ? c.galeno_id : null,
         cantidad: form.modalidad === "calculable" ? (parseFloat(c.cantidad) || 0) : 0,
@@ -291,8 +307,10 @@ export default function NomencladorPorOS() {
     }
   }
 
-  async function handleDelete(v: ValorOut) {
-    if (!confirm(`¿Cerrar el valor del código ${v.codigo} para esta obra social?`)) return;
+  async function doDelete() {
+    if (!deleteTarget) return;
+    const v = deleteTarget;
+    setDeleteTarget(null);
     try {
       await deleteValor(v.id);
       setValores((prev) => prev.filter((x) => x.id !== v.id));
@@ -303,13 +321,17 @@ export default function NomencladorPorOS() {
     }
   }
 
+  function handleDelete(v: ValorOut) {
+    setDeleteTarget(v);
+  }
+
   function openModal() {
     setForm({
       nomencladorId: null,
       nomencladorLabel: "",
       modalidad: "calculable",
       vigencia_desde: today(),
-      componentes: [emptyComp("calculable")],
+      componentes: initComps(),
     });
     setNomSearch("");
     setNomResults([]);
@@ -559,26 +581,15 @@ export default function NomencladorPorOS() {
 
                 {/* Componentes */}
                 <div className={styles.sectionTitle}>Componentes de precio</div>
-                {errors.componentes && <span className={styles.errorMsg}>{errors.componentes}</span>}
 
                 <div className={styles.componentRows}>
                   {form.componentes.map((comp, i) => (
-                    <div key={i} className={styles.componentRow}>
-                      {/* Concepto */}
-                      <div className={styles.formGroup}>
-                        <label className={styles.formLabel}>Concepto</label>
-                        <select
-                          className={styles.formSelect}
-                          value={comp.concepto}
-                          onChange={(e) => updateComp(i, "concepto", e.target.value as ComponenteForm["concepto"])}
-                        >
-                          <option value="Honorarios">Honorarios</option>
-                          <option value="Ayudante">Ayudante</option>
-                          <option value="Gastos">Gastos</option>
-                        </select>
+                    <div key={comp.concepto} className={styles.componentRow}>
+                      <div className={styles.compConceptLabel}>
+                        {comp.concepto}
+                        {i === 0 && <span className={styles.req}> *</span>}
                       </div>
 
-                      {/* Galeno or fixed — based on form-level modalidad */}
                       {form.modalidad === "calculable" ? (
                         <>
                           <div className={styles.formGroup}>
@@ -588,7 +599,7 @@ export default function NomencladorPorOS() {
                               value={comp.galeno_id ?? ""}
                               onChange={(e) => updateComp(i, "galeno_id", e.target.value ? Number(e.target.value) : null)}
                             >
-                              <option value="">— Seleccionar —</option>
+                              <option value="">— {i === 0 ? "Seleccionar" : "Opcional"} —</option>
                               {galenos.filter((g) => g.activo).map((g) => (
                                 <option key={g.id} value={g.id}>
                                   {g.codigo}{g.nivel != null ? ` (niv. ${g.nivel})` : ""} — {fmt.format(parseFloat(g.valor_unitario))}
@@ -616,34 +627,14 @@ export default function NomencladorPorOS() {
                             className={`${styles.formInput} ${errors[`comp_${i}_valor`] ? styles.inputError : ""}`}
                             value={comp.valor_unitario}
                             onChange={(e) => updateComp(i, "valor_unitario", e.target.value)}
-                            placeholder="0.00"
+                            placeholder={i === 0 ? "0.00" : "Dejar vacío si no aplica"}
                           />
                           {errors[`comp_${i}_valor`] && <span className={styles.errorMsg}>{errors[`comp_${i}_valor`]}</span>}
                         </div>
                       )}
-
-                      <div className={styles.formGroup} style={{ alignSelf: "flex-end" }}>
-                        <label className={styles.formLabel} style={{ visibility: "hidden" }}>_</label>
-                        <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.83rem", cursor: "pointer" }}>
-                          <input
-                            type="checkbox"
-                            checked={comp.opcional}
-                            onChange={(e) => updateComp(i, "opcional", e.target.checked)}
-                          />
-                          Opcional
-                        </label>
-                      </div>
-
-                      <button className={styles.btnRemoveComp} onClick={() => removeComp(i)} title="Quitar componente">
-                        <XIcon size={14} />
-                      </button>
                     </div>
                   ))}
                 </div>
-
-                <button className={styles.btnAddComp} onClick={addComp}>
-                  <Plus size={14} /> Agregar componente
-                </button>
               </div>
 
               <div className={styles.modalFooter}>
@@ -669,6 +660,16 @@ export default function NomencladorPorOS() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ConfirmModal
+        isOpen={deleteTarget !== null}
+        variant="danger"
+        title="Cerrar valor"
+        message={`¿Cerrar el valor del código ${deleteTarget?.codigo} para esta obra social? Esta acción no se puede deshacer.`}
+        confirmLabel="Cerrar valor"
+        onConfirm={doDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

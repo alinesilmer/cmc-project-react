@@ -11,6 +11,7 @@ export type User = {
   /** 'D' = médico; otros valores = personal administrativo */
   ingresar?: string | null;
   especialidad_id?: number | null;
+  es_organizacion?: number | null;
 };
 
 function normalizeUser(raw: any): User {
@@ -26,6 +27,7 @@ function normalizeUser(raw: any): User {
     role: raw?.role ?? null,
     ingresar: raw?.ingresar ?? raw?.INGRESAR ?? null,
     especialidad_id: raw?.especialidad_id ?? raw?.ESPECIALIDAD_ID ?? null,
+    es_organizacion: raw?.es_organizacion != null ? Number(raw.es_organizacion) : null,
   };
 }
 

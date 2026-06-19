@@ -634,7 +634,7 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
 
 .componentRow {
   display: grid;
-  grid-template-columns: 120px 80px 1fr auto;
+  grid-template-columns: 110px 1fr 1fr;
   gap: 8px;
   align-items: end;
   padding: 10px 12px;
@@ -645,39 +645,12 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
   @media (max-width: 560px) { grid-template-columns: 1fr 1fr; }
 }
 
-.btnAddComp {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 34px;
-  padding: 0 14px;
-  background: none;
-  color: $blue;
-  border: 1px dashed #b3ceff;
-  border-radius: $radius-sm;
+.compConceptLabel {
   font-size: 0.83rem;
   font-weight: 600;
-  cursor: pointer;
-  transition: background .14s;
-
-  &:hover { background: $blue-light; }
-}
-
-.btnRemoveComp {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  background: none;
-  color: $text-3;
-  border: none;
-  border-radius: $radius-sm;
-  cursor: pointer;
-  transition: color .14s, background .14s;
-  align-self: center;
-
-  &:hover { color: $red; background: $red-light; }
+  color: $text-1;
+  padding-bottom: 6px;
+  align-self: end;
 }
 
 // ─── Nomenclador search ───────────────────────────────────────────────────────
