@@ -117,6 +117,7 @@ export type ValorOut = {
   nivel: number | null;
   complejidad: string | null;
   especialidad_id_colegio: number | null;
+  por_presupuesto: 0 | 1;
   vigencia_desde: string;
   vigencia_hasta: string | null;
   estado: ValorEstado;
@@ -142,6 +143,7 @@ export type ValorCreatePayload = {
   nivel?: number | null;
   complejidad?: string | null;
   especialidad_id_colegio?: number | null;
+  por_presupuesto?: 0 | 1;
   vigencia_desde: string;
   observacion?: string | null;
   componentes: ComponentePayload[];
@@ -173,6 +175,7 @@ export type TablaValorItem = {
   descripcion: string;
   nivel: number | null;
   precio_total: string;
+  por_presupuesto: 0 | 1;
   vigencia_desde: string;
   vigencia_hasta: string | null;
   componentes: TablaValorComponente[];

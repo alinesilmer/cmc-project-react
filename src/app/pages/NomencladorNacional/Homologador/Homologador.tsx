@@ -14,6 +14,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 
 import styles from "./Homologador.module.scss";
+import ConfirmModal from "../../../components/atoms/ConfirmModal/ConfirmModal";
 import { listHomologaciones, createHomologacion, deleteHomologacion } from "./homologador.api";
 import { listObrasSociales } from "../../ObrasSociales/obrasSociales.api";
 import { listNomenclador } from "../nomenclador.api";
@@ -32,6 +33,7 @@ export default function Homologador() {
   const [showAdd, setShowAdd] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [deleting, setDeleting] = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<HomologadorOut | null>(null);
 
   // Cache resolved nomenclador labels (id → "CODIGO — descripcion")
   const [nomLabels, setNomLabels] = useState<Record<number, string>>({});
@@ -95,6 +97,10 @@ export default function Homologador() {
   }, [homologaciones, mapSearch, nomLabels]);
 
   // ── Helpers ───────────────────────────────────────────────────────────────
+
+  function handleDelete(m: HomologadorOut) {
+    setDeleteTarget(m);
+  }
 
   function showToast(type: "success" | "error", msg: string) {
     setToast({ type, msg });
@@ -180,9 +186,10 @@ export default function Homologador() {
 
   // ── Delete ────────────────────────────────────────────────────────────────
 
-  async function handleDelete(m: HomologadorOut) {
-    const label = nomLabels[m.nomenclador_id] ?? String(m.nomenclador_id);
-    if (!confirm(`¿Eliminar la homologación de "${m.codigo_origen}" → "${label}"?`)) return;
+  async function doDelete() {
+    if (!deleteTarget) return;
+    const m = deleteTarget;
+    setDeleteTarget(null);
     setDeleting(m.id);
     try {
       await deleteHomologacion(m.id);
@@ -418,6 +425,16 @@ export default function Homologador() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ConfirmModal
+        isOpen={deleteTarget !== null}
+        variant="danger"
+        title="Eliminar homologación"
+        message={`¿Eliminar la homologación de "${deleteTarget?.codigo_origen}" → "${deleteTarget ? (nomLabels[deleteTarget.nomenclador_id] ?? String(deleteTarget.nomenclador_id)) : ""}"?`}
+        confirmLabel="Eliminar"
+        onConfirm={doDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

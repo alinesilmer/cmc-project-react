@@ -17,6 +17,7 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 
 import styles from "./NomencladorCodigos.module.scss";
+import ConfirmModal from "../../../components/atoms/ConfirmModal/ConfirmModal";
 import {
   listNomenclador,
   createNomenclador,
@@ -97,6 +98,7 @@ export default function NomencladorCodigos() {
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
 
   const load = useCallback(async (p: number, q: string, comp: string, act: string) => {
     setLoading(true);
@@ -206,8 +208,10 @@ export default function NomencladorCodigos() {
     }
   }
 
-  async function handleDelete(id: number) {
-    if (!confirm("¿Eliminar este código permanentemente?")) return;
+  async function doDelete() {
+    if (deleteTargetId === null) return;
+    const id = deleteTargetId;
+    setDeleteTargetId(null);
     try {
       await deleteNomenclador(id);
       setItems((prev) => prev.filter((i) => i.id !== id));
@@ -216,6 +220,10 @@ export default function NomencladorCodigos() {
       const msg = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
       showToast("error", msg ?? "No se pudo eliminar el código.");
     }
+  }
+
+  function handleDelete(id: number) {
+    setDeleteTargetId(id);
   }
 
   const ComplejidadBadge = useMemo(() => {
@@ -530,6 +538,16 @@ export default function NomencladorCodigos() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ConfirmModal
+        isOpen={deleteTargetId !== null}
+        variant="danger"
+        title="Eliminar código"
+        message="¿Eliminar este código permanentemente? Esta acción no se puede deshacer."
+        confirmLabel="Eliminar"
+        onConfirm={doDelete}
+        onCancel={() => setDeleteTargetId(null)}
+      />
     </div>
   );
 }

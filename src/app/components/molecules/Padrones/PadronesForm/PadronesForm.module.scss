@@ -1,12 +1,10 @@
 @use "@/app/styles/all.scss" as *;
 
 .container {
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
   padding: 24px;
 
   @media (max-width: $breakpoint-md) {
-    max-width: 100%;
     padding: 20px;
   }
 
@@ -15,17 +13,22 @@
   }
 }
 
+// ─── HEADER ───────────────────────────────────────────────────
 .header {
-  margin-bottom: 18px;
+  margin-bottom: 20px;
+}
+
+.headerTop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
 
   h2 {
-    margin: 0 0 6px 0;
-    font-size: 26px;
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
     color: #111827;
-
-    @media (max-width: $breakpoint-md) {
-      font-size: 22px;
-    }
 
     @media (max-width: $breakpoint-sm) {
       font-size: 19px;
@@ -33,238 +36,355 @@
   }
 }
 
+.selectedBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #1d4ed8;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
 .subtitle {
   margin: 0;
   color: #6b7280;
-  font-size: 14px;
-
-  @media (max-width: $breakpoint-md) {
-    font-size: 13px;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    font-size: 12px;
-  }
+  font-size: 13.5px;
 }
 
-.searchRow {
+// ─── CONTROLS ROW ─────────────────────────────────────────────
+.controlsRow {
   display: flex;
   gap: 10px;
   align-items: center;
-  margin: 0 0 10px 0;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+
+  @media (max-width: $breakpoint-sm) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.searchWrapper {
+  position: relative;
+  flex: 1;
+  min-width: 180px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
 }
 
 .searchInput {
-  flex: 1;
-  padding: 9px 12px;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
+  width: 100%;
+  padding: 9px 36px 9px 34px;
+  border-radius: 10px;
+  border: 1.5px solid #e5e7eb;
   outline: none;
   font-size: 13px;
   background: #fff;
+  box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s;
 
   &:focus {
     border-color: #1d4ed8;
-    box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
+    box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1);
   }
 }
 
 .clearSearch {
-  padding: 9px 12px;
-  border-radius: 999px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: #e5e7eb;
+  color: #6b7280;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &:hover {
-    background: #f9fafb;
+    background: #d1d5db;
+    color: #374151;
   }
 }
 
+// ─── BULK ACTIONS ─────────────────────────────────────────────
+.bulkActions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+
+  @media (max-width: $breakpoint-sm) {
+    width: 100%;
+
+    button {
+      flex: 1;
+      justify-content: center;
+    }
+  }
+}
+
+.bulkBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1.5px solid #1d4ed8;
+  background: #1d4ed8;
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, opacity 0.15s;
+
+  svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+  }
+
+  &:hover:not(:disabled) {
+    background: #1e40af;
+    border-color: #1e40af;
+  }
+
+  &:disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+  }
+}
+
+.bulkBtnOutline {
+  background: #fff;
+  color: #374151;
+  border-color: #d1d5db;
+
+  &:hover:not(:disabled) {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+  }
+}
+
+// ─── META ─────────────────────────────────────────────────────
 .searchMeta {
   margin: 0 0 12px 0;
   font-size: 12px;
-  color: #6b7280;
+  color: #9ca3af;
 }
 
-.noResults {
-  padding: 14px;
-  border: 1px dashed #d1d5db;
-  border-radius: 12px;
-  color: #6b7280;
-  font-size: 13px;
-}
-
+// ─── GRID ─────────────────────────────────────────────────────
 .insuranceList {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   margin-bottom: 16px;
-
-  @media (min-width: $breakpoint-md) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
 
   @media (max-width: $breakpoint-sm) {
-    gap: 8px;
-    margin-bottom: 14px;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  @media (max-width: 400px) {
+    grid-template-columns: 1fr;
   }
 }
 
+// ─── ITEM CARD ────────────────────────────────────────────────
 .insuranceItem {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
-  padding: 10px 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  padding: 11px 13px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
   cursor: pointer;
   background: #ffffff;
-  transition: transform 0.12s ease, border-color 0.12s ease,
-    box-shadow 0.12s ease, background 0.12s ease;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  position: relative;
+  min-width: 0;
 
   &:hover {
-    border-color: rgba(29, 78, 216, 0.45);
-    background: #fbfdff;
-    box-shadow: 0 6px 18px rgba(17, 24, 39, 0.06);
-    transform: translateY(-1px);
+    border-color: #93c5fd;
+    background: #f8faff;
+    box-shadow: 0 2px 8px rgba(29, 78, 216, 0.07);
   }
+}
+
+// ─── SELECTED STATE ───────────────────────────────────────────
+.insuranceItemSelected {
+  border-color: transparent !important;
+  background: linear-gradient(135deg, $primary-yellow-light 0%, $primary-yellow 100%) !important;
+  box-shadow: 0 0 0 2px #d0c182, 0 4px 14px rgba(208, 193, 130, 0.35) !important;
+
+  .insuranceName {
+    color: $primary-yellow-dark;
+    font-weight: 700;
+  }
+
+  .insuranceCode {
+    color: #7a6a28;
+  }
+}
+
+.insuranceItemPending {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+// ─── CHECKBOX ─────────────────────────────────────────────────
+.checkboxWrap {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   input[type="checkbox"] {
     width: 16px;
     height: 16px;
     cursor: pointer;
-    margin-top: 2px;
-    flex: 0 0 auto;
-    accent-color: #1d4ed8;
-  }
-
-  @media (max-width: $breakpoint-md) {
-    padding: 10px;
-    gap: 9px;
-
-    input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
-    }
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    padding: 9px 10px;
+    accent-color: #b8950a;
+    margin: 0;
   }
 }
 
+// ─── SPINNER ──────────────────────────────────────────────────
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #bfdbfe;
+  border-top-color: #1d4ed8;
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+// ─── ITEM CONTENT ─────────────────────────────────────────────
 .insuranceInfo {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   min-width: 0;
+  flex: 1;
 }
 
 .insuranceName {
   font-weight: 600;
   color: #111827;
-  font-size: 13px;
-  line-height: 1.2;
-
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  font-size: 12.5px;
+  line-height: 1.25;
+  white-space: nowrap;
   overflow: hidden;
-
-  @media (max-width: $breakpoint-sm) {
-    font-size: 12.5px;
-  }
+  text-overflow: ellipsis;
+  transition: color 0.15s;
 }
 
 .insuranceCode {
-  font-size: 11.5px;
-  color: #6b7280;
+  font-size: 11px;
+  color: #9ca3af;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.15s;
+}
 
-  @media (max-width: $breakpoint-sm) {
-    font-size: 11px;
+// ─── CHECK BADGE (selected indicator) ─────────────────────────
+.checkBadge {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #b8950a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(184, 149, 10, 0.4);
+
+  svg {
+    width: 12px;
+    height: 12px;
   }
 }
 
-.helpBox {
-  background: #f0f9ff;
-  border: 1px solid #bfdbfe;
-  border-radius: 12px;
-  padding: 14px;
-  margin-bottom: 18px;
-
-  @media (max-width: $breakpoint-md) {
-    padding: 13px;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    padding: 12px;
-    margin-bottom: 16px;
-  }
-}
-
-.helpText {
-  margin: 0 0 8px 0;
-  color: #1e40af;
+// ─── NO RESULTS ───────────────────────────────────────────────
+.noResults {
+  grid-column: 1 / -1;
+  padding: 20px 14px;
+  border: 1px dashed #d1d5db;
+  border-radius: 10px;
+  color: #9ca3af;
   font-size: 13px;
+  text-align: center;
+}
 
-  @media (max-width: $breakpoint-md) {
-    font-size: 12.5px;
-  }
+// ─── SKELETON ─────────────────────────────────────────────────
+.skeletonItem {
+  height: 56px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s infinite;
+}
 
-  @media (max-width: $breakpoint-sm) {
-    font-size: 12px;
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+// ─── DOWNLOADS ────────────────────────────────────────────────
+.downloadActions {
+  margin-top: 8px;
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.downloadButton {
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 8px;
+  border: 1.5px solid #e5e7eb;
+  background: #f9fafb;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+
+  &:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
   }
 }
 
-.helpContact {
-  margin: 4px 0;
-  color: #1e40af;
-  font-size: 13px;
-
-  @media (max-width: $breakpoint-md) {
-    font-size: 12.5px;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    font-size: 12px;
-  }
-}
-
+// ─── LEGACY ───────────────────────────────────────────────────
 .actions {
   margin-top: 1rem;
   display: flex;
   gap: 0.75rem;
   justify-content: flex-end;
   flex-wrap: wrap;
-}
-
-.previewButton {
-  padding: 0.55rem 1.05rem;
-  border-radius: 999px;
-  border: 1px solid #cbd5e1;
-  background: #fff;
-  font-size: 0.85rem;
-  cursor: pointer;
-
-  &:hover {
-    background: #f8fafc;
-  }
-}
-
-.submitButton {
-  padding: 0.55rem 1.15rem;
-  border-radius: 999px;
-  border: none;
-  background: #0061a8;
-  color: #fff;
-  font-weight: 600;
-  font-size: 0.85rem;
-  cursor: pointer;
-
-  &:hover {
-    filter: brightness(0.98);
-  }
 }
 
 .warningOverlay {
@@ -284,52 +404,4 @@
   max-width: 420px;
   width: 100%;
   box-shadow: 0 18px 45px rgba(15, 23, 42, 0.35);
-}
-
-.warningActions {
-  margin-top: 1.5rem;
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-}
-
-.cancelButton,
-.confirmButton {
-  padding: 0.5rem 1.2rem;
-  border-radius: 999px;
-  font-size: 0.9rem;
-  cursor: pointer;
-}
-
-.cancelButton {
-  border: 1px solid #cbd5e1;
-  background: #ffffff;
-}
-
-.confirmButton {
-  border: none;
-  background: #16a34a;
-  color: #ffffff;
-  font-weight: 600;
-}
-
-.downloadActions {
-  margin-top: 0.9rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  justify-content: flex-end;
-}
-
-.downloadButton {
-  padding: 0.45rem 0.95rem;
-  font-size: 0.82rem;
-  border-radius: 999px;
-  border: 1px solid #d4d4d8;
-  background: #f9fafb;
-  cursor: pointer;
-
-  &:hover {
-    background: #eef2ff;
-  }
 }

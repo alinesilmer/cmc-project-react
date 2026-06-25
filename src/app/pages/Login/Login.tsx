@@ -73,7 +73,8 @@ function Login() {
       }
 
       if (me.role == "medico") {
-        const next = `/menu.php?nro_socio1=${encodeURIComponent(
+        const menuPage = me.es_organizacion === 1 ? "menu_clinica.php" : "menu.php";
+        const next = `/${menuPage}?nro_socio1=${encodeURIComponent(
           Number(me.nro_socio),
         )}`;
         const { data } = await http.get("/auth/legacy/sso-link", {

@@ -16,6 +16,7 @@ import styles from "./ActualizarPreciosGalenos.module.scss";
 import { listGalenos, actualizarPrecioGaleno } from "../nomenclador.api";
 import { listObrasSociales } from "../../ObrasSociales/obrasSociales.api";
 import type { GalenoOut } from "../nomenclador.types";
+import ConfirmModal from "../../../components/atoms/ConfirmModal/ConfirmModal";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -43,6 +44,7 @@ export default function ActualizarPreciosGalenos() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [saveResults, setSaveResults] = useState<SaveResult[]>([]);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const { data: osList = [] } = useQuery({
     queryKey: ["obras-sociales"],
@@ -89,6 +91,11 @@ export default function ActualizarPreciosGalenos() {
     [edits],
   );
 
+  const dateConflicts = useMemo(
+    () => galenos.filter((g) => g.vigencia_desde === vigencia),
+    [galenos, vigencia],
+  );
+
   function setEdit(id: number, val: string) {
     setEdits((prev) => ({ ...prev, [id]: val }));
   }
@@ -98,15 +105,8 @@ export default function ActualizarPreciosGalenos() {
     setTimeout(() => setToast(null), 5000);
   }
 
-  async function handleSaveAll() {
-    if (pendingEdits.length === 0 || !vigencia) return;
-    if (
-      !confirm(
-        `¿Actualizar ${pendingEdits.length} precio(s) con vigencia desde ${vigencia}?\n\nEsta operación crea nuevos registros manteniendo el historial de valores anteriores.`,
-      )
-    )
-      return;
-
+  async function doSaveAll() {
+    setConfirmOpen(false);
     setSaving(true);
     setSaveResults([]);
 
@@ -130,15 +130,13 @@ export default function ActualizarPreciosGalenos() {
         });
         results.push({ id, nombre: galeno.nombre, ok: true });
       } catch (e: unknown) {
-        const msg = (
-          e as { response?: { data?: { detail?: string } } }
-        )?.response?.data?.detail;
-        results.push({
-          id,
-          nombre: galeno.nombre,
-          ok: false,
-          msg: msg ?? "Error al actualizar",
-        });
+        const err = e as { response?: { status?: number; data?: { detail?: string } } };
+        const is409 = err?.response?.status === 409;
+        const msg = err?.response?.data?.detail
+          ?? (is409
+            ? "Ya existe un registro con esa fecha de vigencia. Elegí una fecha posterior."
+            : "Error al actualizar");
+        results.push({ id, nombre: galeno.nombre, ok: false, msg });
       }
     }
 
@@ -154,6 +152,11 @@ export default function ActualizarPreciosGalenos() {
     } else {
       showToast("error", `${ok} actualizados, ${fail} con error.`);
     }
+  }
+
+  function handleSaveAll() {
+    if (pendingEdits.length === 0 || !vigencia) return;
+    setConfirmOpen(true);
   }
 
   const selectedOsName = osList.find(
@@ -277,6 +280,19 @@ export default function ActualizarPreciosGalenos() {
                 </div>
               </div>
 
+              {/* Date conflict warning */}
+              {dateConflicts.length > 0 && (
+                <div className={styles.conflictWarning}>
+                  <AlertCircle size={14} />
+                  <span>
+                    {dateConflicts.length === galenos.length
+                      ? "Todos los galenos ya tienen vigencia desde esta fecha."
+                      : `${dateConflicts.length} galeno(s) ya tienen vigencia desde esta fecha.`}{" "}
+                    Elegí una fecha posterior para poder actualizar.
+                  </span>
+                </div>
+              )}
+
               {/* Save results summary */}
               {saveResults.length > 0 && (
                 <div className={styles.resultsBox}>
@@ -340,6 +356,16 @@ export default function ActualizarPreciosGalenos() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ConfirmModal
+        isOpen={confirmOpen}
+        variant="warning"
+        title="Confirmar actualización"
+        message={`¿Actualizar ${pendingEdits.length} precio(s) con vigencia desde ${vigencia}?\n\nEsta operación crea nuevos registros manteniendo el historial de valores anteriores.`}
+        confirmLabel="Actualizar"
+        onConfirm={doSaveAll}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </div>
   );
 }

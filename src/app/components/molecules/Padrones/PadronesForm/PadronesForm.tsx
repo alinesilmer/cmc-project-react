@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -10,7 +10,6 @@ import styles from "./PadronesForm.module.scss";
 import SuccessModal from "../../SuccessModal/SuccessModal";
 import Alert from "../../../atoms/Alert/Alert";
 
-// 🔌 API helpers
 import {
   fetchObrasSociales,
   fetchPadrones,
@@ -20,9 +19,7 @@ import {
   type Padron,
 } from "../../../../pages/DoctorProfilePage/api";
 import { useNotify } from "../../../../hooks/useNotify";
-import Button from "../../../atoms/Button/Button";
 
-// ✅ Props
 type Props = {
   medicoId: number | string;
   onPreview?: (selected: string[]) => void;
@@ -31,14 +28,11 @@ type Props = {
 
 type AlertType = "success" | "error" | "warning" | "info";
 
-const normalize = (s: string) =>
-  s
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim();
+const EXCLUDED_OS = new Set([30, 158, 213, 216, 227, 273, 282, 360, 377, 380, 388, 445]);
 
-// helper pequeño para tolerar ambos nombres en el padrón
+const normalize = (s: string) =>
+  s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+
 function padronOSId(p: Padron): number {
   return Number(
     (p as any)?.NRO_OBRA_SOCIAL ??
@@ -53,19 +47,14 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
   const [loading, setLoading] = useState(true);
   const [pendingOS, setPendingOS] = useState<Set<number>>(new Set());
 
-  // 📚 Catálogo
   const [catalog, setCatalog] = useState<ObraSocial[]>([]);
-  // 🔗 Vínculos existentes
   const [padrones, setPadrones] = useState<Padron[]>([]);
-  // ✅ Selección por NRO_OBRA_SOCIAL
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const notify = useNotify();
-  const opSeqRef = React.useRef(0);
+  const opSeqRef = useRef(0);
 
-  // 🔎 Search
   const [query, setQuery] = useState("");
 
-  // ✅ Éxito / Alertas
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | undefined>();
   const [alertOpen, setAlertOpen] = useState(false);
@@ -73,9 +62,7 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
   const [alertTitle, setAlertTitle] = useState("");
   const [alertMessage, setAlertMessage] = useState("");
   const [alertShowActions, setAlertShowActions] = useState(false);
-  const [alertOnConfirm, setAlertOnConfirm] = useState<(() => void) | null>(
-    null
-  );
+  const [alertOnConfirm, setAlertOnConfirm] = useState<(() => void) | null>(null);
 
   const navigate = useNavigate();
 
@@ -92,7 +79,7 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
           fetchPadrones(medicoId),
         ]);
         if (!alive) return;
-        setCatalog(cat);
+        setCatalog(cat.filter((os) => !EXCLUDED_OS.has(os.NRO_OBRA_SOCIAL)));
         setPadrones(prs);
 
         const s = new Set<number>();
@@ -125,7 +112,6 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
         })
       : catalog.slice();
 
-    // 👉 asociadas primero, luego alfabético por nombre
     base.sort((a, b) => {
       const aSel = selected.has(a.NRO_OBRA_SOCIAL);
       const bSel = selected.has(b.NRO_OBRA_SOCIAL);
@@ -137,16 +123,10 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
   }, [catalog, query, selected]);
 
   // ─────────────────────────────────────────────────────────────
-  // CHECKBOX: crea/borra en server y notifica
+  // TOGGLE (individual)
   // ─────────────────────────────────────────────────────────────
-  async function persistToggle(
-    nroOS: number,
-    willSelect: boolean,
-    osName: string
-  ) {
-    // marcar OS como pendiente
+  async function persistToggle(nroOS: number, willSelect: boolean, osName: string) {
     setPendingOS((prev) => new Set(prev).add(nroOS));
-    // registrar nº de operación para evitar pisadas con respuestas viejas
     const myOp = ++opSeqRef.current;
 
     try {
@@ -158,10 +138,7 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
         notify.info(`Se quitó la obra social N° ${nroOS}.`);
       }
 
-      // refrescar desde el server
       const fresh = await fetchPadrones(medicoId);
-
-      // si mientras tanto hubo otra operación más nueva, NO pisamos
       if (myOp !== opSeqRef.current) return;
 
       setPadrones(fresh);
@@ -172,7 +149,6 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
       });
       setSelected(s);
     } catch (e) {
-      // revertir optimista si falló
       setSelected((prev) => {
         const copy = new Set(prev);
         if (willSelect) copy.delete(nroOS);
@@ -182,14 +158,11 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
       notify.error("No se pudo guardar tu cambio. Intentá nuevamente.");
       setAlertType("error");
       setAlertTitle("No se pudo actualizar");
-      setAlertMessage(
-        "Ocurrió un problema guardando tu selección. Intentá nuevamente."
-      );
+      setAlertMessage("Ocurrió un problema guardando tu selección. Intentá nuevamente.");
       setAlertShowActions(false);
       setAlertOnConfirm(null);
       setAlertOpen(true);
     } finally {
-      // quitar de pendientes
       setPendingOS((prev) => {
         const copy = new Set(prev);
         copy.delete(nroOS);
@@ -199,12 +172,11 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
   }
 
   const handleToggle = (nroOS: number, name: string) => {
-    if (loading) return; // aún cargando
-    if (pendingOS.has(nroOS)) return; // ya hay una op en vuelo para esta OS
+    if (loading) return;
+    if (pendingOS.has(nroOS)) return;
 
     const willSelect = !selected.has(nroOS);
 
-    // Optimista
     setSelected((prev) => {
       const copy = new Set(prev);
       if (willSelect) copy.add(nroOS);
@@ -224,21 +196,20 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
     return filteredCatalog.some((os) => selected.has(os.NRO_OBRA_SOCIAL));
   }, [filteredCatalog, selected]);
 
-  // procesado en serie para no reventar el server con 200 requests simultáneas
+  // ─────────────────────────────────────────────────────────────
+  // BULK
+  // ─────────────────────────────────────────────────────────────
   async function bulkApplyForList(list: ObraSocial[], willSelect: boolean) {
     if (loading) return;
     if (list.length === 0) return;
 
-    // bloquear mientras corre
     setLoading(true);
-    // marcar todas como pendientes (deshabilita checkboxes)
     setPendingOS((prev) => {
       const copy = new Set(prev);
       list.forEach((os) => copy.add(os.NRO_OBRA_SOCIAL));
       return copy;
     });
 
-    // Optimista
     setSelected((prev) => {
       const copy = new Set(prev);
       list.forEach((os) => {
@@ -249,14 +220,12 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
       return copy;
     });
 
-    // "operación" bulk (evita pisadas raras)
     const myOp = ++opSeqRef.current;
 
     try {
       for (const os of list) {
         const id = os.NRO_OBRA_SOCIAL;
         const isSel = selected.has(id);
-        // si ya está en el estado deseado, salteá
         if (willSelect && isSel) continue;
         if (!willSelect && !isSel) continue;
 
@@ -281,14 +250,11 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
       notify.error("No se pudieron aplicar los cambios masivos.");
       setAlertType("error");
       setAlertTitle("No se pudo actualizar");
-      setAlertMessage(
-        "Ocurrió un problema aplicando cambios masivos. Intentá nuevamente."
-      );
+      setAlertMessage("Ocurrió un problema aplicando cambios masivos. Intentá nuevamente.");
       setAlertShowActions(false);
       setAlertOnConfirm(null);
       setAlertOpen(true);
 
-      // refrescar para volver al estado real del server
       try {
         const fresh = await fetchPadrones(medicoId);
         if (myOp !== opSeqRef.current) return;
@@ -299,9 +265,7 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
           if (id) s.add(id);
         });
         setSelected(s);
-      } catch {
-        // si también falla, dejamos el estado optimista (y el usuario reintenta)
-      }
+      } catch {}
     } finally {
       setPendingOS((prev) => {
         const copy = new Set(prev);
@@ -312,25 +276,18 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
     }
   }
 
-  const handleSelectAllFiltered = () => {
-    void bulkApplyForList(filteredCatalog, true);
-  };
-
-  const handleClearAllFiltered = () => {
-    void bulkApplyForList(filteredCatalog, false);
-  };
+  const handleSelectAllFiltered = () => void bulkApplyForList(filteredCatalog, true);
+  const handleClearAllFiltered = () => void bulkApplyForList(filteredCatalog, false);
 
   // ─────────────────────────────────────────────────────────────
-  // PREVIEW / SUBMIT (opcionales)
+  // PREVIEW / SUBMIT
   // ─────────────────────────────────────────────────────────────
   const handlePreview = () => {
     if (!onPreview) return;
     if (selected.size === 0) {
       setAlertType("info");
       setAlertTitle("No hay obras sociales seleccionadas");
-      setAlertMessage(
-        "Seleccioná al menos una obra social para previsualizar."
-      );
+      setAlertMessage("Seleccioná al menos una obra social para previsualizar.");
       setAlertShowActions(false);
       setAlertOnConfirm(null);
       setAlertOpen(true);
@@ -348,27 +305,21 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
       .map((os) => os.NOMBRE);
 
     let msg: string;
-    if (names.length === 1)
-      msg = `Se envió el padrón de la obra social ${names[0]}.`;
+    if (names.length === 1) msg = `Se envió el padrón de la obra social ${names[0]}.`;
     else if (names.length > 1 && names.length <= 3)
       msg = `Se enviaron los padrones de: ${names.join(", ")}.`;
-    else
-      msg = `Se enviaron los padrones de ${names.length} obras sociales seleccionadas.`;
+    else msg = `Se enviaron los padrones de ${names.length} obras sociales seleccionadas.`;
 
-    setSuccessMessage(
-      msg + " Nuestro equipo revisará la información a la brevedad."
-    );
+    setSuccessMessage(msg + " Nuestro equipo revisará la información a la brevedad.");
     setShowSuccess(true);
   };
 
   const handleSubmit = () => {
-    if (!onSubmit) return; // si no usan Submit, no mostramos confirm
+    if (!onSubmit) return;
     if (selected.size === 0) {
       setAlertType("warning");
       setAlertTitle("Seleccioná al menos una obra social");
-      setAlertMessage(
-        "Para enviar los padrones, marcá al menos una obra social."
-      );
+      setAlertMessage("Para enviar los padrones, marcá al menos una obra social.");
       setAlertShowActions(false);
       setAlertOnConfirm(null);
       setAlertOpen(true);
@@ -376,9 +327,7 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
     }
     setAlertType("warning");
     setAlertTitle("¿Confirmar envío de padrones?");
-    setAlertMessage(
-      "Se enviarán los padrones de las obras sociales seleccionadas."
-    );
+    setAlertMessage("Se enviarán los padrones de las obras sociales seleccionadas.");
     setAlertShowActions(true);
     setAlertOnConfirm(() => confirmSubmit);
     setAlertOpen(true);
@@ -390,7 +339,7 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
   };
 
   // ─────────────────────────────────────────────────────────────
-  // EXPORTS (CSV / PDF)
+  // EXPORTS
   // ─────────────────────────────────────────────────────────────
   const getSelectedRows = () =>
     catalog
@@ -404,23 +353,17 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
     if (selected.size === 0) {
       setAlertType("info");
       setAlertTitle("No hay datos para exportar");
-      setAlertMessage(
-        "Seleccioná al menos una obra social para generar el CSV."
-      );
+      setAlertMessage("Seleccioná al menos una obra social para generar el CSV.");
       setAlertShowActions(false);
       setAlertOnConfirm(null);
       setAlertOpen(true);
       return;
     }
-
     const header = ["Código", "Obra social"];
     const rows = getSelectedRows();
     const csv = [header, ...rows]
-      .map((row) =>
-        row.map((f) => `"${String(f).replace(/"/g, '""')}"`).join(";")
-      )
+      .map((row) => row.map((f) => `"${String(f).replace(/"/g, '""')}"`).join(";"))
       .join("\n");
-
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     saveAs(blob, "padrones-obras-sociales.csv");
   };
@@ -429,118 +372,155 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
     if (selected.size === 0) {
       setAlertType("info");
       setAlertTitle("No hay datos para exportar");
-      setAlertMessage(
-        "Seleccioná al menos una obra social para generar el PDF."
-      );
+      setAlertMessage("Seleccioná al menos una obra social para generar el PDF.");
       setAlertShowActions(false);
       setAlertOnConfirm(null);
       setAlertOpen(true);
       return;
     }
-
     const rows = getSelectedRows();
     const doc = new jsPDF();
     doc.setFontSize(14);
     doc.text("Padrones - Obras sociales seleccionadas", 14, 18);
-    autoTable(doc, {
-      head: [["Código", "Obra social"]],
-      body: rows,
-      startY: 26,
-    });
+    autoTable(doc, { head: [["Código", "Obra social"]], body: rows, startY: 26 });
     doc.save("padrones-obras-sociales.pdf");
   };
+
+  const selectedCountInFilter = filteredCatalog.filter((os) =>
+    selected.has(os.NRO_OBRA_SOCIAL)
+  ).length;
 
   // ─────────────────────────────────────────────────────────────
   // RENDER
   // ─────────────────────────────────────────────────────────────
   return (
     <div className={styles.container}>
+      {/* HEADER */}
       <div className={styles.header}>
-        <h2>Seleccionar Obras Sociales</h2>
+        <div className={styles.headerTop}>
+          <h2>Obras Sociales</h2>
+          {selected.size > 0 && (
+            <span className={styles.selectedBadge}>{selected.size} seleccionadas</span>
+          )}
+        </div>
         <p className={styles.subtitle}>
-          Marque las obras sociales con las que trabajará
+          Marcá las obras sociales con las que trabaja el médico
         </p>
       </div>
 
-      {/* 🔎 SEARCH BAR */}
-      <div className={styles.searchRow}>
-        <input
-          className={styles.searchInput}
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Buscar por nombre o código (ej: Swiss, OS056)…"
-          aria-label="Buscar obra social"
-        />
-        {query.trim().length > 0 && (
+      {/* SEARCH + BULK ACTIONS */}
+      <div className={styles.controlsRow}>
+        <div className={styles.searchWrapper}>
+          <svg className={styles.searchIcon} viewBox="0 0 20 20" fill="none">
+            <circle cx="8.5" cy="8.5" r="5.5" stroke="#9ca3af" strokeWidth="1.5" />
+            <path d="M13 13l4 4" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          <input
+            className={styles.searchInput}
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar por nombre o código…"
+            aria-label="Buscar obra social"
+          />
+          {query.trim().length > 0 && (
+            <button
+              type="button"
+              className={styles.clearSearch}
+              onClick={() => setQuery("")}
+              aria-label="Limpiar búsqueda"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
+        <div className={styles.bulkActions}>
           <button
             type="button"
-            className={styles.clearSearch}
-            onClick={() => setQuery("")}
+            className={styles.bulkBtn}
+            disabled={loading || filteredCatalog.length === 0 || allFilteredSelected}
+            onClick={handleSelectAllFiltered}
+            title={query.trim() ? "Seleccionar las obras sociales filtradas" : "Seleccionar todas"}
           >
-            Limpiar
+            <svg viewBox="0 0 16 16" fill="none">
+              <rect x="1" y="1" width="14" height="14" rx="3" stroke="currentColor" strokeWidth="1.5" fill="#1d4ed8" />
+              <path d="M4.5 8l2.5 2.5 4.5-5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            {query.trim() ? "Sel. filtradas" : "Seleccionar todas"}
           </button>
-        )}
+          <button
+            type="button"
+            className={`${styles.bulkBtn} ${styles.bulkBtnOutline}`}
+            disabled={loading || filteredCatalog.length === 0 || !anyFilteredSelected}
+            onClick={handleClearAllFiltered}
+            title={query.trim() ? "Quitar las obras sociales filtradas" : "Quitar todas"}
+          >
+            <svg viewBox="0 0 16 16" fill="none">
+              <rect x="1" y="1" width="14" height="14" rx="3" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M5 8h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            {query.trim() ? "Quitar filtradas" : "Quitar todas"}
+          </button>
+        </div>
       </div>
 
-      {/* ✅ Acciones masivas
-      <div className={styles.bulkActions}>
-        <Button
-          type="button"
-          variant="secondary"
-          className={styles.bulkButton}
-          disabled={loading || filteredCatalog.length === 0 || allFilteredSelected}
-          onClick={handleSelectAllFiltered}
-          title={
-            query.trim()
-              ? "Seleccionar todas las obras sociales filtradas"
-              : "Seleccionar todas las obras sociales"
-          }
-        >
-          {query.trim() ? "Seleccionar filtradas" : "Seleccionar todas"}
-        </Button>
-
-        <Button
-          type="button"
-          className={styles.bulkButtonSecondary}
-          disabled={loading || filteredCatalog.length === 0 || !anyFilteredSelected}
-          onClick={handleClearAllFiltered}
-          title={
-            query.trim()
-              ? "Quitar todas las obras sociales filtradas"
-              : "Quitar todas las obras sociales"
-          }
-        >
-          {query.trim() ? "Quitar filtradas" : "Quitar todas"}
-        </Button>
-      </div> */}
-
       <p className={styles.searchMeta}>
-        Mostrando {filteredCatalog.length} de {catalog.length}
+        {query.trim()
+          ? `${selectedCountInFilter} seleccionadas · ${filteredCatalog.length} resultado${filteredCatalog.length !== 1 ? "s" : ""} de ${catalog.length}`
+          : `${filteredCatalog.length} obras sociales`}
       </p>
 
+      {/* GRID */}
       <div className={styles.insuranceList}>
-        {filteredCatalog.length === 0 ? (
+        {loading && catalog.length === 0 ? (
+          Array.from({ length: 12 }).map((_, i) => (
+            <div key={i} className={styles.skeletonItem} />
+          ))
+        ) : filteredCatalog.length === 0 ? (
           <div className={styles.noResults}>
-            No se encontraron obras sociales para “{query}”.
+            No se encontraron obras sociales para &ldquo;{query}&rdquo;.
           </div>
         ) : (
           filteredCatalog.map((os) => {
             const code =
               os.CODIGO ?? `OS${String(os.NRO_OBRA_SOCIAL).padStart(3, "0")}`;
             const checked = selected.has(os.NRO_OBRA_SOCIAL);
+            const pending = pendingOS.has(os.NRO_OBRA_SOCIAL);
             return (
-              <label key={os.NRO_OBRA_SOCIAL} className={styles.insuranceItem}>
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  disabled={loading || pendingOS.has(os.NRO_OBRA_SOCIAL)}
-                  onChange={() => handleToggle(os.NRO_OBRA_SOCIAL, os.NOMBRE)}
-                />
+              <label
+                key={os.NRO_OBRA_SOCIAL}
+                className={[
+                  styles.insuranceItem,
+                  checked ? styles.insuranceItemSelected : "",
+                  pending ? styles.insuranceItemPending : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
+                <span className={styles.checkboxWrap}>
+                  {pending ? (
+                    <span className={styles.spinner} />
+                  ) : (
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      disabled={loading || pending}
+                      onChange={() => handleToggle(os.NRO_OBRA_SOCIAL, os.NOMBRE)}
+                    />
+                  )}
+                </span>
                 <div className={styles.insuranceInfo}>
                   <span className={styles.insuranceName}>{os.NOMBRE}</span>
-                  <span className={styles.insuranceCode}>Código: {code}</span>
+                  <span className={styles.insuranceCode}>{code}</span>
                 </div>
+                {checked && !pending && (
+                  <span className={styles.checkBadge} aria-hidden>
+                    <svg viewBox="0 0 12 12" fill="none">
+                      <path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                )}
               </label>
             );
           })
@@ -549,23 +529,14 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
 
       {/* DESCARGAS */}
       <div className={styles.downloadActions}>
-        <button
-          type="button"
-          className={styles.downloadButton}
-          onClick={handleDownloadCsv}
-        >
-          Descargar CSV
+        <button type="button" className={styles.downloadButton} onClick={handleDownloadCsv}>
+          ↓ CSV
         </button>
-        <button
-          type="button"
-          className={styles.downloadButton}
-          onClick={handleDownloadPdf}
-        >
-          Descargar PDF
+        <button type="button" className={styles.downloadButton} onClick={handleDownloadPdf}>
+          ↓ PDF
         </button>
       </div>
 
-      {/* MODAL DE ÉXITO */}
       <SuccessModal
         open={showSuccess}
         onClose={handleSuccessClose}
@@ -573,7 +544,6 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
         message={successMessage}
       />
 
-      {/* ALERTA */}
       {alertOpen && (
         <Alert
           type={alertType}
