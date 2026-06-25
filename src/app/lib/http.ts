@@ -158,3 +158,12 @@ export const delJSONBody = async <T = unknown>(url: string, body?: any): Promise
   const { data } = await http.delete(url, { data: body ?? {} });
   return data as T;
 };
+
+export const getJSONWithHeaders = async <T>(
+  url: string,
+  params?: Record<string, any>
+): Promise<{ data: T; totalCount: number | undefined }> => {
+  const res = await http.get<T>(url, { params });
+  const raw = Number(res.headers["x-total-count"] ?? NaN);
+  return { data: res.data, totalCount: Number.isNaN(raw) ? undefined : raw };
+};

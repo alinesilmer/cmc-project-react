@@ -42,6 +42,12 @@ import RefacturacionesList from "./app/pages/Pagos/RefacturacionesList/Refactura
 import DeduccionesList from "./app/pages/Deducciones/DeduccionesList";
 import NuevaDeduccion from "./app/pages/Deducciones/NuevaDeduccion";
 
+// Facturación (carga de prestaciones del Colegio)
+import Facturacion from "./app/pages/facturacion/Facturacion";
+import CargaFacturacion from "./app/pages/facturacion/CargaFacturacion/CargaFacturacion";
+import ListadoPrestaciones from "./app/pages/facturacion/ListadoPrestaciones/ListadoPrestaciones";
+import CierrePeriodo from "./app/pages/facturacion/CierrePeriodo/CierrePeriodo";
+
 // WEBSITE
 import WebRoutes from "./website/router";
 import GenerarExcel from "./app/pages/CrearPadronExcel/CrearPadronExcel";
@@ -114,6 +120,14 @@ export default function RootRoutes() {
             <Route path="refacturaciones/:loteId" element={<LoteDetalle />} />
             <Route path="deducciones" element={<DeduccionesList />} />
             <Route path="deducciones/nueva" element={<NuevaDeduccion />} />
+
+            {/* Facturación */}
+            <Route path="facturacion">
+              <Route index element={<Facturacion />} />
+              <Route path="carga" element={<CargaFacturacion />} />
+              <Route path="prestaciones" element={<ListadoPrestaciones />} />
+              <Route path="cierre" element={<CierrePeriodo />} />
+            </Route>
 
             <Route path="padron-ioscor" element={<PadronIoscor />} />
             <Route path="solicitudes" element={<ApplicationsList />} />

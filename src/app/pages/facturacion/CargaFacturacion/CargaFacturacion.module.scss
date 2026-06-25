@@ -1,0 +1,87 @@
+@use "../../../styles/variables" as *;
+
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: $gray-50;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: $primary-blue-darker;
+  color: $white;
+  padding: $spacing-3 $spacing-6;
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+  flex-wrap: wrap;
+  box-shadow: $shadow-md;
+
+  h1 {
+    font-family: Manrope, sans-serif;
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    margin: 0;
+    color: $white;
+  }
+}
+
+.headerActions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+}
+
+.body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: $spacing-6;
+  padding: $spacing-6;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+
+  @media (max-width: $breakpoint-xl) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-6;
+}
+
+.sidebar {
+  position: sticky;
+  top: 72px;
+  align-self: start;
+  max-height: calc(100vh - 88px);
+  overflow-y: auto;
+
+  @media (max-width: $breakpoint-xl) {
+    position: static;
+    max-height: none;
+    overflow-y: visible;
+    order: -1;
+  }
+}
+
+.footer {
+  position: sticky;
+  bottom: 0;
+  background: $white;
+  border-top: 1px solid $gray-200;
+  padding: $spacing-3 $spacing-6;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: $spacing-3;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
+  z-index: 50;
+}
