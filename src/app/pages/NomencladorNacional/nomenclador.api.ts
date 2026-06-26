@@ -10,9 +10,14 @@ import type {
   GalenoUpdatePayload,
   GalenoActualizarPrecioPayload,
   GalenoActualizarPrecioMasivoPayload,
+  GalenoActualizarUnidadesPayload,
+  GalenoActualizarUnidadesResult,
+  GalenosImportarPayload,
+  GalenosImportarResult,
   ActualizacionMasivaResult,
   ValorOut,
   ValorCreatePayload,
+  ValorUpdatePayload,
   ValorActualizarPayload,
   TablaValorItem,
   NomencladorEspecialidadOut,
@@ -74,6 +79,20 @@ export const actualizarPrecioMasivoGaleno = (
 export const deleteGaleno = (id: number): Promise<void> =>
   delJSON<void>(`/api/galenos/${id}`);
 
+export const getGalenoById = (id: number): Promise<GalenoOut> =>
+  getJSON<GalenoOut>(`/api/galenos/${id}`);
+
+export const actualizarUnidadesGaleno = (
+  id: number,
+  payload: GalenoActualizarUnidadesPayload
+): Promise<GalenoActualizarUnidadesResult> =>
+  postJSON<GalenoActualizarUnidadesResult>(`/api/galenos/${id}/actualizar_unidades`, payload);
+
+export const importarGalenosDeObraSocial = (
+  payload: GalenosImportarPayload
+): Promise<GalenosImportarResult> =>
+  postJSON<GalenosImportarResult>("/api/galenos/importar_de_obra_social", payload);
+
 // ─── Valores ──────────────────────────────────────────────────────────────────
 
 export const listValores = (params: {
@@ -93,6 +112,12 @@ export const createValor = (payload: ValorCreatePayload): Promise<ValorOut> =>
 
 export const actualizarValor = (id: number, payload: ValorActualizarPayload): Promise<ValorOut> =>
   postJSON<ValorOut>(`/api/valores_nm/${id}/actualizar`, payload);
+
+export const getValorById = (id: number): Promise<ValorOut> =>
+  getJSON<ValorOut>(`/api/valores_nm/${id}`);
+
+export const updateValorMetadata = (id: number, payload: ValorUpdatePayload): Promise<ValorOut> =>
+  putJSON<ValorOut>(`/api/valores_nm/${id}`, payload);
 
 export const deleteValor = (id: number): Promise<void> =>
   delJSON<void>(`/api/valores_nm/${id}`);

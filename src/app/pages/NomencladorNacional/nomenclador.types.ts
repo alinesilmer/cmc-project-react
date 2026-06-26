@@ -53,6 +53,9 @@ export type GalenoOut = {
   vigencia_desde: string;
   vigencia_hasta: string | null;
   valor_unitario: string;
+  unidades_honorarios: string | null;
+  unidades_ayudante: string | null;
+  unidades_gastos: string | null;
   activo: boolean;
   observacion: string | null;
   created_at: string;
@@ -64,14 +67,26 @@ export type GalenoCreatePayload = {
   nivel?: number | null;
   vigencia_desde: string;
   valor_unitario: number;
+  unidades_honorarios?: number | null;
+  unidades_ayudante?: number | null;
+  unidades_gastos?: number | null;
   observacion?: string | null;
+};
+
+export type GalenoNivelItem = {
+  nivel: number;
+  valor_unitario: number;
+  unidades_honorarios?: number | null;
+  unidades_ayudante?: number | null;
+  unidades_gastos?: number | null;
 };
 
 export type GalenoCreateNivelesPayload = {
   obra_social_nro: number;
   nombre: string;
   vigencia_desde: string;
-  niveles: { nivel: number; valor_unitario: number }[];
+  observacion?: string | null;
+  niveles: GalenoNivelItem[];
 };
 
 export type GalenoUpdatePayload = {
@@ -93,15 +108,54 @@ export type ActualizacionMasivaResult = {
   omitidos: number;
 };
 
+export type GalenoActualizarUnidadesPayload = {
+  vigencia_desde: string;
+  unidades_honorarios?: number | null;
+  unidades_ayudante?: number | null;
+  unidades_gastos?: number | null;
+};
+
+export type GalenoActualizarUnidadesResult = {
+  galeno: GalenoOut;
+  componentes_actualizados: number;
+};
+
+export type GalenosImportarPayload = {
+  obra_social_nro_origen: number;
+  obra_social_nro_destino: number;
+  vigencia_desde: string;
+};
+
+export type GalenosImportarResult = {
+  total_origen: number;
+  creados: number;
+  rotados: number;
+  sin_cambios: number;
+  errores: { codigo: string; nivel: number | null; motivo: string }[];
+};
+
 // ─── Valores ──────────────────────────────────────────────────────────────────
+
+export type Origen = "NE" | "NNE" | "NN";
+
+export const ORIGEN_LABELS: Record<Origen, string> = {
+  NE: "Nomenclador Específico",
+  NNE: "Nomenclador Negociado",
+  NN: "Nomenclador Nacional",
+};
 
 export type ValorComponenteOut = {
   id: number;
   valor_id: number;
   concepto: string;
+  tipo: "calculable" | "fijo";
   galeno_id: number | null;
+  galeno_codigo: string | null;
+  galeno_nivel: number | null;
   cantidad: string;
   valor_unitario: string | null;
+  precio_unitario: string | null;
+  subtotal: string;
   opcional: boolean;
   orden: number;
   activo: boolean;
@@ -114,10 +168,12 @@ export type ValorOut = {
   nomenclador_id: number;
   codigo: string;
   descripcion: string | null;
+  origen: Origen;
   nivel: number | null;
   complejidad: string | null;
   especialidad_id_colegio: number | null;
-  por_presupuesto: 0 | 1;
+  por_presupuesto: boolean;
+  modalidad: "galeno" | "fijo";
   vigencia_desde: string;
   vigencia_hasta: string | null;
   estado: ValorEstado;
@@ -139,14 +195,22 @@ export type ComponentePayload = {
 export type ValorCreatePayload = {
   obra_social_nro: number;
   nomenclador_id: number;
+  origen: Origen;
   descripcion?: string | null;
   nivel?: number | null;
   complejidad?: string | null;
   especialidad_id_colegio?: number | null;
-  por_presupuesto?: 0 | 1;
+  por_presupuesto?: boolean;
   vigencia_desde: string;
   observacion?: string | null;
   componentes: ComponentePayload[];
+};
+
+export type ValorUpdatePayload = {
+  descripcion?: string | null;
+  nivel?: number | null;
+  complejidad?: string | null;
+  observacion?: string | null;
 };
 
 export type ValorActualizarPayload = {

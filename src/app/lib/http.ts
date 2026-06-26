@@ -53,7 +53,12 @@ let refreshing = false;
 let queue: Array<() => void> = [];
 
 http.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    const method = (res.config.method ?? "").toUpperCase();
+    const url = res.config.url ?? "";
+    console.log(`[API] ${method} ${url}`, res.data);
+    return res;
+  },
   async (error) => {
     const original = error.config || {};
 
