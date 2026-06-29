@@ -3,7 +3,7 @@
 import type React from "react";
 import { motion } from "framer-motion";
 import Sidebar from "../../components/molecules/Sidebar/Sidebar";
-import SearchBar from "../../components/molecules/SearchBar/SearchBar";
+import SearchField from "../../components/molecules/SearchField/SearchField";
 import Card from "../../components/atoms/Card/Card";
 import styles from "./SocialWorkSection.module.scss";
 
@@ -53,7 +53,7 @@ const SocialWorkSelection: React.FC = () => {
         >
           <div className={styles.header}>
             <h1 className={styles.title}>Seleccione la Obra Social</h1>
-            <SearchBar placeholder="Buscar obra social..." />
+            <SearchField placeholder="Buscar obra social..." />
           </div>
 
           <div className={styles.socialWorksGrid}>

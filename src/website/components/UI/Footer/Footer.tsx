@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
 import {
-  FiInstagram,
-  FiMapPin,
-  FiPhone,
-  FiMail,
-} from "react-icons/fi";
+  Instagram as FiInstagram,
+  MapPin as FiMapPin,
+  Phone as FiPhone,
+  Mail as FiMail,
+} from "lucide-react";
 import styles from "./Footer.module.scss";
 import logo from "../../../assets/images/logoCMC.png";
 

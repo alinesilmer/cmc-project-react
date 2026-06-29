@@ -127,15 +127,6 @@ const Dashboard: React.FC = () => {
       badge: "Análisis",
     },
     {
-      icon: Paperclip,
-      title: "Listado de Prestadores",
-      description:
-        "Consultá el listado operativo de prestadores y referencias rápidas.",
-      link: "/panel/padronsucio",
-      accent: "amber",
-      badge: "Consulta",
-    },
-    {
       icon: ShieldCheck,
       title: "Permisos y Roles",
       description:

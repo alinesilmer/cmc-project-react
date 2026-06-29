@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { FiMapPin, FiMail, FiPhone, FiExternalLink } from "react-icons/fi";
+import { MapPin as FiMapPin, Mail as FiMail, Phone as FiPhone, ExternalLink as FiExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import styles from "./contact.module.scss";
 import PageHero from "../../components/UI/Hero/Hero";

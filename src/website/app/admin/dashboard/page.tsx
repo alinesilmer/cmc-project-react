@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiPlus, FiEdit, FiTrash2, FiLogOut, FiSearch } from "react-icons/fi";
-import { FaWhatsapp } from "react-icons/fa";
+import { Plus as FiPlus, SquarePen as FiEdit, Trash2 as FiTrash2, LogOut as FiLogOut, Search as FiSearch } from "lucide-react";
+import FaWhatsapp from "../../../components/UI/icons/WhatsappIcon";
 import Button from "../../../components/UI/Button/Button";
 import AdminMedicosPromo from "../MedicosPromo/MedicosPromo";
 import NewsForm from "./NewsForm";

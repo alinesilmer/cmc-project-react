@@ -8,8 +8,8 @@ import {
 import { Link, useLocation } from "react-router-dom";
 import Logo from "../../assets/images/logoCMC.png";
 import { AnimatePresence, motion } from "framer-motion";
-import { FiX, FiSend } from "react-icons/fi";
-import { FaWhatsapp } from "react-icons/fa";
+import { X as FiX, Send as FiSend } from "lucide-react";
+import FaWhatsapp from "../UI/icons/WhatsappIcon";
 
 import {
   GREETING,

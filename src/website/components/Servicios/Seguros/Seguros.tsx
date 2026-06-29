@@ -1,6 +1,6 @@
 import React from "react"
 import { motion } from "framer-motion"
-import { FaWhatsapp } from "react-icons/fa"
+import FaWhatsapp from "../../UI/icons/WhatsappIcon"
 import styles from "./Seguros.module.scss"
 import Button from "../../UI/Button/Button"
 

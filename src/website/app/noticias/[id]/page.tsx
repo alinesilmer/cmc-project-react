@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FiCalendar, FiUser, FiArrowLeft } from "react-icons/fi";
+import { Calendar as FiCalendar, User as FiUser, ArrowLeft as FiArrowLeft } from "lucide-react";
 
 import Button from "../../../components/UI/Button/Button";
 import NoticiaContent from "../../../components/Noticias/NoticiaContent/NoticiaContent";

@@ -1,4 +1,4 @@
-import { FiFileText, FiDollarSign, FiUsers, FiBookOpen, FiAward, FiHeadphones } from "react-icons/fi";
+import { FileText as FiFileText, DollarSign as FiDollarSign, Users as FiUsers, BookOpen as FiBookOpen, Award as FiAward, Headphones as FiHeadphones } from "lucide-react";
 import { motion } from "framer-motion";
 import styles from "./HealthServices.module.scss";
 import ServiceCard from "../../UI/ServicesCard/ServicesCard";

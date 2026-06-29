@@ -259,13 +259,6 @@ const NAV_SECTIONS: NavSection[] = [
         children: [
           {
             kind: "item",
-            path: `${base}/solicitudes`,
-            icon: UserCog,
-            label: "Solicitudes de Registro",
-            perms: ["medicos:leer"],
-          },
-          {
-            kind: "item",
             path: `${base}/users`,
             icon: BookUser,
             label: "Listado de Socios",
@@ -298,20 +291,6 @@ const NAV_SECTIONS: NavSection[] = [
             path: `${base}/afiliadospadron`,
             icon: Newspaper,
             label: "Padrones",
-            perms: ["medicos:leer"],
-          },
-          {
-            kind: "item",
-            path: `${base}/padronsucio`,
-            icon: Paperclip,
-            label: "Listado de Prestadores",
-            perms: ["medicos:leer"],
-          },
-          {
-            kind: "item",
-            path: `${base}/padron-swiss`,
-            icon: Users2,
-            label: "Padrón Swiss Medical",
             perms: ["medicos:leer"],
           },
         ],

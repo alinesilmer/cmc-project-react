@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import type { Application, ApplicationStatus } from "../../../types/types";
 import styles from "./ApplicationsList.module.scss";
 import { getJSON } from "../../../lib/http";
-import SearchBar from "../SearchBar/SearchBar";
+import SearchField from "../SearchField/SearchField";
 
 export type ApplicationFromApi = {
   id: number;
@@ -179,7 +179,7 @@ const ApplicationsList: React.FC = () => {
         </div>
 
         <div className={styles.searchBox}>
-          <SearchBar
+          <SearchField
             placeholder="Buscar por nombre, email o documento..."
             value={q}
             onChange={(e) => setQ(e.target.value)}

@@ -4,8 +4,6 @@ import type React from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./UsersManagerDashboard.module.scss";
 import MetricCard from "../../components/molecules/MetricCard/MetricCard";
-// import LineChart from "../../components/molecules/LineChart/LineChart";
-// import type { ApplicationStatus } from "../../../types/types";
 import { useEffect, useState } from "react";
 import { getJSON } from "../../lib/http";
 
@@ -118,16 +116,6 @@ const UsersManagerDashboard: React.FC = () => {
       </div>
 
      <div className={styles.actionsGrid}>
-        <div
-          className={`${styles.actionCard} ${styles.actionCardPrimary}`}
-          onClick={() => navigate("/panel/solicitudes")}
-        >
-          <div className={styles.actionIcon}>📋</div>
-          <h3 className={styles.actionTitle}>Solicitudes de Socios</h3>
-          <p className={styles.actionDescription}>Revisá, aprobá o rechazá solicitudes pendientes.</p>
-          <button className={styles.actionButton}>Ver Solicitudes →</button>
-        </div>
-
         {/* <div
           className={`${styles.actionCard} ${styles.actionCardSecondary}`}
           onClick={() => navigate("/panel/admin-padrones")}
@@ -146,10 +134,6 @@ const UsersManagerDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* <div className={styles.chartSection}>
-        <h2 className={styles.sectionTitle}>Nuevos Socios por Mes</h2>
-        <LineChart data={chartData} />
-      </div> */}
     </div>
   );
 };

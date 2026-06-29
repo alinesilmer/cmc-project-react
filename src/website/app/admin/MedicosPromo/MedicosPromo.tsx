@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import {
-  FiTrash2,
-  FiEdit,
-  FiSave,
-  FiSearch,
-  FiUpload,
-  FiX,
-} from "react-icons/fi";
+  Trash2 as FiTrash2,
+  SquarePen as FiEdit,
+  Save as FiSave,
+  Search as FiSearch,
+  Upload as FiUpload,
+  X as FiX,
+} from "lucide-react";
 import Button from "../../../components/UI/Button/Button";
 import styles from "./MedicosPromo.module.scss";
 import type { PubAd, DoctorLite } from "../../../lib/ads.client";

@@ -2,21 +2,19 @@ import { type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  FiUserCheck,
-  FiShield,
-  FiBookOpen,
-  FiAward,
-  FiHeadphones,
-  FiUsers,
-} from "react-icons/fi";
-import {
-  FaUserPlus,
-  FaFileInvoiceDollar,
-  FaCheckCircle,
-  FaNewspaper,
-  FaYoutube,
-  FaArrowRight,
-} from "react-icons/fa";
+  UserCheck as FiUserCheck,
+  Shield as FiShield,
+  BookOpen as FiBookOpen,
+  Award as FiAward,
+  Headphones as FiHeadphones,
+  Users as FiUsers,
+  UserPlus as FaUserPlus,
+  ReceiptText as FaFileInvoiceDollar,
+  CircleCheck as FaCheckCircle,
+  Newspaper as FaNewspaper,
+  Youtube as FaYoutube,
+  ArrowRight as FaArrowRight,
+} from "lucide-react";
 import styles from "./Welcome.module.scss";
 import Button from "../../../components/UI/Button/Button";
 import stethoscopeDeco from "../../../assets/images/stethoscope-deco.png";

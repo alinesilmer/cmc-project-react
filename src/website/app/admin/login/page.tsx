@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FiMail, FiLock } from "react-icons/fi";
+import { Mail as FiMail, Lock as FiLock } from "lucide-react";
 import Button from "../../../components/UI/Button/Button";
 import { api } from "../../../lib/api";
 import styles from "./login.module.scss";

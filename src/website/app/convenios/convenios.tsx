@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { FiMessageCircle, FiMail, FiCheckCircle } from "react-icons/fi";
+import { MessageCircle as FiMessageCircle, Mail as FiMail, CircleCheck as FiCheckCircle } from "lucide-react";
 import ObrasSociales from "../../components/Servicios/ObrasSociales/ObrasSociales";
 import type { ObraSocial } from "../../components/Servicios/ObrasSociales/ObrasSociales";
 import PageHero from "../../components/UI/Hero/Hero";

@@ -9,14 +9,11 @@ import DoctorsPage from "./app/pages/DoctorsList/DoctorsList";
 import SocialWorksPage from "./app/pages/SocialWorkSection/SocialWorkSection";
 import DoctorProfilePage from "./app/pages/DoctorProfilePage/DoctorProfilePage";
 import PadronIoscor from "./app/pages/PadronIoscor/PadronIoscor";
-import ApplicationsList from "./app/components/molecules/ApplicationsList/ApplicationsList";
-import ApplicationDetail from "./app/components/molecules/ApplicationDetail/ApplicationDetail";
 import UsersList from "./app/pages/UsersList/UsersList";
 import RegisterSocio from "./app/pages/RegisterSocio/RegisterSocio";
 import PermissionsManager from "./app/pages/PermissionsManager/PermissionsManager";
 import UsersManagerDashboard from "./app/pages/UsersManagerDashboard/UsersManagerDashboard";
 import Config from "./app/pages/Config/Config";
-import PadronSucio from "./app/pages/PadronSucio/PadronSucio";
 import Help from "./app/pages/Help/Help";
 import Login from "./app/pages/Login/Login";
 import Register from "./app/pages/Register/Register";
@@ -54,7 +51,6 @@ import GenerarExcel from "./app/pages/CrearPadronExcel/CrearPadronExcel";
 import BoletinConsultaComun from "./app/pages/BoletinConsultaComun/BoletinConsultaComun";
 import ActualizacionValores from "./app/pages/ActualizacionValores/ActualizacionValores";
 import TablaValores from "./app/pages/TablaValores/TablaValores";
-import PadronSwiss from "./app/pages/PadronSwiss/PadronSwiss";
 import ObrasSocialesListado from "./app/pages/ObrasSociales/ObrasSocialesListado/ObrasSocialesListado";
 import ObrasSocialesForm from "./app/pages/ObrasSociales/ObrasSocialesForm/ObrasSocialesForm";
 import ObrasSocialesDetalle from "./app/pages/ObrasSociales/ObrasSocialesDetalle/ObrasSocialesDetalle";
@@ -93,7 +89,6 @@ export default function RootRoutes() {
             <Route path="doctors" element={<DoctorsPage />} />
             <Route path="doctors/:id" element={<DoctorProfilePage />} />
             <Route path="social-works" element={<SocialWorksPage />} />
-            <Route path="padronsucio" element={<PadronSucio />} />
             <Route
               path="afiliadospadron"
               element={<AfiliadosPorObraSocialPage />}
@@ -130,8 +125,6 @@ export default function RootRoutes() {
             </Route>
 
             <Route path="padron-ioscor" element={<PadronIoscor />} />
-            <Route path="solicitudes" element={<ApplicationsList />} />
-            <Route path="solicitudes/:id" element={<ApplicationDetail />} />
             <Route path="users" element={<UsersList />} />
             <Route path="register-socio" element={<RegisterSocio />} />
             <Route path="admin/permissions" element={<PermissionsManager />} />
@@ -141,7 +134,6 @@ export default function RootRoutes() {
             <Route path="help" element={<Help />} />
             <Route path="crear-padron" element={<CrearPadron />} />
             <Route path="crear-excel" element={<GenerarExcel />} />
-            <Route path="padron-swiss" element={<PadronSwiss />} />
             <Route
               path="boletin-consulta-comun"
               element={<BoletinConsultaComun />}

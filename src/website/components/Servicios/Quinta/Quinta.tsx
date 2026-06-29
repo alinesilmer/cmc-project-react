@@ -1,6 +1,6 @@
 import React from "react"
 import { motion } from "framer-motion"
-import { FaDownload } from "react-icons/fa"
+import { Download as FaDownload } from "lucide-react"
 import { Info, Phone } from "lucide-react"
 import styles from "./Quinta.module.scss"
 import Button from "../../UI/Button/Button"
