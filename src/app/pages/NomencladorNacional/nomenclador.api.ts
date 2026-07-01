@@ -1,4 +1,4 @@
-import { getJSON, postJSON, putJSON, patchJSON, delJSON } from "../../lib/http";
+import { getJSON, postJSON, putJSON, patchJSON, delJSON, postForm } from "../../lib/http";
 import type {
   NomencladorOut,
   NomencladorListParams,
@@ -21,6 +21,7 @@ import type {
   ValorActualizarPayload,
   TablaValorItem,
   NomencladorEspecialidadOut,
+  ImportarCSVResult,
 } from "./nomenclador.types";
 
 // ─── Nomenclador ──────────────────────────────────────────────────────────────
@@ -112,6 +113,46 @@ export const createValor = (payload: ValorCreatePayload): Promise<ValorOut> =>
 
 export const actualizarValor = (id: number, payload: ValorActualizarPayload): Promise<ValorOut> =>
   postJSON<ValorOut>(`/api/valores_nm/${id}/actualizar`, payload);
+
+// Cantidad de valores ya cargados para una OS en una vigencia exacta (guard anti doble carga).
+export const contarValoresPorVigencia = (
+  obra_social_nro: number,
+  vigencia_desde: string,
+): Promise<{ obra_social_nro: number; vigencia_desde: string; cantidad: number }> =>
+  getJSON("/api/valores_nm/por_vigencia", { obra_social_nro, vigencia_desde });
+
+// Vigencias con valores cargados para una OS (para el selector del modal de eliminación).
+export const listVigenciasCargadas = (
+  obra_social_nro: number,
+): Promise<{ vigencia_desde: string; cantidad: number }[]> =>
+  getJSON("/api/valores_nm/vigencias", { obra_social_nro });
+
+// Elimina todos los valores (con componentes e historial) de una OS en una vigencia exacta.
+export const eliminarValoresPorVigencia = (
+  obra_social_nro: number,
+  vigencia_desde: string,
+): Promise<{ eliminados: number }> => {
+  const qs = new URLSearchParams({
+    obra_social_nro: String(obra_social_nro),
+    vigencia_desde,
+  }).toString();
+  return delJSON(`/api/valores_nm/por_vigencia?${qs}`);
+};
+
+// Importa un CSV (formato por componente) de valores para una OS y vigencia.
+export const importarValoresCsv = (
+  file: File,
+  obra_social_nro: number,
+  vigencia_desde: string,
+): Promise<ImportarCSVResult> => {
+  const fd = new FormData();
+  fd.append("file", file);
+  const qs = new URLSearchParams({
+    obra_social_nro: String(obra_social_nro),
+    vigencia_desde,
+  }).toString();
+  return postForm<ImportarCSVResult>(`/api/valores_nm/importar_csv?${qs}`, fd);
+};
 
 export const getValorById = (id: number): Promise<ValorOut> =>
   getJSON<ValorOut>(`/api/valores_nm/${id}`);

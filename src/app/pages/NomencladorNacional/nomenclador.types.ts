@@ -245,6 +245,13 @@ export type TablaValorItem = {
   componentes: TablaValorComponente[];
 };
 
+// ─── Importar CSV ─────────────────────────────────────────────────────────────
+
+export type ImportarCSVResult = {
+  procesados: number;
+  errores: { fila: number | string; codigo?: string; motivo: string }[];
+};
+
 // ─── Nomenclador Especialidades ───────────────────────────────────────────────
 
 export type NomencladorEspecialidadOut = {

@@ -65,6 +65,7 @@ import Homologador from "./app/pages/NomencladorNacional/Homologador/Homologador
 import NomencladorPorOS from "./app/pages/NomencladorNacional/NomencladorPorOS/NomencladorPorOS";
 import NomencladorGalenos from "./app/pages/NomencladorNacional/NomencladorGalenos/NomencladorGalenos";
 import ActualizarPreciosGalenos from "./app/pages/NomencladorNacional/ActualizarPreciosGalenos/ActualizarPreciosGalenos";
+import ImportarPreciosPdf from "./app/pages/NomencladorNacional/ImportarPreciosPdf/ImportarPreciosPdf";
 
 export default function RootRoutes() {
   return (
@@ -161,6 +162,7 @@ export default function RootRoutes() {
             <Route path="nomenclador/actualizar-precios" element={<ActualizarPreciosGalenos />} />
             <Route path="nomenclador/consulta-valores" element={<ConsultaValores />} />
             <Route path="nomenclador/consulta-precios" element={<ConsultaPrecios />} />
+            <Route path="nomenclador/importar-precios-pdf" element={<ImportarPreciosPdf />} />
             <Route path="nomenclador/homologador" element={<Homologador />} />
 
             <Route path="especialidades" element={<EspecialidadesPage />} />

@@ -420,6 +420,13 @@ const NAV_SECTIONS: NavSection[] = [
       },
       {
         kind: "item",
+        path: `${base}/nomenclador/importar-precios-pdf`,
+        icon: FileText,
+        label: "Importar Precios PDF",
+        perms: ["medicos:leer"],
+      },
+      {
+        kind: "item",
         path: `${base}/nomenclador/homologador`,
         icon: GitMerge,
         label: "Homologador",
