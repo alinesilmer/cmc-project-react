@@ -779,7 +779,7 @@ export default function NomencladorPorOS() {
       {/* ── Create modal ── */}
       <AnimatePresence>
         {modalKind === "create" && (
-          <motion.div className={styles.backdrop} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setModalKind(null)}>
+          <motion.div className={styles.backdrop} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <motion.div
               className={styles.modal}
               initial={{ opacity: 0, scale: 0.96, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -969,7 +969,7 @@ export default function NomencladorPorOS() {
       {/* ── Edit modal ── */}
       <AnimatePresence>
         {modalKind === "edit" && editTarget && (
-          <motion.div className={styles.backdrop} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setModalKind(null)}>
+          <motion.div className={styles.backdrop} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <motion.div
               className={`${styles.modal} ${styles.modalLg}`}
               initial={{ opacity: 0, scale: 0.96, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }}

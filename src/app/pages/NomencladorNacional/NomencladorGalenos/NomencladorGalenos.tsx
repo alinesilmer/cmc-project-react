@@ -9,7 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import styles from "./NomencladorGalenos.module.scss";
 import {
   listGalenos, createGaleno, createNivelesGaleno,
-  deleteGaleno, updateGaleno, actualizarUnidadesGaleno,
+  deleteGaleno, updateGaleno, actualizarUnidadesGaleno, actualizarPrecioGaleno,
   importarGalenosDeObraSocial, getHistorialGaleno,
 } from "../nomenclador.api";
 import { listObrasSociales } from "../../ObrasSociales/obrasSociales.api";
@@ -79,6 +79,8 @@ type EditForm = {
   hon: string;
   ayu: string;
   gas: string;
+  valor: string;
+  vigencia_precio: string;
 };
 
 type ImportForm = {
@@ -114,14 +116,18 @@ export default function NomencladorGalenos() {
   const [editTarget, setEditTarget] = useState<GalenoOut | null>(null);
   const [editForm, setEditForm] = useState<EditForm>({
     observacion: "", vigencia_unidades: today(), hon: "", ayu: "", gas: "",
+    valor: "", vigencia_precio: today(),
   });
   const [savingObs, setSavingObs] = useState(false);
   const [savingUnidades, setSavingUnidades] = useState(false);
+  const [savingPrecio, setSavingPrecio] = useState(false);
   const [confirmUnidades, setConfirmUnidades] = useState(false);
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
 
   // ── Import modal state ────────────────────────────────────────────────────
   const [importForm, setImportForm] = useState<ImportForm>({ osOrigen: "", vigencia_desde: today() });
+  const [importOsSearch, setImportOsSearch] = useState("");
+  const [importOsOpen, setImportOsOpen] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<GalenosImportarResult | null>(null);
   const [importErrors, setImportErrors] = useState<Record<string, string>>({});
@@ -306,10 +312,38 @@ export default function NomencladorGalenos() {
   // ── Edit actions ──────────────────────────────────────────────────────────
   function openEdit(g: GalenoOut) {
     setEditTarget(g);
-    setEditForm({ observacion: g.observacion ?? "", vigencia_unidades: today(), hon: "", ayu: "", gas: "" });
+    setEditForm({
+      observacion: g.observacion ?? "", vigencia_unidades: today(), hon: "", ayu: "", gas: "",
+      valor: g.valor_unitario ?? "", vigencia_precio: today(),
+    });
     setEditErrors({});
     setConfirmUnidades(false);
     setModalKind("edit");
+  }
+
+  async function handleActualizarPrecio() {
+    if (!editTarget) return;
+    const v = parseFloat(editForm.valor);
+    const e: Record<string, string> = {};
+    if (editForm.valor.trim() === "" || isNaN(v) || v < 0) e.valor = "Valor inválido";
+    if (!editForm.vigencia_precio) e.vigencia_precio = "Requerido";
+    setEditErrors((p) => ({ ...p, ...e }));
+    if (Object.keys(e).length > 0) return;
+
+    setSavingPrecio(true);
+    try {
+      await actualizarPrecioGaleno(editTarget.id, {
+        nuevo_valor_unitario: v,
+        vigencia_desde: editForm.vigencia_precio,
+      });
+      showToast("success", "Valor del galeno actualizado.");
+      setModalKind(null);
+      if (selectedOsNro) loadOsGalenos(selectedOsNro);
+    } catch (err) {
+      showToast("error", extractDetail(err));
+    } finally {
+      setSavingPrecio(false);
+    }
   }
 
   async function handleSaveObservacion() {
@@ -376,6 +410,8 @@ export default function NomencladorGalenos() {
   // ── Import actions ────────────────────────────────────────────────────────
   function openImport() {
     setImportForm({ osOrigen: "", vigencia_desde: today() });
+    setImportOsSearch("");
+    setImportOsOpen(false);
     setImportResult(null);
     setImportErrors({});
     setModalKind("import");
@@ -946,6 +982,41 @@ export default function NomencladorGalenos() {
             </div>
 
             <div className={styles.sectionSep} />
+            <p className={styles.sectionTitle}>Actualizar valor</p>
+            <p className={styles.hintText}>
+              Cambia el valor unitario del galeno desde la vigencia indicada (rota la vigencia anterior).
+              Actual: <strong>{fmt.format(parseMonto(editTarget.valor_unitario) ?? 0)}</strong>.
+            </p>
+            <div className={styles.formRow2}>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Valor unitario ($) <span className={styles.req}>*</span></label>
+                <input
+                  type="number" min="0" step="0.01"
+                  className={`${styles.formInput} ${editErrors.valor ? styles.inputError : ""}`}
+                  value={editForm.valor}
+                  onChange={(e) => { setEditForm((p) => ({ ...p, valor: e.target.value })); setEditErrors((p) => ({ ...p, valor: "" })); }}
+                  placeholder="0.00"
+                />
+                {editErrors.valor && <span className={styles.errorMsg}>{editErrors.valor}</span>}
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Vigente desde <span className={styles.req}>*</span></label>
+                <input
+                  type="date"
+                  className={`${styles.formInput} ${editErrors.vigencia_precio ? styles.inputError : ""}`}
+                  value={editForm.vigencia_precio}
+                  onChange={(e) => { setEditForm((p) => ({ ...p, vigencia_precio: e.target.value })); setEditErrors((p) => ({ ...p, vigencia_precio: "" })); }}
+                />
+                {editErrors.vigencia_precio && <span className={styles.errorMsg}>{editErrors.vigencia_precio}</span>}
+              </div>
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+              <button className={styles.btnPrimary} onClick={handleActualizarPrecio} disabled={savingPrecio}>
+                {savingPrecio ? <><Loader2 size={14} className={styles.spin} /> Actualizando…</> : <><Save size={14} /> Actualizar valor</>}
+              </button>
+            </div>
+
+            <div className={styles.sectionSep} />
             <p className={styles.sectionTitle}>Actualizar unidades pactadas</p>
 
             <div className={styles.warningBox}>
@@ -1030,29 +1101,66 @@ export default function NomencladorGalenos() {
             title="Importar galenos de otra OS"
             subtitle={`Destino: ${selectedOsName}`}
             onClose={() => setModalKind(null)}
+            wide
           >
             <div className={styles.formGroup}>
               <label className={styles.formLabel}>
                 Obra Social origen <span className={styles.req}>*</span>
               </label>
-              <select
-                className={`${styles.formSelect} ${importErrors.osOrigen ? styles.inputError : ""}`}
-                value={importForm.osOrigen}
-                onChange={(e) => {
-                  setImportForm((p) => ({
-                    ...p,
-                    osOrigen: e.target.value === "" ? "" : Number(e.target.value),
-                  }));
-                  setImportErrors((p) => ({ ...p, osOrigen: "" }));
-                }}
-              >
-                <option value="">— Seleccionar —</option>
-                {osList
-                  .filter((os) => os.nro_obra_social !== selectedOsNro)
-                  .map((os) => (
-                    <option key={os.nro_obra_social} value={os.nro_obra_social}>{os.nombre}</option>
-                  ))}
-              </select>
+              {importForm.osOrigen !== "" ? (
+                <div className={styles.osAcSelected}>
+                  <span className={styles.osAcNro}>{importForm.osOrigen}</span>
+                  <span className={styles.osAcName}>
+                    {osList.find((os) => os.nro_obra_social === importForm.osOrigen)?.nombre ?? ""}
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.osAcClear}
+                    title="Cambiar"
+                    onClick={() => { setImportForm((p) => ({ ...p, osOrigen: "" })); setImportOsSearch(""); }}
+                  >
+                    <XIcon size={13} />
+                  </button>
+                </div>
+              ) : (
+                <div className={styles.osAcWrap}>
+                  <input
+                    className={`${styles.formInput} ${importErrors.osOrigen ? styles.inputError : ""}`}
+                    placeholder="Buscar por nombre o número…"
+                    value={importOsSearch}
+                    onChange={(e) => { setImportOsSearch(e.target.value); setImportOsOpen(true); }}
+                    onFocus={() => setImportOsOpen(true)}
+                    onBlur={() => setTimeout(() => setImportOsOpen(false), 150)}
+                  />
+                  {importOsOpen && (() => {
+                    const q = importOsSearch.trim().toLowerCase();
+                    const list = osList
+                      .filter((os) => os.nro_obra_social !== selectedOsNro)
+                      .filter((os) => !q || os.nombre.toLowerCase().includes(q) || String(os.nro_obra_social).includes(q))
+                      .slice(0, 50);
+                    return list.length > 0 ? (
+                      <ul className={styles.osAcDropdown}>
+                        {list.map((os) => (
+                          <li
+                            key={os.nro_obra_social}
+                            className={styles.osAcItem}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setImportForm((p) => ({ ...p, osOrigen: os.nro_obra_social }));
+                              setImportErrors((p) => ({ ...p, osOrigen: "" }));
+                              setImportOsSearch("");
+                              setImportOsOpen(false);
+                            }}
+                          >
+                            <span className={styles.osAcNro}>{os.nro_obra_social}</span>
+                            <span className={styles.osAcName}>{os.nombre}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null;
+                  })()}
+                </div>
+              )}
               {importErrors.osOrigen && (
                 <span className={styles.errorMsg}>{importErrors.osOrigen}</span>
               )}
@@ -1222,11 +1330,12 @@ export default function NomencladorGalenos() {
 
 // ─── Modal sub-component ──────────────────────────────────────────────────────
 
-function Modal({ title, subtitle, onClose, children }: {
+function Modal({ title, subtitle, onClose, children, wide }: {
   title: string;
   subtitle?: string;
   onClose: () => void;
   children: ReactNode;
+  wide?: boolean;
 }) {
   return (
     <motion.div
@@ -1234,15 +1343,13 @@ function Modal({ title, subtitle, onClose, children }: {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      onClick={onClose}
     >
       <motion.div
-        className={styles.modal}
+        className={`${styles.modal} ${wide ? styles.modalWide : ""}`}
         initial={{ opacity: 0, scale: 0.96, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 12 }}
         transition={{ duration: 0.16 }}
-        onClick={(e) => e.stopPropagation()}
       >
         <div className={styles.modalHeader}>
           <div>

@@ -8,6 +8,13 @@ function maxCols(grid: Cell[][]): number {
   return grid.reduce((m, r) => Math.max(m, r.length), 0);
 }
 
+// Fila de la tabla de niveles/complejidades: alguna CELDA empieza con "NIVEL n" o
+// "COMPLEJIDAD n". Es preciso: no matchea una descripción normal que solo CONTENGA
+// "nivel 2" en el medio (ej. "TAC nivel 2 cerebral") — esa fila sí se lee.
+function isNivelesRow(r: Cell[]): boolean {
+  return r.some((c) => /^\s*(nivel|complejidad)\s+\d+/i.test(String(c ?? "")));
+}
+
 /**
  * Auto-detecta las columnas. Si se pasa `codeSet` (catálogo CMC), la columna de código
  * es la que más celdas tiene que EXISTEN en el catálogo → detección a prueba de balas
@@ -16,17 +23,20 @@ function maxCols(grid: Cell[][]): number {
 export function autoDetectMapping(grid: Cell[][], codeSet?: Set<string>): ColMapping {
   const cols = maxCols(grid);
   const useCatalog = !!codeSet && codeSet.size > 0;
+  // La detección de columnas ignora las filas de niveles para que esa tabla no
+  // desvíe qué columna es código o precio de los códigos reales.
+  const dataRows = grid.filter((r) => !isNivelesRow(r));
   const headerText = (c: number) =>
     grid.slice(0, 5).map((r) => String(r[c] ?? "")).join(" ").toLowerCase();
   const priceScore = (c: number) =>
-    grid.reduce((s, r) => s + (parsePrecioCell(r[c] ?? null) ? 1 : 0), 0);
+    dataRows.reduce((s, r) => s + (parsePrecioCell(r[c] ?? null) ? 1 : 0), 0);
 
   // ── columna de código ──
   let codigoCol = 0;
   let best = -1;
   for (let c = 0; c < cols; c++) {
     let s = 0;
-    for (const r of grid) {
+    for (const r of dataRows) {
       const nv = normalizeCodigoCell(r[c] ?? null);
       if (!nv) continue;
       if (useCatalog) { if (codeSet!.has(nv)) s++; }
@@ -65,7 +75,7 @@ export function sheetToRows(grid: Cell[][], m: ColMapping, codeSet?: Set<string>
   const rows: PrecioRow[] = [];
 
   for (const r of grid) {
-    if (/\bNIVEL\s+\d/i.test(r.map((c) => String(c ?? "")).join(" "))) continue;
+    if (isNivelesRow(r)) continue; // solo la tabla de niveles/complejidades se omite
 
     const codigo = normalizeCodigoCell(r[m.codigo] ?? null);
     if (!codigo) continue;

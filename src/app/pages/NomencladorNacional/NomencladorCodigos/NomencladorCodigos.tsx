@@ -384,7 +384,6 @@ export default function NomencladorCodigos() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={closeModal}
           >
             <motion.div
               className={styles.modal}
