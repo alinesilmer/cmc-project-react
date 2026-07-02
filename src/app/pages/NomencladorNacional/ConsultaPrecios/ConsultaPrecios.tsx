@@ -14,11 +14,7 @@ import { AnimatePresence, motion } from "framer-motion";
 
 // Reuse identical styles from the admin Consulta de Valores page
 import styles from "../ConsultaValores/ConsultaValores.module.scss";
-import {
-  listNomenclador,
-  getTablaValores,
-  getNomencladorEspecialidades,
-} from "../nomenclador.api";
+import { listNomenclador, getTablaValores } from "../nomenclador.api";
 import { listObrasSociales } from "../../ObrasSociales/obrasSociales.api";
 import type { NomencladorOut, TablaValorItem } from "../nomenclador.types";
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
@@ -31,14 +27,13 @@ const fmt = new Intl.NumberFormat("es-AR", {
 });
 
 function findComp(componentes: TablaValorItem["componentes"], concepto: string) {
-  return componentes.find(
-    (c) => c.concepto.toLowerCase() === concepto.toLowerCase() && !c.opcional,
-  );
+  return componentes.find((c) => c.concepto.toLowerCase() === concepto.toLowerCase());
 }
 
 export default function ConsultaPrecios() {
   const { user } = useAuth();
-  const doctorEspId: number | null = user?.especialidad_id ?? null;
+  // ID_COLEGIO_ESPE en orden de prioridad (principal primero)
+  const doctorEspecialidades: number[] = user?.especialidades ?? [];
 
   // Specialty validity state (populated after each search)
   const [especialidadValida, setEspecialidadValida] = useState<boolean | null>(null);
@@ -112,9 +107,9 @@ export default function ConsultaPrecios() {
     setNomLoading(true);
     nomDebounce.current = setTimeout(async () => {
       try {
-        // TODO (speciality restriction): when doctorEspId is available, pass it to filter
-        // codes only belonging to the doctor's speciality, e.g.:
-        //   listNomenclador({ q: q.trim(), activo: true, size: 15, especialidad_id: doctorEspId })
+        // TODO (speciality restriction): when doctorEspecialidades is available, pass it to
+        // filter codes only belonging to the doctor's specialities, e.g.:
+        //   listNomenclador({ q: q.trim(), activo: true, size: 15, especialidad_id: doctorEspecialidades[0] })
         const res = await listNomenclador({ q: q.trim(), activo: true, size: 15 });
         setNomResults(res);
       } catch {
@@ -155,12 +150,12 @@ export default function ConsultaPrecios() {
     setEspecialidadValida(null);
 
     try {
-      const [tablaData, espsData] = await Promise.all([
-        getTablaValores({ obra_social_nro: osNro, codigo: selectedNom.codigo, size: 5 }),
-        doctorEspId != null
-          ? getNomencladorEspecialidades(selectedNom.id)
-          : Promise.resolve(null),
-      ]);
+      const tablaData = await getTablaValores({
+        obra_social_nro: osNro,
+        codigo: selectedNom.codigo,
+        especialidades: doctorEspecialidades.length ? doctorEspecialidades : undefined,
+        size: 5,
+      });
 
       const exactTabla = tablaData.find(
         (t) => t.codigo.toUpperCase() === selectedNom.codigo.toUpperCase(),
@@ -172,12 +167,14 @@ export default function ConsultaPrecios() {
 
       setResult(exactTabla);
 
-      if (doctorEspId != null && espsData != null) {
-        if (selectedNom.sin_restriccion_especialidad) {
-          setEspecialidadValida(true);
-        } else {
-          setEspecialidadValida(espsData.some((e) => e.especialidad_id_colegio === doctorEspId && e.activo));
-        }
+      if (doctorEspecialidades.length) {
+        setEspecialidadValida(
+          selectedNom.sin_restriccion_especialidad
+            ? true
+            : exactTabla.origen === "NE" &&
+                exactTabla.especialidad_id_colegio != null &&
+                doctorEspecialidades.includes(exactTabla.especialidad_id_colegio),
+        );
       }
     } catch {
       setError("Error al consultar. Verificá la obra social y el código.");
@@ -352,7 +349,7 @@ export default function ConsultaPrecios() {
                 {selectedOSItem?.nombre} · Vigente desde {result.vigencia_desde}
                 {result.vigencia_hasta && ` hasta ${result.vigencia_hasta}`}
               </p>
-              {doctorEspId != null && especialidadValida !== null && (
+              {doctorEspecialidades.length > 0 && especialidadValida !== null && (
                 <div
                   className={`${styles.especialidadBadge} ${
                     especialidadValida ? styles.badgeOk : styles.badgeNo

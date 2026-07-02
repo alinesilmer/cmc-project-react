@@ -1,4 +1,4 @@
-import { getJSON, postJSON, putJSON, patchJSON, delJSON } from "../../lib/http";
+import { getJSON, postJSON, putJSON, patchJSON, delJSON, http } from "../../lib/http";
 import type {
   NomencladorOut,
   NomencladorListParams,
@@ -124,15 +124,24 @@ export const deleteValor = (id: number): Promise<void> =>
 
 // ─── Reportes ─────────────────────────────────────────────────────────────────
 
-export const getTablaValores = (params: {
+export const getTablaValores = async (params: {
   obra_social_nro: number;
   fecha?: string;
   codigo?: string;
+  /** IDs de especialidad del colegio, en orden de prioridad (la principal primero). */
+  especialidades?: number[];
   orden?: "codigo" | "valor";
   page?: number;
   size?: number;
-}): Promise<TablaValorItem[]> =>
-  getJSON<TablaValorItem[]>("/api/reportes_nm/tabla_valores", params);
+}): Promise<TablaValorItem[]> => {
+  const { data } = await http.get<TablaValorItem[]>("/api/reportes_nm/tabla_valores", {
+    params,
+    // El backend espera el param repetido (`especialidades=5&especialidades=12`),
+    // no con corchetes (`especialidades[]=5`), que es lo que serializa axios por default.
+    paramsSerializer: { indexes: null },
+  });
+  return data;
+};
 
 // ─── Nomenclador Especialidades ───────────────────────────────────────────────
 

@@ -12,18 +12,10 @@ import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 
 import styles from "./ConsultaValores.module.scss";
-import {
-  listNomenclador,
-  getTablaValores,
-  getNomencladorEspecialidades,
-} from "../nomenclador.api";
+import { listNomenclador, getTablaValores } from "../nomenclador.api";
 import { listObrasSociales } from "../../ObrasSociales/obrasSociales.api";
 import { getEspecialidades } from "../../Especialidades/especialidades.api";
-import type {
-  NomencladorOut,
-  TablaValorItem,
-  NomencladorEspecialidadOut,
-} from "../nomenclador.types";
+import type { NomencladorOut, TablaValorItem } from "../nomenclador.types";
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
 import type { Especialidad } from "../../Especialidades/especialidades.types";
 
@@ -34,9 +26,7 @@ const fmt = new Intl.NumberFormat("es-AR", {
 });
 
 function findComp(componentes: TablaValorItem["componentes"], concepto: string) {
-  return componentes.find(
-    (c) => c.concepto.toLowerCase() === concepto.toLowerCase() && !c.opcional,
-  );
+  return componentes.find((c) => c.concepto.toLowerCase() === concepto.toLowerCase());
 }
 
 export default function ConsultaValores() {
@@ -61,7 +51,6 @@ export default function ConsultaValores() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [result, setResult] = useState<TablaValorItem | null>(null);
-  const [nomEsps, setNomEsps] = useState<NomencladorEspecialidadOut[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const { data: osList = [] } = useQuery({
@@ -78,7 +67,8 @@ export default function ConsultaValores() {
 
   // Derived values
   const osNro = selectedOSItem?.nro_obra_social ?? null;
-  const espId = selectedEspItem?.id ?? null;
+  // ID_COLEGIO_ESPE — es lo que espera el backend en `especialidades` y lo que devuelve en `especialidad_id_colegio`
+  const espId = selectedEspItem?.id_colegio_espe ?? null;
 
   // Filtered lists (client-side)
   const filteredOS = useMemo(() => {
@@ -125,14 +115,18 @@ export default function ConsultaValores() {
     setSelectedEspItem(e);
     setEspSearch("");
     setEspOpen(false);
-    setNomEsps(null);
+    setResult(null);
+    setError(null);
+    setSearched(false);
   }
 
   function clearEsp() {
     setSelectedEspItem(null);
     setEspSearch("");
     setEspOpen(false);
-    setNomEsps(null);
+    setResult(null);
+    setError(null);
+    setSearched(false);
   }
 
   // ── Nomenclador autocomplete ───────────────────────────────────────────────
@@ -162,7 +156,6 @@ export default function ConsultaValores() {
     setNomResults([]);
     // Clear previous result when a new code is chosen
     setResult(null);
-    setNomEsps(null);
     setError(null);
     setSearched(false);
   }
@@ -172,7 +165,6 @@ export default function ConsultaValores() {
     setNomSearch("");
     setNomResults([]);
     setResult(null);
-    setNomEsps(null);
     setError(null);
     setSearched(false);
   }
@@ -185,14 +177,15 @@ export default function ConsultaValores() {
     setLoading(true);
     setSearched(true);
     setResult(null);
-    setNomEsps(null);
     setError(null);
 
     try {
-      const [tablaData, espsData] = await Promise.all([
-        getTablaValores({ obra_social_nro: osNro, codigo: selectedNom.codigo, size: 5 }),
-        espId ? getNomencladorEspecialidades(selectedNom.id) : Promise.resolve(null),
-      ]);
+      const tablaData = await getTablaValores({
+        obra_social_nro: osNro,
+        codigo: selectedNom.codigo,
+        especialidades: espId ? [espId] : undefined,
+        size: 5,
+      });
 
       const exactTabla = tablaData.find(
         (t) => t.codigo.toUpperCase() === selectedNom.codigo.toUpperCase(),
@@ -203,7 +196,6 @@ export default function ConsultaValores() {
       }
 
       setResult(exactTabla);
-      setNomEsps(espsData);
     } catch {
       setError("Error al consultar. Verificá la obra social y el código.");
     } finally {
@@ -214,11 +206,10 @@ export default function ConsultaValores() {
   // ── Specialty validity ─────────────────────────────────────────────────────
 
   const especialidadValida = useMemo<boolean | null>(() => {
-    if (!espId || !selectedNom) return null;
+    if (!espId || !selectedNom || !result) return null;
     if (selectedNom.sin_restriccion_especialidad) return true;
-    if (!nomEsps) return null;
-    return nomEsps.some((e) => e.especialidad_id_colegio === espId && e.activo);
-  }, [espId, selectedNom, nomEsps]);
+    return result.origen === "NE" && result.especialidad_id_colegio === espId;
+  }, [espId, selectedNom, result]);
 
   const honorarios = result ? findComp(result.componentes, "Honorarios") : undefined;
   const gastos = result ? findComp(result.componentes, "Gastos") : undefined;

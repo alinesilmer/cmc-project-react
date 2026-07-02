@@ -225,21 +225,28 @@ export type ValorActualizarPayload = {
 // ─── Tabla Valores (Reportes) ─────────────────────────────────────────────────
 
 export type TablaValorComponente = {
-  concepto: string;
-  tipo: string;
-  valor_unitario: string;
+  componente_id: number;
+  concepto: "Honorarios" | "Ayudante" | "Gastos";
+  tipo: "calculable" | "fijo";
+  galeno_id: number | null;
+  galeno_codigo: string | null;
+  galeno_nivel: number | null;
   cantidad: string;
+  valor_unitario: string;
   subtotal: string;
-  opcional: boolean;
 };
 
 export type TablaValorItem = {
   nomenclador_id: number;
   codigo: string;
-  descripcion: string;
+  /** "NE" (variante por especialidad), "NNE" o "NN" — cuál variante ganó. */
+  origen: "NE" | "NNE" | "NN";
+  /** Especialidad de la variante ganadora. Solo != null cuando ganó una NE. */
+  especialidad_id_colegio: number | null;
+  descripcion: string | null;
   nivel: number | null;
+  por_presupuesto: boolean;
   precio_total: string;
-  por_presupuesto: 0 | 1;
   vigencia_desde: string;
   vigencia_hasta: string | null;
   componentes: TablaValorComponente[];
