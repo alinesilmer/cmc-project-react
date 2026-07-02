@@ -1,56 +1,29 @@
-import { useState, useMemo, useRef } from "react";
-import {
-  Search,
-  DollarSign,
-  CheckCircle2,
-  XCircle,
-  Loader2,
-  AlertCircle,
-  X as XIcon,
-} from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { Search, Loader2, AlertCircle, Info } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { AnimatePresence, motion } from "framer-motion";
 
-import styles from "./ConsultaValores.module.scss";
-import {
-  listNomenclador,
-  getTablaValores,
-  getNomencladorEspecialidades,
-} from "../nomenclador.api";
+import styles from "../ConsultaShared/consulta.module.scss";
+import Combobox from "../ConsultaShared/Combobox";
+import ResultRegister from "../ConsultaShared/ResultRegister";
+import { listNomenclador, getTablaValores } from "../nomenclador.api";
 import { listObrasSociales } from "../../ObrasSociales/obrasSociales.api";
 import { getEspecialidades } from "../../Especialidades/especialidades.api";
-import type {
-  NomencladorOut,
-  TablaValorItem,
-  NomencladorEspecialidadOut,
-} from "../nomenclador.types";
+import type { NomencladorOut, TablaValorItem } from "../nomenclador.types";
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
 import type { Especialidad } from "../../Especialidades/especialidades.types";
 
-const fmt = new Intl.NumberFormat("es-AR", {
-  style: "currency",
-  currency: "ARS",
-  maximumFractionDigits: 2,
-});
-
-function findComp(componentes: TablaValorItem["componentes"], concepto: string) {
-  return componentes.find(
-    (c) => c.concepto.toLowerCase() === concepto.toLowerCase() && !c.opcional,
-  );
-}
+const NOM_MIN_CHARS = 2;
 
 export default function ConsultaValores() {
-  // OS autocomplete
-  const [selectedOSItem, setSelectedOSItem] = useState<ObraSocialListItem | null>(null);
+  // Obra social (client-side filtered from a cached list)
+  const [selectedOS, setSelectedOS] = useState<ObraSocialListItem | null>(null);
   const [osSearch, setOsSearch] = useState("");
-  const [osOpen, setOsOpen] = useState(false);
 
-  // Especialidad autocomplete
-  const [selectedEspItem, setSelectedEspItem] = useState<Especialidad | null>(null);
+  // Especialidad (optional, client-side filtered)
+  const [selectedEsp, setSelectedEsp] = useState<Especialidad | null>(null);
   const [espSearch, setEspSearch] = useState("");
-  const [espOpen, setEspOpen] = useState(false);
 
-  // Nomenclador autocomplete
+  // Código CMC (debounced server search)
   const [nomSearch, setNomSearch] = useState("");
   const [nomResults, setNomResults] = useState<NomencladorOut[]>([]);
   const [nomLoading, setNomLoading] = useState(false);
@@ -61,7 +34,6 @@ export default function ConsultaValores() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [result, setResult] = useState<TablaValorItem | null>(null);
-  const [nomEsps, setNomEsps] = useState<NomencladorEspecialidadOut[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const { data: osList = [] } = useQuery({
@@ -76,20 +48,13 @@ export default function ConsultaValores() {
     staleTime: 30 * 60 * 1000,
   });
 
-  // Derived values
-  const osNro = selectedOSItem?.nro_obra_social ?? null;
-  const espId = selectedEspItem?.id ?? null;
+  const osNro = selectedOS?.nro_obra_social ?? null;
 
-  // Filtered lists (client-side)
   const filteredOS = useMemo(() => {
     if (!osSearch.trim()) return osList.slice(0, 50);
     const q = osSearch.toLowerCase();
     return osList
-      .filter(
-        (os) =>
-          os.nombre.toLowerCase().includes(q) ||
-          String(os.nro_obra_social).includes(q),
-      )
+      .filter((os) => os.nombre.toLowerCase().includes(q) || String(os.nro_obra_social).includes(q))
       .slice(0, 50);
   }, [osList, osSearch]);
 
@@ -99,50 +64,43 @@ export default function ConsultaValores() {
     return especialidades.filter((e) => e.nombre.toLowerCase().includes(q));
   }, [especialidades, espSearch]);
 
-  // ── OS autocomplete handlers ───────────────────────────────────────────────
+  // Any input change invalidates the previous result.
+  function resetOutput() {
+    setResult(null);
+    setError(null);
+    setSearched(false);
+  }
 
   function selectOS(os: ObraSocialListItem) {
-    setSelectedOSItem(os);
+    setSelectedOS(os);
     setOsSearch("");
-    setOsOpen(false);
-    setResult(null);
-    setError(null);
-    setSearched(false);
+    resetOutput();
   }
-
   function clearOS() {
-    setSelectedOSItem(null);
+    setSelectedOS(null);
     setOsSearch("");
-    setOsOpen(false);
-    setResult(null);
-    setError(null);
-    setSearched(false);
+    resetOutput();
   }
-
-  // ── Especialidad autocomplete handlers ────────────────────────────────────
 
   function selectEsp(e: Especialidad) {
-    setSelectedEspItem(e);
+    setSelectedEsp(e);
     setEspSearch("");
-    setEspOpen(false);
-    setNomEsps(null);
+    resetOutput();
   }
-
   function clearEsp() {
-    setSelectedEspItem(null);
+    setSelectedEsp(null);
     setEspSearch("");
-    setEspOpen(false);
-    setNomEsps(null);
+    resetOutput();
   }
-
-  // ── Nomenclador autocomplete ───────────────────────────────────────────────
 
   function handleNomSearch(q: string) {
     setNomSearch(q);
     setNomResults([]);
     if (nomDebounce.current) clearTimeout(nomDebounce.current);
-    if (q.trim().length < 2) return;
-
+    if (q.trim().length < NOM_MIN_CHARS) {
+      setNomLoading(false);
+      return;
+    }
     setNomLoading(true);
     nomDebounce.current = setTimeout(async () => {
       try {
@@ -160,50 +118,35 @@ export default function ConsultaValores() {
     setSelectedNom(n);
     setNomSearch("");
     setNomResults([]);
-    // Clear previous result when a new code is chosen
-    setResult(null);
-    setNomEsps(null);
-    setError(null);
-    setSearched(false);
+    resetOutput();
   }
-
   function clearNom() {
     setSelectedNom(null);
     setNomSearch("");
     setNomResults([]);
-    setResult(null);
-    setNomEsps(null);
-    setError(null);
-    setSearched(false);
+    resetOutput();
   }
-
-  // ── Search ─────────────────────────────────────────────────────────────────
 
   async function handleSearch() {
     if (!osNro || !selectedNom) return;
-
     setLoading(true);
     setSearched(true);
     setResult(null);
-    setNomEsps(null);
     setError(null);
-
     try {
-      const [tablaData, espsData] = await Promise.all([
-        getTablaValores({ obra_social_nro: osNro, codigo: selectedNom.codigo, size: 5 }),
-        espId ? getNomencladorEspecialidades(selectedNom.id) : Promise.resolve(null),
-      ]);
-
-      const exactTabla = tablaData.find(
+      const tablaData = await getTablaValores({
+        obra_social_nro: osNro,
+        codigo: selectedNom.codigo,
+        size: 5,
+      });
+      const exact = tablaData.find(
         (t) => t.codigo.toUpperCase() === selectedNom.codigo.toUpperCase(),
       );
-      if (!exactTabla) {
+      if (!exact) {
         setError("Este código no tiene precio cargado para la obra social seleccionada.");
         return;
       }
-
-      setResult(exactTabla);
-      setNomEsps(espsData);
+      setResult(exact);
     } catch {
       setError("Error al consultar. Verificá la obra social y el código.");
     } finally {
@@ -211,291 +154,117 @@ export default function ConsultaValores() {
     }
   }
 
-  // ── Specialty validity ─────────────────────────────────────────────────────
-
-  const especialidadValida = useMemo<boolean | null>(() => {
-    if (!espId || !selectedNom) return null;
-    if (selectedNom.sin_restriccion_especialidad) return true;
-    if (!nomEsps) return null;
-    return nomEsps.some((e) => e.especialidad_id_colegio === espId && e.activo);
-  }, [espId, selectedNom, nomEsps]);
-
-  const honorarios = result ? findComp(result.componentes, "Honorarios") : undefined;
-  const gastos = result ? findComp(result.componentes, "Gastos") : undefined;
-  const ayudante = result ? findComp(result.componentes, "Ayudante") : undefined;
-
   const canSearch = Boolean(osNro && selectedNom);
+  const nomMenuHint =
+    nomSearch.trim().length > 0 && nomSearch.trim().length < NOM_MIN_CHARS
+      ? "Seguí escribiendo…"
+      : undefined;
 
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <span className={styles.headerIcon}>
-          <DollarSign size={20} />
-        </span>
-        <div>
-          <h1 className={styles.title}>Consulta de Valores</h1>
-          <p className={styles.subtitle}>
-            Consulta de precios por obra social y especialidad
+    <div className={styles.page}>
+      <div className={styles.inner}>
+        <div className={styles.pagehead}>
+          <h1 className={styles.pageTitle}>Consulta de valores</h1>
+          <p className={styles.pageSub}>
+            Valor de una práctica según la obra social y la especialidad.
           </p>
         </div>
-      </div>
 
-      {/* ── Search form ── */}
-      <div className={styles.formCard}>
-        <div className={styles.formGrid}>
-          {/* OS */}
-          <div className={styles.formGroup}>
-            <label className={styles.formLabel}>Obra social</label>
-            {selectedOSItem ? (
-              <div className={styles.selectedCode}>
-                <span className={styles.selectedCodeNum}>{selectedOSItem.nro_obra_social}</span>
-                <span className={styles.selectedCodeDesc}>{selectedOSItem.nombre}</span>
-                <button className={styles.clearCodeBtn} onClick={clearOS} type="button" title="Cambiar">
-                  <XIcon size={13} />
-                </button>
-              </div>
-            ) : (
-              <div className={styles.autocompleteWrap}>
-                <div className={styles.autocompleteInputWrap}>
-                  <Search size={13} className={styles.autocompleteIcon} />
-                  <input
-                    className={styles.autocompleteInput}
-                    placeholder="Buscar por nombre o número…"
-                    value={osSearch}
-                    onChange={(e) => { setOsSearch(e.target.value); setOsOpen(true); }}
-                    onFocus={() => setOsOpen(true)}
-                    onBlur={() => setTimeout(() => setOsOpen(false), 150)}
-                  />
-                </div>
-                {osOpen && filteredOS.length > 0 && (
-                  <ul className={styles.autocompleteDropdown}>
-                    {filteredOS.map((os) => (
-                      <li
-                        key={os.nro_obra_social}
-                        className={styles.autocompleteItem}
-                        onMouseDown={(e) => { e.preventDefault(); selectOS(os); }}
-                      >
-                        <span className={styles.dropdownCode}>{os.nro_obra_social}</span>
-                        <span className={styles.dropdownDesc}>{os.nombre}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-          </div>
+        <div className={styles.instrument}>
+          {/* Query */}
+          <section className={styles.colQuery} aria-label="Consultar valor">
+            <div className={styles.colTitle}></div>
 
-          {/* Specialty */}
-          <div className={styles.formGroup}>
-            <label className={styles.formLabel}>
-              Especialidad <span className={styles.optional}>(opcional)</span>
-            </label>
-            {selectedEspItem ? (
-              <div className={styles.selectedCode}>
-                <span className={styles.selectedCodeDesc}>{selectedEspItem.nombre}</span>
-                <button className={styles.clearCodeBtn} onClick={clearEsp} type="button" title="Cambiar">
-                  <XIcon size={13} />
-                </button>
-              </div>
-            ) : (
-              <div className={styles.autocompleteWrap}>
-                <div className={styles.autocompleteInputWrap}>
-                  <Search size={13} className={styles.autocompleteIcon} />
-                  <input
-                    className={styles.autocompleteInput}
-                    placeholder="Buscar especialidad…"
-                    value={espSearch}
-                    onChange={(e) => { setEspSearch(e.target.value); setEspOpen(true); }}
-                    onFocus={() => setEspOpen(true)}
-                    onBlur={() => setTimeout(() => setEspOpen(false), 150)}
-                  />
-                </div>
-                {espOpen && filteredEsp.length > 0 && (
-                  <ul className={styles.autocompleteDropdown}>
-                    {filteredEsp.map((e) => (
-                      <li
-                        key={e.id}
-                        className={styles.autocompleteItem}
-                        onMouseDown={(ev) => { ev.preventDefault(); selectEsp(e); }}
-                      >
-                        <span className={styles.dropdownDesc}>{e.nombre}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-          </div>
+            <Combobox<ObraSocialListItem>
+              idx={1}
+              label="Obra social"
+              placeholder="Buscar por nombre o número…"
+              query={osSearch}
+              onQueryChange={setOsSearch}
+              items={filteredOS}
+              getKey={(os) => os.nro_obra_social}
+              getCode={(os) => String(os.nro_obra_social)}
+              getText={(os) => os.nombre}
+              selected={selectedOS}
+              onSelect={selectOS}
+              onClear={clearOS}
+            />
 
-          {/* Código CMC — autocomplete from Catálogo CMC */}
-          <div className={styles.formGroup}>
-            <label className={styles.formLabel}>Código CMC</label>
+            <Combobox<Especialidad>
+              idx={2}
+              label="Especialidad"
+              hint="opcional"
+              placeholder="Buscar especialidad…"
+              query={espSearch}
+              onQueryChange={setEspSearch}
+              items={filteredEsp}
+              getKey={(e) => e.id}
+              getText={(e) => e.nombre}
+              selected={selectedEsp}
+              onSelect={selectEsp}
+              onClear={clearEsp}
+            />
 
-            {selectedNom ? (
-              <div className={styles.selectedCode}>
-                <span className={styles.selectedCodeNum}>{selectedNom.codigo}</span>
-                <span className={styles.selectedCodeDesc}>{selectedNom.descripcion}</span>
-                <button
-                  className={styles.clearCodeBtn}
-                  onClick={clearNom}
-                  title="Cambiar código"
-                  type="button"
-                >
-                  <XIcon size={13} />
-                </button>
-              </div>
-            ) : (
-              <div className={styles.autocompleteWrap}>
-                <div className={styles.autocompleteInputWrap}>
-                  <Search size={13} className={styles.autocompleteIcon} />
-                  <input
-                    className={styles.autocompleteInput}
-                    placeholder="Buscar por código o descripción…"
-                    value={nomSearch}
-                    onChange={(e) => handleNomSearch(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && nomResults.length > 0) selectNom(nomResults[0]);
-                    }}
-                  />
-                  {nomLoading && (
-                    <Loader2 size={13} className={`${styles.autocompleteSpinner} ${styles.spin}`} />
-                  )}
-                </div>
+            <Combobox<NomencladorOut>
+              idx={3}
+              label="Práctica"
+              hint="por código o por nombre"
+              placeholder="Buscar por código o nombre…"
+              query={nomSearch}
+              onQueryChange={handleNomSearch}
+              items={nomResults}
+              getKey={(n) => n.id}
+              getCode={(n) => n.codigo}
+              getText={(n) => n.descripcion}
+              selected={selectedNom}
+              onSelect={selectNom}
+              onClear={clearNom}
+              loading={nomLoading}
+              menuHint={nomMenuHint}
+            />
 
-                {nomResults.length > 0 && (
-                  <ul className={styles.autocompleteDropdown}>
-                    {nomResults.map((n) => (
-                      <li
-                        key={n.id}
-                        className={styles.autocompleteItem}
-                        onMouseDown={(e) => { e.preventDefault(); selectNom(n); }}
-                      >
-                        <span className={styles.dropdownCode}>{n.codigo}</span>
-                        <span className={styles.dropdownDesc}>{n.descripcion}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Submit */}
-          <div className={styles.formGroup} style={{ marginTop: 12 }}>
             <button
-              className={styles.btnSearch}
+              type="button"
+              className={styles.cta}
               onClick={handleSearch}
               disabled={!canSearch || loading}
+              title={!canSearch ? "Elegí obra social y práctica" : undefined}
             >
-              {loading ? (
-                <Loader2 size={15} className={styles.spin} />
-              ) : (
-                <Search size={15} />
-              )}
-              Consultar
+              {loading ? <Loader2 size={18} className={styles.spin} /> : <Search size={18} />}
+              Consultar valor
             </button>
-          </div>
+          </section>
+
+          {/* Result */}
+          <section className={styles.colResult} aria-live="polite">
+            {loading ? (
+              <div className={styles.loading}>
+                <span className={styles.pulse} />
+                <span>Emitiendo valor…</span>
+              </div>
+            ) : searched && error ? (
+              <div className={styles.errorbox}>
+                <AlertCircle size={18} />
+                {error}
+              </div>
+            ) : result ? (
+              <ResultRegister result={result} />
+            ) : (
+              <div className={styles.prompt}>
+                <div className={styles.promptLines} aria-hidden="true">
+                  <i /><i /><i /><i />
+                </div>
+                <div className={styles.promptInner}></div>
+              </div>
+            )}
+          </section>
         </div>
+
+        <p className={styles.disclaimer}>
+          <Info size={15} />
+          Los valores son orientativos y pueden actualizarse según cada obra social.
+        </p>
       </div>
-
-      {/* ── Output ── */}
-      <AnimatePresence mode="wait">
-        {loading && (
-          <motion.div
-            key="loading"
-            className={styles.loadingState}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <Loader2 size={22} className={styles.spin} />
-            <span>Consultando…</span>
-          </motion.div>
-        )}
-
-        {!loading && searched && error && (
-          <motion.div
-            key="error"
-            className={styles.errorState}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-          >
-            <AlertCircle size={16} />
-            {error}
-          </motion.div>
-        )}
-
-        {!loading && result && (
-          <motion.div
-            key="result"
-            className={styles.resultCard}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.18 }}
-          >
-            <div className={styles.resultHeader}>
-              <p className={styles.resultDesc}>{result.descripcion}</p>
-              <p className={styles.resultSub}>
-                {selectedOSItem?.nombre} · Vigente desde {result.vigencia_desde}
-                {result.vigencia_hasta && ` hasta ${result.vigencia_hasta}`}
-              </p>
-              {espId !== null && (
-                <div
-                  className={`${styles.especialidadBadge} ${
-                    especialidadValida === null
-                      ? styles.badgeNeutral
-                      : especialidadValida
-                      ? styles.badgeOk
-                      : styles.badgeNo
-                  }`}
-                >
-                  {especialidadValida === null ? (
-                    <Loader2 size={13} className={styles.spin} />
-                  ) : especialidadValida ? (
-                    <>
-                      <CheckCircle2 size={13} />
-                      {selectedEspItem?.nombre}: habilitada
-                    </>
-                  ) : (
-                    <>
-                      <XCircle size={13} />
-                      {selectedEspItem?.nombre}: no habilitada
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div className={styles.priceBreakdown}>
-              {honorarios && (
-                <div className={styles.priceCell}>
-                  <span className={styles.priceCellLabel}>Honorarios</span>
-                  <span className={styles.priceCellValue}>
-                    {fmt.format(parseFloat(honorarios.subtotal))}
-                  </span>
-                </div>
-              )}
-              {gastos && (
-                <div className={styles.priceCell}>
-                  <span className={styles.priceCellLabel}>Gastos</span>
-                  <span className={styles.priceCellValue}>
-                    {fmt.format(parseFloat(gastos.subtotal))}
-                  </span>
-                </div>
-              )}
-              {ayudante && (
-                <div className={styles.priceCell}>
-                  <span className={styles.priceCellLabel}>Ayudante</span>
-                  <span className={styles.priceCellValue}>
-                    {fmt.format(parseFloat(ayudante.subtotal))}
-                  </span>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
