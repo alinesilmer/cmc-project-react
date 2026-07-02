@@ -286,6 +286,72 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
   &::placeholder { color: $text-3; }
 }
 
+.filterGroup {
+  display: inline-flex;
+  gap: 4px;
+  background: #f1f5f9;
+  padding: 3px;
+  border-radius: $radius-sm;
+}
+
+.filterBtn {
+  height: 28px;
+  padding: 0 12px;
+  border: none;
+  background: transparent;
+  color: $text-2;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s, color .15s;
+
+  &:hover { color: $text-1; }
+}
+
+.filterBtnActive {
+  background: $surface;
+  color: $blue;
+  box-shadow: $shadow-sm;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 16px;
+  border-top: 1px solid $border;
+}
+
+.pageInfo {
+  font-size: 0.82rem;
+  color: $text-2;
+}
+
+.pageBtns {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.pageBtn {
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid $border;
+  border-radius: $radius-sm;
+  background: $surface;
+  color: $text-1;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+
+  &:hover:not(:disabled) { border-color: $blue; color: $blue; }
+  &:disabled { opacity: .45; cursor: not-allowed; }
+}
+
 .btnPrimary {
   display: inline-flex;
   align-items: center;

@@ -32,6 +32,10 @@ export const listNomenclador = (params?: NomencladorListParams): Promise<Nomencl
 export const getNomencladorById = (id: number): Promise<NomencladorOut> =>
   getJSON<NomencladorOut>(`/api/nomenclador/${id}`);
 
+// Solo los códigos del catálogo (para auto-detección/validación en importaciones).
+export const listNomencladorCodigos = (): Promise<string[]> =>
+  getJSON<string[]>("/api/nomenclador/codigos", { activo: true });
+
 export const createNomenclador = (payload: NomencladorCreatePayload): Promise<NomencladorOut> =>
   postJSON<NomencladorOut>("/api/nomenclador/", payload);
 
