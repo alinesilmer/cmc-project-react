@@ -124,6 +124,12 @@ export type GalenosImportarPayload = {
   obra_social_nro_origen: number;
   obra_social_nro_destino: number;
   vigencia_desde: string;
+  /** Limita la importación a estos códigos (omitir = todos). */
+  codigos?: string[];
+  /** Reemplaza galenos sin nivel del destino por los niveles del origen. */
+  convertir_a_nivelado?: boolean;
+  /** Copia solo el valor del galeno y conserva las unidades del destino. */
+  solo_valor?: boolean;
 };
 
 export type GalenosImportarResult = {
@@ -131,6 +137,7 @@ export type GalenosImportarResult = {
   creados: number;
   rotados: number;
   sin_cambios: number;
+  convertidos?: number;
   errores: { codigo: string; nivel: number | null; motivo: string }[];
 };
 
