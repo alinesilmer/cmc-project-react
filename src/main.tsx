@@ -19,7 +19,7 @@ createRoot(document.getElementById("root")!).render(
         <AuthProvider>
           <RootRoutes />
         </AuthProvider>
-        <ReactQueryDevtools initialIsOpen={false} />
+        {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
       </QueryClientProvider>
     </BrowserRouter>
   </StrictMode>

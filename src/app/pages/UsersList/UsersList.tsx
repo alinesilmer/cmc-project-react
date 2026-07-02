@@ -15,6 +15,7 @@ import { mapUIToQuery } from "./medicosExport";
 import { getEspecialidadNameById } from "../../lib/especialidadesCatalog";
 
 import { useMedicosExport } from "./useMedicosExport";
+import { useEspecialidades } from "../../components/molecules/FilterModal/useEspecialidades";
 
 import LogoCMCUrl from "../../assets/logoCMC.png";
 
@@ -65,6 +66,33 @@ function normalizeAdherente(row: any): boolean | null {
   return normalizeBool(raw);
 }
 
+// Especialidades para la columna: resuelve nro_especialidad -> nombre y OMITE
+// los códigos que no tienen nombre en el catálogo (p. ej. el 420 genérico),
+// para que no se vea el número suelto al lado de los nombres.
+function pickEspecialidadNames(row: any): string {
+  const nroKeys = [
+    "nro_especialidad",
+    "nro_especialidad2",
+    "nro_especialidad3",
+    "nro_especialidad4",
+    "nro_especialidad5",
+    "nro_especialidad6",
+  ];
+  const names: string[] = [];
+  const seen = new Set<string>();
+  for (const k of nroKeys) {
+    const v = row?.[k];
+    if (!v || v === 0 || v === "0") continue;
+    const name = getEspecialidadNameById(v);
+    if (!name) continue; // sin nombre en catálogo -> no mostrar el número
+    const key = name.trim().toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    names.push(name);
+  }
+  return names.join(", ");
+}
+
 function toUserRow(m: any) {
   const status = isActiveRow(m) ? "activo" : "inactivo";
   const a = normalizeAdherente(m);
@@ -74,7 +102,7 @@ function toUserRow(m: any) {
     id: m?.id ?? m?.ID ?? null,
     nro_socio: m?.nro_socio ?? m?.NRO_SOCIO ?? null,
     name: m?.nombre ?? m?.NOMBRE ?? "—",
-    email: m?.mail_particular ?? m?.MAIL_PARTICULAR ?? m?.email ?? "—",
+    especialidad: pickEspecialidadNames(m) || "—",
     phone: m?.telefono_consulta ?? m?.TELEFONO_CONSULTA ?? m?.tel_consulta ?? m.TEL_CONSULTA ?? "—",
     joinDate: (m?.fecha_ingreso ?? m?.FECHA_INGRESO ?? m?.joinDate) ?? null,
     status,
@@ -531,6 +559,9 @@ const UsersList: React.FC = () => {
 
   const { exportLoading, exportError, setExportError, onExportWithFilters } = useMedicosExport();
 
+  // Carga el catálogo de especialidades (id -> nombre) para la columna Especialidad.
+  const { especialidades } = useEspecialidades();
+
   // draft: lo que hay en el modal (no aplicado todavía)
   const [filters, setFilters] = useState<FilterSelection>(initialFilters);
   // committed: lo que se envió al servidor al clickear "Filtrar"
@@ -620,7 +651,9 @@ const UsersList: React.FC = () => {
   // El servidor ya aplica la mayoría de los filtros; client-only: adherente, tieneMalapraxis (belt-and-suspenders)
   const filteredUsers = useMemo(() => {
     return applyMedicosFilters(rawUsers, committedFilters).map(toUserRow);
-  }, [rawUsers, committedFilters]);
+    // especialidades en deps: recalcula los nombres cuando el catálogo termina de cargar
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rawUsers, committedFilters, especialidades]);
 
   function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
     setSearchTerm(e.target.value);
@@ -839,7 +872,7 @@ const UsersList: React.FC = () => {
             <tr>
               <th>Nro. Socio</th>
               <th>Nombre</th>
-              <th>Email</th>
+              <th>Especialidad</th>
               <th>Teléfono</th>
               <th>Matrícula</th>
               <th>Estado</th>
@@ -858,7 +891,7 @@ const UsersList: React.FC = () => {
                 <tr key={user.id}>
                   <td>{user.nro_socio ?? "—"}</td>
                   <td className={styles.nameCell}>{user.name}</td>
-                  <td>{user.email}</td>
+                  <td>{user.especialidad}</td>
                   <td>{user.phone}</td>
                   <td>{user.matriculaProv}</td>
                   <td>

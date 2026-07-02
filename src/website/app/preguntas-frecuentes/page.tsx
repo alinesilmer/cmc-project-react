@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiChevronDown } from "react-icons/fi";
+import { ChevronDown as FiChevronDown } from "lucide-react";
 import Hero from "../../components/UI/Hero/Hero";
 import heroBg from "../../assets/images/faq2.png";
 import styles from "./PreguntasFrecuentes.module.scss";

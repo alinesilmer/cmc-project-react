@@ -10,7 +10,7 @@ import {
   addPermToRole,
   removePermFromRole,
 } from "./api";
-import SearchBar from "../../components/molecules/SearchBar/SearchBar";
+import SearchField from "../../components/molecules/SearchField/SearchField";
 
 // ---------- Mapeo visual de permisos ----------
 // Categorías por prefijo de código (mostrar ≠ almacenar)
@@ -160,7 +160,7 @@ const PermissionsManager: React.FC = () => {
           {/* Columna de Permisos */}
           <div className={s.permsSide}>
             <div className={s.searchBar} style={{ display: "flex", gap: 8 }}>
-              <SearchBar
+              <SearchField
                 placeholder="Buscar permiso..."
                 value={q}
                 onChange={(e) => setQ(e.target.value)}

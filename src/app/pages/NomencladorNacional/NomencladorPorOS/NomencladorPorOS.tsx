@@ -63,6 +63,13 @@ type EditEcuForm = {
 
 const fmt = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 2 });
 
+const PAGE_SIZE = 25;
+
+// El badge muestra "Valor Fijo" para NNE; el resto usa su etiqueta estándar.
+function origenBadgeLabel(o: Origen): string {
+  return o === "NNE" ? "Valor Fijo" : ORIGEN_LABELS[o];
+}
+
 const FIXED_CONCEPTOS: ComponenteForm["concepto"][] = ["Honorarios", "Gastos", "Ayudante"];
 
 function initComps(): ComponenteForm[] {
@@ -168,6 +175,9 @@ export default function NomencladorPorOS() {
   const [loadingValores, setLoadingValores] = useState(false);
   const [codeSearch, setCodeSearch] = useState("");
   const [nomDescMap, setNomDescMap] = useState<Record<number, string>>({});
+  const [origenFilter, setOrigenFilter] = useState<Origen | "todos">("todos");
+  const [page, setPage] = useState(1);
+  const descAttempted = useRef<Set<number>>(new Set());
 
   // Modal
   const [modalKind, setModalKind] = useState<ModalKind>(null);
@@ -228,7 +238,9 @@ export default function NomencladorPorOS() {
   const selectedOS = osList.find((os) => os.nro_obra_social === selectedNroOS);
 
   useEffect(() => {
-    if (!selectedNroOS) { setGalenos([]); setValores([]); setNomDescMap({}); return; }
+    descAttempted.current = new Set();
+    setNomDescMap({});
+    if (!selectedNroOS) { setGalenos([]); setValores([]); return; }
     listGalenos({ obra_social_nro: selectedNroOS }).then(setGalenos).catch(() => {});
     loadValores(selectedNroOS);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -237,15 +249,14 @@ export default function NomencladorPorOS() {
   const loadValores = useCallback(async (osNro: number) => {
     setLoadingValores(true);
     try {
-      const data = await listValores({ obra_social_nro: osNro, estado: "activo", size: 200 });
-      setValores(data);
-      const idsNeedingDesc = [...new Set(data.filter((v) => !v.descripcion).map((v) => v.nomenclador_id))];
-      if (idsNeedingDesc.length > 0) {
-        const results = await Promise.allSettled(idsNeedingDesc.map(getNomencladorById));
-        const map: Record<number, string> = {};
-        results.forEach((r, i) => { if (r.status === "fulfilled") map[idsNeedingDesc[i]] = r.value.descripcion; });
-        setNomDescMap((prev) => ({ ...prev, ...map }));
+      // Traer TODOS los valores activos (paginando la API) para agrupar/filtrar/paginar bien.
+      const all: ValorOut[] = [];
+      for (let p = 1; p <= 100; p++) {
+        const batch = await listValores({ obra_social_nro: osNro, estado: "activo", page: p, size: 200 });
+        all.push(...batch);
+        if (batch.length < 200) break;
       }
+      setValores(all);
     } catch { showToast("error", "Error al cargar los valores."); }
     finally { setLoadingValores(false); }
   }, []);
@@ -253,10 +264,14 @@ export default function NomencladorPorOS() {
   const resolvedDesc = useCallback((v: ValorOut) => v.descripcion ?? nomDescMap[v.nomenclador_id] ?? "", [nomDescMap]);
 
   const filteredValores = useMemo(() => {
-    if (!codeSearch.trim()) return valores;
-    const q = codeSearch.toLowerCase();
-    return valores.filter((v) => v.codigo.toLowerCase().includes(q) || (v.descripcion ?? nomDescMap[v.nomenclador_id] ?? "").toLowerCase().includes(q));
-  }, [valores, codeSearch, nomDescMap]);
+    let list = valores;
+    if (origenFilter !== "todos") list = list.filter((v) => v.origen === origenFilter);
+    if (codeSearch.trim()) {
+      const q = codeSearch.toLowerCase();
+      list = list.filter((v) => v.codigo.toLowerCase().includes(q) || (v.descripcion ?? nomDescMap[v.nomenclador_id] ?? "").toLowerCase().includes(q));
+    }
+    return list;
+  }, [valores, codeSearch, origenFilter, nomDescMap]);
 
   const grouped = useMemo(() => {
     const map = new Map<number, ValorOut[]>();
@@ -267,6 +282,37 @@ export default function NomencladorPorOS() {
     }
     return Array.from(map.entries());
   }, [filteredValores]);
+
+  const totalPages = Math.max(1, Math.ceil(grouped.length / PAGE_SIZE));
+  const pageGroups = useMemo(
+    () => grouped.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [grouped, page],
+  );
+
+  // Volver a la página 1 cuando cambian OS, búsqueda o filtro de origen.
+  useEffect(() => { setPage(1); }, [selectedNroOS, codeSearch, origenFilter]);
+  // Ajustar si la página quedó fuera de rango (p. ej. tras cerrar un valor).
+  useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
+
+  // Resolver descripciones faltantes SOLO para los códigos visibles (lazy, acotado por página).
+  useEffect(() => {
+    const ids = [...new Set(
+      pageGroups
+        .flatMap(([, vs]) => vs)
+        .filter((v) => !v.descripcion && !descAttempted.current.has(v.nomenclador_id))
+        .map((v) => v.nomenclador_id),
+    )];
+    if (ids.length === 0) return;
+    ids.forEach((id) => descAttempted.current.add(id));
+    let alive = true;
+    Promise.allSettled(ids.map(getNomencladorById)).then((results) => {
+      if (!alive) return;
+      const map: Record<number, string> = {};
+      results.forEach((r, i) => { if (r.status === "fulfilled") map[ids[i]] = r.value.descripcion; });
+      if (Object.keys(map).length) setNomDescMap((prev) => ({ ...prev, ...map }));
+    });
+    return () => { alive = false; };
+  }, [pageGroups]);
 
   function showToast(type: "success" | "error", msg: string) {
     setToast({ type, msg });
@@ -603,6 +649,17 @@ export default function NomencladorPorOS() {
                   <Search size={14} className={styles.searchIcon} />
                   <input className={styles.searchInput} placeholder="Buscar código…" value={codeSearch} onChange={(e) => setCodeSearch(e.target.value)} />
                 </div>
+                <div className={styles.filterGroup}>
+                  {(["todos", "NNE", "NN", "NE"] as const).map((o) => (
+                    <button
+                      key={o}
+                      className={`${styles.filterBtn} ${origenFilter === o ? styles.filterBtnActive : ""}`}
+                      onClick={() => setOrigenFilter(o)}
+                    >
+                      {o === "todos" ? "Todos" : o === "NNE" ? "Valor Fijo" : o}
+                    </button>
+                  ))}
+                </div>
                 <button className={styles.btnPrimary} onClick={openCreate}><Plus size={14} /> Agregar código</button>
               </div>
 
@@ -624,7 +681,7 @@ export default function NomencladorPorOS() {
                       <tr><td colSpan={6} className={styles.loadingCell}>Cargando…</td></tr>
                     ) : grouped.length === 0 ? (
                       <tr><td colSpan={6} className={styles.emptyCell}>Sin códigos cargados</td></tr>
-                    ) : grouped.map(([nomId, variants]) => {
+                    ) : pageGroups.map(([nomId, variants]) => {
                       const first = variants[0];
                       return (
                         <Fragment key={nomId}>
@@ -638,7 +695,7 @@ export default function NomencladorPorOS() {
                             <tr key={v.id} className={styles.variantRow}>
                               <td>
                                 <span className={`${styles.origenBadge} ${styles[`origen${v.origen}` as keyof typeof styles]}`}>
-                                  {ORIGEN_LABELS[v.origen]}
+                                  {origenBadgeLabel(v.origen)}
                                 </span>
                               </td>
                               <td className={styles.mutedText}>
@@ -670,7 +727,7 @@ export default function NomencladorPorOS() {
 
               {/* Mobile cards */}
               <div className={styles.cardList}>
-                {filteredValores.map((v) => (
+                {pageGroups.flatMap(([, vs]) => vs).map((v) => (
                   <div key={v.id} className={styles.card}>
                     <div className={styles.cardTop}>
                       <span className={styles.codeCell}>{v.codigo}</span>
@@ -686,6 +743,34 @@ export default function NomencladorPorOS() {
                   </div>
                 ))}
               </div>
+
+              {/* Paginación */}
+              {!loadingValores && grouped.length > 0 && (
+                <div className={styles.pagination}>
+                  <span className={styles.pageInfo}>
+                    {grouped.length} código{grouped.length !== 1 ? "s" : ""}
+                    {totalPages > 1 ? ` · Página ${page} de ${totalPages}` : ""}
+                  </span>
+                  {totalPages > 1 && (
+                    <div className={styles.pageBtns}>
+                      <button
+                        className={styles.pageBtn}
+                        disabled={page <= 1}
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      >
+                        Anterior
+                      </button>
+                      <button
+                        className={styles.pageBtn}
+                        disabled={page >= totalPages}
+                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      >
+                        Siguiente
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </>
           )}
         </div>
@@ -694,7 +779,7 @@ export default function NomencladorPorOS() {
       {/* ── Create modal ── */}
       <AnimatePresence>
         {modalKind === "create" && (
-          <motion.div className={styles.backdrop} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setModalKind(null)}>
+          <motion.div className={styles.backdrop} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <motion.div
               className={styles.modal}
               initial={{ opacity: 0, scale: 0.96, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -884,7 +969,7 @@ export default function NomencladorPorOS() {
       {/* ── Edit modal ── */}
       <AnimatePresence>
         {modalKind === "edit" && editTarget && (
-          <motion.div className={styles.backdrop} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setModalKind(null)}>
+          <motion.div className={styles.backdrop} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <motion.div
               className={`${styles.modal} ${styles.modalLg}`}
               initial={{ opacity: 0, scale: 0.96, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -897,7 +982,7 @@ export default function NomencladorPorOS() {
                     Editar — <span className={styles.codeCell}>{editTarget.codigo}</span>
                   </h2>
                   <p className={styles.modalSubtitle}>
-                    {ORIGEN_LABELS[editTarget.origen]}
+                    {origenBadgeLabel(editTarget.origen)}
                     {editTarget.especialidad_id_colegio ? ` · ${espMap[editTarget.especialidad_id_colegio] ?? `Esp. ${editTarget.especialidad_id_colegio}`}` : ""}
                     {editTarget.nivel != null ? ` · Niv. ${editTarget.nivel}` : ""}
                   </p>

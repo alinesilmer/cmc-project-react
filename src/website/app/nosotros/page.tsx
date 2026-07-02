@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
-import { FaHeart, FaHandshake, FaLightbulb } from "react-icons/fa";
-import { FaMagnifyingGlass } from "react-icons/fa6";
+import { Heart as FaHeart, Handshake as FaHandshake, Lightbulb as FaLightbulb, Search as FaMagnifyingGlass } from "lucide-react";
 import styles from "./nosotros.module.scss";
 import PageHero from "../../components/UI/Hero/Hero";
 

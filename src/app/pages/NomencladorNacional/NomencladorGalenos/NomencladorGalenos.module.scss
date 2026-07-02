@@ -642,6 +642,10 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
   display: flex;
   flex-direction: column;
 }
+.modalWide {
+  max-width: 760px;
+  min-height: 400px;
+}
 .modalHeader {
   display: flex;
   align-items: flex-start;
@@ -697,6 +701,69 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
   gap: 12px;
 
   @media (max-width: 480px) { grid-template-columns: 1fr; }
+}
+
+/* ── Autocomplete Obra Social (Importar de otra OS) ── */
+.osAcWrap {
+  position: relative;
+}
+.osAcDropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  max-height: 220px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+.osAcItem {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+
+  &:hover { background: #eef2ff; }
+}
+.osAcSelected {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid #c7d2fe;
+  border-radius: 8px;
+  background: #eef2ff;
+}
+.osAcNro {
+  font-weight: 700;
+  color: #4f46e5;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+.osAcName {
+  color: #1a1f2e;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.osAcClear {
+  margin-left: auto;
+  display: inline-flex;
+  border: none;
+  background: none;
+  color: #718096;
+  cursor: pointer;
+
+  &:hover { color: #dc2626; }
 }
 .formGroup {
   display: flex;

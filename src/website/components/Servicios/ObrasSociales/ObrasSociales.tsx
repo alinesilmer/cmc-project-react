@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { FiSearch, FiX } from "react-icons/fi"
+import { Search as FiSearch, X as FiX } from "lucide-react"
 import styles from "./ObrasSociales.module.scss"
 
 export type ObraSocial = {

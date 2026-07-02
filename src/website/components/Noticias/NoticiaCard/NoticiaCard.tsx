@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { FiCalendar, FiUser, FiArrowRight } from "react-icons/fi";
+import { Calendar as FiCalendar, User as FiUser, ArrowRight as FiArrowRight } from "lucide-react";
 import styles from "./NoticiaCard.module.scss";
 import type { Noticia } from "../../../types";
 

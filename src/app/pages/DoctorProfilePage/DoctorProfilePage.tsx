@@ -457,7 +457,6 @@ const DoctorProfilePage: React.FC = () => {
           fecha_ingreso: getFechaIngreso(raw),
         } as DoctorProfileX;
         setData(normalized);
-        console.log(normalized);
         if (normalized?.existe)
           setExiste(normalized.existe.toUpperCase() === "S" ? "S" : "N");
       } finally {

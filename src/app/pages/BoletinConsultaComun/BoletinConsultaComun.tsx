@@ -5,6 +5,14 @@ import { FileDown, Pencil, Plus, RefreshCcw, Search, X } from "lucide-react";
 
 import styles from "./BoletinConsultaComun.module.scss";
 import Button from "../../components/atoms/Button/Button";
+import IconButton from "../../components/atoms/IconButton/IconButton";
+import {
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+} from "../../components/atoms/Table/Table";
 
 import {
   CONSULTA_COMUN_CODE,
@@ -391,23 +399,23 @@ export default function BoletinConsultaComun() {
 
         {!isLoading && filteredItems.length > 0 && (
           <div className={styles.tableWrapper}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th className={styles.colNumber}>N°</th>
-                  <th>Obra Social</th>
-                  <th className={styles.colAmount}>Valor</th>
-                  <th className={styles.colDate}>Últ. cambio</th>
-                  <th className={styles.colObs}>Obs.</th>
-                  <th className={styles.colAction} />
-                </tr>
-              </thead>
-              <tbody>
+            <Table stickyHeader className={styles.table}>
+              <TableHead>
+                <TableRow>
+                  <TableCell component="th" className={styles.colNumber}>N°</TableCell>
+                  <TableCell component="th">Obra Social</TableCell>
+                  <TableCell component="th" className={styles.colAmount}>Valor</TableCell>
+                  <TableCell component="th" className={styles.colDate}>Últ. cambio</TableCell>
+                  <TableCell component="th" className={styles.colObs}>Obs.</TableCell>
+                  <TableCell component="th" className={styles.colAction} />
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {filteredItems.map((item) => {
                   if (editingNro === item.nro) {
                     return (
-                      <tr key={item.nro}>
-                        <td colSpan={6} className={styles.editRowCell}>
+                      <TableRow key={item.nro}>
+                        <TableCell colSpan={6} className={styles.editRowCell}>
                           <p className={styles.editRowLabel}>
                             Editando:{" "}
                             <strong>
@@ -466,8 +474,8 @@ export default function BoletinConsultaComun() {
                               </Button>
                             </div>
                           </div>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     );
                   }
 
@@ -476,16 +484,16 @@ export default function BoletinConsultaComun() {
 
                   return (
                     <Fragment key={item.nro}>
-                      <tr>
-                        <td className={styles.numberCell}>{item.nro}</td>
-                        <td className={styles.nameCell}>{item.nombre}</td>
-                        <td className={styles.amountCell}>
+                      <TableRow>
+                        <TableCell className={styles.numberCell}>{item.nro}</TableCell>
+                        <TableCell className={styles.nameCell}>{item.nombre}</TableCell>
+                        <TableCell className={styles.amountCell}>
                           {moneyFormatter.format(item.valor)}
-                        </td>
-                        <td className={styles.dateCell}>
+                        </TableCell>
+                        <TableCell className={styles.dateCell}>
                           {formatApiDate(item.fechaCambio)}
-                        </td>
-                        <td className={styles.obsCell}>
+                        </TableCell>
+                        <TableCell className={styles.obsCell}>
                           {hasObs ? (
                             <button
                               className={`${styles.obsBadge} ${isViewingObs ? styles.obsBadgeActive : ""}`}
@@ -498,22 +506,23 @@ export default function BoletinConsultaComun() {
                           ) : (
                             <span className={styles.obsBadgeEmpty}>—</span>
                           )}
-                        </td>
-                        <td className={styles.actionCell}>
-                          <button
+                        </TableCell>
+                        <TableCell className={styles.actionCell}>
+                          <IconButton
+                            size="small"
                             className={styles.editIconBtn}
                             onClick={() => handleEdit(item.nro)}
                             title="Editar observación"
                             disabled={editingNro !== null}
                           >
                             <Pencil size={15} />
-                          </button>
-                        </td>
-                      </tr>
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
 
                       {isViewingObs && hasObs && (
-                        <tr>
-                          <td colSpan={6} className={styles.obsViewCell}>
+                        <TableRow>
+                          <TableCell colSpan={6} className={styles.obsViewCell}>
                             <div className={styles.obsViewInner}>
                               <div className={styles.obsViewToolbar}>
                                 <span className={styles.obsViewTitle}>
@@ -550,14 +559,14 @@ export default function BoletinConsultaComun() {
                                 )}
                               </div>
                             </div>
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       )}
                     </Fragment>
                   );
                 })}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         )}
       </section>

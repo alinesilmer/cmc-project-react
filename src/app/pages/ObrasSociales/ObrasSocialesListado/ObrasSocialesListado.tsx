@@ -1,13 +1,58 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Eye, Pencil, Trash2, RefreshCw, ClipboardList, Download } from "lucide-react";
+import { Plus, Eye, Pencil, Trash2, RefreshCw, ClipboardList, Download } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+} from "../../../components/atoms/Table/Table";
+import IconButton from "../../../components/atoms/IconButton/IconButton";
 import { listObrasSociales, deleteObraSocial } from "../obrasSociales.api";
 import type { ObraSocialListItem } from "../obrasSociales.types";
 import ExportPanel from "../export/ExportPanel";
 import s from "./ObrasSocialesListado.module.scss";
 import Button from "../../../components/atoms/Button/Button";
+import SearchField from "../../../components/molecules/SearchField/SearchField";
 
 const PAGE_SIZE = 15;
+
+// Square, bordered icon button to keep the original .iconBtn look on MUI IconButton.
+const iconBtnSx = {
+  width: 28,
+  height: 28,
+  borderRadius: "0.45rem",
+  border: "1px solid #e2e8f0",
+  color: "#64748b",
+  "&:hover": {
+    backgroundColor: "rgba(173, 162, 198, 0.15)",
+    color: "#7B6CA8",
+    borderColor: "rgba(137,124,172,0.5)",
+  },
+} as const;
+
+const iconBtnDangerSx = {
+  ...iconBtnSx,
+  "&:hover": {
+    backgroundColor: "#fff0f0",
+    color: "#cc2a2a",
+    borderColor: "#cc2a2a",
+  },
+} as const;
+
+// Purple/lilac header — the background lives on the CELLS (not the row) so it
+// always paints under MUI + border-collapse. Applies only to this table.
+const headCellSx = {
+  color: "#ffffff",
+  backgroundColor: "#816eb0",
+  fontWeight: 600,
+  fontSize: "10px",
+  textTransform: "uppercase",
+  letterSpacing: "0.07em",
+  whiteSpace: "nowrap",
+  borderBottom: "none",
+} as const;
 
 function formatFecha(iso: string): string {
   if (!iso) return "—";
@@ -99,50 +144,45 @@ export default function ObrasSocialesListado() {
 
         <div className={s.headerActions}>
           <Button
-             variant="ghost"
+            variant="ghost"
             size="sm"
-            className={s.btnSecondary}
             onClick={load}
             disabled={loading}
             aria-label="Actualizar listado"
             title="Actualizar"
+            leftIcon={<RefreshCw size={16} className={loading ? s.spinning : ""} />}
           >
-            <RefreshCw size={16} className={loading ? s.spinning : ""} />
             <span className={s.btnLabel}>Actualizar</span>
           </Button>
           <Button
             variant="secondary"
             size="sm"
-            className={s.btnSecondary}
             onClick={() => setShowExport(true)}
             disabled={loading || items.length === 0}
             title="Exportar"
+            leftIcon={<Download size={16} />}
           >
-            <Download size={16} />
             <span className={s.btnLabel}>Exportables</span>
           </Button>
-          <button
-            type="button"
-            className={s.btnPrimary}
+          <Button
+            variant="primary"
+            size="sm"
             onClick={() => navigate("/panel/convenios/obras-sociales/alta")}
+            leftIcon={<Plus size={16} />}
           >
-            <Plus size={16} />
             <span className={s.btnLabel}>Nueva Obra Social</span>
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Search */}
       <div className={s.searchRow}>
         <div className={s.searchWrap}>
-          <Search size={16} className={s.searchIcon} aria-hidden="true" />
-          <input
-            type="search"
-            className={s.searchInput}
+          <SearchField
+            fullWidth
             placeholder="Buscar por nombre o número…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            aria-label="Buscar obras sociales"
           />
         </div>
       </div>
@@ -170,36 +210,37 @@ export default function ObrasSocialesListado() {
                 : "Todavía no hay obras sociales registradas."}
             </p>
             {!query && (
-              <button
-                type="button"
-                className={s.btnPrimary}
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={() => navigate("/panel/convenios/obras-sociales/alta")}
+                leftIcon={<Plus size={16} />}
               >
-                <Plus size={16} /> Registrar primera obra social
-              </button>
+                Registrar primera obra social
+              </Button>
             )}
           </div>
         ) : (
-          <table className={s.table} aria-label="Listado de obras sociales">
-            <thead>
-              <tr>
-                <th scope="col">Nº</th>
-                <th scope="col">Denominación</th>
-                <th scope="col" className={s.hideXs}>Condición IVA</th>
-                <th scope="col" className={s.hideSm}>Contacto</th>
-                <th scope="col" className={s.hideMd}>Alta convenio</th>
-                <th scope="col" className={s.actionsCol}>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table className={s.table} aria-label="Listado de obras sociales">
+            <TableHead>
+              <TableRow>
+                <TableCell component="th" scope="col" sx={headCellSx}>Nº</TableCell>
+                <TableCell component="th" scope="col" sx={headCellSx}>Denominación</TableCell>
+                <TableCell component="th" scope="col" className={s.hideXs} sx={headCellSx}>Condición IVA</TableCell>
+                <TableCell component="th" scope="col" className={s.hideSm} sx={headCellSx}>Contacto</TableCell>
+                <TableCell component="th" scope="col" className={s.hideMd} sx={headCellSx}>Alta convenio</TableCell>
+                <TableCell component="th" scope="col" className={s.actionsCol} sx={headCellSx}>Acciones</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {paginated.map((os) => (
-                <tr key={os.id}>
-                  <td className={s.nroCell}>{os.nro_obra_social}</td>
-                  <td>
+                <TableRow key={os.id}>
+                  <TableCell className={s.nroCell}>{os.nro_obra_social}</TableCell>
+                  <TableCell>
                     <span className={s.nameCell}>{os.nombre}</span>
                     <span className={s.denoCell}>{os.denominacion}</span>
-                  </td>
-                  <td className={s.hideXs}>
+                  </TableCell>
+                  <TableCell className={s.hideXs}>
                     <span
                       className={
                         os.condicion_iva === "responsable_inscripto"
@@ -211,17 +252,17 @@ export default function ObrasSocialesListado() {
                         ? "Factura A"
                         : "Factura B"}
                     </span>
-                  </td>
-                  <td className={s.hideSm}>
+                  </TableCell>
+                  <TableCell className={s.hideSm}>
                     <span className={s.contactLine}>{os.emails?.[0]?.valor ?? "—"}</span>
                     <span className={s.contactLine}>{os.telefonos?.[0]?.valor ?? ""}</span>
-                  </td>
-                  <td className={s.hideMd}>{os.fecha_alta_convenio ? formatFecha(os.fecha_alta_convenio) : ''}</td>
-                  <td>
+                  </TableCell>
+                  <TableCell className={s.hideMd}>{os.fecha_alta_convenio ? formatFecha(os.fecha_alta_convenio) : ''}</TableCell>
+                  <TableCell>
                     <div className={s.actions}>
-                      <button
-                        type="button"
-                        className={s.iconBtn}
+                      <IconButton
+                        size="small"
+                        sx={iconBtnSx}
                         onClick={() =>
                           navigate(`/panel/convenios/obras-sociales/${os.id}`)
                         }
@@ -229,10 +270,10 @@ export default function ObrasSocialesListado() {
                         aria-label={`Ver detalle de ${os.nombre}`}
                       >
                         <Eye size={15} />
-                      </button>
-                      <button
-                        type="button"
-                        className={s.iconBtn}
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        sx={iconBtnSx}
                         onClick={() =>
                           navigate(
                             `/panel/convenios/obras-sociales/${os.id}/editar`
@@ -242,48 +283,48 @@ export default function ObrasSocialesListado() {
                         aria-label={`Editar ${os.nombre}`}
                       >
                         <Pencil size={15} />
-                      </button>
-                      <button
-                        type="button"
-                        className={`${s.iconBtn} ${s.iconBtnDanger}`}
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        sx={iconBtnDangerSx}
                         onClick={() => setConfirmDeleteId(os.id)}
                         title="Eliminar"
                         aria-label={`Eliminar ${os.nombre}`}
                         disabled={deletingId === os.id}
                       >
                         <Trash2 size={15} />
-                      </button>
+                      </IconButton>
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         )}
       </div>
 
       {/* Pagination */}
       {!loading && totalPages > 1 && (
         <div className={s.pagination} role="navigation" aria-label="Paginación">
-          <button
-            type="button"
-            className={s.pageBtn}
+          <Button
+            variant="ghost"
+            size="sm"
             disabled={page === 1}
             onClick={() => setPage((p) => p - 1)}
           >
             ‹ Anterior
-          </button>
+          </Button>
           <span className={s.pageInfo}>
             Página {page} de {totalPages}
           </span>
-          <button
-            type="button"
-            className={s.pageBtn}
+          <Button
+            variant="ghost"
+            size="sm"
             disabled={page === totalPages}
             onClick={() => setPage((p) => p + 1)}
           >
             Siguiente ›
-          </button>
+          </Button>
         </div>
       )}
 
@@ -307,21 +348,19 @@ export default function ObrasSocialesListado() {
               todos sus datos asociados.
             </p>
             <div className={s.modalActions}>
-              <button
-                type="button"
-                className={s.btnSecondary}
+              <Button
+                variant="ghost"
                 onClick={() => setConfirmDeleteId(null)}
               >
                 Cancelar
-              </button>
-              <button
-                type="button"
-                className={s.btnDanger}
+              </Button>
+              <Button
+                variant="danger"
                 onClick={() => handleDelete(confirmDeleteId)}
                 disabled={deletingId === confirmDeleteId}
               >
                 {deletingId === confirmDeleteId ? "Eliminando…" : "Sí, eliminar"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

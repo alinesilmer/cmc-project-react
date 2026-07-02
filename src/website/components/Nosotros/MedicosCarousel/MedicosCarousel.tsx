@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FiChevronLeft, FiChevronRight, FiX } from "react-icons/fi";
+import { ChevronLeft as FiChevronLeft, ChevronRight as FiChevronRight, X as FiX } from "lucide-react";
 import styles from "./MedicosCarousel.module.scss";
 import { listAds } from "../../../lib/ads.client";
 import type { PubAd } from "../../../lib/ads.client";

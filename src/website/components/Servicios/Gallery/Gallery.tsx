@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react"
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
 import {
-  FiSearch, FiX, FiFolder, FiPlay,
-  FiChevronLeft, FiChevronRight, FiImage,
-} from "react-icons/fi"
+  Search as FiSearch, X as FiX, Folder as FiFolder, Play as FiPlay,
+  ChevronLeft as FiChevronLeft, ChevronRight as FiChevronRight, Image as FiImage,
+} from "lucide-react"
 import styles from "./Gallery.module.scss"
 
 const EASE = [0.22, 1, 0.36, 1] as const

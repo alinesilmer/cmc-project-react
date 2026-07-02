@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  FiUploadCloud,
-  FiFileText,
-  FiX,
-  FiTrash2,
-  FiChevronDown,
-  FiExternalLink,
-} from "react-icons/fi";
+  CloudUpload as FiUploadCloud,
+  FileText as FiFileText,
+  X as FiX,
+  Trash2 as FiTrash2,
+  ChevronDown as FiChevronDown,
+  ExternalLink as FiExternalLink,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import styles from "./dashboard.module.scss";
 import {

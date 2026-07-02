@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiFilter, FiX } from "react-icons/fi";
+import { Filter as FiFilter, X as FiX } from "lucide-react";
 import NoticiaCard from "../../components/Noticias/NoticiaCard/NoticiaCard";
 import PageHero from "../../components/UI/Hero/Hero";
 import { listNews } from "../../lib/news.client";

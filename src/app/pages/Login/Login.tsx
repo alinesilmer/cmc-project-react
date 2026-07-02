@@ -65,7 +65,6 @@ function Login() {
     setLoading(true);
     try {
       const me = await login(nro, p);
-      console.log(me);
 
       if (isWebEditor(me.scopes)) {
         navigate("/admin/dashboard-web", { replace: true });

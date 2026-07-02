@@ -9,7 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import styles from "./NomencladorGalenos.module.scss";
 import {
   listGalenos, createGaleno, createNivelesGaleno,
-  deleteGaleno, updateGaleno, actualizarUnidadesGaleno,
+  deleteGaleno, updateGaleno, actualizarUnidadesGaleno, actualizarPrecioGaleno,
   importarGalenosDeObraSocial, getHistorialGaleno,
 } from "../nomenclador.api";
 import { listObrasSociales } from "../../ObrasSociales/obrasSociales.api";
@@ -79,11 +79,17 @@ type EditForm = {
   hon: string;
   ayu: string;
   gas: string;
+  valor: string;
+  vigencia_precio: string;
 };
 
 type ImportForm = {
   osOrigen: number | "";
   vigencia_desde: string;
+  alcance: "todos" | "nivelados" | "sin_nivel";
+  convertir: boolean;
+  // "valor_y_unidades" copia todo; "solo_valor" mantiene las unidades del destino.
+  actualizar: "valor_y_unidades" | "solo_valor";
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -114,17 +120,26 @@ export default function NomencladorGalenos() {
   const [editTarget, setEditTarget] = useState<GalenoOut | null>(null);
   const [editForm, setEditForm] = useState<EditForm>({
     observacion: "", vigencia_unidades: today(), hon: "", ayu: "", gas: "",
+    valor: "", vigencia_precio: today(),
   });
   const [savingObs, setSavingObs] = useState(false);
   const [savingUnidades, setSavingUnidades] = useState(false);
+  const [savingPrecio, setSavingPrecio] = useState(false);
   const [confirmUnidades, setConfirmUnidades] = useState(false);
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
 
   // ── Import modal state ────────────────────────────────────────────────────
-  const [importForm, setImportForm] = useState<ImportForm>({ osOrigen: "", vigencia_desde: today() });
+  const [importForm, setImportForm] = useState<ImportForm>({
+    osOrigen: "", vigencia_desde: today(), alcance: "todos", convertir: false,
+    actualizar: "valor_y_unidades",
+  });
+  const [importOsSearch, setImportOsSearch] = useState("");
+  const [importOsOpen, setImportOsOpen] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<GalenosImportarResult | null>(null);
   const [importErrors, setImportErrors] = useState<Record<string, string>>({});
+  // Galenos vigentes de la OS origen (para el alcance nivelados / sin nivel)
+  const [importOrigenGalenos, setImportOrigenGalenos] = useState<GalenoOut[] | null>(null);
 
   // ── Historial state ───────────────────────────────────────────────────────
   const [historialTarget, setHistorialTarget] = useState<{
@@ -306,10 +321,38 @@ export default function NomencladorGalenos() {
   // ── Edit actions ──────────────────────────────────────────────────────────
   function openEdit(g: GalenoOut) {
     setEditTarget(g);
-    setEditForm({ observacion: g.observacion ?? "", vigencia_unidades: today(), hon: "", ayu: "", gas: "" });
+    setEditForm({
+      observacion: g.observacion ?? "", vigencia_unidades: today(), hon: "", ayu: "", gas: "",
+      valor: g.valor_unitario ?? "", vigencia_precio: today(),
+    });
     setEditErrors({});
     setConfirmUnidades(false);
     setModalKind("edit");
+  }
+
+  async function handleActualizarPrecio() {
+    if (!editTarget) return;
+    const v = parseFloat(editForm.valor);
+    const e: Record<string, string> = {};
+    if (editForm.valor.trim() === "" || isNaN(v) || v < 0) e.valor = "Valor inválido";
+    if (!editForm.vigencia_precio) e.vigencia_precio = "Requerido";
+    setEditErrors((p) => ({ ...p, ...e }));
+    if (Object.keys(e).length > 0) return;
+
+    setSavingPrecio(true);
+    try {
+      await actualizarPrecioGaleno(editTarget.id, {
+        nuevo_valor_unitario: v,
+        vigencia_desde: editForm.vigencia_precio,
+      });
+      showToast("success", "Valor del galeno actualizado.");
+      setModalKind(null);
+      if (selectedOsNro) loadOsGalenos(selectedOsNro);
+    } catch (err) {
+      showToast("error", extractDetail(err));
+    } finally {
+      setSavingPrecio(false);
+    }
   }
 
   async function handleSaveObservacion() {
@@ -375,10 +418,26 @@ export default function NomencladorGalenos() {
 
   // ── Import actions ────────────────────────────────────────────────────────
   function openImport() {
-    setImportForm({ osOrigen: "", vigencia_desde: today() });
+    setImportForm({
+      osOrigen: "", vigencia_desde: today(), alcance: "todos", convertir: false,
+      actualizar: "valor_y_unidades",
+    });
+    setImportOsSearch("");
+    setImportOsOpen(false);
     setImportResult(null);
     setImportErrors({});
+    setImportOrigenGalenos(null);
     setModalKind("import");
+  }
+
+  async function loadImportOrigenGalenos(osNro: number) {
+    setImportOrigenGalenos(null);
+    try {
+      const data = await listGalenos({ obra_social_nro: osNro });
+      setImportOrigenGalenos(data.filter((g) => g.activo && g.vigencia_hasta == null));
+    } catch {
+      setImportOrigenGalenos([]);
+    }
   }
 
   async function handleImport() {
@@ -387,6 +446,25 @@ export default function NomencladorGalenos() {
     if (!importForm.vigencia_desde) e.vigencia_desde = "Requerido";
     if (importForm.osOrigen !== "" && Number(importForm.osOrigen) === selectedOsNro)
       e.osOrigen = "El origen no puede ser igual al destino";
+
+    // Con alcance parcial, los códigos salen de los galenos del origen ya cargados
+    let codigos: string[] | undefined;
+    if (importForm.osOrigen !== "" && importForm.alcance !== "todos") {
+      if (importOrigenGalenos == null) {
+        e.alcance = "Aguardá a que carguen los galenos del origen";
+      } else {
+        const filtrados = importOrigenGalenos.filter((g) =>
+          importForm.alcance === "nivelados" ? g.nivel != null : g.nivel == null
+        );
+        codigos = [...new Set(filtrados.map((g) => g.codigo))];
+        if (codigos.length === 0) {
+          e.alcance = importForm.alcance === "nivelados"
+            ? "El origen no tiene galenos nivelados"
+            : "El origen no tiene galenos sin nivel";
+        }
+      }
+    }
+
     setImportErrors(e);
     if (Object.keys(e).length > 0) return;
 
@@ -397,6 +475,9 @@ export default function NomencladorGalenos() {
         obra_social_nro_origen: Number(importForm.osOrigen),
         obra_social_nro_destino: selectedOsNro!,
         vigencia_desde: importForm.vigencia_desde,
+        ...(codigos ? { codigos } : {}),
+        convertir_a_nivelado: importForm.convertir,
+        solo_valor: importForm.actualizar === "solo_valor",
       });
       setImportResult(result);
       if (selectedOsNro) loadOsGalenos(selectedOsNro);
@@ -946,6 +1027,41 @@ export default function NomencladorGalenos() {
             </div>
 
             <div className={styles.sectionSep} />
+            <p className={styles.sectionTitle}>Actualizar valor</p>
+            <p className={styles.hintText}>
+              Cambia el valor unitario del galeno desde la vigencia indicada (rota la vigencia anterior).
+              Actual: <strong>{fmt.format(parseMonto(editTarget.valor_unitario) ?? 0)}</strong>.
+            </p>
+            <div className={styles.formRow2}>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Valor unitario ($) <span className={styles.req}>*</span></label>
+                <input
+                  type="number" min="0" step="0.01"
+                  className={`${styles.formInput} ${editErrors.valor ? styles.inputError : ""}`}
+                  value={editForm.valor}
+                  onChange={(e) => { setEditForm((p) => ({ ...p, valor: e.target.value })); setEditErrors((p) => ({ ...p, valor: "" })); }}
+                  placeholder="0.00"
+                />
+                {editErrors.valor && <span className={styles.errorMsg}>{editErrors.valor}</span>}
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Vigente desde <span className={styles.req}>*</span></label>
+                <input
+                  type="date"
+                  className={`${styles.formInput} ${editErrors.vigencia_precio ? styles.inputError : ""}`}
+                  value={editForm.vigencia_precio}
+                  onChange={(e) => { setEditForm((p) => ({ ...p, vigencia_precio: e.target.value })); setEditErrors((p) => ({ ...p, vigencia_precio: "" })); }}
+                />
+                {editErrors.vigencia_precio && <span className={styles.errorMsg}>{editErrors.vigencia_precio}</span>}
+              </div>
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+              <button className={styles.btnPrimary} onClick={handleActualizarPrecio} disabled={savingPrecio}>
+                {savingPrecio ? <><Loader2 size={14} className={styles.spin} /> Actualizando…</> : <><Save size={14} /> Actualizar valor</>}
+              </button>
+            </div>
+
+            <div className={styles.sectionSep} />
             <p className={styles.sectionTitle}>Actualizar unidades pactadas</p>
 
             <div className={styles.warningBox}>
@@ -1030,29 +1146,71 @@ export default function NomencladorGalenos() {
             title="Importar galenos de otra OS"
             subtitle={`Destino: ${selectedOsName}`}
             onClose={() => setModalKind(null)}
+            wide
           >
             <div className={styles.formGroup}>
               <label className={styles.formLabel}>
                 Obra Social origen <span className={styles.req}>*</span>
               </label>
-              <select
-                className={`${styles.formSelect} ${importErrors.osOrigen ? styles.inputError : ""}`}
-                value={importForm.osOrigen}
-                onChange={(e) => {
-                  setImportForm((p) => ({
-                    ...p,
-                    osOrigen: e.target.value === "" ? "" : Number(e.target.value),
-                  }));
-                  setImportErrors((p) => ({ ...p, osOrigen: "" }));
-                }}
-              >
-                <option value="">— Seleccionar —</option>
-                {osList
-                  .filter((os) => os.nro_obra_social !== selectedOsNro)
-                  .map((os) => (
-                    <option key={os.nro_obra_social} value={os.nro_obra_social}>{os.nombre}</option>
-                  ))}
-              </select>
+              {importForm.osOrigen !== "" ? (
+                <div className={styles.osAcSelected}>
+                  <span className={styles.osAcNro}>{importForm.osOrigen}</span>
+                  <span className={styles.osAcName}>
+                    {osList.find((os) => os.nro_obra_social === importForm.osOrigen)?.nombre ?? ""}
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.osAcClear}
+                    title="Cambiar"
+                    onClick={() => {
+                      setImportForm((p) => ({ ...p, osOrigen: "" }));
+                      setImportOsSearch("");
+                      setImportOrigenGalenos(null);
+                    }}
+                  >
+                    <XIcon size={13} />
+                  </button>
+                </div>
+              ) : (
+                <div className={styles.osAcWrap}>
+                  <input
+                    className={`${styles.formInput} ${importErrors.osOrigen ? styles.inputError : ""}`}
+                    placeholder="Buscar por nombre o número…"
+                    value={importOsSearch}
+                    onChange={(e) => { setImportOsSearch(e.target.value); setImportOsOpen(true); }}
+                    onFocus={() => setImportOsOpen(true)}
+                    onBlur={() => setTimeout(() => setImportOsOpen(false), 150)}
+                  />
+                  {importOsOpen && (() => {
+                    const q = importOsSearch.trim().toLowerCase();
+                    const list = osList
+                      .filter((os) => os.nro_obra_social !== selectedOsNro)
+                      .filter((os) => !q || os.nombre.toLowerCase().includes(q) || String(os.nro_obra_social).includes(q))
+                      .slice(0, 50);
+                    return list.length > 0 ? (
+                      <ul className={styles.osAcDropdown}>
+                        {list.map((os) => (
+                          <li
+                            key={os.nro_obra_social}
+                            className={styles.osAcItem}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setImportForm((p) => ({ ...p, osOrigen: os.nro_obra_social }));
+                              setImportErrors((p) => ({ ...p, osOrigen: "" }));
+                              setImportOsSearch("");
+                              setImportOsOpen(false);
+                              loadImportOrigenGalenos(os.nro_obra_social);
+                            }}
+                          >
+                            <span className={styles.osAcNro}>{os.nro_obra_social}</span>
+                            <span className={styles.osAcName}>{os.nombre}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null;
+                  })()}
+                </div>
+              )}
               {importErrors.osOrigen && (
                 <span className={styles.errorMsg}>{importErrors.osOrigen}</span>
               )}
@@ -1073,8 +1231,108 @@ export default function NomencladorGalenos() {
               )}
             </div>
 
+            {/* Alcance de la importación */}
+            {(() => {
+              const nivelados = importOrigenGalenos?.filter((g) => g.nivel != null) ?? null;
+              const sinNivel = importOrigenGalenos?.filter((g) => g.nivel == null) ?? null;
+              const cnt = (list: GalenoOut[] | null, porCodigo = false) =>
+                list == null ? "" : ` (${porCodigo ? new Set(list.map((g) => g.codigo)).size : list.length})`;
+              return (
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Qué importar</label>
+                  <label className={styles.checkRow}>
+                    <input
+                      type="radio" name="importAlcance" className={styles.checkInput}
+                      checked={importForm.alcance === "todos"}
+                      onChange={() => setImportForm((p) => ({ ...p, alcance: "todos" }))}
+                    />
+                    <span className={styles.checkLabel}>
+                      Todos los galenos{cnt(importOrigenGalenos)}
+                    </span>
+                  </label>
+                  <label className={styles.checkRow}>
+                    <input
+                      type="radio" name="importAlcance" className={styles.checkInput}
+                      checked={importForm.alcance === "nivelados"}
+                      onChange={() => setImportForm((p) => ({ ...p, alcance: "nivelados" }))}
+                    />
+                    <span className={styles.checkLabel}>
+                      Solo galenos nivelados{cnt(nivelados, true)}
+                    </span>
+                  </label>
+                  <label className={styles.checkRow}>
+                    <input
+                      type="radio" name="importAlcance" className={styles.checkInput}
+                      checked={importForm.alcance === "sin_nivel"}
+                      onChange={() => setImportForm((p) => ({ ...p, alcance: "sin_nivel" }))}
+                    />
+                    <span className={styles.checkLabel}>
+                      Solo galenos sin nivel{cnt(sinNivel)}
+                    </span>
+                  </label>
+                  {importForm.alcance !== "todos" && (
+                    <p className={styles.hintText}>
+                      Los demás galenos del destino no se tocan (conservan sus valores).
+                    </p>
+                  )}
+                  {importErrors.alcance && (
+                    <span className={styles.errorMsg}>{importErrors.alcance}</span>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* Qué actualizar: valor + unidades vs. solo el valor del galeno */}
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Qué actualizar</label>
+              <label className={styles.checkRow}>
+                <input
+                  type="radio" name="importActualizar" className={styles.checkInput}
+                  checked={importForm.actualizar === "valor_y_unidades"}
+                  onChange={() => setImportForm((p) => ({ ...p, actualizar: "valor_y_unidades" }))}
+                />
+                <span className={styles.checkLabel}>Valor del galeno y unidades</span>
+              </label>
+              <label className={styles.checkRow}>
+                <input
+                  type="radio" name="importActualizar" className={styles.checkInput}
+                  checked={importForm.actualizar === "solo_valor"}
+                  onChange={() => setImportForm((p) => ({ ...p, actualizar: "solo_valor" }))}
+                />
+                <span className={styles.checkLabel}>
+                  Solo el valor del galeno (mantener las unidades del destino)
+                </span>
+              </label>
+              {importForm.actualizar === "solo_valor" && (
+                <p className={styles.hintText}>
+                  Actualiza el valor general del galeno (el que multiplica a cada nivel) con el
+                  del origen y conserva las unidades de cada nivel del destino. Los galenos que
+                  el destino todavía no tenga se crean con los datos completos del origen.
+                </p>
+              )}
+            </div>
+
+            {/* Conversión sin nivel → nivelado */}
+            <div className={styles.formGroup}>
+              <label className={styles.checkRow}>
+                <input
+                  type="checkbox" className={styles.checkInput}
+                  checked={importForm.convertir}
+                  onChange={(e) => setImportForm((p) => ({ ...p, convertir: e.target.checked }))}
+                />
+                <span className={styles.checkLabel}>
+                  Reemplazar galenos sin nivel del destino por los niveles del origen
+                </span>
+              </label>
+              <p className={styles.hintText}>
+                Si el origen tiene un galeno nivelado y el destino lo tiene sin nivel, se cierra
+                el galeno sin nivel del destino, se crean los niveles y los valores que lo usaban
+                pasan al galeno de su nivel. Sin esta opción esos casos se reportan como error.
+              </p>
+            </div>
+
             <p className={styles.hintText}>
-              Copia todos los galenos vigentes del origen (precio + unidades). Si la OS destino ya
+              Copia los galenos vigentes del origen (precio + unidades). Si la OS destino ya
               tiene un galeno con ese código/nivel, se rota la vigencia.
             </p>
 
@@ -1097,6 +1355,12 @@ export default function NomencladorGalenos() {
                     <span className={styles.statNum}>{importResult.sin_cambios}</span>
                     <span className={styles.statLabel}>Sin cambios</span>
                   </div>
+                  {(importResult.convertidos ?? 0) > 0 && (
+                    <div className={`${styles.statBox} ${styles.statCreado}`}>
+                      <span className={styles.statNum}>{importResult.convertidos}</span>
+                      <span className={styles.statLabel}>Convertidos</span>
+                    </div>
+                  )}
                 </div>
                 {importResult.errores.length > 0 && (
                   <div className={styles.errorList}>
@@ -1222,11 +1486,12 @@ export default function NomencladorGalenos() {
 
 // ─── Modal sub-component ──────────────────────────────────────────────────────
 
-function Modal({ title, subtitle, onClose, children }: {
+function Modal({ title, subtitle, onClose, children, wide }: {
   title: string;
   subtitle?: string;
   onClose: () => void;
   children: ReactNode;
+  wide?: boolean;
 }) {
   return (
     <motion.div
@@ -1234,15 +1499,13 @@ function Modal({ title, subtitle, onClose, children }: {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      onClick={onClose}
     >
       <motion.div
-        className={styles.modal}
+        className={`${styles.modal} ${wide ? styles.modalWide : ""}`}
         initial={{ opacity: 0, scale: 0.96, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 12 }}
         transition={{ duration: 0.16 }}
-        onClick={(e) => e.stopPropagation()}
       >
         <div className={styles.modalHeader}>
           <div>

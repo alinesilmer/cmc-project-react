@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { FiUser, FiMenu, FiX, FiChevronDown } from "react-icons/fi";
+import { User as FiUser, Menu as FiMenu, X as FiX, ChevronDown as FiChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import styles from "./Header.module.scss";
 import logo from "../../../assets/images/logoCMC.png";
