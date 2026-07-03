@@ -3,16 +3,18 @@ import type { Cell } from "./types";
 
 /**
  * Extrae un código de 6 dígitos del comienzo de un texto:
- *  - plano:    "220204"                       → "220204"
- *  - separado: "22.02.04" / "22,23,20" / "22.33,23" (grupos de 2, punto o coma) → 6 dígitos
- * No colisiona con precios: esos usan grupos de 3 dígitos (miles) y coma decimal.
+ *  - plano:    "220204"                                   → "220204"
+ *  - separado: "22.02.04" / "22,23,20" / "22-02-04" / "22.33-23" (grupos de 2,
+ *              separados por punto, coma o guion)          → 6 dígitos
+ * No colisiona con precios: esos usan grupos de 3 dígitos (miles) y coma decimal;
+ * los guiones no aparecen en los precios.
  */
 export function extractCodigo(raw: string): string | null {
   const s = raw.trim();
   const plain = s.match(/^(\d{6})(?![\d.,])/);
   if (plain) return plain[1];
-  const sep = s.match(/^(\d{2}[.,]\d{2}[.,]\d{2})(?![\d.,])/);
-  if (sep) return sep[1].replace(/[.,]/g, "");
+  const sep = s.match(/^(\d{2}[.,-]\d{2}[.,-]\d{2})(?![\d.,-])/);
+  if (sep) return sep[1].replace(/[.,-]/g, "");
   return null;
 }
 
@@ -30,11 +32,11 @@ export function findCodigo(tokens: string[]): string | null {
   for (const t of tokens) {
     const s = t.trim();
     if (s === "") continue;
-    if (/^[\d.,]+$/.test(s)) joined += s;
+    if (/^[\d.,-]+$/.test(s)) joined += s;
     else break; // primer token con letras → fin del posible código
   }
-  const sep = joined.match(/^\d{2}[.,]\d{2}[.,]\d{2}/);
-  return sep ? sep[0].replace(/[.,]/g, "") : null;
+  const sep = joined.match(/^\d{2}[.,-]\d{2}[.,-]\d{2}/);
+  return sep ? sep[0].replace(/[.,-]/g, "") : null;
 }
 
 /**
