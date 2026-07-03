@@ -1150,3 +1150,114 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
   max-height: 380px;
   overflow-y: auto;
 }
+
+// ─── Crear galenos desde plantilla (multi-OS) ──────────────────────────────────
+.osChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.osChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 10px;
+  border: 1px solid #c7d2fe;
+  border-radius: 20px;
+  background: #eef2ff;
+  font-size: 0.8rem;
+  color: $text-1;
+}
+.osChipClear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: $text-3;
+  cursor: pointer;
+  transition: background .12s, color .12s;
+
+  &:hover { background: $red-light; color: $red; }
+}
+.draftList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.draftCard {
+  border: 1px solid $border;
+  border-radius: $radius-md;
+  background: $surface;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: $shadow-sm;
+}
+.draftHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.draftTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: $text-1;
+}
+.draftCode {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: $orange;
+  background: $orange-bg;
+  border: 1px solid $orange-bd;
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+.nivelInlineField {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.nivelNumInput {
+  width: 56px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid $border;
+  border-radius: $radius-sm;
+  font-size: 0.82rem;
+  color: $text-1;
+  background: $surface;
+  outline: none;
+  box-sizing: border-box;
+
+  &:focus { border-color: $blue; }
+}
+.resultList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.resultRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  padding: 8px 10px;
+  border-radius: $radius-sm;
+  background: #f8fafd;
+  border: 1px solid $border;
+
+  svg { flex-shrink: 0; margin-top: 2px; }
+}
+.resultOk { color: $green; }
+.resultErr { color: $red; }

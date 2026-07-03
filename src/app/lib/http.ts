@@ -45,6 +45,14 @@ http.interceptors.request.use((config) => {
 
   const token = getAccessToken();
   if (token) config.headers["Authorization"] = `Bearer ${token}`;
+
+  const method = (config.method ?? "").toUpperCase();
+  console.log(`%cRequest a: ${config.url}`, "color: #22c55e; font-weight: bold;", {
+    method,
+    params: config.params,
+    data: config.data,
+  });
+
   return config;
 });
 
@@ -56,7 +64,7 @@ http.interceptors.response.use(
   (res) => {
     const method = (res.config.method ?? "").toUpperCase();
     const url = res.config.url ?? "";
-    console.log(`[API] ${method} ${url}`, res.data);
+    console.log(`%c[API] ${method} ${url}`, "color: #06b6d4; font-weight: bold;", res.data);
     return res;
   },
   async (error) => {

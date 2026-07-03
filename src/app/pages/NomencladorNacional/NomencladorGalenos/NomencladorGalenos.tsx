@@ -8,13 +8,14 @@ import { useQuery } from "@tanstack/react-query";
 
 import styles from "./NomencladorGalenos.module.scss";
 import {
-  listGalenos, createGaleno, createNivelesGaleno,
+  listGalenos,
   deleteGaleno, updateGaleno, actualizarUnidadesGaleno, actualizarPrecioGaleno,
   importarGalenosDeObraSocial, getHistorialGaleno,
 } from "../nomenclador.api";
 import { listObrasSociales } from "../../ObrasSociales/obrasSociales.api";
 import type { GalenoOut, GalenosImportarResult } from "../nomenclador.types";
 import ConfirmModal from "../../../components/atoms/ConfirmModal/ConfirmModal";
+import GalenoCreateModal from "./GalenoCreateModal";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -48,30 +49,6 @@ function extractDetail(e: unknown): string {
 
 type Tab = "catalogo" | "por-os";
 type ModalKind = "create" | "edit" | "import" | "historial" | null;
-
-type NivelRow = { nivel: number; hon: string; ayu: string; gas: string };
-
-type CreateForm = {
-  osNro: number | "";
-  nombre: string;
-  nivelado: boolean;
-  valor_unitario: string;
-  vigencia_desde: string;
-  observacion: string;
-  hon: string;
-  ayu: string;
-  gas: string;
-  niveles: NivelRow[];
-};
-
-function emptyCreate(): CreateForm {
-  return {
-    osNro: "", nombre: "", nivelado: false,
-    valor_unitario: "", vigencia_desde: today(), observacion: "",
-    hon: "", ayu: "", gas: "",
-    niveles: [{ nivel: 1, hon: "", ayu: "", gas: "" }],
-  };
-}
 
 type EditForm = {
   observacion: string;
@@ -110,11 +87,6 @@ export default function NomencladorGalenos() {
   const [osGalenos, setOsGalenos] = useState<GalenoOut[]>([]);
   const [loadingOs, setLoadingOs] = useState(false);
   const [toggling, setToggling] = useState<number | null>(null);
-
-  // ── Create modal state ────────────────────────────────────────────────────
-  const [createForm, setCreateForm] = useState<CreateForm>(emptyCreate());
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [saving, setSaving] = useState(false);
 
   // ── Edit modal state ──────────────────────────────────────────────────────
   const [editTarget, setEditTarget] = useState<GalenoOut | null>(null);
@@ -220,102 +192,12 @@ export default function NomencladorGalenos() {
 
   // ── Create actions ────────────────────────────────────────────────────────
   function openCreate() {
-    const form = emptyCreate();
-    if (tab === "por-os" && selectedOsNro) form.osNro = selectedOsNro;
-    setCreateForm(form);
-    setFormErrors({});
     setModalKind("create");
   }
 
-  function setCreateField<K extends keyof CreateForm>(k: K, v: CreateForm[K]) {
-    setCreateForm((prev) => ({ ...prev, [k]: v }));
-    setFormErrors((prev) => ({ ...prev, [k]: "" }));
-  }
-
-  function addNivel() {
-    setCreateForm((prev) => ({
-      ...prev,
-      niveles: [...prev.niveles, { nivel: prev.niveles.length + 1, hon: "", ayu: "", gas: "" }],
-    }));
-  }
-
-  function removeNivel(idx: number) {
-    setCreateForm((prev) => {
-      const next = prev.niveles
-        .filter((_, i) => i !== idx)
-        .map((r, i) => ({ ...r, nivel: i + 1 }));
-      return { ...prev, niveles: next.length ? next : [{ nivel: 1, hon: "", ayu: "", gas: "" }] };
-    });
-  }
-
-  function setNivelField(idx: number, field: keyof NivelRow, val: string) {
-    setCreateForm((prev) => ({
-      ...prev,
-      niveles: prev.niveles.map((r, i) => (i === idx ? { ...r, [field]: val } : r)),
-    }));
-  }
-
-  function validateCreate(): boolean {
-    const e: Record<string, string> = {};
-    if (createForm.osNro === "") e.osNro = "Requerido";
-    if (!createForm.nombre.trim()) e.nombre = "Requerido";
-    if (!createForm.vigencia_desde) e.vigencia_desde = "Requerido";
-    const vu = parseFloat(createForm.valor_unitario);
-    if (!createForm.valor_unitario || isNaN(vu) || vu < 0)
-      e.valor_unitario = "Valor inválido (debe ser ≥ 0)";
-    if (createForm.nivelado && createForm.niveles.length === 0)
-      e.niveles = "Agregá al menos un nivel";
-    setFormErrors(e);
-    return Object.keys(e).length === 0;
-  }
-
-  async function handleCreate() {
-    if (!validateCreate()) return;
-    setSaving(true);
-    const osNro = Number(createForm.osNro);
-    const obs = createForm.observacion.trim() || null;
-    const parseOpt = (s: string) => (s.trim() === "" ? null : parseFloat(s));
-
-    try {
-      if (createForm.nivelado) {
-        const nivelPayload = createForm.niveles.map((r) => ({
-          nivel: r.nivel,
-          valor_unitario: parseFloat(createForm.valor_unitario),
-          unidades_honorarios: parseOpt(r.hon),
-          unidades_ayudante: parseOpt(r.ayu),
-          unidades_gastos: parseOpt(r.gas),
-        }));
-        await createNivelesGaleno({
-          obra_social_nro: osNro,
-          nombre: createForm.nombre.trim(),
-          vigencia_desde: createForm.vigencia_desde,
-          observacion: obs,
-          niveles: nivelPayload,
-        });
-        showToast("success", `Galeno nivelado creado con ${nivelPayload.length} nivel(es).`);
-      } else {
-        const g = await createGaleno({
-          obra_social_nro: osNro,
-          nombre: createForm.nombre.trim(),
-          nivel: null,
-          vigencia_desde: createForm.vigencia_desde,
-          valor_unitario: parseFloat(createForm.valor_unitario),
-          unidades_honorarios: parseOpt(createForm.hon),
-          unidades_ayudante: parseOpt(createForm.ayu),
-          unidades_gastos: parseOpt(createForm.gas),
-          observacion: obs,
-        });
-        setGalenos((prev) => [g, ...prev]);
-        showToast("success", "Galeno creado.");
-      }
-      setModalKind(null);
-      loadCatalogo();
-      if (tab === "por-os" && selectedOsNro === osNro) loadOsGalenos(osNro);
-    } catch (e) {
-      showToast("error", extractDetail(e));
-    } finally {
-      setSaving(false);
-    }
+  function handleCreated() {
+    loadCatalogo();
+    if (tab === "por-os" && selectedOsNro) loadOsGalenos(selectedOsNro);
   }
 
   // ── Edit actions ──────────────────────────────────────────────────────────
@@ -781,228 +663,14 @@ export default function NomencladorGalenos() {
 
       {/* ── Modals ── */}
       <AnimatePresence>
-        {/* CREATE modal */}
+        {/* CREATE modal — alta desde plantilla, multi-OS */}
         {modalKind === "create" && (
-          <Modal
-            title="Nuevo galeno"
-            subtitle="El código se genera automáticamente a partir del nombre"
+          <GalenoCreateModal
+            osList={osList}
+            initialOsNro={tab === "por-os" ? selectedOsNro : null}
             onClose={() => setModalKind(null)}
-          >
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>
-                Obra Social <span className={styles.req}>*</span>
-              </label>
-              <select
-                className={`${styles.formSelect} ${formErrors.osNro ? styles.inputError : ""}`}
-                value={createForm.osNro}
-                onChange={(e) =>
-                  setCreateField("osNro", e.target.value === "" ? "" : Number(e.target.value))
-                }
-              >
-                <option value="">— Seleccionar —</option>
-                {osList.map((os) => (
-                  <option key={os.nro_obra_social} value={os.nro_obra_social}>{os.nombre}</option>
-                ))}
-              </select>
-              {formErrors.osNro && <span className={styles.errorMsg}>{formErrors.osNro}</span>}
-            </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>
-                Nombre <span className={styles.req}>*</span>
-              </label>
-              <input
-                className={`${styles.formInput} ${formErrors.nombre ? styles.inputError : ""}`}
-                value={createForm.nombre}
-                onChange={(e) => setCreateField("nombre", e.target.value)}
-                placeholder="ej: Galeno Quirúrgico Adulto"
-              />
-              {formErrors.nombre && <span className={styles.errorMsg}>{formErrors.nombre}</span>}
-            </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>
-                Vigente desde <span className={styles.req}>*</span>
-              </label>
-              <input
-                type="date"
-                className={`${styles.formInput} ${formErrors.vigencia_desde ? styles.inputError : ""}`}
-                value={createForm.vigencia_desde}
-                onChange={(e) => setCreateField("vigencia_desde", e.target.value)}
-              />
-              {formErrors.vigencia_desde && (
-                <span className={styles.errorMsg}>{formErrors.vigencia_desde}</span>
-              )}
-            </div>
-
-            {/* Nivelado toggle */}
-            <label className={styles.checkRow}>
-              <input
-                type="checkbox"
-                className={styles.checkInput}
-                checked={createForm.nivelado}
-                onChange={(e) => setCreateField("nivelado", e.target.checked)}
-              />
-              <span className={styles.checkLabel}>Galeno nivelado</span>
-            </label>
-
-            {/* Valor unitario (compartido) */}
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>
-                Valor galeno <span className={styles.req}>*</span>
-              </label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                className={`${styles.formInput} ${formErrors.valor_unitario ? styles.inputError : ""}`}
-                value={createForm.valor_unitario}
-                onChange={(e) => setCreateField("valor_unitario", e.target.value)}
-                placeholder="0.00"
-              />
-              {formErrors.valor_unitario && (
-                <span className={styles.errorMsg}>{formErrors.valor_unitario}</span>
-              )}
-              {createForm.nivelado && (
-                <span className={styles.hintText}>Este valor se aplica a todos los niveles.</span>
-              )}
-            </div>
-
-            {/* NO nivelado → unidades simples */}
-            {!createForm.nivelado && (
-              <div className={styles.unitsBlock}>
-                <p className={styles.unitsBlockTitle}>
-                  Unidades plantilla{" "}
-                  <span className={styles.optional}>(opcional)</span>
-                </p>
-                <p className={styles.hintText}>
-                  Si dejás una unidad vacía, el código tomará la unidad del nomenclador al facturar.
-                </p>
-                <div className={styles.formRow3}>
-                  <div className={styles.formGroup}>
-                    <label className={styles.unitLabel}>Honorarios</label>
-                    <input
-                      type="number" min="0" step="0.0001"
-                      className={styles.unitInput}
-                      value={createForm.hon}
-                      onChange={(e) => setCreateField("hon", e.target.value)}
-                      placeholder="—"
-                    />
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label className={styles.unitLabel}>Ayudante</label>
-                    <input
-                      type="number" min="0" step="0.0001"
-                      className={styles.unitInput}
-                      value={createForm.ayu}
-                      onChange={(e) => setCreateField("ayu", e.target.value)}
-                      placeholder="—"
-                    />
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label className={styles.unitLabel}>Gastos</label>
-                    <input
-                      type="number" min="0" step="0.0001"
-                      className={styles.unitInput}
-                      value={createForm.gas}
-                      onChange={(e) => setCreateField("gas", e.target.value)}
-                      placeholder="—"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* NIVELADO → filas dinámicas */}
-            {createForm.nivelado && (
-              <div className={styles.nivelSection}>
-                <p className={styles.unitsBlockTitle}>
-                  Niveles <span className={styles.req}>*</span>
-                </p>
-                <p className={styles.hintText}>
-                  Cada nivel lleva sus propias unidades de honorarios, ayudante y gastos.
-                </p>
-                {formErrors.niveles && (
-                  <span className={styles.errorMsg}>{formErrors.niveles}</span>
-                )}
-                <div className={styles.nivelList}>
-                  {createForm.niveles.map((row, idx) => (
-                    <div key={idx} className={styles.nivelCard}>
-                      <div className={styles.nivelCardHeader}>
-                        <span className={styles.nivelNum}>Nivel {row.nivel}</span>
-                        {createForm.niveles.length > 1 && (
-                          <button
-                            type="button"
-                            className={styles.removeNivelBtn}
-                            onClick={() => removeNivel(idx)}
-                            title="Quitar nivel"
-                          >
-                            <XIcon size={13} />
-                          </button>
-                        )}
-                      </div>
-                      <div className={styles.formRow3}>
-                        <div className={styles.formGroup}>
-                          <label className={styles.unitLabel}>Honorarios</label>
-                          <input
-                            type="number" min="0" step="0.0001"
-                            className={styles.unitInput}
-                            value={row.hon}
-                            onChange={(e) => setNivelField(idx, "hon", e.target.value)}
-                            placeholder="—"
-                          />
-                        </div>
-                        <div className={styles.formGroup}>
-                          <label className={styles.unitLabel}>Ayudante</label>
-                          <input
-                            type="number" min="0" step="0.0001"
-                            className={styles.unitInput}
-                            value={row.ayu}
-                            onChange={(e) => setNivelField(idx, "ayu", e.target.value)}
-                            placeholder="—"
-                          />
-                        </div>
-                        <div className={styles.formGroup}>
-                          <label className={styles.unitLabel}>Gastos</label>
-                          <input
-                            type="number" min="0" step="0.0001"
-                            className={styles.unitInput}
-                            value={row.gas}
-                            onChange={(e) => setNivelField(idx, "gas", e.target.value)}
-                            placeholder="—"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <button type="button" className={styles.addNivelBtn} onClick={addNivel}>
-                  <Plus size={14} /> Agregar nivel
-                </button>
-              </div>
-            )}
-
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>
-                Observación <span className={styles.optional}>(opcional)</span>
-              </label>
-              <textarea
-                className={styles.formTextarea}
-                value={createForm.observacion}
-                onChange={(e) => setCreateField("observacion", e.target.value)}
-                placeholder="Opcional…"
-              />
-            </div>
-
-            <div className={styles.modalFooter}>
-              <button className={styles.btnGhost} onClick={() => setModalKind(null)}>Cancelar</button>
-              <button className={styles.btnPrimary} onClick={handleCreate} disabled={saving}>
-                {saving
-                  ? <><Loader2 size={14} className={styles.spin} /> Guardando…</>
-                  : <><Save size={15} /> Crear galeno</>}
-              </button>
-            </div>
-          </Modal>
+            onCreated={handleCreated}
+          />
         )}
 
         {/* EDIT modal */}

@@ -10,7 +10,8 @@ export type User = {
   role?: string | null;
   /** 'D' = médico; otros valores = personal administrativo */
   ingresar?: string | null;
-  especialidad_id?: number | null;
+  /** ID_COLEGIO_ESPE en orden de prioridad (principal primero). Vacía si no tiene. */
+  especialidades: number[];
   es_organizacion?: number | null;
 };
 
@@ -26,7 +27,7 @@ function normalizeUser(raw: any): User {
       : [],
     role: raw?.role ?? null,
     ingresar: raw?.ingresar ?? raw?.INGRESAR ?? null,
-    especialidad_id: raw?.especialidad_id ?? raw?.ESPECIALIDAD_ID ?? null,
+    especialidades: Array.isArray(raw?.especialidades) ? raw.especialidades : [],
     es_organizacion: raw?.es_organizacion != null ? Number(raw.es_organizacion) : null,
   };
 }

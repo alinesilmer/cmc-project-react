@@ -141,6 +141,28 @@ export type GalenosImportarResult = {
   errores: { codigo: string; nivel: number | null; motivo: string }[];
 };
 
+// ─── Plantillas de Galenos (solo lectura) ──────────────────────────────────────
+
+export type GalenoPlantillaNivelOut = {
+  /** null = galeno sin niveles */
+  nivel: number | null;
+  /** Siempre "0.00" — informativo; el precio real lo carga el operador al instanciar. */
+  valor_unitario: string;
+  unidades_honorarios: string | null;
+  unidades_ayudante: string | null;
+  unidades_gastos: string | null;
+};
+
+export type GalenoPlantillaOut = {
+  /** Identificador del conjunto, ej. "cirugia_adulto_de_7_niveles". */
+  grupo: string;
+  /** Slug real que tendrá el galeno en nm_galenos al instanciarse. */
+  codigo: string;
+  /** Nombre a mostrar / a mandar en el POST de creación. */
+  nombre: string;
+  niveles: GalenoPlantillaNivelOut[];
+};
+
 // ─── Valores ──────────────────────────────────────────────────────────────────
 
 export type Origen = "NE" | "NNE" | "NN";
@@ -232,21 +254,28 @@ export type ValorActualizarPayload = {
 // ─── Tabla Valores (Reportes) ─────────────────────────────────────────────────
 
 export type TablaValorComponente = {
-  concepto: string;
-  tipo: string;
-  valor_unitario: string;
+  componente_id: number;
+  concepto: "Honorarios" | "Ayudante" | "Gastos";
+  tipo: "calculable" | "fijo";
+  galeno_id: number | null;
+  galeno_codigo: string | null;
+  galeno_nivel: number | null;
   cantidad: string;
+  valor_unitario: string;
   subtotal: string;
-  opcional: boolean;
 };
 
 export type TablaValorItem = {
   nomenclador_id: number;
   codigo: string;
-  descripcion: string;
+  /** "NE" (variante por especialidad), "NNE" o "NN" — cuál variante ganó. */
+  origen: "NE" | "NNE" | "NN";
+  /** Especialidad de la variante ganadora. Solo != null cuando ganó una NE. */
+  especialidad_id_colegio: number | null;
+  descripcion: string | null;
   nivel: number | null;
+  por_presupuesto: boolean;
   precio_total: string;
-  por_presupuesto: 0 | 1;
   vigencia_desde: string;
   vigencia_hasta: string | null;
   componentes: TablaValorComponente[];
