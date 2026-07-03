@@ -27,7 +27,7 @@ import { autoDetectMapping, sheetToRows, columnList } from "../../../utils/preci
 import { rowsToCsv, buildComponentCsv } from "../../../utils/precios/csv";
 import {
   importarValoresCsv,
-  contarValoresPorVigencia,
+  listCodigosPorVigencia,
   eliminarValoresPorVigencia,
   listVigenciasCargadas,
 } from "../nomenclador.api";
@@ -63,6 +63,8 @@ export default function ImportarPreciosPdf() {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<ImportarCSVResult | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
+  // Códigos del archivo que ya estaban cargados en esta vigencia y se omitieron.
+  const [omitidos, setOmitidos] = useState(0);
 
   // Modal de eliminación por vigencia
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -111,6 +113,7 @@ export default function ImportarPreciosPdf() {
     setError(null);
     setImportResult(null);
     setImportError(null);
+    setOmitidos(0);
     setSheets([]);
     setMapping(null);
     setSheetIdx(0);
@@ -184,17 +187,27 @@ export default function ImportarPreciosPdf() {
     setImporting(true);
     setImportError(null);
     setImportResult(null);
+    setOmitidos(0);
     try {
-      const { cantidad } = await contarValoresPorVigencia(os, vig);
-      if (cantidad > 0) {
+      // Cargar por partes: se importan solo los códigos que aún no están cargados
+      // para esta OS en esta vigencia; los ya presentes se omiten (no se pisan).
+      const { codigos } = await listCodigosPorVigencia(os, vig);
+      const yaCargados = new Set(codigos);
+      const nuevos = rows.filter((r) => !yaCargados.has(r.codigo));
+      const cantidadOmitidos = rows.length - nuevos.length;
+
+      if (nuevos.length === 0) {
         setImportError(
-          `Ya hay ${cantidad} código${cantidad !== 1 ? "s" : ""} cargado${cantidad !== 1 ? "s" : ""} ` +
-            `para la obra social ${os} en la vigencia ${vig}. Eliminá esa vigencia antes de volver a cargar.`,
+          `Los ${rows.length} código${rows.length !== 1 ? "s" : ""} de este archivo ya ` +
+            `${rows.length !== 1 ? "están" : "está"} cargado${rows.length !== 1 ? "s" : ""} ` +
+            `para la obra social ${os} en la vigencia ${vig}. No hay códigos nuevos para importar.`,
         );
         return;
       }
-      const file = new File([buildComponentCsv(rows, ORIGEN)], "valores.csv", { type: "text/csv" });
+
+      const file = new File([buildComponentCsv(nuevos, ORIGEN)], "valores.csv", { type: "text/csv" });
       setImportResult(await importarValoresCsv(file, os, vig));
+      setOmitidos(cantidadOmitidos);
     } catch (e) {
       console.error(e);
       setImportError("No se pudo importar. Revisá la conexión y los datos.");
@@ -440,7 +453,7 @@ export default function ImportarPreciosPdf() {
                 <span className={styles.stepBadge}>Paso 2</span>
                 <div>
                   <h2 className={styles.importTitle}>Importar a la base de datos</h2>
-                  <p className={styles.importSub}>Crea los valores (nm_valores) para la obra social {nroObraSocial || "…"} con vigencia {vigencia || "…"}.</p>
+                  <p className={styles.importSub}>Crea los valores (nm_valores) para la obra social {nroObraSocial || "…"} con vigencia {vigencia || "…"}. Podés cargar varias hojas en la misma vigencia: se importan solo los códigos nuevos, los ya cargados se omiten.</p>
                 </div>
               </div>
               <div className={styles.importRow}>
@@ -456,6 +469,12 @@ export default function ImportarPreciosPdf() {
                     <CheckCircle2 size={15} />
                     {importResult.procesados} código{importResult.procesados !== 1 ? "s" : ""} importado{importResult.procesados !== 1 ? "s" : ""}
                   </div>
+                  {omitidos > 0 && (
+                    <div className={styles.resultInfo}>
+                      <AlertCircle size={15} />
+                      {omitidos} código{omitidos !== 1 ? "s" : ""} ya cargado{omitidos !== 1 ? "s" : ""} en esta vigencia se {omitidos !== 1 ? "omitieron" : "omitió"} para no pisar los precios existentes.
+                    </div>
+                  )}
                   {importResult.errores.length > 0 && (
                     <div className={styles.resultErrors}>
                       <div className={styles.resultErrTitle}><AlertCircle size={14} /> {importResult.errores.length} con error</div>

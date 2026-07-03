@@ -178,6 +178,14 @@ export const contarValoresPorVigencia = (
 }> =>
   getJSON("/api/valores_nm/por_vigencia", { obra_social_nro, vigencia_desde });
 
+// Códigos ya cargados para una OS en una vigencia exacta. Permite cargar la misma
+// vigencia por partes (varias hojas): se omiten los códigos ya presentes.
+export const listCodigosPorVigencia = (
+  obra_social_nro: number,
+  vigencia_desde: string,
+): Promise<{ obra_social_nro: number; vigencia_desde: string; codigos: string[] }> =>
+  getJSON("/api/valores_nm/codigos_por_vigencia", { obra_social_nro, vigencia_desde });
+
 // Vigencias con valores cargados para una OS (para el selector del modal de eliminación).
 export const listVigenciasCargadas = (
   obra_social_nro: number,

@@ -322,7 +322,7 @@ export default function NomencladorGalenos() {
     }
   }
 
-  async function handleImport() {
+  async function handleImport(forceConvertir?: boolean) {
     const e: Record<string, string> = {};
     if (importForm.osOrigen === "") e.osOrigen = "Requerido";
     if (!importForm.vigencia_desde) e.vigencia_desde = "Requerido";
@@ -350,6 +350,9 @@ export default function NomencladorGalenos() {
     setImportErrors(e);
     if (Object.keys(e).length > 0) return;
 
+    const convertir = forceConvertir ?? importForm.convertir;
+    if (forceConvertir) setImportForm((p) => ({ ...p, convertir: true }));
+
     setImporting(true);
     setImportResult(null);
     try {
@@ -358,7 +361,7 @@ export default function NomencladorGalenos() {
         obra_social_nro_destino: selectedOsNro!,
         vigencia_desde: importForm.vigencia_desde,
         ...(codigos ? { codigos } : {}),
-        convertir_a_nivelado: importForm.convertir,
+        convertir_a_nivelado: convertir,
         solo_valor: importForm.actualizar === "solo_valor",
       });
       setImportResult(result);
@@ -1030,6 +1033,28 @@ export default function NomencladorGalenos() {
                     </div>
                   )}
                 </div>
+                {importResult.errores.some((er) => /sin nivel/i.test(er.motivo)) &&
+                  !importForm.convertir && (
+                    <div className={styles.convertBanner}>
+                      <AlertCircle size={16} />
+                      <div>
+                        <p>
+                          Algunos galenos del origen son <strong>nivelados</strong> y el destino los
+                          tiene <strong>sin nivel</strong>. Por eso no se importaron. Para reemplazarlos
+                          por los niveles del origen, reintentá con la conversión activada.
+                        </p>
+                        <button
+                          className={styles.btnPrimary}
+                          onClick={() => handleImport(true)}
+                          disabled={importing}
+                        >
+                          {importing
+                            ? <><Loader2 size={14} className={styles.spin} /> Reintentando…</>
+                            : <><Download size={14} /> Reintentar convirtiendo a nivelado</>}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 {importResult.errores.length > 0 && (
                   <div className={styles.errorList}>
                     <p className={styles.errorListTitle}>
@@ -1054,7 +1079,7 @@ export default function NomencladorGalenos() {
                 {importResult ? "Cerrar" : "Cancelar"}
               </button>
               {!importResult && (
-                <button className={styles.btnPrimary} onClick={handleImport} disabled={importing}>
+                <button className={styles.btnPrimary} onClick={() => handleImport()} disabled={importing}>
                   {importing
                     ? <><Loader2 size={14} className={styles.spin} /> Importando…</>
                     : <><Download size={14} /> Importar</>}
