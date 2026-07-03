@@ -22,6 +22,7 @@ import type {
   GalenoActualizarUnidadesResult,
   GalenosImportarPayload,
   GalenosImportarResult,
+  GalenoPlantillaOut,
   ActualizacionMasivaResult,
   ValorOut,
   ValorCreatePayload,
@@ -135,6 +136,14 @@ export const importarGalenosDeObraSocial = (
     "/api/galenos/importar_de_obra_social",
     payload,
   );
+
+// ─── Plantillas de Galenos (solo lectura) ──────────────────────────────────────
+
+export const listGalenoPlantillas = (): Promise<GalenoPlantillaOut[]> =>
+  getJSON<GalenoPlantillaOut[]>("/api/galenos/plantillas");
+
+export const getGalenoPlantilla = (grupo: string): Promise<GalenoPlantillaOut> =>
+  getJSON<GalenoPlantillaOut>(`/api/galenos/plantillas/${grupo}`);
 
 // ─── Valores ──────────────────────────────────────────────────────────────────
 

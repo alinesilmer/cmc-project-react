@@ -5,8 +5,6 @@ import {
   Loader2,
   AlertCircle,
   AlertTriangle,
-  CheckCircle2,
-  XCircle,
   X as XIcon,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -34,9 +32,6 @@ export default function ConsultaPrecios() {
   const { user } = useAuth();
   // ID_COLEGIO_ESPE en orden de prioridad (principal primero)
   const doctorEspecialidades: number[] = user?.especialidades ?? [];
-
-  // Specialty validity state (populated after each search)
-  const [especialidadValida, setEspecialidadValida] = useState<boolean | null>(null);
 
   // OS autocomplete
   const [selectedOSItem, setSelectedOSItem] = useState<ObraSocialListItem | null>(null);
@@ -147,7 +142,6 @@ export default function ConsultaPrecios() {
     setSearched(true);
     setResult(null);
     setError(null);
-    setEspecialidadValida(null);
 
     try {
       const tablaData = await getTablaValores({
@@ -166,16 +160,6 @@ export default function ConsultaPrecios() {
       }
 
       setResult(exactTabla);
-
-      if (doctorEspecialidades.length) {
-        setEspecialidadValida(
-          selectedNom.sin_restriccion_especialidad
-            ? true
-            : exactTabla.origen === "NE" &&
-                exactTabla.especialidad_id_colegio != null &&
-                doctorEspecialidades.includes(exactTabla.especialidad_id_colegio),
-        );
-      }
     } catch {
       setError("Error al consultar. Verificá la obra social y el código.");
     } finally {
@@ -345,23 +329,7 @@ export default function ConsultaPrecios() {
           >
             <div className={styles.resultHeader}>
               <p className={styles.resultDesc}>{result.descripcion}</p>
-              <p className={styles.resultSub}>
-                {selectedOSItem?.nombre} · Vigente desde {result.vigencia_desde}
-                {result.vigencia_hasta && ` hasta ${result.vigencia_hasta}`}
-              </p>
-              {doctorEspecialidades.length > 0 && especialidadValida !== null && (
-                <div
-                  className={`${styles.especialidadBadge} ${
-                    especialidadValida ? styles.badgeOk : styles.badgeNo
-                  }`}
-                >
-                  {especialidadValida ? (
-                    <><CheckCircle2 size={13} /> Tu especialidad está habilitada para este código</>
-                  ) : (
-                    <><XCircle size={13} /> Tu especialidad no está habilitada para este código</>
-                  )}
-                </div>
-              )}
+              <p className={styles.resultSub}>{selectedOSItem?.nombre}</p>
             </div>
 
             <div className={styles.priceBreakdown}>

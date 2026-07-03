@@ -141,6 +141,28 @@ export type GalenosImportarResult = {
   errores: { codigo: string; nivel: number | null; motivo: string }[];
 };
 
+// ─── Plantillas de Galenos (solo lectura) ──────────────────────────────────────
+
+export type GalenoPlantillaNivelOut = {
+  /** null = galeno sin niveles */
+  nivel: number | null;
+  /** Siempre "0.00" — informativo; el precio real lo carga el operador al instanciar. */
+  valor_unitario: string;
+  unidades_honorarios: string | null;
+  unidades_ayudante: string | null;
+  unidades_gastos: string | null;
+};
+
+export type GalenoPlantillaOut = {
+  /** Identificador del conjunto, ej. "cirugia_adulto_de_7_niveles". */
+  grupo: string;
+  /** Slug real que tendrá el galeno en nm_galenos al instanciarse. */
+  codigo: string;
+  /** Nombre a mostrar / a mandar en el POST de creación. */
+  nombre: string;
+  niveles: GalenoPlantillaNivelOut[];
+};
+
 // ─── Valores ──────────────────────────────────────────────────────────────────
 
 export type Origen = "NE" | "NNE" | "NN";
