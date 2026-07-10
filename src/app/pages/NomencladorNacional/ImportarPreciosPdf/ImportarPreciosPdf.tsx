@@ -359,18 +359,25 @@ export default function ImportarPreciosPdf() {
                     </select>
                   </div>
                   <div className={styles.mapField}>
-                    <label className={styles.mapLabel}>Precio 1 · Cirujano</label>
+                    <label className={styles.mapLabel}>Honorarios · Cirujano</label>
                     <select className={styles.mapSelect} value={mapping.precio1} onChange={(e) => setMapping({ ...mapping, precio1: Number(e.target.value) })}>
                       {columns.map((c) => <option key={c.index} value={c.index}>{c.label}</option>)}
                     </select>
                   </div>
-                  <button type="button" className={styles.swapBtn} disabled={mapping.precio2 == null} title="Intercambiar Precio 1 y Precio 2"
+                  <button type="button" className={styles.swapBtn} disabled={mapping.precio2 == null} title="Intercambiar Honorarios y Ayudante"
                     onClick={() => setMapping({ ...mapping, precio1: mapping.precio2!, precio2: mapping.precio1 })}>
                     <ArrowLeftRight size={15} />
                   </button>
                   <div className={styles.mapField}>
-                    <label className={styles.mapLabel}>Precio 2 · Ayudante</label>
+                    <label className={styles.mapLabel}>Ayudante</label>
                     <select className={styles.mapSelect} value={mapping.precio2 ?? ""} onChange={(e) => setMapping({ ...mapping, precio2: e.target.value === "" ? null : Number(e.target.value) })}>
+                      <option value="">— ninguno —</option>
+                      {columns.map((c) => <option key={c.index} value={c.index}>{c.label}</option>)}
+                    </select>
+                  </div>
+                  <div className={styles.mapField}>
+                    <label className={styles.mapLabel}>Gastos</label>
+                    <select className={styles.mapSelect} value={mapping.gastos ?? ""} onChange={(e) => setMapping({ ...mapping, gastos: e.target.value === "" ? null : Number(e.target.value) })}>
                       <option value="">— ninguno —</option>
                       {columns.map((c) => <option key={c.index} value={c.index}>{c.label}</option>)}
                     </select>
@@ -413,8 +420,9 @@ export default function ImportarPreciosPdf() {
                   <thead>
                     <tr>
                       <th>codigo</th>
-                      <th className={styles.num}>precio_1</th>
-                      <th className={styles.num}>precio_2</th>
+                      <th className={styles.num}>Honorarios</th>
+                      <th className={styles.num}>Ayudante</th>
+                      <th className={styles.num}>Gastos</th>
                       <th>vigencia</th>
                       <th className={styles.num}>nro_obrasocial</th>
                     </tr>
@@ -424,16 +432,21 @@ export default function ImportarPreciosPdf() {
                       <tr key={`${r.codigo}-${i}`}>
                         <td className={styles.code}>{r.codigo}</td>
                         {r.por_presupuesto ? (
-                          <td className={styles.presupuestoCell} colSpan={2}>Por presupuesto</td>
-                        ) : r.precio_1 && r.precio_2 ? (
-                          <>
-                            <td className={`${styles.num} ${styles.swappable}`} onClick={() => swapRow(i)} title="Click para intercambiar precio_1 y precio_2">{r.precio_1}</td>
-                            <td className={`${styles.num} ${styles.swappable}`} onClick={() => swapRow(i)} title="Click para intercambiar precio_1 y precio_2">{r.precio_2}</td>
-                          </>
+                          <td className={styles.presupuestoCell} colSpan={3}>Por presupuesto</td>
                         ) : (
                           <>
-                            <td className={styles.num}>{r.precio_1}</td>
-                            <td className={styles.num}>{r.precio_2}</td>
+                            {r.precio_1 && r.precio_2 ? (
+                              <>
+                                <td className={`${styles.num} ${styles.swappable}`} onClick={() => swapRow(i)} title="Click para intercambiar Honorarios y Ayudante">{r.precio_1}</td>
+                                <td className={`${styles.num} ${styles.swappable}`} onClick={() => swapRow(i)} title="Click para intercambiar Honorarios y Ayudante">{r.precio_2}</td>
+                              </>
+                            ) : (
+                              <>
+                                <td className={styles.num}>{r.precio_1}</td>
+                                <td className={styles.num}>{r.precio_2}</td>
+                              </>
+                            )}
+                            <td className={styles.num}>{r.gastos}</td>
                           </>
                         )}
                         <td className={styles.muted}>{vigencia}</td>

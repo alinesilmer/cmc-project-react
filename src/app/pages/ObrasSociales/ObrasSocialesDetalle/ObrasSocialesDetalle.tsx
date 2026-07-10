@@ -1,7 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
 import {
   Building2, ChevronLeft, Pencil, FileText, Mail, Phone, MapPin,
@@ -13,64 +12,106 @@ import {
 import { getObraSocial } from "../obrasSociales.api";
 import type { ObraSocial, Documento } from "../obrasSociales.types";
 import { CONDICION_IVA_LABELS, TIPO_DOCUMENTO_LABELS } from "../obrasSociales.types";
-import {
-  extractRowsFromPayload,
-  normalizeRow,
-} from "../../BoletinConsultaComun/boletinConsultaComun.api";
-import type { ApiBoletinRow } from "../../BoletinConsultaComun/boletinConsultaComun.types";
-import { moneyFormatter, BOLETIN_ENDPOINTS } from "../../BoletinConsultaComun/boletinConsultaComun.constants";
+import { listValores } from "../../NomencladorNacional/nomenclador.api";
+import type { ValorOut, ValorEstado, Origen } from "../../NomencladorNacional/nomenclador.types";
 import s from "./ObrasSocialesDetalle.module.scss";
 
-const BOLETIN_URL = BOLETIN_ENDPOINTS[0];
+const money = new Intl.NumberFormat("es-AR", {
+  style: "currency",
+  currency: "ARS",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
 
-async function fetchRowsForOS(nroOS: number, signal?: AbortSignal): Promise<ApiBoletinRow[]> {
-  const allRows: ApiBoletinRow[] = [];
-  for (let page = 1; page <= 50; page++) {
-    const response = await axios.get(BOLETIN_URL, {
-      signal,
-      timeout: 20000,
-      withCredentials: false,
-      headers: { Accept: "application/json" },
-      params: { nro_obra_social: nroOS, page, size: 500 },
-    });
-    const rows = (extractRowsFromPayload(response.data) ?? []).map(normalizeRow);
-    if (!rows.length) break;
-    allRows.push(...rows.filter((r) => r.nro_obrasocial === nroOS));
-    if (rows.length < 500) break;
+/** Fila de historial derivada de un Valor del nomenclador negociado (nm_valores). */
+type HistRow = {
+  id: number;
+  codigo: string;
+  descripcion: string | null;
+  origen: Origen;
+  nivel: number | null;
+  /** Agrupa versiones de la MISMA variante para calcular el % vs. la anterior. */
+  variantKey: string;
+  vigencia_desde: string;
+  vigencia_hasta: string | null;
+  estado: ValorEstado;
+  por_presupuesto: boolean;
+  honorarios: number;
+  ayudante: number;
+  gastos: number;
+  total: number;
+};
+
+function subtotalOf(v: ValorOut, concepto: string): number {
+  const c = v.componentes.find((x) => x.concepto.toLowerCase() === concepto.toLowerCase());
+  return c ? parseFloat(c.subtotal) || 0 : 0;
+}
+
+function toHistRow(v: ValorOut): HistRow {
+  const honorarios = subtotalOf(v, "Honorarios");
+  const ayudante = subtotalOf(v, "Ayudante");
+  const gastos = subtotalOf(v, "Gastos");
+  return {
+    id: v.id,
+    codigo: v.codigo,
+    descripcion: v.descripcion,
+    origen: v.origen,
+    nivel: v.nivel,
+    variantKey: `${v.codigo}|${v.origen}|${v.especialidad_id_colegio ?? ""}|${v.nivel ?? ""}`,
+    vigencia_desde: v.vigencia_desde,
+    vigencia_hasta: v.vigencia_hasta,
+    estado: v.estado,
+    por_presupuesto: v.por_presupuesto,
+    honorarios,
+    ayudante,
+    gastos,
+    total: honorarios + ayudante + gastos,
+  };
+}
+
+// Historial completo de la OS: trae todas las vigencias (activas y cerradas) de
+// /api/valores_nm/, paginando hasta agotar. Cada Valor es una versión de un código.
+async function fetchHistorialOS(nroOS: number): Promise<HistRow[]> {
+  const all: HistRow[] = [];
+  const size = 200;
+  for (let page = 1; page <= 100; page++) {
+    const batch = await listValores({ obra_social_nro: nroOS, page, size });
+    all.push(...batch.map(toHistRow));
+    if (batch.length < size) break;
   }
-  return allRows;
+  return all;
 }
 
 const COLS = [
-  { key: "codigos",      label: "Código",      numeric: false },
-  { key: "honorarios_a", label: "Hon. A",       numeric: true  },
-  { key: "honorarios_b", label: "Hon. B",       numeric: true  },
-  { key: "honorarios_c", label: "Hon. C",       numeric: true  },
-  { key: "gastos",       label: "Gastos",       numeric: true  },
-  { key: "ayudante_a",   label: "Ayud. A",      numeric: true  },
-  { key: "ayudante_b",   label: "Ayud. B",      numeric: true  },
-  { key: "ayudante_c",   label: "Ayud. C",      numeric: true  },
+  { key: "codigo",     label: "Código",     numeric: false },
+  { key: "honorarios", label: "Honorarios", numeric: true  },
+  { key: "ayudante",   label: "Ayudante",   numeric: true  },
+  { key: "gastos",     label: "Gastos",     numeric: true  },
+  { key: "total",      label: "Total",      numeric: true  },
 ] as const;
 
 type ColKey = (typeof COLS)[number]["key"];
 type ActiveTab = "datos" | "documentos" | "historial";
 type HistorialView = "porcentual" | "por_fecha";
 
-async function exportToExcel(rows: ApiBoletinRow[], osName: string, date: string) {
+async function exportToExcel(rows: HistRow[], osName: string, date: string) {
   const [{ utils, write }, { saveAs }] = await Promise.all([
     import("xlsx"),
     import("file-saver"),
   ]);
   const data = rows.map((r) => ({
-    "Código":       r.codigos,
-    "Honorarios A": r.honorarios_a,
-    "Honorarios B": r.honorarios_b,
-    "Honorarios C": r.honorarios_c,
-    "Gastos":       r.gastos,
-    "Ayudante A":   r.ayudante_a,
-    "Ayudante B":   r.ayudante_b,
-    "Ayudante C":   r.ayudante_c,
-    "Fecha cambio": r.fecha_cambio ?? "",
+    "Código":         r.codigo,
+    "Descripción":    r.descripcion ?? "",
+    "Honorarios":     r.honorarios,
+    "Ayudante":       r.ayudante,
+    "Gastos":         r.gastos,
+    "Total":          r.total,
+    "Origen":         r.origen,
+    "Nivel":          r.nivel ?? "",
+    "Estado":         r.estado,
+    "Vigencia desde": r.vigencia_desde,
+    "Vigencia hasta": r.vigencia_hasta ?? "",
+    "Por presupuesto": r.por_presupuesto ? "Sí" : "",
   }));
   const ws = utils.json_to_sheet(data);
   const wb = utils.book_new();
@@ -155,8 +196,8 @@ export default function ObrasSocialesDetalle() {
   }, [obraId]);
 
   const { data: rows = [], isLoading: isLoadingRows } = useQuery({
-    queryKey: ["os-historial-rows", obra?.nro_obra_social],
-    queryFn: ({ signal }) => fetchRowsForOS(obra!.nro_obra_social, signal),
+    queryKey: ["os-historial-valores", obra?.nro_obra_social],
+    queryFn: () => fetchHistorialOS(obra!.nro_obra_social),
     enabled: !!obra?.nro_obra_social && activeTab === "historial",
     staleTime: 5 * 60 * 1000,
   });
@@ -165,23 +206,25 @@ export default function ObrasSocialesDetalle() {
   const porcentualGroups = useMemo(() => {
     if (!rows.length) return [];
 
-    const map = new Map<string, ApiBoletinRow[]>();
+    // Cadena de versiones por variante (código+origen+especialidad+nivel), asc por vigencia.
+    const byVariant = new Map<string, HistRow[]>();
     for (const row of rows) {
-      const key = row.fecha_cambio ?? "__none__";
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(row);
+      if (!byVariant.has(row.variantKey)) byVariant.set(row.variantKey, []);
+      byVariant.get(row.variantKey)!.push(row);
+    }
+    for (const [, chain] of byVariant) {
+      chain.sort((a, b) => a.vigencia_desde.localeCompare(b.vigencia_desde));
     }
 
-    const byCode = new Map<string, ApiBoletinRow[]>();
+    // Agrupa por vigencia_desde (la fecha en que un nuevo precio entra en vigencia).
+    const byDate = new Map<string, HistRow[]>();
     for (const row of rows) {
-      if (!byCode.has(row.codigos)) byCode.set(row.codigos, []);
-      byCode.get(row.codigos)!.push(row);
-    }
-    for (const [, codeRows] of byCode) {
-      codeRows.sort((a, b) => (a.fecha_cambio ?? "").localeCompare(b.fecha_cambio ?? ""));
+      const key = row.vigencia_desde ?? "__none__";
+      if (!byDate.has(key)) byDate.set(key, []);
+      byDate.get(key)!.push(row);
     }
 
-    const sorted = [...map.entries()].sort(([a], [b]) => {
+    const sorted = [...byDate.entries()].sort(([a], [b]) => {
       if (a === "__none__") return 1;
       if (b === "__none__") return -1;
       return b.localeCompare(a);
@@ -190,14 +233,12 @@ export default function ObrasSocialesDetalle() {
     return sorted.map(([dateKey, dateRows]) => {
       const pctChanges: number[] = [];
       for (const row of dateRows) {
-        const allVersions = byCode.get(row.codigos) ?? [];
-        const thisIdx = allVersions.findIndex((r) => r.id === row.id);
+        const chain = byVariant.get(row.variantKey) ?? [];
+        const thisIdx = chain.findIndex((r) => r.id === row.id);
         if (thisIdx > 0) {
-          const prior = allVersions[thisIdx - 1];
-          if (prior.honorarios_a > 0) {
-            pctChanges.push(
-              ((row.honorarios_a - prior.honorarios_a) / prior.honorarios_a) * 100
-            );
+          const prior = chain[thisIdx - 1];
+          if (prior.total > 0) {
+            pctChanges.push(((row.total - prior.total) / prior.total) * 100);
           }
         }
       }
@@ -212,12 +253,12 @@ export default function ObrasSocialesDetalle() {
 
   // ── Por fecha table ────────────────────────────────────────────────────────
   const availableDates = useMemo(() => {
-    const dates = new Set(rows.map((r) => r.fecha_cambio).filter(Boolean) as string[]);
+    const dates = new Set(rows.map((r) => r.vigencia_desde).filter(Boolean));
     return [...dates].sort().reverse();
   }, [rows]);
 
   const dateRows = useMemo(
-    () => (dateFilter ? rows.filter((r) => r.fecha_cambio === dateFilter) : []),
+    () => (dateFilter ? rows.filter((r) => r.vigencia_desde === dateFilter) : []),
     [rows, dateFilter]
   );
 
@@ -225,7 +266,7 @@ export default function ObrasSocialesDetalle() {
     let result = dateRows;
     if (codeFilter.trim()) {
       const term = codeFilter.trim().toLowerCase();
-      result = result.filter((r) => r.codigos.toLowerCase().includes(term));
+      result = result.filter((r) => r.codigo.toLowerCase().includes(term));
     }
     if (sortField) {
       result = [...result].sort((a, b) => {
@@ -529,7 +570,7 @@ export default function ObrasSocialesDetalle() {
               <div className={s.porFechaHeader}>
                 <label className={s.porFechaLabel}>
                   <CalendarDays size={14} />
-                  Fecha cambio
+                  Vigencia desde
                 </label>
                 <select
                   className={s.porFechaSelect}
@@ -546,14 +587,14 @@ export default function ObrasSocialesDetalle() {
               {!dateFilter && (
                 <div className={s.hEmptyState}>
                   <CalendarDays size={28} />
-                  <span>Seleccioná una fecha para ver los valores.</span>
+                  <span>Seleccioná una vigencia para ver los valores.</span>
                 </div>
               )}
 
               {dateFilter && dateRows.length === 0 && (
                 <div className={s.hEmptyState}>
                   <SearchX size={28} />
-                  <span>No hay valores registrados para la fecha {dateFilter}.</span>
+                  <span>No hay valores registrados para la vigencia {dateFilter}.</span>
                 </div>
               )}
 
@@ -619,14 +660,24 @@ export default function ObrasSocialesDetalle() {
                         <tbody>
                           {displayRows.map((row) => (
                             <tr key={row.id}>
-                              <td className={s.tdCode}>{row.codigos}</td>
-                              <td className={`${s.tdRight} ${s.tdMoney}`}>{moneyFormatter.format(row.honorarios_a)}</td>
-                              <td className={`${s.tdRight} ${s.tdMoney}`}>{moneyFormatter.format(row.honorarios_b)}</td>
-                              <td className={`${s.tdRight} ${s.tdMoney}`}>{moneyFormatter.format(row.honorarios_c)}</td>
-                              <td className={`${s.tdRight} ${s.tdMoney}`}>{moneyFormatter.format(row.gastos)}</td>
-                              <td className={`${s.tdRight} ${s.tdMoney}`}>{moneyFormatter.format(row.ayudante_a)}</td>
-                              <td className={`${s.tdRight} ${s.tdMoney}`}>{moneyFormatter.format(row.ayudante_b)}</td>
-                              <td className={`${s.tdRight} ${s.tdMoney}`}>{moneyFormatter.format(row.ayudante_c)}</td>
+                              <td className={s.tdCode}>
+                                {row.codigo}{row.nivel != null ? ` · N${row.nivel}` : ""}
+                              </td>
+                              {row.por_presupuesto ? (
+                                <>
+                                  <td className={`${s.tdRight} ${s.tdMoney}`}>—</td>
+                                  <td className={`${s.tdRight} ${s.tdMoney}`}>—</td>
+                                  <td className={`${s.tdRight} ${s.tdMoney}`}>—</td>
+                                  <td className={`${s.tdRight} ${s.tdMoney}`}>Por presupuesto</td>
+                                </>
+                              ) : (
+                                <>
+                                  <td className={`${s.tdRight} ${s.tdMoney}`}>{money.format(row.honorarios)}</td>
+                                  <td className={`${s.tdRight} ${s.tdMoney}`}>{money.format(row.ayudante)}</td>
+                                  <td className={`${s.tdRight} ${s.tdMoney}`}>{money.format(row.gastos)}</td>
+                                  <td className={`${s.tdRight} ${s.tdMoney}`}>{money.format(row.total)}</td>
+                                </>
+                              )}
                             </tr>
                           ))}
                         </tbody>

@@ -1,9 +1,9 @@
 // Deduplicación de filas por código: ante duplicados, gana el de mayor precio total.
 import type { PrecioRow } from "./types";
 
-/** Precio total de una fila (precio_1 + precio_2). "Por presupuesto" cuenta como 0. */
+/** Precio total de una fila (honorarios + ayudante + gastos). "Por presupuesto" cuenta como 0. */
 function rowTotal(r: PrecioRow): number {
-  return (parseFloat(r.precio_1) || 0) + (parseFloat(r.precio_2) || 0);
+  return (parseFloat(r.precio_1) || 0) + (parseFloat(r.precio_2) || 0) + (parseFloat(r.gastos) || 0);
 }
 
 /**

@@ -53,7 +53,6 @@ function ResultRegister({ result, showVigencia = true, eligibility = null }: Res
     <article className={styles.register}>
       <div className={styles.regHead}>
         <div className={styles.regHeadmain}>
-          <span className={styles.tagCode}>{result.codigo}</span>
           <h2 className={styles.regTitle}>{result.descripcion}</h2>
           {eligibility && (
             <div

@@ -47,13 +47,16 @@ export function autoDetectMapping(grid: Cell[][], codeSet?: Set<string>): ColMap
   }
 
   // ── columnas de precio (pista por encabezado; si no, la última columna numérica) ──
+  // precio1 = Honorarios (cirujano), precio2 = Ayudante, gastos = Gastos.
   let precio1: number | null = null;
   let precio2: number | null = null;
+  let gastos: number | null = null;
   for (let c = 0; c < cols; c++) {
     if (c === codigoCol) continue;
     const h = headerText(c);
     if (precio1 == null && /ciruj|cirj|honor|\bhon\b/.test(h)) precio1 = c;
     if (precio2 == null && /ayud|\bay\b/.test(h)) precio2 = c;
+    if (gastos == null && /gasto/.test(h)) gastos = c;
   }
   if (precio1 == null) {
     for (let c = cols - 1; c >= 0; c--) {
@@ -63,7 +66,7 @@ export function autoDetectMapping(grid: Cell[][], codeSet?: Set<string>): ColMap
   }
   if (precio1 == null) precio1 = codigoCol === 0 ? 1 : 0;
 
-  return { codigo: codigoCol, precio1, precio2 };
+  return { codigo: codigoCol, precio1, precio2, gastos };
 }
 
 /**
@@ -83,15 +86,16 @@ export function sheetToRows(grid: Cell[][], m: ColMapping, codeSet?: Set<string>
 
     const p1 = parsePrecioCell(r[m.precio1] ?? null);
     const p2 = m.precio2 != null ? parsePrecioCell(r[m.precio2] ?? null) : null;
+    const pg = m.gastos != null ? parsePrecioCell(r[m.gastos] ?? null) : null;
 
     if (p1?.presupuesto || p2?.presupuesto) {
-      rows.push({ codigo, precio_1: "", precio_2: "", por_presupuesto: true });
+      rows.push({ codigo, precio_1: "", precio_2: "", gastos: "", por_presupuesto: true });
       continue;
     }
-    if (!p1 && !p2) {
+    if (!p1 && !p2 && !pg) {
       // sin precio en las columnas mapeadas: si la fila dice "por presupuesto", se marca
       if (isPorPresupuesto(r.map((c) => String(c ?? "")).join(" "))) {
-        rows.push({ codigo, precio_1: "", precio_2: "", por_presupuesto: true });
+        rows.push({ codigo, precio_1: "", precio_2: "", gastos: "", por_presupuesto: true });
       }
       continue;
     }
@@ -100,6 +104,7 @@ export function sheetToRows(grid: Cell[][], m: ColMapping, codeSet?: Set<string>
       codigo,
       precio_1: p1?.value ?? "",
       precio_2: p2?.value ?? "",
+      gastos: pg?.value ?? "",
       por_presupuesto: false,
     });
   }

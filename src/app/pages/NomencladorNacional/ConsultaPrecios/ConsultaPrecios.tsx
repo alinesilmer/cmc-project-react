@@ -1,44 +1,27 @@
 import { useState, useMemo, useRef } from "react";
-import {
-  Search,
-  DollarSign,
-  Loader2,
-  AlertCircle,
-  AlertTriangle,
-  X as XIcon,
-} from "lucide-react";
+import { Search, Loader2, AlertCircle, AlertTriangle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { AnimatePresence, motion } from "framer-motion";
 
-// Reuse identical styles from the admin Consulta de Valores page
-import styles from "../ConsultaValores/ConsultaValores.module.scss";
+import styles from "../ConsultaShared/consulta.module.scss";
+import Combobox from "../ConsultaShared/Combobox";
+import ResultRegister from "../ConsultaShared/ResultRegister";
 import { listNomenclador, getTablaValores } from "../nomenclador.api";
 import { listObrasSociales } from "../../ObrasSociales/obrasSociales.api";
 import type { NomencladorOut, TablaValorItem } from "../nomenclador.types";
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
 import { useAuth } from "../../../auth/AuthProvider";
 
-const fmt = new Intl.NumberFormat("es-AR", {
-  style: "currency",
-  currency: "ARS",
-  maximumFractionDigits: 2,
-});
-
-function findComp(componentes: TablaValorItem["componentes"], concepto: string) {
-  return componentes.find((c) => c.concepto.toLowerCase() === concepto.toLowerCase());
-}
-
 export default function ConsultaPrecios() {
   const { user } = useAuth();
-  // ID_COLEGIO_ESPE en orden de prioridad (principal primero)
+  // ID_COLEGIO_ESPE en orden de prioridad (principal primero). La especialidad
+  // no se elige acá: la determina el usuario logueado.
   const doctorEspecialidades: number[] = user?.especialidades ?? [];
 
   // OS autocomplete
   const [selectedOSItem, setSelectedOSItem] = useState<ObraSocialListItem | null>(null);
   const [osSearch, setOsSearch] = useState("");
-  const [osOpen, setOsOpen] = useState(false);
 
-  // Código CMC autocomplete
+  // Práctica (nomenclador) autocomplete
   const [nomSearch, setNomSearch] = useState("");
   const [nomResults, setNomResults] = useState<NomencladorOut[]>([]);
   const [nomLoading, setNomLoading] = useState(false);
@@ -71,27 +54,13 @@ export default function ConsultaPrecios() {
       .slice(0, 50);
   }, [osList, osSearch]);
 
-  // ── OS autocomplete handlers ───────────────────────────────────────────────
-
-  function selectOS(os: ObraSocialListItem) {
-    setSelectedOSItem(os);
-    setOsSearch("");
-    setOsOpen(false);
+  function resetResult() {
     setResult(null);
     setError(null);
     setSearched(false);
   }
 
-  function clearOS() {
-    setSelectedOSItem(null);
-    setOsSearch("");
-    setOsOpen(false);
-    setResult(null);
-    setError(null);
-    setSearched(false);
-  }
-
-  // ── Nomenclador autocomplete ───────────────────────────────────────────────
+  // ── Práctica autocomplete (async, debounced) ──────────────────────────────
 
   function handleNomSearch(q: string) {
     setNomSearch(q);
@@ -113,24 +82,6 @@ export default function ConsultaPrecios() {
         setNomLoading(false);
       }
     }, 300);
-  }
-
-  function selectNom(n: NomencladorOut) {
-    setSelectedNom(n);
-    setNomSearch("");
-    setNomResults([]);
-    setResult(null);
-    setError(null);
-    setSearched(false);
-  }
-
-  function clearNom() {
-    setSelectedNom(null);
-    setNomSearch("");
-    setNomResults([]);
-    setResult(null);
-    setError(null);
-    setSearched(false);
   }
 
   // ── Search ─────────────────────────────────────────────────────────────────
@@ -167,205 +118,100 @@ export default function ConsultaPrecios() {
     }
   }
 
-  const honorarios = result ? findComp(result.componentes, "Honorarios") : undefined;
-  const gastos = result ? findComp(result.componentes, "Gastos") : undefined;
-  const ayudante = result ? findComp(result.componentes, "Ayudante") : undefined;
-
   const canSearch = Boolean(osNro && selectedNom);
 
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <span className={styles.headerIcon}>
-          <DollarSign size={20} />
-        </span>
-        <div>
-          <h1 className={styles.title}>Consulta de Precios</h1>
-          <p className={styles.subtitle}>Precio de un código para una obra social</p>
+    <div className={styles.page}>
+      <div className={styles.inner}>
+        <div className={styles.pagehead}>
+          <h1 className={styles.pageTitle}>Consulta de precios</h1>
+          <p className={styles.pageSub}>
+            Valor vigente de una práctica según el convenio pactado con una obra
+            social.
+          </p>
         </div>
-      </div>
 
-      {/* ── Search form ── */}
-      <div className={styles.formCard}>
-        <div className={styles.formGrid}>
+        <div className={styles.instrument}>
+          {/* ── Query column ── */}
+          <div className={styles.colQuery}>
+            <div className={styles.colTitle} />
 
-          {/* Obra social */}
-          <div className={styles.formGroup}>
-            <label className={styles.formLabel}>Obra social</label>
-            {selectedOSItem ? (
-              <div className={styles.selectedCode}>
-                <span className={styles.selectedCodeNum}>{selectedOSItem.nro_obra_social}</span>
-                <span className={styles.selectedCodeDesc}>{selectedOSItem.nombre}</span>
-                <button className={styles.clearCodeBtn} onClick={clearOS} type="button" title="Cambiar">
-                  <XIcon size={13} />
-                </button>
-              </div>
-            ) : (
-              <div className={styles.autocompleteWrap}>
-                <div className={styles.autocompleteInputWrap}>
-                  <Search size={13} className={styles.autocompleteIcon} />
-                  <input
-                    className={styles.autocompleteInput}
-                    placeholder="Buscar por nombre o número…"
-                    value={osSearch}
-                    onChange={(e) => { setOsSearch(e.target.value); setOsOpen(true); }}
-                    onFocus={() => setOsOpen(true)}
-                    onBlur={() => setTimeout(() => setOsOpen(false), 150)}
-                  />
-                </div>
-                {osOpen && filteredOS.length > 0 && (
-                  <ul className={styles.autocompleteDropdown}>
-                    {filteredOS.map((os) => (
-                      <li
-                        key={os.nro_obra_social}
-                        className={styles.autocompleteItem}
-                        onMouseDown={(e) => { e.preventDefault(); selectOS(os); }}
-                      >
-                        <span className={styles.dropdownCode}>{os.nro_obra_social}</span>
-                        <span className={styles.dropdownDesc}>{os.nombre}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-          </div>
+            <Combobox<ObraSocialListItem>
+              idx={1}
+              label="Obra social"
+              placeholder="Buscar por nombre o número…"
+              query={osSearch}
+              onQueryChange={(q) => { setOsSearch(q); resetResult(); }}
+              items={filteredOS}
+              getKey={(os) => os.nro_obra_social}
+              getCode={(os) => String(os.nro_obra_social)}
+              getText={(os) => os.nombre}
+              selected={selectedOSItem}
+              onSelect={(os) => { setSelectedOSItem(os); setOsSearch(""); resetResult(); }}
+              onClear={() => { setSelectedOSItem(null); setOsSearch(""); resetResult(); }}
+            />
 
-          {/* Código CMC */}
-          <div className={styles.formGroup}>
-            <label className={styles.formLabel}>Código CMC</label>
-            {selectedNom ? (
-              <div className={styles.selectedCode}>
-                <span className={styles.selectedCodeNum}>{selectedNom.codigo}</span>
-                <span className={styles.selectedCodeDesc}>{selectedNom.descripcion}</span>
-                <button className={styles.clearCodeBtn} onClick={clearNom} type="button" title="Cambiar código">
-                  <XIcon size={13} />
-                </button>
-              </div>
-            ) : (
-              <div className={styles.autocompleteWrap}>
-                <div className={styles.autocompleteInputWrap}>
-                  <Search size={13} className={styles.autocompleteIcon} />
-                  <input
-                    className={styles.autocompleteInput}
-                    placeholder="Buscar por código o descripción…"
-                    value={nomSearch}
-                    onChange={(e) => handleNomSearch(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && nomResults.length > 0) selectNom(nomResults[0]);
-                    }}
-                  />
-                  {nomLoading && (
-                    <Loader2 size={13} className={`${styles.autocompleteSpinner} ${styles.spin}`} />
-                  )}
-                </div>
-                {nomResults.length > 0 && (
-                  <ul className={styles.autocompleteDropdown}>
-                    {nomResults.map((n) => (
-                      <li
-                        key={n.id}
-                        className={styles.autocompleteItem}
-                        onMouseDown={(e) => { e.preventDefault(); selectNom(n); }}
-                      >
-                        <span className={styles.dropdownCode}>{n.codigo}</span>
-                        <span className={styles.dropdownDesc}>{n.descripcion}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-          </div>
+            <Combobox<NomencladorOut>
+              idx={2}
+              label="Práctica"
+              hint="por código o por nombre"
+              placeholder="Buscar por código o descripción…"
+              query={nomSearch}
+              onQueryChange={handleNomSearch}
+              items={nomResults}
+              getKey={(n) => n.id}
+              getCode={(n) => n.codigo}
+              getText={(n) => n.descripcion}
+              selected={selectedNom}
+              onSelect={(n) => { setSelectedNom(n); setNomSearch(""); setNomResults([]); resetResult(); }}
+              onClear={() => { setSelectedNom(null); setNomSearch(""); setNomResults([]); resetResult(); }}
+              loading={nomLoading}
+              menuHint="Escribí al menos 2 caracteres…"
+            />
 
-          {/* Submit */}
-          <div className={styles.formGroup} style={{ marginTop: 12 }}>
             <button
-              className={styles.btnSearch}
+              type="button"
+              className={styles.cta}
               onClick={handleSearch}
               disabled={!canSearch || loading}
             >
-              {loading ? <Loader2 size={15} className={styles.spin} /> : <Search size={15} />}
-              Consultar
+              {loading ? <Loader2 size={17} className={styles.spin} /> : <Search size={17} />}
+              Consultar precio
             </button>
           </div>
+
+          {/* ── Result column ── */}
+          <div className={styles.colResult}>
+            {loading ? (
+              <div className={styles.loading}>
+                <span className={styles.pulse} />
+                Consultando precios…
+              </div>
+            ) : result ? (
+              <ResultRegister result={result} showVigencia={false} />
+            ) : searched && error ? (
+              <div className={styles.errorbox}>
+                <AlertCircle size={18} />
+                {error}
+              </div>
+            ) : (
+              <div className={styles.prompt}>
+                <div className={styles.promptLines} aria-hidden="true">
+                  <i /><i /><i /><i /><i /><i />
+                </div>
+                <div className={styles.promptInner}>
+                 
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className={styles.disclaimer}>
+          <AlertTriangle size={16} />
+          Los precios están sujetos a modificaciones por parte de las obras sociales.
         </div>
       </div>
-
-      {/* ── Output ── */}
-      <AnimatePresence mode="wait">
-        {loading && (
-          <motion.div
-            key="loading"
-            className={styles.loadingState}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <Loader2 size={22} className={styles.spin} />
-            <span>Consultando…</span>
-          </motion.div>
-        )}
-
-        {!loading && searched && error && (
-          <motion.div
-            key="error"
-            className={styles.errorState}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-          >
-            <AlertCircle size={16} />
-            {error}
-          </motion.div>
-        )}
-
-        {!loading && result && (
-          <motion.div
-            key="result"
-            className={styles.resultCard}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.18 }}
-          >
-            <div className={styles.resultHeader}>
-              <p className={styles.resultDesc}>{result.descripcion}</p>
-              <p className={styles.resultSub}>{selectedOSItem?.nombre}</p>
-            </div>
-
-            <div className={styles.priceBreakdown}>
-              {honorarios && (
-                <div className={styles.priceCell}>
-                  <span className={styles.priceCellLabel}>Honorarios</span>
-                  <span className={styles.priceCellValue}>
-                    {fmt.format(parseFloat(honorarios.subtotal))}
-                  </span>
-                </div>
-              )}
-              {gastos && (
-                <div className={styles.priceCell}>
-                  <span className={styles.priceCellLabel}>Gastos</span>
-                  <span className={styles.priceCellValue}>
-                    {fmt.format(parseFloat(gastos.subtotal))}
-                  </span>
-                </div>
-              )}
-              {ayudante && (
-                <div className={styles.priceCell}>
-                  <span className={styles.priceCellLabel}>Ayudante</span>
-                  <span className={styles.priceCellValue}>
-                    {fmt.format(parseFloat(ayudante.subtotal))}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <div className={styles.disclaimer}>
-              <AlertTriangle size={15} className={styles.disclaimerIcon} />
-              Los precios están sujetos a modificaciones por parte de las obras sociales.
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

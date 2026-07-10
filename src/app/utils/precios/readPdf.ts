@@ -47,7 +47,7 @@ function parseLine(line: Token[]): PrecioRow | null {
     .sort((a, b) => a.x - b.x);
 
   if (prices.length === 0) {
-    if (isPorPresupuesto(text)) return { codigo, precio_1: "", precio_2: "", por_presupuesto: true };
+    if (isPorPresupuesto(text)) return { codigo, precio_1: "", precio_2: "", gastos: "", por_presupuesto: true };
     return null;
   }
 
@@ -55,10 +55,13 @@ function parseLine(line: Token[]): PrecioRow | null {
   const candidates = prices.length >= 3 ? prices.slice(0, prices.length - 1) : prices;
   const ordered = [...candidates].sort((a, b) => b.val - a.val).slice(0, 2);
 
+  // El PDF no expone columnas: no se puede aislar Gastos de forma confiable, así que
+  // queda vacío. Gastos se carga por la ruta Excel/CSV, donde la columna es explícita.
   return {
     codigo,
     precio_1: ordered[0]?.str ?? "",
     precio_2: ordered[1]?.str ?? "",
+    gastos: "",
     por_presupuesto: false,
   };
 }
