@@ -2,9 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import { saveAs } from "file-saver";
+import { saveAs } from "@/app/lib/fileSaver";
 
 import styles from "./PadronesForm.module.scss";
 import SuccessModal from "../../SuccessModal/SuccessModal";
@@ -368,7 +366,7 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
     saveAs(blob, "padrones-obras-sociales.csv");
   };
 
-  const handleDownloadPdf = () => {
+  const handleDownloadPdf = async () => {
     if (selected.size === 0) {
       setAlertType("info");
       setAlertTitle("No hay datos para exportar");
@@ -379,6 +377,8 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
       return;
     }
     const rows = getSelectedRows();
+    const { jsPDF } = await import("jspdf");
+    const { default: autoTable } = await import("jspdf-autotable");
     const doc = new jsPDF();
     doc.setFontSize(14);
     doc.text("Padrones - Obras sociales seleccionadas", 14, 18);

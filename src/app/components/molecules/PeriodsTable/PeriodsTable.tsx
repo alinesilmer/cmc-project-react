@@ -2,8 +2,8 @@
 "use client";
 
 import React from "react";
-import { saveAs } from "file-saver";
-import ExcelJS from "exceljs";
+import { saveAs } from "@/app/lib/fileSaver";
+import type ExcelJS from "exceljs";
 import styles from "./PeriodsTable.module.scss";
 import Button from "../../atoms/Button/Button";
 import { Link } from "react-router-dom";
@@ -39,7 +39,8 @@ async function exportPeriodsToExcel(
   filename = "periodos.xlsx",
   includeStatus = true
 ) {
-  const wb = new ExcelJS.Workbook();
+  const ExcelJSLib = (await import("exceljs")).default;
+  const wb = new ExcelJSLib.Workbook();
   const ws = wb.addWorksheet("Períodos");
 
   ws.columns = [

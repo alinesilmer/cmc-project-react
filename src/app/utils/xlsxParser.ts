@@ -1,4 +1,3 @@
-import * as XLSX from "xlsx";
 import type { ObraSocial } from "./docxParser";
 
 function toNumber(v: any): number {
@@ -27,6 +26,7 @@ function isTextCell(v: any) {
 }
 
 export async function parseXlsxRanking(file: File): Promise<ObraSocial[]> {
+  const XLSX = await import("xlsx");
   const buffer = await file.arrayBuffer();
   const wb = XLSX.read(buffer, { type: "array" });
 

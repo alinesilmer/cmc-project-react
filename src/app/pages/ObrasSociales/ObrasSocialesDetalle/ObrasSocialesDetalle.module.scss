@@ -991,3 +991,42 @@
 .sortIconActive {
   color: #6f6591;
 }
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-4;
+  padding: $spacing-4 0 $spacing-2;
+}
+
+.pageBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-2 $spacing-4;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-md;
+  background-color: $white;
+  color: $gray-700;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+
+  &:hover:not(:disabled) {
+    background-color: $gray-50;
+    border-color: $gray-400;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.pageInfo {
+  font-size: $font-size-sm;
+  color: $gray-600;
+  font-variant-numeric: tabular-nums;
+}

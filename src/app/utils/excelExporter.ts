@@ -1,5 +1,3 @@
-import ExcelJS from "exceljs";
-import { saveAs } from "file-saver";
 import type { ObraSocial } from "./docxParser";
 
 function fmtDate(d: Date) {
@@ -31,6 +29,9 @@ function normalizeObrasSociales(rows: ObraSocial[]): ObraSocial[] {
 }
 
 export async function exportToExcel(data: ObraSocial[]) {
+  const { default: ExcelJS } = await import("exceljs");
+  const { saveAs } = await import("file-saver");
+
   const ordered = normalizeObrasSociales(data).sort((a, b) => b.consulta - a.consulta);
 
   const wb = new ExcelJS.Workbook();

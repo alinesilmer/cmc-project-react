@@ -1,7 +1,7 @@
 @use "@/app/styles/all.scss" as *;
 
 .page { min-height: 100vh; }
-.content { padding: $spacing-6; max-width: 100%; }
+.content { padding: $spacing-8; max-width: 100%; }
 
 .header {
   display: flex;

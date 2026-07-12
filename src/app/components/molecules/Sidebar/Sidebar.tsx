@@ -34,7 +34,6 @@ import {
   RotateCcw,
   Wallet,
   Plus,
-  CircleDollarSign,
   FileBoxIcon,
   FileText,
   FileSpreadsheet,
@@ -42,13 +41,14 @@ import {
   Users2,
   ClipboardPlus,
   HousePlus,
-  Table2,
   Flower2,
   FileCode2,
   Sigma,
   TrendingUp,
   Search,
   GitMerge,
+  History,
+  Percent,
 } from "lucide-react";
 
 import styles from "./Sidebar.module.scss";
@@ -324,28 +324,6 @@ const NAV_SECTIONS: NavSection[] = [
       },
       {
         kind: "group",
-        id: "valores",
-        icon: CircleDollarSign,
-        label: "Valores",
-        children: [
-          {
-            kind: "item",
-            path: `${base}/tabla-valores`,
-            icon: Table2,
-            label: "Tabla de Valores",
-            perms: ["medicos:leer"],
-          },
-          {
-            kind: "item",
-            path: `${base}/actualizacion-valores`,
-            icon: PencilRuler,
-            label: "Actualización de Valores",
-            perms: ["medicos:leer"],
-          },
-        ],
-      },
-      {
-        kind: "group",
         id: "convenios",
         icon: Building2,
         label: "Convenios",
@@ -362,6 +340,13 @@ const NAV_SECTIONS: NavSection[] = [
             path: `${base}/convenios/obras-sociales/alta`,
             icon: HousePlus,
             label: "Alta Obra Social",
+            perms: ["medicos:leer"],
+          },
+          {
+            kind: "item",
+            path: `${base}/historial-valores`,
+            icon: History,
+            label: "Historial de Valores",
             perms: ["medicos:leer"],
           },
         ],
@@ -423,6 +408,13 @@ const NAV_SECTIONS: NavSection[] = [
         path: `${base}/nomenclador/importar-precios-pdf`,
         icon: FileText,
         label: "Importar Precios PDF",
+        perms: ["medicos:leer"],
+      },
+      {
+        kind: "item",
+        path: `${base}/nomenclador/aumento-porcentual`,
+        icon: Percent,
+        label: "Aumento Porcentual",
         perms: ["medicos:leer"],
       },
       {

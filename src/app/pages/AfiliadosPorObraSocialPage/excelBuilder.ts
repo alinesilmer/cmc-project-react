@@ -1,4 +1,4 @@
-import ExcelJS from "exceljs";
+import type ExcelJS from "exceljs";
 import type { ObraSocial, Prestador, ExportOptions } from "./types";
 import {
   fmtDate, safeStr, buildOsCode,
@@ -101,6 +101,8 @@ export async function buildExcel(
   selectedOS: ObraSocial,
   opts: ExportOptions
 ): Promise<Blob> {
+  const ExcelJS = (await import("exceljs")).default;
+
   const logoDataUrl = await fetchAsDataUrl(CMC_LOGO_SRC);
   const code = buildOsCode(selectedOS);
   const dateStr = fmtDate(new Date());

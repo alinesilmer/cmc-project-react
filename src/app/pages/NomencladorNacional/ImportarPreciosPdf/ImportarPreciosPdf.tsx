@@ -14,7 +14,7 @@ import {
   SlidersHorizontal,
   X as XIcon,
 } from "lucide-react";
-import { saveAs } from "file-saver";
+import { saveAs } from "@/app/lib/fileSaver";
 
 import styles from "./ImportarPreciosPdf.module.scss";
 import Modal from "../../../components/atoms/Modal/Modal";

@@ -1,8 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
-import ExcelJS from "exceljs";
-import { saveAs } from "file-saver";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import type ExcelJS from "exceljs";
+import { saveAs } from "@/app/lib/fileSaver";
 import { getJSON } from "../../../../lib/http";
 import Button from "../../../../components/atoms/Button/Button";
 import Card from "../../../../components/atoms/Card/Card";
@@ -136,7 +134,8 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
 
   // ── Excel export ──────────────────────────────────────────────
   const exportExcel = async () => {
-    const wb = new ExcelJS.Workbook();
+    const ExcelJSLib = (await import("exceljs")).default;
+    const wb = new ExcelJSLib.Workbook();
     const ws = wb.addWorksheet("Vista Previa");
 
     // Helpers
@@ -389,7 +388,9 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
   };
 
   // ── PDF export ────────────────────────────────────────────────
-  const exportPDF = () => {
+  const exportPDF = async () => {
+    const { jsPDF } = await import("jspdf");
+    const { default: autoTable } = await import("jspdf-autotable");
     const doc = new jsPDF({
       orientation: "landscape",
       unit: "pt",

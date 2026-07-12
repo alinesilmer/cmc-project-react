@@ -251,6 +251,29 @@ export type ValorActualizarPayload = {
   observacion?: string | null;
 };
 
+// ─── Actualización masiva por porcentaje ───────────────────────────────────────
+
+/**
+ * Aumento/baja porcentual lineal sobre los valores de modalidad FIJA de una OS
+ * en un `origen` dado. `filtro_codigos` limita a esos códigos; `filtro_rango`
+ * limita a un rango [desde, hasta] (comparación por string, como el backend).
+ * Sin ninguno de los dos, aplica a todos. Los valores calculables por galeno
+ * quedan como `omitidos` (se actualizan subiendo el galeno).
+ */
+export type ActualizarPorcentajePayload = {
+  obra_social_nro: number;
+  origen: Origen;
+  porcentaje: number;
+  vigencia_desde: string;
+  filtro_codigos?: string[] | null;
+  filtro_rango?: { desde: string; hasta: string } | null;
+};
+
+export type RevertirActualizacionPayload = {
+  obra_social_nro: number;
+  vigencia_revertir: string;
+};
+
 // ─── Tabla Valores (Reportes) ─────────────────────────────────────────────────
 
 export type TablaValorComponente = {

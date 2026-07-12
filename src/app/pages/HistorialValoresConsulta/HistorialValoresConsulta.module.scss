@@ -1,0 +1,203 @@
+@use "@/app/styles/all.scss" as *;
+
+.container {
+  padding: $spacing-8;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-6;
+  min-height: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+}
+
+.headerIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: $border-radius-lg;
+  background-color: $gray-100;
+  color: $gray-700;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: $font-size-sm;
+  color: $gray-500;
+  margin: $spacing-1 0 0;
+}
+
+.selectorCard {
+  background-color: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-sm;
+  padding: $spacing-5;
+  max-width: 560px;
+}
+
+.selectorLabel {
+  display: block;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: $gray-600;
+  margin-bottom: $spacing-2;
+}
+
+.autocomplete {
+  position: relative;
+}
+
+.inputWrap {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-md;
+  padding: 0 $spacing-3;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &:focus-within {
+    border-color: #6f6591;
+    box-shadow: 0 0 0 3px rgba(111, 101, 145, 0.12);
+  }
+}
+
+.inputIcon {
+  color: $gray-400;
+  flex-shrink: 0;
+}
+
+.input {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  width: 100%;
+  padding: $spacing-3 0;
+  font-size: $font-size-sm;
+  color: $gray-800;
+
+  &::placeholder {
+    color: $gray-400;
+  }
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  margin: 0;
+  padding: $spacing-1;
+  list-style: none;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-md;
+  box-shadow: $shadow-md;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-2 $spacing-3;
+  border-radius: $border-radius-sm;
+  cursor: pointer;
+
+  &:hover {
+    background-color: $gray-50;
+  }
+}
+
+.optionNro {
+  font-family: monospace;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: #6f6591;
+  min-width: 44px;
+}
+
+.optionName {
+  font-size: $font-size-sm;
+  color: $gray-700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chosen {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-3;
+  border: 1px solid #d9d5e6;
+  border-radius: $border-radius-md;
+  background-color: #f6f4fb;
+}
+
+.chosenNro {
+  font-family: monospace;
+  font-weight: $font-weight-bold;
+  font-size: $font-size-sm;
+  color: $white;
+  background-color: #6f6591;
+  padding: $spacing-1 $spacing-2;
+  border-radius: $border-radius-sm;
+}
+
+.chosenName {
+  flex: 1;
+  min-width: 0;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $gray-800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chosenClear {
+  border: 0;
+  background: transparent;
+  color: $gray-500;
+  cursor: pointer;
+  display: inline-flex;
+  padding: $spacing-1;
+  border-radius: $border-radius-sm;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: $gray-700;
+  }
+}
+
+.prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-3;
+  padding: $spacing-16;
+  color: $gray-400;
+  text-align: center;
+  background-color: $white;
+  border: 1px dashed $gray-200;
+  border-radius: $border-radius-lg;
+}

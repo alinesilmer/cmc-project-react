@@ -47,11 +47,13 @@ http.interceptors.request.use((config) => {
   if (token) config.headers["Authorization"] = `Bearer ${token}`;
 
   const method = (config.method ?? "").toUpperCase();
-  console.log(`%cRequest a: ${config.url}`, "color: #22c55e; font-weight: bold;", {
-    method,
-    params: config.params,
-    data: config.data,
-  });
+  if (import.meta.env.DEV) {
+    console.log(`%cRequest a: ${config.url}`, "color: #22c55e; font-weight: bold;", {
+      method,
+      params: config.params,
+      data: config.data,
+    });
+  }
 
   return config;
 });
@@ -62,9 +64,11 @@ let queue: Array<() => void> = [];
 
 http.interceptors.response.use(
   (res) => {
-    const method = (res.config.method ?? "").toUpperCase();
-    const url = res.config.url ?? "";
-    console.log(`%c[API] ${method} ${url}`, "color: #06b6d4; font-weight: bold;", res.data);
+    if (import.meta.env.DEV) {
+      const method = (res.config.method ?? "").toUpperCase();
+      const url = res.config.url ?? "";
+      console.log(`%c[API] ${method} ${url}`, "color: #06b6d4; font-weight: bold;", res.data);
+    }
     return res;
   },
   async (error) => {

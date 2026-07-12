@@ -23,10 +23,8 @@ import {
   fmt,
   mesLabel,
 } from "../types";
-import ExcelJS from "exceljs";
-import { saveAs } from "file-saver";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import type ExcelJS from "exceljs";
+import { saveAs } from "@/app/lib/fileSaver";
 
 const OBSERVACION_OPTIONS = [
   "Falta firma",
@@ -300,7 +298,8 @@ const LoteDetalle: React.FC = () => {
 
   const exportExcel = async () => {
     if (!lote) return;
-    const wb = new ExcelJS.Workbook();
+    const ExcelJSLib = (await import("exceljs")).default;
+    const wb = new ExcelJSLib.Workbook();
     const ws = wb.addWorksheet("Ajustes");
     ws.columns = [
       { header: "Tipo", key: "tipo", width: 10 },
@@ -347,8 +346,10 @@ const LoteDetalle: React.FC = () => {
     );
   };
 
-  const exportPDF = () => {
+  const exportPDF = async () => {
     if (!lote) return;
+    const { jsPDF } = await import("jspdf");
+    const { default: autoTable } = await import("jspdf-autotable");
     const doc = new jsPDF({ orientation: "landscape" });
     doc.setFontSize(12);
     doc.text(`Lote ${loteId} — OS ${lote.obra_social_id} · ${periodo}`, 14, 14);

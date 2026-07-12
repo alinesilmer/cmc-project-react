@@ -11,9 +11,6 @@ import {
   Trash2,
   XCircle,
 } from "lucide-react";
-import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -298,6 +295,7 @@ const DeduccionesList: React.FC = () => {
 
   const exportExcel = async () => {
     try {
+      const XLSX = await import("xlsx");
       const data = await fetchDeduccionesHistorialExport(buildExportParams());
       const rows = data.map((row) => ({
         Medico: row.medico_nombre,
@@ -322,6 +320,8 @@ const DeduccionesList: React.FC = () => {
 
   const exportPdf = async () => {
     try {
+      const { jsPDF } = await import("jspdf");
+      const { default: autoTable } = await import("jspdf-autotable");
       const data = await fetchDeduccionesHistorialExport(buildExportParams());
       const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
       doc.setFontSize(14);

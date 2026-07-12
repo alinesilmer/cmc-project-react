@@ -2,8 +2,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import ExcelJS from "exceljs";
-import { saveAs } from "file-saver";
+import { saveAs } from "@/app/lib/fileSaver";
 
 import type { ExportColumnKey, MedicoRow } from "./medicosExport";
 import { DEFAULT_HEADERS, mapUIToQuery, pickValue } from "./medicosExport";
@@ -99,6 +98,7 @@ export function useMedicosExport() {
         // =========================
         // XLSX PRETTY
         // =========================
+        const ExcelJS = (await import("exceljs")).default;
         const wb = new ExcelJS.Workbook();
         wb.creator = "CMC";
         wb.created = now;

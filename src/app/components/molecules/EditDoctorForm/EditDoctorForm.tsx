@@ -2,7 +2,6 @@
 
 import React, { useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import Sidebar from "../../molecules/Sidebar/Sidebar";
 import Card from "../../atoms/Card/Card";
 import Button from "../../atoms/Button/Button";
 import Input from "../../atoms/Input/Input";
@@ -92,7 +91,6 @@ export default function EditDoctorPage() {
 
   return (
     <div className={styles.page}>
-      <Sidebar />
       <div className={styles.content}>
         <div className={styles.topbar}>
           <Link to={`/doctors/${id}`} className={styles.backLink}>

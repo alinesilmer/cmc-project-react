@@ -176,6 +176,7 @@ export default function NomencladorPorOS() {
   const [codeSearch, setCodeSearch] = useState("");
   const [nomDescMap, setNomDescMap] = useState<Record<number, string>>({});
   const [origenFilter, setOrigenFilter] = useState<Origen | "todos">("todos");
+  const [soloPresupuesto, setSoloPresupuesto] = useState(false);
   const [page, setPage] = useState(1);
   const descAttempted = useRef<Set<number>>(new Set());
 
@@ -266,12 +267,13 @@ export default function NomencladorPorOS() {
   const filteredValores = useMemo(() => {
     let list = valores;
     if (origenFilter !== "todos") list = list.filter((v) => v.origen === origenFilter);
+    if (soloPresupuesto) list = list.filter((v) => v.por_presupuesto);
     if (codeSearch.trim()) {
       const q = codeSearch.toLowerCase();
       list = list.filter((v) => v.codigo.toLowerCase().includes(q) || (v.descripcion ?? nomDescMap[v.nomenclador_id] ?? "").toLowerCase().includes(q));
     }
     return list;
-  }, [valores, codeSearch, origenFilter, nomDescMap]);
+  }, [valores, codeSearch, origenFilter, soloPresupuesto, nomDescMap]);
 
   const grouped = useMemo(() => {
     const map = new Map<number, ValorOut[]>();
@@ -290,7 +292,7 @@ export default function NomencladorPorOS() {
   );
 
   // Volver a la página 1 cuando cambian OS, búsqueda o filtro de origen.
-  useEffect(() => { setPage(1); }, [selectedNroOS, codeSearch, origenFilter]);
+  useEffect(() => { setPage(1); }, [selectedNroOS, codeSearch, origenFilter, soloPresupuesto]);
   // Ajustar si la página quedó fuera de rango (p. ej. tras cerrar un valor).
   useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
 
@@ -659,6 +661,16 @@ export default function NomencladorPorOS() {
                       {o === "todos" ? "Todos" : o === "NNE" ? "Valor Fijo" : o}
                     </button>
                   ))}
+                </div>
+                <div className={styles.filterGroup}>
+                  <button
+                    className={`${styles.filterBtn} ${soloPresupuesto ? styles.filterBtnActive : ""}`}
+                    onClick={() => setSoloPresupuesto((v) => !v)}
+                    title="Mostrar solo códigos por presupuesto"
+                    aria-pressed={soloPresupuesto}
+                  >
+                    Por presupuesto
+                  </button>
                 </div>
                 <button className={styles.btnPrimary} onClick={openCreate}><Plus size={14} /> Agregar código</button>
               </div>

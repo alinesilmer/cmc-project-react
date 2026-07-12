@@ -1,0 +1,400 @@
+@use "@/app/styles/all.scss" as *;
+
+// ── Bar ─────────────────────────────────────────────────────────────────────────
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  width: 100%;
+  background: rgba($white, 0.85);
+  backdrop-filter: saturate(180%) blur(12px);
+  border-bottom: 1px solid rgba($gray-200, 0.8);
+  box-shadow: 0 6px 20px -12px rgba(15, 23, 42, 0.18);
+  font-family: "Open Sans", sans-serif;
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  height: 64px;
+  padding: 0 $spacing-6;
+}
+
+// ── Brand ────────────────────────────────────────────────────────────────────────
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  text-decoration: none;
+  flex-shrink: 0;
+  padding-right: $spacing-5;
+  margin-right: $spacing-4;
+  border-right: 1px solid rgba($gray-200, 0.9);
+  height: 34px;
+}
+.logo {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  border-radius: 9px;
+}
+.brandText {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $primary-blue;
+  letter-spacing: 0.04em;
+}
+
+// ── Desktop menubar (full-height links + underline indicator) ─────────────────────
+.menubar {
+  display: flex;
+  align-self: stretch;
+  align-items: stretch;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.menu {
+  display: flex;
+  position: relative;
+}
+
+.topLink {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 100%;
+  padding: 0 $spacing-3;
+  border: none;
+  background: transparent;
+  color: $gray-600;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.16s ease;
+
+  // underline indicator anchored to the bottom edge of the bar
+  &::after {
+    content: "";
+    position: absolute;
+    left: $spacing-3;
+    right: $spacing-3;
+    bottom: 0;
+    height: 2.5px;
+    border-radius: 3px 3px 0 0;
+    background: $primary-blue;
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+  }
+
+  &:hover {
+    color: $gray-900;
+    &::after { transform: scaleX(1); opacity: 0.4; }
+  }
+  &:focus-visible {
+    outline: none;
+    color: $gray-900;
+    &::after { transform: scaleX(1); opacity: 0.4; }
+  }
+}
+.topLabel { line-height: 1; }
+
+.topActive {
+  color: $primary-blue;
+  &::after { transform: scaleX(1); opacity: 1; }
+}
+.topOpen {
+  color: $gray-900;
+  &::after { transform: scaleX(1); opacity: 0.4; }
+}
+
+.chev {
+  color: $gray-400;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+.chevOpen { transform: rotate(180deg); color: $gray-600; }
+
+// ── Dropdown ─────────────────────────────────────────────────────────────────────
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 60;
+  display: flex;
+  padding: $spacing-4;
+  gap: $spacing-4;
+  background: $white;
+  border: 1px solid rgba($gray-200, 0.7);
+  border-radius: 14px;
+  box-shadow:
+    0 24px 48px -12px rgba(15, 23, 42, 0.18),
+    0 8px 16px -8px rgba(15, 23, 42, 0.08);
+  max-width: min(640px, calc(100vw - 24px));
+  animation: dropIn 0.16s ease;
+
+  // invisible bridge covering the gap so hover survives the trip from trigger
+  &::before {
+    content: "";
+    position: absolute;
+    top: -10px;
+    left: 0;
+    right: 0;
+    height: 10px;
+  }
+}
+.dropdownEnd {
+  left: auto;
+  right: 0;
+}
+
+.dropdownCol {
+  min-width: 196px;
+
+  & + & {
+    padding-left: $spacing-4;
+    border-left: 1px solid rgba($gray-200, 0.7);
+  }
+}
+.dropdownHeading {
+  margin: 2px 0 $spacing-2;
+  padding: 0 $spacing-2;
+  font-size: 10.5px;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba($primary-blue, 0.75);
+}
+.dropdownList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+// ── Item (dropdown + drawer) ─────────────────────────────────────────────────────
+.item {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: 9px $spacing-2 9px 10px;
+  border-radius: 9px;
+  color: $gray-600;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.14s ease, color 0.14s ease;
+
+  &:hover {
+    background: rgba($primary-blue, 0.06);
+    color: $primary-blue;
+  }
+}
+.itemActive {
+  background: rgba($primary-blue, 0.09);
+  color: $primary-blue;
+  font-weight: 600;
+}
+.itemIcon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: $gray-400;
+  transition: color 0.14s ease;
+
+  .item:hover &,
+  .itemActive & { color: $primary-blue; }
+}
+.itemLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// ── Right cluster ────────────────────────────────────────────────────────────────
+.right {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  flex-shrink: 0;
+  margin-left: $spacing-4;
+  padding-left: $spacing-4;
+  border-left: 1px solid rgba($gray-200, 0.9);
+}
+
+.authButton {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  height: 38px;
+  padding: 0 $spacing-3;
+  border: 1px solid rgba($gray-200, 0.9);
+  border-radius: 10px;
+  background: $white;
+  color: $gray-600;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: $font-weight-semibold;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+
+  &:hover {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #dc2626;
+  }
+  &:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(#dc2626, 0.16); }
+}
+
+.hamburger {
+  display: none;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba($gray-200, 0.9);
+  border-radius: 10px;
+  background: $white;
+  color: $gray-800;
+  cursor: pointer;
+
+  &:hover { background: $gray-100; }
+}
+
+// ── Mobile drawer (hidden on desktop) ────────────────────────────────────────────
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  background: rgba(15, 23, 42, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+  z-index: 90;
+}
+.overlayOn { opacity: 1; pointer-events: auto; }
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(86vw, 340px);
+  height: 100dvh;
+  display: none;
+  flex-direction: column;
+  background: $white;
+  box-shadow: $shadow-md;
+  transform: translateX(105%);
+  transition: transform 0.24s ease;
+  z-index: 91;
+}
+.drawerOpen { transform: translateX(0); }
+
+.drawerHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-4;
+  border-bottom: 1px solid rgba($gray-200, 0.9);
+}
+.drawerClose {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 10px;
+  background: $gray-100;
+  color: $gray-700;
+  cursor: pointer;
+  &:hover { background: $gray-200; }
+}
+.drawerBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: $spacing-3;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.drawerFoot {
+  padding: $spacing-3 $spacing-4;
+  border-top: 1px solid rgba($gray-200, 0.9);
+  .authButton { width: 100%; justify-content: center; }
+}
+
+.mLink,
+.mGroupBtn {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  width: 100%;
+  min-height: 46px;
+  padding: 0 $spacing-3;
+  border: none;
+  background: transparent;
+  border-radius: 9px;
+  color: $gray-700;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  &:hover { background: $gray-100; color: $gray-900; }
+
+  .itemIcon { color: $gray-400; }
+}
+.mGroup { display: flex; flex-direction: column; }
+.mGroupBody {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  margin: 4px 0 8px 20px;
+  padding-left: 14px;
+  border-left: 1px solid rgba($gray-200, 0.9);
+
+  .dropdownCol { min-width: 0; }
+  .dropdownCol + .dropdownCol { padding-left: 0; border-left: none; }
+}
+
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+// ── Responsive: collapse menubar into a drawer ───────────────────────────────────
+@media (max-width: 1024px) {
+  .menubar { display: none; }
+  .hamburger { display: inline-flex; }
+  .overlay { display: block; }
+  .drawer { display: flex; }
+  .right { margin-left: auto; border-left: none; padding-left: 0; }
+  .authText { display: none; }
+  .authButton { padding: 0 $spacing-3; }
+}
+
+@media (max-width: 480px) {
+  .inner { padding: 0 $spacing-3; }
+  .brand { padding-right: $spacing-3; margin-right: $spacing-2; }
+  .brandText { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dropdown, .drawer, .overlay, .chev, .topLink::after { animation: none; transition: none; }
+}

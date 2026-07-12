@@ -1,6 +1,3 @@
-import ExcelJS from "exceljs";
-import { saveAs } from "file-saver";
-
 export type ExportFormat = "xlsx" | "csv";
 export type AnyRow = Record<string, any>;
 
@@ -132,6 +129,8 @@ export async function exportRowsFile(args: {
 
   const cols = uniq((columns && columns.length ? columns : Object.keys(LABELS)).filter(Boolean));
 
+  const { saveAs } = await import("file-saver");
+
   if (format === "csv") {
     const headers = cols.map((c) => LABELS[c] ?? c);
     const lines: string[] = [];
@@ -145,6 +144,8 @@ export async function exportRowsFile(args: {
     saveAs(blob, filename);
     return;
   }
+
+  const { default: ExcelJS } = await import("exceljs");
 
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet(sheetName);

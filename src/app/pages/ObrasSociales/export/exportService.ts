@@ -1,7 +1,4 @@
-import { saveAs } from "file-saver";
-import ExcelJS from "exceljs";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import type ExcelJS from "exceljs";
 import logoUrl from "@/app/assets/logoCMC.png";
 import type { ObraSocialListItem } from "../obrasSociales.types";
 import {
@@ -116,6 +113,9 @@ export async function exportToExcel(
   appliedFilters: string[] = [],
   filename = "convenios_obras_sociales"
 ): Promise<void> {
+  const ExcelJS = (await import("exceljs")).default;
+  const { saveAs } = await import("file-saver");
+
   const { active, headers, rows } = buildRows(items, fields);
   const logo64 = await getLogoBase64();
 
@@ -258,6 +258,9 @@ export async function exportToPDF(
   appliedFilters: string[],
   filename = "convenios_obras_sociales"
 ): Promise<void> {
+  const { default: jsPDF } = await import("jspdf");
+  const { default: autoTable } = await import("jspdf-autotable");
+
   const { active, headers, rows } = buildRows(items, fields);
   const logo64 = await getLogoBase64();
 

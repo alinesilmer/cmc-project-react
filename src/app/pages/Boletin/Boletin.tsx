@@ -2,9 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
-import { saveAs } from "file-saver";
+import type { jsPDF } from "jspdf";
+import { saveAs } from "@/app/lib/fileSaver";
 import styles from "./Boletin.module.scss";
 import Button from "../../components/atoms/Button/Button";
 import logo from "../../assets/logoCMC.png";
@@ -307,7 +306,9 @@ function drawPdfRankBadge(
 }
 
 async function exportRankingToPdf(items: RankedEntry[], codigo: string) {
-  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const { jsPDF: JsPDF } = await import("jspdf");
+  const { default: autoTable } = await import("jspdf-autotable");
+  const doc = new JsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const logoDataUrl = await loadImageAsDataUrl(CMC_LOGO_SRC);
 

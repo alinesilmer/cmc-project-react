@@ -9,8 +9,8 @@ import BackButton from "../../components/atoms/BackButton/BackButton";
 import Button from "../../components/atoms/Button/Button";
 import Card from "../../components/atoms/Card/Card";
 import styles from "./LiquidacionMedico.module.scss";
-import ExcelJS from "exceljs";
-import { saveAs } from "file-saver";
+import type ExcelJS from "exceljs";
+import { saveAs } from "@/app/lib/fileSaver";
 
 const RESUMEN_BY_ID = (id: string | number) => `/api/liquidacion/resumen/${id}`;
 const LIQ_MEDICO_LIST = (id: string | number, skip: number, limit: number) =>
@@ -136,7 +136,8 @@ const LiquidacionMedico: React.FC = () => {
   };
 
   const exportExcel = async () => {
-    const wb = new ExcelJS.Workbook();
+    const ExcelJSLib = (await import("exceljs")).default;
+    const wb = new ExcelJSLib.Workbook();
     const ws = wb.addWorksheet("Liquidación Médico");
     ws.columns = [
       { header: "Nro de Socio", key: "nro_socio", width: 14 },

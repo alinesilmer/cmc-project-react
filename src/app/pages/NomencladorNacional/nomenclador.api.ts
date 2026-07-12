@@ -31,6 +31,8 @@ import type {
   TablaValorItem,
   NomencladorEspecialidadOut,
   ImportarCSVResult,
+  ActualizarPorcentajePayload,
+  RevertirActualizacionPayload,
 } from "./nomenclador.types";
 
 // ─── Nomenclador ──────────────────────────────────────────────────────────────
@@ -166,6 +168,26 @@ export const actualizarValor = (
   payload: ValorActualizarPayload,
 ): Promise<ValorOut> =>
   postJSON<ValorOut>(`/api/valores_nm/${id}/actualizar`, payload);
+
+// Aumento/baja porcentual lineal sobre los valores fijos de una OS (por origen),
+// opcionalmente acotado por códigos o por rango. Devuelve actualizados/omitidos/errores.
+export const actualizarPorcentajeValores = (
+  payload: ActualizarPorcentajePayload,
+): Promise<ActualizacionMasivaResult> =>
+  postJSON<ActualizacionMasivaResult>(
+    "/api/valores_nm/actualizar_porcentaje",
+    payload,
+  );
+
+// Revierte la última actualización: elimina los valores con esa vigencia_desde y
+// reactiva los anteriores de cada variante.
+export const revertirActualizacionValores = (
+  payload: RevertirActualizacionPayload,
+): Promise<ActualizacionMasivaResult> =>
+  postJSON<ActualizacionMasivaResult>(
+    "/api/valores_nm/revertir_ultima_actualizacion",
+    payload,
+  );
 
 // Cantidad de valores ya cargados para una OS en una vigencia exacta (guard anti doble carga).
 export const contarValoresPorVigencia = (

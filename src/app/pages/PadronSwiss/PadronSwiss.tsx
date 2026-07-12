@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { saveAs } from "file-saver";
+import { saveAs } from "@/app/lib/fileSaver";
 import { Download } from "lucide-react";
-import * as XLSX from "xlsx";
 
 import styles from "./PadronSwiss.module.scss";
 import Button from "../../components/atoms/Button/Button";
@@ -24,6 +23,7 @@ const PadronSwiss = () => {
 
   useEffect(() => {
     async function loadExcel() {
+      const XLSX = await import("xlsx");
       try {
         setLoading(true);
         setError("");

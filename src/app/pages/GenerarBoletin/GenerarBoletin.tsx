@@ -9,8 +9,6 @@ import React, {
   forwardRef,
 } from "react";
 import axios from "axios";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import DatePicker, { registerLocale } from "react-datepicker";
 import { es } from "date-fns/locale/es";
 import "react-datepicker/dist/react-datepicker.css";
@@ -332,8 +330,12 @@ function buildIndexBodyTwoCol(
   return rows;
 }
 
-function calcIndexPagesCountTwoCol(items: ObraSocialBoletin[]): number {
-  const tmp = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+function calcIndexPagesCountTwoCol(
+  items: ObraSocialBoletin[],
+  JsPDF: typeof import("jspdf").jsPDF,
+  autoTable: typeof import("jspdf-autotable").default,
+): number {
+  const tmp = new JsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const margin = 20;
   const body = buildIndexBodyTwoCol(items, 1);
 
@@ -510,7 +512,10 @@ const GenerarBoletin = () => {
     try {
       if (!boletinData.length) return;
 
-      const doc = new jsPDF({
+      const { jsPDF: JsPDF } = await import("jspdf");
+      const { default: autoTable } = await import("jspdf-autotable");
+
+      const doc = new JsPDF({
         orientation: "portrait",
         unit: "mm",
         format: "a4",
@@ -526,7 +531,7 @@ const GenerarBoletin = () => {
       const lightGray: [number, number, number] = [241, 245, 249];
       const mediumGray: [number, number, number] = [100, 116, 139];
 
-      const indexPagesCount = calcIndexPagesCountTwoCol(boletinData);
+      const indexPagesCount = calcIndexPagesCountTwoCol(boletinData, JsPDF, autoTable);
       const totalPages = 2 + indexPagesCount + boletinData.length;
       const detailsStartPage = 3 + indexPagesCount;
 

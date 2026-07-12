@@ -6,7 +6,7 @@
 
 "use client";
 
-import { saveAs } from "file-saver";
+import { saveAs } from "@/app/lib/fileSaver";
 import { Download } from "lucide-react";
 
 import styles from "./PadronSucio.module.scss";

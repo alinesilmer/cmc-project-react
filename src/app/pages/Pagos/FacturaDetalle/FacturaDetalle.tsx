@@ -7,8 +7,8 @@ import Button from "../../../components/atoms/Button/Button";
 import Card from "../../../components/atoms/Card/Card";
 import styles from "./FacturaDetalle.module.scss";
 import { type Liquidacion, fmt, mesLabel } from "../types";
-import ExcelJS from "exceljs";
-import { saveAs } from "file-saver";
+import type ExcelJS from "exceljs";
+import { saveAs } from "@/app/lib/fileSaver";
 
 const LIQ_URL = (id: string | number) => `/api/liquidacion/liquidaciones_por_os/${id}`;
 const DETALLES_VISTA_URL = (id: string | number, search?: string, medicoId?: string) => {
@@ -83,7 +83,8 @@ const FacturaDetalle: React.FC = () => {
   useEffect(() => { setPage(1); fetchData(); }, [fetchData]);
 
   const exportExcel = async () => {
-    const wb = new ExcelJS.Workbook();
+    const ExcelJSLib = (await import("exceljs")).default;
+    const wb = new ExcelJSLib.Workbook();
     const ws = wb.addWorksheet("Detalle");
     ws.columns = [
       { header: "Socio", key: "socio", width: 10 },

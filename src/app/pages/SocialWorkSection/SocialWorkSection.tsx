@@ -2,7 +2,6 @@
 
 import type React from "react";
 import { motion } from "framer-motion";
-import Sidebar from "../../components/molecules/Sidebar/Sidebar";
 import SearchField from "../../components/molecules/SearchField/SearchField";
 import Card from "../../components/atoms/Card/Card";
 import styles from "./SocialWorkSection.module.scss";
@@ -43,8 +42,6 @@ const SocialWorkSelection: React.FC = () => {
 
   return (
     <div className={styles.socialWorkPage}>
-      <Sidebar />
-
       <div className={styles.content}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}

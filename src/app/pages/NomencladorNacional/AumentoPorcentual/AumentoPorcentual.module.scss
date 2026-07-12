@@ -1,0 +1,524 @@
+@use "@/app/styles/all.scss" as *;
+
+$accent: #5a4e86;
+$accent-tint: #f5f3fb;
+$accent-line: #d9d5e6;
+$up: #15803d;
+$down: #b91c1c;
+
+.container {
+  padding: $spacing-8;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-6;
+  min-height: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+}
+.headerIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: $border-radius-lg;
+  background-color: $accent-tint;
+  color: $accent;
+  flex-shrink: 0;
+}
+.title {
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  margin: 0;
+}
+// ── Panel ──────────────────────────────────────────────────────────────────────
+.panel {
+  background-color: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-sm;
+  padding: $spacing-5;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+}
+.panelDanger {
+  border-color: #f0cccc;
+  background-color: #fdf7f7;
+}
+.panelHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-3;
+}
+.stepBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: $border-radius-md;
+  background-color: $accent;
+  color: $white;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  flex-shrink: 0;
+}
+.stepBadgeDanger { background-color: $down; }
+.panelTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $gray-900;
+  margin: 0;
+}
+.panelDesc {
+  font-size: $font-size-sm;
+  color: $gray-500;
+  margin: 2px 0 0;
+}
+
+// ── OS picker ──────────────────────────────────────────────────────────────────
+.autocomplete { position: relative; max-width: 560px; }
+.inputWrap {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-md;
+  padding: 0 $spacing-3;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  &:focus-within { border-color: $accent; box-shadow: 0 0 0 3px rgba(90, 78, 134, 0.12); }
+}
+.inputIcon { color: $gray-400; flex-shrink: 0; }
+.input {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  width: 100%;
+  padding: $spacing-3 0;
+  font-size: $font-size-sm;
+  color: $gray-800;
+  &::placeholder { color: $gray-400; }
+}
+// standalone inputs (code add / range) reuse .input but need their own border
+.codesInputRow .input,
+.rangeRow .input {
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-md;
+  padding: $spacing-2 $spacing-3;
+  &:focus { border-color: $accent; box-shadow: 0 0 0 3px rgba(90, 78, 134, 0.12); }
+}
+.dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  margin: 0;
+  padding: $spacing-1;
+  list-style: none;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-md;
+  box-shadow: $shadow-md;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.option {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-2 $spacing-3;
+  border-radius: $border-radius-sm;
+  cursor: pointer;
+  &:hover { background-color: $accent-tint; }
+}
+.optionNro {
+  font-family: monospace;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: $accent;
+  min-width: 44px;
+}
+.optionName {
+  font-size: $font-size-sm;
+  color: $gray-700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chosen {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-3;
+  border: 1px solid $accent-line;
+  border-radius: $border-radius-md;
+  background-color: $accent-tint;
+  max-width: 560px;
+}
+.chosenNro {
+  font-family: monospace;
+  font-weight: $font-weight-bold;
+  font-size: $font-size-sm;
+  color: $white;
+  background-color: $accent;
+  padding: $spacing-1 $spacing-2;
+  border-radius: $border-radius-sm;
+}
+.chosenName {
+  flex: 1;
+  min-width: 0;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $gray-800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chosenClear {
+  border: 0;
+  background: transparent;
+  color: $gray-500;
+  cursor: pointer;
+  display: inline-flex;
+  padding: $spacing-1;
+  border-radius: $border-radius-sm;
+  &:hover { background-color: rgba(0, 0, 0, 0.05); color: $gray-700; }
+}
+
+// ── Fields ─────────────────────────────────────────────────────────────────────
+.fieldsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-4;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  min-width: 180px;
+  flex: 1;
+}
+.fieldLabel {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: $gray-600;
+}
+.select,
+.dateInput {
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-md;
+  padding: $spacing-2 $spacing-3;
+  font-size: $font-size-sm;
+  color: $gray-800;
+  background-color: $white;
+  &:focus { outline: none; border-color: $accent; box-shadow: 0 0 0 3px rgba(90, 78, 134, 0.12); }
+}
+.pctInputWrap { position: relative; }
+.pctInput {
+  width: 100%;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-md;
+  padding: $spacing-2 $spacing-6 $spacing-2 $spacing-3;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $gray-800;
+  &:focus { outline: none; border-color: $accent; box-shadow: 0 0 0 3px rgba(90, 78, 134, 0.12); }
+}
+.pctUp { color: $up; border-color: rgba(21, 128, 61, 0.5); }
+.pctDown { color: $down; border-color: rgba(185, 28, 28, 0.5); }
+.pctSuffix {
+  position: absolute;
+  right: $spacing-3;
+  top: 50%;
+  transform: translateY(-50%);
+  color: $gray-400;
+  font-weight: $font-weight-semibold;
+}
+
+.indicator {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-3 $spacing-4;
+  border-radius: $border-radius-md;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+}
+.indicatorUp { background-color: #eef7f0; color: $up; }
+.indicatorDown { background-color: #fdf0f0; color: $down; }
+
+// ── Scope ──────────────────────────────────────────────────────────────────────
+.scopeTabs {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  background-color: $gray-100;
+  border-radius: $border-radius-md;
+  width: fit-content;
+}
+.scopeTab {
+  border: 0;
+  background: transparent;
+  padding: $spacing-2 $spacing-4;
+  border-radius: $border-radius-sm;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $gray-600;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+  &:hover { color: $gray-800; }
+}
+.scopeTabActive {
+  background-color: $white;
+  color: $accent;
+  box-shadow: $shadow-sm;
+}
+.scopeBody {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+.codesInputRow {
+  display: flex;
+  gap: $spacing-2;
+  max-width: 560px;
+  .input { flex: 1; }
+}
+.rangeRow {
+  display: flex;
+  gap: $spacing-4;
+  max-width: 560px;
+}
+.chipsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-2;
+  align-items: center;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px $spacing-2;
+  background-color: $accent-tint;
+  border: 1px solid $accent-line;
+  border-radius: $border-radius-sm;
+  font-family: monospace;
+  font-size: $font-size-xs;
+  color: $accent;
+}
+.chipRemove {
+  border: 0;
+  background: transparent;
+  color: $accent;
+  cursor: pointer;
+  display: inline-flex;
+  padding: 0;
+  &:hover { color: $down; }
+}
+.chipClear {
+  border: 0;
+  background: transparent;
+  color: $gray-500;
+  font-size: $font-size-xs;
+  cursor: pointer;
+  text-decoration: underline;
+  &:hover { color: $gray-700; }
+}
+
+// ── Actions / buttons ────────────────────────────────────────────────────────────
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-3;
+}
+.btnPrimary,
+.btnSecondary,
+.btnDanger,
+.btnGhost {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-2 $spacing-4;
+  border-radius: $border-radius-md;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s, opacity 0.15s;
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+.btnPrimary {
+  border: 1px solid $accent;
+  background-color: $accent;
+  color: $white;
+  &:hover:not(:disabled) { background-color: #4b4071; }
+}
+.btnSecondary {
+  border: 1px solid $gray-300;
+  background-color: $white;
+  color: $gray-700;
+  &:hover:not(:disabled) { background-color: $gray-50; border-color: $gray-400; }
+}
+.btnDanger {
+  border: 1px solid $down;
+  background-color: $down;
+  color: $white;
+  &:hover:not(:disabled) { background-color: #9c1717; }
+}
+.btnGhost {
+  border: 1px solid transparent;
+  background-color: transparent;
+  color: $gray-600;
+  &:hover:not(:disabled) { background-color: $gray-100; }
+}
+.confirmBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-3 $spacing-4;
+  background-color: $accent-tint;
+  border: 1px solid $accent-line;
+  border-radius: $border-radius-md;
+}
+.confirmText {
+  font-size: $font-size-sm;
+  color: $gray-700;
+  font-weight: $font-weight-medium;
+}
+
+// ── Result ─────────────────────────────────────────────────────────────────────
+.resultBox {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+.resultOk {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  color: $up;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+}
+.resultMuted { color: $gray-500; font-weight: $font-weight-normal; }
+.resultErr {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: $down;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  > svg { flex-shrink: 0; }
+}
+.errorList {
+  margin: 2px 0 0;
+  padding-left: $spacing-5;
+  font-weight: $font-weight-normal;
+  color: $gray-600;
+  font-size: $font-size-xs;
+}
+
+// ── Preview ────────────────────────────────────────────────────────────────────
+.previewCard {
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-md;
+  padding: $spacing-4;
+  background-color: $gray-50;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+.previewStats {
+  display: flex;
+  gap: $spacing-3;
+  flex-wrap: wrap;
+}
+.statPill {
+  padding: 4px $spacing-3;
+  border-radius: $border-radius-sm;
+  background-color: $accent-tint;
+  color: $accent;
+  font-size: $font-size-sm;
+}
+.statPillMuted { background-color: $gray-100; color: $gray-600; }
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-md;
+  background-color: $white;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: $font-size-sm;
+  thead {
+    background-color: $gray-50;
+    th {
+      text-align: left;
+      padding: $spacing-2 $spacing-3;
+      font-size: $font-size-xs;
+      font-weight: $font-weight-semibold;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: $gray-600;
+      white-space: nowrap;
+    }
+  }
+  tbody {
+    tr { border-top: 1px solid $gray-100; }
+    td { padding: $spacing-2 $spacing-3; color: $gray-800; }
+  }
+}
+.right { text-align: right; }
+.codeCell { font-family: monospace; font-size: $font-size-xs; color: $gray-700; white-space: nowrap; }
+.descCell {
+  color: $gray-600;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.oldVal { color: $gray-500; font-variant-numeric: tabular-nums; }
+.newVal { color: $up; font-weight: $font-weight-semibold; font-variant-numeric: tabular-nums; }
+
+.hint { font-size: $font-size-sm; color: $gray-500; margin: 0; }
+.hintCenter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+  padding: $spacing-6;
+  color: $gray-500;
+  font-size: $font-size-sm;
+}
+
+.prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-3;
+  padding: $spacing-16;
+  color: $gray-400;
+  text-align: center;
+  background-color: $white;
+  border: 1px dashed $gray-200;
+  border-radius: $border-radius-lg;
+}
+
+.spin { animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
