@@ -65,7 +65,7 @@
 
 .heroContent p {
   margin: 0;
-  font-family: "Raleway", sans-serif;
+  font-family: "Inter", sans-serif;
   font-size: clamp(0.9rem, 1.2vw, 1rem);
   line-height: 1.8;
   color: $gray-600;
@@ -198,7 +198,7 @@
 
 .contactKey {
   display: block;
-  font-family: "Raleway", sans-serif;
+  font-family: "Inter", sans-serif;
   font-size: $font-size-sm;
   font-weight: $font-weight-semibold;
   color: $gray-500;
@@ -370,7 +370,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: $spacing-2;
-  font-family: "Raleway", sans-serif;
+  font-family: "Inter", sans-serif;
   font-size: 1rem;
   line-height: 1.65;
   color: $gray-700;
@@ -395,7 +395,7 @@
   margin: $spacing-1 0 0;
   font-size: $font-size-sm;
   color: $gray-500;
-  font-family: "Raleway", sans-serif;
+  font-family: "Inter", sans-serif;
   line-height: 1.5;
 
   svg { flex-shrink: 0; margin-top: 2px; }
@@ -464,7 +464,7 @@
   border: 1px dashed $gray-300;
   padding: $spacing-4 $spacing-5;
   border-radius: $border-radius-md;
-  font-family: "Raleway", sans-serif;
+  font-family: "Inter", sans-serif;
   font-size: 1rem;
   color: $gray-700;
 
@@ -488,7 +488,7 @@
   margin-top: $spacing-4;
   font-size: $font-size-sm;
   color: $gray-500;
-  font-family: "Raleway", sans-serif;
+  font-family: "Inter", sans-serif;
   line-height: 1.6;
 }
 

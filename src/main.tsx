@@ -8,17 +8,24 @@ import RootRoutes from "./routes";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { AuthProvider } from "./app/auth/AuthProvider";
 
 const queryClient = new QueryClient();
+
+const muiTheme = createTheme({
+  typography: { fontFamily: '"Inter", sans-serif' },
+});
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <RootRoutes />
-        </AuthProvider>
+        <ThemeProvider theme={muiTheme}>
+          <AuthProvider>
+            <RootRoutes />
+          </AuthProvider>
+        </ThemeProvider>
         {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
       </QueryClientProvider>
     </BrowserRouter>

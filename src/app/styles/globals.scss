@@ -10,8 +10,13 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+:root {
+  // rsuite components resolve their font from this variable
+  --rs-font-family-base: "Inter", sans-serif;
+}
+
 body {
-  font-family: "Raleway", sans-serif;
+  font-family: "Inter", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: $gray-50;
@@ -31,7 +36,7 @@ h6 {
 }
 
 button {
-  font-family: "Manrope", sans-serif;
+  font-family: "Inter", sans-serif;
 }
 
 input,

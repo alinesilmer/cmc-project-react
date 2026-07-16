@@ -30,6 +30,8 @@ import type {
   ValorActualizarPayload,
   TablaValorItem,
   NomencladorEspecialidadOut,
+  NomencladorEspecialidadResumenOut,
+  NomencladorEspecialidadResumenParams,
   ImportarCSVResult,
   ActualizarPorcentajePayload,
   RevertirActualizacionPayload,
@@ -283,4 +285,14 @@ export const getNomencladorEspecialidades = (
 ): Promise<NomencladorEspecialidadOut[]> =>
   getJSON<NomencladorEspecialidadOut[]>(
     `/api/nomenclador/${id}/especialidades`,
+  );
+
+// Lista códigos↔especialidad con el nombre de la especialidad ya resuelto.
+// Filtra por especialidad (especialidad_id_colegio) y/o texto (q), paginado por código.
+export const listNomencladorEspecialidadesResumen = (
+  params?: NomencladorEspecialidadResumenParams,
+): Promise<NomencladorEspecialidadResumenOut[]> =>
+  getJSON<NomencladorEspecialidadResumenOut[]>(
+    "/api/nomenclador/especialidades",
+    params,
   );

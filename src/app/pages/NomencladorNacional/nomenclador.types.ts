@@ -321,3 +321,26 @@ export type NomencladorEspecialidadOut = {
   observacion: string | null;
   created_at: string;
 };
+
+// Fila enriquecida (un par código↔especialidad con el nombre ya resuelto),
+// devuelta por GET /api/nomenclador/especialidades.
+export type NomencladorEspecialidadResumenOut = {
+  id: number;
+  nomenclador_id: number;
+  codigo: string;
+  descripcion: string;
+  especialidad_id_colegio: number;
+  /** null si el ID_COLEGIO_ESPE no tiene match en el catálogo (dato huérfano). */
+  especialidad: string | null;
+  activo: boolean;
+  observacion: string | null;
+  created_at: string;
+};
+
+export type NomencladorEspecialidadResumenParams = {
+  q?: string;
+  especialidad_id_colegio?: number;
+  activo?: boolean;
+  page?: number;
+  size?: number;
+};
