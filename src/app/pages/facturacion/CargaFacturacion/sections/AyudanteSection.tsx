@@ -2,9 +2,10 @@ import React from "react";
 import MedicoAutocomplete from "../../components/MedicoAutocomplete";
 import type { MedicoOption, PrecioResponse, TipoCalculo } from "../../types";
 import { formatMoney, parseMoney } from "../../money";
+import styles from "../CargaFacturacion.module.scss";
 
-export interface AyudanteEquipoState {
-  activo: boolean;
+export interface AyudanteLinea {
+  id: string;
   codMedico: string | null;
   medico: MedicoOption | null;
   porcentaje: number;
@@ -12,146 +13,172 @@ export interface AyudanteEquipoState {
   precioManual: string;
 }
 
-export const DEFAULT_AYUDANTE_EQUIPO: AyudanteEquipoState = {
-  activo: false,
+const nuevoId = () =>
+  typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `ay-${Date.now()}-${Math.random()}`;
+
+export const crearAyudanteLinea = (precioAutomatico: string): AyudanteLinea => ({
+  id: nuevoId(),
   codMedico: null,
   medico: null,
-  porcentaje: 30,
+  porcentaje: 100,
   tipoCalculo: "A",
-  precioManual: "0",
+  precioManual: precioAutomatico,
+});
+
+const montoLinea = (linea: AyudanteLinea, precio: PrecioResponse): number => {
+  const base = linea.tipoCalculo === "A" ? parseMoney(precio.ayudante) : parseMoney(linea.precioManual);
+  return base * (linea.porcentaje / 100);
+};
+
+export const totalAyudantes = (lineas: AyudanteLinea[], precio: PrecioResponse | null): number => {
+  if (!precio) return 0;
+  return lineas.reduce((acc, l) => acc + montoLinea(l, precio), 0);
 };
 
 interface Props {
   precio: PrecioResponse;
-  ayudante: AyudanteEquipoState;
-  onChange: (a: AyudanteEquipoState) => void;
+  maxAyudantes: number;
+  ayudantes: AyudanteLinea[];
+  onChange: (ayudantes: AyudanteLinea[]) => void;
   codMedicoMain: string | null;
   disabled?: boolean;
-  error?: string | null;
+  errors?: Record<string, string>;
 }
 
 const AyudanteSection: React.FC<Props> = ({
-  precio, ayudante, onChange, codMedicoMain, disabled, error,
+  precio, maxAyudantes, ayudantes, onChange, codMedicoMain, disabled, errors = {},
 }) => {
-  const set = (patch: Partial<AyudanteEquipoState>) => onChange({ ...ayudante, ...patch });
-  const isDuplicate = !!(codMedicoMain && ayudante.codMedico === codMedicoMain);
-  const ayAmount = ayudante.tipoCalculo === "A"
-    ? parseMoney(precio.ayudante)
-    : parseMoney(ayudante.precioManual);
-  const ayTotal = ayAmount * (ayudante.porcentaje / 100);
+  const alMaximo = ayudantes.length >= maxAyudantes;
 
-  if (!ayudante.activo) {
-    return (
-      <button
-        type="button"
-        onClick={() => onChange({ ...DEFAULT_AYUDANTE_EQUIPO, activo: true, precioManual: precio.ayudante })}
-        disabled={disabled}
-        style={{
-          fontSize: 13, color: "#0c2a52", background: "none",
-          border: "1px dashed #cbd5e1", borderRadius: 8, padding: "10px 16px",
-          cursor: "pointer", width: "100%", textAlign: "left",
-          display: "flex", alignItems: "center", gap: 8,
-          opacity: disabled ? 0.5 : 1,
-        }}
-      >
-        <span style={{ fontSize: 16 }}>+</span>
-        <span>Agregar ayudante</span>
-        <span style={{ fontSize: 11, color: "#94a3b8", marginLeft: 4 }}>
-          (valor automático: {formatMoney(precio.ayudante)})
-        </span>
-      </button>
-    );
-  }
+  const updateLinea = (id: string, patch: Partial<AyudanteLinea>) => {
+    onChange(ayudantes.map((l) => (l.id === id ? { ...l, ...patch } : l)));
+  };
+
+  const quitarLinea = (id: string) => {
+    onChange(ayudantes.filter((l) => l.id !== id));
+  };
+
+  const agregarLinea = () => {
+    if (alMaximo) return;
+    onChange([...ayudantes, crearAyudanteLinea(precio.ayudante)]);
+  };
+
+  const codigosUsados = (excluirId: string) =>
+    new Set(ayudantes.filter((l) => l.id !== excluirId && l.codMedico).map((l) => l.codMedico));
 
   return (
-    <section style={{ border: "1px solid #bfdbfe", borderRadius: 8, padding: 16, background: "#f0f7ff" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-        <h3 style={{ fontSize: "0.86rem", fontWeight: 600, color: "#0c2a52", margin: 0 }}>
-          Ayudante quirúrgico
-        </h3>
-        <button
-          type="button"
-          onClick={() => onChange({ ...DEFAULT_AYUDANTE_EQUIPO })}
-          disabled={disabled}
-          style={{ fontSize: 12, color: "#cc2a2a", background: "none", border: "none", cursor: "pointer", padding: "2px 6px" }}
-        >
-          ✕ Quitar
-        </button>
-      </div>
+    <div className={styles.section}>
+      <span className={styles.sectionTitle}>
+        Ayudantes quirúrgicos
+        <span className={`${styles.infoChip} ${alMaximo ? styles.chipWarning : styles.chipNeutral}`}>
+          {ayudantes.length} / {maxAyudantes}
+        </span>
+        <span className={styles.sectionHint}>máximo {maxAyudantes} para este código</span>
+      </span>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 420 }}>
-        <div>
-          <label style={{ fontSize: 13, fontWeight: 500, display: "block", marginBottom: 4 }}>Médico ayudante *</label>
-          <MedicoAutocomplete
-            value={ayudante.codMedico}
-            onChange={(cod, med) => set({ codMedico: cod, medico: med })}
-            disabled={disabled}
-          />
-          {isDuplicate && (
-            <span style={{ fontSize: 12, color: "#cc2a2a", display: "block", marginTop: 3 }}>
-              El ayudante no puede ser el mismo médico principal.
-            </span>
-          )}
-          {error && !isDuplicate && (
-            <span style={{ fontSize: 12, color: "#cc2a2a", display: "block", marginTop: 3 }}>{error}</span>
-          )}
-        </div>
+      {ayudantes.map((linea, idx) => {
+        const isDuplicateMain = !!(codMedicoMain && linea.codMedico === codMedicoMain);
+        const isDuplicateOther = !!(linea.codMedico && codigosUsados(linea.id).has(linea.codMedico));
+        const error = errors[`ayudante_${idx}`];
+        const monto = montoLinea(linea, precio);
 
-        <div style={{ display: "flex", alignItems: "flex-end", gap: 16 }}>
-          <div>
-            <label style={{ fontSize: 13, fontWeight: 500, display: "block", marginBottom: 4 }}>Porcentaje (%)</label>
-            <input
-              type="number" min={1} max={100}
-              value={ayudante.porcentaje}
-              onChange={(e) => set({ porcentaje: Math.min(100, Math.max(1, Number(e.target.value))) })}
-              disabled={disabled}
-              style={{ width: 70 }}
-            />
-          </div>
-          <div>
-            <label style={{ fontSize: 11, color: "#64748b", display: "block", marginBottom: 4 }}>Valor automático del código</label>
-            <span style={{ fontSize: 14, fontWeight: 600, color: "#0c2a52" }}>{formatMoney(precio.ayudante)}</span>
-          </div>
-        </div>
+        return (
+          <div key={linea.id} className={styles.ayudanteBox}>
+            <div className={styles.ayudanteHeader}>
+              <span className={styles.sectionTitle} style={{ textTransform: "none", fontSize: "0.86rem" }}>
+                Ayudante {idx + 1}
+              </span>
+              <button
+                type="button"
+                className={styles.removeBtn}
+                onClick={() => quitarLinea(linea.id)}
+                disabled={disabled}
+              >
+                ✕ Quitar
+              </button>
+            </div>
 
-        <div>
-          <label style={{ fontSize: 13, fontWeight: 500, display: "block", marginBottom: 6 }}>Tipo de cálculo</label>
-          <div style={{ display: "flex", gap: 20 }}>
-            {([["A", "Automático"], ["M", "Manual"]] as const).map(([v, label]) => (
-              <label key={v} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13, cursor: "pointer" }}>
-                <input
-                  type="radio"
-                  name="ayudanteTipoCalculo"
-                  value={v}
-                  checked={ayudante.tipoCalculo === v}
-                  onChange={() => set({ tipoCalculo: v })}
+            <div className={styles.fieldsRow}>
+              <div className={`${styles.filterField} ${styles.filterFieldWide}`}>
+                <label className={styles.filterLabel}>Médico ayudante <span className={styles.errorText}>*</span></label>
+                <MedicoAutocomplete
+                  value={linea.codMedico}
+                  onChange={(cod, med) => updateLinea(linea.id, { codMedico: cod, medico: med })}
                   disabled={disabled}
                 />
-                {label}
-              </label>
-            ))}
-          </div>
-        </div>
+                {isDuplicateMain && <span className={styles.errorText}>No puede ser el mismo médico principal.</span>}
+                {isDuplicateOther && !isDuplicateMain && <span className={styles.errorText}>Ese médico ya está agregado como ayudante.</span>}
+                {error && !isDuplicateMain && !isDuplicateOther && <span className={styles.errorText}>{error}</span>}
+              </div>
+            </div>
 
-        {ayudante.tipoCalculo === "M" && (
-          <div>
-            <label style={{ fontSize: 13, fontWeight: 500, display: "block", marginBottom: 4 }}>Precio del ayudante</label>
-            <input
-              type="number" min={0} step="0.01"
-              value={ayudante.precioManual}
-              onChange={(e) => set({ precioManual: e.target.value })}
-              disabled={disabled}
-              style={{ width: 150 }}
-            />
-          </div>
-        )}
+            <div className={styles.fieldsRow}>
+              <div className={styles.filterField}>
+                <label className={styles.filterLabel}>Porcentaje (%)</label>
+                <input
+                  className={styles.input}
+                  type="number" min={1} max={100}
+                  value={linea.porcentaje}
+                  onChange={(e) => updateLinea(linea.id, { porcentaje: Math.min(100, Math.max(1, Number(e.target.value))) })}
+                  disabled={disabled}
+                />
+              </div>
+              <div className={styles.filterField}>
+                <label className={styles.filterLabel}>Precio del ayudante</label>
+                {/* Mismo input siempre: en Automático muestra el valor del código y
+                    queda bloqueado; en Manual se habilita para editarlo. */}
+                <input
+                  className={styles.input}
+                  type="number" min={0} step="0.01"
+                  value={linea.tipoCalculo === "A" ? precio.ayudante : linea.precioManual}
+                  onChange={(e) => updateLinea(linea.id, { precioManual: e.target.value })}
+                  disabled={disabled || linea.tipoCalculo === "A"}
+                />
+              </div>
+            </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: "#dbeafe", borderRadius: 6 }}>
-          <span style={{ fontSize: 12, color: "#1e40af" }}>Total ayudante estimado:</span>
-          <strong style={{ fontSize: 13, color: "#1e3a8a" }}>{formatMoney(ayTotal)}</strong>
-        </div>
-      </div>
-    </section>
+            <div className={styles.filterField}>
+              <label className={styles.filterLabel}>Tipo de cálculo</label>
+              <div className={styles.radioRow}>
+                {([["A", "Automático"], ["M", "Manual"]] as const).map(([v, label]) => (
+                  <label key={v} className={styles.radioLabel}>
+                    <input
+                      type="radio"
+                      name={`ayudanteTipoCalculo-${linea.id}`}
+                      value={v}
+                      checked={linea.tipoCalculo === v}
+                      onChange={() => updateLinea(linea.id, { tipoCalculo: v })}
+                      disabled={disabled}
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className={styles.totalRow}>
+              <span>Total de este ayudante:</span>
+              <strong>{formatMoney(monto)}</strong>
+            </div>
+          </div>
+        );
+      })}
+
+      {!alMaximo ? (
+        <button
+          type="button"
+          className={styles.addAyudanteBtn}
+          onClick={agregarLinea}
+          disabled={disabled}
+        >
+          <span style={{ fontSize: 16 }}>+</span>
+          <span>Agregar ayudante</span>
+          <span className={styles.sectionHint}>(valor automático: {formatMoney(precio.ayudante)})</span>
+        </button>
+      ) : (
+        <span className={styles.mutedText}>Alcanzaste el máximo de ayudantes para este código.</span>
+      )}
+    </div>
   );
 };
 

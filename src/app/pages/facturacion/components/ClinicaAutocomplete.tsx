@@ -1,26 +1,25 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import AppSearchSelect, { type AppSearchSelectOption } from "../../../components/atoms/AppSearchSelect/AppSearchSelect";
-import { fetchMedicos } from "../api";
-import type { MedicoOption } from "../types";
+import { fetchClinicas } from "../api";
+import type { ClinicaOption } from "../types";
 
-// Los números de socio pueden tener 1 sola cifra (ej. "2") — la tolerancia de
-// 2 caracteres solo tiene sentido para texto (nombre), no para búsquedas numéricas.
+// El backend busca por nombre, o por documento/CUIT/nº socio si el término es numérico.
+// La tolerancia de 2 caracteres solo aplica al texto; en numérico alcanza con 1.
 const isNumeric = (s: string) => /^\d+$/.test(s);
 const minLenFor = (q: string) => (isNumeric(q) ? 1 : 2);
 
 interface Props {
-  value: string | null;
-  onChange: (cod: string | null, medico: MedicoOption | null) => void;
+  value: number | null;
+  onChange: (cod: number | null, clinica: ClinicaOption | null) => void;
   disabled?: boolean;
-  label?: string;
   /** Precarga la opción mostrada antes de que el usuario busque (usado al editar). */
   presetLabel?: string;
   blurOnSelect?: boolean;
 }
 
-const MedicoAutocomplete: React.FC<Props> = ({ value, onChange, disabled, presetLabel, blurOnSelect }) => {
-  const [options, setOptions] = useState<MedicoOption[]>(() =>
-    value && presetLabel ? [{ cod: value, nombre: presetLabel }] : [],
+const ClinicaAutocomplete: React.FC<Props> = ({ value, onChange, disabled, presetLabel, blurOnSelect }) => {
+  const [options, setOptions] = useState<ClinicaOption[]>(() =>
+    value != null && presetLabel ? [{ cod: value, nombre: presetLabel }] : [],
   );
   const [loading, setLoading] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
@@ -31,7 +30,7 @@ const MedicoAutocomplete: React.FC<Props> = ({ value, onChange, disabled, preset
     abortRef.current = new AbortController();
     setLoading(true);
     try {
-      const rows = await fetchMedicos(q);
+      const rows = await fetchClinicas(q);
       setOptions(rows);
     } catch {
       // abort or network error
@@ -42,13 +41,10 @@ const MedicoAutocomplete: React.FC<Props> = ({ value, onChange, disabled, preset
 
   useEffect(() => () => { abortRef.current?.abort(); }, []);
 
-  const selectOptions: AppSearchSelectOption[] = options.map((m) => ({
-    id: m.cod,
-    // Nº socio · matrícula · nombre (la matrícula se omite si no viene).
-    label: [m.cod, m.matricula, m.nombre]
-      .filter((v) => v != null && v !== "")
-      .join(" · "),
-    subtitle: m.categoria ? `Categoría ${m.categoria}` : undefined,
+  const selectOptions: AppSearchSelectOption[] = options.map((c) => ({
+    id: c.cod,
+    label: `${c.cod} · ${c.nombre}`,
+    subtitle: c.localidad ?? undefined,
   }));
 
   return (
@@ -56,8 +52,9 @@ const MedicoAutocomplete: React.FC<Props> = ({ value, onChange, disabled, preset
       options={selectOptions}
       value={value}
       onChange={(id) => {
-        const med = options.find((m) => m.cod === String(id)) ?? null;
-        onChange(id ? String(id) : null, med);
+        const cod = id != null ? Number(id) : null;
+        const clinica = options.find((c) => c.cod === cod) ?? null;
+        onChange(cod, clinica);
       }}
       onQueryChange={search}
       loading={loading}
@@ -67,4 +64,4 @@ const MedicoAutocomplete: React.FC<Props> = ({ value, onChange, disabled, preset
   );
 };
 
-export default MedicoAutocomplete;
+export default ClinicaAutocomplete;

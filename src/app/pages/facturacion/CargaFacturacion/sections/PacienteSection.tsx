@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from "react";
-import AfiliadoLookup from "../../components/AfiliadoLookup";
+import React, { useState } from "react";
+import AfiliadoAutocomplete from "../../components/AfiliadoAutocomplete";
 import AltaAfiliadoModal from "../../components/AltaAfiliadoModal";
 import type { AfiliadoRead } from "../../types";
-
-const MIN_DIGITS = 8;
+import styles from "../CargaFacturacion.module.scss";
 
 interface Props {
   dni: string;
@@ -18,67 +17,51 @@ const PacienteSection: React.FC<Props> = ({
   dni, nombrePaciente, onDniChange, onAfiliadoFound, disabled, error,
 }) => {
   const [showAlta, setShowAlta] = useState(false);
-  const [dniNoEncontrado, setDniNoEncontrado] = useState("");
 
-  useEffect(() => {
-    if (dni.length < MIN_DIGITS) {
-      setDniNoEncontrado("");
-      setShowAlta(false);
-    }
-  }, [dni]);
-
-  const handleNotFound = (d: string) => {
-    setDniNoEncontrado(d);
-    setShowAlta(true);
+  const handleAfiliadoChange = (nuevoDni: string | null, afiliado: AfiliadoRead | null) => {
+    onDniChange(nuevoDni ?? "");
+    if (afiliado) onAfiliadoFound(afiliado);
   };
 
   return (
-    <section>
-      <h3 style={{ fontSize: "0.86rem", fontWeight: 600, color: "#0c2a52", borderTop: "1px solid #e2e8f0", paddingTop: 12, marginBottom: 12 }}>
-        Paciente / afiliado <span style={{ fontWeight: 400, color: "#94a3b8" }}>(opcional)</span>
-      </h3>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 420 }}>
-        <div>
-          <label style={{ fontSize: 13, fontWeight: 500, display: "block", marginBottom: 4 }}>DNI</label>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <AfiliadoLookup
-              dni={dni}
-              onDniChange={onDniChange}
-              onFound={onAfiliadoFound}
-              onNotFound={handleNotFound}
-              disabled={disabled}
-              error={error}
-            />
-            {dniNoEncontrado && !showAlta && (
-              <button
-                type="button"
-                onClick={() => setShowAlta(true)}
-                style={{ fontSize: 12, color: "#0c2a52", textDecoration: "underline", background: "none", border: "none", cursor: "pointer" }}
-              >
-                + Dar de alta
-              </button>
-            )}
+    <div className={styles.section}>
+      <span className={styles.sectionTitle}>
+        Paciente / afiliado <span className={styles.sectionHint}>(opcional)</span>
+      </span>
+      <div className={styles.fieldsRow}>
+        <div className={`${styles.filterField} ${styles.filterFieldWide}`} data-field="paciente">
+          <label className={styles.filterLabel}>Paciente (nombre o DNI)</label>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <AfiliadoAutocomplete
+                value={dni || null}
+                onChange={handleAfiliadoChange}
+                disabled={disabled}
+                presetLabel={nombrePaciente || undefined}
+                blurOnSelect={false}
+              />
+            </div>
+            <button type="button" className={styles.btnGhost} onClick={() => setShowAlta(true)} disabled={disabled}>
+              + Agregar afiliado
+            </button>
           </div>
+          {nombrePaciente && (
+            <span style={{ fontSize: 12, color: "#1d9148", fontWeight: 600 }}>✓ {nombrePaciente}</span>
+          )}
+          {error && <span className={styles.errorText}>{error}</span>}
         </div>
-        {nombrePaciente && (
-          <div>
-            <label style={{ fontSize: 13, fontWeight: 500, display: "block", marginBottom: 4 }}>Nombre</label>
-            <input value={nombrePaciente} disabled style={{ background: "#f1f5f9" }} />
-          </div>
-        )}
       </div>
 
       <AltaAfiliadoModal
         isOpen={showAlta}
-        dni={dniNoEncontrado}
+        dni={dni}
         onClose={() => setShowAlta(false)}
         onCreated={(afiliado) => {
           setShowAlta(false);
-          setDniNoEncontrado("");
           onAfiliadoFound(afiliado);
         }}
       />
-    </section>
+    </div>
   );
 };
 

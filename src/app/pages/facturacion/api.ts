@@ -1,10 +1,11 @@
-import { getJSON, postJSON, patchJSON, delJSON, getJSONWithHeaders } from "../../lib/http";
+import { getJSON, postJSON, patchJSON, delJSON, getJSONWithHeaders, postForm } from "../../lib/http";
 import type {
-  MedicoOption, ObraSocialOption, NomencladorOption,
+  MedicoOption, ObraSocialOption, NomencladorOption, ClinicaOption,
   AfiliadoRead, PeriodoActivoResponse, PrecioResponse,
-  PrestacionRead, PrestacionesCreate, GuardadoResponse,
+  PrestacionRead, PrestacionesCreate, PrestacionesComplementariaCreate, GuardadoResponse,
   PrestacionUpdate, MoverPeriodoPayload, MoverPeriodoResponse,
-  CierrePreviewResponse, CierreResponse, ListarPrestacionesParams,
+  CierrePreviewResponse, CierreResponse, CierrePayload, ListarPrestacionesParams,
+  FacturaRead, ListarFacturasParams, FacturaDetalleResponse, ComplementoCreate,
 } from "./types";
 
 const BASE = "/api/facturacion";
@@ -40,11 +41,18 @@ export const fetchMedicos = (q: string, limit = 20) =>
 export const fetchObrasSociales = (q: string, limit = 20) =>
   traced("GET /obras-sociales", { q, limit }, getJSON<ObraSocialOption[]>(`${BASE}/obras-sociales`, { q, limit }));
 
-export const fetchNomenclador = (q: string, limit = 20) =>
-  traced("GET /nomenclador", { q, limit }, getJSON<NomencladorOption[]>(`${BASE}/nomenclador`, { q, limit }));
+export const fetchClinicas = (q: string, limit = 20) =>
+  traced("GET /clinicas", { q, limit }, getJSON<ClinicaOption[]>(`${BASE}/clinicas`, { q, limit }));
 
-export const fetchAfiliado = (dni: string) =>
-  traced(`GET /afiliados/${dni}`, { dni }, getJSON<AfiliadoRead>(`${BASE}/afiliados/${dni}`));
+export const fetchCodigosHabilitados = (nroSocio: string, q?: string) =>
+  traced(
+    `GET /medico/${nroSocio}/codigos-habilitados`,
+    { nroSocio, q },
+    getJSON<NomencladorOption[]>(`${BASE}/medico/${nroSocio}/codigos-habilitados`, q ? { q } : undefined),
+  );
+
+export const fetchAfiliados = (q: string, limit = 20) =>
+  traced("GET /afiliados (búsqueda)", { q, limit }, getJSON<AfiliadoRead[]>(`${BASE}/afiliados`, { q, limit }));
 
 export const crearAfiliado = (body: { dni: string; nombre: string }) =>
   traced("POST /afiliados", body, postJSON<AfiliadoRead>(`${BASE}/afiliados`, body));
@@ -68,6 +76,37 @@ export const listarPrestaciones = (filtros: ListarPrestacionesParams) =>
     getJSONWithHeaders<PrestacionRead[]>(`${BASE}/prestaciones`, filtros as Record<string, any>),
   );
 
+export const listarFacturas = (filtros: ListarFacturasParams) =>
+  traced(
+    "GET /facturas (paginado)",
+    filtros,
+    getJSONWithHeaders<FacturaRead[]>(`${BASE}/facturas`, filtros as Record<string, any>),
+  );
+
+export const crearComplemento = (payload: ComplementoCreate) =>
+  traced(
+    "POST /facturas/complemento",
+    payload,
+    postJSON<FacturaRead>(`${BASE}/facturas/complemento`, payload),
+  );
+
+export const fetchFacturaDetalle = (id: number | string) =>
+  traced(
+    `GET /facturas/${id}/detalle`,
+    { id },
+    getJSON<FacturaDetalleResponse>(`${BASE}/facturas/${id}/detalle`),
+  );
+
+export const fetchPrestacion = (id: number | string) =>
+  traced(`GET /prestaciones/${id}`, { id }, getJSON<PrestacionRead>(`${BASE}/prestaciones/${id}`));
+
+export const marcarRevisado = (payload: { marcados?: number[]; desmarcados?: number[] }) =>
+  traced(
+    "PATCH /prestaciones/revisado",
+    payload,
+    patchJSON<PrestacionRead[]>(`${BASE}/prestaciones/revisado`, payload),
+  );
+
 export const fetchRecientes = (cod_obra: string, usuario?: string) =>
   traced(
     "GET /prestaciones/recientes",
@@ -81,6 +120,19 @@ export const crearPrestaciones = (payload: PrestacionesCreate, confirmar_duplica
     payload,
     postJSON<GuardadoResponse>(
       `${BASE}/prestaciones${confirmar_duplicado ? "?confirmar_duplicado=true" : ""}`,
+      payload,
+    ),
+  );
+
+export const crearPrestacionesComplementaria = (
+  payload: PrestacionesComplementariaCreate,
+  confirmar_duplicado = false,
+) =>
+  traced(
+    `POST /prestaciones-complementaria${confirmar_duplicado ? "?confirmar_duplicado=true" : ""}`,
+    payload,
+    postJSON<GuardadoResponse>(
+      `${BASE}/prestaciones-complementaria${confirmar_duplicado ? "?confirmar_duplicado=true" : ""}`,
       payload,
     ),
   );
@@ -113,9 +165,18 @@ export const previewCierre = (cod_obra: string, periodo: string) =>
     getJSON<CierrePreviewResponse>(`${BASE}/cierre/preview`, { cod_obra, periodo }),
   );
 
-export const cerrarPeriodo = (cod_obra: string, periodo: string) =>
-  traced(
+export const cerrarPeriodo = (payload: CierrePayload) => {
+  const form = new FormData();
+  form.append("cod_obra", payload.cod_obra);
+  form.append("periodo", payload.periodo);
+  if (payload.tipo_factura) form.append("tipo_factura", payload.tipo_factura);
+  if (payload.nro_factura) form.append("nro_factura", payload.nro_factura);
+  if (payload.archivo) form.append("archivo", payload.archivo);
+
+  return traced(
     "POST /cierre",
-    { cod_obra, periodo },
-    postJSON<CierreResponse>(`${BASE}/cierre`, { cod_obra, periodo }),
+    { cod_obra: payload.cod_obra, periodo: payload.periodo, tipo_factura: payload.tipo_factura, nro_factura: payload.nro_factura, archivo: payload.archivo?.name },
+    postForm<CierreResponse>(`${BASE}/cierre`, form),
   );
+};
+

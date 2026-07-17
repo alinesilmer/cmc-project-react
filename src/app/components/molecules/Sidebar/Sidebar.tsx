@@ -29,7 +29,6 @@ import {
   CalendarDays,
   Building2,
   ClipboardList,
-  BadgeCheck,
   ArrowLeftRight,
   RotateCcw,
   Wallet,
@@ -49,6 +48,8 @@ import {
   GitMerge,
   History,
   Percent,
+  Receipt,
+  Layers,
 } from "lucide-react";
 
 import styles from "./Sidebar.module.scss";
@@ -89,35 +90,28 @@ const FACTURACION_CHILDREN: NavItem[] = [
     kind: "item",
     path: `${facturacionBase}/carga`,
     icon: DollarSign,
-    label: "Carga Prestaciones - Colegio",
+    label: "Cargar Prestaciones",
     perms: ["medicos:leer"],
   },
   {
     kind: "item",
-    path: `${facturacionBase}/cierre-periodo`,
+    path: `${facturacionBase}/cierre`,
     icon: CalendarDays,
-    label: "Cierre de Períodos Facturista",
+    label: "Cerrar Factura",
     perms: ["medicos:leer"],
   },
   {
     kind: "item",
-    path: `${facturacionBase}/listado-por-medico`,
+    path: `${facturacionBase}/periodos`,
     icon: ClipboardList,
-    label: "Listado por Médico",
+    label: "Ver períodos",
     perms: ["medicos:leer"],
   },
   {
     kind: "item",
-    path: `${facturacionBase}/listado-por-obra-social`,
-    icon: Building2,
-    label: "Listado por Obra Social - Colegio",
-    perms: ["medicos:leer"],
-  },
-  {
-    kind: "item",
-    path: `${facturacionBase}/validacion`,
-    icon: BadgeCheck,
-    label: "Validación",
+    path: `${facturacionBase}/complementarias`,
+    icon: Layers,
+    label: "Complementarias",
     perms: ["medicos:leer"],
   },
 ];
@@ -127,14 +121,19 @@ const NAV_SECTIONS: NavSection[] = [
     title: "Principal",
     items: [
       { kind: "item", path: `${base}/dashboard`, icon: Home, label: "Inicio" },
-      // {
-      //   kind: "group",
-      //   id: "facturacion",
-      //   icon: NotebookIcon,
-      //   label: "Facturación",
-      //   perms: ["medicos:leer"],
-      //   children: FACTURACION_CHILDREN,
-      // },
+    ],
+  },
+  {
+    title: "Facturación",
+    items: [
+      {
+        kind: "group",
+        id: "facturacion",
+        icon: Receipt,
+        label: "Facturación",
+        perms: ["medicos:leer"],
+        children: FACTURACION_CHILDREN,
+      },
     ],
   },
   {

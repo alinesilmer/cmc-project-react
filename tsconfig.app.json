@@ -9,6 +9,9 @@
 
     /* Bundler mode */
     "moduleResolution": "bundler",
+    /* Espeja el alias de vite.config.ts — sin esto tsc no resuelve los imports "@/..." */
+    "baseUrl": ".",
+    "paths": { "@/*": ["./src/*"] },
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",

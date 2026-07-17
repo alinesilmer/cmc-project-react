@@ -116,8 +116,11 @@ export const MESES = [
 ];
 export const mesLabel = (m: number) => MESES[(m - 1) % 12] ?? String(m);
 
+// Sin `style: "currency"` a propósito: los ~100+ call-sites de `fmt()` en este
+// módulo ya anteponen "$"/"-$"/"+$" a mano — agregar el símbolo acá lo duplicaría.
 export const currency = new Intl.NumberFormat("es-AR", {
-  minimumFractionDigits: 0,
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
 });
 export const fmt = (n: number | string | null | undefined) =>
   currency.format(Number(n ?? 0));

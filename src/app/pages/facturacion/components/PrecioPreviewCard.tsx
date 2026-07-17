@@ -37,9 +37,6 @@ const PrecioPreviewCard: React.FC<Props> = ({ precio }) => (
       <p style={{ fontSize: 12, color: "#475569", margin: 0 }}>{precio.descripcion}</p>
     )}
 
-    {precio.fuente && (
-      <p style={{ fontSize: 11, color: "#94a3b8", margin: 0 }}>Fuente: {precio.fuente}</p>
-    )}
 
     {!precio.admitido && precio.motivo && (
       <div

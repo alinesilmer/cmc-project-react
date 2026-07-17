@@ -114,7 +114,8 @@ type PeriodoDisp = {
 };
 
 /* ========== Utils ========== */
-const currency = new Intl.NumberFormat("es-AR", { minimumFractionDigits: 0 });
+// Sin `style: "currency"`: los call-sites ya anteponen "$"/"-$"/"+$" a mano.
+const currency = new Intl.NumberFormat("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 function toNumber(x: unknown): number {
   if (typeof x === "number") return x;

@@ -86,7 +86,7 @@ const Dashboard: React.FC = () => {
       title: "Facturación",
       description:
         "Ingresá a carga, listados, cierres y herramientas de facturación.",
-      link: "/panel/facturacion",
+      link: "/panel/facturacion/periodos",
       accent: "blue",
       badge: "Operativo",
     },

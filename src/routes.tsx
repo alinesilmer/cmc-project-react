@@ -43,10 +43,11 @@ const DeduccionesList = lazy(() => import("./app/pages/Deducciones/DeduccionesLi
 const NuevaDeduccion = lazy(() => import("./app/pages/Deducciones/NuevaDeduccion"));
 
 // Facturación (carga de prestaciones del Colegio)
-const Facturacion = lazy(() => import("./app/pages/facturacion/Facturacion"));
 const CargaFacturacion = lazy(() => import("./app/pages/facturacion/CargaFacturacion/CargaFacturacion"));
-const ListadoPrestaciones = lazy(() => import("./app/pages/facturacion/ListadoPrestaciones/ListadoPrestaciones"));
 const CierrePeriodo = lazy(() => import("./app/pages/facturacion/CierrePeriodo/CierrePeriodo"));
+const VerPeriodos = lazy(() => import("./app/pages/facturacion/VerPeriodos/VerPeriodos"));
+const Complementarias = lazy(() => import("./app/pages/facturacion/Complementarias/Complementarias"));
+const FacturacionFacturaDetalle = lazy(() => import("./app/pages/facturacion/FacturaDetalle/FacturaDetalle"));
 
 // WEBSITE
 const WebRoutes = lazy(() => import("./website/router"));
@@ -122,10 +123,14 @@ export default function RootRoutes() {
 
               {/* Facturación */}
               <Route path="facturacion">
-                <Route index element={<Facturacion />} />
+                <Route index element={<Navigate to="/panel/facturacion/periodos" replace />} />
                 <Route path="carga" element={<CargaFacturacion />} />
-                <Route path="prestaciones" element={<ListadoPrestaciones />} />
+                <Route path="carga/:id" element={<CargaFacturacion />} />
                 <Route path="cierre" element={<CierrePeriodo />} />
+                <Route path="periodos" element={<VerPeriodos />} />
+                <Route path="periodos/:id" element={<FacturacionFacturaDetalle />} />
+                <Route path="complementarias" element={<Complementarias />} />
+                <Route path="complementarias/:facturaId/cargar" element={<CargaFacturacion />} />
               </Route>
 
               <Route path="padron-ioscor" element={<PadronIoscor />} />

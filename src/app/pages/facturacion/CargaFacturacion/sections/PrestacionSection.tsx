@@ -3,47 +3,47 @@ import NomencladorAutocomplete from "../../components/NomencladorAutocomplete";
 import PrecioPreviewCard from "../../components/PrecioPreviewCard";
 import type { NomencladorOption, PrecioResponse } from "../../types";
 import CircularProgress from "@mui/material/CircularProgress";
+import styles from "../CargaFacturacion.module.scss";
 
 interface Props {
   codNomenclador: string | null;
   onNomencladorChange: (codigo: string | null, nom: NomencladorOption | null) => void;
+  codMedico: string | null;
   precio: PrecioResponse | null;
   precioLoading: boolean;
   precioError: string | null;
   disabled?: boolean;
   errors?: Record<string, string>;
+  presetLabel?: string;
+  blockedHint?: string;
 }
 
 const PrestacionSection: React.FC<Props> = ({
-  codNomenclador, onNomencladorChange, precio, precioLoading, precioError,
-  disabled, errors = {},
+  codNomenclador, onNomencladorChange, codMedico, precio, precioLoading, precioError,
+  disabled, errors = {}, presetLabel, blockedHint,
 }) => (
-  <section>
-    <h3 style={{ fontSize: "0.86rem", fontWeight: 600, color: "#0c2a52", borderTop: "1px solid #e2e8f0", paddingTop: 12, marginBottom: 12 }}>
-      Prestación
-    </h3>
-    <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 420 }}>
-      <div>
-        <label style={{ fontSize: 13, fontWeight: 500, display: "block", marginBottom: 4 }}>
-          Código *
-          {precioLoading && <CircularProgress size={12} style={{ marginLeft: 8 }} />}
-        </label>
-        <NomencladorAutocomplete
-          value={codNomenclador}
-          onChange={onNomencladorChange}
-          disabled={disabled}
-        />
-        {errors.codNomenclador && (
-          <span style={{ fontSize: 12, color: "#cc2a2a", display: "block", marginTop: 4 }}>
-            {errors.codNomenclador}
-          </span>
-        )}
-      </div>
-
-      {precioError && <div style={{ fontSize: 12, color: "#cc2a2a" }}>{precioError}</div>}
-      {precio && !precioLoading && <PrecioPreviewCard precio={precio} />}
+  <div className={styles.section}>
+    <span className={styles.sectionTitle}>Prestación</span>
+    <div className={`${styles.filterField} ${styles.filterFieldWide}`} data-field="codigo">
+      <label className={styles.filterLabel}>
+        Código <span className={styles.errorText}>*</span>
+        {precioLoading && <CircularProgress size={12} style={{ marginLeft: 8 }} />}
+      </label>
+      <NomencladorAutocomplete
+        value={codNomenclador}
+        onChange={onNomencladorChange}
+        codMedico={codMedico}
+        disabled={disabled}
+        presetLabel={presetLabel}
+        blurOnSelect={false}
+      />
+      {blockedHint && <span className={styles.mutedText}>{blockedHint}</span>}
+      {errors.codNomenclador && <span className={styles.errorText}>{errors.codNomenclador}</span>}
     </div>
-  </section>
+
+    {precioError && <div className={styles.errorText}>{precioError}</div>}
+    {precio && !precioLoading && <PrecioPreviewCard precio={precio} />}
+  </div>
 );
 
 export default PrestacionSection;
