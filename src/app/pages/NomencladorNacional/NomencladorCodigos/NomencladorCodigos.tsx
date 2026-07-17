@@ -24,8 +24,17 @@ import {
   updateNomenclador,
   toggleNomencladorActivo,
   deleteNomenclador,
+  getNomencladorById,
+  listNomencladorEspecialidadesResumen,
 } from "../nomenclador.api";
-import type { NomencladorOut, NomencladorCreatePayload } from "../nomenclador.types";
+import type {
+  NomencladorOut,
+  NomencladorCreatePayload,
+  NomencladorEspecialidadResumenOut,
+} from "../nomenclador.types";
+import { getEspecialidades } from "../../Especialidades/especialidades.api";
+import type { Especialidad } from "../../Especialidades/especialidades.types";
+import EspecialidadCombo from "../EspecialidadCombo";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -91,6 +100,9 @@ export default function NomencladorCodigos() {
   const [search, setSearch] = useState("");
   const [filterComplejidad, setFilterComplejidad] = useState("");
   const [filterActivo, setFilterActivo] = useState("true");
+  const [filterEspecialidad, setFilterEspecialidad] = useState(""); // id_colegio_espe ("" = sin filtro)
+  const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
+  const [espItems, setEspItems] = useState<NomencladorEspecialidadResumenOut[]>([]);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -100,32 +112,60 @@ export default function NomencladorCodigos() {
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
 
-  const load = useCallback(async (p: number, q: string, comp: string, act: string) => {
-    setLoading(true);
-    try {
-      const params: Record<string, unknown> = { page: p, size: PAGE_SIZE };
-      if (q.trim()) params.q = q.trim();
-      if (comp) params.complejidad = comp;
-      if (act !== "") params.activo = act === "true";
+  const load = useCallback(
+    async (p: number, q: string, comp: string, act: string, esp: string) => {
+      setLoading(true);
+      try {
+        if (esp) {
+          // Modo especialidad: la fuente es el endpoint enriquecido código↔especialidad.
+          const params: Record<string, unknown> = {
+            page: p,
+            size: PAGE_SIZE,
+            especialidad_id_colegio: Number(esp),
+          };
+          if (q.trim()) params.q = q.trim();
+          if (act !== "") params.activo = act === "true";
 
-      const data = await listNomenclador(params as Parameters<typeof listNomenclador>[0]);
-      setItems(data);
-      setHasMore(data.length === PAGE_SIZE);
-    } catch {
-      setItems([]);
-      setHasMore(false);
-    } finally {
-      setLoading(false);
-    }
+          const data = await listNomencladorEspecialidadesResumen(
+            params as Parameters<typeof listNomencladorEspecialidadesResumen>[0],
+          );
+          setEspItems(data);
+          setItems([]);
+          setHasMore(data.length === PAGE_SIZE);
+        } else {
+          const params: Record<string, unknown> = { page: p, size: PAGE_SIZE };
+          if (q.trim()) params.q = q.trim();
+          if (comp) params.complejidad = comp;
+          if (act !== "") params.activo = act === "true";
+
+          const data = await listNomenclador(params as Parameters<typeof listNomenclador>[0]);
+          setItems(data);
+          setEspItems([]);
+          setHasMore(data.length === PAGE_SIZE);
+        }
+      } catch {
+        setItems([]);
+        setEspItems([]);
+        setHasMore(false);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
+
+  // Catálogo de especialidades para el filtro.
+  useEffect(() => {
+    getEspecialidades().then(setEspecialidades).catch(() => setEspecialidades([]));
   }, []);
 
   // Debounce search; also triggers on page/filter changes via deps
   useEffect(() => {
     const t = setTimeout(() => {
-      load(page, search, filterComplejidad, filterActivo);
+      load(page, search, filterComplejidad, filterActivo, filterEspecialidad);
     }, search.trim() ? 350 : 0);
     return () => clearTimeout(t);
-  }, [load, page, search, filterComplejidad, filterActivo]);
+  }, [load, page, search, filterComplejidad, filterActivo, filterEspecialidad]);
 
   function showToast(type: "success" | "error", msg: string) {
     setToast({ type, msg });
@@ -144,6 +184,17 @@ export default function NomencladorCodigos() {
     setForm(itemToForm(item));
     setErrors({});
     setModalOpen(true);
+  }
+
+  // En modo especialidad las filas son pares (sin todos los campos del código),
+  // así que traemos el código completo antes de abrir el editor.
+  async function openEditFromEsp(row: NomencladorEspecialidadResumenOut) {
+    try {
+      const full = await getNomencladorById(row.nomenclador_id);
+      openEdit(full);
+    } catch {
+      showToast("error", "No se pudo cargar el código.");
+    }
   }
 
   function closeModal() {
@@ -183,6 +234,13 @@ export default function NomencladorCodigos() {
       if (editingId) {
         const updated = await updateNomenclador(editingId, payload);
         setItems((prev) => prev.map((i) => (i.id === editingId ? updated : i)));
+        setEspItems((prev) =>
+          prev.map((r) =>
+            r.nomenclador_id === editingId
+              ? { ...r, codigo: updated.codigo, descripcion: updated.descripcion }
+              : r,
+          ),
+        );
         showToast("success", "Código actualizado.");
       } else {
         const created = await createNomenclador(payload);
@@ -233,6 +291,8 @@ export default function NomencladorCodigos() {
     };
   }, []);
 
+  const espMode = filterEspecialidad !== "";
+
   return (
     <div className={styles.container}>
       {/* Header */}
@@ -259,9 +319,17 @@ export default function NomencladorCodigos() {
             />
           </div>
 
+          <EspecialidadCombo
+            especialidades={especialidades}
+            value={filterEspecialidad ? Number(filterEspecialidad) : null}
+            onChange={(v) => { setFilterEspecialidad(v === null ? "" : String(v)); setPage(1); }}
+          />
+
           <select
             className={styles.filterSelect}
             value={filterComplejidad}
+            disabled={espMode}
+            title={espMode ? "No disponible al filtrar por especialidad" : undefined}
             onChange={(e) => { setFilterComplejidad(e.target.value); setPage(1); }}
           >
             <option value="">Todas las complejidades</option>
@@ -289,18 +357,42 @@ export default function NomencladorCodigos() {
         <div className={styles.tableWrap}>
           <table className={styles.table}>
             <thead>
-              <tr>
-                <th>Código</th>
-                <th>Descripción</th>
-                <th>Categoría</th>
-                <th>Complejidad</th>
-                <th>Estado</th>
-                <th className={styles.thActions}>Acciones</th>
-              </tr>
+              {espMode ? (
+                <tr>
+                  <th>Código</th>
+                  <th>Descripción</th>
+                  <th>Especialidad</th>
+                  <th className={styles.thActions}>Acciones</th>
+                </tr>
+              ) : (
+                <tr>
+                  <th>Código</th>
+                  <th>Descripción</th>
+                  <th>Categoría</th>
+                  <th>Complejidad</th>
+                  <th>Estado</th>
+                  <th className={styles.thActions}>Acciones</th>
+                </tr>
+              )}
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={6} className={styles.loadingCell}>Cargando…</td></tr>
+                <tr><td colSpan={espMode ? 4 : 6} className={styles.loadingCell}>Cargando…</td></tr>
+              ) : espMode ? (
+                espItems.length === 0 ? (
+                  <tr><td colSpan={4} className={styles.emptyCell}>Sin resultados</td></tr>
+                ) : espItems.map((row) => (
+                  <tr key={`esp-${row.id}`}>
+                    <td><span className={styles.codeCell}>{row.codigo}</span></td>
+                    <td>{row.descripcion}</td>
+                    <td>{row.especialidad ?? <span style={{ color: "#718096" }}>—</span>}</td>
+                    <td className={styles.actionsCell}>
+                      <button className={styles.btnEdit} onClick={() => openEditFromEsp(row)} title="Editar código">
+                        <Edit2 size={13} />
+                      </button>
+                    </td>
+                  </tr>
+                ))
               ) : items.length === 0 ? (
                 <tr><td colSpan={6} className={styles.emptyCell}>Sin resultados</td></tr>
               ) : items.map((item) => (
@@ -339,6 +431,21 @@ export default function NomencladorCodigos() {
         <div className={styles.cardList}>
           {loading ? (
             <p className={styles.emptyText}>Cargando…</p>
+          ) : espMode ? (
+            espItems.length === 0 ? (
+              <p className={styles.emptyText}>Sin resultados</p>
+            ) : espItems.map((row) => (
+              <div key={`esp-${row.id}`} className={styles.card}>
+                <div className={styles.cardTop}>
+                  <span className={styles.codeCell}>{row.codigo}</span>
+                  {row.especialidad && <span className={styles.badge}>{row.especialidad}</span>}
+                </div>
+                <p className={styles.cardDesc}>{row.descripcion}</p>
+                <div className={styles.cardActions}>
+                  <button className={styles.btnEdit} onClick={() => openEditFromEsp(row)}><Edit2 size={13} /> Editar</button>
+                </div>
+              </div>
+            ))
           ) : items.length === 0 ? (
             <p className={styles.emptyText}>Sin resultados</p>
           ) : items.map((item) => (

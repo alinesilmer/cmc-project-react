@@ -10,10 +10,12 @@ import styles from "./NomencladorPorOS.module.scss";
 import {
   listGalenos, listValores, createValor, deleteValor,
   listNomenclador, getNomencladorById, updateValorMetadata, actualizarValor,
+  listNomencladorEspecialidadesResumen,
 } from "../nomenclador.api";
 import ConfirmModal from "../../../components/atoms/ConfirmModal/ConfirmModal";
 import { listObrasSociales } from "../../ObrasSociales/obrasSociales.api";
 import { getEspecialidades } from "../../Especialidades/especialidades.api";
+import EspecialidadCombo from "../EspecialidadCombo";
 import type { ValorOut, GalenoOut, NomencladorOut, ComponentePayload, Origen } from "../nomenclador.types";
 import { ORIGEN_LABELS } from "../nomenclador.types";
 import { today, parseMonto } from "../nomenclador.helpers";
@@ -177,6 +179,7 @@ export default function NomencladorPorOS() {
   const [nomDescMap, setNomDescMap] = useState<Record<number, string>>({});
   const [origenFilter, setOrigenFilter] = useState<Origen | "todos">("todos");
   const [soloPresupuesto, setSoloPresupuesto] = useState(false);
+  const [especialidadFilter, setEspecialidadFilter] = useState<number | "todos">("todos");
   const [page, setPage] = useState(1);
   const descAttempted = useRef<Set<number>>(new Set());
 
@@ -228,6 +231,27 @@ export default function NomencladorPorOS() {
     return m;
   }, [especialidades]);
 
+  // IDs de nomenclador conectados a la especialidad elegida (para acotar el listado).
+  // Se traen todos los pares de la especialidad (paginando) y se guardan como Set.
+  const { data: codigosDeEspecialidad, isFetching: espFilterFetching } = useQuery({
+    queryKey: ["nomenclador-especialidad-codigos", especialidadFilter],
+    queryFn: async () => {
+      const ids = new Set<number>();
+      for (let p = 1; p <= 100; p++) {
+        const batch = await listNomencladorEspecialidadesResumen({
+          especialidad_id_colegio: especialidadFilter as number,
+          page: p,
+          size: 200,
+        });
+        batch.forEach((r) => ids.add(r.nomenclador_id));
+        if (batch.length < 200) break;
+      }
+      return ids;
+    },
+    enabled: especialidadFilter !== "todos",
+    staleTime: 5 * 60 * 1000,
+  });
+
   const filteredOS = useMemo(() => {
     if (!osSearch.trim()) return osList.slice(0, 80);
     const q = osSearch.toLowerCase();
@@ -268,12 +292,19 @@ export default function NomencladorPorOS() {
     let list = valores;
     if (origenFilter !== "todos") list = list.filter((v) => v.origen === origenFilter);
     if (soloPresupuesto) list = list.filter((v) => v.por_presupuesto);
+    if (especialidadFilter !== "todos") {
+      // Mientras el set carga (undefined) no mostramos nada para no confundir.
+      list = codigosDeEspecialidad ? list.filter((v) => codigosDeEspecialidad.has(v.nomenclador_id)) : [];
+    }
     if (codeSearch.trim()) {
       const q = codeSearch.toLowerCase();
       list = list.filter((v) => v.codigo.toLowerCase().includes(q) || (v.descripcion ?? nomDescMap[v.nomenclador_id] ?? "").toLowerCase().includes(q));
     }
     return list;
-  }, [valores, codeSearch, origenFilter, soloPresupuesto, nomDescMap]);
+  }, [valores, codeSearch, origenFilter, soloPresupuesto, nomDescMap, especialidadFilter, codigosDeEspecialidad]);
+
+  // Loading combinado: valores de la OS + resolución del set de la especialidad.
+  const showLoading = loadingValores || (especialidadFilter !== "todos" && !codigosDeEspecialidad && espFilterFetching);
 
   const grouped = useMemo(() => {
     const map = new Map<number, ValorOut[]>();
@@ -292,7 +323,7 @@ export default function NomencladorPorOS() {
   );
 
   // Volver a la página 1 cuando cambian OS, búsqueda o filtro de origen.
-  useEffect(() => { setPage(1); }, [selectedNroOS, codeSearch, origenFilter, soloPresupuesto]);
+  useEffect(() => { setPage(1); }, [selectedNroOS, codeSearch, origenFilter, soloPresupuesto, especialidadFilter]);
   // Ajustar si la página quedó fuera de rango (p. ej. tras cerrar un valor).
   useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
 
@@ -672,6 +703,11 @@ export default function NomencladorPorOS() {
                     Por presupuesto
                   </button>
                 </div>
+                <EspecialidadCombo
+                  especialidades={especialidades}
+                  value={especialidadFilter === "todos" ? null : especialidadFilter}
+                  onChange={(v) => setEspecialidadFilter(v === null ? "todos" : v)}
+                />
                 <button className={styles.btnPrimary} onClick={openCreate}><Plus size={14} /> Agregar código</button>
               </div>
 
@@ -689,10 +725,12 @@ export default function NomencladorPorOS() {
                     </tr>
                   </thead>
                   <tbody>
-                    {loadingValores ? (
+                    {showLoading ? (
                       <tr><td colSpan={6} className={styles.loadingCell}>Cargando…</td></tr>
                     ) : grouped.length === 0 ? (
-                      <tr><td colSpan={6} className={styles.emptyCell}>Sin códigos cargados</td></tr>
+                      <tr><td colSpan={6} className={styles.emptyCell}>
+                        {especialidadFilter !== "todos" ? "Sin códigos de esta especialidad" : "Sin códigos cargados"}
+                      </td></tr>
                     ) : pageGroups.map(([nomId, variants]) => {
                       const first = variants[0];
                       return (
@@ -757,7 +795,7 @@ export default function NomencladorPorOS() {
               </div>
 
               {/* Paginación */}
-              {!loadingValores && grouped.length > 0 && (
+              {!showLoading && grouped.length > 0 && (
                 <div className={styles.pagination}>
                   <span className={styles.pageInfo}>
                     {grouped.length} código{grouped.length !== 1 ? "s" : ""}

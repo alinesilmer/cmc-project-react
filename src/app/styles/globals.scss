@@ -10,10 +10,18 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+:root {
+  // rsuite components resolve their font from this variable
+  --rs-font-family-base: "Inter", sans-serif;
+}
+
 body {
-  font-family: "Raleway", sans-serif;
+  // font-family: "Raleway", sans-serif;
   // Numeros tabulares/alineados con las letras (en vez de "old-style" con descendentes).
-  font-feature-settings: 'pnum' on, 'lnum' on;
+  font-feature-settings:
+    "pnum" on,
+    "lnum" on;
+  font-family: "Inter", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: $gray-50;
@@ -34,8 +42,7 @@ h6 {
 }
 
 button {
-  font-family: "Manrope", sans-serif;
-  font-feature-settings: normal;
+  font-family: "Inter", sans-serif;
 }
 
 input,
