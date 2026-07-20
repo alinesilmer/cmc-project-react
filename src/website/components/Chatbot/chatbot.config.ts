@@ -244,6 +244,71 @@ export const INTENTS: Intent[] = [
     ],
   },
 
+  // ── Obras sociales específicas — procedimientos de atención / autorización ────
+  // Van antes del intent genérico "obras_sociales" para que su nombre gane el
+  // match, pero después de "obras_sociales_check" para no pisar la consulta
+  // de convenio en vivo ("¿tiene convenio con...?").
+
+  {
+    id: "swiss_medical",
+    keywords: [
+      "swiss medical",
+      "swiss",
+      "atender swiss",
+      "atiendo swiss",
+      "como atiendo con swiss",
+      "como atender con swiss",
+      "prestador swiss",
+      "numero de prestador swiss",
+      "usuario swiss",
+      "alta swiss",
+      "tutorial swiss",
+      "plus swiss",
+      "sin cobro de plus",
+    ],
+    chipLabel: "Swiss Medical",
+    answer:
+      "Para atender pacientes de Swiss Medical:\n\n" +
+      "1. Asiente la consulta en la planilla correspondiente y haga firmar " +
+      "al paciente.\n" +
+      "2. Para generar su usuario en el sistema de Swiss, inicie sesión, " +
+      "vaya a su perfil y presione el botón «Obtener usuario SWISS MEDICAL». " +
+      "Allí encontrará las instrucciones para crearlo.\n" +
+      "3. Si aún no tiene número de prestador, envíe un correo a " +
+      "padronescolegiomedico@gmail.com confirmando que atenderá con Swiss " +
+      "sin cobro de plus, para tramitar el alta.",
+    links: [
+      { label: "Ir al sistema", href: APPROVED_LINKS.login, external: true },
+    ],
+    whatsapp: "padrones",
+  },
+  {
+    id: "union_personal",
+    keywords: [
+      "union personal",
+      "autorizacion union personal",
+      "autorizaciones union personal",
+      "prestaciones union personal",
+      "como autorizo union personal",
+      "autorizar union personal",
+      "codigo 420101",
+      "420101",
+    ],
+    chipLabel: "Unión Personal",
+    answer:
+      "Autorizaciones de Unión Personal:\n\n" +
+      "El usuario y la clave para autorizar están disponibles en su perfil " +
+      "dentro del sistema.\n\n" +
+      "1. Ingrese a Menú → Autorizaciones → Prestaciones.\n" +
+      "2. Complete únicamente el N° de afiliado, la versión de la credencial " +
+      "y el plan; luego ingrese el código de consulta 420101 y presione «Autorizar».\n" +
+      "3. Complete todos los datos en un recetario con membrete e incluya el " +
+      "N° de autorización como referencia.",
+    links: [
+      { label: "Ir al sistema", href: APPROVED_LINKS.login, external: true },
+    ],
+  },
+
   {
     id: "obras_sociales",
     keywords: [
