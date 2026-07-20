@@ -1,17 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { FileCheck2, ArrowLeft, Paperclip } from "lucide-react";
 
-import Button from "../../../components/atoms/Button/Button";
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
 import { previewCierre, cerrarPeriodo, fetchPeriodoActivo } from "../api";
 import type { CierrePreviewResponse, ObraSocialOption } from "../types";
 import { detailMessage } from "../types";
 import { formatMoney } from "../money";
 import ObraSocialAutocomplete from "../components/ObraSocialAutocomplete";
-import ImporteDisplay from "../components/ImporteDisplay";
 import ConfirmarCierreModal from "./ConfirmarCierreModal";
 import styles from "./CierrePeriodo.module.scss";
+
+const TIPOS_FACTURA = ["A", "B", "C"];
 
 const CierrePeriodo: React.FC = () => {
   const navigate = useNavigate();
@@ -22,6 +23,12 @@ const CierrePeriodo: React.FC = () => {
   const [preview, setPreview] = useState<CierrePreviewResponse | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
+
+  const [tipoFactura, setTipoFactura] = useState("");
+  const [nroFactura, setNroFactura] = useState("");
+  const [archivo, setArchivo] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [cerrando, setCerrando] = useState(false);
 
@@ -65,10 +72,16 @@ const CierrePeriodo: React.FC = () => {
     if (!obraSocial || !periodo || !preview) return;
     setCerrando(true);
     try {
-      const result = await cerrarPeriodo(String(obraSocial.nro_obra_social), periodo);
+      const result = await cerrarPeriodo({
+        cod_obra: String(obraSocial.nro_obra_social),
+        periodo,
+        tipo_factura: tipoFactura || undefined,
+        nro_factura: nroFactura || undefined,
+        archivo,
+      });
       notify(`Factura #${result.id_factura} generada — ${formatMoney(result.importe_total)}`);
       setConfirmOpen(false);
-      navigate("/panel/facturacion/prestaciones");
+      navigate("/panel/facturacion/periodos");
     } catch (e: any) {
       notify(detailMessage(e?.response?.data?.detail) || "Error al cerrar.", "error");
     } finally {
@@ -79,104 +92,154 @@ const CierrePeriodo: React.FC = () => {
   const canCerrar = !!preview && !preview.cerrado && preview.cantidad > 0 && !cerrando;
 
   return (
-    <div className={styles.page}>
-      <header className={styles.header}>
-        <h1>Cierre de período</h1>
-        <div className={styles.headerActions}>
-          <Button variant="ghost" size="sm" onClick={() => navigate("/panel/facturacion")}>
-            ← Volver
-          </Button>
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <span className={styles.headerIcon}>
+          <FileCheck2 size={22} />
+        </span>
+        <div>
+          <h1 className={styles.title}>Cerrar factura</h1>
+          <p className={styles.subtitle}>Cierre de período — genera la factura y habilita la liquidación.</p>
         </div>
-      </header>
+        <div className={styles.headerRight}>
+          <button type="button" className={styles.backBtn} onClick={() => navigate("/panel/facturacion/periodos")}>
+            <ArrowLeft size={15} /> Volver
+          </button>
+        </div>
+      </div>
 
       <motion.div
-        className={styles.body}
+        className={styles.layout}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 420 }}>
-          <div>
-            <label style={{ fontSize: 13, fontWeight: 500, display: "block", marginBottom: 4 }}>Obra social</label>
-            <ObraSocialAutocomplete
-              value={obraSocial?.nro_obra_social ?? null}
-              onChange={(_, os) => setObraSocial(os)}
-              disabled={cerrando}
-            />
+        <div className={styles.section}>
+          <span className={styles.sectionTitle}>Obra social y período</span>
+          <div className={styles.fieldsRow}>
+            <div className={styles.filterField}>
+              <label className={styles.filterLabel}>Obra social</label>
+              <ObraSocialAutocomplete
+                value={obraSocial?.nro_obra_social ?? null}
+                onChange={(_, os) => setObraSocial(os)}
+                disabled={cerrando}
+              />
+            </div>
+            <div className={styles.filterField}>
+              <label className={styles.filterLabel}>Período (YYYYMM)</label>
+              <input
+                className={styles.input}
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                value={periodo}
+                onChange={(e) => setPeriodo(e.target.value)}
+                placeholder="Ej. 202607"
+                disabled={!obraSocial || cerrando}
+              />
+            </div>
           </div>
-          <div>
-            <label style={{ fontSize: 13, fontWeight: 500, display: "block", marginBottom: 4 }}>Período (YYYYMM)</label>
-            <input
-              type="text"
-              value={periodo}
-              onChange={(e) => setPeriodo(e.target.value)}
-              placeholder="Ej. 202606"
-              disabled={!obraSocial || cerrando}
-              maxLength={6}
-              style={{ maxWidth: 160 }}
-            />
+
+          {previewLoading && <span className={styles.mutedText}>Cargando preview…</span>}
+          {previewError && <div className={styles.errorBox}>{previewError}</div>}
+
+          {preview && (
+            <div className={styles.previewRow}>
+              <span className={`${styles.infoChip} ${styles.chipNeutral}`}>
+                {preview.cantidad} prestación{preview.cantidad !== 1 ? "es" : ""}
+              </span>
+              <span className={`${styles.infoChip} ${styles.chipTotal}`}>
+                Total: {formatMoney(preview.importe_total)}
+              </span>
+              <span className={`${styles.infoChip} ${preview.cerrado ? styles.chipCerrada : styles.chipAbierta}`}>
+                {preview.cerrado ? "Ya cerrado" : "Abierto"}
+              </span>
+            </div>
+          )}
+
+          {preview?.cerrado && (
+            <p className={styles.mutedText}>
+              Este período ya tiene una factura generada. No se puede volver a cerrar.
+            </p>
+          )}
+        </div>
+
+        <div className={styles.section}>
+          <span className={styles.sectionTitle}>Datos de la factura</span>
+          <div className={styles.fieldsRow}>
+            <div className={styles.filterField}>
+              <label className={styles.filterLabel}>Tipo de factura</label>
+              <select
+                className={styles.select}
+                value={tipoFactura}
+                onChange={(e) => setTipoFactura(e.target.value)}
+                disabled={cerrando}
+              >
+                <option value="">— sin especificar —</option>
+                {TIPOS_FACTURA.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+            <div className={styles.filterField}>
+              <label className={styles.filterLabel}>Nº de factura</label>
+              <input
+                className={styles.input}
+                type="text"
+                value={nroFactura}
+                onChange={(e) => setNroFactura(e.target.value)}
+                placeholder="Ej. 0001-00012345"
+                disabled={cerrando}
+              />
+            </div>
+            <div className={styles.filterField}>
+              <label className={styles.filterLabel}>Agregar factura (documento)</label>
+              <label className={styles.fileField}>
+                <Paperclip size={15} />
+                <span className={styles.fileName}>{archivo ? archivo.name : "Adjuntar PDF / imagen — opcional"}</span>
+                <input
+                  ref={fileInputRef}
+                  className={styles.fileInput}
+                  type="file"
+                  accept="application/pdf,image/*"
+                  onChange={(e) => setArchivo(e.target.files?.[0] ?? null)}
+                  disabled={cerrando}
+                />
+              </label>
+            </div>
           </div>
         </div>
 
-        {previewLoading && (
-          <p style={{ fontSize: 13, color: "#64748b" }}>Cargando preview…</p>
-        )}
-
-        {previewError && (
-          <div style={{ background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: 6, padding: "10px 14px", fontSize: 13, color: "#cc2a2a" }}>
-            {previewError}
+        <div className={styles.section}>
+          <div className={styles.warningBox}>
+            ⚠ El cierre es <strong>IRREVERSIBLE</strong>: genera la factura, pasa las prestaciones
+            de estado A → C y las habilita para liquidación.
           </div>
-        )}
+        </div>
 
-        {preview && (
-          <div className={styles.previewCard}>
-            <div className={styles.statRow}>
-              <label>Prestaciones a cerrar</label>
-              <strong>{preview.cantidad}</strong>
-            </div>
-            <div className={styles.statRow}>
-              <label>Importe total</label>
-              <strong><ImporteDisplay value={preview.importe_total} large /></strong>
-            </div>
-            <div className={styles.statRow}>
-              <label>Estado del período</label>
-              <strong style={{ color: preview.cerrado ? "#1d9148" : "#92400e" }}>
-                {preview.cerrado ? "⚠ Ya cerrado" : "🟢 Abierto"}
-              </strong>
-            </div>
-            {preview.cerrado && (
-              <p style={{ fontSize: 12, color: "#475569", margin: 0 }}>
-                Este período ya tiene una factura generada. No se puede volver a cerrar.
-              </p>
-            )}
-          </div>
-        )}
-
-        <div className={styles.warningBox}>
-          ⚠ El cierre es <strong>IRREVERSIBLE</strong>: genera la factura, pasa las prestaciones
-          de estado A → C y las habilita para liquidación.
+        <div className={styles.formFooter}>
+          <button type="button" className={styles.btnGhost} onClick={() => navigate("/panel/facturacion/periodos")} disabled={cerrando}>
+            Cancelar
+          </button>
+          <button
+            type="button"
+            className={styles.btnDanger}
+            onClick={() => setConfirmOpen(true)}
+            disabled={!canCerrar}
+          >
+            {cerrando ? "Cerrando…" : "Cerrar período"}
+          </button>
         </div>
       </motion.div>
-
-      <footer className={styles.footer}>
-        <Button variant="ghost" onClick={() => navigate("/panel/facturacion")} disabled={cerrando}>
-          Cancelar
-        </Button>
-        <Button
-          variant="danger"
-          onClick={() => setConfirmOpen(true)}
-          disabled={!canCerrar}
-          isLoading={cerrando}
-        >
-          Cerrar período
-        </Button>
-      </footer>
 
       {preview && obraSocial && (
         <ConfirmarCierreModal
           isOpen={confirmOpen}
           preview={preview}
           osNombre={obraSocial.nombre}
+          tipoFactura={tipoFactura}
+          nroFactura={nroFactura}
+          archivoNombre={archivo?.name ?? null}
           onClose={() => setConfirmOpen(false)}
           onConfirm={handleCerrar}
           loading={cerrando}

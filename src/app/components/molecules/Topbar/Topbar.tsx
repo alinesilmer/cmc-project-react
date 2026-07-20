@@ -12,8 +12,8 @@ import {
   Users, BookUser, ClipboardPlus, Building2, Newspaper,
   Flower2, FileBoxIcon, Medal, ClipboardList, HousePlus, History,
   FileCode2, Search, FileText, Percent, GitMerge, Sigma, TrendingUp,
-  PencilRuler, ShieldUser, Monitor,
-  LogOut, CircleUserRound, ChevronDown, Menu, X,
+  PencilRuler, ShieldUser, Monitor, Receipt, CalendarDays,
+  LogOut, CircleUserRound, ChevronDown, Menu, X, Layers,
 } from "lucide-react";
 
 import styles from "./Topbar.module.scss";
@@ -41,6 +41,19 @@ const LIQ = ["liquidacion:leer", "liquidacion:ver"];
 
 const TOP_NAV: TopEntry[] = [
   { kind: "link", path: `${base}/dashboard`, icon: Home, label: "Inicio" },
+  {
+    kind: "menu", id: "facturacion", icon: Receipt, label: "Facturación",
+    columns: [
+      {
+        items: [
+          { path: `${base}/facturacion/carga`, icon: DollarSign, label: "Cargar Prestaciones", perms: R },
+          { path: `${base}/facturacion/cierre`, icon: CalendarDays, label: "Cerrar Factura", perms: R },
+          { path: `${base}/facturacion/periodos`, icon: ClipboardList, label: "Ver períodos", perms: R },
+          { path: `${base}/facturacion/complementarias`, icon: Layers, label: "Complementarias", perms: R },
+        ],
+      },
+    ],
+  },
   {
     kind: "menu", id: "liquidacion", icon: DollarSign, label: "Liquidación",
     columns: [

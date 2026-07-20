@@ -16,6 +16,11 @@ html {
 }
 
 body {
+  // font-family: "Raleway", sans-serif;
+  // Numeros tabulares/alineados con las letras (en vez de "old-style" con descendentes).
+  font-feature-settings:
+    "pnum" on,
+    "lnum" on;
   font-family: "Inter", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -32,6 +37,7 @@ h4,
 h5,
 h6 {
   font-family: "Manrope", sans-serif;
+  font-feature-settings: normal;
   line-height: 1.15;
 }
 

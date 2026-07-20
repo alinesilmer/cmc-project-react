@@ -17,6 +17,7 @@ import {
   type LoteAjuste,
   mesLabel,
   MESES,
+  fmt,
 } from "../types";
 import AppSearchSelect from "../../../components/atoms/AppSearchSelect/AppSearchSelect";
 
@@ -334,7 +335,7 @@ const DebitosCreditos: React.FC = () => {
       alignRight: true,
       render: (l) => (
         <span className={styles.negative}>
-          -${Number(l.total_debitos).toLocaleString("es-AR")}
+          -${fmt(l.total_debitos)}
         </span>
       ),
     },
@@ -344,7 +345,7 @@ const DebitosCreditos: React.FC = () => {
       alignRight: true,
       render: (l) => (
         <span className={styles.positive}>
-          +${Number(l.total_creditos).toLocaleString("es-AR")}
+          +${fmt(l.total_creditos)}
         </span>
       ),
     },

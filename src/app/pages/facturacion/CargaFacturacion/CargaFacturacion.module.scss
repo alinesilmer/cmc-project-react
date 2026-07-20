@@ -1,87 +1,602 @@
-@use "../../../styles/variables" as *;
+// Mismo lenguaje visual que VerPeriodos / FacturaDetalle / CierrePeriodo ("Valores y nomencladores").
+$blue: #3b6fd4;
+$blue-light: #e8efff;
+$blue-hover: #2f5bbb;
+$red: #dc2626;
+$red-light: #fee2e2;
+$green: #166534;
+$amber: #92400e;
+$border: #e2e8f0;
+$surface: #ffffff;
+$text-1: #1a1f2e;
+$text-2: #4a5568;
+$text-3: #718096;
+$radius-sm: 6px;
+$radius-md: 10px;
+$radius-lg: 14px;
+$shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
 
-.page {
-  display: flex;
-  flex-direction: column;
+.container {
   min-height: 100vh;
-  background: $gray-50;
+  background: linear-gradient(135deg, #f0f4ff 0%, #fafbff 60%, #f5f0ff 100%);
+  padding: 1.8rem;
+  font-family: inherit;
 }
 
 .header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: $primary-blue-darker;
-  color: $white;
-  padding: $spacing-3 $spacing-6;
   display: flex;
   align-items: center;
-  gap: $spacing-4;
+  gap: 12px;
+  margin-bottom: 24px;
   flex-wrap: wrap;
-  box-shadow: $shadow-md;
-
-  h1 {
-    font-family: Manrope, sans-serif;
-    font-size: $font-size-lg;
-    font-weight: $font-weight-semibold;
-    margin: 0;
-    color: $white;
-  }
 }
 
-.headerActions {
+.headerIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: $radius-md;
+  background: $blue-light;
+  color: $blue;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: $text-1;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 0.8rem;
+  color: $text-3;
+  margin: 2px 0 0;
+}
+
+.headerRight {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: $spacing-3;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  background: none;
+  color: $text-2;
+  border: 1px solid $border;
+  border-radius: $radius-sm;
+  font-size: 0.83rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: #fff;
+  }
+}
+
+.infoChip {
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 20px;
+  padding: 3px 12px;
+  white-space: nowrap;
+}
+
+.chipNeutral {
+  background: $blue-light;
+  color: $blue;
+}
+.chipWarning {
+  background: #fef3c7;
+  color: $amber;
+}
+
+// ─── Editor de período (carga normal) ──────────────────────────────────────
+.periodoLinkBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: $blue;
+  cursor: pointer;
+  text-decoration: underline;
+
+  &:hover { color: $blue-hover; }
+  &:disabled {
+    color: $text-3;
+    cursor: not-allowed;
+    text-decoration: none;
+  }
+}
+
+.periodoEditorRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.medicoExtra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.especialidadChip {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: 20px;
+  padding: 2px 10px;
+  background: $surface;
+  border: 1px solid $border;
+  color: $text-2;
+  white-space: nowrap;
+}
+
+// ─── Aviso de complementaria ────────────────────────────────────────────────
+.complementoAlert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto 16px;
+  padding: 12px 16px;
+  background: #fef3c7;
+  border: 1px solid #fbbf24;
+  border-radius: $radius-md;
+  color: $amber;
+  font-size: 0.9rem;
+
+  strong { font-weight: 700; }
+}
+
+.complementoAlertIcon {
+  flex-shrink: 0;
+  color: #d97706;
+}
+
+// ─── Layout general ─────────────────────────────────────────────────────────
+// Una sola columna: el resumen va arriba (order: -1) y el formulario debajo.
+// Es flex y no grid a propósito: en grid, el sticky del resumen quedaría acotado
+// a su propia fila y se despegaría apenas termina, en vez de acompañar el scroll
+// de todo el formulario.
 .body {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: $spacing-6;
-  padding: $spacing-6;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
   max-width: 1400px;
   width: 100%;
   margin: 0 auto;
-
-  @media (max-width: $breakpoint-xl) {
-    grid-template-columns: 1fr;
-  }
 }
 
-.form {
+.layout {
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: $spacing-6;
 }
 
-.sidebar {
-  position: sticky;
-  top: 72px;
-  align-self: start;
-  max-height: calc(100vh - 88px);
-  overflow-y: auto;
+.sidebarCol {
+  order: -1;
+  top: 88px;
+  z-index: 5;
+  padding: 12px 0;
+  background: transparent;
+  backdrop-filter: blur(6px);
 
-  @media (max-width: $breakpoint-xl) {
-    position: static;
-    max-height: none;
-    overflow-y: visible;
-    order: -1;
+  // Alinea el resumen con el ancho de las secciones del formulario, para que todo
+  // se lea como una sola columna. Aplica tanto al resumen completo como a la card
+  // suelta de "Total estimado" que se muestra en modo edición.
+  > * {
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
   }
 }
 
-.footer {
-  position: sticky;
-  bottom: 0;
-  background: $white;
-  border-top: 1px solid $gray-200;
-  padding: $spacing-3 $spacing-6;
+// ─── Secciones del formulario ───────────────────────────────────────────────
+// El contenido de cada sección queda centrado dentro de la card (el card en sí
+// no se achica), con un ancho máximo fijo para que todos los inputs midan igual.
+// El width:100% mantiene el conjunto responsive: el tope solo actúa cuando sobra
+// espacio, y por debajo los campos se achican con la pantalla.
+.section {
+  padding: 18px 20px;
+  border-bottom: 1px solid $border;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  @media (max-width: 560px) {
+    padding: 16px 14px;
+  }
+}
+
+.sectionTitle {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: $spacing-3;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
-  z-index: 50;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: $blue;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.sectionHint {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: $text-3;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.fieldsRow {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+
+.filterField {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+
+  // Sin esto el chip se estira a todo el ancho del campo y deja de leerse como
+  // píldora. Acotado a .filterField para no afectar los chips del header.
+  .infoChip {
+    align-self: center;
+  }
+}
+
+.filterFieldWide {
+  width: 100%;
+}
+
+.filterLabel {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: $text-2;
+  text-align: center;
+
+  .req {
+    color: $red;
+  }
+}
+
+// ─── Inputs / selects (incl. los que renderizan los subcomponentes) ────────
+.input,
+.select {
+  width: 100%;
+  height: 36px;
+  border: 1px solid $border;
+  border-radius: $radius-sm;
+  font-size: 0.84rem;
+  color: $text-1;
+  background: $surface;
+  outline: none;
+  box-sizing: border-box;
+  text-align: center;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+
+  &:focus {
+    border-color: $blue;
+    box-shadow: 0 0 0 3px rgba(59, 111, 212, 0.12);
+  }
+
+  &::placeholder {
+    color: $text-3;
+  }
+
+  &:disabled {
+    background: #f4f6fa;
+    cursor: not-allowed;
+  }
+}
+
+.input {
+  padding: 0 12px;
+}
+
+.select {
+  padding: 0 28px 0 12px;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+// Cascada a los <input>/<select> nativos que renderizan MedicoSection, PacienteSection,
+// PrestacionSection, AyudanteSection, etc. (todas privadas a esta pantalla).
+// Se excluyen los inputs de MUI (Autocomplete/TextField ya traen su propio recuadro
+// vía fieldset — si les aplicamos también borde/fondo acá queda un doble recuadro).
+.layout {
+  input[type="text"]:not([class*="Mui"]),
+  input[type="number"]:not([class*="Mui"]),
+  input[type="date"]:not([class*="Mui"]),
+  input[type="month"]:not([class*="Mui"]) {
+    height: 36px;
+    padding: 0 12px;
+    border: 1px solid $border;
+    border-radius: $radius-sm;
+    font-size: 0.84rem;
+    color: $text-1;
+    background: $surface;
+    outline: none;
+    box-sizing: border-box;
+    text-align: center;
+    transition:
+      border-color 0.15s,
+      box-shadow 0.15s;
+
+    &:focus {
+      border-color: $blue;
+      box-shadow: 0 0 0 3px rgba(59, 111, 212, 0.12);
+    }
+
+    &::placeholder {
+      color: $text-3;
+    }
+
+    &:disabled {
+      background: #f4f6fa;
+      cursor: not-allowed;
+    }
+  }
+
+  // Sin flechitas de incremento/decremento en los inputs numéricos.
+  input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+  }
+
+  // Los Autocomplete/TextField de MUI (obra social, médico, nomenclador, afiliado)
+  // renderizan su propio <input>; el texto se centra acá porque el bloque de arriba
+  // los excluye a propósito para no duplicarles el recuadro.
+  input[class*="Mui"] {
+    text-align: center;
+  }
+
+  input[type="radio"] {
+    accent-color: $blue;
+  }
+
+  label {
+    color: $text-2;
+  }
+}
+
+.readonlyField {
+  height: 36px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid $border;
+  border-radius: $radius-sm;
+  font-size: 0.84rem;
+  color: $text-2;
+  background: #f4f6fa;
+}
+
+.radioRow {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.radioLabel {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.84rem;
+  color: $text-2;
+  cursor: pointer;
+}
+
+// ─── Estados / avisos ───────────────────────────────────────────────────────
+.errorText {
+  font-size: 0.76rem;
+  color: $red;
+  text-align: center;
+}
+
+.mutedText {
+  font-size: 0.78rem;
+  color: $text-3;
+  text-align: center;
+}
+
+.errorBox {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: $radius-sm;
+  padding: 10px 14px;
+  font-size: 0.8rem;
+  color: #cc2a2a;
+  text-align: center;
+}
+
+.warningBox {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: $radius-sm;
+  padding: 10px 14px;
+  font-size: 0.78rem;
+  color: $amber;
+  text-align: center;
+}
+
+.totalRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: $blue-light;
+  border-radius: $radius-sm;
+  font-size: 0.84rem;
+  color: $text-2;
+
+  strong {
+    font-size: 0.95rem;
+    color: $blue;
+  }
+}
+
+// ─── Botones (mismo patrón que VerPeriodos / CierrePeriodo) ────────────────
+.formFooter {
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #fafbfd;
+  border-top: 1px solid $border;
+}
+
+.btnGhost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  background: none;
+  color: $text-2;
+  border: 1px solid $border;
+  border-radius: $radius-sm;
+  font-size: 0.84rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover:not(:disabled) {
+    background: #f4f6fa;
+  }
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  background: $blue;
+  color: #fff;
+  border: none;
+  border-radius: $radius-sm;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover:not(:disabled) {
+    background: $blue-hover;
+  }
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+// ─── Ayudante quirúrgico (dentro de PrestacionSection/AyudanteSection) ─────
+.addAyudanteBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  background: none;
+  border: 1px dashed $border;
+  border-radius: $radius-sm;
+  color: $blue;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+
+  &:hover:not(:disabled) {
+    background: $blue-light;
+    border-color: $blue;
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.ayudanteBox {
+  border: 1px solid $blue-light;
+  border-radius: $radius-md;
+  padding: 16px;
+  background: #f8faff;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ayudanteHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.removeBtn {
+  font-size: 0.76rem;
+  color: $red;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }

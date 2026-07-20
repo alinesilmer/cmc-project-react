@@ -15,8 +15,12 @@
 .modal {
   position: fixed;
   top: 24px;
-  left: 50%;
-  transform: translateX(-50%);
+  // Centrado con márgenes automáticos y no con translateX(-50%): framer-motion anima
+  // scale/y escribiendo `transform` inline, que pisaría el translate y correría el modal.
+  left: 0;
+  right: 0;
+  margin-left: auto;
+  margin-right: auto;
   z-index: 1001;
 
   background: $white;

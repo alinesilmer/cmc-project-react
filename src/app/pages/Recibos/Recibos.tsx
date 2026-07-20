@@ -94,7 +94,8 @@ type DetailState =
 type ResumenBasic = { id: number; mes: number; anio: number };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const currency = new Intl.NumberFormat("es-AR", { minimumFractionDigits: 0 });
+// Sin `style: "currency"`: los call-sites ya anteponen "$"/"-$"/"+$" a mano.
+const currency = new Intl.NumberFormat("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmt = (n: number | string | null | undefined) => currency.format(Number(n ?? 0));
 
 function parseRecibo(raw: any): ReciboRow {

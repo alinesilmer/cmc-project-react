@@ -1,0 +1,481 @@
+// Mismo lenguaje visual que VerPeriodos / NomencladorPorOS ("Valores y nomencladores").
+$blue:       #3b6fd4;
+$blue-light: #e8efff;
+$blue-hover: #2f5bbb;
+$red:        #dc2626;
+$red-light:  #fee2e2;
+$green:      #166534;
+$border:     #e2e8f0;
+$surface:    #ffffff;
+$text-1:     #1a1f2e;
+$text-2:     #4a5568;
+$text-3:     #718096;
+$radius-sm:  6px;
+$radius-md:  10px;
+$radius-lg:  14px;
+$shadow-sm:  0 1px 4px rgba(0, 0, 0, .06);
+$shadow-md:  0 4px 16px rgba(0, 0, 0, .10);
+
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f0f4ff 0%, #fafbff 60%, #f5f0ff 100%);
+  padding: 1.8rem;
+  font-family: inherit;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.headerIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: $radius-md;
+  background: $blue-light;
+  color: $blue;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: $text-1;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 0.8rem;
+  color: $text-3;
+  margin: 2px 0 0;
+}
+
+.headerRight {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  background: none;
+  color: $text-2;
+  border: 1px solid $border;
+  border-radius: $radius-sm;
+  font-size: 0.83rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s;
+
+  &:hover { background: #fff; }
+}
+
+.infoChip {
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 20px;
+  padding: 3px 12px;
+  white-space: nowrap;
+}
+
+.chipOs { background: $blue-light; color: $blue; }
+.chipTotal { background: #f0fdf4; color: $green; border: 1px solid #bbf7d0; }
+.chipAbierta { background: #fef3c7; color: #92400e; }
+.chipCerrada { background: #dcfce7; color: #166534; }
+
+.layout {
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+  overflow: hidden;
+}
+
+.toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  border-bottom: 1px solid $border;
+  background: #fafbfd;
+}
+
+.filterField {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 190px;
+}
+
+.filterLabel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: $text-3;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.select {
+  height: 36px;
+  border: 1px solid $border;
+  border-radius: $radius-sm;
+  font-size: 0.84rem;
+  color: $text-1;
+  background: $surface;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color .15s, box-shadow .15s;
+  padding: 0 28px 0 12px;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+
+  &:focus {
+    border-color: $blue;
+    box-shadow: 0 0 0 3px rgba(59, 111, 212, .12);
+  }
+}
+
+.toolbarStats {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+// ─── Tabla ──────────────────────────────────────────────────────────────────
+// Sin scroll: el contenido tiene que entrar en el ancho disponible, así que las
+// celdas envuelven texto en vez de forzar overflow horizontal.
+.tableWrap {
+  width: 100%;
+}
+
+.table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  // Tamaño único para todo el texto de la tabla (header, celdas, badges, resumen).
+  font-size: 11px;
+
+  thead tr {
+    background: #0c2a52;
+  }
+
+  th {
+    padding: 8px 8px;
+    text-align: left;
+    font-size: inherit;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    word-break: break-word;
+  }
+
+  td {
+    padding: 8px 8px;
+    color: $text-1;
+    border-bottom: 1px solid #f1f4f8;
+    vertical-align: middle;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  tbody tr.dataRow {
+    transition: background .1s;
+
+    &:hover { background: #f8faff; }
+  }
+
+  // Anchos fijos por columna para que las 14 columnas entren sin scroll.
+  th:nth-child(1)  { width: 5%; }
+  th:nth-child(2)  { width: 10%; }
+  th:nth-child(3)  { width: 8%; }
+  th:nth-child(4)  { width: 7%; }
+  th:nth-child(5)  { width: 7%; }
+  th:nth-child(6)  { width: 8%; }
+  th:nth-child(7)  { width: 7%; }
+  th:nth-child(8)  { width: 5%; }
+  th:nth-child(9)  { width: 7%; }
+  th:nth-child(10) { width: 7%; }
+  th:nth-child(11) { width: 6%; }
+  th:nth-child(12) { width: 7%; }
+  th:nth-child(13) { width: 8%; }
+  th:nth-child(14) { width: 8%; }
+}
+
+.thActions { text-align: right; }
+
+.rowRevisada td {
+  background: #f3fbf5;
+}
+
+.rowAnulada td {
+  opacity: 0.55;
+}
+
+.idCell {
+  white-space: nowrap;
+}
+
+.socioCell {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.socioNro {
+  font-weight: 700;
+  color: $blue;
+  font-variant-numeric: tabular-nums;
+  font-size: inherit;
+}
+
+.socioNombre {
+  color: $text-1;
+  font-size: inherit;
+  line-height: 1.25;
+}
+
+.socioMatricula {
+  color: $text-3;
+  font-weight: 400;
+}
+
+.codeCell {
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 700;
+  font-size: inherit;
+  color: $blue;
+}
+
+.cantidadCell {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.cantidadMain {
+  font-weight: 600;
+  color: $text-1;
+}
+
+.cantidadSub {
+  font-size: inherit;
+  color: $text-3;
+}
+
+.moneyCell {
+  font-variant-numeric: tabular-nums;
+  color: $text-1;
+}
+
+.subtotalCell {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: $green;
+}
+
+.mutedText {
+  color: $text-3;
+}
+
+.tipoPrestadorBadge {
+  display: inline-block;
+  font-size: inherit;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+.tipoPrestadorMedico   { background: #eff6ff; color: #1d4ed8; }
+.tipoPrestadorAyudante  { background: #faf5ff; color: #6b21a8; }
+.tipoPrestadorGastos   { background: #fff7ed; color: #c2410c; }
+
+.tipoBadge {
+  display: inline-block;
+  font-size: inherit;
+  font-weight: 600;
+  border-radius: 20px;
+  padding: 2px 7px;
+  background: #eef2f7;
+  color: #475569;
+}
+
+.tipoConsulta   { background: #e8f0ff; color: #0c2a52; }
+.tipoPractica   { background: #fef3c7; color: #92400e; }
+.tipoHonorarios { background: #f0fdf4; color: #166534; }
+.tipoSanatorio  { background: #faf5ff; color: #6b21a8; }
+
+.actionsCell {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.auditCheckbox {
+  width: 17px;
+  height: 17px;
+  cursor: pointer;
+  accent-color: $green;
+}
+
+.auditCheckboxWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 23px;
+  height: 23px;
+  border-radius: $radius-sm;
+  transition: background .15s;
+}
+
+.auditCheckboxOn {
+  background: #dcfce7;
+}
+
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 23px;
+  height: 23px;
+  background: none;
+  border: none;
+  border-radius: $radius-sm;
+  color: $text-2;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+
+  &:hover:not(:disabled) { background: #f1f4f8; color: $text-1; }
+  &:disabled { opacity: .35; cursor: not-allowed; }
+}
+
+.iconBtnEdit:hover:not(:disabled) { color: $blue; background: #eff6ff; }
+.iconBtnMove:hover:not(:disabled) { color: #92400e; background: #fffbeb; }
+.iconBtnDelete:hover:not(:disabled) { color: $red; background: $red-light; }
+
+// ─── Fila resumen ───────────────────────────────────────────────────────────
+.resumenRow td {
+  background: #f0f4ff;
+  border-top: 2px solid #dce7ff;
+  border-bottom: 2px solid #dce7ff;
+  padding: 10px 12px;
+  white-space: normal;
+}
+
+.resumenContent {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: inherit;
+}
+
+.resumenLabel {
+  font-weight: 700;
+  color: $text-1;
+  white-space: nowrap;
+}
+
+.resumenBadge {
+  display: inline-block;
+  font-size: inherit;
+  font-weight: 600;
+  border-radius: 20px;
+  padding: 2px 10px;
+  background: $surface;
+  border: 1px solid $border;
+  color: $text-2;
+  white-space: nowrap;
+}
+
+.resumenMoney {
+  font-size: inherit;
+  color: $text-2;
+  white-space: nowrap;
+
+  strong { color: $text-1; }
+}
+
+.resumenTotalBadge {
+  display: inline-block;
+  font-size: inherit;
+  font-weight: 700;
+  border-radius: 20px;
+  padding: 3px 12px;
+  background: $blue;
+  color: #fff;
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+.resumenActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.resumenActionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid $border;
+  border-radius: 20px;
+  background: $surface;
+  color: $text-2;
+  font-size: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s, border-color .15s, color .15s;
+
+  &:hover:not(:disabled) { border-color: $blue; color: $blue; }
+  &:disabled { opacity: .5; cursor: not-allowed; }
+}
+
+.emptyCell {
+  text-align: center;
+  color: $text-3;
+  padding: 40px 14px !important;
+  font-style: italic;
+  white-space: normal;
+}
+
+.loadingCell {
+  text-align: center;
+  color: $text-3;
+  padding: 40px 14px !important;
+  white-space: normal;
+}
+
+.errorBox {
+  margin: 16px;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: $radius-sm;
+  padding: 12px 16px;
+  font-size: 13px;
+  color: #cc2a2a;
+}

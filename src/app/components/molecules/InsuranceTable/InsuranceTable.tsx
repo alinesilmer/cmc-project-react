@@ -9,6 +9,13 @@ import Button from "../../atoms/Button/Button";
 import { Link } from "react-router-dom";
 import { postJSON, http } from "../../../lib/http";
 
+const currency = new Intl.NumberFormat("es-AR", {
+  style: "currency",
+  currency: "ARS",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 export type Period = {
   id: number | string;
   period: string;
@@ -286,9 +293,9 @@ const InsuranceTable: React.FC<Props> = ({
             style={{ animationDelay: `${i * 40}ms` }}
           >
             <div>{r.period}</div>
-            <div>${r.grossTotal.toLocaleString()}</div>
-            <div>-${r.discounts.toLocaleString()}</div>
-            <div>${r.netTotal.toLocaleString()}</div>
+            <div>{currency.format(r.grossTotal)}</div>
+            <div>{currency.format(-r.discounts)}</div>
+            <div>{currency.format(r.netTotal)}</div>
           </div>
         ))}
       </div>

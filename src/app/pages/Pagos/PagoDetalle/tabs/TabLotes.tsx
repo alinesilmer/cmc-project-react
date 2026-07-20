@@ -182,7 +182,7 @@ const TabLotes: React.FC<Props> = ({ pago, pagoId }) => {
         rows={rows}
         columns={columns}
         actions={[]}
-        emptyMessage="No hay facturas en este pago. Agregá facturas en el tab "Facturas" primero."
+        emptyMessage={'No hay facturas en este pago. Agregá facturas en el tab "Facturas" primero.'}
         loading={loading}
       />
     </div>
