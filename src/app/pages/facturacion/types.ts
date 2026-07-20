@@ -17,6 +17,10 @@ export type MedicoOption = {
   cod: string; nombre: string; matricula?: number | string; categoria?: string;
   condicion_impositiva?: string | null;
   especialidades?: MedicoEspecialidad[];
+  /** true cuando el payee elegido es una clínica (organización) en vez de un médico.
+   *  Lo marca el front al mezclar los buscadores de médicos y clínicas. */
+  es_organizacion?: boolean;
+  localidad?: string | null;
 };
 export type ObraSocialOption  = { id: number; nro_obra_social: number; nombre: string };
 export type NomencladorOption = {
@@ -39,6 +43,9 @@ export interface AfiliadoRead {
 
 export interface PrestacionItem {
   cod_medico: string;
+  /** Solo si `cod_medico` es una clínica: NRO_SOCIO del médico que ejecutó (no cobra,
+   *  fija el precio por su especialidad). NULL cuando el payee ya es un médico. */
+  cod_medico_ejecutor?: string | null;
   dni_paciente?: string | null;
   fecha_practica?: string | null;
   cod_clinica?: number | null;
@@ -54,10 +61,20 @@ export interface PrestacionItem {
   grupo_equipo_id?: number | null;
 }
 
-export interface PrestacionesCreate { obra_social: string; prestaciones: PrestacionItem[]; }
+export interface PrestacionesCreate {
+  obra_social: string;
+  /** YYYYMM opcional: permite saltar el automático (último cerrado + 1) cuando ese
+   *  período no tuvo movimiento. Debe ser >= al automático o el backend responde 422. */
+  periodo?: string | null;
+  prestaciones: PrestacionItem[];
+}
 /** Carga en un complemento: se referencia por `factura_id`, no por obra_social/periodo. */
 export interface PrestacionesComplementariaCreate { factura_id: number; prestaciones: PrestacionItem[]; }
-export interface GuardadoResponse  { ids: number[]; importe_total: Money; }
+export interface GuardadoResponse  {
+  ids: number[]; importe_total: Money;
+  /** Período donde efectivamente se guardó — confirma el automático o el editado a mano. */
+  periodo?: string;
+}
 
 export interface PeriodoActivoResponse {
   cod_obra: string; periodo: string;
@@ -80,6 +97,8 @@ export interface PrecioResponse {
 
 export interface PrestacionRead {
   id: number; periodo: string; cod_medico: string;
+  /** NRO_SOCIO del médico ejecutor (solo si el payee es una clínica); precarga el campo. */
+  cod_medico_ejecutor?: string | null;
   /** @deprecated Ahora es igual a `id`. Viene por compatibilidad; usar `id` como identificador. */
   nro_orden?: string | null;
   cod_obra_social?: string | null; cod_nomenclador?: string | null;
@@ -97,6 +116,9 @@ export interface PrestacionRead {
   cod_clinica?: number | null;
   tipo_calculo?: TipoCalculo | null;
   porcentaje?: number | null;
+  /** Otros integrantes del equipo quirúrgico (típicamente los ayudantes). Solo lo trae
+   *  la cabeza (id == grupo_equipo_id); los anidados vienen con `grupo` en null. */
+  grupo?: PrestacionRead[] | null;
 }
 
 export type PrestacionUpdate = Partial<PrestacionItem>;

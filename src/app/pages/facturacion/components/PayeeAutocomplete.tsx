@@ -3,22 +3,21 @@ import AppSearchSelect, { type AppSearchSelectOption } from "../../../components
 import { fetchMedicos } from "../api";
 import type { MedicoOption } from "../types";
 
-// Los números de socio pueden tener 1 sola cifra (ej. "2") — la tolerancia de
-// 2 caracteres solo tiene sentido para texto (nombre), no para búsquedas numéricas.
+// Payee = a quién se le paga. GET /medicos ya devuelve `es_organizacion` para cada
+// socio (médico o clínica), así que un solo fetch alcanza para mezclar ambos casos.
 const isNumeric = (s: string) => /^\d+$/.test(s);
 const minLenFor = (q: string) => (isNumeric(q) ? 1 : 2);
 
 interface Props {
   value: string | null;
-  onChange: (cod: string | null, medico: MedicoOption | null) => void;
+  onChange: (cod: string | null, payee: MedicoOption | null) => void;
   disabled?: boolean;
-  label?: string;
   /** Precarga la opción mostrada antes de que el usuario busque (usado al editar). */
   presetLabel?: string;
   blurOnSelect?: boolean;
 }
 
-const MedicoAutocomplete: React.FC<Props> = ({ value, onChange, disabled, presetLabel, blurOnSelect }) => {
+const PayeeAutocomplete: React.FC<Props> = ({ value, onChange, disabled, presetLabel, blurOnSelect }) => {
   const [options, setOptions] = useState<MedicoOption[]>(() =>
     value && presetLabel ? [{ cod: value, nombre: presetLabel }] : [],
   );
@@ -48,7 +47,11 @@ const MedicoAutocomplete: React.FC<Props> = ({ value, onChange, disabled, preset
     label: [m.cod, m.nombre, m.matricula]
       .filter((v) => v != null && v !== "")
       .join(" · "),
-    subtitle: m.categoria ? `Categoría ${m.categoria}` : undefined,
+    subtitle: m.es_organizacion
+      ? "Clínica / organización"
+      : m.categoria
+        ? `Categoría ${m.categoria}`
+        : undefined,
   }));
 
   return (
@@ -56,8 +59,8 @@ const MedicoAutocomplete: React.FC<Props> = ({ value, onChange, disabled, preset
       options={selectOptions}
       value={value}
       onChange={(id) => {
-        const med = options.find((m) => m.cod === String(id)) ?? null;
-        onChange(id ? String(id) : null, med);
+        const payee = options.find((m) => String(m.cod) === String(id)) ?? null;
+        onChange(id ? String(id) : null, payee);
       }}
       onQueryChange={search}
       loading={loading}
@@ -67,4 +70,4 @@ const MedicoAutocomplete: React.FC<Props> = ({ value, onChange, disabled, preset
   );
 };
 
-export default MedicoAutocomplete;
+export default PayeeAutocomplete;

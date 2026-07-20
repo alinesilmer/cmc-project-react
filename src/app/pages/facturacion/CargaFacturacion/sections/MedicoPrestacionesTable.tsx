@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ClipboardList, Pencil, ArrowRightCircle, ArrowLeftCircle, Trash2 } from "lucide-react";
+import { ClipboardList, Pencil, Copy, ArrowRightCircle, ArrowLeftCircle, Trash2 } from "lucide-react";
 
 import { useAppSnackbar } from "../../../../hooks/useAppSnackbar";
 import { listarPrestaciones, anularPrestacion, marcarRevisado, moverPeriodo } from "../../api";
@@ -128,6 +128,12 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
 
   const handleEditar = (row: PrestacionRead) => {
     navigate(`/panel/facturacion/carga/${row.id}`);
+  };
+
+  // Precarga el formulario de carga con los datos de esta fila, pero como una
+  // prestación nueva (POST) — la original no se toca.
+  const handleReplicar = (row: PrestacionRead) => {
+    navigate(`/panel/facturacion/carga?replicar=${row.id}`);
   };
 
   const handleEliminar = (row: PrestacionRead) => setPendingAction({ type: "eliminar", row });
@@ -298,6 +304,15 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                           onClick={() => handleEditar(row)}
                         >
                           <Pencil size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.iconBtn}
+                          title="Replicar carga"
+                          disabled={busy}
+                          onClick={() => handleReplicar(row)}
+                        >
+                          <Copy size={13} />
                         </button>
                         <button
                           type="button"

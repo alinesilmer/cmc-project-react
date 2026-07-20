@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ClipboardList, ArrowLeft, Pencil, ArrowRightCircle, ArrowLeftCircle, Trash2 } from "lucide-react";
+import { ClipboardList, ArrowLeft, Pencil, Copy, ArrowRightCircle, ArrowLeftCircle, Trash2 } from "lucide-react";
 
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
 import {
@@ -135,6 +135,12 @@ const FacturaDetalle: React.FC = () => {
 
   const handleEditar = (p: PrestacionFacturaDetalle) => {
     navigate(`/panel/facturacion/carga/${p.id}?from=${id}`);
+  };
+
+  // Precarga el formulario de carga con los datos de esta prestación, pero como una
+  // prestación nueva (POST) — la original no se toca.
+  const handleReplicar = (p: PrestacionFacturaDetalle) => {
+    navigate(`/panel/facturacion/carga?replicar=${p.id}`);
   };
 
   const handleEliminar = (p: PrestacionFacturaDetalle) => setPendingAction({ type: "eliminar", p });
@@ -287,6 +293,15 @@ const FacturaDetalle: React.FC = () => {
           onClick={() => handleEditar(p)}
         >
           <Pencil size={14} />
+        </button>
+        <button
+          type="button"
+          className={styles.iconBtn}
+          title="Replicar carga"
+          disabled={busy}
+          onClick={() => handleReplicar(p)}
+        >
+          <Copy size={14} />
         </button>
         {!esComplemento && (
           <>

@@ -17,10 +17,14 @@ interface Props {
   onChange: (nroObraSocial: number | null, os: ObraSocialOption | null) => void;
   disabled?: boolean;
   blurOnSelect?: boolean;
+  /** Nombre de la OS ya elegida, para mostrarla antes de buscar (usado al replicar). */
+  presetLabel?: string;
 }
 
-const ObraSocialAutocomplete: React.FC<Props> = ({ value, onChange, disabled, blurOnSelect }) => {
-  const [options, setOptions] = useState<ObraSocialOption[]>([]);
+const ObraSocialAutocomplete: React.FC<Props> = ({ value, onChange, disabled, blurOnSelect, presetLabel }) => {
+  const [options, setOptions] = useState<ObraSocialOption[]>(() =>
+    value != null && presetLabel ? [{ id: value, nro_obra_social: value, nombre: presetLabel }] : [],
+  );
   const [loading, setLoading] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 

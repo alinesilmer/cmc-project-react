@@ -2,18 +2,29 @@ import React from "react";
 import Card from "../../../../components/atoms/Card/Card";
 
 interface Props {
-  mantener: { paciente: boolean; servicio: boolean; medico: boolean };
-  onMantenerChange: (k: "paciente" | "servicio" | "medico", v: boolean) => void;
+  mantener: { obraSocial: boolean; paciente: boolean; fecha: boolean; clinica: boolean; medico: boolean };
+  onMantenerChange: (k: "obraSocial" | "paciente" | "fecha" | "clinica" | "medico", v: boolean) => void;
   /** En complementaria las prestaciones son rezagadas de fechas distintas: no tiene
-   *  sentido mantener fecha+clínica, así que el checkbox Servicio no se muestra. */
-  showServicio?: boolean;
+   *  sentido mantener la fecha, así que ese checkbox no se muestra. */
+  showFecha?: boolean;
+  /** En complementaria la obra social es fija (viene de la factura), así que su checkbox
+   *  no se muestra. */
+  showObraSocial?: boolean;
 }
 
-const ETIQUETAS = { servicio: "Servicio", medico: "Médico", paciente: "Paciente" } as const;
+const ETIQUETAS = {
+  obraSocial: "Obra social",
+  medico: "Médico",
+  paciente: "Paciente",
+  fecha: "Fecha",
+  clinica: "Clínica",
+} as const;
 
-const ResumenLateralCard: React.FC<Props> = ({ mantener, onMantenerChange, showServicio = true }) => {
-  const campos = (["servicio", "medico", "paciente"] as const).filter(
-    (k) => k !== "servicio" || showServicio,
+const ResumenLateralCard: React.FC<Props> = ({
+  mantener, onMantenerChange, showFecha = true, showObraSocial = true,
+}) => {
+  const campos = (["obraSocial", "medico", "paciente", "fecha", "clinica"] as const).filter(
+    (k) => (k !== "fecha" || showFecha) && (k !== "obraSocial" || showObraSocial),
   );
 
   return (

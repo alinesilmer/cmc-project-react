@@ -6,6 +6,9 @@ import styles from "../CargaFacturacion.module.scss";
 
 export interface AyudanteLinea {
   id: string;
+  /** Id de la prestación real cuando la línea viene de un equipo existente (al editar).
+   *  null/undefined = línea nueva → se crea con POST. Sirve para reconciliar el grupo. */
+  prestacionId?: number | null;
   codMedico: string | null;
   medico: MedicoOption | null;
   porcentaje: number;
@@ -18,6 +21,7 @@ const nuevoId = () =>
 
 export const crearAyudanteLinea = (precioAutomatico: string): AyudanteLinea => ({
   id: nuevoId(),
+  prestacionId: null,
   codMedico: null,
   medico: null,
   porcentaje: 100,
@@ -48,8 +52,6 @@ interface Props {
 const AyudanteSection: React.FC<Props> = ({
   precio, maxAyudantes, ayudantes, onChange, codMedicoMain, disabled, errors = {},
 }) => {
-  const alMaximo = ayudantes.length >= maxAyudantes;
-
   const updateLinea = (id: string, patch: Partial<AyudanteLinea>) => {
     onChange(ayudantes.map((l) => (l.id === id ? { ...l, ...patch } : l)));
   };
@@ -58,8 +60,8 @@ const AyudanteSection: React.FC<Props> = ({
     onChange(ayudantes.filter((l) => l.id !== id));
   };
 
+  // maxAyudantes es solo una referencia del código: no bloquea el alta de más líneas.
   const agregarLinea = () => {
-    if (alMaximo) return;
     onChange([...ayudantes, crearAyudanteLinea(precio.ayudante)]);
   };
 
@@ -70,10 +72,12 @@ const AyudanteSection: React.FC<Props> = ({
     <div className={styles.section}>
       <span className={styles.sectionTitle}>
         Ayudantes quirúrgicos
-        <span className={`${styles.infoChip} ${alMaximo ? styles.chipWarning : styles.chipNeutral}`}>
-          {ayudantes.length} / {maxAyudantes}
+        <span className={`${styles.infoChip} ${styles.chipNeutral}`}>
+          {ayudantes.length}
         </span>
-        <span className={styles.sectionHint}>máximo {maxAyudantes} para este código</span>
+        <span className={styles.sectionHint}>
+          este código usa {maxAyudantes} ayudante{maxAyudantes === 1 ? "" : "s"}
+        </span>
       </span>
 
       {ayudantes.map((linea, idx) => {
@@ -105,10 +109,36 @@ const AyudanteSection: React.FC<Props> = ({
                   value={linea.codMedico}
                   onChange={(cod, med) => updateLinea(linea.id, { codMedico: cod, medico: med })}
                   disabled={disabled}
+                  // Precarga el texto cuando la línea viene de replicar/editar un equipo.
+                  presetLabel={
+                    linea.medico
+                      ? [linea.medico.nombre, linea.medico.matricula]
+                          .filter((v) => v != null && v !== "").join(" · ") || undefined
+                      : undefined
+                  }
                 />
                 {isDuplicateMain && <span className={styles.errorText}>No puede ser el mismo médico principal.</span>}
                 {isDuplicateOther && !isDuplicateMain && <span className={styles.errorText}>Ese médico ya está agregado como ayudante.</span>}
                 {error && !isDuplicateMain && !isDuplicateOther && <span className={styles.errorText}>{error}</span>}
+              </div>
+            </div>
+
+            <div className={styles.filterField}>
+              <label className={styles.filterLabel}>Tipo de cálculo</label>
+              <div className={styles.radioRow}>
+                {([["A", "Automático"], ["M", "Manual"]] as const).map(([v, label]) => (
+                  <label key={v} className={styles.radioLabel}>
+                    <input
+                      type="radio"
+                      name={`ayudanteTipoCalculo-${linea.id}`}
+                      value={v}
+                      checked={linea.tipoCalculo === v}
+                      onChange={() => updateLinea(linea.id, { tipoCalculo: v })}
+                      disabled={disabled}
+                    />
+                    {label}
+                  </label>
+                ))}
               </div>
             </div>
 
@@ -137,25 +167,6 @@ const AyudanteSection: React.FC<Props> = ({
               </div>
             </div>
 
-            <div className={styles.filterField}>
-              <label className={styles.filterLabel}>Tipo de cálculo</label>
-              <div className={styles.radioRow}>
-                {([["A", "Automático"], ["M", "Manual"]] as const).map(([v, label]) => (
-                  <label key={v} className={styles.radioLabel}>
-                    <input
-                      type="radio"
-                      name={`ayudanteTipoCalculo-${linea.id}`}
-                      value={v}
-                      checked={linea.tipoCalculo === v}
-                      onChange={() => updateLinea(linea.id, { tipoCalculo: v })}
-                      disabled={disabled}
-                    />
-                    {label}
-                  </label>
-                ))}
-              </div>
-            </div>
-
             <div className={styles.totalRow}>
               <span>Total de este ayudante:</span>
               <strong>{formatMoney(monto)}</strong>
@@ -164,20 +175,16 @@ const AyudanteSection: React.FC<Props> = ({
         );
       })}
 
-      {!alMaximo ? (
-        <button
-          type="button"
-          className={styles.addAyudanteBtn}
-          onClick={agregarLinea}
-          disabled={disabled}
-        >
-          <span style={{ fontSize: 16 }}>+</span>
-          <span>Agregar ayudante</span>
-          <span className={styles.sectionHint}>(valor automático: {formatMoney(precio.ayudante)})</span>
-        </button>
-      ) : (
-        <span className={styles.mutedText}>Alcanzaste el máximo de ayudantes para este código.</span>
-      )}
+      <button
+        type="button"
+        className={styles.addAyudanteBtn}
+        onClick={agregarLinea}
+        disabled={disabled}
+      >
+        <span style={{ fontSize: 16 }}>+</span>
+        <span>Agregar ayudante</span>
+        <span className={styles.sectionHint}>(valor automático: {formatMoney(precio.ayudante)})</span>
+      </button>
     </div>
   );
 };
