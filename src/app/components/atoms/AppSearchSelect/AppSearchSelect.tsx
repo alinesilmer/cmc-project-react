@@ -89,8 +89,10 @@ const AppSearchSelect: React.FC<Props> = ({
       }}
       onFocus={() => {
         // Reabrir sugerencias para lo que ya estaba escrito, en vez de forzar una
-        // selección o dejar la lista vacía.
-        if (inputValue) onQueryChange?.(inputValue);
+        // selección o dejar la lista vacía. Si ya hay una opción elegida, `inputValue`
+        // es su label compuesto (código · nombre · matrícula) — no lo que buscaría el
+        // usuario, así que no dispara una búsqueda nueva con eso.
+        if (inputValue && !selected) onQueryChange?.(inputValue);
       }}
       noOptionsText="Sin resultados"
       loadingText="Buscando…"
