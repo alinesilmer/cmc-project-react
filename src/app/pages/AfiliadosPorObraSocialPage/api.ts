@@ -16,16 +16,20 @@ const ENDPOINTS = {
   obrasSociales: `${API_BASE}/api/obras_social/`,
   medicosByOS: (nroOS: number) =>
     `${API_BASE}/api/padrones/obras-sociales/${nroOS}/medicos`,
+  // Detalle del prestador. Solo /api/medicos/{id} existe en el backend; los
+  // endpoints /prestadores y /doctores daban 404 en cada llamada.
   prestadorDetailCandidates: (id: string) => [
-    `${API_BASE}/api/prestadores/${id}`,
     `${API_BASE}/api/medicos/${id}`,
-    `${API_BASE}/api/doctores/${id}`,
   ],
 };
 
 const PDF_REQ_TIMEOUT_MS = 12_000;
 const PDF_CONTACT_CONCURRENCY = 4;
-const PDF_ENRICH_MAX = 700;
+// Tope de seguridad para el enriquecimiento por fila. Con el backend
+// devolviendo domicilio/CUIT/mail/CP en el listado, esto normalmente no se
+// usa; queda alto para no truncar padrones grandes si el front se despliega
+// antes que el backend (era 700 → faltaban datos de la letra R en adelante).
+const PDF_ENRICH_MAX = 5000;
 const CONTACT_CACHE_MAX = 5_000;
 
 const contactoCache = new Map<string, ContactoPayload>();
