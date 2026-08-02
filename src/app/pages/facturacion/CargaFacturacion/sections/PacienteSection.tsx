@@ -30,7 +30,8 @@ const PacienteSection: React.FC<Props> = ({
       </span>
       <div className={styles.fieldsRow}>
         <div className={`${styles.filterField} ${styles.filterFieldWide}`} data-field="paciente">
-          <label className={styles.filterLabel}>Paciente (nombre o DNI)</label>
+          {/* El identificador puede ser el DNI o el nro de afiliado de la OS. */}
+          <label className={styles.filterLabel}>Paciente (nombre, DNI o nro de afiliado)</label>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <AfiliadoAutocomplete

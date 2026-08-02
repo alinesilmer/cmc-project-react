@@ -7,7 +7,7 @@ import Combobox from "../ConsultaShared/Combobox";
 import ResultRegister from "../ConsultaShared/ResultRegister";
 import { listNomenclador, getTablaValores } from "../nomenclador.api";
 import { listObrasSociales } from "../../ObrasSociales/obrasSociales.api";
-import type { NomencladorOut, TablaValorItem } from "../nomenclador.types";
+import type { NomencladorOut, TablaValorItem, ViaPractica } from "../nomenclador.types";
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
 import { useAuth } from "../../../auth/AuthProvider";
 
@@ -27,6 +27,11 @@ export default function ConsultaPrecios() {
   const [nomLoading, setNomLoading] = useState(false);
   const [selectedNom, setSelectedNom] = useState<NomencladorOut | null>(null);
   const nomDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Vía de realización. Solo tiene efecto real en códigos de cirugía asociados a un
+  // galeno de 7/10 niveles: en el resto, el listado cae silenciosamente a "T" (ver
+  // aviso de degradado más abajo).
+  const [via, setVia] = useState<ViaPractica>("T");
 
   // Query result
   const [loading, setLoading] = useState(false);
@@ -100,6 +105,7 @@ export default function ConsultaPrecios() {
         codigo: selectedNom.codigo,
         especialidades: doctorEspecialidades.length ? doctorEspecialidades : undefined,
         size: 5,
+        via,
       });
 
       const exactTabla = tablaData.find(
@@ -169,6 +175,26 @@ export default function ConsultaPrecios() {
               menuHint="Escribí al menos 2 caracteres…"
             />
 
+            <div className={styles.viaToggle}>
+              {(
+                [
+                  ["T", "Tradicional"],
+                  ["L", "Laparoscópica"],
+                ] as const
+              ).map(([v, label]) => (
+                <label key={v} className={styles.viaOption}>
+                  <input
+                    type="radio"
+                    name="via"
+                    value={v}
+                    checked={via === v}
+                    onChange={() => { setVia(v); resetResult(); }}
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+
             <button
               type="button"
               className={styles.cta}
@@ -188,7 +214,15 @@ export default function ConsultaPrecios() {
                 Consultando precios…
               </div>
             ) : result ? (
-              <ResultRegister result={result} showVigencia={false} />
+              <>
+                <ResultRegister result={result} showVigencia={false} />
+                {via === "L" && result.via_aplicada === "T" && (
+                  <div className={styles.viaDegradeNotice}>
+                    <AlertTriangle size={16} />
+                    Este código no admite vía laparoscópica; se muestra el precio tradicional.
+                  </div>
+                )}
+              </>
             ) : searched && error ? (
               <div className={styles.errorbox}>
                 <AlertCircle size={18} />

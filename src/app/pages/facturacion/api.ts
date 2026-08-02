@@ -6,6 +6,7 @@ import type {
   PrestacionUpdate, MoverPeriodoPayload, MoverPeriodoResponse,
   CierrePreviewResponse, CierreResponse, CierrePayload, ListarPrestacionesParams,
   FacturaRead, ListarFacturasParams, FacturaDetalleResponse, ComplementoCreate,
+  ViaPractica,
 } from "./types";
 
 const BASE = "/api/facturacion";
@@ -61,12 +62,12 @@ export const fetchPeriodoActivo = (cod_obra: string) =>
   traced("GET /periodo-activo", { cod_obra }, getJSON<PeriodoActivoResponse>(`${BASE}/periodo-activo`, { cod_obra }));
 
 export const fetchPrecio = (
-  cod_medico: string, cod_obra: string, codigo: string, fecha?: string,
+  cod_medico: string, cod_obra: string, codigo: string, fecha?: string, via?: ViaPractica,
 ) =>
   traced(
     "GET /nomenclador/precio",
-    { cod_medico, cod_obra, codigo, fecha },
-    getJSON<PrecioResponse>(`${BASE}/nomenclador/precio`, { cod_medico, cod_obra, codigo, fecha }),
+    { cod_medico, cod_obra, codigo, fecha, via },
+    getJSON<PrecioResponse>(`${BASE}/nomenclador/precio`, { cod_medico, cod_obra, codigo, fecha, via }),
   );
 
 export const listarPrestaciones = (filtros: ListarPrestacionesParams) =>

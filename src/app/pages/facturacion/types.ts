@@ -1,4 +1,6 @@
 export type TipoCalculo = "A" | "M";
+/** Vía de realización de la práctica. "T" = tradicional (default), "L" = laparoscópica. */
+export type ViaPractica = "T" | "L";
 export type EstadoPrestacion = "A" | "C" | "X" | "L";
 export type Tipo = "Consulta" | "Practica" | "Honorarios individuales" | "Sanatorio";
 
@@ -54,6 +56,8 @@ export interface PrestacionItem {
   cantidad?: number;
   sesion?: number;
   tipo_calculo?: TipoCalculo;
+  /** Solo tiene efecto en tipo_calculo "A" (ajusta la cotización); en "M" es informativo. */
+  via?: ViaPractica | null;
   honorarios?: number | Money | null;
   gastos?: number | Money | null;
   ayudante?: number | Money | null;
@@ -93,6 +97,9 @@ export interface PrecioResponse {
   por_presupuesto: boolean;
   /** Máximo de ayudantes admitidos para ese código+OS. null/0 = no admite ayudantes. */
   cantidad_ayudantes?: number | null;
+  via: ViaPractica;
+  /** Solo se completa si via="L" y el galeno cotizado es de 7 niveles. */
+  nivel_cotizado?: number | null;
 }
 
 export interface PrestacionRead {
@@ -115,6 +122,7 @@ export interface PrestacionRead {
   autorizacion?: string | null;
   cod_clinica?: number | null;
   tipo_calculo?: TipoCalculo | null;
+  via?: ViaPractica | null;
   porcentaje?: number | null;
   /** Otros integrantes del equipo quirúrgico (típicamente los ayudantes). Solo lo trae
    *  la cabeza (id == grupo_equipo_id); los anidados vienen con `grupo` en null. */
@@ -207,6 +215,8 @@ export interface PrestacionFacturaDetalle {
   autorizacion: string | null;
   fecha_practica: string | null;
   codigo: string | null;
+  /** Opcional: no confirmado que el backend lo mande todavía en este endpoint. */
+  via?: ViaPractica | null;
   nro_afiliado: string | null;
   cantidad: number | null;
   sesion: number | null;

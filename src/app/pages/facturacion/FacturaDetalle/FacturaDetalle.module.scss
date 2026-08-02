@@ -203,21 +203,22 @@ $shadow-md:  0 4px 16px rgba(0, 0, 0, .10);
     &:hover { background: #f8faff; }
   }
 
-  // Anchos fijos por columna para que las 14 columnas entren sin scroll.
+  // Anchos fijos por columna para que las 15 columnas entren sin scroll.
   th:nth-child(1)  { width: 5%; }
-  th:nth-child(2)  { width: 10%; }
-  th:nth-child(3)  { width: 8%; }
+  th:nth-child(2)  { width: 9%; }
+  th:nth-child(3)  { width: 7%; }
   th:nth-child(4)  { width: 7%; }
-  th:nth-child(5)  { width: 7%; }
-  th:nth-child(6)  { width: 8%; }
+  th:nth-child(5)  { width: 6%; }
+  th:nth-child(6)  { width: 4%; }
   th:nth-child(7)  { width: 7%; }
-  th:nth-child(8)  { width: 5%; }
-  th:nth-child(9)  { width: 7%; }
+  th:nth-child(8)  { width: 7%; }
+  th:nth-child(9)  { width: 5%; }
   th:nth-child(10) { width: 7%; }
-  th:nth-child(11) { width: 6%; }
-  th:nth-child(12) { width: 7%; }
-  th:nth-child(13) { width: 8%; }
+  th:nth-child(11) { width: 7%; }
+  th:nth-child(12) { width: 6%; }
+  th:nth-child(13) { width: 7%; }
   th:nth-child(14) { width: 8%; }
+  th:nth-child(15) { width: 8%; }
 }
 
 .thActions { text-align: right; }
@@ -322,6 +323,18 @@ $shadow-md:  0 4px 16px rgba(0, 0, 0, .10);
 .tipoPractica   { background: #fef3c7; color: #92400e; }
 .tipoHonorarios { background: #f0fdf4; color: #166534; }
 .tipoSanatorio  { background: #faf5ff; color: #6b21a8; }
+
+.viaBadge {
+  display: inline-block;
+  font-size: inherit;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 2px 6px;
+  background: #eef2f7;
+  color: #475569;
+}
+
+.viaLaparoscopica { background: #e0e7ff; color: #3730a3; }
 
 .actionsCell {
   display: flex;

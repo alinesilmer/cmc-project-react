@@ -113,6 +113,9 @@ const tipoClass = (t: Tipo | null | undefined): string => {
   }
 };
 
+const viaLabel = (v: string | null | undefined): string =>
+  v === "L" ? "Laparoscópica" : v === "T" ? "Tradicional" : "";
+
 const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, medicoMatricula, codObra, periodo, refreshKey }) => {
   const navigate = useNavigate();
   const notify = useAppSnackbar();
@@ -142,7 +145,10 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
         limit: LIMIT,
         offset,
       });
-      setRows(data);
+      // Las anuladas no se muestran: para el operador la prestación ya no existe. El
+      // endpoint no tiene un filtro "todo menos anuladas" (`estado` es un valor solo,
+      // y filtrar por "A" escondería las cerradas), así que se descartan acá.
+      setRows(data.filter((r) => r.estado !== "X"));
       setTotalCount(tc);
     } catch (e: any) {
       notify(detailMessage(e?.response?.data?.detail) || "Error al cargar las prestaciones del médico.", "error");
@@ -210,14 +216,22 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
     });
   };
 
+  // El destino es la misma pantalla con otro id/query: React Router no resetea el
+  // scroll, y como el click se hace desde la tabla (abajo de todo) el formulario
+  // quedaría fuera de vista. Se sube a mano.
+  const irAlFormulario = (to: string) => {
+    navigate(to);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const handleEditar = (row: PrestacionRead) => {
-    navigate(`/panel/facturacion/carga/${row.id}`);
+    irAlFormulario(`/panel/facturacion/carga/${row.id}`);
   };
 
   // Precarga el formulario de carga con los datos de esta fila, pero como una
   // prestación nueva (POST) — la original no se toca.
   const handleReplicar = (row: PrestacionRead) => {
-    navigate(`/panel/facturacion/carga?replicar=${row.id}`);
+    irAlFormulario(`/panel/facturacion/carga?replicar=${row.id}`);
   };
 
   const handleEliminar = (row: PrestacionRead) => setPendingAction({ type: "eliminar", row });
@@ -230,6 +244,8 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
       try {
         await anularPrestacion(row.id);
         notify("Prestación anulada.");
+        // Sale de la tabla en el acto; el refetch de atrás reacomoda la paginación.
+        setRows((prev) => prev.filter((r) => r.id !== row.id));
         fetchData();
         onSuccess();
       } catch (e: any) {
@@ -307,6 +323,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                 <th>Autorización</th>
                 <th>Fecha</th>
                 <th>Código</th>
+                <th>Vía</th>
                 <th>Nro Afiliado</th>
                 <th>Cantidad</th>
                 <th>%</th>
@@ -320,10 +337,10 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
             </thead>
             <tbody>
               {loading && (
-                <tr><td colSpan={15} className={styles.loadingCell}>Cargando…</td></tr>
+                <tr><td colSpan={16} className={styles.loadingCell}>Cargando…</td></tr>
               )}
               {!loading && rows.length === 0 && (
-                <tr><td colSpan={15} className={styles.emptyCell}>Este médico no tiene prestaciones cargadas.</td></tr>
+                <tr><td colSpan={16} className={styles.emptyCell}>Este médico no tiene prestaciones cargadas.</td></tr>
               )}
               {!loading && rows.map((row) => {
                 const editable = row.estado === "A";
@@ -333,7 +350,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                 return (
                   <tr
                     key={row.id}
-                    className={`${styles.dataRow} ${row.revisado ? styles.rowRevisada : ""} ${row.estado === "X" ? styles.rowAnulada : ""}`}
+                    className={`${styles.dataRow} ${row.revisado ? styles.rowRevisada : ""}`}
                   >
                     <td className={styles.idCell}>{row.id}</td>
                     <td>
@@ -357,6 +374,16 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                     <td>{row.autorizacion || <span className={styles.mutedText}>—</span>}</td>
                     <td>{fmtFecha(row.fecha_practica)}</td>
                     <td><span className={styles.codeCell}>{row.cod_nomenclador ?? "—"}</span></td>
+                    <td>
+                      {row.via ? (
+                        <span
+                          className={`${styles.viaBadge} ${row.via === "L" ? styles.viaLaparoscopica : ""}`}
+                          title={viaLabel(row.via)}
+                        >
+                          {row.via}
+                        </span>
+                      ) : <span className={styles.mutedText}>—</span>}
+                    </td>
                     <td>{row.dni_paciente || <span className={styles.mutedText}>—</span>}</td>
                     <td>
                       <div className={styles.cantidadCell}>
