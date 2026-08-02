@@ -52,6 +52,9 @@ const tipoClass = (t: Tipo | null): string => {
   }
 };
 
+const viaLabel = (v: string | null | undefined): string =>
+  v === "L" ? "Laparoscópica" : v === "T" ? "Tradicional" : "";
+
 const estadoChipClass = (estado: string | null): string => {
   if (estado === "A") return styles.chipAbierta;
   if (estado === "C") return styles.chipCerrada;
@@ -361,6 +364,16 @@ const FacturaDetalle: React.FC = () => {
       <td>{p.autorizacion || <span className={styles.mutedText}>—</span>}</td>
       <td>{fmtFecha(p.fecha_practica)}</td>
       <td><span className={styles.codeCell}>{p.codigo ?? "—"}</span></td>
+      <td>
+        {p.via ? (
+          <span
+            className={`${styles.viaBadge} ${p.via === "L" ? styles.viaLaparoscopica : ""}`}
+            title={viaLabel(p.via)}
+          >
+            {p.via}
+          </span>
+        ) : <span className={styles.mutedText}>—</span>}
+      </td>
       <td>{p.nro_afiliado || <span className={styles.mutedText}>—</span>}</td>
       <td>
         <div className={styles.cantidadCell}>
@@ -396,7 +409,7 @@ const FacturaDetalle: React.FC = () => {
 
     return (
       <tr key={`resumen-${grupo.cod_medico}`} className={styles.resumenRow}>
-        <td colSpan={14}>
+        <td colSpan={15}>
           <div className={styles.resumenContent}>
             <span className={styles.resumenLabel}>
               RESUMEN: Socio {grupo.cod_medico} {grupo.nombre ?? ""}
@@ -507,6 +520,7 @@ const FacturaDetalle: React.FC = () => {
                 <th>Autorización</th>
                 <th>Fecha</th>
                 <th>Código</th>
+                <th>Vía</th>
                 <th>Nro Afiliado</th>
                 <th>Cantidad</th>
                 <th>%</th>
@@ -520,13 +534,13 @@ const FacturaDetalle: React.FC = () => {
             </thead>
             <tbody>
               {loading && (
-                <tr><td colSpan={14} className={styles.loadingCell}>Cargando…</td></tr>
+                <tr><td colSpan={15} className={styles.loadingCell}>Cargando…</td></tr>
               )}
               {!loading && error && (
-                <tr><td colSpan={14} className={styles.emptyCell}>{error}</td></tr>
+                <tr><td colSpan={15} className={styles.emptyCell}>{error}</td></tr>
               )}
               {!loading && !error && detalle && detalle.total_prestaciones === 0 && (
-                <tr><td colSpan={14} className={styles.emptyCell}>Esta factura no tiene prestaciones.</td></tr>
+                <tr><td colSpan={15} className={styles.emptyCell}>Esta factura no tiene prestaciones.</td></tr>
               )}
               {!loading && !error && detalle && gruposOrdenados.map((grupo) => (
                 <React.Fragment key={grupo.cod_medico}>

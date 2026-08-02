@@ -275,8 +275,12 @@ export default function NomencladorCodigos() {
       setItems((prev) => prev.filter((i) => i.id !== id));
       showToast("success", "Código eliminado.");
     } catch (e: unknown) {
-      const msg = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      showToast("error", msg ?? "No se pudo eliminar el código.");
+      const err = e as { response?: { status?: number; data?: { detail?: string } } };
+      if (err?.response?.status === 409) {
+        showToast("error", err.response.data?.detail ?? "No se puede eliminar: tiene valores activos.");
+      } else {
+        showToast("error", err?.response?.data?.detail ?? "No se pudo eliminar el código.");
+      }
     }
   }
 

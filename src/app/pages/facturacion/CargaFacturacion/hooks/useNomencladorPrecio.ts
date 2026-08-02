@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { fetchPrecio } from "../../api";
-import type { PrecioResponse } from "../../types";
+import type { PrecioResponse, ViaPractica } from "../../types";
 
 const DEBOUNCE_MS = 250;
 
@@ -9,9 +9,10 @@ interface Params {
   codObra: string | null;
   codigo: string | null;
   fecha?: string | null;
+  via?: ViaPractica;
 }
 
-export function useNomencladorPrecio({ codMedico, codObra, codigo, fecha }: Params) {
+export function useNomencladorPrecio({ codMedico, codObra, codigo, fecha, via }: Params) {
   const [precio, setPrecio] = useState<PrecioResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +31,7 @@ export function useNomencladorPrecio({ codMedico, codObra, codigo, fecha }: Para
       setLoading(true);
       setError(null);
       try {
-        const data = await fetchPrecio(codMedico, codObra, codigo, fecha ?? undefined);
+        const data = await fetchPrecio(codMedico, codObra, codigo, fecha ?? undefined, via);
         setPrecio(data);
       } catch (e: any) {
         const detail = e?.response?.data?.detail;
@@ -44,7 +45,7 @@ export function useNomencladorPrecio({ codMedico, codObra, codigo, fecha }: Para
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [codMedico, codObra, codigo, fecha]);
+  }, [codMedico, codObra, codigo, fecha, via]);
 
   const reset = () => { setPrecio(null); setError(null); };
 

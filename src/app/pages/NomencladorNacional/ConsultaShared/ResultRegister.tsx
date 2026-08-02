@@ -54,6 +54,11 @@ function ResultRegister({ result, showVigencia = true, eligibility = null }: Res
       <div className={styles.regHead}>
         <div className={styles.regHeadmain}>
           <h2 className={styles.regTitle}>{result.descripcion}</h2>
+          {result.via_aplicada === "L" && (
+            <div className={`${styles.eligibility} ${styles.eligOk}`}>
+              Vía laparoscópica
+            </div>
+          )}
           {eligibility && (
             <div
               className={`${styles.eligibility} ${

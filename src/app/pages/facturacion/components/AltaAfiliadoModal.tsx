@@ -12,7 +12,13 @@ interface Props {
   onCreated: (afiliado: AfiliadoRead) => void;
 }
 
-const MIN_DIGITS = 6;
+// El identificador del paciente puede ser un DNI o un nro de afiliado de la obra
+// social (alfanumérico y con separadores, ej. "1231233/00"). Mismo criterio que
+// `AfiliadoCreate` en el backend: ^[A-Za-z0-9./-]+$ de 4 a 20 caracteres.
+const ID_MIN = 4;
+const ID_MAX = 20;
+/** Descarta lo que el backend rechazaría — incluidos los espacios. */
+const limpiarId = (v: string) => v.replace(/[^A-Za-z0-9./-]/g, "").slice(0, ID_MAX);
 
 const AltaAfiliadoModal: React.FC<Props> = ({ isOpen, dni, onClose, onCreated }) => {
   const [dniInput, setDniInput] = useState(dni);
@@ -20,14 +26,16 @@ const AltaAfiliadoModal: React.FC<Props> = ({ isOpen, dni, onClose, onCreated })
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Cada vez que se abre, precargamos el DNI que ya se hubiera tipeado/elegido
-  // en el selector, pero queda editable por si el operador lo quiere corregir.
+  // Cada vez que se abre, precargamos el identificador que ya se hubiera tipeado o
+  // elegido en el selector, pero queda editable por si el operador lo quiere corregir.
   useEffect(() => {
-    if (isOpen) setDniInput(dni);
+    if (isOpen) setDniInput(limpiarId(dni));
   }, [isOpen, dni]);
 
+  const idValido = dniInput.length >= ID_MIN;
+
   const handleSubmit = async () => {
-    if (!nombre.trim() || dniInput.length < MIN_DIGITS) return;
+    if (!nombre.trim() || !idValido) return;
     setLoading(true);
     setError(null);
     try {
@@ -65,7 +73,9 @@ const AltaAfiliadoModal: React.FC<Props> = ({ isOpen, dni, onClose, onCreated })
               <span className={styles.headerIcon}><UserPlus size={18} /></span>
               <div>
                 <h2 className={styles.title}>Agregar afiliado</h2>
-                <p className={styles.subtitle}>Cargá el DNI y el nombre para poder facturar a este paciente.</p>
+                <p className={styles.subtitle}>
+                  Cargá el DNI o el nro de afiliado y el nombre para poder facturar a este paciente.
+                </p>
               </div>
               <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Cerrar" disabled={loading}>
                 <X size={16} />
@@ -74,15 +84,16 @@ const AltaAfiliadoModal: React.FC<Props> = ({ isOpen, dni, onClose, onCreated })
 
             <div className={styles.body}>
               <div className={styles.field}>
-                <label className={styles.label}>DNI <span className={styles.req}>*</span></label>
+                <label className={styles.label}>
+                  DNI o Nro de afiliado <span className={styles.req}>*</span>
+                </label>
                 <input
                   className={styles.input}
                   type="text"
-                  inputMode="numeric"
                   value={dniInput}
-                  onChange={(e) => setDniInput(e.target.value.replace(/\D/g, ""))}
-                  placeholder="DNI (mín. 6 dígitos)"
-                  maxLength={15}
+                  onChange={(e) => setDniInput(limpiarId(e.target.value))}
+                  placeholder="Ej.: 12345678 o 1231233/00"
+                  maxLength={ID_MAX}
                   disabled={loading}
                 />
               </div>
@@ -110,7 +121,7 @@ const AltaAfiliadoModal: React.FC<Props> = ({ isOpen, dni, onClose, onCreated })
                 type="button"
                 className={styles.btnPrimary}
                 onClick={handleSubmit}
-                disabled={!nombre.trim() || dniInput.length < MIN_DIGITS || loading}
+                disabled={!nombre.trim() || !idValido || loading}
               >
                 {loading ? "Guardando…" : "Dar de alta"}
               </button>

@@ -4,7 +4,6 @@ export type ValorEstado = "activo" | "cerrado";
 export type NomencladorOut = {
   id: number;
   codigo: string;
-  proviene_de_id: number | null;
   descripcion: string;
   categoria: string | null;
   complejidad: Complejidad | null;
@@ -30,7 +29,6 @@ export type NomencladorListParams = {
 export type NomencladorCreatePayload = {
   codigo: string;
   descripcion: string;
-  proviene_de_id?: number | null;
   categoria?: string | null;
   complejidad?: Complejidad | null;
   sin_restriccion_especialidad?: boolean;
@@ -276,6 +274,9 @@ export type RevertirActualizacionPayload = {
 
 // ─── Tabla Valores (Reportes) ─────────────────────────────────────────────────
 
+/** Vía de realización de la práctica. "T" = tradicional (default), "L" = laparoscópica. */
+export type ViaPractica = "T" | "L";
+
 export type TablaValorComponente = {
   componente_id: number;
   concepto: "Honorarios" | "Ayudante" | "Gastos";
@@ -302,6 +303,9 @@ export type TablaValorItem = {
   vigencia_desde: string;
   vigencia_hasta: string | null;
   componentes: TablaValorComponente[];
+  /** Vía realmente aplicada en esta fila. Si se pidió "L" y el código no la admite,
+   *  el listado no rechaza: cae a su precio tradicional y esto queda en "T". */
+  via_aplicada: ViaPractica;
 };
 
 // ─── Importar CSV ─────────────────────────────────────────────────────────────

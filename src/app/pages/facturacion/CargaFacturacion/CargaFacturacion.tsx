@@ -22,6 +22,7 @@ import type {
   AfiliadoRead,
   PrestacionItem,
   TipoCalculo,
+  ViaPractica,
   PrestacionRead,
   PrestacionUpdate,
   MedicoOption,
@@ -172,9 +173,12 @@ const CargaFacturacion: React.FC = () => {
 
   // Montos principales
   const [codNomenclador, setCodNomenclador] = useState<string | null>(null);
+  // Categoría del código elegido: la vía solo se ofrece para "Honorarios individuales".
+  const [codNomencladorCategoria, setCodNomencladorCategoria] = useState<string | null>(null);
   const [cantidad, setCantidad] = useState(1);
   const [sesion, setSesion] = useState(1);
   const [tipoCalculo, setTipoCalculo] = useState<TipoCalculo>("A");
+  const [via, setVia] = useState<ViaPractica>("T");
   const [porcentaje, setPorcentaje] = useState(100);
   const [honorarios, setHonorarios] = useState("0");
   const [gastos, setGastos] = useState("0");
@@ -228,6 +232,8 @@ const CargaFacturacion: React.FC = () => {
   // snapshot la sostiene; se invalida si el operador toca el médico a mano.
   const [ultimoMedico, setUltimoMedico] = useState<MedicoOption | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  // Fuerza volver a leer la prestación en edición (se incrementa después de guardar).
+  const [editReloadKey, setEditReloadKey] = useState(0);
 
   // El médico que fija el precio y los códigos habilitados: el propio payee si es un
   // médico, o el médico ejecutor si el payee es una clínica.
@@ -251,6 +257,7 @@ const CargaFacturacion: React.FC = () => {
     // Sin fecha de práctica el backend cotiza el valor vigente a hoy (el más actual).
     // Se manda `null` y no "" para que el query param no viaje vacío.
     fecha: fechaPractica || null,
+    via,
   });
 
   // Precarga de la prestación cuando se entra en modo edición
@@ -281,6 +288,7 @@ const CargaFacturacion: React.FC = () => {
         setCantidad(p.cantidad ?? 1);
         setSesion(p.sesion ?? 1);
         setTipoCalculo((p.tipo_calculo as TipoCalculo) ?? "A");
+        setVia((p.via as ViaPractica) ?? "T");
         setPorcentaje(p.porcentaje ?? 100);
         setHonorarios(p.honorarios != null ? String(p.honorarios) : "0");
         setGastos(p.gastos != null ? String(p.gastos) : "0");
@@ -336,7 +344,10 @@ const CargaFacturacion: React.FC = () => {
         }
         if (nomRes.status === "fulfilled") {
           const nom = nomRes.value.find((x) => x.codigo === p.cod_nomenclador);
-          if (nom) setCodigoPreset(nom.descripcion || null);
+          if (nom) {
+            setCodigoPreset(nom.descripcion || null);
+            setCodNomencladorCategoria(nom.categoria ?? null);
+          }
         }
         if (cliRes.status === "fulfilled") {
           const cli = cliRes.value.find((x) => x.cod === p.cod_clinica);
@@ -362,7 +373,7 @@ const CargaFacturacion: React.FC = () => {
     return () => {
       active = false;
     };
-  }, [isEdit, editId]);
+  }, [isEdit, editId, editReloadKey]);
 
   // Carga de la factura complementaria: valida que sea un complemento abierto y fija
   // OS/período. Sostiene el badge del header y la búsqueda de precio/tabla.
@@ -411,20 +422,29 @@ const CargaFacturacion: React.FC = () => {
 
   // El máximo de ayudantes depende del código elegido — al cambiar de código
   // las líneas ya cargadas dejan de tener sentido (podían pertenecer a otro tope).
+  // La admisión de la vía laparoscópica también depende del código, así que arrastrarla
+  // a una práctica distinta produciría rechazos espurios. Se salta mientras la precarga
+  // de edición/replicar está en curso: ese flujo setea `codNomenclador` y `via` en el
+  // mismo batch, y este efecto pisaría la vía recién precargada.
   useEffect(() => {
+    if (loadingEdit || loadingReplicar) return;
     setAyudantes([]);
-  }, [codNomenclador]);
+    setVia("T");
+  }, [codNomenclador]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Limpiar nombre cuando se borra el DNI
   useEffect(() => {
     if (dni.length < 8) setNombrePaciente("");
   }, [dni]);
 
+  const volverATradicional = useCallback(() => setVia("T"), []);
+
   const handleObraSocialChange = useCallback(
     (nro: number | null, os: ObraSocialOption | null) => {
       setObraSocial(os);
       resetPeriodo();
       setCodNomenclador(null);
+      setCodNomencladorCategoria(null);
       if (nro && os) {
         localStorage.setItem(FACTURACION_ULTIMA_OS_KEY, JSON.stringify(os));
         loadPeriodo(String(nro));
@@ -461,6 +481,7 @@ const CargaFacturacion: React.FC = () => {
         setCantidad(p.cantidad ?? 1);
         setSesion(p.sesion ?? 1);
         setTipoCalculo((p.tipo_calculo as TipoCalculo) ?? "A");
+        setVia((p.via as ViaPractica) ?? "T");
         setPorcentaje(p.porcentaje ?? 100);
         setHonorarios(p.honorarios != null ? String(p.honorarios) : "0");
         setGastos(p.gastos != null ? String(p.gastos) : "0");
@@ -509,7 +530,10 @@ const CargaFacturacion: React.FC = () => {
         }
         if (nomRes.status === "fulfilled") {
           const nom = nomRes.value.find((x) => x.codigo === p.cod_nomenclador);
-          if (nom) setCodigoPreset(nom.descripcion || null);
+          if (nom) {
+            setCodigoPreset(nom.descripcion || null);
+            setCodNomencladorCategoria(nom.categoria ?? null);
+          }
         }
         if (cliRes.status === "fulfilled") {
           const cli = cliRes.value.find((x) => x.cod === p.cod_clinica);
@@ -554,6 +578,7 @@ const CargaFacturacion: React.FC = () => {
     cantidad,
     sesion,
     tipo_calculo: tipoCalculo,
+    via,
     honorarios: parseMoney(honorarios),
     gastos: parseMoney(gastos),
     ayudante: 0,
@@ -598,9 +623,11 @@ const CargaFacturacion: React.FC = () => {
 
   const resetForm = () => {
     setCodNomenclador(null);
+    setCodNomencladorCategoria(null);
     setHonorarios("0");
     setGastos("0");
     setTipoCalculo("A");
+    setVia("T");
     setPorcentaje(100);
     setCantidad(1);
     setSesion(1);
@@ -659,6 +686,7 @@ const CargaFacturacion: React.FC = () => {
       cantidad,
       sesion,
       tipo_calculo: tipoCalculo,
+      via,
       honorarios: parseMoney(honorarios),
       gastos: parseMoney(gastos),
       porcentaje,
@@ -678,6 +706,7 @@ const CargaFacturacion: React.FC = () => {
         cod_clinica: codClinica,
         autorizacion: autorizacion || null,
         cod_nomenclador: codNomenclador!,
+        via,
       };
       const idsVigentes = new Set<number>();
       const nuevos: PrestacionItem[] = [];
@@ -724,11 +753,12 @@ const CargaFacturacion: React.FC = () => {
       }
 
       notify("Prestación actualizada.");
-      navigate(
-        fromFactura
-          ? `/panel/facturacion/periodos/${fromFactura}`
-          : "/panel/facturacion/periodos",
-      );
+      // Se queda en el formulario, igual que la carga normal (para volver está el
+      // botón del header). Se recarga la prestación en vez de dejar el estado como
+      // está: los ayudantes que se acaban de crear todavía no tienen su `prestacionId`
+      // y un segundo guardado los volvería a crear duplicados.
+      setEditReloadKey((k) => k + 1);
+      setRefreshKey((k) => k + 1);
     } catch (e: any) {
       notify(
         detailMessage(e?.response?.data?.detail) || "Error al guardar",
@@ -766,6 +796,7 @@ const CargaFacturacion: React.FC = () => {
         // misma, así que se copia igual que dni/fecha/clínica.
         autorizacion: mainItem.autorizacion,
         cod_nomenclador: mainItem.cod_nomenclador!,
+        via: mainItem.via,
         cantidad: 1,
         sesion: 1,
         tipo_calculo: linea.tipoCalculo,
@@ -925,7 +956,9 @@ const CargaFacturacion: React.FC = () => {
       ? (complementoMeta?.periodo ?? null)
       : (periodoOverride ?? periodo?.periodo ?? null);
 
-  if (isEdit && loadingEdit) {
+  // Solo en la primera lectura: la recarga posterior a guardar no tiene que blanquear
+  // la pantalla — el formulario ya tiene los datos y se actualizan en el lugar.
+  if (isEdit && loadingEdit && !editMeta) {
     return (
       <div className={styles.container}>
         <div className={styles.header}>
@@ -1229,11 +1262,18 @@ const CargaFacturacion: React.FC = () => {
           <PrestacionSection
             key={`nom-${nomencladorResetKey}`}
             codNomenclador={codNomenclador}
-            onNomencladorChange={(cod) => setCodNomenclador(cod)}
+            onNomencladorChange={(cod, nom) => {
+              setCodNomenclador(cod);
+              setCodNomencladorCategoria(nom?.categoria ?? null);
+            }}
             codMedico={codMedicoEfectivo}
             precio={precio}
             precioLoading={precioLoading}
             precioError={precioError}
+            via={via}
+            onViaChange={setVia}
+            mostrarVia={codNomencladorCategoria === "Honorarios individuales"}
+            onVolverATradicional={volverATradicional}
             // La fecha ya no bloquea el código: es opcional (carga por cantidad).
             disabled={formDisabled || !codMedicoEfectivo}
             errors={errores}

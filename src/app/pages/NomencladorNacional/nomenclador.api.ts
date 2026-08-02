@@ -29,6 +29,7 @@ import type {
   ValorUpdatePayload,
   ValorActualizarPayload,
   TablaValorItem,
+  ViaPractica,
   NomencladorEspecialidadOut,
   NomencladorEspecialidadResumenOut,
   NomencladorEspecialidadResumenParams,
@@ -265,6 +266,7 @@ export const getTablaValores = async (params: {
   orden?: "codigo" | "valor";
   page?: number;
   size?: number;
+  via?: ViaPractica;
 }): Promise<TablaValorItem[]> => {
   const { data } = await http.get<TablaValorItem[]>(
     "/api/reportes_nm/tabla_valores",

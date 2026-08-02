@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from "react";
-import { Search, Loader2, AlertCircle } from "lucide-react";
+import { Search, Loader2, AlertCircle, AlertTriangle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import styles from "../ConsultaShared/consulta.module.scss";
@@ -8,7 +8,7 @@ import ResultRegister from "../ConsultaShared/ResultRegister";
 import { listNomenclador, getTablaValores } from "../nomenclador.api";
 import { listObrasSociales } from "../../ObrasSociales/obrasSociales.api";
 import { getEspecialidades } from "../../Especialidades/especialidades.api";
-import type { NomencladorOut, TablaValorItem } from "../nomenclador.types";
+import type { NomencladorOut, TablaValorItem, ViaPractica } from "../nomenclador.types";
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
 import type { Especialidad } from "../../Especialidades/especialidades.types";
 
@@ -27,6 +27,11 @@ export default function ConsultaValores() {
   const [nomLoading, setNomLoading] = useState(false);
   const [selectedNom, setSelectedNom] = useState<NomencladorOut | null>(null);
   const nomDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Vía de realización. Solo tiene efecto real en códigos de cirugía asociados a un
+  // galeno de 7/10 niveles: en el resto, el listado cae silenciosamente a "T" (ver
+  // aviso de degradado más abajo).
+  const [via, setVia] = useState<ViaPractica>("T");
 
   // Query result
   const [loading, setLoading] = useState(false);
@@ -111,6 +116,7 @@ export default function ConsultaValores() {
         codigo: selectedNom.codigo,
         especialidades: espId ? [espId] : undefined,
         size: 5,
+        via,
       });
 
       const exactTabla = tablaData.find(
@@ -203,6 +209,26 @@ export default function ConsultaValores() {
               menuHint="Escribí al menos 2 caracteres…"
             />
 
+            <div className={styles.viaToggle}>
+              {(
+                [
+                  ["T", "Tradicional"],
+                  ["L", "Laparoscópica"],
+                ] as const
+              ).map(([v, label]) => (
+                <label key={v} className={styles.viaOption}>
+                  <input
+                    type="radio"
+                    name="via"
+                    value={v}
+                    checked={via === v}
+                    onChange={() => { setVia(v); resetResult(); }}
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+
             <button
               type="button"
               className={styles.cta}
@@ -222,15 +248,23 @@ export default function ConsultaValores() {
                 Consultando valores…
               </div>
             ) : result ? (
-              <ResultRegister
-                result={result}
-                showVigencia
-                eligibility={
-                  espId && selectedEspItem
-                    ? { nombre: selectedEspItem.nombre, valida: especialidadValida }
-                    : null
-                }
-              />
+              <>
+                <ResultRegister
+                  result={result}
+                  showVigencia
+                  eligibility={
+                    espId && selectedEspItem
+                      ? { nombre: selectedEspItem.nombre, valida: especialidadValida }
+                      : null
+                  }
+                />
+                {via === "L" && result.via_aplicada === "T" && (
+                  <div className={styles.viaDegradeNotice}>
+                    <AlertTriangle size={16} />
+                    Este código no admite vía laparoscópica; se muestra el precio tradicional.
+                  </div>
+                )}
+              </>
             ) : searched && error ? (
               <div className={styles.errorbox}>
                 <AlertCircle size={18} />

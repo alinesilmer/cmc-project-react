@@ -355,6 +355,38 @@
   animation: pulse 1s ease-in-out infinite;
 }
 
+// ── Vía (Tradicional / Laparoscópica) ─────────────────────────────────────────
+.viaToggle {
+  display: flex;
+  gap: 14px;
+  margin: -8px 0 20px;
+}
+.viaOption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--ink-2);
+  cursor: pointer;
+
+  input { accent-color: var(--accent-2); }
+}
+.viaDegradeNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 26px 22px;
+  padding: 12px 16px;
+  background: var(--amber-bg);
+  border: 1.5px solid var(--amber-line);
+  border-left: 4px solid var(--amber-ico);
+  color: var(--amber-text);
+  font-size: 0.85rem;
+  font-weight: 600;
+
+  svg { flex-shrink: 0; margin-top: 1px; }
+}
+
 .errorbox {
   display: flex;
   align-items: flex-start;

@@ -424,6 +424,13 @@ $shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
   gap: 20px;
 }
 
+.radioColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
 .radioLabel {
   display: flex;
   align-items: center;
