@@ -32,7 +32,10 @@ const MedicoAutocomplete: React.FC<Props> = ({ value, onChange, disabled, preset
     setLoading(true);
     try {
       const rows = await fetchMedicos(q);
-      setOptions(rows);
+      // Este autocomplete es para médicos individuales (ejecutor, ayudante, equipo
+      // quirúrgico): /medicos mezcla médicos y organizaciones, así que se filtran las
+      // clínicas — no tiene sentido de negocio elegir una como ejecutor/ayudante.
+      setOptions(rows.filter((m) => !m.es_organizacion));
     } catch {
       // abort or network error
     } finally {
@@ -56,7 +59,7 @@ const MedicoAutocomplete: React.FC<Props> = ({ value, onChange, disabled, preset
       options={selectOptions}
       value={value}
       onChange={(id) => {
-        const med = options.find((m) => m.cod === String(id)) ?? null;
+        const med = options.find((m) => String(m.cod) === String(id)) ?? null;
         onChange(id ? String(id) : null, med);
       }}
       onQueryChange={search}

@@ -51,8 +51,6 @@ import MedicoPrestacionesTable from "./sections/MedicoPrestacionesTable";
 
 import styles from "./CargaFacturacion.module.scss";
 
-const todayISO = () => new Date().toISOString().slice(0, 10);
-
 // Al editar/replicar puede clickearse cualquier fila del equipo, incluida un ayudante.
 // El formulario se arma siempre desde la CABECERA (id == grupo_equipo_id): es la que
 // tiene el médico principal en `cod_medico` y trae el `grupo` con los ayudantes. Si la
@@ -250,7 +248,9 @@ const CargaFacturacion: React.FC = () => {
           ? String(obraSocial.nro_obra_social)
           : null,
     codigo: codNomenclador,
-    fecha: fechaPractica,
+    // Sin fecha de práctica el backend cotiza el valor vigente a hoy (el más actual).
+    // Se manda `null` y no "" para que el query param no viaje vacío.
+    fecha: fechaPractica || null,
   });
 
   // Precarga de la prestación cuando se entra en modo edición
@@ -272,7 +272,9 @@ const CargaFacturacion: React.FC = () => {
         setCodMedicoEjecutor(p.cod_medico_ejecutor ?? null);
         setDni(p.dni_paciente ?? "");
         setNombrePaciente(p.nombre_paciente ?? "");
-        setFechaPractica(p.fecha_practica ?? todayISO());
+        // La fecha es opcional: si la prestación se cargó sin fecha (carga por
+        // cantidad) se deja vacía. Ponerle "hoy" la inventaría al guardar.
+        setFechaPractica(p.fecha_practica ?? "");
         setCodClinica(p.cod_clinica ?? null);
         setAutorizacion(p.autorizacion ?? "");
         setCodNomenclador(p.cod_nomenclador ?? null);
@@ -450,7 +452,9 @@ const CargaFacturacion: React.FC = () => {
         setCodMedicoEjecutor(p.cod_medico_ejecutor ?? null);
         setDni(p.dni_paciente ?? "");
         setNombrePaciente(p.nombre_paciente ?? "");
-        setFechaPractica(p.fecha_practica ?? todayISO());
+        // La fecha es opcional: si la prestación se cargó sin fecha (carga por
+        // cantidad) se deja vacía. Ponerle "hoy" la inventaría al guardar.
+        setFechaPractica(p.fecha_practica ?? "");
         setCodClinica(p.cod_clinica ?? null);
         setAutorizacion(p.autorizacion ?? "");
         setCodNomenclador(p.cod_nomenclador ?? null);
@@ -542,7 +546,8 @@ const CargaFacturacion: React.FC = () => {
     // El ejecutor solo se manda si el payee es una clínica.
     cod_medico_ejecutor: payeeEsOrganizacion ? codMedicoEjecutor : null,
     dni_paciente: dni || null,
-    fecha_practica: fechaPractica,
+    // Opcional: sin fecha el backend guarda NULL y cotiza al valor vigente de hoy.
+    fecha_practica: fechaPractica || null,
     cod_clinica: codClinica,
     autorizacion: autorizacion || null,
     cod_nomenclador: codNomenclador!,
@@ -647,7 +652,7 @@ const CargaFacturacion: React.FC = () => {
       cod_medico: codMedico!,
       cod_medico_ejecutor: payeeEsOrganizacion ? codMedicoEjecutor : null,
       dni_paciente: dni || null,
-      fecha_practica: fechaPractica,
+      fecha_practica: fechaPractica || null,
       cod_clinica: codClinica,
       autorizacion: autorizacion || null,
       cod_nomenclador: codNomenclador!,
@@ -669,7 +674,7 @@ const CargaFacturacion: React.FC = () => {
       // con la cabecera (se copian para que el grupo quede coherente).
       const shared = {
         dni_paciente: dni || null,
-        fecha_practica: fechaPractica,
+        fecha_practica: fechaPractica || null,
         cod_clinica: codClinica,
         autorizacion: autorizacion || null,
         cod_nomenclador: codNomenclador!,
@@ -1200,7 +1205,10 @@ const CargaFacturacion: React.FC = () => {
 
           {/* 4. Fecha de práctica */}
           <div className={styles.section}>
-            <span className={styles.sectionTitle}>Fecha de práctica</span>
+            <span className={styles.sectionTitle}>
+              Fecha de práctica{" "}
+              <span className={styles.sectionHint}>(opcional)</span>
+            </span>
             <div className={styles.filterField} data-field="fecha">
               <input
                 className={styles.input}
@@ -1209,6 +1217,11 @@ const CargaFacturacion: React.FC = () => {
                 onChange={(e) => setFechaPractica(e.target.value)}
                 disabled={formDisabled}
               />
+              <span className={styles.mutedText}>
+                {fechaPractica
+                  ? "El precio se cotiza al valor vigente en esa fecha."
+                  : "Sin fecha (carga por cantidad): se guarda vacía y el precio se cotiza al valor vigente de hoy."}
+              </span>
             </div>
           </div>
 
@@ -1221,7 +1234,8 @@ const CargaFacturacion: React.FC = () => {
             precio={precio}
             precioLoading={precioLoading}
             precioError={precioError}
-            disabled={formDisabled || !codMedicoEfectivo || !fechaPractica}
+            // La fecha ya no bloquea el código: es opcional (carga por cantidad).
+            disabled={formDisabled || !codMedicoEfectivo}
             errors={errores}
             presetLabel={codigoPreset ?? (isEdit ? "(valor actual)" : undefined)}
             blockedHint={
@@ -1229,9 +1243,7 @@ const CargaFacturacion: React.FC = () => {
                 ? payeeEsOrganizacion
                   ? "Elegí el médico ejecutor para ver sus códigos habilitados."
                   : "Elegí un médico para ver sus códigos habilitados."
-                : !isEdit && !fechaPractica
-                  ? "Cargá la fecha de práctica para poder ingresar el código."
-                  : undefined
+                : undefined
             }
           />
 

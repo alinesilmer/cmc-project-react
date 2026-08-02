@@ -23,6 +23,11 @@ type PendingAction =
 
 const fmtFecha = (iso: string | null): string => {
   if (!iso) return "—";
+  // `new Date("2026-11-01")` parsea las date-only como medianoche UTC, y al mostrarlas
+  // en hora local (AR = UTC-3) retroceden un día. Las fechas de la API (`fecha_practica`,
+  // `fecha`) son columnas DATE, así que se formatean sin pasar por Date.
+  const soloFecha = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (soloFecha) return `${soloFecha[3]}/${soloFecha[2]}/${soloFecha[1]}`;
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });

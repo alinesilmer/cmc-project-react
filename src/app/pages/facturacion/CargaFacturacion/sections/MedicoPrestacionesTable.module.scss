@@ -1,19 +1,19 @@
 // Mismo lenguaje visual y misma estructura de tabla que FacturaDetalle
 // (/panel/facturacion/periodos/:id) — ver ese módulo para la referencia original.
-$blue:       #3b6fd4;
+$blue: #3b6fd4;
 $blue-light: #e8efff;
-$red:        #dc2626;
-$red-light:  #fee2e2;
-$green:      #166534;
-$border:     #e2e8f0;
-$surface:    #ffffff;
-$text-1:     #1a1f2e;
-$text-2:     #4a5568;
-$text-3:     #718096;
-$radius-sm:  6px;
-$radius-md:  10px;
-$radius-lg:  14px;
-$shadow-sm:  0 1px 4px rgba(0, 0, 0, .06);
+$red: #dc2626;
+$red-light: #fee2e2;
+$green: #166534;
+$border: #e2e8f0;
+$surface: #ffffff;
+$text-1: #1a1f2e;
+$text-2: #4a5568;
+$text-3: #718096;
+$radius-sm: 6px;
+$radius-md: 10px;
+$radius-lg: 14px;
+$shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
 
 .wrap {
   max-width: 1400px;
@@ -69,7 +69,9 @@ $shadow-sm:  0 1px 4px rgba(0, 0, 0, .06);
   width: 100%;
   table-layout: fixed;
   border-collapse: collapse;
-  font-size: 11px;
+  // Los operadores son gente mayor: el dato se lee a 12px aunque cueste una fila más
+  // alta. La compacidad se gana con los anchos de columna, nunca achicando la letra.
+  font-size: 12px;
 
   thead tr {
     background: #0c2a52;
@@ -78,11 +80,12 @@ $shadow-sm:  0 1px 4px rgba(0, 0, 0, .06);
   th {
     padding: 8px 8px;
     text-align: left;
-    font-size: inherit;
+    font-size: 11px;
     font-weight: 700;
     color: #fff;
-    letter-spacing: .03em;
+    letter-spacing: 0.02em;
     text-transform: uppercase;
+    line-height: 1.25;
     word-break: break-word;
   }
 
@@ -91,39 +94,84 @@ $shadow-sm:  0 1px 4px rgba(0, 0, 0, .06);
     color: $text-1;
     border-bottom: 1px solid #f1f4f8;
     vertical-align: middle;
-    word-break: break-word;
-    overflow-wrap: anywhere;
+    // `anywhere` solo como último recurso: primero se intenta cortar por espacios
+    // para no partir nombres al medio (obra social, paciente).
+    overflow-wrap: break-word;
   }
 
   tbody tr.dataRow {
-    transition: background .1s;
+    transition: background 0.1s;
 
-    &:hover { background: #f8faff; }
+    &:hover {
+      background: #f8faff;
+    }
   }
 
-  // Anchos fijos por columna para que las 14 columnas entren sin scroll.
-  th:nth-child(1)  { width: 5%; }
-  th:nth-child(2)  { width: 10%; }
-  th:nth-child(3)  { width: 8%; }
-  th:nth-child(4)  { width: 7%; }
-  th:nth-child(5)  { width: 7%; }
-  th:nth-child(6)  { width: 8%; }
-  th:nth-child(7)  { width: 7%; }
-  th:nth-child(8)  { width: 5%; }
-  th:nth-child(9)  { width: 7%; }
-  th:nth-child(10) { width: 7%; }
-  th:nth-child(11) { width: 6%; }
-  th:nth-child(12) { width: 7%; }
-  th:nth-child(13) { width: 8%; }
-  th:nth-child(14) { width: 8%; }
+  // Anchos fijos por columna para que las 15 columnas entren sin scroll: con
+  // `table-layout: fixed` tienen que sumar 100% y NO puede quedar ninguna sin ancho
+  // (la que falte se lleva el sobrante y descuadra el resto).
+  th:nth-child(1) {
+    width: 6%;
+  } // ID
+  th:nth-child(2) {
+    width: 9%;
+  } // Socio
+  th:nth-child(3) {
+    width: 8%;
+  } // Obra social
+  th:nth-child(4) {
+    width: 9%;
+  } // Autorización
+  th:nth-child(5) {
+    width: 7%;
+  } // Fecha
+  th:nth-child(6) {
+    width: 6%;
+  } // Código
+  th:nth-child(7) {
+    width: 7%;
+  } // Nro Afiliado
+  th:nth-child(8) {
+    width: 6%;
+  } // Cantidad
+  th:nth-child(9) {
+    width: 4%;
+  } // %
+  th:nth-child(10) {
+    width: 9%;
+  } // Honorarios
+  th:nth-child(11) {
+    width: 9%;
+  } // Gastos
+  th:nth-child(12) {
+    width: 4%;
+  } // TP
+  th:nth-child(13) {
+    width: 9%;
+  } // Sub total
+  th:nth-child(14) {
+    width: 4%;
+  } // Tipo
+  // Acciones en 2 filas de 3 iconos: 3 × 24px + 2 × 4px de gap + padding ≈ 96px.
+  th:nth-child(15) {
+    width: 7%;
+  } // Acciones
 }
 
-.thActions { text-align: right; }
+.thActions {
+  text-align: right;
+}
 
-.rowRevisada td { background: #f3fbf5; }
-.rowAnulada td { opacity: 0.55; }
+.rowRevisada td {
+  background: #f3fbf5;
+}
+.rowAnulada td {
+  opacity: 0.55;
+}
 
-.idCell { white-space: nowrap; }
+.idCell {
+  white-space: nowrap;
+}
 
 .socioCell {
   display: flex;
@@ -149,8 +197,27 @@ $shadow-sm:  0 1px 4px rgba(0, 0, 0, .06);
   font-weight: 400;
 }
 
+.osCell {
+  // El nombre se muestra completo y baja de línea por palabra cuando no entra —
+  // igual que el nombre del socio. Nunca se corta ni se recorta: el operador tiene
+  // que poder leer de qué obra social es la prestación sin pasar el mouse.
+  display: block;
+  color: $text-1;
+  line-height: 1.25;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+.osNro {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: $blue;
+  // El código y sus paréntesis viajan juntos: nunca parten al final de una línea.
+  white-space: nowrap;
+}
+
 .codeCell {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: "Courier New", Courier, monospace;
   font-weight: 700;
   font-size: inherit;
   color: $blue;
@@ -183,7 +250,9 @@ $shadow-sm:  0 1px 4px rgba(0, 0, 0, .06);
   color: $green;
 }
 
-.mutedText { color: $text-3; }
+.mutedText {
+  color: $text-3;
+}
 
 .tipoPrestadorBadge {
   display: inline-block;
@@ -193,31 +262,55 @@ $shadow-sm:  0 1px 4px rgba(0, 0, 0, .06);
   padding: 2px 6px;
 }
 
-.tipoPrestadorMedico  { background: #eff6ff; color: #1d4ed8; }
-.tipoPrestadorAyudante { background: #faf5ff; color: #6b21a8; }
-.tipoPrestadorGastos  { background: #fff7ed; color: #c2410c; }
+.tipoPrestadorMedico {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+.tipoPrestadorAyudante {
+  background: #faf5ff;
+  color: #6b21a8;
+}
+.tipoPrestadorGastos {
+  background: #fff7ed;
+  color: #c2410c;
+}
 
 .tipoBadge {
   display: inline-block;
   font-size: inherit;
-  font-weight: 600;
+  font-weight: 700;
   border-radius: 20px;
-  padding: 2px 7px;
+  padding: 2px 8px;
   background: #eef2f7;
   color: #475569;
 }
 
-.tipoConsulta   { background: #e8f0ff; color: #0c2a52; }
-.tipoPractica   { background: #fef3c7; color: #92400e; }
-.tipoHonorarios { background: #f0fdf4; color: #166534; }
-.tipoSanatorio  { background: #faf5ff; color: #6b21a8; }
+.tipoConsulta {
+  background: #e8f0ff;
+  color: #0c2a52;
+}
+.tipoPractica {
+  background: #fef3c7;
+  color: #92400e;
+}
+.tipoHonorarios {
+  background: #f0fdf4;
+  color: #166534;
+}
+.tipoSanatorio {
+  background: #faf5ff;
+  color: #6b21a8;
+}
 
+// Grilla fija de 3 columnas: los 6 controles quedan 3 arriba y 3 abajo. Así la
+// columna necesita un tercio del ancho y los botones pueden seguir siendo grandes
+// (blancos de click cómodos) sin comerse el espacio de las columnas de datos.
 .actionsCell {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3, 24px);
   gap: 4px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  align-items: center;
+  justify-content: end;
+  align-content: center;
 }
 
 .auditCheckbox {
@@ -231,36 +324,56 @@ $shadow-sm:  0 1px 4px rgba(0, 0, 0, .06);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 23px;
-  height: 23px;
+  width: 24px;
+  height: 24px;
   border-radius: $radius-sm;
-  transition: background .15s;
+  transition: background 0.15s;
 }
 
-.auditCheckboxOn { background: #dcfce7; }
+.auditCheckboxOn {
+  background: #dcfce7;
+}
 
 .iconBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 23px;
-  height: 23px;
+  width: 24px;
+  height: 24px;
   background: none;
   border: none;
   border-radius: $radius-sm;
   color: $text-2;
   cursor: pointer;
-  transition: background .15s, color .15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 
-  &:hover:not(:disabled) { background: #f1f4f8; color: $text-1; }
-  &:disabled { opacity: .35; cursor: not-allowed; }
+  &:hover:not(:disabled) {
+    background: #f1f4f8;
+    color: $text-1;
+  }
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
 }
 
-.iconBtnEdit:hover:not(:disabled) { color: $blue; background: #eff6ff; }
-.iconBtnMove:hover:not(:disabled) { color: #92400e; background: #fffbeb; }
-.iconBtnDelete:hover:not(:disabled) { color: $red; background: $red-light; }
+.iconBtnEdit:hover:not(:disabled) {
+  color: $blue;
+  background: #eff6ff;
+}
+.iconBtnMove:hover:not(:disabled) {
+  color: #92400e;
+  background: #fffbeb;
+}
+.iconBtnDelete:hover:not(:disabled) {
+  color: $red;
+  background: $red-light;
+}
 
-.emptyCell, .loadingCell {
+.emptyCell,
+.loadingCell {
   text-align: center;
   color: $text-3;
   padding: 32px 14px !important;
@@ -298,8 +411,17 @@ $shadow-sm:  0 1px 4px rgba(0, 0, 0, .06);
   font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background .15s, border-color .15s, color .15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
 
-  &:hover:not(:disabled) { border-color: $blue; color: $blue; }
-  &:disabled { opacity: .45; cursor: not-allowed; }
+  &:hover:not(:disabled) {
+    border-color: $blue;
+    color: $blue;
+  }
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
 }

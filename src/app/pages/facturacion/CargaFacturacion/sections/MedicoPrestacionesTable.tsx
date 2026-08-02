@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ClipboardList, Pencil, Copy, ArrowRightCircle, ArrowLeftCircle, Trash2 } from "lucide-react";
 
 import { useAppSnackbar } from "../../../../hooks/useAppSnackbar";
-import { listarPrestaciones, anularPrestacion, marcarRevisado, moverPeriodo } from "../../api";
+import { listarPrestaciones, anularPrestacion, marcarRevisado, moverPeriodo, fetchObrasSociales } from "../../api";
 import type { PrestacionRead, Tipo } from "../../types";
 import { detailMessage } from "../../types";
 import { formatMoney, parseMoney } from "../../money";
@@ -30,10 +30,27 @@ interface Props {
 
 const fmtFecha = (iso: string | null | undefined): string => {
   if (!iso) return "—";
+  // `new Date("2026-11-01")` parsea las date-only como medianoche UTC, y al mostrarlas
+  // en hora local (AR = UTC-3) retroceden un día. Las fechas de la API (`fecha_practica`,
+  // `fecha`) son columnas DATE, así que se formatean sin pasar por Date.
+  const soloFecha = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (soloFecha) return `${soloFecha[3]}/${soloFecha[2]}/${soloFecha[1]}`;
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
 };
+
+/** Código de OS normalizado: la columna puede traerlo con espacios o ceros a la
+ *  izquierda, y así no coincidiría con el `nro_obra_social` numérico del buscador. */
+const normCodOs = (cod: string | null | undefined): string | null => {
+  const t = (cod ?? "").trim();
+  if (!t) return null;
+  return /^\d+$/.test(t) ? String(Number(t)) : t;
+};
+
+/** "(<nro>) <nombre>" — sin el nombre mientras no se haya resuelto. */
+const fmtObraSocial = (cod: string, nombres: Record<string, string>): string =>
+  nombres[cod] ? `(${cod}) ${nombres[cod]}` : `(${cod})`;
 
 // El listado plano no trae `tipo_prestador` (eso solo lo devuelve el detalle de
 // factura agrupado) — lo derivamos con la misma prioridad documentada: ayudante>0 →
@@ -45,12 +62,44 @@ const deriveTipoPrestador = (row: PrestacionRead): TipoPrestador => {
   return null;
 };
 
+// Sigla + nombre largo para el `title`. "Gastos" es la línea que factura la clínica
+// (el sanatorio cobra los gastos), por eso se rotula como Clínica de cara al operador
+// aunque el backend la nombre por el concepto que cobra.
+const tipoPrestadorAbrev = (t: TipoPrestador): string | null => {
+  switch (t) {
+    case "Medico":   return "M";
+    case "Ayudante": return "A";
+    case "Gastos":   return "C";
+    default:         return null;
+  }
+};
+
+const tipoPrestadorLabel = (t: TipoPrestador): string => {
+  switch (t) {
+    case "Medico":   return "Médico";
+    case "Ayudante": return "Ayudante";
+    case "Gastos":   return "Clínica (gastos)";
+    default:         return "";
+  }
+};
+
 const tipoPrestadorClass = (t: TipoPrestador): string => {
   switch (t) {
     case "Medico":   return styles.tipoPrestadorMedico;
     case "Ayudante": return styles.tipoPrestadorAyudante;
     case "Gastos":   return styles.tipoPrestadorGastos;
     default:         return "";
+  }
+};
+
+// La columna es angosta: se muestra la sigla y el nombre completo queda en el `title`.
+const tipoAbrev = (t: Tipo | null | undefined): string | null => {
+  switch (t) {
+    case "Consulta":                return "C";
+    case "Practica":                return "P";
+    case "Honorarios individuales": return "HI";
+    case "Sanatorio":               return "S";
+    default:                        return null;
   }
 };
 
@@ -74,6 +123,10 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
   const [offset, setOffset] = useState(0);
   const [busyIds, setBusyIds] = useState<Set<number>>(new Set());
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  // El listado solo trae `cod_obra_social`: los nombres se resuelven aparte y se
+  // cachean por código (las páginas repiten la misma OS una y otra vez).
+  const [nombresOs, setNombresOs] = useState<Record<string, string>>({});
+  const osPedidasRef = useRef<Set<string>>(new Set());
 
   // Cambió el médico, la obra social o el período → volvemos a la primera página.
   useEffect(() => { setOffset(0); }, [codMedico, codObra, periodo]);
@@ -101,6 +154,37 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
   // `refreshKey` no se lee acá dentro: es un disparador explícito del padre para
   // volver a pedir el listado después de guardar.
   useEffect(() => { fetchData(); }, [fetchData, refreshKey]);
+
+  // Resuelve los nombres de las obras sociales que aparecen en la página actual.
+  // Se marcan como pedidas aunque falle: sin eso, un código sin match dispararía el
+  // fetch en cada render (la respuesta nunca llenaría el cache).
+  useEffect(() => {
+    const faltantes = Array.from(
+      new Set(rows.map((r) => normCodOs(r.cod_obra_social)).filter((c): c is string => !!c)),
+    ).filter((cod) => !osPedidasRef.current.has(cod));
+    if (faltantes.length === 0) return;
+    faltantes.forEach((cod) => osPedidasRef.current.add(cod));
+
+    let active = true;
+    (async () => {
+      // Sin `limit`: el endpoint lo topea en 20 y cualquier valor mayor responde 422.
+      // Best-effort: si una falla, esa celda queda solo con el número.
+      const res = await Promise.allSettled(faltantes.map((cod) => fetchObrasSociales(cod)));
+      if (!active) return;
+      const nuevos: Record<string, string> = {};
+      res.forEach((r, i) => {
+        if (r.status !== "fulfilled") return;
+        // `/obras-sociales` es un buscador: puede traer parecidos, así que se toma
+        // el que coincide exacto con el código de la prestación.
+        const os = r.value.find((x) => String(x.nro_obra_social) === faltantes[i]);
+        // Los nombres vienen de una columna CHAR: llegan con espacios al final.
+        const nombre = os?.nombre?.trim();
+        if (nombre) nuevos[faltantes[i]] = nombre;
+      });
+      if (Object.keys(nuevos).length > 0) setNombresOs((prev) => ({ ...prev, ...nuevos }));
+    })();
+    return () => { active = false; };
+  }, [rows]);
 
   const withBusy = async (id: number, fn: () => Promise<void>) => {
     setBusyIds((prev) => new Set(prev).add(id));
@@ -219,6 +303,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
               <tr>
                 <th>ID</th>
                 <th>Socio</th>
+                <th>Obra social</th>
                 <th>Autorización</th>
                 <th>Fecha</th>
                 <th>Código</th>
@@ -235,15 +320,16 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
             </thead>
             <tbody>
               {loading && (
-                <tr><td colSpan={14} className={styles.loadingCell}>Cargando…</td></tr>
+                <tr><td colSpan={15} className={styles.loadingCell}>Cargando…</td></tr>
               )}
               {!loading && rows.length === 0 && (
-                <tr><td colSpan={14} className={styles.emptyCell}>Este médico no tiene prestaciones cargadas.</td></tr>
+                <tr><td colSpan={15} className={styles.emptyCell}>Este médico no tiene prestaciones cargadas.</td></tr>
               )}
               {!loading && rows.map((row) => {
                 const editable = row.estado === "A";
                 const busy = busyIds.has(row.id);
                 const tipoPrestador = deriveTipoPrestador(row);
+                const codOs = normCodOs(row.cod_obra_social);
                 return (
                   <tr
                     key={row.id}
@@ -258,6 +344,15 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                         </span>
                         <span className={styles.socioNombre}>{medicoNombre ?? "—"}</span>
                       </div>
+                    </td>
+                    <td title={codOs ? fmtObraSocial(codOs, nombresOs) : undefined}>
+                      {codOs ? (
+                        <span className={styles.osCell}>
+                          <span className={styles.osNro}>({codOs})</span>
+                          {/* Mientras el nombre no esté resuelto se muestra solo el número. */}
+                          {nombresOs[codOs] && ` ${nombresOs[codOs]}`}
+                        </span>
+                      ) : <span className={styles.mutedText}>—</span>}
                     </td>
                     <td>{row.autorizacion || <span className={styles.mutedText}>—</span>}</td>
                     <td>{fmtFecha(row.fecha_practica)}</td>
@@ -274,15 +369,22 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                     <td><span className={styles.moneyCell}>{formatMoney(row.gastos)}</span></td>
                     <td>
                       {tipoPrestador ? (
-                        <span className={`${styles.tipoPrestadorBadge} ${tipoPrestadorClass(tipoPrestador)}`}>
-                          {tipoPrestador}
+                        <span
+                          className={`${styles.tipoPrestadorBadge} ${tipoPrestadorClass(tipoPrestador)}`}
+                          title={tipoPrestadorLabel(tipoPrestador)}
+                        >
+                          {tipoPrestadorAbrev(tipoPrestador)}
                         </span>
                       ) : <span className={styles.mutedText}>—</span>}
                     </td>
                     <td><span className={styles.subtotalCell}>{formatMoney(row.importe_total)}</span></td>
                     <td>
                       {row.tipo ? (
-                        <span className={`${styles.tipoBadge} ${tipoClass(row.tipo)}`}>{row.tipo}</span>
+                        <span className={`${styles.tipoBadge} ${tipoClass(row.tipo)}`} title={row.tipo}>
+                          {/* Si apareciera un tipo nuevo sin sigla, se muestra tal cual
+                              en vez de perder el dato. */}
+                          {tipoAbrev(row.tipo) ?? row.tipo}
+                        </span>
                       ) : <span className={styles.mutedText}>—</span>}
                     </td>
                     <td>
@@ -303,7 +405,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                           disabled={!editable || busy}
                           onClick={() => handleEditar(row)}
                         >
-                          <Pencil size={13} />
+                          <Pencil size={15} />
                         </button>
                         <button
                           type="button"
@@ -312,7 +414,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                           disabled={busy}
                           onClick={() => handleReplicar(row)}
                         >
-                          <Copy size={13} />
+                          <Copy size={15} />
                         </button>
                         <button
                           type="button"
@@ -321,7 +423,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                           disabled={!editable || busy}
                           onClick={() => handleMoverPeriodo(row, "anterior")}
                         >
-                          <ArrowLeftCircle size={14} />
+                          <ArrowLeftCircle size={16} />
                         </button>
                         <button
                           type="button"
@@ -330,7 +432,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                           disabled={!editable || busy}
                           onClick={() => handleMoverPeriodo(row, "siguiente")}
                         >
-                          <ArrowRightCircle size={14} />
+                          <ArrowRightCircle size={16} />
                         </button>
                         <button
                           type="button"
@@ -339,7 +441,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                           disabled={!editable || busy}
                           onClick={() => handleEliminar(row)}
                         >
-                          <Trash2 size={13} />
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     </td>
