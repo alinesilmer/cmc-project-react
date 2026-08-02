@@ -79,3 +79,59 @@
     animation: none !important;
   }
 }
+
+/* ===== Botón de cierre propio (reemplaza el de rsuite) ===== */
+:global(.amodal-zoom.rs-modal .rs-modal-header) {
+  position: relative;
+  padding-inline-end: 40px; /* espacio para el botón de cierre */
+}
+:global(.amodal-close) {
+  position: absolute;
+  top: -2px;
+  inset-inline-end: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--rs-gray-600, #6b6b6b);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+:global(.amodal-close:hover) {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--rs-gray-900, #121212);
+}
+:global(.amodal-close:focus-visible) {
+  outline: 2px solid var(--rs-blue-500, #3498ff);
+  outline-offset: 2px;
+}
+:global(.amodal-close:disabled) {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ===== Responsive: el diálogo nunca desborda el viewport ===== */
+/* El cuerpo scrollea si el formulario es más alto que la pantalla; el header y
+   el footer (botones) quedan siempre visibles. */
+:global(.amodal-zoom.rs-modal .rs-modal-body) {
+  max-height: min(70vh, 620px);
+  overflow-y: auto;
+}
+
+@media (max-width: 640px) {
+  :global(.amodal-zoom.rs-modal) {
+    --rs-modal-margin-top: 1rem;
+  }
+  :global(.amodal-zoom.rs-modal .rs-modal-dialog) {
+    width: auto !important;
+    margin-inline: 12px !important;
+  }
+  :global(.amodal-zoom.rs-modal .rs-modal-body) {
+    max-height: 76vh;
+  }
+}

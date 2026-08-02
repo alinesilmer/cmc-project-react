@@ -427,6 +427,73 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
   color: $orange;
   letter-spacing: .03em;
 }
+
+// ─── Grupo / niveles ──────────────────────────────────────────────────────────
+.nombreToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: $text-1;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-align: left;
+
+  svg { color: $text-3; flex-shrink: 0; }
+  &:hover span { color: $blue; }
+}
+.nivelBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  background: $blue-light;
+  border: 1px solid #c7d7f5;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: $blue;
+  white-space: nowrap;
+}
+.sinNivelBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  background: #f1f5f9;
+  border: 1px solid $border;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: $text-3;
+  white-space: nowrap;
+}
+.nivelRow {
+  background: #fafbfd;
+
+  td {
+    padding-top: 6px;
+    padding-bottom: 6px;
+    font-size: 0.78rem;
+    color: $text-2;
+  }
+  &:hover { background: #f4f6fa !important; }
+}
+.nivelCell {
+  padding-left: 30px !important;
+  font-weight: 600;
+  color: $text-2;
+}
+.nivelUnits {
+  color: $text-3;
+  font-variant-numeric: tabular-nums;
+}
+.nivelValor {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: $text-2;
+}
 .priceCell {
   font-variant-numeric: tabular-nums;
   font-weight: 700;

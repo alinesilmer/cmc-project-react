@@ -14,6 +14,7 @@ import {
   FileCode2, Search, FileText, Percent, GitMerge, Sigma, TrendingUp,
   PencilRuler, ShieldUser, Monitor, Receipt, CalendarDays,
   LogOut, CircleUserRound, ChevronDown, Menu, X, Layers,
+  Smartphone, Gift, Inbox, Megaphone, ShieldCheck, ExternalLink, FileUp,
 } from "lucide-react";
 
 import styles from "./Topbar.module.scss";
@@ -39,8 +40,35 @@ const base = "/panel";
 const R = ["medicos:leer"];
 const LIQ = ["liquidacion:leer", "liquidacion:ver"];
 
+// Accesos directos a las obras sociales que se validan desde el panel. El
+// catálogo completo (incluidos los portales externos) vive en el hub.
+const VALIDACIONES_MENU: Extract<TopEntry, { kind: "menu" }> = {
+  kind: "menu", id: "validaciones", icon: ShieldCheck, label: "Validaciones",
+  columns: [
+    {
+      heading: "Validar prestación",
+      items: [
+        { path: `${base}/validaciones/sancor`, icon: ShieldCheck, label: "Sancor Salud" },
+        { path: `${base}/validaciones/ospjn`, icon: ShieldCheck, label: "OSPJN · Judicial" },
+        { path: `${base}/validaciones/nobis`, icon: ShieldCheck, label: "Nobis Salud" },
+        { path: `${base}/validaciones/ospm`, icon: ShieldCheck, label: "OSPM" },
+      ],
+    },
+    {
+      heading: "Carga de prestaciones",
+      items: [
+        { path: `${base}/validaciones/omint`, icon: ClipboardList, label: "Omint" },
+        { path: `${base}/validaciones/boreal`, icon: ClipboardList, label: "Boreal Salud" },
+        { path: `${base}/validaciones`, icon: ShieldCheck, label: "Ver todas" },
+        { path: `${base}/validaciones/portales`, icon: ExternalLink, label: "Portales de obras sociales" },
+      ],
+    },
+  ],
+};
+
 const TOP_NAV: TopEntry[] = [
   { kind: "link", path: `${base}/dashboard`, icon: Home, label: "Inicio" },
+  VALIDACIONES_MENU,
   {
     kind: "menu", id: "facturacion", icon: Receipt, label: "Facturación",
     columns: [
@@ -93,6 +121,20 @@ const TOP_NAV: TopEntry[] = [
     ],
   },
   {
+    // Contenido y bandejas que alimentan la app de socios (cmc-app): lo que se
+    // administra acá se ve en el teléfono del médico, no en el panel.
+    kind: "menu", id: "movil", icon: Smartphone, label: "App Móvil",
+    columns: [
+      {
+        items: [
+          { path: `${base}/beneficios`, icon: Gift, label: "Beneficios", perms: ["beneficios:gestionar"] },
+          { path: `${base}/avisos`, icon: Megaphone, label: "Avisos", perms: ["avisos:gestionar"] },
+          { path: `${base}/solicitudes-cambio`, icon: Inbox, label: "Solicitudes de cambio", perms: ["solicitudes_cambio:gestionar"] },
+        ],
+      },
+    ],
+  },
+  {
     kind: "menu", id: "auditoria", icon: Flower2, label: "Auditoría",
     columns: [
       {
@@ -131,6 +173,7 @@ const TOP_NAV: TopEntry[] = [
         heading: "Galenos",
         items: [
           { path: `${base}/nomenclador/galenos`, icon: Sigma, label: "Galenos", perms: R },
+          { path: `${base}/nomenclador/galenos/importar`, icon: FileUp, label: "Importar Galenos", perms: R },
           { path: `${base}/nomenclador/actualizar-precios`, icon: TrendingUp, label: "Actualizar Unidades", perms: R },
         ],
       },
@@ -151,6 +194,7 @@ const TOP_NAV: TopEntry[] = [
 ];
 
 const DOCTOR_TOP_NAV: TopEntry[] = [
+  VALIDACIONES_MENU,
   { kind: "link", path: `${base}/nomenclador/consulta-precios`, icon: DollarSign, label: "Consulta de Precios" },
 ];
 

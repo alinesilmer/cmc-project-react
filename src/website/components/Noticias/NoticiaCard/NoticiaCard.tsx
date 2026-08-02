@@ -6,6 +6,8 @@ import type { Noticia } from "../../../types";
 interface NoticiaCardProps {
   noticia: Noticia;
   onClick: () => void;
+  /** "square" = tarjeta cuadrada, sin meta y con el resumen completo al pasar el cursor */
+  variant?: "default" | "square";
 }
 
 type Dateish = string | number | Date | null | undefined;
@@ -25,7 +27,13 @@ function formatearFecha(fecha: Dateish): string {
   });
 }
 
-export default function NoticiaCard({ noticia, onClick }: NoticiaCardProps) {
+export default function NoticiaCard({
+  noticia,
+  onClick,
+  variant = "default",
+}: NoticiaCardProps) {
+  const esCuadrada = variant === "square";
+
   const portada =
     (noticia.portada && noticia.portada.trim()) || "https://res.cloudinary.com/dcfkgepmp/image/upload/v1764076138/20251125_1004_Portada_M%C3%A9dica_Moderna_simple_compose_01kaxhrn6nfm2t5ftq9htn6c9v_q4kx1d.png";
 
@@ -37,7 +45,7 @@ export default function NoticiaCard({ noticia, onClick }: NoticiaCardProps) {
 
   return (
     <motion.article
-      className={styles.card}
+      className={`${styles.card} ${esCuadrada ? styles.cardSquare : ""}`}
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -64,16 +72,18 @@ export default function NoticiaCard({ noticia, onClick }: NoticiaCardProps) {
         <h3 className={styles.title}>{noticia.titulo}</h3>
         <p className={styles.resumen}>{noticia.resumen}</p>
 
-        <div className={styles.meta}>
-          <span className={styles.metaItem}>
-            <FiCalendar />
-            {fecha}
-          </span>
-          <span className={styles.metaItem}>
-            <FiUser />
-            {autor}
-          </span>
-        </div>
+        {!esCuadrada && (
+          <div className={styles.meta}>
+            <span className={styles.metaItem}>
+              <FiCalendar />
+              {fecha}
+            </span>
+            <span className={styles.metaItem}>
+              <FiUser />
+              {autor}
+            </span>
+          </div>
+        )}
 
         <button className={styles.readMore} type="button">
           Leer más <FiArrowRight />

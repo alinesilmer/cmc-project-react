@@ -1,0 +1,403 @@
+@use "@/app/styles/all.scss" as *;
+
+.container {
+  padding: $spacing-8;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-6;
+  min-height: 100%;
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-5;
+    gap: $spacing-5;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-4;
+  }
+}
+
+// ─── Header ───────────────────────────────────────────────────────────────────
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $spacing-5;
+  flex-wrap: wrap;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+}
+
+.headerIcon {
+  color: $primary-blue;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: $font-size-4xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  margin: 0;
+  line-height: 1.2;
+
+  @media (max-width: $breakpoint-md) {
+    font-size: $font-size-3xl;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-2xl;
+  }
+}
+
+.subtitle {
+  font-size: $font-size-sm;
+  color: $gray-500;
+  margin: $spacing-1 0 0;
+  max-width: 62ch;
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  flex: 0 1 320px;
+  padding: 0 $spacing-4;
+  height: 42px;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-lg;
+  color: $gray-400;
+  transition: border-color 0.18s, box-shadow 0.18s;
+
+  &:focus-within {
+    border-color: $primary-blue;
+    box-shadow: 0 0 0 3px rgba($primary-blue, 0.12);
+  }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: $font-size-base;
+    color: $gray-800;
+
+    &::placeholder {
+      color: $gray-400;
+    }
+
+    // Oculta la "x" nativa de type=search para no duplicar affordances.
+    &::-webkit-search-cancel-button {
+      appearance: none;
+    }
+  }
+}
+
+.hint {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-2;
+  margin: 0;
+  font-size: $font-size-sm;
+  color: $gray-500;
+  line-height: 1.5;
+
+  svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: $gray-400;
+  }
+
+  strong {
+    color: $gray-700;
+    font-weight: $font-weight-semibold;
+  }
+}
+
+// ─── Grilla de obras sociales ─────────────────────────────────────────────────
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(276px, 1fr));
+  gap: $spacing-4;
+
+  @media (max-width: $breakpoint-sm) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  padding: $spacing-5;
+  padding-top: calc(#{$spacing-5} + 4px);
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-sm;
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: $shadow-lg;
+    border-color: $gray-300;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary-blue;
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    &:hover {
+      transform: none;
+    }
+  }
+}
+
+.cardDisabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+
+  &:hover {
+    transform: none;
+    box-shadow: $shadow-sm;
+  }
+}
+
+.accent {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4px;
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  color: $white;
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.5px;
+}
+
+.cardLogo {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  padding: 3px;
+  object-fit: contain;
+  background: $white;
+  border: 2px solid $gray-200;
+  border-radius: 50%;
+}
+
+.cardTitles {
+  min-width: 0;
+}
+
+.cardName {
+  margin: 0;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $gray-900;
+  line-height: 1.25;
+}
+
+.cardCode {
+  font-size: $font-size-xs;
+  color: $gray-500;
+  letter-spacing: 0.3px;
+}
+
+.cardDesc {
+  margin: 0;
+  flex: 1;
+  font-size: $font-size-sm;
+  color: $gray-600;
+  line-height: 1.5;
+}
+
+.cardBadges {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  flex-wrap: wrap;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px $spacing-2;
+  border-radius: 999px;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  white-space: nowrap;
+}
+
+.badgeOk {
+  background: rgba($success-green, 0.12);
+  color: $success-green;
+}
+
+.badgeWarn {
+  background: rgba($warning-orange, 0.14);
+  color: #b45309;
+}
+
+.cardAction {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: $spacing-3;
+  border-top: 1px solid $gray-100;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $primary-blue;
+
+  .cardDisabled & {
+    color: $gray-500;
+  }
+}
+
+// ─── Banner de portales externos ──────────────────────────────────────────────
+
+.portalesBanner {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+  padding: $spacing-4 $spacing-5;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-sm;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+
+  > svg:first-child {
+    flex-shrink: 0;
+    color: $primary-blue;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: $gray-300;
+    box-shadow: $shadow-md;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary-blue;
+    outline-offset: 2px;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    flex-wrap: wrap;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    &:hover {
+      transform: none;
+    }
+  }
+}
+
+.portalesTexto {
+  flex: 1;
+  min-width: 0;
+
+  strong {
+    display: block;
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $gray-900;
+  }
+
+  span {
+    display: block;
+    margin-top: 2px;
+    font-size: $font-size-sm;
+    color: $gray-500;
+    line-height: 1.45;
+  }
+}
+
+.portalesLogos {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+
+  img {
+    width: 38px;
+    height: 38px;
+    padding: 2px;
+    object-fit: contain;
+    background: $white;
+    border: 2px solid $gray-200;
+    border-radius: 50%;
+
+    // Se superponen levemente, como una pila de avatares.
+    & + img {
+      margin-left: -10px;
+    }
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    display: none;
+  }
+}
+
+.portalesArrow {
+  flex-shrink: 0;
+  color: $primary-blue;
+}
+
+// ─── Vacío ────────────────────────────────────────────────────────────────────
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-12 $spacing-5;
+  background: $white;
+  border: 1px dashed $gray-300;
+  border-radius: $border-radius-lg;
+  color: $gray-500;
+  text-align: center;
+
+  svg {
+    color: $gray-300;
+  }
+
+  p {
+    margin: 0;
+    font-size: $font-size-base;
+  }
+}

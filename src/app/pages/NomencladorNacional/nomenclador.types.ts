@@ -93,6 +93,48 @@ export type GalenoUpdatePayload = {
   observacion?: string | null;
 };
 
+// ─── Importación masiva desde planilla ────────────────────────────────────────
+
+/**
+ * Nivel dentro de un lote. Igual que `GalenoNivelItem` pero con `nivel`
+ * anulable: un galeno plano se manda como un único nivel con `nivel: null`
+ * (así lo modela `nm_galenos`, donde nivel NULL = sin niveles).
+ */
+export type GalenoLoteNivel = Omit<GalenoNivelItem, "nivel"> & {
+  nivel: number | null;
+};
+
+export type GalenoLoteItem = {
+  nombre: string;
+  niveles: GalenoLoteNivel[];
+};
+
+export type GalenoImportarLotePayload = {
+  obra_social_nro: number;
+  vigencia_desde: string;
+  galenos: GalenoLoteItem[];
+  observacion?: string | null;
+  /** `omitir` saltea los que ya están vigentes; `rotar` los reemplaza. */
+  si_existe?: "omitir" | "rotar";
+};
+
+export type GalenoLoteResultItem = {
+  nombre: string;
+  codigo: string;
+  estado: "creado" | "rotado" | "omitido" | "error";
+  niveles: number;
+  detalle?: string | null;
+};
+
+export type GalenoImportarLoteResult = {
+  total: number;
+  creados: number;
+  rotados: number;
+  omitidos: number;
+  errores: number;
+  items: GalenoLoteResultItem[];
+};
+
 export type GalenoActualizarPrecioPayload = {
   nuevo_valor_unitario: number;
   vigencia_desde: string;

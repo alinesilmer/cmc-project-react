@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, Fragment } from "react";
 import {
   Search,
   TrendingUp,
@@ -8,12 +8,19 @@ import {
   Loader2,
   RefreshCw,
   Save,
+  Info,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 
 import styles from "./ActualizarPreciosGalenos.module.scss";
-import { listGalenos, actualizarPrecioGaleno } from "../nomenclador.api";
+import {
+  listGalenos,
+  actualizarPrecioGaleno,
+  actualizarPrecioMasivoGaleno,
+} from "../nomenclador.api";
 import { listObrasSociales } from "../../ObrasSociales/obrasSociales.api";
 import type { GalenoOut } from "../nomenclador.types";
 import ConfirmModal from "../../../components/atoms/ConfirmModal/ConfirmModal";
@@ -30,7 +37,24 @@ function today() {
   return new Date().toISOString().slice(0, 10);
 }
 
-type SaveResult = { id: number; nombre: string; ok: boolean; msg?: string };
+/** Un galeno agrupado por código: los nivelados agrupan todos sus niveles. */
+type Grupo = {
+  codigo: string;
+  nombre: string;
+  nivelado: boolean;
+  niveles: GalenoOut[]; // ordenados por nivel
+};
+
+/** Valor unitario actual de un grupo: un único valor si todos los niveles coinciden, si no un rango. */
+function grupoValorActual(g: Grupo): string {
+  const nums = g.niveles.map((n) => parseFloat(n.valor_unitario));
+  const min = Math.min(...nums);
+  const max = Math.max(...nums);
+  if (min === max) return fmt.format(min);
+  return `${fmt.format(min)} – ${fmt.format(max)}`;
+}
+
+type SaveResult = { codigo: string; nombre: string; ok: boolean; msg?: string };
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
@@ -39,7 +63,8 @@ export default function ActualizarPreciosGalenos() {
   const [osSearch, setOsSearch] = useState("");
   const [galenos, setGalenos] = useState<GalenoOut[]>([]);
   const [loadingOs, setLoadingOs] = useState(false);
-  const [edits, setEdits] = useState<Record<number, string>>({});
+  const [edits, setEdits] = useState<Record<string, string>>({}); // keyed by código
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [vigencia, setVigencia] = useState(today());
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
@@ -55,6 +80,7 @@ export default function ActualizarPreciosGalenos() {
   const loadGalenos = useCallback(async (osNro: number) => {
     setLoadingOs(true);
     setEdits({});
+    setExpanded({});
     setSaveResults([]);
     try {
       const data = await listGalenos({ obra_social_nro: osNro });
@@ -63,6 +89,16 @@ export default function ActualizarPreciosGalenos() {
       setGalenos([]);
     } finally {
       setLoadingOs(false);
+    }
+  }, []);
+
+  /** Refresca los galenos sin borrar edits/resultados (tras guardar). */
+  const refreshGalenos = useCallback(async (osNro: number) => {
+    try {
+      const data = await listGalenos({ obra_social_nro: osNro });
+      setGalenos(data.filter((g) => g.activo));
+    } catch {
+      /* mantener valores previos */
     }
   }, []);
 
@@ -82,6 +118,29 @@ export default function ActualizarPreciosGalenos() {
       .slice(0, 100);
   }, [osList, osSearch]);
 
+  // Agrupa los galenos por código; los nivelados quedan en un solo grupo con todos sus niveles.
+  const grupos = useMemo<Grupo[]>(() => {
+    const map = new Map<string, GalenoOut[]>();
+    for (const g of galenos) {
+      const arr = map.get(g.codigo) ?? [];
+      arr.push(g);
+      map.set(g.codigo, arr);
+    }
+    return [...map.entries()]
+      .map(([codigo, rows]) => {
+        const niveles = [...rows].sort(
+          (a, b) => (a.nivel ?? 0) - (b.nivel ?? 0),
+        );
+        return {
+          codigo,
+          nombre: niveles[0].nombre,
+          nivelado: rows.some((r) => r.nivel != null),
+          niveles,
+        };
+      })
+      .sort((a, b) => a.nombre.localeCompare(b.nombre));
+  }, [galenos]);
+
   const pendingEdits = useMemo(
     () =>
       Object.entries(edits).filter(([, v]) => {
@@ -96,8 +155,12 @@ export default function ActualizarPreciosGalenos() {
     [galenos, vigencia],
   );
 
-  function setEdit(id: number, val: string) {
-    setEdits((prev) => ({ ...prev, [id]: val }));
+  function setEdit(codigo: string, val: string) {
+    setEdits((prev) => ({ ...prev, [codigo]: val }));
+  }
+
+  function toggleExpand(codigo: string) {
+    setExpanded((prev) => ({ ...prev, [codigo]: !prev[codigo] }));
   }
 
   function showToast(type: "success" | "error", msg: string) {
@@ -107,28 +170,61 @@ export default function ActualizarPreciosGalenos() {
 
   async function doSaveAll() {
     setConfirmOpen(false);
+    if (!selectedOsNro) return;
     setSaving(true);
     setSaveResults([]);
 
     const results: SaveResult[] = [];
 
-    for (const [idStr, valStr] of pendingEdits) {
-      const id = Number(idStr);
-      const galeno = galenos.find((g) => g.id === id);
-      if (!galeno) continue;
+    for (const [codigo, valStr] of pendingEdits) {
+      const grupo = grupos.find((gr) => gr.codigo === codigo);
+      if (!grupo) continue;
+      const valor = parseFloat(valStr);
 
       try {
-        const updated = await actualizarPrecioGaleno(id, {
-          nuevo_valor_unitario: parseFloat(valStr),
-          vigencia_desde: vigencia,
-        });
-        setGalenos((prev) => prev.map((g) => (g.id === id ? updated : g)));
-        setEdits((prev) => {
-          const next = { ...prev };
-          delete next[id];
-          return next;
-        });
-        results.push({ id, nombre: galeno.nombre, ok: true });
+        if (grupo.nivelado) {
+          // Un solo valor unitario para todos los niveles; cada nivel conserva sus unidades.
+          const res = await actualizarPrecioMasivoGaleno({
+            obra_social_nro: selectedOsNro,
+            codigo,
+            vigencia_desde: vigencia,
+            items: grupo.niveles
+              .filter((n) => n.nivel != null)
+              .map((n) => ({
+                nivel: n.nivel as number,
+                nuevo_valor_unitario: valor,
+              })),
+          });
+          if (res.errores.length > 0) {
+            results.push({
+              codigo,
+              nombre: grupo.nombre,
+              ok: false,
+              msg: res.errores[0]?.motivo ?? "Error al actualizar",
+            });
+          } else if (res.actualizados === 0) {
+            results.push({
+              codigo,
+              nombre: grupo.nombre,
+              ok: false,
+              msg: "Sin cambios. ¿Ya existe un registro con esa vigencia? Elegí una fecha posterior.",
+            });
+          } else {
+            results.push({
+              codigo,
+              nombre: grupo.nombre,
+              ok: true,
+              msg: `${res.actualizados} nivel(es) actualizados`,
+            });
+          }
+        } else {
+          // Galeno sin nivel: un único registro.
+          await actualizarPrecioGaleno(grupo.niveles[0].id, {
+            nuevo_valor_unitario: valor,
+            vigencia_desde: vigencia,
+          });
+          results.push({ codigo, nombre: grupo.nombre, ok: true });
+        }
       } catch (e: unknown) {
         const err = e as { response?: { status?: number; data?: { detail?: string } } };
         const is409 = err?.response?.status === 409;
@@ -136,19 +232,29 @@ export default function ActualizarPreciosGalenos() {
           ?? (is409
             ? "Ya existe un registro con esa fecha de vigencia. Elegí una fecha posterior."
             : "Error al actualizar");
-        results.push({ id, nombre: galeno.nombre, ok: false, msg });
+        results.push({ codigo, nombre: grupo.nombre, ok: false, msg });
       }
     }
+
+    // Limpia los edits que se guardaron con éxito.
+    setEdits((prev) => {
+      const next = { ...prev };
+      for (const r of results) if (r.ok) delete next[r.codigo];
+      return next;
+    });
 
     setSaveResults(results);
     setSaving(false);
 
+    // Refresca los valores actuales (el endpoint masivo no devuelve las filas).
+    await refreshGalenos(selectedOsNro);
+
     const ok = results.filter((r) => r.ok).length;
     const fail = results.filter((r) => !r.ok).length;
     if (fail === 0) {
-      showToast("success", `${ok} precio(s) actualizados con éxito.`);
+      showToast("success", `${ok} galeno(s) actualizados con éxito.`);
     } else if (ok === 0) {
-      showToast("error", "No se pudo actualizar ningún precio.");
+      showToast("error", "No se pudo actualizar ningún galeno.");
     } else {
       showToast("error", `${ok} actualizados, ${fail} con error.`);
     }
@@ -280,6 +386,17 @@ export default function ActualizarPreciosGalenos() {
                 </div>
               </div>
 
+              {/* Info: cómo funcionan los nivelados */}
+              <div className={styles.infoBox}>
+                <Info size={15} style={{ flexShrink: 0, marginTop: 1 }} />
+                <span>
+                  En galenos <strong>nivelados</strong>, el valor unitario que
+                  ingreses se aplica a <strong>todos los niveles</strong> a la
+                  vez. Las unidades de honorarios y ayudante de cada nivel se
+                  conservan tal cual.
+                </span>
+              </div>
+
               {/* Date conflict warning */}
               {dateConflicts.length > 0 && (
                 <div className={styles.conflictWarning}>
@@ -298,7 +415,7 @@ export default function ActualizarPreciosGalenos() {
                 <div className={styles.resultsBox}>
                   {saveResults.map((r) => (
                     <div
-                      key={r.id}
+                      key={r.codigo}
                       className={`${styles.resultRow} ${r.ok ? styles.resultOk : styles.resultErr}`}
                     >
                       {r.ok ? (
@@ -308,14 +425,16 @@ export default function ActualizarPreciosGalenos() {
                       )}
                       <span>
                         {r.nombre}:{" "}
-                        {r.ok ? "actualizado correctamente" : r.msg}
+                        {r.ok
+                          ? r.msg ?? "actualizado correctamente"
+                          : r.msg}
                       </span>
                     </div>
                   ))}
                 </div>
               )}
 
-              {galenos.length === 0 ? (
+              {grupos.length === 0 ? (
                 <div className={styles.emptyOs}>
                   <p>
                     Esta obra social no tiene galenos activos cargados.
@@ -328,9 +447,11 @@ export default function ActualizarPreciosGalenos() {
               ) : (
                 <PriceSection
                   title="Galenos"
-                  rows={galenos}
+                  grupos={grupos}
                   edits={edits}
                   onEdit={setEdit}
+                  expanded={expanded}
+                  onToggleExpand={toggleExpand}
                   saveResults={saveResults}
                 />
               )}
@@ -361,7 +482,7 @@ export default function ActualizarPreciosGalenos() {
         isOpen={confirmOpen}
         variant="warning"
         title="Confirmar actualización"
-        message={`¿Actualizar ${pendingEdits.length} precio(s) con vigencia desde ${vigencia}?\n\nEsta operación crea nuevos registros manteniendo el historial de valores anteriores.`}
+        message={`¿Actualizar el valor de ${pendingEdits.length} galeno(s) con vigencia desde ${vigencia}?\n\nEn los nivelados, el valor se aplica a todos los niveles (conservando sus unidades). Esta operación crea nuevos registros manteniendo el historial de valores anteriores.`}
         confirmLabel="Actualizar"
         onConfirm={doSaveAll}
         onCancel={() => setConfirmOpen(false)}
@@ -374,79 +495,135 @@ export default function ActualizarPreciosGalenos() {
 
 function PriceSection({
   title,
-  rows,
+  grupos,
   edits,
   onEdit,
+  expanded,
+  onToggleExpand,
   saveResults,
 }: {
   title: string;
-  rows: GalenoOut[];
-  edits: Record<number, string>;
-  onEdit: (id: number, val: string) => void;
+  grupos: Grupo[];
+  edits: Record<string, string>;
+  onEdit: (codigo: string, val: string) => void;
+  expanded: Record<string, boolean>;
+  onToggleExpand: (codigo: string) => void;
   saveResults: SaveResult[];
 }) {
   return (
     <div className={styles.section}>
       <div className={styles.sectionHeader}>
         <h2 className={styles.sectionTitle}>{title}</h2>
-        <span className={styles.sectionCount}>{rows.length}</span>
+        <span className={styles.sectionCount}>{grupos.length}</span>
       </div>
       <div className={styles.tableWrap}>
         <table className={styles.table}>
           <thead>
             <tr>
               <th>Nombre</th>
+              <th>Tipo</th>
               <th>Unidad actual</th>
               <th>Nueva unidad</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((g) => {
-              const val = edits[g.id] ?? "";
+            {grupos.map((grupo) => {
+              const val = edits[grupo.codigo] ?? "";
               const isDirty =
-                val.trim() !== "" && !isNaN(parseFloat(val)) && parseFloat(val) >= 0;
-              const result = saveResults.find((r) => r.id === g.id);
+                val.trim() !== "" &&
+                !isNaN(parseFloat(val)) &&
+                parseFloat(val) >= 0;
+              const result = saveResults.find((r) => r.codigo === grupo.codigo);
+              const isOpen = !!expanded[grupo.codigo];
               return (
-                <tr
-                  key={g.id}
-                  className={
-                    result?.ok
-                      ? styles.rowSaved
-                      : isDirty
-                        ? styles.rowDirty
-                        : undefined
-                  }
-                >
-                  <td>{g.nombre}</td>
-                  <td className={styles.priceCell}>
-                    {fmt.format(parseFloat(g.valor_unitario))}
-                  </td>
-                  <td>
-                    <div className={styles.inputWrap}>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        className={`${styles.priceInput} ${isDirty ? styles.priceInputDirty : ""} ${result?.ok ? styles.priceInputSaved : ""} ${result && !result.ok ? styles.priceInputError : ""}`}
-                        value={val}
-                        onChange={(e) => onEdit(g.id, e.target.value)}
-                        placeholder="Nuevo valor…"
-                        disabled={result?.ok}
-                      />
-                      {result?.ok && (
-                        <CheckCircle2
-                          size={15}
-                          className={styles.savedIcon}
-                        />
+                <Fragment key={grupo.codigo}>
+                  <tr
+                    className={
+                      result?.ok
+                        ? styles.rowSaved
+                        : isDirty
+                          ? styles.rowDirty
+                          : undefined
+                    }
+                  >
+                    <td>
+                      {grupo.nivelado ? (
+                        <button
+                          type="button"
+                          className={styles.nombreToggle}
+                          onClick={() => onToggleExpand(grupo.codigo)}
+                          title="Ver niveles"
+                        >
+                          {isOpen ? (
+                            <ChevronDown size={14} />
+                          ) : (
+                            <ChevronRight size={14} />
+                          )}
+                          <span>{grupo.nombre}</span>
+                        </button>
+                      ) : (
+                        <span>{grupo.nombre}</span>
                       )}
-                      {result && !result.ok && (
-                        <span title={result.msg}>
-                          <AlertCircle size={15} className={styles.errorIcon} />
+                    </td>
+                    <td>
+                      {grupo.nivelado ? (
+                        <span className={styles.nivelBadge}>
+                          Nivelado · {grupo.niveles.length} niveles
                         </span>
+                      ) : (
+                        <span className={styles.sinNivelBadge}>Sin nivel</span>
                       )}
-                    </div>
-                  </td>
-                </tr>
+                    </td>
+                    <td className={styles.priceCell}>
+                      {grupoValorActual(grupo)}
+                    </td>
+                    <td>
+                      <div className={styles.inputWrap}>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          className={`${styles.priceInput} ${isDirty ? styles.priceInputDirty : ""} ${result?.ok ? styles.priceInputSaved : ""} ${result && !result.ok ? styles.priceInputError : ""}`}
+                          value={val}
+                          onChange={(e) => onEdit(grupo.codigo, e.target.value)}
+                          placeholder={
+                            grupo.nivelado
+                              ? "Valor para todos los niveles…"
+                              : "Nuevo valor…"
+                          }
+                          disabled={result?.ok}
+                        />
+                        {result?.ok && (
+                          <CheckCircle2
+                            size={15}
+                            className={styles.savedIcon}
+                          />
+                        )}
+                        {result && !result.ok && (
+                          <span title={result.msg}>
+                            <AlertCircle size={15} className={styles.errorIcon} />
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+
+                  {/* Detalle de niveles (solo lectura) — confirma que las unidades se conservan */}
+                  {grupo.nivelado &&
+                    isOpen &&
+                    grupo.niveles.map((n) => (
+                      <tr key={n.id} className={styles.nivelRow}>
+                        <td className={styles.nivelCell}>Nivel {n.nivel}</td>
+                        <td className={styles.nivelUnits} colSpan={2}>
+                          Honorarios: {n.unidades_honorarios ?? "—"} · Ayudante:{" "}
+                          {n.unidades_ayudante ?? "—"}
+                        </td>
+                        <td className={styles.nivelValor}>
+                          {fmt.format(parseFloat(n.valor_unitario))}
+                        </td>
+                      </tr>
+                    ))}
+                </Fragment>
               );
             })}
           </tbody>

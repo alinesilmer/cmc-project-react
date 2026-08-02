@@ -94,6 +94,101 @@
   }
 }
 
+/* Variante cuadrada: imagen a sangre, texto sobre degradado.
+   El resumen se recorta a 2 líneas y se despliega completo con el cursor encima. */
+.cardSquare {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: $border-radius-md;
+  // Sombra gris suave en lugar de la negra genérica de $shadow-md
+  box-shadow: 0 4px 14px rgba($gray, 0.35);
+
+  .image {
+    position: absolute;
+    inset: 0;
+    height: 100%;
+  }
+
+  .content {
+    position: absolute;
+    inset: auto 0 0 0;
+    flex: none;
+    padding: $spacing-md;
+    color: $white;
+    background: linear-gradient(
+      to top,
+      rgba($dark-gray, 0.94) 0%,
+      rgba($dark-gray, 0.78) 45%,
+      rgba($gray, 0.3) 78%,
+      rgba($gray, 0) 100%
+    );
+    transition: background $transition-normal;
+  }
+
+  .title {
+    color: $white;
+    font-size: $font-size-large;
+    margin-bottom: $spacing-xs;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .resumen {
+    flex: none;
+    color: rgba($white, 0.88);
+    font-size: $font-size-small;
+    line-height: 1.5;
+    margin-bottom: $spacing-xs;
+    max-height: 3em; // 2 líneas exactas (2 × line-height)
+    overflow: hidden;
+    transition: max-height $transition-normal;
+  }
+
+  .readMore {
+    color: $primary-yellow;
+  }
+
+  &:hover,
+  &:focus-visible,
+  &:focus-within {
+    box-shadow: 0 10px 26px rgba($gray, 0.5);
+
+    .content {
+      background: linear-gradient(
+        to top,
+        rgba($dark-gray, 0.96) 0%,
+        rgba($dark-gray, 0.9) 60%,
+        rgba($gray, 0.62) 100%
+      );
+    }
+
+    .resumen {
+      max-height: 10em;
+    }
+
+    .image img {
+      transform: scale(1.06);
+    }
+  }
+}
+
+/* Sin hover (táctil): mostramos más resumen de entrada */
+@media (hover: none) {
+  .cardSquare .resumen {
+    max-height: 6em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cardSquare .resumen,
+  .cardSquare .content,
+  .cardSquare .image img {
+    transition: none;
+  }
+}
+
 .pdfBadge {
   position: absolute;
   top: 8px;
@@ -182,6 +277,20 @@
   .meta {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .cardSquare {
+    .content {
+      padding: $spacing-sm $spacing-md;
+    }
+
+    .title {
+      font-size: $font-size-base;
+    }
+
+    .resumen {
+      margin-bottom: $spacing-xs;
+    }
   }
 
   .image {

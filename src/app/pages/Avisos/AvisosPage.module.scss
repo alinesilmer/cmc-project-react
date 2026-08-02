@@ -1,0 +1,628 @@
+@use "@/app/styles/all.scss" as *;
+
+// ─── Page layout ──────────────────────────────────────────────────────────────
+
+.container {
+  padding: $spacing-8;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-6;
+  min-height: 100%;
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-5;
+    gap: $spacing-4;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-4;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $spacing-4;
+  flex-wrap: wrap;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+}
+
+.headerIcon {
+  color: $primary-blue;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: $font-size-4xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  margin: 0;
+  line-height: 1.2;
+
+  @media (max-width: $breakpoint-md) {
+    font-size: $font-size-3xl;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-2xl;
+  }
+}
+
+.subtitle {
+  font-size: $font-size-sm;
+  color: $gray-500;
+  margin: $spacing-1 0 0;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $gray-800;
+  margin: 0 0 $spacing-3;
+}
+
+// ─── Banners ──────────────────────────────────────────────────────────────────
+
+.demoBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-3;
+  padding: $spacing-4 $spacing-5;
+  background-color: rgba($warning-orange, 0.1);
+  border: 1px solid rgba($warning-orange, 0.45);
+  border-radius: $border-radius-md;
+  color: $gray-800;
+  font-size: $font-size-sm;
+  line-height: 1.5;
+
+  svg {
+    color: $warning-orange;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+}
+
+.successBanner {
+  padding: $spacing-3 $spacing-4;
+  background-color: rgba($success-green, 0.1);
+  border: 1px solid rgba($success-green, 0.4);
+  border-radius: $border-radius-md;
+  color: $success-green;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+}
+
+.errorBanner {
+  padding: $spacing-4 $spacing-5;
+  background-color: #fff0f0;
+  border: 1px solid #fca5a5;
+  border-radius: $border-radius-md;
+  color: $danger-red;
+  font-size: $font-size-base;
+}
+
+.saveError {
+  padding: $spacing-3 $spacing-4;
+  background-color: #fff0f0;
+  border: 1px solid #fca5a5;
+  border-radius: $border-radius-md;
+  color: $danger-red;
+  font-size: $font-size-sm;
+}
+
+// ─── Two-column layout ────────────────────────────────────────────────────────
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: $spacing-6;
+  align-items: start;
+
+  @media (max-width: $breakpoint-lg) {
+    grid-template-columns: 1fr;
+    gap: $spacing-4;
+  }
+}
+
+.card {
+  background-color: $white;
+  border-radius: $border-radius-sm;
+  box-shadow: $shadow-md;
+  padding: $spacing-6;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-5;
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-4;
+    gap: $spacing-4;
+  }
+}
+
+.cardTitle {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin: 0;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $gray-800;
+
+  svg {
+    color: $primary-blue;
+  }
+}
+
+// ─── Form ─────────────────────────────────────────────────────────────────────
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  min-width: 0;
+}
+
+.label {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-700;
+}
+
+.required {
+  color: $danger-red;
+  margin-left: $spacing-1;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  padding: $spacing-3 $spacing-4;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-md;
+  font-size: $font-size-base;
+  font-family: inherit;
+  color: $gray-800;
+  background-color: $white;
+  outline: none;
+  transition: border-color 0.18s, box-shadow 0.18s;
+  box-sizing: border-box;
+
+  &:focus {
+    border-color: $primary-blue;
+    box-shadow: 0 0 0 3px rgba($primary-blue, 0.12);
+  }
+
+  &::placeholder {
+    color: $gray-400;
+  }
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 92px;
+}
+
+.inputError {
+  border-color: $danger-red;
+
+  &:focus {
+    box-shadow: 0 0 0 3px rgba($danger-red, 0.12);
+  }
+}
+
+// El contador queda a la derecha aunque no haya error que lo empuje
+.fieldFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+  min-height: 16px;
+}
+
+.counter {
+  margin-left: auto;
+  font-size: $font-size-xs;
+  color: $gray-400;
+  font-variant-numeric: tabular-nums;
+}
+
+.counterOver {
+  color: $danger-red;
+  font-weight: $font-weight-semibold;
+}
+
+.fieldError {
+  font-size: $font-size-xs;
+  color: $danger-red;
+  font-weight: $font-weight-medium;
+}
+
+.fieldHint {
+  font-size: $font-size-xs;
+  color: $gray-500;
+  font-weight: $font-weight-normal;
+}
+
+.audience {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-3;
+  padding: $spacing-3 $spacing-4;
+  background-color: $gray-50;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-md;
+  font-size: $font-size-sm;
+  color: $gray-700;
+  line-height: 1.5;
+
+  svg {
+    color: $primary-blue;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+// ─── Phone preview ────────────────────────────────────────────────────────────
+
+.previewHint {
+  margin: 0;
+  font-size: $font-size-sm;
+  color: $gray-500;
+}
+
+.phone {
+  position: relative;
+  border: 8px solid $gray-800;
+  border-radius: 34px;
+  background: linear-gradient(160deg, $primary-blue-dark 0%, $primary-blue 100%);
+  padding: $spacing-8 $spacing-4 $spacing-6;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  min-height: 280px;
+}
+
+.phoneNotch {
+  position: absolute;
+  top: $spacing-3;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 68px;
+  height: 5px;
+  border-radius: 999px;
+  background-color: rgba($white, 0.35);
+}
+
+.push {
+  display: flex;
+  gap: $spacing-3;
+  padding: $spacing-3 $spacing-4;
+  border-radius: $border-radius-lg;
+  background-color: rgba($white, 0.96);
+  box-shadow: 0 8px 20px rgba($gray-900, 0.28);
+  backdrop-filter: blur(6px);
+}
+
+.pushIcon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: $border-radius-md;
+  background-color: $primary-blue;
+  color: $white;
+}
+
+.pushBody {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pushMeta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: $spacing-3;
+}
+
+.pushApp {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: $gray-500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pushTime {
+  font-size: $font-size-xs;
+  color: $gray-400;
+  white-space: nowrap;
+}
+
+.pushTitle {
+  margin: 0;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.pushText {
+  margin: 0;
+  font-size: $font-size-sm;
+  color: $gray-600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.pushTipo {
+  align-self: center;
+  padding: 2px $spacing-3;
+  border-radius: $border-radius-xl;
+  background-color: rgba($white, 0.18);
+  color: $white;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0.03em;
+}
+
+// ─── Table ────────────────────────────────────────────────────────────────────
+
+.tableWrapper {
+  background-color: $white;
+  border-radius: $border-radius-sm;
+  box-shadow: $shadow-md;
+  overflow: hidden;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+
+  thead tr {
+    background-color: $primary-blue-dark;
+    border-bottom: 2px solid $gray-200;
+
+    th {
+      padding: $spacing-4 $spacing-5;
+      text-align: left;
+      font-size: $font-size-xs;
+      font-weight: $font-weight-semibold;
+      color: $white;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+  }
+
+  tbody tr {
+    border-bottom: 1px solid $gray-100;
+    transition: background-color 0.15s;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background-color: $gray-50;
+    }
+
+    td {
+      padding: $spacing-4 $spacing-5;
+      font-size: $font-size-base;
+      color: $gray-800;
+      vertical-align: middle;
+    }
+  }
+
+  @media (max-width: $breakpoint-md) {
+    thead th,
+    tbody td {
+      padding: $spacing-3 $spacing-4;
+    }
+  }
+}
+
+.itemTitle {
+  font-weight: $font-weight-semibold;
+  color: $gray-900;
+}
+
+.itemDesc {
+  font-size: $font-size-sm;
+  color: $gray-500;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-width: 380px;
+}
+
+.mutedCell {
+  color: $gray-600;
+  font-size: $font-size-sm;
+  white-space: nowrap;
+}
+
+.tipoChip {
+  display: inline-block;
+  padding: 2px $spacing-3;
+  border-radius: $border-radius-xl;
+  background-color: $secondary-blue;
+  color: $primary-blue-dark;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  white-space: nowrap;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px $spacing-3;
+  border-radius: $border-radius-xl;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  white-space: nowrap;
+}
+
+.badgeOn {
+  background-color: rgba($success-green, 0.14);
+  color: $success-green;
+}
+
+.badgeOff {
+  background-color: $gray-100;
+  color: $gray-500;
+}
+
+// ─── Row actions ──────────────────────────────────────────────────────────────
+
+.actionsCol {
+  width: 80px;
+  text-align: right !important;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: $spacing-2;
+  // Reserva el alto de la fila aunque el aviso ya esté bajado (sin botón)
+  min-height: 30px;
+}
+
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: $border-radius-md;
+  border: 1px solid $gray-200;
+  background-color: $white;
+  color: $gray-600;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+
+  &:hover {
+    background-color: $secondary-blue;
+    color: $primary-blue;
+    border-color: $primary-blue;
+  }
+}
+
+// ─── States ───────────────────────────────────────────────────────────────────
+
+.loadingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-16;
+  gap: $spacing-4;
+  color: $gray-500;
+  font-size: $font-size-base;
+
+  p {
+    text-align: center;
+    margin: 0;
+  }
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid $gray-200;
+  border-top-color: $primary-blue;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-16;
+  gap: $spacing-4;
+  color: $gray-500;
+  font-size: $font-size-base;
+
+  p {
+    text-align: center;
+    margin: 0;
+  }
+}
+
+.emptyIcon {
+  color: $gray-300;
+}
+
+// ─── Confirm modal ────────────────────────────────────────────────────────────
+
+.modalBody {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  padding: $spacing-2 0;
+}
+
+.confirmText {
+  margin: 0;
+  font-size: $font-size-base;
+  color: $gray-700;
+  line-height: 1.5;
+}
+
+.confirmPreview {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  padding: $spacing-3 $spacing-4;
+  background-color: $gray-50;
+  border-left: 3px solid $primary-blue;
+  border-radius: $border-radius-md;
+}
+
+.confirmPreviewTitle {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  overflow-wrap: anywhere;
+}
+
+.confirmPreviewText {
+  font-size: $font-size-sm;
+  color: $gray-600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.confirmNote {
+  margin: 0;
+  font-size: $font-size-xs;
+  color: $gray-500;
+  line-height: 1.5;
+}

@@ -197,6 +197,11 @@ export default function MedicosCarousel() {
 
   const closeModal = () => setModal({ open: false, url: "", title: "" });
 
+  // Barra de posición: ancho proporcional a lo visible, desplazada según el índice
+  const maxIndex = Math.max(0, LEN - visibleCount);
+  const barWidth = LEN > 0 ? Math.max(10, (visibleCount / LEN) * 100) : 100;
+  const barOffset = maxIndex > 0 ? (index / maxIndex) * (100 - barWidth) : 0;
+
   useEffect(() => {
     if (!modal.open) return;
 
@@ -270,6 +275,15 @@ export default function MedicosCarousel() {
           </div>
         )}
       </div>
+
+      {canScroll && (
+        <div className={styles.progress} aria-hidden="true">
+          <div
+            className={styles.progressBar}
+            style={{ width: `${barWidth}%`, marginLeft: `${barOffset}%` }}
+          />
+        </div>
+      )}
 
       {modal.open && (
         <div className={styles.modalBackdrop} onClick={closeModal}>

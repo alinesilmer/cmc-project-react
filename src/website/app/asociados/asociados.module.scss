@@ -1,69 +1,96 @@
 @use "@/website/styles/all.scss" as *;
 
 .wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-xl;
   padding: $spacing-xxl $spacing-lg;
-  background: $white;
+  background: linear-gradient(180deg, $white 0%, rgba($light-blue, 0.5) 100%);
   color: $dark-gray;
   font-family: $font-normal;
 }
 
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xl;
+}
 
-.title {
-  font-family: $font-playfair;
-  font-size: $font-size-h2;
+.sectionHead {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-xs;
+  max-width: 720px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.eyebrow {
+  font-size: $font-size-small;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: $primary-blue;
+}
+
+.sectionTitle {
+  font-family: $font-title;
+  font-size: $font-size-h3;
+  line-height: 1.15;
   letter-spacing: -0.5px;
-  color: $white;
+  color: $primary-blue-dark;
 }
 
-.subtitle {
-  font-size: $font-size-large;
-  color: rgba($white, 0.95);
+// Subrayado corto de acento debajo del título
+.sectionTitle::after {
+  content: "";
+  display: block;
+  width: 56px;
+  height: 3px;
+  margin: $spacing-sm auto 0;
+  border-radius: 999px;
+  background: $primary-blue;
 }
 
-.heroGlow {
-  position: absolute;
-  right: -60px;
-  top: -80px;
-  width: 320px;
-  height: 320px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, rgba($accent-blue, 0.35), transparent 60%);
-  opacity: 0.9;
+.sectionLead {
+  font-size: $font-size-base;
+  line-height: 1.6;
+  color: $gray;
 }
 
-.cards {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: $spacing-lg;
-}
-
-.item {
-  display: flex;
-  flex: 1 1 calc(25% - #{$spacing-lg});
-  max-width: calc(25% - #{$spacing-lg});
-}
-
-@media (max-width: $breakpoint-wide) {
-  .item { flex: 1 1 calc(33.33% - #{$spacing-lg}); max-width: calc(33.33% - #{$spacing-lg}); }
-}
-
+/* Desktop down */
 @media (max-width: $breakpoint-desktop) {
-  .wrapper { padding: $spacing-xl $spacing-lg; }
-  .hero { padding: $spacing-lg; }
+  .wrapper {
+    padding: $spacing-xl $spacing-lg;
+  }
+
+  .container {
+    gap: $spacing-lg;
+  }
 }
 
+/* Tablet down */
 @media (max-width: $breakpoint-tablet) {
-  .hero { flex-direction: column; align-items: flex-start; gap: $spacing-md; }
-  .heroStats { gap: $spacing-lg; }
-  .item { flex: 1 1 calc(50% - #{$spacing-lg}); max-width: calc(50% - #{$spacing-lg}); }
+  .wrapper {
+    padding: $spacing-xl $spacing-md;
+  }
+
+  .sectionTitle {
+    font-size: $font-size-h4;
+  }
 }
 
+/* Mobile down */
 @media (max-width: $breakpoint-mobile) {
-  .wrapper { padding: $spacing-lg $spacing-md; }
-  .cards { gap: $spacing-md; }
-  .item { flex: 1 1 100%; max-width: 100%; }
+  .wrapper {
+    padding: $spacing-lg $spacing-md;
+  }
+
+  .sectionTitle {
+    font-size: $font-size-large;
+  }
+
+  .sectionLead {
+    font-size: $font-size-small;
+  }
 }

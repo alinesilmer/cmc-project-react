@@ -1,0 +1,601 @@
+@use "@/app/styles/all.scss" as *;
+
+.container {
+  padding: $spacing-8;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-5;
+  min-height: 100%;
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-5;
+    gap: $spacing-4;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-4;
+  }
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $gray-500;
+  text-decoration: none;
+
+  &:hover {
+    color: $primary-blue;
+  }
+}
+
+// ─── Encabezado ───────────────────────────────────────────────────────────────
+
+.header {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $spacing-5;
+  flex-wrap: wrap;
+  padding: $spacing-5 $spacing-6;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-left: 4px solid var(--os-color, #{$primary-blue});
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-sm;
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-4;
+  }
+}
+
+.headerMain {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-4;
+  min-width: 0;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  color: $white;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.5px;
+}
+
+.headerLogo {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  padding: 4px;
+  object-fit: contain;
+  background: $white;
+  border: 2px solid $gray-200;
+  border-radius: 50%;
+}
+
+.title {
+  margin: 0;
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  line-height: 1.2;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-2xl;
+  }
+}
+
+.subtitle {
+  margin: $spacing-1 0 0;
+  max-width: 60ch;
+  font-size: $font-size-sm;
+  color: $gray-500;
+  line-height: 1.5;
+}
+
+// ─── Barra de período ─────────────────────────────────────────────────────────
+
+.periodBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-4;
+  flex-wrap: wrap;
+  padding: $spacing-3 $spacing-4;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-lg;
+}
+
+.periodPicker {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.periodArrow {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  background: $white;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-sm;
+  color: $gray-600;
+  cursor: pointer;
+  transition: background 0.16s, color 0.16s;
+
+  &:hover:not(:disabled) {
+    background: $gray-100;
+    color: $gray-900;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.periodLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 160px;
+  justify-content: center;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $gray-900;
+
+  svg {
+    color: $gray-400;
+  }
+}
+
+.periodTotals {
+  display: flex;
+  align-items: center;
+  gap: $spacing-5;
+  font-size: $font-size-sm;
+  color: $gray-500;
+
+  b {
+    color: $gray-900;
+  }
+}
+
+.periodMonto {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $primary-blue;
+  font-variant-numeric: tabular-nums;
+}
+
+// ─── Avisos ───────────────────────────────────────────────────────────────────
+
+%aviso-base {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-3;
+  margin: 0;
+  padding: $spacing-3 $spacing-4;
+  border-radius: $border-radius-md;
+  font-size: $font-size-sm;
+  line-height: 1.5;
+
+  svg {
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+}
+
+.nota {
+  @extend %aviso-base;
+  background: $secondary-blue;
+  border: 1px solid rgba($primary-blue, 0.2);
+  color: $gray-700;
+
+  svg {
+    color: $primary-blue;
+  }
+}
+
+.aviso {
+  @extend %aviso-base;
+  background: rgba($warning-orange, 0.1);
+  border: 1px solid rgba($warning-orange, 0.4);
+  color: #92400e;
+
+  svg {
+    color: $warning-orange;
+  }
+}
+
+.error {
+  @extend %aviso-base;
+  background: #fff0f0;
+  border: 1px solid #fca5a5;
+  color: $danger-red;
+}
+
+// ─── Pestañas ─────────────────────────────────────────────────────────────────
+
+.tabs {
+  display: flex;
+  gap: $spacing-1;
+  padding-bottom: 2px;
+  border-bottom: 1px solid $gray-200;
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-3 $spacing-4;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  font-family: inherit;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $gray-500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.18s, border-color 0.18s;
+
+  &:hover {
+    color: $gray-800;
+  }
+}
+
+.tabActive {
+  color: $primary-blue;
+  font-weight: $font-weight-semibold;
+  border-bottom-color: $primary-blue;
+}
+
+.tabBadge {
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: $gray-200;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  color: $gray-700;
+
+  .tabActive & {
+    background: $primary-blue;
+    color: $white;
+  }
+}
+
+// ─── Paneles ──────────────────────────────────────────────────────────────────
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+}
+
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+  flex-wrap: wrap;
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
+  color: $gray-900;
+}
+
+.cardSub {
+  margin: 0;
+  font-size: $font-size-sm;
+  color: $gray-500;
+  line-height: 1.5;
+  max-width: 72ch;
+}
+
+.formCard {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  padding: $spacing-6;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-sm;
+  max-width: 760px;
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-4;
+  }
+}
+
+.linkBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $primary-blue;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// ─── Resultado de la validación ───────────────────────────────────────────────
+
+.resultado {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  padding: $spacing-5;
+  border-radius: $border-radius-lg;
+  border: 1px solid;
+  max-width: 760px;
+  animation: resultadoIn 0.24s ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes resultadoIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.resultado_autorizada {
+  background: rgba($success-green, 0.07);
+  border-color: rgba($success-green, 0.4);
+  color: $success-green;
+}
+
+.resultado_rechazada {
+  background: #fff5f5;
+  border-color: #fca5a5;
+  color: $danger-red;
+}
+
+.resultado_pendiente {
+  background: rgba($warning-orange, 0.08);
+  border-color: rgba($warning-orange, 0.45);
+  color: #92400e;
+}
+
+.resultado_cargada {
+  background: rgba($primary-blue, 0.06);
+  border-color: rgba($primary-blue, 0.35);
+  color: $primary-blue;
+}
+
+.resultadoHead {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-3;
+
+  svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  strong {
+    display: block;
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+  }
+
+  p {
+    margin: 3px 0 0;
+    font-size: $font-size-sm;
+    color: $gray-700;
+    line-height: 1.5;
+  }
+}
+
+.resultadoClose {
+  position: absolute;
+  top: $spacing-3;
+  right: $spacing-3;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  background: transparent;
+  border: none;
+  border-radius: $border-radius-sm;
+  color: currentColor;
+  opacity: 0.6;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.05);
+  }
+}
+
+.resultadoDatos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: $spacing-4;
+  margin: 0;
+  padding-top: $spacing-4;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+
+  @media (max-width: $breakpoint-sm) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  dt {
+    font-size: $font-size-xs;
+    color: $gray-500;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  dd {
+    margin: 3px 0 0;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $gray-900;
+    font-variant-numeric: tabular-nums;
+    word-break: break-word;
+  }
+}
+
+.resultadoTotal {
+  font-size: $font-size-lg !important;
+  font-weight: $font-weight-bold !important;
+}
+
+.resultadoAyuda {
+  margin: 0;
+  padding-top: $spacing-3;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  font-size: $font-size-sm;
+  color: $gray-600;
+  line-height: 1.5;
+}
+
+// ─── Modales ──────────────────────────────────────────────────────────────────
+
+.modalBody {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  font-size: $font-size-base;
+  color: $gray-700;
+  line-height: 1.55;
+
+  p {
+    margin: 0;
+  }
+}
+
+.modalNota {
+  font-size: $font-size-sm;
+  color: $gray-500;
+}
+
+.modalError {
+  padding: $spacing-2 $spacing-3;
+  background: #fff0f0;
+  border: 1px solid #fca5a5;
+  border-radius: $border-radius-sm;
+  font-size: $font-size-sm;
+  color: $danger-red;
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: $spacing-6;
+  background: $gray-50;
+  border: 1px dashed $gray-300;
+  border-radius: $border-radius-md;
+  font-family: inherit;
+  color: $gray-600;
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s;
+
+  &:hover {
+    border-color: $primary-blue;
+    background: $secondary-blue;
+  }
+
+  svg {
+    color: $gray-400;
+  }
+
+  span {
+    font-size: $font-size-base;
+    font-weight: $font-weight-medium;
+    color: $gray-800;
+    word-break: break-all;
+  }
+
+  em {
+    font-size: $font-size-xs;
+    font-style: normal;
+    color: $gray-500;
+  }
+}
+
+// ─── Portal externo ───────────────────────────────────────────────────────────
+
+.externo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-16 $spacing-6;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-lg;
+  text-align: center;
+
+  .subtitle {
+    max-width: 46ch;
+  }
+}
+
+.externoBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin-top: $spacing-3;
+  padding: 0 $spacing-6;
+  height: 44px;
+  background: $primary-blue-dark;
+  border-radius: $border-radius-md;
+  color: $white;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  text-decoration: none;
+
+  &:hover {
+    background: $primary-blue-darker;
+    color: $white;
+  }
+}

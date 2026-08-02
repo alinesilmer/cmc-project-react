@@ -22,6 +22,8 @@ import type {
   GalenoActualizarUnidadesResult,
   GalenosImportarPayload,
   GalenosImportarResult,
+  GalenoImportarLotePayload,
+  GalenoImportarLoteResult,
   GalenoPlantillaOut,
   ActualizacionMasivaResult,
   ValorOut,
@@ -103,6 +105,12 @@ export const updateGaleno = (
   id: number,
   payload: GalenoUpdatePayload,
 ): Promise<GalenoOut> => putJSON<GalenoOut>(`/api/galenos/${id}`, payload);
+
+/** POST /api/galenos/importar_lote — alta masiva desde una planilla. */
+export const importarLoteGalenos = (
+  payload: GalenoImportarLotePayload,
+): Promise<GalenoImportarLoteResult> =>
+  postJSON<GalenoImportarLoteResult>("/api/galenos/importar_lote", payload);
 
 export const actualizarPrecioGaleno = (
   id: number,

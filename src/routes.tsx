@@ -57,9 +57,15 @@ const ObrasSocialesForm = lazy(() => import("./app/pages/ObrasSociales/ObrasSoci
 const ObrasSocialesDetalle = lazy(() => import("./app/pages/ObrasSociales/ObrasSocialesDetalle/ObrasSocialesDetalle"));
 const HistorialValoresConsulta = lazy(() => import("./app/pages/HistorialValoresConsulta/HistorialValoresConsulta"));
 const EspecialidadesPage = lazy(() => import("./app/pages/Especialidades/EspecialidadesPage"));
+const BeneficiosPage = lazy(() => import("./app/pages/Beneficios/BeneficiosPage"));
+const SolicitudesCambioPage = lazy(() => import("./app/pages/SolicitudesCambio/SolicitudesCambioPage"));
+const AvisosPage = lazy(() => import("./app/pages/Avisos/AvisosPage"));
 const ServiciosPage = lazy(() => import("./app/pages/Servicios/ServiciosPage"));
 const TablaGinecologia = lazy(() => import("./app/pages/TablaGinecologia/TablaGinecologia"));
 const BoletinGalenos = lazy(() => import("./app/pages/BoletinGalenos/BoletinGalenos"));
+const ValidacionesHub = lazy(() => import("./app/pages/Validaciones/ValidacionesHub"));
+const ValidacionOS = lazy(() => import("./app/pages/Validaciones/ValidacionOS"));
+const PortalesExternos = lazy(() => import("./app/pages/Validaciones/PortalesExternos"));
 const NomencladorCodigos = lazy(() => import("./app/pages/NomencladorNacional/NomencladorCodigos/NomencladorCodigos"));
 const ConsultaValores = lazy(() => import("./app/pages/NomencladorNacional/ConsultaValores/ConsultaValores"));
 const ConsultaPrecios = lazy(() => import("./app/pages/NomencladorNacional/ConsultaPrecios/ConsultaPrecios"));
@@ -68,6 +74,7 @@ const NomencladorPorOS = lazy(() => import("./app/pages/NomencladorNacional/Nome
 const NomencladorGalenos = lazy(() => import("./app/pages/NomencladorNacional/NomencladorGalenos/NomencladorGalenos"));
 const ActualizarPreciosGalenos = lazy(() => import("./app/pages/NomencladorNacional/ActualizarPreciosGalenos/ActualizarPreciosGalenos"));
 const ImportarPreciosPdf = lazy(() => import("./app/pages/NomencladorNacional/ImportarPreciosPdf/ImportarPreciosPdf"));
+const ImportarGalenos = lazy(() => import("./app/pages/NomencladorNacional/ImportarGalenos/ImportarGalenos"));
 const AumentoPorcentual = lazy(() => import("./app/pages/NomencladorNacional/AumentoPorcentual/AumentoPorcentual"));
 
 export default function RootRoutes() {
@@ -157,10 +164,17 @@ export default function RootRoutes() {
                 path="boletin-galenos"
                 element={<BoletinGalenos />}
               />
+              {/* Validaciones con obras sociales */}
+              <Route path="validaciones" element={<ValidacionesHub />} />
+              {/* Ruta estática antes de la dinámica: "portales" no es un slug de O.S. */}
+              <Route path="validaciones/portales" element={<PortalesExternos />} />
+              <Route path="validaciones/:slug" element={<ValidacionOS />} />
+
               {/* Nomenclador Nacional */}
               <Route path="nomenclador/codigos" element={<NomencladorCodigos />} />
               <Route path="nomenclador/por-obra-social" element={<NomencladorPorOS />} />
               <Route path="nomenclador/galenos" element={<NomencladorGalenos />} />
+              <Route path="nomenclador/galenos/importar" element={<ImportarGalenos />} />
               <Route path="nomenclador/actualizar-precios" element={<ActualizarPreciosGalenos />} />
               <Route path="nomenclador/consulta-valores" element={<ConsultaValores />} />
               <Route path="nomenclador/consulta-precios" element={<ConsultaPrecios />} />
@@ -170,6 +184,12 @@ export default function RootRoutes() {
 
               <Route path="especialidades" element={<EspecialidadesPage />} />
               <Route path="servicios" element={<ServiciosPage />} />
+              <Route path="beneficios" element={<BeneficiosPage />} />
+              <Route path="avisos" element={<AvisosPage />} />
+              <Route
+                path="solicitudes-cambio"
+                element={<SolicitudesCambioPage />}
+              />
 
               <Route path="convenios/obras-sociales">
                 <Route index element={<ObrasSocialesListado />} />

@@ -2,7 +2,15 @@
 
 import React from "react";
 import { Modal, Animation, Loader } from "rsuite";
+import { X } from "lucide-react";
 import Button from "../../atoms/Button/Button";
+
+// CSS base de los componentes RSuite que usa el modal. Va acá (y no en cada
+// página) para que el diálogo tenga siempre su layout — antes sólo lo cargaba
+// DoctorProfilePage y, si esa ruta no se había visitado, el modal salía sin
+// estilos.
+import "rsuite/Modal/styles/index.css";
+import "rsuite/Loader/styles/index.css";
 
 // IMPORTANTE: importá el CSS del modal para que los @keyframes se apliquen.
 import "./ActionModal.module.scss";
@@ -82,8 +90,19 @@ const ActionModal: React.FC<ActionModalProps> = ({
       className={phaseClass}
       backdropClassName={phaseClass}
     >
-      <Modal.Header>
+      {/* Botón de cierre propio: en rsuite 6 el ícono del close por defecto vive
+          en un stylesheet base que no importamos, así que salía roto. */}
+      <Modal.Header closeButton={false}>
         <Modal.Title>{title}</Modal.Title>
+        <button
+          type="button"
+          className="amodal-close"
+          onClick={handleClose}
+          disabled={busy}
+          aria-label="Cerrar"
+        >
+          <X size={18} aria-hidden="true" />
+        </button>
       </Modal.Header>
 
       <Animation.Transition
