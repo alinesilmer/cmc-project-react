@@ -50,25 +50,9 @@ export const longDateTimeFormatter = new Intl.DateTimeFormat("es-AR", {
   timeStyle: "short",
 });
 
-const API_BASE_RAW =
-  (import.meta as any).env?.VITE_API_BASE_URL ??
-  (import.meta as any).env?.VITE_API_URL ??
-  (import.meta as any).env?.VITE_BACKEND_URL ??
-  "";
-
-function stripTrailingSlash(value: string): string {
-  return String(value || "").trim().replace(/\/+$/, "");
-}
-
-const API_BASE = stripTrailingSlash(String(API_BASE_RAW || ""));
-
-const API_ROOT = API_BASE
-  ? API_BASE.endsWith("/api")
-    ? API_BASE
-    : `${API_BASE}/api`
-  : "/api";
-
-export const BOLETIN_ENDPOINTS = [`${API_ROOT}/valores/boletin`];
+// Ruta relativa: la baseURL por ambiente la resuelve la instancia `http`
+// compartida (src/app/lib/http.ts), no hay que armarla acá.
+export const BOLETIN_ENDPOINTS = [`/api/valores/boletin`];
 
 export const SWISS_MEDICAL_NRO_OS = 256;
-export const SWISS_NOMENCLADO_URL = `${API_ROOT}/valores/nomenclado-swiss`;
+export const SWISS_NOMENCLADO_URL = `/api/valores/nomenclado-swiss`;

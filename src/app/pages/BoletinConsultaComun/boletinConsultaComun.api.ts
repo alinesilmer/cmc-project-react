@@ -20,6 +20,7 @@ import type {
   ConsultaComunItem,
 } from "./boletinConsultaComun.types";
 import { mensajeDeError } from "../../lib/httpErrors";
+import { http } from "../../lib/http";
 
 function pickFirst<T = unknown>(
   obj: Record<string, unknown>,
@@ -345,13 +346,9 @@ export async function fetchBoletinPage(
   signal?: AbortSignal,
   codigo: string = CONSULTA_COMUN_CODE
 ): Promise<ApiBoletinRow[]> {
-  const response = await axios.get(endpoint, {
+  const response = await http.get(endpoint, {
     signal,
     timeout: 20000,
-    withCredentials: false,
-    headers: {
-      Accept: "application/json",
-    },
     params: {
       codigo,
       page,

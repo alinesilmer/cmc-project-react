@@ -19,6 +19,8 @@ import InsuranceTable, {
 import Button from "../../atoms/Button/Button";
 // import { Link } from "react-router-dom";
 import Alert from "../../atoms/Alert/Alert";
+import { postJSON, delJSON } from "../../../lib/http";
+import { mensajeDeError } from "../../../lib/httpErrors";
 
 type MonthKey = string;
 
@@ -60,11 +62,11 @@ const fmtMonthKey = (d: Date) =>
 const sortByPeriodAsc = (a: PeriodBucket, b: PeriodBucket) =>
   a.period.localeCompare(b.period);
 
-const API_BASE =
-  (import.meta as any).env?.VITE_API_URL ?? "http://localhost:8000";
-const CREATE_LIQ_URL = `${API_BASE}/api/liquidacion/liquidaciones_por_os/crear`;
+// Rutas relativas: la baseURL por ambiente la resuelve la instancia `http`
+// compartida (vía postJSON/delJSON), no hay que armarla acá.
+const CREATE_LIQ_URL = `/api/liquidacion/liquidaciones_por_os/crear`;
 const DELETE_LIQ_URL = (id: number | string) =>
-  `${API_BASE}/api/liquidacion/liquidaciones_por_os/${id}`;
+  `/api/liquidacion/liquidaciones_por_os/${id}`;
 
 const InsuranceCard: React.FC<Props> = ({
   name,
@@ -121,22 +123,13 @@ const InsuranceCard: React.FC<Props> = ({
     setSaving(true);
     setApiError(null);
     try {
-      const res = await fetch(CREATE_LIQ_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          resumen_id: Number(resumenId),
-          obra_social_id: Number(osId),
-          mes_periodo: m,
-          anio_periodo: y,
-          nro_liquidacion: nroInput.trim(),
-        }),
+      const created: any = await postJSON(CREATE_LIQ_URL, {
+        resumen_id: Number(resumenId),
+        obra_social_id: Number(osId),
+        mes_periodo: m,
+        anio_periodo: y,
+        nro_liquidacion: nroInput.trim(),
       });
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        throw new Error(`Error ${res.status}: ${txt || "no se pudo crear"}`);
-      }
-      const created: any = await res.json();
 
       const toAdd: PeriodBucket = {
         period: key,
@@ -164,7 +157,7 @@ const InsuranceCard: React.FC<Props> = ({
       setOpenMonthModal(false);
       setNroInput("");
     } catch (e: any) {
-      setApiError(e?.message || "No se pudo crear la liquidación.");
+      setApiError(mensajeDeError(e, "No se pudo crear la liquidación."));
     } finally {
       setSaving(false);
     }
@@ -179,16 +172,10 @@ const InsuranceCard: React.FC<Props> = ({
       setSaving(true);
       setApiError(null);
       try {
-        const res = await fetch(DELETE_LIQ_URL(lid), { method: "DELETE" });
-        if (!res.ok) {
-          const txt = await res.text().catch(() => "");
-          throw new Error(
-            `Error ${res.status}: ${txt || "no se pudo eliminar"}`,
-          );
-        }
+        await delJSON(DELETE_LIQ_URL(lid));
       } catch (e: any) {
         setSaving(false);
-        setApiError(e?.message || "No se pudo eliminar la liquidación.");
+        setApiError(mensajeDeError(e, "No se pudo eliminar la liquidación."));
         return;
       }
       setSaving(false);

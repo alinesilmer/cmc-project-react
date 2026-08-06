@@ -1,4 +1,4 @@
-import axios from "axios";
+import { http } from "../../lib/http";
 import type { ObraSocial, Prestador, ContactoPayload, ExportOptions } from "./types";
 import {
   safeStr,
@@ -7,19 +7,16 @@ import {
   coerceToStringArray,
 } from "./helpers";
 
-const API_BASE =
-  (import.meta as any).env?.VITE_API_URL?.toString?.() ||
-  (import.meta as any).env?.VITE_API_BASE?.toString?.() ||
-  "/api";
-
+// Rutas relativas: la baseURL (y su manejo por ambiente, dev vs prod) la
+// resuelve la instancia `http` compartida — no hay que armarla acá.
 const ENDPOINTS = {
-  obrasSociales: `${API_BASE}/api/obras_social/`,
+  obrasSociales: `/api/obras_social/`,
   medicosByOS: (nroOS: number) =>
-    `${API_BASE}/api/padrones/obras-sociales/${nroOS}/medicos`,
+    `/api/padrones/obras-sociales/${nroOS}/medicos`,
   // Detalle del prestador. Solo /api/medicos/{id} existe en el backend; los
   // endpoints /prestadores y /doctores daban 404 en cada llamada.
   prestadorDetailCandidates: (id: string) => [
-    `${API_BASE}/api/medicos/${id}`,
+    `/api/medicos/${id}`,
   ],
 };
 
@@ -113,10 +110,10 @@ function mapItemToPrestador(it: any): Prestador {
 export async function fetchObrasSociales(
   signal?: AbortSignal
 ): Promise<ObraSocial[]> {
-  const { data } = await axios.get(ENDPOINTS.obrasSociales, {
+  const { data } = await http.get(ENDPOINTS.obrasSociales, {
     signal,
     timeout: 20_000,
-  } as any);
+  });
   const arr = Array.isArray(data) ? data : [];
   return arr
     .map(mapObraSocialRawToOS)
@@ -134,11 +131,11 @@ export async function fetchPrestadoresAllPages(
 
   while (true) {
     if (signal?.aborted) break;
-    const { data } = await axios.get(ENDPOINTS.medicosByOS(nroOS), {
+    const { data } = await http.get(ENDPOINTS.medicosByOS(nroOS), {
       params: { page, size: PAGE_SIZE },
       timeout: 25_000,
       signal,
-    } as any);
+    });
 
     if (Array.isArray(data)) return data.map(mapItemToPrestador);
 
@@ -163,10 +160,10 @@ async function fetchContactoById(
 
   for (const url of ENDPOINTS.prestadorDetailCandidates(id)) {
     try {
-      const { data } = await axios.get(url, {
+      const { data } = await http.get(url, {
         signal,
         timeout: PDF_REQ_TIMEOUT_MS,
-      } as any);
+      });
       const src = unwrapPrestadorSource(data);
       const payload: ContactoPayload = {
         domicilio_consulta:

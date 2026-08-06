@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import axios from "axios";
 import type { jsPDF } from "jspdf";
 import { saveAs } from "@/app/lib/fileSaver";
 import styles from "./Boletin.module.scss";
 import Button from "../../components/atoms/Button/Button";
 import logo from "../../assets/logoCMC.png";
+import { http } from "../../lib/http";
 
 type ApiBoletinRow = {
   id: number;
@@ -43,21 +43,10 @@ const money = new Intl.NumberFormat("es-AR", {
   maximumFractionDigits: 2,
 });
 
-const API_BASE_RAW =
-  (import.meta as any).env?.VITE_API_BASE_URL ??
-  (import.meta as any).env?.VITE_API_URL ??
-  (import.meta as any).env?.VITE_BACKEND_URL ??
-  "";
-
-const API_BASE = String(API_BASE_RAW || "").replace(/\/+$/, "");
-const API_ROOT = API_BASE
-  ? API_BASE.endsWith("/api")
-    ? API_BASE
-    : `${API_BASE}/api`
-  : "/api";
-
+// Ruta relativa: la baseURL por ambiente la resuelve la instancia `http`
+// compartida, no hay que armarla acá.
 const ENDPOINTS = {
-  valoresBoletin: `${API_ROOT}/valores/boletin`,
+  valoresBoletin: `/api/valores/boletin`,
 };
 
 const CMC_NAME = "Colegio Médico de Corrientes";
@@ -120,7 +109,7 @@ async function fetchValoresBoletin(codigo: string): Promise<ApiBoletinRow[]> {
   const size = 500;
 
   while (true) {
-    const { data } = await axios.get(ENDPOINTS.valoresBoletin, {
+    const { data } = await http.get(ENDPOINTS.valoresBoletin, {
       params: { codigo, page, size },
     });
     const arr = Array.isArray(data) ? data : [];
