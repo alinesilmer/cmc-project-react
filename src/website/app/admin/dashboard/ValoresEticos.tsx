@@ -16,6 +16,7 @@ import {
   deleteValorEtico,
   type ValoresEticosOut,
 } from "./valoresEticos.api";
+import { abrirAdjunto } from "../../../../app/lib/archivos";
 
 function fmtDate(iso: string) {
   try {
@@ -31,7 +32,6 @@ function fmtDate(iso: string) {
   }
 }
 
-const pdfUrl = (pdf_path: string) => `/${pdf_path}`;
 const fileName = (pdf_path: string) => pdf_path.split("/").pop() ?? pdf_path;
 
 export default function ValoresEticos() {
@@ -156,16 +156,18 @@ export default function ValoresEticos() {
           )}
         </div>
         {ultimo && (
-          <a
-            href={pdfUrl(ultimo.pdf_path)}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
             className={styles.eticaViewLink}
+            style={{ background: "none", border: "none", cursor: "pointer" }}
             aria-label="Ver PDF actual"
+            onClick={() =>
+              abrirAdjunto(ultimo.pdf_path).catch((e) => setError(e.message))
+            }
           >
             <FiExternalLink size={14} />
             Ver PDF
-          </a>
+          </button>
         )}
       </div>
 
@@ -287,16 +289,18 @@ export default function ValoresEticos() {
                         )}
                       </div>
                       <div className={styles.eticaHistorialActions}>
-                        <a
-                          href={pdfUrl(item.pdf_path)}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <button
+                          type="button"
                           className={styles.eticaViewLink}
+                          style={{ background: "none", border: "none", cursor: "pointer" }}
                           aria-label="Ver PDF"
+                          onClick={() =>
+                            abrirAdjunto(item.pdf_path).catch((e) => setError(e.message))
+                          }
                         >
                           <FiExternalLink size={13} />
                           Ver
-                        </a>
+                        </button>
                         <button
                           type="button"
                           className={styles.eticaDeleteBtn}

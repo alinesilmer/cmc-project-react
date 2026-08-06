@@ -23,7 +23,7 @@ export default function RequireWebEditor({
     return <Navigate to={redirectUnauthedTo} replace state={{ from: loc }} />;
   }
 
-  if (!isWebEditor(user.scopes)) {
+  if (!isWebEditor(user)) {
     return forbidAs403 ? (
       <Navigate to="/403" replace />
     ) : (

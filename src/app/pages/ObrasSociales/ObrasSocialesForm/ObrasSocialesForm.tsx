@@ -36,6 +36,8 @@ import type {
   Documento,
   ContactoEntry,
 } from "../obrasSociales.types";
+import { abrirAdjunto } from "../../../lib/archivos";
+import { useNotify } from "../../../hooks/useNotify";
 import s from "./ObrasSocialesForm.module.scss";
 
 const TIPO_DOCUMENTOS: TipoDocumento[] = [
@@ -297,6 +299,7 @@ function DocRow({ obraId, tipo, existing, onUploaded, onQueue, queued }: DocRowP
   const [uploadError, setUploadError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
+  const notify = useNotify();
 
   const clearInputs = () => {
     if (inputRef.current) inputRef.current.value = "";
@@ -368,14 +371,14 @@ function DocRow({ obraId, tipo, existing, onUploaded, onQueue, queued }: DocRowP
 
       {existing && (
         <div className={s.existingFileRow}>
-          <a
-            href={existing.url}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
             className={s.docFileLink}
+            style={{ background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit", textAlign: "left" }}
+            onClick={() => abrirAdjunto(existing.url).catch((e) => notify.error(e.message))}
           >
             {TIPO_DOCUMENTO_LABELS[tipo]}
-          </a>
+          </button>
           <button
             type="button"
             className={s.docHistoryBtn}
@@ -493,6 +496,7 @@ function OtrosDocList({ obraId, existingDocs, onReload, onQueueChange }: OtrosDo
       existing: d,
     }))
   );
+  const notify = useNotify();
 
   useEffect(() => {
     setEntries(
@@ -632,14 +636,16 @@ function OtrosDocList({ obraId, existingDocs, onReload, onQueueChange }: OtrosDo
           />
 
           {entry.existing && (
-            <a
-              href={entry.existing.url}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
               className={s.docFileLink}
+              style={{ background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit", textAlign: "left" }}
+              onClick={() =>
+                abrirAdjunto(entry.existing!.url).catch((e) => notify.error(e.message))
+              }
             >
               {entry.nombreCustom || "Ver archivo"}
-            </a>
+            </button>
           )}
 
           <div className={s.uploadArea}>

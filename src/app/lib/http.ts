@@ -1,7 +1,13 @@
 import axios from "axios";
-import type { AxiosRequestConfig } from "axios";
-import { getAccessToken, setAccessToken, getCookie } from "../auth/token";
+import type { AxiosRequestConfig, InternalAxiosRequestConfig } from "axios";
+import { getAccessToken } from "../auth/token";
 import { API_URL } from "../config/env";
+import { refreshSession, forceLogout } from "../auth/session";
+
+type RetriableConfig = InternalAxiosRequestConfig & {
+  __retried?: boolean;
+  __token?: string | null;
+};
 
 // Instancia base
 export const http = axios.create({
@@ -26,8 +32,8 @@ const isFormDataLike = (d: any) => {
   );
 };
 
-http.interceptors.request.use((config) => {
-  config.headers = config.headers ?? {};
+http.interceptors.request.use((config: RetriableConfig) => {
+  config.headers = config.headers ?? ({} as any);
   config.headers["Accept"] = "application/json";
 
   const body = config.data as any;
@@ -45,6 +51,10 @@ http.interceptors.request.use((config) => {
 
   const token = getAccessToken();
   if (token) config.headers["Authorization"] = `Bearer ${token}`;
+  // Recordamos con qué token salió esta request: si al recibir un 401
+  // el token vigente ya cambió, significa que otra request en vuelo ya
+  // refrescó — reintentamos directo en vez de disparar un segundo refresh.
+  config.__token = token;
 
   const method = (config.method ?? "").toUpperCase();
   if (import.meta.env.DEV) {
@@ -58,10 +68,7 @@ http.interceptors.request.use((config) => {
   return config;
 });
 
-// Response: si 401 → intentar refresh y reintentar
-let refreshing = false;
-let queue: Array<() => void> = [];
-
+// Response: si 401 → refrescar (serializado en session.ts) y reintentar
 http.interceptors.response.use(
   (res) => {
     if (import.meta.env.DEV) {
@@ -72,7 +79,7 @@ http.interceptors.response.use(
     return res;
   },
   async (error) => {
-    const original = error.config || {};
+    const original = (error.config || {}) as RetriableConfig;
 
     // ⛔ nada de refrescar si:
     if (
@@ -83,40 +90,26 @@ http.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (refreshing) {
-      await new Promise<void>((ok) => queue.push(ok));
+    original.__retried = true;
+
+    // Otra request ya renovó el token mientras esta viajaba: no hace falta
+    // un segundo refresh, alcanza con reintentar con el token vigente.
+    const currentToken = getAccessToken();
+    if (currentToken && currentToken !== original.__token) {
       original.headers = original.headers || {};
-      const t = getAccessToken();
-      if (t) original.headers["Authorization"] = `Bearer ${t}`;
-      original.__retried = true;
+      original.headers["Authorization"] = `Bearer ${currentToken}`;
       return http.request(original);
     }
 
-    refreshing = true;
     try {
-      const csrf = getCookie("csrf_token"); // en local funciona (same-site)
-      const { data } = await httpBare.post("/auth/refresh", null, {
-        headers: csrf ? { "X-CSRF-Token": csrf } : {},
-      });
-      setAccessToken(data.access_token);
-      http.defaults.headers.common[
-        "Authorization"
-      ] = `Bearer ${data.access_token}`;
-      queue.forEach((ok) => ok());
-      queue = [];
-
+      const newToken = await refreshSession();
+      http.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
       original.headers = original.headers || {};
-      original.headers["Authorization"] = `Bearer ${data.access_token}`;
-      original.__retried = true;
+      original.headers["Authorization"] = `Bearer ${newToken}`;
       return http.request(original);
     } catch (e) {
-      setAccessToken(null);
-      delete http.defaults.headers.common["Authorization"];
-      queue.forEach((ok) => ok());
-      queue = [];
+      forceLogout("sesion_expirada");
       return Promise.reject(e);
-    } finally {
-      refreshing = false;
     }
   }
 );

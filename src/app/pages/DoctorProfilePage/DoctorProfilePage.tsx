@@ -72,6 +72,7 @@ import "rsuite/Toggle/styles/index.css";
 import { Animation } from "rsuite";
 import ActionModal from "../../components/molecules/ActionModal/ActionModal";
 import { useNotify } from "../../hooks/useNotify";
+import { abrirAdjunto } from "../../lib/archivos";
 import PadronesForm from "../../components/molecules/Padrones/PadronesForm/PadronesForm";
 
 /* ===================== helpers labels ===================== */
@@ -1433,10 +1434,8 @@ const DoctorProfilePage: React.FC = () => {
                                     variant="primary"
                                     size="sm"
                                     onClick={() =>
-                                      window.open(
-                                        doc.url,
-                                        "_blank",
-                                        "noopener,noreferrer"
+                                      abrirAdjunto(doc.url).catch((e) =>
+                                        notify.error(e.message)
                                       )
                                     }
                                   >
@@ -1538,12 +1537,9 @@ const DoctorProfilePage: React.FC = () => {
                                               size="sm"
                                               variant="primary"
                                               onClick={() => {
-                                                const href = r.adjunto_url;
-                                                if (href)
-                                                  window.open(
-                                                    href,
-                                                    "_blank",
-                                                    "noopener,noreferrer"
+                                                if (r.adjunto_url)
+                                                  abrirAdjunto(r.adjunto_url).catch((e) =>
+                                                    notify.error(e.message)
                                                   );
                                               }}
                                               title="Abrir adjunto"

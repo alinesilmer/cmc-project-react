@@ -30,6 +30,7 @@ const AdminPadronesDetail = lazy(() => import("./app/pages/AdminPadronesDetail/A
 const Boletin = lazy(() => import("./app/pages/Boletin/Boletin"));
 const AfiliadosPorObraSocialPage = lazy(() => import("./app/pages/AfiliadosPorObraSocialPage/AfiliadosPorObraSocialPage"));
 const GenerarBoletin = lazy(() => import("./app/pages/GenerarBoletin/GenerarBoletin"));
+const CambiarPassword = lazy(() => import("./app/pages/CambiarPassword/CambiarPassword"));
 
 // Liquidación (nuevo módulo)
 const PagosList = lazy(() => import("./app/pages/Pagos/PagosList/PagosList"));
@@ -208,6 +209,10 @@ export default function RootRoutes() {
             <Route
               path="/panel/admin-padrones-detail"
               element={<AdminPadronesDetail />}
+            />
+            <Route
+              path="/panel/cambiar-password"
+              element={<CambiarPassword />}
             />
           </Route>
 

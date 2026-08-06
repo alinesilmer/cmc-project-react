@@ -7,31 +7,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import styles from "./ApplicationDetail.module.scss";
 import SuccessModal from "../SuccessModal/SuccessModal";
 import { getJSON, postJSON } from "../../../lib/http";
+import { abrirAdjunto } from "../../../lib/archivos";
+import { useNotify } from "../../../hooks/useNotify";
 import BackButton from "../../../components/atoms/BackButton/BackButton";
-
-function toAbsUrl(u?: string | null): string | null {
-  if (!u) return null;
-  if (/^https?:\/\//i.test(u)) return u; // ya es absoluta
-  const path = u.startsWith("/") ? u : `/${u}`;
-  return `${window.location.origin}${path}`;
-}
-
-function normalizeAttachUrls<T extends Record<string, any>>(obj: T): T {
-  const out: Record<string, any> = { ...obj };
-  for (const [k, v] of Object.entries(out)) {
-    if (k.startsWith("attach_") && typeof v === "string") {
-      out[k] = toAbsUrl(v);
-    }
-  }
-  // también especialidades[].adjunto_url
-  if (Array.isArray(out.especialidades)) {
-    out.especialidades = out.especialidades.map((e: any) => ({
-      ...e,
-      adjunto_url: toAbsUrl(e?.adjunto_url ?? null),
-    }));
-  }
-  return out as T;
-}
 
 type EspecialidadForSolicitud = {
   id_colegio?: number | null;
@@ -150,6 +128,9 @@ async function rejectSolicitud(
 const ApplicationDetail: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const notify = useNotify();
+  const verAdjunto = (ruta?: string | null) =>
+    abrirAdjunto(ruta).catch((e) => notify.error(e.message));
 
   const [sol, setSol] = useState<SolicitudDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -179,7 +160,7 @@ const ApplicationDetail: React.FC = () => {
           `/api/medicos/${sol.medico_id}`
         );
         if (!alive) return;
-        setMedico(normalizeAttachUrls(data));
+        setMedico(data);
       } catch (e: any) {
         console.error(e);
         if (alive) {
@@ -592,13 +573,7 @@ const ApplicationDetail: React.FC = () => {
                           <button
                             type="button"
                             className={styles.buttonSecondary}
-                            onClick={() =>
-                              window.open(
-                                medico.attach_titulo!,
-                                "_blank",
-                                "noopener,noreferrer"
-                              )
-                            }
+                            onClick={() => verAdjunto(medico.attach_titulo)}
                           >
                             Ver
                           </button>
@@ -612,13 +587,7 @@ const ApplicationDetail: React.FC = () => {
                           <button
                             type="button"
                             className={styles.buttonSecondary}
-                            onClick={() =>
-                              window.open(
-                                medico.attach_matricula_prov!,
-                                "_blank",
-                                "noopener,noreferrer"
-                              )
-                            }
+                            onClick={() => verAdjunto(medico.attach_matricula_prov)}
                           >
                             Ver
                           </button>
@@ -632,13 +601,7 @@ const ApplicationDetail: React.FC = () => {
                           <button
                             type="button"
                             className={styles.buttonSecondary}
-                            onClick={() =>
-                              window.open(
-                                medico.attach_matricula_nac!,
-                                "_blank",
-                                "noopener,noreferrer"
-                              )
-                            }
+                            onClick={() => verAdjunto(medico.attach_matricula_nac)}
                           >
                             Ver
                           </button>
@@ -652,13 +615,7 @@ const ApplicationDetail: React.FC = () => {
                           <button
                             type="button"
                             className={styles.buttonSecondary}
-                            onClick={() =>
-                              window.open(
-                                medico.attach_resolucion!,
-                                "_blank",
-                                "noopener,noreferrer"
-                              )
-                            }
+                            onClick={() => verAdjunto(medico.attach_resolucion)}
                           >
                             Ver
                           </button>
@@ -672,13 +629,7 @@ const ApplicationDetail: React.FC = () => {
                           <button
                             type="button"
                             className={styles.buttonSecondary}
-                            onClick={() =>
-                              window.open(
-                                medico.attach_habilitacion_municipal!,
-                                "_blank",
-                                "noopener,noreferrer"
-                              )
-                            }
+                            onClick={() => verAdjunto(medico.attach_habilitacion_municipal)}
                           >
                             Ver
                           </button>
@@ -692,13 +643,7 @@ const ApplicationDetail: React.FC = () => {
                           <button
                             type="button"
                             className={styles.buttonSecondary}
-                            onClick={() =>
-                              window.open(
-                                medico.attach_dni!,
-                                "_blank",
-                                "noopener,noreferrer"
-                              )
-                            }
+                            onClick={() => verAdjunto(medico.attach_dni)}
                           >
                             Ver
                           </button>
@@ -710,13 +655,7 @@ const ApplicationDetail: React.FC = () => {
                           <button
                             type="button"
                             className={styles.buttonSecondary}
-                            onClick={() =>
-                              window.open(
-                                medico.attach_cuit!,
-                                "_blank",
-                                "noopener,noreferrer"
-                              )
-                            }
+                            onClick={() => verAdjunto(medico.attach_cuit)}
                           >
                             Ver
                           </button>
@@ -730,13 +669,7 @@ const ApplicationDetail: React.FC = () => {
                           <button
                             type="button"
                             className={styles.buttonSecondary}
-                            onClick={() =>
-                              window.open(
-                                medico.attach_condicion_impositiva!,
-                                "_blank",
-                                "noopener,noreferrer"
-                              )
-                            }
+                            onClick={() => verAdjunto(medico.attach_condicion_impositiva)}
                           >
                             Ver
                           </button>
@@ -748,13 +681,7 @@ const ApplicationDetail: React.FC = () => {
                           <button
                             type="button"
                             className={styles.buttonSecondary}
-                            onClick={() =>
-                              window.open(
-                                medico.attach_anssal!,
-                                "_blank",
-                                "noopener,noreferrer"
-                              )
-                            }
+                            onClick={() => verAdjunto(medico.attach_anssal)}
                           >
                             Ver
                           </button>
@@ -768,13 +695,7 @@ const ApplicationDetail: React.FC = () => {
                           <button
                             type="button"
                             className={styles.buttonSecondary}
-                            onClick={() =>
-                              window.open(
-                                medico.attach_malapraxis!,
-                                "_blank",
-                                "noopener,noreferrer"
-                              )
-                            }
+                            onClick={() => verAdjunto(medico.attach_malapraxis)}
                           >
                             Ver
                           </button>
@@ -786,13 +707,7 @@ const ApplicationDetail: React.FC = () => {
                           <button
                             type="button"
                             className={styles.buttonSecondary}
-                            onClick={() =>
-                              window.open(
-                                medico.attach_cbu!,
-                                "_blank",
-                                "noopener,noreferrer"
-                              )
-                            }
+                            onClick={() => verAdjunto(medico.attach_cbu)}
                           >
                             Ver
                           </button>
@@ -843,13 +758,7 @@ const ApplicationDetail: React.FC = () => {
                                 <button
                                   type="button"
                                   className={styles.buttonSecondary}
-                                  onClick={() =>
-                                    window.open(
-                                      esp.adjunto_url!,
-                                      "_blank",
-                                      "noopener,noreferrer"
-                                    )
-                                  }
+                                  onClick={() => verAdjunto(esp.adjunto_url)}
                                 >
                                   Ver
                                 </button>

@@ -1,4 +1,5 @@
 import { createContext, useContext, useMemo, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   login as apiLogin,
   logout as apiLogout,
@@ -6,7 +7,8 @@ import {
   type User,
 } from "./api";
 import { http } from "../lib/http";
-import { getCookie, setAccessToken } from "../auth/token";
+import { getAccessToken, getCookie, setAccessToken } from "../auth/token";
+import { refreshSession, listenRemoteLogout, type LogoutMotivo } from "./session";
 
 type AuthCtx = {
   user: User | null;
@@ -24,6 +26,7 @@ export const useAuth = () => {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [ready, setReady] = useState(false);
+  const navigate = useNavigate();
 
   // precarga (pero OJO: no es fuente de verdad)
   useEffect(() => {
@@ -50,45 +53,68 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     delete http.defaults.headers.common["Authorization"];
   };
 
+  // Cierre de sesión forzado: por el interceptor de http.ts (401 que no se
+  // pudo refrescar) en esta pestaña, o por otra pestaña vía BroadcastChannel.
   useEffect(() => {
+    const goToLogin = (motivo: LogoutMotivo) => {
+      setUser(null);
+      sessionStorage.removeItem("me");
+      navigate("/panel/login", { replace: true, state: { motivo } });
+    };
+    const onLocalLogout = (ev: Event) => {
+      goToLogin((ev as CustomEvent<LogoutMotivo>).detail);
+    };
+    window.addEventListener("auth:logout", onLocalLogout);
+    const unsubscribeRemote = listenRemoteLogout(goToLogin);
+    return () => {
+      window.removeEventListener("auth:logout", onLocalLogout);
+      unsubscribeRemote();
+    };
+  }, [navigate]);
+
+  useEffect(() => {
+    let cancelled = false;
     (async () => {
       try {
+        const token = getAccessToken();
         const csrf = getCookie("csrf_token");
-        // 💡 si NO hay cookies ni Authorization => no hay sesión válida
-        const hasAuthHeader = !!http.defaults.headers.common["Authorization"];
-        if (!csrf && !hasAuthHeader) {
+
+        if (!token && !csrf) {
+          // sin access en memoria y sin cookie de sesión: no hay nada que restaurar
           setUser(null);
           sessionStorage.removeItem("me");
-          setAccessToken(null);
-          delete http.defaults.headers.common["Authorization"];
           setReady(true);
           return;
         }
 
-        // si hay csrf, intentamos refresh
-        if (csrf) {
-          const r = await http.post("/auth/refresh", null, {
-            headers: { "X-CSRF-Token": csrf },
-          });
-          setAccessToken(r.data.access_token);
-          http.defaults.headers.common[
-            "Authorization"
-          ] = `Bearer ${r.data.access_token}`;
+        if (!token && csrf) {
+          // hay cookie de refresh pero ningún access todavía: hace falta un
+          // refresh explícito antes de poder pedir /auth/me. Pasa por el
+          // mismo single-flight que usa el interceptor de http.ts.
+          const newToken = await refreshSession();
+          http.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
         }
 
-        // fuente de verdad
+        // fuente de verdad. Si el access de sessionStorage seguía siendo
+        // válido, esto responde directo; si venció, el interceptor de
+        // http.ts refresca una sola vez y reintenta antes de llegar acá.
         const u = await apiMe();
+        if (cancelled) return;
         setUser(u);
         sessionStorage.setItem("me", JSON.stringify(u));
       } catch {
+        if (cancelled) return;
         setUser(null);
         setAccessToken(null);
         sessionStorage.removeItem("me");
         delete http.defaults.headers.common["Authorization"];
       } finally {
-        setReady(true);
+        if (!cancelled) setReady(true);
       }
     })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const value = useMemo(
