@@ -1,6 +1,7 @@
 // src/app/auth/api.ts
 import { http, httpBare } from "../lib/http";
 import { setAccessToken } from "../auth/token";
+import { forceLogout } from "./session";
 
 export type User = {
   id: number;
@@ -13,6 +14,9 @@ export type User = {
   /** ID_COLEGIO_ESPE en orden de prioridad (principal primero). Vacía si no tiene. */
   especialidades: number[];
   es_organizacion?: number | null;
+  /** Altas nuevas nacen en true (contraseña pública `cmc1785`); las cuentas
+   * existentes siempre llegan en false y nunca ven la pantalla de cambio. */
+  must_change_password: boolean;
 };
 
 function normalizeUser(raw: any): User {
@@ -29,6 +33,7 @@ function normalizeUser(raw: any): User {
     ingresar: raw?.ingresar ?? raw?.INGRESAR ?? null,
     especialidades: Array.isArray(raw?.especialidades) ? raw.especialidades : [],
     es_organizacion: raw?.es_organizacion != null ? Number(raw.es_organizacion) : null,
+    must_change_password: Boolean(raw?.must_change_password),
   };
 }
 
@@ -65,4 +70,18 @@ export async function logout(): Promise<void> {
   await http.post("/auth/logout");
   setAccessToken(null);
   delete http.defaults.headers.common["Authorization"];
+}
+
+export async function changePassword(
+  passwordActual: string,
+  passwordNueva: string
+): Promise<{ ok: boolean; relogin?: boolean }> {
+  const { data } = await http.post("/auth/change-password", {
+    password_actual: passwordActual,
+    password_nueva: passwordNueva,
+  });
+  // El backend cierra todas las sesiones del usuario al cambiar la
+  // contraseña (§7.3): hay que limpiar el estado local y mandar al login.
+  if (data?.relogin) forceLogout("password_changed");
+  return data as { ok: boolean; relogin?: boolean };
 }

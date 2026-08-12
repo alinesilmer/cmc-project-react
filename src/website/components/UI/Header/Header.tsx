@@ -31,7 +31,7 @@ export default function Header() {
   const [legacyUrl, setLegacyUrl] = useState<string>(legacyFallback);
   useEffect(() => {
     // si está logueado y NO es web editor, buscamos link SSO al legacy
-    if (user && !isWebEditor(user.scopes)) {
+    if (user && !isWebEditor(user)) {
       http
         .get<{ url: string }>("/auth/legacy/sso-link", {
           params: { next: "/principal.php" },
@@ -48,9 +48,9 @@ export default function Header() {
 
   const targetHref = !user
     ? "/panel/login"
-    : isWebEditor(user.scopes)
+    : isWebEditor(user)
     ? "/admin/dashboard-web"
-    : legacyUrl; 
+    : legacyUrl;
 
   useEffect(() => {
     const onScroll = () => {

@@ -9,6 +9,8 @@ import { getObraSocial } from "../obrasSociales.api";
 import type { ObraSocial, Documento } from "../obrasSociales.types";
 import { CONDICION_IVA_LABELS, TIPO_DOCUMENTO_LABELS } from "../obrasSociales.types";
 import HistorialValores from "./HistorialValores";
+import { abrirAdjunto } from "../../../lib/archivos";
+import { useNotify } from "../../../hooks/useNotify";
 import s from "./ObrasSocialesDetalle.module.scss";
 
 type ActiveTab = "datos" | "documentos" | "historial";
@@ -32,6 +34,7 @@ function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label:
 }
 
 function DocumentoCard({ doc }: { doc: Documento }) {
+  const notify = useNotify();
   const label = doc.nombre_custom ? doc.nombre_custom : TIPO_DOCUMENTO_LABELS[doc.tipo];
   return (
     <div className={s.docCard}>
@@ -39,7 +42,14 @@ function DocumentoCard({ doc }: { doc: Documento }) {
         <span className={s.docCardTipo}><FileText size={14} />{label}</span>
         <span className={s.docActiveBadge}>Activo</span>
       </div>
-      <a href={doc.url} target="_blank" rel="noopener noreferrer" className={s.docLink}>{label}</a>
+      <button
+        type="button"
+        className={s.docLink}
+        style={{ background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit", textAlign: "left" }}
+        onClick={() => abrirAdjunto(doc.url).catch((e) => notify.error(e.message))}
+      >
+        {label}
+      </button>
     </div>
   );
 }

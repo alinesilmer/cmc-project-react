@@ -197,6 +197,93 @@ $shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
   font-weight: 400;
 }
 
+// Indica que la fila es parte de un equipo (médico + ayudante(s) + gastos). Se usa
+// índigo para no pisar los colores ya tomados por los roles (azul/violeta/naranja).
+.teamBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 2px 6px;
+  border: 1px solid #c7d2fe;
+  border-radius: 20px;
+  background: #eef2ff;
+  color: #4338ca;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+
+  &:hover {
+    background: #e0e7ff;
+    border-color: #a5b4fc;
+  }
+}
+
+.teamBadgeOpen {
+  background: #4338ca;
+  border-color: #4338ca;
+  color: #fff;
+
+  &:hover {
+    background: #3730a3;
+  }
+}
+
+.teamDetailRow td {
+  padding: 10px 14px;
+  background: #f5f5ff;
+  border-bottom: 1px solid #e0e2fb;
+}
+
+.teamDetailContent {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.teamDetailLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 700;
+  color: #4338ca;
+  font-size: inherit;
+  white-space: nowrap;
+}
+
+.teamMember {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 1px solid #e0e2fb;
+  border-radius: $radius-sm;
+  background: $surface;
+  font-size: inherit;
+}
+
+// La fila que el operador ya está mirando se resalta dentro de su propio equipo.
+.teamMemberActual {
+  border-color: #4338ca;
+  background: #eef2ff;
+}
+
+.teamMemberNombre {
+  color: $text-1;
+  font-weight: 600;
+}
+
+.teamMemberMoney {
+  font-variant-numeric: tabular-nums;
+  color: $text-2;
+}
+
 .osCell {
   // El nombre se muestra completo y baja de línea por palabra cuando no entra —
   // igual que el nombre del socio. Nunca se corta ni se recorta: el operador tiene

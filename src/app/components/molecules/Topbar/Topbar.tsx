@@ -23,6 +23,7 @@ import styles from "./Topbar.module.scss";
 import { useAuth } from "../../../auth/AuthProvider";
 import { isMedico } from "../../../auth/roles";
 import RequirePermission from "../../../auth/RequirePermission";
+import { PERMS } from "../../../auth/scopes";
 import Logo from "../../../assets/logoCMC.png";
 
 // ─── Nav model ─────────────────────────────────────────────────────────────────
@@ -40,8 +41,8 @@ type TopEntry =
   | { kind: "menu"; id: string; icon: LucideIcon; label: string; columns: MenuColumn[] };
 
 const base = "/panel";
-const R = ["medicos:leer"];
-const LIQ = ["liquidacion:leer", "liquidacion:ver"];
+const R = [PERMS.MEDICO_LEER];
+const LIQ = [PERMS.LIQUIDACION_LEER];
 
 // Accesos directos a las obras sociales que se validan desde el panel. El
 // catálogo completo (incluidos los portales externos) vive en el hub.
@@ -148,9 +149,9 @@ const TOP_NAV: TopEntry[] = [
     columns: [
       {
         items: [
-          { path: `${base}/beneficios`, icon: Gift, label: "Beneficios", perms: ["beneficios:gestionar"] },
-          { path: `${base}/avisos`, icon: Megaphone, label: "Avisos", perms: ["avisos:gestionar"] },
-          { path: `${base}/solicitudes-cambio`, icon: Inbox, label: "Solicitudes de cambio", perms: ["solicitudes_cambio:gestionar"] },
+          { path: `${base}/beneficios`, icon: Gift, label: "Beneficios", perms: [PERMS.BENEFICIO_GESTIONAR] },
+          { path: `${base}/avisos`, icon: Megaphone, label: "Avisos", perms: [PERMS.AVISO_GESTIONAR] },
+          { path: `${base}/solicitudes-cambio`, icon: Inbox, label: "Solicitudes de cambio", perms: [PERMS.SOLICITUD_RESOLVER] },
         ],
       },
     ],
@@ -211,7 +212,7 @@ const TOP_NAV: TopEntry[] = [
       {
         heading: "Sistema",
         items: [
-          { path: `${base}/admin/permissions`, icon: ShieldUser, label: "Permisos y roles", perms: ["rbac:gestionar"] },
+          { path: `${base}/admin/permissions`, icon: ShieldUser, label: "Permisos y roles", perms: [PERMS.RBAC_GESTIONAR] },
           { path: "https://legacy.colegiomedicocorrientes.com/principal.php", icon: Monitor, label: "Sistema Viejo", perms: R, external: true },
         ],
       },

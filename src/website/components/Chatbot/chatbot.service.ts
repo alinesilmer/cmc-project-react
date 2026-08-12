@@ -5,11 +5,14 @@
  *
  * Security rules:
  *  - Internal endpoint paths are never returned to callers.
- *  - Auth tokens are never attached manually — handled by axios defaults.
+ *  - Auth tokens are never attached manually. El chatbot se muestra en el
+ *    sitio público (Chatbot.tsx lo oculta en /panel y /admin, no al revés), así
+ *    que usamos httpBare y no `http`: no hace falta Authorization acá y un
+ *    401 no debe disparar el refresh/redirect a /panel/login del interceptor.
  *  - All API errors are caught; callers receive typed results, never raw errors.
  */
 
-import axios from "axios";
+import { httpBare } from "../../lib/http";
 
 // ─── Internal normalizer ──────────────────────────────────────────────────────
 
@@ -34,11 +37,9 @@ const CACHE_TTL_MS = 5 * 60 * 1000;
 async function fetchOSList(signal?: AbortSignal): Promise<OSEntry[]> {
   if (_osCache !== null && Date.now() - _osCacheTs < CACHE_TTL_MS) return _osCache;
 
-  const { data } = await axios.get("/api/obras_social/", {
+  const { data } = await httpBare.get("/api/obras_social/", {
     signal,
     timeout: 8_000,
-    withCredentials: false,
-    headers: { Accept: "application/json" },
   });
 
   const items: unknown[] = Array.isArray(data) ? data

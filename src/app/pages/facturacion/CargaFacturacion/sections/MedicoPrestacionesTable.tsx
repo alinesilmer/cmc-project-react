@@ -1,9 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ClipboardList, Pencil, Copy, ArrowRightCircle, ArrowLeftCircle, Trash2 } from "lucide-react";
+import {
+  ClipboardList, Pencil, Copy, ArrowRightCircle, ArrowLeftCircle, Trash2, Users, ChevronDown, ChevronUp,
+} from "lucide-react";
 
 import { useAppSnackbar } from "../../../../hooks/useAppSnackbar";
-import { listarPrestaciones, anularPrestacion, marcarRevisado, moverPeriodo, fetchObrasSociales } from "../../api";
+import {
+  listarPrestaciones, anularPrestacion, marcarRevisado, moverPeriodo, fetchObrasSociales, fetchMedicos,
+} from "../../api";
 import type { PrestacionRead, Tipo } from "../../types";
 import { detailMessage } from "../../types";
 import { formatMoney, parseMoney } from "../../money";
@@ -131,6 +135,17 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
   const [nombresOs, setNombresOs] = useState<Record<string, string>>({});
   const osPedidasRef = useRef<Set<string>>(new Set());
 
+  // Filas con `grupo_equipo_id`: son parte de un equipo (cabecera + ayudante(s) +
+  // gastos). Se cachean por id de grupo para no repetir el pedido al volver a
+  // renderizar ni al cambiar de página si reaparece el mismo equipo.
+  const [equipos, setEquipos] = useState<Record<number, PrestacionRead[]>>({});
+  const equiposPedidosRef = useRef<Set<number>>(new Set());
+  // Nombres de los socios que integran esos equipos (el listado de un equipo solo
+  // trae `cod_medico`, no el nombre — se resuelve aparte igual que la obra social).
+  const [nombresIntegrantes, setNombresIntegrantes] = useState<Record<string, string>>({});
+  const integrantesPedidosRef = useRef<Set<string>>(new Set());
+  const [equiposAbiertos, setEquiposAbiertos] = useState<Set<number>>(new Set());
+
   // Cambió el médico, la obra social o el período → volvemos a la primera página.
   useEffect(() => { setOffset(0); }, [codMedico, codObra, periodo]);
 
@@ -191,6 +206,82 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
     })();
     return () => { active = false; };
   }, [rows]);
+
+  // Por cada fila con `grupo_equipo_id`, trae el resto del equipo (cabecera +
+  // ayudante(s) + gastos) para poder mostrarlo agrupado. Se cachea por id de grupo
+  // — el mismo equipo puede reaparecer en otra página o tras un refresh.
+  useEffect(() => {
+    const idsGrupo = Array.from(
+      new Set(rows.map((r) => r.grupo_equipo_id).filter((g): g is number => g != null)),
+    ).filter((gid) => !equiposPedidosRef.current.has(gid));
+    if (idsGrupo.length === 0) return;
+    idsGrupo.forEach((gid) => equiposPedidosRef.current.add(gid));
+
+    let active = true;
+    (async () => {
+      const res = await Promise.allSettled(
+        idsGrupo.map((gid) => listarPrestaciones({ grupo_equipo_id: gid, limit: 20 })),
+      );
+      if (!active) return;
+      const nuevos: Record<number, PrestacionRead[]> = {};
+      res.forEach((r, i) => {
+        if (r.status !== "fulfilled") return;
+        nuevos[idsGrupo[i]] = r.value.data;
+      });
+      if (Object.keys(nuevos).length > 0) {
+        setEquipos((prev) => ({ ...prev, ...nuevos }));
+        // Los equipos arrancan desplegados: el operador tiene que ver de entrada
+        // quiénes lo integran, sin necesidad de clickear el badge.
+        setEquiposAbiertos((prev) => {
+          const next = new Set(prev);
+          Object.keys(nuevos).forEach((gid) => next.add(Number(gid)));
+          return next;
+        });
+      }
+    })();
+    return () => { active = false; };
+  }, [rows]);
+
+  // Nombres de los socios que integran los equipos ya traídos (el listado por
+  // `grupo_equipo_id` solo trae `cod_medico`, igual que el listado principal).
+  useEffect(() => {
+    const codsVistos = new Set<string>();
+    Object.values(equipos).forEach((miembros) => miembros.forEach((m) => codsVistos.add(m.cod_medico)));
+    const faltantes = Array.from(codsVistos).filter(
+      (cod) => cod !== codMedico && !integrantesPedidosRef.current.has(cod),
+    );
+    if (faltantes.length === 0) return;
+    faltantes.forEach((cod) => integrantesPedidosRef.current.add(cod));
+
+    let active = true;
+    (async () => {
+      const res = await Promise.allSettled(faltantes.map((cod) => fetchMedicos(cod)));
+      if (!active) return;
+      const nuevos: Record<string, string> = {};
+      res.forEach((r, i) => {
+        if (r.status !== "fulfilled") return;
+        const medico = r.value.find((m) => m.cod === faltantes[i]);
+        if (medico?.nombre) nuevos[faltantes[i]] = medico.nombre;
+      });
+      if (Object.keys(nuevos).length > 0) setNombresIntegrantes((prev) => ({ ...prev, ...nuevos }));
+    })();
+    return () => { active = false; };
+  }, [equipos, codMedico]);
+
+  const toggleEquipo = (gid: number) => {
+    setEquiposAbiertos((prev) => {
+      const next = new Set(prev);
+      if (next.has(gid)) next.delete(gid); else next.add(gid);
+      return next;
+    });
+  };
+
+  // "(nro) nombre" de un integrante del equipo — usa el médico de esta pantalla si
+  // coincide (ya lo tenemos por props) y si no busca en el cache resuelto aparte.
+  const nombreIntegrante = (cod: string): string | null => {
+    if (cod === codMedico) return medicoNombre ?? null;
+    return nombresIntegrantes[cod] ?? null;
+  };
 
   const withBusy = async (id: number, fn: () => Promise<void>) => {
     setBusyIds((prev) => new Set(prev).add(id));
@@ -347,9 +438,16 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                 const busy = busyIds.has(row.id);
                 const tipoPrestador = deriveTipoPrestador(row);
                 const codOs = normCodOs(row.cod_obra_social);
+                // Un equipo real tiene otros integrantes además de esta fila (cabecera,
+                // ayudante(s), gastos). Si solo aparece esta fila no hay nada que agrupar.
+                const gid = row.grupo_equipo_id ?? null;
+                const equipo = gid != null ? equipos[gid] : undefined;
+                const companeros = equipo ? equipo.filter((m) => m.id !== row.id) : [];
+                const esEquipo = companeros.length > 0;
+                const abierto = gid != null && equiposAbiertos.has(gid);
                 return (
+                  <React.Fragment key={row.id}>
                   <tr
-                    key={row.id}
                     className={`${styles.dataRow} ${row.revisado ? styles.rowRevisada : ""}`}
                   >
                     <td className={styles.idCell}>{row.id}</td>
@@ -360,6 +458,18 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                           {medicoMatricula != null && <span className={styles.socioMatricula}> - {medicoMatricula}</span>}
                         </span>
                         <span className={styles.socioNombre}>{medicoNombre ?? "—"}</span>
+                        {esEquipo && (
+                          <button
+                            type="button"
+                            className={`${styles.teamBadge} ${abierto ? styles.teamBadgeOpen : ""}`}
+                            title="Esta prestación es parte de un equipo (médico, ayudante y/o gastos)"
+                            onClick={() => toggleEquipo(gid as number)}
+                          >
+                            <Users size={11} />
+                            Equipo quirúrgico
+                            {abierto ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+                          </button>
+                        )}
                       </div>
                     </td>
                     <td title={codOs ? fmtObraSocial(codOs, nombresOs) : undefined}>
@@ -473,6 +583,41 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                       </div>
                     </td>
                   </tr>
+                  {esEquipo && abierto && (
+                    <tr className={styles.teamDetailRow}>
+                      <td colSpan={16}>
+                        <div className={styles.teamDetailContent}>
+                          <span className={styles.teamDetailLabel}>
+                            <Users size={13} /> Integrantes del equipo
+                          </span>
+                          {equipo!.map((m) => {
+                            const rolM = deriveTipoPrestador(m);
+                            const nombre = nombreIntegrante(m.cod_medico);
+                            return (
+                              <span
+                                key={m.id}
+                                className={`${styles.teamMember} ${m.id === row.id ? styles.teamMemberActual : ""}`}
+                              >
+                                {rolM && (
+                                  <span
+                                    className={`${styles.tipoPrestadorBadge} ${tipoPrestadorClass(rolM)}`}
+                                    title={tipoPrestadorLabel(rolM)}
+                                  >
+                                    {tipoPrestadorAbrev(rolM)}
+                                  </span>
+                                )}
+                                <span className={styles.teamMemberNombre}>
+                                  {m.cod_medico}{nombre && ` · ${nombre}`}
+                                </span>
+                                <span className={styles.teamMemberMoney}>{formatMoney(m.importe_total)}</span>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  </React.Fragment>
                 );
               })}
             </tbody>

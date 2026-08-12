@@ -8,7 +8,6 @@ import React, {
   useMemo,
   forwardRef,
 } from "react";
-import axios from "axios";
 import DatePicker, { registerLocale } from "react-datepicker";
 import { es } from "date-fns/locale/es";
 import "react-datepicker/dist/react-datepicker.css";
@@ -16,24 +15,17 @@ import { Download, Loader2, Calendar } from "lucide-react";
 import styles from "./GenerarBoletin.module.scss";
 import Button from "../../../website/components/UI/Button/Button";
 import CMCLogoUrl from "../../assets/logoCMC.png";
+// httpBare (no http): esta página vive en /generar-boletin, fuera de
+// RequireAuth y de acceso anónimo — no conviene que un 401 acá dispare el
+// refresh/redirect a /panel/login del interceptor de `http`.
+import { httpBare } from "../../lib/http";
 
 registerLocale("es", es);
 
-const API_BASE_RAW =
-  (import.meta as any).env?.VITE_API_BASE_URL ??
-  (import.meta as any).env?.VITE_API_URL ??
-  (import.meta as any).env?.VITE_BACKEND_URL ??
-  "";
-
-const API_BASE = String(API_BASE_RAW || "").replace(/\/+$/, "");
-const API_ROOT = API_BASE
-  ? API_BASE.endsWith("/api")
-    ? API_BASE
-    : `${API_BASE}/api`
-  : "/api";
-
+// Ruta relativa: la baseURL por ambiente la resuelve la instancia `http`
+// compartida, no hay que armarla acá.
 const ENDPOINTS = {
-  valoresBoletin: `${API_ROOT}/valores/boletin`,
+  valoresBoletin: `/api/valores/boletin`,
 };
 
 type ApiBoletinRow = {
@@ -213,7 +205,7 @@ function normalizeRow(r: any): ApiBoletinRow {
 }
 
 async function fetchValoresBoletin(params?: QueryParams): Promise<ApiBoletinRow[]> {
-  const { data } = await axios.get(ENDPOINTS.valoresBoletin, { params });
+  const { data } = await httpBare.get(ENDPOINTS.valoresBoletin, { params });
   const arr = Array.isArray(data) ? data : [];
   return arr.map(normalizeRow);
 }

@@ -1,6 +1,7 @@
 // src/auth/RequirePermission.tsx
 import type { ReactNode } from "react";
 import { useAuth } from "./AuthProvider";
+import { hasScope } from "./scopes";
 
 type Props = {
   scope?: string;        // compat: un único permiso
@@ -15,9 +16,9 @@ export default function RequirePermission({ scope, anyOf, allOf, children }: Pro
 
   const scopes = user.scopes ?? [];
 
-  if (scope && !scopes.includes(scope)) return null;
-  if (anyOf && anyOf.length > 0 && !anyOf.some(s => scopes.includes(s))) return null;
-  if (allOf && allOf.length > 0 && !allOf.every(s => scopes.includes(s))) return null;
+  if (scope && !hasScope(scopes, scope)) return null;
+  if (anyOf && anyOf.length > 0 && !anyOf.some(s => hasScope(scopes, s))) return null;
+  if (allOf && allOf.length > 0 && !allOf.every(s => hasScope(scopes, s))) return null;
 
   return <>{children}</>;
 }

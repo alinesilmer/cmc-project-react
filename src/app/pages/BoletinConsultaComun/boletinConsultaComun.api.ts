@@ -19,6 +19,8 @@ import type {
   ApiBoletinRow,
   ConsultaComunItem,
 } from "./boletinConsultaComun.types";
+import { mensajeDeError } from "../../lib/httpErrors";
+import { http } from "../../lib/http";
 
 function pickFirst<T = unknown>(
   obj: Record<string, unknown>,
@@ -319,8 +321,12 @@ export function getErrorMessage(error: unknown): string {
 
     const status = error.response?.status;
     if (status === 400) return "Solicitud inválida al backend.";
-    if (status === 401 || status === 403) {
-      return "No tiene permisos para consultar este recurso.";
+    // El 401 lo maneja el interceptor (refresh/login); si llega hasta acá ya
+    // falló ese intento. El 403 no se trata igual (§4): no hay refresh que
+    // arregle una falta de permiso, así que mostramos el detalle si vino.
+    if (status === 401) return "No tiene permisos para consultar este recurso.";
+    if (status === 403) {
+      return mensajeDeError(error, "No tiene permisos para consultar este recurso.");
     }
     if (status === 404) return "No se encontró el endpoint solicitado.";
     if (status && status >= 500) {
@@ -340,13 +346,9 @@ export async function fetchBoletinPage(
   signal?: AbortSignal,
   codigo: string = CONSULTA_COMUN_CODE
 ): Promise<ApiBoletinRow[]> {
-  const response = await axios.get(endpoint, {
+  const response = await http.get(endpoint, {
     signal,
     timeout: 20000,
-    withCredentials: false,
-    headers: {
-      Accept: "application/json",
-    },
     params: {
       codigo,
       page,

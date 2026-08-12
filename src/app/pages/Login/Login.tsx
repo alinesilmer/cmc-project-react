@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Download } from "lucide-react";
 import styles from "./Login.module.scss";
 import Button from "../../components/atoms/Button/Button";
@@ -8,11 +8,23 @@ import { useAuth } from "../../auth/AuthProvider";
 import { isWebEditor } from "../../auth/roles";
 import { http } from "../../lib/http";
 import pdf from "../../assets/CMC_08_2026.pdf";
+import { mensajeDeError } from "../../lib/httpErrors";
+import type { LogoutMotivo } from "../../auth/session";
 import Header from "../../../website/components/UI/Header/Header";
 
+const LOGOUT_MESSAGES: Record<LogoutMotivo, string> = {
+  token_revocado: "Tu sesión se cerró, ingresá de nuevo.",
+  sesion_expirada: "Tu sesión se cerró, ingresá de nuevo.",
+  password_changed: "Contraseña actualizada, ingresá de nuevo.",
+};
+
 function Login() {
-  const [isMember, setIsMember] = useState<boolean | null>(null);
+  const location = useLocation();
+  const motivo = (location.state as { motivo?: LogoutMotivo } | null)?.motivo;
+
+  const [isMember, setIsMember] = useState<boolean | null>(motivo ? true : null);
   const [error, setError] = useState<string>("");
+  const [notice, setNotice] = useState<string>(motivo ? LOGOUT_MESSAGES[motivo] : "");
   const [loading, setLoading] = useState(false);
   const [isPdfOpen, setIsPdfOpen] = useState(false);
   const navigate = useNavigate();
@@ -51,6 +63,7 @@ function Login() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
+    setNotice("");
 
     const fd = new FormData(e.currentTarget);
     const u = String(fd.get("username") || "").trim();
@@ -66,7 +79,12 @@ function Login() {
     try {
       const me = await login(nro, p);
 
-      if (isWebEditor(me.scopes)) {
+      if (me.must_change_password) {
+        navigate("/panel/cambiar-password", { replace: true });
+        return;
+      }
+
+      if (isWebEditor(me)) {
         navigate("/admin/dashboard-web", { replace: true });
         return;
       }
@@ -87,11 +105,7 @@ function Login() {
         window.location.href = data.url;
       }
     } catch (err: any) {
-      const apiMsg =
-        err?.response?.data?.detail ??
-        err?.response?.data?.message ??
-        "Credenciales inválidas o servicio no disponible.";
-      setError(String(apiMsg));
+      setError(mensajeDeError(err, "Credenciales inválidas o servicio no disponible."));
     } finally {
       setLoading(false);
     }
@@ -167,6 +181,16 @@ function Login() {
                 onSubmit={handleSubmit}
                 noValidate
               >
+                {notice && !error && (
+                  <div
+                    className={styles.errorBox}
+                    role="status"
+                    aria-live="polite"
+                  >
+                    {notice}
+                  </div>
+                )}
+
                 {error && (
                   <div
                     className={styles.errorBox}
