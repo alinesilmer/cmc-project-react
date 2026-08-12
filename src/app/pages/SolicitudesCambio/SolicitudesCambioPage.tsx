@@ -240,25 +240,62 @@ export default function SolicitudesCambioPage() {
                 </div>
               </div>
 
-              <div className={s.values}>
-                <div className={s.valueBox}>
-                  <span className={s.valueLabel}>Valor actual</span>
-                  <span className={s.valueCurrent}>
-                    {item.valor_actual ?? "—"}
-                  </span>
+              {/* Formulario completo: se listan TODOS los campos del pedido.
+                  Es lo que se va a escribir en el legajo al aprobar, así que
+                  mostrar sólo el primero (como hacía el diseño de un campo por
+                  solicitud) sería aprobar a ciegas. */}
+              {item.cambios && Object.keys(item.cambios).length > 0 ? (
+                <div className={s.cambiosLista}>
+                  {Object.entries(item.cambios).map(([campo, v]) => (
+                    <div key={campo} className={s.values}>
+                      <span className={s.campoChip}>{campoLabel(campo)}</span>
+                      <div className={s.valueBox}>
+                        <span className={s.valueLabel}>Valor actual</span>
+                        <span className={s.valueCurrent}>
+                          {v?.actual?.trim() || "—"}
+                        </span>
+                      </div>
+                      <ArrowRight
+                        size={18}
+                        className={s.valueArrow}
+                        aria-hidden="true"
+                      />
+                      <div className={s.valueBox}>
+                        <span className={s.valueLabel}>Valor propuesto</span>
+                        <span className={s.valueProposed}>
+                          {v?.propuesto?.trim() || "—"}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  {item.estado === "pendiente" && (
+                    <p className={s.avisoAplica}>
+                      Al aprobar, estos cambios se aplican automáticamente al
+                      legajo del socio.
+                    </p>
+                  )}
                 </div>
-                <ArrowRight
-                  size={18}
-                  className={s.valueArrow}
-                  aria-hidden="true"
-                />
-                <div className={s.valueBox}>
-                  <span className={s.valueLabel}>Valor propuesto</span>
-                  <span className={s.valueProposed}>
-                    {item.valor_propuesto ?? "—"}
-                  </span>
+              ) : (
+                <div className={s.values}>
+                  <div className={s.valueBox}>
+                    <span className={s.valueLabel}>Valor actual</span>
+                    <span className={s.valueCurrent}>
+                      {item.valor_actual ?? "—"}
+                    </span>
+                  </div>
+                  <ArrowRight
+                    size={18}
+                    className={s.valueArrow}
+                    aria-hidden="true"
+                  />
+                  <div className={s.valueBox}>
+                    <span className={s.valueLabel}>Valor propuesto</span>
+                    <span className={s.valueProposed}>
+                      {item.valor_propuesto ?? "—"}
+                    </span>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <p className={s.message}>{item.mensaje}</p>
 

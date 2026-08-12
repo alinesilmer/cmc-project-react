@@ -1,0 +1,572 @@
+@use "@/app/styles/all.scss" as *;
+
+// Reportes y Estadísticas. La comparte el panel del Colegio y la vista del
+// médico: son la misma lectura con distinto alcance, así que no tiene sentido
+// mantener dos hojas que tienen que verse igual.
+
+// Cantos vivos, igual que el resto de las pantallas nuevas.
+$radius: 0;
+
+.page {
+  display: flex;
+  min-height: 100vh;
+
+  @media (max-width: $breakpoint-md) {
+    min-height: 100dvh;
+  }
+
+  @media (max-width: 768px) {
+    display: block;
+  }
+}
+
+.content {
+  flex: 1;
+  // Sin esto las tablas anchas estiran el item flex y aparece scroll horizontal
+  // en toda la página en vez de dentro de la tabla.
+  min-width: 0;
+  padding: $spacing-10;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-8;
+  background: linear-gradient(180deg, #f9fbff 0%, #f5f8fd 55%, #eef3fa 100%);
+
+  @media (max-width: 1200px) {
+    padding: $spacing-8;
+    gap: $spacing-6;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-5;
+  }
+
+  @media (max-width: 480px) {
+    padding: $spacing-4;
+  }
+}
+
+// ─── Cabecera ─────────────────────────────────────────────────────────────────
+
+.head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: $spacing-4;
+}
+
+.title {
+  margin: 0;
+  font-family: "Manrope", "Inter", sans-serif;
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  color: $primary-blue-darker;
+  letter-spacing: -0.015em;
+}
+
+.subtitle {
+  margin: $spacing-1 0 0;
+  font-size: $font-size-base;
+  color: $gray-500;
+}
+
+.controls {
+  display: flex;
+  align-items: flex-end;
+  gap: $spacing-3;
+  flex-wrap: wrap;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+}
+
+.label {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: $gray-500;
+}
+
+.input,
+.select {
+  height: 38px;
+  padding: 0 $spacing-3;
+  border: 1px solid $gray-300;
+  border-radius: $radius;
+  background: $white;
+  font-family: inherit;
+  font-size: $font-size-base;
+  color: $gray-900;
+
+  &:focus {
+    outline: none;
+    border-color: $accent-blue;
+    box-shadow: 0 0 0 3px rgba(90, 121, 225, 0.16);
+  }
+}
+
+// ─── KPIs ─────────────────────────────────────────────────────────────────────
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: $spacing-4;
+}
+
+.kpi {
+  padding: $spacing-5;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-top: 3px solid $primary-blue;
+  border-radius: $radius;
+}
+
+.kpiAccentGold { border-top-color: #c8a83c; }
+.kpiAccentBlue { border-top-color: $accent-blue; }
+.kpiAccentGreen { border-top-color: $success-green; }
+
+.kpiLabel {
+  display: block;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: $gray-500;
+}
+
+.kpiValue {
+  display: block;
+  margin-top: $spacing-2;
+  font-family: "Manrope", "Inter", sans-serif;
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  line-height: 1.1;
+  // Los importes largos no deben desarmar la grilla.
+  overflow-wrap: anywhere;
+}
+
+.kpiHint {
+  display: block;
+  margin-top: $spacing-1;
+  font-size: $font-size-sm;
+  color: $gray-400;
+}
+
+// ─── Tarjetas / secciones ─────────────────────────────────────────────────────
+
+.card {
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radius;
+  padding: $spacing-6;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  min-width: 0;
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-4;
+  }
+}
+
+.cardHead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: $spacing-4;
+  flex-wrap: wrap;
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
+  color: $primary-blue-darker;
+}
+
+.cardSub {
+  margin: $spacing-1 0 0;
+  font-size: $font-size-sm;
+  color: $gray-500;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+  gap: $spacing-6;
+  align-items: start;
+
+  @media (max-width: $breakpoint-md) {
+    gap: $spacing-4;
+  }
+}
+
+// ─── Tablas ───────────────────────────────────────────────────────────────────
+
+.tableWrap {
+  // El scroll vive DENTRO de la tabla: la página nunca se mueve de costado.
+  overflow-x: auto;
+  min-width: 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: $font-size-sm;
+  white-space: nowrap;
+
+  th,
+  td {
+    padding: $spacing-3 $spacing-3;
+    text-align: left;
+    border-bottom: 1px solid $gray-200;
+  }
+
+  th {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: $gray-500;
+    background: $gray-50;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  tbody tr:hover {
+    background: rgba(90, 121, 225, 0.05);
+  }
+}
+
+.num {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+}
+
+/** Celda con el nombre: es la única que puede cortar para no ensanchar todo. */
+.nombre {
+  white-space: normal;
+  min-width: 12rem;
+  max-width: 22rem;
+}
+
+.rowBtn {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: $primary-blue-lighter;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.rank {
+  display: inline-grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  color: $gray-500;
+  background: $gray-100;
+}
+
+.rankTop {
+  color: $primary-blue-darker;
+  background: $primary-yellow-light;
+}
+
+// ─── Chips de estado ──────────────────────────────────────────────────────────
+
+.chip {
+  display: inline-block;
+  padding: 2px $spacing-2;
+  border-radius: $radius;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+}
+
+.chipAutorizada { background: #e6f4ea; color: #14682f; }
+.chipRechazada { background: #fdeaea; color: #a51f1f; }
+.chipPendiente { background: #fdf3e0; color: #8a5b06; }
+.chipCargada { background: $secondary-blue; color: $primary-blue-darker; }
+.chipNeutro { background: $gray-100; color: $gray-500; }
+
+// ─── Gráficos ─────────────────────────────────────────────────────────────────
+
+.chart {
+  width: 100%;
+  // Alto fijo: Recharts necesita una altura concreta para el contenedor
+  // responsive, si no colapsa a 0.
+  height: 17rem;
+
+  @media (max-width: $breakpoint-md) {
+    height: 14rem;
+  }
+}
+
+.tooltip {
+  background: $white;
+  border: 1px solid $gray-300;
+  padding: $spacing-3;
+  font-size: $font-size-sm;
+  box-shadow: $shadow-md;
+}
+
+.tooltipTitle {
+  margin: 0 0 $spacing-1;
+  font-weight: $font-weight-semibold;
+  color: $gray-900;
+}
+
+.tooltipRow {
+  margin: 0;
+  color: $gray-600;
+}
+
+// ─── Estados ──────────────────────────────────────────────────────────────────
+
+.skeleton {
+  height: 4.6rem;
+  background: linear-gradient(90deg, $gray-100 25%, $gray-200 37%, $gray-100 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: 0 0; }
+}
+
+.empty {
+  padding: $spacing-8;
+  text-align: center;
+  font-size: $font-size-sm;
+  color: $gray-500;
+  border: 1px dashed $gray-300;
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-4;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: $font-size-sm;
+}
+
+// ─── Paginación ───────────────────────────────────────────────────────────────
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+  flex-wrap: wrap;
+}
+
+.pagerInfo {
+  font-size: $font-size-sm;
+  color: $gray-500;
+}
+
+.pagerBtns {
+  display: flex;
+  gap: $spacing-2;
+}
+
+.pageBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  height: 34px;
+  padding: 0 $spacing-3;
+  border: 1px solid $gray-300;
+  border-radius: $radius;
+  background: $white;
+  font-size: $font-size-sm;
+  color: $gray-700;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: $gray-100;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+// ─── Panel embebido en el legajo del médico ───────────────────────────────────
+// No trae `.page` ni `.content`: vive dentro de la pestaña del perfil, que ya
+// pone su propio fondo y su padding.
+
+.medicoPanel {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-5;
+  min-width: 0;
+}
+
+// ─── Selector de reporte ──────────────────────────────────────────────────────
+
+.tabs {
+  display: flex;
+  gap: $spacing-2;
+  flex-wrap: wrap;
+  padding-bottom: $spacing-1;
+
+  @media (max-width: $breakpoint-md) {
+    // En pantallas chicas la fila scrollea de costado en vez de envolverse:
+    // así el grupo se lee como una sola barra de opciones.
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  flex-shrink: 0;
+  height: 40px;
+  padding: 0 $spacing-4;
+  border: 1px solid $gray-200;
+  border-radius: $radius;
+  background: $white;
+  font-family: inherit;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  color: $gray-600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    background: $gray-50;
+    color: $gray-900;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(90, 121, 225, 0.2);
+  }
+}
+
+.tabOn {
+  background: $primary-blue;
+  border-color: $primary-blue;
+  color: $white;
+  font-weight: $font-weight-semibold;
+
+  &:hover {
+    background: $primary-blue-lighter;
+    color: $white;
+  }
+}
+
+// ─── Buscador ─────────────────────────────────────────────────────────────────
+
+.searchBox {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: $spacing-3;
+  color: $gray-400;
+  pointer-events: none;
+}
+
+.searchInput {
+  height: 38px;
+  width: 100%;
+  min-width: 12rem;
+  padding: 0 2rem 0 2.1rem;
+  border: 1px solid $gray-300;
+  border-radius: $radius;
+  background: $white;
+  font-family: inherit;
+  font-size: $font-size-base;
+  color: $gray-900;
+
+  &:focus {
+    outline: none;
+    border-color: $accent-blue;
+    box-shadow: 0 0 0 3px rgba(90, 121, 225, 0.16);
+  }
+
+  // Chrome dibuja su propia X en los input[type=search]; se usa la nuestra.
+  &::-webkit-search-cancel-button {
+    appearance: none;
+  }
+}
+
+.searchClear {
+  position: absolute;
+  right: $spacing-2;
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  background: none;
+  padding: 2px;
+  color: $gray-400;
+  cursor: pointer;
+
+  &:hover {
+    color: $gray-700;
+  }
+}
+
+.exportBtns {
+  display: flex;
+  gap: $spacing-2;
+}
+
+// ─── Filtro activo (drill-down) ───────────────────────────────────────────────
+
+.filtroActivo {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-2 $spacing-3;
+  background: $secondary-blue;
+  border: 1px solid rgba(90, 121, 225, 0.3);
+  font-size: $font-size-sm;
+  color: $primary-blue-darker;
+}
+
+.filtroQuitar {
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.7;
+
+  &:hover {
+    opacity: 1;
+  }
+}

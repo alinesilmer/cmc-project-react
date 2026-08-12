@@ -1,12 +1,6 @@
 import type ExcelJS from "exceljs";
-import type { ObraSocial, Prestador, ExportOptions } from "./types";
-import {
-  fmtDate, safeStr, buildOsCode,
-  pickNroPrestador, pickNombre, pickMatriculaProv,
-  pickTelefonoConsulta, pickEspecialidad,
-  pickDomicilioConsulta, pickMailParticular,
-  pickCuit, pickCodigoPostal,
-} from "./helpers";
+import type { ObraSocial, ExportRow, ExportField } from "./types";
+import { fmtDate, safeStr, buildOsCode } from "./helpers";
 import {
   CMC_NAME, CMC_PHONE, CMC_EMAIL, CMC_LOGO_SRC,
   fetchAsDataUrl,
@@ -31,39 +25,13 @@ const CELL_BORDER = {
   top: BORDER(), bottom: BORDER(), left: BORDER(), right: BORDER(),
 };
 
-type ColSpec = { header: string; key: string; width: number };
-
-function buildColSpecs(opts: ExportOptions): ColSpec[] {
-  const cols: ColSpec[] = [
-    { header: "N° Socio",              key: "nro",  width: 13 },
-    { header: "Prestador",             key: "nom",  width: 44 },
-    { header: "Matrícula Prov.",       key: "mat",  width: 16 },
-    { header: "Teléfono consultorio",  key: "tel",  width: 22 },
-  ];
-  if (opts.includeCuit)
-    cols.push({ header: "CUIT",        key: "cuit", width: 20 });
-  cols.push({ header: "Especialidades",          key: "esp",  width: 36 });
-  cols.push({ header: "Dirección consultorio",   key: "dom",  width: 52 });
-  if (opts.includeEmail)
-    cols.push({ header: "Correo electrónico",    key: "mail", width: 38 });
-  if (opts.includeCP)
-    cols.push({ header: "CP",                   key: "cp",   width: 10 });
-  return cols;
+/** El peso del catálogo es adimensional; acá se traduce a caracteres de Excel. */
+function anchoDe(campo: ExportField): number {
+  return Math.round(Math.min(56, Math.max(10, campo.weight * 1.5 + 6)));
 }
 
-function pickCellValue(p: Prestador, key: string): string {
-  switch (key) {
-    case "nro":  return safeStr(pickNroPrestador(p)) || "—";
-    case "nom":  return safeStr(pickNombre(p)) || "—";
-    case "mat":  return safeStr(pickMatriculaProv(p)) || "—";
-    case "tel":  return safeStr(pickTelefonoConsulta(p)) || "—";
-    case "cuit": return safeStr(pickCuit(p)) || "—";
-    case "esp":  return safeStr(pickEspecialidad(p)) || "—";
-    case "dom":  return safeStr(pickDomicilioConsulta(p)) || "—";
-    case "mail": return safeStr(pickMailParticular(p)) || "—";
-    case "cp":   return safeStr(pickCodigoPostal(p)) || "—";
-    default:     return "—";
-  }
+function pickCellValue(row: ExportRow, campo: ExportField): string {
+  return safeStr(campo.get(row)).trim() || "—";
 }
 
 // Column letter from 1-based index (1=A, 2=B, …)
@@ -97,16 +65,15 @@ function tryAddLogoImage(wb: ExcelJS.Workbook, dataUrl: string | null): number |
 const HEADER_ROWS = 8; 
 
 export async function buildExcel(
-  rows: Prestador[],
+  rows: ExportRow[],
   selectedOS: ObraSocial,
-  opts: ExportOptions
+  cols: ExportField[]
 ): Promise<Blob> {
   const ExcelJS = (await import("exceljs")).default;
 
   const logoDataUrl = await fetchAsDataUrl(CMC_LOGO_SRC);
   const code = buildOsCode(selectedOS);
   const dateStr = fmtDate(new Date());
-  const cols = buildColSpecs(opts);
   const NCOLS = cols.length;
   const lastColLetter = colLetter(NCOLS);
 
@@ -121,7 +88,7 @@ export async function buildExcel(
     },
   });
 
-  ws.columns = cols.map(c => ({ key: c.key, width: c.width }));
+  ws.columns = cols.map(c => ({ key: c.key, width: anchoDe(c) }));
 
   // ── Row 1: top accent bar ────────────────────────────────────────────────
   ws.getRow(1).height = 4;
@@ -168,7 +135,7 @@ export async function buildExcel(
   hRow.height = 20;
   cols.forEach((col, i) => {
     const cell = hRow.getCell(i + 1);
-    cell.value = col.header;
+    cell.value = col.label;
     cell.font = { name: "Calibri", size: 9, bold: true, color: { argb: C.headerText } };
     cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: C.headerBg } };
     cell.alignment = { vertical: "middle", horizontal: "center", wrapText: false };
@@ -176,14 +143,15 @@ export async function buildExcel(
   });
 
   // ── Data rows ────────────────────────────────────────────────────────────
-  const leftAlignKeys = new Set(["nom", "esp", "dom", "mail"]);
   rows.forEach((p, idx) => {
-    const values = cols.map(c => pickCellValue(p, c.key));
+    const values = cols.map(c => pickCellValue(p, c));
     const row = ws.addRow(values);
     row.height = 16;
     const isAlt = idx % 2 !== 0;
     row.eachCell((cell, colIdx) => {
-      const key = cols[colIdx - 1]?.key ?? "";
+      // La alineación la define el catálogo: el texto largo va a la izquierda
+      // y se ajusta, los códigos y fechas van centrados en una sola línea.
+      const alaIzquierda = cols[colIdx - 1]?.align === "left";
       cell.fill = {
         type: "pattern", pattern: "solid",
         fgColor: { argb: isAlt ? C.altRow : C.white },
@@ -192,8 +160,8 @@ export async function buildExcel(
       cell.font = { name: "Calibri", size: 9 };
       cell.alignment = {
         vertical: "middle",
-        horizontal: leftAlignKeys.has(key) ? "left" : "center",
-        wrapText: leftAlignKeys.has(key),
+        horizontal: alaIzquierda ? "left" : "center",
+        wrapText: alaIzquierda,
       };
     });
   });

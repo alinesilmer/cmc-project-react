@@ -231,6 +231,61 @@
   border-left: 1px solid rgba($gray-200, 0.9);
 }
 
+// ── Usuario logueado ─────────────────────────────────────────────────────────────
+// Identifica la sesión activa, que en equipos compartidos (mostrador del Colegio)
+// es la diferencia entre facturar a nombre propio o del socio anterior.
+.userChip {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  height: 38px;
+  padding: 0 $spacing-2;
+  min-width: 0; // permite que .userName recorte en vez de empujar la barra
+}
+
+.userAvatar {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: $primary-blue;
+  color: $white;
+  font-size: 0.7rem;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.02em;
+}
+
+.userName {
+  font-size: 0.875rem;
+  font-weight: $font-weight-semibold;
+  color: $gray-700;
+  // Los nombres del padrón son largos ("APELLIDO NOMBRE SEGUNDO"): se recortan
+  // para que la barra no se desarme. El completo queda en el title.
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.drawerUser {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  min-width: 0;
+}
+
+.drawerUserName {
+  font-size: 0.9rem;
+  font-weight: $font-weight-semibold;
+  color: $gray-800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .authButton {
   display: inline-flex;
   align-items: center;
@@ -387,6 +442,9 @@
   .right { margin-left: auto; border-left: none; padding-left: 0; }
   .authText { display: none; }
   .authButton { padding: 0 $spacing-3; }
+  // Sin la barra de menú el espacio es para el hamburguesa: el nombre completo
+  // pasa a la cabecera del drawer y acá queda sólo el avatar con las iniciales.
+  .userName { display: none; }
 }
 
 @media (max-width: 480px) {

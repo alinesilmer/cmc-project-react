@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  BookOpen,
   ChevronLeft,
   ChevronRight,
   Gift,
+  MapPin,
   Pencil,
   Plus,
   Search,
   Trash2,
 } from "lucide-react";
 
+import escudoCMC from "../../assets/escudoCMC.png";
 import ActionModal from "../../components/molecules/ActionModal/ActionModal";
 import Button from "../../components/atoms/Button/Button";
 import {
@@ -22,9 +25,7 @@ import {
   COLOR_PRESETS,
   EMPTY_BENEFICIO_FORM,
   beneficioToForm,
-  estaVencido,
   formToPayload,
-  formatFecha,
   validateBeneficioForm,
 } from "./beneficios.types";
 import type {
@@ -32,6 +33,7 @@ import type {
   BeneficioFormData,
   BeneficioFormErrors,
 } from "./beneficios.types";
+import { abrirRevista } from "./revista";
 import s from "./BeneficiosPage.module.scss";
 
 const PAGE_SIZE = 20;
@@ -112,6 +114,19 @@ export default function BeneficiosPage() {
   useEffect(() => {
     setPage(1);
   }, [searchTerm, categoriaFilter]);
+
+  // ── Revista imprimible ─────────────────────────────────────────────────────
+  // Se genera con TODOS los beneficios activos, no con el filtro de pantalla:
+  // la revista es material institucional, no un recorte de la búsqueda actual.
+  const handleRevista = () => {
+    // En about:blank las rutas relativas no resuelven; el logo va absoluto.
+    const logo = new URL(escudoCMC, window.location.origin).href;
+    if (!abrirRevista(items, logo)) {
+      setLoadError(
+        "El navegador bloqueó la ventana emergente. Permitila para generar la revista."
+      );
+    }
+  };
 
   // ── Modal helpers ──────────────────────────────────────────────────────────
   const openCreate = () => {
@@ -205,6 +220,20 @@ export default function BeneficiosPage() {
           </div>
         </div>
         <div className={s.headerActions}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleRevista}
+            disabled={activos === 0}
+            title={
+              activos === 0
+                ? "No hay beneficios activos para publicar"
+                : `Generar la revista con ${activos} beneficio${activos === 1 ? "" : "s"}`
+            }
+          >
+            <BookOpen size={16} />
+            Generar revista
+          </Button>
           <Button variant="secondary" size="sm" onClick={openCreate}>
             <Plus size={16} />
             Nuevo beneficio
@@ -261,87 +290,67 @@ export default function BeneficiosPage() {
             </p>
           </div>
         ) : (
-          <table className={s.table}>
-            <thead>
-              <tr>
-                <th>Título</th>
-                <th>Categoría</th>
-                <th>Descuento</th>
-                <th>Ubicación</th>
-                <th>Vigencia</th>
-                <th>Estado</th>
-                <th className={s.actionsCol}>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginated.map((item) => (
-                <tr key={item.id}>
-                  <td>
-                    <div className={s.nameCell}>
-                      <span
-                        className={s.colorBar}
-                        style={{
-                          backgroundColor: item.color ?? "transparent",
-                          borderColor: item.color ? item.color : undefined,
-                        }}
-                        aria-hidden="true"
-                        title={item.color ? `Acento ${item.color}` : "Sin color"}
-                      />
-                      <span className={s.nameText}>
-                        <span className={s.itemTitle}>{item.titulo}</span>
-                        <span className={s.itemDesc}>{item.descripcion}</span>
-                      </span>
-                    </div>
-                  </td>
-                  <td>
-                    <span className={s.categoryChip}>{item.categoria}</span>
-                  </td>
-                  <td className={s.discountCell}>{item.descuento ?? "—"}</td>
-                  <td className={s.mutedCell}>{item.ubicacion ?? "—"}</td>
-                  <td className={s.mutedCell}>
-                    {formatFecha(item.vigencia_hasta)}
-                    {item.activo && estaVencido(item) && (
-                      <span className={s.expiredHint} title="Sigue visible en la app: desactivalo para ocultarlo">
-                        vencido
-                      </span>
-                    )}
-                  </td>
-                  <td>
-                    <span
-                      className={`${s.badge} ${item.activo ? s.badgeOn : s.badgeOff}`}
-                    >
-                      {item.activo ? "Activo" : "Inactivo"}
+          <div className={s.cardGrid}>
+            {paginated.map((item) => (
+              <article key={item.id} className={s.benefitCard}>
+                {/* Franja del color elegido: identifica el beneficio de un
+                    vistazo, igual que en la app del socio. */}
+                <span
+                  className={s.cardAccent}
+                  style={{ backgroundColor: item.color ?? "transparent" }}
+                  aria-hidden="true"
+                />
+
+                <div className={s.cardTop}>
+                  <span className={s.categoryChip}>{item.categoria}</span>
+                  <span
+                    className={`${s.badge} ${item.activo ? s.badgeOn : s.badgeOff}`}
+                  >
+                    {item.activo ? "Activo" : "Inactivo"}
+                  </span>
+                </div>
+
+                <h3 className={s.cardTitle}>{item.titulo}</h3>
+                <p className={s.cardDesc}>{item.descripcion}</p>
+
+                <div className={s.cardMeta}>
+                  {item.descuento && (
+                    <span className={s.cardDiscount}>{item.descuento}</span>
+                  )}
+                  {item.ubicacion && (
+                    <span className={s.cardPlace}>
+                      <MapPin size={13} aria-hidden="true" />
+                      {item.ubicacion}
                     </span>
-                  </td>
-                  <td className={s.actionsCol}>
-                    <div className={s.actions}>
-                      <button
-                        type="button"
-                        className={s.iconBtn}
-                        onClick={() => openEdit(item)}
-                        title="Editar"
-                        aria-label={`Editar ${item.titulo}`}
-                      >
-                        <Pencil size={15} />
-                      </button>
-                      <button
-                        type="button"
-                        className={`${s.iconBtn} ${s.iconBtnDanger}`}
-                        onClick={() => {
-                          setDeleteError(null);
-                          setDeleting(item);
-                        }}
-                        title="Eliminar"
-                        aria-label={`Eliminar ${item.titulo}`}
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  )}
+                </div>
+
+                <div className={s.cardActions}>
+                  <button
+                    type="button"
+                    className={s.iconBtn}
+                    onClick={() => openEdit(item)}
+                    title="Editar"
+                    aria-label={`Editar ${item.titulo}`}
+                  >
+                    <Pencil size={15} />
+                  </button>
+                  <button
+                    type="button"
+                    className={`${s.iconBtn} ${s.iconBtnDanger}`}
+                    onClick={() => {
+                      setDeleteError(null);
+                      setDeleting(item);
+                    }}
+                    title="Eliminar"
+                    aria-label={`Eliminar ${item.titulo}`}
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
         )}
       </div>
 
@@ -470,19 +479,6 @@ export default function BeneficiosPage() {
               <FieldError msg={formErrors.ubicacion} />
             </div>
 
-            <div className={s.field}>
-              <label className={s.label} htmlFor="ben-vigencia">
-                Vigente hasta
-              </label>
-              <input
-                id="ben-vigencia"
-                type="date"
-                className={`${s.input} ${formErrors.vigencia_hasta ? s.inputError : ""}`}
-                value={formData.vigencia_hasta}
-                onChange={(e) => setField("vigencia_hasta", e.target.value)}
-              />
-              <FieldError msg={formErrors.vigencia_hasta} />
-            </div>
           </div>
 
           <div className={s.field}>

@@ -489,3 +489,21 @@
   color: $danger-red;
   font-weight: $font-weight-medium;
 }
+
+/* ── Formulario completo (solicitudes con varios campos) ────────────────────
+   Una fila por campo, con el mismo "actual → propuesto" que ya se usaba para
+   la solicitud de un solo dato. */
+.cambiosLista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.avisoAplica {
+  margin: 0.2rem 0 0;
+  font-size: 0.78rem;
+  color: #8a5b06;
+  background: #fdf3e0;
+  border: 1px solid #f5d9a8;
+  padding: 0.45rem 0.7rem;
+}

@@ -1,10 +1,21 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import NoticiaCard from "../../components/Noticias/NoticiaCard/NoticiaCard";
+
+import ListadoContenido from "../../components/Contenido/ListadoContenido/ListadoContenido";
+import type { ListadoTextos } from "../../components/Contenido/ListadoContenido/ListadoContenido";
 import PageHero from "../../components/UI/Hero/Hero";
 import { listCourses } from "../../lib/news.client";
 import type { Noticia } from "../../types";
-import styles from "./cursoscap.module.scss";
+
+const TEXTOS: ListadoTextos = {
+  singular: "curso",
+  plural: "cursos",
+  buscarPlaceholder: "Buscar cursos por título, autor o tema…",
+  cargando: "Cargando cursos...",
+  vacio: "No hay cursos publicados en este momento.",
+  sinResultados: "Ningún curso coincide con tu búsqueda.",
+  verTodos: "Ver todos los cursos",
+};
 
 export default function CursosPage() {
   const [items, setItems] = useState<Noticia[]>([]);
@@ -13,7 +24,9 @@ export default function CursosPage() {
 
   useEffect(() => {
     document.title = "Cursos y Capacitaciones | Colegio Médico de Corrientes";
-    return () => { document.title = "Colegio Médico de Corrientes"; };
+    return () => {
+      document.title = "Colegio Médico de Corrientes";
+    };
   }, []);
 
   useEffect(() => {
@@ -23,7 +36,7 @@ export default function CursosPage() {
   const cargar = async () => {
     try {
       setLoading(true);
-      const data = await listCourses(); // ✅ sólo "Curso"
+      const data = await listCourses(); // sólo tipo "Curso"
       const normalized = data.map((n: any) => ({
         ...n,
         fechaCreacion: n.fecha_creacion ?? n.fechaCreacion ?? null,
@@ -45,27 +58,12 @@ export default function CursosPage() {
         subtitle="Formación y actualización profesional del Colegio Médico de Corrientes"
         backgroundImage="https://res.cloudinary.com/dcfkgepmp/image/upload/q_auto/f_auto/v1775665371/heroImg_fus7an.png"
       />
-      <main className={styles.noticiasPage}>
-        <div className={styles.container}>
-          {loading ? (
-            <div className={styles.loading}>Cargando cursos...</div>
-          ) : items.length === 0 ? (
-            <div className={styles.empty}>
-              <p>No hay cursos publicados en este momento.</p>
-            </div>
-          ) : (
-            <div className={styles.grid}>
-              {items.map((curso) => (
-                <NoticiaCard
-                  key={curso.id}
-                  noticia={curso}
-                  onClick={() => navigate(`/cursos/${curso.id}`)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </main>
+      <ListadoContenido
+        items={items}
+        loading={loading}
+        textos={TEXTOS}
+        onSelect={(id) => navigate(`/cursos/${id}`)}
+      />
     </div>
   );
 }

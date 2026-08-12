@@ -4,16 +4,29 @@ import { AnimatePresence } from "framer-motion";
 
 // Structural components are always needed for the panel shell → keep eager.
 import RequireAuth from "./app/auth/RequireAuth";
+import MedicoRouteGuard from "./app/auth/MedicoRouteGuard";
 import AppLayout from "./app/components/molecules/AppLayout/AppLayout";
+import { useAuth } from "./app/auth/AuthProvider";
+import { isMedico } from "./app/auth/roles";
 
 // Pages are lazy-loaded (route-level code splitting) so each route ships its own
 // chunk instead of bloating the main bundle.
 const DashboardPage = lazy(() => import("./app/pages/Dashboard/Dashboard"));
+const InicioMedico = lazy(() => import("./app/pages/InicioMedico/InicioMedico"));
+const MiPerfil = lazy(() => import("./app/pages/MiPerfil/MiPerfil"));
+// Reportes carga Recharts, que pesa: va lazy para no meterlo en el bundle de
+// quienes nunca abren la pantalla.
+const ReportesPage = lazy(() => import("./app/pages/Reportes/ReportesPage"));
+const MisReportes = lazy(() => import("./app/pages/Reportes/MisReportes"));
 const DoctorsPage = lazy(() => import("./app/pages/DoctorsList/DoctorsList"));
 const SocialWorksPage = lazy(() => import("./app/pages/SocialWorkSection/SocialWorkSection"));
 const DoctorProfilePage = lazy(() => import("./app/pages/DoctorProfilePage/DoctorProfilePage"));
 const PadronIoscor = lazy(() => import("./app/pages/PadronIoscor/PadronIoscor"));
 const UsersList = lazy(() => import("./app/pages/UsersList/UsersList"));
+// Control de calidad del padrón: sólo lectura, señala legajos con problemas.
+const AuditoriaPadron = lazy(
+  () => import("./app/pages/UsersList/AuditoriaPadron"),
+);
 const RegisterSocio = lazy(() => import("./app/pages/RegisterSocio/RegisterSocio"));
 const PermissionsManager = lazy(() => import("./app/pages/PermissionsManager/PermissionsManager"));
 const UsersManagerDashboard = lazy(() => import("./app/pages/UsersManagerDashboard/UsersManagerDashboard"));
@@ -78,6 +91,12 @@ const ImportarPreciosPdf = lazy(() => import("./app/pages/NomencladorNacional/Im
 const ImportarGalenos = lazy(() => import("./app/pages/NomencladorNacional/ImportarGalenos/ImportarGalenos"));
 const AumentoPorcentual = lazy(() => import("./app/pages/NomencladorNacional/AumentoPorcentual/AumentoPorcentual"));
 
+/** /panel/dashboard: el socio ve su portal, el personal el tablero de siempre. */
+function InicioRoute() {
+  const { user } = useAuth();
+  return isMedico(user) ? <InicioMedico /> : <DashboardPage />;
+}
+
 export default function RootRoutes() {
   return (
     <AnimatePresence mode="wait">
@@ -98,7 +117,21 @@ export default function RootRoutes() {
             <Route path="/panel" element={<AppLayout />}>
               <Route index element={<Navigate to="/panel/dashboard" replace />} />
 
-              <Route path="dashboard" element={<DashboardPage />} />
+              {/* Los usuarios médicos solo alcanzan las rutas de MEDICO_ALLOWED_PATHS. */}
+              <Route element={<MedicoRouteGuard />}>
+              <Route path="dashboard" element={<InicioRoute />} />
+              <Route path="mi-perfil" element={<MiPerfil />} />
+              {/* Reportes del Colegio: además de esta ruta, el backend exige
+                  `facturas:ver` — el guard de acá es sólo comodidad de UI. */}
+              <Route path="reportes" element={<ReportesPage />} />
+              {/* Versión del socio: sólo sus propios números. */}
+              <Route path="mis-numeros" element={<MisReportes />} />
+
+              {/* TEMPORAL — preview del portal del socio desde una cuenta admin.
+                  /panel/dashboard elige por rol, así que el Inicio del médico no
+                  es alcanzable de otro modo. Borrar junto con VISTA_MEDICO_MENU
+                  (Topbar.tsx) cuando estén los permisos reales. */}
+              <Route path="preview/inicio-medico" element={<InicioMedico />} />
               <Route path="doctors" element={<DoctorsPage />} />
               <Route path="doctors/:id" element={<DoctorProfilePage />} />
               <Route path="social-works" element={<SocialWorksPage />} />
@@ -143,6 +176,7 @@ export default function RootRoutes() {
 
               <Route path="padron-ioscor" element={<PadronIoscor />} />
               <Route path="users" element={<UsersList />} />
+              <Route path="users/auditoria" element={<AuditoriaPadron />} />
               <Route path="register-socio" element={<RegisterSocio />} />
               <Route path="admin/permissions" element={<PermissionsManager />} />
               <Route path="users-manager" element={<UsersManagerDashboard />} />
@@ -203,6 +237,7 @@ export default function RootRoutes() {
                 path="*"
                 element={<Navigate to="/panel/dashboard" replace />}
               />
+              </Route>
             </Route>
 
             <Route path="/panel/admin-padrones" element={<AdminPadrones />} />

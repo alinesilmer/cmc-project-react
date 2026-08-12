@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactElement,
@@ -15,10 +16,12 @@ import {
   PencilRuler, ShieldUser, Monitor, Receipt, CalendarDays,
   LogOut, CircleUserRound, ChevronDown, Menu, X, Layers,
   Smartphone, Gift, Inbox, Megaphone, ShieldCheck, ExternalLink, FileUp,
+  BarChart3,
 } from "lucide-react";
 
 import styles from "./Topbar.module.scss";
 import { useAuth } from "../../../auth/AuthProvider";
+import { isMedico } from "../../../auth/roles";
 import RequirePermission from "../../../auth/RequirePermission";
 import { PERMS } from "../../../auth/scopes";
 import Logo from "../../../assets/logoCMC.png";
@@ -67,8 +70,26 @@ const VALIDACIONES_MENU: Extract<TopEntry, { kind: "menu" }> = {
   ],
 };
 
+// TEMPORAL — atajos para revisar el portal del socio desde una cuenta admin.
+// Sin permisos reales todavía, es la única forma de ver estas pantallas sin un
+// login 'D'. Borrar esta constante, su uso en TOP_NAV y la ruta
+// /panel/preview/inicio-medico (routes.tsx) cuando estén los permisos.
+const VISTA_MEDICO_MENU: Extract<TopEntry, { kind: "menu" }> = {
+  kind: "menu", id: "vista-medico", icon: CircleUserRound, label: "Vista médico",
+  columns: [
+    {
+      items: [
+        { path: `${base}/preview/inicio-medico`, icon: Home, label: "Inicio del médico" },
+        { path: `${base}/nomenclador/consulta-precios`, icon: DollarSign, label: "Consulta de Precios" },
+        { path: `${base}/mi-perfil`, icon: CircleUserRound, label: "Mi perfil (solo lectura)" },
+      ],
+    },
+  ],
+};
+
 const TOP_NAV: TopEntry[] = [
   { kind: "link", path: `${base}/dashboard`, icon: Home, label: "Inicio" },
+  VISTA_MEDICO_MENU,
   VALIDACIONES_MENU,
   {
     kind: "menu", id: "facturacion", icon: Receipt, label: "Facturación",
@@ -136,6 +157,12 @@ const TOP_NAV: TopEntry[] = [
     ],
   },
   {
+    // Gatea con `facturas:ver`, el mismo scope que exige el backend: si el
+    // usuario no lo tiene, el enlace no aparece y la API igual lo rechazaría.
+    kind: "link", path: `${base}/reportes`, icon: BarChart3,
+    label: "Reportes", perms: ["facturas:ver"],
+  },
+  {
     kind: "menu", id: "auditoria", icon: Flower2, label: "Auditoría",
     columns: [
       {
@@ -164,7 +191,6 @@ const TOP_NAV: TopEntry[] = [
           { path: `${base}/nomenclador/codigos`, icon: FileCode2, label: "Catálogo Códigos CMC", perms: R },
           { path: `${base}/nomenclador/por-obra-social`, icon: Building2, label: "Por Obra Social", perms: R },
           { path: `${base}/nomenclador/consulta-valores`, icon: Search, label: "Consulta de Valores", perms: R },
-          { path: `${base}/nomenclador/consulta-precios`, icon: DollarSign, label: "Consulta de Precios", perms: R },
           { path: `${base}/nomenclador/importar-precios-pdf`, icon: FileText, label: "Importar Precios PDF", perms: R },
           { path: `${base}/nomenclador/aumento-porcentual`, icon: Percent, label: "Aumento Porcentual", perms: R },
           { path: `${base}/nomenclador/homologador`, icon: GitMerge, label: "Homologador", perms: R },
@@ -194,9 +220,14 @@ const TOP_NAV: TopEntry[] = [
   },
 ];
 
+// Nav del socio (INGRESAR = 'D'). Debe quedar alineado con MEDICO_ALLOWED_PATHS:
+// lo que no está acá tampoco es alcanzable por URL (ver MedicoRouteGuard).
 const DOCTOR_TOP_NAV: TopEntry[] = [
+  { kind: "link", path: `${base}/dashboard`, icon: Home, label: "Inicio" },
   VALIDACIONES_MENU,
   { kind: "link", path: `${base}/nomenclador/consulta-precios`, icon: DollarSign, label: "Consulta de Precios" },
+  { kind: "link", path: `${base}/mis-numeros`, icon: TrendingUp, label: "Mis números" },
+  { kind: "link", path: `${base}/mi-perfil`, icon: CircleUserRound, label: "Mi perfil" },
 ];
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
@@ -224,8 +255,7 @@ export default function Topbar() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-  const isDoctor = user?.ingresar === "D";
-  const nav = isDoctor ? DOCTOR_TOP_NAV : TOP_NAV;
+  const nav = isMedico(user) ? DOCTOR_TOP_NAV : TOP_NAV;
   const isAuthenticated = Boolean(user);
 
   const [openMenu, setOpenMenu] = useState<string | null>(null);
@@ -234,7 +264,20 @@ export default function Topbar() {
   const headerRef = useRef<HTMLElement>(null);
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const authLabel = isAuthenticated ? "Cerrar sesión" : "Iniciar sesión";
+  // El chip del usuario no cabe junto al menú en pantallas chicas: ahí el nombre
+  // se muestra en la cabecera del drawer (ver más abajo), no en la barra.
+  const userName = user?.nombre?.trim() ?? "";
+  const userInitials = useMemo(() => {
+    const partes = userName.split(/\s+/).filter(Boolean);
+    if (!partes.length) return "";
+    // Nombre y apellido; con una sola palabra alcanza su inicial.
+    return partes
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase() ?? "")
+      .join("");
+  }, [userName]);
+
+  const authLabel = isAuthenticated ? "Salir" : "Iniciar sesión";
   const AuthIcon = isAuthenticated ? LogOut : CircleUserRound;
 
   // Close menus on navigation.
@@ -421,6 +464,15 @@ export default function Topbar() {
         </nav>
 
         <div className={styles.right}>
+          {isAuthenticated && userName && (
+            <div className={styles.userChip} title={userName}>
+              <span className={styles.userAvatar} aria-hidden="true">
+                {userInitials}
+              </span>
+              <span className={styles.userName}>{userName}</span>
+            </div>
+          )}
+
           <button
             type="button"
             className={styles.authButton}
@@ -453,7 +505,16 @@ export default function Topbar() {
       />
       <aside className={`${styles.drawer} ${mobileOpen ? styles.drawerOpen : ""}`} aria-label="Menú">
         <div className={styles.drawerHead}>
-          <span className={styles.brandText}>Menú</span>
+          {isAuthenticated && userName ? (
+            <div className={styles.drawerUser}>
+              <span className={styles.userAvatar} aria-hidden="true">
+                {userInitials}
+              </span>
+              <span className={styles.drawerUserName}>{userName}</span>
+            </div>
+          ) : (
+            <span className={styles.brandText}>Menú</span>
+          )}
           <button type="button" className={styles.drawerClose} onClick={() => setMobileOpen(false)} aria-label="Cerrar">
             <X size={18} />
           </button>

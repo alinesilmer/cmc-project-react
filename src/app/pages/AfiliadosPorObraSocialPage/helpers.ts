@@ -79,6 +79,41 @@ export function pickCodigoPostal(p: Prestador): string {
   return safeStr(p.codigo_postal ?? "");
 }
 
+/** Prestador inactivo en el padrón de esa obra social (MARCA = "N").
+ *
+ *  Es distinto de la baja del Colegio (`listado_medico.EXISTE`): un médico
+ *  puede seguir siendo socio y estar de baja en una obra social puntual. Este
+ *  es el estado que define si figura en ese padrón. */
+export function esInactivoEnPadron(p: { marca?: string | null }): boolean {
+  return safeStr(p.marca).trim().toUpperCase() === "N";
+}
+
+/** ISO (YYYY-MM-DD) → DD/MM/AAAA, sin construir un Date.
+ *
+ *  Nada de `new Date(iso)`: sobre una fecha sin hora el navegador asume UTC y
+ *  al formatearla en horario argentino resta un día. La base además guarda
+ *  `0000-00-00` en los registros sin cargar. */
+export function fmtFechaCorta(v: unknown): string {
+  const s = safeStr(v).slice(0, 10);
+  if (!s || s.startsWith("0000")) return "";
+  const [y, m, d] = s.split("-");
+  return y && m && d ? `${d}/${m}/${y}` : "";
+}
+
+/** Años cumplidos desde una fecha ISO, o `null` si no hay fecha usable. */
+export function aniosDesde(v: unknown): number | null {
+  const s = safeStr(v).slice(0, 10);
+  if (!s || s.startsWith("0000")) return null;
+  const [y, m, d] = s.split("-").map(Number);
+  if (!y || !m || !d) return null;
+  const hoy = new Date();
+  let anios = hoy.getFullYear() - y;
+  // Descuenta el año en curso si todavía no llegó el aniversario.
+  const mesActual = hoy.getMonth() + 1;
+  if (mesActual < m || (mesActual === m && hoy.getDate() < d)) anios -= 1;
+  return anios >= 0 && anios < 130 ? anios : null;
+}
+
 export function coerceToStringArray(v: unknown): string[] {
   if (!v) return [];
   if (Array.isArray(v)) return (v as unknown[]).map((x) => safeStr(x));
@@ -128,13 +163,3 @@ export function pickEspecialidad(p: Prestador): string {
   return pickEspecialidadesList(p).slice(0, 3).join(", ");
 }
 
-export function shouldShowMailForOS(os: ObraSocial | null): boolean {
-  const name = safeStr(os?.NOMBRE);
-  if (!name) return false;
-  const n = normalize(name);
-  return (
-    n.includes("unne") ||
-    n.includes("swiss medical") ||
-    n.includes("swissmedical")
-  );
-}

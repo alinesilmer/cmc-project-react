@@ -3,23 +3,22 @@ import {
   useMemo, useRef, useState,
 } from "react";
 import axios from "axios";
-import { saveAs } from "@/app/lib/fileSaver";
 import {
   Building2, ChevronDown, FileSpreadsheet,
-  FileText, Search, X,
+  FileText, Search, SlidersHorizontal, X,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import type { ObraSocial, ExportingPdfMode, ExportOptions } from "./types";
+import type { ObraSocial, Prestador } from "./types";
 import {
-  normalize, safeStr, buildOsCode,
+  normalize, safeStr, buildOsCode, esInactivoEnPadron,
   pickEspecialidadesAll, pickNroPrestador, pickNombre,
   pickMatriculaProv, pickTelefonoConsulta,
-  shouldShowMailForOS, fmtDate,
 } from "./helpers";
-import { fetchObrasSociales, fetchPrestadoresAllPages, enrichForPdf } from "./api";
-import { buildSimplePdf, buildPdfByEspecialidad } from "./pdfBuilder";
-import { buildExcel } from "./excelBuilder";
+import { fetchObrasSociales, fetchPrestadoresAllPages } from "./api";
+import { useExportFields } from "./useExportFields";
+import { useExportar } from "./useExportar";
+import ExportFieldsModal from "./ExportFieldsModal";
 import AfiliadosPorObraSocialTable from "./AfiliadosPorObraSocialTable";
 import styles from "./AfiliadosPorObraSocialPage.module.scss";
 import Button from "../../components/atoms/Button/Button";
@@ -32,7 +31,7 @@ const AfiliadosPorObraSocialPage = () => {
   const [errorObras, setErrorObras] = useState<string | null>(null);
 
   const [selectedOS, setSelectedOS] = useState<ObraSocial | null>(null);
-  const [prestadores, setPrestadores] = useState([]);
+  const [prestadores, setPrestadores] = useState<Prestador[]>([]);
   const [loadingPrestadores, setLoadingPrestadores] = useState(false);
   const [errorPrestadores, setErrorPrestadores] = useState<string | null>(null);
 
@@ -44,12 +43,7 @@ const AfiliadosPorObraSocialPage = () => {
   const [osDropdownOpen, setOsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
-  const [exportingPdf, setExportingPdf] = useState<ExportingPdfMode>(null);
-  const pdfAbortRef = useRef<AbortController | null>(null);
-
-  const [exportOptions, setExportOptions] = useState<ExportOptions>({
-    includeEmail: false, includeCuit: false, includeCP: false,
-  });
+  const [camposOpen, setCamposOpen] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -94,7 +88,7 @@ const AfiliadosPorObraSocialPage = () => {
       try {
         setLoadingPrestadores(true); setErrorPrestadores(null); setTableQuery("");
         const rows = await fetchPrestadoresAllPages(selectedOS.NRO_OBRA_SOCIAL, ctrl.signal);
-        if (!ctrl.signal.aborted) setPrestadores(rows as any);
+        if (!ctrl.signal.aborted) setPrestadores(rows);
       } catch (e: any) {
         if (ctrl.signal.aborted) return;
         let extra = "";
@@ -105,13 +99,6 @@ const AfiliadosPorObraSocialPage = () => {
     })();
     return () => ctrl.abort();
   }, [selectedOS?.NRO_OBRA_SOCIAL]);
-
-  // Auto-enable email column for OS types that typically include mail data
-  useEffect(() => {
-    if (shouldShowMailForOS(selectedOS)) setExportOptions(p => ({ ...p, includeEmail: true }));
-  }, [selectedOS]);
-
-  useEffect(() => () => { pdfAbortRef.current?.abort(); }, []);
 
   const filteredOS = useMemo(() => {
     const q = normalize(deferredOsQuery);
@@ -128,10 +115,19 @@ const AfiliadosPorObraSocialPage = () => {
     return Math.max(0, obras.length - filteredOS.length);
   }, [deferredOsQuery, filteredOS.length, obras.length]);
 
+  // Los inactivos de este padrón se descartan una sola vez, acá: de este
+  // arreglo salen la tabla, el buscador, los contadores y las exportaciones,
+  // así que no hay forma de que un inactivo se cuele en el PDF o el Excel.
+  const activos = useMemo(
+    () => prestadores.filter((p) => !esInactivoEnPadron(p)),
+    [prestadores]
+  );
+  const ocultosInactivos = prestadores.length - activos.length;
+
   const filteredPrestadores = useMemo(() => {
     const q = normalize(deferredTableQuery);
-    if (!q) return prestadores;
-    return (prestadores as any[]).filter((p) => {
+    if (!q) return activos;
+    return activos.filter((p) => {
       const nro = normalize(safeStr(pickNroPrestador(p)));
       const nom = normalize(safeStr(pickNombre(p)));
       const mat = normalize(safeStr(pickMatriculaProv(p)));
@@ -139,72 +135,28 @@ const AfiliadosPorObraSocialPage = () => {
       const esp = normalize(safeStr(pickEspecialidadesAll(p)));
       return nro.includes(q) || nom.includes(q) || mat.includes(q) || tel.includes(q) || esp.includes(q);
     });
-  }, [deferredTableQuery, prestadores]);
+  }, [activos, deferredTableQuery]);
 
-  const selectedCode = selectedOS ? buildOsCode(selectedOS) : "";
-  const canExport = !!selectedOS && !loadingPrestadores && exportingPdf === null && filteredPrestadores.length > 0;
+  const campos = useExportFields();
+  const exportar = useExportar({
+    selectedOS,
+    rows: filteredPrestadores,
+    campos: campos.seleccionados,
+    necesitaFicha: campos.necesitaFicha,
+  });
 
-  const runPdfExport = useCallback(async (
-    mode: "pdf" | "pdf_by_especialidad",
-    buildFn: (rows: any, os: ObraSocial, opts: ExportOptions, sig: AbortSignal) => Promise<Blob>,
-    filename: string,
-    errMsg: string
-  ) => {
-    if (!selectedOS || !canExport) return;
-    pdfAbortRef.current?.abort();
-    const ctrl = new AbortController();
-    pdfAbortRef.current = ctrl;
-    setExportingPdf(mode);
-    try {
-      const enriched = await enrichForPdf(filteredPrestadores as any, exportOptions, ctrl.signal);
-      if (ctrl.signal.aborted) return;
-      const blob = await buildFn(enriched, selectedOS, exportOptions, ctrl.signal);
-      if (ctrl.signal.aborted) return;
-      saveAs(blob, filename);
-    } catch (e: any) {
-      if (ctrl.signal.aborted) return;
-      console.error(e); window.alert(errMsg);
-    } finally {
-      if (pdfAbortRef.current === ctrl) pdfAbortRef.current = null;
-      setExportingPdf(null);
-    }
-  }, [selectedOS, canExport, filteredPrestadores, exportOptions]);
-
-  const handleDownloadPdf = useCallback(() => runPdfExport(
-    "pdf", buildSimplePdf,
-    `prestadores_${selectedCode}_${fmtDate(new Date())}.pdf`,
-    "No se pudo generar el PDF. Probá filtrar más o exportar Excel."
-  ), [runPdfExport, selectedCode]);
-
-  const handleDownloadPdfByEsp = useCallback(() => runPdfExport(
-    "pdf_by_especialidad", buildPdfByEspecialidad,
-    `prestadores_${selectedCode}_por_especialidad_${fmtDate(new Date())}.pdf`,
-    "No se pudo generar el PDF por especialidad."
-  ), [runPdfExport, selectedCode]);
-
-  const handleDownloadExcel = useCallback(async () => {
-    if (!selectedOS || filteredPrestadores.length === 0) { window.alert("No hay datos para exportar."); return; }
-    try {
-      const ctrl = new AbortController();
-      const enriched = await enrichForPdf(filteredPrestadores as any, exportOptions, ctrl.signal);
-      const blob = await buildExcel(enriched, selectedOS, exportOptions);
-      saveAs(blob, `prestadores_${selectedCode}_${fmtDate(new Date())}.xlsx`);
-    } catch (e) { console.error(e); window.alert("Error al generar Excel."); }
-  }, [selectedOS, filteredPrestadores, selectedCode, exportOptions]);
+  const canExport =
+    !!selectedOS && !loadingPrestadores && !exportar.ocupado &&
+    filteredPrestadores.length > 0;
 
   const selectOS = useCallback((os: ObraSocial) => {
     setSelectedOS(os); setOsQuery(""); setOsDropdownOpen(false);
   }, []);
 
   const clearOS = useCallback(() => {
-    pdfAbortRef.current?.abort();
     setSelectedOS(null); setPrestadores([]); setErrorPrestadores(null);
-    setTableQuery(""); setOsQuery(""); setOsDropdownOpen(false); setExportingPdf(null);
+    setTableQuery(""); setOsQuery(""); setOsDropdownOpen(false);
   }, []);
-
-  const setOpt = useCallback((key: keyof ExportOptions) =>
-    (e: React.ChangeEvent<HTMLInputElement>) =>
-      setExportOptions(p => ({ ...p, [key]: e.target.checked })), []);
 
   return (
     <div className={styles.container}>
@@ -270,24 +222,61 @@ const AfiliadosPorObraSocialPage = () => {
 
               <div className={styles.actionsPanel}>
                 <div className={styles.actions}>
-                  <Button size="md" variant="danger" onClick={handleDownloadPdf} disabled={!canExport}>
-                    <FileText size={18} /><span>{exportingPdf === "pdf" ? "Generando…" : "Descargar PDF"}</span>
+                  <Button size="md" variant="danger" onClick={exportar.descargarPdf} disabled={!canExport}>
+                    <FileText size={18} /><span>{exportar.exportingPdf === "pdf" ? "Generando…" : "Descargar PDF"}</span>
                   </Button>
-                  <Button size="md" variant="third" onClick={handleDownloadPdfByEsp} disabled={!canExport}>
-                    <FileText size={18} /><span>{exportingPdf === "pdf_by_especialidad" ? "Generando…" : "PDF por especialidad"}</span>
+                  <Button size="md" variant="third" onClick={exportar.descargarPdfPorEspecialidad} disabled={!canExport}>
+                    <FileText size={18} /><span>{exportar.exportingPdf === "pdf_by_especialidad" ? "Generando…" : "PDF por especialidad"}</span>
                   </Button>
-                  <Button size="md" variant="success" onClick={handleDownloadExcel} disabled={!canExport}>
-                    <FileSpreadsheet size={18} /><span>Descargar Excel</span>
+                  <Button size="md" variant="success" onClick={exportar.descargarExcel} disabled={!canExport}>
+                    <FileSpreadsheet size={18} /><span>{exportar.exportingExcel ? "Generando…" : "Descargar Excel"}</span>
                   </Button>
                 </div>
-                <div className={styles.exportOptions}>
-                  <span className={styles.exportOptionsLabel}>Incluir en exportación:</span>
-                  <label className={styles.exportToggle}><input type="checkbox" checked={exportOptions.includeEmail} onChange={setOpt("includeEmail")} /> Email</label>
-                  <label className={styles.exportToggle}><input type="checkbox" checked={exportOptions.includeCuit} onChange={setOpt("includeCuit")} /> CUIT</label>
-                  <label className={styles.exportToggle}><input type="checkbox" checked={exportOptions.includeCP} onChange={setOpt("includeCP")} /> CP</label>
-                </div>
+
+                {/* Un botón con el resumen a la vista: se sabe qué va a salir en
+                    el archivo sin abrir nada. */}
+                <button
+                  type="button"
+                  className={styles.camposBtn}
+                  onClick={() => setCamposOpen(true)}
+                >
+                  <SlidersHorizontal size={15} aria-hidden="true" />
+                  <span className={styles.camposBtnText}>
+                    Datos a incluir
+                    <b>{campos.seleccionados.length}</b>
+                  </span>
+                  {campos.sensibles > 0 && (
+                    <span className={styles.camposWarn}>
+                      {campos.sensibles} personal{campos.sensibles === 1 ? "" : "es"}
+                    </span>
+                  )}
+                </button>
               </div>
             </div>
+
+            {exportar.error && (
+              <div className={styles.errorMessage} role="alert">
+                {exportar.error}
+                <button
+                  type="button"
+                  className={styles.errorClose}
+                  onClick={exportar.limpiarError}
+                  aria-label="Cerrar aviso"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+            )}
+
+            {/* El padrón crudo trae altas y bajas mezcladas; si no se dijera,
+                el total de la pantalla no coincidiría con el de la obra social. */}
+            {selectedOS && !loadingPrestadores && ocultosInactivos > 0 && (
+              <p className={styles.inactivosHint}>
+                {ocultosInactivos === 1
+                  ? "1 prestador inactivo en este padrón no se muestra ni se exporta."
+                  : `${ocultosInactivos} prestadores inactivos en este padrón no se muestran ni se exportan.`}
+              </p>
+            )}
 
             {selectedOS && (
               <div className={styles.searchWrapper}>
@@ -314,15 +303,25 @@ const AfiliadosPorObraSocialPage = () => {
               <div className={styles.errorMessage}>{errorPrestadores}</div>
             ) : (
               <AfiliadosPorObraSocialTable
-                rows={filteredPrestadores as any}
+                rows={filteredPrestadores}
                 tableQuery={tableQuery}
-                totalCount={(prestadores as any[]).length}
+                totalCount={activos.length}
                 onNavigate={goToPrestador}
               />
             )}
           </div>
         </section>
       </div>
+
+      <ExportFieldsModal
+        open={camposOpen}
+        onClose={() => setCamposOpen(false)}
+        keys={campos.keys}
+        sensibles={campos.sensibles}
+        necesitaFicha={campos.necesitaFicha}
+        onToggle={campos.alternar}
+        onToggleGroup={campos.alternarGrupo}
+      />
     </div>
   );
 };

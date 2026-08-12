@@ -1,0 +1,568 @@
+@use "@/app/styles/all.scss" as *;
+
+// Portal del socio. Hoja propia (antes reusaba Dashboard.module.scss): el Inicio
+// del médico dejó de ser un tablero de accesos para ser una vidriera —hero corto,
+// beneficios, convenios, tutoriales— y forzar las dos cosas en la misma hoja
+// obligaba a que cada cambio de una vigilara a la otra.
+
+// Radio único de la pantalla: cantos vivos. Reemplaza a $border-radius-* (que va
+// de 0.34rem a 0.9rem) y a las píldoras de 999px de los badges. Se toca acá y
+// cambia toda la página — no repartir radios sueltos por las reglas de abajo.
+$radius-sharp: 0;
+
+// Mismo shell y misma escala de padding que el resto del panel (ver
+// Dashboard.module.scss): el portal del socio no debe encuadrar distinto que
+// las pantallas que tiene al lado.
+.page {
+  display: flex;
+  min-height: 100vh;
+
+  @media (max-width: $breakpoint-md) {
+    min-height: 100dvh;
+  }
+
+  @media (max-width: 768px) {
+    display: block;
+  }
+}
+
+.content {
+  flex: 1;
+  // Sin esto el item flex toma `min-width: auto` = su ancho min-content, y la
+  // tira de logos (`width: max-content`) lo estira más allá del viewport: el
+  // `overflow: hidden` del contenedor no descuenta esa contribución. Mismo
+  // motivo por el que AppLayout lo pone en su <main>.
+  min-width: 0;
+  padding: $spacing-10;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-12;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(90, 121, 225, 0.1), transparent 26%),
+    radial-gradient(circle at 88% 14%, rgba(23, 63, 112, 0.07), transparent 24%),
+    linear-gradient(180deg, #f9fbff 0%, #f5f8fd 54%, #eef3fa 100%);
+
+  @media (max-width: 1200px) {
+    padding: $spacing-8;
+    gap: $spacing-10;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-5;
+    gap: $spacing-8;
+  }
+
+  @media (max-width: 480px) {
+    padding: $spacing-4;
+  }
+}
+
+// ─── Hero ─────────────────────────────────────────────────────────────────────
+// Deliberadamente bajo: es un saludo y dos botones, no una portada. Todo lo que
+// el socio viene a hacer vive más abajo, así que el hero no debe empujarlo fuera
+// de pantalla.
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: $radius-sharp;
+  padding: $spacing-10 $spacing-12;
+  color: $white;
+  background:
+    linear-gradient(120deg, rgba(12, 42, 82, 0.94) 0%, rgba(23, 63, 112, 0.9) 46%, rgba(52, 85, 193, 0.82) 100%),
+    var(--hero-image) center / cover no-repeat;
+  box-shadow: $shadow-lg;
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-8 $spacing-6;
+  }
+}
+
+// Velo de trama para que el texto no se apoye directo sobre la foto.
+.heroGlow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 82% 18%, rgba(247, 233, 170, 0.22), transparent 42%),
+    radial-gradient(circle at 8% 92%, rgba(90, 121, 225, 0.28), transparent 46%);
+}
+
+.heroInner {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: $spacing-8;
+
+  @media (max-width: $breakpoint-md) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: $spacing-5;
+  }
+}
+
+.heroText {
+  max-width: 34rem;
+}
+
+.greeting {
+  margin: 0;
+  font-family: "Manrope", "Inter", sans-serif;
+  font-size: $font-size-4xl;
+  font-weight: $font-weight-bold;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+
+.heroSub {
+  margin: $spacing-3 0 0;
+  font-size: $font-size-lg;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.84);
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-3;
+  margin-top: $spacing-6;
+}
+
+.heroBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-3 $spacing-5;
+  border-radius: $radius-sharp;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  text-decoration: none;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+}
+
+.heroBtnPrimary {
+  background: $primary-yellow;
+  color: $primary-blue-darker;
+  box-shadow: 0 6px 16px rgba(247, 233, 170, 0.28);
+
+  &:hover {
+    background: $primary-yellow-light;
+  }
+}
+
+.heroBtnGhost {
+  background: rgba(255, 255, 255, 0.12);
+  color: $white;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+
+// ─── Section chrome ───────────────────────────────────────────────────────────
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-5;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: $spacing-4;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-family: "Manrope", "Inter", sans-serif;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: $primary-blue-darker;
+  letter-spacing: -0.01em;
+}
+
+.sectionSub {
+  margin: $spacing-1 0 0;
+  font-size: $font-size-base;
+  color: $gray-500;
+}
+
+.sectionLink {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $primary-blue-lighter;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// ─── Accesos ──────────────────────────────────────────────────────────────────
+
+.accessGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: $spacing-4;
+}
+
+.accessCard {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  height: 100%;
+  padding: $spacing-5;
+  border-radius: $radius-sharp;
+  background: $white;
+  border: 1px solid $gray-200;
+  text-decoration: none;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: $shadow-lg;
+    border-color: rgba(90, 121, 225, 0.4);
+  }
+}
+
+.accessIcon {
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: $radius-sharp;
+  color: $white;
+}
+
+.accentDarkblue { background: linear-gradient(140deg, $primary-blue-darker, $primary-blue); }
+.accentBlue     { background: linear-gradient(140deg, $primary-blue, $accent-blue); }
+.accentAmber    { background: linear-gradient(140deg, #b4801f, $warning-orange); }
+.accentGold     { background: linear-gradient(140deg, #8a7420, #c8a83c); }
+
+.accessTitle {
+  margin: 0;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $gray-900;
+}
+
+.accessDesc {
+  margin: 0;
+  flex: 1;
+  font-size: $font-size-sm;
+  line-height: 1.5;
+  color: $gray-500;
+}
+
+.accessArrow {
+  color: $primary-blue-lighter;
+  align-self: flex-end;
+}
+
+// ─── Beneficios ───────────────────────────────────────────────────────────────
+
+.benefitGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: $spacing-4;
+}
+
+.benefitCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  padding: $spacing-5;
+  border-radius: $radius-sharp;
+  background: $white;
+  border: 1px solid $gray-200;
+  // El acento lo pinta cada beneficio con su `color` guardado en la BD.
+  border-top: 3px solid var(--benefit-accent, #{$accent-blue});
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: $shadow-lg;
+  }
+}
+
+.benefitTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $spacing-3;
+}
+
+.benefitCategoria {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: $gray-400;
+}
+
+.benefitDescuento {
+  flex-shrink: 0;
+  padding: $spacing-1 $spacing-3;
+  border-radius: $radius-sharp;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  color: $white;
+  background: var(--benefit-accent, #{$accent-blue});
+}
+
+.benefitTitle {
+  margin: 0;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $gray-900;
+  line-height: 1.35;
+}
+
+.benefitDesc {
+  margin: 0;
+  flex: 1;
+  font-size: $font-size-sm;
+  line-height: 1.5;
+  color: $gray-500;
+  // Descripción libre y larga en la BD: se recorta para que la grilla no se
+  // desalinee por una tarjeta con cuatro párrafos.
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.benefitFoot {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-size: $font-size-sm;
+  color: $gray-500;
+}
+
+// ─── Convenios (tira de logos) ────────────────────────────────────────────────
+
+.logoStrip {
+  position: relative;
+  overflow: hidden;
+  padding: $spacing-5 0;
+  border-radius: $radius-sharp;
+  background: $white;
+  border: 1px solid $gray-200;
+
+  // Difumina los bordes para que la tira no "corte" los logos de golpe.
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 4rem;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  &::before {
+    left: 0;
+    background: linear-gradient(90deg, $white, transparent);
+  }
+
+  &::after {
+    right: 0;
+    background: linear-gradient(270deg, $white, transparent);
+  }
+}
+
+.logoTrack {
+  display: flex;
+  align-items: center;
+  gap: $spacing-12;
+  width: max-content;
+  animation: logoScroll 42s linear infinite;
+
+  .logoStrip:hover & {
+    animation-play-state: paused;
+  }
+
+  // Respeta a quien pidió menos movimiento: se queda quieta y se puede scrollear.
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    width: 100%;
+    overflow-x: auto;
+    justify-content: flex-start;
+  }
+}
+
+.logoItem {
+  flex-shrink: 0;
+  height: 2.5rem;
+  width: auto;
+  object-fit: contain;
+  filter: grayscale(1);
+  opacity: 0.62;
+  transition: filter 0.2s ease, opacity 0.2s ease;
+
+  &:hover {
+    filter: grayscale(0);
+    opacity: 1;
+  }
+}
+
+@keyframes logoScroll {
+  from { transform: translateX(0); }
+  // -50%: la pista lleva la lista duplicada, así el salto es invisible.
+  to   { transform: translateX(-50%); }
+}
+
+// ─── Tutoriales (placeholder) ─────────────────────────────────────────────────
+
+.tutorialGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: $spacing-4;
+}
+
+.tutorialCard {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  padding: $spacing-5;
+  border-radius: $radius-sharp;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px dashed $gray-300;
+}
+
+.tutorialThumb {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 9;
+  border-radius: $radius-sharp;
+  background: linear-gradient(140deg, $secondary-blue, #dbe6fb);
+  color: $primary-blue-lighter;
+}
+
+.tutorialTitle {
+  margin: 0;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $gray-700;
+}
+
+.tutorialMeta {
+  margin: 0;
+  font-size: $font-size-sm;
+  color: $gray-400;
+}
+
+.soonBadge {
+  align-self: flex-start;
+  padding: $spacing-1 $spacing-3;
+  border-radius: $radius-sharp;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: $primary-yellow-dark;
+  background: $primary-yellow-light;
+}
+
+// ─── Soporte ──────────────────────────────────────────────────────────────────
+
+.supportCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-6;
+  padding: $spacing-6 $spacing-8;
+  border-radius: $radius-sharp;
+  background: linear-gradient(120deg, $secondary-blue, #eef4ff);
+  border: 1px solid rgba(90, 121, 225, 0.24);
+
+  @media (max-width: $breakpoint-md) {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: $spacing-5;
+  }
+}
+
+.supportTitle {
+  margin: 0;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
+  color: $primary-blue-darker;
+}
+
+.supportDesc {
+  margin: $spacing-1 0 0;
+  font-size: $font-size-sm;
+  color: $gray-600;
+}
+
+.supportBtn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-3 $spacing-5;
+  border-radius: $radius-sharp;
+  background: $primary-blue;
+  color: $white;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  text-decoration: none;
+  transition: background 0.16s ease, transform 0.16s ease;
+
+  &:hover {
+    background: $primary-blue-lighter;
+    transform: translateY(-1px);
+  }
+}
+
+// ─── Estados ──────────────────────────────────────────────────────────────────
+
+.skeletonGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: $spacing-4;
+}
+
+.skeleton {
+  height: 9.5rem;
+  border-radius: $radius-sharp;
+  background: linear-gradient(90deg, $gray-100 25%, $gray-200 37%, $gray-100 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes shimmer {
+  from { background-position: 100% 0; }
+  to   { background-position: 0 0; }
+}
+
+.empty {
+  padding: $spacing-8;
+  border-radius: $radius-sharp;
+  border: 1px dashed $gray-300;
+  background: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  font-size: $font-size-sm;
+  color: $gray-500;
+}
