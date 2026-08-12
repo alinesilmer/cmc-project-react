@@ -16,6 +16,12 @@ export const getBeneficios = (params?: {
   limit?: number;
 }): Promise<Beneficio[]> => getJSON<Beneficio[]>(`${BASE}/`, params);
 
+/** GET /api/beneficios/vigentes — activos y no vencidos.
+ *  A diferencia del resto del módulo NO pide `beneficios:gestionar`: es la
+ *  lectura que consume el portal del socio (Inicio médico). */
+export const getBeneficiosVigentes = (limit?: number): Promise<Beneficio[]> =>
+  getJSON<Beneficio[]>(`${BASE}/vigentes`, limit ? { limit } : undefined);
+
 /** GET /api/beneficios/categorias — catálogo fijo que pobla el select. */
 export const getCategorias = (): Promise<string[]> =>
   getJSON<string[]>(`${BASE}/categorias`);

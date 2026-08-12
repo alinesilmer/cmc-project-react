@@ -11,9 +11,11 @@ const money = new Intl.NumberFormat("es-AR", {
   maximumFractionDigits: 2,
 });
 
+// Todo Valor tiene siempre los 3 conceptos (Honorarios/Gastos/Ayudante) y todos
+// suman al precio_total: no existen componentes opcionales.
 function findComp(componentes: TablaValorItem["componentes"], concepto: string) {
   return componentes.find(
-    (c) => c.concepto.toLowerCase() === concepto.toLowerCase() && !c.opcional,
+    (c) => c.concepto.toLowerCase() === concepto.toLowerCase(),
   );
 }
 
@@ -31,8 +33,9 @@ function LedgerRow({ label, subtotal }: { label: string; subtotal: string }) {
 }
 
 /**
- * The "boleta de valores": código + descripción, gold vigencia seal, the
- * Honorarios value as the hero, and Gastos / Ayudante itemised below.
+ * The "boleta de valores": código + descripción, gold vigencia seal, and the
+ * three concepts (Honorarios / Gastos / Ayudante) itemised with the same
+ * weight — none of them is the headline, they are components of one value.
  * Pure presentation — receives an already-resolved TablaValorItem.
  */
 type ResultRegisterProps = {
@@ -47,7 +50,7 @@ function ResultRegister({ result, showVigencia = true, eligibility = null }: Res
   const honorarios = findComp(result.componentes, "Honorarios");
   const gastos = findComp(result.componentes, "Gastos");
   const ayudante = findComp(result.componentes, "Ayudante");
-  const porPresupuesto = result.por_presupuesto === 1;
+  const porPresupuesto = Boolean(result.por_presupuesto);
 
   return (
     <article className={styles.register}>
@@ -95,20 +98,21 @@ function ResultRegister({ result, showVigencia = true, eligibility = null }: Res
 
       <div className={styles.regRuler} aria-hidden="true" />
 
-      <div className={styles.total}>
-        <span className={styles.totalLabel}>Valor Honorario</span>
-        {porPresupuesto ? (
-          <span className={`${styles.totalValue} ${styles.totalPresupuesto}`}>Por presupuesto</span>
-        ) : (
-          <span className={styles.totalValue}>
-            {honorarios ? money.format(parseFloat(honorarios.subtotal)) : "—"}
+      {porPresupuesto ? (
+        <div className={styles.total}>
+          <span className={styles.totalLabel}>Valor Honorario</span>
+          <span className={`${styles.totalValue} ${styles.totalPresupuesto}`}>
+            POR PRESUPUESTO
           </span>
-        )}
-      </div>
-
-      {!porPresupuesto && (gastos || ayudante) && (
+        </div>
+      ) : (
+        /* Los tres conceptos se listan igual. Antes Honorarios iba aparte como
+           bloque destacado, con tipografía enorme y fondo propio: eso lo hacía
+           parecer de otra naturaleza que Gastos y Ayudante, cuando los tres son
+           componentes del mismo valor. */
         <div className={styles.ledger}>
-          <div className={styles.ledgerCap}>Otros conceptos</div>
+          <div className={styles.ledgerCap}>Conceptos</div>
+          {honorarios && <LedgerRow label="Honorarios" subtotal={honorarios.subtotal} />}
           {gastos && <LedgerRow label="Gastos" subtotal={gastos.subtotal} />}
           {ayudante && <LedgerRow label="Ayudante" subtotal={ayudante.subtotal} />}
         </div>

@@ -1,0 +1,213 @@
+@use "@/app/styles/all.scss" as *;
+
+// Cantos vivos, igual que el portal del socio (InicioMedico.module.scss).
+$radius-sharp: 0;
+
+// Botón chiquito que va pegado a la etiqueta de cada dato en "Mi perfil".
+// Discreto a propósito: es una salida de emergencia, no una acción principal.
+.reportBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-left: $spacing-2;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: $gray-400;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  vertical-align: middle;
+  transition: color 0.15s ease;
+
+  &:hover,
+  &:focus-visible {
+    color: $warning-orange;
+    text-decoration: underline;
+  }
+}
+
+// El botón de cierre que trae rsuite es un aspa gris diminuta pegada al borde.
+// Se reestiliza en vez de reemplazarlo (como hace ActionModal con el suyo) para
+// no perder el `onClose` ni el manejo de foco que rsuite ya le cablea.
+// Va scopeado a este modal: `.modal` viaja al elemento .rs-modal, así que no
+// toca ningún otro diálogo de la app.
+.modal {
+  :global(.rs-modal-header) {
+    // Aire para que el aspa no se monte sobre el título.
+    padding-inline-end: 2.75rem;
+  }
+
+  :global(.rs-modal-header-close) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    top: $spacing-3;
+    inset-inline-end: $spacing-3;
+    width: 1.9rem;
+    height: 1.9rem;
+    padding: 0;
+    border: 1px solid rgba(204, 42, 42, 0.32);
+    border-radius: $radius-sharp;
+    background: rgba(204, 42, 42, 0.08);
+    color: $danger-red;
+    opacity: 1;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+    // rsuite pinta el aspa con un svg propio; heredar el color evita depender
+    // de si la versión usa fill o stroke.
+    svg {
+      width: 0.95rem;
+      height: 0.95rem;
+      fill: currentColor;
+    }
+
+    &:hover,
+    &:focus-visible {
+      background: $danger-red;
+      border-color: $danger-red;
+      color: $white;
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(204, 42, 42, 0.24);
+    }
+  }
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+.label {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-700;
+}
+
+.hint {
+  font-size: $font-size-xs;
+  color: $gray-500;
+}
+
+.current {
+  padding: $spacing-3 $spacing-4;
+  border-radius: $radius-sharp;
+  background: $gray-100;
+  border: 1px solid $gray-200;
+  font-size: $font-size-base;
+  color: $gray-700;
+  word-break: break-word;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  padding: $spacing-3 $spacing-4;
+  border-radius: $radius-sharp;
+  border: 1px solid $gray-300;
+  font-family: inherit;
+  font-size: $font-size-base;
+  color: $gray-900;
+  background: $white;
+
+  &:focus {
+    outline: none;
+    border-color: $accent-blue;
+    box-shadow: 0 0 0 3px rgba(90, 121, 225, 0.16);
+  }
+}
+
+.textarea {
+  min-height: 6rem;
+  resize: vertical;
+}
+
+.error {
+  font-size: $font-size-sm;
+  color: $danger-red;
+}
+
+.counter {
+  align-self: flex-end;
+  font-size: $font-size-xs;
+  color: $gray-400;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-3;
+  margin-top: $spacing-2;
+}
+
+// ─── Formulario completo ──────────────────────────────────────────────────────
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: $spacing-4;
+}
+
+/** Marca el campo tocado: de un vistazo se ve qué se está pidiendo cambiar. */
+.inputCambiado {
+  border-color: $warning-orange;
+  background: #fffbf2;
+}
+
+.restaurar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  margin-left: $spacing-2;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-normal;
+  color: $gray-500;
+  cursor: pointer;
+
+  &:hover {
+    color: $warning-orange;
+    text-decoration: underline;
+  }
+}
+
+.antes {
+  font-size: $font-size-xs;
+  color: $gray-500;
+}
+
+.resumen {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin: 0;
+  padding: $spacing-3 $spacing-4;
+  background: $gray-100;
+  border: 1px solid $gray-200;
+  border-radius: $radius-sharp;
+  font-size: $font-size-sm;
+  color: $gray-700;
+}
+
+.note {
+  padding: $spacing-3 $spacing-4;
+  border-radius: $radius-sharp;
+  background: $secondary-blue;
+  border: 1px solid rgba(90, 121, 225, 0.24);
+  font-size: $font-size-sm;
+  color: $primary-blue-darker;
+  line-height: 1.5;
+}

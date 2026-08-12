@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Pencil, Plus, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -13,6 +13,12 @@ import styles from "./DoctorProfilePage.module.scss";
 
 import RequirePermission from "../../auth/RequirePermission";
 import BackButton from "../../components/atoms/BackButton/BackButton";
+import ReportesMedico from "../Reportes/ReportesMedico";
+import Credencial from "./Credencial";
+import FormularioCambiosModal from "./FormularioCambiosModal";
+import ReportarCambioModal from "./ReportarCambioModal";
+import type { ReportTarget } from "./ReportarCambioModal";
+import reportStyles from "./ReportarCambioModal.module.scss";
 import type {
   DoctorProfile,
   DoctorDocument,
@@ -253,21 +259,90 @@ type TabKey =
   | "conceptos"
   | "especialidades"
   | "padrones"
+  | "credencial"
+  | "reportes"
   | "permisos";
 
 const DEFAULT_LABELS = [...ATTACH_KEYS, "otro"];
 
-const DoctorProfilePage: React.FC = () => {
+type DoctorProfilePageProps = {
+  /** Fija el legajo en vez de tomarlo de la URL (lo usa "Mi perfil"). */
+  medicoId?: number | string;
+  /** Oculta toda la UI de edición: alta/baja, adjuntos, especialidades y conceptos. */
+  readOnly?: boolean;
+};
+
+const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
+  medicoId: medicoIdProp,
+  readOnly = false,
+}) => {
   const { id } = useParams<{ id: string }>();
-  const medicoId = id!;
+  const medicoId = String(medicoIdProp ?? id);
   const nav = useNavigate();
   const notify = useNotify();
   const location = useLocation();
 
   const [tab, setTab] = useState<TabKey>("datos");
 
+  // En modo lectura el socio ve solo su legajo: "conceptos" (descuentos) y
+  // "padrones" son administrativos y sus controles mutan al tocarlos.
+  // "reportes" queda SÓLO del lado del Colegio: por ahora el médico no debe ver
+  // su facturación desde el legajo. La pestaña se saca de la vista de lectura,
+  // pero el panel (ReportesMedico) NO se borra — sigue funcionando para el
+  // Colegio y vuelve a habilitarse para el socio agregando "reportes" acá.
+  // "credencial" va en las dos vistas: el socio necesita la suya y el Colegio
+  // la consulta desde el legajo. No expone nada que el médico no vea ya.
+  const visibleTabs: TabKey[] = readOnly
+    ? ["datos", "documentos", "especialidades", "credencial"]
+    : [
+        "datos",
+        "documentos",
+        "especialidades",
+        "conceptos",
+        "padrones",
+        "credencial",
+        "reportes",
+      ];
+
   const [data, setData] = useState<DoctorProfileX | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Reclamo de corrección: sólo existe en modo lectura, que es como el socio ve
+  // su propio legajo. El admin no lo necesita — edita el dato directamente.
+  const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
+  // Formulario completo: el socio revisa todos sus datos editables de una.
+  const [formularioOpen, setFormularioOpen] = useState(false);
+
+  /** Botón "reportar" al lado de la etiqueta de un dato. `campo` es el valor que
+   *  viaja a la columna homónima, así que debe salir de CAMPOS_CONOCIDOS. */
+  function ReportarBtn({
+    campo,
+    label,
+    valorActual,
+  }: {
+    campo: string;
+    label: string;
+    valorActual?: unknown;
+  }) {
+    if (!readOnly) return null;
+    return (
+      <button
+        type="button"
+        className={reportStyles.reportBtn}
+        title={`Reportar que "${label}" está mal`}
+        onClick={() =>
+          setReportTarget({
+            campo,
+            label,
+            valorActual:
+              valorActual == null || valorActual === "" ? null : String(valorActual),
+          })
+        }
+      >
+        reportar
+      </button>
+    );
+  }
 
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -469,7 +544,7 @@ const DoctorProfilePage: React.FC = () => {
   }, [medicoId]);
 
   useEffect(() => {
-    if (tab !== "permisos") return;
+    if (tab !== "permisos" || readOnly) return;
     let alive = true;
     (async () => {
       setRbacLoading(true);
@@ -496,7 +571,7 @@ const DoctorProfilePage: React.FC = () => {
     return () => {
       alive = false;
     };
-  }, [tab, medicoId]);
+  }, [tab, medicoId, readOnly]);
 
   useEffect(() => {
     if (tab !== "especialidades") return;
@@ -869,6 +944,7 @@ const DoctorProfilePage: React.FC = () => {
                       </div>
                     </div>
 
+                    {!readOnly && (
                     <div className={styles.headerActions}>
                       <div
                         className={styles.toggleWrap}
@@ -913,12 +989,29 @@ const DoctorProfilePage: React.FC = () => {
                         &nbsp;Eliminar socio
                       </Button>
                     </div>
+                    )}
+
+                    {/* Salida general para lo que no tiene su propio "reportar"
+                        al lado (especialidades, padrón, cualquier otra cosa).
+                        Va en .headerActions —igual que los controles del admin—
+                        para que el `margin-left: auto` lo alinee al borde
+                        derecho en vez de dejarlo pegado al nombre. */}
+                    {readOnly && (
+                      <div className={styles.headerActions}>
+                        <Button
+                          variant="ghost"
+                          onClick={() => setFormularioOpen(true)}
+                          title="Revisar y corregir tus datos"
+                        >
+                          <Pencil size={16} />
+                          &nbsp;Corregir mis datos
+                        </Button>
+                      </div>
+                    )}
                   </div>
 
                   <div className={styles.tabs} id="doctor-tabs-root">
-                    {(
-                      ["datos", "documentos", "especialidades", "conceptos", "padrones"] as TabKey[]
-                    ).map((k) => (
+                    {visibleTabs.map((k) => (
                       <button
                         key={k}
                         className={`${styles.tab} ${
@@ -935,22 +1028,26 @@ const DoctorProfilePage: React.FC = () => {
                         )}
                       </button>
                     ))}
-                    <RequirePermission scope="rbac:gestionar">
-                      <button
-                        className={`${styles.tab} ${
-                          tab === "permisos" ? styles.tabActive : ""
-                        }`}
-                        onClick={() => setTab("permisos")}
-                      >
-                        Permisos
-                        {tab === "permisos" && (
-                          <motion.span
-                            layoutId="tab-underline"
-                            className={styles.tabUnderline}
-                          />
-                        )}
-                      </button>
-                    </RequirePermission>
+                    {/* Permisos es administración de RBAC, no parte del legajo: queda
+                        fuera de "Mi perfil" aunque el socio tenga rbac:gestionar. */}
+                    {!readOnly && (
+                      <RequirePermission scope="rbac:gestionar">
+                        <button
+                          className={`${styles.tab} ${
+                            tab === "permisos" ? styles.tabActive : ""
+                          }`}
+                          onClick={() => setTab("permisos")}
+                        >
+                          Permisos
+                          {tab === "permisos" && (
+                            <motion.span
+                              layoutId="tab-underline"
+                              className={styles.tabUnderline}
+                            />
+                          )}
+                        </button>
+                      </RequirePermission>
+                    )}
                   </div>
 
                   <AnimatePresence mode="wait">
@@ -962,6 +1059,7 @@ const DoctorProfilePage: React.FC = () => {
                         exit={{ opacity: 0, y: 8 }}
                         className={styles.tabBody}
                       >
+                        {!readOnly && (
                         <button
                           type="button"
                           className={styles.editPencil}
@@ -982,6 +1080,7 @@ const DoctorProfilePage: React.FC = () => {
                         >
                           <Pencil size={16} />
                         </button>
+                        )}
 
                         <h5 className={styles.section}>Datos personales</h5>
                         <div className={styles.infoGrid}>
@@ -1085,6 +1184,11 @@ const DoctorProfilePage: React.FC = () => {
                           <div>
                             <span className={styles.label}>
                               Domicilio particular
+                              <ReportarBtn
+                                campo="domicilio"
+                                label="Domicilio particular"
+                                valorActual={(data as any).domicilio_particular}
+                              />
                             </span>
                             {isEditing ? (
                               RText("domicilio_particular")
@@ -1095,7 +1199,14 @@ const DoctorProfilePage: React.FC = () => {
                             )}
                           </div>
                           <div>
-                            <span className={styles.label}>Tel. particular</span>
+                            <span className={styles.label}>
+                              Tel. particular
+                              <ReportarBtn
+                                campo="telefono"
+                                label="Tel. particular"
+                                valorActual={(data as any).tele_particular}
+                              />
+                            </span>
                             {isEditing ? (
                               RText("tele_particular")
                             ) : (
@@ -1105,6 +1216,11 @@ const DoctorProfilePage: React.FC = () => {
                           <div>
                             <span className={styles.label}>
                               Celular particular
+                              <ReportarBtn
+                                campo="telefono"
+                                label="Celular particular"
+                                valorActual={(data as any).celular_particular}
+                              />
                             </span>
                             {isEditing ? (
                               RText("celular_particular")
@@ -1118,6 +1234,11 @@ const DoctorProfilePage: React.FC = () => {
                           <div>
                             <span className={styles.label}>
                               E-mail particular
+                              <ReportarBtn
+                                campo="email"
+                                label="E-mail particular"
+                                valorActual={(data as any).mail_particular}
+                              />
                             </span>
                             {isEditing ? (
                               RText("mail_particular")
@@ -1210,6 +1331,11 @@ const DoctorProfilePage: React.FC = () => {
                           <div>
                             <span className={styles.label}>
                               Domicilio de consulta
+                              <ReportarBtn
+                                campo="domicilio"
+                                label="Domicilio de consulta"
+                                valorActual={(data as any).domicilio_consulta}
+                              />
                             </span>
                           </div>
                           <div>
@@ -1220,7 +1346,14 @@ const DoctorProfilePage: React.FC = () => {
                             )}
                           </div>
                           <div>
-                            <span className={styles.label}>Tel. consulta</span>
+                            <span className={styles.label}>
+                              Tel. consulta
+                              <ReportarBtn
+                                campo="telefono"
+                                label="Tel. consulta"
+                                valorActual={(data as any).telefono_consulta}
+                              />
+                            </span>
                             {isEditing ? (
                               RText("telefono_consulta")
                             ) : (
@@ -1396,6 +1529,7 @@ const DoctorProfilePage: React.FC = () => {
                             >
                               Descargar todo
                             </Button>
+                            {!readOnly && (
                             <Button
                               variant="ghost"
                               style={{ marginLeft: 8 }}
@@ -1409,6 +1543,7 @@ const DoctorProfilePage: React.FC = () => {
                               <Plus size={16} />
                               &nbsp;Agregar documento
                             </Button>
+                            )}
                           </div>
                         </div>
 
@@ -1442,6 +1577,7 @@ const DoctorProfilePage: React.FC = () => {
                                   >
                                     Descargar
                                   </Button>
+                                  {!readOnly && (
                                   <Button
                                     variant="ghost"
                                     size="sm"
@@ -1450,6 +1586,7 @@ const DoctorProfilePage: React.FC = () => {
                                   >
                                     Eliminar
                                   </Button>
+                                  )}
                                 </div>
                               </li>
                             ))}
@@ -1470,6 +1607,7 @@ const DoctorProfilePage: React.FC = () => {
                           <h5 className={styles.section}>
                             Especialidades adheridas
                           </h5>
+                          {!readOnly && (
                           <Button
                             variant="primary"
                             onClick={() => {
@@ -1483,6 +1621,7 @@ const DoctorProfilePage: React.FC = () => {
                             <Plus size={16} />
                             &nbsp;Agregar especialidad
                           </Button>
+                          )}
                         </div>
 
                         {espLoading && (
@@ -1504,14 +1643,14 @@ const DoctorProfilePage: React.FC = () => {
                                   <th>N° resolución</th>
                                   <th>Fecha resolución</th>
                                   <th>Adjunto</th>
-                                  <th style={{ width: 120 }}>Acciones</th>
+                                  {!readOnly && <th style={{ width: 120 }}>Acciones</th>}
                                 </tr>
                               </thead>
                               <tbody>
                                 {(especs || []).length === 0 ? (
                                   <tr>
                                     <td
-                                      colSpan={6}
+                                      colSpan={readOnly ? 5 : 6}
                                       className={styles.mutedCenter}
                                     >
                                       Sin especialidades asociadas.
@@ -1555,6 +1694,7 @@ const DoctorProfilePage: React.FC = () => {
                                             "—"
                                           )}
                                         </td>
+                                        {!readOnly && (
                                         <td>
                                           <Button
                                             size="sm"
@@ -1568,6 +1708,7 @@ const DoctorProfilePage: React.FC = () => {
                                             {removing ? "Quitando…" : "Quitar"}
                                           </Button>
                                         </td>
+                                        )}
                                       </tr>
                                     );
                                   })
@@ -1722,7 +1863,54 @@ const DoctorProfilePage: React.FC = () => {
                       </motion.div>
                     )}
 
-                    {tab === "permisos" && (
+                    {tab === "credencial" && data && (
+                      <motion.div
+                        key="tab-credencial"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 8 }}
+                        className={styles.tabBody}
+                      >
+                        <Credencial
+                          nombre={
+                            (data as any).apellido && (data as any).nombre_
+                              ? `${String((data as any).apellido).toUpperCase()} ${(data as any).nombre_}`
+                              : ((data as any).name ?? "")
+                          }
+                          sexo={(data as any).sexo}
+                          documento={(data as any).documento}
+                          // Primera especialidad adherida; si no tiene, no se muestra.
+                          especialidad={especs[0]?.nombre ?? null}
+                          activo={
+                            String((data as any).existe ?? "").toUpperCase() === "S"
+                          }
+                        />
+                      </motion.div>
+                    )}
+
+                    {/* `!readOnly` acompaña a la pestaña: aunque el botón ya no
+                        se dibuja en "Mi perfil", el panel tampoco se renderiza
+                        si `tab` llegara a valer "reportes" por otra vía. */}
+                    {tab === "reportes" && !readOnly && data && (
+                      <motion.div
+                        key="tab-reportes"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 8 }}
+                        className={styles.tabBody}
+                      >
+                        <ReportesMedico
+                          nroSocio={String((data as any).nro_socio ?? medicoId)}
+                          // En "Mi perfil" (readOnly) el socio consulta sus
+                          // propios endpoints, que sacan el nro del token. Desde
+                          // el legajo, el Colegio usa los suyos, que piden
+                          // `facturas:ver`.
+                          propio={readOnly}
+                        />
+                      </motion.div>
+                    )}
+
+                    {tab === "permisos" && !readOnly && (
                       <RequirePermission scope="rbac:gestionar">
                         <motion.div
                           key="rbac"
@@ -2138,6 +2326,16 @@ const DoctorProfilePage: React.FC = () => {
         </p>
         <p style={{ marginTop: 8 }}>¿Querés continuar?</p>
       </ActionModal>
+
+      <ReportarCambioModal
+        target={reportTarget}
+        onClose={() => setReportTarget(null)}
+      />
+
+      <FormularioCambiosModal
+        open={formularioOpen}
+        onClose={() => setFormularioOpen(false)}
+      />
     </div>
   );
 };

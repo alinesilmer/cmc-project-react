@@ -1,0 +1,227 @@
+@use "@/app/styles/all.scss" as *;
+
+// Credencial profesional del socio.
+//
+// Replica la tarjeta de la app móvil para que el médico vea lo mismo en los dos
+// lados. Reemplaza en pantalla al PDF de `credencial_pdf.php` del sistema viejo
+// (FPDF, descarga directa), que mostraba los mismos datos con otra estética.
+
+$navy:      #14315C;
+$navy-alto: #0D2447;
+$dorado:    #F2E2A8;
+$verde:     #34C77B;
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-4;
+  max-width: 38rem;
+  margin: 0 auto;
+}
+
+// ─── Tarjeta ──────────────────────────────────────────────────────────────────
+
+.card {
+  position: relative;
+  width: 100%;
+  padding: $spacing-5 $spacing-6 $spacing-6;
+  background: linear-gradient(160deg, $navy 0%, $navy-alto 100%);
+  border-radius: 16px;
+  color: $white;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(13, 36, 71, 0.28);
+}
+
+// Círculo decorativo del ángulo superior derecho.
+.card::before {
+  content: "";
+  position: absolute;
+  top: -3.6rem;
+  right: -3.2rem;
+  width: 12rem;
+  height: 12rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.045);
+  pointer-events: none;
+}
+
+.top {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-size: 0.68rem;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.asterisco { color: $dorado; flex-shrink: 0; }
+
+.etiqueta {
+  font-size: 0.62rem;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: $dorado;
+  white-space: nowrap;
+}
+
+.escudo {
+  position: relative;
+  display: block;
+  width: 6.5rem;
+  height: 6.5rem;
+  margin: $spacing-3 auto $spacing-2;
+  object-fit: contain;
+}
+
+.nombre {
+  position: relative;
+  margin: 0;
+  text-align: center;
+  font-size: 1.32rem;
+  font-weight: $font-weight-bold;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  // Los nombres del padrón son largos: que corten en vez de desbordar.
+  overflow-wrap: anywhere;
+}
+
+.especialidad {
+  position: relative;
+  margin: $spacing-1 0 0;
+  text-align: center;
+  font-size: 0.82rem;
+  letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.72);
+  text-transform: uppercase;
+}
+
+.pie {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: $spacing-4;
+  margin-top: $spacing-5;
+}
+
+.dato { min-width: 0; }
+
+.datoLabel {
+  display: block;
+  font-size: 0.6rem;
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.datoValor {
+  display: block;
+  margin-top: 2px;
+  font-size: 1.06rem;
+  font-weight: $font-weight-bold;
+  font-variant-numeric: tabular-nums;
+}
+
+.estado {
+  display: inline-block;
+  margin-top: $spacing-3;
+  padding: 3px $spacing-3;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: $font-weight-semibold;
+  background: rgba(52, 199, 123, 0.16);
+  color: $verde;
+  border: 1px solid rgba(52, 199, 123, 0.4);
+}
+
+.estadoInactivo {
+  background: rgba(255, 122, 122, 0.14);
+  color: #FF9B9B;
+  border-color: rgba(255, 122, 122, 0.38);
+}
+
+.fecha {
+  font-size: 0.76rem;
+  color: rgba(255, 255, 255, 0.66);
+  white-space: nowrap;
+}
+
+// ─── Acción y leyenda ─────────────────────────────────────────────────────────
+
+.boton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+  width: 100%;
+  padding: $spacing-4;
+  border: 0;
+  border-radius: 12px;
+  background: $navy;
+  color: $white;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  transition: background 0.16s ease;
+
+  &:hover { background: $navy-alto; }
+  &:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(20, 49, 92, 0.28); }
+}
+
+.leyenda {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-2;
+  font-size: 0.73rem;
+  line-height: 1.45;
+  color: $gray-500;
+  text-align: left;
+}
+
+.leyenda svg { flex-shrink: 0; margin-top: 1px; color: $gray-400; }
+
+// ─── Impresión ────────────────────────────────────────────────────────────────
+// "Descargar" abre el diálogo de impresión: en pantalla se oculta todo salvo la
+// tarjeta, así el PDF sale con la credencial sola y no con el panel entero.
+
+@media print {
+  // `visibility` y no `display`: se hereda, así que se puede apagar todo y
+  // volver a encender sólo la credencial. Con `display:none` en el body la
+  // tarjeta también desaparecería, por ser descendiente.
+  :global(body) * { visibility: hidden; }
+  .wrap, .wrap * { visibility: visible; }
+
+  .wrap {
+    position: fixed;
+    inset: 0;
+    margin: 0;
+    padding: 18mm;
+    max-width: none;
+    background: $white;
+  }
+
+  .boton { display: none !important; }
+
+  .card {
+    box-shadow: none;
+    /* Sin esto Chrome descarta el fondo azul al exportar a PDF. */
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .leyenda { margin-top: 8mm; }
+}

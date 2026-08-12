@@ -336,6 +336,29 @@ export default function ImportarGalenos() {
             </details>
           )}
 
+          {/* Las filas descartadas se calculaban pero no se mostraban: si un
+              galeno no se reconocía, desaparecía sin dejar rastro y no había
+              forma de darse cuenta salvo contando los detectados. */}
+          {parsed.descartadas.length > 0 && (
+            <details className={styles.avisos}>
+              <summary>
+                {parsed.descartadas.length} fila(s) con nombre e importe que no
+                se tomaron como galeno
+              </summary>
+              <p className={styles.descartadasNota}>
+                Es lo esperable para el nomenclador de prácticas y las notas al
+                pie. Si ves acá un galeno que debería importarse, avisá: falta
+                contemplar cómo lo escribe esta planilla.
+              </p>
+              <ul>
+                {parsed.descartadas.map((d, i) => (
+                  <li key={i}>
+                    {d.nombre} — {fmt.format(d.importe)}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
         </section>
       )}
 

@@ -1,9 +1,7 @@
-import type { ExportOptions, ObraSocial, Prestador } from "./types";
+import type { ExportField, ExportRow, ObraSocial } from "./types";
 import {
   fmtDate, safeStr, normalize, buildOsCode,
-  pickNroPrestador, pickNombre, pickMatriculaProv, pickTelefonoConsulta,
-  pickEspecialidad, pickDomicilioConsulta, pickMailParticular,
-  pickCuit, pickCodigoPostal, pickEspecialidadesList,
+  pickNombre, pickEspecialidadesList,
 } from "./helpers";
 import {
   CMC_NAME, CMC_PHONE, CMC_EMAIL, CMC_LOGO_SRC,
@@ -26,57 +24,66 @@ const ALT: [number, number, number] = [246, 249, 253];
 const TW = 269;
 const HEADER_H = 34; 
 
-// ── Column width lookup (all combinations sum exactly to 269mm) ──────────────
-type WMap = Record<string, number>;
-function getWidths(o: ExportOptions): WMap {
-  const { includeEmail: m, includeCuit: c, includeCP: p } = o;
-  if (!m && !c && !p) return { nro:14, nom:55, mat:16, tel:20, esp:42, dom:122 };
-  if ( m && !c && !p) return { nro:14, nom:50, mat:16, tel:20, esp:40, dom:90,  mail:39 };
-  if (!m &&  c && !p) return { nro:14, nom:48, mat:16, tel:20, cuit:26, esp:38, dom:107 };
-  if (!m && !c &&  p) return { nro:14, nom:50, mat:16, tel:20, esp:40, dom:110, cp:19 };
-  if ( m &&  c && !p) return { nro:12, nom:44, mat:14, tel:18, cuit:24, esp:36, dom:80,  mail:41 };
-  if ( m && !c &&  p) return { nro:12, nom:45, mat:14, tel:18, esp:36, dom:90,  mail:37, cp:17 };
-  if (!m &&  c &&  p) return { nro:12, nom:44, mat:14, tel:18, cuit:24, esp:36, dom:100, cp:21 };
-  /* all */           return { nro:12, nom:43, mat:14, tel:18, cuit:24, esp:34, dom:70,  mail:37, cp:17 };
-}
+/** Ancho mínimo legible: por debajo, el encabezado se parte en tres renglones. */
+const MIN_COL_MM = 11;
 
-type ColDef = { label: string; key: string; w: number };
-function buildCols(o: ExportOptions): ColDef[] {
-  const W = getWidths(o);
-  const cols: ColDef[] = [
-    { label: "N° Socio",   key: "nro",  w: W.nro },
-    { label: "Prestador",  key: "nom",  w: W.nom },
-    { label: "Mat. Prov",  key: "mat",  w: W.mat },
-    { label: "Teléfono",   key: "tel",  w: W.tel },
-  ];
-  if (o.includeCuit)  cols.push({ label: "CUIT",               key: "cuit", w: W.cuit! });
-  cols.push({ label: "Especialidades",      key: "esp",  w: W.esp });
-  cols.push({ label: "Dirección consultorio", key: "dom", w: W.dom });
-  if (o.includeEmail) cols.push({ label: "Correo electrónico", key: "mail", w: W.mail! });
-  if (o.includeCP)    cols.push({ label: "CP",                 key: "cp",   w: W.cp! });
-  return cols;
-}
+/**
+ * Reparte los 269 mm útiles entre las columnas elegidas, en proporción a su
+ * peso. Antes esto era una tabla con las 8 combinaciones posibles de tres
+ * opciones; con un catálogo abierto esa tabla tendría que listar 2^N casos.
+ * El reparto proporcional cubre cualquier selección y siempre suma el ancho
+ * exacto, que es lo que autoTable necesita para no desbordar la hoja.
+ */
+export function anchosDe(cols: ExportField[]): number[] {
+  if (cols.length === 0) return [];
 
-function pickCell(p: Prestador, key: string): string {
-  switch (key) {
-    case "nro":  return safeStr(pickNroPrestador(p)) || "—";
-    case "nom":  return safeStr(pickNombre(p)) || "—";
-    case "mat":  return safeStr(pickMatriculaProv(p)) || "—";
-    case "tel":  return safeStr(pickTelefonoConsulta(p)) || "—";
-    case "cuit": return safeStr(pickCuit(p)) || "—";
-    case "esp":  return safeStr(pickEspecialidad(p)) || "—";
-    case "dom":  return safeStr(pickDomicilioConsulta(p)) || "—";
-    case "mail": return safeStr(pickMailParticular(p)) || "—";
-    case "cp":   return safeStr(pickCodigoPostal(p)) || "—";
-    default:     return "—";
+  const pesoTotal = cols.reduce((acc, c) => acc + c.weight, 0) || 1;
+  let anchos = cols.map((c) => (c.weight / pesoTotal) * TW);
+
+  // Con muchas columnas las angostas quedan ilegibles: se les garantiza un piso
+  // y el faltante se descuenta de las anchas, que son las que pueden ceder.
+  //
+  // El piso sólo se aplica si entra: pasadas las ~24 columnas, `n * MIN_COL_MM`
+  // ya supera el ancho de la hoja y garantizarlo dejaba anchos negativos. En ese
+  // caso el reparto proporcional puro es lo único coherente — el PDF queda
+  // apretado igual, y para eso el selector recomienda Excel.
+  const pisoEntra = cols.length * MIN_COL_MM < TW;
+  const bajoMinimo = pisoEntra
+    ? anchos.reduce((acc, w) => acc + Math.max(0, MIN_COL_MM - w), 0)
+    : 0;
+  if (bajoMinimo > 0) {
+    // `holgura > bajoMinimo` está garantizado cuando el piso entra:
+    // holgura − faltante = Σ(w − MIN) = TW − n·MIN > 0.
+    const holgura = anchos.reduce((acc, w) => acc + Math.max(0, w - MIN_COL_MM), 0);
+    const factor = bajoMinimo / holgura;
+    anchos = anchos.map((w) =>
+      w < MIN_COL_MM ? MIN_COL_MM : w - (w - MIN_COL_MM) * factor
+    );
   }
+
+  // El redondeo de arriba puede dejar unas décimas de más o de menos; el sobrante
+  // va a la columna más ancha, donde no se nota.
+  const suma = anchos.reduce((a, b) => a + b, 0);
+  const resto = TW - suma;
+  if (Math.abs(resto) > 0.01) {
+    let iMax = 0;
+    anchos.forEach((w, i) => { if (w > anchos[iMax]) iMax = i; });
+    anchos[iMax] += resto;
+  }
+  return anchos;
 }
 
-function tableStyles(o: ExportOptions) {
-  const many = o.includeEmail && o.includeCuit && o.includeCP;
+function pickCell(row: ExportRow, campo: ExportField): string {
+  return safeStr(campo.get(row)).trim() || "—";
+}
+
+/** Con muchas columnas hay que achicar la letra o el texto se parte demasiado. */
+function tableStyles(cols: ExportField[]) {
+  const n = cols.length;
+  const fontSize = n >= 12 ? 6 : n >= 10 ? 6.5 : n >= 8 ? 7 : 7.5;
   return {
     styles: {
-      fontSize: many ? 7 : 7.5,
+      fontSize,
       cellPadding: { top: 3, bottom: 3, left: 2.5, right: 2.5 },
       valign: "middle" as const,
       overflow: "linebreak" as const,
@@ -87,11 +94,21 @@ function tableStyles(o: ExportOptions) {
       fillColor: BG,
       textColor: [255,255,255] as [number,number,number],
       fontStyle: "bold" as const,
-      fontSize: many ? 7 : 7.5,
+      fontSize,
       cellPadding: { top: 4, bottom: 4, left: 2.5, right: 2.5 },
     },
     alternateRowStyles: { fillColor: ALT },
   };
+}
+
+/** Anchos + alineación por columna, en el formato que espera autoTable. */
+function columnStylesDe(cols: ExportField[]) {
+  const anchos = anchosDe(cols);
+  const estilos: Record<number, { cellWidth: number; halign: "left" | "center" }> = {};
+  cols.forEach((c, i) => {
+    estilos[i] = { cellWidth: anchos[i], halign: c.align };
+  });
+  return estilos;
 }
 
 // ── Shared header drawing ────────────────────────────────────────────────────
@@ -164,9 +181,9 @@ function fitText(doc: any, text: string, maxW: number): string {
 // ── Simple flat PDF ──────────────────────────────────────────────────────────
 
 export async function buildSimplePdf(
-  rows: Prestador[],
+  rows: ExportRow[],
   selectedOS: ObraSocial,
-  opts: ExportOptions,
+  cols: ExportField[],
   signal?: AbortSignal
 ): Promise<Blob> {
   const [{ JsPDF, autoTable }, logo] = await Promise.all([
@@ -177,23 +194,20 @@ export async function buildSimplePdf(
 
   const code = buildOsCode(selectedOS);
   const date = fmtDate(new Date());
-  const cols = buildCols(opts);
-  const colStyles: Record<number, { cellWidth: number }> = {};
-  cols.forEach((c, i) => { colStyles[i] = { cellWidth: c.w }; });
 
   const doc = new JsPDF({ orientation: "landscape", compress: true });
   const title = "Prestadores por Obra Social";
   const subtitle = `${selectedOS.NOMBRE} (${code})  ·  ${date}  ·  ${rows.length} prestadores`;
 
   autoTable(doc, {
-    head: [cols.map(c => c.label)],
-    body: rows.map(p => cols.map(c => pickCell(p, c.key))),
+    head: [cols.map(c => c.short)],
+    body: rows.map(p => cols.map(c => pickCell(p, c))),
     startY: HEADER_H + 4,
     margin: { left: 14, right: 14, top: HEADER_H + 2 },
     tableWidth: TW,
     didDrawPage: () => drawHeader(doc, logo, title, subtitle),
-    columnStyles: colStyles,
-    ...tableStyles(opts),
+    columnStyles: columnStylesDe(cols),
+    ...tableStyles(cols),
   });
 
   return doc.output("blob") as Blob;
@@ -201,9 +215,9 @@ export async function buildSimplePdf(
 
 // ── Grouped PDF with multi-page TOC ──────────────────────────────────────────
 
-type GroupResult = { items: Map<string, Prestador[]>; labels: Map<string, string> };
-function buildGroups(rows: Prestador[]): GroupResult {
-  const items = new Map<string, Prestador[]>();
+type GroupResult = { items: Map<string, ExportRow[]>; labels: Map<string, string> };
+function buildGroups(rows: ExportRow[]): GroupResult {
+  const items = new Map<string, ExportRow[]>();
   const labels = new Map<string, string>();
   const sinKey = normalize("Sin especialidad");
   labels.set(sinKey, "Sin especialidad");
@@ -261,9 +275,9 @@ function renderTocEntries(
 }
 
 export async function buildPdfByEspecialidad(
-  rows: Prestador[],
+  rows: ExportRow[],
   selectedOS: ObraSocial,
-  opts: ExportOptions,
+  cols: ExportField[],
   signal?: AbortSignal
 ): Promise<Blob> {
   const [{ JsPDF, autoTable }, logo] = await Promise.all([
@@ -275,9 +289,7 @@ export async function buildPdfByEspecialidad(
   const { items, labels } = buildGroups(rows);
   const code = buildOsCode(selectedOS);
   const date = fmtDate(new Date());
-  const cols = buildCols(opts);
-  const colStyles: Record<number, { cellWidth: number }> = {};
-  cols.forEach((c, i) => { colStyles[i] = { cellWidth: c.w }; });
+  const colStyles = columnStylesDe(cols);
 
   const keys = Array.from(items.keys()).sort((a, b) =>
     safeStr(labels.get(a)).localeCompare(safeStr(labels.get(b)), "es")
@@ -300,8 +312,8 @@ export async function buildPdfByEspecialidad(
     const sub = `${selectedOS.NOMBRE} (${code})  ·  ${date}  ·  ${arr.length} ${arr.length === 1 ? "prestador" : "prestadores"}`;
 
     autoTable(doc, {
-      head: [cols.map(c => c.label)],
-      body: arr.map(p => cols.map(c => pickCell(p, c.key))),
+      head: [cols.map(c => c.short)],
+      body: arr.map(p => cols.map(c => pickCell(p, c))),
       startY: HEADER_H + 10,
       margin: { left: 14, right: 14, top: HEADER_H + 8 },
       tableWidth: TW,
@@ -312,7 +324,7 @@ export async function buildPdfByEspecialidad(
         doc.setTextColor(0, 0, 0); doc.setFont(undefined, "normal");
       },
       columnStyles: colStyles,
-      ...tableStyles(opts),
+      ...tableStyles(cols),
     });
   });
 

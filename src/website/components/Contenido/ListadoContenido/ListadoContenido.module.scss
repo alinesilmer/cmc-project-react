@@ -1,6 +1,6 @@
-@use "../../styles/variables" as *;
+@use "../../../styles/variables" as *;
 
-.noticiasPage {
+.listadoPage {
   min-height: 100vh;
   padding: $spacing-xxl $spacing-md;
 }
@@ -180,7 +180,7 @@
 
 /* Desktop down */
 @media (max-width: $breakpoint-desktop) {
-  .noticiasPage {
+  .listadoPage {
     padding: $spacing-xl $spacing-md;
   }
 
@@ -192,7 +192,7 @@
 
 /* Tablet down */
 @media (max-width: $breakpoint-tablet) {
-  .noticiasPage {
+  .listadoPage {
     padding: $spacing-lg $spacing-sm;
     height: auto;
     min-height: 100vh;
@@ -293,7 +293,7 @@
 
 /* Mobile down */
 @media (max-width: $breakpoint-mobile) {
-  .noticiasPage {
+  .listadoPage {
     padding: $spacing-md $spacing-xs;
   }
 

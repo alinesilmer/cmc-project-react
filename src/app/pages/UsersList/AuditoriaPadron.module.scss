@@ -1,0 +1,175 @@
+@use "@/app/styles/all.scss" as *;
+
+$radius: 0;
+
+.page { display: flex; min-height: 100vh; @media (max-width: 768px) { display: block; } }
+
+.content {
+  flex: 1;
+  min-width: 0;
+  padding: $spacing-10;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-6;
+  background: linear-gradient(180deg, #f9fbff 0%, #f5f8fd 55%, #eef3fa 100%);
+
+  @media (max-width: 1200px) { padding: $spacing-8; }
+  @media (max-width: $breakpoint-md) { padding: $spacing-5; gap: $spacing-5; }
+}
+
+.back {
+  display: inline-flex; align-items: center; gap: $spacing-2;
+  font-size: $font-size-sm; font-weight: $font-weight-semibold;
+  color: $primary-blue-lighter; text-decoration: none;
+  &:hover { text-decoration: underline; }
+}
+
+.head { display: flex; align-items: flex-end; justify-content: space-between; gap: $spacing-4; flex-wrap: wrap; }
+
+.title {
+  margin: 0;
+  font-family: "Manrope", "Inter", sans-serif;
+  font-size: $font-size-3xl; font-weight: $font-weight-bold;
+  color: $primary-blue-darker; letter-spacing: -0.015em;
+}
+
+.subtitle { margin: $spacing-1 0 0; font-size: $font-size-base; color: $gray-500; max-width: 46rem; }
+
+/** Aclaración de que nada se modifica. Va arriba de todo a propósito: es lo
+    primero que alguien se pregunta al ver una pantalla que audita datos. */
+.aviso {
+  display: flex; align-items: flex-start; gap: $spacing-3;
+  padding: $spacing-4 $spacing-5;
+  background: $secondary-blue;
+  border: 1px solid rgba(90, 121, 225, 0.24);
+  border-radius: $radius;
+  font-size: $font-size-sm; color: $primary-blue-darker; line-height: 1.5;
+}
+.aviso svg { flex-shrink: 0; margin-top: 1px; }
+
+// ─── Marcador general ─────────────────────────────────────────────────────────
+
+.tablero { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: $spacing-4; }
+
+.tarjetaTotal {
+  padding: $spacing-5;
+  background: $white; border: 1px solid $gray-200; border-radius: $radius;
+  border-top: 3px solid $primary-blue;
+}
+.totalNum {
+  display: block; margin-top: $spacing-2;
+  font-family: "Manrope", "Inter", sans-serif;
+  font-size: $font-size-3xl; font-weight: $font-weight-bold; color: $gray-900; line-height: 1;
+}
+.totalLabel {
+  display: block; font-size: $font-size-xs; font-weight: $font-weight-semibold;
+  text-transform: uppercase; letter-spacing: 0.07em; color: $gray-500;
+}
+.totalHint { display: block; margin-top: $spacing-1; font-size: $font-size-sm; color: $gray-400; }
+
+.acentoAlta  { border-top-color: $danger-red; }
+.acentoMedia { border-top-color: $warning-orange; }
+.acentoBaja  { border-top-color: $accent-blue; }
+.acentoInfo  { border-top-color: $gray-400; }
+
+// ─── Grupos por severidad ─────────────────────────────────────────────────────
+
+.grupo { display: flex; flex-direction: column; gap: $spacing-3; }
+
+.grupoTitulo {
+  display: flex; align-items: center; gap: $spacing-3;
+  margin: 0; font-size: $font-size-xl; font-weight: $font-weight-semibold; color: $primary-blue-darker;
+}
+.grupoTitulo::after { content: ""; flex: 1; height: 1px; background: $gray-200; }
+
+.chipSev {
+  padding: 2px $spacing-2; border-radius: $radius;
+  font-size: $font-size-xs; font-weight: $font-weight-bold;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.sevAlta  { background: #fdeaea; color: #a51f1f; }
+.sevMedia { background: #fdf3e0; color: #8a5b06; }
+.sevBaja  { background: $secondary-blue; color: $primary-blue-darker; }
+.sevInfo  { background: $gray-100; color: $gray-600; }
+
+// ─── Chequeo ──────────────────────────────────────────────────────────────────
+
+.chequeo { background: $white; border: 1px solid $gray-200; border-radius: $radius; overflow: hidden; }
+
+/** Todo el encabezado es el botón: un área grande de click es más fácil de
+    acertar que un chevron de 16px, sobre todo en pantallas táctiles. */
+.chequeoHead {
+  display: flex; align-items: center; gap: $spacing-4;
+  width: 100%; padding: $spacing-4 $spacing-5;
+  border: 0; background: none; text-align: left; cursor: pointer;
+  font-family: inherit;
+
+  &:hover { background: $gray-50; }
+  &:focus-visible { outline: none; box-shadow: inset 0 0 0 2px rgba(90, 121, 225, 0.35); }
+}
+
+.chequeoTexto { flex: 1; min-width: 0; }
+.chequeoTitulo { display: block; font-size: $font-size-lg; font-weight: $font-weight-semibold; color: $gray-900; }
+.chequeoDesc { display: block; margin-top: 2px; font-size: $font-size-sm; color: $gray-500; line-height: 1.45; }
+
+.casos {
+  flex-shrink: 0; min-width: 4.2rem; text-align: right;
+  font-family: "Manrope", "Inter", sans-serif;
+  font-size: $font-size-2xl; font-weight: $font-weight-bold; color: $gray-900;
+  font-variant-numeric: tabular-nums;
+}
+.casosCero { color: $success-green; }
+
+.flecha { flex-shrink: 0; color: $gray-400; }
+
+// ─── Detalle ──────────────────────────────────────────────────────────────────
+
+.detalle { border-top: 1px solid $gray-200; padding: $spacing-4 $spacing-5 $spacing-5; }
+
+.tableWrap { overflow-x: auto; min-width: 0; }
+
+.table {
+  width: 100%; border-collapse: collapse; font-size: $font-size-sm; white-space: nowrap;
+
+  th, td { padding: $spacing-2 $spacing-3; text-align: left; border-bottom: 1px solid $gray-200; }
+  th {
+    font-size: $font-size-xs; font-weight: $font-weight-semibold;
+    text-transform: uppercase; letter-spacing: 0.05em; color: $gray-500; background: $gray-50;
+  }
+  tbody tr:hover { background: rgba(90, 121, 225, 0.05); }
+}
+
+.nombre { white-space: normal; min-width: 13rem; }
+.num { text-align: right !important; font-variant-numeric: tabular-nums; }
+
+.verLink {
+  display: inline-flex; align-items: center; gap: 3px;
+  color: $primary-blue-lighter; text-decoration: none; font-weight: $font-weight-semibold;
+  &:hover { text-decoration: underline; }
+}
+
+.falta { color: $danger-red; font-style: italic; }
+
+.pieDetalle { margin: $spacing-3 0 0; font-size: $font-size-sm; color: $gray-500; }
+
+// ─── Estados ──────────────────────────────────────────────────────────────────
+
+.ok {
+  display: flex; align-items: center; gap: $spacing-2;
+  padding: $spacing-4; font-size: $font-size-sm; color: $success-green;
+}
+
+.skeleton {
+  height: 4rem;
+  background: linear-gradient(90deg, $gray-100 25%, $gray-200 37%, $gray-100 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  @media (prefers-reduced-motion: reduce) { animation: none; }
+}
+@keyframes shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
+
+.error {
+  display: flex; align-items: center; gap: $spacing-2;
+  padding: $spacing-4; border: 1px solid #fecaca; background: #fef2f2;
+  color: #b91c1c; font-size: $font-size-sm;
+}

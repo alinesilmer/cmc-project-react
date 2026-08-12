@@ -489,43 +489,73 @@
   }
 }
 
-.exportOptions {
-  display: flex;
+// Reemplaza a los tres checkboxes sueltos (Email / CUIT / CP): con más de
+// veinte columnas disponibles la lista plana no entraba, y el resumen numérico
+// dice de un vistazo qué va a salir en el archivo.
+.camposBtn {
+  display: inline-flex;
   align-items: center;
-  gap: $spacing-4;
-  flex-wrap: wrap;
-  padding: $spacing-4 $spacing-1;
+  gap: $spacing-2;
+  align-self: flex-start;
+  margin-top: $spacing-3;
+  padding: $spacing-2 $spacing-4;
+  background: $white;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-md;
+  color: $gray-700;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s;
+
+  &:hover {
+    background: $secondary-blue;
+    border-color: $primary-blue;
+    color: $primary-blue;
+  }
+
+  @media (max-width: 480px) {
+    align-self: stretch;
+    justify-content: center;
+  }
 }
 
-.exportOptionsLabel {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
-  color: $gray-500;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
-
-.exportToggle {
+.camposBtnText {
   display: inline-flex;
   align-items: center;
   gap: $spacing-2;
   font-size: $font-size-sm;
   font-weight: $font-weight-semibold;
-  color: $gray-700;
-  cursor: pointer;
-  user-select: none;
+  white-space: nowrap;
 
-  input[type="checkbox"] {
-    width: 15px;
-    height: 15px;
-    accent-color: $primary-blue;
-    cursor: pointer;
+  b {
+    display: inline-grid;
+    place-items: center;
+    min-width: 20px;
+    padding: 0 5px;
+    border-radius: $border-radius-xl;
+    background: $primary-blue;
+    color: $white;
+    font-size: $font-size-xs;
   }
+}
 
-  &:hover {
-    color: $primary-blue;
-  }
+.inactivosHint {
+  margin: 0;
+  padding: $spacing-2 $spacing-4;
+  border-left: 3px solid $gray-300;
+  background: $gray-50;
+  color: $gray-500;
+  font-size: $font-size-sm;
+  line-height: 1.5;
+}
+
+.camposWarn {
+  padding: 1px 7px;
+  border-radius: $border-radius-xl;
+  background: rgba($warning-orange, 0.16);
+  color: $warning-orange;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  white-space: nowrap;
 }
 
 .actionBtn,
@@ -727,6 +757,9 @@
 }
 
 .errorMessage {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-3;
   padding: $spacing-4 $spacing-5;
   background: rgba($danger-red, 0.08);
   border: 1px solid rgba($danger-red, 0.22);
@@ -735,6 +768,20 @@
   font-size: $font-size-sm;
   font-weight: $font-weight-semibold;
   line-height: 1.6;
+}
+
+.errorClose {
+  flex-shrink: 0;
+  margin-left: auto;
+  display: inline-flex;
+  padding: 2px;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.7;
+
+  &:hover { opacity: 1; }
 }
 
 .resultsHeader {

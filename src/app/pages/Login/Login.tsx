@@ -7,7 +7,7 @@ import Modal from "../../components/atoms/Modal/Modal";
 import { useAuth } from "../../auth/AuthProvider";
 import { isWebEditor } from "../../auth/roles";
 import { http } from "../../lib/http";
-import pdf from "../../assets/CMC_03_2026.pdf";
+import pdf from "../../assets/CMC_08_2026.pdf";
 import Header from "../../../website/components/UI/Header/Header";
 
 function Login() {

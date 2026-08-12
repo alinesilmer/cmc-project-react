@@ -800,6 +800,10 @@ const UsersList: React.FC = () => {
         </div>
         <div className={styles.headerActions}>
           <BackButton />
+          {/* Control de calidad del padrón: sólo lectura, no modifica datos. */}
+          <Button variant="ghost" onClick={() => navigate("/panel/users/auditoria")}>
+            Control de datos
+          </Button>
           <Button variant="secondary" onClick={() => navigate("/panel/register-socio")}>
             Agregar socio
           </Button>

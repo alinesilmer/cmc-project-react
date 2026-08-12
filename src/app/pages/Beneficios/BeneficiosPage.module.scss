@@ -584,3 +584,102 @@
   color: $gray-700;
   line-height: 1.5;
 }
+
+/* ── Grilla de tarjetas ──────────────────────────────────────────────────────
+   Reemplaza a la tabla: un beneficio es una pieza visual (color, descuento,
+   categoría), no una fila de datos, y así el panel se parece a lo que el socio
+   termina viendo en la app. */
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: $spacing-4;
+  padding: $spacing-4;
+}
+
+.benefitCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  padding: $spacing-5 $spacing-5 $spacing-4;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-lg;
+  transition: box-shadow 0.18s ease, transform 0.18s ease;
+
+  &:hover {
+    box-shadow: $shadow-md;
+    transform: translateY(-2px);
+  }
+}
+
+/* Franja del color elegido, sobre el borde superior de la tarjeta. */
+.cardAccent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: $border-radius-lg $border-radius-lg 0 0;
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $gray-900;
+  line-height: 1.3;
+}
+
+.cardDesc {
+  margin: 0;
+  flex: 1;
+  font-size: $font-size-sm;
+  line-height: 1.5;
+  color: $gray-500;
+  /* Las descripciones son texto libre y largo: se recortan para que las
+     tarjetas de una misma fila no queden de alturas dispares. */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cardMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $spacing-2 $spacing-3;
+  margin-top: $spacing-1;
+}
+
+.cardDiscount {
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  color: $primary-blue;
+}
+
+.cardPlace {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: $font-size-sm;
+  color: $gray-500;
+}
+
+.cardActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-2;
+  margin-top: $spacing-2;
+  padding-top: $spacing-3;
+  border-top: 1px solid $gray-100;
+}
