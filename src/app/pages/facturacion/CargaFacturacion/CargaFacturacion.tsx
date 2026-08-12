@@ -427,13 +427,16 @@ const CargaFacturacion: React.FC = () => {
   // El máximo de ayudantes depende del código elegido — al cambiar de código
   // las líneas ya cargadas dejan de tener sentido (podían pertenecer a otro tope).
   // La admisión de la vía laparoscópica también depende del código, así que arrastrarla
-  // a una práctica distinta produciría rechazos espurios. Se salta mientras la precarga
-  // de edición/replicar está en curso: ese flujo setea `codNomenclador` y `via` en el
-  // mismo batch, y este efecto pisaría la vía recién precargada.
+  // a una práctica distinta produciría rechazos espurios. Un monto "Manual" tipeado para
+  // el código anterior también se descarta, así vuelve a Automático y trae el precio del
+  // código nuevo. Se salta mientras la precarga de edición/replicar está en curso: ese
+  // flujo setea `codNomenclador`, `via` y `tipo_calculo` en el mismo batch, y este efecto
+  // pisaría los valores recién precargados.
   useEffect(() => {
     if (loadingEdit || loadingReplicar) return;
     setAyudantes([]);
     setVia("T");
+    setTipoCalculo("A");
   }, [codNomenclador]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Limpiar nombre cuando se borra el DNI
@@ -447,8 +450,14 @@ const CargaFacturacion: React.FC = () => {
     (nro: number | null, os: ObraSocialOption | null) => {
       setObraSocial(os);
       resetPeriodo();
-      setCodNomenclador(null);
-      setCodNomencladorCategoria(null);
+      // El código elegido NO se borra acá: los códigos habilitados son por médico, no
+      // por obra social (`fetchCodigosHabilitados` no recibe OS), así que sigue siendo
+      // una opción válida para tipear. Lo que sí puede cambiar es si está *admitido*
+      // para la OS nueva — eso ya lo resuelve `useNomencladorPrecio` (que tiene `codObra`
+      // entre sus dependencias) refetcheando el precio solo, y `PrecioPreviewCard`
+      // muestra el aviso "⚠ {motivo}" automáticamente si `admitido` da false. Borrarlo acá
+      // rompería esa reacción: sin código no hay precio que pedir, y el cuadro
+      // directamente desaparece en vez de avisar.
       if (nro && os) {
         localStorage.setItem(FACTURACION_ULTIMA_OS_KEY, JSON.stringify(os));
         loadPeriodo(String(nro));
@@ -1178,11 +1187,15 @@ const CargaFacturacion: React.FC = () => {
               setUltimoMedico(null);
               const esOrg = !!med?.es_organizacion;
               setPayeeEsOrganizacion(esOrg);
-              if (!esOrg) {
-                // Payee médico: ejecuta y cobra él mismo, no hay ejecutor aparte.
-                setCodMedicoEjecutor(null);
-                setMedicoEjecutor(null);
-              } else {
+              // Cambió el payee: el ejecutor cargado (si había) puede no corresponder a
+              // este médico/clínica nuevo — se limpia siempre, no solo al dejar de ser
+              // organización (pasar de una clínica a otra también lo invalida). El campo
+              // sigue montado en ese caso (la sección "Médico ejecutor" no desaparece),
+              // así que hace falta remontarlo para que no quede el texto viejo escrito.
+              setCodMedicoEjecutor(null);
+              setMedicoEjecutor(null);
+              setEjecutorResetKey((k) => k + 1);
+              if (esOrg) {
                 // Payee clínica: el campo "Clínica" de más abajo queda de más — la
                 // clínica ya es el propio payee — así que se limpia y se oculta.
                 setCodClinica(null);
@@ -1419,7 +1432,18 @@ const CargaFacturacion: React.FC = () => {
                     name="tipoCalculo"
                     value={v}
                     checked={tipoCalculo === v}
-                    onChange={() => setTipoCalculo(v)}
+                    onChange={() => {
+                      setTipoCalculo(v);
+                      // El efecto que sincroniza honorarios/gastos solo mira `precio`:
+                      // si el operador vuelve a Automático sin que `precio` haya
+                      // cambiado, ese efecto no dispara y quedaría el monto manual
+                      // viejo puesto en un campo que ya se ve (y se guarda) como
+                      // automático. Se resincroniza acá, en el momento del toggle.
+                      if (v === "A" && precio) {
+                        setHonorarios(precio.honorarios ?? "0");
+                        setGastos(precio.gastos ?? "0");
+                      }
+                    }}
                     disabled={formDisabled}
                   />
                   {label}
