@@ -207,6 +207,10 @@ const CargaFacturacion: React.FC = () => {
   // propósito cuando `value` pasa a null. Van separadas para que un reset no arrastre
   // a los campos que el operador pidió mantener.
   const [medicoResetKey, setMedicoResetKey] = useState(0);
+  // Separada de `medicoResetKey`: cuando el payee (clínica) se mantiene por "Mantener
+  // clínica" pero el ejecutor no, hay que remontar solo el campo ejecutor sin tocar el
+  // resto de la sección médico.
+  const [ejecutorResetKey, setEjecutorResetKey] = useState(0);
   const [pacienteResetKey, setPacienteResetKey] = useState(0);
   const [nomencladorResetKey, setNomencladorResetKey] = useState(0);
   // La clínica es un autocomplete (conserva su texto tipeado): al resetear el servicio
@@ -633,13 +637,26 @@ const CargaFacturacion: React.FC = () => {
     setSesion(1);
     setAyudantes([]);
     setAutorizacion("");
-    if (!mantener.medico) {
+    // Si el payee es una clínica, "Mantener clínica" también aplica al Nº de socio: es
+    // el mismo dato (la clínica se carga ahí, no en el campo "Clínica" — que por eso
+    // queda oculto). Para un médico normal, "Mantener clínica" no lo toca: es el campo
+    // "Clínica" aparte el que se mantiene, más abajo.
+    const medicoMantenidoPorClinica = mantener.clinica && payeeEsOrganizacion;
+    if (!mantener.medico && !medicoMantenidoPorClinica) {
       setCodMedico(null);
       setMedicoSeleccionado(null);
       setPayeeEsOrganizacion(false);
       setCodMedicoEjecutor(null);
       setMedicoEjecutor(null);
       setMedicoResetKey((k) => k + 1);
+      setEjecutorResetKey((k) => k + 1);
+    } else if (!mantener.medico) {
+      // Se mantuvo el payee por "Mantener clínica", pero el médico ejecutor es un dato
+      // de la práctica puntual (puede cambiar entre cargas de la misma clínica) — se
+      // limpia igual, salvo que "Mantener médico" también esté tildado.
+      setCodMedicoEjecutor(null);
+      setMedicoEjecutor(null);
+      setEjecutorResetKey((k) => k + 1);
     }
     if (!mantener.paciente) {
       setDni("");
@@ -664,13 +681,17 @@ const CargaFacturacion: React.FC = () => {
 
     // Primer campo que quedó vacío, en orden de carga. Se calcula desde `mantener` y
     // no leyendo el estado, que en esta closure todavía tiene los valores viejos.
-    pendingFocusRef.current = !mantener.medico
+    pendingFocusRef.current = !mantener.medico && !medicoMantenidoPorClinica
       ? "medico"
-      : !mantener.paciente
-        ? "paciente"
-        : !mantener.fecha
-          ? "fecha"
-          : "codigo";
+      : !mantener.medico
+        // El payee quedó (por "Mantener clínica") pero el ejecutor se limpió: es el
+        // primer campo realmente vacío, no "Nº socio" (que ya tiene la clínica).
+        ? "medicoEjecutor"
+        : !mantener.paciente
+          ? "paciente"
+          : !mantener.fecha
+            ? "fecha"
+            : "codigo";
   };
 
   const doGuardarEdit = async () => {
@@ -1161,6 +1182,11 @@ const CargaFacturacion: React.FC = () => {
                 // Payee médico: ejecuta y cobra él mismo, no hay ejecutor aparte.
                 setCodMedicoEjecutor(null);
                 setMedicoEjecutor(null);
+              } else {
+                // Payee clínica: el campo "Clínica" de más abajo queda de más — la
+                // clínica ya es el propio payee — así que se limpia y se oculta.
+                setCodClinica(null);
+                setClinicaResetKey((k) => k + 1);
               }
             }}
             disabled={guardando}
@@ -1178,7 +1204,7 @@ const CargaFacturacion: React.FC = () => {
             ejecutorDisabled={guardando}
             ejecutorError={errores.codMedicoEjecutor}
             ejecutorPresetLabel={ejecutorPreset ?? (isEdit ? "(valor actual)" : undefined)}
-            ejecutorResetKey={medicoResetKey}
+            ejecutorResetKey={ejecutorResetKey}
           />
 
           {/* 2. Obra social + período. En complementaria son fijos (van en el badge). */}
@@ -1287,20 +1313,23 @@ const CargaFacturacion: React.FC = () => {
             }
           />
 
-          {/* 6. Clínica */}
-          <div className={styles.section}>
-            <span className={styles.sectionTitle}>Clínica</span>
-            <div className={styles.filterField}>
-              <ClinicaAutocomplete
-                key={`clinica-${clinicaResetKey}`}
-                value={codClinica}
-                onChange={(cod) => setCodClinica(cod)}
-                disabled={formDisabled}
-                presetLabel={clinicaPreset ?? undefined}
-                blurOnSelect={false}
-              />
+          {/* 6. Clínica — se oculta si el payee (Nº socio) ya es una clínica: sería
+              redundante volver a pedirla acá. */}
+          {!payeeEsOrganizacion && (
+            <div className={styles.section}>
+              <span className={styles.sectionTitle}>Clínica</span>
+              <div className={styles.filterField}>
+                <ClinicaAutocomplete
+                  key={`clinica-${clinicaResetKey}`}
+                  value={codClinica}
+                  onChange={(cod) => setCodClinica(cod)}
+                  disabled={formDisabled}
+                  presetLabel={clinicaPreset ?? undefined}
+                  blurOnSelect={false}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* 6b. Autorización */}
           <div className={styles.section}>

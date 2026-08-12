@@ -45,12 +45,17 @@ const AppSearchSelect: React.FC<Props> = ({
 
   const selected = pinned && String(pinned.id) === String(value) ? pinned : null;
 
+  const [inputValue, setInputValue] = useState(selected?.label ?? "");
+
+  // El seleccionado se antepone a la lista para que MUI no lo pierda de vista — pero
+  // solo mientras el texto siga siendo el suyo. En cuanto el operador tipea algo
+  // distinto (buscando otra cosa), dejar de anteponerlo: si no, con `autoHighlight` +
+  // `autoSelect` de abajo, Tab/Enter re-confirmarían el valor viejo en vez de tomar la
+  // primera coincidencia de lo que recién tipeó.
   const mergedOptions =
-    selected && !options.some((o) => String(o.id) === String(selected.id))
+    selected && inputValue === selected.label && !options.some((o) => String(o.id) === String(selected.id))
       ? [selected, ...options]
       : options;
-
-  const [inputValue, setInputValue] = useState(selected?.label ?? "");
 
   useEffect(() => {
     if (selected) setInputValue(selected.label);
@@ -63,6 +68,11 @@ const AppSearchSelect: React.FC<Props> = ({
       // No limpiamos el texto tipeado al perder foco si no se eligió nada — se
       // mantiene visible en vez de "borrarse" como pasaba antes.
       clearOnBlur={false}
+      // El operador tipea y se va con Tab/Enter sin clickear la opción: se resalta la
+      // primera coincidencia (`autoHighlight`) y esa es la que queda tomada al confirmar
+      // con Enter o al perder foco (`autoSelect`), sin obligarlo a usar el mouse.
+      autoHighlight
+      autoSelect
       options={mergedOptions}
       getOptionLabel={(opt) => opt.label}
       value={selected}

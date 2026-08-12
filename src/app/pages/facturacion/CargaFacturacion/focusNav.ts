@@ -7,6 +7,7 @@
 
 export type FocusField =
   | "medico"
+  | "medicoEjecutor"
   | "obraSocial"
   | "paciente"
   | "fecha"
