@@ -11,6 +11,10 @@ export const PERMS = {
   SOLICITUD_RESOLVER: "solicitud:resolver",
   RBAC_GESTIONAR: "rbac:gestionar",
   FACTURACION_LEER: "facturacion:leer",
+  /** TEMPORAL — prueba controlada del panel nuevo con médicos seleccionados.
+   * Quien lo tenga se queda en /panel/dashboard tras el login en vez de ir al
+   * legacy (ver Login.tsx). Sin equivalente viejo, no va en ALIAS_LEGACY. */
+  PANEL_INGRESAR: "panel:ingresar",
 } as const;
 
 export const ALIAS_LEGACY: Record<string, string[]> = {
