@@ -78,9 +78,17 @@ const AppSearchSelect: React.FC<Props> = ({
       value={selected}
       inputValue={inputValue}
       onChange={(_, newVal) => {
-        onChange(newVal?.id ?? null);
         setPinned(newVal);
         setInputValue(newVal?.label ?? "");
+        // No notificar al padre en el mismo tick: si el padre reacciona montando o
+        // desmontando otro Autocomplete (p. ej. al elegir un payee que es clínica
+        // aparece el campo "Médico ejecutor"), eso colisiona con el cierre del propio
+        // Popper de MUI (portal a document.body) que está terminando de reconciliarse
+        // en este mismo commit, y React tira "insertBefore ... not a child of this
+        // node" con la pantalla en blanco. Diferir un tick deja que el Popper termine
+        // de cerrarse en su propio commit antes de que el padre reestructure el árbol.
+        const id = newVal?.id ?? null;
+        setTimeout(() => onChange(id), 0);
       }}
       disabled={disabled}
       loading={loading}
@@ -93,7 +101,7 @@ const AppSearchSelect: React.FC<Props> = ({
         } else if (reason === "clear") {
           setInputValue("");
           setPinned(null);
-          onChange(null);
+          setTimeout(() => onChange(null), 0);
           onQueryChange?.("");
         }
       }}
