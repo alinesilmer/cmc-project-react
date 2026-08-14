@@ -80,15 +80,15 @@ const AppSearchSelect: React.FC<Props> = ({
       onChange={(_, newVal) => {
         setPinned(newVal);
         setInputValue(newVal?.label ?? "");
-        // No notificar al padre en el mismo tick: si el padre reacciona montando o
-        // desmontando otro Autocomplete (p. ej. al elegir un payee que es clínica
-        // aparece el campo "Médico ejecutor"), eso colisiona con el cierre del propio
-        // Popper de MUI (portal a document.body) que está terminando de reconciliarse
-        // en este mismo commit, y React tira "insertBefore ... not a child of this
-        // node" con la pantalla en blanco. Diferir un tick deja que el Popper termine
-        // de cerrarse en su propio commit antes de que el padre reestructure el árbol.
-        const id = newVal?.id ?? null;
-        setTimeout(() => onChange(id), 0);
+        // Notificar al padre en el mismo tick, sincrónicamente. Hubo una versión que
+        // difería esto con setTimeout creyendo que el remonte de campos hermanos
+        // competía con el cierre del Popper de MUI — no era eso (React aplica el
+        // cierre del portal y el alta del hermano en un mismo commit sin problema;
+        // la pantalla en blanco venía de que el traductor del navegador reescribía
+        // el DOM, ver el comentario de index.html). Diferirlo sí rompía algo real:
+        // el operador que elige con Enter y sigue tecleando de inmediato encontraba
+        // el estado del padre todavía sin actualizar.
+        onChange(newVal?.id ?? null);
       }}
       disabled={disabled}
       loading={loading}
@@ -101,7 +101,7 @@ const AppSearchSelect: React.FC<Props> = ({
         } else if (reason === "clear") {
           setInputValue("");
           setPinned(null);
-          setTimeout(() => onChange(null), 0);
+          onChange(null);
           onQueryChange?.("");
         }
       }}

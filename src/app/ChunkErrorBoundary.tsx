@@ -18,6 +18,19 @@ const isChunkLoadError = (error: unknown): boolean => {
   );
 };
 
+// El otro motivo de pantalla en blanco: algo externo a React (el traductor del
+// navegador, una extensión de antivirus, etc.) reescribió el DOM por debajo. Cuando
+// React va a insertar o sacar un nodo, el hermano de referencia que tenía guardado
+// ya no es hijo del contenedor y el commit revienta. La app no puede seguir
+// renderizando sobre un árbol corrupto, pero recargar la deja sana.
+// La raíz de esto se ataca en index.html (lang="es" + notranslate); esto es la red
+// de contención para el resto de los casos.
+const isDomCorruptionError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) return false;
+  const esNotFound = error.name === "NotFoundError";
+  return esNotFound && /insertBefore|removeChild|appendChild/i.test(error.message);
+};
+
 interface Props {
   children: ReactNode;
 }
@@ -35,8 +48,11 @@ class ChunkErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: unknown) {
+    // El flag vive en sessionStorage: si el reload no alcanzó y vuelve a romperse,
+    // se muestra la pantalla de "Reintentar" en vez de recargar en loop infinito.
     const yaIntentado = sessionStorage.getItem(CHUNK_RELOAD_FLAG) === "1";
-    if (isChunkLoadError(error) && !yaIntentado) {
+    const recuperable = isChunkLoadError(error) || isDomCorruptionError(error);
+    if (recuperable && !yaIntentado) {
       sessionStorage.setItem(CHUNK_RELOAD_FLAG, "1");
       this.setState({ recovering: true });
       window.location.reload();
@@ -56,8 +72,8 @@ class ChunkErrorBoundary extends Component<Props, State> {
       );
     }
 
-    // Error genuino (no de chunk), o de chunk pero ya se había intentado recargar
-    // antes en esta sesión y volvió a pasar: no seguimos recargando en loop.
+    // Error que no sabemos recuperar, o uno que sí pero ya se recargó una vez en
+    // esta sesión y volvió a pasar: no seguimos recargando en loop.
     return (
       <div style={{ padding: 40, textAlign: "center", fontFamily: "sans-serif" }}>
         <p>Ocurrió un problema al cargar la aplicación.</p>
