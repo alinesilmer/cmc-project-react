@@ -70,26 +70,8 @@ const VALIDACIONES_MENU: Extract<TopEntry, { kind: "menu" }> = {
   ],
 };
 
-// TEMPORAL — atajos para revisar el portal del socio desde una cuenta admin.
-// Sin permisos reales todavía, es la única forma de ver estas pantallas sin un
-// login 'D'. Borrar esta constante, su uso en TOP_NAV y la ruta
-// /panel/preview/inicio-medico (routes.tsx) cuando estén los permisos.
-const VISTA_MEDICO_MENU: Extract<TopEntry, { kind: "menu" }> = {
-  kind: "menu", id: "vista-medico", icon: CircleUserRound, label: "Vista médico",
-  columns: [
-    {
-      items: [
-        { path: `${base}/preview/inicio-medico`, icon: Home, label: "Inicio del médico" },
-        { path: `${base}/nomenclador/consulta-precios`, icon: DollarSign, label: "Consulta de Precios" },
-        { path: `${base}/mi-perfil`, icon: CircleUserRound, label: "Mi perfil (solo lectura)" },
-      ],
-    },
-  ],
-};
-
 const TOP_NAV: TopEntry[] = [
   { kind: "link", path: `${base}/dashboard`, icon: Home, label: "Inicio" },
-  VISTA_MEDICO_MENU,
   VALIDACIONES_MENU,
   {
     kind: "menu", id: "facturacion", icon: Receipt, label: "Facturación",
@@ -226,7 +208,6 @@ const DOCTOR_TOP_NAV: TopEntry[] = [
   { kind: "link", path: `${base}/dashboard`, icon: Home, label: "Inicio" },
   VALIDACIONES_MENU,
   { kind: "link", path: `${base}/nomenclador/consulta-precios`, icon: DollarSign, label: "Consulta de Precios" },
-  { kind: "link", path: `${base}/mis-numeros`, icon: TrendingUp, label: "Mis números" },
   { kind: "link", path: `${base}/mi-perfil`, icon: CircleUserRound, label: "Mi perfil" },
 ];
 

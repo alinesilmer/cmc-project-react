@@ -80,37 +80,3 @@ export const getEvolucion = (params: {
   obra_social?: string;
   meses?: number;
 }): Promise<PuntoSerie[]> => getJSON<PuntoSerie[]>(`${BASE}/evolucion`, params);
-
-// ─── Médico ──────────────────────────────────────────────────────────────────
-// Sólo piden estar logueado. El backend saca el nro de socio del token: no hay
-// parámetro para pedir los datos de otro médico.
-
-export const getMiResumen = (periodo: string): Promise<ResumenReporte> =>
-  getJSON<ResumenReporte>(`${BASE}/mios/resumen`, { periodo });
-
-export const getMisCodigos = (params: {
-  periodo: string;
-  obra_social?: string;
-  orden?: OrdenCodigos;
-  limit?: number;
-}): Promise<CodigoStat[]> => getJSON<CodigoStat[]>(`${BASE}/mios/codigos`, params);
-
-export const getMisObrasSociales = (params: {
-  periodo: string;
-  limit?: number;
-}): Promise<ObraSocialStat[]> =>
-  getJSON<ObraSocialStat[]>(`${BASE}/mios/obras-sociales`, params);
-
-export const getMisPrestaciones = (params: {
-  periodo?: string;
-  obra_social?: string;
-  codigo?: string;
-  desde?: string;
-  hasta?: string;
-  limit?: number;
-  offset?: number;
-}): Promise<PaginaPrestaciones> =>
-  getJSON<PaginaPrestaciones>(`${BASE}/mios/prestaciones`, params);
-
-export const getMiEvolucion = (meses = 12): Promise<PuntoSerie[]> =>
-  getJSON<PuntoSerie[]>(`${BASE}/mios/evolucion`, { meses });

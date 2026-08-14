@@ -287,10 +287,8 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
 
   // En modo lectura el socio ve solo su legajo: "conceptos" (descuentos) y
   // "padrones" son administrativos y sus controles mutan al tocarlos.
-  // "reportes" queda SÓLO del lado del Colegio: por ahora el médico no debe ver
-  // su facturación desde el legajo. La pestaña se saca de la vista de lectura,
-  // pero el panel (ReportesMedico) NO se borra — sigue funcionando para el
-  // Colegio y vuelve a habilitarse para el socio agregando "reportes" acá.
+  // "reportes" es SÓLO del lado del Colegio (ReportesMedico exige
+  // `facturas:ver`): el médico no tiene panel propio de facturación.
   // "credencial" va en las dos vistas: el socio necesita la suya y el Colegio
   // la consulta desde el legajo. No expone nada que el médico no vea ya.
   const visibleTabs: TabKey[] = readOnly
@@ -1897,11 +1895,6 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                       >
                         <ReportesMedico
                           nroSocio={String((data as any).nro_socio ?? medicoId)}
-                          // En "Mi perfil" (readOnly) el socio consulta sus
-                          // propios endpoints, que sacan el nro del token. Desde
-                          // el legajo, el Colegio usa los suyos, que piden
-                          // `facturas:ver`.
-                          propio={readOnly}
                         />
                       </motion.div>
                     )}

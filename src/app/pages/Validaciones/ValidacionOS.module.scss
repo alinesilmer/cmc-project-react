@@ -336,6 +336,26 @@
   }
 }
 
+// Selector de socio, sólo para personal del Colegio (ver !esMedico en
+// ValidacionOS.tsx). Mismo look que los campos de PrestacionForm.
+.socioField {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-width: 420px;
+}
+
+.socioLabel {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  color: $gray-700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
 .linkBtn {
   display: inline-flex;
   align-items: center;

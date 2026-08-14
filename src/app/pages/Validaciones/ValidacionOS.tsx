@@ -13,10 +13,15 @@ import {
   FileUp,
   Info,
   PlusCircle,
+  UserRound,
   X,
 } from "lucide-react";
 
+import { useAuth } from "../../auth/AuthProvider";
+import { isMedico } from "../../auth/roles";
 import ActionModal from "../../components/molecules/ActionModal/ActionModal";
+import MedicoAutocomplete from "../facturacion/components/MedicoAutocomplete";
+import type { MedicoOption } from "../facturacion/types";
 import PeriodosTable from "./components/PeriodosTable";
 import PrestacionesTable from "./components/PrestacionesTable";
 import PrestacionForm from "./components/PrestacionForm";
@@ -50,6 +55,15 @@ export default function ValidacionOS() {
   const { slug } = useParams<{ slug: string }>();
   const os = getObraSocial(slug);
 
+  const { user } = useAuth();
+  const esMedico = isMedico(user);
+  // El personal del Colegio (rol no médico) tiene que elegir a qué socio le
+  // corresponde la carga: el backend, sin `nro_socio`, opera sobre el token
+  // de quien está logueado, y quien está logueado acá no es un médico.
+  const [socio, setSocio] = useState<MedicoOption | null>(null);
+  const nroSocioElegido = esMedico || !socio ? undefined : Number(socio.cod);
+  const faltaElegirSocio = !esMedico && !socio;
+
   const [tab, setTab] = useState<TabId>("carga");
   const [mes, setMes] = useState(hoy.getMonth() + 1);
   const [anio, setAnio] = useState(hoy.getFullYear());
@@ -80,13 +94,22 @@ export default function ValidacionOS() {
   // ─── Carga de datos ────────────────────────────────────────────────────────
   const refrescar = useCallback(async () => {
     if (codigoOS == null) return;
+    // Personal del Colegio sin socio elegido todavía: no hay de quién traer
+    // nada (ver faltaElegirSocio).
+    if (faltaElegirSocio) {
+      setPrestaciones([]);
+      setPeriodos([]);
+      setCargandoLista(false);
+      setCargandoPeriodos(false);
+      return;
+    }
     setCargandoLista(true);
     setCargandoPeriodos(true);
     setErrorCarga(null);
     try {
       const [lista, periodosOS] = await Promise.all([
-        getPrestaciones(codigoOS, mes, anio),
-        getPeriodos(codigoOS),
+        getPrestaciones(codigoOS, mes, anio, nroSocioElegido),
+        getPeriodos(codigoOS, nroSocioElegido),
       ]);
       setPrestaciones(lista);
       setPeriodos(periodosOS);
@@ -96,7 +119,7 @@ export default function ValidacionOS() {
       setCargandoLista(false);
       setCargandoPeriodos(false);
     }
-  }, [codigoOS, mes, anio]);
+  }, [codigoOS, mes, anio, faltaElegirSocio, nroSocioElegido]);
 
   useEffect(() => {
     void refrescar();
@@ -139,6 +162,7 @@ export default function ValidacionOS() {
 
   const handleValidar = async (valores: PrestacionFormValues) => {
     if (os.codigo == null) return;
+    if (faltaElegirSocio) return; // el formulario ni se muestra en este caso
     setEnviando(true);
     setResultado(null);
     try {
@@ -157,6 +181,7 @@ export default function ValidacionOS() {
         token: valores.token ?? "",
         coseguro: Number(String(valores.coseguro ?? "0").replace(",", ".")) || 0,
         cantidad: Number(valores.cantidad ?? 1) || 1,
+        nro_socio: nroSocioElegido,
       });
       setResultado({
         estado: prestacion.estado,
@@ -188,7 +213,7 @@ export default function ValidacionOS() {
     if (!aEliminar) return;
     setErrorAccion(null);
     try {
-      await eliminarPrestacion(aEliminar.id);
+      await eliminarPrestacion(aEliminar.id, nroSocioElegido);
       await refrescar();
       setAEliminar(null);
     } catch {
@@ -201,7 +226,7 @@ export default function ValidacionOS() {
     if (!aAdjuntar || !archivo) return;
     setErrorAccion(null);
     try {
-      await adjuntarOrden(aAdjuntar.id, archivo);
+      await adjuntarOrden(aAdjuntar.id, archivo, nroSocioElegido);
       await refrescar();
       setAAdjuntar(null);
       setArchivo(null);
@@ -257,6 +282,28 @@ export default function ValidacionOS() {
         </div>
 
       </header>
+
+      {/* ── Socio a validar (sólo personal del Colegio) ── */}
+      {!esMedico && (
+        <section className={s.formCard} style={{ maxWidth: 480 }}>
+          <div>
+            <h2 className={s.cardTitle}>Socio a validar</h2>
+            <p className={s.cardSub}>
+              Elegí el médico para el que vas a cargar esta prestación. El
+              período, el historial y la carga de acá abajo pasan a ser los suyos.
+            </p>
+          </div>
+          <div className={s.socioField}>
+            <label className={s.socioLabel}>
+              <UserRound size={14} /> Socio
+            </label>
+            <MedicoAutocomplete
+              value={socio?.cod ?? null}
+              onChange={(_cod, medico) => setSocio(medico)}
+            />
+          </div>
+        </section>
+      )}
 
       {/* ── Selector de período ── */}
       <div className={s.periodBar}>
@@ -364,7 +411,14 @@ export default function ValidacionOS() {
                 ? "Completá los datos del afiliado y el código. Consultamos a la obra social en el momento."
                 : "Cargá la autorización que ya obtuviste en el portal de la obra social."}
             </p>
-            <PrestacionForm os={os} enviando={enviando} onSubmit={handleValidar} />
+            {faltaElegirSocio ? (
+              <p className={s.aviso}>
+                <AlertTriangle size={16} />
+                Elegí primero el socio arriba: la prestación se carga a su nombre.
+              </p>
+            ) : (
+              <PrestacionForm os={os} enviando={enviando} onSubmit={handleValidar} />
+            )}
           </div>
         </section>
       )}

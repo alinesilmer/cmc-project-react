@@ -612,10 +612,8 @@ const CargaFacturacion: React.FC = () => {
     if (payeeEsOrganizacion && !codMedicoEjecutor)
       errs.codMedicoEjecutor = "Requerido — indicá el médico que ejecutó";
     if (!codNomenclador) errs.codNomenclador = "Requerido";
-    if (precio && !precio.admitido && tipoCalculo !== "M") {
-      errs.admitido =
-        "Código no admitido — pasá a modo Manual para forzar la carga";
-    }
+    // Código no admitido / sin precio ya no bloquea el guardado — PrecioPreviewCard
+    // muestra el aviso "⚠ {motivo}" igual, pero la carga se permite en cualquier modo.
     if (ayudantes.length > 0) {
       const vistos = new Set<string>();
       ayudantes.forEach((linea, idx) => {
@@ -957,11 +955,17 @@ const CargaFacturacion: React.FC = () => {
     next.focus();
   };
 
+  // Los campos ya no se bloquean por orden de carga (p. ej. no hace falta elegir Obra
+  // Social antes de tocar Paciente/Fecha/Código/etc.): solo se deshabilitan mientras se
+  // está guardando, o cuando el registro de fondo (edición/complementaria) todavía no
+  // está disponible o no es editable. El campo Código es la única excepción real: sigue
+  // atado al Médico porque los códigos habilitados se piden a una API scoped por médico
+  // (no es una restricción de orden visual, es una dependencia de datos).
   const formDisabled = isEdit
     ? loadingEdit || guardando || editMeta?.estado !== "A"
     : isComplemento
       ? loadingComplemento || guardando || !complementoMeta
-      : !obraSocial || !!periodoError || guardando;
+      : guardando;
   const maxAyudantes = precio?.cantidad_ayudantes ?? 0;
   // La sección se muestra (en carga, replicar y edición) si el código admite ayudantes
   // o si ya hay líneas cargadas (p. ej. un equipo cuyo código reporta 0 de referencia).
@@ -1495,9 +1499,6 @@ const CargaFacturacion: React.FC = () => {
                 />
               </div>
             </div>
-            {errores.admitido && (
-              <div className={styles.warningBox}>{errores.admitido}</div>
-            )}
           </div>
 
           {/* 10. Ayudantes quirúrgicos (equipo). En edición se reconcilia el grupo. */}

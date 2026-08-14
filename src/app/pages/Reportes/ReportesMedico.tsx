@@ -4,12 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 
 import {
   getCodigosDeMedico,
-  getEvolucion,
-  getMiEvolucion,
-  getMiResumen,
-  getMisCodigos,
-  getMisObrasSociales,
-  getMisPrestaciones,
   getObrasSociales,
   getPrestaciones,
   getResumen,
@@ -28,7 +22,6 @@ import {
   Cargando,
   ErrorBox,
   EstadoChip,
-  GraficoEvolucion,
   Kpi,
   Pager,
   SelectorMesAnio,
@@ -43,28 +36,18 @@ const STALE = 5 * 60 * 1000;
 interface Props {
   /** Socio del que se muestran los números. */
   nroSocio: string;
-  /**
-   * `true` cuando el médico está mirando SU PROPIO legajo.
-   *
-   * No es cosmético: decide contra qué familia de endpoints se pega.
-   *   · propio  → `/api/reportes/mios/*`, que sólo piden estar logueado y sacan
-   *               el socio del token (el `nroSocio` de arriba ni se manda).
-   *   · ajeno   → `/api/reportes/*`, que exigen el scope `facturas:ver`.
-   *
-   * Así un médico nunca puede pedir los números de otro ni por error ni
-   * manipulando la URL: el endpoint que usaría no acepta el parámetro.
-   */
-  propio: boolean;
 }
 
 /**
  * Panel de facturación de UN médico, para la pestaña "Reportes" del legajo.
+ * Sólo lo ve el Colegio (requiere `facturas:ver`) — el médico no tiene una
+ * versión propia de este panel.
  *
  * Responde las preguntas concretas que se hacen en el mostrador: cuánto facturó
  * en el período, a qué obras sociales y con qué códigos — por ejemplo cuánto
  * lleva del 420101.
  */
-const ReportesMedico: React.FC<Props> = ({ nroSocio, propio }) => {
+const ReportesMedico: React.FC<Props> = ({ nroSocio }) => {
   const anios = useMemo(() => {
     const set = new Set(ultimosPeriodos(24).map((p) => Number(p.slice(0, 4))));
     return [...set].sort((a, b) => b - a);
@@ -81,75 +64,42 @@ const ReportesMedico: React.FC<Props> = ({ nroSocio, propio }) => {
   }, [periodo, obraSocial, codigo]);
 
   const comun = { staleTime: STALE, retry: 1 } as const;
-  // Entra en todas las claves: sin esto, el caché de "mis números" y el de
-  // "los números de este socio" se pisarían entre sí.
-  const clave = [propio ? "mio" : "adm", nroSocio];
+  const clave = ["adm", nroSocio];
 
   const resumen = useQuery({
     queryKey: ["med-resumen", ...clave, periodo],
-    queryFn: () =>
-      propio ? getMiResumen(periodo) : getResumen(periodo),
-    ...comun,
-  });
-
-  const evolucion = useQuery({
-    queryKey: ["med-evolucion", ...clave],
-    queryFn: () =>
-      propio
-        ? getMiEvolucion(12)
-        : // El endpoint del Colegio no filtra la serie por médico, así que se
-          // arma con los períodos del propio detalle (ver más abajo).
-          getEvolucion({ meses: 12 }),
-    // Sólo tiene sentido para el médico: la serie global no es "su" evolución.
-    enabled: propio,
+    queryFn: () => getResumen(periodo),
     ...comun,
   });
 
   const codigos = useQuery({
     queryKey: ["med-codigos", ...clave, periodo, obraSocial],
     queryFn: () =>
-      propio
-        ? getMisCodigos({
-            periodo,
-            obra_social: obraSocial || undefined,
-            limit: LIMIT,
-          })
-        : getCodigosDeMedico(nroSocio, {
-            periodo,
-            obra_social: obraSocial || undefined,
-            limit: LIMIT,
-          }),
+      getCodigosDeMedico(nroSocio, {
+        periodo,
+        obra_social: obraSocial || undefined,
+        limit: LIMIT,
+      }),
     ...comun,
   });
 
   const obras = useQuery({
     queryKey: ["med-obras", ...clave, periodo],
-    queryFn: () =>
-      propio
-        ? getMisObrasSociales({ periodo, limit: LIMIT })
-        : getObrasSociales({ periodo, limit: LIMIT }),
+    queryFn: () => getObrasSociales({ periodo, limit: LIMIT }),
     ...comun,
   });
 
   const detalle = useQuery({
     queryKey: ["med-detalle", ...clave, periodo, obraSocial, codigo, offset],
     queryFn: () =>
-      propio
-        ? getMisPrestaciones({
-            periodo,
-            obra_social: obraSocial || undefined,
-            codigo: codigo || undefined,
-            limit: LIMIT,
-            offset,
-          })
-        : getPrestaciones({
-            periodo,
-            nro_socio: nroSocio,
-            obra_social: obraSocial || undefined,
-            codigo: codigo || undefined,
-            limit: LIMIT,
-            offset,
-          }),
+      getPrestaciones({
+        periodo,
+        nro_socio: nroSocio,
+        obra_social: obraSocial || undefined,
+        codigo: codigo || undefined,
+        limit: LIMIT,
+        offset,
+      }),
     placeholderData: (prev) => prev,
     ...comun,
   });
@@ -177,9 +127,8 @@ const ReportesMedico: React.FC<Props> = ({ nroSocio, propio }) => {
     { header: "Importe", value: (p: PrestacionReporte) => p.importe_total },
   ];
 
-  const r = resumen.data;
-  // Cuando lo mira el Colegio, el resumen es del período completo y no del
-  // médico: sus totales propios salen de la tabla de códigos.
+  // El resumen es del período completo, no del médico: sus totales propios
+  // salen de la tabla de códigos.
   const totalCodigos = (codigos.data ?? []).reduce(
     (a, c) => a + c.importe_total,
     0
@@ -237,8 +186,8 @@ const ReportesMedico: React.FC<Props> = ({ nroSocio, propio }) => {
       {/* ── KPIs ── */}
       {codigos.isError || resumen.isError ? (
         <ErrorBox>
-          No se pudieron cargar los números de este período.
-          {!propio && " Puede que no tengas permiso para ver facturación."}
+          No se pudieron cargar los números de este período. Puede que no
+          tengas permiso para ver facturación.
         </ErrorBox>
       ) : codigos.isLoading ? (
         <div className={styles.kpis}>
@@ -250,44 +199,24 @@ const ReportesMedico: React.FC<Props> = ({ nroSocio, propio }) => {
         <div className={styles.kpis}>
           <Kpi
             label="Facturado en el período"
-            value={money.format(propio && r ? r.importe_total : totalCodigos)}
+            value={money.format(totalCodigos)}
             hint={periodoLargo(periodo)}
             accent="gold"
           />
           <Kpi
             label="Prestaciones"
-            value={numero.format(
-              propio && r ? r.prestaciones : prestacionesMedico
-            )}
+            value={numero.format(prestacionesMedico)}
             hint={`${numero.format((codigos.data ?? []).length)} códigos distintos`}
           />
           <Kpi
             label="Obras sociales"
-            // Sólo se sabe en el perfil propio: el resumen del Colegio cuenta
-            // las obras sociales del período entero, no las de este médico.
-            value={propio && r ? numero.format(r.obras_sociales) : "—"}
-            hint={propio ? "con facturación" : "ver el detalle"}
+            // El resumen del Colegio cuenta las del período entero, no las de
+            // este médico — el detalle está en la tabla "Por obra social".
+            value="—"
+            hint="ver el detalle"
             accent="blue"
           />
         </div>
-      )}
-
-      {/* La evolución sólo se muestra en el perfil propio: el endpoint del
-          Colegio devuelve la serie global, que no es la de este médico. */}
-      {propio && (
-        <section className={styles.card}>
-          <div className={styles.cardHead}>
-            <div>
-              <h3 className={styles.cardTitle}>Evolución</h3>
-              <p className={styles.cardSub}>Últimos 12 períodos con actividad.</p>
-            </div>
-          </div>
-          {evolucion.isLoading ? (
-            <Cargando filas={2} />
-          ) : (
-            <GraficoEvolucion datos={evolucion.data ?? []} />
-          )}
-        </section>
       )}
 
       {/* ── Códigos ── */}

@@ -17,7 +17,6 @@ const MiPerfil = lazy(() => import("./app/pages/MiPerfil/MiPerfil"));
 // Reportes carga Recharts, que pesa: va lazy para no meterlo en el bundle de
 // quienes nunca abren la pantalla.
 const ReportesPage = lazy(() => import("./app/pages/Reportes/ReportesPage"));
-const MisReportes = lazy(() => import("./app/pages/Reportes/MisReportes"));
 const DoctorsPage = lazy(() => import("./app/pages/DoctorsList/DoctorsList"));
 const SocialWorksPage = lazy(() => import("./app/pages/SocialWorkSection/SocialWorkSection"));
 const DoctorProfilePage = lazy(() => import("./app/pages/DoctorProfilePage/DoctorProfilePage"));
@@ -124,14 +123,7 @@ export default function RootRoutes() {
               {/* Reportes del Colegio: además de esta ruta, el backend exige
                   `facturas:ver` — el guard de acá es sólo comodidad de UI. */}
               <Route path="reportes" element={<ReportesPage />} />
-              {/* Versión del socio: sólo sus propios números. */}
-              <Route path="mis-numeros" element={<MisReportes />} />
 
-              {/* TEMPORAL — preview del portal del socio desde una cuenta admin.
-                  /panel/dashboard elige por rol, así que el Inicio del médico no
-                  es alcanzable de otro modo. Borrar junto con VISTA_MEDICO_MENU
-                  (Topbar.tsx) cuando estén los permisos reales. */}
-              <Route path="preview/inicio-medico" element={<InicioMedico />} />
               <Route path="doctors" element={<DoctorsPage />} />
               <Route path="doctors/:id" element={<DoctorProfilePage />} />
               <Route path="social-works" element={<SocialWorksPage />} />
