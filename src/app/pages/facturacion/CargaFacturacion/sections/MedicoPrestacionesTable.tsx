@@ -157,13 +157,14 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
         cod_medico: codMedico,
         cod_obra: codObra ?? undefined,
         periodo: periodo ?? undefined,
+        // Esta tabla es la de trabajo bajo el formulario de carga: solo tiene sentido
+        // mostrar lo que todavía se puede tocar. Las cerradas (ya facturadas) y las
+        // anuladas quedan afuera — para verlas está el listado de Períodos/Facturas.
+        estado: "A",
         limit: LIMIT,
         offset,
       });
-      // Las anuladas no se muestran: para el operador la prestación ya no existe. El
-      // endpoint no tiene un filtro "todo menos anuladas" (`estado` es un valor solo,
-      // y filtrar por "A" escondería las cerradas), así que se descartan acá.
-      setRows(data.filter((r) => r.estado !== "X"));
+      setRows(data);
       setTotalCount(tc);
     } catch (e: any) {
       notify(detailMessage(e?.response?.data?.detail) || "Error al cargar las prestaciones del médico.", "error");
