@@ -16,9 +16,15 @@ interface Props {
   /** Precarga la opción mostrada antes de que el usuario busque (usado al editar). */
   presetLabel?: string;
   blurOnSelect?: boolean;
+  /** Lista ya traída entera (ver CargaFacturacion.tsx): si viene, se filtra en
+   *  memoria y no se pega más a `/medicos` por cada tecleo. Sin esto, busca como
+   *  siempre — el resto de las pantallas que usan este campo no se tocan. */
+  medicosPrecargados?: MedicoOption[];
 }
 
-const MedicoAutocomplete: React.FC<Props> = ({ value, onChange, disabled, presetLabel, blurOnSelect }) => {
+const MedicoAutocomplete: React.FC<Props> = ({
+  value, onChange, disabled, presetLabel, blurOnSelect, medicosPrecargados,
+}) => {
   const [options, setOptions] = useState<MedicoOption[]>(() =>
     value && presetLabel ? [{ cod: value, nombre: presetLabel }] : [],
   );
@@ -43,6 +49,21 @@ const MedicoAutocomplete: React.FC<Props> = ({ value, onChange, disabled, preset
     }
   }, []);
 
+  // Mismo filtro (sin organizaciones) y mismo tope que el buscador remoto, pero
+  // en memoria — sobre la lista que ya trajo CargaFacturacion.tsx una sola vez.
+  const buscarLocal = useCallback((q: string) => {
+    if (q.length < minLenFor(q) || !medicosPrecargados) { setOptions([]); return; }
+    const needle = q.toLowerCase();
+    const filtrados = medicosPrecargados.filter(
+      (m) =>
+        !m.es_organizacion &&
+        (String(m.cod).includes(q) ||
+          m.nombre.toLowerCase().includes(needle) ||
+          (m.matricula != null && String(m.matricula).includes(q))),
+    );
+    setOptions(filtrados.slice(0, 20));
+  }, [medicosPrecargados]);
+
   useEffect(() => () => { abortRef.current?.abort(); }, []);
 
   const selectOptions: AppSearchSelectOption[] = options.map((m) => ({
@@ -59,11 +80,11 @@ const MedicoAutocomplete: React.FC<Props> = ({ value, onChange, disabled, preset
       options={selectOptions}
       value={value}
       onChange={(id) => {
-        const med = options.find((m) => String(m.cod) === String(id)) ?? null;
+        const med = (medicosPrecargados ?? options).find((m) => String(m.cod) === String(id)) ?? null;
         onChange(id ? String(id) : null, med);
       }}
-      onQueryChange={search}
-      loading={loading}
+      onQueryChange={medicosPrecargados ? buscarLocal : search}
+      loading={medicosPrecargados ? false : loading}
       disabled={disabled}
       blurOnSelect={blurOnSelect}
     />

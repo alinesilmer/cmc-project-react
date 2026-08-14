@@ -12,7 +12,9 @@ import {
   editarPrestacion,
   anularPrestacion,
   fetchMedicos,
+  fetchMedicosTodos,
   fetchObrasSociales,
+  fetchObrasSocialesTodas,
   fetchCodigosHabilitados,
   fetchClinicas,
 } from "../api";
@@ -110,6 +112,38 @@ const CargaFacturacion: React.FC = () => {
   const replicarParam = searchParams.get("replicar");
   const isReplicando = !isEdit && !isComplemento && !!replicarParam;
   const [loadingReplicar, setLoadingReplicar] = useState(isReplicando);
+
+  // Precarga completa de médicos y obras sociales: antes de que el formulario se
+  // muestre, se piden una sola vez (en vez de un pedido por cada tecleo, lento con
+  // ~4.500 médicos) y de ahí en más los autocompletes de médico/obra social filtran
+  // en memoria. Bloquea el formulario entero con "Cargando formulario…" hasta que
+  // ambas listas estén — ver el gate más abajo. Redis lo va a hacer innecesario más
+  // adelante; por ahora es la forma más simple de sacarse de encima la latencia.
+  const [medicosPrecargados, setMedicosPrecargados] = useState<MedicoOption[] | null>(null);
+  const [obrasSocialesPrecargadas, setObrasSocialesPrecargadas] = useState<ObraSocialOption[] | null>(null);
+  const [errorPrecarga, setErrorPrecarga] = useState(false);
+  const [reintentoPrecarga, setReintentoPrecarga] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+    setErrorPrecarga(false);
+    (async () => {
+      try {
+        const [medicos, obrasSociales] = await Promise.all([
+          fetchMedicosTodos(),
+          fetchObrasSocialesTodas(),
+        ]);
+        if (!active) return;
+        setMedicosPrecargados(medicos);
+        setObrasSocialesPrecargadas(obrasSociales);
+      } catch {
+        if (active) setErrorPrecarga(true);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [reintentoPrecarga]);
 
   // Complementaria — OS/período fijos, tomados de la factura referenciada por id.
   const [complementoMeta, setComplementoMeta] = useState<{
@@ -990,6 +1024,38 @@ const CargaFacturacion: React.FC = () => {
       ? (complementoMeta?.periodo ?? null)
       : (periodoOverride ?? periodo?.periodo ?? null);
 
+  // Antes que cualquier otro gate: sin médicos y obras sociales precargados no hay
+  // formulario que mostrar (los autocompletes de médico/obra social dependen de
+  // estas listas para filtrar en memoria).
+  if (!medicosPrecargados || !obrasSocialesPrecargadas) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <span className={styles.headerIcon}>
+            <FilePlus2 size={22} />
+          </span>
+          <div>
+            <h1 className={styles.title}>Cargar prestación</h1>
+          </div>
+        </div>
+        {errorPrecarga ? (
+          <div className={styles.errorBox}>
+            ⚠ No se pudieron cargar los médicos y las obras sociales.{" "}
+            <button
+              type="button"
+              className={styles.periodoLinkBtn}
+              onClick={() => setReintentoPrecarga((k) => k + 1)}
+            >
+              Reintentar
+            </button>
+          </div>
+        ) : (
+          <p className={styles.mutedText}>Cargando formulario, esperá…</p>
+        )}
+      </div>
+    );
+  }
+
   // Solo en la primera lectura: la recarga posterior a guardar no tiene que blanquear
   // la pantalla — el formulario ya tiene los datos y se actualizan en el lugar.
   if (isEdit && loadingEdit && !editMeta) {
@@ -1222,6 +1288,7 @@ const CargaFacturacion: React.FC = () => {
             ejecutorError={errores.codMedicoEjecutor}
             ejecutorPresetLabel={ejecutorPreset ?? (isEdit ? "(valor actual)" : undefined)}
             ejecutorResetKey={ejecutorResetKey}
+            medicosPrecargados={medicosPrecargados}
           />
 
           {/* 2. Obra social + período. En complementaria son fijos (van en el badge). */}
@@ -1262,6 +1329,7 @@ const CargaFacturacion: React.FC = () => {
               disabled={guardando}
               periodoOverride={periodoOverride}
               onPeriodoOverrideChange={setPeriodoOverride}
+              obrasSocialesPrecargadas={obrasSocialesPrecargadas}
             />
           )}
 
@@ -1511,6 +1579,7 @@ const CargaFacturacion: React.FC = () => {
               codMedicoMain={codMedico}
               disabled={isEdit ? formDisabled : guardando}
               errors={errores}
+              medicosPrecargados={medicosPrecargados}
             />
           )}
 

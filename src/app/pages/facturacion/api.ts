@@ -39,8 +39,18 @@ async function traced<T>(label: string, params: unknown, promise: Promise<T>): P
 export const fetchMedicos = (q: string, limit = 20) =>
   traced("GET /medicos", { q, limit }, getJSON<MedicoOption[]>(`${BASE}/medicos`, { q, limit }));
 
+// Precarga completa para el formulario de Carga de Facturación (ver
+// CargaFacturacion.tsx): se pide una sola vez al entrar y de ahí en más el
+// médico/obra social/clínica se elige filtrando en memoria, sin ida y vuelta
+// al backend por cada tecleo.
+export const fetchMedicosTodos = () =>
+  traced("GET /medicos/todos", {}, getJSON<MedicoOption[]>(`${BASE}/medicos/todos`));
+
 export const fetchObrasSociales = (q: string, limit = 20) =>
   traced("GET /obras-sociales", { q, limit }, getJSON<ObraSocialOption[]>(`${BASE}/obras-sociales`, { q, limit }));
+
+export const fetchObrasSocialesTodas = () =>
+  traced("GET /obras-sociales/todas", {}, getJSON<ObraSocialOption[]>(`${BASE}/obras-sociales/todas`));
 
 export const fetchClinicas = (q: string, limit = 20) =>
   traced("GET /clinicas", { q, limit }, getJSON<ClinicaOption[]>(`${BASE}/clinicas`, { q, limit }));

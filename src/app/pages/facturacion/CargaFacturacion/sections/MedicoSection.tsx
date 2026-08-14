@@ -22,12 +22,15 @@ interface Props {
   ejecutorError?: string | null;
   ejecutorPresetLabel?: string;
   ejecutorResetKey?: number;
+  /** Lista completa precargada por CargaFacturacion.tsx — ver PayeeAutocomplete. */
+  medicosPrecargados?: MedicoOption[];
 }
 
 const MedicoSection: React.FC<Props> = ({
   codMedico, medico, onMedicoChange, disabled, error, presetLabel,
   payeeEsOrganizacion, codMedicoEjecutor, medicoEjecutor, onEjecutorChange,
   ejecutorDisabled, ejecutorError, ejecutorPresetLabel, ejecutorResetKey,
+  medicosPrecargados,
 }) => (
   <div className={styles.section}>
     <span className={styles.sectionTitle}>Médico / Clínica</span>
@@ -41,6 +44,7 @@ const MedicoSection: React.FC<Props> = ({
             disabled={disabled}
             presetLabel={presetLabel}
             blurOnSelect={false}
+            medicosPrecargados={medicosPrecargados}
           />
         </div>
         {medico?.es_organizacion && (
@@ -79,6 +83,7 @@ const MedicoSection: React.FC<Props> = ({
           disabled={ejecutorDisabled}
           presetLabel={ejecutorPresetLabel}
           blurOnSelect={false}
+          medicosPrecargados={medicosPrecargados}
         />
         {ejecutorError && <span className={styles.errorText}>{ejecutorError}</span>}
 

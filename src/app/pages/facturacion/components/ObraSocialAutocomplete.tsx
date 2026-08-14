@@ -19,9 +19,15 @@ interface Props {
   blurOnSelect?: boolean;
   /** Nombre de la OS ya elegida, para mostrarla antes de buscar (usado al replicar). */
   presetLabel?: string;
+  /** Lista ya traída entera (ver CargaFacturacion.tsx): si viene, se filtra en
+   *  memoria y no se pega más a `/obras-sociales` por cada tecleo. Sin esto, busca
+   *  como siempre — el resto de las pantallas que usan este campo no se tocan. */
+  obrasSocialesPrecargadas?: ObraSocialOption[];
 }
 
-const ObraSocialAutocomplete: React.FC<Props> = ({ value, onChange, disabled, blurOnSelect, presetLabel }) => {
+const ObraSocialAutocomplete: React.FC<Props> = ({
+  value, onChange, disabled, blurOnSelect, presetLabel, obrasSocialesPrecargadas,
+}) => {
   const [options, setOptions] = useState<ObraSocialOption[]>(() =>
     value != null && presetLabel ? [{ id: value, nro_obra_social: value, nombre: presetLabel }] : [],
   );
@@ -49,6 +55,16 @@ const ObraSocialAutocomplete: React.FC<Props> = ({ value, onChange, disabled, bl
     }
   }, []);
 
+  // Con la lista precargada entera (~140 filas), "buscar" es filtrar en memoria.
+  const buscarLocal = useCallback((q: string) => {
+    if (q.length < minLenFor(q) || !obrasSocialesPrecargadas) { setOptions([]); return; }
+    const needle = q.toLowerCase();
+    const filtradas = obrasSocialesPrecargadas.filter(
+      (os) => String(os.nro_obra_social).includes(q) || os.nombre.toLowerCase().includes(needle),
+    );
+    setOptions(filtradas.slice(0, 20));
+  }, [obrasSocialesPrecargadas]);
+
   useEffect(() => () => { abortRef.current?.abort(); }, []);
 
   const selectOptions: AppSearchSelectOption[] = options.map((os) => ({
@@ -61,11 +77,11 @@ const ObraSocialAutocomplete: React.FC<Props> = ({ value, onChange, disabled, bl
       options={selectOptions}
       value={value}
       onChange={(id) => {
-        const os = options.find((o) => o.nro_obra_social === Number(id)) ?? null;
+        const os = (obrasSocialesPrecargadas ?? options).find((o) => o.nro_obra_social === Number(id)) ?? null;
         onChange(id ? Number(id) : null, os);
       }}
-      onQueryChange={search}
-      loading={loading}
+      onQueryChange={obrasSocialesPrecargadas ? buscarLocal : search}
+      loading={obrasSocialesPrecargadas ? false : loading}
       disabled={disabled}
       blurOnSelect={blurOnSelect}
     />
