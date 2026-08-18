@@ -13,10 +13,16 @@ import {
   FileUp,
   Info,
   PlusCircle,
+  UserRound,
   X,
 } from "lucide-react";
 
+import { useAuth } from "../../auth/AuthProvider";
+import { isMedico } from "../../auth/roles";
+import { mensajeDeError } from "../../lib/httpErrors";
 import ActionModal from "../../components/molecules/ActionModal/ActionModal";
+import MedicoAutocomplete from "../facturacion/components/MedicoAutocomplete";
+import type { MedicoOption } from "../facturacion/types";
 import PeriodosTable from "./components/PeriodosTable";
 import PrestacionesTable from "./components/PrestacionesTable";
 import PrestacionForm from "./components/PrestacionForm";
@@ -25,6 +31,7 @@ import {
   adjuntarOrden,
   cargarPrestacion,
   eliminarPrestacion,
+  esTimeoutDeRed,
   getPeriodoActual,
   getPeriodos,
   getPrestaciones,
@@ -49,6 +56,15 @@ const hoy = new Date();
 export default function ValidacionOS() {
   const { slug } = useParams<{ slug: string }>();
   const os = getObraSocial(slug);
+
+  const { user } = useAuth();
+  const esMedico = isMedico(user);
+  // El personal del Colegio (rol no médico) tiene que elegir a qué socio le
+  // corresponde la carga: el backend, sin `nro_socio`, opera sobre el token
+  // de quien está logueado, y quien está logueado acá no es un médico.
+  const [socio, setSocio] = useState<MedicoOption | null>(null);
+  const nroSocioElegido = esMedico || !socio ? undefined : Number(socio.cod);
+  const faltaElegirSocio = !esMedico && !socio;
 
   const [tab, setTab] = useState<TabId>("carga");
   const [mes, setMes] = useState(hoy.getMonth() + 1);
@@ -80,13 +96,22 @@ export default function ValidacionOS() {
   // ─── Carga de datos ────────────────────────────────────────────────────────
   const refrescar = useCallback(async () => {
     if (codigoOS == null) return;
+    // Personal del Colegio sin socio elegido todavía: no hay de quién traer
+    // nada (ver faltaElegirSocio).
+    if (faltaElegirSocio) {
+      setPrestaciones([]);
+      setPeriodos([]);
+      setCargandoLista(false);
+      setCargandoPeriodos(false);
+      return;
+    }
     setCargandoLista(true);
     setCargandoPeriodos(true);
     setErrorCarga(null);
     try {
       const [lista, periodosOS] = await Promise.all([
-        getPrestaciones(codigoOS, mes, anio),
-        getPeriodos(codigoOS),
+        getPrestaciones(codigoOS, mes, anio, nroSocioElegido),
+        getPeriodos(codigoOS, nroSocioElegido),
       ]);
       setPrestaciones(lista);
       setPeriodos(periodosOS);
@@ -96,7 +121,7 @@ export default function ValidacionOS() {
       setCargandoLista(false);
       setCargandoPeriodos(false);
     }
-  }, [codigoOS, mes, anio]);
+  }, [codigoOS, mes, anio, faltaElegirSocio, nroSocioElegido]);
 
   useEffect(() => {
     void refrescar();
@@ -139,6 +164,7 @@ export default function ValidacionOS() {
 
   const handleValidar = async (valores: PrestacionFormValues) => {
     if (os.codigo == null) return;
+    if (faltaElegirSocio) return; // el formulario ni se muestra en este caso
     setEnviando(true);
     setResultado(null);
     try {
@@ -157,6 +183,7 @@ export default function ValidacionOS() {
         token: valores.token ?? "",
         coseguro: Number(String(valores.coseguro ?? "0").replace(",", ".")) || 0,
         cantidad: Number(valores.cantidad ?? 1) || 1,
+        nro_socio: nroSocioElegido,
       });
       setResultado({
         estado: prestacion.estado,
@@ -170,14 +197,28 @@ export default function ValidacionOS() {
       });
       await refrescar();
       resultadoRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    } catch (err: any) {
-      setResultado({
-        estado: "rechazada",
-        mensaje:
-          err?.response?.data?.detail ??
-          err?.message ??
-          "No pudimos guardar la prestación. Intentá de nuevo.",
-      });
+    } catch (err) {
+      // Se cortó del lado del navegador: el backend puede haber terminado igual
+      // y la obra social puede haber autorizado. Decir "no se pudo" acá lleva al
+      // médico a reintentar, y un segundo intento consume otro token del
+      // afiliado — así que se refresca la lista y se le pide que mire antes.
+      if (esTimeoutDeRed(err)) {
+        // Refrescamos para que el contador de "Período actual" ya muestre la
+        // prestación si efectivamente entró. El aviso se queda en esta pestaña.
+        await refrescar();
+        setResultado({
+          estado: "incierto",
+          mensaje: `${os.nombre} está demorando en responder. Puede que la prestación haya quedado cargada igual: revisala en "Período actual" antes de volver a validar, para no pedir dos veces la misma autorización.`,
+        });
+      } else {
+        setResultado({
+          estado: "rechazada",
+          mensaje: mensajeDeError(
+            err,
+            "No pudimos guardar la prestación. Intentá de nuevo.",
+          ),
+        });
+      }
       resultadoRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     } finally {
       setEnviando(false);
@@ -188,11 +229,23 @@ export default function ValidacionOS() {
     if (!aEliminar) return;
     setErrorAccion(null);
     try {
-      await eliminarPrestacion(aEliminar.id);
+      await eliminarPrestacion(aEliminar.id, nroSocioElegido);
       await refrescar();
       setAEliminar(null);
-    } catch {
-      setErrorAccion("No pudimos eliminar la prestación.");
+    } catch (err) {
+      // Igual que en el alta: si cortó el navegador, la baja puede haberse
+      // hecho igual. Refrescamos y cerramos el modal — la lista es la que
+      // manda, y dejar "no pudimos eliminar" sobre una prestación que ya no
+      // está fue exactamente lo que pasó en las pruebas.
+      if (esTimeoutDeRed(err)) {
+        await refrescar();
+        setAEliminar(null);
+        setErrorCarga(
+          `${os.nombre} está demorando en responder. Verificá en el listado si la prestación se eliminó antes de reintentar.`,
+        );
+        return;
+      }
+      setErrorAccion(mensajeDeError(err, "No pudimos eliminar la prestación."));
       throw new Error("delete failed"); // mantiene el modal abierto
     }
   };
@@ -201,7 +254,7 @@ export default function ValidacionOS() {
     if (!aAdjuntar || !archivo) return;
     setErrorAccion(null);
     try {
-      await adjuntarOrden(aAdjuntar.id, archivo);
+      await adjuntarOrden(aAdjuntar.id, archivo, nroSocioElegido);
       await refrescar();
       setAAdjuntar(null);
       setArchivo(null);
@@ -222,6 +275,15 @@ export default function ValidacionOS() {
   const tope = periodoAbierto ?? { mes: hoy.getMonth() + 1, anio: hoy.getFullYear() };
   const enTope = mes === tope.mes && anio === tope.anio;
   const fueraDelAbierto = Boolean(periodoAbierto) && !enTope;
+
+  // Entrar al listado siempre trae datos frescos. Importa después de un
+  // timeout: el aviso manda al médico a revisar acá si la prestación entró, y
+  // el último refresco pudo haber salido antes de que el backend terminara —
+  // una lista vacía y vieja lo llevaría a validar dos veces.
+  const irATab = (destino: TabId) => {
+    setTab(destino);
+    if (destino === "periodo") void refrescar();
+  };
 
   const TABS: { id: TabId; label: string; icon: typeof PlusCircle; badge?: number }[] = [
     { id: "carga", label: "Cargar prestación", icon: PlusCircle },
@@ -254,6 +316,28 @@ export default function ValidacionOS() {
         </div>
 
       </header>
+
+      {/* ── Socio a validar (sólo personal del Colegio) ── */}
+      {!esMedico && (
+        <section className={s.formCard} style={{ maxWidth: 480 }}>
+          <div>
+            <h2 className={s.cardTitle}>Socio a validar</h2>
+            <p className={s.cardSub}>
+              Elegí el médico para el que vas a cargar esta prestación. El
+              período, el historial y la carga de acá abajo pasan a ser los suyos.
+            </p>
+          </div>
+          <div className={s.socioField}>
+            <label className={s.socioLabel}>
+              <UserRound size={14} /> Socio
+            </label>
+            <MedicoAutocomplete
+              value={socio?.cod ?? null}
+              onChange={(_cod, medico) => setSocio(medico)}
+            />
+          </div>
+        </section>
+      )}
 
       {/* ── Selector de período ── */}
       <div className={s.periodBar}>
@@ -331,7 +415,7 @@ export default function ValidacionOS() {
             role="tab"
             aria-selected={tab === t.id}
             className={`${s.tab} ${tab === t.id ? s.tabActive : ""}`}
-            onClick={() => setTab(t.id)}
+            onClick={() => irATab(t.id)}
           >
             <t.icon size={16} />
             {t.label}
@@ -361,7 +445,14 @@ export default function ValidacionOS() {
                 ? "Completá los datos del afiliado y el código. Consultamos a la obra social en el momento."
                 : "Cargá la autorización que ya obtuviste en el portal de la obra social."}
             </p>
-            <PrestacionForm os={os} enviando={enviando} onSubmit={handleValidar} />
+            {faltaElegirSocio ? (
+              <p className={s.aviso}>
+                <AlertTriangle size={16} />
+                Elegí primero el socio arriba: la prestación se carga a su nombre.
+              </p>
+            ) : (
+              <PrestacionForm os={os} enviando={enviando} onSubmit={handleValidar} />
+            )}
           </div>
         </section>
       )}
@@ -500,7 +591,9 @@ function ResultadoBanner({
       ? BadgeCheck
       : estado === "pendiente"
         ? Info
-        : CircleAlert;
+        : estado === "incierto"
+          ? AlertTriangle
+          : CircleAlert;
 
   const titulo =
     estado === "autorizada"
@@ -509,7 +602,9 @@ function ResultadoBanner({
         ? "Prestación cargada"
         : estado === "pendiente"
           ? "Requiere gestión del afiliado"
-          : "No se pudo cargar la prestación";
+          : estado === "incierto"
+            ? "No sabemos si se cargó"
+            : "No se pudo cargar la prestación";
 
   return (
     <div className={`${s.resultado} ${s[`resultado_${estado}`]}`} role="status">

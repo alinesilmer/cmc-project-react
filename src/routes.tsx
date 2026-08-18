@@ -5,6 +5,7 @@ import { AnimatePresence } from "framer-motion";
 // Structural components are always needed for the panel shell → keep eager.
 import RequireAuth from "./app/auth/RequireAuth";
 import MedicoRouteGuard from "./app/auth/MedicoRouteGuard";
+import RequireScope from "./app/auth/RequireScope";
 import AppLayout from "./app/components/molecules/AppLayout/AppLayout";
 import { useAuth } from "./app/auth/AuthProvider";
 import { isMedico } from "./app/auth/roles";
@@ -17,7 +18,6 @@ const MiPerfil = lazy(() => import("./app/pages/MiPerfil/MiPerfil"));
 // Reportes carga Recharts, que pesa: va lazy para no meterlo en el bundle de
 // quienes nunca abren la pantalla.
 const ReportesPage = lazy(() => import("./app/pages/Reportes/ReportesPage"));
-const MisReportes = lazy(() => import("./app/pages/Reportes/MisReportes"));
 const DoctorsPage = lazy(() => import("./app/pages/DoctorsList/DoctorsList"));
 const SocialWorksPage = lazy(() => import("./app/pages/SocialWorkSection/SocialWorkSection"));
 const DoctorProfilePage = lazy(() => import("./app/pages/DoctorProfilePage/DoctorProfilePage"));
@@ -122,121 +122,182 @@ export default function RootRoutes() {
               {/* Los usuarios médicos solo alcanzan las rutas de MEDICO_ALLOWED_PATHS. */}
               <Route element={<MedicoRouteGuard />}>
               <Route path="dashboard" element={<InicioRoute />} />
-              <Route path="mi-perfil" element={<MiPerfil />} />
-              {/* Reportes del Colegio: además de esta ruta, el backend exige
-                  `facturas:ver` — el guard de acá es sólo comodidad de UI. */}
-              <Route path="reportes" element={<ReportesPage />} />
-              {/* Versión del socio: sólo sus propios números. */}
-              <Route path="mis-numeros" element={<MisReportes />} />
 
-              {/* TEMPORAL — preview del portal del socio desde una cuenta admin.
-                  /panel/dashboard elige por rol, así que el Inicio del médico no
-                  es alcanzable de otro modo. Borrar junto con VISTA_MEDICO_MENU
-                  (Topbar.tsx) cuando estén los permisos reales. */}
-              <Route path="preview/inicio-medico" element={<InicioMedico />} />
-              <Route path="doctors" element={<DoctorsPage />} />
-              <Route path="doctors/:id" element={<DoctorProfilePage />} />
+              <Route element={<RequireScope anyOf={["medico:leer_propio", "medico:leer"]} />}>
+                <Route path="mi-perfil" element={<MiPerfil />} />
+              </Route>
+
+              {/* Reportes del Colegio: además de esta ruta, el backend exige
+                  `reporte:leer` — el guard de acá es sólo comodidad de UI. */}
+              <Route element={<RequireScope scope="reporte:leer" />}>
+                <Route path="reportes" element={<ReportesPage />} />
+              </Route>
+
+              <Route element={<RequireScope scope="medico:leer" />}>
+                <Route path="doctors" element={<DoctorsPage />} />
+                <Route path="doctors/:id" element={<DoctorProfilePage />} />
+              </Route>
+
               <Route path="social-works" element={<SocialWorksPage />} />
-              <Route
-                path="afiliadospadron"
-                element={<AfiliadosPorObraSocialPage />}
-              />
+
+              <Route element={<RequireScope scope="padron:leer" />}>
+                <Route
+                  path="afiliadospadron"
+                  element={<AfiliadosPorObraSocialPage />}
+                />
+              </Route>
 
               {/* Liquidación */}
-              <Route path="liquidation" element={<PagosList />} />
-              <Route path="liquidation/:pagoId" element={<PagoDetalle />} />
-              <Route
-                path="liquidation/:pagoId/facturas/:liquidacionId"
-                element={<FacturaDetalle />}
-              />
+              <Route element={<RequireScope scope="pago:leer" />}>
+                <Route path="liquidation" element={<PagosList />} />
+                <Route path="liquidation/:pagoId" element={<PagoDetalle />} />
+                <Route
+                  path="liquidation/:pagoId/facturas/:liquidacionId"
+                  element={<FacturaDetalle />}
+                />
+              </Route>
 
-              {/* Débitos y Créditos (independiente) */}
-              <Route path="debitos-creditos" element={<DebitosCreditos />} />
-              <Route path="debitos-creditos/:loteId" element={<LoteDetalle />} />
-              <Route
-                path="debitos-creditos-sin-factura/:loteId"
-                element={<LoteDetalleSinFactura />}
-              />
+              {/* Débitos y Créditos + Refacturaciones (independientes) */}
+              <Route element={<RequireScope scope="lote:leer" />}>
+                <Route path="debitos-creditos" element={<DebitosCreditos />} />
+                <Route path="debitos-creditos/:loteId" element={<LoteDetalle />} />
+                <Route
+                  path="debitos-creditos-sin-factura/:loteId"
+                  element={<LoteDetalleSinFactura />}
+                />
+                <Route path="refacturaciones" element={<RefacturacionesList />} />
+                <Route path="refacturaciones/:loteId" element={<LoteDetalle />} />
+              </Route>
 
-              {/* Refacturaciones (independiente) */}
-              <Route path="refacturaciones" element={<RefacturacionesList />} />
-              <Route path="refacturaciones/:loteId" element={<LoteDetalle />} />
-              <Route path="deducciones" element={<DeduccionesList />} />
-              <Route path="deducciones/nueva" element={<NuevaDeduccion />} />
+              <Route element={<RequireScope scope="deduccion:leer" />}>
+                <Route path="deducciones" element={<DeduccionesList />} />
+              </Route>
+              <Route element={<RequireScope scope="deduccion:crear" />}>
+                <Route path="deducciones/nueva" element={<NuevaDeduccion />} />
+              </Route>
 
               {/* Facturación */}
               <Route path="facturacion">
                 <Route index element={<Navigate to="/panel/facturacion/periodos" replace />} />
-                <Route path="carga" element={<CargaFacturacion />} />
-                <Route path="carga/:id" element={<CargaFacturacion />} />
-                <Route path="cierre" element={<CierrePeriodo />} />
-                <Route path="periodos" element={<VerPeriodos />} />
-                <Route path="periodos/:id" element={<FacturacionFacturaDetalle />} />
-                <Route path="complementarias" element={<Complementarias />} />
-                <Route path="complementarias/:facturaId/cargar" element={<CargaFacturacion />} />
+                <Route element={<RequireScope scope="facturacion:cargar" />}>
+                  <Route path="carga" element={<CargaFacturacion />} />
+                  <Route path="carga/:id" element={<CargaFacturacion />} />
+                </Route>
+                <Route element={<RequireScope scope="facturacion:cerrar" />}>
+                  <Route path="cierre" element={<CierrePeriodo />} />
+                </Route>
+                <Route element={<RequireScope scope="facturacion:leer" />}>
+                  <Route path="periodos" element={<VerPeriodos />} />
+                  <Route path="periodos/:id" element={<FacturacionFacturaDetalle />} />
+                </Route>
+                <Route element={<RequireScope scope="facturacion:complementar" />}>
+                  <Route path="complementarias" element={<Complementarias />} />
+                  <Route path="complementarias/:facturaId/cargar" element={<CargaFacturacion />} />
+                </Route>
               </Route>
 
-              <Route path="padron-ioscor" element={<PadronIoscor />} />
-              <Route path="users" element={<UsersList />} />
-              <Route path="users/auditoria" element={<AuditoriaPadron />} />
-              <Route path="register-socio" element={<RegisterSocio />} />
-              <Route path="admin/permissions" element={<PermissionsManager />} />
-              <Route path="users-manager" element={<UsersManagerDashboard />} />
-              <Route path="boletin" element={<Boletin />} />
+              <Route element={<RequireScope scope="padron:leer" />}>
+                <Route path="padron-ioscor" element={<PadronIoscor />} />
+              </Route>
+
+              <Route element={<RequireScope scope="medico:leer" />}>
+                <Route path="users" element={<UsersList />} />
+                <Route path="users/auditoria" element={<AuditoriaPadron />} />
+                <Route path="users-manager" element={<UsersManagerDashboard />} />
+              </Route>
+
+              <Route element={<RequireScope scope="medico:crear" />}>
+                <Route path="register-socio" element={<RegisterSocio />} />
+              </Route>
+
+              <Route element={<RequireScope scope="rbac:gestionar" />}>
+                <Route path="admin/permissions" element={<PermissionsManager />} />
+              </Route>
+
               <Route path="config" element={<Config />} />
               <Route path="help" element={<Help />} />
-              <Route
-                path="boletin-consulta-comun"
-                element={<BoletinConsultaComun />}
-              />
-              <Route
-                path="historial-valores"
-                element={<HistorialValoresConsulta />}
-              />
-              <Route
-                path="tabla-ginecologia"
-                element={<TablaGinecologia />}
-              />
-              <Route
-                path="boletin-galenos"
-                element={<BoletinGalenos />}
-              />
+
+              <Route element={<RequireScope scope="nomenclador:leer" />}>
+                <Route path="boletin" element={<Boletin />} />
+                <Route
+                  path="historial-valores"
+                  element={<HistorialValoresConsulta />}
+                />
+                <Route
+                  path="tabla-ginecologia"
+                  element={<TablaGinecologia />}
+                />
+                <Route
+                  path="boletin-galenos"
+                  element={<BoletinGalenos />}
+                />
+              </Route>
+
+              <Route element={<RequireScope scope="catalogo:leer" />}>
+                <Route
+                  path="boletin-consulta-comun"
+                  element={<BoletinConsultaComun />}
+                />
+              </Route>
+
               {/* Validaciones con obras sociales */}
-              <Route path="validaciones" element={<ValidacionesHub />} />
-              {/* Ruta estática antes de la dinámica: "portales" no es un slug de O.S. */}
-              <Route path="validaciones/portales" element={<PortalesExternos />} />
-              <Route path="validaciones/:slug" element={<ValidacionOS />} />
+              <Route element={<RequireScope scope="validacion:cargar" />}>
+                <Route path="validaciones" element={<ValidacionesHub />} />
+                {/* Ruta estática antes de la dinámica: "portales" no es un slug de O.S. */}
+                <Route path="validaciones/portales" element={<PortalesExternos />} />
+                <Route path="validaciones/:slug" element={<ValidacionOS />} />
+              </Route>
 
               {/* Planillas de consulta: el médico las descarga, el Colegio las publica. */}
               <Route path="planillas" element={<PlanillasMedico />} />
               <Route path="convenios/planillas" element={<PlanillasAdmin />} />
 
               {/* Nomenclador Nacional */}
-              <Route path="nomenclador/codigos" element={<NomencladorCodigos />} />
-              <Route path="nomenclador/por-obra-social" element={<NomencladorPorOS />} />
-              <Route path="nomenclador/galenos" element={<NomencladorGalenos />} />
-              <Route path="nomenclador/galenos/importar" element={<ImportarGalenos />} />
-              <Route path="nomenclador/actualizar-precios" element={<ActualizarPreciosGalenos />} />
-              <Route path="nomenclador/consulta-valores" element={<ConsultaValores />} />
-              <Route path="nomenclador/consulta-precios" element={<ConsultaPrecios />} />
-              <Route path="nomenclador/importar-precios-pdf" element={<ImportarPreciosPdf />} />
-              <Route path="nomenclador/aumento-porcentual" element={<AumentoPorcentual />} />
-              <Route path="nomenclador/homologador" element={<Homologador />} />
+              <Route element={<RequireScope scope="nomenclador:leer" />}>
+                <Route path="nomenclador/codigos" element={<NomencladorCodigos />} />
+                <Route path="nomenclador/por-obra-social" element={<NomencladorPorOS />} />
+                <Route path="nomenclador/galenos" element={<NomencladorGalenos />} />
+                <Route path="nomenclador/consulta-valores" element={<ConsultaValores />} />
+                <Route path="nomenclador/consulta-precios" element={<ConsultaPrecios />} />
+                <Route path="nomenclador/homologador" element={<Homologador />} />
+              </Route>
+              <Route element={<RequireScope scope="nomenclador:masivo" />}>
+                <Route path="nomenclador/galenos/importar" element={<ImportarGalenos />} />
+                <Route path="nomenclador/importar-precios-pdf" element={<ImportarPreciosPdf />} />
+                <Route path="nomenclador/aumento-porcentual" element={<AumentoPorcentual />} />
+              </Route>
+              <Route element={<RequireScope scope="nomenclador:editar" />}>
+                <Route path="nomenclador/actualizar-precios" element={<ActualizarPreciosGalenos />} />
+              </Route>
 
-              <Route path="especialidades" element={<EspecialidadesPage />} />
-              <Route path="servicios" element={<ServiciosPage />} />
-              <Route path="beneficios" element={<BeneficiosPage />} />
-              <Route path="avisos" element={<AvisosPage />} />
-              <Route
-                path="solicitudes-cambio"
-                element={<SolicitudesCambioPage />}
-              />
+              <Route element={<RequireScope scope="catalogo:leer" />}>
+                <Route path="especialidades" element={<EspecialidadesPage />} />
+              </Route>
+              <Route element={<RequireScope scope="medico:leer" />}>
+                <Route path="servicios" element={<ServiciosPage />} />
+              </Route>
+              <Route element={<RequireScope scope="beneficio:gestionar" />}>
+                <Route path="beneficios" element={<BeneficiosPage />} />
+              </Route>
+              <Route element={<RequireScope scope="aviso:gestionar" />}>
+                <Route path="avisos" element={<AvisosPage />} />
+              </Route>
+              <Route element={<RequireScope scope="solicitud:leer" />}>
+                <Route
+                  path="solicitudes-cambio"
+                  element={<SolicitudesCambioPage />}
+                />
+              </Route>
 
               <Route path="convenios/obras-sociales">
-                <Route index element={<ObrasSocialesListado />} />
-                <Route path="alta" element={<ObrasSocialesForm />} />
-                <Route path=":id" element={<ObrasSocialesDetalle />} />
-                <Route path=":id/editar" element={<ObrasSocialesForm />} />
+                <Route element={<RequireScope scope="catalogo:leer" />}>
+                  <Route index element={<ObrasSocialesListado />} />
+                  <Route path=":id" element={<ObrasSocialesDetalle />} />
+                </Route>
+                <Route element={<RequireScope scope="catalogo:editar" />}>
+                  <Route path="alta" element={<ObrasSocialesForm />} />
+                  <Route path=":id/editar" element={<ObrasSocialesForm />} />
+                </Route>
               </Route>
 
               <Route
@@ -246,11 +307,13 @@ export default function RootRoutes() {
               </Route>
             </Route>
 
-            <Route path="/panel/admin-padrones" element={<AdminPadrones />} />
-            <Route
-              path="/panel/admin-padrones-detail"
-              element={<AdminPadronesDetail />}
-            />
+            <Route element={<RequireScope scope="padron:leer" />}>
+              <Route path="/panel/admin-padrones" element={<AdminPadrones />} />
+              <Route
+                path="/panel/admin-padrones-detail"
+                element={<AdminPadronesDetail />}
+              />
+            </Route>
             <Route
               path="/panel/cambiar-password"
               element={<CambiarPassword />}

@@ -32,11 +32,13 @@ interface Props {
   /** Período elegido a mano (YYYYMM), o null para usar el automático. */
   periodoOverride: string | null;
   onPeriodoOverrideChange: (periodo: string | null) => void;
+  /** Lista completa precargada por CargaFacturacion.tsx — ver ObraSocialAutocomplete. */
+  obrasSocialesPrecargadas?: ObraSocialOption[];
 }
 
 const DatosGeneralesSection: React.FC<Props> = ({
   obraSocial, onObraSocialChange, periodo, periodoError, disabled,
-  periodoOverride, onPeriodoOverrideChange,
+  periodoOverride, onPeriodoOverrideChange, obrasSocialesPrecargadas,
 }) => {
   const [editando, setEditando] = useState(false);
 
@@ -69,6 +71,7 @@ const DatosGeneralesSection: React.FC<Props> = ({
             disabled={disabled}
             blurOnSelect={false}
             presetLabel={obraSocial?.nombre}
+            obrasSocialesPrecargadas={obrasSocialesPrecargadas}
           />
         </div>
         <div className={styles.filterField}>

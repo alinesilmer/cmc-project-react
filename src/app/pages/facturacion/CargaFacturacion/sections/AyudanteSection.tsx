@@ -47,10 +47,13 @@ interface Props {
   codMedicoMain: string | null;
   disabled?: boolean;
   errors?: Record<string, string>;
+  /** Lista completa precargada por CargaFacturacion.tsx — ver MedicoAutocomplete. */
+  medicosPrecargados?: MedicoOption[];
 }
 
 const AyudanteSection: React.FC<Props> = ({
   precio, maxAyudantes, ayudantes, onChange, codMedicoMain, disabled, errors = {},
+  medicosPrecargados,
 }) => {
   const updateLinea = (id: string, patch: Partial<AyudanteLinea>) => {
     onChange(ayudantes.map((l) => (l.id === id ? { ...l, ...patch } : l)));
@@ -116,6 +119,7 @@ const AyudanteSection: React.FC<Props> = ({
                           .filter((v) => v != null && v !== "").join(" · ") || undefined
                       : undefined
                   }
+                  medicosPrecargados={medicosPrecargados}
                 />
                 {isDuplicateMain && <span className={styles.errorText}>No puede ser el mismo médico principal.</span>}
                 {isDuplicateOther && !isDuplicateMain && <span className={styles.errorText}>Ese médico ya está agregado como ayudante.</span>}

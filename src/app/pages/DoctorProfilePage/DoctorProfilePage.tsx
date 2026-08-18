@@ -12,6 +12,7 @@ import Button from "../../components/atoms/Button/Button";
 import styles from "./DoctorProfilePage.module.scss";
 
 import RequirePermission from "../../auth/RequirePermission";
+import { usePermisos } from "../../auth/usePermisos";
 import BackButton from "../../components/atoms/BackButton/BackButton";
 import ReportesMedico from "../Reportes/ReportesMedico";
 import Credencial from "./Credencial";
@@ -287,10 +288,8 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
 
   // En modo lectura el socio ve solo su legajo: "conceptos" (descuentos) y
   // "padrones" son administrativos y sus controles mutan al tocarlos.
-  // "reportes" queda SÓLO del lado del Colegio: por ahora el médico no debe ver
-  // su facturación desde el legajo. La pestaña se saca de la vista de lectura,
-  // pero el panel (ReportesMedico) NO se borra — sigue funcionando para el
-  // Colegio y vuelve a habilitarse para el socio agregando "reportes" acá.
+  // "reportes" es SÓLO del lado del Colegio (ReportesMedico exige
+  // `facturas:ver`): el médico no tiene panel propio de facturación.
   // "credencial" va en las dos vistas: el socio necesita la suya y el Colegio
   // la consulta desde el legajo. No expone nada que el médico no vea ya.
   const visibleTabs: TabKey[] = readOnly
@@ -344,6 +343,8 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
       </button>
     );
   }
+
+  const { can } = usePermisos();
 
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -1060,7 +1061,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                         exit={{ opacity: 0, y: 8 }}
                         className={styles.tabBody}
                       >
-                        {!readOnly && (
+                        {!readOnly && can("medico:editar") && (
                         <button
                           type="button"
                           className={styles.editPencil}
@@ -1435,7 +1436,9 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                           </div>
                           <div>
                             <span className={styles.label}>CBU</span>
-                            {isEditing ? (
+                            {/* Es el campo contra el que se pagan las liquidaciones: gate
+                                propio, independiente de medico:editar. */}
+                            {isEditing && can("medico:editar_bancario") ? (
                               RText("cbu")
                             ) : (
                               <span>{fmt((data as any).cbu)}</span>
@@ -1530,7 +1533,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                             >
                               Descargar todo
                             </Button>
-                            {!readOnly && (
+                            {!readOnly && can("medico:documento") && (
                             <Button
                               variant="ghost"
                               style={{ marginLeft: 8 }}
@@ -1576,7 +1579,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                                   >
                                     Descargar
                                   </Button>
-                                  {!readOnly && (
+                                  {!readOnly && can("medico:documento") && (
                                   <Button
                                     variant="ghost"
                                     size="sm"
@@ -1897,11 +1900,6 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                       >
                         <ReportesMedico
                           nroSocio={String((data as any).nro_socio ?? medicoId)}
-                          // En "Mi perfil" (readOnly) el socio consulta sus
-                          // propios endpoints, que sacan el nro del token. Desde
-                          // el legajo, el Colegio usa los suyos, que piden
-                          // `facturas:ver`.
-                          propio={readOnly}
                         />
                       </motion.div>
                     )}

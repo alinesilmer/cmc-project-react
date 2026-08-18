@@ -173,9 +173,16 @@ export interface Periodo {
   cerrado?: boolean;
 }
 
-/** Respuesta del validador de la obra social. */
+/** Respuesta del validador de la obra social.
+ *
+ * `"incierto"` no viene del backend: es el corte por timeout del navegador.
+ * La obra social puede haber autorizado igual —el backend espera más que
+ * nosotros— así que no es ni un éxito ni un rechazo, y sobre todo **no es algo
+ * para reintentar a ciegas**: un segundo intento emitiría una segunda
+ * autorización real. Por eso no está en `EstadoPrestacion`, que refleja lo que
+ * quedó grabado en `detalle_facturacion`. */
 export interface ResultadoValidacion {
-  estado: EstadoPrestacion;
+  estado: EstadoPrestacion | "incierto";
   mensaje: string;
   prestacion?: Prestacion;
 }

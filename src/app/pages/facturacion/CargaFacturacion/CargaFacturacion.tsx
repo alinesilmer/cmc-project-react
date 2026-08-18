@@ -12,7 +12,9 @@ import {
   editarPrestacion,
   anularPrestacion,
   fetchMedicos,
+  fetchMedicosTodos,
   fetchObrasSociales,
+  fetchObrasSocialesTodas,
   fetchCodigosHabilitados,
   fetchClinicas,
 } from "../api";
@@ -111,6 +113,38 @@ const CargaFacturacion: React.FC = () => {
   const isReplicando = !isEdit && !isComplemento && !!replicarParam;
   const [loadingReplicar, setLoadingReplicar] = useState(isReplicando);
 
+  // Precarga completa de médicos y obras sociales: antes de que el formulario se
+  // muestre, se piden una sola vez (en vez de un pedido por cada tecleo, lento con
+  // ~4.500 médicos) y de ahí en más los autocompletes de médico/obra social filtran
+  // en memoria. Bloquea el formulario entero con "Cargando formulario…" hasta que
+  // ambas listas estén — ver el gate más abajo. Redis lo va a hacer innecesario más
+  // adelante; por ahora es la forma más simple de sacarse de encima la latencia.
+  const [medicosPrecargados, setMedicosPrecargados] = useState<MedicoOption[] | null>(null);
+  const [obrasSocialesPrecargadas, setObrasSocialesPrecargadas] = useState<ObraSocialOption[] | null>(null);
+  const [errorPrecarga, setErrorPrecarga] = useState(false);
+  const [reintentoPrecarga, setReintentoPrecarga] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+    setErrorPrecarga(false);
+    (async () => {
+      try {
+        const [medicos, obrasSociales] = await Promise.all([
+          fetchMedicosTodos(),
+          fetchObrasSocialesTodas(),
+        ]);
+        if (!active) return;
+        setMedicosPrecargados(medicos);
+        setObrasSocialesPrecargadas(obrasSociales);
+      } catch {
+        if (active) setErrorPrecarga(true);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [reintentoPrecarga]);
+
   // Complementaria — OS/período fijos, tomados de la factura referenciada por id.
   const [complementoMeta, setComplementoMeta] = useState<{
     cod_obra: string;
@@ -207,6 +241,10 @@ const CargaFacturacion: React.FC = () => {
   // propósito cuando `value` pasa a null. Van separadas para que un reset no arrastre
   // a los campos que el operador pidió mantener.
   const [medicoResetKey, setMedicoResetKey] = useState(0);
+  // Separada de `medicoResetKey`: cuando el payee (clínica) se mantiene por "Mantener
+  // clínica" pero el ejecutor no, hay que remontar solo el campo ejecutor sin tocar el
+  // resto de la sección médico.
+  const [ejecutorResetKey, setEjecutorResetKey] = useState(0);
   const [pacienteResetKey, setPacienteResetKey] = useState(0);
   const [nomencladorResetKey, setNomencladorResetKey] = useState(0);
   // La clínica es un autocomplete (conserva su texto tipeado): al resetear el servicio
@@ -423,13 +461,16 @@ const CargaFacturacion: React.FC = () => {
   // El máximo de ayudantes depende del código elegido — al cambiar de código
   // las líneas ya cargadas dejan de tener sentido (podían pertenecer a otro tope).
   // La admisión de la vía laparoscópica también depende del código, así que arrastrarla
-  // a una práctica distinta produciría rechazos espurios. Se salta mientras la precarga
-  // de edición/replicar está en curso: ese flujo setea `codNomenclador` y `via` en el
-  // mismo batch, y este efecto pisaría la vía recién precargada.
+  // a una práctica distinta produciría rechazos espurios. Un monto "Manual" tipeado para
+  // el código anterior también se descarta, así vuelve a Automático y trae el precio del
+  // código nuevo. Se salta mientras la precarga de edición/replicar está en curso: ese
+  // flujo setea `codNomenclador`, `via` y `tipo_calculo` en el mismo batch, y este efecto
+  // pisaría los valores recién precargados.
   useEffect(() => {
     if (loadingEdit || loadingReplicar) return;
     setAyudantes([]);
     setVia("T");
+    setTipoCalculo("A");
   }, [codNomenclador]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Limpiar nombre cuando se borra el DNI
@@ -443,8 +484,14 @@ const CargaFacturacion: React.FC = () => {
     (nro: number | null, os: ObraSocialOption | null) => {
       setObraSocial(os);
       resetPeriodo();
-      setCodNomenclador(null);
-      setCodNomencladorCategoria(null);
+      // El código elegido NO se borra acá: los códigos habilitados son por médico, no
+      // por obra social (`fetchCodigosHabilitados` no recibe OS), así que sigue siendo
+      // una opción válida para tipear. Lo que sí puede cambiar es si está *admitido*
+      // para la OS nueva — eso ya lo resuelve `useNomencladorPrecio` (que tiene `codObra`
+      // entre sus dependencias) refetcheando el precio solo, y `PrecioPreviewCard`
+      // muestra el aviso "⚠ {motivo}" automáticamente si `admitido` da false. Borrarlo acá
+      // rompería esa reacción: sin código no hay precio que pedir, y el cuadro
+      // directamente desaparece en vez de avisar.
       if (nro && os) {
         localStorage.setItem(FACTURACION_ULTIMA_OS_KEY, JSON.stringify(os));
         loadPeriodo(String(nro));
@@ -599,10 +646,8 @@ const CargaFacturacion: React.FC = () => {
     if (payeeEsOrganizacion && !codMedicoEjecutor)
       errs.codMedicoEjecutor = "Requerido — indicá el médico que ejecutó";
     if (!codNomenclador) errs.codNomenclador = "Requerido";
-    if (precio && !precio.admitido && tipoCalculo !== "M") {
-      errs.admitido =
-        "Código no admitido — pasá a modo Manual para forzar la carga";
-    }
+    // Código no admitido / sin precio ya no bloquea el guardado — PrecioPreviewCard
+    // muestra el aviso "⚠ {motivo}" igual, pero la carga se permite en cualquier modo.
     if (ayudantes.length > 0) {
       const vistos = new Set<string>();
       ayudantes.forEach((linea, idx) => {
@@ -633,13 +678,26 @@ const CargaFacturacion: React.FC = () => {
     setSesion(1);
     setAyudantes([]);
     setAutorizacion("");
-    if (!mantener.medico) {
+    // Si el payee es una clínica, "Mantener clínica" también aplica al Nº de socio: es
+    // el mismo dato (la clínica se carga ahí, no en el campo "Clínica" — que por eso
+    // queda oculto). Para un médico normal, "Mantener clínica" no lo toca: es el campo
+    // "Clínica" aparte el que se mantiene, más abajo.
+    const medicoMantenidoPorClinica = mantener.clinica && payeeEsOrganizacion;
+    if (!mantener.medico && !medicoMantenidoPorClinica) {
       setCodMedico(null);
       setMedicoSeleccionado(null);
       setPayeeEsOrganizacion(false);
       setCodMedicoEjecutor(null);
       setMedicoEjecutor(null);
       setMedicoResetKey((k) => k + 1);
+      setEjecutorResetKey((k) => k + 1);
+    } else if (!mantener.medico) {
+      // Se mantuvo el payee por "Mantener clínica", pero el médico ejecutor es un dato
+      // de la práctica puntual (puede cambiar entre cargas de la misma clínica) — se
+      // limpia igual, salvo que "Mantener médico" también esté tildado.
+      setCodMedicoEjecutor(null);
+      setMedicoEjecutor(null);
+      setEjecutorResetKey((k) => k + 1);
     }
     if (!mantener.paciente) {
       setDni("");
@@ -664,13 +722,17 @@ const CargaFacturacion: React.FC = () => {
 
     // Primer campo que quedó vacío, en orden de carga. Se calcula desde `mantener` y
     // no leyendo el estado, que en esta closure todavía tiene los valores viejos.
-    pendingFocusRef.current = !mantener.medico
+    pendingFocusRef.current = !mantener.medico && !medicoMantenidoPorClinica
       ? "medico"
-      : !mantener.paciente
-        ? "paciente"
-        : !mantener.fecha
-          ? "fecha"
-          : "codigo";
+      : !mantener.medico
+        // El payee quedó (por "Mantener clínica") pero el ejecutor se limpió: es el
+        // primer campo realmente vacío, no "Nº socio" (que ya tiene la clínica).
+        ? "medicoEjecutor"
+        : !mantener.paciente
+          ? "paciente"
+          : !mantener.fecha
+            ? "fecha"
+            : "codigo";
   };
 
   const doGuardarEdit = async () => {
@@ -927,11 +989,17 @@ const CargaFacturacion: React.FC = () => {
     next.focus();
   };
 
+  // Los campos ya no se bloquean por orden de carga (p. ej. no hace falta elegir Obra
+  // Social antes de tocar Paciente/Fecha/Código/etc.): solo se deshabilitan mientras se
+  // está guardando, o cuando el registro de fondo (edición/complementaria) todavía no
+  // está disponible o no es editable. El campo Código es la única excepción real: sigue
+  // atado al Médico porque los códigos habilitados se piden a una API scoped por médico
+  // (no es una restricción de orden visual, es una dependencia de datos).
   const formDisabled = isEdit
     ? loadingEdit || guardando || editMeta?.estado !== "A"
     : isComplemento
       ? loadingComplemento || guardando || !complementoMeta
-      : !obraSocial || !!periodoError || guardando;
+      : guardando;
   const maxAyudantes = precio?.cantidad_ayudantes ?? 0;
   // La sección se muestra (en carga, replicar y edición) si el código admite ayudantes
   // o si ya hay líneas cargadas (p. ej. un equipo cuyo código reporta 0 de referencia).
@@ -955,6 +1023,38 @@ const CargaFacturacion: React.FC = () => {
     : isComplemento
       ? (complementoMeta?.periodo ?? null)
       : (periodoOverride ?? periodo?.periodo ?? null);
+
+  // Antes que cualquier otro gate: sin médicos y obras sociales precargados no hay
+  // formulario que mostrar (los autocompletes de médico/obra social dependen de
+  // estas listas para filtrar en memoria).
+  if (!medicosPrecargados || !obrasSocialesPrecargadas) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <span className={styles.headerIcon}>
+            <FilePlus2 size={22} />
+          </span>
+          <div>
+            <h1 className={styles.title}>Cargar prestación</h1>
+          </div>
+        </div>
+        {errorPrecarga ? (
+          <div className={styles.errorBox}>
+            ⚠ No se pudieron cargar los médicos y las obras sociales.{" "}
+            <button
+              type="button"
+              className={styles.periodoLinkBtn}
+              onClick={() => setReintentoPrecarga((k) => k + 1)}
+            >
+              Reintentar
+            </button>
+          </div>
+        ) : (
+          <p className={styles.mutedText}>Cargando formulario, esperá…</p>
+        )}
+      </div>
+    );
+  }
 
   // Solo en la primera lectura: la recarga posterior a guardar no tiene que blanquear
   // la pantalla — el formulario ya tiene los datos y se actualizan en el lugar.
@@ -1157,10 +1257,19 @@ const CargaFacturacion: React.FC = () => {
               setUltimoMedico(null);
               const esOrg = !!med?.es_organizacion;
               setPayeeEsOrganizacion(esOrg);
-              if (!esOrg) {
-                // Payee médico: ejecuta y cobra él mismo, no hay ejecutor aparte.
-                setCodMedicoEjecutor(null);
-                setMedicoEjecutor(null);
+              // Cambió el payee: el ejecutor cargado (si había) puede no corresponder a
+              // este médico/clínica nuevo — se limpia siempre, no solo al dejar de ser
+              // organización (pasar de una clínica a otra también lo invalida). El campo
+              // sigue montado en ese caso (la sección "Médico ejecutor" no desaparece),
+              // así que hace falta remontarlo para que no quede el texto viejo escrito.
+              setCodMedicoEjecutor(null);
+              setMedicoEjecutor(null);
+              setEjecutorResetKey((k) => k + 1);
+              if (esOrg) {
+                // Payee clínica: el campo "Clínica" de más abajo queda de más — la
+                // clínica ya es el propio payee — así que se limpia y se oculta.
+                setCodClinica(null);
+                setClinicaResetKey((k) => k + 1);
               }
             }}
             disabled={guardando}
@@ -1178,7 +1287,8 @@ const CargaFacturacion: React.FC = () => {
             ejecutorDisabled={guardando}
             ejecutorError={errores.codMedicoEjecutor}
             ejecutorPresetLabel={ejecutorPreset ?? (isEdit ? "(valor actual)" : undefined)}
-            ejecutorResetKey={medicoResetKey}
+            ejecutorResetKey={ejecutorResetKey}
+            medicosPrecargados={medicosPrecargados}
           />
 
           {/* 2. Obra social + período. En complementaria son fijos (van en el badge). */}
@@ -1219,6 +1329,7 @@ const CargaFacturacion: React.FC = () => {
               disabled={guardando}
               periodoOverride={periodoOverride}
               onPeriodoOverrideChange={setPeriodoOverride}
+              obrasSocialesPrecargadas={obrasSocialesPrecargadas}
             />
           )}
 
@@ -1287,20 +1398,23 @@ const CargaFacturacion: React.FC = () => {
             }
           />
 
-          {/* 6. Clínica */}
-          <div className={styles.section}>
-            <span className={styles.sectionTitle}>Clínica</span>
-            <div className={styles.filterField}>
-              <ClinicaAutocomplete
-                key={`clinica-${clinicaResetKey}`}
-                value={codClinica}
-                onChange={(cod) => setCodClinica(cod)}
-                disabled={formDisabled}
-                presetLabel={clinicaPreset ?? undefined}
-                blurOnSelect={false}
-              />
+          {/* 6. Clínica — se oculta si el payee (Nº socio) ya es una clínica: sería
+              redundante volver a pedirla acá. */}
+          {!payeeEsOrganizacion && (
+            <div className={styles.section}>
+              <span className={styles.sectionTitle}>Clínica</span>
+              <div className={styles.filterField}>
+                <ClinicaAutocomplete
+                  key={`clinica-${clinicaResetKey}`}
+                  value={codClinica}
+                  onChange={(cod) => setCodClinica(cod)}
+                  disabled={formDisabled}
+                  presetLabel={clinicaPreset ?? undefined}
+                  blurOnSelect={false}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* 6b. Autorización */}
           <div className={styles.section}>
@@ -1390,7 +1504,18 @@ const CargaFacturacion: React.FC = () => {
                     name="tipoCalculo"
                     value={v}
                     checked={tipoCalculo === v}
-                    onChange={() => setTipoCalculo(v)}
+                    onChange={() => {
+                      setTipoCalculo(v);
+                      // El efecto que sincroniza honorarios/gastos solo mira `precio`:
+                      // si el operador vuelve a Automático sin que `precio` haya
+                      // cambiado, ese efecto no dispara y quedaría el monto manual
+                      // viejo puesto en un campo que ya se ve (y se guarda) como
+                      // automático. Se resincroniza acá, en el momento del toggle.
+                      if (v === "A" && precio) {
+                        setHonorarios(precio.honorarios ?? "0");
+                        setGastos(precio.gastos ?? "0");
+                      }
+                    }}
                     disabled={formDisabled}
                   />
                   {label}
@@ -1442,9 +1567,6 @@ const CargaFacturacion: React.FC = () => {
                 />
               </div>
             </div>
-            {errores.admitido && (
-              <div className={styles.warningBox}>{errores.admitido}</div>
-            )}
           </div>
 
           {/* 10. Ayudantes quirúrgicos (equipo). En edición se reconcilia el grupo. */}
@@ -1457,6 +1579,7 @@ const CargaFacturacion: React.FC = () => {
               codMedicoMain={codMedico}
               disabled={isEdit ? formDisabled : guardando}
               errors={errores}
+              medicosPrecargados={medicosPrecargados}
             />
           )}
 

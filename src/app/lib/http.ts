@@ -129,17 +129,26 @@ export async function getJSONLong<T>(
   return r.data;
 }
 
-export const postJSON = async <T>(url: string, body?: any) => {
-  const { data } = await http.post(url, body ?? {});
+// `config` sirve sobre todo para subir el `timeout` de una llamada puntual.
+// El default de 15 s alcanza para la API sola, pero se queda corto cuando el
+// backend a su vez tiene que esperar a un tercero (ver TIMEOUT_OS_EN_LINEA en
+// pages/Validaciones/validaciones.api.ts).
+export const postJSON = async <T>(
+  url: string,
+  body?: any,
+  config?: AxiosRequestConfig
+) => {
+  const { data } = await http.post(url, body ?? {}, config);
   return data as T;
 };
 
 // 👇 helper para multipart
 export const postForm = async <T = unknown>(
   url: string,
-  form: FormData
+  form: FormData,
+  config?: AxiosRequestConfig
 ): Promise<T> => {
-  const { data } = await http.post(url, form); // sin headers
+  const { data } = await http.post(url, form, config); // sin headers
   return data as T;
 };
 
@@ -159,8 +168,11 @@ export const patchJSON = async <T = unknown>(
   return data as T;
 };
 
-export const delJSON = async <T = unknown>(url: string): Promise<T> => {
-  const { data } = await http.delete(url);
+export const delJSON = async <T = unknown>(
+  url: string,
+  config?: AxiosRequestConfig
+): Promise<T> => {
+  const { data } = await http.delete(url, config);
   return data as T;
 };
 

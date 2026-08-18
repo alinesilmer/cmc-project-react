@@ -1,7 +1,27 @@
 <!DOCTYPE html>
-<html lang="en">
+<!--
+  lang="es" (antes decía "en"): TODO el contenido de la app está en español. Con
+  lang="en" el navegador cree que la página está en inglés y, para un usuario con
+  Chrome/Edge en español, ofrece (o aplica automáticamente, si alguna vez se tildó
+  "Traducir siempre inglés al español") traducirla.
+
+  Eso NO es cosmético: el traductor reescribe el DOM por fuera de React —
+  reemplaza y fusiona nodos de texto envolviéndolos en <font>. Después, cuando
+  React inserta un elemento hermano (p. ej. el chip "OS: ..." del header al elegir
+  una obra social), el nodo de referencia que React tenía guardado ya no es hijo
+  del contenedor, y el commit revienta con:
+    NotFoundError: Failed to execute 'insertBefore' on 'Node': The node before
+    which the new node is to be inserted is not a child of this node.
+  → pantalla en blanco, sólo en las máquinas donde la traducción está activa.
+
+  translate="no" + <meta name="google" content="notranslate"> son la defensa dura:
+  aunque el idioma quedara mal declarado, el traductor no toca esta página. Es un
+  panel de gestión interno en español, así que no se pierde nada.
+-->
+<html lang="es" translate="no">
   <head>
     <meta charset="UTF-8" />
+    <meta name="google" content="notranslate" />
     <link rel="icon" type="image/png+xml" href="/logoCMC.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Colegio Médico de Corrientes</title>

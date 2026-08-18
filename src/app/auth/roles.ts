@@ -24,10 +24,6 @@ export const MEDICO_ALLOWED_PATHS = [
   "/panel/mi-perfil",
   "/panel/nomenclador/consulta-precios",
   "/panel/validaciones",
-  // "Mis números": el socio ve SÓLO lo suyo. La pantalla del Colegio
-  // (/panel/reportes) queda afuera a propósito — cruza la facturación de todos
-  // y además el backend la gatea con el scope `facturas:ver`.
-  "/panel/mis-numeros",
   "/panel/help",
 ];
 
