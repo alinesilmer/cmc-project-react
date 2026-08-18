@@ -97,6 +97,17 @@ export interface ObraSocialListItem {
   updated_at?: string | null;
 }
 
+// ─── CUIT ─────────────────────────────────────────────────────────────────────
+
+// El CUIT viene de una columna legacy que puede traerlo con o sin guiones, y que
+// usa '0' como placeholder de "sin dato". Devuelve "" cuando no hay CUIT real.
+export function displayCuit(raw?: string | null): string {
+  const digits = (raw ?? "").replace(/\D/g, "");
+  if (!digits || Number(digits) === 0) return "";
+  if (digits.length !== 11) return digits;
+  return `${digits.slice(0, 2)}-${digits.slice(2, 10)}-${digits.slice(10)}`;
+}
+
 // ─── Contact entries ──────────────────────────────────────────────────────────
 
 export interface ContactoEntry {

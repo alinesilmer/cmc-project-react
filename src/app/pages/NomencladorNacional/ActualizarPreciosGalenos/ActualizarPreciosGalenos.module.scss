@@ -494,6 +494,46 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
   font-weight: 600;
   color: $text-2;
 }
+
+// Las unidades de ayudante van más apagadas que las de honorarios: se muestran
+// como referencia, pero la cuenta que interesa es la de honorarios.
+.nivelAyudante {
+  color: $text-3;
+}
+
+// Honorario del nivel = unidades × valor unitario. Cierra la cuenta que las dos
+// celdas anteriores empiezan.
+.nivelHonorario {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: $green;
+  white-space: nowrap;
+}
+
+.nivelHonorarioCambio {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+// El honorario que queda atrás: tachado y en gris, para que la cifra que se lee
+// sea la nueva.
+.nivelHonorarioPrevio {
+  font-weight: 500;
+  color: $text-3;
+  text-decoration: line-through;
+}
+
+.nivelHonorarioNuevo {
+  font-weight: 700;
+  color: $green;
+}
+
+.nivelSinHonorario {
+  font-weight: 400;
+  font-style: italic;
+  color: $text-3;
+}
 .priceCell {
   font-variant-numeric: tabular-nums;
   font-weight: 700;

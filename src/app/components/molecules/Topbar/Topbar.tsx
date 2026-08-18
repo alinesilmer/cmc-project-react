@@ -81,6 +81,7 @@ const VISTA_MEDICO_MENU: Extract<TopEntry, { kind: "menu" }> = {
       items: [
         { path: `${base}/preview/inicio-medico`, icon: Home, label: "Inicio del médico" },
         { path: `${base}/nomenclador/consulta-precios`, icon: DollarSign, label: "Consulta de Precios" },
+        { path: `${base}/planillas`, icon: FileText, label: "Planillas" },
         { path: `${base}/mi-perfil`, icon: CircleUserRound, label: "Mi perfil (solo lectura)" },
       ],
     },
@@ -178,6 +179,7 @@ const TOP_NAV: TopEntry[] = [
           { path: `${base}/convenios/obras-sociales`, icon: ClipboardList, label: "Listado de Obras Sociales", perms: R },
           { path: `${base}/convenios/obras-sociales/alta`, icon: HousePlus, label: "Alta Obra Social", perms: R },
           { path: `${base}/historial-valores`, icon: History, label: "Historial de Valores", perms: R },
+          { path: `${base}/convenios/planillas`, icon: FileText, label: "Planillas de Consulta", perms: R },
         ],
       },
     ],
@@ -226,6 +228,7 @@ const DOCTOR_TOP_NAV: TopEntry[] = [
   { kind: "link", path: `${base}/dashboard`, icon: Home, label: "Inicio" },
   VALIDACIONES_MENU,
   { kind: "link", path: `${base}/nomenclador/consulta-precios`, icon: DollarSign, label: "Consulta de Precios" },
+  { kind: "link", path: `${base}/planillas`, icon: FileText, label: "Planillas" },
   { kind: "link", path: `${base}/mis-numeros`, icon: TrendingUp, label: "Mis números" },
   { kind: "link", path: `${base}/mi-perfil`, icon: CircleUserRound, label: "Mi perfil" },
 ];

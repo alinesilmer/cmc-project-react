@@ -80,6 +80,8 @@ const BoletinGalenos = lazy(() => import("./app/pages/BoletinGalenos/BoletinGale
 const ValidacionesHub = lazy(() => import("./app/pages/Validaciones/ValidacionesHub"));
 const ValidacionOS = lazy(() => import("./app/pages/Validaciones/ValidacionOS"));
 const PortalesExternos = lazy(() => import("./app/pages/Validaciones/PortalesExternos"));
+const PlanillasMedico = lazy(() => import("./app/pages/Planillas/PlanillasMedico"));
+const PlanillasAdmin = lazy(() => import("./app/pages/Planillas/PlanillasAdmin"));
 const NomencladorCodigos = lazy(() => import("./app/pages/NomencladorNacional/NomencladorCodigos/NomencladorCodigos"));
 const ConsultaValores = lazy(() => import("./app/pages/NomencladorNacional/ConsultaValores/ConsultaValores"));
 const ConsultaPrecios = lazy(() => import("./app/pages/NomencladorNacional/ConsultaPrecios/ConsultaPrecios"));
@@ -204,6 +206,10 @@ export default function RootRoutes() {
               {/* Ruta estática antes de la dinámica: "portales" no es un slug de O.S. */}
               <Route path="validaciones/portales" element={<PortalesExternos />} />
               <Route path="validaciones/:slug" element={<ValidacionOS />} />
+
+              {/* Planillas de consulta: el médico las descarga, el Colegio las publica. */}
+              <Route path="planillas" element={<PlanillasMedico />} />
+              <Route path="convenios/planillas" element={<PlanillasAdmin />} />
 
               {/* Nomenclador Nacional */}
               <Route path="nomenclador/codigos" element={<NomencladorCodigos />} />

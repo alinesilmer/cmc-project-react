@@ -38,6 +38,7 @@ import type {
   ImportarCSVResult,
   ActualizarPorcentajePayload,
   RevertirActualizacionPayload,
+  ValorDocumentoOut,
 } from "./nomenclador.types";
 
 // ─── Nomenclador ──────────────────────────────────────────────────────────────
@@ -306,3 +307,34 @@ export const listNomencladorEspecialidadesResumen = (
     "/api/nomenclador/especialidades",
     params,
   );
+
+// ─── Documentos de una vigencia de valores ────────────────────────────────────
+// El respaldo de cada actualización de precios: lo que la obra social mandó.
+// Ver app/modules/nomenclador/routes_valores_documentos.py.
+
+export const listValorDocumentos = (
+  obra_social_nro: number,
+  vigencia_desde?: string,
+): Promise<ValorDocumentoOut[]> =>
+  getJSON<ValorDocumentoOut[]>("/api/valores_nm/documentos", {
+    obra_social_nro,
+    ...(vigencia_desde ? { vigencia_desde } : {}),
+  });
+
+/** Multipart: PDF, Excel (.xlsx/.xls) o CSV. */
+export const subirValorDocumento = (params: {
+  obra_social_nro: number;
+  vigencia_desde: string;
+  archivo: File;
+  descripcion?: string;
+}): Promise<ValorDocumentoOut> => {
+  const form = new FormData();
+  form.append("obra_social_nro", String(params.obra_social_nro));
+  form.append("vigencia_desde", params.vigencia_desde);
+  form.append("archivo", params.archivo);
+  if (params.descripcion?.trim()) form.append("descripcion", params.descripcion.trim());
+  return postForm<ValorDocumentoOut>("/api/valores_nm/documentos", form);
+};
+
+export const eliminarValorDocumento = (id: number): Promise<void> =>
+  delJSON<void>(`/api/valores_nm/documentos/${id}`);

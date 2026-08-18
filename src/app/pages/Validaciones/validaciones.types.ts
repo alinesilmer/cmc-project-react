@@ -66,6 +66,27 @@ export type EstadoIntegracion = "operativa" | "mantenimiento" | "restringida";
  */
 export type TipoValidacion = "online" | "manual";
 
+/**
+ * Guía de acceso al portal de la obra social. Reemplaza los modales
+ * `modalSwissGuide` / `modalUnionGuide` de `menu.php`: credenciales que el
+ * Colegio comparte con el prestador, pasos y, si la hay, la guía en PDF.
+ */
+export interface GuiaPortal {
+  /** Texto del botón que abre la guía en la tarjeta. */
+  chip: string;
+  titulo: string;
+  /** Credenciales compartidas (usuario/clave). Se muestran con botón de copiar. */
+  credenciales?: { label: string; valor: string }[];
+  /** Aviso destacado arriba de los pasos. */
+  aviso?: string;
+  intro?: string;
+  pasos: string[];
+  /** Enlace final de la guía (PDF o portal). */
+  enlace?: { href: string; texto: string };
+  /** Nota al pie, para lo que el Colegio no puede resolver desde el panel. */
+  pie?: string;
+}
+
 export interface ObraSocialConfig {
   slug: string;
   nombre: string;
@@ -103,6 +124,8 @@ export interface ObraSocialConfig {
   nota?: string;
   /** Códigos que la obra social no acepta por esta vía. */
   codigosBloqueados?: string[];
+  /** Guía de usuario/clave y pasos del portal (Swiss Medical, Unión Personal). */
+  guia?: GuiaPortal;
 }
 
 // ─── Prestaciones ─────────────────────────────────────────────────────────────

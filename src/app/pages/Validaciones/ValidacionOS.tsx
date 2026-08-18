@@ -250,10 +250,7 @@ export default function ValidacionOS() {
               {iniciales(os.nombre)}
             </span>
           )}
-          <div>
-            <h1 className={s.title}>{os.nombre}</h1>
-            <p className={s.subtitle}>{os.descripcion}</p>
-          </div>
+          <h1 className={s.title}>{os.nombre}</h1>
         </div>
 
       </header>
@@ -589,7 +586,6 @@ function PortalExterno({ slug }: { slug: string }) {
           {iniciales(os.nombre)}
         </span>
         <h1 className={s.title}>{os.nombre}</h1>
-        <p className={s.subtitle}>{os.descripcion}</p>
         <a
           className={s.externoBtn}
           href={os.url}

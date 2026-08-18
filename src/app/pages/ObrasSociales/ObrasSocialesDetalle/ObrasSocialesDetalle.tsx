@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { getObraSocial } from "../obrasSociales.api";
 import type { ObraSocial, Documento } from "../obrasSociales.types";
-import { CONDICION_IVA_LABELS, TIPO_DOCUMENTO_LABELS } from "../obrasSociales.types";
+import { CONDICION_IVA_LABELS, TIPO_DOCUMENTO_LABELS, displayCuit } from "../obrasSociales.types";
 import HistorialValores from "./HistorialValores";
 import { abrirAdjunto } from "../../../lib/archivos";
 import { useNotify } from "../../../hooks/useNotify";
@@ -102,6 +102,7 @@ export default function ObrasSocialesDetalle() {
 
   const plazoLabel = obra.plazo_vencimiento ? `${obra.plazo_vencimiento} días` : "—";
   const dir = obra.direccion?.[0];
+  const cuit = displayCuit(obra.cuit);
 
   return (
     <div className={s.container}>
@@ -166,7 +167,7 @@ export default function ObrasSocialesDetalle() {
           <section className={s.card}>
             <h2 className={s.cardTitle}>Datos principales</h2>
             <div className={s.infoGroup}>
-              {obra.cuit && <InfoRow icon={Hash} label="CUIT" value={obra.cuit} />}
+              {cuit && <InfoRow icon={Hash} label="CUIT" value={cuit} />}
               {obra.direccion_real && <InfoRow icon={MapPin} label="Dirección real oficial" value={obra.direccion_real} />}
               {(obra.emails ?? []).map((e, i) => <InfoRow key={i} icon={Mail} label={e.etiqueta || "Email"} value={e.valor} />)}
               {(obra.telefonos ?? []).map((t, i) => <InfoRow key={i} icon={Phone} label={t.etiqueta || "Teléfono"} value={t.valor} />)}

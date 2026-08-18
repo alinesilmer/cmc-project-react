@@ -4,7 +4,6 @@ import {
   Camera,
   ChevronLeft,
   Save,
-  Upload,
   X,
   FileText,
   Search,
@@ -27,6 +26,7 @@ import {
   TIPO_DOCUMENTO_LABELS,
   PLAZO_OPTIONS,
   validateObraSocialForm,
+  displayCuit,
 } from "../obrasSociales.types";
 import type {
   ObraSocialFormData,
@@ -265,17 +265,21 @@ function formatCUIT(raw: string): string {
 
 // ─── File validation ──────────────────────────────────────────────────────────
 
+// El backend valida por magic bytes contra una whitelist (app/common/uploads.py,
+// perfil DOCUMENTOS): PDF e imágenes. Word queda afuera — aceptarlo acá sólo
+// produce un 415 al subir.
+const DOC_ACCEPT = ".pdf,.jpg,.jpeg,.png,.webp,.tif,.tiff";
+
 function validateDocFile(f: File): string | null {
   const allowed = [
     "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "image/jpeg",
     "image/png",
     "image/webp",
+    "image/tiff",
   ];
   if (!allowed.includes(f.type))
-    return "Solo se aceptan PDF, Word o imágenes (JPG, PNG).";
+    return "Solo se aceptan PDF o imágenes (JPG, PNG, WEBP, TIFF).";
   if (f.size > 10 * 1024 * 1024)
     return "El archivo no puede superar los 10 MB.";
   return null;
@@ -289,12 +293,19 @@ interface DocRowProps {
   existing?: Documento;
   onUploaded: () => void;
   onQueue: (tipo: TipoDocumento, files: File[]) => void;
+  onRemoveQueued: (tipo: TipoDocumento, index: number) => void;
   queued?: File[];
 }
 
-function DocRow({ obraId, tipo, existing, onUploaded, onQueue, queued }: DocRowProps) {
-  const [files, setFiles] = useState<File[]>([]);
-  const [uploading, setUploading] = useState(false);
+function DocRow({
+  obraId,
+  tipo,
+  existing,
+  onUploaded,
+  onQueue,
+  onRemoveQueued,
+  queued,
+}: DocRowProps) {
   const [deleting, setDeleting] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -320,22 +331,6 @@ function DocRow({ obraId, tipo, existing, onUploaded, onQueue, queued }: DocRowP
     }
   };
 
-  const handleUpload = async () => {
-    if (!files.length || !obraId) return;
-    setUploading(true);
-    setUploadError(null);
-    try {
-      await Promise.all(files.map((f) => uploadDocumento(obraId, tipo, f)));
-      setFiles([]);
-      clearInputs();
-      onUploaded();
-    } catch {
-      setUploadError("No se pudo subir el archivo. Intentá de nuevo.");
-    } finally {
-      setUploading(false);
-    }
-  };
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = Array.from(e.target.files ?? []);
     if (!fileList.length) return;
@@ -344,19 +339,16 @@ function DocRow({ obraId, tipo, existing, onUploaded, onQueue, queued }: DocRowP
       if (err) { setUploadError(err); return; }
     }
     setUploadError(null);
-    if (obraId) {
-      setFiles((prev) => [...prev, ...fileList]);
-    } else {
-      onQueue(tipo, fileList);
-    }
+    // Alta y edición se comportan igual: lo elegido queda encolado y se sube al
+    // guardar. Antes, en edición el archivo se quedaba en un estado local que el
+    // submit no miraba, así que se perdía sin aviso.
+    onQueue(tipo, fileList);
+    clearInputs();
   };
 
   const removeFile = (index: number) => {
-    setFiles((prev) => {
-      const next = prev.filter((_, i) => i !== index);
-      if (!next.length) clearInputs();
-      return next;
-    });
+    onRemoveQueued(tipo, index);
+    clearInputs();
   };
 
   return (
@@ -398,7 +390,7 @@ function DocRow({ obraId, tipo, existing, onUploaded, onQueue, queued }: DocRowP
           <input
             ref={inputRef}
             type="file"
-            accept=".pdf,.doc,.docx"
+            accept={DOC_ACCEPT}
             multiple
             onChange={handleFileChange}
             className={s.fileInput}
@@ -418,48 +410,23 @@ function DocRow({ obraId, tipo, existing, onUploaded, onQueue, queued }: DocRowP
           </label>
         </div>
 
-        {!obraId && queued && queued.length > 0 && (
+        {queued && queued.length > 0 && (
           <div className={s.queuedFileList}>
             {queued.map((f, i) => (
               <div key={i} className={s.queuedFile}>
                 <span className={s.queuedFileName}>{f.name}</span>
                 <span className={s.queuedNote}>Se subirá al guardar</span>
+                <button
+                  type="button"
+                  className={s.contactoRemoveBtn}
+                  onClick={() => removeFile(i)}
+                  aria-label="Quitar archivo"
+                >
+                  <X size={14} />
+                </button>
               </div>
             ))}
           </div>
-        )}
-
-        {obraId && files.length > 0 && (
-          <>
-            <div className={s.queuedFileList}>
-              {files.map((f, i) => (
-                <div key={i} className={s.queuedFile}>
-                  <span className={s.queuedFileName}>{f.name}</span>
-                  <button
-                    type="button"
-                    className={s.contactoRemoveBtn}
-                    onClick={() => removeFile(i)}
-                    aria-label="Quitar archivo"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-              ))}
-            </div>
-            <button
-              type="button"
-              className={s.uploadBtn}
-              onClick={handleUpload}
-              disabled={uploading}
-            >
-              <Upload size={14} />
-              {uploading
-                ? "Subiendo…"
-                : existing
-                ? `Subir ${files.length > 1 ? `${files.length} archivos` : "archivo"}`
-                : `Subir ${files.length > 1 ? `${files.length} archivos` : "archivo"}`}
-            </button>
-          </>
         )}
 
         {uploadError && (
@@ -477,7 +444,6 @@ interface OtroEntry {
   nombreCustom: string;
   file?: File;
   existing?: Documento;
-  uploading?: boolean;
   uploadError?: string;
 }
 
@@ -498,24 +464,31 @@ function OtrosDocList({ obraId, existingDocs, onReload, onQueueChange }: OtrosDo
   );
   const notify = useNotify();
 
+  // Al recargar los documentos del servidor se conservan las filas con archivo
+  // pendiente: si no, borrar un documento existente te vaciaba la cola visible.
   useEffect(() => {
-    setEntries(
-      existingDocs.map((d) => ({
+    setEntries((prev) => [
+      ...existingDocs.map((d) => ({
         tempId: String(d.id),
         nombreCustom: d.nombre_custom ?? "",
         existing: d,
-      }))
-    );
+      })),
+      ...prev.filter((e) => !e.existing && e.file),
+    ]);
   }, [existingDocs.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Sin el nombre escrito el archivo igual se sube: cae el nombre del archivo.
+  // Filtrar por `nombreCustom` no vacío hacía que un adjunto sin nombre
+  // desapareciera al guardar, sin aviso.
   const notifyQueue = (updated: OtroEntry[]) => {
-    if (!obraId) {
-      onQueueChange(
-        updated
-          .filter((e) => e.file && e.nombreCustom.trim())
-          .map((e) => ({ nombreCustom: e.nombreCustom.trim(), file: e.file! }))
-      );
-    }
+    onQueueChange(
+      updated
+        .filter((e) => e.file)
+        .map((e) => ({
+          nombreCustom: e.nombreCustom.trim() || e.file!.name,
+          file: e.file!,
+        }))
+    );
   };
 
   const updateEntry = (tempId: string, patch: Partial<OtroEntry>) => {
@@ -578,19 +551,6 @@ function OtrosDocList({ obraId, existingDocs, onReload, onQueueChange }: OtrosDo
     }
   };
 
-  const handleUpload = async (tempId: string) => {
-    const entry = entries.find((e) => e.tempId === tempId);
-    if (!entry || !entry.file || !obraId || !entry.nombreCustom.trim()) return;
-    updateEntry(tempId, { uploading: true, uploadError: undefined });
-    try {
-      await uploadDocumento(obraId, "otros", entry.file, entry.nombreCustom.trim());
-      updateEntry(tempId, { uploading: false, file: undefined });
-      onReload();
-    } catch {
-      updateEntry(tempId, { uploading: false, uploadError: "No se pudo subir el archivo." });
-    }
-  };
-
   return (
     <div className={s.otrosDocList}>
       {entries.map((entry) => (
@@ -627,7 +587,7 @@ function OtrosDocList({ obraId, existingDocs, onReload, onQueueChange }: OtrosDo
           <input
             type="text"
             className={s.nombreCustomInput}
-            placeholder="Nombre del documento *"
+            placeholder="Nombre del documento"
             value={entry.nombreCustom}
             onChange={(e) => updateEntry(entry.tempId, { nombreCustom: e.target.value })}
             maxLength={120}
@@ -652,7 +612,7 @@ function OtrosDocList({ obraId, existingDocs, onReload, onQueueChange }: OtrosDo
             <div className={s.uploadInputRow}>
               <input
                 type="file"
-                accept=".pdf,.doc,.docx"
+                accept={DOC_ACCEPT}
                 className={s.fileInput}
                 onChange={(e) => handleFileChange(entry.tempId, e)}
                 aria-label={`Seleccionar archivo para ${entry.nombreCustom || "documento personalizado"}`}
@@ -670,28 +630,11 @@ function OtrosDocList({ obraId, existingDocs, onReload, onQueueChange }: OtrosDo
               </label>
             </div>
 
-            {!obraId && entry.file && (
+            {entry.file && (
               <div className={s.queuedFile}>
                 <span className={s.queuedFileName}>{entry.file.name}</span>
                 <span className={s.queuedNote}>Se subirá al guardar</span>
               </div>
-            )}
-
-            {obraId && entry.file && (
-              <>
-                <div className={s.queuedFile}>
-                  <span className={s.queuedFileName}>{entry.file.name}</span>
-                </div>
-                <button
-                  type="button"
-                  className={s.uploadBtn}
-                  onClick={() => handleUpload(entry.tempId)}
-                  disabled={entry.uploading || !entry.nombreCustom.trim()}
-                >
-                  <Upload size={14} />
-                  {entry.uploading ? "Subiendo…" : entry.existing ? "Reemplazar archivo" : "Subir archivo"}
-                </button>
-              </>
             )}
 
             {entry.uploadError && (
@@ -713,6 +656,7 @@ function OtrosDocList({ obraId, existingDocs, onReload, onQueueChange }: OtrosDo
 
 export default function ObrasSocialesForm() {
   const navigate = useNavigate();
+  const notify = useNotify();
   const { id } = useParams<{ id: string }>();
   const isEdit = Boolean(id);
   const obraId = id ? Number(id) : undefined;
@@ -763,7 +707,7 @@ export default function ObrasSocialesForm() {
         setForm({
           nro_obra_social: String(data.nro_obra_social),
           nombre: data.nombre,
-          cuit: formatCUIT(data.cuit ?? ""),
+          cuit: displayCuit(data.cuit),
           direccion_real: data.direccion_real ?? "",
           condicion_iva: data.condicion_iva ?? "",
           df_tipo: dfTipo,
@@ -824,6 +768,48 @@ export default function ObrasSocialesForm() {
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
+  // ── Documentos pendientes ───────────────────────────────────────────────────
+  // Sube todo lo encolado y avisa por toast lo que falló. Antes esto era un
+  // `Promise.allSettled` sin mirar el resultado: un 415 del backend (por
+  // ejemplo, un .docx, que no acepta) terminaba en un alta "exitosa" sin
+  // documentos y sin ningún mensaje.
+  const subirPendientes = async (destinoId: number) => {
+    const tareas: Array<{ nombre: string; run: () => Promise<unknown> }> = [];
+
+    pendingFixed.forEach((fileArr, tipo) => {
+      fileArr.forEach((file) =>
+        tareas.push({
+          nombre: file.name,
+          run: () => uploadDocumento(destinoId, tipo, file),
+        })
+      );
+    });
+    pendingOtros.forEach((entry) => {
+      tareas.push({
+        nombre: entry.file.name,
+        run: () =>
+          uploadDocumento(destinoId, "otros", entry.file, entry.nombreCustom),
+      });
+    });
+
+    if (!tareas.length) return;
+
+    const resultados = await Promise.allSettled(tareas.map((t) => t.run()));
+    const fallaron = tareas
+      .filter((_, i) => resultados[i].status === "rejected")
+      .map((t) => t.nombre);
+
+    if (fallaron.length) {
+      notify.error(
+        fallaron.length === 1
+          ? "No se pudo subir un documento"
+          : `No se pudieron subir ${fallaron.length} documentos`,
+        fallaron.join(", "),
+        { duration: 8000 }
+      );
+    }
+  };
+
   // ── Submit ───────────────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -857,22 +843,17 @@ export default function ObrasSocialesForm() {
           ...toAdd.map((r) => setObraSocialPrincipal(r.id, obraId)),
           ...toRemove.map((r) => setObraSocialPrincipal(r.id, null)),
         ]);
+        await subirPendientes(obraId);
         navigate(`/panel/convenios/obras-sociales/${obraId}`);
       } else {
         const created = await createObraSocial(payload);
-        const uploads: Promise<unknown>[] = [];
-        pendingFixed.forEach((fileArr, tipo) => {
-          fileArr.forEach((file) => uploads.push(uploadDocumento(created.id, tipo, file)));
-        });
-        pendingOtros.forEach((entry) => {
-          uploads.push(uploadDocumento(created.id, "otros", entry.file, entry.nombreCustom));
-        });
-        // Link all selected asociadas to the newly created OS
-        toAdd.forEach((r) => {
-          uploads.push(setObraSocialPrincipal(r.id, created.id));
-        });
-        await Promise.allSettled(uploads);
         setSavedId(created.id);
+        // Las asociadas son secundarias al alta: si una falla, la obra social ya
+        // existe igual y se resuelve editando.
+        await Promise.allSettled(
+          toAdd.map((r) => setObraSocialPrincipal(r.id, created.id))
+        );
+        await subirPendientes(created.id);
         navigate(`/panel/convenios/obras-sociales/${created.id}`);
       }
     } catch {
@@ -1378,6 +1359,15 @@ export default function ObrasSocialesForm() {
                     setPendingFixed((prev) => {
                       const next = new Map(prev);
                       if (files.length) next.set(t, [...(prev.get(t) ?? []), ...files]);
+                      else next.delete(t);
+                      return next;
+                    });
+                  }}
+                  onRemoveQueued={(t, index) => {
+                    setPendingFixed((prev) => {
+                      const next = new Map(prev);
+                      const restantes = (prev.get(t) ?? []).filter((_, i) => i !== index);
+                      if (restantes.length) next.set(t, restantes);
                       else next.delete(t);
                       return next;
                     });

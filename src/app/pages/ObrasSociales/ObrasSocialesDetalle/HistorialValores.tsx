@@ -1,14 +1,24 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   History, TrendingUp, TrendingDown, Minus,
   Search, ChevronUp, ChevronDown, ChevronsUpDown,
   Download, Loader2, SearchX, X as XIcon, CalendarDays,
+  Paperclip, Trash2, Upload,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import s from "./ObrasSocialesDetalle.module.scss";
-import { listValores } from "../../NomencladorNacional/nomenclador.api";
-import type { ValorOut, ValorEstado, Origen } from "../../NomencladorNacional/nomenclador.types";
+import { abrirAdjunto } from "../../../lib/archivos";
+import { useNotify } from "../../../hooks/useNotify";
+import {
+  eliminarValorDocumento,
+  listValorDocumentos,
+  listValores,
+  subirValorDocumento,
+} from "../../NomencladorNacional/nomenclador.api";
+import type {
+  ValorOut, ValorEstado, Origen, ValorDocumentoOut,
+} from "../../NomencladorNacional/nomenclador.types";
 
 const money = new Intl.NumberFormat("es-AR", {
   style: "currency",
@@ -81,6 +91,15 @@ async function fetchHistorialOS(nroOS: number): Promise<HistRow[]> {
   return all;
 }
 
+/** Lo que la obra social manda cuando actualiza precios. */
+const FORMATOS_DOC = ".pdf,.xlsx,.xls,.csv";
+
+function pesoLegible(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 const COLS = [
   { key: "codigo",     label: "Código",     numeric: false },
   { key: "honorarios", label: "Honorarios", numeric: true  },
@@ -150,6 +169,70 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
     staleTime: 5 * 60 * 1000,
   });
 
+  // ── Documentos de respaldo ─────────────────────────────────────────────────
+  // La otra mitad del registro de cada actualización: la nota, el Excel o el
+  // CSV con el que llegaron esos precios. Se traen todos los de la OS de una
+  // sola vez y se agrupan por vigencia acá — son unos pocos, y así la lista de
+  // actualizaciones puede mostrar el contador sin una request por fila.
+  const { error: avisarError, success: avisarOk } = useNotify();
+  const [subiendo, setSubiendo] = useState(false);
+  const [borrandoDoc, setBorrandoDoc] = useState<number | null>(null);
+  const docInputRef = useRef<HTMLInputElement>(null);
+
+  const {
+    data: documentos = [],
+    refetch: refetchDocumentos,
+  } = useQuery({
+    queryKey: ["os-valores-documentos", obraNro],
+    queryFn: () => listValorDocumentos(obraNro),
+    enabled: !!obraNro,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const docsPorVigencia = useMemo(() => {
+    const mapa = new Map<string, ValorDocumentoOut[]>();
+    for (const doc of documentos) {
+      if (!mapa.has(doc.vigencia_desde)) mapa.set(doc.vigencia_desde, []);
+      mapa.get(doc.vigencia_desde)!.push(doc);
+    }
+    return mapa;
+  }, [documentos]);
+
+  const docsDeLaFecha = dateFilter ? docsPorVigencia.get(dateFilter) ?? [] : [];
+
+  const subirDoc = async (file: File | null) => {
+    if (!file || !dateFilter || subiendo) return;
+    setSubiendo(true);
+    try {
+      await subirValorDocumento({
+        obra_social_nro: obraNro,
+        vigencia_desde: dateFilter,
+        archivo: file,
+      });
+      await refetchDocumentos();
+      avisarOk("Documento adjuntado.");
+    } catch (e: any) {
+      avisarError(e?.response?.data?.detail ?? "No se pudo subir el documento.");
+    } finally {
+      setSubiendo(false);
+      // Sin esto, volver a elegir el mismo archivo no dispara el change.
+      if (docInputRef.current) docInputRef.current.value = "";
+    }
+  };
+
+  const borrarDoc = async (doc: ValorDocumentoOut) => {
+    if (borrandoDoc !== null) return;
+    setBorrandoDoc(doc.id);
+    try {
+      await eliminarValorDocumento(doc.id);
+      await refetchDocumentos();
+    } catch (e: any) {
+      avisarError(e?.response?.data?.detail ?? "No se pudo eliminar el documento.");
+    } finally {
+      setBorrandoDoc(null);
+    }
+  };
+
   // ── Porcentual groups ──────────────────────────────────────────────────────
   const porcentualGroups = useMemo(() => {
     if (!rows.length) return [];
@@ -200,10 +283,14 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
   }, [rows]);
 
   // ── Por fecha table ────────────────────────────────────────────────────────
+  // Se suman las vigencias que sólo tienen documento: la nota de la obra social
+  // suele llegar antes de que alguien cargue los precios, y si el selector se
+  // armara sólo con los valores, ese adjunto quedaría inalcanzable.
   const availableDates = useMemo(() => {
     const dates = new Set(rows.map((r) => r.vigencia_desde).filter(Boolean));
+    for (const doc of documentos) dates.add(doc.vigencia_desde);
     return [...dates].sort().reverse();
-  }, [rows]);
+  }, [rows, documentos]);
 
   const dateRows = useMemo(
     () => (dateFilter ? rows.filter((r) => r.vigencia_desde === dateFilter) : []),
@@ -329,6 +416,14 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
                     </div>
 
                     <div className={s.porcentualRight}>
+                      {/* Cuántos respaldos tiene esta actualización. Sin
+                          adjuntos no se dice nada: la fila ya es larga. */}
+                      {group.date && (docsPorVigencia.get(group.date)?.length ?? 0) > 0 && (
+                        <span className={s.docBadge} title="Documentos de respaldo">
+                          <Paperclip size={13} />
+                          {docsPorVigencia.get(group.date)!.length}
+                        </span>
+                      )}
                       {group.avgPct !== null ? (
                         <span className={`${s.porcentualPct} ${isPositive ? s.porcentualPctUp : isNegative ? s.porcentualPctDown : ""}`}>
                           {isPositive ? <TrendingUp size={14} /> : isNegative ? <TrendingDown size={14} /> : <Minus size={14} />}
@@ -380,6 +475,70 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
             <div className={s.hEmptyState}>
               <CalendarDays size={28} />
               <span>Seleccioná una vigencia para ver los valores.</span>
+            </div>
+          )}
+
+          {/* Respaldo de la actualización: la nota, el Excel o el CSV que
+              mandó la obra social. Va arriba de la grilla porque es el origen
+              de lo que la grilla muestra. */}
+          {dateFilter && (
+            <div className={s.docsPanel}>
+              <div className={s.docsHeader}>
+                <h3 className={s.docsTitle}>
+                  <Paperclip size={14} />
+                  Documentos de la actualización
+                </h3>
+                <label
+                  className={s.docsUploadBtn}
+                  htmlFor="valor-doc-file"
+                  aria-disabled={subiendo}
+                >
+                  {subiendo ? <Loader2 size={13} className={s.spinIcon} /> : <Upload size={13} />}
+                  {subiendo ? "Subiendo…" : "Adjuntar"}
+                </label>
+                <input
+                  id="valor-doc-file"
+                  ref={docInputRef}
+                  type="file"
+                  className={s.docsInput}
+                  accept={FORMATOS_DOC}
+                  disabled={subiendo}
+                  onChange={(e) => void subirDoc(e.target.files?.[0] ?? null)}
+                />
+              </div>
+
+              {docsDeLaFecha.length === 0 ? (
+                <p className={s.docsEmpty}>
+                  Sin documentos. Se aceptan PDF, Excel y CSV.
+                </p>
+              ) : (
+                <div className={s.docsList}>
+                  {docsDeLaFecha.map((doc) => (
+                    <div key={doc.id} className={s.docItem}>
+                      <button
+                        type="button"
+                        className={s.docName}
+                        title={doc.descripcion ?? doc.nombre_original}
+                        onClick={() =>
+                          abrirAdjunto(doc.url).catch((err) => avisarError(err.message))
+                        }
+                      >
+                        {doc.nombre_original}
+                      </button>
+                      <span className={s.docMeta}>{pesoLegible(doc.size)}</span>
+                      <button
+                        type="button"
+                        className={s.docDeleteBtn}
+                        disabled={borrandoDoc === doc.id}
+                        aria-label={`Eliminar ${doc.nombre_original}`}
+                        onClick={() => void borrarDoc(doc)}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
