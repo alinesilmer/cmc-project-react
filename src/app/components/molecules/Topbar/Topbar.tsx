@@ -4,7 +4,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type ReactElement,
 } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
@@ -22,8 +21,7 @@ import {
 import styles from "./Topbar.module.scss";
 import { useAuth } from "../../../auth/AuthProvider";
 import { isMedico } from "../../../auth/roles";
-import RequirePermission from "../../../auth/RequirePermission";
-import { PERMS } from "../../../auth/scopes";
+import { usePermisos } from "../../../auth/usePermisos";
 import Logo from "../../../assets/logoCMC.png";
 
 // ─── Nav model ─────────────────────────────────────────────────────────────────
@@ -41,30 +39,29 @@ type TopEntry =
   | { kind: "menu"; id: string; icon: LucideIcon; label: string; columns: MenuColumn[] };
 
 const base = "/panel";
-const R = [PERMS.MEDICO_LEER];
-const LIQ = [PERMS.LIQUIDACION_LEER];
 
 // Accesos directos a las obras sociales que se validan desde el panel. El
-// catálogo completo (incluidos los portales externos) vive en el hub.
+// catálogo completo (incluidos los portales externos) vive en el hub. Mismo
+// scope que exige la API para todo /api/validaciones/*: `validacion:cargar`.
 const VALIDACIONES_MENU: Extract<TopEntry, { kind: "menu" }> = {
   kind: "menu", id: "validaciones", icon: ShieldCheck, label: "Validaciones",
   columns: [
     {
       heading: "Validar prestación",
       items: [
-        { path: `${base}/validaciones/sancor`, icon: ShieldCheck, label: "Sancor Salud" },
-        { path: `${base}/validaciones/ospjn`, icon: ShieldCheck, label: "OSPJN · Judicial" },
-        { path: `${base}/validaciones/nobis`, icon: ShieldCheck, label: "Nobis Salud" },
-        { path: `${base}/validaciones/ospm`, icon: ShieldCheck, label: "OSPM" },
+        { path: `${base}/validaciones/sancor`, icon: ShieldCheck, label: "Sancor Salud", perms: ["validacion:cargar"] },
+        { path: `${base}/validaciones/ospjn`, icon: ShieldCheck, label: "OSPJN · Judicial", perms: ["validacion:cargar"] },
+        { path: `${base}/validaciones/nobis`, icon: ShieldCheck, label: "Nobis Salud", perms: ["validacion:cargar"] },
+        { path: `${base}/validaciones/ospm`, icon: ShieldCheck, label: "OSPM", perms: ["validacion:cargar"] },
       ],
     },
     {
       heading: "Carga de prestaciones",
       items: [
-        { path: `${base}/validaciones/omint`, icon: ClipboardList, label: "Omint" },
-        { path: `${base}/validaciones/boreal`, icon: ClipboardList, label: "Boreal Salud" },
-        { path: `${base}/validaciones`, icon: ShieldCheck, label: "Ver todas" },
-        { path: `${base}/validaciones/portales`, icon: ExternalLink, label: "Portales de obras sociales" },
+        { path: `${base}/validaciones/omint`, icon: ClipboardList, label: "Omint", perms: ["validacion:cargar"] },
+        { path: `${base}/validaciones/boreal`, icon: ClipboardList, label: "Boreal Salud", perms: ["validacion:cargar"] },
+        { path: `${base}/validaciones`, icon: ShieldCheck, label: "Ver todas", perms: ["validacion:cargar"] },
+        { path: `${base}/validaciones/portales`, icon: ExternalLink, label: "Portales de obras sociales", perms: ["validacion:cargar"] },
       ],
     },
   ],
@@ -78,10 +75,10 @@ const TOP_NAV: TopEntry[] = [
     columns: [
       {
         items: [
-          { path: `${base}/facturacion/carga`, icon: DollarSign, label: "Cargar Prestaciones", perms: R },
-          { path: `${base}/facturacion/cierre`, icon: CalendarDays, label: "Cerrar Factura", perms: R },
-          { path: `${base}/facturacion/periodos`, icon: ClipboardList, label: "Ver períodos", perms: R },
-          { path: `${base}/facturacion/complementarias`, icon: Layers, label: "Complementarias", perms: R },
+          { path: `${base}/facturacion/carga`, icon: DollarSign, label: "Cargar Prestaciones", perms: ["facturacion:cargar"] },
+          { path: `${base}/facturacion/cierre`, icon: CalendarDays, label: "Cerrar Factura", perms: ["facturacion:cerrar"] },
+          { path: `${base}/facturacion/periodos`, icon: ClipboardList, label: "Ver períodos", perms: ["facturacion:leer"] },
+          { path: `${base}/facturacion/complementarias`, icon: Layers, label: "Complementarias", perms: ["facturacion:complementar"] },
         ],
       },
     ],
@@ -91,16 +88,16 @@ const TOP_NAV: TopEntry[] = [
     columns: [
       {
         items: [
-          { path: `${base}/liquidation`, icon: DollarSign, label: "Liquidación", perms: LIQ },
-          { path: `${base}/debitos-creditos`, icon: ArrowLeftRight, label: "Débitos y Créditos", perms: LIQ },
-          { path: `${base}/refacturaciones`, icon: RotateCcw, label: "Refacturaciones", perms: LIQ },
+          { path: `${base}/liquidation`, icon: DollarSign, label: "Liquidación", perms: ["pago:leer"] },
+          { path: `${base}/debitos-creditos`, icon: ArrowLeftRight, label: "Débitos y Créditos", perms: ["lote:leer"] },
+          { path: `${base}/refacturaciones`, icon: RotateCcw, label: "Refacturaciones", perms: ["lote:leer"] },
         ],
       },
       {
         heading: "Deducciones",
         items: [
-          { path: `${base}/deducciones`, icon: Wallet, label: "Lista", perms: LIQ },
-          { path: `${base}/deducciones/nueva`, icon: Plus, label: "Nueva deducción", perms: LIQ },
+          { path: `${base}/deducciones`, icon: Wallet, label: "Lista", perms: ["deduccion:leer"] },
+          { path: `${base}/deducciones/nueva`, icon: Plus, label: "Nueva deducción", perms: ["deduccion:crear"] },
         ],
       },
     ],
@@ -111,15 +108,15 @@ const TOP_NAV: TopEntry[] = [
       {
         heading: "Socios",
         items: [
-          { path: `${base}/users`, icon: BookUser, label: "Listado de Socios", perms: R },
-          { path: `${base}/especialidades`, icon: ClipboardPlus, label: "Especialidades", perms: R },
-          { path: `${base}/servicios`, icon: Building2, label: "Servicios", perms: R },
+          { path: `${base}/users`, icon: BookUser, label: "Listado de Socios", perms: ["medico:leer"] },
+          { path: `${base}/especialidades`, icon: ClipboardPlus, label: "Especialidades", perms: ["catalogo:leer"] },
+          { path: `${base}/servicios`, icon: Building2, label: "Servicios", perms: ["medico:leer"] },
         ],
       },
       {
         heading: "Padrones",
         items: [
-          { path: `${base}/afiliadospadron`, icon: Newspaper, label: "Padrones", perms: R },
+          { path: `${base}/afiliadospadron`, icon: Newspaper, label: "Padrones", perms: ["padron:leer"] },
         ],
       },
     ],
@@ -131,18 +128,19 @@ const TOP_NAV: TopEntry[] = [
     columns: [
       {
         items: [
-          { path: `${base}/beneficios`, icon: Gift, label: "Beneficios", perms: [PERMS.BENEFICIO_GESTIONAR] },
-          { path: `${base}/avisos`, icon: Megaphone, label: "Avisos", perms: [PERMS.AVISO_GESTIONAR] },
-          { path: `${base}/solicitudes-cambio`, icon: Inbox, label: "Solicitudes de cambio", perms: [PERMS.SOLICITUD_RESOLVER] },
+          { path: `${base}/beneficios`, icon: Gift, label: "Beneficios", perms: ["beneficio:gestionar"] },
+          { path: `${base}/avisos`, icon: Megaphone, label: "Avisos", perms: ["aviso:gestionar"] },
+          // Bandeja de solicitudes: `solicitud:leer` para verlas, distinto de
+          // `solicitud:resolver` (aprobar/rechazar), que se gatea dentro de la
+          // pantalla en cada acción.
+          { path: `${base}/solicitudes-cambio`, icon: Inbox, label: "Solicitudes de cambio", perms: ["solicitud:leer"] },
         ],
       },
     ],
   },
   {
-    // Gatea con `facturas:ver`, el mismo scope que exige el backend: si el
-    // usuario no lo tiene, el enlace no aparece y la API igual lo rechazaría.
     kind: "link", path: `${base}/reportes`, icon: BarChart3,
-    label: "Reportes", perms: ["facturas:ver"],
+    label: "Reportes", perms: ["reporte:leer"],
   },
   {
     kind: "menu", id: "auditoria", icon: Flower2, label: "Auditoría",
@@ -150,16 +148,16 @@ const TOP_NAV: TopEntry[] = [
       {
         heading: "Boletín",
         items: [
-          { path: `${base}/boletin-consulta-comun`, icon: FileBoxIcon, label: "Boletín Mensual", perms: R },
-          { path: `${base}/boletin`, icon: Medal, label: "Ranking O.S.", perms: R },
+          { path: `${base}/boletin-consulta-comun`, icon: FileBoxIcon, label: "Boletín Mensual", perms: ["catalogo:leer"] },
+          { path: `${base}/boletin`, icon: Medal, label: "Ranking O.S.", perms: ["nomenclador:leer"] },
         ],
       },
       {
         heading: "Convenios",
         items: [
-          { path: `${base}/convenios/obras-sociales`, icon: ClipboardList, label: "Listado de Obras Sociales", perms: R },
-          { path: `${base}/convenios/obras-sociales/alta`, icon: HousePlus, label: "Alta Obra Social", perms: R },
-          { path: `${base}/historial-valores`, icon: History, label: "Historial de Valores", perms: R },
+          { path: `${base}/convenios/obras-sociales`, icon: ClipboardList, label: "Listado de Obras Sociales", perms: ["catalogo:leer"] },
+          { path: `${base}/convenios/obras-sociales/alta`, icon: HousePlus, label: "Alta Obra Social", perms: ["catalogo:editar"] },
+          { path: `${base}/historial-valores`, icon: History, label: "Historial de Valores", perms: ["nomenclador:leer"] },
         ],
       },
     ],
@@ -170,20 +168,20 @@ const TOP_NAV: TopEntry[] = [
       {
         heading: "Códigos",
         items: [
-          { path: `${base}/nomenclador/codigos`, icon: FileCode2, label: "Catálogo Códigos CMC", perms: R },
-          { path: `${base}/nomenclador/por-obra-social`, icon: Building2, label: "Por Obra Social", perms: R },
-          { path: `${base}/nomenclador/consulta-valores`, icon: Search, label: "Consulta de Valores", perms: R },
-          { path: `${base}/nomenclador/importar-precios-pdf`, icon: FileText, label: "Importar Precios PDF", perms: R },
-          { path: `${base}/nomenclador/aumento-porcentual`, icon: Percent, label: "Aumento Porcentual", perms: R },
-          { path: `${base}/nomenclador/homologador`, icon: GitMerge, label: "Homologador", perms: R },
+          { path: `${base}/nomenclador/codigos`, icon: FileCode2, label: "Catálogo Códigos CMC", perms: ["nomenclador:leer"] },
+          { path: `${base}/nomenclador/por-obra-social`, icon: Building2, label: "Por Obra Social", perms: ["nomenclador:leer"] },
+          { path: `${base}/nomenclador/consulta-valores`, icon: Search, label: "Consulta de Valores", perms: ["nomenclador:leer"] },
+          { path: `${base}/nomenclador/importar-precios-pdf`, icon: FileText, label: "Importar Precios PDF", perms: ["nomenclador:masivo"] },
+          { path: `${base}/nomenclador/aumento-porcentual`, icon: Percent, label: "Aumento Porcentual", perms: ["nomenclador:masivo"] },
+          { path: `${base}/nomenclador/homologador`, icon: GitMerge, label: "Homologador", perms: ["nomenclador:leer"] },
         ],
       },
       {
         heading: "Galenos",
         items: [
-          { path: `${base}/nomenclador/galenos`, icon: Sigma, label: "Galenos", perms: R },
-          { path: `${base}/nomenclador/galenos/importar`, icon: FileUp, label: "Importar Galenos", perms: R },
-          { path: `${base}/nomenclador/actualizar-precios`, icon: TrendingUp, label: "Actualizar Unidades", perms: R },
+          { path: `${base}/nomenclador/galenos`, icon: Sigma, label: "Galenos", perms: ["nomenclador:leer"] },
+          { path: `${base}/nomenclador/galenos/importar`, icon: FileUp, label: "Importar Galenos", perms: ["nomenclador:masivo"] },
+          { path: `${base}/nomenclador/actualizar-precios`, icon: TrendingUp, label: "Actualizar Unidades", perms: ["nomenclador:editar"] },
         ],
       },
     ],
@@ -194,8 +192,13 @@ const TOP_NAV: TopEntry[] = [
       {
         heading: "Sistema",
         items: [
-          { path: `${base}/admin/permissions`, icon: ShieldUser, label: "Permisos y roles", perms: [PERMS.RBAC_GESTIONAR] },
-          { path: "https://legacy.colegiomedicocorrientes.com/principal.php", icon: Monitor, label: "Sistema Viejo", perms: R, external: true },
+          { path: `${base}/admin/permissions`, icon: ShieldUser, label: "Permisos y roles", perms: ["rbac:gestionar"] },
+          // Atajo de conveniencia hacia el sistema legacy, sin scope propio:
+          // no hay ningún permiso en la tabla que gobierne "ver este link
+          // desde el panel nuevo" (distinto de `system_new:access`, que hace
+          // lo inverso — lo consume el legacy para mostrar el link al panel
+          // nuevo). Visible para cualquier staff autenticado no-médico.
+          { path: "https://legacy.colegiomedicocorrientes.com/principal.php", icon: Monitor, label: "Sistema Viejo", external: true },
         ],
       },
     ],
@@ -220,21 +223,35 @@ function menuItems(entry: Extract<TopEntry, { kind: "menu" }>): MenuLink[] {
   return entry.columns.flatMap((c) => c.items);
 }
 
-// Union of perms across a menu's items — controls whether the trigger shows at all.
-function menuPerms(entry: Extract<TopEntry, { kind: "menu" }>): string[] {
-  const all = menuItems(entry).flatMap((i) => i.perms ?? []);
-  return [...new Set(all)];
-}
-
 function entryActive(current: string, entry: TopEntry): boolean {
   if (entry.kind === "link") return isActivePath(current, entry.path);
   return menuItems(entry).some((i) => !i.external && isActivePath(current, i.path));
+}
+
+// `perms` es semántica "anyOf": sin perms declarados, visible para cualquier
+// autenticado; con perms, alcanza con tener uno solo.
+function passesPerms(perms: string[] | undefined, can: (code: string) => boolean): boolean {
+  return !perms || perms.length === 0 || perms.some(can);
+}
+
+// Una columna de un dropdown se oculta entera (heading incluido) si ninguno
+// de sus ítems es visible para el usuario — si no, queda un título de sección
+// colgando sobre una lista vacía.
+function columnVisible(col: MenuColumn, can: (code: string) => boolean): boolean {
+  return col.items.some((i) => passesPerms(i.perms, can));
+}
+
+// El trigger de un menú desplegable se oculta si ninguna de sus columnas
+// tiene algo para mostrar.
+function menuVisible(entry: Extract<TopEntry, { kind: "menu" }>, can: (code: string) => boolean): boolean {
+  return entry.columns.some((c) => columnVisible(c, can));
 }
 
 export default function Topbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { can } = usePermisos();
 
   const nav = isMedico(user) ? DOCTOR_TOP_NAV : TOP_NAV;
   const isAuthenticated = Boolean(user);
@@ -308,16 +325,10 @@ export default function Topbar() {
     try { await logout(); } finally { navigate(`${base}/login`, { replace: true }); }
   }, [isAuthenticated, logout, navigate]);
 
-  const wrapPerm = useCallback(
-    (node: ReactElement, perms?: string[], key?: string) =>
-      !perms || perms.length === 0 ? node : (
-        <RequirePermission key={key} anyOf={perms}>{node}</RequirePermission>
-      ),
-    [],
-  );
-
   // ── Shared item link renderer (used in dropdowns and mobile drawer) ──────────
   const renderItem = (item: MenuLink) => {
+    if (!passesPerms(item.perms, can)) return null;
+
     const Icon = item.icon;
     const active = !item.external && isActivePath(location.pathname, item.path);
     const cls = `${styles.item} ${active ? styles.itemActive : ""}`;
@@ -332,24 +343,28 @@ export default function Topbar() {
     ) : (
       <Link to={item.path} className={cls} aria-current={active ? "page" : undefined}>{inner}</Link>
     );
-    return wrapPerm(<li key={item.path}>{node}</li>, item.perms, item.path);
+    return <li key={item.path}>{node}</li>;
   };
 
   const renderColumns = (columns: MenuColumn[]) =>
-    columns.map((col, i) => (
-      <div key={col.heading ?? `col-${i}`} className={styles.dropdownCol}>
-        {col.heading && <p className={styles.dropdownHeading}>{col.heading}</p>}
-        <ul className={styles.dropdownList}>{col.items.map(renderItem)}</ul>
-      </div>
-    ));
+    columns
+      .filter((col) => columnVisible(col, can))
+      .map((col, i) => (
+        <div key={col.heading ?? `col-${i}`} className={styles.dropdownCol}>
+          {col.heading && <p className={styles.dropdownHeading}>{col.heading}</p>}
+          <ul className={styles.dropdownList}>{col.items.map(renderItem)}</ul>
+        </div>
+      ));
 
   // ── Desktop top-level entry ──────────────────────────────────────────────────
   const renderTopEntry = (entry: TopEntry, idx: number, total: number) => {
     // Right-align the dropdowns of the trailing menus so they don't overflow.
     const alignEnd = idx >= total - 2;
     if (entry.kind === "link") {
+      if (!passesPerms(entry.perms, can)) return null;
+
       const active = isActivePath(location.pathname, entry.path);
-      const node = (
+      return (
         <Link
           key={entry.path}
           to={entry.path}
@@ -359,12 +374,13 @@ export default function Topbar() {
           <span className={styles.topLabel}>{entry.label}</span>
         </Link>
       );
-      return wrapPerm(node, entry.perms, entry.path);
     }
+
+    if (!menuVisible(entry, can)) return null;
 
     const open = openMenu === entry.id;
     const active = entryActive(location.pathname, entry);
-    const node = (
+    return (
       <div
         key={entry.id}
         className={styles.menu}
@@ -389,15 +405,16 @@ export default function Topbar() {
         )}
       </div>
     );
-    return wrapPerm(node, menuPerms(entry), entry.id);
   };
 
   // ── Mobile accordion entry ───────────────────────────────────────────────────
   const renderMobileEntry = (entry: TopEntry) => {
     if (entry.kind === "link") {
+      if (!passesPerms(entry.perms, can)) return null;
+
       const Icon = entry.icon;
       const active = isActivePath(location.pathname, entry.path);
-      const node = (
+      return (
         <Link
           key={entry.path}
           to={entry.path}
@@ -407,12 +424,13 @@ export default function Topbar() {
           <span className={styles.itemLabel}>{entry.label}</span>
         </Link>
       );
-      return wrapPerm(node, entry.perms, entry.path);
     }
+
+    if (!menuVisible(entry, can)) return null;
 
     const Icon = entry.icon;
     const open = Boolean(mobileExpanded[entry.id]);
-    const node = (
+    return (
       <div key={entry.id} className={styles.mGroup}>
         <button
           type="button"
@@ -429,7 +447,6 @@ export default function Topbar() {
         )}
       </div>
     );
-    return wrapPerm(node, menuPerms(entry), entry.id);
   };
 
   return (

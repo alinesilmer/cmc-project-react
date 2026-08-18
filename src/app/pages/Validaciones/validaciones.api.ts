@@ -23,6 +23,38 @@ import type {
 
 const BASE = "/api/validaciones";
 
+// Timeout de las llamadas que hacen que el backend consulte a la obra social.
+//
+// El default de axios (15 s, ver lib/http.ts) es más corto que lo que el propio
+// backend está dispuesto a esperar: `SANCOR_TIMEOUT` es 30 s. Con esa
+// diferencia, el navegador abandonaba operaciones que el servidor terminaba
+// igual — verificado el 2026-08-17, una baja que el backend resolvió en 30,3 s
+// y el panel reportó como "no pudimos eliminar la prestación", con la
+// prestación ya anulada.
+//
+// Cuando el alta es la que aparenta fallar el problema es peor: el médico
+// reintenta y **se emite una segunda autorización real**, consumiendo otro
+// token del afiliado.
+//
+// 45 s = los 30 del backend + margen para la base, el espejo al sistema viejo y
+// la red. Si sube `SANCOR_TIMEOUT`, subir esto también: tiene que ser siempre
+// mayor, nunca al revés.
+const TIMEOUT_OS_EN_LINEA = 45_000;
+
+/** `true` si la request se cortó del lado del navegador y no del servidor.
+ *
+ * Es la distinción que importa: un 4xx/5xx significa que el backend decidió y
+ * la operación no se hizo; un corte por timeout significa que **no sabemos** en
+ * qué quedó, y hay que ir a mirar antes de reintentar. */
+export const esTimeoutDeRed = (err: unknown): boolean => {
+  const e = err as { code?: string; message?: string; response?: unknown } | null;
+  if (!e) return false;
+  if (e.code === "ECONNABORTED" || e.code === "ETIMEDOUT") return true;
+  // Sin `response` no hubo respuesta del servidor; el texto de axios para el
+  // corte por tiempo es "timeout of 45000ms exceeded".
+  return !e.response && /timeout/i.test(String(e.message ?? ""));
+};
+
 // ─── Formas que devuelve el backend (snake_case) ──────────────────────────────
 
 interface PrestacionApi {
@@ -170,11 +202,14 @@ export interface CargarPrestacionPayload {
   nro_socio?: number;
 }
 
-/** POST /api/validaciones/prestaciones — carga manual (Boreal / Omint). */
+/** POST /api/validaciones/prestaciones — carga manual (Boreal / Omint) y
+ * autorización en línea (Sancor / OSPJN / Nobis / OSPM). */
 export const cargarPrestacion = async (
   payload: CargarPrestacionPayload
 ): Promise<Prestacion> => {
-  const r = await postJSON<PrestacionApi>(`${BASE}/prestaciones`, payload);
+  const r = await postJSON<PrestacionApi>(`${BASE}/prestaciones`, payload, {
+    timeout: TIMEOUT_OS_EN_LINEA,
+  });
   return toPrestacion(r);
 };
 
@@ -191,9 +226,14 @@ export const adjuntarOrden = async (
   return toPrestacion(r);
 };
 
-/** DELETE /api/validaciones/prestaciones/{id} — baja lógica (EXISTE='N'). */
+/** DELETE /api/validaciones/prestaciones/{id} — baja lógica (EXISTE='N').
+ *
+ * En Sancor y Nobis además intenta anular la autorización en la obra social
+ * antes de marcar nada, así que también depende de un tercero. */
 export const eliminarPrestacion = (id: string, nroSocio?: number): Promise<void> => {
   // `delJSON` no acepta params, así que el socio va en la query string.
   const qs = nroSocio ? `?nro_socio=${encodeURIComponent(nroSocio)}` : "";
-  return delJSON<void>(`${BASE}/prestaciones/${id}${qs}`);
+  return delJSON<void>(`${BASE}/prestaciones/${id}${qs}`, {
+    timeout: TIMEOUT_OS_EN_LINEA,
+  });
 };

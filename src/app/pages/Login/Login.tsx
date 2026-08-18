@@ -6,7 +6,7 @@ import Button from "../../components/atoms/Button/Button";
 import Modal from "../../components/atoms/Modal/Modal";
 import { useAuth } from "../../auth/AuthProvider";
 import { isWebEditor } from "../../auth/roles";
-import { hasScope, PERMS } from "../../auth/scopes";
+import { hasScope } from "../../auth/scopes";
 import { http } from "../../lib/http";
 import pdf from "../../assets/CMC_08_2026.pdf";
 import { mensajeDeError } from "../../lib/httpErrors";
@@ -94,7 +94,7 @@ function Login() {
       // seleccionados. Quien tenga panel:ingresar se queda acá en vez de ir
       // al legacy; el resto sigue el flujo de siempre. Borrar junto con
       // Scope.PANEL_INGRESAR (backend) cuando cierre la prueba.
-      if (hasScope(me.scopes, PERMS.PANEL_INGRESAR)) {
+      if (hasScope(me.scopes, "panel:ingresar")) {
         navigate("/panel/dashboard", { replace: true });
         return;
       }

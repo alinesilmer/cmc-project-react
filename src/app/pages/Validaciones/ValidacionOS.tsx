@@ -19,6 +19,7 @@ import {
 
 import { useAuth } from "../../auth/AuthProvider";
 import { isMedico } from "../../auth/roles";
+import { mensajeDeError } from "../../lib/httpErrors";
 import ActionModal from "../../components/molecules/ActionModal/ActionModal";
 import MedicoAutocomplete from "../facturacion/components/MedicoAutocomplete";
 import type { MedicoOption } from "../facturacion/types";
@@ -30,6 +31,7 @@ import {
   adjuntarOrden,
   cargarPrestacion,
   eliminarPrestacion,
+  esTimeoutDeRed,
   getPeriodoActual,
   getPeriodos,
   getPrestaciones,
@@ -195,14 +197,28 @@ export default function ValidacionOS() {
       });
       await refrescar();
       resultadoRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    } catch (err: any) {
-      setResultado({
-        estado: "rechazada",
-        mensaje:
-          err?.response?.data?.detail ??
-          err?.message ??
-          "No pudimos guardar la prestación. Intentá de nuevo.",
-      });
+    } catch (err) {
+      // Se cortó del lado del navegador: el backend puede haber terminado igual
+      // y la obra social puede haber autorizado. Decir "no se pudo" acá lleva al
+      // médico a reintentar, y un segundo intento consume otro token del
+      // afiliado — así que se refresca la lista y se le pide que mire antes.
+      if (esTimeoutDeRed(err)) {
+        // Refrescamos para que el contador de "Período actual" ya muestre la
+        // prestación si efectivamente entró. El aviso se queda en esta pestaña.
+        await refrescar();
+        setResultado({
+          estado: "incierto",
+          mensaje: `${os.nombre} está demorando en responder. Puede que la prestación haya quedado cargada igual: revisala en "Período actual" antes de volver a validar, para no pedir dos veces la misma autorización.`,
+        });
+      } else {
+        setResultado({
+          estado: "rechazada",
+          mensaje: mensajeDeError(
+            err,
+            "No pudimos guardar la prestación. Intentá de nuevo.",
+          ),
+        });
+      }
       resultadoRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     } finally {
       setEnviando(false);
@@ -216,8 +232,20 @@ export default function ValidacionOS() {
       await eliminarPrestacion(aEliminar.id, nroSocioElegido);
       await refrescar();
       setAEliminar(null);
-    } catch {
-      setErrorAccion("No pudimos eliminar la prestación.");
+    } catch (err) {
+      // Igual que en el alta: si cortó el navegador, la baja puede haberse
+      // hecho igual. Refrescamos y cerramos el modal — la lista es la que
+      // manda, y dejar "no pudimos eliminar" sobre una prestación que ya no
+      // está fue exactamente lo que pasó en las pruebas.
+      if (esTimeoutDeRed(err)) {
+        await refrescar();
+        setAEliminar(null);
+        setErrorCarga(
+          `${os.nombre} está demorando en responder. Verificá en el listado si la prestación se eliminó antes de reintentar.`,
+        );
+        return;
+      }
+      setErrorAccion(mensajeDeError(err, "No pudimos eliminar la prestación."));
       throw new Error("delete failed"); // mantiene el modal abierto
     }
   };
@@ -247,6 +275,15 @@ export default function ValidacionOS() {
   const tope = periodoAbierto ?? { mes: hoy.getMonth() + 1, anio: hoy.getFullYear() };
   const enTope = mes === tope.mes && anio === tope.anio;
   const fueraDelAbierto = Boolean(periodoAbierto) && !enTope;
+
+  // Entrar al listado siempre trae datos frescos. Importa después de un
+  // timeout: el aviso manda al médico a revisar acá si la prestación entró, y
+  // el último refresco pudo haber salido antes de que el backend terminara —
+  // una lista vacía y vieja lo llevaría a validar dos veces.
+  const irATab = (destino: TabId) => {
+    setTab(destino);
+    if (destino === "periodo") void refrescar();
+  };
 
   const TABS: { id: TabId; label: string; icon: typeof PlusCircle; badge?: number }[] = [
     { id: "carga", label: "Cargar prestación", icon: PlusCircle },
@@ -381,7 +418,7 @@ export default function ValidacionOS() {
             role="tab"
             aria-selected={tab === t.id}
             className={`${s.tab} ${tab === t.id ? s.tabActive : ""}`}
-            onClick={() => setTab(t.id)}
+            onClick={() => irATab(t.id)}
           >
             <t.icon size={16} />
             {t.label}
@@ -557,7 +594,9 @@ function ResultadoBanner({
       ? BadgeCheck
       : estado === "pendiente"
         ? Info
-        : CircleAlert;
+        : estado === "incierto"
+          ? AlertTriangle
+          : CircleAlert;
 
   const titulo =
     estado === "autorizada"
@@ -566,7 +605,9 @@ function ResultadoBanner({
         ? "Prestación cargada"
         : estado === "pendiente"
           ? "Requiere gestión del afiliado"
-          : "No se pudo cargar la prestación";
+          : estado === "incierto"
+            ? "No sabemos si se cargó"
+            : "No se pudo cargar la prestación";
 
   return (
     <div className={`${s.resultado} ${s[`resultado_${estado}`]}`} role="status">
