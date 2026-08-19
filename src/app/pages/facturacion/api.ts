@@ -68,6 +68,12 @@ export const fetchAfiliados = (q: string, limit = 20) =>
 export const crearAfiliado = (body: { dni: string; nombre: string }) =>
   traced("POST /afiliados", body, postJSON<AfiliadoRead>(`${BASE}/afiliados`, body));
 
+// El identificador puede llevar barras ("1231233/00") — va encodeado; del lado del
+// backend la ruta es `{dni:path}`. Devuelve 204; 409 si el afiliado ya tiene
+// prestaciones no anuladas cargadas.
+export const eliminarAfiliado = (dni: string) =>
+  traced("DELETE /afiliados", { dni }, delJSON<void>(`${BASE}/afiliados/${encodeURIComponent(dni)}`));
+
 export const fetchPeriodoActivo = (cod_obra: string) =>
   traced("GET /periodo-activo", { cod_obra }, getJSON<PeriodoActivoResponse>(`${BASE}/periodo-activo`, { cod_obra }));
 

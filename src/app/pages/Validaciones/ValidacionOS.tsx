@@ -78,6 +78,12 @@ export default function ValidacionOS() {
 
   const [enviando, setEnviando] = useState(false);
   const [resultado, setResultado] = useState<ResultadoValidacion | null>(null);
+  // Se incrementa después de un alta exitosa para remontar `PrestacionForm` con
+  // los campos vacíos. Sin esto el formulario quedaba con el afiliado, el token
+  // y el código cargados y el botón habilitado: un segundo clic —por costumbre
+  // o por duda— pedía **otra autorización real** por la misma práctica y
+  // consumía otro token de la credencial.
+  const [formKey, setFormKey] = useState(0);
 
   const [aEliminar, setAEliminar] = useState<Prestacion | null>(null);
   const [aAdjuntar, setAAdjuntar] = useState<Prestacion | null>(null);
@@ -195,30 +201,35 @@ export default function ValidacionOS() {
               : "La prestación quedó cargada en el período.",
         prestacion,
       });
+      // Sólo se limpia cuando la prestación quedó cargada. Ante un rechazo los
+      // datos se conservan: casi siempre hay que corregir un dígito y reintentar.
+      if (prestacion.estado === "autorizada" || prestacion.estado === "cargada") {
+        setFormKey((k) => k + 1);
+      }
       await refrescar();
       resultadoRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     } catch (err) {
-      // Se cortó del lado del navegador: el backend puede haber terminado igual
-      // y la obra social puede haber autorizado. Decir "no se pudo" acá lleva al
-      // médico a reintentar, y un segundo intento consume otro token del
-      // afiliado — así que se refresca la lista y se le pide que mire antes.
-      if (esTimeoutDeRed(err)) {
-        // Refrescamos para que el contador de "Período actual" ya muestre la
-        // prestación si efectivamente entró. El aviso se queda en esta pestaña.
-        await refrescar();
-        setResultado({
-          estado: "incierto",
-          mensaje: `${os.nombre} está demorando en responder. Puede que la prestación haya quedado cargada igual: revisala en "Período actual" antes de volver a validar, para no pedir dos veces la misma autorización.`,
-        });
-      } else {
-        setResultado({
-          estado: "rechazada",
-          mensaje: mensajeDeError(
-            err,
-            "No pudimos guardar la prestación. Intentá de nuevo.",
-          ),
-        });
-      }
+      // Regla única para el prestador: si no salió el cartel de autorizada, la
+      // prestación no se cargó. El timeout no es una excepción a eso.
+      //
+      // Se puede afirmar porque el cliente espera más que el backend
+      // (TIMEOUT_OS_EN_LINEA > SANCOR_TIMEOUT): si acá se corta, el backend ya
+      // desistió de Sancor y cerró con 502 sin grabar nada. Antes no era cierto
+      // —el navegador cortaba a los 15 s y el backend seguía hasta 30— y por
+      // eso hacía falta un estado intermedio.
+      //
+      // Igual se refresca la lista: si un backend excepcionalmente lento
+      // alcanzó a grabar, la prestación aparece en "Período actual" y el
+      // prestador la ve antes de reintentar.
+      const porTimeout = esTimeoutDeRed(err);
+      if (porTimeout) await refrescar();
+      setResultado({
+        estado: "rechazada",
+        mensaje: porTimeout
+          ? `${os.nombre} no respondió a tiempo, así que la prestación no se cargó. Reintentá en unos minutos.`
+          : mensajeDeError(err, "No pudimos guardar la prestación. Intentá de nuevo."),
+        mostrarAyuda: !porTimeout,
+      });
       resultadoRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     } finally {
       setEnviando(false);
@@ -454,7 +465,13 @@ export default function ValidacionOS() {
                 Elegí primero el socio arriba: la prestación se carga a su nombre.
               </p>
             ) : (
-              <PrestacionForm os={os} enviando={enviando} onSubmit={handleValidar} />
+              <PrestacionForm
+                key={formKey}
+                os={os}
+                enviando={enviando}
+                onSubmit={handleValidar}
+                nroSocio={nroSocioElegido}
+              />
             )}
           </div>
         </section>
@@ -588,15 +605,13 @@ function ResultadoBanner({
   resultado: ResultadoValidacion;
   onCerrar: () => void;
 }) {
-  const { estado, mensaje, prestacion } = resultado;
+  const { estado, mensaje, prestacion, mostrarAyuda = true } = resultado;
   const Icono =
     estado === "autorizada" || estado === "cargada"
       ? BadgeCheck
       : estado === "pendiente"
         ? Info
-        : estado === "incierto"
-          ? AlertTriangle
-          : CircleAlert;
+        : CircleAlert;
 
   const titulo =
     estado === "autorizada"
@@ -605,9 +620,7 @@ function ResultadoBanner({
         ? "Prestación cargada"
         : estado === "pendiente"
           ? "Requiere gestión del afiliado"
-          : estado === "incierto"
-            ? "No sabemos si se cargó"
-            : "No se pudo cargar la prestación";
+          : "No se pudo cargar la prestación";
 
   return (
     <div className={`${s.resultado} ${s[`resultado_${estado}`]}`} role="status">
@@ -659,7 +672,7 @@ function ResultadoBanner({
         </dl>
       )}
 
-      {!prestacion && estado === "rechazada" && (
+      {!prestacion && estado === "rechazada" && mostrarAyuda && (
         <p className={s.resultadoAyuda}>
           Revisá los datos del afiliado y el código. Si el problema sigue, consultá en
           el Colegio.

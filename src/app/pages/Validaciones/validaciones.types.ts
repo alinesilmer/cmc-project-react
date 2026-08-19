@@ -152,16 +152,19 @@ export interface Periodo {
 
 /** Respuesta del validador de la obra social.
  *
- * `"incierto"` no viene del backend: es el corte por timeout del navegador.
- * La obra social puede haber autorizado igual —el backend espera más que
- * nosotros— así que no es ni un éxito ni un rechazo, y sobre todo **no es algo
- * para reintentar a ciegas**: un segundo intento emitiría una segunda
- * autorización real. Por eso no está en `EstadoPrestacion`, que refleja lo que
- * quedó grabado en `detalle_facturacion`. */
+ * No hay estado "no sé": si la carga no terminó en `autorizada`/`cargada`, para
+ * el prestador la prestación **no se cargó**, timeout incluido. Eso vale porque
+ * el cliente espera más que el backend (ver TIMEOUT_OS_EN_LINEA en
+ * validaciones.api.ts), así que un corte acá implica que el backend ya cerró
+ * sin grabar. */
 export interface ResultadoValidacion {
-  estado: EstadoPrestacion | "incierto";
+  estado: EstadoPrestacion;
   mensaje: string;
   prestacion?: Prestacion;
+  /** "Revisá los datos del afiliado y el código" al pie del rechazo. Sólo sirve
+   * cuando el problema puede estar en lo que se tipeó; ante un timeout o una
+   * caída de la obra social manda a revisar algo que estaba bien. */
+  mostrarAyuda?: boolean;
 }
 
 export interface CodigoNomenclador {
@@ -175,6 +178,11 @@ export interface CodigoNomenclador {
    */
   admitido: boolean;
   motivo?: string | null;
+  /** Código con el que la obra social conoce esta práctica, cuando exige uno
+   * distinto para autorizar (ver `obras/<os>/homologador.py` en la API).
+   * `null` = se manda tal cual. Es informativo: el precio y lo que se factura
+   * son siempre los de `codigo`. */
+  seEnvia?: string | null;
 }
 
 export interface PrestadorInfo {

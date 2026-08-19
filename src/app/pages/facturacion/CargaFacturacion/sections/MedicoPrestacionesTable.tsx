@@ -161,6 +161,12 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
         // mostrar lo que todavía se puede tocar. Las cerradas (ya facturadas) y las
         // anuladas quedan afuera — para verlas está el listado de Períodos/Facturas.
         estado: "A",
+        // El `estado` de arriba es una copia denormalizada de "mi factura está abierta"
+        // y puede mentir: una reimportación masiva dejó 1.572 prestaciones en 'A' sobre
+        // una factura ya cerrada, y esta tabla las mostraba como editables cuando el
+        // operador guardaba con "Mantener médico" y sin obra social (ahí no hay filtro
+        // de OS/período que las tape). Esto obliga al backend a mirar la cabecera real.
+        solo_facturas_abiertas: true,
         limit: LIMIT,
         offset,
       });

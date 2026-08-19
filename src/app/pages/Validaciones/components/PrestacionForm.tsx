@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2, ShieldCheck, Trash2 } from "lucide-react";
 
 import CodigoSelect from "./CodigoSelect";
@@ -14,6 +14,9 @@ interface Props {
   os: ObraSocialConfig;
   enviando: boolean;
   onSubmit: (valores: PrestacionFormValues) => void;
+  /** Médico sobre el que se valida. Sólo lo manda el personal del Colegio;
+   * cambiarlo limpia el código elegido (ver el efecto de abajo). */
+  nroSocio?: number;
 }
 
 const soloDigitos = (v: string) => v.replace(/\D/g, "");
@@ -64,9 +67,19 @@ function validar(os: ObraSocialConfig, valores: PrestacionFormValues) {
   return errores;
 }
 
-export default function PrestacionForm({ os, enviando, onSubmit }: Props) {
+export default function PrestacionForm({ os, enviando, onSubmit, nroSocio }: Props) {
   const [valores, setValores] = useState<PrestacionFormValues>(() => valoresIniciales(os));
   const [errores, setErrores] = useState<PrestacionFormErrors>({});
+
+  // Cambió el médico: el código elegido deja de valer. La habilitación y el
+  // precio dependen de sus especialidades, así que lo que estaba seleccionado
+  // puede no corresponderle —y de dejarlo, se cargaría a su nombre un código
+  // que se eligió mirando el nomenclador de otro—. Los datos del afiliado se
+  // conservan: son del paciente, no del prestador.
+  useEffect(() => {
+    setValores((prev) => (prev.codigo ? { ...prev, codigo: "" } : prev));
+    setErrores((prev) => (prev.codigo ? { ...prev, codigo: undefined } : prev));
+  }, [nroSocio]);
 
   const setCampo = (name: string, valor: string) => {
     setValores((prev) => ({ ...prev, [name]: valor }));
@@ -106,6 +119,7 @@ export default function PrestacionForm({ os, enviando, onSubmit }: Props) {
           invalid={invalido}
           bloqueados={os.codigosBloqueados}
           disabled={enviando}
+          nroSocio={nroSocio}
         />
       );
     } else if (campo.sufijo) {

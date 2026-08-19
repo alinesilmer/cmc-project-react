@@ -29,7 +29,9 @@ const campoCodigo: CampoConfig = {
   tipo: "codigo",
   required: true,
   placeholder: "Buscá por código o descripción",
-  hint: "Solo se listan los códigos habilitados para tus especialidades",
+  // El buscador ya sólo lista lo facturable: el backend descarta los no
+  // habilitados y el front saca además los bloqueados por convenio.
+  hint: "Solo se listan los códigos que podés facturar en esta obra social",
 };
 
 const campoNombreAfiliado: CampoConfig = {
@@ -59,7 +61,13 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
     descripcion:
       "Autorización en línea contra el autorizador de Sancor. Requiere el token de la credencial del afiliado.",
     codigosBloqueados: ["180164", "180150"],
-    nota: "El código 070660 no se autoriza en línea: el paciente debe tramitarlo en oficinas de Sancor.",
+    // La sustitución por especialidad decide si 070660 se resuelve en línea:
+    // con especialidad 16 se envía como 070715 y Sancor lo autoriza; sin ella,
+    // el paciente tiene que ir a las oficinas. El front no conoce las
+    // especialidades del médico, así que el aviso va en condicional — antes
+    // afirmaba que nunca se autoriza, y se lo mostraba también a quien sí
+    // podía validarlo.
+    nota: "Según tu especialidad, el código 070660 puede no autorizarse en línea: en ese caso el paciente debe tramitarlo en oficinas de Sancor.",
     campos: [
       {
         name: "nroAfiliado",

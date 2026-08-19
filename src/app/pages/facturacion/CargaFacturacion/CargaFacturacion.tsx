@@ -38,7 +38,7 @@ import ClinicaAutocomplete from "../components/ClinicaAutocomplete";
 import { usePeriodoActivo } from "./hooks/usePeriodoActivo";
 import { useNomencladorPrecio } from "./hooks/useNomencladorPrecio";
 import { useHotkeys, isMod, isModalOpen } from "./hooks/useHotkeys";
-import { focusField, nextFocusable, type FocusField } from "./focusNav";
+import { focusFirstField, nextFocusable, type FocusField } from "./focusNav";
 
 import MedicoSection from "./sections/MedicoSection";
 import DatosGeneralesSection from "./sections/DatosGeneralesSection";
@@ -257,7 +257,7 @@ const CargaFacturacion: React.FC = () => {
   // Navegación por teclado: `resetForm` deja acá el campo a enfocar y el efecto de
   // abajo lo consume una vez que el formulario volvió a estar habilitado.
   const formRef = useRef<HTMLDivElement>(null);
-  const pendingFocusRef = useRef<FocusField | null>(null);
+  const pendingFocusRef = useRef<FocusField[] | null>(null);
   // Ids de los ayudantes que trae el equipo al editar — para saber, al guardar, cuáles
   // se quitaron (hay que anularlos).
   const ayudantesOriginalesRef = useRef<number[]>([]);
@@ -720,19 +720,25 @@ const CargaFacturacion: React.FC = () => {
     setErrores({});
     setNomencladorResetKey((k) => k + 1);
 
-    // Primer campo que quedó vacío, en orden de carga. Se calcula desde `mantener` y
-    // no leyendo el estado, que en esta closure todavía tiene los valores viejos.
-    pendingFocusRef.current = !mantener.medico && !medicoMantenidoPorClinica
-      ? "medico"
-      : !mantener.medico
-        // El payee quedó (por "Mantener clínica") pero el ejecutor se limpió: es el
-        // primer campo realmente vacío, no "Nº socio" (que ya tiene la clínica).
-        ? "medicoEjecutor"
-        : !mantener.paciente
-          ? "paciente"
-          : !mantener.fecha
-            ? "fecha"
-            : "codigo";
+    // Campos que quedaron vacíos, en el orden en que están en pantalla: el efecto de
+    // abajo enfoca el primero que exista. Se calcula desde `mantener` y no leyendo el
+    // estado, que en esta closure todavía tiene los valores viejos.
+    //
+    // "Clínica" no entra: está debajo del código, así que nunca es el primer vacío
+    // (el código se limpia siempre). El código cierra la lista por el mismo motivo.
+    const pendientes: FocusField[] = [];
+    if (!mantener.medico && !medicoMantenidoPorClinica) {
+      pendientes.push("medico");
+    } else if (!mantener.medico) {
+      // El payee quedó (por "Mantener clínica") pero el ejecutor se limpió: es el
+      // primer campo realmente vacío, no "Nº socio" (que ya tiene la clínica).
+      pendientes.push("medicoEjecutor");
+    }
+    if (!mantener.obraSocial) pendientes.push("obraSocial");
+    if (!mantener.paciente) pendientes.push("paciente");
+    if (!mantener.fecha) pendientes.push("fecha");
+    pendientes.push("codigo");
+    pendingFocusRef.current = pendientes;
   };
 
   const doGuardarEdit = async () => {
@@ -967,7 +973,7 @@ const CargaFacturacion: React.FC = () => {
   // no-op silencioso. Al pasar a false el efecto vuelve a correr y ahí sí enfoca.
   useEffect(() => {
     if (!pendingFocusRef.current || guardando) return;
-    focusField(formRef.current, pendingFocusRef.current);
+    focusFirstField(formRef.current, pendingFocusRef.current);
     pendingFocusRef.current = null;
   }, [nomencladorResetKey, guardando]);
 
