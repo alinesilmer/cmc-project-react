@@ -80,6 +80,7 @@ import { Animation } from "rsuite";
 import ActionModal from "../../components/molecules/ActionModal/ActionModal";
 import { useNotify } from "../../hooks/useNotify";
 import { abrirAdjunto } from "../../lib/archivos";
+import { formatFecha } from "../../lib/fechas";
 import PadronesForm from "../../components/molecules/Padrones/PadronesForm/PadronesForm";
 
 /* ===================== helpers labels ===================== */
@@ -218,8 +219,9 @@ function parseLocalDate(s: string): Date {
 
 const fmt = (v: any) =>
   v === undefined || v === null || v === "" ? "—" : String(v);
-const fmtDate = (s?: string | null) =>
-  s ? new Date(s).toLocaleDateString("es-AR") : "—";
+// Fecha de nacimiento e ingreso son fechas de calendario: con `new Date(s)` el
+// parser las lee como UTC y mostraba el día anterior. Ver src/app/lib/fechas.ts.
+const fmtDate = (s?: string | null) => (s ? formatFecha(s) : "—");
 
 // Standalone pagador select with own query/options state
 const PagadorSelect: React.FC<{

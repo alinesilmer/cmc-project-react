@@ -58,6 +58,28 @@ const VALIDACIONES_MENU: Extract<TopEntry, { kind: "menu" }> = {
     {
       heading: "Carga de prestaciones",
       items: [
+        { path: `${base}/validaciones/omint`, icon: ClipboardList, label: "Omint" },
+        { path: `${base}/validaciones/boreal`, icon: ClipboardList, label: "Boreal Salud" },
+        { path: `${base}/validaciones`, icon: ShieldCheck, label: "Ver todas" },
+        { path: `${base}/validaciones/portales`, icon: ExternalLink, label: "Portales de obras sociales" },
+      ],
+    },
+  ],
+};
+
+// TEMPORAL — atajos para revisar el portal del socio desde una cuenta admin.
+// Sin permisos reales todavía, es la única forma de ver estas pantallas sin un
+// login 'D'. Borrar esta constante, su uso en TOP_NAV y la ruta
+// /panel/preview/inicio-medico (routes.tsx) cuando estén los permisos.
+const VISTA_MEDICO_MENU: Extract<TopEntry, { kind: "menu" }> = {
+  kind: "menu", id: "vista-medico", icon: CircleUserRound, label: "Vista médico",
+  columns: [
+    {
+      items: [
+        { path: `${base}/preview/inicio-medico`, icon: Home, label: "Inicio del médico" },
+        { path: `${base}/nomenclador/consulta-precios`, icon: DollarSign, label: "Consulta de Precios" },
+        { path: `${base}/planillas`, icon: FileText, label: "Planillas" },
+        { path: `${base}/mi-perfil`, icon: CircleUserRound, label: "Mi perfil (solo lectura)" },
         { path: `${base}/validaciones/omint`, icon: ClipboardList, label: "Omint", perms: ["validacion:cargar"] },
         { path: `${base}/validaciones/boreal`, icon: ClipboardList, label: "Boreal Salud", perms: ["validacion:cargar"] },
         { path: `${base}/validaciones`, icon: ShieldCheck, label: "Ver todas", perms: ["validacion:cargar"] },
@@ -155,6 +177,7 @@ const TOP_NAV: TopEntry[] = [
       {
         heading: "Convenios",
         items: [
+          { path: `${base}/convenios/planillas`, icon: FileText, label: "Planillas de Consulta", perms: ["catalogo:editar"] },
           { path: `${base}/convenios/obras-sociales`, icon: ClipboardList, label: "Listado de Obras Sociales", perms: ["catalogo:leer"] },
           { path: `${base}/convenios/obras-sociales/alta`, icon: HousePlus, label: "Alta Obra Social", perms: ["catalogo:editar"] },
           { path: `${base}/historial-valores`, icon: History, label: "Historial de Valores", perms: ["nomenclador:leer"] },
@@ -211,6 +234,7 @@ const DOCTOR_TOP_NAV: TopEntry[] = [
   { kind: "link", path: `${base}/dashboard`, icon: Home, label: "Inicio" },
   VALIDACIONES_MENU,
   { kind: "link", path: `${base}/nomenclador/consulta-precios`, icon: DollarSign, label: "Consulta de Precios" },
+  { kind: "link", path: `${base}/planillas`, icon: FileText, label: "Planillas" },
   { kind: "link", path: `${base}/mi-perfil`, icon: CircleUserRound, label: "Mi perfil" },
 ];
 

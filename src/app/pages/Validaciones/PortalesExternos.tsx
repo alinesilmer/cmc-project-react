@@ -1,70 +1,23 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, ExternalLink, Globe, Info } from "lucide-react";
+import { ArrowLeft, Globe, Info } from "lucide-react";
 
-import { OBRAS_EXTERNAS, destinoExterno } from "./validaciones.config";
-import { iniciales } from "./validaciones.types";
+import { OBRAS_EXTERNAS } from "./validaciones.config";
 import type { ObraSocialConfig } from "./validaciones.types";
+import ObraSocialCard, {
+  obraSocialCardStyles as card,
+} from "./components/ObraSocialCard";
+import GuiaPortalModal from "./components/GuiaPortalModal";
 import s from "./PortalesExternos.module.scss";
 
 /**
- * Obras sociales que no se validan desde el panel. Reemplaza la grilla de
- * logos de `menu.php`: cada tarjeta lleva al sitio del Colegio cuando la obra
- * social tiene página propia, y al portal de la obra social cuando no.
+ * Sólo las obras sociales que se validan fuera del panel. El hub de validaciones
+ * ya las lista junto a las integradas; esta vista queda como acceso directo
+ * desde el menú.
  */
-function PortalCard({ os }: { os: ObraSocialConfig }) {
-  const { href, interno } = destinoExterno(os);
-
-  const cuerpo = (
-    <>
-      <span className={s.logoWrap} style={{ ["--os-color" as string]: os.color }}>
-        {os.logo ? (
-          <img src={os.logo} alt="" className={s.logo} loading="lazy" />
-        ) : (
-          <span className={s.logoFallback} style={{ background: os.color }}>
-            {iniciales(os.nombre)}
-          </span>
-        )}
-      </span>
-
-      <h2 className={s.nombre}>{os.nombre}</h2>
-      <p className={s.descripcion}>{os.descripcion}</p>
-
-      {os.nota && (
-        <p className={s.nota}>
-          <Info size={14} />
-          {os.nota}
-        </p>
-      )}
-
-      <span className={s.accion}>
-        {interno ? (
-          <>
-            <Globe size={15} /> Ver en el sitio del Colegio
-          </>
-        ) : (
-          <>
-            <ExternalLink size={15} /> Ir al portal
-          </>
-        )}
-      </span>
-    </>
-  );
-
-  if (interno)
-    return (
-      <Link to={href} className={s.card}>
-        {cuerpo}
-      </Link>
-    );
-
-  return (
-    <a className={s.card} href={href} target="_blank" rel="noopener noreferrer">
-      {cuerpo}
-    </a>
-  );
-}
-
 export default function PortalesExternos() {
+  const [guia, setGuia] = useState<ObraSocialConfig | null>(null);
+
   return (
     <div className={s.container}>
       <Link to="/panel/validaciones" className={s.back}>
@@ -82,9 +35,9 @@ export default function PortalesExternos() {
         </div>
       </header>
 
-      <div className={s.grid}>
+      <div className={card.grid}>
         {OBRAS_EXTERNAS.map((os) => (
-          <PortalCard key={os.slug} os={os} />
+          <ObraSocialCard key={os.slug} os={os} onAbrirGuia={setGuia} />
         ))}
       </div>
 
@@ -93,6 +46,8 @@ export default function PortalesExternos() {
         ¿Necesitás usuario o clave para alguno de estos portales? Consultá en el
         Colegio Médico de lunes a viernes de 8 a 14 h.
       </p>
+
+      {guia && <GuiaPortalModal os={guia} onClose={() => setGuia(null)} />}
     </div>
   );
 }

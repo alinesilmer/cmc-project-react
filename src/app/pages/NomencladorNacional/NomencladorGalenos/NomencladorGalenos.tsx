@@ -16,6 +16,7 @@ import { listObrasSociales } from "../../ObrasSociales/obrasSociales.api";
 import type { GalenoOut, GalenosImportarResult } from "../nomenclador.types";
 import ConfirmModal from "../../../components/atoms/ConfirmModal/ConfirmModal";
 import GalenoCreateModal from "./GalenoCreateModal";
+import { hoyISO } from "../../../lib/fechas";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -25,9 +26,10 @@ const fmt = new Intl.NumberFormat("es-AR", {
   maximumFractionDigits: 2,
 });
 
-function today() {
-  return new Date().toISOString().slice(0, 10);
-}
+// hoyISO y no toISOString(): este último pasa la hora local a UTC, así que
+// después de las 21:00 en Argentina proponía la vigencia del día siguiente.
+// Ver src/app/lib/fechas.ts.
+const today = hoyISO;
 
 function parseMonto(s: string | null | undefined): number | null {
   if (s == null || s === "") return null;

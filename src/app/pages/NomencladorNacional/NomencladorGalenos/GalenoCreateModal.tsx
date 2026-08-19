@@ -11,12 +11,14 @@ import {
 } from "../nomenclador.api";
 import type { GalenoPlantillaOut } from "../nomenclador.types";
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
+import { hoyISO } from "../../../lib/fechas";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function today() {
-  return new Date().toISOString().slice(0, 10);
-}
+// hoyISO y no toISOString(): este último pasa la hora local a UTC, así que
+// después de las 21:00 en Argentina proponía la vigencia del día siguiente.
+// Ver src/app/lib/fechas.ts.
+const today = hoyISO;
 
 function extractDetail(e: unknown): string {
   const err = e as { response?: { data?: { detail?: string } } };

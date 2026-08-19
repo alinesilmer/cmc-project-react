@@ -11,6 +11,7 @@ import {
   Trash2,
 } from "lucide-react";
 
+import { saveAs } from "@/app/lib/fileSaver";
 import escudoCMC from "../../assets/escudoCMC.png";
 import ActionModal from "../../components/molecules/ActionModal/ActionModal";
 import Button from "../../components/atoms/Button/Button";
@@ -33,8 +34,9 @@ import type {
   BeneficioFormData,
   BeneficioFormErrors,
 } from "./beneficios.types";
-import { abrirRevista } from "./revista";
+import { generarRevistaPdf } from "./revistaPdf";
 import s from "./BeneficiosPage.module.scss";
+import { hoyISO } from "../../lib/fechas";
 
 const PAGE_SIZE = 20;
 
@@ -115,16 +117,24 @@ export default function BeneficiosPage() {
     setPage(1);
   }, [searchTerm, categoriaFilter]);
 
-  // ── Revista imprimible ─────────────────────────────────────────────────────
+  // ── Revista ────────────────────────────────────────────────────────────────
   // Se genera con TODOS los beneficios activos, no con el filtro de pantalla:
   // la revista es material institucional, no un recorte de la búsqueda actual.
-  const handleRevista = () => {
-    // En about:blank las rutas relativas no resuelven; el logo va absoluto.
-    const logo = new URL(escudoCMC, window.location.origin).href;
-    if (!abrirRevista(items, logo)) {
-      setLoadError(
-        "El navegador bloqueó la ventana emergente. Permitila para generar la revista."
-      );
+  const [generandoRevista, setGenerandoRevista] = useState(false);
+
+  const handleRevista = async () => {
+    setGenerandoRevista(true);
+    setLoadError(null);
+    try {
+      const logo = new URL(escudoCMC, window.location.origin).href;
+      const blob = await generarRevistaPdf(items, logo);
+      const fecha = hoyISO();
+      saveAs(blob, `red-de-beneficios-${fecha}.pdf`);
+    } catch (e) {
+      console.error(e);
+      setLoadError("No se pudo generar la revista. Intentá de nuevo.");
+    } finally {
+      setGenerandoRevista(false);
     }
   };
 
@@ -224,15 +234,15 @@ export default function BeneficiosPage() {
             variant="ghost"
             size="sm"
             onClick={handleRevista}
-            disabled={activos === 0}
+            disabled={activos === 0 || generandoRevista}
             title={
               activos === 0
                 ? "No hay beneficios activos para publicar"
-                : `Generar la revista con ${activos} beneficio${activos === 1 ? "" : "s"}`
+                : `Descargar la revista en PDF con ${activos} beneficio${activos === 1 ? "" : "s"}`
             }
           >
             <BookOpen size={16} />
-            Generar revista
+            {generandoRevista ? "Generando…" : "Descargar revista"}
           </Button>
           <Button variant="secondary" size="sm" onClick={openCreate}>
             <Plus size={16} />

@@ -11,11 +11,13 @@ import {
   Info,
   ChevronDown,
   ChevronRight,
+  ArrowRight,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 
 import styles from "./ActualizarPreciosGalenos.module.scss";
+import { hoyISO } from "../../../lib/fechas";
 import {
   listGalenos,
   actualizarPrecioGaleno,
@@ -33,9 +35,9 @@ const fmt = new Intl.NumberFormat("es-AR", {
   maximumFractionDigits: 2,
 });
 
-function today() {
-  return new Date().toISOString().slice(0, 10);
-}
+// hoyISO y no toISOString(): este ultimo pasa a UTC, asi que despues de las
+// 21:00 en Argentina proponia la vigencia del dia siguiente. Ver lib/fechas.ts.
+const today = hoyISO;
 
 /** Un galeno agrupado por código: los nivelados agrupan todos sus niveles. */
 type Grupo = {
@@ -52,6 +54,34 @@ function grupoValorActual(g: Grupo): string {
   const max = Math.max(...nums);
   if (min === max) return fmt.format(min);
   return `${fmt.format(min)} – ${fmt.format(max)}`;
+}
+
+/**
+ * Honorario de un nivel: unidades de honorarios × valor unitario del galeno.
+ *
+ * Es la misma cuenta que hace el backend al armar el componente "Honorarios" de
+ * un valor (`subtotal = cantidad × valor_unitario`, ver
+ * `nm_valores_componentes` y `services/nomenclador/service.py`). Se replica acá
+ * para que al tipear un valor unitario nuevo se vea en pesos qué le pasa a cada
+ * nivel, que es la cifra por la que se pregunta — el unitario solo no dice nada.
+ *
+ * `null` cuando el nivel no tiene unidades de honorarios cargadas: ahí no hay
+ * cuenta que hacer, y mostrar $0 sería afirmar algo falso.
+ */
+function honorarioDe(unidades: string | null, valorUnitario: number): number | null {
+  if (unidades == null) return null;
+  const u = parseFloat(unidades);
+  if (isNaN(u) || isNaN(valorUnitario)) return null;
+  return u * valorUnitario;
+}
+
+/** Unidades sin ceros de relleno: `3.00` → `3`, `0.25` → `0,25`. */
+const unidadesFmt = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 4 });
+
+function formatUnidades(unidades: string | null): string | null {
+  if (unidades == null) return null;
+  const u = parseFloat(unidades);
+  return isNaN(u) ? null : unidadesFmt.format(u);
 }
 
 type SaveResult = { codigo: string; nombre: string; ok: boolean; msg?: string };
@@ -608,21 +638,63 @@ function PriceSection({
                     </td>
                   </tr>
 
-                  {/* Detalle de niveles (solo lectura) — confirma que las unidades se conservan */}
+                  {/* Detalle de niveles (solo lectura). La fila se lee como una
+                      cuenta de izquierda a derecha: unidades × unitario = honorario.
+                      Con un valor nuevo tipeado, la última celda muestra a cuánto
+                      pasa el honorario de ese nivel. */}
                   {grupo.nivelado &&
                     isOpen &&
-                    grupo.niveles.map((n) => (
-                      <tr key={n.id} className={styles.nivelRow}>
-                        <td className={styles.nivelCell}>Nivel {n.nivel}</td>
-                        <td className={styles.nivelUnits} colSpan={2}>
-                          Honorarios: {n.unidades_honorarios ?? "—"} · Ayudante:{" "}
-                          {n.unidades_ayudante ?? "—"}
-                        </td>
-                        <td className={styles.nivelValor}>
-                          {fmt.format(parseFloat(n.valor_unitario))}
-                        </td>
-                      </tr>
-                    ))}
+                    grupo.niveles.map((n) => {
+                      const unidadActual = parseFloat(n.valor_unitario);
+                      const unidadNueva = isDirty ? parseFloat(val) : null;
+                      const uHon = formatUnidades(n.unidades_honorarios);
+                      const uAyu = formatUnidades(n.unidades_ayudante);
+                      const honActual = honorarioDe(n.unidades_honorarios, unidadActual);
+                      const honNuevo =
+                        unidadNueva != null
+                          ? honorarioDe(n.unidades_honorarios, unidadNueva)
+                          : null;
+                      return (
+                        <tr key={n.id} className={styles.nivelRow}>
+                          <td className={styles.nivelCell}>Nivel {n.nivel}</td>
+                          <td className={styles.nivelUnits}>
+                            {uHon ?? "—"} un. hon.
+                            {uAyu != null && (
+                              <span className={styles.nivelAyudante}>
+                                {" "}· {uAyu} ay.
+                              </span>
+                            )}
+                          </td>
+                          <td className={styles.nivelValor}>
+                            {fmt.format(unidadActual)}
+                          </td>
+                          <td className={styles.nivelHonorario}>
+                            {honActual == null ? (
+                              <span className={styles.nivelSinHonorario}>
+                                sin unidades de honorarios
+                              </span>
+                            ) : honNuevo == null ? (
+                              <span title={`${uHon} × ${fmt.format(unidadActual)}`}>
+                                = {fmt.format(honActual)}
+                              </span>
+                            ) : (
+                              <span
+                                className={styles.nivelHonorarioCambio}
+                                title={`${uHon} × ${fmt.format(unidadNueva as number)}`}
+                              >
+                                <span className={styles.nivelHonorarioPrevio}>
+                                  {fmt.format(honActual)}
+                                </span>
+                                <ArrowRight size={11} />
+                                <strong className={styles.nivelHonorarioNuevo}>
+                                  {fmt.format(honNuevo)}
+                                </strong>
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                 </Fragment>
               );
             })}

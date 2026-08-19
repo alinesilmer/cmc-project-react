@@ -252,6 +252,7 @@ export default function ConsultaValores() {
                 <ResultRegister
                   result={result}
                   showVigencia
+                  showDesglose
                   eligibility={
                     espId && selectedEspItem
                       ? { nombre: selectedEspItem.nombre, valida: especialidadValida }

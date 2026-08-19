@@ -37,8 +37,8 @@
 .header {
   position: relative;
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: center;
   gap: $spacing-5;
   flex-wrap: wrap;
   padding: $spacing-5 $spacing-6;
@@ -55,7 +55,7 @@
 
 .headerMain {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: $spacing-4;
   min-width: 0;
 }

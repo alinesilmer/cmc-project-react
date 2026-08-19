@@ -14,6 +14,7 @@ import logoIssunne from "../../assets/obras-sociales/issunne.png";
 import logoMedife from "../../assets/obras-sociales/medife.jpg";
 import logoNobis from "../../assets/obras-sociales/nobis.png";
 import logoOmint from "../../assets/obras-sociales/omint.png";
+import logoOsdepym from "../../assets/obras-sociales/osdepym.png";
 import logoOspjn from "../../assets/obras-sociales/ospjn.jpg";
 import logoOspm from "../../assets/obras-sociales/ospm.jpg";
 import logoPrevencion from "../../assets/obras-sociales/prevencion.jpg";
@@ -302,6 +303,18 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
     url: "https://menu.traditum.com/View/Main.aspx",
   },
   {
+    slug: "osdepym",
+    nombre: "OSDEPYM",
+    codigo: 423,
+    modo: "externa",
+    estado: "operativa",
+    color: "#16603a",
+    logo: logoOsdepym,
+    descripcion:
+      "Portal de prestadores de OSDEPYM, con tu usuario propio.",
+    url: "https://portal-prestadores.osdepym.com.ar/",
+  },
+  {
     slug: "prevencion-salud",
     nombre: "Prevención Salud",
     codigo: null,
@@ -326,6 +339,21 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
       "Las prestaciones y órdenes se cargan en el portal de prestadores de Swiss Medical, con tu usuario propio.",
     url: "https://www.swissmedical.com.ar/prestadores/",
     nota: "¿Todavía no tenés usuario? El Colegio te da tu N° de Prestador y la guía de registro paso a paso.",
+    guia: {
+      chip: "Guía de registro",
+      titulo: "Swiss Medical — Guía de registro",
+      aviso:
+        "¿Ya estás registrado? No necesitás volver a registrarte: ingresá con tu usuario para cargar tus prestaciones u órdenes.",
+      intro:
+        "Guía paso a paso para registrarte en el portal de Swiss Medical y cargar tus prestaciones u órdenes.",
+      pasos: [
+        "Abrí la guía en PDF con el botón de abajo.",
+        "Seguí los pasos para crear tu usuario en el portal de prestadores de Swiss Medical.",
+        "Una vez registrado, ingresá para cargar tus prestaciones u órdenes.",
+      ],
+      enlace: { href: "/swiss_registro.pdf", texto: "Ver la guía en PDF" },
+      pie: "Tu N° de Prestador te lo da el Colegio Médico: pedilo por mesa de ayuda si no lo tenés.",
+    },
   },
   {
     slug: "upcn",
@@ -339,6 +367,25 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
       "Centro de atención de Unión Personal. Consultá en el Colegio el usuario y la clave compartida.",
     url: "https://centro.unionpersonal.com.ar/appHMS/ca_web_prod/login.php",
     nota: "Cargá sólo el número de afiliado, la versión de credencial y el plan; después el código de consulta 420101.",
+    guia: {
+      chip: "Usuario y clave",
+      titulo: "Unión Personal — Usuario y clave",
+      credenciales: [
+        { label: "Usuario", valor: "42036" },
+        { label: "Clave", valor: "4040" },
+      ],
+      intro:
+        "Ingresá al portal de Unión Personal con estos datos y seguí estos pasos para autorizar una prestación.",
+      pasos: [
+        "Entrá a Menú → Autorizaciones → Prestaciones.",
+        "Completá solamente el N° de afiliado SIN EL ÚLTIMO NÚMERO, la versión de la credencial y el plan. Después el código de consulta 420101 y presioná Autorizar.",
+        "Completá todos los datos en un recetario con membrete y en el campo N° de autorización de referencia.",
+      ],
+      enlace: {
+        href: "https://centro.unionpersonal.com.ar/appHMS/ca_web_prod/login.php",
+        texto: "Ir a Unión Personal",
+      },
+    },
   },
 ];
 
@@ -351,9 +398,17 @@ export const OBRAS_INTEGRADAS = OBRAS_SOCIALES.filter((os) => os.modo === "integ
 /** Se validan fuera del panel (portal de la obra social o página del Colegio). */
 export const OBRAS_EXTERNAS = OBRAS_SOCIALES.filter((os) => os.modo === "externa");
 
-/** Destino recomendado para una obra social externa. */
-export const destinoExterno = (os: ObraSocialConfig) => ({
-  href: os.sitioCmc ?? os.url ?? "#",
-  /** `true` cuando el destino es una página del propio sitio del Colegio. */
-  interno: Boolean(os.sitioCmc),
-});
+/**
+ * Destino de la tarjeta de una obra social.
+ * `panel`  → se valida y carga desde acá.
+ * `cmc`    → tiene página propia en el sitio del Colegio.
+ * `portal` → se valida en el sitio de la obra social (enlace externo).
+ */
+export const destinoObraSocial = (
+  os: ObraSocialConfig
+): { href: string; tipo: "panel" | "cmc" | "portal" } => {
+  if (os.modo === "integrada")
+    return { href: `/panel/validaciones/${os.slug}`, tipo: "panel" };
+  if (os.sitioCmc) return { href: os.sitioCmc, tipo: "cmc" };
+  return { href: os.url ?? "#", tipo: "portal" };
+};

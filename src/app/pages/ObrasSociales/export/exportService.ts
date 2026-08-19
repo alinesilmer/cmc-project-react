@@ -1,6 +1,7 @@
 import type ExcelJS from "exceljs";
 import logoUrl from "@/app/assets/logoCMC.png";
 import type { ObraSocialListItem } from "../obrasSociales.types";
+import { hoyISO } from "../../../lib/fechas";
 import {
   formatFecha,
   formatPlazo,
@@ -246,7 +247,7 @@ export async function exportToExcel(
   });
 
   const buffer = await wb.xlsx.writeBuffer();
-  const date   = new Date().toISOString().slice(0, 10);
+  const date   = hoyISO();
   saveAs(new Blob([buffer]), `${filename}_${date}.xlsx`);
 }
 
@@ -392,6 +393,6 @@ export async function exportToPDF(
     },
   });
 
-  const exportDate = new Date().toISOString().slice(0, 10);
+  const exportDate = hoyISO();
   doc.save(`${filename}_${exportDate}.pdf`);
 }

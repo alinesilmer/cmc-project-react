@@ -390,3 +390,22 @@ export type NomencladorEspecialidadResumenParams = {
   page?: number;
   size?: number;
 };
+
+/**
+ * Documento respaldatorio de una vigencia de valores de una obra social: la
+ * nota, el Excel o el CSV con el que llegaron los precios de esa actualización.
+ * Fila de `nm_valores_documentos`, agrupada por (obra social, vigencia_desde).
+ */
+export type ValorDocumentoOut = {
+  id: number;
+  obra_social_nro: number;
+  /** La misma fecha que agrupa los valores de la actualización (`YYYY-MM-DD`). */
+  vigencia_desde: string;
+  nombre_original: string;
+  content_type: string;
+  size: number;
+  descripcion: string | null;
+  /** Ruta `/api/archivos/…`: pide token, se abre con `abrirAdjunto()`. */
+  url: string;
+  created_at: string;
+};

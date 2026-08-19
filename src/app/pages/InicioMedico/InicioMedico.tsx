@@ -11,6 +11,7 @@ import {
   ClipboardList,
   DollarSign,
   ExternalLink,
+  FileText,
   Globe,
   LifeBuoy,
   MapPin,
@@ -96,6 +97,14 @@ const ACCESOS: QuickAction[] = [
       "Accesos directos a los portales donde se carga o valida cada prestación.",
     link: "/panel/validaciones/portales",
     accent: "amber",
+  },
+  {
+    icon: FileText,
+    title: "Planillas de consulta",
+    description:
+      "Las planillas que publica el Colegio para presentar con tu facturación.",
+    link: "/panel/planillas",
+    accent: "blue",
   },
   {
     icon: CircleUserRound,
@@ -301,7 +310,7 @@ const InicioMedico: React.FC = () => {
         <section className={styles.section}>
           <div className={styles.sectionHead}>
             <div>
-              <h2 className={styles.sectionTitle}>Obras sociales con convenio</h2>
+              <h2 className={styles.sectionTitle}>Obras sociales con validación web</h2>
               <p className={styles.sectionSub}>
                 Consultá valores y validá afiliados de todas ellas desde el panel.
               </p>
