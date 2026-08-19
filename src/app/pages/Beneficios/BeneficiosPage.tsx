@@ -36,6 +36,7 @@ import type {
 } from "./beneficios.types";
 import { generarRevistaPdf } from "./revistaPdf";
 import s from "./BeneficiosPage.module.scss";
+import { hoyISO } from "../../lib/fechas";
 
 const PAGE_SIZE = 20;
 
@@ -127,7 +128,7 @@ export default function BeneficiosPage() {
     try {
       const logo = new URL(escudoCMC, window.location.origin).href;
       const blob = await generarRevistaPdf(items, logo);
-      const fecha = new Date().toISOString().slice(0, 10);
+      const fecha = hoyISO();
       saveAs(blob, `red-de-beneficios-${fecha}.pdf`);
     } catch (e) {
       console.error(e);

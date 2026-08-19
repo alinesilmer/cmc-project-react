@@ -10,6 +10,7 @@ import IoscorAffilliateTable, {
   type PracticeRow,
 } from "../../components/molecules/IoscorAffilliateTable/IoscorAffilliateTable";
 import styles from "./PadronIoscor.module.scss";
+import { hoyISO } from "../../lib/fechas";
 
 /* Local padrón mock */
 const FAKE_PADRON: Record<string, true> = {
@@ -27,7 +28,7 @@ const seed: PracticeRow[] = [
     obraSocName: "IOSCOR",
     codigo: "420101",
     cantidad: 1,
-    fecha: new Date().toISOString().slice(0, 10),
+    fecha: hoyISO(),
     orderMode: "Auto",
     percHonorario: 100,
     percGasto: 0,
@@ -41,7 +42,7 @@ const seed: PracticeRow[] = [
     obraSocName: "OSDE",
     codigo: "331001",
     cantidad: 1,
-    fecha: new Date().toISOString().slice(0, 10),
+    fecha: hoyISO(),
     orderMode: "Manual",
     orderNumber: "000123",
     percHonorario: 100,

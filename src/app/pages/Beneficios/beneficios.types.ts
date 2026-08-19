@@ -1,4 +1,5 @@
 // ─── Entity ───────────────────────────────────────────────────────────────────
+import { hoyISO } from "../../lib/fechas";
 
 export interface Beneficio {
   id: number;
@@ -167,5 +168,5 @@ export function formatFecha(iso: string | null): string {
  *  que el panel lo marca para que el admin lo desactive. */
 export function estaVencido(item: Beneficio): boolean {
   if (!item.vigencia_hasta) return false;
-  return item.vigencia_hasta < new Date().toISOString().slice(0, 10);
+  return item.vigencia_hasta < hoyISO();
 }

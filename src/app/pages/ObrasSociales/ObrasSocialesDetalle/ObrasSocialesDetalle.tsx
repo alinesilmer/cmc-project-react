@@ -10,16 +10,16 @@ import type { ObraSocial, Documento } from "../obrasSociales.types";
 import { CONDICION_IVA_LABELS, TIPO_DOCUMENTO_LABELS, displayCuit } from "../obrasSociales.types";
 import HistorialValores from "./HistorialValores";
 import { abrirAdjunto } from "../../../lib/archivos";
+import { formatFechaLarga } from "../../../lib/fechas";
 import { useNotify } from "../../../hooks/useNotify";
 import s from "./ObrasSocialesDetalle.module.scss";
 
 type ActiveTab = "datos" | "documentos" | "historial";
 
-function formatFecha(iso?: string | null): string {
-  if (!iso) return "—";
-  try { return new Date(iso).toLocaleDateString("es-AR", { dateStyle: "long" }); }
-  catch { return iso; }
-}
+// `formatFechaLarga` y no `new Date(iso).toLocaleDateString()`: la fecha de alta
+// de convenio es una fecha de calendario y el parser nativo la lee como UTC,
+// mostrando el día anterior. Ver src/app/lib/fechas.ts.
+const formatFecha = formatFechaLarga;
 
 function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value?: string | null }) {
   return (

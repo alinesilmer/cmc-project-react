@@ -2,6 +2,7 @@
 
 import { ThumbsUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { formatFecha } from "../../../lib/fechas";
 import styles from "./IoscorAffilliateTable.module.scss";
 
 export type PracticeRow = {
@@ -67,13 +68,9 @@ function Row({
       </td>
       <td className={styles.tdCodigo}>{r.codigo}</td>
       <td className={styles.tdCant}>{r.cantidad}</td>
-      <td className={styles.tdFecha}>
-        {new Date(r.fecha).toLocaleDateString("es-AR", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        })}
-      </td>
+      {/* formatFecha y no `new Date(r.fecha)`: la fecha de la prestación es de
+          calendario y el parser nativo la corría un día. Ver lib/fechas.ts. */}
+      <td className={styles.tdFecha}>{formatFecha(r.fecha)}</td>
       <td className={styles.tdPct}>
         {r.percHonorario != null ? (
           <span className={styles.pctBadge}>{r.percHonorario.toFixed(0)}%</span>

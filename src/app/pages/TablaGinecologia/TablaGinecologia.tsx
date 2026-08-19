@@ -5,6 +5,7 @@ import { getJSON } from "../../lib/http";
 import { SECCIONES, resolveUnidades, FASGO_BASE_2026 } from "./data/fasgo2026";
 import { OS_BASE_VALUES, OS_EXCLUSIONS } from "./data/osBaseValues";
 import styles from "./TablaGinecologia.module.scss";
+import { hoyISO } from "../../lib/fechas";
 
 // ─── Obra Social ───────────────────────────────────────────────────────────────
 
@@ -170,7 +171,7 @@ export default function TablaGinecologia() {
       ws["!cols"] = [{ wch: 12 }, { wch: 40 }, { wch: 8 }, { wch: 10 }, { wch: 16 }, { wch: 24 }];
       utils.book_append_sheet(wb, ws, sec.nombre.slice(0, 31));
     }
-    const date   = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+    const date   = hoyISO().replace(/-/g, "");
     const buffer = write(wb, { bookType: "xlsx", type: "array" }) as ArrayBuffer;
     saveAs(new Blob([buffer], { type: "application/octet-stream" }), `NomencladoGinecologia-${date}.xlsx`);
   }, [fasgoVal, providerVal, osLabel]);

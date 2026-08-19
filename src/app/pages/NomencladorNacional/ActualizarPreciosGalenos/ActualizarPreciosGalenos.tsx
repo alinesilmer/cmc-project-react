@@ -17,6 +17,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 
 import styles from "./ActualizarPreciosGalenos.module.scss";
+import { hoyISO } from "../../../lib/fechas";
 import {
   listGalenos,
   actualizarPrecioGaleno,
@@ -34,9 +35,9 @@ const fmt = new Intl.NumberFormat("es-AR", {
   maximumFractionDigits: 2,
 });
 
-function today() {
-  return new Date().toISOString().slice(0, 10);
-}
+// hoyISO y no toISOString(): este ultimo pasa a UTC, asi que despues de las
+// 21:00 en Argentina proponia la vigencia del dia siguiente. Ver lib/fechas.ts.
+const today = hoyISO;
 
 /** Un galeno agrupado por código: los nivelados agrupan todos sus niveles. */
 type Grupo = {

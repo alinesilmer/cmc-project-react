@@ -12,6 +12,9 @@ import IconButton from "../../../components/atoms/IconButton/IconButton";
 import { listObrasSociales, deleteObraSocial } from "../obrasSociales.api";
 import type { ObraSocialListItem } from "../obrasSociales.types";
 import ExportPanel from "../export/ExportPanel";
+// `new Date("2025-05-30")` se parsea como UTC y mostraba el día anterior en
+// Argentina. Ver src/app/lib/fechas.ts.
+import { formatFecha } from "../../../lib/fechas";
 import s from "./ObrasSocialesListado.module.scss";
 import Button from "../../../components/atoms/Button/Button";
 import SearchField from "../../../components/molecules/SearchField/SearchField";
@@ -53,15 +56,6 @@ const headCellSx = {
   whiteSpace: "nowrap",
   borderBottom: "none",
 } as const;
-
-function formatFecha(iso: string): string {
-  if (!iso) return "—";
-  try {
-    return new Date(iso).toLocaleDateString("es-AR", { dateStyle: "short" });
-  } catch {
-    return iso;
-  }
-}
 
 export default function ObrasSocialesListado() {
   const navigate = useNavigate();

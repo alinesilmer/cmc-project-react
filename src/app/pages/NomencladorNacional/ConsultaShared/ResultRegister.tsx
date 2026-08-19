@@ -2,7 +2,10 @@ import { memo } from "react";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 
 import styles from "./consulta.module.scss";
-import type { TablaValorItem } from "../nomenclador.types";
+import { ORIGEN_LABELS, type TablaValorItem } from "../nomenclador.types";
+
+// Unidades sin ceros de relleno: `17.5000` → `17,5`.
+const unidades = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 4 });
 
 const money = new Intl.NumberFormat("es-AR", {
   style: "currency",
@@ -19,11 +22,39 @@ function findComp(componentes: TablaValorItem["componentes"], concepto: string) 
   );
 }
 
-function LedgerRow({ label, subtotal }: { label: string; subtotal: string }) {
-  const value = parseFloat(subtotal);
+/**
+ * Una fila del ledger. Con `comp` muestra además de dónde sale el número:
+ * `cantidad × valor unitario del galeno`, que es exactamente la cuenta que hace
+ * el backend (`subtotal = cantidad × valor_unitario`). Sin eso, el importe es
+ * un dato que hay que creer; con eso, se puede verificar.
+ */
+function LedgerRow({
+  label,
+  comp,
+  showDesglose,
+}: {
+  label: string;
+  comp: TablaValorItem["componentes"][number];
+  showDesglose: boolean;
+}) {
+  const value = parseFloat(comp.subtotal);
+  const cantidad = parseFloat(comp.cantidad);
+  const unitario = parseFloat(comp.valor_unitario);
+  // Con cantidad 0 (el caso típico de Ayudante) no hay cuenta que mostrar: el
+  // "0 × algo" es ruido, el importe en cero ya lo dice.
+  const hayCuenta = showDesglose && cantidad > 0 && !isNaN(unitario);
+
   return (
     <div className={styles.ledRow}>
-      <span className={styles.ledLabel}>{label}</span>
+      <span className={styles.ledLabel}>
+        {label}
+        {hayCuenta && (
+          <span className={styles.ledCuenta}>
+            {unidades.format(cantidad)} × {money.format(unitario)}
+            {comp.galeno_nivel != null && ` · nivel ${comp.galeno_nivel}`}
+          </span>
+        )}
+      </span>
       <span className={styles.ledDots} aria-hidden="true" />
       <span className={`${styles.ledVal} ${value === 0 ? styles.ledValZero : ""}`}>
         {money.format(value)}
@@ -44,9 +75,21 @@ type ResultRegisterProps = {
   showVigencia?: boolean;
   /** When set, shows a specialty eligibility chip. `valida === null` = still checking. */
   eligibility?: { nombre: string; valida: boolean | null } | null;
+  /**
+   * Muestra de dónde sale cada importe: el nomenclador que ganó y la cuenta
+   * `cantidad × unitario` de cada concepto. Va en consulta-valores, que es la
+   * pantalla de auditoría del convenio; consulta-precios es la consulta rápida
+   * del médico y ahí el desglose sería ruido.
+   */
+  showDesglose?: boolean;
 };
 
-function ResultRegister({ result, showVigencia = true, eligibility = null }: ResultRegisterProps) {
+function ResultRegister({
+  result,
+  showVigencia = true,
+  eligibility = null,
+  showDesglose = false,
+}: ResultRegisterProps) {
   const honorarios = findComp(result.componentes, "Honorarios");
   const gastos = findComp(result.componentes, "Gastos");
   const ayudante = findComp(result.componentes, "Ayudante");
@@ -111,10 +154,22 @@ function ResultRegister({ result, showVigencia = true, eligibility = null }: Res
            parecer de otra naturaleza que Gastos y Ayudante, cuando los tres son
            componentes del mismo valor. */
         <div className={styles.ledger}>
-          <div className={styles.ledgerCap}>Conceptos</div>
-          {honorarios && <LedgerRow label="Honorarios" subtotal={honorarios.subtotal} />}
-          {gastos && <LedgerRow label="Gastos" subtotal={gastos.subtotal} />}
-          {ayudante && <LedgerRow label="Ayudante" subtotal={ayudante.subtotal} />}
+          <div className={styles.ledgerCap}>
+            Conceptos
+            {showDesglose && (
+              <span className={styles.ledgerOrigen}>
+                {ORIGEN_LABELS[result.origen]}
+                {result.nivel != null && ` · nivel ${result.nivel}`}
+              </span>
+            )}
+          </div>
+          {honorarios && (
+            <LedgerRow label="Honorarios" comp={honorarios} showDesglose={showDesglose} />
+          )}
+          {gastos && <LedgerRow label="Gastos" comp={gastos} showDesglose={showDesglose} />}
+          {ayudante && (
+            <LedgerRow label="Ayudante" comp={ayudante} showDesglose={showDesglose} />
+          )}
         </div>
       )}
     </article>
