@@ -17,6 +17,7 @@ import type { GalenoOut, GalenosImportarResult } from "../nomenclador.types";
 import ConfirmModal from "../../../components/atoms/ConfirmModal/ConfirmModal";
 import GalenoCreateModal from "./GalenoCreateModal";
 import { hoyISO } from "../../../lib/fechas";
+import { compararGalenos } from "../nomenclador.helpers";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -175,12 +176,25 @@ export default function NomencladorGalenos() {
       seen.add(g.codigo);
       return true;
     });
-    if (!catSearch.trim()) return unique;
-    const q = catSearch.toLowerCase();
-    return unique.filter(
-      (g) => g.codigo.toLowerCase().includes(q) || g.nombre.toLowerCase().includes(q),
-    );
+    const q = catSearch.trim().toLowerCase();
+    const visibles = q
+      ? unique.filter(
+          (g) => g.codigo.toLowerCase().includes(q) || g.nombre.toLowerCase().includes(q),
+        )
+      : unique;
+    // El orden del boletín, no el que devuelva la API. Ver `compararGalenos`.
+    return [...visibles].sort(compararGalenos);
   }, [galenos, catSearch]);
+
+  // Los galenos de la obra social elegida, en el orden del boletín. Dentro de
+  // un mismo código los nivelados van por nivel, que es como se leen.
+  const osGalenosOrdenados = useMemo(
+    () =>
+      [...osGalenos].sort(
+        (a, b) => compararGalenos(a, b) || (a.nivel ?? 0) - (b.nivel ?? 0),
+      ),
+    [osGalenos],
+  );
 
   const filteredOS = useMemo(() => {
     if (!osSearch.trim()) return osList.slice(0, 100);
@@ -611,7 +625,7 @@ export default function NomencladorGalenos() {
                         </tr>
                       </thead>
                       <tbody>
-                        {osGalenos.map((g) => (
+                        {osGalenosOrdenados.map((g) => (
                           <tr key={g.id}>
                             <td><span className={styles.codeCell}>{g.codigo}</span></td>
                             <td>{g.nombre}</td>

@@ -1,0 +1,302 @@
+@use "@/app/styles/all.scss" as *;
+
+.container {
+  padding: $spacing-8;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-5;
+  min-height: 100%;
+
+  @media (max-width: $breakpoint-md) { padding: $spacing-5; gap: $spacing-4; }
+  @media (max-width: $breakpoint-sm) { padding: $spacing-4; }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+
+  // El botón de guardar se va al extremo y en mobile baja a su propia línea.
+  > button { margin-left: auto; }
+
+  @media (max-width: $breakpoint-sm) {
+    flex-wrap: wrap;
+    > button { margin-left: 0; width: 100%; justify-content: center; }
+  }
+}
+
+.headerIcon { color: $primary-blue; flex-shrink: 0; }
+
+.title {
+  margin: 0;
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  line-height: 1.2;
+
+  @media (max-width: $breakpoint-sm) { font-size: $font-size-2xl; }
+}
+
+.subtitle {
+  margin: $spacing-1 0 0;
+  font-size: $font-size-sm;
+  color: $gray-500;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-10;
+  color: $gray-500;
+  font-size: $font-size-sm;
+}
+
+.spin { animation: spin 0.9s linear infinite; }
+
+// ── Tarjetas ────────────────────────────────────────────────────────────────
+
+.card {
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-lg;
+  padding: $spacing-5;
+  box-shadow: $shadow-sm;
+
+  @media (max-width: $breakpoint-sm) { padding: $spacing-4; }
+}
+
+.cardTitle {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin: 0 0 $spacing-4;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $gray-800;
+
+  svg { color: $primary-blue; flex-shrink: 0; }
+  // El "Agregar" de las secciones con lista.
+  > button { margin-left: auto; }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: $spacing-4;
+}
+
+.field { display: flex; flex-direction: column; gap: $spacing-1; }
+.fieldFull { grid-column: 1 / -1; }
+
+.label {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: $gray-500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.hint {
+  font-size: $font-size-xs;
+  color: $gray-400;
+  font-variant-numeric: tabular-nums;
+}
+
+.input {
+  width: 100%;
+  height: 36px;
+  padding: 0 $spacing-3;
+  font-size: $font-size-base;
+  color: $gray-900;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-md;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &:focus {
+    border-color: $primary-blue;
+    box-shadow: 0 0 0 3px rgba($primary-blue, 0.12);
+  }
+
+  &:disabled { background: $gray-50; color: $gray-600; cursor: not-allowed; }
+  &::placeholder { color: $gray-400; }
+}
+
+.textarea {
+  @extend .input;
+  height: auto;
+  padding: $spacing-3;
+  resize: vertical;
+  line-height: 1.5;
+  font-family: inherit;
+}
+
+.aviso {
+  margin: 0 0 $spacing-4;
+  padding: $spacing-3;
+  font-size: $font-size-sm;
+  color: $primary-yellow-dark;
+  background: $primary-yellow-light;
+  border-radius: $border-radius-md;
+}
+
+// ── Listas (teléfonos y casillas) ───────────────────────────────────────────
+
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: $spacing-2; }
+
+.row,
+.rowMail {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-3;
+  background: $gray-50;
+  border-radius: $border-radius-md;
+
+  @media (max-width: $breakpoint-sm) { flex-wrap: wrap; }
+}
+
+.rowTag {
+  flex-shrink: 0;
+  min-width: 110px;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: $gray-500;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.rowMain {
+  flex: 1;
+  font-size: $font-size-base;
+  color: $gray-900;
+  font-variant-numeric: tabular-nums;
+}
+
+.rowActions { display: flex; gap: $spacing-1; margin-left: auto; flex-shrink: 0; }
+
+.rowEdit,
+.rowEditMail {
+  display: grid;
+  gap: $spacing-2;
+  padding: $spacing-3;
+  background: $secondary-blue;
+  border-radius: $border-radius-md;
+  align-items: center;
+}
+
+.rowEdit { grid-template-columns: 1fr 1fr auto; }
+.rowEditMail { grid-template-columns: 1fr 1.4fr 1fr 1fr auto; }
+
+@media (max-width: $breakpoint-lg) {
+  .rowEditMail { grid-template-columns: 1fr 1fr; }
+  .rowEditMail > div { grid-column: 1 / -1; justify-content: flex-end; }
+}
+
+@media (max-width: $breakpoint-sm) {
+  .rowEdit,
+  .rowEditMail { grid-template-columns: 1fr; }
+  .rowEdit > div { justify-content: flex-end; }
+}
+
+.mailMain {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.mailAddr {
+  font-size: $font-size-base;
+  color: $gray-900;
+  word-break: break-all;
+}
+
+.mailServers { font-size: $font-size-xs; color: $gray-400; }
+
+.mailPass {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  flex-shrink: 0;
+}
+
+.clave {
+  padding: 3px $spacing-2;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: $font-size-sm;
+  color: $gray-800;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-sm;
+  user-select: all;
+  word-break: break-all;
+}
+
+.claveOculta, .claveVacia { font-size: $font-size-xs; color: $gray-400; }
+
+.empty {
+  padding: $spacing-4;
+  text-align: center;
+  font-size: $font-size-sm;
+  color: $gray-400;
+}
+
+// ── Botones ─────────────────────────────────────────────────────────────────
+
+.primaryBtn { @extend %btn-primario; }
+
+.ghostBtn { @extend %btn-fantasma; }
+
+.addBtn { @extend %btn-agregar; }
+
+.iconBtn { @extend %btn-icono; }
+
+.iconOk { @extend %btn-icono-ok; }
+
+.iconDanger { @extend %btn-icono-peligro; }
+
+// ── Diálogo de contraseña ───────────────────────────────────────────────────
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-4;
+  background: rgba($gray-900, 0.45);
+}
+
+.modal {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  padding: $spacing-5;
+  background: $white;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-xl;
+}
+
+.modalTitle {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin: 0;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $gray-900;
+  word-break: break-all;
+
+  svg { color: $primary-blue; flex-shrink: 0; }
+}
+
+.modalHint { margin: 0; font-size: $font-size-xs; color: $gray-500; }
+
+.modalActions { display: flex; justify-content: flex-end; gap: $spacing-2; }

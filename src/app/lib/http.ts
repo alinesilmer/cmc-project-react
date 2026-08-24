@@ -22,6 +22,21 @@ export const httpBare = axios.create({
   timeout: 15000,
 });
 
+/**
+ * Si la URL mueve credenciales y por lo tanto no se puede loguear en consola.
+ *
+ * El log de DEV imprime el body de cada request y el body de cada respuesta.
+ * Para casi todo eso es útil; para el endpoint que devuelve la contraseña de
+ * una casilla del Colegio, significa dejar la clave en claro en la consola del
+ * navegador —y en cualquier extensión que lea la consola— cada vez que alguien
+ * la mira con las devtools abiertas.
+ *
+ * El backend ya redacta estos cuerpos en `audit_log`; esto cierra el mismo
+ * agujero del lado del cliente.
+ */
+const esSensible = (url?: string) =>
+  Boolean(url && (url.includes("/password") || url.includes("/auth/")));
+
 const isFormDataLike = (d: any) => {
   if (!d) return false;
   // detecta instancias nativas y objetos con append()
@@ -61,7 +76,7 @@ http.interceptors.request.use((config: RetriableConfig) => {
     console.log(`%cRequest a: ${config.url}`, "color: #22c55e; font-weight: bold;", {
       method,
       params: config.params,
-      data: config.data,
+      data: esSensible(config.url) ? "<omitido>" : config.data,
     });
   }
 
@@ -74,7 +89,11 @@ http.interceptors.response.use(
     if (import.meta.env.DEV) {
       const method = (res.config.method ?? "").toUpperCase();
       const url = res.config.url ?? "";
-      console.log(`%c[API] ${method} ${url}`, "color: #06b6d4; font-weight: bold;", res.data);
+      console.log(
+        `%c[API] ${method} ${url}`,
+        "color: #06b6d4; font-weight: bold;",
+        esSensible(url) ? "<omitido>" : res.data
+      );
     }
     return res;
   },

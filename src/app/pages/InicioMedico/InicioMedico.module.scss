@@ -446,6 +446,27 @@ $radius-sharp: 0;
   border: 1px dashed $gray-300;
 }
 
+// La tarjeta con video real: borde sólido, no punteado como las pendientes.
+.tutorialCardVideo {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  padding: $spacing-5;
+  border-radius: $radius-sharp;
+  background: $white;
+  border: 1px solid $gray-200;
+}
+
+.tutorialVideo {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: $radius-sharp;
+  background: $gray-900;
+  // `contain` y no `cover`: recortar un tutorial puede tapar justo la parte de
+  // la pantalla que el video está explicando.
+  object-fit: contain;
+}
+
 .tutorialThumb {
   display: grid;
   place-items: center;

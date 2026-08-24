@@ -532,6 +532,18 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
   margin: 0;
 }
 
+// Ayudante y gastos de la tarjeta mobile. Se oculta sola si no hay ninguno:
+// sin hijos el flex no ocupa alto y el `gap` del padre no la cuenta.
+.cardConceptos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 0;
+  font-size: 0.76rem;
+  color: $text-2;
+  font-variant-numeric: tabular-nums;
+}
+
 .cardActions {
   display: flex;
   gap: 8px;

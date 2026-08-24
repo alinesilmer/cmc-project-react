@@ -409,3 +409,24 @@ export type ValorDocumentoOut = {
   url: string;
   created_at: string;
 };
+
+/** Una obra social que actualizó valores en una vigencia. */
+export interface ObraSocialActualizada {
+  obra_social_nro: number;
+  nombre: string;
+  /** `YYYY-MM-DD`. */
+  vigencia_desde: string;
+  /** Filas de `nm_valores` cargadas con esa vigencia. */
+  codigos: number;
+  tiene_documento: boolean;
+}
+
+/** Un mes con al menos una actualización; los vacíos no vienen. */
+export interface MesActualizaciones {
+  /** `YYYY-MM`. */
+  mes: string;
+  obras_sociales: ObraSocialActualizada[];
+  /** Obras sociales distintas: una puede tener dos vigencias en el mes. */
+  total_obras_sociales: number;
+  total_codigos: number;
+}

@@ -42,3 +42,9 @@
 .scale-in {
   animation: scaleIn 0.2s ease-out;
 }
+
+/* Usado por todos los spinners (`<Loader2 className={s.spin} />`). Estaba
+   copiado en cada módulo que mostraba un estado de carga. */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

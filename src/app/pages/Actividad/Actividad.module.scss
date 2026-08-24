@@ -1,0 +1,255 @@
+@use "@/app/styles/all.scss" as *;
+
+.container {
+  padding: $spacing-8;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  min-height: 100%;
+
+  @media (max-width: $breakpoint-md) { padding: $spacing-5; }
+  @media (max-width: $breakpoint-sm) { padding: $spacing-4; }
+}
+
+.header { display: flex; align-items: center; gap: $spacing-4; }
+.headerIcon { color: $primary-blue; flex-shrink: 0; }
+
+.title {
+  margin: 0;
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  line-height: 1.2;
+
+  @media (max-width: $breakpoint-sm) { font-size: $font-size-2xl; }
+}
+
+.subtitle { margin: $spacing-1 0 0; font-size: $font-size-sm; color: $gray-500; }
+
+.avisoDemo {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-3;
+  padding: $spacing-3 $spacing-4;
+  font-size: $font-size-sm;
+  line-height: 1.5;
+  color: $primary-yellow-dark;
+  background: $primary-yellow-light;
+  border-radius: $border-radius-md;
+
+  svg { flex-shrink: 0; margin-top: 1px; }
+}
+
+// ── Filtros ─────────────────────────────────────────────────────────────────
+
+.filtros {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  flex-wrap: wrap;
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: 0 $spacing-3;
+  height: 34px;
+  flex: 1;
+  min-width: 220px;
+  max-width: 340px;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-md;
+
+  svg { flex-shrink: 0; color: $gray-400; }
+
+  &:focus-within {
+    border-color: $primary-blue;
+    box-shadow: 0 0 0 3px rgba($primary-blue, 0.12);
+  }
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: $font-size-base;
+  font-family: inherit;
+  color: $gray-900;
+
+  &::placeholder { color: $gray-400; }
+}
+
+.clearBtn {
+  display: inline-flex;
+  color: $gray-400;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+
+  &:hover { color: $danger-red; }
+}
+
+.select {
+  height: 34px;
+  padding: 0 $spacing-3;
+  font-size: $font-size-sm;
+  font-family: inherit;
+  color: $gray-800;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-md;
+  outline: none;
+  cursor: pointer;
+
+  &:focus {
+    border-color: $primary-blue;
+    box-shadow: 0 0 0 3px rgba($primary-blue, 0.12);
+  }
+}
+
+.ghostBtn { @extend %btn-fantasma; }
+
+// ── Tabla ───────────────────────────────────────────────────────────────────
+
+.card {
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-sm;
+  overflow: hidden;
+}
+
+// La tabla scrollea dentro de su caja: sin esto, en mobile empuja el ancho de
+// toda la página y aparece scroll horizontal en el body.
+.tableWrap { overflow-x: auto; }
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: $font-size-sm;
+  min-width: 780px;
+
+  th {
+    padding: $spacing-3 $spacing-4;
+    text-align: left;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    color: $gray-500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: $gray-50;
+    border-bottom: 1px solid $gray-200;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: $spacing-3 $spacing-4;
+    border-bottom: 1px solid $gray-100;
+    vertical-align: top;
+    color: $gray-800;
+  }
+
+  tbody tr:hover td { background: $gray-50; }
+  tbody tr:last-child td { border-bottom: none; }
+}
+
+.colFecha { width: 145px; white-space: nowrap; font-variant-numeric: tabular-nums; color: $gray-600; }
+.colUsuario { width: 190px; }
+.colModulo { width: 130px; white-space: nowrap; color: $gray-600; }
+.colResultado { width: 130px; white-space: nowrap; }
+
+.usuario { display: block; font-weight: $font-weight-medium; color: $gray-900; }
+
+.rol {
+  display: block;
+  font-size: $font-size-xs;
+  color: $gray-400;
+  text-transform: capitalize;
+}
+
+.accion { display: block; color: $gray-900; }
+
+.ruta {
+  display: block;
+  margin-top: 2px;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: $font-size-xs;
+  color: $gray-400;
+  word-break: break-all;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px $spacing-2;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: $white;
+  border-radius: 999px;
+}
+
+.status {
+  margin-left: $spacing-2;
+  font-size: $font-size-xs;
+  color: $gray-400;
+  font-variant-numeric: tabular-nums;
+}
+
+.empty {
+  padding: $spacing-10 !important;
+  text-align: center;
+  color: $gray-400;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+  padding: $spacing-3;
+  font-size: $font-size-sm;
+  color: $gray-500;
+  border-top: 1px solid $gray-100;
+}
+
+.spin { animation: spin 0.9s linear infinite; }
+
+// ── Paginador ───────────────────────────────────────────────────────────────
+
+.paginador {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-3 $spacing-4;
+  border-top: 1px solid $gray-100;
+}
+
+.total { font-size: $font-size-sm; color: $gray-500; margin-right: auto; }
+
+.pagina {
+  font-size: $font-size-sm;
+  color: $gray-600;
+  font-variant-numeric: tabular-nums;
+  min-width: 56px;
+  text-align: center;
+}
+
+.navBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  color: $gray-600;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-sm;
+  cursor: pointer;
+
+  &:hover:not(:disabled) { color: $primary-blue; border-color: $primary-blue; }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+}

@@ -13,5 +13,11 @@ export function mensajeDeError(err: any, fallback = "Ocurrió un error"): string
       : "No tenés permiso para esta acción.";
   }
 
-  return typeof detail === "string" && detail ? detail : fallback;
+  if (typeof detail === "string" && detail) return detail;
+
+  // Un 422 de pydantic trae una lista de errores. Se muestra el primero: es el
+  // campo que el usuario acaba de tocar.
+  if (Array.isArray(detail) && detail[0]?.msg) return String(detail[0].msg);
+
+  return fallback;
 }

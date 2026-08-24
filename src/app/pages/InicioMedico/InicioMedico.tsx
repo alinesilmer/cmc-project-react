@@ -116,11 +116,29 @@ const ACCESOS: QuickAction[] = [
   },
 ];
 
-// Placeholders del módulo de tutoriales, todavía sin backend. Cuando exista,
-// esta constante se reemplaza por la query y las tarjetas dejan de ser estáticas.
-const TUTORIALES_PREVIEW = [
+/**
+ * Los tutoriales publicados. Todavía sin backend: cuando exista, esta constante
+ * se reemplaza por la query y el resto de la sección no cambia.
+ *
+ * Los videos se sirven desde Cloudinary y no desde `src/assets`: el mp4 de
+ * Medife pesa 41 MB, más del doble que todo el bundle de la aplicación. En el
+ * repo entraría a la historia de git para siempre y saldría del mismo servidor
+ * que atiende la API; desde el CDN llega por streaming, con calidad adaptativa
+ * en móvil.
+ */
+type Tutorial = { titulo: string; descripcion: string; url: string };
+
+const TUTORIALES: Tutorial[] = [
+  {
+    titulo: "Validaciones en Medife",
+    descripcion: "Cómo validar un afiliado paso a paso.",
+    url: "https://res.cloudinary.com/dcfkgepmp/video/upload/v1787517269/medife_tuto_f8w32o.mp4",
+  },
+];
+
+/** Lo que todavía no está grabado; se muestra en gris, sin reproductor. */
+const TUTORIALES_PENDIENTES = [
   "Cómo consultar el precio de una práctica",
-  "Validar un afiliado paso a paso",
   "Cargar tu documentación al legajo",
 ];
 
@@ -340,7 +358,7 @@ const InicioMedico: React.FC = () => {
           </div>
         </section>
 
-        {/* ── Tutoriales (placeholder) ── */}
+        {/* ── Tutoriales ── */}
         <section className={styles.section}>
           <div className={styles.sectionHead}>
             <div>
@@ -349,11 +367,30 @@ const InicioMedico: React.FC = () => {
                 Videos cortos para sacarle el jugo al sistema.
               </p>
             </div>
-            <span className={styles.soonBadge}>Próximamente</span>
           </div>
 
           <div className={styles.tutorialGrid}>
-            {TUTORIALES_PREVIEW.map((titulo) => (
+            {TUTORIALES.map((t) => (
+              <article key={t.url} className={styles.tutorialCardVideo}>
+                {/*
+                  `preload="none"` y no "metadata": el video no se descarga
+                  hasta que alguien lo pide. En el portal entra todo el padrón,
+                  la mayoría desde el celular, y casi nadie va a abrirlo.
+                */}
+                <video
+                  className={styles.tutorialVideo}
+                  src={t.url}
+                  controls
+                  preload="none"
+                  playsInline
+                  controlsList="nodownload"
+                />
+                <h3 className={styles.tutorialTitle}>{t.titulo}</h3>
+                <p className={styles.tutorialMeta}>{t.descripcion}</p>
+              </article>
+            ))}
+
+            {TUTORIALES_PENDIENTES.map((titulo) => (
               <div key={titulo} className={styles.tutorialCard}>
                 <div className={styles.tutorialThumb}>
                   <PlayCircle size={30} />
