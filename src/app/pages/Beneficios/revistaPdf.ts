@@ -6,7 +6,7 @@ import guia3 from "../../assets/crede3.png";
 import {
   A4, ANCHO_UTIL, COLOR, MARGEN,
   altoParrafo, chip, degradeVertical, fill, fuente, parrafo,
-  rectPunteado, recortar, stroke, tinta,
+  rectPunteado, recortar, stroke, tinta, tituloEspaciado,
 } from "./revistaDraw";
 
 /**
@@ -124,9 +124,7 @@ function dibujarTapa(doc: Doc, logo: string | null, edicion: string) {
 
   fuente(doc, 9, true);
   tinta(doc, COLOR.doradoClaro);
-  doc.text("COLEGIO MÉDICO DE CORRIENTES", A4.ancho / 2, 130, {
-    align: "center", charSpace: 0.8,
-  });
+  tituloEspaciado(doc, "COLEGIO MÉDICO DE CORRIENTES", 130, 0.8);
 
   fuente(doc, 38, true);
   tinta(doc, COLOR.blanco);
@@ -136,16 +134,14 @@ function dibujarTapa(doc: Doc, logo: string | null, edicion: string) {
 
   parrafo(
     doc,
-    "Descuentos, promociones y ventajas exclusivas para los médicos asociados y su grupo familiar.",
+    "Descuentos, promociones y ventajas exclusivas para los médicos asociados",
     (A4.ancho - 110) / 2, 180, 110,
     { pt: 11, color: [200, 214, 230], align: "center", interlineado: 1.45 }
   );
 
   fuente(doc, 9, false);
   tinta(doc, [150, 170, 195]);
-  doc.text(`EDICIÓN ${edicion.toUpperCase()}`, A4.ancho / 2, A4.alto - 22, {
-    align: "center", charSpace: 0.6,
-  });
+  tituloEspaciado(doc, `EDICIÓN ${edicion.toUpperCase()}`, A4.alto - 22, 0.6);
 }
 
 // ── Encabezado y pie de las páginas interiores ───────────────────────────────
