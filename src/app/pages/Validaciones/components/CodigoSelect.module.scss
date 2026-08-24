@@ -109,11 +109,6 @@
   background: $secondary-blue;
 }
 
-.bloqueado {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .opCodigo {
   font-weight: $font-weight-semibold;
   color: $primary-blue;
@@ -125,13 +120,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.opBloqueado {
-  margin-left: $spacing-2;
-  font-size: $font-size-xs;
-  font-style: normal;
-  color: $danger-red;
 }
 
 .opValor {
@@ -154,4 +142,20 @@
   text-align: center;
   font-size: $font-size-sm;
   color: $gray-500;
+}
+
+// Homologación: la obra social conoce esta práctica con otro código. Es un dato
+// informativo — el precio y lo que se factura son los del código elegido.
+.opHomologado {
+  margin-left: $spacing-2;
+  font-size: $font-size-xs;
+  font-style: normal;
+  color: $gray-500;
+}
+
+.homologado {
+  display: block;
+  margin-top: $spacing-1;
+  font-size: $font-size-xs;
+  color: $gray-600;
 }

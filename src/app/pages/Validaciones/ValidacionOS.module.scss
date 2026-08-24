@@ -427,16 +427,6 @@
   color: $primary-blue;
 }
 
-// Timeout del navegador: la obra social puede haber autorizado igual. Se
-// distingue del rechazo a propósito — el rojo invita a reintentar, y reintentar
-// acá emite una segunda autorización real.
-.resultado_incierto {
-  background: rgba($warning-orange, 0.1);
-  border-color: rgba($warning-orange, 0.55);
-  border-left-width: 3px;
-  color: #92400e;
-}
-
 .resultadoHead {
   display: flex;
   align-items: flex-start;

@@ -95,6 +95,7 @@ const AltaAfiliadoModal: React.FC<Props> = ({ isOpen, dni, onClose, onCreated })
                   placeholder="Ej.: 12345678 o 1231233/00"
                   maxLength={ID_MAX}
                   disabled={loading}
+                  autoFocus
                 />
               </div>
 
@@ -106,7 +107,6 @@ const AltaAfiliadoModal: React.FC<Props> = ({ isOpen, dni, onClose, onCreated })
                   onChange={(e) => setNombre(e.target.value.toUpperCase())}
                   placeholder="APELLIDO NOMBRE"
                   disabled={loading}
-                  autoFocus
                 />
               </div>
 

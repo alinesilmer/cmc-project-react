@@ -525,6 +525,36 @@ $shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
   }
 }
 
+// Botón cuadrado de solo icono, para acciones destructivas al lado de un campo
+// (hoy: eliminar del padrón el afiliado seleccionado, en PacienteSection).
+.btnIconDanger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: none;
+  color: $red;
+  border: 1px solid $border;
+  border-radius: $radius-sm;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+
+  &:hover:not(:disabled) {
+    background: $red-light;
+    border-color: $red;
+  }
+  &:disabled {
+    color: $text-3;
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
 .btnPrimary {
   display: inline-flex;
   align-items: center;

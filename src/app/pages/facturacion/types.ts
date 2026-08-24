@@ -160,6 +160,10 @@ export interface ListarPrestacionesParams {
   grupo_equipo_id?: number;
   dni_paciente?: string; nombre_paciente?: string;
   fecha_desde?: string; fecha_hasta?: string;
+  /** Sólo prestaciones cuya cabecera de facturación sigue abierta. Mira
+   *  `facturacion.estado` en vez del `estado` copiado en la prestación, que una carga
+   *  masiva por fuera de la API puede dejar desincronizado. */
+  solo_facturas_abiertas?: boolean;
   q?: string; limit?: number; offset?: number;
 }
 

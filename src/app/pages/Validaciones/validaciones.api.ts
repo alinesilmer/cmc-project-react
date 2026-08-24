@@ -85,6 +85,7 @@ interface CodigoApi {
   total: number | string;
   admitido: boolean;
   motivo: string | null;
+  se_envia: string | null;
 }
 
 // Los DECIMAL de MySQL llegan como string por JSON.
@@ -164,16 +165,24 @@ export const getPeriodos = async (
   return filas.map((p) => ({ ...p, total: num(p.total) }));
 };
 
-/** GET /api/validaciones/codigos — nomenclador con el valor de esa obra social. */
+/** GET /api/validaciones/codigos — nomenclador con el valor de esa obra social.
+ *
+ * `nroSocio` es imprescindible cuando carga el personal del Colegio: la
+ * habilitación y el precio se resuelven contra las especialidades del médico,
+ * y sin el parámetro el backend los resuelve contra el usuario logueado. Un
+ * administrativo no tiene especialidades cargadas, así que sin esto **ningún
+ * código le sale habilitado**. */
 export const buscarCodigos = async (
   obraSocial: number,
   q: string,
-  limit = 20
+  limit = 20,
+  nroSocio?: number
 ): Promise<CodigoNomenclador[]> => {
   const filas = await getJSON<CodigoApi[]>(`${BASE}/codigos`, {
     obra_social: obraSocial,
     q,
     limit,
+    ...(nroSocio ? { nro_socio: nroSocio } : {}),
   });
   return filas.map((c) => ({
     codigo: c.codigo,
@@ -182,6 +191,7 @@ export const buscarCodigos = async (
     gastos: num(c.gastos),
     admitido: c.admitido,
     motivo: c.motivo,
+    seEnvia: c.se_envia ?? null,
   }));
 };
 
