@@ -1,0 +1,430 @@
+@use "@/app/styles/all.scss" as *;
+
+.container {
+  padding: $spacing-8;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-5;
+  min-height: 100%;
+
+  @media (max-width: $breakpoint-md) { padding: $spacing-5; gap: $spacing-4; }
+  @media (max-width: $breakpoint-sm) { padding: $spacing-4; }
+}
+
+.header { display: flex; align-items: center; gap: $spacing-4; }
+.headerIcon { color: $primary-blue; flex-shrink: 0; }
+
+.title {
+  margin: 0;
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  line-height: 1.2;
+
+  @media (max-width: $breakpoint-sm) { font-size: $font-size-2xl; }
+}
+
+.subtitle { margin: $spacing-1 0 0; font-size: $font-size-sm; color: $gray-500; }
+
+.card {
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-lg;
+  padding: $spacing-5;
+  box-shadow: $shadow-sm;
+
+  @media (max-width: $breakpoint-sm) { padding: $spacing-3; }
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-3 0 0;
+  color: $gray-500;
+  font-size: $font-size-sm;
+}
+
+.spin { animation: spin 0.9s linear infinite; }
+
+// ── Cabecera del almanaque ──────────────────────────────────────────────────
+
+.calHead {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  margin-bottom: $spacing-4;
+  flex-wrap: wrap;
+}
+
+.calTitle {
+  margin: 0;
+  min-width: 170px;
+  text-align: center;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $gray-900;
+}
+
+.navBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: $gray-600;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-sm;
+  cursor: pointer;
+
+  &:hover { color: $primary-blue; border-color: $primary-blue; }
+}
+
+.filtros { display: flex; gap: $spacing-2; margin-left: auto; flex-wrap: wrap; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  height: 28px;
+  padding: 0 $spacing-3;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: $gray-600;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+
+  &:hover { border-color: $gray-400; }
+}
+
+.chipOn {
+  color: $white;
+  background: $gray-700;
+  border-color: $gray-700;
+
+  // El punto de color pierde sentido sobre el chip pintado del mismo color.
+  .dot { background: rgba($white, 0.85) !important; }
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+// ── Grilla ──────────────────────────────────────────────────────────────────
+
+.semana {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: $spacing-1;
+  margin-bottom: $spacing-2;
+
+  span {
+    text-align: center;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    color: $gray-400;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: $spacing-1;
+}
+
+.celda,
+.celdaVacia {
+  min-height: 84px;
+  border-radius: $border-radius-sm;
+  padding: $spacing-1;
+
+  @media (max-width: $breakpoint-md) { min-height: 64px; }
+  @media (max-width: $breakpoint-sm) { min-height: 52px; padding: 2px; }
+}
+
+.celda {
+  background: $gray-50;
+  border: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.celdaVacia { background: transparent; }
+
+.celdaHoy {
+  background: $secondary-blue;
+  border-color: $primary-blue;
+}
+
+.celdaNum {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: $gray-500;
+  font-variant-numeric: tabular-nums;
+}
+
+.celdaEventos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pill {
+  padding: 1px $spacing-1;
+  font-size: $font-size-xs;
+  line-height: 1.35;
+  color: $white;
+  border-radius: 3px;
+  // Un título largo no puede ensanchar la casilla ni romper la grilla.
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  @media (max-width: $breakpoint-sm) {
+    // En pantallas chicas la casilla no da para leer el texto: queda el color
+    // como señal de que ese día tiene algo, y el detalle se ve en la lista.
+    height: 5px;
+    padding: 0;
+    text-indent: -9999px;
+  }
+}
+
+// ── Pestañas y lista ────────────────────────────────────────────────────────
+
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin-bottom: $spacing-4;
+  flex-wrap: wrap;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  height: 32px;
+  padding: 0 $spacing-4;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $gray-600;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-md;
+  cursor: pointer;
+
+  &:hover { border-color: $gray-400; }
+}
+
+.tabOn {
+  color: $primary-blue;
+  background: $secondary-blue;
+  border-color: $primary-blue;
+  font-weight: $font-weight-semibold;
+}
+
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: $spacing-2; }
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-3;
+  background: $gray-50;
+  border-radius: $border-radius-md;
+}
+
+.rowInactivo { opacity: 0.55; }
+
+.rowMain { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+
+.rowTitulo {
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  color: $gray-900;
+}
+
+.rowCuando {
+  font-size: $font-size-xs;
+  color: $gray-500;
+}
+
+.rowActions { display: flex; gap: $spacing-1; margin-left: auto; flex-shrink: 0; }
+
+.empty {
+  padding: $spacing-4;
+  text-align: center;
+  font-size: $font-size-sm;
+  color: $gray-400;
+}
+
+// ── Formulario ──────────────────────────────────────────────────────────────
+
+.form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: $spacing-3;
+  padding: $spacing-4;
+  margin-bottom: $spacing-4;
+  background: $secondary-blue;
+  border-radius: $border-radius-md;
+}
+
+.field { display: flex; flex-direction: column; gap: $spacing-1; }
+.fieldFull { grid-column: 1 / -1; }
+
+.label {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: $gray-600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.input {
+  width: 100%;
+  height: 34px;
+  padding: 0 $spacing-3;
+  font-size: $font-size-base;
+  font-family: inherit;
+  color: $gray-900;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-md;
+  outline: none;
+
+  &:focus {
+    border-color: $primary-blue;
+    box-shadow: 0 0 0 3px rgba($primary-blue, 0.12);
+  }
+}
+
+.formActions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-2;
+}
+
+// ── Selector de responsable ─────────────────────────────────────────────────
+
+.selectWrap { position: relative; }
+
+.selectBox {
+  display: flex;
+  align-items: center;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-md;
+
+  &:focus-within {
+    border-color: $primary-blue;
+    box-shadow: 0 0 0 3px rgba($primary-blue, 0.12);
+  }
+}
+
+.selectInput {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  padding: 0 $spacing-3;
+  font-size: $font-size-base;
+  font-family: inherit;
+  color: $gray-900;
+  background: transparent;
+  border: none;
+  outline: none;
+
+  &::placeholder { color: $gray-400; }
+}
+
+.selectIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 32px;
+  color: $gray-400;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:hover { color: $primary-blue; }
+}
+
+.selectMenu {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 3px);
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: $spacing-1;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-md;
+  box-shadow: $shadow-lg;
+}
+
+.selectOption {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  width: 100%;
+  padding: $spacing-2 $spacing-3;
+  font-size: $font-size-sm;
+  text-align: left;
+  color: $gray-800;
+  background: transparent;
+  border: none;
+  border-radius: $border-radius-sm;
+  cursor: pointer;
+
+  &:hover { background: $secondary-blue; }
+}
+
+.selectNombre { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.selectRol {
+  font-size: $font-size-xs;
+  color: $gray-400;
+  flex-shrink: 0;
+}
+
+.selectCheck { color: $primary-blue; flex-shrink: 0; }
+
+.selectVacio {
+  padding: $spacing-3;
+  font-size: $font-size-xs;
+  color: $gray-400;
+  text-align: center;
+}
+
+// ── Botones ─────────────────────────────────────────────────────────────────
+
+.primaryBtn { @extend %btn-primario; }
+
+.ghostBtn { @extend %btn-fantasma; }
+
+.addBtn { @extend %btn-agregar; }
+
+.iconBtn { @extend %btn-icono; }
+
+.iconDanger { @extend %btn-icono-peligro; }

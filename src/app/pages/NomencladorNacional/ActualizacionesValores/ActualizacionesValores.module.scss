@@ -1,0 +1,263 @@
+@use "@/app/styles/all.scss" as *;
+
+.container {
+  padding: $spacing-8;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  min-height: 100%;
+
+  @media (max-width: $breakpoint-md) { padding: $spacing-5; }
+  @media (max-width: $breakpoint-sm) { padding: $spacing-4; }
+}
+
+.header { display: flex; align-items: center; gap: $spacing-4; }
+.headerIcon { color: $primary-blue; flex-shrink: 0; }
+
+.title {
+  margin: 0;
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  line-height: 1.2;
+
+  @media (max-width: $breakpoint-sm) { font-size: $font-size-2xl; }
+}
+
+.subtitle { margin: $spacing-1 0 0; font-size: $font-size-sm; color: $gray-500; }
+
+.spin { animation: spin 0.9s linear infinite; }
+
+// ── Barra de filtro ─────────────────────────────────────────────────────────
+
+.barra {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+  flex-wrap: wrap;
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: 0 $spacing-3;
+  height: 34px;
+  flex: 1;
+  min-width: 200px;
+  max-width: 320px;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-md;
+
+  svg { flex-shrink: 0; color: $gray-400; }
+
+  &:focus-within {
+    border-color: $primary-blue;
+    box-shadow: 0 0 0 3px rgba($primary-blue, 0.12);
+  }
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: $font-size-base;
+  font-family: inherit;
+  color: $gray-900;
+
+  &::placeholder { color: $gray-400; }
+}
+
+.clearBtn {
+  display: inline-flex;
+  color: $gray-400;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+
+  &:hover { color: $danger-red; }
+}
+
+.select {
+  height: 34px;
+  padding: 0 $spacing-3;
+  font-size: $font-size-sm;
+  font-family: inherit;
+  color: $gray-800;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-md;
+  outline: none;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:focus {
+    border-color: $primary-blue;
+    box-shadow: 0 0 0 3px rgba($primary-blue, 0.12);
+  }
+}
+
+.totales {
+  display: flex;
+  gap: $spacing-4;
+  margin-left: auto;
+  font-size: $font-size-sm;
+  color: $gray-500;
+
+  strong { color: $gray-900; font-variant-numeric: tabular-nums; }
+
+  @media (max-width: $breakpoint-sm) {
+    margin-left: 0;
+    gap: $spacing-3;
+    font-size: $font-size-xs;
+  }
+}
+
+.estado {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+  padding: $spacing-12;
+  font-size: $font-size-sm;
+  color: $gray-400;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-lg;
+}
+
+// ── Meses ───────────────────────────────────────────────────────────────────
+
+.meses { display: flex; flex-direction: column; gap: $spacing-3; }
+
+.mes {
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-sm;
+  overflow: hidden;
+}
+
+.mesHead {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  width: 100%;
+  padding: $spacing-4 $spacing-5;
+  background: $gray-50;
+  border: none;
+  border-bottom: 1px solid $gray-100;
+  cursor: pointer;
+  text-align: left;
+
+  svg { color: $gray-400; flex-shrink: 0; }
+  &:hover { background: $gray-100; }
+
+  @media (max-width: $breakpoint-sm) { padding: $spacing-3; }
+}
+
+.mesTitulo {
+  margin: 0;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $gray-900;
+}
+
+.mesMeta {
+  margin-left: auto;
+  font-size: $font-size-xs;
+  color: $gray-500;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+// ── Filas ───────────────────────────────────────────────────────────────────
+
+.lista { list-style: none; margin: 0; padding: 0; }
+
+.fila {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-3 $spacing-5;
+  border-bottom: 1px solid $gray-100;
+
+  &:last-child { border-bottom: none; }
+  &:hover { background: $gray-50; }
+
+  @media (max-width: $breakpoint-sm) {
+    // En mobile la fila se apila: el nombre arriba, el resto abajo alineado a
+    // la izquierda. Sin esto el contador y el link se salen del ancho.
+    flex-wrap: wrap;
+    gap: $spacing-2;
+    padding: $spacing-3;
+  }
+}
+
+.filaMain {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+
+  @media (max-width: $breakpoint-sm) { flex-basis: 100%; }
+}
+
+.osNombre {
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  color: $gray-900;
+}
+
+.osMeta { font-size: $font-size-xs; color: $gray-400; }
+
+.docBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px $spacing-2;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: $success-green;
+  background: rgba($success-green, 0.1);
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.codigos {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 70px;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $gray-900;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+
+  em {
+    font-style: normal;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-normal;
+    color: $gray-400;
+  }
+
+  @media (max-width: $breakpoint-sm) { align-items: flex-start; min-width: 0; }
+}
+
+.verLink {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $primary-blue;
+  text-decoration: none;
+  flex-shrink: 0;
+
+  &:hover { text-decoration: underline; }
+
+  @media (max-width: $breakpoint-sm) { margin-left: auto; }
+}

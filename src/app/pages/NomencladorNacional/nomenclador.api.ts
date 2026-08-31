@@ -39,6 +39,7 @@ import type {
   ActualizarPorcentajePayload,
   RevertirActualizacionPayload,
   ValorDocumentoOut,
+  MesActualizaciones,
 } from "./nomenclador.types";
 
 // ─── Nomenclador ──────────────────────────────────────────────────────────────
@@ -338,3 +339,10 @@ export const subirValorDocumento = (params: {
 
 export const eliminarValorDocumento = (id: number): Promise<void> =>
   delJSON<void>(`/api/valores_nm/documentos/${id}`);
+
+/**
+ * Qué obras sociales actualizaron valores, por mes de vigencia.
+ * Una sola llamada: el backend agrupa y devuelve ~9 meses. `nomenclador:leer`.
+ */
+export const getActualizacionesPorMes = (): Promise<MesActualizaciones[]> =>
+  getJSON<MesActualizaciones[]>("/api/valores_nm/actualizaciones");

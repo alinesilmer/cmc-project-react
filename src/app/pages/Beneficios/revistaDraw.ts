@@ -79,6 +79,31 @@ export function rectPunteado(
 }
 
 /** Escribe texto con ajuste de línea y devuelve la Y donde terminó. */
+/**
+ * Texto centrado con espaciado entre letras, centrado de verdad.
+ *
+ * `doc.text(t, ancho/2, y, { align: "center", charSpace })` **queda corrido**:
+ * jsPDF calcula el ancho para centrar sin contar el `charSpace`, así que el
+ * texto arranca en el centro correcto de su versión sin espaciar y se extiende
+ * hacia la derecha. Medido en jsPDF 4.2.1: el título de la tapa daba el mismo
+ * `Td` con y sin `charSpace`, y terminaba 10,8 mm a la derecha del centro.
+ *
+ * Acá se calcula el ancho real —base más el espaciado entre glifos— y se dibuja
+ * alineado a la izquierda desde la posición que corresponde.
+ */
+export function tituloEspaciado(
+  doc: Doc,
+  texto: string,
+  y: number,
+  charSpace: number,
+  anchoCaja = A4.ancho
+): void {
+  // `charSpace × (n - 1)`: el espaciado va entre letras, así que no cuenta
+  // después de la última — si contara, el texto quedaría corrido media letra.
+  const ancho = doc.getTextWidth(texto) + charSpace * Math.max(texto.length - 1, 0);
+  doc.text(texto, (anchoCaja - ancho) / 2, y, { charSpace });
+}
+
 export function parrafo(
   doc: Doc,
   texto: string,

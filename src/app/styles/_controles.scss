@@ -1,0 +1,125 @@
+@use "./variables.scss" as *;
+
+/* Controles compartidos por las pantallas de administración.
+ *
+ * Son placeholders (`%`), no clases: Sass no emite nada hasta que alguien los
+ * extiende, así que esto no agrega peso a los módulos que no los usan. Cada
+ * módulo los engancha con el nombre de clase que ya tenía, así que el HTML no
+ * cambia:
+ *
+ *     .primaryBtn { @extend %btn-primario; }
+ */
+
+%control-base {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  height: 34px;
+  padding: 0 $spacing-4;
+  font-size: $font-size-sm;
+  font-family: inherit;
+  font-weight: $font-weight-semibold;
+  border: none;
+  border-radius: $border-radius-md;
+  cursor: pointer;
+
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+%btn-primario {
+  @extend %control-base;
+  color: $white;
+  background: $primary-blue;
+
+  &:hover:not(:disabled) { background: $primary-blue-darker; }
+}
+
+%btn-fantasma {
+  @extend %control-base;
+  color: $gray-700;
+  background: $gray-100;
+
+  &:hover:not(:disabled) { background: $gray-200; }
+}
+
+/* El "Agregar" chico que va en el encabezado de una sección con lista. */
+%btn-agregar {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  height: 30px;
+  padding: 0 $spacing-3;
+  font-size: $font-size-xs;
+  font-family: inherit;
+  font-weight: $font-weight-semibold;
+  color: $primary-blue;
+  background: $secondary-blue;
+  border: none;
+  border-radius: $border-radius-sm;
+  cursor: pointer;
+
+  &:hover { background: #d9e5fb; }
+}
+
+%btn-icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  color: $gray-500;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-sm;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+
+  &:hover:not(:disabled) { color: $primary-blue; border-color: $primary-blue; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+%btn-icono-peligro {
+  @extend %btn-icono;
+  &:hover:not(:disabled) { color: $danger-red; border-color: $danger-red; }
+}
+
+%btn-icono-ok {
+  @extend %btn-icono;
+  color: $white;
+  background: $success-green;
+  border-color: $success-green;
+
+  &:hover:not(:disabled) { color: $white; background: #167339; }
+}
+
+/* El `<input>` de texto de los formularios de administración. */
+%campo-texto {
+  width: 100%;
+  height: 34px;
+  padding: 0 $spacing-3;
+  font-size: $font-size-base;
+  font-family: inherit;
+  color: $gray-900;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-md;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &:focus {
+    border-color: $primary-blue;
+    box-shadow: 0 0 0 3px rgba($primary-blue, 0.12);
+  }
+
+  &:disabled { background: $gray-50; color: $gray-600; cursor: not-allowed; }
+  &::placeholder { color: $gray-400; }
+}
+
+/* La etiqueta chica en mayúsculas que va arriba de cada campo. */
+%etiqueta-campo {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: $gray-500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}

@@ -82,6 +82,9 @@ const BoletinGalenos = lazy(() => import("./app/pages/BoletinGalenos/BoletinGale
 const ValidacionesHub = lazy(() => import("./app/pages/Validaciones/ValidacionesHub"));
 const ValidacionOS = lazy(() => import("./app/pages/Validaciones/ValidacionOS"));
 const PortalesExternos = lazy(() => import("./app/pages/Validaciones/PortalesExternos"));
+const InstitucionPage = lazy(() => import("./app/pages/Institucion/InstitucionPage"));
+const AgendaPage = lazy(() => import("./app/pages/Agenda/AgendaPage"));
+const ActividadPage = lazy(() => import("./app/pages/Actividad/ActividadPage"));
 const PlanillasMedico = lazy(() => import("./app/pages/Planillas/PlanillasMedico"));
 const PlanillasAdmin = lazy(() => import("./app/pages/Planillas/PlanillasAdmin"));
 const NomencladorCodigos = lazy(() => import("./app/pages/NomencladorNacional/NomencladorCodigos/NomencladorCodigos"));
@@ -91,6 +94,7 @@ const Homologador = lazy(() => import("./app/pages/NomencladorNacional/Homologad
 const NomencladorPorOS = lazy(() => import("./app/pages/NomencladorNacional/NomencladorPorOS/NomencladorPorOS"));
 const NomencladorGalenos = lazy(() => import("./app/pages/NomencladorNacional/NomencladorGalenos/NomencladorGalenos"));
 const ActualizarPreciosGalenos = lazy(() => import("./app/pages/NomencladorNacional/ActualizarPreciosGalenos/ActualizarPreciosGalenos"));
+const ActualizacionesValores = lazy(() => import("./app/pages/NomencladorNacional/ActualizacionesValores/ActualizacionesValores"));
 const ImportarPreciosPdf = lazy(() => import("./app/pages/NomencladorNacional/ImportarPreciosPdf/ImportarPreciosPdf"));
 const ImportarGalenos = lazy(() => import("./app/pages/NomencladorNacional/ImportarGalenos/ImportarGalenos"));
 const AumentoPorcentual = lazy(() => import("./app/pages/NomencladorNacional/AumentoPorcentual/AumentoPorcentual"));
@@ -220,6 +224,11 @@ export default function RootRoutes() {
 
               <Route element={<RequireScope scope="rbac:gestionar" />}>
                 <Route path="admin/permissions" element={<PermissionsManager />} />
+                {/* Registro de acciones del personal. Va con `rbac:gestionar`
+                    —el mismo criterio que `auditoria:leer`, que es de admin—
+                    porque muestra qué hizo cada empleado. Todavía sin backend:
+                    la pantalla avisa que los datos son de ejemplo. */}
+                <Route path="actividad" element={<ActividadPage />} />
               </Route>
 
               <Route path="config" element={<Config />} />
@@ -268,6 +277,7 @@ export default function RootRoutes() {
                 <Route path="nomenclador/consulta-valores" element={<ConsultaValores />} />
                 <Route path="nomenclador/consulta-precios" element={<ConsultaPrecios />} />
                 <Route path="nomenclador/homologador" element={<Homologador />} />
+                <Route path="nomenclador/actualizaciones" element={<ActualizacionesValores />} />
               </Route>
               <Route element={<RequireScope scope="nomenclador:masivo" />}>
                 <Route path="nomenclador/galenos/importar" element={<ImportarGalenos />} />
@@ -280,6 +290,11 @@ export default function RootRoutes() {
 
               <Route element={<RequireScope scope="catalogo:leer" />}>
                 <Route path="especialidades" element={<EspecialidadesPage />} />
+                {/* Datos del propio Colegio y los tres calendarios. El guard
+                    de acá es comodidad de UI; el backend exige lo mismo, y las
+                    contraseñas de las casillas además `rbac:gestionar`. */}
+                <Route path="institucion" element={<InstitucionPage />} />
+                <Route path="agenda" element={<AgendaPage />} />
               </Route>
               <Route element={<RequireScope scope="medico:leer" />}>
                 <Route path="servicios" element={<ServiciosPage />} />

@@ -18,7 +18,7 @@ import { getEspecialidades } from "../../Especialidades/especialidades.api";
 import EspecialidadCombo from "../EspecialidadCombo";
 import type { ValorOut, GalenoOut, NomencladorOut, ComponentePayload, Origen } from "../nomenclador.types";
 import { ORIGEN_LABELS } from "../nomenclador.types";
-import { today, parseMonto } from "../nomenclador.helpers";
+import { today, parseMonto, compararGalenos } from "../nomenclador.helpers";
 
 // ─── Local types ──────────────────────────────────────────────────────────────
 
@@ -81,11 +81,24 @@ function initComps(): ComponenteForm[] {
   }));
 }
 
-function sumValor(v: ValorOut): number {
-  return v.componentes.filter((c) => c.activo && !c.opcional).reduce((acc, c) => {
-    if (c.tipo === "calculable") return acc + parseMonto(c.subtotal);
-    return acc + parseMonto(c.valor_unitario);
-  }, 0);
+/**
+ * El importe de un concepto suelto, o `null` si el valor no lo tiene cargado.
+ *
+ * La tabla muestra los tres por separado —honorario, ayudante y gastos— en vez
+ * del total sumado: se facturan y se cobran por separado, y el número que se
+ * busca al mirar un código es el honorario, no la suma.
+ *
+ * En un componente calculable el monto es `subtotal` (cantidad × galeno); en uno
+ * fijo es `valor_unitario`, porque esas filas guardan el importe ahí y dejan la
+ * cantidad en 0 —su `subtotal` sería 0—.
+ *
+ * `null` y no `0` a propósito: "no tiene ayudante" y "el ayudante vale cero" se
+ * muestran distinto (— contra $ 0,00).
+ */
+function montoDe(v: ValorOut, concepto: ComponenteForm["concepto"]): number | null {
+  const c = v.componentes.find((x) => x.concepto === concepto && x.activo);
+  if (!c) return null;
+  return c.tipo === "calculable" ? parseMonto(c.subtotal) : parseMonto(c.valor_unitario);
 }
 
 function compsFromOut(comps: ValorOut["componentes"]): ComponenteForm[] {
@@ -112,6 +125,17 @@ type CompEditorProps = {
 };
 
 function ComponentEditor({ modalidad, componentes, galenos, errors, onChange }: CompEditorProps) {
+  // Los activos, en el orden del boletín y con los niveles seguidos. El select
+  // se recorre a ojo buscando un galeno puntual, así que el orden en que el
+  // operador los tiene en la cabeza es el que importa.
+  const galenosOrdenados = useMemo(
+    () =>
+      galenos
+        .filter((g) => g.activo)
+        .sort((a, b) => compararGalenos(a, b) || (a.nivel ?? 0) - (b.nivel ?? 0)),
+    [galenos],
+  );
+
   return (
     <div className={styles.componentRows}>
       {componentes.map((comp, i) => (
@@ -129,7 +153,7 @@ function ComponentEditor({ modalidad, componentes, galenos, errors, onChange }: 
                   onChange={(e) => onChange(i, "galeno_id", e.target.value ? Number(e.target.value) : null)}
                 >
                   <option value="">— {i === 0 ? "Seleccionar" : "Opcional"} —</option>
-                  {galenos.filter((g) => g.activo).map((g) => (
+                  {galenosOrdenados.map((g) => (
                     <option key={g.id} value={g.id}>
                       {g.codigo}{g.nivel != null ? ` (niv. ${g.nivel})` : ""} — {fmt.format(parseMonto(g.valor_unitario))}
                     </option>
@@ -720,15 +744,17 @@ export default function NomencladorPorOS() {
                       <th>Especialidad</th>
                       <th>Nivel</th>
                       <th>Precio</th>
+                      <th>Ayudante</th>
+                      <th>Gastos</th>
                       <th>Vigente desde</th>
                       <th className={styles.thActions}>Acc.</th>
                     </tr>
                   </thead>
                   <tbody>
                     {showLoading ? (
-                      <tr><td colSpan={6} className={styles.loadingCell}>Cargando…</td></tr>
+                      <tr><td colSpan={8} className={styles.loadingCell}>Cargando…</td></tr>
                     ) : grouped.length === 0 ? (
-                      <tr><td colSpan={6} className={styles.emptyCell}>
+                      <tr><td colSpan={8} className={styles.emptyCell}>
                         {especialidadFilter !== "todos" ? "Sin códigos de esta especialidad" : "Sin códigos cargados"}
                       </td></tr>
                     ) : pageGroups.map(([nomId, variants]) => {
@@ -736,7 +762,7 @@ export default function NomencladorPorOS() {
                       return (
                         <Fragment key={nomId}>
                           <tr className={styles.groupHeader}>
-                            <td colSpan={6}>
+                            <td colSpan={8}>
                               <span className={styles.codeCell}>{first.codigo}</span>
                               {resolvedDesc(first) && <span className={styles.groupDesc}> — {resolvedDesc(first)}</span>}
                             </td>
@@ -754,11 +780,31 @@ export default function NomencladorPorOS() {
                                   : "—"}
                               </td>
                               <td className={styles.mutedText}>{v.nivel != null ? `Niv. ${v.nivel}` : "—"}</td>
-                              <td>
-                                {v.por_presupuesto
-                                  ? <span className={styles.presupuestoChip}>Por presupuesto</span>
-                                  : <span className={styles.priceCell}>{fmt.format(sumValor(v))}</span>}
-                              </td>
+                              {v.por_presupuesto ? (
+                                // El chip ocupa las tres columnas de importe:
+                                // sin precio pactado no hay nada que desglosar.
+                                <td colSpan={3}>
+                                  <span className={styles.presupuestoChip}>Por presupuesto</span>
+                                </td>
+                              ) : (
+                                <>
+                                  <td>
+                                    <span className={styles.priceCell}>
+                                      {fmt.format(montoDe(v, "Honorarios") ?? 0)}
+                                    </span>
+                                  </td>
+                                  <td className={styles.mutedText}>
+                                    {montoDe(v, "Ayudante") == null
+                                      ? "—"
+                                      : fmt.format(montoDe(v, "Ayudante")!)}
+                                  </td>
+                                  <td className={styles.mutedText}>
+                                    {montoDe(v, "Gastos") == null
+                                      ? "—"
+                                      : fmt.format(montoDe(v, "Gastos")!)}
+                                  </td>
+                                </>
+                              )}
                               <td className={styles.mutedText}>{v.vigencia_desde}</td>
                               <td>
                                 <div className={styles.actionsCell}>
@@ -782,10 +828,24 @@ export default function NomencladorPorOS() {
                     <div className={styles.cardTop}>
                       <span className={styles.codeCell}>{v.codigo}</span>
                       <span className={styles.priceCell}>
-                        {v.por_presupuesto ? "Por presupuesto" : fmt.format(sumValor(v))}
+                        {v.por_presupuesto
+                          ? "Por presupuesto"
+                          : fmt.format(montoDe(v, "Honorarios") ?? 0)}
                       </span>
                     </div>
                     <p className={styles.cardDesc}>{resolvedDesc(v)}</p>
+                    {/* En mobile el honorario va arriba, junto al código, y los
+                        otros dos conceptos abajo sólo si el valor los tiene. */}
+                    {!v.por_presupuesto && (
+                      <p className={styles.cardConceptos}>
+                        {montoDe(v, "Ayudante") != null && (
+                          <span>Ayudante {fmt.format(montoDe(v, "Ayudante")!)}</span>
+                        )}
+                        {montoDe(v, "Gastos") != null && (
+                          <span>Gastos {fmt.format(montoDe(v, "Gastos")!)}</span>
+                        )}
+                      </p>
+                    )}
                     <div className={styles.cardActions}>
                       <button className={styles.btnEdit} onClick={() => openEdit(v)}><Edit2 size={12} /> Editar</button>
                       <button className={styles.btnDanger} onClick={() => handleDelete(v)}><Trash2 size={12} /> Cerrar</button>

@@ -18,6 +18,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import styles from "./ActualizarPreciosGalenos.module.scss";
 import { hoyISO } from "../../../lib/fechas";
+import { compararGalenos } from "../nomenclador.helpers";
 import {
   listGalenos,
   actualizarPrecioGaleno,
@@ -168,7 +169,8 @@ export default function ActualizarPreciosGalenos() {
           niveles,
         };
       })
-      .sort((a, b) => a.nombre.localeCompare(b.nombre));
+      // El orden del boletín, no el alfabético. Ver `compararGalenos`.
+      .sort(compararGalenos);
   }, [galenos]);
 
   const pendingEdits = useMemo(

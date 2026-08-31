@@ -10,7 +10,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   Home, DollarSign, ArrowLeftRight, RotateCcw, Wallet, Plus,
   Users, BookUser, ClipboardPlus, Building2, Newspaper,
-  Flower2, FileBoxIcon, Medal, ClipboardList, HousePlus, History,
+  Flower2, FileBoxIcon, CalendarClock, Medal, ClipboardList, HousePlus, History,
   FileCode2, Search, FileText, Percent, GitMerge, Sigma, TrendingUp,
   PencilRuler, ShieldUser, Monitor, Receipt, CalendarDays,
   LogOut, CircleUserRound, ChevronDown, Menu, X, Layers,
@@ -183,6 +183,7 @@ const TOP_NAV: TopEntry[] = [
           { path: `${base}/convenios/obras-sociales`, icon: ClipboardList, label: "Listado de Obras Sociales", perms: ["catalogo:leer"] },
           { path: `${base}/convenios/obras-sociales/alta`, icon: HousePlus, label: "Alta Obra Social", perms: ["catalogo:editar"] },
           { path: `${base}/historial-valores`, icon: History, label: "Historial de Valores", perms: ["nomenclador:leer"] },
+          { path: `${base}/nomenclador/actualizaciones`, icon: CalendarClock, label: "O.S. Actualizadas (LISTADO)", perms: ["nomenclador:leer"] },
         ],
       },
     ],
@@ -215,9 +216,17 @@ const TOP_NAV: TopEntry[] = [
     kind: "menu", id: "herramientas", icon: PencilRuler, label: "Herramientas",
     columns: [
       {
+        heading: "Colegio",
+        items: [
+          { path: `${base}/institucion`, icon: Building2, label: "Datos del Colegio", perms: ["catalogo:leer"] },
+          { path: `${base}/agenda`, icon: CalendarDays, label: "Calendario", perms: ["catalogo:leer"] },
+        ],
+      },
+      {
         heading: "Sistema",
         items: [
           { path: `${base}/admin/permissions`, icon: ShieldUser, label: "Permisos y roles", perms: ["rbac:gestionar"] },
+          { path: `${base}/actividad`, icon: History, label: "Registro de actividad", perms: ["rbac:gestionar"] },
           // Atajo de conveniencia hacia el sistema legacy, sin scope propio:
           // no hay ningún permiso en la tabla que gobierne "ver este link
           // desde el panel nuevo" (distinto de `system_new:access`, que hace

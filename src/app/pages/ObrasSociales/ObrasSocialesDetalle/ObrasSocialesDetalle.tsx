@@ -9,12 +9,13 @@ import { getObraSocial } from "../obrasSociales.api";
 import type { ObraSocial, Documento } from "../obrasSociales.types";
 import { CONDICION_IVA_LABELS, TIPO_DOCUMENTO_LABELS, displayCuit } from "../obrasSociales.types";
 import HistorialValores from "./HistorialValores";
+import PagosObraSocial from "./PagosObraSocial";
 import { abrirAdjunto } from "../../../lib/archivos";
 import { formatFechaLarga } from "../../../lib/fechas";
 import { useNotify } from "../../../hooks/useNotify";
 import s from "./ObrasSocialesDetalle.module.scss";
 
-type ActiveTab = "datos" | "documentos" | "historial";
+type ActiveTab = "datos" | "documentos" | "pagos" | "historial";
 
 // `formatFechaLarga` y no `new Date(iso).toLocaleDateString()`: la fecha de alta
 // de convenio es una fecha de calendario y el parser nativo la lee como UTC,
@@ -145,6 +146,7 @@ export default function ObrasSocialesDetalle() {
         {([
           { key: "datos",       label: "Datos" },
           { key: "documentos",  label: "Documentos" },
+          { key: "pagos",       label: "Pagos" },
           { key: "historial",   label: "Historial de Valores" },
         ] as { key: ActiveTab; label: string }[]).map(({ key, label }) => (
           <button
@@ -253,6 +255,12 @@ export default function ObrasSocialesDetalle() {
           </section>
         </div>
       )}
+
+      {/* ── Tab: Pagos ──────────────────────────────────────────────────── */}
+      {/* Va con `obra.id` (la PK) y no con `nro_obra_social`: los pagos cuelgan
+          de `obras_sociales.ID` por FK, a diferencia del historial de valores,
+          que indexa por número de obra social. */}
+      {activeTab === "pagos" && <PagosObraSocial obraId={obra.id} />}
 
       {/* ── Tab: Historial de Valores ────────────────────────────────────── */}
       {activeTab === "historial" && (
