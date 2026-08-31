@@ -14,7 +14,12 @@ import { formatMoney, parseMoney } from "../../money";
 import ConfirmActionModal from "../../components/ConfirmActionModal";
 import styles from "./MedicoPrestacionesTable.module.scss";
 
-const LIMIT = 10;
+// Esta tabla NO pagina: muestra todas las prestaciones del médico en el período que se
+// está cargando. Como el endpoint topea el `limit` en 200, se piden páginas hasta
+// agotar el listado. `MAX_PAGINAS` es un freno de seguridad para no encadenar pedidos
+// sin fin si el backend devolviera siempre páginas llenas.
+const PAGE_SIZE = 200;
+const MAX_PAGINAS = 25;
 
 type TipoPrestador = "Medico" | "Ayudante" | "Gastos" | null;
 
@@ -127,7 +132,6 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
   const [rows, setRows] = useState<PrestacionRead[]>([]);
   const [totalCount, setTotalCount] = useState<number | undefined>(undefined);
   const [loading, setLoading] = useState(false);
-  const [offset, setOffset] = useState(0);
   const [busyIds, setBusyIds] = useState<Set<number>>(new Set());
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   // El listado solo trae `cod_obra_social`: los nombres se resuelven aparte y se
@@ -146,38 +150,46 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
   const integrantesPedidosRef = useRef<Set<string>>(new Set());
   const [equiposAbiertos, setEquiposAbiertos] = useState<Set<number>>(new Set());
 
-  // Cambió el médico, la obra social o el período → volvemos a la primera página.
-  useEffect(() => { setOffset(0); }, [codMedico, codObra, periodo]);
-
   const fetchData = useCallback(async () => {
     if (!codMedico) { setRows([]); setTotalCount(undefined); return; }
     setLoading(true);
     try {
-      const { data, totalCount: tc } = await listarPrestaciones({
+      const filtros = {
         cod_medico: codMedico,
         cod_obra: codObra ?? undefined,
         periodo: periodo ?? undefined,
         // Esta tabla es la de trabajo bajo el formulario de carga: solo tiene sentido
         // mostrar lo que todavía se puede tocar. Las cerradas (ya facturadas) y las
         // anuladas quedan afuera — para verlas está el listado de Períodos/Facturas.
-        estado: "A",
+        estado: "A" as const,
         // El `estado` de arriba es una copia denormalizada de "mi factura está abierta"
         // y puede mentir: una reimportación masiva dejó 1.572 prestaciones en 'A' sobre
         // una factura ya cerrada, y esta tabla las mostraba como editables cuando el
         // operador guardaba con "Mantener médico" y sin obra social (ahí no hay filtro
         // de OS/período que las tape). Esto obliga al backend a mirar la cabecera real.
         solo_facturas_abiertas: true,
-        limit: LIMIT,
-        offset,
-      });
-      setRows(data);
-      setTotalCount(tc);
+      };
+      const todas: PrestacionRead[] = [];
+      let total: number | undefined;
+      for (let pagina = 0; pagina < MAX_PAGINAS; pagina += 1) {
+        const { data, totalCount: tc } = await listarPrestaciones({
+          ...filtros,
+          limit: PAGE_SIZE,
+          offset: pagina * PAGE_SIZE,
+        });
+        todas.push(...data);
+        if (tc !== undefined) total = tc;
+        if (data.length < PAGE_SIZE) break;
+        if (total !== undefined && todas.length >= total) break;
+      }
+      setRows(todas);
+      setTotalCount(total ?? todas.length);
     } catch (e: any) {
       notify(detailMessage(e?.response?.data?.detail) || "Error al cargar las prestaciones del médico.", "error");
     } finally {
       setLoading(false);
     }
-  }, [codMedico, codObra, periodo, offset, notify]);
+  }, [codMedico, codObra, periodo, notify]);
 
   // `refreshKey` no se lee acá dentro: es un disparador explícito del padre para
   // volver a pedir el listado después de guardar.
@@ -322,8 +334,10 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // `from=carga` le dice al formulario de edición que, al guardar, tiene que volver
+  // acá (al formulario de carga) y no al listado general de períodos.
   const handleEditar = (row: PrestacionRead) => {
-    irAlFormulario(`/panel/facturacion/carga/${row.id}`);
+    irAlFormulario(`/panel/facturacion/carga/${row.id}?from=carga`);
   };
 
   // Precarga el formulario de carga con los datos de esta fila, pero como una
@@ -387,9 +401,6 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
       executeMover(pendingAction.row, pendingAction.direccion, () => setPendingAction(null));
     }
   };
-
-  const page = Math.floor(offset / LIMIT) + 1;
-  const totalPages = totalCount !== undefined ? Math.max(1, Math.ceil(totalCount / LIMIT)) : undefined;
 
   return (
     <div className={styles.wrap}>
@@ -631,31 +642,11 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
           </table>
         </div>
 
+        {/* Sin paginado: el pie sólo informa cuántas filas hay en pantalla. */}
         <div className={styles.pagination}>
           <span className={styles.pageInfo}>
             {totalCount !== undefined ? `${totalCount} prestación${totalCount !== 1 ? "es" : ""}` : "—"}
           </span>
-          <div className={styles.pageBtns}>
-            <button
-              type="button"
-              className={styles.pageBtn}
-              disabled={offset === 0 || loading}
-              onClick={() => setOffset((o) => Math.max(0, o - LIMIT))}
-            >
-              ◀ Anterior
-            </button>
-            <span className={styles.pageInfo}>
-              Página {page}{totalPages ? ` / ${totalPages}` : ""}
-            </span>
-            <button
-              type="button"
-              className={styles.pageBtn}
-              disabled={(totalCount !== undefined && offset + LIMIT >= totalCount) || rows.length < LIMIT || loading}
-              onClick={() => setOffset((o) => o + LIMIT)}
-            >
-              Siguiente ▶
-            </button>
-          </div>
         </div>
       </div>
 

@@ -129,7 +129,10 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
 
     try {
       if (willSelect) {
-        await addPadronByOS(medicoId, nroOS);
+        // MARCA="S" explícito: sin esto el backend crea la fila con el
+        // default legacy "N" y el médico queda invisible en el padrón por
+        // obra social aunque el checkbox del perfil lo muestre marcado.
+        await addPadronByOS(medicoId, nroOS, { MARCA: "S" });
         notify.success(`Se agregó la obra social N° ${nroOS}.`);
       } else {
         await removePadronByOS(medicoId, nroOS);
@@ -227,7 +230,7 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
         if (willSelect && isSel) continue;
         if (!willSelect && !isSel) continue;
 
-        if (willSelect) await addPadronByOS(medicoId, id);
+        if (willSelect) await addPadronByOS(medicoId, id, { MARCA: "S" });
         else await removePadronByOS(medicoId, id);
       }
 

@@ -1,5 +1,6 @@
 import React from "react";
 import MedicoAutocomplete from "../../components/MedicoAutocomplete";
+import NumericInput from "../../components/NumericInput";
 import type { MedicoOption, PrecioResponse, TipoCalculo } from "../../types";
 import { formatMoney, parseMoney } from "../../money";
 import styles from "../CargaFacturacion.module.scss";
@@ -11,7 +12,7 @@ export interface AyudanteLinea {
   prestacionId?: number | null;
   codMedico: string | null;
   medico: MedicoOption | null;
-  porcentaje: number;
+  porcentaje: string;
   tipoCalculo: TipoCalculo;
   precioManual: string;
 }
@@ -24,14 +25,15 @@ export const crearAyudanteLinea = (precioAutomatico: string): AyudanteLinea => (
   prestacionId: null,
   codMedico: null,
   medico: null,
-  porcentaje: 100,
+  porcentaje: "100",
   tipoCalculo: "A",
   precioManual: precioAutomatico,
 });
 
 const montoLinea = (linea: AyudanteLinea, precio: PrecioResponse): number => {
   const base = linea.tipoCalculo === "A" ? parseMoney(precio.ayudante) : parseMoney(linea.precioManual);
-  return base * (linea.porcentaje / 100);
+  const porc = parseInt(linea.porcentaje, 10);
+  return base * ((Number.isNaN(porc) ? 100 : porc) / 100);
 };
 
 export const totalAyudantes = (lineas: AyudanteLinea[], precio: PrecioResponse | null): number => {
@@ -149,11 +151,11 @@ const AyudanteSection: React.FC<Props> = ({
             <div className={styles.fieldsRow}>
               <div className={styles.filterField}>
                 <label className={styles.filterLabel}>Porcentaje (%)</label>
-                <input
+                <NumericInput
                   className={styles.input}
-                  type="number" min={1} max={100}
+                  min={1} max={100}
                   value={linea.porcentaje}
-                  onChange={(e) => updateLinea(linea.id, { porcentaje: Math.min(100, Math.max(1, Number(e.target.value))) })}
+                  onChange={(v) => updateLinea(linea.id, { porcentaje: v })}
                   disabled={disabled}
                 />
               </div>
@@ -161,11 +163,11 @@ const AyudanteSection: React.FC<Props> = ({
                 <label className={styles.filterLabel}>Precio del ayudante</label>
                 {/* Mismo input siempre: en Automático muestra el valor del código y
                     queda bloqueado; en Manual se habilita para editarlo. */}
-                <input
+                <NumericInput
                   className={styles.input}
-                  type="number" min={0} step="0.01"
+                  decimals min={0}
                   value={linea.tipoCalculo === "A" ? precio.ayudante : linea.precioManual}
-                  onChange={(e) => updateLinea(linea.id, { precioManual: e.target.value })}
+                  onChange={(v) => updateLinea(linea.id, { precioManual: v })}
                   disabled={disabled || linea.tipoCalculo === "A"}
                 />
               </div>

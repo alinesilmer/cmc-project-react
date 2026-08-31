@@ -5,6 +5,9 @@ $blue-light: #e8efff;
 $red: #dc2626;
 $red-light: #fee2e2;
 $green: #166534;
+$audit-row: #fefce8;
+$audit-halo: #fef9c3;
+$audit-accent: #ca8a04;
 $border: #e2e8f0;
 $surface: #ffffff;
 $text-1: #1a1f2e;
@@ -166,7 +169,7 @@ $shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
 .rowRevisada td {
-  background: #f3fbf5;
+  background: $audit-row;
 }
 
 .idCell {
@@ -419,7 +422,7 @@ $shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
   width: 17px;
   height: 17px;
   cursor: pointer;
-  accent-color: $green;
+  accent-color: $audit-accent;
 }
 
 .auditCheckboxWrap {
@@ -433,7 +436,7 @@ $shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
 .auditCheckboxOn {
-  background: #dcfce7;
+  background: $audit-halo;
 }
 
 .iconBtn {

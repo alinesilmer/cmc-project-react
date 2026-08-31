@@ -375,6 +375,7 @@ const FacturaDetalle: React.FC = () => {
         ) : <span className={styles.mutedText}>—</span>}
       </td>
       <td>{p.nro_afiliado || <span className={styles.mutedText}>—</span>}</td>
+      <td>{p.nombre_paciente || <span className={styles.mutedText}>—</span>}</td>
       <td>
         <div className={styles.cantidadCell}>
           <span className={styles.cantidadMain}>Cant. {p.cantidad ?? "—"}</span>
@@ -409,7 +410,7 @@ const FacturaDetalle: React.FC = () => {
 
     return (
       <tr key={`resumen-${grupo.cod_medico}`} className={styles.resumenRow}>
-        <td colSpan={15}>
+        <td colSpan={16}>
           <div className={styles.resumenContent}>
             <span className={styles.resumenLabel}>
               RESUMEN: Socio {grupo.cod_medico} {grupo.nombre ?? ""}
@@ -522,6 +523,7 @@ const FacturaDetalle: React.FC = () => {
                 <th>Código</th>
                 <th>Vía</th>
                 <th>Nro Afiliado</th>
+                <th>Paciente</th>
                 <th>Cantidad</th>
                 <th>%</th>
                 <th>Honorarios</th>
@@ -534,13 +536,13 @@ const FacturaDetalle: React.FC = () => {
             </thead>
             <tbody>
               {loading && (
-                <tr><td colSpan={15} className={styles.loadingCell}>Cargando…</td></tr>
+                <tr><td colSpan={16} className={styles.loadingCell}>Cargando…</td></tr>
               )}
               {!loading && error && (
-                <tr><td colSpan={15} className={styles.emptyCell}>{error}</td></tr>
+                <tr><td colSpan={16} className={styles.emptyCell}>{error}</td></tr>
               )}
               {!loading && !error && detalle && detalle.total_prestaciones === 0 && (
-                <tr><td colSpan={15} className={styles.emptyCell}>Esta factura no tiene prestaciones.</td></tr>
+                <tr><td colSpan={16} className={styles.emptyCell}>Esta factura no tiene prestaciones.</td></tr>
               )}
               {!loading && !error && detalle && gruposOrdenados.map((grupo) => (
                 <React.Fragment key={grupo.cod_medico}>

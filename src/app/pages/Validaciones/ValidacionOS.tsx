@@ -41,6 +41,7 @@ import {
   iniciales,
   nombreMes,
 } from "./validaciones.types";
+import { esPendienteDeObraSocial } from "./validaciones.types";
 import type {
   Periodo,
   Prestacion,
@@ -603,24 +604,32 @@ function ResultadoBanner({
   onCerrar: () => void;
 }) {
   const { estado, mensaje, prestacion, mostrarAyuda = true } = resultado;
+
+  // Nobis grada el `P-Pendiente` como `rechazada` en la base (importe 0,
+  // fuera de factura), pero acá corresponde el mismo aviso que un `pendiente`
+  // real: la orden existe en Nobis, sólo falta que el afiliado la gestione.
+  // Ver `esPendienteDeObraSocial` — no cambia `estado`, sólo cómo se muestra.
+  const pendienteDeGestion = estado === "rechazada" && esPendienteDeObraSocial(mensaje);
+  const estadoVisual = pendienteDeGestion ? "pendiente" : estado;
+
   const Icono =
-    estado === "autorizada" || estado === "cargada"
+    estadoVisual === "autorizada" || estadoVisual === "cargada"
       ? BadgeCheck
-      : estado === "pendiente"
+      : estadoVisual === "pendiente"
         ? Info
         : CircleAlert;
 
   const titulo =
-    estado === "autorizada"
+    estadoVisual === "autorizada"
       ? "Prestación autorizada"
-      : estado === "cargada"
+      : estadoVisual === "cargada"
         ? "Prestación cargada"
-        : estado === "pendiente"
+        : estadoVisual === "pendiente"
           ? "Requiere gestión del afiliado"
           : "No se pudo cargar la prestación";
 
   return (
-    <div className={`${s.resultado} ${s[`resultado_${estado}`]}`} role="status">
+    <div className={`${s.resultado} ${s[`resultado_${estadoVisual}`]}`} role="status">
       <button
         type="button"
         className={s.resultadoClose}

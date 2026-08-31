@@ -1,0 +1,491 @@
+@use "@/app/styles/all.scss" as *;
+
+.page {
+  height: 100vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: $spacing-8;
+  gap: 1rem;
+}
+
+.content {
+  width: 100%;
+  flex: 1 1 auto;
+  overflow: auto;
+}
+.content > div {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+  flex: 0 0 auto;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: $font-size-2xl;
+}
+
+.subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: $gray-600;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: $gray-500;
+}
+
+.breadcrumb button {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  font-weight: 600;
+  color: #3455c1;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.breadcrumb .current {
+  color: $gray-900;
+  font-weight: 600;
+}
+
+.errorBanner {
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  border-radius: $border-radius-md;
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+// ── Pestañas ─────────────────────────────────────────────────────────────
+// Mismo patrón que el legajo del socio (DoctorProfilePage.module.scss:166):
+// subrayado animado con `layoutId` compartido de framer-motion.
+.tabs {
+  display: flex;
+  gap: $spacing-6;
+  border-bottom: 1px solid $gray-200;
+}
+
+.tab {
+  position: relative;
+  padding: 10px 0;
+  background: transparent;
+  border: 0;
+  color: $gray-600;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  outline: none;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tab:hover {
+  color: $gray-900;
+}
+
+.tabActive {
+  color: $gray-900;
+}
+
+.tabUnderline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: $primary-blue;
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tabUnderline {
+    transition: none !important;
+  }
+}
+
+// ── KPIs ─────────────────────────────────────────────────────────────────
+.kpiRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-6;
+}
+
+.kpiCard {
+  background: $white;
+  padding: $spacing-6;
+  border-radius: $border-radius-md;
+  box-shadow: $shadow-md;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-2;
+  flex: 1 1 220px;
+  min-width: 220px;
+}
+
+.kpiCardCaja {
+  border-bottom: 3px solid $warning-orange;
+}
+
+.kpiValue {
+  font-size: $font-size-4xl;
+  font-weight: $font-weight-bold;
+  color: $primary-blue;
+}
+
+.kpiLabel {
+  font-size: $font-size-sm;
+  color: $gray-600;
+  font-weight: $font-weight-medium;
+  text-align: center;
+}
+
+// ── Filtros ──────────────────────────────────────────────────────────────
+.filtersCard {
+  padding: 14px;
+}
+
+.filtersRow {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 20%;
+  min-width: 160px;
+}
+.filterGroup.wide {
+  width: 30%;
+}
+.filterGroup.narrow {
+  width: 15%;
+}
+
+.filterGroup label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: $gray-600;
+  font-weight: 600;
+}
+
+.filterGroup input,
+.filterGroup select {
+  height: 37px;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-md;
+  padding: 0 10px;
+  font-size: 13px;
+  outline: none;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.filterGroup input:focus,
+.filterGroup select:focus {
+  border-color: #1b56ff;
+}
+
+.searchInputWrap {
+  position: relative;
+}
+.searchInputWrap svg {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: $gray-400;
+  pointer-events: none;
+}
+.searchInputWrap input {
+  width: 100%;
+  padding-left: 32px !important;
+}
+
+.checkboxGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 37px;
+}
+.checkboxGroup label {
+  font-size: 12px;
+  color: $gray-700;
+  white-space: nowrap;
+}
+.checkboxGroup input {
+  width: 15px;
+  height: 15px;
+  accent-color: #3455c1;
+}
+
+.filterGroup :global(.MuiOutlinedInput-root) {
+  height: 37px;
+  padding: 0 32px 0 0 !important;
+  font-size: 13px;
+  border-radius: $border-radius-md;
+}
+
+// ── Mini KPIs del drill-down ────────────────────────────────────────────
+.miniKpiRow {
+  display: flex;
+  gap: 14px;
+}
+.miniKpiCard {
+  flex: 1;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: 10px;
+  padding: 14px 18px;
+}
+.miniKpiLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: $gray-600;
+  font-weight: 600;
+}
+.miniKpiValue {
+  font-size: 20px;
+  font-weight: 700;
+  color: $gray-900;
+  margin-top: 4px;
+}
+.miniKpiValueCaja {
+  color: #92400e;
+}
+
+// ── Tabla ────────────────────────────────────────────────────────────────
+.tableCard {
+  padding: 0;
+  overflow: hidden;
+}
+
+.loadingState {
+  padding: 24px;
+  color: $gray-500;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.emptyState {
+  padding: 48px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: $gray-500;
+}
+.emptyState svg {
+  color: $gray-300;
+}
+.emptyTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: $gray-700;
+}
+.emptyHint {
+  font-size: 12.5px;
+  color: $gray-400;
+  text-align: center;
+}
+
+.tableWrap {
+  overflow: auto;
+  width: 100%;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  background: linear-gradient(135deg, #1b56ff 0%, #0a3fd4 100%);
+  color: #fff;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 10px 12px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eef2ff;
+  font-size: 13px;
+  color: $gray-900;
+  vertical-align: middle;
+}
+
+.table tbody tr {
+  cursor: pointer;
+}
+.table tbody tr:hover {
+  background: #f8faff;
+}
+
+.numCell {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.conceptCode {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: $gray-500;
+  background: $gray-100;
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-right: 6px;
+}
+
+.saldoCell {
+  text-align: right;
+  white-space: nowrap;
+}
+.saldoValue {
+  font-size: 13px;
+  font-weight: 700;
+  color: $gray-900;
+}
+.saldoCajaChip {
+  display: inline-block;
+  margin-top: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.badgeCaja {
+  background: #fef3c7;
+  color: #92400e;
+}
+.badgeLiquidacion {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.badgePendiente {
+  background: #e5e7eb;
+  color: #334155;
+}
+.badgeEnPago {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.badgeAplicado {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.pagadorHint {
+  font-size: 11px;
+  color: $gray-500;
+  font-weight: 400;
+  margin-top: 2px;
+}
+
+.rowChevron {
+  text-align: center;
+  color: $gray-400;
+}
+
+.paginationBar {
+  background: rgba(255, 255, 255, 0.98);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 12px;
+  border-top: 1px solid #eef2ff;
+}
+
+.paginationBar button {
+  border: 1px solid $gray-300;
+  background: #fff;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.paginationBar button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.paginationBar span {
+  font-size: 13px;
+  color: $gray-700;
+}
+
+@media (max-width: 1280px) {
+  .filterGroup {
+    width: 45%;
+  }
+}
+
+@media (max-width: 760px) {
+  .content {
+    padding: 12px;
+  }
+  .kpiCard {
+    flex: 1 1 calc(50% - #{$spacing-2});
+    min-width: 0;
+  }
+  .filterGroup {
+    width: 100%;
+  }
+}

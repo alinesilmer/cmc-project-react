@@ -19,6 +19,12 @@ type Props = {
   /** Al elegir una opción, MUI hace blur y el foco se pierde. Poner en `false` lo deja
    *  en el campo, que es lo que necesita una pantalla con navegación por teclado. */
   blurOnSelect?: boolean;
+  /** Texto con el que arranca el campo cuando NO hay opción seleccionada (`value` en
+   *  null) pero igual se sabe qué había. Se usa al editar registros viejos que
+   *  guardaron el nombre del paciente sin identificador: sin esto el input se ve
+   *  vacío aunque el dato exista. Solo se lee al montar; en cuanto el operador tipea
+   *  o elige algo, manda lo nuevo. */
+  initialInputValue?: string;
 };
 
 const AppSearchSelect: React.FC<Props> = ({
@@ -29,6 +35,7 @@ const AppSearchSelect: React.FC<Props> = ({
   loading,
   onQueryChange,
   blurOnSelect = true,
+  initialInputValue,
 }) => {
   // `options` se reemplaza por completo en cada búsqueda remota, así que la opción ya
   // seleccionada puede desaparecer de la lista (porque el usuario escribió algo nuevo
@@ -45,7 +52,7 @@ const AppSearchSelect: React.FC<Props> = ({
 
   const selected = pinned && String(pinned.id) === String(value) ? pinned : null;
 
-  const [inputValue, setInputValue] = useState(selected?.label ?? "");
+  const [inputValue, setInputValue] = useState(selected?.label ?? initialInputValue ?? "");
 
   // El seleccionado se antepone a la lista para que MUI no lo pierda de vista — pero
   // solo mientras el texto siga siendo el suyo. En cuanto el operador tipea algo

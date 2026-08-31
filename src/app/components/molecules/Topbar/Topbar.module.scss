@@ -13,6 +13,11 @@
   font-family: "Inter", sans-serif;
 }
 
+// Barra que no acompaña el scroll — ver `sinSticky()` en Topbar.tsx.
+.topbarEstatica {
+  position: static;
+}
+
 .inner {
   display: flex;
   align-items: center;

@@ -53,6 +53,10 @@ const AfiliadoAutocomplete: React.FC<Props> = ({ value, onChange, disabled, pres
       loading={loading}
       disabled={disabled}
       blurOnSelect={blurOnSelect}
+      // Prestaciones viejas guardaron el nombre del paciente con el identificador
+      // vacío (`dni_p = ''`). Ahí no hay opción que seleccionar, pero el nombre se
+      // muestra igual en el campo en vez de dejarlo en blanco.
+      initialInputValue={!value && presetLabel ? presetLabel : undefined}
     />
   );
 };

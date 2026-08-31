@@ -55,6 +55,7 @@ const DebitosCreditos = lazy(() => import("./app/pages/Pagos/DebitosCreditos/Deb
 const RefacturacionesList = lazy(() => import("./app/pages/Pagos/RefacturacionesList/RefacturacionesList"));
 const DeduccionesList = lazy(() => import("./app/pages/Deducciones/DeduccionesList"));
 const NuevaDeduccion = lazy(() => import("./app/pages/Deducciones/NuevaDeduccion"));
+const CobranzasPage = lazy(() => import("./app/pages/Cobranzas/CobranzasPage"));
 
 // Facturación (carga de prestaciones del Colegio)
 const CargaFacturacion = lazy(() => import("./app/pages/facturacion/CargaFacturacion/CargaFacturacion"));
@@ -62,6 +63,7 @@ const CierrePeriodo = lazy(() => import("./app/pages/facturacion/CierrePeriodo/C
 const VerPeriodos = lazy(() => import("./app/pages/facturacion/VerPeriodos/VerPeriodos"));
 const Complementarias = lazy(() => import("./app/pages/facturacion/Complementarias/Complementarias"));
 const FacturacionFacturaDetalle = lazy(() => import("./app/pages/facturacion/FacturaDetalle/FacturaDetalle"));
+const ConsultaPrestacion = lazy(() => import("./app/pages/facturacion/ConsultaPrestacion/ConsultaPrestacion"));
 
 // WEBSITE
 const WebRoutes = lazy(() => import("./website/router"));
@@ -189,6 +191,8 @@ export default function RootRoutes() {
                 <Route element={<RequireScope scope="facturacion:leer" />}>
                   <Route path="periodos" element={<VerPeriodos />} />
                   <Route path="periodos/:id" element={<FacturacionFacturaDetalle />} />
+                  <Route path="consulta" element={<ConsultaPrestacion />} />
+                  <Route path="consulta/:id" element={<ConsultaPrestacion />} />
                 </Route>
                 <Route element={<RequireScope scope="facturacion:complementar" />}>
                   <Route path="complementarias" element={<Complementarias />} />
@@ -208,6 +212,10 @@ export default function RootRoutes() {
 
               <Route element={<RequireScope scope="medico:crear" />}>
                 <Route path="register-socio" element={<RegisterSocio />} />
+              </Route>
+
+              <Route element={<RequireScope scope="cobranza:leer" />}>
+                <Route path="cobranzas" element={<CobranzasPage />} />
               </Route>
 
               <Route element={<RequireScope scope="rbac:gestionar" />}>

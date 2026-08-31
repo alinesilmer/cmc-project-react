@@ -165,6 +165,41 @@
   font-weight: $font-weight-medium;
 }
 
+// ─── Consulta en vivo (cartel activo/inactivo debajo del campo) ────────────────
+// Mismo cartel que tenía el legacy de Nobis (panel-green/panel-orange/panel-red
+// debajo del número de afiliado), ahora genérico para cualquier campo con
+// `consultaEnVivo`.
+
+.liveCheck {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  padding: $spacing-2 $spacing-3;
+  border-radius: $border-radius-md;
+  line-height: 1.35;
+
+  svg {
+    flex: none;
+  }
+}
+
+.liveCheckCargando {
+  color: $gray-500;
+  background: $gray-50;
+}
+
+.liveCheckOk {
+  color: $success-green;
+  background: rgba($success-green, 0.1);
+}
+
+.liveCheckError {
+  color: $danger-red;
+  background: rgba($danger-red, 0.08);
+}
+
 // ─── Acciones ─────────────────────────────────────────────────────────────────
 
 .actions {

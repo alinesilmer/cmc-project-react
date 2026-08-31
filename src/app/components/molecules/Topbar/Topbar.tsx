@@ -100,6 +100,7 @@ const TOP_NAV: TopEntry[] = [
           { path: `${base}/facturacion/carga`, icon: DollarSign, label: "Cargar Prestaciones", perms: ["facturacion:cargar"] },
           { path: `${base}/facturacion/cierre`, icon: CalendarDays, label: "Cerrar Factura", perms: ["facturacion:cerrar"] },
           { path: `${base}/facturacion/periodos`, icon: ClipboardList, label: "Ver períodos", perms: ["facturacion:leer"] },
+          { path: `${base}/facturacion/consulta`, icon: Search, label: "Buscar prestación", perms: ["facturacion:leer"] },
           { path: `${base}/facturacion/complementarias`, icon: Layers, label: "Complementarias", perms: ["facturacion:complementar"] },
         ],
       },
@@ -133,6 +134,7 @@ const TOP_NAV: TopEntry[] = [
           { path: `${base}/users`, icon: BookUser, label: "Listado de Socios", perms: ["medico:leer"] },
           { path: `${base}/especialidades`, icon: ClipboardPlus, label: "Especialidades", perms: ["catalogo:leer"] },
           { path: `${base}/servicios`, icon: Building2, label: "Servicios", perms: ["medico:leer"] },
+          { path: `${base}/cobranzas`, icon: Wallet, label: "Cobranzas", perms: ["cobranza:leer"] },
         ],
       },
       {
@@ -269,6 +271,23 @@ function columnVisible(col: MenuColumn, can: (code: string) => boolean): boolean
 // tiene algo para mostrar.
 function menuVisible(entry: Extract<TopEntry, { kind: "menu" }>, can: (code: string) => boolean): boolean {
   return entry.columns.some((c) => columnVisible(c, can));
+}
+
+// Pantallas donde la barra NO acompaña el scroll. El formulario de carga de
+// prestaciones es largo (formulario + listado del médico debajo) y la barra fija le
+// come alto útil mientras el operador baja; ahí se deja estática y se recupera al
+// volver arriba. Cubre alta, edición y carga en complementaria — es el mismo
+// formulario en las tres rutas.
+const RUTAS_SIN_STICKY = [
+  `${base}/facturacion/carga`,
+  `${base}/facturacion/complementarias/`,
+];
+
+function sinSticky(pathname: string): boolean {
+  return (
+    pathname.startsWith(RUTAS_SIN_STICKY[0]) ||
+    (pathname.startsWith(RUTAS_SIN_STICKY[1]) && pathname.endsWith("/cargar"))
+  );
 }
 
 export default function Topbar() {
@@ -474,7 +493,10 @@ export default function Topbar() {
   };
 
   return (
-    <header className={styles.topbar} ref={headerRef}>
+    <header
+      className={`${styles.topbar} ${sinSticky(location.pathname) ? styles.topbarEstatica : ""}`}
+      ref={headerRef}
+    >
       <div className={styles.inner}>
         <Link to={`${base}/dashboard`} className={styles.brand} aria-label="Inicio">
           <img src={Logo} alt="CMC" className={styles.logo} />

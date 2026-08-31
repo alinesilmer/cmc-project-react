@@ -34,6 +34,7 @@ import { FACTURACION_ULTIMA_OS_KEY } from "../constants";
 
 import DuplicadoConfirmModal from "../components/DuplicadoConfirmModal";
 import ClinicaAutocomplete from "../components/ClinicaAutocomplete";
+import NumericInput from "../components/NumericInput";
 
 import { usePeriodoActivo } from "./hooks/usePeriodoActivo";
 import { useNomencladorPrecio } from "./hooks/useNomencladorPrecio";
@@ -87,7 +88,7 @@ const buildAyudantesFromGrupo = async (
         prestacionId: g.id,
         codMedico: g.cod_medico,
         medico,
-        porcentaje: g.porcentaje ?? 100,
+        porcentaje: String(g.porcentaje ?? 100),
         tipoCalculo: (g.tipo_calculo as TipoCalculo) ?? "A",
         precioManual: precioAyudante,
       };
@@ -95,7 +96,21 @@ const buildAyudantesFromGrupo = async (
   );
 };
 
-type Mantener = { obraSocial: boolean; paciente: boolean; fecha: boolean; clinica: boolean; medico: boolean };
+// Cantidad/Sesión/Porcentaje se guardan como string en el estado (los inputs son
+// type="text" con bloqueo de no-dígitos, ver NumericInput): esto convierte al enviar.
+const toInt = (v: string, fallback: number): number => {
+  const n = parseInt(v, 10);
+  return Number.isNaN(n) ? fallback : n;
+};
+
+type Mantener = {
+  obraSocial: boolean;
+  paciente: boolean;
+  fecha: boolean;
+  clinica: boolean;
+  medico: boolean;
+  autorizacion: boolean;
+};
 
 const CargaFacturacion: React.FC = () => {
   const navigate = useNavigate();
@@ -165,6 +180,12 @@ const CargaFacturacion: React.FC = () => {
   } | null>(null);
   const [loadingEdit, setLoadingEdit] = useState(isEdit);
   const [editNotFound, setEditNotFound] = useState(false);
+  // "La primera precarga de edición terminó ENTERA (datos + labels de los
+  // autocompletes)". Es lo que gatea el render del formulario: los autocompletes
+  // fijan su texto al montar (ver AppSearchSelect) y si se muestran a mitad de la
+  // precarga quedan con "(valor actual)" o vacíos para siempre. No se puede usar
+  // `editMeta` para esto — se setea al principio de la precarga, no al final.
+  const [editHidratado, setEditHidratado] = useState(false);
   // Labels descriptivos para los autocompletes en edición: la prestación solo trae los
   // códigos, así que se resuelven contra las búsquedas para mostrar nombre/matrícula/desc.
   const [medicoPreset, setMedicoPreset] = useState<string | null>(null);
@@ -209,15 +230,22 @@ const CargaFacturacion: React.FC = () => {
   const [codNomenclador, setCodNomenclador] = useState<string | null>(null);
   // Categoría del código elegido: la vía solo se ofrece para "Honorarios individuales".
   const [codNomencladorCategoria, setCodNomencladorCategoria] = useState<string | null>(null);
-  const [cantidad, setCantidad] = useState(1);
-  const [sesion, setSesion] = useState(1);
+  const [cantidad, setCantidad] = useState("1");
+  const [sesion, setSesion] = useState("1");
   const [tipoCalculo, setTipoCalculo] = useState<TipoCalculo>("A");
   const [via, setVia] = useState<ViaPractica>("T");
-  const [porcentaje, setPorcentaje] = useState(100);
+  const [porcentaje, setPorcentaje] = useState("100");
   const [honorarios, setHonorarios] = useState("0");
   const [gastos, setGastos] = useState("0");
+  // Tipo de prestador de ESTA carga: "medico" (cirujano, default) factura
+  // honorarios/gastos y admite ayudantes de equipo; "ayudante" factura un único monto
+  // de ayudante y no admite equipo (el ayudante puede ser socio sin que el cirujano lo
+  // sea, y viceversa — casos que antes no se podían cargar por separado).
+  const [tipoPrestador, setTipoPrestador] = useState<"medico" | "ayudante">("medico");
+  const [montoAyudante, setMontoAyudante] = useState("0");
 
-  // Ayudantes quirúrgicos (0..N según cantidad_ayudantes del código+OS)
+  // Ayudantes quirúrgicos (0..N según cantidad_ayudantes del código+OS). Solo aplica
+  // cuando `tipoPrestador === "medico"`.
   const [ayudantes, setAyudantes] = useState<AyudanteLinea[]>([]);
 
   // UI. En complementaria no se mantiene la fecha (rezagadas de fechas distintas), y ese
@@ -229,6 +257,7 @@ const CargaFacturacion: React.FC = () => {
     fecha: false,
     clinica: false,
     medico: false,
+    autorizacion: false,
   }));
   const [guardando, setGuardando] = useState(false);
   const [errores, setErrores] = useState<Record<string, string>>({});
@@ -270,8 +299,6 @@ const CargaFacturacion: React.FC = () => {
   // snapshot la sostiene; se invalida si el operador toca el médico a mano.
   const [ultimoMedico, setUltimoMedico] = useState<MedicoOption | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
-  // Fuerza volver a leer la prestación en edición (se incrementa después de guardar).
-  const [editReloadKey, setEditReloadKey] = useState(0);
 
   // El médico que fija el precio y los códigos habilitados: el propio payee si es un
   // médico, o el médico ejecutor si el payee es una clínica.
@@ -298,9 +325,13 @@ const CargaFacturacion: React.FC = () => {
     via,
   });
 
-  // Precarga de la prestación cuando se entra en modo edición
+  // Precarga de la prestación cuando se entra en modo edición.
+  // Espera a las listas precargadas: los nombres de médico / médico ejecutor / obra
+  // social salen de ahí (búsqueda en memoria, sin pedidos extra ni carreras). El
+  // formulario tampoco se muestra antes de tenerlas, así que no cuesta nada.
   useEffect(() => {
     if (!isEdit || !editId) return;
+    if (!medicosPrecargados || !obrasSocialesPrecargadas) return;
     let active = true;
     setLoadingEdit(true);
     (async () => {
@@ -323,30 +354,60 @@ const CargaFacturacion: React.FC = () => {
         setCodClinica(p.cod_clinica ?? null);
         setAutorizacion(p.autorizacion ?? "");
         setCodNomenclador(p.cod_nomenclador ?? null);
-        setCantidad(p.cantidad ?? 1);
-        setSesion(p.sesion ?? 1);
+        setCantidad(String(p.cantidad ?? 1));
+        setSesion(String(p.sesion ?? 1));
         setTipoCalculo((p.tipo_calculo as TipoCalculo) ?? "A");
         setVia((p.via as ViaPractica) ?? "T");
-        setPorcentaje(p.porcentaje ?? 100);
-        setHonorarios(p.honorarios != null ? String(p.honorarios) : "0");
-        setGastos(p.gastos != null ? String(p.gastos) : "0");
+        setPorcentaje(String(p.porcentaje ?? 100));
+        const esAyudante = parseMoney(p.ayudante) > 0;
+        setTipoPrestador(esAyudante ? "ayudante" : "medico");
+        if (esAyudante) {
+          setMontoAyudante(p.ayudante != null ? String(p.ayudante) : "0");
+          setHonorarios("0");
+          setGastos("0");
+        } else {
+          setHonorarios(p.honorarios != null ? String(p.honorarios) : "0");
+          setGastos(p.gastos != null ? String(p.gastos) : "0");
+        }
+        // La obra social sale de la lista precargada: si el código no está en el
+        // catálogo (pasa con filas importadas de CMC) se muestra el número solo.
+        const os = p.cod_obra_social
+          ? obrasSocialesPrecargadas.find(
+              (x) => String(x.nro_obra_social) === String(p.cod_obra_social),
+            ) ?? null
+          : null;
         setEditMeta({
           cod_obra_social: p.cod_obra_social ?? "",
+          // El nombre viene de una columna de ancho fijo: llega con espacios al final.
+          cod_obra_social_label: os ? `${os.nro_obra_social} · ${os.nombre.trim()}` : undefined,
           periodo: p.periodo,
           estado: p.estado ?? null,
         });
 
-        // La prestación solo trae códigos. Resolvemos los labels descriptivos con las
-        // búsquedas (en paralelo, best-effort) ANTES de bajar loadingEdit: los
-        // autocompletes fijan su texto al montar, así que tienen que estar listos ya.
+        // La prestación solo trae códigos: los labels descriptivos se resuelven ANTES
+        // de habilitar el render del formulario (`editHidratado`), porque los
+        // autocompletes fijan su texto al montar. Médico y médico ejecutor salen de la
+        // lista precargada — `/medicos/todos` ya trae médicos Y clínicas con
+        // `es_organizacion`, así que sirve para el payee sea cual sea.
+        const buscarMedico = (cod: string | null | undefined): MedicoOption | null =>
+          cod ? medicosPrecargados.find((m) => String(m.cod) === String(cod)) ?? null : null;
+        const labelMedico = (m: MedicoOption) =>
+          [m.nombre, m.matricula].filter((v) => v != null && v !== "").join(" · ") || null;
+
+        const payee = buscarMedico(p.cod_medico);
+        if (payee) {
+          setMedicoSeleccionado(payee);
+          setMedicoPreset(labelMedico(payee));
+        }
+        const ejecutor = esOrg ? buscarMedico(p.cod_medico_ejecutor) : null;
+        if (ejecutor) {
+          setMedicoEjecutor(ejecutor);
+          setEjecutorPreset(labelMedico(ejecutor));
+        }
+
         // Los códigos habilitados dependen del médico efectivo (ejecutor si es clínica).
         const codMedForCodigos = esOrg ? (p.cod_medico_ejecutor ?? p.cod_medico) : p.cod_medico;
-        // /medicos ya devuelve `es_organizacion` para cualquier socio (médico o
-        // clínica): un solo fetch alcanza para resolver el payee sea cual sea.
-        const [payeeRes, ejeRes, osRes, nomRes, cliRes] = await Promise.allSettled([
-          fetchMedicos(p.cod_medico),
-          esOrg && p.cod_medico_ejecutor ? fetchMedicos(p.cod_medico_ejecutor) : Promise.resolve([]),
-          p.cod_obra_social ? fetchObrasSociales(p.cod_obra_social) : Promise.resolve([]),
+        const [nomRes, cliRes] = await Promise.allSettled([
           p.cod_nomenclador
             ? fetchCodigosHabilitados(codMedForCodigos, p.cod_nomenclador)
             : Promise.resolve([]),
@@ -354,32 +415,6 @@ const CargaFacturacion: React.FC = () => {
         ]);
         if (!active) return;
 
-        if (payeeRes.status === "fulfilled") {
-          const m = payeeRes.value.find((x) => x.cod === p.cod_medico);
-          if (m) {
-            setMedicoSeleccionado(m);
-            setMedicoPreset(
-              [m.nombre, m.matricula].filter((v) => v != null && v !== "").join(" · ") || null,
-            );
-          }
-        }
-        if (ejeRes.status === "fulfilled") {
-          const m = (ejeRes.value as MedicoOption[]).find((x) => x.cod === p.cod_medico_ejecutor);
-          if (m) {
-            setMedicoEjecutor(m);
-            setEjecutorPreset(
-              [m.nombre, m.matricula].filter((v) => v != null && v !== "").join(" · ") || null,
-            );
-          }
-        }
-        if (osRes.status === "fulfilled") {
-          const os = osRes.value.find((x) => String(x.nro_obra_social) === p.cod_obra_social);
-          if (os) {
-            setEditMeta((prev) =>
-              prev ? { ...prev, cod_obra_social_label: `${os.nro_obra_social} · ${os.nombre}` } : prev,
-            );
-          }
-        }
         if (nomRes.status === "fulfilled") {
           const nom = nomRes.value.find((x) => x.codigo === p.cod_nomenclador);
           if (nom) {
@@ -402,6 +437,8 @@ const CargaFacturacion: React.FC = () => {
             setAyudantes(lineas);
           }
         }
+        // Recién acá el formulario puede mostrarse: ya está todo, labels incluidos.
+        if (active) setEditHidratado(true);
       } catch {
         setEditNotFound(true);
       } finally {
@@ -411,7 +448,7 @@ const CargaFacturacion: React.FC = () => {
     return () => {
       active = false;
     };
-  }, [isEdit, editId, editReloadKey]);
+  }, [isEdit, editId, medicosPrecargados, obrasSocialesPrecargadas]);
 
   // Carga de la factura complementaria: valida que sea un complemento abierto y fija
   // OS/período. Sostiene el badge del header y la búsqueda de precio/tabla.
@@ -453,10 +490,14 @@ const CargaFacturacion: React.FC = () => {
       return;
     }
     if (tipoCalculo === "A") {
-      setHonorarios(precio.honorarios ?? "0");
-      setGastos(precio.gastos ?? "0");
+      if (tipoPrestador === "ayudante") {
+        setMontoAyudante(precio.ayudante ?? "0");
+      } else {
+        setHonorarios(precio.honorarios ?? "0");
+        setGastos(precio.gastos ?? "0");
+      }
     }
-  }, [precio]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [precio, tipoPrestador]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // El máximo de ayudantes depende del código elegido — al cambiar de código
   // las líneas ya cargadas dejan de tener sentido (podían pertenecer a otro tope).
@@ -473,9 +514,13 @@ const CargaFacturacion: React.FC = () => {
     setTipoCalculo("A");
   }, [codNomenclador]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Limpiar nombre cuando se borra el DNI
+  // Limpiar el nombre cuando se borra el identificador del paciente. La condición es
+  // "vacío", NO "menos de 8 caracteres": el campo no es sólo un DNI, también acepta el
+  // nro de afiliado de la obra social, que suele ser más corto (la mayoría de las
+  // prestaciones cargadas tienen uno de menos de 8). Con el tope de 8, elegir a uno de
+  // esos afiliados —o precargarlo al editar— borraba el nombre recién resuelto.
   useEffect(() => {
-    if (dni.length < 8) setNombrePaciente("");
+    if (!dni) setNombrePaciente("");
   }, [dni]);
 
   const volverATradicional = useCallback(() => setVia("T"), []);
@@ -525,13 +570,21 @@ const CargaFacturacion: React.FC = () => {
         setCodClinica(p.cod_clinica ?? null);
         setAutorizacion(p.autorizacion ?? "");
         setCodNomenclador(p.cod_nomenclador ?? null);
-        setCantidad(p.cantidad ?? 1);
-        setSesion(p.sesion ?? 1);
+        setCantidad(String(p.cantidad ?? 1));
+        setSesion(String(p.sesion ?? 1));
         setTipoCalculo((p.tipo_calculo as TipoCalculo) ?? "A");
         setVia((p.via as ViaPractica) ?? "T");
-        setPorcentaje(p.porcentaje ?? 100);
-        setHonorarios(p.honorarios != null ? String(p.honorarios) : "0");
-        setGastos(p.gastos != null ? String(p.gastos) : "0");
+        setPorcentaje(String(p.porcentaje ?? 100));
+        const esAyudante = parseMoney(p.ayudante) > 0;
+        setTipoPrestador(esAyudante ? "ayudante" : "medico");
+        if (esAyudante) {
+          setMontoAyudante(p.ayudante != null ? String(p.ayudante) : "0");
+          setHonorarios("0");
+          setGastos("0");
+        } else {
+          setHonorarios(p.honorarios != null ? String(p.honorarios) : "0");
+          setGastos(p.gastos != null ? String(p.gastos) : "0");
+        }
 
         const codMedForCodigos = esOrg ? (p.cod_medico_ejecutor ?? p.cod_medico) : p.cod_medico;
         const [payeeRes, ejeRes, osRes, nomRes, cliRes] = await Promise.allSettled([
@@ -605,12 +658,31 @@ const CargaFacturacion: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isReplicando, replicarParam]);
 
+  // A dónde se vuelve al salir del formulario: con el botón "Volver" y, en edición,
+  // también después de guardar. El `?from=` lo pone quien abrió la edición —
+  // `carga` desde la tabla de abajo del propio formulario, el id de la factura desde
+  // el detalle de factura — así se vuelve a la pantalla desde la que se entró.
+  const volverA = isComplemento
+    ? "/panel/facturacion/complementarias"
+    : fromFactura === "carga"
+      ? "/panel/facturacion/carga"
+      : fromFactura
+        ? `/panel/facturacion/periodos/${fromFactura}`
+        : "/panel/facturacion/periodos";
+
   const totalEstimado = useMemo(() => {
+    const porc = toInt(porcentaje, 100);
+    const cant = toInt(cantidad, 1);
+    const ses = toInt(sesion, 1);
+    if (tipoPrestador === "ayudante") {
+      const a = parseMoney(montoAyudante);
+      return a * (porc / 100) * cant * ses;
+    }
     const h = parseMoney(honorarios);
     const g = parseMoney(gastos);
-    const base = (h + g) * (porcentaje / 100) * cantidad * sesion;
+    const base = (h + g) * (porc / 100) * cant * ses;
     return base + totalAyudantes(ayudantes, precio);
-  }, [honorarios, gastos, porcentaje, cantidad, sesion, ayudantes, precio]);
+  }, [tipoPrestador, montoAyudante, honorarios, gastos, porcentaje, cantidad, sesion, ayudantes, precio]);
 
   const buildMainItem = (): PrestacionItem => ({
     cod_medico: codMedico!,
@@ -622,14 +694,14 @@ const CargaFacturacion: React.FC = () => {
     cod_clinica: codClinica,
     autorizacion: autorizacion || null,
     cod_nomenclador: codNomenclador!,
-    cantidad,
-    sesion,
+    cantidad: toInt(cantidad, 1),
+    sesion: toInt(sesion, 1),
     tipo_calculo: tipoCalculo,
     via,
-    honorarios: parseMoney(honorarios),
-    gastos: parseMoney(gastos),
-    ayudante: 0,
-    porcentaje,
+    honorarios: tipoPrestador === "ayudante" ? 0 : parseMoney(honorarios),
+    gastos: tipoPrestador === "ayudante" ? 0 : parseMoney(gastos),
+    ayudante: tipoPrestador === "ayudante" ? parseMoney(montoAyudante) : 0,
+    porcentaje: toInt(porcentaje, 100),
     grupo_equipo_id: null,
   });
 
@@ -648,6 +720,17 @@ const CargaFacturacion: React.FC = () => {
     if (!codNomenclador) errs.codNomenclador = "Requerido";
     // Código no admitido / sin precio ya no bloquea el guardado — PrecioPreviewCard
     // muestra el aviso "⚠ {motivo}" igual, pero la carga se permite en cualquier modo.
+    // Ayudante suelto en modo Automático: si el código no tiene valor de ayudante, el
+    // backend guardaría una fila en 0 sin badge de rol — hay que pasar a Manual y
+    // cargar el importe a mano.
+    if (
+      tipoPrestador === "ayudante" &&
+      tipoCalculo === "A" &&
+      parseMoney(montoAyudante) <= 0
+    ) {
+      errs.montoAyudante =
+        "Este código no tiene valor de ayudante — pasá a cálculo Manual y cargá el importe";
+    }
     if (ayudantes.length > 0) {
       const vistos = new Set<string>();
       ayudantes.forEach((linea, idx) => {
@@ -673,11 +756,15 @@ const CargaFacturacion: React.FC = () => {
     setGastos("0");
     setTipoCalculo("A");
     setVia("T");
-    setPorcentaje(100);
-    setCantidad(1);
-    setSesion(1);
+    setPorcentaje("100");
+    setCantidad("1");
+    setSesion("1");
     setAyudantes([]);
-    setAutorizacion("");
+    setTipoPrestador("medico");
+    setMontoAyudante("0");
+    // El Nº de autorización suele repetirse en una tanda (la OS autoriza varias
+    // prácticas con el mismo número), por eso se puede mantener entre cargas.
+    if (!mantener.autorizacion) setAutorizacion("");
     // Si el payee es una clínica, "Mantener clínica" también aplica al Nº de socio: es
     // el mismo dato (la clínica se carga ahí, no en el campo "Clínica" — que por eso
     // queda oculto). Para un médico normal, "Mantener clínica" no lo toca: es el campo
@@ -741,6 +828,29 @@ const CargaFacturacion: React.FC = () => {
     pendingFocusRef.current = pendientes;
   };
 
+  // Salir de la edición hacia el alta (`/carga/:id` → `/carga`) NO remonta el
+  // componente: es el mismo elemento en la misma posición del árbol de rutas, así que
+  // React conserva su estado. Sin esto, el formulario de alta aparecería cargado con
+  // los datos de la prestación que se acaba de editar.
+  const modoEdicionAnteriorRef = useRef(isEdit);
+  useEffect(() => {
+    const salioDeEdicion = modoEdicionAnteriorRef.current && !isEdit;
+    modoEdicionAnteriorRef.current = isEdit;
+    if (!salioDeEdicion) return;
+    setEditMeta(null);
+    setEditHidratado(false);
+    setEditNotFound(false);
+    setMedicoPreset(null);
+    setEjecutorPreset(null);
+    setCodigoPreset(null);
+    setClinicaPreset(null);
+    setUltimoMedico(null);
+    ayudantesOriginalesRef.current = [];
+    headPrestacionIdRef.current = null;
+    resetForm();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEdit]);
+
   const doGuardarEdit = async () => {
     if (!validate() || !editId) return;
     const payload: PrestacionUpdate = {
@@ -751,13 +861,14 @@ const CargaFacturacion: React.FC = () => {
       cod_clinica: codClinica,
       autorizacion: autorizacion || null,
       cod_nomenclador: codNomenclador!,
-      cantidad,
-      sesion,
+      cantidad: toInt(cantidad, 1),
+      sesion: toInt(sesion, 1),
       tipo_calculo: tipoCalculo,
       via,
-      honorarios: parseMoney(honorarios),
-      gastos: parseMoney(gastos),
-      porcentaje,
+      honorarios: tipoPrestador === "ayudante" ? 0 : parseMoney(honorarios),
+      gastos: tipoPrestador === "ayudante" ? 0 : parseMoney(gastos),
+      ayudante: tipoPrestador === "ayudante" ? parseMoney(montoAyudante) : 0,
+      porcentaje: toInt(porcentaje, 100),
     };
     // La cabecera real (no necesariamente editId: puede haberse editado un ayudante).
     const headId = headPrestacionIdRef.current ?? Number(editId);
@@ -794,7 +905,7 @@ const CargaFacturacion: React.FC = () => {
           honorarios: 0,
           gastos: 0,
           ayudante: ayAmount,
-          porcentaje: linea.porcentaje,
+          porcentaje: toInt(linea.porcentaje, 100),
         };
         if (linea.prestacionId) {
           // Existente → PATCH.
@@ -821,12 +932,12 @@ const CargaFacturacion: React.FC = () => {
       }
 
       notify("Prestación actualizada.");
-      // Se queda en el formulario, igual que la carga normal (para volver está el
-      // botón del header). Se recarga la prestación en vez de dejar el estado como
-      // está: los ayudantes que se acaban de crear todavía no tienen su `prestacionId`
-      // y un segundo guardado los volvería a crear duplicados.
-      setEditReloadKey((k) => k + 1);
-      setRefreshKey((k) => k + 1);
+      // Vuelta a la pantalla desde la que se entró a editar (el formulario de carga o
+      // el detalle de factura, según el `?from=`). Además de ser lo esperado, evita el
+      // riesgo de un segundo guardado sobre un estado desactualizado: los ayudantes
+      // recién creados todavía no tienen su `prestacionId` y se duplicarían.
+      navigate(volverA);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e: any) {
       notify(
         detailMessage(e?.response?.data?.detail) || "Error al guardar",
@@ -871,7 +982,7 @@ const CargaFacturacion: React.FC = () => {
         honorarios: 0,
         gastos: 0,
         ayudante: ayAmount,
-        porcentaje: linea.porcentaje,
+        porcentaje: toInt(linea.porcentaje, 100),
         grupo_equipo_id: null,
       });
     }
@@ -1009,7 +1120,10 @@ const CargaFacturacion: React.FC = () => {
   const maxAyudantes = precio?.cantidad_ayudantes ?? 0;
   // La sección se muestra (en carga, replicar y edición) si el código admite ayudantes
   // o si ya hay líneas cargadas (p. ej. un equipo cuyo código reporta 0 de referencia).
+  // No aplica cuando esta carga ES un ayudante suelto (tipoPrestador="ayudante"): ese
+  // modo factura un único monto y no arma equipo.
   const admiteAyudante =
+    tipoPrestador === "medico" &&
     !!precio && !precioLoading && (maxAyudantes > 0 || ayudantes.length > 0);
 
   // El médico del formulario mientras haya uno; si el reset lo limpió, el último que
@@ -1063,8 +1177,11 @@ const CargaFacturacion: React.FC = () => {
   }
 
   // Solo en la primera lectura: la recarga posterior a guardar no tiene que blanquear
-  // la pantalla — el formulario ya tiene los datos y se actualizan en el lugar.
-  if (isEdit && loadingEdit && !editMeta) {
+  // la pantalla — el formulario ya tiene los datos y se actualizan en el lugar. El
+  // gate es `editHidratado` (y no `editMeta`, que se setea a mitad de la precarga):
+  // si el formulario se muestra antes de tener los labels, los autocompletes montan
+  // con "(valor actual)" y ya no se recuperan.
+  if (isEdit && loadingEdit && !editHidratado) {
     return (
       <div className={styles.container}>
         <div className={styles.header}>
@@ -1208,15 +1325,7 @@ const CargaFacturacion: React.FC = () => {
           <button
             type="button"
             className={styles.backBtn}
-            onClick={() =>
-              navigate(
-                isComplemento
-                  ? "/panel/facturacion/complementarias"
-                  : isEdit && fromFactura
-                    ? `/panel/facturacion/periodos/${fromFactura}`
-                    : "/panel/facturacion/periodos",
-              )
-            }
+            onClick={() => navigate(volverA)}
           >
             <ArrowLeft size={15} /> Volver
           </button>
@@ -1449,14 +1558,11 @@ const CargaFacturacion: React.FC = () => {
                 <label className={styles.filterLabel}>
                   Cantidad <span className={styles.errorText}>*</span>
                 </label>
-                <input
+                <NumericInput
                   className={styles.input}
-                  type="number"
                   min={1}
                   value={cantidad}
-                  onChange={(e) =>
-                    setCantidad(Math.max(1, Number(e.target.value)))
-                  }
+                  onChange={setCantidad}
                   disabled={formDisabled}
                 />
               </div>
@@ -1464,33 +1570,63 @@ const CargaFacturacion: React.FC = () => {
                 <label className={styles.filterLabel}>
                   Sesión <span className={styles.errorText}>*</span>
                 </label>
-                <input
+                <NumericInput
                   className={styles.input}
-                  type="number"
                   min={1}
                   value={sesion}
-                  onChange={(e) =>
-                    setSesion(Math.max(1, Number(e.target.value)))
-                  }
+                  onChange={setSesion}
                   disabled={formDisabled}
                 />
               </div>
               <div className={styles.filterField}>
                 <label className={styles.filterLabel}>% Porcentaje</label>
-                <input
+                <NumericInput
                   className={styles.input}
-                  type="number"
                   min={1}
                   max={100}
                   value={porcentaje}
-                  onChange={(e) =>
-                    setPorcentaje(
-                      Math.min(100, Math.max(1, Number(e.target.value))),
-                    )
-                  }
+                  onChange={setPorcentaje}
                   disabled={formDisabled}
                 />
               </div>
+            </div>
+          </div>
+
+          {/* 7b. Tipo de prestador: cirujano (factura honorarios/gastos, admite equipo)
+              o ayudante suelto (factura un único monto de ayudante, sin equipo). Permite
+              cargar al ayudante como socio del Colegio aunque el cirujano no lo sea. */}
+          <div className={styles.section}>
+            <span className={styles.sectionTitle}>Tipo de prestador</span>
+            <div className={styles.radioRow}>
+              {(
+                [
+                  ["medico", "Médico cirujano"],
+                  ["ayudante", "Ayudante"],
+                ] as const
+              ).map(([v, label]) => (
+                <label key={v} className={styles.radioLabel}>
+                  <input
+                    type="radio"
+                    name="tipoPrestador"
+                    value={v}
+                    checked={tipoPrestador === v}
+                    onChange={() => {
+                      setTipoPrestador(v);
+                      if (v === "ayudante") {
+                        setAyudantes([]);
+                        if (tipoCalculo === "A" && precio) {
+                          setMontoAyudante(precio.ayudante ?? "0");
+                        }
+                      } else if (tipoCalculo === "A" && precio) {
+                        setHonorarios(precio.honorarios ?? "0");
+                        setGastos(precio.gastos ?? "0");
+                      }
+                    }}
+                    disabled={formDisabled}
+                  />
+                  {label}
+                </label>
+              ))}
             </div>
           </div>
 
@@ -1512,14 +1648,18 @@ const CargaFacturacion: React.FC = () => {
                     checked={tipoCalculo === v}
                     onChange={() => {
                       setTipoCalculo(v);
-                      // El efecto que sincroniza honorarios/gastos solo mira `precio`:
+                      // El efecto que sincroniza los montos solo mira `precio`:
                       // si el operador vuelve a Automático sin que `precio` haya
                       // cambiado, ese efecto no dispara y quedaría el monto manual
                       // viejo puesto en un campo que ya se ve (y se guarda) como
                       // automático. Se resincroniza acá, en el momento del toggle.
                       if (v === "A" && precio) {
-                        setHonorarios(precio.honorarios ?? "0");
-                        setGastos(precio.gastos ?? "0");
+                        if (tipoPrestador === "ayudante") {
+                          setMontoAyudante(precio.ayudante ?? "0");
+                        } else {
+                          setHonorarios(precio.honorarios ?? "0");
+                          setGastos(precio.gastos ?? "0");
+                        }
                       }
                     }}
                     disabled={formDisabled}
@@ -1530,7 +1670,7 @@ const CargaFacturacion: React.FC = () => {
             </div>
           </div>
 
-          {/* 9. Honorarios y gastos */}
+          {/* 9. Montos: Honorarios/Gastos para el cirujano, un único campo para el ayudante. */}
           <div className={styles.section}>
             <span className={styles.sectionTitle}>
               Montos
@@ -1547,32 +1687,46 @@ const CargaFacturacion: React.FC = () => {
                 </span>
               )}
             </span>
-            <div className={styles.fieldsRow}>
-              <div className={styles.filterField}>
-                <label className={styles.filterLabel}>Honorarios</label>
-                <input
-                  className={styles.input}
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  value={honorarios}
-                  onChange={(e) => setHonorarios(e.target.value)}
-                  disabled={formDisabled || tipoCalculo === "A"}
-                />
+            {tipoPrestador === "ayudante" ? (
+              <div className={styles.fieldsRow}>
+                <div className={styles.filterField}>
+                  <label className={styles.filterLabel}>Ayudante</label>
+                  <NumericInput
+                    className={styles.input}
+                    decimals min={0}
+                    value={montoAyudante}
+                    onChange={setMontoAyudante}
+                    disabled={formDisabled || tipoCalculo === "A"}
+                  />
+                  {errores.montoAyudante && (
+                    <span className={styles.errorText}>{errores.montoAyudante}</span>
+                  )}
+                </div>
               </div>
-              <div className={styles.filterField}>
-                <label className={styles.filterLabel}>Gastos</label>
-                <input
-                  className={styles.input}
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  value={gastos}
-                  onChange={(e) => setGastos(e.target.value)}
-                  disabled={formDisabled || tipoCalculo === "A"}
-                />
+            ) : (
+              <div className={styles.fieldsRow}>
+                <div className={styles.filterField}>
+                  <label className={styles.filterLabel}>Honorarios</label>
+                  <NumericInput
+                    className={styles.input}
+                    decimals min={0}
+                    value={honorarios}
+                    onChange={setHonorarios}
+                    disabled={formDisabled || tipoCalculo === "A"}
+                  />
+                </div>
+                <div className={styles.filterField}>
+                  <label className={styles.filterLabel}>Gastos</label>
+                  <NumericInput
+                    className={styles.input}
+                    decimals min={0}
+                    value={gastos}
+                    onChange={setGastos}
+                    disabled={formDisabled || tipoCalculo === "A"}
+                  />
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* 10. Ayudantes quirúrgicos (equipo). En edición se reconcilia el grupo. */}
@@ -1597,25 +1751,9 @@ const CargaFacturacion: React.FC = () => {
             </div>
           </div>
 
+          {/* Guardar va primero: es la acción principal y la que se dispara siempre;
+              "Limpiar" queda a la derecha para no tenerla en el camino. */}
           <div className={styles.formFooter}>
-            {!isEdit && (
-              <button
-                type="button"
-                className={styles.btnGhost}
-                onClick={resetForm}
-                disabled={guardando}
-              >
-                Limpiar (Ctrl+L)
-              </button>
-            )}
-            {/* <button
-              type="button"
-              className={styles.btnGhost}
-              onClick={() => navigate(isEdit && fromFactura ? `/panel/facturacion/periodos/${fromFactura}` : "/panel/facturacion/periodos")}
-              disabled={guardando}
-            >
-              Cancelar
-            </button> */}
             <button
               type="button"
               data-field="guardar"
@@ -1629,6 +1767,16 @@ const CargaFacturacion: React.FC = () => {
                   ? "Guardar cambios"
                   : "Guardar (Ctrl+↵)"}
             </button>
+            {!isEdit && (
+              <button
+                type="button"
+                className={styles.btnGhost}
+                onClick={resetForm}
+                disabled={guardando}
+              >
+                Limpiar (Ctrl+L)
+              </button>
+            )}
           </div>
         </div>
 

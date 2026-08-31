@@ -5,6 +5,9 @@ $blue-hover: #2f5bbb;
 $red:        #dc2626;
 $red-light:  #fee2e2;
 $green:      #166534;
+$audit-row:    #fefce8;
+$audit-halo:   #fef9c3;
+$audit-accent: #ca8a04;
 $border:     #e2e8f0;
 $surface:    #ffffff;
 $text-1:     #1a1f2e;
@@ -203,28 +206,29 @@ $shadow-md:  0 4px 16px rgba(0, 0, 0, .10);
     &:hover { background: #f8faff; }
   }
 
-  // Anchos fijos por columna para que las 15 columnas entren sin scroll.
-  th:nth-child(1)  { width: 5%; }
+  // Anchos fijos por columna para que las 16 columnas entren sin scroll.
+  th:nth-child(1)  { width: 4%; }
   th:nth-child(2)  { width: 9%; }
-  th:nth-child(3)  { width: 7%; }
-  th:nth-child(4)  { width: 7%; }
+  th:nth-child(3)  { width: 6%; }
+  th:nth-child(4)  { width: 6%; }
   th:nth-child(5)  { width: 6%; }
   th:nth-child(6)  { width: 4%; }
-  th:nth-child(7)  { width: 7%; }
-  th:nth-child(8)  { width: 7%; }
-  th:nth-child(9)  { width: 5%; }
-  th:nth-child(10) { width: 7%; }
-  th:nth-child(11) { width: 7%; }
+  th:nth-child(7)  { width: 6%; }
+  th:nth-child(8)  { width: 9%; }
+  th:nth-child(9)  { width: 6%; }
+  th:nth-child(10) { width: 4%; }
+  th:nth-child(11) { width: 6%; }
   th:nth-child(12) { width: 6%; }
-  th:nth-child(13) { width: 7%; }
-  th:nth-child(14) { width: 8%; }
+  th:nth-child(13) { width: 5%; }
+  th:nth-child(14) { width: 7%; }
   th:nth-child(15) { width: 8%; }
+  th:nth-child(16) { width: 8%; }
 }
 
 .thActions { text-align: right; }
 
 .rowRevisada td {
-  background: #f3fbf5;
+  background: $audit-row;
 }
 
 .rowAnulada td {
@@ -348,7 +352,7 @@ $shadow-md:  0 4px 16px rgba(0, 0, 0, .10);
   width: 17px;
   height: 17px;
   cursor: pointer;
-  accent-color: $green;
+  accent-color: $audit-accent;
 }
 
 .auditCheckboxWrap {
@@ -362,7 +366,7 @@ $shadow-md:  0 4px 16px rgba(0, 0, 0, .10);
 }
 
 .auditCheckboxOn {
-  background: #dcfce7;
+  background: $audit-halo;
 }
 
 .iconBtn {

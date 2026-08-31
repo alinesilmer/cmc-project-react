@@ -5,7 +5,12 @@
 // `swiss_1.php`, `nobis/nobis.php` y la grilla de `menu.php`). Mantener esta
 // tabla alineada con el backend cuando se conecte la API real.
 
-import type { CampoConfig, ObraSocialConfig } from "./validaciones.types";
+import { consultarAfiliadoNobis } from "./validaciones.api";
+import type {
+  CampoConfig,
+  ConsultaEnVivoResultado,
+  ObraSocialConfig,
+} from "./validaciones.types";
 
 import logoBoreal from "../../assets/obras-sociales/boreal.png";
 import logoIoscor from "../../assets/obras-sociales/ioscor.jpg";
@@ -44,6 +49,21 @@ const campoNombreAfiliado: CampoConfig = {
   uppercase: true,
   placeholder: "Nombre completo",
 };
+
+/** Igual que el cartel verde/rojo de "Afiliado ACTIVO" del legacy de Nobis
+ * (`nobis.php`): consulta `ConsultarAfiliado` en vivo y no bloquea nada — el
+ * legacy corre con `$nobis_require_active = false`, así que se puede cargar
+ * igual aunque el afiliado figure inactivo. */
+async function consultarAfiliadoNobisEnVivo(
+  valor: string
+): Promise<ConsultaEnVivoResultado> {
+  const r = await consultarAfiliadoNobis(valor);
+  if (!r.encontrado) return { ok: false, texto: "Afiliado no encontrado." };
+  const partes = [r.activo ? "Afiliado ACTIVO." : "Afiliado NO activo."];
+  if (r.nombre) partes.push(r.nombre);
+  if (r.estado) partes.push(`(${r.estado})`);
+  return { ok: r.activo, texto: partes.join(" ") };
+}
 
 // ─── Catálogo ─────────────────────────────────────────────────────────────────
 
@@ -121,7 +141,12 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
   {
     slug: "nobis",
     nombre: "Nobis Salud",
-    codigo: 402,
+    // 62, no 402. El 402 nunca existió: ni en `obras_sociales`, ni en el
+    // nomenclador, ni en el sistema viejo — llegó como número de relleno en un
+    // docstring del backend y se copió acá. Con 402 el panel no servía ni para
+    // leer: el buscador de códigos devolvía [] y el alta moría en 422 "la obra
+    // social 402 todavía no está implementada". Corregido 2026-08-19.
+    codigo: 62,
     modo: "integrada",
     estado: "operativa",
     validacion: "online",
@@ -138,14 +163,23 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
         required: true,
         maxLength: 20,
         placeholder: "Número de credencial",
+        // Mismo cartel que tenía el legacy debajo del campo: activo/inactivo
+        // en vivo, sin bloquear el envío. minLength 6 = el mismo umbral que
+        // usaba `shouldQueryAfiliado()` en nobis.php.
+        consultaEnVivo: { minLength: 6, consultar: consultarAfiliadoNobisEnVivo },
       },
       {
         name: "token",
         label: "Token de la credencial",
         tipo: "numerico",
         required: true,
-        maxLength: 4,
-        placeholder: "1234",
+        // 6, no 4. Los tokens de Nobis son de 6 dígitos (290894, 666766); con
+        // el límite en 4 el médico no podía tipear el suyo completo y Nobis
+        // contestaba "Token incorrecto". El de Sancor sí es de 4 — son formatos
+        // distintos y por eso el largo va por obra social. Corregido 2026-08-19.
+        maxLength: 6,
+        placeholder: "123456",
+        hint: "6 dígitos que muestra la credencial del afiliado",
       },
       campoCodigo,
       {

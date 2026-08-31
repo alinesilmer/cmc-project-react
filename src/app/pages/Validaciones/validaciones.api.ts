@@ -195,6 +195,19 @@ export const buscarCodigos = async (
   }));
 };
 
+interface AfiliadoNobisApi {
+  encontrado: boolean;
+  activo: boolean;
+  nombre: string | null;
+  estado: string;
+}
+
+/** GET /api/validaciones/nobis/afiliado — estado en vivo del afiliado (sólo
+ * lectura, no bloquea el alta). Es el mismo `ConsultarAfiliado` del WSGeCROS
+ * que usaba el legacy para el cartel debajo del campo. */
+export const consultarAfiliadoNobis = (nroAfiliado: string): Promise<AfiliadoNobisApi> =>
+  getJSON<AfiliadoNobisApi>(`${BASE}/nobis/afiliado`, { nro_afiliado: nroAfiliado });
+
 // ─── Escrituras ───────────────────────────────────────────────────────────────
 
 export interface CargarPrestacionPayload {

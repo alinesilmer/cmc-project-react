@@ -1,6 +1,6 @@
 import { FileText, Inbox, Paperclip, Trash2 } from "lucide-react";
 
-import { formatFecha, formatMoneda } from "../validaciones.types";
+import { esPendienteDeObraSocial, formatFecha, formatMoneda } from "../validaciones.types";
 import type { EstadoPrestacion, Prestacion } from "../validaciones.types";
 import s from "./Tablas.module.scss";
 
@@ -26,9 +26,17 @@ export function EstadoChip({
   estado: EstadoPrestacion;
   detalle?: string;
 }) {
+  // Nobis grada el `P-Pendiente` como `rechazada` en la base (importe 0,
+  // fuera de factura — ver `validaciones.types.ts::esPendienteDeObraSocial`),
+  // pero mostrarlo como un rechazo liso confunde: la orden sí existe en
+  // Nobis, esperando que el afiliado la gestione. Sólo cambia el chip, no el
+  // dato: el resto del panel sigue filtrando por `estado === "rechazada"`.
+  const pendienteDeGestion = estado === "rechazada" && esPendienteDeObraSocial(detalle);
+  const claseEstado = pendienteDeGestion ? "pendiente" : estado;
+
   return (
-    <span className={`${s.chip} ${s[`chip_${estado}`]}`} title={detalle}>
-      {ETIQUETA_ESTADO[estado]}
+    <span className={`${s.chip} ${s[`chip_${claseEstado}`]}`} title={detalle}>
+      {pendienteDeGestion ? "Pendiente" : ETIQUETA_ESTADO[estado]}
     </span>
   );
 }

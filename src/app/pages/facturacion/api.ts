@@ -6,7 +6,7 @@ import type {
   PrestacionUpdate, MoverPeriodoPayload, MoverPeriodoResponse,
   CierrePreviewResponse, CierreResponse, CierrePayload, ListarPrestacionesParams,
   FacturaRead, ListarFacturasParams, FacturaDetalleResponse, ComplementoCreate,
-  ViaPractica,
+  ViaPractica, PrestacionFicha,
 } from "./types";
 
 const BASE = "/api/facturacion";
@@ -116,6 +116,16 @@ export const fetchFacturaDetalle = (id: number | string) =>
 
 export const fetchPrestacion = (id: number | string) =>
   traced(`GET /prestaciones/${id}`, { id }, getJSON<PrestacionRead>(`${BASE}/prestaciones/${id}`));
+
+// Ficha completa (pantalla de consulta): registro sin recortes + códigos resueltos a
+// nombre. Distinta de `fetchPrestacion`, que trae el shape recortado para precargar el
+// formulario de edición.
+export const fetchPrestacionFicha = (id: number | string) =>
+  traced(
+    `GET /prestaciones/${id}/ficha`,
+    { id },
+    getJSON<PrestacionFicha>(`${BASE}/prestaciones/${id}/ficha`),
+  );
 
 export const marcarRevisado = (payload: { marcados?: number[]; desmarcados?: number[] }) =>
   traced(
