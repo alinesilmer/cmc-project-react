@@ -133,6 +133,10 @@
   gap: $spacing-2;
 }
 
+.fieldNarrow {
+  max-width: 220px;
+}
+
 .label {
   font-size: $font-size-sm;
   font-weight: $font-weight-semibold;

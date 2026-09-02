@@ -248,6 +248,11 @@
   min-width: 220px;
 }
 
+.fieldFecha {
+  flex: 0 0 auto;
+  min-width: 160px;
+}
+
 .label {
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
@@ -321,6 +326,20 @@
   &:hover {
     border-color: $danger-red;
   }
+}
+
+// ─── Modal de edición ─────────────────────────────────────────────────────────
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-2;
 }
 
 .aviso {

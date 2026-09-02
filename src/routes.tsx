@@ -267,7 +267,9 @@ export default function RootRoutes() {
 
               {/* Planillas de consulta: el médico las descarga, el Colegio las publica. */}
               <Route path="planillas" element={<PlanillasMedico />} />
-              <Route path="convenios/planillas" element={<PlanillasAdmin />} />
+              <Route element={<RequireScope scope="contenido:editar" />}>
+                <Route path="convenios/planillas" element={<PlanillasAdmin />} />
+              </Route>
 
               {/* Nomenclador Nacional */}
               <Route element={<RequireScope scope="nomenclador:leer" />}>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Plus, Eye, Pencil, Trash2, RefreshCw, ClipboardList, Download } from "lucide-react";
 import {
   Table,
@@ -59,11 +59,14 @@ const headCellSx = {
 
 export default function ObrasSocialesListado() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [items, setItems] = useState<ObraSocialListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
+  // Deep link desde Actualizaciones de Valores: `?q=<nro>` llega acá y antes
+  // se perdía porque el estado siempre arrancaba vacío. Ver auditoría O-13.
+  const [query, setQuery] = useState(() => searchParams.get("q") ?? "");
   const [page, setPage] = useState(1);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
@@ -235,17 +238,21 @@ export default function ObrasSocialesListado() {
                     <span className={s.denoCell}>{os.denominacion}</span>
                   </TableCell>
                   <TableCell className={s.hideXs}>
-                    <span
-                      className={
-                        os.condicion_iva === "responsable_inscripto"
-                          ? s.badgeA
-                          : s.badgeB
-                      }
-                    >
-                      {os.condicion_iva === "responsable_inscripto"
-                        ? "Factura A"
-                        : "Factura B"}
-                    </span>
+                    {os.condicion_iva == null ? (
+                      <span className={s.badgeNeutral}>Sin definir</span>
+                    ) : (
+                      <span
+                        className={
+                          os.condicion_iva === "responsable_inscripto"
+                            ? s.badgeA
+                            : s.badgeB
+                        }
+                      >
+                        {os.condicion_iva === "responsable_inscripto"
+                          ? "Factura A"
+                          : "Factura B"}
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell className={s.hideSm}>
                     <span className={s.contactLine}>{os.emails?.[0]?.valor ?? "—"}</span>

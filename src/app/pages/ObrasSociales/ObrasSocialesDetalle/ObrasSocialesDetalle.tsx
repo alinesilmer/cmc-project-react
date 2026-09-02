@@ -9,13 +9,17 @@ import { getObraSocial } from "../obrasSociales.api";
 import type { ObraSocial, Documento } from "../obrasSociales.types";
 import { CONDICION_IVA_LABELS, TIPO_DOCUMENTO_LABELS, displayCuit } from "../obrasSociales.types";
 import HistorialValores from "./HistorialValores";
-import PagosObraSocial from "./PagosObraSocial";
+// «Pagos» deshabilitado a pedido del Colegio — el backend no registra su
+// router (ver app/api/routes.py y el docstring de ObraSocialPago en la API).
+// Reactivar: descomentar este import, el tab y el bloque de render abajo.
+// import PagosObraSocial from "./PagosObraSocial";
 import { abrirAdjunto } from "../../../lib/archivos";
 import { formatFechaLarga } from "../../../lib/fechas";
 import { useNotify } from "../../../hooks/useNotify";
+import { usePermisos } from "../../../auth/usePermisos";
 import s from "./ObrasSocialesDetalle.module.scss";
 
-type ActiveTab = "datos" | "documentos" | "pagos" | "historial";
+type ActiveTab = "datos" | "documentos" | "historial";
 
 // `formatFechaLarga` y no `new Date(iso).toLocaleDateString()`: la fecha de alta
 // de convenio es una fecha de calendario y el parser nativo la lee como UTC,
@@ -65,6 +69,7 @@ export default function ObrasSocialesDetalle() {
   const [error, setError] = useState<string | null>(null);
 
   const [activeTab, setActiveTab] = useState<ActiveTab>("datos");
+  const { can } = usePermisos();
 
   useEffect(() => {
     if (!obraId) return;
@@ -142,12 +147,18 @@ export default function ObrasSocialesDetalle() {
       </div>
 
       {/* ── Tabs ────────────────────────────────────────────────────────── */}
+      {/* «Pagos» deshabilitado (ver el import comentado arriba). «Historial de
+          Valores» pide un scope aparte del resto de la pestaña —lee
+          /api/valores_nm/, que exige nomenclador:leer y no catalogo:leer—, así
+          que se oculta para quien no lo tiene en vez de mostrar un tab que
+          siempre da error al abrirlo. Ver auditoría O-07. */}
       <div className={s.tabs}>
         {([
           { key: "datos",       label: "Datos" },
           { key: "documentos",  label: "Documentos" },
-          { key: "pagos",       label: "Pagos" },
-          { key: "historial",   label: "Historial de Valores" },
+          ...(can("nomenclador:leer")
+            ? [{ key: "historial", label: "Historial de Valores" }]
+            : []),
         ] as { key: ActiveTab; label: string }[]).map(({ key, label }) => (
           <button
             key={key}
@@ -256,11 +267,8 @@ export default function ObrasSocialesDetalle() {
         </div>
       )}
 
-      {/* ── Tab: Pagos ──────────────────────────────────────────────────── */}
-      {/* Va con `obra.id` (la PK) y no con `nro_obra_social`: los pagos cuelgan
-          de `obras_sociales.ID` por FK, a diferencia del historial de valores,
-          que indexa por número de obra social. */}
-      {activeTab === "pagos" && <PagosObraSocial obraId={obra.id} />}
+      {/* «Pagos» deshabilitado — ver el import comentado arriba.
+          {activeTab === "pagos" && <PagosObraSocial obraId={obra.id} />} */}
 
       {/* ── Tab: Historial de Valores ────────────────────────────────────── */}
       {activeTab === "historial" && (

@@ -80,13 +80,34 @@ function toHistRow(v: ValorOut): HistRow {
 
 // Historial completo de la OS: trae todas las vigencias (activas y cerradas) de
 // /api/valores_nm/, paginando hasta agotar. Cada Valor es una versión de un código.
+/**
+ * Trae todas las páginas en tandas de a `CONCURRENCIA` en paralelo, en vez de
+ * una request a la vez: para una obra social con miles de valores (la 62 hoy
+ * tiene 3.334, o sea 17 páginas) esto corta el tiempo de espera a una fracción
+ * sin cambiar nada del backend. Ver auditoría O-07.
+ */
 async function fetchHistorialOS(nroOS: number): Promise<HistRow[]> {
-  const all: HistRow[] = [];
   const size = 200;
-  for (let page = 1; page <= 100; page++) {
-    const batch = await listValores({ obra_social_nro: nroOS, page, size });
-    all.push(...batch.map(toHistRow));
-    if (batch.length < size) break;
+  const CONCURRENCIA = 5;
+  const TOPE_PAGINAS = 500; // cota defensiva, antes eran 100 páginas secuenciales
+
+  const all: HistRow[] = [];
+  let pagina = 1;
+  let sigue = true;
+
+  while (sigue && pagina <= TOPE_PAGINAS) {
+    const tanda = Array.from({ length: CONCURRENCIA }, (_, i) => pagina + i);
+    const resultados = await Promise.all(
+      tanda.map((p) => listValores({ obra_social_nro: nroOS, page: p, size }))
+    );
+    for (const batch of resultados) {
+      all.push(...batch.map(toHistRow));
+      if (batch.length < size) {
+        sigue = false;
+        break;
+      }
+    }
+    pagina += CONCURRENCIA;
   }
   return all;
 }

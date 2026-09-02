@@ -171,6 +171,16 @@ export const postForm = async <T = unknown>(
   return data as T;
 };
 
+// 👇 mismo caso que postForm, para ediciones que pueden reemplazar un archivo
+export const patchForm = async <T = unknown>(
+  url: string,
+  form: FormData,
+  config?: AxiosRequestConfig
+): Promise<T> => {
+  const { data } = await http.patch(url, form, config); // sin headers
+  return data as T;
+};
+
 export const putJSON = async <T = unknown>(
   url: string,
   body?: any

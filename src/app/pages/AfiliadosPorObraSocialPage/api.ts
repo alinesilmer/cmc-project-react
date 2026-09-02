@@ -16,6 +16,7 @@ import {
 const ENDPOINTS = {
   obrasSociales: "/api/obras_social/",
   medicosByOS: (nroOS: number) => `/api/padrones/obras-sociales/${nroOS}/medicos`,
+  medicosExportByOS: (nroOS: number) => `/api/padrones/obras-sociales/${nroOS}/medicos/export`,
 };
 
 function mapObraSocialRawToOS(raw: any): ObraSocial {
@@ -96,9 +97,14 @@ function mapItemToPrestador(it: any): Prestador {
 export async function fetchObrasSociales(
   signal?: AbortSignal
 ): Promise<ObraSocial[]> {
+  // Una empresa con varios planes (Swiss Medical, Medife, Sancor...) tiene
+  // un único padrón: `solo_principales` oculta los planes asociados para que
+  // el selector la liste una sola vez. El endpoint expande a toda la familia
+  // igual, así que el resultado del padrón/export no cambia.
   const { data } = await http.get(ENDPOINTS.obrasSociales, {
     signal,
     timeout: 20_000,
+    params: { solo_principales: true },
   });
   const arr = Array.isArray(data) ? data : [];
   return arr
@@ -110,31 +116,13 @@ export async function fetchPrestadoresAllPages(
   nroOS: number,
   signal?: AbortSignal
 ): Promise<Prestador[]> {
-  const PAGE_SIZE = 200; // tope del backend (`size` está limitado a 200)
-  let page = 1;
-  const out: Prestador[] = [];
-  let total: number | null = null;
-
-  while (true) {
-    if (signal?.aborted) break;
-    const { data } = await http.get(ENDPOINTS.medicosByOS(nroOS), {
-      params: { page, size: PAGE_SIZE },
-      timeout: 25_000,
-      signal,
-    });
-
-    if (Array.isArray(data)) return data.map(mapItemToPrestador);
-
-    const items = Array.isArray(data?.items) ? data.items : [];
-    total = Number.isFinite(data?.total) ? Number(data.total) : total;
-    for (const it of items) out.push(mapItemToPrestador(it));
-    if (items.length === 0) break;
-    if (total !== null && out.length >= total) break;
-    page += 1;
-    // El padrón más grande tiene ~1.000 prestadores; 10.000 páginas es un
-    // cortacircuitos contra un backend que devuelva siempre lo mismo.
-    if (page > 10_000) break;
-  }
-
-  return out;
+  // `/medicos/export` devuelve el mismo universo de filas que `/medicos`
+  // (misma familia, mismo dedup por NRO_SOCIO) pero sin paginar: un solo
+  // pedido en vez de recorrer 5-6 páginas de `size=200`.
+  const { data } = await http.get(ENDPOINTS.medicosExportByOS(nroOS), {
+    timeout: 60_000,
+    signal,
+  });
+  const items = Array.isArray(data) ? data : [];
+  return items.map(mapItemToPrestador);
 }

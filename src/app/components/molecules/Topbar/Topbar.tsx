@@ -179,7 +179,7 @@ const TOP_NAV: TopEntry[] = [
       {
         heading: "Convenios",
         items: [
-          { path: `${base}/convenios/planillas`, icon: FileText, label: "Planillas de Consulta", perms: ["catalogo:editar"] },
+          { path: `${base}/convenios/planillas`, icon: FileText, label: "Planillas de Consulta", perms: ["contenido:editar"] },
           { path: `${base}/convenios/obras-sociales`, icon: ClipboardList, label: "Listado de Obras Sociales", perms: ["catalogo:leer"] },
           { path: `${base}/convenios/obras-sociales/alta`, icon: HousePlus, label: "Alta Obra Social", perms: ["catalogo:editar"] },
           { path: `${base}/historial-valores`, icon: History, label: "Historial de Valores", perms: ["nomenclador:leer"] },

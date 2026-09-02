@@ -57,7 +57,10 @@ function buildPayload(form: ObraSocialFormData) {
   return {
     nro_obra_social: Number(form.nro_obra_social),
     nombre: form.nombre.trim(),
-    cuit: form.cuit.trim() || null,
+    // Sólo dígitos: la base guarda el CUIT crudo (columna legacy
+    // `varchar(11)`), y mandar los guiones que agrega el input de una
+    // obra social a otra rompía esa longitud. Ver auditoría O-12.
+    cuit: form.cuit.replace(/\D/g, "") || null,
     direccion_real: form.direccion_real.trim() || null,
     condicion_iva: form.condicion_iva || null,
     plazo_vencimiento: plazo,
@@ -65,73 +68,44 @@ function buildPayload(form: ObraSocialFormData) {
     obra_social_principal_id: form.obra_social_principal_id
       ? Number(form.obra_social_principal_id)
       : null,
+    // Operación: sin esto una obra social nueva quedaba deshabilitada para el
+    // padrón por el default del backend (ver auditoría O-02).
+    marca: form.marca,
+    ver_valor: form.ver_valor,
+    dia_corte: Number(form.dia_corte) || 20,
     contactos,
     direcciones,
   };
 }
 
 // ─── List ─────────────────────────────────────────────────────────────────────
-// Uses the existing legacy endpoint which returns uppercase fields.
 // CRUD operations (detail/create/update/delete) use the same base: /api/obras_social/
 
-function normalizeListItem(raw: any, i: number): ObraSocialListItem | null {
-  const nro =
-    raw?.nro_obra_social ?? raw?.NRO_OBRA_SOCIAL ?? raw?.NRO_OBRASOCIAL ?? null;
-  const nombre = String(
-    raw?.nombre ?? raw?.NOMBRE ?? raw?.OBRA_SOCIAL ?? ""
-  ).trim();
-  if (!nombre) return null;
-
-  const nroNum = Number(nro);
-  const id = Number.isFinite(nroNum) && nroNum > 0 ? nroNum : i + 1;
-
-  const condicionIva: ObraSocialListItem["condicion_iva"] =
-    raw?.condicion_iva === "responsable_inscripto" || raw?.TIPO_FACT === "A"
-      ? "responsable_inscripto"
-      : raw?.condicion_iva === "exento" || raw?.TIPO_FACT === "B"
-      ? "exento"
-      : null;
-
-  const emailVal = raw?.emails?.[0]?.valor ?? raw?.EMAIL ?? raw?.email_principal ?? "";
-  const telVal = raw?.telefonos?.[0]?.valor ?? raw?.TELEFONO ?? raw?.telefono_contacto ?? "";
-
+function normalizeListItem(raw: ObraSocial): ObraSocialListItem {
   return {
-    id: raw.id ?? id,
-    nro_obra_social: nroNum > 0 ? nroNum : id,
-    nombre,
-    denominacion: raw.denominacion ?? `${id} — ${nombre}`,
-    condicion_iva: condicionIva,
-    marca: raw.marca ?? raw.MARCA ?? null,
-    ver_valor: raw.ver_valor ?? raw.VER_VALOR ?? null,
-    cuit: raw.cuit ?? raw.CUIT ?? null,
-    direccion_real: raw.direccion_real ?? raw.DIRECCION ?? null,
-    plazo_vencimiento: raw.plazo_vencimiento != null
-      ? Number(raw.plazo_vencimiento)
-      : raw.PLAZO_VENCIMIENTO != null
-      ? Number(raw.PLAZO_VENCIMIENTO)
-      : null,
-    emails: raw.emails ?? (emailVal ? [{ valor: emailVal, etiqueta: "" }] : []),
-    telefonos: raw.telefonos ?? (telVal ? [{ valor: telVal, etiqueta: "" }] : []),
-    fecha_alta_convenio: raw.fecha_alta_convenio ?? raw.FECHA_ALTA ?? null,
+    id: raw.id,
+    nro_obra_social: raw.nro_obra_social,
+    nombre: raw.nombre,
+    denominacion: raw.denominacion,
+    condicion_iva: raw.condicion_iva ?? null,
+    marca: raw.marca ?? null,
+    ver_valor: raw.ver_valor ?? null,
+    cuit: raw.cuit ?? null,
+    direccion_real: raw.direccion_real ?? null,
+    plazo_vencimiento: raw.plazo_vencimiento ?? null,
+    emails: raw.emails ?? [],
+    telefonos: raw.telefonos ?? [],
+    fecha_alta_convenio: raw.fecha_alta_convenio ?? null,
     updated_at: raw.updated_at ?? null,
   };
 }
 
 export async function listObrasSociales(q?: string): Promise<ObraSocialListItem[]> {
-  const { data } = await http.get("/api/obras_social/", { timeout: 20_000 });
+  const { data } = await http.get<ObraSocial[]>("/api/obras_social/", { timeout: 20_000 });
 
-  const arr: any[] = Array.isArray(data)
-    ? data
-    : Array.isArray((data as any)?.items)
-    ? (data as any).items
-    : Array.isArray((data as any)?.results)
-    ? (data as any).results
-    : [];
-
-  const items: ObraSocialListItem[] = arr
-    .map((raw, i) => normalizeListItem(raw, i))
-    .filter((x): x is ObraSocialListItem => x !== null)
-    .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+  // El backend ya devuelve orden alfabético ascendente (ver auditoría O-15):
+  // no hace falta reordenar acá.
+  const items = data.map(normalizeListItem);
 
   if (!q) return items;
   const term = q.trim().toLowerCase();
