@@ -248,6 +248,11 @@ export interface PrestacionFacturaDetalle {
   tipo: Tipo | null;
   revisado: boolean;
   estado: EstadoPrestacion | null;
+  /** Vínculo ayudante/gastos → prestación cabeza de equipo (grupo_equipo_id ==
+   * su propio id). null si no tiene equipo quirúrgico asociado. */
+  grupo_equipo_id?: number | null;
+  id_especialidad?: number | null;
+  especialidad_nombre?: string | null;
 }
 
 export interface PrestadorFacturaGrupo {

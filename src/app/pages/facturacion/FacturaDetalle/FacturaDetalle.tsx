@@ -1,7 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ClipboardList, ArrowLeft, Pencil, Copy, ArrowRightCircle, ArrowLeftCircle, Trash2, Download } from "lucide-react";
+import {
+  ClipboardList, ArrowLeft, Pencil, Copy, ArrowRightCircle, ArrowLeftCircle, Trash2,
+  Download, SlidersHorizontal,
+} from "lucide-react";
 
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
 import {
@@ -9,18 +12,41 @@ import {
   moverPeriodo,
 } from "../api";
 import type {
-  FacturaDetalleResponse, PrestadorFacturaGrupo, PrestacionFacturaDetalle, Tipo,
+  FacturaDetalleResponse, PrestacionFacturaDetalle, Tipo,
 } from "../types";
 import { detailMessage } from "../types";
-import { formatMoney } from "../money";
+import { formatMoney, parseMoney } from "../money";
 import ConfirmActionModal from "../components/ConfirmActionModal";
 import ExportPanel from "./export/ExportPanel";
+import VistaPanel from "./vista/VistaPanel";
+import type { ColumnaVista, FiltrosVista, OrdenVista, VistaOpciones } from "./vista/types";
+import { COLUMNAS_VISTA_DISPONIBLES, ORDEN_TIPOS, PESO_COLUMNA, VISTA_OPCIONES_DEFAULT } from "./vista/types";
 import styles from "./FacturaDetalle.module.scss";
 
+// La prestación "aplanada" con los datos de su socio ya resueltos — se arma una
+// sola vez a partir de `detalle.prestadores` y es la base de todo el pipeline
+// de vista (filtrar → agrupar → ordenar), en vez de depender de la agrupación
+// por-socio que ya viene armada del backend.
+interface PrestacionConSocio extends PrestacionFacturaDetalle {
+  cod_medico: string;
+  nombreSocio: string | null;
+  matriculaSocio: number | null;
+}
+
+interface VistaGrupo {
+  key: string;
+  titulo: string;
+  prestaciones: PrestacionConSocio[];
+  mostrarResumen: boolean;
+  totalHonorarios: number;
+  totalGastos: number;
+  totalSubtotal: number;
+}
+
 type PendingAction =
-  | { type: "eliminar"; p: PrestacionFacturaDetalle }
-  | { type: "mover"; p: PrestacionFacturaDetalle; direccion: "siguiente" | "anterior" }
-  | { type: "moverGrupo"; grupo: PrestadorFacturaGrupo; direccion: "siguiente" | "anterior" };
+  | { type: "eliminar"; p: PrestacionConSocio }
+  | { type: "mover"; p: PrestacionConSocio; direccion: "siguiente" | "anterior" }
+  | { type: "moverGrupo"; ids: number[]; label: string; groupKey: string; direccion: "siguiente" | "anterior" };
 
 const fmtFecha = (iso: string | null): string => {
   if (!iso) return "—";
@@ -68,6 +94,46 @@ const estadoLabel = (estado: string | null): string => {
   return estado || "—";
 };
 
+const sumarTotales = (arr: PrestacionConSocio[]) => arr.reduce(
+  (acc, p) => {
+    acc.totalHonorarios += parseMoney(p.honorarios);
+    acc.totalGastos += parseMoney(p.gastos);
+    acc.totalSubtotal += parseMoney(p.subtotal);
+    return acc;
+  },
+  { totalHonorarios: 0, totalGastos: 0, totalSubtotal: 0 },
+);
+
+const compararPorOrden = (a: PrestacionConSocio, b: PrestacionConSocio, orden: OrdenVista): number => {
+  switch (orden) {
+    case "fecha":
+      return (a.fecha_practica ?? "").localeCompare(b.fecha_practica ?? "");
+    case "codigo":
+      return (a.codigo ?? "").localeCompare(b.codigo ?? "", "es");
+    case "monto_desc":
+      return parseMoney(b.subtotal) - parseMoney(a.subtotal);
+    case "nombre_socio":
+      return (a.nombreSocio ?? a.cod_medico).localeCompare(b.nombreSocio ?? b.cod_medico, "es", { sensitivity: "base" });
+    default:
+      return 0;
+  }
+};
+
+const pasaFiltros = (p: PrestacionConSocio, f: FiltrosVista): boolean => {
+  if (f.fecha_desde && (!p.fecha_practica || p.fecha_practica < f.fecha_desde)) return false;
+  if (f.fecha_hasta && (!p.fecha_practica || p.fecha_practica > f.fecha_hasta)) return false;
+  if (f.tipos && f.tipos.length > 0 && (!p.tipo || !f.tipos.includes(p.tipo))) return false;
+  if (f.revisado !== undefined && p.revisado !== f.revisado) return false;
+  if (f.cod_medicos && f.cod_medicos.length > 0 && !f.cod_medicos.includes(p.cod_medico)) return false;
+  if (f.id_especialidad !== undefined && (p.id_especialidad ?? null) !== f.id_especialidad) return false;
+  return true;
+};
+
+const hayFiltrosActivos = (f: FiltrosVista): boolean =>
+  Boolean(f.fecha_desde || f.fecha_hasta || f.revisado !== undefined
+    || (f.tipos && f.tipos.length > 0) || (f.cod_medicos && f.cod_medicos.length > 0)
+    || f.id_especialidad !== undefined);
+
 const FacturaDetalle: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -80,6 +146,8 @@ const FacturaDetalle: React.FC = () => {
   const [busyGroups, setBusyGroups] = useState<Set<string>>(new Set());
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
+  const [vistaOpen, setVistaOpen] = useState(false);
+  const [vistaOpciones, setVistaOpciones] = useState<VistaOpciones>(VISTA_OPCIONES_DEFAULT);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -117,7 +185,7 @@ const FacturaDetalle: React.FC = () => {
     }
   };
 
-  const handleToggleRevisado = (p: PrestacionFacturaDetalle) => {
+  const handleToggleRevisado = (p: PrestacionConSocio) => {
     if (!detalle) return;
     const nextValue = !p.revisado;
     setDetalle({
@@ -143,22 +211,22 @@ const FacturaDetalle: React.FC = () => {
     });
   };
 
-  const handleEditar = (p: PrestacionFacturaDetalle) => {
+  const handleEditar = (p: PrestacionConSocio) => {
     navigate(`/panel/facturacion/carga/${p.id}?from=${id}`);
   };
 
   // Precarga el formulario de carga con los datos de esta prestación, pero como una
   // prestación nueva (POST) — la original no se toca.
-  const handleReplicar = (p: PrestacionFacturaDetalle) => {
+  const handleReplicar = (p: PrestacionConSocio) => {
     navigate(`/panel/facturacion/carga?replicar=${p.id}`);
   };
 
-  const handleEliminar = (p: PrestacionFacturaDetalle) => setPendingAction({ type: "eliminar", p });
+  const handleEliminar = (p: PrestacionConSocio) => setPendingAction({ type: "eliminar", p });
 
-  const handleMoverPeriodo = (p: PrestacionFacturaDetalle, direccion: "siguiente" | "anterior") =>
+  const handleMoverPeriodo = (p: PrestacionConSocio, direccion: "siguiente" | "anterior") =>
     setPendingAction({ type: "mover", p, direccion });
 
-  const executeEliminar = (p: PrestacionFacturaDetalle, onSuccess: () => void) =>
+  const executeEliminar = (p: PrestacionConSocio, onSuccess: () => void) =>
     withBusy(p.id, async () => {
       try {
         await anularPrestacion(p.id);
@@ -176,7 +244,7 @@ const FacturaDetalle: React.FC = () => {
       }
     });
 
-  const executeMoverPeriodo = (p: PrestacionFacturaDetalle, direccion: "siguiente" | "anterior", onSuccess: () => void) =>
+  const executeMoverPeriodo = (p: PrestacionConSocio, direccion: "siguiente" | "anterior", onSuccess: () => void) =>
     withBusy(p.id, async () => {
       try {
         if (!detalle) return;
@@ -196,10 +264,9 @@ const FacturaDetalle: React.FC = () => {
       }
     });
 
-  const handleMarcarTodos = (grupo: PrestadorFacturaGrupo) => {
-    const ids = grupo.prestaciones.map((p) => p.id);
+  const handleMarcarTodos = (ids: number[], groupKey: string) => {
     if (ids.length === 0) return;
-    withGroupBusy(grupo.cod_medico, async () => {
+    withGroupBusy(groupKey, async () => {
       try {
         await marcarRevisado({ marcados: ids });
         notify(`Se marcaron ${ids.length} prestación${ids.length !== 1 ? "es" : ""} como auditadas.`);
@@ -210,10 +277,9 @@ const FacturaDetalle: React.FC = () => {
     });
   };
 
-  const handleDesmarcarTodos = (grupo: PrestadorFacturaGrupo) => {
-    const ids = grupo.prestaciones.map((p) => p.id);
+  const handleDesmarcarTodos = (ids: number[], groupKey: string) => {
     if (ids.length === 0) return;
-    withGroupBusy(grupo.cod_medico, async () => {
+    withGroupBusy(groupKey, async () => {
       try {
         await marcarRevisado({ desmarcados: ids });
         notify(`Se desmarcaron ${ids.length} prestación${ids.length !== 1 ? "es" : ""}.`);
@@ -224,24 +290,25 @@ const FacturaDetalle: React.FC = () => {
     });
   };
 
-  const handleMoverGrupo = (grupo: PrestadorFacturaGrupo, direccion: "siguiente" | "anterior") => {
-    const movibles = grupo.prestaciones.filter((p) => p.estado === "A");
+  const handleMoverGrupo = (g: VistaGrupo, direccion: "siguiente" | "anterior") => {
+    const movibles = g.prestaciones.filter((p) => p.estado === "A");
     if (movibles.length === 0) {
       notify("No hay prestaciones abiertas para mover en este grupo.", "error");
       return;
     }
-    setPendingAction({ type: "moverGrupo", grupo, direccion });
+    setPendingAction({
+      type: "moverGrupo", ids: movibles.map((p) => p.id), label: g.titulo, groupKey: g.key, direccion,
+    });
   };
 
-  const executeMoverGrupo = (grupo: PrestadorFacturaGrupo, direccion: "siguiente" | "anterior", onSuccess: () => void) => {
+  const executeMoverGrupo = (ids: number[], groupKey: string, direccion: "siguiente" | "anterior", onSuccess: () => void) => {
     if (!detalle) return Promise.resolve();
-    const movibles = grupo.prestaciones.filter((p) => p.estado === "A");
-    return withGroupBusy(grupo.cod_medico, async () => {
+    return withGroupBusy(groupKey, async () => {
       try {
         const result = await moverPeriodo({
           cod_obra: detalle.cod_obra,
           periodo_origen: detalle.periodo,
-          ids: movibles.map((p) => p.id),
+          ids,
           direccion,
         });
         notify(`Se movieron ${result.ids_movidos.length} prestación${result.ids_movidos.length !== 1 ? "es" : ""} al período ${result.periodo_destino}.`);
@@ -262,18 +329,99 @@ const FacturaDetalle: React.FC = () => {
     } else if (pendingAction.type === "mover") {
       executeMoverPeriodo(pendingAction.p, pendingAction.direccion, () => setPendingAction(null));
     } else {
-      executeMoverGrupo(pendingAction.grupo, pendingAction.direccion, () => setPendingAction(null));
+      executeMoverGrupo(pendingAction.ids, pendingAction.groupKey, pendingAction.direccion, () => setPendingAction(null));
     }
   };
 
-  const gruposOrdenados = useMemo(() => {
+  // ── Pipeline de vista: aplanar → filtrar → agrupar → ordenar ────────────────
+  // Todo en el cliente: el endpoint no tiene filtros/orden propios y ya trae
+  // todas las prestaciones de una — ver `vista/types.ts`.
+
+  const todasFlat = useMemo<PrestacionConSocio[]>(() => {
     if (!detalle) return [];
-    return [...detalle.prestadores].sort((a, b) =>
-      (a.nombre ?? a.cod_medico).localeCompare(b.nombre ?? b.cod_medico, "es", { sensitivity: "base" }),
-    );
+    const out: PrestacionConSocio[] = [];
+    for (const g of detalle.prestadores) {
+      for (const p of g.prestaciones) {
+        out.push({ ...p, cod_medico: g.cod_medico, nombreSocio: g.nombre, matriculaSocio: g.matricula });
+      }
+    }
+    return out;
   }, [detalle]);
 
-  const renderRevisadoCheckbox = (p: PrestacionFacturaDetalle) => (
+  // Todas las prestaciones de cada equipo quirúrgico (cabeza + compañeros), sin
+  // filtrar — así el equipo se puede mostrar completo aunque algún filtro deje
+  // afuera a un compañero.
+  const equipoPorGrupo = useMemo(() => {
+    const map = new Map<number, PrestacionConSocio[]>();
+    for (const p of todasFlat) {
+      if (p.grupo_equipo_id == null) continue;
+      const arr = map.get(p.grupo_equipo_id) ?? [];
+      arr.push(p);
+      map.set(p.grupo_equipo_id, arr);
+    }
+    return map;
+  }, [todasFlat]);
+
+  const prestadoresOpciones = useMemo(
+    () => detalle?.prestadores.map((p) => ({ cod_medico: p.cod_medico, nombre: p.nombre })) ?? [],
+    [detalle],
+  );
+
+  const filtradas = useMemo(
+    () => todasFlat.filter((p) => pasaFiltros(p, vistaOpciones)),
+    [todasFlat, vistaOpciones],
+  );
+
+  const vistaGrupos = useMemo<VistaGrupo[]>(() => {
+    if (vistaOpciones.agrupacion === "plana") {
+      const ordenadas = [...filtradas].sort((a, b) => compararPorOrden(a, b, vistaOpciones.orden));
+      return [{ key: "__plana__", titulo: "", prestaciones: ordenadas, mostrarResumen: false, ...sumarTotales(ordenadas) }];
+    }
+
+    if (vistaOpciones.agrupacion === "por_tipo") {
+      return ORDEN_TIPOS
+        .map((t) => filtradas.filter((p) => p.tipo === t))
+        .map((arr, i) => ({ tipo: ORDEN_TIPOS[i], arr }))
+        .filter(({ arr }) => arr.length > 0)
+        .map(({ tipo, arr }) => {
+          const ordenadas = [...arr].sort((a, b) => compararPorOrden(a, b, vistaOpciones.orden));
+          return { key: `tipo-${tipo}`, titulo: tipo, prestaciones: ordenadas, mostrarResumen: true, ...sumarTotales(ordenadas) };
+        });
+    }
+
+    // por_socio (default)
+    const porSocio = new Map<string, PrestacionConSocio[]>();
+    for (const p of filtradas) {
+      const arr = porSocio.get(p.cod_medico) ?? [];
+      arr.push(p);
+      porSocio.set(p.cod_medico, arr);
+    }
+    const entries = [...porSocio.entries()].map(([cod, arr]) => {
+      const ordenadas = [...arr].sort((a, b) => compararPorOrden(a, b, vistaOpciones.orden));
+      const titulo = `Socio ${cod} ${arr[0]?.nombreSocio ?? ""}`.trim();
+      return { key: cod, titulo, prestaciones: ordenadas, mostrarResumen: true, ...sumarTotales(ordenadas) };
+    });
+    entries.sort((a, b) => a.titulo.localeCompare(b.titulo, "es", { sensitivity: "base" }));
+    return entries;
+  }, [filtradas, vistaOpciones.agrupacion, vistaOpciones.orden]);
+
+  const columnasActivas = useMemo(
+    () => COLUMNAS_VISTA_DISPONIBLES.filter((c) => vistaOpciones.columnas.includes(c.key)),
+    [vistaOpciones.columnas],
+  );
+
+  const columnasConPeso = useMemo(() => {
+    const activos: { id: string; peso: number }[] = [
+      { id: "id", peso: PESO_COLUMNA.id },
+      { id: "socio", peso: PESO_COLUMNA.socio },
+      ...columnasActivas.map((c) => ({ id: c.key, peso: PESO_COLUMNA[c.key] })),
+      { id: "acciones", peso: PESO_COLUMNA.acciones },
+    ];
+    const suma = activos.reduce((s, c) => s + c.peso, 0) || 1;
+    return activos.map((c) => ({ ...c, pct: (c.peso / suma) * 100 }));
+  }, [columnasActivas]);
+
+  const renderRevisadoCheckbox = (p: PrestacionConSocio) => (
     <span className={`${styles.auditCheckboxWrap} ${p.revisado ? styles.auditCheckboxOn : ""}`}>
       <input
         type="checkbox"
@@ -289,7 +437,7 @@ const FacturaDetalle: React.FC = () => {
   // mover sus prestaciones a otro período no tiene sentido, así que se ocultan esos botones.
   const esComplemento = (detalle?.version ?? 1) > 1;
 
-  const renderAcciones = (p: PrestacionFacturaDetalle) => {
+  const renderAcciones = (p: PrestacionConSocio) => {
     const editable = p.estado === "A";
     const busy = busyIds.has(p.id);
     return (
@@ -348,90 +496,159 @@ const FacturaDetalle: React.FC = () => {
     );
   };
 
-  const renderDataRow = (p: PrestacionFacturaDetalle, grupo: PrestadorFacturaGrupo) => (
-    <tr
-      key={p.id}
-      className={`${styles.dataRow} ${p.revisado ? styles.rowRevisada : ""} ${p.estado === "X" ? styles.rowAnulada : ""}`}
-    >
-      <td className={styles.idCell}>{p.id}</td>
-      <td>
-        <div className={styles.socioCell}>
-          <span className={styles.socioNro}>
-            {grupo.cod_medico}
-            {grupo.matricula != null && <span className={styles.socioMatricula}> - {grupo.matricula}</span>}
-          </span>
-          <span className={styles.socioNombre}>{grupo.nombre ?? "—"}</span>
-        </div>
-      </td>
-      <td>{p.autorizacion || <span className={styles.mutedText}>—</span>}</td>
-      <td>{fmtFecha(p.fecha_practica)}</td>
-      <td><span className={styles.codeCell}>{p.codigo ?? "—"}</span></td>
-      <td>
-        {p.via ? (
-          <span
-            className={`${styles.viaBadge} ${p.via === "L" ? styles.viaLaparoscopica : ""}`}
-            title={viaLabel(p.via)}
-          >
-            {p.via}
-          </span>
-        ) : <span className={styles.mutedText}>—</span>}
-      </td>
-      <td>{p.nro_afiliado || <span className={styles.mutedText}>—</span>}</td>
-      <td>{p.nombre_paciente || <span className={styles.mutedText}>—</span>}</td>
-      <td>
-        <div className={styles.cantidadCell}>
-          <span className={styles.cantidadMain}>Cant. {p.cantidad ?? "—"}</span>
-          <span className={styles.cantidadSub}>Sesión {p.sesion ?? "—"}</span>
-        </div>
-      </td>
-      <td>{p.porcentaje != null ? `${p.porcentaje}%` : "—"}</td>
-      <td><span className={styles.moneyCell}>{formatMoney(p.honorarios)}</span></td>
-      <td><span className={styles.moneyCell}>{formatMoney(p.gastos)}</span></td>
-      <td>
-        {p.tipo_prestador ? (
-          <span className={`${styles.tipoPrestadorBadge} ${tipoPrestadorClass(p.tipo_prestador)}`}>
-            {p.tipo_prestador}
-          </span>
-        ) : <span className={styles.mutedText}>—</span>}
-      </td>
-      <td><span className={styles.subtotalCell}>{formatMoney(p.subtotal)}</span></td>
-      <td>
-        {p.tipo ? (
-          <span className={`${styles.tipoBadge} ${tipoClass(p.tipo)}`}>{p.tipo}</span>
-        ) : <span className={styles.mutedText}>—</span>}
-      </td>
-      <td>{renderAcciones(p)}</td>
-    </tr>
-  );
+  const renderCeldaColumna = (p: PrestacionConSocio, col: ColumnaVista) => {
+    switch (col) {
+      case "autorizacion":
+        return <td key={col}>{p.autorizacion || <span className={styles.mutedText}>—</span>}</td>;
+      case "fecha":
+        return <td key={col}>{fmtFecha(p.fecha_practica)}</td>;
+      case "codigo":
+        return <td key={col}><span className={styles.codeCell}>{p.codigo ?? "—"}</span></td>;
+      case "via":
+        return (
+          <td key={col}>
+            {p.via ? (
+              <span
+                className={`${styles.viaBadge} ${p.via === "L" ? styles.viaLaparoscopica : ""}`}
+                title={viaLabel(p.via)}
+              >
+                {p.via}
+              </span>
+            ) : <span className={styles.mutedText}>—</span>}
+          </td>
+        );
+      case "nro_afiliado":
+        return <td key={col}>{p.nro_afiliado || <span className={styles.mutedText}>—</span>}</td>;
+      case "paciente":
+        return <td key={col}>{p.nombre_paciente || <span className={styles.mutedText}>—</span>}</td>;
+      case "cantidad":
+        return (
+          <td key={col}>
+            <div className={styles.cantidadCell}>
+              <span className={styles.cantidadMain}>Cant. {p.cantidad ?? "—"}</span>
+              <span className={styles.cantidadSub}>Sesión {p.sesion ?? "—"}</span>
+            </div>
+          </td>
+        );
+      case "porcentaje":
+        return <td key={col}>{p.porcentaje != null ? `${p.porcentaje}%` : "—"}</td>;
+      case "honorarios":
+        return <td key={col}><span className={styles.moneyCell}>{formatMoney(p.honorarios)}</span></td>;
+      case "gastos":
+        return <td key={col}><span className={styles.moneyCell}>{formatMoney(p.gastos)}</span></td>;
+      case "tipo_prestador":
+        return (
+          <td key={col}>
+            {p.tipo_prestador ? (
+              <span className={`${styles.tipoPrestadorBadge} ${tipoPrestadorClass(p.tipo_prestador)}`}>
+                {p.tipo_prestador}
+              </span>
+            ) : <span className={styles.mutedText}>—</span>}
+          </td>
+        );
+      case "subtotal":
+        return <td key={col}><span className={styles.subtotalCell}>{formatMoney(p.subtotal)}</span></td>;
+      case "tipo":
+        return (
+          <td key={col}>
+            {p.tipo ? (
+              <span className={`${styles.tipoBadge} ${tipoClass(p.tipo)}`}>{p.tipo}</span>
+            ) : <span className={styles.mutedText}>—</span>}
+          </td>
+        );
+      default:
+        return null;
+    }
+  };
 
-  const renderResumenRow = (grupo: PrestadorFacturaGrupo) => {
-    const cantPracticas = grupo.prestaciones.filter((p) => p.tipo === "Practica").length;
-    const cantConsultas = grupo.prestaciones.filter((p) => p.tipo === "Consulta").length;
-    const cantHonorarios = grupo.prestaciones.filter((p) => p.tipo === "Honorarios individuales").length;
-    const grupoBusy = busyGroups.has(grupo.cod_medico);
+  const renderDataRow = (
+    p: PrestacionConSocio,
+    opts?: { indent?: boolean; keyOverride?: string; ultimoDelEquipo?: boolean; equipoHead?: boolean },
+  ) => {
+    const indent = opts?.indent ?? false;
+    return (
+      <tr
+        key={opts?.keyOverride ?? p.id}
+        className={[
+          styles.dataRow,
+          p.revisado ? styles.rowRevisada : "",
+          p.estado === "X" ? styles.rowAnulada : "",
+          indent ? styles.equipoPreviewRow : "",
+          opts?.ultimoDelEquipo ? styles.equipoPreviewRowLast : "",
+          opts?.equipoHead ? styles.equipoGrupoHeadRow : "",
+        ].filter(Boolean).join(" ")}
+      >
+        <td className={styles.idCell}>{p.id}</td>
+        <td>
+          <div className={styles.socioCell}>
+            <span className={styles.socioNro}>
+              {p.cod_medico}
+              {p.matriculaSocio != null && <span className={styles.socioMatricula}> - {p.matriculaSocio}</span>}
+            </span>
+            <span className={styles.socioNombre}>{p.nombreSocio ?? "—"}</span>
+          </div>
+        </td>
+        {columnasActivas.map((c) => renderCeldaColumna(p, c.key))}
+        <td>
+          {indent ? <span className={styles.mutedText}>En su grupo</span> : renderAcciones(p)}
+        </td>
+      </tr>
+    );
+  };
+
+  // Cada prestación cabeza de equipo (`grupo_equipo_id === su propio id`) arrastra,
+  // indentadas justo debajo, filas de solo lectura con el detalle completo de sus
+  // compañeros (ayudante/gastos) — sin afectar el subtotal del grupo en el que
+  // está esta fila. Cada compañero sigue teniendo, además, su propia fila
+  // interactiva completa en su propio grupo (por eso estas son de sólo lectura:
+  // actuar sobre la prestación real se hace ahí).
+  const renderFilaConEquipo = (p: PrestacionConSocio): React.ReactNode[] => {
+    if (vistaOpciones.agruparEquipo && p.grupo_equipo_id != null && p.grupo_equipo_id === p.id) {
+      const companeros = (equipoPorGrupo.get(p.grupo_equipo_id) ?? []).filter((m) => m.id !== p.id);
+      if (companeros.length > 0) {
+        const filas: React.ReactNode[] = [renderDataRow(p, { equipoHead: true })];
+        companeros.forEach((m, i) => {
+          filas.push(renderDataRow(m, {
+            indent: true,
+            keyOverride: `${p.id}-eq-${m.id}`,
+            ultimoDelEquipo: i === companeros.length - 1,
+          }));
+        });
+        return filas;
+      }
+    }
+    return [renderDataRow(p)];
+  };
+
+  const renderResumenRow = (g: VistaGrupo) => {
+    const grupoBusy = busyGroups.has(g.key);
+    const ids = g.prestaciones.map((p) => p.id);
+    const esPorSocio = vistaOpciones.agrupacion === "por_socio";
 
     return (
-      <tr key={`resumen-${grupo.cod_medico}`} className={styles.resumenRow}>
-        <td colSpan={16}>
+      <tr key={`resumen-${g.key}`} className={styles.resumenRow}>
+        <td colSpan={columnasConPeso.length}>
           <div className={styles.resumenContent}>
-            <span className={styles.resumenLabel}>
-              RESUMEN: Socio {grupo.cod_medico} {grupo.nombre ?? ""}
-            </span>
-            <span className={styles.resumenBadge}>Prácticas: {cantPracticas}</span>
-            <span className={styles.resumenBadge}>Consultas: {cantConsultas}</span>
-            <span className={styles.resumenBadge}>Honorarios: {cantHonorarios}</span>
+            <span className={styles.resumenLabel}>RESUMEN: {g.titulo}</span>
+            {esPorSocio && (
+              <>
+                <span className={styles.resumenBadge}>Prácticas: {g.prestaciones.filter((p) => p.tipo === "Practica").length}</span>
+                <span className={styles.resumenBadge}>Consultas: {g.prestaciones.filter((p) => p.tipo === "Consulta").length}</span>
+                <span className={styles.resumenBadge}>Honorarios: {g.prestaciones.filter((p) => p.tipo === "Honorarios individuales").length}</span>
+              </>
+            )}
             <span className={styles.resumenMoney}>
-              Honorarios del socio: <strong>{formatMoney(grupo.total_honorarios)}</strong>
+              Honorarios: <strong>{formatMoney(g.totalHonorarios)}</strong>
             </span>
             <span className={styles.resumenMoney}>
-              Gastos del socio: <strong>{formatMoney(grupo.total_gastos)}</strong>
+              Gastos: <strong>{formatMoney(g.totalGastos)}</strong>
             </span>
             <div className={styles.resumenActions}>
               <button
                 type="button"
                 className={styles.resumenActionBtn}
                 disabled={grupoBusy}
-                onClick={() => handleMarcarTodos(grupo)}
+                onClick={() => handleMarcarTodos(ids, g.key)}
               >
                 Marcar todos
               </button>
@@ -439,17 +656,17 @@ const FacturaDetalle: React.FC = () => {
                 type="button"
                 className={styles.resumenActionBtn}
                 disabled={grupoBusy}
-                onClick={() => handleDesmarcarTodos(grupo)}
+                onClick={() => handleDesmarcarTodos(ids, g.key)}
               >
                 Desmarcar todos
               </button>
-              {!esComplemento && (
+              {!esComplemento && esPorSocio && (
                 <>
                   <button
                     type="button"
                     className={styles.resumenActionBtn}
                     disabled={grupoBusy}
-                    onClick={() => handleMoverGrupo(grupo, "siguiente")}
+                    onClick={() => handleMoverGrupo(g, "siguiente")}
                   >
                     <ArrowRightCircle size={12} /> Siguiente período todos
                   </button>
@@ -457,19 +674,22 @@ const FacturaDetalle: React.FC = () => {
                     type="button"
                     className={styles.resumenActionBtn}
                     disabled={grupoBusy}
-                    onClick={() => handleMoverGrupo(grupo, "anterior")}
+                    onClick={() => handleMoverGrupo(g, "anterior")}
                   >
                     <ArrowLeftCircle size={12} /> Anterior período todos
                   </button>
                 </>
               )}
             </div>
-            <span className={styles.resumenTotalBadge}>Total: {formatMoney(grupo.total_subtotal)}</span>
+            <span className={styles.resumenTotalBadge}>Total: {formatMoney(g.totalSubtotal)}</span>
           </div>
         </td>
       </tr>
     );
   };
+
+  const filtrosActivos = hayFiltrosActivos(vistaOpciones);
+  const totalFiltrado = useMemo(() => sumarTotales(filtradas).totalSubtotal, [filtradas]);
 
   return (
     <div className={styles.container}>
@@ -494,6 +714,9 @@ const FacturaDetalle: React.FC = () => {
               </span>
             </>
           )}
+          <button type="button" className={styles.backBtn} onClick={() => setVistaOpen(true)} disabled={!detalle}>
+            <SlidersHorizontal size={15} /> Vista
+          </button>
           <button type="button" className={styles.backBtn} onClick={() => setExportOpen(true)} disabled={!detalle}>
             <Download size={15} /> Exportar
           </button>
@@ -508,6 +731,11 @@ const FacturaDetalle: React.FC = () => {
           <div className={styles.toolbar}>
             <div className={styles.toolbarStats}>
               <span className={styles.infoChip}>{detalle.total_prestaciones} prestación{detalle.total_prestaciones !== 1 ? "es" : ""}</span>
+              {filtrosActivos && (
+                <span className={styles.infoChip}>
+                  Mostrando {filtradas.length} filtrada{filtradas.length !== 1 ? "s" : ""} — {formatMoney(totalFiltrado)}
+                </span>
+              )}
             </div>
           </div>
         )}
@@ -519,40 +747,34 @@ const FacturaDetalle: React.FC = () => {
           transition={{ duration: 0.3 }}
         >
           <table className={styles.table}>
+            <colgroup>
+              {columnasConPeso.map((c) => <col key={c.id} style={{ width: `${c.pct}%` }} />)}
+            </colgroup>
             <thead>
               <tr>
                 <th>ID</th>
                 <th>Socio</th>
-                <th>Autorización</th>
-                <th>Fecha</th>
-                <th>Código</th>
-                <th>Vía</th>
-                <th>Nro Afiliado</th>
-                <th>Paciente</th>
-                <th>Cantidad</th>
-                <th>%</th>
-                <th>Honorarios</th>
-                <th>Gastos</th>
-                <th>TP</th>
-                <th>Sub total</th>
-                <th>Tipo</th>
+                {columnasActivas.map((c) => <th key={c.key}>{c.label}</th>)}
                 <th className={styles.thActions}>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {loading && (
-                <tr><td colSpan={16} className={styles.loadingCell}>Cargando…</td></tr>
+                <tr><td colSpan={columnasConPeso.length} className={styles.loadingCell}>Cargando…</td></tr>
               )}
               {!loading && error && (
-                <tr><td colSpan={16} className={styles.emptyCell}>{error}</td></tr>
+                <tr><td colSpan={columnasConPeso.length} className={styles.emptyCell}>{error}</td></tr>
               )}
               {!loading && !error && detalle && detalle.total_prestaciones === 0 && (
-                <tr><td colSpan={16} className={styles.emptyCell}>Esta factura no tiene prestaciones.</td></tr>
+                <tr><td colSpan={columnasConPeso.length} className={styles.emptyCell}>Esta factura no tiene prestaciones.</td></tr>
               )}
-              {!loading && !error && detalle && gruposOrdenados.map((grupo) => (
-                <React.Fragment key={grupo.cod_medico}>
-                  {grupo.prestaciones.map((p) => renderDataRow(p, grupo))}
-                  {renderResumenRow(grupo)}
+              {!loading && !error && detalle && detalle.total_prestaciones > 0 && filtradas.length === 0 && (
+                <tr><td colSpan={columnasConPeso.length} className={styles.emptyCell}>Ningún resultado con los filtros de vista actuales.</td></tr>
+              )}
+              {!loading && !error && detalle && vistaGrupos.map((g) => (
+                <React.Fragment key={g.key}>
+                  {g.prestaciones.flatMap((p) => renderFilaConEquipo(p))}
+                  {g.mostrarResumen && renderResumenRow(g)}
                 </React.Fragment>
               ))}
             </tbody>
@@ -594,29 +816,35 @@ const FacturaDetalle: React.FC = () => {
         />
       )}
 
-      {pendingAction?.type === "moverGrupo" && (() => {
-        const movibles = pendingAction.grupo.prestaciones.filter((p) => p.estado === "A").length;
-        const label = pendingAction.direccion === "siguiente" ? "período siguiente" : "período anterior";
-        return (
-          <ConfirmActionModal
-            isOpen
-            icon={pendingAction.direccion === "siguiente" ? ArrowRightCircle : ArrowLeftCircle}
-            variant="primary"
-            title={pendingAction.direccion === "siguiente" ? "Mover al período siguiente" : "Mover al período anterior"}
-            message={
-              <>¿Mover <strong>{movibles}</strong> prestación{movibles !== 1 ? "es" : ""} de{" "}
-                <strong>{pendingAction.grupo.nombre ?? pendingAction.grupo.cod_medico}</strong> al <strong>{label}</strong>?</>
-            }
-            confirmLabel="Mover todos"
-            onClose={() => setPendingAction(null)}
-            onConfirm={handleConfirmPending}
-            loading={busyGroups.has(pendingAction.grupo.cod_medico)}
-          />
-        );
-      })()}
+      {pendingAction?.type === "moverGrupo" && (
+        <ConfirmActionModal
+          isOpen
+          icon={pendingAction.direccion === "siguiente" ? ArrowRightCircle : ArrowLeftCircle}
+          variant="primary"
+          title={pendingAction.direccion === "siguiente" ? "Mover al período siguiente" : "Mover al período anterior"}
+          message={
+            <>¿Mover <strong>{pendingAction.ids.length}</strong> prestación{pendingAction.ids.length !== 1 ? "es" : ""} de{" "}
+              <strong>{pendingAction.label}</strong> al{" "}
+              <strong>{pendingAction.direccion === "siguiente" ? "período siguiente" : "período anterior"}</strong>?</>
+          }
+          confirmLabel="Mover todos"
+          onClose={() => setPendingAction(null)}
+          onConfirm={handleConfirmPending}
+          loading={busyGroups.has(pendingAction.groupKey)}
+        />
+      )}
 
       {exportOpen && detalle && (
         <ExportPanel detalle={detalle} onClose={() => setExportOpen(false)} />
+      )}
+
+      {vistaOpen && detalle && (
+        <VistaPanel
+          opciones={vistaOpciones}
+          onChange={setVistaOpciones}
+          prestadores={prestadoresOpciones}
+          onClose={() => setVistaOpen(false)}
+        />
       )}
     </div>
   );
