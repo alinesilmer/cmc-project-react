@@ -100,8 +100,17 @@ function normalizeListItem(raw: ObraSocial): ObraSocialListItem {
   };
 }
 
-export async function listObrasSociales(q?: string): Promise<ObraSocialListItem[]> {
-  const { data } = await http.get<ObraSocial[]>("/api/obras_social/", { timeout: 20_000 });
+export async function listObrasSociales(
+  q?: string,
+  incluirInactivas?: boolean
+): Promise<ObraSocialListItem[]> {
+  const { data } = await http.get<ObraSocial[]>("/api/obras_social/", {
+    timeout: 20_000,
+    // Por default el backend oculta las dadas de baja (MARCA='N'). Un deep
+    // link que busca por número puntual —p.ej. desde O.S. Actualizadas—
+    // necesita poder traerlas de vuelta. Ver auditoría A-05.
+    params: incluirInactivas ? { incluir_inactivas: true } : undefined,
+  });
 
   // El backend ya devuelve orden alfabético ascendente (ver auditoría O-15):
   // no hace falta reordenar acá.

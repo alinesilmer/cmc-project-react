@@ -67,6 +67,10 @@ export default function ObrasSocialesListado() {
   // Deep link desde Actualizaciones de Valores: `?q=<nro>` llega acá y antes
   // se perdía porque el estado siempre arrancaba vacío. Ver auditoría O-13.
   const [query, setQuery] = useState(() => searchParams.get("q") ?? "");
+  // Mismo deep link: si la obra social buscada está de baja (o si nunca tuvo
+  // fila en el catálogo), sin esto el link llevaba a un listado vacío. Ver
+  // auditoría A-05.
+  const incluirInactivas = searchParams.get("incluir_inactivas") === "true";
   const [page, setPage] = useState(1);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
@@ -76,14 +80,14 @@ export default function ObrasSocialesListado() {
     setLoading(true);
     setError(null);
     try {
-      const data = await listObrasSociales();
+      const data = await listObrasSociales(undefined, incluirInactivas);
       setItems(data);
     } catch {
       setError("No se pudo cargar el listado. Intentá nuevamente.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [incluirInactivas]);
 
   useEffect(() => {
     load();

@@ -15,12 +15,16 @@ export interface AyudanteLinea {
   porcentaje: string;
   tipoCalculo: TipoCalculo;
   precioManual: string;
+  /** Nº de autorización propio de este integrante. Solo se usa cuando el operador
+   *  activa "autorización por integrante" — con el checkbox apagado, se ignora y se
+   *  factura con el número de la cabecera (ver CargaFacturacion.tsx). */
+  autorizacion: string;
 }
 
 const nuevoId = () =>
   typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `ay-${Date.now()}-${Math.random()}`;
 
-export const crearAyudanteLinea = (precioAutomatico: string): AyudanteLinea => ({
+export const crearAyudanteLinea = (precioAutomatico: string, autorizacion = ""): AyudanteLinea => ({
   id: nuevoId(),
   prestacionId: null,
   codMedico: null,
@@ -28,6 +32,7 @@ export const crearAyudanteLinea = (precioAutomatico: string): AyudanteLinea => (
   porcentaje: "100",
   tipoCalculo: "A",
   precioManual: precioAutomatico,
+  autorizacion,
 });
 
 const montoLinea = (linea: AyudanteLinea, precio: PrecioResponse): number => {
@@ -51,11 +56,14 @@ interface Props {
   errors?: Record<string, string>;
   /** Lista completa precargada por CargaFacturacion.tsx — ver MedicoAutocomplete. */
   medicosPrecargados?: MedicoOption[];
+  /** true → cada ayudante lleva su propio Nº de autorización (input propio); false →
+   *  la sección no lo pide, se factura con el número de la cabecera. */
+  porIntegrante?: boolean;
 }
 
 const AyudanteSection: React.FC<Props> = ({
   precio, maxAyudantes, ayudantes, onChange, codMedicoMain, disabled, errors = {},
-  medicosPrecargados,
+  medicosPrecargados, porIntegrante,
 }) => {
   const updateLinea = (id: string, patch: Partial<AyudanteLinea>) => {
     onChange(ayudantes.map((l) => (l.id === id ? { ...l, ...patch } : l)));
@@ -128,6 +136,21 @@ const AyudanteSection: React.FC<Props> = ({
                 {error && !isDuplicateMain && !isDuplicateOther && <span className={styles.errorText}>{error}</span>}
               </div>
             </div>
+
+            {porIntegrante && (
+              <div className={styles.filterField}>
+                <label className={styles.filterLabel}>Nº de autorización</label>
+                <input
+                  className={styles.input}
+                  type="text"
+                  maxLength={30}
+                  value={linea.autorizacion}
+                  onChange={(e) => updateLinea(linea.id, { autorizacion: e.target.value })}
+                  disabled={disabled}
+                  placeholder="Nº de autorización de este integrante"
+                />
+              </div>
+            )}
 
             <div className={styles.filterField}>
               <label className={styles.filterLabel}>Tipo de cálculo</label>

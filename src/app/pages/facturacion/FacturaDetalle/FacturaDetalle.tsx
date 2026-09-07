@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ClipboardList, ArrowLeft, Pencil, Copy, ArrowRightCircle, ArrowLeftCircle, Trash2 } from "lucide-react";
+import { ClipboardList, ArrowLeft, Pencil, Copy, ArrowRightCircle, ArrowLeftCircle, Trash2, Download } from "lucide-react";
 
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
 import {
@@ -14,6 +14,7 @@ import type {
 import { detailMessage } from "../types";
 import { formatMoney } from "../money";
 import ConfirmActionModal from "../components/ConfirmActionModal";
+import ExportPanel from "./export/ExportPanel";
 import styles from "./FacturaDetalle.module.scss";
 
 type PendingAction =
@@ -78,6 +79,7 @@ const FacturaDetalle: React.FC = () => {
   const [busyIds, setBusyIds] = useState<Set<number>>(new Set());
   const [busyGroups, setBusyGroups] = useState<Set<string>>(new Set());
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -492,6 +494,9 @@ const FacturaDetalle: React.FC = () => {
               </span>
             </>
           )}
+          <button type="button" className={styles.backBtn} onClick={() => setExportOpen(true)} disabled={!detalle}>
+            <Download size={15} /> Exportar
+          </button>
           <button type="button" className={styles.backBtn} onClick={() => navigate("/panel/facturacion/periodos")}>
             <ArrowLeft size={15} /> Volver
           </button>
@@ -609,6 +614,10 @@ const FacturaDetalle: React.FC = () => {
           />
         );
       })()}
+
+      {exportOpen && detalle && (
+        <ExportPanel detalle={detalle} onClose={() => setExportOpen(false)} />
+      )}
     </div>
   );
 };

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import AppSearchSelect, { type AppSearchSelectOption } from "../../../components/atoms/AppSearchSelect/AppSearchSelect";
 import { fetchMedicos } from "../api";
 import type { MedicoOption } from "../types";
+import { filtrarYOrdenar } from "./localSearch";
 
 // Los números de socio pueden tener 1 sola cifra (ej. "2") — la tolerancia de
 // 2 caracteres solo tiene sentido para texto (nombre), no para búsquedas numéricas.
@@ -49,19 +50,24 @@ const MedicoAutocomplete: React.FC<Props> = ({
     }
   }, []);
 
-  // Mismo filtro (sin organizaciones) y mismo tope que el buscador remoto, pero
-  // en memoria — sobre la lista que ya trajo CargaFacturacion.tsx una sola vez.
+  // Mismo filtro (sin organizaciones) que el buscador remoto, pero en memoria —
+  // sobre la lista que ya trajo CargaFacturacion.tsx una sola vez. Query vacío
+  // (campo recién clickeado, nada tipeado) devuelve la lista completa: sin esto
+  // el dropdown abre sin ninguna opción hasta que se tipea.
   const buscarLocal = useCallback((q: string) => {
-    if (q.length < minLenFor(q) || !medicosPrecargados) { setOptions([]); return; }
-    const needle = q.toLowerCase();
-    const filtrados = medicosPrecargados.filter(
-      (m) =>
-        !m.es_organizacion &&
-        (String(m.cod).includes(q) ||
-          m.nombre.toLowerCase().includes(needle) ||
-          (m.matricula != null && String(m.matricula).includes(q))),
+    if (!medicosPrecargados) { setOptions([]); return; }
+    if (q.length === 0) {
+      setOptions(medicosPrecargados.filter((m) => !m.es_organizacion));
+      return;
+    }
+    if (q.length < minLenFor(q)) { setOptions([]); return; }
+    // Orden de prioridad de coincidencia: Matrícula > Nombre > Nº de socio.
+    const filtrados = filtrarYOrdenar(
+      medicosPrecargados.filter((m) => !m.es_organizacion),
+      q,
+      (m) => [m.matricula, m.nombre, m.cod],
     );
-    setOptions(filtrados.slice(0, 20));
+    setOptions(filtrados);
   }, [medicosPrecargados]);
 
   useEffect(() => () => { abortRef.current?.abort(); }, []);

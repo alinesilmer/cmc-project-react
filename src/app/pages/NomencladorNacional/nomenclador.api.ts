@@ -40,6 +40,7 @@ import type {
   RevertirActualizacionPayload,
   ValorDocumentoOut,
   MesActualizaciones,
+  ResumenVigenciaOut,
 } from "./nomenclador.types";
 
 // ─── Nomenclador ──────────────────────────────────────────────────────────────
@@ -169,6 +170,8 @@ export const listValores = (params: {
   especialidad_id_colegio?: number;
   estado?: string;
   vigente_a?: string;
+  /** Filtra por la vigencia exacta (no "vigente a la fecha X"). */
+  vigencia_desde?: string;
   page?: number;
   size?: number;
 }): Promise<ValorOut[]> => getJSON<ValorOut[]>("/api/valores_nm/", params);
@@ -226,6 +229,18 @@ export const listVigenciasCargadas = (
   obra_social_nro: number,
 ): Promise<{ vigencia_desde: string; cantidad: number }[]> =>
   getJSON("/api/valores_nm/vigencias", { obra_social_nro });
+
+/**
+ * Cuándo y cuánto actualizó esta obra social, ya agregado por vigencia —
+ * cantidad de códigos y variación promedio contra la versión anterior de cada
+ * uno. Sale de `nm_historial_precio_codigo`, no de bajar la grilla completa de
+ * `/api/valores_nm/`. Alimenta la vista "Actualizaciones porcentuales" del
+ * historial. Ver auditoría H-01/H-02.
+ */
+export const getResumenPorVigencia = (
+  obra_social_nro: number,
+): Promise<ResumenVigenciaOut[]> =>
+  getJSON<ResumenVigenciaOut[]>("/api/valores_nm/resumen_por_vigencia", { obra_social_nro });
 
 // Elimina todos los valores (con componentes e historial) de una OS en una vigencia exacta.
 export const eliminarValoresPorVigencia = (

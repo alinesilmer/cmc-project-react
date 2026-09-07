@@ -56,9 +56,9 @@ const AppSearchSelect: React.FC<Props> = ({
 
   // El seleccionado se antepone a la lista para que MUI no lo pierda de vista — pero
   // solo mientras el texto siga siendo el suyo. En cuanto el operador tipea algo
-  // distinto (buscando otra cosa), dejar de anteponerlo: si no, con `autoHighlight` +
-  // `autoSelect` de abajo, Tab/Enter re-confirmarían el valor viejo en vez de tomar la
-  // primera coincidencia de lo que recién tipeó.
+  // distinto (buscando otra cosa), dejar de anteponerlo: si no, con `autoHighlight`
+  // de abajo, Enter re-confirmaría el valor viejo en vez de tomar la primera
+  // coincidencia de lo que recién tipeó.
   const mergedOptions =
     selected && inputValue === selected.label && !options.some((o) => String(o.id) === String(selected.id))
       ? [selected, ...options]
@@ -75,11 +75,15 @@ const AppSearchSelect: React.FC<Props> = ({
       // No limpiamos el texto tipeado al perder foco si no se eligió nada — se
       // mantiene visible en vez de "borrarse" como pasaba antes.
       clearOnBlur={false}
-      // El operador tipea y se va con Tab/Enter sin clickear la opción: se resalta la
-      // primera coincidencia (`autoHighlight`) y esa es la que queda tomada al confirmar
-      // con Enter o al perder foco (`autoSelect`), sin obligarlo a usar el mouse.
+      // `autoSelect` confirma la opción resaltada al perder foco (blur), no solo con
+      // Enter — sin condicionarlo, con la lista completa mostrada al hacer click (sin
+      // tipear nada) terminaba "eligiendo" el primer ítem de la lista con solo
+      // clickear afuera para cerrar. Solo tiene sentido cuando el operador escribió
+      // algo (hay una búsqueda real de por medio): campo vacío + click afuera no debe
+      // seleccionar nada; campo con texto + click afuera sí toma la coincidencia
+      // resaltada, igual que Enter.
       autoHighlight
-      autoSelect
+      autoSelect={inputValue.length > 0}
       options={mergedOptions}
       getOptionLabel={(opt) => opt.label}
       value={selected}
@@ -117,7 +121,15 @@ const AppSearchSelect: React.FC<Props> = ({
         // selección o dejar la lista vacía. Si ya hay una opción elegida, `inputValue`
         // es su label compuesto (código · nombre · matrícula) — no lo que buscaría el
         // usuario, así que no dispara una búsqueda nueva con eso.
-        if (inputValue && !selected) onQueryChange?.(inputValue);
+        //
+        // Se dispara también con `inputValue` vacío (antes solo si había texto
+        // tipeado): un campo recién clickeado, sin nada escrito, tiene que poder
+        // mostrar algo. Quien recibe el query decide qué hacer con "" — los campos
+        // con lista precargada entera (ver AppSearchSelect callers en facturación)
+        // devuelven la lista completa; el resto de los buscadores remotos ya
+        // ignoraban un query vacío (mismo guard que usaban al borrar el texto
+        // tipeado), así que no dispara nada nuevo para ellos.
+        if (!selected) onQueryChange?.(inputValue);
       }}
       noOptionsText="Sin resultados"
       loadingText="Buscando…"

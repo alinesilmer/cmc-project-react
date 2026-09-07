@@ -1,4 +1,4 @@
-import { getJSON, postJSON, patchJSON, delJSON, getJSONWithHeaders, postForm } from "../../lib/http";
+import { getJSON, postJSON, patchJSON, delJSON, getJSONWithHeaders, postForm, getBlobLong } from "../../lib/http";
 import type {
   MedicoOption, ObraSocialOption, NomencladorOption, ClinicaOption,
   AfiliadoRead, PeriodoActivoResponse, PrecioResponse,
@@ -8,6 +8,7 @@ import type {
   FacturaRead, ListarFacturasParams, FacturaDetalleResponse, ComplementoCreate,
   ViaPractica, PrestacionFicha,
 } from "./types";
+import type { ExportOpciones, ExportPreset, TipoDocumentoPreset } from "./FacturaDetalle/export/types";
 
 const BASE = "/api/facturacion";
 
@@ -54,6 +55,15 @@ export const fetchObrasSocialesTodas = () =>
 
 export const fetchClinicas = (q: string, limit = 20) =>
   traced("GET /clinicas", { q, limit }, getJSON<ClinicaOption[]>(`${BASE}/clinicas`, { q, limit }));
+
+export const fetchClinicasTodas = () =>
+  traced("GET /clinicas/todas", {}, getJSON<ClinicaOption[]>(`${BASE}/clinicas/todas`));
+
+export const crearClinica = (body: { nombre: string }) =>
+  traced("POST /clinicas", body, postJSON<ClinicaOption>(`${BASE}/clinicas`, body));
+
+export const eliminarClinica = (cod: number) =>
+  traced("DELETE /clinicas", { cod }, delJSON<void>(`${BASE}/clinicas/${cod}`));
 
 export const fetchCodigosHabilitados = (nroSocio: string, q?: string) =>
   traced(
@@ -191,6 +201,41 @@ export const previewCierre = (cod_obra: string, periodo: string) =>
     { cod_obra, periodo },
     getJSON<CierrePreviewResponse>(`${BASE}/cierre/preview`, { cod_obra, periodo }),
   );
+
+// ── Export (detalle + carátula) ──────────────────────────────────────────────
+// GET, no POST: es el patrón que ya usa el resto de la API para "exportar con
+// filtros" (`/api/deducciones/export`, `/api/cobranzas/export`) y permite que
+// el backend arme un `Content-Disposition: attachment` normal. `timeoutMs` más
+// largo que el default porque con miles de prestaciones el PDF/Excel puede
+// tardar unos segundos en generarse.
+export const descargarExportDetalle = (
+  facturaId: number | string, formato: "pdf" | "xlsx", opciones: ExportOpciones,
+) =>
+  traced(
+    `GET /facturas/${facturaId}/export/detalle.${formato}`,
+    opciones,
+    getBlobLong(`${BASE}/facturas/${facturaId}/export/detalle.${formato}`, opciones as Record<string, any>),
+  );
+
+export const descargarExportCaratula = (facturaId: number | string, formato: "pdf" | "xlsx") =>
+  traced(
+    `GET /facturas/${facturaId}/export/caratula.${formato}`,
+    { facturaId },
+    getBlobLong(`${BASE}/facturas/${facturaId}/export/caratula.${formato}`),
+  );
+
+export const listarExportPresets = (tipoDocumento?: TipoDocumentoPreset) =>
+  traced(
+    "GET /export-presets",
+    { tipoDocumento },
+    getJSON<ExportPreset[]>(`${BASE}/export-presets`, tipoDocumento ? { tipo_documento: tipoDocumento } : undefined),
+  );
+
+export const crearExportPreset = (payload: { nombre: string; tipo_documento: TipoDocumentoPreset; opciones: ExportOpciones }) =>
+  traced("POST /export-presets", payload, postJSON<ExportPreset>(`${BASE}/export-presets`, payload));
+
+export const eliminarExportPreset = (id: number) =>
+  traced("DELETE /export-presets", { id }, delJSON<void>(`${BASE}/export-presets/${id}`));
 
 export const cerrarPeriodo = (payload: CierrePayload) => {
   const form = new FormData();

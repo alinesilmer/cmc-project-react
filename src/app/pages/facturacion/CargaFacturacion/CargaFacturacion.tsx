@@ -17,6 +17,7 @@ import {
   fetchObrasSocialesTodas,
   fetchCodigosHabilitados,
   fetchClinicas,
+  fetchClinicasTodas,
 } from "../api";
 import { detailMessage, versionLabel } from "../types";
 import type {
@@ -28,13 +29,14 @@ import type {
   PrestacionRead,
   PrestacionUpdate,
   MedicoOption,
+  ClinicaOption,
 } from "../types";
 import { parseMoney, formatMoney } from "../money";
-import { FACTURACION_ULTIMA_OS_KEY } from "../constants";
+import { FACTURACION_ULTIMA_OS_KEY, FACTURACION_AUTORIZACION_POR_INTEGRANTE_KEY } from "../constants";
 
 import DuplicadoConfirmModal from "../components/DuplicadoConfirmModal";
-import ClinicaAutocomplete from "../components/ClinicaAutocomplete";
 import NumericInput from "../components/NumericInput";
+import { dedupePorId } from "../components/localSearch";
 
 import { usePeriodoActivo } from "./hooks/usePeriodoActivo";
 import { useNomencladorPrecio } from "./hooks/useNomencladorPrecio";
@@ -44,6 +46,7 @@ import { focusFirstField, nextFocusable, type FocusField } from "./focusNav";
 import MedicoSection from "./sections/MedicoSection";
 import DatosGeneralesSection from "./sections/DatosGeneralesSection";
 import PacienteSection from "./sections/PacienteSection";
+import ClinicaSection from "./sections/ClinicaSection";
 import PrestacionSection from "./sections/PrestacionSection";
 import AyudanteSection, {
   crearAyudanteLinea,
@@ -84,7 +87,7 @@ const buildAyudantesFromGrupo = async (
       }
       const precioAyudante = g.ayudante != null ? String(g.ayudante) : "0";
       return {
-        ...crearAyudanteLinea(precioAyudante),
+        ...crearAyudanteLinea(precioAyudante, g.autorizacion ?? ""),
         prestacionId: g.id,
         codMedico: g.cod_medico,
         medico,
@@ -95,6 +98,14 @@ const buildAyudantesFromGrupo = async (
     }),
   );
 };
+
+// Auto-detecta si el equipo ya tiene autorizaciones distintas por integrante (carga
+// vieja o hecha desde otra pantalla) para no pisarlas silenciosamente al guardar —
+// ver `autorizacionPorIntegrante` en el componente.
+const tieneAutorizacionDistintaPorIntegrante = (
+  cabeza: PrestacionRead, lineas: AyudanteLinea[],
+): boolean =>
+  lineas.some((l) => (l.autorizacion || null) !== (cabeza.autorizacion || null));
 
 // Cantidad/Sesión/Porcentaje se guardan como string en el estado (los inputs son
 // type="text" con bloqueo de no-dígitos, ver NumericInput): esto convierte al enviar.
@@ -136,6 +147,7 @@ const CargaFacturacion: React.FC = () => {
   // adelante; por ahora es la forma más simple de sacarse de encima la latencia.
   const [medicosPrecargados, setMedicosPrecargados] = useState<MedicoOption[] | null>(null);
   const [obrasSocialesPrecargadas, setObrasSocialesPrecargadas] = useState<ObraSocialOption[] | null>(null);
+  const [clinicasPrecargadas, setClinicasPrecargadas] = useState<ClinicaOption[] | null>(null);
   const [errorPrecarga, setErrorPrecarga] = useState(false);
   const [reintentoPrecarga, setReintentoPrecarga] = useState(0);
 
@@ -144,13 +156,19 @@ const CargaFacturacion: React.FC = () => {
     setErrorPrecarga(false);
     (async () => {
       try {
-        const [medicos, obrasSociales] = await Promise.all([
+        const [medicos, obrasSociales, clinicas] = await Promise.all([
           fetchMedicosTodos(),
           fetchObrasSocialesTodas(),
+          fetchClinicasTodas(),
         ]);
         if (!active) return;
-        setMedicosPrecargados(medicos);
-        setObrasSocialesPrecargadas(obrasSociales);
+        // `listado_medico` tiene NRO_SOCIO duplicado en algunas filas (mismo médico
+        // cargado dos veces — dato legacy, no un caso de negocio real). Sin dedupar,
+        // el Autocomplete renderiza dos <li> con la misma key y React mezcla su
+        // contenido entre renders al filtrar — eso se veía como "el filtro falla".
+        setMedicosPrecargados(dedupePorId(medicos, (m) => m.cod));
+        setObrasSocialesPrecargadas(dedupePorId(obrasSociales, (o) => o.nro_obra_social));
+        setClinicasPrecargadas(dedupePorId(clinicas, (c) => c.cod));
       } catch {
         if (active) setErrorPrecarga(true);
       }
@@ -247,6 +265,17 @@ const CargaFacturacion: React.FC = () => {
   // Ayudantes quirúrgicos (0..N según cantidad_ayudantes del código+OS). Solo aplica
   // cuando `tipoPrestador === "medico"`.
   const [ayudantes, setAyudantes] = useState<AyudanteLinea[]>([]);
+
+  // Algunas obras sociales emiten un Nº de autorización POR integrante del equipo
+  // (cirujano y cada ayudante) en vez de uno solo para toda la práctica. Preferencia
+  // del operador, persistida entre cargas (trabaja tandas de la misma OS) — por eso
+  // NO se resetea en `resetForm()`, a diferencia del resto del estado de ayudantes.
+  const [autorizacionPorIntegrante, setAutorizacionPorIntegrante] = useState(
+    () => localStorage.getItem(FACTURACION_AUTORIZACION_POR_INTEGRANTE_KEY) === "1",
+  );
+  useEffect(() => {
+    localStorage.setItem(FACTURACION_AUTORIZACION_POR_INTEGRANTE_KEY, autorizacionPorIntegrante ? "1" : "0");
+  }, [autorizacionPorIntegrante]);
 
   // UI. En complementaria no se mantiene la fecha (rezagadas de fechas distintas), y ese
   // checkbox tampoco se muestra. La clínica sí puede mantenerse (misma clínica en varias).
@@ -435,6 +464,9 @@ const CargaFacturacion: React.FC = () => {
               .map((l) => l.prestacionId)
               .filter((v): v is number => v != null);
             setAyudantes(lineas);
+            if (tieneAutorizacionDistintaPorIntegrante(p, lineas)) {
+              setAutorizacionPorIntegrante(true);
+            }
           }
         }
         // Recién acá el formulario puede mostrarse: ya está todo, labels incluidos.
@@ -644,7 +676,12 @@ const CargaFacturacion: React.FC = () => {
         // vuelve a dispararse), así que estas líneas persisten.
         if (p.grupo && p.grupo.length > 0) {
           const lineas = await buildAyudantesFromGrupo(p.grupo);
-          if (active) setAyudantes(lineas);
+          if (active) {
+            setAyudantes(lineas);
+            if (tieneAutorizacionDistintaPorIntegrante(p, lineas)) {
+              setAutorizacionPorIntegrante(true);
+            }
+          }
         }
       } catch {
         notify("No se pudo cargar la prestación a replicar.", "error");
@@ -796,6 +833,7 @@ const CargaFacturacion: React.FC = () => {
     }
     if (!mantener.clinica) {
       setCodClinica(null);
+      setClinicaPreset(null);
       setClinicaResetKey((k) => k + 1);
     }
     if (!mantener.obraSocial) {
@@ -899,6 +937,11 @@ const CargaFacturacion: React.FC = () => {
           cod_medico: linea.codMedico,
           cod_medico_ejecutor: null,
           ...shared,
+          // Con "autorización por integrante" activo, cada ayudante lleva la suya en
+          // vez de la de la cabecera (ver comentario equivalente en `doGuardar`).
+          autorizacion: autorizacionPorIntegrante
+            ? (linea.autorizacion.trim() || null)
+            : shared.autorizacion,
           cantidad: 1,
           sesion: 1,
           tipo_calculo: linea.tipoCalculo,
@@ -971,9 +1014,12 @@ const CargaFacturacion: React.FC = () => {
         dni_paciente: mainItem.dni_paciente,
         fecha_practica: mainItem.fecha_practica,
         cod_clinica: mainItem.cod_clinica,
-        // Es un dato de la práctica, no del prestador: el ayudante participa de la
-        // misma, así que se copia igual que dni/fecha/clínica.
-        autorizacion: mainItem.autorizacion,
+        // Por defecto es un dato de la práctica, no del prestador: se copia igual que
+        // dni/fecha/clínica. Con "autorización por integrante" activo, cada ayudante
+        // lleva la suya (algunas OS emiten un número distinto por miembro del equipo).
+        autorizacion: autorizacionPorIntegrante
+          ? (linea.autorizacion.trim() || null)
+          : mainItem.autorizacion,
         cod_nomenclador: mainItem.cod_nomenclador!,
         via: mainItem.via,
         cantidad: 1,
@@ -1147,7 +1193,7 @@ const CargaFacturacion: React.FC = () => {
   // Antes que cualquier otro gate: sin médicos y obras sociales precargados no hay
   // formulario que mostrar (los autocompletes de médico/obra social dependen de
   // estas listas para filtrar en memoria).
-  if (!medicosPrecargados || !obrasSocialesPrecargadas) {
+  if (!medicosPrecargados || !obrasSocialesPrecargadas || !clinicasPrecargadas) {
     return (
       <div className={styles.container}>
         <div className={styles.header}>
@@ -1160,7 +1206,7 @@ const CargaFacturacion: React.FC = () => {
         </div>
         {errorPrecarga ? (
           <div className={styles.errorBox}>
-            ⚠ No se pudieron cargar los médicos y las obras sociales.{" "}
+            ⚠ No se pudieron cargar los médicos, las obras sociales y las clínicas.{" "}
             <button
               type="button"
               className={styles.periodoLinkBtn}
@@ -1384,6 +1430,7 @@ const CargaFacturacion: React.FC = () => {
                 // Payee clínica: el campo "Clínica" de más abajo queda de más — la
                 // clínica ya es el propio payee — así que se limpia y se oculta.
                 setCodClinica(null);
+                setClinicaPreset(null);
                 setClinicaResetKey((k) => k + 1);
               }
             }}
@@ -1516,19 +1563,29 @@ const CargaFacturacion: React.FC = () => {
           {/* 6. Clínica — se oculta si el payee (Nº socio) ya es una clínica: sería
               redundante volver a pedirla acá. */}
           {!payeeEsOrganizacion && (
-            <div className={styles.section}>
-              <span className={styles.sectionTitle}>Clínica</span>
-              <div className={styles.filterField}>
-                <ClinicaAutocomplete
-                  key={`clinica-${clinicaResetKey}`}
-                  value={codClinica}
-                  onChange={(cod) => setCodClinica(cod)}
-                  disabled={formDisabled}
-                  presetLabel={clinicaPreset ?? undefined}
-                  blurOnSelect={false}
-                />
-              </div>
-            </div>
+            <ClinicaSection
+              codClinica={codClinica}
+              clinicaNombre={clinicaPreset}
+              onClinicaChange={(cod, clinica) => {
+                setCodClinica(cod);
+                setClinicaPreset(clinica?.nombre ?? null);
+                // Recién creada (o cualquiera resuelta que no viniera en la precarga):
+                // se agrega a la lista en memoria para que quede buscable/reseleccionable
+                // sin recargar la página.
+                if (clinica) {
+                  setClinicasPrecargadas((prev) => {
+                    if (!prev || prev.some((c) => c.cod === clinica.cod)) return prev;
+                    return [...prev, clinica].sort((a, b) => a.nombre.localeCompare(b.nombre));
+                  });
+                }
+              }}
+              onClinicaDeleted={(cod) => {
+                setClinicasPrecargadas((prev) => (prev ? prev.filter((c) => c.cod !== cod) : prev));
+              }}
+              disabled={formDisabled}
+              clinicasPrecargadas={clinicasPrecargadas}
+              resetKey={clinicaResetKey}
+            />
           )}
 
           {/* 6b. Autorización */}
@@ -1548,6 +1605,17 @@ const CargaFacturacion: React.FC = () => {
                 placeholder="Nº de autorización de la obra social"
               />
             </div>
+            {admiteAyudante && (
+              <label className={styles.radioLabel}>
+                <input
+                  type="checkbox"
+                  checked={autorizacionPorIntegrante}
+                  onChange={(e) => setAutorizacionPorIntegrante(e.target.checked)}
+                  disabled={formDisabled}
+                />
+                Un Nº de autorización por cada integrante del equipo
+              </label>
+            )}
           </div>
 
           {/* 7. Sesión y cantidad */}
@@ -1740,6 +1808,7 @@ const CargaFacturacion: React.FC = () => {
               disabled={isEdit ? formDisabled : guardando}
               errors={errores}
               medicosPrecargados={medicosPrecargados}
+              porIntegrante={autorizacionPorIntegrante}
             />
           )}
 

@@ -236,13 +236,16 @@ export type ValorOut = {
   obra_social_nro: number;
   nomenclador_id: number;
   codigo: string;
+  /** Override de esta OS — casi siempre `null`. Para MOSTRAR usar `descripcion_efectiva`. */
   descripcion: string | null;
+  /** La que hay que mostrar: `descripcion` si la OS puso una, si no la del catálogo. */
+  descripcion_efectiva: string;
   origen: Origen;
   nivel: number | null;
   complejidad: string | null;
   especialidad_id_colegio: number | null;
   por_presupuesto: boolean;
-  modalidad: "galeno" | "fijo";
+  modalidad: "galeno" | "fijo" | "por_presupuesto";
   vigencia_desde: string;
   vigencia_hasta: string | null;
   estado: ValorEstado;
@@ -408,6 +411,17 @@ export type ValorDocumentoOut = {
   /** Ruta `/api/archivos/…`: pide token, se abre con `abrirAdjunto()`. */
   url: string;
   created_at: string;
+  /** Nombre de quien lo subió. `null` si no se pudo resolver. */
+  subido_por_nombre: string | null;
+};
+
+/** Una vigencia ya agregada: cuántos códigos y cuánto varió el promedio. */
+export type ResumenVigenciaOut = {
+  /** `YYYY-MM-DD`. */
+  vigencia_desde: string;
+  cantidad: number;
+  /** `null` cuando ningún código de esta vigencia tenía versión anterior. */
+  avg_pct: number | null;
 };
 
 /** Una obra social que actualizó valores en una vigencia. */

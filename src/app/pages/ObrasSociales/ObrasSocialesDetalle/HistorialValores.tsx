@@ -10,8 +10,10 @@ import { useQuery } from "@tanstack/react-query";
 import s from "./ObrasSocialesDetalle.module.scss";
 import { abrirAdjunto } from "../../../lib/archivos";
 import { useNotify } from "../../../hooks/useNotify";
+import { usePermisos } from "../../../auth/usePermisos";
 import {
   eliminarValorDocumento,
+  getResumenPorVigencia,
   listValorDocumentos,
   listValores,
   subirValorDocumento,
@@ -39,8 +41,6 @@ type HistRow = {
   descripcion: string | null;
   origen: Origen;
   nivel: number | null;
-  /** Agrupa versiones de la MISMA variante para calcular el % vs. la anterior. */
-  variantKey: string;
   vigencia_desde: string;
   vigencia_hasta: string | null;
   estado: ValorEstado;
@@ -63,10 +63,13 @@ function toHistRow(v: ValorOut): HistRow {
   return {
     id: v.id,
     codigo: v.codigo,
-    descripcion: v.descripcion,
+    // La OS casi nunca pone `descripcion` propia (56.804 de 57.902 filas la
+    // tienen NULL): mostrar eso dejaba la columna vacía. `descripcion_efectiva`
+    // ya resuelve la herencia contra el catálogo del lado del servidor. Ver
+    // auditoría H-04.
+    descripcion: v.descripcion_efectiva || v.descripcion,
     origen: v.origen,
     nivel: v.nivel,
-    variantKey: `${v.codigo}|${v.origen}|${v.especialidad_id_colegio ?? ""}|${v.nivel ?? ""}`,
     vigencia_desde: v.vigencia_desde,
     vigencia_hasta: v.vigencia_hasta,
     estado: v.estado,
@@ -78,18 +81,22 @@ function toHistRow(v: ValorOut): HistRow {
   };
 }
 
-// Historial completo de la OS: trae todas las vigencias (activas y cerradas) de
-// /api/valores_nm/, paginando hasta agotar. Cada Valor es una versión de un código.
 /**
- * Trae todas las páginas en tandas de a `CONCURRENCIA` en paralelo, en vez de
- * una request a la vez: para una obra social con miles de valores (la 62 hoy
- * tiene 3.334, o sea 17 páginas) esto corta el tiempo de espera a una fracción
- * sin cambiar nada del backend. Ver auditoría O-07.
+ * Valores de UNA vigencia exacta de la obra social, paginando en tandas de a
+ * `CONCURRENCIA` en paralelo.
+ *
+ * Antes esto traía la obra social ENTERA — para NOBIS MEDICAL (N° 62), 3.334
+ * filas con sus componentes en 17 requests y 4,29 MB — para terminar mostrando
+ * sólo la vigencia que el usuario eligió. Ahora el filtro
+ * `vigencia_desde` va en la query: sólo se pide lo que la grilla va a mostrar.
+ * La otra pregunta —cuándo y cuánto actualizó la obra social, sin entrar a
+ * ninguna fecha en particular— la resuelve `getResumenPorVigencia()`, que ya
+ * viene agregada del servidor. Ver auditoría H-01.
  */
-async function fetchHistorialOS(nroOS: number): Promise<HistRow[]> {
+async function fetchValoresDeVigencia(nroOS: number, vigenciaDesde: string): Promise<HistRow[]> {
   const size = 200;
   const CONCURRENCIA = 5;
-  const TOPE_PAGINAS = 500; // cota defensiva, antes eran 100 páginas secuenciales
+  const TOPE_PAGINAS = 100; // una sola vigencia no debería pasar de esto
 
   const all: HistRow[] = [];
   let pagina = 1;
@@ -98,7 +105,9 @@ async function fetchHistorialOS(nroOS: number): Promise<HistRow[]> {
   while (sigue && pagina <= TOPE_PAGINAS) {
     const tanda = Array.from({ length: CONCURRENCIA }, (_, i) => pagina + i);
     const resultados = await Promise.all(
-      tanda.map((p) => listValores({ obra_social_nro: nroOS, page: p, size }))
+      tanda.map((p) =>
+        listValores({ obra_social_nro: nroOS, vigencia_desde: vigenciaDesde, page: p, size })
+      )
     );
     for (const batch of resultados) {
       all.push(...batch.map(toHistRow));
@@ -183,10 +192,21 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
   const [exporting, setExporting] = useState(false);
   const [page, setPage] = useState(1);
 
-  const { data: rows = [], isLoading: isLoadingRows } = useQuery({
-    queryKey: ["os-historial-valores", obraNro],
-    queryFn: () => fetchHistorialOS(obraNro),
+  // Agregado por vigencia — cuenta y variación promedio — sin bajar la grilla.
+  // Alimenta la vista "Actualizaciones porcentuales". Ver H-01/H-02.
+  const { data: resumen = [], isLoading: isLoadingResumen } = useQuery({
+    queryKey: ["os-resumen-vigencia", obraNro],
+    queryFn: () => getResumenPorVigencia(obraNro),
     enabled: !!obraNro,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Grilla completa, pero sólo de la vigencia elegida — se pide recién cuando
+  // hace falta, no al entrar a la pantalla.
+  const { data: dateRows = [], isLoading: isLoadingDateRows } = useQuery({
+    queryKey: ["os-valores-vigencia", obraNro, dateFilter],
+    queryFn: () => fetchValoresDeVigencia(obraNro, dateFilter),
+    enabled: !!obraNro && !!dateFilter,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -196,7 +216,12 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
   // sola vez y se agrupan por vigencia acá — son unos pocos, y así la lista de
   // actualizaciones puede mostrar el contador sin una request por fila.
   const { error: avisarError, success: avisarOk } = useNotify();
+  // Sin esto, quien sólo puede leer (rol médico) veía "Adjuntar" y el tacho de
+  // basura y se enteraba de que no podía recién al hacer clic (403). Ver H-06.
+  const { can } = usePermisos();
+  const puedeEditarDocs = can("nomenclador:editar");
   const [subiendo, setSubiendo] = useState(false);
+  const [docDescripcion, setDocDescripcion] = useState("");
   const [borrandoDoc, setBorrandoDoc] = useState<number | null>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
 
@@ -229,8 +254,10 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
         obra_social_nro: obraNro,
         vigencia_desde: dateFilter,
         archivo: file,
+        descripcion: docDescripcion,
       });
       await refetchDocumentos();
+      setDocDescripcion("");
       avisarOk("Documento adjuntado.");
     } catch (e: any) {
       avisarError(e?.response?.data?.detail ?? "No se pudo subir el documento.");
@@ -255,68 +282,23 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
   };
 
   // ── Porcentual groups ──────────────────────────────────────────────────────
-  const porcentualGroups = useMemo(() => {
-    if (!rows.length) return [];
-
-    // Cadena de versiones por variante (código+origen+especialidad+nivel), asc por vigencia.
-    const byVariant = new Map<string, HistRow[]>();
-    for (const row of rows) {
-      if (!byVariant.has(row.variantKey)) byVariant.set(row.variantKey, []);
-      byVariant.get(row.variantKey)!.push(row);
-    }
-    for (const [, chain] of byVariant) {
-      chain.sort((a, b) => a.vigencia_desde.localeCompare(b.vigencia_desde));
-    }
-
-    // Agrupa por vigencia_desde (la fecha en que un nuevo precio entra en vigencia).
-    const byDate = new Map<string, HistRow[]>();
-    for (const row of rows) {
-      const key = row.vigencia_desde ?? "__none__";
-      if (!byDate.has(key)) byDate.set(key, []);
-      byDate.get(key)!.push(row);
-    }
-
-    const sorted = [...byDate.entries()].sort(([a], [b]) => {
-      if (a === "__none__") return 1;
-      if (b === "__none__") return -1;
-      return b.localeCompare(a);
-    });
-
-    return sorted.map(([dateKey, dateRows]) => {
-      const pctChanges: number[] = [];
-      for (const row of dateRows) {
-        const chain = byVariant.get(row.variantKey) ?? [];
-        const thisIdx = chain.findIndex((r) => r.id === row.id);
-        if (thisIdx > 0) {
-          const prior = chain[thisIdx - 1];
-          if (prior.total > 0) {
-            pctChanges.push(((row.total - prior.total) / prior.total) * 100);
-          }
-        }
-      }
-      const avgPct =
-        pctChanges.length > 0
-          ? pctChanges.reduce((a, b) => a + b, 0) / pctChanges.length
-          : null;
-
-      return { date: dateKey === "__none__" ? null : dateKey, count: dateRows.length, avgPct };
-    });
-  }, [rows]);
+  // El agregado (cuenta + variación promedio) ya viene calculado del servidor
+  // contra `nm_historial_precio_codigo` — acá sólo se adapta la forma para el
+  // render. Ver H-01/H-02.
+  const porcentualGroups = useMemo(
+    () => resumen.map((r) => ({ date: r.vigencia_desde, count: r.cantidad, avgPct: r.avg_pct })),
+    [resumen]
+  );
 
   // ── Por fecha table ────────────────────────────────────────────────────────
   // Se suman las vigencias que sólo tienen documento: la nota de la obra social
   // suele llegar antes de que alguien cargue los precios, y si el selector se
   // armara sólo con los valores, ese adjunto quedaría inalcanzable.
   const availableDates = useMemo(() => {
-    const dates = new Set(rows.map((r) => r.vigencia_desde).filter(Boolean));
+    const dates = new Set(resumen.map((r) => r.vigencia_desde));
     for (const doc of documentos) dates.add(doc.vigencia_desde);
     return [...dates].sort().reverse();
-  }, [rows, documentos]);
-
-  const dateRows = useMemo(
-    () => (dateFilter ? rows.filter((r) => r.vigencia_desde === dateFilter) : []),
-    [rows, dateFilter]
-  );
+  }, [resumen, documentos]);
 
   const displayRows = useMemo(() => {
     let result = dateRows;
@@ -399,16 +381,14 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
         </button>
       </div>
 
-      {/* Loading state */}
-      {isLoadingRows && (
+      {/* ── Porcentual view ── */}
+      {historialView === "porcentual" && isLoadingResumen && (
         <div className={s.hLoadingState}>
           <Loader2 size={22} className={s.spinIcon} />
           <span>Cargando historial de {obraNombre}…</span>
         </div>
       )}
-
-      {/* ── Porcentual view ── */}
-      {!isLoadingRows && historialView === "porcentual" && (
+      {historialView === "porcentual" && !isLoadingResumen && (
         <>
           {porcentualGroups.length === 0 ? (
             <div className={s.hEmptyState}>
@@ -472,7 +452,7 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
       )}
 
       {/* ── Por fecha view ── */}
-      {!isLoadingRows && historialView === "por_fecha" && (
+      {historialView === "por_fecha" && (
         <div className={s.porFechaSection}>
           {/* Date select */}
           <div className={s.porFechaHeader}>
@@ -509,23 +489,36 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
                   <Paperclip size={14} />
                   Documentos de la actualización
                 </h3>
-                <label
-                  className={s.docsUploadBtn}
-                  htmlFor="valor-doc-file"
-                  aria-disabled={subiendo}
-                >
-                  {subiendo ? <Loader2 size={13} className={s.spinIcon} /> : <Upload size={13} />}
-                  {subiendo ? "Subiendo…" : "Adjuntar"}
-                </label>
-                <input
-                  id="valor-doc-file"
-                  ref={docInputRef}
-                  type="file"
-                  className={s.docsInput}
-                  accept={FORMATOS_DOC}
-                  disabled={subiendo}
-                  onChange={(e) => void subirDoc(e.target.files?.[0] ?? null)}
-                />
+                {puedeEditarDocs && (
+                  <div className={s.docsUploadGroup}>
+                    <input
+                      type="text"
+                      className={s.docDescInput}
+                      placeholder="Nota (opcional)"
+                      value={docDescripcion}
+                      onChange={(e) => setDocDescripcion(e.target.value)}
+                      disabled={subiendo}
+                      aria-label="Nota del documento"
+                    />
+                    <label
+                      className={s.docsUploadBtn}
+                      htmlFor="valor-doc-file"
+                      aria-disabled={subiendo}
+                    >
+                      {subiendo ? <Loader2 size={13} className={s.spinIcon} /> : <Upload size={13} />}
+                      {subiendo ? "Subiendo…" : "Adjuntar"}
+                    </label>
+                    <input
+                      id="valor-doc-file"
+                      ref={docInputRef}
+                      type="file"
+                      className={s.docsInput}
+                      accept={FORMATOS_DOC}
+                      disabled={subiendo}
+                      onChange={(e) => void subirDoc(e.target.files?.[0] ?? null)}
+                    />
+                  </div>
+                )}
               </div>
 
               {docsDeLaFecha.length === 0 ? (
@@ -536,26 +529,33 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
                 <div className={s.docsList}>
                   {docsDeLaFecha.map((doc) => (
                     <div key={doc.id} className={s.docItem}>
-                      <button
-                        type="button"
-                        className={s.docName}
-                        title={doc.descripcion ?? doc.nombre_original}
-                        onClick={() =>
-                          abrirAdjunto(doc.url).catch((err) => avisarError(err.message))
-                        }
-                      >
-                        {doc.nombre_original}
-                      </button>
+                      <div className={s.docNameCol}>
+                        <button
+                          type="button"
+                          className={s.docName}
+                          title={doc.descripcion ?? doc.nombre_original}
+                          onClick={() =>
+                            abrirAdjunto(doc.url).catch((err) => avisarError(err.message))
+                          }
+                        >
+                          {doc.nombre_original}
+                        </button>
+                        {doc.subido_por_nombre && (
+                          <span className={s.docSubidoPor}>Subido por {doc.subido_por_nombre}</span>
+                        )}
+                      </div>
                       <span className={s.docMeta}>{pesoLegible(doc.size)}</span>
-                      <button
-                        type="button"
-                        className={s.docDeleteBtn}
-                        disabled={borrandoDoc === doc.id}
-                        aria-label={`Eliminar ${doc.nombre_original}`}
-                        onClick={() => void borrarDoc(doc)}
-                      >
-                        <Trash2 size={13} />
-                      </button>
+                      {puedeEditarDocs && (
+                        <button
+                          type="button"
+                          className={s.docDeleteBtn}
+                          disabled={borrandoDoc === doc.id}
+                          aria-label={`Eliminar ${doc.nombre_original}`}
+                          onClick={() => void borrarDoc(doc)}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -563,14 +563,21 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
             </div>
           )}
 
-          {dateFilter && dateRows.length === 0 && (
+          {dateFilter && isLoadingDateRows && (
+            <div className={s.hLoadingState}>
+              <Loader2 size={22} className={s.spinIcon} />
+              <span>Cargando valores de la vigencia {dateFilter}…</span>
+            </div>
+          )}
+
+          {dateFilter && !isLoadingDateRows && dateRows.length === 0 && (
             <div className={s.hEmptyState}>
               <SearchX size={28} />
               <span>No hay valores registrados para la vigencia {dateFilter}.</span>
             </div>
           )}
 
-          {dateFilter && dateRows.length > 0 && (
+          {dateFilter && !isLoadingDateRows && dateRows.length > 0 && (
             <>
               {/* Toolbar */}
               <div className={s.hToolbar}>
