@@ -202,11 +202,61 @@ export interface FacturaRead {
   importe: number | null;
   afip: string | null;
   usuario: string | null;
+  /** NOMBRE resuelto contra listado_medico (batch, no persistido). Puede venir
+   *  `null` aunque `usuario` exista: hay operadores del Colegio sin fila propia
+   *  en listado_medico (usuario no numérico, p. ej. "sbaier"). */
+  usuario_nombre?: string | null;
   estado: string | null;
   /** En un complemento nace en "C": la fase médico está cerrada, es carga exclusiva del Colegio. */
   estado_doctor?: string | null;
   created: string | null;
   documento_url?: string | null;
+  /** Quién/cuándo se creó esta cabecera (alta, no cierre) — `null` en filas
+   *  históricas anteriores a este campo. Distinto de `usuario`/`created`, que
+   *  se pisan al cerrar y funcionan como "cerrado por"/"fecha de cierre". */
+  creado_por?: string | null;
+  creado_en?: string | null;
+  creado_por_nombre?: string | null;
+}
+
+// ── Registro de facturación (auditoría administrativa, scope facturacion:registro) ──
+export interface CargaPorUsuario {
+  usuario: string;
+  nombre?: string | null;
+  cantidad_prestaciones: number;
+  importe_total: Money;
+}
+
+export interface CierresPorUsuario {
+  usuario: string;
+  nombre?: string | null;
+  cantidad_facturas: number;
+  importe_total: Money;
+}
+
+export interface ActividadEvento {
+  tipo: "cierre" | "carga";
+  usuario: string;
+  nombre?: string | null;
+  fecha: string;
+  cod_obra: string;
+  periodo: string;
+  referencia: string;
+  importe: Money;
+}
+
+export interface RegistroPorUsuarioParams {
+  cod_obra?: string;
+  periodo?: string;
+  desde?: string;
+  hasta?: string;
+  limit?: number;
+}
+
+export interface RegistroActividadParams {
+  cod_obra?: string;
+  periodo?: string;
+  limit?: number;
 }
 
 export interface ComplementoCreate {

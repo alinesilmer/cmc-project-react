@@ -7,6 +7,8 @@ import type {
   CierrePreviewResponse, CierreResponse, CierrePayload, ListarPrestacionesParams,
   FacturaRead, ListarFacturasParams, FacturaDetalleResponse, ComplementoCreate,
   ViaPractica, PrestacionFicha,
+  CargaPorUsuario, CierresPorUsuario, ActividadEvento,
+  RegistroPorUsuarioParams, RegistroActividadParams,
 } from "./types";
 import type { ExportOpciones, ExportPreset, TipoDocumentoPreset } from "./FacturaDetalle/export/types";
 
@@ -236,6 +238,28 @@ export const crearExportPreset = (payload: { nombre: string; tipo_documento: Tip
 
 export const eliminarExportPreset = (id: number) =>
   traced("DELETE /export-presets", { id }, delJSON<void>(`${BASE}/export-presets/${id}`));
+
+// ── Registro de facturación (auditoría administrativa, scope facturacion:registro) ──
+export const listarCargaPorUsuario = (filtros: RegistroPorUsuarioParams) =>
+  traced(
+    "GET /registro/carga-por-usuario",
+    filtros,
+    getJSON<CargaPorUsuario[]>(`${BASE}/registro/carga-por-usuario`, filtros as Record<string, any>),
+  );
+
+export const listarCierresPorUsuario = (filtros: RegistroPorUsuarioParams) =>
+  traced(
+    "GET /registro/cierres-por-usuario",
+    filtros,
+    getJSON<CierresPorUsuario[]>(`${BASE}/registro/cierres-por-usuario`, filtros as Record<string, any>),
+  );
+
+export const fetchActividadReciente = (params: RegistroActividadParams) =>
+  traced(
+    "GET /registro/actividad",
+    params,
+    getJSON<ActividadEvento[]>(`${BASE}/registro/actividad`, params as Record<string, any>),
+  );
 
 export const cerrarPeriodo = (payload: CierrePayload) => {
   const form = new FormData();

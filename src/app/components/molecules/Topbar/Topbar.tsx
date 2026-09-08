@@ -102,6 +102,7 @@ const TOP_NAV: TopEntry[] = [
           { path: `${base}/facturacion/periodos`, icon: ClipboardList, label: "Ver períodos", perms: ["facturacion:leer"] },
           { path: `${base}/facturacion/consulta`, icon: Search, label: "Buscar prestación", perms: ["facturacion:leer"] },
           { path: `${base}/facturacion/complementarias`, icon: Layers, label: "Complementarias", perms: ["facturacion:complementar"] },
+          { path: `${base}/facturacion/registro`, icon: History, label: "Registro de Facturación", perms: ["facturacion:registro"] },
         ],
       },
     ],
