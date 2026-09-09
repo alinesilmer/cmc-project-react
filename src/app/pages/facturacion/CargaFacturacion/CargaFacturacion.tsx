@@ -255,6 +255,10 @@ const CargaFacturacion: React.FC = () => {
   const [porcentaje, setPorcentaje] = useState("100");
   const [honorarios, setHonorarios] = useState("0");
   const [gastos, setGastos] = useState("0");
+  // Importe que el afiliado paga de su bolsillo; se descuenta del total. Se prellena
+  // con el sugerido del Valor del código (ver el efecto de abajo) y queda editable —
+  // el operador puede corregirlo si cobró otra cosa. Solo aplica a la fila principal.
+  const [coseguro, setCoseguro] = useState("0");
   // Tipo de prestador de ESTA carga: "medico" (cirujano, default) factura
   // honorarios/gastos y admite ayudantes de equipo; "ayudante" factura un único monto
   // de ayudante y no admite equipo (el ayudante puede ser socio sin que el cirujano lo
@@ -394,9 +398,11 @@ const CargaFacturacion: React.FC = () => {
           setMontoAyudante(p.ayudante != null ? String(p.ayudante) : "0");
           setHonorarios("0");
           setGastos("0");
+          setCoseguro("0");
         } else {
           setHonorarios(p.honorarios != null ? String(p.honorarios) : "0");
           setGastos(p.gastos != null ? String(p.gastos) : "0");
+          setCoseguro(p.coseguro != null ? String(p.coseguro) : "0");
         }
         // La obra social sale de la lista precargada: si el código no está en el
         // catálogo (pasa con filas importadas de CMC) se muestra el número solo.
@@ -524,9 +530,12 @@ const CargaFacturacion: React.FC = () => {
     if (tipoCalculo === "A") {
       if (tipoPrestador === "ayudante") {
         setMontoAyudante(precio.ayudante ?? "0");
+        // El coseguro es del acto, no de cada prestador: no aplica a la fila de ayudante.
+        setCoseguro("0");
       } else {
         setHonorarios(precio.honorarios ?? "0");
         setGastos(precio.gastos ?? "0");
+        setCoseguro(precio.coseguro ?? "0");
       }
     }
   }, [precio, tipoPrestador]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -613,9 +622,11 @@ const CargaFacturacion: React.FC = () => {
           setMontoAyudante(p.ayudante != null ? String(p.ayudante) : "0");
           setHonorarios("0");
           setGastos("0");
+          setCoseguro("0");
         } else {
           setHonorarios(p.honorarios != null ? String(p.honorarios) : "0");
           setGastos(p.gastos != null ? String(p.gastos) : "0");
+          setCoseguro(p.coseguro != null ? String(p.coseguro) : "0");
         }
 
         const codMedForCodigos = esOrg ? (p.cod_medico_ejecutor ?? p.cod_medico) : p.cod_medico;
@@ -717,9 +728,12 @@ const CargaFacturacion: React.FC = () => {
     }
     const h = parseMoney(honorarios);
     const g = parseMoney(gastos);
-    const base = (h + g) * (porc / 100) * cant * ses;
+    const cos = parseMoney(coseguro);
+    // El coseguro no se escala por porcentaje (mismo criterio que el backend,
+    // `calcular_importe_total`); sí escala por cantidad/sesión, igual que el resto.
+    const base = ((h + g) * (porc / 100) - cos) * cant * ses;
     return base + totalAyudantes(ayudantes, precio);
-  }, [tipoPrestador, montoAyudante, honorarios, gastos, porcentaje, cantidad, sesion, ayudantes, precio]);
+  }, [tipoPrestador, montoAyudante, honorarios, gastos, coseguro, porcentaje, cantidad, sesion, ayudantes, precio]);
 
   const buildMainItem = (): PrestacionItem => ({
     cod_medico: codMedico!,
@@ -739,6 +753,8 @@ const CargaFacturacion: React.FC = () => {
     gastos: tipoPrestador === "ayudante" ? 0 : parseMoney(gastos),
     ayudante: tipoPrestador === "ayudante" ? parseMoney(montoAyudante) : 0,
     porcentaje: toInt(porcentaje, 100),
+    // Solo la fila principal lleva coseguro — nunca la de ayudante (el acto es uno solo).
+    coseguro: tipoPrestador === "ayudante" ? 0 : parseMoney(coseguro),
     grupo_equipo_id: null,
   });
 
@@ -791,6 +807,7 @@ const CargaFacturacion: React.FC = () => {
     setCodNomencladorCategoria(null);
     setHonorarios("0");
     setGastos("0");
+    setCoseguro("0");
     setTipoCalculo("A");
     setVia("T");
     setPorcentaje("100");
@@ -907,6 +924,7 @@ const CargaFacturacion: React.FC = () => {
       gastos: tipoPrestador === "ayudante" ? 0 : parseMoney(gastos),
       ayudante: tipoPrestador === "ayudante" ? parseMoney(montoAyudante) : 0,
       porcentaje: toInt(porcentaje, 100),
+      coseguro: tipoPrestador === "ayudante" ? 0 : parseMoney(coseguro),
     };
     // La cabecera real (no necesariamente editId: puede haberse editado un ayudante).
     const headId = headPrestacionIdRef.current ?? Number(editId);
@@ -1682,12 +1700,14 @@ const CargaFacturacion: React.FC = () => {
                       setTipoPrestador(v);
                       if (v === "ayudante") {
                         setAyudantes([]);
+                        setCoseguro("0");
                         if (tipoCalculo === "A" && precio) {
                           setMontoAyudante(precio.ayudante ?? "0");
                         }
                       } else if (tipoCalculo === "A" && precio) {
                         setHonorarios(precio.honorarios ?? "0");
                         setGastos(precio.gastos ?? "0");
+                        setCoseguro(precio.coseguro ?? "0");
                       }
                     }}
                     disabled={formDisabled}
@@ -1727,6 +1747,7 @@ const CargaFacturacion: React.FC = () => {
                         } else {
                           setHonorarios(precio.honorarios ?? "0");
                           setGastos(precio.gastos ?? "0");
+                          setCoseguro(precio.coseguro ?? "0");
                         }
                       }
                     }}
@@ -1791,6 +1812,16 @@ const CargaFacturacion: React.FC = () => {
                     value={gastos}
                     onChange={setGastos}
                     disabled={formDisabled || tipoCalculo === "A"}
+                  />
+                </div>
+                <div className={styles.filterField}>
+                  <label className={styles.filterLabel}>Coseguro</label>
+                  <NumericInput
+                    className={styles.input}
+                    decimals min={0}
+                    value={coseguro}
+                    onChange={setCoseguro}
+                    disabled={formDisabled}
                   />
                 </div>
               </div>

@@ -110,57 +110,62 @@ $shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
     }
   }
 
-  // Anchos fijos por columna para que las 16 columnas entren sin scroll: con
+  // Anchos fijos por columna para que las 17 columnas entren sin scroll: con
   // `table-layout: fixed` tienen que sumar 100% y NO puede quedar ninguna sin ancho
-  // (la que falte se lleva el sobrante y descuadra el resto).
+  // (la que falte se lleva el sobrante y descuadra el resto). El orden tiene que
+  // coincidir exactamente con los <th> del JSX — si se agrega o saca una columna acá
+  // hay que renumerar todo lo que sigue, si no el ancho de una queda pisando a otra.
   th:nth-child(1) {
-    width: 6%;
+    width: 4%;
   } // ID
   th:nth-child(2) {
-    width: 9%;
+    width: 10%;
   } // Socio
   th:nth-child(3) {
-    width: 6%;
+    width: 9%;
   } // Obra social
   th:nth-child(4) {
-    width: 7%;
+    width: 6%;
   } // Autorización
   th:nth-child(5) {
-    width: 7%;
+    width: 6%;
   } // Fecha
   th:nth-child(6) {
-    width: 6%;
+    width: 5%;
   } // Código
   th:nth-child(7) {
-    width: 4%;
+    width: 3%;
   } // Vía
   th:nth-child(8) {
-    width: 7%;
+    width: 6%;
   } // Nro Afiliado
   th:nth-child(9) {
     width: 6%;
   } // Cantidad
   th:nth-child(10) {
-    width: 4%;
+    width: 3%;
   } // %
   th:nth-child(11) {
-    width: 9%;
+    width: 7%;
   } // Honorarios
   th:nth-child(12) {
-    width: 9%;
+    width: 7%;
   } // Gastos
   th:nth-child(13) {
-    width: 4%;
-  } // TP
+    width: 6%;
+  } // Coseguro
   th:nth-child(14) {
-    width: 9%;
-  } // Sub total
+    width: 3%;
+  } // TP
   th:nth-child(15) {
+    width: 7%;
+  } // Sub total
+  th:nth-child(16) {
     width: 4%;
   } // Tipo
   // Acciones en 2 filas de 3 iconos: 3 × 24px + 2 × 4px de gap + padding ≈ 96px.
-  th:nth-child(16) {
-    width: 7%;
+  th:nth-child(17) {
+    width: 8%;
   } // Acciones
 }
 
@@ -173,6 +178,12 @@ $shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
 .idCell {
+  white-space: nowrap;
+}
+
+.fechaCell {
+  // Sin esto, "07/05/2026" no entra en el ancho de columna y `break-word` corta el
+  // año a la mitad ("202" / "6") en vez de respetar la fecha como una unidad.
   white-space: nowrap;
 }
 

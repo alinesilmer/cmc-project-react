@@ -83,6 +83,7 @@ interface CodigoApi {
   honorarios: number | string;
   gastos: number | string;
   total: number | string;
+  coseguro: number | string;
   admitido: boolean;
   motivo: string | null;
   se_envia: string | null;
@@ -189,6 +190,7 @@ export const buscarCodigos = async (
     descripcion: c.descripcion,
     honorarios: num(c.honorarios),
     gastos: num(c.gastos),
+    coseguro: num(c.coseguro),
     admitido: c.admitido,
     motivo: c.motivo,
     seEnvia: c.se_envia ?? null,

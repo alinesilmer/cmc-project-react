@@ -42,6 +42,7 @@ type ValorForm = {
   porPresupuesto: boolean;
   nivel: string;
   complejidad: string;
+  coseguro: string;
   observacion: string;
   especialidadId: number | null;
   especialidadSearch: string;
@@ -52,6 +53,7 @@ type EditMetaForm = {
   descripcion: string;
   nivel: string;
   complejidad: string;
+  coseguro: string;
   observacion: string;
 };
 
@@ -215,14 +217,14 @@ export default function NomencladorPorOS() {
   const [form, setForm] = useState<ValorForm>({
     nomencladorId: null, nomencladorLabel: "", origen: "NNE",
     modalidad: "calculable", vigencia_desde: today(),
-    porPresupuesto: false, nivel: "", complejidad: "", observacion: "",
+    porPresupuesto: false, nivel: "", complejidad: "", coseguro: "", observacion: "",
     especialidadId: null, especialidadSearch: "", componentes: initComps(),
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
   // Edit forms
-  const [editMeta, setEditMeta] = useState<EditMetaForm>({ descripcion: "", nivel: "", complejidad: "", observacion: "" });
+  const [editMeta, setEditMeta] = useState<EditMetaForm>({ descripcion: "", nivel: "", complejidad: "", coseguro: "", observacion: "" });
   const [editEcu, setEditEcu] = useState<EditEcuForm>({ vigencia_desde: today(), modalidad: "calculable", componentes: initComps() });
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
   const [savingMeta, setSavingMeta] = useState(false);
@@ -527,7 +529,7 @@ export default function NomencladorPorOS() {
     setForm({
       nomencladorId: null, nomencladorLabel: "", origen: "NNE",
       modalidad: "calculable", vigencia_desde: today(),
-      porPresupuesto: false, nivel: "", complejidad: "", observacion: "",
+      porPresupuesto: false, nivel: "", complejidad: "", coseguro: "", observacion: "",
       especialidadId: null, especialidadSearch: "", componentes: initComps(),
     });
     setNomSearch(""); setNomResults([]); setErrors({});
@@ -541,6 +543,7 @@ export default function NomencladorPorOS() {
       descripcion: v.descripcion ?? "",
       nivel: v.nivel != null ? String(v.nivel) : "",
       complejidad: v.complejidad ?? "",
+      coseguro: v.coseguro && parseMonto(v.coseguro) !== 0 ? v.coseguro : "",
       observacion: v.observacion ?? "",
     });
     setEditEcu({ vigencia_desde: today(), modalidad: mod, componentes: compsFromOut(v.componentes) });
@@ -578,6 +581,7 @@ export default function NomencladorPorOS() {
         complejidad: form.complejidad || null,
         especialidad_id_colegio: form.origen === "NE" ? form.especialidadId : null,
         por_presupuesto: form.porPresupuesto,
+        coseguro: form.coseguro.trim() ? parseMonto(form.coseguro) : 0,
         vigencia_desde: form.vigencia_desde,
         observacion: form.observacion || null,
         componentes,
@@ -599,6 +603,7 @@ export default function NomencladorPorOS() {
         descripcion: editMeta.descripcion || null,
         nivel: editMeta.nivel ? parseInt(editMeta.nivel, 10) : null,
         complejidad: editMeta.complejidad || null,
+        coseguro: editMeta.coseguro.trim() ? parseMonto(editMeta.coseguro) : 0,
         observacion: editMeta.observacion || null,
       });
       setValores((prev) => prev.map((v) => (v.id === updated.id ? updated : v)));
@@ -746,15 +751,16 @@ export default function NomencladorPorOS() {
                       <th>Precio</th>
                       <th>Ayudante</th>
                       <th>Gastos</th>
+                      <th>Coseguro</th>
                       <th>Vigente desde</th>
                       <th className={styles.thActions}>Acc.</th>
                     </tr>
                   </thead>
                   <tbody>
                     {showLoading ? (
-                      <tr><td colSpan={8} className={styles.loadingCell}>Cargando…</td></tr>
+                      <tr><td colSpan={9} className={styles.loadingCell}>Cargando…</td></tr>
                     ) : grouped.length === 0 ? (
-                      <tr><td colSpan={8} className={styles.emptyCell}>
+                      <tr><td colSpan={9} className={styles.emptyCell}>
                         {especialidadFilter !== "todos" ? "Sin códigos de esta especialidad" : "Sin códigos cargados"}
                       </td></tr>
                     ) : pageGroups.map(([nomId, variants]) => {
@@ -762,7 +768,7 @@ export default function NomencladorPorOS() {
                       return (
                         <Fragment key={nomId}>
                           <tr className={styles.groupHeader}>
-                            <td colSpan={8}>
+                            <td colSpan={9}>
                               <span className={styles.codeCell}>{first.codigo}</span>
                               {resolvedDesc(first) && <span className={styles.groupDesc}> — {resolvedDesc(first)}</span>}
                             </td>
@@ -805,6 +811,9 @@ export default function NomencladorPorOS() {
                                   </td>
                                 </>
                               )}
+                              <td className={styles.mutedText}>
+                                {parseMonto(v.coseguro) === 0 ? "—" : fmt.format(parseMonto(v.coseguro))}
+                              </td>
                               <td className={styles.mutedText}>{v.vigencia_desde}</td>
                               <td>
                                 <div className={styles.actionsCell}>
@@ -844,6 +853,11 @@ export default function NomencladorPorOS() {
                         {montoDe(v, "Gastos") != null && (
                           <span>Gastos {fmt.format(montoDe(v, "Gastos")!)}</span>
                         )}
+                      </p>
+                    )}
+                    {parseMonto(v.coseguro) > 0 && (
+                      <p className={styles.cardConceptos}>
+                        <span>Coseguro {fmt.format(parseMonto(v.coseguro))}</span>
                       </p>
                     )}
                     <div className={styles.cardActions}>
@@ -1025,6 +1039,20 @@ export default function NomencladorPorOS() {
                   </div>
                 </div>
 
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Coseguro ($)</label>
+                  <input
+                    type="number" min="0" step="0.01"
+                    className={styles.formInput}
+                    value={form.coseguro}
+                    onChange={(e) => setForm((p) => ({ ...p, coseguro: e.target.value }))}
+                    placeholder="0.00"
+                  />
+                  <span className={styles.hintText}>
+                    Lo que el afiliado paga de su bolsillo; se descuenta del total al facturar
+                  </span>
+                </div>
+
                 {/* Por presupuesto toggle */}
                 <label className={styles.toggleRow}>
                   <input
@@ -1128,6 +1156,17 @@ export default function NomencladorPorOS() {
                       <label className={styles.formLabel}>Observación</label>
                       <input className={styles.formInput} value={editMeta.observacion} onChange={(e) => setEditMeta((p) => ({ ...p, observacion: e.target.value }))} placeholder="Opcional" />
                     </div>
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Coseguro ($)</label>
+                    <input
+                      type="number" min="0" step="0.01"
+                      className={styles.formInput}
+                      value={editMeta.coseguro}
+                      onChange={(e) => setEditMeta((p) => ({ ...p, coseguro: e.target.value }))}
+                      placeholder="0.00"
+                      style={{ maxWidth: 200 }}
+                    />
                   </div>
                   <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
                     <button className={styles.btnPrimary} onClick={handleSaveMeta} disabled={savingMeta}>

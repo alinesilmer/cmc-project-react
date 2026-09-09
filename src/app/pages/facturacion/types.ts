@@ -62,6 +62,9 @@ export interface PrestacionItem {
   gastos?: number | Money | null;
   ayudante?: number | Money | null;
   porcentaje?: number;
+  /** Importe que el afiliado paga de su bolsillo; se descuenta del total. undefined/null =
+   *  usar el sugerido por el Valor del código. No se escala por `porcentaje`. */
+  coseguro?: number | Money | null;
   grupo_equipo_id?: number | null;
 }
 
@@ -100,6 +103,8 @@ export interface PrecioResponse {
   via: ViaPractica;
   /** Solo se completa si via="L" y el galeno cotizado es de 7 niveles. */
   nivel_cotizado?: number | null;
+  /** Coseguro sugerido desde el Valor del código — editable al cargar la prestación. */
+  coseguro: Money;
 }
 
 export interface PrestacionRead {
@@ -118,6 +123,7 @@ export interface PrestacionRead {
   sesion?: number | null; cantidad?: number | null;
   honorarios?: Money | null; gastos?: Money | null; ayudante?: Money | null;
   importe_total?: Money | null;
+  coseguro?: Money | null;
   estado?: EstadoPrestacion | null;
   origen_carga?: "medico" | "colegio" | null;
   fecha_practica?: string | null;

@@ -227,6 +227,9 @@ export interface CodigoNomenclador {
   descripcion: string;
   honorarios: number;
   gastos: number;
+  /** Coseguro sugerido para este código — informativo; lo que factura es lo que el
+   * médico tipea en el campo "Coseguro" del formulario, si la obra social lo pide. */
+  coseguro: number;
   /**
    * `false` cuando el médico no tiene habilitación por especialidad para el
    * código, o no hay precio vigente para esa obra social. `motivo` lo explica.

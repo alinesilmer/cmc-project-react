@@ -438,6 +438,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                 <th>%</th>
                 <th>Honorarios</th>
                 <th>Gastos</th>
+                <th>Coseguro</th>
                 <th>TP</th>
                 <th>Sub total</th>
                 <th>Tipo</th>
@@ -446,10 +447,10 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
             </thead>
             <tbody>
               {loading && (
-                <tr><td colSpan={16} className={styles.loadingCell}>Cargando…</td></tr>
+                <tr><td colSpan={17} className={styles.loadingCell}>Cargando…</td></tr>
               )}
               {!loading && rows.length === 0 && (
-                <tr><td colSpan={16} className={styles.emptyCell}>Este médico no tiene prestaciones cargadas.</td></tr>
+                <tr><td colSpan={17} className={styles.emptyCell}>Este médico no tiene prestaciones cargadas.</td></tr>
               )}
               {!loading && rows.map((row) => {
                 const editable = row.estado === "A";
@@ -500,7 +501,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                       ) : <span className={styles.mutedText}>—</span>}
                     </td>
                     <td>{row.autorizacion || <span className={styles.mutedText}>—</span>}</td>
-                    <td>{fmtFecha(row.fecha_practica)}</td>
+                    <td className={styles.fechaCell}>{fmtFecha(row.fecha_practica)}</td>
                     <td><span className={styles.codeCell}>{row.cod_nomenclador ?? "—"}</span></td>
                     <td>
                       {row.via ? (
@@ -522,6 +523,11 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                     <td>{row.porcentaje != null ? `${row.porcentaje}%` : "—"}</td>
                     <td><span className={styles.moneyCell}>{formatMoney(row.honorarios)}</span></td>
                     <td><span className={styles.moneyCell}>{formatMoney(row.gastos)}</span></td>
+                    <td>
+                      {parseMoney(row.coseguro) > 0
+                        ? <span className={styles.moneyCell}>{formatMoney(row.coseguro)}</span>
+                        : <span className={styles.mutedText}>—</span>}
+                    </td>
                     <td>
                       {tipoPrestador ? (
                         <span
@@ -603,7 +609,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                   </tr>
                   {esEquipo && abierto && (
                     <tr className={styles.teamDetailRow}>
-                      <td colSpan={16}>
+                      <td colSpan={17}>
                         <div className={styles.teamDetailContent}>
                           <span className={styles.teamDetailLabel}>
                             <Users size={13} /> Integrantes del equipo

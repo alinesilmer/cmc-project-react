@@ -194,7 +194,14 @@ export default function PrestacionForm({ os, enviando, onSubmit, nroSocio }: Pro
         <CodigoSelect
           obraSocial={os.codigo ?? 0}
           value={valor}
-          onChange={(codigo) => setCampo(campo.name, codigo)}
+          onChange={(codigo, opcion) => {
+            setCampo(campo.name, codigo);
+            // Prellena el coseguro sugerido del código — solo si esta obra social pide
+            // ese campo (hoy Boreal). Sigue editable: el médico lo puede corregir.
+            if (opcion && opcion.coseguro > 0 && os.campos?.some((c) => c.name === "coseguro")) {
+              setCampo("coseguro", String(opcion.coseguro));
+            }
+          }}
           placeholder={campo.placeholder}
           invalid={invalido}
           bloqueados={os.codigosBloqueados}

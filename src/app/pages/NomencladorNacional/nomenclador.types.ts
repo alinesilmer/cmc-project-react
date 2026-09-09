@@ -245,6 +245,8 @@ export type ValorOut = {
   complejidad: string | null;
   especialidad_id_colegio: number | null;
   por_presupuesto: boolean;
+  /** Importe que el afiliado paga de su bolsillo; se descuenta del total a facturar. */
+  coseguro: string;
   modalidad: "galeno" | "fijo" | "por_presupuesto";
   vigencia_desde: string;
   vigencia_hasta: string | null;
@@ -273,6 +275,7 @@ export type ValorCreatePayload = {
   complejidad?: string | null;
   especialidad_id_colegio?: number | null;
   por_presupuesto?: boolean;
+  coseguro?: number;
   vigencia_desde: string;
   observacion?: string | null;
   componentes: ComponentePayload[];
@@ -282,6 +285,7 @@ export type ValorUpdatePayload = {
   descripcion?: string | null;
   nivel?: number | null;
   complejidad?: string | null;
+  coseguro?: number;
   observacion?: string | null;
 };
 
@@ -291,6 +295,7 @@ export type ValorActualizarPayload = {
   descripcion?: string | null;
   nivel?: number | null;
   complejidad?: string | null;
+  coseguro?: number;
   observacion?: string | null;
 };
 

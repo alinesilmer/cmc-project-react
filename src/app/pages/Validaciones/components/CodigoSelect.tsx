@@ -14,7 +14,9 @@ interface Props {
   /** NRO_OBRA_SOCIAL — define qué valor se muestra para cada código. */
   obraSocial: number;
   value: string;
-  onChange: (codigo: string) => void;
+  /** `opcion` viene completa (incluye el coseguro sugerido) para que el formulario
+   * pueda prellenar su propio campo "Coseguro" al elegir un código. */
+  onChange: (codigo: string, opcion?: CodigoNomenclador) => void;
   placeholder?: string;
   invalid?: boolean;
   /** Códigos que la obra social no acepta por convenio: no se listan. */
@@ -109,7 +111,7 @@ export default function CodigoSelect({
   // Lo que llega a `opciones` ya está filtrado: todo lo listado es elegible.
   const elegir = (op: CodigoNomenclador) => {
     setSeleccionado(op);
-    onChange(op.codigo);
+    onChange(op.codigo, op);
     setQuery("");
     setAbierto(false);
   };
@@ -171,6 +173,11 @@ export default function CodigoSelect({
       {!abierto && seleccionado?.seEnvia && (
         <span className={s.homologado}>
           La obra social lo autoriza como <strong>{seleccionado.seEnvia}</strong>
+        </span>
+      )}
+      {!abierto && seleccionado && seleccionado.coseguro > 0 && (
+        <span className={s.homologado}>
+          Tiene <strong>{formatMoneda(seleccionado.coseguro)}</strong> de coseguro
         </span>
       )}
 
