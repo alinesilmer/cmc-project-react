@@ -34,7 +34,10 @@ import {
 import type { ImportarCSVResult } from "../nomenclador.types";
 
 const PREVIEW_LIMIT = 1000;
-const ORIGEN = "NNE"; // estas cargas son siempre Nomenclador Negociado
+// Estas cargas son siempre NE, sin especialidad puntual: el importador del backend
+// expande cada código a una fila por cada especialidad habilitada (mismo precio para
+// todas). Si el código no tiene ninguna habilitada, esa fila del CSV falla.
+const ORIGEN = "NE";
 const ACCEPT: Record<FileKind, string> = { pdf: ".pdf", excel: ".xls,.xlsx", csv: ".csv" };
 
 export default function ImportarPreciosPdf() {
@@ -467,6 +470,11 @@ export default function ImportarPreciosPdf() {
                 <div>
                   <h2 className={styles.importTitle}>Importar a la base de datos</h2>
                   <p className={styles.importSub}>Crea los valores (nm_valores) para la obra social {nroObraSocial || "…"} con vigencia {vigencia || "…"}. Podés cargar varias hojas en la misma vigencia: se importan solo los códigos nuevos, los ya cargados se omiten.</p>
+                  <p className={styles.importSub}>
+                    Cada código se carga como NE con el mismo precio para TODAS sus especialidades
+                    habilitadas (una fila por especialidad). Un código sin ninguna especialidad
+                    habilitada en Códigos queda con error y no se importa.
+                  </p>
                 </div>
               </div>
               <div className={styles.importRow}>

@@ -205,11 +205,10 @@ export type GalenoPlantillaOut = {
 
 // ─── Valores ──────────────────────────────────────────────────────────────────
 
-export type Origen = "NE" | "NNE" | "NN";
+export type Origen = "NE" | "NN";
 
 export const ORIGEN_LABELS: Record<Origen, string> = {
   NE: "Nomenclador Específico",
-  NNE: "Nomenclador Negociado",
   NN: "Nomenclador Nacional",
 };
 
@@ -281,6 +280,23 @@ export type ValorCreatePayload = {
   componentes: ComponentePayload[];
 };
 
+/** Alta de una variante NE para varias especialidades a la vez (mismo precio, misma
+ * vigencia): reemplaza el rol que tenía cargar un NNE. Ver POST /valores_nm/multi. */
+export type ValorCreateMultiPayload = {
+  obra_social_nro: number;
+  nomenclador_id: number;
+  origen: "NE";
+  descripcion?: string | null;
+  nivel?: number | null;
+  complejidad?: string | null;
+  especialidades_id_colegio: number[];
+  por_presupuesto?: boolean;
+  coseguro?: number;
+  vigencia_desde: string;
+  observacion?: string | null;
+  componentes: ComponentePayload[];
+};
+
 export type ValorUpdatePayload = {
   descripcion?: string | null;
   nivel?: number | null;
@@ -297,6 +313,9 @@ export type ValorActualizarPayload = {
   complejidad?: string | null;
   coseguro?: number;
   observacion?: string | null;
+  /** Propaga la misma vigencia+componentes a las demás variantes NE del par
+   * (OS + código), cada una conservando su propia especialidad. No aplica a NN. */
+  aplicar_a_variantes?: boolean;
 };
 
 // ─── Actualización masiva por porcentaje ───────────────────────────────────────
@@ -342,8 +361,8 @@ export type TablaValorComponente = {
 export type TablaValorItem = {
   nomenclador_id: number;
   codigo: string;
-  /** "NE" (variante por especialidad), "NNE" o "NN" — cuál variante ganó. */
-  origen: "NE" | "NNE" | "NN";
+  /** "NE" (variante por especialidad) o "NN" — cuál variante ganó. */
+  origen: Origen;
   /** Especialidad de la variante ganadora. Solo != null cuando ganó una NE. */
   especialidad_id_colegio: number | null;
   descripcion: string | null;

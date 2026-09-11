@@ -544,6 +544,23 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
   color: $red;
 }
 
+.hintText {
+  font-size: 0.75rem;
+  color: $text-3;
+  margin: 2px 0 6px;
+}
+
+.checkboxList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 8px 10px;
+  border: 1px solid $border;
+  border-radius: $radius-sm;
+}
+
 .checkRow {
   display: flex;
   align-items: center;

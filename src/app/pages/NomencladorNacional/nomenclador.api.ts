@@ -28,6 +28,7 @@ import type {
   ActualizacionMasivaResult,
   ValorOut,
   ValorCreatePayload,
+  ValorCreateMultiPayload,
   ValorUpdatePayload,
   ValorActualizarPayload,
   TablaValorItem,
@@ -179,6 +180,12 @@ export const listValores = (params: {
 export const createValor = (payload: ValorCreatePayload): Promise<ValorOut> =>
   postJSON<ValorOut>("/api/valores_nm/", payload);
 
+// Alta de una variante NE para varias especialidades a la vez (mismo precio, misma
+// vigencia): reemplaza el rol que tenía cargar un NNE.
+export const createValorMulti = (
+  payload: ValorCreateMultiPayload,
+): Promise<ValorOut[]> => postJSON<ValorOut[]>("/api/valores_nm/multi", payload);
+
 export const actualizarValor = (
   id: number,
   payload: ValorActualizarPayload,
@@ -323,6 +330,27 @@ export const listNomencladorEspecialidadesResumen = (
     "/api/nomenclador/especialidades",
     params,
   );
+
+// Habilita una especialidad para un código (reactiva si ya existía soft-deleted).
+// Siempre a nivel Colegio (obra_social_nro NULL): la dimensión por OS de esta tabla
+// no se usa desde el panel nuevo.
+export const addNomencladorEspecialidad = (
+  nomencladorId: number,
+  especialidadIdColegio: number,
+  observacion?: string | null,
+): Promise<NomencladorEspecialidadOut> =>
+  postJSON<NomencladorEspecialidadOut>(
+    `/api/nomenclador/${nomencladorId}/especialidades`,
+    { especialidad_id_colegio: especialidadIdColegio, observacion: observacion ?? null },
+  );
+
+// Baja de una habilitación de Colegio. El backend responde 409 si hay valores NE
+// activos que dependen de ella.
+export const deleteNomencladorEspecialidad = (
+  nomencladorId: number,
+  espId: number,
+): Promise<void> =>
+  delJSON(`/api/nomenclador/${nomencladorId}/especialidades/${espId}`);
 
 // ─── Documentos de una vigencia de valores ────────────────────────────────────
 // El respaldo de cada actualización de precios: lo que la obra social mandó.

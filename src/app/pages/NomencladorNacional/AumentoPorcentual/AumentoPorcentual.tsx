@@ -24,7 +24,7 @@ const money = new Intl.NumberFormat("es-AR", {
 });
 
 type Scope = "todos" | "codigos" | "rango";
-const ORIGENES: Origen[] = ["NNE", "NE", "NN"];
+const ORIGENES: Origen[] = ["NE", "NN"];
 const PREVIEW_SAMPLE = 40;
 
 function totalOf(v: ValorOut): number {
@@ -50,7 +50,7 @@ export default function AumentoPorcentual() {
   const [osOpen, setOsOpen] = useState(false);
 
   // Parámetros
-  const [origen, setOrigen] = useState<Origen>("NNE");
+  const [origen, setOrigen] = useState<Origen>("NE");
   const [vigencia, setVigencia] = useState("");
   const [pct, setPct] = useState("");
 
