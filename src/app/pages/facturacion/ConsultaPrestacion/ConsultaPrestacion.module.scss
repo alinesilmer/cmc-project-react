@@ -1,0 +1,453 @@
+// Mismo sistema visual que VerPeriodos/FacturaDetalle: variables locales, sin
+// @use "@/app/styles/all.scss" — así el módulo queda autocontenido.
+$blue:       #3b6fd4;
+$blue-light: #e8efff;
+$blue-hover: #2f5bbb;
+$red:        #dc2626;
+$red-light:  #fee2e2;
+$green:      #166534;
+$amber-bg:   #fef3c7;
+$amber-fg:   #92400e;
+$border:     #e2e8f0;
+$surface:    #ffffff;
+$text-1:     #1a1f2e;
+$text-2:     #4a5568;
+$text-3:     #718096;
+$radius-sm:  6px;
+$radius-md:  10px;
+$radius-lg:  14px;
+$shadow-sm:  0 1px 4px rgba(0, 0, 0, .06);
+
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f0f4ff 0%, #fafbff 60%, #f5f0ff 100%);
+  padding: 1.8rem;
+  font-family: inherit;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.headerIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: $radius-md;
+  background: $blue-light;
+  color: $blue;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: $text-1;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 0.8rem;
+  color: $text-3;
+  margin: 2px 0 0;
+}
+
+.layout {
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+  overflow: hidden;
+}
+
+// ─── Buscador ───────────────────────────────────────────────────────────────
+.toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 16px 20px;
+  border-bottom: 1px solid $border;
+  background: #fafbfd;
+}
+
+.filterField {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 220px;
+}
+
+.filterFieldWide {
+  flex: 1;
+  min-width: 260px;
+}
+
+.filterLabel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: $text-3;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.inputRow {
+  display: flex;
+  gap: 8px;
+}
+
+.input {
+  height: 36px;
+  flex: 1;
+  border: 1px solid $border;
+  border-radius: $radius-sm;
+  font-size: 0.84rem;
+  color: $text-1;
+  background: $surface;
+  outline: none;
+  padding: 0 12px;
+  box-sizing: border-box;
+  transition: border-color .15s, box-shadow .15s;
+
+  &:focus {
+    border-color: $blue;
+    box-shadow: 0 0 0 3px rgba(59, 111, 212, .12);
+  }
+
+  &::placeholder { color: $text-3; }
+}
+
+.iconBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  background: #eff6ff;
+  color: $blue;
+  border: none;
+  border-radius: $radius-sm;
+  cursor: pointer;
+  transition: background .15s;
+
+  &:hover:not(:disabled) { background: #dbeafe; }
+  &:disabled { opacity: .5; cursor: not-allowed; }
+}
+
+.divider {
+  width: 1px;
+  height: 36px;
+  background: $border;
+  flex-shrink: 0;
+}
+
+// ─── Estados vacíos ─────────────────────────────────────────────────────────
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 72px 24px;
+  text-align: center;
+}
+
+.emptyIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #eef2f7;
+  color: #94a3b8;
+}
+
+.emptyIconWarn {
+  background: $amber-bg;
+  color: $amber-fg;
+}
+
+.emptyText {
+  font-size: 0.86rem;
+  color: $text-3;
+  max-width: 360px;
+  margin: 0;
+}
+
+.emptyTextStrong {
+  font-size: 0.9rem;
+  color: $text-1;
+  margin: 0;
+}
+
+.ghostBtn {
+  height: 34px;
+  padding: 0 16px;
+  background: none;
+  color: $text-2;
+  border: 1px solid $border;
+  border-radius: $radius-sm;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+
+  &:hover { background: #f4f6fa; }
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px 0 8px;
+  background: none;
+  color: $text-2;
+  border: 1px solid $border;
+  border-radius: $radius-sm;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+  margin: 14px 20px 0;
+
+  &:hover { background: #f4f6fa; }
+}
+
+// ─── Lista de resultados ────────────────────────────────────────────────────
+.listaInfo {
+  padding: 12px 20px;
+  font-size: 0.82rem;
+  color: $text-2;
+  border-bottom: 1px solid $border;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+
+  thead tr { background: #0c2a52; }
+
+  th {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 11px 14px;
+    color: $text-1;
+    border-bottom: 1px solid #f1f4f8;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    transition: background .1s;
+    &:hover { background: #f8faff; }
+    &:last-child td { border-bottom: none; }
+  }
+}
+
+.thRight, .tdRight { text-align: right; }
+
+.codeCell {
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 700;
+  color: $blue;
+}
+
+.idCell {
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 700;
+  color: $text-1;
+}
+
+.moneyCell {
+  font-variant-numeric: tabular-nums;
+}
+
+.btnVer {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 12px;
+  background: #eff6ff;
+  color: $blue;
+  border: none;
+  border-radius: $radius-sm;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+
+  &:hover { background: #dbeafe; }
+}
+
+.loadingCell, .emptyCell {
+  text-align: center;
+  color: $text-3;
+  padding: 40px 14px !important;
+}
+
+.emptyCell { font-style: italic; }
+
+// ─── Ficha ──────────────────────────────────────────────────────────────────
+.fichaHero {
+  padding: 16px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.fichaId {
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: $text-1;
+}
+
+.chip {
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 20px;
+  padding: 3px 12px;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chipBlue { background: $blue-light; color: $blue; }
+.chipNeutral { background: #eef2f7; color: #475569; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 4px 20px 20px;
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.gridFull { grid-column: 1 / -1; }
+
+.card {
+  border: 1px solid $border;
+  border-radius: $radius-md;
+  padding: 14px 16px;
+  background: $surface;
+}
+
+.cardLegacy {
+  border: 1px dashed $border;
+  background: #fafbfd;
+}
+
+.cardTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: $text-3;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+}
+
+.cardMain {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: $text-1;
+}
+
+.cardSub {
+  font-size: 0.78rem;
+  color: $text-3;
+  margin-top: 2px;
+}
+
+.cardWarn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+  font-size: 0.78rem;
+  color: $amber-fg;
+
+  svg { flex-shrink: 0; }
+}
+
+.montosGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+
+  @media (max-width: 720px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.montoLabel {
+  font-size: 0.72rem;
+  color: $text-3;
+}
+
+.montoValor {
+  font-size: 0.94rem;
+  font-weight: 600;
+  color: $text-1;
+  font-variant-numeric: tabular-nums;
+}
+
+.montoTotal {
+  font-size: 1rem;
+  font-weight: 700;
+  color: $green;
+  font-variant-numeric: tabular-nums;
+}
+
+.legacyGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px 16px;
+  font-size: 0.78rem;
+
+  @media (max-width: 720px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.legacyLabel { color: $text-3; }
+.legacyValue { color: $text-2; font-weight: 600; }
+
+.legacyNote {
+  margin-top: 10px;
+  font-size: 0.74rem;
+  color: $text-3;
+  font-style: italic;
+}
+
+.mutedText { color: $text-3; }

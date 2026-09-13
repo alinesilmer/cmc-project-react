@@ -725,6 +725,9 @@ export default function ObrasSocialesForm() {
             ? String(data.obra_social_principal.id)
             : "",
           asociadas_ids: data.asociadas?.map((a) => a.id) ?? [],
+          marca: data.marca === "S" ? "S" : "N",
+          ver_valor: data.ver_valor === "S" ? "S" : "N",
+          dia_corte: String(data.dia_corte ?? 20),
         });
 
         if (data.obra_social_principal) {
@@ -810,6 +813,44 @@ export default function ObrasSocialesForm() {
     }
   };
 
+  // ── Vínculos con asociadas ───────────────────────────────────────────────────
+  // Antes esto era un `Promise.allSettled` sin mirar el resultado: si el PATCH
+  // de una asociada fallaba, la pantalla navegaba al detalle como si todo
+  // hubiera salido bien y el vínculo simplemente no quedaba. Mismo patrón que
+  // `subirPendientes` para los documentos. Ver auditoría O-08.
+  const vincularAsociadas = async (
+    destinoId: number,
+    toAdd: ObraSocialRef[],
+    toRemove: ObraSocialRef[]
+  ) => {
+    const tareas: Array<{ nombre: string; run: () => Promise<unknown> }> = [
+      ...toAdd.map((r) => ({
+        nombre: r.denominacion,
+        run: () => setObraSocialPrincipal(r.id, destinoId),
+      })),
+      ...toRemove.map((r) => ({
+        nombre: r.denominacion,
+        run: () => setObraSocialPrincipal(r.id, null),
+      })),
+    ];
+    if (!tareas.length) return;
+
+    const resultados = await Promise.allSettled(tareas.map((t) => t.run()));
+    const fallaron = tareas
+      .filter((_, i) => resultados[i].status === "rejected")
+      .map((t) => t.nombre);
+
+    if (fallaron.length) {
+      notify.error(
+        fallaron.length === 1
+          ? "No se pudo vincular una obra social asociada"
+          : `No se pudieron vincular ${fallaron.length} obras sociales asociadas`,
+        fallaron.join(", "),
+        { duration: 8000 }
+      );
+    }
+  };
+
   // ── Submit ───────────────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -839,10 +880,7 @@ export default function ObrasSocialesForm() {
 
       if (isEdit && obraId) {
         await updateObraSocial(obraId, payload);
-        await Promise.allSettled([
-          ...toAdd.map((r) => setObraSocialPrincipal(r.id, obraId)),
-          ...toRemove.map((r) => setObraSocialPrincipal(r.id, null)),
-        ]);
+        await vincularAsociadas(obraId, toAdd, toRemove);
         await subirPendientes(obraId);
         navigate(`/panel/convenios/obras-sociales/${obraId}`);
       } else {
@@ -850,9 +888,7 @@ export default function ObrasSocialesForm() {
         setSavedId(created.id);
         // Las asociadas son secundarias al alta: si una falla, la obra social ya
         // existe igual y se resuelve editando.
-        await Promise.allSettled(
-          toAdd.map((r) => setObraSocialPrincipal(r.id, created.id))
-        );
+        await vincularAsociadas(created.id, toAdd, []);
         await subirPendientes(created.id);
         navigate(`/panel/convenios/obras-sociales/${created.id}`);
       }
@@ -937,7 +973,7 @@ export default function ObrasSocialesForm() {
                 value={form.nombre}
                 onChange={(e) => set("nombre", e.target.value)}
                 placeholder="Ej: IOSCOR"
-                maxLength={45}
+                maxLength={255}
               />
               <FieldError msg={errors.nombre} />
               {form.nro_obra_social && form.nombre && (
@@ -1002,6 +1038,93 @@ export default function ObrasSocialesForm() {
               </select>
               <FieldError msg={errors.condicion_iva} />
             </div>
+          </div>
+        </section>
+
+        {/* ── Sección 1B: Operación ──
+            Sin esto, una obra social nueva quedaba MARCA="N" por el default
+            del backend y no aparecía en ningún selector de padrón, y
+            dia_corte no era editable desde ningún lado del front (siempre 20).
+            Ver auditoría O-02. */}
+        <section className={s.section}>
+          <h2 className={s.sectionTitle}>Operación</h2>
+
+          <div className={s.field} id="field-marca">
+            <span className={s.label}>Habilitada en el padrón</span>
+            <div className={s.radioGroup}>
+              <label className={s.radioLabel}>
+                <input
+                  type="radio"
+                  name="marca"
+                  value="S"
+                  checked={form.marca === "S"}
+                  onChange={() => set("marca", "S")}
+                  className={s.radioInput}
+                />
+                Sí
+              </label>
+              <label className={s.radioLabel}>
+                <input
+                  type="radio"
+                  name="marca"
+                  value="N"
+                  checked={form.marca === "N"}
+                  onChange={() => set("marca", "N")}
+                  className={s.radioInput}
+                />
+                No
+              </label>
+            </div>
+            <span className={s.hint}>
+              Con «No» no aparece en el selector de padrón ni en las asignaciones de médicos.
+            </span>
+          </div>
+
+          <div className={s.field} id="field-ver_valor">
+            <span className={s.label}>Muestra valores a los médicos</span>
+            <div className={s.radioGroup}>
+              <label className={s.radioLabel}>
+                <input
+                  type="radio"
+                  name="ver_valor"
+                  value="S"
+                  checked={form.ver_valor === "S"}
+                  onChange={() => set("ver_valor", "S")}
+                  className={s.radioInput}
+                />
+                Sí
+              </label>
+              <label className={s.radioLabel}>
+                <input
+                  type="radio"
+                  name="ver_valor"
+                  value="N"
+                  checked={form.ver_valor === "N"}
+                  onChange={() => set("ver_valor", "N")}
+                  className={s.radioInput}
+                />
+                No
+              </label>
+            </div>
+          </div>
+
+          <div className={`${s.field} ${s.fieldNarrow}`} id="field-dia_corte">
+            <label className={s.label} htmlFor="dia_corte">
+              Día de corte del período
+            </label>
+            <input
+              id="dia_corte"
+              type="number"
+              min={1}
+              max={28}
+              className={`${s.input} ${errors.dia_corte ? s.inputError : ""}`}
+              value={form.dia_corte}
+              onChange={(e) => set("dia_corte", e.target.value)}
+            />
+            <FieldError msg={errors.dia_corte} />
+            <span className={s.hint}>
+              1 = mes completo (del 1 al último día). 20 = del 20 al 20 del mes siguiente.
+            </span>
           </div>
         </section>
 
@@ -1338,6 +1461,11 @@ export default function ObrasSocialesForm() {
                 }}
                 excludeId={obraId}
               />
+              <span className={s.hint}>
+                Marcarla acá la saca del selector de padrón: las asignaciones de
+                médicos sólo listan obras sociales sin principal, para que una
+                empresa con varios planes aparezca una sola vez.
+              </span>
             </div>
           </div>
         </section>

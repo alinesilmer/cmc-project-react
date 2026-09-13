@@ -1134,6 +1134,34 @@
   display: none;
 }
 
+.docsUploadGroup {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  flex-shrink: 0;
+}
+
+// Nota opcional del operador ("addenda al convenio", "lista corregida"): el
+// backend ya la acepta desde siempre, faltaba dónde escribirla. Ver H-09.
+.docDescInput {
+  width: 180px;
+  padding: $spacing-1 $spacing-2;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-sm;
+  font-size: $font-size-xs;
+  font-family: inherit;
+  color: $gray-800;
+
+  &:focus {
+    outline: none;
+    border-color: #9d91c2;
+  }
+
+  &::placeholder {
+    color: $gray-400;
+  }
+}
+
 .docsList {
   display: flex;
   flex-direction: column;
@@ -1150,8 +1178,14 @@
   border-radius: $radio-sm;
 }
 
-.docName {
+.docNameCol {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.docName {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1169,6 +1203,12 @@
   &:hover {
     text-decoration: underline;
   }
+}
+
+// Quién lo subió, resuelto desde ListadoMedico. Ver H-10.
+.docSubidoPor {
+  font-size: 10px;
+  color: $gray-400;
 }
 
 .docMeta {

@@ -45,11 +45,17 @@ export default function CambiarPassword() {
         navigate("/panel/login", { replace: true });
       }
     } catch (err: any) {
-      const apiMsg =
-        err?.response?.data?.detail ??
-        err?.response?.data?.message ??
-        "No se pudo cambiar la contraseña. Verificá la contraseña actual.";
-      setError(String(apiMsg));
+      const detail = err?.response?.data?.detail ?? err?.response?.data?.message;
+      let apiMsg: string;
+      if (Array.isArray(detail)) {
+        // Error de validación de FastAPI: lista de {msg, loc, type}.
+        apiMsg = detail.map((d: any) => d?.msg ?? String(d)).join(" ");
+      } else if (typeof detail === "string" && detail) {
+        apiMsg = detail;
+      } else {
+        apiMsg = "No se pudo cambiar la contraseña. Verificá la contraseña actual.";
+      }
+      setError(apiMsg);
     } finally {
       setLoading(false);
     }

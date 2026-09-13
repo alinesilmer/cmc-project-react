@@ -847,7 +847,6 @@
 }
 
 .origenNE  { background: #eff6ff; color: #1d4ed8; }
-.origenNNE { background: #f0fdf4; color: #166534; }
 .origenNN  { background: #faf5ff; color: #6b21a8; }
 
 // ─── Wider modal ──────────────────────────────────────────────────────────────
@@ -875,6 +874,19 @@
 }
 
 // ─── Toggle ───────────────────────────────────────────────────────────────────
+// Lista de checkboxes (especialidades a tildar para el alta NE en grupo, variantes
+// hermanas al aplicar una edición). Cada fila reusa .toggleRow/.toggleInput/.toggleLabel.
+.checkboxList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 8px 10px;
+  border: 1px solid $border;
+  border-radius: $radius-sm;
+}
+
 .toggleRow {
   display: flex;
   align-items: center;

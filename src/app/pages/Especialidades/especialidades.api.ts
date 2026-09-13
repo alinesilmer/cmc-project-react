@@ -27,4 +27,4 @@ export const updateEspecialidad = (
   id: number,
   payload: EspecialidadPayload
 ): Promise<Especialidad> =>
-  patchJSON<Especialidad>(`${BASE}/${id}`, payload);
+  patchJSON<Especialidad>(`${BASE}${id}`, payload);

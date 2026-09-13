@@ -305,6 +305,19 @@
   letter-spacing: 0.02em;
 }
 
+.badgeNeutral {
+  display: inline-block;
+  padding: 2px $spacing-2;
+  background-color: $gray-100;
+  color: $gray-500;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-sm;
+  font-size: 10px;
+  font-weight: $font-weight-semibold;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
 .contactLine {
   display: block;
   font-size: 11px;

@@ -20,7 +20,7 @@ type Discount = {
   percentage: number;
 };
 
-const DESCUENTOS_URL = "/api/descuentos";
+const DESCUENTOS_URL = "/api/conceptos";
 
 const DiscountsList: React.FC = () => {
   const { id } = useParams(); // período activo (resumen_id)

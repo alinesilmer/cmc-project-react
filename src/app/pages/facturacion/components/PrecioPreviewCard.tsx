@@ -1,6 +1,6 @@
 import React from "react";
 import type { PrecioResponse } from "../types";
-import { formatMoney } from "../money";
+import { formatMoney, parseMoney } from "../money";
 
 interface Props {
   precio: PrecioResponse;
@@ -32,6 +32,12 @@ const PrecioPreviewCard: React.FC<Props> = ({ precio, onVolverATradicional }) =>
         <span style={{ fontSize: 11, color: "#64748b", display: "block" }}>Ayudante</span>
         <strong style={{ fontSize: 14 }}>{formatMoney(precio.ayudante)}</strong>
       </div>
+      {parseMoney(precio.coseguro) > 0 && (
+        <div>
+          <span style={{ fontSize: 11, color: "#64748b", display: "block" }}>Coseguro sugerido</span>
+          <strong style={{ fontSize: 14 }}>{formatMoney(precio.coseguro)}</strong>
+        </div>
+      )}
     </div>
 
     {(precio.descripcion || (precio.via === "L" && precio.admitido)) && (

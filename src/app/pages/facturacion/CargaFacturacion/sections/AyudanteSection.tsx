@@ -1,5 +1,6 @@
 import React from "react";
 import MedicoAutocomplete from "../../components/MedicoAutocomplete";
+import NumericInput from "../../components/NumericInput";
 import type { MedicoOption, PrecioResponse, TipoCalculo } from "../../types";
 import { formatMoney, parseMoney } from "../../money";
 import styles from "../CargaFacturacion.module.scss";
@@ -11,27 +12,33 @@ export interface AyudanteLinea {
   prestacionId?: number | null;
   codMedico: string | null;
   medico: MedicoOption | null;
-  porcentaje: number;
+  porcentaje: string;
   tipoCalculo: TipoCalculo;
   precioManual: string;
+  /** Nº de autorización propio de este integrante. Solo se usa cuando el operador
+   *  activa "autorización por integrante" — con el checkbox apagado, se ignora y se
+   *  factura con el número de la cabecera (ver CargaFacturacion.tsx). */
+  autorizacion: string;
 }
 
 const nuevoId = () =>
   typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `ay-${Date.now()}-${Math.random()}`;
 
-export const crearAyudanteLinea = (precioAutomatico: string): AyudanteLinea => ({
+export const crearAyudanteLinea = (precioAutomatico: string, autorizacion = ""): AyudanteLinea => ({
   id: nuevoId(),
   prestacionId: null,
   codMedico: null,
   medico: null,
-  porcentaje: 100,
+  porcentaje: "100",
   tipoCalculo: "A",
   precioManual: precioAutomatico,
+  autorizacion,
 });
 
 const montoLinea = (linea: AyudanteLinea, precio: PrecioResponse): number => {
   const base = linea.tipoCalculo === "A" ? parseMoney(precio.ayudante) : parseMoney(linea.precioManual);
-  return base * (linea.porcentaje / 100);
+  const porc = parseInt(linea.porcentaje, 10);
+  return base * ((Number.isNaN(porc) ? 100 : porc) / 100);
 };
 
 export const totalAyudantes = (lineas: AyudanteLinea[], precio: PrecioResponse | null): number => {
@@ -49,11 +56,14 @@ interface Props {
   errors?: Record<string, string>;
   /** Lista completa precargada por CargaFacturacion.tsx — ver MedicoAutocomplete. */
   medicosPrecargados?: MedicoOption[];
+  /** true → cada ayudante lleva su propio Nº de autorización (input propio); false →
+   *  la sección no lo pide, se factura con el número de la cabecera. */
+  porIntegrante?: boolean;
 }
 
 const AyudanteSection: React.FC<Props> = ({
   precio, maxAyudantes, ayudantes, onChange, codMedicoMain, disabled, errors = {},
-  medicosPrecargados,
+  medicosPrecargados, porIntegrante,
 }) => {
   const updateLinea = (id: string, patch: Partial<AyudanteLinea>) => {
     onChange(ayudantes.map((l) => (l.id === id ? { ...l, ...patch } : l)));
@@ -127,6 +137,21 @@ const AyudanteSection: React.FC<Props> = ({
               </div>
             </div>
 
+            {porIntegrante && (
+              <div className={styles.filterField}>
+                <label className={styles.filterLabel}>Nº de autorización</label>
+                <input
+                  className={styles.input}
+                  type="text"
+                  maxLength={30}
+                  value={linea.autorizacion}
+                  onChange={(e) => updateLinea(linea.id, { autorizacion: e.target.value })}
+                  disabled={disabled}
+                  placeholder="Nº de autorización de este integrante"
+                />
+              </div>
+            )}
+
             <div className={styles.filterField}>
               <label className={styles.filterLabel}>Tipo de cálculo</label>
               <div className={styles.radioRow}>
@@ -149,11 +174,11 @@ const AyudanteSection: React.FC<Props> = ({
             <div className={styles.fieldsRow}>
               <div className={styles.filterField}>
                 <label className={styles.filterLabel}>Porcentaje (%)</label>
-                <input
+                <NumericInput
                   className={styles.input}
-                  type="number" min={1} max={100}
+                  min={1} max={100}
                   value={linea.porcentaje}
-                  onChange={(e) => updateLinea(linea.id, { porcentaje: Math.min(100, Math.max(1, Number(e.target.value))) })}
+                  onChange={(v) => updateLinea(linea.id, { porcentaje: v })}
                   disabled={disabled}
                 />
               </div>
@@ -161,11 +186,11 @@ const AyudanteSection: React.FC<Props> = ({
                 <label className={styles.filterLabel}>Precio del ayudante</label>
                 {/* Mismo input siempre: en Automático muestra el valor del código y
                     queda bloqueado; en Manual se habilita para editarlo. */}
-                <input
+                <NumericInput
                   className={styles.input}
-                  type="number" min={0} step="0.01"
+                  decimals min={0}
                   value={linea.tipoCalculo === "A" ? precio.ayudante : linea.precioManual}
-                  onChange={(e) => updateLinea(linea.id, { precioManual: e.target.value })}
+                  onChange={(v) => updateLinea(linea.id, { precioManual: v })}
                   disabled={disabled || linea.tipoCalculo === "A"}
                 />
               </div>

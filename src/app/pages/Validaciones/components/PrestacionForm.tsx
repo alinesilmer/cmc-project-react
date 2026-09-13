@@ -1,14 +1,24 @@
-import { useEffect, useState } from "react";
-import { Loader2, ShieldCheck, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { CheckCircle2, Loader2, ShieldCheck, Trash2, XCircle } from "lucide-react";
 
 import CodigoSelect from "./CodigoSelect";
 import type {
   CampoConfig,
+  ConsultaEnVivoResultado,
   ObraSocialConfig,
   PrestacionFormErrors,
   PrestacionFormValues,
 } from "../validaciones.types";
 import s from "./PrestacionForm.module.scss";
+
+// Debounce mientras se tipea — igual que el legacy de Nobis (`nobis.php`,
+// `shouldQueryAfiliado` + 500ms de debounce).
+const DEBOUNCE_CONSULTA_MS = 500;
+
+interface EstadoLiveCheck {
+  loading: boolean;
+  resultado?: ConsultaEnVivoResultado;
+}
 
 interface Props {
   os: ObraSocialConfig;
@@ -70,6 +80,14 @@ function validar(os: ObraSocialConfig, valores: PrestacionFormValues) {
 export default function PrestacionForm({ os, enviando, onSubmit, nroSocio }: Props) {
   const [valores, setValores] = useState<PrestacionFormValues>(() => valoresIniciales(os));
   const [errores, setErrores] = useState<PrestacionFormErrors>({});
+  const [liveChecks, setLiveChecks] = useState<Record<string, EstadoLiveCheck>>({});
+
+  // Refs porque no necesitan re-render por sí solos: sólo coordinan qué
+  // request es la vigente. Mismo patrón que `requestSeq`/`lastQueriedAfiliado`
+  // del legacy (`nobis.php`).
+  const liveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const liveUltimoValor = useRef<Record<string, string>>({});
+  const liveSeq = useRef<Record<string, number>>({});
 
   // Cambió el médico: el código elegido deja de valer. La habilitación y el
   // precio dependen de sus especialidades, así que lo que estaba seleccionado
@@ -81,14 +99,76 @@ export default function PrestacionForm({ os, enviando, onSubmit, nroSocio }: Pro
     setErrores((prev) => (prev.codigo ? { ...prev, codigo: undefined } : prev));
   }, [nroSocio]);
 
+  // Al desmontar (o cambiar de obra social), no dejar timers colgados.
+  useEffect(() => {
+    const timers = liveTimers.current;
+    return () => {
+      Object.values(timers).forEach(clearTimeout);
+    };
+  }, [os.slug]);
+
+  const dispararConsultaEnVivo = (campo: CampoConfig, valorCrudo: string, inmediato = false) => {
+    const config = campo.consultaEnVivo;
+    if (!config) return;
+
+    clearTimeout(liveTimers.current[campo.name]);
+    const limpio = valorCrudo.replace(/\D/g, "");
+
+    if (limpio.length < config.minLength) {
+      liveUltimoValor.current[campo.name] = "";
+      setLiveChecks((prev) => {
+        if (!(campo.name in prev)) return prev;
+        const resto = { ...prev };
+        delete resto[campo.name];
+        return resto;
+      });
+      return;
+    }
+    if (limpio === liveUltimoValor.current[campo.name]) return; // no repetir
+
+    const ejecutar = () => {
+      liveUltimoValor.current[campo.name] = limpio;
+      const seq = (liveSeq.current[campo.name] ?? 0) + 1;
+      liveSeq.current[campo.name] = seq;
+      setLiveChecks((prev) => ({ ...prev, [campo.name]: { loading: true } }));
+
+      config
+        .consultar(limpio)
+        .then((resultado) => {
+          if (liveSeq.current[campo.name] !== seq) return; // llegó una respuesta vieja
+          setLiveChecks((prev) => ({ ...prev, [campo.name]: { loading: false, resultado } }));
+        })
+        .catch(() => {
+          if (liveSeq.current[campo.name] !== seq) return;
+          setLiveChecks((prev) => ({
+            ...prev,
+            [campo.name]: {
+              loading: false,
+              resultado: { ok: false, texto: "No se pudo consultar." },
+            },
+          }));
+        });
+    };
+
+    if (inmediato) ejecutar();
+    else liveTimers.current[campo.name] = setTimeout(ejecutar, DEBOUNCE_CONSULTA_MS);
+  };
+
   const setCampo = (name: string, valor: string) => {
     setValores((prev) => ({ ...prev, [name]: valor }));
     setErrores((prev) => (prev[name] ? { ...prev, [name]: undefined } : prev));
+
+    const campo = os.campos?.find((c) => c.name === name);
+    if (campo?.consultaEnVivo) dispararConsultaEnVivo(campo, valor);
   };
 
   const limpiar = () => {
     setValores(valoresIniciales(os));
     setErrores({});
+    Object.values(liveTimers.current).forEach(clearTimeout);
+    liveTimers.current = {};
+    liveUltimoValor.current = {};
+    setLiveChecks({});
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -114,7 +194,14 @@ export default function PrestacionForm({ os, enviando, onSubmit, nroSocio }: Pro
         <CodigoSelect
           obraSocial={os.codigo ?? 0}
           value={valor}
-          onChange={(codigo) => setCampo(campo.name, codigo)}
+          onChange={(codigo, opcion) => {
+            setCampo(campo.name, codigo);
+            // Prellena el coseguro sugerido del código — solo si esta obra social pide
+            // ese campo (hoy Boreal). Sigue editable: el médico lo puede corregir.
+            if (opcion && opcion.coseguro > 0 && os.campos?.some((c) => c.name === "coseguro")) {
+              setCampo("coseguro", String(opcion.coseguro));
+            }
+          }}
           placeholder={campo.placeholder}
           invalid={invalido}
           bloqueados={os.codigosBloqueados}
@@ -192,11 +279,19 @@ export default function PrestacionForm({ os, enviando, onSubmit, nroSocio }: Pro
               campo.tipo === "numerico" ? soloDigitos(e.target.value) : e.target.value
             )
           }
+          // Salvavidas para "pegar y salir del campo" antes de que corra el
+          // debounce — mismo criterio que el `blur` del legacy.
+          onBlur={
+            campo.consultaEnVivo
+              ? () => dispararConsultaEnVivo(campo, valores[campo.name] ?? "", true)
+              : undefined
+          }
         />
       );
     }
 
     const anchoCorto = campo.tipo === "entero" || (campo.maxLength ?? 99) <= 4;
+    const liveCheck = campo.consultaEnVivo ? liveChecks[campo.name] : undefined;
 
     return (
       <div
@@ -214,6 +309,32 @@ export default function PrestacionForm({ os, enviando, onSubmit, nroSocio }: Pro
           </span>
         ) : (
           campo.hint && <span className={s.hint}>{campo.hint}</span>
+        )}
+        {liveCheck && (
+          <span
+            className={`${s.liveCheck} ${
+              liveCheck.loading
+                ? s.liveCheckCargando
+                : liveCheck.resultado?.ok
+                  ? s.liveCheckOk
+                  : s.liveCheckError
+            }`}
+            role="status"
+          >
+            {liveCheck.loading ? (
+              <>
+                <Loader2 size={14} className={s.spin} /> Consultando afiliado…
+              </>
+            ) : liveCheck.resultado?.ok ? (
+              <>
+                <CheckCircle2 size={14} /> {liveCheck.resultado.texto}
+              </>
+            ) : (
+              <>
+                <XCircle size={14} /> {liveCheck.resultado?.texto}
+              </>
+            )}
+          </span>
         )}
       </div>
     );

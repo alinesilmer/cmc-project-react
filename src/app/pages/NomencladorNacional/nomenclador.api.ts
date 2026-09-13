@@ -28,6 +28,7 @@ import type {
   ActualizacionMasivaResult,
   ValorOut,
   ValorCreatePayload,
+  ValorCreateMultiPayload,
   ValorUpdatePayload,
   ValorActualizarPayload,
   TablaValorItem,
@@ -40,6 +41,7 @@ import type {
   RevertirActualizacionPayload,
   ValorDocumentoOut,
   MesActualizaciones,
+  ResumenVigenciaOut,
 } from "./nomenclador.types";
 
 // ─── Nomenclador ──────────────────────────────────────────────────────────────
@@ -169,12 +171,20 @@ export const listValores = (params: {
   especialidad_id_colegio?: number;
   estado?: string;
   vigente_a?: string;
+  /** Filtra por la vigencia exacta (no "vigente a la fecha X"). */
+  vigencia_desde?: string;
   page?: number;
   size?: number;
 }): Promise<ValorOut[]> => getJSON<ValorOut[]>("/api/valores_nm/", params);
 
 export const createValor = (payload: ValorCreatePayload): Promise<ValorOut> =>
   postJSON<ValorOut>("/api/valores_nm/", payload);
+
+// Alta de una variante NE para varias especialidades a la vez (mismo precio, misma
+// vigencia): reemplaza el rol que tenía cargar un NNE.
+export const createValorMulti = (
+  payload: ValorCreateMultiPayload,
+): Promise<ValorOut[]> => postJSON<ValorOut[]>("/api/valores_nm/multi", payload);
 
 export const actualizarValor = (
   id: number,
@@ -226,6 +236,18 @@ export const listVigenciasCargadas = (
   obra_social_nro: number,
 ): Promise<{ vigencia_desde: string; cantidad: number }[]> =>
   getJSON("/api/valores_nm/vigencias", { obra_social_nro });
+
+/**
+ * Cuándo y cuánto actualizó esta obra social, ya agregado por vigencia —
+ * cantidad de códigos y variación promedio contra la versión anterior de cada
+ * uno. Sale de `nm_historial_precio_codigo`, no de bajar la grilla completa de
+ * `/api/valores_nm/`. Alimenta la vista "Actualizaciones porcentuales" del
+ * historial. Ver auditoría H-01/H-02.
+ */
+export const getResumenPorVigencia = (
+  obra_social_nro: number,
+): Promise<ResumenVigenciaOut[]> =>
+  getJSON<ResumenVigenciaOut[]>("/api/valores_nm/resumen_por_vigencia", { obra_social_nro });
 
 // Elimina todos los valores (con componentes e historial) de una OS en una vigencia exacta.
 export const eliminarValoresPorVigencia = (
@@ -308,6 +330,27 @@ export const listNomencladorEspecialidadesResumen = (
     "/api/nomenclador/especialidades",
     params,
   );
+
+// Habilita una especialidad para un código (reactiva si ya existía soft-deleted).
+// Siempre a nivel Colegio (obra_social_nro NULL): la dimensión por OS de esta tabla
+// no se usa desde el panel nuevo.
+export const addNomencladorEspecialidad = (
+  nomencladorId: number,
+  especialidadIdColegio: number,
+  observacion?: string | null,
+): Promise<NomencladorEspecialidadOut> =>
+  postJSON<NomencladorEspecialidadOut>(
+    `/api/nomenclador/${nomencladorId}/especialidades`,
+    { especialidad_id_colegio: especialidadIdColegio, observacion: observacion ?? null },
+  );
+
+// Baja de una habilitación de Colegio. El backend responde 409 si hay valores NE
+// activos que dependen de ella.
+export const deleteNomencladorEspecialidad = (
+  nomencladorId: number,
+  espId: number,
+): Promise<void> =>
+  delJSON(`/api/nomenclador/${nomencladorId}/especialidades/${espId}`);
 
 // ─── Documentos de una vigencia de valores ────────────────────────────────────
 // El respaldo de cada actualización de precios: lo que la obra social mandó.

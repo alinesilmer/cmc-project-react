@@ -1,5 +1,6 @@
 import React from "react";
 import MedicoAutocomplete from "../../components/MedicoAutocomplete";
+import NumericInput from "../../components/NumericInput";
 import type { MedicoOption } from "../../types";
 import { parseMoney } from "../../money";
 
@@ -9,19 +10,19 @@ export interface MiembroEquipo {
   honorarios: string;
   gastos: string;
   ayudante: string;
-  porcentaje: number;
+  porcentaje: string;
 }
 
 export const DEFAULT_MEDICO: MiembroEquipo = {
   cod_medico: null, medico: null,
   honorarios: "0", gastos: "0", ayudante: "0",
-  porcentaje: 100,
+  porcentaje: "100",
 };
 
 export const DEFAULT_AYUDANTE: MiembroEquipo = {
   cod_medico: null, medico: null,
   honorarios: "0", gastos: "0", ayudante: "0",
-  porcentaje: 30,
+  porcentaje: "30",
 };
 
 interface Props {
@@ -94,48 +95,40 @@ const EquipoQuirurgicoSection: React.FC<Props> = ({
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <div>
                 <label style={{ fontSize: 11, color: "#64748b", display: "block", marginBottom: 2 }}>Honorarios</label>
-                <input
-                  type="number"
-                  min={0}
-                  step="0.01"
+                <NumericInput
+                  decimals min={0}
                   value={m.honorarios}
-                  onChange={(e) => updateMiembro(idx, { honorarios: e.target.value })}
+                  onChange={(v) => updateMiembro(idx, { honorarios: v })}
                   disabled={disabled}
                   style={{ width: 110 }}
                 />
               </div>
               <div>
                 <label style={{ fontSize: 11, color: "#64748b", display: "block", marginBottom: 2 }}>Gastos</label>
-                <input
-                  type="number"
-                  min={0}
-                  step="0.01"
+                <NumericInput
+                  decimals min={0}
                   value={m.gastos}
-                  onChange={(e) => updateMiembro(idx, { gastos: e.target.value })}
+                  onChange={(v) => updateMiembro(idx, { gastos: v })}
                   disabled={disabled}
                   style={{ width: 110 }}
                 />
               </div>
               <div>
                 <label style={{ fontSize: 11, color: "#64748b", display: "block", marginBottom: 2 }}>Ayudante</label>
-                <input
-                  type="number"
-                  min={0}
-                  step="0.01"
+                <NumericInput
+                  decimals min={0}
                   value={m.ayudante}
-                  onChange={(e) => updateMiembro(idx, { ayudante: e.target.value })}
+                  onChange={(v) => updateMiembro(idx, { ayudante: v })}
                   disabled={disabled}
                   style={{ width: 110 }}
                 />
               </div>
               <div>
                 <label style={{ fontSize: 11, color: "#64748b", display: "block", marginBottom: 2 }}>%</label>
-                <input
-                  type="number"
-                  min={1}
-                  max={100}
+                <NumericInput
+                  min={1} max={100}
                   value={m.porcentaje}
-                  onChange={(e) => updateMiembro(idx, { porcentaje: Number(e.target.value) })}
+                  onChange={(v) => updateMiembro(idx, { porcentaje: v })}
                   disabled={disabled}
                   style={{ width: 60 }}
                 />

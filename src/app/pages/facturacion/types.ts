@@ -62,6 +62,9 @@ export interface PrestacionItem {
   gastos?: number | Money | null;
   ayudante?: number | Money | null;
   porcentaje?: number;
+  /** Importe que el afiliado paga de su bolsillo; se descuenta del total. undefined/null =
+   *  usar el sugerido por el Valor del código. No se escala por `porcentaje`. */
+  coseguro?: number | Money | null;
   grupo_equipo_id?: number | null;
 }
 
@@ -100,6 +103,8 @@ export interface PrecioResponse {
   via: ViaPractica;
   /** Solo se completa si via="L" y el galeno cotizado es de 7 niveles. */
   nivel_cotizado?: number | null;
+  /** Coseguro sugerido desde el Valor del código — editable al cargar la prestación. */
+  coseguro: Money;
 }
 
 export interface PrestacionRead {
@@ -110,10 +115,15 @@ export interface PrestacionRead {
   nro_orden?: string | null;
   cod_obra_social?: string | null; cod_nomenclador?: string | null;
   tipo?: Tipo | null;
+  /** "Medico" | "Ayudante" | "Gastos", derivado de qué monto está en >0. Siempre viene
+   *  poblado (tanto en el listado como en el detalle) — no confundir con el campo
+   *  homónimo, más completo, de `PrestacionFacturaDetalle`. */
+  tipo_prestador?: TipoPrestador | null;
   grupo_equipo_id?: number | null;
   sesion?: number | null; cantidad?: number | null;
   honorarios?: Money | null; gastos?: Money | null; ayudante?: Money | null;
   importe_total?: Money | null;
+  coseguro?: Money | null;
   estado?: EstadoPrestacion | null;
   origen_carga?: "medico" | "colegio" | null;
   fecha_practica?: string | null;
@@ -124,6 +134,11 @@ export interface PrestacionRead {
   tipo_calculo?: TipoCalculo | null;
   via?: ViaPractica | null;
   porcentaje?: number | null;
+  /** Fecha/hora de CARGA (no de práctica) — columna `created`. Es el criterio de orden
+   *  de los listados, no el ID: las importaciones masivas de CMC intercalan rangos. */
+  created_at?: string | null;
+  /** NRO_SOCIO de quien cargó la prestación. */
+  usuario?: string | null;
   /** Otros integrantes del equipo quirúrgico (típicamente los ayudantes). Solo lo trae
    *  la cabeza (id == grupo_equipo_id); los anidados vienen con `grupo` en null. */
   grupo?: PrestacionRead[] | null;
@@ -155,6 +170,8 @@ export interface CierreResponse {
 }
 
 export interface ListarPrestacionesParams {
+  /** ID exacto (PK). Primer campo del buscador de la pantalla de consulta. */
+  id?: number;
   cod_obra?: string; periodo?: string; cod_medico?: string; cod_nomenclador?: string;
   estado?: EstadoPrestacion; tipo?: Tipo;
   grupo_equipo_id?: number;
@@ -164,7 +181,11 @@ export interface ListarPrestacionesParams {
    *  `facturacion.estado` en vez del `estado` copiado en la prestación, que una carga
    *  masiva por fuera de la API puede dejar desincronizado. */
   solo_facturas_abiertas?: boolean;
-  q?: string; limit?: number; offset?: number;
+  q?: string;
+  /** Busca el texto en `nro_orden` O en `autorizacion`. Segundo campo del buscador de
+   *  la pantalla de consulta; se combina con AND con el resto de los filtros. */
+  orden_o_autorizacion?: string;
+  limit?: number; offset?: number;
 }
 
 export interface FacturaRead {
@@ -187,11 +208,61 @@ export interface FacturaRead {
   importe: number | null;
   afip: string | null;
   usuario: string | null;
+  /** NOMBRE resuelto contra listado_medico (batch, no persistido). Puede venir
+   *  `null` aunque `usuario` exista: hay operadores del Colegio sin fila propia
+   *  en listado_medico (usuario no numérico, p. ej. "sbaier"). */
+  usuario_nombre?: string | null;
   estado: string | null;
   /** En un complemento nace en "C": la fase médico está cerrada, es carga exclusiva del Colegio. */
   estado_doctor?: string | null;
   created: string | null;
   documento_url?: string | null;
+  /** Quién/cuándo se creó esta cabecera (alta, no cierre) — `null` en filas
+   *  históricas anteriores a este campo. Distinto de `usuario`/`created`, que
+   *  se pisan al cerrar y funcionan como "cerrado por"/"fecha de cierre". */
+  creado_por?: string | null;
+  creado_en?: string | null;
+  creado_por_nombre?: string | null;
+}
+
+// ── Registro de facturación (auditoría administrativa, scope facturacion:registro) ──
+export interface CargaPorUsuario {
+  usuario: string;
+  nombre?: string | null;
+  cantidad_prestaciones: number;
+  importe_total: Money;
+}
+
+export interface CierresPorUsuario {
+  usuario: string;
+  nombre?: string | null;
+  cantidad_facturas: number;
+  importe_total: Money;
+}
+
+export interface ActividadEvento {
+  tipo: "cierre" | "carga";
+  usuario: string;
+  nombre?: string | null;
+  fecha: string;
+  cod_obra: string;
+  periodo: string;
+  referencia: string;
+  importe: Money;
+}
+
+export interface RegistroPorUsuarioParams {
+  cod_obra?: string;
+  periodo?: string;
+  desde?: string;
+  hasta?: string;
+  limit?: number;
+}
+
+export interface RegistroActividadParams {
+  cod_obra?: string;
+  periodo?: string;
+  limit?: number;
 }
 
 export interface ComplementoCreate {
@@ -222,6 +293,7 @@ export interface PrestacionFacturaDetalle {
   /** Opcional: no confirmado que el backend lo mande todavía en este endpoint. */
   via?: ViaPractica | null;
   nro_afiliado: string | null;
+  nombre_paciente?: string | null;
   cantidad: number | null;
   sesion: number | null;
   porcentaje: number | null;
@@ -232,6 +304,11 @@ export interface PrestacionFacturaDetalle {
   tipo: Tipo | null;
   revisado: boolean;
   estado: EstadoPrestacion | null;
+  /** Vínculo ayudante/gastos → prestación cabeza de equipo (grupo_equipo_id ==
+   * su propio id). null si no tiene equipo quirúrgico asociado. */
+  grupo_equipo_id?: number | null;
+  id_especialidad?: number | null;
+  especialidad_nombre?: string | null;
 }
 
 export interface PrestadorFacturaGrupo {
@@ -257,6 +334,124 @@ export interface FacturaDetalleResponse {
   total_prestaciones: number;
   total_importe: Money;
   prestadores: PrestadorFacturaGrupo[];
+}
+
+// ── Ficha completa de una prestación (pantalla de consulta, solo lectura) ────
+// A diferencia de `PrestacionRead` (recortado, pensado para el formulario de
+// edición), acá viene la fila TAL CUAL está en la base, sin recortes, más los
+// códigos resueltos a nombre. Los nombres de campo replican los del backend
+// (`PrestacionCrudaOut` en app/modules/facturacion/schemas.py), no los de
+// `PrestacionRead` — por eso `cod_med` y no `cod_medico`, etc.
+export interface PrestacionCruda {
+  id_detalle_prestaciones: number;
+  periodo: string;
+  periodo_label?: string | null;
+  created?: string | null;
+  usuario?: string | null;
+  origen_carga?: "medico" | "colegio" | null;
+  estado?: string | null;
+  revisado: boolean;
+  version: number;
+  cod_med?: string | null;
+  cod_med_ejecutor?: string | null;
+  cod_clinica?: number | null;
+  cod_obr?: string | null;
+  cod_nom?: string | null;
+  nomenclador_id?: number | null;
+  nro_orden?: string | null;
+  autorizacion?: string | null;
+  grupo_equipo_id?: number | null;
+  id_especialidad?: number | null;
+  dni_p?: string | null;
+  nom_ape_p?: string | null;
+  diag?: string | null;
+  fecha_practica?: string | null;
+  tipo?: Tipo | null;
+  tipo_orden?: string | null;
+  categoria?: string | null;
+  via?: ViaPractica | null;
+  sesion?: number | null;
+  cantidad?: number | null;
+  porc?: number | null;
+  manual?: TipoCalculo | null;
+  tipo_prestador?: TipoPrestador | null;
+  honorarios?: Money | null;
+  gastos?: Money | null;
+  ayudante?: Money | null;
+  importe_total?: Money | null;
+  coseguro: Money;
+  calculo_snapshot?: unknown;
+  validacion_estado?: string | null;
+  validacion_detalle?: string | null;
+  validacion_respuesta?: unknown;
+  validacion_anulada: boolean;
+  orden_path?: string | null;
+  orden_url?: string | null;
+  // legacy CMC — casi siempre vacíos en filas cargadas por este módulo
+  tpo_funcion?: string | null;
+  tpo_serv?: string | null;
+  cod_med_indica?: string | null;
+  codigo_oms?: string | null;
+  nro_vias?: number | null;
+  fin_semana?: string | null;
+  nocturno?: string | null;
+  feriado?: string | null;
+  urgencia?: string | null;
+}
+
+export interface SocioRef {
+  nro_socio: number;
+  nombre?: string | null;
+  matricula_prov?: number | null;
+  categoria?: string | null;
+  es_organizacion: boolean;
+}
+
+export interface ObraSocialRef {
+  nro_obrasocial: number;
+  nombre?: string | null;
+}
+
+export interface NomencladorRef {
+  id: number;
+  codigo: string;
+  descripcion?: string | null;
+  categoria?: string | null;
+  complejidad?: string | null;
+  obra_social_nro?: number | null;
+  /** true = no había vínculo persistido (`nomenclador_id`); se resolvió por código. */
+  resuelto_por_codigo: boolean;
+}
+
+export interface AfiliadoRef {
+  id: number;
+  dni: string;
+  nombre: string;
+}
+
+export interface AuditoriaEvento {
+  id: number;
+  timestamp: string;
+  method: string;
+  status_code: number;
+  nro_socio?: number | null;
+  nombre?: string | null;
+  role?: string | null;
+  ip?: string | null;
+  request_body?: string | null;
+}
+
+export interface PrestacionFicha {
+  prestacion: PrestacionCruda;
+  medico?: SocioRef | null;
+  clinica?: SocioRef | null;
+  cargado_por?: SocioRef | null;
+  obra_social?: ObraSocialRef | null;
+  nomenclador?: NomencladorRef | null;
+  paciente?: AfiliadoRef | null;
+  factura?: FacturaRead | null;
+  equipo: PrestacionRead[];
+  auditoria: AuditoriaEvento[];
 }
 
 export const detailMessage = (detail: unknown): string =>

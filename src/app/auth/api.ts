@@ -77,8 +77,8 @@ export async function changePassword(
   passwordNueva: string
 ): Promise<{ ok: boolean; relogin?: boolean }> {
   const { data } = await http.post("/auth/change-password", {
-    password_actual: passwordActual,
-    password_nueva: passwordNueva,
+    old_password: passwordActual,
+    new_password: passwordNueva,
   });
   // El backend cierra todas las sesiones del usuario al cambiar la
   // contraseña (§7.3): hay que limpiar el estado local y mandar al login.

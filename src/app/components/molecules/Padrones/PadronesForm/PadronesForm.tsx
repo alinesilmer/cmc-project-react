@@ -26,7 +26,12 @@ type Props = {
 
 type AlertType = "success" | "error" | "warning" | "info";
 
-const EXCLUDED_OS = new Set([30, 158, 213, 216, 227, 273, 282, 360, 377, 380, 388, 445]);
+// 158, 273 (Sancor), 377, 380, 388 (Medife) y las asociadas de cualquier otra
+// familia declarada ya las oculta el backend (`obra_social_principal_id`,
+// GET /api/padrones/catalogo). Lo que queda acá son planes secundarios SIN
+// declarar todavía — nadie confirmó de qué empresa son cada uno — más 445
+// (BOREAL SALUD), que está de baja (`MARCA='N'`).
+const EXCLUDED_OS = new Set([30, 213, 216, 227, 282, 360, 445]);
 
 const normalize = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
@@ -129,7 +134,10 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
 
     try {
       if (willSelect) {
-        await addPadronByOS(medicoId, nroOS);
+        // MARCA="S" explícito: sin esto el backend crea la fila con el
+        // default legacy "N" y el médico queda invisible en el padrón por
+        // obra social aunque el checkbox del perfil lo muestre marcado.
+        await addPadronByOS(medicoId, nroOS, { MARCA: "S" });
         notify.success(`Se agregó la obra social N° ${nroOS}.`);
       } else {
         await removePadronByOS(medicoId, nroOS);
@@ -227,7 +235,7 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
         if (willSelect && isSel) continue;
         if (!willSelect && !isSel) continue;
 
-        if (willSelect) await addPadronByOS(medicoId, id);
+        if (willSelect) await addPadronByOS(medicoId, id, { MARCA: "S" });
         else await removePadronByOS(medicoId, id);
       }
 

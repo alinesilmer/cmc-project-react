@@ -171,6 +171,16 @@ export const postForm = async <T = unknown>(
   return data as T;
 };
 
+// 👇 mismo caso que postForm, para ediciones que pueden reemplazar un archivo
+export const patchForm = async <T = unknown>(
+  url: string,
+  form: FormData,
+  config?: AxiosRequestConfig
+): Promise<T> => {
+  const { data } = await http.patch(url, form, config); // sin headers
+  return data as T;
+};
+
 export const putJSON = async <T = unknown>(
   url: string,
   body?: any
@@ -199,6 +209,44 @@ export const delJSONBody = async <T = unknown>(url: string, body?: any): Promise
   const { data } = await http.delete(url, { data: body ?? {} });
   return data as T;
 };
+
+// Axios serializa un array como `columnas[]=a&columnas[]=b` por default —
+// FastAPI espera la clave repetida sin corchetes (`columnas=a&columnas=b`)
+// para bindear un `list[...]` en un Query param. Sin este serializer, todo
+// filtro/columna multivaluada del panel de exportación se pierde en silencio.
+function serializeParamsRepetidos(params: Record<string, any>): string {
+  const usp = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null) continue;
+    if (Array.isArray(value)) {
+      for (const v of value) if (v !== undefined && v !== null) usp.append(key, String(v));
+    } else {
+      usp.append(key, String(value));
+    }
+  }
+  return usp.toString();
+}
+
+// Descarga de archivo (export a PDF/Excel): timeout largo porque el backend
+// puede tardar unos segundos generando el documento (facturas con miles de
+// prestaciones), y `responseType: "blob"` para no intentar parsear el binario
+// como JSON. El nombre de archivo se lee de `Content-Disposition` cuando el
+// caller no lo pisa explícitamente.
+export async function getBlobLong(
+  url: string,
+  params?: Record<string, any>,
+  timeoutMs = 180_000
+): Promise<{ blob: Blob; filename?: string }> {
+  const res = await http.get(url, {
+    params,
+    timeout: timeoutMs,
+    responseType: "blob",
+    paramsSerializer: { serialize: serializeParamsRepetidos },
+  });
+  const disposition: string | undefined = res.headers?.["content-disposition"];
+  const match = disposition?.match(/filename="?([^";]+)"?/i);
+  return { blob: res.data as Blob, filename: match?.[1] };
+}
 
 export const getJSONWithHeaders = async <T>(
   url: string,

@@ -1,4 +1,5 @@
 import React from "react";
+import NumericInput from "../../components/NumericInput";
 
 interface Props {
   fechaPractica: string;
@@ -32,11 +33,10 @@ const ServicioSection: React.FC<Props> = ({
           Clínica (cod)
           <span style={{ fontSize: 11, color: "#94a3b8", marginLeft: 6 }}>si se completa → tipo Sanatorio</span>
         </label>
-        <input
-          type="number"
+        <NumericInput
           min={1}
-          value={codClinica ?? ""}
-          onChange={(e) => onCodClinicaChange(e.target.value ? Number(e.target.value) : null)}
+          value={codClinica != null ? String(codClinica) : ""}
+          onChange={(v) => onCodClinicaChange(v ? Number(v) : null)}
           disabled={disabled}
           placeholder="— opcional —"
           style={{ maxWidth: 140 }}

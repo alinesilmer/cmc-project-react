@@ -23,3 +23,4 @@ export const CODIGOS_BLOQUEADOS = ["5000", "6000"];
 
 export const FACTURACION_ULTIMA_OS_KEY = "facturacion:ultimaOS";
 export const FACTURACION_FILTROS_KEY = "facturacion:listado:filtros";
+export const FACTURACION_AUTORIZACION_POR_INTEGRANTE_KEY = "facturacion:autorizacionPorIntegrante";

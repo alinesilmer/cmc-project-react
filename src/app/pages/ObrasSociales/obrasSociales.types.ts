@@ -70,6 +70,8 @@ export interface ObraSocial {
   plazo_vencimiento?: number | null;
   fecha_alta_convenio?: string | null;
   obra_social_principal_id?: number | null;
+  // 1 = mes completo, 20 = del 20 al 20. Default 20 en el backend.
+  dia_corte?: number;
   emails?: ContactoEntry[];
   telefonos?: ContactoEntry[];
   obra_social_principal?: ObraSocialRef | null;
@@ -142,6 +144,11 @@ export interface ObraSocialFormData {
   // Relaciones
   obra_social_principal_id: string;
   asociadas_ids: number[];
+  // Operación: sin esto una obra social nueva quedaba MARCA="N" por default
+  // del backend y no aparecía en ningún selector de padrón (ver auditoría O-02).
+  marca: "S" | "N";
+  ver_valor: "S" | "N";
+  dia_corte: string;
 }
 
 export const EMPTY_FORM: ObraSocialFormData = {
@@ -163,11 +170,31 @@ export const EMPTY_FORM: ObraSocialFormData = {
   telefonos: [{ valor: "", etiqueta: "" }],
   obra_social_principal_id: "",
   asociadas_ids: [],
+  marca: "S",
+  ver_valor: "N",
+  dia_corte: "20",
 };
 
 // ─── Validation errors ────────────────────────────────────────────────────────
 
 export type FormErrors = Partial<Record<keyof ObraSocialFormData, string>>;
+
+/**
+ * Dígito verificador módulo 11. El formato `NN-NNNNNNNN-N` sólo valida que
+ * tenga la forma de un CUIT; esto valida que sea uno real (ver auditoría O-12).
+ */
+function cuitEsValido(cuit: string): boolean {
+  const digitos = cuit.replace(/\D/g, "");
+  if (digitos.length !== 11) return false;
+  const multiplicadores = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2];
+  const suma = digitos
+    .slice(0, 10)
+    .split("")
+    .reduce((acc, d, i) => acc + Number(d) * multiplicadores[i], 0);
+  const resto = suma % 11;
+  const verificador = resto === 0 ? 0 : resto === 1 ? 9 : 11 - resto;
+  return verificador === Number(digitos[10]);
+}
 
 export function validateObraSocialForm(data: ObraSocialFormData): FormErrors {
   const errors: FormErrors = {};
@@ -180,8 +207,20 @@ export function validateObraSocialForm(data: ObraSocialFormData): FormErrors {
   if (!data.nombre.trim())
     errors.nombre = "El nombre es obligatorio.";
 
-  if (data.cuit.trim() && !/^\d{2}-\d{8}-\d{1}$/.test(data.cuit.trim()))
-    errors.cuit = "El CUIT debe tener 11 dígitos.";
+  if (data.cuit.trim()) {
+    if (!/^\d{2}-\d{8}-\d{1}$/.test(data.cuit.trim()))
+      errors.cuit = "El CUIT debe tener el formato NN-NNNNNNNN-N.";
+    else if (!cuitEsValido(data.cuit.trim()))
+      errors.cuit = "Ese CUIT no es válido (dígito verificador incorrecto).";
+  }
+
+  if (!data.dia_corte.trim()) {
+    errors.dia_corte = "Elegí el día de corte del período.";
+  } else {
+    const diaCorte = Number(data.dia_corte.trim());
+    if (!Number.isInteger(diaCorte) || diaCorte < 1 || diaCorte > 28)
+      errors.dia_corte = "Tiene que ser un día entre 1 y 28.";
+  }
 
   if (data.plazo_vencimiento === "otro" && !data.plazo_custom.trim())
     errors.plazo_custom = "Ingresá el plazo personalizado.";

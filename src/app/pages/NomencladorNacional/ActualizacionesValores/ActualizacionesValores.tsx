@@ -61,14 +61,23 @@ export default function ActualizacionesValores() {
     const porAnio = anio ? meses.filter((m) => m.mes.startsWith(anio)) : meses;
     if (!q) return porAnio;
     return porAnio
-      .map((m) => ({
-        ...m,
-        obras_sociales: m.obras_sociales.filter(
+      .map((m) => {
+        const obras_sociales = m.obras_sociales.filter(
           (o) =>
             o.nombre.toLowerCase().includes(q) ||
             String(o.obra_social_nro).includes(q),
-        ),
-      }))
+        );
+        // Antes esto quedaba con `...m`, que arrastraba total_codigos y
+        // total_obras_sociales del mes SIN filtrar: buscar "UNNE" mostraba dos
+        // filas por 1.527 valores reales, con el total diciendo 4.963. Ver
+        // auditoría A-01.
+        return {
+          ...m,
+          obras_sociales,
+          total_codigos: obras_sociales.reduce((acc, o) => acc + o.codigos, 0),
+          total_obras_sociales: new Set(obras_sociales.map((o) => o.obra_social_nro)).size,
+        };
+      })
       // Un mes que se queda sin obras sociales tras filtrar no se muestra: el
       // encabezado vacío sólo agrega ruido a la lista de resultados.
       .filter((m) => m.obras_sociales.length > 0);
@@ -202,10 +211,14 @@ export default function ActualizacionesValores() {
 
                         {/* El listado usa el ID interno de la obra social y acá
                             sólo se tiene el NRO_OBRASOCIAL, así que se enlaza a
-                            la búsqueda por número en vez de al detalle. */}
+                            la búsqueda por número en vez de al detalle.
+                            `incluir_inactivas=true` porque el listado oculta
+                            por default las dadas de baja (MARCA='N') y una
+                            obra social puede haber actualizado precios antes
+                            de darse de baja. Ver auditoría A-05. */}
                         <Link
                           className={s.verLink}
-                          to={`/panel/convenios/obras-sociales?q=${o.obra_social_nro}`}
+                          to={`/panel/convenios/obras-sociales?q=${o.obra_social_nro}&incluir_inactivas=true`}
                         >
                           Ver
                         </Link>

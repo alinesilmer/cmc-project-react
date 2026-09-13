@@ -83,6 +83,7 @@ interface CodigoApi {
   honorarios: number | string;
   gastos: number | string;
   total: number | string;
+  coseguro: number | string;
   admitido: boolean;
   motivo: string | null;
   se_envia: string | null;
@@ -189,11 +190,25 @@ export const buscarCodigos = async (
     descripcion: c.descripcion,
     honorarios: num(c.honorarios),
     gastos: num(c.gastos),
+    coseguro: num(c.coseguro),
     admitido: c.admitido,
     motivo: c.motivo,
     seEnvia: c.se_envia ?? null,
   }));
 };
+
+interface AfiliadoNobisApi {
+  encontrado: boolean;
+  activo: boolean;
+  nombre: string | null;
+  estado: string;
+}
+
+/** GET /api/validaciones/nobis/afiliado — estado en vivo del afiliado (sólo
+ * lectura, no bloquea el alta). Es el mismo `ConsultarAfiliado` del WSGeCROS
+ * que usaba el legacy para el cartel debajo del campo. */
+export const consultarAfiliadoNobis = (nroAfiliado: string): Promise<AfiliadoNobisApi> =>
+  getJSON<AfiliadoNobisApi>(`${BASE}/nobis/afiliado`, { nro_afiliado: nroAfiliado });
 
 // ─── Escrituras ───────────────────────────────────────────────────────────────
 

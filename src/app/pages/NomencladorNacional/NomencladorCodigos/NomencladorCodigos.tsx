@@ -26,6 +26,9 @@ import {
   deleteNomenclador,
   getNomencladorById,
   listNomencladorEspecialidadesResumen,
+  getNomencladorEspecialidades,
+  addNomencladorEspecialidad,
+  deleteNomencladorEspecialidad,
 } from "../nomenclador.api";
 import type {
   NomencladorOut,
@@ -112,6 +115,14 @@ export default function NomencladorCodigos() {
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
 
+  // Especialidades habilitadas del código en el modal (nm_nomenclador_especialidad,
+  // siempre a nivel Colegio). En alta: se acumulan localmente y se mandan recién al
+  // crear el código. En edición: cada tilde pega al server de inmediato.
+  const [habilitadas, setHabilitadas] = useState<Set<number>>(new Set());
+  const [habilitadasLoading, setHabilitadasLoading] = useState(false);
+  const [habilitacionBusy, setHabilitacionBusy] = useState<number | null>(null);
+  const [habilitadasError, setHabilitadasError] = useState<string | null>(null);
+
   const load = useCallback(
     async (p: number, q: string, comp: string, act: string, esp: string) => {
       setLoading(true);
@@ -176,6 +187,7 @@ export default function NomencladorCodigos() {
     setEditingId(null);
     setForm(emptyForm());
     setErrors({});
+    setHabilitadas(new Set());
     setModalOpen(true);
   }
 
@@ -183,7 +195,42 @@ export default function NomencladorCodigos() {
     setEditingId(item.id);
     setForm(itemToForm(item));
     setErrors({});
+    setHabilitadas(new Set());
+    setHabilitadasLoading(true);
+    getNomencladorEspecialidades(item.id)
+      .then((rows) => setHabilitadas(new Set(rows.filter((r) => r.activo).map((r) => r.especialidad_id_colegio))))
+      .catch(() => showToast("error", "No se pudieron cargar las especialidades habilitadas."))
+      .finally(() => setHabilitadasLoading(false));
     setModalOpen(true);
+  }
+
+  // Alta: solo tilda/destilda localmente (el código todavía no existe). Edición:
+  // pega al server de inmediato — togglear una especialidad no debería depender de
+  // apretar "Guardar" en el resto del formulario.
+  async function toggleHabilitacion(espId: number) {
+    if (editingId === null) {
+      setHabilitadas((prev) => {
+        const next = new Set(prev);
+        if (next.has(espId)) next.delete(espId); else next.add(espId);
+        return next;
+      });
+      return;
+    }
+    setHabilitacionBusy(espId);
+    try {
+      if (habilitadas.has(espId)) {
+        await deleteNomencladorEspecialidad(editingId, espId);
+        setHabilitadas((prev) => { const next = new Set(prev); next.delete(espId); return next; });
+      } else {
+        await addNomencladorEspecialidad(editingId, espId);
+        setHabilitadas((prev) => new Set(prev).add(espId));
+      }
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      showToast("error", msg ?? "No se pudo actualizar la habilitación.");
+    } finally {
+      setHabilitacionBusy(null);
+    }
   }
 
   // En modo especialidad las filas son pares (sin todos los campos del código),
@@ -200,6 +247,8 @@ export default function NomencladorCodigos() {
   function closeModal() {
     setModalOpen(false);
     setEditingId(null);
+    setHabilitadas(new Set());
+    setHabilitadasError(null);
   }
 
   function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
@@ -212,6 +261,11 @@ export default function NomencladorCodigos() {
     if (!form.codigo.trim()) errs.codigo = "Requerido";
     if (!form.descripcion.trim()) errs.descripcion = "Requerido";
     setErrors(errs);
+    if (editingId === null && !form.sin_restriccion_especialidad && habilitadas.size === 0) {
+      setHabilitadasError("Tildá al menos una especialidad, o marcá \"Sin restricción de especialidad\"");
+      return false;
+    }
+    setHabilitadasError(null);
     return Object.keys(errs).length === 0;
   }
 
@@ -245,7 +299,20 @@ export default function NomencladorCodigos() {
       } else {
         const created = await createNomenclador(payload);
         setItems((prev) => [created, ...prev]);
-        showToast("success", "Código creado.");
+        if (habilitadas.size > 0) {
+          const resultados = await Promise.allSettled(
+            [...habilitadas].map((espId) => addNomencladorEspecialidad(created.id, espId)),
+          );
+          const fallidas = resultados.filter((r) => r.status === "rejected").length;
+          showToast(
+            fallidas > 0 ? "error" : "success",
+            fallidas > 0
+              ? `Código creado, pero ${fallidas} especialidad(es) no se pudieron habilitar. Editá el código para reintentar.`
+              : "Código creado.",
+          );
+        } else {
+          showToast("success", "Código creado.");
+        }
       }
       closeModal();
     } catch (e: unknown) {
@@ -571,6 +638,36 @@ export default function NomencladorCodigos() {
                     </label>
                   </div>
                 </div>
+
+                {!form.sin_restriccion_especialidad && (
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>
+                      Especialidades habilitadas {editingId === null && <span className={styles.req}>*</span>}
+                    </label>
+                    <p className={styles.hintText}>
+                      Quién puede facturar este código. Una variante NE de precio implica que su
+                      especialidad esté acá — borrar una habilitación con NE activas se rechaza.
+                    </p>
+                    {habilitadasLoading ? (
+                      <span className={styles.hintText}>Cargando…</span>
+                    ) : (
+                      <div className={styles.checkboxList}>
+                        {especialidades.map((e) => (
+                          <label key={e.id_colegio_espe} className={styles.checkRow}>
+                            <input
+                              type="checkbox"
+                              checked={habilitadas.has(e.id_colegio_espe)}
+                              disabled={habilitacionBusy === e.id_colegio_espe}
+                              onChange={() => toggleHabilitacion(e.id_colegio_espe)}
+                            />
+                            {e.nombre}
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                    {habilitadasError && <span className={styles.errorMsg}>{habilitadasError}</span>}
+                  </div>
+                )}
 
                 <div className={styles.sectionTitle}>Unidades de referencia</div>
                 <div className={styles.formRow3}>

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import AppSearchSelect, { type AppSearchSelectOption } from "../../../components/atoms/AppSearchSelect/AppSearchSelect";
 import { fetchMedicos } from "../api";
 import type { MedicoOption } from "../types";
+import { filtrarYOrdenar } from "./localSearch";
 
 // Payee = a quién se le paga. GET /medicos ya devuelve `es_organizacion` para cada
 // socio (médico o clínica), así que un solo fetch alcanza para mezclar ambos casos.
@@ -46,28 +47,29 @@ const PayeeAutocomplete: React.FC<Props> = ({
   }, []);
 
   // Con la lista precargada entera, "buscar" es filtrar en memoria — mismo
-  // criterio (cod/nombre/matrícula) y mismo tope que el buscador remoto, sin
-  // ida y vuelta al backend por cada tecleo.
+  // criterio (cod/nombre/matrícula) que el buscador remoto, sin ida y vuelta al
+  // backend por cada tecleo. A diferencia de obra social/clínica, este campo NO
+  // muestra la lista completa al hacer click con el campo vacío (a pedido: acá hay
+  // demasiados médicos para que tenga sentido navegar sin tipear) — hay que escribir.
   const buscarLocal = useCallback((q: string) => {
-    if (q.length < minLenFor(q) || !medicosPrecargados) { setOptions([]); return; }
-    const needle = q.toLowerCase();
-    const filtrados = medicosPrecargados.filter(
-      (m) =>
-        String(m.cod).includes(q) ||
-        m.nombre.toLowerCase().includes(needle) ||
-        (m.matricula != null && String(m.matricula).includes(q)),
-    );
-    setOptions(filtrados.slice(0, 20));
+    if (!medicosPrecargados) { setOptions([]); return; }
+    if (q.length < minLenFor(q)) { setOptions([]); return; }
+    // Orden de prioridad de coincidencia: Matrícula > Nombre > Nº de socio.
+    const filtrados = filtrarYOrdenar(medicosPrecargados, q, (m) => [m.matricula, m.nombre, m.cod]);
+    setOptions(filtrados);
   }, [medicosPrecargados]);
 
   useEffect(() => () => { abortRef.current?.abort(); }, []);
 
   const selectOptions: AppSearchSelectOption[] = options.map((m) => ({
     id: m.cod,
-    // Nº socio · nombre · matrícula (la matrícula se omite si no viene).
-    label: [m.cod, m.nombre, m.matricula]
-      .filter((v) => v != null && v !== "")
-      .join(" · "),
+    // Nº socio · nombre · matrícula — salvo para clínicas/organizaciones, que no
+    // tienen Nº de socio ni matrícula como médico: se muestra solo el nombre.
+    label: m.es_organizacion
+      ? m.nombre
+      : [m.cod, m.nombre, m.matricula]
+          .filter((v) => v != null && v !== "")
+          .join(" · "),
     subtitle: m.es_organizacion
       ? "Clínica / organización"
       : m.categoria

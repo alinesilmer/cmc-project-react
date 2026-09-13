@@ -65,8 +65,8 @@ function isFocusable(el: HTMLElement): boolean {
 /**
  * Siguiente campo a enfocar desde `current`, en orden de DOM.
  *
- * Sólo recorre campos de entrada — **nunca botones**. El pie tiene "Limpiar" antes que
- * "Guardar", y Paciente tiene "+ Agregar afiliado" pegado al campo: si los botones
+ * Sólo recorre campos de entrada — **nunca botones**. El pie tiene "Guardar" y
+ * "Limpiar", y Paciente tiene "+ Agregar afiliado" pegado al campo: si los botones
  * entraran al recorrido, un Enter de más borraría el formulario o abriría un modal.
  * Cuando no queda campo siguiente devolvemos el botón Guardar, que es la salida
  * natural y deja el disparo final en manos del operador.

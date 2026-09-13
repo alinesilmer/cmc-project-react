@@ -493,7 +493,7 @@ export const deleteSocioDescuento = (id: number) =>
   delJSON<void>(`/api/deducciones/socios/${id}`);
 
 export const fetchDescuentosConceptos = async (): Promise<DescuentoConcept[]> => {
-  const raw = await getJSON<any[]>("/api/descuentos");
+  const raw = await getJSON<any[]>("/api/conceptos");
   return (raw ?? [])
     .map((d) => ({
       id: Number(d?.id ?? d?.desc_id ?? 0),

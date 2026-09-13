@@ -1,9 +1,11 @@
 import React from "react";
 import Card from "../../../../components/atoms/Card/Card";
 
+type CampoMantenible = "obraSocial" | "medico" | "paciente" | "fecha" | "clinica" | "autorizacion";
+
 interface Props {
-  mantener: { obraSocial: boolean; paciente: boolean; fecha: boolean; clinica: boolean; medico: boolean };
-  onMantenerChange: (k: "obraSocial" | "paciente" | "fecha" | "clinica" | "medico", v: boolean) => void;
+  mantener: Record<CampoMantenible, boolean>;
+  onMantenerChange: (k: CampoMantenible, v: boolean) => void;
   /** En complementaria las prestaciones son rezagadas de fechas distintas: no tiene
    *  sentido mantener la fecha, así que ese checkbox no se muestra. */
   showFecha?: boolean;
@@ -12,18 +14,19 @@ interface Props {
   showObraSocial?: boolean;
 }
 
-const ETIQUETAS = {
+const ETIQUETAS: Record<CampoMantenible, string> = {
   obraSocial: "Obra social",
   medico: "Médico",
   paciente: "Paciente",
   fecha: "Fecha",
   clinica: "Clínica",
-} as const;
+  autorizacion: "Nro de autorización",
+};
 
 const ResumenLateralCard: React.FC<Props> = ({
   mantener, onMantenerChange, showFecha = true, showObraSocial = true,
 }) => {
-  const campos = (["obraSocial", "medico", "paciente", "fecha", "clinica"] as const).filter(
+  const campos = (["obraSocial", "medico", "paciente", "fecha", "clinica", "autorizacion"] as const).filter(
     (k) => (k !== "fecha" || showFecha) && (k !== "obraSocial" || showObraSocial),
   );
 

@@ -78,7 +78,7 @@ export type LoteAjuste = {
   ajustes: Ajuste[];
 };
 
-export type Descuento = {
+export type Concepto = {
   id: number;
   nombre: string;
   nro_colegio: number;

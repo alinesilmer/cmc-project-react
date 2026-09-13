@@ -4,10 +4,10 @@ import { useAppSnackbar } from "../../../../hooks/useAppSnackbar";
 import Button from "../../../../components/atoms/Button/Button";
 import Card from "../../../../components/atoms/Card/Card";
 import styles from "./tabs.module.scss";
-import { type Pago, type Descuento, fmt } from "../../types";
+import { type Pago, type Concepto, fmt } from "../../types";
 
-const DESCUENTOS_URL = "/api/descuentos";
-const DESCUENTO_URL = (id: number) => `/api/descuentos/${id}`;
+const CONCEPTOS_URL = "/api/conceptos";
+const CONCEPTO_URL = (id: number) => `/api/conceptos/${id}`;
 const GENERAR_URL = (pagoId: number, descId: number) =>
   `/api/deducciones/${pagoId}/colegio/bulk_generar_descuento/${descId}`;
 const POR_PAGO_URL = (pagoId: number) => `/api/deducciones/por_pago/${pagoId}`;
@@ -36,7 +36,7 @@ type Props = { pago: Pago; pagoId: number; onRefresh?: () => void };
 
 const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
   const notify = useAppSnackbar();
-  const [descuentos, setDescuentos] = useState<Descuento[]>([]);
+  const [descuentos, setDescuentos] = useState<Concepto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,15 +44,15 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
   const [generadoInfo, setGeneradoInfo] = useState<PorPagoResult | null>(null);
 
   // Modal generar
-  const [genTarget, setGenTarget] = useState<Descuento | null>(null);
+  const [genTarget, setGenTarget] = useState<Concepto | null>(null);
   const [generating, setGenerating] = useState(false);
 
   // Modal deshacer
-  const [deshacerTarget, setDeshacerTarget] = useState<Descuento | null>(null);
+  const [deshacerTarget, setDeshacerTarget] = useState<Concepto | null>(null);
   const [deshaciendo, setDeshaciendo] = useState(false);
 
   // Editar descuento
-  const [editTarget, setEditTarget] = useState<Descuento | null>(null);
+  const [editTarget, setEditTarget] = useState<Concepto | null>(null);
   const [editPrecio, setEditPrecio] = useState("");
   const [editPorcentaje, setEditPorcentaje] = useState("");
   const [editSaving, setEditSaving] = useState(false);
@@ -70,7 +70,7 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
     (async () => {
       setLoading(true);
       try {
-        const data = await getJSON<any[]>(DESCUENTOS_URL);
+        const data = await getJSON<any[]>(CONCEPTOS_URL);
         setDescuentos(
           (data ?? []).map((d: any) => ({
             id: d.id,
@@ -148,7 +148,7 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
     }
   };
 
-  const openEdit = (d: Descuento) => {
+  const openEdit = (d: Concepto) => {
     setEditTarget(d);
     setEditPrecio(String(d.precio));
     setEditPorcentaje(String(d.porcentaje));
@@ -158,7 +158,7 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
     if (!editTarget) return;
     setEditSaving(true);
     try {
-      const updated = await patchJSON<any>(DESCUENTO_URL(editTarget.id), {
+      const updated = await patchJSON<any>(CONCEPTO_URL(editTarget.id), {
         precio: Number(editPrecio),
         porcentaje: Number(editPorcentaje),
       });
@@ -174,7 +174,7 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
         ),
       );
       setEditTarget(null);
-      notify("Descuento guardado correctamente.");
+      notify("Concepto guardado correctamente.");
     } catch (e: any) {
       const detail = e?.response?.data?.detail;
       notify(
@@ -275,7 +275,7 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
         <div className={styles.modalBackdrop} role="dialog" aria-modal="true">
           <div className={styles.modalCard}>
             <div className={styles.modalHeader}>
-              <h3>Generar Descuento</h3>
+              <h3>Generar Concepto</h3>
               <button
                 className={styles.modalClose}
                 onClick={() => setGenTarget(null)}
@@ -383,7 +383,7 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
         <div className={styles.modalBackdrop} role="dialog" aria-modal="true">
           <div className={styles.modalCard}>
             <div className={styles.modalHeader}>
-              <h3>Editar Descuento</h3>
+              <h3>Editar Concepto</h3>
               <button
                 className={styles.modalClose}
                 onClick={() => setEditTarget(null)}

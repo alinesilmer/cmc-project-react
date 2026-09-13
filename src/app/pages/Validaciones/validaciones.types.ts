@@ -42,6 +42,24 @@ export interface CampoConfig {
     placeholder?: string;
     label?: string;
   };
+  /**
+   * Si está seteado, el campo consulta en vivo mientras el prestador tipea
+   * (debounce + se cancela la consulta anterior si el valor cambió) y muestra
+   * el resultado debajo — igual que el cartel verde/rojo de "Afiliado ACTIVO"
+   * del legacy de Nobis. Nunca bloquea el envío: es sólo informativo.
+   */
+  consultaEnVivo?: {
+    /** Dígitos mínimos antes de disparar la consulta (Nobis: 6, como el legacy). */
+    minLength: number;
+    consultar: (valor: string) => Promise<ConsultaEnVivoResultado>;
+  };
+}
+
+/** Resultado de una `consultaEnVivo`, ya traducido al cartel a mostrar. */
+export interface ConsultaEnVivoResultado {
+  /** `true` = cartel verde, `false` = cartel rojo. */
+  ok: boolean;
+  texto: string;
 }
 
 /** Valores del formulario: cada campo guarda un string (se normaliza al enviar). */
@@ -147,6 +165,20 @@ export interface ObraSocialConfig {
  */
 export type EstadoPrestacion = "autorizada" | "rechazada" | "pendiente" | "cargada";
 
+// Nobis grada el `P-Pendiente` como `rechazada` a propósito —importe 0, fuera
+// de factura, igual que un rechazo real— pero antes de mostrarlo como un
+// rechazo liso conviene avisar que la orden **sí existe** en Nobis, esperando
+// que el afiliado la gestione. El prefijo es el que arma
+// `ValidadorNobis.validar()` en el backend (`obras/nobis/validador.py`); si
+// cambia ahí, hay que cambiarlo acá.
+const PREFIJO_PENDIENTE_OBRA_SOCIAL = "Pendiente de autorización de la obra social.";
+
+/** `true` si el detalle es el de una `rechazada` que en realidad quedó
+ * pendiente de gestión en la obra social (hoy, sólo Nobis). No cambia el
+ * `estado` — sigue siendo `rechazada` en la base—, sólo cómo se lo muestra. */
+export const esPendienteDeObraSocial = (detalle?: string | null): boolean =>
+  !!detalle && detalle.startsWith(PREFIJO_PENDIENTE_OBRA_SOCIAL);
+
 export interface Prestacion {
   id: string;
   fecha: string; // ISO (YYYY-MM-DD)
@@ -201,6 +233,9 @@ export interface CodigoNomenclador {
   descripcion: string;
   honorarios: number;
   gastos: number;
+  /** Coseguro sugerido para este código — informativo; lo que factura es lo que el
+   * médico tipea en el campo "Coseguro" del formulario, si la obra social lo pide. */
+  coseguro: number;
   /**
    * `false` cuando el médico no tiene habilitación por especialidad para el
    * código, o no hay precio vigente para esa obra social. `motivo` lo explica.

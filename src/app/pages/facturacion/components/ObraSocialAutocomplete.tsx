@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import AppSearchSelect, { type AppSearchSelectOption } from "../../../components/atoms/AppSearchSelect/AppSearchSelect";
 import { fetchObrasSociales } from "../api";
 import type { ObraSocialOption } from "../types";
+import { filtrarYOrdenar } from "./localSearch";
 
 // Cache en memoria para obras sociales (casi inmutable por sesión)
 const osCache = new Map<string, { data: ObraSocialOption[]; ts: number }>();
@@ -56,13 +57,15 @@ const ObraSocialAutocomplete: React.FC<Props> = ({
   }, []);
 
   // Con la lista precargada entera (~140 filas), "buscar" es filtrar en memoria.
+  // Query vacío (campo recién clickeado) devuelve la lista completa: sin esto el
+  // dropdown abre sin ninguna opción hasta tipear.
   const buscarLocal = useCallback((q: string) => {
-    if (q.length < minLenFor(q) || !obrasSocialesPrecargadas) { setOptions([]); return; }
-    const needle = q.toLowerCase();
-    const filtradas = obrasSocialesPrecargadas.filter(
-      (os) => String(os.nro_obra_social).includes(q) || os.nombre.toLowerCase().includes(needle),
-    );
-    setOptions(filtradas.slice(0, 20));
+    if (!obrasSocialesPrecargadas) { setOptions([]); return; }
+    if (q.length === 0) { setOptions(obrasSocialesPrecargadas); return; }
+    if (q.length < minLenFor(q)) { setOptions([]); return; }
+    // Orden de prioridad de coincidencia: Nombre > Nº de obra social.
+    const filtradas = filtrarYOrdenar(obrasSocialesPrecargadas, q, (os) => [os.nombre, os.nro_obra_social]);
+    setOptions(filtradas);
   }, [obrasSocialesPrecargadas]);
 
   useEffect(() => () => { abortRef.current?.abort(); }, []);

@@ -5,6 +5,9 @@ $blue-hover: #2f5bbb;
 $red:        #dc2626;
 $red-light:  #fee2e2;
 $green:      #166534;
+$audit-row:    #fefce8;
+$audit-halo:   #fef9c3;
+$audit-accent: #ca8a04;
 $border:     #e2e8f0;
 $surface:    #ffffff;
 $text-1:     #1a1f2e;
@@ -203,32 +206,65 @@ $shadow-md:  0 4px 16px rgba(0, 0, 0, .10);
     &:hover { background: #f8faff; }
   }
 
-  // Anchos fijos por columna para que las 15 columnas entren sin scroll.
-  th:nth-child(1)  { width: 5%; }
-  th:nth-child(2)  { width: 9%; }
-  th:nth-child(3)  { width: 7%; }
-  th:nth-child(4)  { width: 7%; }
-  th:nth-child(5)  { width: 6%; }
-  th:nth-child(6)  { width: 4%; }
-  th:nth-child(7)  { width: 7%; }
-  th:nth-child(8)  { width: 7%; }
-  th:nth-child(9)  { width: 5%; }
-  th:nth-child(10) { width: 7%; }
-  th:nth-child(11) { width: 7%; }
-  th:nth-child(12) { width: 6%; }
-  th:nth-child(13) { width: 7%; }
-  th:nth-child(14) { width: 8%; }
-  th:nth-child(15) { width: 8%; }
+  // Los anchos de columna ya no son fijos por posición (`th:nth-child`): con el
+  // selector de columnas del panel de vista la cantidad de columnas cambia, así
+  // que el ancho de cada una se calcula en `FacturaDetalle.tsx` (según el peso
+  // relativo de `PESO_COLUMNA`) y se aplica vía `<colgroup>` — eso es lo que
+  // `table-layout: fixed` necesita para repartir el 100% entre las que estén
+  // visibles en cada momento.
 }
 
 .thActions { text-align: right; }
 
 .rowRevisada td {
-  background: #f3fbf5;
+  background: $audit-row;
 }
 
 .rowAnulada td {
   opacity: 0.55;
+}
+
+// Recuadro de equipo quirúrgico (ver `agruparEquipo` en vista/types.ts): un
+// marco gris que arranca en la fila del cirujano y engloba, debajo, las de
+// sus compañeros (ayudante/gastos) — de sólo lectura a propósito, la
+// prestación real —donde sí se audita/edita/mueve— vive en el grupo del
+// propio compañero. Sólo esas filas de compañero llevan fondo gris; la del
+// cirujano se ve igual que cualquier otra, sólo que con el marco arriba.
+//
+// El marco lateral va únicamente en la primera/última celda de cada fila
+// (no en `td` a secas) porque si no las columnas del medio también quedarían
+// con una línea vertical entre ellas.
+$equipo-border: #d7dbe2;
+$equipo-bg: #f7f8fa;
+
+.equipoGrupoHeadRow td {
+  border-top: 2px solid $equipo-border;
+}
+
+.equipoGrupoHeadRow td:first-child {
+  border-left: 2px solid $equipo-border;
+}
+
+.equipoGrupoHeadRow td:last-child {
+  border-right: 2px solid $equipo-border;
+}
+
+.equipoPreviewRow td {
+  background: $equipo-bg;
+  color: $text-3;
+}
+
+.equipoPreviewRow td:first-child {
+  border-left: 2px solid $equipo-border;
+}
+
+.equipoPreviewRow td:last-child {
+  border-right: 2px solid $equipo-border;
+}
+
+// Cierra el marco abajo, en la última fila del bloque de compañeros.
+.equipoPreviewRowLast td {
+  border-bottom: 2px solid $equipo-border;
 }
 
 .idCell {
@@ -348,7 +384,7 @@ $shadow-md:  0 4px 16px rgba(0, 0, 0, .10);
   width: 17px;
   height: 17px;
   cursor: pointer;
-  accent-color: $green;
+  accent-color: $audit-accent;
 }
 
 .auditCheckboxWrap {
@@ -362,7 +398,7 @@ $shadow-md:  0 4px 16px rgba(0, 0, 0, .10);
 }
 
 .auditCheckboxOn {
-  background: #dcfce7;
+  background: $audit-halo;
 }
 
 .iconBtn {

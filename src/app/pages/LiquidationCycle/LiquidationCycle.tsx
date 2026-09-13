@@ -32,7 +32,7 @@ import BackButton from "../../components/atoms/BackButton/BackButton";
 const RESUMEN_BY_ID = (id: string | number) => `/api/liquidacion/resumen/${id}`;
 const OBRAS_SOCIALES_URL = `/api/obras_social/`;
 
-const DESCUENTOS_URL = `/api/descuentos`;
+const DESCUENTOS_URL = `/api/conceptos`;
 
 const GEN_DESC_URL = (resumenId: string | number, descId: string | number) =>
   `/api/deducciones/${resumenId}/colegio/bulk_generar_descuento/${descId}`;
