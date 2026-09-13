@@ -23,6 +23,7 @@ export const MEDICO_ALLOWED_PATHS = [
   "/panel/dashboard",
   "/panel/mi-perfil",
   "/panel/nomenclador/consulta-precios",
+  "/panel/planillas",
   "/panel/validaciones",
   "/panel/help",
 ];

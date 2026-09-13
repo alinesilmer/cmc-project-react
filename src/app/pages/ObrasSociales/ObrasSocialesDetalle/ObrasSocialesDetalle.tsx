@@ -3,7 +3,7 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Building2, ChevronLeft, Pencil, FileText, Mail, Phone, MapPin,
-  CalendarDays, Receipt, Link2, Users, Hash,
+  CalendarDays, Receipt, Link2, Users, Hash, Copy, Check,
 } from "lucide-react";
 import { getObraSocial } from "../obrasSociales.api";
 import type { ObraSocial, Documento } from "../obrasSociales.types";
@@ -22,7 +22,37 @@ type ActiveTab = "datos" | "documentos" | "pagos" | "historial";
 // mostrando el día anterior. Ver src/app/lib/fechas.ts.
 const formatFecha = formatFechaLarga;
 
-function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value?: string | null }) {
+function CopyButton({ label, value }: { label: string; value: string }) {
+  const [copiado, setCopiado] = useState(false);
+
+  const copiar = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 1600);
+    } catch {
+      /* Sin permiso de portapapeles: el valor igual está a la vista. */
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      className={`${s.copyBtn} ${copiado ? s.copyBtnDone : ""}`}
+      onClick={copiar}
+      title={copiado ? "Copiado" : `Copiar ${label.toLowerCase()}`}
+      aria-label={copiado ? "Copiado" : `Copiar ${label.toLowerCase()}`}
+    >
+      {copiado ? <Check size={14} /> : <Copy size={14} />}
+    </button>
+  );
+}
+
+// `copy`: lo que va al portapapeles cuando difiere de lo que se muestra —el CUIT
+// se ve con guiones pero se copia en crudo, que es como lo piden los portales—.
+// `copy={null}` desactiva el botón en las filas que no sirven para pegar afuera.
+function InfoRow({ icon: Icon, label, value, copy }: { icon: React.ElementType; label: string; value?: string | null; copy?: string | null }) {
+  const copiable = copy === undefined ? value : copy;
   return (
     <div className={s.infoRow}>
       <span className={s.infoIcon}><Icon size={15} /></span>
@@ -30,6 +60,7 @@ function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label:
         <span className={s.infoLabel}>{label}</span>
         <span className={s.infoValue}>{value || "—"}</span>
       </div>
+      {copiable ? <CopyButton label={label} value={copiable} /> : null}
     </div>
   );
 }
@@ -104,6 +135,7 @@ export default function ObrasSocialesDetalle() {
   const plazoLabel = obra.plazo_vencimiento ? `${obra.plazo_vencimiento} días` : "—";
   const dir = obra.direccion?.[0];
   const cuit = displayCuit(obra.cuit);
+  const cuitDigits = (obra.cuit ?? "").replace(/\D/g, "");
 
   return (
     <div className={s.container}>
@@ -169,11 +201,11 @@ export default function ObrasSocialesDetalle() {
           <section className={s.card}>
             <h2 className={s.cardTitle}>Datos principales</h2>
             <div className={s.infoGroup}>
-              {cuit && <InfoRow icon={Hash} label="CUIT" value={cuit} />}
+              {cuit && <InfoRow icon={Hash} label="CUIT" value={cuit} copy={cuitDigits} />}
               {obra.direccion_real && <InfoRow icon={MapPin} label="Dirección real oficial" value={obra.direccion_real} />}
               {(obra.emails ?? []).map((e, i) => <InfoRow key={i} icon={Mail} label={e.etiqueta || "Email"} value={e.valor} />)}
               {(obra.telefonos ?? []).map((t, i) => <InfoRow key={i} icon={Phone} label={t.etiqueta || "Teléfono"} value={t.valor} />)}
-              {obra.fecha_alta_convenio && <InfoRow icon={CalendarDays} label="Fecha de alta de convenio" value={formatFecha(obra.fecha_alta_convenio)} />}
+              {obra.fecha_alta_convenio && <InfoRow icon={CalendarDays} label="Fecha de alta de convenio" value={formatFecha(obra.fecha_alta_convenio)} copy={null} />}
             </div>
           </section>
 
@@ -181,15 +213,15 @@ export default function ObrasSocialesDetalle() {
           <section className={s.card}>
             <h2 className={s.cardTitle}>Facturación</h2>
             <div className={s.infoGroup}>
-              {obra.condicion_iva && <InfoRow icon={Receipt} label="Condición de IVA" value={CONDICION_IVA_LABELS[obra.condicion_iva]} />}
-              {obra.plazo_vencimiento != null && <InfoRow icon={CalendarDays} label="Plazo de vencimiento" value={plazoLabel} />}
+              {obra.condicion_iva && <InfoRow icon={Receipt} label="Condición de IVA" value={CONDICION_IVA_LABELS[obra.condicion_iva]} copy={null} />}
+              {obra.plazo_vencimiento != null && <InfoRow icon={CalendarDays} label="Plazo de vencimiento" value={plazoLabel} copy={null} />}
               {dir && (
                 <>
                   {dir.provincia && <InfoRow icon={MapPin} label="Provincia" value={dir.provincia} />}
                   {dir.localidad && <InfoRow icon={MapPin} label="Localidad" value={dir.localidad} />}
                   {dir.direccion && <InfoRow icon={MapPin} label="Dirección de envío" value={dir.direccion} />}
                   {dir.codigo_postal && <InfoRow icon={MapPin} label="Código postal" value={dir.codigo_postal} />}
-                  {dir.horario && <InfoRow icon={CalendarDays} label="Horario" value={dir.horario} />}
+                  {dir.horario && <InfoRow icon={CalendarDays} label="Horario" value={dir.horario} copy={null} />}
                 </>
               )}
             </div>
@@ -230,8 +262,8 @@ export default function ObrasSocialesDetalle() {
           <section className={s.card}>
             <h2 className={s.cardTitle}>Información del registro</h2>
             <div className={s.infoGroup}>
-              <InfoRow icon={CalendarDays} label="Fecha de creación" value={formatFecha(obra.created_at)} />
-              <InfoRow icon={CalendarDays} label="Última actualización" value={formatFecha(obra.updated_at)} />
+              <InfoRow icon={CalendarDays} label="Fecha de creación" value={formatFecha(obra.created_at)} copy={null} />
+              <InfoRow icon={CalendarDays} label="Última actualización" value={formatFecha(obra.updated_at)} copy={null} />
             </div>
           </section>
         </div>

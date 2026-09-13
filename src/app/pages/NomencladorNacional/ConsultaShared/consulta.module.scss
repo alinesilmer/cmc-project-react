@@ -1,35 +1,13 @@
+@use "@/app/styles/all.scss" as *;
+
 // Consulta de Precios — "Registro de Valores"
 // Scoped design tokens (declared on .page so nothing leaks globally).
 
 .page {
-  --paper:        #e7e9ec;
-  --paper-2:      #dee1e5;
-  --surface:      #ffffff;
-  --ink:          #16191f;
-  --ink-2:        #414751;
-  --ink-3:        #6f747c;
-  --line:         #d6d9dd;
-  --line-2:       #c3c7cd;
-  --accent:       #3b6fd4;
-  --accent-2:     #2f5bbb;
-  --accent-tint:  #e8efff;
-  --accent-tint-2:#f3f7fe;
-  --gold:         #e0a516;
-  --gold-2:       #a9790c;
-  --gold-tint:    #fdf6e3;
-  --amber-bg:     #fffbeb;
-  --amber-line:   #fcd34d;
-  --amber-ico:    #d97706;
-  --amber-text:   #92400e;
-  --pine:         #24614a;
-  --pine-tint:    #e7efea;
-  --pine-line:    #b9e6d3;
 
-  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
-  --mono:  "SF Mono", "Cascadia Code", "JetBrains Mono", "Roboto Mono", Consolas, "Courier New", monospace;
 
   min-height: 100vh;
-  color: var(--ink);
+  color: $tinta;
   padding: 1.8rem;
   font-family: inherit;
 }
@@ -45,17 +23,17 @@
   margin-bottom: 22px;
 }
 .pageTitle {
-  font-family: var(--serif);
+  font-family: "Manrope", sans-serif;
   font-size: 2.05rem;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: var(--ink);
+  color: $tinta;
   margin: 0;
   text-wrap: balance;
 }
 .pageSub {
   margin: 7px 0 0;
-  color: var(--ink-2);
+  color: $tinta-2;
   font-size: 0.96rem;
 }
 
@@ -63,13 +41,13 @@
 .instrument {
   display: grid;
   grid-template-columns: 384px 1fr;
-  background: var(--surface);
-  border: 1.5px solid var(--ink);
+  background: $superficie;
+  border: 1.5px solid $tinta;
   box-shadow: 12px 12px 0 rgba(22, 25, 31, 0.06);
 }
 
 .colQuery {
-  border-right: 1.5px solid var(--ink);
+  border-right: 1.5px solid $tinta;
   padding: 26px 26px 28px;
 }
 .colResult {
@@ -82,19 +60,20 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--ink);
+  color: $tinta;
   margin-bottom: 22px;
 
   &::before {
     content: "";
     width: 12px;
     height: 12px;
-    background: var(--accent);
+    background: $acento;
     flex-shrink: 0;
   }
 }
@@ -109,17 +88,18 @@
   gap: 8px;
   font-size: 0.82rem;
   font-weight: 700;
-  color: var(--ink);
+  color: $tinta;
   margin-bottom: 8px;
 }
 .qIdx {
-  font-family: var(--mono);
-  color: var(--accent-2);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: $acento-fuerte;
   font-size: 0.8rem;
 }
 .qHint {
   font-weight: 400;
-  color: var(--ink-3);
+  color: $tinta-3;
   font-size: 0.78rem;
 }
 
@@ -133,15 +113,15 @@
   width: 100%;
   min-height: 50px;
   padding: 0 12px;
-  background: var(--surface);
-  border: 1.5px solid var(--line-2);
+  background: $superficie;
+  border: 1.5px solid $linea-2;
   cursor: text;
   transition: border-color 0.14s, box-shadow 0.14s;
 
-  &:hover { border-color: var(--ink-3); }
+  &:hover { border-color: $tinta-3; }
   &:focus-within {
-    border-color: var(--ink);
-    box-shadow: inset 0 0 0 1px var(--ink);
+    border-color: $tinta;
+    box-shadow: inset 0 0 0 1px $tinta;
     outline: none;
   }
 
@@ -151,15 +131,15 @@
     background: transparent;
     font: inherit;
     font-size: 0.95rem;
-    color: var(--ink);
+    color: $tinta;
     width: 100%;
     padding: 13px 0;
 
-    &::placeholder { color: var(--ink-3); }
+    &::placeholder { color: $tinta-3; }
   }
 }
-.fieldIco { color: var(--ink-3); flex-shrink: 0; }
-.fieldSpin { color: var(--ink-3); flex-shrink: 0; }
+.fieldIco { color: $tinta-3; flex-shrink: 0; }
+.fieldSpin { color: $tinta-3; flex-shrink: 0; }
 
 .chosen {
   display: flex;
@@ -168,8 +148,8 @@
   width: 100%;
   min-height: 50px;
   padding: 7px 7px 7px 0;
-  background: var(--accent-tint);
-  border: 1.5px solid var(--accent);
+  background: $acento-tinte;
+  border: 1.5px solid $acento;
   border-left-width: 5px;
 }
 // For code-less items (e.g. especialidad): no left code tag, so pad the text in.
@@ -178,18 +158,19 @@
   align-self: stretch;
   display: flex;
   align-items: center;
-  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
   font-weight: 700;
   font-size: 0.8rem;
   color: #fff;
-  background: var(--accent-2);
+  background: $acento-fuerte;
   padding: 5px 8px;
   flex-shrink: 0;
   letter-spacing: 0.02em;
 }
 .chosenText {
   font-size: 0.9rem;
-  color: var(--ink);
+  color: $tinta;
   font-weight: 600;
   flex: 1;
   min-width: 0;
@@ -203,7 +184,7 @@
   height: 34px;
   border: 0;
   background: transparent;
-  color: var(--accent-2);
+  color: $acento-fuerte;
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -221,8 +202,8 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  background: var(--surface);
-  border: 1.5px solid var(--ink);
+  background: $superficie;
+  border: 1.5px solid $tinta;
   box-shadow: 8px 8px 0 rgba(22, 25, 31, 0.08);
   max-height: 256px;
   overflow-y: auto;
@@ -233,30 +214,31 @@
   gap: 11px;
   padding: 11px 12px;
   cursor: pointer;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid $linea;
 
   &:last-child { border-bottom: 0; }
-  &:hover { background: var(--accent-tint); }
+  &:hover { background: $acento-tinte; }
 }
-.optActive { background: var(--accent-tint); }
+.optActive { background: $acento-tinte; }
 .optCode {
-  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
   font-weight: 700;
   font-size: 0.82rem;
-  color: var(--accent-2);
+  color: $acento-fuerte;
   flex-shrink: 0;
   min-width: 56px;
 }
 .optText {
   font-size: 0.88rem;
-  color: var(--ink-2);
+  color: $tinta-2;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .optEmpty {
   padding: 15px 12px;
-  color: var(--ink-3);
+  color: $tinta-3;
   font-size: 0.85rem;
   list-style: none;
 }
@@ -270,8 +252,8 @@
   width: 100%;
   height: 52px;
   margin-top: 6px;
-  border: 1.5px solid var(--accent-2);
-  background: var(--accent);
+  border: 1.5px solid $acento-fuerte;
+  background: $acento;
   color: #fff;
   font-family: inherit;
   font-size: 0.98rem;
@@ -280,15 +262,15 @@
   cursor: pointer;
   transition: background 0.14s, transform 0.1s;
 
-  &:hover:not(:disabled) { background: var(--accent-2); }
+  &:hover:not(:disabled) { background: $acento-fuerte; }
   &:active:not(:disabled) { transform: translateY(1px); }
   &:disabled {
-    background: var(--paper-2);
-    border-color: var(--line-2);
-    color: var(--ink-3);
+    background: $superficie-2;
+    border-color: $linea-2;
+    color: $tinta-3;
     cursor: not-allowed;
   }
-  &:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+  &:focus-visible { outline: 3px solid $tinta; outline-offset: 2px; }
 }
 
 // ── Result states ─────────────────────────────────────────────────────────────
@@ -314,27 +296,28 @@
   i {
     display: block;
     height: 1px;
-    background: var(--line);
+    background: $linea;
   }
 }
 .promptInner { position: relative; }
 .promptKicker {
-  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
   font-size: 0.72rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--accent-2);
+  color: $acento-fuerte;
 }
 .promptTitle {
-  font-family: var(--serif);
+  font-family: "Manrope", sans-serif;
   font-size: 1.5rem;
   font-weight: 700;
   margin: 10px 0 8px;
-  color: var(--ink);
+  color: $tinta;
 }
 .promptText {
   margin: 0;
-  color: var(--ink-2);
+  color: $tinta-2;
   font-size: 0.95rem;
   max-width: 42ch;
 }
@@ -345,13 +328,13 @@
   gap: 12px;
   padding: 40px 34px;
   min-height: 360px;
-  color: var(--ink-2);
+  color: $tinta-2;
   font-size: 0.95rem;
 }
 .pulse {
   width: 14px;
   height: 14px;
-  background: var(--accent);
+  background: $acento;
   animation: pulse 1s ease-in-out infinite;
 }
 
@@ -366,10 +349,10 @@
   align-items: center;
   gap: 6px;
   font-size: 0.85rem;
-  color: var(--ink-2);
+  color: $tinta-2;
   cursor: pointer;
 
-  input { accent-color: var(--accent-2); }
+  input { accent-color: $acento-fuerte; }
 }
 .viaDegradeNotice {
   display: flex;
@@ -377,10 +360,10 @@
   gap: 10px;
   margin: 0 26px 22px;
   padding: 12px 16px;
-  background: var(--amber-bg);
-  border: 1.5px solid var(--amber-line);
-  border-left: 4px solid var(--amber-ico);
-  color: var(--amber-text);
+  background: $alerta-bg;
+  border: 1.5px solid $alerta-linea;
+  border-left: 4px solid $alerta-ico;
+  color: $alerta;
   font-size: 0.85rem;
   font-weight: 600;
 
@@ -393,10 +376,10 @@
   gap: 12px;
   margin: 26px;
   padding: 18px 20px;
-  background: var(--amber-bg);
-  border: 1.5px solid var(--amber-line);
-  border-left: 5px solid var(--amber-ico);
-  color: var(--amber-text);
+  background: $alerta-bg;
+  border: 1.5px solid $alerta-linea;
+  border-left: 5px solid $alerta-ico;
+  color: $alerta;
   font-size: 0.92rem;
   font-weight: 600;
 
@@ -420,22 +403,23 @@
 .regHeadmain { min-width: 0; }
 .tagCode {
   display: inline-block;
-  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
   font-weight: 700;
   font-size: 0.78rem;
   color: #fff;
-  background: var(--ink);
+  background: $tinta;
   padding: 4px 9px;
   letter-spacing: 0.04em;
   margin-bottom: 12px;
 }
 .regTitle {
-  font-family: var(--serif);
+  font-family: "Manrope", sans-serif;
   font-size: 1.55rem;
   font-weight: 700;
   line-height: 1.2;
   letter-spacing: -0.01em;
-  color: var(--ink);
+  color: $tinta;
   margin: 0;
   text-wrap: balance;
 }
@@ -451,13 +435,13 @@
   font-weight: 650;
   border: 1.5px solid;
 }
-.eligOk { color: var(--pine); border-color: var(--pine-line); background: var(--pine-tint); }
-.eligNo { color: var(--amber-text); border-color: var(--amber-line); background: var(--amber-bg); }
-.eligPending { color: var(--ink-3); border-color: var(--line-2); background: #fff; }
+.eligOk { color: $ok; border-color: $ok-linea; background: $ok-bg; }
+.eligNo { color: $alerta; border-color: $alerta-linea; background: $alerta-bg; }
+.eligPending { color: $tinta-3; border-color: $linea-2; background: #fff; }
 .seal {
   flex-shrink: 0;
-  border: 1.5px solid var(--gold);
-  background: var(--gold-tint);
+  border: 1.5px solid $alerta-ico;
+  background: $alerta-bg;
   padding: 8px 12px;
   text-align: center;
   display: flex;
@@ -465,17 +449,19 @@
   gap: 2px;
 }
 .sealK {
-  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
   font-size: 0.58rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--gold-2);
+  color: $alerta;
 }
 .sealV {
-  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
   font-size: 0.9rem;
   font-weight: 700;
-  color: var(--gold-2);
+  color: $alerta;
   font-variant-numeric: tabular-nums;
 }
 
@@ -483,7 +469,7 @@
 // gold lead segment (echoes the vigencia seal), no busy tick marks.
 .regRuler {
   height: 3px;
-  background: linear-gradient(90deg, var(--gold) 0 52px, var(--accent) 52px);
+  background: linear-gradient(90deg, $alerta-ico 0 52px, $acento 52px);
 }
 
 .total {
@@ -492,29 +478,29 @@
   justify-content: space-between;
   gap: 16px;
   padding: 24px 28px;
-  background: var(--accent-tint-2);
-  border-bottom: 2px solid var(--ink);
+  background: $acento-lavado;
+  border-bottom: 2px solid $tinta;
 }
 .totalLabel {
   font-size: 0.74rem;
   font-weight: 700;
   letter-spacing: 0.11em;
   text-transform: uppercase;
-  color: var(--accent-2);
+  color: $acento-fuerte;
   max-width: 8em;
 }
 .totalValue {
-  font-family: var(--serif);
+  font-family: "Manrope", sans-serif;
   font-size: 3rem;
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.02em;
-  color: var(--ink);
+  color: $tinta;
   font-variant-numeric: tabular-nums;
 }
 .totalPresupuesto {
   font-size: 1.5rem;
-  color: var(--gold-2);
+  color: $alerta;
   letter-spacing: 0;
 }
 
@@ -528,7 +514,7 @@
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--ink-3);
+  color: $tinta-3;
   margin-bottom: 2px;
 }
 // Qué nomenclador ganó (NE / NNE / NN) y, si la variante lo tiene, su nivel.
@@ -538,7 +524,7 @@
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: none;
-  color: var(--ink-3);
+  color: $tinta-3;
 }
 .ledRow {
   display: flex;
@@ -551,31 +537,33 @@
   flex-direction: column;
   gap: 2px;
   font-size: 0.9rem;
-  color: var(--ink-2);
+  color: $tinta-2;
   font-weight: 550;
 }
 // La cuenta que da el importe de la derecha: cantidad × valor unitario del
 // galeno. En monoespaciada porque se lee contra la cifra del subtotal.
 .ledCuenta {
-  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
   font-size: 0.72rem;
   font-weight: 500;
-  color: var(--ink-3);
+  color: $tinta-3;
   font-variant-numeric: tabular-nums;
 }
 .ledDots {
   flex: 1;
-  border-bottom: 1.5px dotted var(--line-2);
+  border-bottom: 1.5px dotted $linea-2;
   transform: translateY(-4px);
 }
 .ledVal {
-  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
   font-size: 0.95rem;
   font-weight: 600;
-  color: var(--ink);
+  color: $tinta;
   font-variant-numeric: tabular-nums;
 }
-.ledValZero { color: var(--ink-3); font-weight: 500; }
+.ledValZero { color: $tinta-3; font-weight: 500; }
 
 // Informational note below the whole panel — clearly visible, but calm
 // (soft blue, not a warning).
@@ -585,14 +573,14 @@
   gap: 11px;
   margin: 18px 0 0;
   padding: 13px 18px;
-  background: var(--accent-tint);
-  border-left: 4px solid var(--accent);
-  color: var(--ink-2);
+  background: $acento-tinte;
+  border-left: 4px solid $acento;
+  color: $tinta-2;
   font-size: 0.85rem;
   font-weight: 550;
   line-height: 1.45;
 
-  svg { flex-shrink: 0; color: var(--accent); }
+  svg { flex-shrink: 0; color: $acento; }
 }
 
 .spin { animation: spin 0.7s linear infinite; }
@@ -609,7 +597,7 @@
   }
   .colQuery {
     border-right: 0;
-    border-bottom: 1.5px solid var(--ink);
+    border-bottom: 1.5px solid $tinta;
   }
   .pageTitle { font-size: 1.8rem; }
 }

@@ -9,6 +9,8 @@ import { useQuery } from "@tanstack/react-query";
 
 import s from "./ObrasSocialesDetalle.module.scss";
 import { abrirAdjunto } from "../../../lib/archivos";
+import { paginar } from "../../../lib/paginar";
+import { downloadExcelSheet } from "../../../lib/excelExport";
 import { useNotify } from "../../../hooks/useNotify";
 import {
   eliminarValorDocumento,
@@ -80,15 +82,13 @@ function toHistRow(v: ValorOut): HistRow {
 
 // Historial completo de la OS: trae todas las vigencias (activas y cerradas) de
 // /api/valores_nm/, paginando hasta agotar. Cada Valor es una versión de un código.
+const VALORES_PAGE = 200;
 async function fetchHistorialOS(nroOS: number): Promise<HistRow[]> {
-  const all: HistRow[] = [];
-  const size = 200;
-  for (let page = 1; page <= 100; page++) {
-    const batch = await listValores({ obra_social_nro: nroOS, page, size });
-    all.push(...batch.map(toHistRow));
-    if (batch.length < size) break;
-  }
-  return all;
+  const filas = await paginar(
+    (page) => listValores({ obra_social_nro: nroOS, page, size: VALORES_PAGE }),
+    { size: VALORES_PAGE },
+  );
+  return filas.map(toHistRow);
 }
 
 /** Lo que la obra social manda cuando actualiza precios. */
@@ -111,10 +111,6 @@ const COLS = [
 type ColKey = (typeof COLS)[number]["key"];
 
 async function exportToExcel(rows: HistRow[], osName: string, date: string) {
-  const [{ utils, write }, { saveAs }] = await Promise.all([
-    import("xlsx"),
-    import("file-saver"),
-  ]);
   const data = rows.map((r) => ({
     "Código":         r.codigo,
     "Descripción":    r.descripcion ?? "",
@@ -129,15 +125,8 @@ async function exportToExcel(rows: HistRow[], osName: string, date: string) {
     "Vigencia hasta": r.vigencia_hasta ?? "",
     "Por presupuesto": r.por_presupuesto ? "Sí" : "",
   }));
-  const ws = utils.json_to_sheet(data);
-  const wb = utils.book_new();
-  utils.book_append_sheet(wb, ws, "Valores");
   const safeName = osName.replace(/[/\\?%*:|"<>]/g, "_").replace(/\s+/g, "_");
-  const buffer = write(wb, { bookType: "xlsx", type: "array" }) as ArrayBuffer;
-  saveAs(
-    new Blob([buffer], { type: "application/octet-stream" }),
-    `Historial-${safeName}-${date}.xlsx`
-  );
+  await downloadExcelSheet(`Historial-${safeName}-${date}.xlsx`, "Valores", data);
 }
 
 function SortIcon({ col, sortField, sortDir }: { col: ColKey; sortField: ColKey | null; sortDir: "asc" | "desc" }) {

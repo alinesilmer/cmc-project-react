@@ -9,12 +9,10 @@ import type {
   FaltantesFilter,
   FilterSelection,
   OtrosFilter,
-  VencimientosFilter,
 } from "../../../types/filters";
 
 import { useEspecialidades } from "./useEspecialidades";
 import { ColumnsSection } from "./sections/ColumnsSection";
-import { VencimientosSection } from "./sections/VencimientosSection";
 import { OtrosSection } from "./sections/OtrosSection";
 import { FaltantesSection } from "./sections/FaltantesSection";
 import { FiltersResumen } from "./sections/FiltersResumen";
@@ -42,8 +40,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
 }) => {
   const [expandedSections, setExpandedSections] = useState({
     columns: true,
-    vencimientos: true,
-    otros: false,
+    otros: true,
     faltantes: false,
   });
 
@@ -66,10 +63,6 @@ const FilterModal: React.FC<FilterModalProps> = ({
     setFilters((prev) => ({ ...prev, columns: keys }));
   }, [setFilters]);
 
-  const patchVencimientos = useCallback((patch: Partial<VencimientosFilter>) => {
-    setFilters((prev) => ({ ...prev, vencimientos: { ...prev.vencimientos, ...patch } }));
-  }, [setFilters]);
-
   const patchOtros = useCallback((patch: Partial<OtrosFilter>) => {
     setFilters((prev) => ({ ...prev, otros: { ...prev.otros, ...patch } }));
   }, [setFilters]);
@@ -88,13 +81,6 @@ const FilterModal: React.FC<FilterModalProps> = ({
             onSetColumns={setColumns}
             expanded={expandedSections.columns}
             onToggle={() => toggleSection("columns")}
-          />
-
-          <VencimientosSection
-            vencimientos={filters.vencimientos}
-            onPatch={patchVencimientos}
-            expanded={expandedSections.vencimientos}
-            onToggle={() => toggleSection("vencimientos")}
           />
 
           <OtrosSection

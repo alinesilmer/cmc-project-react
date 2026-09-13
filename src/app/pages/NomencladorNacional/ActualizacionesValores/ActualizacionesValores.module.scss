@@ -48,7 +48,7 @@
   max-width: 320px;
   background: $white;
   border: 1px solid $gray-200;
-  border-radius: $border-radius-md;
+  border-radius: $radio-md;
 
   svg { flex-shrink: 0; color: $gray-400; }
 
@@ -90,7 +90,7 @@
   color: $gray-800;
   background: $white;
   border: 1px solid $gray-200;
-  border-radius: $border-radius-md;
+  border-radius: $radio-md;
   outline: none;
   cursor: pointer;
   flex-shrink: 0;
@@ -127,7 +127,7 @@
   color: $gray-400;
   background: $white;
   border: 1px solid $gray-200;
-  border-radius: $border-radius-lg;
+  border-radius: $radio-lg;
 }
 
 // ── Meses ───────────────────────────────────────────────────────────────────
@@ -137,7 +137,7 @@
 .mes {
   background: $white;
   border: 1px solid $gray-200;
-  border-radius: $border-radius-lg;
+  border-radius: $radio-lg;
   box-shadow: $shadow-sm;
   overflow: hidden;
 }
@@ -225,7 +225,7 @@
   font-weight: $font-weight-medium;
   color: $success-green;
   background: rgba($success-green, 0.1);
-  border-radius: 999px;
+  border-radius: $radio-sm;
   flex-shrink: 0;
 }
 

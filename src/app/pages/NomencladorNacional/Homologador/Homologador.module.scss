@@ -1,26 +1,5 @@
-$blue:        #3b6fd4;
-$blue-light:  #e8efff;
-$blue-mid:    #b3ceff;
-$blue-hover:  #2f5bbb;
-$amber:       #d97706;
-$amber-light: #fffbeb;
-$amber-mid:   #fcd34d;
-$red:         #dc2626;
-$red-light:   #fee2e2;
-$green:       #166534;
-$green-light: #f0fdf4;
-$green-mid:   #bbf7d0;
-$border:      #e2e8f0;
-$surface:     #ffffff;
-$bg:          #f8fafc;
-$text-1:      #1a1f2e;
-$text-2:      #4a5568;
-$text-3:      #718096;
-$radius-sm:   6px;
-$radius-md:   10px;
-$radius-lg:   14px;
-$shadow-sm:   0 1px 4px rgba(0,0,0,.06);
-$shadow-md:   0 4px 16px rgba(0,0,0,.10);
+@use "@/app/styles/all.scss" as *;
+
 
 // ─── Page shell ───────────────────────────────────────────────────────────────
 
@@ -28,7 +7,7 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: $bg;
+  background: $papel;
   padding: 1.8rem;
   font-family: inherit;
   box-sizing: border-box;
@@ -47,22 +26,22 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
   justify-content: center;
   width: 42px;
   height: 42px;
-  border-radius: $radius-md;
-  background: $blue-light;
-  color: $blue;
+  border-radius: $radio-md;
+  background: $acento-tinte;
+  color: $acento;
   flex-shrink: 0;
 }
 
 .title {
   font-size: 1.3rem;
   font-weight: 700;
-  color: $text-1;
+  color: $tinta;
   margin: 0;
 }
 
 .subtitle {
   font-size: 0.8rem;
-  color: $text-3;
+  color: $tinta-3;
   margin: 2px 0 0;
 }
 
@@ -85,9 +64,9 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
   width: 220px;
   flex-shrink: 0;
   max-height: calc(100vh - 180px);
-  background: $surface;
-  border: 1px solid $border;
-  border-radius: $radius-lg;
+  background: $superficie;
+  border: 1px solid $linea;
+  border-radius: $radio-lg;
   box-shadow: $shadow-sm;
   display: flex;
   flex-direction: column;
@@ -105,14 +84,14 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
 
 .osPanelHeader {
   padding: 12px 12px 8px;
-  border-bottom: 1px solid $border;
+  border-bottom: 1px solid $linea;
   flex-shrink: 0;
 }
 
 .osPanelTitle {
   font-size: 0.7rem;
   font-weight: 700;
-  color: $text-3;
+  color: $tinta-3;
   letter-spacing: .08em;
   text-transform: uppercase;
   margin: 0 0 8px;
@@ -127,7 +106,7 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
 .osSearchIcon {
   position: absolute;
   left: 8px;
-  color: $text-3;
+  color: $tinta-3;
   pointer-events: none;
 }
 
@@ -135,16 +114,16 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
   width: 100%;
   height: 32px;
   padding: 0 8px 0 28px;
-  border: 1px solid $border;
-  border-radius: $radius-sm;
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
   font-size: 0.8rem;
-  color: $text-1;
-  background: $bg;
+  color: $tinta;
+  background: $papel;
   outline: none;
   box-sizing: border-box;
 
-  &:focus { border-color: $blue; box-shadow: 0 0 0 2px rgba(59,111,212,.12); }
-  &::placeholder { color: $text-3; }
+  &:focus { border-color: $acento; box-shadow: 0 0 0 2px rgba(59,111,212,.12); }
+  &::placeholder { color: $tinta-3; }
 }
 
 .osList {
@@ -161,24 +140,24 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
   padding: 7px 10px;
   background: none;
   border: none;
-  border-radius: $radius-sm;
+  border-radius: $radio-sm;
   cursor: pointer;
   text-align: left;
   transition: background .1s;
 
-  &:hover { background: $blue-light; }
+  &:hover { background: $acento-tinte; }
 }
 
 .osItemSelected {
-  background: $blue-light !important;
-  outline: 2px solid $blue;
+  background: $acento-tinte !important;
+  outline: 2px solid $acento;
   outline-offset: -2px;
 }
 
 .osNro {
   font-size: 0.72rem;
   font-weight: 700;
-  color: $blue;
+  color: $acento;
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
   min-width: 28px;
@@ -186,7 +165,7 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
 
 .osNombre {
   font-size: 0.78rem;
-  color: $text-2;
+  color: $tinta-2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -209,12 +188,12 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
   align-items: center;
   justify-content: center;
   gap: 12px;
-  color: $text-3;
+  color: $tinta-3;
   font-size: 0.9rem;
   padding: 60px 20px;
-  background: $surface;
-  border: 1px dashed $border;
-  border-radius: $radius-lg;
+  background: $superficie;
+  border: 1px dashed $linea;
+  border-radius: $radio-lg;
   text-align: center;
 }
 
@@ -232,7 +211,7 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
 .toolbarTitle {
   font-size: 0.95rem;
   font-weight: 700;
-  color: $text-1;
+  color: $tinta;
   flex: 1;
   min-width: 0;
   white-space: nowrap;
@@ -243,9 +222,9 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
 .toolbarCount {
   font-size: 0.75rem;
   font-weight: 600;
-  color: $text-3;
-  background: $border;
-  border-radius: 20px;
+  color: $tinta-3;
+  background: $linea;
+  border-radius: $radio-lg;
   padding: 2px 9px;
 }
 
@@ -261,7 +240,7 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
 .searchIcon {
   position: absolute;
   left: 9px;
-  color: $text-3;
+  color: $tinta-3;
   pointer-events: none;
 }
 
@@ -269,16 +248,16 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
   width: 100%;
   height: 34px;
   padding: 0 10px 0 30px;
-  border: 1px solid $border;
-  border-radius: $radius-sm;
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
   font-size: 0.82rem;
-  color: $text-1;
-  background: $surface;
+  color: $tinta;
+  background: $superficie;
   outline: none;
   box-sizing: border-box;
 
-  &:focus { border-color: $blue; box-shadow: 0 0 0 2px rgba(59,111,212,.12); }
-  &::placeholder { color: $text-3; }
+  &:focus { border-color: $acento; box-shadow: 0 0 0 2px rgba(59,111,212,.12); }
+  &::placeholder { color: $tinta-3; }
 }
 
 .btnAdd {
@@ -287,10 +266,10 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
   gap: 6px;
   height: 34px;
   padding: 0 14px;
-  background: $blue;
+  background: $acento;
   color: #fff;
   border: none;
-  border-radius: $radius-sm;
+  border-radius: $radio-sm;
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
@@ -298,15 +277,15 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
   transition: background .15s;
   flex-shrink: 0;
 
-  &:hover { background: $blue-hover; }
+  &:hover { background: $acento-fuerte; }
 }
 
 // ─── Add form card ────────────────────────────────────────────────────────────
 
 .addCard {
-  background: $surface;
-  border: 2px solid $blue;
-  border-radius: $radius-lg;
+  background: $superficie;
+  border: 2px solid $acento;
+  border-radius: $radio-lg;
   box-shadow: 0 0 0 4px rgba(59,111,212,.08);
   padding: 16px;
 }
@@ -314,7 +293,7 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
 .addCardTitle {
   font-size: 0.78rem;
   font-weight: 700;
-  color: $blue;
+  color: $acento;
   text-transform: uppercase;
   letter-spacing: .07em;
   margin: 0 0 14px;
@@ -338,32 +317,32 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
 .addLabel {
   font-size: 0.72rem;
   font-weight: 600;
-  color: $text-2;
+  color: $tinta-2;
 }
 
 .addInput {
   height: 36px;
   padding: 0 10px;
-  border: 1px solid $border;
-  border-radius: $radius-sm;
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
   font-size: 0.85rem;
-  color: $text-1;
-  background: $surface;
+  color: $tinta;
+  background: $superficie;
   outline: none;
   box-sizing: border-box;
   width: 100%;
 
-  &:focus { border-color: $blue; box-shadow: 0 0 0 2px rgba(59,111,212,.12); }
-  &::placeholder { color: $text-3; }
+  &:focus { border-color: $acento; box-shadow: 0 0 0 2px rgba(59,111,212,.12); }
+  &::placeholder { color: $tinta-3; }
 }
 
-.addInputError { border-color: $red !important; }
+.addInputError { border-color: $peligro !important; }
 
 .arrowCol {
   display: flex;
   align-items: center;
   padding-top: 22px;
-  color: $text-3;
+  color: $tinta-3;
   flex-shrink: 0;
 
   @media (max-width: 500px) { display: none; }
@@ -381,7 +360,7 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
 .autocompleteIcon {
   position: absolute;
   left: 9px;
-  color: $text-3;
+  color: $tinta-3;
   pointer-events: none;
 }
 
@@ -389,22 +368,22 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
   height: 36px;
   width: 100%;
   padding: 0 32px 0 28px;
-  border: 1px solid $border;
-  border-radius: $radius-sm;
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
   font-size: 0.85rem;
-  color: $text-1;
-  background: $surface;
+  color: $tinta;
+  background: $superficie;
   outline: none;
   box-sizing: border-box;
 
-  &:focus { border-color: $blue; box-shadow: 0 0 0 2px rgba(59,111,212,.12); }
-  &::placeholder { color: $text-3; }
+  &:focus { border-color: $acento; box-shadow: 0 0 0 2px rgba(59,111,212,.12); }
+  &::placeholder { color: $tinta-3; }
 }
 
 .autocompleteSpinner {
   position: absolute;
   right: 9px;
-  color: $text-3;
+  color: $tinta-3;
 }
 
 .autocompleteDropdown {
@@ -412,9 +391,9 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  background: $surface;
-  border: 1px solid $border;
-  border-radius: $radius-sm;
+  background: $superficie;
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
   box-shadow: $shadow-md;
   z-index: 100;
   list-style: none;
@@ -432,20 +411,21 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
   cursor: pointer;
   transition: background .1s;
 
-  &:hover { background: $blue-light; }
+  &:hover { background: $acento-tinte; }
 }
 
 .dropdownCode {
-  font-family: 'Courier New', monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
   font-size: 0.8rem;
   font-weight: 700;
-  color: $blue;
+  color: $acento;
   flex-shrink: 0;
 }
 
 .dropdownDesc {
   font-size: 0.8rem;
-  color: $text-2;
+  color: $tinta-2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -457,24 +437,25 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
   gap: 7px;
   height: 36px;
   padding: 0 8px 0 10px;
-  background: $blue-light;
-  border: 1px solid $blue-mid;
-  border-radius: $radius-sm;
+  background: $acento-tinte;
+  border: 1px solid $acento-suave;
+  border-radius: $radio-sm;
   box-sizing: border-box;
   min-width: 0;
 }
 
 .selectedNomCode {
-  font-family: 'Courier New', monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
   font-size: 0.82rem;
   font-weight: 700;
-  color: $blue;
+  color: $acento;
   flex-shrink: 0;
 }
 
 .selectedNomDesc {
   font-size: 0.78rem;
-  color: $text-2;
+  color: $tinta-2;
   flex: 1;
   min-width: 0;
   white-space: nowrap;
@@ -490,13 +471,13 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
   height: 20px;
   background: none;
   border: none;
-  color: $text-3;
-  border-radius: $radius-sm;
+  color: $tinta-3;
+  border-radius: $radio-sm;
   cursor: pointer;
   flex-shrink: 0;
   transition: color .12s, background .12s;
 
-  &:hover { color: $red; background: $red-light; }
+  &:hover { color: $peligro; background: $peligro-bg; }
 }
 
 .addActions {
@@ -504,13 +485,13 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
   align-items: center;
   gap: 8px;
   padding-top: 14px;
-  border-top: 1px solid $border;
+  border-top: 1px solid $linea;
   margin-top: 14px;
 }
 
 .errorMsg {
   font-size: 0.72rem;
-  color: $red;
+  color: $peligro;
   margin-top: 2px;
 }
 
@@ -520,16 +501,16 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
   gap: 6px;
   height: 34px;
   padding: 0 16px;
-  background: $blue;
+  background: $acento;
   color: #fff;
   border: none;
-  border-radius: $radius-sm;
+  border-radius: $radio-sm;
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
   transition: background .15s;
 
-  &:hover:not(:disabled) { background: $blue-hover; }
+  &:hover:not(:disabled) { background: $acento-fuerte; }
   &:disabled { opacity: .5; cursor: not-allowed; }
 }
 
@@ -540,14 +521,14 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
   height: 34px;
   padding: 0 14px;
   background: none;
-  border: 1px solid $border;
-  border-radius: $radius-sm;
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
   font-size: 0.82rem;
-  color: $text-2;
+  color: $tinta-2;
   cursor: pointer;
   transition: background .12s;
 
-  &:hover { background: $bg; }
+  &:hover { background: $papel; }
 }
 
 // ─── Mapping list ─────────────────────────────────────────────────────────────
@@ -564,9 +545,9 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
-  background: $surface;
-  border: 1px solid $border;
-  border-radius: $radius-md;
+  background: $superficie;
+  border: 1px solid $linea;
+  border-radius: $radio-md;
   box-shadow: $shadow-sm;
   transition: box-shadow .15s;
 
@@ -594,36 +575,37 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-family: 'Courier New', monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
   font-size: 0.8rem;
   font-weight: 700;
-  border-radius: $radius-sm;
+  border-radius: $radio-sm;
   padding: 2px 8px;
   width: fit-content;
 }
 
 .osChip {
-  background: $amber-light;
-  border: 1px solid $amber-mid;
-  color: $amber;
+  background: $alerta-bg;
+  border: 1px solid $alerta-linea;
+  color: $alerta-ico;
 }
 
 .cmcChip {
-  background: $blue-light;
-  border: 1px solid $blue-mid;
-  color: $blue;
+  background: $acento-tinte;
+  border: 1px solid $acento-suave;
+  color: $acento;
 }
 
 .codeDesc {
   font-size: 0.77rem;
-  color: $text-3;
+  color: $tinta-3;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .mappingArrow {
-  color: $text-3;
+  color: $tinta-3;
   flex-shrink: 0;
 }
 
@@ -635,13 +617,13 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
   height: 30px;
   background: none;
   border: 1px solid transparent;
-  border-radius: $radius-sm;
-  color: $text-3;
+  border-radius: $radio-sm;
+  color: $tinta-3;
   cursor: pointer;
   flex-shrink: 0;
   transition: color .12s, background .12s, border-color .12s;
 
-  &:hover { color: $red; background: $red-light; border-color: #fca5a5; }
+  &:hover { color: $peligro; background: $peligro-bg; border-color: #fca5a5; }
   &:disabled { opacity: .4; cursor: not-allowed; }
 }
 
@@ -652,7 +634,7 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
   align-items: center;
   gap: 10px;
   padding: 40px;
-  color: $text-3;
+  color: $tinta-3;
   font-size: 0.9rem;
   justify-content: center;
 }
@@ -664,11 +646,11 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
   justify-content: center;
   gap: 10px;
   padding: 48px 20px;
-  color: $text-3;
+  color: $tinta-3;
   font-size: 0.88rem;
-  background: $surface;
-  border: 1px dashed $border;
-  border-radius: $radius-lg;
+  background: $superficie;
+  border: 1px dashed $linea;
+  border-radius: $radio-lg;
   text-align: center;
 }
 
@@ -684,7 +666,7 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
   align-items: center;
   gap: 10px;
   padding: 12px 18px;
-  border-radius: $radius-md;
+  border-radius: $radio-md;
   font-size: 0.875rem;
   font-weight: 500;
   box-shadow: $shadow-md;
@@ -692,8 +674,8 @@ $shadow-md:   0 4px 16px rgba(0,0,0,.10);
   max-width: 360px;
 }
 
-.toastSuccess { background: $green-light; border: 1px solid $green-mid; color: $green; }
-.toastError   { background: $red-light;   border: 1px solid #fca5a5;    color: $red; }
+.toastSuccess { background: $ok-bg; border: 1px solid $ok-linea; color: $ok; }
+.toastError   { background: $peligro-bg;   border: 1px solid #fca5a5;    color: $peligro; }
 
 // ─── Spinner ──────────────────────────────────────────────────────────────────
 

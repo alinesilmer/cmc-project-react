@@ -15,9 +15,25 @@ import {
   normalizeText,
 } from "./boletinConsultaComun.helpers";
 import type { ConsultaComunItem } from "./boletinConsultaComun.types";
+import type { NormasPorOS } from "./useNormasOperativas";
 
-export async function generateConsultaComunPdf(items: ConsultaComunItem[]) {
+/** Fecha de la norma, corta. En el PDF no hay lugar para más. */
+function formatShortDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("es-AR", { dateStyle: "short" });
+}
+
+export async function generateConsultaComunPdf(
+  items: ConsultaComunItem[],
+  normasPorOS?: NormasPorOS
+) {
   items = [...items].sort((a, b) => b.valor - a.valor);
+
+  // El PDF se lee fuera del panel, así que los links a las normas van
+  // absolutos: `/noticias/12` impreso en papel no lleva a ninguna parte.
+  const baseUrl =
+    typeof window === "undefined" ? "" : window.location.origin;
 
   const [{ jsPDF }, { saveAs }] = await Promise.all([
     import("jspdf"),
@@ -51,6 +67,10 @@ export async function generateConsultaComunPdf(items: ConsultaComunItem[]) {
     muted: [102, 112, 133] as const,
     green: [16, 124, 87] as const,
     white: [255, 255, 255] as const,
+    // Ámbar para las normas operativas: la ficha ya usa azul para todo, y en
+    // blanco y negro el contraste con la card de observaciones se pierde.
+    amber: [176, 106, 31] as const,
+    softAmber: [252, 245, 234] as const,
   };
 
   const detailPagesStart = 2 + Math.max(1, Math.ceil(items.length / 22));
@@ -396,6 +416,69 @@ export async function generateConsultaComunPdf(items: ConsultaComunItem[]) {
 
         curY += cardH + 5;
       }
+    }
+
+    // ── Normas operativas ────────────────────────────────────────
+    // A diferencia de Observaciones, si no hay no se dibuja nada: un
+    // "sin normas operativas" en cada una de las ~300 fichas es ruido.
+    const normas = normasPorOS?.get(item.nro) ?? [];
+    if (normas.length === 0) return;
+
+    curY += 3;
+    if (curY + 24 > safeBottomY) {
+      doc.addPage();
+      drawHeaderSection(item.nombre);
+      curY = 50;
+    }
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10.5);
+    doc.setTextColor(...palette.navy);
+    doc.text("Normas operativas", marginX, curY);
+    curY += 8;
+
+    for (const norma of normas) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      const tituloLines = doc.splitTextToSize(norma.titulo, textWidth) as string[];
+      // Título (n líneas) + la URL debajo, más el padding de la card.
+      const cardH = (tituloLines.length + 1) * lineH + cardPadY * 2;
+
+      if (curY + cardH > safeBottomY) {
+        doc.addPage();
+        drawHeaderSection(item.nombre);
+        curY = 50;
+      }
+
+      doc.setFillColor(...palette.softAmber);
+      doc.roundedRect(marginX, curY, pageWidth - marginX * 2, cardH, 2, 2, "F");
+      doc.setFillColor(...palette.amber);
+      doc.rect(marginX, curY + 1, borderW, cardH - 2, "F");
+
+      const url = `${baseUrl}/noticias/${norma.id}`;
+      let lineY = curY + cardPadY + lineH - 0.8;
+
+      // El título es el link: en pantalla se hace click, y la URL impresa de
+      // abajo es para la copia en papel, donde el link no sirve.
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      doc.setTextColor(...palette.text);
+      tituloLines.forEach((line) => {
+        doc.textWithLink(line, textX, lineY, { url, maxWidth: textWidth });
+        lineY += lineH;
+      });
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.2);
+      doc.setTextColor(...palette.muted);
+      doc.text(
+        `${formatShortDate(norma.fecha)} · ${url}`,
+        textX,
+        lineY,
+        { maxWidth: textWidth }
+      );
+
+      curY += cardH + 5;
     }
   }
 

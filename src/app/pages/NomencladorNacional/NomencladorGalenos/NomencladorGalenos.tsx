@@ -4,15 +4,14 @@ import {
   Loader2, RefreshCw, Building2, Pencil, Clock, Download, Trash2,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
 
 import styles from "./NomencladorGalenos.module.scss";
+import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import {
   listGalenos,
   deleteGaleno, updateGaleno, actualizarUnidadesGaleno, actualizarPrecioGaleno,
   importarGalenosDeObraSocial, getHistorialGaleno,
 } from "../nomenclador.api";
-import { listObrasSociales } from "../../ObrasSociales/obrasSociales.api";
 import type { GalenoOut, GalenosImportarResult } from "../nomenclador.types";
 import ConfirmModal from "../../../components/atoms/ConfirmModal/ConfirmModal";
 import GalenoCreateModal from "./GalenoCreateModal";
@@ -124,11 +123,7 @@ export default function NomencladorGalenos() {
   const [loadingHistorial, setLoadingHistorial] = useState(false);
 
   // ── Queries ───────────────────────────────────────────────────────────────
-  const { data: osList = [] } = useQuery({
-    queryKey: ["obras-sociales"],
-    queryFn: () => listObrasSociales(),
-    staleTime: 10 * 60 * 1000,
-  });
+  const { data: osList = [] } = useObrasSociales();
 
   // ── Loaders ───────────────────────────────────────────────────────────────
   const loadCatalogo = useCallback(async () => {

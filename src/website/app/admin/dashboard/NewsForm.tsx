@@ -11,7 +11,23 @@ import {
   getNewsById,
   type TipoPublicacion,
 } from "../../../lib/news.client";
+import ObrasSocialesPicker from "./ObrasSocialesPicker";
 import styles from "./dashboard.module.scss";
+
+/**
+ * La etiqueta es texto libre, así que se compara normalizada: "Normas
+ * operativas", "NORMAS OPERATIVAS" y "Normas Operativas" son la misma cosa.
+ * Esto decide sólo si se muestra el selector — lo que el boletín consulta es la
+ * asociación guardada, no este texto.
+ */
+const esBadgeNormaOperativa = (badge: string) =>
+  badge
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase()
+    .startsWith("normas operativas");
 
 type DocItem = {
   id: number | string;
@@ -53,6 +69,9 @@ export default function NewsForm({
     badge: initialValues?.badge ?? "",
   });
 
+  const [obrasSociales, setObrasSociales] = useState<number[]>([]);
+  const esNormaOperativa = esBadgeNormaOperativa(formData.badge);
+
   const [portadaFile, setPortadaFile] = useState<File | null>(null);
   const [portadaPreview, setPortadaPreview] = useState<string>(
     initialValues?.portadaUrl ?? ""
@@ -75,6 +94,7 @@ export default function NewsForm({
       .then((detail) => {
         setExistingDocs(detail.documentos ?? []);
         setFormData((prev) => ({ ...prev, badge: detail.badge ?? "" }));
+        setObrasSociales(detail.obras_sociales ?? []);
       })
       .catch((e) => console.error("No se pudo cargar documentos:", e));
   }, [editingId]);
@@ -163,6 +183,10 @@ export default function NewsForm({
         publicada: formData.publicada,
         tipo: formData.tipo,
         badge: formData.badge,
+        // Se manda siempre, también vacío: si la noticia dejó de ser norma
+        // operativa hay que desasociarla, no dejar el link viejo colgado en el
+        // boletín.
+        obrasSociales: esNormaOperativa ? obrasSociales : [],
       };
       if (editingId) {
         await updateNews(editingId, payload, {
@@ -278,6 +302,21 @@ export default function NewsForm({
             <option value="Normas Operativas" />
           </datalist>
         </div>
+
+        {/* ── Obras sociales alcanzadas (sólo normas operativas) ── */}
+        {esNormaOperativa && (
+          <div className={styles.inputGroup}>
+            <label>Obras sociales alcanzadas</label>
+            <p className={styles.helpText}>
+              Aparece como norma operativa en la fila de cada obra social del
+              boletín de consulta común.
+            </p>
+            <ObrasSocialesPicker
+              value={obrasSociales}
+              onChange={setObrasSociales}
+            />
+          </div>
+        )}
 
         {/* ── Contenido Markdown ── */}
         <div className={styles.inputGroup}>

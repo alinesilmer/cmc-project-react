@@ -1,14 +1,13 @@
 import { useState, useMemo, useRef } from "react";
 import { Search, Loader2, AlertCircle, AlertTriangle } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
 
 import styles from "../ConsultaShared/consulta.module.scss";
 import Combobox from "../ConsultaShared/Combobox";
 import ResultRegister from "../ConsultaShared/ResultRegister";
 import { listNomenclador, getTablaValores } from "../nomenclador.api";
-import { listObrasSociales } from "../../ObrasSociales/obrasSociales.api";
 import type { NomencladorOut, TablaValorItem, ViaPractica } from "../nomenclador.types";
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
+import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import { useAuth } from "../../../auth/AuthProvider";
 
 export default function ConsultaPrecios() {
@@ -39,11 +38,7 @@ export default function ConsultaPrecios() {
   const [result, setResult] = useState<TablaValorItem | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const { data: osList = [] } = useQuery({
-    queryKey: ["obras-sociales"],
-    queryFn: () => listObrasSociales(),
-    staleTime: 10 * 60 * 1000,
-  });
+  const { data: osList = [] } = useObrasSociales();
 
   const osNro = selectedOSItem?.nro_obra_social ?? null;
 

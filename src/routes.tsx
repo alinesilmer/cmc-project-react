@@ -80,6 +80,7 @@ const BoletinGalenos = lazy(() => import("./app/pages/BoletinGalenos/BoletinGale
 const ValidacionesHub = lazy(() => import("./app/pages/Validaciones/ValidacionesHub"));
 const ValidacionOS = lazy(() => import("./app/pages/Validaciones/ValidacionOS"));
 const PortalesExternos = lazy(() => import("./app/pages/Validaciones/PortalesExternos"));
+const PrevencionSalud = lazy(() => import("./app/pages/Validaciones/PrevencionSalud"));
 const InstitucionPage = lazy(() => import("./app/pages/Institucion/InstitucionPage"));
 const AgendaPage = lazy(() => import("./app/pages/Agenda/AgendaPage"));
 const ActividadPage = lazy(() => import("./app/pages/Actividad/ActividadPage"));
@@ -90,11 +91,14 @@ const ConsultaValores = lazy(() => import("./app/pages/NomencladorNacional/Consu
 const ConsultaPrecios = lazy(() => import("./app/pages/NomencladorNacional/ConsultaPrecios/ConsultaPrecios"));
 const Homologador = lazy(() => import("./app/pages/NomencladorNacional/Homologador/Homologador"));
 const NomencladorPorOS = lazy(() => import("./app/pages/NomencladorNacional/NomencladorPorOS/NomencladorPorOS"));
+// Auditoría: el catálogo de una obra social recortado a una especialidad.
+const CodigosPorEspecialidad = lazy(
+  () => import("./app/pages/NomencladorNacional/CodigosPorEspecialidad/CodigosPorEspecialidad"),
+);
 const NomencladorGalenos = lazy(() => import("./app/pages/NomencladorNacional/NomencladorGalenos/NomencladorGalenos"));
 const ActualizarPreciosGalenos = lazy(() => import("./app/pages/NomencladorNacional/ActualizarPreciosGalenos/ActualizarPreciosGalenos"));
 const ActualizacionesValores = lazy(() => import("./app/pages/NomencladorNacional/ActualizacionesValores/ActualizacionesValores"));
 const ImportarPreciosPdf = lazy(() => import("./app/pages/NomencladorNacional/ImportarPreciosPdf/ImportarPreciosPdf"));
-const ImportarGalenos = lazy(() => import("./app/pages/NomencladorNacional/ImportarGalenos/ImportarGalenos"));
 const AumentoPorcentual = lazy(() => import("./app/pages/NomencladorNacional/AumentoPorcentual/AumentoPorcentual"));
 
 /** /panel/dashboard: el socio ve su portal, el personal el tablero de siempre. */
@@ -254,17 +258,29 @@ export default function RootRoutes() {
                 <Route path="validaciones" element={<ValidacionesHub />} />
                 {/* Ruta estática antes de la dinámica: "portales" no es un slug de O.S. */}
                 <Route path="validaciones/portales" element={<PortalesExternos />} />
+                <Route
+                  path="validaciones/prevencion-salud"
+                  element={<PrevencionSalud />}
+                />
                 <Route path="validaciones/:slug" element={<ValidacionOS />} />
               </Route>
 
               {/* Planillas de consulta: el médico las descarga, el Colegio las publica. */}
               <Route path="planillas" element={<PlanillasMedico />} />
-              <Route path="convenios/planillas" element={<PlanillasAdmin />} />
+              {/* La pantalla de publicación sube y borra planillas: el backend
+                  exige `contenido:editar` en POST y DELETE (authz.py), así que
+                  la ruta pide lo mismo. Sin el guard, quien no tenía el permiso
+                  no veía el ítem en el menú pero llegaba igual por la URL y se
+                  encontraba con el formulario de carga. */}
+              <Route element={<RequireScope scope="contenido:editar" />}>
+                <Route path="convenios/planillas" element={<PlanillasAdmin />} />
+              </Route>
 
               {/* Nomenclador Nacional */}
               <Route element={<RequireScope scope="nomenclador:leer" />}>
                 <Route path="nomenclador/codigos" element={<NomencladorCodigos />} />
                 <Route path="nomenclador/por-obra-social" element={<NomencladorPorOS />} />
+                <Route path="nomenclador/por-especialidad" element={<CodigosPorEspecialidad />} />
                 <Route path="nomenclador/galenos" element={<NomencladorGalenos />} />
                 <Route path="nomenclador/consulta-valores" element={<ConsultaValores />} />
                 <Route path="nomenclador/consulta-precios" element={<ConsultaPrecios />} />
@@ -272,7 +288,6 @@ export default function RootRoutes() {
                 <Route path="nomenclador/actualizaciones" element={<ActualizacionesValores />} />
               </Route>
               <Route element={<RequireScope scope="nomenclador:masivo" />}>
-                <Route path="nomenclador/galenos/importar" element={<ImportarGalenos />} />
                 <Route path="nomenclador/importar-precios-pdf" element={<ImportarPreciosPdf />} />
                 <Route path="nomenclador/aumento-porcentual" element={<AumentoPorcentual />} />
               </Route>

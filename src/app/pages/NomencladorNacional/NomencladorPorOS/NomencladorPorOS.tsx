@@ -7,13 +7,13 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 
 import styles from "./NomencladorPorOS.module.scss";
+import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import {
   listGalenos, listValores, createValor, deleteValor,
   listNomenclador, getNomencladorById, updateValorMetadata, actualizarValor,
   listNomencladorEspecialidadesResumen,
 } from "../nomenclador.api";
 import ConfirmModal from "../../../components/atoms/ConfirmModal/ConfirmModal";
-import { listObrasSociales } from "../../ObrasSociales/obrasSociales.api";
 import { getEspecialidades } from "../../Especialidades/especialidades.api";
 import EspecialidadCombo from "../EspecialidadCombo";
 import type { ValorOut, GalenoOut, NomencladorOut, ComponentePayload, Origen } from "../nomenclador.types";
@@ -237,11 +237,7 @@ export default function NomencladorPorOS() {
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ValorOut | null>(null);
 
-  const { data: osList = [] } = useQuery({
-    queryKey: ["obras-sociales"],
-    queryFn: () => listObrasSociales(),
-    staleTime: 10 * 60 * 1000,
-  });
+  const { data: osList = [] } = useObrasSociales();
 
   const { data: especialidades = [] } = useQuery({
     queryKey: ["especialidades"],

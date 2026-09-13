@@ -48,3 +48,10 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* Carga en curso: filas fantasma y celdas todavía sin dato (`%brillo`).
+   Estaba copiado en cada módulo del nomenclador que mostraba un esqueleto. */
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}

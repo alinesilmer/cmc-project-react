@@ -196,6 +196,9 @@ export default function Header() {
               </AnimatePresence>
             </div>
 
+            <Link to="/beneficios" className={styles.navLink} onClick={closeAll}>
+              Beneficios
+            </Link>
             <Link to="/cursos" className={styles.navLink} onClick={closeAll}>
               Cursos/Capacitaciones
             </Link>
@@ -317,6 +320,13 @@ export default function Header() {
                 </AnimatePresence>
               </div>
 
+              <Link
+                to="/beneficios"
+                className={styles.mobileLink}
+                onClick={closeAll}
+              >
+                Beneficios
+              </Link>
               <Link
                 to="/cursos"
                 className={styles.mobileLink}

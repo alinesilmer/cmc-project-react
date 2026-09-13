@@ -61,7 +61,7 @@
   max-width: 360px;
   background: $white;
   border: 1px solid $gray-200;
-  border-radius: $border-radius-md;
+  border-radius: $radio-md;
 
   svg {
     flex-shrink: 0;
@@ -94,7 +94,7 @@
   overflow-x: auto;
   background: $white;
   border: 1px solid $gray-200;
-  border-radius: $border-radius-lg;
+  border-radius: $radio-lg;
   box-shadow: $shadow-sm;
 }
 
@@ -163,7 +163,7 @@
   padding: 6px $spacing-3;
   background: $secondary-blue;
   border: 1px solid transparent;
-  border-radius: $border-radius-sm;
+  border-radius: $radio-sm;
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   color: $primary-blue;
@@ -192,7 +192,7 @@
   padding: $spacing-12 $spacing-5;
   background: $white;
   border: 1px dashed $gray-300;
-  border-radius: $border-radius-lg;
+  border-radius: $radio-lg;
   color: $gray-500;
   text-align: center;
 
@@ -215,7 +215,7 @@
   padding: $spacing-5;
   background: $white;
   border: 1px solid $gray-200;
-  border-radius: $border-radius-lg;
+  border-radius: $radio-lg;
   box-shadow: $shadow-sm;
 }
 
@@ -261,7 +261,7 @@
   padding: 0 $spacing-3;
   background: $white;
   border: 1px solid $gray-200;
-  border-radius: $border-radius-md;
+  border-radius: $radio-md;
   font-size: $font-size-sm;
   font-family: inherit;
   color: $gray-800;
@@ -285,7 +285,7 @@
   padding: 0 $spacing-5;
   background: $primary-blue;
   border: none;
-  border-radius: $border-radius-md;
+  border-radius: $radio-md;
   font-size: $font-size-sm;
   font-weight: $font-weight-semibold;
   font-family: inherit;
@@ -310,7 +310,7 @@
   padding: 6px $spacing-3;
   background: $white;
   border: 1px solid $gray-200;
-  border-radius: $border-radius-sm;
+  border-radius: $radio-sm;
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   font-family: inherit;
@@ -331,7 +331,7 @@
   padding: $spacing-3 $spacing-4;
   background: rgba($primary-yellow-light, 0.5);
   border: 1px solid rgba($primary-yellow, 0.85);
-  border-radius: $border-radius-md;
+  border-radius: $radio-md;
   font-size: $font-size-sm;
   color: $primary-yellow-dark;
   line-height: 1.5;

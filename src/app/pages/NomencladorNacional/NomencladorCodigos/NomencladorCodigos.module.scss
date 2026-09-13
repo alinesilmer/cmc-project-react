@@ -1,23 +1,9 @@
-$blue:       #3b6fd4;
-$blue-light: #e8efff;
-$blue-hover: #2f5bbb;
-$red:        #dc2626;
-$red-light:  #fee2e2;
-$green:      #166534;
-$border:     #e2e8f0;
-$surface:    #ffffff;
-$text-1:     #1a1f2e;
-$text-2:     #4a5568;
-$text-3:     #718096;
-$radius-sm:  6px;
-$radius-md:  10px;
-$radius-lg:  14px;
-$shadow-sm:  0 1px 4px rgba(0,0,0,.06);
-$shadow-md:  0 4px 16px rgba(0,0,0,.10);
+@use "@/app/styles/all.scss" as *;
+
 
 .container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f0f4ff 0%, #fafbff 60%, #f5f0ff 100%);
+  background: $papel;
   padding: 1.8rem;
   font-family: inherit;
 }
@@ -43,30 +29,30 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
   justify-content: center;
   width: 42px;
   height: 42px;
-  border-radius: $radius-md;
-  background: $blue-light;
-  color: $blue;
+  border-radius: $radio-md;
+  background: $acento-tinte;
+  color: $acento;
   flex-shrink: 0;
 }
 
 .title {
   font-size: 1.35rem;
   font-weight: 700;
-  color: $text-1;
+  color: $tinta;
   margin: 0;
   line-height: 1.2;
 }
 
 .subtitle {
   font-size: 0.8rem;
-  color: $text-3;
+  color: $tinta-3;
   margin: 2px 0 0;
 }
 
 .body {
-  background: $surface;
-  border: 1px solid $border;
-  border-radius: $radius-lg;
+  background: $superficie;
+  border: 1px solid $linea;
+  border-radius: $radio-lg;
   box-shadow: $shadow-sm;
   overflow: hidden;
 }
@@ -77,7 +63,7 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
   gap: 10px;
   flex-wrap: wrap;
   padding: 14px 16px;
-  border-bottom: 1px solid $border;
+  border-bottom: 1px solid $linea;
   background: #fafbfd;
 }
 
@@ -92,7 +78,7 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
   left: 10px;
   top: 50%;
   transform: translateY(-50%);
-  color: $text-3;
+  color: $tinta-3;
   pointer-events: none;
 }
 
@@ -100,32 +86,32 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
   width: 100%;
   height: 36px;
   padding: 0 12px 0 32px;
-  border: 1px solid $border;
-  border-radius: $radius-sm;
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
   font-size: 0.85rem;
-  color: $text-1;
-  background: $surface;
+  color: $tinta;
+  background: $superficie;
   outline: none;
   box-sizing: border-box;
   transition: border-color .15s;
 
-  &:focus { border-color: $blue; }
-  &::placeholder { color: $text-3; }
+  &:focus { border-color: $acento; }
+  &::placeholder { color: $tinta-3; }
 }
 
 .filterSelect {
   height: 36px;
   padding: 0 28px 0 10px;
-  border: 1px solid $border;
-  border-radius: $radius-sm;
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
   font-size: 0.84rem;
-  color: $text-1;
-  background: $surface url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 8px center;
+  color: $tinta;
+  background: $superficie url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 8px center;
   appearance: none;
   outline: none;
   cursor: pointer;
 
-  &:focus { border-color: $blue; }
+  &:focus { border-color: $acento; }
 }
 
 .btnPrimary {
@@ -134,17 +120,17 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
   gap: 6px;
   height: 36px;
   padding: 0 16px;
-  background: $blue;
+  background: $acento;
   color: #fff;
   border: none;
-  border-radius: $radius-sm;
+  border-radius: $radio-sm;
   font-size: 0.84rem;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
   transition: background .15s;
 
-  &:hover:not(:disabled) { background: $blue-hover; }
+  &:hover:not(:disabled) { background: $acento-fuerte; }
   &:disabled { opacity: .55; cursor: not-allowed; }
 }
 
@@ -155,9 +141,9 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
   height: 36px;
   padding: 0 16px;
   background: none;
-  color: $text-2;
-  border: 1px solid $border;
-  border-radius: $radius-sm;
+  color: $tinta-2;
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
   font-size: 0.84rem;
   font-weight: 500;
   cursor: pointer;
@@ -172,10 +158,10 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
   gap: 4px;
   height: 28px;
   padding: 0 10px;
-  background: $blue-light;
-  color: $blue;
+  background: $acento-tinte;
+  color: $acento;
   border: none;
-  border-radius: $radius-sm;
+  border-radius: $radio-sm;
   font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
@@ -190,10 +176,10 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
   gap: 4px;
   height: 28px;
   padding: 0 10px;
-  background: $red-light;
-  color: $red;
+  background: $peligro-bg;
+  color: $peligro;
   border: none;
-  border-radius: $radius-sm;
+  border-radius: $radio-sm;
   font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
@@ -209,9 +195,9 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
   height: 28px;
   padding: 0 10px;
   background: #f0fdf4;
-  color: $green;
+  color: $ok;
   border: 1px solid #bbf7d0;
-  border-radius: $radius-sm;
+  border-radius: $radio-sm;
   font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
@@ -221,8 +207,8 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
 
   &.inactive {
     background: #fafafa;
-    color: $text-3;
-    border-color: $border;
+    color: $tinta-3;
+    border-color: $linea;
 
     &:hover { background: #f1f4f8; }
   }
@@ -242,7 +228,7 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
 
   thead tr {
     background: #f8fafd;
-    border-bottom: 1px solid $border;
+    border-bottom: 1px solid $linea;
   }
 
   th {
@@ -250,7 +236,7 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
     text-align: left;
     font-size: 0.75rem;
     font-weight: 600;
-    color: $text-3;
+    color: $tinta-3;
     letter-spacing: .04em;
     text-transform: uppercase;
     white-space: nowrap;
@@ -258,7 +244,7 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
 
   td {
     padding: 10px 14px;
-    color: $text-1;
+    color: $tinta;
     border-bottom: 1px solid #f1f4f8;
     vertical-align: middle;
   }
@@ -275,22 +261,23 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
 
 .emptyCell {
   text-align: center;
-  color: $text-3;
+  color: $tinta-3;
   padding: 32px 14px !important;
   font-style: italic;
 }
 
 .loadingCell {
   text-align: center;
-  color: $text-3;
+  color: $tinta-3;
   padding: 32px 14px !important;
 }
 
 .codeCell {
-  font-family: 'Courier New', Courier, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
   font-weight: 700;
   font-size: 0.9rem;
-  color: $blue;
+  color: $acento;
   letter-spacing: .04em;
 }
 
@@ -303,7 +290,7 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
 .badge {
   display: inline-block;
   padding: 2px 8px;
-  border-radius: 20px;
+  border-radius: $radio-lg;
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: .03em;
@@ -312,7 +299,7 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
   &.media  { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
   &.alta   { background: #fff1f2; color: #9f1239; border: 1px solid #fecdd3; }
   &.activo { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
-  &.inactivo { background: #f9fafb; color: $text-3; border: 1px solid $border; }
+  &.inactivo { background: #f9fafb; color: $tinta-3; border: 1px solid $linea; }
 }
 
 .cardList {
@@ -325,9 +312,9 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
 }
 
 .card {
-  background: $surface;
-  border: 1px solid $border;
-  border-radius: $radius-md;
+  background: $superficie;
+  border: 1px solid $linea;
+  border-radius: $radio-md;
   padding: 14px;
   display: flex;
   flex-direction: column;
@@ -344,7 +331,7 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
 
 .cardDesc {
   font-size: 0.85rem;
-  color: $text-1;
+  color: $tinta;
   margin: 0;
 }
 
@@ -362,7 +349,7 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
 
 .emptyText {
   text-align: center;
-  color: $text-3;
+  color: $tinta-3;
   font-style: italic;
   font-size: 0.85rem;
   padding: 24px 0;
@@ -382,8 +369,8 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
 }
 
 .modal {
-  background: $surface;
-  border-radius: $radius-lg;
+  background: $superficie;
+  border-radius: $radio-lg;
   box-shadow: 0 20px 60px rgba(0,0,0,.22);
   width: 100%;
   max-width: 600px;
@@ -395,7 +382,7 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
   @media (max-width: 540px) {
     max-width: 100%;
     max-height: 96vh;
-    border-radius: $radius-md $radius-md 0 0;
+    border-radius: $radio-md $radio-md 0 0;
     align-self: flex-end;
   }
 }
@@ -405,20 +392,20 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
   align-items: flex-start;
   justify-content: space-between;
   padding: 18px 20px 14px;
-  border-bottom: 1px solid $border;
+  border-bottom: 1px solid $linea;
   flex-shrink: 0;
 }
 
 .modalTitle {
   font-size: 1rem;
   font-weight: 700;
-  color: $text-1;
+  color: $tinta;
   margin: 0;
 }
 
 .modalSubtitle {
   font-size: 0.78rem;
-  color: $text-3;
+  color: $tinta-3;
   margin: 3px 0 0;
 }
 
@@ -430,13 +417,13 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
   height: 30px;
   background: none;
   border: none;
-  color: $text-3;
-  border-radius: $radius-sm;
+  color: $tinta-3;
+  border-radius: $radio-sm;
   cursor: pointer;
   flex-shrink: 0;
   transition: background .14s, color .14s;
 
-  &:hover { background: #f1f4f8; color: $text-1; }
+  &:hover { background: #f1f4f8; color: $tinta; }
 }
 
 .modalBody {
@@ -453,7 +440,7 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
   justify-content: flex-end;
   gap: 10px;
   padding: 14px 20px;
-  border-top: 1px solid $border;
+  border-top: 1px solid $linea;
   flex-shrink: 0;
   background: #fafbfd;
 }
@@ -461,10 +448,10 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
 .sectionTitle {
   font-size: 0.72rem;
   font-weight: 700;
-  color: $text-3;
+  color: $tinta-3;
   letter-spacing: .06em;
   text-transform: uppercase;
-  border-bottom: 1px solid $border;
+  border-bottom: 1px solid $linea;
   padding-bottom: 6px;
 }
 
@@ -493,25 +480,25 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
 .formLabel {
   font-size: 0.8rem;
   font-weight: 600;
-  color: $text-2;
+  color: $tinta-2;
 }
 
-.req { color: $red; }
+.req { color: $peligro; }
 
 .formInput,
 .formSelect,
 .formTextarea {
-  border: 1px solid $border;
-  border-radius: $radius-sm;
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
   font-size: 0.875rem;
-  color: $text-1;
-  background: $surface;
+  color: $tinta;
+  background: $superficie;
   outline: none;
   transition: border-color .15s, box-shadow .15s;
   box-sizing: border-box;
 
   &:focus {
-    border-color: $blue;
+    border-color: $acento;
     box-shadow: 0 0 0 3px rgba(59, 111, 212, .12);
   }
 }
@@ -535,13 +522,13 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
 }
 
 .inputError {
-  border-color: $red !important;
+  border-color: $peligro !important;
   box-shadow: 0 0 0 3px rgba(220, 38, 38, .10) !important;
 }
 
 .errorMsg {
   font-size: 0.75rem;
-  color: $red;
+  color: $peligro;
 }
 
 .checkRow {
@@ -549,13 +536,13 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
   align-items: center;
   gap: 8px;
   font-size: 0.85rem;
-  color: $text-2;
+  color: $tinta-2;
   cursor: pointer;
 
   input[type="checkbox"] {
     width: 16px;
     height: 16px;
-    accent-color: $blue;
+    accent-color: $acento;
     cursor: pointer;
   }
 }
@@ -581,7 +568,7 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
   align-items: center;
   gap: 8px;
   padding: 10px 20px;
-  border-radius: 999px;
+  border-radius: $radio-sm;
   font-size: 0.85rem;
   font-weight: 600;
   box-shadow: $shadow-md;
@@ -590,7 +577,7 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
 }
 
 .toastSuccess { background: #166534; color: #fff; }
-.toastError   { background: $red;    color: #fff; }
+.toastError   { background: $peligro;    color: #fff; }
 
 .paginationBar {
   display: flex;
@@ -598,10 +585,10 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
   justify-content: space-between;
   gap: 10px;
   padding: 12px 16px;
-  border-top: 1px solid $border;
+  border-top: 1px solid $linea;
   background: #fafbfd;
   font-size: 0.82rem;
-  color: $text-3;
+  color: $tinta-3;
 
   @media (max-width: 640px) { flex-direction: column; align-items: flex-start; }
 }
@@ -614,14 +601,14 @@ $shadow-md:  0 4px 16px rgba(0,0,0,.10);
 .btnPage {
   height: 30px;
   padding: 0 12px;
-  border: 1px solid $border;
-  border-radius: $radius-sm;
-  background: $surface;
-  color: $text-2;
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
+  background: $superficie;
+  color: $tinta-2;
   font-size: 0.82rem;
   cursor: pointer;
   transition: background .12s;
 
-  &:hover:not(:disabled) { background: $blue-light; color: $blue; border-color: #b3ceff; }
+  &:hover:not(:disabled) { background: $acento-tinte; color: $acento; border-color: #b3ceff; }
   &:disabled { opacity: .45; cursor: not-allowed; }
 }

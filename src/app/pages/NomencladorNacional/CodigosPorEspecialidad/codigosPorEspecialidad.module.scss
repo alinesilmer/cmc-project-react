@@ -1,0 +1,243 @@
+@use "@/app/styles/all.scss" as *;
+
+/* Códigos por especialidad — catálogo de una OS recortado a una especialidad.
+ * Todo lo que esta pantalla comparte con el resto de Auditoría y Nomenclador
+ * (colores, radios, tabla, chips, estados) sale de `_superficies.scss`; acá
+ * queda solo lo propio: los dos pasos y las columnas de origen. */
+
+.page { @extend %pantalla; }
+.inner { @extend %contenido; }
+.srOnly { @extend %oculto-visual; }
+
+// ── Encabezado ────────────────────────────────────────────────────────────────
+.pagehead { @extend %encabezado; }
+.pageTitle { @extend %titulo; }
+.pageSub { @extend %subtitulo; }
+
+// ── Pasos (los dos combos) ────────────────────────────────────────────────────
+.steps {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 384px));
+  gap: $spacing-5;
+  align-items: end;
+  margin-bottom: $spacing-4;
+
+  @media (max-width: $breakpoint-lg) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field {
+  min-width: 0;
+
+  // El Combobox arrastra su propio margen inferior (viene de apilarse en la
+  // columna de consulta-precios); acá los dos van lado a lado.
+  > div { margin-bottom: 0; }
+}
+
+// Paso 2 hasta que haya obra social: visible pero apagado.
+.fieldOff {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+// ── Filtros ───────────────────────────────────────────────────────────────────
+.tools {
+  display: flex;
+  gap: $spacing-2;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: $spacing-2;
+}
+
+.searchBox {
+  @extend %buscador;
+  flex: 1 1 240px;
+}
+.searchIcon { @extend %buscador-icono; }
+.searchInput { @extend %buscador-campo; }
+.searchClear { @extend %buscador-limpiar; }
+.searchBox:focus-within .searchIcon { color: $acento; }
+
+.select { @extend %select; }
+
+.viaToggle { @extend %grupo-opciones; }
+.viaBtn { @extend %opcion; }
+.viaBtnOn { @extend %opcion-activa; }
+
+// Chips de origen: filtran y a la vez son el resumen (cuántos NN, NNE, NE).
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-2;
+  margin-bottom: $spacing-4;
+}
+
+.chip { @extend %chip; }
+.chipOn { @extend %chip-activo; }
+
+.chipN {
+  font-variant-numeric: tabular-nums;
+  font-size: $font-size-xs;
+  color: $tinta-3;
+
+  .chipOn & { color: $acento; }
+}
+
+// ── Tabla ─────────────────────────────────────────────────────────────────────
+.tableWrap { @extend %tarjeta-flotante; }
+.tableScroll { overflow-x: auto; }
+.table { @extend %tabla; }
+.row { @extend %fila; }
+
+.cCodigo { @extend %codigo; }
+
+// Marca los códigos `sin_restriccion_especialidad`: entran para cualquier
+// especialidad, no por el mapeo de la elegida.
+.univ {
+  @extend %etiqueta;
+  @extend %tono-neutro;
+  margin-left: $spacing-2;
+  text-transform: uppercase;
+}
+
+.cDesc {
+  min-width: 24ch;
+  color: $tinta-2;
+  line-height: 1.35;
+}
+
+.cNum { @extend %celda-numero; }
+.cTotal { @extend %celda-total; }
+.dash { @extend %guion; }
+.nivelChip { @extend %pastilla-numero; }
+
+// ── Origen del valor ──────────────────────────────────────────────────────────
+// NN nacional, NNE nacional de la obra social, NE variante por especialidad.
+// Un tono por origen para poder barrer la columna de un ojo.
+.origen {
+  @extend %etiqueta;
+  min-width: 40px;
+  font-variant-numeric: tabular-nums;
+}
+
+.oNN { @extend %tono-neutro; }
+.oNNE { @extend %tono-info; }
+.oNE { @extend %tono-alerta; }
+
+.sinValor {
+  font-size: $font-size-sm;
+  font-style: italic;
+  color: $tinta-3;
+}
+
+.presupuesto {
+  @extend %etiqueta;
+  @extend %tono-alerta;
+  text-transform: uppercase;
+}
+
+.compl {
+  @extend %etiqueta;
+  text-transform: capitalize;
+}
+
+.c_baja { @extend %tono-ok; }
+.c_media { @extend %tono-alerta; }
+.c_alta { @extend %tono-peligro; }
+
+// Celda de precio todavía en camino: la lista de códigos ya se pintó y estas
+// columnas entran cuando responde tabla_valores.
+.pend {
+  @extend %brillo;
+  display: inline-block;
+  width: 42px;
+  height: 14px;
+  border-radius: $radio-xs;
+  vertical-align: middle;
+}
+
+.pendAncho { width: 76px; }
+
+// Mientras los precios no llegaron no hay conteos por origen que mostrar.
+.chipsOff .chip { opacity: 0.5; }
+
+// ── Ver más y estados ─────────────────────────────────────────────────────────
+.masBtn { @extend %boton-mas; }
+.empty { @extend %estado-vacio; }
+.skeletons { @extend %esqueleto; }
+.skeletonRow { @extend %esqueleto-fila; }
+.errorbox { @extend %estado-error; }
+.avisoPrecios {
+  @extend %estado-aviso;
+  margin-bottom: $spacing-2;
+}
+
+// En celular la tabla se vuelve una lista de fichas: el código encabeza, el
+// resto baja con su etiqueta al costado.
+@media (max-width: $breakpoint-lg) {
+  .tableScroll { overflow-x: visible; }
+
+  .table thead { display: none; }
+
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+    width: 100%;
+  }
+
+  .row {
+    position: relative;
+    padding: $spacing-3 0 $spacing-2;
+    border-bottom: 1px solid $linea;
+
+    td { border-bottom: none; }
+    td:first-child { box-shadow: none; }
+    &:hover td:first-child { box-shadow: none; }
+  }
+
+  .table td {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: $spacing-4;
+    padding: 2px $spacing-4;
+    text-align: right;
+
+    // Sin `@extend %rotulo`: Sass no deja extender a través de una media query.
+    &::before {
+      content: attr(data-label);
+      flex: 0 0 auto;
+      font-size: $font-size-xs;
+      font-weight: $font-weight-bold;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: $tinta-3;
+    }
+  }
+
+  .cCodigo {
+    font-size: $font-size-xl;
+    justify-content: flex-start;
+
+    &::before { display: none; }
+  }
+
+  .cDesc {
+    display: block;
+    text-align: left;
+    padding-top: 1px;
+    padding-bottom: $spacing-2;
+    font-size: $font-size-base;
+
+    &::before { display: none; }
+  }
+
+  .cTotal {
+    margin-top: $spacing-1;
+    padding-top: $spacing-2;
+    border-top: 1px dashed $linea;
+  }
+}

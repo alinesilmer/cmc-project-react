@@ -13,8 +13,9 @@ import {
 } from "../nomenclador.api";
 import { ORIGEN_LABELS } from "../nomenclador.types";
 import type { Origen, ValorOut, ActualizacionMasivaResult } from "../nomenclador.types";
-import { listObrasSociales } from "../../ObrasSociales/obrasSociales.api";
+import { paginar } from "../../../lib/paginar";
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
+import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 
 const money = new Intl.NumberFormat("es-AR", {
   style: "currency",
@@ -32,16 +33,13 @@ function totalOf(v: ValorOut): number {
 }
 
 // Todos los valores activos de la OS, paginando /api/valores_nm/ (estado=activo).
-async function fetchActivosOS(nroOS: number): Promise<ValorOut[]> {
-  const all: ValorOut[] = [];
-  const size = 200;
-  for (let page = 1; page <= 100; page++) {
-    const batch = await listValores({ obra_social_nro: nroOS, estado: "activo", page, size });
-    all.push(...batch);
-    if (batch.length < size) break;
-  }
-  return all;
-}
+const VALORES_PAGE = 200;
+const fetchActivosOS = (nroOS: number): Promise<ValorOut[]> =>
+  paginar(
+    (page) =>
+      listValores({ obra_social_nro: nroOS, estado: "activo", page, size: VALORES_PAGE }),
+    { size: VALORES_PAGE },
+  );
 
 export default function AumentoPorcentual() {
   // Obra social
@@ -75,11 +73,7 @@ export default function AumentoPorcentual() {
 
   const osNro = selectedOS?.nro_obra_social ?? null;
 
-  const { data: osList = [] } = useQuery({
-    queryKey: ["obras-sociales"],
-    queryFn: () => listObrasSociales(),
-    staleTime: 10 * 60 * 1000,
-  });
+  const { data: osList = [] } = useObrasSociales();
 
   const filteredOS = useMemo(() => {
     if (!osSearch.trim()) return osList.slice(0, 50);

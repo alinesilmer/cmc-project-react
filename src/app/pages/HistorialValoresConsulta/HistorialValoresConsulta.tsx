@@ -1,11 +1,10 @@
 import { useMemo, useState } from "react";
 import { Search, X as XIcon, Building2, History } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
 
 import styles from "./HistorialValoresConsulta.module.scss";
 import HistorialValores from "../ObrasSociales/ObrasSocialesDetalle/HistorialValores";
-import { listObrasSociales } from "../ObrasSociales/obrasSociales.api";
 import type { ObraSocialListItem } from "../ObrasSociales/obrasSociales.types";
+import { useObrasSociales } from "../ObrasSociales/useObrasSociales";
 
 /**
  * Consulta directa del historial de valores de una obra social desde el menú
@@ -17,11 +16,7 @@ export default function HistorialValoresConsulta() {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
 
-  const { data: osList = [] } = useQuery({
-    queryKey: ["obras-sociales"],
-    queryFn: () => listObrasSociales(),
-    staleTime: 10 * 60 * 1000,
-  });
+  const { data: osList = [] } = useObrasSociales();
 
   const filtered = useMemo(() => {
     if (!query.trim()) return osList.slice(0, 50);

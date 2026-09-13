@@ -5,8 +5,9 @@
 // deja de ser confiable para discutirlo con la obra social.
 //
 // El CSV se arma a mano —son datos tabulares simples y no justifica una
-// dependencia— y el Excel usa `xlsx`, que ya está en el proyecto y se importa
-// diferido para no sumarlo al bundle de quien nunca exporta.
+// dependencia— y el Excel pasa por `lib/excelExport`, la única vía de escritura
+// del proyecto, que carga ExcelJS diferido para no sumarlo al bundle de quien
+// nunca exporta.
 
 export interface ColumnaExport<T> {
   header: string;
@@ -68,32 +69,25 @@ export async function exportarExcel<T>(
   nombre: string,
   hoja = "Reporte"
 ): Promise<void> {
-  const XLSX = await import("xlsx");
+  const { buildExcelBlob } = await import("../../lib/excelExport");
+  const headers = columnas.map((c) => c.header);
   const datos = filas.map((f) => {
     const o: Record<string, string | number | null> = {};
     for (const c of columnas) o[c.header] = c.value(f);
     return o;
   });
-  const ws = XLSX.utils.json_to_sheet(datos, {
-    header: columnas.map((c) => c.header),
-  });
   // Ancho de columna aproximado por el largo del encabezado y de los datos.
-  ws["!cols"] = columnas.map((c) => ({
-    wch: Math.min(
+  const widths = columnas.map((c) =>
+    Math.min(
       44,
       Math.max(
         c.header.length + 2,
         ...filas.slice(0, 200).map((f) => String(c.value(f) ?? "").length + 2)
       )
-    ),
-  }));
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, hoja.slice(0, 31));
-  const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-  descargar(
-    new Blob([buf], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    }),
-    `${nombre}.xlsx`
+    )
   );
+  const blob = await buildExcelBlob([
+    { name: hoja, rows: datos, headers, widths },
+  ]);
+  descargar(blob, `${nombre}.xlsx`);
 }

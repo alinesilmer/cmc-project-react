@@ -1,0 +1,506 @@
+@use "./variables.scss" as *;
+
+/* Superficies compartidas por Auditoría y Nomenclador.
+ *
+ * Antes cada pantalla de estas dos secciones traía su propia paleta copiada
+ * (ocho archivos definían el mismo `$blue: #3b6fd4` y el mismo juego de
+ * sombras, y tres más lo repetían como custom properties `--accent`), su propio
+ * radio y su propia familia tipográfica. El resultado: nueve dialectos para el
+ * mismo diseño y un azul que además no era el del Topbar.
+ *
+ * Acá vive el único juego de tokens. Todo sale de `variables.scss`, así que las
+ * pantallas usan los mismos colores que el resto del panel.
+ *
+ * Igual que `_controles.scss`, son placeholders (`%`): Sass no emite nada hasta
+ * que alguien los extiende, así que no suman peso a los módulos que no los
+ * usan. Cada módulo los engancha con el nombre de clase que ya tenía:
+ *
+ *     .tableWrap { @extend %tarjeta; }
+ *
+ * Dos tipografías, no más (las que ya carga `globals.scss`):
+ *   · Manrope → títulos (`%titulo`; los h1-h6 ya la toman de globals).
+ *   · Inter   → todo lo demás, incluidos los códigos de práctica, que se
+ *               distinguen con `%codigo` (cifras tabulares + tracking) en vez
+ *               de con una tercera familia monoespaciada.
+ */
+
+// ── Superficie ────────────────────────────────────────────────────────────────
+$superficie:     $white;    // tarjetas, filas
+$superficie-2:   $gray-50;  // encabezados de tabla, zonas hundidas
+$papel:          $gray-100; // fondo de la pantalla, pastillas neutras
+
+// ── Texto ─────────────────────────────────────────────────────────────────────
+$tinta:          $gray-900; // títulos y datos duros
+$tinta-2:        $gray-600; // texto corriente
+$tinta-3:        $gray-500; // rótulos, ayudas, estados vacíos
+
+// ── Líneas ────────────────────────────────────────────────────────────────────
+$linea:          $gray-200; // divisiones internas
+$linea-2:        $gray-300; // bordes de contenedor y de control
+
+// ── Acento ────────────────────────────────────────────────────────────────────
+// El azul del Topbar. Las pantallas usaban #3b6fd4, que no era el de la barra.
+$acento:         $primary-blue;
+$acento-fuerte:  $primary-blue-darker;
+$acento-suave:   $primary-blue-lighter;
+$acento-tinte:   $secondary-blue;  // fondo de chip activo
+$acento-lavado:  #f4f7fd;          // hover de fila
+
+// ── Semáforo ──────────────────────────────────────────────────────────────────
+$ok:             $success-green;
+$ok-bg:          #ecfdf5;
+$ok-linea:       #a7d8bd;
+
+$alerta:         #92400e;
+$alerta-ico:     $warning-orange;
+$alerta-bg:      #fffbeb;
+$alerta-linea:   #fcd34d;
+
+$peligro:        $danger-red;
+$peligro-bg:     #fef2f2;
+$peligro-linea:  #f3b7b7;
+
+// ── Radios ────────────────────────────────────────────────────────────────────
+// Más cuadrados que `$border-radius-*`. Sin pastillas de 999px: los chips y los
+// controles redondos eran lo que hacía que cada pantalla se leyera distinta.
+$radio-xs:       3px;  // etiquetas y badges
+$radio-sm:       4px;  // inputs, botones, chips
+$radio-md:       6px;  // tarjetas y contenedores de tabla
+$radio-lg:       8px;  // modales y paneles grandes
+
+// ── Sombras ───────────────────────────────────────────────────────────────────
+$sombra-tarjeta: 0 1px 2px rgba($gray-900, 0.05);
+$sombra-flotante: 0 1px 2px rgba($gray-900, 0.05), 0 8px 24px rgba($gray-900, 0.06);
+
+// ── Alturas de control ────────────────────────────────────────────────────────
+// Una sola: buscador, selects y toggles quedan sobre la misma línea.
+$alto-control:   40px;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Estructura de página
+// ═══════════════════════════════════════════════════════════════════════════════
+
+%pantalla {
+  min-height: 100vh;
+  padding: $spacing-8;
+  color: $tinta;
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-4 $spacing-3 $spacing-8;
+  }
+}
+
+%contenido {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+%encabezado {
+  max-width: 60ch;
+  margin-bottom: $spacing-5;
+}
+
+%titulo {
+  margin: 0;
+  font-family: "Manrope", sans-serif;
+  font-size: $font-size-4xl;
+  font-weight: $font-weight-bold;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-2xl;
+  }
+}
+
+%subtitulo {
+  margin: $spacing-1 0 0;
+  color: $tinta-2;
+  font-size: $font-size-base;
+}
+
+/* Rótulo chico en mayúsculas: encabezados de tabla, etiquetas de ficha. */
+%rotulo {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: $tinta-3;
+}
+
+/* Solo para lectores de pantalla. */
+%oculto-visual {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Contenedores
+// ═══════════════════════════════════════════════════════════════════════════════
+
+%tarjeta {
+  background: $superficie;
+  border: 1px solid $linea-2;
+  border-radius: $radio-md;
+  box-shadow: $sombra-tarjeta;
+}
+
+%tarjeta-flotante {
+  @extend %tarjeta;
+  box-shadow: $sombra-flotante;
+  overflow: hidden;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Tabla
+// ═══════════════════════════════════════════════════════════════════════════════
+
+%tabla {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: $font-size-base;
+
+  thead th {
+    padding: $spacing-2 $spacing-4;
+    text-align: left;
+    white-space: nowrap;
+    background: $superficie-2;
+    border-bottom: 1px solid $linea-2;
+    @extend %rotulo;
+  }
+
+  td {
+    padding: $spacing-3 $spacing-4;
+    border-bottom: 1px solid $linea;
+    vertical-align: middle;
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+}
+
+%fila {
+  transition: background-color 0.12s;
+
+  // Barra de acento a la izquierda al pasar el mouse.
+  td:first-child {
+    box-shadow: inset 3px 0 0 transparent;
+    transition: box-shadow 0.12s;
+  }
+
+  &:hover {
+    background: $acento-lavado;
+    td:first-child { box-shadow: inset 3px 0 0 $linea-2; }
+  }
+}
+
+/* Columna numérica: cifras alineadas y sin cortes de línea. */
+%celda-numero {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: $tinta-2;
+}
+
+%celda-total {
+  @extend %celda-numero;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $tinta;
+  letter-spacing: -0.01em;
+}
+
+/* El código de práctica. Reemplaza a las cinco familias monoespaciadas que
+ * había repartidas (ui-monospace, Courier New, monospace, ...): con cifras
+ * tabulares y un poco de tracking, Inter separa el dato igual de bien. */
+%codigo {
+  font-variant-numeric: tabular-nums;
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  color: $tinta;
+}
+
+%guion {
+  color: $linea-2;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Etiquetas y chips
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/* Badge de estado. Se combina con un tono: `@extend %etiqueta, %tono-ok;` */
+%etiqueta {
+  display: inline-block;
+  padding: 2px $spacing-2;
+  border: 1px solid;
+  border-radius: $radio-xs;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+%tono-neutro   { background: $papel;        border-color: $linea-2;       color: $tinta-2; }
+%tono-info     { background: $acento-tinte; border-color: $acento-suave;  color: $acento; }
+%tono-ok       { background: $ok-bg;        border-color: $ok-linea;      color: $ok; }
+%tono-alerta   { background: $alerta-bg;    border-color: $alerta-linea;  color: $alerta; }
+%tono-peligro  { background: $peligro-bg;   border-color: $peligro-linea; color: $peligro; }
+
+/* Pastilla numérica (nivel, cantidad). */
+%pastilla-numero {
+  display: inline-grid;
+  place-items: center;
+  min-width: 24px;
+  height: 22px;
+  padding: 0 $spacing-1;
+  border-radius: $radio-xs;
+  background: $papel;
+  color: $tinta-2;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Chip que filtra: se apaga y se prende. */
+%chip {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-1 $spacing-3;
+  font: inherit;
+  font-size: $font-size-sm;
+  color: $tinta-2;
+  background: $superficie;
+  border: 1px solid $linea-2;
+  border-radius: $radio-sm;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+
+  &:hover:not(:disabled) { border-color: $acento; color: $acento; }
+  &:disabled { opacity: 0.5; cursor: default; }
+}
+
+%chip-activo {
+  background: $acento-tinte;
+  border-color: $acento;
+  color: $acento;
+  font-weight: $font-weight-semibold;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Controles
+// ═══════════════════════════════════════════════════════════════════════════════
+
+%buscador {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+%buscador-campo {
+  width: 100%;
+  height: $alto-control;
+  padding: 0 $spacing-8;
+  font: inherit;
+  font-size: $font-size-base;
+  color: $tinta;
+  background: $superficie;
+  border: 1px solid $linea-2;
+  border-radius: $radio-sm;
+  outline: none;
+  appearance: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &::placeholder { color: $gray-400; }
+  &::-webkit-search-cancel-button { display: none; }
+
+  &:focus {
+    border-color: $acento;
+    box-shadow: 0 0 0 3px rgba($acento, 0.12);
+  }
+}
+
+%buscador-icono {
+  position: absolute;
+  left: $spacing-3;
+  color: $tinta-3;
+  pointer-events: none;
+  transition: color 0.15s;
+}
+
+%buscador-limpiar {
+  position: absolute;
+  right: $spacing-2;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: $radio-xs;
+  background: $acento-tinte;
+  color: $acento;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover { background: $acento; color: $white; }
+}
+
+%select {
+  height: $alto-control;
+  padding: 0 $spacing-8 0 $spacing-3;
+  font: inherit;
+  font-size: $font-size-sm;
+  color: $tinta-2;
+  background: $superficie
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>")
+    no-repeat right $spacing-3 center;
+  border: 1px solid $linea-2;
+  border-radius: $radio-sm;
+  cursor: pointer;
+  appearance: none;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &:focus {
+    border-color: $acento;
+    box-shadow: 0 0 0 3px rgba($acento, 0.12);
+  }
+
+  &:disabled { opacity: 0.55; cursor: not-allowed; }
+}
+
+/* Grupo de dos o tres opciones excluyentes (vía, orden, modo). */
+%grupo-opciones {
+  display: inline-flex;
+  align-items: stretch;
+  height: $alto-control;
+  padding: 3px;
+  gap: 2px;
+  background: $papel;
+  border: 1px solid $linea-2;
+  border-radius: $radio-sm;
+}
+
+%opcion {
+  display: flex;
+  align-items: center;
+  padding: 0 $spacing-4;
+  font: inherit;
+  font-size: $font-size-sm;
+  color: $tinta-2;
+  background: transparent;
+  border: none;
+  border-radius: $radio-xs;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover { color: $tinta; }
+}
+
+%opcion-activa {
+  background: $superficie;
+  color: $acento;
+  font-weight: $font-weight-semibold;
+  box-shadow: $sombra-tarjeta;
+
+  &:hover { color: $acento; }
+}
+
+/* "Ver más": ocupa el ancho de la tabla, debajo de ella. */
+%boton-mas {
+  display: block;
+  width: 100%;
+  margin-top: $spacing-3;
+  padding: $spacing-3;
+  font: inherit;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $acento;
+  background: $superficie;
+  border: 1px solid $linea-2;
+  border-radius: $radio-sm;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+
+  &:hover {
+    background: $acento-lavado;
+    border-color: $acento;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Estados
+// ═══════════════════════════════════════════════════════════════════════════════
+
+%estado-vacio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+  padding: $spacing-16 $spacing-4;
+  color: $tinta-3;
+  background: $superficie;
+  border: 1px dashed $linea-2;
+  border-radius: $radio-md;
+  text-align: center;
+
+  svg { color: $linea-2; }
+}
+
+%estado-error {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-3 $spacing-4;
+  font-size: $font-size-base;
+  color: $peligro;
+  background: $peligro-bg;
+  border: 1px solid $peligro-linea;
+  border-radius: $radio-md;
+
+  svg { flex-shrink: 0; }
+}
+
+%estado-aviso {
+  @extend %estado-error;
+  color: $alerta;
+  background: $alerta-bg;
+  border-color: $alerta-linea;
+
+  svg { color: $alerta-ico; }
+}
+
+/* Filas fantasma mientras carga. `shimmer` vive en animations.scss. */
+%esqueleto {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 1px;
+  background: $linea;
+  border: 1px solid $linea-2;
+  border-radius: $radio-md;
+  overflow: hidden;
+}
+
+%esqueleto-fila {
+  height: 44px;
+  @extend %brillo;
+}
+
+/* El degradé que se desplaza. Sirve tanto para una fila entera como para una
+ * celda suelta que todavía no tiene dato. */
+%brillo {
+  background: linear-gradient(90deg, $superficie-2 25%, $papel 50%, $superficie-2 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s infinite linear;
+}

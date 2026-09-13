@@ -150,12 +150,8 @@ export default function TablaGinecologia() {
   }
 
   const handleExport = useCallback(async () => {
-    const [{ utils, write }, { saveAs }] = await Promise.all([
-      import("xlsx"),
-      import("file-saver"),
-    ]);
-    const wb = utils.book_new();
-    for (const sec of SECCIONES) {
+    const { downloadExcel } = await import("../../lib/excelExport");
+    const hojas = SECCIONES.map((sec) => {
       const data = sec.practicas.map((p) => {
         const u = resolveUnidades(p);
         return {
@@ -167,13 +163,14 @@ export default function TablaGinecologia() {
           [`Valor ${osLabel}`]: calc(u, providerVal),
         };
       });
-      const ws = utils.json_to_sheet(data);
-      ws["!cols"] = [{ wch: 12 }, { wch: 40 }, { wch: 8 }, { wch: 10 }, { wch: 16 }, { wch: 24 }];
-      utils.book_append_sheet(wb, ws, sec.nombre.slice(0, 31));
-    }
-    const date   = hoyISO().replace(/-/g, "");
-    const buffer = write(wb, { bookType: "xlsx", type: "array" }) as ArrayBuffer;
-    saveAs(new Blob([buffer], { type: "application/octet-stream" }), `NomencladoGinecologia-${date}.xlsx`);
+      return {
+        name: sec.nombre,
+        rows: data,
+        widths: [12, 40, 8, 10, 16, 24],
+      };
+    });
+    const date = hoyISO().replace(/-/g, "");
+    await downloadExcel(`NomencladoGinecologia-${date}.xlsx`, hojas);
   }, [fasgoVal, providerVal, osLabel]);
 
   return (

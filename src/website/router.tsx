@@ -5,6 +5,7 @@ import RequireWebEditor from "../app/auth/RequireWebEditor";
 const Home = lazy(() => import("./app/inicio/page"));
 const Contacto = lazy(() => import("./app/contact/page"));
 const NoticiasPage = lazy(() => import("./app/noticias/page"));
+const BeneficiosPage = lazy(() => import("./app/beneficios/page"));
 const NoticiaDetail = lazy(() => import("./app/noticias/[id]/page"));
 const AdminLogin = lazy(() => import("./app/admin/login/page"));
 const AdminDashboard = lazy(() => import("./app/admin/dashboard/page"));
@@ -76,6 +77,7 @@ export default function WebRoutes() {
         <Route path="/servicios" element={<Servicios />} />
         <Route path="/galeria" element={<GaleriaPage />} />
         <Route path="/convenios" element={<ConveniosPage />} />
+        <Route path="/beneficios" element={<BeneficiosPage />} />
         <Route path="/quinta" element={<QuintaPage />} />
         <Route path="/seguros" element={<SegurosPage />} />
         <Route path="/medicos-asociados" element={<Asociados />} />

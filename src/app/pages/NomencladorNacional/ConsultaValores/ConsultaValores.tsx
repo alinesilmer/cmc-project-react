@@ -6,10 +6,10 @@ import styles from "../ConsultaShared/consulta.module.scss";
 import Combobox from "../ConsultaShared/Combobox";
 import ResultRegister from "../ConsultaShared/ResultRegister";
 import { listNomenclador, getTablaValores } from "../nomenclador.api";
-import { listObrasSociales } from "../../ObrasSociales/obrasSociales.api";
 import { getEspecialidades } from "../../Especialidades/especialidades.api";
 import type { NomencladorOut, TablaValorItem, ViaPractica } from "../nomenclador.types";
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
+import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import type { Especialidad } from "../../Especialidades/especialidades.types";
 
 export default function ConsultaValores() {
@@ -39,11 +39,7 @@ export default function ConsultaValores() {
   const [result, setResult] = useState<TablaValorItem | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const { data: osList = [] } = useQuery({
-    queryKey: ["obras-sociales"],
-    queryFn: () => listObrasSociales(),
-    staleTime: 10 * 60 * 1000,
-  });
+  const { data: osList = [] } = useObrasSociales();
 
   const { data: especialidades = [] } = useQuery({
     queryKey: ["especialidades"],

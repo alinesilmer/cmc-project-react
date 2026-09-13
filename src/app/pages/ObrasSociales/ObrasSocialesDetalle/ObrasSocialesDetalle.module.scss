@@ -52,7 +52,7 @@
   color: $gray-600;
   font-size: $font-size-sm;
   cursor: pointer;
-  border-radius: $border-radius-md;
+  border-radius: $radio-md;
   transition: color 0.15s, background-color 0.15s;
   align-self: flex-start;
 
@@ -81,7 +81,7 @@
   height: 56px;
   background-color: #e7e3f4;
  color: #786c99;
-  border-radius: $border-radius-sm;
+  border-radius: $radio-sm;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -110,7 +110,7 @@
   background-color: $white;
   color: #6f6591;
   border: 1px solid #6f6591;
-  border-radius: $border-radius-md;
+  border-radius: $radio-md;
   font-size: $font-size-sm;
   font-weight: $font-weight-semibold;
   text-decoration: none;
@@ -135,7 +135,7 @@
   padding: $spacing-2 $spacing-4;
   background-color: #cdc2e8;
   color: #493c68;
-  border-radius: $border-radius-sm;
+  border-radius: $radio-sm;
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
 }
@@ -145,7 +145,7 @@
   padding: $spacing-2 $spacing-4;
   background-color: rgb(254, 250, 219);
   color: #938a54;
-  border-radius: $border-radius-sm;
+  border-radius: $radio-sm;
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
 }
@@ -155,7 +155,7 @@
   padding: $spacing-2 $spacing-4;
   background-color: $gray-100;
   color: $gray-700;
-  border-radius: $border-radius-sm;
+  border-radius: $radio-sm;
   font-size: $font-size-xs;
   font-weight: $font-weight-medium;
 }
@@ -175,7 +175,7 @@
 
 .card {
   background-color: $white;
-  border-radius: $border-radius-sm;
+  border-radius: $radio-sm;
   box-shadow: $shadow-md;
   padding: $spacing-6;
   display: flex;
@@ -241,6 +241,47 @@
   word-break: break-word;
 }
 
+// Botón de copiar: discreto hasta que el mouse entra en la fila, pero siempre
+// visible al navegar con teclado y una vez copiado (para que se vea el tilde).
+.copyBtn {
+  margin-left: auto;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: $radio-md;
+  background: none;
+  color: $gray-500;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+
+  .infoRow:hover &,
+  &:focus-visible {
+    opacity: 1;
+  }
+
+  &:hover {
+    color: #574e76;
+    background: #f2effa;
+    border-color: #d6d1eac0;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #574e76;
+    outline-offset: 1px;
+  }
+}
+
+.copyBtnDone {
+  opacity: 1;
+  color: $success-green;
+}
+
 // ─── Relations ────────────────────────────────────────────────────────────────
 
 .relationsGrid {
@@ -282,7 +323,7 @@
   font-weight: $font-weight-medium;
   text-decoration: none;
   padding: $spacing-2 $spacing-3;
-  border-radius: $border-radius-md;
+  border-radius: $radio-md;
   border: 1px solid $secondary-blue;
   background-color: #dfd9f3;
   transition: background-color 0.15s, border-color 0.15s;
@@ -315,7 +356,7 @@
 .docCard {
   background-color: $gray-50;
   border: 1px solid $gray-200;
-  border-radius: $border-radius-lg;
+  border-radius: $radio-lg;
   padding: $spacing-5;
   display: flex;
   flex-direction: column;
@@ -344,7 +385,7 @@
   padding: $spacing-1 $spacing-3;
   background-color: #b9a7e9;
   color: #493c68;
-  border-radius: $border-radius-sm;
+  border-radius: $radio-sm;
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
 }
@@ -373,7 +414,7 @@
   padding: $spacing-1 $spacing-3;
   background: none;
   border: 1px solid $gray-300;
-  border-radius: $border-radius-md;
+  border-radius: $radio-md;
   font-size: $font-size-xs;
   color: $gray-600;
   cursor: pointer;
@@ -390,7 +431,7 @@
   margin: 0;
   padding: $spacing-3;
   background-color: $white;
-  border-radius: $border-radius-md;
+  border-radius: $radio-md;
   border: 1px solid $gray-200;
   display: flex;
   flex-direction: column;
@@ -442,7 +483,7 @@
   padding: $spacing-4 $spacing-5;
   background-color: #fff0f0;
   border: 1px solid #fca5a5;
-  border-radius: $border-radius-md;
+  border-radius: $radio-md;
   color: $danger-red;
   font-size: $font-size-base;
 }
@@ -523,7 +564,7 @@
   bottom: -1px;
   height: 2px;
   background: #6f6591;
-  border-radius: 2px;
+  border-radius: $radio-xs;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -553,7 +594,7 @@
   padding: $spacing-2 $spacing-4;
   background-color: $white;
   border: 1px solid $gray-300;
-  border-radius: $border-radius-md;
+  border-radius: $radio-md;
   font-size: $font-size-sm;
   font-weight: $font-weight-medium;
   color: $gray-600;
@@ -606,7 +647,7 @@
   gap: 0;
   background-color: $white;
   border: 1px solid $gray-200;
-  border-radius: $border-radius-md;
+  border-radius: $radio-md;
   overflow: hidden;
   box-shadow: $shadow-sm;
 }
@@ -695,7 +736,7 @@
   padding: $spacing-1 $spacing-3;
   background: none;
   border: 1px solid #9d91c2;
-  border-radius: $border-radius-sm;
+  border-radius: $radio-sm;
   font-size: $font-size-xs;
   color: #574e76;
   cursor: pointer;
@@ -722,7 +763,7 @@
   padding: $spacing-4 $spacing-5;
   background-color: $white;
   border: 1px solid $gray-200;
-  border-radius: $border-radius-md;
+  border-radius: $radio-md;
   box-shadow: $shadow-sm;
   flex-wrap: wrap;
 }
@@ -740,7 +781,7 @@
 .porFechaSelect {
   padding: $spacing-2 $spacing-3;
   border: 1px solid $gray-300;
-  border-radius: $border-radius-md;
+  border-radius: $radio-md;
   font-size: $font-size-sm;
   color: $gray-800;
   background-color: $white;
@@ -774,7 +815,7 @@
   padding: $spacing-1 $spacing-3;
   background-color: $gray-100;
   border: 1px solid $gray-200;
-  border-radius: $border-radius-sm;
+  border-radius: $radio-sm;
   font-size: $font-size-xs;
   color: $gray-700;
   cursor: pointer;
@@ -825,7 +866,7 @@
 .filterInput {
   padding: $spacing-2 $spacing-3 $spacing-2 $spacing-8;
   border: 1px solid $gray-300;
-  border-radius: $border-radius-md;
+  border-radius: $radio-md;
   font-size: $font-size-sm;
   color: $gray-800;
   background-color: $white;
@@ -860,7 +901,7 @@
   color: $gray-500;
   background-color: $gray-100;
   padding: $spacing-1 $spacing-3;
-  border-radius: $border-radius-sm;
+  border-radius: $radio-sm;
   white-space: nowrap;
 }
 
@@ -871,7 +912,7 @@
   padding: $spacing-2 $spacing-4;
   background-color: $white;
   border: 1px solid $gray-300;
-  border-radius: $border-radius-md;
+  border-radius: $radio-md;
   font-size: $font-size-sm;
   font-weight: $font-weight-medium;
   color: $gray-700;
@@ -894,7 +935,7 @@
 
 .tableContainer {
   overflow-x: auto;
-  border-radius: $border-radius-md;
+  border-radius: $radio-md;
   box-shadow: $shadow-sm;
   border: 1px solid $gray-200;
 }
@@ -957,7 +998,7 @@
 }
 
 .tdCode {
-  font-family: monospace;
+  font-variant-numeric: tabular-nums;
   font-size: $font-size-xs;
   color: $gray-700;
   white-space: nowrap;
@@ -1006,7 +1047,7 @@
   gap: $spacing-1;
   padding: $spacing-2 $spacing-4;
   border: 1px solid $gray-200;
-  border-radius: $border-radius-md;
+  border-radius: $radio-md;
   background-color: $white;
   color: $gray-700;
   font-size: $font-size-sm;
@@ -1042,7 +1083,7 @@
   padding: $spacing-4 $spacing-5;
   background-color: $white;
   border: 1px solid $gray-200;
-  border-radius: $border-radius-md;
+  border-radius: $radio-md;
   box-shadow: $shadow-sm;
 }
 
@@ -1072,7 +1113,7 @@
   padding: $spacing-1 $spacing-3;
   background: none;
   border: 1px solid #9d91c2;
-  border-radius: $border-radius-sm;
+  border-radius: $radio-sm;
   font-size: $font-size-xs;
   color: #574e76;
   cursor: pointer;
@@ -1106,7 +1147,7 @@
   padding: $spacing-2 $spacing-3;
   background-color: $gray-50;
   border: 1px solid $gray-200;
-  border-radius: $border-radius-sm;
+  border-radius: $radio-sm;
 }
 
 .docName {
@@ -1143,7 +1184,7 @@
   padding: $spacing-1;
   background: none;
   border: none;
-  border-radius: $border-radius-sm;
+  border-radius: $radio-sm;
   color: $gray-400;
   cursor: pointer;
 

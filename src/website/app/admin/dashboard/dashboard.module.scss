@@ -1285,3 +1285,71 @@
     grid-template-columns: 1fr;
   }
 }
+
+// ─── Selector de obras sociales (normas operativas) ────────────────────────────
+
+.osPicker {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.osChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.osChip {
+  border: 1px solid rgba($primary-blue, 0.3);
+  background: rgba($primary-blue, 0.08);
+  color: $primary-blue;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba($primary-blue, 0.16);
+  }
+}
+
+// Alto fijo con scroll: el padrón pasa las 300 obras sociales y sin tope la
+// lista empujaría el resto del formulario fuera de la pantalla.
+.osList {
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1.5px solid #dde2ec;
+  border-radius: $border-radius-sm;
+  background: $white;
+  padding: 6px;
+}
+
+.osOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: $border-radius-sm;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: #374151;
+  cursor: pointer;
+
+  &:hover {
+    background: #f4f7fd;
+  }
+
+  input {
+    width: auto;
+    margin: 0;
+  }
+}
+
+.osHint {
+  font-size: 0.8rem;
+  color: #8a99b3;
+  margin: 2px 0 0;
+}

@@ -15,7 +15,7 @@
   padding: $spacing-4 $spacing-5;
   background: $white;
   border: 1px solid $gray-200;
-  border-radius: $border-radius-lg;
+  border-radius: $radio-lg;
   box-shadow: $shadow-sm;
   flex-wrap: wrap;
 
@@ -55,7 +55,7 @@
   gap: $spacing-3;
   padding: $spacing-4;
   background: $secondary-blue;
-  border-radius: $border-radius-lg;
+  border-radius: $radio-lg;
 }
 
 .field { display: flex; flex-direction: column; gap: $spacing-1; }
@@ -78,7 +78,7 @@
   color: $gray-900;
   background: $white;
   border: 1px solid $gray-200;
-  border-radius: $border-radius-md;
+  border-radius: $radio-md;
   outline: none;
 
   &:focus {
@@ -99,7 +99,7 @@
 .tableWrap {
   background: $white;
   border: 1px solid $gray-200;
-  border-radius: $border-radius-lg;
+  border-radius: $radio-lg;
   box-shadow: $shadow-sm;
   // La tabla scrollea acá adentro: sin esto empuja el ancho de toda la página.
   overflow-x: auto;
@@ -153,7 +153,7 @@
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   color: $white;
-  border-radius: 999px;
+  border-radius: $radio-sm;
 }
 
 .facturaCell { display: flex; align-items: center; gap: $spacing-1; }
@@ -208,7 +208,7 @@
   font-size: $font-size-sm;
   background: $white;
   border: 1px solid $gray-200;
-  border-radius: $border-radius-lg;
+  border-radius: $radio-lg;
 
   p { margin: 0; }
 }

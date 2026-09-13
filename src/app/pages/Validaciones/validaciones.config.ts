@@ -317,14 +317,19 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
   {
     slug: "prevencion-salud",
     nombre: "Prevención Salud",
-    codigo: null,
+    codigo: 103,
     modo: "externa",
     estado: "operativa",
     color: "#e30613",
     logo: logoPrevencion,
     descripcion:
-      "El Colegio tiene su propia página de Prevención Salud con la información del convenio; la validación se hace en la autogestión de prestadores.",
-    sitioCmc: "/prevencion-salud",
+      "Las prestaciones se cargan desde el panel subiendo el reporte de facturación de Prevención Salud.",
+    // El backend todavía no conoce la 103: `obras.POR_NRO` no la tiene, así que
+    // `POST /prestaciones` responde 422. El número está acá para identificarla
+    // y para que la pantalla de carga por archivo lo tenga a mano el día que
+    // exista el import; la carga real sigue sin implementarse.
+    cargaImplementada: false,
+    rutaPanel: "/panel/validaciones/prevencion-salud",
     url: "https://autogestionprestadores.prevencionsalud.com.ar/Validations/AuthorizationRequest",
   },
   {
@@ -407,6 +412,7 @@ export const OBRAS_EXTERNAS = OBRAS_SOCIALES.filter((os) => os.modo === "externa
 export const destinoObraSocial = (
   os: ObraSocialConfig
 ): { href: string; tipo: "panel" | "cmc" | "portal" } => {
+  if (os.rutaPanel) return { href: os.rutaPanel, tipo: "panel" };
   if (os.modo === "integrada")
     return { href: `/panel/validaciones/${os.slug}`, tipo: "panel" };
   if (os.sitioCmc) return { href: os.sitioCmc, tipo: "cmc" };

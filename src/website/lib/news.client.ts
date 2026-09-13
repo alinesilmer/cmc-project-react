@@ -22,6 +22,12 @@ type CreateFields = {
   publicada?: boolean;
   autor?: string;
   badge?: string;
+  /**
+   * NRO_OBRASOCIAL alcanzados por la noticia (normas operativas). Viaja como
+   * CSV porque el alta es `multipart/form-data`, no JSON. Un array vacío
+   * desasocia todas; omitir el campo deja lo que ya estaba.
+   */
+  obrasSociales?: number[];
 };
 
 type UpdateFields = Partial<CreateFields>;
@@ -52,6 +58,9 @@ export async function createNews(fields: CreateFields, opts?: SaveOptions) {
   }
   if (fields.autor) fd.append("autor", fields.autor);
   if (fields.badge !== undefined) fd.append("badge", fields.badge);
+  if (fields.obrasSociales !== undefined) {
+    fd.append("obras_sociales", fields.obrasSociales.join(","));
+  }
 
   if (opts?.portada) fd.append("portada", opts.portada);
   (opts?.adjuntos ?? []).forEach((f) => fd.append("adjuntos", f));
@@ -74,6 +83,9 @@ export async function updateNews(
     fd.append("publicada", String(!!fields.publicada));
   if (fields.autor !== undefined) fd.append("autor", fields.autor || "");
   if (fields.badge !== undefined) fd.append("badge", fields.badge);
+  if (fields.obrasSociales !== undefined) {
+    fd.append("obras_sociales", fields.obrasSociales.join(","));
+  }
 
   if (opts?.clearPortada) fd.append("limpiar_portada", "true");
   if (opts?.portada) fd.append("portada", opts.portada);

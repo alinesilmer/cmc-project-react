@@ -32,4 +32,6 @@ export interface DocumentoNoticias {
 
 export interface NoticiaDetail extends Noticia {
   documentos: DocumentoNoticias[];
+  /** NRO_OBRASOCIAL alcanzados por la noticia (normas operativas). */
+  obras_sociales?: number[];
 }

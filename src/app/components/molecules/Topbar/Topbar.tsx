@@ -9,13 +9,13 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import {
   Home, DollarSign, ArrowLeftRight, RotateCcw, Wallet, Plus,
-  Users, BookUser, ClipboardPlus, Building2, Newspaper,
+  Users, UserPlus, BookUser, ClipboardPlus, Building2, Newspaper,
   Flower2, FileBoxIcon, CalendarClock, Medal, ClipboardList, HousePlus, History,
-  FileCode2, Search, FileText, Percent, GitMerge, Sigma, TrendingUp,
+  FileCode2, Search, FileText, Percent, Sigma, TrendingUp,
   PencilRuler, ShieldUser, Monitor, Receipt, CalendarDays,
   LogOut, CircleUserRound, ChevronDown, Menu, X, Layers,
-  Smartphone, Gift, Inbox, Megaphone, ShieldCheck, ExternalLink, FileUp,
-  BarChart3,
+  Smartphone, Gift, Inbox, Megaphone, ShieldCheck, ExternalLink,
+  BarChart3, Stethoscope,
 } from "lucide-react";
 
 import styles from "./Topbar.module.scss";
@@ -131,6 +131,7 @@ const TOP_NAV: TopEntry[] = [
         heading: "Socios",
         items: [
           { path: `${base}/users`, icon: BookUser, label: "Listado de Socios", perms: ["medico:leer"] },
+          { path: `${base}/register-socio`, icon: UserPlus, label: "Agregar socio", perms: ["medico:crear"] },
           { path: `${base}/especialidades`, icon: ClipboardPlus, label: "Especialidades", perms: ["catalogo:leer"] },
           { path: `${base}/servicios`, icon: Building2, label: "Servicios", perms: ["medico:leer"] },
         ],
@@ -168,6 +169,12 @@ const TOP_NAV: TopEntry[] = [
     kind: "menu", id: "auditoria", icon: Flower2, label: "Auditoría",
     columns: [
       {
+        heading: "Códigos",
+        items: [
+          { path: `${base}/nomenclador/por-especialidad`, icon: Stethoscope, label: "Códigos por Especialidad", perms: ["nomenclador:leer"] },
+        ],
+      },
+      {
         heading: "Boletín",
         items: [
           { path: `${base}/boletin-consulta-comun`, icon: FileBoxIcon, label: "Boletín Mensual", perms: ["catalogo:leer"] },
@@ -177,7 +184,7 @@ const TOP_NAV: TopEntry[] = [
       {
         heading: "Convenios",
         items: [
-          { path: `${base}/convenios/planillas`, icon: FileText, label: "Planillas de Consulta", perms: ["catalogo:editar"] },
+          { path: `${base}/convenios/planillas`, icon: FileText, label: "Planillas de Consulta", perms: ["contenido:editar"] },
           { path: `${base}/convenios/obras-sociales`, icon: ClipboardList, label: "Listado de Obras Sociales", perms: ["catalogo:leer"] },
           { path: `${base}/convenios/obras-sociales/alta`, icon: HousePlus, label: "Alta Obra Social", perms: ["catalogo:editar"] },
           { path: `${base}/historial-valores`, icon: History, label: "Historial de Valores", perms: ["nomenclador:leer"] },
@@ -195,16 +202,13 @@ const TOP_NAV: TopEntry[] = [
           { path: `${base}/nomenclador/codigos`, icon: FileCode2, label: "Catálogo Códigos CMC", perms: ["nomenclador:leer"] },
           { path: `${base}/nomenclador/por-obra-social`, icon: Building2, label: "Por Obra Social", perms: ["nomenclador:leer"] },
           { path: `${base}/nomenclador/consulta-valores`, icon: Search, label: "Consulta de Valores", perms: ["nomenclador:leer"] },
-          { path: `${base}/nomenclador/importar-precios-pdf`, icon: FileText, label: "Importar Precios PDF", perms: ["nomenclador:masivo"] },
           { path: `${base}/nomenclador/aumento-porcentual`, icon: Percent, label: "Aumento Porcentual", perms: ["nomenclador:masivo"] },
-          { path: `${base}/nomenclador/homologador`, icon: GitMerge, label: "Homologador", perms: ["nomenclador:leer"] },
         ],
       },
       {
         heading: "Galenos",
         items: [
           { path: `${base}/nomenclador/galenos`, icon: Sigma, label: "Galenos", perms: ["nomenclador:leer"] },
-          { path: `${base}/nomenclador/galenos/importar`, icon: FileUp, label: "Importar Galenos", perms: ["nomenclador:masivo"] },
           { path: `${base}/nomenclador/actualizar-precios`, icon: TrendingUp, label: "Actualizar Unidades", perms: ["nomenclador:editar"] },
         ],
       },

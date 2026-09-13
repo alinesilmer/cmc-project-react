@@ -16,11 +16,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import styles from "./Homologador.module.scss";
 import ConfirmModal from "../../../components/atoms/ConfirmModal/ConfirmModal";
 import { listHomologaciones, createHomologacion, deleteHomologacion } from "./homologador.api";
-import { listObrasSociales } from "../../ObrasSociales/obrasSociales.api";
 import { listNomenclador } from "../nomenclador.api";
 import type { HomologadorOut } from "./homologador.types";
 import type { NomencladorOut } from "../nomenclador.types";
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
+import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -50,11 +50,7 @@ export default function Homologador() {
 
   // ── Data ──────────────────────────────────────────────────────────────────
 
-  const { data: osList = [] } = useQuery({
-    queryKey: ["obras-sociales"],
-    queryFn: () => listObrasSociales(),
-    staleTime: 10 * 60 * 1000,
-  });
+  const { data: osList = [] } = useObrasSociales();
 
   const osNro = selectedOS?.nro_obra_social ?? null;
 

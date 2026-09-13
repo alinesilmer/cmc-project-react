@@ -14,9 +14,9 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
 
 import styles from "./ActualizarPreciosGalenos.module.scss";
+import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import { hoyISO } from "../../../lib/fechas";
 import { compararGalenos } from "../nomenclador.helpers";
 import {
@@ -24,7 +24,6 @@ import {
   actualizarPrecioGaleno,
   actualizarPrecioMasivoGaleno,
 } from "../nomenclador.api";
-import { listObrasSociales } from "../../ObrasSociales/obrasSociales.api";
 import type { GalenoOut } from "../nomenclador.types";
 import ConfirmModal from "../../../components/atoms/ConfirmModal/ConfirmModal";
 
@@ -102,11 +101,7 @@ export default function ActualizarPreciosGalenos() {
   const [saveResults, setSaveResults] = useState<SaveResult[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const { data: osList = [] } = useQuery({
-    queryKey: ["obras-sociales"],
-    queryFn: () => listObrasSociales(),
-    staleTime: 10 * 60 * 1000,
-  });
+  const { data: osList = [] } = useObrasSociales();
 
   const loadGalenos = useCallback(async (osNro: number) => {
     setLoadingOs(true);

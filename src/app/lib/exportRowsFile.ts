@@ -179,9 +179,13 @@ export async function exportRowsFile(args: {
   const headerRowIdx = 4;
   const startCol = 1;
 
+  // El setter de `Row.values` de ExcelJS aplica `offset = 1` cuando el array
+  // tiene índice 0, así que un array contiguo arranca en la columna A. Con
+  // `[undefined, ...headers]` la tabla arrancaba en B y quedaba desalineada del
+  // autofiltro y de los anchos, que sí se aplican desde la columna 1.
   const headers = cols.map((c) => LABELS[c] ?? c);
   const headerRow = ws.getRow(headerRowIdx);
-  headerRow.values = [undefined, ...headers];
+  headerRow.values = headers;
   headerRow.font = { bold: true };
   headerRow.alignment = { vertical: "middle" };
   headerRow.height = 18;
@@ -190,8 +194,9 @@ export async function exportRowsFile(args: {
 
   for (let i = 0; i < rows.length; i++) {
     const r = rows[i];
-    const values = cols.map((c) => pickValue(r, c, especialidadMap));
-    ws.getRow(dataStartRow + i).values = [undefined, ...values];
+    ws.getRow(dataStartRow + i).values = cols.map((c) =>
+      pickValue(r, c, especialidadMap)
+    );
   }
 
   const lastColLetter = colToLetter(cols.length);

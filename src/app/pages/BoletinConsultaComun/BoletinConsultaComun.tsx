@@ -1,7 +1,16 @@
 "use client";
 
 import { Fragment, useCallback, useMemo, useRef, useState } from "react";
-import { FileDown, Pencil, Plus, RefreshCcw, Search, X } from "lucide-react";
+import {
+  ExternalLink,
+  FileDown,
+  FileText,
+  Pencil,
+  Plus,
+  RefreshCcw,
+  Search,
+  X,
+} from "lucide-react";
 
 import styles from "./BoletinConsultaComun.module.scss";
 import Button from "../../components/atoms/Button/Button";
@@ -24,6 +33,7 @@ import { generateConsultaComunExcel } from "./boletinConsultaComun.excel";
 import { useConsultaComunQuery } from "./useConsultaComunQuery";
 import { useGalenoQuery } from "./useGalenoQuery";
 import { useObservaciones } from "./useObservaciones";
+import { urlNorma, useNormasOperativas } from "./useNormasOperativas";
 import { formatApiDate } from "./boletinConsultaComun.helpers";
 import type { GalenoValues } from "./boletinConsultaComun.types";
 
@@ -101,6 +111,8 @@ export default function BoletinConsultaComun() {
     isSavingTemplate,
   } = useObservaciones();
 
+  const { normasPorOS } = useNormasOperativas();
+
   const filteredItems = useMemo(
     () =>
       data.filter(
@@ -175,7 +187,7 @@ export default function BoletinConsultaComun() {
     setExportError(null);
     setIsGeneratingPdf(true);
     try {
-      await generateConsultaComunPdf(dataForExport);
+      await generateConsultaComunPdf(dataForExport, normasPorOS);
     } catch (err) {
       setExportError(
         err instanceof Error
@@ -185,7 +197,7 @@ export default function BoletinConsultaComun() {
     } finally {
       setIsGeneratingPdf(false);
     }
-  }, [dataForExport, isGeneratingPdf]);
+  }, [dataForExport, normasPorOS, isGeneratingPdf]);
 
   const handleDownloadExcel = useCallback(async () => {
     if (dataForExport.length === 0 || isGeneratingExcel) return;
@@ -480,6 +492,11 @@ export default function BoletinConsultaComun() {
                   }
 
                   const hasObs = Boolean(observaciones[item.nro]);
+                  const normas = normasPorOS.get(item.nro) ?? [];
+                  // La fila se despliega si hay observación **o** normas: una
+                  // obra social puede tener sólo normas y ahí el "—" escondía
+                  // que había algo para leer.
+                  const hasDetalle = hasObs || normas.length > 0;
                   const isViewingObs = viewingObsNro === item.nro;
 
                   return (
@@ -494,14 +511,32 @@ export default function BoletinConsultaComun() {
                           {formatApiDate(item.fechaCambio)}
                         </TableCell>
                         <TableCell className={styles.obsCell}>
-                          {hasObs ? (
+                          {hasDetalle ? (
                             <button
                               className={`${styles.obsBadge} ${isViewingObs ? styles.obsBadgeActive : ""}`}
                               onClick={() => handleToggleObsView(item.nro)}
                               disabled={editingNro !== null}
-                              title={isViewingObs ? "Cerrar observación" : "Ver observación"}
+                              title={
+                                isViewingObs
+                                  ? "Cerrar"
+                                  : normas.length > 0
+                                    ? `Ver observación y ${normas.length} norma(s) operativa(s)`
+                                    : "Ver observación"
+                              }
                             >
-                              {isViewingObs ? "Cerrar" : "Ver"}
+                              {isViewingObs ? (
+                                "Cerrar"
+                              ) : (
+                                <>
+                                  Ver
+                                  {normas.length > 0 && (
+                                    <span className={styles.normasCount}>
+                                      <FileText size={12} />
+                                      {normas.length}
+                                    </span>
+                                  )}
+                                </>
+                              )}
                             </button>
                           ) : (
                             <span className={styles.obsBadgeEmpty}>—</span>
@@ -520,23 +555,25 @@ export default function BoletinConsultaComun() {
                         </TableCell>
                       </TableRow>
 
-                      {isViewingObs && hasObs && (
+                      {isViewingObs && hasDetalle && (
                         <TableRow>
                           <TableCell colSpan={6} className={styles.obsViewCell}>
                             <div className={styles.obsViewInner}>
                               <div className={styles.obsViewToolbar}>
                                 <span className={styles.obsViewTitle}>
-                                  Observación · {item.nombre}
+                                  {hasObs ? "Observación" : "Normas operativas"} ·{" "}
+                                  {item.nombre}
                                 </span>
                                 <button
                                   className={styles.obsViewEditBtn}
                                   onClick={() => handleEdit(item.nro)}
                                 >
                                   <Pencil size={13} />
-                                  Editar
+                                  {hasObs ? "Editar" : "Agregar observación"}
                                 </button>
                               </div>
 
+                              {hasObs && (
                               <div className={styles.obsBlock}>
                                 {parseObsLines(observaciones[item.nro] ?? "").map(
                                   (line, i) =>
@@ -558,6 +595,33 @@ export default function BoletinConsultaComun() {
                                     )
                                 )}
                               </div>
+                              )}
+
+                              {normas.length > 0 && (
+                                <div className={styles.normasBlock}>
+                                  <span className={styles.obsViewTitle}>
+                                    Normas operativas
+                                  </span>
+                                  {normas.map((norma) => (
+                                    <a
+                                      key={norma.id}
+                                      className={styles.normaItem}
+                                      href={urlNorma(norma.id)}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                    >
+                                      <FileText size={15} />
+                                      <span className={styles.normaTitulo}>
+                                        {norma.titulo}
+                                      </span>
+                                      <span className={styles.normaFecha}>
+                                        {formatApiDate(norma.fecha)}
+                                      </span>
+                                      <ExternalLink size={13} />
+                                    </a>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>

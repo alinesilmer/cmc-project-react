@@ -1,0 +1,294 @@
+@use "@/app/styles/all.scss" as *;
+
+.container {
+  padding: $spacing-8;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-5;
+  min-height: 100%;
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-5;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-4;
+  }
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  align-self: flex-start;
+  font-size: $font-size-sm;
+  color: $gray-500;
+  text-decoration: none;
+
+  &:hover {
+    color: $primary-blue;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+}
+
+.headerIcon {
+  color: $primary-blue;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+  margin: 0;
+  line-height: 1.2;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-2xl;
+  }
+}
+
+.subtitle {
+  font-size: $font-size-sm;
+  color: $gray-500;
+  margin: $spacing-1 0 0;
+  max-width: 62ch;
+}
+
+// ─── Carga del archivo ────────────────────────────────────────────────────────
+
+.uploader {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  flex-wrap: wrap;
+}
+
+.fileInput {
+  display: none;
+}
+
+.archivo {
+  font-size: $font-size-sm;
+  color: $gray-700;
+}
+
+.limpiar {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: $font-size-sm;
+  color: $gray-500;
+
+  &:hover {
+    color: $danger-red;
+  }
+}
+
+.error {
+  margin: 0;
+  padding: $spacing-3 $spacing-4;
+  border-radius: $border-radius-lg;
+  background: rgba($danger-red, 0.08);
+  border: 1px solid rgba($danger-red, 0.25);
+  color: $danger-red;
+  font-size: $font-size-sm;
+}
+
+.aviso,
+.pendiente {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin: 0;
+  padding: $spacing-3 $spacing-4;
+  border-radius: $border-radius-lg;
+  font-size: $font-size-sm;
+  background: rgba($warning-orange, 0.08);
+  border: 1px solid rgba($warning-orange, 0.25);
+  color: $gray-800;
+
+  svg {
+    flex-shrink: 0;
+    color: $warning-orange;
+  }
+}
+
+// ─── Resumen del reporte ──────────────────────────────────────────────────────
+
+.resumen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-3;
+}
+
+.dato {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  min-width: 7rem;
+  padding: $spacing-3 $spacing-4;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-lg;
+
+  strong {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    color: $gray-900;
+    font-variant-numeric: tabular-nums;
+  }
+
+  span {
+    font-size: $font-size-xs;
+    color: $gray-500;
+  }
+}
+
+.datoAlerta {
+  border-color: rgba($warning-orange, 0.4);
+
+  strong {
+    color: $warning-orange;
+  }
+}
+
+.filtro {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  align-self: flex-start;
+  font-size: $font-size-sm;
+  color: $gray-700;
+  cursor: pointer;
+}
+
+// ─── Tabla ────────────────────────────────────────────────────────────────────
+
+.tableWrap {
+  overflow-x: auto;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-sm;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: $font-size-sm;
+  white-space: nowrap;
+
+  th,
+  td {
+    padding: $spacing-3 $spacing-4;
+    text-align: left;
+    border-bottom: 1px solid $gray-200;
+  }
+
+  thead th {
+    position: sticky;
+    top: 0;
+    background: $gray-50;
+    color: $gray-600;
+    font-weight: $font-weight-semibold;
+  }
+
+  tbody tr:hover {
+    background: rgba($primary-blue, 0.04);
+  }
+
+  tbody td {
+    color: $gray-800;
+  }
+
+  tfoot td {
+    background: $gray-50;
+    font-weight: $font-weight-semibold;
+    color: $gray-900;
+    border-bottom: none;
+  }
+}
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/** Fila que la obra social no autorizó. */
+.rechazada td {
+  background: rgba($danger-red, 0.05);
+}
+
+/** "2/3" — qué parte de una autorización multi-práctica es esta fila. */
+.parte {
+  margin-left: $spacing-2;
+  padding: 0 $spacing-1;
+  border-radius: $border-radius-sm;
+  background: $gray-100;
+  color: $gray-500;
+  font-size: $font-size-xs;
+  font-variant-numeric: tabular-nums;
+}
+
+/** Las descripciones del nomenclador son largas; es la única columna que corta. */
+.practica {
+  white-space: normal;
+  min-width: 18rem;
+  max-width: 28rem;
+}
+
+.medico {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  white-space: normal;
+  min-width: 14rem;
+}
+
+.meta {
+  font-size: $font-size-xs;
+  color: $gray-500;
+}
+
+.badge {
+  align-self: flex-start;
+  padding: 1px $spacing-2;
+  border-radius: $border-radius-sm;
+  background: rgba($warning-orange, 0.12);
+  color: #b45309;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-12 $spacing-5;
+  background: $white;
+  border: 1px dashed $gray-300;
+  border-radius: $border-radius-lg;
+  color: $gray-500;
+  text-align: center;
+
+  svg {
+    color: $gray-300;
+  }
+
+  p {
+    margin: 0;
+    max-width: 60ch;
+  }
+}

@@ -5,11 +5,9 @@
   flex-direction: column;
   gap: 24px;
   padding: 24px;
-  background:
-    radial-gradient(circle at top right, rgba(49, 92, 184, 0.08), transparent 22%),
-    linear-gradient(180deg, #f7f9fc 0%, #f3f6fb 100%);
+  background: $papel;
   min-height: 100%;
-  color: #243241;
+  color: $tinta;
 }
 
 .hero {
@@ -29,7 +27,7 @@
 
 
 .heroLeft {
-  border-radius: 8px;
+  border-radius: $radio-md;
   padding: 28px;
   display: flex;
   flex-direction: column;
@@ -50,7 +48,7 @@
   gap: 8px;
   min-height: 34px;
   padding: 0 12px;
-  border-radius: 8px;
+  border-radius: $radio-md;
   font-size: 0.88rem;
   font-weight: 700;
   letter-spacing: 0.01em;
@@ -85,7 +83,7 @@
 }
 
 .contactCard {
-  border-radius: 8px;
+  border-radius: $radio-md;
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -121,7 +119,7 @@
 }
 
 .panel {
-  border-radius: 8px;
+  border-radius: $radio-md;
   padding: 24px;
 }
 
@@ -168,7 +166,7 @@
 }
 
 .metaCard {
-  border-radius: 8px;
+  border-radius: $radio-md;
   padding: 16px 18px;
   border: 1px solid $gray-300;
 }
@@ -204,7 +202,7 @@
 .searchInput {
   width: 100%;
   height: 48px;
-  border-radius: 8px;
+  border-radius: $radio-md;
   border: 1px solid #d8e0eb;
   background: #fff;
   padding: 0 16px 0 42px;
@@ -230,7 +228,7 @@
 .errorBox,
 .emptyBox,
 .resultsBar {
-  border-radius: 16px;
+  border-radius: $radio-lg;
   padding: 14px 16px;
 }
 
@@ -247,7 +245,7 @@
 .loader {
   width: 18px;
   height: 18px;
-  border-radius: 999px;
+  border-radius: $radio-sm;
   border: 2px solid rgba(49, 92, 184, 0.18);
   border-top-color: #315cb8;
   animation: spin 0.9s linear infinite;
@@ -285,7 +283,7 @@
 
 .tableWrapper {
   overflow: auto;
-  border-radius: 8px;
+  border-radius: $radio-md;
   border: 1px solid #dce4ef;
   background: #fff;
 }
@@ -378,7 +376,7 @@
   min-width: 50px;
   height: 28px;
   padding: 0 10px;
-  border-radius: 999px;
+  border-radius: $radio-sm;
   font-size: 0.82rem;
   font-weight: 700;
 }
@@ -451,7 +449,7 @@
   align-items: center;
   gap: 5px;
   padding: 4px 12px;
-  border-radius: 8px;
+  border-radius: $radio-md;
   border: 1px solid rgba(49, 92, 184, 0.3);
   background: rgba(49, 92, 184, 0.07);
   color: #264b92;
@@ -476,7 +474,7 @@
 .obsItem,
 .obsItemPlain {
   padding: 11px 16px;
-  border-radius: 8px;
+  border-radius: $radio-md;
   background: #fff;
   border: 1px solid #e4eaf3;
 }
@@ -514,7 +512,7 @@
 .templatesSection {
   margin-bottom: 20px;
   padding: 16px 18px;
-  border-radius: 8px;
+  border-radius: $radio-md;
   background: #f8fafc;
   border: 1px solid $gray-300;
 }
@@ -550,7 +548,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0;
-  border-radius: 8px;
+  border-radius: $radio-md;
   border: 1px solid rgba(49, 92, 184, 0.22);
   background: rgba(49, 92, 184, 0.07);
   overflow: hidden;
@@ -609,7 +607,7 @@
 .addTemplateInput {
   flex: 1;
   height: 38px;
-  border-radius: 8px;
+  border-radius: $radio-md;
   border: 1px solid #d8e0eb;
   background: #fff;
   padding: 0 14px;
@@ -642,7 +640,7 @@
   gap: 6px;
   height: 38px;
   padding: 0 16px;
-  border-radius: 8px;
+  border-radius: $radio-md;
   border: 1px solid rgba(49, 92, 184, 0.28);
   background: rgba(49, 92, 184, 0.08);
   color: #264b92;
@@ -687,7 +685,7 @@
 .inlineTemplateChip {
   background: #fff;
   border: 1px solid rgba(49, 92, 184, 0.25);
-  border-radius: 8px;
+  border-radius: $radio-md;
   padding: 4px 12px;
   font-size: 0.83rem;
   font-family: inherit;
@@ -724,7 +722,7 @@
   cursor: pointer;
   padding: 5px 7px;
   color: #7b8798;
-  border-radius: 8px;
+  border-radius: $radio-md;
   display: inline-flex;
   align-items: center;
   transition:
@@ -756,7 +754,7 @@
 
 .obsTextarea {
   width: 100%;
-  border-radius: 8px;
+  border-radius: $radio-md;
   border: 1px solid #c6d5ee;
   padding: 10px 14px;
   font-size: 0.93rem;
@@ -828,7 +826,7 @@
   .contactCard,
   .panel {
     padding: 18px;
-    border-radius: 20px;
+    border-radius: $radio-lg;
   }
 
   .panelTop {
@@ -853,4 +851,63 @@
     flex-direction: column;
     align-items: flex-start;
   }
+}
+/* ── Normas operativas (noticias asociadas a la obra social) ──── */
+
+/* Contador dentro del badge "Ver": avisa que además de la observación hay
+   normas, sin agregar una columna a una tabla que ya va justa de ancho. */
+.normasCount {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 6px;
+  padding-left: 6px;
+  border-left: 1px solid currentColor;
+  font-size: 0.76rem;
+}
+
+.normasBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.normaItem {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 14px;
+  border-radius: $radio-md;
+  background: #fff;
+  border: 1px solid #e4eaf3;
+  border-left: 3px solid #b06a1f;
+  color: #243241;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    background: #fffaf3;
+    border-color: #e4d3bd;
+    border-left-color: #b06a1f;
+  }
+
+  svg {
+    flex-shrink: 0;
+    color: #b06a1f;
+  }
+}
+
+.normaTitulo {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.normaFecha {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  color: #667085;
 }

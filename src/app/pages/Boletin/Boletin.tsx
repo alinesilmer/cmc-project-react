@@ -7,6 +7,7 @@ import styles from "./Boletin.module.scss";
 import Button from "../../components/atoms/Button/Button";
 import logo from "../../assets/logoCMC.png";
 import { http } from "../../lib/http";
+import { paginar } from "../../lib/paginar";
 
 type ApiBoletinRow = {
   id: number;
@@ -103,22 +104,22 @@ function normalizeRow(r: any): ApiBoletinRow {
   };
 }
 
+const BOLETIN_PAGE = 500;
+
+// El `while (true)` que había acá no tenía techo: si el backend devolvía
+// siempre páginas completas, el navegador quedaba pidiendo para siempre.
+// `paginar` corta a las 100 páginas y además pide de a cuatro.
 async function fetchValoresBoletin(codigo: string): Promise<ApiBoletinRow[]> {
-  const all: ApiBoletinRow[] = [];
-  let page = 1;
-  const size = 500;
-
-  while (true) {
-    const { data } = await http.get(ENDPOINTS.valoresBoletin, {
-      params: { codigo, page, size },
-    });
-    const arr = Array.isArray(data) ? data : [];
-    all.push(...arr.map(normalizeRow));
-    if (arr.length < size) break;
-    page++;
-  }
-
-  return all;
+  const filas = await paginar(
+    async (page) => {
+      const { data } = await http.get(ENDPOINTS.valoresBoletin, {
+        params: { codigo, page, size: BOLETIN_PAGE },
+      });
+      return Array.isArray(data) ? data : [];
+    },
+    { size: BOLETIN_PAGE },
+  );
+  return filas.map(normalizeRow);
 }
 
 function buildLatestPerOS(rows: ApiBoletinRow[]): RankedOS[] {
@@ -194,11 +195,8 @@ async function exportRankingToExcel(items: RankedEntry[]) {
   }));
 
   try {
-    const xlsx = await import("xlsx");
-    const ws = xlsx.utils.json_to_sheet(rows);
-    const wb = xlsx.utils.book_new();
-    xlsx.utils.book_append_sheet(wb, ws, "Ranking");
-    xlsx.writeFile(wb, "ranking_obras_sociales.xlsx");
+    const { downloadExcelSheet } = await import("../../lib/excelExport");
+    await downloadExcelSheet("ranking_obras_sociales.xlsx", "Ranking", rows);
     return;
   } catch {
     const header = ["Ranking", "N° Obra Social", "Obra Social", "Importe"];

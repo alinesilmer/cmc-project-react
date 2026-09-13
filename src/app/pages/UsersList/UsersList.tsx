@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState, useRef } from "react";
 import styles from "./UsersList.module.scss";
 import { getJSON } from "../../lib/http";
 import Button from "../../components/atoms/Button/Button";
-import BackButton from "../../components/atoms/BackButton/BackButton";
 import Modal from "../../components/atoms/Modal/Modal";
 import FilterModal from "../../components/molecules/FilterModal/FilterModal";
 import { useNavigate } from "react-router-dom";
@@ -799,13 +798,9 @@ const UsersList: React.FC = () => {
           <p className={styles.subtitle}>Gestión de médicos asociados</p>
         </div>
         <div className={styles.headerActions}>
-          <BackButton />
           {/* Control de calidad del padrón: sólo lectura, no modifica datos. */}
           <Button variant="ghost" onClick={() => navigate("/panel/users/auditoria")}>
             Control de datos
-          </Button>
-          <Button variant="secondary" onClick={() => navigate("/panel/register-socio")}>
-            Agregar socio
           </Button>
           <Button onClick={() => setIsExportOpen(true)}>Filtrar y Exportar</Button>
         </div>

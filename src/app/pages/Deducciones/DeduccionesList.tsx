@@ -295,7 +295,7 @@ const DeduccionesList: React.FC = () => {
 
   const exportExcel = async () => {
     try {
-      const XLSX = await import("xlsx");
+      const { downloadExcelSheet } = await import("../../lib/excelExport");
       const data = await fetchDeduccionesHistorialExport(buildExportParams());
       const rows = data.map((row) => ({
         Medico: row.medico_nombre,
@@ -309,10 +309,7 @@ const DeduccionesList: React.FC = () => {
         Estado: row.estado,
         Origen: row.origen,
       }));
-      const ws = XLSX.utils.json_to_sheet(rows);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Deducciones");
-      XLSX.writeFile(wb, "deducciones.xlsx");
+      await downloadExcelSheet("deducciones.xlsx", "Deducciones", rows);
     } catch (e: any) {
       notify(getErrorMessage(e, "No se pudo exportar a Excel."), "error");
     }

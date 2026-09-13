@@ -110,6 +110,12 @@ export interface ObraSocialConfig {
    * sobre `url` a la hora de ofrecer el acceso.
    */
   sitioCmc?: string;
+  /**
+   * Pantalla propia dentro del panel para una obra social que no usa el
+   * formulario genérico (hoy Prevención Salud, que se carga por archivo).
+   * Tiene prioridad sobre `sitioCmc` y `url`.
+   */
+  rutaPanel?: string;
   campos?: CampoConfig[];
   /** Cantidad de códigos de prestación que admite una misma autorización. */
   maxCodigos?: number;

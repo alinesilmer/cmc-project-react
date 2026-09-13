@@ -1,0 +1,163 @@
+@use "@/app/styles/all.scss" as *;
+
+/* Aranceles — las prácticas del médico con el valor vigente de una obra social.
+ * Comparte todo lo estructural con el resto del nomenclador vía
+ * `_superficies.scss`; acá queda solo el armado de los controles. */
+
+.page { @extend %pantalla; }
+.inner { @extend %contenido; }
+.srOnly { @extend %oculto-visual; }
+
+// ── Encabezado ────────────────────────────────────────────────────────────────
+.pagehead { @extend %encabezado; }
+.pageTitle { @extend %titulo; }
+.pageSub { @extend %subtitulo; }
+
+// ── Controles ─────────────────────────────────────────────────────────────────
+.controls {
+  display: grid;
+  grid-template-columns: 384px 1fr;
+  gap: $spacing-5;
+  align-items: end;
+  margin-bottom: $spacing-4;
+
+  @media (max-width: $breakpoint-lg) {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+}
+
+.osField {
+  min-width: 0;
+
+  // El Combobox arrastra su propio margen inferior (viene de apilarse en la
+  // columna de consulta-precios). Acá va al lado del buscador, así que ese
+  // margen es justo lo que desalineaba las dos cajas.
+  > div { margin-bottom: 0; }
+}
+
+.tools {
+  display: flex;
+  gap: $spacing-2;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.searchBox {
+  @extend %buscador;
+  flex: 1 1 260px;
+}
+.searchIcon { @extend %buscador-icono; }
+.searchInput { @extend %buscador-campo; }
+.searchClear { @extend %buscador-limpiar; }
+.searchBox:focus-within .searchIcon { color: $acento; }
+
+.viaToggle { @extend %grupo-opciones; }
+.viaBtn { @extend %opcion; }
+.viaBtnOn { @extend %opcion-activa; }
+
+// ── Tabla ─────────────────────────────────────────────────────────────────────
+.tableWrap { @extend %tarjeta-flotante; }
+.tableScroll { overflow-x: auto; }
+.table { @extend %tabla; }
+.row { @extend %fila; }
+
+.cCodigo { @extend %codigo; }
+
+.cDesc {
+  min-width: 24ch;
+  color: $tinta-2;
+  line-height: 1.35;
+}
+
+.cNum { @extend %celda-numero; }
+.cTotal { @extend %celda-total; }
+.dash { @extend %guion; }
+.nivelChip { @extend %pastilla-numero; }
+
+.presupuesto {
+  @extend %etiqueta;
+  @extend %tono-alerta;
+  text-transform: uppercase;
+}
+
+// ── Ver más y estados ─────────────────────────────────────────────────────────
+.masBtn { @extend %boton-mas; }
+.empty { @extend %estado-vacio; }
+.skeletons { @extend %esqueleto; }
+.skeletonRow { @extend %esqueleto-fila; }
+.errorbox { @extend %estado-error; }
+
+.disclaimer {
+  @extend %estado-aviso;
+  margin-top: $spacing-5;
+}
+
+// En celular la tabla se vuelve una lista de fichas: el código y el total
+// encabezan, el resto baja como chips con su etiqueta.
+@media (max-width: $breakpoint-lg) {
+  .tableScroll { overflow-x: visible; }
+
+  .table thead { display: none; }
+
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+    width: 100%;
+  }
+
+  .row {
+    position: relative;
+    padding: $spacing-3 0 $spacing-2;
+    border-bottom: 1px solid $linea;
+
+    td { border-bottom: none; }
+    td:first-child { box-shadow: none; }
+    &:hover td:first-child { box-shadow: none; }
+  }
+
+  .table td {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: $spacing-4;
+    padding: 2px $spacing-4;
+    text-align: right;
+
+    // Sin `@extend %rotulo`: Sass no deja extender a través de una media query.
+    &::before {
+      content: attr(data-label);
+      flex: 0 0 auto;
+      font-size: $font-size-xs;
+      font-weight: $font-weight-bold;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: $tinta-3;
+    }
+  }
+
+  .cCodigo {
+    font-size: $font-size-xl;
+    justify-content: flex-start;
+
+    &::before { display: none; }
+  }
+
+  .cDesc {
+    display: block;
+    text-align: left;
+    padding-top: 1px;
+    padding-bottom: $spacing-2;
+    font-size: $font-size-base;
+
+    &::before { display: none; }
+  }
+
+  .cTotal {
+    margin-top: $spacing-1;
+    padding-top: $spacing-2;
+    border-top: 1px dashed $linea;
+  }
+}

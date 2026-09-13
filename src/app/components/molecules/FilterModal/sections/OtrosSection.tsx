@@ -39,24 +39,15 @@ export function OtrosSection({
           <div className={styles.otrosGrid}>
             <div className={styles.exportField}>
               <label className={styles.exportLabel}>Sexo</label>
-              <input
-                type="text"
-                className={styles.exportInput}
+              <select
+                className={styles.exportSelect}
                 value={otros.sexo}
                 onChange={(e) => onPatch({ sexo: e.target.value })}
-                placeholder="M / F"
-              />
-            </div>
-
-            <div className={styles.exportField}>
-              <label className={styles.exportLabel}>CUIT</label>
-              <input
-                type="text"
-                className={styles.exportInput}
-                value={otros.cuit}
-                onChange={(e) => onPatch({ cuit: e.target.value })}
-                placeholder="Ej: 20-12345678-9"
-              />
+              >
+                <option value="">Todos</option>
+                <option value="M">Masculino</option>
+                <option value="F">Femenino</option>
+              </select>
             </div>
 
             <div className={styles.exportField}>
@@ -83,17 +74,6 @@ export function OtrosSection({
                 <option value="si">Sí</option>
                 <option value="no">No</option>
               </select>
-            </div>
-
-            <div className={styles.exportField}>
-              <label className={styles.exportLabel}>Provincia</label>
-              <input
-                type="text"
-                className={styles.exportInput}
-                value={otros.provincia}
-                onChange={(e) => onPatch({ provincia: e.target.value })}
-                placeholder="Ej: Corrientes"
-              />
             </div>
 
             <div className={styles.exportField}>

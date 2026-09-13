@@ -21,6 +21,11 @@ export type NomencladorListParams = {
   q?: string;
   categoria?: string;
   complejidad?: string;
+  /**
+   * Acota a lo que ve esa obra social: sus códigos propios + los compartidos del
+   * Colegio. Omitido = catálogo completo (uso administrativo).
+   */
+  obra_social_nro?: number;
   activo?: boolean;
   page?: number;
   size?: number;
