@@ -56,7 +56,7 @@ export const pagarEnCaja = (id: number) =>
   postJSON<DeduccionHistorialItem>(`${DEDUCCIONES_URL}/${id}/pagar`, {});
 
 export const fetchDescuentos = async (): Promise<DescuentoOption[]> => {
-  const raw = await getJSON<any[]>("/api/descuentos");
+  const raw = await getJSON<any[]>("/api/conceptos");
   return (raw ?? [])
     .map((d) => {
       const nro_colegio = String(d?.nro_colegio ?? "").trim();
