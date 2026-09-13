@@ -533,7 +533,7 @@
 
 .hintText {
   font-size: 0.75rem;
-  color: $text-3;
+  color: $gray-500;
   margin: 2px 0 6px;
 }
 
@@ -544,8 +544,8 @@
   max-height: 200px;
   overflow-y: auto;
   padding: 8px 10px;
-  border: 1px solid $border;
-  border-radius: $radius-sm;
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
 }
 
 .checkRow {

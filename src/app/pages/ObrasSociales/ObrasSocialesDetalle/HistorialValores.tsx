@@ -9,7 +9,6 @@ import { useQuery } from "@tanstack/react-query";
 
 import s from "./ObrasSocialesDetalle.module.scss";
 import { abrirAdjunto } from "../../../lib/archivos";
-import { paginar } from "../../../lib/paginar";
 import { downloadExcelSheet } from "../../../lib/excelExport";
 import { useNotify } from "../../../hooks/useNotify";
 import { usePermisos } from "../../../auth/usePermisos";
@@ -83,15 +82,6 @@ function toHistRow(v: ValorOut): HistRow {
   };
 }
 
-// Historial completo de la OS: trae todas las vigencias (activas y cerradas) de
-// /api/valores_nm/, paginando hasta agotar. Cada Valor es una versión de un código.
-const VALORES_PAGE = 200;
-async function fetchHistorialOS(nroOS: number): Promise<HistRow[]> {
-  const filas = await paginar(
-    (page) => listValores({ obra_social_nro: nroOS, page, size: VALORES_PAGE }),
-    { size: VALORES_PAGE },
-  );
-  return filas.map(toHistRow);
 /**
  * Valores de UNA vigencia exacta de la obra social, paginando en tandas de a
  * `CONCURRENCIA` en paralelo.
