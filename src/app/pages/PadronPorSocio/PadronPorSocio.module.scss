@@ -1,0 +1,22 @@
+@use "@/app/styles/all.scss" as *;
+
+.page {
+  padding: $spacing-8;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin: 0;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $primary-blue-dark;
+}
+
+.search {
+  max-width: 520px;
+}

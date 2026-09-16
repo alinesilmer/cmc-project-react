@@ -21,6 +21,7 @@ const ReportesPage = lazy(() => import("./app/pages/Reportes/ReportesPage"));
 const DoctorsPage = lazy(() => import("./app/pages/DoctorsList/DoctorsList"));
 const SocialWorksPage = lazy(() => import("./app/pages/SocialWorkSection/SocialWorkSection"));
 const DoctorProfilePage = lazy(() => import("./app/pages/DoctorProfilePage/DoctorProfilePage"));
+const PadronPorSocio = lazy(() => import("./app/pages/PadronPorSocio/PadronPorSocio"));
 const PadronIoscor = lazy(() => import("./app/pages/PadronIoscor/PadronIoscor"));
 const UsersList = lazy(() => import("./app/pages/UsersList/UsersList"));
 // Control de calidad del padrón: sólo lectura, señala legajos con problemas.
@@ -147,6 +148,7 @@ export default function RootRoutes() {
               <Route element={<RequireScope scope="medico:leer" />}>
                 <Route path="doctors" element={<DoctorsPage />} />
                 <Route path="doctors/:id" element={<DoctorProfilePage />} />
+                <Route path="padron-socio" element={<PadronPorSocio />} />
               </Route>
 
               <Route path="social-works" element={<SocialWorksPage />} />

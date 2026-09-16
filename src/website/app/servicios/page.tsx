@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import { ShieldCheck, Handshake, Home, Receipt, Gift, Images, HeartHandshake } from "lucide-react"
+import { ShieldCheck, Handshake, Home, Images, HeartHandshake } from "lucide-react"
 import styles from "./servicios.module.scss"
 import ServiceCard from "../../components/UI/ServicesCard/ServicesCard";
 import Hero from "../../components/UI/Hero/Hero";

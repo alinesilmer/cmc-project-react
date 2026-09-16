@@ -106,70 +106,6 @@ export type Option = { id: string; label: string }; // id = nro_colegio (para co
 
 export type AssocEspMode = "add" | "edit";
 
-// export type DoctorProfile = {
-//   id: number;
-//   nro_socio?: number | null;
-//   nombre?: string | null;
-//   nombre_?: string | null;
-//   apellido?: string | null;
-//   telefono_consulta?: string | null;
-//   domicilio_consulta?: string | null;
-//   mail_particular?: string | null;
-//   sexo?: string | null;
-//   tipo_doc?: string | null;
-//   documento?: string | null;
-//   cuit?: string | null;
-//   provincia?: string | null;
-//   localidad?: string | null;
-//   domicilio_particular?: string | null;
-//   tele_particular?: string | null;
-//   celular_particular?: string | null;
-//   codigo_postal?: string | null;
-//   categoria?: string | null;
-//   existe?: string | null;
-//   fecha_nac?: string | null;
-//   titulo?: string | null;
-//   fecha_recibido?: string | null;
-//   fecha_matricula?: string | null;
-//   matricula_prov?: string | null;
-//   matricula_nac?: string | null;
-//   nro_resolucion?: string | null;
-//   fecha_resolucion?: string | null;
-//   condicion_impositiva?: string | null;
-//   anssal?: number | null;
-//   vencimiento_anssal?: string | null;
-//   malapraxis?: string | null;
-//   vencimiento_malapraxis?: string | null;
-//   cobertura?: number | null;
-//   vencimiento_cobertura?: string | null;
-//   cbu?: string | null;
-//   observacion?: string | null;
-
-//   // adjuntos unitarios (urls relativas)
-//   attach_titulo?: string | null;
-//   attach_matricula_nac?: string | null;
-//   attach_matricula_prov?: string | null;
-//   attach_resolucion?: string | null;
-//   attach_habilitacion_municipal?: string | null;
-//   attach_cuit?: string | null;
-//   attach_condicion_impositiva?: string | null;
-//   attach_anssal?: string | null;
-//   attach_malapraxis?: string | null;
-//   attach_cbu?: string | null;
-//   attach_dni?: string | null;
-
-//   // agregado en tu endpoint extendido:
-//   especialidades?: Array<{
-//     id_colegio?: number | null;
-//     n_resolucion?: string | null;
-//     fecha_resolucion?: string | null;
-//     adjunto?: string | null;
-//     adjunto_url?: string | null;
-//     especialidad_nombre?: string | null;
-//     id_colegio_label?: string | null;
-//   }>;
-// };
-
 //#region ===== Rutas base =====
 const ESPECIALIDADES = () => `/api/especialidades/`;
 
@@ -318,19 +254,6 @@ export const getEffective = (uid: number | string) =>
 
 // #endregion
 
-/* ===== (Opcional) subir archivo y obtener adjunto_id ===== */
-// export async function uploadDocumento(
-//   file: File,
-//   medicoId: number | string
-// ): Promise<{ id: number }> {
-//   const fd = new FormData();
-//   fd.set("file", file);
-//   fd.set("medico_id", String(medicoId));
-//   // asumimos que ya tenés un endpoint POST /api/documentos
-//   const res = await fetch("/api/documentos", { method: "POST", body: fd });
-//   if (!res.ok) throw new Error("No se pudo subir el archivo");
-//   return res.json();
-// }
 // --- Subir documento (devuelve id) ---
 export const uploadDocumento = async (
   medicoId: string | number,
@@ -365,13 +288,13 @@ export const deleteMedico = (id: string | number) =>
 export const getDocumentoLabels = () =>
   getJSON<string[]>(`/api/medicos/documentos/labels`);
 
-// === NUEVO: eliminar documento ===
+// === eliminar documento ===
 export const deleteMedicoDocumento = (
   medicoId: string | number,
   docId: number | string
 ) => delJSON(`/api/medicos/${medicoId}/documentos/${docId}`);
 
-// === NUEVO: mapear/limpiar campo attach_* del listado_medico ===
+// === mapear/limpiar campo attach_* del listado_medico ===
 // PATCH /api/medicos/:id/attach  body: { field: "attach_titulo", doc_id: 123 | null }
 export const setMedicoAttach = (
   medicoId: string | number,

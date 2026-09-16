@@ -527,7 +527,7 @@ const GenerarBoletin = () => {
       const totalPages = 2 + indexPagesCount + boletinData.length;
       const detailsStartPage = 3 + indexPagesCount;
 
-      const addHeader = (pageNum: number, total: number) => {
+      const addHeader = (_pageNum: number, _total: number) => {
         doc.setDrawColor(...accentColor);
         doc.setLineWidth(0.5);
         doc.line(margin, 25, pageWidth - margin, 25);
@@ -848,7 +848,7 @@ const GenerarBoletin = () => {
           ["Galeno Cirugía Infantil", `$${formatCurrency(os.galenoCirugiaInfantil)}`],
         ];
 
-        // ✅ TABLA A ANCHO COMPLETO (ocupa el espacio restante)
+        // TABLA A ANCHO COMPLETO (ocupa el espacio restante)
         autoTable(doc, {
           startY: currentY,
           body: valuesData,
@@ -868,7 +868,7 @@ const GenerarBoletin = () => {
           alternateRowStyles: { fillColor: [248, 250, 252] },
         });
 
-        /* ✅ COMENTADO (NO ELIMINAR): AUTORIZACIONES
+        /* COMENTADO (NO ELIMINAR): AUTORIZACIONES
         const rightColX = margin + contentWidth / 2 + 5;
         const boxWidth = contentWidth / 2 - 5;
 
@@ -887,7 +887,7 @@ const GenerarBoletin = () => {
         doc.text(autorizacionesLines, rightColX + 5, currentY + 18);
         */
 
-        /* ✅ COMENTADO (NO ELIMINAR): ANEXO IV
+        /* COMENTADO (NO ELIMINAR): ANEXO IV
         const anexoY = currentY + 50;
         doc.setFillColor(...lightGray);
         doc.setTextColor(...primaryColor);
@@ -905,7 +905,7 @@ const GenerarBoletin = () => {
         doc.text(anexoLines, rightColX + 5, anexoY + 18);
         */
 
-        /* ✅ COMENTADO (NO ELIMINAR): INFORMACIÓN ADICIONAL
+        /* COMENTADO (NO ELIMINAR): INFORMACIÓN ADICIONAL
         const addInfoY = 175;
 
         doc.setFillColor(255, 255, 255);
@@ -936,7 +936,7 @@ const GenerarBoletin = () => {
         });
         */
 
-        /* ✅ COMENTADO (NO ELIMINAR): RECORDATORIOS
+        /* COMENTADO (NO ELIMINAR): RECORDATORIOS
         const normasY = addInfoY + 60;
         doc.setFillColor(...lightGray);
         doc.roundedRect(margin, normasY, contentWidth, 30, 3, 3, "F");

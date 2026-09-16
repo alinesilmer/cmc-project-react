@@ -28,6 +28,19 @@ export type GalenoValues = {
   otrosGastos: number;
 };
 
+/** Valores galeno en cero: el boletín legacy no los trae y hay que completarlos. */
+export const ZERO_GALENO: GalenoValues = {
+  quirurgico: 0,
+  practica: 0,
+  radiologico: 0,
+  cirugiaAdultos: 0,
+  cirugiaInfantil: 0,
+  gastosQuirurgicos: 0,
+  gastosRadiologico: 0,
+  gastosBioquimicos: 0,
+  otrosGastos: 0,
+};
+
 export type ConsultaComunItem = {
   nro: number;
   nombre: string;

@@ -11,7 +11,6 @@ import {
   LayoutDashboard,
   LifeBuoy,
   NotebookText,
-  Paperclip,
   ShieldCheck,
   UserCog,
   Users,

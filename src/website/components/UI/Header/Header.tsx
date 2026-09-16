@@ -8,7 +8,7 @@ import { useAuth } from "../../../../app/auth/AuthProvider";
 import { isWebEditor } from "../../../../app/auth/roles";
 import { http } from "../../../../app/lib/http"; 
 
-// === NUEVO: helper para SSO hacia el legacy usando VITE_URL_BASE_LEGACY ===
+// === helper para SSO hacia el legacy usando VITE_URL_BASE_LEGACY ===
 const LEGACY_BASE =
   (import.meta.env.VITE_URL_BASE_LEGACY as string | undefined) ??
   "https://legacy.colegiomedicocorrientes.com"; 

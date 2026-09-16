@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import { getJSON, postJSON, putJSON, patchJSON, delJSON } from "../../../lib/http";
@@ -68,7 +68,8 @@ function SelectableTable<T extends { id: number | string }>({
   const toggleRow = (id: T["id"]) => {
     setSelected((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };

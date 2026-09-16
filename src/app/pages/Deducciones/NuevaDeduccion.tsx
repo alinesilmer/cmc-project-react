@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 
 import Button from "../../components/atoms/Button/Button";
 import Card from "../../components/atoms/Card/Card";
-import AppSearchSelect, { type AppAppSearchSelectOption } from "../../components/atoms/AppSearchSelect/AppSearchSelect";
+import AppSearchSelect, { type AppSearchSelectOption } from "../../components/atoms/AppSearchSelect/AppSearchSelect";
 import { createDeduccion, fetchDescuentos, fetchMedicos, fetchOpenPago } from "./api";
 import { useAppSnackbar } from "../../hooks/useAppSnackbar";
 import { MESES, formatMoney } from "./types";

@@ -9,6 +9,7 @@ import "react-datepicker/dist/react-datepicker.css";
 
 import Card from "../../components/atoms/Card/Card";
 import Button from "../../components/atoms/Button/Button";
+import CopyButton from "../../components/atoms/CopyButton/CopyButton";
 import styles from "./DoctorProfilePage.module.scss";
 
 import RequirePermission from "../../auth/RequirePermission";
@@ -223,6 +224,34 @@ const fmt = (v: any) =>
 // parser las lee como UTC y mostraba el día anterior. Ver src/app/lib/fechas.ts.
 const fmtDate = (s?: string | null) => (s ? formatFecha(s) : "—");
 
+// Valor del legajo con botón de copiar al lado. `copy` es lo que va al
+// portapapeles cuando difiere de lo mostrado (CUIT y CBU se copian sin
+// separadores, que es como los piden los portales y homebanking).
+function Copiable({
+  label,
+  value,
+  copy,
+  enabled,
+  children,
+}: {
+  label: string;
+  value: unknown;
+  copy?: string;
+  enabled: boolean;
+  children: React.ReactNode;
+}) {
+  const texto = copy ?? (isBlankish(value) || isDashish(value) ? "" : String(value).trim());
+  if (!enabled || !texto) return <span>{children}</span>;
+  return (
+    <span className={styles.valueRow}>
+      {children}
+      <CopyButton label={label} value={texto} />
+    </span>
+  );
+}
+
+const soloDigitos = (v: unknown) => (v == null ? "" : String(v).replace(/\D/g, ""));
+
 // Standalone pagador select with own query/options state
 const PagadorSelect: React.FC<{
   value: number | null;
@@ -252,7 +281,11 @@ const PagadorSelect: React.FC<{
       value={value}
       disabled={disabled}
       onQueryChange={setQuery}
-      onChange={onChange}
+      onChange={(val) => {
+        // AppSearchSelect devuelve string | number; acá el pagador es un id numérico.
+        const id = val == null ? null : Number(val);
+        onChange(id != null && Number.isFinite(id) ? id : null);
+      }}
     />
   );
 };
@@ -514,6 +547,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
   useEffect(() => {
     const fromPath = (location.state as any)?.fromPath as string | undefined;
     const cameFromAfiliados =
+      (location.state as any)?.tab === "padrones" ||
       (typeof fromPath === "string" &&
         fromPath.includes("/panel/afiliadospadron")) ||
       sessionStorage.getItem("cmc_open_padrones_next") === "1";
@@ -1127,7 +1161,9 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                             {isEditing ? (
                               RText("documento")
                             ) : (
-                              <span>{fmt((data as any).documento)}</span>
+                              <Copiable label="Documento" value={(data as any).documento} enabled={!readOnly}>
+                                {fmt((data as any).documento)}
+                              </Copiable>
                             )}
                           </div>
                           <div>
@@ -1135,7 +1171,9 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                             {isEditing ? (
                               RText("cuit")
                             ) : (
-                              <span>{fmt((data as any).cuit)}</span>
+                              <Copiable label="CUIT" value={(data as any).cuit} copy={soloDigitos((data as any).cuit)} enabled={!readOnly}>
+                                {fmt((data as any).cuit)}
+                              </Copiable>
                             )}
                           </div>
                           <div>
@@ -1197,9 +1235,9 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                             {isEditing ? (
                               RText("domicilio_particular")
                             ) : (
-                              <span>
+                              <Copiable label="Domicilio" value={(data as any).domicilio_particular} enabled={!readOnly}>
                                 {fmt((data as any).domicilio_particular)}
-                              </span>
+                              </Copiable>
                             )}
                           </div>
                           <div>
@@ -1214,7 +1252,9 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                             {isEditing ? (
                               RText("tele_particular")
                             ) : (
-                              <span>{fmt((data as any).tele_particular)}</span>
+                              <Copiable label="Teléfono" value={(data as any).tele_particular} enabled={!readOnly}>
+                                {fmt((data as any).tele_particular)}
+                              </Copiable>
                             )}
                           </div>
                           <div>
@@ -1229,9 +1269,9 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                             {isEditing ? (
                               RText("celular_particular")
                             ) : (
-                              <span>
+                              <Copiable label="Celular" value={(data as any).celular_particular} enabled={!readOnly}>
                                 {fmt((data as any).celular_particular)}
-                              </span>
+                              </Copiable>
                             )}
                           </div>
 
@@ -1247,16 +1287,18 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                             {isEditing ? (
                               RText("mail_particular")
                             ) : (
-                              <a
-                                className={styles.link}
-                                href={
-                                  (data as any).mail_particular
-                                    ? `mailto:${(data as any).mail_particular}`
-                                    : undefined
-                                }
-                              >
-                                {fmt((data as any).mail_particular)}
-                              </a>
+                              <Copiable label="E-mail" value={(data as any).mail_particular} enabled={!readOnly}>
+                                <a
+                                  className={styles.link}
+                                  href={
+                                    (data as any).mail_particular
+                                      ? `mailto:${(data as any).mail_particular}`
+                                      : undefined
+                                  }
+                                >
+                                  {fmt((data as any).mail_particular)}
+                                </a>
+                              </Copiable>
                             )}
                           </div>
 
@@ -1281,7 +1323,9 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                             {isEditing ? (
                               RText("nro_socio")
                             ) : (
-                              <span>{fmt((data as any).nro_socio)}</span>
+                              <Copiable label="Nº socio" value={(data as any).nro_socio} enabled={!readOnly}>
+                                {fmt((data as any).nro_socio)}
+                              </Copiable>
                             )}
                           </div>
                           <div>
@@ -1305,7 +1349,9 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                             {isEditing ? (
                               RText("matricula_prov")
                             ) : (
-                              <span>{fmt((data as any).matricula_prov)}</span>
+                              <Copiable label="Matrícula provincial" value={(data as any).matricula_prov} enabled={!readOnly}>
+                                {fmt((data as any).matricula_prov)}
+                              </Copiable>
                             )}
                           </div>
                           <div>
@@ -1313,7 +1359,9 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                             {isEditing ? (
                               RText("matricula_nac")
                             ) : (
-                              <span>{fmt((data as any).matricula_nac)}</span>
+                              <Copiable label="Matrícula nacional" value={(data as any).matricula_nac} enabled={!readOnly}>
+                                {fmt((data as any).matricula_nac)}
+                              </Copiable>
                             )}
                           </div>
                           <div>
@@ -1346,7 +1394,9 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                             {isEditing ? (
                               RText("domicilio_consulta")
                             ) : (
-                              <span>{fmt((data as any).domicilio_consulta)}</span>
+                              <Copiable label="Domicilio de consulta" value={(data as any).domicilio_consulta} enabled={!readOnly}>
+                                {fmt((data as any).domicilio_consulta)}
+                              </Copiable>
                             )}
                           </div>
                           <div>
@@ -1361,7 +1411,9 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                             {isEditing ? (
                               RText("telefono_consulta")
                             ) : (
-                              <span>{fmt((data as any).telefono_consulta)}</span>
+                              <Copiable label="Teléfono de consulta" value={(data as any).telefono_consulta} enabled={!readOnly}>
+                                {fmt((data as any).telefono_consulta)}
+                              </Copiable>
                             )}
                           </div>
                         </div>
@@ -1443,7 +1495,9 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                             {isEditing && can("medico:editar_bancario") ? (
                               RText("cbu")
                             ) : (
-                              <span>{fmt((data as any).cbu)}</span>
+                              <Copiable label="CBU" value={(data as any).cbu} copy={soloDigitos((data as any).cbu)} enabled={!readOnly}>
+                                {fmt((data as any).cbu)}
+                              </Copiable>
                             )}
                           </div>
                           <div>

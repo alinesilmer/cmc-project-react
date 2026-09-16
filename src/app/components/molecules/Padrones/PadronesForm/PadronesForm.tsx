@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { saveAs } from "@/app/lib/fileSaver";
@@ -51,7 +49,7 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
   const [pendingOS, setPendingOS] = useState<Set<number>>(new Set());
 
   const [catalog, setCatalog] = useState<ObraSocial[]>([]);
-  const [padrones, setPadrones] = useState<Padron[]>([]);
+  const [, setPadrones] = useState<Padron[]>([]);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const notify = useNotify();
   const opSeqRef = useRef(0);
@@ -128,7 +126,7 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
   // ─────────────────────────────────────────────────────────────
   // TOGGLE (individual)
   // ─────────────────────────────────────────────────────────────
-  async function persistToggle(nroOS: number, willSelect: boolean, osName: string) {
+  async function persistToggle(nroOS: number, willSelect: boolean, _osName: string) {
     setPendingOS((prev) => new Set(prev).add(nroOS));
     const myOp = ++opSeqRef.current;
 
@@ -154,7 +152,7 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
         if (id) s.add(id);
       });
       setSelected(s);
-    } catch (e) {
+    } catch {
       setSelected((prev) => {
         const copy = new Set(prev);
         if (willSelect) copy.delete(nroOS);
@@ -252,7 +250,7 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
 
       if (willSelect) notify.success("Se agregaron las obras sociales.");
       else notify.info("Se quitaron las obras sociales.");
-    } catch (e) {
+    } catch {
       notify.error("No se pudieron aplicar los cambios masivos.");
       setAlertType("error");
       setAlertTitle("No se pudo actualizar");

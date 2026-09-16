@@ -9,11 +9,10 @@ type RetriableConfig = InternalAxiosRequestConfig & {
   __token?: string | null;
 };
 
-// Instancia base
 export const http = axios.create({
   baseURL: API_URL,
   timeout: 15000,
-  withCredentials: true, // 👈 necesario para enviar cookies
+  withCredentials: true, // envía la cookie httpOnly del refresh token
 });
 
 export const httpBare = axios.create({
@@ -54,7 +53,7 @@ http.interceptors.request.use((config: RetriableConfig) => {
   const body = config.data as any;
   const isFD = isFormDataLike(body);
 
-  // ❗ NO pongas application/json si es FormData
+  // Con FormData no se fija Content-Type: el navegador agrega el boundary.
   if (
     !isFD &&
     !config.headers["Content-Type"] &&
@@ -100,7 +99,7 @@ http.interceptors.response.use(
   async (error) => {
     const original = (error.config || {}) as RetriableConfig;
 
-    // ⛔ nada de refrescar si:
+    // No se refresca si no es 401, si ya se reintentó o si falló el propio refresh.
     if (
       error.response?.status !== 401 ||
       original.__retried ||
@@ -161,7 +160,7 @@ export const postJSON = async <T>(
   return data as T;
 };
 
-// 👇 helper para multipart
+// Multipart: sin headers propios (ver interceptor de request).
 export const postForm = async <T = unknown>(
   url: string,
   form: FormData,
@@ -171,7 +170,7 @@ export const postForm = async <T = unknown>(
   return data as T;
 };
 
-// 👇 mismo caso que postForm, para ediciones que pueden reemplazar un archivo
+// Igual que postForm, para ediciones que pueden reemplazar un archivo.
 export const patchForm = async <T = unknown>(
   url: string,
   form: FormData,

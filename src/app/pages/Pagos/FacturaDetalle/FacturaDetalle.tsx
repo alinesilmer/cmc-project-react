@@ -52,8 +52,9 @@ const FacturaDetalle: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(false);
+  // TODO: la paginación no se muestra todavía; solo se reinicia y se calcula.
+  const [, setPage] = useState(1);
+  const [, setHasMore] = useState(false);
 
   const [searchDebounce, setSearchDebounce] = useState("");
   useEffect(() => {

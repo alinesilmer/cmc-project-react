@@ -14,14 +14,6 @@ type MedicoRow = {
   [key: string]: unknown;
 };
 
-function normalizeText(v: unknown): string {
-  return String(v ?? "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .trim();
-}
-
 function pickNombre(row: Record<string, unknown>): string {
   return String(
     row.nombre ?? row.NOMBRE ?? row.apellido_nombre ?? row.APELLIDO_NOMBRE ?? "—"

@@ -10,11 +10,11 @@ type ValidationReason = "type" | "size";
 interface PdfUploadProps {
   label: string;
   required?: boolean;
-  value?: File | null;                 // ⬅️ NUEVO (controlado)
+  value?: File | null;                 // modo controlado
   onFileSelect: (file: File | null) => void;
   error?: string;
   onValidationError?: (reason: ValidationReason) => void;
-  maxMb?: number;                      // ⬅️ opcional (default 20MB)
+  maxMb?: number;                      // opcional (default 20MB)
 }
 
 const DEFAULT_MAX_MB = 20;
@@ -34,7 +34,7 @@ const PdfUpload: React.FC<PdfUploadProps> = ({
   const [showToast, setShowToast] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
 
-  // ⬅️ IDs únicos por instancia (evita colisiones entre inputs)
+  // IDs únicos por instancia (evita colisiones entre inputs)
   const uid = useId();
   const inputId = `file-upload-input-${uid}`;
   const errorId = `file-upload-error-${uid}`;
@@ -43,7 +43,7 @@ const PdfUpload: React.FC<PdfUploadProps> = ({
   const dialogRef = useRef<HTMLDivElement>(null);
   const toastTimeoutRef = useRef<number | null>(null);
 
-  // ⬅️ Sincronizá con la prop controlada
+  // Sincronizá con la prop controlada
   useEffect(() => {
     setSelectedFile(value ?? null);
   }, [value]);
@@ -183,7 +183,7 @@ const PdfUpload: React.FC<PdfUploadProps> = ({
                 id={inputId}
                 ref={fileInputRef}
                 type="file"
-                // ⬅️ PDF + imágenes
+                // PDF + imágenes
                 accept=".pdf,application/pdf,image/*"
                 onChange={handleFileChange}
                 className={styles.hiddenInput}

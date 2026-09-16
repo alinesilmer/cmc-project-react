@@ -40,31 +40,10 @@ type TopEntry =
 
 const base = "/panel";
 
-// Accesos directos a las obras sociales que se validan desde el panel. El
-// catálogo completo (incluidos los portales externos) vive en el hub. Mismo
-// scope que exige la API para todo /api/validaciones/*: `validacion:cargar`.
-const VALIDACIONES_MENU: Extract<TopEntry, { kind: "menu" }> = {
-  kind: "menu", id: "validaciones", icon: ShieldCheck, label: "Validaciones",
-  columns: [
-    {
-      heading: "Validar prestación",
-      items: [
-        { path: `${base}/validaciones/sancor`, icon: ShieldCheck, label: "Sancor Salud", perms: ["validacion:cargar"] },
-        { path: `${base}/validaciones/ospjn`, icon: ShieldCheck, label: "OSPJN · Judicial", perms: ["validacion:cargar"] },
-        { path: `${base}/validaciones/nobis`, icon: ShieldCheck, label: "Nobis Salud", perms: ["validacion:cargar"] },
-        { path: `${base}/validaciones/ospm`, icon: ShieldCheck, label: "OSPM", perms: ["validacion:cargar"] },
-      ],
-    },
-    {
-      heading: "Carga de prestaciones",
-      items: [
-        { path: `${base}/validaciones/omint`, icon: ClipboardList, label: "Omint" },
-        { path: `${base}/validaciones/boreal`, icon: ClipboardList, label: "Boreal Salud" },
-        { path: `${base}/validaciones`, icon: ShieldCheck, label: "Ver todas" },
-        { path: `${base}/validaciones/portales`, icon: ExternalLink, label: "Portales de obras sociales" },
-      ],
-    },
-  ],
+// Va directo al hub: el catálogo de obras sociales (y los portales externos)
+// vive ahí, sin accesos directos en la barra.
+const VALIDACIONES_LINK: Extract<TopEntry, { kind: "link" }> = {
+  kind: "link", path: `${base}/validaciones`, icon: ShieldCheck, label: "Validaciones",
 };
 
 // TEMPORAL — atajos para revisar el portal del socio desde una cuenta admin.
@@ -91,7 +70,7 @@ const VISTA_MEDICO_MENU: Extract<TopEntry, { kind: "menu" }> = {
 
 const TOP_NAV: TopEntry[] = [
   { kind: "link", path: `${base}/dashboard`, icon: Home, label: "Inicio" },
-  VALIDACIONES_MENU,
+  VALIDACIONES_LINK,
   {
     kind: "menu", id: "facturacion", icon: Receipt, label: "Facturación",
     columns: [
@@ -143,6 +122,7 @@ const TOP_NAV: TopEntry[] = [
         heading: "Padrones",
         items: [
           { path: `${base}/afiliadospadron`, icon: Newspaper, label: "Padrones", perms: ["padron:leer"] },
+          { path: `${base}/padron-socio`, icon: BookUser, label: "Padrón por Socio", perms: ["medico:leer"] },
         ],
       },
     ],
@@ -172,16 +152,11 @@ const TOP_NAV: TopEntry[] = [
     kind: "menu", id: "auditoria", icon: Flower2, label: "Auditoría",
     columns: [
       {
-        heading: "Códigos",
-        items: [
-          { path: `${base}/nomenclador/por-especialidad`, icon: Stethoscope, label: "Códigos por Especialidad", perms: ["nomenclador:leer"] },
-        ],
-      },
-      {
         heading: "Boletín",
         items: [
           { path: `${base}/boletin-consulta-comun`, icon: FileBoxIcon, label: "Boletín Mensual", perms: ["catalogo:leer"] },
           { path: `${base}/boletin`, icon: Medal, label: "Ranking O.S.", perms: ["nomenclador:leer"] },
+          { path: `${base}/nomenclador/actualizaciones`, icon: CalendarClock, label: "O.S. Actualizadas (LISTADO)", perms: ["nomenclador:leer"] },
         ],
       },
       {
@@ -191,7 +166,6 @@ const TOP_NAV: TopEntry[] = [
           { path: `${base}/convenios/obras-sociales`, icon: ClipboardList, label: "Listado de Obras Sociales", perms: ["catalogo:leer"] },
           { path: `${base}/convenios/obras-sociales/alta`, icon: HousePlus, label: "Alta Obra Social", perms: ["catalogo:editar"] },
           { path: `${base}/historial-valores`, icon: History, label: "Historial de Valores", perms: ["nomenclador:leer"] },
-          { path: `${base}/nomenclador/actualizaciones`, icon: CalendarClock, label: "O.S. Actualizadas (LISTADO)", perms: ["nomenclador:leer"] },
         ],
       },
     ],
@@ -204,6 +178,7 @@ const TOP_NAV: TopEntry[] = [
         items: [
           { path: `${base}/nomenclador/codigos`, icon: FileCode2, label: "Catálogo Códigos CMC", perms: ["nomenclador:leer"] },
           { path: `${base}/nomenclador/por-obra-social`, icon: Building2, label: "Por Obra Social", perms: ["nomenclador:leer"] },
+          { path: `${base}/nomenclador/por-especialidad`, icon: Stethoscope, label: "Códigos por Especialidad", perms: ["nomenclador:leer"] },
           { path: `${base}/nomenclador/consulta-valores`, icon: Search, label: "Consulta de Valores", perms: ["nomenclador:leer"] },
           { path: `${base}/nomenclador/aumento-porcentual`, icon: Percent, label: "Aumento Porcentual", perms: ["nomenclador:masivo"] },
         ],
@@ -248,7 +223,7 @@ const TOP_NAV: TopEntry[] = [
 // lo que no está acá tampoco es alcanzable por URL (ver MedicoRouteGuard).
 const DOCTOR_TOP_NAV: TopEntry[] = [
   { kind: "link", path: `${base}/dashboard`, icon: Home, label: "Inicio" },
-  VALIDACIONES_MENU,
+  VALIDACIONES_LINK,
   { kind: "link", path: `${base}/nomenclador/consulta-precios`, icon: DollarSign, label: "Consulta de Precios" },
   { kind: "link", path: `${base}/planillas`, icon: FileText, label: "Planillas" },
   { kind: "link", path: `${base}/mi-perfil`, icon: CircleUserRound, label: "Mi perfil" },

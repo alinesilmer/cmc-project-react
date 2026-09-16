@@ -35,19 +35,7 @@ import { useGalenoQuery } from "./useGalenoQuery";
 import { useObservaciones } from "./useObservaciones";
 import { urlNorma, useNormasOperativas } from "./useNormasOperativas";
 import { formatApiDate } from "./boletinConsultaComun.helpers";
-import type { GalenoValues } from "./boletinConsultaComun.types";
-
-const ZERO_GALENO: GalenoValues = {
-  quirurgico: 0,
-  practica: 0,
-  radiologico: 0,
-  cirugiaAdultos: 0,
-  cirugiaInfantil: 0,
-  gastosQuirurgicos: 0,
-  gastosRadiologico: 0,
-  gastosBioquimicos: 0,
-  otrosGastos: 0,
-};
+import { ZERO_GALENO } from "./boletinConsultaComun.types";
 
 type ObsLine =
   | { type: "header"; label: string; body: string }

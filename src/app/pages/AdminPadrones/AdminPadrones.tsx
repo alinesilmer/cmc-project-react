@@ -26,14 +26,11 @@ const AdminPadrones: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<PadronStatus | "all">("all")
 
   useEffect(() => {
-    // TODO: Replace with actual API call
-    // Simulated API call
+    // TODO: reemplazar el mock por GET /api/padrones
     const fetchPadrones = async () => {
       try {
         setLoading(true)
-        // const response = await getJSON<PadronSubmission[]>("/api/padrones");
 
-        // Mock data for demonstration
         const mockData: PadronSubmission[] = [
           {
             id: 1,

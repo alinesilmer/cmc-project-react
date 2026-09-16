@@ -14,7 +14,9 @@ import type { ExportOpciones, ExportPreset, TipoDocumentoPreset } from "./Factur
 
 const BASE = "/api/facturacion";
 
+// Traza de llamadas solo en desarrollo; los errores se registran siempre.
 const log = (label: string, params: unknown, data: unknown) => {
+  if (!import.meta.env.DEV) return;
   console.groupCollapsed(`%c[facturacion] ${label}`, "color:#0c2a52;font-weight:600");
   console.log("params →", params);
   console.log("response →", data);

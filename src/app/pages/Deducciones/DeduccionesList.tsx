@@ -106,11 +106,6 @@ const DeduccionesList: React.FC = () => {
 
   const lastPage = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  const descuentoMap = useMemo(() => {
-    const map = new Map<number, string>();
-    descuentos.forEach((d) => map.set(d.id, d.nombre));
-    return map;
-  }, [descuentos]);
 
   const medicoOptions = useMemo<AppSearchSelectOption[]>(
     () =>

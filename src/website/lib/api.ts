@@ -56,7 +56,7 @@ async function fetchJson<T>(url: string, init: RequestInit = {}): Promise<T> {
   const res = await fetch(url, {
     ...init,
     mode: "cors",
-    credentials: "include", // ✅ necesario por cookies/JWT
+    credentials: "include", // necesario por cookies/JWT
     headers: {
       Accept: "application/json",
       ...(init.headers || {}),

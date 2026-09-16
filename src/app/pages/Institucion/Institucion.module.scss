@@ -188,7 +188,7 @@
 }
 
 .rowEdit { grid-template-columns: 1fr 1fr auto; }
-.rowEditMail { grid-template-columns: 1fr 1.4fr 1fr 1fr auto; }
+.rowEditMail { grid-template-columns: 1fr 1.4fr auto; }
 
 @media (max-width: $breakpoint-lg) {
   .rowEditMail { grid-template-columns: 1fr 1fr; }
@@ -215,7 +215,6 @@
   word-break: break-all;
 }
 
-.mailServers { font-size: $font-size-xs; color: $gray-400; }
 
 .mailPass {
   display: flex;

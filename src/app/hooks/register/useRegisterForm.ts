@@ -16,7 +16,7 @@ import {
   DOC_LABEL_MAP,
 } from "../../pages/Register/api";
 
-// ⬇️ NUEVO: mini API admin
+// mini API admin
 import {
   saveContinueAdmin,
   // opcional: setExisteAdmin,
@@ -83,7 +83,7 @@ export function useRegisterForm(
     Boolean(opts?.showAdherentePrompt)
   );
 
-  // ⬇️ NUEVO: id del médico creado/actualizado en admin
+  // id del médico creado/actualizado en admin
   const [medicoId, setMedicoId] = useState<number | null>(null);
 
   // Provincias
@@ -154,10 +154,10 @@ export function useRegisterForm(
     return [...(mainItem ? [mainItem] : []), ...extras].slice(0, 6);
   };
 
-  // ⬇️ NUEVO: helper para no mandar strings vacíos
+  // helper para no mandar strings vacíos
   const toUndef = (v?: string) => (v && `${v}`.trim() !== "" ? v : undefined);
 
-  // ⬇️ NUEVO: payload parcial (admin)
+  // payload parcial (admin)
   const buildPartialPayload = () => {
     return {
       // Identificación
@@ -198,7 +198,7 @@ export function useRegisterForm(
     };
   };
 
-  // ⬇️ NUEVO: Guardar y continuar (ADMIN)
+  // Guardar y continuar (ADMIN)
   const saveAndContinue = async () => {
     if (mode !== "admin") return;
 
@@ -224,7 +224,7 @@ export function useRegisterForm(
     }
   };
 
-  // ⬇️ NUEVO: Guardar y terminar (ADMIN) — guarda, sube adjuntos (si hay) y redirige al detalle
+  // Guardar y terminar (ADMIN) — guarda, sube adjuntos (si hay) y redirige al detalle
   const saveAndFinish = async () => {
     if (mode !== "admin") return;
 
@@ -334,7 +334,7 @@ export function useRegisterForm(
     onChange,
     getInputProps,
 
-    // NUEVO: flujo admin
+    // flujo admin
     medicoId,
     setMedicoId,
     saveAndContinue,

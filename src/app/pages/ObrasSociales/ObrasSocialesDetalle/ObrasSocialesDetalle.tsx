@@ -11,8 +11,8 @@ import { CONDICION_IVA_LABELS, TIPO_DOCUMENTO_LABELS, displayCuit } from "../obr
 import HistorialValores from "./HistorialValores";
 // «Pagos» deshabilitado a pedido del Colegio — el backend no registra su
 // router (ver app/api/routes.py y el docstring de ObraSocialPago en la API).
-// Reactivar: descomentar este import, el tab y el bloque de render abajo.
-// import PagosObraSocial from "./PagosObraSocial";
+// El componente PagosObraSocial (con su api y types) se borró; para reactivar
+// la pestaña, recuperarlo del historial de git.
 import { abrirAdjunto } from "../../../lib/archivos";
 import { formatFechaLarga } from "../../../lib/fechas";
 import { useNotify } from "../../../hooks/useNotify";
@@ -179,7 +179,7 @@ export default function ObrasSocialesDetalle() {
       </div>
 
       {/* ── Tabs ────────────────────────────────────────────────────────── */}
-      {/* «Pagos» deshabilitado (ver el import comentado arriba). «Historial de
+      {/* «Pagos» deshabilitado (ver la nota en los imports). «Historial de
           Valores» pide un scope aparte del resto de la pestaña —lee
           /api/valores_nm/, que exige nomenclador:leer y no catalogo:leer—, así
           que se oculta para quien no lo tiene en vez de mostrar un tab que
@@ -299,8 +299,6 @@ export default function ObrasSocialesDetalle() {
         </div>
       )}
 
-      {/* «Pagos» deshabilitado — ver el import comentado arriba.
-          {activeTab === "pagos" && <PagosObraSocial obraId={obra.id} />} */}
 
       {/* ── Tab: Historial de Valores ────────────────────────────────────── */}
       {activeTab === "historial" && (

@@ -182,13 +182,11 @@ export function validateField(
     case "cuit":
       if (!value) return "Ingrese CUIT";
       if (!/^\d+$/.test(value)) return "Solo números";
-      // if (value.length !== LIMITS.cuit) return `Debe tener ${LIMITS.cuit} dígitos`;
       return "";
 
     case "cbu":
       if (!value) return ""; // optional
       if (!/^\d+$/.test(value)) return "Solo números";
-      // if (value.length !== LIMITS.cbu) return `Debe tener ${LIMITS.cbu} dígitos`;
       return "";
 
     case "malpracticeCoverage":
@@ -201,47 +199,11 @@ export function validateField(
   }
 }
 
-// Step validation (strict)
+// La validación bloqueante por paso está desactivada: el alta avanza aunque haya
+// campos vacíos. Se conserva la firma para que useRegisterForm no cambie.
 export function validateStep(
-  step: Step,
-  data: Readonly<Partial<RegisterFormData>>,
-  now = new Date()
+  _step: Step,
+  _data: Readonly<Partial<RegisterFormData>>
 ): ErrorMap {
-  const errors: ErrorMap = {};
-  const add = (field: keyof RegisterFormData, msg: string) => {
-    if (msg) errors[field] = msg;
-  };
-
-  if (step === 1) {
-    // add("documentType", (data.documentType ?? "") ? "" : "Seleccione tipo de documento");
-    // add("documentNumber", validateField("documentNumber", data.documentNumber ?? ""));
-    // add("firstName",      validateField("firstName",      data.firstName ?? ""));
-    // add("lastName",       validateField("lastName",       data.lastName ?? ""));
-    // add("gender",         validateField("gender",         data.gender ?? ""));
-    // add("birthDate",      validateBirthDate(data.birthDate ?? "", now));
-    // add("email",          validateField("email",          data.email ?? ""));
-    // if (data.address) add("address", validateField("address", data.address ?? ""));
-    // if (data.phone)   add("phone",   validateField("phone",   data.phone ?? ""));
-    // if (data.mobile)  add("mobile",  validateField("mobile",  data.mobile ?? ""));
-  }
-
-  if (step === 2) {
-    // add("title",            validateField("title",           data.title ?? ""));
-    // add("nationalLicense",  validateField("nationalLicense", data.nationalLicense ?? ""));
-    // add("specialty",        validateField("specialty",       data.specialty ?? ""));
-    // if (data.resolutionNumber) add("resolutionNumber", validateField("resolutionNumber", data.resolutionNumber ?? ""));
-    // if (data.officePhone)     add("officePhone",     validateField("officePhone", data.officePhone ?? ""));
-    // if (data.officeAddress)   add("officeAddress",   validateField("address",     data.officeAddress ?? ""));
-  }
-
-  if (step === 3) {
-    // add("cuit",          validateField("cuit",          data.cuit ?? ""));
-    // add("taxCondition",  (data.taxCondition ?? "") ? "" : "Seleccione condición impositiva");
-    // if (data.cbu)                 add("cbu",                 validateField("cbu",                 data.cbu ?? ""));
-    // if (data.malpracticeCoverage) add("malpracticeCoverage", validateField("malpracticeCoverage", data.malpracticeCoverage ?? ""));
-    // if (data.phone)               add("phone",               validateField("phone",               data.phone ?? ""));
-    // if (data.mobile)              add("mobile",              validateField("mobile",              data.mobile ?? ""));
-  }
-
-  return errors;
+  return {};
 }

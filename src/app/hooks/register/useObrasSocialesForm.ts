@@ -2,7 +2,6 @@ import { useState } from "react";
 import type { ObrasSocialesFormData } from "../../types/obras-sociales";
 import { initialObrasSocialesFormData } from "../../types/obras-sociales";
 import { validateObrasSocialesForm } from "../../lib/obras-sociales-validation";
-// import { sendObrasSocialesRegister } from "../../api/obras-sociales-api";
 
 export function useObrasSocialesForm() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -87,12 +86,7 @@ export function useObrasSocialesForm() {
     }
 
     try {
-      // TODO: Uncomment when backend is ready
-      // await sendObrasSocialesRegister(formData, files);
-      
-      console.log("Formulario enviado:", formData);
-      console.log("Archivos:", files);
-      
+      // TODO: todavía no hay endpoint de alta de obras sociales; el envío no llega al backend.
       alert("¡Solicitud enviada exitosamente! Recibirá un email de confirmación.");
       
       // Reset form

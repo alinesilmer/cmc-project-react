@@ -52,7 +52,7 @@ export async function createNews(fields: CreateFields, opts?: SaveOptions) {
   fd.append("titulo", fields.titulo);
   fd.append("resumen", fields.resumen);
   fd.append("contenido", fields.contenido);
-  fd.append("tipo", fields.tipo); // ✅ NUEVO
+  fd.append("tipo", fields.tipo);
   if (typeof fields.publicada !== "undefined") {
     fd.append("publicada", String(!!fields.publicada));
   }
@@ -78,7 +78,7 @@ export async function updateNews(
   if (fields.titulo !== undefined) fd.append("titulo", fields.titulo);
   if (fields.resumen !== undefined) fd.append("resumen", fields.resumen);
   if (fields.contenido !== undefined) fd.append("contenido", fields.contenido);
-  if (fields.tipo !== undefined) fd.append("tipo", fields.tipo); // ✅ NUEVO
+  if (fields.tipo !== undefined) fd.append("tipo", fields.tipo);
   if (fields.publicada !== undefined)
     fd.append("publicada", String(!!fields.publicada));
   if (fields.autor !== undefined) fd.append("autor", fields.autor || "");

@@ -67,7 +67,7 @@ export function useMedicosExport() {
           return false;
         }
 
-        // ✅ build backend params
+        // build backend params
         const params = {
           ...mapUIToQuery(filters),
           limit: 2000,
@@ -130,7 +130,7 @@ export function useMedicosExport() {
             const { base64, ext } = await fileToBase64(logoFile);
             const imageId = wb.addImage({ base64, extension: ext });
 
-            // ✅ FIX for your TypeScript error: use correct col/row anchors
+            // Anclas col/row explícitas (el tipo de exceljs no acepta el atajo)
             ws.addImage(imageId, {
               tl: { col: 0, row: 0 }, // A1
               ext: { width: 220, height: 90 },

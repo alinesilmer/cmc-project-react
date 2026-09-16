@@ -1,6 +1,4 @@
-// src/app/auth/api.ts
 import { postJSON, getJSON, postForm, patchJSON } from "../../lib/http";
-import type { RegisterFormData } from "../../types/register";
 /* ===== tipos ===== */
 export type RegisterPayload = {
   documentType: string;
@@ -131,7 +129,6 @@ export async function registerMedicoAdmin(
   );
 }
 
-// ⬇ queda igual, pero asegúrate de NO setear Content-Type a mano
 export async function uploadMedicoDocumento(
   medicoId: number,
   file: File,
@@ -146,7 +143,7 @@ export async function uploadMedicoDocumento(
   );
 }
 
-// 🔎 mapeo de keys de tu Steps.tsx → labels del backend
+// Keys de archivos de Steps.tsx → labels del backend.
 export const DOC_LABEL_MAP: Record<string, string> = {
   docNumberImg: "documento",
   tituloImg: "titulo",
@@ -161,7 +158,6 @@ export const DOC_LABEL_MAP: Record<string, string> = {
   cbuImg: "cbu",
 };
 
-// opcional: listar solicitudes si armás panel admin
 export async function listSolicitudes(params?: {
   estado?: "pendiente" | "aprobada" | "rechazada";
   limit?: number;
@@ -170,8 +166,8 @@ export async function listSolicitudes(params?: {
   return await getJSON("/auth/solicitudes", params);
 }
 
-// 2) mapear claves de tus inputs file → labels que entiende el backend
-//    soporta varios nombres posibles por si en Steps usás otras keys
+// Deduce el label de backend a partir de la key del input de archivo.
+// Acepta variantes de nombre (dni/documento, matricula nac/nacional, etc.).
 function inferLabelFromKey(k: string): DocLabel | null {
   const s = k.toLowerCase();
 
@@ -192,10 +188,7 @@ function inferLabelFromKey(k: string): DocLabel | null {
   return null;
 }
 
-/**
- * Envía el registro y sube adjuntos.
- * NO maneja toasts ni loaders: lo hacés en tu Register.tsx como ya tenés.
- */
+/** Envía el registro y sube adjuntos. Toasts y loaders quedan a cargo del llamador. */
 export async function sendRegister(
   formData: any,
   files: Record<string, File | null>
@@ -222,7 +215,6 @@ export async function saveContinueAdmin(
   return postJSON("/api/medicos/admin/save-continue", body);
 }
 
-// Si querés exponer el toggle desde acá (lo vas a usar en el ProfileHeader)
 export async function setExisteAdmin(medicoId: number, existe: "S" | "N") {
   return patchJSON(`/api/medicos/${medicoId}/existe`, { existe });
 }

@@ -516,22 +516,6 @@ export default function InstitucionPage() {
                     setMailEditando({ ...mailEditando, direccion: e.target.value })
                   }
                 />
-                <input
-                  className={s.input}
-                  placeholder="Entrante (IMAP/POP)"
-                  value={mailEditando.servidor_entrante ?? ""}
-                  onChange={(e) =>
-                    setMailEditando({ ...mailEditando, servidor_entrante: e.target.value })
-                  }
-                />
-                <input
-                  className={s.input}
-                  placeholder="Saliente (SMTP)"
-                  value={mailEditando.servidor_saliente ?? ""}
-                  onChange={(e) =>
-                    setMailEditando({ ...mailEditando, servidor_saliente: e.target.value })
-                  }
-                />
                 <div className={s.rowActions}>
                   <button
                     type="button"
@@ -565,11 +549,6 @@ export default function InstitucionPage() {
                 <div className={s.mailMain}>
                   <span className={s.rowTag}>{m.etiqueta || "Casilla"}</span>
                   <span className={s.mailAddr}>{m.direccion}</span>
-                  {(m.servidor_entrante || m.servidor_saliente) && (
-                    <span className={s.mailServers}>
-                      {[m.servidor_entrante, m.servidor_saliente].filter(Boolean).join(" · ")}
-                    </span>
-                  )}
                 </div>
 
                 <div className={s.mailPass}>
@@ -652,22 +631,6 @@ export default function InstitucionPage() {
                 autoFocus
                 value={mailNuevo.direccion}
                 onChange={(e) => setMailNuevo({ ...mailNuevo, direccion: e.target.value })}
-              />
-              <input
-                className={s.input}
-                placeholder="Entrante (IMAP/POP)"
-                value={mailNuevo.servidor_entrante ?? ""}
-                onChange={(e) =>
-                  setMailNuevo({ ...mailNuevo, servidor_entrante: e.target.value })
-                }
-              />
-              <input
-                className={s.input}
-                placeholder="Saliente (SMTP)"
-                value={mailNuevo.servidor_saliente ?? ""}
-                onChange={(e) =>
-                  setMailNuevo({ ...mailNuevo, servidor_saliente: e.target.value })
-                }
               />
               <div className={s.rowActions}>
                 <button

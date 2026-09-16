@@ -7,6 +7,7 @@ import styles from "./Card.module.scss";
 interface CardProps {
   children: React.ReactNode;
   className?: string;
+  style?: React.CSSProperties;
   onClick?: () => void;
   hoverable?: boolean;
 }
@@ -14,6 +15,7 @@ interface CardProps {
 const Card: React.FC<CardProps> = ({
   children,
   className = "",
+  style,
   onClick,
   hoverable = false,
 }) => {
@@ -22,6 +24,7 @@ const Card: React.FC<CardProps> = ({
       className={`${styles.card} ${
         hoverable ? styles.hoverable : ""
       } ${className}`}
+      style={style}
       onClick={onClick}
       whileHover={
         hoverable

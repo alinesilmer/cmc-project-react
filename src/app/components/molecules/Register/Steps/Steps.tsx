@@ -69,9 +69,9 @@ const DateField: React.FC<DateFieldProps> = ({
   return (
     <div className={styles.formGroup}>
       <DatePicker
-        // 👇 se usa SOLO al montar el componente
+        // se usa SOLO al montar el componente
         defaultValue={strToDate(value)}
-        // 👇 cada vez que el usuario elige una fecha válida,
+        // cada vez que el usuario elige una fecha válida,
         // avisamos al form en formato string
         onChange={(d: Date | null) => {
           onChange(dateToStr(d));
@@ -130,8 +130,6 @@ type Props = {
   setSpecItems: React.Dispatch<React.SetStateAction<SpecialtyItem[]>>;
 };
 
-// const MAX_SPECS = 6;
-
 const Steps: React.FC<Props> = (props) => {
   const {
     step,
@@ -189,7 +187,7 @@ const Steps: React.FC<Props> = (props) => {
         fileKey: newKey,
       },
     ]);
-    // 👇 importantísimo: que arranque vacío
+    // importantísimo: que arranque vacío
     setFiles((prev) => ({ ...prev, [newKey]: null }));
   };
 

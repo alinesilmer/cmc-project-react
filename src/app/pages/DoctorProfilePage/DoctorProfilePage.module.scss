@@ -252,6 +252,14 @@ h5.section {
   color: $gray-900;
 }
 
+.valueRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .label {
   font-size: $font-size-sm;
   font-weight: $font-weight-medium;

@@ -9,13 +9,8 @@ interface MetricCardProps {
   color: "blue" | "orange" | "purple" | "green";
 }
 
-const MetricCard: React.FC<MetricCardProps> = ({
-  title,
-  value,
-  // change,
-  // trend,
-  color,
-}) => {
+// `change` y `trend` siguen en las props pero hoy no se muestran.
+const MetricCard: React.FC<MetricCardProps> = ({ title, value, color }) => {
   const cardColorClass = {
     blue: styles.cardBlue,
     orange: styles.cardOrange,
@@ -23,16 +18,10 @@ const MetricCard: React.FC<MetricCardProps> = ({
     green: styles.cardGreen,
   }[color];
 
-  // const trendClass = trend === "up" ? styles.trendUp : styles.trendDown;
-  // const trendIcon = trend === "up" ? "↑" : "↓";
-
   return (
     <div className={`${styles.card} ${cardColorClass}`}>
       <h3 className={styles.title}>{title}</h3>
       <p className={styles.value}>{value}</p>
-      {/* <span className={`${styles.change} ${trendClass}`}>
-        {trendIcon} {change}
-      </span> */}
     </div>
   );
 };

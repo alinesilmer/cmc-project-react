@@ -10,6 +10,7 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+*.tgz
 *.local
 
 # Editor directories and files
@@ -31,6 +32,7 @@ Dockerfile
 Caddyfile
 
 .claude/
+CLAUDE.local.md
 .CAMBIOS_LIQUIDACION
 .CLAUDE
 .liquidacion_dev
@@ -38,4 +40,8 @@ Caddyfile
 .instructions
 docs/
 flyer/
-infoValidaciones/
+InfoValidaciones/
+
+# Datos reales (padrones, reportes de facturación): nunca en el repo ni en public/
+public/*.xlsx
+src/app/prevencion/

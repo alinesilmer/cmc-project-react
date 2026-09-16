@@ -1,6 +1,6 @@
 import type { AccionUsuario, FiltrosActividad, PaginaActividad } from "./actividad.types";
 
-// ⚠ Sin backend todavía: devuelve datos de ejemplo.
+// Sin backend todavía: devuelve datos de ejemplo.
 //
 // Cuando la API exista, lo único que cambia es `getActividad`:
 //

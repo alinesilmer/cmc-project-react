@@ -13,8 +13,7 @@
  *     fijo con una sola fuente, sin rellenos ni bordes, y `get_cell_style`
  *     sólo mapea formatos numéricos. Negrita, colores, celdas combinadas e
  *     imágenes son de la edición Pro (paga).
- *   * **Leer → `xlsx`** (SheetJS, ver `utils/xlsxParser.ts` y
- *     `utils/precios/`). ExcelJS no tiene lector de `.xls` binario legacy
+ *   * **Leer → `xlsx`** (SheetJS, ver `utils/precios/`). ExcelJS no tiene lector de `.xls` binario legacy
  *     —sólo `xlsx` y `csv`—, y hay tres inputs del panel que aceptan `.xls`.
  *
  * O sea: cada una quedó en lo que la otra no puede hacer. Antes de mover algo

@@ -1,4 +1,3 @@
-// src/app/auth/api.ts
 import { postJSON, getJSON, postForm } from "../../lib/http";
 import type { RegisterFormData } from "../../types/register";
 /* ===== tipos ===== */
@@ -53,7 +52,7 @@ export function buildRegisterPayload(form: any): RegisterPayload {
     documentNumber: String(form.documentNumber || "").trim(),
     firstName: String(form.firstName || "").trim(),
     lastName: String(form.lastName || "").trim(),
-    gender: form.gender || null, // ← 👈 agregar
+    gender: form.gender || null,
 
     email: form.email || null,
     phone: form.phone || null,
@@ -73,9 +72,7 @@ export function buildRegisterPayload(form: any): RegisterPayload {
     nationalLicense: form.nationalLicense || null,
     graduationDate: form.graduationDate || null,
 
-    // OJO: si tu <select> guarda id_colegio_espe en form.specialty,
-    // el backend ya lo maneja en el "fallback" robusto que te pasé.
-    // Si en el front ya envías specialties[] mejor aún.
+    // id_colegio_espe elegido en el select; el backend también acepta specialties[].
     specialty: form.specialty || null,
 
     resolutionNumber: form.resolutionNumber || null,
@@ -135,7 +132,6 @@ export async function registerMedico(
   return await postJSON<RegisterResponse>("/api/medicos/register", payload);
 }
 
-// ⬇ queda igual, pero asegúrate de NO setear Content-Type a mano
 export async function uploadMedicoDocumento(
   medicoId: number,
   file: File,
@@ -150,7 +146,7 @@ export async function uploadMedicoDocumento(
   );
 }
 
-// 🔎 mapeo de keys de tu Steps.tsx → labels del backend
+// Keys de archivos de Steps.tsx → labels del backend.
 export const DOC_LABEL_MAP: Record<string, string> = {
   docNumberImg: "documento",
   tituloImg: "titulo",
@@ -165,7 +161,6 @@ export const DOC_LABEL_MAP: Record<string, string> = {
   cbuImg: "cbu",
 };
 
-// opcional: listar solicitudes si armás panel admin
 export async function listSolicitudes(params?: {
   estado?: "pendiente" | "aprobada" | "rechazada";
   limit?: number;
@@ -174,40 +169,8 @@ export async function listSolicitudes(params?: {
   return await getJSON("/auth/solicitudes", params);
 }
 
-//==========================================================================================
-
-// 1) armar payload para /auth/register desde tu RegisterFormData
-// export function buildRegisterPayload(form: any): RegisterPayload {
-//   return {
-//     // en tu UI no pedís tipo de doc: usamos DNI por defecto
-//     documentType: "DNI",
-//     documentNumber: String(form.documentNumber || "").trim(),
-
-//     firstName: String(form.firstName || "").trim(),
-//     lastName: String(form.lastName || "").trim(),
-
-//     email: form.email || null,
-//     phone: form.phone || null,
-//     mobile: form.mobile || null,
-
-//     address: form.address || null,
-//     province: form.province || null,
-//     locality: form.locality || null,
-//     postalCode: form.postalCode || null,
-
-//     officeAddress: form.officeAddress || null,
-//     officePhone: form.officePhone || null,
-
-//     cuit: form.cuit || null,
-//     cbu: form.cbu || null,
-//     condicionImpositiva: form.taxCondition || null,
-
-//     observations: form.observations || null,
-//   };
-// }
-
-// 2) mapear claves de tus inputs file → labels que entiende el backend
-//    soporta varios nombres posibles por si en Steps usás otras keys
+// Deduce el label de backend a partir de la key del input de archivo.
+// Acepta variantes de nombre (dni/documento, matricula nac/nacional, etc.).
 function inferLabelFromKey(k: string): DocLabel | null {
   const s = k.toLowerCase();
 
@@ -228,10 +191,7 @@ function inferLabelFromKey(k: string): DocLabel | null {
   return null;
 }
 
-/**
- * Envía el registro y sube adjuntos.
- * NO maneja toasts ni loaders: lo hacés en tu Register.tsx como ya tenés.
- */
+/** Envía el registro y sube adjuntos. Toasts y loaders quedan a cargo del llamador. */
 export async function sendRegister(
   formData: any,
   files: Record<string, File | null>

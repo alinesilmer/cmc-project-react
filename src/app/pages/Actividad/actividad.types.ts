@@ -1,6 +1,6 @@
 // Registro de acciones del personal del Colegio (todos los que NO son médicos).
 //
-// ⚠ El backend todavía no existe. Este es el contrato que la API va a tener que
+// El backend todavía no existe. Este es el contrato que la API va a tener que
 // cumplir; mientras tanto `actividad.api.ts` devuelve datos de ejemplo.
 
 /** Sale del status HTTP. */

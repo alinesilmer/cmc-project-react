@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   getJSON,
@@ -63,7 +63,6 @@ const transitionDescriptions: Record<string, string> = {
 
 const LoteDetalleSinFactura: React.FC = () => {
   const { loteId } = useParams<{ loteId: string }>();
-  const navigate = useNavigate();
   const notify = useAppSnackbar();
 
   const [lote, setLote] = useState<LoteAjuste | null>(null);
@@ -101,8 +100,6 @@ const LoteDetalleSinFactura: React.FC = () => {
     setError(null);
     try {
       const data = await getJSON<LoteAjuste>(LOTE_URL(loteId));
-      console.log("[LoteDetalleSinFactura] lote:", data);
-      console.log("[LoteDetalleSinFactura] ajustes:", data.ajustes);
       setLote(data);
     } catch (e: any) {
       setError(e?.message || "No se pudo cargar el lote.");

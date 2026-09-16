@@ -30,35 +30,10 @@ function Login() {
   const [isPdfOpen, setIsPdfOpen] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
-  // const hasLegacyAccess = (scopes?: string[]) =>
-  //   !!scopes?.some((s) =>
-  //     [
-  //       "legacy:access",
-  //       "legacy:facturador",
-  //       "facturador",
-  //       "facturas:ver",
-  //     ].includes(s)
-  //   );
-
-  // const isDoctor = (scopes?: string[]) =>
-  //   !!scopes?.some(
-  //     (s) =>
-  //       typeof s === "string" &&
-  //       /^(medicos?|legacy:(doctor|medico))(:|$)/i.test(s.trim())
-  //   );
 
   const goMember = () => {
     setIsMember(true);
     setError("");
-  };
-
-  const goRegister = () => {
-    setIsMember(false);
-    navigate("/panel/register");
-  };
-
-  const goObrasSociales = () => {
-    navigate("/panel/register-os");
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {

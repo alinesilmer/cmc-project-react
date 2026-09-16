@@ -13,7 +13,6 @@ import {
   DollarSign,
   Info as InfoIcon,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import styles from "./Info.module.scss";
 import Button from "../../../website/components/UI/Button/Button";
 
@@ -165,13 +164,6 @@ const Section: React.FC<{
 // ─── Main component ───────────────────────────────────────────────────────────
 
 const Info: React.FC = () => {
-  const navigate = useNavigate();
-
-  const handleBack = () => {
-    if (window.history.length > 1) navigate(-1);
-    else navigate("/");
-  };
-
   const principales: Item[] = [
     {
       id: "1",

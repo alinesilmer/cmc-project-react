@@ -4,17 +4,16 @@ import {
   CMC_NAME,
   CMC_PHONE,
   CMC_SUBTITLE,
-  CONSULTA_COMUN_CODE,
   moneyFormatter,
 } from "./boletinConsultaComun.constants";
 import {
   buildPdfFilename,
   fetchAsDataUrl,
-  formatGeneratedDate,
   getImageFormat,
   normalizeText,
 } from "./boletinConsultaComun.helpers";
 import type { ConsultaComunItem } from "./boletinConsultaComun.types";
+import { ZERO_GALENO } from "./boletinConsultaComun.types";
 import type { NormasPorOS } from "./useNormasOperativas";
 
 /** Fecha de la norma, corta. En el PDF no hay lugar para más. */
@@ -41,7 +40,6 @@ export async function generateConsultaComunPdf(
   ]);
 
   const generatedAt = new Date();
-  const generatedAtLabel = formatGeneratedDate(generatedAt);
   const logoDataUrl = await fetchAsDataUrl(CMC_LOGO_SRC);
   const mes = generatedAt
     .toLocaleString("es-AR", { month: "long" })
@@ -268,17 +266,7 @@ export async function generateConsultaComunPdf(
     doc.text(moneyFormatter.format(item.valor), marginX + 6, 65);
 
     // ── GALENO values (always render, defensive fallback for stale cache) ──
-    const galeno = item.galeno ?? {
-      quirurgico: 0,
-      practica: 0,
-      radiologico: 0,
-      cirugiaAdultos: 0,
-      cirugiaInfantil: 0,
-      gastosQuirurgicos: 0,
-      gastosRadiologico: 0,
-      gastosBioquimicos: 0,
-      otrosGastos: 0,
-    };
+    const galeno = item.galeno ?? ZERO_GALENO;
     const galenoEntries: [string, number][] = [
       ["Quirúrgico", galeno.quirurgico],
       ["Práctica", galeno.practica],

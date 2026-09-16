@@ -1,0 +1,33 @@
+@use "@/app/styles/all.scss" as *;
+
+.btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: $radio-md;
+  background: none;
+  color: $gray-500;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    color: #574e76;
+    background: #f2effa;
+    border-color: #d6d1eac0;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #574e76;
+    outline-offset: 1px;
+  }
+}
+
+.done,
+.done:hover {
+  color: $success-green;
+}

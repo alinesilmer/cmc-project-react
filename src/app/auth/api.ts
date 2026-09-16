@@ -1,4 +1,3 @@
-// src/app/auth/api.ts
 import { http, httpBare } from "../lib/http";
 import { setAccessToken } from "../auth/token";
 import { forceLogout } from "./session";
@@ -36,20 +35,6 @@ function normalizeUser(raw: any): User {
     must_change_password: Boolean(raw?.must_change_password),
   };
 }
-
-// export async function login(nro_socio: number, password: string) {
-//   const { data } = await http.post("/auth/login", { nro_socio, password });
-//   setAccessToken(data.access_token);
-//   // 🔧 asegura que TODAS las próximas requests lleven el token
-//   http.defaults.headers.common["Authorization"] = `Bearer ${data.access_token}`;
-//   return data.user as User;
-// }
-
-// export async function logout(): Promise<void> {
-//   await http.post("/auth/logout");
-//   setAccessToken(null);
-//   delete http.defaults.headers.common["Authorization"];
-// }
 
 export async function login(
   nro_socio: number,

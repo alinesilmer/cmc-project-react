@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getJSON, postJSON, delJSON } from "../../../../lib/http";
+import { getJSON, postJSON } from "../../../../lib/http";
 import { useAppSnackbar } from "../../../../hooks/useAppSnackbar";
 import Button from "../../../../components/atoms/Button/Button";
 import SelectableTable from "../../../../components/molecules/SelectableTable/SelectableTable";
