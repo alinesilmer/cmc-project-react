@@ -132,11 +132,12 @@ function pesoLegible(bytes: number): string {
 }
 
 const COLS = [
-  { key: "codigo",     label: "Código",     numeric: false },
-  { key: "honorarios", label: "Honorarios", numeric: true  },
-  { key: "ayudante",   label: "Ayudante",   numeric: true  },
-  { key: "gastos",     label: "Gastos",     numeric: true  },
-  { key: "total",      label: "Total",      numeric: true  },
+  { key: "codigo",      label: "Código",      numeric: false },
+  { key: "descripcion", label: "Descripción", numeric: false },
+  { key: "honorarios",  label: "Honorarios",  numeric: true  },
+  { key: "ayudante",    label: "Ayudante",    numeric: true  },
+  { key: "gastos",      label: "Gastos",      numeric: true  },
+  { key: "total",       label: "Total",       numeric: true  },
 ] as const;
 
 type ColKey = (typeof COLS)[number]["key"];
@@ -294,7 +295,11 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
     let result = dateRows;
     if (codeFilter.trim()) {
       const term = codeFilter.trim().toLowerCase();
-      result = result.filter((r) => r.codigo.toLowerCase().includes(term));
+      result = result.filter(
+        (r) =>
+          r.codigo.toLowerCase().includes(term) ||
+          (r.descripcion ?? "").toLowerCase().includes(term),
+      );
     }
     if (sortField) {
       result = [...result].sort((a, b) => {
@@ -576,7 +581,7 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
                     <Search size={14} className={s.filterIcon} />
                     <input
                       className={s.filterInput}
-                      placeholder="Filtrar por código..."
+                      placeholder="Filtrar por código o descripción..."
                       value={codeFilter}
                       onChange={(e) => setCodeFilter(e.target.value)}
                     />
@@ -605,7 +610,7 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
               {displayRows.length === 0 && codeFilter.trim() ? (
                 <div className={s.hEmptyState}>
                   <SearchX size={28} />
-                  <span>Ningún código coincide con "{codeFilter}".</span>
+                  <span>Ningún código o descripción coincide con "{codeFilter}".</span>
                 </div>
               ) : (
                 <>
@@ -632,6 +637,12 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
                           <tr key={row.id}>
                             <td className={s.tdCode}>
                               {row.codigo}{row.nivel != null ? ` · N${row.nivel}` : ""}
+                            </td>
+                            <td
+                              className={`${s.tdDesc} ${row.descripcion ? "" : s.tdDescEmpty}`}
+                              title={row.descripcion ?? undefined}
+                            >
+                              {row.descripcion || "—"}
                             </td>
                             {row.por_presupuesto ? (
                               <>

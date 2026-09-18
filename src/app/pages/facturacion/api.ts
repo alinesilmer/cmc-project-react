@@ -226,6 +226,17 @@ export const descargarExportCaratula = (facturaId: number | string, formato: "pd
     getBlobLong(`${BASE}/facturas/${facturaId}/export/caratula.${formato}`),
   );
 
+// Detalle por médico: cruza todas las obras sociales del socio en un período.
+// Mismo membrete institucional que el export de factura (ver encabezado.py).
+export const descargarExportPorMedico = (
+  nroSocio: number | string, periodo: string, formato: "pdf" | "xlsx",
+) =>
+  traced(
+    `GET /medico/${nroSocio}/export/detalle.${formato}`,
+    { nroSocio, periodo },
+    getBlobLong(`${BASE}/medico/${nroSocio}/export/detalle.${formato}`, { periodo }),
+  );
+
 export const listarExportPresets = (tipoDocumento?: TipoDocumentoPreset) =>
   traced(
     "GET /export-presets",

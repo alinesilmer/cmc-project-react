@@ -65,6 +65,7 @@ const tipoPrestadorClass = (t: string | null): string => {
     case "Medico":   return styles.tipoPrestadorMedico;
     case "Ayudante": return styles.tipoPrestadorAyudante;
     case "Gastos":   return styles.tipoPrestadorGastos;
+    case "Pediatra": return styles.tipoPrestadorPediatra;
     default:         return "";
   }
 };

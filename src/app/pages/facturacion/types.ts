@@ -66,6 +66,12 @@ export interface PrestacionItem {
    *  usar el sugerido por el Valor del código. No se escala por `porcentaje`. */
   coseguro?: number | Money | null;
   grupo_equipo_id?: number | null;
+  /** Rol del integrante dentro del equipo. undefined/null = comportamiento histórico
+   *  (el rol se infiere del concepto en >0). "pediatra" es el único valor que hoy
+   *  cambia algo: fuerza tpo_funcion='P' en el backend, coseguro 0 y lo saca de la
+   *  elección de cabeza — el cirujano manda, aunque el pediatra también cobre
+   *  honorarios (de su PROPIO código, distinto al del cirujano). */
+  rol?: "pediatra" | null;
 }
 
 export interface PrestacionesCreate {
@@ -105,6 +111,10 @@ export interface PrecioResponse {
   nivel_cotizado?: number | null;
   /** Coseguro sugerido desde el Valor del código — editable al cargar la prestación. */
   coseguro: Money;
+  /** true → este código admite sumar un pediatra al equipo (parto/cesárea). La lista de
+   *  códigos vive en el backend (no se duplica acá) — usar este flag, no hardcodear
+   *  110401/110403 en el front. */
+  admite_pediatra?: boolean;
 }
 
 export interface PrestacionRead {
@@ -282,7 +292,7 @@ export interface ListarFacturasParams {
   offset?: number;
 }
 
-export type TipoPrestador = "Medico" | "Ayudante" | "Gastos";
+export type TipoPrestador = "Medico" | "Ayudante" | "Gastos" | "Pediatra";
 
 export interface PrestacionFacturaDetalle {
   id: number;

@@ -22,24 +22,33 @@ export function dedupePorId<T>(items: T[], getId: (item: T) => string | number):
 export function filtrarYOrdenar<T>(
   items: T[],
   q: string,
-  // Campos del ítem en orden de PRIORIDAD (el primero que matchea gana el ranking):
-  // ej. [matricula, nombre, cod] para que una coincidencia de matrícula quede antes
-  // que una de nombre, y esa antes que una de nro de socio.
+  // Campos del ítem en orden de PRIORIDAD: el primer campo que matchea define el
+  // grupo (ej. [cod, matricula, nombre] pone socio antes que matrícula, y esa antes
+  // que nombre). Dentro de un mismo campo desempata la CALIDAD del match: una
+  // coincidencia exacta va antes que una "empieza con", y esa antes que un "contiene".
   getFields: (item: T) => Array<string | number | null | undefined>,
   maxResults = 50,
 ): T[] {
   const needle = q.toLowerCase();
-  const scored: Array<{ item: T; rank: number }> = [];
+  const scored: Array<{ item: T; score: number }> = [];
   for (const item of items) {
     const fields = getFields(item);
-    let rank = -1;
+    let best = Infinity;
     for (let i = 0; i < fields.length; i++) {
       const v = fields[i];
       if (v == null || v === "") continue;
-      if (String(v).toLowerCase().includes(needle)) { rank = i; break; }
+      const s = String(v).toLowerCase();
+      const pos = s.indexOf(needle);
+      if (pos === -1) continue;
+      // Calidad dentro del campo: 0 = exacto, 1 = empieza con, 2 = contiene.
+      const calidad = s === needle ? 0 : pos === 0 ? 1 : 2;
+      // El campo (prioridad) manda; a igual campo, gana la mejor calidad. Así,
+      // buscando "824", el socio 824 (exacto) queda antes que 2824/9824 (contiene).
+      const score = i * 10 + calidad;
+      if (score < best) best = score;
     }
-    if (rank !== -1) scored.push({ item, rank });
+    if (best !== Infinity) scored.push({ item, score: best });
   }
-  scored.sort((a, b) => a.rank - b.rank);
+  scored.sort((a, b) => a.score - b.score);
   return scored.slice(0, maxResults).map((s) => s.item);
 }

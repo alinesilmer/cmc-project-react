@@ -64,6 +64,7 @@ const VerPeriodos = lazy(() => import("./app/pages/facturacion/VerPeriodos/VerPe
 const Complementarias = lazy(() => import("./app/pages/facturacion/Complementarias/Complementarias"));
 const FacturacionFacturaDetalle = lazy(() => import("./app/pages/facturacion/FacturaDetalle/FacturaDetalle"));
 const ConsultaPrestacion = lazy(() => import("./app/pages/facturacion/ConsultaPrestacion/ConsultaPrestacion"));
+const DetallePorMedico = lazy(() => import("./app/pages/facturacion/DetallePorMedico/DetallePorMedico"));
 const RegistroFacturacion = lazy(() => import("./app/pages/facturacion/RegistroFacturacion/RegistroFacturacion"));
 
 // WEBSITE
@@ -202,6 +203,7 @@ export default function RootRoutes() {
                   <Route path="periodos/:id" element={<FacturacionFacturaDetalle />} />
                   <Route path="consulta" element={<ConsultaPrestacion />} />
                   <Route path="consulta/:id" element={<ConsultaPrestacion />} />
+                  <Route path="detalle-medico" element={<DetallePorMedico />} />
                 </Route>
                 <Route element={<RequireScope scope="facturacion:complementar" />}>
                   <Route path="complementarias" element={<Complementarias />} />

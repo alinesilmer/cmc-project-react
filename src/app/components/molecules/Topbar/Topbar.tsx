@@ -15,7 +15,7 @@ import {
   PencilRuler, ShieldUser, Monitor, Receipt, CalendarDays,
   LogOut, CircleUserRound, ChevronDown, Menu, X, Layers,
   Smartphone, Gift, Inbox, Megaphone, ShieldCheck, ExternalLink,
-  BarChart3, Stethoscope,
+  BarChart3, Stethoscope, UserSearch,
 } from "lucide-react";
 
 import styles from "./Topbar.module.scss";
@@ -101,6 +101,7 @@ const TOP_NAV: TopEntry[] = [
           { path: `${base}/facturacion/cierre`, icon: CalendarDays, label: "Cerrar Factura", perms: ["facturacion:cerrar"] },
           { path: `${base}/facturacion/periodos`, icon: ClipboardList, label: "Ver períodos", perms: ["facturacion:leer"] },
           { path: `${base}/facturacion/consulta`, icon: Search, label: "Buscar prestación", perms: ["facturacion:leer"] },
+          { path: `${base}/facturacion/detalle-medico`, icon: UserSearch, label: "Detalle por médico", perms: ["facturacion:leer"] },
           { path: `${base}/facturacion/complementarias`, icon: Layers, label: "Complementarias", perms: ["facturacion:complementar"] },
           { path: `${base}/facturacion/registro`, icon: History, label: "Registro de Facturación", perms: ["facturacion:registro"] },
         ],

@@ -624,3 +624,51 @@ $shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
     text-decoration: underline;
   }
 }
+
+// ─── Pediatra (equipo de parto/cesárea) ─────────────────────────────────────
+// Acento teal — no colisiona con el azul del cirujano ni el violeta del badge de
+// ayudante (ver MedicoPrestacionesTable.module.scss). No toca ninguna clase de
+// Ayudante de arriba: son variantes nuevas al lado, no una modificación.
+$teal: #0f766e;
+$teal-light: #eafaf7;
+$teal-border: #b7ede4;
+
+.pediatraSection {
+  .sectionTitle {
+    color: $teal;
+  }
+}
+
+.pediatraBox {
+  border-color: $teal-border;
+  background: $teal-light;
+}
+
+.addPediatraBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  background: none;
+  border: 1px dashed $teal-border;
+  border-radius: $radius-sm;
+  color: $teal;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+
+  &:hover:not(:disabled) {
+    background: $teal-light;
+    border-color: $teal;
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}

@@ -1,0 +1,411 @@
+// "Detalle por médico" — mismo lenguaje visual que "Ver períodos"
+// (VerPeriodos.module.scss) y el detalle de "Listado de prestaciones"
+// (FacturaDetalle.module.scss), del que se copian los chips de tipo/tp.
+$blue:       #3b6fd4;
+$blue-light: #e8efff;
+$blue-hover: #2f5bbb;
+$red:        #dc2626;
+$green:      #166534;
+$border:     #e2e8f0;
+$surface:    #ffffff;
+$text-1:     #1a1f2e;
+$text-2:     #4a5568;
+$text-3:     #718096;
+$radius-sm:  6px;
+$radius-md:  10px;
+$radius-lg:  14px;
+$shadow-sm:  0 1px 4px rgba(0, 0, 0, .06);
+
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f0f4ff 0%, #fafbff 60%, #f5f0ff 100%);
+  padding: 1.8rem;
+  font-family: inherit;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.headerIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: $radius-md;
+  background: $blue-light;
+  color: $blue;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: $text-1;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 0.8rem;
+  color: $text-3;
+  margin: 2px 0 0;
+}
+
+.layout {
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+  overflow: hidden;
+}
+
+// ─── Toolbar / formulario ─────────────────────────────────────────────────────
+.toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  border-bottom: 1px solid $border;
+  background: #fafbfd;
+}
+
+.filterField {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 160px;
+}
+
+.filterLabel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: $text-3;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.input {
+  width: 100%;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid $border;
+  border-radius: $radius-sm;
+  font-size: 0.84rem;
+  color: $text-1;
+  background: $surface;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color .15s, box-shadow .15s;
+
+  &:focus {
+    border-color: $blue;
+    box-shadow: 0 0 0 3px rgba(59, 111, 212, .12);
+  }
+
+  &::placeholder { color: $text-3; }
+  &:disabled { background: #f4f6fa; cursor: not-allowed; }
+}
+
+.searchBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  background: $blue;
+  color: #fff;
+  border: none;
+  border-radius: $radius-sm;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s;
+
+  &:hover:not(:disabled) { background: $blue-hover; }
+  &:disabled { opacity: .55; cursor: not-allowed; }
+}
+
+.clearBtn {
+  height: 36px;
+  padding: 0 14px;
+  background: none;
+  color: $text-2;
+  border: 1px solid $border;
+  border-radius: $radius-sm;
+  font-size: 0.83rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s;
+
+  &:hover:not(:disabled) { background: #f4f6fa; }
+  &:disabled { opacity: .55; cursor: not-allowed; }
+}
+
+// ─── Banner de médico + resumen ────────────────────────────────────────────────
+.summaryBar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  padding: 14px 16px;
+  border-bottom: 1px solid $border;
+  background: #f8faff;
+}
+
+.medicoInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-right: auto;
+}
+
+.medicoNombre {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: $text-1;
+}
+
+.medicoSub {
+  font-size: 0.76rem;
+  color: $text-3;
+  font-variant-numeric: tabular-nums;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  border-radius: 20px;
+  padding: 3px 11px;
+  background: #eef2f7;
+  color: $text-2;
+  white-space: nowrap;
+}
+
+.chipCount { background: $blue-light; color: $blue; }
+.chipMoney { background: #f0fdf4; color: $green; font-variant-numeric: tabular-nums; }
+.chipWarn  { background: #fef3c7; color: #92400e; }
+
+// ─── Botones de exportación ────────────────────────────────────────────────────
+.exportGroup {
+  display: inline-flex;
+  gap: 8px;
+  margin-left: 6px;
+}
+
+.exportBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 13px;
+  border: 1px solid $border;
+  border-radius: $radius-sm;
+  background: $surface;
+  font-size: 0.79rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+
+  &:disabled { opacity: .55; cursor: not-allowed; }
+}
+
+.exportBtnExcel {
+  color: #166534;
+  &:hover:not(:disabled) { background: #f0fdf4; border-color: #86efac; }
+}
+
+.exportBtnPDF {
+  color: #b91c1c;
+  &:hover:not(:disabled) { background: #fef2f2; border-color: #fca5a5; }
+}
+
+.spin {
+  animation: dpm-spin 0.9s linear infinite;
+}
+
+@keyframes dpm-spin {
+  to { transform: rotate(360deg); }
+}
+
+// ─── Tabla ──────────────────────────────────────────────────────────────────
+.tableWrap { overflow-x: auto; }
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.83rem;
+
+  thead tr {
+    background: #0c2a52;
+    border-bottom: 1px solid $border;
+  }
+
+  th {
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 10px 12px;
+    color: $text-1;
+    border-bottom: 1px solid #f1f4f8;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    transition: background .1s;
+    &:hover { background: #f8faff; }
+    &:last-child td { border-bottom: none; }
+  }
+}
+
+.thRight { text-align: right; }
+.tdRight { text-align: right; }
+
+.rowAnulada td {
+  opacity: .5;
+  text-decoration: line-through;
+}
+
+.idCell {
+  font-variant-numeric: tabular-nums;
+  color: $text-2;
+}
+
+.osCell {
+  font-weight: 700;
+  color: $blue;
+  font-variant-numeric: tabular-nums;
+}
+
+.codeCell {
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 700;
+  color: $blue;
+}
+
+.moneyCell { font-variant-numeric: tabular-nums; color: $text-1; }
+
+.subtotalCell {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: $green;
+}
+
+.cantidadCell {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.cantidadMain { font-weight: 600; color: $text-1; }
+.cantidadSub  { font-size: 0.72rem; color: $text-3; }
+
+.mutedText { color: $text-3; }
+
+.viaBadge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 1px 6px;
+  background: #eef2f7;
+  color: $text-2;
+}
+.viaLaparoscopica { background: #ede9fe; color: #6b21a8; }
+
+.tipoBadge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: 20px;
+  padding: 2px 8px;
+  background: #eef2f7;
+  color: #475569;
+  white-space: nowrap;
+}
+.tipoConsulta   { background: #e8f0ff; color: #0c2a52; }
+.tipoPractica   { background: #fef3c7; color: #92400e; }
+.tipoHonorarios { background: #f0fdf4; color: #166534; }
+.tipoSanatorio  { background: #faf5ff; color: #6b21a8; }
+
+.tipoPrestadorBadge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+.tipoPrestadorMedico   { background: #eff6ff; color: #1d4ed8; }
+.tipoPrestadorAyudante { background: #faf5ff; color: #6b21a8; }
+.tipoPrestadorGastos   { background: #fff7ed; color: #c2410c; }
+.tipoPrestadorPediatra { background: #eafaf7; color: #0f766e; }
+
+.btnVer {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 12px;
+  background: #eff6ff;
+  color: $blue;
+  border: none;
+  border-radius: $radius-sm;
+  font-size: 0.77rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+
+  &:hover { background: #dbeafe; }
+}
+
+// ─── Estados vacíos ───────────────────────────────────────────────────────────
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 56px 24px;
+  text-align: center;
+}
+
+.emptyIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: $blue-light;
+  color: $blue;
+}
+
+.emptyText {
+  font-size: 0.88rem;
+  color: $text-3;
+  max-width: 460px;
+  margin: 0;
+}
+
+.emptyTextStrong {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: $text-1;
+  margin: 0;
+}
