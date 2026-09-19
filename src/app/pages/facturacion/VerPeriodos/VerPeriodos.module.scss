@@ -294,6 +294,24 @@ $shadow-md:  0 4px 16px rgba(0, 0, 0, .10);
   &:hover { background: #dbeafe; }
 }
 
+.btnFactura {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 12px;
+  background: #f0fdf4;
+  color: $green;
+  border: none;
+  border-radius: $radius-sm;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+
+  &:hover { background: #dcfce7; }
+}
+
 .emptyCell {
   text-align: center;
   color: $text-3;

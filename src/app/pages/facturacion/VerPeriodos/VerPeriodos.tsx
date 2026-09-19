@@ -1,15 +1,21 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Receipt, Search, Eye } from "lucide-react";
+import { Receipt, Search, Eye, FileText } from "lucide-react";
 
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
+import { abrirAdjunto } from "../../../lib/archivos";
 import { listarFacturas } from "../api";
 import type { FacturaRead, ListarFacturasParams, ObraSocialOption } from "../types";
 import { detailMessage } from "../types";
 import { formatMoney } from "../money";
 import ObraSocialAutocomplete from "../components/ObraSocialAutocomplete";
 import styles from "./VerPeriodos.module.scss";
+
+// Mismos estados que `FACTURA_ESTADOS_CERRADOS` en el backend (service.py):
+// 'C' es el estado actual, 'L'/'LC' son históricos de CMC que se siguen
+// aceptando como cerrados por compatibilidad.
+const ESTADOS_CERRADOS = new Set(["C", "L", "LC"]);
 
 const PAGE_SIZES = [25, 50, 100, 200];
 const DEFAULT_LIMIT = 50;
@@ -99,6 +105,10 @@ const VerPeriodos: React.FC = () => {
 
   const handleVer = (row: FacturaRead) => {
     navigate(`/panel/facturacion/periodos/${row.id_prestaciones}`);
+  };
+
+  const handleVerFactura = (row: FacturaRead) => {
+    abrirAdjunto(row.documento_url).catch((e: Error) => notify(e.message, "error"));
   };
 
   const limit = filtros.limit ?? DEFAULT_LIMIT;
@@ -244,6 +254,11 @@ const VerPeriodos: React.FC = () => {
                       <button type="button" className={styles.btnView} onClick={() => handleVer(row)}>
                         <Eye size={14} /> Ver
                       </button>
+                      {row.estado && ESTADOS_CERRADOS.has(row.estado) && row.documento_url && (
+                        <button type="button" className={styles.btnFactura} onClick={() => handleVerFactura(row)}>
+                          <FileText size={14} /> Ver factura
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
