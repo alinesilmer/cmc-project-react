@@ -86,7 +86,6 @@ interface CodigoApi {
   coseguro: number | string;
   admitido: boolean;
   motivo: string | null;
-  se_envia: string | null;
 }
 
 // Los DECIMAL de MySQL llegan como string por JSON.
@@ -193,7 +192,6 @@ export const buscarCodigos = async (
     coseguro: num(c.coseguro),
     admitido: c.admitido,
     motivo: c.motivo,
-    seEnvia: c.se_envia ?? null,
   }));
 };
 

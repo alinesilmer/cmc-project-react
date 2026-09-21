@@ -167,14 +167,6 @@ export default function CodigoSelect({
         {cargando && abierto && <Loader2 size={15} className={s.spinner} />}
       </div>
 
-      {/* Sancor autoriza algunos códigos con otro número. Sin este aviso, el
-          prestador ve en la tabla un código distinto del que eligió y no
-          entiende por qué. El precio y lo que se factura no cambian. */}
-      {!abierto && seleccionado?.seEnvia && (
-        <span className={s.homologado}>
-          La obra social lo autoriza como <strong>{seleccionado.seEnvia}</strong>
-        </span>
-      )}
       {!abierto && seleccionado && seleccionado.coseguro > 0 && (
         <span className={s.homologado}>
           Tiene <strong>{formatMoneda(seleccionado.coseguro)}</strong> de coseguro
@@ -202,15 +194,7 @@ export default function CodigoSelect({
                 onClick={() => elegir(op)}
               >
                 <span className={s.opCodigo}>{op.codigo}</span>
-                <span className={s.opDesc}>
-                  {op.descripcion}
-                  {op.seEnvia && (
-                    <em className={s.opHomologado}>se envía como {op.seEnvia}</em>
-                  )}
-                </span>
-                <span className={s.opValor}>
-                  {formatMoneda(op.honorarios + op.gastos)}
-                </span>
+                <span className={s.opDesc}>{op.descripcion}</span>
                 {activo && <Check size={15} className={s.opCheck} />}
               </li>
             );

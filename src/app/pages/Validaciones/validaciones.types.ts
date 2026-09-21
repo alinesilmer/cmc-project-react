@@ -242,11 +242,6 @@ export interface CodigoNomenclador {
    */
   admitido: boolean;
   motivo?: string | null;
-  /** Código con el que la obra social conoce esta práctica, cuando exige uno
-   * distinto para autorizar (ver `obras/<os>/homologador.py` en la API).
-   * `null` = se manda tal cual. Es informativo: el precio y lo que se factura
-   * son siempre los de `codigo`. */
-  seEnvia?: string | null;
 }
 
 export interface PrestadorInfo {
