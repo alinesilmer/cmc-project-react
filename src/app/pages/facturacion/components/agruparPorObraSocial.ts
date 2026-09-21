@@ -30,8 +30,15 @@ export function agruparPorObraSocial(prestaciones: PrestacionRead[]): GrupoObraS
     }
     grupo.prestaciones.push(p);
     if (p.estado !== "X") {
-      grupo.totalHonorarios += parseMoney(p.honorarios);
-      grupo.totalGastos += parseMoney(p.gastos);
+      // `honorarios`/`gastos` son el valor UNITARIO de la prestación — el backend
+      // recién multiplica por cantidad*sesión al calcular `importe_total`
+      // (ver calcular_importe_total en service.py). Hay que hacer la misma
+      // multiplicación acá para que el subtotal del grupo sea consistente con
+      // el total (si no, "Honorarios" queda muy por debajo de lo que corresponde
+      // en prestaciones con cantidad/sesión > 1).
+      const unidades = (p.cantidad ?? 1) * (p.sesion ?? 1);
+      grupo.totalHonorarios += parseMoney(p.honorarios) * unidades;
+      grupo.totalGastos += parseMoney(p.gastos) * unidades;
       grupo.totalImporte += parseMoney(p.importe_total);
     }
   }

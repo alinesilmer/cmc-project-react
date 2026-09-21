@@ -190,7 +190,7 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
   },
   {
     slug: "ospm",
-    nombre: "OSPM · Personal Municipal",
+    nombre: "OSPM · Personal Marítimo",
     codigo: 433,
     modo: "integrada",
     estado: "operativa",

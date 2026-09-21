@@ -68,6 +68,13 @@ export default function ValidacionOS() {
   const [tab, setTab] = useState<TabId>("carga");
   const [mes, setMes] = useState(hoy.getMonth() + 1);
   const [anio, setAnio] = useState(hoy.getFullYear());
+  // `mes`/`anio` arrancan en el mes calendario (ver `hoy` arriba) solo porque hace
+  // falta un valor inicial sincrónico — el período REAL es el puntero
+  // `periodo_medico_actual` que se pide abajo. Sin este flag la barra mostraba el
+  // mes de hoy por un instante y después "saltaba" al período abierto de verdad
+  // (ej. mostraba Septiembre y al toque cambiaba a Octubre) apenas resolvía el
+  // fetch — confuso cuando ya no coinciden porque el cron de cierre corrió.
+  const [periodoListo, setPeriodoListo] = useState(false);
 
   const [prestaciones, setPrestaciones] = useState<Prestacion[]>([]);
   const [periodos, setPeriodos] = useState<Periodo[]>([]);
@@ -163,6 +170,10 @@ export default function ValidacionOS() {
   useEffect(() => {
     if (codigoOS == null) return;
     let cancelado = false;
+    // Al cambiar de obra social (sin remount: mismo componente, otro `slug` de
+    // ruta) hay que volver a mostrar "Cargando…" — si no, se ve por un instante
+    // el período de la obra social anterior.
+    setPeriodoListo(false);
     getPeriodoActual(codigoOS)
       .then(({ mes: m, anio: a }) => {
         if (cancelado) return;
@@ -171,6 +182,9 @@ export default function ValidacionOS() {
       })
       .catch(() => {
         /* sin puntero configurado seguimos con el mes calendario */
+      })
+      .finally(() => {
+        if (!cancelado) setPeriodoListo(true);
       });
     return () => {
       cancelado = true;
@@ -365,11 +379,9 @@ export default function ValidacionOS() {
       <div className={s.periodBar}>
         <div className={s.periodInfo}>
           <span className={s.periodEyebrow}>Período abierto</span>
-          <div className={s.periodLabel}>
+          <div className={`${s.periodLabel} ${periodoListo ? "" : s.periodLabelLoading}`}>
             <CalendarDays size={18} />
-            <span>
-              {nombreMes(mes)} {anio}
-            </span>
+            <span>{periodoListo ? `${nombreMes(mes)} ${anio}` : "Cargando…"}</span>
           </div>
         </div>
 
