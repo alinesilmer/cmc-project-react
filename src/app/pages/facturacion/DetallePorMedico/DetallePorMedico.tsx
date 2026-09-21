@@ -1,8 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import {
-  UserSearch, Search, Eye, AlertTriangle, FileSpreadsheet, FileText, Loader2,
+  UserSearch, Search, AlertTriangle, FileSpreadsheet, FileText, Loader2,
 } from "lucide-react";
 
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
@@ -11,6 +10,7 @@ import { detailMessage } from "../types";
 import type { MedicoOption, PrestacionRead, Tipo } from "../types";
 import { formatMoney, parseMoney } from "../money";
 import { saveAs } from "../../../lib/fileSaver";
+import TablaPorObraSocial from "../components/TablaPorObraSocial";
 import styles from "./DetallePorMedico.module.scss";
 
 // Tope del backend por request (GET /prestaciones: limit <= 200) y freno de
@@ -24,37 +24,6 @@ const TIPO_LABEL_CORTO: Record<Tipo, string> = {
   Practica: "Prácticas",
   "Honorarios individuales": "Honorarios",
   Sanatorio: "Sanatorios",
-};
-
-// Igual criterio que el resto del módulo: las fechas DATE ("YYYY-MM-DD") no se
-// parsean con `new Date` porque el huso (AR = UTC-3) las corre un día.
-const fmtFecha = (iso: string | null | undefined): string => {
-  if (!iso) return "—";
-  const soloFecha = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
-  if (soloFecha) return `${soloFecha[3]}/${soloFecha[2]}/${soloFecha[1]}`;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
-};
-
-const tipoClass = (t: Tipo | null | undefined): string => {
-  switch (t) {
-    case "Consulta":               return styles.tipoConsulta;
-    case "Practica":               return styles.tipoPractica;
-    case "Honorarios individuales": return styles.tipoHonorarios;
-    case "Sanatorio":              return styles.tipoSanatorio;
-    default:                       return "";
-  }
-};
-
-const tipoPrestadorClass = (t: string | null | undefined): string => {
-  switch (t) {
-    case "Medico":   return styles.tipoPrestadorMedico;
-    case "Ayudante": return styles.tipoPrestadorAyudante;
-    case "Gastos":   return styles.tipoPrestadorGastos;
-    case "Pediatra": return styles.tipoPrestadorPediatra;
-    default:         return "";
-  }
 };
 
 interface Busqueda { socio: string; periodo: string; }
@@ -345,76 +314,13 @@ const DetallePorMedico: React.FC = () => {
           </div>
         )}
 
-        {/* Tabla de detalle */}
+        {/* Tabla de detalle, agrupada por obra social */}
         {hayResultados && rows!.length > 0 && !loading && (
-          <motion.div
-            className={styles.tableWrap}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-          >
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Obra social</th>
-                  <th>Fecha</th>
-                  <th>Código</th>
-                  <th>Tipo</th>
-                  <th>Autorización</th>
-                  <th>Afiliado</th>
-                  <th>Cantidad</th>
-                  <th className={styles.thRight}>%</th>
-                  <th className={styles.thRight}>Honorarios</th>
-                  <th className={styles.thRight}>Gastos</th>
-                  <th className={styles.thRight}>Coseguro</th>
-                  <th className={styles.thRight}>Subtotal</th>
-                  <th>TP</th>
-                  <th className={styles.thRight}>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows!.map((p) => (
-                  <tr key={p.id} className={p.estado === "X" ? styles.rowAnulada : ""}>
-                    <td className={styles.idCell}>{p.id}</td>
-                    <td><span className={styles.osCell}>{p.cod_obra_social ?? "—"}</span></td>
-                    <td>{fmtFecha(p.fecha_practica)}</td>
-                    <td><span className={styles.codeCell}>{p.cod_nomenclador ?? "—"}</span></td>
-                    <td>
-                      {p.tipo ? (
-                        <span className={`${styles.tipoBadge} ${tipoClass(p.tipo)}`}>{p.tipo}</span>
-                      ) : <span className={styles.mutedText}>—</span>}
-                    </td>
-                    <td>{p.autorizacion || <span className={styles.mutedText}>—</span>}</td>
-                    <td>{p.nombre_paciente || <span className={styles.mutedText}>—</span>}</td>
-                    <td>
-                      <div className={styles.cantidadCell}>
-                        <span className={styles.cantidadMain}>Cant. {p.cantidad ?? "—"}</span>
-                        <span className={styles.cantidadSub}>Sesión {p.sesion ?? "—"}</span>
-                      </div>
-                    </td>
-                    <td className={styles.tdRight}>{p.porcentaje != null ? `${p.porcentaje}%` : "—"}</td>
-                    <td className={styles.tdRight}><span className={styles.moneyCell}>{formatMoney(p.honorarios)}</span></td>
-                    <td className={styles.tdRight}><span className={styles.moneyCell}>{formatMoney(p.gastos)}</span></td>
-                    <td className={styles.tdRight}><span className={styles.moneyCell}>{formatMoney(p.coseguro)}</span></td>
-                    <td className={styles.tdRight}><span className={styles.subtotalCell}>{formatMoney(p.importe_total)}</span></td>
-                    <td>
-                      {p.tipo_prestador ? (
-                        <span className={`${styles.tipoPrestadorBadge} ${tipoPrestadorClass(p.tipo_prestador)}`}>
-                          {p.tipo_prestador}
-                        </span>
-                      ) : <span className={styles.mutedText}>—</span>}
-                    </td>
-                    <td className={styles.tdRight}>
-                      <button type="button" className={styles.btnVer} onClick={() => verFicha(p.id)}>
-                        <Eye size={14} /> Ver ficha
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </motion.div>
+          <TablaPorObraSocial
+            prestaciones={rows!}
+            cargando={false}
+            onRowClick={(p) => verFicha(p.id)}
+          />
         )}
       </div>
     </div>

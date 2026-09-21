@@ -14,7 +14,7 @@ import {
   FileCode2, Search, FileText, Percent, Sigma, TrendingUp,
   PencilRuler, ShieldUser, Monitor, Receipt, CalendarDays,
   LogOut, CircleUserRound, ChevronDown, Menu, X, Layers,
-  Smartphone, Gift, Inbox, Megaphone, ShieldCheck, ExternalLink,
+  Smartphone, Gift, Inbox, Megaphone, ShieldCheck,
   BarChart3, Stethoscope, UserSearch,
 } from "lucide-react";
 
@@ -61,7 +61,6 @@ const VALIDACIONES_MENU: Extract<TopEntry, { kind: "menu" }> = {
         { path: `${base}/validaciones/omint`, icon: ClipboardList, label: "Omint" },
         { path: `${base}/validaciones/boreal`, icon: ClipboardList, label: "Boreal Salud" },
         { path: `${base}/validaciones`, icon: ShieldCheck, label: "Ver todas" },
-        { path: `${base}/validaciones/portales`, icon: ExternalLink, label: "Portales de obras sociales" },
       ],
     },
   ],
@@ -83,7 +82,6 @@ const VISTA_MEDICO_MENU: Extract<TopEntry, { kind: "menu" }> = {
         { path: `${base}/validaciones/omint`, icon: ClipboardList, label: "Omint", perms: ["validacion:cargar"] },
         { path: `${base}/validaciones/boreal`, icon: ClipboardList, label: "Boreal Salud", perms: ["validacion:cargar"] },
         { path: `${base}/validaciones`, icon: ShieldCheck, label: "Ver todas", perms: ["validacion:cargar"] },
-        { path: `${base}/validaciones/portales`, icon: ExternalLink, label: "Portales de obras sociales", perms: ["validacion:cargar"] },
       ],
     },
   ],
@@ -252,6 +250,7 @@ const DOCTOR_TOP_NAV: TopEntry[] = [
   VALIDACIONES_MENU,
   { kind: "link", path: `${base}/nomenclador/consulta-precios`, icon: DollarSign, label: "Consulta de Precios" },
   { kind: "link", path: `${base}/planillas`, icon: FileText, label: "Planillas" },
+  { kind: "link", path: `${base}/facturacion/mi-recepcion`, icon: Receipt, label: "Mi recepción" },
   { kind: "link", path: `${base}/mi-perfil`, icon: CircleUserRound, label: "Mi perfil" },
 ];
 

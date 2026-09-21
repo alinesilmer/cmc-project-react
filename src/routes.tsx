@@ -66,6 +66,7 @@ const FacturacionFacturaDetalle = lazy(() => import("./app/pages/facturacion/Fac
 const ConsultaPrestacion = lazy(() => import("./app/pages/facturacion/ConsultaPrestacion/ConsultaPrestacion"));
 const DetallePorMedico = lazy(() => import("./app/pages/facturacion/DetallePorMedico/DetallePorMedico"));
 const RegistroFacturacion = lazy(() => import("./app/pages/facturacion/RegistroFacturacion/RegistroFacturacion"));
+const MiRecepcion = lazy(() => import("./app/pages/facturacion/MiRecepcion/MiRecepcion"));
 
 // WEBSITE
 const WebRoutes = lazy(() => import("./website/router"));
@@ -204,6 +205,9 @@ export default function RootRoutes() {
                   <Route path="consulta" element={<ConsultaPrestacion />} />
                   <Route path="consulta/:id" element={<ConsultaPrestacion />} />
                   <Route path="detalle-medico" element={<DetallePorMedico />} />
+                </Route>
+                <Route element={<RequireScope scope="facturacion:leer_propio" />}>
+                  <Route path="mi-recepcion" element={<MiRecepcion />} />
                 </Route>
                 <Route element={<RequireScope scope="facturacion:complementar" />}>
                   <Route path="complementarias" element={<Complementarias />} />

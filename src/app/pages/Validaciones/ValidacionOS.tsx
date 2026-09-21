@@ -5,8 +5,6 @@ import {
   ArrowLeft,
   BadgeCheck,
   CalendarDays,
-  ChevronLeft,
-  ChevronRight,
   CircleAlert,
   ClipboardList,
   ExternalLink,
@@ -50,7 +48,7 @@ import type {
 } from "./validaciones.types";
 import s from "./ValidacionOS.module.scss";
 
-type TabId = "carga" | "periodo" | "historial";
+type TabId = "carga" | "listado";
 
 const hoy = new Date();
 
@@ -73,7 +71,6 @@ export default function ValidacionOS() {
 
   const [prestaciones, setPrestaciones] = useState<Prestacion[]>([]);
   const [periodos, setPeriodos] = useState<Periodo[]>([]);
-  const [cargandoLista, setCargandoLista] = useState(true);
   const [cargandoPeriodos, setCargandoPeriodos] = useState(true);
   const [errorCarga, setErrorCarga] = useState<string | null>(null);
 
@@ -90,10 +87,13 @@ export default function ValidacionOS() {
   const [aAdjuntar, setAAdjuntar] = useState<Prestacion | null>(null);
   const [archivo, setArchivo] = useState<File | null>(null);
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
-  const [periodoAbierto, setPeriodoAbierto] = useState<{
-    mes: number;
-    anio: number;
-  } | null>(null);
+
+  // Detalle prestación-por-prestación de un período del listado (cualquiera,
+  // no sólo el abierto) — independiente de `prestaciones`/`mes`/`anio`, que
+  // son siempre los del período abierto (la barra de arriba no navega).
+  const [verDetalle, setVerDetalle] = useState<Periodo | null>(null);
+  const [prestacionesDetalle, setPrestacionesDetalle] = useState<Prestacion[]>([]);
+  const [cargandoDetalle, setCargandoDetalle] = useState(false);
 
   const fileRef = useRef<HTMLInputElement>(null);
   const resultadoRef = useRef<HTMLDivElement>(null);
@@ -108,11 +108,9 @@ export default function ValidacionOS() {
     if (faltaElegirSocio) {
       setPrestaciones([]);
       setPeriodos([]);
-      setCargandoLista(false);
       setCargandoPeriodos(false);
       return;
     }
-    setCargandoLista(true);
     setCargandoPeriodos(true);
     setErrorCarga(null);
     try {
@@ -125,7 +123,6 @@ export default function ValidacionOS() {
     } catch {
       setErrorCarga("No pudimos traer las prestaciones. Reintentá en unos segundos.");
     } finally {
-      setCargandoLista(false);
       setCargandoPeriodos(false);
     }
   }, [codigoOS, mes, anio, faltaElegirSocio, nroSocioElegido]);
@@ -133,6 +130,33 @@ export default function ValidacionOS() {
   useEffect(() => {
     void refrescar();
   }, [refrescar]);
+
+  // Trae las prestaciones de un período puntual del listado (no ata al
+  // período abierto): así "Ver detalle" no mueve la barra de arriba.
+  const abrirDetalle = useCallback(
+    async (p: Periodo) => {
+      if (codigoOS == null) return;
+      setVerDetalle(p);
+      setCargandoDetalle(true);
+      try {
+        const lista = await getPrestaciones(codigoOS, p.mes, p.anio, nroSocioElegido);
+        setPrestacionesDetalle(lista);
+      } catch {
+        setErrorCarga("No pudimos traer las prestaciones de ese período. Reintentá en unos segundos.");
+      } finally {
+        setCargandoDetalle(false);
+      }
+    },
+    [codigoOS, nroSocioElegido],
+  );
+
+  // Después de eliminar/adjuntar sobre el detalle abierto, refresca esa misma
+  // lista — `refrescar()` sólo trae la del período abierto, que puede ser otro.
+  const refrescarDetalle = useCallback(async () => {
+    if (!verDetalle || codigoOS == null) return;
+    const lista = await getPrestaciones(codigoOS, verDetalle.mes, verDetalle.anio, nroSocioElegido);
+    setPrestacionesDetalle(lista);
+  }, [verDetalle, codigoOS, nroSocioElegido]);
 
   // El período abierto lo define el Colegio (puntero `periodo_medico_actual`),
   // no el calendario: arrancamos parados ahí y no en el mes de hoy.
@@ -144,7 +168,6 @@ export default function ValidacionOS() {
         if (cancelado) return;
         setMes(m);
         setAnio(a);
-        setPeriodoAbierto({ mes: m, anio: a });
       })
       .catch(() => {
         /* sin puntero configurado seguimos con el mes calendario */
@@ -207,7 +230,7 @@ export default function ValidacionOS() {
       if (prestacion.estado === "autorizada" || prestacion.estado === "cargada") {
         setFormKey((k) => k + 1);
       }
-      await refrescar();
+      await Promise.all([refrescar(), refrescarDetalle()]);
       resultadoRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     } catch (err) {
       // Regla única para el prestador: si no salió el cartel de autorizada, la
@@ -220,10 +243,10 @@ export default function ValidacionOS() {
       // eso hacía falta un estado intermedio.
       //
       // Igual se refresca la lista: si un backend excepcionalmente lento
-      // alcanzó a grabar, la prestación aparece en "Período actual" y el
-      // prestador la ve antes de reintentar.
+      // alcanzó a grabar, la prestación aparece en el listado y el prestador
+      // la ve antes de reintentar.
       const porTimeout = esTimeoutDeRed(err);
-      if (porTimeout) await refrescar();
+      if (porTimeout) await Promise.all([refrescar(), refrescarDetalle()]);
       setResultado({
         estado: "rechazada",
         mensaje: porTimeout
@@ -242,7 +265,7 @@ export default function ValidacionOS() {
     setErrorAccion(null);
     try {
       await eliminarPrestacion(aEliminar.id, nroSocioElegido);
-      await refrescar();
+      await Promise.all([refrescar(), refrescarDetalle()]);
       setAEliminar(null);
     } catch (err) {
       // Igual que en el alta: si cortó el navegador, la baja puede haberse
@@ -250,7 +273,7 @@ export default function ValidacionOS() {
       // manda, y dejar "no pudimos eliminar" sobre una prestación que ya no
       // está fue exactamente lo que pasó en las pruebas.
       if (esTimeoutDeRed(err)) {
-        await refrescar();
+        await Promise.all([refrescar(), refrescarDetalle()]);
         setAEliminar(null);
         setErrorCarga(
           `${os.nombre} está demorando en responder. Verificá en el listado si la prestación se eliminó antes de reintentar.`,
@@ -267,7 +290,7 @@ export default function ValidacionOS() {
     setErrorAccion(null);
     try {
       await adjuntarOrden(aAdjuntar.id, archivo, nroSocioElegido);
-      await refrescar();
+      await Promise.all([refrescar(), refrescarDetalle()]);
       setAAdjuntar(null);
       setArchivo(null);
     } catch {
@@ -276,46 +299,33 @@ export default function ValidacionOS() {
     }
   };
 
-  const moverPeriodo = (delta: number) => {
-    const d = new Date(anio, mes - 1 + delta, 1);
-    setMes(d.getMonth() + 1);
-    setAnio(d.getFullYear());
-  };
-
-  // El tope para navegar hacia adelante es el período abierto por el Colegio;
-  // si todavía no llegó la respuesta, el mes calendario.
-  const tope = periodoAbierto ?? { mes: hoy.getMonth() + 1, anio: hoy.getFullYear() };
-  const enTope = mes === tope.mes && anio === tope.anio;
-  const fueraDelAbierto = Boolean(periodoAbierto) && !enTope;
-
   // Entrar al listado siempre trae datos frescos. Importa después de un
   // timeout: el aviso manda al médico a revisar acá si la prestación entró, y
   // el último refresco pudo haber salido antes de que el backend terminara —
   // una lista vacía y vieja lo llevaría a validar dos veces.
   const irATab = (destino: TabId) => {
     setTab(destino);
-    if (destino === "periodo") void refrescar();
+    if (destino === "listado") void refrescar();
   };
 
   const TABS: { id: TabId; label: string; icon: typeof PlusCircle; badge?: number }[] = [
     { id: "carga", label: "Cargar prestación", icon: PlusCircle },
     {
-      id: "periodo",
-      label: "Período actual",
+      id: "listado",
+      label: "Listado",
       icon: ClipboardList,
-      badge: prestaciones.length,
+      badge: periodos.length,
     },
-    { id: "historial", label: "Historial", icon: CalendarDays },
   ];
 
   return (
-    <div className={s.container}>
+    <div className={s.container} style={{ ["--os-color" as string]: os.color }}>
       {/* ── Encabezado ── */}
       <Link to="/panel/validaciones" className={s.back}>
         <ArrowLeft size={16} /> Volver a obras sociales
       </Link>
 
-      <header className={s.header} style={{ ["--os-color" as string]: os.color }}>
+      <header className={s.header}>
         <div className={s.headerMain}>
           {os.logo ? (
             <img src={os.logo} alt="" className={s.headerLogo} />
@@ -351,49 +361,32 @@ export default function ValidacionOS() {
         </section>
       )}
 
-      {/* ── Selector de período ── */}
+      {/* ── Período ── */}
       <div className={s.periodBar}>
-        <div className={s.periodPicker}>
-          <button
-            type="button"
-            className={s.periodArrow}
-            onClick={() => moverPeriodo(-1)}
-            aria-label="Período anterior"
-          >
-            <ChevronLeft size={17} />
-          </button>
+        <div className={s.periodInfo}>
+          <span className={s.periodEyebrow}>Período abierto</span>
           <div className={s.periodLabel}>
-            <CalendarDays size={15} />
+            <CalendarDays size={18} />
             <span>
               {nombreMes(mes)} {anio}
             </span>
           </div>
-          <button
-            type="button"
-            className={s.periodArrow}
-            onClick={() => moverPeriodo(1)}
-            disabled={enTope}
-            aria-label="Período siguiente"
-          >
-            <ChevronRight size={17} />
-          </button>
         </div>
 
-        <div className={s.periodTotals}>
-          <span>
-            <b>{prestaciones.length}</b> prestaciones
-          </span>
-          <span className={s.periodMonto}>{formatMoneda(totalPeriodo)}</span>
+        <div className={s.periodStats}>
+          <div className={s.periodStat}>
+            <span className={s.periodStatValue}>{prestaciones.length}</span>
+            <span className={s.periodStatLabel}>prestaciones</span>
+          </div>
+          <div className={s.periodStatDivider} />
+          <div className={s.periodStat}>
+            <span className={`${s.periodStatValue} ${s.periodStatMoney}`}>
+              {formatMoneda(totalPeriodo)}
+            </span>
+            <span className={s.periodStatLabel}>total del período</span>
+          </div>
         </div>
       </div>
-
-      {fueraDelAbierto && (
-        <p className={s.aviso}>
-          <AlertTriangle size={16} />
-          Estás viendo un período cerrado. Lo que cargues va siempre al período
-          abierto ({nombreMes(tope.mes)} {tope.anio}).
-        </p>
-      )}
 
       {os.nota && (
         <p className={s.nota}>
@@ -475,45 +468,57 @@ export default function ValidacionOS() {
         </section>
       )}
 
-      {tab === "periodo" && (
+      {tab === "listado" && (
         <section className={s.panel}>
-          <div className={s.panelHead}>
-            <h2 className={s.cardTitle}>
-              Prestaciones de {nombreMes(mes)} {anio}
-            </h2>
-            <button type="button" className={s.linkBtn} onClick={() => setTab("carga")}>
-              <PlusCircle size={15} /> Cargar otra
-            </button>
-          </div>
-          <PrestacionesTable
-            prestaciones={prestaciones}
-            cargando={cargandoLista}
-            permiteAdjuntarOrden={os.permiteAdjuntarOrden}
-            onEliminar={setAEliminar}
-            onAdjuntar={(p) => {
-              setArchivo(null);
-              setAAdjuntar(p);
-            }}
-          />
-        </section>
-      )}
-
-      {tab === "historial" && (
-        <section className={s.panel}>
-          <h2 className={s.cardTitle}>Períodos cargados</h2>
-          <p className={s.cardSub}>
-            Cada período agrupa lo autorizado en el mes. El comprobante es el mismo
-            listado que se presenta con la facturación.
-          </p>
-          <PeriodosTable
-            periodos={periodos}
-            cargando={cargandoPeriodos}
-            onVerComprobante={(p) => {
-              setMes(p.mes);
-              setAnio(p.anio);
-              setTab("periodo");
-            }}
-          />
+          {verDetalle ? (
+            <>
+              <div className={s.panelHead}>
+                <div>
+                  <button
+                    type="button"
+                    className={s.linkBtn}
+                    onClick={() => setVerDetalle(null)}
+                  >
+                    <ArrowLeft size={15} /> Volver al listado de períodos
+                  </button>
+                  <h2 className={s.cardTitle}>
+                    Prestaciones de {nombreMes(verDetalle.mes)} {verDetalle.anio}
+                  </h2>
+                </div>
+                <button type="button" className={s.linkBtn} onClick={() => setTab("carga")}>
+                  <PlusCircle size={15} /> Cargar otra
+                </button>
+              </div>
+              <PrestacionesTable
+                prestaciones={prestacionesDetalle}
+                cargando={cargandoDetalle}
+                permiteAdjuntarOrden={os.permiteAdjuntarOrden}
+                onEliminar={setAEliminar}
+                onAdjuntar={(p) => {
+                  setArchivo(null);
+                  setAAdjuntar(p);
+                }}
+              />
+            </>
+          ) : (
+            <>
+              <div className={s.panelHead}>
+                <h2 className={s.cardTitle}>Períodos</h2>
+                <button type="button" className={s.linkBtn} onClick={() => setTab("carga")}>
+                  <PlusCircle size={15} /> Cargar otra
+                </button>
+              </div>
+              <p className={s.cardSub}>
+                Un período por fila, el más reciente primero. "Ver detalle" abre las
+                prestaciones cargadas en ese período, una por una.
+              </p>
+              <PeriodosTable
+                periodos={periodos}
+                cargando={cargandoPeriodos}
+                onVerDetalle={abrirDetalle}
+              />
+            </>
+          )}
         </section>
       )}
 

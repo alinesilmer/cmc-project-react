@@ -312,6 +312,32 @@ $shadow-md:  0 4px 16px rgba(0, 0, 0, .10);
   &:hover { background: #dcfce7; }
 }
 
+.btnPublicar {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 12px;
+  background: #f8fafc;
+  color: $text-3;
+  border: 1px solid #e2e8f0;
+  border-radius: $radius-sm;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+
+  &:hover { background: #f1f5f9; }
+}
+
+.btnPublicarOn {
+  background: #f0fdf4;
+  color: $green;
+  border-color: #bbf7d0;
+
+  &:hover { background: #dcfce7; }
+}
+
 .emptyCell {
   text-align: center;
   color: $text-3;

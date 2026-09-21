@@ -82,13 +82,6 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
     descripcion:
       "Autorización en línea contra el autorizador de Sancor. Requiere el token de la credencial del afiliado.",
     codigosBloqueados: ["180164", "180150"],
-    // La sustitución por especialidad decide si 070660 se resuelve en línea:
-    // con especialidad 16 se envía como 070715 y Sancor lo autoriza; sin ella,
-    // el paciente tiene que ir a las oficinas. El front no conoce las
-    // especialidades del médico, así que el aviso va en condicional — antes
-    // afirmaba que nunca se autoriza, y se lo mostraba también a quien sí
-    // podía validarlo.
-    nota: "Según tu especialidad, el código 070660 puede no autorizarse en línea: en ese caso el paciente debe tramitarlo en oficinas de Sancor.",
     campos: [
       {
         name: "nroAfiliado",
@@ -122,6 +115,7 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
     protocolo: "REST",
     color: "#1f3a93",
     logo: logoOspjn,
+    cargaImplementada: true,
     descripcion:
       "Validación de afiliado y autorización en línea contra el servicio de la Obra Social del Poder Judicial de la Nación.",
     campos: [
@@ -153,6 +147,7 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
     protocolo: "SOAP · Gecros",
     color: "#7b2d8b",
     logo: logoNobis,
+    cargaImplementada: true,
     descripcion:
       "Autorización en línea contra el servicio Gecros de Nobis. Requiere el token de la credencial.",
     campos: [
@@ -203,6 +198,7 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
     protocolo: "REST",
     color: "#0b7285",
     logo: logoOspm,
+    cargaImplementada: true,
     descripcion:
       "Validación por DNI del afiliado. El sistema resuelve el padrón y devuelve la autorización.",
     campos: [

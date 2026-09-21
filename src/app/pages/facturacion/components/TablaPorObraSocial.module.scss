@@ -1,0 +1,189 @@
+// Tabla agrupada por obra social, compartida por "detalle-medico" (Colegio) y
+// "Mi recepción" (médico). Mismo lenguaje visual que DetallePorMedico.module.scss
+// y FacturaDetalle.module.scss (de donde se adaptan las clases de fila-resumen).
+$blue:    #3b6fd4;
+$green:   #166534;
+$border:  #e2e8f0;
+$surface: #ffffff;
+$text-1:  #1a1f2e;
+$text-2:  #4a5568;
+$text-3:  #718096;
+$radius-sm: 6px;
+
+.tableWrap { overflow-x: auto; }
+
+.colCodigo   { width: 26%; }
+.colAfiliado { width: 22%; }
+.colCantidad { width: 16%; }
+.colMoney    { width: 12%; }
+
+.table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 0.83rem;
+
+  thead tr {
+    background: #0c2a52;
+    border-bottom: 1px solid $border;
+  }
+
+  th {
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 10px 12px;
+    color: $text-1;
+    border-bottom: 1px solid #f1f4f8;
+    vertical-align: middle;
+  }
+
+  tbody tr:not(.resumenRow) {
+    transition: background .1s;
+    &:hover { background: #f8faff; }
+  }
+}
+
+// Honorarios/Gastos/Total: alineados a la izquierda, como el resto de las
+// columnas (no a la derecha, que es lo habitual para columnas de dinero —
+// pedido explícito).
+.thMoney { text-align: left; }
+.tdMoney { text-align: left; }
+
+.totalLabelCell { text-align: right; }
+
+.rowClickable { cursor: pointer; }
+
+.rowAnulada td {
+  opacity: .5;
+  text-decoration: line-through;
+}
+
+.codeCell {
+  display: block;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 700;
+  color: $blue;
+}
+.codeDesc {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: $text-3;
+  text-decoration: none;
+  white-space: normal;
+}
+
+.moneyCell { font-variant-numeric: tabular-nums; color: $text-1; }
+
+.subtotalCell {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: $green;
+}
+
+.mutedText { color: $text-3; }
+
+// ─── Fila resumen (encabezado de grupo, ANTES del detalle) ────────────────────
+.resumenRow td {
+  background: #f0f4ff;
+  border-top: 2px solid #dce7ff;
+  border-bottom: 2px solid #dce7ff;
+  padding: 10px 12px;
+  white-space: normal;
+}
+
+.resumenContent {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: inherit;
+}
+
+.toggleBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: $text-2;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background .15s;
+
+  svg { transition: transform .15s; }
+
+  &:hover { background: rgba(59, 111, 212, .12); color: $blue; }
+}
+
+.toggleBtnColapsado svg { transform: rotate(-90deg); }
+
+.resumenLabel {
+  font-weight: 700;
+  color: $text-1;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.resumenMoney {
+  font-size: inherit;
+  color: $text-2;
+  white-space: nowrap;
+
+  strong { color: $text-1; }
+}
+
+.resumenTotalBadge {
+  display: inline-block;
+  font-size: inherit;
+  font-weight: 700;
+  border-radius: 20px;
+  padding: 3px 12px;
+  background: $blue;
+  color: #fff;
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+// ─── Total general ─────────────────────────────────────────────────────────
+.totalGeneralRow td {
+  padding: 14px 12px;
+  border-top: 2px solid $text-1;
+  border-bottom: none;
+  font-weight: 700;
+  color: $text-1;
+}
+
+.totalGeneralValue {
+  font-variant-numeric: tabular-nums;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: $green;
+}
+
+// ─── Estados vacíos ────────────────────────────────────────────────────────
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.emptyText { font-size: 0.85rem; color: $text-3; margin: 0; }
+.emptyTextStrong { font-size: 0.9rem; font-weight: 600; color: $text-2; margin: 0; }

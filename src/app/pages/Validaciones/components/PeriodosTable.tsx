@@ -1,4 +1,4 @@
-import { CalendarRange, FileDown } from "lucide-react";
+import { CalendarRange, ChevronRight } from "lucide-react";
 
 import { formatMoneda, nombreMes } from "../validaciones.types";
 import type { Periodo } from "../validaciones.types";
@@ -7,10 +7,10 @@ import s from "./Tablas.module.scss";
 interface Props {
   periodos: Periodo[];
   cargando: boolean;
-  onVerComprobante: (p: Periodo) => void;
+  onVerDetalle: (p: Periodo) => void;
 }
 
-export default function PeriodosTable({ periodos, cargando, onVerComprobante }: Props) {
+export default function PeriodosTable({ periodos, cargando, onVerDetalle }: Props) {
   if (cargando)
     return (
       <div className={s.skeletonWrap}>
@@ -37,7 +37,7 @@ export default function PeriodosTable({ periodos, cargando, onVerComprobante }: 
               <th>Período</th>
               <th className={s.center}>Prestaciones</th>
               <th className={s.right}>Total facturado</th>
-              <th className={s.center}>Comprobante</th>
+              <th className={s.center}>Detalle</th>
             </tr>
           </thead>
           <tbody>
@@ -54,9 +54,9 @@ export default function PeriodosTable({ periodos, cargando, onVerComprobante }: 
                   <button
                     type="button"
                     className={s.pdfBtn}
-                    onClick={() => onVerComprobante(p)}
+                    onClick={() => onVerDetalle(p)}
                   >
-                    <FileDown size={15} /> Ver PDF
+                    Ver detalle <ChevronRight size={15} />
                   </button>
                 </td>
               </tr>
@@ -79,9 +79,9 @@ export default function PeriodosTable({ periodos, cargando, onVerComprobante }: 
               <button
                 type="button"
                 className={s.cardBtn}
-                onClick={() => onVerComprobante(p)}
+                onClick={() => onVerDetalle(p)}
               >
-                <FileDown size={15} /> Ver comprobante
+                Ver detalle <ChevronRight size={15} />
               </button>
             </div>
           </li>

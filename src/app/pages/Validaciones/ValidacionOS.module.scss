@@ -110,75 +110,86 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: $spacing-4;
+  gap: $spacing-5;
   flex-wrap: wrap;
-  padding: $spacing-3 $spacing-4;
-  background: $white;
+  padding: $spacing-5 $spacing-6;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--os-color, #{$primary-blue}) 6%, $white), $white);
   border: 1px solid $gray-200;
-  border-radius: $border-radius-lg;
+  border-left: 4px solid var(--os-color, #{$primary-blue});
+  border-radius: $border-radius-xl;
+  box-shadow: $shadow-sm;
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-4;
+  }
 }
 
-.periodPicker {
+.periodInfo {
   display: flex;
-  align-items: center;
-  gap: $spacing-2;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.periodArrow {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  background: $white;
-  border: 1px solid $gray-300;
-  border-radius: $border-radius-sm;
-  color: $gray-600;
-  cursor: pointer;
-  transition: background 0.16s, color 0.16s;
-
-  &:hover:not(:disabled) {
-    background: $gray-100;
-    color: $gray-900;
-  }
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
+.periodEyebrow {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--os-color, #{$primary-blue});
 }
 
 .periodLabel {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-width: 160px;
-  justify-content: center;
-  font-size: $font-size-base;
-  font-weight: $font-weight-semibold;
+  gap: $spacing-2;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
   color: $gray-900;
+  text-transform: capitalize;
 
   svg {
-    color: $gray-400;
+    color: var(--os-color, #{$primary-blue});
   }
 }
 
-.periodTotals {
+.periodStats {
   display: flex;
   align-items: center;
-  gap: $spacing-5;
-  font-size: $font-size-sm;
-  color: $gray-500;
+  gap: $spacing-6;
 
-  b {
-    color: $gray-900;
+  @media (max-width: $breakpoint-sm) {
+    gap: $spacing-4;
   }
 }
 
-.periodMonto {
-  font-size: $font-size-xl;
+.periodStat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+
+.periodStatValue {
+  font-size: $font-size-3xl;
   font-weight: $font-weight-bold;
-  color: $primary-blue;
+  color: $gray-900;
   font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.periodStatMoney {
+  color: $success-green;
+}
+
+.periodStatLabel {
+  font-size: $font-size-xs;
+  color: $gray-500;
+}
+
+.periodStatDivider {
+  align-self: stretch;
+  width: 1px;
+  background: $gray-200;
 }
 
 // ─── Avisos ───────────────────────────────────────────────────────────────────
