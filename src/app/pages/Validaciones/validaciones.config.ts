@@ -359,8 +359,11 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
     // y para que la pantalla de carga por archivo lo tenga a mano el día que
     // exista el import; la carga real sigue sin implementarse.
     cargaImplementada: false,
+    // Sólo el Colegio entra por acá (sube el reporte de facturación de todo
+    // el padrón); el médico no tiene nada que hacer en esa pantalla, así que
+    // `destinoObraSocial` la salta para él y usa `url` en su lugar.
     rutaPanel: "/panel/validaciones/prevencion-salud",
-    url: "https://autogestionprestadores.prevencionsalud.com.ar/Validations/AuthorizationRequest",
+    url: "https://autogestionprestadores.prevencionsalud.com.ar/",
   },
   {
     slug: "swiss-medical",
@@ -438,11 +441,18 @@ export const OBRAS_EXTERNAS = OBRAS_SOCIALES.filter((os) => os.modo === "externa
  * `panel`  → se valida y carga desde acá.
  * `cmc`    → tiene página propia en el sitio del Colegio.
  * `portal` → se valida en el sitio de la obra social (enlace externo).
+ *
+ * `esMedico` sólo importa para `rutaPanel`: hoy la única obra social que lo usa
+ * es Prevención Salud, y esa pantalla propia es la herramienta del Colegio para
+ * repartir el reporte de facturación entre médicos — no algo que el médico
+ * pueda operar. Para él, la tarjeta cae al siguiente caso (`url`, portal
+ * externo) como si `rutaPanel` no existiera.
  */
 export const destinoObraSocial = (
-  os: ObraSocialConfig
+  os: ObraSocialConfig,
+  esMedico: boolean
 ): { href: string; tipo: "panel" | "cmc" | "portal" } => {
-  if (os.rutaPanel) return { href: os.rutaPanel, tipo: "panel" };
+  if (os.rutaPanel && !esMedico) return { href: os.rutaPanel, tipo: "panel" };
   if (os.modo === "integrada")
     return { href: `/panel/validaciones/${os.slug}`, tipo: "panel" };
   if (os.sitioCmc) return { href: os.sitioCmc, tipo: "cmc" };

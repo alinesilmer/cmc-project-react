@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { ExternalLink, Globe, KeyRound, Wrench, ArrowUpRight } from "lucide-react";
 
+import { useAuth } from "../../../auth/AuthProvider";
+import { isMedico } from "../../../auth/roles";
 import { destinoObraSocial } from "../validaciones.config";
 import { iniciales } from "../validaciones.types";
 import type { ObraSocialConfig } from "../validaciones.types";
@@ -20,7 +22,8 @@ interface Props {
  * médico ve todas las obras sociales en la misma grilla.
  */
 export default function ObraSocialCard({ os, onAbrirGuia }: Props) {
-  const { href, tipo } = destinoObraSocial(os);
+  const { user } = useAuth();
+  const { href, tipo } = destinoObraSocial(os, isMedico(user));
   const deshabilitada = os.estado === "mantenimiento";
 
   const cuerpo = (

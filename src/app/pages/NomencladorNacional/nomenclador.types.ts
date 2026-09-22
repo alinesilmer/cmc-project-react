@@ -249,6 +249,9 @@ export type ValorOut = {
   complejidad: string | null;
   especialidad_id_colegio: number | null;
   por_presupuesto: boolean;
+  /** Máximo de ayudantes admitidos para este código+OS. `null` = no lleva ayudantes —
+   * es lo que decide si "Agregar ayudante" aparece en Carga de Facturación. */
+  cantidad_ayudantes: number | null;
   /** Importe que el afiliado paga de su bolsillo; se descuenta del total a facturar. */
   coseguro: string;
   modalidad: "galeno" | "fijo" | "por_presupuesto";
@@ -279,6 +282,7 @@ export type ValorCreatePayload = {
   complejidad?: string | null;
   especialidad_id_colegio?: number | null;
   por_presupuesto?: boolean;
+  cantidad_ayudantes?: number | null;
   coseguro?: number;
   vigencia_desde: string;
   observacion?: string | null;
@@ -296,6 +300,7 @@ export type ValorCreateMultiPayload = {
   complejidad?: string | null;
   especialidades_id_colegio: number[];
   por_presupuesto?: boolean;
+  cantidad_ayudantes?: number | null;
   coseguro?: number;
   vigencia_desde: string;
   observacion?: string | null;
@@ -306,6 +311,7 @@ export type ValorUpdatePayload = {
   descripcion?: string | null;
   nivel?: number | null;
   complejidad?: string | null;
+  cantidad_ayudantes?: number | null;
   coseguro?: number;
   observacion?: string | null;
 };
