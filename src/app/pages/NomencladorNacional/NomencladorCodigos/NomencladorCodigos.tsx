@@ -122,6 +122,9 @@ export default function NomencladorCodigos() {
   const [habilitadasLoading, setHabilitadasLoading] = useState(false);
   const [habilitacionBusy, setHabilitacionBusy] = useState<number | null>(null);
   const [habilitadasError, setHabilitadasError] = useState<string | null>(null);
+  // Sólo filtra visualmente (display:none) sobre `especialidades`, ya traída
+  // entera del catálogo — no dispara ningún fetch nuevo.
+  const [busquedaEspecialidad, setBusquedaEspecialidad] = useState("");
 
   const load = useCallback(
     async (p: number, q: string, comp: string, act: string, esp: string) => {
@@ -188,6 +191,7 @@ export default function NomencladorCodigos() {
     setForm(emptyForm());
     setErrors({});
     setHabilitadas(new Set());
+    setBusquedaEspecialidad("");
     setModalOpen(true);
   }
 
@@ -196,6 +200,7 @@ export default function NomencladorCodigos() {
     setForm(itemToForm(item));
     setErrors({});
     setHabilitadas(new Set());
+    setBusquedaEspecialidad("");
     setHabilitadasLoading(true);
     getNomencladorEspecialidades(item.id)
       .then((rows) => setHabilitadas(new Set(rows.filter((r) => r.activo).map((r) => r.especialidad_id_colegio))))
@@ -593,12 +598,16 @@ export default function NomencladorCodigos() {
                   </div>
                   <div className={styles.formGroup}>
                     <label className={styles.formLabel}>Categoría</label>
-                    <input
-                      className={styles.formInput}
+                    <select
+                      className={styles.formSelect}
                       value={form.categoria}
                       onChange={(e) => setField("categoria", e.target.value)}
-                      placeholder="ej: consultas"
-                    />
+                    >
+                      <option value="">— Sin especificar —</option>
+                      <option value="Consulta">Consulta</option>
+                      <option value="Practica">Práctica</option>
+                      <option value="Honorarios individuales">Honorarios individuales</option>
+                    </select>
                   </div>
                 </div>
 
@@ -651,19 +660,39 @@ export default function NomencladorCodigos() {
                     {habilitadasLoading ? (
                       <span className={styles.hintText}>Cargando…</span>
                     ) : (
-                      <div className={styles.checkboxList}>
-                        {especialidades.map((e) => (
-                          <label key={e.id_colegio_espe} className={styles.checkRow}>
-                            <input
-                              type="checkbox"
-                              checked={habilitadas.has(e.id_colegio_espe)}
-                              disabled={habilitacionBusy === e.id_colegio_espe}
-                              onChange={() => toggleHabilitacion(e.id_colegio_espe)}
-                            />
-                            {e.nombre}
-                          </label>
-                        ))}
-                      </div>
+                      <>
+                        <input
+                          type="text"
+                          className={styles.formInput}
+                          value={busquedaEspecialidad}
+                          onChange={(e) => setBusquedaEspecialidad(e.target.value)}
+                          placeholder="Buscar especialidad…"
+                        />
+                        <div className={styles.checkboxList}>
+                          {especialidades.map((e) => {
+                            // Ya están todas traídas: esto sólo esconde filas con
+                            // CSS, no vuelve a pedir nada al backend.
+                            const visible = e.nombre
+                              .toLowerCase()
+                              .includes(busquedaEspecialidad.trim().toLowerCase());
+                            return (
+                              <label
+                                key={e.id_colegio_espe}
+                                className={styles.checkRow}
+                                style={{ display: visible ? undefined : "none" }}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={habilitadas.has(e.id_colegio_espe)}
+                                  disabled={habilitacionBusy === e.id_colegio_espe}
+                                  onChange={() => toggleHabilitacion(e.id_colegio_espe)}
+                                />
+                                {e.nombre}
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </>
                     )}
                     {habilitadasError && <span className={styles.errorMsg}>{habilitadasError}</span>}
                   </div>

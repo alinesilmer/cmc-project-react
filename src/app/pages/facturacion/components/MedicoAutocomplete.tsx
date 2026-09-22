@@ -61,11 +61,11 @@ const MedicoAutocomplete: React.FC<Props> = ({
       return;
     }
     if (q.length < minLenFor(q)) { setOptions([]); return; }
-    // Orden de prioridad de coincidencia: Matrícula > Nombre > Nº de socio.
+    // Orden de prioridad de coincidencia: Nº de socio > Matrícula > Nombre.
     const filtrados = filtrarYOrdenar(
       medicosPrecargados.filter((m) => !m.es_organizacion),
       q,
-      (m) => [m.matricula, m.nombre, m.cod],
+      (m) => [m.cod, m.matricula, m.nombre],
     );
     setOptions(filtrados);
   }, [medicosPrecargados]);

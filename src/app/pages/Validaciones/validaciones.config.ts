@@ -82,13 +82,6 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
     descripcion:
       "Autorización en línea contra el autorizador de Sancor. Requiere el token de la credencial del afiliado.",
     codigosBloqueados: ["180164", "180150"],
-    // La sustitución por especialidad decide si 070660 se resuelve en línea:
-    // con especialidad 16 se envía como 070715 y Sancor lo autoriza; sin ella,
-    // el paciente tiene que ir a las oficinas. El front no conoce las
-    // especialidades del médico, así que el aviso va en condicional — antes
-    // afirmaba que nunca se autoriza, y se lo mostraba también a quien sí
-    // podía validarlo.
-    nota: "Según tu especialidad, el código 070660 puede no autorizarse en línea: en ese caso el paciente debe tramitarlo en oficinas de Sancor.",
     campos: [
       {
         name: "nroAfiliado",
@@ -122,6 +115,7 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
     protocolo: "REST",
     color: "#1f3a93",
     logo: logoOspjn,
+    cargaImplementada: true,
     descripcion:
       "Validación de afiliado y autorización en línea contra el servicio de la Obra Social del Poder Judicial de la Nación.",
     campos: [
@@ -153,6 +147,7 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
     protocolo: "SOAP · Gecros",
     color: "#7b2d8b",
     logo: logoNobis,
+    cargaImplementada: true,
     descripcion:
       "Autorización en línea contra el servicio Gecros de Nobis. Requiere el token de la credencial.",
     campos: [
@@ -195,7 +190,7 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
   },
   {
     slug: "ospm",
-    nombre: "OSPM · Personal Municipal",
+    nombre: "OSPM · Personal Marítimo",
     codigo: 433,
     modo: "integrada",
     estado: "operativa",
@@ -203,6 +198,7 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
     protocolo: "REST",
     color: "#0b7285",
     logo: logoOspm,
+    cargaImplementada: true,
     descripcion:
       "Validación por DNI del afiliado. El sistema resuelve el padrón y devuelve la autorización.",
     campos: [
@@ -363,8 +359,11 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
     // y para que la pantalla de carga por archivo lo tenga a mano el día que
     // exista el import; la carga real sigue sin implementarse.
     cargaImplementada: false,
+    // Sólo el Colegio entra por acá (sube el reporte de facturación de todo
+    // el padrón); el médico no tiene nada que hacer en esa pantalla, así que
+    // `destinoObraSocial` la salta para él y usa `url` en su lugar.
     rutaPanel: "/panel/validaciones/prevencion-salud",
-    url: "https://autogestionprestadores.prevencionsalud.com.ar/Validations/AuthorizationRequest",
+    url: "https://autogestionprestadores.prevencionsalud.com.ar/",
   },
   {
     slug: "swiss-medical",
@@ -442,11 +441,18 @@ export const OBRAS_EXTERNAS = OBRAS_SOCIALES.filter((os) => os.modo === "externa
  * `panel`  → se valida y carga desde acá.
  * `cmc`    → tiene página propia en el sitio del Colegio.
  * `portal` → se valida en el sitio de la obra social (enlace externo).
+ *
+ * `esMedico` sólo importa para `rutaPanel`: hoy la única obra social que lo usa
+ * es Prevención Salud, y esa pantalla propia es la herramienta del Colegio para
+ * repartir el reporte de facturación entre médicos — no algo que el médico
+ * pueda operar. Para él, la tarjeta cae al siguiente caso (`url`, portal
+ * externo) como si `rutaPanel` no existiera.
  */
 export const destinoObraSocial = (
-  os: ObraSocialConfig
+  os: ObraSocialConfig,
+  esMedico: boolean
 ): { href: string; tipo: "panel" | "cmc" | "portal" } => {
-  if (os.rutaPanel) return { href: os.rutaPanel, tipo: "panel" };
+  if (os.rutaPanel && !esMedico) return { href: os.rutaPanel, tipo: "panel" };
   if (os.modo === "integrada")
     return { href: `/panel/validaciones/${os.slug}`, tipo: "panel" };
   if (os.sitioCmc) return { href: os.sitioCmc, tipo: "cmc" };

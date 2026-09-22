@@ -14,8 +14,8 @@ import {
   FileCode2, Search, FileText, Percent, Sigma, TrendingUp,
   PencilRuler, ShieldUser, Monitor, Receipt, CalendarDays,
   LogOut, CircleUserRound, ChevronDown, Menu, X, Layers,
-  Smartphone, Gift, Inbox, Megaphone, ShieldCheck, ExternalLink,
-  BarChart3, Stethoscope,
+  Smartphone, Gift, Inbox, Megaphone, ShieldCheck,
+  BarChart3, Stethoscope, UserSearch,
 } from "lucide-react";
 
 import styles from "./Topbar.module.scss";
@@ -40,10 +40,30 @@ type TopEntry =
 
 const base = "/panel";
 
-// Va directo al hub: el catálogo de obras sociales (y los portales externos)
-// vive ahí, sin accesos directos en la barra.
-const VALIDACIONES_LINK: Extract<TopEntry, { kind: "link" }> = {
-  kind: "link", path: `${base}/validaciones`, icon: ShieldCheck, label: "Validaciones",
+// Accesos directos a las obras sociales que se validan desde el panel. El
+// catálogo completo (incluidos los portales externos) vive en el hub. Mismo
+// scope que exige la API para todo /api/validaciones/*: `validacion:cargar`.
+const VALIDACIONES_MENU: Extract<TopEntry, { kind: "menu" }> = {
+  kind: "menu", id: "validaciones", icon: ShieldCheck, label: "Validaciones",
+  columns: [
+    {
+      heading: "Validar prestación",
+      items: [
+        { path: `${base}/validaciones/sancor`, icon: ShieldCheck, label: "Sancor Salud", perms: ["validacion:cargar"] },
+        { path: `${base}/validaciones/ospjn`, icon: ShieldCheck, label: "OSPJN · Judicial", perms: ["validacion:cargar"] },
+        { path: `${base}/validaciones/nobis`, icon: ShieldCheck, label: "Nobis Salud", perms: ["validacion:cargar"] },
+        { path: `${base}/validaciones/ospm`, icon: ShieldCheck, label: "OSPM", perms: ["validacion:cargar"] },
+      ],
+    },
+    {
+      heading: "Carga de prestaciones",
+      items: [
+        { path: `${base}/validaciones/omint`, icon: ClipboardList, label: "Omint" },
+        { path: `${base}/validaciones/boreal`, icon: ClipboardList, label: "Boreal Salud" },
+        { path: `${base}/validaciones`, icon: ShieldCheck, label: "Ver todas" },
+      ],
+    },
+  ],
 };
 
 // TEMPORAL — atajos para revisar el portal del socio desde una cuenta admin.
@@ -62,7 +82,6 @@ const VISTA_MEDICO_MENU: Extract<TopEntry, { kind: "menu" }> = {
         { path: `${base}/validaciones/omint`, icon: ClipboardList, label: "Omint", perms: ["validacion:cargar"] },
         { path: `${base}/validaciones/boreal`, icon: ClipboardList, label: "Boreal Salud", perms: ["validacion:cargar"] },
         { path: `${base}/validaciones`, icon: ShieldCheck, label: "Ver todas", perms: ["validacion:cargar"] },
-        { path: `${base}/validaciones/portales`, icon: ExternalLink, label: "Portales de obras sociales", perms: ["validacion:cargar"] },
       ],
     },
   ],
@@ -80,6 +99,7 @@ const TOP_NAV: TopEntry[] = [
           { path: `${base}/facturacion/cierre`, icon: CalendarDays, label: "Cerrar Factura", perms: ["facturacion:cerrar"] },
           { path: `${base}/facturacion/periodos`, icon: ClipboardList, label: "Ver períodos", perms: ["facturacion:leer"] },
           { path: `${base}/facturacion/consulta`, icon: Search, label: "Buscar prestación", perms: ["facturacion:leer"] },
+          { path: `${base}/facturacion/detalle-medico`, icon: UserSearch, label: "Detalle por médico", perms: ["facturacion:leer"] },
           { path: `${base}/facturacion/complementarias`, icon: Layers, label: "Complementarias", perms: ["facturacion:complementar"] },
           { path: `${base}/facturacion/registro`, icon: History, label: "Registro de Facturación", perms: ["facturacion:registro"] },
         ],
@@ -226,6 +246,7 @@ const DOCTOR_TOP_NAV: TopEntry[] = [
   VALIDACIONES_LINK,
   { kind: "link", path: `${base}/nomenclador/consulta-precios`, icon: DollarSign, label: "Consulta de Precios" },
   { kind: "link", path: `${base}/planillas`, icon: FileText, label: "Planillas" },
+  { kind: "link", path: `${base}/facturacion/mi-recepcion`, icon: Receipt, label: "Mi recepción" },
   { kind: "link", path: `${base}/mi-perfil`, icon: CircleUserRound, label: "Mi perfil" },
 ];
 

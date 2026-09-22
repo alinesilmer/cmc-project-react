@@ -375,6 +375,12 @@ $shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
   background: #fff7ed;
   color: #c2410c;
 }
+.tipoPrestadorPediatra {
+  // Mismo teal que CargaFacturacion.module.scss usa para la sección Pediatra —
+  // distinto del azul de Médico, violeta de Ayudante y naranja de Gastos.
+  background: #eafaf7;
+  color: #0f766e;
+}
 
 .tipoBadge {
   display: inline-block;

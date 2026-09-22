@@ -66,6 +66,12 @@ export interface PrestacionItem {
    *  usar el sugerido por el Valor del código. No se escala por `porcentaje`. */
   coseguro?: number | Money | null;
   grupo_equipo_id?: number | null;
+  /** Rol del integrante dentro del equipo. undefined/null = comportamiento histórico
+   *  (el rol se infiere del concepto en >0). "pediatra" es el único valor que hoy
+   *  cambia algo: fuerza tpo_funcion='P' en el backend, coseguro 0 y lo saca de la
+   *  elección de cabeza — el cirujano manda, aunque el pediatra también cobre
+   *  honorarios (de su PROPIO código, distinto al del cirujano). */
+  rol?: "pediatra" | null;
 }
 
 export interface PrestacionesCreate {
@@ -105,6 +111,10 @@ export interface PrecioResponse {
   nivel_cotizado?: number | null;
   /** Coseguro sugerido desde el Valor del código — editable al cargar la prestación. */
   coseguro: Money;
+  /** true → este código admite sumar un pediatra al equipo (parto/cesárea). La lista de
+   *  códigos vive en el backend (no se duplica acá) — usar este flag, no hardcodear
+   *  110401/110403 en el front. */
+  admite_pediatra?: boolean;
 }
 
 export interface PrestacionRead {
@@ -113,7 +123,13 @@ export interface PrestacionRead {
   cod_medico_ejecutor?: string | null;
   /** @deprecated Ahora es igual a `id`. Viene por compatibilidad; usar `id` como identificador. */
   nro_orden?: string | null;
-  cod_obra_social?: string | null; cod_nomenclador?: string | null;
+  cod_obra_social?: string | null;
+  /** Resuelto en batch contra `obras_sociales` — no viene "crudo" del ORM. */
+  nombre_obra_social?: string | null;
+  cod_nomenclador?: string | null;
+  /** Descripción del nomenclador, resuelta en batch por `nomenclador_id`. `null` en
+   *  filas legacy sin ese vínculo (código que ya no existe en el catálogo). */
+  descripcion?: string | null;
   tipo?: Tipo | null;
   /** "Medico" | "Ayudante" | "Gastos", derivado de qué monto está en >0. Siempre viene
    *  poblado (tanto en el listado como en el detalle) — no confundir con el campo
@@ -185,7 +201,14 @@ export interface ListarPrestacionesParams {
   /** Busca el texto en `nro_orden` O en `autorizacion`. Segundo campo del buscador de
    *  la pantalla de consulta; se combina con AND con el resto de los filtros. */
   orden_o_autorizacion?: string;
+  /** true = sólo lo que el Colegio publicó ("Mi recepción"); omitido = todo. */
+  publicado?: boolean;
   limit?: number; offset?: number;
+}
+
+export interface PeriodoPropio {
+  periodo: string;
+  periodo_label: string;
 }
 
 export interface FacturaRead {
@@ -223,6 +246,23 @@ export interface FacturaRead {
   creado_por?: string | null;
   creado_en?: string | null;
   creado_por_nombre?: string | null;
+  /** true si al menos una fila de detalle_facturacion de esta OS+período (cualquier
+   *  versión) está publicada — visibilidad hacia el médico. Se actualiza en bloque
+   *  con `publicarPeriodo`, único camino de la app para tocar este flag. */
+  publicado: boolean;
+}
+
+export interface PublicarPeriodoPayload {
+  cod_obra: string;
+  periodo: string;
+  publicado: boolean;
+}
+
+export interface PublicarPeriodoResponse {
+  cod_obra: string;
+  periodo: string;
+  publicado: boolean;
+  filas_actualizadas: number;
 }
 
 // ── Registro de facturación (auditoría administrativa, scope facturacion:registro) ──
@@ -282,7 +322,7 @@ export interface ListarFacturasParams {
   offset?: number;
 }
 
-export type TipoPrestador = "Medico" | "Ayudante" | "Gastos";
+export type TipoPrestador = "Medico" | "Ayudante" | "Gastos" | "Pediatra";
 
 export interface PrestacionFacturaDetalle {
   id: number;

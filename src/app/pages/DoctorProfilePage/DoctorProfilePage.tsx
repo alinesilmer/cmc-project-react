@@ -1500,14 +1500,18 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                               </Copiable>
                             )}
                           </div>
-                          <div>
-                            <span className={styles.label}>Observación</span>
-                            {isEditing ? (
-                              RText("observacion")
-                            ) : (
-                              <span>{fmt((data as any).observacion)}</span>
-                            )}
-                          </div>
+                          {/* Apunte interno del Colegio sobre el médico: no le
+                              corresponde verlo a él, sólo al personal que lo carga. */}
+                          {!readOnly && (
+                            <div>
+                              <span className={styles.label}>Observación</span>
+                              {isEditing ? (
+                                RText("observacion")
+                              ) : (
+                                <span>{fmt((data as any).observacion)}</span>
+                              )}
+                            </div>
+                          )}
                         </div>
 
                         {isEditing && (

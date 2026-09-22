@@ -9,6 +9,8 @@ import type {
   ViaPractica, PrestacionFicha,
   CargaPorUsuario, CierresPorUsuario, ActividadEvento,
   RegistroPorUsuarioParams, RegistroActividadParams,
+  PublicarPeriodoPayload, PublicarPeriodoResponse,
+  PeriodoPropio,
 } from "./types";
 import type { ExportOpciones, ExportPreset, TipoDocumentoPreset } from "./FacturaDetalle/export/types";
 
@@ -107,6 +109,9 @@ export const listarPrestaciones = (filtros: ListarPrestacionesParams) =>
     getJSONWithHeaders<PrestacionRead[]>(`${BASE}/prestaciones`, filtros as Record<string, any>),
   );
 
+export const listarPeriodosPropios = () =>
+  traced("GET /periodos-propios", {}, getJSON<PeriodoPropio[]>(`${BASE}/periodos-propios`));
+
 export const listarFacturas = (filtros: ListarFacturasParams) =>
   traced(
     "GET /facturas (paginado)",
@@ -146,6 +151,13 @@ export const marcarRevisado = (payload: { marcados?: number[]; desmarcados?: num
     "PATCH /prestaciones/revisado",
     payload,
     patchJSON<PrestacionRead[]>(`${BASE}/prestaciones/revisado`, payload),
+  );
+
+export const publicarPeriodo = (payload: PublicarPeriodoPayload) =>
+  traced(
+    "PATCH /facturas/publicado",
+    payload,
+    patchJSON<PublicarPeriodoResponse>(`${BASE}/facturas/publicado`, payload),
   );
 
 export const fetchRecientes = (cod_obra: string, usuario?: string) =>
@@ -226,6 +238,17 @@ export const descargarExportCaratula = (facturaId: number | string, formato: "pd
     `GET /facturas/${facturaId}/export/caratula.${formato}`,
     { facturaId },
     getBlobLong(`${BASE}/facturas/${facturaId}/export/caratula.${formato}`),
+  );
+
+// Detalle por médico: cruza todas las obras sociales del socio en un período.
+// Mismo membrete institucional que el export de factura (ver encabezado.py).
+export const descargarExportPorMedico = (
+  nroSocio: number | string, periodo: string, formato: "pdf" | "xlsx",
+) =>
+  traced(
+    `GET /medico/${nroSocio}/export/detalle.${formato}`,
+    { nroSocio, periodo },
+    getBlobLong(`${BASE}/medico/${nroSocio}/export/detalle.${formato}`, { periodo }),
   );
 
 export const listarExportPresets = (tipoDocumento?: TipoDocumentoPreset) =>

@@ -8,7 +8,6 @@ import {
   ArrowRight,
   ArrowUpRight,
   CircleUserRound,
-  ClipboardList,
   DollarSign,
   ExternalLink,
   FileText,
@@ -16,6 +15,7 @@ import {
   LifeBuoy,
   MapPin,
   PlayCircle,
+  Receipt,
   ShieldCheck,
 } from "lucide-react";
 
@@ -91,19 +91,19 @@ const ACCESOS: QuickAction[] = [
     accent: "blue",
   },
   {
-    icon: ClipboardList,
-    title: "Portales de obras sociales",
-    description:
-      "Accesos directos a los portales donde se carga o valida cada prestación.",
-    link: "/panel/validaciones/portales",
-    accent: "amber",
-  },
-  {
     icon: FileText,
     title: "Planillas de consulta",
     description:
       "Las planillas que publica el Colegio para presentar con tu facturación.",
     link: "/panel/planillas",
+    accent: "blue",
+  },
+  {
+    icon: Receipt,
+    title: "Mi recepción",
+    description:
+      "Las prestaciones que el Colegio ya te publicó, por obra social.",
+    link: "/panel/facturacion/mi-recepcion",
     accent: "blue",
   },
   {

@@ -42,6 +42,9 @@ type ValorForm = {
   porPresupuesto: boolean;
   nivel: string;
   complejidad: string;
+  /** Máximo de ayudantes admitidos — vacío = no lleva. Es lo único que habilita
+   * "Agregar ayudante" en Carga de Facturación (`precio.cantidad_ayudantes`). */
+  cantidad_ayudantes: string;
   coseguro: string;
   observacion: string;
   /** Especialidades tildadas para la variante NE a crear — una fila por cada una
@@ -54,6 +57,7 @@ type EditMetaForm = {
   descripcion: string;
   nivel: string;
   complejidad: string;
+  cantidad_ayudantes: string;
   coseguro: string;
   observacion: string;
 };
@@ -226,7 +230,7 @@ export default function NomencladorPorOS() {
   const [form, setForm] = useState<ValorForm>({
     nomencladorId: null, nomencladorLabel: "", origen: "NE",
     modalidad: "calculable", vigencia_desde: today(),
-    porPresupuesto: false, nivel: "", complejidad: "", coseguro: "", observacion: "",
+    porPresupuesto: false, nivel: "", complejidad: "", cantidad_ayudantes: "", coseguro: "", observacion: "",
     especialidadesChecked: new Set(), componentes: initComps(),
   });
   // Especialidades habilitadas del código elegido (nm_nomenclador_especialidad),
@@ -239,7 +243,7 @@ export default function NomencladorPorOS() {
   const [saving, setSaving] = useState(false);
 
   // Edit forms
-  const [editMeta, setEditMeta] = useState<EditMetaForm>({ descripcion: "", nivel: "", complejidad: "", coseguro: "", observacion: "" });
+  const [editMeta, setEditMeta] = useState<EditMetaForm>({ descripcion: "", nivel: "", complejidad: "", cantidad_ayudantes: "", coseguro: "", observacion: "" });
   const [editEcu, setEditEcu] = useState<EditEcuForm>({ vigencia_desde: today(), modalidad: "calculable", componentes: initComps(), aplicarAVariantes: false });
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
   const [savingMeta, setSavingMeta] = useState(false);
@@ -563,7 +567,7 @@ export default function NomencladorPorOS() {
     setForm({
       nomencladorId: null, nomencladorLabel: "", origen: "NE",
       modalidad: "calculable", vigencia_desde: today(),
-      porPresupuesto: false, nivel: "", complejidad: "", coseguro: "", observacion: "",
+      porPresupuesto: false, nivel: "", complejidad: "", cantidad_ayudantes: "", coseguro: "", observacion: "",
       especialidadesChecked: new Set(), componentes: initComps(),
     });
     setEspecialidadesHabilitadas(null);
@@ -581,6 +585,7 @@ export default function NomencladorPorOS() {
       descripcion: v.descripcion ?? "",
       nivel: v.nivel != null ? String(v.nivel) : "",
       complejidad: v.complejidad ?? "",
+      cantidad_ayudantes: v.cantidad_ayudantes != null ? String(v.cantidad_ayudantes) : "",
       coseguro: v.coseguro && parseMonto(v.coseguro) !== 0 ? v.coseguro : "",
       observacion: v.observacion ?? "",
     });
@@ -625,6 +630,7 @@ export default function NomencladorPorOS() {
         nivel: form.nivel ? parseInt(form.nivel, 10) : null,
         complejidad: form.complejidad || null,
         por_presupuesto: form.porPresupuesto,
+        cantidad_ayudantes: form.cantidad_ayudantes.trim() ? parseInt(form.cantidad_ayudantes, 10) : null,
         coseguro: form.coseguro.trim() ? parseMonto(form.coseguro) : 0,
         vigencia_desde: form.vigencia_desde,
         observacion: form.observacion || null,
@@ -671,6 +677,7 @@ export default function NomencladorPorOS() {
         descripcion: editMeta.descripcion || null,
         nivel: editMeta.nivel ? parseInt(editMeta.nivel, 10) : null,
         complejidad: editMeta.complejidad || null,
+        cantidad_ayudantes: editMeta.cantidad_ayudantes.trim() ? parseInt(editMeta.cantidad_ayudantes, 10) : null,
         coseguro: editMeta.coseguro.trim() ? parseMonto(editMeta.coseguro) : 0,
         observacion: editMeta.observacion || null,
       });
@@ -1129,18 +1136,34 @@ export default function NomencladorPorOS() {
                   </div>
                 </div>
 
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>Coseguro ($)</label>
-                  <input
-                    type="number" min="0" step="0.01"
-                    className={styles.formInput}
-                    value={form.coseguro}
-                    onChange={(e) => setForm((p) => ({ ...p, coseguro: e.target.value }))}
-                    placeholder="0.00"
-                  />
-                  <span className={styles.hintText}>
-                    Lo que el afiliado paga de su bolsillo; se descuenta del total al facturar
-                  </span>
+                <div className={styles.formRow2}>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Coseguro ($)</label>
+                    <input
+                      type="number" min="0" step="0.01"
+                      className={styles.formInput}
+                      value={form.coseguro}
+                      onChange={(e) => setForm((p) => ({ ...p, coseguro: e.target.value }))}
+                      placeholder="0.00"
+                    />
+                    <span className={styles.hintText}>
+                      Lo que el afiliado paga de su bolsillo; se descuenta del total al facturar
+                    </span>
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Cantidad de ayudantes</label>
+                    <input
+                      type="number" min="0" step="1"
+                      className={styles.formInput}
+                      value={form.cantidad_ayudantes}
+                      onChange={(e) => setForm((p) => ({ ...p, cantidad_ayudantes: e.target.value }))}
+                      placeholder="0"
+                    />
+                    <span className={styles.hintText}>
+                      Máximo admitido para este código+OS. Vacío = no lleva — sin esto no
+                      aparece "Agregar ayudante" en Carga de Facturación.
+                    </span>
+                  </div>
                 </div>
 
                 {/* Por presupuesto toggle */}
@@ -1247,16 +1270,32 @@ export default function NomencladorPorOS() {
                       <input className={styles.formInput} value={editMeta.observacion} onChange={(e) => setEditMeta((p) => ({ ...p, observacion: e.target.value }))} placeholder="Opcional" />
                     </div>
                   </div>
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>Coseguro ($)</label>
-                    <input
-                      type="number" min="0" step="0.01"
-                      className={styles.formInput}
-                      value={editMeta.coseguro}
-                      onChange={(e) => setEditMeta((p) => ({ ...p, coseguro: e.target.value }))}
-                      placeholder="0.00"
-                      style={{ maxWidth: 200 }}
-                    />
+                  <div className={styles.formRow2}>
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>Coseguro ($)</label>
+                      <input
+                        type="number" min="0" step="0.01"
+                        className={styles.formInput}
+                        value={editMeta.coseguro}
+                        onChange={(e) => setEditMeta((p) => ({ ...p, coseguro: e.target.value }))}
+                        placeholder="0.00"
+                        style={{ maxWidth: 200 }}
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>Cantidad de ayudantes</label>
+                      <input
+                        type="number" min="0" step="1"
+                        className={styles.formInput}
+                        value={editMeta.cantidad_ayudantes}
+                        onChange={(e) => setEditMeta((p) => ({ ...p, cantidad_ayudantes: e.target.value }))}
+                        placeholder="0"
+                        style={{ maxWidth: 200 }}
+                      />
+                      <span className={styles.hintText}>
+                        Vacío = no lleva ayudantes en Carga de Facturación.
+                      </span>
+                    </div>
                   </div>
                   <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
                     <button className={styles.btnPrimary} onClick={handleSaveMeta} disabled={savingMeta}>

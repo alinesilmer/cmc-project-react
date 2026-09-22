@@ -21,7 +21,7 @@ import styles from "./MedicoPrestacionesTable.module.scss";
 const PAGE_SIZE = 200;
 const MAX_PAGINAS = 25;
 
-type TipoPrestador = "Medico" | "Ayudante" | "Gastos" | null;
+type TipoPrestador = "Medico" | "Ayudante" | "Gastos" | "Pediatra" | null;
 
 type PendingAction =
   | { type: "eliminar"; row: PrestacionRead }
@@ -61,10 +61,12 @@ const normCodOs = (cod: string | null | undefined): string | null => {
 const fmtObraSocial = (cod: string, nombres: Record<string, string>): string =>
   nombres[cod] ? `(${cod}) ${nombres[cod]}` : `(${cod})`;
 
-// El listado plano no trae `tipo_prestador` (eso solo lo devuelve el detalle de
-// factura agrupado) — lo derivamos con la misma prioridad documentada: ayudante>0 →
-// honorarios>0 (Medico) → gastos>0 (Gastos).
+// `listar_prestaciones` ya puebla `tipo_prestador` (vía `_to_prestacion_read_list`),
+// así que la fila trae el badge correcto de entrada — incluido "Pediatra", que por
+// montos sería indistinguible de "Medico" (ambos cobran honorarios). La derivación
+// local queda sólo de fallback para filas que no lo traigan.
 const deriveTipoPrestador = (row: PrestacionRead): TipoPrestador => {
+  if (row.tipo_prestador) return row.tipo_prestador;
   if (parseMoney(row.ayudante) > 0) return "Ayudante";
   if (parseMoney(row.honorarios) > 0) return "Medico";
   if (parseMoney(row.gastos) > 0) return "Gastos";
@@ -79,6 +81,7 @@ const tipoPrestadorAbrev = (t: TipoPrestador): string | null => {
     case "Medico":   return "M";
     case "Ayudante": return "A";
     case "Gastos":   return "C";
+    case "Pediatra": return "P";
     default:         return null;
   }
 };
@@ -88,6 +91,7 @@ const tipoPrestadorLabel = (t: TipoPrestador): string => {
     case "Medico":   return "Médico";
     case "Ayudante": return "Ayudante";
     case "Gastos":   return "Clínica (gastos)";
+    case "Pediatra": return "Pediatra";
     default:         return "";
   }
 };
@@ -97,6 +101,7 @@ const tipoPrestadorClass = (t: TipoPrestador): string => {
     case "Medico":   return styles.tipoPrestadorMedico;
     case "Ayudante": return styles.tipoPrestadorAyudante;
     case "Gastos":   return styles.tipoPrestadorGastos;
+    case "Pediatra": return styles.tipoPrestadorPediatra;
     default:         return "";
   }
 };

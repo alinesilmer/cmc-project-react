@@ -1,15 +1,22 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Receipt, Search, Eye } from "lucide-react";
+import { Receipt, Search, Eye, EyeOff, FileText } from "lucide-react";
 
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
-import { listarFacturas } from "../api";
+import { abrirAdjunto } from "../../../lib/archivos";
+import { listarFacturas, publicarPeriodo } from "../api";
 import type { FacturaRead, ListarFacturasParams, ObraSocialOption } from "../types";
 import { detailMessage } from "../types";
 import { formatMoney } from "../money";
 import ObraSocialAutocomplete from "../components/ObraSocialAutocomplete";
+import ConfirmActionModal from "../components/ConfirmActionModal";
 import styles from "./VerPeriodos.module.scss";
+
+// Mismos estados que `FACTURA_ESTADOS_CERRADOS` en el backend (service.py):
+// 'C' es el estado actual, 'L'/'LC' son históricos de CMC que se siguen
+// aceptando como cerrados por compatibilidad.
+const ESTADOS_CERRADOS = new Set(["C", "L", "LC"]);
 
 const PAGE_SIZES = [25, 50, 100, 200];
 const DEFAULT_LIMIT = 50;
@@ -62,6 +69,8 @@ const VerPeriodos: React.FC = () => {
   const [rows, setRows] = useState<FacturaRead[]>([]);
   const [totalCount, setTotalCount] = useState<number | undefined>(undefined);
   const [loading, setLoading] = useState(false);
+  const [aPublicar, setAPublicar] = useState<FacturaRead | null>(null);
+  const [publicando, setPublicando] = useState(false);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -99,6 +108,28 @@ const VerPeriodos: React.FC = () => {
 
   const handleVer = (row: FacturaRead) => {
     navigate(`/panel/facturacion/periodos/${row.id_prestaciones}`);
+  };
+
+  const handleVerFactura = (row: FacturaRead) => {
+    abrirAdjunto(row.documento_url).catch((e: Error) => notify(e.message, "error"));
+  };
+
+  const handleConfirmarPublicar = async () => {
+    if (!aPublicar) return;
+    setPublicando(true);
+    try {
+      const nuevoEstado = !aPublicar.publicado;
+      await publicarPeriodo({
+        cod_obra: aPublicar.cod_obr, periodo: aPublicar.periodo, publicado: nuevoEstado,
+      });
+      notify(`Período ${nuevoEstado ? "publicado" : "despublicado"}.`, "success");
+      setAPublicar(null);
+      await fetchData(filtros);
+    } catch (e: any) {
+      notify(detailMessage(e?.response?.data?.detail) || "No pudimos actualizar la publicación.", "error");
+    } finally {
+      setPublicando(false);
+    }
   };
 
   const limit = filtros.limit ?? DEFAULT_LIMIT;
@@ -244,6 +275,19 @@ const VerPeriodos: React.FC = () => {
                       <button type="button" className={styles.btnView} onClick={() => handleVer(row)}>
                         <Eye size={14} /> Ver
                       </button>
+                      {row.estado && ESTADOS_CERRADOS.has(row.estado) && row.documento_url && (
+                        <button type="button" className={styles.btnFactura} onClick={() => handleVerFactura(row)}>
+                          <FileText size={14} /> Ver factura
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className={`${styles.btnPublicar} ${row.publicado ? styles.btnPublicarOn : ""}`}
+                        onClick={() => setAPublicar(row)}
+                      >
+                        {row.publicado ? <Eye size={14} /> : <EyeOff size={14} />}
+                        {row.publicado ? "Publicado" : "No publicado"}
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -297,6 +341,30 @@ const VerPeriodos: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <ConfirmActionModal
+        isOpen={Boolean(aPublicar)}
+        icon={aPublicar?.publicado ? EyeOff : Eye}
+        variant="primary"
+        title={aPublicar?.publicado ? "Despublicar período" : "Publicar período"}
+        message={
+          aPublicar && (
+            <>
+              El período <strong>{aPublicar.periodo_label || aPublicar.periodo}</strong> de{" "}
+              <strong>{aPublicar.cod_obr}</strong>{" "}
+              {aPublicar.publicado
+                ? "dejará de verse en el panel del médico."
+                : "pasará a verse en el panel del médico."}
+            </>
+          )
+        }
+        confirmLabel={aPublicar?.publicado ? "Despublicar" : "Publicar"}
+        onClose={() => {
+          if (!publicando) setAPublicar(null);
+        }}
+        onConfirm={handleConfirmarPublicar}
+        loading={publicando}
+      />
     </div>
   );
 };

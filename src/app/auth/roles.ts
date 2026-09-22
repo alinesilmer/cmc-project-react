@@ -25,6 +25,7 @@ export const MEDICO_ALLOWED_PATHS = [
   "/panel/nomenclador/consulta-precios",
   "/panel/planillas",
   "/panel/validaciones",
+  "/panel/facturacion/mi-recepcion",
   "/panel/help",
 ];
 

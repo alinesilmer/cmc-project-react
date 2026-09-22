@@ -53,6 +53,11 @@ import AyudanteSection, {
   totalAyudantes,
   type AyudanteLinea,
 } from "./sections/AyudanteSection";
+import PediatraSection, {
+  crearPediatraLinea,
+  montoPediatra,
+  type PediatraLinea,
+} from "./sections/PediatraSection";
 import ResumenLateralCard from "./sections/ResumenLateralCard";
 import MedicoPrestacionesTable from "./sections/MedicoPrestacionesTable";
 
@@ -97,6 +102,45 @@ const buildAyudantesFromGrupo = async (
       };
     }),
   );
+};
+
+// Reconstruye la línea de pediatra (máx. 1) desde el `grupo` de una prestación — función
+// HERMANA de `buildAyudantesFromGrupo`, no la toca ni comparte su filtro. Se distingue
+// por `tipo_prestador === "Pediatra"` (lo pone el backend vía tpo_funcion='P'), NUNCA
+// por montos: la fila del pediatra también tiene `ayudante=0` como cualquier cirujano,
+// así que el filtro de ayudantes (`ayudante > 0`) ya la deja afuera solo, sin cambios.
+const buildPediatraFromGrupo = async (
+  grupo: PrestacionRead[],
+): Promise<PediatraLinea | null> => {
+  const g = grupo.find((m) => m.tipo_prestador === "Pediatra");
+  if (!g) return null;
+  let medico: MedicoOption | null = null;
+  try {
+    const rows = await fetchMedicos(g.cod_medico);
+    medico = rows.find((m) => m.cod === g.cod_medico) ?? null;
+  } catch {
+    // best-effort: sin nombre, la línea igual funciona con el código.
+  }
+  let codigoPreset: string | null = null;
+  if (g.cod_nomenclador) {
+    try {
+      const codigos = await fetchCodigosHabilitados(g.cod_medico, g.cod_nomenclador);
+      codigoPreset = codigos.find((c) => c.codigo === g.cod_nomenclador)?.descripcion ?? null;
+    } catch {
+      // best-effort: sin descripción, el código igual queda cargado.
+    }
+  }
+  return {
+    ...crearPediatraLinea(g.autorizacion ?? ""),
+    prestacionId: g.id,
+    codMedico: g.cod_medico,
+    medico,
+    codNomenclador: g.cod_nomenclador ?? null,
+    codigoPreset,
+    porcentaje: String(g.porcentaje ?? 100),
+    tipoCalculo: (g.tipo_calculo as TipoCalculo) ?? "A",
+    precioManual: g.honorarios != null ? String(g.honorarios) : "0",
+  };
 };
 
 // Auto-detecta si el equipo ya tiene autorizaciones distintas por integrante (carga
@@ -270,6 +314,12 @@ const CargaFacturacion: React.FC = () => {
   // cuando `tipoPrestador === "medico"`.
   const [ayudantes, setAyudantes] = useState<AyudanteLinea[]>([]);
 
+  // Pediatra del equipo (máx. 1, sólo en parto/cesárea — ver `precio.admite_pediatra`).
+  // Es un socio DISTINTO del cirujano que factura su PROPIO código: por eso tiene su
+  // propia consulta de precio (ver `useNomencladorPrecio` más abajo), separada de la
+  // del cirujano y de la de ayudantes (que reusan el código principal).
+  const [pediatra, setPediatra] = useState<PediatraLinea | null>(null);
+
   // Algunas obras sociales emiten un Nº de autorización POR integrante del equipo
   // (cirujano y cada ayudante) en vez de uno solo para toda la práctica. Preferencia
   // del operador, persistida entre cargas (trabaja tandas de la misma OS) — por eso
@@ -323,6 +373,9 @@ const CargaFacturacion: React.FC = () => {
   // Ids de los ayudantes que trae el equipo al editar — para saber, al guardar, cuáles
   // se quitaron (hay que anularlos).
   const ayudantesOriginalesRef = useRef<number[]>([]);
+  // Id de la fila del pediatra que trae el equipo al editar (null = no había). Mismo
+  // propósito que `ayudantesOriginalesRef` pero para una única fila, no una lista.
+  const pediatraOriginalRef = useRef<number | null>(null);
   // Id real de la cabecera del equipo al editar. Puede diferir de `editId` (la URL) si
   // se clickeó "Editar" en una fila que es ayudante: ahí se resuelve la cabecera.
   const headPrestacionIdRef = useRef<number | null>(null);
@@ -337,25 +390,46 @@ const CargaFacturacion: React.FC = () => {
   // médico, o el médico ejecutor si el payee es una clínica.
   const codMedicoEfectivo = payeeEsOrganizacion ? codMedicoEjecutor : codMedico;
 
-  // Precio del nomenclador
+  // Obra social efectiva para cotizar — la misma cuenta se repetía 3 veces (acá, en
+  // `codObraTabla` más abajo y ahora también en el precio del pediatra); memoizada una
+  // sola vez para que las tres la compartan.
+  const codObraEfectivo = useMemo(
+    () =>
+      isEdit
+        ? (editMeta?.cod_obra_social ?? null)
+        : isComplemento
+          ? (complementoMeta?.cod_obra ?? null)
+          : obraSocial
+            ? String(obraSocial.nro_obra_social)
+            : null,
+    [isEdit, editMeta?.cod_obra_social, isComplemento, complementoMeta?.cod_obra, obraSocial],
+  );
+
+  // Precio del nomenclador (código principal — cirujano/ayudante suelto)
   const {
     precio,
     loading: precioLoading,
     error: precioError,
   } = useNomencladorPrecio({
     codMedico: codMedicoEfectivo,
-    codObra: isEdit
-      ? (editMeta?.cod_obra_social ?? null)
-      : isComplemento
-        ? (complementoMeta?.cod_obra ?? null)
-        : obraSocial
-          ? String(obraSocial.nro_obra_social)
-          : null,
+    codObra: codObraEfectivo,
     codigo: codNomenclador,
     // Sin fecha de práctica el backend cotiza el valor vigente a hoy (el más actual).
     // Se manda `null` y no "" para que el query param no viaje vacío.
     fecha: fechaPractica || null,
     via,
+  });
+
+  // Precio del PEDIATRA — socio y código propios, independientes del cirujano. Mismo
+  // hook, segunda instancia: ya está debounceado y keyed por estas deps.
+  const { precio: precioPediatra, loading: precioPediatraLoading } = useNomencladorPrecio({
+    codMedico: pediatra?.codMedico ?? null,
+    codObra: codObraEfectivo,
+    codigo: pediatra?.codNomenclador ?? null,
+    fecha: fechaPractica || null,
+    // El código del pediatra se cotiza siempre tradicional — la vía es del acto
+    // quirúrgico del cirujano, no de la atención del recién nacido.
+    via: "T",
   });
 
   // Precarga de la prestación cuando se entra en modo edición.
@@ -474,6 +548,12 @@ const CargaFacturacion: React.FC = () => {
               setAutorizacionPorIntegrante(true);
             }
           }
+          // Pediatra del equipo (si hay). Bloque paralelo al de arriba, no lo toca.
+          const lineaPediatra = await buildPediatraFromGrupo(p.grupo);
+          if (active && lineaPediatra) {
+            pediatraOriginalRef.current = lineaPediatra.prestacionId ?? null;
+            setPediatra(lineaPediatra);
+          }
         }
         // Recién acá el formulario puede mostrarse: ya está todo, labels incluidos.
         if (active) setEditHidratado(true);
@@ -553,6 +633,10 @@ const CargaFacturacion: React.FC = () => {
     setAyudantes([]);
     setVia("T");
     setTipoCalculo("A");
+    // El pediatra sólo aplica a parto/cesárea: si el código principal cambió, ya no
+    // vale (aunque el código nuevo también sea de parto/cesárea, es una prestación
+    // distinta — se vuelve a agregar a mano).
+    setPediatra(null);
   }, [codNomenclador]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Limpiar el nombre cuando se borra el identificador del paciente. La condición es
@@ -693,6 +777,11 @@ const CargaFacturacion: React.FC = () => {
               setAutorizacionPorIntegrante(true);
             }
           }
+          // Pediatra del equipo (si hay) — se replica igual que los ayudantes: al
+          // guardar se crea una fila nueva (`doGuardar` no mira `prestacionId`), no se
+          // toca `pediatraOriginalRef` (eso es solo para reconciliar en edición).
+          const lineaPediatra = await buildPediatraFromGrupo(p.grupo);
+          if (active && lineaPediatra) setPediatra(lineaPediatra);
         }
       } catch {
         notify("No se pudo cargar la prestación a replicar.", "error");
@@ -732,8 +821,14 @@ const CargaFacturacion: React.FC = () => {
     // El coseguro no se escala por porcentaje (mismo criterio que el backend,
     // `calcular_importe_total`); sí escala por cantidad/sesión, igual que el resto.
     const base = ((h + g) * (porc / 100) - cos) * cant * ses;
-    return base + totalAyudantes(ayudantes, precio);
-  }, [tipoPrestador, montoAyudante, honorarios, gastos, coseguro, porcentaje, cantidad, sesion, ayudantes, precio]);
+    // Ni ayudantes ni pediatra escalan por cantidad/sesión: sus filas siempre se
+    // guardan con cantidad=1/sesión=1 (ver doGuardar), igual que ya hacía totalAyudantes.
+    const pedMonto = pediatra ? montoPediatra(pediatra, precioPediatra) : 0;
+    return base + totalAyudantes(ayudantes, precio) + pedMonto;
+  }, [
+    tipoPrestador, montoAyudante, honorarios, gastos, coseguro, porcentaje, cantidad, sesion,
+    ayudantes, precio, pediatra, precioPediatra,
+  ]);
 
   const buildMainItem = (): PrestacionItem => ({
     cod_medico: codMedico!,
@@ -798,6 +893,25 @@ const CargaFacturacion: React.FC = () => {
         if (linea.codMedico) vistos.add(linea.codMedico);
       });
     }
+    if (pediatra) {
+      if (!pediatra.codMedico) {
+        errs.pediatra = "Seleccioná el médico pediatra";
+      } else if (pediatra.codMedico === codMedico) {
+        errs.pediatra = "El pediatra no puede ser el mismo médico principal";
+      } else if (ayudantes.some((a) => a.codMedico === pediatra.codMedico)) {
+        errs.pediatra = "Ese médico ya está cargado como ayudante";
+      }
+      if (!pediatra.codNomenclador) {
+        errs.pediatraCodigo = "Elegí el código que factura el pediatra";
+      } else if (
+        pediatra.tipoCalculo === "A" &&
+        !precioPediatraLoading &&
+        parseMoney(precioPediatra?.honorarios) <= 0
+      ) {
+        errs.pediatraCodigo =
+          "Este código no tiene valor de honorarios — pasá a Manual y cargá el importe";
+      }
+    }
     setErrores(errs);
     return Object.keys(errs).length === 0;
   };
@@ -814,6 +928,8 @@ const CargaFacturacion: React.FC = () => {
     setCantidad("1");
     setSesion("1");
     setAyudantes([]);
+    setPediatra(null);
+    pediatraOriginalRef.current = null;
     setTipoPrestador("medico");
     setMontoAyudante("0");
     // El Nº de autorización suele repetirse en una tanda (la OS autoriza varias
@@ -992,6 +1108,57 @@ const CargaFacturacion: React.FC = () => {
         await anularPrestacion(id);
       }
 
+      // 2b. Reconciliar el PEDIATRA — bloque PARALELO al de ayudantes: no reutiliza ni
+      // modifica el de arriba. Tiene su propio POST/PATCH porque, a diferencia del
+      // ayudante, no comparte `cod_nomenclador`/`via` con la cabecera (`shared` de
+      // arriba es del cirujano, no del pediatra).
+      const pediatraOriginalId = pediatraOriginalRef.current;
+      if (pediatra?.codMedico && pediatra.codNomenclador) {
+        const pedAmount =
+          pediatra.tipoCalculo === "A"
+            ? parseMoney(precioPediatra?.honorarios)
+            : parseMoney(pediatra.precioManual);
+        const pedFields = {
+          cod_medico: pediatra.codMedico,
+          cod_medico_ejecutor: null,
+          dni_paciente: dni || null,
+          fecha_practica: fechaPractica || null,
+          cod_clinica: codClinica,
+          autorizacion: autorizacionPorIntegrante
+            ? (pediatra.autorizacion.trim() || null)
+            : (autorizacion || null),
+          cod_nomenclador: pediatra.codNomenclador,
+          via: "T" as ViaPractica,
+          cantidad: 1,
+          sesion: 1,
+          tipo_calculo: pediatra.tipoCalculo,
+          honorarios: pedAmount,
+          gastos: 0,
+          ayudante: 0,
+          coseguro: 0,
+          porcentaje: toInt(pediatra.porcentaje, 100),
+          rol: "pediatra" as const,
+        };
+        if (pediatra.prestacionId) {
+          // Existente (misma fila) → PATCH.
+          await editarPrestacion(pediatra.prestacionId, pedFields);
+        } else {
+          // Nuevo. Si había un pediatra ORIGINAL distinto, se reemplaza: se anula antes
+          // de crear el nuevo — el backend rechaza un 2º pediatra activo en el equipo.
+          if (pediatraOriginalId) {
+            await anularPrestacion(pediatraOriginalId);
+          }
+          await crearPrestaciones({
+            obra_social: editMeta!.cod_obra_social,
+            periodo: editMeta!.periodo,
+            prestaciones: [{ ...pedFields, grupo_equipo_id: headId }],
+          });
+        }
+      } else if (pediatraOriginalId) {
+        // Se quitó el pediatra que había, sin agregar uno nuevo → se anula.
+        await anularPrestacion(pediatraOriginalId);
+      }
+
       notify("Prestación actualizada.");
       // Vuelta a la pantalla desde la que se entró a editar (el formulario de carga o
       // el detalle de factura, según el `?from=`). Además de ser lo esperado, evita el
@@ -1048,6 +1215,45 @@ const CargaFacturacion: React.FC = () => {
         ayudante: ayAmount,
         porcentaje: toInt(linea.porcentaje, 100),
         grupo_equipo_id: null,
+      });
+    }
+
+    // Pediatra: va AL FINAL (después de los ayudantes) y nunca es `items[0]` — el
+    // backend valida que el primer ítem sea siempre el cirujano y rechaza con 422 si
+    // no. Código y médico son los PROPIOS del pediatra, no los del cirujano.
+    if (pediatra?.codMedico && pediatra.codNomenclador) {
+      const pedAmount =
+        pediatra.tipoCalculo === "A"
+          ? parseMoney(precioPediatra?.honorarios)
+          : parseMoney(pediatra.precioManual);
+      items.push({
+        cod_medico: pediatra.codMedico,
+        cod_medico_ejecutor: null,
+        dni_paciente: mainItem.dni_paciente,
+        fecha_practica: mainItem.fecha_practica,
+        cod_clinica: mainItem.cod_clinica,
+        autorizacion: autorizacionPorIntegrante
+          ? (pediatra.autorizacion.trim() || null)
+          : mainItem.autorizacion,
+        // Código PROPIO del pediatra — NO el del cirujano.
+        cod_nomenclador: pediatra.codNomenclador,
+        via: "T",
+        cantidad: 1,
+        sesion: 1,
+        tipo_calculo: pediatra.tipoCalculo,
+        // El pediatra cobra honorarios (de su código). El backend pisa el monto con el
+        // valor autoritativo del lookup en modo Automático; acá alcanza con que sea >0
+        // (marker) — igual criterio que honorarios/gastos/ayudante en el resto del form.
+        honorarios: pedAmount,
+        gastos: 0,
+        ayudante: 0,
+        porcentaje: toInt(pediatra.porcentaje, 100),
+        // Coseguro siempre 0 en la fila del pediatra — lo cubre el cirujano. El backend
+        // también lo fuerza a 0 (defensa en profundidad), pero no hace falta mandar otra
+        // cosa que no sea 0 acá.
+        coseguro: 0,
+        grupo_equipo_id: null,
+        rol: "pediatra",
       });
     }
 
@@ -1190,18 +1396,20 @@ const CargaFacturacion: React.FC = () => {
     tipoPrestador === "medico" &&
     !!precio && !precioLoading && (maxAyudantes > 0 || ayudantes.length > 0);
 
+  // Sección Pediatra: mismo criterio de "medico + precio resuelto" que ayudantes, más
+  // el flag que trae el código (`admite_pediatra` — sólo parto/cesárea). Se mantiene
+  // viva si ya hay un pediatra cargado, aunque el flag cambiara (mismo criterio que
+  // `ayudantes.length > 0` arriba, para no ocultar un equipo ya armado).
+  const admitePediatra =
+    tipoPrestador === "medico" &&
+    !!precio && !precioLoading && (!!precio.admite_pediatra || !!pediatra);
+
   // El médico del formulario mientras haya uno; si el reset lo limpió, el último que
   // se guardó. Como `onMedicoChange` invalida el snapshot, esto sólo sobrevive a un
   // reset programático: si el operador limpia el campo a mano, la tabla se oculta.
   const medicoTabla = medicoSeleccionado ?? ultimoMedico;
 
-  const codObraTabla = isEdit
-    ? (editMeta?.cod_obra_social ?? null)
-    : isComplemento
-      ? (complementoMeta?.cod_obra ?? null)
-      : obraSocial
-        ? String(obraSocial.nro_obra_social)
-        : null;
+  const codObraTabla = codObraEfectivo;
   const periodoTabla = isEdit
     ? (editMeta?.periodo ?? null)
     : isComplemento
@@ -1700,6 +1908,7 @@ const CargaFacturacion: React.FC = () => {
                       setTipoPrestador(v);
                       if (v === "ayudante") {
                         setAyudantes([]);
+                        setPediatra(null);
                         setCoseguro("0");
                         if (tipoCalculo === "A" && precio) {
                           setMontoAyudante(precio.ayudante ?? "0");
@@ -1843,7 +2052,40 @@ const CargaFacturacion: React.FC = () => {
             />
           )}
 
-          {/* Total: siempre debajo de ayudantes (incluye su monto), encima de los botones. */}
+          {/* 10b. Pediatra (parto/cesárea, máx. 1). Sección nueva, independiente de
+              Ayudantes: no la reemplaza ni comparte su estado. */}
+          {admitePediatra && (
+            pediatra ? (
+              <PediatraSection
+                linea={pediatra}
+                onChange={setPediatra}
+                onQuitar={() => setPediatra(null)}
+                precioPediatra={precioPediatra}
+                precioPediatraLoading={precioPediatraLoading}
+                codMedicoMain={codMedico}
+                codsEquipo={new Set(ayudantes.map((a) => a.codMedico).filter((v): v is string => !!v))}
+                disabled={isEdit ? formDisabled : guardando}
+                error={errores.pediatra || errores.pediatraCodigo}
+                medicosPrecargados={medicosPrecargados}
+                porIntegrante={autorizacionPorIntegrante}
+              />
+            ) : (
+              <div className={styles.section}>
+                <button
+                  type="button"
+                  className={styles.addPediatraBtn}
+                  onClick={() => setPediatra(crearPediatraLinea())}
+                  disabled={isEdit ? formDisabled : guardando}
+                >
+                  <span style={{ fontSize: 16 }}>+</span>
+                  <span>Agregar pediatra</span>
+                </button>
+              </div>
+            )
+          )}
+
+          {/* Total: siempre debajo de ayudantes y pediatra (incluye sus montos), encima
+              de los botones. */}
           <div className={styles.section}>
             <div className={styles.totalRow}>
               <span>Total estimado:</span>

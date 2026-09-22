@@ -91,18 +91,13 @@
 
 .opcion {
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: $spacing-3;
   padding: $spacing-2 $spacing-3;
   border-radius: $border-radius-sm;
   cursor: pointer;
   font-size: $font-size-sm;
-
-  @media (max-width: $breakpoint-sm) {
-    grid-template-columns: auto 1fr;
-    row-gap: 2px;
-  }
 }
 
 .resaltado {
@@ -122,17 +117,6 @@
   white-space: nowrap;
 }
 
-.opValor {
-  color: $gray-500;
-  font-size: $font-size-xs;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-
-  @media (max-width: $breakpoint-sm) {
-    grid-column: 2;
-  }
-}
-
 .opCheck {
   color: $success-green;
 }
@@ -141,15 +125,6 @@
   padding: $spacing-4;
   text-align: center;
   font-size: $font-size-sm;
-  color: $gray-500;
-}
-
-// Homologación: la obra social conoce esta práctica con otro código. Es un dato
-// informativo — el precio y lo que se factura son los del código elegido.
-.opHomologado {
-  margin-left: $spacing-2;
-  font-size: $font-size-xs;
-  font-style: normal;
   color: $gray-500;
 }
 

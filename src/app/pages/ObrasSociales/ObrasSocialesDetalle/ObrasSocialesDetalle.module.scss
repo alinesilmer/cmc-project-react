@@ -1004,6 +1004,18 @@
   white-space: nowrap;
 }
 
+.tdDesc {
+  max-width: 340px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: $gray-700;
+}
+
+.tdDescEmpty {
+  color: $gray-400;
+}
+
 .tdRight {
   text-align: right;
 }
