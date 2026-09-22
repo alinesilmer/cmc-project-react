@@ -14,7 +14,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 
 import styles from "./Homologador.module.scss";
-import ConfirmModal from "../../../components/atoms/ConfirmModal/ConfirmModal";
+import ConfirmModal from "@/app/components/ui/ConfirmModal/ConfirmModal";
 import { listHomologaciones, createHomologacion, deleteHomologacion } from "./homologador.api";
 import { listNomenclador } from "../nomenclador.api";
 import type { HomologadorOut } from "./homologador.types";

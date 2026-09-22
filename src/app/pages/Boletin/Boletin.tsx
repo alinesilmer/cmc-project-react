@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { jsPDF } from "jspdf";
-import { saveAs } from "@/app/lib/fileSaver";
+import { saveAs } from "@/app/shared/lib/fileSaver";
 import styles from "./Boletin.module.scss";
-import Button from "../../components/atoms/Button/Button";
+import Button from "@/app/components/ui/Button/Button";
 import logo from "../../assets/logoCMC.png";
-import { http } from "../../lib/http";
-import { paginar } from "../../lib/paginar";
+import { http } from "@/app/shared/lib/http";
+import { paginar } from "@/app/shared/lib/paginar";
 
 type ApiBoletinRow = {
   id: number;
@@ -195,7 +195,7 @@ async function exportRankingToExcel(items: RankedEntry[]) {
   }));
 
   try {
-    const { downloadExcelSheet } = await import("../../lib/excelExport");
+    const { downloadExcelSheet } = await import("@/app/shared/lib/excelExport");
     await downloadExcelSheet("ranking_obras_sociales.xlsx", "Ranking", rows);
     return;
   } catch {

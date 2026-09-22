@@ -8,7 +8,7 @@ import {
   X,
 } from "lucide-react";
 
-import ActionModal from "../../components/molecules/ActionModal/ActionModal";
+import ActionModal from "@/app/components/ui/ActionModal/ActionModal";
 import {
   approveSolicitudCambio,
   getSolicitudesCambio,

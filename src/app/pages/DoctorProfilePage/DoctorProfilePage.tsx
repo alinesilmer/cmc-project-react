@@ -7,14 +7,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
-import Card from "../../components/atoms/Card/Card";
-import Button from "../../components/atoms/Button/Button";
-import CopyButton from "../../components/atoms/CopyButton/CopyButton";
+import Card from "@/app/components/ui/Card/Card";
+import Button from "@/app/components/ui/Button/Button";
+import CopyButton from "@/app/components/ui/CopyButton/CopyButton";
 import styles from "./DoctorProfilePage.module.scss";
 
 import RequirePermission from "../../auth/RequirePermission";
 import { usePermisos } from "../../auth/usePermisos";
-import BackButton from "../../components/atoms/BackButton/BackButton";
+import BackButton from "@/app/components/ui/BackButton/BackButton";
 import ReportesMedico from "../Reportes/ReportesMedico";
 import Credencial from "./Credencial";
 import FormularioCambiosModal from "./FormularioCambiosModal";
@@ -71,18 +71,18 @@ import {
   fetchDescuentosConceptos,
   searchMedicosForPagador,
 } from "./api";
-import AppSearchSelect from "../../components/atoms/AppSearchSelect/AppSearchSelect";
-import type { AppSearchSelectOption } from "../../components/atoms/AppSearchSelect/AppSearchSelect";
+import AppSearchSelect from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
+import type { AppSearchSelectOption } from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
 
 import { Modal, Toggle, Notification } from "rsuite";
 import "rsuite/Modal/styles/index.css";
 import "rsuite/Toggle/styles/index.css";
 import { Animation } from "rsuite";
-import ActionModal from "../../components/molecules/ActionModal/ActionModal";
+import ActionModal from "@/app/components/ui/ActionModal/ActionModal";
 import { useNotify } from "../../hooks/useNotify";
-import { abrirAdjunto } from "../../lib/archivos";
-import { formatFecha } from "../../lib/fechas";
-import PadronesForm from "../../components/molecules/Padrones/PadronesForm/PadronesForm";
+import { abrirAdjunto } from "@/app/shared/lib/archivos";
+import { formatFecha } from "@/app/shared/lib/fechas";
+import PadronesForm from "@/app/features/padrones/components/PadronesForm/PadronesForm";
 
 /* ===================== helpers labels ===================== */
 const ATTACH_PRETTY: Record<string, string> = {

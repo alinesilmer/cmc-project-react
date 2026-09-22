@@ -4,7 +4,7 @@ import { MessageCircle as FiMessageCircle, Mail as FiMail } from "lucide-react";
 import ObrasSociales from "../../components/Servicios/ObrasSociales/ObrasSociales";
 import type { ObraSocial } from "../../components/Servicios/ObrasSociales/ObrasSociales";
 import Button from "../../components/UI/Button/Button";
-import { http } from "../../../app/lib/http";
+import { http } from "@/app/shared/lib/http";
 import styles from "./convenios.module.scss";
 
 // ─── Constants ────────────────────────────────────────────────────────────────

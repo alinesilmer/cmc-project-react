@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { getJSON } from "../../../../lib/http";
-import Button from "../../../../components/atoms/Button/Button";
-import Card from "../../../../components/atoms/Card/Card";
+import { getJSON } from "@/app/shared/lib/http";
+import Button from "@/app/components/ui/Button/Button";
+import Card from "@/app/components/ui/Card/Card";
 import styles from "./tabs.module.scss";
 import { type Pago, fmt } from "../../types";
 

@@ -11,7 +11,7 @@ import {
 } from "../nomenclador.api";
 import type { GalenoPlantillaOut } from "../nomenclador.types";
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
-import { hoyISO } from "../../../lib/fechas";
+import { hoyISO } from "@/app/shared/lib/fechas";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

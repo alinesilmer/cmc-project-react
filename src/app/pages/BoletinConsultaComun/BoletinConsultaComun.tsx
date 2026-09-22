@@ -13,15 +13,15 @@ import {
 } from "lucide-react";
 
 import styles from "./BoletinConsultaComun.module.scss";
-import Button from "../../components/atoms/Button/Button";
-import IconButton from "../../components/atoms/IconButton/IconButton";
+import Button from "@/app/components/ui/Button/Button";
+import IconButton from "@/app/components/ui/IconButton/IconButton";
 import {
   Table,
   TableHead,
   TableBody,
   TableRow,
   TableCell,
-} from "../../components/atoms/Table/Table";
+} from "@/app/components/ui/Table/Table";
 
 import {
   CONSULTA_COMUN_CODE,

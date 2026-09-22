@@ -17,7 +17,7 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 
 import styles from "./NomencladorCodigos.module.scss";
-import ConfirmModal from "../../../components/atoms/ConfirmModal/ConfirmModal";
+import ConfirmModal from "@/app/components/ui/ConfirmModal/ConfirmModal";
 import {
   listNomenclador,
   createNomenclador,

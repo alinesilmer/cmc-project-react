@@ -1,6 +1,6 @@
 import logoUrl from "@/app/assets/logoCMC.png";
 import type { ObraSocialListItem } from "../obrasSociales.types";
-import { hoyISO } from "../../../lib/fechas";
+import { hoyISO } from "@/app/shared/lib/fechas";
 import {
   formatFecha,
   formatPlazo,

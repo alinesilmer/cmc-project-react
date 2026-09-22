@@ -19,8 +19,8 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
-import Button from "../../components/atoms/Button/Button";
-import Card from "../../components/atoms/Card/Card";
+import Button from "@/app/components/ui/Button/Button";
+import Card from "@/app/components/ui/Card/Card";
 import { useAppSnackbar } from "../../hooks/useAppSnackbar";
 import {
   fetchDetalleMedico,

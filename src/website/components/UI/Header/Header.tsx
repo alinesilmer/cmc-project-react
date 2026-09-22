@@ -6,7 +6,7 @@ import styles from "./Header.module.scss";
 import logo from "../../../assets/images/logoCMC.png";
 import { useAuth } from "../../../../app/auth/AuthProvider";
 import { isWebEditor } from "../../../../app/auth/roles";
-import { http } from "../../../../app/lib/http"; 
+import { http } from "@/app/shared/lib/http"; 
 
 // === helper para SSO hacia el legacy usando VITE_URL_BASE_LEGACY ===
 const LEGACY_BASE =

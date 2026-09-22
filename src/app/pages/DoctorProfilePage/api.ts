@@ -6,7 +6,7 @@ import {
   delJSON,
   putJSON,
   postForm,
-} from "../../lib/http";
+} from "@/app/shared/lib/http";
 
 /* ===== Tipos mínimos (podés ampliar) ===== */
 export type DoctorDocument = {

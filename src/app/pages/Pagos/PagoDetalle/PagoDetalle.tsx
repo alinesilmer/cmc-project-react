@@ -2,10 +2,10 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import Tooltip from "@mui/material/Tooltip";
-import { getJSON, postJSON, putJSON } from "../../../lib/http";
+import { getJSON, postJSON, putJSON } from "@/app/shared/lib/http";
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
-import BackButton from "../../../components/atoms/BackButton/BackButton";
-import Button from "../../../components/atoms/Button/Button";
+import BackButton from "@/app/components/ui/BackButton/BackButton";
+import Button from "@/app/components/ui/Button/Button";
 import styles from "./PagoDetalle.module.scss";
 import { type Pago, fmt, mesLabel } from "../types";
 

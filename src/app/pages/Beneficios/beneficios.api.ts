@@ -1,4 +1,4 @@
-import { getJSON, postJSON, patchJSON, delJSON } from "../../lib/http";
+import { getJSON, postJSON, patchJSON, delJSON } from "@/app/shared/lib/http";
 import type {
   Beneficio,
   BeneficioCreatePayload,

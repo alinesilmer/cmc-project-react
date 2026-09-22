@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Building2, ChevronLeft, ChevronRight, Search } from "lucide-react";
-import { getJSON, patchJSON } from "../../lib/http";
+import { getJSON, patchJSON } from "@/app/shared/lib/http";
 import s from "./ServiciosPage.module.scss";
 
 const PAGE_SIZE = 20;

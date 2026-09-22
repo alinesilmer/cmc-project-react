@@ -13,7 +13,7 @@ import {
 } from "../nomenclador.api";
 import { ORIGEN_LABELS } from "../nomenclador.types";
 import type { Origen, ValorOut, ActualizacionMasivaResult } from "../nomenclador.types";
-import { paginar } from "../../../lib/paginar";
+import { paginar } from "@/app/shared/lib/paginar";
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 

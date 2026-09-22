@@ -2,8 +2,8 @@
 
 import type React from "react";
 import { motion } from "framer-motion";
-import SearchField from "../../components/molecules/SearchField/SearchField";
-import Card from "../../components/atoms/Card/Card";
+import SearchField from "@/app/components/ui/SearchField/SearchField";
+import Card from "@/app/components/ui/Card/Card";
 import styles from "./SocialWorkSection.module.scss";
 
 const SocialWorkSelection: React.FC = () => {

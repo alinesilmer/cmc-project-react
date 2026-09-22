@@ -3,7 +3,7 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import styles from "./AdminPadronesDetail.module.scss"
-import BackButton from "../../components/atoms/BackButton/BackButton"
+import BackButton from "@/app/components/ui/BackButton/BackButton"
 
 type PadronStatus = "pending" | "approved" | "rejected"
 

@@ -1,4 +1,4 @@
-import { getJSON } from "../../lib/http";
+import { getJSON } from "@/app/shared/lib/http";
 import { parseFecha } from "./boletinConsultaComun.helpers";
 import type { GalenoValues } from "./boletinConsultaComun.types";
 

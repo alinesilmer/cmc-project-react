@@ -13,7 +13,7 @@ El backend es un repositorio aparte: **cmc_api** (FastAPI + MySQL).
 |---|---|
 | Base | React 19, TypeScript 5.8, Vite 7 |
 | Ruteo | React Router 7, rutas con `lazy()` |
-| Datos | Axios (`src/app/lib/http.ts`) y TanStack Query |
+| Datos | Axios (`src/app/shared/lib/http.ts`) y TanStack Query |
 | UI | MUI 7, SCSS Modules, framer-motion, lucide-react |
 | Documentos | exceljs (escritura), xlsx/SheetJS (lectura), jsPDF, pdfjs-dist |
 | Gráficos | Recharts (solo en Reportes) |
@@ -62,14 +62,18 @@ src/
 ├── routes.tsx            Rutas del panel y montaje del sitio institucional
 ├── app/                  Panel de gestión
 │   ├── auth/             Sesión, tokens, guards de ruta y permisos
-│   ├── components/       Componentes compartidos (atoms, molecules)
+│   ├── components/
+│   │   ├── ui/           UI genérica y sin dominio (Button, Card, Modal, Table…)
+│   │   └── layout/       AppLayout y Topbar
 │   ├── config/           Configuración por ambiente
-│   ├── hooks/            Hooks compartidos (notificaciones, formularios)
-│   ├── lib/              Cliente HTTP, fechas, exportación, paginado
-│   ├── pages/            Una carpeta por pantalla o dominio
+│   ├── features/         Dominios usados por más de una página (padrones, registro)
+│   ├── hooks/            Hooks compartidos (notificaciones)
+│   ├── pages/            Una carpeta por pantalla, con su `components/` propio
+│   ├── shared/
+│   │   ├── lib/          Cliente HTTP, fechas, exportación, validaciones, precios
+│   │   └── data/         Datos estáticos (provincias y localidades)
 │   ├── styles/           Variables y estilos globales SCSS
-│   ├── types/            Tipos compartidos
-│   └── utils/            Validaciones y parsers de precios
+│   └── types/            Tipos compartidos
 └── website/              Sitio institucional
     ├── router.tsx
     ├── app/              Páginas del sitio
@@ -79,9 +83,17 @@ src/
 
 Las pantallas grandes siguen este patrón dentro de `pages/<Dominio>/`: `*.api.ts` (llamadas), `*.types.ts` (tipos), `use*.ts` (hooks) y el componente de página.
 
+Dónde va un componente nuevo:
+
+| Lo usa… | Va en |
+|---|---|
+| Cualquier pantalla, sin lógica de dominio | `components/ui/` |
+| Una sola página | `pages/<Pagina>/components/` |
+| Varias páginas, con lógica de dominio | `features/<dominio>/components/` |
+
 ## Convenciones
 
-- **HTTP**: usar siempre los helpers de `src/app/lib/http.ts` (`getJSON`, `postJSON`, `postForm`, etc.). La instancia agrega el token, renueva la sesión ante un 401 y reintenta la request. No usar `fetch` ni crear otra instancia de axios.
+- **HTTP**: usar siempre los helpers de `src/app/shared/lib/http.ts` (`getJSON`, `postJSON`, `postForm`, etc.). La instancia agrega el token, renueva la sesión ante un 401 y reintenta la request. No usar `fetch` ni crear otra instancia de axios.
 - **Permisos**: proteger rutas con `RequireScope` y ocultar acciones con `usePermisos()`. Los scopes vienen del backend.
 - **Estilos**: SCSS Modules por componente, con las variables de `src/app/styles/variables.scss`.
 - **Rutas**: toda página nueva se registra en `src/routes.tsx` con `lazy()`.

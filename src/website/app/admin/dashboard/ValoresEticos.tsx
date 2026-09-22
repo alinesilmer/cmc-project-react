@@ -16,7 +16,7 @@ import {
   deleteValorEtico,
   type ValoresEticosOut,
 } from "./valoresEticos.api";
-import { abrirAdjunto } from "../../../../app/lib/archivos";
+import { abrirAdjunto } from "@/app/shared/lib/archivos";
 
 function fmtDate(iso: string) {
   try {

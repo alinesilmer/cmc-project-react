@@ -10,7 +10,7 @@ import {
   addPermToRole,
   removePermFromRole,
 } from "./api";
-import SearchField from "../../components/molecules/SearchField/SearchField";
+import SearchField from "@/app/components/ui/SearchField/SearchField";
 
 // ---------- Mapeo visual de permisos ----------
 // Categorías por prefijo de código (mostrar ≠ almacenar)

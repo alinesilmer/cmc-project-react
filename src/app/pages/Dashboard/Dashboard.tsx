@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../auth/AuthProvider";
 import styles from "./Dashboard.module.scss";
-import Button from "../../components/atoms/Button/Button";
+import Button from "@/app/components/ui/Button/Button";
 
 
 type QuickAction = {

@@ -8,7 +8,7 @@ import {
   Upload,
 } from "lucide-react";
 
-import Button from "../../components/atoms/Button/Button";
+import Button from "@/app/components/ui/Button/Button";
 import {
   fueRechazada,
   leerArchivoPrevencion,

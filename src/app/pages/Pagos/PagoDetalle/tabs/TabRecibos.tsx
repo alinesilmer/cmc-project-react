@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { getJSON, postJSON, patchJSON, delJSONBody } from "../../../../lib/http";
+import { getJSON, postJSON, patchJSON, delJSONBody } from "@/app/shared/lib/http";
 import { useAppSnackbar } from "../../../../hooks/useAppSnackbar";
-import Button from "../../../../components/atoms/Button/Button";
-import SelectableTable from "../../../../components/molecules/SelectableTable/SelectableTable";
-import type { ColumnDef } from "../../../../components/molecules/SelectableTable/types";
+import Button from "@/app/components/ui/Button/Button";
+import SelectableTable from "@/app/components/ui/SelectableTable/SelectableTable";
+import type { ColumnDef } from "@/app/components/ui/SelectableTable/types";
 import styles from "./tabs.module.scss";
 import { type Pago, fmt } from "../../types";
 

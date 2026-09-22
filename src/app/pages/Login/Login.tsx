@@ -2,14 +2,14 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Download } from "lucide-react";
 import styles from "./Login.module.scss";
-import Button from "../../components/atoms/Button/Button";
-import Modal from "../../components/atoms/Modal/Modal";
+import Button from "@/app/components/ui/Button/Button";
+import Modal from "@/app/components/ui/Modal/Modal";
 import { useAuth } from "../../auth/AuthProvider";
 import { isWebEditor } from "../../auth/roles";
 import { hasScope } from "../../auth/scopes";
-import { http } from "../../lib/http";
+import { http } from "@/app/shared/lib/http";
 import pdf from "../../assets/CMC_08_2026.pdf";
-import { mensajeDeError } from "../../lib/httpErrors";
+import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 import type { LogoutMotivo } from "../../auth/session";
 import Header from "../../../website/components/UI/Header/Header";
 

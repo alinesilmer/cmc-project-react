@@ -1,4 +1,4 @@
-import { http, httpBare } from "../lib/http";
+import { http, httpBare } from "@/app/shared/lib/http";
 import { setAccessToken } from "../auth/token";
 import { forceLogout } from "./session";
 

@@ -18,7 +18,7 @@
 //     los componentes. `especialidades` acá no filtra: solo elige qué variante
 //     de precio gana, por eso hay que cruzar igual con (1) y (2).
 
-import { paginar } from "../../../lib/paginar";
+import { paginar } from "@/app/shared/lib/paginar";
 import {
   listNomenclador,
   listNomencladorEspecialidadesResumen,

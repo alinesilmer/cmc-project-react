@@ -1,4 +1,4 @@
-import { delJSON, getJSON, patchJSON, postJSON } from "../../lib/http";
+import { delJSON, getJSON, patchJSON, postJSON } from "@/app/shared/lib/http";
 import type {
   DeduccionCreatePayload,
   DeduccionRead,

@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2 } from "lucide-react";
-import { getJSON } from "../../lib/http";
+import { getJSON } from "@/app/shared/lib/http";
 import type { GalenoFormState, GalenoLevel } from "./boletinGalenos.types";
 import { EMPTY_GALENO_VALUES } from "./boletinGalenos.types";
 import GalenoForm from "./components/GalenoForm";

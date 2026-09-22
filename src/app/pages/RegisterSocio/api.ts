@@ -1,4 +1,4 @@
-import { postJSON, getJSON, postForm, patchJSON } from "../../lib/http";
+import { postJSON, getJSON, postForm, patchJSON } from "@/app/shared/lib/http";
 /* ===== tipos ===== */
 export type RegisterPayload = {
   documentType: string;

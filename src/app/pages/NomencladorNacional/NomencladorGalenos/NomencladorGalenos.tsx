@@ -13,9 +13,9 @@ import {
   importarGalenosDeObraSocial, getHistorialGaleno,
 } from "../nomenclador.api";
 import type { GalenoOut, GalenosImportarResult } from "../nomenclador.types";
-import ConfirmModal from "../../../components/atoms/ConfirmModal/ConfirmModal";
+import ConfirmModal from "@/app/components/ui/ConfirmModal/ConfirmModal";
 import GalenoCreateModal from "./GalenoCreateModal";
-import { hoyISO } from "../../../lib/fechas";
+import { hoyISO } from "@/app/shared/lib/fechas";
 import { compararGalenos } from "../nomenclador.helpers";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

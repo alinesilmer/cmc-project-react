@@ -11,8 +11,8 @@
 // que cuesta paginar la lista completa (y `q` busca por LIKE, o sea que
 // devuelve la matrícula 5863 pero también la 15863 y la 58630).
 
-import { getJSON } from "../../lib/http";
-import { paginar } from "../../lib/paginar";
+import { getJSON } from "@/app/shared/lib/http";
+import { paginar } from "@/app/shared/lib/paginar";
 
 /** El máximo que acepta `GET /api/medicos` (`limit: int = Query(50, le=200)`). */
 const PAGINA = 200;

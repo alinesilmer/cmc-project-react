@@ -4,7 +4,7 @@
 // (single-flight) y entre pestañas (lock en localStorage + BroadcastChannel),
 // porque un /auth/refresh duplicado con el mismo token es leído por el
 // servidor como reuso y cierra todas las sesiones del socio (§7.4).
-import { http, httpBare } from "../lib/http";
+import { http, httpBare } from "@/app/shared/lib/http";
 import { getCookie, setAccessToken } from "./token";
 
 export type LogoutMotivo = "token_revocado" | "password_changed" | "sesion_expirada";

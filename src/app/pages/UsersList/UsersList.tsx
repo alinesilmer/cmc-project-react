@@ -3,18 +3,18 @@
 import type React from "react";
 import { useEffect, useMemo, useState, useRef } from "react";
 import styles from "./UsersList.module.scss";
-import { getJSON } from "../../lib/http";
-import Button from "../../components/atoms/Button/Button";
-import Modal from "../../components/atoms/Modal/Modal";
-import FilterModal from "../../components/molecules/FilterModal/FilterModal";
+import { getJSON } from "@/app/shared/lib/http";
+import Button from "@/app/components/ui/Button/Button";
+import Modal from "@/app/components/ui/Modal/Modal";
+import FilterModal from "@/app/pages/UsersList/components/FilterModal/FilterModal";
 import { useNavigate } from "react-router-dom";
 import type { FilterSelection, MissingFieldKey } from "../../types/filters";
 import { initialFilters } from "../../types/filters";
 import { mapUIToQuery } from "./medicosExport";
-import { getEspecialidadNameById } from "../../lib/especialidadesCatalog";
+import { getEspecialidadNameById } from "@/app/shared/lib/especialidadesCatalog";
 
 import { useMedicosExport } from "./useMedicosExport";
-import { useEspecialidades } from "../../components/molecules/FilterModal/useEspecialidades";
+import { useEspecialidades } from "@/app/pages/UsersList/components/FilterModal/useEspecialidades";
 
 import LogoCMCUrl from "../../assets/logoCMC.png";
 

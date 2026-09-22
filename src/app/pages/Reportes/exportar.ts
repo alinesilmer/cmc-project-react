@@ -69,7 +69,7 @@ export async function exportarExcel<T>(
   nombre: string,
   hoja = "Reporte"
 ): Promise<void> {
-  const { buildExcelBlob } = await import("../../lib/excelExport");
+  const { buildExcelBlob } = await import("@/app/shared/lib/excelExport");
   const headers = columnas.map((c) => c.header);
   const datos = filas.map((f) => {
     const o: Record<string, string | number | null> = {};

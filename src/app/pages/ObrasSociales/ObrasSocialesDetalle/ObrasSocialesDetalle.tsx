@@ -13,8 +13,8 @@ import HistorialValores from "./HistorialValores";
 // router (ver app/api/routes.py y el docstring de ObraSocialPago en la API).
 // El componente PagosObraSocial (con su api y types) se borró; para reactivar
 // la pestaña, recuperarlo del historial de git.
-import { abrirAdjunto } from "../../../lib/archivos";
-import { formatFechaLarga } from "../../../lib/fechas";
+import { abrirAdjunto } from "@/app/shared/lib/archivos";
+import { formatFechaLarga } from "@/app/shared/lib/fechas";
 import { useNotify } from "../../../hooks/useNotify";
 import { usePermisos } from "../../../auth/usePermisos";
 import s from "./ObrasSocialesDetalle.module.scss";

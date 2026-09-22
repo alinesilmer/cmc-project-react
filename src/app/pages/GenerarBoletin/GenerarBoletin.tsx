@@ -18,7 +18,7 @@ import CMCLogoUrl from "../../assets/logoCMC.png";
 // httpBare (no http): esta página vive en /generar-boletin, fuera de
 // RequireAuth y de acceso anónimo — no conviene que un 401 acá dispare el
 // refresh/redirect a /panel/login del interceptor de `http`.
-import { httpBare } from "../../lib/http";
+import { httpBare } from "@/app/shared/lib/http";
 
 registerLocale("es", es);
 

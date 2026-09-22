@@ -17,7 +17,7 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import styles from "./ActualizarPreciosGalenos.module.scss";
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
-import { hoyISO } from "../../../lib/fechas";
+import { hoyISO } from "@/app/shared/lib/fechas";
 import { compararGalenos } from "../nomenclador.helpers";
 import {
   listGalenos,
@@ -25,7 +25,7 @@ import {
   actualizarPrecioMasivoGaleno,
 } from "../nomenclador.api";
 import type { GalenoOut } from "../nomenclador.types";
-import ConfirmModal from "../../../components/atoms/ConfirmModal/ConfirmModal";
+import ConfirmModal from "@/app/components/ui/ConfirmModal/ConfirmModal";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

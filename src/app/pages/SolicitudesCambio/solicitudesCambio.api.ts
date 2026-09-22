@@ -1,4 +1,4 @@
-import { getJSON, postJSON } from "../../lib/http";
+import { getJSON, postJSON } from "@/app/shared/lib/http";
 import type {
   CampoEditable,
   EstadoSolicitudCambio,

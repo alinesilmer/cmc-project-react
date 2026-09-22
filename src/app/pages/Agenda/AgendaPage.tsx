@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 import { useNotify } from "../../hooks/useNotify";
-import { mensajeDeError } from "../../lib/httpErrors";
+import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 import { usePermisos } from "../../auth/usePermisos";
 import ResponsableSelect from "./ResponsableSelect";
 import {

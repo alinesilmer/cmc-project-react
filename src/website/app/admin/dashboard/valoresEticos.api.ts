@@ -1,4 +1,4 @@
-import { http, postForm, delJSON } from "../../../../app/lib/http";
+import { http, postForm, delJSON } from "@/app/shared/lib/http";
 
 export type ValoresEticosOut = {
   id: number;

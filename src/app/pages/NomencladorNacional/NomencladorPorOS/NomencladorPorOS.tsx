@@ -13,7 +13,7 @@ import {
   listNomenclador, getNomencladorById, updateValorMetadata, actualizarValor,
   listNomencladorEspecialidadesResumen, getNomencladorEspecialidades,
 } from "../nomenclador.api";
-import ConfirmModal from "../../../components/atoms/ConfirmModal/ConfirmModal";
+import ConfirmModal from "@/app/components/ui/ConfirmModal/ConfirmModal";
 import { getEspecialidades } from "../../Especialidades/especialidades.api";
 import EspecialidadCombo from "../EspecialidadCombo";
 import type { ValorOut, GalenoOut, NomencladorOut, ComponentePayload, Origen } from "../nomenclador.types";

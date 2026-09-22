@@ -5,7 +5,7 @@ import Button from "../../../components/UI/Button/Button";
 import styles from "./HeroVideo.module.scss";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../../app/auth/AuthProvider";
-import { http } from "../../../../app/lib/http";
+import { http } from "@/app/shared/lib/http";
 
 const IMAGES = [
   "https://i.pinimg.com/736x/fd/d3/d8/fdd3d83d55b928e22d751fbc1edcc012.jpg",

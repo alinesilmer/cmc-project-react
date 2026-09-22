@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { getJSON } from "../../../lib/http";
+import { getJSON } from "@/app/shared/lib/http";
 import styles from "./dashboard.module.scss";
 
 type ApiObraSocial = {

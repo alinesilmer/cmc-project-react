@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { saveAs } from "@/app/lib/fileSaver";
+import { saveAs } from "@/app/shared/lib/fileSaver";
 
 import type { ExportField, ExportRow, ExportingPdfMode, ObraSocial, Prestador } from "./types";
 import { buildOsCode, fmtDate, safeStr } from "./helpers";

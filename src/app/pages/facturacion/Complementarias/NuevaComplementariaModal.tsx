@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import Modal from "../../../components/atoms/Modal/Modal";
-import Button from "../../../components/atoms/Button/Button";
+import Modal from "@/app/components/ui/Modal/Modal";
+import Button from "@/app/components/ui/Button/Button";
 import { crearComplemento, fetchPeriodoActivo, previewCierre } from "../api";
 import type { CierrePreviewResponse, FacturaRead, ObraSocialOption } from "../types";
 import { detailMessage } from "../types";

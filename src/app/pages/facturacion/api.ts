@@ -1,4 +1,4 @@
-import { getJSON, postJSON, patchJSON, delJSON, getJSONWithHeaders, postForm, getBlobLong } from "../../lib/http";
+import { getJSON, postJSON, patchJSON, delJSON, getJSONWithHeaders, postForm, getBlobLong } from "@/app/shared/lib/http";
 import type {
   MedicoOption, ObraSocialOption, NomencladorOption, ClinicaOption,
   AfiliadoRead, PeriodoActivoResponse, PrecioResponse,

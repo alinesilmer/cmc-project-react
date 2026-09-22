@@ -8,8 +8,8 @@ import {
 import { useQuery } from "@tanstack/react-query";
 
 import s from "./ObrasSocialesDetalle.module.scss";
-import { abrirAdjunto } from "../../../lib/archivos";
-import { downloadExcelSheet } from "../../../lib/excelExport";
+import { abrirAdjunto } from "@/app/shared/lib/archivos";
+import { downloadExcelSheet } from "@/app/shared/lib/excelExport";
 import { useNotify } from "../../../hooks/useNotify";
 import { usePermisos } from "../../../auth/usePermisos";
 import {

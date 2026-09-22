@@ -1,9 +1,9 @@
 import type React from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./UsersManagerDashboard.module.scss";
-import MetricCard from "../../components/molecules/MetricCard/MetricCard";
+import MetricCard from "@/app/components/ui/MetricCard/MetricCard";
 import { useEffect, useState } from "react";
-import { getJSON } from "../../lib/http";
+import { getJSON } from "@/app/shared/lib/http";
 
 const UsersManagerDashboard: React.FC = () => {
   const navigate = useNavigate();

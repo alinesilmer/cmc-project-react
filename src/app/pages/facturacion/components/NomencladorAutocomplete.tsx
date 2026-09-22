@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import AppSearchSelect, { type AppSearchSelectOption } from "../../../components/atoms/AppSearchSelect/AppSearchSelect";
+import AppSearchSelect, { type AppSearchSelectOption } from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
 import { fetchCodigosHabilitados } from "../api";
 import type { NomencladorOption } from "../types";
 import { CODIGOS_BLOQUEADOS } from "../constants";

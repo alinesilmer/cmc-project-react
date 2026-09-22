@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Newspaper } from "lucide-react";
 
-import AppSearchSelect from "../../components/atoms/AppSearchSelect/AppSearchSelect";
-import type { AppSearchSelectOption } from "../../components/atoms/AppSearchSelect/AppSearchSelect";
+import AppSearchSelect from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
+import type { AppSearchSelectOption } from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
 import { searchMedicosForPagador } from "../DoctorProfilePage/api";
 import s from "./PadronPorSocio.module.scss";
 

@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useState } from "react";
 import type ExcelJS from "exceljs";
-import { saveAs } from "@/app/lib/fileSaver";
-import { getJSON } from "../../../../lib/http";
-import Button from "../../../../components/atoms/Button/Button";
-import Card from "../../../../components/atoms/Card/Card";
+import { saveAs } from "@/app/shared/lib/fileSaver";
+import { getJSON } from "@/app/shared/lib/http";
+import Button from "@/app/components/ui/Button/Button";
+import Card from "@/app/components/ui/Card/Card";
 import styles from "./tabs.module.scss";
 import { fmt, mesLabel } from "../../types";
 

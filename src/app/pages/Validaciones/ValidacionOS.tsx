@@ -19,8 +19,8 @@ import {
 
 import { useAuth } from "../../auth/AuthProvider";
 import { isMedico } from "../../auth/roles";
-import { mensajeDeError } from "../../lib/httpErrors";
-import ActionModal from "../../components/molecules/ActionModal/ActionModal";
+import { mensajeDeError } from "@/app/shared/lib/httpErrors";
+import ActionModal from "@/app/components/ui/ActionModal/ActionModal";
 import MedicoAutocomplete from "../facturacion/components/MedicoAutocomplete";
 import type { MedicoOption } from "../facturacion/types";
 import PeriodosTable from "./components/PeriodosTable";

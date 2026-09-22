@@ -6,7 +6,7 @@ import { AnimatePresence } from "framer-motion";
 import RequireAuth from "./app/auth/RequireAuth";
 import MedicoRouteGuard from "./app/auth/MedicoRouteGuard";
 import RequireScope from "./app/auth/RequireScope";
-import AppLayout from "./app/components/molecules/AppLayout/AppLayout";
+import AppLayout from "@/app/components/layout/AppLayout/AppLayout";
 import { useAuth } from "./app/auth/AuthProvider";
 import { isMedico } from "./app/auth/roles";
 
@@ -36,7 +36,7 @@ const Help = lazy(() => import("./app/pages/Help/Help"));
 const Login = lazy(() => import("./app/pages/Login/Login"));
 const Register = lazy(() => import("./app/pages/Register/Register"));
 const Info = lazy(() => import("./app/pages/Info/Info"));
-const AdherenteForm = lazy(() => import("./app/components/molecules/AdherenteForm/AdherenteForm"));
+const AdherenteForm = lazy(() => import("@/app/pages/AdherenteForm/AdherenteForm"));
 const ObrasSocialesRegisterPage = lazy(() => import("./app/pages/ObrasSocialesRegisterPage/ObrasSocialesRegisterPage"));
 const PadronesPage = lazy(() => import("./app/pages/PadronesPage/PadronesPage"));
 const AdminPadrones = lazy(() => import("./app/pages/AdminPadrones/AdminPadrones"));

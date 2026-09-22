@@ -1,5 +1,5 @@
-import { http } from "../../lib/http";
-import { getJSON, postJSON, patchJSON, delJSON, postForm } from "../../lib/http";
+import { http } from "@/app/shared/lib/http";
+import { getJSON, postJSON, patchJSON, delJSON, postForm } from "@/app/shared/lib/http";
 import type {
   ObraSocial,
   ObraSocialListItem,

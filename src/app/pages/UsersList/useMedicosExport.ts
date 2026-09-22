@@ -2,12 +2,12 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { saveAs } from "@/app/lib/fileSaver";
+import { saveAs } from "@/app/shared/lib/fileSaver";
 
 import type { ExportColumnKey, MedicoRow } from "./medicosExport";
 import { DEFAULT_HEADERS, mapUIToQuery, pickValue } from "./medicosExport";
 
-import { getJSON } from "../../lib/http";
+import { getJSON } from "@/app/shared/lib/http";
 import type { FilterSelection } from "../../types/filters";
 
 type ExportFormat = "xlsx" | "csv";

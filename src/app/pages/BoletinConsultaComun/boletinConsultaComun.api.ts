@@ -20,8 +20,8 @@ import type {
   ConsultaComunItem,
 } from "./boletinConsultaComun.types";
 import { ZERO_GALENO } from "./boletinConsultaComun.types";
-import { mensajeDeError } from "../../lib/httpErrors";
-import { http } from "../../lib/http";
+import { mensajeDeError } from "@/app/shared/lib/httpErrors";
+import { http } from "@/app/shared/lib/http";
 
 function pickFirst<T = unknown>(
   obj: Record<string, unknown>,

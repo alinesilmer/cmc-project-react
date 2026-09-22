@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { getJSON, postJSON, delJSON, patchJSON } from "../../../../lib/http";
+import { getJSON, postJSON, delJSON, patchJSON } from "@/app/shared/lib/http";
 import { useAppSnackbar } from "../../../../hooks/useAppSnackbar";
-import Button from "../../../../components/atoms/Button/Button";
-import Card from "../../../../components/atoms/Card/Card";
+import Button from "@/app/components/ui/Button/Button";
+import Card from "@/app/components/ui/Card/Card";
 import styles from "./tabs.module.scss";
 import { type Pago, type Concepto, fmt } from "../../types";
 

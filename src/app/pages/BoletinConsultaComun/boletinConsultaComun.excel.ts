@@ -1,4 +1,4 @@
-import { downloadExcelSheet } from "../../lib/excelExport";
+import { downloadExcelSheet } from "@/app/shared/lib/excelExport";
 import { CONSULTA_COMUN_CODE } from "./boletinConsultaComun.constants";
 import { formatApiDate } from "./boletinConsultaComun.helpers";
 import type { ConsultaComunItem, ObservacionesMap } from "./boletinConsultaComun.types";

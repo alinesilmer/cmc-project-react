@@ -6,13 +6,13 @@ import {
   patchJSON,
   postJSON,
   putJSON,
-} from "../../../lib/http";
+} from "@/app/shared/lib/http";
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
-import BackButton from "../../../components/atoms/BackButton/BackButton";
-import Button from "../../../components/atoms/Button/Button";
-import Card from "../../../components/atoms/Card/Card";
-import SelectableTable from "../../../components/molecules/SelectableTable/SelectableTable";
-import type { ActionDef, ColumnDef } from "../../../components/molecules/SelectableTable/types";
+import BackButton from "@/app/components/ui/BackButton/BackButton";
+import Button from "@/app/components/ui/Button/Button";
+import Card from "@/app/components/ui/Card/Card";
+import SelectableTable from "@/app/components/ui/SelectableTable/SelectableTable";
+import type { ActionDef, ColumnDef } from "@/app/components/ui/SelectableTable/types";
 import styles from "./LoteDetalle.module.scss";
 import {
   type LoteAjuste,
@@ -21,7 +21,7 @@ import {
   mesLabel,
 } from "../types";
 import type ExcelJS from "exceljs";
-import { saveAs } from "@/app/lib/fileSaver";
+import { saveAs } from "@/app/shared/lib/fileSaver";
 
 const LOTE_URL = (id: string | number) => `/api/lotes/snaps/${id}`;
 const ITEMS_URL = (id: string | number) => `/api/lotes/snaps/${id}/items`;

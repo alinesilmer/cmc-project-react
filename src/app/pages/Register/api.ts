@@ -1,4 +1,4 @@
-import { postJSON, getJSON, postForm } from "../../lib/http";
+import { postJSON, getJSON, postForm } from "@/app/shared/lib/http";
 import type { RegisterFormData } from "../../types/register";
 /* ===== tipos ===== */
 export type RegisterPayload = {

@@ -12,12 +12,12 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-} from "../../components/atoms/Table/Table";
-import SearchField from "../../components/molecules/SearchField/SearchField";
-import Card from "../../components/atoms/Card/Card";
-import Button from "../../components/atoms/Button/Button";
+} from "@/app/components/ui/Table/Table";
+import SearchField from "@/app/components/ui/SearchField/SearchField";
+import Card from "@/app/components/ui/Card/Card";
+import Button from "@/app/components/ui/Button/Button";
 import styles from "./DoctorsList.module.scss";
-import { getJSON } from "../../lib/http";
+import { getJSON } from "@/app/shared/lib/http";
 
 type DoctorRow = {
   id: number;

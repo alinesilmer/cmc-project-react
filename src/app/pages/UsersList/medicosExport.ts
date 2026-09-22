@@ -1,6 +1,6 @@
 // src/app/pages/UsersList/medicosExport.ts
 // Helpers + mapping for Medicos export (/api/medicos/all)
-import { getEspecialidadNameById } from "../../lib/especialidadesCatalog";
+import { getEspecialidadNameById } from "@/app/shared/lib/especialidadesCatalog";
 import type { FilterSelection } from "../../types/filters";
 export type { FilterSelection };
 

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import PadronesPromptModal from "../../components/molecules/Padrones/PadronesPromptModal/PadronesPromptModal";
-import PadronesForm from "../../components/molecules/Padrones/PadronesForm/PadronesForm";
+import PadronesPromptModal from "@/app/features/padrones/components/PadronesPromptModal/PadronesPromptModal";
+import PadronesForm from "@/app/features/padrones/components/PadronesForm/PadronesForm";
 import { useAuth } from "../../auth/AuthProvider";
 import styles from "./PadronesPage.module.scss";
 

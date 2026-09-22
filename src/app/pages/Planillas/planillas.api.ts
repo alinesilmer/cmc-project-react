@@ -1,4 +1,4 @@
-import { delJSON, getJSON, patchForm, postForm } from "../../lib/http";
+import { delJSON, getJSON, patchForm, postForm } from "@/app/shared/lib/http";
 import type { Planilla } from "./planillas.types";
 
 const BASE = "/api/planillas";

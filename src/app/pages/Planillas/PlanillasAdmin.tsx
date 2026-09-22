@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FileText, FolderOpen, Info, Pencil, Search, Trash2, Upload } from "lucide-react";
 
-import { abrirAdjunto } from "../../lib/archivos";
-import { hoyISO } from "../../lib/fechas";
+import { abrirAdjunto } from "@/app/shared/lib/archivos";
+import { hoyISO } from "@/app/shared/lib/fechas";
 import { useNotify } from "../../hooks/useNotify";
-import Modal from "../../components/atoms/Modal/Modal";
-import ConfirmModal from "../../components/atoms/ConfirmModal/ConfirmModal";
-import Button from "../../components/atoms/Button/Button";
+import Modal from "@/app/components/ui/Modal/Modal";
+import ConfirmModal from "@/app/components/ui/ConfirmModal/ConfirmModal";
+import Button from "@/app/components/ui/Button/Button";
 import { createPlanilla, deletePlanilla, editPlanilla, getPlanillas } from "./planillas.api";
 import {
   formatFechaPlanilla,

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
-import { getJSON } from "../../lib/http";
+import { getJSON } from "@/app/shared/lib/http";
 
 // ─── API response shapes ──────────────────────────────────────────
 
