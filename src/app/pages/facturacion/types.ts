@@ -160,7 +160,13 @@ export interface PrestacionRead {
   grupo?: PrestacionRead[] | null;
 }
 
-export type PrestacionUpdate = Partial<PrestacionItem>;
+export type PrestacionUpdate = Partial<PrestacionItem> & {
+  /** Sólo en PATCH, no en el alta: cambiarlos mueve la fila a otra cabecera
+   *  `facturacion` (cod_obr+periodo+version) y la re-cotiza. Ver `editar_prestacion`
+   *  en el backend — no-op si coinciden con los que ya tenía la fila. */
+  cod_obra_social?: string;
+  periodo?: string;
+};
 
 export interface MoverPeriodoPayload {
   cod_obra: string; periodo_origen: string;

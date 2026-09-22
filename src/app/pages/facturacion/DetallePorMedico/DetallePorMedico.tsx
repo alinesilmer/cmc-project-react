@@ -11,6 +11,7 @@ import type { MedicoOption, PrestacionRead, Tipo } from "../types";
 import { formatMoney, parseMoney } from "../money";
 import { saveAs } from "../../../lib/fileSaver";
 import TablaPorObraSocial from "../components/TablaPorObraSocial";
+import MedicoAutocomplete from "../components/MedicoAutocomplete";
 import styles from "./DetallePorMedico.module.scss";
 
 // Tope del backend por request (GET /prestaciones: limit <= 200) y freno de
@@ -32,7 +33,10 @@ const DetallePorMedico: React.FC = () => {
   const navigate = useNavigate();
   const notify = useAppSnackbar();
 
-  const [socioInput, setSocioInput] = useState("");
+  // Buscador de socio: por Nº de socio o por nombre (mismo `/medicos` que usa
+  // el resto de facturación) — antes era un input numérico que sólo aceptaba
+  // el número de socio tipeado a mano.
+  const [medicoElegido, setMedicoElegido] = useState<MedicoOption | null>(null);
   const [periodoInput, setPeriodoInput] = useState("");
 
   const [rows, setRows] = useState<PrestacionRead[] | null>(null);
@@ -43,14 +47,10 @@ const DetallePorMedico: React.FC = () => {
   const [exportando, setExportando] = useState<"pdf" | "xlsx" | null>(null);
 
   const buscar = async () => {
-    const socio = socioInput.trim();
+    const socio = medicoElegido?.cod?.trim() ?? "";
     const periodo = periodoInput.trim();
     if (!socio || !periodo) {
-      notify("Completá el número de socio y el período.", "error");
-      return;
-    }
-    if (!/^\d+$/.test(socio)) {
-      notify("El número de socio tiene que ser numérico.", "error");
+      notify("Elegí un socio y completá el período.", "error");
       return;
     }
     if (!/^\d{6}$/.test(periodo)) {
@@ -107,7 +107,7 @@ const DetallePorMedico: React.FC = () => {
   };
 
   const limpiar = () => {
-    setSocioInput("");
+    setMedicoElegido(null);
     setPeriodoInput("");
     setRows(null);
     setMedico(null);
@@ -170,16 +170,12 @@ const DetallePorMedico: React.FC = () => {
 
       <div className={styles.layout}>
         <div className={styles.toolbar}>
-          <div className={styles.filterField}>
-            <label className={styles.filterLabel}>Nº de socio</label>
-            <input
-              className={styles.input}
-              type="text"
-              inputMode="numeric"
-              placeholder="Ej. 824"
-              value={socioInput}
-              onChange={(e) => setSocioInput(e.target.value)}
-              onKeyDown={onKeyDown}
+          <div className={styles.filterField} style={{ minWidth: 260 }}>
+            <label className={styles.filterLabel}>Socio</label>
+            <MedicoAutocomplete
+              value={medicoElegido?.cod ?? null}
+              onChange={(_cod, m) => setMedicoElegido(m)}
+              blurOnSelect={false}
             />
           </div>
 
@@ -289,8 +285,8 @@ const DetallePorMedico: React.FC = () => {
           <div className={styles.emptyState}>
             <span className={styles.emptyIcon}><UserSearch size={24} /></span>
             <p className={styles.emptyText}>
-              Ingresá el número de socio y el período (AAAAMM) para ver el detalle
-              completo de las prestaciones de ese médico.
+              Buscá al socio por número o por nombre y completá el período (AAAAMM)
+              para ver el detalle completo de las prestaciones de ese médico.
             </p>
           </div>
         )}

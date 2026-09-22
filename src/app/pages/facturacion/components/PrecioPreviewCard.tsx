@@ -19,6 +19,49 @@ const PrecioPreviewCard: React.FC<Props> = ({ precio, onVolverATradicional }) =>
       gap: 8,
     }}
   >
+    {/* No sólo `!precio.admitido`: con `CARGA_SIN_PRECIO=true` (dev y prod) el
+        caso "sin valor vigente" vuelve `admitido=true` con montos en 0 para no
+        bloquear la carga (ver `resolver_precio`), pero `motivo` sigue trayendo
+        la explicación — que sin este chequeo nunca se mostraba. Los únicos dos
+        lugares donde el backend pone `motivo` son de rechazo/advertencia, así
+        que basta con que venga para mostrar el cartel. */}
+    {precio.motivo && (
+      <div
+        style={{
+          background: "#fffbeb",
+          border: "1px solid #f59e0b",
+          borderRadius: 6,
+          padding: "8px 12px",
+          fontSize: 12,
+          color: "#92400e",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+        }}
+      >
+        <span>⚠ {precio.motivo}</span>
+        {precio.via === "L" && onVolverATradicional && (
+          <button
+            type="button"
+            onClick={onVolverATradicional}
+            style={{
+              background: "none",
+              border: "1px solid #92400e",
+              borderRadius: 4,
+              padding: "2px 8px",
+              fontSize: 11,
+              color: "#92400e",
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Volver a Tradicional
+          </button>
+        )}
+      </div>
+    )}
+
     <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
       <div>
         <span style={{ fontSize: 11, color: "#64748b", display: "block" }}>Honorarios</span>
@@ -59,43 +102,6 @@ const PrecioPreviewCard: React.FC<Props> = ({ precio, onVolverATradicional }) =>
           </span>
         )}
       </p>
-    )}
-
-    {!precio.admitido && precio.motivo && (
-      <div
-        style={{
-          background: "#fffbeb",
-          border: "1px solid #f59e0b",
-          borderRadius: 6,
-          padding: "8px 12px",
-          fontSize: 12,
-          color: "#92400e",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-        }}
-      >
-        <span>⚠ {precio.motivo}</span>
-        {precio.via === "L" && onVolverATradicional && (
-          <button
-            type="button"
-            onClick={onVolverATradicional}
-            style={{
-              background: "none",
-              border: "1px solid #92400e",
-              borderRadius: 4,
-              padding: "2px 8px",
-              fontSize: 11,
-              color: "#92400e",
-              cursor: "pointer",
-              whiteSpace: "nowrap",
-            }}
-          >
-            Volver a Tradicional
-          </button>
-        )}
-      </div>
     )}
 
     {precio.por_presupuesto && (

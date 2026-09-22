@@ -232,7 +232,10 @@ const CargaFacturacion: React.FC = () => {
   const [loadingComplemento, setLoadingComplemento] = useState(isComplemento);
   const [complementoError, setComplementoError] = useState<string | null>(null);
 
-  // Edición — metadatos inmutables de la prestación cargada (OS/período no se pueden cambiar)
+  // Edición — snapshot de la prestación tal como está guardada. OS/período SÍ se pueden
+  // cambiar (`obraSocial`/`periodo` de más arriba, seedeados con estos valores al
+  // precargar): esto queda como fallback y como lo que muestra `estado` (si la
+  // prestación sigue abierta), no como el valor autoritativo de OS/período.
   const [editMeta, setEditMeta] = useState<{
     cod_obra_social: string;
     /** "<nro> · <nombre>" resuelto aparte; el fetch de la prestación solo trae el código. */
@@ -392,17 +395,17 @@ const CargaFacturacion: React.FC = () => {
 
   // Obra social efectiva para cotizar — la misma cuenta se repetía 3 veces (acá, en
   // `codObraTabla` más abajo y ahora también en el precio del pediatra); memoizada una
-  // sola vez para que las tres la compartan.
+  // sola vez para que las tres la compartan. Editar y cargar comparten la misma fuente
+  // (`obraSocial`, seedeada con la actual al entrar en edición): si se cambia la OS acá
+  // se re-cotiza igual que al elegirla en una carga nueva.
   const codObraEfectivo = useMemo(
     () =>
-      isEdit
-        ? (editMeta?.cod_obra_social ?? null)
-        : isComplemento
-          ? (complementoMeta?.cod_obra ?? null)
-          : obraSocial
-            ? String(obraSocial.nro_obra_social)
-            : null,
-    [isEdit, editMeta?.cod_obra_social, isComplemento, complementoMeta?.cod_obra, obraSocial],
+      isComplemento
+        ? (complementoMeta?.cod_obra ?? null)
+        : obraSocial
+          ? String(obraSocial.nro_obra_social)
+          : null,
+    [isComplemento, complementoMeta?.cod_obra, obraSocial],
   );
 
   // Precio del nomenclador (código principal — cirujano/ayudante suelto)
@@ -492,6 +495,15 @@ const CargaFacturacion: React.FC = () => {
           periodo: p.periodo,
           estado: p.estado ?? null,
         });
+        // Seedea el campo editable de Obra social/Período con el valor actual de la
+        // fila — de acá en más `obraSocial`/`periodo` (no `editMeta`) son la fuente de
+        // verdad, igual que en la carga nueva. `loadPeriodo` trae el período activo de
+        // esa OS, que tiene que coincidir con `p.periodo`: una fila sólo es editable si
+        // su período sigue abierto (gate de `editMeta.estado === "A"` más abajo).
+        if (os) {
+          setObraSocial(os);
+          loadPeriodo(String(os.nro_obra_social));
+        }
 
         // La prestación solo trae códigos: los labels descriptivos se resuelven ANTES
         // de habilitar el render del formulario (`editHidratado`), porque los
@@ -566,7 +578,7 @@ const CargaFacturacion: React.FC = () => {
     return () => {
       active = false;
     };
-  }, [isEdit, editId, medicosPrecargados, obrasSocialesPrecargadas]);
+  }, [isEdit, editId, medicosPrecargados, obrasSocialesPrecargadas, loadPeriodo]);
 
   // Carga de la factura complementaria: valida que sea un complemento abierto y fija
   // OS/período. Sostiene el badge del header y la búsqueda de precio/tabla.
@@ -855,7 +867,9 @@ const CargaFacturacion: React.FC = () => {
 
   const validate = (): boolean => {
     const errs: Record<string, string> = {};
-    if (!isEdit && !isComplemento) {
+    // La complementaria fija OS/período (van en el badge, no son campos del form). Todo
+    // lo demás —carga nueva y edición— valida igual: ambas ahora dejan elegir la OS.
+    if (!isComplemento) {
       if (!obraSocial) errs.obraSocial = "Requerido";
       if (!periodo) errs.periodo = "Sin período activo";
       if (periodoOverride && periodo && periodoOverride < periodo.periodo) {
@@ -1024,9 +1038,18 @@ const CargaFacturacion: React.FC = () => {
 
   const doGuardarEdit = async () => {
     if (!validate() || !editId) return;
+    // Efectivos = lo que está elegido ahora en el form, no el snapshot original de
+    // `editMeta`: si el operador cambió la OS/período, esto viaja en el PATCH de la
+    // cabecera y el backend mueve la fila (`editar_prestacion`, no-op si no cambió).
+    const obraSocialEfectiva = obraSocial
+      ? String(obraSocial.nro_obra_social)
+      : editMeta!.cod_obra_social;
+    const periodoEfectivo = periodoOverride ?? periodo?.periodo ?? editMeta!.periodo;
     const payload: PrestacionUpdate = {
       cod_medico: codMedico!,
       cod_medico_ejecutor: payeeEsOrganizacion ? codMedicoEjecutor : null,
+      cod_obra_social: obraSocialEfectiva,
+      periodo: periodoEfectivo,
       dni_paciente: dni || null,
       fecha_practica: fechaPractica || null,
       cod_clinica: codClinica,
@@ -1085,20 +1108,27 @@ const CargaFacturacion: React.FC = () => {
           porcentaje: toInt(linea.porcentaje, 100),
         };
         if (linea.prestacionId) {
-          // Existente → PATCH.
+          // Existente → PATCH. Va también con la OS/período EFECTIVOS: si la cabecera
+          // se movió arriba, el ayudante tiene que moverse con ella — si no, el equipo
+          // queda partido entre dos facturas.
           idsVigentes.add(linea.prestacionId);
-          await editarPrestacion(linea.prestacionId, ayFields);
+          await editarPrestacion(linea.prestacionId, {
+            ...ayFields,
+            cod_obra_social: obraSocialEfectiva,
+            periodo: periodoEfectivo,
+          });
         } else {
           // Nuevo → se crea junto al equipo (mismo grupo_equipo_id que la cabecera).
           nuevos.push({ ...ayFields, grupo_equipo_id: headId });
         }
       }
-      // Los nuevos van al mismo período/OS del equipo (que está abierto: si no, no se
-      // podría editar).
+      // Los nuevos van al mismo período/OS EFECTIVOS del equipo (ya movido si la
+      // cabecera cambió de OS/período arriba) — no al `editMeta` original, o el
+      // ayudante nuevo quedaría en una cabecera distinta a la de su propia cirugía.
       if (nuevos.length > 0) {
         await crearPrestaciones({
-          obra_social: editMeta!.cod_obra_social,
-          periodo: editMeta!.periodo,
+          obra_social: obraSocialEfectiva,
+          periodo: periodoEfectivo,
           prestaciones: nuevos,
         });
       }
@@ -1140,8 +1170,14 @@ const CargaFacturacion: React.FC = () => {
           rol: "pediatra" as const,
         };
         if (pediatra.prestacionId) {
-          // Existente (misma fila) → PATCH.
-          await editarPrestacion(pediatra.prestacionId, pedFields);
+          // Existente (misma fila) → PATCH, también con la OS/período efectivos —
+          // mismo motivo que con el ayudante: el pediatra tiene que moverse junto al
+          // resto del equipo si la cabecera cambió de OS/período.
+          await editarPrestacion(pediatra.prestacionId, {
+            ...pedFields,
+            cod_obra_social: obraSocialEfectiva,
+            periodo: periodoEfectivo,
+          });
         } else {
           // Nuevo. Si había un pediatra ORIGINAL distinto, se reemplaza: se anula antes
           // de crear el nuevo — el backend rechaza un 2º pediatra activo en el equipo.
@@ -1149,8 +1185,8 @@ const CargaFacturacion: React.FC = () => {
             await anularPrestacion(pediatraOriginalId);
           }
           await crearPrestaciones({
-            obra_social: editMeta!.cod_obra_social,
-            periodo: editMeta!.periodo,
+            obra_social: obraSocialEfectiva,
+            periodo: periodoEfectivo,
             prestaciones: [{ ...pedFields, grupo_equipo_id: headId }],
           });
         }
@@ -1305,7 +1341,11 @@ const CargaFacturacion: React.FC = () => {
   const periodoOk = !periodoOverride || !periodo || periodoOverride >= periodo.periodo;
 
   const canGuardar = isEdit
-    ? !!codMedico &&
+    ? !!obraSocial &&
+      !!periodo &&
+      !periodoError &&
+      periodoOk &&
+      !!codMedico &&
       ejecutorOk &&
       !!codNomenclador &&
       !guardando &&
@@ -1410,11 +1450,9 @@ const CargaFacturacion: React.FC = () => {
   const medicoTabla = medicoSeleccionado ?? ultimoMedico;
 
   const codObraTabla = codObraEfectivo;
-  const periodoTabla = isEdit
-    ? (editMeta?.periodo ?? null)
-    : isComplemento
-      ? (complementoMeta?.periodo ?? null)
-      : (periodoOverride ?? periodo?.periodo ?? null);
+  const periodoTabla = isComplemento
+    ? (complementoMeta?.periodo ?? null)
+    : (periodoOverride ?? periodo?.periodo ?? null);
 
   // Antes que cualquier otro gate: sin médicos y obras sociales precargados no hay
   // formulario que mostrar (los autocompletes de médico/obra social dependen de
@@ -1569,18 +1607,7 @@ const CargaFacturacion: React.FC = () => {
           </p>
         </div>
         <div className={styles.headerRight}>
-          {isEdit ? (
-            editMeta && (
-              <>
-                <span className={`${styles.infoChip} ${styles.chipNeutral}`}>
-                  Período: {editMeta.periodo}
-                </span>
-                <span className={`${styles.infoChip} ${styles.chipNeutral}`}>
-                  OS: {editMeta.cod_obra_social}
-                </span>
-              </>
-            )
-          ) : isComplemento ? null : (
+          {isComplemento ? null : (
             <>
               {periodo && (
                 <span className={`${styles.infoChip} ${styles.chipNeutral}`}>
@@ -1679,46 +1706,34 @@ const CargaFacturacion: React.FC = () => {
             medicosPrecargados={medicosPrecargados}
           />
 
-          {/* 2. Obra social + período. En complementaria son fijos (van en el badge). */}
-          {isComplemento ? null : isEdit ? (
-            <div className={styles.section}>
-              <span className={styles.sectionTitle}>Datos generales</span>
-              <div className={styles.fieldsRow}>
-                <div className={styles.filterField}>
-                  <label className={styles.filterLabel}>Obra social</label>
-                  <div className={styles.readonlyField}>
-                    {editMeta?.cod_obra_social_label ?? editMeta?.cod_obra_social ?? "—"}
-                  </div>
-                </div>
-                <div className={styles.filterField}>
-                  <label className={styles.filterLabel}>Período</label>
-                  <div className={styles.readonlyField}>
-                    {editMeta?.periodo ?? "—"}
-                  </div>
-                </div>
-              </div>
-              {editMeta && editMeta.estado !== "A" && (
+          {/* 2. Obra social + período. En complementaria son fijos (van en el badge).
+              Editable también en edición: cambiar la OS/período mueve la fila a otra
+              cabecera y re-cotiza (ver `editar_prestacion` en el backend) — el mismo
+              PATCH ya lo soportaba, sólo faltaba dejar de mostrarlo como sólo-lectura. */}
+          {isComplemento ? null : (
+            <>
+              <DatosGeneralesSection
+                key={`os-${osResetKey}`}
+                obraSocial={obraSocial}
+                onObraSocialChange={handleObraSocialChange}
+                periodo={periodo}
+                periodoError={periodoError}
+                // No incluir periodoLoading en `guardando`: al elegir la OS, loadPeriodo
+                // pone loading en true sincrónicamente y, si esto deshabilita el input,
+                // el navegador le saca el foco — y se rompe el "Enter para avanzar". En
+                // edición, además se bloquea si la prestación ya no está abierta.
+                disabled={isEdit ? formDisabled : guardando}
+                periodoOverride={periodoOverride}
+                onPeriodoOverrideChange={setPeriodoOverride}
+                obrasSocialesPrecargadas={obrasSocialesPrecargadas}
+              />
+              {isEdit && editMeta && editMeta.estado !== "A" && (
                 <div className={styles.errorBox}>
                   ⚠ Esta prestación ya no está en estado abierto — no se puede
                   editar.
                 </div>
               )}
-            </div>
-          ) : (
-            <DatosGeneralesSection
-              key={`os-${osResetKey}`}
-              obraSocial={obraSocial}
-              onObraSocialChange={handleObraSocialChange}
-              periodo={periodo}
-              periodoError={periodoError}
-              // No incluir periodoLoading: al elegir la OS, loadPeriodo pone loading en
-              // true sincrónicamente y, si esto deshabilita el input, el navegador le
-              // saca el foco — y se rompe el "Enter para avanzar".
-              disabled={guardando}
-              periodoOverride={periodoOverride}
-              onPeriodoOverrideChange={setPeriodoOverride}
-              obrasSocialesPrecargadas={obrasSocialesPrecargadas}
-            />
+            </>
           )}
 
           {/* 3. Paciente */}
