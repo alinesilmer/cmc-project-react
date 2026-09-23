@@ -1415,6 +1415,15 @@ const CargaFacturacion: React.FC = () => {
   // Enter avanza al campo siguiente. Los handlers de MUI viven en el input (más
   // adentro) y corren primero, así que acá sólo llegan los Enter que el autocomplete
   // no consumió para elegir una opción.
+  // Al pasar de campo, la pantalla se centra sobre el input con un desplazamiento
+  // suave. El foco por Enter usa `preventScroll` (ver handleFormKeyDown) para que el
+  // navegador no dé su salto brusco antes de esta animación.
+  const centrarCampoEnfocado = (e: React.FocusEvent<HTMLDivElement>) => {
+    const el = e.target as HTMLElement;
+    if (!/^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName)) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
   const handleFormKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key !== "Enter") return;
     if (e.shiftKey || e.ctrlKey || e.metaKey || e.altKey) return;
@@ -1427,7 +1436,7 @@ const CargaFacturacion: React.FC = () => {
     const next = nextFocusable(formRef.current, el);
     if (!next) return;
     e.preventDefault();
-    next.focus();
+    next.focus({ preventScroll: true });
   };
 
   // Los campos ya no se bloquean por orden de carga (p. ej. no hace falta elegir Obra
@@ -1672,7 +1681,7 @@ const CargaFacturacion: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <div className={styles.layout} ref={formRef} onKeyDown={handleFormKeyDown}>
+        <div className={styles.layout} ref={formRef} onKeyDown={handleFormKeyDown} onFocus={centrarCampoEnfocado}>
           {/* 1. Médico cabecera */}
           <MedicoSection
             key={`medico-${medicoResetKey}`}
