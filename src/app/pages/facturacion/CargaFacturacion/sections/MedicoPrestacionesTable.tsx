@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ClipboardList, Pencil, Copy, ArrowRightCircle, ArrowLeftCircle, Trash2, Users, ChevronDown, ChevronUp,
@@ -136,6 +136,11 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
 
   const [rows, setRows] = useState<PrestacionRead[]>([]);
   const [totalCount, setTotalCount] = useState<number | undefined>(undefined);
+  // Unidades facturadas (cantidad × sesión), no filas: es lo que muestra el pie.
+  const totalUnidades = useMemo(
+    () => rows.reduce((acc, r) => acc + (r.cantidad || 1) * (r.sesion || 1), 0),
+    [rows],
+  );
   const [loading, setLoading] = useState(false);
   const [busyIds, setBusyIds] = useState<Set<number>>(new Set());
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
@@ -656,7 +661,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
         {/* Sin paginado: el pie sólo informa cuántas filas hay en pantalla. */}
         <div className={styles.pagination}>
           <span className={styles.pageInfo}>
-            {totalCount !== undefined ? `${totalCount} prestación${totalCount !== 1 ? "es" : ""}` : "—"}
+            {totalCount !== undefined ? `${totalUnidades} prestación${totalUnidades !== 1 ? "es" : ""}` : "—"}
           </span>
         </div>
       </div>

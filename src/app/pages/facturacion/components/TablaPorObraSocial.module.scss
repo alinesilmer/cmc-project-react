@@ -138,6 +138,14 @@ $radius-sm: 6px;
   white-space: nowrap;
 }
 
+.resumenCodigo {
+  font-weight: 700;
+  color: $text-1;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .resumenMoney {
   font-size: inherit;
   color: $text-2;

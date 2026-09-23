@@ -13,16 +13,19 @@ interface Props {
   /** Sólo la usa "detalle-medico" (Colegio) — "Mi recepción" no tiene permiso
    *  para entrar a la ficha completa de una prestación. */
   onRowClick?: (p: PrestacionRead) => void;
+  /** Muestra el Nº de obra social a la izquierda del nombre. Sólo para el personal
+   *  del Colegio ("detalle-medico"); el médico no lo ve en "Mi recepción". */
+  mostrarCodigoOS?: boolean;
 }
 
 const COLUMNAS = 6;
 
-const TablaPorObraSocial: React.FC<Props> = ({ prestaciones, cargando, onRowClick }) => {
-  // Qué grupos (obra social) están colapsados — por defecto todos abiertos.
-  const [colapsados, setColapsados] = useState<Set<string>>(new Set());
+const TablaPorObraSocial: React.FC<Props> = ({ prestaciones, cargando, onRowClick, mostrarCodigoOS }) => {
+  // Qué grupos (obra social) están ABIERTOS — por defecto todos colapsados.
+  const [abiertos, setAbiertos] = useState<Set<string>>(new Set());
 
   const toggleGrupo = (clave: string) => {
-    setColapsados((prev) => {
+    setAbiertos((prev) => {
       const next = new Set(prev);
       if (next.has(clave)) next.delete(clave);
       else next.add(clave);
@@ -77,7 +80,7 @@ const TablaPorObraSocial: React.FC<Props> = ({ prestaciones, cargando, onRowClic
         </thead>
         <tbody>
           {grupos.map((g) => {
-            const colapsado = colapsados.has(g.clave);
+            const colapsado = !abiertos.has(g.clave);
             return (
             <React.Fragment key={g.clave}>
               <tr className={styles.resumenRow}>
@@ -92,6 +95,9 @@ const TablaPorObraSocial: React.FC<Props> = ({ prestaciones, cargando, onRowClic
                     >
                       <ChevronDown size={16} />
                     </button>
+                    {mostrarCodigoOS && g.clave !== "sin-os" && (
+                      <span className={styles.resumenCodigo}>{g.clave}</span>
+                    )}
                     <span className={styles.resumenLabel}>{g.nombre}</span>
                     <span className={styles.resumenMoney}>
                       Honorarios: <strong>{formatMoney(g.totalHonorarios)}</strong>
