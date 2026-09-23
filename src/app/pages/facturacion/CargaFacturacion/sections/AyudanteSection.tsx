@@ -41,9 +41,14 @@ const montoLinea = (linea: AyudanteLinea, precio: PrecioResponse): number => {
   return base * ((Number.isNaN(porc) ? 100 : porc) / 100);
 };
 
-export const totalAyudantes = (lineas: AyudanteLinea[], precio: PrecioResponse | null): number => {
+export const totalAyudantes = (
+  lineas: AyudanteLinea[],
+  precio: PrecioResponse | null,
+  cantidad = 1,
+  sesion = 1,
+): number => {
   if (!precio) return 0;
-  return lineas.reduce((acc, l) => acc + montoLinea(l, precio), 0);
+  return lineas.reduce((acc, l) => acc + montoLinea(l, precio), 0) * cantidad * sesion;
 };
 
 interface Props {

@@ -833,10 +833,9 @@ const CargaFacturacion: React.FC = () => {
     // El coseguro no se escala por porcentaje (mismo criterio que el backend,
     // `calcular_importe_total`); sí escala por cantidad/sesión, igual que el resto.
     const base = ((h + g) * (porc / 100) - cos) * cant * ses;
-    // Ni ayudantes ni pediatra escalan por cantidad/sesión: sus filas siempre se
-    // guardan con cantidad=1/sesión=1 (ver doGuardar), igual que ya hacía totalAyudantes.
-    const pedMonto = pediatra ? montoPediatra(pediatra, precioPediatra) : 0;
-    return base + totalAyudantes(ayudantes, precio) + pedMonto;
+    // Ayudante y pediatra escalan por cantidad/sesión igual que el cirujano (ver doGuardar).
+    const pedMonto = pediatra ? montoPediatra(pediatra, precioPediatra) * cant * ses : 0;
+    return base + totalAyudantes(ayudantes, precio, cant, ses) + pedMonto;
   }, [
     tipoPrestador, montoAyudante, honorarios, gastos, coseguro, porcentaje, cantidad, sesion,
     ayudantes, precio, pediatra, precioPediatra,
@@ -871,7 +870,9 @@ const CargaFacturacion: React.FC = () => {
     // lo demás —carga nueva y edición— valida igual: ambas ahora dejan elegir la OS.
     if (!isComplemento) {
       if (!obraSocial) errs.obraSocial = "Requerido";
-      if (!periodo) errs.periodo = "Sin período activo";
+      // Sin automático, un período elegido a mano ("Elegir período" — obra social sin
+      // período cerrado previo) es válido igual; solo es error si no hay ninguno de los dos.
+      if (!periodo && !periodoOverride) errs.periodo = "Sin período activo";
       if (periodoOverride && periodo && periodoOverride < periodo.periodo) {
         errs.periodo = `El período no puede ser anterior a ${periodo.periodo_label}`;
       }
@@ -1099,8 +1100,10 @@ const CargaFacturacion: React.FC = () => {
           autorizacion: autorizacionPorIntegrante
             ? (linea.autorizacion.trim() || null)
             : shared.autorizacion,
-          cantidad: 1,
-          sesion: 1,
+          // Mismo criterio que en el alta (doGuardar): el ayudante escala con la
+          // cantidad/sesión de la cabecera, no queda fijo en 1.
+          cantidad: toInt(cantidad, 1),
+          sesion: toInt(sesion, 1),
           tipo_calculo: linea.tipoCalculo,
           honorarios: 0,
           gastos: 0,
@@ -1159,8 +1162,10 @@ const CargaFacturacion: React.FC = () => {
             : (autorizacion || null),
           cod_nomenclador: pediatra.codNomenclador,
           via: "T" as ViaPractica,
-          cantidad: 1,
-          sesion: 1,
+          // Mismo criterio que el ayudante (ver doGuardarEdit más arriba): escala con
+          // la cantidad/sesión de la cabecera.
+          cantidad: toInt(cantidad, 1),
+          sesion: toInt(sesion, 1),
           tipo_calculo: pediatra.tipoCalculo,
           honorarios: pedAmount,
           gastos: 0,
@@ -1243,8 +1248,11 @@ const CargaFacturacion: React.FC = () => {
           : mainItem.autorizacion,
         cod_nomenclador: mainItem.cod_nomenclador!,
         via: mainItem.via,
-        cantidad: 1,
-        sesion: 1,
+        // El ayudante asiste la misma cantidad/sesión que el cirujano: si la
+        // práctica se cargó ×N, el ayudante también cobra ×N (antes quedaba
+        // siempre en 1, sin importar lo cargado en la cabecera).
+        cantidad: mainItem.cantidad,
+        sesion: mainItem.sesion,
         tipo_calculo: linea.tipoCalculo,
         honorarios: 0,
         gastos: 0,
@@ -1274,8 +1282,9 @@ const CargaFacturacion: React.FC = () => {
         // Código PROPIO del pediatra — NO el del cirujano.
         cod_nomenclador: pediatra.codNomenclador,
         via: "T",
-        cantidad: 1,
-        sesion: 1,
+        // Mismo criterio que el ayudante: escala con la cantidad/sesión de la cabecera.
+        cantidad: mainItem.cantidad,
+        sesion: mainItem.sesion,
         tipo_calculo: pediatra.tipoCalculo,
         // El pediatra cobra honorarios (de su código). El backend pisa el monto con el
         // valor autoritativo del lookup en modo Automático; acá alcanza con que sea >0
@@ -1339,11 +1348,16 @@ const CargaFacturacion: React.FC = () => {
   const ejecutorOk = !payeeEsOrganizacion || !!codMedicoEjecutor;
   // El período editado no puede ser anterior al automático (el backend lo rechaza con 422).
   const periodoOk = !periodoOverride || !periodo || periodoOverride >= periodo.periodo;
+  // Resuelto = hay automático, o el operador ya eligió uno a mano con "Elegir período"
+  // (caso de obra social sin período cerrado previo, donde no hay automático que
+  // esperar — ver DatosGeneralesSection y resolver_periodo_colegio_carga en el back).
+  const periodoResuelto = !!periodo || !!periodoOverride;
+  const periodoErrorBloquea = periodoError && !periodoOverride;
 
   const canGuardar = isEdit
     ? !!obraSocial &&
-      !!periodo &&
-      !periodoError &&
+      periodoResuelto &&
+      !periodoErrorBloquea &&
       periodoOk &&
       !!codMedico &&
       ejecutorOk &&
@@ -1360,8 +1374,8 @@ const CargaFacturacion: React.FC = () => {
         !precioLoading &&
         !!complementoMeta
       : !!obraSocial &&
-        !!periodo &&
-        !periodoError &&
+        periodoResuelto &&
+        !periodoErrorBloquea &&
         periodoOk &&
         !!codMedico &&
         ejecutorOk &&
