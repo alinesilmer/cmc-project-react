@@ -69,11 +69,14 @@ export const crearClinica = (body: { nombre: string }) =>
 export const eliminarClinica = (cod: number) =>
   traced("DELETE /clinicas", { cod }, delJSON<void>(`${BASE}/clinicas/${cod}`));
 
-export const fetchCodigosHabilitados = (nroSocio: string, q?: string) =>
+export const fetchCodigosHabilitados = (nroSocio: string, q?: string, codObra?: string | null) =>
   traced(
     `GET /medico/${nroSocio}/codigos-habilitados`,
-    { nroSocio, q },
-    getJSON<NomencladorOption[]>(`${BASE}/medico/${nroSocio}/codigos-habilitados`, q ? { q } : undefined),
+    { nroSocio, q, codObra },
+    getJSON<NomencladorOption[]>(`${BASE}/medico/${nroSocio}/codigos-habilitados`, {
+      ...(q ? { q } : {}),
+      ...(codObra ? { cod_obra: codObra } : {}),
+    }),
   );
 
 export const fetchAfiliados = (q: string, limit = 20) =>

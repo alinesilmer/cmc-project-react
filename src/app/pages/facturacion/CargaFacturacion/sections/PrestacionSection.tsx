@@ -9,6 +9,9 @@ interface Props {
   codNomenclador: string | null;
   onNomencladorChange: (codigo: string | null, nom: NomencladorOption | null) => void;
   codMedico: string | null;
+  /** Obra social de la prestación — habilita que el autocomplete muestre la
+   * descripción que esa OS pactó en vez de la genérica del catálogo. */
+  codObra?: string | null;
   precio: PrecioResponse | null;
   precioLoading: boolean;
   precioError: string | null;
@@ -24,7 +27,7 @@ interface Props {
 }
 
 const PrestacionSection: React.FC<Props> = ({
-  codNomenclador, onNomencladorChange, codMedico, precio, precioLoading, precioError,
+  codNomenclador, onNomencladorChange, codMedico, codObra, precio, precioLoading, precioError,
   via, onViaChange, onVolverATradicional, mostrarVia,
   disabled, errors = {}, presetLabel, blockedHint,
 }) => (
@@ -39,6 +42,7 @@ const PrestacionSection: React.FC<Props> = ({
         value={codNomenclador}
         onChange={onNomencladorChange}
         codMedico={codMedico}
+        codObra={codObra}
         disabled={disabled}
         presetLabel={presetLabel}
         blurOnSelect={false}

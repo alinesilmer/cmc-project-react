@@ -1804,6 +1804,7 @@ const CargaFacturacion: React.FC = () => {
               setCodNomencladorCategoria(nom?.categoria ?? null);
             }}
             codMedico={codMedicoEfectivo}
+            codObra={codObraEfectivo}
             precio={precio}
             precioLoading={precioLoading}
             precioError={precioError}
