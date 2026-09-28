@@ -5,8 +5,8 @@ $blue-light: #e8efff;
 $red: #dc2626;
 $red-light: #fee2e2;
 $green: #166534;
-$audit-row: #fefce8;
-$audit-halo: #fef9c3;
+$audit-row: #fef9c3;
+$audit-halo: #fde68a;
 $audit-accent: #ca8a04;
 $border: #e2e8f0;
 $surface: #ffffff;
@@ -110,7 +110,7 @@ $shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
     }
   }
 
-  // Anchos fijos por columna para que las 17 columnas entren sin scroll: con
+  // Anchos fijos por columna para que las 18 columnas entren sin scroll: con
   // `table-layout: fixed` tienen que sumar 100% y NO puede quedar ninguna sin ancho
   // (la que falte se lleva el sobrante y descuadra el resto). El orden tiene que
   // coincidir exactamente con los <th> del JSX — si se agrega o saca una columna acá
@@ -119,13 +119,13 @@ $shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
     width: 4%;
   } // ID
   th:nth-child(2) {
-    width: 10%;
+    width: 9%;
   } // Socio
   th:nth-child(3) {
-    width: 9%;
+    width: 8%;
   } // Obra social
   th:nth-child(4) {
-    width: 6%;
+    width: 5%;
   } // Autorización
   th:nth-child(5) {
     width: 6%;
@@ -140,31 +140,34 @@ $shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
     width: 6%;
   } // Nro Afiliado
   th:nth-child(9) {
-    width: 6%;
-  } // Cantidad
+    width: 8%;
+  } // Afiliado
   th:nth-child(10) {
+    width: 5%;
+  } // Cantidad
+  th:nth-child(11) {
     width: 3%;
   } // %
-  th:nth-child(11) {
-    width: 7%;
-  } // Honorarios
   th:nth-child(12) {
-    width: 7%;
-  } // Gastos
+    width: 6%;
+  } // Honorarios
   th:nth-child(13) {
     width: 6%;
-  } // Coseguro
+  } // Gastos
   th:nth-child(14) {
+    width: 5%;
+  } // Coseguro
+  th:nth-child(15) {
     width: 3%;
   } // TP
-  th:nth-child(15) {
-    width: 7%;
-  } // Sub total
   th:nth-child(16) {
+    width: 6%;
+  } // Sub total
+  th:nth-child(17) {
     width: 4%;
   } // Tipo
   // Acciones en 2 filas de 3 iconos: 3 × 24px + 2 × 4px de gap + padding ≈ 96px.
-  th:nth-child(17) {
+  th:nth-child(18) {
     width: 8%;
   } // Acciones
 }

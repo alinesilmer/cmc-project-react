@@ -81,7 +81,7 @@ const tipoPrestadorAbrev = (t: TipoPrestador): string | null => {
     case "Medico":   return "M";
     case "Ayudante": return "A";
     case "Gastos":   return "C";
-    case "Pediatra": return "P";
+    case "Pediatra": return "PE";
     default:         return null;
   }
 };
@@ -444,6 +444,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                 <th>Código</th>
                 <th>Vía</th>
                 <th>Nro Afiliado</th>
+                <th>Afiliado</th>
                 <th>Cantidad</th>
                 <th>%</th>
                 <th>Honorarios</th>
@@ -457,10 +458,10 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
             </thead>
             <tbody>
               {loading && (
-                <tr><td colSpan={17} className={styles.loadingCell}>Cargando…</td></tr>
+                <tr><td colSpan={18} className={styles.loadingCell}>Cargando…</td></tr>
               )}
               {!loading && rows.length === 0 && (
-                <tr><td colSpan={17} className={styles.emptyCell}>Este médico no tiene prestaciones cargadas.</td></tr>
+                <tr><td colSpan={18} className={styles.emptyCell}>Este médico no tiene prestaciones cargadas.</td></tr>
               )}
               {!loading && rows.map((row) => {
                 const editable = row.estado === "A";
@@ -524,6 +525,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                       ) : <span className={styles.mutedText}>—</span>}
                     </td>
                     <td>{row.dni_paciente || <span className={styles.mutedText}>—</span>}</td>
+                    <td>{row.nombre_paciente || <span className={styles.mutedText}>—</span>}</td>
                     <td>
                       <div className={styles.cantidadCell}>
                         <span className={styles.cantidadMain}>Cant. {row.cantidad ?? "—"}</span>
@@ -619,7 +621,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                   </tr>
                   {esEquipo && abierto && (
                     <tr className={styles.teamDetailRow}>
-                      <td colSpan={17}>
+                      <td colSpan={18}>
                         <div className={styles.teamDetailContent}>
                           <span className={styles.teamDetailLabel}>
                             <Users size={13} /> Integrantes del equipo

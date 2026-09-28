@@ -1915,7 +1915,6 @@ const CargaFacturacion: React.FC = () => {
                 <NumericInput
                   className={styles.input}
                   min={1}
-                  max={100}
                   value={porcentaje}
                   onChange={setPorcentaje}
                   disabled={formDisabled}

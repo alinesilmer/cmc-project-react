@@ -1,4 +1,4 @@
-import type { EstadoPrestacion, Tipo } from "./types";
+import type { EstadoPrestacion, Tipo, TipoPrestador } from "./types";
 
 export const MESES = [
   "Enero","Febrero","Marzo","Abril","Mayo","Junio",
@@ -10,6 +10,21 @@ export const ESTADO_LABEL: Record<EstadoPrestacion, string> = {
   C: "Cerrado",
   X: "Anulado",
   L: "Legacy",
+};
+
+// Siglas de las tablas de prestaciones (columnas TP y TIPO); el nombre completo va en el `title`.
+export const TIPO_PRESTADOR_ABREV: Record<NonNullable<TipoPrestador>, string> = {
+  Medico: "M",
+  Ayudante: "A",
+  Pediatra: "PE",
+  Gastos: "C", // línea de la clínica (el sanatorio cobra los gastos)
+};
+
+export const TIPO_ABREV: Record<Tipo, string> = {
+  Consulta: "C",
+  "Honorarios individuales": "HI",
+  Practica: "P",
+  Sanatorio: "S",
 };
 
 export const TIPO_LABEL: Record<Tipo, string> = {

@@ -345,6 +345,10 @@ export interface PrestacionFacturaDetalle {
   porcentaje: number | null;
   honorarios: Money | null;
   gastos: Money | null;
+  coseguro?: Money | null;
+  /** Clínica donde se hizo la prestación (null si no hubo). */
+  cod_clinica?: number | null;
+  nombre_clinica?: string | null;
   tipo_prestador: TipoPrestador | null;
   subtotal: Money | null;
   tipo: Tipo | null;

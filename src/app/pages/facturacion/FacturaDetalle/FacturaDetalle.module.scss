@@ -267,6 +267,26 @@ $equipo-bg: #f7f8fa;
   border-bottom: 2px solid $equipo-border;
 }
 
+// Marco naranja de una clínica: encabezado + todas las filas de sus prestaciones.
+// Se dibuja con box-shadow inset para no pisar el marco de equipo (que usa border).
+$clinica-bg: #fed7aa;
+$clinica-border: #ea580c;
+
+.clinicaHeadRow td {
+  background: $clinica-bg;
+  color: #7c2d12;
+  font-weight: 700;
+  padding: 5px 10px;
+  box-shadow: inset 0 2px 0 $clinica-border, inset 2px 0 0 $clinica-border, inset -2px 0 0 $clinica-border;
+}
+
+.clinicaRow td:first-child { box-shadow: inset 2px 0 0 $clinica-border; }
+.clinicaRow td:last-child { box-shadow: inset -2px 0 0 $clinica-border; }
+
+.clinicaRowLast td { box-shadow: inset 0 -2px 0 $clinica-border; }
+.clinicaRowLast td:first-child { box-shadow: inset 0 -2px 0 $clinica-border, inset 2px 0 0 $clinica-border; }
+.clinicaRowLast td:last-child { box-shadow: inset 0 -2px 0 $clinica-border, inset -2px 0 0 $clinica-border; }
+
 .idCell {
   white-space: nowrap;
 }
