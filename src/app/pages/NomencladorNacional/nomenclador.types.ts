@@ -1,16 +1,19 @@
 export type Complejidad = "baja" | "media" | "alta";
 export type ValorEstado = "activo" | "cerrado";
 
+/**
+ * Catálogo del Colegio — puro: código + clasificación + vínculo opcional al
+ * Nomenclador Nacional. Descripción, especialidades y "sin restricción" dejaron
+ * de vivir acá: son datos POR OBRA SOCIAL, se cargan desde el modal de Valores
+ * (`ValorOut.especialidades` / `ValorUpdatePayload`, ver más abajo).
+ */
 export type NomencladorOut = {
   id: number;
   codigo: string;
-  descripcion: string;
   categoria: string | null;
   complejidad: Complejidad | null;
-  sin_restriccion_especialidad: boolean;
-  unidades_honorarios: string | null;
-  unidades_ayudante: string | null;
-  unidades_gastos: string | null;
+  /** Código del Nomenclador Nacional vinculado (alimenta la generación de Valores NN). */
+  nomenclador_nacional_id: number | null;
   activo: boolean;
   observacion: string | null;
   created_at: string;
@@ -22,8 +25,8 @@ export type NomencladorListParams = {
   categoria?: string;
   complejidad?: string;
   /**
-   * Acota a lo que ve esa obra social: sus códigos propios + los compartidos del
-   * Colegio. Omitido = catálogo completo (uso administrativo).
+   * Solo cambia algo para el rol médico (acota a sus códigos habilitados en esa
+   * OS). El catálogo en sí ya no distingue por obra social.
    */
   obra_social_nro?: number;
   activo?: boolean;
@@ -33,17 +36,50 @@ export type NomencladorListParams = {
 
 export type NomencladorCreatePayload = {
   codigo: string;
-  descripcion: string;
   categoria?: string | null;
   complejidad?: Complejidad | null;
-  sin_restriccion_especialidad?: boolean;
-  unidades_honorarios?: number | null;
-  unidades_ayudante?: number | null;
-  unidades_gastos?: number | null;
+  nomenclador_nacional_id?: number | null;
   observacion?: string | null;
 };
 
 export type NomencladorUpdatePayload = Partial<NomencladorCreatePayload & { activo?: boolean }>;
+
+// ─── Nomenclador Nacional ───────────────────────────────────────────────────
+
+export type NomencladorNacionalOut = {
+  id: number;
+  codigo: string;
+  descripcion: string | null;
+  unidades_honorarios: string | null;
+  unidades_ayudante: string | null;
+  unidades_gastos: string | null;
+  categoria: string | null;
+  complejidad: Complejidad | null;
+  activo: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type NomencladorNacionalListParams = {
+  q?: string;
+  activo?: boolean;
+  page?: number;
+  size?: number;
+};
+
+export type NomencladorNacionalCreatePayload = {
+  codigo: string;
+  descripcion?: string | null;
+  unidades_honorarios?: number | null;
+  unidades_ayudante?: number | null;
+  unidades_gastos?: number | null;
+  categoria?: string | null;
+  complejidad?: Complejidad | null;
+};
+
+export type NomencladorNacionalUpdatePayload = Partial<
+  NomencladorNacionalCreatePayload & { activo?: boolean }
+>;
 
 // ─── Galenos ──────────────────────────────────────────────────────────────────
 
@@ -254,6 +290,13 @@ export type ValorOut = {
   cantidad_ayudantes: number | null;
   /** Importe que el afiliado paga de su bolsillo; se descuenta del total a facturar. */
   coseguro: string;
+  /** Dato del PAR (obra_social_nro, código), no de esta variante puntual: el código
+   * lo puede facturar cualquier especialidad en esta OS. Se edita en "Metadatos". */
+  sin_restriccion_especialidad: boolean;
+  /** Especialidades habilitadas HOY para (obra_social_nro, código) — también dato
+   * del par, igual en todas las variantes activas. Se reemplaza por completo con
+   * `ValorUpdatePayload.especialidades`. */
+  especialidades: number[];
   modalidad: "galeno" | "fijo" | "por_presupuesto";
   vigencia_desde: string;
   vigencia_hasta: string | null;
@@ -277,7 +320,9 @@ export type ValorCreatePayload = {
   obra_social_nro: number;
   nomenclador_id: number;
   origen: Origen;
-  descripcion?: string | null;
+  /** Obligatoria: cómo nombra ESTA obra social al código. Ya no hereda en silencio
+   * del catálogo del Colegio. */
+  descripcion: string;
   nivel?: number | null;
   complejidad?: string | null;
   especialidad_id_colegio?: number | null;
@@ -295,7 +340,8 @@ export type ValorCreateMultiPayload = {
   obra_social_nro: number;
   nomenclador_id: number;
   origen: "NE";
-  descripcion?: string | null;
+  /** Obligatoria — ver ValorCreatePayload.descripcion. */
+  descripcion: string;
   nivel?: number | null;
   complejidad?: string | null;
   especialidades_id_colegio: number[];
@@ -308,7 +354,14 @@ export type ValorCreateMultiPayload = {
 };
 
 export type ValorUpdatePayload = {
+  /** Dato del par: se propaga a todas las variantes activas de (obra_social_nro,
+   * código) — incluida la NN. */
   descripcion?: string | null;
+  sin_restriccion_especialidad?: boolean;
+  /** Reemplaza POR COMPLETO la habilitación del par (no se suma). `[]` = vaciar
+   * (rechazado con 409 si alguna especialidad todavía tiene un NE activo). Omitir
+   * = no tocar. Único lugar del sistema donde se editan especialidades. */
+  especialidades?: number[];
   nivel?: number | null;
   complejidad?: string | null;
   cantidad_ayudantes?: number | null;
@@ -382,6 +435,9 @@ export type TablaValorItem = {
   descripcion: string | null;
   nivel: number | null;
   por_presupuesto: boolean;
+  /** El código lo puede facturar cualquier especialidad en esta OS (dato de la
+   * variante ganadora — `Valor.sin_restriccion_especialidad`). */
+  sin_restriccion_especialidad: boolean;
   precio_total: string;
   vigencia_desde: string;
   vigencia_hasta: string | null;
@@ -398,36 +454,27 @@ export type ImportarCSVResult = {
   errores: { fila: number | string; codigo?: string; motivo: string }[];
 };
 
-// ─── Nomenclador Especialidades ───────────────────────────────────────────────
+// ─── Códigos por especialidad (consulta de solo lectura, por obra social) ────
+//
+// Las especialidades pasaron a ser un dato por obra social (`nm_valor_
+// especialidad`) — se editan enteramente desde el modal de Valores
+// (`ValorUpdatePayload.especialidades`). Esto es solo lectura: GET
+// /api/nomenclador/especialidades ahora exige `obra_social_nro`.
 
-export type NomencladorEspecialidadOut = {
-  id: number;
-  nomenclador_id: number;
-  especialidad_id_colegio: number;
-  activo: boolean;
-  observacion: string | null;
-  created_at: string;
-};
-
-// Fila enriquecida (un par código↔especialidad con el nombre ya resuelto),
-// devuelta por GET /api/nomenclador/especialidades.
-export type NomencladorEspecialidadResumenOut = {
-  id: number;
-  nomenclador_id: number;
+export type CodigoPorEspecialidadOut = {
   codigo: string;
+  /** Resuelta contra esta OS (con fallback si nadie cargó una todavía). */
   descripcion: string;
   especialidad_id_colegio: number;
   /** null si el ID_COLEGIO_ESPE no tiene match en el catálogo (dato huérfano). */
   especialidad: string | null;
-  activo: boolean;
-  observacion: string | null;
-  created_at: string;
+  obra_social_nro: number;
 };
 
-export type NomencladorEspecialidadResumenParams = {
+export type CodigoPorEspecialidadParams = {
+  obra_social_nro: number;
   q?: string;
   especialidad_id_colegio?: number;
-  activo?: boolean;
   page?: number;
   size?: number;
 };

@@ -202,6 +202,7 @@ const TOP_NAV: TopEntry[] = [
         heading: "Códigos",
         items: [
           { path: `${base}/nomenclador/codigos`, icon: FileCode2, label: "Catálogo Códigos CMC", perms: ["nomenclador:leer"] },
+          { path: `${base}/nomenclador/nacional`, icon: Layers, label: "Nomenclador Nacional", perms: ["nomenclador:leer"] },
           { path: `${base}/nomenclador/por-obra-social`, icon: Building2, label: "Por Obra Social", perms: ["nomenclador:leer"] },
           { path: `${base}/nomenclador/consulta-valores`, icon: Search, label: "Consulta de Valores", perms: ["nomenclador:leer"] },
           { path: `${base}/nomenclador/aumento-porcentual`, icon: Percent, label: "Aumento Porcentual", perms: ["nomenclador:masivo"] },

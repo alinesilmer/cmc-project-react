@@ -12,6 +12,10 @@ import type {
   NomencladorListParams,
   NomencladorCreatePayload,
   NomencladorUpdatePayload,
+  NomencladorNacionalOut,
+  NomencladorNacionalListParams,
+  NomencladorNacionalCreatePayload,
+  NomencladorNacionalUpdatePayload,
   GalenoOut,
   GalenoCreatePayload,
   GalenoCreateNivelesPayload,
@@ -33,9 +37,8 @@ import type {
   ValorActualizarPayload,
   TablaValorItem,
   ViaPractica,
-  NomencladorEspecialidadOut,
-  NomencladorEspecialidadResumenOut,
-  NomencladorEspecialidadResumenParams,
+  CodigoPorEspecialidadOut,
+  CodigoPorEspecialidadParams,
   ImportarCSVResult,
   ActualizarPorcentajePayload,
   RevertirActualizacionPayload,
@@ -77,6 +80,43 @@ export const toggleNomencladorActivo = (
 
 export const deleteNomenclador = (id: number): Promise<void> =>
   delJSON<void>(`/api/nomenclador/${id}`);
+
+// ─── Nomenclador Nacional ───────────────────────────────────────────────────
+// Catálogo NN, independiente del catálogo del Colegio de arriba. Uno o varios
+// códigos del Colegio pueden vincularse a la misma fila acá.
+
+export const listNomencladorNacional = (
+  params?: NomencladorNacionalListParams,
+): Promise<NomencladorNacionalOut[]> =>
+  getJSON<NomencladorNacionalOut[]>("/api/nomenclador_nacional/", params);
+
+export const listNomencladorNacionalCodigos = (): Promise<string[]> =>
+  getJSON<string[]>("/api/nomenclador_nacional/codigos", { activo: true });
+
+export const getNomencladorNacionalById = (id: number): Promise<NomencladorNacionalOut> =>
+  getJSON<NomencladorNacionalOut>(`/api/nomenclador_nacional/${id}`);
+
+export const createNomencladorNacional = (
+  payload: NomencladorNacionalCreatePayload,
+): Promise<NomencladorNacionalOut> =>
+  postJSON<NomencladorNacionalOut>("/api/nomenclador_nacional/", payload);
+
+export const updateNomencladorNacional = (
+  id: number,
+  payload: NomencladorNacionalUpdatePayload,
+): Promise<NomencladorNacionalOut> =>
+  putJSON<NomencladorNacionalOut>(`/api/nomenclador_nacional/${id}`, payload);
+
+export const toggleNomencladorNacionalActivo = (
+  id: number,
+  activo: boolean,
+): Promise<NomencladorNacionalOut> =>
+  patchJSON<NomencladorNacionalOut>(
+    `/api/nomenclador_nacional/${id}/activar?activo=${activo}`,
+  );
+
+export const deleteNomencladorNacional = (id: number): Promise<void> =>
+  delJSON<void>(`/api/nomenclador_nacional/${id}`);
 
 // ─── Galenos ──────────────────────────────────────────────────────────────────
 
@@ -312,45 +352,14 @@ export const getTablaValores = async (params: {
   return data;
 };
 
-// ─── Nomenclador Especialidades ───────────────────────────────────────────────
+// ─── Códigos por especialidad (solo lectura, por obra social) ────────────────
+// Las especialidades se editan desde el modal de Valores (updateValorMetadata,
+// ver ValorUpdatePayload.especialidades) — esto es únicamente para consultarlas.
 
-export const getNomencladorEspecialidades = (
-  id: number,
-): Promise<NomencladorEspecialidadOut[]> =>
-  getJSON<NomencladorEspecialidadOut[]>(
-    `/api/nomenclador/${id}/especialidades`,
-  );
-
-// Lista códigos↔especialidad con el nombre de la especialidad ya resuelto.
-// Filtra por especialidad (especialidad_id_colegio) y/o texto (q), paginado por código.
-export const listNomencladorEspecialidadesResumen = (
-  params?: NomencladorEspecialidadResumenParams,
-): Promise<NomencladorEspecialidadResumenOut[]> =>
-  getJSON<NomencladorEspecialidadResumenOut[]>(
-    "/api/nomenclador/especialidades",
-    params,
-  );
-
-// Habilita una especialidad para un código (reactiva si ya existía soft-deleted).
-// Siempre a nivel Colegio (obra_social_nro NULL): la dimensión por OS de esta tabla
-// no se usa desde el panel nuevo.
-export const addNomencladorEspecialidad = (
-  nomencladorId: number,
-  especialidadIdColegio: number,
-  observacion?: string | null,
-): Promise<NomencladorEspecialidadOut> =>
-  postJSON<NomencladorEspecialidadOut>(
-    `/api/nomenclador/${nomencladorId}/especialidades`,
-    { especialidad_id_colegio: especialidadIdColegio, observacion: observacion ?? null },
-  );
-
-// Baja de una habilitación de Colegio. El backend responde 409 si hay valores NE
-// activos que dependen de ella.
-export const deleteNomencladorEspecialidad = (
-  nomencladorId: number,
-  espId: number,
-): Promise<void> =>
-  delJSON(`/api/nomenclador/${nomencladorId}/especialidades/${espId}`);
+export const listCodigosPorEspecialidad = (
+  params: CodigoPorEspecialidadParams,
+): Promise<CodigoPorEspecialidadOut[]> =>
+  getJSON<CodigoPorEspecialidadOut[]>("/api/nomenclador/especialidades", params);
 
 // ─── Documentos de una vigencia de valores ────────────────────────────────────
 // El respaldo de cada actualización de precios: lo que la obra social mandó.

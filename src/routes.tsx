@@ -92,6 +92,7 @@ const ActividadPage = lazy(() => import("./app/pages/Actividad/ActividadPage"));
 const PlanillasMedico = lazy(() => import("./app/pages/Planillas/PlanillasMedico"));
 const PlanillasAdmin = lazy(() => import("./app/pages/Planillas/PlanillasAdmin"));
 const NomencladorCodigos = lazy(() => import("./app/pages/NomencladorNacional/NomencladorCodigos/NomencladorCodigos"));
+const NomencladorNacionalTabla = lazy(() => import("./app/pages/NomencladorNacional/NomencladorNacionalTabla/NomencladorNacionalTabla"));
 const ConsultaValores = lazy(() => import("./app/pages/NomencladorNacional/ConsultaValores/ConsultaValores"));
 const ConsultaPrecios = lazy(() => import("./app/pages/NomencladorNacional/ConsultaPrecios/ConsultaPrecios"));
 const Homologador = lazy(() => import("./app/pages/NomencladorNacional/Homologador/Homologador"));
@@ -297,6 +298,7 @@ export default function RootRoutes() {
               {/* Nomenclador Nacional */}
               <Route element={<RequireScope scope="nomenclador:leer" />}>
                 <Route path="nomenclador/codigos" element={<NomencladorCodigos />} />
+                <Route path="nomenclador/nacional" element={<NomencladorNacionalTabla />} />
                 <Route path="nomenclador/por-obra-social" element={<NomencladorPorOS />} />
                 <Route path="nomenclador/por-especialidad" element={<CodigosPorEspecialidad />} />
                 <Route path="nomenclador/galenos" element={<NomencladorGalenos />} />

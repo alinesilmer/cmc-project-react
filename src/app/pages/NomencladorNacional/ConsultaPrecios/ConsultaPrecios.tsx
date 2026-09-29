@@ -156,13 +156,13 @@ export default function ConsultaPrecios() {
               idx={2}
               label="Práctica"
               hint="por código o por nombre"
-              placeholder="Buscar por código o descripción…"
+              placeholder="Buscar por código…"
               query={nomSearch}
               onQueryChange={handleNomSearch}
               items={nomResults}
               getKey={(n) => n.id}
               getCode={(n) => n.codigo}
-              getText={(n) => n.descripcion}
+              getText={(n) => n.categoria ?? n.codigo}
               selected={selectedNom}
               onSelect={(n) => { setSelectedNom(n); setNomSearch(""); setNomResults([]); resetResult(); }}
               onClear={() => { setSelectedNom(null); setNomSearch(""); setNomResults([]); resetResult(); }}
