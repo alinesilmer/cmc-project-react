@@ -19,6 +19,21 @@ const AfiliadoAutocomplete: React.FC<Props> = ({ value, onChange, disabled, pres
   const [loading, setLoading] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
+  // El `useState` de arriba solo corre al montar: si `value`/`presetLabel` cambian
+  // después (ej. se crea un afiliado nuevo desde "+ Agregar afiliado", o se resuelve
+  // por otro lado sin pasar por una búsqueda acá), `options` se queda vieja y
+  // `AppSearchSelect` no encuentra con qué label mostrar el `value` nuevo — el campo
+  // se ve vacío aunque el dato ya esté (el tilde verde de abajo, que lee el estado
+  // del padre directo, sí se actualiza — de ahí el desfasaje entre los dos).
+  useEffect(() => {
+    if (!value || !presetLabel) return;
+    setOptions((prev) => {
+      const actual = prev.find((a) => a.dni === value);
+      if (actual && actual.nombre === presetLabel) return prev;
+      return [{ id: 0, dni: value, nombre: presetLabel }, ...prev.filter((a) => a.dni !== value)];
+    });
+  }, [value, presetLabel]);
+
   const search = useCallback(async (q: string) => {
     if (q.length < 1) { setOptions([]); return; }
     abortRef.current?.abort();

@@ -58,7 +58,6 @@ type EditMetaForm = {
   nivel: string;
   complejidad: string;
   cantidad_ayudantes: string;
-  coseguro: string;
   observacion: string;
 };
 
@@ -66,6 +65,7 @@ type EditEcuForm = {
   vigencia_desde: string;
   modalidad: ModalidadValor;
   componentes: ComponenteForm[];
+  coseguro: string;
   /** Propaga la nueva vigencia+ecuación a las demás variantes NE del mismo código+OS. */
   aplicarAVariantes: boolean;
 };
@@ -243,8 +243,8 @@ export default function NomencladorPorOS() {
   const [saving, setSaving] = useState(false);
 
   // Edit forms
-  const [editMeta, setEditMeta] = useState<EditMetaForm>({ descripcion: "", nivel: "", complejidad: "", cantidad_ayudantes: "", coseguro: "", observacion: "" });
-  const [editEcu, setEditEcu] = useState<EditEcuForm>({ vigencia_desde: today(), modalidad: "calculable", componentes: initComps(), aplicarAVariantes: false });
+  const [editMeta, setEditMeta] = useState<EditMetaForm>({ descripcion: "", nivel: "", complejidad: "", cantidad_ayudantes: "", observacion: "" });
+  const [editEcu, setEditEcu] = useState<EditEcuForm>({ vigencia_desde: today(), modalidad: "calculable", componentes: initComps(), coseguro: "", aplicarAVariantes: false });
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
   const [savingMeta, setSavingMeta] = useState(false);
   const [savingEcu, setSavingEcu] = useState(false);
@@ -543,20 +543,24 @@ export default function NomencladorPorOS() {
   function validateEcuacion(): boolean {
     const errs: Record<string, string> = {};
     if (!editEcu.vigencia_desde) errs.vigencia_desde = "Requerido";
-    const hon = editEcu.componentes[0];
-    if (editEcu.modalidad === "calculable") {
-      if (!hon.galeno_id) errs["comp_0_galeno"] = "Seleccioná un galeno";
-    } else {
-      if (!hon.valor_unitario.trim() || isNaN(parseFloat(hon.valor_unitario)))
-        errs["comp_0_valor"] = "Valor inválido";
+    // Por presupuesto no tiene ecuación propia (H/G/A van en 0, ver `_crear_valor_con_
+    // componentes` en el back) — solo importan vigencia_desde y coseguro, ya chequeados.
+    if (!editTarget?.por_presupuesto) {
+      const hon = editEcu.componentes[0];
+      if (editEcu.modalidad === "calculable") {
+        if (!hon.galeno_id) errs["comp_0_galeno"] = "Seleccioná un galeno";
+      } else {
+        if (!hon.valor_unitario.trim() || isNaN(parseFloat(hon.valor_unitario)))
+          errs["comp_0_valor"] = "Valor inválido";
+      }
+      editEcu.componentes.slice(1).forEach((c, i) => {
+        const idx = i + 1;
+        if (editEcu.modalidad === "calculable" && c.cantidad && !c.galeno_id)
+          errs[`comp_${idx}_galeno`] = "Seleccioná un galeno";
+        if (editEcu.modalidad === "fijo" && c.valor_unitario.trim() && isNaN(parseFloat(c.valor_unitario)))
+          errs[`comp_${idx}_valor`] = "Valor inválido";
+      });
     }
-    editEcu.componentes.slice(1).forEach((c, i) => {
-      const idx = i + 1;
-      if (editEcu.modalidad === "calculable" && c.cantidad && !c.galeno_id)
-        errs[`comp_${idx}_galeno`] = "Seleccioná un galeno";
-      if (editEcu.modalidad === "fijo" && c.valor_unitario.trim() && isNaN(parseFloat(c.valor_unitario)))
-        errs[`comp_${idx}_valor`] = "Valor inválido";
-    });
     setEditErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -586,11 +590,11 @@ export default function NomencladorPorOS() {
       nivel: v.nivel != null ? String(v.nivel) : "",
       complejidad: v.complejidad ?? "",
       cantidad_ayudantes: v.cantidad_ayudantes != null ? String(v.cantidad_ayudantes) : "",
-      coseguro: v.coseguro && parseMonto(v.coseguro) !== 0 ? v.coseguro : "",
       observacion: v.observacion ?? "",
     });
     setEditEcu({
       vigencia_desde: today(), modalidad: mod, componentes: compsFromOut(v.componentes),
+      coseguro: v.coseguro && parseMonto(v.coseguro) !== 0 ? v.coseguro : "",
       aplicarAVariantes: hayHermanas,
     });
     setEditErrors({});
@@ -678,7 +682,6 @@ export default function NomencladorPorOS() {
         nivel: editMeta.nivel ? parseInt(editMeta.nivel, 10) : null,
         complejidad: editMeta.complejidad || null,
         cantidad_ayudantes: editMeta.cantidad_ayudantes.trim() ? parseInt(editMeta.cantidad_ayudantes, 10) : null,
-        coseguro: editMeta.coseguro.trim() ? parseMonto(editMeta.coseguro) : 0,
         observacion: editMeta.observacion || null,
       });
       setValores((prev) => prev.map((v) => (v.id === updated.id ? updated : v)));
@@ -694,22 +697,30 @@ export default function NomencladorPorOS() {
     if (!editTarget || !validateEcuacion()) return;
     setSavingEcu(true);
     try {
-      const filled = editEcu.componentes.filter((c, i) => {
-        if (i === 0) return true;
-        if (editEcu.modalidad === "calculable") return c.galeno_id != null;
-        return c.valor_unitario.trim() !== "" && !isNaN(parseFloat(c.valor_unitario));
-      });
-      const componentes: ComponentePayload[] = filled.map((c, i) => ({
-        concepto: c.concepto,
-        galeno_id: editEcu.modalidad === "calculable" ? c.galeno_id : null,
-        cantidad: editEcu.modalidad === "calculable" ? (parseFloat(c.cantidad) || 0) : 0,
-        valor_unitario: editEcu.modalidad === "fijo" ? parseFloat(c.valor_unitario) : null,
-        opcional: c.opcional,
-        orden: i,
-      }));
+      // Por presupuesto no tiene ecuación propia: se cierra/abre vigencia igual, pero
+      // sin componentes — el back los fuerza a H/G/A=0 (ver `_crear_valor_con_componentes`).
+      const componentes: ComponentePayload[] = editTarget.por_presupuesto ? [] : (() => {
+        const filled = editEcu.componentes.filter((c, i) => {
+          if (i === 0) return true;
+          if (editEcu.modalidad === "calculable") return c.galeno_id != null;
+          return c.valor_unitario.trim() !== "" && !isNaN(parseFloat(c.valor_unitario));
+        });
+        return filled.map((c, i) => ({
+          concepto: c.concepto,
+          galeno_id: editEcu.modalidad === "calculable" ? c.galeno_id : null,
+          cantidad: editEcu.modalidad === "calculable" ? (parseFloat(c.cantidad) || 0) : 0,
+          valor_unitario: editEcu.modalidad === "fijo" ? parseFloat(c.valor_unitario) : null,
+          opcional: c.opcional,
+          orden: i,
+        }));
+      })();
       await actualizarValor(editTarget.id, {
         vigencia_desde: editEcu.vigencia_desde,
         componentes,
+        coseguro: editEcu.coseguro.trim() ? parseMonto(editEcu.coseguro) : 0,
+        // Explícito: el back NO lo hereda del valor que cierra, así que si no se manda
+        // un código por_presupuesto pierde esa condición al rotar vigencia.
+        por_presupuesto: editTarget.por_presupuesto,
         aplicar_a_variantes: editEcu.aplicarAVariantes,
       });
       showToast(
@@ -1272,17 +1283,6 @@ export default function NomencladorPorOS() {
                   </div>
                   <div className={styles.formRow2}>
                     <div className={styles.formGroup}>
-                      <label className={styles.formLabel}>Coseguro ($)</label>
-                      <input
-                        type="number" min="0" step="0.01"
-                        className={styles.formInput}
-                        value={editMeta.coseguro}
-                        onChange={(e) => setEditMeta((p) => ({ ...p, coseguro: e.target.value }))}
-                        placeholder="0.00"
-                        style={{ maxWidth: 200 }}
-                      />
-                    </div>
-                    <div className={styles.formGroup}>
                       <label className={styles.formLabel}>Cantidad de ayudantes</label>
                       <input
                         type="number" min="0" step="1"
@@ -1304,52 +1304,73 @@ export default function NomencladorPorOS() {
                   </div>
                 </div>
 
-                {/* Actualizar ecuación section */}
-                {!editTarget.por_presupuesto && (
-                  <div className={styles.editSection}>
-                    <div className={styles.editSectionTitle}>Actualizar ecuación de precio</div>
-                    <p className={styles.hintText}>Cierra la vigencia actual y crea una nueva con la ecuación que ingreses.</p>
-                    <div className={styles.formRow2}>
-                      <div className={styles.formGroup}>
-                        <label className={styles.formLabel}>Nueva vigencia desde <span className={styles.req}>*</span></label>
-                        <input
-                          type="date"
-                          className={`${styles.formInput} ${editErrors.vigencia_desde ? styles.inputError : ""}`}
-                          value={editEcu.vigencia_desde}
-                          onChange={(e) => { setEditEcu((p) => ({ ...p, vigencia_desde: e.target.value })); setEditErrors((p) => ({ ...p, vigencia_desde: "" })); }}
-                        />
-                        {editErrors.vigencia_desde && <span className={styles.errorMsg}>{editErrors.vigencia_desde}</span>}
-                      </div>
-                      <div className={styles.formGroup}>
-                        <label className={styles.formLabel}>Tipo de valor</label>
-                        <select className={styles.formSelect} value={editEcu.modalidad} onChange={(e) => changeEditModalidad(e.target.value as ModalidadValor)}>
-                          <option value="calculable">Calculable (galeno × cantidad)</option>
-                          <option value="fijo">Fijo ($)</option>
-                        </select>
-                      </div>
+                {/* Actualizar ecuación section — el coseguro vive acá: es parte del
+                    precio, cambiarlo cierra la vigencia actual y abre una nueva. Para
+                    por_presupuesto no hay tipo de valor ni componentes (no tiene
+                    ecuación propia), pero vigencia+coseguro se editan igual. */}
+                <div className={styles.editSection}>
+                  <div className={styles.editSectionTitle}>Actualizar ecuación de precio</div>
+                  <p className={styles.hintText}>
+                    {editTarget.por_presupuesto
+                      ? "Este código es por presupuesto (sin fórmula fija). Cambiar el coseguro cierra la vigencia actual y abre una nueva."
+                      : "Cierra la vigencia actual y crea una nueva con la ecuación que ingreses."}
+                  </p>
+                  <div className={styles.formRow2}>
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>Nueva vigencia desde <span className={styles.req}>*</span></label>
+                      <input
+                        type="date"
+                        className={`${styles.formInput} ${editErrors.vigencia_desde ? styles.inputError : ""}`}
+                        value={editEcu.vigencia_desde}
+                        onChange={(e) => { setEditEcu((p) => ({ ...p, vigencia_desde: e.target.value })); setEditErrors((p) => ({ ...p, vigencia_desde: "" })); }}
+                      />
+                      {editErrors.vigencia_desde && <span className={styles.errorMsg}>{editErrors.vigencia_desde}</span>}
                     </div>
-                    <ComponentEditor modalidad={editEcu.modalidad} componentes={editEcu.componentes} galenos={galenos} errors={editErrors} onChange={updateEditComp} />
-                    {editHermanas.length > 0 && (
-                      <label className={styles.toggleRow} style={{ marginTop: 8 }}>
-                        <input
-                          type="checkbox"
-                          className={styles.toggleInput}
-                          checked={editEcu.aplicarAVariantes}
-                          onChange={(e) => setEditEcu((p) => ({ ...p, aplicarAVariantes: e.target.checked }))}
-                        />
-                        <span className={styles.toggleLabel}>
-                          Aplicar la misma vigencia y ecuación a las {editHermanas.length} variante{editHermanas.length > 1 ? "s" : ""} más de este código
-                          ({editHermanas.map((h) => espMap[h.especialidad_id_colegio ?? -1] ?? `Esp. ${h.especialidad_id_colegio}`).join(", ")})
-                        </span>
-                      </label>
-                    )}
-                    <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
-                      <button className={styles.btnWarning} onClick={handleActualizar} disabled={savingEcu}>
-                        {savingEcu ? <><span className={styles.spinner} /> Actualizando…</> : "Actualizar ecuación"}
-                      </button>
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>Coseguro ($)</label>
+                      <input
+                        type="number" min="0" step="0.01"
+                        className={styles.formInput}
+                        value={editEcu.coseguro}
+                        onChange={(e) => setEditEcu((p) => ({ ...p, coseguro: e.target.value }))}
+                        placeholder="0.00"
+                      />
                     </div>
                   </div>
-                )}
+                  {!editTarget.por_presupuesto && (
+                    <>
+                      <div className={styles.formRow2}>
+                        <div className={styles.formGroup}>
+                          <label className={styles.formLabel}>Tipo de valor</label>
+                          <select className={styles.formSelect} value={editEcu.modalidad} onChange={(e) => changeEditModalidad(e.target.value as ModalidadValor)}>
+                            <option value="calculable">Calculable (galeno × cantidad)</option>
+                            <option value="fijo">Fijo ($)</option>
+                          </select>
+                        </div>
+                      </div>
+                      <ComponentEditor modalidad={editEcu.modalidad} componentes={editEcu.componentes} galenos={galenos} errors={editErrors} onChange={updateEditComp} />
+                    </>
+                  )}
+                  {editHermanas.length > 0 && (
+                    <label className={styles.toggleRow} style={{ marginTop: 8 }}>
+                      <input
+                        type="checkbox"
+                        className={styles.toggleInput}
+                        checked={editEcu.aplicarAVariantes}
+                        onChange={(e) => setEditEcu((p) => ({ ...p, aplicarAVariantes: e.target.checked }))}
+                      />
+                      <span className={styles.toggleLabel}>
+                        Aplicar la misma vigencia y ecuación a las {editHermanas.length} variante{editHermanas.length > 1 ? "s" : ""} más de este código
+                        ({editHermanas.map((h) => espMap[h.especialidad_id_colegio ?? -1] ?? `Esp. ${h.especialidad_id_colegio}`).join(", ")})
+                      </span>
+                    </label>
+                  )}
+                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+                    <button className={styles.btnWarning} onClick={handleActualizar} disabled={savingEcu}>
+                      {savingEcu ? <><span className={styles.spinner} /> Actualizando…</> : "Actualizar"}
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <div className={styles.modalFooter}>

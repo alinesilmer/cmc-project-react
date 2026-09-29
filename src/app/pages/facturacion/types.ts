@@ -115,6 +115,11 @@ export interface PrecioResponse {
    *  códigos vive en el backend (no se duplica acá) — usar este flag, no hardcodear
    *  110401/110403 en el front. */
   admite_pediatra?: boolean;
+  /** true → esta obra social exige autorización previa para este código (override de
+   *  `nm_valores.requiere_autorizacion` > default del catálogo). El backend solo lo
+   *  hace obligatorio cuando carga el médico (422 sin número); del lado Colegio no
+   *  bloquea, así que el front avisa para que no se cargue sin querer sin el número. */
+  requiere_autorizacion?: boolean;
 }
 
 export interface PrestacionRead {

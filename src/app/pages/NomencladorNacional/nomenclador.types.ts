@@ -312,7 +312,6 @@ export type ValorUpdatePayload = {
   nivel?: number | null;
   complejidad?: string | null;
   cantidad_ayudantes?: number | null;
-  coseguro?: number;
   observacion?: string | null;
 };
 
@@ -324,6 +323,10 @@ export type ValorActualizarPayload = {
   complejidad?: string | null;
   coseguro?: number;
   observacion?: string | null;
+  /** El valor que se cierra puede ser por_presupuesto (sin ecuación propia): el back
+   * no lo hereda del anterior, hay que mandarlo explícito o el nuevo valor queda con
+   * por_presupuesto=false y pierde esa condición. */
+  por_presupuesto?: boolean;
   /** Propaga la misma vigencia+componentes a las demás variantes NE del par
    * (OS + código), cada una conservando su propia especialidad. No aplica a NN. */
   aplicar_a_variantes?: boolean;

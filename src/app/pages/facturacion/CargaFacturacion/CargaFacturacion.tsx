@@ -617,6 +617,10 @@ const CargaFacturacion: React.FC = () => {
     if (!precio) return;
     if (precio.por_presupuesto) {
       setTipoCalculo("M");
+      // Honorarios/gastos los informa la OS a mano (por eso Manual), pero el
+      // coseguro sí tiene un valor propio del código — se precarga igual, no
+      // depende de tipoCalculo (el input de Coseguro nunca se deshabilita por eso).
+      setCoseguro(tipoPrestador === "ayudante" ? "0" : precio.coseguro ?? "0");
       return;
     }
     if (tipoCalculo === "A") {
@@ -1870,6 +1874,13 @@ const CargaFacturacion: React.FC = () => {
                 placeholder="Nº de autorización de la obra social"
               />
             </div>
+            {precio?.requiere_autorizacion && (
+              <div className={styles.warningBox} style={{ textAlign: "left", display: "flex", alignItems: "center", gap: 8 }}>
+                <AlertTriangle size={14} style={{ flexShrink: 0 }} />
+                Esta obra social exige autorización previa para este código.
+                {!autorizacion.trim() && " Todavía no cargaste el número."}
+              </div>
+            )}
             {admiteAyudante && (
               <label className={styles.radioLabel}>
                 <input
