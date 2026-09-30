@@ -165,6 +165,7 @@ type Mantener = {
   clinica: boolean;
   medico: boolean;
   autorizacion: boolean;
+  codigo: boolean;
 };
 
 const CargaFacturacion: React.FC = () => {
@@ -344,6 +345,7 @@ const CargaFacturacion: React.FC = () => {
     clinica: false,
     medico: false,
     autorizacion: false,
+    codigo: false,
   }));
   const [guardando, setGuardando] = useState(false);
   const [errores, setErrores] = useState<Record<string, string>>({});
@@ -368,6 +370,10 @@ const CargaFacturacion: React.FC = () => {
   // Ídem obra social: si no se mantiene entre cargas, hay que remontar la sección para
   // limpiar el texto tipeado del autocomplete.
   const [osResetKey, setOsResetKey] = useState(0);
+  // Se incrementa en TODO `resetForm()`, se mantenga o no el código — a diferencia de
+  // `nomencladorResetKey` (que solo remonta el autocomplete cuando el código SÍ se
+  // limpia). Dispara el efecto de foco de abajo sin importar qué se haya mantenido.
+  const [resetTick, setResetTick] = useState(0);
 
   // Navegación por teclado: `resetForm` deja acá el campo a enfocar y el efecto de
   // abajo lo consume una vez que el formulario volvió a estar habilitado.
@@ -936,11 +942,19 @@ const CargaFacturacion: React.FC = () => {
   };
 
   const resetForm = () => {
-    setCodNomenclador(null);
-    setCodNomencladorCategoria(null);
-    setHonorarios("0");
-    setGastos("0");
-    setCoseguro("0");
+    // El código suele repetirse en una tanda (misma práctica para varios médicos o
+    // pacientes seguidos). Honorarios/gastos/coseguro se mantienen junto con él: si
+    // nada más que fija el precio cambió (médico, OS, vía, fecha), ya están correctos
+    // y no hay que volver a pedirlos; si algo de eso sí cambió, `useNomencladorPrecio`
+    // refetchea solo y el efecto que sincroniza precio→honorarios los termina pisando.
+    if (!mantener.codigo) {
+      setCodNomenclador(null);
+      setCodNomencladorCategoria(null);
+      setHonorarios("0");
+      setGastos("0");
+      setCoseguro("0");
+      setNomencladorResetKey((k) => k + 1);
+    }
     setTipoCalculo("A");
     setVia("T");
     setPorcentaje("100");
@@ -995,14 +1009,15 @@ const CargaFacturacion: React.FC = () => {
       setOsResetKey((k) => k + 1);
     }
     setErrores({});
-    setNomencladorResetKey((k) => k + 1);
+    setResetTick((k) => k + 1);
 
     // Campos que quedaron vacíos, en el orden en que están en pantalla: el efecto de
     // abajo enfoca el primero que exista. Se calcula desde `mantener` y no leyendo el
     // estado, que en esta closure todavía tiene los valores viejos.
     //
     // "Clínica" no entra: está debajo del código, así que nunca es el primer vacío
-    // (el código se limpia siempre). El código cierra la lista por el mismo motivo.
+    // (el código se limpia salvo que se mantenga). El código cierra la lista por el
+    // mismo motivo, salvo que se mantenga — ahí no queda nada suyo por enfocar.
     const pendientes: FocusField[] = [];
     if (!mantener.medico && !medicoMantenidoPorClinica) {
       pendientes.push("medico");
@@ -1014,7 +1029,7 @@ const CargaFacturacion: React.FC = () => {
     if (!mantener.obraSocial) pendientes.push("obraSocial");
     if (!mantener.paciente) pendientes.push("paciente");
     if (!mantener.fecha) pendientes.push("fecha");
-    pendientes.push("codigo");
+    if (!mantener.codigo) pendientes.push("codigo");
     pendingFocusRef.current = pendientes;
   };
 
@@ -1414,7 +1429,7 @@ const CargaFacturacion: React.FC = () => {
     if (!pendingFocusRef.current || guardando) return;
     focusFirstField(formRef.current, pendingFocusRef.current);
     pendingFocusRef.current = null;
-  }, [nomencladorResetKey, guardando]);
+  }, [resetTick, guardando]);
 
   // Enter avanza al campo siguiente. Los handlers de MUI viven en el input (más
   // adentro) y corren primero, así que acá sólo llegan los Enter que el autocomplete
