@@ -1,4 +1,4 @@
-// src/app/lib/archivos.ts
+// src/app/shared/lib/archivos.ts
 // Abre un adjunto respetando lo que devuelve la API (§8 del doc de backend):
 // - rutas bajo /api/archivos/... exigen token y se piden como blob autenticado.
 // - todo lo demás (incluidos /uploads/web_noticias y /uploads/medicos_publicidad,

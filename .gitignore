@@ -45,3 +45,9 @@ InfoValidaciones/
 # Datos reales (padrones, reportes de facturación): nunca en el repo ni en public/
 public/*.xlsx
 src/app/prevencion/
+src/app/deleteLater/
+
+src/app/assets/prestadores_padron.pdf
+src/app/**/*.xlsx
+src/app/**/*.xls
+src/app/**/*.csv

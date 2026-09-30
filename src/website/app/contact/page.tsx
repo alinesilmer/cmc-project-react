@@ -3,6 +3,7 @@ import { MapPin as FiMapPin, Mail as FiMail, Phone as FiPhone, ExternalLink as F
 import { motion } from "framer-motion";
 import styles from "./contact.module.scss";
 import PageHero from "../../components/UI/Hero/Hero";
+import { useTituloPagina } from "../../lib/useTituloPagina";
 
 const MAPS_EMBED_SRC =
   "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3540.1035993211517!2d-58.8279958!3d-27.466033900000003!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94456ca75442b0d5%3A0x6579bf31d9d171fc!2sColegio%20M%C3%A9dico%20de%20Corrientes!5e0!3m2!1ses!2sar!4v1761223450529!5m2!1ses!2sar";
@@ -90,6 +91,8 @@ function MapEmbed() {
 }
 
 export default function Contacto() {
+  useTituloPagina("Contacto");
+
   return (
     <div className={styles.page}>
       <PageHero

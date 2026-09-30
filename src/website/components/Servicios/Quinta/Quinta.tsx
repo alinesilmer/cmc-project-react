@@ -10,7 +10,9 @@ const EASE = [0.22, 1, 0.36, 1] as const
 type Props = {
   titulo?: string
   descripcion?: string
-  pdfUrl: string
+  /** Reglamento de uso. Sin archivo cargado no se ofrece la descarga: es
+   * preferible que falte el botón a que baje un PDF que no sirve. */
+  pdfUrl?: string
   etiquetaBoton?: React.ReactNode
 }
 
@@ -36,12 +38,14 @@ export default function Quinta({
           <h3 className={styles.titulo}>{titulo}</h3>
           <p className={styles.descripcion}>{descripcion}</p>
           <div className={styles.ctaRow}>
-            <a href={pdfUrl} download aria-label="Descargar PDF con requisitos">
-              <Button variant="secondary" size="xlg">
-                <FaDownload className={styles.iconInline} />
-                <span>{etiquetaBoton}</span>
-              </Button>
-            </a>
+            {pdfUrl && (
+              <a href={pdfUrl} download aria-label="Descargar PDF con requisitos">
+                <Button variant="secondary" size="xlg">
+                  <FaDownload className={styles.iconInline} />
+                  <span>{etiquetaBoton}</span>
+                </Button>
+              </a>
+            )}
             <a href={WA_LINK} target="_blank" rel="noopener noreferrer" aria-label="Reservar por WhatsApp">
               <Button variant="secondary" size="xlg">
                 <Phone className={styles.iconInline} />

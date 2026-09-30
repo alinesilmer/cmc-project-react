@@ -1,6 +1,5 @@
 import { useMemo } from "react";
-import { marked } from "marked";
-import DOMPurify from "dompurify";
+import { markdownSeguro } from "../../../lib/markdown";
 
 type Props = {
   contenido: string;
@@ -9,12 +8,7 @@ type Props = {
 
 export default function NoticiaContent({ contenido, className }: Props) {
   const html = useMemo(() => {
-    try {
-      const raw = marked.parse(contenido, { gfm: true, breaks: true }) as string;
-      return DOMPurify.sanitize(raw);
-    } catch {
-      return contenido.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    }
+    return markdownSeguro(contenido);
   }, [contenido]);
 
   return (

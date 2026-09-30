@@ -17,6 +17,7 @@ import {
   type ValoresEticosOut,
 } from "./valoresEticos.api";
 import { abrirAdjunto } from "@/app/shared/lib/archivos";
+import { PDF, accept, motivoDeRechazo } from "../../../lib/subidas";
 
 function fmtDate(iso: string) {
   try {
@@ -68,8 +69,12 @@ export default function ValoresEticos() {
 
   const handleFile = (f: File | null) => {
     if (!f) return;
-    if (f.type !== "application/pdf") {
-      setError("Solo se aceptan archivos PDF.");
+
+    // Antes sólo se miraba `f.type`, que lo declara el navegador y llega
+    // vacío para varios archivos; tampoco había límite de tamaño.
+    const motivo = motivoDeRechazo(f, PDF);
+    if (motivo) {
+      setError(motivo);
       return;
     }
     setError(null);
@@ -196,7 +201,7 @@ export default function ValoresEticos() {
         <input
           ref={inputRef}
           type="file"
-          accept="application/pdf"
+          accept={accept(PDF)}
           className={styles.eticaFileInput}
           onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
         />

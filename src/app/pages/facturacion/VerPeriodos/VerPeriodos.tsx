@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Receipt, Search, Eye, EyeOff, FileText } from "lucide-react";
 
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
-import { abrirAdjunto } from "../../../lib/archivos";
+import { abrirAdjunto } from "@/app/shared/lib/archivos";
 import { listarFacturas, publicarPeriodo } from "../api";
 import type { FacturaRead, ListarFacturasParams, ObraSocialOption } from "../types";
 import { detailMessage } from "../types";

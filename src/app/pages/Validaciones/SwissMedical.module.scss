@@ -1,0 +1,22 @@
+// Lo propio de la tabla de Swiss Medical. El resto del andamiaje está en
+// `components/reporte/reporte.module.scss`.
+
+@use "@/app/styles/all.scss" as *;
+
+/** Las descripciones del nomenclador son largas; es la única columna que corta. */
+.practica {
+  white-space: normal;
+  min-width: 16rem;
+  max-width: 26rem;
+}
+
+.afiliado {
+  white-space: normal;
+  min-width: 13rem;
+}
+
+/** Fila que hay que revisar antes de facturar: sin médico en el padrón, o con
+ * una matrícula que no es de Corrientes. */
+.revisar td {
+  background: rgba($warning-orange, 0.06);
+}

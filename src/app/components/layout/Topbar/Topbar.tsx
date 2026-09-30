@@ -15,7 +15,7 @@ import {
   PencilRuler, ShieldUser, Monitor, Receipt, CalendarDays,
   LogOut, CircleUserRound, ChevronDown, Menu, X, Layers,
   Smartphone, Gift, Inbox, Megaphone, ShieldCheck,
-  BarChart3, Stethoscope, UserSearch,
+  BarChart3, Stethoscope, UserSearch, Globe,
 } from "lucide-react";
 
 import styles from "./Topbar.module.scss";
@@ -40,30 +40,11 @@ type TopEntry =
 
 const base = "/panel";
 
-// Accesos directos a las obras sociales que se validan desde el panel. El
-// catálogo completo (incluidos los portales externos) vive en el hub. Mismo
-// scope que exige la API para todo /api/validaciones/*: `validacion:cargar`.
-const VALIDACIONES_MENU: Extract<TopEntry, { kind: "menu" }> = {
-  kind: "menu", id: "validaciones", icon: ShieldCheck, label: "Validaciones",
-  columns: [
-    {
-      heading: "Validar prestación",
-      items: [
-        { path: `${base}/validaciones/sancor`, icon: ShieldCheck, label: "Sancor Salud", perms: ["validacion:cargar"] },
-        { path: `${base}/validaciones/ospjn`, icon: ShieldCheck, label: "OSPJN · Judicial", perms: ["validacion:cargar"] },
-        { path: `${base}/validaciones/nobis`, icon: ShieldCheck, label: "Nobis Salud", perms: ["validacion:cargar"] },
-        { path: `${base}/validaciones/ospm`, icon: ShieldCheck, label: "OSPM", perms: ["validacion:cargar"] },
-      ],
-    },
-    {
-      heading: "Carga de prestaciones",
-      items: [
-        { path: `${base}/validaciones/omint`, icon: ClipboardList, label: "Omint" },
-        { path: `${base}/validaciones/boreal`, icon: ClipboardList, label: "Boreal Salud" },
-        { path: `${base}/validaciones`, icon: ShieldCheck, label: "Ver todas" },
-      ],
-    },
-  ],
+// Un botón, no un menú: el hub ya lista todas las obras sociales —las que se
+// validan acá y las que abren un portal externo— y duplicar unas pocas en un
+// desplegable obligaba a mantener las dos listas en sincronía.
+const VALIDACIONES_LINK: Extract<TopEntry, { kind: "link" }> = {
+  kind: "link", path: `${base}/validaciones`, icon: ShieldCheck, label: "Validaciones",
 };
 
 // TEMPORAL — atajos para revisar el portal del socio desde una cuenta admin.
@@ -90,6 +71,13 @@ const VISTA_MEDICO_MENU: Extract<TopEntry, { kind: "menu" }> = {
 const TOP_NAV: TopEntry[] = [
   { kind: "link", path: `${base}/dashboard`, icon: Home, label: "Inicio" },
   VALIDACIONES_LINK,
+  // Oculto hasta que Importaciones salga a producción. Al reactivarlo, volver
+  // a importar `FileUp` de lucide-react.
+  // La sección lista los importadores disponibles; sumar uno no toca el nav.
+  // {
+  //   kind: "link", path: `${base}/importaciones`, icon: FileUp,
+  //   label: "Importaciones", perms: ["facturacion:cargar"],
+  // },
   {
     kind: "menu", id: "facturacion", icon: Receipt, label: "Facturación",
     columns: [
@@ -220,6 +208,11 @@ const TOP_NAV: TopEntry[] = [
         items: [
           { path: `${base}/institucion`, icon: Building2, label: "Datos del Colegio", perms: ["catalogo:leer"] },
           { path: `${base}/agenda`, icon: CalendarDays, label: "Calendario", perms: ["catalogo:leer"] },
+          // Administra el contenido del sitio público desde el panel: los
+          // componentes siguen en `src/website/` pero la pantalla se monta acá.
+          // `contenido:editar` es el permiso que el backend ya exige para
+          // noticias y avisos, así que el médico no lo ve.
+          { path: `${base}/sitio`, icon: Globe, label: "Contenido del sitio", perms: ["contenido:editar"] },
         ],
       },
       {
@@ -245,6 +238,7 @@ const DOCTOR_TOP_NAV: TopEntry[] = [
   { kind: "link", path: `${base}/dashboard`, icon: Home, label: "Inicio" },
   VALIDACIONES_LINK,
   { kind: "link", path: `${base}/nomenclador/consulta-precios`, icon: DollarSign, label: "Consulta de Precios" },
+  { kind: "link", path: `${base}/boletin-valores`, icon: FileBoxIcon, label: "Valores Boletín" },
   { kind: "link", path: `${base}/planillas`, icon: FileText, label: "Planillas" },
   { kind: "link", path: `${base}/facturacion/mi-recepcion`, icon: Receipt, label: "Mi recepción" },
   { kind: "link", path: `${base}/mi-perfil`, icon: CircleUserRound, label: "Mi perfil" },
@@ -352,12 +346,20 @@ export default function Topbar() {
     };
   }, [openMenu]);
 
-  // Lock body scroll while the mobile drawer is open.
+  // Con el drawer abierto: sin scroll de fondo y Escape lo cierra. El Escape de
+  // arriba sólo atiende los desplegables de escritorio, que no existen acá.
   useEffect(() => {
     if (!mobileOpen) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = prev; };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      document.removeEventListener("keydown", onKey);
+    };
   }, [mobileOpen]);
 
   // Hover-intent: open on mouse-enter, close after a short grace period so the
@@ -378,6 +380,16 @@ export default function Topbar() {
     try { await logout(); } finally { navigate(`${base}/login`, { replace: true }); }
   }, [isAuthenticated, logout, navigate]);
 
+  /** Cierra el menú abierto, sea el desplegable de escritorio o el drawer.
+   *
+   * Va en el click del enlace y no sólo en el cambio de ruta: ir a la página en
+   * la que ya estás no cambia `location.pathname`, y un enlace externo abre
+   * otra pestaña sin cambiarlo nunca. En los dos casos el menú quedaba abierto. */
+  const cerrarMenus = useCallback(() => {
+    setOpenMenu(null);
+    setMobileOpen(false);
+  }, []);
+
   // ── Shared item link renderer (used in dropdowns and mobile drawer) ──────────
   const renderItem = (item: MenuLink) => {
     if (!passesPerms(item.perms, can)) return null;
@@ -392,9 +404,24 @@ export default function Topbar() {
       </>
     );
     const node = item.external ? (
-      <a href={item.path} target="_blank" rel="noopener noreferrer" className={cls}>{inner}</a>
+      <a
+        href={item.path}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={cls}
+        onClick={cerrarMenus}
+      >
+        {inner}
+      </a>
     ) : (
-      <Link to={item.path} className={cls} aria-current={active ? "page" : undefined}>{inner}</Link>
+      <Link
+        to={item.path}
+        className={cls}
+        aria-current={active ? "page" : undefined}
+        onClick={cerrarMenus}
+      >
+        {inner}
+      </Link>
     );
     return <li key={item.path}>{node}</li>;
   };
@@ -472,6 +499,7 @@ export default function Topbar() {
           key={entry.path}
           to={entry.path}
           className={`${styles.mLink} ${active ? styles.itemActive : ""}`}
+          onClick={cerrarMenus}
         >
           <span className={styles.itemIcon}><Icon size={17} /></span>
           <span className={styles.itemLabel}>{entry.label}</span>

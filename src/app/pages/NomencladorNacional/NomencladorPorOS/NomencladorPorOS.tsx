@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import styles from "./NomencladorPorOS.module.scss";
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
+import SelectorVigencia from "../components/SelectorVigencia";
 import {
   listGalenos, listValores, createValor, createValorMulti, deleteValor,
   listNomenclador, getNomencladorById, updateValorMetadata, actualizarValor,
@@ -216,6 +217,9 @@ export default function NomencladorPorOS() {
   const [codeSearch, setCodeSearch] = useState("");
   const [nomDescMap, setNomDescMap] = useState<Record<number, string>>({});
   const [origenFilter, setOrigenFilter] = useState<Origen | "todos">("todos");
+  // Qué carga se está mirando. Sin esto se traían todas las vigencias juntas y
+  // el mismo código salía repetido una vez por carga.
+  const [vigencia, setVigencia] = useState<string | null>(null);
   const [modalidadFilter, setModalidadFilter] = useState<ValorOut["modalidad"] | "todos">("todos");
   const [soloPresupuesto, setSoloPresupuesto] = useState(false);
   const [especialidadFilter, setEspecialidadFilter] = useState<number | "todos">("todos");
@@ -308,17 +312,26 @@ export default function NomencladorPorOS() {
     setNomDescMap({});
     if (!selectedNroOS) { setGalenos([]); setValores([]); return; }
     listGalenos({ obra_social_nro: selectedNroOS }).then(setGalenos).catch(() => {});
-    loadValores(selectedNroOS);
+    loadValores(selectedNroOS, vigencia);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedNroOS]);
+  }, [selectedNroOS, vigencia]);
 
-  const loadValores = useCallback(async (osNro: number) => {
+  const loadValores = useCallback(async (osNro: number, vigenciaDesde?: string | null) => {
     setLoadingValores(true);
     try {
-      // Traer TODOS los valores activos (paginando la API) para agrupar/filtrar/paginar bien.
+      // Sólo la vigencia elegida. Traerlas todas multiplicaba las filas por la
+      // cantidad de cargas de la obra social y no había forma de saber cuál se
+      // estaba leyendo. Sin vigencia (opción "Todas") se traen todas, que es el
+      // comportamiento viejo y sigue disponible a pedido.
       const all: ValorOut[] = [];
       for (let p = 1; p <= 100; p++) {
-        const batch = await listValores({ obra_social_nro: osNro, estado: "activo", page: p, size: 200 });
+        const batch = await listValores({
+          obra_social_nro: osNro,
+          estado: "activo",
+          ...(vigenciaDesde ? { vigencia_desde: vigenciaDesde } : {}),
+          page: p,
+          size: 200,
+        });
         all.push(...batch);
         if (batch.length < 200) break;
       }
@@ -365,7 +378,7 @@ export default function NomencladorPorOS() {
   );
 
   // Volver a la página 1 cuando cambian OS, búsqueda o filtro de origen.
-  useEffect(() => { setPage(1); }, [selectedNroOS, codeSearch, origenFilter, modalidadFilter, soloPresupuesto, especialidadFilter]);
+  useEffect(() => { setPage(1); }, [selectedNroOS, vigencia, codeSearch, origenFilter, modalidadFilter, soloPresupuesto, especialidadFilter]);
   // Ajustar si la página quedó fuera de rango (p. ej. tras cerrar un valor).
   useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
 
@@ -719,7 +732,7 @@ export default function NomencladorPorOS() {
           : "Ecuación actualizada. Recargando…",
       );
       setModalKind(null);
-      if (selectedNroOS) loadValores(selectedNroOS);
+      if (selectedNroOS) loadValores(selectedNroOS, vigencia);
     } catch (e: unknown) {
       const msg = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
       showToast("error", msg ?? "No se pudo actualizar la ecuación.");
@@ -791,6 +804,12 @@ export default function NomencladorPorOS() {
                 <h2 className={styles.contentTitle}>{selectedOS?.nombre ?? `OS ${selectedNroOS}`}</h2>
               </div>
               <div className={styles.toolbar}>
+                <SelectorVigencia
+                  obraSocialNro={selectedNroOS}
+                  valor={vigencia}
+                  onCambio={setVigencia}
+                  etiquetaTodas="Todas las vigencias"
+                />
                 <div className={styles.searchWrap}>
                   <Search size={14} className={styles.searchIcon} />
                   <input className={styles.searchInput} placeholder="Buscar código…" value={codeSearch} onChange={(e) => setCodeSearch(e.target.value)} />

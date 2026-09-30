@@ -19,7 +19,7 @@ import type {
   ApiBoletinRow,
   ConsultaComunItem,
 } from "./boletinConsultaComun.types";
-import { ZERO_GALENO } from "./boletinConsultaComun.types";
+import { SIN_GALENOS } from "./boletinConsultaComun.types";
 import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 import { http } from "@/app/shared/lib/http";
 
@@ -293,7 +293,7 @@ export function buildLatestPerOS(rows: ApiBoletinRow[]): ConsultaComunItem[] {
       observaciones: [...(OBSERVATIONS_BY_OS[nro] ?? [])].map((x) =>
         normalizeText(x, 1000)
       ),
-      galeno: { ...ZERO_GALENO },
+      galenos: SIN_GALENOS,
     }))
     .sort((a, b) => {
       const byName = a.nombre.localeCompare(b.nombre, "es", {

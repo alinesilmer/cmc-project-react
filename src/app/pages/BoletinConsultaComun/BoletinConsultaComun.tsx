@@ -35,7 +35,7 @@ import { useGalenoQuery } from "./useGalenoQuery";
 import { useObservaciones } from "./useObservaciones";
 import { urlNorma, useNormasOperativas } from "./useNormasOperativas";
 import { formatApiDate } from "./boletinConsultaComun.helpers";
-import { ZERO_GALENO } from "./boletinConsultaComun.types";
+import { SIN_GALENOS } from "./boletinConsultaComun.types";
 
 type ObsLine =
   | { type: "header"; label: string; body: string }
@@ -120,7 +120,7 @@ export default function BoletinConsultaComun() {
         observaciones: observaciones[item.nro]
           ? [observaciones[item.nro]]
           : item.observaciones,
-        galeno: galenoMap?.get(item.nro) ?? ZERO_GALENO,
+        galenos: galenoMap?.get(item.nro) ?? SIN_GALENOS,
       })),
     [data, observaciones, galenoMap]
   );

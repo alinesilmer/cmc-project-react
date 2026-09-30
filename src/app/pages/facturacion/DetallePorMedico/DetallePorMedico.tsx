@@ -9,7 +9,7 @@ import { listarPrestaciones, fetchMedicos, descargarExportPorMedico } from "../a
 import { detailMessage } from "../types";
 import type { MedicoOption, PrestacionRead, Tipo } from "../types";
 import { formatMoney, parseMoney } from "../money";
-import { saveAs } from "../../../lib/fileSaver";
+import { saveAs } from "@/app/shared/lib/fileSaver";
 import TablaPorObraSocial from "../components/TablaPorObraSocial";
 import styles from "./DetallePorMedico.module.scss";
 

@@ -13,8 +13,9 @@ import {
   DollarSign,
   Info as InfoIcon,
 } from "lucide-react";
-import styles from "./Info.module.scss";
-import Button from "../../../website/components/UI/Button/Button";
+import styles from "./socios.module.scss";
+import Button from "../../components/UI/Button/Button";
+import { useTituloPagina } from "../../lib/useTituloPagina";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -163,7 +164,9 @@ const Section: React.FC<{
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-const Info: React.FC = () => {
+const SociosPage: React.FC = () => {
+  useTituloPagina("Quiero ser Socio");
+
   const principales: Item[] = [
     {
       id: "1",
@@ -478,4 +481,4 @@ const Info: React.FC = () => {
   );
 };
 
-export default Info;
+export default SociosPage;

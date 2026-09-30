@@ -1,3 +1,5 @@
+import type { GalenoItem } from "@/app/features/nomenclador/galenos";
+
 export type ApiBoletinRow = {
   id: number;
   codigos: string;
@@ -15,31 +17,8 @@ export type ApiBoletinRow = {
   fecha_vigencia: string | null;
 };
 
-export type GalenoValues = {
-  quirurgico: number;
-  practica: number;
-  radiologico: number;
-  cirugiaAdultos: number;
-  cirugiaInfantil: number;
-  gastosQuirurgicos: number;
-  /** Legacy DB column name: gastos_radiologico (singular). */
-  gastosRadiologico: number;
-  gastosBioquimicos: number;
-  otrosGastos: number;
-};
-
-/** Valores galeno en cero: el boletín legacy no los trae y hay que completarlos. */
-export const ZERO_GALENO: GalenoValues = {
-  quirurgico: 0,
-  practica: 0,
-  radiologico: 0,
-  cirugiaAdultos: 0,
-  cirugiaInfantil: 0,
-  gastosQuirurgicos: 0,
-  gastosRadiologico: 0,
-  gastosBioquimicos: 0,
-  otrosGastos: 0,
-};
+/** Sin galenos: el endpoint del boletín no los trae y se completan aparte. */
+export const SIN_GALENOS: GalenoItem[] = [];
 
 export type ConsultaComunItem = {
   nro: number;
@@ -48,7 +27,8 @@ export type ConsultaComunItem = {
   fechaCambio: string | null;
   observaciones: string[];
   /** Populated from backend but not rendered in the UI table — export only. */
-  galeno: GalenoValues;
+  /** Los galenos pactados con esa obra social. Puede venir vacío. */
+  galenos: GalenoItem[];
 };
 
 /** One text observation per obra social, keyed by nro_obrasocial. */

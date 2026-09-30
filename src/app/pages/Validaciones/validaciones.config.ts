@@ -16,6 +16,7 @@ import logoBoreal from "../../assets/obras-sociales/boreal.png";
 import logoIoscor from "../../assets/obras-sociales/ioscor.jpg";
 import logoIosfa from "../../assets/obras-sociales/iosfa.jpg";
 import logoIssunne from "../../assets/obras-sociales/issunne.png";
+// import logoMedicus from "../../assets/obras-sociales/medicus.png";
 import logoMedife from "../../assets/obras-sociales/medife.jpg";
 import logoNobis from "../../assets/obras-sociales/nobis.png";
 import logoOmint from "../../assets/obras-sociales/omint.png";
@@ -285,6 +286,62 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
     ],
   },
 
+  // Medicus oculta hasta que la carga esté conectada en el backend (la 373
+  // todavía responde 422). Para reactivarla, descomentar este bloque y el
+  // import de `logoMedicus`.
+  // {
+    // slug: "medicus",
+    // nombre: "Medicus",
+    // // 373 = MEDICUS,CORPORATE,FAMILY -MC- en `obras_sociales`. Ojo que hay una
+    // // segunda: la 372 (MEDICUS FUERZAS DE SEGURIDAD, planes MS1/MS2 desde el
+    // // 01/06/2026), hoy con MARCA='N'. Si el Colegio la activa va como otra
+    // // entrada, no como un plan de esta: el catálogo es por NRO_OBRASOCIAL.
+    // codigo: 373,
+    // modo: "integrada",
+    // estado: "operativa",
+    // validacion: "online",
+    // protocolo: "REST · HL7 v2.4 (canal Traditum)",
+    // color: "#004b8d",
+    // logo: logoMedicus,
+    // // El backend todavía no conoce la 373: `obras.POR_NRO` no la tiene, así que
+    // // `POST /prestaciones` responde 422 y la pantalla muestra el aviso de
+    // // «carga no conectada». Las lecturas (períodos, prestaciones, códigos) sí
+    // // funcionan porque son genéricas. Ver la guía de integración de Traditum.
+    // cargaImplementada: false,
+    // descripcion:
+      // "Autorización en línea contra Medicus a través del canal Traditum.",
+    // campos: [
+      // {
+        // name: "nroAfiliado",
+        // label: "Número de afiliado",
+        // tipo: "numerico",
+        // required: true,
+        // maxLength: 13,
+        // placeholder: "09227263000",
+        // hint: "La credencial completa, sin guiones ni espacios",
+        // // Falta el cartel de afiliado activo. Medicus lo resuelve con el
+        // // mensaje de elegibilidad ZQI^Z01, así que en cuanto exista
+        // // `GET /api/validaciones/medicus/elegibilidad` va acá un
+        // // `consultaEnVivo` igual al de Nobis. No se cableó antes para no
+        // // dejar un cartel rojo permanente contra un endpoint inexistente.
+      // },
+      // campoCodigo,
+      // {
+        // name: "cantidad",
+        // label: "Cantidad",
+        // tipo: "entero",
+        // min: 1,
+        // max: 99,
+        // placeholder: "1",
+        // hint: "Cuántas unidades de la práctica se solicitan",
+      // },
+      // // El diagnóstico (segmento DG1) no se le pide al médico: Sancor lo manda
+      // // fijo desde el backend (`Z111^CONSULTA^I10`) y el reporte de Swiss trae
+      // // la columna `icd` vacía en las 1.127 filas, así que el Colegio no lo
+      // // registra. Si Medicus llega a exigir uno real, se agrega acá.
+    // ],
+  // },
+
   // ── Portales externos ──────────────────────────────────────────────────────
   // Estas obras sociales no se validan desde el panel: en `menu.php` el enlace
   // sale del sitio del Colegio hacia el portal de la obra social.
@@ -375,6 +432,11 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
     logo: logoSwiss,
     descripcion:
       "Las prestaciones y órdenes se cargan en el portal de prestadores de Swiss Medical, con tu usuario propio.",
+    // Sólo el Colegio entra por acá: Swiss manda un reporte mensual de todo
+    // el padrón y esta pantalla lo reparte entre los efectores. Para el
+    // médico `destinoObraSocial` saltea `rutaPanel` y usa `url`, así que la
+    // tarjeta lo sigue mandando al portal de Swiss.
+    rutaPanel: "/panel/validaciones/swiss-medical",
     url: "https://www.swissmedical.com.ar/prestadores/",
     nota: "¿Todavía no tenés usuario? El Colegio te da tu N° de Prestador y la guía de registro paso a paso.",
     guia: {

@@ -115,6 +115,10 @@ export type ResultadoMatricula =
   /** Más de una ficha con la misma matrícula: hay que resolverlo a mano. */
   | { tipo: "ambiguo"; medico: MedicoPadron; total: number };
 
+/** Se pudo atar la fila a alguien del padrón. */
+export const esIdentificado = (r: ResultadoMatricula): boolean =>
+  r.tipo === "encontrado" || r.tipo === "ambiguo";
+
 export function buscarPorMatricula(
   idx: IndiceMatriculas,
   matricula: string

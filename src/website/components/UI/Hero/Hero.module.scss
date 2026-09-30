@@ -30,6 +30,13 @@
   animation: heroZoom 7s ease-out forwards;
 }
 
+/** Respaldo sin foto: degradé de marca. No se le aplica el zoom porque un
+ * degradé plano escalando no se percibe, sólo gasta compositing. */
+.bgLiso {
+  background: linear-gradient(140deg, $primary-blue-dark 0%, $primary-blue 55%, $primary-blue-lighter 100%);
+  animation: none;
+}
+
 @keyframes heroZoom {
   from { transform: scale(1.07); }
   to   { transform: scale(1); }

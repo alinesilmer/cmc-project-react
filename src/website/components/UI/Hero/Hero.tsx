@@ -4,7 +4,10 @@ import styles from "./Hero.module.scss";
 interface HeroProps {
   title: string;
   subtitle: string;
-  backgroundImage: string;
+  /** Foto de fondo. Sin ella el hero usa el degradé institucional: así una
+   * sección sin imagen propia entra igual, sin inventar una que no existe ni
+   * sumar otra descarga pesada. */
+  backgroundImage?: string;
 }
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -21,8 +24,8 @@ const Hero = ({ title, subtitle, backgroundImage }: HeroProps) => {
     <section className={styles.hero} role="img" aria-label={title}>
       {/* Background isolated so CSS zoom doesn't affect text layout */}
       <div
-        className={styles.bg}
-        style={{ backgroundImage: `url(${backgroundImage})` }}
+        className={backgroundImage ? styles.bg : `${styles.bg} ${styles.bgLiso}`}
+        style={backgroundImage ? { backgroundImage: `url(${backgroundImage})` } : undefined}
         aria-hidden="true"
       />
       <div className={styles.overlay} aria-hidden="true" />

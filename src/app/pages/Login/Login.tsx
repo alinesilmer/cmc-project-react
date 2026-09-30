@@ -61,7 +61,7 @@ function Login() {
       }
 
       if (isWebEditor(me)) {
-        navigate("/admin/dashboard-web", { replace: true });
+        navigate("/panel/sitio", { replace: true });
         return;
       }
 
@@ -234,7 +234,7 @@ function Login() {
           <div className={styles.divider} aria-hidden />
           <div className={styles.bottomLinks}>
             {!isMember && (
-              <Link to="/panel/info" className={styles.linkMuted}>
+              <Link to="/socios" className={styles.linkMuted}>
                 Requisitos para Registrarse
               </Link>
             )}

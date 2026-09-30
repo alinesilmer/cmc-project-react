@@ -1,10 +1,56 @@
 @use "../../../styles/variables" as *;
 
+// ─── Escala del panel ─────────────────────────────────────────────────────────
+//
+// Antes había 32 colores sueltos escritos a mano en este archivo: seis blancos
+// casi idénticos ($ad-superficie-2, $ad-superficie-2, $ad-superficie-2, $ad-superficie-2, $ad-superficie-2, $ad-superficie-2), cuatro
+// tintes azules y seis grises de borde. Ninguno era “otro color” a propósito:
+// eran copias de distintos momentos. Colapsarlos es lo que hace que la pantalla
+// se lea como una sola cosa.
+//
+// Viven acá y no en `styles/variables.scss` porque son del panel: el sitio
+// público no tiene ni escala de grises fina ni colores semánticos.
+
+// Superficies
+$ad-fondo: #f4f6fa;
+$ad-superficie: #ffffff;
+$ad-superficie-2: #f8fafc;
+
+// Tinte de marca, para hover y selección
+$ad-tinte: #eef3ff;
+$ad-tinte-fuerte: #dbeafe;
+$ad-enlace: #1d4ed8;
+
+// Bordes: uno para contornos, otro para lo que sólo separa
+$ad-borde: #dde2ec;
+$ad-borde-fuerte: #c5cfe0;
+
+// Texto
+$ad-texto: #374151;
+$ad-texto-2: #6b7280;
+$ad-texto-3: #8a99b3;
+
+// Semánticos
+$ad-peligro: #dc2626;
+$ad-peligro-oscuro: #b91c1c;
+$ad-peligro-borde: #fca5a5;
+$ad-peligro-fondo: #fef2f2;
+$ad-peligro-suave: #fee2e2;
+$ad-ok: #166534;
+$ad-ok-fondo: #dcfce7;
+$ad-whatsapp: #25d366;
+
+// Un solo radio para controles y tarjetas, y la píldora para los chips.
+$ad-radio: 10px;
+$ad-radio-chico: 6px;
+$ad-radio-pill: 999px;
+
+
 // ─── Layout shell ──────────────────────────────────────────────────────────────
 
 .dashboard {
   min-height: 100vh;
-  background: #f4f6fa;
+  background: $ad-fondo;
 }
 
 // ─── Header ────────────────────────────────────────────────────────────────────
@@ -45,7 +91,7 @@
   background: transparent;
   color: rgba(255, 255, 255, 0.85);
   padding: 0.35rem 0.9rem;
-  border-radius: $border-radius-sm;
+  border-radius: $ad-radio;
   font-weight: 500;
   font-size: $font-size-base;
   cursor: pointer;
@@ -78,10 +124,10 @@
   gap: 1rem;
   margin-bottom: $spacing-md;
   padding: 0.75rem 1rem;
-  background: #fef2f2;
-  border: 1px solid #fca5a5;
-  border-radius: 8px;
-  color: #b91c1c;
+  background: $ad-peligro-fondo;
+  border: 1px solid $ad-peligro-borde;
+  border-radius: $ad-radio;
+  color: $ad-peligro-oscuro;
   font-size: 0.9rem;
 
   button {
@@ -89,7 +135,7 @@
     border: none;
     cursor: pointer;
     font-size: 1.2rem;
-    color: #b91c1c;
+    color: $ad-peligro-oscuro;
     line-height: 1;
     padding: 0 0.25rem;
     flex-shrink: 0;
@@ -116,8 +162,8 @@
   input[type="search"] {
     width: 100%;
     padding: 0.55rem 0.85rem 0.55rem 2.35rem;
-    border: 1.5px solid #dde2ec;
-    border-radius: $border-radius-sm;
+    border: 1px solid $ad-borde;
+    border-radius: $ad-radio;
     font-size: $font-size-base;
     font-family: inherit;
     background: $white;
@@ -136,7 +182,7 @@
   left: 0.7rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #8a99b3;
+  color: $ad-texto-3;
   pointer-events: none;
   font-size: 0.95rem;
 }
@@ -150,15 +196,15 @@
 .selectLabel {
   font-size: 0.78rem;
   font-weight: 600;
-  color: #6b7280;
+  color: $ad-texto-2;
   letter-spacing: 0.3px;
   text-transform: uppercase;
 }
 
 .select {
   height: 38px;
-  border: 1.5px solid #dde2ec;
-  border-radius: 8px;
+  border: 1px solid $ad-borde;
+  border-radius: $ad-radio;
   padding: 0 0.75rem;
   background: $white;
   font: inherit;
@@ -184,10 +230,10 @@
 
 .noticias {
   background: $white;
-  border-radius: $border-radius-sm;
+  border-radius: $ad-radio;
   padding: $spacing-xl;
   box-shadow: $shadow-sm;
-  border: 1px solid #eaecf0;
+  border: 1px solid $ad-borde;
 }
 
 .noticiasHeader {
@@ -205,7 +251,7 @@
 
 .count {
   font-size: 0.85rem;
-  color: #8a99b3;
+  color: $ad-texto-3;
   font-weight: 500;
 }
 
@@ -224,8 +270,8 @@
 
 .skeleton {
   height: 180px;
-  border-radius: $border-radius-md;
-  background: linear-gradient(90deg, #f0f2f7 25%, #e4e7ef 50%, #f0f2f7 75%);
+  border-radius: $ad-radio;
+  background: linear-gradient(90deg, $ad-superficie-2 25%, $ad-borde 50%, $ad-superficie-2 75%);
   background-size: 800px 100%;
   animation: shimmer 1.4s infinite linear;
 }
@@ -242,7 +288,7 @@
 }
 
 .emptyMsg {
-  color: #8a99b3;
+  color: $ad-texto-3;
   font-size: 1rem;
   margin: 0;
 }
@@ -261,8 +307,8 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  border: 1.5px solid #eaecf0;
-  border-radius: $border-radius-sm;
+  border: 1px solid $ad-borde;
+  border-radius: $ad-radio;
   padding: $spacing-md;
   background: $white;
   transition: box-shadow $transition-fast, border-color $transition-fast, transform $transition-fast;
@@ -331,18 +377,18 @@
   letter-spacing: 0.4px;
   text-transform: uppercase;
   padding: 0.2rem 0.55rem;
-  border-radius: 6px;
+  border-radius: $ad-radio-chico;
   line-height: 1;
 }
 
 .badgeNoticia {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: $ad-tinte-fuerte;
+  color: $ad-enlace;
 }
 
 .badgeCurso {
-  background: #dcfce7;
-  color: #166534;
+  background: $ad-ok-fondo;
+  color: $ad-ok;
 }
 
 .statusBadge {
@@ -351,24 +397,24 @@
   font-size: 0.72rem;
   font-weight: 600;
   padding: 0.2rem 0.55rem;
-  border-radius: $border-radius-sm;
+  border-radius: $ad-radio;
   line-height: 1;
 }
 
 .statusPublished {
-  background: #dcfce7;
-  color: #166534;
+  background: $ad-ok-fondo;
+  color: $ad-ok;
 }
 
 .statusDraft {
-  background: #f3f4f6;
-  color: #6b7280;
+  background: $ad-superficie-2;
+  color: $ad-texto-2;
 }
 
 .cardDate {
   display: block;
   font-size: 0.78rem;
-  color: #a0aec0;
+  color: $ad-texto-3;
   margin-top: 4px;
 }
 
@@ -380,7 +426,7 @@
   gap: 6px;
   margin-top: $spacing-sm;
   padding-top: $spacing-sm;
-  border-top: 1px solid #f0f2f7;
+  border-top: 1px solid $ad-superficie-2;
 
   button {
     display: inline-flex;
@@ -389,8 +435,8 @@
     width: 34px;
     height: 34px;
     border: none;
-    border-radius: $border-radius-sm;
-    background: #f5f7fa;
+    border-radius: $ad-radio;
+    background: $ad-superficie-2;
     cursor: pointer;
     font-size: 0.95rem;
     transition: background $transition-fast, color $transition-fast;
@@ -398,18 +444,18 @@
 }
 
 .actionWhatsapp {
-  color: #25d366;
-  &:hover { background: #dcfce7 !important; }
+  color: $ad-whatsapp;
+  &:hover { background: $ad-ok-fondo !important; }
 }
 
 .actionEdit {
   color: $primary-blue;
-  &:hover { background: #dbeafe !important; }
+  &:hover { background: $ad-tinte-fuerte !important; }
 }
 
 .actionDelete {
-  color: #dc2626;
-  &:hover { background: #fee2e2 !important; }
+  color: $ad-peligro;
+  &:hover { background: $ad-peligro-suave !important; }
 }
 
 // ─── Pagination ────────────────────────────────────────────────────────────────
@@ -421,13 +467,13 @@
   gap: $spacing-md;
   margin-top: $spacing-lg;
   padding-top: $spacing-md;
-  border-top: 1px solid #eaecf0;
+  border-top: 1px solid $ad-borde;
   flex-wrap: wrap;
 }
 
 .pagerInfo {
   font-size: 0.88rem;
-  color: #8a99b3;
+  color: $ad-texto-3;
 }
 
 .pagerNav {
@@ -441,9 +487,9 @@
   min-width: 34px;
   height: 34px;
   padding: 0 0.5rem;
-  border: 1.5px solid #dde2ec;
+  border: 1px solid $ad-borde;
   background: $white;
-  border-radius: $border-radius-sm;
+  border-radius: $ad-radio;
   cursor: pointer;
   font-size: 0.88rem;
   font-weight: 600;
@@ -451,7 +497,7 @@
   transition: background $transition-fast, border-color $transition-fast, color $transition-fast;
 
   &:hover {
-    background: #f0f4ff;
+    background: $ad-tinte;
     border-color: $primary-blue;
     color: $primary-blue;
   }
@@ -461,7 +507,7 @@
     cursor: not-allowed;
     &:hover {
       background: $white;
-      border-color: #dde2ec;
+      border-color: $ad-borde;
       color: $dark-gray;
     }
   }
@@ -477,17 +523,18 @@
 
 .tabContent {
   padding-top: $spacing-md;
+  padding-bottom: $spacing-lg;
 }
 
 // ─── Form card ─────────────────────────────────────────────────────────────────
 
 .form {
   background: $white;
-  border-radius: $border-radius-sm;
+  border-radius: $ad-radio;
   padding: $spacing-xl;
   margin-bottom: $spacing-lg;
   box-shadow: $shadow-sm;
-  border: 1px solid #eaecf0;
+  border: 1px solid $ad-borde;
 
   form {
     display: flex;
@@ -503,10 +550,10 @@
   gap: 1rem;
   margin-bottom: $spacing-md;
   padding: 0.6rem 0.9rem;
-  background: #fef2f2;
-  border: 1px solid #fca5a5;
-  border-radius: 8px;
-  color: #b91c1c;
+  background: $ad-peligro-fondo;
+  border: 1px solid $ad-peligro-borde;
+  border-radius: $ad-radio;
+  color: $ad-peligro-oscuro;
   font-size: 0.875rem;
 
   button {
@@ -514,7 +561,7 @@
     border: none;
     cursor: pointer;
     font-size: 1.1rem;
-    color: #b91c1c;
+    color: $ad-peligro-oscuro;
     line-height: 1;
     padding: 0 0.25rem;
     flex-shrink: 0;
@@ -538,15 +585,15 @@
   label {
     font-weight: 600;
     font-size: 0.88rem;
-    color: #374151;
+    color: $ad-texto;
     letter-spacing: 0.2px;
   }
 
   input,
   textarea {
     padding: 0.6rem 0.85rem;
-    border: 1.5px solid #dde2ec;
-    border-radius: $border-radius-sm;
+    border: 1px solid $ad-borde;
+    border-radius: $ad-radio;
     font-size: $font-size-base;
     font-family: inherit;
     background: $white;
@@ -584,7 +631,7 @@
   gap: 0.5rem;
   font-weight: 600;
   font-size: 0.88rem;
-  color: #374151;
+  color: $ad-texto;
   cursor: pointer;
 
   input[type="checkbox"] {
@@ -605,18 +652,18 @@
 
   button {
     padding: 0.3rem 0.65rem;
-    border: 1.5px solid #dde2ec;
-    border-radius: 6px;
+    border: 1px solid $ad-borde;
+    border-radius: $ad-radio-chico;
     background: $white;
     font-size: 0.82rem;
     font-weight: 600;
-    color: #374151;
+    color: $ad-texto;
     cursor: pointer;
     transition: background $transition-fast, border-color $transition-fast;
     white-space: nowrap;
 
     &:hover {
-      background: #f0f4ff;
+      background: $ad-tinte;
       border-color: $primary-blue;
       color: $primary-blue;
     }
@@ -635,9 +682,9 @@
 .preview {
   margin-top: $spacing-sm;
   padding: $spacing-md;
-  border: 1.5px solid #eaecf0;
-  border-radius: 10px;
-  background: #fafbfc;
+  border: 1px solid $ad-borde;
+  border-radius: $ad-radio;
+  background: $ad-superficie-2;
   line-height: 1.65;
   font-size: 0.92rem;
 
@@ -648,8 +695,8 @@
   blockquote {
     margin: 0.75rem 0;
     padding-left: 0.75rem;
-    border-left: 3px solid #dde2ec;
-    color: #6b7280;
+    border-left: 3px solid $ad-borde;
+    color: $ad-texto-2;
   }
 
   a {
@@ -672,9 +719,9 @@
   img {
     max-width: 100%;
     max-height: 200px;
-    border-radius: 8px;
+    border-radius: $ad-radio;
     object-fit: cover;
-    border: 1px solid #eaecf0;
+    border: 1px solid $ad-borde;
   }
 }
 
@@ -691,9 +738,9 @@
   justify-content: space-between;
   gap: $spacing-sm;
   padding: 8px 12px;
-  border: 1.5px solid #eaecf0;
-  border-radius: 8px;
-  background: #fafbfc;
+  border: 1px solid $ad-borde;
+  border-radius: $ad-radio;
+  background: $ad-superficie-2;
   font-size: 0.88rem;
 }
 
@@ -717,7 +764,7 @@
 .removeBtn {
   background: transparent;
   border: none;
-  color: #dc2626;
+  color: $ad-peligro;
   cursor: pointer;
   font-size: 0.82rem;
   font-weight: 600;
@@ -730,7 +777,7 @@
 
 .helpText {
   font-size: 0.8rem;
-  color: #8a99b3;
+  color: $ad-texto-3;
   margin: 2px 0 0;
 }
 
@@ -741,11 +788,20 @@
   flex-direction: column;
   gap: $spacing-lg;
   background: $white;
-  border-radius: $border-radius-sm;
+  border-radius: $ad-radio;
   padding: $spacing-xl;
   box-shadow: $shadow-sm;
-  border: 1px solid #eaecf0;
+  border: 1px solid $ad-borde;
+}
+
+/** El contenido no se estira: una columna de lectura cómoda dentro de la
+ * tarjeta. Es la tarjeta la que ocupa el ancho, como en las otras solapas.
+ *
+ * Va sobre los hijos directos y no sobre una lista de clases: la sección tiene
+ * catorce bloques y enumerarlos se desincroniza al primer cambio. */
+.eticaSection > * {
   max-width: 680px;
+  width: 100%;
 }
 
 .eticaHeader {
@@ -762,7 +818,7 @@
 
 .eticaDesc {
   margin: 0;
-  color: #6b7280;
+  color: $ad-texto-2;
   font-size: 0.9rem;
   line-height: 1.6;
 }
@@ -772,9 +828,9 @@
   align-items: center;
   gap: $spacing-sm;
   padding: 10px 14px;
-  border: 1.5px solid #dde2ec;
-  border-radius: $border-radius-sm;
-  background: #f8fafc;
+  border: 1px solid $ad-borde;
+  border-radius: $ad-radio;
+  background: $ad-superficie-2;
 
   div {
     display: flex;
@@ -794,7 +850,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  color: #8a99b3;
+  color: $ad-texto-3;
 }
 
 .eticaCurrentName {
@@ -804,9 +860,9 @@
 }
 
 .eticaDropzone {
-  border: 2px dashed #c5cfe0;
-  border-radius: $border-radius-sm;
-  background: #f8fafc;
+  border: 2px dashed $ad-borde-fuerte;
+  border-radius: $ad-radio;
+  background: $ad-superficie-2;
   padding: $spacing-xl $spacing-lg;
   cursor: pointer;
   transition: border-color $transition-fast, background $transition-fast;
@@ -814,19 +870,19 @@
 
   &:hover {
     border-color: $primary-blue;
-    background: #f0f4ff;
+    background: $ad-tinte;
   }
 }
 
 .eticaDropzoneActive {
   border-color: $primary-blue;
-  background: #eef3ff;
+  background: $ad-tinte;
 }
 
 .eticaDropzoneFilled {
   border-style: solid;
   border-color: $primary-blue;
-  background: #f0f5ff;
+  background: $ad-tinte;
 }
 
 .eticaFileInput {
@@ -842,13 +898,13 @@
 }
 
 .eticaUploadIcon {
-  color: #8a99b3;
+  color: $ad-texto-3;
 }
 
 .eticaDropzoneText {
   margin: 0;
   font-size: 0.92rem;
-  color: #374151;
+  color: $ad-texto;
 
   span {
     color: $primary-blue;
@@ -860,7 +916,7 @@
 .eticaDropzoneHint {
   margin: 0;
   font-size: 0.78rem;
-  color: #8a99b3;
+  color: $ad-texto-3;
 }
 
 .eticaFilePreview {
@@ -882,7 +938,7 @@
 
 .eticaFileSize {
   font-size: 0.8rem;
-  color: #8a99b3;
+  color: $ad-texto-3;
   flex-shrink: 0;
 }
 
@@ -890,15 +946,15 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #dc2626;
+  color: $ad-peligro;
   display: inline-flex;
   align-items: center;
   padding: 2px;
-  border-radius: 4px;
+  border-radius: $ad-radio-chico;
   transition: background $transition-fast;
   flex-shrink: 0;
 
-  &:hover { background: #fee2e2; }
+  &:hover { background: $ad-peligro-suave; }
 }
 
 .eticaActions {
@@ -913,7 +969,7 @@
   align-items: center;
   gap: 7px;
   padding: 0.55rem 1.2rem;
-  border-radius: $border-radius-sm;
+  border-radius: $ad-radio;
   border: none;
   background: $primary-blue;
   color: $white;
@@ -929,42 +985,42 @@
 
 .eticaCancelBtn {
   padding: 0.55rem 1rem;
-  border-radius: $border-radius-sm;
-  border: 1.5px solid #dde2ec;
+  border-radius: $ad-radio;
+  border: 1px solid $ad-borde;
   background: $white;
   font-family: inherit;
   font-size: 0.92rem;
   font-weight: 600;
-  color: #374151;
+  color: $ad-texto;
   cursor: pointer;
   transition: border-color $transition-fast, background $transition-fast;
 
   &:hover {
     border-color: $primary-blue;
-    background: #f0f4ff;
+    background: $ad-tinte;
   }
 }
 
 .eticaCurrentDate {
   font-size: 0.78rem;
-  color: #8a99b3;
+  color: $ad-texto-3;
 }
 
 .eticaCurrentObs {
   font-size: 0.82rem;
-  color: #6b7280;
+  color: $ad-texto-2;
   font-style: italic;
 }
 
 .eticaCurrentEmpty {
   font-size: 0.88rem;
-  color: #8a99b3;
+  color: $ad-texto-3;
   font-style: italic;
 }
 
 .eticaLoadingText {
   font-size: 0.88rem;
-  color: #8a99b3;
+  color: $ad-texto-3;
 }
 
 .eticaViewLink {
@@ -989,7 +1045,7 @@
   label {
     font-size: 0.82rem;
     font-weight: 600;
-    color: #6b7280;
+    color: $ad-texto-2;
     text-transform: uppercase;
     letter-spacing: 0.4px;
   }
@@ -998,13 +1054,13 @@
 .eticaObsTextarea {
   resize: vertical;
   min-height: 56px;
-  border: 1.5px solid #dde2ec;
-  border-radius: $border-radius-sm;
+  border: 1px solid $ad-borde;
+  border-radius: $ad-radio;
   padding: 8px 12px;
   font-family: inherit;
   font-size: 0.9rem;
   color: $dark-gray;
-  background: #fafbfc;
+  background: $ad-superficie-2;
   transition: border-color $transition-fast;
 
   &:focus {
@@ -1020,7 +1076,7 @@
   justify-content: space-between;
   gap: 8px;
   padding: 10px 14px;
-  border-radius: $border-radius-sm;
+  border-radius: $ad-radio;
   font-size: 0.9rem;
   font-weight: 500;
 
@@ -1036,26 +1092,26 @@
 }
 
 .eticaSuccessBanner {
-  background: #f0fdf4;
-  border: 1.5px solid #bbf7d0;
-  color: #166534;
+  background: $ad-ok-fondo;
+  border: 1px solid $ad-ok-fondo;
+  color: $ad-ok;
 
-  button { color: #166534; }
+  button { color: $ad-ok; }
 }
 
 .eticaErrorBanner {
-  background: #fef2f2;
-  border: 1.5px solid #fecaca;
-  color: #991b1b;
+  background: $ad-peligro-fondo;
+  border: 1px solid $ad-peligro-borde;
+  color: $ad-peligro-oscuro;
 
-  button { color: #991b1b; }
+  button { color: $ad-peligro-oscuro; }
 }
 
 .eticaHistorial {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  border-top: 1.5px solid #eaecf0;
+  border-top: 1px solid $ad-borde;
   padding-top: $spacing-lg;
 }
 
@@ -1086,9 +1142,9 @@
   align-items: center;
   gap: $spacing-sm;
   padding: 10px 14px;
-  border: 1.5px solid #eaecf0;
-  border-radius: $border-radius-sm;
-  background: #fafbfc;
+  border: 1px solid $ad-borde;
+  border-radius: $ad-radio;
+  background: $ad-superficie-2;
 }
 
 .eticaHistorialMeta {
@@ -1110,12 +1166,12 @@
 
 .eticaHistorialDate {
   font-size: 0.78rem;
-  color: #8a99b3;
+  color: $ad-texto-3;
 }
 
 .eticaHistorialObs {
   font-size: 0.8rem;
-  color: #6b7280;
+  color: $ad-texto-2;
   font-style: italic;
   white-space: nowrap;
   overflow: hidden;
@@ -1133,20 +1189,20 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #dc2626;
+  color: $ad-peligro;
   display: inline-flex;
   align-items: center;
   padding: 4px;
-  border-radius: 4px;
+  border-radius: $ad-radio-chico;
   transition: background $transition-fast;
 
-  &:hover { background: #fee2e2; }
+  &:hover { background: $ad-peligro-suave; }
   &:disabled { opacity: 0.4; cursor: not-allowed; }
 }
 
 .eticaNoData {
   font-size: 0.88rem;
-  color: #8a99b3;
+  color: $ad-texto-3;
   text-align: center;
   padding: 12px 0;
   margin: 0;
@@ -1236,7 +1292,7 @@
   .noticias,
   .form {
     padding: $spacing-md;
-    border-radius: $border-radius-md;
+    border-radius: $ad-radio;
   }
 
   .list {
@@ -1244,7 +1300,7 @@
   }
 
   .noticiaItem {
-    border-radius: $border-radius-sm;
+    border-radius: $ad-radio;
   }
 
   .noticiaContent h3 {
@@ -1304,7 +1360,7 @@
   border: 1px solid rgba($primary-blue, 0.3);
   background: rgba($primary-blue, 0.08);
   color: $primary-blue;
-  border-radius: 999px;
+  border-radius: $ad-radio-pill;
   padding: 3px 10px;
   font-size: 0.8rem;
   font-weight: 600;
@@ -1321,8 +1377,8 @@
 .osList {
   max-height: 220px;
   overflow-y: auto;
-  border: 1.5px solid #dde2ec;
-  border-radius: $border-radius-sm;
+  border: 1px solid $ad-borde;
+  border-radius: $ad-radio;
   background: $white;
   padding: 6px;
 }
@@ -1332,14 +1388,14 @@
   align-items: center;
   gap: 8px;
   padding: 5px 8px;
-  border-radius: $border-radius-sm;
+  border-radius: $ad-radio;
   font-size: 0.85rem;
   font-weight: 400;
-  color: #374151;
+  color: $ad-texto;
   cursor: pointer;
 
   &:hover {
-    background: #f4f7fd;
+    background: $ad-superficie-2;
   }
 
   input {
@@ -1350,6 +1406,6 @@
 
 .osHint {
   font-size: 0.8rem;
-  color: #8a99b3;
+  color: $ad-texto-3;
   margin: 2px 0 0;
 }

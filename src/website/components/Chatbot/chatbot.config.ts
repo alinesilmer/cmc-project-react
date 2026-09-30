@@ -165,17 +165,6 @@ export const INTENTS: Intent[] = [
       "comodidades en la sección dedicada.",
     links: [{ label: "Ver la Quinta", href: "/quinta" }],
   },
-  {
-    id: "galeria",
-    keywords: [
-      "galeria", "fotos", "fotografias", "imagenes", "album",
-      "eventos fotografias", "ver fotos",
-    ],
-    answer:
-      "En nuestra Galería puede ver imágenes de eventos, actividades " +
-      "e instalaciones del Colegio Médico de Corrientes.",
-    links: [{ label: "Ver Galería", href: "/galeria" }],
-  },
 
   // ── Must come BEFORE obras_sociales to match specific queries first ──────────
 

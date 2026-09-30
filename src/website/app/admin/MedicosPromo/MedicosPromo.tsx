@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import Button from "../../../components/UI/Button/Button";
 import styles from "./MedicosPromo.module.scss";
+import { IMAGENES, accept, motivoDeRechazo } from "../../../lib/subidas";
 import type { PubAd, DoctorLite } from "../../../lib/ads.client";
 import {
   listAds,
@@ -53,6 +54,30 @@ export default function AdminMedicosPromo() {
       }
     })();
   }, []);
+
+  // Un `alert()` bloquea la pestaña, se ve distinto en cada navegador y no
+  // deja copiar el texto. Los errores van en la pantalla, donde pasó la cosa.
+  const [aviso, setAviso] = useState<string | null>(null);
+
+  /** Valida antes de aceptar el archivo: el `accept` del input es sólo una
+   * sugerencia del diálogo, no un filtro. */
+  const elegirImagen = (
+    file: File | null,
+    set: (f: File | null) => void
+  ): void => {
+    if (!file) {
+      set(null);
+      return;
+    }
+    const motivo = motivoDeRechazo(file, IMAGENES);
+    if (motivo) {
+      setAviso(motivo);
+      set(null);
+      return;
+    }
+    setAviso(null);
+    set(file);
+  };
 
   // ---- búsqueda de médicos (crear)
   useEffect(() => {
@@ -123,11 +148,11 @@ export default function AdminMedicosPromo() {
   const onCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedDoctor) {
-      alert("Selecciona un médico");
+      setAviso("Elegí un médico de la lista.");
       return;
     }
     if (!fileNew) {
-      alert("Subí una imagen");
+      setAviso("Falta la imagen del aviso.");
       return;
     }
     try {
@@ -144,7 +169,7 @@ export default function AdminMedicosPromo() {
       if (fileNewRef.current) fileNewRef.current.value = "";
     } catch (e) {
       console.error(e);
-      alert("No se pudo crear la publicidad");
+      setAviso("No pudimos crear el aviso. Reintentá en unos minutos.");
     }
   };
 
@@ -178,7 +203,7 @@ export default function AdminMedicosPromo() {
   // ---- guardar edición
   const saveEdit = async (ad: PubAd) => {
     try {
-      const fields: any = {};
+      const fields: Partial<{ medico_id: number; activo: boolean }> = {};
       if (editSelectedDoctor) fields.medico_id = editSelectedDoctor.id;
       if (typeof editActivo === "boolean") fields.activo = editActivo;
       const updated = await updateAd(ad.id, fields, editFile || undefined);
@@ -186,7 +211,7 @@ export default function AdminMedicosPromo() {
       cancelEdit();
     } catch (e) {
       console.error(e);
-      alert("No se pudo actualizar");
+      setAviso("No pudimos guardar los cambios. Reintentá en unos minutos.");
     }
   };
 
@@ -197,12 +222,25 @@ export default function AdminMedicosPromo() {
       setAds((prev) => prev.map((x) => (x.id === ad.id ? updated : x)));
     } catch (e) {
       console.error(e);
-      alert("No se pudo cambiar el estado");
+      setAviso("No pudimos cambiar el estado del aviso.");
     }
   };
 
   return (
     <div className={styles.wrap}>
+      {aviso && (
+        <p className={styles.aviso} role="status">
+          {aviso}
+          <button
+            type="button"
+            className={styles.avisoCerrar}
+            onClick={() => setAviso(null)}
+            aria-label="Cerrar el aviso"
+          >
+            ×
+          </button>
+        </p>
+      )}
       {/* Formulario de creación */}
       <section className={styles.formSection}>
         <h2>Agregar publicidad de médico</h2>
@@ -280,9 +318,11 @@ export default function AdminMedicosPromo() {
               <input
                 ref={fileNewRef}
                 type="file"
-                accept="image/*"
+                accept={accept(IMAGENES)}
                 hidden
-                onChange={(e) => setFileNew(e.target.files?.[0] || null)}
+                onChange={(e) =>
+                  elegirImagen(e.target.files?.[0] || null, setFileNew)
+                }
               />
               {fileNew && (
                 <span className={styles.filename}>{fileNew.name}</span>
@@ -406,10 +446,10 @@ export default function AdminMedicosPromo() {
                           <input
                             ref={editFileRef}
                             type="file"
-                            accept="image/*"
+                            accept={accept(IMAGENES)}
                             hidden
                             onChange={(e) =>
-                              setEditFile(e.target.files?.[0] || null)
+                              elegirImagen(e.target.files?.[0] || null, setEditFile)
                             }
                           />
                           {editFile && (

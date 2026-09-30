@@ -1,14 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus as FiPlus, SquarePen as FiEdit, Trash2 as FiTrash2, LogOut as FiLogOut, Search as FiSearch } from "lucide-react";
+import { Plus as FiPlus, SquarePen as FiEdit, Trash2 as FiTrash2, Search as FiSearch } from "lucide-react";
 import FaWhatsapp from "../../../components/UI/icons/WhatsappIcon";
 import Button from "../../../components/UI/Button/Button";
 import AdminMedicosPromo from "../MedicosPromo/MedicosPromo";
 import NewsForm from "./NewsForm";
 import ValoresEticos from "./ValoresEticos";
 import styles from "./dashboard.module.scss";
-import { useAuth } from "../../../../app/auth/AuthProvider";
 
 import {
   listNews,
@@ -46,10 +45,14 @@ function fmtDate(d: Date | string | undefined) {
 }
 
 export default function DashboardPage() {
-  const navigate = useNavigate();
-  const { logout } = useAuth();
+  // El tab sale de la URL para que `?tab=promo` siga siendo enlazable: es a
+  // donde redirige la vieja dirección del sitio (/admin/medicos-promo).
+  const [params, setParams] = useSearchParams();
 
-  const [tab, setTab] = useState<Tab>("noticias");
+
+  const tab = (params.get("tab") as Tab | null) ?? "noticias";
+  const setTab = (t: Tab) =>
+    setParams(t === "noticias" ? {} : { tab: t }, { replace: true });
   const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -66,23 +69,30 @@ export default function DashboardPage() {
     return () => clearTimeout(id);
   }, [q]);
 
-  useEffect(() => {
-    if (tab !== "noticias") return;
-    void cargarNoticias();
-  }, [tab, tipo]);
+  // Cambiar de filtro rápido dispara varias lecturas y no vuelven en orden:
+  // sin esto, la respuesta de un filtro viejo puede pisar a la del actual.
+  const pedido = useRef(0);
 
-  const cargarNoticias = async () => {
+  const cargarNoticias = useCallback(async () => {
+    const mio = ++pedido.current;
     try {
       setLoading(true);
       const data = await listNews(tipo === "Todos" ? undefined : { tipo });
+      if (mio !== pedido.current) return;
       setNoticias(data);
     } catch (error) {
       console.error("Error al cargar noticias:", error);
+      if (mio !== pedido.current) return;
       setOpError("Error al cargar las publicaciones. Intentá de nuevo.");
     } finally {
-      setLoading(false);
+      if (mio === pedido.current) setLoading(false);
     }
-  };
+  }, [tipo]);
+
+  useEffect(() => {
+    if (tab !== "noticias") return;
+    void cargarNoticias();
+  }, [tab, cargarNoticias]);
 
   const handleEdit = (n: Noticia) => {
     setEditingId(n.id);
@@ -108,14 +118,6 @@ export default function DashboardPage() {
     } catch (error) {
       console.error("Error al eliminar noticia:", error);
       setOpError("Error al eliminar la publicación. Por favor, intentá de nuevo.");
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } finally {
-      navigate("/panel/login", { replace: true });
     }
   };
 
@@ -209,9 +211,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <Button variant="ghost" size="medium" icon={<FiLogOut />} onClick={handleLogout}>
-          Cerrar Sesión
-        </Button>
       </header>
 
       <div className={styles.container}>

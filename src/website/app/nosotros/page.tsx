@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Heart as FaHeart, Handshake as FaHandshake, Lightbulb as FaLightbulb, Search as FaMagnifyingGlass } from "lucide-react";
 import styles from "./nosotros.module.scss";
 import PageHero from "../../components/UI/Hero/Hero";
+import { useTituloPagina } from "../../lib/useTituloPagina";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -51,6 +52,8 @@ const HIGHLIGHT_CARDS = [
 ] as const;
 
 export default function NosotrosPage() {
+  useTituloPagina("Nosotros");
+
   return (
     <div className={styles.page}>
       <PageHero

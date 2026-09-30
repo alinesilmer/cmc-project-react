@@ -6,6 +6,7 @@ import type { ListadoTextos } from "../../components/Contenido/ListadoContenido/
 import PageHero from "../../components/UI/Hero/Hero";
 import { listCourses } from "../../lib/news.client";
 import type { Noticia } from "../../types";
+import { useTituloPagina } from "../../lib/useTituloPagina";
 
 const TEXTOS: ListadoTextos = {
   singular: "curso",
@@ -22,12 +23,7 @@ export default function CursosPage() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    document.title = "Cursos y Capacitaciones | Colegio Médico de Corrientes";
-    return () => {
-      document.title = "Colegio Médico de Corrientes";
-    };
-  }, []);
+  useTituloPagina("Cursos y Capacitaciones");
 
   useEffect(() => {
     void cargar();

@@ -1,13 +1,20 @@
 import { getJSON, http } from "./http";
 import type { Noticia, NoticiaDetail } from "../types/index";
 
-function adaptNewsDetail(n: any): NoticiaDetail {
-  if (!n || typeof n !== "object") return n;
+// La API mezcla camelCase y snake_case en las fechas según el endpoint, así
+// que el adaptador recibe algo de forma desconocida y normaliza. `unknown`
+// en vez de `any` para que el chequeo de objeto sea obligatorio.
+function adaptNewsDetail(n: unknown): NoticiaDetail {
+  if (!n || typeof n !== "object") return n as NoticiaDetail;
+  const crudo = n as Record<string, unknown>;
   return {
-    ...n,
+    ...(crudo as unknown as NoticiaDetail),
     // normalizo fechas
-    fechaCreacion: n.fechaCreacion ?? n.fecha_creacion ?? null,
-    fechaActualizacion: n.fechaActualizacion ?? n.fecha_actualizacion ?? null,
+    fechaCreacion: (crudo.fechaCreacion ?? crudo.fecha_creacion ?? null) as
+      NoticiaDetail["fechaCreacion"],
+    fechaActualizacion: (crudo.fechaActualizacion ??
+      crudo.fecha_actualizacion ??
+      null) as NoticiaDetail["fechaActualizacion"],
   };
 }
 
