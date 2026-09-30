@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ClipboardList, Pencil, Copy, ArrowRightCircle, ArrowLeftCircle, Trash2, Users, ChevronDown, ChevronUp,
@@ -81,7 +81,7 @@ const tipoPrestadorAbrev = (t: TipoPrestador): string | null => {
     case "Medico":   return "M";
     case "Ayudante": return "A";
     case "Gastos":   return "C";
-    case "Pediatra": return "P";
+    case "Pediatra": return "PE";
     default:         return null;
   }
 };
@@ -136,6 +136,11 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
 
   const [rows, setRows] = useState<PrestacionRead[]>([]);
   const [totalCount, setTotalCount] = useState<number | undefined>(undefined);
+  // Unidades facturadas (cantidad × sesión), no filas: es lo que muestra el pie.
+  const totalUnidades = useMemo(
+    () => rows.reduce((acc, r) => acc + (r.cantidad || 1) * (r.sesion || 1), 0),
+    [rows],
+  );
   const [loading, setLoading] = useState(false);
   const [busyIds, setBusyIds] = useState<Set<number>>(new Set());
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
@@ -439,6 +444,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                 <th>Código</th>
                 <th>Vía</th>
                 <th>Nro Afiliado</th>
+                <th>Afiliado</th>
                 <th>Cantidad</th>
                 <th>%</th>
                 <th>Honorarios</th>
@@ -452,10 +458,10 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
             </thead>
             <tbody>
               {loading && (
-                <tr><td colSpan={17} className={styles.loadingCell}>Cargando…</td></tr>
+                <tr><td colSpan={18} className={styles.loadingCell}>Cargando…</td></tr>
               )}
               {!loading && rows.length === 0 && (
-                <tr><td colSpan={17} className={styles.emptyCell}>Este médico no tiene prestaciones cargadas.</td></tr>
+                <tr><td colSpan={18} className={styles.emptyCell}>Este médico no tiene prestaciones cargadas.</td></tr>
               )}
               {!loading && rows.map((row) => {
                 const editable = row.estado === "A";
@@ -519,6 +525,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                       ) : <span className={styles.mutedText}>—</span>}
                     </td>
                     <td>{row.dni_paciente || <span className={styles.mutedText}>—</span>}</td>
+                    <td>{row.nombre_paciente || <span className={styles.mutedText}>—</span>}</td>
                     <td>
                       <div className={styles.cantidadCell}>
                         <span className={styles.cantidadMain}>Cant. {row.cantidad ?? "—"}</span>
@@ -614,7 +621,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                   </tr>
                   {esEquipo && abierto && (
                     <tr className={styles.teamDetailRow}>
-                      <td colSpan={17}>
+                      <td colSpan={18}>
                         <div className={styles.teamDetailContent}>
                           <span className={styles.teamDetailLabel}>
                             <Users size={13} /> Integrantes del equipo
@@ -656,7 +663,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
         {/* Sin paginado: el pie sólo informa cuántas filas hay en pantalla. */}
         <div className={styles.pagination}>
           <span className={styles.pageInfo}>
-            {totalCount !== undefined ? `${totalCount} prestación${totalCount !== 1 ? "es" : ""}` : "—"}
+            {totalCount !== undefined ? `${totalUnidades} prestación${totalUnidades !== 1 ? "es" : ""}` : "—"}
           </span>
         </div>
       </div>

@@ -1,7 +1,8 @@
 import React from "react";
 import Card from "@/app/components/ui/Card/Card";
 
-type CampoMantenible = "obraSocial" | "medico" | "paciente" | "fecha" | "clinica" | "autorizacion";
+type CampoMantenible =
+  | "obraSocial" | "medico" | "paciente" | "fecha" | "clinica" | "autorizacion" | "codigo";
 
 interface Props {
   mantener: Record<CampoMantenible, boolean>;
@@ -21,12 +22,15 @@ const ETIQUETAS: Record<CampoMantenible, string> = {
   fecha: "Fecha",
   clinica: "Clínica",
   autorizacion: "Nro de autorización",
+  codigo: "Código",
 };
 
 const ResumenLateralCard: React.FC<Props> = ({
   mantener, onMantenerChange, showFecha = true, showObraSocial = true,
 }) => {
-  const campos = (["obraSocial", "medico", "paciente", "fecha", "clinica", "autorizacion"] as const).filter(
+  const campos = (
+    ["obraSocial", "medico", "paciente", "fecha", "clinica", "autorizacion", "codigo"] as const
+  ).filter(
     (k) => (k !== "fecha" || showFecha) && (k !== "obraSocial" || showObraSocial),
   );
 

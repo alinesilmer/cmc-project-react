@@ -1,16 +1,18 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   UserSearch, Search, AlertTriangle, FileSpreadsheet, FileText, Loader2,
 } from "lucide-react";
 
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
-import { listarPrestaciones, fetchMedicos, descargarExportPorMedico } from "../api";
+import { listarPrestaciones, fetchMedicos, fetchMedicosTodos, descargarExportPorMedico } from "../api";
 import { detailMessage } from "../types";
 import type { MedicoOption, PrestacionRead, Tipo } from "../types";
 import { formatMoney, parseMoney } from "../money";
 import { saveAs } from "@/app/shared/lib/fileSaver";
 import TablaPorObraSocial from "../components/TablaPorObraSocial";
+import MedicoAutocomplete from "../components/MedicoAutocomplete";
+import { dedupePorId } from "../components/localSearch";
 import styles from "./DetallePorMedico.module.scss";
 
 // Tope del backend por request (GET /prestaciones: limit <= 200) y freno de
@@ -32,7 +34,30 @@ const DetallePorMedico: React.FC = () => {
   const navigate = useNavigate();
   const notify = useAppSnackbar();
 
-  const [socioInput, setSocioInput] = useState("");
+  // Buscador de socio: por Nº de socio o por nombre (mismo `/medicos` que usa
+  // el resto de facturación) — antes era un input numérico que sólo aceptaba
+  // el número de socio tipeado a mano.
+  // Precarga completa de médicos (igual que el formulario de carga): el formulario de
+  // búsqueda no se muestra hasta tenerlos, y el autocomplete filtra en memoria.
+  const [medicosPrecargados, setMedicosPrecargados] = useState<MedicoOption[] | null>(null);
+  const [errorPrecarga, setErrorPrecarga] = useState(false);
+  const [reintentoPrecarga, setReintentoPrecarga] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+    setErrorPrecarga(false);
+    (async () => {
+      try {
+        const medicos = await fetchMedicosTodos();
+        if (active) setMedicosPrecargados(dedupePorId(medicos, (m) => m.cod));
+      } catch {
+        if (active) setErrorPrecarga(true);
+      }
+    })();
+    return () => { active = false; };
+  }, [reintentoPrecarga]);
+
+  const [medicoElegido, setMedicoElegido] = useState<MedicoOption | null>(null);
   const [periodoInput, setPeriodoInput] = useState("");
 
   const [rows, setRows] = useState<PrestacionRead[] | null>(null);
@@ -43,14 +68,10 @@ const DetallePorMedico: React.FC = () => {
   const [exportando, setExportando] = useState<"pdf" | "xlsx" | null>(null);
 
   const buscar = async () => {
-    const socio = socioInput.trim();
+    const socio = medicoElegido?.cod?.trim() ?? "";
     const periodo = periodoInput.trim();
     if (!socio || !periodo) {
-      notify("Completá el número de socio y el período.", "error");
-      return;
-    }
-    if (!/^\d+$/.test(socio)) {
-      notify("El número de socio tiene que ser numérico.", "error");
+      notify("Elegí un socio y completá el período.", "error");
       return;
     }
     if (!/^\d{6}$/.test(periodo)) {
@@ -107,7 +128,7 @@ const DetallePorMedico: React.FC = () => {
   };
 
   const limpiar = () => {
-    setSocioInput("");
+    setMedicoElegido(null);
     setPeriodoInput("");
     setRows(null);
     setMedico(null);
@@ -154,6 +175,33 @@ const DetallePorMedico: React.FC = () => {
 
   const hayResultados = !!busqueda && !!rows;
 
+  if (!medicosPrecargados) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <span className={styles.headerIcon}>
+            <UserSearch size={22} />
+          </span>
+          <div>
+            <h1 className={styles.title}>Detalle por médico</h1>
+          </div>
+        </div>
+        {errorPrecarga ? (
+          <div className={styles.emptyState}>
+            <p className={styles.emptyTextStrong}>⚠ No se pudieron cargar los médicos.</p>
+            <button type="button" className={styles.searchBtn} onClick={() => setReintentoPrecarga((k) => k + 1)}>
+              Reintentar
+            </button>
+          </div>
+        ) : (
+          <div className={styles.emptyState}>
+            <p className={styles.emptyText}>Cargando formulario, esperá…</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -170,16 +218,13 @@ const DetallePorMedico: React.FC = () => {
 
       <div className={styles.layout}>
         <div className={styles.toolbar}>
-          <div className={styles.filterField}>
-            <label className={styles.filterLabel}>Nº de socio</label>
-            <input
-              className={styles.input}
-              type="text"
-              inputMode="numeric"
-              placeholder="Ej. 824"
-              value={socioInput}
-              onChange={(e) => setSocioInput(e.target.value)}
-              onKeyDown={onKeyDown}
+          <div className={styles.filterField} style={{ minWidth: 260 }}>
+            <label className={styles.filterLabel}>Socio</label>
+            <MedicoAutocomplete
+              value={medicoElegido?.cod ?? null}
+              onChange={(_cod, m) => setMedicoElegido(m)}
+              blurOnSelect={false}
+              medicosPrecargados={medicosPrecargados}
             />
           </div>
 
@@ -289,8 +334,8 @@ const DetallePorMedico: React.FC = () => {
           <div className={styles.emptyState}>
             <span className={styles.emptyIcon}><UserSearch size={24} /></span>
             <p className={styles.emptyText}>
-              Ingresá el número de socio y el período (AAAAMM) para ver el detalle
-              completo de las prestaciones de ese médico.
+              Buscá al socio por número o por nombre y completá el período (AAAAMM)
+              para ver el detalle completo de las prestaciones de ese médico.
             </p>
           </div>
         )}
@@ -320,6 +365,7 @@ const DetallePorMedico: React.FC = () => {
             prestaciones={rows!}
             cargando={false}
             onRowClick={(p) => verFicha(p.id)}
+            mostrarCodigoOS
           />
         )}
       </div>

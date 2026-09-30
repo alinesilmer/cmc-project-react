@@ -143,7 +143,7 @@ export default function Homologador() {
 
   function selectNom(n: NomencladorOut) {
     setSelectedNom(n);
-    setNomLabels((prev) => ({ ...prev, [n.id]: `${n.codigo} — ${n.descripcion}` }));
+    setNomLabels((prev) => ({ ...prev, [n.id]: `${n.codigo} — ${n.categoria ?? ""}` }));
     setNomSearch("");
     setNomResults([]);
     setFormErrors((p) => ({ ...p, nomenclador: "" }));
@@ -167,7 +167,7 @@ export default function Homologador() {
       });
       setNomLabels((prev) => ({
         ...prev,
-        [created.nomenclador_id]: selectedNom ? `${selectedNom.codigo} — ${selectedNom.descripcion}` : String(created.nomenclador_id),
+        [created.nomenclador_id]: selectedNom ? `${selectedNom.codigo} — ${selectedNom.categoria ?? ""}` : String(created.nomenclador_id),
       }));
       await queryClient.invalidateQueries({ queryKey: ["homologaciones", osNro] });
       showToast("success", "Homologación creada.");
@@ -307,7 +307,7 @@ export default function Homologador() {
                         {selectedNom ? (
                           <div className={styles.selectedNom}>
                             <span className={styles.selectedNomCode}>{selectedNom.codigo}</span>
-                            <span className={styles.selectedNomDesc}>{selectedNom.descripcion}</span>
+                            <span className={styles.selectedNomDesc}>{selectedNom.categoria}</span>
                             <button className={styles.clearBtn} onClick={() => setSelectedNom(null)} type="button">
                               <XIcon size={12} />
                             </button>
@@ -334,7 +334,7 @@ export default function Homologador() {
                                     onMouseDown={(e) => { e.preventDefault(); selectNom(n); }}
                                   >
                                     <span className={styles.dropdownCode}>{n.codigo}</span>
-                                    <span className={styles.dropdownDesc}>{n.descripcion}</span>
+                                    <span className={styles.dropdownDesc}>{n.categoria}</span>
                                   </li>
                                 ))}
                               </ul>

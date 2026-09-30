@@ -284,6 +284,82 @@ $shadow-md:  0 4px 16px rgba(0, 0, 0, .10);
   color: $blue-hover;
 }
 
+// ─── Dirección (asc/desc) — toggle segmentado, ver OrdenVistaSection ─────────
+
+.dirRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.dirLabel {
+  font-size: 0.75rem;
+  color: $text-3;
+}
+
+.dirGroup {
+  display: flex;
+}
+
+.dirBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border: 1px solid $border;
+  border-right: none;
+  border-radius: $radius-sm 0 0 $radius-sm;
+  background: $surface;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: $text-2;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s, color 0.15s;
+
+  &:hover { border-color: $blue; }
+}
+
+.dirBtnRight {
+  border-right: 1px solid $border;
+  border-radius: 0 $radius-sm $radius-sm 0;
+
+  &:hover { border-right-color: $blue; }
+}
+
+.dirBtnOn {
+  background: $blue-light;
+  border-color: $blue;
+  color: $blue-hover;
+
+  &.dirBtnRight { border-right-color: $blue; }
+}
+
+// ─── Ayuda contextual del criterio de orden ──────────────────────────────────
+
+.hintCallout {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: $blue-light;
+  border-radius: $radius-md;
+}
+
+.hintIcon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: $blue;
+}
+
+.hintText {
+  font-size: 0.78rem;
+  color: $text-1;
+  line-height: 1.4;
+  margin: 0;
+}
+
 .chipRow {
   display: flex;
   flex-wrap: wrap;

@@ -1,27 +1,29 @@
 // Carga de la tabla "códigos por especialidad" de una obra social.
 //
-// Tres fuentes, ninguna nueva: las tres rutas ya existen y ya están declaradas
-// en `authz.py` (`nomenclador:leer` las tres; el catálogo de especialidades del
-// Colegio pide `catalogo:leer`). No hace falta tocar el backend.
+// Fase 2 de la reestructura del nomenclador: descripción y "sin restricción de
+// especialidad" dejaron de ser del catálogo del Colegio — son datos por (obra
+// social, código), en `nm_valores`. Cuatro fuentes:
 //
-//  1. `/api/nomenclador/?obra_social_nro=N` — QUÉ códigos existen para esa OS
-//     (propios + compartidos del Colegio) y de dónde salen `complejidad` y
-//     `sin_restriccion_especialidad`. Con rol `medico` el backend ya recorta la
-//     lista a lo que ese médico tiene habilitado, así que esta fuente es la que
-//     mantiene el cerco: elegir otra especialidad en el combo NO amplía lo que
-//     ve, porque el cruce siempre se hace contra esta lista.
-//  2. `/api/nomenclador/especialidades?especialidad_id_colegio=E` — QUÉ códigos
-//     están mapeados a la especialidad elegida (nm_nomenclador_especialidad).
-//     El endpoint no filtra por obra social; el recorte por OS lo da (1).
-//  3. `/api/reportes_nm/tabla_valores` — CUÁNTO vale cada código en esa OS, ya
-//     colapsado a una fila por código, con `origen` (NE > NNE > NN), `nivel` y
-//     los componentes. `especialidades` acá no filtra: solo elige qué variante
-//     de precio gana, por eso hay que cruzar igual con (1) y (2).
+//  1. `/api/nomenclador/?obra_social_nro=N` — QUÉ códigos ve el usuario logueado
+//     (con rol médico, ya recortado a lo habilitado). Da la membresía; ya no da
+//     descripción ni "sin restricción".
+//  2. `/api/reportes_nm/tabla_valores` SIN filtro de especialidad — descripción y
+//     "sin restricción" de cada código CON PRECIO VIGENTE en esa OS (`Valor.
+//     descripcion` / `Valor.sin_restriccion_especialidad` de la variante ganadora).
+//     Los códigos sin precio cargado todavía no tienen esta info — quedan con
+//     descripción vacía y "sin restricción" en false hasta que se les cargue un
+//     Valor.
+//  3. `/api/nomenclador/especialidades?obra_social_nro=N&especialidad_id_colegio=E`
+//     — QUÉ códigos están habilitados para esa especialidad EN ESTA OS
+//     (`nm_valor_especialidad`).
+//  4. `/api/reportes_nm/tabla_valores` con `especialidades=[E]` — CUÁNTO vale cada
+//     código en esa OS con esa especialidad, colapsado a una fila por código, con
+//     `origen` (NE > NN), `nivel` y los componentes.
 
 import { paginar } from "@/app/shared/lib/paginar";
 import {
   listNomenclador,
-  listNomencladorEspecialidadesResumen,
+  listCodigosPorEspecialidad,
   getTablaValores,
 } from "../nomenclador.api";
 import type { NomencladorOut, TablaValorItem, ViaPractica } from "../nomenclador.types";
@@ -47,21 +49,42 @@ export const fetchCatalogoOS = (obraSocialNro: number): Promise<NomencladorOut[]
     { size: NOM_PAGE, maxPaginas: MAX_PAGINAS },
   );
 
-/** Códigos mapeados a una especialidad (mapeo activo), en MAYÚSCULAS. */
+/** Códigos habilitados para una especialidad, EN ESTA OS (mapeo activo), en MAYÚSCULAS. */
 export async function fetchCodigosDeEspecialidad(
+  obraSocialNro: number,
   especialidadIdColegio: number,
 ): Promise<Set<string>> {
   const filas = await paginar(
     (page) =>
-      listNomencladorEspecialidadesResumen({
+      listCodigosPorEspecialidad({
+        obra_social_nro: obraSocialNro,
         especialidad_id_colegio: especialidadIdColegio,
-        activo: true,
         page,
         size: ESP_PAGE,
       }),
     { size: ESP_PAGE, maxPaginas: MAX_PAGINAS },
   );
   return new Set(filas.map((f) => f.codigo.toUpperCase()));
+}
+
+/** Descripción + "sin restricción" de cada código CON PRECIO vigente en la OS, sin
+ * filtrar por especialidad — dato de la variante ganadora, ya no del catálogo. */
+export async function fetchDescripcionesOS(
+  obraSocialNro: number,
+): Promise<Map<string, { descripcion: string; universal: boolean }>> {
+  const filas = await paginar(
+    (page) =>
+      getTablaValores({ obra_social_nro: obraSocialNro, orden: "codigo", page, size: TABLA_PAGE }),
+    { size: TABLA_PAGE, maxPaginas: MAX_PAGINAS },
+  );
+  const map = new Map<string, { descripcion: string; universal: boolean }>();
+  for (const f of filas) {
+    map.set(f.codigo.toUpperCase(), {
+      descripcion: f.descripcion ?? "",
+      universal: f.sin_restriccion_especialidad,
+    });
+  }
+  return map;
 }
 
 /** Filas con precio vigente de la obra social, con la variante NE de la especialidad. */

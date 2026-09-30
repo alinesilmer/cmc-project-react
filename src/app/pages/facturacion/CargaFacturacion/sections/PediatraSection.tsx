@@ -179,7 +179,7 @@ const PediatraSection: React.FC<Props> = ({
             <label className={styles.filterLabel}>Porcentaje (%)</label>
             <NumericInput
               className={styles.input}
-              min={1} max={100}
+              min={1}
               value={linea.porcentaje}
               onChange={(v) => update({ porcentaje: v })}
               disabled={disabled}

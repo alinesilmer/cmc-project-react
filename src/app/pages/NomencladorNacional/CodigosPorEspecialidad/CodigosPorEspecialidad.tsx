@@ -7,6 +7,7 @@ import Combobox from "../ConsultaShared/Combobox";
 import {
   fetchCatalogoOS,
   fetchCodigosDeEspecialidad,
+  fetchDescripcionesOS,
   fetchTablaValores,
 } from "./codigosPorEspecialidad.api";
 import { getEspecialidades } from "../../Especialidades/especialidades.api";
@@ -112,13 +113,23 @@ export default function CodigosPorEspecialidad() {
     queryFn: () => fetchCatalogoOS(osNro as number),
   });
 
-  // Mapeo código↔especialidad: no depende de la obra social.
+  // Mapeo código↔especialidad: por obra social (nm_valor_especialidad).
   const mapeo = useQuery({
-    queryKey: ["nomenclador-codigos-especialidad", espId],
-    enabled: espId != null,
+    queryKey: ["nomenclador-codigos-especialidad", osNro, espId],
+    enabled: osNro != null && espId != null,
     staleTime: 15 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
-    queryFn: () => fetchCodigosDeEspecialidad(espId as number),
+    queryFn: () => fetchCodigosDeEspecialidad(osNro as number, espId as number),
+  });
+
+  // Descripción + "sin restricción" de cada código con precio en la OS — ya no
+  // vienen del catálogo del Colegio, son datos de la variante ganadora por OS.
+  const descripciones = useQuery({
+    queryKey: ["nomenclador-descripciones-os", osNro],
+    enabled: osNro != null,
+    staleTime: 15 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    queryFn: () => fetchDescripcionesOS(osNro as number),
   });
 
   // Los precios son la carga más pesada y NO bloquean la tabla: la lista de
@@ -141,12 +152,14 @@ export default function CodigosPorEspecialidad() {
 
   const listo = osNro != null && espId != null;
   // "Cargando" es solo la lista de códigos: los precios llegan aparte.
-  const cargando = listo && (!catalogo.data || !mapeo.data);
+  const cargando = listo && (!catalogo.data || !mapeo.data || !descripciones.data);
   const cargandoPrecios = listo && !valores.data && !valores.isError;
-  const conError = catalogo.isError || mapeo.isError;
+  const conError = catalogo.isError || mapeo.isError || descripciones.isError;
 
   // El cruce. `catalogo` es el cerco: con rol médico ya viene recortado por el
   // backend, así que elegir otra especialidad en el combo nunca muestra de más.
+  // Descripción y "sin restricción" salen de `descripciones` (por OS, ya no del
+  // catálogo) — códigos sin precio cargado todavía quedan con descripción vacía.
   const filas = useMemo<Fila[]>(() => {
     if (!listo || !catalogo.data || !mapeo.data) return [];
 
@@ -155,20 +168,23 @@ export default function CodigosPorEspecialidad() {
     const porCodigo = new Map(
       (valores.data ?? []).map((v) => [v.codigo.toUpperCase(), v] as const),
     );
+    const descPorCodigo = descripciones.data ?? new Map<string, { descripcion: string; universal: boolean }>();
 
     const out: Fila[] = [];
     for (const n of catalogo.data) {
       const cod = n.codigo.toUpperCase();
+      const info = descPorCodigo.get(cod);
+      const universal = info?.universal ?? false;
       // Entra si está mapeado a la especialidad elegida o si es universal
       // (`sin_restriccion_especialidad`), igual que el gate del backend.
-      if (!mapeo.data.has(cod) && !n.sin_restriccion_especialidad) continue;
+      if (!mapeo.data.has(cod) && !universal) continue;
 
       const v = porCodigo.get(cod);
       out.push({
         codigo: n.codigo,
-        descripcion: n.descripcion,
+        descripcion: info?.descripcion ?? "",
         complejidad: n.complejidad,
-        universal: n.sin_restriccion_especialidad,
+        universal,
         origen: v?.origen ?? null,
         nivel: v?.nivel ?? null,
         precioTotal: v ? parseFloat(v.precio_total) : null,
@@ -177,7 +193,7 @@ export default function CodigosPorEspecialidad() {
     }
     out.sort((a, b) => a.codigo.localeCompare(b.codigo, "es", { numeric: true }));
     return out;
-  }, [listo, catalogo.data, mapeo.data, valores.data]);
+  }, [listo, catalogo.data, mapeo.data, valores.data, descripciones.data]);
 
   const niveles = useMemo(() => {
     const set = new Set<number>();

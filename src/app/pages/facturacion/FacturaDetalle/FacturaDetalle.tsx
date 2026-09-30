@@ -15,11 +15,12 @@ import type {
   FacturaDetalleResponse, PrestacionFacturaDetalle, Tipo,
 } from "../types";
 import { detailMessage } from "../types";
+import { TIPO_ABREV, TIPO_LABEL, TIPO_PRESTADOR_ABREV } from "../constants";
 import { formatMoney, parseMoney } from "../money";
 import ConfirmActionModal from "../components/ConfirmActionModal";
 import ExportPanel from "./export/ExportPanel";
 import VistaPanel from "./vista/VistaPanel";
-import type { ColumnaVista, FiltrosVista, OrdenVista, VistaOpciones } from "./vista/types";
+import type { ColumnaVista, FiltrosVista, OrdenDireccion, OrdenVista, VistaOpciones } from "./vista/types";
 import { COLUMNAS_VISTA_DISPONIBLES, ORDEN_TIPOS, PESO_COLUMNA, VISTA_OPCIONES_DEFAULT } from "./vista/types";
 import styles from "./FacturaDetalle.module.scss";
 
@@ -105,16 +106,19 @@ const sumarTotales = (arr: PrestacionConSocio[]) => arr.reduce(
   { totalHonorarios: 0, totalGastos: 0, totalSubtotal: 0 },
 );
 
-const compararPorOrden = (a: PrestacionConSocio, b: PrestacionConSocio, orden: OrdenVista): number => {
+const compararPorOrden = (
+  a: PrestacionConSocio, b: PrestacionConSocio, orden: OrdenVista, direccion: OrdenDireccion,
+): number => {
+  const signo = direccion === "desc" ? -1 : 1;
   switch (orden) {
     case "fecha":
-      return (a.fecha_practica ?? "").localeCompare(b.fecha_practica ?? "");
+      return signo * (a.fecha_practica ?? "").localeCompare(b.fecha_practica ?? "");
     case "codigo":
-      return (a.codigo ?? "").localeCompare(b.codigo ?? "", "es");
-    case "monto_desc":
-      return parseMoney(b.subtotal) - parseMoney(a.subtotal);
+      return signo * (a.codigo ?? "").localeCompare(b.codigo ?? "", "es");
+    case "importe":
+      return signo * (parseMoney(a.subtotal) - parseMoney(b.subtotal));
     case "nombre_socio":
-      return (a.nombreSocio ?? a.cod_medico).localeCompare(b.nombreSocio ?? b.cod_medico, "es", { sensitivity: "base" });
+      return signo * (a.nombreSocio ?? a.cod_medico).localeCompare(b.nombreSocio ?? b.cod_medico, "es", { sensitivity: "base" });
     default:
       return 0;
   }
@@ -375,7 +379,7 @@ const FacturaDetalle: React.FC = () => {
 
   const vistaGrupos = useMemo<VistaGrupo[]>(() => {
     if (vistaOpciones.agrupacion === "plana") {
-      const ordenadas = [...filtradas].sort((a, b) => compararPorOrden(a, b, vistaOpciones.orden));
+      const ordenadas = [...filtradas].sort((a, b) => compararPorOrden(a, b, vistaOpciones.orden, vistaOpciones.direccion));
       return [{ key: "__plana__", titulo: "", prestaciones: ordenadas, mostrarResumen: false, ...sumarTotales(ordenadas) }];
     }
 
@@ -385,7 +389,7 @@ const FacturaDetalle: React.FC = () => {
         .map((arr, i) => ({ tipo: ORDEN_TIPOS[i], arr }))
         .filter(({ arr }) => arr.length > 0)
         .map(({ tipo, arr }) => {
-          const ordenadas = [...arr].sort((a, b) => compararPorOrden(a, b, vistaOpciones.orden));
+          const ordenadas = [...arr].sort((a, b) => compararPorOrden(a, b, vistaOpciones.orden, vistaOpciones.direccion));
           return { key: `tipo-${tipo}`, titulo: tipo, prestaciones: ordenadas, mostrarResumen: true, ...sumarTotales(ordenadas) };
         });
     }
@@ -398,13 +402,18 @@ const FacturaDetalle: React.FC = () => {
       porSocio.set(p.cod_medico, arr);
     }
     const entries = [...porSocio.entries()].map(([cod, arr]) => {
-      const ordenadas = [...arr].sort((a, b) => compararPorOrden(a, b, vistaOpciones.orden));
-      const titulo = `Socio ${cod} ${arr[0]?.nombreSocio ?? ""}`.trim();
-      return { key: cod, titulo, prestaciones: ordenadas, mostrarResumen: true, ...sumarTotales(ordenadas) };
+      const ordenadas = [...arr].sort((a, b) => compararPorOrden(a, b, vistaOpciones.orden, vistaOpciones.direccion));
+      const nombreSocio = arr[0]?.nombreSocio ?? null;
+      const titulo = `Socio ${cod} ${nombreSocio ?? ""}`.trim();
+      return { key: cod, titulo, nombreSocio, prestaciones: ordenadas, mostrarResumen: true, ...sumarTotales(ordenadas) };
     });
-    entries.sort((a, b) => a.titulo.localeCompare(b.titulo, "es", { sensitivity: "base" }));
+    // Por NOMBRE, no por `titulo`: `titulo` arranca con el número de socio ("Socio 1234 ...")
+    // y comparar esa cadena entera ordena por el número como texto ("123" antes que "45"),
+    // no por el nombre — daba un orden que parecía aleatorio en vez de A-Z.
+    entries.sort((a, b) =>
+      (a.nombreSocio ?? a.key).localeCompare(b.nombreSocio ?? b.key, "es", { sensitivity: "base" }));
     return entries;
-  }, [filtradas, vistaOpciones.agrupacion, vistaOpciones.orden]);
+  }, [filtradas, vistaOpciones.agrupacion, vistaOpciones.orden, vistaOpciones.direccion]);
 
   const columnasActivas = useMemo(
     () => COLUMNAS_VISTA_DISPONIBLES.filter((c) => vistaOpciones.columnas.includes(c.key)),
@@ -541,19 +550,26 @@ const FacturaDetalle: React.FC = () => {
         return (
           <td key={col}>
             {p.tipo_prestador ? (
-              <span className={`${styles.tipoPrestadorBadge} ${tipoPrestadorClass(p.tipo_prestador)}`}>
-                {p.tipo_prestador}
+              <span
+                className={`${styles.tipoPrestadorBadge} ${tipoPrestadorClass(p.tipo_prestador)}`}
+                title={p.tipo_prestador}
+              >
+                {TIPO_PRESTADOR_ABREV[p.tipo_prestador] ?? p.tipo_prestador}
               </span>
             ) : <span className={styles.mutedText}>—</span>}
           </td>
         );
+      case "coseguro":
+        return <td key={col}><span className={styles.moneyCell}>{formatMoney(p.coseguro)}</span></td>;
       case "subtotal":
         return <td key={col}><span className={styles.subtotalCell}>{formatMoney(p.subtotal)}</span></td>;
       case "tipo":
         return (
           <td key={col}>
             {p.tipo ? (
-              <span className={`${styles.tipoBadge} ${tipoClass(p.tipo)}`}>{p.tipo}</span>
+              <span className={`${styles.tipoBadge} ${tipoClass(p.tipo)}`} title={TIPO_LABEL[p.tipo] ?? p.tipo}>
+                {TIPO_ABREV[p.tipo] ?? p.tipo}
+              </span>
             ) : <span className={styles.mutedText}>—</span>}
           </td>
         );
@@ -619,6 +635,39 @@ const FacturaDetalle: React.FC = () => {
       }
     }
     return [renderDataRow(p)];
+  };
+
+  // Prestaciones consecutivas de una misma clínica se enmarcan bajo un encabezado
+  // naranja con su nombre; el marco engloba también las filas de equipo de cada una.
+  const renderFilasConClinica = (prestaciones: PrestacionConSocio[]): React.ReactNode[] => {
+    const out: React.ReactNode[] = [];
+    let i = 0;
+    while (i < prestaciones.length) {
+      const cod = prestaciones[i].cod_clinica;
+      if (!cod) {
+        out.push(...renderFilaConEquipo(prestaciones[i]));
+        i += 1;
+        continue;
+      }
+      let j = i;
+      while (j < prestaciones.length && prestaciones[j].cod_clinica === cod) j += 1;
+      const filas = prestaciones.slice(i, j).flatMap((p) => renderFilaConEquipo(p));
+      out.push(
+        <tr key={`clinica-${prestaciones[i].id}`} className={styles.clinicaHeadRow}>
+          <td colSpan={columnasConPeso.length}>
+            Clínica {prestaciones[i].nombre_clinica ?? cod}
+          </td>
+        </tr>,
+      );
+      filas.forEach((f, k) => {
+        if (!React.isValidElement<{ className?: string }>(f)) { out.push(f); return; }
+        const cls = [f.props.className, styles.clinicaRow, k === filas.length - 1 ? styles.clinicaRowLast : ""]
+          .filter(Boolean).join(" ");
+        out.push(React.cloneElement(f, { className: cls }));
+      });
+      i = j;
+    }
+    return out;
   };
 
   const renderResumenRow = (g: VistaGrupo) => {
@@ -774,7 +823,7 @@ const FacturaDetalle: React.FC = () => {
               )}
               {!loading && !error && detalle && vistaGrupos.map((g) => (
                 <React.Fragment key={g.key}>
-                  {g.prestaciones.flatMap((p) => renderFilaConEquipo(p))}
+                  {renderFilasConClinica(g.prestaciones)}
                   {g.mostrarResumen && renderResumenRow(g)}
                 </React.Fragment>
               ))}

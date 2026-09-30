@@ -83,14 +83,17 @@ const DatosGeneralesSection: React.FC<Props> = ({
           ) : (
             <span className={styles.mutedText}>— (seleccioná una obra social)</span>
           )}
-          {automatico && !editando && (
+          {/* Sin automático (obra social sin período cerrado previo, ver periodoError)
+             * no hay nada que ofrecer como sugerencia — pero el operador igual tiene que
+             * poder elegir uno a mano, así que el botón se habilita igual en ese caso. */}
+          {(automatico || periodoError) && !editando && (
             <button
               type="button"
               className={styles.periodoLinkBtn}
               onClick={() => setEditando(true)}
               disabled={disabled}
             >
-              Modificar período
+              {automatico ? "Modificar período" : "Elegir período"}
             </button>
           )}
           {editando && (
@@ -104,17 +107,19 @@ const DatosGeneralesSection: React.FC<Props> = ({
                 }
                 disabled={disabled}
               />
-              <button
-                type="button"
-                className={styles.periodoLinkBtn}
-                onClick={() => {
-                  onPeriodoOverrideChange(null);
-                  setEditando(false);
-                }}
-                disabled={disabled}
-              >
-                Usar automático
-              </button>
+              {automatico && (
+                <button
+                  type="button"
+                  className={styles.periodoLinkBtn}
+                  onClick={() => {
+                    onPeriodoOverrideChange(null);
+                    setEditando(false);
+                  }}
+                  disabled={disabled}
+                >
+                  Usar automático
+                </button>
+              )}
             </div>
           )}
           {fueraDeRango && (

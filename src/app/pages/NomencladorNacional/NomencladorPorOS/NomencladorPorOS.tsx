@@ -11,8 +11,8 @@ import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import SelectorVigencia from "../components/SelectorVigencia";
 import {
   listGalenos, listValores, createValor, createValorMulti, deleteValor,
-  listNomenclador, getNomencladorById, updateValorMetadata, actualizarValor,
-  listNomencladorEspecialidadesResumen, getNomencladorEspecialidades,
+  listNomenclador, updateValorMetadata, actualizarValor,
+  listCodigosPorEspecialidad,
 } from "../nomenclador.api";
 import ConfirmModal from "@/app/components/ui/ConfirmModal/ConfirmModal";
 import { getEspecialidades } from "../../Especialidades/especialidades.api";
@@ -40,6 +40,8 @@ type ValorForm = {
   origen: Origen;
   modalidad: ModalidadValor;
   vigencia_desde: string;
+  /** Obligatoria: cómo nombra esta obra social al código. */
+  descripcion: string;
   porPresupuesto: boolean;
   nivel: string;
   complejidad: string;
@@ -56,10 +58,15 @@ type ValorForm = {
 
 type EditMetaForm = {
   descripcion: string;
+  /** Dato del par (obra_social_nro, código) — se propaga en el back a todas las
+   * variantes activas del mismo par (incluida la NN) al guardar. */
+  sin_restriccion_especialidad: boolean;
+  /** Especialidades habilitadas HOY para el par. Se reemplaza por completo al
+   * guardar (no se suma) — único lugar del sistema donde se editan. */
+  especialidades: number[];
   nivel: string;
   complejidad: string;
   cantidad_ayudantes: string;
-  coseguro: string;
   observacion: string;
 };
 
@@ -67,6 +74,7 @@ type EditEcuForm = {
   vigencia_desde: string;
   modalidad: ModalidadValor;
   componentes: ComponenteForm[];
+  coseguro: string;
   /** Propaga la nueva vigencia+ecuación a las demás variantes NE del mismo código+OS. */
   aplicarAVariantes: boolean;
 };
@@ -215,7 +223,6 @@ export default function NomencladorPorOS() {
   const [valores, setValores] = useState<ValorOut[]>([]);
   const [loadingValores, setLoadingValores] = useState(false);
   const [codeSearch, setCodeSearch] = useState("");
-  const [nomDescMap, setNomDescMap] = useState<Record<number, string>>({});
   const [origenFilter, setOrigenFilter] = useState<Origen | "todos">("todos");
   // Qué carga se está mirando. Sin esto se traían todas las vigencias juntas y
   // el mismo código salía repetido una vez por carga.
@@ -224,7 +231,6 @@ export default function NomencladorPorOS() {
   const [soloPresupuesto, setSoloPresupuesto] = useState(false);
   const [especialidadFilter, setEspecialidadFilter] = useState<number | "todos">("todos");
   const [page, setPage] = useState(1);
-  const descAttempted = useRef<Set<number>>(new Set());
 
   // Modal
   const [modalKind, setModalKind] = useState<ModalKind>(null);
@@ -233,22 +239,19 @@ export default function NomencladorPorOS() {
   // Create form
   const [form, setForm] = useState<ValorForm>({
     nomencladorId: null, nomencladorLabel: "", origen: "NE",
-    modalidad: "calculable", vigencia_desde: today(),
+    modalidad: "calculable", vigencia_desde: today(), descripcion: "",
     porPresupuesto: false, nivel: "", complejidad: "", cantidad_ayudantes: "", coseguro: "", observacion: "",
     especialidadesChecked: new Set(), componentes: initComps(),
   });
-  // Especialidades habilitadas del código elegido (nm_nomenclador_especialidad),
-  // para el checklist de la variante NE. Vacío/undefined mientras no aplica o no cargó.
-  const [especialidadesHabilitadas, setEspecialidadesHabilitadas] = useState<
-    { especialidad_id_colegio: number }[] | null
-  >(null);
-  const [loadingHabilitadas, setLoadingHabilitadas] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
   // Edit forms
-  const [editMeta, setEditMeta] = useState<EditMetaForm>({ descripcion: "", nivel: "", complejidad: "", cantidad_ayudantes: "", coseguro: "", observacion: "" });
-  const [editEcu, setEditEcu] = useState<EditEcuForm>({ vigencia_desde: today(), modalidad: "calculable", componentes: initComps(), aplicarAVariantes: false });
+  const [editMeta, setEditMeta] = useState<EditMetaForm>({
+    descripcion: "", sin_restriccion_especialidad: false, especialidades: [],
+    nivel: "", complejidad: "", cantidad_ayudantes: "", observacion: "",
+  });
+  const [editEcu, setEditEcu] = useState<EditEcuForm>({ vigencia_desde: today(), modalidad: "calculable", componentes: initComps(), coseguro: "", aplicarAVariantes: false });
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
   const [savingMeta, setSavingMeta] = useState(false);
   const [savingEcu, setSavingEcu] = useState(false);
@@ -276,24 +279,26 @@ export default function NomencladorPorOS() {
     return m;
   }, [especialidades]);
 
-  // IDs de nomenclador conectados a la especialidad elegida (para acotar el listado).
-  // Se traen todos los pares de la especialidad (paginando) y se guardan como Set.
+  // Códigos habilitados para la especialidad elegida EN ESTA OS (para acotar el
+  // listado). Se traen todos los pares (paginando) y se guardan como Set de códigos
+  // en mayúsculas — las especialidades son un dato por obra social.
   const { data: codigosDeEspecialidad, isFetching: espFilterFetching } = useQuery({
-    queryKey: ["nomenclador-especialidad-codigos", especialidadFilter],
+    queryKey: ["nomenclador-especialidad-codigos", selectedNroOS, especialidadFilter],
     queryFn: async () => {
-      const ids = new Set<number>();
+      const codigos = new Set<string>();
       for (let p = 1; p <= 100; p++) {
-        const batch = await listNomencladorEspecialidadesResumen({
+        const batch = await listCodigosPorEspecialidad({
+          obra_social_nro: selectedNroOS as number,
           especialidad_id_colegio: especialidadFilter as number,
           page: p,
           size: 200,
         });
-        batch.forEach((r) => ids.add(r.nomenclador_id));
+        batch.forEach((r) => codigos.add(r.codigo.toUpperCase()));
         if (batch.length < 200) break;
       }
-      return ids;
+      return codigos;
     },
-    enabled: especialidadFilter !== "todos",
+    enabled: especialidadFilter !== "todos" && selectedNroOS != null,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -308,8 +313,6 @@ export default function NomencladorPorOS() {
   const selectedOS = osList.find((os) => os.nro_obra_social === selectedNroOS);
 
   useEffect(() => {
-    descAttempted.current = new Set();
-    setNomDescMap({});
     if (!selectedNroOS) { setGalenos([]); setValores([]); return; }
     listGalenos({ obra_social_nro: selectedNroOS }).then(setGalenos).catch(() => {});
     loadValores(selectedNroOS, vigencia);
@@ -340,7 +343,10 @@ export default function NomencladorPorOS() {
     finally { setLoadingValores(false); }
   }, []);
 
-  const resolvedDesc = useCallback((v: ValorOut) => v.descripcion ?? nomDescMap[v.nomenclador_id] ?? "", [nomDescMap]);
+  // Ya no hay fallback al catálogo del Colegio: descripcion es obligatoria en el
+  // alta nueva, así que solo queda vacía en filas viejas (previas a la fase 2 de
+  // la reestructura) que todavía no se editaron.
+  const resolvedDesc = useCallback((v: ValorOut) => v.descripcion ?? "", []);
 
   const filteredValores = useMemo(() => {
     let list = valores;
@@ -349,14 +355,16 @@ export default function NomencladorPorOS() {
     if (soloPresupuesto) list = list.filter((v) => v.por_presupuesto);
     if (especialidadFilter !== "todos") {
       // Mientras el set carga (undefined) no mostramos nada para no confundir.
-      list = codigosDeEspecialidad ? list.filter((v) => codigosDeEspecialidad.has(v.nomenclador_id)) : [];
+      list = codigosDeEspecialidad
+        ? list.filter((v) => codigosDeEspecialidad.has(v.codigo.toUpperCase()))
+        : [];
     }
     if (codeSearch.trim()) {
       const q = codeSearch.toLowerCase();
-      list = list.filter((v) => v.codigo.toLowerCase().includes(q) || (v.descripcion ?? nomDescMap[v.nomenclador_id] ?? "").toLowerCase().includes(q));
+      list = list.filter((v) => v.codigo.toLowerCase().includes(q) || (v.descripcion ?? "").toLowerCase().includes(q));
     }
     return list;
-  }, [valores, codeSearch, origenFilter, modalidadFilter, soloPresupuesto, nomDescMap, especialidadFilter, codigosDeEspecialidad]);
+  }, [valores, codeSearch, origenFilter, modalidadFilter, soloPresupuesto, especialidadFilter, codigosDeEspecialidad]);
 
   // Loading combinado: valores de la OS + resolución del set de la especialidad.
   const showLoading = loadingValores || (especialidadFilter !== "todos" && !codigosDeEspecialidad && espFilterFetching);
@@ -382,26 +390,6 @@ export default function NomencladorPorOS() {
   // Ajustar si la página quedó fuera de rango (p. ej. tras cerrar un valor).
   useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
 
-  // Resolver descripciones faltantes SOLO para los códigos visibles (lazy, acotado por página).
-  useEffect(() => {
-    const ids = [...new Set(
-      pageGroups
-        .flatMap(([, vs]) => vs)
-        .filter((v) => !v.descripcion && !descAttempted.current.has(v.nomenclador_id))
-        .map((v) => v.nomenclador_id),
-    )];
-    if (ids.length === 0) return;
-    ids.forEach((id) => descAttempted.current.add(id));
-    let alive = true;
-    Promise.allSettled(ids.map(getNomencladorById)).then((results) => {
-      if (!alive) return;
-      const map: Record<number, string> = {};
-      results.forEach((r, i) => { if (r.status === "fulfilled") map[ids[i]] = r.value.descripcion; });
-      if (Object.keys(map).length) setNomDescMap((prev) => ({ ...prev, ...map }));
-    });
-    return () => { alive = false; };
-  }, [pageGroups]);
-
   function showToast(type: "success" | "error", msg: string) {
     setToast({ type, msg });
     setTimeout(() => setToast(null), 4000);
@@ -424,7 +412,7 @@ export default function NomencladorPorOS() {
   }
 
   function selectNom(n: NomencladorOut) {
-    setForm((prev) => ({ ...prev, nomencladorId: n.id, nomencladorLabel: `${n.codigo} — ${n.descripcion}` }));
+    setForm((prev) => ({ ...prev, nomencladorId: n.id, nomencladorLabel: n.codigo }));
     setNomSearch(""); setNomResults([]);
     setErrors((prev) => ({ ...prev, nomenclador: "" }));
   }
@@ -433,28 +421,6 @@ export default function NomencladorPorOS() {
     setForm((prev) => ({ ...prev, nomencladorId: null, nomencladorLabel: "" }));
     setNomSearch(""); setNomResults([]);
   }
-
-  // ─── Especialidades habilitadas del código (para el checklist de alta NE) ──
-  // Se recarga cada vez que cambia el código elegido o el origen pasa a NE. Todas
-  // arrancan tildadas por defecto (carga en grupo: "mismo precio para todas").
-  useEffect(() => {
-    if (modalKind !== "create" || form.origen !== "NE" || !form.nomencladorId) {
-      setEspecialidadesHabilitadas(null);
-      return;
-    }
-    let cancelado = false;
-    setLoadingHabilitadas(true);
-    getNomencladorEspecialidades(form.nomencladorId)
-      .then((rows) => {
-        if (cancelado) return;
-        const activas = rows.filter((r) => r.activo);
-        setEspecialidadesHabilitadas(activas);
-        setForm((p) => ({ ...p, especialidadesChecked: new Set(activas.map((r) => r.especialidad_id_colegio)) }));
-      })
-      .catch(() => { if (!cancelado) setEspecialidadesHabilitadas([]); })
-      .finally(() => { if (!cancelado) setLoadingHabilitadas(false); });
-    return () => { cancelado = true; };
-  }, [modalKind, form.origen, form.nomencladorId]);
 
   // ─── Origin + modalidad rules ──────────────────────────────────────────────
 
@@ -525,13 +491,10 @@ export default function NomencladorPorOS() {
   function validateCreate(): boolean {
     const errs: Record<string, string> = {};
     if (!form.nomencladorId) errs.nomenclador = "Seleccioná un código";
+    if (!form.descripcion.trim()) errs.descripcion = "Requerido";
     if (!form.vigencia_desde) errs.vigencia_desde = "Requerido";
-    if (form.origen === "NE") {
-      if (especialidadesHabilitadas != null && especialidadesHabilitadas.length === 0) {
-        errs.especialidades = "Este código no tiene ninguna especialidad habilitada — cargalas en Códigos antes de crear un valor NE";
-      } else if (form.especialidadesChecked.size === 0) {
-        errs.especialidades = "Tildá al menos una especialidad";
-      }
+    if (form.origen === "NE" && form.especialidadesChecked.size === 0) {
+      errs.especialidades = "Tildá al menos una especialidad";
     }
     if (!form.porPresupuesto) {
       const hon = form.componentes[0];
@@ -556,20 +519,24 @@ export default function NomencladorPorOS() {
   function validateEcuacion(): boolean {
     const errs: Record<string, string> = {};
     if (!editEcu.vigencia_desde) errs.vigencia_desde = "Requerido";
-    const hon = editEcu.componentes[0];
-    if (editEcu.modalidad === "calculable") {
-      if (!hon.galeno_id) errs["comp_0_galeno"] = "Seleccioná un galeno";
-    } else {
-      if (!hon.valor_unitario.trim() || isNaN(parseFloat(hon.valor_unitario)))
-        errs["comp_0_valor"] = "Valor inválido";
+    // Por presupuesto no tiene ecuación propia (H/G/A van en 0, ver `_crear_valor_con_
+    // componentes` en el back) — solo importan vigencia_desde y coseguro, ya chequeados.
+    if (!editTarget?.por_presupuesto) {
+      const hon = editEcu.componentes[0];
+      if (editEcu.modalidad === "calculable") {
+        if (!hon.galeno_id) errs["comp_0_galeno"] = "Seleccioná un galeno";
+      } else {
+        if (!hon.valor_unitario.trim() || isNaN(parseFloat(hon.valor_unitario)))
+          errs["comp_0_valor"] = "Valor inválido";
+      }
+      editEcu.componentes.slice(1).forEach((c, i) => {
+        const idx = i + 1;
+        if (editEcu.modalidad === "calculable" && c.cantidad && !c.galeno_id)
+          errs[`comp_${idx}_galeno`] = "Seleccioná un galeno";
+        if (editEcu.modalidad === "fijo" && c.valor_unitario.trim() && isNaN(parseFloat(c.valor_unitario)))
+          errs[`comp_${idx}_valor`] = "Valor inválido";
+      });
     }
-    editEcu.componentes.slice(1).forEach((c, i) => {
-      const idx = i + 1;
-      if (editEcu.modalidad === "calculable" && c.cantidad && !c.galeno_id)
-        errs[`comp_${idx}_galeno`] = "Seleccioná un galeno";
-      if (editEcu.modalidad === "fijo" && c.valor_unitario.trim() && isNaN(parseFloat(c.valor_unitario)))
-        errs[`comp_${idx}_valor`] = "Valor inválido";
-    });
     setEditErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -579,11 +546,10 @@ export default function NomencladorPorOS() {
   function openCreate() {
     setForm({
       nomencladorId: null, nomencladorLabel: "", origen: "NE",
-      modalidad: "calculable", vigencia_desde: today(),
+      modalidad: "calculable", vigencia_desde: today(), descripcion: "",
       porPresupuesto: false, nivel: "", complejidad: "", cantidad_ayudantes: "", coseguro: "", observacion: "",
       especialidadesChecked: new Set(), componentes: initComps(),
     });
-    setEspecialidadesHabilitadas(null);
     setNomSearch(""); setNomResults([]); setErrors({});
     setModalKind("create");
   }
@@ -595,15 +561,17 @@ export default function NomencladorPorOS() {
     );
     setEditTarget(v);
     setEditMeta({
-      descripcion: v.descripcion ?? "",
+      descripcion: resolvedDesc(v),
+      sin_restriccion_especialidad: v.sin_restriccion_especialidad,
+      especialidades: v.especialidades,
       nivel: v.nivel != null ? String(v.nivel) : "",
       complejidad: v.complejidad ?? "",
       cantidad_ayudantes: v.cantidad_ayudantes != null ? String(v.cantidad_ayudantes) : "",
-      coseguro: v.coseguro && parseMonto(v.coseguro) !== 0 ? v.coseguro : "",
       observacion: v.observacion ?? "",
     });
     setEditEcu({
       vigencia_desde: today(), modalidad: mod, componentes: compsFromOut(v.componentes),
+      coseguro: v.coseguro && parseMonto(v.coseguro) !== 0 ? v.coseguro : "",
       aplicarAVariantes: hayHermanas,
     });
     setEditErrors({});
@@ -640,6 +608,7 @@ export default function NomencladorPorOS() {
         }));
       }
       const base = {
+        descripcion: form.descripcion.trim(),
         nivel: form.nivel ? parseInt(form.nivel, 10) : null,
         complejidad: form.complejidad || null,
         por_presupuesto: form.porPresupuesto,
@@ -688,10 +657,11 @@ export default function NomencladorPorOS() {
     try {
       const updated = await updateValorMetadata(editTarget.id, {
         descripcion: editMeta.descripcion || null,
+        sin_restriccion_especialidad: editMeta.sin_restriccion_especialidad,
+        especialidades: editMeta.especialidades,
         nivel: editMeta.nivel ? parseInt(editMeta.nivel, 10) : null,
         complejidad: editMeta.complejidad || null,
         cantidad_ayudantes: editMeta.cantidad_ayudantes.trim() ? parseInt(editMeta.cantidad_ayudantes, 10) : null,
-        coseguro: editMeta.coseguro.trim() ? parseMonto(editMeta.coseguro) : 0,
         observacion: editMeta.observacion || null,
       });
       setValores((prev) => prev.map((v) => (v.id === updated.id ? updated : v)));
@@ -707,22 +677,30 @@ export default function NomencladorPorOS() {
     if (!editTarget || !validateEcuacion()) return;
     setSavingEcu(true);
     try {
-      const filled = editEcu.componentes.filter((c, i) => {
-        if (i === 0) return true;
-        if (editEcu.modalidad === "calculable") return c.galeno_id != null;
-        return c.valor_unitario.trim() !== "" && !isNaN(parseFloat(c.valor_unitario));
-      });
-      const componentes: ComponentePayload[] = filled.map((c, i) => ({
-        concepto: c.concepto,
-        galeno_id: editEcu.modalidad === "calculable" ? c.galeno_id : null,
-        cantidad: editEcu.modalidad === "calculable" ? (parseFloat(c.cantidad) || 0) : 0,
-        valor_unitario: editEcu.modalidad === "fijo" ? parseFloat(c.valor_unitario) : null,
-        opcional: c.opcional,
-        orden: i,
-      }));
+      // Por presupuesto no tiene ecuación propia: se cierra/abre vigencia igual, pero
+      // sin componentes — el back los fuerza a H/G/A=0 (ver `_crear_valor_con_componentes`).
+      const componentes: ComponentePayload[] = editTarget.por_presupuesto ? [] : (() => {
+        const filled = editEcu.componentes.filter((c, i) => {
+          if (i === 0) return true;
+          if (editEcu.modalidad === "calculable") return c.galeno_id != null;
+          return c.valor_unitario.trim() !== "" && !isNaN(parseFloat(c.valor_unitario));
+        });
+        return filled.map((c, i) => ({
+          concepto: c.concepto,
+          galeno_id: editEcu.modalidad === "calculable" ? c.galeno_id : null,
+          cantidad: editEcu.modalidad === "calculable" ? (parseFloat(c.cantidad) || 0) : 0,
+          valor_unitario: editEcu.modalidad === "fijo" ? parseFloat(c.valor_unitario) : null,
+          opcional: c.opcional,
+          orden: i,
+        }));
+      })();
       await actualizarValor(editTarget.id, {
         vigencia_desde: editEcu.vigencia_desde,
         componentes,
+        coseguro: editEcu.coseguro.trim() ? parseMonto(editEcu.coseguro) : 0,
+        // Explícito: el back NO lo hereda del valor que cierra, así que si no se manda
+        // un código por_presupuesto pierde esa condición al rotar vigencia.
+        por_presupuesto: editTarget.por_presupuesto,
         aplicar_a_variantes: editEcu.aplicarAVariantes,
       });
       showToast(
@@ -1040,8 +1018,7 @@ export default function NomencladorPorOS() {
                   <label className={styles.formLabel}>Código de nomenclador <span className={styles.req}>*</span></label>
                   {form.nomencladorId ? (
                     <div className={styles.selectedCode}>
-                      <strong>{form.nomencladorLabel.split("—")[0].trim()}</strong>
-                      <span style={{ color: "#4a5568" }}>{form.nomencladorLabel.split("—").slice(1).join("—").trim()}</span>
+                      <strong>{form.nomencladorLabel}</strong>
                       <button style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: "#718096" }} onClick={clearNom}>
                         <XIcon size={14} />
                       </button>
@@ -1053,7 +1030,7 @@ export default function NomencladorPorOS() {
                           className={`${styles.formInput} ${errors.nomenclador ? styles.inputError : ""}`}
                           value={nomSearch}
                           onChange={(e) => searchNom(e.target.value)}
-                          placeholder="Escribí código o descripción para buscar…"
+                          placeholder="Escribí el código para buscar…"
                           style={{ paddingRight: nomLoading ? 36 : 12, width: "100%", boxSizing: "border-box" }}
                         />
                         {nomLoading && (
@@ -1066,7 +1043,7 @@ export default function NomencladorPorOS() {
                         <ul className={styles.autocompleteDropdown}>
                           {nomResults.map((n) => (
                             <li key={n.id} className={styles.autocompleteItem} onMouseDown={(e) => { e.preventDefault(); selectNom(n); }}>
-                              <strong>{n.codigo}</strong> — {n.descripcion}
+                              <strong>{n.codigo}</strong>{n.categoria ? ` — ${n.categoria}` : ""}
                             </li>
                           ))}
                         </ul>
@@ -1074,6 +1051,18 @@ export default function NomencladorPorOS() {
                     </div>
                   )}
                   {errors.nomenclador && <span className={styles.errorMsg}>{errors.nomenclador}</span>}
+                </div>
+
+                {/* Descripción — obligatoria: cómo nombra ESTA obra social al código. */}
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Descripción <span className={styles.req}>*</span></label>
+                  <input
+                    className={`${styles.formInput} ${errors.descripcion ? styles.inputError : ""}`}
+                    value={form.descripcion}
+                    onChange={(e) => { setForm((p) => ({ ...p, descripcion: e.target.value })); setErrors((p) => ({ ...p, descripcion: "" })); }}
+                    placeholder="Cómo nombra esta obra social al código"
+                  />
+                  {errors.descripcion && <span className={styles.errorMsg}>{errors.descripcion}</span>}
                 </div>
 
                 {/* Origen + nivel */}
@@ -1098,32 +1087,25 @@ export default function NomencladorPorOS() {
                 </div>
 
                 {/* Especialidades — solo NE. Una fila por cada tildada (POST /valores_nm/multi):
-                    mismo precio, misma vigencia, filas separadas. */}
+                    mismo precio, misma vigencia, filas separadas. Se puede elegir
+                    cualquier especialidad del catálogo: crear la variante la habilita
+                    automáticamente para este código en esta OS si todavía no lo estaba. */}
                 {form.origen === "NE" && (
                   <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>Especialidades habilitadas <span className={styles.req}>*</span></label>
+                    <label className={styles.formLabel}>Especialidades <span className={styles.req}>*</span></label>
                     {!form.nomencladorId ? (
                       <span className={styles.hintText}>Elegí un código primero</span>
-                    ) : loadingHabilitadas ? (
-                      <span className={styles.hintText}>Cargando especialidades habilitadas…</span>
-                    ) : especialidadesHabilitadas && especialidadesHabilitadas.length === 0 ? (
-                      <span className={styles.errorMsg}>
-                        Este código no tiene ninguna especialidad habilitada. Cargalas en la
-                        pantalla de Códigos antes de crear un valor NE.
-                      </span>
                     ) : (
                       <div className={styles.checkboxList}>
-                        {(especialidadesHabilitadas ?? []).map((e) => (
-                          <label key={e.especialidad_id_colegio} className={styles.toggleRow}>
+                        {especialidades.map((e) => (
+                          <label key={e.id_colegio_espe} className={styles.toggleRow}>
                             <input
                               type="checkbox"
                               className={styles.toggleInput}
-                              checked={form.especialidadesChecked.has(e.especialidad_id_colegio)}
-                              onChange={() => toggleEspecialidadChecked(e.especialidad_id_colegio)}
+                              checked={form.especialidadesChecked.has(e.id_colegio_espe)}
+                              onChange={() => toggleEspecialidadChecked(e.id_colegio_espe)}
                             />
-                            <span className={styles.toggleLabel}>
-                              {espMap[e.especialidad_id_colegio] ?? `Esp. ${e.especialidad_id_colegio}`}
-                            </span>
+                            <span className={styles.toggleLabel}>{e.nombre}</span>
                           </label>
                         ))}
                       </div>
@@ -1267,7 +1249,7 @@ export default function NomencladorPorOS() {
                   <div className={styles.formRow2}>
                     <div className={styles.formGroup}>
                       <label className={styles.formLabel}>Descripción</label>
-                      <input className={styles.formInput} value={editMeta.descripcion} onChange={(e) => setEditMeta((p) => ({ ...p, descripcion: e.target.value }))} placeholder="Opcional" />
+                      <input className={styles.formInput} value={editMeta.descripcion} onChange={(e) => setEditMeta((p) => ({ ...p, descripcion: e.target.value }))} placeholder="Cómo nombra esta obra social al código" />
                     </div>
                     <div className={styles.formGroup}>
                       <label className={styles.formLabel}>Nivel</label>
@@ -1291,17 +1273,6 @@ export default function NomencladorPorOS() {
                   </div>
                   <div className={styles.formRow2}>
                     <div className={styles.formGroup}>
-                      <label className={styles.formLabel}>Coseguro ($)</label>
-                      <input
-                        type="number" min="0" step="0.01"
-                        className={styles.formInput}
-                        value={editMeta.coseguro}
-                        onChange={(e) => setEditMeta((p) => ({ ...p, coseguro: e.target.value }))}
-                        placeholder="0.00"
-                        style={{ maxWidth: 200 }}
-                      />
-                    </div>
-                    <div className={styles.formGroup}>
                       <label className={styles.formLabel}>Cantidad de ayudantes</label>
                       <input
                         type="number" min="0" step="1"
@@ -1316,6 +1287,51 @@ export default function NomencladorPorOS() {
                       </span>
                     </div>
                   </div>
+
+                  {/* Descripción, sin restricción y especialidades son datos del PAR
+                      (obra_social_nro + código), no de esta variante puntual: al
+                      guardar se propagan a todas las filas activas del par, incluida
+                      la NN — ver update_valor_metadata en el back. */}
+                  <label className={styles.toggleRow}>
+                    <input
+                      type="checkbox"
+                      className={styles.toggleInput}
+                      checked={editMeta.sin_restriccion_especialidad}
+                      onChange={(e) => setEditMeta((p) => ({ ...p, sin_restriccion_especialidad: e.target.checked }))}
+                    />
+                    <span className={styles.toggleLabel}>Sin restricción de especialidad</span>
+                  </label>
+
+                  {!editMeta.sin_restriccion_especialidad && (
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>Especialidades habilitadas</label>
+                      <p className={styles.hintText}>
+                        Quién puede facturar este código en esta obra social. Sacar una que
+                        todavía tiene un valor de especialidad activo se rechaza.
+                      </p>
+                      <div className={styles.checkboxList}>
+                        {especialidades.map((e) => (
+                          <label key={e.id_colegio_espe} className={styles.toggleRow}>
+                            <input
+                              type="checkbox"
+                              className={styles.toggleInput}
+                              checked={editMeta.especialidades.includes(e.id_colegio_espe)}
+                              onChange={() =>
+                                setEditMeta((p) => ({
+                                  ...p,
+                                  especialidades: p.especialidades.includes(e.id_colegio_espe)
+                                    ? p.especialidades.filter((id) => id !== e.id_colegio_espe)
+                                    : [...p.especialidades, e.id_colegio_espe],
+                                }))
+                              }
+                            />
+                            <span className={styles.toggleLabel}>{e.nombre}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
                     <button className={styles.btnPrimary} onClick={handleSaveMeta} disabled={savingMeta}>
                       {savingMeta ? <><span className={styles.spinner} /> Guardando…</> : <><Save size={14} /> Guardar metadatos</>}
@@ -1323,52 +1339,73 @@ export default function NomencladorPorOS() {
                   </div>
                 </div>
 
-                {/* Actualizar ecuación section */}
-                {!editTarget.por_presupuesto && (
-                  <div className={styles.editSection}>
-                    <div className={styles.editSectionTitle}>Actualizar ecuación de precio</div>
-                    <p className={styles.hintText}>Cierra la vigencia actual y crea una nueva con la ecuación que ingreses.</p>
-                    <div className={styles.formRow2}>
-                      <div className={styles.formGroup}>
-                        <label className={styles.formLabel}>Nueva vigencia desde <span className={styles.req}>*</span></label>
-                        <input
-                          type="date"
-                          className={`${styles.formInput} ${editErrors.vigencia_desde ? styles.inputError : ""}`}
-                          value={editEcu.vigencia_desde}
-                          onChange={(e) => { setEditEcu((p) => ({ ...p, vigencia_desde: e.target.value })); setEditErrors((p) => ({ ...p, vigencia_desde: "" })); }}
-                        />
-                        {editErrors.vigencia_desde && <span className={styles.errorMsg}>{editErrors.vigencia_desde}</span>}
-                      </div>
-                      <div className={styles.formGroup}>
-                        <label className={styles.formLabel}>Tipo de valor</label>
-                        <select className={styles.formSelect} value={editEcu.modalidad} onChange={(e) => changeEditModalidad(e.target.value as ModalidadValor)}>
-                          <option value="calculable">Calculable (galeno × cantidad)</option>
-                          <option value="fijo">Fijo ($)</option>
-                        </select>
-                      </div>
+                {/* Actualizar ecuación section — el coseguro vive acá: es parte del
+                    precio, cambiarlo cierra la vigencia actual y abre una nueva. Para
+                    por_presupuesto no hay tipo de valor ni componentes (no tiene
+                    ecuación propia), pero vigencia+coseguro se editan igual. */}
+                <div className={styles.editSection}>
+                  <div className={styles.editSectionTitle}>Actualizar ecuación de precio</div>
+                  <p className={styles.hintText}>
+                    {editTarget.por_presupuesto
+                      ? "Este código es por presupuesto (sin fórmula fija). Cambiar el coseguro cierra la vigencia actual y abre una nueva."
+                      : "Cierra la vigencia actual y crea una nueva con la ecuación que ingreses."}
+                  </p>
+                  <div className={styles.formRow2}>
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>Nueva vigencia desde <span className={styles.req}>*</span></label>
+                      <input
+                        type="date"
+                        className={`${styles.formInput} ${editErrors.vigencia_desde ? styles.inputError : ""}`}
+                        value={editEcu.vigencia_desde}
+                        onChange={(e) => { setEditEcu((p) => ({ ...p, vigencia_desde: e.target.value })); setEditErrors((p) => ({ ...p, vigencia_desde: "" })); }}
+                      />
+                      {editErrors.vigencia_desde && <span className={styles.errorMsg}>{editErrors.vigencia_desde}</span>}
                     </div>
-                    <ComponentEditor modalidad={editEcu.modalidad} componentes={editEcu.componentes} galenos={galenos} errors={editErrors} onChange={updateEditComp} />
-                    {editHermanas.length > 0 && (
-                      <label className={styles.toggleRow} style={{ marginTop: 8 }}>
-                        <input
-                          type="checkbox"
-                          className={styles.toggleInput}
-                          checked={editEcu.aplicarAVariantes}
-                          onChange={(e) => setEditEcu((p) => ({ ...p, aplicarAVariantes: e.target.checked }))}
-                        />
-                        <span className={styles.toggleLabel}>
-                          Aplicar la misma vigencia y ecuación a las {editHermanas.length} variante{editHermanas.length > 1 ? "s" : ""} más de este código
-                          ({editHermanas.map((h) => espMap[h.especialidad_id_colegio ?? -1] ?? `Esp. ${h.especialidad_id_colegio}`).join(", ")})
-                        </span>
-                      </label>
-                    )}
-                    <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
-                      <button className={styles.btnWarning} onClick={handleActualizar} disabled={savingEcu}>
-                        {savingEcu ? <><span className={styles.spinner} /> Actualizando…</> : "Actualizar ecuación"}
-                      </button>
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>Coseguro ($)</label>
+                      <input
+                        type="number" min="0" step="0.01"
+                        className={styles.formInput}
+                        value={editEcu.coseguro}
+                        onChange={(e) => setEditEcu((p) => ({ ...p, coseguro: e.target.value }))}
+                        placeholder="0.00"
+                      />
                     </div>
                   </div>
-                )}
+                  {!editTarget.por_presupuesto && (
+                    <>
+                      <div className={styles.formRow2}>
+                        <div className={styles.formGroup}>
+                          <label className={styles.formLabel}>Tipo de valor</label>
+                          <select className={styles.formSelect} value={editEcu.modalidad} onChange={(e) => changeEditModalidad(e.target.value as ModalidadValor)}>
+                            <option value="calculable">Calculable (galeno × cantidad)</option>
+                            <option value="fijo">Fijo ($)</option>
+                          </select>
+                        </div>
+                      </div>
+                      <ComponentEditor modalidad={editEcu.modalidad} componentes={editEcu.componentes} galenos={galenos} errors={editErrors} onChange={updateEditComp} />
+                    </>
+                  )}
+                  {editHermanas.length > 0 && (
+                    <label className={styles.toggleRow} style={{ marginTop: 8 }}>
+                      <input
+                        type="checkbox"
+                        className={styles.toggleInput}
+                        checked={editEcu.aplicarAVariantes}
+                        onChange={(e) => setEditEcu((p) => ({ ...p, aplicarAVariantes: e.target.checked }))}
+                      />
+                      <span className={styles.toggleLabel}>
+                        Aplicar la misma vigencia y ecuación a las {editHermanas.length} variante{editHermanas.length > 1 ? "s" : ""} más de este código
+                        ({editHermanas.map((h) => espMap[h.especialidad_id_colegio ?? -1] ?? `Esp. ${h.especialidad_id_colegio}`).join(", ")})
+                      </span>
+                    </label>
+                  )}
+                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+                    <button className={styles.btnWarning} onClick={handleActualizar} disabled={savingEcu}>
+                      {savingEcu ? <><span className={styles.spinner} /> Actualizando…</> : "Actualizar"}
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <div className={styles.modalFooter}>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Search,
   Plus,
@@ -16,20 +16,18 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
-import styles from "./NomencladorCodigos.module.scss";
-import ConfirmModal from "@/app/components/ui/ConfirmModal/ConfirmModal";
+import styles from "./NomencladorNacionalTabla.module.scss";
+import ConfirmModal from "../../../components/atoms/ConfirmModal/ConfirmModal";
 import {
-  listNomenclador,
-  createNomenclador,
-  updateNomenclador,
-  toggleNomencladorActivo,
-  deleteNomenclador,
   listNomencladorNacional,
+  createNomencladorNacional,
+  updateNomencladorNacional,
+  toggleNomencladorNacionalActivo,
+  deleteNomencladorNacional,
 } from "../nomenclador.api";
 import type {
-  NomencladorOut,
-  NomencladorCreatePayload,
   NomencladorNacionalOut,
+  NomencladorNacionalCreatePayload,
 } from "../nomenclador.types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -38,10 +36,12 @@ type Complejidad = "baja" | "media" | "alta";
 
 type FormState = {
   codigo: string;
+  descripcion: string;
   categoria: string;
   complejidad: Complejidad | "";
-  nomenclador_nacional_id: number | null;
-  observacion: string;
+  unidades_honorarios: string;
+  unidades_ayudante: string;
+  unidades_gastos: string;
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -49,126 +49,45 @@ type FormState = {
 function emptyForm(): FormState {
   return {
     codigo: "",
+    descripcion: "",
     categoria: "",
     complejidad: "",
-    nomenclador_nacional_id: null,
-    observacion: "",
+    unidades_honorarios: "",
+    unidades_ayudante: "",
+    unidades_gastos: "",
   };
 }
 
-function itemToForm(item: NomencladorOut): FormState {
+function itemToForm(item: NomencladorNacionalOut): FormState {
   return {
     codigo: item.codigo,
+    descripcion: item.descripcion ?? "",
     categoria: item.categoria ?? "",
     complejidad: (item.complejidad as Complejidad | "") ?? "",
-    nomenclador_nacional_id: item.nomenclador_nacional_id,
-    observacion: item.observacion ?? "",
+    unidades_honorarios: item.unidades_honorarios ?? "",
+    unidades_ayudante: item.unidades_ayudante ?? "",
+    unidades_gastos: item.unidades_gastos ?? "",
   };
+}
+
+function nullableNum(s: string): number | null {
+  if (!s.trim()) return null;
+  const n = parseFloat(s.replace(",", "."));
+  return isNaN(n) ? null : n;
 }
 
 const PAGE_SIZE = 50;
 
-// ─── Combo de vínculo con el Nomenclador Nacional ─────────────────────────────
-
-function NomencladorNacionalCombo({
-  opciones,
-  value,
-  onChange,
-}: {
-  opciones: NomencladorNacionalOut[];
-  value: number | null;
-  onChange: (id: number | null) => void;
-}) {
-  const [query, setQuery] = useState("");
-  const [open, setOpen] = useState(false);
-  const wrapRef = useRef<HTMLDivElement>(null);
-
-  const selected = useMemo(() => opciones.find((o) => o.id === value) ?? null, [opciones, value]);
-  const selectedLabel = selected ? `${selected.codigo} — ${selected.descripcion ?? ""}` : "";
-
-  useEffect(() => {
-    if (!open) setQuery(selectedLabel);
-  }, [selectedLabel, open]);
-
-  useEffect(() => {
-    if (!open) return;
-    function onDocClick(e: MouseEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, [open]);
-
-  const filtradas = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q || q === selectedLabel.toLowerCase()) return opciones.slice(0, 40);
-    return opciones
-      .filter(
-        (o) =>
-          o.codigo.toLowerCase().includes(q) ||
-          (o.descripcion ?? "").toLowerCase().includes(q),
-      )
-      .slice(0, 40);
-  }, [opciones, query, selectedLabel]);
-
-  return (
-    <div ref={wrapRef} style={{ position: "relative" }}>
-      <input
-        className={styles.formInput}
-        value={query}
-        placeholder="Buscar código NN por número o descripción…"
-        onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
-        onFocus={(e) => { setOpen(true); e.currentTarget.select(); }}
-      />
-      {value !== null && (
-        <button
-          type="button"
-          className={styles.btnGhost}
-          style={{ position: "absolute", right: 4, top: 4, height: 30, padding: "0 8px" }}
-          onClick={() => { onChange(null); setQuery(""); setOpen(false); }}
-          title="Quitar vínculo"
-        >
-          <XIcon size={13} />
-        </button>
-      )}
-      {open && (
-        <ul className={styles.checkboxList} style={{ position: "absolute", zIndex: 5, background: "#fff", width: "100%", margin: 0, listStyle: "none" }}>
-          {filtradas.length === 0 ? (
-            <li className={styles.hintText}>Sin coincidencias</li>
-          ) : (
-            filtradas.map((o) => (
-              <li
-                key={o.id}
-                className={styles.checkRow}
-                onMouseDown={(ev) => {
-                  ev.preventDefault();
-                  onChange(o.id);
-                  setQuery(`${o.codigo} — ${o.descripcion ?? ""}`);
-                  setOpen(false);
-                }}
-              >
-                <strong>{o.codigo}</strong>&nbsp;{o.descripcion}
-              </li>
-            ))
-          )}
-        </ul>
-      )}
-    </div>
-  );
-}
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function NomencladorCodigos() {
-  const [items, setItems] = useState<NomencladorOut[]>([]);
+export default function NomencladorNacionalTabla() {
+  const [items, setItems] = useState<NomencladorNacionalOut[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [search, setSearch] = useState("");
   const [filterComplejidad, setFilterComplejidad] = useState("");
   const [filterActivo, setFilterActivo] = useState("true");
-
-  const [nnOpciones, setNnOpciones] = useState<NomencladorNacionalOut[]>([]);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -184,11 +103,10 @@ export default function NomencladorCodigos() {
       try {
         const params: Record<string, unknown> = { page: p, size: PAGE_SIZE };
         if (q.trim()) params.q = q.trim();
-        if (comp) params.complejidad = comp;
         if (act !== "") params.activo = act === "true";
-
-        const data = await listNomenclador(params as Parameters<typeof listNomenclador>[0]);
-        setItems(data);
+        const data = await listNomencladorNacional(params as Parameters<typeof listNomencladorNacional>[0]);
+        const filtrado = comp ? data.filter((i) => i.complejidad === comp) : data;
+        setItems(filtrado);
         setHasMore(data.length === PAGE_SIZE);
       } catch {
         setItems([]);
@@ -199,13 +117,6 @@ export default function NomencladorCodigos() {
     },
     [],
   );
-
-  // Catálogo NN completo, para el combo de vínculo del modal.
-  useEffect(() => {
-    listNomencladorNacional({ activo: true, size: 200 })
-      .then(setNnOpciones)
-      .catch(() => setNnOpciones([]));
-  }, []);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -226,7 +137,7 @@ export default function NomencladorCodigos() {
     setModalOpen(true);
   }
 
-  function openEdit(item: NomencladorOut) {
+  function openEdit(item: NomencladorNacionalOut) {
     setEditingId(item.id);
     setForm(itemToForm(item));
     setErrors({});
@@ -254,22 +165,24 @@ export default function NomencladorCodigos() {
     if (!validate()) return;
     setSaving(true);
     try {
-      const payload: NomencladorCreatePayload = {
+      const payload: NomencladorNacionalCreatePayload = {
         codigo: form.codigo.trim(),
+        descripcion: form.descripcion.trim() || null,
         categoria: form.categoria.trim() || null,
         complejidad: (form.complejidad as "baja" | "media" | "alta") || null,
-        nomenclador_nacional_id: form.nomenclador_nacional_id,
-        observacion: form.observacion.trim() || null,
+        unidades_honorarios: nullableNum(form.unidades_honorarios),
+        unidades_ayudante: nullableNum(form.unidades_ayudante),
+        unidades_gastos: nullableNum(form.unidades_gastos),
       };
 
       if (editingId) {
-        const updated = await updateNomenclador(editingId, payload);
+        const updated = await updateNomencladorNacional(editingId, payload);
         setItems((prev) => prev.map((i) => (i.id === editingId ? updated : i)));
-        showToast("success", "Código actualizado.");
+        showToast("success", "Código NN actualizado.");
       } else {
-        const created = await createNomenclador(payload);
+        const created = await createNomencladorNacional(payload);
         setItems((prev) => [created, ...prev]);
-        showToast("success", "Código creado.");
+        showToast("success", "Código NN creado.");
       }
       closeModal();
     } catch (e: unknown) {
@@ -280,9 +193,9 @@ export default function NomencladorCodigos() {
     }
   }
 
-  async function handleToggle(item: NomencladorOut) {
+  async function handleToggle(item: NomencladorNacionalOut) {
     try {
-      const updated = await toggleNomencladorActivo(item.id, !item.activo);
+      const updated = await toggleNomencladorNacionalActivo(item.id, !item.activo);
       setItems((prev) => prev.map((i) => (i.id === item.id ? updated : i)));
       showToast("success", `Código ${updated.activo ? "activado" : "desactivado"}.`);
     } catch {
@@ -295,13 +208,13 @@ export default function NomencladorCodigos() {
     const id = deleteTargetId;
     setDeleteTargetId(null);
     try {
-      await deleteNomenclador(id);
+      await deleteNomencladorNacional(id);
       setItems((prev) => prev.filter((i) => i.id !== id));
-      showToast("success", "Código eliminado.");
+      showToast("success", "Código NN eliminado.");
     } catch (e: unknown) {
       const err = e as { response?: { status?: number; data?: { detail?: string } } };
       if (err?.response?.status === 409) {
-        showToast("error", err.response.data?.detail ?? "No se puede eliminar: tiene valores activos.");
+        showToast("error", err.response.data?.detail ?? "No se puede eliminar: hay códigos del Colegio vinculados.");
       } else {
         showToast("error", err?.response?.data?.detail ?? "No se pudo eliminar el código.");
       }
@@ -319,8 +232,6 @@ export default function NomencladorCodigos() {
     };
   }, []);
 
-  const nnPorId = useMemo(() => new Map(nnOpciones.map((o) => [o.id, o])), [nnOpciones]);
-
   return (
     <div className={styles.container}>
       {/* Header */}
@@ -328,8 +239,11 @@ export default function NomencladorCodigos() {
         <div className={styles.headerLeft}>
           <span className={styles.headerIcon}><ListOrdered size={20} /></span>
           <div>
-            <h1 className={styles.title}>Gestión de Códigos</h1>
-            <p className={styles.subtitle}>Catálogo maestro de prestaciones médicas del Colegio</p>
+            <h1 className={styles.title}>Nomenclador Nacional</h1>
+            <p className={styles.subtitle}>
+              Catálogo NN — independiente del catálogo del Colegio. Alimenta la generación
+              automática de valores NN.
+            </p>
           </div>
         </div>
       </div>
@@ -341,7 +255,7 @@ export default function NomencladorCodigos() {
             <Search size={15} className={styles.searchIcon} />
             <input
               className={styles.searchInput}
-              placeholder="Buscar por código…"
+              placeholder="Buscar por código o descripción…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -369,7 +283,7 @@ export default function NomencladorCodigos() {
           </select>
 
           <button className={styles.btnPrimary} onClick={openCreate}>
-            <Plus size={15} /> Nuevo código
+            <Plus size={15} /> Nuevo código NN
           </button>
         </div>
 
@@ -379,7 +293,7 @@ export default function NomencladorCodigos() {
             <thead>
               <tr>
                 <th>Código</th>
-                <th>Nomenclador Nacional</th>
+                <th>Descripción</th>
                 <th>Categoría</th>
                 <th>Complejidad</th>
                 <th>Estado</th>
@@ -394,11 +308,7 @@ export default function NomencladorCodigos() {
               ) : items.map((item) => (
                 <tr key={item.id}>
                   <td><span className={styles.codeCell}>{item.codigo}</span></td>
-                  <td>
-                    {item.nomenclador_nacional_id != null
-                      ? (nnPorId.get(item.nomenclador_nacional_id)?.codigo ?? item.nomenclador_nacional_id)
-                      : <span style={{ color: "#718096" }}>—</span>}
-                  </td>
+                  <td>{item.descripcion ?? <span style={{ color: "#718096" }}>—</span>}</td>
                   <td>{item.categoria ?? <span style={{ color: "#718096" }}>—</span>}</td>
                   <td><ComplejidadBadge v={item.complejidad} /></td>
                   <td>
@@ -441,6 +351,7 @@ export default function NomencladorCodigos() {
                   {item.activo ? "Activo" : "Inactivo"}
                 </span>
               </div>
+              <p className={styles.cardDesc}>{item.descripcion}</p>
               <div className={styles.cardMeta}>
                 {item.categoria && <span className={styles.badge}>{item.categoria}</span>}
                 {item.complejidad && <ComplejidadBadge v={item.complejidad} />}
@@ -486,18 +397,13 @@ export default function NomencladorCodigos() {
             >
               <div className={styles.modalHeader}>
                 <div>
-                  <h2 className={styles.modalTitle}>{editingId ? "Editar código" : "Nuevo código"}</h2>
-                  <p className={styles.modalSubtitle}>Catálogo maestro del Colegio</p>
+                  <h2 className={styles.modalTitle}>{editingId ? "Editar código NN" : "Nuevo código NN"}</h2>
+                  <p className={styles.modalSubtitle}>Catálogo del Nomenclador Nacional</p>
                 </div>
                 <button className={styles.modalClose} onClick={closeModal}><XIcon size={18} /></button>
               </div>
 
               <div className={styles.modalBody}>
-                <p className={styles.hintText}>
-                  Descripción, especialidades habilitadas y "sin restricción" se cargan por obra
-                  social, desde el modal de Valores (Por Obra Social) — no acá.
-                </p>
-
                 <div className={styles.formRow2}>
                   <div className={styles.formGroup}>
                     <label className={styles.formLabel}>Código <span className={styles.req}>*</span></label>
@@ -524,38 +430,72 @@ export default function NomencladorCodigos() {
                   </div>
                 </div>
 
-                <div className={styles.formRow2}>
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>Complejidad</label>
-                    <select
-                      className={styles.formSelect}
-                      value={form.complejidad}
-                      onChange={(e) => setField("complejidad", e.target.value as Complejidad | "")}
-                    >
-                      <option value="">— Sin especificar —</option>
-                      <option value="baja">Baja</option>
-                      <option value="media">Media</option>
-                      <option value="alta">Alta</option>
-                    </select>
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>Nomenclador Nacional vinculado</label>
-                    <NomencladorNacionalCombo
-                      opciones={nnOpciones}
-                      value={form.nomenclador_nacional_id}
-                      onChange={(id) => setField("nomenclador_nacional_id", id)}
-                    />
-                  </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Descripción</label>
+                  <input
+                    className={styles.formInput}
+                    value={form.descripcion}
+                    onChange={(e) => setField("descripcion", e.target.value)}
+                    placeholder="ej: Consulta médica general"
+                  />
                 </div>
 
                 <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>Observación</label>
-                  <textarea
-                    className={styles.formTextarea}
-                    value={form.observacion}
-                    onChange={(e) => setField("observacion", e.target.value)}
-                    placeholder="Observaciones opcionales…"
-                  />
+                  <label className={styles.formLabel}>Complejidad</label>
+                  <select
+                    className={styles.formSelect}
+                    value={form.complejidad}
+                    onChange={(e) => setField("complejidad", e.target.value as Complejidad | "")}
+                    style={{ maxWidth: 260 }}
+                  >
+                    <option value="">— Sin especificar —</option>
+                    <option value="baja">Baja</option>
+                    <option value="media">Media</option>
+                    <option value="alta">Alta</option>
+                  </select>
+                </div>
+
+                <div className={styles.sectionTitle}>Unidades por defecto</div>
+                <p className={styles.hintText}>
+                  Se usan para calcular los Valores NN de cada obra social (unidad × galeno).
+                </p>
+                <div className={styles.formRow3}>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Honorarios</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      className={styles.formInput}
+                      value={form.unidades_honorarios}
+                      onChange={(e) => setField("unidades_honorarios", e.target.value)}
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Ayudante</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      className={styles.formInput}
+                      value={form.unidades_ayudante}
+                      onChange={(e) => setField("unidades_ayudante", e.target.value)}
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Gastos</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      className={styles.formInput}
+                      value={form.unidades_gastos}
+                      onChange={(e) => setField("unidades_gastos", e.target.value)}
+                      placeholder="0.00"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -588,8 +528,8 @@ export default function NomencladorCodigos() {
       <ConfirmModal
         isOpen={deleteTargetId !== null}
         variant="danger"
-        title="Eliminar código"
-        message="¿Eliminar este código permanentemente? Esta acción no se puede deshacer."
+        title="Eliminar código NN"
+        message="¿Eliminar este código del Nomenclador Nacional permanentemente? Esta acción no se puede deshacer."
         confirmLabel="Eliminar"
         onConfirm={doDelete}
         onCancel={() => setDeleteTargetId(null)}

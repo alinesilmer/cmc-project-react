@@ -115,6 +115,11 @@ export interface PrecioResponse {
    *  códigos vive en el backend (no se duplica acá) — usar este flag, no hardcodear
    *  110401/110403 en el front. */
   admite_pediatra?: boolean;
+  /** true → esta obra social exige autorización previa para este código (override de
+   *  `nm_valores.requiere_autorizacion` > default del catálogo). El backend solo lo
+   *  hace obligatorio cuando carga el médico (422 sin número); del lado Colegio no
+   *  bloquea, así que el front avisa para que no se cargue sin querer sin el número. */
+  requiere_autorizacion?: boolean;
 }
 
 export interface PrestacionRead {
@@ -160,7 +165,13 @@ export interface PrestacionRead {
   grupo?: PrestacionRead[] | null;
 }
 
-export type PrestacionUpdate = Partial<PrestacionItem>;
+export type PrestacionUpdate = Partial<PrestacionItem> & {
+  /** Sólo en PATCH, no en el alta: cambiarlos mueve la fila a otra cabecera
+   *  `facturacion` (cod_obr+periodo+version) y la re-cotiza. Ver `editar_prestacion`
+   *  en el backend — no-op si coinciden con los que ya tenía la fila. */
+  cod_obra_social?: string;
+  periodo?: string;
+};
 
 export interface MoverPeriodoPayload {
   cod_obra: string; periodo_origen: string;
@@ -339,6 +350,10 @@ export interface PrestacionFacturaDetalle {
   porcentaje: number | null;
   honorarios: Money | null;
   gastos: Money | null;
+  coseguro?: Money | null;
+  /** Clínica donde se hizo la prestación (null si no hubo). */
+  cod_clinica?: number | null;
+  nombre_clinica?: string | null;
   tipo_prestador: TipoPrestador | null;
   subtotal: Money | null;
   tipo: Tipo | null;

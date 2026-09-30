@@ -135,7 +135,8 @@ export default function ConsultaValores() {
 
   const especialidadValida = useMemo<boolean | null>(() => {
     if (!espId || !selectedNom || !result) return null;
-    if (selectedNom.sin_restriccion_especialidad) return true;
+    // Dato de la variante ganadora en esta OS, ya no del catálogo del Colegio.
+    if (result.sin_restriccion_especialidad) return true;
     return result.origen === "NE" && result.especialidad_id_colegio === espId;
   }, [espId, selectedNom, result]);
 
@@ -191,13 +192,13 @@ export default function ConsultaValores() {
               idx={3}
               label="Práctica"
               hint="por código o por nombre"
-              placeholder="Buscar por código o descripción…"
+              placeholder="Buscar por código…"
               query={nomSearch}
               onQueryChange={handleNomSearch}
               items={nomResults}
               getKey={(n) => n.id}
               getCode={(n) => n.codigo}
-              getText={(n) => n.descripcion}
+              getText={(n) => n.categoria ?? n.codigo}
               selected={selectedNom}
               onSelect={(n) => { setSelectedNom(n); setNomSearch(""); setNomResults([]); resetResult(); }}
               onClear={() => { setSelectedNom(null); setNomSearch(""); setNomResults([]); resetResult(); }}
