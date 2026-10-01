@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { FileText, FolderOpen, Search } from "lucide-react";
 
-import { abrirAdjunto } from "../../lib/archivos";
+import { abrirAdjunto } from "@/app/shared/lib/archivos";
 import { useNotify } from "../../hooks/useNotify";
 import { getPlanillas } from "./planillas.api";
 import {

@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getJSON, postJSON, delJSON } from "../../../../lib/http";
+import { getJSON, postJSON } from "@/app/shared/lib/http";
 import { useAppSnackbar } from "../../../../hooks/useAppSnackbar";
-import Button from "../../../../components/atoms/Button/Button";
-import SelectableTable from "../../../../components/molecules/SelectableTable/SelectableTable";
+import Button from "@/app/components/ui/Button/Button";
+import SelectableTable from "@/app/components/ui/SelectableTable/SelectableTable";
 import type {
   ActionDef,
   ColumnDef,
-} from "../../../../components/molecules/SelectableTable/types";
+} from "@/app/components/ui/SelectableTable/types";
 import styles from "./tabs.module.scss";
 import {
   type Pago,
@@ -17,7 +17,7 @@ import {
   fmt,
   mesLabel,
 } from "../../types";
-import AppSearchSelect from "../../../../components/atoms/AppSearchSelect/AppSearchSelect";
+import AppSearchSelect from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
 
 const LIQUIDACIONES_URL = (pagoId: number) =>
   `/api/liquidacion/liquidaciones_por_os/?pago_id=${pagoId}`;

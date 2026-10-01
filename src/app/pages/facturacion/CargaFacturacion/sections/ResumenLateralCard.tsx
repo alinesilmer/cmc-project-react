@@ -1,5 +1,5 @@
 import React from "react";
-import Card from "../../../../components/atoms/Card/Card";
+import Card from "@/app/components/ui/Card/Card";
 
 type CampoMantenible =
   | "obraSocial" | "medico" | "paciente" | "fecha" | "clinica" | "autorizacion" | "codigo";

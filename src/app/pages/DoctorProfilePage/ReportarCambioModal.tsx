@@ -5,7 +5,7 @@ import { Modal } from "rsuite";
 import "rsuite/Modal/styles/index.css";
 import { AlertTriangle } from "lucide-react";
 
-import Button from "../../components/atoms/Button/Button";
+import Button from "@/app/components/ui/Button/Button";
 import { useNotify } from "../../hooks/useNotify";
 import { crearSolicitudCambioPropia } from "../SolicitudesCambio/solicitudesCambio.api";
 import styles from "./ReportarCambioModal.module.scss";

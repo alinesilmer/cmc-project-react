@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Building2, ChevronLeft, ChevronRight, Search } from "lucide-react";
-import { getJSON, patchJSON } from "../../lib/http";
+import { getJSON, patchJSON } from "@/app/shared/lib/http";
 import s from "./ServiciosPage.module.scss";
 
 const PAGE_SIZE = 20;
@@ -13,14 +13,6 @@ type MedicoRow = {
   es_organizacion: number;
   [key: string]: unknown;
 };
-
-function normalizeText(v: unknown): string {
-  return String(v ?? "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .trim();
-}
 
 function pickNombre(row: Record<string, unknown>): string {
   return String(

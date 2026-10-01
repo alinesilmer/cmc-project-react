@@ -3,7 +3,7 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import styles from "./AdminPadronesDetail.module.scss"
-import BackButton from "../../components/atoms/BackButton/BackButton"
+import BackButton from "@/app/components/ui/BackButton/BackButton"
 
 type PadronStatus = "pending" | "approved" | "rejected"
 
@@ -36,13 +36,11 @@ const AdminPadronesDetail: React.FC = () => {
   const [processing, setProcessing] = useState(false)
 
   useEffect(() => {
-    // TODO: Replace with actual API call
+    // TODO: reemplazar el mock por GET /api/padrones/:id
     const fetchPadronDetail = async () => {
       try {
         setLoading(true)
-        // const response = await getJSON<PadronDetail>(`/api/padrones/${id}`);
 
-        // Mock data
         const mockData: PadronDetail = {
           id: Number(id),
           medico_id: 101,
@@ -73,15 +71,13 @@ const AdminPadronesDetail: React.FC = () => {
   }, [id])
 
   const handleDownloadPDF = () => {
-    // TODO: Implement PDF download
+    // TODO: implementar la descarga en PDF
     alert("Descargando PDF...")
-    console.log("Download PDF for padron:", id)
   }
 
   const handleDownloadExcel = () => {
-    // TODO: Implement Excel download
+    // TODO: implementar la descarga en Excel
     alert("Descargando Excel...")
-    console.log("Download Excel for padron:", id)
   }
 
   const handleApprove = async () => {
@@ -89,8 +85,7 @@ const AdminPadronesDetail: React.FC = () => {
 
     setProcessing(true)
     try {
-      // TODO: Implement approve API call
-      // await postJSON(`/api/padrones/${id}/approve`, {});
+      // TODO: POST /api/padrones/:id/approve (hoy no llama al backend)
 
       alert("Solicitud aprobada exitosamente")
       navigate("/panel/padrones")
@@ -109,8 +104,7 @@ const AdminPadronesDetail: React.FC = () => {
 
     setProcessing(true)
     try {
-      // TODO: Implement reject API call
-      // await postJSON(`/api/padrones/${id}/reject`, { reason: rejectionReason });
+      // TODO: POST /api/padrones/:id/reject con { reason } (hoy no llama al backend)
 
       alert("Solicitud rechazada")
       navigate("/panel/padrones")

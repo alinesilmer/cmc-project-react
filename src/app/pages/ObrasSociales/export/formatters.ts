@@ -1,7 +1,7 @@
 import type { ObraSocialListItem, CondicionIVA } from "../obrasSociales.types";
 // Fechas de calendario: `new Date("2025-05-30")` se parsea como UTC y el export
 // salía con el día anterior. Ver src/app/lib/fechas.ts.
-export { formatFecha } from "../../../lib/fechas";
+export { formatFecha } from "@/app/shared/lib/fechas";
 
 export const FACTURA_LABELS: Record<CondicionIVA, string> = {
   responsable_inscripto: "Factura A",

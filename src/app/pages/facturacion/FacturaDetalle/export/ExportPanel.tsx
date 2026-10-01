@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { descargarExportDetalle, descargarExportCaratula } from "../../api";
-import { saveAs } from "../../../../lib/fileSaver";
+import { saveAs } from "@/app/shared/lib/fileSaver";
 import type { FacturaDetalleResponse } from "../../types";
 import type { ExportOpciones } from "./types";
 import { OPCIONES_DEFAULT } from "./types";

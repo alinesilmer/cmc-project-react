@@ -23,14 +23,33 @@ export const MEDICO_ALLOWED_PATHS = [
   "/panel/dashboard",
   "/panel/mi-perfil",
   "/panel/nomenclador/consulta-precios",
+  "/panel/boletin-valores",
   "/panel/planillas",
   "/panel/validaciones",
   "/panel/facturacion/mi-recepcion",
   "/panel/help",
 ];
 
+/**
+ * Excepciones dentro de un prefijo permitido. `/panel/validaciones` tiene que
+ * estar abierto para el socio —es donde carga sus prestaciones—, pero los
+ * lectores de reportes que cuelgan de ahí son herramientas del Colegio: leen el
+ * archivo mensual de toda la matrícula y lo cruzan contra el padrón.
+ *
+ * Es el mismo cerco de UI que `MEDICO_ALLOWED_PATHS`, no una autorización: el
+ * padrón que necesitan estas pantallas ya exige `medico:leer`, que el rol
+ * médico no tiene.
+ */
+export const MEDICO_BLOCKED_PATHS = [
+  "/panel/validaciones/prevencion-salud",
+  "/panel/validaciones/swiss-medical",
+];
+
 export const medicoCanAccess = (pathname: string): boolean =>
   MEDICO_ALLOWED_PATHS.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
+  ) &&
+  !MEDICO_BLOCKED_PATHS.some(
     (p) => pathname === p || pathname.startsWith(`${p}/`),
   );
 

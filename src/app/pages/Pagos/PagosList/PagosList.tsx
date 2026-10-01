@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { getJSON, postJSON, delJSON } from "../../../lib/http";
+import { getJSON, postJSON, delJSON } from "@/app/shared/lib/http";
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
-import Button from "../../../components/atoms/Button/Button";
-import Card from "../../../components/atoms/Card/Card";
+import Button from "@/app/components/ui/Button/Button";
+import Card from "@/app/components/ui/Card/Card";
 import styles from "./PagosList.module.scss";
 import { type Pago, fmt, mesLabel, MESES } from "../types";
 

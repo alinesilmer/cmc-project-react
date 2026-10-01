@@ -1,16 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import Card from "../../components/atoms/Card/Card";
+import Card from "@/app/components/ui/Card/Card";
 import IoscorAffilliateForm, {
   type PracticeInput,
   type PracticeRowForEdit,
-} from "../../components/molecules/IoscorAffilliateForm/IoscorAffilliateForm";
+} from "@/app/pages/PadronIoscor/components/IoscorAffilliateForm/IoscorAffilliateForm";
 import IoscorAffilliateTable, {
   type PracticeRow,
-} from "../../components/molecules/IoscorAffilliateTable/IoscorAffilliateTable";
+} from "@/app/pages/PadronIoscor/components/IoscorAffilliateTable/IoscorAffilliateTable";
 import styles from "./PadronIoscor.module.scss";
-import { hoyISO } from "../../lib/fechas";
+import { hoyISO } from "@/app/shared/lib/fechas";
 
 /* Local padrón mock */
 const FAKE_PADRON: Record<string, true> = {

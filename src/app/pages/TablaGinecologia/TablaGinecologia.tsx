@@ -1,11 +1,11 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Download, Save, ChevronDown, Loader2, Search } from "lucide-react";
-import { getJSON } from "../../lib/http";
+import { getJSON } from "@/app/shared/lib/http";
 import { SECCIONES, resolveUnidades, FASGO_BASE_2026 } from "./data/fasgo2026";
 import { OS_BASE_VALUES, OS_EXCLUSIONS } from "./data/osBaseValues";
 import styles from "./TablaGinecologia.module.scss";
-import { hoyISO } from "../../lib/fechas";
+import { hoyISO } from "@/app/shared/lib/fechas";
 
 // ─── Obra Social ───────────────────────────────────────────────────────────────
 
@@ -150,7 +150,7 @@ export default function TablaGinecologia() {
   }
 
   const handleExport = useCallback(async () => {
-    const { downloadExcel } = await import("../../lib/excelExport");
+    const { downloadExcel } = await import("@/app/shared/lib/excelExport");
     const hojas = SECCIONES.map((sec) => {
       const data = sec.practicas.map((p) => {
         const u = resolveUnidades(p);

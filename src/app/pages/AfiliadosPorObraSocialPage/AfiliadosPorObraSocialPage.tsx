@@ -21,7 +21,7 @@ import { useExportar } from "./useExportar";
 import ExportFieldsModal from "./ExportFieldsModal";
 import AfiliadosPorObraSocialTable from "./AfiliadosPorObraSocialTable";
 import styles from "./AfiliadosPorObraSocialPage.module.scss";
-import Button from "../../components/atoms/Button/Button";
+import Button from "@/app/components/ui/Button/Button";
 
 const MAX_IDLE_OS_RESULTS = 80;
 

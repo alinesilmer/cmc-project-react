@@ -1,4 +1,4 @@
-import { getJSON } from "../../lib/http";
+import { getJSON } from "@/app/shared/lib/http";
 
 // Control de calidad del padrón. Es SOLO LECTURA: el backend señala legajos con
 // problemas y nadie corrige nada automáticamente (ver `auditoria.py`).

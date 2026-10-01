@@ -10,11 +10,11 @@ export type MissingFieldKey =
   | "matricula_prov"
   | "matricula_nac"
   | "provincia"
-  // ❌ localidad removida
+  // localidad removida
   | "categoria"
   | "especialidad"
   | "condicion_impositiva"
-  | "malapraxis"; // ✅ empresa malapraxis
+  | "malapraxis"; // empresa malapraxis
 
 export type FaltantesFilter = {
   enabled: boolean;

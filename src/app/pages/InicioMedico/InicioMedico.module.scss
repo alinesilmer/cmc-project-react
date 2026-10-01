@@ -37,10 +37,9 @@ $radius-sharp: 0;
   display: flex;
   flex-direction: column;
   gap: $spacing-12;
-  background:
-    radial-gradient(circle at 12% 8%, rgba(90, 121, 225, 0.1), transparent 26%),
-    radial-gradient(circle at 88% 14%, rgba(23, 63, 112, 0.07), transparent 24%),
-    linear-gradient(180deg, #f9fbff 0%, #f5f8fd 54%, #eef3fa 100%);
+  // Sin fondo propio: hereda el $gray-50 del body, igual que el resto del
+  // panel. El degradado azulado que había acá teñía la pantalla entera y la
+  // separaba visualmente de las pantallas vecinas.
 
   @media (max-width: 1200px) {
     padding: $spacing-8;
@@ -272,12 +271,6 @@ $radius-sharp: 0;
 }
 
 // ─── Beneficios ───────────────────────────────────────────────────────────────
-
-.benefitGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
-  gap: $spacing-4;
-}
 
 .benefitCard {
   position: relative;

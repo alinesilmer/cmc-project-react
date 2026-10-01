@@ -2,28 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { jsPDF } from "jspdf";
-import { saveAs } from "@/app/lib/fileSaver";
+import { saveAs } from "@/app/shared/lib/fileSaver";
 import styles from "./Boletin.module.scss";
-import Button from "../../components/atoms/Button/Button";
+import Button from "@/app/components/ui/Button/Button";
 import logo from "../../assets/logoCMC.png";
-import { http } from "../../lib/http";
-import { paginar } from "../../lib/paginar";
-
-type ApiBoletinRow = {
-  id: number;
-  codigos: string;
-  nro_obrasocial: number;
-  obra_social: string | null;
-  honorarios_a: number;
-  honorarios_b: number;
-  honorarios_c: number;
-  gastos: number;
-  ayudante_a: number;
-  ayudante_b: number;
-  ayudante_c: number;
-  c_p_h_s: string;
-  fecha_cambio: string | null;
-};
+import { http } from "@/app/shared/lib/http";
 
 type RankedOS = {
   nro: number;
@@ -43,12 +26,6 @@ const money = new Intl.NumberFormat("es-AR", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
-
-// Ruta relativa: la baseURL por ambiente la resuelve la instancia `http`
-// compartida, no hay que armarla acá.
-const ENDPOINTS = {
-  valoresBoletin: `/api/valores/boletin`,
-};
 
 const CMC_NAME = "Colegio Médico de Corrientes";
 const CMC_PHONE = String(
@@ -86,57 +63,28 @@ function normalizeText(s: any, maxLen = 160): string {
   return t.length > maxLen ? `${t.slice(0, maxLen - 1)}…` : t;
 }
 
-function normalizeRow(r: any): ApiBoletinRow {
-  return {
-    id: Number(r?.id ?? 0),
-    codigos: String(r?.codigos ?? ""),
-    nro_obrasocial: Number(r?.nro_obrasocial ?? 0),
-    obra_social: (r?.obra_social ?? null) as string | null,
-    honorarios_a: safeNum(r?.honorarios_a),
-    honorarios_b: safeNum(r?.honorarios_b),
-    honorarios_c: safeNum(r?.honorarios_c),
-    gastos: safeNum(r?.gastos),
-    ayudante_a: safeNum(r?.ayudante_a),
-    ayudante_b: safeNum(r?.ayudante_b),
-    ayudante_c: safeNum(r?.ayudante_c),
-    c_p_h_s: String(r?.c_p_h_s ?? ""),
-    fecha_cambio: r?.fecha_cambio ?? null,
-  };
-}
-
-const BOLETIN_PAGE = 500;
 
 // El `while (true)` que había acá no tenía techo: si el backend devolvía
 // siempre páginas completas, el navegador quedaba pidiendo para siempre.
 // `paginar` corta a las 100 páginas y además pide de a cuatro.
-async function fetchValoresBoletin(codigo: string): Promise<ApiBoletinRow[]> {
-  const filas = await paginar(
-    async (page) => {
-      const { data } = await http.get(ENDPOINTS.valoresBoletin, {
-        params: { codigo, page, size: BOLETIN_PAGE },
-      });
-      return Array.isArray(data) ? data : [];
-    },
-    { size: BOLETIN_PAGE },
-  );
-  return filas.map(normalizeRow);
-}
-
-function buildLatestPerOS(rows: ApiBoletinRow[]): RankedOS[] {
-  const byOS = new Map<number, ApiBoletinRow>();
-
-  for (const r of rows) {
-    if (!r?.nro_obrasocial) continue;
-    const existing = byOS.get(r.nro_obrasocial);
-    if (!existing || r.id < existing.id) {
-      byOS.set(r.nro_obrasocial, r);
-    }
-  }
-
-  return Array.from(byOS.entries()).map(([nro, row]) => ({
-    nro,
-    nombre: normalizeText(row.obra_social ?? `OS ${nro}`),
-    honorariosA: row.honorarios_a,
+/**
+ * El ranking a una fecha, desde el nomenclador nuevo.
+ *
+ * Antes salía de `valores_boletin` (la tabla legacy, que ya no se usa) y había
+ * que paginarla entera y quedarse con la fila más nueva de cada obra social en
+ * el navegador. `reportes_nm/ranking_valores` hace las dos cosas del lado del
+ * servidor: una fila por obra social, la de vigencia más reciente, ya ordenada
+ * de mayor a menor.
+ */
+async function fetchRanking(codigo: string, fecha: string): Promise<RankedOS[]> {
+  const { data } = await http.get("/api/reportes_nm/ranking_valores", {
+    params: { codigo, ...(fecha ? { fecha_referencia: fecha } : {}) },
+  });
+  const filas = Array.isArray(data?.ranking) ? data.ranking : [];
+  return filas.map((r: any) => ({
+    nro: Number(r?.obra_social_nro ?? 0),
+    nombre: normalizeText(r?.nombre_os ?? `OS ${r?.obra_social_nro ?? ""}`),
+    honorariosA: safeNum(r?.valor),
   }));
 }
 
@@ -195,7 +143,7 @@ async function exportRankingToExcel(items: RankedEntry[]) {
   }));
 
   try {
-    const { downloadExcelSheet } = await import("../../lib/excelExport");
+    const { downloadExcelSheet } = await import("@/app/shared/lib/excelExport");
     await downloadExcelSheet("ranking_obras_sociales.xlsx", "Ranking", rows);
     return;
   } catch {
@@ -401,6 +349,8 @@ export default function Boletin() {
   const [query, setQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [codigo, setCodigo] = useState("420101");
+  // Valores vigentes a esta fecha. Hoy por defecto: es el precio que rige.
+  const [fecha, setFecha] = useState(() => new Date().toISOString().slice(0, 10));
 
   const codigoVacio = codigo.trim() === "";
 
@@ -411,13 +361,12 @@ export default function Boletin() {
     };
   }, []);
 
-  const load = async (codigoActual: string) => {
+  const load = async (codigoActual: string, fechaActual: string) => {
     if (codigoActual.trim() === "") return;
     setLoading(true);
     setError(null);
     try {
-      const rows = await fetchValoresBoletin(codigoActual.trim());
-      const latest = buildLatestPerOS(rows);
+      const latest = await fetchRanking(codigoActual.trim(), fechaActual);
       if (!mountedRef.current) return;
       setData(latest);
       if (latest.length === 0) setError("No se encontraron resultados para ese código.");
@@ -432,7 +381,9 @@ export default function Boletin() {
   };
 
   useEffect(() => {
-    void load(codigo);
+    void load(codigo, fecha);
+    // Sólo al montar: después se recarga desde el buscador o el selector.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const ranked = useMemo(() => buildRankedEntries(data), [data]);
@@ -450,7 +401,7 @@ export default function Boletin() {
   const handleConsultar = async () => {
     setQuery("");
     setData([]);
-    await load(codigo);
+    await load(codigo, fecha);
   };
 
   const handleDownloadExcel = async () => {
@@ -495,6 +446,22 @@ export default function Boletin() {
                 Debe ingresar un código nomenclador para consultar datos.
               </p>
             )}
+          </div>
+
+          {/* Los precios de una obra social cambian con cada convenio: el
+              ranking es siempre a una fecha. Hoy por defecto, que es el que
+              rige. */}
+          <div className={styles.fieldGroup}>
+            <label htmlFor="fechaInput" className={styles.fieldLabel}>
+              Valores vigentes al
+            </label>
+            <input
+              id="fechaInput"
+              type="date"
+              value={fecha}
+              onChange={(e) => setFecha(e.target.value)}
+              className={styles.fieldInput}
+            />
           </div>
 
           <div className={styles.actions}>

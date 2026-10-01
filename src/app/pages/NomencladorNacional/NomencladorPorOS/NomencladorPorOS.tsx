@@ -1,32 +1,64 @@
-import { useState, useEffect, useCallback, useMemo, useRef, Fragment } from "react";
 import {
-  Search, Plus, Trash2, X as XIcon, Save,
-  Building2, CheckCircle2, AlertCircle, Loader2, Edit2,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+  Fragment,
+} from "react";
+import {
+  Search,
+  Plus,
+  Trash2,
+  X as XIcon,
+  Save,
+  Building2,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  Edit2,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 
 import styles from "./NomencladorPorOS.module.scss";
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
+import SelectorVigencia from "../components/SelectorVigencia";
 import {
-  listGalenos, listValores, createValor, createValorMulti, deleteValor,
-  listNomenclador, actualizarValor,
-  listCodigosPorEspecialidad, getNomencladorById, updateNucleoPar,
-  getFamiliaObraSocial, replicarValoresEnFamilia,
+  listGalenos,
+  listValores,
+  createValor,
+  createValorMulti,
+  deleteValor,
+  listNomenclador,
+  actualizarValor,
+  listCodigosPorEspecialidad,
+  getNomencladorById,
+  updateNucleoPar,
+  getFamiliaObraSocial,
+  replicarValoresEnFamilia,
 } from "../nomenclador.api";
 import MultiSelectBuscable from "../../../components/molecules/MultiSelectBuscable/MultiSelectBuscable";
 import ReplicarFamiliaBlock, {
-  ErrorReplica, ResultadoReplica,
+  ErrorReplica,
+  ResultadoReplica,
 } from "../../../components/molecules/ReplicarFamilia/ReplicarFamiliaBlock";
 import {
-  REPLICA_INICIAL, destinosReplica, type ReplicaState,
+  REPLICA_INICIAL,
+  destinosReplica,
+  type ReplicaState,
 } from "../../../components/molecules/ReplicarFamilia/replicaState";
-import ConfirmModal from "../../../components/atoms/ConfirmModal/ConfirmModal";
+import ConfirmModal from "@/app/components/ui/ConfirmModal/ConfirmModal";
 import { getEspecialidades } from "../../Especialidades/especialidades.api";
 import EspecialidadCombo from "../EspecialidadCombo";
 import type {
-  ValorOut, GalenoOut, NomencladorOut, ComponentePayload, Origen,
-  ReplicaResultadoItem, ReplicarValoresFamiliaPayload,
+  ValorOut,
+  GalenoOut,
+  NomencladorOut,
+  ComponentePayload,
+  Origen,
+  ReplicaResultadoItem,
+  ReplicarValoresFamiliaPayload,
 } from "../nomenclador.types";
 import { ORIGEN_LABELS } from "../nomenclador.types";
 import { today, parseMonto, compararGalenos } from "../nomenclador.helpers";
@@ -95,7 +127,11 @@ type EditEcuForm = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const fmt = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 2 });
+const fmt = new Intl.NumberFormat("es-AR", {
+  style: "currency",
+  currency: "ARS",
+  maximumFractionDigits: 2,
+});
 
 const PAGE_SIZE = 25;
 
@@ -109,11 +145,18 @@ const MODALIDAD_LABELS: Record<ValorOut["modalidad"], string> = {
   por_presupuesto: "Por presupuesto",
 };
 
-const FIXED_CONCEPTOS: ComponenteForm["concepto"][] = ["Honorarios", "Gastos", "Ayudante"];
+const FIXED_CONCEPTOS: ComponenteForm["concepto"][] = [
+  "Honorarios",
+  "Gastos",
+  "Ayudante",
+];
 
 function initComps(): ComponenteForm[] {
   return FIXED_CONCEPTOS.map((concepto) => ({
-    concepto, galeno_id: null, cantidad: "", valor_unitario: "",
+    concepto,
+    galeno_id: null,
+    cantidad: "",
+    valor_unitario: "",
     opcional: concepto !== "Honorarios",
   }));
 }
@@ -132,10 +175,15 @@ function initComps(): ComponenteForm[] {
  * `null` y no `0` a propósito: "no tiene ayudante" y "el ayudante vale cero" se
  * muestran distinto (— contra $ 0,00).
  */
-function montoDe(v: ValorOut, concepto: ComponenteForm["concepto"]): number | null {
+function montoDe(
+  v: ValorOut,
+  concepto: ComponenteForm["concepto"],
+): number | null {
   const c = v.componentes.find((x) => x.concepto === concepto && x.activo);
   if (!c) return null;
-  return c.tipo === "calculable" ? parseMonto(c.subtotal) : parseMonto(c.valor_unitario);
+  return c.tipo === "calculable"
+    ? parseMonto(c.subtotal)
+    : parseMonto(c.valor_unitario);
 }
 
 function compsFromOut(comps: ValorOut["componentes"]): ComponenteForm[] {
@@ -158,10 +206,20 @@ type CompEditorProps = {
   componentes: ComponenteForm[];
   galenos: GalenoOut[];
   errors: Record<string, string>;
-  onChange: (idx: number, key: keyof ComponenteForm, value: ComponenteForm[keyof ComponenteForm]) => void;
+  onChange: (
+    idx: number,
+    key: keyof ComponenteForm,
+    value: ComponenteForm[keyof ComponenteForm],
+  ) => void;
 };
 
-function ComponentEditor({ modalidad, componentes, galenos, errors, onChange }: CompEditorProps) {
+function ComponentEditor({
+  modalidad,
+  componentes,
+  galenos,
+  errors,
+  onChange,
+}: CompEditorProps) {
   // Los activos, en el orden del boletín y con los niveles seguidos. El select
   // se recorre a ojo buscando un galeno puntual, así que el orden en que el
   // operador los tiene en la cabeza es el que importa.
@@ -169,11 +227,16 @@ function ComponentEditor({ modalidad, componentes, galenos, errors, onChange }: 
     () =>
       galenos
         .filter((g) => g.activo)
-        .sort((a, b) => compararGalenos(a, b) || (a.nivel ?? 0) - (b.nivel ?? 0)),
+        .sort(
+          (a, b) => compararGalenos(a, b) || (a.nivel ?? 0) - (b.nivel ?? 0),
+        ),
     [galenos],
   );
 
-  const galenoPorId = useMemo(() => new Map(galenos.map((g) => [g.id, g])), [galenos]);
+  const galenoPorId = useMemo(
+    () => new Map(galenos.map((g) => [g.id, g])),
+    [galenos],
+  );
 
   // Subtotal orientativo: galeno × cantidad (calculable) o el valor fijo. `null` = no se
   // puede calcular todavía (sin galeno, o cantidad en 0 = la completa el back).
@@ -182,7 +245,8 @@ function ComponentEditor({ modalidad, componentes, galenos, errors, onChange }: 
       const v = parseFloat(comp.valor_unitario);
       return isNaN(v) ? null : v;
     }
-    const g = comp.galeno_id != null ? galenoPorId.get(comp.galeno_id) : undefined;
+    const g =
+      comp.galeno_id != null ? galenoPorId.get(comp.galeno_id) : undefined;
     const cant = parseFloat(comp.cantidad);
     if (!g || isNaN(cant) || cant <= 0) return null;
     return parseMonto(g.valor_unitario) * cant;
@@ -190,7 +254,9 @@ function ComponentEditor({ modalidad, componentes, galenos, errors, onChange }: 
 
   const subtotales = componentes.map(subtotal);
   const total = subtotales.reduce<number>((acc, v) => acc + (v ?? 0), 0);
-  const hayAuto = modalidad === "calculable" && componentes.some((c, i) => c.galeno_id != null && subtotales[i] == null);
+  const hayAuto =
+    modalidad === "calculable" &&
+    componentes.some((c, i) => c.galeno_id != null && subtotales[i] == null);
 
   return (
     <div className={styles.componentRows}>
@@ -203,7 +269,11 @@ function ComponentEditor({ modalidad, componentes, galenos, errors, onChange }: 
             <div className={styles.componentCardHead}>
               <span className={styles.compConceptLabel}>
                 {comp.concepto}
-                {i === 0 ? <span className={styles.req}> *</span> : <span className={styles.compOpcional}>opcional</span>}
+                {i === 0 ? (
+                  <span className={styles.req}> *</span>
+                ) : (
+                  <span className={styles.compOpcional}>opcional</span>
+                )}
               </span>
               <span className={styles.compSubtotal}>
                 {sub != null
@@ -217,27 +287,51 @@ function ComponentEditor({ modalidad, componentes, galenos, errors, onChange }: 
             {modalidad === "calculable" ? (
               <div className={styles.componentFields}>
                 <div className={styles.formGroup}>
-                  <label className={styles.formLabel} htmlFor={`comp-${i}-galeno`}>Galeno</label>
+                  <label
+                    className={styles.formLabel}
+                    htmlFor={`comp-${i}-galeno`}
+                  >
+                    Galeno
+                  </label>
                   <select
                     id={`comp-${i}-galeno`}
                     className={`${styles.formSelect} ${styles.compControl} ${errGaleno ? styles.inputError : ""}`}
                     value={comp.galeno_id ?? ""}
-                    onChange={(e) => onChange(i, "galeno_id", e.target.value ? Number(e.target.value) : null)}
+                    onChange={(e) =>
+                      onChange(
+                        i,
+                        "galeno_id",
+                        e.target.value ? Number(e.target.value) : null,
+                      )
+                    }
                   >
-                    <option value="">— {i === 0 ? "Seleccionar" : "Sin galeno"} —</option>
+                    <option value="">
+                      — {i === 0 ? "Seleccionar" : "Sin galeno"} —
+                    </option>
                     {galenosOrdenados.map((g) => (
                       <option key={g.id} value={g.id}>
-                        {g.codigo}{g.nivel != null ? ` (niv. ${g.nivel})` : ""} — {fmt.format(parseMonto(g.valor_unitario))}
+                        {g.codigo}
+                        {g.nivel != null ? ` (niv. ${g.nivel})` : ""} —{" "}
+                        {fmt.format(parseMonto(g.valor_unitario))}
                       </option>
                     ))}
                   </select>
-                  {errGaleno && <span className={styles.errorMsg}>{errGaleno}</span>}
+                  {errGaleno && (
+                    <span className={styles.errorMsg}>{errGaleno}</span>
+                  )}
                 </div>
                 <div className={styles.formGroup}>
-                  <label className={styles.formLabel} htmlFor={`comp-${i}-cantidad`}>Cantidad</label>
+                  <label
+                    className={styles.formLabel}
+                    htmlFor={`comp-${i}-cantidad`}
+                  >
+                    Cantidad
+                  </label>
                   <input
                     id={`comp-${i}-cantidad`}
-                    type="number" min="0" step="0.01"
+                    type="number"
+                    min="0"
+                    step="0.01"
                     className={`${styles.formInput} ${styles.compControl}`}
                     value={comp.cantidad}
                     onChange={(e) => onChange(i, "cantidad", e.target.value)}
@@ -247,16 +341,24 @@ function ComponentEditor({ modalidad, componentes, galenos, errors, onChange }: 
               </div>
             ) : (
               <div className={styles.formGroup}>
-                <label className={styles.formLabel} htmlFor={`comp-${i}-valor`}>Valor fijo ($)</label>
+                <label className={styles.formLabel} htmlFor={`comp-${i}-valor`}>
+                  Valor fijo ($)
+                </label>
                 <input
                   id={`comp-${i}-valor`}
-                  type="number" min="0" step="0.01"
+                  type="number"
+                  min="0"
+                  step="0.01"
                   className={`${styles.formInput} ${styles.compControl} ${errValor ? styles.inputError : ""}`}
                   value={comp.valor_unitario}
-                  onChange={(e) => onChange(i, "valor_unitario", e.target.value)}
+                  onChange={(e) =>
+                    onChange(i, "valor_unitario", e.target.value)
+                  }
                   placeholder={i === 0 ? "0.00" : "Vacío si no aplica"}
                 />
-                {errValor && <span className={styles.errorMsg}>{errValor}</span>}
+                {errValor && (
+                  <span className={styles.errorMsg}>{errValor}</span>
+                )}
               </div>
             )}
           </div>
@@ -269,7 +371,8 @@ function ComponentEditor({ modalidad, componentes, galenos, errors, onChange }: 
       </div>
       {hayAuto && (
         <span className={styles.hintText}>
-          Los componentes con cantidad en 0 toman las unidades del galeno o del código al guardar; el total no las incluye.
+          Los componentes con cantidad en 0 toman las unidades del galeno o del
+          código al guardar; el total no las incluye.
         </span>
       )}
     </div>
@@ -286,9 +389,16 @@ export default function NomencladorPorOS() {
   const [loadingValores, setLoadingValores] = useState(false);
   const [codeSearch, setCodeSearch] = useState("");
   const [origenFilter, setOrigenFilter] = useState<Origen | "todos">("todos");
-  const [modalidadFilter, setModalidadFilter] = useState<ValorOut["modalidad"] | "todos">("todos");
+  // Qué carga se está mirando. Sin esto se traían todas las vigencias juntas y
+  // el mismo código salía repetido una vez por carga.
+  const [vigencia, setVigencia] = useState<string | null>(null);
+  const [modalidadFilter, setModalidadFilter] = useState<
+    ValorOut["modalidad"] | "todos"
+  >("todos");
   const [soloPresupuesto, setSoloPresupuesto] = useState(false);
-  const [especialidadFilter, setEspecialidadFilter] = useState<number | "todos">("todos");
+  const [especialidadFilter, setEspecialidadFilter] = useState<
+    number | "todos"
+  >("todos");
   const [page, setPage] = useState(1);
 
   // Modal
@@ -297,22 +407,47 @@ export default function NomencladorPorOS() {
 
   // Create form
   const [form, setForm] = useState<ValorForm>({
-    nomencladorId: null, nomencladorLabel: "", origen: "NE",
-    modalidad: "calculable", vigencia_desde: today(), descripcion: "",
-    porPresupuesto: false, nivel: "", complejidad: "", cantidad_ayudantes: "", coseguro: "", observacion: "",
-    especialidadesChecked: new Set(), sinRestriccion: false, componentes: initComps(),
+    nomencladorId: null,
+    nomencladorLabel: "",
+    origen: "NE",
+    modalidad: "calculable",
+    vigencia_desde: today(),
+    descripcion: "",
+    porPresupuesto: false,
+    nivel: "",
+    complejidad: "",
+    cantidad_ayudantes: "",
+    coseguro: "",
+    observacion: "",
+    especialidadesChecked: new Set(),
+    sinRestriccion: false,
+    componentes: initComps(),
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [cargandoConfig, setCargandoConfig] = useState(false);
-  const [configMsg, setConfigMsg] = useState<{ tipo: "ok" | "info" | "error"; texto: string } | null>(null);
+  const [configMsg, setConfigMsg] = useState<{
+    tipo: "ok" | "info" | "error";
+    texto: string;
+  } | null>(null);
 
   // Edit forms
   const [editMeta, setEditMeta] = useState<EditMetaForm>({
-    descripcion: "", sin_restriccion_especialidad: false, especialidades: [],
-    nivel: "", complejidad: "", cantidad_ayudantes: "", observacion: "",
+    descripcion: "",
+    sin_restriccion_especialidad: false,
+    especialidades: [],
+    nivel: "",
+    complejidad: "",
+    cantidad_ayudantes: "",
+    observacion: "",
   });
-  const [editEcu, setEditEcu] = useState<EditEcuForm>({ vigencia_desde: today(), modalidad: "calculable", componentes: initComps(), coseguro: "", aplicarAVariantes: false });
+  const [editEcu, setEditEcu] = useState<EditEcuForm>({
+    vigencia_desde: today(),
+    modalidad: "calculable",
+    componentes: initComps(),
+    coseguro: "",
+    aplicarAVariantes: false,
+  });
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
   const [savingMeta, setSavingMeta] = useState(false);
   // "nucleo" = el código PARA TODAS sus especialidades; "variante" = una sola fila
@@ -323,7 +458,9 @@ export default function NomencladorPorOS() {
   const [nucleoOrigen, setNucleoOrigen] = useState<"NE" | "NN">("NE");
   // Replicar en los otros planes de la familia de la OS (Swiss Medical, Medife…).
   const [replica, setReplica] = useState<ReplicaState>(REPLICA_INICIAL);
-  const [replicaResultado, setReplicaResultado] = useState<ReplicaResultadoItem[] | null>(null);
+  const [replicaResultado, setReplicaResultado] = useState<
+    ReplicaResultadoItem[] | null
+  >(null);
   const [replicaError, setReplicaError] = useState<string | null>(null);
   const replicaTerminada = replicaResultado !== null || replicaError !== null;
   const [savingEcu, setSavingEcu] = useState(false);
@@ -334,7 +471,10 @@ export default function NomencladorPorOS() {
   const [nomLoading, setNomLoading] = useState(false);
   const nomDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const [toast, setToast] = useState<{
+    type: "success" | "error";
+    msg: string;
+  } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ValorOut | null>(null);
 
   const { data: osList = [] } = useObrasSociales();
@@ -347,7 +487,9 @@ export default function NomencladorPorOS() {
 
   const espMap = useMemo(() => {
     const m: Record<number, string> = {};
-    especialidades.forEach((e) => { m[e.id_colegio_espe] = e.nombre; });
+    especialidades.forEach((e) => {
+      m[e.id_colegio_espe] = e.nombre;
+    });
     return m;
   }, [especialidades]);
 
@@ -359,64 +501,98 @@ export default function NomencladorPorOS() {
   });
 
   const espOptions = useMemo(
-    () => especialidades.map((e) => ({ value: e.id_colegio_espe, label: e.nombre })),
+    () =>
+      especialidades.map((e) => ({
+        value: e.id_colegio_espe,
+        label: e.nombre,
+      })),
     [especialidades],
   );
 
   // Códigos habilitados para la especialidad elegida EN ESTA OS (para acotar el
   // listado). Se traen todos los pares (paginando) y se guardan como Set de códigos
   // en mayúsculas — las especialidades son un dato por obra social.
-  const { data: codigosDeEspecialidad, isFetching: espFilterFetching } = useQuery({
-    queryKey: ["nomenclador-especialidad-codigos", selectedNroOS, especialidadFilter],
-    queryFn: async () => {
-      const codigos = new Set<string>();
-      for (let p = 1; p <= 100; p++) {
-        const batch = await listCodigosPorEspecialidad({
-          obra_social_nro: selectedNroOS as number,
-          especialidad_id_colegio: especialidadFilter as number,
-          page: p,
-          size: 200,
-        });
-        batch.forEach((r) => codigos.add(r.codigo.toUpperCase()));
-        if (batch.length < 200) break;
-      }
-      return codigos;
-    },
-    enabled: especialidadFilter !== "todos" && selectedNroOS != null,
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data: codigosDeEspecialidad, isFetching: espFilterFetching } =
+    useQuery({
+      queryKey: [
+        "nomenclador-especialidad-codigos",
+        selectedNroOS,
+        especialidadFilter,
+      ],
+      queryFn: async () => {
+        const codigos = new Set<string>();
+        for (let p = 1; p <= 100; p++) {
+          const batch = await listCodigosPorEspecialidad({
+            obra_social_nro: selectedNroOS as number,
+            especialidad_id_colegio: especialidadFilter as number,
+            page: p,
+            size: 200,
+          });
+          batch.forEach((r) => codigos.add(r.codigo.toUpperCase()));
+          if (batch.length < 200) break;
+        }
+        return codigos;
+      },
+      enabled: especialidadFilter !== "todos" && selectedNroOS != null,
+      staleTime: 5 * 60 * 1000,
+    });
 
   const filteredOS = useMemo(() => {
     if (!osSearch.trim()) return osList.slice(0, 80);
     const q = osSearch.toLowerCase();
     return osList
-      .filter((os) => os.nombre?.toLowerCase().includes(q) || String(os.nro_obra_social).includes(q))
+      .filter(
+        (os) =>
+          os.nombre?.toLowerCase().includes(q) ||
+          String(os.nro_obra_social).includes(q),
+      )
       .slice(0, 80);
   }, [osList, osSearch]);
 
   const selectedOS = osList.find((os) => os.nro_obra_social === selectedNroOS);
 
   useEffect(() => {
-    if (!selectedNroOS) { setGalenos([]); setValores([]); return; }
-    listGalenos({ obra_social_nro: selectedNroOS }).then(setGalenos).catch(() => {});
-    loadValores(selectedNroOS);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedNroOS]);
+    if (!selectedNroOS) {
+      setGalenos([]);
+      setValores([]);
+      return;
+    }
+    listGalenos({ obra_social_nro: selectedNroOS })
+      .then(setGalenos)
+      .catch(() => {});
+    loadValores(selectedNroOS, vigencia);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedNroOS, vigencia]);
 
-  const loadValores = useCallback(async (osNro: number) => {
-    setLoadingValores(true);
-    try {
-      // Traer TODOS los valores activos (paginando la API) para agrupar/filtrar/paginar bien.
-      const all: ValorOut[] = [];
-      for (let p = 1; p <= 100; p++) {
-        const batch = await listValores({ obra_social_nro: osNro, estado: "activo", page: p, size: 200 });
-        all.push(...batch);
-        if (batch.length < 200) break;
+  const loadValores = useCallback(
+    async (osNro: number, vigenciaDesde?: string | null) => {
+      setLoadingValores(true);
+      try {
+        // Sólo la vigencia elegida. Traerlas todas multiplicaba las filas por la
+        // cantidad de cargas de la obra social y no había forma de saber cuál se
+        // estaba leyendo. Sin vigencia (opción "Todas") se traen todas, que es el
+        // comportamiento viejo y sigue disponible a pedido.
+        const all: ValorOut[] = [];
+        for (let p = 1; p <= 100; p++) {
+          const batch = await listValores({
+            obra_social_nro: osNro,
+            estado: "activo",
+            ...(vigenciaDesde ? { vigencia_desde: vigenciaDesde } : {}),
+            page: p,
+            size: 200,
+          });
+          all.push(...batch);
+          if (batch.length < 200) break;
+        }
+        setValores(all);
+      } catch {
+        showToast("error", "Error al cargar los valores.");
+      } finally {
+        setLoadingValores(false);
       }
-      setValores(all);
-    } catch { showToast("error", "Error al cargar los valores."); }
-    finally { setLoadingValores(false); }
-  }, []);
+    },
+    [],
+  );
 
   // Ya no hay fallback al catálogo del Colegio: descripcion es obligatoria en el
   // alta nueva, así que solo queda vacía en filas viejas (previas a la fase 2 de
@@ -425,8 +601,10 @@ export default function NomencladorPorOS() {
 
   const filteredValores = useMemo(() => {
     let list = valores;
-    if (origenFilter !== "todos") list = list.filter((v) => v.origen === origenFilter);
-    if (modalidadFilter !== "todos") list = list.filter((v) => v.modalidad === modalidadFilter);
+    if (origenFilter !== "todos")
+      list = list.filter((v) => v.origen === origenFilter);
+    if (modalidadFilter !== "todos")
+      list = list.filter((v) => v.modalidad === modalidadFilter);
     if (soloPresupuesto) list = list.filter((v) => v.por_presupuesto);
     if (especialidadFilter !== "todos") {
       // Mientras el set carga (undefined) no mostramos nada para no confundir.
@@ -436,13 +614,29 @@ export default function NomencladorPorOS() {
     }
     if (codeSearch.trim()) {
       const q = codeSearch.toLowerCase();
-      list = list.filter((v) => v.codigo.toLowerCase().includes(q) || (v.descripcion ?? "").toLowerCase().includes(q));
+      list = list.filter(
+        (v) =>
+          v.codigo.toLowerCase().includes(q) ||
+          (v.descripcion ?? "").toLowerCase().includes(q),
+      );
     }
     return list;
-  }, [valores, codeSearch, origenFilter, modalidadFilter, soloPresupuesto, especialidadFilter, codigosDeEspecialidad]);
+  }, [
+    valores,
+    codeSearch,
+    origenFilter,
+    modalidadFilter,
+    soloPresupuesto,
+    especialidadFilter,
+    codigosDeEspecialidad,
+  ]);
 
   // Loading combinado: valores de la OS + resolución del set de la especialidad.
-  const showLoading = loadingValores || (especialidadFilter !== "todos" && !codigosDeEspecialidad && espFilterFetching);
+  const showLoading =
+    loadingValores ||
+    (especialidadFilter !== "todos" &&
+      !codigosDeEspecialidad &&
+      espFilterFetching);
 
   const grouped = useMemo(() => {
     const map = new Map<number, ValorOut[]>();
@@ -452,12 +646,18 @@ export default function NomencladorPorOS() {
       map.set(v.nomenclador_id, arr);
     }
     const nombreEsp = (v: ValorOut) =>
-      v.especialidad_id_colegio != null ? (espMap[v.especialidad_id_colegio] ?? "") : "";
+      v.especialidad_id_colegio != null
+        ? (espMap[v.especialidad_id_colegio] ?? "")
+        : "";
     map.forEach((arr) =>
       arr.sort((x, y) =>
         x.origen === y.origen
-          ? nombreEsp(x).localeCompare(nombreEsp(y), "es", { sensitivity: "base" })
-          : x.origen === "NE" ? -1 : 1,
+          ? nombreEsp(x).localeCompare(nombreEsp(y), "es", {
+              sensitivity: "base",
+            })
+          : x.origen === "NE"
+            ? -1
+            : 1,
       ),
     );
     return Array.from(map.entries());
@@ -470,9 +670,21 @@ export default function NomencladorPorOS() {
   );
 
   // Volver a la página 1 cuando cambian OS, búsqueda o filtro de origen.
-  useEffect(() => { setPage(1); }, [selectedNroOS, codeSearch, origenFilter, modalidadFilter, soloPresupuesto, especialidadFilter]);
+  useEffect(() => {
+    setPage(1);
+  }, [
+    selectedNroOS,
+    vigencia,
+    codeSearch,
+    origenFilter,
+    modalidadFilter,
+    soloPresupuesto,
+    especialidadFilter,
+  ]);
   // Ajustar si la página quedó fuera de rango (p. ej. tras cerrar un valor).
-  useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   function showToast(type: "success" | "error", msg: string) {
     setToast({ type, msg });
@@ -484,21 +696,36 @@ export default function NomencladorPorOS() {
   function searchNom(q: string) {
     setNomSearch(q);
     if (nomDebounce.current) clearTimeout(nomDebounce.current);
-    if (q.trim().length < 2) { setNomResults([]); return; }
+    if (q.trim().length < 2) {
+      setNomResults([]);
+      return;
+    }
     setNomLoading(true);
     nomDebounce.current = setTimeout(async () => {
       try {
-        const results = await listNomenclador({ q: q.trim(), activo: true, size: 12 });
+        const results = await listNomenclador({
+          q: q.trim(),
+          activo: true,
+          size: 12,
+        });
         setNomResults(results);
-      } catch { setNomResults([]); }
-      finally { setNomLoading(false); }
+      } catch {
+        setNomResults([]);
+      } finally {
+        setNomLoading(false);
+      }
     }, 300);
   }
 
   function selectNom(n: NomencladorOut) {
-    setForm((prev) => ({ ...prev, nomencladorId: n.id, nomencladorLabel: n.codigo }));
+    setForm((prev) => ({
+      ...prev,
+      nomencladorId: n.id,
+      nomencladorLabel: n.codigo,
+    }));
     setConfigMsg(null);
-    setNomSearch(""); setNomResults([]);
+    setNomSearch("");
+    setNomResults([]);
     setErrors((prev) => ({ ...prev, nomenclador: "" }));
   }
 
@@ -510,23 +737,43 @@ export default function NomencladorPorOS() {
       const nm = await getNomencladorById(form.nomencladorId);
       const conDescripcion = !!nm.descripcion;
       const conComplejidad = !!nm.complejidad;
-      const conSinRestriccion = form.origen === "NE" && nm.sin_restriccion_especialidad === true;
-      const conEspecialidades = form.origen === "NE" && !conSinRestriccion && nm.especialidades.length > 0;
+      const conSinRestriccion =
+        form.origen === "NE" && nm.sin_restriccion_especialidad === true;
+      const conEspecialidades =
+        form.origen === "NE" &&
+        !conSinRestriccion &&
+        nm.especialidades.length > 0;
       setForm((prev) => ({
         ...prev,
         ...(conDescripcion ? { descripcion: nm.descripcion as string } : {}),
         ...(conComplejidad ? { complejidad: nm.complejidad as string } : {}),
-        ...(conSinRestriccion ? { sinRestriccion: true, especialidadesChecked: new Set<number>() } : {}),
-        ...(conEspecialidades ? { sinRestriccion: false, especialidadesChecked: new Set(nm.especialidades) } : {}),
+        ...(conSinRestriccion
+          ? { sinRestriccion: true, especialidadesChecked: new Set<number>() }
+          : {}),
+        ...(conEspecialidades
+          ? {
+              sinRestriccion: false,
+              especialidadesChecked: new Set(nm.especialidades),
+            }
+          : {}),
       }));
       setErrors((p) => ({ ...p, descripcion: "", especialidades: "" }));
       setConfigMsg(
-        conDescripcion || conComplejidad || conEspecialidades || conSinRestriccion
+        conDescripcion ||
+          conComplejidad ||
+          conEspecialidades ||
+          conSinRestriccion
           ? { tipo: "ok", texto: "Configuración inicial cargada correctamente" }
-          : { tipo: "info", texto: `El código ${nm.codigo} no tiene configuración inicial cargada.` },
+          : {
+              tipo: "info",
+              texto: `El código ${nm.codigo} no tiene configuración inicial cargada.`,
+            },
       );
     } catch {
-      setConfigMsg({ tipo: "error", texto: "No se pudo cargar la configuración inicial." });
+      setConfigMsg({
+        tipo: "error",
+        texto: "No se pudo cargar la configuración inicial.",
+      });
     } finally {
       setCargandoConfig(false);
     }
@@ -535,7 +782,8 @@ export default function NomencladorPorOS() {
   function clearNom() {
     setConfigMsg(null);
     setForm((prev) => ({ ...prev, nomencladorId: null, nomencladorLabel: "" }));
-    setNomSearch(""); setNomResults([]);
+    setNomSearch("");
+    setNomResults([]);
   }
 
   // ─── Origin + modalidad rules ──────────────────────────────────────────────
@@ -555,7 +803,8 @@ export default function NomencladorPorOS() {
 
   function changeModalidad(m: ModalidadValor) {
     setForm((prev) => ({
-      ...prev, modalidad: m,
+      ...prev,
+      modalidad: m,
       componentes: prev.componentes.map((c) => ({
         ...c,
         galeno_id: m === "fijo" ? null : c.galeno_id,
@@ -567,7 +816,8 @@ export default function NomencladorPorOS() {
 
   function changeEditModalidad(m: ModalidadValor) {
     setEditEcu((prev) => ({
-      ...prev, modalidad: m,
+      ...prev,
+      modalidad: m,
       componentes: prev.componentes.map((c) => ({
         ...c,
         galeno_id: m === "fijo" ? null : c.galeno_id,
@@ -579,7 +829,11 @@ export default function NomencladorPorOS() {
 
   // ─── Component update helpers ──────────────────────────────────────────────
 
-  function updateComp<K extends keyof ComponenteForm>(idx: number, key: K, value: ComponenteForm[K]) {
+  function updateComp<K extends keyof ComponenteForm>(
+    idx: number,
+    key: K,
+    value: ComponenteForm[K],
+  ) {
     setForm((prev) => {
       const comps = [...prev.componentes];
       comps[idx] = { ...comps[idx], [key]: value };
@@ -587,7 +841,11 @@ export default function NomencladorPorOS() {
     });
   }
 
-  function updateEditComp<K extends keyof ComponenteForm>(idx: number, key: K, value: ComponenteForm[K]) {
+  function updateEditComp<K extends keyof ComponenteForm>(
+    idx: number,
+    key: K,
+    value: ComponenteForm[K],
+  ) {
     setEditEcu((prev) => {
       const comps = [...prev.componentes];
       comps[idx] = { ...comps[idx], [key]: value };
@@ -602,8 +860,13 @@ export default function NomencladorPorOS() {
     if (!form.nomencladorId) errs.nomenclador = "Seleccioná un código";
     if (!form.descripcion.trim()) errs.descripcion = "Requerido";
     if (!form.vigencia_desde) errs.vigencia_desde = "Requerido";
-    if (form.origen === "NE" && !form.sinRestriccion && form.especialidadesChecked.size === 0) {
-      errs.especialidades = "Tildá al menos una especialidad o marcá 'Sin restricción por especialidad'";
+    if (
+      form.origen === "NE" &&
+      !form.sinRestriccion &&
+      form.especialidadesChecked.size === 0
+    ) {
+      errs.especialidades =
+        "Tildá al menos una especialidad o marcá 'Sin restricción por especialidad'";
     }
     if (!form.porPresupuesto) {
       const hon = form.componentes[0];
@@ -617,7 +880,11 @@ export default function NomencladorPorOS() {
         const idx = i + 1;
         if (form.modalidad === "calculable" && c.cantidad && !c.galeno_id)
           errs[`comp_${idx}_galeno`] = "Seleccioná un galeno";
-        if (form.modalidad === "fijo" && c.valor_unitario.trim() && isNaN(parseFloat(c.valor_unitario)))
+        if (
+          form.modalidad === "fijo" &&
+          c.valor_unitario.trim() &&
+          isNaN(parseFloat(c.valor_unitario))
+        )
           errs[`comp_${idx}_valor`] = "Valor inválido";
       });
     }
@@ -642,7 +909,11 @@ export default function NomencladorPorOS() {
         const idx = i + 1;
         if (editEcu.modalidad === "calculable" && c.cantidad && !c.galeno_id)
           errs[`comp_${idx}_galeno`] = "Seleccioná un galeno";
-        if (editEcu.modalidad === "fijo" && c.valor_unitario.trim() && isNaN(parseFloat(c.valor_unitario)))
+        if (
+          editEcu.modalidad === "fijo" &&
+          c.valor_unitario.trim() &&
+          isNaN(parseFloat(c.valor_unitario))
+        )
           errs[`comp_${idx}_valor`] = "Valor inválido";
       });
     }
@@ -654,12 +925,26 @@ export default function NomencladorPorOS() {
 
   function openCreate() {
     setForm({
-      nomencladorId: null, nomencladorLabel: "", origen: "NE",
-      modalidad: "calculable", vigencia_desde: today(), descripcion: "",
-      porPresupuesto: false, nivel: "", complejidad: "", cantidad_ayudantes: "", coseguro: "", observacion: "",
-      especialidadesChecked: new Set(), sinRestriccion: false, componentes: initComps(),
+      nomencladorId: null,
+      nomencladorLabel: "",
+      origen: "NE",
+      modalidad: "calculable",
+      vigencia_desde: today(),
+      descripcion: "",
+      porPresupuesto: false,
+      nivel: "",
+      complejidad: "",
+      cantidad_ayudantes: "",
+      coseguro: "",
+      observacion: "",
+      especialidadesChecked: new Set(),
+      sinRestriccion: false,
+      componentes: initComps(),
     });
-    setNomSearch(""); setNomResults([]); setErrors({}); setConfigMsg(null);
+    setNomSearch("");
+    setNomResults([]);
+    setErrors({});
+    setConfigMsg(null);
     resetReplica();
     setModalKind("create");
   }
@@ -672,11 +957,14 @@ export default function NomencladorPorOS() {
       especialidades: v.especialidades,
       nivel: v.nivel != null ? String(v.nivel) : "",
       complejidad: v.complejidad ?? "",
-      cantidad_ayudantes: v.cantidad_ayudantes != null ? String(v.cantidad_ayudantes) : "",
+      cantidad_ayudantes:
+        v.cantidad_ayudantes != null ? String(v.cantidad_ayudantes) : "",
       observacion: v.observacion ?? "",
     });
     setEditEcu({
-      vigencia_desde: today(), modalidad: mod, componentes: compsFromOut(v.componentes),
+      vigencia_desde: today(),
+      modalidad: mod,
+      componentes: compsFromOut(v.componentes),
       coseguro: v.coseguro && parseMonto(v.coseguro) !== 0 ? v.coseguro : "",
       aplicarAVariantes: false,
     });
@@ -685,7 +973,8 @@ export default function NomencladorPorOS() {
 
   /** Lápiz de UNA fila: solo valores, vigencia y coseguro. */
   function openEdit(v: ValorOut) {
-    const mod: ModalidadValor = v.modalidad === "galeno" ? "calculable" : "fijo";
+    const mod: ModalidadValor =
+      v.modalidad === "galeno" ? "calculable" : "fijo";
     cargarFormsDeEdicion(v, mod);
     resetReplica();
     setEcuEnabled(false);
@@ -703,13 +992,16 @@ export default function NomencladorPorOS() {
     if (grupo.length === 0) return;
     setNucleoOrigen(origen);
     const base = grupo[0];
-    const mod: ModalidadValor = base.modalidad === "galeno" ? "calculable" : "fijo";
+    const mod: ModalidadValor =
+      base.modalidad === "galeno" ? "calculable" : "fijo";
     cargarFormsDeEdicion(base, mod);
     setEditMeta((p) => ({
       ...p,
       // Datos del PAR (OS + código), no de cada fila: la NN nunca tiene especialidad,
       // así que no se pueden deducir de las filas.
-      sin_restriccion_especialidad: grupo.some((v) => v.sin_restriccion_especialidad),
+      sin_restriccion_especialidad: grupo.some(
+        (v) => v.sin_restriccion_especialidad,
+      ),
       especialidades: base.especialidades,
     }));
     resetReplica();
@@ -728,9 +1020,11 @@ export default function NomencladorPorOS() {
       return "Estás modificando los valores del NOMENCLADOR NACIONAL de este código (mismo valor para todas sus especialidades)";
     }
     if (editMode === "variante" && editTarget) {
-      const nombre = editTarget.especialidad_id_colegio != null
-        ? (espMap[editTarget.especialidad_id_colegio] ?? `Esp. ${editTarget.especialidad_id_colegio}`)
-        : null;
+      const nombre =
+        editTarget.especialidad_id_colegio != null
+          ? (espMap[editTarget.especialidad_id_colegio] ??
+            `Esp. ${editTarget.especialidad_id_colegio}`)
+          : null;
       return nombre
         ? `Estás modificando este código PARA LA ESPECIALIDAD DE ${nombre}`
         : "Estás modificando este código SIN ESPECIALIDAD (sin restricción)";
@@ -747,13 +1041,18 @@ export default function NomencladorPorOS() {
   /** Replica en la familia lo recién guardado. true = hubo replicación (el modal queda
    * abierto mostrando el resultado); false = no había nada que replicar. */
   async function replicarSiCorresponde(
-    payload: Omit<ReplicarValoresFamiliaPayload, "origen_obra_social_nro" | "destinos">,
+    payload: Omit<
+      ReplicarValoresFamiliaPayload,
+      "origen_obra_social_nro" | "destinos"
+    >,
   ): Promise<boolean> {
     const destinos = destinosReplica(replica);
     if (!selectedNroOS || destinos.length === 0) return false;
     try {
       const r = await replicarValoresEnFamilia({
-        ...payload, origen_obra_social_nro: selectedNroOS, destinos,
+        ...payload,
+        origen_obra_social_nro: selectedNroOS,
+        destinos,
       });
       setReplicaResultado(r.resultados);
     } catch (e: unknown) {
@@ -775,13 +1074,18 @@ export default function NomencladorPorOS() {
         const filled = form.componentes.filter((c, i) => {
           if (i === 0) return true;
           if (form.modalidad === "calculable") return c.galeno_id != null;
-          return c.valor_unitario.trim() !== "" && !isNaN(parseFloat(c.valor_unitario));
+          return (
+            c.valor_unitario.trim() !== "" &&
+            !isNaN(parseFloat(c.valor_unitario))
+          );
         });
         componentes = filled.map((c, i) => ({
           concepto: c.concepto,
           galeno_id: form.modalidad === "calculable" ? c.galeno_id : null,
-          cantidad: form.modalidad === "calculable" ? (parseFloat(c.cantidad) || 0) : 0,
-          valor_unitario: form.modalidad === "fijo" ? parseFloat(c.valor_unitario) : null,
+          cantidad:
+            form.modalidad === "calculable" ? parseFloat(c.cantidad) || 0 : 0,
+          valor_unitario:
+            form.modalidad === "fijo" ? parseFloat(c.valor_unitario) : null,
           opcional: c.opcional,
           orden: i,
         }));
@@ -791,14 +1095,18 @@ export default function NomencladorPorOS() {
         nivel: form.nivel ? parseInt(form.nivel, 10) : null,
         complejidad: form.complejidad || null,
         por_presupuesto: form.porPresupuesto,
-        cantidad_ayudantes: form.cantidad_ayudantes.trim() ? parseInt(form.cantidad_ayudantes, 10) : null,
+        cantidad_ayudantes: form.cantidad_ayudantes.trim()
+          ? parseInt(form.cantidad_ayudantes, 10)
+          : null,
         coseguro: form.coseguro.trim() ? parseMonto(form.coseguro) : 0,
         vigencia_desde: form.vigencia_desde,
         observacion: form.observacion || null,
         componentes,
       };
       const especialidadesAlta =
-        form.origen === "NE" && !form.sinRestriccion ? [...form.especialidadesChecked] : [];
+        form.origen === "NE" && !form.sinRestriccion
+          ? [...form.especialidadesChecked]
+          : [];
       if (form.origen === "NE" && form.sinRestriccion) {
         // Sin restricción: UNA sola fila "sin especialidad".
         const v = await createValor({
@@ -810,7 +1118,10 @@ export default function NomencladorPorOS() {
           sin_restriccion_especialidad: true,
         });
         setValores((prev) => [v, ...prev]);
-        showToast("success", "Código agregado sin restricción por especialidad.");
+        showToast(
+          "success",
+          "Código agregado sin restricción por especialidad.",
+        );
       } else if (form.origen === "NE") {
         const nuevos = await createValorMulti({
           ...base,
@@ -844,14 +1155,18 @@ export default function NomencladorPorOS() {
           ...base,
           origen: form.origen,
           especialidades_id_colegio: especialidadesAlta,
-          sin_restriccion_especialidad: form.origen === "NE" && form.sinRestriccion ? true : null,
+          sin_restriccion_especialidad:
+            form.origen === "NE" && form.sinRestriccion ? true : null,
         },
       });
       if (!replicado) setModalKind(null);
     } catch (e: unknown) {
-      const msg = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      const msg = (e as { response?: { data?: { detail?: string } } })?.response
+        ?.data?.detail;
       showToast("error", msg ?? "No se pudo guardar.");
-    } finally { setSaving(false); }
+    } finally {
+      setSaving(false);
+    }
   }
 
   function buildEcuComponentes(): ComponentePayload[] {
@@ -859,27 +1174,40 @@ export default function NomencladorPorOS() {
     const filled = editEcu.componentes.filter((c, i) => {
       if (i === 0) return true;
       if (editEcu.modalidad === "calculable") return c.galeno_id != null;
-      return c.valor_unitario.trim() !== "" && !isNaN(parseFloat(c.valor_unitario));
+      return (
+        c.valor_unitario.trim() !== "" && !isNaN(parseFloat(c.valor_unitario))
+      );
     });
     return filled.map((c, i) => ({
       concepto: c.concepto,
       galeno_id: editEcu.modalidad === "calculable" ? c.galeno_id : null,
-      cantidad: editEcu.modalidad === "calculable" ? (parseFloat(c.cantidad) || 0) : 0,
-      valor_unitario: editEcu.modalidad === "fijo" ? parseFloat(c.valor_unitario) : null,
+      cantidad:
+        editEcu.modalidad === "calculable" ? parseFloat(c.cantidad) || 0 : 0,
+      valor_unitario:
+        editEcu.modalidad === "fijo" ? parseFloat(c.valor_unitario) : null,
       opcional: c.opcional,
       orden: i,
     }));
   }
 
   function errMsg(e: unknown, fallback: string): string {
-    return (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? fallback;
+    return (
+      (e as { response?: { data?: { detail?: string } } })?.response?.data
+        ?.detail ?? fallback
+    );
   }
 
   // Núcleo: metadatos + (opcional) ecuación + especialidades, todo para TODAS las variantes.
   async function handleSaveNucleo() {
     if (!editTarget || !selectedNroOS) return;
-    if (!editMeta.sin_restriccion_especialidad && editMeta.especialidades.length === 0) {
-      showToast("error", "Elegí al menos una especialidad o marcá 'Sin restricción por especialidad'.");
+    if (
+      !editMeta.sin_restriccion_especialidad &&
+      editMeta.especialidades.length === 0
+    ) {
+      showToast(
+        "error",
+        "Elegí al menos una especialidad o marcá 'Sin restricción por especialidad'.",
+      );
       return;
     }
     if (ecuEnabled && !validateEcuacion()) return;
@@ -889,30 +1217,47 @@ export default function NomencladorPorOS() {
         descripcion: editMeta.descripcion,
         nivel: editMeta.nivel ? parseInt(editMeta.nivel, 10) : null,
         complejidad: editMeta.complejidad || null,
-        cantidad_ayudantes: editMeta.cantidad_ayudantes.trim() ? parseInt(editMeta.cantidad_ayudantes, 10) : null,
+        cantidad_ayudantes: editMeta.cantidad_ayudantes.trim()
+          ? parseInt(editMeta.cantidad_ayudantes, 10)
+          : null,
         observacion: editMeta.observacion || null,
         ecuacion: ecuEnabled
           ? {
               vigencia_desde: editEcu.vigencia_desde,
               componentes: buildEcuComponentes(),
-              coseguro: editEcu.coseguro.trim() ? parseMonto(editEcu.coseguro) : 0,
+              coseguro: editEcu.coseguro.trim()
+                ? parseMonto(editEcu.coseguro)
+                : 0,
               por_presupuesto: editTarget.por_presupuesto,
             }
           : null,
         sin_restriccion_especialidad: editMeta.sin_restriccion_especialidad,
-        especialidades: editMeta.sin_restriccion_especialidad ? [] : editMeta.especialidades,
+        especialidades: editMeta.sin_restriccion_especialidad
+          ? []
+          : editMeta.especialidades,
         origen: nucleoOrigen,
       };
-      await updateNucleoPar(selectedNroOS, editTarget.nomenclador_id, nucleoPayload);
-      showToast("success", "Código actualizado para todas las especialidades. Recargando…");
+      await updateNucleoPar(
+        selectedNroOS,
+        editTarget.nomenclador_id,
+        nucleoPayload,
+      );
+      showToast(
+        "success",
+        "Código actualizado para todas las especialidades. Recargando…",
+      );
       const replicado = await replicarSiCorresponde({
-        nomenclador_id: editTarget.nomenclador_id, operacion: "nucleo", nucleo: nucleoPayload,
+        nomenclador_id: editTarget.nomenclador_id,
+        operacion: "nucleo",
+        nucleo: nucleoPayload,
       });
       if (!replicado) setModalKind(null);
       loadValores(selectedNroOS);
     } catch (e: unknown) {
       showToast("error", errMsg(e, "No se pudo actualizar el código."));
-    } finally { setSavingMeta(false); }
+    } finally {
+      setSavingMeta(false);
+    }
   }
 
   // Una sola variante: solo valores, vigencia y coseguro.
@@ -944,7 +1289,9 @@ export default function NomencladorPorOS() {
       if (selectedNroOS) loadValores(selectedNroOS);
     } catch (e: unknown) {
       showToast("error", errMsg(e, "No se pudo actualizar la ecuación."));
-    } finally { setSavingEcu(false); }
+    } finally {
+      setSavingEcu(false);
+    }
   }
 
   async function doDelete() {
@@ -956,22 +1303,29 @@ export default function NomencladorPorOS() {
       setValores((prev) => prev.filter((x) => x.id !== v.id));
       showToast("success", "Valor cerrado.");
     } catch (e: unknown) {
-      const msg = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      const msg = (e as { response?: { data?: { detail?: string } } })?.response
+        ?.data?.detail;
       showToast("error", msg ?? "No se pudo cerrar el valor.");
     }
   }
 
-  function handleDelete(v: ValorOut) { setDeleteTarget(v); }
+  function handleDelete(v: ValorOut) {
+    setDeleteTarget(v);
+  }
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <span className={styles.headerIcon}><Building2 size={20} /></span>
+        <span className={styles.headerIcon}>
+          <Building2 size={20} />
+        </span>
         <div>
           <h1 className={styles.title}>Códigos por Obra Social</h1>
-          <p className={styles.subtitle}>Listado y carga de códigos y precios por obra social</p>
+          <p className={styles.subtitle}>
+            Listado y carga de códigos y precios por obra social
+          </p>
         </div>
       </div>
 
@@ -982,7 +1336,12 @@ export default function NomencladorPorOS() {
             <p className={styles.osPanelTitle}>Obra social</p>
             <div className={styles.osSearchWrap}>
               <Search size={13} className={styles.osSearchIcon} />
-              <input className={styles.osSearchInput} placeholder="Buscar…" value={osSearch} onChange={(e) => setOsSearch(e.target.value)} />
+              <input
+                className={styles.osSearchInput}
+                placeholder="Buscar…"
+                value={osSearch}
+                onChange={(e) => setOsSearch(e.target.value)}
+              />
             </div>
           </div>
           <div className={styles.osList}>
@@ -990,7 +1349,10 @@ export default function NomencladorPorOS() {
               <button
                 key={os.nro_obra_social}
                 className={`${styles.osItem} ${selectedNroOS === os.nro_obra_social ? styles.osItemSelected : ""}`}
-                onClick={() => { setSelectedNroOS(os.nro_obra_social); setCodeSearch(""); }}
+                onClick={() => {
+                  setSelectedNroOS(os.nro_obra_social);
+                  setCodeSearch("");
+                }}
               >
                 <span className={styles.osNro}>{os.nro_obra_social}</span>
                 <span className={styles.osNombre}>{os.nombre}</span>
@@ -1009,12 +1371,25 @@ export default function NomencladorPorOS() {
           ) : (
             <>
               <div className={styles.contentHeader}>
-                <h2 className={styles.contentTitle}>{selectedOS?.nombre ?? `OS ${selectedNroOS}`}</h2>
+                <h2 className={styles.contentTitle}>
+                  {selectedOS?.nombre ?? `OS ${selectedNroOS}`}
+                </h2>
               </div>
               <div className={styles.toolbar}>
+                <SelectorVigencia
+                  obraSocialNro={selectedNroOS}
+                  valor={vigencia}
+                  onCambio={setVigencia}
+                  etiquetaTodas="Todas las vigencias"
+                />
                 <div className={styles.searchWrap}>
                   <Search size={14} className={styles.searchIcon} />
-                  <input className={styles.searchInput} placeholder="Buscar código…" value={codeSearch} onChange={(e) => setCodeSearch(e.target.value)} />
+                  <input
+                    className={styles.searchInput}
+                    placeholder="Buscar código…"
+                    value={codeSearch}
+                    onChange={(e) => setCodeSearch(e.target.value)}
+                  />
                 </div>
                 <div className={styles.filterGroup}>
                   {(["todos", "NN", "NE"] as const).map((o) => (
@@ -1028,7 +1403,9 @@ export default function NomencladorPorOS() {
                   ))}
                 </div>
                 <div className={styles.filterGroup}>
-                  {(["todos", "galeno", "fijo", "por_presupuesto"] as const).map((m) => (
+                  {(
+                    ["todos", "galeno", "fijo", "por_presupuesto"] as const
+                  ).map((m) => (
                     <button
                       key={m}
                       className={`${styles.filterBtn} ${modalidadFilter === m ? styles.filterBtnActive : ""}`}
@@ -1050,10 +1427,16 @@ export default function NomencladorPorOS() {
                 </div>
                 <EspecialidadCombo
                   especialidades={especialidades}
-                  value={especialidadFilter === "todos" ? null : especialidadFilter}
-                  onChange={(v) => setEspecialidadFilter(v === null ? "todos" : v)}
+                  value={
+                    especialidadFilter === "todos" ? null : especialidadFilter
+                  }
+                  onChange={(v) =>
+                    setEspecialidadFilter(v === null ? "todos" : v)
+                  }
                 />
-                <button className={styles.btnPrimary} onClick={openCreate}><Plus size={14} /> Agregar código</button>
+                <button className={styles.btnPrimary} onClick={openCreate}>
+                  <Plus size={14} /> Agregar código
+                </button>
               </div>
 
               {/* Table */}
@@ -1075,149 +1458,215 @@ export default function NomencladorPorOS() {
                   </thead>
                   <tbody>
                     {showLoading ? (
-                      <tr><td colSpan={10} className={styles.loadingCell}>Cargando…</td></tr>
+                      <tr>
+                        <td colSpan={10} className={styles.loadingCell}>
+                          Cargando…
+                        </td>
+                      </tr>
                     ) : grouped.length === 0 ? (
-                      <tr><td colSpan={10} className={styles.emptyCell}>
-                        {especialidadFilter !== "todos" ? "Sin códigos de esta especialidad" : "Sin códigos cargados"}
-                      </td></tr>
-                    ) : pageGroups.map(([nomId, variants]) => {
-                      const first = variants[0];
-                      return (
-                        <Fragment key={nomId}>
-                          <tr className={styles.groupHeader}>
-                            <td colSpan={10}>
-                              <span className={styles.codeCell}>{first.codigo}</span>
-                              {resolvedDesc(first) && <span className={styles.groupDesc}> — {resolvedDesc(first)}</span>}
-                              {(
-                                <button
-                                  className={styles.btnEdit}
-                                  style={{ marginLeft: 10 }}
-                                  onClick={() => openEditNucleo(nomId, variants.some((x) => x.origen === "NE") ? "NE" : "NN")}
-                                  title="Editar el código para todas las especialidades"
-                                >
-                                  <Edit2 size={12} />
-                                </button>
-                              )}
-                            </td>
-                          </tr>
-                          {variants.map((v) => (
-                            <tr key={v.id} className={styles.variantRow}>
-                              <td>
-                                <span className={`${styles.origenBadge} ${styles[`origen${v.origen}` as keyof typeof styles]}`}>
-                                  {origenBadgeLabel(v.origen)}
+                      <tr>
+                        <td colSpan={10} className={styles.emptyCell}>
+                          {especialidadFilter !== "todos"
+                            ? "Sin códigos de esta especialidad"
+                            : "Sin códigos cargados"}
+                        </td>
+                      </tr>
+                    ) : (
+                      pageGroups.map(([nomId, variants]) => {
+                        const first = variants[0];
+                        return (
+                          <Fragment key={nomId}>
+                            <tr className={styles.groupHeader}>
+                              <td colSpan={10}>
+                                <span className={styles.codeCell}>
+                                  {first.codigo}
                                 </span>
-                              </td>
-                              <td className={styles.mutedText}>{MODALIDAD_LABELS[v.modalidad]}</td>
-                              <td className={styles.mutedText}>
-                                {v.especialidad_id_colegio
-                                  ? (espMap[v.especialidad_id_colegio] ?? `Esp. ${v.especialidad_id_colegio}`)
-                                  : v.origen === "NE"
-                                    ? "Sin especialidad"
-                                    : v.sin_restriccion_especialidad
-                                      ? "Mismo valor · Sin restricción"
-                                      : `Mismo valor · ${v.especialidades.length} especialidad${v.especialidades.length === 1 ? "" : "es"}`}
-                              </td>
-                              <td className={styles.mutedText}>{v.nivel != null ? `Niv. ${v.nivel}` : "—"}</td>
-                              {v.por_presupuesto ? (
-                                // El chip ocupa las tres columnas de importe:
-                                // sin precio pactado no hay nada que desglosar.
-                                <td colSpan={3}>
-                                  <span className={styles.presupuestoChip}>Por presupuesto</span>
-                                </td>
-                              ) : (
-                                <>
-                                  <td>
-                                    <span className={styles.priceCell}>
-                                      {fmt.format(montoDe(v, "Honorarios") ?? 0)}
-                                    </span>
-                                  </td>
-                                  <td className={styles.mutedText}>
-                                    {montoDe(v, "Ayudante") == null
-                                      ? "—"
-                                      : fmt.format(montoDe(v, "Ayudante")!)}
-                                  </td>
-                                  <td className={styles.mutedText}>
-                                    {montoDe(v, "Gastos") == null
-                                      ? "—"
-                                      : fmt.format(montoDe(v, "Gastos")!)}
-                                  </td>
-                                </>
-                              )}
-                              <td className={styles.mutedText}>
-                                {parseMonto(v.coseguro) === 0 ? "—" : fmt.format(parseMonto(v.coseguro))}
-                              </td>
-                              <td className={styles.mutedText}>{v.vigencia_desde}</td>
-                              <td>
-                                <div className={styles.actionsCell}>
+                                {resolvedDesc(first) && (
+                                  <span className={styles.groupDesc}>
+                                    {" "}
+                                    — {resolvedDesc(first)}
+                                  </span>
+                                )}
+                                {
                                   <button
                                     className={styles.btnEdit}
-                                    onClick={() => openEdit(v)}
-                                    title="Editar valores y vigencia"
+                                    style={{ marginLeft: 10 }}
+                                    onClick={() =>
+                                      openEditNucleo(
+                                        nomId,
+                                        variants.some((x) => x.origen === "NE")
+                                          ? "NE"
+                                          : "NN",
+                                      )
+                                    }
+                                    title="Editar el código para todas las especialidades"
                                   >
                                     <Edit2 size={12} />
                                   </button>
-                                  <button className={styles.btnDanger} onClick={() => handleDelete(v)} title="Cerrar"><Trash2 size={12} /></button>
-                                </div>
+                                }
                               </td>
                             </tr>
-                          ))}
-                        </Fragment>
-                      );
-                    })}
+                            {variants.map((v) => (
+                              <tr key={v.id} className={styles.variantRow}>
+                                <td>
+                                  <span
+                                    className={`${styles.origenBadge} ${styles[`origen${v.origen}` as keyof typeof styles]}`}
+                                  >
+                                    {origenBadgeLabel(v.origen)}
+                                  </span>
+                                </td>
+                                <td className={styles.mutedText}>
+                                  {MODALIDAD_LABELS[v.modalidad]}
+                                </td>
+                                <td className={styles.mutedText}>
+                                  {v.especialidad_id_colegio
+                                    ? (espMap[v.especialidad_id_colegio] ??
+                                      `Esp. ${v.especialidad_id_colegio}`)
+                                    : v.origen === "NE"
+                                      ? "Sin especialidad"
+                                      : v.sin_restriccion_especialidad
+                                        ? "Mismo valor · Sin restricción"
+                                        : `Mismo valor · ${v.especialidades.length} especialidad${v.especialidades.length === 1 ? "" : "es"}`}
+                                </td>
+                                <td className={styles.mutedText}>
+                                  {v.nivel != null ? `Niv. ${v.nivel}` : "—"}
+                                </td>
+                                {v.por_presupuesto ? (
+                                  // El chip ocupa las tres columnas de importe:
+                                  // sin precio pactado no hay nada que desglosar.
+                                  <td colSpan={3}>
+                                    <span className={styles.presupuestoChip}>
+                                      Por presupuesto
+                                    </span>
+                                  </td>
+                                ) : (
+                                  <>
+                                    <td>
+                                      <span className={styles.priceCell}>
+                                        {fmt.format(
+                                          montoDe(v, "Honorarios") ?? 0,
+                                        )}
+                                      </span>
+                                    </td>
+                                    <td className={styles.mutedText}>
+                                      {montoDe(v, "Ayudante") == null
+                                        ? "—"
+                                        : fmt.format(montoDe(v, "Ayudante")!)}
+                                    </td>
+                                    <td className={styles.mutedText}>
+                                      {montoDe(v, "Gastos") == null
+                                        ? "—"
+                                        : fmt.format(montoDe(v, "Gastos")!)}
+                                    </td>
+                                  </>
+                                )}
+                                <td className={styles.mutedText}>
+                                  {parseMonto(v.coseguro) === 0
+                                    ? "—"
+                                    : fmt.format(parseMonto(v.coseguro))}
+                                </td>
+                                <td className={styles.mutedText}>
+                                  {v.vigencia_desde}
+                                </td>
+                                <td>
+                                  <div className={styles.actionsCell}>
+                                    <button
+                                      className={styles.btnEdit}
+                                      onClick={() => openEdit(v)}
+                                      title="Editar valores y vigencia"
+                                    >
+                                      <Edit2 size={12} />
+                                    </button>
+                                    <button
+                                      className={styles.btnDanger}
+                                      onClick={() => handleDelete(v)}
+                                      title="Cerrar"
+                                    >
+                                      <Trash2 size={12} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </Fragment>
+                        );
+                      })
+                    )}
                   </tbody>
                 </table>
               </div>
 
               {/* Mobile cards */}
               <div className={styles.cardList}>
-                {pageGroups.flatMap(([, vs]) => vs).map((v) => (
-                  <div key={v.id} className={styles.card}>
-                    <div className={styles.cardTop}>
-                      <span className={styles.codeCell}>{v.codigo}</span>
-                      <span className={styles.priceCell}>
-                        {v.por_presupuesto
-                          ? "Por presupuesto"
-                          : fmt.format(montoDe(v, "Honorarios") ?? 0)}
-                      </span>
-                    </div>
-                    <p className={styles.cardDesc}>{resolvedDesc(v)}</p>
-                    {/* En mobile el honorario va arriba, junto al código, y los
+                {pageGroups
+                  .flatMap(([, vs]) => vs)
+                  .map((v) => (
+                    <div key={v.id} className={styles.card}>
+                      <div className={styles.cardTop}>
+                        <span className={styles.codeCell}>{v.codigo}</span>
+                        <span className={styles.priceCell}>
+                          {v.por_presupuesto
+                            ? "Por presupuesto"
+                            : fmt.format(montoDe(v, "Honorarios") ?? 0)}
+                        </span>
+                      </div>
+                      <p className={styles.cardDesc}>{resolvedDesc(v)}</p>
+                      {/* En mobile el honorario va arriba, junto al código, y los
                         otros dos conceptos abajo sólo si el valor los tiene. */}
-                    {!v.por_presupuesto && (
-                      <p className={styles.cardConceptos}>
-                        {montoDe(v, "Ayudante") != null && (
-                          <span>Ayudante {fmt.format(montoDe(v, "Ayudante")!)}</span>
-                        )}
-                        {montoDe(v, "Gastos") != null && (
-                          <span>Gastos {fmt.format(montoDe(v, "Gastos")!)}</span>
-                        )}
-                      </p>
-                    )}
-                    {parseMonto(v.coseguro) > 0 && (
-                      <p className={styles.cardConceptos}>
-                        <span>Coseguro {fmt.format(parseMonto(v.coseguro))}</span>
-                      </p>
-                    )}
-                    <div className={styles.cardActions}>
-                      <button
-                        className={styles.btnEdit}
-                        onClick={() => openEditNucleo(
-                          v.nomenclador_id,
-                          valores.some((x) => x.nomenclador_id === v.nomenclador_id && x.origen === "NE") ? "NE" : "NN",
-                        )}
-                      >
-                        <Edit2 size={12} /> Código
-                      </button>
-                      <button
-                        className={styles.btnEdit}
-                        onClick={() => openEdit(v)}
-                      >
-                        <Edit2 size={12} /> Editar
-                      </button>
-                      <button className={styles.btnDanger} onClick={() => handleDelete(v)}><Trash2 size={12} /> Cerrar</button>
+                      {!v.por_presupuesto && (
+                        <p className={styles.cardConceptos}>
+                          {montoDe(v, "Ayudante") != null && (
+                            <span>
+                              Ayudante {fmt.format(montoDe(v, "Ayudante")!)}
+                            </span>
+                          )}
+                          {montoDe(v, "Gastos") != null && (
+                            <span>
+                              Gastos {fmt.format(montoDe(v, "Gastos")!)}
+                            </span>
+                          )}
+                        </p>
+                      )}
+                      {parseMonto(v.coseguro) > 0 && (
+                        <p className={styles.cardConceptos}>
+                          <span>
+                            Coseguro {fmt.format(parseMonto(v.coseguro))}
+                          </span>
+                        </p>
+                      )}
+                      <div className={styles.cardActions}>
+                        <button
+                          className={styles.btnEdit}
+                          onClick={() =>
+                            openEditNucleo(
+                              v.nomenclador_id,
+                              valores.some(
+                                (x) =>
+                                  x.nomenclador_id === v.nomenclador_id &&
+                                  x.origen === "NE",
+                              )
+                                ? "NE"
+                                : "NN",
+                            )
+                          }
+                        >
+                          <Edit2 size={12} /> Código
+                        </button>
+                        <button
+                          className={styles.btnEdit}
+                          onClick={() => openEdit(v)}
+                        >
+                          <Edit2 size={12} /> Editar
+                        </button>
+                        <button
+                          className={styles.btnDanger}
+                          onClick={() => handleDelete(v)}
+                        >
+                          <Trash2 size={12} /> Cerrar
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
 
               {/* Paginación */}
@@ -1239,7 +1688,9 @@ export default function NomencladorPorOS() {
                       <button
                         className={styles.pageBtn}
                         disabled={page >= totalPages}
-                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                        onClick={() =>
+                          setPage((p) => Math.min(totalPages, p + 1))
+                        }
                       >
                         Siguiente
                       </button>
@@ -1255,11 +1706,18 @@ export default function NomencladorPorOS() {
       {/* ── Create modal ── */}
       <AnimatePresence>
         {modalKind === "create" && (
-          <motion.div className={styles.backdrop} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <motion.div
+            className={styles.backdrop}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
             <motion.div
               className={styles.modal}
-              initial={{ opacity: 0, scale: 0.96, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 12 }} transition={{ duration: 0.16 }}
+              initial={{ opacity: 0, scale: 0.96, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 12 }}
+              transition={{ duration: 0.16 }}
               onClick={(e) => e.stopPropagation()}
             >
               <div className={styles.modalHeader}>
@@ -1267,17 +1725,33 @@ export default function NomencladorPorOS() {
                   <h2 className={styles.modalTitle}>Agregar código</h2>
                   <p className={styles.modalSubtitle}>{selectedOS?.nombre}</p>
                 </div>
-                <button className={styles.modalClose} onClick={() => setModalKind(null)}><XIcon size={18} /></button>
+                <button
+                  className={styles.modalClose}
+                  onClick={() => setModalKind(null)}
+                >
+                  <XIcon size={18} />
+                </button>
               </div>
 
               <div className={styles.modalBody}>
                 {/* Nomenclador picker */}
                 <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>Código de nomenclador <span className={styles.req}>*</span></label>
+                  <label className={styles.formLabel}>
+                    Código de nomenclador <span className={styles.req}>*</span>
+                  </label>
                   {form.nomencladorId ? (
                     <div className={styles.selectedCode}>
                       <strong>{form.nomencladorLabel}</strong>
-                      <button style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: "#718096" }} onClick={clearNom}>
+                      <button
+                        style={{
+                          marginLeft: "auto",
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          color: "#718096",
+                        }}
+                        onClick={clearNom}
+                      >
                         <XIcon size={14} />
                       </button>
                     </div>
@@ -1289,41 +1763,89 @@ export default function NomencladorPorOS() {
                           value={nomSearch}
                           onChange={(e) => searchNom(e.target.value)}
                           placeholder="Escribí el código para buscar…"
-                          style={{ paddingRight: nomLoading ? 36 : 12, width: "100%", boxSizing: "border-box" }}
+                          style={{
+                            paddingRight: nomLoading ? 36 : 12,
+                            width: "100%",
+                            boxSizing: "border-box",
+                          }}
                         />
                         {nomLoading && (
-                          <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: "#718096" }}>
-                            <Loader2 size={14} style={{ animation: "spin .7s linear infinite" }} />
+                          <span
+                            style={{
+                              position: "absolute",
+                              right: 10,
+                              top: "50%",
+                              transform: "translateY(-50%)",
+                              color: "#718096",
+                            }}
+                          >
+                            <Loader2
+                              size={14}
+                              style={{ animation: "spin .7s linear infinite" }}
+                            />
                           </span>
                         )}
                       </div>
                       {nomResults.length > 0 && (
                         <ul className={styles.autocompleteDropdown}>
                           {nomResults.map((n) => (
-                            <li key={n.id} className={styles.autocompleteItem} onMouseDown={(e) => { e.preventDefault(); selectNom(n); }}>
-                              <strong>{n.codigo}</strong>{n.categoria ? ` — ${n.categoria}` : ""}
+                            <li
+                              key={n.id}
+                              className={styles.autocompleteItem}
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                selectNom(n);
+                              }}
+                            >
+                              <strong>{n.codigo}</strong>
+                              {n.categoria ? ` — ${n.categoria}` : ""}
                             </li>
                           ))}
                         </ul>
                       )}
                     </div>
                   )}
-                  {errors.nomenclador && <span className={styles.errorMsg}>{errors.nomenclador}</span>}
+                  {errors.nomenclador && (
+                    <span className={styles.errorMsg}>
+                      {errors.nomenclador}
+                    </span>
+                  )}
                   {form.nomencladorId && (
-                    <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-start" }}>
+                    <div
+                      style={{
+                        marginTop: 8,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 6,
+                        alignItems: "flex-start",
+                      }}
+                    >
                       <button
                         type="button"
                         className={styles.btnGhost}
                         onClick={cargarConfiguracionInicial}
                         disabled={cargandoConfig}
                       >
-                        {cargandoConfig && <Loader2 size={14} style={{ animation: "spin .7s linear infinite" }} />}
+                        {cargandoConfig && (
+                          <Loader2
+                            size={14}
+                            style={{ animation: "spin .7s linear infinite" }}
+                          />
+                        )}
                         Cargar configuración inicial de {form.nomencladorLabel}
                       </button>
                       {configMsg && (
                         <span
-                          className={configMsg.tipo === "error" ? styles.errorMsg : styles.hintText}
-                          style={configMsg.tipo === "ok" ? { color: "#2f855a", fontWeight: 500 } : undefined}
+                          className={
+                            configMsg.tipo === "error"
+                              ? styles.errorMsg
+                              : styles.hintText
+                          }
+                          style={
+                            configMsg.tipo === "ok"
+                              ? { color: "#2f855a", fontWeight: 500 }
+                              : undefined
+                          }
                         >
                           {configMsg.texto}
                         </span>
@@ -1334,32 +1856,56 @@ export default function NomencladorPorOS() {
 
                 {/* Descripción — obligatoria: cómo nombra ESTA obra social al código. */}
                 <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>Descripción <span className={styles.req}>*</span></label>
+                  <label className={styles.formLabel}>
+                    Descripción <span className={styles.req}>*</span>
+                  </label>
                   <input
                     className={`${styles.formInput} ${errors.descripcion ? styles.inputError : ""}`}
                     value={form.descripcion}
-                    onChange={(e) => { setForm((p) => ({ ...p, descripcion: e.target.value })); setErrors((p) => ({ ...p, descripcion: "" })); }}
+                    onChange={(e) => {
+                      setForm((p) => ({ ...p, descripcion: e.target.value }));
+                      setErrors((p) => ({ ...p, descripcion: "" }));
+                    }}
                     placeholder="Cómo nombra esta obra social al código"
                   />
-                  {errors.descripcion && <span className={styles.errorMsg}>{errors.descripcion}</span>}
+                  {errors.descripcion && (
+                    <span className={styles.errorMsg}>
+                      {errors.descripcion}
+                    </span>
+                  )}
                 </div>
 
                 {/* Origen + nivel */}
                 <div className={styles.formRow2}>
                   <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>Origen <span className={styles.req}>*</span></label>
-                    <select className={styles.formSelect} value={form.origen} onChange={(e) => changeOrigen(e.target.value as Origen)}>
-                      {(Object.entries(ORIGEN_LABELS) as [Origen, string][]).map(([k, label]) => (
-                        <option key={k} value={k}>{label} ({k})</option>
+                    <label className={styles.formLabel}>
+                      Origen <span className={styles.req}>*</span>
+                    </label>
+                    <select
+                      className={styles.formSelect}
+                      value={form.origen}
+                      onChange={(e) => changeOrigen(e.target.value as Origen)}
+                    >
+                      {(
+                        Object.entries(ORIGEN_LABELS) as [Origen, string][]
+                      ).map(([k, label]) => (
+                        <option key={k} value={k}>
+                          {label} ({k})
+                        </option>
                       ))}
                     </select>
                   </div>
                   <div className={styles.formGroup}>
                     <label className={styles.formLabel}>Nivel</label>
                     <input
-                      type="number" min="1" step="1" className={styles.formInput}
+                      type="number"
+                      min="1"
+                      step="1"
+                      className={styles.formInput}
                       value={form.nivel}
-                      onChange={(e) => setForm((p) => ({ ...p, nivel: e.target.value }))}
+                      onChange={(e) =>
+                        setForm((p) => ({ ...p, nivel: e.target.value }))
+                      }
                       placeholder="Opcional"
                     />
                   </div>
@@ -1372,10 +1918,15 @@ export default function NomencladorPorOS() {
                 {form.origen === "NE" && (
                   <div className={styles.formGroup}>
                     <label className={styles.formLabel}>
-                      Especialidades {!form.sinRestriccion && <span className={styles.req}>*</span>}
+                      Especialidades{" "}
+                      {!form.sinRestriccion && (
+                        <span className={styles.req}>*</span>
+                      )}
                     </label>
                     {!form.nomencladorId ? (
-                      <span className={styles.hintText}>Elegí un código primero</span>
+                      <span className={styles.hintText}>
+                        Elegí un código primero
+                      </span>
                     ) : (
                       <>
                         <label className={styles.toggleRow}>
@@ -1384,22 +1935,31 @@ export default function NomencladorPorOS() {
                             className={styles.toggleInput}
                             checked={form.sinRestriccion}
                             onChange={(e) => {
-                              setForm((p) => ({ ...p, sinRestriccion: e.target.checked }));
+                              setForm((p) => ({
+                                ...p,
+                                sinRestriccion: e.target.checked,
+                              }));
                               setErrors((p) => ({ ...p, especialidades: "" }));
                             }}
                           />
-                          <span className={styles.toggleLabel}>Sin restricción por especialidad</span>
+                          <span className={styles.toggleLabel}>
+                            Sin restricción por especialidad
+                          </span>
                         </label>
                         {form.sinRestriccion ? (
                           <span className={styles.hintText}>
-                            Se crea una sola fila "sin especialidad": vale para cualquier médico.
+                            Se crea una sola fila "sin especialidad": vale para
+                            cualquier médico.
                           </span>
                         ) : (
                           <MultiSelectBuscable
                             options={espOptions}
                             selected={[...form.especialidadesChecked]}
                             onChange={(next) => {
-                              setForm((p) => ({ ...p, especialidadesChecked: new Set(next) }));
+                              setForm((p) => ({
+                                ...p,
+                                especialidadesChecked: new Set(next),
+                              }));
                               setErrors((p) => ({ ...p, especialidades: "" }));
                             }}
                             noun="especialidades"
@@ -1407,25 +1967,47 @@ export default function NomencladorPorOS() {
                         )}
                       </>
                     )}
-                    {errors.especialidades && <span className={styles.errorMsg}>{errors.especialidades}</span>}
+                    {errors.especialidades && (
+                      <span className={styles.errorMsg}>
+                        {errors.especialidades}
+                      </span>
+                    )}
                   </div>
                 )}
 
                 {/* Vigencia + complejidad */}
                 <div className={styles.formRow2}>
                   <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>Vigente desde <span className={styles.req}>*</span></label>
+                    <label className={styles.formLabel}>
+                      Vigente desde <span className={styles.req}>*</span>
+                    </label>
                     <input
                       type="date"
                       className={`${styles.formInput} ${errors.vigencia_desde ? styles.inputError : ""}`}
                       value={form.vigencia_desde}
-                      onChange={(e) => { setForm((p) => ({ ...p, vigencia_desde: e.target.value })); setErrors((p) => ({ ...p, vigencia_desde: "" })); }}
+                      onChange={(e) => {
+                        setForm((p) => ({
+                          ...p,
+                          vigencia_desde: e.target.value,
+                        }));
+                        setErrors((p) => ({ ...p, vigencia_desde: "" }));
+                      }}
                     />
-                    {errors.vigencia_desde && <span className={styles.errorMsg}>{errors.vigencia_desde}</span>}
+                    {errors.vigencia_desde && (
+                      <span className={styles.errorMsg}>
+                        {errors.vigencia_desde}
+                      </span>
+                    )}
                   </div>
                   <div className={styles.formGroup}>
                     <label className={styles.formLabel}>Complejidad</label>
-                    <select className={styles.formSelect} value={form.complejidad} onChange={(e) => setForm((p) => ({ ...p, complejidad: e.target.value }))}>
+                    <select
+                      className={styles.formSelect}
+                      value={form.complejidad}
+                      onChange={(e) =>
+                        setForm((p) => ({ ...p, complejidad: e.target.value }))
+                      }
+                    >
                       <option value="">— Hereda del nomenclador —</option>
                       <option value="baja">Baja</option>
                       <option value="media">Media</option>
@@ -1438,28 +2020,43 @@ export default function NomencladorPorOS() {
                   <div className={styles.formGroup}>
                     <label className={styles.formLabel}>Coseguro ($)</label>
                     <input
-                      type="number" min="0" step="0.01"
+                      type="number"
+                      min="0"
+                      step="0.01"
                       className={styles.formInput}
                       value={form.coseguro}
-                      onChange={(e) => setForm((p) => ({ ...p, coseguro: e.target.value }))}
+                      onChange={(e) =>
+                        setForm((p) => ({ ...p, coseguro: e.target.value }))
+                      }
                       placeholder="0.00"
                     />
                     <span className={styles.hintText}>
-                      Lo que el afiliado paga de su bolsillo; se descuenta del total al facturar
+                      Lo que el afiliado paga de su bolsillo; se descuenta del
+                      total al facturar
                     </span>
                   </div>
                   <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>Cantidad de ayudantes</label>
+                    <label className={styles.formLabel}>
+                      Cantidad de ayudantes
+                    </label>
                     <input
-                      type="number" min="0" step="1"
+                      type="number"
+                      min="0"
+                      step="1"
                       className={styles.formInput}
                       value={form.cantidad_ayudantes}
-                      onChange={(e) => setForm((p) => ({ ...p, cantidad_ayudantes: e.target.value }))}
+                      onChange={(e) =>
+                        setForm((p) => ({
+                          ...p,
+                          cantidad_ayudantes: e.target.value,
+                        }))
+                      }
                       placeholder="0"
                     />
                     <span className={styles.hintText}>
-                      Máximo admitido para este código+OS. Vacío = no lleva — sin esto no
-                      aparece "Agregar ayudante" en Carga de Facturación.
+                      Máximo admitido para este código+OS. Vacío = no lleva —
+                      sin esto no aparece "Agregar ayudante" en Carga de
+                      Facturación.
                     </span>
                   </div>
                 </div>
@@ -1471,10 +2068,19 @@ export default function NomencladorPorOS() {
                     className={styles.toggleInput}
                     checked={form.porPresupuesto}
                     disabled={form.origen === "NN"}
-                    onChange={(e) => setForm((p) => ({ ...p, porPresupuesto: e.target.checked }))}
+                    onChange={(e) =>
+                      setForm((p) => ({
+                        ...p,
+                        porPresupuesto: e.target.checked,
+                      }))
+                    }
                   />
                   <span className={styles.toggleLabel}>Por presupuesto</span>
-                  {form.origen === "NN" && <span className={styles.hintText}>&nbsp;(no disponible para NN)</span>}
+                  {form.origen === "NN" && (
+                    <span className={styles.hintText}>
+                      &nbsp;(no disponible para NN)
+                    </span>
+                  )}
                 </label>
 
                 {!form.porPresupuesto && (
@@ -1485,27 +2091,52 @@ export default function NomencladorPorOS() {
                         className={styles.formSelect}
                         value={form.modalidad}
                         disabled={form.origen === "NN"}
-                        onChange={(e) => changeModalidad(e.target.value as ModalidadValor)}
+                        onChange={(e) =>
+                          changeModalidad(e.target.value as ModalidadValor)
+                        }
                         style={{ maxWidth: 260 }}
                       >
-                        <option value="calculable">Calculable (galeno × cantidad)</option>
+                        <option value="calculable">
+                          Calculable (galeno × cantidad)
+                        </option>
                         <option value="fijo">Fijo ($)</option>
                       </select>
-                      {form.origen === "NN" && <span className={styles.hintText}>NN siempre usa galenos calculables</span>}
+                      {form.origen === "NN" && (
+                        <span className={styles.hintText}>
+                          NN siempre usa galenos calculables
+                        </span>
+                      )}
                     </div>
-                    <div className={styles.sectionTitle}>Componentes de precio</div>
-                    <ComponentEditor modalidad={form.modalidad} componentes={form.componentes} galenos={galenos} errors={errors} onChange={updateComp} />
+                    <div className={styles.sectionTitle}>
+                      Componentes de precio
+                    </div>
+                    <ComponentEditor
+                      modalidad={form.modalidad}
+                      componentes={form.componentes}
+                      galenos={galenos}
+                      errors={errors}
+                      onChange={updateComp}
+                    />
                   </>
                 )}
 
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Observación</label>
-                  <input className={styles.formInput} value={form.observacion} onChange={(e) => setForm((p) => ({ ...p, observacion: e.target.value }))} placeholder="Opcional" />
+                  <input
+                    className={styles.formInput}
+                    value={form.observacion}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, observacion: e.target.value }))
+                    }
+                    placeholder="Opcional"
+                  />
                 </div>
 
                 {replicaTerminada ? (
                   <>
-                    {replicaResultado && <ResultadoReplica resultados={replicaResultado} />}
+                    {replicaResultado && (
+                      <ResultadoReplica resultados={replicaResultado} />
+                    )}
                     {replicaError && <ErrorReplica mensaje={replicaError} />}
                   </>
                 ) : (
@@ -1521,14 +2152,35 @@ export default function NomencladorPorOS() {
 
               <div className={styles.modalFooter}>
                 {replicaTerminada ? (
-                  <button className={styles.btnPrimary} onClick={() => setModalKind(null)}>Cerrar</button>
+                  <button
+                    className={styles.btnPrimary}
+                    onClick={() => setModalKind(null)}
+                  >
+                    Cerrar
+                  </button>
                 ) : (
                   <>
-                    <button className={styles.btnGhost} onClick={() => setModalKind(null)}>Cancelar</button>
-                    <button className={styles.btnPrimary} onClick={handleSave} disabled={saving}>
-                      {saving
-                        ? <><span className={styles.spinner} /> Guardando…</>
-                        : <><Save size={15} /> {replicaActiva ? "Guardar y replicar" : "Guardar"}</>}
+                    <button
+                      className={styles.btnGhost}
+                      onClick={() => setModalKind(null)}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      className={styles.btnPrimary}
+                      onClick={handleSave}
+                      disabled={saving}
+                    >
+                      {saving ? (
+                        <>
+                          <span className={styles.spinner} /> Guardando…
+                        </>
+                      ) : (
+                        <>
+                          <Save size={15} />{" "}
+                          {replicaActiva ? "Guardar y replicar" : "Guardar"}
+                        </>
+                      )}
                     </button>
                   </>
                 )}
@@ -1541,25 +2193,43 @@ export default function NomencladorPorOS() {
       {/* ── Edit modal ── */}
       <AnimatePresence>
         {modalKind === "edit" && editTarget && (
-          <motion.div className={styles.backdrop} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <motion.div
+            className={styles.backdrop}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
             <motion.div
               className={`${styles.modal} ${styles.modalLg}`}
-              initial={{ opacity: 0, scale: 0.96, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 12 }} transition={{ duration: 0.16 }}
+              initial={{ opacity: 0, scale: 0.96, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 12 }}
+              transition={{ duration: 0.16 }}
               onClick={(e) => e.stopPropagation()}
             >
               <div className={styles.modalHeader}>
                 <div>
                   <h2 className={styles.modalTitle}>
-                    Editar — <span className={styles.codeCell}>{editTarget.codigo}</span>{editMode === "nucleo" ? " (código)" : ""}
+                    Editar —{" "}
+                    <span className={styles.codeCell}>{editTarget.codigo}</span>
+                    {editMode === "nucleo" ? " (código)" : ""}
                   </h2>
                   <p className={styles.modalSubtitle}>
                     {origenBadgeLabel(editTarget.origen)}
-                    {editTarget.especialidad_id_colegio ? ` · ${espMap[editTarget.especialidad_id_colegio] ?? `Esp. ${editTarget.especialidad_id_colegio}`}` : ""}
-                    {editTarget.nivel != null ? ` · Niv. ${editTarget.nivel}` : ""}
+                    {editTarget.especialidad_id_colegio
+                      ? ` · ${espMap[editTarget.especialidad_id_colegio] ?? `Esp. ${editTarget.especialidad_id_colegio}`}`
+                      : ""}
+                    {editTarget.nivel != null
+                      ? ` · Niv. ${editTarget.nivel}`
+                      : ""}
                   </p>
                 </div>
-                <button className={styles.modalClose} onClick={() => setModalKind(null)}><XIcon size={18} /></button>
+                <button
+                  className={styles.modalClose}
+                  onClick={() => setModalKind(null)}
+                >
+                  <XIcon size={18} />
+                </button>
               </div>
 
               <div className={styles.modalBody}>
@@ -1567,8 +2237,13 @@ export default function NomencladorPorOS() {
                   <div
                     role="note"
                     style={{
-                      background: "#ebf4ff", border: "1px solid #bee3f8", color: "#2c5282",
-                      borderRadius: 6, padding: "8px 12px", fontSize: 13, fontWeight: 600,
+                      background: "#ebf4ff",
+                      border: "1px solid #bee3f8",
+                      color: "#2c5282",
+                      borderRadius: 6,
+                      padding: "8px 12px",
+                      fontSize: 13,
+                      fontWeight: 600,
                     }}
                   >
                     {leyendaEdicion()}
@@ -1579,21 +2254,55 @@ export default function NomencladorPorOS() {
                     NO los tiene: solo valores, vigencia y coseguro. */}
                 {editMode === "nucleo" && (
                   <div className={styles.editSection}>
-                    <div className={styles.editSectionTitle}>Datos del código</div>
+                    <div className={styles.editSectionTitle}>
+                      Datos del código
+                    </div>
                     <div className={styles.formRow2}>
                       <div className={styles.formGroup}>
                         <label className={styles.formLabel}>Descripción</label>
-                        <input className={styles.formInput} value={editMeta.descripcion} onChange={(e) => setEditMeta((p) => ({ ...p, descripcion: e.target.value }))} placeholder="Cómo nombra esta obra social al código" />
+                        <input
+                          className={styles.formInput}
+                          value={editMeta.descripcion}
+                          onChange={(e) =>
+                            setEditMeta((p) => ({
+                              ...p,
+                              descripcion: e.target.value,
+                            }))
+                          }
+                          placeholder="Cómo nombra esta obra social al código"
+                        />
                       </div>
                       <div className={styles.formGroup}>
                         <label className={styles.formLabel}>Nivel</label>
-                        <input type="number" min="1" step="1" className={styles.formInput} value={editMeta.nivel} onChange={(e) => setEditMeta((p) => ({ ...p, nivel: e.target.value }))} placeholder="Opcional" />
+                        <input
+                          type="number"
+                          min="1"
+                          step="1"
+                          className={styles.formInput}
+                          value={editMeta.nivel}
+                          onChange={(e) =>
+                            setEditMeta((p) => ({
+                              ...p,
+                              nivel: e.target.value,
+                            }))
+                          }
+                          placeholder="Opcional"
+                        />
                       </div>
                     </div>
                     <div className={styles.formRow2}>
                       <div className={styles.formGroup}>
                         <label className={styles.formLabel}>Complejidad</label>
-                        <select className={styles.formSelect} value={editMeta.complejidad} onChange={(e) => setEditMeta((p) => ({ ...p, complejidad: e.target.value }))}>
+                        <select
+                          className={styles.formSelect}
+                          value={editMeta.complejidad}
+                          onChange={(e) =>
+                            setEditMeta((p) => ({
+                              ...p,
+                              complejidad: e.target.value,
+                            }))
+                          }
+                        >
                           <option value="">— Hereda del nomenclador —</option>
                           <option value="baja">Baja</option>
                           <option value="media">Media</option>
@@ -1602,17 +2311,36 @@ export default function NomencladorPorOS() {
                       </div>
                       <div className={styles.formGroup}>
                         <label className={styles.formLabel}>Observación</label>
-                        <input className={styles.formInput} value={editMeta.observacion} onChange={(e) => setEditMeta((p) => ({ ...p, observacion: e.target.value }))} placeholder="Opcional" />
+                        <input
+                          className={styles.formInput}
+                          value={editMeta.observacion}
+                          onChange={(e) =>
+                            setEditMeta((p) => ({
+                              ...p,
+                              observacion: e.target.value,
+                            }))
+                          }
+                          placeholder="Opcional"
+                        />
                       </div>
                     </div>
                     <div className={styles.formRow2}>
                       <div className={styles.formGroup}>
-                        <label className={styles.formLabel}>Cantidad de ayudantes</label>
+                        <label className={styles.formLabel}>
+                          Cantidad de ayudantes
+                        </label>
                         <input
-                          type="number" min="0" step="1"
+                          type="number"
+                          min="0"
+                          step="1"
                           className={styles.formInput}
                           value={editMeta.cantidad_ayudantes}
-                          onChange={(e) => setEditMeta((p) => ({ ...p, cantidad_ayudantes: e.target.value }))}
+                          onChange={(e) =>
+                            setEditMeta((p) => ({
+                              ...p,
+                              cantidad_ayudantes: e.target.value,
+                            }))
+                          }
                           placeholder="0"
                           style={{ maxWidth: 200 }}
                         />
@@ -1622,16 +2350,23 @@ export default function NomencladorPorOS() {
                       </div>
                     </div>
 
-                    {(
+                    {
                       <>
                         <label className={styles.toggleRow}>
                           <input
                             type="checkbox"
                             className={styles.toggleInput}
                             checked={editMeta.sin_restriccion_especialidad}
-                            onChange={(e) => setEditMeta((p) => ({ ...p, sin_restriccion_especialidad: e.target.checked }))}
+                            onChange={(e) =>
+                              setEditMeta((p) => ({
+                                ...p,
+                                sin_restriccion_especialidad: e.target.checked,
+                              }))
+                            }
                           />
-                          <span className={styles.toggleLabel}>Sin restricción por especialidad</span>
+                          <span className={styles.toggleLabel}>
+                            Sin restricción por especialidad
+                          </span>
                         </label>
                         {editMeta.sin_restriccion_especialidad ? (
                           <p className={styles.hintText}>
@@ -1641,7 +2376,9 @@ export default function NomencladorPorOS() {
                           </p>
                         ) : (
                           <div className={styles.formGroup}>
-                            <label className={styles.formLabel}>Especialidades</label>
+                            <label className={styles.formLabel}>
+                              Especialidades
+                            </label>
                             <p className={styles.hintText}>
                               {nucleoOrigen === "NN"
                                 ? "Quién puede facturar este código en esta obra social. Son las mismas especialidades que usan las variantes NE del código."
@@ -1650,14 +2387,18 @@ export default function NomencladorPorOS() {
                             <MultiSelectBuscable
                               options={espOptions}
                               selected={editMeta.especialidades}
-                              onChange={(next) => setEditMeta((p) => ({ ...p, especialidades: next }))}
+                              onChange={(next) =>
+                                setEditMeta((p) => ({
+                                  ...p,
+                                  especialidades: next,
+                                }))
+                              }
                               noun="especialidades"
                             />
                           </div>
                         )}
                       </>
-                    )}
-
+                    }
                   </div>
                 )}
 
@@ -1665,14 +2406,21 @@ export default function NomencladorPorOS() {
                     nueva en TODAS las variantes); en una variante suelta es lo único editable. */}
                 <div className={styles.editSection}>
                   <div className={styles.editSectionTitle}>
-                    {editMode === "nucleo" ? "Valores, vigencia y coseguro" : "Actualizar ecuación de precio"}
+                    {editMode === "nucleo"
+                      ? "Valores, vigencia y coseguro"
+                      : "Actualizar ecuación de precio"}
                   </div>
                   {editMode === "nucleo" && !ecuEnabled ? (
                     <div>
                       <p className={styles.hintText}>
-                        Si no los modificás, los valores y la vigencia actuales se mantienen.
+                        Si no los modificás, los valores y la vigencia actuales
+                        se mantienen.
                       </p>
-                      <button className={styles.btnGhost} type="button" onClick={() => setEcuEnabled(true)}>
+                      <button
+                        className={styles.btnGhost}
+                        type="button"
+                        onClick={() => setEcuEnabled(true)}
+                      >
                         Modificar valores, vigencia y coseguro
                       </button>
                     </div>
@@ -1685,22 +2433,47 @@ export default function NomencladorPorOS() {
                       </p>
                       <div className={styles.formRow2}>
                         <div className={styles.formGroup}>
-                          <label className={styles.formLabel}>Nueva vigencia desde <span className={styles.req}>*</span></label>
+                          <label className={styles.formLabel}>
+                            Nueva vigencia desde{" "}
+                            <span className={styles.req}>*</span>
+                          </label>
                           <input
                             type="date"
                             className={`${styles.formInput} ${editErrors.vigencia_desde ? styles.inputError : ""}`}
                             value={editEcu.vigencia_desde}
-                            onChange={(e) => { setEditEcu((p) => ({ ...p, vigencia_desde: e.target.value })); setEditErrors((p) => ({ ...p, vigencia_desde: "" })); }}
+                            onChange={(e) => {
+                              setEditEcu((p) => ({
+                                ...p,
+                                vigencia_desde: e.target.value,
+                              }));
+                              setEditErrors((p) => ({
+                                ...p,
+                                vigencia_desde: "",
+                              }));
+                            }}
                           />
-                          {editErrors.vigencia_desde && <span className={styles.errorMsg}>{editErrors.vigencia_desde}</span>}
+                          {editErrors.vigencia_desde && (
+                            <span className={styles.errorMsg}>
+                              {editErrors.vigencia_desde}
+                            </span>
+                          )}
                         </div>
                         <div className={styles.formGroup}>
-                          <label className={styles.formLabel}>Coseguro ($)</label>
+                          <label className={styles.formLabel}>
+                            Coseguro ($)
+                          </label>
                           <input
-                            type="number" min="0" step="0.01"
+                            type="number"
+                            min="0"
+                            step="0.01"
                             className={styles.formInput}
                             value={editEcu.coseguro}
-                            onChange={(e) => setEditEcu((p) => ({ ...p, coseguro: e.target.value }))}
+                            onChange={(e) =>
+                              setEditEcu((p) => ({
+                                ...p,
+                                coseguro: e.target.value,
+                              }))
+                            }
                             placeholder="0.00"
                           />
                         </div>
@@ -1709,26 +2482,67 @@ export default function NomencladorPorOS() {
                         <>
                           <div className={styles.formRow2}>
                             <div className={styles.formGroup}>
-                              <label className={styles.formLabel}>Tipo de valor</label>
-                              <select className={styles.formSelect} value={editEcu.modalidad} onChange={(e) => changeEditModalidad(e.target.value as ModalidadValor)}>
-                                <option value="calculable">Calculable (galeno × cantidad)</option>
+                              <label className={styles.formLabel}>
+                                Tipo de valor
+                              </label>
+                              <select
+                                className={styles.formSelect}
+                                value={editEcu.modalidad}
+                                onChange={(e) =>
+                                  changeEditModalidad(
+                                    e.target.value as ModalidadValor,
+                                  )
+                                }
+                              >
+                                <option value="calculable">
+                                  Calculable (galeno × cantidad)
+                                </option>
                                 <option value="fijo">Fijo ($)</option>
                               </select>
                             </div>
                           </div>
-                          <ComponentEditor modalidad={editEcu.modalidad} componentes={editEcu.componentes} galenos={galenos} errors={editErrors} onChange={updateEditComp} />
+                          <ComponentEditor
+                            modalidad={editEcu.modalidad}
+                            componentes={editEcu.componentes}
+                            galenos={galenos}
+                            errors={editErrors}
+                            onChange={updateEditComp}
+                          />
                         </>
                       )}
                       {editMode === "nucleo" ? (
                         <div style={{ marginTop: 8 }}>
-                          <button className={styles.btnGhost} type="button" onClick={() => setEcuEnabled(false)}>
+                          <button
+                            className={styles.btnGhost}
+                            type="button"
+                            onClick={() => setEcuEnabled(false)}
+                          >
                             No modificar valores
                           </button>
                         </div>
                       ) : (
-                        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
-                          <button className={styles.btnWarning} onClick={handleActualizar} disabled={savingEcu}>
-                            {savingEcu ? <><span className={styles.spinner} /> Actualizando…</> : replicaActiva ? "Actualizar y replicar" : "Actualizar"}
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "flex-end",
+                            marginTop: 8,
+                          }}
+                        >
+                          <button
+                            className={styles.btnWarning}
+                            onClick={handleActualizar}
+                            disabled={savingEcu}
+                          >
+                            {savingEcu ? (
+                              <>
+                                <span className={styles.spinner} />{" "}
+                                Actualizando…
+                              </>
+                            ) : replicaActiva ? (
+                              "Actualizar y replicar"
+                            ) : (
+                              "Actualizar"
+                            )}
                           </button>
                         </div>
                       )}
@@ -1738,7 +2552,9 @@ export default function NomencladorPorOS() {
 
                 {replicaTerminada ? (
                   <>
-                    {replicaResultado && <ResultadoReplica resultados={replicaResultado} />}
+                    {replicaResultado && (
+                      <ResultadoReplica resultados={replicaResultado} />
+                    )}
                     {replicaError && <ErrorReplica mensaje={replicaError} />}
                   </>
                 ) : (
@@ -1758,15 +2574,36 @@ export default function NomencladorPorOS() {
 
               <div className={styles.modalFooter}>
                 {replicaTerminada ? (
-                  <button className={styles.btnPrimary} onClick={() => setModalKind(null)}>Cerrar</button>
+                  <button
+                    className={styles.btnPrimary}
+                    onClick={() => setModalKind(null)}
+                  >
+                    Cerrar
+                  </button>
                 ) : (
                   <>
-                    <button className={styles.btnGhost} onClick={() => setModalKind(null)}>{editMode === "nucleo" ? "Cancelar" : "Cerrar"}</button>
+                    <button
+                      className={styles.btnGhost}
+                      onClick={() => setModalKind(null)}
+                    >
+                      {editMode === "nucleo" ? "Cancelar" : "Cerrar"}
+                    </button>
                     {editMode === "nucleo" && (
-                      <button className={styles.btnPrimary} onClick={handleSaveNucleo} disabled={savingMeta}>
-                        {savingMeta
-                          ? <><span className={styles.spinner} /> Guardando…</>
-                          : <><Save size={15} /> {replicaActiva ? "Guardar y replicar" : "Guardar"}</>}
+                      <button
+                        className={styles.btnPrimary}
+                        onClick={handleSaveNucleo}
+                        disabled={savingMeta}
+                      >
+                        {savingMeta ? (
+                          <>
+                            <span className={styles.spinner} /> Guardando…
+                          </>
+                        ) : (
+                          <>
+                            <Save size={15} />{" "}
+                            {replicaActiva ? "Guardar y replicar" : "Guardar"}
+                          </>
+                        )}
                       </button>
                     )}
                   </>
@@ -1782,9 +2619,15 @@ export default function NomencladorPorOS() {
         {toast && (
           <motion.div
             className={`${styles.toast} ${toast.type === "success" ? styles.toastSuccess : styles.toastError}`}
-            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }}
           >
-            {toast.type === "success" ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
+            {toast.type === "success" ? (
+              <CheckCircle2 size={15} />
+            ) : (
+              <AlertCircle size={15} />
+            )}
             {toast.msg}
           </motion.div>
         )}

@@ -10,7 +10,7 @@ import {
   addPermToRole,
   removePermFromRole,
 } from "./api";
-import SearchField from "../../components/molecules/SearchField/SearchField";
+import SearchField from "@/app/components/ui/SearchField/SearchField";
 
 // ---------- Mapeo visual de permisos ----------
 // Categorías por prefijo de código (mostrar ≠ almacenar)
@@ -53,8 +53,6 @@ type Role = { name: string; description?: string };
 type Permission = { code: string; description?: string };
 
 const PermissionsManager: React.FC = () => {
-  // const nav = useNavigate();
-
   const [roles, setRoles] = useState<Role[]>([]);
   const [activeRole, setActiveRole] = useState<string | null>(null);
 
@@ -76,7 +74,6 @@ const PermissionsManager: React.FC = () => {
       const [r, p] = await Promise.all([listRoles(), listPermissions()]);
       setRoles(r);
       setPerms(p);
-      console.log("Permisos cargados:", p);
       if (!activeRole && r.length) setActiveRole(r[0].name);
       setLoadingRoles(false);
       setLoadingPerms(false);

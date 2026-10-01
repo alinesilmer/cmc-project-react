@@ -1,6 +1,6 @@
 import React from "react";
-import Modal from "../../../components/atoms/Modal/Modal";
-import Button from "../../../components/atoms/Button/Button";
+import Modal from "@/app/components/ui/Modal/Modal";
+import Button from "@/app/components/ui/Button/Button";
 import type { CierrePreviewResponse } from "../types";
 import { formatMoney } from "../money";
 

@@ -12,7 +12,7 @@
  *  - All API errors are caught; callers receive typed results, never raw errors.
  */
 
-import { httpBare } from "../../lib/http";
+import { httpBare } from "@/app/shared/lib/http";
 
 // ─── Internal normalizer ──────────────────────────────────────────────────────
 

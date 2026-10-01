@@ -4,17 +4,16 @@ import {
   CMC_NAME,
   CMC_PHONE,
   CMC_SUBTITLE,
-  CONSULTA_COMUN_CODE,
   moneyFormatter,
 } from "./boletinConsultaComun.constants";
 import {
   buildPdfFilename,
   fetchAsDataUrl,
-  formatGeneratedDate,
   getImageFormat,
   normalizeText,
 } from "./boletinConsultaComun.helpers";
 import type { ConsultaComunItem } from "./boletinConsultaComun.types";
+import { etiquetaGaleno } from "@/app/features/nomenclador/galenos";
 import type { NormasPorOS } from "./useNormasOperativas";
 
 /** Fecha de la norma, corta. En el PDF no hay lugar para más. */
@@ -41,7 +40,6 @@ export async function generateConsultaComunPdf(
   ]);
 
   const generatedAt = new Date();
-  const generatedAtLabel = formatGeneratedDate(generatedAt);
   const logoDataUrl = await fetchAsDataUrl(CMC_LOGO_SRC);
   const mes = generatedAt
     .toLocaleString("es-AR", { month: "long" })
@@ -267,32 +265,10 @@ export async function generateConsultaComunPdf(
     doc.setTextColor(...palette.green);
     doc.text(moneyFormatter.format(item.valor), marginX + 6, 65);
 
-    // ── GALENO values (always render, defensive fallback for stale cache) ──
-    const galeno = item.galeno ?? {
-      quirurgico: 0,
-      practica: 0,
-      radiologico: 0,
-      cirugiaAdultos: 0,
-      cirugiaInfantil: 0,
-      gastosQuirurgicos: 0,
-      gastosRadiologico: 0,
-      gastosBioquimicos: 0,
-      otrosGastos: 0,
-    };
-    const galenoEntries: [string, number][] = [
-      ["Quirúrgico", galeno.quirurgico],
-      ["Práctica", galeno.practica],
-      ["Radiológico", galeno.radiologico],
-      ["Cirugía Adultos", galeno.cirugiaAdultos],
-      ["Cirugía Infantil", galeno.cirugiaInfantil],
-    ];
-    const gastosEntries: [string, number][] = [
-      ["G. Quirúrgicos", galeno.gastosQuirurgicos],
-      ["G. Radiológico", galeno.gastosRadiologico],
-      ["G. Bioquímicos", galeno.gastosBioquimicos],
-      ["Otros Gastos", galeno.otrosGastos],
-    ];
-
+    // ── Galenos ──────────────────────────────────────────────────
+    // Cuántos y cuáles depende de la obra social, así que la grilla se arma
+    // con lo que haya y baja de renglón sola. El nombre puede ocupar dos
+    // líneas ("Galeno Cirugía Adultos N3" no entra en una columna).
     let curY = 76;
 
     doc.setDrawColor(...palette.line);
@@ -305,46 +281,58 @@ export async function generateConsultaComunPdf(
     doc.text("Valores GENERALES", marginX, curY);
     curY += 7;
 
-    const colW = (pageWidth - marginX * 2) / galenoEntries.length;
-    const galenoCardH = 17;
-
-    galenoEntries.forEach(([label, val], i) => {
-      const cx = marginX + i * colW;
+    if (item.galenos.length === 0) {
       doc.setFillColor(...palette.softBlue);
-      doc.roundedRect(cx, curY, colW - 2, galenoCardH, 2, 2, "F");
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7.2);
-      doc.setTextColor(...palette.muted);
-      doc.text(label, cx + 3.5, curY + 5.5);
-
-      doc.setFont("helvetica", "bold");
+      doc.roundedRect(marginX, curY, pageWidth - marginX * 2, 14, 2, 2, "F");
+      doc.setFont("helvetica", "italic");
       doc.setFontSize(9.5);
-      doc.setTextColor(...palette.green);
-      doc.text(moneyFormatter.format(val), cx + 3.5, curY + 13.5);
-    });
-
-    curY += galenoCardH + 4;
-
-    const gastosColW = (pageWidth - marginX * 2) / gastosEntries.length;
-
-    gastosEntries.forEach(([label, val], i) => {
-      const cx = marginX + i * gastosColW;
-      doc.setFillColor(...palette.softBlue);
-      doc.roundedRect(cx, curY, gastosColW - 2, galenoCardH, 2, 2, "F");
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7.2);
       doc.setTextColor(...palette.muted);
-      doc.text(label, cx + 3.5, curY + 5.5);
+      doc.text(
+        "Sin galenos pactados con esta obra social.",
+        marginX + 6,
+        curY + 9
+      );
+      curY += 20;
+    } else {
+      const porFila = 5;
+      const colW = (pageWidth - marginX * 2) / porFila;
+      const cardPad = 3.5;
+      const galenoCardH = 20;
+      const bottomY = pageHeight - 22;
 
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(9.5);
-      doc.setTextColor(...palette.green);
-      doc.text(moneyFormatter.format(val), cx + 3.5, curY + 13.5);
-    });
+      item.galenos.forEach((g, i) => {
+        const col = i % porFila;
 
-    curY += galenoCardH + 6;
+        if (col === 0 && i > 0) curY += galenoCardH + 3;
+        if (col === 0 && curY + galenoCardH > bottomY) {
+          doc.addPage();
+          drawHeaderSection(item.nombre);
+          curY = 50;
+        }
+
+        const cx = marginX + col * colW;
+        doc.setFillColor(...palette.softBlue);
+        doc.roundedRect(cx, curY, colW - 2, galenoCardH, 2, 2, "F");
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(6.6);
+        doc.setTextColor(...palette.muted);
+        // Dos líneas como máximo: la tarjeta tiene alto fijo.
+        const lineas = (
+          doc.splitTextToSize(etiquetaGaleno(g), colW - cardPad * 2 - 2) as string[]
+        ).slice(0, 2);
+        lineas.forEach((linea, n) => {
+          doc.text(linea, cx + cardPad, curY + 5 + n * 3.4);
+        });
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9);
+        doc.setTextColor(...palette.green);
+        doc.text(moneyFormatter.format(g.valor), cx + cardPad, curY + 16.5);
+      });
+
+      curY += galenoCardH + 6;
+    }
 
     doc.setDrawColor(...palette.line);
     doc.line(marginX, curY, pageWidth - marginX, curY);

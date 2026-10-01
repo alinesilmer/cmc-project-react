@@ -1,15 +1,10 @@
-import { useEffect } from "react";
 import styles from "./asociados.module.scss";
-import MedicosCarousel from "../../components/Nosotros/MedicosCarousel/MedicosCarousel";
+import MedicosDirectorio from "../../components/Asociados/MedicosDirectorio/MedicosDirectorio";
 import Hero from "../../components/UI/Hero/Hero";
+import { useTituloPagina } from "../../lib/useTituloPagina";
 
 export default function MedicosAsociadosPage() {
-  useEffect(() => {
-    document.title = "Médicos Asociados | Colegio Médico de Corrientes";
-    return () => {
-      document.title = "Colegio Médico de Corrientes";
-    };
-  }, []);
+  useTituloPagina("Médicos Asociados");
 
   return (
     <div>
@@ -21,19 +16,25 @@ export default function MedicosAsociadosPage() {
 
       <section
         className={styles.wrapper}
-        aria-label="Médicos Asociados al Colegio Médico de Corrientes"
+        aria-labelledby="titulo-asociados"
       >
         <div className={styles.container}>
           <header className={styles.sectionHead}>
             <span className={styles.eyebrow}>Profesionales</span>
-            <h2 className={styles.sectionTitle}>Nuestros médicos asociados</h2>
+            <h2 id="titulo-asociados" className={styles.sectionTitle}>
+              Avisos de nuestros asociados
+            </h2>
+            {/* La lista sale de `/api/publicidad-medicos`: son los socios que
+                publicaron su aviso, no el padrón. Decirlo acá evita que alguien
+                concluya que un médico no está asociado porque no aparece. */}
             <p className={styles.sectionLead}>
-              Recorré los profesionales asociados al Colegio Médico de
-              Corrientes. Hacé clic en una tarjeta para verla en detalle.
+              Estos son algunos de los médicos asociados: los que publicaron su
+              aviso profesional. No es el padrón completo, así que si no
+              encontrás a quien buscás, consultanos en el Colegio.
             </p>
           </header>
 
-          <MedicosCarousel />
+          <MedicosDirectorio />
         </div>
       </section>
     </div>

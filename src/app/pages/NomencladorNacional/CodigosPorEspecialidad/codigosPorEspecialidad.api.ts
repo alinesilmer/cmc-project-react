@@ -20,7 +20,7 @@
 //     código en esa OS con esa especialidad, colapsado a una fila por código, con
 //     `origen` (NE > NN), `nivel` y los componentes.
 
-import { paginar } from "../../../lib/paginar";
+import { paginar } from "@/app/shared/lib/paginar";
 import {
   listNomenclador,
   listCodigosPorEspecialidad,

@@ -1,0 +1,144 @@
+@use "sass:color";
+@use "@/app/styles/all.scss" as *;
+
+// Lo propio de esta pantalla. El encuadre, la carga del archivo, el resumen y
+// la tabla salen de `Validaciones/components/reporte/reporte.module.scss`.
+
+.controles {
+  display: flex;
+  align-items: center;
+  gap: $spacing-5;
+  flex-wrap: wrap;
+}
+
+.campoPeriodo {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-size: $font-size-sm;
+  color: $gray-600;
+
+  select {
+    padding: $spacing-2 $spacing-3;
+    font-family: inherit;
+    font-size: $font-size-sm;
+    color: $gray-900;
+    background: $white;
+    border: 1px solid $gray-200;
+    border-radius: $border-radius-md;
+    font-variant-numeric: tabular-nums;
+
+    &:focus {
+      outline: none;
+      border-color: $primary-blue;
+      box-shadow: 0 0 0 3px rgba($accent-blue, 0.16);
+    }
+
+    &:disabled {
+      background: $gray-50;
+      color: $gray-500;
+    }
+  }
+}
+
+// ─── Estado de cada fila ──────────────────────────────────────────────────────
+
+.chip {
+  display: inline-block;
+  padding: 1px $spacing-2;
+  border-radius: $border-radius-sm;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  white-space: nowrap;
+}
+
+.grabable,
+.grabada {
+  background: rgba($primary-blue, 0.1);
+  color: $primary-blue;
+}
+
+.duplicada {
+  background: $gray-200;
+  color: $gray-600;
+}
+
+.omitida {
+  background: rgba($warning-orange, 0.16);
+  // `darken()` quedó deprecada en Dart Sass; `color.adjust` con lightness
+  // negativo da exactamente el mismo color.
+  color: color.adjust($warning-orange, $lightness: -18%);
+}
+
+/** La fila entera se atenúa: de un vistazo se ve cuánto del reporte no entra. */
+.noEntra {
+  background: $gray-50;
+  color: $gray-500;
+}
+
+.socio {
+  margin-left: $spacing-2;
+  font-size: $font-size-xs;
+  color: $gray-500;
+  font-variant-numeric: tabular-nums;
+}
+
+.practica {
+  min-width: 14rem;
+  max-width: 26rem;
+}
+
+.motivo {
+  min-width: 16rem;
+  max-width: 32rem;
+  font-size: $font-size-xs;
+  line-height: 1.45;
+  color: $gray-600;
+}
+
+// ─── Acciones ─────────────────────────────────────────────────────────────────
+
+.espera {
+  margin: 0;
+  padding: $spacing-6 $spacing-5;
+  text-align: center;
+  font-size: $font-size-sm;
+  color: $gray-600;
+  background: $white;
+  border: 1px dashed $gray-300;
+  border-radius: $border-radius-lg;
+}
+
+.errorInline {
+  margin: 0;
+  margin-right: auto;
+  font-size: $font-size-sm;
+  color: $danger-red;
+}
+
+.hecho {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin: 0;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $primary-blue;
+}
+
+/** Paginado de la tabla de resultado. Un reporte trae más de mil prácticas:
+ * se muestran de a 50 para que la pantalla no se cuelgue pintándolas todas. */
+.paginado {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-4;
+  margin-top: $spacing-4;
+  flex-wrap: wrap;
+}
+
+.paginaActual {
+  font-size: $font-size-sm;
+  color: $gray-600;
+  font-variant-numeric: tabular-nums;
+}

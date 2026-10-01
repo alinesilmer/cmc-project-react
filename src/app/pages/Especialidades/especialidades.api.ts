@@ -1,4 +1,4 @@
-import { getJSON, postJSON, patchJSON } from "../../lib/http";
+import { getJSON, postJSON, patchJSON } from "@/app/shared/lib/http";
 import type { Especialidad, EspecialidadPayload } from "./especialidades.types";
 
 const BASE = "/api/especialidades/";

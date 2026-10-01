@@ -11,10 +11,10 @@ import {
   Trash2,
 } from "lucide-react";
 
-import { saveAs } from "@/app/lib/fileSaver";
+import { saveAs } from "@/app/shared/lib/fileSaver";
 import escudoCMC from "../../assets/escudoCMC.png";
-import ActionModal from "../../components/molecules/ActionModal/ActionModal";
-import Button from "../../components/atoms/Button/Button";
+import ActionModal from "@/app/components/ui/ActionModal/ActionModal";
+import Button from "@/app/components/ui/Button/Button";
 import {
   createBeneficio,
   deleteBeneficio,
@@ -36,7 +36,7 @@ import type {
 } from "./beneficios.types";
 import { generarRevistaPdf } from "./revistaPdf";
 import s from "./BeneficiosPage.module.scss";
-import { hoyISO } from "../../lib/fechas";
+import { hoyISO } from "@/app/shared/lib/fechas";
 
 const PAGE_SIZE = 20;
 

@@ -1,14 +1,14 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { getJSON } from "../../../lib/http";
-import BackButton from "../../../components/atoms/BackButton/BackButton";
-import Button from "../../../components/atoms/Button/Button";
-import Card from "../../../components/atoms/Card/Card";
+import { getJSON } from "@/app/shared/lib/http";
+import BackButton from "@/app/components/ui/BackButton/BackButton";
+import Button from "@/app/components/ui/Button/Button";
+import Card from "@/app/components/ui/Card/Card";
 import styles from "./FacturaDetalle.module.scss";
 import { type Liquidacion, fmt, mesLabel } from "../types";
 import type ExcelJS from "exceljs";
-import { saveAs } from "@/app/lib/fileSaver";
+import { saveAs } from "@/app/shared/lib/fileSaver";
 
 const LIQ_URL = (id: string | number) => `/api/liquidacion/liquidaciones_por_os/${id}`;
 const DETALLES_VISTA_URL = (id: string | number, search?: string, medicoId?: string) => {
@@ -52,8 +52,9 @@ const FacturaDetalle: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(false);
+  // TODO: la paginación no se muestra todavía; solo se reinicia y se calcula.
+  const [, setPage] = useState(1);
+  const [, setHasMore] = useState(false);
 
   const [searchDebounce, setSearchDebounce] = useState("");
   useEffect(() => {

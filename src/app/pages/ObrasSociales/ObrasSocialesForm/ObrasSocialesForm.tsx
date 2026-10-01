@@ -36,7 +36,7 @@ import type {
   Documento,
   ContactoEntry,
 } from "../obrasSociales.types";
-import { abrirAdjunto } from "../../../lib/archivos";
+import { abrirAdjunto } from "@/app/shared/lib/archivos";
 import { useNotify } from "../../../hooks/useNotify";
 import s from "./ObrasSocialesForm.module.scss";
 import Modal from "../../../components/atoms/Modal/Modal";

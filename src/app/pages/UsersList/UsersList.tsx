@@ -3,18 +3,18 @@
 import type React from "react";
 import { useEffect, useMemo, useState, useRef } from "react";
 import styles from "./UsersList.module.scss";
-import { getJSON } from "../../lib/http";
-import Button from "../../components/atoms/Button/Button";
-import Modal from "../../components/atoms/Modal/Modal";
-import FilterModal from "../../components/molecules/FilterModal/FilterModal";
+import { getJSON } from "@/app/shared/lib/http";
+import Button from "@/app/components/ui/Button/Button";
+import Modal from "@/app/components/ui/Modal/Modal";
+import FilterModal from "@/app/pages/UsersList/components/FilterModal/FilterModal";
 import { useNavigate } from "react-router-dom";
 import type { FilterSelection, MissingFieldKey } from "../../types/filters";
 import { initialFilters } from "../../types/filters";
 import { mapUIToQuery } from "./medicosExport";
-import { getEspecialidadNameById } from "../../lib/especialidadesCatalog";
+import { getEspecialidadNameById } from "@/app/shared/lib/especialidadesCatalog";
 
 import { useMedicosExport } from "./useMedicosExport";
-import { useEspecialidades } from "../../components/molecules/FilterModal/useEspecialidades";
+import { useEspecialidades } from "@/app/pages/UsersList/components/FilterModal/useEspecialidades";
 
 import LogoCMCUrl from "../../assets/logoCMC.png";
 
@@ -111,10 +111,8 @@ function toUserRow(m: any) {
   };
 }
 
-type UserRow = ReturnType<typeof toUserRow>;
-
 /* ================================
-   ✅ Especialidades múltiples (FIX REAL)
+   Especialidades múltiples
    - Lee especialidad1..especialidadN
    - Dedup
    - Quita "médico" si hay otras
@@ -161,11 +159,11 @@ function collectEspecialidadColumns(row: any, max = 12): any[] {
 function getEspecialidadesTokens(row: any): string[] {
   const tokensRaw: string[] = [];
 
-  // ✅ 1) columnas especialidad1..N (tu caso real)
+  // 1) columnas especialidad1..N (tu caso real)
   const cols = collectEspecialidadColumns(row, 12);
   for (const v of cols) tokensRaw.push(...splitTokens(v));
 
-  // ✅ 2) compat: si backend manda "ESPECIALIDADES" como string/array
+  // 2) compat: si backend manda "ESPECIALIDADES" como string/array
   const rawCombined =
     (row as any)?.ESPECIALIDADES ??
     (row as any)?.especialidades ??
@@ -189,7 +187,7 @@ function getEspecialidadesTokens(row: any): string[] {
     const n = normalizeText(t);
     if (!n) continue;
 
-    // ✅ NO queremos que "Sin especialidad" cuente como especialidad
+    // NO queremos que "Sin especialidad" cuente como especialidad
     if (n === "sin especialidad" || n === "sinespecialidad") continue;
 
     if (seen.has(n)) continue;
@@ -197,7 +195,7 @@ function getEspecialidadesTokens(row: any): string[] {
     out.push(t);
   }
 
-  // ✅ regla: si hay más de 1 y existe "médico", se elimina
+  // regla: si hay más de 1 y existe "médico", se elimina
   const hasMedico = out.some((x) => normalizeText(x) === "medico");
   if (hasMedico && out.length > 1) {
     return out.filter((x) => normalizeText(x) !== "medico");
@@ -344,7 +342,7 @@ const MISSING_FIELD_KEYS: Record<MissingFieldKey, string[]> = {
   provincia: ["provincia", "PROVINCIA"],
   categoria: ["categoria", "CATEGORIA"],
 
-  // ✅ incluimos variantes, pero igual la lógica principal está en getEspecialidadesTokens()
+  // incluimos variantes, pero igual la lógica principal está en getEspecialidadesTokens()
   especialidad: [
     "especialidad",
     "ESPECIALIDAD",
@@ -461,7 +459,7 @@ function applyMedicosFilters(rows: MedicoRow[], filters: FilterSelection): Medic
       if (ci !== ciNorm) return false;
     }
 
-    // ✅ filtro por especialidad contra TODAS las especialidades del médico
+    // filtro por especialidad contra TODAS las especialidades del médico
     if (o.especialidad && !matchEspecialidad(row, o.especialidad)) return false;
 
     if (o.estado === "activo" && !isActiveRow(row)) return false;
@@ -525,23 +523,6 @@ function applyMedicosFilters(rows: MedicoRow[], filters: FilterSelection): Medic
   });
 }
 
-function matchesQuickSearch(row: any, q: string) {
-  const s = normalizeText(q);
-  if (!s) return true;
-
-  const name = pickFirst(row, ["NOMBRE", "nombre", "apellido_nombre", "APELLIDO_NOMBRE", "ape_nom", "APE_NOM"]);
-  const email = pickFirst(row, ["mail_particular", "MAIL_PARTICULAR", "email", "EMAIL"]);
-  const nroSocio = pickFirst(row, ["NRO_SOCIO", "nro_socio"]);
-  const matProv = pickFirst(row, ["MATRICULA_PROV", "matricula_prov"]);
-
-  return (
-    normalizeText(name).includes(s) ||
-    normalizeText(email).includes(s) ||
-    normalizeText(nroSocio).includes(s) ||
-    normalizeText(matProv).includes(s)
-  );
-}
-
 const PAGE_SIZE = 50;
 
 const UsersList: React.FC = () => {
@@ -566,7 +547,7 @@ const UsersList: React.FC = () => {
   // committed: lo que se envió al servidor al clickear "Filtrar"
   const [committedFilters, setCommittedFilters] = useState<FilterSelection>(initialFilters);
 
-  // ✅ Cache del logo en File (solo 1 fetch)
+  // Cache del logo en File (solo 1 fetch)
   const logoFilePromiseRef = useRef<Promise<File | null> | null>(null);
   const getFixedLogoFile = async (): Promise<File | null> => {
     if (logoFilePromiseRef.current) return logoFilePromiseRef.current;

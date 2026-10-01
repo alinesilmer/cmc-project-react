@@ -13,15 +13,15 @@ import {
 } from "lucide-react";
 
 import styles from "./BoletinConsultaComun.module.scss";
-import Button from "../../components/atoms/Button/Button";
-import IconButton from "../../components/atoms/IconButton/IconButton";
+import Button from "@/app/components/ui/Button/Button";
+import IconButton from "@/app/components/ui/IconButton/IconButton";
 import {
   Table,
   TableHead,
   TableBody,
   TableRow,
   TableCell,
-} from "../../components/atoms/Table/Table";
+} from "@/app/components/ui/Table/Table";
 
 import {
   CONSULTA_COMUN_CODE,
@@ -35,19 +35,7 @@ import { useGalenoQuery } from "./useGalenoQuery";
 import { useObservaciones } from "./useObservaciones";
 import { urlNorma, useNormasOperativas } from "./useNormasOperativas";
 import { formatApiDate } from "./boletinConsultaComun.helpers";
-import type { GalenoValues } from "./boletinConsultaComun.types";
-
-const ZERO_GALENO: GalenoValues = {
-  quirurgico: 0,
-  practica: 0,
-  radiologico: 0,
-  cirugiaAdultos: 0,
-  cirugiaInfantil: 0,
-  gastosQuirurgicos: 0,
-  gastosRadiologico: 0,
-  gastosBioquimicos: 0,
-  otrosGastos: 0,
-};
+import { SIN_GALENOS } from "./boletinConsultaComun.types";
 
 type ObsLine =
   | { type: "header"; label: string; body: string }
@@ -132,7 +120,7 @@ export default function BoletinConsultaComun() {
         observaciones: observaciones[item.nro]
           ? [observaciones[item.nro]]
           : item.observaciones,
-        galeno: galenoMap?.get(item.nro) ?? ZERO_GALENO,
+        galenos: galenoMap?.get(item.nro) ?? SIN_GALENOS,
       })),
     [data, observaciones, galenoMap]
   );

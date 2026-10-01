@@ -17,7 +17,9 @@ import {
 } from "lucide-react";
 import styles from "./Welcome.module.scss";
 import Button from "../../../components/UI/Button/Button";
-import stethoscopeDeco from "../../../assets/images/stethoscope-deco.png";
+// Decorativa, en Cloudinary con q_auto/f_auto: pesaba 1,52 MB en el repo.
+const stethoscopeDeco =
+  "https://res.cloudinary.com/dcfkgepmp/image/upload/q_auto/f_auto/v1790263647/stethoscope-deco_x8srvv.png";
 
 // ── 6 institutional benefit cards ─────────────────────────────────────────────
 type BenefitCard = { icon: ReactNode; title: string; description: string };

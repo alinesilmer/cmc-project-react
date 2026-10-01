@@ -2,8 +2,14 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import Button from "../../../components/UI/Button/Button";
-import { marked } from "marked";
-import DOMPurify from "dompurify";
+import { markdownSeguro } from "../../../lib/markdown";
+import {
+  DOCUMENTOS,
+  IMAGENES,
+  accept,
+  filtrarValidos,
+  motivoDeRechazo,
+} from "../../../lib/subidas";
 import {
   createNews,
   updateNews,
@@ -101,17 +107,7 @@ export default function NewsForm({
 
   const previewHtml = useMemo(() => {
     if (!showPreview) return "";
-    try {
-      const raw = marked.parse(formData.contenido, {
-        gfm: true,
-        breaks: true,
-      }) as string;
-      return DOMPurify.sanitize(raw);
-    } catch {
-      return formData.contenido
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-    }
+    return markdownSeguro(formData.contenido);
   }, [formData.contenido, showPreview]);
 
   function wrapSelection(prefix: string, suffix = prefix) {
@@ -135,7 +131,16 @@ export default function NewsForm({
   const onPickPortada = () => portadaInputRef.current?.click();
   const onChangePortada: React.ChangeEventHandler<HTMLInputElement> = (e) => {
     const f = e.target.files?.[0] || null;
+    if (portadaInputRef.current) portadaInputRef.current.value = "";
     if (!f) return;
+
+    const motivo = motivoDeRechazo(f, IMAGENES);
+    if (motivo) {
+      setFormError(motivo);
+      return;
+    }
+    setFormError(null);
+
     if (portadaPreview?.startsWith("blob:")) URL.revokeObjectURL(portadaPreview);
     setPortadaFile(f);
     setClearPortada(false);
@@ -152,9 +157,14 @@ export default function NewsForm({
   const onPickAdjuntos = () => adjuntosInputRef.current?.click();
   const onChangeAdjuntos: React.ChangeEventHandler<HTMLInputElement> = (e) => {
     const files = Array.from(e.target.files || []);
-    if (!files.length) return;
-    setPendingFiles((prev) => [...prev, ...files]);
     if (adjuntosInputRef.current) adjuntosInputRef.current.value = "";
+    if (!files.length) return;
+
+    // Se suman los que sirven y se avisa por los que no, en vez de abortar
+    // toda la selección por un archivo suelto.
+    const { validos, errores } = filtrarValidos(files, DOCUMENTOS);
+    setFormError(errores.length ? errores.join(" ") : null);
+    if (validos.length) setPendingFiles((prev) => [...prev, ...validos]);
   };
   const onRemovePending = (idx: number) =>
     setPendingFiles((prev) => prev.filter((_, i) => i !== idx));
@@ -410,7 +420,7 @@ export default function NewsForm({
             <input
               ref={portadaInputRef}
               type="file"
-              accept="image/*"
+              accept={accept(IMAGENES)}
               hidden
               onChange={onChangePortada}
             />
@@ -437,7 +447,7 @@ export default function NewsForm({
             <input
               ref={adjuntosInputRef}
               type="file"
-              accept="image/*,application/pdf"
+              accept={accept(DOCUMENTOS)}
               multiple
               hidden
               onChange={onChangeAdjuntos}

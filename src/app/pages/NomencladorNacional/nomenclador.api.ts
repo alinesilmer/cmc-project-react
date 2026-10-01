@@ -6,7 +6,7 @@ import {
   delJSON,
   http,
   postForm,
-} from "../../lib/http";
+} from "@/app/shared/lib/http";
 import type {
   NomencladorOut,
   NomencladorDetalleOut,

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
@@ -8,13 +8,12 @@ import {
   patchJSON,
   postJSON,
   putJSON,
-} from "../../../lib/http";
+} from "@/app/shared/lib/http";
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
-import BackButton from "../../../components/atoms/BackButton/BackButton";
-import Button from "../../../components/atoms/Button/Button";
-import Card from "../../../components/atoms/Card/Card";
-import SelectableTable from "../../../components/molecules/SelectableTable/SelectableTable";
-import type { ActionDef, ColumnDef } from "../../../components/molecules/SelectableTable/types";
+import BackButton from "@/app/components/ui/BackButton/BackButton";
+import Button from "@/app/components/ui/Button/Button";
+import Card from "@/app/components/ui/Card/Card";
+import SelectableTable from "@/app/components/ui/SelectableTable/SelectableTable";
 import styles from "./LoteDetalle.module.scss";
 import {
   type LoteAjuste,
@@ -24,7 +23,7 @@ import {
   mesLabel,
 } from "../types";
 import type ExcelJS from "exceljs";
-import { saveAs } from "@/app/lib/fileSaver";
+import { saveAs } from "@/app/shared/lib/fileSaver";
 
 const OBSERVACION_OPTIONS = [
   "Falta firma",
@@ -69,10 +68,7 @@ const transitionDescriptions: Record<string, string> = {
 
 const LoteDetalle: React.FC = () => {
   const { pagoId, loteId } = useParams<{ pagoId: string; loteId: string }>();
-  const navigate = useNavigate();
   const notify = useAppSnackbar();
-  const [searchParams] = useSearchParams();
-  const backTab = searchParams.get("from") ?? "lotes";
 
   const [lote, setLote] = useState<LoteAjuste | null>(null);
   const [loading, setLoading] = useState(true);
@@ -117,7 +113,6 @@ const LoteDetalle: React.FC = () => {
     try {
       const data = await getJSON<LoteAjuste>(LOTE_URL(loteId));
       setLote(data);
-      console.log(data);
     } catch (e: any) {
       setError(e?.message || "No se pudo cargar el lote.");
     } finally {

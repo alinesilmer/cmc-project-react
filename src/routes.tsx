@@ -5,8 +5,9 @@ import { AnimatePresence } from "framer-motion";
 // Structural components are always needed for the panel shell → keep eager.
 import RequireAuth from "./app/auth/RequireAuth";
 import MedicoRouteGuard from "./app/auth/MedicoRouteGuard";
+import RequireWebEditor from "./app/auth/RequireWebEditor";
 import RequireScope from "./app/auth/RequireScope";
-import AppLayout from "./app/components/molecules/AppLayout/AppLayout";
+import AppLayout from "@/app/components/layout/AppLayout/AppLayout";
 import { useAuth } from "./app/auth/AuthProvider";
 import { isMedico } from "./app/auth/roles";
 
@@ -21,6 +22,7 @@ const ReportesPage = lazy(() => import("./app/pages/Reportes/ReportesPage"));
 const DoctorsPage = lazy(() => import("./app/pages/DoctorsList/DoctorsList"));
 const SocialWorksPage = lazy(() => import("./app/pages/SocialWorkSection/SocialWorkSection"));
 const DoctorProfilePage = lazy(() => import("./app/pages/DoctorProfilePage/DoctorProfilePage"));
+const PadronPorSocio = lazy(() => import("./app/pages/PadronPorSocio/PadronPorSocio"));
 const PadronIoscor = lazy(() => import("./app/pages/PadronIoscor/PadronIoscor"));
 const UsersList = lazy(() => import("./app/pages/UsersList/UsersList"));
 // Control de calidad del padrón: sólo lectura, señala legajos con problemas.
@@ -34,8 +36,7 @@ const Config = lazy(() => import("./app/pages/Config/Config"));
 const Help = lazy(() => import("./app/pages/Help/Help"));
 const Login = lazy(() => import("./app/pages/Login/Login"));
 const Register = lazy(() => import("./app/pages/Register/Register"));
-const Info = lazy(() => import("./app/pages/Info/Info"));
-const AdherenteForm = lazy(() => import("./app/components/molecules/AdherenteForm/AdherenteForm"));
+const AdherenteForm = lazy(() => import("@/app/pages/AdherenteForm/AdherenteForm"));
 const ObrasSocialesRegisterPage = lazy(() => import("./app/pages/ObrasSocialesRegisterPage/ObrasSocialesRegisterPage"));
 const PadronesPage = lazy(() => import("./app/pages/PadronesPage/PadronesPage"));
 const AdminPadrones = lazy(() => import("./app/pages/AdminPadrones/AdminPadrones"));
@@ -70,6 +71,15 @@ const MiRecepcion = lazy(() => import("./app/pages/facturacion/MiRecepcion/MiRec
 
 // WEBSITE
 const WebRoutes = lazy(() => import("./website/router"));
+// El ABM de contenido del sitio. Los componentes siguen en `src/website/`
+// porque es funcionalidad del sitio —usan sus clientes y su Button—, pero
+// las rutas viven acá para que rendericen dentro del panel y no envueltas
+// en el Header, el Footer y el Chatbot de la página pública.
+const BoletinMedico = lazy(() => import("./app/pages/BoletinMedico/BoletinMedico"));
+const SitioContenido = lazy(() => import("./website/app/admin/dashboard/page"));
+const ImportacionesHub = lazy(() => import("./app/pages/Importaciones/ImportacionesHub"));
+const ImportarPrevencion = lazy(() => import("./app/pages/Importaciones/ImportarPrevencion"));
+const ImportarSwiss = lazy(() => import("./app/pages/Importaciones/ImportarSwiss"));
 const BoletinConsultaComun = lazy(() => import("./app/pages/BoletinConsultaComun/BoletinConsultaComun"));
 const ObrasSocialesListado = lazy(() => import("./app/pages/ObrasSociales/ObrasSocialesListado/ObrasSocialesListado"));
 const ObrasSocialesForm = lazy(() => import("./app/pages/ObrasSociales/ObrasSocialesForm/ObrasSocialesForm"));
@@ -86,6 +96,7 @@ const ValidacionesHub = lazy(() => import("./app/pages/Validaciones/Validaciones
 const ValidacionOS = lazy(() => import("./app/pages/Validaciones/ValidacionOS"));
 const PortalesExternos = lazy(() => import("./app/pages/Validaciones/PortalesExternos"));
 const PrevencionSalud = lazy(() => import("./app/pages/Validaciones/PrevencionSalud"));
+const SwissMedical = lazy(() => import("./app/pages/Validaciones/SwissMedical"));
 const InstitucionPage = lazy(() => import("./app/pages/Institucion/InstitucionPage"));
 const AgendaPage = lazy(() => import("./app/pages/Agenda/AgendaPage"));
 const ActividadPage = lazy(() => import("./app/pages/Actividad/ActividadPage"));
@@ -125,7 +136,10 @@ export default function RootRoutes() {
             element={<ObrasSocialesRegisterPage />}
           />
           <Route path="/panel/register" element={<Register />} />
-          <Route path="/panel/info" element={<Info />} />
+          {/* La página de requisitos para asociarse vive en el sitio público
+              (`/socios`): es material para quien todavía no es socio. Se deja
+              la ruta vieja redirigiendo para no romper enlaces guardados. */}
+          <Route path="/panel/info" element={<Navigate to="/socios" replace />} />
           <Route path="/panel/adherente" element={<AdherenteForm />} />
           <Route path="/panel/padrones" element={<PadronesPage />} />
           <Route path="/generar-boletin" element={<GenerarBoletin />} />
@@ -137,6 +151,13 @@ export default function RootRoutes() {
               {/* Los usuarios médicos solo alcanzan las rutas de MEDICO_ALLOWED_PATHS. */}
               <Route element={<MedicoRouteGuard />}>
               <Route path="dashboard" element={<InicioRoute />} />
+
+              {/* Valores del boletín, sólo lectura. Es la versión de panel del
+                  modal «Valores Boletín» del sistema viejo, que el socio abría
+                  desde su menú. Va dentro del guard del médico y sin
+                  RequireScope: lee los mismos endpoints que ya usa su
+                  Consulta de Precios. */}
+              <Route path="boletin-valores" element={<BoletinMedico />} />
 
               <Route element={<RequireScope anyOf={["medico:leer_propio", "medico:leer"]} />}>
                 <Route path="mi-perfil" element={<MiPerfil />} />
@@ -151,6 +172,7 @@ export default function RootRoutes() {
               <Route element={<RequireScope scope="medico:leer" />}>
                 <Route path="doctors" element={<DoctorsPage />} />
                 <Route path="doctors/:id" element={<DoctorProfilePage />} />
+                <Route path="padron-socio" element={<PadronPorSocio />} />
               </Route>
 
               <Route path="social-works" element={<SocialWorksPage />} />
@@ -238,6 +260,19 @@ export default function RootRoutes() {
                 <Route path="cobranzas" element={<CobranzasPage />} />
               </Route>
 
+              {/* Contenido del sitio público: noticias, cursos, valores éticos y
+                  avisos de médicos. `RequireWebEditor` acepta el rol editor_web
+                  o `contenido:editar`, que es lo que el backend ya exige. */}
+              <Route element={<RequireWebEditor />}>
+                <Route path="sitio" element={<SitioContenido />} />
+                {/* La solapa vive dentro de la pantalla; la dirección vieja
+                    del sitio sigue funcionando y cae en ella. */}
+                <Route
+                  path="sitio/medicos-promo"
+                  element={<Navigate to="/panel/sitio?tab=promo" replace />}
+                />
+              </Route>
+
               <Route element={<RequireScope scope="rbac:gestionar" />}>
                 <Route path="admin/permissions" element={<PermissionsManager />} />
                 {/* Registro de acciones del personal. Va con `rbac:gestionar`
@@ -273,6 +308,21 @@ export default function RootRoutes() {
                 />
               </Route>
 
+              {/* Importaciones masivas: obras sociales que mandan un reporte
+                  mensual en vez de validar prestación por prestación. Es carga
+                  del Colegio en nombre de terceros, así que va con el mismo
+                  permiso que la carga manual. Queda fuera de
+                  MEDICO_ALLOWED_PATHS, que es lista blanca: el socio no llega
+                  ni por URL. */}
+              <Route element={<RequireScope scope="facturacion:cargar" />}>
+                <Route path="importaciones" element={<ImportacionesHub />} />
+                <Route
+                  path="importaciones/prevencion"
+                  element={<ImportarPrevencion />}
+                />
+                <Route path="importaciones/swiss" element={<ImportarSwiss />} />
+              </Route>
+
               {/* Validaciones con obras sociales */}
               <Route element={<RequireScope scope="validacion:cargar" />}>
                 <Route path="validaciones" element={<ValidacionesHub />} />
@@ -281,6 +331,10 @@ export default function RootRoutes() {
                 <Route
                   path="validaciones/prevencion-salud"
                   element={<PrevencionSalud />}
+                />
+                <Route
+                  path="validaciones/swiss-medical"
+                  element={<SwissMedical />}
                 />
                 <Route path="validaciones/:slug" element={<ValidacionOS />} />
               </Route>

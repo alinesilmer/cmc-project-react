@@ -1,0 +1,165 @@
+@use "@/app/styles/all.scss" as *;
+
+// Mismo encuadre que ValidacionesHub: las dos son pantallas hermanas y tienen
+// que abrirse igual.
+
+.container {
+  padding: $spacing-8;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-6;
+  min-height: 100%;
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-5;
+    gap: $spacing-5;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-4;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+}
+
+.headerIcon {
+  color: $primary-blue;
+  flex-shrink: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  line-height: 1.2;
+  color: $gray-900;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-2xl;
+  }
+}
+
+.subtitle {
+  margin: $spacing-1 0 0;
+  max-width: 62ch;
+  font-size: $font-size-sm;
+  color: $gray-500;
+}
+
+// ─── Grilla ───────────────────────────────────────────────────────────────────
+
+.grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
+  gap: $spacing-4;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+  height: 100%;
+  padding: $spacing-5;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-sm;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+
+  &:hover {
+    border-color: $primary-blue;
+    box-shadow: $shadow-md;
+    transform: translateY(-2px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary-blue;
+    outline-offset: 2px;
+  }
+}
+
+.cardInactiva {
+  background: $gray-50;
+  cursor: default;
+
+  &:hover {
+    border-color: $gray-200;
+    box-shadow: $shadow-sm;
+    transform: none;
+  }
+}
+
+.logo {
+  width: 3rem;
+  height: 3rem;
+  flex-shrink: 0;
+  object-fit: contain;
+  border-radius: $border-radius-md;
+  background: $white;
+}
+
+.texto {
+  flex: 1;
+  min-width: 0;
+}
+
+.nombre {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin: 0;
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+}
+
+.codigo {
+  padding: 1px $spacing-2;
+  border-radius: $border-radius-sm;
+  background: $gray-100;
+  color: $gray-600;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  font-variant-numeric: tabular-nums;
+}
+
+.desc {
+  margin: $spacing-1 0 0;
+  font-size: $font-size-sm;
+  line-height: 1.45;
+  color: $gray-600;
+}
+
+.flecha {
+  flex-shrink: 0;
+  color: $gray-400;
+}
+
+.proximamente {
+  flex-shrink: 0;
+  padding: 2px $spacing-2;
+  border-radius: $border-radius-sm;
+  background: $gray-200;
+  color: $gray-600;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+
+    &:hover {
+      transform: none;
+    }
+  }
+}

@@ -1,15 +1,15 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { getJSON, postJSON } from "../../../lib/http";
+import { getJSON, postJSON } from "@/app/shared/lib/http";
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
-import Button from "../../../components/atoms/Button/Button";
-import Card from "../../../components/atoms/Card/Card";
-import SelectableTable from "../../../components/molecules/SelectableTable/SelectableTable";
+import Button from "@/app/components/ui/Button/Button";
+import Card from "@/app/components/ui/Card/Card";
+import SelectableTable from "@/app/components/ui/SelectableTable/SelectableTable";
 import type {
   ActionDef,
   ColumnDef,
-} from "../../../components/molecules/SelectableTable/types";
+} from "@/app/components/ui/SelectableTable/types";
 import styles from "./RefacturacionesList.module.scss";
 import {
   type ObraSocial,
@@ -19,7 +19,7 @@ import {
   MESES,
   fmt,
 } from "../types";
-import AppSearchSelect from "../../../components/atoms/AppSearchSelect/AppSearchSelect";
+import AppSearchSelect from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
 
 const LISTA_URL = (params: Record<string, string>) => {
   const p = new URLSearchParams({ tipo: "refacturacion", ...params });

@@ -1,5 +1,5 @@
 // ─── Entity ───────────────────────────────────────────────────────────────────
-import { hoyISO } from "../../lib/fechas";
+import { hoyISO } from "@/app/shared/lib/fechas";
 
 export interface Beneficio {
   id: number;

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Card from "../../components/atoms/Card/Card";
-import Button from "../../components/atoms/Button/Button";
-import Input from "../../components/atoms/Input/Input";
+import Card from "@/app/components/ui/Card/Card";
+import Button from "@/app/components/ui/Button/Button";
+import Input from "@/app/components/ui/Input/Input";
 import { changePassword } from "../../auth/api";
 import styles from "./CambiarPassword.module.scss";
 

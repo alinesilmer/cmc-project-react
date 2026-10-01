@@ -103,14 +103,15 @@
   border-collapse: collapse;
   font-size: $font-size-sm;
 
+  /** Cabecera en el azul institucional, igual que la del boletín del socio. */
   th {
     padding: $spacing-3 $spacing-4;
-    background: $gray-50;
-    border-bottom: 1px solid $gray-200;
+    background: $primary-blue;
+    border-bottom: none;
     text-align: left;
     font-size: $font-size-xs;
     font-weight: $font-weight-semibold;
-    color: $gray-500;
+    color: $primary-yellow-light;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     white-space: nowrap;

@@ -1,25 +1,9 @@
-"use client";
-
 import type React from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./UsersManagerDashboard.module.scss";
-import MetricCard from "../../components/molecules/MetricCard/MetricCard";
+import MetricCard from "@/app/components/ui/MetricCard/MetricCard";
 import { useEffect, useState } from "react";
-import { getJSON } from "../../lib/http";
-
-// type MedicoRow = {
-//   id: number;
-//   nro_socio: number;
-//   nombre: string;
-//   // ...otros campos si los necesitás
-// };
-
-// type SolicitudApi = {
-//   id: number;
-//   status: ApplicationStatus; // "nueva" | "pendiente" | "aprobada" | "rechazada"
-//   submitted_date?: string | null;
-//   // ...otros campos si los necesitás
-// };
+import { getJSON } from "@/app/shared/lib/http";
 
 const UsersManagerDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -28,15 +12,6 @@ const UsersManagerDashboard: React.FC = () => {
   const [nuevas, setNuevas] = useState<number>(0);
   const [pendientes, setPendientes] = useState<number>(0);
   const [aprobadas, setAprobadas] = useState<number>(0);
-
-  // const chartData = [
-  //   { month: "Ene", value: 45 },
-  //   { month: "Feb", value: 52 },
-  //   { month: "Mar", value: 48 },
-  //   { month: "Abr", value: 61 },
-  //   { month: "May", value: 55 },
-  //   { month: "Jun", value: 67 },
-  // ];
 
   useEffect(() => {
     let ignore = false;

@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "../../auth/AuthProvider";
+import Carrusel from "./components/Carrusel/Carrusel";
 import { getBeneficiosVigentes } from "../Beneficios/beneficios.api";
 import type { Beneficio } from "../Beneficios/beneficios.types";
 import styles from "./InicioMedico.module.scss";
@@ -46,9 +47,9 @@ import logoUpcn from "../../assets/obras-sociales/upcn.png";
 const WHATSAPP_URL =
   "https://wa.me/5493794532335?text=¡Hola!,%20necesito%20soporte%20con%20el%20sistema%20del%20Colegio%20Médico";
 
-// Cuántos beneficios entran en la vidriera. El catálogo completo tendrá su
-// propia pantalla; acá alcanza con una muestra que no empuje el resto abajo.
-const BENEFICIOS_EN_PORTADA = 6;
+// La vidriera los trae todos: antes se cortaba en 6 y el socio no tenía cómo
+// enterarse de que había más. Ahora se recorren en el carrusel, así que la
+// sección sigue ocupando el mismo alto sin importar cuántos haya.
 
 const OBRAS_SOCIALES: { src: string; nombre: string }[] = [
   { src: logoIoscor, nombre: "IOSCOR" },
@@ -167,7 +168,7 @@ const InicioMedico: React.FC = () => {
     isError: beneficiosError,
   } = useQuery({
     queryKey: ["beneficios-vigentes"],
-    queryFn: () => getBeneficiosVigentes(BENEFICIOS_EN_PORTADA),
+    queryFn: () => getBeneficiosVigentes(),
     staleTime: 10 * 60 * 1000,
     retry: false,
   });
@@ -179,7 +180,8 @@ const InicioMedico: React.FC = () => {
       style={{ "--benefit-accent": b.color ?? undefined } as React.CSSProperties}
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.26, delay: index * 0.04 }}
+      // Techo al escalonado: sin él, con 30 beneficios el último entraba a 1,2 s.
+      transition={{ duration: 0.26, delay: Math.min(index, 8) * 0.04 }}
     >
       <div className={styles.benefitTop}>
         <span className={styles.benefitCategoria}>{b.categoria}</span>
@@ -318,9 +320,9 @@ const InicioMedico: React.FC = () => {
               los descuentos y convenios del Colegio.
             </div>
           ) : (
-            <div className={styles.benefitGrid}>
+            <Carrusel etiqueta="Beneficios para socios">
               {beneficios.map(renderBeneficio)}
-            </div>
+            </Carrusel>
           )}
         </section>
 

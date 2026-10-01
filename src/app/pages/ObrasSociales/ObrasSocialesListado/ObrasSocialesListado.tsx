@@ -7,17 +7,17 @@ import {
   TableCell,
   TableHead,
   TableRow,
-} from "../../../components/atoms/Table/Table";
-import IconButton from "../../../components/atoms/IconButton/IconButton";
+} from "@/app/components/ui/Table/Table";
+import IconButton from "@/app/components/ui/IconButton/IconButton";
 import { listObrasSociales, deleteObraSocial } from "../obrasSociales.api";
 import type { ObraSocialListItem } from "../obrasSociales.types";
 import ExportPanel from "../export/ExportPanel";
 // `new Date("2025-05-30")` se parsea como UTC y mostraba el día anterior en
 // Argentina. Ver src/app/lib/fechas.ts.
-import { formatFecha } from "../../../lib/fechas";
+import { formatFecha } from "@/app/shared/lib/fechas";
 import s from "./ObrasSocialesListado.module.scss";
-import Button from "../../../components/atoms/Button/Button";
-import SearchField from "../../../components/molecules/SearchField/SearchField";
+import Button from "@/app/components/ui/Button/Button";
+import SearchField from "@/app/components/ui/SearchField/SearchField";
 
 const PAGE_SIZE = 15;
 

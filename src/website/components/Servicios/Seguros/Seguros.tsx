@@ -9,7 +9,6 @@ const EASE = [0.22, 1, 0.36, 1] as const
 type Props = {
   titulo?: string
   descripcion?: string
-  pdfUrl: string
   whatsAppNumber?: string
   whatsAppLabel?: React.ReactNode
   whatsAppMessage?: string

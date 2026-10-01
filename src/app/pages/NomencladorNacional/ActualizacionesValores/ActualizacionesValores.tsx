@@ -13,7 +13,7 @@ import {
 
 import { getActualizacionesPorMes } from "../nomenclador.api";
 import type { MesActualizaciones } from "../nomenclador.types";
-import { formatFecha } from "../../../lib/fechas";
+import { formatFecha } from "@/app/shared/lib/fechas";
 import s from "./ActualizacionesValores.module.scss";
 
 const MESES = [
@@ -96,7 +96,8 @@ export default function ActualizacionesValores() {
   const alternar = (mes: string) =>
     setCerrados((prev) => {
       const s = new Set(prev);
-      s.has(mes) ? s.delete(mes) : s.add(mes);
+      if (s.has(mes)) s.delete(mes);
+      else s.add(mes);
       return s;
     });
 

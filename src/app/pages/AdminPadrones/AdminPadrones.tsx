@@ -3,7 +3,7 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import styles from "./AdminPadrones.module.scss"
-import BackButton from "../../components/atoms/BackButton/BackButton"
+import BackButton from "@/app/components/ui/BackButton/BackButton"
 
 type PadronStatus = "pending" | "approved" | "rejected"
 
@@ -26,14 +26,11 @@ const AdminPadrones: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<PadronStatus | "all">("all")
 
   useEffect(() => {
-    // TODO: Replace with actual API call
-    // Simulated API call
+    // TODO: reemplazar el mock por GET /api/padrones
     const fetchPadrones = async () => {
       try {
         setLoading(true)
-        // const response = await getJSON<PadronSubmission[]>("/api/padrones");
 
-        // Mock data for demonstration
         const mockData: PadronSubmission[] = [
           {
             id: 1,

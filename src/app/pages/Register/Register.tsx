@@ -1,8 +1,8 @@
 // src/app/pages/Register/index.tsx
 "use client";
 import React, { useEffect, useState } from "react";
-import RegisterBase from "../../components/molecules/Register/RegisterBase";
-import { getJSON } from "../../lib/http";
+import RegisterBase from "@/app/features/registro/components/RegisterBase";
+import { getJSON } from "@/app/shared/lib/http";
 
 const stepsMeta = [
   { id: 1, title: "Datos Personales", icon: "👤" },

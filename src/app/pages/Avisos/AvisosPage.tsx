@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Bell, EyeOff, Info, Megaphone, Send, Smartphone, Users } from "lucide-react";
 
-import ActionModal from "../../components/molecules/ActionModal/ActionModal";
-import Button from "../../components/atoms/Button/Button";
+import ActionModal from "@/app/components/ui/ActionModal/ActionModal";
+import Button from "@/app/components/ui/Button/Button";
 import { createAviso, getAvisos, updateAviso } from "./avisos.api";
 import {
   EMPTY_AVISO_FORM,

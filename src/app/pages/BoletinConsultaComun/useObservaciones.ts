@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { delJSON, getJSON, postJSON, putJSON } from "../../lib/http";
+import { delJSON, getJSON, postJSON, putJSON } from "@/app/shared/lib/http";
 import type { ObservacionesMap } from "./boletinConsultaComun.types";
 
 // ─── API response shapes ──────────────────────────────────────────

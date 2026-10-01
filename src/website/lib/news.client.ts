@@ -1,13 +1,20 @@
 import { getJSON, http } from "./http";
 import type { Noticia, NoticiaDetail } from "../types/index";
 
-function adaptNewsDetail(n: any): NoticiaDetail {
-  if (!n || typeof n !== "object") return n;
+// La API mezcla camelCase y snake_case en las fechas según el endpoint, así
+// que el adaptador recibe algo de forma desconocida y normaliza. `unknown`
+// en vez de `any` para que el chequeo de objeto sea obligatorio.
+function adaptNewsDetail(n: unknown): NoticiaDetail {
+  if (!n || typeof n !== "object") return n as NoticiaDetail;
+  const crudo = n as Record<string, unknown>;
   return {
-    ...n,
+    ...(crudo as unknown as NoticiaDetail),
     // normalizo fechas
-    fechaCreacion: n.fechaCreacion ?? n.fecha_creacion ?? null,
-    fechaActualizacion: n.fechaActualizacion ?? n.fecha_actualizacion ?? null,
+    fechaCreacion: (crudo.fechaCreacion ?? crudo.fecha_creacion ?? null) as
+      NoticiaDetail["fechaCreacion"],
+    fechaActualizacion: (crudo.fechaActualizacion ??
+      crudo.fecha_actualizacion ??
+      null) as NoticiaDetail["fechaActualizacion"],
   };
 }
 
@@ -52,7 +59,7 @@ export async function createNews(fields: CreateFields, opts?: SaveOptions) {
   fd.append("titulo", fields.titulo);
   fd.append("resumen", fields.resumen);
   fd.append("contenido", fields.contenido);
-  fd.append("tipo", fields.tipo); // ✅ NUEVO
+  fd.append("tipo", fields.tipo);
   if (typeof fields.publicada !== "undefined") {
     fd.append("publicada", String(!!fields.publicada));
   }
@@ -78,7 +85,7 @@ export async function updateNews(
   if (fields.titulo !== undefined) fd.append("titulo", fields.titulo);
   if (fields.resumen !== undefined) fd.append("resumen", fields.resumen);
   if (fields.contenido !== undefined) fd.append("contenido", fields.contenido);
-  if (fields.tipo !== undefined) fd.append("tipo", fields.tipo); // ✅ NUEVO
+  if (fields.tipo !== undefined) fd.append("tipo", fields.tipo);
   if (fields.publicada !== undefined)
     fd.append("publicada", String(!!fields.publicada));
   if (fields.autor !== undefined) fd.append("autor", fields.autor || "");

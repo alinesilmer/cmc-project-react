@@ -1,16 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { MapPin, Tag, CalendarClock, Search, X } from "lucide-react";
+import { MapPin, Tag, CalendarClock, Search, X, Download, IdCard } from "lucide-react";
 import {
   listBeneficiosVigentes,
   formatVigencia,
   type BeneficioPublico,
 } from "../../lib/beneficios.client";
 import styles from "./beneficios.module.scss";
+import { useTituloPagina } from "../../lib/useTituloPagina";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 const TODAS = "Todas";
+
+// Servido desde , así que la URL es estable y se puede compartir o
+// imprimir sin depender del hash del build.
+const INSTRUCTIVO_PDF = "/InstructivoCredencialCMC.pdf";
 
 // Buscar sin acentos: "cardiologia" tiene que encontrar "Cardiología".
 function normalize(str: string) {
@@ -28,12 +33,7 @@ export default function BeneficiosPage() {
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    document.title = "Beneficios para Socios | Colegio Médico de Corrientes";
-    return () => {
-      document.title = "Colegio Médico de Corrientes";
-    };
-  }, []);
+  useTituloPagina("Beneficios para Socios");
 
   useEffect(() => {
     let aborted = false;
@@ -108,6 +108,45 @@ export default function BeneficiosPage() {
           Corrientes.
         </motion.p>
       </section>
+
+      {/* Cómo se usan los beneficios. Va antes del listado porque sin la
+          credencial el listado no le sirve de nada a quien llega por primera vez. */}
+      <motion.section
+        className={styles.instructivo}
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: EASE, delay: 0.1 }}
+      >
+        <div className={styles.instructivoTexto}>
+          <h2 className={styles.instructivoTitulo}>
+            <IdCard size={20} aria-hidden="true" />
+            Cómo usar tu credencial
+          </h2>
+          <ol className={styles.pasos}>
+            <li>
+              Entrá al panel con tu usuario y abrí <strong>Mi perfil</strong>.
+            </li>
+            <li>
+              Abrí la pestaña <strong>Credencial</strong>: ahí está tu
+              credencial digital con tu nombre, matrícula y estado.
+            </li>
+            <li>
+              Descargala o mostrala desde el celular al pedir el beneficio en
+              el comercio adherido.
+            </li>
+          </ol>
+        </div>
+
+        <a
+          className={styles.instructivoBoton}
+          href={INSTRUCTIVO_PDF}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Download size={18} aria-hidden="true" />
+          Descargar el instructivo
+        </a>
+      </motion.section>
 
       {!loading && !error && items.length > 0 && (
         <motion.div

@@ -2,14 +2,14 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Download } from "lucide-react";
 import styles from "./Login.module.scss";
-import Button from "../../components/atoms/Button/Button";
-import Modal from "../../components/atoms/Modal/Modal";
+import Button from "@/app/components/ui/Button/Button";
+import Modal from "@/app/components/ui/Modal/Modal";
 import { useAuth } from "../../auth/AuthProvider";
 import { isWebEditor } from "../../auth/roles";
 import { hasScope } from "../../auth/scopes";
-import { http } from "../../lib/http";
+import { http } from "@/app/shared/lib/http";
 import pdf from "../../assets/CMC_08_2026.pdf";
-import { mensajeDeError } from "../../lib/httpErrors";
+import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 import type { LogoutMotivo } from "../../auth/session";
 import Header from "../../../website/components/UI/Header/Header";
 
@@ -30,35 +30,10 @@ function Login() {
   const [isPdfOpen, setIsPdfOpen] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
-  // const hasLegacyAccess = (scopes?: string[]) =>
-  //   !!scopes?.some((s) =>
-  //     [
-  //       "legacy:access",
-  //       "legacy:facturador",
-  //       "facturador",
-  //       "facturas:ver",
-  //     ].includes(s)
-  //   );
-
-  // const isDoctor = (scopes?: string[]) =>
-  //   !!scopes?.some(
-  //     (s) =>
-  //       typeof s === "string" &&
-  //       /^(medicos?|legacy:(doctor|medico))(:|$)/i.test(s.trim())
-  //   );
 
   const goMember = () => {
     setIsMember(true);
     setError("");
-  };
-
-  const goRegister = () => {
-    setIsMember(false);
-    navigate("/panel/register");
-  };
-
-  const goObrasSociales = () => {
-    navigate("/panel/register-os");
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -86,7 +61,7 @@ function Login() {
       }
 
       if (isWebEditor(me)) {
-        navigate("/admin/dashboard-web", { replace: true });
+        navigate("/panel/sitio", { replace: true });
         return;
       }
 
@@ -259,7 +234,7 @@ function Login() {
           <div className={styles.divider} aria-hidden />
           <div className={styles.bottomLinks}>
             {!isMember && (
-              <Link to="/panel/info" className={styles.linkMuted}>
+              <Link to="/socios" className={styles.linkMuted}>
                 Requisitos para Registrarse
               </Link>
             )}

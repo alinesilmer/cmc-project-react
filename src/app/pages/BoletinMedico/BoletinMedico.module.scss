@@ -1,0 +1,437 @@
+@use "@/app/styles/all.scss" as *;
+
+.container {
+  padding: $spacing-8;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-5;
+  min-height: 100%;
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-5;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-4;
+  }
+}
+
+// ─── Encabezado ───────────────────────────────────────────────────────────────
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+}
+
+.headerIcon {
+  color: $primary-blue;
+  flex-shrink: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  line-height: 1.2;
+  color: $gray-900;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-2xl;
+  }
+}
+
+.subtitle {
+  margin: $spacing-1 0 0;
+  max-width: 62ch;
+  font-size: $font-size-sm;
+  color: $gray-500;
+}
+
+// ─── Barra de control ─────────────────────────────────────────────────────────
+
+.barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-3;
+}
+
+/** Segmentado: las dos vistas son excluyentes, así que van como un control y no
+ * como dos botones sueltos. */
+.tabs {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: $border-radius-lg;
+  background: $gray-100;
+  border: 1px solid $gray-200;
+}
+
+.tab {
+  padding: $spacing-2 $spacing-4;
+  border: none;
+  border-radius: $border-radius-md;
+  background: transparent;
+  color: $gray-600;
+  font-family: inherit;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+
+  &:hover:not(.tabActiva) {
+    color: $gray-900;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary-blue;
+    outline-offset: 2px;
+  }
+}
+
+.tabActiva {
+  background: $white;
+  color: $primary-blue;
+  box-shadow: $shadow-sm;
+}
+
+.buscador {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 18rem;
+  max-width: 26rem;
+}
+
+.lupa {
+  position: absolute;
+  left: $spacing-3;
+  color: $gray-400;
+  pointer-events: none;
+}
+
+.input {
+  width: 100%;
+  padding: $spacing-2 $spacing-8 $spacing-2 2.4rem;
+  font-family: inherit;
+  font-size: $font-size-sm;
+  color: $gray-900;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-lg;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+
+  &::placeholder {
+    color: $gray-400;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $primary-blue;
+    box-shadow: 0 0 0 3px rgba($accent-blue, 0.16);
+  }
+
+  // El aspa nativa duplicaría el botón de limpiar.
+  &::-webkit-search-cancel-button {
+    appearance: none;
+  }
+}
+
+.limpiar {
+  position: absolute;
+  right: $spacing-2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: $gray-500;
+  cursor: pointer;
+
+  &:hover {
+    background: $gray-100;
+    color: $gray-900;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary-blue;
+    outline-offset: 2px;
+  }
+}
+
+.conteo {
+  margin: 0;
+  margin-left: auto;
+  font-size: $font-size-sm;
+  color: $gray-500;
+  font-variant-numeric: tabular-nums;
+}
+
+// El botón de descarga usa el `Button` del sistema (`components/ui/Button`),
+// que ya trae el azul institucional y el spinner: no lleva estilo propio acá.
+
+// ─── Tabla de consulta ────────────────────────────────────────────────────────
+
+.tableWrap {
+  overflow-x: auto;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-sm;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: $font-size-sm;
+
+  th,
+  td {
+    padding: $spacing-3 $spacing-4;
+    text-align: left;
+    border-bottom: 1px solid $gray-200;
+  }
+
+  /** Cabecera en el azul institucional. Queda fija al hacer scroll, así que el
+   * fondo tiene que ser opaco: con el gris claro anterior, sobre una tabla
+   * larga la fila de títulos se confundía con los datos. */
+  thead th {
+    position: sticky;
+    top: 0;
+    background: $primary-blue;
+    color: $primary-yellow-light;
+    font-weight: $font-weight-semibold;
+    white-space: nowrap;
+    border-bottom: none;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  tbody tr:hover {
+    background: rgba($primary-blue, 0.04);
+  }
+}
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.nombre {
+  font-weight: $font-weight-medium;
+  color: $gray-900;
+  min-width: 14rem;
+}
+
+/** El dato que el médico vino a ver: es lo único que se destaca. */
+.valor {
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+}
+
+.fecha {
+  color: $gray-500;
+  white-space: nowrap;
+}
+
+.obs {
+  color: $gray-600;
+  min-width: 16rem;
+  max-width: 34rem;
+}
+
+// ─── Tarjetas de galeno ───────────────────────────────────────────────────────
+
+.grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+  gap: $spacing-4;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  padding: $spacing-5;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-sm;
+}
+
+.cardHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: $spacing-3;
+  padding-bottom: $spacing-3;
+  border-bottom: 1px solid $gray-200;
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  line-height: 1.3;
+  color: $gray-900;
+}
+
+.cardNro {
+  flex-shrink: 0;
+  font-size: $font-size-xs;
+  color: $gray-500;
+  font-variant-numeric: tabular-nums;
+}
+
+.valores {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+/** Las condiciones de la obra social. Con viñeta, a diferencia de los valores:
+ * son frases y no pares concepto-importe, y el guion que traen en la base se
+ * saca al leerlas para no duplicarlo. */
+.condiciones {
+  margin: 0;
+  padding-left: $spacing-4;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+
+  li {
+    font-size: $font-size-sm;
+    line-height: 1.5;
+    color: $gray-700;
+  }
+
+  li::marker {
+    color: $gray-400;
+  }
+}
+
+.valorFila {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: $spacing-3;
+}
+
+.valorNombre {
+  font-size: $font-size-sm;
+  color: $gray-600;
+}
+
+.valorMonto {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-900;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cardObs {
+  margin: 0;
+  padding-top: $spacing-3;
+  border-top: 1px solid $gray-200;
+  font-size: $font-size-xs;
+  line-height: 1.5;
+  color: $gray-600;
+}
+
+// ─── Estados ──────────────────────────────────────────────────────────────────
+
+.esqueletos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+  gap: $spacing-4;
+}
+
+.esqueleto {
+  height: 9rem;
+  border-radius: $border-radius-lg;
+  background: linear-gradient(
+    100deg,
+    rgba($gray-100, 0.9) 30%,
+    rgba($white, 0.9) 50%,
+    rgba($gray-100, 0.9) 70%
+  );
+  background-size: 300% 100%;
+  animation: brillo 1.4s ease-in-out infinite;
+}
+
+@keyframes brillo {
+  0% {
+    background-position: 130% 0;
+  }
+  100% {
+    background-position: -30% 0;
+  }
+}
+
+.aviso {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin: 0;
+  padding: $spacing-6 $spacing-5;
+  justify-content: center;
+  text-align: center;
+  font-size: $font-size-sm;
+  color: $gray-600;
+  background: $white;
+  border: 1px dashed $gray-300;
+  border-radius: $border-radius-lg;
+
+  svg {
+    flex-shrink: 0;
+    color: $gray-400;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .esqueleto {
+    animation: none;
+  }
+
+  .tab {
+    transition: none;
+  }
+}
+
+@media (max-width: $breakpoint-sm) {
+  .barra {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tabs {
+    width: 100%;
+  }
+
+  .tab {
+    flex: 1;
+  }
+
+  .buscador {
+    max-width: none;
+  }
+
+  .conteo {
+    margin-left: 0;
+    text-align: right;
+  }
+}

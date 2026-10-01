@@ -9,7 +9,7 @@ import { listarPrestaciones, fetchMedicos, fetchMedicosTodos, descargarExportPor
 import { detailMessage } from "../types";
 import type { MedicoOption, PrestacionRead, Tipo } from "../types";
 import { formatMoney, parseMoney } from "../money";
-import { saveAs } from "../../../lib/fileSaver";
+import { saveAs } from "@/app/shared/lib/fileSaver";
 import TablaPorObraSocial from "../components/TablaPorObraSocial";
 import MedicoAutocomplete from "../components/MedicoAutocomplete";
 import { dedupePorId } from "../components/localSearch";

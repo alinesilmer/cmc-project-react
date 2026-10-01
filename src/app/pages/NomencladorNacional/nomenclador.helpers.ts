@@ -1,4 +1,4 @@
-import { hoyISO } from "../../lib/fechas";
+import { hoyISO } from "@/app/shared/lib/fechas";
 
 export function parseMonto(s: string | null | undefined): number {
   if (!s) return 0;

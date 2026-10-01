@@ -6,6 +6,7 @@ import type { ListadoTextos } from "../../components/Contenido/ListadoContenido/
 import PageHero from "../../components/UI/Hero/Hero";
 import { listNews } from "../../lib/news.client";
 import type { Noticia } from "../../types";
+import { useTituloPagina } from "../../lib/useTituloPagina";
 
 const TEXTOS: ListadoTextos = {
   singular: "noticia",
@@ -22,12 +23,7 @@ export default function NoticiasPage() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    document.title = "Noticias | Colegio Médico de Corrientes";
-    return () => {
-      document.title = "Colegio Médico de Corrientes";
-    };
-  }, []);
+  useTituloPagina("Noticias");
 
   useEffect(() => {
     cargarNoticias();

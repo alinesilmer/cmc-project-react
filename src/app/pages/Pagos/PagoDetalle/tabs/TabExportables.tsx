@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { getJSON } from "../../../../lib/http";
+import { getJSON } from "@/app/shared/lib/http";
 import { useAppSnackbar } from "../../../../hooks/useAppSnackbar";
-import Button from "../../../../components/atoms/Button/Button";
+import Button from "@/app/components/ui/Button/Button";
 import styles from "./tabs.module.scss";
 import type { Pago } from "../../types";
 

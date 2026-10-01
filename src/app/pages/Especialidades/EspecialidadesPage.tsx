@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, ClipboardPlus, Pencil, Plus, Search } from "lucide-react";
 
 const PAGE_SIZE = 20;
-import ActionModal from "../../components/molecules/ActionModal/ActionModal";
+import ActionModal from "@/app/components/ui/ActionModal/ActionModal";
 import {
   getEspecialidades,
   createEspecialidad,
@@ -20,7 +20,7 @@ import type {
   EspecialidadFormErrors,
 } from "./especialidades.types";
 import s from "./EspecialidadesPage.module.scss";
-import Button from "../../components/atoms/Button/Button";
+import Button from "@/app/components/ui/Button/Button";
 
 // ─── Field error helper ───────────────────────────────────────────────────────
 

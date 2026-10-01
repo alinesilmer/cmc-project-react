@@ -1,7 +1,6 @@
-import type ExcelJS from "exceljs";
 import logoUrl from "@/app/assets/logoCMC.png";
 import type { ObraSocialListItem } from "../obrasSociales.types";
-import { hoyISO } from "../../../lib/fechas";
+import { hoyISO } from "@/app/shared/lib/fechas";
 import {
   formatFecha,
   formatPlazo,
@@ -14,8 +13,6 @@ import {
 // ─── Institutional palette ────────────────────────────────────────────────────
 
 const BLUE        = "FF173F70";
-const BLUE_MID    = "FF1B4C88";
-const BLUE_LIGHT  = "FFD6E4F7";
 const YELLOW_BG   = "FFFDF6DC";
 const GRAY_HEADER = "FFF4F5F7";
 const GRAY_BORDER = "FFD0D7E2";
@@ -95,16 +92,6 @@ function localeDateLong() {
 
 const thin  = { style: "thin"   as const, color: { argb: GRAY_BORDER } };
 const thick = { style: "medium" as const, color: { argb: BLUE } };
-
-function applyBorder(cell: ExcelJS.Cell, opts: { top?: boolean; bottom?: boolean; left?: boolean; right?: boolean; thick?: boolean }) {
-  const line = opts.thick ? thick : thin;
-  cell.border = {
-    top:    opts.top    ? line : undefined,
-    bottom: opts.bottom ? line : undefined,
-    left:   opts.left   ? line : undefined,
-    right:  opts.right  ? line : undefined,
-  };
-}
 
 export async function exportToExcel(
   items: ObraSocialListItem[],

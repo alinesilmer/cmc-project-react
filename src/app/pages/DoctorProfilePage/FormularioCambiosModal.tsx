@@ -6,7 +6,7 @@ import "rsuite/Modal/styles/index.css";
 import { AlertTriangle, Check, RotateCcw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
-import Button from "../../components/atoms/Button/Button";
+import Button from "@/app/components/ui/Button/Button";
 import { useNotify } from "../../hooks/useNotify";
 import {
   enviarFormularioCambios,

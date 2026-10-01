@@ -6,7 +6,7 @@ import {
   me as apiMe,
   type User,
 } from "./api";
-import { http } from "../lib/http";
+import { http } from "@/app/shared/lib/http";
 import { getAccessToken, getCookie, setAccessToken } from "../auth/token";
 import { refreshSession, listenRemoteLogout, type LogoutMotivo } from "./session";
 

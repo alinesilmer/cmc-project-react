@@ -6,9 +6,9 @@ import styles from "./Header.module.scss";
 import logo from "../../../assets/images/logoCMC.png";
 import { useAuth } from "../../../../app/auth/AuthProvider";
 import { isWebEditor } from "../../../../app/auth/roles";
-import { http } from "../../../../app/lib/http"; 
+import { http } from "@/app/shared/lib/http"; 
 
-// === NUEVO: helper para SSO hacia el legacy usando VITE_URL_BASE_LEGACY ===
+// === helper para SSO hacia el legacy usando VITE_URL_BASE_LEGACY ===
 const LEGACY_BASE =
   (import.meta.env.VITE_URL_BASE_LEGACY as string | undefined) ??
   "https://legacy.colegiomedicocorrientes.com"; 
@@ -49,7 +49,7 @@ export default function Header() {
   const targetHref = !user
     ? "/panel/login"
     : isWebEditor(user)
-    ? "/admin/dashboard-web"
+    ? "/panel/sitio"
     : legacyUrl;
 
   useEffect(() => {
@@ -162,15 +162,6 @@ export default function Header() {
                         onClick={closeAll}
                       >
                         Quinta
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/galeria"
-                        className={styles.subLink}
-                        onClick={closeAll}
-                      >
-                        Galería de fotos y videos
                       </Link>
                     </li>
                     <li>
@@ -305,9 +296,6 @@ export default function Header() {
                       </Link>
                       <Link to="/quinta" onClick={closeAll}>
                         Quinta
-                      </Link>
-                      <Link to="/galeria" onClick={closeAll}>
-                        Galería de fotos y videos
                       </Link>
                       <Link to="/prevencion-salud" onClick={closeAll}>
                         Prevención Salud

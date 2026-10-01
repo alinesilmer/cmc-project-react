@@ -14,17 +14,17 @@ import {
   SlidersHorizontal,
   X as XIcon,
 } from "lucide-react";
-import { saveAs } from "@/app/lib/fileSaver";
+import { saveAs } from "@/app/shared/lib/fileSaver";
 
 import styles from "./ImportarPreciosPdf.module.scss";
-import Modal from "../../../components/atoms/Modal/Modal";
+import Modal from "@/app/components/ui/Modal/Modal";
 import { useCatalogoCodigos } from "./useCatalogoCodigos";
-import type { PrecioRow, SheetData, ColMapping, FileKind } from "../../../utils/precios/types";
-import { readPdf } from "../../../utils/precios/readPdf";
-import { readExcel } from "../../../utils/precios/readExcel";
-import { readCsv } from "../../../utils/precios/readCsv";
-import { autoDetectMapping, sheetToRows, columnList } from "../../../utils/precios/sheet";
-import { rowsToCsv, buildComponentCsv } from "../../../utils/precios/csv";
+import type { PrecioRow, SheetData, ColMapping, FileKind } from "@/app/shared/lib/precios/types";
+import { readPdf } from "@/app/shared/lib/precios/readPdf";
+import { readExcel } from "@/app/shared/lib/precios/readExcel";
+import { readCsv } from "@/app/shared/lib/precios/readCsv";
+import { autoDetectMapping, sheetToRows, columnList } from "@/app/shared/lib/precios/sheet";
+import { rowsToCsv, buildComponentCsv } from "@/app/shared/lib/precios/csv";
 import {
   importarValoresCsv,
   listCodigosPorVigencia,

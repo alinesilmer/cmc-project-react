@@ -19,8 +19,9 @@ import type {
   ApiBoletinRow,
   ConsultaComunItem,
 } from "./boletinConsultaComun.types";
-import { mensajeDeError } from "../../lib/httpErrors";
-import { http } from "../../lib/http";
+import { SIN_GALENOS } from "./boletinConsultaComun.types";
+import { mensajeDeError } from "@/app/shared/lib/httpErrors";
+import { http } from "@/app/shared/lib/http";
 
 function pickFirst<T = unknown>(
   obj: Record<string, unknown>,
@@ -292,13 +293,7 @@ export function buildLatestPerOS(rows: ApiBoletinRow[]): ConsultaComunItem[] {
       observaciones: [...(OBSERVATIONS_BY_OS[nro] ?? [])].map((x) =>
         normalizeText(x, 1000)
       ),
-      galeno: {
-        quirurgico: 0,
-        practica: 0,
-        radiologico: 0,
-        cirugiaAdultos: 0,
-        cirugiaInfantil: 0,
-      },
+      galenos: SIN_GALENOS,
     }))
     .sort((a, b) => {
       const byName = a.nombre.localeCompare(b.nombre, "es", {

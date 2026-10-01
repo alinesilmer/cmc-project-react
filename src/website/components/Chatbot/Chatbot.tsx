@@ -8,7 +8,7 @@ import {
 import { Link, useLocation } from "react-router-dom";
 import Logo from "../../assets/images/logoCMC.png";
 import { AnimatePresence, motion } from "framer-motion";
-import { X as FiX, Send as FiSend } from "lucide-react";
+import { X as FiX, Send as FiSend, MessageCircle as FiMessage } from "lucide-react";
 import FaWhatsapp from "../UI/icons/WhatsappIcon";
 
 import {
@@ -45,6 +45,11 @@ interface ChatMsg {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const HIDDEN_PATHS = ["/admin", "/403", "/panel"];
+
+// Dónde se ofrece el botón flotante. No va en todas: en la portada el chat ya
+// se abre desde el hero, y un globito fijo en cada página del sitio es ruido.
+// Acá están las dos pantallas a las que se llega justamente con una duda.
+const RUTAS_CON_BOTON = ["/contacto", "/preguntas-frecuentes"];
 const TYPING_DELAY_MS = 650;
 const DIALOG_ID = "cmc-chat-dialog";
 
@@ -65,6 +70,7 @@ export default function Chatbot() {
   const { pathname } = useLocation();
   // Hooks must be called unconditionally — guard moved to render phase below
   const isHidden = HIDDEN_PATHS.some((p) => pathname.startsWith(p));
+  const mostrarBoton = RUTAS_CON_BOTON.some((p) => pathname.startsWith(p));
 
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMsg[]>(INITIAL_MESSAGES);
@@ -226,6 +232,31 @@ export default function Chatbot() {
 
   const windowContent = (
     <AnimatePresence>
+      {mostrarBoton && !open && (
+        <motion.div
+          key="fab"
+          className={styles.root}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.9 }}
+          transition={{ duration: 0.18 }}
+        >
+          <button
+            type="button"
+            className={styles.fab}
+            onClick={() => setOpen(true)}
+            aria-label="Abrir el asistente del Colegio"
+            aria-haspopup="dialog"
+            aria-controls={DIALOG_ID}
+          >
+            <span className={styles.fabIcon}>
+              <FiMessage aria-hidden="true" />
+            </span>
+            <span className={styles.fabLabel}>CONSULTAS</span>
+          </button>
+        </motion.div>
+      )}
+
       {open && (
         <motion.div
           key="backdrop"

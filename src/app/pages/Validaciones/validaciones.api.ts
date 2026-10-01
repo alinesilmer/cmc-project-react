@@ -13,7 +13,7 @@
 // Una prestación que la obra social NO autorizó se graba igual (para que el
 // prestador vea qué pasó) pero con importe 0 y fuera de la factura.
 
-import { delJSON, getJSON, postForm, postJSON } from "../../lib/http";
+import { delJSON, getJSON, postForm, postJSON } from "@/app/shared/lib/http";
 import type {
   CodigoNomenclador,
   Periodo,

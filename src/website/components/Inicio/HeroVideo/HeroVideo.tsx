@@ -5,12 +5,17 @@ import Button from "../../../components/UI/Button/Button";
 import styles from "./HeroVideo.module.scss";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../../app/auth/AuthProvider";
-import { http } from "../../../../app/lib/http";
+import { http } from "@/app/shared/lib/http";
 
+// Fotos propias, del Cloudinary del Colegio. Antes dos de las tres salían de
+// i.pinimg.com: cada visitante de la portada le filtraba su IP y el referer a
+// Pinterest, y la rotación se rompía el día que esa URL cambiara.
+//
+// `q_auto/f_auto` deja que Cloudinary elija calidad y formato según el
+// navegador (WebP/AVIF donde se pueda), igual que el hero de Noticias.
 const IMAGES = [
-  "https://i.pinimg.com/736x/fd/d3/d8/fdd3d83d55b928e22d751fbc1edcc012.jpg",
-  "https://res.cloudinary.com/dcfkgepmp/image/upload/v1762471702/quintacmc3_s6sffw.jpg",
-  "https://i.pinimg.com/736x/01/bf/d8/01bfd827a566e504c3b5a1202f30be4f.jpg",
+  "https://res.cloudinary.com/dcfkgepmp/image/upload/q_auto/f_auto/v1767475582/_DSC0055_usaahm.jpg",
+  "https://res.cloudinary.com/dcfkgepmp/image/upload/q_auto/f_auto/v1762471702/quintacmc3_s6sffw.jpg",
 ] as const;
 
 const EASE = [0.22, 1, 0.36, 1] as const;

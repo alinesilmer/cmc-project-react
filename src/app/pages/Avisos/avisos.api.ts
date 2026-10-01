@@ -1,4 +1,4 @@
-import { getJSON, postJSON, patchJSON, delJSON } from "../../lib/http";
+import { getJSON, postJSON, patchJSON, delJSON } from "@/app/shared/lib/http";
 import type { Aviso, AvisoCreatePayload, AvisoUpdatePayload } from "./avisos.types";
 
 // Ojo: la tabla del backend es `avisos_push` (el nombre `avisos` ya lo ocupa una

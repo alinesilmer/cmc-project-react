@@ -20,7 +20,7 @@ import {
   REPLICA_INICIAL, destinosReplica, type ReplicaState,
 } from "../../../components/molecules/ReplicarFamilia/replicaState";
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
-import { hoyISO } from "../../../lib/fechas";
+import { hoyISO } from "@/app/shared/lib/fechas";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

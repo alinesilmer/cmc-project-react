@@ -1,4 +1,4 @@
-import { delJSON, getJSON, postJSON, putJSON } from "../../lib/http";
+import { delJSON, getJSON, postJSON, putJSON } from "@/app/shared/lib/http";
 import type {
   EmailInput,
   EmailInstitucion,

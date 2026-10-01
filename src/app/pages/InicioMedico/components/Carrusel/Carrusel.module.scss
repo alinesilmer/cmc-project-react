@@ -1,0 +1,123 @@
+@use "@/app/styles/all.scss" as *;
+
+// Cantos vivos, como el resto del portal del socio: $radius-sharp vale 0 y es
+// local de InicioMedico.module.scss, así que acá no se setea radio en vez de
+// duplicar el token (lo que su propio comentario pide no hacer).
+
+.wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+/** La pista. Cada hijo se ancla al borde izquierdo al desplazarse.
+ *
+ * El padding vertical deja respirar el `translateY(-3px)` del hover de las
+ * tarjetas: sin él, `overflow-x` recorta la tarjeta levantada por arriba. */
+.track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(16rem, 1fr);
+  gap: $spacing-4;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  padding: $spacing-1 0 $spacing-3;
+
+  // La barra es parte del mueble, no un resto del navegador: fina, gris, sin
+  // la canaleta de Chrome, y se oscurece al pasar por encima. Firefox sólo
+  // entiende estas dos propiedades, y su barra fina ya viene sin canaleta.
+  scrollbar-width: thin;
+  scrollbar-color: $gray-300 transparent;
+
+  > * {
+    scroll-snap-align: start;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary-blue;
+    outline-offset: 4px;
+  }
+
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    // Sin `background-clip`, el pulgar toca los bordes y se ve como una franja;
+    // con el borde transparente queda una píldora flotando en el carril.
+    background: $gray-300;
+    border: 2px solid transparent;
+    background-clip: content-box;
+    transition: background-color 0.18s ease;
+  }
+
+  &:hover::-webkit-scrollbar-thumb {
+    background: $gray-400;
+    background-clip: content-box;
+  }
+
+  &::-webkit-scrollbar-thumb:active {
+    background: $primary-blue;
+    background-clip: content-box;
+  }
+}
+
+/** Cuántas tarjetas entran a la vez. Con pocas, que no se estiren a lo ancho. */
+@media (min-width: $breakpoint-md) {
+  .track {
+    grid-auto-columns: minmax(18rem, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track {
+    scroll-behavior: auto;
+  }
+}
+
+.controles {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  align-self: flex-end;
+}
+
+.contador {
+  font-size: $font-size-sm;
+  color: $gray-500;
+  font-variant-numeric: tabular-nums;
+}
+
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid $gray-200;
+  background: $white;
+  color: $gray-700;
+  cursor: pointer;
+  transition: border-color 0.18s ease, color 0.18s ease;
+
+  &:hover:not(:disabled) {
+    border-color: $primary-blue;
+    color: $primary-blue;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary-blue;
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+}

@@ -1,4 +1,6 @@
-import { http, postForm, delJSON } from "../../../../app/lib/http";
+import axios from "axios";
+
+import { http, postForm, delJSON } from "@/app/shared/lib/http";
 
 export type ValoresEticosOut = {
   id: number;
@@ -11,8 +13,9 @@ export const getUltimo = async (): Promise<ValoresEticosOut | null> => {
   try {
     const { data } = await http.get<ValoresEticosOut>("/api/valores-eticos/ultimo");
     return data;
-  } catch (e: any) {
-    if (e?.response?.status === 404) return null;
+  } catch (e) {
+    // Todavía no se subió ninguno: no es un error que deba cortar la pantalla.
+    if (axios.isAxiosError(e) && e.response?.status === 404) return null;
     throw e;
   }
 };

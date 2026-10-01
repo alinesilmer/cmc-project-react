@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { MessageCircle as FiMessageCircle, Mail as FiMail, CircleCheck as FiCheckCircle } from "lucide-react";
+import { MessageCircle as FiMessageCircle, Mail as FiMail } from "lucide-react";
 import ObrasSociales from "../../components/Servicios/ObrasSociales/ObrasSociales";
 import type { ObraSocial } from "../../components/Servicios/ObrasSociales/ObrasSociales";
-import PageHero from "../../components/UI/Hero/Hero";
 import Button from "../../components/UI/Button/Button";
-import { http } from "../../../app/lib/http";
+import Hero from "../../components/UI/Hero/Hero";
+import { useTituloPagina } from "../../lib/useTituloPagina";
+import { http } from "@/app/shared/lib/http";
 import styles from "./convenios.module.scss";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -84,9 +85,14 @@ export default function ConveniosPage() {
     return () => { aborted = true; };
   }, []);
 
+  useTituloPagina("Convenios");
+
   return (
     <div className={styles.page}>
-      
+      <Hero
+        title="Convenios"
+        subtitle="Obras sociales con acuerdo vigente con el Colegio Médico de Corrientes"
+      />
 
       {/* ── Obras sociales list ───────────────────────────────────────────── */}
       <ObrasSociales

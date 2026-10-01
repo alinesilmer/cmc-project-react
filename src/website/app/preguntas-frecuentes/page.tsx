@@ -2,8 +2,12 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown as FiChevronDown } from "lucide-react";
 import Hero from "../../components/UI/Hero/Hero";
-import heroBg from "../../assets/images/faq2.png";
+// En Cloudinary con q_auto/f_auto: pesaba 0,87 MB como PNG en el repo y se
+// servía igual a todos los navegadores.
+const heroBg =
+  "https://res.cloudinary.com/dcfkgepmp/image/upload/q_auto/f_auto/v1790263646/faq2_gxkebk.png";
 import styles from "./PreguntasFrecuentes.module.scss";
+import { useTituloPagina } from "../../lib/useTituloPagina";
 
 // ─── Content ──────────────────────────────────────────────────────────────────
 
@@ -186,6 +190,8 @@ function AccordionItem({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function PreguntasFrecuentesPage() {
+  useTituloPagina("Preguntas frecuentes");
+
   const [openId, setOpenId] = useState<string | null>(null);
 
   const toggle = (id: string) =>

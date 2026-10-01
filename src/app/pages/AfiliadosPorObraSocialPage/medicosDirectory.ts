@@ -1,4 +1,4 @@
-import { http } from "@/app/lib/http";
+import { http } from "@/app/shared/lib/http";
 import type { MedicoExtra } from "./types";
 
 /**

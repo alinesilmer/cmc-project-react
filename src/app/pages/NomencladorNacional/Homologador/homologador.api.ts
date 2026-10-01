@@ -1,4 +1,4 @@
-import { getJSON, postJSON, putJSON, delJSON } from "../../../lib/http";
+import { getJSON, postJSON, putJSON, delJSON } from "@/app/shared/lib/http";
 import type {
   HomologadorOut,
   HomologadorCreatePayload,

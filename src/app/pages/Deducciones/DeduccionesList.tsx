@@ -15,13 +15,13 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
-import Button from "../../components/atoms/Button/Button";
-import Card from "../../components/atoms/Card/Card";
+import Button from "@/app/components/ui/Button/Button";
+import Card from "@/app/components/ui/Card/Card";
 import AppSearchSelect, {
   type AppSearchSelectOption,
-} from "../../components/atoms/AppSearchSelect/AppSearchSelect";
-import SelectableTable from "../../components/molecules/SelectableTable/SelectableTable";
-import type { ActionDef, ColumnDef } from "../../components/molecules/SelectableTable/types";
+} from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
+import SelectableTable from "@/app/components/ui/SelectableTable/SelectableTable";
+import type { ActionDef, ColumnDef } from "@/app/components/ui/SelectableTable/types";
 import {
   deleteDeduccion,
   fetchDeduccion,
@@ -106,11 +106,6 @@ const DeduccionesList: React.FC = () => {
 
   const lastPage = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  const descuentoMap = useMemo(() => {
-    const map = new Map<number, string>();
-    descuentos.forEach((d) => map.set(d.id, d.nombre));
-    return map;
-  }, [descuentos]);
 
   const medicoOptions = useMemo<AppSearchSelectOption[]>(
     () =>
@@ -295,7 +290,7 @@ const DeduccionesList: React.FC = () => {
 
   const exportExcel = async () => {
     try {
-      const { downloadExcelSheet } = await import("../../lib/excelExport");
+      const { downloadExcelSheet } = await import("@/app/shared/lib/excelExport");
       const data = await fetchDeduccionesHistorialExport(buildExportParams());
       const rows = data.map((row) => ({
         Medico: row.medico_nombre,
