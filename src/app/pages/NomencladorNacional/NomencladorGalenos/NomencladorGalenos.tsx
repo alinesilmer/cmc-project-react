@@ -11,8 +11,18 @@ import {
   listGalenos,
   deleteGaleno, updateGaleno, actualizarUnidadesGaleno, actualizarPrecioGaleno,
   importarGalenosDeObraSocial, getHistorialGaleno,
+  getFamiliaObraSocial, replicarGalenoEnFamilia,
 } from "../nomenclador.api";
-import type { GalenoOut, GalenosImportarResult } from "../nomenclador.types";
+import type {
+  GalenoOut, GalenosImportarResult, ObraSocialFamiliaItem, ReplicaResultadoItem,
+  ReplicarGalenoFamiliaPayload,
+} from "../nomenclador.types";
+import ReplicarFamiliaBlock, {
+  ErrorReplica, ResultadoReplica,
+} from "../../../components/molecules/ReplicarFamilia/ReplicarFamiliaBlock";
+import {
+  REPLICA_INICIAL, destinosReplica, type ReplicaState,
+} from "../../../components/molecules/ReplicarFamilia/replicaState";
 import ConfirmModal from "../../../components/atoms/ConfirmModal/ConfirmModal";
 import GalenoCreateModal from "./GalenoCreateModal";
 import { hoyISO } from "../../../lib/fechas";
@@ -101,6 +111,13 @@ export default function NomencladorGalenos() {
   const [savingPrecio, setSavingPrecio] = useState(false);
   const [confirmUnidades, setConfirmUnidades] = useState(false);
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
+  // Replicar en los planes de la familia de la OS del galeno (mismo código y nivel).
+  const [familiaEdit, setFamiliaEdit] = useState<ObraSocialFamiliaItem[]>([]);
+  const [replica, setReplica] = useState<ReplicaState>(REPLICA_INICIAL);
+  const [replicaResultado, setReplicaResultado] = useState<
+    { accion: "valor" | "unidades"; resultados: ReplicaResultadoItem[] } | null
+  >(null);
+  const [replicaError, setReplicaError] = useState<string | null>(null);
 
   // ── Import modal state ────────────────────────────────────────────────────
   const [importForm, setImportForm] = useState<ImportForm>({
@@ -220,7 +237,35 @@ export default function NomencladorGalenos() {
     });
     setEditErrors({});
     setConfirmUnidades(false);
+    setReplica(REPLICA_INICIAL);
+    setReplicaResultado(null);
+    setReplicaError(null);
+    setFamiliaEdit([]);
+    getFamiliaObraSocial(g.obra_social_nro).then(setFamiliaEdit).catch(() => setFamiliaEdit([]));
     setModalKind("edit");
+  }
+
+  const replicaActiva = replica.activo && replica.destinos.length > 0;
+
+  /** Replica en la familia la acción recién guardada. true = hubo replicación (el modal
+   * queda abierto mostrando el resultado). */
+  async function replicarGalenoSiCorresponde(
+    accion: "valor" | "unidades",
+    payload: Omit<ReplicarGalenoFamiliaPayload, "origen_obra_social_nro" | "destinos">,
+  ): Promise<boolean> {
+    const destinos = destinosReplica(replica);
+    if (!editTarget || destinos.length === 0) return false;
+    setReplicaResultado(null);
+    setReplicaError(null);
+    try {
+      const r = await replicarGalenoEnFamilia({
+        ...payload, origen_obra_social_nro: editTarget.obra_social_nro, destinos,
+      });
+      setReplicaResultado({ accion, resultados: r.resultados });
+    } catch (e) {
+      setReplicaError(extractDetail(e));
+    }
+    return true;
   }
 
   async function handleActualizarPrecio() {
@@ -239,7 +284,14 @@ export default function NomencladorGalenos() {
         vigencia_desde: editForm.vigencia_precio,
       });
       showToast("success", "Valor del galeno actualizado.");
-      setModalKind(null);
+      const replicado = await replicarGalenoSiCorresponde("valor", {
+        operacion: "precio",
+        codigo: editTarget.codigo,
+        nivel: editTarget.nivel,
+        nuevo_valor_unitario: v,
+        vigencia_desde: editForm.vigencia_precio,
+      });
+      if (!replicado) setModalKind(null);
       if (selectedOsNro) loadOsGalenos(selectedOsNro);
     } catch (err) {
       showToast("error", extractDetail(err));
@@ -300,7 +352,16 @@ export default function NomencladorGalenos() {
       });
       setOsGalenos((prev) => prev.map((x) => (x.id === result.galeno.id ? result.galeno : x)));
       showToast("success", `Unidades actualizadas. ${result.componentes_actualizados} componente(s) afectados.`);
-      setModalKind(null);
+      const replicado = await replicarGalenoSiCorresponde("unidades", {
+        operacion: "unidades",
+        codigo: editTarget.codigo,
+        nivel: editTarget.nivel,
+        vigencia_desde: editForm.vigencia_unidades,
+        ...(h !== undefined && { unidades_honorarios: h }),
+        ...(a !== undefined && { unidades_ayudante: a }),
+        ...(g !== undefined && { unidades_gastos: g }),
+      });
+      if (!replicado) setModalKind(null);
       if (selectedOsNro) loadOsGalenos(selectedOsNro);
     } catch (e) {
       showToast("error", extractDetail(e));
@@ -709,6 +770,13 @@ export default function NomencladorGalenos() {
             </div>
 
             <div className={styles.sectionSep} />
+            <ReplicarFamiliaBlock
+              familia={familiaEdit}
+              value={replica}
+              onChange={setReplica}
+              disabled={savingPrecio || savingUnidades}
+              descripcion="Se aplica a «Actualizar valor» y «Actualizar unidades» en el galeno con el mismo código y nivel de cada plan. Si un plan no tiene el galeno, al actualizar el valor se crea; al actualizar unidades se omite. La observación no se replica."
+            />
             <p className={styles.sectionTitle}>Actualizar valor</p>
             <p className={styles.hintText}>
               Cambia el valor unitario del galeno desde la vigencia indicada (rota la vigencia anterior).
@@ -739,9 +807,10 @@ export default function NomencladorGalenos() {
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
               <button className={styles.btnPrimary} onClick={handleActualizarPrecio} disabled={savingPrecio}>
-                {savingPrecio ? <><Loader2 size={14} className={styles.spin} /> Actualizando…</> : <><Save size={14} /> Actualizar valor</>}
+                {savingPrecio ? <><Loader2 size={14} className={styles.spin} /> Actualizando…</> : <><Save size={14} /> {replicaActiva ? "Actualizar valor y replicar" : "Actualizar valor"}</>}
               </button>
             </div>
+            {replicaResultado?.accion === "valor" && <ResultadoReplica resultados={replicaResultado.resultados} />}
 
             <div className={styles.sectionSep} />
             <p className={styles.sectionTitle}>Actualizar unidades pactadas</p>
@@ -816,9 +885,11 @@ export default function NomencladorGalenos() {
               >
                 {savingUnidades
                   ? <><Loader2 size={14} className={styles.spin} /> Actualizando…</>
-                  : "Actualizar unidades"}
+                  : replicaActiva ? "Actualizar unidades y replicar" : "Actualizar unidades"}
               </button>
             </div>
+            {replicaResultado?.accion === "unidades" && <ResultadoReplica resultados={replicaResultado.resultados} />}
+            {replicaError && <ErrorReplica mensaje={replicaError} />}
           </Modal>
         )}
 

@@ -1,0 +1,110 @@
+@use "@/app/styles/all.scss" as *;
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 20px;
+  min-width: 0;
+}
+
+.sectionHeading {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: $tinta;
+}
+
+.checkLine {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
+  font-size: 0.875rem;
+  color: $tinta-2;
+  cursor: pointer;
+
+  input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: $acento;
+  }
+}
+
+.sinRestriccionInfo {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: $radio-sm;
+  background: $acento-tinte;
+  color: $tinta-2;
+  font-size: 0.82rem;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 12px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: $acento;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: $radio-sm;
+  font-size: 0.875rem;
+  color: $tinta;
+
+  ul {
+    margin: 0;
+    padding-left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+.resultWarn {
+  background: #fff7e6;
+  border: 1px solid #f0c36d;
+}
+
+.resultOk {
+  background: #e8f6ec;
+  border: 1px solid #7cc596;
+}
+
+.motivo { color: $peligro; font-weight: 600; }
+
+.filters {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 12px;
+
+  @media (max-width: 640px) { grid-template-columns: 1fr; }
+}
+
+.num { text-align: right; font-variant-numeric: tabular-nums; }

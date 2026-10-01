@@ -6,7 +6,7 @@ import {
 
 import { useAppSnackbar } from "../../../../hooks/useAppSnackbar";
 import {
-  listarPrestaciones, anularPrestacion, marcarRevisado, moverPeriodo, fetchObrasSociales, fetchMedicos,
+  listarPrestaciones, anularPrestacion, marcarRevisado, moverPeriodo, fetchObraSocialPorCodigo, fetchMedicos,
 } from "../../api";
 import type { PrestacionRead, Tipo } from "../../types";
 import { detailMessage } from "../../types";
@@ -219,7 +219,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
     (async () => {
       // Sin `limit`: el endpoint lo topea en 20 y cualquier valor mayor responde 422.
       // Best-effort: si una falla, esa celda queda solo con el número.
-      const res = await Promise.allSettled(faltantes.map((cod) => fetchObrasSociales(cod)));
+      const res = await Promise.allSettled(faltantes.map((cod) => fetchObraSocialPorCodigo(cod)));
       if (!active) return;
       const nuevos: Record<string, string> = {};
       res.forEach((r, i) => {

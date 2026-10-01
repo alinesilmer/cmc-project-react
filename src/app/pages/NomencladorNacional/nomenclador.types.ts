@@ -10,14 +10,23 @@ export type ValorEstado = "activo" | "cerrado";
 export type NomencladorOut = {
   id: number;
   codigo: string;
+  /** Descripción DEFAULT del catálogo (opcional): sugerencia, no fuente de verdad. */
+  descripcion: string | null;
   categoria: string | null;
   complejidad: Complejidad | null;
   /** Código del Nomenclador Nacional vinculado (alimenta la generación de Valores NN). */
   nomenclador_nacional_id: number | null;
+  /** Default de catálogo: `null` = el catálogo no opina. */
+  sin_restriccion_especialidad: boolean | null;
   activo: boolean;
   observacion: string | null;
   created_at: string;
   updated_at: string;
+};
+
+/** `NomencladorOut` + la plantilla de especialidades sugeridas (ID_COLEGIO_ESPE). */
+export type NomencladorDetalleOut = NomencladorOut & {
+  especialidades: number[];
 };
 
 export type NomencladorListParams = {
@@ -36,6 +45,10 @@ export type NomencladorListParams = {
 
 export type NomencladorCreatePayload = {
   codigo: string;
+  descripcion?: string | null;
+  sin_restriccion_especialidad?: boolean | null;
+  /** Plantilla de especialidades sugeridas. En update: `null`/ausente = no tocar, `[]` = vaciar. */
+  especialidades?: number[] | null;
   categoria?: string | null;
   complejidad?: Complejidad | null;
   nomenclador_nacional_id?: number | null;
@@ -43,6 +56,15 @@ export type NomencladorCreatePayload = {
 };
 
 export type NomencladorUpdatePayload = Partial<NomencladorCreatePayload & { activo?: boolean }>;
+
+export type AplicarEspecialidadesResult = {
+  aplicadas: {
+    obra_social_nro: number;
+    variantes_creadas: number;
+    variantes_existentes: number;
+  }[];
+  omitidas: { obra_social_nro: number; motivo: string }[];
+};
 
 // ─── Nomenclador Nacional ───────────────────────────────────────────────────
 
@@ -326,6 +348,8 @@ export type ValorCreatePayload = {
   nivel?: number | null;
   complejidad?: string | null;
   especialidad_id_colegio?: number | null;
+  /** NE sin especialidad: dato del par (OS + código). `true` habilita una fila sin especialidad. */
+  sin_restriccion_especialidad?: boolean;
   por_presupuesto?: boolean;
   cantidad_ayudantes?: number | null;
   coseguro?: number;
@@ -385,6 +409,25 @@ export type ValorActualizarPayload = {
   aplicar_a_variantes?: boolean;
 };
 
+/** Edición del "núcleo" de un código en una obra social: vale PARA TODAS sus
+ * especialidades. Una sola transacción en el back (PUT /valores_nm/par/{os}/{nomenclador}). */
+export type ValorNucleoPayload = {
+  descripcion?: string | null;
+  nivel?: number | null;
+  complejidad?: string | null;
+  cantidad_ayudantes?: number | null;
+  observacion?: string | null;
+  /** Si viene, rota vigencia + valores + coseguro de TODAS las variantes NE activas. */
+  ecuacion?: ValorActualizarPayload | null;
+  /** true deja UNA sola fila "sin especialidad" (cierra las demás). */
+  sin_restriccion_especialidad: boolean;
+  /** Especialidades deseadas (si no es sin restricción): agrega las nuevas clonando
+   * la primera variante y cierra las que se sacaron. */
+  especialidades: number[];
+  /** Qué núcleo se edita cuando el código tiene NE y NN: las variantes NE o la fila NN. */
+  origen?: "NE" | "NN";
+};
+
 // ─── Actualización masiva por porcentaje ───────────────────────────────────────
 
 /**
@@ -401,11 +444,41 @@ export type ActualizarPorcentajePayload = {
   vigencia_desde: string;
   filtro_codigos?: string[] | null;
   filtro_rango?: { desde: string; hasta: string } | null;
+  /** Aumentar los valores de precio fijo del origen/alcance. */
+  incluir_valores_fijos?: boolean;
+  /** Códigos de galeno de la OS a aumentar (todos sus niveles vigentes). */
+  galeno_codigos?: string[] | null;
+  /** true = vista previa: calcula sin guardar. */
+  dry_run?: boolean;
 };
 
 export type RevertirActualizacionPayload = {
   obra_social_nro: number;
   vigencia_revertir: string;
+  dry_run?: boolean;
+};
+
+export type AumentoDetalleItem = {
+  tipo: "valor" | "galeno";
+  codigo: string;
+  descripcion: string | null;
+  especialidad_id_colegio: number | null;
+  nivel: number | null;
+  vigencia_actual: string | null;
+  /** Decimal serializado como string. */
+  actual: string;
+  nuevo: string | null;
+  estado: "actualiza" | "omitido" | "error";
+  motivo: string | null;
+};
+
+export type AumentoPorcentualResult = {
+  actualizados: number;
+  galenos_actualizados: number;
+  omitidos: number;
+  errores: { motivo: string; [key: string]: unknown }[];
+  detalle: AumentoDetalleItem[];
+  dry_run: boolean;
 };
 
 // ─── Tabla Valores (Reportes) ─────────────────────────────────────────────────
@@ -529,3 +602,75 @@ export interface MesActualizaciones {
   total_obras_sociales: number;
   total_codigos: number;
 }
+
+// ─── Replicar en obras sociales de la misma familia ──────────────────────────
+
+export type ObraSocialFamiliaItem = {
+  nro_obra_social: number;
+  nombre: string;
+  es_principal: boolean;
+};
+
+export type ReplicaEstado = "replicado" | "creado" | "omitido" | "error";
+
+export type ReplicaResultadoItem = {
+  obra_social_nro: number;
+  nombre: string;
+  estado: ReplicaEstado;
+  motivo: string | null;
+};
+
+export type ReplicarFamiliaResult = { resultados: ReplicaResultadoItem[] };
+
+export type ReplicaAltaPayload = {
+  origen: Origen;
+  /** [] = una sola fila sin especialidad (NN o NE sin restricción). */
+  especialidades_id_colegio: number[];
+  sin_restriccion_especialidad?: boolean | null;
+  descripcion: string;
+  nivel?: number | null;
+  complejidad?: string | null;
+  categoria?: string | null;
+  requiere_autorizacion?: boolean | null;
+  por_presupuesto: boolean;
+  cantidad_ayudantes?: number | null;
+  coseguro: number;
+  vigencia_desde: string;
+  observacion?: string | null;
+  componentes: ComponentePayload[];
+};
+
+export type ReplicarValoresFamiliaPayload = {
+  origen_obra_social_nro: number;
+  nomenclador_id: number;
+  destinos: number[];
+  operacion: "alta" | "nucleo" | "variante";
+  alta?: ReplicaAltaPayload;
+  nucleo?: ValorNucleoPayload;
+  variante?: {
+    origen: Origen;
+    especialidad_id_colegio: number | null;
+    ecuacion: ValorActualizarPayload;
+  };
+};
+
+export type ReplicarGalenoFamiliaPayload = {
+  origen_obra_social_nro: number;
+  destinos: number[];
+  operacion: "alta" | "precio" | "unidades";
+  codigo: string;
+  vigencia_desde: string;
+  nombre?: string;
+  niveles?: {
+    nivel: number | null;
+    valor_unitario: number;
+    unidades_honorarios?: number | null;
+    unidades_ayudante?: number | null;
+    unidades_gastos?: number | null;
+  }[];
+  nivel?: number | null;
+  nuevo_valor_unitario?: number;
+  unidades_honorarios?: number | null;
+  unidades_ayudante?: number | null;
+  unidades_gastos?: number | null;
+};

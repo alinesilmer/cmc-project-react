@@ -8,8 +8,17 @@ import { motion } from "framer-motion";
 import styles from "./NomencladorGalenos.module.scss";
 import {
   listGalenoPlantillas, createNivelesGaleno, createGaleno,
+  getFamiliaObraSocial, replicarGalenoEnFamilia,
 } from "../nomenclador.api";
-import type { GalenoPlantillaOut } from "../nomenclador.types";
+import type {
+  GalenoOut, GalenoPlantillaOut, ObraSocialFamiliaItem, ReplicaResultadoItem,
+} from "../nomenclador.types";
+import ReplicarFamiliaBlock, {
+  ErrorReplica, ResultadoReplica,
+} from "../../../components/molecules/ReplicarFamilia/ReplicarFamiliaBlock";
+import {
+  REPLICA_INICIAL, destinosReplica, type ReplicaState,
+} from "../../../components/molecules/ReplicarFamilia/replicaState";
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
 import { hoyISO } from "../../../lib/fechas";
 
@@ -75,6 +84,9 @@ type SubmitResult = {
   nivelesCount: number;
   ok: boolean;
   detail?: string;
+  /** Resultado de replicar este alta en los planes de la familia (si se pidió). */
+  replica?: ReplicaResultadoItem[];
+  replicaError?: string;
 };
 
 let draftSeq = 0;
@@ -135,6 +147,47 @@ export default function GalenoCreateModal({
 
   const [submitting, setSubmitting] = useState(false);
   const [results, setResults] = useState<SubmitResult[] | null>(null);
+
+  // Replicar en los planes de la familia de las OS elegidas.
+  const [familiaPorOs, setFamiliaPorOs] = useState<Record<number, ObraSocialFamiliaItem[]>>({});
+  const [replica, setReplica] = useState<ReplicaState>(REPLICA_INICIAL);
+
+  useEffect(() => {
+    const faltan = blocks.map((b) => b.osNro).filter((nro) => !(nro in familiaPorOs));
+    if (faltan.length === 0) return;
+    let alive = true;
+    Promise.all(faltan.map((nro) => getFamiliaObraSocial(nro).catch(() => [])))
+      .then((listas) => {
+        if (!alive) return;
+        setFamiliaPorOs((prev) => {
+          const next = { ...prev };
+          faltan.forEach((nro, i) => { next[nro] = listas[i]; });
+          return next;
+        });
+      });
+    return () => { alive = false; };
+  }, [blocks, familiaPorOs]);
+
+  // Unión de las familias de las OS elegidas, sin las que ya están elegidas.
+  const familiaOpciones = useMemo(() => {
+    const elegidas = new Set(blocks.map((b) => b.osNro));
+    const vistos = new Map<number, ObraSocialFamiliaItem>();
+    for (const b of blocks) {
+      for (const f of familiaPorOs[b.osNro] ?? []) {
+        if (!elegidas.has(f.nro_obra_social)) vistos.set(f.nro_obra_social, f);
+      }
+    }
+    return [...vistos.values()];
+  }, [blocks, familiaPorOs]);
+
+  // Si una OS sale de la lista (se eligió como origen o se quitó su familia), se destilda.
+  useEffect(() => {
+    const validos = new Set(familiaOpciones.map((f) => f.nro_obra_social));
+    setReplica((r) => {
+      const destinos = r.destinos.filter((d) => validos.has(d));
+      return destinos.length === r.destinos.length ? r : { ...r, destinos };
+    });
+  }, [familiaOpciones]);
 
   // ── Load plantillas ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -367,6 +420,42 @@ export default function GalenoCreateModal({
         : { ...base, ok: false, detail: extractDetail(s.reason) };
     });
 
+    // Replicar cada alta exitosa en los planes elegidos que sean de SU familia.
+    const elegidos = new Set(destinosReplica(replica));
+    if (elegidos.size > 0) {
+      await Promise.all(settled.map(async (s, i) => {
+        if (s.status !== "fulfilled") return;
+        const { osNro, draft } = tasks[i];
+        const destinos = (familiaPorOs[osNro] ?? [])
+          .map((f) => f.nro_obra_social)
+          .filter((nro) => elegidos.has(nro));
+        if (destinos.length === 0) return;
+        const creado = s.value as GalenoOut | GalenoOut[];
+        const codigo = Array.isArray(creado) ? creado[0]?.codigo : creado.codigo;
+        const vu = parseFloat(draft.valor_unitario);
+        try {
+          const r = await replicarGalenoEnFamilia({
+            origen_obra_social_nro: osNro,
+            destinos,
+            operacion: "alta",
+            codigo,
+            nombre: draft.nombre,
+            vigencia_desde: draft.vigencia_desde,
+            niveles: draft.niveles.map((n) => ({
+              nivel: draft.sinNivel ? null : (n.nivel as number),
+              valor_unitario: vu,
+              unidades_honorarios: parseOpt(n.hon),
+              unidades_ayudante: parseOpt(n.ayu),
+              unidades_gastos: parseOpt(n.gas),
+            })),
+          });
+          res[i].replica = r.resultados;
+        } catch (e) {
+          res[i].replicaError = extractDetail(e);
+        }
+      }));
+    }
+
     setResults(res);
     setSubmitting(false);
     if (res.some((r) => r.ok)) onCreated();
@@ -434,6 +523,14 @@ export default function GalenoCreateModal({
             </div>
           </div>
 
+          <ReplicarFamiliaBlock
+            familia={familiaOpciones}
+            value={replica}
+            onChange={setReplica}
+            disabled={submitting}
+            descripcion="Planes de la misma empresa que las obras sociales elegidas. Se crea el mismo galeno en cada uno; si ya lo tiene, se omite."
+          />
+
           {blocks.length === 0 ? (
             <div className={styles.noSelection}>
               <Building2 size={32} className={styles.noSelectionIcon} />
@@ -498,7 +595,7 @@ export default function GalenoCreateModal({
             >
               {submitting
                 ? <><Loader2 size={14} className={styles.spin} /> Creando…</>
-                : <><Save size={15} /> Crear {totalDrafts > 0 ? `${totalDrafts} ` : ""}galeno{totalDrafts !== 1 ? "s" : ""}</>}
+                : <><Save size={15} /> Crear {totalDrafts > 0 ? `${totalDrafts} ` : ""}galeno{totalDrafts !== 1 ? "s" : ""}{destinosReplica(replica).length > 0 ? " y replicar" : ""}</>}
             </button>
           </div>
         </>
@@ -732,6 +829,15 @@ function ResultSummary({
           </div>
         ))}
       </div>
+      {results.map((r, i) =>
+        r.replica || r.replicaError ? (
+          <div key={`rep-${i}`} className={styles.formGroup}>
+            <span className={styles.formLabel}>Replicación de {r.nombre} (OS {r.osNro})</span>
+            {r.replica && <ResultadoReplica resultados={r.replica} />}
+            {r.replicaError && <ErrorReplica mensaje={r.replicaError} />}
+          </div>
+        ) : null,
+      )}
       <div className={styles.modalFooter}>
         <button className={styles.btnPrimary} onClick={onClose}>Cerrar</button>
       </div>

@@ -39,6 +39,7 @@ import type {
 import { abrirAdjunto } from "../../../lib/archivos";
 import { useNotify } from "../../../hooks/useNotify";
 import s from "./ObrasSocialesForm.module.scss";
+import Modal from "../../../components/atoms/Modal/Modal";
 
 const TIPO_DOCUMENTOS: TipoDocumento[] = [
   "convenio",
@@ -665,6 +666,9 @@ export default function ObrasSocialesForm() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
+  // Solo en el alta: el back crea la OS y además siembra sus galenos y todo su
+  // nomenclador NN, lo que tarda varios segundos.
+  const [creando, setCreando] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<number | undefined>(obraId);
 
@@ -726,7 +730,6 @@ export default function ObrasSocialesForm() {
             : "",
           asociadas_ids: data.asociadas?.map((a) => a.id) ?? [],
           marca: data.marca === "S" ? "S" : "N",
-          ver_valor: data.ver_valor === "S" ? "S" : "N",
           dia_corte: String(data.dia_corte ?? 20),
         });
 
@@ -884,6 +887,7 @@ export default function ObrasSocialesForm() {
         await subirPendientes(obraId);
         navigate(`/panel/convenios/obras-sociales/${obraId}`);
       } else {
+        setCreando(true);
         const created = await createObraSocial(payload);
         setSavedId(created.id);
         // Las asociadas son secundarias al alta: si una falla, la obra social ya
@@ -898,6 +902,7 @@ export default function ObrasSocialesForm() {
       );
     } finally {
       setSaving(false);
+      setCreando(false);
     }
   };
 
@@ -1078,34 +1083,6 @@ export default function ObrasSocialesForm() {
             <span className={s.hint}>
               Con «No» no aparece en el selector de padrón ni en las asignaciones de médicos.
             </span>
-          </div>
-
-          <div className={s.field} id="field-ver_valor">
-            <span className={s.label}>Muestra valores a los médicos</span>
-            <div className={s.radioGroup}>
-              <label className={s.radioLabel}>
-                <input
-                  type="radio"
-                  name="ver_valor"
-                  value="S"
-                  checked={form.ver_valor === "S"}
-                  onChange={() => set("ver_valor", "S")}
-                  className={s.radioInput}
-                />
-                Sí
-              </label>
-              <label className={s.radioLabel}>
-                <input
-                  type="radio"
-                  name="ver_valor"
-                  value="N"
-                  checked={form.ver_valor === "N"}
-                  onChange={() => set("ver_valor", "N")}
-                  className={s.radioInput}
-                />
-                No
-              </label>
-            </div>
           </div>
 
           <div className={`${s.field} ${s.fieldNarrow}`} id="field-dia_corte">
@@ -1529,6 +1506,23 @@ export default function ObrasSocialesForm() {
           </button>
         </div>
       </form>
+
+      <Modal
+        isOpen={creando}
+        onClose={() => {}}
+        title="Registrando obra social"
+        size="small"
+        showCloseButton={false}
+      >
+        <div className={s.creandoBox} role="status" aria-live="polite">
+          <span className={s.creandoSpinner} aria-hidden="true" />
+          <p className={s.creandoTitulo}>Creando obra social y su nomenclador</p>
+          <p className={s.creandoTexto}>
+            Se están generando los galenos y los valores del Nomenclador Nacional. Puede
+            tardar unos segundos; no cierres esta ventana.
+          </p>
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -603,6 +603,8 @@
 .modalBody {
   padding: 18px 20px;
   overflow-y: auto;
+  overflow-x: hidden;
+  min-width: 0;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -694,28 +696,93 @@
 .componentRows {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  min-width: 0;
 }
 
-.componentRow {
-  display: grid;
-  grid-template-columns: 110px 1fr 1fr;
-  gap: 8px;
-  align-items: end;
-  padding: 10px 12px;
+.componentCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
   background: #f8fafd;
   border: 1px solid $linea;
   border-radius: $radio-sm;
+  min-width: 0;
+  transition: border-color .15s;
 
-  @media (max-width: 560px) { grid-template-columns: 1fr 1fr; }
+  &:focus-within { border-color: $acento; }
+}
+
+.componentCardHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
 }
 
 .compConceptLabel {
-  font-size: 0.83rem;
-  font-weight: 600;
+  font-size: 0.85rem;
+  font-weight: 700;
   color: $tinta;
-  padding-bottom: 6px;
-  align-self: end;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.compOpcional {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: $tinta-3;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.compSubtotal {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: $tinta-2;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+// Galeno ocupa lo que sobra; cantidad, un ancho fijo. `minmax(0, …)` deja que la
+// columna se achique por debajo del texto de la opción más larga del select, que
+// era lo que empujaba el modal a tener scroll horizontal.
+.componentFields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 150px);
+  gap: 10px;
+  min-width: 0;
+
+  > * { min-width: 0; }
+
+  @media (max-width: 520px) { grid-template-columns: minmax(0, 1fr); }
+}
+
+.compControl {
+  width: 100%;
+  min-width: 0;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.componentTotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 10px 14px;
+  border-top: 1px dashed $linea;
+  font-size: 0.85rem;
+  color: $tinta-2;
+
+  strong {
+    font-size: 1rem;
+    color: $tinta;
+    font-variant-numeric: tabular-nums;
+  }
 }
 
 // ─── Nomenclador search ───────────────────────────────────────────────────────

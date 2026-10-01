@@ -51,8 +51,17 @@ export const fetchMedicos = (q: string, limit = 20) =>
 export const fetchMedicosTodos = () =>
   traced("GET /medicos/todos", {}, getJSON<MedicoOption[]>(`${BASE}/medicos/todos`));
 
+/** Buscador para ELEGIR una obra social: solo trae las activas. */
 export const fetchObrasSociales = (q: string, limit = 20) =>
   traced("GET /obras-sociales", { q, limit }, getJSON<ObraSocialOption[]>(`${BASE}/obras-sociales`, { q, limit }));
+
+/** Resolver el nombre de una obra social de algo YA cargado: incluye las desactivadas. */
+export const fetchObraSocialPorCodigo = (cod: string) =>
+  traced(
+    "GET /obras-sociales (incl. inactivas)",
+    { q: cod },
+    getJSON<ObraSocialOption[]>(`${BASE}/obras-sociales`, { q: cod, limit: 20, solo_activas: false }),
+  );
 
 export const fetchObrasSocialesTodas = () =>
   traced("GET /obras-sociales/todas", {}, getJSON<ObraSocialOption[]>(`${BASE}/obras-sociales/todas`));

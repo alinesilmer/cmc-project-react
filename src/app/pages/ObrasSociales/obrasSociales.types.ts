@@ -63,7 +63,6 @@ export interface ObraSocial {
   nombre: string;
   denominacion: string;
   marca?: string | null;
-  ver_valor?: string | null;
   cuit?: string | null;
   direccion_real?: string | null;
   condicion_iva?: CondicionIVA | null;
@@ -89,7 +88,6 @@ export interface ObraSocialListItem {
   denominacion: string;
   condicion_iva?: CondicionIVA | null;
   marca?: string | null;
-  ver_valor?: string | null;
   cuit?: string | null;
   direccion_real?: string | null;
   plazo_vencimiento?: number | null;
@@ -147,7 +145,6 @@ export interface ObraSocialFormData {
   // Operación: sin esto una obra social nueva quedaba MARCA="N" por default
   // del backend y no aparecía en ningún selector de padrón (ver auditoría O-02).
   marca: "S" | "N";
-  ver_valor: "S" | "N";
   dia_corte: string;
 }
 
@@ -171,7 +168,6 @@ export const EMPTY_FORM: ObraSocialFormData = {
   obra_social_principal_id: "",
   asociadas_ids: [],
   marca: "S",
-  ver_valor: "N",
   dia_corte: "20",
 };
 

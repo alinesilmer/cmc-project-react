@@ -92,6 +92,7 @@ const ActividadPage = lazy(() => import("./app/pages/Actividad/ActividadPage"));
 const PlanillasMedico = lazy(() => import("./app/pages/Planillas/PlanillasMedico"));
 const PlanillasAdmin = lazy(() => import("./app/pages/Planillas/PlanillasAdmin"));
 const NomencladorCodigos = lazy(() => import("./app/pages/NomencladorNacional/NomencladorCodigos/NomencladorCodigos"));
+const NomencladorCodigoForm = lazy(() => import("./app/pages/NomencladorNacional/NomencladorCodigoForm/NomencladorCodigoForm"));
 const NomencladorNacionalTabla = lazy(() => import("./app/pages/NomencladorNacional/NomencladorNacionalTabla/NomencladorNacionalTabla"));
 const ConsultaValores = lazy(() => import("./app/pages/NomencladorNacional/ConsultaValores/ConsultaValores"));
 const ConsultaPrecios = lazy(() => import("./app/pages/NomencladorNacional/ConsultaPrecios/ConsultaPrecios"));
@@ -312,6 +313,8 @@ export default function RootRoutes() {
                 <Route path="nomenclador/aumento-porcentual" element={<AumentoPorcentual />} />
               </Route>
               <Route element={<RequireScope scope="nomenclador:editar" />}>
+                <Route path="nomenclador/codigos/nuevo" element={<NomencladorCodigoForm />} />
+                <Route path="nomenclador/codigos/:id/editar" element={<NomencladorCodigoForm />} />
                 <Route path="nomenclador/actualizar-precios" element={<ActualizarPreciosGalenos />} />
               </Route>
 
