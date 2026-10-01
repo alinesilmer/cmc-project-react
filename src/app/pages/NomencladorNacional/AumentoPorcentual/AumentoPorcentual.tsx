@@ -28,8 +28,6 @@ import type {
   AumentoDetalleItem,
   ActualizarPorcentajePayload,
 } from "../nomenclador.types";
-import type { ValorOut, ActualizacionMasivaResult } from "../nomenclador.types";
-import { paginar } from "@/app/shared/lib/paginar";
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import { getEspecialidades } from "../../Especialidades/especialidades.api";

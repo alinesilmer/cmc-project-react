@@ -330,6 +330,14 @@ export default function NomencladorCodigoForm() {
 
             {resultado && <ResultadoAplicar resultado={resultado} osNombre={osNombre} />}
 
+            {saving === "aplicar" && (
+              <p className={styles.sinRestriccionInfo}>
+                Aplicando a {osSel.length} obra{osSel.length === 1 ? "" : "s"} social
+                {osSel.length === 1 ? "" : "es"}. Con muchas obras sociales y especialidades
+                puede tardar unos minutos: no cierres ni recargues la página.
+              </p>
+            )}
+
             <div className={styles.actions}>
               <button type="button" className={base.btnGhost} onClick={() => navigate(LISTADO_PATH)}>
                 {resultado ? "Volver al listado" : "Cancelar"}

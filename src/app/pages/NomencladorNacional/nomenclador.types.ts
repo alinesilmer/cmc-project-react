@@ -118,8 +118,17 @@ export type GalenoOut = {
   unidades_ayudante: string | null;
   unidades_gastos: string | null;
   activo: boolean;
+  /** Solo para el boletín del médico: `false` lo oculta en /panel/boletin-valores. */
+  visible: boolean;
   observacion: string | null;
   created_at: string;
+};
+
+export type GalenoVisibilidadResult = {
+  obra_social_nro: number;
+  codigo: string;
+  visible: boolean;
+  filas_actualizadas: number;
 };
 
 export type GalenoCreatePayload = {

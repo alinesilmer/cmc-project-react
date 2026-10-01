@@ -156,7 +156,8 @@ export async function fetchBoletinMedico(): Promise<ItemBoletin[]> {
       listObrasSociales(),
       consultaPorOS(CODIGO_CONSULTA, fecha),
       consultaPorOS(CODIGO_CONSULTA_SWISS, fecha),
-      fetchGalenosPorOS(fecha),
+      // Sin los galenos ocultados para el médico desde "Actualizar Unidades".
+      fetchGalenosPorOS(fecha, { soloVisibles: true }),
       observacionesPorOS(),
     ]);
 

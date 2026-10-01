@@ -31,6 +31,7 @@ import type {
   GalenoImportarLotePayload,
   GalenoImportarLoteResult,
   GalenoPlantillaOut,
+  GalenoVisibilidadResult,
   ActualizacionMasivaResult,
   ValorOut,
   ValorCreatePayload,
@@ -81,13 +82,23 @@ export const updateNomenclador = (
   putJSON<NomencladorDetalleOut>(`/api/nomenclador/${id}`, payload);
 
 /** Aplica la plantilla YA guardada del código a las obras sociales dadas. */
+/**
+ * Timeout para las operaciones masivas, que pueden tardar minutos contra la
+ * base de prod. Ejemplo: aplicar el 420351 a 65 O.S. × ~35 especialidades
+ * creó 2.260 filas en ~100 s. Con el default de 15 s el navegador cortaba y
+ * mostraba error mientras el backend terminaba bien.
+ */
+const TIMEOUT_MASIVO_MS = 10 * 60_000;
+
 export const aplicarEspecialidades = (
   id: number,
   obra_social_nros: number[],
 ): Promise<AplicarEspecialidadesResult> =>
-  postJSON<AplicarEspecialidadesResult>(`/api/nomenclador/${id}/aplicar-especialidades`, {
-    obra_social_nros,
-  });
+  postJSON<AplicarEspecialidadesResult>(
+    `/api/nomenclador/${id}/aplicar-especialidades`,
+    { obra_social_nros },
+    { timeout: TIMEOUT_MASIVO_MS },
+  );
 
 export const toggleNomencladorActivo = (
   id: number,
@@ -188,6 +199,14 @@ export const actualizarPrecioMasivoGaleno = (
     payload,
   );
 
+/** Muestra/oculta el galeno (todos sus niveles) de una OS en el boletín del médico. */
+export const cambiarVisibilidadGaleno = (payload: {
+  obra_social_nro: number;
+  codigo: string;
+  visible: boolean;
+}): Promise<GalenoVisibilidadResult> =>
+  patchJSON<GalenoVisibilidadResult>("/api/galenos/visibilidad", payload);
+
 export const deleteGaleno = (id: number): Promise<void> =>
   delJSON<void>(`/api/galenos/${id}`);
 
@@ -258,6 +277,7 @@ export const actualizarPorcentajeValores = (
   postJSON<AumentoPorcentualResult>(
     "/api/valores_nm/actualizar_porcentaje",
     payload,
+    { timeout: TIMEOUT_MASIVO_MS },
   );
 
 // Revierte el aumento de una fecha: solo valores abiertos por un aumento y galenos
@@ -268,6 +288,7 @@ export const revertirActualizacionValores = (
   postJSON<AumentoPorcentualResult>(
     "/api/valores_nm/revertir_ultima_actualizacion",
     payload,
+    { timeout: TIMEOUT_MASIVO_MS },
   );
 
 // Cantidad de valores ya cargados para una OS en una vigencia exacta (guard anti doble carga).
@@ -433,9 +454,13 @@ export const getFamiliaObraSocial = (nro: number): Promise<ObraSocialFamiliaItem
 export const replicarValoresEnFamilia = (
   payload: ReplicarValoresFamiliaPayload,
 ): Promise<ReplicarFamiliaResult> =>
-  postJSON<ReplicarFamiliaResult>("/api/valores_nm/replicar_en_familia", payload);
+  postJSON<ReplicarFamiliaResult>("/api/valores_nm/replicar_en_familia", payload, {
+    timeout: TIMEOUT_MASIVO_MS,
+  });
 
 export const replicarGalenoEnFamilia = (
   payload: ReplicarGalenoFamiliaPayload,
 ): Promise<ReplicarFamiliaResult> =>
-  postJSON<ReplicarFamiliaResult>("/api/galenos/replicar_en_familia", payload);
+  postJSON<ReplicarFamiliaResult>("/api/galenos/replicar_en_familia", payload, {
+    timeout: TIMEOUT_MASIVO_MS,
+  });
