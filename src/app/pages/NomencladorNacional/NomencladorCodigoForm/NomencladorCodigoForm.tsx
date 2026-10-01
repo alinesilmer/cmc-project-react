@@ -6,7 +6,7 @@ import { AlertCircle, ArrowLeft, CheckCircle2, ListOrdered, Save } from "lucide-
 
 import base from "../NomencladorCodigos/NomencladorCodigos.module.scss";
 import styles from "./NomencladorCodigoForm.module.scss";
-import AppSearchSelect from "../../../components/atoms/AppSearchSelect/AppSearchSelect";
+import AppSearchSelect from "../../../components/ui/AppSearchSelect/AppSearchSelect";
 import MultiSelectBuscable from "../../../components/molecules/MultiSelectBuscable/MultiSelectBuscable";
 import { usePermisos } from "../../../auth/usePermisos";
 import { getEspecialidades } from "../../Especialidades/especialidades.api";

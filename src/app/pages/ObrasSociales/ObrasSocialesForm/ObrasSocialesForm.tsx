@@ -39,7 +39,7 @@ import type {
 import { abrirAdjunto } from "@/app/shared/lib/archivos";
 import { useNotify } from "../../../hooks/useNotify";
 import s from "./ObrasSocialesForm.module.scss";
-import Modal from "../../../components/atoms/Modal/Modal";
+import Modal from "../../../components/ui/Modal/Modal";
 
 const TIPO_DOCUMENTOS: TipoDocumento[] = [
   "convenio",
