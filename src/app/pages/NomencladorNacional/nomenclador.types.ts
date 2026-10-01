@@ -124,6 +124,38 @@ export type GalenoOut = {
   created_at: string;
 };
 
+/** Informe de "Completar nomenclador NN" (con `dry_run` es la vista previa). */
+export type CompletarBaseNNResult = {
+  obra_social_nro: number;
+  dry_run: boolean;
+  vigencia_desde: string;
+  galenos_creados: { codigo: string; nombre: string }[];
+  galenos_existentes: {
+    codigo: string;
+    nombre: string;
+    valor_unitario: string;
+    vigencia_desde: string;
+  }[];
+  total_candidatos: number;
+  nn_creados: number;
+  nn_existentes: number;
+  habilitaciones_sembradas: number;
+  errores: { codigo: string; motivo: string }[];
+};
+
+/** Precarga de un NN: galeno según el rango del código + unidades del Nomenclador Nacional. */
+export type ComponentesNNSugeridos = {
+  disponible: boolean;
+  motivo: string | null;
+  componentes: {
+    concepto: "Honorarios" | "Ayudante" | "Gastos";
+    galeno_id: number;
+    galeno_nombre: string;
+    cantidad: string;
+    orden: number;
+  }[];
+};
+
 export type GalenoVisibilidadResult = {
   obra_social_nro: number;
   codigo: string;

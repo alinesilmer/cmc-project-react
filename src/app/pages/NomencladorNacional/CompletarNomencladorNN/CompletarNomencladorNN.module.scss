@@ -1,0 +1,229 @@
+@use "@/app/styles/all.scss" as *;
+
+.container {
+  min-height: 100vh;
+  background: $papel;
+  padding: 28px 24px 60px;
+  max-width: 920px;
+  margin: 0 auto;
+
+  @media (max-width: 767px) { padding: 20px 16px 48px; }
+}
+
+// ─── Header ───────────────────────────────────────────────────────────────────
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.headerIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: $radio-md;
+  background: $acento-tinte;
+  color: $acento;
+  flex-shrink: 0;
+}
+.title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: $tinta;
+  margin: 0;
+  line-height: 1.2;
+}
+.subtitle {
+  font-size: 0.8rem;
+  color: $tinta-3;
+  margin: 2px 0 0;
+}
+
+.infoBox {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: $radio-sm;
+  font-size: 0.82rem;
+  color: #1e40af;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+// ─── Cards ────────────────────────────────────────────────────────────────────
+.card {
+  background: $superficie;
+  border: 1px solid $linea;
+  border-radius: $radio-lg;
+  box-shadow: $shadow-sm;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+.label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: $tinta-3;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-bottom: 6px;
+}
+.selectWrap { max-width: 460px; }
+
+.sectionTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: $tinta;
+  margin: 0 0 4px;
+}
+.blockTitle {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: $tinta-3;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin: 18px 0 8px;
+}
+
+// ─── Listas ───────────────────────────────────────────────────────────────────
+.lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+%item {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 180px) minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: $radio-sm;
+  font-size: 0.84rem;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 16px minmax(0, 1fr);
+    .itemDetalle { grid-column: 2; }
+  }
+}
+.itemNuevo     { @extend %item; background: $ok-bg;     color: #166534; }
+.itemExistente { @extend %item; background: #f4f6fa;    color: $tinta-2; }
+.itemError     { @extend %item; background: $alerta-bg; color: $alerta; }
+.itemNombre {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.itemDetalle {
+  font-size: 0.8rem;
+  opacity: .9;
+}
+
+// ─── Contadores ───────────────────────────────────────────────────────────────
+.contadores {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+
+  @media (max-width: 600px) { grid-template-columns: 1fr; }
+}
+.contador {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid $linea;
+  border-radius: $radio-md;
+  background: #fafbfd;
+
+  strong {
+    font-size: 1.35rem;
+    color: $tinta;
+    font-variant-numeric: tabular-nums;
+  }
+  span {
+    font-size: 0.78rem;
+    color: $tinta-3;
+  }
+}
+.contadorNuevo {
+  background: $ok-bg;
+  border-color: $ok-linea;
+  strong { color: #166534; }
+}
+
+// ─── Mensajes y acciones ──────────────────────────────────────────────────────
+.muted {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: $tinta-3;
+  margin: 10px 0 0;
+}
+.errorBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: $alerta-bg;
+  border: 1px solid $alerta-linea;
+  border-radius: $radio-sm;
+  color: $alerta;
+  font-size: 0.84rem;
+}
+.okBox {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 14px;
+  background: $ok-bg;
+  border: 1px solid $ok-linea;
+  border-radius: $radio-sm;
+  color: #166534;
+  font-size: 0.86rem;
+  font-weight: 500;
+}
+.okInline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #166534;
+  font-size: 0.86rem;
+  font-weight: 500;
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 18px;
+  background: $acento;
+  color: #fff;
+  border: none;
+  border-radius: $radio-sm;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+
+  &:hover:not(:disabled) { background: $acento-fuerte; }
+  &:disabled { opacity: .55; cursor: not-allowed; }
+}
+
+.spin { animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }

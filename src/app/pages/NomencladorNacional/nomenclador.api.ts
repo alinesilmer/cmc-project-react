@@ -32,6 +32,8 @@ import type {
   GalenoImportarLoteResult,
   GalenoPlantillaOut,
   GalenoVisibilidadResult,
+  ComponentesNNSugeridos,
+  CompletarBaseNNResult,
   ActualizacionMasivaResult,
   ValorOut,
   ValorCreatePayload,
@@ -446,6 +448,30 @@ export const getActualizacionesPorMes = (): Promise<MesActualizaciones[]> =>
   getJSON<MesActualizaciones[]>("/api/valores_nm/actualizaciones");
 
 // ─── Replicar en obras sociales de la misma familia ──────────────────────────
+
+/**
+ * Completa los 7 galenos base y los NN que le falten a una OS, sin tocar lo que
+ * ya tiene. `dry_run` = vista previa (no guarda nada).
+ */
+export const completarBaseNN = (
+  obra_social_nro: number,
+  dry_run: boolean,
+): Promise<CompletarBaseNNResult> =>
+  postJSON<CompletarBaseNNResult>(
+    "/api/valores_nm/completar_base_nn",
+    { obra_social_nro, dry_run },
+    { timeout: TIMEOUT_MASIVO_MS },
+  );
+
+/** Componentes de un NN para precargar el alta: misma regla que la generación automática. */
+export const getComponentesNN = (
+  obra_social_nro: number,
+  nomenclador_id: number,
+): Promise<ComponentesNNSugeridos> =>
+  getJSON<ComponentesNNSugeridos>("/api/valores_nm/componentes_nn", {
+    obra_social_nro,
+    nomenclador_id,
+  });
 
 /** Las OTRAS obras sociales activas de la familia (planes de la misma empresa). */
 export const getFamiliaObraSocial = (nro: number): Promise<ObraSocialFamiliaItem[]> =>

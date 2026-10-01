@@ -37,6 +37,7 @@ import {
   updateNucleoPar,
   getFamiliaObraSocial,
   replicarValoresEnFamilia,
+  getComponentesNN,
 } from "../nomenclador.api";
 import MultiSelectBuscable from "../../../components/molecules/MultiSelectBuscable/MultiSelectBuscable";
 import ReplicarFamiliaBlock, {
@@ -430,6 +431,11 @@ export default function NomencladorPorOS() {
     tipo: "ok" | "info" | "error";
     texto: string;
   } | null>(null);
+  /** Resultado de precargar los componentes NN (unidades del Nomenclador Nacional). */
+  const [nnMsg, setNnMsg] = useState<{
+    tipo: "ok" | "error" | "cargando";
+    texto: string;
+  } | null>(null);
 
   // Edit forms
   const [editMeta, setEditMeta] = useState<EditMetaForm>({
@@ -800,6 +806,61 @@ export default function NomencladorPorOS() {
       return next;
     });
   }
+
+  // Alta NN: con el código elegido, precarga Honorarios/Gastos/Ayudante con el
+  // galeno que corresponde al rango del código y las unidades del Nomenclador
+  // Nacional — la misma regla con la que se generan los NN al crear la OS.
+  // Se dispara al elegir el código o al pasar a NN (en cualquier orden).
+  const nnCreateOrigen = modalKind === "create" ? form.origen : null;
+  const nnCreateNomId = modalKind === "create" ? form.nomencladorId : null;
+  useEffect(() => {
+    if (nnCreateOrigen !== "NN" || !nnCreateNomId || !selectedNroOS) {
+      setNnMsg(null);
+      return;
+    }
+    let vigente = true;
+    setNnMsg({ tipo: "cargando", texto: "Cargando unidades del Nomenclador Nacional…" });
+    getComponentesNN(selectedNroOS, nnCreateNomId)
+      .then((r) => {
+        if (!vigente) return;
+        if (!r.disponible) {
+          setNnMsg({
+            tipo: "error",
+            texto: `No se pudieron precargar las unidades: ${r.motivo ?? "sin datos"}. Cargalas a mano.`,
+          });
+          return;
+        }
+        setForm((prev) => ({
+          ...prev,
+          modalidad: "calculable",
+          componentes: FIXED_CONCEPTOS.map((concepto) => {
+            const s = r.componentes.find((c) => c.concepto === concepto);
+            return {
+              concepto,
+              galeno_id: s?.galeno_id ?? null,
+              cantidad: s ? String(Number(s.cantidad)) : "",
+              valor_unitario: "",
+              opcional: concepto !== "Honorarios",
+            };
+          }),
+        }));
+        setNnMsg({
+          tipo: "ok",
+          texto: "Unidades del Nomenclador Nacional cargadas: "
+            + r.componentes
+              .map((c) => `${c.concepto} ${Number(c.cantidad)} × ${c.galeno_nombre}`)
+              .join(" · "),
+        });
+      })
+      .catch(() => {
+        if (vigente) {
+          setNnMsg({ tipo: "error", texto: "No se pudieron cargar las unidades del Nomenclador Nacional." });
+        }
+      });
+    return () => {
+      vigente = false;
+    };
+  }, [nnCreateOrigen, nnCreateNomId, selectedNroOS]);
 
   function changeModalidad(m: ModalidadValor) {
     setForm((prev) => ({
@@ -2110,6 +2171,20 @@ export default function NomencladorPorOS() {
                     <div className={styles.sectionTitle}>
                       Componentes de precio
                     </div>
+                    {nnMsg && (
+                      <span
+                        className={
+                          nnMsg.tipo === "error" ? styles.errorMsg : styles.hintText
+                        }
+                        style={
+                          nnMsg.tipo === "ok"
+                            ? { color: "#2f855a", fontWeight: 500, display: "block", marginBottom: 8 }
+                            : { display: "block", marginBottom: 8 }
+                        }
+                      >
+                        {nnMsg.texto}
+                      </span>
+                    )}
                     <ComponentEditor
                       modalidad={form.modalidad}
                       componentes={form.componentes}
