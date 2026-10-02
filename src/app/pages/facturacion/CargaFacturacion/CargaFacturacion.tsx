@@ -13,7 +13,7 @@ import {
   anularPrestacion,
   fetchMedicos,
   fetchMedicosTodos,
-  fetchObrasSociales,
+  fetchObraSocialPorCodigo,
   fetchObrasSocialesTodas,
   fetchCodigosHabilitados,
   fetchClinicas,
@@ -739,7 +739,7 @@ const CargaFacturacion: React.FC = () => {
         const [payeeRes, ejeRes, osRes, nomRes, cliRes] = await Promise.allSettled([
           fetchMedicos(p.cod_medico),
           esOrg && p.cod_medico_ejecutor ? fetchMedicos(p.cod_medico_ejecutor) : Promise.resolve([]),
-          p.cod_obra_social ? fetchObrasSociales(p.cod_obra_social) : Promise.resolve([]),
+          p.cod_obra_social ? fetchObraSocialPorCodigo(p.cod_obra_social) : Promise.resolve([]),
           p.cod_nomenclador
             ? fetchCodigosHabilitados(codMedForCodigos, p.cod_nomenclador)
             : Promise.resolve([]),

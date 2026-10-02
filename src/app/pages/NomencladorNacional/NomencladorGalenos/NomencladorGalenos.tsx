@@ -1,7 +1,25 @@
-import { useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
 import {
-  Search, Plus, X as XIcon, Save, TrendingUp, CheckCircle2, AlertCircle,
-  Loader2, RefreshCw, Building2, Pencil, Clock, Download, Trash2,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  type ReactNode,
+} from "react";
+import {
+  Search,
+  Plus,
+  X as XIcon,
+  Save,
+  TrendingUp,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  RefreshCw,
+  Building2,
+  Pencil,
+  Clock,
+  Download,
+  Trash2,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -9,10 +27,31 @@ import styles from "./NomencladorGalenos.module.scss";
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import {
   listGalenos,
-  deleteGaleno, updateGaleno, actualizarUnidadesGaleno, actualizarPrecioGaleno,
-  importarGalenosDeObraSocial, getHistorialGaleno,
+  deleteGaleno,
+  updateGaleno,
+  actualizarUnidadesGaleno,
+  actualizarPrecioGaleno,
+  importarGalenosDeObraSocial,
+  getHistorialGaleno,
+  getFamiliaObraSocial,
+  replicarGalenoEnFamilia,
 } from "../nomenclador.api";
-import type { GalenoOut, GalenosImportarResult } from "../nomenclador.types";
+import type {
+  GalenoOut,
+  GalenosImportarResult,
+  ObraSocialFamiliaItem,
+  ReplicaResultadoItem,
+  ReplicarGalenoFamiliaPayload,
+} from "../nomenclador.types";
+import ReplicarFamiliaBlock, {
+  ErrorReplica,
+  ResultadoReplica,
+} from "../../../components/molecules/ReplicarFamilia/ReplicarFamiliaBlock";
+import {
+  REPLICA_INICIAL,
+  destinosReplica,
+  type ReplicaState,
+} from "../../../components/molecules/ReplicarFamilia/replicaState";
 import ConfirmModal from "@/app/components/ui/ConfirmModal/ConfirmModal";
 import GalenoCreateModal from "./GalenoCreateModal";
 import { hoyISO } from "@/app/shared/lib/fechas";
@@ -76,7 +115,10 @@ type ImportForm = {
 export default function NomencladorGalenos() {
   const [tab, setTab] = useState<Tab>("catalogo");
   const [modalKind, setModalKind] = useState<ModalKind>(null);
-  const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const [toast, setToast] = useState<{
+    type: "success" | "error";
+    msg: string;
+  } | null>(null);
 
   // ── Catálogo state ────────────────────────────────────────────────────────
   const [galenos, setGalenos] = useState<GalenoOut[]>([]);
@@ -93,31 +135,53 @@ export default function NomencladorGalenos() {
   // ── Edit modal state ──────────────────────────────────────────────────────
   const [editTarget, setEditTarget] = useState<GalenoOut | null>(null);
   const [editForm, setEditForm] = useState<EditForm>({
-    observacion: "", vigencia_unidades: today(), hon: "", ayu: "", gas: "",
-    valor: "", vigencia_precio: today(),
+    observacion: "",
+    vigencia_unidades: today(),
+    hon: "",
+    ayu: "",
+    gas: "",
+    valor: "",
+    vigencia_precio: today(),
   });
   const [savingObs, setSavingObs] = useState(false);
   const [savingUnidades, setSavingUnidades] = useState(false);
   const [savingPrecio, setSavingPrecio] = useState(false);
   const [confirmUnidades, setConfirmUnidades] = useState(false);
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
+  // Replicar en los planes de la familia de la OS del galeno (mismo código y nivel).
+  const [familiaEdit, setFamiliaEdit] = useState<ObraSocialFamiliaItem[]>([]);
+  const [replica, setReplica] = useState<ReplicaState>(REPLICA_INICIAL);
+  const [replicaResultado, setReplicaResultado] = useState<{
+    accion: "valor" | "unidades";
+    resultados: ReplicaResultadoItem[];
+  } | null>(null);
+  const [replicaError, setReplicaError] = useState<string | null>(null);
 
   // ── Import modal state ────────────────────────────────────────────────────
   const [importForm, setImportForm] = useState<ImportForm>({
-    osOrigen: "", vigencia_desde: today(), alcance: "todos", convertir: false,
+    osOrigen: "",
+    vigencia_desde: today(),
+    alcance: "todos",
+    convertir: false,
     actualizar: "valor_y_unidades",
   });
   const [importOsSearch, setImportOsSearch] = useState("");
   const [importOsOpen, setImportOsOpen] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [importResult, setImportResult] = useState<GalenosImportarResult | null>(null);
+  const [importResult, setImportResult] =
+    useState<GalenosImportarResult | null>(null);
   const [importErrors, setImportErrors] = useState<Record<string, string>>({});
   // Galenos vigentes de la OS origen (para el alcance nivelados / sin nivel)
-  const [importOrigenGalenos, setImportOrigenGalenos] = useState<GalenoOut[] | null>(null);
+  const [importOrigenGalenos, setImportOrigenGalenos] = useState<
+    GalenoOut[] | null
+  >(null);
 
   // ── Historial state ───────────────────────────────────────────────────────
   const [historialTarget, setHistorialTarget] = useState<{
-    os: number; codigo: string; nombre: string; nivel: number | null;
+    os: number;
+    codigo: string;
+    nombre: string;
+    nivel: number | null;
   } | null>(null);
   const [historialRows, setHistorialRows] = useState<GalenoOut[]>([]);
   const [loadingHistorial, setLoadingHistorial] = useState(false);
@@ -174,7 +238,9 @@ export default function NomencladorGalenos() {
     const q = catSearch.trim().toLowerCase();
     const visibles = q
       ? unique.filter(
-          (g) => g.codigo.toLowerCase().includes(q) || g.nombre.toLowerCase().includes(q),
+          (g) =>
+            g.codigo.toLowerCase().includes(q) ||
+            g.nombre.toLowerCase().includes(q),
         )
       : unique;
     // El orden del boletín, no el que devuelva la API. Ver `compararGalenos`.
@@ -195,11 +261,17 @@ export default function NomencladorGalenos() {
     if (!osSearch.trim()) return osList.slice(0, 100);
     const q = osSearch.toLowerCase();
     return osList
-      .filter((os) => os.nombre?.toLowerCase().includes(q) || String(os.nro_obra_social).includes(q))
+      .filter(
+        (os) =>
+          os.nombre?.toLowerCase().includes(q) ||
+          String(os.nro_obra_social).includes(q),
+      )
       .slice(0, 100);
   }, [osList, osSearch]);
 
-  const selectedOsName = osList.find((os) => os.nro_obra_social === selectedOsNro)?.nombre;
+  const selectedOsName = osList.find(
+    (os) => os.nro_obra_social === selectedOsNro,
+  )?.nombre;
 
   // ── Create actions ────────────────────────────────────────────────────────
   function openCreate() {
@@ -215,19 +287,60 @@ export default function NomencladorGalenos() {
   function openEdit(g: GalenoOut) {
     setEditTarget(g);
     setEditForm({
-      observacion: g.observacion ?? "", vigencia_unidades: today(), hon: "", ayu: "", gas: "",
-      valor: g.valor_unitario ?? "", vigencia_precio: today(),
+      observacion: g.observacion ?? "",
+      vigencia_unidades: today(),
+      hon: "",
+      ayu: "",
+      gas: "",
+      valor: g.valor_unitario ?? "",
+      vigencia_precio: today(),
     });
     setEditErrors({});
     setConfirmUnidades(false);
+    setReplica(REPLICA_INICIAL);
+    setReplicaResultado(null);
+    setReplicaError(null);
+    setFamiliaEdit([]);
+    getFamiliaObraSocial(g.obra_social_nro)
+      .then(setFamiliaEdit)
+      .catch(() => setFamiliaEdit([]));
     setModalKind("edit");
+  }
+
+  const replicaActiva = replica.activo && replica.destinos.length > 0;
+
+  /** Replica en la familia la acción recién guardada. true = hubo replicación (el modal
+   * queda abierto mostrando el resultado). */
+  async function replicarGalenoSiCorresponde(
+    accion: "valor" | "unidades",
+    payload: Omit<
+      ReplicarGalenoFamiliaPayload,
+      "origen_obra_social_nro" | "destinos"
+    >,
+  ): Promise<boolean> {
+    const destinos = destinosReplica(replica);
+    if (!editTarget || destinos.length === 0) return false;
+    setReplicaResultado(null);
+    setReplicaError(null);
+    try {
+      const r = await replicarGalenoEnFamilia({
+        ...payload,
+        origen_obra_social_nro: editTarget.obra_social_nro,
+        destinos,
+      });
+      setReplicaResultado({ accion, resultados: r.resultados });
+    } catch (e) {
+      setReplicaError(extractDetail(e));
+    }
+    return true;
   }
 
   async function handleActualizarPrecio() {
     if (!editTarget) return;
     const v = parseFloat(editForm.valor);
     const e: Record<string, string> = {};
-    if (editForm.valor.trim() === "" || isNaN(v) || v < 0) e.valor = "Valor inválido";
+    if (editForm.valor.trim() === "" || isNaN(v) || v < 0)
+      e.valor = "Valor inválido";
     if (!editForm.vigencia_precio) e.vigencia_precio = "Requerido";
     setEditErrors((p) => ({ ...p, ...e }));
     if (Object.keys(e).length > 0) return;
@@ -239,7 +352,14 @@ export default function NomencladorGalenos() {
         vigencia_desde: editForm.vigencia_precio,
       });
       showToast("success", "Valor del galeno actualizado.");
-      setModalKind(null);
+      const replicado = await replicarGalenoSiCorresponde("valor", {
+        operacion: "precio",
+        codigo: editTarget.codigo,
+        nivel: editTarget.nivel,
+        nuevo_valor_unitario: v,
+        vigencia_desde: editForm.vigencia_precio,
+      });
+      if (!replicado) setModalKind(null);
       if (selectedOsNro) loadOsGalenos(selectedOsNro);
     } catch (err) {
       showToast("error", extractDetail(err));
@@ -255,7 +375,9 @@ export default function NomencladorGalenos() {
       const updated = await updateGaleno(editTarget.id, {
         observacion: editForm.observacion.trim() || null,
       });
-      setOsGalenos((prev) => prev.map((g) => (g.id === updated.id ? updated : g)));
+      setOsGalenos((prev) =>
+        prev.map((g) => (g.id === updated.id ? updated : g)),
+      );
       setEditTarget(updated);
       showToast("success", "Observación guardada.");
     } catch (e) {
@@ -268,7 +390,9 @@ export default function NomencladorGalenos() {
   function validateUnidades(): boolean {
     const e: Record<string, string> = {};
     if (!editForm.vigencia_unidades) e.vigencia_unidades = "Requerido";
-    const someSet = [editForm.hon, editForm.ayu, editForm.gas].some((v) => v.trim() !== "");
+    const someSet = [editForm.hon, editForm.ayu, editForm.gas].some(
+      (v) => v.trim() !== "",
+    );
     if (!someSet) e.unidades = "Ingresá al menos una unidad para actualizar";
     setEditErrors(e);
     return Object.keys(e).length === 0;
@@ -298,9 +422,23 @@ export default function NomencladorGalenos() {
         ...(a !== undefined && { unidades_ayudante: a }),
         ...(g !== undefined && { unidades_gastos: g }),
       });
-      setOsGalenos((prev) => prev.map((x) => (x.id === result.galeno.id ? result.galeno : x)));
-      showToast("success", `Unidades actualizadas. ${result.componentes_actualizados} componente(s) afectados.`);
-      setModalKind(null);
+      setOsGalenos((prev) =>
+        prev.map((x) => (x.id === result.galeno.id ? result.galeno : x)),
+      );
+      showToast(
+        "success",
+        `Unidades actualizadas. ${result.componentes_actualizados} componente(s) afectados.`,
+      );
+      const replicado = await replicarGalenoSiCorresponde("unidades", {
+        operacion: "unidades",
+        codigo: editTarget.codigo,
+        nivel: editTarget.nivel,
+        vigencia_desde: editForm.vigencia_unidades,
+        ...(h !== undefined && { unidades_honorarios: h }),
+        ...(a !== undefined && { unidades_ayudante: a }),
+        ...(g !== undefined && { unidades_gastos: g }),
+      });
+      if (!replicado) setModalKind(null);
       if (selectedOsNro) loadOsGalenos(selectedOsNro);
     } catch (e) {
       showToast("error", extractDetail(e));
@@ -312,7 +450,10 @@ export default function NomencladorGalenos() {
   // ── Import actions ────────────────────────────────────────────────────────
   function openImport() {
     setImportForm({
-      osOrigen: "", vigencia_desde: today(), alcance: "todos", convertir: false,
+      osOrigen: "",
+      vigencia_desde: today(),
+      alcance: "todos",
+      convertir: false,
       actualizar: "valor_y_unidades",
     });
     setImportOsSearch("");
@@ -327,7 +468,9 @@ export default function NomencladorGalenos() {
     setImportOrigenGalenos(null);
     try {
       const data = await listGalenos({ obra_social_nro: osNro });
-      setImportOrigenGalenos(data.filter((g) => g.activo && g.vigencia_hasta == null));
+      setImportOrigenGalenos(
+        data.filter((g) => g.activo && g.vigencia_hasta == null),
+      );
     } catch {
       setImportOrigenGalenos([]);
     }
@@ -337,7 +480,10 @@ export default function NomencladorGalenos() {
     const e: Record<string, string> = {};
     if (importForm.osOrigen === "") e.osOrigen = "Requerido";
     if (!importForm.vigencia_desde) e.vigencia_desde = "Requerido";
-    if (importForm.osOrigen !== "" && Number(importForm.osOrigen) === selectedOsNro)
+    if (
+      importForm.osOrigen !== "" &&
+      Number(importForm.osOrigen) === selectedOsNro
+    )
       e.osOrigen = "El origen no puede ser igual al destino";
 
     // Con alcance parcial, los códigos salen de los galenos del origen ya cargados
@@ -347,13 +493,16 @@ export default function NomencladorGalenos() {
         e.alcance = "Aguardá a que carguen los galenos del origen";
       } else {
         const filtrados = importOrigenGalenos.filter((g) =>
-          importForm.alcance === "nivelados" ? g.nivel != null : g.nivel == null
+          importForm.alcance === "nivelados"
+            ? g.nivel != null
+            : g.nivel == null,
         );
         codigos = [...new Set(filtrados.map((g) => g.codigo))];
         if (codigos.length === 0) {
-          e.alcance = importForm.alcance === "nivelados"
-            ? "El origen no tiene galenos nivelados"
-            : "El origen no tiene galenos sin nivel";
+          e.alcance =
+            importForm.alcance === "nivelados"
+              ? "El origen no tiene galenos nivelados"
+              : "El origen no tiene galenos sin nivel";
         }
       }
     }
@@ -386,12 +535,21 @@ export default function NomencladorGalenos() {
 
   // ── Historial actions ─────────────────────────────────────────────────────
   async function openHistorial(g: GalenoOut) {
-    setHistorialTarget({ os: g.obra_social_nro, codigo: g.codigo, nombre: g.nombre, nivel: g.nivel });
+    setHistorialTarget({
+      os: g.obra_social_nro,
+      codigo: g.codigo,
+      nombre: g.nombre,
+      nivel: g.nivel,
+    });
     setHistorialRows([]);
     setLoadingHistorial(true);
     setModalKind("historial");
     try {
-      const rows = await getHistorialGaleno(g.obra_social_nro, g.codigo, g.nivel ?? undefined);
+      const rows = await getHistorialGaleno(
+        g.obra_social_nro,
+        g.codigo,
+        g.nivel ?? undefined,
+      );
       setHistorialRows(rows);
     } catch {
       showToast("error", "No se pudo cargar el historial.");
@@ -408,9 +566,14 @@ export default function NomencladorGalenos() {
       setOsGalenos((prev) => prev.filter((x) => x.id !== g.id));
       showToast("success", `"${g.nombre}" desactivado.`);
     } catch (e) {
-      const err = e as { response?: { status?: number; data?: { detail?: string } } };
+      const err = e as {
+        response?: { status?: number; data?: { detail?: string } };
+      };
       if (err?.response?.status === 409) {
-        showToast("error", "No se puede desactivar: hay un valor activo que usa este galeno.");
+        showToast(
+          "error",
+          "No se puede desactivar: hay un valor activo que usa este galeno.",
+        );
       } else {
         showToast("error", extractDetail(e));
       }
@@ -426,10 +589,14 @@ export default function NomencladorGalenos() {
       {/* Header */}
       <div className={styles.header}>
         <div className={styles.headerLeft}>
-          <span className={styles.headerIcon}><TrendingUp size={20} /></span>
+          <span className={styles.headerIcon}>
+            <TrendingUp size={20} />
+          </span>
           <div>
             <h1 className={styles.title}>Galenos</h1>
-            <p className={styles.subtitle}>Precios unitarios y unidades pactadas por obra social</p>
+            <p className={styles.subtitle}>
+              Precios unitarios y unidades pactadas por obra social
+            </p>
           </div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
@@ -474,7 +641,11 @@ export default function NomencladorGalenos() {
                 onChange={(e) => setCatSearch(e.target.value)}
               />
             </div>
-            <button className={styles.btnGhost} onClick={loadCatalogo} title="Recargar">
+            <button
+              className={styles.btnGhost}
+              onClick={loadCatalogo}
+              title="Recargar"
+            >
               <RefreshCw size={14} />
             </button>
           </div>
@@ -497,22 +668,34 @@ export default function NomencladorGalenos() {
                   </tr>
                 ) : filteredCatalogo.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className={styles.emptyCell}>Sin galenos cargados aún.</td>
+                    <td colSpan={3} className={styles.emptyCell}>
+                      Sin galenos cargados aún.
+                    </td>
                   </tr>
-                ) : filteredCatalogo.map((g) => {
-                  const hasNiveles = galenos.some((x) => x.codigo === g.codigo && x.nivel != null);
-                  return (
-                    <tr key={g.codigo}>
-                      <td><span className={styles.codeCell}>{g.codigo}</span></td>
-                      <td>{g.nombre}</td>
-                      <td>
-                        {hasNiveles
-                          ? <span className={styles.nivelBadge}>Nivelado</span>
-                          : <span className={styles.sinNivelBadge}>Sin nivel</span>}
-                      </td>
-                    </tr>
-                  );
-                })}
+                ) : (
+                  filteredCatalogo.map((g) => {
+                    const hasNiveles = galenos.some(
+                      (x) => x.codigo === g.codigo && x.nivel != null,
+                    );
+                    return (
+                      <tr key={g.codigo}>
+                        <td>
+                          <span className={styles.codeCell}>{g.codigo}</span>
+                        </td>
+                        <td>{g.nombre}</td>
+                        <td>
+                          {hasNiveles ? (
+                            <span className={styles.nivelBadge}>Nivelado</span>
+                          ) : (
+                            <span className={styles.sinNivelBadge}>
+                              Sin nivel
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
@@ -520,14 +703,18 @@ export default function NomencladorGalenos() {
           {/* Mobile cards */}
           <div className={styles.cardList}>
             {filteredCatalogo.map((g) => {
-              const hasNiveles = galenos.some((x) => x.codigo === g.codigo && x.nivel != null);
+              const hasNiveles = galenos.some(
+                (x) => x.codigo === g.codigo && x.nivel != null,
+              );
               return (
                 <div key={g.codigo} className={styles.card}>
                   <div className={styles.cardTop}>
                     <span className={styles.codeCell}>{g.codigo}</span>
-                    {hasNiveles
-                      ? <span className={styles.nivelBadge}>Nivelado</span>
-                      : <span className={styles.sinNivelBadge}>Sin nivel</span>}
+                    {hasNiveles ? (
+                      <span className={styles.nivelBadge}>Nivelado</span>
+                    ) : (
+                      <span className={styles.sinNivelBadge}>Sin nivel</span>
+                    )}
                   </div>
                   <p className={styles.cardDesc}>{g.nombre}</p>
                 </div>
@@ -573,19 +760,28 @@ export default function NomencladorGalenos() {
             {!selectedOsNro ? (
               <div className={styles.noSelection}>
                 <Building2 size={36} className={styles.noSelectionIcon} />
-                <p>Seleccioná una obra social para ver y gestionar sus galenos</p>
+                <p>
+                  Seleccioná una obra social para ver y gestionar sus galenos
+                </p>
               </div>
             ) : (
               <>
                 <div className={styles.osContentHeader}>
                   <strong>{selectedOsName}</strong>
                   <span className={styles.osContentSub}>
-                    {osGalenos.length} galeno{osGalenos.length !== 1 ? "s" : ""} activos
+                    {osGalenos.length} galeno{osGalenos.length !== 1 ? "s" : ""}{" "}
+                    activos
                   </span>
                   <button
                     className={styles.btnGhost}
-                    style={{ marginLeft: "auto", height: 30, padding: "0 10px" }}
-                    onClick={() => selectedOsNro && loadOsGalenos(selectedOsNro)}
+                    style={{
+                      marginLeft: "auto",
+                      height: 30,
+                      padding: "0 10px",
+                    }}
+                    onClick={() =>
+                      selectedOsNro && loadOsGalenos(selectedOsNro)
+                    }
                     title="Recargar"
                   >
                     <RefreshCw size={13} />
@@ -622,16 +818,30 @@ export default function NomencladorGalenos() {
                       <tbody>
                         {osGalenosOrdenados.map((g) => (
                           <tr key={g.id}>
-                            <td><span className={styles.codeCell}>{g.codigo}</span></td>
+                            <td>
+                              <span className={styles.codeCell}>
+                                {g.codigo}
+                              </span>
+                            </td>
                             <td>{g.nombre}</td>
-                            <td className={styles.metaCell}>{g.nivel ?? "—"}</td>
+                            <td className={styles.metaCell}>
+                              {g.nivel ?? "—"}
+                            </td>
                             <td className={styles.priceCell}>
                               {fmt.format(parseMonto(g.valor_unitario) ?? 0)}
                             </td>
-                            <td className={styles.unitCell}>{fmtUnidad(g.unidades_honorarios)}</td>
-                            <td className={styles.unitCell}>{fmtUnidad(g.unidades_ayudante)}</td>
-                            <td className={styles.unitCell}>{fmtUnidad(g.unidades_gastos)}</td>
-                            <td className={styles.metaCell}>{g.vigencia_desde}</td>
+                            <td className={styles.unitCell}>
+                              {fmtUnidad(g.unidades_honorarios)}
+                            </td>
+                            <td className={styles.unitCell}>
+                              {fmtUnidad(g.unidades_ayudante)}
+                            </td>
+                            <td className={styles.unitCell}>
+                              {fmtUnidad(g.unidades_gastos)}
+                            </td>
+                            <td className={styles.metaCell}>
+                              {g.vigencia_desde}
+                            </td>
                             <td>
                               <div className={styles.actionsCell}>
                                 <button
@@ -654,9 +864,14 @@ export default function NomencladorGalenos() {
                                   disabled={toggling === g.id}
                                   title="Desactivar galeno"
                                 >
-                                  {toggling === g.id
-                                    ? <Loader2 size={13} className={styles.spin} />
-                                    : <Trash2 size={13} />}
+                                  {toggling === g.id ? (
+                                    <Loader2
+                                      size={13}
+                                      className={styles.spin}
+                                    />
+                                  ) : (
+                                    <Trash2 size={13} />
+                                  )}
                                 </button>
                               </div>
                             </td>
@@ -688,7 +903,11 @@ export default function NomencladorGalenos() {
         {modalKind === "edit" && editTarget && (
           <Modal
             title={`Editar — ${editTarget.nombre}`}
-            subtitle={editTarget.nivel != null ? `Nivel ${editTarget.nivel}` : "Sin nivel"}
+            subtitle={
+              editTarget.nivel != null
+                ? `Nivel ${editTarget.nivel}`
+                : "Sin nivel"
+            }
             onClose={() => setModalKind(null)}
           >
             {/* Observación */}
@@ -697,51 +916,117 @@ export default function NomencladorGalenos() {
               <textarea
                 className={styles.formTextarea}
                 value={editForm.observacion}
-                onChange={(e) => setEditForm((p) => ({ ...p, observacion: e.target.value }))}
+                onChange={(e) =>
+                  setEditForm((p) => ({ ...p, observacion: e.target.value }))
+                }
                 placeholder="Opcional…"
               />
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end" }}>
-              <button className={styles.btnGhost} onClick={handleSaveObservacion} disabled={savingObs}>
-                {savingObs ? <Loader2 size={13} className={styles.spin} /> : <Save size={13} />}
-                {" "}Guardar observación
+              <button
+                className={styles.btnGhost}
+                onClick={handleSaveObservacion}
+                disabled={savingObs}
+              >
+                {savingObs ? (
+                  <Loader2 size={13} className={styles.spin} />
+                ) : (
+                  <Save size={13} />
+                )}{" "}
+                Guardar observación
               </button>
             </div>
 
             <div className={styles.sectionSep} />
+            <ReplicarFamiliaBlock
+              familia={familiaEdit}
+              value={replica}
+              onChange={setReplica}
+              disabled={savingPrecio || savingUnidades}
+              descripcion="Se aplica a «Actualizar valor» y «Actualizar unidades» en el galeno con el mismo código y nivel de cada plan. Si un plan no tiene el galeno, al actualizar el valor se crea; al actualizar unidades se omite. La observación no se replica."
+            />
             <p className={styles.sectionTitle}>Actualizar valor</p>
             <p className={styles.hintText}>
-              Cambia el valor unitario del galeno desde la vigencia indicada (rota la vigencia anterior).
-              Actual: <strong>{fmt.format(parseMonto(editTarget.valor_unitario) ?? 0)}</strong>.
+              Cambia el valor unitario del galeno desde la vigencia indicada
+              (rota la vigencia anterior). Actual:{" "}
+              <strong>
+                {fmt.format(parseMonto(editTarget.valor_unitario) ?? 0)}
+              </strong>
+              .
             </p>
             <div className={styles.formRow2}>
               <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Valor unitario ($) <span className={styles.req}>*</span></label>
+                <label className={styles.formLabel}>
+                  Valor unitario ($) <span className={styles.req}>*</span>
+                </label>
                 <input
-                  type="number" min="0" step="0.01"
+                  type="number"
+                  min="0"
+                  step="0.01"
                   className={`${styles.formInput} ${editErrors.valor ? styles.inputError : ""}`}
                   value={editForm.valor}
-                  onChange={(e) => { setEditForm((p) => ({ ...p, valor: e.target.value })); setEditErrors((p) => ({ ...p, valor: "" })); }}
+                  onChange={(e) => {
+                    setEditForm((p) => ({ ...p, valor: e.target.value }));
+                    setEditErrors((p) => ({ ...p, valor: "" }));
+                  }}
                   placeholder="0.00"
                 />
-                {editErrors.valor && <span className={styles.errorMsg}>{editErrors.valor}</span>}
+                {editErrors.valor && (
+                  <span className={styles.errorMsg}>{editErrors.valor}</span>
+                )}
               </div>
               <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Vigente desde <span className={styles.req}>*</span></label>
+                <label className={styles.formLabel}>
+                  Vigente desde <span className={styles.req}>*</span>
+                </label>
                 <input
                   type="date"
                   className={`${styles.formInput} ${editErrors.vigencia_precio ? styles.inputError : ""}`}
                   value={editForm.vigencia_precio}
-                  onChange={(e) => { setEditForm((p) => ({ ...p, vigencia_precio: e.target.value })); setEditErrors((p) => ({ ...p, vigencia_precio: "" })); }}
+                  onChange={(e) => {
+                    setEditForm((p) => ({
+                      ...p,
+                      vigencia_precio: e.target.value,
+                    }));
+                    setEditErrors((p) => ({ ...p, vigencia_precio: "" }));
+                  }}
                 />
-                {editErrors.vigencia_precio && <span className={styles.errorMsg}>{editErrors.vigencia_precio}</span>}
+                {editErrors.vigencia_precio && (
+                  <span className={styles.errorMsg}>
+                    {editErrors.vigencia_precio}
+                  </span>
+                )}
               </div>
             </div>
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
-              <button className={styles.btnPrimary} onClick={handleActualizarPrecio} disabled={savingPrecio}>
-                {savingPrecio ? <><Loader2 size={14} className={styles.spin} /> Actualizando…</> : <><Save size={14} /> Actualizar valor</>}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                marginTop: 8,
+              }}
+            >
+              <button
+                className={styles.btnPrimary}
+                onClick={handleActualizarPrecio}
+                disabled={savingPrecio}
+              >
+                {savingPrecio ? (
+                  <>
+                    <Loader2 size={14} className={styles.spin} /> Actualizando…
+                  </>
+                ) : (
+                  <>
+                    <Save size={14} />{" "}
+                    {replicaActiva
+                      ? "Actualizar valor y replicar"
+                      : "Actualizar valor"}
+                  </>
+                )}
               </button>
             </div>
+            {replicaResultado?.accion === "valor" && (
+              <ResultadoReplica resultados={replicaResultado.resultados} />
+            )}
 
             <div className={styles.sectionSep} />
             <p className={styles.sectionTitle}>Actualizar unidades pactadas</p>
@@ -749,8 +1034,9 @@ export default function NomencladorGalenos() {
             <div className={styles.warningBox}>
               <AlertCircle size={15} style={{ flexShrink: 0, marginTop: 1 }} />
               <span>
-                Esta operación pisa las unidades de <strong>todos</strong> los componentes
-                que usan este galeno, incluso overrides cargados a mano.
+                Esta operación pisa las unidades de <strong>todos</strong> los
+                componentes que usan este galeno, incluso overrides cargados a
+                mano.
               </span>
             </div>
 
@@ -762,14 +1048,23 @@ export default function NomencladorGalenos() {
                 type="date"
                 className={`${styles.formInput} ${editErrors.vigencia_unidades ? styles.inputError : ""}`}
                 value={editForm.vigencia_unidades}
-                onChange={(e) => setEditForm((p) => ({ ...p, vigencia_unidades: e.target.value }))}
+                onChange={(e) =>
+                  setEditForm((p) => ({
+                    ...p,
+                    vigencia_unidades: e.target.value,
+                  }))
+                }
               />
               {editErrors.vigencia_unidades && (
-                <span className={styles.errorMsg}>{editErrors.vigencia_unidades}</span>
+                <span className={styles.errorMsg}>
+                  {editErrors.vigencia_unidades}
+                </span>
               )}
             </div>
 
-            <p className={styles.hintText}>Dejá un campo vacío para no modificar esa unidad.</p>
+            <p className={styles.hintText}>
+              Dejá un campo vacío para no modificar esa unidad.
+            </p>
             {editErrors.unidades && (
               <span className={styles.errorMsg}>{editErrors.unidades}</span>
             )}
@@ -778,47 +1073,74 @@ export default function NomencladorGalenos() {
               <div className={styles.formGroup}>
                 <label className={styles.unitLabel}>Honorarios</label>
                 <input
-                  type="number" min="0" step="0.0001"
+                  type="number"
+                  min="0"
+                  step="0.0001"
                   className={styles.unitInput}
                   value={editForm.hon}
-                  onChange={(e) => setEditForm((p) => ({ ...p, hon: e.target.value }))}
+                  onChange={(e) =>
+                    setEditForm((p) => ({ ...p, hon: e.target.value }))
+                  }
                   placeholder="—"
                 />
               </div>
               <div className={styles.formGroup}>
                 <label className={styles.unitLabel}>Ayudante</label>
                 <input
-                  type="number" min="0" step="0.0001"
+                  type="number"
+                  min="0"
+                  step="0.0001"
                   className={styles.unitInput}
                   value={editForm.ayu}
-                  onChange={(e) => setEditForm((p) => ({ ...p, ayu: e.target.value }))}
+                  onChange={(e) =>
+                    setEditForm((p) => ({ ...p, ayu: e.target.value }))
+                  }
                   placeholder="—"
                 />
               </div>
               <div className={styles.formGroup}>
                 <label className={styles.unitLabel}>Gastos</label>
                 <input
-                  type="number" min="0" step="0.0001"
+                  type="number"
+                  min="0"
+                  step="0.0001"
                   className={styles.unitInput}
                   value={editForm.gas}
-                  onChange={(e) => setEditForm((p) => ({ ...p, gas: e.target.value }))}
+                  onChange={(e) =>
+                    setEditForm((p) => ({ ...p, gas: e.target.value }))
+                  }
                   placeholder="—"
                 />
               </div>
             </div>
 
             <div className={styles.modalFooter}>
-              <button className={styles.btnGhost} onClick={() => setModalKind(null)}>Cerrar</button>
+              <button
+                className={styles.btnGhost}
+                onClick={() => setModalKind(null)}
+              >
+                Cerrar
+              </button>
               <button
                 className={styles.btnPrimary}
                 onClick={handleActualizarUnidades}
                 disabled={savingUnidades}
               >
-                {savingUnidades
-                  ? <><Loader2 size={14} className={styles.spin} /> Actualizando…</>
-                  : "Actualizar unidades"}
+                {savingUnidades ? (
+                  <>
+                    <Loader2 size={14} className={styles.spin} /> Actualizando…
+                  </>
+                ) : replicaActiva ? (
+                  "Actualizar unidades y replicar"
+                ) : (
+                  "Actualizar unidades"
+                )}
               </button>
             </div>
+            {replicaResultado?.accion === "unidades" && (
+              <ResultadoReplica resultados={replicaResultado.resultados} />
+            )}
+            {replicaError && <ErrorReplica mensaje={replicaError} />}
           </Modal>
         )}
 
@@ -838,7 +1160,9 @@ export default function NomencladorGalenos() {
                 <div className={styles.osAcSelected}>
                   <span className={styles.osAcNro}>{importForm.osOrigen}</span>
                   <span className={styles.osAcName}>
-                    {osList.find((os) => os.nro_obra_social === importForm.osOrigen)?.nombre ?? ""}
+                    {osList.find(
+                      (os) => os.nro_obra_social === importForm.osOrigen,
+                    )?.nombre ?? ""}
                   </span>
                   <button
                     type="button"
@@ -859,38 +1183,57 @@ export default function NomencladorGalenos() {
                     className={`${styles.formInput} ${importErrors.osOrigen ? styles.inputError : ""}`}
                     placeholder="Buscar por nombre o número…"
                     value={importOsSearch}
-                    onChange={(e) => { setImportOsSearch(e.target.value); setImportOsOpen(true); }}
+                    onChange={(e) => {
+                      setImportOsSearch(e.target.value);
+                      setImportOsOpen(true);
+                    }}
                     onFocus={() => setImportOsOpen(true)}
                     onBlur={() => setTimeout(() => setImportOsOpen(false), 150)}
                   />
-                  {importOsOpen && (() => {
-                    const q = importOsSearch.trim().toLowerCase();
-                    const list = osList
-                      .filter((os) => os.nro_obra_social !== selectedOsNro)
-                      .filter((os) => !q || os.nombre.toLowerCase().includes(q) || String(os.nro_obra_social).includes(q))
-                      .slice(0, 50);
-                    return list.length > 0 ? (
-                      <ul className={styles.osAcDropdown}>
-                        {list.map((os) => (
-                          <li
-                            key={os.nro_obra_social}
-                            className={styles.osAcItem}
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              setImportForm((p) => ({ ...p, osOrigen: os.nro_obra_social }));
-                              setImportErrors((p) => ({ ...p, osOrigen: "" }));
-                              setImportOsSearch("");
-                              setImportOsOpen(false);
-                              loadImportOrigenGalenos(os.nro_obra_social);
-                            }}
-                          >
-                            <span className={styles.osAcNro}>{os.nro_obra_social}</span>
-                            <span className={styles.osAcName}>{os.nombre}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : null;
-                  })()}
+                  {importOsOpen &&
+                    (() => {
+                      const q = importOsSearch.trim().toLowerCase();
+                      const list = osList
+                        .filter((os) => os.nro_obra_social !== selectedOsNro)
+                        .filter(
+                          (os) =>
+                            !q ||
+                            os.nombre.toLowerCase().includes(q) ||
+                            String(os.nro_obra_social).includes(q),
+                        )
+                        .slice(0, 50);
+                      return list.length > 0 ? (
+                        <ul className={styles.osAcDropdown}>
+                          {list.map((os) => (
+                            <li
+                              key={os.nro_obra_social}
+                              className={styles.osAcItem}
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                setImportForm((p) => ({
+                                  ...p,
+                                  osOrigen: os.nro_obra_social,
+                                }));
+                                setImportErrors((p) => ({
+                                  ...p,
+                                  osOrigen: "",
+                                }));
+                                setImportOsSearch("");
+                                setImportOsOpen(false);
+                                loadImportOrigenGalenos(os.nro_obra_social);
+                              }}
+                            >
+                              <span className={styles.osAcNro}>
+                                {os.nro_obra_social}
+                              </span>
+                              <span className={styles.osAcName}>
+                                {os.nombre}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null;
+                    })()}
                 </div>
               )}
               {importErrors.osOrigen && (
@@ -906,27 +1249,42 @@ export default function NomencladorGalenos() {
                 type="date"
                 className={`${styles.formInput} ${importErrors.vigencia_desde ? styles.inputError : ""}`}
                 value={importForm.vigencia_desde}
-                onChange={(e) => setImportForm((p) => ({ ...p, vigencia_desde: e.target.value }))}
+                onChange={(e) =>
+                  setImportForm((p) => ({
+                    ...p,
+                    vigencia_desde: e.target.value,
+                  }))
+                }
               />
               {importErrors.vigencia_desde && (
-                <span className={styles.errorMsg}>{importErrors.vigencia_desde}</span>
+                <span className={styles.errorMsg}>
+                  {importErrors.vigencia_desde}
+                </span>
               )}
             </div>
 
             {/* Alcance de la importación */}
             {(() => {
-              const nivelados = importOrigenGalenos?.filter((g) => g.nivel != null) ?? null;
-              const sinNivel = importOrigenGalenos?.filter((g) => g.nivel == null) ?? null;
+              const nivelados =
+                importOrigenGalenos?.filter((g) => g.nivel != null) ?? null;
+              const sinNivel =
+                importOrigenGalenos?.filter((g) => g.nivel == null) ?? null;
               const cnt = (list: GalenoOut[] | null, porCodigo = false) =>
-                list == null ? "" : ` (${porCodigo ? new Set(list.map((g) => g.codigo)).size : list.length})`;
+                list == null
+                  ? ""
+                  : ` (${porCodigo ? new Set(list.map((g) => g.codigo)).size : list.length})`;
               return (
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Qué importar</label>
                   <label className={styles.checkRow}>
                     <input
-                      type="radio" name="importAlcance" className={styles.checkInput}
+                      type="radio"
+                      name="importAlcance"
+                      className={styles.checkInput}
                       checked={importForm.alcance === "todos"}
-                      onChange={() => setImportForm((p) => ({ ...p, alcance: "todos" }))}
+                      onChange={() =>
+                        setImportForm((p) => ({ ...p, alcance: "todos" }))
+                      }
                     />
                     <span className={styles.checkLabel}>
                       Todos los galenos{cnt(importOrigenGalenos)}
@@ -934,9 +1292,13 @@ export default function NomencladorGalenos() {
                   </label>
                   <label className={styles.checkRow}>
                     <input
-                      type="radio" name="importAlcance" className={styles.checkInput}
+                      type="radio"
+                      name="importAlcance"
+                      className={styles.checkInput}
                       checked={importForm.alcance === "nivelados"}
-                      onChange={() => setImportForm((p) => ({ ...p, alcance: "nivelados" }))}
+                      onChange={() =>
+                        setImportForm((p) => ({ ...p, alcance: "nivelados" }))
+                      }
                     />
                     <span className={styles.checkLabel}>
                       Solo galenos nivelados{cnt(nivelados, true)}
@@ -944,9 +1306,13 @@ export default function NomencladorGalenos() {
                   </label>
                   <label className={styles.checkRow}>
                     <input
-                      type="radio" name="importAlcance" className={styles.checkInput}
+                      type="radio"
+                      name="importAlcance"
+                      className={styles.checkInput}
                       checked={importForm.alcance === "sin_nivel"}
-                      onChange={() => setImportForm((p) => ({ ...p, alcance: "sin_nivel" }))}
+                      onChange={() =>
+                        setImportForm((p) => ({ ...p, alcance: "sin_nivel" }))
+                      }
                     />
                     <span className={styles.checkLabel}>
                       Solo galenos sin nivel{cnt(sinNivel)}
@@ -954,11 +1320,14 @@ export default function NomencladorGalenos() {
                   </label>
                   {importForm.alcance !== "todos" && (
                     <p className={styles.hintText}>
-                      Los demás galenos del destino no se tocan (conservan sus valores).
+                      Los demás galenos del destino no se tocan (conservan sus
+                      valores).
                     </p>
                   )}
                   {importErrors.alcance && (
-                    <span className={styles.errorMsg}>{importErrors.alcance}</span>
+                    <span className={styles.errorMsg}>
+                      {importErrors.alcance}
+                    </span>
                   )}
                 </div>
               );
@@ -969,17 +1338,30 @@ export default function NomencladorGalenos() {
               <label className={styles.formLabel}>Qué actualizar</label>
               <label className={styles.checkRow}>
                 <input
-                  type="radio" name="importActualizar" className={styles.checkInput}
+                  type="radio"
+                  name="importActualizar"
+                  className={styles.checkInput}
                   checked={importForm.actualizar === "valor_y_unidades"}
-                  onChange={() => setImportForm((p) => ({ ...p, actualizar: "valor_y_unidades" }))}
+                  onChange={() =>
+                    setImportForm((p) => ({
+                      ...p,
+                      actualizar: "valor_y_unidades",
+                    }))
+                  }
                 />
-                <span className={styles.checkLabel}>Valor del galeno y unidades</span>
+                <span className={styles.checkLabel}>
+                  Valor del galeno y unidades
+                </span>
               </label>
               <label className={styles.checkRow}>
                 <input
-                  type="radio" name="importActualizar" className={styles.checkInput}
+                  type="radio"
+                  name="importActualizar"
+                  className={styles.checkInput}
                   checked={importForm.actualizar === "solo_valor"}
-                  onChange={() => setImportForm((p) => ({ ...p, actualizar: "solo_valor" }))}
+                  onChange={() =>
+                    setImportForm((p) => ({ ...p, actualizar: "solo_valor" }))
+                  }
                 />
                 <span className={styles.checkLabel}>
                   Solo el valor del galeno (mantener las unidades del destino)
@@ -987,9 +1369,10 @@ export default function NomencladorGalenos() {
               </label>
               {importForm.actualizar === "solo_valor" && (
                 <p className={styles.hintText}>
-                  Actualiza el valor general del galeno (el que multiplica a cada nivel) con el
-                  del origen y conserva las unidades de cada nivel del destino. Los galenos que
-                  el destino todavía no tenga se crean con los datos completos del origen.
+                  Actualiza el valor general del galeno (el que multiplica a
+                  cada nivel) con el del origen y conserva las unidades de cada
+                  nivel del destino. Los galenos que el destino todavía no tenga
+                  se crean con los datos completos del origen.
                 </p>
               )}
             </div>
@@ -998,70 +1381,101 @@ export default function NomencladorGalenos() {
             <div className={styles.formGroup}>
               <label className={styles.checkRow}>
                 <input
-                  type="checkbox" className={styles.checkInput}
+                  type="checkbox"
+                  className={styles.checkInput}
                   checked={importForm.convertir}
-                  onChange={(e) => setImportForm((p) => ({ ...p, convertir: e.target.checked }))}
+                  onChange={(e) =>
+                    setImportForm((p) => ({
+                      ...p,
+                      convertir: e.target.checked,
+                    }))
+                  }
                 />
                 <span className={styles.checkLabel}>
-                  Reemplazar galenos sin nivel del destino por los niveles del origen
+                  Reemplazar galenos sin nivel del destino por los niveles del
+                  origen
                 </span>
               </label>
               <p className={styles.hintText}>
-                Si el origen tiene un galeno nivelado y el destino lo tiene sin nivel, se cierra
-                el galeno sin nivel del destino, se crean los niveles y los valores que lo usaban
-                pasan al galeno de su nivel. Sin esta opción esos casos se reportan como error.
+                Si el origen tiene un galeno nivelado y el destino lo tiene sin
+                nivel, se cierra el galeno sin nivel del destino, se crean los
+                niveles y los valores que lo usaban pasan al galeno de su nivel.
+                Sin esta opción esos casos se reportan como error.
               </p>
             </div>
 
             <p className={styles.hintText}>
-              Copia los galenos vigentes del origen (precio + unidades). Si la OS destino ya
-              tiene un galeno con ese código/nivel, se rota la vigencia.
+              Copia los galenos vigentes del origen (precio + unidades). Si la
+              OS destino ya tiene un galeno con ese código/nivel, se rota la
+              vigencia.
             </p>
 
             {importResult && (
               <div className={styles.importResult}>
                 <div className={styles.statsGrid}>
                   <div className={styles.statBox}>
-                    <span className={styles.statNum}>{importResult.total_origen}</span>
+                    <span className={styles.statNum}>
+                      {importResult.total_origen}
+                    </span>
                     <span className={styles.statLabel}>Total origen</span>
                   </div>
                   <div className={`${styles.statBox} ${styles.statCreado}`}>
-                    <span className={styles.statNum}>{importResult.creados}</span>
+                    <span className={styles.statNum}>
+                      {importResult.creados}
+                    </span>
                     <span className={styles.statLabel}>Creados</span>
                   </div>
                   <div className={`${styles.statBox} ${styles.statRotado}`}>
-                    <span className={styles.statNum}>{importResult.rotados}</span>
+                    <span className={styles.statNum}>
+                      {importResult.rotados}
+                    </span>
                     <span className={styles.statLabel}>Rotados</span>
                   </div>
                   <div className={styles.statBox}>
-                    <span className={styles.statNum}>{importResult.sin_cambios}</span>
+                    <span className={styles.statNum}>
+                      {importResult.sin_cambios}
+                    </span>
                     <span className={styles.statLabel}>Sin cambios</span>
                   </div>
                   {(importResult.convertidos ?? 0) > 0 && (
                     <div className={`${styles.statBox} ${styles.statCreado}`}>
-                      <span className={styles.statNum}>{importResult.convertidos}</span>
+                      <span className={styles.statNum}>
+                        {importResult.convertidos}
+                      </span>
                       <span className={styles.statLabel}>Convertidos</span>
                     </div>
                   )}
                 </div>
-                {importResult.errores.some((er) => /sin nivel/i.test(er.motivo)) &&
+                {importResult.errores.some((er) =>
+                  /sin nivel/i.test(er.motivo),
+                ) &&
                   !importForm.convertir && (
                     <div className={styles.convertBanner}>
                       <AlertCircle size={16} />
                       <div>
                         <p>
-                          Algunos galenos del origen son <strong>nivelados</strong> y el destino los
-                          tiene <strong>sin nivel</strong>. Por eso no se importaron. Para reemplazarlos
-                          por los niveles del origen, reintentá con la conversión activada.
+                          Algunos galenos del origen son{" "}
+                          <strong>nivelados</strong> y el destino los tiene{" "}
+                          <strong>sin nivel</strong>. Por eso no se importaron.
+                          Para reemplazarlos por los niveles del origen,
+                          reintentá con la conversión activada.
                         </p>
                         <button
                           className={styles.btnPrimary}
                           onClick={() => handleImport(true)}
                           disabled={importing}
                         >
-                          {importing
-                            ? <><Loader2 size={14} className={styles.spin} /> Reintentando…</>
-                            : <><Download size={14} /> Reintentar convirtiendo a nivelado</>}
+                          {importing ? (
+                            <>
+                              <Loader2 size={14} className={styles.spin} />{" "}
+                              Reintentando…
+                            </>
+                          ) : (
+                            <>
+                              <Download size={14} /> Reintentar convirtiendo a
+                              nivelado
+                            </>
+                          )}
                         </button>
                       </div>
                     </div>
@@ -1076,7 +1490,9 @@ export default function NomencladorGalenos() {
                         <AlertCircle size={12} />
                         <span>
                           {err.codigo}
-                          {err.nivel != null ? ` (Nivel ${err.nivel})` : ""}: {err.motivo}
+                          {err.nivel != null
+                            ? ` (Nivel ${err.nivel})`
+                            : ""}: {err.motivo}
                         </span>
                       </div>
                     ))}
@@ -1086,14 +1502,27 @@ export default function NomencladorGalenos() {
             )}
 
             <div className={styles.modalFooter}>
-              <button className={styles.btnGhost} onClick={() => setModalKind(null)}>
+              <button
+                className={styles.btnGhost}
+                onClick={() => setModalKind(null)}
+              >
                 {importResult ? "Cerrar" : "Cancelar"}
               </button>
               {!importResult && (
-                <button className={styles.btnPrimary} onClick={() => handleImport()} disabled={importing}>
-                  {importing
-                    ? <><Loader2 size={14} className={styles.spin} /> Importando…</>
-                    : <><Download size={14} /> Importar</>}
+                <button
+                  className={styles.btnPrimary}
+                  onClick={() => handleImport()}
+                  disabled={importing}
+                >
+                  {importing ? (
+                    <>
+                      <Loader2 size={14} className={styles.spin} /> Importando…
+                    </>
+                  ) : (
+                    <>
+                      <Download size={14} /> Importar
+                    </>
+                  )}
                 </button>
               )}
             </div>
@@ -1105,14 +1534,19 @@ export default function NomencladorGalenos() {
           <Modal
             title={`Historial — ${historialTarget.nombre}`}
             subtitle={[
-              historialTarget.nivel != null ? `Nivel ${historialTarget.nivel}` : null,
+              historialTarget.nivel != null
+                ? `Nivel ${historialTarget.nivel}`
+                : null,
               `OS ${historialTarget.os}`,
-            ].filter(Boolean).join(" · ")}
+            ]
+              .filter(Boolean)
+              .join(" · ")}
             onClose={() => setModalKind(null)}
           >
             {loadingHistorial ? (
               <div className={styles.loadingRow}>
-                <Loader2 size={16} className={styles.spin} /> Cargando historial…
+                <Loader2 size={16} className={styles.spin} /> Cargando
+                historial…
               </div>
             ) : historialRows.length === 0 ? (
               <p className={styles.hintText}>No hay registros históricos.</p>
@@ -1132,19 +1566,32 @@ export default function NomencladorGalenos() {
                   </thead>
                   <tbody>
                     {historialRows.map((h) => (
-                      <tr key={h.id} className={h.activo ? undefined : styles.rowInactive}>
+                      <tr
+                        key={h.id}
+                        className={h.activo ? undefined : styles.rowInactive}
+                      >
                         <td className={styles.metaCell}>{h.vigencia_desde}</td>
-                        <td className={styles.metaCell}>{h.vigencia_hasta ?? "—"}</td>
+                        <td className={styles.metaCell}>
+                          {h.vigencia_hasta ?? "—"}
+                        </td>
                         <td className={styles.priceCell}>
                           {fmt.format(parseMonto(h.valor_unitario) ?? 0)}
                         </td>
-                        <td className={styles.unitCell}>{fmtUnidad(h.unidades_honorarios)}</td>
-                        <td className={styles.unitCell}>{fmtUnidad(h.unidades_ayudante)}</td>
-                        <td className={styles.unitCell}>{fmtUnidad(h.unidades_gastos)}</td>
+                        <td className={styles.unitCell}>
+                          {fmtUnidad(h.unidades_honorarios)}
+                        </td>
+                        <td className={styles.unitCell}>
+                          {fmtUnidad(h.unidades_ayudante)}
+                        </td>
+                        <td className={styles.unitCell}>
+                          {fmtUnidad(h.unidades_gastos)}
+                        </td>
                         <td>
-                          {h.activo
-                            ? <span className={styles.badgeOk}>Activo</span>
-                            : <span className={styles.badgeOff}>Cerrado</span>}
+                          {h.activo ? (
+                            <span className={styles.badgeOk}>Activo</span>
+                          ) : (
+                            <span className={styles.badgeOff}>Cerrado</span>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -1153,7 +1600,12 @@ export default function NomencladorGalenos() {
               </div>
             )}
             <div className={styles.modalFooter}>
-              <button className={styles.btnGhost} onClick={() => setModalKind(null)}>Cerrar</button>
+              <button
+                className={styles.btnGhost}
+                onClick={() => setModalKind(null)}
+              >
+                Cerrar
+              </button>
             </div>
           </Modal>
         )}
@@ -1179,7 +1631,11 @@ export default function NomencladorGalenos() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 16 }}
           >
-            {toast.type === "success" ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
+            {toast.type === "success" ? (
+              <CheckCircle2 size={15} />
+            ) : (
+              <AlertCircle size={15} />
+            )}
             {toast.msg}
           </motion.div>
         )}
@@ -1190,7 +1646,13 @@ export default function NomencladorGalenos() {
 
 // ─── Modal sub-component ──────────────────────────────────────────────────────
 
-function Modal({ title, subtitle, onClose, children, wide }: {
+function Modal({
+  title,
+  subtitle,
+  onClose,
+  children,
+  wide,
+}: {
   title: string;
   subtitle?: string;
   onClose: () => void;

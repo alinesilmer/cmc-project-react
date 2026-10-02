@@ -23,6 +23,7 @@ import {
   listGalenos,
   actualizarPrecioGaleno,
   actualizarPrecioMasivoGaleno,
+  cambiarVisibilidadGaleno,
 } from "../nomenclador.api";
 import type { GalenoOut } from "../nomenclador.types";
 import ConfirmModal from "@/app/components/ui/ConfirmModal/ConfirmModal";
@@ -45,6 +46,8 @@ type Grupo = {
   nombre: string;
   nivelado: boolean;
   niveles: GalenoOut[]; // ordenados por nivel
+  /** Se muestra en el boletín del médico. El toggle pisa todos los niveles juntos. */
+  visible: boolean;
 };
 
 /** Valor unitario actual de un grupo: un único valor si todos los niveles coinciden, si no un rango. */
@@ -100,6 +103,7 @@ export default function ActualizarPreciosGalenos() {
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [saveResults, setSaveResults] = useState<SaveResult[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [toggling, setToggling] = useState<Record<string, boolean>>({}); // keyed by código
 
   const { data: osList = [] } = useObrasSociales();
 
@@ -162,6 +166,7 @@ export default function ActualizarPreciosGalenos() {
           nombre: niveles[0].nombre,
           nivelado: rows.some((r) => r.nivel != null),
           niveles,
+          visible: rows.every((r) => r.visible !== false),
         };
       })
       // El orden del boletín, no el alfabético. Ver `compararGalenos`.
@@ -193,6 +198,40 @@ export default function ActualizarPreciosGalenos() {
   function showToast(type: "success" | "error", msg: string) {
     setToast({ type, msg });
     setTimeout(() => setToast(null), 5000);
+  }
+
+  /** Muestra/oculta el galeno en el boletín del médico. Optimista: si falla, se revierte. */
+  async function toggleVisible(grupo: Grupo) {
+    if (!selectedOsNro) return;
+    const visible = !grupo.visible;
+    const aplicar = (v: boolean) =>
+      setGalenos((prev) =>
+        prev.map((g) => (g.codigo === grupo.codigo ? { ...g, visible: v } : g)),
+      );
+    aplicar(visible);
+    setToggling((prev) => ({ ...prev, [grupo.codigo]: true }));
+    try {
+      await cambiarVisibilidadGaleno({
+        obra_social_nro: selectedOsNro,
+        codigo: grupo.codigo,
+        visible,
+      });
+      showToast(
+        "success",
+        visible
+          ? `${grupo.nombre} vuelve a mostrarse en el boletín de los médicos.`
+          : `${grupo.nombre} ya no se muestra en el boletín de los médicos.`,
+      );
+    } catch {
+      aplicar(!visible);
+      showToast("error", `No se pudo cambiar la visibilidad de ${grupo.nombre}.`);
+    } finally {
+      setToggling((prev) => {
+        const next = { ...prev };
+        delete next[grupo.codigo];
+        return next;
+      });
+    }
   }
 
   async function doSaveAll() {
@@ -420,7 +459,10 @@ export default function ActualizarPreciosGalenos() {
                   En galenos <strong>nivelados</strong>, el valor unitario que
                   ingreses se aplica a <strong>todos los niveles</strong> a la
                   vez. Las unidades de honorarios y ayudante de cada nivel se
-                  conservan tal cual.
+                  conservan tal cual. Con <strong>Visible en boletín</strong>{" "}
+                  apagado, el galeno no aparece en Valores Boletín de los
+                  médicos para esta obra social (no cambia precios ni
+                  facturación).
                 </span>
               </div>
 
@@ -480,6 +522,8 @@ export default function ActualizarPreciosGalenos() {
                   expanded={expanded}
                   onToggleExpand={toggleExpand}
                   saveResults={saveResults}
+                  toggling={toggling}
+                  onToggleVisible={toggleVisible}
                 />
               )}
             </>
@@ -528,6 +572,8 @@ function PriceSection({
   expanded,
   onToggleExpand,
   saveResults,
+  toggling,
+  onToggleVisible,
 }: {
   title: string;
   grupos: Grupo[];
@@ -536,6 +582,8 @@ function PriceSection({
   expanded: Record<string, boolean>;
   onToggleExpand: (codigo: string) => void;
   saveResults: SaveResult[];
+  toggling: Record<string, boolean>;
+  onToggleVisible: (grupo: Grupo) => void;
 }) {
   return (
     <div className={styles.section}>
@@ -551,6 +599,7 @@ function PriceSection({
               <th>Tipo</th>
               <th>Unidad actual</th>
               <th>Nueva unidad</th>
+              <th>Visible en boletín</th>
             </tr>
           </thead>
           <tbody>
@@ -565,13 +614,14 @@ function PriceSection({
               return (
                 <Fragment key={grupo.codigo}>
                   <tr
-                    className={
+                    className={[
                       result?.ok
                         ? styles.rowSaved
                         : isDirty
                           ? styles.rowDirty
-                          : undefined
-                    }
+                          : "",
+                      grupo.visible ? "" : styles.rowOculto,
+                    ].join(" ").trim() || undefined}
                   >
                     <td>
                       {grupo.nivelado ? (
@@ -633,6 +683,28 @@ function PriceSection({
                         )}
                       </div>
                     </td>
+                    <td className={styles.visibleCell}>
+                      <label
+                        className={styles.visibleToggle}
+                        title={
+                          grupo.visible
+                            ? "Se muestra en Valores Boletín de los médicos"
+                            : "Oculto en Valores Boletín de los médicos"
+                        }
+                      >
+                        <input
+                          type="checkbox"
+                          checked={grupo.visible}
+                          disabled={!!toggling[grupo.codigo]}
+                          onChange={() => onToggleVisible(grupo)}
+                          aria-label={`Mostrar ${grupo.nombre} en el boletín de los médicos`}
+                        />
+                        <span className={styles.visibleTrack} />
+                        <span className={styles.visibleLabel}>
+                          {grupo.visible ? "Visible" : "Oculto"}
+                        </span>
+                      </label>
+                    </td>
                   </tr>
 
                   {/* Detalle de niveles (solo lectura). La fila se lee como una
@@ -689,6 +761,7 @@ function PriceSection({
                               </span>
                             )}
                           </td>
+                          <td />
                         </tr>
                       );
                     })}

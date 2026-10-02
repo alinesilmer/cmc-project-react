@@ -235,7 +235,8 @@ export async function fetchBoletinMedico(
       listObrasSociales(),
       consultaPorOS(CODIGO_CONSULTA, fecha),
       consultaPorOS(CODIGO_CONSULTA_SWISS, fecha),
-      fetchGalenosPorOS(fecha),
+      // Sin los galenos ocultados para el médico desde "Actualizar Unidades".
+      fetchGalenosPorOS(fecha, { soloVisibles: true }),
       observacionesPorOS(),
       // Sólo los pediatras piden los cinco códigos de pediatría.
       pediatria ? preciosPediatria(fecha) : Promise.resolve(null),

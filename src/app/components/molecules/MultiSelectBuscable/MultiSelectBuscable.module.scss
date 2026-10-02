@@ -1,0 +1,116 @@
+@use "@/app/styles/all.scss" as *;
+
+.wrap {
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
+  background: $superficie;
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+  border-bottom: 1px solid $linea;
+  background: #fafbfd;
+}
+
+.searchWrap {
+  position: relative;
+  flex: 1 1 180px;
+  min-width: 0;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: $tinta-3;
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  height: 34px;
+  padding: 0 12px 0 30px;
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
+  font-size: 0.84rem;
+  color: $tinta;
+  background: $superficie;
+  outline: none;
+  box-sizing: border-box;
+
+  &:focus { border-color: $acento; }
+  &::placeholder { color: $tinta-3; }
+}
+
+.btnMini {
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
+  background: $superficie;
+  color: $tinta-2;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) { border-color: $acento; color: $acento; }
+  &:disabled { opacity: .5; cursor: not-allowed; }
+}
+
+.list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  font-size: 0.85rem;
+  color: $tinta-2;
+  cursor: pointer;
+  border-bottom: 1px solid $linea;
+
+  &:hover { background: $acento-tinte; }
+
+  input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: $acento;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+}
+
+.label { min-width: 0; overflow-wrap: anywhere; }
+
+.hint {
+  margin-left: auto;
+  color: $tinta-3;
+  font-size: 0.72rem;
+}
+
+.empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 14px 12px;
+  font-size: 0.82rem;
+  color: $tinta-3;
+}
+
+.foot {
+  padding: 6px 12px;
+  border-top: 1px solid $linea;
+  font-size: 0.75rem;
+  color: $tinta-3;
+}

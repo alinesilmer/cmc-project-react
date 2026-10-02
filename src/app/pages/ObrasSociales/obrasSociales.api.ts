@@ -71,7 +71,6 @@ function buildPayload(form: ObraSocialFormData) {
     // Operación: sin esto una obra social nueva quedaba deshabilitada para el
     // padrón por el default del backend (ver auditoría O-02).
     marca: form.marca,
-    ver_valor: form.ver_valor,
     dia_corte: Number(form.dia_corte) || 20,
     contactos,
     direcciones,
@@ -89,7 +88,6 @@ function normalizeListItem(raw: ObraSocial): ObraSocialListItem {
     denominacion: raw.denominacion,
     condicion_iva: raw.condicion_iva ?? null,
     marca: raw.marca ?? null,
-    ver_valor: raw.ver_valor ?? null,
     cuit: raw.cuit ?? null,
     direccion_real: raw.direccion_real ?? null,
     plazo_vencimiento: raw.plazo_vencimiento ?? null,

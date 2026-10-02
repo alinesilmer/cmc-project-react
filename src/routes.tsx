@@ -107,6 +107,7 @@ const ActividadPage = lazy(() => import("./app/pages/Actividad/ActividadPage"));
 const PlanillasMedico = lazy(() => import("./app/pages/Planillas/PlanillasMedico"));
 const PlanillasAdmin = lazy(() => import("./app/pages/Planillas/PlanillasAdmin"));
 const NomencladorCodigos = lazy(() => import("./app/pages/NomencladorNacional/NomencladorCodigos/NomencladorCodigos"));
+const NomencladorCodigoForm = lazy(() => import("./app/pages/NomencladorNacional/NomencladorCodigoForm/NomencladorCodigoForm"));
 const NomencladorNacionalTabla = lazy(() => import("./app/pages/NomencladorNacional/NomencladorNacionalTabla/NomencladorNacionalTabla"));
 const ConsultaValores = lazy(() => import("./app/pages/NomencladorNacional/ConsultaValores/ConsultaValores"));
 const ConsultaPrecios = lazy(() => import("./app/pages/NomencladorNacional/ConsultaPrecios/ConsultaPrecios"));
@@ -118,6 +119,7 @@ const CodigosPorEspecialidad = lazy(
 );
 const NomencladorGalenos = lazy(() => import("./app/pages/NomencladorNacional/NomencladorGalenos/NomencladorGalenos"));
 const ActualizarPreciosGalenos = lazy(() => import("./app/pages/NomencladorNacional/ActualizarPreciosGalenos/ActualizarPreciosGalenos"));
+const CompletarNomencladorNN = lazy(() => import("./app/pages/NomencladorNacional/CompletarNomencladorNN/CompletarNomencladorNN"));
 const ActualizacionesValores = lazy(() => import("./app/pages/NomencladorNacional/ActualizacionesValores/ActualizacionesValores"));
 const ImportarPreciosPdf = lazy(() => import("./app/pages/NomencladorNacional/ImportarPreciosPdf/ImportarPreciosPdf"));
 const AumentoPorcentual = lazy(() => import("./app/pages/NomencladorNacional/AumentoPorcentual/AumentoPorcentual"));
@@ -376,8 +378,11 @@ export default function RootRoutes() {
               <Route element={<RequireScope scope="nomenclador:masivo" />}>
                 <Route path="nomenclador/importar-precios-pdf" element={<ImportarPreciosPdf />} />
                 <Route path="nomenclador/aumento-porcentual" element={<AumentoPorcentual />} />
+                <Route path="herramientas/completar-nomenclador-nn" element={<CompletarNomencladorNN />} />
               </Route>
               <Route element={<RequireScope scope="nomenclador:editar" />}>
+                <Route path="nomenclador/codigos/nuevo" element={<NomencladorCodigoForm />} />
+                <Route path="nomenclador/codigos/:id/editar" element={<NomencladorCodigoForm />} />
                 <Route path="nomenclador/actualizar-precios" element={<ActualizarPreciosGalenos />} />
               </Route>
 

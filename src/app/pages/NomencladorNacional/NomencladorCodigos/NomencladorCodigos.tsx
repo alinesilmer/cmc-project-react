@@ -1,11 +1,10 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Search,
   Plus,
   Edit2,
   Trash2,
-  X as XIcon,
-  Save,
   ListOrdered,
   CheckCircle2,
   AlertCircle,
@@ -20,146 +19,24 @@ import styles from "./NomencladorCodigos.module.scss";
 import ConfirmModal from "@/app/components/ui/ConfirmModal/ConfirmModal";
 import {
   listNomenclador,
-  createNomenclador,
-  updateNomenclador,
   toggleNomencladorActivo,
   deleteNomenclador,
   listNomencladorNacional,
 } from "../nomenclador.api";
-import type {
-  NomencladorOut,
-  NomencladorCreatePayload,
-  NomencladorNacionalOut,
-} from "../nomenclador.types";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type Complejidad = "baja" | "media" | "alta";
-
-type FormState = {
-  codigo: string;
-  categoria: string;
-  complejidad: Complejidad | "";
-  nomenclador_nacional_id: number | null;
-  observacion: string;
-};
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function emptyForm(): FormState {
-  return {
-    codigo: "",
-    categoria: "",
-    complejidad: "",
-    nomenclador_nacional_id: null,
-    observacion: "",
-  };
-}
-
-function itemToForm(item: NomencladorOut): FormState {
-  return {
-    codigo: item.codigo,
-    categoria: item.categoria ?? "",
-    complejidad: (item.complejidad as Complejidad | "") ?? "",
-    nomenclador_nacional_id: item.nomenclador_nacional_id,
-    observacion: item.observacion ?? "",
-  };
-}
+import { usePermisos } from "../../../auth/usePermisos";
+import type { NomencladorOut, NomencladorNacionalOut } from "../nomenclador.types";
 
 const PAGE_SIZE = 50;
 
-// ─── Combo de vínculo con el Nomenclador Nacional ─────────────────────────────
-
-function NomencladorNacionalCombo({
-  opciones,
-  value,
-  onChange,
-}: {
-  opciones: NomencladorNacionalOut[];
-  value: number | null;
-  onChange: (id: number | null) => void;
-}) {
-  const [query, setQuery] = useState("");
-  const [open, setOpen] = useState(false);
-  const wrapRef = useRef<HTMLDivElement>(null);
-
-  const selected = useMemo(() => opciones.find((o) => o.id === value) ?? null, [opciones, value]);
-  const selectedLabel = selected ? `${selected.codigo} — ${selected.descripcion ?? ""}` : "";
-
-  useEffect(() => {
-    if (!open) setQuery(selectedLabel);
-  }, [selectedLabel, open]);
-
-  useEffect(() => {
-    if (!open) return;
-    function onDocClick(e: MouseEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, [open]);
-
-  const filtradas = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q || q === selectedLabel.toLowerCase()) return opciones.slice(0, 40);
-    return opciones
-      .filter(
-        (o) =>
-          o.codigo.toLowerCase().includes(q) ||
-          (o.descripcion ?? "").toLowerCase().includes(q),
-      )
-      .slice(0, 40);
-  }, [opciones, query, selectedLabel]);
-
-  return (
-    <div ref={wrapRef} style={{ position: "relative" }}>
-      <input
-        className={styles.formInput}
-        value={query}
-        placeholder="Buscar código NN por número o descripción…"
-        onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
-        onFocus={(e) => { setOpen(true); e.currentTarget.select(); }}
-      />
-      {value !== null && (
-        <button
-          type="button"
-          className={styles.btnGhost}
-          style={{ position: "absolute", right: 4, top: 4, height: 30, padding: "0 8px" }}
-          onClick={() => { onChange(null); setQuery(""); setOpen(false); }}
-          title="Quitar vínculo"
-        >
-          <XIcon size={13} />
-        </button>
-      )}
-      {open && (
-        <ul className={styles.checkboxList} style={{ position: "absolute", zIndex: 5, background: "#fff", width: "100%", margin: 0, listStyle: "none" }}>
-          {filtradas.length === 0 ? (
-            <li className={styles.hintText}>Sin coincidencias</li>
-          ) : (
-            filtradas.map((o) => (
-              <li
-                key={o.id}
-                className={styles.checkRow}
-                onMouseDown={(ev) => {
-                  ev.preventDefault();
-                  onChange(o.id);
-                  setQuery(`${o.codigo} — ${o.descripcion ?? ""}`);
-                  setOpen(false);
-                }}
-              >
-                <strong>{o.codigo}</strong>&nbsp;{o.descripcion}
-              </li>
-            ))
-          )}
-        </ul>
-      )}
-    </div>
-  );
-}
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
+const RUTA_FORM = "/panel/nomenclador/codigos";
+
 export default function NomencladorCodigos() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { can } = usePermisos();
+  const puedeEditar = can("nomenclador:editar");
   const [items, setItems] = useState<NomencladorOut[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -170,11 +47,6 @@ export default function NomencladorCodigos() {
 
   const [nnOpciones, setNnOpciones] = useState<NomencladorNacionalOut[]>([]);
 
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [form, setForm] = useState<FormState>(emptyForm());
-  const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
-  const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
 
@@ -207,6 +79,15 @@ export default function NomencladorCodigos() {
       .catch(() => setNnOpciones([]));
   }, []);
 
+  // El formulario de alta/edición vuelve acá con su toast de éxito.
+  useEffect(() => {
+    const t = (location.state as { toast?: { type: "success" | "error"; msg: string } } | null)?.toast;
+    if (!t) return;
+    showToast(t.type, t.msg);
+    navigate(location.pathname, { replace: true, state: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     const t = setTimeout(() => {
       load(page, search, filterComplejidad, filterActivo);
@@ -220,64 +101,11 @@ export default function NomencladorCodigos() {
   }
 
   function openCreate() {
-    setEditingId(null);
-    setForm(emptyForm());
-    setErrors({});
-    setModalOpen(true);
+    navigate(`${RUTA_FORM}/nuevo`);
   }
 
   function openEdit(item: NomencladorOut) {
-    setEditingId(item.id);
-    setForm(itemToForm(item));
-    setErrors({});
-    setModalOpen(true);
-  }
-
-  function closeModal() {
-    setModalOpen(false);
-    setEditingId(null);
-  }
-
-  function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
-    setForm((prev) => ({ ...prev, [key]: value }));
-    setErrors((prev) => ({ ...prev, [key]: undefined }));
-  }
-
-  function validate(): boolean {
-    const errs: Partial<Record<keyof FormState, string>> = {};
-    if (!form.codigo.trim()) errs.codigo = "Requerido";
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  }
-
-  async function handleSave() {
-    if (!validate()) return;
-    setSaving(true);
-    try {
-      const payload: NomencladorCreatePayload = {
-        codigo: form.codigo.trim(),
-        categoria: form.categoria.trim() || null,
-        complejidad: (form.complejidad as "baja" | "media" | "alta") || null,
-        nomenclador_nacional_id: form.nomenclador_nacional_id,
-        observacion: form.observacion.trim() || null,
-      };
-
-      if (editingId) {
-        const updated = await updateNomenclador(editingId, payload);
-        setItems((prev) => prev.map((i) => (i.id === editingId ? updated : i)));
-        showToast("success", "Código actualizado.");
-      } else {
-        const created = await createNomenclador(payload);
-        setItems((prev) => [created, ...prev]);
-        showToast("success", "Código creado.");
-      }
-      closeModal();
-    } catch (e: unknown) {
-      const msg = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      showToast("error", msg ?? "No se pudo guardar el código.");
-    } finally {
-      setSaving(false);
-    }
+    navigate(`${RUTA_FORM}/${item.id}/editar`);
   }
 
   async function handleToggle(item: NomencladorOut) {
@@ -368,9 +196,11 @@ export default function NomencladorCodigos() {
             <option value="">Todos</option>
           </select>
 
-          <button className={styles.btnPrimary} onClick={openCreate}>
-            <Plus size={15} /> Nuevo código
-          </button>
+          {puedeEditar && (
+            <button className={styles.btnPrimary} onClick={openCreate}>
+              <Plus size={15} /> Nuevo código
+            </button>
+          )}
         </div>
 
         {/* Table */}
@@ -414,9 +244,11 @@ export default function NomencladorCodigos() {
                     >
                       {item.activo ? <ToggleRight size={13} /> : <ToggleLeft size={13} />}
                     </button>
-                    <button className={styles.btnEdit} onClick={() => openEdit(item)} title="Editar">
-                      <Edit2 size={13} />
-                    </button>
+                    {puedeEditar && (
+                      <button className={styles.btnEdit} onClick={() => openEdit(item)} title="Editar">
+                        <Edit2 size={13} />
+                      </button>
+                    )}
                     <button className={styles.btnDanger} onClick={() => handleDelete(item.id)} title="Eliminar">
                       <Trash2 size={13} />
                     </button>
@@ -446,7 +278,9 @@ export default function NomencladorCodigos() {
                 {item.complejidad && <ComplejidadBadge v={item.complejidad} />}
               </div>
               <div className={styles.cardActions}>
-                <button className={styles.btnEdit} onClick={() => openEdit(item)}><Edit2 size={13} /> Editar</button>
+                {puedeEditar && (
+                  <button className={styles.btnEdit} onClick={() => openEdit(item)}><Edit2 size={13} /> Editar</button>
+                )}
                 <button className={styles.btnDanger} onClick={() => handleDelete(item.id)}><Trash2 size={13} /> Eliminar</button>
               </div>
             </div>
@@ -466,109 +300,6 @@ export default function NomencladorCodigos() {
           </div>
         </div>
       </div>
-
-      {/* ── Modal ── */}
-      <AnimatePresence>
-        {modalOpen && (
-          <motion.div
-            className={styles.backdrop}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className={styles.modal}
-              initial={{ opacity: 0, scale: 0.96, y: 12 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 12 }}
-              transition={{ duration: 0.16 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className={styles.modalHeader}>
-                <div>
-                  <h2 className={styles.modalTitle}>{editingId ? "Editar código" : "Nuevo código"}</h2>
-                  <p className={styles.modalSubtitle}>Catálogo maestro del Colegio</p>
-                </div>
-                <button className={styles.modalClose} onClick={closeModal}><XIcon size={18} /></button>
-              </div>
-
-              <div className={styles.modalBody}>
-                <p className={styles.hintText}>
-                  Descripción, especialidades habilitadas y "sin restricción" se cargan por obra
-                  social, desde el modal de Valores (Por Obra Social) — no acá.
-                </p>
-
-                <div className={styles.formRow2}>
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>Código <span className={styles.req}>*</span></label>
-                    <input
-                      className={`${styles.formInput} ${errors.codigo ? styles.inputError : ""}`}
-                      value={form.codigo}
-                      onChange={(e) => setField("codigo", e.target.value)}
-                      placeholder="ej: 420101"
-                    />
-                    {errors.codigo && <span className={styles.errorMsg}>{errors.codigo}</span>}
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>Categoría</label>
-                    <select
-                      className={styles.formSelect}
-                      value={form.categoria}
-                      onChange={(e) => setField("categoria", e.target.value)}
-                    >
-                      <option value="">— Sin especificar —</option>
-                      <option value="Consulta">Consulta</option>
-                      <option value="Practica">Práctica</option>
-                      <option value="Honorarios individuales">Honorarios individuales</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className={styles.formRow2}>
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>Complejidad</label>
-                    <select
-                      className={styles.formSelect}
-                      value={form.complejidad}
-                      onChange={(e) => setField("complejidad", e.target.value as Complejidad | "")}
-                    >
-                      <option value="">— Sin especificar —</option>
-                      <option value="baja">Baja</option>
-                      <option value="media">Media</option>
-                      <option value="alta">Alta</option>
-                    </select>
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>Nomenclador Nacional vinculado</label>
-                    <NomencladorNacionalCombo
-                      opciones={nnOpciones}
-                      value={form.nomenclador_nacional_id}
-                      onChange={(id) => setField("nomenclador_nacional_id", id)}
-                    />
-                  </div>
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>Observación</label>
-                  <textarea
-                    className={styles.formTextarea}
-                    value={form.observacion}
-                    onChange={(e) => setField("observacion", e.target.value)}
-                    placeholder="Observaciones opcionales…"
-                  />
-                </div>
-              </div>
-
-              <div className={styles.modalFooter}>
-                <button className={styles.btnGhost} onClick={closeModal}>Cancelar</button>
-                <button className={styles.btnPrimary} onClick={handleSave} disabled={saving}>
-                  {saving ? <><span className={styles.spinner} /> Guardando…</> : <><Save size={15} /> Guardar</>}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Toast */}
       <AnimatePresence>

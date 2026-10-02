@@ -42,6 +42,7 @@ interface ApiGaleno {
   vigencia_desde: string | null;
   observacion: string | null;
   activo: boolean;
+  visible?: boolean;
 }
 
 const aNumero = (v: number | string | null | undefined): number => {
@@ -82,15 +83,21 @@ const esMasReciente = (g: ApiGaleno, previo: ApiGaleno): boolean => {
  * social tiene varias vigencias que cubren la fecha para el mismo código y
  * nivel, las devuelve a todas. Vale la última, que es el precio en curso; las
  * anteriores quedaron abiertas por no habérseles cerrado `vigencia_hasta`.
+ *
+ * `soloVisibles` descarta los galenos ocultados desde "Actualizar Unidades"
+ * (`visible = false`). Lo usa SOLO el boletín del médico; el del Colegio los
+ * sigue mostrando todos.
  */
 export async function fetchGalenosPorOS(
-  fecha: string = hoyISO()
+  fecha: string = hoyISO(),
+  { soloVisibles = false }: { soloVisibles?: boolean } = {}
 ): Promise<GalenosPorOS> {
   const filas = await getJSON<ApiGaleno[]>("/api/galenos/", { vigente_a: fecha });
 
   const mejor = new Map<string, ApiGaleno>();
   for (const g of filas) {
     if (!g.obra_social_nro || g.activo === false) continue;
+    if (soloVisibles && g.visible === false) continue;
     if (aNumero(g.valor_unitario) <= 0) continue;
 
     const k = clave(g);

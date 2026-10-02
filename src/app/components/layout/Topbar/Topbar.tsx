@@ -15,7 +15,7 @@ import {
   PencilRuler, ShieldUser, Monitor, Receipt, CalendarDays,
   LogOut, CircleUserRound, ChevronDown, Menu, X, Layers,
   Smartphone, Gift, Inbox, Megaphone, ShieldCheck,
-  BarChart3, Stethoscope, UserSearch, Globe,
+  BarChart3, Stethoscope, UserSearch, Globe, DatabaseZap,
 } from "lucide-react";
 
 import styles from "./Topbar.module.scss";
@@ -213,6 +213,14 @@ const TOP_NAV: TopEntry[] = [
           // `contenido:editar` es el permiso que el backend ya exige para
           // noticias y avisos, así que el médico no lo ve.
           { path: `${base}/sitio`, icon: Globe, label: "Contenido del sitio", perms: ["contenido:editar"] },
+        ],
+      },
+      {
+        heading: "Nomenclador",
+        items: [
+          // Completa galenos base + valores NN faltantes de una OS (nueva o
+          // existente) en $0, sin tocar lo que ya tiene.
+          { path: `${base}/herramientas/completar-nomenclador-nn`, icon: DatabaseZap, label: "Completar nomenclador NN", perms: ["nomenclador:masivo"] },
         ],
       },
       {

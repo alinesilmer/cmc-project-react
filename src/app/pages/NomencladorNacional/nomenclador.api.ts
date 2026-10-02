@@ -9,6 +9,8 @@ import {
 } from "@/app/shared/lib/http";
 import type {
   NomencladorOut,
+  NomencladorDetalleOut,
+  AplicarEspecialidadesResult,
   NomencladorListParams,
   NomencladorCreatePayload,
   NomencladorUpdatePayload,
@@ -29,12 +31,16 @@ import type {
   GalenoImportarLotePayload,
   GalenoImportarLoteResult,
   GalenoPlantillaOut,
+  GalenoVisibilidadResult,
+  ComponentesNNSugeridos,
+  CompletarBaseNNResult,
   ActualizacionMasivaResult,
   ValorOut,
   ValorCreatePayload,
   ValorCreateMultiPayload,
   ValorUpdatePayload,
   ValorActualizarPayload,
+  ValorNucleoPayload,
   TablaValorItem,
   ViaPractica,
   CodigoPorEspecialidadOut,
@@ -42,9 +48,14 @@ import type {
   ImportarCSVResult,
   ActualizarPorcentajePayload,
   RevertirActualizacionPayload,
+  AumentoPorcentualResult,
   ValorDocumentoOut,
   MesActualizaciones,
   ResumenVigenciaOut,
+  ObraSocialFamiliaItem,
+  ReplicarFamiliaResult,
+  ReplicarValoresFamiliaPayload,
+  ReplicarGalenoFamiliaPayload,
 } from "./nomenclador.types";
 
 // ─── Nomenclador ──────────────────────────────────────────────────────────────
@@ -54,8 +65,8 @@ export const listNomenclador = (
 ): Promise<NomencladorOut[]> =>
   getJSON<NomencladorOut[]>("/api/nomenclador/", params);
 
-export const getNomencladorById = (id: number): Promise<NomencladorOut> =>
-  getJSON<NomencladorOut>(`/api/nomenclador/${id}`);
+export const getNomencladorById = (id: number): Promise<NomencladorDetalleOut> =>
+  getJSON<NomencladorDetalleOut>(`/api/nomenclador/${id}`);
 
 // Solo los códigos del catálogo (para auto-detección/validación en importaciones).
 export const listNomencladorCodigos = (): Promise<string[]> =>
@@ -63,14 +74,33 @@ export const listNomencladorCodigos = (): Promise<string[]> =>
 
 export const createNomenclador = (
   payload: NomencladorCreatePayload,
-): Promise<NomencladorOut> =>
-  postJSON<NomencladorOut>("/api/nomenclador/", payload);
+): Promise<NomencladorDetalleOut> =>
+  postJSON<NomencladorDetalleOut>("/api/nomenclador/", payload);
 
 export const updateNomenclador = (
   id: number,
   payload: NomencladorUpdatePayload,
-): Promise<NomencladorOut> =>
-  putJSON<NomencladorOut>(`/api/nomenclador/${id}`, payload);
+): Promise<NomencladorDetalleOut> =>
+  putJSON<NomencladorDetalleOut>(`/api/nomenclador/${id}`, payload);
+
+/** Aplica la plantilla YA guardada del código a las obras sociales dadas. */
+/**
+ * Timeout para las operaciones masivas, que pueden tardar minutos contra la
+ * base de prod. Ejemplo: aplicar el 420351 a 65 O.S. × ~35 especialidades
+ * creó 2.260 filas en ~100 s. Con el default de 15 s el navegador cortaba y
+ * mostraba error mientras el backend terminaba bien.
+ */
+const TIMEOUT_MASIVO_MS = 10 * 60_000;
+
+export const aplicarEspecialidades = (
+  id: number,
+  obra_social_nros: number[],
+): Promise<AplicarEspecialidadesResult> =>
+  postJSON<AplicarEspecialidadesResult>(
+    `/api/nomenclador/${id}/aplicar-especialidades`,
+    { obra_social_nros },
+    { timeout: TIMEOUT_MASIVO_MS },
+  );
 
 export const toggleNomencladorActivo = (
   id: number,
@@ -171,6 +201,14 @@ export const actualizarPrecioMasivoGaleno = (
     payload,
   );
 
+/** Muestra/oculta el galeno (todos sus niveles) de una OS en el boletín del médico. */
+export const cambiarVisibilidadGaleno = (payload: {
+  obra_social_nro: number;
+  codigo: string;
+  visible: boolean;
+}): Promise<GalenoVisibilidadResult> =>
+  patchJSON<GalenoVisibilidadResult>("/api/galenos/visibilidad", payload);
+
 export const deleteGaleno = (id: number): Promise<void> =>
   delJSON<void>(`/api/galenos/${id}`);
 
@@ -234,22 +272,25 @@ export const actualizarValor = (
 
 // Aumento/baja porcentual lineal sobre los valores fijos de una OS (por origen),
 // opcionalmente acotado por códigos o por rango. Devuelve actualizados/omitidos/errores.
+// Aumento porcentual de valores fijos y/o galenos. Con `dry_run` es la vista previa.
 export const actualizarPorcentajeValores = (
   payload: ActualizarPorcentajePayload,
-): Promise<ActualizacionMasivaResult> =>
-  postJSON<ActualizacionMasivaResult>(
+): Promise<AumentoPorcentualResult> =>
+  postJSON<AumentoPorcentualResult>(
     "/api/valores_nm/actualizar_porcentaje",
     payload,
+    { timeout: TIMEOUT_MASIVO_MS },
   );
 
-// Revierte la última actualización: elimina los valores con esa vigencia_desde y
-// reactiva los anteriores de cada variante.
+// Revierte el aumento de una fecha: solo valores abiertos por un aumento y galenos
+// rotados ese día. Con `dry_run` muestra qué se revertiría.
 export const revertirActualizacionValores = (
   payload: RevertirActualizacionPayload,
-): Promise<ActualizacionMasivaResult> =>
-  postJSON<ActualizacionMasivaResult>(
+): Promise<AumentoPorcentualResult> =>
+  postJSON<AumentoPorcentualResult>(
     "/api/valores_nm/revertir_ultima_actualizacion",
     payload,
+    { timeout: TIMEOUT_MASIVO_MS },
   );
 
 // Cantidad de valores ya cargados para una OS en una vigencia exacta (guard anti doble carga).
@@ -323,6 +364,13 @@ export const updateValorMetadata = (
   id: number,
   payload: ValorUpdatePayload,
 ): Promise<ValorOut> => putJSON<ValorOut>(`/api/valores_nm/${id}`, payload);
+
+export const updateNucleoPar = (
+  obra_social_nro: number,
+  nomenclador_id: number,
+  payload: ValorNucleoPayload,
+): Promise<ValorOut[]> =>
+  putJSON<ValorOut[]>(`/api/valores_nm/par/${obra_social_nro}/${nomenclador_id}`, payload);
 
 export const deleteValor = (id: number): Promise<void> =>
   delJSON<void>(`/api/valores_nm/${id}`);
@@ -398,3 +446,47 @@ export const eliminarValorDocumento = (id: number): Promise<void> =>
  */
 export const getActualizacionesPorMes = (): Promise<MesActualizaciones[]> =>
   getJSON<MesActualizaciones[]>("/api/valores_nm/actualizaciones");
+
+// ─── Replicar en obras sociales de la misma familia ──────────────────────────
+
+/**
+ * Completa los 7 galenos base y los NN que le falten a una OS, sin tocar lo que
+ * ya tiene. `dry_run` = vista previa (no guarda nada).
+ */
+export const completarBaseNN = (
+  obra_social_nro: number,
+  dry_run: boolean,
+): Promise<CompletarBaseNNResult> =>
+  postJSON<CompletarBaseNNResult>(
+    "/api/valores_nm/completar_base_nn",
+    { obra_social_nro, dry_run },
+    { timeout: TIMEOUT_MASIVO_MS },
+  );
+
+/** Componentes de un NN para precargar el alta: misma regla que la generación automática. */
+export const getComponentesNN = (
+  obra_social_nro: number,
+  nomenclador_id: number,
+): Promise<ComponentesNNSugeridos> =>
+  getJSON<ComponentesNNSugeridos>("/api/valores_nm/componentes_nn", {
+    obra_social_nro,
+    nomenclador_id,
+  });
+
+/** Las OTRAS obras sociales activas de la familia (planes de la misma empresa). */
+export const getFamiliaObraSocial = (nro: number): Promise<ObraSocialFamiliaItem[]> =>
+  getJSON<ObraSocialFamiliaItem[]>(`/api/obras_social/familia/${nro}`);
+
+export const replicarValoresEnFamilia = (
+  payload: ReplicarValoresFamiliaPayload,
+): Promise<ReplicarFamiliaResult> =>
+  postJSON<ReplicarFamiliaResult>("/api/valores_nm/replicar_en_familia", payload, {
+    timeout: TIMEOUT_MASIVO_MS,
+  });
+
+export const replicarGalenoEnFamilia = (
+  payload: ReplicarGalenoFamiliaPayload,
+): Promise<ReplicarFamiliaResult> =>
+  postJSON<ReplicarFamiliaResult>("/api/galenos/replicar_en_familia", payload, {
+    timeout: TIMEOUT_MASIVO_MS,
+  });

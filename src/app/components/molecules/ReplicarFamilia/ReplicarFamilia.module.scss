@@ -1,0 +1,127 @@
+@use "@/app/styles/all.scss" as *;
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid $linea;
+  border-radius: $radio-md;
+  background: $superficie-2;
+  min-width: 0;
+}
+
+.blockOn {
+  border-color: $acento;
+  background: $acento-lavado;
+}
+
+.toggle {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  cursor: pointer;
+
+  input {
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+    accent-color: $acento;
+    flex-shrink: 0;
+  }
+
+  span {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  strong {
+    font-size: 0.875rem;
+    color: $tinta;
+  }
+
+  small {
+    font-size: 0.78rem;
+    color: $tinta-3;
+    line-height: 1.45;
+  }
+}
+
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 11px 13px;
+  border-radius: $radio-md;
+  font-size: 0.85rem;
+}
+
+.resultOk {
+  background: $ok-bg;
+  border: 1px solid $ok-linea;
+  color: $ok;
+}
+
+.resultWarn {
+  background: #fffbeb;
+  border: 1px solid #fcd9a0;
+  color: #92400e;
+}
+
+.resultErr {
+  background: $peligro-bg;
+  border: 1px solid $peligro-linea;
+  color: $peligro;
+}
+
+.resultList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: $tinta-2;
+
+  li {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    flex-wrap: wrap;
+  }
+}
+
+.badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: $radio-xs;
+  white-space: nowrap;
+}
+
+.badge_replicado {
+  background: $ok-bg;
+  color: $ok;
+  border: 1px solid $ok-linea;
+}
+
+.badge_creado {
+  background: $acento-lavado;
+  color: $acento;
+  border: 1px solid $linea-2;
+}
+
+.badge_omitido {
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fcd9a0;
+}
+
+.badge_error {
+  background: $peligro-bg;
+  color: $peligro;
+  border: 1px solid $peligro-linea;
+}
