@@ -1,176 +1,63 @@
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { MessageCircle as FiMessageCircle, Mail as FiMail } from "lucide-react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Handshake, ShieldCheck } from "lucide-react";
+import ContenedorPagina from "../../components/UI/ContenedorPagina/ContenedorPagina";
+import CabeceraFresca from "../../components/UI/CabeceraFresca/CabeceraFresca";
+import Buscador from "../../components/UI/Buscador/Buscador";
+import BandaInvitacion from "../../components/UI/BandaInvitacion/BandaInvitacion";
 import ObrasSociales from "../../components/Servicios/ObrasSociales/ObrasSociales";
-import type { ObraSocial } from "../../components/Servicios/ObrasSociales/ObrasSociales";
-import Button from "../../components/UI/Button/Button";
-import Hero from "../../components/UI/Hero/Hero";
-import { useTituloPagina } from "../../lib/useTituloPagina";
-import { http } from "@/app/shared/lib/http";
-import styles from "./convenios.module.scss";
+import { useTituloPagina } from "../../hooks/useTituloPagina";
+import { listObrasSocialesPublicas, OBRAS_SOCIALES_KEY } from "../../lib/obrasSociales.client";
+import { CONTACTO, CONVENIO } from "../../lib/contacto";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-const EMAIL = "auditoriacolegiomedico23@gmail.com";
-const WA_NUMBER = "543794252323";
-const WA_LINK = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(
-  "Hola, quisiera información para firmar convenio con el Colegio Médico de Corrientes, por favor. ¡Gracias!."
-)}`;
-const MAILTO_LINK = `mailto:${EMAIL}?subject=${encodeURIComponent(
-  "Carta de presentación - Convenio"
-)}&body=${encodeURIComponent(
-  "Hola, adjunto carta de presentación para evaluar convenio. Gracias."
-)}`;
-
-const EASE = [0.22, 1, 0.36, 1] as const;
-
-// ─── Normalizer — matches backend shape: { NRO_OBRA_SOCIAL, NOMBRE, ... } ────
-function normalizeObrasSociales(data: unknown): ObraSocial[] {
-  const items: unknown[] = Array.isArray(data)
-    ? data
-    : Array.isArray((data as any)?.items)
-    ? (data as any).items
-    : Array.isArray((data as any)?.results)
-    ? (data as any).results
-    : [];
-
-  return items
-    .map((item: any, i: number): ObraSocial | null => {
-      const nombre = String(
-        item?.NOMBRE ??
-        item?.nombre ??
-        item?.OBRA_SOCIAL ??
-        item?.obra_social ??
-        item?.name ??
-        item?.razon_social ??
-        ""
-      ).trim();
-      if (!nombre) return null;
-
-      const id = String(
-        item?.NRO_OBRA_SOCIAL ??
-        item?.NRO_OBRASOCIAL ??
-        item?.nro_obra_social ??
-        item?.id ??
-        item?.ID ??
-        `os-${i}`
-      );
-
-      return { id, nombre, href: item?.href ?? item?.url ?? undefined };
-    })
-    .filter((x): x is ObraSocial => x !== null);
-}
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function ConveniosPage() {
-  const [obras, setObras] = useState<ObraSocial[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let aborted = false;
-
-    http
-      .get("/api/obras_social/")
-      .then(({ data }) => {
-        if (aborted) return;
-        setObras(normalizeObrasSociales(data));
-        setLoading(false);
-      })
-      .catch(() => {
-        if (aborted) return;
-        setError("No se pudieron cargar los convenios. Intente más tarde.");
-        setLoading(false);
-      });
-
-    return () => { aborted = true; };
-  }, []);
-
   useTituloPagina("Convenios");
+  const [busqueda, setBusqueda] = useState("");
+
+  const { data: obras = [], isPending, isError } = useQuery({
+    queryKey: OBRAS_SOCIALES_KEY,
+    queryFn: ({ signal }) => listObrasSocialesPublicas(signal),
+    staleTime: 10 * 60 * 1000,
+  });
+
+  // El número sale de la lista real; mientras carga, sólo la palabra.
+  const destacados = [
+    { icono: Handshake, texto: obras.length > 0 ? `${obras.length} convenios` : "Convenios" },
+    { icono: ShieldCheck, texto: "Vigentes" },
+  ];
 
   return (
-    <div className={styles.page}>
-      <Hero
-        title="Convenios"
-        subtitle="Obras sociales con acuerdo vigente con el Colegio Médico de Corrientes"
+    <ContenedorPagina>
+      <CabeceraFresca
+        titulo={
+          <>
+            Obras <span>sociales</span>
+          </>
+        }
+        bajada="Con convenio vigente."
+        lema={
+          <>
+            Más convenios, <em>más pacientes.</em>
+          </>
+        }
+        destacados={destacados}
+        compacto
+      >
+        <Buscador valor={busqueda} onCambio={setBusqueda} placeholder="Buscar obra social…" etiqueta="Buscar obra social" />
+      </CabeceraFresca>
+
+      <ObrasSociales obras={obras} busqueda={busqueda} loading={isPending} error={isError} />
+
+      <BandaInvitacion
+        titulo={
+          <>
+            ¿Sos una obra social? <em>Sumate.</em>
+          </>
+        }
+        bajada="Firmá convenio con el Colegio: escribinos o mandá tu carta de presentación."
+        whatsapp={{ numero: CONTACTO.whatsapp.sede, visible: CONTACTO.telefono.corto, mensaje: CONVENIO.mensajeWhatsApp }}
+        email={{ direccion: CONVENIO.email, asunto: CONVENIO.asuntoEmail, cuerpo: CONVENIO.cuerpoEmail }}
       />
-
-      {/* ── Obras sociales list ───────────────────────────────────────────── */}
-      <ObrasSociales
-        titulo="Obras Sociales"
-        subtitulo="Convenios vigentes con el Colegio Médico de Corrientes"
-        obras={obras}
-        loading={loading}
-        error={error}
-      />
-
-      {/* ── CTA band ─────────────────────────────────────────────────────── */}
-      <section className={styles.ctaBand}>
-        <div className={styles.ctaContainer}>
-
-          <motion.div
-            className={styles.ctaLeft}
-            initial={{ opacity: 0, x: -20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.65, ease: EASE }}
-          >
-            <h2 className={styles.ctaTitle}>
-              ¿Sos una Obra Social que quiere firmar convenio con nosotros?
-            </h2>
-            <p className={styles.ctaLead}>
-              Si sos una Obra Social o empresa interesada en establecer un convenio,
-              contactanos por WhatsApp o enviá tu carta de presentación por correo.
-            </p>
-
-           
-          </motion.div>
-
-          <motion.div
-            className={styles.ctaRight}
-            initial={{ opacity: 0, x: 20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.65, ease: EASE, delay: 0.1 }}
-          >
-            <div className={styles.ctaCard}>
-              <div className={styles.ctaOption}>
-                <div className={styles.ctaOptionIcon} aria-hidden="true">
-                  <FiMessageCircle />
-                </div>
-                <div className={styles.ctaOptionBody}>
-                  <p className={styles.ctaOptionLabel}>WhatsApp</p>
-                  <p className={styles.ctaOptionDesc}>
-                    Contacto directo y rápido con nuestro equipo
-                  </p>
-                </div>
-              </div>
-
-              <a href={WA_LINK} target="_blank" rel="noopener noreferrer" className={styles.ctaLink}>
-                <Button variant="primary" size="large" fullWidth>
-                  Quiero firmar convenio
-                </Button>
-              </a>
-
-              <div className={styles.divider} aria-hidden="true">
-                <span>o también podés escribirnos</span>
-              </div>
-
-              <div className={styles.ctaOption}>
-                <div className={styles.ctaOptionIcon} aria-hidden="true">
-                  <FiMail />
-                </div>
-                <div className={styles.ctaOptionBody}>
-                  <p className={styles.ctaOptionLabel}>Correo electrónico</p>
-                  <a href={MAILTO_LINK} className={styles.ctaEmail}>
-                    {EMAIL}
-                  </a>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-
-        </div>
-      </section>
-    </div>
+    </ContenedorPagina>
   );
 }

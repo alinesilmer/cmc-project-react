@@ -1,364 +1,74 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { User as FiUser, Menu as FiMenu, X as FiX, ChevronDown as FiChevronDown } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { User, Menu, X } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
+import NavEscritorio from "./NavEscritorio";
+import NavMovil from "./NavMovil";
+import { useIrAlSistema } from "../../../hooks/useIrAlSistema";
+import logo from "../../../assets/images/logoCMC-web.png";
 import styles from "./Header.module.scss";
-import logo from "../../../assets/images/logoCMC.png";
-import { useAuth } from "../../../../app/auth/AuthProvider";
-import { isWebEditor } from "../../../../app/auth/roles";
-import { http } from "@/app/shared/lib/http"; 
 
-// === helper para SSO hacia el legacy usando VITE_URL_BASE_LEGACY ===
-const LEGACY_BASE =
-  (import.meta.env.VITE_URL_BASE_LEGACY as string | undefined) ??
-  "https://legacy.colegiomedicocorrientes.com"; 
-
-const legacyFallback = `${LEGACY_BASE.replace(/\/+$/, "")}/principal.php`;
-
+/**
+ * Cabecera del sitio: el nombre, el menú y el acceso, fija arriba.
+ */
 export default function Header() {
   const { pathname } = useLocation();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [openDropdown, setOpenDropdown] = useState<
-    null | "nosotros" | "servicios"
-  >(null);
-  const [mobileOpen, setMobileOpen] = useState({
-    nosotros: false,
-    servicios: false,
-  });
-  const [solid, setSolid] = useState(pathname !== "/");
-  const { user } = useAuth();
-
-  const [legacyUrl, setLegacyUrl] = useState<string>(legacyFallback);
-  useEffect(() => {
-    // si está logueado y NO es web editor, buscamos link SSO al legacy
-    if (user && !isWebEditor(user)) {
-      http
-        .get<{ url: string }>("/auth/legacy/sso-link", {
-          params: { next: "/principal.php" },
-          withCredentials: true,
-        })
-        .then(({ data }) => {
-          if (data?.url) setLegacyUrl(data.url);
-        })
-        .catch(() => setLegacyUrl(legacyFallback));
-    } else {
-      setLegacyUrl(legacyFallback);
-    }
-  }, [user]);
-
-  const targetHref = !user
-    ? "/panel/login"
-    : isWebEditor(user)
-    ? "/panel/sitio"
-    : legacyUrl;
+  const [menuAbierto, setMenuAbierto] = useState(false);
+  const [scrolleado, setScrolleado] = useState(false);
+  const { ir } = useIrAlSistema();
 
   useEffect(() => {
-    const onScroll = () => {
-      if (pathname !== "/") {
-        setSolid(true);
-        return;
-      }
-      const threshold = window.innerHeight - 80;
-      setSolid(window.scrollY >= threshold);
-    };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    const medir = () => setScrolleado(window.scrollY > 40);
+    medir();
+    window.addEventListener("scroll", medir, { passive: true });
+    return () => window.removeEventListener("scroll", medir);
+  }, []);
+
+  // Cambiar de página cierra el menú del celular.
+  useEffect(() => {
+    setMenuAbierto(false);
   }, [pathname]);
 
-  const closeAll = () => {
-    setMenuOpen(false);
-    setOpenDropdown(null);
-    setMobileOpen({ nosotros: false, servicios: false });
+  const ingresar = () => {
+    setMenuAbierto(false);
+    void ir();
   };
 
   return (
-    <>
-      <header className={`${styles.header} ${solid ? "" : styles.transparent}`}>
-        <div className={styles.container}>
-          <Link to="/" className={styles.logo} onClick={closeAll}>
-            <div className={styles.logoIcon}>
-              <img src={logo} alt="Logo" width={400} height={500} />
-            </div>
-          </Link>
+    <header className={`${styles.header} ${scrolleado ? styles.scrolleado : ""}`}>
+      <div className={styles.contenedor}>
+        <Link to="/" className={styles.marca} aria-label="Colegio Médico de Corrientes, inicio">
+          <img src={logo} alt="" width={52} height={52} />
+          <span className={styles.nombre}>
+            Colegio Médico
+            <small>de Corrientes</small>
+          </span>
+        </Link>
 
-          <nav className={styles.desktopNav}>
-            <Link to="/" className={styles.navLink} onClick={closeAll}>
-              Inicio
-            </Link>
-            <Link to="/nosotros" className={styles.navLink} onClick={closeAll}>
-              Nosotros
-            </Link>
+        <NavEscritorio />
 
-            <div
-              className={`${styles.navItem} ${styles.hasDropdown}`}
-              onMouseEnter={() => setOpenDropdown("servicios")}
-              onMouseLeave={() => setOpenDropdown(null)}
-            >
-              <div className={styles.parentRow}>
-                <Link
-                  to="/servicios"
-                  className={styles.navLink}
-                  onClick={closeAll}
-                >
-                  Servicios
-                </Link>
-                <button
-                  className={styles.caretBtn}
-                  aria-haspopup="true"
-                  aria-expanded={openDropdown === "servicios"}
-                  aria-controls="dd-servicios"
-                  onClick={() =>
-                    setOpenDropdown((v) =>
-                      v === "servicios" ? null : "servicios"
-                    )
-                  }
-                >
-                  <FiChevronDown aria-hidden="true" />
-                </button>
-              </div>
-
-              <AnimatePresence>
-                {openDropdown === "servicios" && (
-                  <motion.ul
-                    id="dd-servicios"
-                    className={styles.dropdown}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 8 }}
-                    transition={{ duration: 0.18 }}
-                  >
-                    <li>
-                      <Link
-                        to="/socios"
-                        className={styles.subLink}
-                        onClick={closeAll}
-                      >
-                        Quiero ser Socio
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/seguros"
-                        className={styles.subLink}
-                        onClick={closeAll}
-                      >
-                        Seguro médico
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/convenios"
-                        className={styles.subLink}
-                        onClick={closeAll}
-                      >
-                        Convenios
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/quinta"
-                        className={styles.subLink}
-                        onClick={closeAll}
-                      >
-                        Quinta
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/prevencion-salud"
-                        className={styles.subLink}
-                        onClick={closeAll}
-                      >
-                        Prevención Salud
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/preguntas-frecuentes"
-                        className={styles.subLink}
-                        onClick={closeAll}
-                      >
-                        Preguntas Frecuentes
-                      </Link>
-                    </li>
-                  </motion.ul>
-                )}
-              </AnimatePresence>
-            </div>
-
-            <Link to="/beneficios" className={styles.navLink} onClick={closeAll}>
-              Beneficios
-            </Link>
-            <Link to="/cursos" className={styles.navLink} onClick={closeAll}>
-              Cursos/Capacitaciones
-            </Link>
-            <Link to="/noticias" className={styles.navLink} onClick={closeAll}>
-              Noticias
-            </Link>
-            <Link
-              to="/medicos-asociados"
-              className={styles.navLink}
-              onClick={closeAll}
-            >
-              Médicos Asociados
-            </Link>
-            <Link to="/contacto" className={styles.navLink} onClick={closeAll}>
-              Contacto
-            </Link>
-          </nav>
-
-          <div className={styles.actions}>
-            
-            {user && (
-              <a
-                href={targetHref}
-                className={styles.loginLink}
-                onClick={closeAll}
-              >
-                <FiUser />
-              </a>
-            )}
-          </div>
+        <div className={styles.derecha}>
+          <button type="button" className={styles.ingresar} onClick={ingresar}>
+            <User aria-hidden="true" />
+            <span>Ingresar</span>
+          </button>
 
           <button
-            className={styles.menuToggle}
-            onClick={() => setMenuOpen((v) => !v)}
-            aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
-            aria-expanded={menuOpen}
+            type="button"
+            className={styles.hamburguesa}
+            onClick={() => setMenuAbierto((v) => !v)}
+            aria-label={menuAbierto ? "Cerrar menú" : "Abrir menú"}
+            aria-expanded={menuAbierto}
             aria-controls="mobile-menu"
           >
-            {menuOpen ? <FiX /> : <FiMenu />}
+            {menuAbierto ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
           </button>
         </div>
+      </div>
 
-        <AnimatePresence>
-          {menuOpen && (
-            <motion.div
-              id="mobile-menu"
-              className={styles.mobileMenu}
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.25 }}
-            >
-              <Link to="/" onClick={closeAll} className={styles.mobileLink}>
-                Inicio
-              </Link>
-              <Link
-                to="/nosotros"
-                onClick={closeAll}
-                className={styles.mobileLink}
-              >
-                Nosotros
-              </Link>
-
-              <div className={styles.mobileGroup}>
-                <button
-                  className={styles.mobileGroupBtn}
-                  onClick={() =>
-                    setMobileOpen((p) => ({ ...p, servicios: !p.servicios }))
-                  }
-                  aria-expanded={mobileOpen.servicios}
-                  aria-controls="m-servicios"
-                >
-                  <span>Servicios</span>
-                  <FiChevronDown
-                    className={`${styles.chevron} ${
-                      mobileOpen.servicios ? styles.chevronOpen : ""
-                    }`}
-                    aria-hidden="true"
-                  />
-                </button>
-
-                <AnimatePresence initial={false}>
-                  {mobileOpen.servicios && (
-                    <motion.div
-                      id="m-servicios"
-                      className={styles.mobileSubmenu}
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <Link
-                        to="/socios"
-                        className={styles.subLink}
-                        onClick={closeAll}
-                      >
-                        Quiero ser Socio
-                      </Link>
-                      <Link to="/seguros" onClick={closeAll}>
-                        Seguro médico
-                      </Link>
-                      <Link to="/convenios" onClick={closeAll}>
-                        Convenios
-                      </Link>
-                      <Link to="/quinta" onClick={closeAll}>
-                        Quinta
-                      </Link>
-                      <Link to="/prevencion-salud" onClick={closeAll}>
-                        Prevención Salud
-                      </Link>
-                      <Link to="/preguntas-frecuentes" onClick={closeAll}>
-                        Preguntas Frecuentes
-                      </Link>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              <Link
-                to="/beneficios"
-                className={styles.mobileLink}
-                onClick={closeAll}
-              >
-                Beneficios
-              </Link>
-              <Link
-                to="/cursos"
-                className={styles.mobileLink}
-                onClick={closeAll}
-              >
-                Cursos/Capacitaciones
-              </Link>
-              <Link
-                to="/noticias"
-                onClick={closeAll}
-                className={styles.mobileLink}
-              >
-                Noticias
-              </Link>
-              <Link
-                to="/medicos-asociados"
-                onClick={closeAll}
-                className={styles.mobileLink}
-              >
-                Médicos Asociados
-              </Link>
-              <Link
-                to="/contacto"
-                onClick={closeAll}
-                className={styles.mobileLink}
-              >
-                Contacto
-              </Link>
-              {user && (
-                <a
-                  href={targetHref}
-                  className={styles.mobileLink}
-                  onClick={closeAll}
-                >
-                  Ingresar
-                </a>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </header>
-
-      <div className={styles.offset} aria-hidden="true" />
-
-    </>
+      <AnimatePresence>
+        {menuAbierto && <NavMovil onCerrar={() => setMenuAbierto(false)} onIngresar={ingresar} />}
+      </AnimatePresence>
+    </header>
   );
 }

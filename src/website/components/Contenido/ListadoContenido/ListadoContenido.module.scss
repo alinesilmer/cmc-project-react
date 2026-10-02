@@ -1,16 +1,25 @@
 @use "../../../styles/variables" as *;
 
-.listadoPage {
-  min-height: 100vh;
-  padding: $spacing-xxl $spacing-md;
+// Mismo tamaño que la tarjeta real, para que la grilla no salte al cargar.
+.esqueleto {
+  // Con la forma de la tarjeta: imagen 16/10 y el texto debajo.
+  aspect-ratio: 4 / 4.4;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #f1f3f6 25%, #e6e9ee 50%, #f1f3f6 75%);
+  background-size: 800px 100%;
+  animation: brillo 1.4s infinite linear;
 }
 
-.container {
-  max-width: 1280px;
-  margin: 0 auto;
+@keyframes brillo {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
 }
 
-// Búsqueda a la izquierda, filtros por badge a la derecha. En móvil se apilan.
+@media (prefers-reduced-motion: reduce) {
+  .esqueleto { animation: none; }
+}
+
+// Búsqueda a la izquierda, filtros por etiqueta a la derecha. En móvil se apilan.
 .toolbar {
   display: flex;
   align-items: center;
@@ -25,10 +34,7 @@
   }
 }
 
-.searchBox {
-  position: relative;
-  display: flex;
-  align-items: center;
+.buscador {
   flex: 1 1 320px;
   max-width: 460px;
 
@@ -37,66 +43,38 @@
   }
 }
 
-.searchIcon {
-  position: absolute;
-  left: 14px;
-  width: 18px;
-  height: 18px;
-  color: $gray;
-  pointer-events: none;
-}
+.filtrosBloque {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
 
-.searchInput {
-  width: 100%;
-  padding: 12px 42px 12px 42px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: $border-radius-xl;
-  background: $white;
-  font-family: inherit;
-  font-size: $font-size-small;
-  color: #222;
-  box-shadow: $shadow-sm;
-  transition: border-color 0.18s, box-shadow 0.18s;
-
-  &::placeholder {
-    color: $gray;
-  }
-
-  &:focus {
-    outline: none;
-    border-color: $primary-blue;
-    box-shadow: 0 0 0 3px rgba($primary-blue, 0.12);
-  }
-
-  // La "x" nativa de type=search duplicaría nuestro botón de limpiar.
-  &::-webkit-search-cancel-button {
-    appearance: none;
+  @media (max-width: 768px) {
+    align-items: flex-start;
   }
 }
 
-.searchClear {
-  position: absolute;
-  right: 12px;
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.06);
-  color: $gray;
-  cursor: pointer;
-  transition: background 0.16s, color 0.16s;
+.filtros {
+  justify-content: flex-end;
+
+  @media (max-width: 768px) {
+    justify-content: flex-start;
+  }
+}
+
+// La pista sobre las chips: chica y en gris, para que se lea sin molestar.
+.pista {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6b7280;
 
   svg {
     width: 14px;
     height: 14px;
-  }
-
-  &:hover {
-    background: rgba(0, 0, 0, 0.12);
-    color: #222;
+    color: $primary-blue;
   }
 }
 
@@ -106,72 +84,17 @@
   color: $gray;
 }
 
-.filterRow {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: $spacing-sm;
-}
-
-.filterLabel {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: $font-size-small;
-  font-weight: 600;
-  color: $gray;
-  user-select: none;
-
-  svg {
-    font-size: 1rem;
-  }
-}
-
-.filterBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 16px;
-  border-radius: 20px;
-  border: 1px solid rgba(#dec348, 0.5);
-  background: $primary-yellow;
-  color: #685c29;
-  font-size: $font-size-small;
-  font-weight: 700;
-  cursor: pointer;
-  letter-spacing: 0.3px;
-  transition: background 0.18s, box-shadow 0.18s, border-color 0.18s;
-  box-shadow: $shadow-sm;
-
-  &:hover {
-    background: #e0d39c;
-    border-color: rgba(#dec348, 0.8);
-    box-shadow: $shadow-md;
-    color: #4d4521;
-  }
-}
-
-.filterBtnActive {
-  background: #e0d39c;
-  border-color: rgba(#b09c40, 0.7);
-  color: #4d4521;
-  box-shadow: $shadow-md;
-}
-
-.filterBtnIcon {
-  font-size: 0.85rem;
-  flex-shrink: 0;
-}
-
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: $spacing-xl;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
 }
 
-.loading,
-.empty {
+.estado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-sm;
   text-align: center;
   padding: $spacing-xxl;
   color: $gray;
@@ -180,10 +103,6 @@
 
 /* Desktop down */
 @media (max-width: $breakpoint-desktop) {
-  .listadoPage {
-    padding: $spacing-xl $spacing-md;
-  }
-
   .grid {
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: $spacing-lg;
@@ -192,126 +111,25 @@
 
 /* Tablet down */
 @media (max-width: $breakpoint-tablet) {
-  .listadoPage {
-    padding: $spacing-lg $spacing-sm;
-    height: auto;
-    min-height: 100vh;
-  }
-
   .grid {
-    // 2 columnas mientras entren: una tarjeta cuadrada a ancho completo sería altísima
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
     gap: $spacing-lg;
   }
 
-  .loading,
-  .empty {
+  .estado {
     padding: $spacing-xl;
     font-size: $font-size-base;
   }
 }
 
-// ─── Paginación ───────────────────────────────────────────────────────────────
-
-.paginacion {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: $spacing-xl;
-}
-
-.pageBtn,
-.pageArrow {
-  display: grid;
-  place-items: center;
-  min-width: 40px;
-  height: 40px;
-  padding: 0 10px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: $border-radius-sm;
-  background: $white;
-  color: $primary-blue;
-  font-family: inherit;
-  font-size: $font-size-small;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.16s, border-color 0.16s, color 0.16s;
-
-  &:hover:not(:disabled) {
-    background: rgba($primary-blue, 0.07);
-    border-color: rgba($primary-blue, 0.35);
-  }
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-
-  svg {
-    width: 18px;
-    height: 18px;
-  }
-}
-
-.pageBtnActive {
-  background: $primary-blue;
-  border-color: $primary-blue;
-  color: $white;
-
-  &:hover {
-    background: $primary-blue-dark;
-    border-color: $primary-blue-dark;
-  }
-}
-
-.pageGap {
-  min-width: 24px;
-  text-align: center;
-  color: $gray;
-  user-select: none;
-}
-
-.resetBtn {
-  margin-top: $spacing-sm;
-  padding: 10px 22px;
-  border: 1px solid rgba($primary-blue, 0.35);
-  border-radius: $border-radius-xl;
-  background: $white;
-  color: $primary-blue;
-  font-family: inherit;
-  font-size: $font-size-small;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.16s;
-
-  &:hover {
-    background: rgba($primary-blue, 0.07);
-  }
-}
-
 /* Mobile down */
 @media (max-width: $breakpoint-mobile) {
-  .listadoPage {
-    padding: $spacing-md $spacing-xs;
-  }
-
   .grid {
     grid-template-columns: 1fr;
     gap: $spacing-md;
   }
 
-  .loading,
-  .empty {
+  .estado {
     padding: $spacing-lg;
-    font-size: $font-size-base;
-  }
-
-  .pageBtn,
-  .pageArrow {
-    min-width: 36px;
-    height: 36px;
-    padding: 0 8px;
   }
 }

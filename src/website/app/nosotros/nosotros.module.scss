@@ -1,333 +1,149 @@
 @use "@/website/styles/all.scss" as *;
 
-.page {
-  background: $white;
+$crema: #f7e9aa;
+$suave: #f1f5fb;
+$gris: #6b7280;
+
+// Los tres verbos dentro de la cabecera: uno debajo del otro, porque la
+// tarjeta comparte el ancho con el panel azul y en columnas no entran.
+.pilares {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
 }
 
-.wrap {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 $spacing-lg;
-
-  @media (max-width: $breakpoint-tablet) {
-    padding: 0 $spacing-md;
-  }
-}
-
-.h2Center {
-   font-family: $font-playfair;
-  font-weight: 700;
-  color: $primary-blue;
-  font-size: clamp(1.25rem, 2vw, 2rem);
-  text-align: start;
-}
-
-.wrapNarrow {
-  max-width: 920px;
-  margin: 0 auto;
-  padding: 0 $spacing-lg;
-
-  @media (max-width: $breakpoint-tablet) {
-    padding: 0 $spacing-md;
-  }
-}
-
-.sectionWhite {
-  padding: clamp($spacing-xl, 6vw, $spacing-2xl) 0;
-  background: $white;
-}
-
-.sectionHeader {
-  display: grid;
-  gap: $spacing-xs;
-  margin-bottom: $spacing-lg;
-}
-
-.sectionLabel {
-  display: inline-flex;
-  width: fit-content;
+.pilar {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  padding: $spacing-xs $spacing-sm;
-  border-radius: 999px;
-  background: rgba($primary-blue, 0.08);
-  border: 1px solid rgba($primary-blue, 0.12);
-  color: $primary-blue-dark;
-  font-family: $font-normal;
-  font-size: $font-size-small;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  gap: 16px;
+  padding: 14px 18px;
+  border-radius: 8px;
+  background: $suave;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: $gris;
+
+  strong {
+    display: block;
+    margin-bottom: 2px;
+    font-family: $font-title;
+    font-size: 1.08rem;
+    font-weight: 800;
+    color: $primary-blue-dark;
+  }
 }
 
-.h2 {
-   font-family: $font-playfair;
-  font-weight: 700;
-  color: $primary-blue;
-  text-align: start;
-  font-size: $font-size-subtitle;
-}
-
-.lead {
-  margin: 0;
-  font-family: $font-normal;
-  color: rgba($dark-gray, 0.92);
-  font-size: $font-size-large;
-  line-height: 1.8;
-}
-
-.highlightGrid {
-  margin-top: $spacing-lg;
+.pilarIcono {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: $spacing-md;
-
-  @media (max-width: $breakpoint-desktop) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  @media (max-width: $breakpoint-tablet) {
-    grid-template-columns: 1fr;
-  }
-}
-
-.highlightCard {
-  border-radius: $border-radius-md;
-  background: $white;
-  border: 1px solid rgba($primary-blue, 0.12);
-  box-shadow: $shadow-sm;
-  padding: $spacing-lg;
-  display: grid;
-  gap: 0.35rem;
-
-  transition: transform $transition-fast, box-shadow $transition-fast,
-    border-color $transition-fast;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: $shadow-md;
-    border-color: rgba($primary-blue, 0.18);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-    &:hover {
-      transform: none;
-    }
-  }
-}
-
-.highlightLabel {
-  font-family: $font-normal;
-  font-size: $font-size-small;
-  color: rgba($gray, 0.95);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.highlightValue {
-  font-family: $font-title;
-  font-weight: 800;
-  color: $primary-blue-dark;
-  font-size: 1.05rem;
-  line-height: 1.2;
-}
-
-.highlightDesc {
-  font-family: $font-normal;
-  color: rgba($gray, 0.95);
-  font-size: $font-size-small;
-  line-height: 1.6;
-}
-
-.bandBlue {
-  padding: clamp($spacing-xl, 7vw, $spacing-2xl) 0;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
   background: $primary-blue;
-  color: $white;
+  color: $crema;
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
 }
 
-.bandBlueWithImage {
-  padding: clamp($spacing-xl, 7vw, $spacing-2xl) 0;
-  background: $primary-blue-dark;
-  color: $white;
-}
-
-.bandGrid {
+// Misión y visión, lado a lado: la primera azul, la segunda crema.
+.proposito {
   display: grid;
-  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-  gap: $spacing-xl;
-  align-items: start;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
 
-  @media (max-width: $breakpoint-tablet) {
+  @media (max-width: 760px) {
     grid-template-columns: 1fr;
-    gap: $spacing-md;
   }
 }
 
-.visionGrid {
-  display: grid;
-  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr) minmax(260px, 0.9fr);
-  gap: $spacing-xl;
-  align-items: center;
+.tarjetaProposito {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 32px;
+  border-radius: 10px;
+  overflow: hidden;
+  isolation: isolate;
 
-  @media (max-width: $breakpoint-desktop) {
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-    .visionImage {
-      display: none;
-    }
+  h2 {
+    margin: 0;
+    font-family: $font-title;
+    font-size: 1.7rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
   }
-
-  @media (max-width: $breakpoint-tablet) {
-    grid-template-columns: 1fr;
-    gap: $spacing-md;
-    .visionImage {
-      display: none;
-    }
-  }
-}
-
-.bandAside {
-  display: grid;
-  gap: $spacing-xs;
-}
-
-.bandKicker {
-  font-family: $font-normal;
-  font-size: $font-size-small;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba($primary-yellow, 0.85);
-}
-
-.bandHeading {
-  margin: 0;
-  font-family: $font-title;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: $primary-yellow;
-  font-size: $font-size-h4;
-  line-height: 1.15;
-}
-
-.bandBody {
-  display: grid;
-  gap: $spacing-md;
 
   p {
     margin: 0;
-    font-family: $font-normal;
-    color: rgba($white, 0.92);
-    line-height: 1.8;
-    font-size: $font-size-base;
-  }
-}
-
-.visionImage {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.imageWrapper {
-  width: 100%;
-  border-radius: $border-radius-lg;
-  overflow: hidden;
-  border: 1px solid rgba($white, 0.18);
-  box-shadow: $shadow-lg;
-  background: rgba(0, 0, 0, 0.2);
-
-  img {
-    width: 100%;
-    height: auto;
-    display: block;
-    object-fit: cover;
-  }
-}
-
-.valuesGrid {
-  margin-top: $spacing-lg;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: $spacing-md;
-
-  @media (max-width: $breakpoint-desktop) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    font-size: 1.08rem;
+    line-height: 1.6;
   }
 
-  @media (max-width: $breakpoint-tablet) {
-    grid-template-columns: 1fr;
-  }
-}
-
-.valueCard {
-  border-radius: $border-radius-sm;
-  background: $white;
-  border: 1px solid rgba($primary-blue, 0.12);
-  box-shadow: $shadow-sm;
-  padding: $spacing-lg;
-  display: grid;
-  gap: $spacing-sm;
-  text-align: left;
-
-  transition: transform $transition-fast, box-shadow $transition-fast,
-    border-color $transition-fast;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: $shadow-md;
-    border-color: rgba($primary-blue, 0.18);
+  // Una cruz grande y tenue en la esquina: el detalle médico del sitio.
+  &::after {
+    content: "";
+    position: absolute;
+    right: -24px;
+    bottom: -24px;
+    width: 140px;
+    height: 140px;
+    background:
+      linear-gradient(currentColor, currentColor) center / 34% 100% no-repeat,
+      linear-gradient(currentColor, currentColor) center / 100% 34% no-repeat;
+    opacity: 0.06;
+    z-index: -1;
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-    &:hover {
-      transform: none;
+  &:first-child {
+    background: $primary-blue;
+    color: $white;
+
+    p {
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .propositoIcono {
+      background: $crema;
+      color: $primary-blue-dark;
     }
   }
-}
 
-.valueIcon {
-  width: 44px;
-  height: 44px;
-  border-radius: $border-radius-sm;
-  display: grid;
-  place-items: center;
-  border: 1px solid rgba($primary-blue, 0.14);
-  background: rgba($primary-blue, 0.06);
-  color: $primary-blue-dark;
+  &:last-child {
+    background: #fdf8e4;
+    color: $primary-blue-dark;
 
-  svg {
-    width: 18px;
-    height: 18px;
+    p {
+      color: #374151;
+    }
+
+    .propositoIcono {
+      background: $primary-blue;
+      color: $crema;
+    }
+  }
+
+  @media (max-width: 480px) {
+    padding: 24px;
   }
 }
 
-.valueTitle {
-  margin: 0;
-  font-family: $font-size-card-title;
-  font-weight: 800;
-  color: $primary-blue-dark;
-  font-size: 1.05rem;
-  line-height: 1.2;
-}
+.propositoIcono {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
 
-.valueText {
-  margin: 0;
-  font-family: $font-normal;
-  color: rgba($gray, 0.95);
-  font-size: $font-size-small;
-  line-height: 1.65;
-}
-
-.warm .valueIcon {
-  background: rgba($primary-yellow, 0.45);
-  border-color: rgba($primary-yellow, 0.7);
-  color: $primary-blue-dark;
-}
-
-.cool .valueIcon {
-  background: rgba($primary-blue, 0.08);
-  border-color: rgba($primary-blue, 0.18);
-  color: $primary-blue-dark;
+  svg {
+    width: 26px;
+    height: 26px;
+  }
 }

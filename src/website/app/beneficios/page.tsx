@@ -1,276 +1,141 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { motion } from "framer-motion";
-import { MapPin, Tag, CalendarClock, Search, X, Download, IdCard } from "lucide-react";
-import {
-  listBeneficiosVigentes,
-  formatVigencia,
-  type BeneficioPublico,
-} from "../../lib/beneficios.client";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { CircleUserRound, Download, IdCard, LogIn, Percent, Store } from "lucide-react";
+import ContenedorPagina from "../../components/UI/ContenedorPagina/ContenedorPagina";
+import CabeceraFresca from "../../components/UI/CabeceraFresca/CabeceraFresca";
+import CaminoPasos from "../../components/UI/CaminoPasos/CaminoPasos";
+import Button from "../../components/UI/Button/Button";
+import Buscador from "../../components/UI/Buscador/Buscador";
+import FiltroChips from "../../components/UI/FiltroChips/FiltroChips";
+import Esqueletos from "../../components/UI/Esqueletos/Esqueletos";
+import TarjetaBeneficio from "./components/TarjetaBeneficio";
+import BandaInvitacion from "../../components/UI/BandaInvitacion/BandaInvitacion";
+import { listBeneficiosVigentes, type BeneficioPublico } from "../../lib/beneficios.client";
+import { coincide } from "../../lib/texto";
+import { CONVENIO_COMERCIOS } from "../../lib/contacto";
+import { useTituloPagina } from "../../hooks/useTituloPagina";
 import styles from "./beneficios.module.scss";
-import { useTituloPagina } from "../../lib/useTituloPagina";
-
-const EASE = [0.22, 1, 0.36, 1] as const;
 
 const TODAS = "Todas";
+const SIN_BENEFICIOS: BeneficioPublico[] = [];
 
-// Servido desde , así que la URL es estable y se puede compartir o
-// imprimir sin depender del hash del build.
+// Servido desde /public: URL estable, se puede compartir o imprimir.
 const INSTRUCTIVO_PDF = "/InstructivoCredencialCMC.pdf";
 
-// Buscar sin acentos: "cardiologia" tiene que encontrar "Cardiología".
-function normalize(str: string) {
-  return str
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-}
+// Cómo se usa un beneficio, en tres palabras: la credencial está en el panel.
+const PASOS = [
+  { icono: LogIn, palabra: "Entrá" },
+  { icono: CircleUserRound, palabra: "Tu perfil" },
+  { icono: IdCard, palabra: "¡Mostrala!" },
+];
+
+const DESTACADOS = [
+  { icono: Percent, texto: "Descuentos" },
+  { icono: Store, texto: "Comercios adheridos" },
+];
 
 export default function BeneficiosPage() {
-  const [items, setItems] = useState<BeneficioPublico[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [categoria, setCategoria] = useState<string>(TODAS);
-  const [query, setQuery] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-
   useTituloPagina("Beneficios para Socios");
 
-  useEffect(() => {
-    let aborted = false;
+  const [categoria, setCategoria] = useState(TODAS);
+  const [busqueda, setBusqueda] = useState("");
 
-    listBeneficiosVigentes()
-      .then((data) => {
-        if (aborted) return;
-        setItems(Array.isArray(data) ? data : []);
-        setLoading(false);
-      })
-      .catch(() => {
-        if (aborted) return;
-        setError("No se pudieron cargar los beneficios. Intentá más tarde.");
-        setLoading(false);
-      });
-
-    return () => {
-      aborted = true;
-    };
-  }, []);
+  const { data: items = SIN_BENEFICIOS, isPending, isError } = useQuery({
+    queryKey: ["web", "beneficios-vigentes"],
+    queryFn: () => listBeneficiosVigentes(),
+    staleTime: 10 * 60 * 1000,
+  });
 
   // Las categorías salen de lo que realmente vino: un filtro con opciones
   // vacías es peor que no tenerlo.
-  const categorias = useMemo(() => {
-    const presentes = Array.from(new Set(items.map((b) => b.categoria))).sort(
-      (a, b) => a.localeCompare(b, "es")
-    );
-    return [TODAS, ...presentes];
-  }, [items]);
+  const categorias = useMemo(
+    () => [TODAS, ...Array.from(new Set(items.map((b) => b.categoria))).sort((a, b) => a.localeCompare(b, "es"))],
+    [items]
+  );
 
   // Categoría Y texto: los dos filtros se combinan.
-  const visibles = useMemo(() => {
-    const texto = normalize(query.trim());
-    return items.filter((b) => {
-      if (categoria !== TODAS && b.categoria !== categoria) return false;
-      if (!texto) return true;
-      // `ubicacion` y `descuento` pueden venir nulos.
-      const campos = [
-        b.titulo,
-        b.descripcion,
-        b.categoria,
-        b.ubicacion,
-        b.descuento,
-      ];
-      return campos.some((c) => c && normalize(c).includes(texto));
-    });
-  }, [items, categoria, query]);
+  const visibles = useMemo(
+    () =>
+      items.filter(
+        (b) =>
+          (categoria === TODAS || b.categoria === categoria) &&
+          coincide(busqueda, [b.titulo, b.descripcion, b.categoria, b.ubicacion, b.descuento])
+      ),
+    [items, categoria, busqueda]
+  );
 
-  function limpiarBusqueda() {
-    setQuery("");
-    inputRef.current?.focus();
-  }
+  const listo = !isPending && !isError;
 
   return (
-    <div className={styles.page}>
-      <section className={styles.head}>
-        <motion.h1
-          className={styles.title}
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: EASE }}
-        >
-          Beneficios para Socios
-        </motion.h1>
-        <motion.p
-          className={styles.lead}
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: EASE, delay: 0.12 }}
-        >
-          Descuentos y convenios vigentes para los socios del Colegio Médico de
-          Corrientes.
-        </motion.p>
-      </section>
-
-      {/* Cómo se usan los beneficios. Va antes del listado porque sin la
-          credencial el listado no le sirve de nada a quien llega por primera vez. */}
-      <motion.section
-        className={styles.instructivo}
-        initial={{ opacity: 0, y: 14 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: EASE, delay: 0.1 }}
+    <ContenedorPagina>
+      <CabeceraFresca
+        titulo={
+          <>
+            Beneficios <span>para vos</span>
+          </>
+        }
+        lema={
+          <>
+            Tu credencial <em>vale más.</em>
+          </>
+        }
+        destacados={DESTACADOS}
+        acciones={
+          <Button href={INSTRUCTIVO_PDF} download variant="secondary" size="large" iconoIzquierda={<Download />}>
+            Instructivo
+          </Button>
+        }
       >
-        <div className={styles.instructivoTexto}>
-          <h2 className={styles.instructivoTitulo}>
-            <IdCard size={20} aria-hidden="true" />
-            Cómo usar tu credencial
-          </h2>
-          <ol className={styles.pasos}>
-            <li>
-              Entrá al panel con tu usuario y abrí <strong>Mi perfil</strong>.
-            </li>
-            <li>
-              Abrí la pestaña <strong>Credencial</strong>: ahí está tu
-              credencial digital con tu nombre, matrícula y estado.
-            </li>
-            <li>
-              Descargala o mostrala desde el celular al pedir el beneficio en
-              el comercio adherido.
-            </li>
-          </ol>
-        </div>
+        <CaminoPasos pasos={PASOS} descripcion="Entrá al panel, abrí tu perfil y mostrá la credencial en el comercio" />
+      </CabeceraFresca>
 
-        <a
-          className={styles.instructivoBoton}
-          href={INSTRUCTIVO_PDF}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Download size={18} aria-hidden="true" />
-          Descargar el instructivo
-        </a>
-      </motion.section>
+      <section className={styles.listado} aria-label="Beneficios vigentes">
+        {listo && items.length > 0 && (
+          <Buscador valor={busqueda} onCambio={setBusqueda} placeholder="Buscar…" etiqueta="Buscar beneficio" className={styles.buscador} />
+        )}
 
-      {!loading && !error && items.length > 0 && (
-        <motion.div
-          className={styles.searchWrapper}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: EASE, delay: 0.18 }}
-        >
-          <label htmlFor="beneficios-search" className={styles.srOnly}>
-            Buscar beneficio
-          </label>
-          <div className={styles.searchBox}>
-            <Search className={styles.searchIcon} aria-hidden="true" />
-            <input
-              ref={inputRef}
-              id="beneficios-search"
-              type="search"
-              className={styles.searchInput}
-              placeholder="Buscar beneficio…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              autoComplete="off"
-              spellCheck={false}
-            />
-            {query && (
-              <button
-                className={styles.searchClear}
-                onClick={limpiarBusqueda}
-                aria-label="Limpiar búsqueda"
-                type="button"
-              >
-                <X />
-              </button>
-            )}
+        {categorias.length > 2 && (
+          <FiltroChips
+            opciones={categorias}
+            activa={categoria}
+            onElegir={(c) => setCategoria(c ?? TODAS)}
+            etiqueta="Categorías"
+          />
+        )}
+
+        {isPending ? (
+          <Esqueletos cantidad={6} className={styles.grid} clasePieza={styles.skeleton} />
+        ) : (
+          <div className={styles.grid}>
+            {visibles.map((b, i) => (
+              <TarjetaBeneficio key={b.id} beneficio={b} indice={i} />
+            ))}
           </div>
-        </motion.div>
-      )}
+        )}
 
-      {categorias.length > 2 && (
-        <div className={styles.filtros} role="tablist" aria-label="Categorías">
-          {categorias.map((c) => (
-            <button
-              key={c}
-              type="button"
-              role="tab"
-              aria-selected={c === categoria}
-              className={`${styles.chip} ${
-                c === categoria ? styles.chipActive : ""
-              }`}
-              onClick={() => setCategoria(c)}
-            >
-              {c}
-            </button>
-          ))}
-        </div>
-      )}
+        {isError && <p className={styles.aviso}>No pudimos cargarlos. Probá más tarde.</p>}
 
-      <section className={styles.grid} aria-busy={loading}>
-        {loading &&
-          Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className={styles.skeleton} aria-hidden="true" />
-          ))}
-
-        {!loading &&
-          visibles.map((b, i) => {
-            const acento = b.color || undefined;
-            const vigencia = formatVigencia(b.vigencia_hasta);
-            return (
-              <motion.article
-                key={b.id}
-                className={styles.card}
-                style={acento ? { ["--acento" as string]: acento } : undefined}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-40px" }}
-                transition={{
-                  duration: 0.45,
-                  ease: EASE,
-                  delay: Math.min(i, 6) * 0.05,
-                }}
-              >
-                <header className={styles.cardHead}>
-                  <span className={styles.categoria}>{b.categoria}</span>
-                  {b.descuento && (
-                    <span className={styles.descuento}>
-                      <Tag aria-hidden="true" />
-                      {b.descuento}
-                    </span>
-                  )}
-                </header>
-
-                <h2 className={styles.cardTitle}>{b.titulo}</h2>
-                <p className={styles.cardText}>{b.descripcion}</p>
-
-                <footer className={styles.meta}>
-                  {b.ubicacion && (
-                    <span className={styles.metaItem}>
-                      <MapPin aria-hidden="true" />
-                      {b.ubicacion}
-                    </span>
-                  )}
-                  {vigencia && (
-                    <span className={styles.metaItem}>
-                      <CalendarClock aria-hidden="true" />
-                      Hasta el {vigencia}
-                    </span>
-                  )}
-                </footer>
-              </motion.article>
-            );
-          })}
+        {listo && visibles.length === 0 && (
+          <p className={styles.aviso}>
+            {items.length === 0 ? "Muy pronto." : busqueda.trim() ? `Nada para «${busqueda.trim()}».` : "Nada en esta categoría."}
+          </p>
+        )}
       </section>
 
-      {!loading && error && <p className={styles.aviso}>{error}</p>}
-
-      {!loading && !error && visibles.length === 0 && (
-        <p className={styles.aviso}>
-          {items.length === 0
-            ? "Todavía no hay beneficios cargados."
-            : query.trim()
-              ? `No encontramos beneficios para "${query.trim()}".`
-              : "No hay beneficios en esta categoría."}
-        </p>
-      )}
-    </div>
+      <BandaInvitacion
+        titulo={
+          <>
+            ¿Tenés un comercio? <em>Sumate.</em>
+          </>
+        }
+        bajada="Firmá convenio con el Colegio Médico de Corrientes y acercá tu negocio o producto a nuestros prestigiosos profesionales."
+        whatsapp={{
+          numero: CONVENIO_COMERCIOS.whatsapp,
+          visible: CONVENIO_COMERCIOS.whatsappVisible,
+          mensaje: CONVENIO_COMERCIOS.mensajeWhatsApp,
+        }}
+        email={{ direccion: CONVENIO_COMERCIOS.email, asunto: CONVENIO_COMERCIOS.asuntoEmail }}
+      />
+    </ContenedorPagina>
   );
 }

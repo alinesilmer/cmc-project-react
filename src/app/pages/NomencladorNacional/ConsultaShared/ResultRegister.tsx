@@ -82,6 +82,8 @@ type ResultRegisterProps = {
    * del médico y ahí el desglose sería ruido.
    */
   showDesglose?: boolean;
+  /** Lo que paga el afiliado, si la obra social cobra copago. Sin copago, no se muestra. */
+  copago?: number | null;
 };
 
 function ResultRegister({
@@ -89,6 +91,7 @@ function ResultRegister({
   showVigencia = true,
   eligibility = null,
   showDesglose = false,
+  copago = null,
 }: ResultRegisterProps) {
   const honorarios = findComp(result.componentes, "Honorarios");
   const gastos = findComp(result.componentes, "Gastos");
@@ -170,6 +173,16 @@ function ResultRegister({
           {ayudante && (
             <LedgerRow label="Ayudante" comp={ayudante} showDesglose={showDesglose} />
           )}
+        </div>
+      )}
+
+      {copago !== null && copago > 0 && (
+        <div className={styles.copago}>
+          <span className={styles.copagoLabel}>
+            Copago
+            <span className={styles.copagoNota}>Lo paga el afiliado</span>
+          </span>
+          <span className={styles.copagoVal}>{money.format(copago)}</span>
         </div>
       )}
     </article>

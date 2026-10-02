@@ -1,0 +1,231 @@
+@use "@/app/styles/all.scss" as *;
+
+$crema: #f7e9aa;
+$texto: #14233a;
+
+.fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(12, 42, 82, 0.45);
+  backdrop-filter: blur(6px);
+}
+
+.ventana {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 920px);
+  max-height: calc(100dvh - 40px);
+  overflow: hidden;
+  background: $white;
+  border-radius: 10px;
+  box-shadow: 0 30px 80px rgba(6, 18, 38, 0.35);
+}
+
+.cabecera {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 22px;
+  background: $primary-blue;
+  color: $white;
+  overflow: hidden;
+
+  // Un círculo crema, como en el panel del login.
+  &::after {
+    content: "";
+    position: absolute;
+    width: 180px;
+    height: 180px;
+    right: 60px;
+    top: -110px;
+    border-radius: 50%;
+    background: rgba($crema, 0.14);
+  }
+}
+
+.icono {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: $crema;
+  color: $primary-blue;
+
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.textos {
+  flex: 1;
+  min-width: 0;
+
+  h2 {
+    margin: 0;
+    font-family: "Manrope", sans-serif;
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: $white;
+  }
+
+  p {
+    margin: 2px 0 0;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.78);
+  }
+}
+
+.cerrar {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  color: $white;
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.24);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $crema;
+    outline-offset: 2px;
+  }
+}
+
+.visor {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  padding: 16px 16px 0;
+  background: #f5f3ee;
+}
+
+.pdf {
+  display: block;
+  width: 100%;
+  height: min(65vh, 720px);
+  border: 1px solid #e2ddd0;
+  border-radius: 8px;
+  background: $white;
+}
+
+// En el celular el visor no se muestra: muchos navegadores no dibujan un PDF
+// dentro de la página. Queda un aviso y los botones de abajo.
+.alternativa {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 36px 20px;
+  border-radius: 8px;
+  background: $white;
+  border: 1px dashed #d8d1bf;
+  color: #5b6474;
+  text-align: center;
+
+  svg {
+    width: 40px;
+    height: 40px;
+    color: $primary-blue;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px;
+  background: #f5f3ee;
+}
+
+.principal,
+.secundaria {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 20px;
+  border-radius: 8px;
+  font-family: "Manrope", sans-serif;
+  font-size: 0.98rem;
+  font-weight: 800;
+  text-decoration: none;
+  transition: background 0.18s ease, border-color 0.18s ease;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.principal {
+  background: $primary-blue;
+  color: $white;
+
+  &:hover {
+    background: $primary-blue-darker;
+    color: $white;
+  }
+}
+
+.secundaria {
+  border: 1.5px solid #e2ddd0;
+  background: $white;
+  color: $primary-blue;
+
+  &:hover {
+    border-color: $primary-blue;
+    color: $primary-blue;
+  }
+}
+
+@media (max-width: 640px) {
+  .fondo {
+    padding: 0;
+    align-items: end;
+  }
+
+  .ventana {
+    border-radius: 10px 10px 0 0;
+    max-height: 92dvh;
+  }
+
+  .pdf {
+    display: none;
+  }
+
+  .alternativa {
+    display: flex;
+  }
+
+  .acciones {
+    > * {
+      flex: 1;
+    }
+  }
+}

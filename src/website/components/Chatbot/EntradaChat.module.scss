@@ -1,0 +1,133 @@
+@use "../../styles/variables" as *;
+@use "chat" as *;
+
+// ─── Quick-reply chips ────────────────────────────────────────────────────────
+
+.chips {
+  display: flex;
+  gap: 6px;
+  padding: 10px 14px;
+  border-top: 1px solid $chat-borde;
+  background: #fff;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  max-height: 92px;
+  overflow-y: auto;
+
+  scrollbar-width: thin;
+  scrollbar-color: $chat-borde transparent;
+  &::-webkit-scrollbar       { width: 3px; height: 3px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background: $chat-borde; border-radius: 4px; }
+}
+
+.chip {
+  padding: 6px 13px;
+  border: 1px solid rgba($primary-blue, 0.28);
+  border-radius: 999px;
+  background: rgba($primary-blue, 0.05);
+  color: $primary-blue;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background $transition-fast,
+    color $transition-fast,
+    border-color $transition-fast;
+  flex-shrink: 0;
+
+  &:hover {
+    background: $primary-blue;
+    border-color: $primary-blue;
+    color: #fff;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary-blue;
+    outline-offset: 2px;
+  }
+}
+
+// ─── Input bar ────────────────────────────────────────────────────────────────
+
+.inputBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-top: 1px solid $chat-borde;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 14px;
+  border: 1.5px solid $chat-borde;
+  // Píldora, para que el campo y el botón de enviar lean como un solo control.
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: $chat-texto;
+  outline: none;
+  background: $chat-fondo-sutil;
+  transition:
+    border-color $transition-fast,
+    background $transition-fast,
+    box-shadow $transition-fast;
+
+  &:focus {
+    border-color: $primary-blue;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba($accent-blue, 0.16);
+  }
+
+  &::placeholder {
+    color: $chat-placeholder;
+  }
+}
+
+.sendBtn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: $primary-blue;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 0.88rem;
+  transition:
+    background $transition-fast,
+    transform $transition-fast;
+
+  &:hover:not(:disabled) {
+    background: $primary-blue-dark;
+    transform: scale(1.06);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary-blue;
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    background: $chat-deshabilitado;
+    cursor: not-allowed;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sendBtn {
+    transition: background $transition-fast;
+
+    &:hover {
+      transform: none;
+    }
+  }
+}

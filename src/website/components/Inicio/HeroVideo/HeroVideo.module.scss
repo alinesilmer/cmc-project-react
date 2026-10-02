@@ -85,16 +85,6 @@
   }
 }
 
-.eyebrow {
-  margin: 0;
-  font-family: $font-normal;
-  font-size: clamp(0.72rem, 0.85vw, 0.82rem);
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.58);
-}
-
 .title {
   margin: 0;
   font-family: $font-title;

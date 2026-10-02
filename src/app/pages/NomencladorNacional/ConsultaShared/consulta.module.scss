@@ -567,6 +567,39 @@
 }
 .ledValZero { color: $tinta-3; font-weight: 500; }
 
+// El copago va aparte de los conceptos: esos suman el valor de la práctica y
+// el copago no, lo paga el afiliado.
+.copago {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 28px 22px;
+  padding: 12px 14px;
+  border: 1px solid $linea-2;
+  border-left: 3px solid $acento-fuerte;
+  background: $acento-lavado;
+}
+.copagoLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.9rem;
+  font-weight: 650;
+  color: $tinta;
+}
+.copagoNota {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: $tinta-3;
+}
+.copagoVal {
+  margin-left: auto;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: $tinta;
+  font-variant-numeric: tabular-nums;
+}
+
 // Informational note below the whole panel — clearly visible, but calm
 // (soft blue, not a warning).
 .disclaimer {

@@ -6,6 +6,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 import type { ImportacionOut, PeriodoOpcion } from "./importaciones.api";
 
 export type Filtro = "todas" | "problemas";
@@ -50,11 +51,14 @@ export function useImportador<T>(
   }, []);
 
   // Cambiar de archivo o de período invalida lo previsualizado: lo que se
-  // confirma tiene que ser exactamente lo que se vio.
+  // confirma tiene que ser exactamente lo que se vio. Se mira la lista de
+  // prácticas y no sólo el nombre: un reporte corregido suele volver a subirse
+  // con el mismo nombre, y con el nombre solo la pantalla seguía mostrando la
+  // previsualización vieja mientras «Confirmar» mandaba las filas nuevas.
   useEffect(() => {
     setSalida(null);
     setConfirmado(false);
-  }, [archivo, periodo]);
+  }, [archivo, periodo, prestaciones]);
 
   const cerrado = periodos.find((p) => p.periodo === periodo)?.cerrado ?? false;
 
@@ -72,11 +76,9 @@ export function useImportador<T>(
       }
     } catch (e) {
       console.error("Importación:", e);
-      setError(
-        e instanceof Error
-          ? e.message
-          : "No pudimos procesar el reporte en este momento."
-      );
+      // El motivo lo da el backend (período cerrado, permiso faltante); el
+      // `message` de axios era sólo «Request failed with status code 409».
+      setError(mensajeDeError(e, "No pudimos procesar el reporte en este momento."));
     } finally {
       setTrabajando(false);
     }

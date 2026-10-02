@@ -1,0 +1,58 @@
+@use "../../../styles/variables" as *;
+@use "../../../styles/admin" as *;
+
+.buscador {
+  position: relative;
+}
+
+.searchWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid $ad-borde;
+  border-radius: $ad-radio;
+  padding: 8px 10px;
+}
+
+.searchWrap input {
+  border: none;
+  outline: none;
+  flex: 1;
+}
+
+.dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid $ad-borde;
+  border-radius: $ad-radio;
+  z-index: 10;
+  margin-top: 4px;
+  max-height: 240px;
+  overflow: auto;
+}
+
+.dropdownItem {
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.dropdownItem:hover {
+  background: $ad-superficie-2;
+}
+
+.selectedDoctor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: $ad-superficie-2;
+  border-radius: $ad-radio-pill;
+  padding: 6px 10px;
+  width: max-content;
+}

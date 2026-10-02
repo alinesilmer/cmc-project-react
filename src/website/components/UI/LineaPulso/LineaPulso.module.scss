@@ -1,0 +1,24 @@
+// El color sale de `currentColor`: quien la usa decide con `color`.
+.linea {
+  display: block;
+  overflow: visible;
+}
+
+.trazo,
+.brillo {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.trazo {
+  stroke: currentColor;
+  stroke-width: 2.5;
+}
+
+.brillo {
+  stroke: #f7e9aa;
+  stroke-width: 3.5;
+  filter: drop-shadow(0 0 4px rgba(247, 233, 170, 0.8));
+}

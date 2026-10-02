@@ -1,0 +1,185 @@
+@use "@/website/styles/all.scss" as *;
+
+$crema: #f7e9aa;
+
+.panel {
+  position: relative;
+  min-height: 600px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: $primary-blue;
+  isolation: isolate;
+}
+
+// Un círculo crema grande abajo a la derecha, con las tarjetas encima.
+.circulo {
+  position: absolute;
+  width: 560px;
+  height: 560px;
+  right: -140px;
+  bottom: -200px;
+  border-radius: 50%;
+  background: $crema;
+  z-index: -1;
+}
+
+.aro {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  left: -110px;
+  top: -110px;
+  border-radius: 50%;
+  border: 44px solid rgba(255, 255, 255, 0.06);
+}
+
+.lema {
+  position: relative;
+  margin: 0;
+  padding: 44px 40px 0;
+  max-width: 15ch;
+  font-family: $font-title;
+  font-size: clamp(1.9rem, 3vw, 2.6rem);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+  color: $white;
+
+  em {
+    font-style: normal;
+    color: $crema;
+  }
+}
+
+.destacados {
+  position: absolute;
+  right: 40px;
+  bottom: 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.destacado {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px 10px 10px;
+  width: max-content;
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: 8px;
+  box-shadow: 0 12px 30px rgba(6, 18, 38, 0.22);
+  font-family: $font-title;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: $primary-blue-dark;
+}
+
+.destacadoIcono {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  background: $primary-blue;
+  color: $crema;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+// ─── Tablet y celular: franja con el lema, sin tarjetas ────────────────────────
+
+@media (max-width: 960px) {
+  .panel {
+    min-height: 150px;
+  }
+
+  .circulo {
+    width: 220px;
+    height: 220px;
+    right: -60px;
+    bottom: -100px;
+  }
+
+  .lema {
+    padding: 28px 24px;
+    max-width: 70%;
+    font-size: 1.6rem;
+  }
+
+  .destacados {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .lema {
+    font-size: 1.35rem;
+  }
+}
+
+// Versión baja: el lema arriba y las tarjetas en fila abajo.
+.compacto {
+  min-height: 300px;
+
+  .circulo {
+    width: 360px;
+    height: 360px;
+    right: -100px;
+    bottom: -170px;
+  }
+
+  .destacados {
+    right: auto;
+    left: 40px;
+    bottom: 32px;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 960px) {
+    min-height: 140px;
+  }
+}
+
+// ─── Detalles médicos: cruces tenues y un pulso que late ──────────────────────
+
+// Patrón de cruces sanitarias, casi transparente. SVG en línea: no es una
+// descarga más.
+.cruces {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56'%3E%3Cpath d='M24 16h8v8h8v8h-8v8h-8v-8h-8v-8h8z' fill='%23ffffff'/%3E%3C/svg%3E");
+  background-size: 56px 56px;
+  // Se desvanece hacia abajo, donde van el círculo y las tarjetas.
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 75%);
+}
+
+.pulso {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 52%;
+  width: 100%;
+  height: 64px;
+  color: rgba(255, 255, 255, 0.22);
+  z-index: -1;
+
+  @media (max-width: 960px) {
+    top: auto;
+    bottom: 12px;
+    height: 40px;
+  }
+}
+
+.compacto .pulso {
+  top: 44%;
+}

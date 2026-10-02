@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "../../auth/AuthProvider";
+import { saludoSegunHora } from "@/app/shared/lib/fechas";
+import { esOrganizacion } from "../../auth/roles";
 import Carrusel from "./components/Carrusel/Carrusel";
 import { getBeneficiosVigentes } from "../Beneficios/beneficios.api";
 import type { Beneficio } from "../Beneficios/beneficios.types";
@@ -135,6 +137,11 @@ const TUTORIALES: Tutorial[] = [
     descripcion: "Cómo validar un afiliado paso a paso.",
     url: "https://res.cloudinary.com/dcfkgepmp/video/upload/v1787517269/medife_tuto_f8w32o.mp4",
   },
+  {
+    titulo: "Validación Unión Personal",
+    descripcion: "Cómo validar un afiliado paso a paso.",
+    url: "https://res.cloudinary.com/dcfkgepmp/video/upload/v1790890254/union_personal_zkmpje.mp4",
+  },
 ];
 
 /** Lo que todavía no está grabado; se muestra en gris, sin reproductor. */
@@ -151,14 +158,18 @@ const TUTORIALES_PENDIENTES = [
 const InicioMedico: React.FC = () => {
   const { user } = useAuth();
 
-  const greeting = useMemo(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Buen día";
-    if (hour < 20) return "Buenas tardes";
-    return "Buenas noches";
-  }, []);
+  const greeting = useMemo(() => saludoSegunHora(), []);
 
   const nombre = user?.nombre?.trim() ?? "";
+
+  // Las clínicas no validan afiliados (ver ORGANIZACION_BLOCKED_PATHS) ni tienen
+  // beneficios de socio: se les saca todo lo que lleva a /panel/validaciones, la
+  // vidriera de beneficios y la de obras sociales con validación web.
+  const esOrg = esOrganizacion(user);
+  const accesos = esOrg
+    ? ACCESOS.filter((a) => !a.link.startsWith("/panel/validaciones"))
+    : ACCESOS;
+  const tutoriales = esOrg ? [] : TUTORIALES;
 
   // La vidriera es accesoria: si falla, el resto del portal tiene que seguir
   // sirviendo. Por eso no se propaga el error, sólo se oculta la sección.
@@ -171,6 +182,7 @@ const InicioMedico: React.FC = () => {
     queryFn: () => getBeneficiosVigentes(),
     staleTime: 10 * 60 * 1000,
     retry: false,
+    enabled: !esOrg,
   });
 
   const renderBeneficio = (b: Beneficio, index: number) => (
@@ -223,8 +235,9 @@ const InicioMedico: React.FC = () => {
               </h1>
 
               <p className={styles.heroSub}>
-                Consultá valores, validá afiliados y aprovechá los beneficios
-                del Colegio.
+                {esOrg
+                  ? "Consultá valores y planillas del Colegio."
+                  : "Consultá valores, validá afiliados y aprovechá los beneficios del Colegio."}
               </p>
 
               <div className={styles.heroActions}>
@@ -260,7 +273,7 @@ const InicioMedico: React.FC = () => {
           </div>
 
           <div className={styles.accessGrid}>
-            {ACCESOS.map((action, index) => {
+            {accesos.map((action, index) => {
               const Icon = action.icon;
               const accentClass =
                 styles[
@@ -294,71 +307,75 @@ const InicioMedico: React.FC = () => {
             nada cargado, y eso hacía que pareciera que la funcionalidad no
             existía. Con el estado vacío explícito se entiende que está lista y
             esperando que el Colegio cargue los convenios desde el panel. */}
-        <section className={styles.section}>
-          <div className={styles.sectionHead}>
-            <div>
-              <h2 className={styles.sectionTitle}>Beneficios para socios</h2>
-              <p className={styles.sectionSub}>
-                Descuentos y convenios vigentes en comercios y servicios.
-              </p>
+        {!esOrg && (
+          <section className={styles.section}>
+            <div className={styles.sectionHead}>
+              <div>
+                <h2 className={styles.sectionTitle}>Beneficios para socios</h2>
+                <p className={styles.sectionSub}>
+                  Descuentos y convenios vigentes en comercios y servicios.
+                </p>
+              </div>
             </div>
-          </div>
 
-          {beneficiosLoading ? (
-            <div className={styles.skeletonGrid}>
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className={styles.skeleton} />
-              ))}
-            </div>
-          ) : beneficiosError ? (
-            <div className={styles.empty}>
-              No se pudieron cargar los beneficios en este momento.
-            </div>
-          ) : beneficios.length === 0 ? (
-            <div className={styles.empty}>
-              Todavía no hay beneficios cargados. Muy pronto vas a encontrar acá
-              los descuentos y convenios del Colegio.
-            </div>
-          ) : (
-            <Carrusel etiqueta="Beneficios para socios">
-              {beneficios.map(renderBeneficio)}
-            </Carrusel>
-          )}
-        </section>
+            {beneficiosLoading ? (
+              <div className={styles.skeletonGrid}>
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className={styles.skeleton} />
+                ))}
+              </div>
+            ) : beneficiosError ? (
+              <div className={styles.empty}>
+                No se pudieron cargar los beneficios en este momento.
+              </div>
+            ) : beneficios.length === 0 ? (
+              <div className={styles.empty}>
+                Todavía no hay beneficios cargados. Muy pronto vas a encontrar acá
+                los descuentos y convenios del Colegio.
+              </div>
+            ) : (
+              <Carrusel etiqueta="Beneficios para socios">
+                {beneficios.map(renderBeneficio)}
+              </Carrusel>
+            )}
+          </section>
+        )}
 
         {/* ── Convenios ── */}
-        <section className={styles.section}>
-          <div className={styles.sectionHead}>
-            <div>
-              <h2 className={styles.sectionTitle}>Obras sociales con validación web</h2>
-              <p className={styles.sectionSub}>
-                Consultá valores y validá afiliados de todas ellas desde el panel.
-              </p>
+        {!esOrg && (
+          <section className={styles.section}>
+            <div className={styles.sectionHead}>
+              <div>
+                <h2 className={styles.sectionTitle}>Obras sociales con validación web</h2>
+                <p className={styles.sectionSub}>
+                  Consultá valores y validá afiliados de todas ellas desde el panel.
+                </p>
+              </div>
+              <Link to="/panel/validaciones" className={styles.sectionLink}>
+                Validar un afiliado
+                <ArrowUpRight size={15} />
+              </Link>
             </div>
-            <Link to="/panel/validaciones" className={styles.sectionLink}>
-              Validar un afiliado
-              <ArrowUpRight size={15} />
-            </Link>
-          </div>
 
-          <div className={styles.logoStrip}>
-            {/* La lista va duplicada: el keyframe corre hasta -50% y engancha
-                con el principio, que es la misma secuencia. */}
-            <div className={styles.logoTrack}>
-              {[...OBRAS_SOCIALES, ...OBRAS_SOCIALES].map((os, i) => (
-                <img
-                  key={`${os.nombre}-${i}`}
-                  src={os.src}
-                  alt={os.nombre}
-                  className={styles.logoItem}
-                  loading="lazy"
-                  // La segunda vuelta es decorativa: no debe leerse dos veces.
-                  aria-hidden={i >= OBRAS_SOCIALES.length}
-                />
-              ))}
+            <div className={styles.logoStrip}>
+              {/* La lista va duplicada: el keyframe corre hasta -50% y engancha
+                  con el principio, que es la misma secuencia. */}
+              <div className={styles.logoTrack}>
+                {[...OBRAS_SOCIALES, ...OBRAS_SOCIALES].map((os, i) => (
+                  <img
+                    key={`${os.nombre}-${i}`}
+                    src={os.src}
+                    alt={os.nombre}
+                    className={styles.logoItem}
+                    loading="lazy"
+                    // La segunda vuelta es decorativa: no debe leerse dos veces.
+                    aria-hidden={i >= OBRAS_SOCIALES.length}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* ── Tutoriales ── */}
         <section className={styles.section}>
@@ -372,7 +389,7 @@ const InicioMedico: React.FC = () => {
           </div>
 
           <div className={styles.tutorialGrid}>
-            {TUTORIALES.map((t) => (
+            {tutoriales.map((t) => (
               <article key={t.url} className={styles.tutorialCardVideo}>
                 {/*
                   `preload="none"` y no "metadata": el video no se descarga

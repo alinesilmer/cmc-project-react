@@ -1,31 +1,43 @@
-import { motion } from "framer-motion"
-import Seguros from "../../components/Servicios/Seguros/Seguros"
-import Hero from "../../components/UI/Hero/Hero"
-import { useTituloPagina } from "../../lib/useTituloPagina"
-import styles from "./seguros.module.scss"
+import { ShieldCheck, Users } from "lucide-react";
+import ContenedorPagina from "../../components/UI/ContenedorPagina/ContenedorPagina";
+import CabeceraFresca from "../../components/UI/CabeceraFresca/CabeceraFresca";
+import Button from "../../components/UI/Button/Button";
+import WhatsappIcon from "../../components/UI/icons/WhatsappIcon";
+import AlianzaNoble from "../../components/Servicios/Seguros/AlianzaNoble";
+import { CONSULTAR_SEGUROS } from "../../components/Servicios/Seguros/consulta";
+import { useTituloPagina } from "../../hooks/useTituloPagina";
+
+const DESTACADOS = [
+  { icono: ShieldCheck, texto: "Convenio vigente" },
+  { icono: Users, texto: "Para socios" },
+];
 
 export default function SegurosPage() {
-  useTituloPagina("Seguro médico")
+  useTituloPagina("Seguro médico");
 
   return (
-    <>
-      <Hero
-        title="Seguro médico"
-        subtitle="Convenio con NOBLE: cobertura y asistencia para tu práctica profesional"
-      />
-
-      <motion.div
-        className={styles.segurosWrap}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.35, ease: "easeOut" }}
+    <ContenedorPagina>
+      <CabeceraFresca
+        titulo={
+          <>
+            Asegurados con <span>NOBLE</span>
+          </>
+        }
+        bajada="El Colegio trabaja con NOBLE Seguros."
+        lema={
+          <>
+            Tu práctica, <em>protegida.</em>
+          </>
+        }
+        destacados={DESTACADOS}
+        acciones={
+          <Button href={CONSULTAR_SEGUROS} variant="secondary" size="large" iconoIzquierda={<WhatsappIcon />}>
+            Consultar
+          </Button>
+        }
       >
-      <Seguros
-        titulo="Convenios de Seguros del Colegio Médico"
-        descripcion="Colegio Médico de Corrientes tiene convenio de seguro con la empresa NOBLE. Para mayor información comunicarse por WhatsApp."
-        whatsAppNumber="543794404497"
-      />
-      </motion.div>
-    </>
-  )
+        <AlianzaNoble />
+      </CabeceraFresca>
+    </ContenedorPagina>
+  );
 }

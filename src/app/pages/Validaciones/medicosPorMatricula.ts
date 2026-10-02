@@ -12,10 +12,15 @@
 // devuelve la matrícula 5863 pero también la 15863 y la 58630).
 
 import { getJSON } from "@/app/shared/lib/http";
-import { paginar } from "@/app/shared/lib/paginar";
 
 /** El máximo que acepta `GET /api/medicos` (`limit: int = Query(50, le=200)`). */
 const PAGINA = 200;
+
+/** Páginas que se piden a la vez. */
+const CONCURRENCIA = 4;
+
+/** Techo de seguridad: 100 páginas de 200 son 20.000 fichas (hoy hay ~4.500). */
+const MAX_PAGINAS = 100;
 
 interface MedicoListRow {
   id: number;
@@ -74,6 +79,56 @@ function indexar(filas: MedicoListRow[]): IndiceMatriculas {
   return idx;
 }
 
+const estadoHttp = (e: unknown): number | undefined =>
+  (e as { response?: { status?: number } })?.response?.status;
+
+/**
+ * Una porción del padrón, a prueba de fichas rotas.
+ *
+ * `GET /api/medicos` valida cada fila contra su modelo de respuesta, y una
+ * sola ficha con datos inválidos (hoy la ID 2433, sin nombre) hace que la
+ * página entera devuelva 500. Como la lista va ordenada por nombre, esa ficha
+ * cae en la página 1 y el padrón no se leía nunca: la pantalla avisaba «falta
+ * el permiso» a todos.
+ *
+ * Ante un error del servidor la porción se parte en dos y se reintenta cada
+ * mitad, hasta aislar la ficha rota, que es lo único que se saltea. `servidas`
+ * cuenta las filas como si hubieran llegado todas: es lo que dice si hay más
+ * páginas, y una ficha salteada no puede cortar el recorrido antes de tiempo.
+ * Un 403 no se parte: es falta de permiso y se informa como tal.
+ */
+async function porcion(skip: number, limit: number): Promise<{ filas: MedicoListRow[]; servidas: number }> {
+  try {
+    const filas = await getJSON<MedicoListRow[]>("/api/medicos", { skip, limit, estado: "todos" });
+    return { filas, servidas: filas.length };
+  } catch (e) {
+    const status = estadoHttp(e);
+    if (status === undefined || status < 500) throw e;
+    if (limit === 1) {
+      console.warn(`Padrón: la ficha en la posición ${skip} no se pudo leer y se saltea.`);
+      return { filas: [], servidas: 1 };
+    }
+    const mitad = Math.ceil(limit / 2);
+    const [a, b] = await Promise.all([porcion(skip, mitad), porcion(skip + mitad, limit - mitad)]);
+    return { filas: [...a.filas, ...b.filas], servidas: a.servidas + b.servidas };
+  }
+}
+
+/** El padrón entero, de a varias páginas en paralelo, hasta la primera incompleta. */
+async function leerPadron(): Promise<MedicoListRow[]> {
+  const todo: MedicoListRow[] = [];
+  for (let desde = 0; desde < MAX_PAGINAS; desde += CONCURRENCIA) {
+    const tanda = await Promise.all(
+      Array.from({ length: CONCURRENCIA }, (_, i) => porcion((desde + i) * PAGINA, PAGINA))
+    );
+    for (const p of tanda) {
+      todo.push(...p.filas);
+      if (p.servidas < PAGINA) return todo;
+    }
+  }
+  return todo;
+}
+
 /** Trae (o reutiliza) el índice. Lanza si el usuario no tiene `medico:leer`. */
 export async function getIndiceMatriculas(): Promise<IndiceMatriculas> {
   if (cache) return cache;
@@ -81,16 +136,7 @@ export async function getIndiceMatriculas(): Promise<IndiceMatriculas> {
   if (enVuelo) return enVuelo;
 
   enVuelo = (async () => {
-    const filas = await paginar<MedicoListRow>(
-      (page) =>
-        getJSON<MedicoListRow[]>("/api/medicos", {
-          skip: (page - 1) * PAGINA,
-          limit: PAGINA,
-          estado: "todos",
-        }),
-      { size: PAGINA }
-    );
-    cache = indexar(filas);
+    cache = indexar(await leerPadron());
     return cache;
   })();
 

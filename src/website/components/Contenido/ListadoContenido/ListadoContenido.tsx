@@ -1,169 +1,101 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  ChevronLeft as FiChevronLeft,
-  ChevronRight as FiChevronRight,
-  Filter as FiFilter,
-  Search as FiSearch,
-  X as FiX,
-} from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { SlidersHorizontal } from "lucide-react";
 
-import NoticiaCard from "../../Noticias/NoticiaCard/NoticiaCard";
+import TarjetaPublicacion from "../TarjetaPublicacion/TarjetaPublicacion";
+import Buscador from "../../UI/Buscador/Buscador";
+import FiltroChips from "../../UI/FiltroChips/FiltroChips";
+import Paginacion from "../../UI/Paginacion/Paginacion";
+import Button from "../../UI/Button/Button";
+import Esqueletos from "../../UI/Esqueletos/Esqueletos";
+import { usePaginacion } from "../../../hooks/usePaginacion";
+import { coincide } from "../../../lib/texto";
 import type { Noticia } from "../../../types";
+import type { TextosListado } from "../publicaciones";
 import styles from "./ListadoContenido.module.scss";
 
 /** Cuántos ítems por página (3 filas de 3 en escritorio). */
 const POR_PAGINA = 9;
 
-/**
- * Normaliza para buscar: sin acentos y en minúsculas, así "cardiologia"
- * encuentra "Cardiología" y viceversa.
- */
-const normalizar = (texto: string) =>
-  texto
-    .normalize("NFD")
-    // \p{Diacritic} = las marcas de acento que NFD dejó sueltas.
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase();
-
-/** Páginas a mostrar, con "…" cuando son muchas. */
-function paginasVisibles(actual: number, total: number): (number | "…")[] {
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-  if (actual <= 4) return [1, 2, 3, 4, 5, "…", total];
-  if (actual >= total - 3)
-    return [1, "…", total - 4, total - 3, total - 2, total - 1, total];
-  return [1, "…", actual - 1, actual, actual + 1, "…", total];
-}
-
-/** Los textos que cambian entre noticias y cursos. Todo lo demás es idéntico. */
-export type ListadoTextos = {
-  /** "noticia" / "curso" — para "3 noticias encontradas". */
-  singular: string;
-  plural: string;
-  buscarPlaceholder: string;
-  cargando: string;
-  /** No hay nada publicado todavía. */
-  vacio: string;
-  /** Hay contenido pero ningún resultado para el filtro. */
-  sinResultados: string;
-  verTodos: string;
-};
-
 type Props = {
   items: Noticia[];
   loading: boolean;
-  textos: ListadoTextos;
-  onSelect: (id: Noticia["id"]) => void;
+  textos: TextosListado;
+  /** Ruta del detalle: cada tarjeta lleva a `${rutaDetalle}/${id}`. */
+  rutaDetalle: string;
 };
 
 /**
- * Listado público de publicaciones: buscador, filtro por badge, grilla de
- * tarjetas cuadradas y paginación. Lo comparten /noticias y /cursos, que sólo
- * difieren en de dónde salen los datos, a dónde navegan y los textos — tenerlo
- * acá evita que las dos pantallas se separen visualmente con el tiempo.
+ * Listado público de publicaciones: buscador, filtro por etiqueta, grilla de
+ * tarjetas cuadradas y paginación. Lo comparten /noticias y /cursos.
  */
-export default function ListadoContenido({
-  items,
-  loading,
-  textos,
-  onSelect,
-}: Props) {
-  const [badgeFiltro, setBadgeFiltro] = useState<string | null>(null);
+export default function ListadoContenido({ items, loading, textos, rutaDetalle }: Props) {
+  const [etiqueta, setEtiqueta] = useState<string | null>(null);
   const [busqueda, setBusqueda] = useState("");
-  const [pagina, setPagina] = useState(1);
   const listaRef = useRef<HTMLDivElement>(null);
 
-  const badges = useMemo(
-    () =>
-      Array.from(new Set(items.map((n) => n.badge).filter(Boolean))) as string[],
+  const etiquetas = useMemo(
+    () => Array.from(new Set(items.map((n) => n.badge).filter((b): b is string => Boolean(b)))),
     [items]
   );
 
-  // Busca en título, resumen, autor y badge. El contenido queda afuera a
+  // Busca en título, resumen, autor y etiqueta. El contenido queda afuera a
   // propósito: trae mucho ruido de HTML y devuelve resultados que no se ven.
-  const filtradas = useMemo(() => {
-    const q = normalizar(busqueda.trim());
-    return items.filter((n) => {
-      if (badgeFiltro && n.badge !== badgeFiltro) return false;
-      if (!q) return true;
-      const heno = normalizar(
-        [n.titulo, n.resumen, n.autor, n.badge].filter(Boolean).join(" ")
-      );
-      // Todas las palabras tienen que aparecer, en cualquier orden.
-      return q.split(/\s+/).every((palabra) => heno.includes(palabra));
-    });
-  }, [items, busqueda, badgeFiltro]);
-
-  const totalPaginas = Math.max(1, Math.ceil(filtradas.length / POR_PAGINA));
-
-  // Si cambia el filtro o la búsqueda, volvemos a la primera página: si no,
-  // se puede quedar en una página que ya no existe.
-  useEffect(() => {
-    setPagina(1);
-  }, [busqueda, badgeFiltro]);
-
-  const visibles = useMemo(
-    () => filtradas.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA),
-    [filtradas, pagina]
+  const filtradas = useMemo(
+    () =>
+      items.filter(
+        (n) =>
+          (!etiqueta || n.badge === etiqueta) &&
+          coincide(busqueda, [n.titulo, n.resumen, n.autor, n.badge])
+      ),
+    [items, busqueda, etiqueta]
   );
 
-  const irAPagina = (p: number) => {
-    setPagina(Math.min(Math.max(1, p), totalPaginas));
+  const { pagina, totalPaginas, visibles, irA } = usePaginacion(
+    filtradas,
+    POR_PAGINA,
+    `${busqueda}|${etiqueta}`
+  );
+
+  const cambiarPagina = (p: number) => {
+    irA(p);
     listaRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const hayFiltros = Boolean(busqueda.trim() || badgeFiltro);
+  const limpiarFiltros = () => {
+    setBusqueda("");
+    setEtiqueta(null);
+  };
+
+  const hayFiltros = Boolean(busqueda.trim() || etiqueta);
 
   return (
-    <main className={styles.listadoPage}>
-      <div className={styles.container}>
+    <section aria-label={textos.plural}>
+      <div>
         {!loading && items.length > 0 && (
           <div className={styles.toolbar}>
-            <div className={styles.searchBox}>
-              <FiSearch className={styles.searchIcon} />
-              <input
-                type="search"
-                className={styles.searchInput}
-                value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
-                placeholder={textos.buscarPlaceholder}
-                aria-label={`Buscar ${textos.plural}`}
-              />
-              {busqueda && (
-                <button
-                  type="button"
-                  className={styles.searchClear}
-                  onClick={() => setBusqueda("")}
-                  aria-label="Limpiar búsqueda"
-                >
-                  <FiX />
-                </button>
-              )}
-            </div>
-
-            {badges.length > 0 && (
-              <div className={styles.filterRow}>
-                <span className={styles.filterLabel}>
-                  <FiFilter />
-                  Filtrar:
+            <Buscador
+              valor={busqueda}
+              onCambio={setBusqueda}
+              placeholder={textos.buscarPlaceholder}
+              etiqueta={`Buscar ${textos.plural}`}
+              className={styles.buscador}
+            />
+            {etiquetas.length > 0 && (
+              <div className={styles.filtrosBloque}>
+                {/* Una pista chica: muchos no se dan cuenta de que las chips filtran. */}
+                <span className={styles.pista}>
+                  <SlidersHorizontal aria-hidden="true" />
+                  {etiqueta ? "Tocá de nuevo para quitarlo" : "Filtrá por tema"}
                 </span>
-                {badges.map((b) => (
-                  <button
-                    key={b}
-                    type="button"
-                    className={`${styles.filterBtn} ${
-                      badgeFiltro === b ? styles.filterBtnActive : ""
-                    }`}
-                    onClick={() =>
-                      setBadgeFiltro((prev) => (prev === b ? null : b))
-                    }
-                    aria-pressed={badgeFiltro === b}
-                  >
-                    {b}
-                    {badgeFiltro === b && (
-                      <FiX className={styles.filterBtnIcon} />
-                    )}
-                  </button>
-                ))}
+                <FiltroChips
+                  opciones={etiquetas}
+                  activa={etiqueta}
+                  onElegir={setEtiqueta}
+                  etiqueta="Filtrar por etiqueta"
+                  desmarcable
+                  tono="amarillo"
+                  className={styles.filtros}
+                />
               </div>
             )}
           </div>
@@ -174,9 +106,7 @@ export default function ListadoContenido({
             {filtradas.length === 0
               ? `No se encontraron ${textos.plural}`
               : `${filtradas.length} ${
-                  filtradas.length === 1
-                    ? `${textos.singular} encontrado`
-                    : `${textos.plural} encontrados`
+                  filtradas.length === 1 ? `${textos.singular} encontrado` : `${textos.plural} encontrados`
                 }`}
             {busqueda.trim() && <> para «{busqueda.trim()}»</>}
           </p>
@@ -184,87 +114,40 @@ export default function ListadoContenido({
 
         <div ref={listaRef}>
           {loading ? (
-            <div className={styles.loading}>{textos.cargando}</div>
+            <Esqueletos cantidad={6} className={styles.grid} clasePieza={styles.esqueleto} />
           ) : items.length === 0 ? (
-            <div className={styles.empty}>
+            <div className={styles.estado}>
               <p>{textos.vacio}</p>
             </div>
           ) : filtradas.length === 0 ? (
-            <div className={styles.empty}>
+            <div className={styles.estado}>
               <p>{textos.sinResultados}</p>
-              <button
-                type="button"
-                className={styles.resetBtn}
-                onClick={() => {
-                  setBusqueda("");
-                  setBadgeFiltro(null);
-                }}
-              >
+              <Button variant="default" size="medium" onClick={limpiarFiltros}>
                 {textos.verTodos}
-              </button>
+              </Button>
             </div>
           ) : (
             <div className={styles.grid}>
               {visibles.map((item) => (
-                <NoticiaCard
+                <TarjetaPublicacion
                   key={item.id}
-                  noticia={item}
-                  variant="square"
-                  onClick={() => onSelect(item.id)}
+                  publicacion={item}
+                  href={`${rutaDetalle}/${item.id}`}
                 />
               ))}
             </div>
           )}
         </div>
 
-        {!loading && totalPaginas > 1 && (
-          <nav
-            className={styles.paginacion}
-            aria-label={`Paginación de ${textos.plural}`}
-          >
-            <button
-              type="button"
-              className={styles.pageArrow}
-              onClick={() => irAPagina(pagina - 1)}
-              disabled={pagina === 1}
-              aria-label="Página anterior"
-            >
-              <FiChevronLeft />
-            </button>
-
-            {paginasVisibles(pagina, totalPaginas).map((p, i) =>
-              p === "…" ? (
-                <span key={`gap-${i}`} className={styles.pageGap}>
-                  …
-                </span>
-              ) : (
-                <button
-                  key={p}
-                  type="button"
-                  className={`${styles.pageBtn} ${
-                    p === pagina ? styles.pageBtnActive : ""
-                  }`}
-                  onClick={() => irAPagina(p)}
-                  aria-current={p === pagina ? "page" : undefined}
-                  aria-label={`Página ${p}`}
-                >
-                  {p}
-                </button>
-              )
-            )}
-
-            <button
-              type="button"
-              className={styles.pageArrow}
-              onClick={() => irAPagina(pagina + 1)}
-              disabled={pagina === totalPaginas}
-              aria-label="Página siguiente"
-            >
-              <FiChevronRight />
-            </button>
-          </nav>
+        {!loading && (
+          <Paginacion
+            pagina={pagina}
+            totalPaginas={totalPaginas}
+            onCambiar={cambiarPagina}
+            etiqueta={`Paginación de ${textos.plural}`}
+          />
         )}
       </div>
-    </main>
+    </section>
   );
 }

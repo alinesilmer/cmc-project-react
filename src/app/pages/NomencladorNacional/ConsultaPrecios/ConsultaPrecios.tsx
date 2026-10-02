@@ -4,6 +4,7 @@ import { Search, Loader2, AlertCircle, AlertTriangle } from "lucide-react";
 import styles from "../ConsultaShared/consulta.module.scss";
 import Combobox from "../ConsultaShared/Combobox";
 import ResultRegister from "../ConsultaShared/ResultRegister";
+import { useCopago } from "../ConsultaShared/useCopago";
 import { listNomenclador, getTablaValores } from "../nomenclador.api";
 import type { NomencladorOut, TablaValorItem, ViaPractica } from "../nomenclador.types";
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
@@ -41,6 +42,7 @@ export default function ConsultaPrecios() {
   const { data: osList = [] } = useObrasSociales();
 
   const osNro = selectedOSItem?.nro_obra_social ?? null;
+  const copago = useCopago(osNro, result);
 
   const filteredOS = useMemo(() => {
     if (!osSearch.trim()) return osList.slice(0, 50);
@@ -210,7 +212,7 @@ export default function ConsultaPrecios() {
               </div>
             ) : result ? (
               <>
-                <ResultRegister result={result} showVigencia={false} />
+                <ResultRegister result={result} showVigencia={false} copago={copago} />
                 {via === "L" && result.via_aplicada === "T" && (
                   <div className={styles.viaDegradeNotice}>
                     <AlertTriangle size={16} />

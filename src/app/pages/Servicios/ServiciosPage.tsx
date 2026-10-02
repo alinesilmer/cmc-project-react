@@ -185,6 +185,91 @@ export default function ServiciosPage() {
         </div>
       </div>
 
+      {/* Buscar y asignar: arriba, porque es lo que se viene a hacer acá. */}
+      <section className={s.section}>
+        <h2 className={s.sectionTitle}>Buscar y asignar organización</h2>
+        <p className={s.sectionSubtitle}>
+          Buscá un socio por nombre, matrícula o número de socio y marcá si es una organización.
+        </p>
+
+        <div className={s.searchRow}>
+          <div className={s.searchWrap}>
+            <Search size={16} className={s.searchIcon} aria-hidden="true" />
+            <input
+              type="search"
+              className={s.searchInput}
+              placeholder="Buscar por nombre, matrícula o número de socio…"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              aria-label="Buscar socio"
+            />
+          </div>
+        </div>
+
+        {searchError && (
+          <div className={s.errorBanner} role="alert">
+            {searchError}
+          </div>
+        )}
+
+        {searchTerm.trim().length >= 2 && (
+          <div className={s.tableWrapper}>
+            {searching ? (
+              <div className={s.loadingState}>
+                <span className={s.spinner} aria-hidden="true" />
+                <p>Buscando…</p>
+              </div>
+            ) : searchResults.length === 0 ? (
+              <div className={s.emptyState}>
+                <p>No se encontraron socios con ese criterio.</p>
+              </div>
+            ) : (
+              <table className={s.table}>
+                <thead>
+                  <tr>
+                    <th>Nro. Socio</th>
+                    <th>Nombre</th>
+                    <th>Matrícula Prov.</th>
+                    <th className={s.checkCol}>Es Organización</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {searchResults.map((row) => (
+                    <tr key={row.id}>
+                      <td className={s.idCell}>{row.nro_socio ?? "—"}</td>
+                      <td className={s.nameCell}>{row.nombre}</td>
+                      <td>{row.matricula_prov}</td>
+                      <td className={s.checkCol}>
+                        <label className={s.checkLabel}>
+                          <input
+                            type="checkbox"
+                            className={s.checkbox}
+                            checked={row.es_organizacion === 1}
+                            disabled={updating.has(row.id)}
+                            onChange={() => toggleOrganizacion(row)}
+                            aria-label={`Marcar ${row.nombre} como organización`}
+                          />
+                          {updating.has(row.id) && (
+                            <span className={s.spinnerSm} aria-hidden="true" />
+                          )}
+                        </label>
+                        {updateErrors[row.id] && (
+                          <span className={s.updateError}>{updateErrors[row.id]}</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+
+        {searchTerm.trim().length > 0 && searchTerm.trim().length < 2 && (
+          <p className={s.searchHint}>Ingresá al menos 2 caracteres para buscar.</p>
+        )}
+      </section>
+
       {/* Organizations table */}
       <section className={s.section}>
         <h2 className={s.sectionTitle}>Organizaciones activas</h2>
@@ -269,91 +354,6 @@ export default function ServiciosPage() {
               <ChevronRight size={16} />
             </button>
           </div>
-        )}
-      </section>
-
-      {/* Search and assign */}
-      <section className={s.section}>
-        <h2 className={s.sectionTitle}>Buscar y asignar organización</h2>
-        <p className={s.sectionSubtitle}>
-          Buscá un socio por nombre, matrícula o número de socio y marcá si es una organización.
-        </p>
-
-        <div className={s.searchRow}>
-          <div className={s.searchWrap}>
-            <Search size={16} className={s.searchIcon} aria-hidden="true" />
-            <input
-              type="search"
-              className={s.searchInput}
-              placeholder="Buscar por nombre, matrícula o número de socio…"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              aria-label="Buscar socio"
-            />
-          </div>
-        </div>
-
-        {searchError && (
-          <div className={s.errorBanner} role="alert">
-            {searchError}
-          </div>
-        )}
-
-        {searchTerm.trim().length >= 2 && (
-          <div className={s.tableWrapper}>
-            {searching ? (
-              <div className={s.loadingState}>
-                <span className={s.spinner} aria-hidden="true" />
-                <p>Buscando…</p>
-              </div>
-            ) : searchResults.length === 0 ? (
-              <div className={s.emptyState}>
-                <p>No se encontraron socios con ese criterio.</p>
-              </div>
-            ) : (
-              <table className={s.table}>
-                <thead>
-                  <tr>
-                    <th>Nro. Socio</th>
-                    <th>Nombre</th>
-                    <th>Matrícula Prov.</th>
-                    <th className={s.checkCol}>Es Organización</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {searchResults.map((row) => (
-                    <tr key={row.id}>
-                      <td className={s.idCell}>{row.nro_socio ?? "—"}</td>
-                      <td className={s.nameCell}>{row.nombre}</td>
-                      <td>{row.matricula_prov}</td>
-                      <td className={s.checkCol}>
-                        <label className={s.checkLabel}>
-                          <input
-                            type="checkbox"
-                            className={s.checkbox}
-                            checked={row.es_organizacion === 1}
-                            disabled={updating.has(row.id)}
-                            onChange={() => toggleOrganizacion(row)}
-                            aria-label={`Marcar ${row.nombre} como organización`}
-                          />
-                          {updating.has(row.id) && (
-                            <span className={s.spinnerSm} aria-hidden="true" />
-                          )}
-                        </label>
-                        {updateErrors[row.id] && (
-                          <span className={s.updateError}>{updateErrors[row.id]}</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        )}
-
-        {searchTerm.trim().length > 0 && searchTerm.trim().length < 2 && (
-          <p className={s.searchHint}>Ingresá al menos 2 caracteres para buscar.</p>
         )}
       </section>
     </div>

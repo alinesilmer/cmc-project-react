@@ -10,6 +10,20 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+// Sin las flechitas de subir/bajar en los campos numéricos: en un precio o un
+// importe un clic de más cambia el valor sin que nadie lo note. Vale para todo
+// el sistema, campos de MUI incluidos (renderizan un <input type="number">).
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 :root {
   // rsuite components resolve their font from this variable
   --rs-font-family-base: "Inter", sans-serif;

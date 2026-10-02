@@ -1,0 +1,303 @@
+@use "@/website/styles/all.scss" as *;
+
+$crema: #f7e9aa;
+$texto: #1f2937;
+$gris: #6b7280;
+$borde: #e5e7eb;
+// El ancho cómodo para leer: unas 70 letras por renglón.
+$columna: 760px;
+
+.pagina {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 36px;
+  min-height: 80vh;
+  padding: 40px 20px 80px;
+  background: $white;
+
+  > * {
+    width: min(100%, $columna);
+  }
+
+  @media (max-width: 480px) {
+    gap: 28px;
+    padding: 24px 16px 56px;
+  }
+}
+
+.cabecera {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-family: $font-title;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: $gris;
+  text-decoration: none;
+  transition: color 0.15s ease, gap 0.15s ease;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover,
+  &:focus-visible {
+    gap: 10px;
+    color: $primary-blue;
+  }
+}
+
+.etiqueta {
+  padding: 5px 10px;
+  border-radius: 4px;
+  background: $crema;
+  font-family: $font-title;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: $primary-blue-dark;
+}
+
+.titulo {
+  margin: 0;
+  font-family: $font-title;
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: $primary-blue-dark;
+  overflow-wrap: anywhere;
+
+  // Una raya corta debajo del título, como en las cabeceras del sitio.
+  &::after {
+    content: "";
+    display: block;
+    width: 56px;
+    height: 4px;
+    margin-top: 20px;
+    border-radius: 2px;
+    background: $primary-blue;
+  }
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.9rem;
+    color: $gris;
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+    color: $primary-blue;
+  }
+}
+
+// La portada es un poco más ancha que el texto: le da aire a la página.
+.pagina > .portada {
+  width: min(100%, 980px);
+}
+
+.portada img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.resumen {
+  margin: 0;
+  padding-left: 18px;
+  border-left: 4px solid $crema;
+  font-size: 1.2rem;
+  line-height: 1.6;
+  color: #374151;
+}
+
+.texto {
+  font-size: 1.07rem;
+  line-height: 1.8;
+  color: $texto;
+  overflow-wrap: anywhere;
+
+  > :first-child {
+    margin-top: 0;
+  }
+
+  p,
+  ul,
+  ol {
+    margin: 0 0 1.1em;
+  }
+
+  ul,
+  ol {
+    padding-left: 1.4em;
+  }
+
+  li {
+    margin-bottom: 0.35em;
+  }
+
+  h2,
+  h3,
+  h4 {
+    margin: 1.8em 0 0.6em;
+    font-family: $font-title;
+    font-weight: 800;
+    line-height: 1.25;
+    color: $primary-blue-dark;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+  }
+
+  a {
+    color: $primary-blue;
+    font-weight: 600;
+    text-underline-offset: 3px;
+  }
+
+  blockquote {
+    margin: 1.4em 0;
+    padding: 4px 0 4px 18px;
+    border-left: 4px solid $primary-blue;
+    color: #374151;
+    font-style: italic;
+  }
+
+  img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 1.4em 0;
+    border-radius: 8px;
+  }
+
+  hr {
+    margin: 2em 0;
+    border: 0;
+    border-top: 1px solid $borde;
+  }
+
+  table {
+    width: 100%;
+    margin: 1.4em 0;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+  }
+
+  th,
+  td {
+    padding: 8px 10px;
+    border: 1px solid $borde;
+    text-align: left;
+  }
+
+  th {
+    background: #f8fafc;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1rem;
+  }
+}
+
+.pie {
+  padding-top: 28px;
+  border-top: 1px solid $borde;
+}
+
+.estado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 64px 0;
+  text-align: center;
+
+  p {
+    margin: 0;
+    font-family: $font-title;
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: $primary-blue-dark;
+  }
+}
+
+// Marcadores grises mientras carga, con la forma de la cabecera y la portada.
+.hueso {
+  display: block;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #f1f3f6 25%, #e6e9ee 50%, #f1f3f6 75%);
+  background-size: 200% 100%;
+  animation: brillo 1.4s ease-in-out infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+.huesoTitulo {
+  width: 100%;
+  height: 38px;
+}
+
+.huesoCorto {
+  width: 60%;
+}
+
+.huesoMeta {
+  width: 45%;
+  height: 16px;
+  margin-top: 8px;
+}
+
+.pagina > .huesoPortada {
+  width: min(100%, 980px);
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+}
+
+@keyframes brillo {
+  from {
+    background-position: 100% 0;
+  }
+
+  to {
+    background-position: -100% 0;
+  }
+}

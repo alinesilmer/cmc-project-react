@@ -104,6 +104,15 @@ interface ApiOut {
   filas: ApiFila[];
 }
 
+/**
+ * Previsualizar y confirmar procesan el reporte entero: cientos de filas, cada
+ * una con su médico, su código y su precio. Con los 15 s por defecto un mes
+ * grande puede cortar del lado del navegador mientras el backend sigue, y en
+ * «confirmar» eso es grave: la importación queda grabada y la pantalla dice
+ * que falló. (El reporte de agosto, 581 prácticas, tarda ~2 s en local.)
+ */
+const LARGO = { timeout: 120_000 };
+
 const num = (v: number | string): number => {
   const n = typeof v === "number" ? v : Number(v);
   return Number.isFinite(n) ? n : 0;
@@ -158,9 +167,9 @@ function aCuerpo(
       // rechaza como fila sin fecha, que es lo correcto.
       fecha: p.fechaISO || null,
       afiliado: p.afiliado,
-      profesional: p.profesional,
+      // Sólo lo que se graba o se usa para resolver: el médico sale de la
+      // matrícula, así que «Profesional Efector» y «Conformidad» no viajan.
       matricula: p.matricula,
-      conformidad: p.conformidad,
       codigo: p.codigo,
       descripcion: p.descripcion,
       estado: p.estado,
@@ -178,7 +187,8 @@ export async function previsualizarPrevencion(
 ): Promise<ImportacionOut> {
   const res = await postJSON<ApiOut>(
     "/api/importaciones/prevencion/previsualizar",
-    aCuerpo(prestaciones, periodo, archivo)
+    aCuerpo(prestaciones, periodo, archivo),
+    LARGO
   );
   return aSalida(res);
 }
@@ -190,7 +200,8 @@ export async function confirmarPrevencion(
 ): Promise<ImportacionOut> {
   const res = await postJSON<ApiOut>(
     "/api/importaciones/prevencion/confirmar",
-    aCuerpo(prestaciones, periodo, archivo)
+    aCuerpo(prestaciones, periodo, archivo),
+    LARGO
   );
   return aSalida(res);
 }
@@ -240,7 +251,8 @@ export async function previsualizarSwiss(
   return aSalida(
     await postJSON<ApiOut>(
       "/api/importaciones/swiss/previsualizar",
-      aCuerpoSwiss(prestaciones, periodo, archivo)
+      aCuerpoSwiss(prestaciones, periodo, archivo),
+      LARGO
     )
   );
 }
@@ -253,7 +265,8 @@ export async function confirmarSwiss(
   return aSalida(
     await postJSON<ApiOut>(
       "/api/importaciones/swiss/confirmar",
-      aCuerpoSwiss(prestaciones, periodo, archivo)
+      aCuerpoSwiss(prestaciones, periodo, archivo),
+      LARGO
     )
   );
 }

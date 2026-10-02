@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import styles from "../ConsultaShared/consulta.module.scss";
 import Combobox from "../ConsultaShared/Combobox";
 import ResultRegister from "../ConsultaShared/ResultRegister";
+import { useCopago } from "../ConsultaShared/useCopago";
 import { listNomenclador, getTablaValores } from "../nomenclador.api";
 import { getEspecialidades } from "../../Especialidades/especialidades.api";
 import type { NomencladorOut, TablaValorItem, ViaPractica } from "../nomenclador.types";
@@ -48,6 +49,7 @@ export default function ConsultaValores() {
   });
 
   const osNro = selectedOSItem?.nro_obra_social ?? null;
+  const copago = useCopago(osNro, result);
   // ID_COLEGIO_ESPE — es lo que espera el backend en `especialidades` y lo que devuelve en `especialidad_id_colegio`
   const espId = selectedEspItem?.id_colegio_espe ?? null;
 
@@ -248,6 +250,7 @@ export default function ConsultaValores() {
               <>
                 <ResultRegister
                   result={result}
+                  copago={copago}
                   showVigencia
                   showDesglose
                   eligibility={

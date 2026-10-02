@@ -1,96 +1,47 @@
 /**
- * chatbot.service.ts
- * ──────────────────
- * Async API helpers used by the chatbot for live data lookups.
- *
- * Security rules:
- *  - Internal endpoint paths are never returned to callers.
- *  - Auth tokens are never attached manually. El chatbot se muestra en el
- *    sitio público (Chatbot.tsx lo oculta en /panel y /admin, no al revés), así
- *    que usamos httpBare y no `http`: no hace falta Authorization acá y un
- *    401 no debe disparar el refresh/redirect a /panel/login del interceptor.
- *  - All API errors are caught; callers receive typed results, never raw errors.
+ * Consultas a la API que hace el chatbot para responder con datos en vivo.
+ * Los errores nunca llegan a la UI: el llamador recibe `null` y responde con
+ * el texto genérico del intent.
  */
 
-import { httpBare } from "@/app/shared/lib/http";
+import { listObrasSocialesPublicas, type ObraSocialPublica } from "../../lib/obrasSociales.client";
+import { normalizar } from "../../lib/texto";
 
-// ─── Internal normalizer ──────────────────────────────────────────────────────
+const CACHE_MS = 5 * 60 * 1000;
+let cache: { lista: ObraSocialPublica[]; hasta: number } | null = null;
 
-function normalize(text: string): string {
-  return text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9\s]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+async function obrasSociales(signal?: AbortSignal): Promise<ObraSocialPublica[]> {
+  if (cache && Date.now() < cache.hasta) return cache.lista;
+  const lista = await listObrasSocialesPublicas(signal);
+  cache = { lista, hasta: Date.now() + CACHE_MS };
+  return lista;
 }
 
-// ─── OS list cache (5-minute TTL) ────────────────────────────────────────────
-
-interface OSEntry { nombre: string; nro: number; }
-
-let _osCache: OSEntry[] | null = null;
-let _osCacheTs = 0;
-const CACHE_TTL_MS = 5 * 60 * 1000;
-
-async function fetchOSList(signal?: AbortSignal): Promise<OSEntry[]> {
-  if (_osCache !== null && Date.now() - _osCacheTs < CACHE_TTL_MS) return _osCache;
-
-  const { data } = await httpBare.get("/api/obras_social/", {
-    signal,
-    timeout: 8_000,
-  });
-
-  const items: unknown[] = Array.isArray(data) ? data
-    : Array.isArray((data as any)?.items) ? (data as any).items
-    : Array.isArray((data as any)?.results) ? (data as any).results
-    : [];
-
-  const list: OSEntry[] = items
-    .map((item: any): OSEntry | null => {
-      const nombre = String(
-        item?.NOMBRE ?? item?.nombre ?? item?.OBRA_SOCIAL ?? item?.name ?? ""
-      ).trim();
-      if (!nombre) return null;
-      const nro = Number(
-        item?.NRO_OBRA_SOCIAL ?? item?.NRO_OBRASOCIAL ?? item?.nro_obra_social ?? item?.id ?? 0
-      );
-      return { nombre, nro };
-    })
-    .filter((x): x is OSEntry => x !== null);
-
-  _osCache = list;
-  _osCacheTs = Date.now();
-  return list;
-}
-
-function findByName<T extends { nombre: string }>(list: T[], query: string): T | undefined {
-  const q = normalize(query);
-  return list.find((item) => {
-    const nn = normalize(item.nombre);
-    if (nn.length < 3) return false;
-    return nn.includes(q) || (q.includes(nn) && nn.length >= 4);
+/**
+ * La obra social cuyo nombre contiene la consulta, o está contenido en ella
+ * («sancor salud» encuentra «SANCOR»). Los nombres de menos de 3 letras se
+ * ignoran: con siglas cortas cualquier mensaje daba un falso positivo.
+ */
+function buscarPorNombre(lista: ObraSocialPublica[], consulta: string): ObraSocialPublica | undefined {
+  const q = normalizar(consulta);
+  return lista.find((os) => {
+    const nombre = normalizar(os.nombre);
+    if (nombre.length < 3) return false;
+    return nombre.includes(q) || (q.includes(nombre) && nombre.length >= 4);
   });
 }
 
-// ─── Public API ───────────────────────────────────────────────────────────────
-
-export interface OSCheckResult {
+export interface ResultadoConvenio {
   found: boolean;
   name: string | null;
 }
 
-export async function checkObraSocial(
-  query: string,
-  signal?: AbortSignal
-): Promise<OSCheckResult | null> {
-  const q = normalize(query);
-  if (q.length < 2) return { found: false, name: null };
+/** ¿Hay convenio con esta obra social? `null` si no se pudo consultar. */
+export async function checkObraSocial(consulta: string, signal?: AbortSignal): Promise<ResultadoConvenio | null> {
+  if (normalizar(consulta).length < 2) return { found: false, name: null };
   try {
-    const list = await fetchOSList(signal);
-    const match = findByName(list, query);
-    return { found: !!match, name: match?.nombre ?? null };
+    const match = buscarPorNombre(await obrasSociales(signal), consulta);
+    return { found: Boolean(match), name: match?.nombre ?? null };
   } catch {
     return null;
   }

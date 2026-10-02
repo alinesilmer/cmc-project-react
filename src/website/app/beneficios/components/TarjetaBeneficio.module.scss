@@ -1,0 +1,213 @@
+@use "@/website/styles/all.scss" as *;
+
+.card {
+  // El acento lo pisa inline el color guardado en la base; este es el default.
+  --acento: #{$primary-blue};
+  --sobre-acento: #{$white};
+
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: $white;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(20, 35, 58, 0.05), 0 10px 26px rgba(20, 35, 58, 0.07);
+  transition: transform $transition-fast, box-shadow $transition-fast;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 1px 2px rgba(20, 35, 58, 0.05), 0 18px 34px rgba(20, 35, 58, 0.13);
+  }
+}
+
+// ─── Banda de color: misma altura en todas, haya descuento o no ────────────────
+
+.banda {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 84px;
+  // A la derecha queda lugar para el círculo decorativo.
+  padding: 0 56px 0 20px;
+  background: var(--acento);
+  color: var(--sobre-acento);
+  overflow: hidden;
+
+  // Un círculo claro de fondo, como en los paneles del sitio.
+  &::after {
+    content: "";
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    right: -30px;
+    top: -40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.14);
+  }
+}
+
+// La letra baja según el largo del texto: «10%» grande, una frase en dos
+// renglones. Si ni así entra, la tarjeta ofrece «Ver más».
+.descuento {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  font-family: $font-title;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+
+  &[data-largo="corto"] {
+    font-size: 2rem;
+    line-height: 1;
+  }
+
+  &[data-largo="medio"] {
+    font-size: 1.45rem;
+  }
+
+  &[data-largo="largo"] {
+    font-size: 1.12rem;
+  }
+
+  svg {
+    display: block;
+    width: 28px;
+    height: 28px;
+  }
+}
+
+// La categoría, sobre el título: chica, con un punto del color del beneficio.
+.categoria {
+  display: block;
+  min-width: 0;
+  font-family: $font-title;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 7px;
+    vertical-align: 1px;
+    border-radius: 2px;
+    background: var(--acento);
+  }
+}
+
+// ─── Cuerpo: alto fijo de título y descripción ────────────────────────────────
+
+.cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  padding: 18px 20px;
+}
+
+.cardTitle {
+  margin: 0;
+  font-family: $font-title;
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1.25;
+  color: #14233a;
+  // Siempre dos renglones de alto, así las descripciones arrancan parejas.
+  min-height: calc(1.15rem * 1.25 * 2);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cardText {
+  margin: 0;
+  font-family: $font-normal;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: #5b6474;
+  white-space: pre-line; // la descripción se carga con saltos de línea
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// ─── Pie: sólo si hay datos, siempre al fondo ─────────────────────────────────
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 20px;
+  padding: 12px 0 16px;
+  border-top: 1px solid #efece4;
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-family: $font-normal;
+  font-size: 0.85rem;
+  color: #5b6474;
+
+  svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    color: var(--acento);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+}
+
+.verMas {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  font-family: $font-title;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--acento);
+  cursor: pointer;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.18s ease;
+  }
+
+  &:hover svg {
+    transform: translate(2px, -2px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--acento);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}

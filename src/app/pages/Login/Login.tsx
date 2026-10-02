@@ -1,267 +1,154 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Download } from "lucide-react";
-import styles from "./Login.module.scss";
-import Button from "@/app/components/ui/Button/Button";
-import Modal from "@/app/components/ui/Modal/Modal";
+import { ArrowRight, BadgeCheck, CircleUserRound, FileText, IdCard, LockKeyhole, ShieldCheck, Wallet } from "lucide-react";
+import PantallaAcceso, { type Destacado } from "@/app/features/acceso/components/PantallaAcceso/PantallaAcceso";
+import CampoAcceso from "@/app/features/acceso/components/CampoAcceso/CampoAcceso";
+import AyudaPassword from "./AyudaPassword";
+import ModalValoresEticos from "./ModalValoresEticos";
 import { useAuth } from "../../auth/AuthProvider";
-import { isWebEditor } from "../../auth/roles";
-import { hasScope } from "../../auth/scopes";
-import { http } from "@/app/shared/lib/http";
-import pdf from "../../assets/CMC_08_2026.pdf";
+import { destinoDe, irADestino } from "../../auth/destino";
 import { mensajeDeError } from "@/app/shared/lib/httpErrors";
+import { saludoSegunHora } from "@/app/shared/lib/fechas";
 import type { LogoutMotivo } from "../../auth/session";
-import Header from "../../../website/components/UI/Header/Header";
+import Header from "@/website/components/UI/Header/Header";
+import styles from "./Login.module.scss";
 
-const LOGOUT_MESSAGES: Record<LogoutMotivo, string> = {
+const MENSAJES_SALIDA: Record<LogoutMotivo, string> = {
   token_revocado: "Tu sesión se cerró, ingresá de nuevo.",
   sesion_expirada: "Tu sesión se cerró, ingresá de nuevo.",
   password_changed: "Contraseña actualizada, ingresá de nuevo.",
 };
 
-function Login() {
-  const location = useLocation();
-  const motivo = (location.state as { motivo?: LogoutMotivo } | null)?.motivo;
+const DESTACADOS: Destacado[] = [
+  { icono: ShieldCheck, texto: "Validá afiliados" },
+  { icono: Wallet, texto: "Mirá tus cobros" },
+  { icono: BadgeCheck, texto: "Tu credencial digital" },
+];
 
-  const [isMember, setIsMember] = useState<boolean | null>(motivo ? true : null);
-  const [error, setError] = useState<string>("");
-  const [notice, setNotice] = useState<string>(motivo ? LOGOUT_MESSAGES[motivo] : "");
-  const [loading, setLoading] = useState(false);
-  const [isPdfOpen, setIsPdfOpen] = useState(false);
+export default function Login() {
+  const location = useLocation();
   const navigate = useNavigate();
   const { login } = useAuth();
+  const motivo = (location.state as { motivo?: LogoutMotivo } | null)?.motivo;
 
-  const goMember = () => {
-    setIsMember(true);
-    setError("");
-  };
+  // Se calcula una vez al montar: no hace falta que cambie con la pantalla abierta.
+  const [saludo] = useState(saludoSegunHora);
+  const [error, setError] = useState("");
+  const [aviso, setAviso] = useState(motivo ? MENSAJES_SALIDA[motivo] : "");
+  const [cargando, setCargando] = useState(false);
+  const [ayudaAbierta, setAyudaAbierta] = useState(false);
+  const [pdfAbierto, setPdfAbierto] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const ingresar = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
-    setNotice("");
+    setAviso("");
 
-    const fd = new FormData(e.currentTarget);
-    const u = String(fd.get("username") || "").trim();
-    const p = String(fd.get("password") || "").trim();
-
-    const nro = Number(u);
-    if (!nro || Number.isNaN(nro) || !p) {
-      setError("Ingresá Nro. de socio y matrícula provincial.");
+    const datos = new FormData(e.currentTarget);
+    const nro = Number(String(datos.get("username") ?? "").trim());
+    const password = String(datos.get("password") ?? "").trim();
+    if (!nro || !password) {
+      setError("Completá tu número de socio y tu contraseña.");
       return;
     }
 
-    setLoading(true);
+    setCargando(true);
     try {
-      const me = await login(nro, p);
-
-      if (me.must_change_password) {
-        navigate("/panel/cambiar-password", { replace: true });
-        return;
-      }
-
-      if (isWebEditor(me)) {
-        navigate("/panel/sitio", { replace: true });
-        return;
-      }
-
-      // TEMPORAL — prueba controlada del panel nuevo con médicos
-      // seleccionados. Quien tenga panel:ingresar se queda acá en vez de ir
-      // al legacy; el resto sigue el flujo de siempre. Borrar junto con
-      // Scope.PANEL_INGRESAR (backend) cuando cierre la prueba.
-      if (hasScope(me.scopes, "panel:ingresar")) {
-        navigate("/panel/dashboard", { replace: true });
-        return;
-      }
-
-      if (me.role == "medico") {
-        const menuPage = me.es_organizacion === 1 ? "menu_clinica.php" : "menu.php";
-        const next = `/${menuPage}?nro_socio1=${encodeURIComponent(
-          Number(me.nro_socio),
-        )}`;
-        const { data } = await http.get("/auth/legacy/sso-link", {
-          params: { next },
-        });
-        window.location.href = data.url;
-      } else if (me.role != "medico") {
-        const { data } = await http.get("/auth/legacy/sso-link", {
-          params: { next: "/principal.php" },
-        });
-        window.location.href = data.url;
-      }
-    } catch (err: any) {
-      setError(mensajeDeError(err, "Credenciales inválidas o servicio no disponible."));
+      const usuario = await login(nro, password);
+      await irADestino(destinoDe(usuario), navigate);
+    } catch (err) {
+      setError(mensajeDeError(err, "El número de socio o la contraseña no coinciden."));
     } finally {
-      setLoading(false);
+      setCargando(false);
     }
   };
 
-  const goBackToStart = () => {
-    setIsMember(null);
-    setError("");
-  };
-
   return (
-    <div className={styles.container}>
+    <>
       <Header />
+      <PantallaAcceso
+        lema={
+          <>
+            Tu Colegio, <em>a un clic.</em>
+          </>
+        }
+        destacados={DESTACADOS}
+      >
+        <h1 className={styles.titulo}>{saludo}</h1>
+        <p className={styles.bajada}>Ingresá con tu número de socio.</p>
 
-      <section className={styles.card}>
-        {isMember && (
+        <form className={styles.form} onSubmit={ingresar} noValidate>
+          {aviso && !error && (
+            <p className={`${styles.mensaje} ${styles.mensajeInfo}`} role="status">
+              {aviso}
+            </p>
+          )}
+          {error && (
+            <p className={`${styles.mensaje} ${styles.mensajeError}`} role="alert">
+              {error}
+            </p>
+          )}
+
+          <CampoAcceso
+            id="login-socio"
+            name="username"
+            etiqueta="Número de socio"
+            icono={<IdCard />}
+            placeholder="Ej: 1234"
+            inputMode="numeric"
+            autoComplete="username"
+            invalido={Boolean(error)}
+            onInput={() => setError("")}
+            required
+          />
+
+          <CampoAcceso
+            id="login-password"
+            name="password"
+            etiqueta="Contraseña"
+            icono={<LockKeyhole />}
+            secreto
+            placeholder="Tu contraseña"
+            autoComplete="current-password"
+            invalido={Boolean(error)}
+            onInput={() => setError("")}
+            required
+          />
+
           <button
             type="button"
-            onClick={goBackToStart}
-            className={styles.backLink}
-            aria-label="Volver"
-            title="Volver"
+            className={styles.olvide}
+            onClick={() => setAyudaAbierta((v) => !v)}
+            aria-expanded={ayudaAbierta}
+            aria-controls="ayuda-password"
           >
-            ←
+            ¿Olvidaste tu contraseña?
           </button>
-        )}
+          <AyudaPassword abierta={ayudaAbierta} />
 
-        <div className={styles.content}>
-          <div className={styles.headerRow}>
-            <div className={styles.title}>
-              <h1 className={styles.heading}>
-                {isMember ? "¡Bienvenido!" : "Inicio de Sesión"}
-              </h1>
-              <p className={styles.subtitle}>
-                {isMember
-                  ? "Ingresá con tu número de socio y matrícula."
-                  : "¡Haz click en el botón de abajo!"}
-              </p>
-            </div>
-          </div>
+          <button type="submit" className={styles.ingresar} disabled={cargando} aria-busy={cargando}>
+            {cargando ? "Ingresando…" : "Ingresar"}
+            {!cargando && <ArrowRight aria-hidden="true" />}
+          </button>
+        </form>
 
-          <div className={styles.fork}>
-            {!isMember && (
-              <>
-                <Button
-                  className={styles.cta}
-                  variant="primary"
-                  size="md"
-                  onClick={goMember}
-                >
-                  Iniciar Sesión
-                </Button>
-                <Button
-                  className={styles.cta}
-                  variant="third"
-                  size="md"
-                  onClick={() => setIsPdfOpen(true)}
-                >
-                  Ver Valores Éticos Mínimos
-                </Button>
-                {/* <Button variant="secondary" size="md" onClick={goRegister}>
-                  Quiero ser socio
-                </Button> */}
-                {/* <Button variant="third" size="md" onClick={goObrasSociales}>
-                  Asociarme como Obra Social
-                </Button> */}
-              </>
-            )}
-
-            {isMember && (
-              <form
-                className={styles.loginForm}
-                onSubmit={handleSubmit}
-                noValidate
-              >
-                {notice && !error && (
-                  <div
-                    className={styles.errorBox}
-                    role="status"
-                    aria-live="polite"
-                  >
-                    {notice}
-                  </div>
-                )}
-
-                {error && (
-                  <div
-                    className={styles.errorBox}
-                    role="alert"
-                    aria-live="assertive"
-                  >
-                    {error}
-                  </div>
-                )}
-
-                <label className={styles.label} htmlFor="user">
-                  Nro socio
-                </label>
-                <input
-                  id="user"
-                  name="username"
-                  type="text"
-                  className={`${styles.input} ${error ? styles.isInvalid : ""}`}
-                  placeholder="Nro socio"
-                  autoComplete="username"
-                  required
-                  onInput={() => setError("")}
-                  inputMode="numeric"
-                />
-
-                <label className={styles.label} htmlFor="pass">
-                  Matrícula
-                </label>
-                <input
-                  id="pass"
-                  name="password"
-                  type="password"
-                  className={`${styles.input} ${error ? styles.isInvalid : ""}`}
-                  placeholder="••••••••"
-                  autoComplete="current-password"
-                  required
-                  onInput={() => setError("")}
-                />
-
-                <div className={styles.formActions}>
-                  <Button
-                    submit
-                    variant="primary"
-                    size="md"
-                    className={styles.cta}
-                    disabled={loading}
-                    aria-busy={loading}
-                  >
-                    {loading ? "Ingresando..." : "Ingresar"}
-                  </Button>
-                </div>
-              </form>
-            )}
-          </div>
-
-          <div className={styles.divider} aria-hidden />
-          <div className={styles.bottomLinks}>
-            {!isMember && (
-              <Link to="/socios" className={styles.linkMuted}>
-                Requisitos para Registrarse
-              </Link>
-            )}
-          </div>
+        <div className={styles.separador}>
+          <span>o también</span>
         </div>
-        <aside className={styles.media} aria-hidden></aside>
-      </section>
-      <Modal
-        isOpen={isPdfOpen}
-        onClose={() => setIsPdfOpen(false)}
-        title="Valores Éticos Mínimos"
-        size="large"
-      >
-        <div className={styles.pdfModal}>
-          <iframe
-            src={pdf}
-            title="Valores Éticos Mínimos"
-            className={styles.pdfFrame}
-          />
-          <a href={pdf} download className={styles.pdfDownload}>
-            <Download size={16} />
-            Descargar PDF
-          </a>
+
+        <div className={styles.secundarias}>
+          <button type="button" className={styles.secundaria} onClick={() => setPdfAbierto(true)}>
+            <FileText aria-hidden="true" />
+            Valores éticos mínimos
+          </button>
+          <Link to="/socios" className={styles.secundaria}>
+            <CircleUserRound aria-hidden="true" />
+            Quiero ser socio
+          </Link>
         </div>
-      </Modal>
-    </div>
+      </PantallaAcceso>
+
+      <ModalValoresEticos abierto={pdfAbierto} onCerrar={() => setPdfAbierto(false)} />
+    </>
   );
 }
-
-export default Login;

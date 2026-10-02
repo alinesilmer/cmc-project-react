@@ -1,407 +1,238 @@
 @use "@/app/styles/all.scss" as *;
 
+$crema: #f7e9aa;
+$texto: #14233a;
+$texto-suave: #5b6474;
 
-:root {
-  --login-side: url("https://res.cloudinary.com/dcfkgepmp/image/upload/v1773162585/bg_o4owy8.png");
-}
+// ─── Encabezado del formulario ────────────────────────────────────────────────
 
-.container {
-  min-height: 100dvh;
-  width: 100%;
-  background: url("https://res.cloudinary.com/dcfkgepmp/image/upload/v1773162591/bg-login_nmgskk.png");
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  gap: $spacing-6;
-  padding: $spacing-6;
-
-  @media (max-width: $breakpoint-md) {
-    padding: $spacing-4;
-    gap: $spacing-4;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-3;
-    gap: $spacing-3;
-  }
-}
-
-/* Card container*/
-.card {
-  width: min(100%, 980px);
-  background: $white;
-  border: 1px solid $gray-200;
-  border-radius: $border-radius-sm;
-  box-shadow: $shadow-xl;
-  overflow: hidden;
-  position: relative;
-
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr);
-  min-height: 560px;
-
-  @media (max-width: $breakpoint-lg) {
-    grid-template-columns: 1fr;
-    min-height: unset;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    width: 100%;
-    border-radius: $border-radius-xl;
-    box-shadow: $shadow-lg;
-  }
-}
-
-.content {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  gap: $spacing-6;
-  padding: $spacing-12;
-
-  @media (max-width: $breakpoint-lg) {
-    padding: $spacing-8;
-    gap: $spacing-5;
-  }
-
-  @media (max-width: $breakpoint-md) {
-    padding: $spacing-6;
-    gap: $spacing-4;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-4;
-    gap: $spacing-3;
-  }
-}
-
-.headerRow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  @media (min-width: $breakpoint-lg) {
-    justify-content: center;
-  }
-}
-
-.title {
-  display: grid;
-  gap: $spacing-2;
-  text-align: center;
-
-  @media (min-width: $breakpoint-lg) {
-    text-align: left;
-  }
-}
-
-.heading {
-  margin: 2rem 0 0 0;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
+.titulo {
+  margin: 0 0 6px;
   font-family: "Manrope", sans-serif;
-  font-size: clamp(#{$font-size-3xl}, 2.4vw, 2rem);
-  font-weight: $font-weight-bold;
-  letter-spacing: -0.02em;
-  color: $gray-900;
-  line-height: 1.15;
-
-  @media (max-width: $breakpoint-sm) {
-      margin: 0;
-    }
+  font-size: clamp(2rem, 3.4vw, 2.6rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  color: $texto;
 }
 
-.subtitle {
-  margin: 0;
-    align-items: center;
-  justify-content: center;
-  text-align: center;
-  font-family: "Inter", sans-serif;
-  color: $gray-600;
-  font-size: clamp(#{$font-size-base}, 1.4vw, #{$font-size-lg});
-  line-height: 1.6;
-
-  
+.bajada {
+  margin: 0 0 26px;
+  font-size: 1.05rem;
+  color: $texto-suave;
 }
 
-.fork {
-  display: grid;
-  gap: $spacing-4;
-  width: 100%;
-  max-width: 420px;
-  margin: 0 auto;
+// ─── Formulario ───────────────────────────────────────────────────────────────
 
-  @media (min-width: $breakpoint-lg) {
-    margin: 0;
-  }
-
-  @media (max-width: $breakpoint-md) {
-    max-width: 100%;
-    gap: $spacing-3;
-  }
-}
-
-.divider {
-  height: 1px;
-  background: $gray-200;
-  opacity: 0.9;
-}
-
-.bottomLinks {
+.form {
   display: flex;
-  align-items: center;
-  justify-content: center;
   flex-direction: column;
-  gap: $spacing-3;
-  text-align: center;
-
-  @media (min-width: $breakpoint-md) {
-    flex-direction: row;
-    justify-content: space-between;
-    text-align: center;
-  }
+  gap: 18px;
 }
 
-
-/* === Media side === */
-.media {
-  background-image: var(--login-side);
-  background-size: cover;
-  background-position: center;
-  position: relative;
-
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-
-  padding: $spacing-6;
-  min-height: 560px;
-
-  /* subtle overlay, no gradients */
-  &::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: rgba($black, 0.18);
-    pointer-events: none;
-  }
-
-  @media (max-width: $breakpoint-lg) {
-    min-height: 240px;
-    order: -1;
-    align-items: center;
-    padding: $spacing-5;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    min-height: 200px;
-    padding: $spacing-4;
-  }
+.mensaje {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  line-height: 1.4;
 }
 
-.linkMuted {
-  color: $white;
+.mensajeError {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #b91c1c;
+}
+
+.mensajeInfo {
+  background: #eef3ff;
+  border: 1px solid #dbeafe;
+  color: $primary-blue;
+}
+
+.olvide {
+  align-self: flex-start;
+  margin-top: -6px;
+  padding: 4px 0;
+  border: 0;
+  background: none;
   font-family: "Inter", sans-serif;
-  font-weight: $font-weight-semibold;
-  text-decoration: none;
-  font-size: $font-size-base;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: $primary-blue;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
 
   &:hover {
-    text-decoration: underline;
-    color: $white;
+    color: $primary-blue-darker;
   }
 }
 
-/* === Back arrow (only when isMember=true) === */
-.backLink {
-  position: absolute;
-  top: $spacing-4;
-  left: $spacing-4;
-  z-index: 5;
-
-  display: inline-flex;
+.ingresar {
+  display: flex;
   align-items: center;
   justify-content: center;
-
-  width: 36px;
-  min-width: 36px;
-  height: 36px;
-  border-radius: $border-radius-sm;
-
-  background: $white;
-  color: $primary-blue;
-  border: 1px solid rgba($primary-blue, 0.5);
-
-  font-size: $font-size-lg;
+  gap: 10px;
+  height: 58px;
+  margin-top: 4px;
+  border: 0;
+  border-radius: 8px;
+  background: $primary-blue;
+  color: $white;
+  font-family: "Manrope", sans-serif;
+  font-size: 1.1rem;
+  font-weight: 800;
   cursor: pointer;
-  text-decoration: none;
+  box-shadow: 0 10px 24px rgba($primary-blue, 0.28);
+  transition: background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
 
-  box-shadow: $shadow-sm;
-  transition: transform 0.14s ease, background-color 0.14s ease, color 0.14s ease,
-    border-color 0.14s ease, box-shadow 0.14s ease;
-
-  &:hover {
-    transform: translateY(-1px);
-    background: $primary-blue-dark;
-    color: $white;
-    border-color: $primary-blue-dark;
-    box-shadow: $shadow-md;
+  svg {
+    width: 20px;
+    height: 20px;
+    transition: transform 0.18s ease;
   }
 
-  &:active {
-    transform: translateY(0);
-    box-shadow: $shadow-sm;
+  &:hover:not(:disabled) {
+    background: $primary-blue-darker;
+    transform: translateY(-1px);
+
+    svg {
+      transform: translateX(3px);
+    }
   }
 
   &:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 4px rgba($primary-blue, 0.18), $shadow-md;
+    outline: 3px solid $crema;
+    outline-offset: 2px;
   }
 
-  @media (max-width: $breakpoint-sm) {
-    top: $spacing-3;
-    left: $spacing-3;
-    width: 32px;
-    min-width: 32px;
-    height: 32px;
-    font-size: $font-size-base;
+  &:disabled {
+    opacity: 0.7;
+    cursor: progress;
   }
 }
 
-/* === Form === */
-.loginForm {
+// ─── Ayuda para recuperar la contraseña ───────────────────────────────────────
+
+.ayuda {
+  overflow: hidden;
+}
+
+.ayudaCuerpo {
   display: flex;
-  flex-direction: column;
-  gap: $spacing-3;
-
-  padding: $spacing-5;
-  border: 1px solid $gray-200;
-  border-radius: $border-radius-sm;
-  background: $white;
-  box-shadow: $shadow-sm;
-
-  @media (max-width: $breakpoint-md) {
-    padding: $spacing-4;
-    gap: $spacing-2;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-3;
-  }
+  gap: 14px;
+  padding: 16px;
+  border-radius: 8px;
+  background: #fbf6e1;
+  border: 1px solid rgba(#c9a94a, 0.35);
 }
 
-.label {
-  font-family: "Inter", sans-serif;
-  font-size: $font-size-lg;
-  color: $gray-700;
-  font-weight: 500;
-}
+.ayudaIcono {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  background: $crema;
+  color: #4d441a;
 
-.input {
-  height: 44px;
-  border-radius: $border-radius-sm;
-  border: 1px solid $gray-300;
-  background: $white;
-  padding: 0 $spacing-4;
-
-  font-family: "Inter", sans-serif;
-  font-size: $font-size-lg;
-  font-weight: $font-weight-semibold;
-  color: $gray-900;
-
-  transition: box-shadow 0.14s ease, border-color 0.14s ease;
-
-  &::placeholder {
-    color: $gray-400;
-    font-weight: $font-weight-medium;
-  }
-
-  &:focus {
-    outline: none;
-    border-color: rgba($primary-blue, 0.65);
-    box-shadow: 0 0 0 3px rgba($primary-blue, 0.15);
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    padding: 0 $spacing-3;
+  svg {
+    width: 20px;
+    height: 20px;
   }
 }
 
-.isInvalid {
-  border-color: $danger-red !important;
-  box-shadow: 0 0 0 3px rgba($danger-red, 0.14) !important;
+.ayudaTitulo {
+  margin: 0 0 4px;
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  color: $texto;
 }
 
-.errorBox {
-  background: rgba($danger-red, 0.08);
-  border: 1px solid rgba($danger-red, 0.55);
-  color: $danger-red;
-
-  border-radius: $border-radius-md;
-  padding: $spacing-3 $spacing-4;
-  margin-bottom: $spacing-1;
-
-  font-family: "Inter", sans-serif;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
-  line-height: 1.5;
-
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-2 $spacing-3;
-  }
+.ayudaTexto {
+  margin: 0 0 12px;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: $texto-suave;
 }
 
-.formActions {
-  display: flex;
-  gap: $spacing-3;
-  margin-top: $spacing-2;
-
-  @media (max-width: $breakpoint-md) {
-    flex-direction: column;
-    align-items: stretch;
-    margin-top: $spacing-1;
-  }
-}
-
-.cta {
-  width: 100%;
-}
-
-/* === PDF modal === */
-.pdfModal {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-3;
-}
-
-.pdfFrame {
-  width: 100%;
-  height: 65vh;
-  border: 1px solid $gray-200;
-  border-radius: $border-radius-sm;
-}
-
-.pdfDownload {
+.ayudaBoton {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-2;
-  align-self: flex-end;
-
-  padding: $spacing-2 $spacing-4;
-  border-radius: $border-radius-sm;
-  background: $primary-blue;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 6px;
+  background: #1d9148;
   color: $white;
-  font-family: "Inter", sans-serif;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
+  font-weight: 700;
+  font-size: 0.95rem;
   text-decoration: none;
-  transition: background-color 0.14s ease;
 
   &:hover {
-    background: $primary-blue-dark;
+    background: #17773b;
     color: $white;
   }
 }
+
+// ─── Opciones secundarias ─────────────────────────────────────────────────────
+
+.separador {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 26px 0 16px;
+  color: #9aa3b2;
+  font-size: 0.85rem;
+
+  &::before,
+  &::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #e8e4da;
+  }
+}
+
+.secundarias {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+
+  @media (max-width: 420px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.secundaria {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 50px;
+  padding: 10px 12px;
+  border: 1.5px solid #e2ddd0;
+  border-radius: 8px;
+  background: $white;
+  color: $primary-blue;
+  font-family: "Inter", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease;
+
+  svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    border-color: $primary-blue;
+    background: rgba($primary-blue, 0.04);
+    color: $primary-blue;
+  }
+}
+

@@ -1,0 +1,92 @@
+@use "../../../styles/variables" as *;
+@use "../../../styles/admin" as *;
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+// Etiqueta a la izquierda, botón de vista previa a la derecha.
+.cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+// ─── Markdown toolbar ──────────────────────────────────────────────────────────
+
+.toolbar {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: $spacing-sm;
+
+  button {
+    padding: 0.3rem 0.65rem;
+    border: 1px solid $ad-borde;
+    border-radius: $ad-radio-chico;
+    background: $white;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: $ad-texto;
+    cursor: pointer;
+    transition: background $transition-fast, border-color $transition-fast;
+    white-space: nowrap;
+
+    &:hover {
+      background: $ad-tinte;
+      border-color: $primary-blue;
+      color: $primary-blue;
+    }
+  }
+}
+
+.textarea {
+  width: 100%;
+  white-space: pre-wrap;
+  font-family: "Courier New", monospace;
+  font-size: 0.88rem;
+}
+
+// ─── Markdown preview ──────────────────────────────────────────────────────────
+
+.preview {
+  margin-top: $spacing-sm;
+  padding: $spacing-md;
+  border: 1px solid $ad-borde;
+  border-radius: $ad-radio;
+  background: $ad-superficie-2;
+  line-height: 1.65;
+  font-size: 0.92rem;
+
+  p  { margin: 0 0 0.9rem; }
+  h1, h2, h3 { margin: 1rem 0 0.5rem; }
+  ul, ol { margin: 0.75rem 0 0.75rem 1.25rem; }
+
+  blockquote {
+    margin: 0.75rem 0;
+    padding-left: 0.75rem;
+    border-left: 3px solid $ad-borde;
+    color: $ad-texto-2;
+  }
+
+  a {
+    color: $primary-blue;
+    text-decoration: underline;
+  }
+}
+
+@media (max-width: $breakpoint-mobile) {
+  .toolbar {
+    gap: 4px;
+
+    button {
+      padding: 0.28rem 0.5rem;
+      font-size: 0.78rem;
+    }
+  }
+}

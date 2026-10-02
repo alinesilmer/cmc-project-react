@@ -1,0 +1,93 @@
+@use "@/website/styles/all.scss" as *;
+
+.mapWrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 21 / 9;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba($primary-blue, 0.1);
+  box-shadow: $shadow-md;
+  background: rgba($light-gray, 0.25);
+
+  @media (max-width: $breakpoint-tablet) {
+    aspect-ratio: 16 / 9;
+  }
+
+  @media (max-width: $breakpoint-mobile) {
+    aspect-ratio: 4 / 3;
+  }
+}
+
+.mapIframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+.mapFallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-sm;
+  padding: $spacing-lg;
+  text-align: center;
+}
+
+.mapFallbackIcon {
+  color: $primary-blue;
+  opacity: 0.5;
+}
+
+.mapFallbackText {
+  margin: 0;
+  font-family: $font-normal;
+  font-size: 0.88rem;
+  color: rgba($gray, 0.85);
+  max-width: 34ch;
+  line-height: 1.65;
+}
+
+// ── "Cómo llegar" chip ────────────────────────────────────────────────────────
+.mapChip {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.38rem 0.8rem;
+  border-radius: 6px;
+  background: $white;
+  border: 1px solid rgba($primary-blue, 0.15);
+  font-family: $font-title;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: $primary-blue-dark;
+  text-decoration: none;
+  box-shadow: $shadow-sm;
+  transition: box-shadow $transition-fast, border-color $transition-fast;
+
+  &:hover {
+    box-shadow: $shadow-md;
+    border-color: rgba($primary-blue, 0.28);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary-blue;
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mapChip {
+    transition: none;
+  }
+}

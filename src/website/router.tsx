@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import "./styles/escala.css";
 
 const Home = lazy(() => import("./app/inicio/page"));
 const Contacto = lazy(() => import("./app/contact/page"));
@@ -8,20 +9,20 @@ const BeneficiosPage = lazy(() => import("./app/beneficios/page"));
 const NoticiaDetail = lazy(() => import("./app/noticias/[id]/page"));
 const Forbidden403 = lazy(() => import("./app/forbidden403/Forbidden403"));
 const SociosPage = lazy(() => import("./app/socios/page"));
+const NosotrosPage = lazy(() => import("./app/nosotros/page"));
+const Servicios = lazy(() => import("./app/servicios/page"));
+const ConveniosPage = lazy(() => import("./app/convenios/convenios"));
+const QuintaPage = lazy(() => import("./app/quinta/quinta"));
+const CursosPage = lazy(() => import("./app/cursoscap/page"));
+const CursoDetailPage = lazy(() => import("./app/cursoscap/[id]/page"));
+const SegurosPage = lazy(() => import("./app/seguros/page"));
+const Asociados = lazy(() => import("./app/asociados/page"));
+const PrevencionSaludPage = lazy(() => import("./app/prevencion-salud/page"));
+const PreguntasFrecuentesPage = lazy(() => import("./app/preguntas-frecuentes/page"));
 
 import Header from "./components/UI/Header/Header";
 import Footer from "./components/UI/Footer/Footer";
 import Chatbot from "./components/Chatbot/Chatbot";
-import NosotrosPage from "./app/nosotros/page";
-import Servicios from "./app/servicios/page";
-import ConveniosPage from "./app/convenios/convenios";
-import QuintaPage from "./app/quinta/quinta";
-import CursosPage from "./app/cursoscap/page";
-import CursoDetailPage from "./app/cursoscap/[id]/page";
-import SegurosPage from "./app/seguros/page";
-import Asociados from "./app/asociados/page";
-import PrevencionSaludPage from "./app/prevencion-salud/page";
-import PreguntasFrecuentesPage from "./app/preguntas-frecuentes/page";
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
@@ -32,12 +33,26 @@ function ScrollToTop() {
   return null;
 }
 
+/** Marca el <html> mientras se está en el sitio: ver styles/escala.css. */
+function EscalaSitio() {
+  useEffect(() => {
+    document.documentElement.classList.add("sitio-escala");
+    return () => document.documentElement.classList.remove("sitio-escala");
+  }, []);
+  return null;
+}
+
 export default function WebRoutes() {
   return (
-    <Suspense fallback={<div style={{ padding: 24 }}>Cargando…</div>}>
+    <>
+      <EscalaSitio />
       <Header />
       <ScrollToTop />
 
+      {/* El Suspense envuelve sólo las páginas: al cambiar de sección la cabecera
+          y el pie quedan quietos y sólo el medio espera. El alto mínimo evita que
+          el pie salte hacia arriba mientras carga. */}
+      <Suspense fallback={<div style={{ minHeight: "80vh" }} aria-busy="true" />}>
       <Routes>
         {/* 403 opcional */}
         <Route path="/403" element={<Forbidden403 />} />
@@ -82,9 +97,10 @@ export default function WebRoutes() {
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </Suspense>
 
       <Chatbot />
       <Footer />
-    </Suspense>
+    </>
   );
 }

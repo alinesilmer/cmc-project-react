@@ -1,0 +1,117 @@
+@use "@/website/styles/all.scss" as *;
+
+$crema: #f7e9aa;
+
+.acciones {
+  display: grid;
+  grid-template-columns: repeat(var(--columnas, 3), minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 14px;
+  // Sólo arriba y abajo: el margen lateral lo pone ContenedorPagina para
+  // centrar la sección igual que las demás.
+  margin-block: 0;
+  padding: 0;
+  list-style: none;
+
+  > li {
+    display: flex;
+  }
+
+  // En pantallas chicas: uno debajo del otro, sin importar cuántos sean.
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.accion {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  // Arriba y no al centro: el dato puede ocupar uno o dos renglones, y así
+  // los íconos y los verbos quedan a la misma altura en todas las tarjetas.
+  justify-content: flex-start;
+  flex: 1;
+  gap: 12px;
+  padding: 28px 12px;
+  border-radius: 10px;
+  background: $white;
+  box-shadow: 0 1px 2px rgba(20, 35, 58, 0.05), 0 10px 26px rgba(20, 35, 58, 0.07);
+  color: $primary-blue;
+  text-align: center;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  strong {
+    font-family: $font-title;
+    font-size: 1.15rem;
+    font-weight: 800;
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 1px 2px rgba(20, 35, 58, 0.05), 0 18px 34px rgba(20, 35, 58, 0.13);
+    color: $primary-blue;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary-blue;
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 640px) {
+    flex-direction: row;
+    justify-content: flex-start;
+    padding: 16px 18px;
+    text-align: left;
+  }
+}
+
+.icono {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 10px;
+  background: $primary-blue;
+  color: $crema;
+  transition: transform 0.25s ease;
+
+  svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  @media (max-width: 640px) {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+.accion:hover .icono {
+  transform: scale(1.08) rotate(-4deg);
+}
+
+// El dato va chico y en gris: el verbo es lo que se lee primero.
+.dato {
+  // Se lee entero: el mail largo pasa a un segundo renglón en vez de cortarse.
+  // Las tarjetas tienen todas el mismo alto, así que siguen alineadas.
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: $primary-blue-dark;
+
+  @media (max-width: 640px) {
+    margin-left: auto;
+    text-align: right;
+  }
+}
+
+// En el celular el texto va al lado del ícono: el verbo a la izquierda y el
+// dato a la derecha.
+.verbo {
+  @media (max-width: 640px) {
+    flex-shrink: 0;
+  }
+}

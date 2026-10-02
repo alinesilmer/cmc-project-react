@@ -1,0 +1,204 @@
+@use "../../../styles/variables" as *;
+@use "../../../styles/admin" as *;
+
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+// ─── Filters bar ───────────────────────────────────────────────────────────────
+
+.filtersBar {
+  display: flex;
+  gap: $spacing-sm;
+  align-items: flex-end;
+  margin-bottom: $spacing-md;
+  flex-wrap: wrap;
+}
+
+.buscador {
+  flex: 1 1 240px;
+  min-width: 200px;
+}
+
+.selectGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.selectLabel {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: $ad-texto-2;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.select {
+  height: 38px;
+  border: 1px solid $ad-borde;
+  border-radius: $ad-radio;
+  padding: 0 0.75rem;
+  background: $white;
+  font: inherit;
+  font-size: 0.92rem;
+  outline: none;
+  cursor: pointer;
+  transition: border-color $transition-fast;
+
+  &:focus {
+    border-color: $primary-blue;
+  }
+}
+
+.rightActions {
+  margin-left: auto;
+  display: flex;
+  gap: $spacing-sm;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+// ─── News section wrapper ──────────────────────────────────────────────────────
+
+.noticias {
+  background: $white;
+  border-radius: $ad-radio;
+  padding: $spacing-xl;
+  box-shadow: $shadow-sm;
+  border: 1px solid $ad-borde;
+}
+
+.noticiasHeader {
+  display: flex;
+  align-items: baseline;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-lg;
+
+  h2 {
+    color: $primary-blue;
+    font-size: $font-size-h4;
+    margin: 0;
+  }
+}
+
+.count {
+  font-size: 0.85rem;
+  color: $ad-texto-3;
+  font-weight: 500;
+}
+
+// ─── Loading skeleton ──────────────────────────────────────────────────────────
+
+.skeletonGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: $spacing-md;
+}
+
+.skeleton {
+  height: 180px;
+  border-radius: $ad-radio;
+  background: linear-gradient(90deg, $ad-superficie-2 25%, $ad-borde 50%, $ad-superficie-2 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+
+// ─── Empty state ───────────────────────────────────────────────────────────────
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-xxl 0;
+  text-align: center;
+}
+
+.emptyMsg {
+  color: $ad-texto-3;
+  font-size: 1rem;
+  margin: 0;
+}
+
+// ─── Card grid ─────────────────────────────────────────────────────────────────
+
+.list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: $spacing-md;
+}
+
+// ─── Paginación ────────────────────────────────────────────────────────────────
+
+.pie {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $spacing-md;
+  margin-top: $spacing-lg;
+  padding-top: $spacing-md;
+  border-top: 1px solid $ad-borde;
+  flex-wrap: wrap;
+
+  // El paginador compartido trae su propio margen, pensado para el sitio.
+  nav {
+    margin-top: 0;
+  }
+}
+
+.pieInfo {
+  font-size: 0.88rem;
+  color: $ad-texto-3;
+}
+
+// ─── Responsive ────────────────────────────────────────────────────────────────
+
+@media (max-width: $breakpoint-tablet) {
+  .filtersBar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: $spacing-sm;
+  }
+
+  .buscador {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .rightActions {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .noticias {
+    padding: $spacing-lg;
+  }
+
+  .list {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+
+  .pie {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: $breakpoint-mobile) {
+  .noticias {
+    padding: $spacing-md;
+    border-radius: $ad-radio;
+  }
+
+  .list,
+  .skeletonGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.alerta {
+  margin-bottom: $spacing-md;
+}

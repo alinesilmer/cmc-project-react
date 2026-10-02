@@ -1,0 +1,52 @@
+@use "@/website/styles/admin" as *;
+
+.alerta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid transparent;
+  border-radius: $ad-radio;
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.error {
+  background: $ad-peligro-fondo;
+  border-color: $ad-peligro-borde;
+  color: $ad-peligro-oscuro;
+}
+
+.exito {
+  background: $ad-ok-fondo;
+  border-color: $ad-ok-fondo;
+  color: $ad-ok;
+}
+
+.info {
+  background: $ad-tinte;
+  border-color: $ad-tinte-fuerte;
+  color: $ad-enlace;
+}
+
+.cerrar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  padding: 2px;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover {
+    opacity: 0.7;
+  }
+}
