@@ -15,7 +15,7 @@ import {
   PencilRuler, ShieldUser, Monitor, Receipt, CalendarDays,
   LogOut, CircleUserRound, ChevronDown, Menu, X, Layers,
   Smartphone, Gift, Inbox, Megaphone, ShieldCheck,
-  BarChart3, Stethoscope, UserSearch, Globe, DatabaseZap,
+  BarChart3, Stethoscope, UserSearch, Globe, DatabaseZap, ListPlus,
 } from "lucide-react";
 
 import styles from "./Topbar.module.scss";
@@ -221,6 +221,9 @@ const TOP_NAV: TopEntry[] = [
           // Completa galenos base + valores NN faltantes de una OS (nueva o
           // existente) en $0, sin tocar lo que ya tiene.
           { path: `${base}/herramientas/completar-nomenclador-nn`, icon: DatabaseZap, label: "Completar nomenclador NN", perms: ["nomenclador:masivo"] },
+          // Da de alta un código como NE en $0 (por especialidad de su plantilla) en
+          // varias obras sociales, sin tocar lo que ya tienen.
+          { path: `${base}/herramientas/agregar-codigo-obras-sociales`, icon: ListPlus, label: "Agregar código a obras sociales", perms: ["nomenclador:masivo"] },
         ],
       },
       {

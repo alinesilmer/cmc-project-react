@@ -33,6 +33,7 @@ import type {
   GalenoPlantillaOut,
   GalenoVisibilidadResult,
   ComponentesNNSugeridos,
+  AltaNECeroResult,
   CompletarBaseNNResult,
   ActualizacionMasivaResult,
   ValorOut,
@@ -462,6 +463,17 @@ export const completarBaseNN = (
     { obra_social_nro, dry_run },
     { timeout: TIMEOUT_MASIVO_MS },
   );
+
+/** Alta del código como NE en $0 (por especialidad de su plantilla) en varias O.S. */
+export const altaNECero = (payload: {
+  codigo: string;
+  obra_social_nros: number[];
+  vigencia_desde: string;
+  dry_run: boolean;
+}): Promise<AltaNECeroResult> =>
+  postJSON<AltaNECeroResult>("/api/valores_nm/alta_ne_cero", payload, {
+    timeout: TIMEOUT_MASIVO_MS,
+  });
 
 /** Componentes de un NN para precargar el alta: misma regla que la generación automática. */
 export const getComponentesNN = (

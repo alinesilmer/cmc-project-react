@@ -120,6 +120,7 @@ const CodigosPorEspecialidad = lazy(
 const NomencladorGalenos = lazy(() => import("./app/pages/NomencladorNacional/NomencladorGalenos/NomencladorGalenos"));
 const ActualizarPreciosGalenos = lazy(() => import("./app/pages/NomencladorNacional/ActualizarPreciosGalenos/ActualizarPreciosGalenos"));
 const CompletarNomencladorNN = lazy(() => import("./app/pages/NomencladorNacional/CompletarNomencladorNN/CompletarNomencladorNN"));
+const AgregarCodigoObrasSociales = lazy(() => import("./app/pages/NomencladorNacional/AgregarCodigoObrasSociales/AgregarCodigoObrasSociales"));
 const ActualizacionesValores = lazy(() => import("./app/pages/NomencladorNacional/ActualizacionesValores/ActualizacionesValores"));
 const ImportarPreciosPdf = lazy(() => import("./app/pages/NomencladorNacional/ImportarPreciosPdf/ImportarPreciosPdf"));
 const AumentoPorcentual = lazy(() => import("./app/pages/NomencladorNacional/AumentoPorcentual/AumentoPorcentual"));
@@ -379,6 +380,7 @@ export default function RootRoutes() {
                 <Route path="nomenclador/importar-precios-pdf" element={<ImportarPreciosPdf />} />
                 <Route path="nomenclador/aumento-porcentual" element={<AumentoPorcentual />} />
                 <Route path="herramientas/completar-nomenclador-nn" element={<CompletarNomencladorNN />} />
+                <Route path="herramientas/agregar-codigo-obras-sociales" element={<AgregarCodigoObrasSociales />} />
               </Route>
               <Route element={<RequireScope scope="nomenclador:editar" />}>
                 <Route path="nomenclador/codigos/nuevo" element={<NomencladorCodigoForm />} />

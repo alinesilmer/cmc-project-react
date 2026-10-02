@@ -143,6 +143,30 @@ export type CompletarBaseNNResult = {
   errores: { codigo: string; motivo: string }[];
 };
 
+/** Herramienta "Agregar código a obras sociales" (POST /api/valores_nm/alta_ne_cero). */
+export type AltaNECeroOS = {
+  obra_social_nro: number;
+  nombre: string;
+  estado: "creada" | "sin_cambios" | "omitida" | "error";
+  /** ID_COLEGIO_ESPE; null = la variante sin especialidad. */
+  creadas: (number | null)[];
+  existentes: (number | null)[];
+  motivo: string | null;
+  /** Ya tiene el código en NN con precio: el NE en $0 le ganaría al cotizar. */
+  nn_con_precio: boolean;
+};
+
+export type AltaNECeroResult = {
+  codigo: string;
+  descripcion: string | null;
+  sin_restriccion: boolean;
+  plantilla: { id_colegio: number; nombre: string }[];
+  vigencia_desde: string;
+  dry_run: boolean;
+  total_creadas: number;
+  obras_sociales: AltaNECeroOS[];
+};
+
 /** Precarga de un NN: galeno según el rango del código + unidades del Nomenclador Nacional. */
 export type ComponentesNNSugeridos = {
   disponible: boolean;
