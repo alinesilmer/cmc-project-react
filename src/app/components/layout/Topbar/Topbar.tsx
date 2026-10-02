@@ -186,7 +186,9 @@ const TOP_NAV: TopEntry[] = [
         items: [
           { path: `${base}/nomenclador/codigos`, icon: FileCode2, label: "Catálogo Códigos CMC", perms: ["nomenclador:leer"] },
           { path: `${base}/nomenclador/nacional`, icon: Layers, label: "Nomenclador Nacional", perms: ["nomenclador:leer"] },
-          { path: `${base}/nomenclador/por-obra-social`, icon: Building2, label: "Por Obra Social", perms: ["nomenclador:leer"] },
+          // Flujo en 4 etapas: el código (Catálogo) → alta en la O.S. → precio.
+          { path: `${base}/nomenclador/codigos-por-os`, icon: ClipboardList, label: "Códigos por Obra Social", perms: ["nomenclador:leer"] },
+          { path: `${base}/nomenclador/por-obra-social`, icon: Building2, label: "Precios por Obra Social", perms: ["nomenclador:leer"] },
           { path: `${base}/nomenclador/por-especialidad`, icon: Stethoscope, label: "Códigos por Especialidad", perms: ["nomenclador:leer"] },
           { path: `${base}/nomenclador/consulta-valores`, icon: Search, label: "Consulta de Valores", perms: ["nomenclador:leer"] },
           { path: `${base}/nomenclador/aumento-porcentual`, icon: Percent, label: "Aumento Porcentual", perms: ["nomenclador:masivo"] },

@@ -1,0 +1,141 @@
+@use "@/app/styles/all.scss" as *;
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 20px;
+  min-width: 0;
+}
+
+.filtrosTop {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+
+  @media (max-width: 720px) { grid-template-columns: 1fr; }
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+
+  @media (max-width: 860px) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  @media (max-width: 520px) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.kpi {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 9px 12px;
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
+  background: $superficie;
+  color: $tinta-3;
+  font-size: 0.75rem;
+  text-align: left;
+  cursor: pointer;
+
+  strong {
+    font-size: 1.3rem;
+    color: $tinta;
+    font-variant-numeric: tabular-nums;
+  }
+}
+.kpi_con_precio { background: $ok-bg; border-color: $ok-linea; strong { color: #166534; } }
+.kpi_sin_precio { background: $alerta-bg; border-color: $alerta-linea; strong { color: $alerta; } }
+.kpiOn { box-shadow: inset 0 0 0 2px $acento; }
+
+.barraSel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.filaSel td { background: $acento-tinte; }
+.codigo {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+
+  a { color: $acento; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+}
+.desc { min-width: 220px; }
+.acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  white-space: nowrap;
+
+  a { text-decoration: none; }
+}
+.alerta { color: $alerta; font-weight: 600; }
+.peligro { color: $peligro; font-weight: 600; }
+
+.paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+// ─── Modales ────────────────────────────────────────────────────────────────
+.modalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.modalFooter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 6px;
+}
+.flex1 { flex: 1; }
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: $tinta-2;
+  cursor: pointer;
+
+  input { accent-color: $acento; }
+}
+.cabecera {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.subtitulo {
+  margin: 6px 0 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: $tinta;
+}
+.aviso {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: $radio-sm;
+  border: 1px solid $alerta-linea;
+  background: $alerta-bg;
+  color: $alerta;
+  font-size: 0.82rem;
+}
+.error {
+  padding: 10px 12px;
+  border-radius: $radio-sm;
+  background: #fef2f2;
+  border: 1px solid #f3b4b4;
+  color: $peligro;
+  font-size: 0.84rem;
+}
+.suspender { color: $peligro; }

@@ -872,6 +872,8 @@ const CargaFacturacion: React.FC = () => {
     // Solo la fila principal lleva coseguro — nunca la de ayudante (el acto es uno solo).
     coseguro: tipoPrestador === "ayudante" ? 0 : parseMoney(coseguro),
     grupo_equipo_id: null,
+    // Código dado de alta sin precio: qué conceptos cotizar cuando se revalorice.
+    concepto_sin_precio: precio?.sin_precio ? (tipoPrestador === "ayudante" ? "A" : "HG") : null,
   });
 
   const validate = (): boolean => {
@@ -1278,6 +1280,7 @@ const CargaFacturacion: React.FC = () => {
         ayudante: ayAmount,
         porcentaje: toInt(linea.porcentaje, 100),
         grupo_equipo_id: null,
+        concepto_sin_precio: precio?.sin_precio ? "A" : null,
       });
     }
 
@@ -1889,6 +1892,13 @@ const CargaFacturacion: React.FC = () => {
                 placeholder="Nº de autorización de la obra social"
               />
             </div>
+            {precio?.sin_precio && (
+              <div className={styles.warningBox} style={{ textAlign: "left", display: "flex", alignItems: "center", gap: 8 }}>
+                <AlertTriangle size={14} style={{ flexShrink: 0 }} />
+                Este código está dado de alta en la obra social pero todavía no tiene precio: se
+                carga en $0 y queda «sin valorizar» hasta que se cargue el precio.
+              </div>
+            )}
             {precio?.requiere_autorizacion && (
               <div className={styles.warningBox} style={{ textAlign: "left", display: "flex", alignItems: "center", gap: 8 }}>
                 <AlertTriangle size={14} style={{ flexShrink: 0 }} />

@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
+import { Link, useSearchParams } from "react-router-dom";
 
 import styles from "./NomencladorPorOS.module.scss";
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
@@ -33,7 +34,9 @@ import {
   listNomenclador,
   actualizarValor,
   listCodigosPorEspecialidad,
-  getNomencladorById,
+  getCodigoOS,
+  listCodigosPorOS,
+  revalorizarPrestaciones,
   updateNucleoPar,
   getFamiliaObraSocial,
   replicarValoresEnFamilia,
@@ -50,9 +53,13 @@ import {
   type ReplicaState,
 } from "../../../components/molecules/ReplicarFamilia/replicaState";
 import ConfirmModal from "@/app/components/ui/ConfirmModal/ConfirmModal";
+import Modal from "@/app/components/ui/Modal/Modal";
+import EstadoCodigoPill from "../components/EstadoCodigoPill";
 import { getEspecialidades } from "../../Especialidades/especialidades.api";
 import EspecialidadCombo from "../EspecialidadCombo";
 import type {
+  CodigoObraSocialOut,
+  RevalorizarResult,
   ValorOut,
   GalenoOut,
   NomencladorOut,
@@ -426,11 +433,13 @@ export default function NomencladorPorOS() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
-  const [cargandoConfig, setCargandoConfig] = useState(false);
-  const [configMsg, setConfigMsg] = useState<{
-    tipo: "ok" | "info" | "error";
-    texto: string;
-  } | null>(null);
+  // Etapa 3: el alta del código elegido en esta O.S. (descripción, quién factura).
+  // Sin alta no se puede cargar precio (etapa 4).
+  const [parAlta, setParAlta] = useState<CodigoObraSocialOut | null>(null);
+  const [parCargando, setParCargando] = useState(false);
+  // Prestaciones cargadas en $0 para revalorizar después de guardar el precio.
+  const [revalorizar, setRevalorizar] = useState<RevalorizarResult | null>(null);
+  const [revalorizando, setRevalorizando] = useState(false)
   /** Resultado de precargar los componentes NN (unidades del Nomenclador Nacional). */
   const [nnMsg, setNnMsg] = useState<{
     tipo: "ok" | "error" | "cargando";
@@ -556,6 +565,44 @@ export default function NomencladorPorOS() {
   }, [osList, osSearch]);
 
   const selectedOS = osList.find((os) => os.nro_obra_social === selectedNroOS);
+
+  // ─── Flujo en etapas ──────────────────────────────────────────────────────
+  const bloqueadoPorAlta =
+    !!form.nomencladorId && !!parAlta && (parAlta.estado === "sin_alta" || parAlta.estado === "suspendido");
+  // NE: se elige entre las especialidades habilitadas en el alta (etapa 3).
+  const espOptionsAlta = useMemo(
+    () =>
+      parAlta && !parAlta.sin_restriccion_especialidad && parAlta.especialidades.length > 0
+        ? espOptions.filter((o) => parAlta.especialidades.includes(o.value))
+        : espOptions,
+    [parAlta, espOptions],
+  );
+  // Códigos dados de alta en la O.S. que todavía no tienen precio.
+  const pendientesQuery = useQuery({
+    queryKey: ["codigos-sin-precio", selectedNroOS],
+    queryFn: () => listCodigosPorOS({ obra_social_nro: selectedNroOS as number, estado: "sin_precio", size: 200 }),
+    enabled: selectedNroOS !== null,
+  });
+  const pendientes = pendientesQuery.data?.items ?? [];
+
+  // `?os=…&codigo=…` (desde la Ficha del código o Códigos por obra social).
+  const [params] = useSearchParams();
+  const paramsConsumidos = useRef(false);
+  useEffect(() => {
+    if (paramsConsumidos.current) return;
+    const os = params.get("os");
+    if (os && selectedNroOS === null) {
+      setSelectedNroOS(Number(os));
+      return;
+    }
+    const codigo = params.get("codigo");
+    if (!codigo || selectedNroOS === null || !pendientesQuery.isFetched) return;
+    paramsConsumidos.current = true;
+    const pendiente = pendientes.find((p) => p.codigo === codigo);
+    if (pendiente) abrirCargaPrecio(pendiente.nomenclador_id, pendiente.codigo);
+    else setCodeSearch(codigo);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params, selectedNroOS, pendientesQuery.isFetched]);
 
   useEffect(() => {
     if (!selectedNroOS) {
@@ -723,70 +770,48 @@ export default function NomencladorPorOS() {
     }, 300);
   }
 
-  function selectNom(n: NomencladorOut) {
+  function selectNom(n: Pick<NomencladorOut, "id" | "codigo">) {
     setForm((prev) => ({
       ...prev,
       nomencladorId: n.id,
       nomencladorLabel: n.codigo,
     }));
-    setConfigMsg(null);
     setNomSearch("");
     setNomResults([]);
     setErrors((prev) => ({ ...prev, nomenclador: "" }));
+    void cargarAlta(n.id);
   }
 
-  async function cargarConfiguracionInicial() {
-    if (!form.nomencladorId) return;
-    setCargandoConfig(true);
-    setConfigMsg(null);
+  /** Trae el alta del código en la O.S. y precarga lo que viene de ahí: descripción,
+   * quién factura, complejidad y ayudantes. */
+  async function cargarAlta(nomencladorId: number) {
+    if (!selectedNroOS) return;
+    setParCargando(true);
+    setParAlta(null);
     try {
-      const nm = await getNomencladorById(form.nomencladorId);
-      const conDescripcion = !!nm.descripcion;
-      const conComplejidad = !!nm.complejidad;
-      const conSinRestriccion =
-        form.origen === "NE" && nm.sin_restriccion_especialidad === true;
-      const conEspecialidades =
-        form.origen === "NE" &&
-        !conSinRestriccion &&
-        nm.especialidades.length > 0;
-      setForm((prev) => ({
-        ...prev,
-        ...(conDescripcion ? { descripcion: nm.descripcion as string } : {}),
-        ...(conComplejidad ? { complejidad: nm.complejidad as string } : {}),
-        ...(conSinRestriccion
-          ? { sinRestriccion: true, especialidadesChecked: new Set<number>() }
-          : {}),
-        ...(conEspecialidades
-          ? {
-              sinRestriccion: false,
-              especialidadesChecked: new Set(nm.especialidades),
-            }
-          : {}),
-      }));
-      setErrors((p) => ({ ...p, descripcion: "", especialidades: "" }));
-      setConfigMsg(
-        conDescripcion ||
-          conComplejidad ||
-          conEspecialidades ||
-          conSinRestriccion
-          ? { tipo: "ok", texto: "Configuración inicial cargada correctamente" }
-          : {
-              tipo: "info",
-              texto: `El código ${nm.codigo} no tiene configuración inicial cargada.`,
-            },
-      );
+      const p = await getCodigoOS(selectedNroOS, nomencladorId);
+      setParAlta(p);
+      if (p.estado === "sin_precio" || p.estado === "con_precio") {
+        setForm((prev) => ({
+          ...prev,
+          descripcion: p.descripcion ?? p.descripcion_colegio ?? prev.descripcion,
+          complejidad: p.complejidad ?? prev.complejidad,
+          cantidad_ayudantes:
+            p.cantidad_ayudantes != null ? String(p.cantidad_ayudantes) : prev.cantidad_ayudantes,
+          sinRestriccion: p.sin_restriccion_especialidad,
+          especialidadesChecked: new Set(p.especialidades),
+        }));
+        setErrors((prev) => ({ ...prev, descripcion: "", especialidades: "" }));
+      }
     } catch {
-      setConfigMsg({
-        tipo: "error",
-        texto: "No se pudo cargar la configuración inicial.",
-      });
+      setParAlta(null);
     } finally {
-      setCargandoConfig(false);
+      setParCargando(false);
     }
   }
 
   function clearNom() {
-    setConfigMsg(null);
+    setParAlta(null);
     setForm((prev) => ({ ...prev, nomencladorId: null, nomencladorLabel: "" }));
     setNomSearch("");
     setNomResults([]);
@@ -1005,7 +1030,7 @@ export default function NomencladorPorOS() {
     setNomSearch("");
     setNomResults([]);
     setErrors({});
-    setConfigMsg(null);
+    setParAlta(null);
     resetReplica();
     setModalKind("create");
   }
@@ -1124,6 +1149,42 @@ export default function NomencladorPorOS() {
 
   const replicaActiva = replica.activo && replica.destinos.length > 0;
 
+  // ─── Prestaciones cargadas en $0 (código dado de alta sin precio) ───────────
+
+  async function ofrecerRevalorizar(codigo: string) {
+    if (!selectedNroOS) return;
+    try {
+      const r = await revalorizarPrestaciones({
+        cod_obra: String(selectedNroOS), codigo, dry_run: true,
+      });
+      if (r.total > 0) setRevalorizar(r);
+    } catch {
+      /* sin prestaciones para revalorizar o sin permiso: no se ofrece */
+    }
+  }
+
+  async function confirmarRevalorizar() {
+    if (!revalorizar) return;
+    setRevalorizando(true);
+    try {
+      const r = await revalorizarPrestaciones({
+        cod_obra: revalorizar.cod_obra, codigo: revalorizar.codigo, dry_run: false,
+      });
+      showToast("success", `${r.revalorizadas} prestación${r.revalorizadas === 1 ? "" : "es"} revalorizada${r.revalorizadas === 1 ? "" : "s"}.`);
+      setRevalorizar(null);
+    } catch (e: unknown) {
+      showToast("error", errMsg(e, "No se pudo revalorizar."));
+    } finally {
+      setRevalorizando(false);
+    }
+  }
+
+  /** Abre "Cargar precio" con el código ya elegido (desde el aviso de pendientes o la URL). */
+  function abrirCargaPrecio(nomencladorId: number, codigo: string) {
+    openCreate();
+    selectNom({ id: nomencladorId, codigo });
+  }
+
   // ─── Save actions ──────────────────────────────────────────────────────────
 
   async function handleSave() {
@@ -1209,6 +1270,8 @@ export default function NomencladorPorOS() {
         setValores((prev) => [v, ...prev]);
         showToast("success", "Código agregado a la obra social.");
       }
+      void ofrecerRevalorizar(form.nomencladorLabel);
+      void pendientesQuery.refetch();
       const replicado = await replicarSiCorresponde({
         nomenclador_id: form.nomencladorId!,
         operacion: "alta",
@@ -1496,9 +1559,36 @@ export default function NomencladorPorOS() {
                   }
                 />
                 <button className={styles.btnPrimary} onClick={openCreate}>
-                  <Plus size={14} /> Agregar código
+                  <Plus size={14} /> Cargar precio
                 </button>
               </div>
+
+              {pendientes.length > 0 && (
+                <div className={styles.pendientes} role="status">
+                  <span>
+                    <strong>{pendientes.length} código{pendientes.length === 1 ? "" : "s"} dado{pendientes.length === 1 ? "" : "s"} de alta sin precio.</strong>{" "}
+                    Facturación ya los puede cargar (en $0, si está habilitado); cargales el precio:
+                  </span>
+                  <div className={styles.pendientesChips}>
+                    {pendientes.slice(0, 30).map((p) => (
+                      <button
+                        key={p.nomenclador_id}
+                        type="button"
+                        className={styles.pendienteChip}
+                        title={p.descripcion_os ?? p.descripcion_colegio ?? ""}
+                        onClick={() => abrirCargaPrecio(p.nomenclador_id, p.codigo)}
+                      >
+                        {p.codigo}
+                      </button>
+                    ))}
+                    {pendientes.length > 30 && (
+                      <Link to={`/panel/nomenclador/codigos-por-os?os=${selectedNroOS}`} className={styles.hintText}>
+                        y {pendientes.length - 30} más…
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Table */}
               <div className={styles.tableWrap}>
@@ -1783,7 +1873,7 @@ export default function NomencladorPorOS() {
             >
               <div className={styles.modalHeader}>
                 <div>
-                  <h2 className={styles.modalTitle}>Agregar código</h2>
+                  <h2 className={styles.modalTitle}>Cargar precio</h2>
                   <p className={styles.modalSubtitle}>{selectedOS?.nombre}</p>
                 </div>
                 <button
@@ -1872,45 +1962,41 @@ export default function NomencladorPorOS() {
                     </span>
                   )}
                   {form.nomencladorId && (
-                    <div
-                      style={{
-                        marginTop: 8,
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 6,
-                        alignItems: "flex-start",
-                      }}
-                    >
-                      <button
-                        type="button"
-                        className={styles.btnGhost}
-                        onClick={cargarConfiguracionInicial}
-                        disabled={cargandoConfig}
-                      >
-                        {cargandoConfig && (
-                          <Loader2
-                            size={14}
-                            style={{ animation: "spin .7s linear infinite" }}
-                          />
-                        )}
-                        Cargar configuración inicial de {form.nomencladorLabel}
-                      </button>
-                      {configMsg && (
-                        <span
-                          className={
-                            configMsg.tipo === "error"
-                              ? styles.errorMsg
-                              : styles.hintText
-                          }
-                          style={
-                            configMsg.tipo === "ok"
-                              ? { color: "#2f855a", fontWeight: 500 }
-                              : undefined
-                          }
-                        >
-                          {configMsg.texto}
-                        </span>
-                      )}
+                    <div className={styles.altaBox}>
+                      {parCargando ? (
+                        <span className={styles.hintText}>Revisando el alta del código en la obra social…</span>
+                      ) : bloqueadoPorAlta && parAlta ? (
+                        <div className={styles.altaBloqueo}>
+                          <strong>
+                            {parAlta.estado === "suspendido"
+                              ? `${form.nomencladorLabel} está suspendido en ${selectedOS?.nombre ?? "esta obra social"}.`
+                              : `${selectedOS?.nombre ?? "Esta obra social"} no tiene dado de alta el código ${form.nomencladorLabel}.`}
+                          </strong>
+                          <span>
+                            Para cargarle un precio primero tiene que reconocer el código: descripción,
+                            quién lo factura y condiciones. Es un paso corto y no pide importes.
+                          </span>
+                          <Link
+                            className={styles.btnPrimary}
+                            to={`/panel/nomenclador/codigos-por-os?os=${selectedNroOS}&codigo=${form.nomencladorLabel}`}
+                          >
+                            {parAlta.estado === "suspendido" ? "Reactivar en Códigos por obra social" : "Dar de alta en Códigos por obra social"}
+                          </Link>
+                        </div>
+                      ) : parAlta ? (
+                        <div className={styles.altaOk}>
+                          <EstadoCodigoPill estado={parAlta.estado} />
+                          <span>
+                            {parAlta.sin_restriccion_especialidad
+                              ? "Lo factura cualquier especialidad"
+                              : `Lo facturan ${parAlta.especialidades.length} especialidades`}
+                            {" · "}
+                            <Link to={`/panel/nomenclador/codigos-por-os?os=${selectedNroOS}&codigo=${form.nomencladorLabel}`}>
+                              Editar el alta
+                            </Link>
+                          </span>
+                        </div>
+                      ) : null}
                     </div>
                   )}
                 </div>
@@ -1923,12 +2009,16 @@ export default function NomencladorPorOS() {
                   <input
                     className={`${styles.formInput} ${errors.descripcion ? styles.inputError : ""}`}
                     value={form.descripcion}
+                    readOnly={!!parAlta?.descripcion}
                     onChange={(e) => {
                       setForm((p) => ({ ...p, descripcion: e.target.value }));
                       setErrors((p) => ({ ...p, descripcion: "" }));
                     }}
                     placeholder="Cómo nombra esta obra social al código"
                   />
+                  {parAlta?.descripcion && (
+                    <span className={styles.hintText}>Viene del alta del código en la obra social; se edita en Códigos por obra social.</span>
+                  )}
                   {errors.descripcion && (
                     <span className={styles.errorMsg}>
                       {errors.descripcion}
@@ -1995,6 +2085,7 @@ export default function NomencladorPorOS() {
                             type="checkbox"
                             className={styles.toggleInput}
                             checked={form.sinRestriccion}
+                            disabled={!!parAlta}
                             onChange={(e) => {
                               setForm((p) => ({
                                 ...p,
@@ -2014,7 +2105,7 @@ export default function NomencladorPorOS() {
                           </span>
                         ) : (
                           <MultiSelectBuscable
-                            options={espOptions}
+                            options={espOptionsAlta}
                             selected={[...form.especialidadesChecked]}
                             onChange={(next) => {
                               setForm((p) => ({
@@ -2244,7 +2335,7 @@ export default function NomencladorPorOS() {
                     <button
                       className={styles.btnPrimary}
                       onClick={handleSave}
-                      disabled={saving}
+                      disabled={saving || parCargando || bloqueadoPorAlta}
                     >
                       {saving ? (
                         <>
@@ -2707,6 +2798,53 @@ export default function NomencladorPorOS() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <Modal
+        isOpen={revalorizar !== null}
+        onClose={() => setRevalorizar(null)}
+        title="Revalorizar prestaciones cargadas en $0"
+        size="large"
+      >
+        {revalorizar && (
+          <div className={styles.revalorizar}>
+            <p>
+              Hay <strong>{revalorizar.total} prestación{revalorizar.total === 1 ? "" : "es"} abierta{revalorizar.total === 1 ? "" : "s"}</strong>{" "}
+              del código {revalorizar.codigo} cargada{revalorizar.total === 1 ? "" : "s"} sin precio. Con el precio nuevo quedarían así
+              (las de períodos cerrados no se tocan):
+            </p>
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr><th>Período</th><th>Médico</th><th>Fecha</th><th className={styles.num}>Antes</th><th className={styles.num}>Después</th><th /></tr>
+                </thead>
+                <tbody>
+                  {revalorizar.items.map((it) => (
+                    <tr key={it.id}>
+                      <td>{it.periodo}</td>
+                      <td>Socio {it.cod_med}</td>
+                      <td>{it.fecha_practica ?? "—"}</td>
+                      <td className={styles.num}>{fmt.format(parseMonto(it.importe_antes))}</td>
+                      <td className={styles.num}>{it.estado === "revalorizada" ? fmt.format(parseMonto(it.importe_despues)) : "—"}</td>
+                      <td>{it.estado !== "revalorizada" && <span className={styles.hintText}>{it.motivo}</span>}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className={styles.revalorizarAcciones}>
+              <button type="button" className={styles.btnGhost} onClick={() => setRevalorizar(null)}>Ahora no</button>
+              <button
+                type="button"
+                className={styles.btnPrimary}
+                onClick={confirmarRevalorizar}
+                disabled={revalorizando || revalorizar.items.every((i) => i.estado !== "revalorizada")}
+              >
+                {revalorizando ? "Revalorizando…" : `Revalorizar ${revalorizar.items.filter((i) => i.estado === "revalorizada").length}`}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       <ConfirmModal
         isOpen={deleteTarget !== null}

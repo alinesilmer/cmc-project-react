@@ -550,7 +550,14 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                         </span>
                       ) : <span className={styles.mutedText}>—</span>}
                     </td>
-                    <td><span className={styles.subtotalCell}>{formatMoney(row.importe_total)}</span></td>
+                    <td>
+                      <span className={styles.subtotalCell}>{formatMoney(row.importe_total)}</span>
+                      {row.sin_valorizar && (
+                        <span className={styles.sinValorizar} title="Cargada en $0: el código todavía no tenía precio. Se revaloriza al cargar el precio.">
+                          Sin valorizar
+                        </span>
+                      )}
+                    </td>
                     <td>
                       {row.tipo ? (
                         <span className={`${styles.tipoBadge} ${tipoClass(row.tipo)}`} title={row.tipo}>

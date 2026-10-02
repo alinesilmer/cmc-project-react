@@ -57,13 +57,166 @@ export type NomencladorCreatePayload = {
 
 export type NomencladorUpdatePayload = Partial<NomencladorCreatePayload & { activo?: boolean }>;
 
-export type AplicarEspecialidadesResult = {
-  aplicadas: {
-    obra_social_nro: number;
-    variantes_creadas: number;
-    variantes_existentes: number;
-  }[];
-  omitidas: { obra_social_nro: number; motivo: string }[];
+/** "Dar de alta en obras sociales" desde la Ficha del código: alta sin precio
+ * donde falta; donde ya estaba, suma las especialidades de la plantilla. */
+export type AplicarAltaItem = {
+  obra_social_nro: number;
+  nombre: string;
+  estado: "alta_creada" | "especialidades_agregadas" | "sin_cambios" | "error";
+  motivo: string | null;
+  especialidades_agregadas: number[];
+  sin_quien_factura: boolean;
+};
+export type AplicarEspecialidadesResult = { resultados: AplicarAltaItem[] };
+
+// ─── Flujo en 4 etapas: alta del código en la O.S. (etapa 3) ─────────────────
+
+export type EstadoCodigoOS = "sin_alta" | "sin_precio" | "con_precio" | "suspendido";
+
+export type CodigoPorOSItem = {
+  nomenclador_id: number;
+  codigo: string;
+  descripcion_colegio: string | null;
+  descripcion_os: string | null;
+  estado: EstadoCodigoOS;
+  sin_restriccion_especialidad: boolean;
+  especialidades_os: number;
+  especialidades_plantilla: number;
+  plantilla_sin_restriccion: boolean;
+};
+
+export type CodigosPorOSResult = {
+  obra_social_nro: number;
+  total: number;
+  page: number;
+  size: number;
+  conteos: Record<EstadoCodigoOS, number>;
+  items: CodigoPorOSItem[];
+};
+
+export type CodigoObraSocialOut = {
+  obra_social_nro: number;
+  nomenclador_id: number;
+  codigo: string;
+  descripcion: string | null;
+  descripcion_colegio: string | null;
+  categoria: string | null;
+  complejidad: Complejidad | null;
+  requiere_autorizacion: boolean | null;
+  cantidad_ayudantes: number | null;
+  observacion: string | null;
+  sin_restriccion_especialidad: boolean;
+  especialidades: number[];
+  estado: EstadoCodigoOS;
+  tiene_precio: boolean;
+};
+
+export type CodigoObraSocialUpdate = Partial<{
+  descripcion: string | null;
+  categoria: string | null;
+  complejidad: Complejidad | null;
+  requiere_autorizacion: boolean | null;
+  cantidad_ayudantes: number | null;
+  observacion: string | null;
+  sin_restriccion_especialidad: boolean;
+  especialidades: number[];
+}>;
+
+export type AltaCodigoItem = {
+  obra_social_nro: number;
+  nomenclador_id: number;
+  descripcion?: string | null;
+  especialidades?: number[] | null;
+  sin_restriccion_especialidad?: boolean | null;
+};
+
+export type AltaCodigosPayload = {
+  items: AltaCodigoItem[];
+  requiere_autorizacion?: boolean | null;
+  cantidad_ayudantes?: number | null;
+};
+
+export type AltaCodigoResultado = {
+  obra_social_nro: number;
+  nomenclador_id: number;
+  codigo: string;
+  estado: "creado" | "reactivado" | "ya_existia" | "error";
+  motivo: string | null;
+  sin_quien_factura: boolean;
+};
+
+export type FichaObraSocialItem = {
+  obra_social_nro: number;
+  nombre: string;
+  estado: EstadoCodigoOS;
+  sin_restriccion_especialidad: boolean;
+  especialidades: number;
+  precio_tipo: "igual" | "por_especialidad" | null;
+  precio_total: string | null;
+  variantes: number;
+  vigencia_desde: string | null;
+  prestaciones_sin_valorizar: number;
+};
+
+export type FichaCodigoOut = {
+  nomenclador_id: number;
+  codigo: string;
+  descripcion: string | null;
+  categoria: string | null;
+  complejidad: Complejidad | null;
+  activo: boolean;
+  plantilla_especialidades: number[];
+  plantilla_sin_restriccion: boolean;
+  conteos: Record<EstadoCodigoOS, number>;
+  obras_sociales: FichaObraSocialItem[];
+};
+
+export type PropagarModo = "agregar" | "igualar";
+export type PropagarEspecialidadesItem = {
+  obra_social_nro: number;
+  nombre: string;
+  estado: "actualizada" | "sin_cambios" | "salteada" | "error";
+  motivo: string | null;
+  agrega: number[];
+  quita: number[];
+  conserva_por_precio: number[];
+};
+export type PropagarEspecialidadesResult = {
+  dry_run: boolean;
+  modo: PropagarModo;
+  resultados: PropagarEspecialidadesItem[];
+};
+
+export type RevalorizarItem = {
+  id: number;
+  periodo: string;
+  cod_med: string;
+  fecha_practica: string | null;
+  conceptos: string;
+  estado: "revalorizada" | "sin_precio" | "error";
+  motivo: string | null;
+  importe_antes: string;
+  honorarios: string;
+  gastos: string;
+  ayudante: string;
+  coseguro: string;
+  importe_despues: string;
+};
+export type RevalorizarResult = {
+  dry_run: boolean;
+  cod_obra: string;
+  codigo: string;
+  total: number;
+  revalorizadas: number;
+  items: RevalorizarItem[];
+};
+
+/** Etiqueta de cada estado del código en una O.S. (mismo texto en todas las pantallas). */
+export const ESTADO_CODIGO_OS_LABEL: Record<EstadoCodigoOS, string> = {
+  sin_alta: "Sin alta",
+  sin_precio: "Sin precio",
+  con_precio: "Con precio",
+  suspendido: "Suspendido",
 };
 
 // ─── Nomenclador Nacional ───────────────────────────────────────────────────

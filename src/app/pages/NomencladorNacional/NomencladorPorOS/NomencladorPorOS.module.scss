@@ -1012,3 +1012,80 @@
 
 .toastSuccess { background: #166534; color: #fff; }
 .toastError   { background: $peligro;    color: #fff; }
+
+// ─── Flujo en etapas: alta del código (etapa 3) y precio (etapa 4) ───────────
+.altaBox {
+  margin-top: 8px;
+}
+.altaBloqueo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px dashed $alerta-linea;
+  border-radius: $radio-sm;
+  background: $alerta-bg;
+  color: $alerta;
+  font-size: 0.84rem;
+
+  a { text-decoration: none; }
+}
+.altaOk {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: $tinta-2;
+
+  a { color: $acento; font-weight: 600; }
+}
+
+.pendientes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  border: 1px solid $alerta-linea;
+  border-radius: $radio-sm;
+  background: $alerta-bg;
+  color: $alerta;
+  font-size: 0.84rem;
+}
+.pendientesChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.pendienteChip {
+  padding: 3px 10px;
+  border: 1px solid $alerta-linea;
+  border-radius: 999px;
+  background: $superficie;
+  color: $alerta;
+  font-size: 0.76rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+
+  &:hover { background: $alerta; color: #fff; }
+}
+
+.revalorizar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 0.86rem;
+  color: $tinta-2;
+
+  p { margin: 0; }
+}
+.revalorizarAcciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.num { text-align: right; font-variant-numeric: tabular-nums; }

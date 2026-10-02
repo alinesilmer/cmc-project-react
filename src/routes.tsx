@@ -109,6 +109,7 @@ const ConsultaValores = lazy(() => import("./app/pages/NomencladorNacional/Consu
 const ConsultaPrecios = lazy(() => import("./app/pages/NomencladorNacional/ConsultaPrecios/ConsultaPrecios"));
 const Homologador = lazy(() => import("./app/pages/NomencladorNacional/Homologador/Homologador"));
 const NomencladorPorOS = lazy(() => import("./app/pages/NomencladorNacional/NomencladorPorOS/NomencladorPorOS"));
+const CodigosPorOS = lazy(() => import("./app/pages/NomencladorNacional/CodigosPorOS/CodigosPorOS"));
 // Auditoría: el catálogo de una obra social recortado a una especialidad.
 const CodigosPorEspecialidad = lazy(
   () => import("./app/pages/NomencladorNacional/CodigosPorEspecialidad/CodigosPorEspecialidad"),
@@ -356,6 +357,7 @@ export default function RootRoutes() {
                 <Route path="nomenclador/codigos" element={<NomencladorCodigos />} />
                 <Route path="nomenclador/nacional" element={<NomencladorNacionalTabla />} />
                 <Route path="nomenclador/por-obra-social" element={<NomencladorPorOS />} />
+                <Route path="nomenclador/codigos-por-os" element={<CodigosPorOS />} />
                 <Route path="nomenclador/por-especialidad" element={<CodigosPorEspecialidad />} />
                 <Route path="nomenclador/galenos" element={<NomencladorGalenos />} />
                 <Route path="nomenclador/consulta-valores" element={<ConsultaValores />} />

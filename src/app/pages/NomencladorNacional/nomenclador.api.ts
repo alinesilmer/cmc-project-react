@@ -11,6 +11,16 @@ import type {
   NomencladorOut,
   NomencladorDetalleOut,
   AplicarEspecialidadesResult,
+  AltaCodigosPayload,
+  AltaCodigoResultado,
+  CodigoObraSocialOut,
+  CodigoObraSocialUpdate,
+  CodigosPorOSResult,
+  EstadoCodigoOS,
+  FichaCodigoOut,
+  PropagarEspecialidadesResult,
+  PropagarModo,
+  RevalorizarResult,
   NomencladorListParams,
   NomencladorCreatePayload,
   NomencladorUpdatePayload,
@@ -490,3 +500,75 @@ export const replicarGalenoEnFamilia = (
   postJSON<ReplicarFamiliaResult>("/api/galenos/replicar_en_familia", payload, {
     timeout: TIMEOUT_MASIVO_MS,
   });
+
+// ─── Flujo en 4 etapas ────────────────────────────────────────────────────────
+
+/** Ficha del código: su estado en cada obra social activa. */
+export const getFichaCodigo = (id: number): Promise<FichaCodigoOut> =>
+  getJSON<FichaCodigoOut>(`/api/nomenclador/${id}/ficha`);
+
+/** Etapa 2: quién puede facturar el código según el Colegio (no toca ninguna O.S.). */
+export const guardarPlantillaEspecialidades = (
+  id: number,
+  payload: { sin_restriccion_especialidad: boolean; especialidades: number[] },
+) =>
+  putJSON<{ especialidades: number[]; sin_restriccion_especialidad: boolean }>(
+    `/api/nomenclador/${id}/especialidades`,
+    payload,
+  );
+
+/** Etapa 2 → O.S. que ya tienen el código: agregar lo nuevo o igualar a la plantilla. */
+export const propagarPlantillaEspecialidades = (
+  id: number,
+  payload: { obra_social_nros: number[]; modo: PropagarModo; dry_run: boolean },
+): Promise<PropagarEspecialidadesResult> =>
+  postJSON<PropagarEspecialidadesResult>(
+    `/api/nomenclador/${id}/especialidades/propagar`,
+    payload,
+    { timeout: TIMEOUT_MASIVO_MS },
+  );
+
+/** Etapa 3: códigos del catálogo con su estado en una O.S. */
+export const listCodigosPorOS = (params: {
+  obra_social_nro: number;
+  estado?: EstadoCodigoOS;
+  q?: string;
+  page?: number;
+  size?: number;
+}): Promise<CodigosPorOSResult> => getJSON<CodigosPorOSResult>("/api/codigos_os/", params);
+
+export const getCodigoOS = (os: number, nomencladorId: number): Promise<CodigoObraSocialOut> =>
+  getJSON<CodigoObraSocialOut>(`/api/codigos_os/${os}/${nomencladorId}`);
+
+export const darDeAltaCodigos = (
+  payload: AltaCodigosPayload,
+): Promise<{ resultados: AltaCodigoResultado[] }> =>
+  postJSON<{ resultados: AltaCodigoResultado[] }>("/api/codigos_os/alta", payload, {
+    timeout: TIMEOUT_MASIVO_MS,
+  });
+
+export const updateCodigoOS = (
+  os: number,
+  nomencladorId: number,
+  payload: CodigoObraSocialUpdate,
+): Promise<CodigoObraSocialOut> =>
+  patchJSON<CodigoObraSocialOut>(`/api/codigos_os/${os}/${nomencladorId}`, payload);
+
+export const cambiarEstadoCodigoOS = (
+  os: number,
+  nomencladorId: number,
+  accion: "suspender" | "reactivar",
+): Promise<CodigoObraSocialOut> =>
+  postJSON<CodigoObraSocialOut>(`/api/codigos_os/${os}/${nomencladorId}/${accion}`);
+
+/** Prestaciones abiertas cargadas en $0 por falta de precio → recalcularlas. */
+export const revalorizarPrestaciones = (payload: {
+  cod_obra: string;
+  codigo: string;
+  ids?: number[];
+  dry_run: boolean;
+}): Promise<RevalorizarResult> =>
+  postJSON<RevalorizarResult>("/api/facturacion/revalorizar", payload, {
+    timeout: TIMEOUT_MASIVO_MS,
+  });
+
