@@ -200,12 +200,12 @@ export default function ConsultaValores() {
               items={nomResults}
               getKey={(n) => n.id}
               getCode={(n) => n.codigo}
-              getText={(n) => n.categoria ?? n.codigo}
+              getText={(n) => n.descripcion || n.categoria || n.codigo}
               selected={selectedNom}
               onSelect={(n) => { setSelectedNom(n); setNomSearch(""); setNomResults([]); resetResult(); }}
               onClear={() => { setSelectedNom(null); setNomSearch(""); setNomResults([]); resetResult(); }}
               loading={nomLoading}
-              menuHint="Escribí al menos 2 caracteres…"
+              menuHint={nomSearch.trim().length < 2 ? "Escribí al menos 2 caracteres…" : "Sin resultados"}
             />
 
             <div className={styles.viaToggle}>

@@ -62,6 +62,12 @@ export default function ConsultaPrecios() {
     setSearched(false);
   }
 
+  function resetPractica() {
+    setSelectedNom(null);
+    setNomSearch("");
+    setNomResults([]);
+  }
+
   // ── Práctica autocomplete (async, debounced) ──────────────────────────────
 
   function handleNomSearch(q: string) {
@@ -70,13 +76,17 @@ export default function ConsultaPrecios() {
     if (nomDebounce.current) clearTimeout(nomDebounce.current);
     if (q.trim().length < 2) return;
 
+    // Sin obra social no se busca: para el rol médico el backend solo lista lo que
+    // puede facturar EN esa OS (sin restricción o con su especialidad); sin OS
+    // devolvía únicamente sus habilitaciones individuales, casi siempre nada.
+    if (!osNro) return;
+
     setNomLoading(true);
     nomDebounce.current = setTimeout(async () => {
       try {
-        // TODO (speciality restriction): when doctorEspecialidades is available, pass it to
-        // filter codes only belonging to the doctor's specialities, e.g.:
-        //   listNomenclador({ q: q.trim(), activo: true, size: 15, especialidad_id: doctorEspecialidades[0] })
-        const res = await listNomenclador({ q: q.trim(), activo: true, size: 15 });
+        const res = await listNomenclador({
+          q: q.trim(), activo: true, size: 15, obra_social_nro: osNro,
+        });
         setNomResults(res);
       } catch {
         setNomResults([]);
@@ -150,8 +160,9 @@ export default function ConsultaPrecios() {
               getCode={(os) => String(os.nro_obra_social)}
               getText={(os) => os.nombre}
               selected={selectedOSItem}
-              onSelect={(os) => { setSelectedOSItem(os); setOsSearch(""); resetResult(); }}
-              onClear={() => { setSelectedOSItem(null); setOsSearch(""); resetResult(); }}
+              // Las prácticas buscables dependen de la OS: al cambiarla se limpia la elegida.
+              onSelect={(os) => { setSelectedOSItem(os); setOsSearch(""); resetPractica(); resetResult(); }}
+              onClear={() => { setSelectedOSItem(null); setOsSearch(""); resetPractica(); resetResult(); }}
             />
 
             <Combobox<NomencladorOut>
@@ -164,12 +175,18 @@ export default function ConsultaPrecios() {
               items={nomResults}
               getKey={(n) => n.id}
               getCode={(n) => n.codigo}
-              getText={(n) => n.categoria ?? n.codigo}
+              getText={(n) => n.descripcion || n.categoria || n.codigo}
               selected={selectedNom}
               onSelect={(n) => { setSelectedNom(n); setNomSearch(""); setNomResults([]); resetResult(); }}
               onClear={() => { setSelectedNom(null); setNomSearch(""); setNomResults([]); resetResult(); }}
               loading={nomLoading}
-              menuHint="Escribí al menos 2 caracteres…"
+              menuHint={
+                !osNro
+                  ? "Elegí primero la obra social"
+                  : nomSearch.trim().length < 2
+                    ? "Escribí al menos 2 caracteres…"
+                    : "No hay prácticas que puedas facturar en esta obra social con ese código o nombre"
+              }
             />
 
             <div className={styles.viaToggle}>
