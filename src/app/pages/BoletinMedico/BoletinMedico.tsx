@@ -11,11 +11,15 @@ import {
 } from "lucide-react";
 
 import Button from "@/app/components/ui/Button/Button";
+import { useAuth } from "@/app/auth/AuthProvider";
 import { agruparPorCodigo } from "@/app/features/nomenclador/galenos";
 import type { GrupoGaleno } from "@/app/features/nomenclador/galenos";
 import { fetchBoletinMedico } from "./boletinMedico.api";
 import type { ItemBoletin } from "./boletinMedico.api";
+import { esPediatra } from "./boletinPediatria";
 import { descargarBoletin } from "./boletinMedico.pdf";
+import { moneda } from "./boletinMedico.formato";
+import GrillaPediatria from "./GrillaPediatria";
 import s from "./BoletinMedico.module.scss";
 
 /**
@@ -29,7 +33,7 @@ import s from "./BoletinMedico.module.scss";
  * Sólo lee. El boletín lo carga el Colegio desde sus propias pantallas.
  */
 
-type Vista = "consulta" | "galenos" | "observaciones";
+type Vista = "consulta" | "pediatria" | "galenos" | "observaciones";
 
 const VISTAS: { id: Vista; label: string }[] = [
   { id: "consulta", label: "Valor de consulta" },
@@ -37,15 +41,19 @@ const VISTAS: { id: Vista; label: string }[] = [
   { id: "observaciones", label: "Observaciones" },
 ];
 
+/**
+ * Para un pediatra la primera solapa es su boletín: los códigos de pediatría
+ * de cada obra social en lugar del valor de consulta, como en el sistema viejo.
+ * Los galenos no se le muestran (decisión del Colegio); las observaciones sí.
+ */
+const VISTAS_PEDIATRIA: { id: Vista; label: string }[] = [
+  { id: "pediatria", label: "Valores de pediatría" },
+  ...VISTAS.filter((v) => v.id !== "consulta" && v.id !== "galenos"),
+];
+
 /** Referencia estable para el estado inicial: un `[]` nuevo por render
  * invalidaría los `useMemo` que filtran la lista. */
 const SIN_ITEMS: ItemBoletin[] = [];
-
-const moneda = new Intl.NumberFormat("es-AR", {
-  style: "currency",
-  currency: "ARS",
-  minimumFractionDigits: 2,
-});
 
 /** Sin acentos y en minúscula, para que «prevencion» encuentre «Prevención». */
 const normalizar = (v: string): string =>
@@ -55,8 +63,19 @@ const normalizar = (v: string): string =>
     .toLowerCase()
     .trim();
 
-export default function BoletinMedico() {
-  const [vista, setVista] = useState<Vista>("consulta");
+type Props = {
+  /** Fija la pantalla en una sola solapa y oculta las demás. La usa el
+   * «Boletín de galenos» del Colegio, que es esta misma lectura. */
+  soloVista?: Vista;
+};
+
+export default function BoletinMedico({ soloVista }: Props = {}) {
+  const { user } = useAuth();
+  // El «Boletín de galenos» del Colegio fija una solapa: ahí no aplica.
+  const pediatra = !soloVista && esPediatra(user?.especialidades);
+  const vistas = pediatra ? VISTAS_PEDIATRIA : VISTAS;
+
+  const [vista, setVista] = useState<Vista>(soloVista ?? vistas[0].id);
   const [busqueda, setBusqueda] = useState("");
   const [bajando, setBajando] = useState(false);
 
@@ -67,8 +86,8 @@ export default function BoletinMedico() {
     isPending: cargando,
     isError: error,
   } = useQuery<ItemBoletin[]>({
-    queryKey: ["boletin-medico"],
-    queryFn: fetchBoletinMedico,
+    queryKey: ["boletin-medico", { pediatria: pediatra }],
+    queryFn: () => fetchBoletinMedico({ pediatria: pediatra }),
     staleTime: 30 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
     retry: 1,
@@ -79,6 +98,7 @@ export default function BoletinMedico() {
   // Cada solapa lista sólo las obras sociales que tienen ese dato: una tarjeta
   // vacía no le dice nada a nadie, y el contador de arriba quedaría mintiendo.
   const base = useMemo(() => {
+    if (vista === "pediatria") return items.filter((i) => i.pediatria.length > 0);
     if (vista === "galenos") return items.filter((i) => i.galenos.length > 0);
     if (vista === "observaciones") {
       return items.filter((i) => i.observaciones.length > 0);
@@ -110,7 +130,7 @@ export default function BoletinMedico() {
   if (cargando) {
     return (
       <div className={s.container}>
-        <Encabezado />
+        <Encabezado galenos={soloVista === "galenos"} pediatria={pediatra} />
         <div className={s.esqueletos} aria-busy="true" aria-live="polite">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className={s.esqueleto} />
@@ -123,7 +143,7 @@ export default function BoletinMedico() {
   if (error) {
     return (
       <div className={s.container}>
-        <Encabezado />
+        <Encabezado galenos={soloVista === "galenos"} pediatria={pediatra} />
         <p className={s.aviso} role="status">
           <AlertTriangle size={17} aria-hidden="true" />
           No pudimos cargar el boletín en este momento.
@@ -134,23 +154,25 @@ export default function BoletinMedico() {
 
   return (
     <div className={s.container}>
-      <Encabezado />
+      <Encabezado galenos={soloVista === "galenos"} pediatria={pediatra} />
 
       <div className={s.barra}>
-        <div className={s.tabs} role="tablist" aria-label="Qué parte del boletín ver">
-          {VISTAS.map(({ id, label }) => (
-            <button
-              key={id}
-              type="button"
-              role="tab"
-              aria-selected={vista === id}
-              className={vista === id ? `${s.tab} ${s.tabActiva}` : s.tab}
-              onClick={() => setVista(id)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        {!soloVista && (
+          <div className={s.tabs} role="tablist" aria-label="Qué parte del boletín ver">
+            {vistas.map(({ id, label }) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={vista === id}
+                className={vista === id ? `${s.tab} ${s.tabActiva}` : s.tab}
+                onClick={() => setVista(id)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className={s.buscador}>
           <Search size={17} className={s.lupa} aria-hidden="true" />
@@ -205,6 +227,8 @@ export default function BoletinMedico() {
         </p>
       ) : vista === "consulta" ? (
         <TablaConsulta items={visibles} />
+      ) : vista === "pediatria" ? (
+        <GrillaPediatria items={visibles} />
       ) : vista === "galenos" ? (
         <GrillaGalenos items={visibles} />
       ) : (
@@ -214,15 +238,20 @@ export default function BoletinMedico() {
   );
 }
 
-function Encabezado() {
+function Encabezado({ galenos = false, pediatria = false }: { galenos?: boolean; pediatria?: boolean }) {
+  let bajada = "Valor de consulta y galenos por obra social.";
+  if (galenos) bajada = "Valores de galeno por obra social.";
+  else if (pediatria) bajada = "Valores de pediatría y observaciones por obra social.";
+
   return (
     <header className={s.header}>
       <FileText size={30} className={s.headerIcon} aria-hidden="true" />
       <div>
-        <h1 className={s.title}>Valores del boletín</h1>
+        <h1 className={s.title}>
+          {galenos ? "Boletín de galenos" : "Valores del boletín"}
+        </h1>
         <p className={s.subtitle}>
-          Valor de consulta y galenos por obra social. Sujeto a cambios por
-          actualizaciones permanentes.
+          {bajada} Sujeto a cambios por actualizaciones permanentes.
         </p>
       </div>
     </header>

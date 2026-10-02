@@ -14,6 +14,8 @@ import styles from "./DoctorProfilePage.module.scss";
 
 import RequirePermission from "../../auth/RequirePermission";
 import { usePermisos } from "../../auth/usePermisos";
+import { useAuth } from "../../auth/AuthProvider";
+import { esOrganizacion } from "../../auth/roles";
 import BackButton from "@/app/components/ui/BackButton/BackButton";
 import ReportesMedico from "../Reportes/ReportesMedico";
 import Credencial from "./Credencial";
@@ -318,6 +320,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
   const nav = useNavigate();
   const notify = useNotify();
   const location = useLocation();
+  const { user } = useAuth();
 
   const [tab, setTab] = useState<TabKey>("datos");
 
@@ -326,9 +329,12 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
   // "reportes" es SÓLO del lado del Colegio (ReportesMedico exige
   // `facturas:ver`): el médico no tiene panel propio de facturación.
   // "credencial" va en las dos vistas: el socio necesita la suya y el Colegio
-  // la consulta desde el legajo. No expone nada que el médico no vea ya.
+  // la consulta desde el legajo. No expone nada que el médico no vea ya. Una
+  // organización (clínica) no tiene credencial profesional.
   const visibleTabs: TabKey[] = readOnly
-    ? ["datos", "documentos", "especialidades", "credencial"]
+    ? esOrganizacion(user)
+      ? ["datos", "documentos", "especialidades"]
+      : ["datos", "documentos", "especialidades", "credencial"]
     : [
         "datos",
         "documentos",

@@ -1,127 +1,105 @@
 import { Link } from "react-router-dom";
-import {
-  Instagram as FiInstagram,
-  MapPin as FiMapPin,
-  Phone as FiPhone,
-  Mail as FiMail,
-} from "lucide-react";
+import { ArrowUp, Instagram, MapPin, Phone, Mail } from "lucide-react";
+import { NAVEGACION } from "../Header/navegacion";
+import { CONTACTO, linkWhatsApp } from "../../../lib/contacto";
+import logo from "../../../assets/images/logoCMC-web.png";
 import styles from "./Footer.module.scss";
-import logo from "../../../assets/images/logoCMC.png";
+
+// Las columnas salen del mismo menú que la cabecera: agregar una sección la
+// suma en los dos lados.
+const INSTITUCIONAL = NAVEGACION.filter((i) => !i.hijos && i.ruta !== "/");
+const SERVICIOS = NAVEGACION.find((i) => i.hijos)?.hijos ?? [];
+
+const CONTACTOS = [
+  { icono: MapPin, texto: `${CONTACTO.direccion}, ${CONTACTO.ciudad}`, href: CONTACTO.mapa, externo: true },
+  { icono: Phone, texto: CONTACTO.telefono.visible, href: CONTACTO.telefono.href, externo: false },
+  { icono: Mail, texto: CONTACTO.emails.secretaria, href: `mailto:${CONTACTO.emails.secretaria}`, externo: false },
+];
+
+/** WhatsApp del estudio que desarrolló el sitio. */
+const WHATSAPP_DESARROLLO = "5493794532535";
+
+const volverArriba = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
 export default function Footer() {
   return (
     <footer className={styles.footer}>
-      {/* Top: logo + columnas */}
-      <div className={styles.top}>
-        {/* Marca / Logo */}
-        <div className={styles.brand}>
-          <div className={styles.brandRow}>
-            <img
-              src={logo}
-              alt="Colegio Médico de Corrientes"
-              width={150}
-              height={150}
-              className={styles.logo}
-            />
-          </div>
-        </div>
-
-        {/* Navegación principal */}
-        <nav className={styles.linksCol} aria-label="Navegación">
-          <h4>Navegación</h4>
-          <ul>
-            <li><Link to="/">Inicio</Link></li>
-            <li><Link to="/noticias">Noticias</Link></li>
-            <li><Link to="/nosotros">Nosotros</Link></li>
-            <li><Link to="/servicios">Servicios</Link></li>
-            <li><Link to="/preguntas-frecuentes">Preguntas Frecuentes</Link></li>
-            <li><Link to="/contacto">Contacto</Link></li>
-          </ul>
-        </nav>
-
-        {/* Enlaces rápidos (genéricos, sin subrutas nuevas) */}
-        <nav className={styles.linksCol} aria-label="Enlaces rápidos">
-          <h4>Enlaces Rápidos</h4>
-          <ul>
-            <li><Link to="/cursos">Cursos/Capacitaciones</Link></li>
-            <li><Link to="/medicos-asociados">Médicos asociados</Link></li>
-          </ul>
-        </nav>
-
-        {/* Servicios (placeholders a rutas existentes o por definir más adelante) */}
-        <nav className={styles.linksCol} aria-label="Servicios">
-          <h4>Servicios</h4>
-          <ul>
-            <li><Link to="/servicios">Facturación</Link></li>
-            <li><Link to="/servicios">Liquidación</Link></li>
-            <li><Link to="/servicios">Padrones</Link></li>
-          </ul>
-        </nav>
-      </div>
-
-      {/* Barra de contacto */}
-      <div className={styles.contactBar}>
-        <div className={styles.contactItem}>
-          <span className={styles.iconWrap}>
-            <FiMapPin />
-          </span>
-          <a
-            className={styles.contactItem}
-            href="https://www.google.com/maps/dir//Carlos+Pellegrini+1785,+Corrientes,+Argentina"
-            target="_blank"
-            rel="noreferrer"
-          >
+      <div className={styles.contenido}>
+        <div className={styles.marca}>
+          <Link to="/" className={styles.logo} aria-label="Colegio Médico de Corrientes, inicio">
+            <img src={logo} alt="" width={64} height={64} loading="lazy" />
             <span>
-              Carlos Pellegrini 1785, <br />
-              Corrientes, Argentina
+              Colegio Médico
+              <small>de Corrientes</small>
             </span>
+          </Link>
+          <a
+            className={styles.red}
+            href={CONTACTO.instagram}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Instagram del Colegio"
+          >
+            <Instagram aria-hidden="true" />
+            @colegiomedicoctes
           </a>
         </div>
 
-        <a className={styles.contactItem} href="tel:+543794722121">
-          <span className={styles.iconWrap}>
-            <FiPhone />
-          </span>
-          <span>+54 3794252323</span>
-        </a>
+        <nav className={styles.columna} aria-label="Institucional">
+          <h2>Institucional</h2>
+          <ul>
+            {INSTITUCIONAL.map((i) => (
+              <li key={i.ruta}>
+                <Link to={i.ruta}>{i.etiqueta}</Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
-        <a
-          className={styles.contactItem}
-          href="mailto:secretaria@colegiomedicocorrientes.com"
-        >
-          <span className={styles.iconWrap}>
-            <FiMail />
-          </span>
-          <span>secretaria@colegiomedicocorrientes.com</span>
-        </a>
+        <nav className={styles.columna} aria-label="Servicios">
+          <h2>Servicios</h2>
+          <ul>
+            {SERVICIOS.map((i) => (
+              <li key={i.ruta}>
+                <Link to={i.ruta}>{i.etiqueta}</Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
-        <div className={styles.social}>
-          <a
-            href="https://www.instagram.com/colegiomedicoctes/"
-            aria-label="Instagram"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <FiInstagram />
-          </a>
+        <div className={styles.columna}>
+          <h2>Contacto</h2>
+          <ul>
+            {CONTACTOS.map(({ icono: Icono, texto, href, externo }) => (
+              <li key={texto}>
+                <a
+                  href={href}
+                  className={styles.contacto}
+                  {...(externo ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                >
+                  <Icono aria-hidden="true" />
+                  <span>{texto}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
 
-      {/* Bottom */}
-      <div className={styles.bottom}>
-        <p>© {new Date().getFullYear()} Colegio Médico de Corrientes — Todos los derechos reservados.</p>
-        <p className={styles.metaDev}>
-  Desarrollado por{" "}
-  <a
-    href="https://wa.me/5493794532535"
-    target="_blank"
-    rel="noopener noreferrer"
-    className={styles.linkMetaDev}
-  >
-    DevHorizon
-  </a>
-  .
-</p>
+      <div className={styles.pie}>
+        <div className={styles.pieContenido}>
+          <p>© {new Date().getFullYear()} Colegio Médico de Corrientes. Todos los derechos reservados.</p>
+          <p>
+            Desarrollado por{" "}
+            <a href={linkWhatsApp(WHATSAPP_DESARROLLO)} target="_blank" rel="noopener noreferrer">
+              DevHorizon
+            </a>
+          </p>
+          <button type="button" className={styles.arriba} onClick={volverArriba}>
+            <ArrowUp aria-hidden="true" />
+            Volver arriba
+          </button>
+        </div>
       </div>
     </footer>
   );

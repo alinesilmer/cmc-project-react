@@ -1,0 +1,97 @@
+@use "@/website/styles/all.scss" as *;
+
+$crema: #f7e9aa;
+$suave: #f1f5fb;
+$gris: #6b7280;
+$sombra: 0 1px 2px rgba(20, 35, 58, 0.05), 0 10px 26px rgba(20, 35, 58, 0.07);
+
+.titulo {
+  margin: 0 0 20px;
+  font-family: $font-title;
+  font-size: clamp(1.6rem, 3vw, 2.1rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #14233a;
+
+  em {
+    font-style: normal;
+    color: $primary-blue;
+  }
+}
+
+.grilla {
+  display: grid;
+  grid-template-columns: repeat(var(--columnas, 4), minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px 20px;
+  border-radius: 10px;
+  background: $white;
+  box-shadow: $sombra;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  h3 {
+    margin: 6px 0 0;
+    font-family: $font-title;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: $primary-blue-dark;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.93rem;
+    line-height: 1.5;
+    color: $gris;
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 1px 2px rgba(20, 35, 58, 0.05), 0 18px 34px rgba(20, 35, 58, 0.13);
+
+    .icono {
+      background: $primary-blue;
+      color: $crema;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    &:hover {
+      transform: none;
+    }
+  }
+}
+
+.icono {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: $suave;
+  color: $primary-blue;
+  transition: background 0.2s ease, color 0.2s ease;
+
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+}

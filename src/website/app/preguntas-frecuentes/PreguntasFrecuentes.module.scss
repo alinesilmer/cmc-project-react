@@ -1,169 +1,156 @@
 @use "@/website/styles/all.scss" as *;
 
-.page {
-  background: $white;
-  min-height: 100vh;
+$crema: #f7e9aa;
+$suave: #f1f5fb;
+$gris: #6b7280;
+
+.buscador {
+  max-width: 460px;
 }
 
-// ─── Main content ─────────────────────────────────────────────────────────────
-
-.main {
-  width: min(860px, 92%);
-  margin: 0 auto;
-  padding: clamp(3rem, 7vw, 5.5rem) 0;
-  display: flex;
-  flex-direction: column;
-  gap: clamp(3rem, 6vw, 5rem);
+.vacio {
+  margin: 0;
+  padding: 32px 0;
+  text-align: center;
+  font-family: $font-title;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: $primary-blue-dark;
 }
 
-// ─── Section ──────────────────────────────────────────────────────────────────
-
-.section {
+.seccion {
   display: flex;
   flex-direction: column;
-  gap: $spacing-xl;
+  gap: 18px;
 }
 
-.sectionHeader {
+.encabezado {
   display: flex;
-  flex-direction: column;
-  gap: $spacing-xs;
+  align-items: flex-start;
+  gap: 16px;
+
+  h2 {
+    margin: 2px 0 0;
+    font-family: $font-title;
+    font-size: clamp(1.4rem, 2.6vw, 1.8rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #14233a;
+  }
+
+  p {
+    margin: 4px 0 0;
+    font-size: 0.92rem;
+    color: $gris;
+  }
+}
+
+.icono {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  background: $primary-blue;
+  color: $crema;
+
+  svg {
+    width: 26px;
+    height: 26px;
+  }
 }
 
 .eyebrow {
-  font-family: $font-normal;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: rgba($primary-blue, 0.5);
-}
-
-.sectionTitle {
-  margin: 0;
   font-family: $font-title;
-  font-size: clamp(1.4rem, 2.4vw, 1.9rem);
+  font-size: 0.72rem;
   font-weight: 800;
-  color: $primary-blue-dark;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: $gris;
 }
 
-.sectionSubtitle {
-  margin: 0;
-  font-family: $font-normal;
-  font-size: 0.88rem;
-  color: rgba($primary-blue, 0.55);
-  line-height: 1.5;
-}
-
-// ─── Accordion ────────────────────────────────────────────────────────────────
-
-.accordion {
+.lista {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  border: 1px solid rgba($primary-blue, 0.1);
-  border-radius: $border-radius-md;
-  overflow: hidden;
-  box-shadow: 0 2px 12px rgba($primary-blue, 0.06);
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-// ─── Accordion item ───────────────────────────────────────────────────────────
-
-.item {
-  border-bottom: 1px solid rgba($primary-blue, 0.08);
+// Cada pregunta, una tarjeta blanca; la abierta marca su borde en azul.
+.pregunta {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
   background: $white;
-  transition: background 0.18s;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
-  &:last-child {
-    border-bottom: none;
-  }
-
-  &.itemOpen {
-    background: #f7f9fd;
+  &:hover {
+    border-color: rgba($primary-blue, 0.35);
   }
 }
 
-.question {
+.abierta {
+  border-color: $primary-blue;
+  box-shadow: 0 10px 26px rgba(20, 35, 58, 0.08);
+}
+
+.cabecera {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: $spacing-md;
+  gap: 16px;
   width: 100%;
-  padding: $spacing-md $spacing-lg;
-  background: transparent;
-  border: none;
+  padding: 18px 20px;
+  border: 0;
+  background: none;
   text-align: left;
   cursor: pointer;
-  transition: background 0.18s;
-
-  &:hover {
-    background: rgba($primary-blue, 0.04);
-  }
 
   &:focus-visible {
     outline: 2px solid $primary-blue;
     outline-offset: -2px;
-  }
-
-  @media (max-width: $breakpoint-mobile) {
-    padding: $spacing-sm $spacing-md;
-    gap: $spacing-sm;
+    border-radius: 10px;
   }
 }
 
-.questionText {
-  font-family: $font-normal;
-  font-size: clamp(0.9rem, 1.1vw, 1rem);
-  font-weight: 600;
+.textoPregunta {
+  font-family: $font-title;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.35;
   color: $primary-blue-dark;
-  line-height: 1.45;
-  flex: 1;
 }
 
 .chevron {
   flex-shrink: 0;
-  font-size: 1.1rem;
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+  border-radius: 6px;
+  background: $suave;
   color: $primary-blue;
-  transition: transform 0.24s ease;
+  transition: transform 0.25s ease, background 0.2s ease, color 0.2s ease;
 }
 
-.chevronOpen {
+.chevronAbierto {
   transform: rotate(180deg);
+  background: $primary-blue;
+  color: $crema;
 }
 
-// ─── Answer ───────────────────────────────────────────────────────────────────
+.respuesta {
+  padding: 0 20px 20px;
+  font-size: 0.98rem;
+  line-height: 1.65;
+  color: #374151;
 
-.answerWrap {
-  overflow: hidden;
-}
-
-.answer {
-  padding: 0 $spacing-lg $spacing-md;
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-xs;
-
-  @media (max-width: $breakpoint-mobile) {
-    padding: 0 $spacing-md $spacing-sm;
+  p {
+    margin: 0 0 6px;
   }
-}
 
-.answerLine {
-  margin: 0;
-  font-family: $font-normal;
-  font-size: clamp(0.85rem, 1vw, 0.95rem);
-  color: #334155;
-  line-height: 1.7;
-
-  // Bullet lines get slightly indented
-  &:is([class]) {
-    // handled below via content check
+  p:last-child {
+    margin-bottom: 0;
   }
-}
-
-// Indent bullet lines
-.answerLine:where(:not(:first-child)):not(:has(~ *)) {
-  // fallback: all answer lines share same style
 }

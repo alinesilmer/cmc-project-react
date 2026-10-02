@@ -1,0 +1,42 @@
+// ─── Escala del administrador de contenido ───────────────────────────────────
+//
+// La usan todas las pantallas de /panel/sitio (publicaciones, avisos de
+// médicos, valores éticos). Estaba copiada en dos módulos, y en uno la copia
+// había quedado con el comentario roto por un reemplazo masivo.
+//
+// Vive aparte de `variables.scss` porque es del panel: el sitio público no
+// tiene ni escala de grises fina ni colores semánticos.
+
+// Superficies
+$ad-fondo: #f4f6fa;
+$ad-superficie: #ffffff;
+$ad-superficie-2: #f8fafc;
+
+// Tinte de marca, para hover y selección
+$ad-tinte: #eef3ff;
+$ad-tinte-fuerte: #dbeafe;
+$ad-enlace: #1d4ed8;
+
+// Bordes: uno para contornos, otro para lo que sólo separa
+$ad-borde: #dde2ec;
+$ad-borde-fuerte: #c5cfe0;
+
+// Texto
+$ad-texto: #374151;
+$ad-texto-2: #6b7280;
+$ad-texto-3: #8a99b3;
+
+// Semánticos
+$ad-peligro: #dc2626;
+$ad-peligro-oscuro: #b91c1c;
+$ad-peligro-borde: #fca5a5;
+$ad-peligro-fondo: #fef2f2;
+$ad-peligro-suave: #fee2e2;
+$ad-ok: #166534;
+$ad-ok-fondo: #dcfce7;
+$ad-whatsapp: #25d366;
+
+// Un solo radio para controles y tarjetas, y la píldora para los chips.
+$ad-radio: 10px;
+$ad-radio-chico: 6px;
+$ad-radio-pill: 999px;

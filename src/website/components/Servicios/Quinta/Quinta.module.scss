@@ -1,236 +1,35 @@
-@use "@/website/styles/all.scss" as *;
-
-.wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-xl;
-  padding: $spacing-xxl $spacing-xl;
-  background: white;
-  font-family: $font-normal;
-}
-
-.header {
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  justify-content: space-between;
-  gap: $spacing-xl;
-  border: 1px solid rgba($primary-blue, 0.12);
-  border-radius: $border-radius-sm;
-  background: $primary-blue;
-  color: $white;
-  padding: $spacing-2xl;
-  box-shadow: 0 20px 60px rgba($primary-blue, 0.28);
-  position: relative;
+// La foto, protagonista: ancha y baja, con un acercamiento lento al pasar.
+.foto {
   overflow: hidden;
-}
+  border-radius: 10px;
+  box-shadow: 0 18px 40px rgba(12, 42, 82, 0.14);
 
-.headLeft {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-md;
-  flex: 1;
-  z-index: 1;
-}
-
-.headRight {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: space-between;
-  min-width: 220px;
-  position: relative;
-  z-index: 0;
-}
-
-.titulo {
-  font-family: $font-playfair;
-  font-size: clamp(1.25rem, 2vw, 2rem);
-  letter-spacing: -0.3px;
-  color: $primary-yellow;
-  margin: 0;
-}
-
-.descripcion {
-  font-size: 1.05rem;
-  line-height: 1.7;
-  color: rgba($white, 0.96);
-  margin: 0;
-  max-width: 58ch;
-}
-
-.ctaRow {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: $spacing-md;
-  margin-top: $spacing-sm;
-}
-
-.iconInline {
-  width: 1.1rem;
-  height: 1.1rem;
-}
-
-.badge {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: $spacing-xs;
-  padding: 0.6rem 1rem;
-  border-radius: $border-radius-sm;
-  background: rgba($primary-yellow, 0.95);
-  color: $dark-gray;
-  font-weight: 800;
-  box-shadow: 0 6px 18px rgba($primary-yellow, 0.35);
-  margin-left: auto;
-}
-
-
-.infoPanel {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-lg;
-  border: 1px solid rgba($primary-blue, 0.12);
-  border-radius: $border-radius-sm;
-  background: $white;
-  padding: $spacing-2xl;
-  box-shadow: 0 16px 40px rgba($primary-blue, 0.12);
-}
-
-.infoHeader {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: $spacing-md;
-}
-
-.infoTitleWrap {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: $spacing-sm;
-  color: $primary-blue;
-}
-
-.infoTitle {
-  font-size: 1.25rem;
-  font-weight: 800;
-  margin: 0;
-}
-
-.infoChip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.35rem 0.75rem;
-  border-radius: $border-radius-sm;
-  background: $primary-blue;
-  color: $primary-yellow;
-  font-weight: 800;
-  font-size: 0.85rem;
-  box-shadow: $shadow-sm;
-}
-
-.infoList {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-sm;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  color: $dark-gray;
-  font-size: 1rem;
-  line-height: 1.6;
-}
-
-.contactBox {
-  width: 300px;
-  display: flex;
-  flex-direction: row;
-  align-items: start;
-  justify-content: space-between;
-  gap: $spacing-lg;
-  padding: $spacing-lg;
-  border-radius: $border-radius-sm;
-  background: $white;
-  border: 1px solid lightgray;
-}
-
-.contactLeft {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.contactLabel {
-  color: $gray;
-  font-weight: 700;
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-
-.contactPhone {
-  color: $primary-blue-dark;
-  font-weight: 800;
-  text-decoration: none;
-  transition: color $transition-fast, transform $transition-fast;
-}
-
-.contactPhone:hover {
-  color: $accent-blue;
-  transform: translateY(-1px);
-}
-
-.contactRight {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  text-align: right;
-}
-
-.attnLabel {
-  color: $gray;
-  font-weight: 700;
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-
-.attnText {
-  font-weight: 800;
-  color: $primary-blue;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0) translateX(0); }
-  50% { transform: translateY(-14px) translateX(8px); }
-}
-
-@media (max-width: $breakpoint-desktop) {
-  .wrapper { padding: $spacing-xl $spacing-lg; }
-  .header { padding: $spacing-xl; }
-  .infoPanel { padding: $spacing-xl; }
-}
-
-@media (max-width: $breakpoint-tablet) {
-  .header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: $spacing-lg;
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 21 / 9;
+    object-fit: cover;
+    transition: transform 1.2s ease;
   }
-  .headRight { min-width: auto; width: 100%; align-items: flex-start; }
-  .badge { margin-left: 0; }
-  .contactBox {  width: 200px; flex-direction: column; align-items: flex-start; text-align: left; }
-  .contactRight { text-align: left; align-items: flex-start; }
-}
 
-@media (max-width: $breakpoint-mobile) {
-  .wrapper { padding: $spacing-lg $spacing-md; }
-  .header { padding: $spacing-lg; }
-  .infoPanel { padding: $spacing-lg; }
-  .ctaRow { width: 100%; }
-  .ctaRow > * { flex: 1 1 auto; }
+  &:hover img {
+    transform: scale(1.03);
+  }
+
+  @media (max-width: 640px) {
+    img {
+      aspect-ratio: 4 / 3;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    img {
+      transition: none;
+    }
+
+    &:hover img {
+      transform: none;
+    }
+  }
 }

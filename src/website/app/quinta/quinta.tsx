@@ -1,32 +1,44 @@
-import { motion } from "framer-motion"
-import Quinta from "../../components/Servicios/Quinta/Quinta"
-import Hero from "../../components/UI/Hero/Hero"
-import { useTituloPagina } from "../../lib/useTituloPagina"
-import styles from "./quinta.module.scss"
+import { Clock, Waves } from "lucide-react";
+import ContenedorPagina from "../../components/UI/ContenedorPagina/ContenedorPagina";
+import CabeceraFresca from "../../components/UI/CabeceraFresca/CabeceraFresca";
+import Button from "../../components/UI/Button/Button";
+import WhatsappIcon from "../../components/UI/icons/WhatsappIcon";
+import Quinta from "../../components/Servicios/Quinta/Quinta";
+import { RESERVAR_QUINTA } from "../../components/Servicios/Quinta/reserva";
+import { useTituloPagina } from "../../hooks/useTituloPagina";
+
+const DESTACADOS = [
+  { icono: Waves, texto: "Pileta en temporada" },
+  { icono: Clock, texto: "Lun a vie · 8 a 14 h" },
+];
 
 export default function QuintaPage() {
-  useTituloPagina("Quinta")
+  useTituloPagina("Quinta");
 
   return (
-    <>
-      <Hero
-        title="Quinta del Colegio"
-        subtitle="Requisitos y condiciones para reservar la Quinta"
-        backgroundImage="https://res.cloudinary.com/dcfkgepmp/image/upload/v1762471702/quintacmc3_s6sffw.jpg"
+    <ContenedorPagina>
+      <CabeceraFresca
+        titulo={
+          <>
+            La <span>Quinta</span>
+          </>
+        }
+        bajada="Pileta y aire libre para socios."
+        lema={
+          <>
+            Tu lugar para <em>desconectar.</em>
+          </>
+        }
+        destacados={DESTACADOS}
+        compacto
+        acciones={
+          <Button href={RESERVAR_QUINTA} variant="secondary" size="large" iconoIzquierda={<WhatsappIcon />}>
+            Reservar
+          </Button>
+        }
       />
 
-      <motion.div
-        className={styles.quintaWrap}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.35, ease: "easeOut" }}
-      >
-      <Quinta
-        titulo="Quinta del Colegio"
-        descripcion="Conocé los requisitos y condiciones para reservar la Quinta del Colegio Médico de Corrientes."
-        etiquetaBoton="Descargar requisitos"
-      />
-      </motion.div>
-    </>
-  )
+      <Quinta />
+    </ContenedorPagina>
+  );
 }

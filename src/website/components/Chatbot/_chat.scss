@@ -1,0 +1,17 @@
+// El chat es una superficie chica y densa, así que necesita una escala de
+// neutros más fina que la del sitio (que sólo tiene $gray / $light-gray /
+// $dark-gray). Se define acá, una vez, en lugar de repartir hex sueltos por las
+// reglas como estaba antes.
+$chat-borde: #e6eaf1;
+$chat-fondo-sutil: #f7f9fc;
+$chat-burbuja: #eef2f8;
+$chat-texto: #1e293b;
+$chat-texto-suave: #64748b;
+$chat-placeholder: #9aa5b8;
+$chat-deshabilitado: #cbd5e1;
+$chat-wa: #16a34a;
+
+// Un solo radio para la ventana: antes convivían tres (7px, 14px y 16px) según
+// el modo y el breakpoint, y se notaba al expandir.
+$chat-radio: 16px;
+$chat-radio-control: 10px;

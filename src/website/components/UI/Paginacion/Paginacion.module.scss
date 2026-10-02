@@ -1,0 +1,65 @@
+@use "@/website/styles/all.scss" as *;
+
+.paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: $spacing-xl;
+}
+
+.boton {
+  display: grid;
+  place-items: center;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: $border-radius-sm;
+  background: $white;
+  color: $primary-blue;
+  font-family: inherit;
+  font-size: $font-size-small;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.16s, border-color 0.16s, color 0.16s;
+
+  &:hover:not(:disabled) {
+    background: rgba($primary-blue, 0.07);
+    border-color: rgba($primary-blue, 0.35);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary-blue;
+    outline-offset: 2px;
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.activa {
+  background: $primary-blue;
+  border-color: $primary-blue;
+  color: $white;
+
+  &:hover:not(:disabled) {
+    background: $primary-blue-dark;
+    border-color: $primary-blue-dark;
+  }
+}
+
+.hueco {
+  min-width: 24px;
+  text-align: center;
+  color: $gray;
+  user-select: none;
+}

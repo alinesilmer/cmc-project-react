@@ -7,9 +7,13 @@ import RequireAuth from "./app/auth/RequireAuth";
 import MedicoRouteGuard from "./app/auth/MedicoRouteGuard";
 import RequireWebEditor from "./app/auth/RequireWebEditor";
 import RequireScope from "./app/auth/RequireScope";
-import AppLayout from "@/app/components/layout/AppLayout/AppLayout";
 import { useAuth } from "./app/auth/AuthProvider";
 import { isMedico } from "./app/auth/roles";
+
+// El layout del panel y su tema de MUI también van lazy: el sitio público (`/*`)
+// no los usa y así no entran en el bundle de entrada.
+const TemaPanel = lazy(() => import("./app/TemaPanel"));
+const AppLayout = lazy(() => import("@/app/components/layout/AppLayout/AppLayout"));
 
 // Pages are lazy-loaded (route-level code splitting) so each route ships its own
 // chunk instead of bloating the main bundle.
@@ -129,6 +133,7 @@ export default function RootRoutes() {
     <AnimatePresence mode="wait">
       <Suspense fallback={<div style={{ padding: 24 }}>Cargando…</div>}>
         <Routes>
+          <Route element={<TemaPanel />}>
           <Route path="/panel/login" element={<Login />} />
           <Route
             path="/panel/register-os"
@@ -298,6 +303,13 @@ export default function RootRoutes() {
                   path="boletin-galenos"
                   element={<BoletinGalenos />}
                 />
+                {/* Los valores de galeno que ve el socio en «Valores Boletín»,
+                    para el Colegio. `boletin-galenos` es otra cosa: el
+                    formulario de carga, todavía sin backend. */}
+                <Route
+                  path="boletin-valores-galenos"
+                  element={<BoletinMedico soloVista="galenos" />}
+                />
               </Route>
 
               <Route element={<RequireScope scope="catalogo:leer" />}>
@@ -422,6 +434,7 @@ export default function RootRoutes() {
               path="/panel/cambiar-password"
               element={<CambiarPassword />}
             />
+          </Route>
           </Route>
 
           <Route path="/*" element={<WebRoutes />} />

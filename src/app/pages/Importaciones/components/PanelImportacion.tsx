@@ -5,7 +5,7 @@ import Button from "@/app/components/ui/Button/Button";
 import r from "@/app/pages/Validaciones/components/reporte/reporte.module.scss";
 import type { FilaResultado, ImportacionOut, PeriodoOpcion } from "../importaciones.api";
 import type { Filtro } from "../useImportador";
-import { moneda, periodoLegible } from "../formato";
+import { fechaLegible, moneda, periodoLegible } from "../formato";
 import s from "./panel.module.scss";
 
 /**
@@ -196,7 +196,7 @@ export function TablaResultado({ filas }: { filas: FilaResultado[] }) {
                   </span>
                 </td>
                 <td>{f.nroAutorizacion || "—"}</td>
-                <td>{f.fecha ?? "—"}</td>
+                <td>{fechaLegible(f.fecha)}</td>
                 <td className={r.num}>{f.matricula || "—"}</td>
                 <td>
                   {f.medico || "—"}

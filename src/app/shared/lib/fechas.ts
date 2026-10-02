@@ -89,3 +89,20 @@ export function fechaAISO(d: Date): string {
   const dd = String(d.getDate()).padStart(2, "0");
   return `${d.getFullYear()}-${mm}-${dd}`;
 }
+
+/** Zona horaria de Corrientes Capital (en la base tz, Corrientes pertenece a esta zona). */
+const ZONA_CORRIENTES = "America/Argentina/Cordoba";
+
+/**
+ * «Buenos días», «Buenas tardes» o «Buenas noches» según la hora de Corrientes,
+ * no la del dispositivo: un socio de viaje o una computadora con el reloj en
+ * otra zona recibirían el saludo equivocado.
+ */
+export function saludoSegunHora(ahora: Date = new Date()): string {
+  const hora = Number(
+    new Intl.DateTimeFormat("es-AR", { hour: "numeric", hourCycle: "h23", timeZone: ZONA_CORRIENTES }).format(ahora)
+  );
+  if (hora >= 5 && hora < 12) return "Buenos días";
+  if (hora >= 12 && hora < 20) return "Buenas tardes";
+  return "Buenas noches";
+}

@@ -12,9 +12,12 @@ import { useCallback, useState } from "react";
 import { getIndiceMatriculas } from "../../medicosPorMatricula";
 import type { IndiceMatriculas } from "../../medicosPorMatricula";
 
-const AVISO_PADRON =
-  "No pudimos leer el padrón de médicos, así que las filas quedan sin " +
-  "identificar. Hace falta el permiso de lectura de médicos.";
+/** Sólo un 403 es falta de permiso; cualquier otra falla se dice como falla.
+ * Antes todo error decía «hace falta el permiso», y no era eso. */
+const mensajePadron = (e: unknown): string =>
+  (e as { response?: { status?: number } })?.response?.status === 403
+    ? "No tenés permiso para leer el padrón de médicos (medico:leer), así que las filas quedan sin identificar."
+    : "No pudimos leer el padrón de médicos en este momento, así que las filas quedan sin identificar. Probá de nuevo.";
 
 export interface EstadoReporte<T> {
   /** Nombre del archivo cargado, o `null` si todavía no hay ninguno. */
@@ -34,11 +37,16 @@ export interface OpcionesReporte<T> {
   contar: (reporte: T) => number;
   /** Qué decirle a quien subió un archivo del formato correcto pero vacío. */
   mensajeVacio: string;
+  /**
+   * `false` para no traer el padrón: las importaciones no lo usan, porque el
+   * médico lo resuelve el backend. Por defecto se trae.
+   */
+  conPadron?: boolean;
 }
 
 export function useReporteConPadron<T>(
   leer: (file: File) => Promise<T>,
-  { contar, mensajeVacio }: OpcionesReporte<T>
+  { contar, mensajeVacio, conPadron = true }: OpcionesReporte<T>
 ): EstadoReporte<T> {
   const [archivo, setArchivo] = useState<string | null>(null);
   const [reporte, setReporte] = useState<T | null>(null);
@@ -63,13 +71,15 @@ export function useReporteConPadron<T>(
       try {
         const [leido, idx] = await Promise.all([
           leer(file),
-          getIndiceMatriculas().catch((e) => {
-            // Sin `medico:leer` no se puede mapear, pero el reporte se muestra
-            // igual: es preferible ver las filas sin médico que no ver nada.
-            setAvisoPadron(AVISO_PADRON);
-            console.error("Padrón de matrículas:", e);
-            return null;
-          }),
+          !conPadron
+            ? Promise.resolve(null)
+            : getIndiceMatriculas().catch((e) => {
+                // Sin el padrón no se puede mapear, pero el reporte se muestra
+                // igual: es preferible ver las filas sin médico que no ver nada.
+                setAvisoPadron(mensajePadron(e));
+                console.error("Padrón de matrículas:", e);
+                return null;
+              }),
         ]);
 
         setArchivo(file.name);
@@ -83,7 +93,7 @@ export function useReporteConPadron<T>(
         setLeyendo(false);
       }
     },
-    [leer, contar, mensajeVacio, limpiar]
+    [leer, contar, mensajeVacio, conPadron, limpiar]
   );
 
   return { archivo, reporte, indice, error, avisoPadron, leyendo, cargar, limpiar };

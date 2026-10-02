@@ -1,41 +1,85 @@
-import { ShieldCheck, Handshake, Home, HeartHandshake, UserPlus, HelpCircle } from "lucide-react"
-import styles from "./servicios.module.scss"
-import ServiceCard from "../../components/UI/ServicesCard/ServicesCard";
-import Hero from "../../components/UI/Hero/Hero";
-import { useTituloPagina } from "../../lib/useTituloPagina";
+import { Link } from "react-router-dom";
+import { ArrowUpRight, Clock, MapPin, MessageCircle, Phone } from "lucide-react";
+import ContenedorPagina from "../../components/UI/ContenedorPagina/ContenedorPagina";
+import CabeceraFresca from "../../components/UI/CabeceraFresca/CabeceraFresca";
+import Revelar from "../../components/UI/Revelar/Revelar";
+import Button from "../../components/UI/Button/Button";
+import Llamado from "../../components/UI/Llamado/Llamado";
+import { NAVEGACION } from "../../components/UI/Header/navegacion";
+import { CONTACTO } from "../../lib/contacto";
+import { useTituloPagina } from "../../hooks/useTituloPagina";
+import styles from "./servicios.module.scss";
+
+// Los servicios son los mismos del menú: agregar uno allá lo suma acá.
+const SERVICIOS = NAVEGACION.find((i) => i.ruta === "/servicios")?.hijos ?? [];
+
+/** Una línea por servicio, por ruta. */
+const DESCRIPCIONES: Record<string, string> = {
+  "/socios": "Sumate en tres pasos.",
+  "/seguros": "Cobertura para tu práctica.",
+  "/convenios": "Obras sociales con acuerdo.",
+  "/quinta": "Un lugar para disfrutar.",
+  "/prevencion-salud": "Tu plan, con descuento.",
+  "/preguntas-frecuentes": "Respuestas rápidas.",
+};
+
+const DESTACADOS = [
+  { icono: MapPin, texto: CONTACTO.direccion },
+  { icono: Clock, texto: "Lun a vie · 7 a 15 h" },
+];
 
 export default function ServiciosPage() {
   useTituloPagina("Servicios");
 
-  const secciones = [
-    { icon: <ShieldCheck size={22} />, title: "Seguro médico", description: "Coberturas y asistencia para profesionales.", href: "/seguros" },
-    { icon: <Handshake size={22} />, title: "Convenios", description: "Obras Sociales con acuerdo vigente.", href: "/convenios" },
-    { icon: <Home size={22} />, title: "Quinta", description: "Alquiler y requisitos para el uso de la Quinta.", href: "/quinta" },
-    { icon: <HeartHandshake size={22} />, title: "Prevención Salud", description: "Descuento exclusivo en planes de obra social para socios.", href: "/prevencion-salud" },
-    { icon: <UserPlus size={22} />, title: "Quiero ser Socio", description: "Requisitos y pasos para asociarte al Colegio.", href: "/socios" },
-    { icon: <HelpCircle size={22} />, title: "Preguntas frecuentes", description: "Dudas habituales sobre trámites, convenios y credencial.", href: "/preguntas-frecuentes" },
-  ]
-
   return (
-    <>
-      <Hero
-        title="Servicios"
-        subtitle="Soluciones y beneficios para acompañar tu práctica profesional"
-        backgroundImage="https://res.cloudinary.com/dcfkgepmp/image/upload/v1762471702/quintacmc_piwk5o.jpg"
+    <ContenedorPagina>
+      <CabeceraFresca
+        titulo={
+          <>
+            Todo en <span>un lugar</span>
+          </>
+        }
+        bajada="Elegí qué necesitás."
+        lema={
+          <>
+            Pensado <em>para vos.</em>
+          </>
+        }
+        destacados={DESTACADOS}
+        compacto
       />
 
-      <section
-        className={styles.wrapper}
-        aria-label="Servicios del Colegio Médico de Corrientes"
+      <ul className={styles.grilla} aria-label="Servicios">
+        {SERVICIOS.map(({ etiqueta, ruta, icono: Icono }, i) => (
+          <Revelar key={ruta} como="li" distancia={20} retraso={i * 0.06}>
+            <Link to={ruta} className={styles.servicio}>
+              <span className={styles.icono} aria-hidden="true">
+                <Icono />
+              </span>
+              <span className={styles.texto}>
+                <strong>{etiqueta}</strong>
+                {DESCRIPCIONES[ruta]}
+              </span>
+              <ArrowUpRight className={styles.flecha} aria-hidden="true" />
+            </Link>
+          </Revelar>
+        ))}
+      </ul>
+
+      <Llamado
+        titulo={
+          <>
+            ¿Dudas? <em>Escribinos.</em>
+          </>
+        }
       >
-        <div className={styles.cards} role="list">
-          {secciones.map((s, i) => (
-            <div key={s.title} className={styles.item} role="listitem">
-              <ServiceCard icon={s.icon} title={s.title} description={s.description} href={s.href} delay={i * 0.06} />
-            </div>
-          ))}
-        </div>
-      </section>
-    </>
-  )
+        <Button to="/contacto" size="large" iconoIzquierda={<MessageCircle />}>
+          Contacto
+        </Button>
+        <Button href={CONTACTO.telefono.href} variant="outline" size="large" iconoIzquierda={<Phone />}>
+          Llamar
+        </Button>
+      </Llamado>
+    </ContenedorPagina>
+  );
 }

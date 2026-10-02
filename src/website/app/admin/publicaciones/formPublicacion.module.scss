@@ -1,0 +1,128 @@
+@use "../../../styles/variables" as *;
+@use "../../../styles/admin" as *;
+
+// ─── Form card ─────────────────────────────────────────────────────────────────
+
+.form {
+  background: $white;
+  border-radius: $ad-radio;
+  padding: $spacing-xl;
+  margin-bottom: $spacing-lg;
+  box-shadow: $shadow-sm;
+  border: 1px solid $ad-borde;
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-lg;
+  }
+}
+
+
+.formActions {
+  display: flex;
+  gap: $spacing-sm;
+  margin-top: $spacing-sm;
+  flex-wrap: wrap;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+
+  label,
+  .etiqueta {
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: $ad-texto;
+    letter-spacing: 0.2px;
+  }
+
+  input,
+  textarea {
+    padding: 0.6rem 0.85rem;
+    border: 1px solid $ad-borde;
+    border-radius: $ad-radio;
+    font-size: $font-size-base;
+    font-family: inherit;
+    background: $white;
+    transition: border-color $transition-fast, box-shadow $transition-fast;
+
+    &:focus {
+      outline: none;
+      border-color: $primary-blue;
+      box-shadow: 0 0 0 3px rgba($primary-blue, 0.1);
+    }
+  }
+
+  textarea {
+    resize: vertical;
+  }
+}
+
+.inlineBetween {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.switchLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: $ad-texto;
+  cursor: pointer;
+
+  input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: $primary-blue;
+  }
+}
+
+.helpText {
+  font-size: 0.8rem;
+  color: $ad-texto-3;
+  margin: 2px 0 0;
+}
+// ─── Responsive ────────────────────────────────────────────────────────────────
+
+@media (max-width: $breakpoint-tablet) {
+  .form {
+    padding: $spacing-lg;
+  }
+}
+
+@media (max-width: $breakpoint-mobile) {
+  .form {
+    padding: $spacing-md;
+  }
+
+
+  .formActions {
+    flex-direction: column;
+  }
+}
+
+.select {
+  height: 38px;
+  border: 1px solid $ad-borde;
+  border-radius: $ad-radio;
+  padding: 0 0.75rem;
+  background: $white;
+  font: inherit;
+  font-size: 0.92rem;
+  cursor: pointer;
+
+  &:focus {
+    outline: none;
+    border-color: $primary-blue;
+  }
+}

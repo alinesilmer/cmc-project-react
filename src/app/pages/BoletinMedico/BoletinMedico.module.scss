@@ -335,6 +335,16 @@
   color: $gray-600;
 }
 
+/** El código, chico antes del nombre en el boletín de pediatría: el médico
+ * factura con el número. */
+.valorCodigo {
+  margin-right: $spacing-2;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: $gray-500;
+  font-variant-numeric: tabular-nums;
+}
+
 .valorMonto {
   font-size: $font-size-sm;
   font-weight: $font-weight-semibold;

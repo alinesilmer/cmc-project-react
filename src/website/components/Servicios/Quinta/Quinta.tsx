@@ -1,90 +1,35 @@
-import React from "react"
-import { motion } from "framer-motion"
-import { Download as FaDownload } from "lucide-react"
-import { Info, Phone } from "lucide-react"
-import styles from "./Quinta.module.scss"
-import Button from "../../UI/Button/Button"
+import { IdCard, Megaphone, Wallet } from "lucide-react";
+import Revelar from "../../UI/Revelar/Revelar";
+import TarjetasIcono, { type TarjetaIcono } from "../../UI/TarjetasIcono/TarjetasIcono";
+import { CONTACTO } from "../../../lib/contacto";
+import styles from "./Quinta.module.scss";
 
-const EASE = [0.22, 1, 0.36, 1] as const
+const FOTO = "https://res.cloudinary.com/dcfkgepmp/image/upload/q_auto/f_auto/w_1600,c_limit/v1762471702/quintacmc3_s6sffw.jpg";
 
-type Props = {
-  titulo?: string
-  descripcion?: string
-  /** Reglamento de uso. Sin archivo cargado no se ofrece la descarga: es
-   * preferible que falte el botón a que baje un PDF que no sirve. */
-  pdfUrl?: string
-  etiquetaBoton?: React.ReactNode
-}
+const REQUISITOS: TarjetaIcono[] = [
+  { icono: Wallet, titulo: "Cuota al día", texto: "Para usar la pileta y las instalaciones." },
+  { icono: IdCard, titulo: "Carnet de socio", texto: `Tramitalo en la sede: ${CONTACTO.direccion}.` },
+  { icono: Megaphone, titulo: "Temporada", texto: "Avisamos cuando arranca la pileta. Seguí las publicaciones." },
+];
 
-const PHONE_AR = "543794404497"
-const WA_MSG = "Hola, quisiera solicitar información y reservar la Quinta del Colegio."
-const WA_LINK = `https://wa.me/${PHONE_AR}?text=${encodeURIComponent(WA_MSG)}`
-
-export default function Quinta({
-  titulo = "Quinta del Colegio",
-  descripcion = "Requisitos y condiciones para alquilar la Quinta del Colegio Médico de Corrientes.",
-  pdfUrl,
-  etiquetaBoton = "Descargar requisitos",
-}: Props) {
+/** Lo que hace falta para usar la Quinta y, debajo, la foto grande. */
+export default function Quinta() {
   return (
-    <section className={styles.wrapper} aria-label="Quinta del Colegio">
-      <motion.div
-        className={styles.header}
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: EASE }}
-      >
-        <div className={styles.headLeft}>
-          <h3 className={styles.titulo}>{titulo}</h3>
-          <p className={styles.descripcion}>{descripcion}</p>
-          <div className={styles.ctaRow}>
-            {pdfUrl && (
-              <a href={pdfUrl} download aria-label="Descargar PDF con requisitos">
-                <Button variant="secondary" size="xlg">
-                  <FaDownload className={styles.iconInline} />
-                  <span>{etiquetaBoton}</span>
-                </Button>
-              </a>
-            )}
-            <a href={WA_LINK} target="_blank" rel="noopener noreferrer" aria-label="Reservar por WhatsApp">
-              <Button variant="secondary" size="xlg">
-                <Phone className={styles.iconInline} />
-                <span>Reservar por WhatsApp</span>
-              </Button>
-            </a>
-          </div>
-        </div>
+    <>
+      <TarjetasIcono
+        id="requisitos-quinta"
+        titulo={
+          <>
+            Para <em>usarla</em>
+          </>
+        }
+        items={REQUISITOS}
+        columnas={3}
+      />
 
-      </motion.div>
-
-      <motion.div
-        className={styles.infoPanel}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: EASE, delay: 0.18 }}
-      >
-        <div className={styles.infoHeader}>
-          <div className={styles.infoTitleWrap}>
-            <Info size={20} />
-            <h4 className={styles.infoTitle}>Información importante</h4>
-          </div>
-          <span className={styles.infoChip}>⛔ Obligatorio</span>
-        </div>
-
-        <ul className={styles.infoList}>
-          <li>Para usar la pileta e instalaciones, se debe estar al día con la cuota societaria.</li>
-          <li>Realizar el trámite del carnet de socio. Acercarse por la sede: Pellegrini 1785.</li>
-          <li>Se avisará también el inicio de la temporada de pileta. Estar atentos a las publicaciones.</li>
-          <li>Muchas gracias — Comisión Directiva.</li>
-        </ul>
-
-        <div className={styles.contactBox}>
-          <div className={styles.contactRight}>
-            <span className={styles.attnLabel}>Atención</span>
-            <span className={styles.attnText}>Lunes a viernes · 08:00 a 14:00</span>
-          </div>
-        </div>
-      </motion.div>
-    </section>
-  )
+      <Revelar className={styles.foto} distancia={24}>
+        <img src={FOTO} alt="La Quinta del Colegio Médico" width={1600} height={686} loading="lazy" decoding="async" />
+      </Revelar>
+    </>
+  );
 }

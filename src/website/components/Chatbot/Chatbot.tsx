@@ -1,263 +1,56 @@
 import { createPortal } from "react-dom";
-import {
-  useEffect,
-  useRef,
-  useState,
-  useCallback,
-} from "react";
-import { Link, useLocation } from "react-router-dom";
-import Logo from "../../assets/images/logoCMC.png";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { X as FiX, Send as FiSend, MessageCircle as FiMessage } from "lucide-react";
-import FaWhatsapp from "../UI/icons/WhatsappIcon";
-
-import {
-  GREETING,
-  FALLBACK_MESSAGE,
-  QUICK_CHIPS,
-  WHATSAPP_NUMBERS,
-  type ChatLink,
-  type WhatsAppDept,
-  type MenuOption,
-} from "./chatbot.config";
-import {
-  sanitizeInput,
-  matchIntent,
-  buildWhatsAppUrl,
-  extractObrasSocialesQuery,
-} from "./chatbot.engine";
-import { checkObraSocial } from "./chatbot.service";
+import { X } from "lucide-react";
+import Logo from "../../assets/images/logoCMC-web.png";
+import ChatMensaje, { Escribiendo } from "./ChatMensaje";
+import { useChatbot } from "./useChatbot";
+import { EVENTO_ABRIR_CHATBOT } from "./abrirChatbot";
+import BotonChat from "./BotonChat";
+import EntradaChat from "./EntradaChat";
+import { useModal } from "../../hooks/useModal";
+import { EASE } from "../../lib/motion";
 import styles from "./Chatbot.module.scss";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type MsgRole = "bot" | "user";
-
-interface ChatMsg {
-  id: string;
-  role: MsgRole;
-  text: string;
-  links?: ChatLink[];
-  whatsapp?: WhatsAppDept;
-  menuOptions?: MenuOption[];
-}
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const HIDDEN_PATHS = ["/admin", "/403", "/panel"];
+const RUTAS_OCULTO = ["/403", "/panel"];
 
 // Dónde se ofrece el botón flotante. No va en todas: en la portada el chat ya
 // se abre desde el hero, y un globito fijo en cada página del sitio es ruido.
 // Acá están las dos pantallas a las que se llega justamente con una duda.
 const RUTAS_CON_BOTON = ["/contacto", "/preguntas-frecuentes"];
-const TYPING_DELAY_MS = 650;
 const DIALOG_ID = "cmc-chat-dialog";
-
-// Rate limit: max 10 user messages per 60 seconds
-const RATE_LIMIT_MAX = 10;
-const RATE_LIMIT_WINDOW_MS = 60_000;
-
-let _msgId = 0;
-const nextId = () => `m${++_msgId}`;
-
-const INITIAL_MESSAGES: ChatMsg[] = [
-  { id: nextId(), role: "bot", text: GREETING },
-];
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function Chatbot() {
   const { pathname } = useLocation();
-  // Hooks must be called unconditionally — guard moved to render phase below
-  const isHidden = HIDDEN_PATHS.some((p) => pathname.startsWith(p));
+  const oculto = RUTAS_OCULTO.some((p) => pathname.startsWith(p));
   const mostrarBoton = RUTAS_CON_BOTON.some((p) => pathname.startsWith(p));
 
-  const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMsg[]>(INITIAL_MESSAGES);
-  const [chipsVisible, setChipsVisible] = useState(true);
-  const [inputValue, setInputValue] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
+  const [abierto, setAbierto] = useState(false);
+  const { mensajes, escribiendo, chipsVisibles, enviar, elegirChip, chips } = useChatbot();
 
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const abortRef = useRef<AbortController | null>(null);
-  const msgTimestampsRef = useRef<number[]>([]);
+  const finRef = useRef<HTMLDivElement>(null);
 
+  const cerrar = useCallback(() => setAbierto(false), []);
+  useModal(abierto, cerrar);
 
-  // Scroll to latest message
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isTyping]);
+    finRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [mensajes, escribiendo]);
 
-  // Focus input on open
   useEffect(() => {
-    if (open) {
-      const t = setTimeout(() => inputRef.current?.focus(), 120);
-      return () => clearTimeout(t);
-    }
-  }, [open]);
-
-  // Escape closes chat
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && open) setOpen(false);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
-
-  // Lock body scroll while modal is open
-  useEffect(() => {
-    if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = prev; };
-  }, [open]);
-
-  // Listen for external "open chatbot" events (hero button)
-  useEffect(() => {
-    const handler = () => setOpen(true);
-    window.addEventListener("cmc:open-chatbot", handler);
-    return () => window.removeEventListener("cmc:open-chatbot", handler);
+    const abrir = () => setAbierto(true);
+    window.addEventListener(EVENTO_ABRIR_CHATBOT, abrir);
+    return () => window.removeEventListener(EVENTO_ABRIR_CHATBOT, abrir);
   }, []);
 
-  // Cancel pending lookups on unmount
-  useEffect(() => () => { abortRef.current?.abort(); }, []);
+  if (oculto) return null;
 
-  const closeChat = useCallback(() => setOpen(false), []);
-
-  // ── Message flow ─────────────────────────────────────────────────────────────
-
-  const pushBot = useCallback((msg: Omit<ChatMsg, "id" | "role">) => {
-    setMessages((prev) => [...prev, { ...msg, id: nextId(), role: "bot" }]);
-    setChipsVisible(true);
-  }, []);
-
-  const handleSend = useCallback(
-    async (rawText: string) => {
-      const clean = sanitizeInput(rawText);
-      if (!clean) return;
-
-      // Rate limit: drop messages beyond the window threshold
-      const now = Date.now();
-      msgTimestampsRef.current = msgTimestampsRef.current.filter(
-        (t) => now - t < RATE_LIMIT_WINDOW_MS
-      );
-      if (msgTimestampsRef.current.length >= RATE_LIMIT_MAX) {
-        pushBot({
-          text: "Ha enviado demasiados mensajes en poco tiempo. Por favor espere un momento antes de continuar.",
-        });
-        return;
-      }
-      msgTimestampsRef.current.push(now);
-
-      abortRef.current?.abort();
-      const ac = new AbortController();
-      abortRef.current = ac;
-      const { signal } = ac;
-
-      setChipsVisible(false);
-      setMessages((prev) => [...prev, { id: nextId(), role: "user", text: clean }]);
-      setInputValue("");
-      setIsTyping(true);
-
-      await new Promise<void>((resolve) => {
-        const t = setTimeout(resolve, TYPING_DELAY_MS);
-        signal.addEventListener("abort", () => { clearTimeout(t); resolve(); }, { once: true });
-      });
-
-      if (signal.aborted) return;
-
-      const intent = matchIntent(clean);
-
-      if (!intent) {
-        setIsTyping(false);
-        pushBot({
-          text: FALLBACK_MESSAGE,
-          links: [{ label: "Contacto", href: "/contacto" }],
-          whatsapp: "auditoria",
-        });
-        return;
-      }
-
-      // ── Async: check if a specific obra social has convenio ────────────────
-      if (intent.asyncAction === "check_obra_social") {
-        const osQuery = extractObrasSocialesQuery(clean);
-
-        if (osQuery) {
-          const result = await checkObraSocial(osQuery, signal);
-          if (signal.aborted) return;
-          setIsTyping(false);
-
-          if (result === null) {
-            pushBot({ text: intent.answer, links: intent.links, whatsapp: intent.whatsapp });
-          } else if (result.found && result.name) {
-            pushBot({
-              text: `Sí, ${result.name} tiene convenio vigente con el Colegio Médico de Corrientes.`,
-              links: [{ label: "Ver Convenios", href: "/convenios" }],
-            });
-          } else {
-            pushBot({
-              text: `No encontré "${osQuery.slice(0, 50)}" entre las obras sociales con convenio. Verifique el nombre o consulte el listado completo.`,
-              links: [{ label: "Ver Convenios", href: "/convenios" }],
-            });
-          }
-          return;
-        }
-
-        setIsTyping(false);
-        pushBot({ text: intent.answer, links: intent.links, whatsapp: intent.whatsapp });
-        return;
-      }
-
-      // ── Synchronous intent ────────────────────────────────────────────────
-      setIsTyping(false);
-      pushBot({
-        text: intent.answer,
-        links: intent.links,
-        whatsapp: intent.whatsapp,
-        menuOptions: intent.menuOptions,
-      });
-    },
-    [pushBot]
-  );
-
-  const onSubmit = (e: React.FormEvent) => { e.preventDefault(); handleSend(inputValue); };
-  const onChip = (key: string) => {
-    const chip = QUICK_CHIPS.find((c) => c.key === key);
-    if (chip) handleSend(chip.label);
-  };
-
-  // ── Render ───────────────────────────────────────────────────────────────────
-
-  const windowContent = (
+  return createPortal(
     <AnimatePresence>
-      {mostrarBoton && !open && (
-        <motion.div
-          key="fab"
-          className={styles.root}
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.9 }}
-          transition={{ duration: 0.18 }}
-        >
-          <button
-            type="button"
-            className={styles.fab}
-            onClick={() => setOpen(true)}
-            aria-label="Abrir el asistente del Colegio"
-            aria-haspopup="dialog"
-            aria-controls={DIALOG_ID}
-          >
-            <span className={styles.fabIcon}>
-              <FiMessage aria-hidden="true" />
-            </span>
-            <span className={styles.fabLabel}>CONSULTAS</span>
-          </button>
-        </motion.div>
-      )}
+      {mostrarBoton && !abierto && <BotonChat key="fab" idDialogo={DIALOG_ID} onAbrir={() => setAbierto(true)} />}
 
-      {open && (
+      {abierto && (
         <motion.div
           key="backdrop"
           className={styles.backdrop}
@@ -265,175 +58,65 @@ export default function Chatbot() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
+          onClick={cerrar}
           aria-hidden="true"
         />
       )}
 
-      {open && (
+      {abierto && (
         <motion.div
           key="window"
+          id={DIALOG_ID}
           className={`${styles.window} ${styles.windowExpanded}`}
           role="dialog"
+          aria-modal="true"
           aria-label="Asistente CMC"
-          aria-modal={true}
-          id={DIALOG_ID}
           initial={{ opacity: 0, y: 14, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 14, scale: 0.96 }}
-          transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.22, ease: EASE }}
         >
-          {/* Header */}
           <div className={styles.header}>
             <div className={styles.headerLeft}>
               <div className={styles.avatar} aria-hidden="true">
-                <img src={Logo} alt="Logo CMC" className={styles.avatarImg} />
+                <img src={Logo} alt="" className={styles.avatarImg} />
               </div>
               <div>
                 <p className={styles.botName}>Asistente CMC</p>
                 <p className={styles.botStatus}>En línea</p>
               </div>
             </div>
-            <button
-              className={styles.closeBtn}
-              onClick={closeChat}
-              aria-label="Cerrar chat"
-              type="button"
-            >
-              <FiX aria-hidden="true" />
+            <button className={styles.closeBtn} onClick={cerrar} aria-label="Cerrar chat" type="button">
+              <X aria-hidden="true" />
             </button>
           </div>
 
-          {/* Messages */}
-          <div
-            className={styles.messages}
-            aria-live="polite"
-            aria-relevant="additions"
-            aria-label="Conversación"
-          >
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`${styles.bubble} ${msg.role === "user" ? styles.bubbleUser : styles.bubbleBot}`}
-              >
-                <p className={styles.bubbleText}>{msg.text}</p>
-
-                {(msg.links?.length || msg.whatsapp) && (
-                  <div className={styles.linkRow}>
-                    {msg.links?.map((l) =>
-                      l.external ? (
-                        <a
-                          key={l.href}
-                          href={l.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={styles.linkBtn}
-                        >
-                          {l.label} ↗
-                        </a>
-                      ) : (
-                        <Link
-                          key={l.href}
-                          to={l.href}
-                          className={styles.linkBtn}
-                          onClick={closeChat}
-                        >
-                          {l.label}
-                        </Link>
-                      )
-                    )}
-
-                    {msg.whatsapp && (
-                      <a
-                        href={buildWhatsAppUrl(msg.whatsapp)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`${styles.linkBtn} ${styles.linkWa}`}
-                        aria-label={`Abrir WhatsApp ${WHATSAPP_NUMBERS[msg.whatsapp].label}`}
-                      >
-                        <FaWhatsapp aria-hidden="true" />
-                        WhatsApp {WHATSAPP_NUMBERS[msg.whatsapp].label}
-                      </a>
-                    )}
-                  </div>
-                )}
-
-                {msg.menuOptions && msg.menuOptions.length > 0 && (
-                  <div className={styles.menuOptions} role="group" aria-label="Opciones de consulta">
-                    {msg.menuOptions.map((opt) => (
-                      <button
-                        key={opt.label}
-                        type="button"
-                        className={styles.menuOptionBtn}
-                        onClick={() => handleSend(opt.query)}
-                        disabled={isTyping}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+          <div className={styles.messages} aria-live="polite" aria-relevant="additions" aria-label="Conversación">
+            {mensajes.map((m) => (
+              <ChatMensaje
+                key={m.id}
+                mensaje={m}
+                ocupado={escribiendo}
+                onOpcion={(consulta) => void enviar(consulta)}
+                onNavegar={cerrar}
+              />
             ))}
 
-            {isTyping && (
-              <div
-                className={`${styles.bubble} ${styles.bubbleBot} ${styles.typingBubble}`}
-                aria-label="El asistente está escribiendo"
-              >
-                <span className={styles.dot} />
-                <span className={styles.dot} />
-                <span className={styles.dot} />
-              </div>
-            )}
+            {escribiendo && <Escribiendo />}
 
-            <div ref={bottomRef} />
+            <div ref={finRef} />
           </div>
 
-          {/* Quick-reply chips */}
-          {chipsVisible && (
-            <div className={styles.chips} role="group" aria-label="Temas frecuentes">
-              {QUICK_CHIPS.map((chip) => (
-                <button
-                  key={chip.key}
-                  className={styles.chip}
-                  onClick={() => onChip(chip.key)}
-                  type="button"
-                >
-                  {chip.label}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Input bar */}
-          <form className={styles.inputBar} onSubmit={onSubmit} noValidate>
-            <input
-              ref={inputRef}
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Escriba su pregunta…"
-              maxLength={200}
-              aria-label="Escriba su pregunta"
-              className={styles.input}
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck={false}
-            />
-            <button
-              type="submit"
-              className={styles.sendBtn}
-              disabled={!inputValue.trim() || isTyping}
-              aria-label="Enviar mensaje"
-            >
-              <FiSend aria-hidden="true" />
-            </button>
-          </form>
+          <EntradaChat
+            chips={chips}
+            mostrarChips={chipsVisibles}
+            onChip={elegirChip}
+            onEnviar={(t) => void enviar(t)}
+            ocupado={escribiendo}
+          />
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
-
-  if (isHidden) return null;
-  return createPortal(windowContent, document.body);
 }

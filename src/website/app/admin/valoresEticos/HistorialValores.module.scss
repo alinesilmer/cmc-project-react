@@ -1,0 +1,118 @@
+@use "../../../styles/variables" as *;
+@use "../../../styles/admin" as *;
+
+
+.eticaHistorial {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid $ad-borde;
+  padding-top: $spacing-lg;
+}
+
+.eticaHistorialToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: $primary-blue;
+  padding: 0;
+
+  &:hover { text-decoration: underline; }
+}
+
+.eticaHistorialList {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eticaHistorialItem {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: 10px 14px;
+  border: 1px solid $ad-borde;
+  border-radius: $ad-radio;
+  background: $ad-superficie-2;
+}
+
+.eticaHistorialMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.eticaHistorialName {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: $dark-gray;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.eticaHistorialDate {
+  font-size: 0.78rem;
+  color: $ad-texto-3;
+}
+
+.eticaHistorialObs {
+  font-size: 0.8rem;
+  color: $ad-texto-2;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.eticaHistorialActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.eticaDeleteBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: $ad-peligro;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: $ad-radio-chico;
+  transition: background $transition-fast;
+
+  &:hover { background: $ad-peligro-suave; }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+}
+
+.eticaNoData {
+  font-size: 0.88rem;
+  color: $ad-texto-3;
+  text-align: center;
+  padding: 12px 0;
+  margin: 0;
+}
+
+.eticaHistorialToggle svg {
+  transition: transform 0.2s;
+}
+
+.girado {
+  transform: rotate(180deg);
+}
+
+.icono {
+  flex-shrink: 0;
+  color: $ad-texto-3;
+}

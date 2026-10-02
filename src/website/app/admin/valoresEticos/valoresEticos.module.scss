@@ -1,0 +1,114 @@
+@use "../../../styles/variables" as *;
+@use "../../../styles/admin" as *;
+
+
+// ─── Valores Éticos section ────────────────────────────────────────────────────
+.eticaSection {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+  background: $white;
+  border-radius: $ad-radio;
+  padding: $spacing-xl;
+  box-shadow: $shadow-sm;
+  border: 1px solid $ad-borde;
+}
+
+.eticaSection > * {
+  max-width: 680px;
+  width: 100%;
+}
+
+.eticaHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  h2 {
+    margin: 0;
+    color: $primary-blue;
+    font-size: $font-size-h4;
+  }
+}
+
+.eticaDesc {
+  margin: 0;
+  color: $ad-texto-2;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.eticaCurrent {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: 10px 14px;
+  border: 1px solid $ad-borde;
+  border-radius: $ad-radio;
+  background: $ad-superficie-2;
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+.eticaCurrentIcon {
+  font-size: 1.4rem;
+  color: $primary-blue;
+  flex-shrink: 0;
+}
+
+.eticaCurrentLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: $ad-texto-3;
+}
+
+.eticaCurrentName {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: $dark-gray;
+}
+
+.eticaCurrentDate {
+  font-size: 0.78rem;
+  color: $ad-texto-3;
+}
+
+.eticaCurrentObs {
+  font-size: 0.82rem;
+  color: $ad-texto-2;
+  font-style: italic;
+}
+
+.eticaCurrentEmpty {
+  font-size: 0.88rem;
+  color: $ad-texto-3;
+  font-style: italic;
+}
+
+.eticaLoadingText {
+  font-size: 0.88rem;
+  color: $ad-texto-3;
+}
+
+.eticaViewLink {
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-left: auto;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: $primary-blue;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+
+  &:hover { text-decoration: underline; }
+}

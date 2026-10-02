@@ -38,10 +38,9 @@ import { moneda } from "./formato";
 const MENSAJE_VACIO = "El archivo no tiene ninguna práctica para leer.";
 
 const AYUDA =
-  "Subí el reporte de facturación de Prevención Salud (.xlsx, .xls o .csv), " +
-  "con las columnas Número de Autorización, Fecha de Realización, Afiliado, " +
-  "Profesional Efector, Matrícula MP, Conformidad, Práctica(s) Realizada(s) y " +
-  "Estado.";
+  "Subí el reporte de facturación de Prevención Salud (.xlsx, .xls o .csv). " +
+  "Se usan Número de Autorización, Fecha de Realización, Afiliado, Matrícula MP, " +
+  "Práctica(s) Realizada(s) y Estado; el resto de las columnas se ignora.";
 
 const contar = (rep: ReportePrevencion) => rep.prestaciones.length;
 
@@ -58,6 +57,7 @@ export default function ImportarPrevencion() {
   const estado = useReporteConPadron(leerArchivoPrevencion, {
     contar,
     mensajeVacio: MENSAJE_VACIO,
+    conPadron: false,
   });
 
   const prestaciones = useMemo(

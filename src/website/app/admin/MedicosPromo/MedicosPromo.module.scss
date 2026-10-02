@@ -1,51 +1,5 @@
 @use "../../../styles/variables" as *;
-
-// ─── Escala del panel ─────────────────────────────────────────────────────────
-//
-// Antes había 32 colores sueltos escritos a mano en este archivo: seis blancos
-// casi idénticos ($ad-superficie-2, $ad-superficie-2, $ad-superficie-2, $ad-superficie-2, $ad-superficie-2, $ad-superficie-2), cuatro
-// tintes azules y seis grises de borde. Ninguno era “otro color” a propósito:
-// eran copias de distintos momentos. Colapsarlos es lo que hace que la pantalla
-// se lea como una sola cosa.
-//
-// Viven acá y no en `styles/variables.scss` porque son del panel: el sitio
-// público no tiene ni escala de grises fina ni colores semánticos.
-
-// Superficies
-$ad-fondo: #f4f6fa;
-$ad-superficie: #ffffff;
-$ad-superficie-2: #f8fafc;
-
-// Tinte de marca, para hover y selección
-$ad-tinte: #eef3ff;
-$ad-tinte-fuerte: #dbeafe;
-$ad-enlace: #1d4ed8;
-
-// Bordes: uno para contornos, otro para lo que sólo separa
-$ad-borde: #dde2ec;
-$ad-borde-fuerte: #c5cfe0;
-
-// Texto
-$ad-texto: #374151;
-$ad-texto-2: #6b7280;
-$ad-texto-3: #8a99b3;
-
-// Semánticos
-$ad-peligro: #dc2626;
-$ad-peligro-oscuro: #b91c1c;
-$ad-peligro-borde: #fca5a5;
-$ad-peligro-fondo: #fef2f2;
-$ad-peligro-suave: #fee2e2;
-$ad-ok: #166534;
-$ad-ok-fondo: #dcfce7;
-$ad-whatsapp: #25d366;
-
-// Un solo radio para controles y tarjetas, y la píldora para los chips.
-$ad-radio: 10px;
-$ad-radio-chico: 6px;
-$ad-radio-pill: 999px;
-
-
+@use "../../../styles/admin" as *;
 
 .wrap {
   display: flex;
@@ -67,68 +21,22 @@ $ad-radio-pill: 999px;
   gap: 16px;
   margin-top: 8px;
 }
+
 .row {
   display: flex;
   flex-direction: column;
   gap: 8px;
   position: relative;
 }
+
 .row label {
   font-weight: 600;
 }
+
 .rowInline {
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-.searchWrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid $ad-borde;
-  border-radius: $ad-radio;
-  padding: 8px 10px;
-}
-.searchWrap input {
-  border: none;
-  outline: none;
-  flex: 1;
-}
-
-.dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: #fff;
-  border: 1px solid $ad-borde;
-  border-radius: $ad-radio;
-  z-index: 10;
-  margin-top: 4px;
-  max-height: 240px;
-  overflow: auto;
-}
-.dropdownItem {
-  width: 100%;
-  text-align: left;
-  padding: 8px 10px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-}
-.dropdownItem:hover {
-  background: $ad-superficie-2;
-}
-
-.selectedDoctor {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: $ad-superficie-2;
-  border-radius: $ad-radio-pill;
-  padding: 6px 10px;
-  width: max-content;
 }
 
 .switchLabel {
@@ -143,13 +51,16 @@ $ad-radio-pill: 999px;
   align-items: center;
   gap: 12px;
 }
+
 .filename {
   font-size: 0.9rem;
   color: $ad-texto;
 }
+
 .preview {
   margin-top: 8px;
 }
+
 .preview img {
   max-width: 240px;
   height: auto;
@@ -163,6 +74,7 @@ $ad-radio-pill: 999px;
   gap: 16px;
   margin-top: 2rem;
 }
+
 .card {
   display: flex;
   gap: 12px;
@@ -172,6 +84,7 @@ $ad-radio-pill: 999px;
   padding: 10px;
   background: #fff;
 }
+
 .thumb {
   width: 96px;
   height: 96px;
@@ -182,11 +95,13 @@ $ad-radio-pill: 999px;
   align-items: center;
   justify-content: center;
 }
+
 .thumb img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
+
 .placeholder {
   color: $ad-texto-3;
   font-size: 0.85rem;
@@ -198,6 +113,7 @@ $ad-radio-pill: 999px;
   flex-direction: column;
   gap: 8px;
 }
+
 .title {
   font-weight: 600;
   line-height: 1.2;
@@ -214,46 +130,12 @@ $ad-radio-pill: 999px;
   gap: 8px;
   flex-wrap: wrap;
 }
+
 .actions {
   display: flex;
   justify-content: flex-end;
 }
 
-/** Aviso de error del ABM. Reemplaza a los alert() nativos, que bloqueaban la
- * pestaña y no dejaban copiar el texto. */
-.aviso {
-  position: relative;
-  margin: 0 0 $spacing-md;
-  padding: $spacing-sm $spacing-xl $spacing-sm $spacing-md;
-  border-radius: $ad-radio;
-  border: 1px solid rgba($accent-coral, 0.45);
-  background: rgba($accent-coral, 0.1);
-  color: $dark-gray;
-  font-size: $font-size-small;
-  line-height: 1.5;
-}
-
-.avisoCerrar {
-  position: absolute;
-  top: 50%;
-  right: $spacing-xs;
-  transform: translateY(-50%);
-  width: 1.75rem;
-  height: 1.75rem;
-  border: none;
-  border-radius: 50%;
-  background: transparent;
-  color: $gray;
-  font-size: 1.15rem;
-  line-height: 1;
-  cursor: pointer;
-
-  &:hover {
-    background: rgba($accent-coral, 0.18);
-  }
-
-  &:focus-visible {
-    outline: 2px solid $primary-blue;
-    outline-offset: 2px;
-  }
+.etiqueta {
+  font-weight: 600;
 }

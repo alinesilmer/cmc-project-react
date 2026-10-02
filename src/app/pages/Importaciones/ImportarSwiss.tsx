@@ -64,6 +64,7 @@ export default function ImportarSwiss() {
   const estado = useReporteConPadron(leerArchivoSwiss, {
     contar,
     mensajeVacio: MENSAJE_VACIO,
+    conPadron: false,
   });
 
   const prestaciones = useMemo(

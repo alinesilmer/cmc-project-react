@@ -1,0 +1,139 @@
+@use "@/website/styles/all.scss" as *;
+
+$crema: #f7e9aa;
+
+.tarjeta {
+  height: 100%;
+  background: $white;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(20, 35, 58, 0.05), 0 8px 22px rgba(20, 35, 58, 0.06);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 1px 2px rgba(20, 35, 58, 0.05), 0 16px 32px rgba(20, 35, 58, 0.12);
+  }
+}
+
+.abierta {
+  box-shadow: 0 0 0 2px $primary-blue, 0 16px 32px rgba(20, 35, 58, 0.12);
+}
+
+.cabecera {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 22px 14px 18px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  text-align: center;
+
+  &:focus-visible {
+    outline: 2px solid $primary-blue;
+    outline-offset: -2px;
+    border-radius: 10px;
+  }
+}
+
+.icono {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 10px;
+  background: $crema;
+  color: $primary-blue;
+  transition: transform 0.25s ease, background 0.25s ease, color 0.25s ease;
+
+  svg {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+.tarjeta:hover .icono,
+.abierta .icono {
+  transform: scale(1.08) rotate(-4deg);
+  background: $primary-blue;
+  color: $crema;
+}
+
+.nombre {
+  font-family: $font-title;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.25;
+  color: #14233a;
+}
+
+.importante {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #fde68a;
+  color: #92400e;
+
+  svg {
+    width: 15px;
+    height: 15px;
+  }
+}
+
+.chevron {
+  width: 18px;
+  height: 18px;
+  color: rgba($primary-blue, 0.45);
+  transition: transform 0.2s ease;
+}
+
+.chevronAbierto {
+  transform: rotate(180deg);
+}
+
+.detalle {
+  padding: 0 16px 18px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #4b5563;
+  text-align: left;
+}
+
+.texto {
+  margin: 0;
+}
+
+.hint {
+  display: flex;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #f5f3ee;
+  font-size: 0.82rem;
+  color: #5b6474;
+
+  svg {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    margin-top: 2px;
+  }
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

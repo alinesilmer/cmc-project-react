@@ -7,6 +7,9 @@
 //   galenos           → GET /api/galenos/              (nm_galenos)
 //   nombre de la O.S. → GET /api/obras_social/         (catálogo)
 //   observaciones     → GET /api/boletin/observaciones (boletin_observacion)
+//   pediatría         → GET /api/reportes_nm/boletin?especialidad=39, un pedido
+//                       por código (sólo si el médico es pediatra; ver
+//                       boletinPediatria.ts)
 //
 // Los cuatro piden permisos que el socio ya usa en su Consulta de Precios:
 // `nomenclador:leer` y `catalogo:leer`.
@@ -26,8 +29,22 @@ import {
   type GalenoItem,
 } from "@/app/features/nomenclador/galenos";
 import { listObrasSociales } from "../ObrasSociales/obrasSociales.api";
+import {
+  CODIGO_CONSULTA_COMUN,
+  CODIGOS_CON_PRECIO_PEDIATRICO,
+  CODIGOS_PEDIATRIA,
+  ESPECIALIDAD_PEDIATRIA,
+  NOMBRE_CODIGO,
+} from "./boletinPediatria";
 
 export type { GalenoItem };
+
+/** Un valor del boletín de pediatría: un código con su precio. */
+export interface ValorPediatria {
+  codigo: string;
+  nombre: string;
+  valor: number;
+}
 
 /** El código de consulta del boletín. Swiss Medical usa el suyo. */
 export const CODIGO_CONSULTA = "420351";
@@ -48,6 +65,11 @@ export interface ItemBoletin {
    * el precio — cobrar sin el bono que la obra social exige es no cobrar.
    */
   observaciones: string[];
+  /**
+   * Sólo para pediatras: los códigos de pediatría que reconoce la obra social,
+   * con su precio. Vacío para el resto de los médicos.
+   */
+  pediatria: ValorPediatria[];
 }
 
 interface ApiObservacion {
@@ -65,6 +87,8 @@ interface ApiBoletinItem {
   precio_total: number | string;
   vigencia_desde: string | null;
   por_presupuesto?: boolean;
+  /** De qué especialidad es el precio; `null` = general. */
+  especialidad_id_colegio?: number | null;
 }
 
 interface ApiBoletinOut {
@@ -91,16 +115,25 @@ const aNumero = (v: number | string | null | undefined): number => {
  * Un 404 significa que el código no existe en el nomenclador, que es un estado
  * posible y no un error: se devuelve vacío y la pantalla muestra las obras
  * sociales sin valor de consulta.
+ *
+ * Con `especialidad` el backend devuelve sólo los precios de esa especialidad y
+ * los generales, y el de la especialidad gana: un mismo código puede tener
+ * vigentes a la vez el precio de pediatría y uno general más bajo.
  */
-async function consultaPorOS(codigo: string, fecha: string): Promise<Map<number, ApiBoletinItem>> {
+async function consultaPorOS(
+  codigo: string,
+  fecha: string,
+  especialidad?: number
+): Promise<Map<number, ApiBoletinItem>> {
   const porOS = new Map<number, ApiBoletinItem>();
   try {
-    const res = await getJSON<ApiBoletinOut>("/api/reportes_nm/boletin", { fecha, codigo });
+    const params = especialidad ? { fecha, codigo, especialidad } : { fecha, codigo };
+    const res = await getJSON<ApiBoletinOut>("/api/reportes_nm/boletin", params);
     for (const item of res.items ?? []) {
       if (!item.obra_social_nro) continue;
 
       const previo = porOS.get(item.obra_social_nro);
-      if (!previo || esMasReciente(item, previo)) {
+      if (!previo || esMejor(item, previo, especialidad)) {
         porOS.set(item.obra_social_nro, item);
       }
     }
@@ -147,10 +180,56 @@ function esMasReciente(item: ApiBoletinItem, previo: ApiBoletinItem): boolean {
   return aNumero(item.precio_total) > aNumero(previo.precio_total);
 }
 
-export async function fetchBoletinMedico(): Promise<ItemBoletin[]> {
+/** El precio de la especialidad le gana al general; entre iguales, el más reciente. */
+function esMejor(item: ApiBoletinItem, previo: ApiBoletinItem, especialidad?: number): boolean {
+  if (especialidad !== undefined) {
+    const esDeLaEspecialidad = item.especialidad_id_colegio === especialidad;
+    if (esDeLaEspecialidad !== (previo.especialidad_id_colegio === especialidad)) {
+      return esDeLaEspecialidad;
+    }
+  }
+  return esMasReciente(item, previo);
+}
+
+/** Los precios de pediatría de cada código, por obra social. */
+async function preciosPediatria(fecha: string): Promise<Map<string, Map<number, ApiBoletinItem>>> {
+  const porCodigo = await Promise.all(
+    CODIGOS_CON_PRECIO_PEDIATRICO.map(
+      async (codigo) => [codigo, await consultaPorOS(codigo, fecha, ESPECIALIDAD_PEDIATRIA)] as const
+    )
+  );
+  return new Map(porCodigo);
+}
+
+/**
+ * Los valores de pediatría de una obra social, en el orden de la lista del
+ * Colegio. La consulta común no tiene precio pediátrico propio: va la misma
+ * del boletín general (que para Swiss Medical ya es su código propio).
+ */
+function valoresPediatria(
+  nro: number,
+  precios: Map<string, Map<number, ApiBoletinItem>>,
+  consulta: number | null
+): ValorPediatria[] {
+  const valores: ValorPediatria[] = [];
+  for (const codigo of CODIGOS_PEDIATRIA[nro] ?? []) {
+    const valor =
+      codigo === CODIGO_CONSULTA_COMUN
+        ? consulta
+        : aNumero(precios.get(codigo)?.get(nro)?.precio_total);
+    if (valor && valor > 0) {
+      valores.push({ codigo, nombre: NOMBRE_CODIGO[codigo] ?? codigo, valor });
+    }
+  }
+  return valores;
+}
+
+export async function fetchBoletinMedico(
+  { pediatria = false }: { pediatria?: boolean } = {}
+): Promise<ItemBoletin[]> {
   const fecha = hoyISO();
 
-  const [obras, consultas, consultasSwiss, galenos, observaciones] =
+  const [obras, consultas, consultasSwiss, galenos, observaciones, precios] =
     await Promise.all([
       // Sin filtro: el catálogo entero, ya ordenado alfabéticamente por el backend.
       listObrasSociales(),
@@ -158,6 +237,8 @@ export async function fetchBoletinMedico(): Promise<ItemBoletin[]> {
       consultaPorOS(CODIGO_CONSULTA_SWISS, fecha),
       fetchGalenosPorOS(fecha),
       observacionesPorOS(),
+      // Sólo los pediatras piden los cinco códigos de pediatría.
+      pediatria ? preciosPediatria(fecha) : Promise.resolve(null),
     ]);
 
   const items: ItemBoletin[] = [];
@@ -176,17 +257,25 @@ export async function fetchBoletinMedico(): Promise<ItemBoletin[]> {
     // obra social que sólo tiene observaciones sí entra: son las que exigen
     // bono o autorización, justo lo que el socio necesita saber antes de
     // atender aunque el precio todavía no esté cargado.
-    const consulta = item ? aNumero(item.precio_total) : null;
-    if (consulta === null && galenosDeOS.length === 0 && obsDeOS.length === 0) {
+    const crudo = item ? aNumero(item.precio_total) : null;
+    const consulta = crudo && crudo > 0 ? crudo : null;
+    const pediatriaDeOS = precios ? valoresPediatria(nro, precios, consulta) : [];
+    if (
+      consulta === null &&
+      galenosDeOS.length === 0 &&
+      obsDeOS.length === 0 &&
+      pediatriaDeOS.length === 0
+    ) {
       continue;
     }
 
     items.push({
       nro,
       nombre: (os.nombre || os.denominacion || `OS ${nro}`).trim(),
-      consulta: consulta && consulta > 0 ? consulta : null,
+      consulta,
       galenos: galenosDeOS,
       observaciones: obsDeOS,
+      pediatria: pediatriaDeOS,
     });
   }
 

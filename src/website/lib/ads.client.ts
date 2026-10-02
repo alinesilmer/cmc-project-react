@@ -1,4 +1,4 @@
-import { getJSON, http } from "./http";
+import { getJSON, getPublico, http } from "./http";
 
 export type PubAd = {
   id: number;
@@ -28,6 +28,11 @@ export async function listAds(params?: {
   medico_id?: number;
 }) {
   return await getJSON<PubAd[]>("/api/publicidad-medicos/", params);
+}
+
+/** Los avisos activos para el sitio público, sin sesión: ver `getPublico`. */
+export async function listAdsPublicos() {
+  return await getPublico<PubAd[]>("/api/publicidad-medicos/", { activo: true });
 }
 
 export async function searchDoctors(q: string) {

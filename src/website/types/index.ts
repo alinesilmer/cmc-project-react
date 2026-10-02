@@ -7,20 +7,14 @@ export interface Noticia {
   resumen: string;
   autor: string;
   publicada: boolean;
-  fechaCreacion: Date | string;
-  fechaActualizacion: Date | string;
+  fechaCreacion: Date | string | null;
+  fechaActualizacion: Date | string | null;
   portada?: string;
   tipo: TipoPublicacion;
   badge?: string;
 }
 
-export interface Usuario {
-  email: string;
-  nombre: string;
-  role: string;
-}
-
-export interface DocumentoNoticias {
+export interface DocumentoNoticia {
   id: number;
   label?: string | null;
   original_name: string;
@@ -31,7 +25,7 @@ export interface DocumentoNoticias {
 }
 
 export interface NoticiaDetail extends Noticia {
-  documentos: DocumentoNoticias[];
+  documentos: DocumentoNoticia[];
   /** NRO_OBRASOCIAL alcanzados por la noticia (normas operativas). */
   obras_sociales?: number[];
 }

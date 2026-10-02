@@ -16,7 +16,7 @@
  */
 
 /** `settings.MAX_UPLOAD_BYTES` del backend. */
-export const MAX_BYTES = 20 * 1024 * 1024;
+const MAX_BYTES = 20 * 1024 * 1024;
 
 /** `IMAGENES` de `app/common/uploads.py`. */
 export const IMAGENES = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"] as const;

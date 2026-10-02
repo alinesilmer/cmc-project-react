@@ -1,0 +1,93 @@
+@use "@/website/styles/all.scss" as *;
+
+$crema: #f7e9aa;
+
+.grilla {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 24px;
+
+  @media (max-width: 860px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Los aranceles van en azul: es el dato que más se busca.
+.aranceles {
+  position: relative;
+  overflow: hidden;
+  padding: 32px;
+  border-radius: 10px;
+  background: $primary-blue;
+  color: $white;
+
+  &::after {
+    content: "";
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    right: -70px;
+    bottom: -90px;
+    border-radius: 50%;
+    background: rgba($crema, 0.14);
+  }
+
+  @media (max-width: 480px) {
+    padding: 24px 20px;
+  }
+}
+
+.icono {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 18px;
+  border-radius: 8px;
+  background: $crema;
+  color: $primary-blue;
+
+  svg {
+    width: 26px;
+    height: 26px;
+  }
+}
+
+.montos {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+}
+
+.monto {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+
+  dt {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  dd {
+    margin: 0;
+    font-family: $font-title;
+    font-size: 2rem;
+    font-weight: 800;
+    color: $crema;
+  }
+}
+
+.nota {
+  position: relative;
+  z-index: 1;
+  margin: 14px 0 0;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+}

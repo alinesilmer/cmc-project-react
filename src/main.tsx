@@ -8,7 +8,6 @@ import RootRoutes from "./routes";
 import ChunkErrorBoundary, { CHUNK_RELOAD_FLAG } from "./app/ChunkErrorBoundary";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { AuthProvider } from "./app/auth/AuthProvider";
 
 // Solo en desarrollo: el paquete es devDependency y no entra al bundle de producción.
@@ -19,10 +18,6 @@ const ReactQueryDevtools = import.meta.env.DEV
   : null;
 
 const queryClient = new QueryClient();
-
-const muiTheme = createTheme({
-  typography: { fontFamily: '"Inter", sans-serif' },
-});
 
 // Vite dispara este evento cuando un <link rel="modulepreload"> falla — mismo
 // escenario de chunk viejo borrado por un deploy que cubre ChunkErrorBoundary, pero
@@ -38,11 +33,10 @@ createRoot(document.getElementById("root")!).render(
     <ChunkErrorBoundary>
       <BrowserRouter>
         <QueryClientProvider client={queryClient}>
-          <ThemeProvider theme={muiTheme}>
-            <AuthProvider>
-              <RootRoutes />
-            </AuthProvider>
-          </ThemeProvider>
+          {/* El tema de MUI va sólo en el panel: ver app/TemaPanel.tsx. */}
+          <AuthProvider>
+            <RootRoutes />
+          </AuthProvider>
           {ReactQueryDevtools && (
             <Suspense fallback={null}>
               <ReactQueryDevtools initialIsOpen={false} />

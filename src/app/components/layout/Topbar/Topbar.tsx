@@ -11,7 +11,7 @@ import {
   Home, DollarSign, ArrowLeftRight, RotateCcw, Wallet, Plus,
   Users, UserPlus, BookUser, ClipboardPlus, Building2, Newspaper,
   Flower2, FileBoxIcon, CalendarClock, Medal, ClipboardList, HousePlus, History,
-  FileCode2, Search, FileText, Percent, Sigma, TrendingUp,
+  FileCode2, Search, FileText, FileUp, Percent, Sigma, TrendingUp,
   PencilRuler, ShieldUser, Monitor, Receipt, CalendarDays,
   LogOut, CircleUserRound, ChevronDown, Menu, X, Layers,
   Smartphone, Gift, Inbox, Megaphone, ShieldCheck,
@@ -20,7 +20,7 @@ import {
 
 import styles from "./Topbar.module.scss";
 import { useAuth } from "@/app/auth/AuthProvider";
-import { isMedico } from "@/app/auth/roles";
+import { esOrganizacion, isMedico } from "@/app/auth/roles";
 import { usePermisos } from "@/app/auth/usePermisos";
 import Logo from "@/app/assets/logoCMC.png";
 
@@ -71,13 +71,11 @@ const VISTA_MEDICO_MENU: Extract<TopEntry, { kind: "menu" }> = {
 const TOP_NAV: TopEntry[] = [
   { kind: "link", path: `${base}/dashboard`, icon: Home, label: "Inicio" },
   VALIDACIONES_LINK,
-  // Oculto hasta que Importaciones salga a producción. Al reactivarlo, volver
-  // a importar `FileUp` de lucide-react.
   // La sección lista los importadores disponibles; sumar uno no toca el nav.
-  // {
-  //   kind: "link", path: `${base}/importaciones`, icon: FileUp,
-  //   label: "Importaciones", perms: ["facturacion:cargar"],
-  // },
+  {
+    kind: "link", path: `${base}/importaciones`, icon: FileUp,
+    label: "Importaciones", perms: ["facturacion:cargar"],
+  },
   {
     kind: "menu", id: "facturacion", icon: Receipt, label: "Facturación",
     columns: [
@@ -163,6 +161,7 @@ const TOP_NAV: TopEntry[] = [
         heading: "Boletín",
         items: [
           { path: `${base}/boletin-consulta-comun`, icon: FileBoxIcon, label: "Boletín Mensual", perms: ["catalogo:leer"] },
+          { path: `${base}/boletin-valores-galenos`, icon: Sigma, label: "Boletín Galenos", perms: ["nomenclador:leer"] },
           { path: `${base}/boletin`, icon: Medal, label: "Ranking O.S.", perms: ["nomenclador:leer"] },
           { path: `${base}/nomenclador/actualizaciones`, icon: CalendarClock, label: "O.S. Actualizadas (LISTADO)", perms: ["nomenclador:leer"] },
         ],
@@ -301,7 +300,12 @@ export default function Topbar() {
   const { user, logout } = useAuth();
   const { can } = usePermisos();
 
-  const nav = isMedico(user) ? DOCTOR_TOP_NAV : TOP_NAV;
+  const nav = useMemo(() => {
+    const entries = isMedico(user) ? DOCTOR_TOP_NAV : TOP_NAV;
+    return esOrganizacion(user)
+      ? entries.filter((e) => e !== VALIDACIONES_LINK)
+      : entries;
+  }, [user]);
   const isAuthenticated = Boolean(user);
 
   const [openMenu, setOpenMenu] = useState<string | null>(null);

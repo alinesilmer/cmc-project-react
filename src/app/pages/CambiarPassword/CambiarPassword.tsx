@@ -1,126 +1,117 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import Card from "@/app/components/ui/Card/Card";
-import Button from "@/app/components/ui/Button/Button";
-import Input from "@/app/components/ui/Input/Input";
+import { KeyRound, LockKeyhole, ShieldCheck, Sparkles, UserCheck } from "lucide-react";
+import PantallaAcceso, { type Destacado } from "@/app/features/acceso/components/PantallaAcceso/PantallaAcceso";
+import CampoAcceso from "@/app/features/acceso/components/CampoAcceso/CampoAcceso";
+import RequisitosPassword from "./RequisitosPassword";
+import { requisitosPassword } from "./reglasPassword";
 import { changePassword } from "../../auth/api";
+import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 import styles from "./CambiarPassword.module.scss";
 
+const DESTACADOS: Destacado[] = [
+  { icono: ShieldCheck, texto: "Sólo vos la conocés" },
+  { icono: UserCheck, texto: "Cerramos las otras sesiones" },
+  { icono: Sparkles, texto: "Un paso y listo" },
+];
+
+/**
+ * Cambio de contraseña obligatorio: la cuenta todavía tiene la contraseña
+ * provisoria del alta (ver RequireAuth). El backend cierra todas las sesiones
+ * al cambiarla, así que al terminar se vuelve al login.
+ */
 export default function CambiarPassword() {
   const navigate = useNavigate();
   const [actual, setActual] = useState("");
   const [nueva, setNueva] = useState("");
   const [repetir, setRepetir] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [guardando, setGuardando] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const listo = Boolean(actual) && requisitosPassword({ actual, nueva, repetir }).every((r) => r.ok);
+
+  const guardar = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
-
-    if (!actual || !nueva || !repetir) {
-      setError("Completá todos los campos.");
-      return;
-    }
-    if (nueva.length < 6) {
-      setError("La nueva contraseña debe tener al menos 6 caracteres.");
-      return;
-    }
-    if (nueva !== repetir) {
-      setError("Las contraseñas nuevas no coinciden.");
-      return;
-    }
-    if (nueva === actual) {
-      setError("La nueva contraseña debe ser distinta de la actual.");
+    if (!listo) {
+      setError("Revisá los requisitos de la contraseña nueva.");
       return;
     }
 
-    setLoading(true);
+    setGuardando(true);
     try {
       const res = await changePassword(actual, nueva);
-      // Con relogin:true el backend cierra todas las sesiones; changePassword()
-      // ya dispara forceLogout, que manda al login con el mensaje. Si por algún
-      // motivo no viniera relogin, igual sacamos al usuario de acá.
-      if (!res?.relogin) {
-        navigate("/panel/login", { replace: true });
-      }
-    } catch (err: any) {
-      const detail = err?.response?.data?.detail ?? err?.response?.data?.message;
-      let apiMsg: string;
-      if (Array.isArray(detail)) {
-        // Error de validación de FastAPI: lista de {msg, loc, type}.
-        apiMsg = detail.map((d: any) => d?.msg ?? String(d)).join(" ");
-      } else if (typeof detail === "string" && detail) {
-        apiMsg = detail;
-      } else {
-        apiMsg = "No se pudo cambiar la contraseña. Verificá la contraseña actual.";
-      }
-      setError(apiMsg);
+      // Con relogin:true changePassword() ya dispara forceLogout, que manda al
+      // login con el aviso. Si por algún motivo no viniera, igual se sale.
+      if (!res?.relogin) navigate("/panel/login", { replace: true });
+    } catch (err) {
+      setError(mensajeDeError(err, "No se pudo cambiar la contraseña. Verificá la contraseña actual."));
     } finally {
-      setLoading(false);
+      setGuardando(false);
     }
   };
 
   return (
-    <div className={styles.container}>
-      <Card className={styles.card}>
-        <h1 className={styles.heading}>Cambio de contraseña obligatorio</h1>
-        <p className={styles.subtitle}>
-          Tu cuenta todavía tiene la contraseña provisoria que te dieron al
-          darte de alta. Antes de continuar, elegí una contraseña nueva que
-          solo vos conozcas.
-        </p>
+    <PantallaAcceso
+      lema={
+        <>
+          Una clave <em>sólo tuya.</em>
+        </>
+      }
+      destacados={DESTACADOS}
+    >
+      <span className={styles.icono} aria-hidden="true">
+        <KeyRound />
+      </span>
+      <h1 className={styles.titulo}>Creá tu contraseña</h1>
+      <p className={styles.bajada}>
+        Todavía tenés la contraseña provisoria del alta. Elegí una nueva para seguir.
+      </p>
 
-        <form className={styles.form} onSubmit={handleSubmit} noValidate>
-          {error && (
-            <div className={styles.errorBox} role="alert" aria-live="assertive">
-              {error}
-            </div>
-          )}
+      <form className={styles.form} onSubmit={guardar} noValidate>
+        {error && (
+          <p className={styles.error} role="alert">
+            {error}
+          </p>
+        )}
 
-          <div>
-            <label className={styles.label} htmlFor="actual">
-              Contraseña actual
-            </label>
-            <Input
-              type="password"
-              value={actual}
-              onChange={(e) => setActual(e.target.value)}
-              placeholder="••••••••"
-            />
-          </div>
+        <CampoAcceso
+          id="pass-actual"
+          etiqueta="Contraseña actual"
+          icono={<LockKeyhole />}
+          secreto
+          value={actual}
+          onChange={(e) => setActual(e.target.value)}
+          autoComplete="current-password"
+          placeholder="La que usaste para entrar"
+        />
+        <CampoAcceso
+          id="pass-nueva"
+          etiqueta="Contraseña nueva"
+          icono={<KeyRound />}
+          secreto
+          value={nueva}
+          onChange={(e) => setNueva(e.target.value)}
+          autoComplete="new-password"
+          placeholder="Elegí una nueva"
+        />
+        <CampoAcceso
+          id="pass-repetir"
+          etiqueta="Repetí la contraseña nueva"
+          icono={<KeyRound />}
+          secreto
+          value={repetir}
+          onChange={(e) => setRepetir(e.target.value)}
+          autoComplete="new-password"
+          placeholder="Otra vez, para confirmar"
+        />
 
-          <div>
-            <label className={styles.label} htmlFor="nueva">
-              Contraseña nueva
-            </label>
-            <Input
-              type="password"
-              value={nueva}
-              onChange={(e) => setNueva(e.target.value)}
-              placeholder="••••••••"
-            />
-          </div>
+        <RequisitosPassword actual={actual} nueva={nueva} repetir={repetir} />
 
-          <div>
-            <label className={styles.label} htmlFor="repetir">
-              Repetir contraseña nueva
-            </label>
-            <Input
-              type="password"
-              value={repetir}
-              onChange={(e) => setRepetir(e.target.value)}
-              placeholder="••••••••"
-            />
-          </div>
-
-          <div className={styles.actions}>
-            <Button submit variant="primary" fullWidth disabled={loading}>
-              {loading ? "Guardando…" : "Cambiar contraseña"}
-            </Button>
-          </div>
-        </form>
-      </Card>
-    </div>
+        <button type="submit" className={styles.guardar} disabled={guardando} aria-busy={guardando}>
+          {guardando ? "Guardando…" : "Guardar contraseña"}
+        </button>
+      </form>
+    </PantallaAcceso>
   );
 }

@@ -1,4 +1,5 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap");
+// Las fuentes se cargan una sola vez desde index.html (con preconnect). Acá
+// había un @import que se copiaba en cada CSS que usa estas variables.
 
 // Colors
 $primary-blue: #173f70;

@@ -1,0 +1,112 @@
+@use "@/website/styles/all.scss" as *;
+
+$crema: #f7e9aa;
+
+.camino {
+  position: relative;
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+// Va de centro a centro de los nodos; `left` y `right` los pone el componente
+// según cuántos pasos hay.
+.linea {
+  position: absolute;
+  top: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: repeating-linear-gradient(90deg, $primary-blue 0 12px, transparent 12px 20px);
+  transform-origin: left center;
+
+  @media (max-width: 480px) {
+    top: 30px;
+  }
+}
+
+.paso {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.nodo {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 10px;
+  background: $crema;
+  color: $primary-blue;
+  box-shadow: 0 0 0 6px $white;
+
+  svg {
+    width: 34px;
+    height: 34px;
+  }
+
+  @media (max-width: 480px) {
+    width: 64px;
+    height: 64px;
+
+    svg {
+      width: 28px;
+      height: 28px;
+    }
+  }
+}
+
+// El último paso, en azul y latiendo: es a donde se llega.
+.final .nodo {
+  background: $primary-blue;
+  color: $crema;
+  animation: latido 2.4s ease-in-out 2s infinite;
+}
+
+@keyframes latido {
+  0%, 100% { box-shadow: 0 0 0 6px $white, 0 0 0 6px rgba($primary-blue, 0.25); }
+  50%      { box-shadow: 0 0 0 6px $white, 0 0 0 16px rgba($primary-blue, 0); }
+}
+
+.numero {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: $primary-blue;
+  color: $crema;
+  font-family: $font-title;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.final .numero {
+  background: $crema;
+  color: $primary-blue;
+}
+
+.palabra {
+  font-family: $font-title;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #14233a;
+
+  @media (max-width: 480px) {
+    font-size: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .final .nodo {
+    animation: none;
+  }
+}

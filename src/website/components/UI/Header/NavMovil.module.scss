@@ -1,0 +1,97 @@
+@use "@/website/styles/all.scss" as *;
+
+$acento: $primary-blue;
+
+// Cubre el resto de la pantalla, debajo de la barra fija.
+.menu {
+  position: fixed;
+  top: 68px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow-y: auto;
+  padding: 8px 20px 32px;
+  background: $white;
+  border-top: 1px solid #e5e7eb;
+
+  @media (min-width: 601px) {
+    top: 88px;
+  }
+}
+
+.lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.titulo {
+  margin: 24px 0 4px;
+  font-family: $font-title;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: $acento;
+}
+
+.fila {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 54px;
+  border-bottom: 1px solid #f0f1f3;
+  font-family: $font-title;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: #1f2937;
+  text-decoration: none;
+
+  span {
+    flex: 1;
+  }
+}
+
+.activa {
+  color: $primary-blue;
+  box-shadow: inset 3px 0 0 $acento;
+  padding-left: 12px;
+}
+
+.icono {
+  width: 20px;
+  height: 20px;
+  color: $primary-blue;
+  stroke-width: 1.75;
+}
+
+.flecha {
+  width: 18px;
+  height: 18px;
+  color: #9ca3af;
+}
+
+.ingresar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 52px;
+  margin-top: 28px;
+  border: 0;
+  border-radius: 4px;
+  background: $primary-blue;
+  color: $white;
+  font-family: $font-title;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+
+  svg {
+    width: 19px;
+    height: 19px;
+  }
+}

@@ -1,0 +1,78 @@
+@use "@/app/styles/all.scss" as *;
+
+.pantalla {
+  position: relative;
+  min-height: calc(100dvh - 72px);
+  display: grid;
+  place-items: center;
+  padding: 32px 20px 48px;
+  background: #f5f3ee;
+  overflow: hidden;
+}
+
+// Dos manchas suaves de color detrás de todo: le dan profundidad al fondo liso.
+.manchaUno,
+.manchaDos {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+.manchaUno {
+  width: 520px;
+  height: 520px;
+  top: -220px;
+  left: -180px;
+  background: rgba($primary-blue, 0.08);
+}
+
+.manchaDos {
+  width: 360px;
+  height: 360px;
+  bottom: -160px;
+  right: 30%;
+  background: rgba(#f7e9aa, 0.55);
+}
+
+.marco {
+  position: relative;
+  width: min(100%, 1120px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: 24px;
+  align-items: stretch;
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 44px clamp(24px, 4vw, 56px);
+  background: $white;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(20, 35, 58, 0.05), 0 18px 48px rgba(20, 35, 58, 0.09);
+}
+
+@media (max-width: 960px) {
+  .marco {
+    grid-template-columns: 1fr;
+    max-width: 560px;
+  }
+
+  // En el celular el panel va arriba del formulario.
+  .visual {
+    order: -1;
+  }
+}
+
+@media (max-width: 480px) {
+  .pantalla {
+    padding: 16px 12px 32px;
+  }
+
+  .formulario {
+    padding: 28px 20px;
+    border-radius: 10px;
+  }
+}

@@ -1,423 +1,146 @@
 @use "@/website/styles/all.scss" as *;
 
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(30px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
+$crema: #f7e9aa;
 
-@keyframes fadeInScale {
-  from { opacity: 0; transform: translateY(16px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@keyframes floatOrb {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33%       { transform: translate(30px, -30px) scale(1.1); }
-  66%       { transform: translate(-20px, 20px) scale(0.9); }
-}
-
-@keyframes shimmer {
-  0%   { background-position: -600px 0; }
-  100% { background-position: 600px 0; }
-}
-
-// ── Layout ────────────────────────────────────────────────────────────────────
-.wrapper {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: $spacing-lg;
-  padding: clamp(3rem, 8vw, 5.5rem) clamp(1.25rem, 5vw, 3rem);
-  background: $white;
-  color: $dark-gray;
-  font-family: $font-normal;
-  overflow: hidden;
-  min-height: 60vh;
-}
-
-// ── Background orbs ───────────────────────────────────────────────────────────
-.backgroundOrbs {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
-}
-
-.orb1, .orb2 {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.13;
-  animation: floatOrb 20s ease-in-out infinite;
-}
-
-.orb1 {
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, rgba($primary-blue, 0.5) 0%, transparent 70%);
-  top: -100px;
-  right: -100px;
-}
-
-.orb2 {
-  width: 350px;
-  height: 350px;
-  background: radial-gradient(circle, rgba($primary-yellow, 0.4) 0%, transparent 70%);
-  bottom: -80px;
-  left: -80px;
-  animation-delay: -10s;
-}
-
-// ── Header ────────────────────────────────────────────────────────────────────
-.header {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: $spacing-xs;
-  text-align: center;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-  max-width: 680px;
-  width: 100%;
-}
-
-.headerVisible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.eyebrow {
-  display: inline-block;
-  font-family: $font-title;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: $primary-blue;
-  background: rgba($primary-blue, 0.07);
-  border: 1px solid rgba($primary-blue, 0.14);
-  padding: 0.3em 0.9em;
-  border-radius: 100px;
-}
-
-.title {
-  font-family: $font-playfair;
-  font-size: clamp(1.5rem, 3vw, 2.25rem);
-  color: $primary-blue-dark;
-  letter-spacing: -0.02em;
-  font-weight: 800;
-  line-height: 1.15;
-  margin: 0;
-}
-
-.subtitle {
-  font-size: clamp(0.88rem, 1.1vw, 1rem);
-  color: $gray;
-  line-height: 1.65;
-  max-width: 560px;
-  margin: 0;
-}
-
-// ── Search ────────────────────────────────────────────────────────────────────
-.srOnly {
-  position: absolute;
-  width: 1px;
-  height: 1px;
+.mosaico {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-block: 0;
   padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
+  list-style: none;
 
-.searchWrapper {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  max-width: 520px;
-}
-
-.searchBox {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.searchIcon {
-  position: absolute;
-  left: 1rem;
-  width: 17px;
-  height: 17px;
-  color: rgba($primary-blue, 0.45);
-  pointer-events: none;
-  flex-shrink: 0;
-  transition: color 0.18s ease;
-}
-
-.searchInput {
-  width: 100%;
-  padding: 0.78rem 2.8rem 0.78rem 2.75rem;
-  font-family: $font-normal;
-  font-size: 0.9rem;
-  color: $dark-gray;
-  background: $white;
-  border: 1.5px solid rgba($primary-blue, 0.18);
-  border-radius: 100px;
-  box-shadow: 0 2px 10px rgba($primary-blue, 0.07);
-  outline: none;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease;
-  appearance: none;
-
-  &::placeholder { color: rgba($gray, 0.55); }
-
-  // Hide native clear button
-  &::-webkit-search-cancel-button { display: none; }
-
-  &:focus {
-    border-color: $primary-blue;
-    box-shadow: 0 0 0 3px rgba($primary-blue, 0.1), 0 2px 10px rgba($primary-blue, 0.07);
-
-    ~ .searchIcon, & + .searchIcon { color: $primary-blue; }
-  }
-}
-
-.searchBox:focus-within .searchIcon {
-  color: $primary-blue;
-}
-
-.searchClear {
-  position: absolute;
-  right: 0.85rem;
-  display: grid;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  border: none;
-  border-radius: 50%;
-  background: rgba($primary-blue, 0.08);
-  color: $primary-blue;
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-
-  svg { width: 13px; height: 13px; }
-
-  &:hover { background: $primary-blue; color: $white; }
-  &:focus-visible { outline: 2px solid $primary-blue; outline-offset: 2px; }
-}
-
-// ── Counter ───────────────────────────────────────────────────────────────────
-.counter {
-  position: relative;
-  z-index: 1;
-  font-family: $font-normal;
-  font-size: 0.82rem;
-  color: rgba($gray, 0.85);
-  margin: 0;
-
-  strong { color: $primary-blue; font-weight: 700; }
-  em { font-style: normal; color: $primary-blue-dark; font-weight: 600; }
-}
-
-// ── Grid ──────────────────────────────────────────────────────────────────────
-.list {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: $spacing-md;
-  width: 100%;
-  max-width: 1180px;
-
-  @media (max-width: $breakpoint-wide) {
-    grid-template-columns: repeat(4, 1fr);
+  @media (max-width: 1000px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  @media (max-width: $breakpoint-desktop) {
-    grid-template-columns: repeat(3, 1fr);
+  @media (max-width: 720px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  @media (max-width: $breakpoint-tablet) {
-    grid-template-columns: repeat(2, 1fr);
-    gap: $spacing-sm;
-  }
-
-  @media (max-width: $breakpoint-mobile) {
+  @media (max-width: 460px) {
     grid-template-columns: 1fr;
-    gap: $spacing-sm;
   }
 }
 
-// ── Card ──────────────────────────────────────────────────────────────────────
-.item {
-  position: relative;
+.obra {
   display: flex;
   align-items: center;
-  gap: $spacing-sm;
+  gap: 14px;
+  min-height: 76px;
+  padding: 12px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
   background: $white;
-  border: 1px solid rgba($primary-blue, 0.12);
-  border-left: 3px solid rgba($primary-blue, 0.25);
-  border-radius: $border-radius-sm;
-  box-shadow: 0 1px 4px rgba($primary-blue, 0.06);
-  padding: $spacing-sm $spacing-md;
-  text-decoration: none;
-  color: inherit;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
-  cursor: default;
-  opacity: 0;
-  transform: translateY(16px) scale(0.97);
-  min-height: 56px;
-
-  &[href] { cursor: pointer; }
+  box-shadow: 0 6px 16px rgba(20, 35, 58, 0.05);
+  animation: aparecer 0.35s ease both;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 
   &:hover {
-    background: $primary-blue;
-    border-left-color: $primary-blue;
-    border-color: $primary-blue;
-    box-shadow: 0 4px 16px rgba($primary-blue, 0.22);
     transform: translateY(-2px);
-
-    .dot { background: rgba($primary-yellow, 0.9); }
-    .name { color: $white; }
+    border-color: rgba($primary-blue, 0.3);
+    box-shadow: 0 12px 26px rgba(20, 35, 58, 0.1);
   }
 
-  &:focus-visible {
-    outline: 2px solid $primary-blue;
-    outline-offset: 3px;
-  }
-}
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    transition: none;
 
-.itemVisible {
-  animation: fadeInScale 0.42s ease-out forwards;
-}
-
-.dot {
-  flex-shrink: 0;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: rgba($primary-blue, 0.35);
-  transition: background 0.18s ease;
-}
-
-.name {
-  flex: 1;
-  font-family: $font-title;
-  font-weight: 600;
-  color: $primary-blue-dark;
-  font-size: clamp(0.78rem, 1vw, 0.88rem);
-  line-height: 1.3;
-  transition: color 0.18s ease;
-}
-
-// ── Skeleton loader ───────────────────────────────────────────────────────────
-.skeletonGrid {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: $spacing-md;
-  width: 100%;
-  max-width: 1180px;
-
-  @media (max-width: $breakpoint-desktop) { grid-template-columns: repeat(3, 1fr); }
-  @media (max-width: $breakpoint-tablet)  { grid-template-columns: repeat(2, 1fr); gap: $spacing-sm; }
-  @media (max-width: $breakpoint-mobile)  { grid-template-columns: 1fr; }
-}
-
-.skeletonCard {
-  height: 56px;
-  border-radius: $border-radius-sm;
-  background: linear-gradient(
-    90deg,
-    rgba($primary-blue, 0.06) 25%,
-    rgba($primary-blue, 0.12) 50%,
-    rgba($primary-blue, 0.06) 75%
-  );
-  background-size: 600px 100%;
-  animation: shimmer 1.4s ease-in-out infinite;
-}
-
-// ── Load More ─────────────────────────────────────────────────────────────────
-.loadMoreWrapper {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  justify-content: center;
-  padding-top: $spacing-sm;
-}
-
-.loadMoreBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.72rem 1.75rem;
-  font-family: $font-title;
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: $primary-blue;
-  background: $white;
-  border: 1.5px solid rgba($primary-blue, 0.25);
-  border-radius: 100px;
-  box-shadow: 0 2px 8px rgba($primary-blue, 0.08);
-  cursor: pointer;
-  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.14s ease;
-
-  &:hover {
-    background: $primary-blue;
-    color: $white;
-    border-color: $primary-blue;
-    box-shadow: 0 4px 18px rgba($primary-blue, 0.28);
-    transform: translateY(-1px);
-
-    .loadMoreBadge {
-      background: rgba($white, 0.18);
-      color: $white;
+    &:hover {
+      transform: none;
     }
   }
+}
 
-  &:active {
-    transform: translateY(0);
+// El monograma, en uno de cuatro tonos de la marca según el nombre.
+.monograma {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  font-family: $font-title;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+
+  // Siglas de cuatro a siete letras: más chicas para que entren en el cuadrado.
+  &[data-largo="largo"] {
+    font-size: 0.6rem;
+    letter-spacing: 0;
   }
 
-  &:focus-visible {
-    outline: 2px solid $primary-blue;
-    outline-offset: 3px;
+  &[data-tono="0"] {
+    background: $primary-blue;
+    color: $crema;
+  }
+
+  &[data-tono="1"] {
+    background: #e8eef7;
+    color: $primary-blue;
+  }
+
+  &[data-tono="2"] {
+    background: $crema;
+    color: $primary-blue-dark;
+  }
+
+  &[data-tono="3"] {
+    background: $primary-blue-dark;
+    color: $white;
   }
 }
 
-.loadMoreBadge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.15em 0.55em;
-  border-radius: 100px;
-  background: rgba($primary-blue, 0.09);
-  color: $primary-blue;
-  font-size: 0.78rem;
+.nombre {
+  min-width: 0;
+  font-family: $font-title;
+  font-size: 0.85rem;
   font-weight: 700;
-  transition: background 0.18s ease, color 0.18s ease;
+  line-height: 1.3;
+  color: $primary-blue-dark;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-// ── Status message ────────────────────────────────────────────────────────────
-.statusMsg {
-  position: relative;
-  z-index: 1;
+.aviso {
+  margin: 0;
+  padding: 32px 0;
   text-align: center;
-  padding: 2.5rem 1rem;
-  color: $gray;
-  font-size: 0.95rem;
+  font-family: $font-title;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: $primary-blue-dark;
 }
 
-// ── Reduced motion ────────────────────────────────────────────────────────────
-@media (prefers-reduced-motion: reduce) {
-  .orb1, .orb2 { animation: none; }
-  .itemVisible  { animation: none; opacity: 1; transform: none; }
-  .skeletonCard { animation: none; }
-  .loadMoreBtn  { transition: none; }
+.hueso {
+  height: 76px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #f1f3f6 25%, #e6e9ee 50%, #f1f3f6 75%);
+  background-size: 200% 100%;
+  animation: brillo 1.4s ease-in-out infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes brillo {
+  from {
+    background-position: 100% 0;
+  }
+
+  to {
+    background-position: -100% 0;
+  }
 }

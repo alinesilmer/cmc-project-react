@@ -30,16 +30,6 @@
   text-align: center;
 }
 
-.eyebrow {
-  margin: 0;
-  font-family: $font-normal;
-  font-size: clamp(0.7rem, 0.85vw, 0.8rem);
-  font-weight: 600;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: rgba($primary-blue, 0.55);
-}
-
 .title {
   margin: 0;
   font-family: $font-title;
@@ -80,6 +70,9 @@
 
 // ── 6 institutional benefit cards ─────────────────────────────────────────────
 .benefitsGrid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: $spacing-sm;
@@ -163,21 +156,12 @@
   }
 }
 
-.ctaLink {
-  text-decoration: none;
-  display: inline-flex;
+.ctaBoton {
   margin-top: 1rem;
-  
 
   @media (max-width: $breakpoint-mobile) {
     width: 100%;
-
-    :global(button) { width: 100%; }
   }
-}
-
-.buttonIcon {
-  margin-right: 0.4rem;
 }
 
 // ── Quick-access section ──────────────────────────────────────────────────────
@@ -195,6 +179,9 @@
 }
 
 .quickGrid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: $spacing-sm;

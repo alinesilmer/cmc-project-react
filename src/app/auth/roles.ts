@@ -54,6 +54,26 @@ export const medicoCanAccess = (pathname: string): boolean =>
   );
 
 /**
+ * `listado_medico.es_organizacion` — la cuenta es de una clínica, no de un médico.
+ * Llega como 1/0 normalizado, pero el backend lo manda como bool: se acepta
+ * cualquiera de los dos.
+ */
+export const esOrganizacion = (user: User | null | undefined): boolean =>
+  Boolean(user?.es_organizacion);
+
+/**
+ * Rutas que una organización no usa: las validaciones se hacen por el médico
+ * que atiende al afiliado, no por la clínica. Mismo cerco de UI que
+ * `MEDICO_ALLOWED_PATHS`; se aplica sea cual sea su INGRESAR.
+ */
+const ORGANIZACION_BLOCKED_PATHS = ["/panel/validaciones"];
+
+export const organizacionCanAccess = (pathname: string): boolean =>
+  !ORGANIZACION_BLOCKED_PATHS.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
+  );
+
+/**
  * Scopes viejos que identificaban al editor web antes de RBAC (§2 del doc de
  * backend): `web:editor` pasó a ser el rol `editor_web`. Se mantienen como
  * alias porque los scopes viejos siguen llegando en el token durante la
