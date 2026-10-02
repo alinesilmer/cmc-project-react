@@ -451,17 +451,18 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                 <th>Gastos</th>
                 <th>Coseguro</th>
                 <th>TP</th>
-                <th>Sub total</th>
+                <th>Valor unitario</th>
+                <th>Total</th>
                 <th>Tipo</th>
                 <th className={styles.thActions}>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {loading && (
-                <tr><td colSpan={18} className={styles.loadingCell}>Cargando…</td></tr>
+                <tr><td colSpan={19} className={styles.loadingCell}>Cargando…</td></tr>
               )}
               {!loading && rows.length === 0 && (
-                <tr><td colSpan={18} className={styles.emptyCell}>Este médico no tiene prestaciones cargadas.</td></tr>
+                <tr><td colSpan={19} className={styles.emptyCell}>Este médico no tiene prestaciones cargadas.</td></tr>
               )}
               {!loading && rows.map((row) => {
                 const editable = row.estado === "A";
@@ -550,6 +551,12 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                         </span>
                       ) : <span className={styles.mutedText}>—</span>}
                     </td>
+                    <td>
+                      {/* Honorarios + gastos; el ayudante cobra un único monto aparte. */}
+                      {tipoPrestador === "Ayudante"
+                        ? <span className={styles.mutedText}>—</span>
+                        : <span className={styles.moneyCell}>{formatMoney(parseMoney(row.honorarios) + parseMoney(row.gastos))}</span>}
+                    </td>
                     <td><span className={styles.subtotalCell}>{formatMoney(row.importe_total)}</span></td>
                     <td>
                       {row.tipo ? (
@@ -621,7 +628,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                   </tr>
                   {esEquipo && abierto && (
                     <tr className={styles.teamDetailRow}>
-                      <td colSpan={18}>
+                      <td colSpan={19}>
                         <div className={styles.teamDetailContent}>
                           <span className={styles.teamDetailLabel}>
                             <Users size={13} /> Integrantes del equipo

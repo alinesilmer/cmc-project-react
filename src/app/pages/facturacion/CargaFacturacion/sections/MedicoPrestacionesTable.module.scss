@@ -18,10 +18,11 @@ $radius-md: 10px;
 $radius-lg: 14px;
 $shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
 
+// Sin margen externo: la tabla anula el padding lateral de la página (1.8rem en
+// CargaFacturacion `.container`) y va de borde a borde para ganar ancho. El
+// encabezado conserva ese padding para quedar alineado con el formulario.
 .wrap {
-  max-width: 1400px;
-  width: 100%;
-  margin: 20px auto 0;
+  margin: 20px -1.8rem 0;
 }
 
 .header {
@@ -29,6 +30,7 @@ $shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
   align-items: center;
   gap: 12px;
   margin-bottom: 14px;
+  padding: 0 1.8rem;
 }
 
 .headerIcon {
@@ -58,8 +60,8 @@ $shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
 
 .layout {
   background: $surface;
-  border: 1px solid $border;
-  border-radius: $radius-lg;
+  border-top: 1px solid $border;
+  border-bottom: 1px solid $border;
   box-shadow: $shadow-sm;
   overflow: hidden;
 }
@@ -110,7 +112,7 @@ $shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
     }
   }
 
-  // Anchos fijos por columna para que las 18 columnas entren sin scroll: con
+  // Anchos fijos por columna para que las 19 columnas entren sin scroll: con
   // `table-layout: fixed` tienen que sumar 100% y NO puede quedar ninguna sin ancho
   // (la que falte se lleva el sobrante y descuadra el resto). El orden tiene que
   // coincidir exactamente con los <th> del JSX — si se agrega o saca una columna acá
@@ -119,16 +121,16 @@ $shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
     width: 4%;
   } // ID
   th:nth-child(2) {
-    width: 9%;
+    width: 8%;
   } // Socio
   th:nth-child(3) {
-    width: 8%;
+    width: 7%;
   } // Obra social
   th:nth-child(4) {
     width: 5%;
   } // Autorización
   th:nth-child(5) {
-    width: 6%;
+    width: 5%;
   } // Fecha
   th:nth-child(6) {
     width: 5%;
@@ -137,10 +139,10 @@ $shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
     width: 3%;
   } // Vía
   th:nth-child(8) {
-    width: 6%;
+    width: 5%;
   } // Nro Afiliado
   th:nth-child(9) {
-    width: 8%;
+    width: 7%;
   } // Afiliado
   th:nth-child(10) {
     width: 5%;
@@ -162,12 +164,15 @@ $shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
   } // TP
   th:nth-child(16) {
     width: 6%;
-  } // Sub total
+  } // Valor unitario
   th:nth-child(17) {
-    width: 4%;
+    width: 6%;
+  } // Total
+  th:nth-child(18) {
+    width: 3%;
   } // Tipo
   // Acciones en 2 filas de 3 iconos: 3 × 24px + 2 × 4px de gap + padding ≈ 96px.
-  th:nth-child(18) {
+  th:nth-child(19) {
     width: 8%;
   } // Acciones
 }

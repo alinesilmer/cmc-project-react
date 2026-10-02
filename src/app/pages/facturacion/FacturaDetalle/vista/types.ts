@@ -42,7 +42,7 @@ export const FILTROS_VISTA_VACIOS: FiltrosVista = {};
 export type ColumnaVista =
   | "autorizacion" | "fecha" | "codigo" | "via" | "nro_afiliado" | "paciente"
   | "cantidad" | "porcentaje" | "honorarios" | "gastos" | "coseguro" | "tipo_prestador"
-  | "subtotal" | "tipo";
+  | "valor_unitario" | "subtotal" | "tipo";
 
 // Mismo orden que las columnas fijas de la tabla (ID/Socio/Acciones no se
 // pueden ocultar, por eso no están acá) — `ColumnasVistaSection` y el thead
@@ -62,7 +62,8 @@ export const COLUMNAS_VISTA_DISPONIBLES: { key: ColumnaVista; label: string }[] 
   { key: "gastos", label: "Gastos" },
   { key: "coseguro", label: "Coseguro" },
   { key: "tipo_prestador", label: "TP" },
-  { key: "subtotal", label: "Sub total" },
+  { key: "valor_unitario", label: "Valor unitario" },
+  { key: "subtotal", label: "Total" },
   { key: "tipo", label: "Tipo" },
 ];
 
@@ -77,7 +78,7 @@ export const COLUMNAS_VISTA_DEFAULT: ColumnaVista[] = COLUMNAS_VISTA_DISPONIBLES
 export const PESO_COLUMNA: Record<"id" | "socio" | ColumnaVista | "acciones", number> = {
   id: 4, socio: 9, autorizacion: 6, fecha: 6, codigo: 6, via: 4, nro_afiliado: 6,
   paciente: 9, cantidad: 6, porcentaje: 4, honorarios: 6, gastos: 6, coseguro: 6,
-  tipo_prestador: 3, subtotal: 7, tipo: 3, acciones: 8,
+  tipo_prestador: 3, valor_unitario: 7, subtotal: 7, tipo: 3, acciones: 8,
 };
 
 export interface VistaOpciones extends FiltrosVista {

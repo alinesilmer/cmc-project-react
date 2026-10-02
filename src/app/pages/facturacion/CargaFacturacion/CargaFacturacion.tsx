@@ -399,6 +399,13 @@ const CargaFacturacion: React.FC = () => {
   // médico, o el médico ejecutor si el payee es una clínica.
   const codMedicoEfectivo = payeeEsOrganizacion ? codMedicoEjecutor : codMedico;
 
+  // Con clínica (como socio/payee → Sanatorio, o en el campo Clínica → Honorarios
+  // individuales) los gastos los factura la clínica: van SIEMPRE en 0, en automático y
+  // en manual (el backend lo hace cumplir igual, ver `gasto_forzado_a_cero`). Se deriva
+  // en vez de pisar `gastos`, así al quitar la clínica vuelve el monto que había.
+  const gastosEnCero = payeeEsOrganizacion || codClinica != null;
+  const gastosEfectivos = gastosEnCero ? "0" : gastos;
+
   // Obra social efectiva para cotizar — la misma cuenta se repetía 3 veces (acá, en
   // `codObraTabla` más abajo y ahora también en el precio del pediatra); memoizada una
   // sola vez para que las tres la compartan. Editar y cargar comparten la misma fuente
@@ -838,7 +845,7 @@ const CargaFacturacion: React.FC = () => {
       return a * (porc / 100) * cant * ses;
     }
     const h = parseMoney(honorarios);
-    const g = parseMoney(gastos);
+    const g = parseMoney(gastosEfectivos);
     const cos = parseMoney(coseguro);
     // El coseguro no se escala por porcentaje (mismo criterio que el backend,
     // `calcular_importe_total`); sí escala por cantidad/sesión, igual que el resto.
@@ -847,7 +854,7 @@ const CargaFacturacion: React.FC = () => {
     const pedMonto = pediatra ? montoPediatra(pediatra, precioPediatra) * cant * ses : 0;
     return base + totalAyudantes(ayudantes, precio, cant, ses) + pedMonto;
   }, [
-    tipoPrestador, montoAyudante, honorarios, gastos, coseguro, porcentaje, cantidad, sesion,
+    tipoPrestador, montoAyudante, honorarios, gastosEfectivos, coseguro, porcentaje, cantidad, sesion,
     ayudantes, precio, pediatra, precioPediatra,
   ]);
 
@@ -866,7 +873,7 @@ const CargaFacturacion: React.FC = () => {
     tipo_calculo: tipoCalculo,
     via,
     honorarios: tipoPrestador === "ayudante" ? 0 : parseMoney(honorarios),
-    gastos: tipoPrestador === "ayudante" ? 0 : parseMoney(gastos),
+    gastos: tipoPrestador === "ayudante" ? 0 : parseMoney(gastosEfectivos),
     ayudante: tipoPrestador === "ayudante" ? parseMoney(montoAyudante) : 0,
     porcentaje: toInt(porcentaje, 100),
     // Solo la fila principal lleva coseguro — nunca la de ayudante (el acto es uno solo).
@@ -1080,7 +1087,7 @@ const CargaFacturacion: React.FC = () => {
       tipo_calculo: tipoCalculo,
       via,
       honorarios: tipoPrestador === "ayudante" ? 0 : parseMoney(honorarios),
-      gastos: tipoPrestador === "ayudante" ? 0 : parseMoney(gastos),
+      gastos: tipoPrestador === "ayudante" ? 0 : parseMoney(gastosEfectivos),
       ayudante: tipoPrestador === "ayudante" ? parseMoney(montoAyudante) : 0,
       porcentaje: toInt(porcentaje, 100),
       coseguro: tipoPrestador === "ayudante" ? 0 : parseMoney(coseguro),
@@ -2082,10 +2089,15 @@ const CargaFacturacion: React.FC = () => {
                   <NumericInput
                     className={styles.input}
                     decimals min={0}
-                    value={gastos}
+                    value={gastosEfectivos}
                     onChange={setGastos}
-                    disabled={formDisabled || tipoCalculo === "A"}
+                    disabled={formDisabled || tipoCalculo === "A" || gastosEnCero}
                   />
+                  {gastosEnCero && (
+                    <span className={styles.mutedText}>
+                      Con clínica los gastos van siempre en 0.
+                    </span>
+                  )}
                 </div>
                 <div className={styles.filterField}>
                   <label className={styles.filterLabel}>Coseguro</label>
@@ -2151,6 +2163,14 @@ const CargaFacturacion: React.FC = () => {
           {/* Total: siempre debajo de ayudantes y pediatra (incluye sus montos), encima
               de los botones. */}
           <div className={styles.section}>
+            {/* Valor unitario del cirujano: honorarios + gastos, sin porcentaje,
+                cantidad, sesiones, coseguro ni equipo. El ayudante no lo lleva. */}
+            {tipoPrestador === "medico" && (
+              <div className={styles.valorUnitarioRow}>
+                <span>Valor unitario:</span>
+                <strong>{formatMoney(parseMoney(honorarios) + parseMoney(gastosEfectivos))}</strong>
+              </div>
+            )}
             <div className={styles.totalRow}>
               <span>Total estimado:</span>
               <strong>{formatMoney(totalEstimado)}</strong>

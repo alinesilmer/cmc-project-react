@@ -561,6 +561,15 @@ const FacturaDetalle: React.FC = () => {
         );
       case "coseguro":
         return <td key={col}><span className={styles.moneyCell}>{formatMoney(p.coseguro)}</span></td>;
+      case "valor_unitario":
+        // Honorarios + gastos; el ayudante cobra un único monto aparte.
+        return (
+          <td key={col}>
+            {p.tipo_prestador === "Ayudante"
+              ? <span className={styles.mutedText}>—</span>
+              : <span className={styles.moneyCell}>{formatMoney(parseMoney(p.honorarios) + parseMoney(p.gastos))}</span>}
+          </td>
+        );
       case "subtotal":
         return <td key={col}><span className={styles.subtotalCell}>{formatMoney(p.subtotal)}</span></td>;
       case "tipo":

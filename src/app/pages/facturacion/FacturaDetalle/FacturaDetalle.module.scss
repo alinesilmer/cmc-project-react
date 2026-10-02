@@ -98,10 +98,14 @@ $shadow-md:  0 4px 16px rgba(0, 0, 0, .10);
 .chipAbierta { background: #fef3c7; color: #92400e; }
 .chipCerrada { background: #dcfce7; color: #166534; }
 
+// Sin margen externo: la tarjeta (toolbar + tabla) anula el padding lateral de
+// `.container` (1.8rem) y va de borde a borde. El corrimiento va acá y no en la
+// tabla: esta tarjeta tiene `overflow: hidden` y recortaba lo que sobresalía.
 .layout {
+  margin: 0 -1.8rem;
   background: $surface;
-  border: 1px solid $border;
-  border-radius: $radius-lg;
+  border-top: 1px solid $border;
+  border-bottom: 1px solid $border;
   box-shadow: $shadow-sm;
   overflow: hidden;
 }
