@@ -473,7 +473,6 @@ export interface NomencladorRef {
   descripcion?: string | null;
   categoria?: string | null;
   complejidad?: string | null;
-  obra_social_nro?: number | null;
   /** true = no había vínculo persistido (`nomenclador_id`); se resolvió por código. */
   resuelto_por_codigo: boolean;
 }
