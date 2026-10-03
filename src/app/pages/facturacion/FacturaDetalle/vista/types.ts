@@ -20,7 +20,7 @@ export const OPCIONES_ORDEN_VISTA: { value: OrdenVista; label: string }[] = [
 ];
 
 export const OPCIONES_AGRUPACION_VISTA: { value: AgrupacionVista; label: string; ayuda: string }[] = [
-  { value: "por_socio", label: "Por socio", ayuda: "Una sección por prestador, con su resumen (como hoy)" },
+  { value: "por_socio", label: "Por socio", ayuda: "Médicos y después clínicas, cada uno con su resumen (orden fijo)" },
   { value: "por_tipo", label: "Por tipo", ayuda: "Consultas, prácticas, honorarios y sanatorios separados" },
   { value: "plana", label: "Planilla plana", ayuda: "Sin cortes ni resúmenes, para revisar todo junto" },
 ];

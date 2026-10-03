@@ -89,7 +89,11 @@ export default function ExportPanel({ detalle, onClose }: Props) {
         <div className={s.drawerBody}>
           {tab === "detalle" ? (
             <>
-              <OrdenSection orden={opciones.orden} onChange={(orden) => setOpciones((o) => ({ ...o, orden }))} />
+              <OrdenSection
+                orden={opciones.orden}
+                agrupacion={opciones.agrupacion}
+                onChange={(orden) => setOpciones((o) => ({ ...o, orden }))}
+              />
               <AgrupacionSection
                 agrupacion={opciones.agrupacion}
                 onChange={(agrupacion) => setOpciones((o) => ({ ...o, agrupacion }))}

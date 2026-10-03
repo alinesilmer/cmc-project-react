@@ -16,7 +16,7 @@ interface Props {
 }
 
 const HINT_POR_AGRUPACION: Record<AgrupacionVista, string> = {
-  por_socio: "Los grupos ya van de A a Z por nombre de socio. Este criterio ordena las filas dentro de cada uno.",
+  por_socio: "Orden fijo: médicos A-Z (consultas y prácticas de la más nueva a la más vieja, honorarios individuales por paciente) y al final las clínicas A-Z, por paciente.",
   por_tipo: "Los grupos van en orden fijo (Consultas → Prácticas → Honorarios → Sanatorios). Este criterio ordena las filas dentro de cada uno.",
   plana: "Sin agrupación: este criterio ordena toda la tabla, de punta a punta.",
 };
@@ -24,6 +24,8 @@ const HINT_POR_AGRUPACION: Record<AgrupacionVista, string> = {
 export default function OrdenVistaSection({
   orden, direccion, agrupacion, onChangeOrden, onChangeDireccion,
 }: Props) {
+  // En "Por socio" el orden es fijo (ver `vistaGrupos` en FacturaDetalle.tsx).
+  const fijo = agrupacion === "por_socio";
   return (
     <div className={s.section}>
       <div className={s.sectionHeader}>
@@ -35,7 +37,8 @@ export default function OrdenVistaSection({
           <button
             key={o.value}
             type="button"
-            className={`${s.chipToggle} ${orden === o.value ? s.chipToggleOn : ""}`}
+            className={`${s.chipToggle} ${orden === o.value && !fijo ? s.chipToggleOn : ""}`}
+            disabled={fijo}
             onClick={() => onChangeOrden(o.value)}
           >
             {o.label}
@@ -48,14 +51,16 @@ export default function OrdenVistaSection({
         <div className={s.dirGroup}>
           <button
             type="button"
-            className={`${s.dirBtn} ${direccion === "asc" ? s.dirBtnOn : ""}`}
+            className={`${s.dirBtn} ${direccion === "asc" && !fijo ? s.dirBtnOn : ""}`}
+            disabled={fijo}
             onClick={() => onChangeDireccion("asc")}
           >
             <ArrowUp size={12} /> Ascendente
           </button>
           <button
             type="button"
-            className={`${s.dirBtn} ${s.dirBtnRight} ${direccion === "desc" ? s.dirBtnOn : ""}`}
+            className={`${s.dirBtn} ${s.dirBtnRight} ${direccion === "desc" && !fijo ? s.dirBtnOn : ""}`}
+            disabled={fijo}
             onClick={() => onChangeDireccion("desc")}
           >
             <ArrowDown size={12} /> Descendente

@@ -1,8 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { motion } from "framer-motion";
 import {
-  ClipboardList, ArrowLeft, Pencil, Copy, ArrowRightCircle, ArrowLeftCircle, Trash2,
+  ClipboardList, ArrowLeft, ArrowRightCircle, ArrowLeftCircle, Trash2,
   Download, SlidersHorizontal,
 } from "lucide-react";
 
@@ -15,74 +14,28 @@ import type {
   FacturaDetalleResponse, PrestacionFacturaDetalle, Tipo,
 } from "../types";
 import { detailMessage } from "../types";
-import { TIPO_ABREV, TIPO_LABEL, TIPO_PRESTADOR_ABREV } from "../constants";
 import { formatMoney, parseMoney } from "../money";
 import ConfirmActionModal from "../components/ConfirmActionModal";
 import ExportPanel from "./export/ExportPanel";
 import VistaPanel from "./vista/VistaPanel";
-import type { ColumnaVista, FiltrosVista, OrdenDireccion, OrdenVista, VistaOpciones } from "./vista/types";
+import type { FiltrosVista, OrdenDireccion, OrdenVista, VistaOpciones } from "./vista/types";
 import { COLUMNAS_VISTA_DISPONIBLES, ORDEN_TIPOS, PESO_COLUMNA, VISTA_OPCIONES_DEFAULT } from "./vista/types";
+import type { FilaAcciones, PrestacionConSocio } from "./FilaPrestacion";
+import GrupoTabla from "./GrupoTabla";
+import { sumarTotales } from "./totales";
+import type { GrupoAcciones, VistaGrupo } from "./GrupoTabla";
 import styles from "./FacturaDetalle.module.scss";
 
-// La prestación "aplanada" con los datos de su socio ya resueltos — se arma una
-// sola vez a partir de `detalle.prestadores` y es la base de todo el pipeline
-// de vista (filtrar → agrupar → ordenar), en vez de depender de la agrupación
-// por-socio que ya viene armada del backend.
-interface PrestacionConSocio extends PrestacionFacturaDetalle {
-  cod_medico: string;
-  nombreSocio: string | null;
-  matriculaSocio: number | null;
-}
+// Set vacío compartido: los grupos sin filas ocupadas reciben siempre esta misma
+// referencia y su memo no se invalida.
+const SIN_OCUPADAS: ReadonlySet<number> = new Set();
 
-interface VistaGrupo {
-  key: string;
-  titulo: string;
-  prestaciones: PrestacionConSocio[];
-  mostrarResumen: boolean;
-  totalHonorarios: number;
-  totalGastos: number;
-  totalSubtotal: number;
-}
+const mismaFirma = (a: unknown[], b: unknown[]) => a.length === b.length && a.every((x, i) => x === b[i]);
 
 type PendingAction =
   | { type: "eliminar"; p: PrestacionConSocio }
   | { type: "mover"; p: PrestacionConSocio; direccion: "siguiente" | "anterior" }
-  | { type: "moverGrupo"; ids: number[]; label: string; groupKey: string; direccion: "siguiente" | "anterior" };
-
-const fmtFecha = (iso: string | null): string => {
-  if (!iso) return "—";
-  // `new Date("2026-11-01")` parsea las date-only como medianoche UTC, y al mostrarlas
-  // en hora local (AR = UTC-3) retroceden un día. Las fechas de la API (`fecha_practica`,
-  // `fecha`) son columnas DATE, así que se formatean sin pasar por Date.
-  const soloFecha = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
-  if (soloFecha) return `${soloFecha[3]}/${soloFecha[2]}/${soloFecha[1]}`;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
-};
-
-const tipoPrestadorClass = (t: string | null): string => {
-  switch (t) {
-    case "Medico":   return styles.tipoPrestadorMedico;
-    case "Ayudante": return styles.tipoPrestadorAyudante;
-    case "Gastos":   return styles.tipoPrestadorGastos;
-    case "Pediatra": return styles.tipoPrestadorPediatra;
-    default:         return "";
-  }
-};
-
-const tipoClass = (t: Tipo | null): string => {
-  switch (t) {
-    case "Consulta":               return styles.tipoConsulta;
-    case "Practica":               return styles.tipoPractica;
-    case "Honorarios individuales": return styles.tipoHonorarios;
-    case "Sanatorio":              return styles.tipoSanatorio;
-    default:                       return "";
-  }
-};
-
-const viaLabel = (v: string | null | undefined): string =>
-  v === "L" ? "Laparoscópica" : v === "T" ? "Tradicional" : "";
+  | { type: "moverGrupo"; ids: number[]; marcadas: number; label: string; groupKey: string; direccion: "siguiente" | "anterior" };
 
 const estadoChipClass = (estado: string | null): string => {
   if (estado === "A") return styles.chipAbierta;
@@ -95,16 +48,6 @@ const estadoLabel = (estado: string | null): string => {
   if (estado === "C") return "Cerrada";
   return estado || "—";
 };
-
-const sumarTotales = (arr: PrestacionConSocio[]) => arr.reduce(
-  (acc, p) => {
-    acc.totalHonorarios += parseMoney(p.honorarios);
-    acc.totalGastos += parseMoney(p.gastos);
-    acc.totalSubtotal += parseMoney(p.subtotal);
-    return acc;
-  },
-  { totalHonorarios: 0, totalGastos: 0, totalSubtotal: 0 },
-);
 
 const compararPorOrden = (
   a: PrestacionConSocio, b: PrestacionConSocio, orden: OrdenVista, direccion: OrdenDireccion,
@@ -124,6 +67,21 @@ const compararPorOrden = (
   }
 };
 
+// Orden fijo de "Por socio" — el mismo que arma el exportable (`export/armado.py`).
+const porFechaDesc = (a: PrestacionConSocio, b: PrestacionConSocio): number =>
+  (b.fecha_practica ?? "").localeCompare(a.fecha_practica ?? "") || a.id - b.id;
+const porPacienteAZ = (a: PrestacionConSocio, b: PrestacionConSocio): number =>
+  (a.nombre_paciente ?? "").localeCompare(b.nombre_paciente ?? "", "es", { sensitivity: "base" })
+  || porFechaDesc(a, b);
+const TRAMOS_MEDICO: { tipo: Tipo; subtitulo: string; comparar: typeof porFechaDesc }[] = [
+  { tipo: "Consulta", subtitulo: "Consultas", comparar: porFechaDesc },
+  { tipo: "Practica", subtitulo: "Prácticas", comparar: porFechaDesc },
+  { tipo: "Honorarios individuales", subtitulo: "Honorarios individuales", comparar: porPacienteAZ },
+];
+const porNombreSocio = (a: VistaGrupo, b: VistaGrupo): number =>
+  (a.prestaciones[0]?.nombreSocio ?? a.key)
+    .localeCompare(b.prestaciones[0]?.nombreSocio ?? b.key, "es", { sensitivity: "base" });
+
 const pasaFiltros = (p: PrestacionConSocio, f: FiltrosVista): boolean => {
   if (f.fecha_desde && (!p.fecha_practica || p.fecha_practica < f.fecha_desde)) return false;
   if (f.fecha_hasta && (!p.fecha_practica || p.fecha_practica > f.fecha_hasta)) return false;
@@ -132,6 +90,49 @@ const pasaFiltros = (p: PrestacionConSocio, f: FiltrosVista): boolean => {
   if (f.cod_medicos && f.cod_medicos.length > 0 && !f.cod_medicos.includes(p.cod_medico)) return false;
   if (f.id_especialidad !== undefined && (p.id_especialidad ?? null) !== f.id_especialidad) return false;
   return true;
+};
+
+const sumarMoney = <T,>(arr: T[], get: (x: T) => string | null): string =>
+  arr.reduce((s, x) => s + parseMoney(get(x)), 0).toFixed(2);
+
+// Saca del detalle ya cargado las prestaciones anuladas o movidas de período y
+// recalcula los mismos totales que arma el backend (`obtener_factura_detalle`),
+// para no tener que volver a pedir la factura entera después de cada acción.
+const quitarPrestaciones = (detalle: FacturaDetalleResponse, ids: number[]): FacturaDetalleResponse => {
+  const fuera = new Set(ids);
+  const unidades = (p: PrestacionFacturaDetalle) => (p.cantidad || 1) * (p.sesion || 1);
+  const prestadores = detalle.prestadores
+    .map((g) => {
+      const prestaciones = g.prestaciones.filter((p) => !fuera.has(p.id));
+      if (prestaciones.length === g.prestaciones.length) return g;
+      return {
+        ...g,
+        prestaciones,
+        cantidad_prestaciones: prestaciones.length,
+        total_cantidad: prestaciones.reduce((s, p) => s + unidades(p), 0),
+        total_honorarios: sumarMoney(prestaciones, (p) => p.honorarios),
+        total_gastos: sumarMoney(prestaciones, (p) => p.gastos),
+        total_subtotal: sumarMoney(prestaciones, (p) => p.subtotal),
+      };
+    })
+    .filter((g) => g.prestaciones.length > 0);
+  return {
+    ...detalle,
+    prestadores,
+    total_prestaciones: prestadores.reduce((s, g) => s + g.prestaciones.reduce((t, p) => t + unidades(p), 0), 0),
+    total_importe: sumarMoney(prestadores, (g) => g.total_subtotal),
+  };
+};
+
+const marcarRevisadoLocal = (detalle: FacturaDetalleResponse, ids: number[], valor: boolean): FacturaDetalleResponse => {
+  const set = new Set(ids);
+  return {
+    ...detalle,
+    prestadores: detalle.prestadores.map((g) => ({
+      ...g,
+      prestaciones: g.prestaciones.map((p) => set.has(p.id) ? { ...p, revisado: valor } : p),
+    })),
+  };
 };
 
 const hayFiltrosActivos = (f: FiltrosVista): boolean =>
@@ -193,26 +194,10 @@ const FacturaDetalle: React.FC = () => {
   const handleToggleRevisado = (p: PrestacionConSocio) => {
     if (!detalle) return;
     const nextValue = !p.revisado;
-    setDetalle({
-      ...detalle,
-      prestadores: detalle.prestadores.map((g) => ({
-        ...g,
-        prestaciones: g.prestaciones.map((row) => row.id === p.id ? { ...row, revisado: nextValue } : row),
-      })),
-    });
-    withBusy(p.id, async () => {
-      try {
-        await marcarRevisado(nextValue ? { marcados: [p.id] } : { desmarcados: [p.id] });
-      } catch {
-        setDetalle((cur) => cur ? {
-          ...cur,
-          prestadores: cur.prestadores.map((g) => ({
-            ...g,
-            prestaciones: g.prestaciones.map((row) => row.id === p.id ? { ...row, revisado: !nextValue } : row),
-          })),
-        } : cur);
-        notify("No se pudo actualizar el estado de auditoría.", "error");
-      }
+    setDetalle(marcarRevisadoLocal(detalle, [p.id], nextValue));
+    marcarRevisado(nextValue ? { marcados: [p.id] } : { desmarcados: [p.id] }).catch(() => {
+      setDetalle((cur) => cur ? marcarRevisadoLocal(cur, [p.id], !nextValue) : cur);
+      notify("No se pudo actualizar el estado de auditoría.", "error");
     });
   };
 
@@ -236,7 +221,7 @@ const FacturaDetalle: React.FC = () => {
       try {
         await anularPrestacion(p.id);
         notify("Prestación anulada.");
-        load();
+        setDetalle((cur) => cur ? quitarPrestaciones(cur, [p.id]) : cur);
         onSuccess();
       } catch (e: any) {
         const status = e?.response?.status;
@@ -260,7 +245,7 @@ const FacturaDetalle: React.FC = () => {
           direccion,
         });
         notify(`Prestación movida al período ${result.periodo_destino}.`);
-        load();
+        setDetalle((cur) => cur ? quitarPrestaciones(cur, result.ids_movidos) : cur);
         onSuccess();
       } catch (e: any) {
         const detail = e?.response?.data?.detail;
@@ -275,7 +260,7 @@ const FacturaDetalle: React.FC = () => {
       try {
         await marcarRevisado({ marcados: ids });
         notify(`Se marcaron ${ids.length} prestación${ids.length !== 1 ? "es" : ""} como auditadas.`);
-        load();
+        setDetalle((cur) => cur ? marcarRevisadoLocal(cur, ids, true) : cur);
       } catch (e: any) {
         notify(detailMessage(e?.response?.data?.detail) || "No se pudo marcar el grupo.", "error");
       }
@@ -288,7 +273,7 @@ const FacturaDetalle: React.FC = () => {
       try {
         await marcarRevisado({ desmarcados: ids });
         notify(`Se desmarcaron ${ids.length} prestación${ids.length !== 1 ? "es" : ""}.`);
-        load();
+        setDetalle((cur) => cur ? marcarRevisadoLocal(cur, ids, false) : cur);
       } catch (e: any) {
         notify(detailMessage(e?.response?.data?.detail) || "No se pudo desmarcar el grupo.", "error");
       }
@@ -296,13 +281,15 @@ const FacturaDetalle: React.FC = () => {
   };
 
   const handleMoverGrupo = (g: VistaGrupo, direccion: "siguiente" | "anterior") => {
-    const movibles = g.prestaciones.filter((p) => p.estado === "A");
+    // Las marcadas (auditadas) se quedan en este período: solo se mueven las abiertas sin marcar.
+    const movibles = g.prestaciones.filter((p) => p.estado === "A" && !p.revisado);
     if (movibles.length === 0) {
-      notify("No hay prestaciones abiertas para mover en este grupo.", "error");
+      notify("No hay prestaciones sin marcar para mover en este grupo.", "error");
       return;
     }
     setPendingAction({
       type: "moverGrupo", ids: movibles.map((p) => p.id), label: g.titulo, groupKey: g.key, direccion,
+      marcadas: g.prestaciones.filter((p) => p.estado === "A" && p.revisado).length,
     });
   };
 
@@ -317,7 +304,7 @@ const FacturaDetalle: React.FC = () => {
           direccion,
         });
         notify(`Se movieron ${result.ids_movidos.length} prestación${result.ids_movidos.length !== 1 ? "es" : ""} al período ${result.periodo_destino}.`);
-        load();
+        setDetalle((cur) => cur ? quitarPrestaciones(cur, result.ids_movidos) : cur);
         onSuccess();
       } catch (e: any) {
         const detail = e?.response?.data?.detail;
@@ -326,6 +313,35 @@ const FacturaDetalle: React.FC = () => {
       }
     });
   };
+
+  // Objeto de acciones con identidad fija: delega en los handlers del render actual
+  // (que leen `detalle` fresco) sin invalidar el memo de cada fila.
+  const accionesRef = useRef<FilaAcciones | null>(null);
+  accionesRef.current = {
+    onToggleRevisado: handleToggleRevisado,
+    onEditar: handleEditar,
+    onReplicar: handleReplicar,
+    onMover: handleMoverPeriodo,
+    onEliminar: handleEliminar,
+  };
+  const accionesGrupoRef = useRef<GrupoAcciones | null>(null);
+  accionesGrupoRef.current = {
+    onMarcarTodos: (g) => handleMarcarTodos(g.prestaciones.map((p) => p.id), g.key),
+    onDesmarcarTodos: (g) => handleDesmarcarTodos(g.prestaciones.map((p) => p.id), g.key),
+    onMoverGrupo: handleMoverGrupo,
+  };
+  const accionesGrupo = useMemo<GrupoAcciones>(() => ({
+    onMarcarTodos: (g) => accionesGrupoRef.current?.onMarcarTodos(g),
+    onDesmarcarTodos: (g) => accionesGrupoRef.current?.onDesmarcarTodos(g),
+    onMoverGrupo: (g, d) => accionesGrupoRef.current?.onMoverGrupo(g, d),
+  }), []);
+  const acciones = useMemo<FilaAcciones>(() => ({
+    onToggleRevisado: (p) => accionesRef.current?.onToggleRevisado(p),
+    onEditar: (p) => accionesRef.current?.onEditar(p),
+    onReplicar: (p) => accionesRef.current?.onReplicar(p),
+    onMover: (p, d) => accionesRef.current?.onMover(p, d),
+    onEliminar: (p) => accionesRef.current?.onEliminar(p),
+  }), []);
 
   const handleConfirmPending = () => {
     if (!pendingAction) return;
@@ -342,12 +358,22 @@ const FacturaDetalle: React.FC = () => {
   // Todo en el cliente: el endpoint no tiene filtros/orden propios y ya trae
   // todas las prestaciones de una — ver `vista/types.ts`.
 
+  // Cache por identidad: las acciones locales (tildar, mover, anular) sólo crean un
+  // objeto nuevo para las filas que tocan, así el resto mantiene su referencia y
+  // `FilaPrestacion` (memo) no se vuelve a dibujar.
+  const aplanadasRef = useRef(new WeakMap<PrestacionFacturaDetalle, PrestacionConSocio>());
   const todasFlat = useMemo<PrestacionConSocio[]>(() => {
     if (!detalle) return [];
+    const cache = aplanadasRef.current;
     const out: PrestacionConSocio[] = [];
     for (const g of detalle.prestadores) {
       for (const p of g.prestaciones) {
-        out.push({ ...p, cod_medico: g.cod_medico, nombreSocio: g.nombre, matriculaSocio: g.matricula });
+        let flat = cache.get(p);
+        if (!flat) {
+          flat = { ...p, cod_medico: g.cod_medico, nombreSocio: g.nombre, matriculaSocio: g.matricula };
+          cache.set(p, flat);
+        }
+        out.push(flat);
       }
     }
     return out;
@@ -394,25 +420,42 @@ const FacturaDetalle: React.FC = () => {
         });
     }
 
-    // por_socio (default)
-    const porSocio = new Map<string, PrestacionConSocio[]>();
+    // por_socio (default): orden fijo. Médicos A-Z con sus tramos y, al final, las
+    // clínicas (prestaciones tipo Sanatorio, cuyo socio es la clínica) A-Z por paciente.
+    const medicos = new Map<string, PrestacionConSocio[]>();
+    const clinicas = new Map<string, PrestacionConSocio[]>();
     for (const p of filtradas) {
-      const arr = porSocio.get(p.cod_medico) ?? [];
+      const destino = p.tipo === "Sanatorio" ? clinicas : medicos;
+      const arr = destino.get(p.cod_medico) ?? [];
       arr.push(p);
-      porSocio.set(p.cod_medico, arr);
+      destino.set(p.cod_medico, arr);
     }
-    const entries = [...porSocio.entries()].map(([cod, arr]) => {
-      const ordenadas = [...arr].sort((a, b) => compararPorOrden(a, b, vistaOpciones.orden, vistaOpciones.direccion));
-      const nombreSocio = arr[0]?.nombreSocio ?? null;
-      const titulo = `Socio ${cod} ${nombreSocio ?? ""}`.trim();
-      return { key: cod, titulo, nombreSocio, prestaciones: ordenadas, mostrarResumen: true, ...sumarTotales(ordenadas) };
-    });
-    // Por NOMBRE, no por `titulo`: `titulo` arranca con el número de socio ("Socio 1234 ...")
-    // y comparar esa cadena entera ordena por el número como texto ("123" antes que "45"),
-    // no por el nombre — daba un orden que parecía aleatorio en vez de A-Z.
-    entries.sort((a, b) =>
-      (a.nombreSocio ?? a.key).localeCompare(b.nombreSocio ?? b.key, "es", { sensitivity: "base" }));
-    return entries;
+    const tiposTramo = new Set<Tipo | null>(TRAMOS_MEDICO.map((t) => t.tipo));
+
+    const gruposMedicos: VistaGrupo[] = [...medicos.entries()].map(([cod, arr]) => {
+      const tramos: NonNullable<VistaGrupo["tramos"]> = TRAMOS_MEDICO.map((t) => ({
+        key: t.tipo, subtitulo: t.subtitulo, prestaciones: arr.filter((p) => p.tipo === t.tipo).sort(t.comparar),
+      }));
+      // Filas legacy sin tipo reconocible: al final, para no perderlas.
+      tramos.push({ key: "otras", subtitulo: "Otras", prestaciones: arr.filter((p) => !tiposTramo.has(p.tipo)).sort(porFechaDesc) });
+      const conFilas = tramos.filter((t) => t.prestaciones.length > 0);
+      const prestaciones = conFilas.flatMap((t) => t.prestaciones);
+      return {
+        key: cod, titulo: `Socio ${cod} ${arr[0]?.nombreSocio ?? ""}`.trim(), prestaciones,
+        tramos: conFilas, mostrarResumen: true, ...sumarTotales(prestaciones),
+      };
+    }).sort(porNombreSocio);
+
+    const gruposClinicas: VistaGrupo[] = [...clinicas.entries()].map(([cod, arr]) => {
+      const prestaciones = [...arr].sort(porPacienteAZ);
+      return {
+        key: `clinica-${cod}`, titulo: `${arr[0]?.nombreSocio ?? "Clínica"} · socio ${cod}`, prestaciones,
+        esClinica: true, mostrarResumen: true, ...sumarTotales(prestaciones),
+      };
+    }).sort(porNombreSocio);
+
+    if (gruposClinicas.length > 0) gruposClinicas[0] = { ...gruposClinicas[0], bloque: "Clínicas / Sanatorios" };
+    return [...gruposMedicos, ...gruposClinicas];
   }, [filtradas, vistaOpciones.agrupacion, vistaOpciones.orden, vistaOpciones.direccion]);
 
   const columnasActivas = useMemo(
@@ -431,320 +474,51 @@ const FacturaDetalle: React.FC = () => {
     return activos.map((c) => ({ ...c, pct: (c.peso / suma) * 100 }));
   }, [columnasActivas]);
 
-  const renderRevisadoCheckbox = (p: PrestacionConSocio) => (
-    <span className={`${styles.auditCheckboxWrap} ${p.revisado ? styles.auditCheckboxOn : ""}`}>
-      <input
-        type="checkbox"
-        className={styles.auditCheckbox}
-        checked={p.revisado}
-        onChange={() => handleToggleRevisado(p)}
-        title="Marcar como auditado"
-      />
-    </span>
-  );
+  const esPorSocio = vistaOpciones.agrupacion === "por_socio";
 
-  // Un complemento (version > 1) es una factura para un período ya cerrado y enviado:
-  // mover sus prestaciones a otro período no tiene sentido, así que se ocultan esos botones.
+  // Un complemento (version > 1) no mueve prestaciones de período (ver FilaPrestacion).
   const esComplemento = (detalle?.version ?? 1) > 1;
 
-  const renderAcciones = (p: PrestacionConSocio) => {
-    const editable = p.estado === "A";
-    const busy = busyIds.has(p.id);
-    return (
-      <div className={styles.actionsCell}>
-        {renderRevisadoCheckbox(p)}
-        <button
-          type="button"
-          className={`${styles.iconBtn} ${styles.iconBtnEdit}`}
-          title="Editar"
-          disabled={!editable || busy}
-          onClick={() => handleEditar(p)}
-        >
-          <Pencil size={14} />
-        </button>
-        <button
-          type="button"
-          className={styles.iconBtn}
-          title="Replicar carga"
-          disabled={busy}
-          onClick={() => handleReplicar(p)}
-        >
-          <Copy size={14} />
-        </button>
-        {!esComplemento && (
-          <>
-            <button
-              type="button"
-              className={`${styles.iconBtn} ${styles.iconBtnMove}`}
-              title="Mover al período anterior"
-              disabled={!editable || busy}
-              onClick={() => handleMoverPeriodo(p, "anterior")}
-            >
-              <ArrowLeftCircle size={15} />
-            </button>
-            <button
-              type="button"
-              className={`${styles.iconBtn} ${styles.iconBtnMove}`}
-              title="Mover al período siguiente"
-              disabled={!editable || busy}
-              onClick={() => handleMoverPeriodo(p, "siguiente")}
-            >
-              <ArrowRightCircle size={15} />
-            </button>
-          </>
-        )}
-        <button
-          type="button"
-          className={`${styles.iconBtn} ${styles.iconBtnDelete}`}
-          title="Eliminar"
-          disabled={!editable || busy}
-          onClick={() => handleEliminar(p)}
-        >
-          <Trash2 size={14} />
-        </button>
-      </div>
-    );
-  };
+  const columnasKeys = useMemo(() => columnasActivas.map((c) => c.key), [columnasActivas]);
+  const anchos = useMemo(() => columnasConPeso.map((c) => c.pct), [columnasConPeso]);
 
-  const renderCeldaColumna = (p: PrestacionConSocio, col: ColumnaVista) => {
-    switch (col) {
-      case "autorizacion":
-        return <td key={col}>{p.autorizacion || <span className={styles.mutedText}>—</span>}</td>;
-      case "fecha":
-        return <td key={col}>{fmtFecha(p.fecha_practica)}</td>;
-      case "codigo":
-        return <td key={col}><span className={styles.codeCell}>{p.codigo ?? "—"}</span></td>;
-      case "via":
-        return (
-          <td key={col}>
-            {p.via ? (
-              <span
-                className={`${styles.viaBadge} ${p.via === "L" ? styles.viaLaparoscopica : ""}`}
-                title={viaLabel(p.via)}
-              >
-                {p.via}
-              </span>
-            ) : <span className={styles.mutedText}>—</span>}
-          </td>
-        );
-      case "nro_afiliado":
-        return <td key={col}>{p.nro_afiliado || <span className={styles.mutedText}>—</span>}</td>;
-      case "paciente":
-        return <td key={col}>{p.nombre_paciente || <span className={styles.mutedText}>—</span>}</td>;
-      case "cantidad":
-        return (
-          <td key={col}>
-            <div className={styles.cantidadCell}>
-              <span className={styles.cantidadMain}>Cant. {p.cantidad ?? "—"}</span>
-              <span className={styles.cantidadSub}>Sesión {p.sesion ?? "—"}</span>
-            </div>
-          </td>
-        );
-      case "porcentaje":
-        return <td key={col}>{p.porcentaje != null ? `${p.porcentaje}%` : "—"}</td>;
-      case "honorarios":
-        return <td key={col}><span className={styles.moneyCell}>{formatMoney(p.honorarios)}</span></td>;
-      case "gastos":
-        return <td key={col}><span className={styles.moneyCell}>{formatMoney(p.gastos)}</span></td>;
-      case "tipo_prestador":
-        return (
-          <td key={col}>
-            {p.tipo_prestador ? (
-              <span
-                className={`${styles.tipoPrestadorBadge} ${tipoPrestadorClass(p.tipo_prestador)}`}
-                title={p.tipo_prestador}
-              >
-                {TIPO_PRESTADOR_ABREV[p.tipo_prestador] ?? p.tipo_prestador}
-              </span>
-            ) : <span className={styles.mutedText}>—</span>}
-          </td>
-        );
-      case "coseguro":
-        return <td key={col}><span className={styles.moneyCell}>{formatMoney(p.coseguro)}</span></td>;
-      case "valor_unitario":
-        // Honorarios + gastos; el ayudante cobra un único monto aparte.
-        return (
-          <td key={col}>
-            {p.tipo_prestador === "Ayudante"
-              ? <span className={styles.mutedText}>—</span>
-              : <span className={styles.moneyCell}>{formatMoney(parseMoney(p.honorarios) + parseMoney(p.gastos))}</span>}
-          </td>
-        );
-      case "subtotal":
-        return <td key={col}><span className={styles.subtotalCell}>{formatMoney(p.subtotal)}</span></td>;
-      case "tipo":
-        return (
-          <td key={col}>
-            {p.tipo ? (
-              <span className={`${styles.tipoBadge} ${tipoClass(p.tipo)}`} title={TIPO_LABEL[p.tipo] ?? p.tipo}>
-                {TIPO_ABREV[p.tipo] ?? p.tipo}
-              </span>
-            ) : <span className={styles.mutedText}>—</span>}
-          </td>
-        );
-      default:
-        return null;
-    }
-  };
-
-  const renderDataRow = (
-    p: PrestacionConSocio,
-    opts?: { indent?: boolean; keyOverride?: string; ultimoDelEquipo?: boolean; equipoHead?: boolean },
-  ) => {
-    const indent = opts?.indent ?? false;
-    return (
-      <tr
-        key={opts?.keyOverride ?? p.id}
-        className={[
-          styles.dataRow,
-          p.revisado ? styles.rowRevisada : "",
-          p.estado === "X" ? styles.rowAnulada : "",
-          indent ? styles.equipoPreviewRow : "",
-          opts?.ultimoDelEquipo ? styles.equipoPreviewRowLast : "",
-          opts?.equipoHead ? styles.equipoGrupoHeadRow : "",
-        ].filter(Boolean).join(" ")}
-      >
-        <td className={styles.idCell}>{p.id}</td>
-        <td>
-          <div className={styles.socioCell}>
-            <span className={styles.socioNro}>
-              {p.cod_medico}
-              {p.matriculaSocio != null && <span className={styles.socioMatricula}> - {p.matriculaSocio}</span>}
-            </span>
-            <span className={styles.socioNombre}>{p.nombreSocio ?? "—"}</span>
-          </div>
-        </td>
-        {columnasActivas.map((c) => renderCeldaColumna(p, c.key))}
-        <td>
-          {indent ? <span className={styles.mutedText}>En su grupo</span> : renderAcciones(p)}
-        </td>
-      </tr>
-    );
-  };
-
-  // Cada prestación cabeza de equipo (`grupo_equipo_id === su propio id`) arrastra,
-  // indentadas justo debajo, filas de solo lectura con el detalle completo de sus
-  // compañeros (ayudante/gastos) — sin afectar el subtotal del grupo en el que
-  // está esta fila. Cada compañero sigue teniendo, además, su propia fila
-  // interactiva completa en su propio grupo (por eso estas son de sólo lectura:
-  // actuar sobre la prestación real se hace ahí).
-  const renderFilaConEquipo = (p: PrestacionConSocio): React.ReactNode[] => {
-    if (vistaOpciones.agruparEquipo && p.grupo_equipo_id != null && p.grupo_equipo_id === p.id) {
-      const companeros = (equipoPorGrupo.get(p.grupo_equipo_id) ?? []).filter((m) => m.id !== p.id);
-      if (companeros.length > 0) {
-        const filas: React.ReactNode[] = [renderDataRow(p, { equipoHead: true })];
-        companeros.forEach((m, i) => {
-          filas.push(renderDataRow(m, {
-            indent: true,
-            keyOverride: `${p.id}-eq-${m.id}`,
-            ultimoDelEquipo: i === companeros.length - 1,
-          }));
-        });
-        return filas;
+  // Grupos con identidad estable: si un grupo tiene exactamente las mismas filas (por
+  // referencia), el mismo armado y los mismos compañeros de equipo que en el render
+  // anterior, se reusa el objeto anterior y `GrupoTabla` (memo) no se vuelve a dibujar.
+  // Tildar una fila sólo redibuja el grupo de esa fila.
+  const gruposCacheRef = useRef(new Map<string, { g: VistaGrupo; firma: unknown[] }>());
+  const gruposEstables = useMemo(() => {
+    const anterior = gruposCacheRef.current;
+    const nuevo = new Map<string, { g: VistaGrupo; firma: unknown[] }>();
+    const out = vistaGrupos.map((g) => {
+      const firma: unknown[] = [g.titulo, g.bloque, g.esClinica, g.mostrarResumen, ...g.prestaciones];
+      g.tramos?.forEach((t) => firma.push(t.key, t.prestaciones.length));
+      const companeros: Record<number, PrestacionConSocio[]> = {};
+      for (const p of g.prestaciones) {
+        if (p.grupo_equipo_id == null || p.grupo_equipo_id !== p.id) continue;
+        const otros = (equipoPorGrupo.get(p.id) ?? []).filter((m) => m.id !== p.id);
+        if (otros.length > 0) {
+          companeros[p.id] = otros;
+          firma.push(p.id, ...otros);
+        }
       }
-    }
-    return [renderDataRow(p)];
-  };
-
-  // Prestaciones consecutivas de una misma clínica se enmarcan bajo un encabezado
-  // naranja con su nombre; el marco engloba también las filas de equipo de cada una.
-  const renderFilasConClinica = (prestaciones: PrestacionConSocio[]): React.ReactNode[] => {
-    const out: React.ReactNode[] = [];
-    let i = 0;
-    while (i < prestaciones.length) {
-      const cod = prestaciones[i].cod_clinica;
-      if (!cod) {
-        out.push(...renderFilaConEquipo(prestaciones[i]));
-        i += 1;
-        continue;
-      }
-      let j = i;
-      while (j < prestaciones.length && prestaciones[j].cod_clinica === cod) j += 1;
-      const filas = prestaciones.slice(i, j).flatMap((p) => renderFilaConEquipo(p));
-      out.push(
-        <tr key={`clinica-${prestaciones[i].id}`} className={styles.clinicaHeadRow}>
-          <td colSpan={columnasConPeso.length}>
-            Clínica {prestaciones[i].nombre_clinica ?? cod}
-          </td>
-        </tr>,
-      );
-      filas.forEach((f, k) => {
-        if (!React.isValidElement<{ className?: string }>(f)) { out.push(f); return; }
-        const cls = [f.props.className, styles.clinicaRow, k === filas.length - 1 ? styles.clinicaRowLast : ""]
-          .filter(Boolean).join(" ");
-        out.push(React.cloneElement(f, { className: cls }));
-      });
-      i = j;
-    }
+      const previo = anterior.get(g.key);
+      const final = previo && mismaFirma(previo.firma, firma) ? previo.g : { ...g, companeros };
+      nuevo.set(g.key, { g: final, firma });
+      return final;
+    });
+    gruposCacheRef.current = nuevo;
     return out;
-  };
+  }, [vistaGrupos, equipoPorGrupo]);
 
-  const renderResumenRow = (g: VistaGrupo) => {
-    const grupoBusy = busyGroups.has(g.key);
-    const ids = g.prestaciones.map((p) => p.id);
-    const esPorSocio = vistaOpciones.agrupacion === "por_socio";
+  // La tabla se dibuja con una versión "diferida" de los grupos: cambiar filtros/orden
+  // o abrir un panel responde al instante y la tabla se actualiza al terminar de calcularse.
+  const gruposDibujados = useDeferredValue(gruposEstables);
 
-    return (
-      <tr key={`resumen-${g.key}`} className={styles.resumenRow}>
-        <td colSpan={columnasConPeso.length}>
-          <div className={styles.resumenContent}>
-            <span className={styles.resumenLabel}>RESUMEN: {g.titulo}</span>
-            {esPorSocio && (
-              <>
-                <span className={styles.resumenBadge}>Prácticas: {g.prestaciones.filter((p) => p.tipo === "Practica").length}</span>
-                <span className={styles.resumenBadge}>Consultas: {g.prestaciones.filter((p) => p.tipo === "Consulta").length}</span>
-                <span className={styles.resumenBadge}>Honorarios: {g.prestaciones.filter((p) => p.tipo === "Honorarios individuales").length}</span>
-              </>
-            )}
-            <span className={styles.resumenMoney}>
-              Honorarios: <strong>{formatMoney(g.totalHonorarios)}</strong>
-            </span>
-            <span className={styles.resumenMoney}>
-              Gastos: <strong>{formatMoney(g.totalGastos)}</strong>
-            </span>
-            <div className={styles.resumenActions}>
-              <button
-                type="button"
-                className={styles.resumenActionBtn}
-                disabled={grupoBusy}
-                onClick={() => handleMarcarTodos(ids, g.key)}
-              >
-                Marcar todos
-              </button>
-              <button
-                type="button"
-                className={styles.resumenActionBtn}
-                disabled={grupoBusy}
-                onClick={() => handleDesmarcarTodos(ids, g.key)}
-              >
-                Desmarcar todos
-              </button>
-              {!esComplemento && esPorSocio && (
-                <>
-                  <button
-                    type="button"
-                    className={styles.resumenActionBtn}
-                    disabled={grupoBusy}
-                    onClick={() => handleMoverGrupo(g, "siguiente")}
-                  >
-                    <ArrowRightCircle size={12} /> Siguiente período todos
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.resumenActionBtn}
-                    disabled={grupoBusy}
-                    onClick={() => handleMoverGrupo(g, "anterior")}
-                  >
-                    <ArrowLeftCircle size={12} /> Anterior período todos
-                  </button>
-                </>
-              )}
-            </div>
-            <span className={styles.resumenTotalBadge}>Total: {formatMoney(g.totalSubtotal)}</span>
-          </div>
-        </td>
-      </tr>
-    );
+  const ocupadasDe = (g: VistaGrupo): ReadonlySet<number> => {
+    if (busyIds.size === 0) return SIN_OCUPADAS;
+    const ids = g.prestaciones.filter((p) => busyIds.has(p.id)).map((p) => p.id);
+    return ids.length > 0 ? new Set(ids) : SIN_OCUPADAS;
   };
 
   const filtrosActivos = hayFiltrosActivos(vistaOpciones);
@@ -799,12 +573,7 @@ const FacturaDetalle: React.FC = () => {
           </div>
         )}
 
-        <motion.div
-          className={styles.tableWrap}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        >
+        <div className={styles.tableWrap}>
           <table className={styles.table}>
             <colgroup>
               {columnasConPeso.map((c) => <col key={c.id} style={{ width: `${c.pct}%` }} />)}
@@ -830,15 +599,24 @@ const FacturaDetalle: React.FC = () => {
               {!loading && !error && detalle && detalle.total_prestaciones > 0 && filtradas.length === 0 && (
                 <tr><td colSpan={columnasConPeso.length} className={styles.emptyCell}>Ningún resultado con los filtros de vista actuales.</td></tr>
               )}
-              {!loading && !error && detalle && vistaGrupos.map((g) => (
-                <React.Fragment key={g.key}>
-                  {renderFilasConClinica(g.prestaciones)}
-                  {g.mostrarResumen && renderResumenRow(g)}
-                </React.Fragment>
-              ))}
             </tbody>
           </table>
-        </motion.div>
+          {!loading && !error && detalle && gruposDibujados.map((g) => (
+            <GrupoTabla
+              key={g.key}
+              g={g}
+              columnas={columnasKeys}
+              anchos={anchos}
+              acciones={acciones}
+              accionesGrupo={accionesGrupo}
+              busyIds={ocupadasDe(g)}
+              grupoBusy={busyGroups.has(g.key)}
+              esComplemento={esComplemento}
+              esPorSocio={esPorSocio}
+              agruparEquipo={vistaOpciones.agruparEquipo}
+            />
+          ))}
+        </div>
       </div>
 
       {pendingAction?.type === "eliminar" && (
@@ -886,6 +664,9 @@ const FacturaDetalle: React.FC = () => {
               <strong>{pendingAction.label}</strong> al{" "}
               <strong>{pendingAction.direccion === "siguiente" ? "período siguiente" : "período anterior"}</strong>?</>
           }
+          warning={pendingAction.marcadas > 0
+            ? `${pendingAction.marcadas} marcada${pendingAction.marcadas !== 1 ? "s" : ""} se queda${pendingAction.marcadas !== 1 ? "n" : ""} en este período.`
+            : undefined}
           confirmLabel="Mover todos"
           onClose={() => setPendingAction(null)}
           onConfirm={handleConfirmPending}

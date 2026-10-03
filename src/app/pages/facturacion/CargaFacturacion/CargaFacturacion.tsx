@@ -400,11 +400,10 @@ const CargaFacturacion: React.FC = () => {
   const codMedicoEfectivo = payeeEsOrganizacion ? codMedicoEjecutor : codMedico;
 
   // Con clínica (como socio/payee → Sanatorio, o en el campo Clínica → Honorarios
-  // individuales) los gastos los factura la clínica: van SIEMPRE en 0, en automático y
-  // en manual (el backend lo hace cumplir igual, ver `gasto_forzado_a_cero`). Se deriva
-  // en vez de pisar `gastos`, así al quitar la clínica vuelve el monto que había.
+  // individuales) los gastos los factura la clínica: se proponen en 0 al elegir la
+  // clínica y al cotizar, pero el campo no se bloquea — el operador puede corregirlo.
   const gastosEnCero = payeeEsOrganizacion || codClinica != null;
-  const gastosEfectivos = gastosEnCero ? "0" : gastos;
+  const gastosSugeridos = (valor: string | null | undefined) => (gastosEnCero ? "0" : valor ?? "0");
 
   // Obra social efectiva para cotizar — la misma cuenta se repetía 3 veces (acá, en
   // `codObraTabla` más abajo y ahora también en el precio del pediatra); memoizada una
@@ -643,7 +642,7 @@ const CargaFacturacion: React.FC = () => {
         setCoseguro("0");
       } else {
         setHonorarios(precio.honorarios ?? "0");
-        setGastos(precio.gastos ?? "0");
+        setGastos(gastosSugeridos(precio.gastos));
         setCoseguro(precio.coseguro ?? "0");
       }
     }
@@ -845,7 +844,7 @@ const CargaFacturacion: React.FC = () => {
       return a * (porc / 100) * cant * ses;
     }
     const h = parseMoney(honorarios);
-    const g = parseMoney(gastosEfectivos);
+    const g = parseMoney(gastos);
     const cos = parseMoney(coseguro);
     // El coseguro no se escala por porcentaje (mismo criterio que el backend,
     // `calcular_importe_total`); sí escala por cantidad/sesión, igual que el resto.
@@ -854,7 +853,7 @@ const CargaFacturacion: React.FC = () => {
     const pedMonto = pediatra ? montoPediatra(pediatra, precioPediatra) * cant * ses : 0;
     return base + totalAyudantes(ayudantes, precio, cant, ses) + pedMonto;
   }, [
-    tipoPrestador, montoAyudante, honorarios, gastosEfectivos, coseguro, porcentaje, cantidad, sesion,
+    tipoPrestador, montoAyudante, honorarios, gastos, coseguro, porcentaje, cantidad, sesion,
     ayudantes, precio, pediatra, precioPediatra,
   ]);
 
@@ -873,7 +872,7 @@ const CargaFacturacion: React.FC = () => {
     tipo_calculo: tipoCalculo,
     via,
     honorarios: tipoPrestador === "ayudante" ? 0 : parseMoney(honorarios),
-    gastos: tipoPrestador === "ayudante" ? 0 : parseMoney(gastosEfectivos),
+    gastos: tipoPrestador === "ayudante" ? 0 : parseMoney(gastos),
     ayudante: tipoPrestador === "ayudante" ? parseMoney(montoAyudante) : 0,
     porcentaje: toInt(porcentaje, 100),
     // Solo la fila principal lleva coseguro — nunca la de ayudante (el acto es uno solo).
@@ -1087,7 +1086,7 @@ const CargaFacturacion: React.FC = () => {
       tipo_calculo: tipoCalculo,
       via,
       honorarios: tipoPrestador === "ayudante" ? 0 : parseMoney(honorarios),
-      gastos: tipoPrestador === "ayudante" ? 0 : parseMoney(gastosEfectivos),
+      gastos: tipoPrestador === "ayudante" ? 0 : parseMoney(gastos),
       ayudante: tipoPrestador === "ayudante" ? parseMoney(montoAyudante) : 0,
       porcentaje: toInt(porcentaje, 100),
       coseguro: tipoPrestador === "ayudante" ? 0 : parseMoney(coseguro),
@@ -1729,8 +1728,10 @@ const CargaFacturacion: React.FC = () => {
               setMedicoEjecutor(null);
               setEjecutorResetKey((k) => k + 1);
               if (esOrg) {
-                // Payee clínica: el campo "Clínica" de más abajo queda de más — la
-                // clínica ya es el propio payee — así que se limpia y se oculta.
+                // Payee clínica (Sanatorio): gastos en 0, editable.
+                setGastos("0");
+                // El campo "Clínica" de más abajo queda de más — la clínica ya es el
+                // propio payee — así que se limpia y se oculta.
                 setCodClinica(null);
                 setClinicaPreset(null);
                 setClinicaResetKey((k) => k + 1);
@@ -1859,6 +1860,10 @@ const CargaFacturacion: React.FC = () => {
               clinicaNombre={clinicaPreset}
               onClinicaChange={(cod, clinica) => {
                 setCodClinica(cod);
+                // Con clínica (Honorarios individuales): gastos en 0, editable.
+                // Sin clínica en automático vuelve el gasto cotizado (el campo no se edita ahí).
+                if (cod != null) setGastos("0");
+                else if (tipoCalculo === "A" && precio && tipoPrestador !== "ayudante") setGastos(precio.gastos ?? "0");
                 setClinicaPreset(clinica?.nombre ?? null);
                 // Recién creada (o cualquiera resuelta que no viniera en la precarga):
                 // se agrega a la lista en memoria para que quede buscable/reseleccionable
@@ -1986,7 +1991,7 @@ const CargaFacturacion: React.FC = () => {
                         }
                       } else if (tipoCalculo === "A" && precio) {
                         setHonorarios(precio.honorarios ?? "0");
-                        setGastos(precio.gastos ?? "0");
+                        setGastos(gastosSugeridos(precio.gastos));
                         setCoseguro(precio.coseguro ?? "0");
                       }
                     }}
@@ -2026,7 +2031,7 @@ const CargaFacturacion: React.FC = () => {
                           setMontoAyudante(precio.ayudante ?? "0");
                         } else {
                           setHonorarios(precio.honorarios ?? "0");
-                          setGastos(precio.gastos ?? "0");
+                          setGastos(gastosSugeridos(precio.gastos));
                           setCoseguro(precio.coseguro ?? "0");
                         }
                       }
@@ -2089,13 +2094,13 @@ const CargaFacturacion: React.FC = () => {
                   <NumericInput
                     className={styles.input}
                     decimals min={0}
-                    value={gastosEfectivos}
+                    value={gastos}
                     onChange={setGastos}
-                    disabled={formDisabled || tipoCalculo === "A" || gastosEnCero}
+                    disabled={formDisabled || tipoCalculo === "A"}
                   />
                   {gastosEnCero && (
                     <span className={styles.mutedText}>
-                      Con clínica los gastos van siempre en 0.
+                      Con clínica los gastos se proponen en 0.
                     </span>
                   )}
                 </div>
@@ -2168,7 +2173,7 @@ const CargaFacturacion: React.FC = () => {
             {tipoPrestador === "medico" && (
               <div className={styles.valorUnitarioRow}>
                 <span>Valor unitario:</span>
-                <strong>{formatMoney(parseMoney(honorarios) + parseMoney(gastosEfectivos))}</strong>
+                <strong>{formatMoney(parseMoney(honorarios) + parseMoney(gastos))}</strong>
               </div>
             )}
             <div className={styles.totalRow}>

@@ -599,8 +599,8 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                         <button
                           type="button"
                           className={`${styles.iconBtn} ${styles.iconBtnMove}`}
-                          title="Mover al período anterior"
-                          disabled={!editable || busy}
+                          title={row.revisado ? "Está marcada: desmarcala para moverla" : "Mover al período anterior"}
+                          disabled={!editable || busy || row.revisado}
                           onClick={() => handleMoverPeriodo(row, "anterior")}
                         >
                           <ArrowLeftCircle size={16} />
@@ -608,8 +608,8 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                         <button
                           type="button"
                           className={`${styles.iconBtn} ${styles.iconBtnMove}`}
-                          title="Mover al período siguiente"
-                          disabled={!editable || busy}
+                          title={row.revisado ? "Está marcada: desmarcala para moverla" : "Mover al período siguiente"}
+                          disabled={!editable || busy || row.revisado}
                           onClick={() => handleMoverPeriodo(row, "siguiente")}
                         >
                           <ArrowRightCircle size={16} />

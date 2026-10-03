@@ -51,7 +51,7 @@ export const OPCIONES_ORDEN: { value: OrdenExport; label: string }[] = [
 export const OPCIONES_AGRUPACION: { value: AgrupacionExport; label: string; ayuda: string }[] = [
   { value: "todo_junto", label: "Todo junto", ayuda: "Una sola lista, con resumen por socio" },
   { value: "por_tipo", label: "Separado por tipo", ayuda: "Consultas, prácticas, honorarios y sanatorios aparte" },
-  { value: "por_socio", label: "Separado por socio", ayuda: "Una hoja o sección por prestador" },
+  { value: "por_socio", label: "Separado por socio", ayuda: "Médicos y después clínicas, con orden fijo y en una sola hoja" },
   { value: "plana", label: "Planilla plana", ayuda: "Sin cortes ni resúmenes — para pivotear en Excel" },
 ];
 
