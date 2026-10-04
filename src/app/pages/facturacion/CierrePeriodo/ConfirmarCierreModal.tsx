@@ -26,6 +26,11 @@ const ConfirmarCierreModal: React.FC<Props> = ({
       </p>
       <ul style={{ fontSize: 13, color: "#334155", margin: 0, paddingLeft: 20 }}>
         <li>{preview.cantidad} prestaciones</li>
+        {(preview.sin_valorizar ?? 0) > 0 && (
+          <li style={{ color: "#92400e", fontWeight: 600 }}>
+            {preview.sin_valorizar} sin valorizar (en $0 por falta de precio)
+          </li>
+        )}
         <li>{formatMoney(preview.importe_total)}</li>
         {tipoFactura && <li>Tipo de factura: {tipoFactura}</li>}
         {nroFactura && <li>Nº de factura: {nroFactura}</li>}

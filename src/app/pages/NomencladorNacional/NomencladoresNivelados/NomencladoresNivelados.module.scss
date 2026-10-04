@@ -1,0 +1,162 @@
+@use "@/app/styles/all.scss" as *;
+
+// Lista de nomencladores a la izquierda y el elegido a la derecha (como Precios por O.S.).
+.layout {
+  display: flex;
+  background: $superficie;
+  border: 1px solid $linea;
+  border-radius: $radio-lg;
+  box-shadow: $shadow-sm;
+  overflow: hidden;
+  min-height: 480px;
+
+  @media (max-width: 760px) { flex-direction: column; }
+}
+
+.panel {
+  width: 250px;
+  flex-shrink: 0;
+  border-right: 1px solid $linea;
+  background: #fafbfd;
+  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  @media (max-width: 760px) {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid $linea;
+  }
+}
+
+.panelTitulo {
+  margin: 0 0 6px;
+  padding: 0 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: $tinta-3;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 8px 10px;
+  border-radius: $radio-sm;
+  text-decoration: none;
+  color: $tinta;
+
+  &:hover { background: $superficie-2; }
+  &:focus-visible { outline: 2px solid $acento; outline-offset: -2px; }
+}
+
+.itemOn {
+  background: $acento-tinte;
+  &:hover { background: $acento-tinte; }
+  .itemNombre { color: $acento; font-weight: 700; }
+}
+
+.itemNombre { font-size: 0.86rem; font-weight: 600; }
+.itemMeta { font-size: 0.72rem; color: $tinta-3; font-variant-numeric: tabular-nums; }
+
+.contenido {
+  flex: 1;
+  min-width: 0;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.titulo {
+  margin: 0 0 4px;
+  font-size: 1.15rem;
+  color: $tinta;
+}
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  border: 1px solid $linea;
+  background: $superficie;
+  color: $tinta-2;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+
+  b { font-variant-numeric: tabular-nums; margin-left: 2px; color: $tinta; }
+  &[aria-pressed="true"] { background: $acento; border-color: $acento; color: $white; b { color: $white; } }
+  &:focus-visible { outline: 2px solid $acento; outline-offset: 2px; }
+}
+
+.barra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.buscar { flex: 1 1 240px; max-width: 360px; }
+
+.agregar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+
+  select { width: auto; }
+}
+
+.agregarBuscar { width: 300px; max-width: 100%; }
+
+.codigo {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+
+  a { color: $acento; text-decoration: none; }
+}
+
+.inactivo {
+  margin-left: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: $tinta-3;
+}
+
+.desc { min-width: 220px; }
+
+.nivel {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+
+  select { width: auto; min-width: 130px; height: 32px; }
+}
+
+.unidades { width: 80px; height: 32px; }
+
+.paginacion {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}

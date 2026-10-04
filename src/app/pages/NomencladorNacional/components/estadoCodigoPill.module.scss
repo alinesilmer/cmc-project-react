@@ -1,0 +1,25 @@
+@use "@/app/styles/all.scss" as *;
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+
+  &::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+}
+.sin_alta   { background: $papel;     color: $tinta-3; border-color: $linea; }
+.sin_precio { background: $alerta-bg; color: $alerta;  border-color: $alerta-linea; }
+.con_precio { background: $ok-bg;     color: #166534;  border-color: $ok-linea; }
+.suspendido { background: #fef2f2;    color: $peligro; border-color: #f3b4b4; }

@@ -31,6 +31,8 @@ export type NomencladorDetalleOut = NomencladorOut & {
 
 export type NomencladorListParams = {
   q?: string;
+  /** Con `q`: busca también en la descripción del catálogo. */
+  en_descripcion?: boolean;
   categoria?: string;
   complejidad?: string;
   /**
@@ -57,13 +59,178 @@ export type NomencladorCreatePayload = {
 
 export type NomencladorUpdatePayload = Partial<NomencladorCreatePayload & { activo?: boolean }>;
 
-export type AplicarEspecialidadesResult = {
-  aplicadas: {
-    obra_social_nro: number;
-    variantes_creadas: number;
-    variantes_existentes: number;
-  }[];
-  omitidas: { obra_social_nro: number; motivo: string }[];
+/** "Dar de alta en obras sociales" desde la Ficha del código: alta sin precio
+ * donde falta; donde ya estaba, suma las especialidades de la plantilla. */
+export type AplicarAltaItem = {
+  obra_social_nro: number;
+  nombre: string;
+  estado: "alta_creada" | "especialidades_agregadas" | "sin_cambios" | "error";
+  motivo: string | null;
+  especialidades_agregadas: number[];
+  sin_quien_factura: boolean;
+};
+export type AplicarEspecialidadesResult = { resultados: AplicarAltaItem[] };
+
+// ─── Flujo en 4 etapas: alta del código en la O.S. (etapa 3) ─────────────────
+
+export type EstadoCodigoOS = "sin_alta" | "sin_precio" | "con_precio" | "suspendido";
+
+export type CodigoPorOSItem = {
+  nomenclador_id: number;
+  codigo: string;
+  descripcion_colegio: string | null;
+  descripcion_os: string | null;
+  estado: EstadoCodigoOS;
+  sin_restriccion_especialidad: boolean;
+  especialidades_os: number;
+  especialidades_plantilla: number;
+  plantilla_sin_restriccion: boolean;
+};
+
+export type CodigosPorOSResult = {
+  obra_social_nro: number;
+  total: number;
+  page: number;
+  size: number;
+  conteos: Record<EstadoCodigoOS, number>;
+  items: CodigoPorOSItem[];
+};
+
+export type CodigoObraSocialOut = {
+  obra_social_nro: number;
+  nomenclador_id: number;
+  codigo: string;
+  descripcion: string | null;
+  descripcion_colegio: string | null;
+  categoria: string | null;
+  complejidad: Complejidad | null;
+  requiere_autorizacion: boolean | null;
+  cantidad_ayudantes: number | null;
+  observacion: string | null;
+  sin_restriccion_especialidad: boolean;
+  especialidades: number[];
+  estado: EstadoCodigoOS;
+  tiene_precio: boolean;
+};
+
+export type CodigoObraSocialUpdate = Partial<{
+  descripcion: string | null;
+  categoria: string | null;
+  complejidad: Complejidad | null;
+  requiere_autorizacion: boolean | null;
+  cantidad_ayudantes: number | null;
+  observacion: string | null;
+  sin_restriccion_especialidad: boolean;
+  especialidades: number[];
+  /** Cerrar (vigentes hasta ayer) los precios que quedarían sin especialidad. */
+  cerrar_precios: boolean;
+}>;
+
+/** 409 al editar el alta: quitar especialidades (o "sin restricción") deja precios
+ * activos sin con qué cotizar. La pantalla pregunta y reintenta con `cerrar_precios`. */
+export type PreciosDependientes = {
+  tipo: "precios_dependientes";
+  mensaje: string;
+  /** Hasta cuándo quedan vigentes si se cierran (ayer), ISO. */
+  cierre: string;
+  precios: { id: number; especialidad: string; vigencia_desde: string }[];
+};
+
+export type AltaCodigoItem = {
+  obra_social_nro: number;
+  nomenclador_id: number;
+  descripcion?: string | null;
+  especialidades?: number[] | null;
+  sin_restriccion_especialidad?: boolean | null;
+};
+
+export type AltaCodigosPayload = {
+  items: AltaCodigoItem[];
+  requiere_autorizacion?: boolean | null;
+  cantidad_ayudantes?: number | null;
+};
+
+export type AltaCodigoResultado = {
+  obra_social_nro: number;
+  nomenclador_id: number;
+  codigo: string;
+  estado: "creado" | "reactivado" | "ya_existia" | "error";
+  motivo: string | null;
+  sin_quien_factura: boolean;
+};
+
+export type FichaObraSocialItem = {
+  obra_social_nro: number;
+  nombre: string;
+  estado: EstadoCodigoOS;
+  sin_restriccion_especialidad: boolean;
+  especialidades: number;
+  precio_tipo: "igual" | "por_especialidad" | null;
+  precio_total: string | null;
+  variantes: number;
+  vigencia_desde: string | null;
+  prestaciones_sin_valorizar: number;
+};
+
+export type FichaCodigoOut = {
+  nomenclador_id: number;
+  codigo: string;
+  descripcion: string | null;
+  categoria: string | null;
+  complejidad: Complejidad | null;
+  activo: boolean;
+  plantilla_especialidades: number[];
+  plantilla_sin_restriccion: boolean;
+  conteos: Record<EstadoCodigoOS, number>;
+  obras_sociales: FichaObraSocialItem[];
+};
+
+export type PropagarModo = "agregar" | "igualar";
+export type PropagarEspecialidadesItem = {
+  obra_social_nro: number;
+  nombre: string;
+  estado: "actualizada" | "sin_cambios" | "salteada" | "error";
+  motivo: string | null;
+  agrega: number[];
+  quita: number[];
+  conserva_por_precio: number[];
+};
+export type PropagarEspecialidadesResult = {
+  dry_run: boolean;
+  modo: PropagarModo;
+  resultados: PropagarEspecialidadesItem[];
+};
+
+export type RevalorizarItem = {
+  id: number;
+  periodo: string;
+  cod_med: string;
+  fecha_practica: string | null;
+  conceptos: string;
+  estado: "revalorizada" | "sin_precio" | "error";
+  motivo: string | null;
+  importe_antes: string;
+  honorarios: string;
+  gastos: string;
+  ayudante: string;
+  coseguro: string;
+  importe_despues: string;
+};
+export type RevalorizarResult = {
+  dry_run: boolean;
+  cod_obra: string;
+  codigo: string;
+  total: number;
+  revalorizadas: number;
+  items: RevalorizarItem[];
+};
+
+/** Etiqueta de cada estado del código en una O.S. (mismo texto en todas las pantallas). */
+export const ESTADO_CODIGO_OS_LABEL: Record<EstadoCodigoOS, string> = {
+  sin_alta: "Sin alta",
+  sin_precio: "Sin precio",
+  con_precio: "Con precio",
+  suspendido: "Suspendido",
 };
 
 // ─── Nomenclador Nacional ───────────────────────────────────────────────────
@@ -491,6 +658,9 @@ export type ValorNucleoPayload = {
   especialidades: number[];
   /** Qué núcleo se edita cuando el código tiene NE y NN: las variantes NE o la fila NN. */
   origen?: "NE" | "NN";
+  /** false = no tocar quién factura ni crear/cerrar variantes (el lápiz del código
+   * sólo rota precios). Default del back: true. */
+  tocar_especialidades?: boolean;
 };
 
 // ─── Actualización masiva por porcentaje ───────────────────────────────────────
@@ -738,4 +908,78 @@ export type ReplicarGalenoFamiliaPayload = {
   unidades_honorarios?: number | null;
   unidades_ayudante?: number | null;
   unidades_gastos?: number | null;
+};
+
+// ─── Nomencladores nivelados (Cirugía adulto 7/10, Cirugía infantil, FASGO, Urología…) ──
+
+export type NomencladorNiveladoOut = {
+  id: number;
+  slug: string;
+  nombre: string;
+  galeno_grupo: string;
+  galeno_codigo: string | null;
+  galeno_nombre: string | null;
+  niveles: number;
+  total_codigos: number;
+  /** nivel → cantidad de códigos (las claves llegan como texto en el JSON). */
+  por_nivel: Record<string, number>;
+  con_unidades: number;
+};
+
+export type NiveladoCodigoOut = {
+  nomenclador_id: number;
+  codigo: string;
+  descripcion: string | null;
+  activo: boolean;
+  nivel: number | null;
+  /** "N unidades" fijas en vez de nivel (Honorarios = N × galeno de nivel 1). */
+  unidades: string | null;
+  observacion: string | null;
+};
+
+export type NiveladoCodigosOut = {
+  items: NiveladoCodigoOut[];
+  total: number;
+  page: number;
+  size: number;
+};
+
+/** Nivel o unidades fijas: exactamente uno. */
+export type NiveladoCodigoIn = {
+  nivel: number | null;
+  unidades: number | null;
+  observacion?: string | null;
+};
+
+export type EstadoAplicarNivelado =
+  | "crear" | "creado" | "ya_tiene_precio" | "sin_quien_factura" | "suspendido" | "omitido";
+
+export type AplicarNiveladoFila = {
+  nomenclador_id: number;
+  codigo: string;
+  descripcion: string | null;
+  nivel: number | null;
+  unidades: string | null;
+  estado: EstadoAplicarNivelado;
+  precios: number;
+  precio: string | null;
+  motivo: string | null;
+};
+
+export type AplicarNiveladoOut = {
+  dry_run: boolean;
+  obra_social_nro: number;
+  nomenclador: string;
+  galeno_nombre: string;
+  resumen: {
+    total: number;
+    crear: number;
+    ya_tiene_precio: number;
+    sin_quien_factura: number;
+    suspendido: number;
+    omitido: number;
+    precios: number;
+    altas: number;
+  };
+  filas: AplicarNiveladoFila[];
 };

@@ -88,7 +88,6 @@ function extractDetail(e: unknown): string {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Tab = "catalogo" | "por-os";
 type ModalKind = "create" | "edit" | "import" | "historial" | null;
 
 type EditForm = {
@@ -113,17 +112,11 @@ type ImportForm = {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function NomencladorGalenos() {
-  const [tab, setTab] = useState<Tab>("catalogo");
   const [modalKind, setModalKind] = useState<ModalKind>(null);
   const [toast, setToast] = useState<{
     type: "success" | "error";
     msg: string;
   } | null>(null);
-
-  // ── Catálogo state ────────────────────────────────────────────────────────
-  const [galenos, setGalenos] = useState<GalenoOut[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [catSearch, setCatSearch] = useState("");
 
   // ── Por-OS state ──────────────────────────────────────────────────────────
   const [selectedOsNro, setSelectedOsNro] = useState<number | null>(null);
@@ -190,18 +183,6 @@ export default function NomencladorGalenos() {
   const { data: osList = [] } = useObrasSociales();
 
   // ── Loaders ───────────────────────────────────────────────────────────────
-  const loadCatalogo = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await listGalenos();
-      setGalenos(data);
-    } catch {
-      setGalenos([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   const loadOsGalenos = useCallback(async (osNro: number) => {
     setLoadingOs(true);
     try {
@@ -215,37 +196,14 @@ export default function NomencladorGalenos() {
   }, []);
 
   useEffect(() => {
-    if (tab === "catalogo") loadCatalogo();
-  }, [loadCatalogo, tab]);
-
-  useEffect(() => {
-    if (tab === "por-os" && selectedOsNro) loadOsGalenos(selectedOsNro);
-  }, [tab, selectedOsNro, loadOsGalenos]);
+    if (selectedOsNro) loadOsGalenos(selectedOsNro);
+  }, [selectedOsNro, loadOsGalenos]);
 
   // ── Shared helpers ────────────────────────────────────────────────────────
   function showToast(type: "success" | "error", msg: string) {
     setToast({ type, msg });
     setTimeout(() => setToast(null), 4500);
   }
-
-  const filteredCatalogo = useMemo(() => {
-    const seen = new Set<string>();
-    const unique = galenos.filter((g) => {
-      if (!g.activo || seen.has(g.codigo)) return false;
-      seen.add(g.codigo);
-      return true;
-    });
-    const q = catSearch.trim().toLowerCase();
-    const visibles = q
-      ? unique.filter(
-          (g) =>
-            g.codigo.toLowerCase().includes(q) ||
-            g.nombre.toLowerCase().includes(q),
-        )
-      : unique;
-    // El orden del boletín, no el que devuelva la API. Ver `compararGalenos`.
-    return [...visibles].sort(compararGalenos);
-  }, [galenos, catSearch]);
 
   // Los galenos de la obra social elegida, en el orden del boletín. Dentro de
   // un mismo código los nivelados van por nivel, que es como se leen.
@@ -279,8 +237,7 @@ export default function NomencladorGalenos() {
   }
 
   function handleCreated() {
-    loadCatalogo();
-    if (tab === "por-os" && selectedOsNro) loadOsGalenos(selectedOsNro);
+    if (selectedOsNro) loadOsGalenos(selectedOsNro);
   }
 
   // ── Edit actions ──────────────────────────────────────────────────────────
@@ -600,7 +557,7 @@ export default function NomencladorGalenos() {
           </div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          {tab === "por-os" && selectedOsNro && (
+          {selectedOsNro && (
             <button className={styles.btnGhost} onClick={openImport}>
               <Download size={15} /> Importar de otra OS
             </button>
@@ -611,122 +568,8 @@ export default function NomencladorGalenos() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className={styles.tabs}>
-        <button
-          className={`${styles.tab} ${tab === "catalogo" ? styles.tabActive : ""}`}
-          onClick={() => setTab("catalogo")}
-        >
-          Catálogo
-          <span className={styles.tabCount}>{filteredCatalogo.length}</span>
-        </button>
-        <button
-          className={`${styles.tab} ${tab === "por-os" ? styles.tabActive : ""}`}
-          onClick={() => setTab("por-os")}
-        >
-          Por Obra Social
-        </button>
-      </div>
-
-      {/* ── CATÁLOGO TAB ── */}
-      {tab === "catalogo" && (
-        <div className={styles.body}>
-          <div className={styles.toolbar}>
-            <div className={styles.searchWrap}>
-              <Search size={15} className={styles.searchIcon} />
-              <input
-                className={styles.searchInput}
-                placeholder="Buscar por código o nombre…"
-                value={catSearch}
-                onChange={(e) => setCatSearch(e.target.value)}
-              />
-            </div>
-            <button
-              className={styles.btnGhost}
-              onClick={loadCatalogo}
-              title="Recargar"
-            >
-              <RefreshCw size={14} />
-            </button>
-          </div>
-
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Código</th>
-                  <th>Nombre</th>
-                  <th>Tipo</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={3} className={styles.loadingCell}>
-                      <Loader2 size={14} className={styles.spin} /> Cargando…
-                    </td>
-                  </tr>
-                ) : filteredCatalogo.length === 0 ? (
-                  <tr>
-                    <td colSpan={3} className={styles.emptyCell}>
-                      Sin galenos cargados aún.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredCatalogo.map((g) => {
-                    const hasNiveles = galenos.some(
-                      (x) => x.codigo === g.codigo && x.nivel != null,
-                    );
-                    return (
-                      <tr key={g.codigo}>
-                        <td>
-                          <span className={styles.codeCell}>{g.codigo}</span>
-                        </td>
-                        <td>{g.nombre}</td>
-                        <td>
-                          {hasNiveles ? (
-                            <span className={styles.nivelBadge}>Nivelado</span>
-                          ) : (
-                            <span className={styles.sinNivelBadge}>
-                              Sin nivel
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Mobile cards */}
-          <div className={styles.cardList}>
-            {filteredCatalogo.map((g) => {
-              const hasNiveles = galenos.some(
-                (x) => x.codigo === g.codigo && x.nivel != null,
-              );
-              return (
-                <div key={g.codigo} className={styles.card}>
-                  <div className={styles.cardTop}>
-                    <span className={styles.codeCell}>{g.codigo}</span>
-                    {hasNiveles ? (
-                      <span className={styles.nivelBadge}>Nivelado</span>
-                    ) : (
-                      <span className={styles.sinNivelBadge}>Sin nivel</span>
-                    )}
-                  </div>
-                  <p className={styles.cardDesc}>{g.nombre}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ── POR OS TAB ── */}
-      {tab === "por-os" && (
-        <div className={styles.osLayout}>
+      {/* Obras sociales y los galenos de la elegida */}
+      <div className={styles.osLayout}>
           {/* OS selector panel */}
           <div className={styles.osPanel}>
             <div className={styles.osPanelHeader}>
@@ -885,7 +728,6 @@ export default function NomencladorGalenos() {
             )}
           </div>
         </div>
-      )}
 
       {/* ── Modals ── */}
       <AnimatePresence>
@@ -893,7 +735,7 @@ export default function NomencladorGalenos() {
         {modalKind === "create" && (
           <GalenoCreateModal
             osList={osList}
-            initialOsNro={tab === "por-os" ? selectedOsNro : null}
+            initialOsNro={selectedOsNro}
             onClose={() => setModalKind(null)}
             onCreated={handleCreated}
           />

@@ -72,6 +72,9 @@ export interface PrestacionItem {
    *  elección de cabeza — el cirujano manda, aunque el pediatra también cobre
    *  honorarios (de su PROPIO código, distinto al del cirujano). */
   rol?: "pediatra" | null;
+  /** Solo si el código se carga sin precio: qué conceptos cotizar al revalorizar
+   *  (H honorarios, G gastos, A ayudante). Sin esto el backend asume "HG". */
+  concepto_sin_precio?: "H" | "G" | "HG" | "A" | null;
 }
 
 export interface PrestacionesCreate {
@@ -120,6 +123,9 @@ export interface PrecioResponse {
    *  hace obligatorio cuando carga el médico (422 sin número); del lado Colegio no
    *  bloquea, así que el front avisa para que no se cargue sin querer sin el número. */
   requiere_autorizacion?: boolean;
+  /** true → el código está dado de alta en la O.S. pero todavía sin precio: se carga
+   *  en $0 y queda "sin valorizar" hasta que se cargue el precio y se revalorice. */
+  sin_precio?: boolean;
 }
 
 export interface PrestacionRead {
@@ -151,6 +157,8 @@ export interface PrestacionRead {
   dni_paciente?: string | null; nombre_paciente?: string | null;
   revisado?: boolean;
   autorizacion?: string | null;
+  /** Cargada en $0 por falta de precio: conceptos pendientes ("H"/"G"/"A"). null = valorizada. */
+  sin_valorizar?: string | null;
   cod_clinica?: number | null;
   tipo_calculo?: TipoCalculo | null;
   via?: ViaPractica | null;
@@ -181,6 +189,8 @@ export interface MoverPeriodoResponse { ids_movidos: number[]; periodo_destino: 
 
 export interface CierrePreviewResponse {
   cod_obra: string; periodo: string; cantidad: number; importe_total: Money; cerrado: boolean;
+  /** Prestaciones cargadas en $0 por falta de precio. */
+  sin_valorizar?: number;
 }
 
 export interface CierrePayload {

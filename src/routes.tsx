@@ -1,5 +1,5 @@
 import { Suspense, lazy } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 
 // Structural components are always needed for the panel shell → keep eager.
@@ -114,6 +114,14 @@ const ConsultaValores = lazy(() => import("./app/pages/NomencladorNacional/Consu
 const ConsultaPrecios = lazy(() => import("./app/pages/NomencladorNacional/ConsultaPrecios/ConsultaPrecios"));
 const Homologador = lazy(() => import("./app/pages/NomencladorNacional/Homologador/Homologador"));
 const NomencladorPorOS = lazy(() => import("./app/pages/NomencladorNacional/NomencladorPorOS/NomencladorPorOS"));
+const CodigosPorOS = lazy(() => import("./app/pages/NomencladorNacional/CodigosPorOS/CodigosPorOS"));
+const NomencladoresNivelados = lazy(() => import("./app/pages/NomencladorNacional/NomencladoresNivelados/NomencladoresNivelados"));
+
+/** La pantalla pasó de /nomenclador/por-obra-social a /nomenclador/precios/por-obra-social. */
+function RedirigirValoresPorOS() {
+  const { search } = useLocation();
+  return <Navigate to={`/panel/nomenclador/precios/por-obra-social${search}`} replace />;
+}
 // Auditoría: el catálogo de una obra social recortado a una especialidad.
 const CodigosPorEspecialidad = lazy(
   () => import("./app/pages/NomencladorNacional/CodigosPorEspecialidad/CodigosPorEspecialidad"),
@@ -370,7 +378,11 @@ export default function RootRoutes() {
               <Route element={<RequireScope scope="nomenclador:leer" />}>
                 <Route path="nomenclador/codigos" element={<NomencladorCodigos />} />
                 <Route path="nomenclador/nacional" element={<NomencladorNacionalTabla />} />
-                <Route path="nomenclador/por-obra-social" element={<NomencladorPorOS />} />
+                <Route path="nomenclador/nivelados/:slug?" element={<NomencladoresNivelados />} />
+                <Route path="nomenclador/precios/por-obra-social" element={<NomencladorPorOS />} />
+                {/* Dirección vieja: redirige conservando ?os=…&codigo=… */}
+                <Route path="nomenclador/por-obra-social" element={<RedirigirValoresPorOS />} />
+                <Route path="nomenclador/codigos-por-os" element={<CodigosPorOS />} />
                 <Route path="nomenclador/por-especialidad" element={<CodigosPorEspecialidad />} />
                 <Route path="nomenclador/galenos" element={<NomencladorGalenos />} />
                 <Route path="nomenclador/consulta-valores" element={<ConsultaValores />} />

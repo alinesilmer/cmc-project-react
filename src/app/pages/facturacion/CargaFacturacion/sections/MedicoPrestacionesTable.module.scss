@@ -1,3 +1,5 @@
+@use "@/app/styles/all.scss" as *;
+
 // Mismo lenguaje visual y misma estructura de tabla que FacturaDetalle
 // (/panel/facturacion/periodos/:id) — ver ese módulo para la referencia original.
 $blue: #3b6fd4;
@@ -554,4 +556,18 @@ $shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
     opacity: 0.45;
     cursor: not-allowed;
   }
+}
+
+// Prestación cargada en $0 porque el código todavía no tenía precio.
+.sinValorizar {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid $alerta-linea;
+  background: $alerta-bg;
+  color: $alerta;
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
