@@ -84,9 +84,27 @@ type ComponenteForm = {
   opcional: boolean;
 };
 
+/** Lo que se cotiza: tipo de valor, componentes y coseguro. En "Cargar precio" hay
+ * uno compartido (el del form) o uno por especialidad. */
+type PrecioForm = {
+  modalidad: ModalidadValor;
+  componentes: ComponenteForm[];
+  coseguro: string;
+};
+
+/** Precios activos que el código ya tiene en la O.S. (para no duplicarlos). */
+type PreciosExistentes = {
+  nn: boolean;
+  /** NE sin especialidad (par sin restricción). */
+  sinEspecialidad: boolean;
+  especialidades: Set<number>;
+};
+
 type ValorForm = {
   nomencladorId: number | null;
   nomencladorLabel: string;
+  /** Descripción por defecto del catálogo, sólo para mostrar el código elegido. */
+  nomencladorDesc: string;
   origen: Origen;
   modalidad: ModalidadValor;
   vigencia_desde: string;
@@ -106,7 +124,125 @@ type ValorForm = {
   /** NE "sin restricción por especialidad": una sola fila, sin lista de especialidades. */
   sinRestriccion: boolean;
   componentes: ComponenteForm[];
+  /** NE con varias especialidades: un solo precio para todas (default) o uno por cada una. */
+  mismoPrecio: boolean;
+  /** Precio de cada especialidad cuando `mismoPrecio` está destildado. */
+  precios: Record<number, PrecioForm>;
 };
+
+function formVacio(): ValorForm {
+  return {
+    nomencladorId: null,
+    nomencladorLabel: "",
+    nomencladorDesc: "",
+    origen: "NE",
+    modalidad: "calculable",
+    vigencia_desde: today(),
+    descripcion: "",
+    porPresupuesto: false,
+    nivel: "",
+    complejidad: "",
+    cantidad_ayudantes: "",
+    coseguro: "",
+    observacion: "",
+    especialidadesChecked: new Set(),
+    sinRestriccion: false,
+    componentes: initComps(),
+    mismoPrecio: true,
+    precios: {},
+  };
+}
+
+/** Componentes a mandar: Honorarios siempre; Gastos/Ayudante sólo si están cargados. */
+function componentesPayload(
+  modalidad: ModalidadValor,
+  comps: ComponenteForm[],
+): ComponentePayload[] {
+  return comps
+    .filter((c, i) => {
+      if (i === 0) return true;
+      if (modalidad === "calculable") return c.galeno_id != null;
+      return c.valor_unitario.trim() !== "" && !isNaN(parseFloat(c.valor_unitario));
+    })
+    .map((c, i) => ({
+      concepto: c.concepto,
+      galeno_id: modalidad === "calculable" ? c.galeno_id : null,
+      cantidad: modalidad === "calculable" ? parseFloat(c.cantidad) || 0 : 0,
+      valor_unitario: modalidad === "fijo" ? parseFloat(c.valor_unitario) : null,
+      opcional: c.opcional,
+      orden: i,
+    }));
+}
+
+/** "" o un importe ≥ 0; si no, el mensaje de error. */
+function errorCoseguro(v: string): string | null {
+  if (!v.trim()) return null;
+  const n = parseFloat(v);
+  if (isNaN(n)) return "Importe inválido";
+  return n < 0 ? "El coseguro no puede ser negativo" : null;
+}
+
+/** "2026-10-03" → "03/10/2026". */
+const fechaCorta = (iso: string) => iso.split("-").reverse().join("/");
+
+/** El galeno nivelado que usa la ecuación (el primero), o null. Con galeno nivelado
+ * el nivel del precio es el suyo: no se carga aparte. */
+function galenoNivelado(
+  comps: ComponenteForm[],
+  galenoPorId: Map<number, GalenoOut>,
+): GalenoOut | null {
+  for (const c of comps) {
+    const g = c.galeno_id != null ? galenoPorId.get(c.galeno_id) : undefined;
+    if (g && g.nivel != null) return g;
+  }
+  return null;
+}
+
+/** Errores de un precio, con `prefijo` delante de cada clave (`""` para el compartido). */
+function erroresPrecio(p: PrecioForm, prefijo: string): Record<string, string> {
+  const errs: Record<string, string> = {};
+  const cos = errorCoseguro(p.coseguro);
+  if (cos) errs[`${prefijo}coseguro`] = cos;
+  const hon = p.componentes[0];
+  if (p.modalidad === "calculable") {
+    if (!hon.galeno_id) errs[`${prefijo}comp_0_galeno`] = "Seleccioná un galeno";
+  } else if (!hon.valor_unitario.trim() || isNaN(parseFloat(hon.valor_unitario))) {
+    errs[`${prefijo}comp_0_valor`] = "Valor inválido";
+  }
+  p.componentes.slice(1).forEach((c, i) => {
+    const idx = i + 1;
+    if (p.modalidad === "calculable" && c.cantidad && !c.galeno_id)
+      errs[`${prefijo}comp_${idx}_galeno`] = "Seleccioná un galeno";
+    if (p.modalidad === "fijo" && c.valor_unitario.trim() && isNaN(parseFloat(c.valor_unitario)))
+      errs[`${prefijo}comp_${idx}_valor`] = "Valor inválido";
+  });
+  return errs;
+}
+
+/** Los errores de un prefijo, sin el prefijo (lo que espera `ComponentEditor`). */
+function erroresDe(errors: Record<string, string>, prefijo: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(errors)) {
+    if (k.startsWith(prefijo)) out[k.slice(prefijo.length)] = v;
+  }
+  return out;
+}
+
+function clonarPrecio(p: PrecioForm): PrecioForm {
+  return { ...p, componentes: p.componentes.map((c) => ({ ...c })) };
+}
+
+/** El precio vigente de una fila, como formulario. */
+function precioDeValor(v: ValorOut): PrecioForm {
+  return {
+    modalidad: v.modalidad === "galeno" ? "calculable" : "fijo",
+    componentes: compsFromOut(v.componentes),
+    coseguro: v.coseguro && parseMonto(v.coseguro) !== 0 ? v.coseguro : "",
+  };
+}
+
+/** Para comparar contra lo que había al abrir: sólo rota lo que cambió. */
+const firmaPrecio = (p: PrecioForm) => JSON.stringify(p);
 
 type EditMode = "nucleo" | "variante";
 
@@ -380,10 +516,82 @@ function ComponentEditor({
       {hayAuto && (
         <span className={styles.hintText}>
           Los componentes con cantidad en 0 toman las unidades del galeno o del
-          código al guardar; el total no las incluye.
+          código al guardar; si no tienen, quedan en 0. El total no las incluye.
         </span>
       )}
     </div>
+  );
+}
+
+// ─── BloquePrecio: tipo de valor + componentes + coseguro ──────────────────────
+
+function BloquePrecio({
+  precio,
+  conTipo,
+  soloCoseguro = false,
+  galenos,
+  errors,
+  onModalidad,
+  onCoseguro,
+  onComp,
+}: {
+  precio: PrecioForm;
+  /** NN no elige tipo: siempre galeno × unidades. */
+  conTipo: boolean;
+  /** Por presupuesto: no hay fórmula, sólo coseguro. */
+  soloCoseguro?: boolean;
+  galenos: GalenoOut[];
+  errors: Record<string, string>;
+  onModalidad: (m: ModalidadValor) => void;
+  onCoseguro: (v: string) => void;
+  onComp: CompEditorProps["onChange"];
+}) {
+  return (
+    <>
+      <div className={styles.formRow2}>
+        {conTipo && !soloCoseguro && (
+          <div className={styles.formGroup}>
+            <label className={styles.formLabel}>Tipo de valor</label>
+            <select
+              className={styles.formSelect}
+              value={precio.modalidad}
+              onChange={(e) => onModalidad(e.target.value as ModalidadValor)}
+            >
+              <option value="calculable">Calculable (galeno × cantidad)</option>
+              <option value="fijo">Fijo ($)</option>
+            </select>
+          </div>
+        )}
+        <div className={styles.formGroup}>
+          <label className={styles.formLabel}>Coseguro ($)</label>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            className={`${styles.formInput} ${errors.coseguro ? styles.inputError : ""}`}
+            value={precio.coseguro}
+            onChange={(e) => onCoseguro(e.target.value)}
+            placeholder="0.00"
+          />
+          {errors.coseguro ? (
+            <span className={styles.errorMsg}>{errors.coseguro}</span>
+          ) : (
+            <span className={styles.hintText}>
+              Lo que el afiliado paga de su bolsillo; se descuenta del total al facturar
+            </span>
+          )}
+        </div>
+      </div>
+      {!soloCoseguro && (
+        <ComponentEditor
+          modalidad={precio.modalidad}
+          componentes={precio.componentes}
+          galenos={galenos}
+          errors={errors}
+          onChange={onComp}
+        />
+      )}
+    </>
   );
 }
 
@@ -414,29 +622,14 @@ export default function NomencladorPorOS() {
   const [editTarget, setEditTarget] = useState<ValorOut | null>(null);
 
   // Create form
-  const [form, setForm] = useState<ValorForm>({
-    nomencladorId: null,
-    nomencladorLabel: "",
-    origen: "NE",
-    modalidad: "calculable",
-    vigencia_desde: today(),
-    descripcion: "",
-    porPresupuesto: false,
-    nivel: "",
-    complejidad: "",
-    cantidad_ayudantes: "",
-    coseguro: "",
-    observacion: "",
-    especialidadesChecked: new Set(),
-    sinRestriccion: false,
-    componentes: initComps(),
-  });
+  const [form, setForm] = useState<ValorForm>(formVacio);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   // Etapa 3: el alta del código elegido en esta O.S. (descripción, quién factura).
   // Sin alta no se puede cargar precio (etapa 4).
   const [parAlta, setParAlta] = useState<CodigoObraSocialOut | null>(null);
   const [parCargando, setParCargando] = useState(false);
+  const [existentes, setExistentes] = useState<PreciosExistentes | null>(null);
   // Prestaciones cargadas en $0 para revalorizar después de guardar el precio.
   const [revalorizar, setRevalorizar] = useState<RevalorizarResult | null>(null);
   const [revalorizando, setRevalorizando] = useState(false)
@@ -469,8 +662,21 @@ export default function NomencladorPorOS() {
   // (solo valores, vigencia y coseguro). El NN es una fila única: mismo valor para
   // cualquier especialidad, pero se gestiona por el núcleo igual que el NE.
   const [editMode, setEditMode] = useState<EditMode>("variante");
-  const [ecuEnabled, setEcuEnabled] = useState(false);
   const [nucleoOrigen, setNucleoOrigen] = useState<"NE" | "NN">("NE");
+  // Lápiz del código = rotar precios. Las filas del código (una por especialidad en
+  // NE), el precio de cada una y si se cargan todas con el mismo.
+  const [nucleoVariantes, setNucleoVariantes] = useState<ValorOut[]>([]);
+  const [nucleoMismo, setNucleoMismo] = useState(true);
+  const [nucleoComun, setNucleoComun] = useState<PrecioForm>(() => ({
+    modalidad: "calculable",
+    componentes: initComps(),
+    coseguro: "",
+  }));
+  const [nucleoPrecios, setNucleoPrecios] = useState<Record<number, PrecioForm>>({});
+  const nucleoInicial = useRef<{ comun: string; porFila: Record<number, string> }>({
+    comun: "",
+    porFila: {},
+  });
   // Replicar en los otros planes de la familia de la OS (Swiss Medical, Medife…).
   const [replica, setReplica] = useState<ReplicaState>(REPLICA_INICIAL);
   const [replicaResultado, setReplicaResultado] = useState<
@@ -577,6 +783,32 @@ export default function NomencladorPorOS() {
         : espOptions,
     [parAlta, espOptions],
   );
+  const bloqueadasPorPrecio = useMemo(
+    () => new Map([...(existentes?.especialidades ?? [])].map((e) => [e, "Ya tiene precio"])),
+    [existentes],
+  );
+  // Con "Mismos precios" destildado y más de una especialidad: un precio por cada una.
+  const preciosSeparados =
+    form.origen === "NE" &&
+    !form.sinRestriccion &&
+    !form.porPresupuesto &&
+    !form.mismoPrecio &&
+    form.especialidadesChecked.size > 1;
+  const espSeleccionadas = useMemo(
+    () =>
+      [...form.especialidadesChecked].sort((a, b) =>
+        (espMap[a] ?? "").localeCompare(espMap[b] ?? "", "es", { sensitivity: "base" }),
+      ),
+    [form.especialidadesChecked, espMap],
+  );
+  const galenoPorId = useMemo(() => new Map(galenos.map((g) => [g.id, g])), [galenos]);
+  // Con galeno nivelado el nivel es el del galeno (se completa solo).
+  const nivelCreate = useMemo(() => {
+    const comps = preciosSeparados
+      ? espSeleccionadas.flatMap((e) => form.precios[e]?.componentes ?? [])
+      : form.componentes;
+    return galenoNivelado(comps, galenoPorId);
+  }, [preciosSeparados, espSeleccionadas, form.precios, form.componentes, galenoPorId]);
   // Códigos dados de alta en la O.S. que todavía no tienen precio.
   const pendientesQuery = useQuery({
     queryKey: ["codigos-sin-precio", selectedNroOS],
@@ -599,7 +831,7 @@ export default function NomencladorPorOS() {
     if (!codigo || selectedNroOS === null || !pendientesQuery.isFetched) return;
     paramsConsumidos.current = true;
     const pendiente = pendientes.find((p) => p.codigo === codigo);
-    if (pendiente) abrirCargaPrecio(pendiente.nomenclador_id, pendiente.codigo);
+    if (pendiente) abrirCargaPrecio(pendiente.nomenclador_id, pendiente.codigo, pendiente.descripcion_colegio);
     else setCodeSearch(codigo);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params, selectedNroOS, pendientesQuery.isFetched]);
@@ -758,8 +990,9 @@ export default function NomencladorPorOS() {
       try {
         const results = await listNomenclador({
           q: q.trim(),
+          en_descripcion: true,
           activo: true,
-          size: 12,
+          size: 20,
         });
         setNomResults(results);
       } catch {
@@ -770,11 +1003,12 @@ export default function NomencladorPorOS() {
     }, 300);
   }
 
-  function selectNom(n: Pick<NomencladorOut, "id" | "codigo">) {
+  function selectNom(n: Pick<NomencladorOut, "id" | "codigo"> & { descripcion?: string | null }) {
     setForm((prev) => ({
       ...prev,
       nomencladorId: n.id,
       nomencladorLabel: n.codigo,
+      nomencladorDesc: n.descripcion ?? "",
     }));
     setNomSearch("");
     setNomResults([]);
@@ -788,18 +1022,36 @@ export default function NomencladorPorOS() {
     if (!selectedNroOS) return;
     setParCargando(true);
     setParAlta(null);
+    setExistentes(null);
     try {
       const p = await getCodigoOS(selectedNroOS, nomencladorId);
+      // Precios activos del código en la O.S.: las especialidades que ya tienen
+      // no se vuelven a cargar acá (se rotan con el lápiz).
+      const activos = (
+        await listValores({ obra_social_nro: selectedNroOS, codigo: p.codigo, estado: "activo", size: 200 })
+      ).filter((v) => v.nomenclador_id === nomencladorId);
+      const ex: PreciosExistentes = {
+        nn: activos.some((v) => v.origen === "NN"),
+        sinEspecialidad: activos.some((v) => v.origen === "NE" && v.especialidad_id_colegio == null),
+        especialidades: new Set(
+          activos
+            .filter((v) => v.origen === "NE" && v.especialidad_id_colegio != null)
+            .map((v) => v.especialidad_id_colegio as number),
+        ),
+      };
+      setExistentes(ex);
       setParAlta(p);
       if (p.estado === "sin_precio" || p.estado === "con_precio") {
         setForm((prev) => ({
           ...prev,
           descripcion: p.descripcion ?? p.descripcion_colegio ?? prev.descripcion,
+          nomencladorDesc: prev.nomencladorDesc || (p.descripcion_colegio ?? ""),
           complejidad: p.complejidad ?? prev.complejidad,
           cantidad_ayudantes:
             p.cantidad_ayudantes != null ? String(p.cantidad_ayudantes) : prev.cantidad_ayudantes,
           sinRestriccion: p.sin_restriccion_especialidad,
-          especialidadesChecked: new Set(p.especialidades),
+          especialidadesChecked: new Set(p.especialidades.filter((e) => !ex.especialidades.has(e))),
+          precios: {},
         }));
         setErrors((prev) => ({ ...prev, descripcion: "", especialidades: "" }));
       }
@@ -812,7 +1064,8 @@ export default function NomencladorPorOS() {
 
   function clearNom() {
     setParAlta(null);
-    setForm((prev) => ({ ...prev, nomencladorId: null, nomencladorLabel: "" }));
+    setExistentes(null);
+    setForm((prev) => ({ ...prev, nomencladorId: null, nomencladorLabel: "", nomencladorDesc: "" }));
     setNomSearch("");
     setNomResults([]);
   }
@@ -913,6 +1166,62 @@ export default function NomencladorPorOS() {
     }));
   }
 
+  /** Precio compartido (el del form) como `PrecioForm`. */
+  const precioComun: PrecioForm = {
+    modalidad: form.modalidad,
+    componentes: form.componentes,
+    coseguro: form.coseguro,
+  };
+
+  /** Tilda/destilda "Mismos precios". Al separar, cada especialidad arranca con
+   * una copia de lo que ya estaba cargado en el precio común. */
+  function cambiarMismoPrecio(mismo: boolean) {
+    setForm((prev) => {
+      if (mismo) return { ...prev, mismoPrecio: true };
+      const precios: Record<number, PrecioForm> = {};
+      const base = { modalidad: prev.modalidad, componentes: prev.componentes, coseguro: prev.coseguro };
+      prev.especialidadesChecked.forEach((e) => {
+        precios[e] = prev.precios[e] ?? clonarPrecio(base);
+      });
+      return { ...prev, mismoPrecio: false, precios };
+    });
+    setErrors({});
+  }
+
+  function cambiarEspecialidades(next: number[]) {
+    setForm((prev) => {
+      const precios = { ...prev.precios };
+      if (!prev.mismoPrecio) {
+        const base = { modalidad: prev.modalidad, componentes: prev.componentes, coseguro: prev.coseguro };
+        next.forEach((e) => {
+          if (!precios[e]) precios[e] = clonarPrecio(base);
+        });
+      }
+      return { ...prev, especialidadesChecked: new Set(next), precios };
+    });
+    setErrors((p) => ({ ...p, especialidades: "" }));
+  }
+
+  function actualizarPrecioEsp(esp: number, cambio: (p: PrecioForm) => PrecioForm) {
+    setForm((prev) => ({
+      ...prev,
+      precios: { ...prev.precios, [esp]: cambio(prev.precios[esp]) },
+    }));
+  }
+
+  function cambiarModalidadEsp(esp: number, m: ModalidadValor) {
+    actualizarPrecioEsp(esp, (p) => ({
+      ...p,
+      modalidad: m,
+      componentes: p.componentes.map((c) => ({
+        ...c,
+        galeno_id: m === "fijo" ? null : c.galeno_id,
+        cantidad: m === "fijo" ? "" : c.cantidad,
+        valor_unitario: m === "calculable" ? "" : c.valor_unitario,
+      })),
+    }));
+  }
+
   // ─── Component update helpers ──────────────────────────────────────────────
 
   function updateComp<K extends keyof ComponenteForm>(
@@ -952,27 +1261,27 @@ export default function NomencladorPorOS() {
       form.especialidadesChecked.size === 0
     ) {
       errs.especialidades =
-        "Tildá al menos una especialidad o marcá 'Sin restricción por especialidad'";
+        existentes && existentes.especialidades.size > 0
+          ? "Tildá al menos una especialidad sin precio. Las que ya tienen se cambian con el lápiz del código."
+          : "Tildá al menos una especialidad o marcá 'Sin restricción por especialidad'";
     }
-    if (!form.porPresupuesto) {
-      const hon = form.componentes[0];
-      if (form.modalidad === "calculable") {
-        if (!hon.galeno_id) errs["comp_0_galeno"] = "Seleccioná un galeno";
+    if (form.origen === "NN" && existentes?.nn) {
+      errs.origen = "Este código ya tiene precio NN en esta obra social: se cambia con el lápiz.";
+    }
+    if (form.origen === "NE" && form.sinRestriccion && existentes?.sinEspecialidad) {
+      errs.especialidades = "Este código ya tiene precio sin restricción: se cambia con el lápiz.";
+    }
+    if (form.porPresupuesto) {
+      const cos = errorCoseguro(form.coseguro);
+      if (cos) errs.coseguro = cos;
+    } else {
+      if (preciosSeparados) {
+        espSeleccionadas.forEach((e) => {
+          Object.assign(errs, erroresPrecio(form.precios[e], `esp_${e}_`));
+        });
       } else {
-        if (!hon.valor_unitario.trim() || isNaN(parseFloat(hon.valor_unitario)))
-          errs["comp_0_valor"] = "Valor inválido";
+        Object.assign(errs, erroresPrecio(precioComun, ""));
       }
-      form.componentes.slice(1).forEach((c, i) => {
-        const idx = i + 1;
-        if (form.modalidad === "calculable" && c.cantidad && !c.galeno_id)
-          errs[`comp_${idx}_galeno`] = "Seleccioná un galeno";
-        if (
-          form.modalidad === "fijo" &&
-          c.valor_unitario.trim() &&
-          isNaN(parseFloat(c.valor_unitario))
-        )
-          errs[`comp_${idx}_valor`] = "Valor inválido";
-      });
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -981,6 +1290,11 @@ export default function NomencladorPorOS() {
   function validateEcuacion(): boolean {
     const errs: Record<string, string> = {};
     if (!editEcu.vigencia_desde) errs.vigencia_desde = "Requerido";
+    else if (editTarget && editEcu.vigencia_desde <= editTarget.vigencia_desde) {
+      errs.vigencia_desde = `Tiene que ser posterior al ${fechaCorta(editTarget.vigencia_desde)}, desde cuando rige el precio actual.`;
+    }
+    const cos = errorCoseguro(editEcu.coseguro);
+    if (cos) errs.coseguro = cos;
     // Por presupuesto no tiene ecuación propia (H/G/A van en 0, ver `_crear_valor_con_
     // componentes` en el back) — solo importan vigencia_desde y coseguro, ya chequeados.
     if (!editTarget?.por_presupuesto) {
@@ -1010,27 +1324,12 @@ export default function NomencladorPorOS() {
   // ─── Open modals ───────────────────────────────────────────────────────────
 
   function openCreate() {
-    setForm({
-      nomencladorId: null,
-      nomencladorLabel: "",
-      origen: "NE",
-      modalidad: "calculable",
-      vigencia_desde: today(),
-      descripcion: "",
-      porPresupuesto: false,
-      nivel: "",
-      complejidad: "",
-      cantidad_ayudantes: "",
-      coseguro: "",
-      observacion: "",
-      especialidadesChecked: new Set(),
-      sinRestriccion: false,
-      componentes: initComps(),
-    });
+    setForm(formVacio());
     setNomSearch("");
     setNomResults([]);
     setErrors({});
     setParAlta(null);
+    setExistentes(null);
     resetReplica();
     setModalKind("create");
   }
@@ -1063,7 +1362,6 @@ export default function NomencladorPorOS() {
       v.modalidad === "galeno" ? "calculable" : "fijo";
     cargarFormsDeEdicion(v, mod);
     resetReplica();
-    setEcuEnabled(false);
     setEditMode("variante");
     setModalKind("edit");
   }
@@ -1081,26 +1379,94 @@ export default function NomencladorPorOS() {
     const mod: ModalidadValor =
       base.modalidad === "galeno" ? "calculable" : "fijo";
     cargarFormsDeEdicion(base, mod);
-    setEditMeta((p) => ({
-      ...p,
-      // Datos del PAR (OS + código), no de cada fila: la NN nunca tiene especialidad,
-      // así que no se pueden deducir de las filas.
-      sin_restriccion_especialidad: grupo.some(
-        (v) => v.sin_restriccion_especialidad,
-      ),
-      especialidades: base.especialidades,
-    }));
+    const nombreFila = (v: ValorOut) =>
+      v.especialidad_id_colegio != null ? (espMap[v.especialidad_id_colegio] ?? "") : "";
+    const filas = [...grupo].sort((x, y) =>
+      nombreFila(x).localeCompare(nombreFila(y), "es", { sensitivity: "base" }),
+    );
+    const porFila: Record<number, PrecioForm> = {};
+    filas.forEach((v) => {
+      porFila[v.id] = precioDeValor(v);
+    });
+    const comun = precioDeValor(base);
+    // "Mismo precio" arranca tildado si hoy todas valen lo mismo; si no, cada
+    // especialidad muestra el suyo.
+    const firmas = new Set(filas.map((v) => firmaPrecio(porFila[v.id])));
+    nucleoInicial.current = {
+      comun: firmaPrecio(comun),
+      porFila: Object.fromEntries(filas.map((v) => [v.id, firmaPrecio(porFila[v.id])])),
+    };
+    setNucleoVariantes(filas);
+    setNucleoPrecios(porFila);
+    setNucleoComun(comun);
+    setNucleoMismo(firmas.size <= 1);
     resetReplica();
-    setEcuEnabled(false);
     setEditMode("nucleo");
     setModalKind("edit");
   }
 
+  function cambiarNucleoMismo(mismo: boolean) {
+    setNucleoMismo(mismo);
+    setEditErrors({});
+  }
+
+  function actualizarNucleoPrecio(
+    fila: number | "comun",
+    cambio: (p: PrecioForm) => PrecioForm,
+  ) {
+    if (fila === "comun") setNucleoComun(cambio);
+    else setNucleoPrecios((prev) => ({ ...prev, [fila]: cambio(prev[fila]) }));
+  }
+
+  function cambiarModalidadNucleo(fila: number | "comun", m: ModalidadValor) {
+    actualizarNucleoPrecio(fila, (p) => ({
+      ...p,
+      modalidad: m,
+      componentes: p.componentes.map((c) => ({
+        ...c,
+        galeno_id: m === "fijo" ? null : c.galeno_id,
+        cantidad: m === "fijo" ? "" : c.cantidad,
+        valor_unitario: m === "calculable" ? "" : c.valor_unitario,
+      })),
+    }));
+  }
+
+  function cambiarCompNucleo<K extends keyof ComponenteForm>(
+    fila: number | "comun",
+    idx: number,
+    key: K,
+    value: ComponenteForm[K],
+  ) {
+    actualizarNucleoPrecio(fila, (p) => {
+      const comps = [...p.componentes];
+      comps[idx] = { ...comps[idx], [key]: value };
+      return { ...p, componentes: comps };
+    });
+  }
+
+  /** Un solo formulario para todas: con una sola fila (o NN) no hay qué elegir. */
+  const nucleoUnico = nucleoMismo || nucleoVariantes.length <= 1;
+  const nucleoFilasCambiadas = nucleoUnico
+    ? []
+    : nucleoVariantes.filter(
+        (v) => firmaPrecio(nucleoPrecios[v.id]) !== nucleoInicial.current.porFila[v.id],
+      );
+  const nucleoComunCambio =
+    nucleoUnico && firmaPrecio(nucleoComun) !== nucleoInicial.current.comun;
+  const nivelNucleo = galenoNivelado(
+    nucleoUnico
+      ? nucleoComun.componentes
+      : nucleoVariantes.flatMap((v) => nucleoPrecios[v.id]?.componentes ?? []),
+    galenoPorId,
+  );
+
   function leyendaEdicion(): string | null {
     if (editMode === "nucleo") {
       return nucleoOrigen === "NN"
-        ? "Estás modificando este código PARA TODAS LAS ESPECIALIDADES (Nomenclador Nacional: mismo valor para cualquier especialidad)"
-        : "Estás modificando este código PARA TODAS LAS ESPECIALIDADES";
+        ? "Estás modificando el precio del NOMENCLADOR NACIONAL de este código (mismo valor para cualquier especialidad)"
+        : nucleoUnico
+          ? "Estás modificando este código PARA TODAS LAS ESPECIALIDADES con precio"
+          : "Estás modificando el precio de CADA ESPECIALIDAD de este código";
     }
     if (editMode === "variante" && editTarget?.origen === "NN") {
       return "Estás modificando los valores del NOMENCLADOR NACIONAL de este código (mismo valor para todas sus especialidades)";
@@ -1127,20 +1493,25 @@ export default function NomencladorPorOS() {
   /** Replica en la familia lo recién guardado. true = hubo replicación (el modal queda
    * abierto mostrando el resultado); false = no había nada que replicar. */
   async function replicarSiCorresponde(
-    payload: Omit<
+    ...payloads: Omit<
       ReplicarValoresFamiliaPayload,
       "origen_obra_social_nro" | "destinos"
-    >,
+    >[]
   ): Promise<boolean> {
     const destinos = destinosReplica(replica);
     if (!selectedNroOS || destinos.length === 0) return false;
     try {
-      const r = await replicarValoresEnFamilia({
-        ...payload,
-        origen_obra_social_nro: selectedNroOS,
-        destinos,
-      });
-      setReplicaResultado(r.resultados);
+      // Precios distintos por especialidad: una réplica por cada una.
+      const resultados: ReplicaResultadoItem[] = [];
+      for (const payload of payloads) {
+        const r = await replicarValoresEnFamilia({
+          ...payload,
+          origen_obra_social_nro: selectedNroOS,
+          destinos,
+        });
+        resultados.push(...r.resultados);
+      }
+      setReplicaResultado(resultados);
     } catch (e: unknown) {
       setReplicaError(errMsg(e, "Error de red o del servidor."));
     }
@@ -1180,9 +1551,9 @@ export default function NomencladorPorOS() {
   }
 
   /** Abre "Cargar precio" con el código ya elegido (desde el aviso de pendientes o la URL). */
-  function abrirCargaPrecio(nomencladorId: number, codigo: string) {
+  function abrirCargaPrecio(nomencladorId: number, codigo: string, descripcion?: string | null) {
     openCreate();
-    selectNom({ id: nomencladorId, codigo });
+    selectNom({ id: nomencladorId, codigo, descripcion });
   }
 
   // ─── Save actions ──────────────────────────────────────────────────────────
@@ -1191,30 +1562,16 @@ export default function NomencladorPorOS() {
     if (!validateCreate() || !selectedNroOS) return;
     setSaving(true);
     try {
-      let componentes: ComponentePayload[] = [];
-      if (!form.porPresupuesto) {
-        const filled = form.componentes.filter((c, i) => {
-          if (i === 0) return true;
-          if (form.modalidad === "calculable") return c.galeno_id != null;
-          return (
-            c.valor_unitario.trim() !== "" &&
-            !isNaN(parseFloat(c.valor_unitario))
-          );
-        });
-        componentes = filled.map((c, i) => ({
-          concepto: c.concepto,
-          galeno_id: form.modalidad === "calculable" ? c.galeno_id : null,
-          cantidad:
-            form.modalidad === "calculable" ? parseFloat(c.cantidad) || 0 : 0,
-          valor_unitario:
-            form.modalidad === "fijo" ? parseFloat(c.valor_unitario) : null,
-          opcional: c.opcional,
-          orden: i,
-        }));
-      }
+      const componentes = form.porPresupuesto
+        ? []
+        : componentesPayload(form.modalidad, form.componentes);
       const base = {
         descripcion: form.descripcion.trim(),
-        nivel: form.nivel ? parseInt(form.nivel, 10) : null,
+        nivel: nivelCreate
+          ? nivelCreate.nivel
+          : form.nivel
+            ? parseInt(form.nivel, 10)
+            : null,
         complejidad: form.complejidad || null,
         por_presupuesto: form.porPresupuesto,
         cantidad_ayudantes: form.cantidad_ayudantes.trim()
@@ -1229,6 +1586,43 @@ export default function NomencladorPorOS() {
         form.origen === "NE" && !form.sinRestriccion
           ? [...form.especialidadesChecked]
           : [];
+      if (preciosSeparados) {
+        // Un precio por especialidad: una alta por cada una. Si una falla, las
+        // anteriores quedan guardadas y se avisa cuál no entró.
+        const creados: ValorOut[] = [];
+        const replicas: Parameters<typeof replicarSiCorresponde> = [];
+        try {
+          for (const e of espSeleccionadas) {
+            const p = form.precios[e];
+            const propio = {
+              ...base,
+              coseguro: p.coseguro.trim() ? parseMonto(p.coseguro) : 0,
+              componentes: componentesPayload(p.modalidad, p.componentes),
+            };
+            const nuevos = await createValorMulti({
+              ...propio,
+              obra_social_nro: selectedNroOS,
+              nomenclador_id: form.nomencladorId!,
+              origen: "NE",
+              especialidades_id_colegio: [e],
+            });
+            creados.push(...nuevos);
+            replicas.push({
+              nomenclador_id: form.nomencladorId!,
+              operacion: "alta",
+              alta: { ...propio, origen: "NE", especialidades_id_colegio: [e], sin_restriccion_especialidad: null },
+            });
+          }
+        } finally {
+          if (creados.length > 0) setValores((prev) => [...creados, ...prev]);
+        }
+        showToast("success", `Precio cargado para ${creados.length} especialidades.`);
+        void ofrecerRevalorizar(form.nomencladorLabel);
+        void pendientesQuery.refetch();
+        const replicado = await replicarSiCorresponde(...replicas);
+        if (!replicado) setModalKind(null);
+        return;
+      }
       if (form.origen === "NE" && form.sinRestriccion) {
         // Sin restricción: UNA sola fila "sin especialidad".
         const v = await createValor({
@@ -1285,9 +1679,9 @@ export default function NomencladorPorOS() {
       });
       if (!replicado) setModalKind(null);
     } catch (e: unknown) {
-      const msg = (e as { response?: { data?: { detail?: string } } })?.response
-        ?.data?.detail;
-      showToast("error", msg ?? "No se pudo guardar.");
+      showToast("error", errMsg(e, "No se pudo guardar."));
+      // Con precios por especialidad, las anteriores al error ya quedaron guardadas.
+      if (preciosSeparados && selectedNroOS) void loadValores(selectedNroOS, vigencia);
     } finally {
       setSaving(false);
     }
@@ -1314,71 +1708,101 @@ export default function NomencladorPorOS() {
     }));
   }
 
+  /** El motivo que manda el servidor, sólo si es texto. Los errores de validación
+   * llegan como lista de objetos: mostrarlos tal cual rompía el aviso. */
   function errMsg(e: unknown, fallback: string): string {
-    return (
-      (e as { response?: { data?: { detail?: string } } })?.response?.data
-        ?.detail ?? fallback
-    );
+    const d = (e as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail;
+    if (typeof d === "string") return d;
+    if (d && typeof d === "object" && typeof (d as { mensaje?: unknown }).mensaje === "string") {
+      return (d as { mensaje: string }).mensaje;
+    }
+    return fallback;
   }
 
-  // Núcleo: metadatos + (opcional) ecuación + especialidades, todo para TODAS las variantes.
+  // Lápiz del código: datos del código + rotar precios (de todas juntas o de cada
+  // especialidad). Quién factura no se toca acá: es del alta (etapa 3).
   async function handleSaveNucleo() {
     if (!editTarget || !selectedNroOS) return;
-    if (
-      !editMeta.sin_restriccion_especialidad &&
-      editMeta.especialidades.length === 0
-    ) {
-      showToast(
-        "error",
-        "Elegí al menos una especialidad o marcá 'Sin restricción por especialidad'.",
-      );
-      return;
+    const errs: Record<string, string> = {};
+    const rota = nucleoComunCambio || nucleoFilasCambiadas.length > 0;
+    if (rota && !editEcu.vigencia_desde) errs.vigencia_desde = "Requerido";
+    // La nueva vigencia tiene que ser posterior a la de los precios que se rotan.
+    const rotadas = nucleoComunCambio ? nucleoVariantes : nucleoFilasCambiadas;
+    const ultima = rotadas.map((v) => v.vigencia_desde).sort().pop();
+    if (rota && editEcu.vigencia_desde && ultima && editEcu.vigencia_desde <= ultima) {
+      errs.vigencia_desde = `Tiene que ser posterior al ${fechaCorta(ultima)}, desde cuando rige el precio actual.`;
     }
-    if (ecuEnabled && !validateEcuacion()) return;
+    if (editTarget.por_presupuesto) {
+      if (nucleoComunCambio) {
+        const c = errorCoseguro(nucleoComun.coseguro);
+        if (c) errs.comun_coseguro = c;
+      }
+      nucleoFilasCambiadas.forEach((v) => {
+        const c = errorCoseguro(nucleoPrecios[v.id].coseguro);
+        if (c) errs[`fila_${v.id}_coseguro`] = c;
+      });
+    }
+    if (!editTarget.por_presupuesto) {
+      if (nucleoComunCambio) Object.assign(errs, erroresPrecio(nucleoComun, "comun_"));
+      nucleoFilasCambiadas.forEach((v) => {
+        Object.assign(errs, erroresPrecio(nucleoPrecios[v.id], `fila_${v.id}_`));
+      });
+    }
+    setEditErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+
+    const ecuacionDe = (p: PrecioForm, porPresupuesto: boolean) => ({
+      vigencia_desde: editEcu.vigencia_desde,
+      componentes: porPresupuesto ? [] : componentesPayload(p.modalidad, p.componentes),
+      coseguro: p.coseguro.trim() ? parseMonto(p.coseguro) : 0,
+      por_presupuesto: porPresupuesto,
+    });
+
     setSavingMeta(true);
     try {
       const nucleoPayload = {
         descripcion: editMeta.descripcion,
-        nivel: editMeta.nivel ? parseInt(editMeta.nivel, 10) : null,
+        // Con galeno nivelado el nivel sale del galeno: no se manda suelto.
+        nivel: nivelNucleo ? null : editMeta.nivel ? parseInt(editMeta.nivel, 10) : null,
         complejidad: editMeta.complejidad || null,
         cantidad_ayudantes: editMeta.cantidad_ayudantes.trim()
           ? parseInt(editMeta.cantidad_ayudantes, 10)
           : null,
         observacion: editMeta.observacion || null,
-        ecuacion: ecuEnabled
-          ? {
-              vigencia_desde: editEcu.vigencia_desde,
-              componentes: buildEcuComponentes(),
-              coseguro: editEcu.coseguro.trim()
-                ? parseMonto(editEcu.coseguro)
-                : 0,
-              por_presupuesto: editTarget.por_presupuesto,
-            }
+        ecuacion: nucleoComunCambio
+          ? ecuacionDe(nucleoComun, editTarget.por_presupuesto)
           : null,
-        sin_restriccion_especialidad: editMeta.sin_restriccion_especialidad,
-        especialidades: editMeta.sin_restriccion_especialidad
-          ? []
-          : editMeta.especialidades,
+        sin_restriccion_especialidad: false,
+        especialidades: [],
+        tocar_especialidades: false,
         origen: nucleoOrigen,
       };
-      await updateNucleoPar(
-        selectedNroOS,
-        editTarget.nomenclador_id,
-        nucleoPayload,
-      );
+      await updateNucleoPar(selectedNroOS, editTarget.nomenclador_id, nucleoPayload);
+      const replicas: Parameters<typeof replicarSiCorresponde> = [
+        { nomenclador_id: editTarget.nomenclador_id, operacion: "nucleo", nucleo: nucleoPayload },
+      ];
+      for (const v of nucleoFilasCambiadas) {
+        const ecuacion = {
+          ...ecuacionDe(nucleoPrecios[v.id], v.por_presupuesto),
+          aplicar_a_variantes: false,
+        };
+        await actualizarValor(v.id, ecuacion);
+        replicas.push({
+          nomenclador_id: v.nomenclador_id,
+          operacion: "variante",
+          variante: { origen: v.origen, especialidad_id_colegio: v.especialidad_id_colegio, ecuacion },
+        });
+      }
       showToast(
         "success",
-        "Código actualizado para todas las especialidades. Recargando…",
+        rota ? "Precios actualizados. Recargando…" : "Código actualizado. Recargando…",
       );
-      const replicado = await replicarSiCorresponde({
-        nomenclador_id: editTarget.nomenclador_id,
-        operacion: "nucleo",
-        nucleo: nucleoPayload,
-      });
+      const replicado = await replicarSiCorresponde(...replicas);
       if (!replicado) setModalKind(null);
-      loadValores(selectedNroOS);
+      loadValores(selectedNroOS, vigencia);
     } catch (e: unknown) {
       showToast("error", errMsg(e, "No se pudo actualizar el código."));
+      loadValores(selectedNroOS, vigencia);
     } finally {
       setSavingMeta(false);
     }
@@ -1427,9 +1851,7 @@ export default function NomencladorPorOS() {
       setValores((prev) => prev.filter((x) => x.id !== v.id));
       showToast("success", "Valor cerrado.");
     } catch (e: unknown) {
-      const msg = (e as { response?: { data?: { detail?: string } } })?.response
-        ?.data?.detail;
-      showToast("error", msg ?? "No se pudo cerrar el valor.");
+      showToast("error", errMsg(e, "No se pudo cerrar el valor."));
     }
   }
 
@@ -1446,9 +1868,9 @@ export default function NomencladorPorOS() {
           <Building2 size={20} />
         </span>
         <div>
-          <h1 className={styles.title}>Códigos por Obra Social</h1>
+          <h1 className={styles.title}>Valores por Obra Social</h1>
           <p className={styles.subtitle}>
-            Listado y carga de códigos y precios por obra social
+            Listado y carga de los valores de cada código por obra social
           </p>
         </div>
       </div>
@@ -1576,7 +1998,7 @@ export default function NomencladorPorOS() {
                         type="button"
                         className={styles.pendienteChip}
                         title={p.descripcion_os ?? p.descripcion_colegio ?? ""}
-                        onClick={() => abrirCargaPrecio(p.nomenclador_id, p.codigo)}
+                        onClick={() => abrirCargaPrecio(p.nomenclador_id, p.codigo, p.descripcion_colegio)}
                       >
                         {p.codigo}
                       </button>
@@ -1864,7 +2286,7 @@ export default function NomencladorPorOS() {
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className={styles.modal}
+              className={`${styles.modal} ${styles.modalXl}`}
               initial={{ opacity: 0, scale: 0.96, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 12 }}
@@ -1893,6 +2315,9 @@ export default function NomencladorPorOS() {
                   {form.nomencladorId ? (
                     <div className={styles.selectedCode}>
                       <strong>{form.nomencladorLabel}</strong>
+                      {form.nomencladorDesc && (
+                        <span className={styles.selectedCodeDesc}>{form.nomencladorDesc}</span>
+                      )}
                       <button
                         style={{
                           marginLeft: "auto",
@@ -1913,7 +2338,7 @@ export default function NomencladorPorOS() {
                           className={`${styles.formInput} ${errors.nomenclador ? styles.inputError : ""}`}
                           value={nomSearch}
                           onChange={(e) => searchNom(e.target.value)}
-                          placeholder="Escribí el código para buscar…"
+                          placeholder="Buscá por código o por nombre…"
                           style={{
                             paddingRight: nomLoading ? 36 : 12,
                             width: "100%",
@@ -1949,7 +2374,8 @@ export default function NomencladorPorOS() {
                               }}
                             >
                               <strong>{n.codigo}</strong>
-                              {n.categoria ? ` — ${n.categoria}` : ""}
+                              {" - "}
+                              {n.descripcion ?? ""}
                             </li>
                           ))}
                         </ul>
@@ -2026,40 +2452,35 @@ export default function NomencladorPorOS() {
                   )}
                 </div>
 
-                {/* Origen + nivel */}
-                <div className={styles.formRow2}>
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>
-                      Origen <span className={styles.req}>*</span>
-                    </label>
-                    <select
-                      className={styles.formSelect}
-                      value={form.origen}
-                      onChange={(e) => changeOrigen(e.target.value as Origen)}
-                    >
-                      {(
-                        Object.entries(ORIGEN_LABELS) as [Origen, string][]
-                      ).map(([k, label]) => (
-                        <option key={k} value={k}>
-                          {label} ({k})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>Nivel</label>
-                    <input
-                      type="number"
-                      min="1"
-                      step="1"
-                      className={styles.formInput}
-                      value={form.nivel}
-                      onChange={(e) =>
-                        setForm((p) => ({ ...p, nivel: e.target.value }))
-                      }
-                      placeholder="Opcional"
-                    />
-                  </div>
+                {/* Origen */}
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>
+                    Origen <span className={styles.req}>*</span>
+                  </label>
+                  <select
+                    className={`${styles.formSelect} ${errors.origen ? styles.inputError : ""}`}
+                    value={form.origen}
+                    onChange={(e) => {
+                      changeOrigen(e.target.value as Origen);
+                      setErrors((p) => ({ ...p, origen: "" }));
+                    }}
+                  >
+                    {(
+                      Object.entries(ORIGEN_LABELS) as [Origen, string][]
+                    ).map(([k, label]) => (
+                      <option key={k} value={k}>
+                        {label} ({k})
+                      </option>
+                    ))}
+                  </select>
+                  {form.origen === "NN" && existentes?.nn && (
+                    <span className={styles.avisoPrecio}>
+                      Este código ya tiene precio NN en esta obra social. Para cambiarlo usá el lápiz del código.
+                    </span>
+                  )}
+                  {errors.origen && !existentes?.nn && (
+                    <span className={styles.errorMsg}>{errors.origen}</span>
+                  )}
                 </div>
 
                 {/* Especialidades — solo NE. Una fila por cada tildada (POST /valores_nm/multi):
@@ -2099,23 +2520,31 @@ export default function NomencladorPorOS() {
                           </span>
                         </label>
                         {form.sinRestriccion ? (
-                          <span className={styles.hintText}>
-                            Se crea una sola fila "sin especialidad": vale para
-                            cualquier médico.
-                          </span>
+                          existentes?.sinEspecialidad ? (
+                            <span className={styles.avisoPrecio}>
+                              Este código ya tiene precio sin restricción. Para cambiarlo usá el lápiz del código.
+                            </span>
+                          ) : (
+                            <span className={styles.hintText}>
+                              Se crea una sola fila "sin especialidad": vale para
+                              cualquier médico.
+                            </span>
+                          )
                         ) : (
-                          <MultiSelectBuscable
-                            options={espOptionsAlta}
-                            selected={[...form.especialidadesChecked]}
-                            onChange={(next) => {
-                              setForm((p) => ({
-                                ...p,
-                                especialidadesChecked: new Set(next),
-                              }));
-                              setErrors((p) => ({ ...p, especialidades: "" }));
-                            }}
-                            noun="especialidades"
-                          />
+                          <>
+                            <MultiSelectBuscable
+                              options={espOptionsAlta}
+                              selected={[...form.especialidadesChecked]}
+                              onChange={cambiarEspecialidades}
+                              bloqueadas={bloqueadasPorPrecio}
+                              noun="especialidades"
+                            />
+                            {bloqueadasPorPrecio.size > 0 && (
+                              <span className={styles.hintText}>
+                                Las que dicen «Ya tiene precio» no se cargan acá: su precio se cambia con el lápiz del código.
+                              </span>
+                            )}
+                          </>
                         )}
                       </>
                     )}
@@ -2127,7 +2556,46 @@ export default function NomencladorPorOS() {
                   </div>
                 )}
 
-                {/* Vigencia + complejidad */}
+                {/* Nivel + complejidad */}
+                <div className={styles.formRow2}>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Nivel</label>
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      className={styles.formInput}
+                      value={nivelCreate ? String(nivelCreate.nivel) : form.nivel}
+                      disabled={!!nivelCreate}
+                      onChange={(e) =>
+                        setForm((p) => ({ ...p, nivel: e.target.value }))
+                      }
+                      placeholder="Opcional"
+                    />
+                    {nivelCreate && (
+                      <span className={styles.hintText}>
+                        Lo define el galeno {nivelCreate.nombre}.
+                      </span>
+                    )}
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Complejidad</label>
+                    <select
+                      className={styles.formSelect}
+                      value={form.complejidad}
+                      onChange={(e) =>
+                        setForm((p) => ({ ...p, complejidad: e.target.value }))
+                      }
+                    >
+                      <option value="">— Hereda del nomenclador —</option>
+                      <option value="baja">Baja</option>
+                      <option value="media">Media</option>
+                      <option value="alta">Alta</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Vigencia + ayudantes */}
                 <div className={styles.formRow2}>
                   <div className={styles.formGroup}>
                     <label className={styles.formLabel}>
@@ -2150,42 +2618,6 @@ export default function NomencladorPorOS() {
                         {errors.vigencia_desde}
                       </span>
                     )}
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>Complejidad</label>
-                    <select
-                      className={styles.formSelect}
-                      value={form.complejidad}
-                      onChange={(e) =>
-                        setForm((p) => ({ ...p, complejidad: e.target.value }))
-                      }
-                    >
-                      <option value="">— Hereda del nomenclador —</option>
-                      <option value="baja">Baja</option>
-                      <option value="media">Media</option>
-                      <option value="alta">Alta</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className={styles.formRow2}>
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>Coseguro ($)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      className={styles.formInput}
-                      value={form.coseguro}
-                      onChange={(e) =>
-                        setForm((p) => ({ ...p, coseguro: e.target.value }))
-                      }
-                      placeholder="0.00"
-                    />
-                    <span className={styles.hintText}>
-                      Lo que el afiliado paga de su bolsillo; se descuenta del
-                      total al facturar
-                    </span>
                   </div>
                   <div className={styles.formGroup}>
                     <label className={styles.formLabel}>
@@ -2213,55 +2645,89 @@ export default function NomencladorPorOS() {
                   </div>
                 </div>
 
-                {/* Por presupuesto toggle */}
-                <label className={styles.toggleRow}>
-                  <input
-                    type="checkbox"
-                    className={styles.toggleInput}
-                    checked={form.porPresupuesto}
-                    disabled={form.origen === "NN"}
-                    onChange={(e) =>
-                      setForm((p) => ({
-                        ...p,
-                        porPresupuesto: e.target.checked,
-                      }))
-                    }
-                  />
-                  <span className={styles.toggleLabel}>Por presupuesto</span>
-                  {form.origen === "NN" && (
-                    <span className={styles.hintText}>
-                      &nbsp;(no disponible para NN)
-                    </span>
-                  )}
-                </label>
+                {/* Por presupuesto: no existe para NN (siempre galeno × unidades). */}
+                {form.origen !== "NN" && (
+                  <label className={styles.toggleRow}>
+                    <input
+                      type="checkbox"
+                      className={styles.toggleInput}
+                      checked={form.porPresupuesto}
+                      onChange={(e) =>
+                        setForm((p) => ({
+                          ...p,
+                          porPresupuesto: e.target.checked,
+                        }))
+                      }
+                    />
+                    <span className={styles.toggleLabel}>Por presupuesto</span>
+                  </label>
+                )}
 
-                {!form.porPresupuesto && (
+                {form.porPresupuesto ? (
+                  <div className={styles.formGroup} style={{ maxWidth: 320 }}>
+                    <label className={styles.formLabel}>Coseguro ($)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      className={`${styles.formInput} ${errors.coseguro ? styles.inputError : ""}`}
+                      value={form.coseguro}
+                      onChange={(e) =>
+                        setForm((p) => ({ ...p, coseguro: e.target.value }))
+                      }
+                      placeholder="0.00"
+                    />
+                    {errors.coseguro && (
+                      <span className={styles.errorMsg}>{errors.coseguro}</span>
+                    )}
+                  </div>
+                ) : (
                   <>
-                    <div className={styles.formGroup}>
-                      <label className={styles.formLabel}>Tipo de valor</label>
-                      <select
-                        className={styles.formSelect}
-                        value={form.modalidad}
-                        disabled={form.origen === "NN"}
-                        onChange={(e) =>
-                          changeModalidad(e.target.value as ModalidadValor)
-                        }
-                        style={{ maxWidth: 260 }}
-                      >
-                        <option value="calculable">
-                          Calculable (galeno × cantidad)
-                        </option>
-                        <option value="fijo">Fijo ($)</option>
-                      </select>
-                      {form.origen === "NN" && (
-                        <span className={styles.hintText}>
-                          NN siempre usa galenos calculables
-                        </span>
+                    <div className={styles.sectionTitle}>Precio</div>
+                    {form.origen === "NE" &&
+                      !form.sinRestriccion &&
+                      form.especialidadesChecked.size > 1 && (
+                        <label className={styles.toggleRow}>
+                          <input
+                            type="checkbox"
+                            className={styles.toggleInput}
+                            checked={form.mismoPrecio}
+                            onChange={(e) => cambiarMismoPrecio(e.target.checked)}
+                          />
+                          <span className={styles.toggleLabel}>
+                            Mismos precios para todas las especialidades
+                          </span>
+                        </label>
                       )}
-                    </div>
-                    <div className={styles.sectionTitle}>
-                      Componentes de precio
-                    </div>
+                    {preciosSeparados ? (
+                      espSeleccionadas.map((e) => {
+                        const p = form.precios[e];
+                        const prefijo = `esp_${e}_`;
+                        return (
+                          <div key={e} className={styles.precioEsp}>
+                            <div className={styles.precioEspTitulo}>
+                              {espMap[e] ?? `Esp. ${e}`}
+                            </div>
+                            <BloquePrecio
+                              precio={p}
+                              conTipo
+                              galenos={galenos}
+                              errors={erroresDe(errors, prefijo)}
+                              onModalidad={(m) => cambiarModalidadEsp(e, m)}
+                              onCoseguro={(v) => actualizarPrecioEsp(e, (x) => ({ ...x, coseguro: v }))}
+                              onComp={(idx, key, value) =>
+                                actualizarPrecioEsp(e, (x) => {
+                                  const comps = [...x.componentes];
+                                  comps[idx] = { ...comps[idx], [key]: value };
+                                  return { ...x, componentes: comps };
+                                })
+                              }
+                            />
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <>
                     {nnMsg && (
                       <span
                         className={
@@ -2276,13 +2742,17 @@ export default function NomencladorPorOS() {
                         {nnMsg.texto}
                       </span>
                     )}
-                    <ComponentEditor
-                      modalidad={form.modalidad}
-                      componentes={form.componentes}
+                    <BloquePrecio
+                      precio={precioComun}
+                      conTipo={form.origen !== "NN"}
                       galenos={galenos}
                       errors={errors}
-                      onChange={updateComp}
+                      onModalidad={changeModalidad}
+                      onCoseguro={(v) => setForm((p) => ({ ...p, coseguro: v }))}
+                      onComp={updateComp}
                     />
+                      </>
+                    )}
                   </>
                 )}
 
@@ -2366,7 +2836,7 @@ export default function NomencladorPorOS() {
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className={`${styles.modal} ${styles.modalLg}`}
+              className={`${styles.modal} ${editMode === "nucleo" ? styles.modalXl : styles.modalLg}`}
               initial={{ opacity: 0, scale: 0.96, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 12 }}
@@ -2445,7 +2915,8 @@ export default function NomencladorPorOS() {
                           min="1"
                           step="1"
                           className={styles.formInput}
-                          value={editMeta.nivel}
+                          value={nivelNucleo ? String(nivelNucleo.nivel) : editMeta.nivel}
+                          disabled={!!nivelNucleo}
                           onChange={(e) =>
                             setEditMeta((p) => ({
                               ...p,
@@ -2454,6 +2925,11 @@ export default function NomencladorPorOS() {
                           }
                           placeholder="Opcional"
                         />
+                        {nivelNucleo && (
+                          <span className={styles.hintText}>
+                            Lo define el galeno {nivelNucleo.nombre}: cambia si cambiás el galeno.
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className={styles.formRow2}>
@@ -2516,81 +2992,97 @@ export default function NomencladorPorOS() {
                       </div>
                     </div>
 
-                    {
-                      <>
-                        <label className={styles.toggleRow}>
-                          <input
-                            type="checkbox"
-                            className={styles.toggleInput}
-                            checked={editMeta.sin_restriccion_especialidad}
-                            onChange={(e) =>
-                              setEditMeta((p) => ({
-                                ...p,
-                                sin_restriccion_especialidad: e.target.checked,
-                              }))
-                            }
-                          />
-                          <span className={styles.toggleLabel}>
-                            Sin restricción por especialidad
-                          </span>
-                        </label>
-                        {editMeta.sin_restriccion_especialidad ? (
-                          <p className={styles.hintText}>
-                            {nucleoOrigen === "NN"
-                              ? "Cualquier especialidad puede facturar este código."
-                              : 'Al guardar, las variantes por especialidad se cierran y queda una sola fila "sin especialidad".'}
-                          </p>
-                        ) : (
-                          <div className={styles.formGroup}>
-                            <label className={styles.formLabel}>
-                              Especialidades
-                            </label>
-                            <p className={styles.hintText}>
-                              {nucleoOrigen === "NN"
-                                ? "Quién puede facturar este código en esta obra social. Son las mismas especialidades que usan las variantes NE del código."
-                                : "Las que tildes y no tengan fila se crean con el precio y la vigencia de la primera variante; las que destildes se cierran."}
-                            </p>
-                            <MultiSelectBuscable
-                              options={espOptions}
-                              selected={editMeta.especialidades}
-                              onChange={(next) =>
-                                setEditMeta((p) => ({
-                                  ...p,
-                                  especialidades: next,
-                                }))
-                              }
-                              noun="especialidades"
-                            />
-                          </div>
-                        )}
-                      </>
-                    }
+                    <p className={styles.hintText}>
+                      Quién lo factura se edita en{" "}
+                      <Link to={`/panel/nomenclador/codigos-por-os?os=${selectedNroOS}&codigo=${editTarget.codigo}`}>
+                        Códigos por obra social
+                      </Link>
+                      . Para darle precio a otra especialidad, usá «Cargar precio».
+                    </p>
                   </div>
                 )}
 
                 {/* Valores, vigencia y coseguro. En el núcleo es opcional (abre una vigencia
                     nueva en TODAS las variantes); en una variante suelta es lo único editable. */}
+                {editMode === "nucleo" && (
+                  <div className={styles.editSection}>
+                    <div className={styles.editSectionTitle}>Precios</div>
+                    <p className={styles.hintText}>
+                      Vienen con el precio vigente. Los que cambies cierran su vigencia y
+                      abren una nueva desde la fecha de abajo; los que no toques quedan igual.
+                    </p>
+                    <div className={styles.formGroup} style={{ maxWidth: 320 }}>
+                      <label className={styles.formLabel}>
+                        Nueva vigencia desde <span className={styles.req}>*</span>
+                      </label>
+                      <input
+                        type="date"
+                        className={`${styles.formInput} ${editErrors.vigencia_desde ? styles.inputError : ""}`}
+                        value={editEcu.vigencia_desde}
+                        onChange={(e) => {
+                          setEditEcu((p) => ({ ...p, vigencia_desde: e.target.value }));
+                          setEditErrors((p) => ({ ...p, vigencia_desde: "" }));
+                        }}
+                      />
+                      {editErrors.vigencia_desde && (
+                        <span className={styles.errorMsg}>{editErrors.vigencia_desde}</span>
+                      )}
+                    </div>
+                    {nucleoVariantes.length > 1 && (
+                      <label className={styles.toggleRow}>
+                        <input
+                          type="checkbox"
+                          className={styles.toggleInput}
+                          checked={nucleoMismo}
+                          onChange={(e) => cambiarNucleoMismo(e.target.checked)}
+                        />
+                        <span className={styles.toggleLabel}>
+                          Mismo precio para todas las especialidades
+                        </span>
+                      </label>
+                    )}
+                    {nucleoUnico ? (
+                      <BloquePrecio
+                        precio={nucleoComun}
+                        conTipo={nucleoOrigen !== "NN"}
+                        soloCoseguro={editTarget.por_presupuesto}
+                        galenos={galenos}
+                        errors={erroresDe(editErrors, "comun_")}
+                        onModalidad={(m) => cambiarModalidadNucleo("comun", m)}
+                        onCoseguro={(v) => actualizarNucleoPrecio("comun", (x) => ({ ...x, coseguro: v }))}
+                        onComp={(idx, key, value) => cambiarCompNucleo("comun", idx, key, value)}
+                      />
+                    ) : (
+                      nucleoVariantes.map((v) => (
+                        <div key={v.id} className={styles.precioEsp}>
+                          <div className={styles.precioEspTitulo}>
+                            {v.especialidad_id_colegio != null
+                              ? (espMap[v.especialidad_id_colegio] ?? `Esp. ${v.especialidad_id_colegio}`)
+                              : "Sin especialidad"}
+                            <span className={styles.precioEspVigencia}>vigente desde {v.vigencia_desde}</span>
+                          </div>
+                          <BloquePrecio
+                            precio={nucleoPrecios[v.id]}
+                            conTipo
+                            soloCoseguro={v.por_presupuesto}
+                            galenos={galenos}
+                            errors={erroresDe(editErrors, `fila_${v.id}_`)}
+                            onModalidad={(m) => cambiarModalidadNucleo(v.id, m)}
+                            onCoseguro={(c) => actualizarNucleoPrecio(v.id, (x) => ({ ...x, coseguro: c }))}
+                            onComp={(idx, key, value) => cambiarCompNucleo(v.id, idx, key, value)}
+                          />
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+
+                {editMode === "variante" && (
                 <div className={styles.editSection}>
                   <div className={styles.editSectionTitle}>
-                    {editMode === "nucleo"
-                      ? "Valores, vigencia y coseguro"
-                      : "Actualizar ecuación de precio"}
+                    Actualizar ecuación de precio
                   </div>
-                  {editMode === "nucleo" && !ecuEnabled ? (
-                    <div>
-                      <p className={styles.hintText}>
-                        Si no los modificás, los valores y la vigencia actuales
-                        se mantienen.
-                      </p>
-                      <button
-                        className={styles.btnGhost}
-                        type="button"
-                        onClick={() => setEcuEnabled(true)}
-                      >
-                        Modificar valores, vigencia y coseguro
-                      </button>
-                    </div>
-                  ) : (
+                  {(
                     <>
                       <p className={styles.hintText}>
                         {editTarget.por_presupuesto
@@ -2632,7 +3124,7 @@ export default function NomencladorPorOS() {
                             type="number"
                             min="0"
                             step="0.01"
-                            className={styles.formInput}
+                            className={`${styles.formInput} ${editErrors.coseguro ? styles.inputError : ""}`}
                             value={editEcu.coseguro}
                             onChange={(e) =>
                               setEditEcu((p) => ({
@@ -2642,6 +3134,9 @@ export default function NomencladorPorOS() {
                             }
                             placeholder="0.00"
                           />
+                          {editErrors.coseguro && (
+                            <span className={styles.errorMsg}>{editErrors.coseguro}</span>
+                          )}
                         </div>
                       </div>
                       {!editTarget.por_presupuesto && (
@@ -2676,17 +3171,7 @@ export default function NomencladorPorOS() {
                           />
                         </>
                       )}
-                      {editMode === "nucleo" ? (
-                        <div style={{ marginTop: 8 }}>
-                          <button
-                            className={styles.btnGhost}
-                            type="button"
-                            onClick={() => setEcuEnabled(false)}
-                          >
-                            No modificar valores
-                          </button>
-                        </div>
-                      ) : (
+                      {(
                         <div
                           style={{
                             display: "flex",
@@ -2715,6 +3200,7 @@ export default function NomencladorPorOS() {
                     </>
                   )}
                 </div>
+                )}
 
                 {replicaTerminada ? (
                   <>

@@ -94,6 +94,26 @@
 
 .label { min-width: 0; overflow-wrap: anywhere; }
 
+.rowBloqueada {
+  cursor: not-allowed;
+  color: $tinta-3;
+  background: #fafbfd;
+
+  &:hover { background: #fafbfd; }
+  input[type="checkbox"] { cursor: not-allowed; }
+}
+
+.motivo {
+  margin-left: auto;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #fefcbf;
+  color: #975a16;
+  font-size: 0.7rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .hint {
   margin-left: auto;
   color: $tinta-3;

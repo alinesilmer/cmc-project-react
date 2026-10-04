@@ -31,6 +31,8 @@ export type NomencladorDetalleOut = NomencladorOut & {
 
 export type NomencladorListParams = {
   q?: string;
+  /** Con `q`: busca también en la descripción del catálogo. */
+  en_descripcion?: boolean;
   categoria?: string;
   complejidad?: string;
   /**
@@ -120,7 +122,19 @@ export type CodigoObraSocialUpdate = Partial<{
   observacion: string | null;
   sin_restriccion_especialidad: boolean;
   especialidades: number[];
+  /** Cerrar (vigentes hasta ayer) los precios que quedarían sin especialidad. */
+  cerrar_precios: boolean;
 }>;
+
+/** 409 al editar el alta: quitar especialidades (o "sin restricción") deja precios
+ * activos sin con qué cotizar. La pantalla pregunta y reintenta con `cerrar_precios`. */
+export type PreciosDependientes = {
+  tipo: "precios_dependientes";
+  mensaje: string;
+  /** Hasta cuándo quedan vigentes si se cierran (ayer), ISO. */
+  cierre: string;
+  precios: { id: number; especialidad: string; vigencia_desde: string }[];
+};
 
 export type AltaCodigoItem = {
   obra_social_nro: number;
@@ -620,6 +634,9 @@ export type ValorNucleoPayload = {
   especialidades: number[];
   /** Qué núcleo se edita cuando el código tiene NE y NN: las variantes NE o la fila NN. */
   origen?: "NE" | "NN";
+  /** false = no tocar quién factura ni crear/cerrar variantes (el lápiz del código
+   * sólo rota precios). Default del back: true. */
+  tocar_especialidades?: boolean;
 };
 
 // ─── Actualización masiva por porcentaje ───────────────────────────────────────
@@ -867,4 +884,78 @@ export type ReplicarGalenoFamiliaPayload = {
   unidades_honorarios?: number | null;
   unidades_ayudante?: number | null;
   unidades_gastos?: number | null;
+};
+
+// ─── Nomencladores nivelados (Cirugía adulto 7/10, Cirugía infantil, FASGO, Urología…) ──
+
+export type NomencladorNiveladoOut = {
+  id: number;
+  slug: string;
+  nombre: string;
+  galeno_grupo: string;
+  galeno_codigo: string | null;
+  galeno_nombre: string | null;
+  niveles: number;
+  total_codigos: number;
+  /** nivel → cantidad de códigos (las claves llegan como texto en el JSON). */
+  por_nivel: Record<string, number>;
+  con_unidades: number;
+};
+
+export type NiveladoCodigoOut = {
+  nomenclador_id: number;
+  codigo: string;
+  descripcion: string | null;
+  activo: boolean;
+  nivel: number | null;
+  /** "N unidades" fijas en vez de nivel (Honorarios = N × galeno de nivel 1). */
+  unidades: string | null;
+  observacion: string | null;
+};
+
+export type NiveladoCodigosOut = {
+  items: NiveladoCodigoOut[];
+  total: number;
+  page: number;
+  size: number;
+};
+
+/** Nivel o unidades fijas: exactamente uno. */
+export type NiveladoCodigoIn = {
+  nivel: number | null;
+  unidades: number | null;
+  observacion?: string | null;
+};
+
+export type EstadoAplicarNivelado =
+  | "crear" | "creado" | "ya_tiene_precio" | "sin_quien_factura" | "suspendido" | "omitido";
+
+export type AplicarNiveladoFila = {
+  nomenclador_id: number;
+  codigo: string;
+  descripcion: string | null;
+  nivel: number | null;
+  unidades: string | null;
+  estado: EstadoAplicarNivelado;
+  precios: number;
+  precio: string | null;
+  motivo: string | null;
+};
+
+export type AplicarNiveladoOut = {
+  dry_run: boolean;
+  obra_social_nro: number;
+  nomenclador: string;
+  galeno_nombre: string;
+  resumen: {
+    total: number;
+    crear: number;
+    ya_tiene_precio: number;
+    sin_quien_factura: number;
+    suspendido: number;
+    omitido: number;
+    precios: number;
+    altas: number;
+  };
+  filas: AplicarNiveladoFila[];
 };

@@ -35,7 +35,7 @@ import type {
 
 const LISTADO_PATH = "/panel/nomenclador/codigos";
 const CODIGOS_OS_PATH = "/panel/nomenclador/codigos-por-os";
-const PRECIOS_PATH = "/panel/nomenclador/por-obra-social";
+const PRECIOS_PATH = "/panel/nomenclador/precios/por-obra-social";
 
 type Toast = { type: "success" | "error"; msg: string };
 type Tab = "obras" | "datos" | "especialidades" | "boletin";

@@ -4,7 +4,7 @@ import s from "./estadoCodigoPill.module.scss";
 
 /**
  * Estado de un código en una obra social, igual en todas las pantallas del flujo
- * (Ficha del código, Códigos por obra social, Precios por obra social):
+ * (Ficha del código, Códigos por obra social, Valores por obra social):
  * Sin alta · Sin precio · Con precio · Suspendido.
  */
 export default function EstadoCodigoPill({

@@ -18,6 +18,9 @@ type Props<V extends string | number> = {
   noun: string;
   disabled?: boolean;
   loading?: boolean;
+  /** Opciones que se muestran pero no se pueden tildar, con el motivo al lado
+   * (ej. "Ya tiene precio"). "Seleccionar todos" las saltea. */
+  bloqueadas?: Map<V, string>;
 };
 
 const normalizar = (s: string) =>
@@ -34,6 +37,7 @@ export default function MultiSelectBuscable<V extends string | number>({
   noun,
   disabled,
   loading,
+  bloqueadas,
 }: Props<V>) {
   const [query, setQuery] = useState("");
   // Siempre alfabético, sin importar el orden en que lleguen las opciones.
@@ -60,7 +64,11 @@ export default function MultiSelectBuscable<V extends string | number>({
 
   function selectVisibles(on: boolean) {
     const next = new Set(selectedSet);
-    visibles.forEach((o) => (on ? next.add(o.value) : next.delete(o.value)));
+    visibles.forEach((o) => {
+      if (on && bloqueadas?.has(o.value)) return;
+      if (on) next.add(o.value);
+      else next.delete(o.value);
+    });
     onChange(options.map((o) => o.value).filter((x) => next.has(x)));
   }
 
@@ -102,18 +110,25 @@ export default function MultiSelectBuscable<V extends string | number>({
         ) : visibles.length === 0 ? (
           <p className={styles.empty}>Sin coincidencias</p>
         ) : (
-          visibles.map((o) => (
-            <label key={o.value} className={styles.row}>
-              <input
-                type="checkbox"
-                checked={selectedSet.has(o.value)}
-                disabled={disabled}
-                onChange={() => toggle(o.value)}
-              />
-              <span className={styles.label}>{o.label}</span>
-              {o.hint && <small className={styles.hint}>{o.hint}</small>}
-            </label>
-          ))
+          visibles.map((o) => {
+            const motivo = bloqueadas?.get(o.value);
+            return (
+              <label key={o.value} className={`${styles.row} ${motivo ? styles.rowBloqueada : ""}`} title={motivo}>
+                <input
+                  type="checkbox"
+                  checked={!motivo && selectedSet.has(o.value)}
+                  disabled={disabled || !!motivo}
+                  onChange={() => toggle(o.value)}
+                />
+                <span className={styles.label}>{o.label}</span>
+                {motivo ? (
+                  <small className={styles.motivo}>{motivo}</small>
+                ) : (
+                  o.hint && <small className={styles.hint}>{o.hint}</small>
+                )}
+              </label>
+            );
+          })
         )}
       </div>
 

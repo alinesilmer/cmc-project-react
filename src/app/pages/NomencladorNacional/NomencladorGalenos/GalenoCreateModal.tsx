@@ -4,15 +4,17 @@ import {
   CheckCircle2, AlertCircle, Trash2,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 
 import styles from "./NomencladorGalenos.module.scss";
 import {
   listGalenoPlantillas, createNivelesGaleno, createGaleno,
-  getFamiliaObraSocial, replicarGalenoEnFamilia,
+  getFamiliaObraSocial, replicarGalenoEnFamilia, listNivelados,
 } from "../nomenclador.api";
 import type {
-  GalenoOut, GalenoPlantillaOut, ObraSocialFamiliaItem, ReplicaResultadoItem,
+  GalenoOut, GalenoPlantillaOut, NomencladorNiveladoOut, ObraSocialFamiliaItem, ReplicaResultadoItem,
 } from "../nomenclador.types";
+import AplicarNiveladoModal from "../components/AplicarNiveladoModal";
 import ReplicarFamiliaBlock, {
   ErrorReplica, ResultadoReplica,
 } from "../../../components/molecules/ReplicarFamilia/ReplicarFamiliaBlock";
@@ -81,6 +83,9 @@ type OsBlock = {
 type SubmitResult = {
   osNro: number;
   nombre: string;
+  /** Plantilla de origen: si es la de un nomenclador nivelado, se ofrece aplicarlo. */
+  grupo: string;
+  vigencia: string;
   nivelesCount: number;
   ok: boolean;
   detail?: string;
@@ -147,6 +152,11 @@ export default function GalenoCreateModal({
 
   const [submitting, setSubmitting] = useState(false);
   const [results, setResults] = useState<SubmitResult[] | null>(null);
+  const { data: nivelados = [] } = useQuery({
+    queryKey: ["nomencladores-nivelados"],
+    queryFn: listNivelados,
+    staleTime: 5 * 60 * 1000,
+  });
 
   // Replicar en los planes de la familia de las OS elegidas.
   const [familiaPorOs, setFamiliaPorOs] = useState<Record<number, ObraSocialFamiliaItem[]>>({});
@@ -414,7 +424,10 @@ export default function GalenoCreateModal({
 
     const res: SubmitResult[] = settled.map((s, i) => {
       const { osNro, draft } = tasks[i];
-      const base = { osNro, nombre: draft.nombre, nivelesCount: draft.niveles.length };
+      const base = {
+        osNro, nombre: draft.nombre, nivelesCount: draft.niveles.length,
+        grupo: draft.grupo, vigencia: draft.vigencia_desde,
+      };
       return s.status === "fulfilled"
         ? { ...base, ok: true }
         : { ...base, ok: false, detail: extractDetail(s.reason) };
@@ -471,7 +484,7 @@ export default function GalenoCreateModal({
       wide
     >
       {results ? (
-        <ResultSummary results={results} osName={osName} onClose={onClose} />
+        <ResultSummary results={results} osName={osName} nivelados={nivelados} onClose={onClose} />
       ) : (
         <>
           {/* Selección de obras sociales */}
@@ -800,14 +813,21 @@ function DraftCard({
 // ─── Result summary ───────────────────────────────────────────────────────────
 
 function ResultSummary({
-  results, osName, onClose,
+  results, osName, nivelados, onClose,
 }: {
   results: SubmitResult[];
   osName: (nro: number) => string;
+  /** Nomencladores nivelados: el galeno recién creado puede ser el de uno. */
+  nivelados: NomencladorNiveladoOut[];
   onClose: () => void;
 }) {
   const ok = results.filter((r) => r.ok).length;
   const failed = results.length - ok;
+  const [aplicar, setAplicar] = useState<{ r: SubmitResult; n: NomencladorNiveladoOut } | null>(null);
+  // Galenos creados desde la plantilla de un nomenclador nivelado: se ofrece aplicarlo.
+  const ofrecer = results.flatMap((r) =>
+    r.ok ? nivelados.filter((n) => n.galeno_grupo === r.grupo).map((n) => ({ r, n })) : [],
+  );
   return (
     <>
       <div className={styles.warningBox} style={{ background: "#f0fdf4", borderColor: "#bbf7d0", color: "#166534" }}>
@@ -838,9 +858,35 @@ function ResultSummary({
           </div>
         ) : null,
       )}
+      {ofrecer.length > 0 && (
+        <div className={styles.formGroup}>
+          <span className={styles.formLabel}>Nomenclador del galeno</span>
+          {ofrecer.map(({ r, n }) => (
+            <div key={`${r.osNro}-${n.slug}`} className={styles.warningBox}>
+              <span style={{ flex: 1 }}>
+                <strong>{n.nombre}</strong>: darle a {osName(r.osNro)} sus {n.total_codigos} códigos con precio
+                según el nivel de cada uno.
+              </span>
+              <button className={styles.btnPrimary} onClick={() => setAplicar({ r, n })}>
+                Aplicar
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
       <div className={styles.modalFooter}>
         <button className={styles.btnPrimary} onClick={onClose}>Cerrar</button>
       </div>
+      {aplicar && (
+        <AplicarNiveladoModal
+          isOpen
+          slug={aplicar.n.slug}
+          nombre={aplicar.n.nombre}
+          obraSocialNro={aplicar.r.osNro}
+          vigenciaInicial={aplicar.r.vigencia}
+          onClose={() => setAplicar(null)}
+        />
+      )}
     </>
   );
 }

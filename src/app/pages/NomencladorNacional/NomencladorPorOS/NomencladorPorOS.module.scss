@@ -918,6 +918,53 @@
 
 // ─── Wider modal ──────────────────────────────────────────────────────────────
 .modalLg { max-width: 720px; }
+// "Cargar precio": entra el buscador con descripción y los precios por especialidad.
+.modalXl { max-width: 960px; }
+
+.selectedCodeDesc {
+  min-width: 0;
+  color: $tinta-2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Ya hay precio: no se carga acá, se rota con el lápiz.
+.avisoPrecio {
+  padding: 6px 10px;
+  border-radius: $radio-sm;
+  background: #fefcbf;
+  color: #975a16;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+// Un precio por especialidad ("Mismos precios" destildado).
+.precioEsp {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid $linea;
+  border-left: 3px solid $acento;
+  border-radius: $radio-md;
+  background: #fafbfd;
+}
+
+.precioEspTitulo {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: $tinta;
+}
+
+.precioEspVigencia {
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: $tinta-3;
+}
 
 // ─── Edit sections ────────────────────────────────────────────────────────────
 .editSection {

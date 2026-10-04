@@ -31,9 +31,9 @@ import { moneda } from "./formato";
  *
  * Mismo circuito que Prevención, con tres diferencias que vienen del reporte:
  *
- *  * **El código hay que traducirlo.** Swiss factura con códigos de ocho
- *    dígitos y el Colegio usa seis. La traducción la hace el backend
- *    (`importaciones/swiss/homologador.py`), no esta pantalla.
+ *  * **El código va tal cual.** Swiss factura con su nomenclador (mayormente de
+ *    ocho dígitos), dado de alta en el catálogo con sus precios. No se recorta
+ *    a seis: un código que no está en el catálogo queda sin cotizar.
  *  * **El copago ya lo cobró el médico en el consultorio**, así que se
  *    descuenta del importe que se le factura a la obra social.
  *  * **La matrícula trae la provincia** ("W-3972"). Las que no son de

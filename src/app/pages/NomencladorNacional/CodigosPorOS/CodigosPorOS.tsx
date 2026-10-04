@@ -26,9 +26,13 @@ import type {
   CodigoPorOSItem,
   Complejidad,
   EstadoCodigoOS,
+  PreciosDependientes,
 } from "../nomenclador.types";
 
-const PRECIOS_PATH = "/panel/nomenclador/por-obra-social";
+/** "2026-10-03" → "03/10/2026". */
+const fechaCorta = (iso: string) => iso.split("-").reverse().join("/");
+
+const PRECIOS_PATH = "/panel/nomenclador/precios/por-obra-social";
 const PAGE_SIZE = 50;
 type Toast = { type: "success" | "error"; msg: string };
 
@@ -514,6 +518,8 @@ function EditarAltaModal({
     cantidad_ayudantes: "", observacion: "", sin_restriccion: false, especialidades: [] as number[],
   });
   const [guardando, setGuardando] = useState(false);
+  // Quitar especialidades con precio: qué precios se cerrarían si se confirma.
+  const [cierre, setCierre] = useState<PreciosDependientes | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const espQuery = useQuery({ queryKey: ["especialidades"], queryFn: getEspecialidades, staleTime: 10 * 60 * 1000 });
@@ -548,11 +554,12 @@ function EditarAltaModal({
     };
   }, [os, nomencladorId]);
 
-  async function guardar() {
+  async function guardar(cerrarPrecios = false) {
     setGuardando(true);
     setError(null);
     try {
       await updateCodigoOS(os, nomencladorId, {
+        cerrar_precios: cerrarPrecios,
         descripcion: form.descripcion.trim() || null,
         categoria: form.categoria || null,
         complejidad: form.complejidad || null,
@@ -562,9 +569,19 @@ function EditarAltaModal({
         sin_restriccion_especialidad: form.sin_restriccion,
         especialidades: form.sin_restriccion ? undefined : form.especialidades,
       });
-      onGuardado("Datos del código en la obra social guardados.");
+      onGuardado(
+        cerrarPrecios
+          ? "Datos guardados y precios cerrados."
+          : "Datos del código en la obra social guardados.",
+      );
     } catch (e) {
-      setError(detalleError(e, "No se pudo guardar."));
+      const d = (e as { response?: { status?: number; data?: { detail?: unknown } } })?.response;
+      const det = d?.data?.detail as PreciosDependientes | undefined;
+      if (d?.status === 409 && det && typeof det === "object" && det.tipo === "precios_dependientes") {
+        setCierre(det);
+      } else {
+        setError(detalleError(e, "No se pudo guardar."));
+      }
     } finally {
       setGuardando(false);
     }
@@ -647,6 +664,32 @@ function EditarAltaModal({
           </>
         )}
         {error && <div className={styles.error}>{error}</div>}
+        {cierre ? (
+          <div className={styles.cierre} role="alertdialog" aria-labelledby="cierre-titulo">
+            <strong id="cierre-titulo">{cierre.mensaje}</strong>
+            <span>
+              ¿Querés cerrar {cierre.precios.length === 1 ? "ese precio" : "esos precios"}? {cierre.precios.length === 1 ? "Queda" : "Quedan"} vigente{cierre.precios.length === 1 ? "" : "s"} hasta el {fechaCorta(cierre.cierre)} y se dejan de cotizar.
+            </span>
+            <ul>
+              {cierre.precios.map((p) => (
+                <li key={p.id}>{p.especialidad} · vigente desde {fechaCorta(p.vigencia_desde)}</li>
+              ))}
+            </ul>
+            <div className={styles.cierreAcciones}>
+              <button type="button" className={base.btnGhost} onClick={() => setCierre(null)} disabled={guardando}>
+                Volver
+              </button>
+              <button
+                type="button"
+                className={`${base.btnPrimary} ${styles.btnPeligro}`}
+                onClick={() => { setCierre(null); void guardar(true); }}
+                disabled={guardando}
+              >
+                Cerrar {cierre.precios.length === 1 ? "precio" : "precios"} y guardar
+              </button>
+            </div>
+          </div>
+        ) : (
         <div className={styles.modalFooter}>
           {par && par.estado !== "suspendido" && (
             <button type="button" className={`${base.btnGhost} ${styles.suspender}`} onClick={suspender} disabled={guardando}>
@@ -655,10 +698,11 @@ function EditarAltaModal({
           )}
           <span className={styles.flex1} />
           <button type="button" className={base.btnGhost} onClick={onClose}>Cancelar</button>
-          <button type="button" className={base.btnPrimary} onClick={guardar} disabled={guardando || !par}>
+          <button type="button" className={base.btnPrimary} onClick={() => void guardar()} disabled={guardando || !par}>
             {guardando ? <><span className={base.spinner} /> Guardando…</> : "Guardar"}
           </button>
         </div>
+        )}
       </div>
     </Modal>
   );

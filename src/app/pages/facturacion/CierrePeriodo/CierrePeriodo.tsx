@@ -161,7 +161,7 @@ const CierrePeriodo: React.FC = () => {
             <div className={styles.errorBox} style={{ background: "#fffbeb", borderColor: "#fcd34d", color: "#92400e" }}>
               Quedan {preview.sin_valorizar} prestación{preview.sin_valorizar === 1 ? "" : "es"} sin valorizar
               (cargadas en $0 porque el código todavía no tenía precio). Podés cerrar igual o esperar a que se
-              cargue el precio y revalorizarlas desde Precios por obra social.
+              cargue el precio y revalorizarlas desde Valores por obra social.
             </div>
           )}
 

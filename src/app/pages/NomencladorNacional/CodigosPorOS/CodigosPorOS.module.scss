@@ -139,3 +139,31 @@
   font-size: 0.84rem;
 }
 .suspender { color: $peligro; }
+
+// Confirmación para cerrar los precios que dependen de lo que se quita.
+.cierre {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid #f3b4b4;
+  border-radius: $radio-sm;
+  background: #fef2f2;
+  color: $peligro;
+  font-size: 0.85rem;
+
+  span, li { color: #742a2a; }
+  ul { margin: 0; padding-left: 18px; }
+}
+
+.cierreAcciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btnPeligro {
+  background: $peligro;
+  border-color: $peligro;
+}

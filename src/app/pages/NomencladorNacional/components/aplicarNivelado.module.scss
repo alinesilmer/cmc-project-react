@@ -1,0 +1,106 @@
+@use "@/app/styles/all.scss" as *;
+
+// Modal "Aplicar nomenclador nivelado a una obra social".
+
+.cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.controles {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 12px;
+
+  @media (max-width: 560px) { grid-template-columns: 1fr; }
+}
+
+.osFija {
+  font-size: 0.9rem;
+  color: $tinta;
+  padding-top: 8px;
+}
+
+.error {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: $radio-sm;
+  background: $peligro-bg;
+  border: 1px solid $peligro-linea;
+  color: $peligro;
+  font-size: 0.85rem;
+
+  a { color: $acento; font-weight: 600; }
+}
+
+.ok {
+  padding: 10px 12px;
+  border-radius: $radio-sm;
+  background: $ok-bg;
+  border: 1px solid $ok-linea;
+  color: $ok;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.resumen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip,
+.chipCrear,
+.chipAviso {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid $linea;
+  background: $superficie;
+  color: $tinta-2;
+  font-size: 0.8rem;
+
+  strong { font-variant-numeric: tabular-nums; }
+}
+
+.chipCrear { background: $ok-bg; border-color: $ok-linea; color: $ok; }
+.chipAviso { background: $alerta-bg; border-color: $alerta-linea; color: $alerta; }
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.84rem;
+  color: $tinta-2;
+  cursor: pointer;
+}
+
+.codigo { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+.desc { min-width: 200px; }
+.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.estado {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: $superficie-2;
+  color: $tinta-2;
+  white-space: nowrap;
+}
+
+.estado_crear,
+.estado_creado { background: $ok-bg; color: $ok; }
+.estado_sin_quien_factura { background: $alerta-bg; color: $alerta; }
+
+.pie {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 4px;
+}

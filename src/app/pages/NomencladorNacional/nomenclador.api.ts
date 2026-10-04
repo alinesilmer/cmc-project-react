@@ -9,6 +9,11 @@ import {
 } from "@/app/shared/lib/http";
 import type {
   NomencladorOut,
+  NomencladorNiveladoOut,
+  NiveladoCodigosOut,
+  NiveladoCodigoOut,
+  NiveladoCodigoIn,
+  AplicarNiveladoOut,
   NomencladorDetalleOut,
   AplicarEspecialidadesResult,
   AltaCodigosPayload,
@@ -572,3 +577,36 @@ export const revalorizarPrestaciones = (payload: {
     timeout: TIMEOUT_MASIVO_MS,
   });
 
+// ─── Nomencladores nivelados ──────────────────────────────────────────────────
+
+export const listNivelados = (): Promise<NomencladorNiveladoOut[]> =>
+  getJSON<NomencladorNiveladoOut[]>("/api/nomencladores_nivelados/");
+
+export const listCodigosNivelado = (
+  slug: string,
+  params: { nivel?: number; unidades?: boolean; q?: string; page?: number; size?: number },
+): Promise<NiveladoCodigosOut> =>
+  getJSON<NiveladoCodigosOut>(`/api/nomencladores_nivelados/${slug}/codigos`, params);
+
+export const agregarCodigoNivelado = (
+  slug: string,
+  payload: NiveladoCodigoIn & { nomenclador_id: number },
+): Promise<NiveladoCodigoOut> =>
+  postJSON<NiveladoCodigoOut>(`/api/nomencladores_nivelados/${slug}/codigos`, payload);
+
+export const actualizarCodigoNivelado = (
+  slug: string,
+  nomencladorId: number,
+  payload: NiveladoCodigoIn,
+): Promise<NiveladoCodigoOut> =>
+  putJSON<NiveladoCodigoOut>(`/api/nomencladores_nivelados/${slug}/codigos/${nomencladorId}`, payload);
+
+export const quitarCodigoNivelado = (slug: string, nomencladorId: number): Promise<void> =>
+  delJSON<void>(`/api/nomencladores_nivelados/${slug}/codigos/${nomencladorId}`);
+
+/** Con `dry_run` sólo muestra qué haría. */
+export const aplicarNivelado = (
+  slug: string,
+  payload: { obra_social_nro: number; vigencia_desde: string; dry_run: boolean },
+): Promise<AplicarNiveladoOut> =>
+  postJSON<AplicarNiveladoOut>(`/api/nomencladores_nivelados/${slug}/aplicar`, payload);
