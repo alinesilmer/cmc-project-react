@@ -534,7 +534,8 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                       </div>
                     </td>
                     <td>{row.porcentaje != null ? `${row.porcentaje}%` : "—"}</td>
-                    <td><span className={styles.moneyCell}>{formatMoney(row.honorarios)}</span></td>
+                    {/* Fila de ayudante: muestra lo que cobra (guardado en `ayudante`, honorarios en 0). */}
+                    <td><span className={styles.moneyCell}>{formatMoney(deriveTipoPrestador(row) === "Ayudante" ? row.ayudante : row.honorarios)}</span></td>
                     <td><span className={styles.moneyCell}>{formatMoney(row.gastos)}</span></td>
                     <td>
                       {parseMoney(row.coseguro) > 0

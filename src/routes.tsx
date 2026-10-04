@@ -84,6 +84,7 @@ const SitioContenido = lazy(() => import("./website/app/admin/dashboard/page"));
 const ImportacionesHub = lazy(() => import("./app/pages/Importaciones/ImportacionesHub"));
 const ImportarPrevencion = lazy(() => import("./app/pages/Importaciones/ImportarPrevencion"));
 const ImportarSwiss = lazy(() => import("./app/pages/Importaciones/ImportarSwiss"));
+const ImportarUnne = lazy(() => import("./app/pages/Importaciones/ImportarUnne"));
 const BoletinConsultaComun = lazy(() => import("./app/pages/BoletinConsultaComun/BoletinConsultaComun"));
 const ObrasSocialesListado = lazy(() => import("./app/pages/ObrasSociales/ObrasSocialesListado/ObrasSocialesListado"));
 const ObrasSocialesForm = lazy(() => import("./app/pages/ObrasSociales/ObrasSocialesForm/ObrasSocialesForm"));
@@ -335,6 +336,7 @@ export default function RootRoutes() {
                   element={<ImportarPrevencion />}
                 />
                 <Route path="importaciones/swiss" element={<ImportarSwiss />} />
+                <Route path="importaciones/unne" element={<ImportarUnne />} />
               </Route>
 
               {/* Validaciones con obras sociales */}

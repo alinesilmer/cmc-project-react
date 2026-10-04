@@ -5,6 +5,7 @@
 
 import logoPrevencion from "@/app/assets/obras-sociales/prevencion.jpg";
 import logoSwiss from "@/app/assets/obras-sociales/swiss-medical.png";
+import logoUnne from "@/app/assets/obras-sociales/issunne.png";
 
 export interface ImportadorConfig {
   slug: string;
@@ -35,6 +36,15 @@ export const IMPORTADORES: ImportadorConfig[] = [
     logo: logoSwiss,
     descripcion:
       "Reporte de liquidación. Traduce los códigos de Swiss y descuenta el copago ya cobrado.",
+    disponible: true,
+  },
+  {
+    slug: "unne",
+    nombre: "UNNE",
+    codigo: 81,
+    logo: logoUnne,
+    descripcion:
+      "Excel de liquidación web del sistema de UNNE. Guarda el importe de UNNE y separa Hon+Gto.",
     disponible: true,
   },
 ];

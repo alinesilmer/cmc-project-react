@@ -101,7 +101,15 @@ const renderCelda = (p: PrestacionConSocio, col: ColumnaVista) => {
     case "porcentaje":
       return <td key={col}>{p.porcentaje != null ? `${p.porcentaje}%` : "—"}</td>;
     case "honorarios":
-      return <td key={col}><span className={styles.moneyCell}>{formatMoney(p.honorarios)}</span></td>;
+      // En la fila del ayudante se muestra lo que cobra (se guarda en `ayudante`, con
+      // honorarios en 0): así la columna cuadra con el total de la fila.
+      return (
+        <td key={col}>
+          <span className={styles.moneyCell}>
+            {formatMoney(p.tipo_prestador === "Ayudante" ? p.ayudante : p.honorarios)}
+          </span>
+        </td>
+      );
     case "gastos":
       return <td key={col}><span className={styles.moneyCell}>{formatMoney(p.gastos)}</span></td>;
     case "tipo_prestador":

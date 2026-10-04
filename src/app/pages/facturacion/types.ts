@@ -350,6 +350,8 @@ export interface PrestacionFacturaDetalle {
   porcentaje: number | null;
   honorarios: Money | null;
   gastos: Money | null;
+  /** Lo que cobra el ayudante (en sus filas honorarios/gastos van en 0). */
+  ayudante?: Money | null;
   coseguro?: Money | null;
   /** Clínica donde se hizo la prestación (null si no hubo). */
   cod_clinica?: number | null;

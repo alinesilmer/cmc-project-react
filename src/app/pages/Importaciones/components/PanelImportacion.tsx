@@ -22,6 +22,7 @@ const ETIQUETA: Record<string, string> = {
   grabada: "Grabada",
   duplicada: "Ya cargada",
   omitida: "No entra",
+  elegir_socio: "Elegir socio",
 };
 
 // ── Controles ────────────────────────────────────────────────────────────────
@@ -90,6 +91,7 @@ export function AccionesImportacion({
   cerrado,
   periodo,
   onCorrer,
+  bloqueo,
 }: {
   error: string;
   confirmado: boolean;
@@ -98,6 +100,8 @@ export function AccionesImportacion({
   cerrado: boolean;
   periodo: string;
   onCorrer: (grabar: boolean) => void;
+  /** Por qué todavía no se puede confirmar (ej. filas sin socio). Se muestra y bloquea. */
+  bloqueo?: string;
 }) {
   if (confirmado) {
     return (
@@ -112,6 +116,7 @@ export function AccionesImportacion({
   return (
     <>
       {error && <p className={s.errorInline}>{error}</p>}
+      {!error && salida && bloqueo && <p className={s.errorInline}>{bloqueo}</p>}
 
       <Button
         type="button"
@@ -130,7 +135,7 @@ export function AccionesImportacion({
         variant="primary"
         isLoading={trabajando && !!salida}
         disabled={
-          trabajando || !salida || salida.resumen.grabables === 0 || cerrado
+          trabajando || !salida || salida.resumen.grabables === 0 || cerrado || !!bloqueo
         }
         onClick={() => onCorrer(true)}
         leftIcon={<Save size={17} />}
@@ -147,7 +152,14 @@ export function AccionesImportacion({
  * todas cuelga el navegador y no hay forma de leerlas de corrido igual. */
 const POR_PAGINA = 50;
 
-export function TablaResultado({ filas }: { filas: FilaResultado[] }) {
+export function TablaResultado({
+  filas,
+  elegirSocio,
+}: {
+  filas: FilaResultado[];
+  /** Selector de socio para las filas `elegir_socio` (sólo UNNE). */
+  elegirSocio?: (f: FilaResultado) => React.ReactNode;
+}) {
   const [pagina, setPagina] = useState(1);
 
   const paginas = Math.max(1, Math.ceil(filas.length / POR_PAGINA));
@@ -199,9 +211,13 @@ export function TablaResultado({ filas }: { filas: FilaResultado[] }) {
                 <td>{fechaLegible(f.fecha)}</td>
                 <td className={r.num}>{f.matricula || "—"}</td>
                 <td>
-                  {f.medico || "—"}
-                  {f.nroSocio !== null && (
-                    <span className={s.socio}>{f.nroSocio}</span>
+                  {f.resultado === "elegir_socio" && elegirSocio ? elegirSocio(f) : (
+                    <>
+                      {f.medico || "—"}
+                      {f.nroSocio !== null && (
+                        <span className={s.socio}>{f.nroSocio}</span>
+                      )}
+                    </>
                   )}
                 </td>
                 <td className={r.num}>{f.codigo || "—"}</td>
@@ -209,7 +225,10 @@ export function TablaResultado({ filas }: { filas: FilaResultado[] }) {
                 <td className={r.num}>
                   {entra ? moneda.format(f.importeTotal) : "—"}
                 </td>
-                <td className={s.motivo}>{f.motivo || "—"}</td>
+                <td className={s.motivo}>
+                  {f.motivo || (f.aviso ? null : "—")}
+                  {f.aviso && <span className={s.aviso}>{f.aviso}</span>}
+                </td>
               </tr>
             );
           })}
