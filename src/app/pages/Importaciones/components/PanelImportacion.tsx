@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { CheckCircle2, Save, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 
 import Button from "@/app/components/ui/Button/Button";
@@ -37,7 +38,10 @@ export function ControlesImportacion({
   conProblemas,
   filtro,
   setFiltro,
+  antes,
 }: {
+  /** Controles propios de la pantalla, delante del período (ej. la obra social). */
+  antes?: ReactNode;
   periodos: PeriodoOpcion[];
   periodo: string;
   setPeriodo: (p: string) => void;
@@ -50,6 +54,7 @@ export function ControlesImportacion({
 }) {
   return (
     <div className={s.controles}>
+      {antes}
       <label className={s.campoPeriodo}>
         <span>Período</span>
         <select
@@ -157,7 +162,7 @@ export function TablaResultado({
   elegirSocio,
 }: {
   filas: FilaResultado[];
-  /** Selector de socio para las filas `elegir_socio` (sólo UNNE). */
+  /** Selector de socio para las filas `elegir_socio` (UNNE y Prevención). */
   elegirSocio?: (f: FilaResultado) => React.ReactNode;
 }) {
   const [pagina, setPagina] = useState(1);

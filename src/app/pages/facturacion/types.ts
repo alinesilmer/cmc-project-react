@@ -193,6 +193,57 @@ export interface CierrePreviewResponse {
   sin_valorizar?: number;
 }
 
+/** Recálculo de precios de una factura abierta (o de un código de ella). */
+export interface RecalculoPayload {
+  cod_obra: string;
+  periodo: string;
+  /** Sin código: todas las prestaciones de la factura. */
+  codigo?: string | null;
+  /** true = vista previa: calcula y no graba. */
+  dry_run: boolean;
+}
+
+export interface RecalculoFila {
+  id: number;
+  cod_medico: string;
+  cod_nomenclador: string;
+  /** Fecha con la que se cotizó: la de la práctica, o hoy si no tenía. */
+  fecha_cotizacion: string | null;
+  grupo_equipo_id: number | null;
+  publicado: boolean;
+  honorarios_antes: Money; gastos_antes: Money; ayudante_antes: Money;
+  coseguro_antes: Money; importe_antes: Money;
+  honorarios: Money; gastos: Money; ayudante: Money; coseguro: Money;
+  importe_despues: Money;
+  diferencia: Money;
+}
+
+export interface RecalculoOmitida {
+  id: number;
+  cod_medico: string;
+  cod_nomenclador: string;
+  fecha_practica: string | null;
+  motivo: string;
+}
+
+export interface RecalculoResponse {
+  dry_run: boolean;
+  cod_obra: string;
+  periodo: string;
+  codigo: string | null;
+  version: number;
+  total: number;
+  cambian: number;
+  sin_cambios: number;
+  omitidas: number;
+  publicadas_afectadas: number;
+  importe_antes: Money;
+  importe_despues: Money;
+  diferencia: Money;
+  filas: RecalculoFila[];
+  omitidas_detalle: RecalculoOmitida[];
+}
+
 export interface CierrePayload {
   cod_obra: string;
   periodo: string;

@@ -27,7 +27,7 @@ export interface PeriodosOut {
 /** Lo que el backend decidió para cada fila. */
 export type ResultadoFila = "grabable" | "grabada" | "duplicada" | "omitida" | "elegir_socio";
 
-/** Socio posible para una matrícula repetida (sólo UNNE). */
+/** Socio posible para una matrícula repetida o sin socio. */
 export interface CandidatoSocio {
   nroSocio: number;
   nombre: string;
@@ -39,7 +39,7 @@ export interface FilaResultado {
   motivo: string;
   /** Advertencia que no impide grabar (ej. importe distinto al nomenclador). */
   aviso: string;
-  /** Socios posibles cuando la matrícula está repetida o no cae en ninguno (UNNE). */
+  /** Socios posibles cuando la matrícula está repetida o no cae en ninguno. */
   candidatos: CandidatoSocio[];
 
   nroAutorizacion: string;
@@ -71,7 +71,7 @@ export interface ResumenImportacion {
   sinMedico: number;
   rechazadas: number;
   importeTotal: number;
-  /** Sólo UNNE: filas esperando que se elija el socio, y filas con aviso. */
+  /** Filas esperando que se elija el socio, y filas con aviso (UNNE y Prevención). */
   porElegir: number;
   conAviso: number;
 }
@@ -174,15 +174,27 @@ const aSalida = (res: ApiOut): ImportacionOut => ({
   filas: (res.filas ?? []).map(aFila),
 });
 
+/** Obras sociales en las que se carga el reporte de Prevención. La 888 es de
+ * prueba: tiene el mismo nomenclador y sirve para ensayar sin tocar la 103. */
+export const OBRAS_PREVENCION = [
+  { nro: 103, nombre: "Prevención Salud" },
+  { nro: 888, nombre: "Prueba Prevención" },
+] as const;
+
+/** Una práctica del reporte, con el socio elegido a mano si hizo falta. */
+export type PrestacionPrevencionElegida = PrestacionPrevencion & { nroSocioElegido?: number | null };
+
 /** Las prácticas del reporte, en el formato que espera la API. */
 function aCuerpo(
-  prestaciones: PrestacionPrevencion[],
+  prestaciones: PrestacionPrevencionElegida[],
   periodo: string,
-  archivo: string
+  archivo: string,
+  obraSocial: number
 ) {
   return {
     periodo: periodo || null,
     archivo,
+    obra_social: obraSocial,
     filas: prestaciones.map((p) => ({
       nro_autorizacion: p.nroAutorizacion,
       // `fechaISO` es "" cuando la celda no era una fecha: el backend lo
@@ -195,34 +207,37 @@ function aCuerpo(
       codigo: p.codigo,
       descripcion: p.descripcion,
       estado: p.estado,
+      nro_socio_elegido: p.nroSocioElegido ?? null,
     })),
   };
 }
 
-export const fetchPeriodosPrevencion = (): Promise<PeriodosOut> =>
-  getJSON<PeriodosOut>("/api/importaciones/prevencion/periodos");
+export const fetchPeriodosPrevencion = (obraSocial: number): Promise<PeriodosOut> =>
+  getJSON<PeriodosOut>("/api/importaciones/prevencion/periodos", { obra_social: obraSocial });
 
 export async function previsualizarPrevencion(
-  prestaciones: PrestacionPrevencion[],
+  prestaciones: PrestacionPrevencionElegida[],
   periodo: string,
-  archivo: string
+  archivo: string,
+  obraSocial: number
 ): Promise<ImportacionOut> {
   const res = await postJSON<ApiOut>(
     "/api/importaciones/prevencion/previsualizar",
-    aCuerpo(prestaciones, periodo, archivo),
+    aCuerpo(prestaciones, periodo, archivo, obraSocial),
     LARGO
   );
   return aSalida(res);
 }
 
 export async function confirmarPrevencion(
-  prestaciones: PrestacionPrevencion[],
+  prestaciones: PrestacionPrevencionElegida[],
   periodo: string,
-  archivo: string
+  archivo: string,
+  obraSocial: number
 ): Promise<ImportacionOut> {
   const res = await postJSON<ApiOut>(
     "/api/importaciones/prevencion/confirmar",
-    aCuerpo(prestaciones, periodo, archivo),
+    aCuerpo(prestaciones, periodo, archivo, obraSocial),
     LARGO
   );
   return aSalida(res);

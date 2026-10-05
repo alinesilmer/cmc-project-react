@@ -11,6 +11,7 @@ import type {
   RegistroPorUsuarioParams, RegistroActividadParams,
   PublicarPeriodoPayload, PublicarPeriodoResponse,
   PeriodoPropio,
+  RecalculoPayload, RecalculoResponse,
 } from "./types";
 import type { ExportOpciones, ExportPreset, TipoDocumentoPreset } from "./FacturaDetalle/export/types";
 
@@ -221,6 +222,15 @@ export const moverPeriodo = (payload: MoverPeriodoPayload) =>
     "POST /prestaciones/mover-periodo",
     payload,
     postJSON<MoverPeriodoResponse>(`${BASE}/prestaciones/mover-periodo`, payload),
+  );
+
+/** Recotiza con el precio vigente las prestaciones automáticas de una factura
+ * abierta. Con `dry_run` sólo calcula. Puede tardar: cada fila hace su lookup. */
+export const recalcularPrecios = (payload: RecalculoPayload) =>
+  traced(
+    "POST /recalcular-precios",
+    payload,
+    postJSON<RecalculoResponse>(`${BASE}/recalcular-precios`, payload, { timeout: 180_000 }),
   );
 
 export const previewCierre = (cod_obra: string, periodo: string) =>

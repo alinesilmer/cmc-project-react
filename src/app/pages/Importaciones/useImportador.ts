@@ -20,7 +20,10 @@ export interface ApiImportador<T> {
 export function useImportador<T>(
   api: ApiImportador<T>,
   prestaciones: T[],
-  archivo: string | null
+  archivo: string | null,
+  /** Cambia el destino de la carga (ej. la obra social de Prevención): se
+   * vuelven a pedir los períodos y se descarta lo previsualizado. */
+  destino: string | number = ""
 ) {
   const [periodos, setPeriodos] = useState<PeriodoOpcion[]>([]);
   const [periodo, setPeriodo] = useState("");
@@ -32,6 +35,7 @@ export function useImportador<T>(
 
   useEffect(() => {
     let vigente = true;
+    setError("");
     (async () => {
       try {
         const res = await api.periodos();
@@ -45,10 +49,10 @@ export function useImportador<T>(
     return () => {
       vigente = false;
     };
-    // `api` es un objeto literal en el llamador: incluirlo relanzaría el
-    // pedido en cada render.
+    // `api` puede ser un objeto literal en el llamador: incluirlo relanzaría
+    // el pedido en cada render. Lo que cambia el resultado es `destino`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [destino]);
 
   // Cambiar de archivo o de período invalida lo previsualizado: lo que se
   // confirma tiene que ser exactamente lo que se vio. Se mira la lista de
@@ -58,7 +62,7 @@ export function useImportador<T>(
   useEffect(() => {
     setSalida(null);
     setConfirmado(false);
-  }, [archivo, periodo, prestaciones]);
+  }, [archivo, periodo, prestaciones, destino]);
 
   const cerrado = periodos.find((p) => p.periodo === periodo)?.cerrado ?? false;
 
