@@ -401,6 +401,8 @@ export interface PrestacionFacturaDetalle {
   periodo: string;
   autorizacion: string | null;
   fecha_practica: string | null;
+  /** Fecha/hora de CARGA (no de práctica) — columna `created`. */
+  created?: string | null;
   codigo: string | null;
   /** Opcional: no confirmado que el backend lo mande todavía en este endpoint. */
   via?: ViaPractica | null;

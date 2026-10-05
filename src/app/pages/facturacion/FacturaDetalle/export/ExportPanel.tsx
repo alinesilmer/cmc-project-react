@@ -3,18 +3,18 @@ import { X } from "lucide-react";
 import { descargarExportDetalle, descargarExportCaratula } from "../../api";
 import { saveAs } from "@/app/shared/lib/fileSaver";
 import type { FacturaDetalleResponse } from "../../types";
-import type { ExportOpciones } from "./types";
-import { OPCIONES_DEFAULT } from "./types";
-import OrdenSection from "./OrdenSection";
-import AgrupacionSection from "./AgrupacionSection";
-import FiltrosSection from "./FiltrosSection";
+import type { VistaOpciones } from "../vista/types";
+import type { ColumnaExport } from "./types";
+import { opcionesDesdeVista } from "./types";
 import ColumnasSection from "./ColumnasSection";
-import PresetsSection from "./PresetsSection";
 import ExportButtons from "./ExportButtons";
 import s from "./export.module.scss";
 
 interface Props {
   detalle: FacturaDetalleResponse;
+  // Cómo se está viendo el listado: el documento sale con esa agrupación, orden, dirección,
+  // filtros y equipo. Lo único que se elige acá son las columnas.
+  vista: VistaOpciones;
   onClose: () => void;
 }
 
@@ -31,14 +31,13 @@ async function extraerMensajeError(err: any): Promise<string> {
   return err?.message || "No se pudo generar el archivo.";
 }
 
-export default function ExportPanel({ detalle, onClose }: Props) {
+export default function ExportPanel({ detalle, vista, onClose }: Props) {
   const [tab, setTab] = useState<"detalle" | "caratula">("detalle");
-  const [opciones, setOpciones] = useState<ExportOpciones>(OPCIONES_DEFAULT);
-
-  const prestadores = detalle.prestadores.map((p) => ({ cod_medico: p.cod_medico, nombre: p.nombre }));
+  const [columnas, setColumnas] = useState<ColumnaExport[]>(() => opcionesDesdeVista(vista).columnas);
 
   const exportarDetalle = async (formato: "pdf" | "xlsx") => {
     try {
+      const opciones = { ...opcionesDesdeVista(vista), columnas };
       const { blob, filename } = await descargarExportDetalle(detalle.id_factura, formato, opciones);
       await saveAs(blob, filename ?? `detalle_factura_${detalle.id_factura}.${formato}`);
     } catch (err) {
@@ -62,7 +61,7 @@ export default function ExportPanel({ detalle, onClose }: Props) {
         <div className={s.drawerHeader}>
           <div>
             <h2 className={s.drawerTitle}>Exportar factura</h2>
-            <p className={s.drawerSub}>Elegí el detalle o la carátula, ajustá las opciones y descargá.</p>
+            <p className={s.drawerSub}>Elegí el detalle o la carátula y descargá.</p>
           </div>
           <button type="button" className={s.closeBtn} onClick={onClose} aria-label="Cerrar panel">
             <X size={18} />
@@ -89,25 +88,13 @@ export default function ExportPanel({ detalle, onClose }: Props) {
         <div className={s.drawerBody}>
           {tab === "detalle" ? (
             <>
-              <OrdenSection
-                orden={opciones.orden}
-                agrupacion={opciones.agrupacion}
-                onChange={(orden) => setOpciones((o) => ({ ...o, orden }))}
-              />
-              <AgrupacionSection
-                agrupacion={opciones.agrupacion}
-                onChange={(agrupacion) => setOpciones((o) => ({ ...o, agrupacion }))}
-              />
-              <FiltrosSection
-                filtros={opciones}
-                onChange={(filtros) => setOpciones((o) => ({ ...o, ...filtros }))}
-                prestadores={prestadores}
-              />
-              <ColumnasSection
-                columnas={opciones.columnas}
-                onChange={(columnas) => setOpciones((o) => ({ ...o, columnas }))}
-              />
-              <PresetsSection tipoDocumento="detalle" opciones={opciones} onAplicar={setOpciones} />
+              <div className={s.section}>
+                <p className={s.sectionHint}>
+                  El detalle sale tal como se ve en pantalla: misma agrupación, orden y filtros. Para cambiarlos,
+                  ajustá la vista (botón &quot;Vista&quot;) antes de exportar.
+                </p>
+              </div>
+              <ColumnasSection columnas={columnas} onChange={setColumnas} />
               <ExportButtons
                 onExport={exportarDetalle}
                 disabled={detalle.total_prestaciones === 0}

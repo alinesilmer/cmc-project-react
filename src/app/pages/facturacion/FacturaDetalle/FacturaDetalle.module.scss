@@ -107,7 +107,9 @@ $shadow-md:  0 4px 16px rgba(0, 0, 0, .10);
   border-top: 1px solid $border;
   border-bottom: 1px solid $border;
   box-shadow: $shadow-sm;
-  overflow: hidden;
+  // `clip` y no `hidden`: recorta igual, pero no crea un contenedor de scroll, que
+  // es lo que impediría que el encabezado de la tabla quede fijo al bajar.
+  overflow: clip;
 }
 
 .toolbar {
@@ -224,6 +226,14 @@ $shadow-md:  0 4px 16px rgba(0, 0, 0, .10);
 
 .thActions { text-align: right; }
 
+// Encabezado fijo: queda pegado debajo de la barra superior (64px + su borde) mientras
+// se recorren los bloques de filas, que son tablas aparte con el mismo colgroup.
+.tablaEncabezado {
+  position: sticky;
+  top: 65px;
+  z-index: 5;
+}
+
 .rowRevisada td {
   background: $audit-row;
 }
@@ -275,25 +285,8 @@ $equipo-bg: #f7f8fa;
   border-bottom: 2px solid $equipo-border;
 }
 
-// Marco naranja de una clínica: encabezado + todas las filas de sus prestaciones.
-// Se dibuja con box-shadow inset para no pisar el marco de equipo (que usa border).
+// Etiqueta de clínica (celda del socio).
 $clinica-bg: #fed7aa;
-$clinica-border: #ea580c;
-
-.clinicaHeadRow td {
-  background: $clinica-bg;
-  color: #7c2d12;
-  font-weight: 700;
-  padding: 5px 10px;
-  box-shadow: inset 0 2px 0 $clinica-border, inset 2px 0 0 $clinica-border, inset -2px 0 0 $clinica-border;
-}
-
-.clinicaRow td:first-child { box-shadow: inset 2px 0 0 $clinica-border; }
-.clinicaRow td:last-child { box-shadow: inset -2px 0 0 $clinica-border; }
-
-.clinicaRowLast td { box-shadow: inset 0 -2px 0 $clinica-border; }
-.clinicaRowLast td:first-child { box-shadow: inset 0 -2px 0 $clinica-border, inset 2px 0 0 $clinica-border; }
-.clinicaRowLast td:last-child { box-shadow: inset 0 -2px 0 $clinica-border, inset -2px 0 0 $clinica-border; }
 
 .idCell {
   white-space: nowrap;
@@ -558,22 +551,7 @@ $clinica-border: #ea580c;
   color: #cc2a2a;
 }
 
-// ─── "Por socio": bloques, título del socio y subtítulos por tramo ──────────
-// Bloque "Clínicas / Sanatorios": banda clara con acento a la izquierda.
-.bloqueRow td {
-  background: $blue-light;
-  color: #0c2a52;
-  font-weight: 700;
-  font-size: 1.1em;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  padding: 12px 12px 10px;
-  box-shadow: inset 4px 0 0 $blue;
-  border-top: 10px solid $surface;
-  border-bottom: 1px solid #c9d8f7;
-}
-
-
+// ─── Título del socio, subtítulos por tramo/tipo y subtotal por médico ─────────
 .socioTituloRow td {
   background: #f6f8fc;
   color: $text-1;
@@ -592,6 +570,18 @@ $clinica-border: #ea580c;
   border-bottom: 1px dashed $border;
 }
 
+// Subtítulo con el nombre de la clínica (mismo naranja que la etiqueta de clínica).
+.clinicaSubtituloRow td {
+  background: $clinica-bg;
+  color: #7c2d12;
+  font-size: .78em;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 5px 12px 4px 22px;
+  border-bottom: 1px solid #fdba74;
+}
+
 .clinicaTag {
   align-self: flex-start;
   margin-top: 2px;
@@ -600,5 +590,41 @@ $clinica-border: #ea580c;
   background: $clinica-bg;
   color: #7c2d12;
   font-size: .85em;
+  white-space: nowrap;
+}
+
+// "Por tipo": subtítulo de cada sección (Consultas, Prácticas…).
+.tipoTituloRow td {
+  background: $blue-light;
+  color: #0c2a52;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 9px 12px;
+  box-shadow: inset 4px 0 0 $blue;
+  border-top: 8px solid $surface;
+}
+
+// "Por tipo": subtotal al cerrar las filas de cada médico.
+.subtotalMedicoRow td {
+  background: #f6f8fc;
+  border-top: 1px solid $border;
+  border-bottom: 2px solid $border;
+  padding: 6px 12px;
+}
+
+.subtotalMedicoContent {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: .9em;
+  color: $text-1;
+}
+
+.subtotalMedicoMontos {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   white-space: nowrap;
 }

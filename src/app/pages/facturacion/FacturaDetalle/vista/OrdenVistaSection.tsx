@@ -16,8 +16,8 @@ interface Props {
 }
 
 const HINT_POR_AGRUPACION: Record<AgrupacionVista, string> = {
-  por_socio: "Orden fijo: médicos A-Z (consultas y prácticas de la más nueva a la más vieja, honorarios individuales por paciente) y al final las clínicas A-Z, por paciente.",
-  por_tipo: "Los grupos van en orden fijo (Consultas → Prácticas → Honorarios → Sanatorios). Este criterio ordena las filas dentro de cada uno.",
+  por_socio: "Orden fijo: médicos A-Z (consultas y prácticas de la más nueva a la más vieja, honorarios individuales y sanatorios por paciente).",
+  por_tipo: "Los grupos van en orden fijo (Consultas → Prácticas → Honorarios → Sanatorios) y, dentro de cada uno, por médico A-Z con su subtotal. Este criterio ordena las filas de cada médico; para ordenar toda la tabla por fecha de carga usá la planilla plana.",
   plana: "Sin agrupación: este criterio ordena toda la tabla, de punta a punta.",
 };
 
@@ -26,6 +26,8 @@ export default function OrdenVistaSection({
 }: Props) {
   // En "Por socio" el orden es fijo (ver `vistaGrupos` en FacturaDetalle.tsx).
   const fijo = agrupacion === "por_socio";
+  // Con "Fecha de carga" la dirección se lee como viejo/nuevo en vez de asc/desc.
+  const porCarga = orden === "fecha_carga";
   return (
     <div className={s.section}>
       <div className={s.sectionHeader}>
@@ -55,7 +57,7 @@ export default function OrdenVistaSection({
             disabled={fijo}
             onClick={() => onChangeDireccion("asc")}
           >
-            <ArrowUp size={12} /> Ascendente
+            <ArrowUp size={12} /> {porCarga ? "Más viejo primero" : "Ascendente"}
           </button>
           <button
             type="button"
@@ -63,7 +65,7 @@ export default function OrdenVistaSection({
             disabled={fijo}
             onClick={() => onChangeDireccion("desc")}
           >
-            <ArrowDown size={12} /> Descendente
+            <ArrowDown size={12} /> {porCarga ? "Más nuevo primero" : "Descendente"}
           </button>
         </div>
       </div>

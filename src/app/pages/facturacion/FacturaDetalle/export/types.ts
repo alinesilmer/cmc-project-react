@@ -1,10 +1,13 @@
 // Espejo de `app/modules/facturacion/export/schemas.py` en el backend — los
 // literals tienen que coincidir carácter por carácter con los que acepta la API.
 import type { Tipo } from "../../types";
+import type { ColumnaVista, OrdenVista, VistaOpciones } from "../vista/types";
 
 export type OrdenExport =
-  | "nombre_socio" | "nro_socio" | "fecha_practica" | "codigo"
-  | "importe_desc" | "nombre_afiliado" | "especialidad";
+  | "nombre_socio" | "nro_socio" | "fecha_practica" | "fecha_carga" | "codigo"
+  | "importe" | "importe_desc" | "nombre_afiliado" | "especialidad";
+
+export type DireccionExport = "asc" | "desc";
 
 export type AgrupacionExport = "todo_junto" | "por_tipo" | "por_socio" | "plana";
 
@@ -38,23 +41,6 @@ export const COLUMNAS_DISPONIBLES: { key: ColumnaExport; label: string }[] = [
   { key: "estado_validacion", label: "Estado validación" },
 ];
 
-export const OPCIONES_ORDEN: { value: OrdenExport; label: string }[] = [
-  { value: "nombre_socio", label: "Nombre del socio (A-Z)" },
-  { value: "nro_socio", label: "Número de socio" },
-  { value: "fecha_practica", label: "Fecha de práctica" },
-  { value: "codigo", label: "Código" },
-  { value: "importe_desc", label: "Importe (mayor a menor)" },
-  { value: "nombre_afiliado", label: "Nombre del afiliado" },
-  { value: "especialidad", label: "Especialidad" },
-];
-
-export const OPCIONES_AGRUPACION: { value: AgrupacionExport; label: string; ayuda: string }[] = [
-  { value: "todo_junto", label: "Todo junto", ayuda: "Una sola lista, con resumen por socio" },
-  { value: "por_tipo", label: "Separado por tipo", ayuda: "Consultas, prácticas, honorarios y sanatorios aparte" },
-  { value: "por_socio", label: "Separado por socio", ayuda: "Médicos y después clínicas, con orden fijo y en una sola hoja" },
-  { value: "plana", label: "Planilla plana", ayuda: "Sin cortes ni resúmenes — para pivotear en Excel" },
-];
-
 export interface ExportFiltros {
   fecha_desde?: string;
   fecha_hasta?: string;
@@ -66,22 +52,45 @@ export interface ExportFiltros {
 
 export interface ExportOpciones extends ExportFiltros {
   orden: OrdenExport;
+  direccion: DireccionExport;
   agrupacion: AgrupacionExport;
+  // Como "Agrupar equipo quirúrgico" de la vista: el equipo se repite, de referencia
+  // (sin sumar), bajo la cabeza.
+  agrupar_equipo: boolean;
   columnas: ColumnaExport[];
 }
 
-export const OPCIONES_DEFAULT: ExportOpciones = {
-  orden: "nombre_socio",
-  agrupacion: "todo_junto",
-  columnas: COLUMNAS_DEFAULT,
+// Columnas de la vista que existen en el export. El socio (nombre y matrícula) siempre
+// se ve en la vista, así que va siempre; "TP" y "Valor unitario" no tienen equivalente.
+const COLUMNA_VISTA_A_EXPORT: Partial<Record<ColumnaVista, ColumnaExport>> = {
+  autorizacion: "autorizacion", fecha: "fecha", codigo: "codigo", via: "via",
+  nro_afiliado: "nro_afiliado", paciente: "afiliado", cantidad: "cantidad", porcentaje: "porcentaje",
+  honorarios: "honorarios", gastos: "gastos", coseguro: "coseguro",
 };
 
-export type TipoDocumentoPreset = "detalle" | "caratula";
+const ORDEN_VISTA_A_EXPORT: Record<OrdenVista, OrdenExport> = {
+  fecha: "fecha_practica", fecha_carga: "fecha_carga", codigo: "codigo",
+  importe: "importe", nombre_socio: "nombre_socio",
+};
 
-export interface ExportPreset {
-  id: number;
-  nombre: string;
-  tipo_documento: TipoDocumentoPreset;
-  opciones: ExportOpciones;
-  created_at: string;
-}
+// Lo que se exporta es lo que se está viendo: misma agrupación, orden, dirección, filtros,
+// equipo y columnas. En el panel de exportar sólo se pueden cambiar las columnas.
+export const opcionesDesdeVista = (v: VistaOpciones): ExportOpciones => {
+  const out: ExportOpciones = {
+    orden: ORDEN_VISTA_A_EXPORT[v.orden],
+    direccion: v.direccion,
+    agrupacion: v.agrupacion,
+    agrupar_equipo: v.agruparEquipo,
+    columnas: [
+      "prestador", "matricula",
+      ...v.columnas.flatMap((c) => COLUMNA_VISTA_A_EXPORT[c] ?? []),
+    ],
+  };
+  if (v.fecha_desde) out.fecha_desde = v.fecha_desde;
+  if (v.fecha_hasta) out.fecha_hasta = v.fecha_hasta;
+  if (v.id_especialidad !== undefined) out.id_especialidad = v.id_especialidad;
+  if (v.cod_medicos && v.cod_medicos.length > 0) out.cod_medicos = v.cod_medicos;
+  if (v.revisado !== undefined) out.revisado = v.revisado;
+  if (v.tipos && v.tipos.length > 0) out.tipos = v.tipos;
+  return out;
+};
