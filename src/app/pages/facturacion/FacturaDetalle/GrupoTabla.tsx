@@ -256,9 +256,9 @@ function GrupoTabla({
       if (t.subtitulo) {
         out.push(<tr key={`tramo-${g.key}-${t.key}`} className={styles.tramoRow}><td colSpan={colSpan}>{t.subtitulo}</td></tr>);
       }
-      // Honorarios individuales y Sanatorios van ordenados por paciente: cada uno con su subtítulo.
+      // Honorarios individuales y Sanatorios van ordenados por paciente: cada uno con su subtítulo y su total.
       const porPaciente = t.key === "Honorarios individuales" || t.key === "Sanatorio";
-      out.push(...filasDe(t.prestaciones, `${g.key}-${t.key}`, { porPaciente }));
+      out.push(...filasDe(t.prestaciones, `${g.key}-${t.key}`, { porPaciente, totalPaciente: porPaciente }));
     }
     return out;
   };
