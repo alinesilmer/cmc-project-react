@@ -161,15 +161,14 @@ interface Props {
   // Un complemento (version > 1) es una factura para un período ya cerrado y enviado:
   // mover sus prestaciones a otro período no tiene sentido, así que se ocultan esos botones.
   esComplemento: boolean;
-  // Fila de sólo lectura de un compañero de equipo, indentada bajo la cabeza.
+  // Integrante del equipo, indentado bajo la cabeza (es una fila completa, con sus acciones).
   indent?: boolean;
   ultimoDelEquipo?: boolean;
   equipoHead?: boolean;
-  // La clínica va como etiqueta en la celda del socio en vez del encabezado naranja
-  // que agrupa filas consecutivas (en "Por socio" el orden por paciente las separa y
-  // el encabezado se repetiría fila por fila).
+  // La clínica (si la hay) va como etiqueta en la celda del socio. En las prestaciones de
+  // tipo Sanatorio no: ahí la clínica es un subtítulo naranja que agrupa las filas.
   clinicaInline?: boolean;
-  // Clases extra (marco naranja de clínica, ver `renderFilasConClinica`).
+  // Clases extra para la fila.
   className?: string;
 }
 
@@ -198,14 +197,14 @@ function FilaPrestacion({
             {p.matriculaSocio != null && <span className={styles.socioMatricula}> - {p.matriculaSocio}</span>}
           </span>
           <span className={styles.socioNombre}>{p.nombreSocio ?? "—"}</span>
-          {clinicaInline && p.cod_clinica != null && (
+          {clinicaInline && p.cod_clinica != null && p.tipo !== "Sanatorio" && (
             <span className={styles.clinicaTag}>Clínica {p.nombre_clinica ?? p.cod_clinica}</span>
           )}
         </div>
       </td>
       {columnas.map((c) => renderCelda(p, c))}
       <td>
-        {indent ? <span className={styles.mutedText}>En su grupo</span> : (
+        {(
           <div className={styles.actionsCell}>
             <span className={`${styles.auditCheckboxWrap} ${p.revisado ? styles.auditCheckboxOn : ""}`}>
               <input

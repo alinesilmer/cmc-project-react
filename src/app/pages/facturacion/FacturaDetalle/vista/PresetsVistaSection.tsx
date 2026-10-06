@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
 import { Trash2 } from "lucide-react";
-import { listarExportPresets, crearExportPreset, eliminarExportPreset } from "../../api";
-import type { ExportOpciones, ExportPreset, TipoDocumentoPreset } from "./types";
-import s from "./export.module.scss";
+import { crearVistaPreset, eliminarVistaPreset, listarVistaPresets } from "../../api";
+import type { VistaOpciones, VistaPreset } from "./types";
+import s from "../export/export.module.scss";
 
 interface Props {
-  tipoDocumento: TipoDocumentoPreset;
-  opciones: ExportOpciones;
-  onAplicar: (opciones: ExportOpciones) => void;
+  opciones: VistaOpciones;
+  onAplicar: (opciones: Partial<VistaOpciones>) => void;
 }
 
-export default function PresetsSection({ tipoDocumento, opciones, onAplicar }: Props) {
-  const [presets, setPresets] = useState<ExportPreset[]>([]);
+// Los presets son de la vista: lo que se guarda acá es lo que después sale en el export.
+export default function PresetsVistaSection({ opciones, onAplicar }: Props) {
+  const [presets, setPresets] = useState<VistaPreset[]>([]);
   const [cargando, setCargando] = useState(false);
   const [nombreNuevo, setNombreNuevo] = useState("");
   const [guardando, setGuardando] = useState(false);
@@ -19,9 +19,9 @@ export default function PresetsSection({ tipoDocumento, opciones, onAplicar }: P
   const recargar = async () => {
     setCargando(true);
     try {
-      setPresets(await listarExportPresets(tipoDocumento));
+      setPresets(await listarVistaPresets());
     } catch {
-      // silencioso: los presets son una comodidad, no bloquean el export
+      // silencioso: los presets son una comodidad, no bloquean la vista
     } finally {
       setCargando(false);
     }
@@ -29,15 +29,14 @@ export default function PresetsSection({ tipoDocumento, opciones, onAplicar }: P
 
   useEffect(() => {
     recargar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tipoDocumento]);
+  }, []);
 
   const guardar = async () => {
     const nombre = nombreNuevo.trim();
     if (!nombre) return;
     setGuardando(true);
     try {
-      await crearExportPreset({ nombre, tipo_documento: tipoDocumento, opciones });
+      await crearVistaPreset(nombre, opciones);
       setNombreNuevo("");
       await recargar();
     } catch {
@@ -50,7 +49,7 @@ export default function PresetsSection({ tipoDocumento, opciones, onAplicar }: P
   const eliminar = async (id: number) => {
     setPresets((prev) => prev.filter((p) => p.id !== id));
     try {
-      await eliminarExportPreset(id);
+      await eliminarVistaPreset(id);
     } catch {
       await recargar();
     }
@@ -59,8 +58,9 @@ export default function PresetsSection({ tipoDocumento, opciones, onAplicar }: P
   return (
     <div className={s.section}>
       <div className={s.sectionHeader}>
-        <h3 className={s.sectionTitle}>Presets guardados</h3>
+        <h3 className={s.sectionTitle}>Presets de la vista</h3>
       </div>
+      <p className={s.sectionHint}>Guardan cómo ves el listado (agrupación, orden, filtros y columnas); el export sale igual.</p>
 
       {cargando && <p className={s.sectionHint}>Cargando…</p>}
       {!cargando && presets.length === 0 && <p className={s.sectionHint}>Todavía no guardaste ninguno.</p>}

@@ -11,8 +11,10 @@ import type {
   RegistroPorUsuarioParams, RegistroActividadParams,
   PublicarPeriodoPayload, PublicarPeriodoResponse,
   PeriodoPropio,
+  RecalculoPayload, RecalculoResponse,
 } from "./types";
-import type { ExportOpciones, ExportPreset, TipoDocumentoPreset } from "./FacturaDetalle/export/types";
+import type { ExportOpciones } from "./FacturaDetalle/export/types";
+import type { VistaOpciones, VistaPreset } from "./FacturaDetalle/vista/types";
 
 const BASE = "/api/facturacion";
 
@@ -223,6 +225,15 @@ export const moverPeriodo = (payload: MoverPeriodoPayload) =>
     postJSON<MoverPeriodoResponse>(`${BASE}/prestaciones/mover-periodo`, payload),
   );
 
+/** Recotiza con el precio vigente las prestaciones automáticas de una factura
+ * abierta. Con `dry_run` sólo calcula. Puede tardar: cada fila hace su lookup. */
+export const recalcularPrecios = (payload: RecalculoPayload) =>
+  traced(
+    "POST /recalcular-precios",
+    payload,
+    postJSON<RecalculoResponse>(`${BASE}/recalcular-precios`, payload, { timeout: 180_000 }),
+  );
+
 export const previewCierre = (cod_obra: string, periodo: string) =>
   traced(
     "GET /cierre/preview",
@@ -263,17 +274,22 @@ export const descargarExportPorMedico = (
     getBlobLong(`${BASE}/medico/${nroSocio}/export/detalle.${formato}`, { periodo }),
   );
 
-export const listarExportPresets = (tipoDocumento?: TipoDocumentoPreset) =>
+// Presets de la VISTA del listado (el exportable sale como se ve, así que se guardan por vista).
+export const listarVistaPresets = () =>
   traced(
     "GET /export-presets",
-    { tipoDocumento },
-    getJSON<ExportPreset[]>(`${BASE}/export-presets`, tipoDocumento ? { tipo_documento: tipoDocumento } : undefined),
+    { tipo_documento: "vista" },
+    getJSON<VistaPreset[]>(`${BASE}/export-presets`, { tipo_documento: "vista" }),
   );
 
-export const crearExportPreset = (payload: { nombre: string; tipo_documento: TipoDocumentoPreset; opciones: ExportOpciones }) =>
-  traced("POST /export-presets", payload, postJSON<ExportPreset>(`${BASE}/export-presets`, payload));
+export const crearVistaPreset = (nombre: string, opciones: VistaOpciones) =>
+  traced(
+    "POST /export-presets",
+    { nombre },
+    postJSON<VistaPreset>(`${BASE}/export-presets`, { nombre, tipo_documento: "vista", opciones }),
+  );
 
-export const eliminarExportPreset = (id: number) =>
+export const eliminarVistaPreset = (id: number) =>
   traced("DELETE /export-presets", { id }, delJSON<void>(`${BASE}/export-presets/${id}`));
 
 // ── Registro de facturación (auditoría administrativa, scope facturacion:registro) ──

@@ -4,7 +4,7 @@
 // orden propios): no hay ida y vuelta al servidor al cambiar una opción acá.
 import type { Tipo } from "../../types";
 
-export type OrdenVista = "fecha" | "codigo" | "importe" | "nombre_socio";
+export type OrdenVista = "fecha" | "fecha_carga" | "codigo" | "importe" | "nombre_socio";
 
 // Sentido del criterio de arriba — separado del criterio en sí (antes "monto_desc"
 // mezclaba las dos cosas en una sola opción, sin forma de pedir importe ascendente).
@@ -14,14 +14,15 @@ export type AgrupacionVista = "por_socio" | "por_tipo" | "plana";
 
 export const OPCIONES_ORDEN_VISTA: { value: OrdenVista; label: string }[] = [
   { value: "fecha", label: "Fecha de práctica" },
+  { value: "fecha_carga", label: "Fecha de carga" },
   { value: "codigo", label: "Código" },
   { value: "importe", label: "Importe" },
   { value: "nombre_socio", label: "Nombre del socio" },
 ];
 
 export const OPCIONES_AGRUPACION_VISTA: { value: AgrupacionVista; label: string; ayuda: string }[] = [
-  { value: "por_socio", label: "Por socio", ayuda: "Médicos y después clínicas, cada uno con su resumen (orden fijo)" },
-  { value: "por_tipo", label: "Por tipo", ayuda: "Consultas, prácticas, honorarios y sanatorios separados" },
+  { value: "por_socio", label: "Por socio", ayuda: "Cada médico con sus consultas, prácticas, honorarios y sanatorios, y su resumen (orden fijo)" },
+  { value: "por_tipo", label: "Por tipo", ayuda: "Consultas, prácticas, honorarios y sanatorios separados, con subtotal por médico" },
   { value: "plana", label: "Planilla plana", ayuda: "Sin cortes ni resúmenes, para revisar todo junto" },
 ];
 
@@ -99,3 +100,12 @@ export const VISTA_OPCIONES_DEFAULT: VistaOpciones = {
   agruparEquipo: true,
   columnas: COLUMNAS_VISTA_DEFAULT,
 };
+
+// Configuración de la vista guardada con un nombre (personal de cada usuario).
+export interface VistaPreset {
+  id: number;
+  nombre: string;
+  tipo_documento: "vista";
+  opciones: Partial<VistaOpciones>;
+  created_at: string;
+}

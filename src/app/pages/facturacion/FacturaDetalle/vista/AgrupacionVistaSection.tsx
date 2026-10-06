@@ -45,9 +45,8 @@ export default function AgrupacionVistaSection({
         <span className={s.fieldLabel}>Agrupar equipo quirúrgico</span>
       </label>
       <p className={s.sectionHint}>
-        Muestra al ayudante/gastos indentados debajo del cirujano, sin sumar su
-        honorario al subtotal de él — cada uno sigue con su propia fila completa
-        (y su propio subtotal) en su grupo.
+        El ayudante/gastos/pediatra de una cirugía aparece únicamente indentado debajo del cirujano
+        y suma en su subtotal. Sin tildar, cada uno es una fila común dentro de su propio socio.
       </p>
     </div>
   );

@@ -33,6 +33,7 @@ import {
   Monitor,
   Receipt,
   CalendarDays,
+  Calculator,
   LogOut,
   CircleUserRound,
   ChevronDown,
@@ -178,6 +179,12 @@ const TOP_NAV: TopEntry[] = [
             icon: CalendarDays,
             label: "Cerrar Factura",
             perms: ["facturacion:cerrar"],
+          },
+          {
+            path: `${base}/facturacion/recalculo`,
+            icon: Calculator,
+            label: "Recalcular precios",
+            perms: ["facturacion:periodo"],
           },
           {
             path: `${base}/facturacion/periodos`,

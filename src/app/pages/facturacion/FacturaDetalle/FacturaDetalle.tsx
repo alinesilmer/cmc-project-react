@@ -56,6 +56,10 @@ const compararPorOrden = (
   switch (orden) {
     case "fecha":
       return signo * (a.fecha_practica ?? "").localeCompare(b.fecha_practica ?? "");
+    case "fecha_carga":
+      // `created` es ISO (se compara como texto); el id desempata las cargas del mismo
+      // segundo y cubre filas sin `created`.
+      return signo * ((a.created ?? "").localeCompare(b.created ?? "") || a.id - b.id);
     case "codigo":
       return signo * (a.codigo ?? "").localeCompare(b.codigo ?? "", "es");
     case "importe":
@@ -73,11 +77,29 @@ const porFechaDesc = (a: PrestacionConSocio, b: PrestacionConSocio): number =>
 const porPacienteAZ = (a: PrestacionConSocio, b: PrestacionConSocio): number =>
   (a.nombre_paciente ?? "").localeCompare(b.nombre_paciente ?? "", "es", { sensitivity: "base" })
   || porFechaDesc(a, b);
+// Sanatorios: las prestaciones de una misma clínica quedan seguidas (A-Z por clínica) para
+// poder intercalar el subtítulo con su nombre.
+const nombreClinica = (p: PrestacionConSocio): string => p.nombre_clinica ?? String(p.cod_clinica ?? "");
+const porClinica = (a: PrestacionConSocio, b: PrestacionConSocio): number =>
+  nombreClinica(a).localeCompare(nombreClinica(b), "es", { sensitivity: "base" });
+const porClinicaYPaciente = (a: PrestacionConSocio, b: PrestacionConSocio): number =>
+  porClinica(a, b) || porPacienteAZ(a, b);
 const TRAMOS_MEDICO: { tipo: Tipo; subtitulo: string; comparar: typeof porFechaDesc }[] = [
   { tipo: "Consulta", subtitulo: "Consultas", comparar: porFechaDesc },
   { tipo: "Practica", subtitulo: "Prácticas", comparar: porFechaDesc },
   { tipo: "Honorarios individuales", subtitulo: "Honorarios individuales", comparar: porPacienteAZ },
+  { tipo: "Sanatorio", subtitulo: "Sanatorios", comparar: porClinicaYPaciente },
 ];
+// Subtítulo de cada sección de "Por tipo".
+const SUBTITULO_TIPO: Record<Tipo, string> = {
+  Consulta: "Consultas",
+  Practica: "Prácticas",
+  "Honorarios individuales": "Honorarios individuales",
+  Sanatorio: "Sanatorios",
+};
+const porNombreMedico = (a: PrestacionConSocio, b: PrestacionConSocio): number =>
+  (a.nombreSocio ?? a.cod_medico).localeCompare(b.nombreSocio ?? b.cod_medico, "es", { sensitivity: "base" })
+  || a.cod_medico.localeCompare(b.cod_medico);
 const porNombreSocio = (a: VistaGrupo, b: VistaGrupo): number =>
   (a.prestaciones[0]?.nombreSocio ?? a.key)
     .localeCompare(b.prestaciones[0]?.nombreSocio ?? b.key, "es", { sensitivity: "base" });
@@ -282,14 +304,14 @@ const FacturaDetalle: React.FC = () => {
 
   const handleMoverGrupo = (g: VistaGrupo, direccion: "siguiente" | "anterior") => {
     // Las marcadas (auditadas) se quedan en este período: solo se mueven las abiertas sin marcar.
-    const movibles = g.prestaciones.filter((p) => p.estado === "A" && !p.revisado);
+    const movibles = g.miembros.filter((p) => p.estado === "A" && !p.revisado);
     if (movibles.length === 0) {
       notify("No hay prestaciones sin marcar para mover en este grupo.", "error");
       return;
     }
     setPendingAction({
       type: "moverGrupo", ids: movibles.map((p) => p.id), label: g.titulo, groupKey: g.key, direccion,
-      marcadas: g.prestaciones.filter((p) => p.estado === "A" && p.revisado).length,
+      marcadas: g.miembros.filter((p) => p.estado === "A" && p.revisado).length,
     });
   };
 
@@ -326,8 +348,8 @@ const FacturaDetalle: React.FC = () => {
   };
   const accionesGrupoRef = useRef<GrupoAcciones | null>(null);
   accionesGrupoRef.current = {
-    onMarcarTodos: (g) => handleMarcarTodos(g.prestaciones.map((p) => p.id), g.key),
-    onDesmarcarTodos: (g) => handleDesmarcarTodos(g.prestaciones.map((p) => p.id), g.key),
+    onMarcarTodos: (g) => handleMarcarTodos(g.miembros.map((p) => p.id), g.key),
+    onDesmarcarTodos: (g) => handleDesmarcarTodos(g.miembros.map((p) => p.id), g.key),
     onMoverGrupo: handleMoverGrupo,
   };
   const accionesGrupo = useMemo<GrupoAcciones>(() => ({
@@ -403,32 +425,66 @@ const FacturaDetalle: React.FC = () => {
     [todasFlat, vistaOpciones],
   );
 
+  // Equipo quirúrgico: con "Agrupar equipo", el ayudante/gastos/pediatra de una cabeza que
+  // pasa los filtros aparece ÚNICAMENTE anidado bajo ella (y cuenta en su grupo), no como
+  // línea propia en su socio. Las prestaciones sin equipo —o cuya cabeza quedó afuera de los
+  // filtros— siguen siendo líneas comunes de su socio.
+  const { principales, hijosPorCabeza, visibles } = useMemo(() => {
+    const hijos = new Map<number, PrestacionConSocio[]>();
+    if (vistaOpciones.agruparEquipo) {
+      for (const p of filtradas) {
+        if (p.grupo_equipo_id !== p.id) continue;
+        const otros = (equipoPorGrupo.get(p.id) ?? []).filter((m) => m.id !== p.id);
+        if (otros.length > 0) hijos.set(p.id, otros);
+      }
+    }
+    const anidados = new Set<number>();
+    hijos.forEach((arr) => arr.forEach((m) => anidados.add(m.id)));
+    const propias = filtradas.filter((p) => !anidados.has(p.id));
+    return {
+      principales: propias,
+      hijosPorCabeza: hijos,
+      visibles: propias.flatMap((p) => [p, ...(hijos.get(p.id) ?? [])]),
+    };
+  }, [filtradas, equipoPorGrupo, vistaOpciones.agruparEquipo]);
+
   const vistaGrupos = useMemo<VistaGrupo[]>(() => {
+    const miembrosDe = (arr: PrestacionConSocio[]) => arr.flatMap((p) => [p, ...(hijosPorCabeza.get(p.id) ?? [])]);
+
     if (vistaOpciones.agrupacion === "plana") {
-      const ordenadas = [...filtradas].sort((a, b) => compararPorOrden(a, b, vistaOpciones.orden, vistaOpciones.direccion));
-      return [{ key: "__plana__", titulo: "", prestaciones: ordenadas, mostrarResumen: false, ...sumarTotales(ordenadas) }];
+      const ordenadas = [...principales].sort((a, b) => compararPorOrden(a, b, vistaOpciones.orden, vistaOpciones.direccion));
+      const miembros = miembrosDe(ordenadas);
+      return [{ key: "__plana__", titulo: "", prestaciones: ordenadas, miembros, mostrarResumen: false, ...sumarTotales(miembros) }];
     }
 
     if (vistaOpciones.agrupacion === "por_tipo") {
       return ORDEN_TIPOS
-        .map((t) => filtradas.filter((p) => p.tipo === t))
+        .map((t) => principales.filter((p) => p.tipo === t))
         .map((arr, i) => ({ tipo: ORDEN_TIPOS[i], arr }))
         .filter(({ arr }) => arr.length > 0)
         .map(({ tipo, arr }) => {
-          const ordenadas = [...arr].sort((a, b) => compararPorOrden(a, b, vistaOpciones.orden, vistaOpciones.direccion));
-          return { key: `tipo-${tipo}`, titulo: tipo, prestaciones: ordenadas, mostrarResumen: true, ...sumarTotales(ordenadas) };
+          // Las filas de cada médico quedan seguidas (para poder cerrar con su subtotal);
+          // el orden elegido rige dentro de cada médico.
+          const ordenadas = [...arr].sort((a, b) =>
+            porNombreMedico(a, b)
+            || (tipo === "Sanatorio" ? porClinica(a, b) : 0)
+            || compararPorOrden(a, b, vistaOpciones.orden, vistaOpciones.direccion));
+          const miembros = miembrosDe(ordenadas);
+          return {
+            key: `tipo-${tipo}`, titulo: SUBTITULO_TIPO[tipo], subtitulo: SUBTITULO_TIPO[tipo], subtotalPorMedico: true,
+            prestaciones: ordenadas, miembros, mostrarResumen: true, ...sumarTotales(miembros),
+          };
         });
     }
 
-    // por_socio (default): orden fijo. Médicos A-Z con sus tramos y, al final, las
-    // clínicas (prestaciones tipo Sanatorio, cuyo socio es la clínica) A-Z por paciente.
+    // por_socio (default): orden fijo. Médicos A-Z, cada uno con sus tramos por tipo.
+    // `cod_medico` es siempre el médico que cobra (la clínica, si hay, va en `cod_clinica`
+    // y se muestra como etiqueta en la fila), así que nunca se agrupa a un socio como clínica.
     const medicos = new Map<string, PrestacionConSocio[]>();
-    const clinicas = new Map<string, PrestacionConSocio[]>();
-    for (const p of filtradas) {
-      const destino = p.tipo === "Sanatorio" ? clinicas : medicos;
-      const arr = destino.get(p.cod_medico) ?? [];
+    for (const p of principales) {
+      const arr = medicos.get(p.cod_medico) ?? [];
       arr.push(p);
-      destino.set(p.cod_medico, arr);
+      medicos.set(p.cod_medico, arr);
     }
     const tiposTramo = new Set<Tipo | null>(TRAMOS_MEDICO.map((t) => t.tipo));
 
@@ -440,23 +496,15 @@ const FacturaDetalle: React.FC = () => {
       tramos.push({ key: "otras", subtitulo: "Otras", prestaciones: arr.filter((p) => !tiposTramo.has(p.tipo)).sort(porFechaDesc) });
       const conFilas = tramos.filter((t) => t.prestaciones.length > 0);
       const prestaciones = conFilas.flatMap((t) => t.prestaciones);
+      const miembros = miembrosDe(prestaciones);
       return {
-        key: cod, titulo: `Socio ${cod} ${arr[0]?.nombreSocio ?? ""}`.trim(), prestaciones,
-        tramos: conFilas, mostrarResumen: true, ...sumarTotales(prestaciones),
+        key: cod, titulo: `Socio ${cod} ${arr[0]?.nombreSocio ?? ""}`.trim(), prestaciones, miembros,
+        tramos: conFilas, mostrarResumen: true, ...sumarTotales(miembros),
       };
     }).sort(porNombreSocio);
 
-    const gruposClinicas: VistaGrupo[] = [...clinicas.entries()].map(([cod, arr]) => {
-      const prestaciones = [...arr].sort(porPacienteAZ);
-      return {
-        key: `clinica-${cod}`, titulo: `${arr[0]?.nombreSocio ?? "Clínica"} · socio ${cod}`, prestaciones,
-        esClinica: true, mostrarResumen: true, ...sumarTotales(prestaciones),
-      };
-    }).sort(porNombreSocio);
-
-    if (gruposClinicas.length > 0) gruposClinicas[0] = { ...gruposClinicas[0], bloque: "Clínicas / Sanatorios" };
-    return [...gruposMedicos, ...gruposClinicas];
-  }, [filtradas, vistaOpciones.agrupacion, vistaOpciones.orden, vistaOpciones.direccion]);
+    return gruposMedicos;
+  }, [principales, hijosPorCabeza, vistaOpciones.agrupacion, vistaOpciones.orden, vistaOpciones.direccion]);
 
   const columnasActivas = useMemo(
     () => COLUMNAS_VISTA_DISPONIBLES.filter((c) => vistaOpciones.columnas.includes(c.key)),
@@ -491,13 +539,12 @@ const FacturaDetalle: React.FC = () => {
     const anterior = gruposCacheRef.current;
     const nuevo = new Map<string, { g: VistaGrupo; firma: unknown[] }>();
     const out = vistaGrupos.map((g) => {
-      const firma: unknown[] = [g.titulo, g.bloque, g.esClinica, g.mostrarResumen, ...g.prestaciones];
+      const firma: unknown[] = [g.titulo, g.subtitulo, g.subtotalPorMedico, g.mostrarResumen, ...g.prestaciones];
       g.tramos?.forEach((t) => firma.push(t.key, t.prestaciones.length));
       const companeros: Record<number, PrestacionConSocio[]> = {};
       for (const p of g.prestaciones) {
-        if (p.grupo_equipo_id == null || p.grupo_equipo_id !== p.id) continue;
-        const otros = (equipoPorGrupo.get(p.id) ?? []).filter((m) => m.id !== p.id);
-        if (otros.length > 0) {
+        const otros = hijosPorCabeza.get(p.id);
+        if (otros && otros.length > 0) {
           companeros[p.id] = otros;
           firma.push(p.id, ...otros);
         }
@@ -509,7 +556,7 @@ const FacturaDetalle: React.FC = () => {
     });
     gruposCacheRef.current = nuevo;
     return out;
-  }, [vistaGrupos, equipoPorGrupo]);
+  }, [vistaGrupos, hijosPorCabeza]);
 
   // La tabla se dibuja con una versión "diferida" de los grupos: cambiar filtros/orden
   // o abrir un panel responde al instante y la tabla se actualiza al terminar de calcularse.
@@ -517,12 +564,12 @@ const FacturaDetalle: React.FC = () => {
 
   const ocupadasDe = (g: VistaGrupo): ReadonlySet<number> => {
     if (busyIds.size === 0) return SIN_OCUPADAS;
-    const ids = g.prestaciones.filter((p) => busyIds.has(p.id)).map((p) => p.id);
+    const ids = g.miembros.filter((p) => busyIds.has(p.id)).map((p) => p.id);
     return ids.length > 0 ? new Set(ids) : SIN_OCUPADAS;
   };
 
   const filtrosActivos = hayFiltrosActivos(vistaOpciones);
-  const totalFiltrado = useMemo(() => sumarTotales(filtradas).totalSubtotal, [filtradas]);
+  const totalFiltrado = useMemo(() => sumarTotales(visibles).totalSubtotal, [visibles]);
 
   return (
     <div className={styles.container}>
@@ -574,7 +621,7 @@ const FacturaDetalle: React.FC = () => {
         )}
 
         <div className={styles.tableWrap}>
-          <table className={styles.table}>
+          <table className={`${styles.table} ${styles.tablaEncabezado}`}>
             <colgroup>
               {columnasConPeso.map((c) => <col key={c.id} style={{ width: `${c.pct}%` }} />)}
             </colgroup>
@@ -675,7 +722,7 @@ const FacturaDetalle: React.FC = () => {
       )}
 
       {exportOpen && detalle && (
-        <ExportPanel detalle={detalle} onClose={() => setExportOpen(false)} />
+        <ExportPanel detalle={detalle} vista={vistaOpciones} onClose={() => setExportOpen(false)} />
       )}
 
       {vistaOpen && detalle && (

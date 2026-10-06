@@ -9,9 +9,10 @@ export const sumarTotales = (arr: PrestacionConSocio[]) => arr.reduce(
     acc.totalHonorarios += parseMoney(p.honorarios);
     acc.totalGastos += parseMoney(p.gastos);
     acc.totalSubtotal += parseMoney(p.subtotal);
+    acc.totalCoseguro += parseMoney(p.coseguro);
     return acc;
   },
-  { totalHonorarios: 0, totalGastos: 0, totalSubtotal: 0 },
+  { totalHonorarios: 0, totalGastos: 0, totalSubtotal: 0, totalCoseguro: 0 },
 );
 
 export const RESUMEN_TIPO_LABEL: Record<Tipo, string> = {

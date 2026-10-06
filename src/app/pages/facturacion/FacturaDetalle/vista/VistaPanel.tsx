@@ -5,6 +5,7 @@ import OrdenVistaSection from "./OrdenVistaSection";
 import AgrupacionVistaSection from "./AgrupacionVistaSection";
 import FiltrosVistaSection from "./FiltrosVistaSection";
 import ColumnasVistaSection from "./ColumnasVistaSection";
+import PresetsVistaSection from "./PresetsVistaSection";
 import s from "../export/export.module.scss";
 
 interface PrestadorOpcion {
@@ -28,7 +29,7 @@ export default function VistaPanel({ opciones, onChange, prestadores, onClose }:
           <div>
             <h2 className={s.drawerTitle}>Vista de la tabla</h2>
             <p className={s.drawerSub}>
-              Ordená, agrupá, filtrá y elegí columnas — se aplica solo en pantalla, no cambia los datos.
+              Ordená, agrupá, filtrá y elegí columnas — no cambia los datos. El exportable sale tal como lo ves acá.
             </p>
           </div>
           <button type="button" className={s.closeBtn} onClick={onClose} aria-label="Cerrar panel">
@@ -58,6 +59,11 @@ export default function VistaPanel({ opciones, onChange, prestadores, onClose }:
           <ColumnasVistaSection
             columnas={opciones.columnas}
             onChange={(columnas) => onChange({ ...opciones, columnas })}
+          />
+          <PresetsVistaSection
+            opciones={opciones}
+            // Un preset puede ser de antes de que existiera alguna opción: lo que falte toma el valor por defecto.
+            onAplicar={(preset) => onChange({ ...VISTA_OPCIONES_DEFAULT, ...preset })}
           />
           <div className={s.section}>
             <button
