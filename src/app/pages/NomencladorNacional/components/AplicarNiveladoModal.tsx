@@ -96,7 +96,7 @@ export default function AplicarNiveladoModal({
       }
     } catch (e) {
       setPreview(null);
-      setError(motivoError(e, "No se pudo calcular."));
+      setError(motivoError(e, dry ? "No se pudo calcular." : "No se pudo aplicar. Revisá en Precios por obra social si se cargó antes de reintentar."));
     } finally {
       setTrabajando(null);
     }

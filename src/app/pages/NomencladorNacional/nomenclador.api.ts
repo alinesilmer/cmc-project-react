@@ -616,9 +616,10 @@ export const actualizarCodigoNivelado = (
 export const quitarCodigoNivelado = (slug: string, nomencladorId: number): Promise<void> =>
   delJSON<void>(`/api/nomencladores_nivelados/${slug}/codigos/${nomencladorId}`);
 
-/** Con `dry_run` sólo muestra qué haría. */
+/** Con `dry_run` sólo muestra qué haría. Timeout largo: aplicar da de alta y cotiza
+ * cientos de códigos y con los 15 s por defecto el navegador cortaba antes. */
 export const aplicarNivelado = (
   slug: string,
   payload: { obra_social_nro: number; vigencia_desde: string; dry_run: boolean },
 ): Promise<AplicarNiveladoOut> =>
-  postJSON<AplicarNiveladoOut>(`/api/nomencladores_nivelados/${slug}/aplicar`, payload);
+  postJSON<AplicarNiveladoOut>(`/api/nomencladores_nivelados/${slug}/aplicar`, payload, { timeout: 180_000 });
