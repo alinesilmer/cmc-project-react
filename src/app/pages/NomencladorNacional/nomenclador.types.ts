@@ -952,7 +952,7 @@ export type NiveladoCodigoIn = {
 };
 
 export type EstadoAplicarNivelado =
-  | "crear" | "creado" | "ya_tiene_precio" | "sin_quien_factura" | "suspendido" | "omitido";
+  | "crear" | "creado" | "reemplazar" | "reemplazado" | "sin_quien_factura" | "suspendido" | "omitido";
 
 export type AplicarNiveladoFila = {
   nomenclador_id: number;
@@ -964,6 +964,8 @@ export type AplicarNiveladoFila = {
   precios: number;
   precio: string | null;
   motivo: string | null;
+  /** Vigencias NE desde la fecha cargada en adelante que se borran de la base. */
+  vigencias_borradas: number;
 };
 
 export type AplicarNiveladoOut = {
@@ -974,7 +976,9 @@ export type AplicarNiveladoOut = {
   resumen: {
     total: number;
     crear: number;
-    ya_tiene_precio: number;
+    /** Ya tenían precio NE: se les carga la vigencia igual. */
+    reemplazar: number;
+    vigencias_borradas: number;
     sin_quien_factura: number;
     suspendido: number;
     omitido: number;

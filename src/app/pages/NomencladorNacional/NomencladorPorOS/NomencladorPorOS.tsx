@@ -184,6 +184,16 @@ function errorCoseguro(v: string): string | null {
 /** "2026-10-03" → "03/10/2026". */
 const fechaCorta = (iso: string) => iso.split("-").reverse().join("/");
 
+/** Aviso (no bloquea) de qué pasa con una vigencia que no es posterior a la vigente:
+ * la misma fecha la actualiza, una anterior borra las más nuevas. */
+function avisoVigencia(nueva: string, vigente: string | undefined): string | null {
+  if (!nueva || !vigente || nueva > vigente) return null;
+  if (nueva === vigente) {
+    return `Ya existe una vigencia desde el ${fechaCorta(vigente)}: se actualiza con estos valores, no se crea otra.`;
+  }
+  return `Es anterior a la vigente (${fechaCorta(vigente)}): se eliminan de la base las vigencias desde el ${fechaCorta(nueva)} en adelante y esta queda como la última.`;
+}
+
 /** El galeno nivelado que usa la ecuación (el primero), o null. Con galeno nivelado
  * el nivel del precio es el suyo: no se carga aparte. */
 function galenoNivelado(
@@ -1282,9 +1292,6 @@ export default function NomencladorPorOS() {
   function validateEcuacion(): boolean {
     const errs: Record<string, string> = {};
     if (!editEcu.vigencia_desde) errs.vigencia_desde = "Requerido";
-    else if (editTarget && editEcu.vigencia_desde <= editTarget.vigencia_desde) {
-      errs.vigencia_desde = `Tiene que ser posterior al ${fechaCorta(editTarget.vigencia_desde)}, desde cuando rige el precio actual.`;
-    }
     const cos = errorCoseguro(editEcu.coseguro);
     if (cos) errs.coseguro = cos;
     // Por presupuesto no tiene ecuación propia (H/G/A van en 0, ver `_crear_valor_con_
@@ -1445,6 +1452,9 @@ export default function NomencladorPorOS() {
       );
   const nucleoComunCambio =
     nucleoUnico && firmaPrecio(nucleoComun) !== nucleoInicial.current.comun;
+  /** La vigencia más nueva de los precios que se rotan (para el aviso de la fecha). */
+  const ultimaNucleo = (nucleoComunCambio ? nucleoVariantes : nucleoFilasCambiadas)
+    .map((v) => v.vigencia_desde).sort().pop();
   const nivelNucleo = galenoNivelado(
     nucleoUnico
       ? nucleoComun.componentes
@@ -1718,12 +1728,7 @@ export default function NomencladorPorOS() {
     const errs: Record<string, string> = {};
     const rota = nucleoComunCambio || nucleoFilasCambiadas.length > 0;
     if (rota && !editEcu.vigencia_desde) errs.vigencia_desde = "Requerido";
-    // La nueva vigencia tiene que ser posterior a la de los precios que se rotan.
-    const rotadas = nucleoComunCambio ? nucleoVariantes : nucleoFilasCambiadas;
-    const ultima = rotadas.map((v) => v.vigencia_desde).sort().pop();
-    if (rota && editEcu.vigencia_desde && ultima && editEcu.vigencia_desde <= ultima) {
-      errs.vigencia_desde = `Tiene que ser posterior al ${fechaCorta(ultima)}, desde cuando rige el precio actual.`;
-    }
+    // Cualquier fecha vale: igual o anterior a la vigente sólo avisa (`avisoVigencia`).
     if (editTarget.por_presupuesto) {
       if (nucleoComunCambio) {
         const c = errorCoseguro(nucleoComun.coseguro);
@@ -3013,6 +3018,9 @@ export default function NomencladorPorOS() {
                       {editErrors.vigencia_desde && (
                         <span className={styles.errorMsg}>{editErrors.vigencia_desde}</span>
                       )}
+                      {avisoVigencia(editEcu.vigencia_desde, ultimaNucleo) && (
+                        <span className={styles.avisoPrecio}>{avisoVigencia(editEcu.vigencia_desde, ultimaNucleo)}</span>
+                      )}
                     </div>
                     {nucleoVariantes.length > 1 && (
                       <label className={styles.toggleRow}>
@@ -3099,6 +3107,11 @@ export default function NomencladorPorOS() {
                           {editErrors.vigencia_desde && (
                             <span className={styles.errorMsg}>
                               {editErrors.vigencia_desde}
+                            </span>
+                          )}
+                          {avisoVigencia(editEcu.vigencia_desde, editTarget.vigencia_desde) && (
+                            <span className={styles.avisoPrecio}>
+                              {avisoVigencia(editEcu.vigencia_desde, editTarget.vigencia_desde)}
                             </span>
                           )}
                         </div>

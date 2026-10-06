@@ -112,6 +112,10 @@ export interface PrecioResponse {
   via: ViaPractica;
   /** Solo se completa si via="L" y el galeno cotizado es de 7 niveles. */
   nivel_cotizado?: number | null;
+  /** true → el código admite vía laparoscópica (la regla vive en la API: galeno de cirugía
+   *  adulto/infantil, fuera del nivel tope). Usar este flag para ofrecer la vía, no la
+   *  categoría del código. */
+  admite_laparoscopia?: boolean;
   /** Coseguro sugerido desde el Valor del código — editable al cargar la prestación. */
   coseguro: Money;
   /** true → este código admite sumar un pediatra al equipo (parto/cesárea). La lista de

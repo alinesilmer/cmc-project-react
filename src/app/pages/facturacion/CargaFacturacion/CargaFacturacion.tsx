@@ -294,8 +294,6 @@ const CargaFacturacion: React.FC = () => {
 
   // Montos principales
   const [codNomenclador, setCodNomenclador] = useState<string | null>(null);
-  // Categoría del código elegido: la vía solo se ofrece para "Honorarios individuales".
-  const [codNomencladorCategoria, setCodNomencladorCategoria] = useState<string | null>(null);
   const [cantidad, setCantidad] = useState("1");
   const [sesion, setSesion] = useState("1");
   const [tipoCalculo, setTipoCalculo] = useState<TipoCalculo>("A");
@@ -552,7 +550,6 @@ const CargaFacturacion: React.FC = () => {
           const nom = nomRes.value.find((x) => x.codigo === p.cod_nomenclador);
           if (nom) {
             setCodigoPreset(nom.descripcion || null);
-            setCodNomencladorCategoria(nom.categoria ?? null);
           }
         }
         if (cliRes.status === "fulfilled") {
@@ -787,7 +784,6 @@ const CargaFacturacion: React.FC = () => {
           const nom = nomRes.value.find((x) => x.codigo === p.cod_nomenclador);
           if (nom) {
             setCodigoPreset(nom.descripcion || null);
-            setCodNomencladorCategoria(nom.categoria ?? null);
           }
         }
         if (cliRes.status === "fulfilled") {
@@ -957,7 +953,6 @@ const CargaFacturacion: React.FC = () => {
     // refetchea solo y el efecto que sincroniza precio→honorarios los termina pisando.
     if (!mantener.codigo) {
       setCodNomenclador(null);
-      setCodNomencladorCategoria(null);
       setHonorarios("0");
       setGastos("0");
       setCoseguro("0");
@@ -1829,10 +1824,7 @@ const CargaFacturacion: React.FC = () => {
           <PrestacionSection
             key={`nom-${nomencladorResetKey}`}
             codNomenclador={codNomenclador}
-            onNomencladorChange={(cod, nom) => {
-              setCodNomenclador(cod);
-              setCodNomencladorCategoria(nom?.categoria ?? null);
-            }}
+            onNomencladorChange={(cod) => setCodNomenclador(cod)}
             codMedico={codMedicoEfectivo}
             codObra={codObraEfectivo}
             precio={precio}
@@ -1840,7 +1832,11 @@ const CargaFacturacion: React.FC = () => {
             precioError={precioError}
             via={via}
             onViaChange={setVia}
-            mostrarVia={codNomencladorCategoria === "Honorarios individuales"}
+            // La vía se ofrece cuando la API dice que el código admite laparoscopía (galeno de
+            // cirugía adulto/infantil, fuera del nivel tope) — no por la categoría del catálogo,
+            // que está mal cargada en parte de los códigos. Si ya está en "L" (p. ej. al editar, o
+            // porque esa cotización fue rechazada) queda visible para poder volver a Tradicional.
+            mostrarVia={!!codNomenclador && (precio?.admite_laparoscopia === true || via === "L")}
             onVolverATradicional={volverATradicional}
             // La fecha ya no bloquea el código: es opcional (carga por cantidad).
             disabled={formDisabled || !codMedicoEfectivo}
