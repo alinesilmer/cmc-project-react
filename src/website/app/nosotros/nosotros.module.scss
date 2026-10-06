@@ -1,55 +1,13 @@
 @use "@/website/styles/all.scss" as *;
 
 $crema: #f7e9aa;
-$suave: #f1f5fb;
-$gris: #6b7280;
 
 // Los tres verbos dentro de la cabecera: uno debajo del otro, porque la
 // tarjeta comparte el ancho con el panel azul y en columnas no entran.
-.pilares {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin: 8px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.pilar {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 14px 18px;
-  border-radius: 8px;
-  background: $suave;
-  font-size: 0.95rem;
-  line-height: 1.45;
-  color: $gris;
-
-  strong {
-    display: block;
-    margin-bottom: 2px;
-    font-family: $font-title;
-    font-size: 1.08rem;
-    font-weight: 800;
-    color: $primary-blue-dark;
-  }
-}
-
-.pilarIcono {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 44px;
-  height: 44px;
-  border-radius: 6px;
-  background: $primary-blue;
-  color: $crema;
-
-  svg {
-    width: 20px;
-    height: 20px;
-  }
+// `ul` para ganarle al `margin: 0` del componente sin depender del orden en
+// que se carguen los estilos.
+ul.pilares {
+  margin-top: 8px;
 }
 
 // Misión y visión, lado a lado: la primera azul, la segunda crema.

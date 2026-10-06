@@ -9,6 +9,7 @@ import {
 import { http } from "@/app/shared/lib/http";
 import { getAccessToken, getCookie, setAccessToken } from "../auth/token";
 import { refreshSession, listenRemoteLogout, type LogoutMotivo } from "./session";
+import { anotarIngreso } from "@/app/features/avisoIngreso/reglasAviso";
 
 type AuthCtx = {
   user: User | null;
@@ -42,6 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const u = await apiLogin(nroSocio, password);
     setUser(u);
     sessionStorage.setItem("me", JSON.stringify(u));
+    anotarIngreso(u);
     return u;
   };
 

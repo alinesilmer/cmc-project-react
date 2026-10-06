@@ -1,0 +1,327 @@
+@use "@/app/styles/all.scss" as *;
+
+// Los controles de esta pantalla son más altos que `$alto-control`: la usan
+// personas de todas las edades y un botón de 40px se erra fácil con el dedo.
+$alto: 46px;
+
+.pantalla {
+  @extend %pantalla;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-5;
+  min-height: 100%;
+}
+
+// ─── Encabezado ───────────────────────────────────────────────────────────────
+
+.encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3 $spacing-5;
+}
+
+.titulo {
+  @extend %titulo;
+}
+
+.bajada {
+  @extend %subtitulo;
+  font-size: $font-size-lg;
+}
+
+// ─── Qué valor comparar ───────────────────────────────────────────────────────
+
+.selectorBotones {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+
+  @media (max-width: $breakpoint-md) {
+    display: none;
+  }
+}
+
+.grupo {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+.grupoRotulo {
+  @extend %rotulo;
+}
+
+.botones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-2;
+}
+
+.valorBoton {
+  @extend %chip;
+  height: $alto;
+  padding: 0 $spacing-4;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $tinta;
+
+  &:focus-visible {
+    outline: 2px solid $acento;
+    outline-offset: 2px;
+  }
+}
+
+// A diferencia de `%chip-activo`, relleno: es la decisión principal de la
+// pantalla y tiene que verse de lejos cuál está elegido.
+.valorBotonActivo {
+  background: $acento;
+  border-color: $acento;
+  color: $primary-yellow-light;
+
+  &:hover:not(:disabled) {
+    border-color: $acento;
+    color: $primary-yellow-light;
+  }
+}
+
+.selectorLista {
+  display: none;
+  flex-direction: column;
+  gap: $spacing-2;
+
+  @media (max-width: $breakpoint-md) {
+    display: flex;
+  }
+}
+
+.select {
+  @extend %select;
+  width: 100%;
+  height: $alto;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $tinta;
+}
+
+// ─── Barra de la lista ────────────────────────────────────────────────────────
+
+.barraLista {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-3;
+  margin-top: $spacing-2;
+}
+
+.pregunta {
+  flex: 1 1 18rem;
+  margin: 0;
+  font-family: "Manrope", sans-serif;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  letter-spacing: -0.01em;
+  color: $acento;
+
+  span {
+    color: $tinta;
+  }
+}
+
+.buscador {
+  @extend %buscador;
+  flex: 1 1 16rem;
+  max-width: 24rem;
+}
+
+.campo {
+  @extend %buscador-campo;
+  height: $alto;
+}
+
+.lupa {
+  @extend %buscador-icono;
+}
+
+.limpiar {
+  @extend %buscador-limpiar;
+}
+
+.orden {
+  @extend %grupo-opciones;
+  height: $alto;
+}
+
+.opcion {
+  @extend %opcion;
+  font-size: $font-size-base;
+
+  &:focus-visible {
+    outline: 2px solid $acento;
+    outline-offset: 1px;
+  }
+}
+
+.opcionActiva {
+  @extend %opcion-activa;
+}
+
+.conteo {
+  margin: 0;
+  font-size: $font-size-base;
+  color: $tinta-3;
+  font-variant-numeric: tabular-nums;
+}
+
+// ─── Lista ────────────────────────────────────────────────────────────────────
+
+.lista {
+  @extend %tarjeta-flotante;
+  list-style: none;
+  margin: 0;
+  padding: 0 $spacing-5;
+}
+
+.fila {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1.2fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: $spacing-2 $spacing-4;
+  padding: $spacing-3 0;
+  border-bottom: 1px solid $linea;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+}
+
+.nro {
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  height: 40px;
+  padding: 0 $spacing-2;
+  border-radius: $radio-sm;
+  background: $acento-lavado;
+  color: $acento;
+  font-family: "Manrope", sans-serif;
+  font-weight: $font-weight-bold;
+  font-variant-numeric: tabular-nums;
+}
+
+.nombre {
+  font-family: "Manrope", sans-serif;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  line-height: 1.25;
+  color: $tinta;
+}
+
+.barra {
+  height: 10px;
+  border-radius: $radio-xs;
+  background: $acento-lavado;
+  overflow: hidden;
+
+  span {
+    display: block;
+    height: 100%;
+    border-radius: $radio-xs;
+    background: $acento;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    display: none;
+  }
+}
+
+.monto {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: $tinta;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-lg;
+  }
+}
+
+.niveles {
+  grid-column: 2 / -1;
+  font-size: $font-size-base;
+  color: $tinta-3;
+
+  summary {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    color: $acento;
+    font-weight: $font-weight-semibold;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid $acento;
+      outline-offset: 2px;
+    }
+  }
+
+  ul {
+    list-style: none;
+    margin: $spacing-2 0 $spacing-1;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+    gap: $spacing-2;
+  }
+
+  li {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: $spacing-3;
+    padding: $spacing-2 $spacing-3;
+    border: 1px solid $linea;
+    border-radius: $radio-sm;
+    color: $tinta-2;
+  }
+
+  strong {
+    color: $tinta;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+}
+
+// ─── Estados ──────────────────────────────────────────────────────────────────
+
+.esqueleto {
+  @extend %esqueleto;
+}
+
+.esqueletoFila {
+  @extend %esqueleto-fila;
+  height: 62px;
+}
+
+.error {
+  @extend %estado-error;
+  margin: 0;
+}
+
+.vacio {
+  @extend %estado-vacio;
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .valorBoton,
+  .opcion {
+    transition: none;
+  }
+}

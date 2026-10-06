@@ -1,0 +1,16 @@
+// Las secciones de la portada. Más anchas que ContenedorPagina, que usa el
+// resto del sitio: debajo del hero de lado a lado, el ancho de siempre dejaba
+// márgenes laterales enormes en pantallas grandes.
+.secciones {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  width: min(100%, 1640px);
+  margin: 0 auto;
+  padding: 48px clamp(16px, 5.5vw, 104px) 72px;
+
+  @media (max-width: 480px) {
+    gap: 32px;
+    padding-block: 32px 48px;
+  }
+}

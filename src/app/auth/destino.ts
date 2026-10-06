@@ -19,37 +19,63 @@ export function destinoDe(user: User): Destino {
   if (user.must_change_password) return { tipo: "panel", ruta: "/panel/cambiar-password" };
   if (isWebEditor(user)) return { tipo: "panel", ruta: "/panel/sitio" };
 
-  // TEMPORAL — prueba controlada del panel nuevo con médicos seleccionados:
-  // quien tenga panel:ingresar se queda acá en vez de ir al legacy. Borrar
-  // junto con Scope.PANEL_INGRESAR (backend) cuando cierre la prueba.
-  // Las organizaciones usan el panel nuevo, recortado por
-  // ORGANIZACION_BLOCKED_PATHS, y no el menu_clinica.php del legacy.
-  if (hasScope(user.scopes, "panel:ingresar") || esOrganizacion(user)) {
+  // Los médicos entran siempre al panel nuevo: ya no pasan por el menu.php
+  // del legacy. Las organizaciones también, recortadas por
+  // ORGANIZACION_BLOCKED_PATHS, en vez del menu_clinica.php del legacy.
+  //
+  // system_new:access es el permiso con el que el legacy muestra el link
+  // «INGRESAR NUEVO SISTEMA» (lo tiene el rol admin): quien ya puede entrar
+  // al panel no tiene por qué pasar antes por el legacy.
+  //
+  // TEMPORAL — panel:ingresar deja en el panel al resto de los usuarios
+  // elegidos para la prueba controlada. Borrar junto con
+  // Scope.PANEL_INGRESAR (backend) cuando cierre la prueba.
+  if (
+    user.role === "medico" ||
+    esOrganizacion(user) ||
+    hasScope(user.scopes, "system_new:access") ||
+    hasScope(user.scopes, "panel:ingresar")
+  ) {
     return { tipo: "panel", ruta: "/panel/dashboard" };
   }
 
-  if (user.role === "medico") {
-    return {
-      tipo: "legacy",
-      next: `/menu.php?nro_socio1=${encodeURIComponent(Number(user.nro_socio))}`,
-    };
-  }
   return { tipo: "legacy", next: "/principal.php" };
 }
 
+/** Pantalla intermedia desde la que se sale hacia el legacy. */
+export const RUTA_SISTEMA_ANTERIOR = "/panel/sistema-anterior";
+
+// Marca que ya se intentó saltar solo al legacy en esta pestaña. Si el usuario
+// vuelve atrás porque el legacy no cargó, la pantalla intermedia no lo manda
+// de nuevo: le muestra qué puede hacer.
+const CLAVE_SALTO = "legacy:salto";
+
+export const yaSeIntentoElSalto = () => sessionStorage.getItem(CLAVE_SALTO) === "1";
+export const marcarSalto = () => sessionStorage.setItem(CLAVE_SALTO, "1");
+
 /**
- * Lleva al usuario a su destino. Para el legacy pide el enlace SSO en el
- * momento: vence a los cinco minutos, así que pedirlo de antemano —como hacía
- * el Header al cargar cada página— dejaba un enlace muerto a quien tardaba en
- * hacer clic. Si falla, propaga el error para que cada pantalla lo muestre.
+ * Lleva al usuario a su destino. Al legacy no se salta directo: se pasa por
+ * la pantalla intermedia, que queda en el historial y le da una salida a
+ * quien se encuentre con el legacy caído.
  */
-export async function irADestino(destino: Destino, navigate: NavigateFunction): Promise<void> {
+export function irADestino(destino: Destino, navigate: NavigateFunction): void {
   if (destino.tipo === "panel") {
     navigate(destino.ruta, { replace: true });
     return;
   }
+  // Cada ingreso es un intento nuevo: vuelve a saltar solo.
+  sessionStorage.removeItem(CLAVE_SALTO);
+  navigate(RUTA_SISTEMA_ANTERIOR, { replace: true });
+}
+
+/**
+ * Enlace SSO al legacy. Vence a los cinco minutos, así que se pide en el
+ * momento de usarlo y no de antemano.
+ */
+export async function pedirEnlaceLegacy(next: string, signal?: AbortSignal): Promise<string> {
   const { data } = await http.get<{ url: string }>("/auth/legacy/sso-link", {
-    params: { next: destino.next },
+    params: { next },
+    signal,
   });
-  window.location.href = data.url;
+  return data.url;
 }

@@ -4,6 +4,7 @@ import CabeceraFresca from "../../components/UI/CabeceraFresca/CabeceraFresca";
 import Button from "../../components/UI/Button/Button";
 import Revelar from "../../components/UI/Revelar/Revelar";
 import Llamado from "../../components/UI/Llamado/Llamado";
+import Pilares from "../../components/UI/Pilares/Pilares";
 import TarjetasIcono from "../../components/UI/TarjetasIcono/TarjetasIcono";
 import { useTituloPagina } from "../../hooks/useTituloPagina";
 import { DESTACADOS, PILARES, PROPOSITO, VALORES } from "./nosotros.data";
@@ -28,19 +29,7 @@ export default function NosotrosPage() {
         }
         destacados={DESTACADOS}
       >
-        <ul className={styles.pilares}>
-          {PILARES.map(({ icono: Icono, titulo, texto }, i) => (
-            <Revelar key={titulo} como="li" className={styles.pilar} distancia={14} retraso={0.2 + i * 0.08} alVerse={false}>
-              <span className={styles.pilarIcono} aria-hidden="true">
-                <Icono />
-              </span>
-              <span>
-                <strong>{titulo}</strong>
-                {texto}
-              </span>
-            </Revelar>
-          ))}
-        </ul>
+        <Pilares items={PILARES} className={styles.pilares} retraso={0.2} alVerse={false} />
       </CabeceraFresca>
 
       <section aria-label="Misión y visión" className={styles.proposito}>

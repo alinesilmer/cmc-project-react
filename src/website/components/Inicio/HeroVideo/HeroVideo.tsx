@@ -23,7 +23,7 @@ const ROTACION_MS = 8000;
 
 export default function HeroVideo() {
   const [actual, setActual] = useState(0);
-  const { ir, yendo } = useIrAlSistema();
+  const { ir } = useIrAlSistema();
 
   useEffect(() => {
     const t = window.setInterval(() => setActual((i) => (i + 1) % IMAGENES.length), ROTACION_MS);
@@ -60,7 +60,7 @@ export default function HeroVideo() {
           </Revelar>
 
           <Revelar className={styles.cta} distancia={12} retraso={0.44} alVerse={false}>
-            <Button variant="secondary" size="xlg" onClick={() => void ir()} disabled={yendo}>
+            <Button variant="secondary" size="xlg" onClick={ir}>
               Entrar a Validar
             </Button>
             <Button

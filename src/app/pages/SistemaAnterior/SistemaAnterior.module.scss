@@ -1,0 +1,163 @@
+@use "@/app/styles/all.scss" as *;
+
+$crema: #f7e9aa;
+$texto: #14233a;
+
+.icono {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  background: $crema;
+  color: $primary-blue;
+
+  svg {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+.titulo {
+  margin: 18px 0 6px;
+  font-family: "Manrope", sans-serif;
+  font-size: clamp(1.9rem, 3.2vw, 2.4rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  color: $texto;
+}
+
+.bajada {
+  margin: 0 0 24px;
+  font-size: 1.02rem;
+  line-height: 1.5;
+  color: #5b6474;
+}
+
+// Barra de progreso indeterminada mientras se salta al legacy.
+.barra {
+  position: relative;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: #e8e4da;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0 60% 0 0;
+    background: $primary-blue;
+    animation: avanzar 1.2s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &::after {
+      inset: 0;
+      animation: none;
+      opacity: 0.5;
+    }
+  }
+}
+
+@keyframes avanzar {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+.error {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 6px;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #b91c1c;
+  font-size: 0.95rem;
+}
+
+.principal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 58px;
+  border: 0;
+  border-radius: 8px;
+  background: $primary-blue;
+  color: $white;
+  font-family: "Manrope", sans-serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba($primary-blue, 0.28);
+  transition: background 0.18s ease, transform 0.18s ease;
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  &:hover:not(:disabled) {
+    background: $primary-blue-darker;
+    color: $white;
+    transform: translateY(-1px);
+  }
+
+  &:focus-visible {
+    outline: 3px solid $crema;
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: progress;
+  }
+}
+
+.secundarias {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 26px;
+
+  @media (max-width: 420px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.secundaria {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 50px;
+  padding: 10px 12px;
+  border: 1.5px solid #e2ddd0;
+  border-radius: 8px;
+  background: $white;
+  color: $primary-blue;
+  font-family: "Inter", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease;
+
+  svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    border-color: $primary-blue;
+    background: rgba($primary-blue, 0.04);
+    color: $primary-blue;
+  }
+}
