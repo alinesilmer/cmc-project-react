@@ -15,6 +15,11 @@ export const sumarTotales = (arr: PrestacionConSocio[]) => arr.reduce(
   { totalHonorarios: 0, totalGastos: 0, totalSubtotal: 0, totalCoseguro: 0 },
 );
 
+// El equipo (ayudante/pediatra/gastos) de una cirugía de Honorarios individuales o Sanatorio
+// se muestra bajo su cabeza pero NO suma al total del médico; en el resto sí.
+export const sumaEquipo = (cabeza: PrestacionConSocio): boolean =>
+  cabeza.tipo !== "Honorarios individuales" && cabeza.tipo !== "Sanatorio";
+
 export const RESUMEN_TIPO_LABEL: Record<Tipo, string> = {
   Consulta: "Consultas",
   Practica: "Prácticas",

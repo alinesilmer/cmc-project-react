@@ -24,7 +24,6 @@ import { Link, useSearchParams } from "react-router-dom";
 
 import styles from "./NomencladorPorOS.module.scss";
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
-import SelectorVigencia from "../components/SelectorVigencia";
 import {
   listGalenos,
   listValores,
@@ -605,9 +604,6 @@ export default function NomencladorPorOS() {
   const [loadingValores, setLoadingValores] = useState(false);
   const [codeSearch, setCodeSearch] = useState("");
   const [origenFilter, setOrigenFilter] = useState<Origen | "todos">("todos");
-  // Qué carga se está mirando. Sin esto se traían todas las vigencias juntas y
-  // el mismo código salía repetido una vez por carga.
-  const [vigencia, setVigencia] = useState<string | null>(null);
   const [modalidadFilter, setModalidadFilter] = useState<
     ValorOut["modalidad"] | "todos"
   >("todos");
@@ -845,24 +841,21 @@ export default function NomencladorPorOS() {
     listGalenos({ obra_social_nro: selectedNroOS })
       .then(setGalenos)
       .catch(() => {});
-    loadValores(selectedNroOS, vigencia);
+    loadValores(selectedNroOS);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedNroOS, vigencia]);
+  }, [selectedNroOS]);
 
   const loadValores = useCallback(
-    async (osNro: number, vigenciaDesde?: string | null) => {
+    async (osNro: number) => {
       setLoadingValores(true);
       try {
-        // Sólo la vigencia elegida. Traerlas todas multiplicaba las filas por la
-        // cantidad de cargas de la obra social y no había forma de saber cuál se
-        // estaba leyendo. Sin vigencia (opción "Todas") se traen todas, que es el
-        // comportamiento viejo y sigue disponible a pedido.
+        // Sólo los precios en vigor (`estado: "activo"`): lo que se cerró al rotar un
+        // precio es historial y no se lista acá.
         const all: ValorOut[] = [];
         for (let p = 1; p <= 100; p++) {
           const batch = await listValores({
             obra_social_nro: osNro,
             estado: "activo",
-            ...(vigenciaDesde ? { vigencia_desde: vigenciaDesde } : {}),
             page: p,
             size: 200,
           });
@@ -959,7 +952,6 @@ export default function NomencladorPorOS() {
     setPage(1);
   }, [
     selectedNroOS,
-    vigencia,
     codeSearch,
     origenFilter,
     modalidadFilter,
@@ -1681,7 +1673,7 @@ export default function NomencladorPorOS() {
     } catch (e: unknown) {
       showToast("error", errMsg(e, "No se pudo guardar."));
       // Con precios por especialidad, las anteriores al error ya quedaron guardadas.
-      if (preciosSeparados && selectedNroOS) void loadValores(selectedNroOS, vigencia);
+      if (preciosSeparados && selectedNroOS) void loadValores(selectedNroOS);
     } finally {
       setSaving(false);
     }
@@ -1799,10 +1791,10 @@ export default function NomencladorPorOS() {
       );
       const replicado = await replicarSiCorresponde(...replicas);
       if (!replicado) setModalKind(null);
-      loadValores(selectedNroOS, vigencia);
+      loadValores(selectedNroOS);
     } catch (e: unknown) {
       showToast("error", errMsg(e, "No se pudo actualizar el código."));
-      loadValores(selectedNroOS, vigencia);
+      loadValores(selectedNroOS);
     } finally {
       setSavingMeta(false);
     }
@@ -1922,12 +1914,6 @@ export default function NomencladorPorOS() {
                 </h2>
               </div>
               <div className={styles.toolbar}>
-                <SelectorVigencia
-                  obraSocialNro={selectedNroOS}
-                  valor={vigencia}
-                  onCambio={setVigencia}
-                  etiquetaTodas="Todas las vigencias"
-                />
                 <div className={styles.searchWrap}>
                   <Search size={14} className={styles.searchIcon} />
                   <input
