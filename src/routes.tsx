@@ -49,6 +49,7 @@ const Boletin = lazy(() => import("./app/pages/Boletin/Boletin"));
 const AfiliadosPorObraSocialPage = lazy(() => import("./app/pages/AfiliadosPorObraSocialPage/AfiliadosPorObraSocialPage"));
 const GenerarBoletin = lazy(() => import("./app/pages/GenerarBoletin/GenerarBoletin"));
 const CambiarPassword = lazy(() => import("./app/pages/CambiarPassword/CambiarPassword"));
+const SistemaAnterior = lazy(() => import("./app/pages/SistemaAnterior/SistemaAnterior"));
 
 // Liquidación (nuevo módulo)
 const PagosList = lazy(() => import("./app/pages/Pagos/PagosList/PagosList"));
@@ -97,6 +98,7 @@ const AvisosPage = lazy(() => import("./app/pages/Avisos/AvisosPage"));
 const ServiciosPage = lazy(() => import("./app/pages/Servicios/ServiciosPage"));
 const TablaGinecologia = lazy(() => import("./app/pages/TablaGinecologia/TablaGinecologia"));
 const BoletinGalenos = lazy(() => import("./app/pages/BoletinGalenos/BoletinGalenos"));
+const BoletinValoresGalenos = lazy(() => import("./app/pages/BoletinValoresGalenos/BoletinValoresGalenos"));
 const ValidacionesHub = lazy(() => import("./app/pages/Validaciones/ValidacionesHub"));
 const ValidacionOS = lazy(() => import("./app/pages/Validaciones/ValidacionOS"));
 const PortalesExternos = lazy(() => import("./app/pages/Validaciones/PortalesExternos"));
@@ -315,12 +317,13 @@ export default function RootRoutes() {
                   path="boletin-galenos"
                   element={<BoletinGalenos />}
                 />
-                {/* Los valores de galeno que ve el socio en «Valores Boletín»,
-                    para el Colegio. `boletin-galenos` es otra cosa: el
-                    formulario de carga, todavía sin backend. */}
+                {/* Los valores de galeno del boletín, para el Colegio: se
+                    elige un valor y se comparan todas las obras sociales.
+                    `boletin-galenos` es otra cosa: el formulario de carga,
+                    todavía sin backend. */}
                 <Route
                   path="boletin-valores-galenos"
-                  element={<BoletinMedico soloVista="galenos" />}
+                  element={<BoletinValoresGalenos />}
                 />
               </Route>
 
@@ -455,6 +458,7 @@ export default function RootRoutes() {
               path="/panel/cambiar-password"
               element={<CambiarPassword />}
             />
+            <Route path="/panel/sistema-anterior" element={<SistemaAnterior />} />
           </Route>
           </Route>
 

@@ -55,7 +55,7 @@ export default function Login() {
     setCargando(true);
     try {
       const usuario = await login(nro, password);
-      await irADestino(destinoDe(usuario), navigate);
+      irADestino(destinoDe(usuario), navigate);
     } catch (err) {
       setError(mensajeDeError(err, "El número de socio o la contraseña no coinciden."));
     } finally {

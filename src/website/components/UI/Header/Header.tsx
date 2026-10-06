@@ -31,7 +31,7 @@ export default function Header() {
 
   const ingresar = () => {
     setMenuAbierto(false);
-    void ir();
+    ir();
   };
 
   return (

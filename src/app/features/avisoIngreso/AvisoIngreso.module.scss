@@ -1,0 +1,135 @@
+@use "@/app/styles/all.scss" as *;
+
+.aviso {
+  position: relative;
+  overflow: hidden;
+  border-radius: $radio-lg;
+  text-align: center;
+}
+
+.cerrar {
+  position: absolute;
+  top: $spacing-3;
+  right: $spacing-3;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: none;
+  border-radius: 50%;
+  background: rgba($white, 0.85);
+  color: $primary-blue;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  &:hover {
+    background: $primary-blue;
+    color: $primary-yellow-light;
+  }
+
+  &:focus-visible {
+    outline: 3px solid $primary-blue;
+    outline-offset: 2px;
+  }
+}
+
+// Franja crema con el corazón: lo primero que se ve, antes que el texto.
+.cabecera {
+  display: grid;
+  place-items: center;
+  padding: $spacing-12 0 $spacing-10;
+  background: linear-gradient(180deg, $primary-yellow 0%, $primary-yellow-light 60%, $white 100%);
+}
+
+.corazon {
+  display: grid;
+  place-items: center;
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  background: $white;
+  color: $danger-red;
+  box-shadow: 0 10px 28px rgba($danger-red, 0.22);
+  animation: latido 1.8s ease-in-out infinite;
+
+  svg {
+    width: 52px;
+    height: 52px;
+    fill: currentColor;
+  }
+}
+
+@keyframes latido {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  12% {
+    transform: scale(1.08);
+  }
+  24% {
+    transform: scale(1);
+  }
+  36% {
+    transform: scale(1.05);
+  }
+  48% {
+    transform: scale(1);
+  }
+}
+
+.cuerpo {
+  padding: 0 $spacing-10 $spacing-10;
+
+  @media (max-width: $breakpoint-sm) {
+    padding: 0 $spacing-5 $spacing-8;
+  }
+}
+
+.titulo {
+  margin: 0 0 $spacing-4;
+  font-family: "Manrope", sans-serif;
+  font-size: clamp(2.1rem, 6vw, 3rem);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  color: $tinta;
+
+  em {
+    font-style: normal;
+    color: $primary-blue;
+  }
+}
+
+.texto {
+  margin: 0 auto $spacing-4;
+  max-width: 30ch;
+  font-size: 1.4rem;
+  line-height: 1.4;
+  color: $tinta;
+}
+
+.gracias {
+  margin: 0;
+  font-family: "Manrope", sans-serif;
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: $primary-blue;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .corazon {
+    animation: none;
+  }
+
+  .cerrar {
+    transition: none;
+  }
+}

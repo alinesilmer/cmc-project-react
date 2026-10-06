@@ -18,7 +18,7 @@ import { fetchBoletinMedico } from "./boletinMedico.api";
 import type { ItemBoletin } from "./boletinMedico.api";
 import { esPediatra } from "./boletinPediatria";
 import { descargarBoletin } from "./boletinMedico.pdf";
-import { moneda } from "./boletinMedico.formato";
+import { moneda, normalizar } from "./boletinMedico.formato";
 import GrillaPediatria from "./GrillaPediatria";
 import s from "./BoletinMedico.module.scss";
 
@@ -55,27 +55,12 @@ const VISTAS_PEDIATRIA: { id: Vista; label: string }[] = [
  * invalidaría los `useMemo` que filtran la lista. */
 const SIN_ITEMS: ItemBoletin[] = [];
 
-/** Sin acentos y en minúscula, para que «prevencion» encuentre «Prevención». */
-const normalizar = (v: string): string =>
-  v
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .trim();
-
-type Props = {
-  /** Fija la pantalla en una sola solapa y oculta las demás. La usa el
-   * «Boletín de galenos» del Colegio, que es esta misma lectura. */
-  soloVista?: Vista;
-};
-
-export default function BoletinMedico({ soloVista }: Props = {}) {
+export default function BoletinMedico() {
   const { user } = useAuth();
-  // El «Boletín de galenos» del Colegio fija una solapa: ahí no aplica.
-  const pediatra = !soloVista && esPediatra(user?.especialidades);
+  const pediatra = esPediatra(user?.especialidades);
   const vistas = pediatra ? VISTAS_PEDIATRIA : VISTAS;
 
-  const [vista, setVista] = useState<Vista>(soloVista ?? vistas[0].id);
+  const [vista, setVista] = useState<Vista>(vistas[0].id);
   const [busqueda, setBusqueda] = useState("");
   const [bajando, setBajando] = useState(false);
 
@@ -130,7 +115,7 @@ export default function BoletinMedico({ soloVista }: Props = {}) {
   if (cargando) {
     return (
       <div className={s.container}>
-        <Encabezado galenos={soloVista === "galenos"} pediatria={pediatra} />
+        <Encabezado pediatria={pediatra} />
         <div className={s.esqueletos} aria-busy="true" aria-live="polite">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className={s.esqueleto} />
@@ -143,7 +128,7 @@ export default function BoletinMedico({ soloVista }: Props = {}) {
   if (error) {
     return (
       <div className={s.container}>
-        <Encabezado galenos={soloVista === "galenos"} pediatria={pediatra} />
+        <Encabezado pediatria={pediatra} />
         <p className={s.aviso} role="status">
           <AlertTriangle size={17} aria-hidden="true" />
           No pudimos cargar el boletín en este momento.
@@ -154,25 +139,23 @@ export default function BoletinMedico({ soloVista }: Props = {}) {
 
   return (
     <div className={s.container}>
-      <Encabezado galenos={soloVista === "galenos"} pediatria={pediatra} />
+      <Encabezado pediatria={pediatra} />
 
       <div className={s.barra}>
-        {!soloVista && (
-          <div className={s.tabs} role="tablist" aria-label="Qué parte del boletín ver">
-            {vistas.map(({ id, label }) => (
-              <button
-                key={id}
-                type="button"
-                role="tab"
-                aria-selected={vista === id}
-                className={vista === id ? `${s.tab} ${s.tabActiva}` : s.tab}
-                onClick={() => setVista(id)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        )}
+        <div className={s.tabs} role="tablist" aria-label="Qué parte del boletín ver">
+          {vistas.map(({ id, label }) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={vista === id}
+              className={vista === id ? `${s.tab} ${s.tabActiva}` : s.tab}
+              onClick={() => setVista(id)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
 
         <div className={s.buscador}>
           <Search size={17} className={s.lupa} aria-hidden="true" />
@@ -238,18 +221,16 @@ export default function BoletinMedico({ soloVista }: Props = {}) {
   );
 }
 
-function Encabezado({ galenos = false, pediatria = false }: { galenos?: boolean; pediatria?: boolean }) {
-  let bajada = "Valor de consulta y galenos por obra social.";
-  if (galenos) bajada = "Valores de galeno por obra social.";
-  else if (pediatria) bajada = "Valores de pediatría y observaciones por obra social.";
+function Encabezado({ pediatria = false }: { pediatria?: boolean }) {
+  const bajada = pediatria
+    ? "Valores de pediatría y observaciones por obra social."
+    : "Valor de consulta y galenos por obra social.";
 
   return (
     <header className={s.header}>
       <FileText size={30} className={s.headerIcon} aria-hidden="true" />
       <div>
-        <h1 className={s.title}>
-          {galenos ? "Boletín de galenos" : "Valores del boletín"}
-        </h1>
+        <h1 className={s.title}>Valores del boletín</h1>
         <p className={s.subtitle}>
           {bajada} Sujeto a cambios por actualizaciones permanentes.
         </p>
