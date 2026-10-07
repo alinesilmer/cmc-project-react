@@ -493,7 +493,11 @@ const FacturaDetalle: React.FC = () => {
               || compararPorOrden(a, b, vistaOpciones.orden, vistaOpciones.direccion)
               || (selector ? porPacienteAZ(a, b) : 0));
           const miembros = miembrosDe(ordenadas);
-          const sumables = sumablesDe(ordenadas);
+          // El total de la sección es lo que se factura en ella: con el equipo de todas
+          // las cirugías, también en Honorarios individuales y Sanatorios (que sí lo dejan
+          // afuera del subtotal de cada médico, ver GrupoTabla). Así la suma de las
+          // secciones da el total de la factura. Igual que el exportable.
+          const sumables = miembros;
           return {
             key: `tipo-${tipo}`, titulo: SUBTITULO_TIPO[tipo], subtitulo: SUBTITULO_TIPO[tipo], subtotalPorMedico: true,
             ordenAlfabetico: selector ? { tipo, valor: selector } : undefined,
