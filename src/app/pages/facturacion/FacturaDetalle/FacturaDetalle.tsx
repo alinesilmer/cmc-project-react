@@ -19,7 +19,7 @@ import ConfirmActionModal from "../components/ConfirmActionModal";
 import ExportPanel from "./export/ExportPanel";
 import VistaPanel from "./vista/VistaPanel";
 import type { FiltrosVista, OrdenDireccion, OrdenVista, VistaOpciones } from "./vista/types";
-import { COLUMNAS_VISTA_DISPONIBLES, ORDEN_TIPOS, PESO_COLUMNA, VISTA_OPCIONES_DEFAULT } from "./vista/types";
+import { cargarVistaSesion, COLUMNAS_VISTA_DISPONIBLES, guardarVistaSesion, ORDEN_TIPOS, PESO_COLUMNA } from "./vista/types";
 import type { FilaAcciones, PrestacionConSocio } from "./FilaPrestacion";
 import GrupoTabla from "./GrupoTabla";
 import { sumaEquipo, sumarTotales } from "./totales";
@@ -177,7 +177,10 @@ const FacturaDetalle: React.FC = () => {
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
   const [vistaOpen, setVistaOpen] = useState(false);
-  const [vistaOpciones, setVistaOpciones] = useState<VistaOpciones>(VISTA_OPCIONES_DEFAULT);
+  // La vista se recuerda en la sesión: al volver de editar/replicar, o de otra factura,
+  // queda como el usuario la dejó.
+  const [vistaOpciones, setVistaOpciones] = useState<VistaOpciones>(cargarVistaSesion);
+  useEffect(() => { guardarVistaSesion(vistaOpciones); }, [vistaOpciones]);
 
   const load = useCallback(async () => {
     if (!id) return;

@@ -1445,13 +1445,19 @@ export default function NomencladorPorOS() {
 
   /** Un solo formulario para todas: con una sola fila (o NN) no hay qué elegir. */
   const nucleoUnico = nucleoMismo || nucleoVariantes.length <= 1;
+  /** Se eligió una fecha distinta de la de por defecto (hoy): aunque no se toque ningún
+   * precio, es una vigencia nueva y la toman TODAS las especialidades del código. */
+  const nucleoVigenciaCambio = !!editEcu.vigencia_desde && editEcu.vigencia_desde !== today();
   const nucleoFilasCambiadas = nucleoUnico
     ? []
     : nucleoVariantes.filter(
-        (v) => firmaPrecio(nucleoPrecios[v.id]) !== nucleoInicial.current.porFila[v.id],
+        (v) =>
+          nucleoVigenciaCambio ||
+          firmaPrecio(nucleoPrecios[v.id]) !== nucleoInicial.current.porFila[v.id],
       );
   const nucleoComunCambio =
-    nucleoUnico && firmaPrecio(nucleoComun) !== nucleoInicial.current.comun;
+    nucleoUnico &&
+    (nucleoVigenciaCambio || firmaPrecio(nucleoComun) !== nucleoInicial.current.comun);
   /** La vigencia más nueva de los precios que se rotan (para el aviso de la fecha). */
   const ultimaNucleo = (nucleoComunCambio ? nucleoVariantes : nucleoFilasCambiadas)
     .map((v) => v.vigencia_desde).sort().pop();
@@ -2999,8 +3005,10 @@ export default function NomencladorPorOS() {
                   <div className={styles.editSection}>
                     <div className={styles.editSectionTitle}>Precios</div>
                     <p className={styles.hintText}>
-                      Vienen con el precio vigente. Los que cambies cierran su vigencia y
-                      abren una nueva desde la fecha de abajo; los que no toques quedan igual.
+                      Vienen con el precio vigente. Si elegís otra fecha, todas las especialidades
+                      cierran su vigencia y abren una nueva desde esa fecha (con su precio
+                      actual si no lo tocás). Si dejás la fecha de hoy, solo se actualizan los
+                      precios que cambies.
                     </p>
                     <div className={styles.formGroup} style={{ maxWidth: 320 }}>
                       <label className={styles.formLabel}>

@@ -556,7 +556,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                       {/* Honorarios + gastos; el ayudante cobra un único monto aparte. */}
                       {tipoPrestador === "Ayudante"
                         ? <span className={styles.mutedText}>—</span>
-                        : <span className={styles.moneyCell}>{formatMoney(parseMoney(row.honorarios) + parseMoney(row.gastos))}</span>}
+                        : <span className={styles.moneyCell}>{formatMoney(parseMoney(row.honorarios) + parseMoney(row.gastos) - parseMoney(row.coseguro))}</span>}
                     </td>
                     <td>
                       <span className={styles.subtotalCell}>{formatMoney(row.importe_total)}</span>

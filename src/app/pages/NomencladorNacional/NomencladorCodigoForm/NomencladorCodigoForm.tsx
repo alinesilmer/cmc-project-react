@@ -773,7 +773,7 @@ function TabEspecialidades({
             </label>
             <label className={styles.checkLine}>
               <input type="radio" name="modo" checked={modo === "igualar"} onChange={() => { setModo("igualar"); setPreview(null); }} />
-              Igualar a la plantilla (también quita lo que sobre, salvo especialidades con precio propio)
+              Igualar a la plantilla (también quita lo que sobre; si una especialidad que se quita tiene precio, ese precio se da de baja y deja de poder facturar)
             </label>
           </div>
 
@@ -788,8 +788,8 @@ function TabEspecialidades({
                       <td>
                         {r.agrega.length > 0 && <span className={styles.mas}>+ {nombres(r.agrega)} </span>}
                         {r.quita.length > 0 && <span className={styles.motivo}>− {nombres(r.quita)} </span>}
-                        {r.conserva_por_precio.length > 0 && <span className={styles.bloq}>Se queda{r.conserva_por_precio.length === 1 ? "" : "n"} (tiene{r.conserva_por_precio.length === 1 ? "" : "n"} precio): {nombres(r.conserva_por_precio)} </span>}
-                        {r.estado === "sin_cambios" && r.conserva_por_precio.length === 0 && <span className={base.hintText}>Sin cambios</span>}
+                        {r.quita_con_precio.length > 0 && <span className={styles.bloq}>Se da{r.quita_con_precio.length === 1 ? "" : "n"} de baja su precio: {nombres(r.quita_con_precio)} </span>}
+                        {r.estado === "sin_cambios" && <span className={base.hintText}>Sin cambios</span>}
                         {(r.estado === "salteada" || r.estado === "error") && <span className={base.hintText}>{r.motivo}</span>}
                       </td>
                     </tr>

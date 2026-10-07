@@ -105,6 +105,50 @@ export const VISTA_OPCIONES_DEFAULT: VistaOpciones = {
   columnas: COLUMNAS_VISTA_DEFAULT,
 };
 
+// ── Vista de la sesión ──────────────────────────────────────────────────────
+// La vista elegida (orden, agrupación, filtros, columnas) se recuerda mientras dure la
+// sesión del navegador: al editar o replicar una prestación se sale de esta pantalla y al
+// volver —de la misma factura o de otra— tiene que estar como se dejó. Los presets
+// guardados con nombre viven en el servidor y no dependen de esto.
+const CLAVE_VISTA_SESION = "facturacion:vista-detalle";
+
+const ORDENES: OrdenVista[] = OPCIONES_ORDEN_VISTA.map((o) => o.value);
+const AGRUPACIONES: AgrupacionVista[] = OPCIONES_AGRUPACION_VISTA.map((o) => o.value);
+const ALFABETICOS: OrdenAlfabetico[] = ["medico", "paciente"];
+
+/** La vista guardada en la sesión, o la de por defecto. Lo guardado se valida: una
+ *  columna u opción que ya no existe no puede romper la pantalla. */
+export function cargarVistaSesion(): VistaOpciones {
+  try {
+    const crudo = sessionStorage.getItem(CLAVE_VISTA_SESION);
+    if (!crudo) return VISTA_OPCIONES_DEFAULT;
+    const g = JSON.parse(crudo) as Partial<VistaOpciones>;
+    const columnas = Array.isArray(g.columnas)
+      ? COLUMNAS_VISTA_DEFAULT.filter((c) => g.columnas!.includes(c))
+      : COLUMNAS_VISTA_DEFAULT;
+    return {
+      ...VISTA_OPCIONES_DEFAULT,
+      ...g,
+      orden: ORDENES.includes(g.orden as OrdenVista) ? g.orden! : VISTA_OPCIONES_DEFAULT.orden,
+      direccion: g.direccion === "desc" ? "desc" : "asc",
+      agrupacion: AGRUPACIONES.includes(g.agrupacion as AgrupacionVista) ? g.agrupacion! : VISTA_OPCIONES_DEFAULT.agrupacion,
+      ordenHonorarios: ALFABETICOS.includes(g.ordenHonorarios as OrdenAlfabetico) ? g.ordenHonorarios! : "medico",
+      ordenSanatorio: ALFABETICOS.includes(g.ordenSanatorio as OrdenAlfabetico) ? g.ordenSanatorio! : "medico",
+      columnas,
+    };
+  } catch {
+    return VISTA_OPCIONES_DEFAULT;
+  }
+}
+
+export function guardarVistaSesion(opciones: VistaOpciones): void {
+  try {
+    sessionStorage.setItem(CLAVE_VISTA_SESION, JSON.stringify(opciones));
+  } catch {
+    // sin storage (modo privado, cuota): la vista simplemente no se recuerda
+  }
+}
+
 // Configuración de la vista guardada con un nombre (personal de cada usuario).
 export interface VistaPreset {
   id: number;

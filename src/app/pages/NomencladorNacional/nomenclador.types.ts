@@ -193,7 +193,8 @@ export type PropagarEspecialidadesItem = {
   motivo: string | null;
   agrega: number[];
   quita: number[];
-  conserva_por_precio: number[];
+  /** Subconjunto de `quita` con precio NE activo: el precio se da de baja con la especialidad. */
+  quita_con_precio: number[];
 };
 export type PropagarEspecialidadesResult = {
   dry_run: boolean;

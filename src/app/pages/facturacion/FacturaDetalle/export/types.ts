@@ -14,7 +14,7 @@ export type AgrupacionExport = "todo_junto" | "por_tipo" | "por_socio" | "plana"
 export type ColumnaExport =
   | "prestador" | "matricula" | "autorizacion" | "fecha" | "codigo"
   | "nro_afiliado" | "afiliado" | "cantidad" | "porcentaje"
-  | "honorarios" | "gastos" | "coseguro" | "diagnostico" | "via" | "especialidad"
+  | "honorarios" | "gastos" | "coseguro" | "valor_unitario" | "diagnostico" | "via" | "especialidad"
   | "estado_validacion";
 
 export const COLUMNAS_DEFAULT: ColumnaExport[] = [
@@ -35,6 +35,7 @@ export const COLUMNAS_DISPONIBLES: { key: ColumnaExport; label: string }[] = [
   { key: "honorarios", label: "Honorarios" },
   { key: "gastos", label: "Gastos" },
   { key: "coseguro", label: "Coseguro" },
+  { key: "valor_unitario", label: "Valor unitario" },
   { key: "diagnostico", label: "Diagnóstico" },
   { key: "via", label: "Vía" },
   { key: "especialidad", label: "Especialidad" },
@@ -64,11 +65,11 @@ export interface ExportOpciones extends ExportFiltros {
 }
 
 // Columnas de la vista que existen en el export. El socio (nombre y matrícula) siempre
-// se ve en la vista, así que va siempre; "TP" y "Valor unitario" no tienen equivalente.
+// se ve en la vista, así que va siempre; "TP" no tiene equivalente.
 const COLUMNA_VISTA_A_EXPORT: Partial<Record<ColumnaVista, ColumnaExport>> = {
   autorizacion: "autorizacion", fecha: "fecha", codigo: "codigo", via: "via",
   nro_afiliado: "nro_afiliado", paciente: "afiliado", cantidad: "cantidad", porcentaje: "porcentaje",
-  honorarios: "honorarios", gastos: "gastos", coseguro: "coseguro",
+  honorarios: "honorarios", gastos: "gastos", coseguro: "coseguro", valor_unitario: "valor_unitario",
 };
 
 const ORDEN_VISTA_A_EXPORT: Record<OrdenVista, OrdenExport> = {

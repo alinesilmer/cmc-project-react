@@ -2258,12 +2258,12 @@ const CargaFacturacion: React.FC = () => {
           {/* Total: siempre debajo de ayudantes y pediatra (incluye sus montos), encima
               de los botones. */}
           <div className={styles.section}>
-            {/* Valor unitario del cirujano: honorarios + gastos, sin porcentaje,
-                cantidad, sesiones, coseguro ni equipo. El ayudante no lo lleva. */}
+            {/* Valor unitario del cirujano: honorarios + gastos − coseguro, sin porcentaje,
+                cantidad, sesiones ni equipo. El ayudante no lo lleva. */}
             {tipoPrestador === "medico" && (
               <div className={styles.valorUnitarioRow}>
                 <span>Valor unitario:</span>
-                <strong>{formatMoney(parseMoney(honorarios) + parseMoney(gastos))}</strong>
+                <strong>{formatMoney(parseMoney(honorarios) + parseMoney(gastos) - parseMoney(coseguro))}</strong>
               </div>
             )}
             <div className={styles.totalRow}>

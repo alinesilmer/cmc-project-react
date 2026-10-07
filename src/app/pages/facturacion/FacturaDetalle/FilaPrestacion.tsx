@@ -128,12 +128,13 @@ const renderCelda = (p: PrestacionConSocio, col: ColumnaVista) => {
     case "coseguro":
       return <td key={col}><span className={styles.moneyCell}>{formatMoney(p.coseguro)}</span></td>;
     case "valor_unitario":
-      // Honorarios + gastos; el ayudante cobra un único monto aparte.
+      // Honorarios + gastos − coseguro (el total es esto × cantidad × sesión); el
+      // ayudante cobra un único monto aparte.
       return (
         <td key={col}>
           {p.tipo_prestador === "Ayudante"
             ? muted
-            : <span className={styles.moneyCell}>{formatMoney(parseMoney(p.honorarios) + parseMoney(p.gastos))}</span>}
+            : <span className={styles.moneyCell}>{formatMoney(parseMoney(p.honorarios) + parseMoney(p.gastos) - parseMoney(p.coseguro))}</span>}
         </td>
       );
     case "subtotal":
