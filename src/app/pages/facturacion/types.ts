@@ -42,6 +42,8 @@ export type ClinicaOption = {
 /** Un afiliado puede tener sólo nombre o sólo número (al menos uno). */
 export interface AfiliadoRead {
   id: number; dni: string | null; nombre: string | null; usuario?: string; created_at?: string;
+  /** Sólo al editarlo: cuántas prestaciones de facturas abiertas se corrigieron con él. */
+  prestaciones_actualizadas?: number;
 }
 
 export interface PrestacionItem {

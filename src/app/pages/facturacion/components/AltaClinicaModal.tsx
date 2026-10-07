@@ -53,6 +53,10 @@ const AltaClinicaModal: React.FC<Props> = ({ isOpen, clinica, onClose, onCreated
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onMouseDown={onClose}
+          // El modal se monta dentro del formulario de carga: que el foco y las teclas no
+          // le lleguen (centra el campo enfocado scrolleando la página y usa Enter para avanzar).
+          onFocus={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
         >
           <motion.div
             className={styles.modal}

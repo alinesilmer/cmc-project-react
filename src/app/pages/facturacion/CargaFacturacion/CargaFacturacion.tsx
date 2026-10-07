@@ -715,7 +715,19 @@ const CargaFacturacion: React.FC = () => {
     setAfiliadoId(a?.id ?? null);
     setDni(a?.dni ?? "");
     setNombrePaciente(a?.nombre ?? "");
-  }, []);
+    // Editado con el lápiz: el backend corrigió también sus prestaciones de facturas
+    // abiertas — se avisa cuántas y se recarga la tabla para verlas ya corregidas.
+    const corregidas = a?.prestaciones_actualizadas ?? 0;
+    if (corregidas > 0) {
+      notify(
+        corregidas === 1
+          ? "Se actualizó 1 prestación abierta de este paciente."
+          : `Se actualizaron ${corregidas} prestaciones abiertas de este paciente.`,
+        "success",
+      );
+      setRefreshKey((k) => k + 1);
+    }
+  }, [notify]);
 
   const volverATradicional = useCallback(() => setVia("T"), []);
 
