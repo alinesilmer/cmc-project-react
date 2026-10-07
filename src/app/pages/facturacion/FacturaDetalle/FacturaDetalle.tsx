@@ -486,7 +486,12 @@ const FacturaDetalle: React.FC = () => {
           const ordenadas = [...arr].sort((a, b) =>
             porNombreMedico(a, b)
             || (tipo === "Sanatorio" ? porClinica(a, b) : 0)
-            || (porPaciente ? porPacienteAZ(a, b) : compararPorOrden(a, b, vistaOpciones.orden, vistaOpciones.direccion)));
+            || (porPaciente
+              ? porPacienteAZ(a, b)
+              // "Médico": rige el orden elegido; lo que ese orden no distingue (con "nombre
+              // del socio" empatan todas las filas del socio) queda por paciente A-Z y no
+              // en el orden de carga. Igual que el exportable (`export/armado.py`).
+              : compararPorOrden(a, b, vistaOpciones.orden, vistaOpciones.direccion) || (selector ? porPacienteAZ(a, b) : 0)));
           const miembros = miembrosDe(ordenadas);
           const sumables = sumablesDe(ordenadas);
           return {

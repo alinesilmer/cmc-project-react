@@ -460,18 +460,15 @@ $shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
   text-align: center;
 }
 
-// Autorización: el aviso de "ya cargada" va al costado del campo (abajo en pantallas chicas).
+// Autorización: el campo ocupa el ancho de la sección, igual que los demás, y el aviso
+// de "ya cargada" va debajo con el mismo ancho.
 .autorizacionFila {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
-
-  > .filterField { flex: 0 1 260px; min-width: 0; }
+  flex-direction: column;
+  gap: 8px;
 }
 
 .autorizacionAviso {
-  flex: 1 1 260px;
   display: flex;
   align-items: center;
   gap: 8px;
