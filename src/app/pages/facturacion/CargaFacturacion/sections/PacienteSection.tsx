@@ -1,57 +1,63 @@
-import React, { useState } from "react";
-import { Trash2 } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { Pencil, Trash2 } from "lucide-react";
 import AfiliadoAutocomplete from "../../components/AfiliadoAutocomplete";
+import { etiquetaAfiliado } from "../../components/etiquetas";
+import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 import AltaAfiliadoModal from "../../components/AltaAfiliadoModal";
 import ConfirmActionModal from "../../components/ConfirmActionModal";
-import { eliminarAfiliado } from "../../api";
+import { eliminarAfiliadoPorId } from "../../api";
 import type { AfiliadoRead } from "../../types";
 import styles from "../CargaFacturacion.module.scss";
 
 interface Props {
+  /** Afiliado elegido del padrón (por id: puede no tener número). */
+  afiliadoId: number | null;
   dni: string;
   nombrePaciente: string;
-  onDniChange: (dni: string) => void;
-  onAfiliadoFound: (afiliado: AfiliadoRead) => void;
+  /** Elegido, creado o editado (o `null` al vaciar / borrar). */
+  onAfiliadoChange: (afiliado: AfiliadoRead | null) => void;
   disabled?: boolean;
   error?: string | null;
 }
 
 const PacienteSection: React.FC<Props> = ({
-  dni, nombrePaciente, onDniChange, onAfiliadoFound, disabled, error,
+  afiliadoId, dni, nombrePaciente, onAfiliadoChange, disabled, error,
 }) => {
-  const [showAlta, setShowAlta] = useState(false);
+  const [modal, setModal] = useState<"alta" | "editar" | null>(null);
   const [showBaja, setShowBaja] = useState(false);
   const [borrando, setBorrando] = useState(false);
   const [bajaError, setBajaError] = useState<string | null>(null);
   // El autocomplete conserva el texto tipeado aunque el `value` vuelva a null
-  // (ver AppSearchSelect): tras borrar el afiliado hay que remontarlo para que el
-  // campo quede realmente vacío y no muestre a alguien que ya no existe.
+  // (ver AppSearchSelect): tras borrar o editar el afiliado hay que remontarlo para
+  // que el campo muestre lo que hay ahora y no a alguien que ya no existe.
   const [autocompleteKey, setAutocompleteKey] = useState(0);
 
-  const handleAfiliadoChange = (nuevoDni: string | null, afiliado: AfiliadoRead | null) => {
-    onDniChange(nuevoDni ?? "");
-    if (afiliado) onAfiliadoFound(afiliado);
-  };
-
-  // Solo se puede borrar lo que está efectivamente seleccionado del padrón: el
-  // nombre resuelto es la señal de que el identificador salió de un afiliado real
-  // y no de algo a medio tipear.
-  const puedeBorrar = Boolean(dni && nombrePaciente) && !disabled;
+  const etiqueta = etiquetaAfiliado(dni, nombrePaciente);
+  // Estable mientras el modal está abierto: si cambiara en cada render, el modal
+  // volvería a cargar sus campos con cada tecla.
+  const aEditar = useMemo(
+    () => (modal === "editar" && afiliadoId != null
+      ? { id: afiliadoId, dni: dni || null, nombre: nombrePaciente || null }
+      : null),
+    [modal, afiliadoId, dni, nombrePaciente],
+  );
+  // Editar y borrar, sólo sobre un afiliado elegido del padrón.
+  const elegido = afiliadoId != null && !disabled;
 
   const handleEliminar = async () => {
+    if (afiliadoId == null) return;
     setBorrando(true);
     setBajaError(null);
     try {
-      await eliminarAfiliado(dni);
+      await eliminarAfiliadoPorId(afiliadoId);
       setShowBaja(false);
-      onDniChange("");           // limpia también el nombre (efecto en CargaFacturacion)
+      onAfiliadoChange(null);
       setAutocompleteKey((k) => k + 1);
-    } catch (e: any) {
-      const detail = e?.response?.data?.detail;
+    } catch (e) {
       // Se cierra el modal para que el motivo (típicamente el 409 "tiene N
       // prestaciones cargadas") quede visible bajo el campo y no tapado.
       setShowBaja(false);
-      setBajaError(typeof detail === "string" ? detail : "No se pudo eliminar el afiliado.");
+      setBajaError(mensajeDeError(e, "No se pudo eliminar el afiliado."));
     } finally {
       setBorrando(false);
     }
@@ -70,33 +76,39 @@ const PacienteSection: React.FC<Props> = ({
             <div style={{ flex: 1, minWidth: 0 }}>
               <AfiliadoAutocomplete
                 key={autocompleteKey}
-                value={dni || null}
-                onChange={handleAfiliadoChange}
+                value={afiliadoId}
+                onChange={onAfiliadoChange}
                 disabled={disabled}
-                presetLabel={nombrePaciente || undefined}
+                presetLabel={etiqueta || undefined}
                 blurOnSelect={false}
               />
             </div>
             <button
               type="button"
+              className={styles.btnIcon}
+              onClick={() => setModal("editar")}
+              disabled={!elegido}
+              title={elegido ? `Editar a ${etiqueta}` : "Elegí un afiliado del padrón para poder editarlo"}
+              aria-label="Editar afiliado"
+            >
+              <Pencil size={15} />
+            </button>
+            <button
+              type="button"
               className={styles.btnIconDanger}
               onClick={() => { setBajaError(null); setShowBaja(true); }}
-              disabled={!puedeBorrar}
-              title={
-                puedeBorrar
-                  ? `Eliminar del padrón a ${nombrePaciente}`
-                  : "Elegí un afiliado del padrón para poder eliminarlo"
-              }
+              disabled={!elegido}
+              title={elegido ? `Eliminar del padrón a ${etiqueta}` : "Elegí un afiliado del padrón para poder eliminarlo"}
               aria-label="Eliminar afiliado del padrón"
             >
               <Trash2 size={16} />
             </button>
-            <button type="button" className={styles.btnGhost} onClick={() => setShowAlta(true)} disabled={disabled}>
+            <button type="button" className={styles.btnGhost} onClick={() => setModal("alta")} disabled={disabled}>
               + Agregar afiliado
             </button>
           </div>
-          {nombrePaciente && (
-            <span style={{ fontSize: 12, color: "#1d9148", fontWeight: 600 }}>✓ {nombrePaciente}</span>
+          {etiqueta && (
+            <span style={{ fontSize: 12, color: "#1d9148", fontWeight: 600 }}>✓ {etiqueta}</span>
           )}
           {error && <span className={styles.errorText}>{error}</span>}
           {bajaError && <span className={styles.errorText}>{bajaError}</span>}
@@ -104,12 +116,14 @@ const PacienteSection: React.FC<Props> = ({
       </div>
 
       <AltaAfiliadoModal
-        isOpen={showAlta}
+        isOpen={modal !== null}
         dni={dni}
-        onClose={() => setShowAlta(false)}
+        afiliado={aEditar}
+        onClose={() => setModal(null)}
         onCreated={(afiliado) => {
-          setShowAlta(false);
-          onAfiliadoFound(afiliado);
+          setModal(null);
+          onAfiliadoChange(afiliado);
+          setAutocompleteKey((k) => k + 1);
         }}
       />
 
@@ -120,7 +134,7 @@ const PacienteSection: React.FC<Props> = ({
         title="Eliminar afiliado"
         message={
           <>
-            Se va a borrar del padrón a <strong>{nombrePaciente}</strong> ({dni}).
+            Se va a borrar del padrón a <strong>{etiqueta}</strong>.
           </>
         }
         warning="Si el afiliado ya tiene prestaciones cargadas (no anuladas), el sistema no va a permitir eliminarlo."

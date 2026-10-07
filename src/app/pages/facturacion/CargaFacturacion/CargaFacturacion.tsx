@@ -18,6 +18,7 @@ import {
   fetchCodigosHabilitados,
   fetchClinicas,
   fetchClinicasTodas,
+  fetchAfiliado,
 } from "../api";
 import { detailMessage, versionLabel } from "../types";
 import type {
@@ -40,6 +41,7 @@ import { dedupePorId } from "../components/localSearch";
 
 import { usePeriodoActivo } from "./hooks/usePeriodoActivo";
 import { useNomencladorPrecio } from "./hooks/useNomencladorPrecio";
+import { useAutorizacionExistente } from "./hooks/useAutorizacionExistente";
 import { useHotkeys, isMod, isModalOpen } from "./hooks/useHotkeys";
 import { focusFirstField, nextFocusable, type FocusField } from "./focusNav";
 
@@ -284,7 +286,9 @@ const CargaFacturacion: React.FC = () => {
   // próximo real es junio). null = usar el automático que sugiere el backend.
   const [periodoOverride, setPeriodoOverride] = useState<string | null>(null);
 
-  // Paciente
+  // Paciente. `afiliadoId` = el elegido del padrón (puede no tener número); `dni` y
+  // `nombrePaciente` son lo que se muestra y, sin afiliado, lo que se manda.
+  const [afiliadoId, setAfiliadoId] = useState<number | null>(null);
   const [dni, setDni] = useState("");
   const [nombrePaciente, setNombrePaciente] = useState("");
 
@@ -433,6 +437,11 @@ const CargaFacturacion: React.FC = () => {
     via,
   });
 
+  // ¿El Nº de autorización ya está cargado en esta O.S.? Sólo avisa.
+  const autorizacionesExistentes = useAutorizacionExistente(
+    codObraEfectivo, autorizacion, editId ? Number(editId) : undefined,
+  );
+
   // Precio del PEDIATRA — socio y código propios, independientes del cirujano. Mismo
   // hook, segunda instancia: ya está debounceado y keyed por estas deps.
   const { precio: precioPediatra, loading: precioPediatraLoading } = useNomencladorPrecio({
@@ -466,6 +475,7 @@ const CargaFacturacion: React.FC = () => {
         setCodMedico(p.cod_medico);
         setPayeeEsOrganizacion(esOrg);
         setCodMedicoEjecutor(p.cod_medico_ejecutor ?? null);
+        setAfiliadoId(null);
         setDni(p.dni_paciente ?? "");
         setNombrePaciente(p.nombre_paciente ?? "");
         // La fecha es opcional: si la prestación se cargó sin fecha (carga por
@@ -664,14 +674,23 @@ const CargaFacturacion: React.FC = () => {
     setPediatra(null);
   }, [codNomenclador]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Limpiar el nombre cuando se borra el identificador del paciente. La condición es
-  // "vacío", NO "menos de 8 caracteres": el campo no es sólo un DNI, también acepta el
-  // nro de afiliado de la obra social, que suele ser más corto (la mayoría de las
-  // prestaciones cargadas tienen uno de menos de 8). Con el tope de 8, elegir a uno de
-  // esos afiliados —o precargarlo al editar— borraba el nombre recién resuelto.
+  // Prestación precargada (editar / replicar) con número: se busca su afiliado para
+  // tener el id, que es con lo que se elige, se edita y se manda.
   useEffect(() => {
-    if (!dni) setNombrePaciente("");
-  }, [dni]);
+    if (afiliadoId != null || !dni) return;
+    let vigente = true;
+    fetchAfiliado(dni)
+      .then((a) => { if (vigente) setAfiliadoId(a.id); })
+      .catch(() => { /* fuera del padrón: queda con el número y el nombre copiados */ });
+    return () => { vigente = false; };
+  }, [dni, afiliadoId]);
+
+  /** Afiliado elegido, creado o editado en la sección Paciente (`null` = vaciado). */
+  const handleAfiliadoChange = useCallback((a: AfiliadoRead | null) => {
+    setAfiliadoId(a?.id ?? null);
+    setDni(a?.dni ?? "");
+    setNombrePaciente(a?.nombre ?? "");
+  }, []);
 
   const volverATradicional = useCallback(() => setVia("T"), []);
 
@@ -712,6 +731,7 @@ const CargaFacturacion: React.FC = () => {
         setCodMedico(p.cod_medico);
         setPayeeEsOrganizacion(esOrg);
         setCodMedicoEjecutor(p.cod_medico_ejecutor ?? null);
+        setAfiliadoId(null);
         setDni(p.dni_paciente ?? "");
         setNombrePaciente(p.nombre_paciente ?? "");
         // La fecha es opcional: si la prestación se cargó sin fecha (carga por
@@ -857,7 +877,9 @@ const CargaFacturacion: React.FC = () => {
     cod_medico: codMedico!,
     // El ejecutor solo se manda si el payee es una clínica.
     cod_medico_ejecutor: payeeEsOrganizacion ? codMedicoEjecutor : null,
+    afiliado_id: afiliadoId,
     dni_paciente: dni || null,
+    nombre_paciente: nombrePaciente || null,
     // Opcional: sin fecha el backend guarda NULL y cotiza al valor vigente de hoy.
     fecha_practica: fechaPractica || null,
     cod_clinica: codClinica,
@@ -993,6 +1015,7 @@ const CargaFacturacion: React.FC = () => {
       setEjecutorResetKey((k) => k + 1);
     }
     if (!mantener.paciente) {
+      setAfiliadoId(null);
       setDni("");
       setNombrePaciente("");
       setPacienteResetKey((k) => k + 1);
@@ -1073,6 +1096,7 @@ const CargaFacturacion: React.FC = () => {
       cod_medico_ejecutor: payeeEsOrganizacion ? codMedicoEjecutor : null,
       cod_obra_social: obraSocialEfectiva,
       periodo: periodoEfectivo,
+      afiliado_id: afiliadoId,
       dni_paciente: dni || null,
       fecha_practica: fechaPractica || null,
       cod_clinica: codClinica,
@@ -1098,6 +1122,7 @@ const CargaFacturacion: React.FC = () => {
       // 2. Reconciliar los ayudantes del equipo. Campos de la práctica que comparten
       // con la cabecera (se copian para que el grupo quede coherente).
       const shared = {
+        afiliado_id: afiliadoId,
         dni_paciente: dni || null,
         fecha_practica: fechaPractica || null,
         cod_clinica: codClinica,
@@ -1176,6 +1201,7 @@ const CargaFacturacion: React.FC = () => {
         const pedFields = {
           cod_medico: pediatra.codMedico,
           cod_medico_ejecutor: null,
+          afiliado_id: afiliadoId,
           dni_paciente: dni || null,
           fecha_practica: fechaPractica || null,
           cod_clinica: codClinica,
@@ -1259,7 +1285,9 @@ const CargaFacturacion: React.FC = () => {
         cod_medico: linea.codMedico,
         // El ayudante es un médico payee: nunca lleva ejecutor.
         cod_medico_ejecutor: null,
+        afiliado_id: mainItem.afiliado_id,
         dni_paciente: mainItem.dni_paciente,
+        nombre_paciente: mainItem.nombre_paciente,
         fecha_practica: mainItem.fecha_practica,
         cod_clinica: mainItem.cod_clinica,
         // Por defecto es un dato de la práctica, no del prestador: se copia igual que
@@ -1296,7 +1324,9 @@ const CargaFacturacion: React.FC = () => {
       items.push({
         cod_medico: pediatra.codMedico,
         cod_medico_ejecutor: null,
+        afiliado_id: mainItem.afiliado_id,
         dni_paciente: mainItem.dni_paciente,
+        nombre_paciente: mainItem.nombre_paciente,
         fecha_practica: mainItem.fecha_practica,
         cod_clinica: mainItem.cod_clinica,
         autorizacion: autorizacionPorIntegrante
@@ -1787,13 +1817,10 @@ const CargaFacturacion: React.FC = () => {
           {/* 3. Paciente */}
           <PacienteSection
             key={`paciente-${pacienteResetKey}`}
+            afiliadoId={afiliadoId}
             dni={dni}
             nombrePaciente={nombrePaciente}
-            onDniChange={setDni}
-            onAfiliadoFound={(a: AfiliadoRead) => {
-              setDni(a.dni);
-              setNombrePaciente(a.nombre);
-            }}
+            onAfiliadoChange={handleAfiliadoChange}
             disabled={formDisabled}
             error={errores.dni}
           />
@@ -1889,16 +1916,35 @@ const CargaFacturacion: React.FC = () => {
               Autorización{" "}
               <span className={styles.sectionHint}>(opcional)</span>
             </span>
-            <div className={styles.filterField}>
-              <input
-                className={styles.input}
-                type="text"
-                maxLength={30}
-                value={autorizacion}
-                onChange={(e) => setAutorizacion(e.target.value)}
-                disabled={formDisabled}
-                placeholder="Nº de autorización de la obra social"
-              />
+            <div className={styles.autorizacionFila}>
+              <div className={styles.filterField}>
+                <input
+                  className={styles.input}
+                  type="text"
+                  maxLength={30}
+                  value={autorizacion}
+                  onChange={(e) => setAutorizacion(e.target.value)}
+                  disabled={formDisabled}
+                  placeholder="Nº de autorización de la obra social"
+                />
+              </div>
+              {autorizacionesExistentes.length > 0 && (
+                <div className={styles.autorizacionAviso} role="alert">
+                  <AlertTriangle size={14} style={{ flexShrink: 0 }} />
+                  <span>
+                    Esta autorización ya está cargada en esta obra social:{" "}
+                    {autorizacionesExistentes.map((a, i) => (
+                      <React.Fragment key={`${a.periodo}-${a.version}`}>
+                        {i > 0 && ", "}
+                        <strong>{a.periodo.slice(4)}/{a.periodo.slice(0, 4)}</strong>
+                        {a.version > 1 && ` (${versionLabel(a.version)})`}
+                        {` · ${a.cantidad} prestación${a.cantidad === 1 ? "" : "es"}`}
+                        {a.estado_factura && a.estado_factura !== "A" && " · cerrada"}
+                      </React.Fragment>
+                    ))}
+                  </span>
+                </div>
+              )}
             </div>
             {precio?.sin_precio && (
               <div className={styles.warningBox} style={{ textAlign: "left", display: "flex", alignItems: "center", gap: 8 }}>

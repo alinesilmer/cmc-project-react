@@ -1522,7 +1522,7 @@ export default function NomencladorPorOS() {
 
   const replicaActiva = replica.activo && replica.destinos.length > 0;
 
-  // ─── Prestaciones cargadas en $0 (código dado de alta sin precio) ───────────
+  // ─── Prestaciones abiertas del código que cambian con el precio nuevo ───────
 
   async function ofrecerRevalorizar(codigo: string) {
     if (!selectedNroOS) return;
@@ -1530,7 +1530,7 @@ export default function NomencladorPorOS() {
       const r = await revalorizarPrestaciones({
         cod_obra: String(selectedNroOS), codigo, dry_run: true,
       });
-      if (r.total > 0) setRevalorizar(r);
+      if (r.revalorizadas > 0) setRevalorizar(r);
     } catch {
       /* sin prestaciones para revalorizar o sin permiso: no se ofrece */
     }
@@ -3287,15 +3287,17 @@ export default function NomencladorPorOS() {
       <Modal
         isOpen={revalorizar !== null}
         onClose={() => setRevalorizar(null)}
-        title="Revalorizar prestaciones cargadas en $0"
+        title="Actualizar prestaciones con el precio nuevo"
         size="large"
       >
         {revalorizar && (
           <div className={styles.revalorizar}>
             <p>
-              Hay <strong>{revalorizar.total} prestación{revalorizar.total === 1 ? "" : "es"} abierta{revalorizar.total === 1 ? "" : "s"}</strong>{" "}
-              del código {revalorizar.codigo} cargada{revalorizar.total === 1 ? "" : "s"} sin precio. Con el precio nuevo quedarían así
-              (las de períodos cerrados no se tocan):
+              Hay <strong>{revalorizar.revalorizadas} prestación{revalorizar.revalorizadas === 1 ? "" : "es"} abierta{revalorizar.revalorizadas === 1 ? "" : "s"}</strong>{" "}
+              del código {revalorizar.codigo} cuyo importe cambia con el precio nuevo (en $0 o con un precio
+              anterior). Quedarían así
+              {revalorizar.sin_cambios > 0 && `; otras ${revalorizar.sin_cambios} ya tienen este precio`}.
+              Las manuales y las de períodos cerrados no se tocan.
             </p>
             <div className={styles.tableWrap}>
               <table className={styles.table}>

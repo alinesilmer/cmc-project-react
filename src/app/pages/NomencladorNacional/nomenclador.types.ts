@@ -207,7 +207,7 @@ export type RevalorizarItem = {
   cod_med: string;
   fecha_practica: string | null;
   conceptos: string;
-  estado: "revalorizada" | "sin_precio" | "error";
+  estado: "revalorizada" | "sin_precio" | "omitida" | "error";
   motivo: string | null;
   importe_antes: string;
   honorarios: string;
@@ -222,6 +222,8 @@ export type RevalorizarResult = {
   codigo: string;
   total: number;
   revalorizadas: number;
+  /** Automáticas abiertas que ya tienen ese precio (no vienen en `items`). */
+  sin_cambios: number;
   items: RevalorizarItem[];
 };
 

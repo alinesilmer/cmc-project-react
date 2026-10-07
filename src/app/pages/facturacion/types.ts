@@ -39,8 +39,9 @@ export type ClinicaOption = {
   localidad?: string | null;
 };
 
+/** Un afiliado puede tener sólo nombre o sólo número (al menos uno). */
 export interface AfiliadoRead {
-  id: number; dni: string; nombre: string; usuario?: string; created_at?: string;
+  id: number; dni: string | null; nombre: string | null; usuario?: string; created_at?: string;
 }
 
 export interface PrestacionItem {
@@ -48,7 +49,11 @@ export interface PrestacionItem {
   /** Solo si `cod_medico` es una clínica: NRO_SOCIO del médico que ejecutó (no cobra,
    *  fija el precio por su especialidad). NULL cuando el payee ya es un médico. */
   cod_medico_ejecutor?: string | null;
+  /** Afiliado elegido del padrón: gana sobre `dni_paciente` (puede no tener número). */
+  afiliado_id?: number | null;
   dni_paciente?: string | null;
+  /** Sólo sin afiliado ni número (ej. replicar una fila que tenía sólo el nombre). */
+  nombre_paciente?: string | null;
   fecha_practica?: string | null;
   cod_clinica?: number | null;
   autorizacion?: string | null;
@@ -100,6 +105,15 @@ export interface PeriodoActivoResponse {
   es_complemento?: boolean;
 }
 
+/** Período de la O.S. donde ya hay prestaciones con un Nº de autorización. */
+export interface AutorizacionExistente {
+  periodo: string;
+  version: number;
+  cantidad: number;
+  /** Estado de la cabecera de esa versión ("A" abierta); null si no hay cabecera. */
+  estado_factura: string | null;
+}
+
 export interface PrecioResponse {
   honorarios: Money; gastos: Money; ayudante: Money;
   descripcion: string; fuente: string;
@@ -130,6 +144,12 @@ export interface PrecioResponse {
   /** true → el código está dado de alta en la O.S. pero todavía sin precio: se carga
    *  en $0 y queda "sin valorizar" hasta que se cargue el precio y se revalorice. */
   sin_precio?: boolean;
+  /** De dónde sale el precio (etiqueta del cotizador): variante NN o NE y cómo se
+   *  calculan los honorarios — valor fijo o con un galeno (y su nivel, si es nivelado). */
+  origen?: "NN" | "NE" | string | null;
+  tipo_valor?: "fijo" | "calculable" | null;
+  galeno_nombre?: string | null;
+  galeno_nivel?: number | null;
 }
 
 export interface PrestacionRead {

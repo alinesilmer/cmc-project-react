@@ -460,6 +460,29 @@ $shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
   text-align: center;
 }
 
+// Autorización: el aviso de "ya cargada" va al costado del campo (abajo en pantallas chicas).
+.autorizacionFila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+
+  > .filterField { flex: 0 1 260px; min-width: 0; }
+}
+
+.autorizacionAviso {
+  flex: 1 1 260px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: $radius-sm;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+  color: $amber;
+}
+
 .totalRow {
   display: flex;
   align-items: center;
@@ -528,8 +551,38 @@ $shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
   }
 }
 
-// Botón cuadrado de solo icono, para acciones destructivas al lado de un campo
-// (hoy: eliminar del padrón el afiliado seleccionado, en PacienteSection).
+// Botón cuadrado de solo icono al lado de un campo: editar lo seleccionado (afiliado,
+// clínica). `.btnIconDanger` es la variante para eliminarlo del padrón.
+.btnIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: none;
+  color: $text-2;
+  border: 1px solid $border;
+  border-radius: $radius-sm;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+
+  &:hover:not(:disabled) {
+    background: $blue-light;
+    border-color: $blue;
+    color: $blue;
+  }
+  &:disabled {
+    color: $text-3;
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
 .btnIconDanger {
   display: inline-flex;
   align-items: center;

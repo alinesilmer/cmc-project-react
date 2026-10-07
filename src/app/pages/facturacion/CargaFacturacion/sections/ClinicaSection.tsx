@@ -1,8 +1,9 @@
-import React, { useState } from "react";
-import { Trash2 } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { Pencil, Trash2 } from "lucide-react";
 import ClinicaAutocomplete from "../../components/ClinicaAutocomplete";
 import AltaClinicaModal from "../../components/AltaClinicaModal";
 import ConfirmActionModal from "../../components/ConfirmActionModal";
+import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 import { eliminarClinica } from "../../api";
 import type { ClinicaOption } from "../../types";
 import styles from "../CargaFacturacion.module.scss";
@@ -26,7 +27,7 @@ const ClinicaSection: React.FC<Props> = ({
   codClinica, clinicaNombre, onClinicaChange, onClinicaDeleted, disabled,
   clinicasPrecargadas, resetKey,
 }) => {
-  const [showAlta, setShowAlta] = useState(false);
+  const [modal, setModal] = useState<"alta" | "editar" | null>(null);
   const [showBaja, setShowBaja] = useState(false);
   const [borrando, setBorrando] = useState(false);
   const [bajaError, setBajaError] = useState<string | null>(null);
@@ -36,6 +37,13 @@ const ClinicaSection: React.FC<Props> = ({
   const [autocompleteKey, setAutocompleteKey] = useState(0);
 
   const puedeBorrar = Boolean(codClinica && clinicaNombre) && !disabled;
+  // Estable mientras el modal está abierto (si no, recargaría el campo en cada render).
+  const aEditar = useMemo(
+    () => (modal === "editar" && codClinica != null && clinicaNombre
+      ? { cod: codClinica, nombre: clinicaNombre }
+      : null),
+    [modal, codClinica, clinicaNombre],
+  );
 
   const handleEliminar = async () => {
     if (codClinica == null) return;
@@ -47,12 +55,11 @@ const ClinicaSection: React.FC<Props> = ({
       onClinicaChange(null, null);
       onClinicaDeleted?.(codClinica);
       setAutocompleteKey((k) => k + 1);
-    } catch (e: any) {
-      const detail = e?.response?.data?.detail;
+    } catch (e) {
       // Se cierra el modal para que el motivo (típicamente el 409 "tiene N
       // prestaciones cargadas") quede visible bajo el campo y no tapado.
       setShowBaja(false);
-      setBajaError(typeof detail === "string" ? detail : "No se pudo eliminar la clínica.");
+      setBajaError(mensajeDeError(e, "No se pudo eliminar la clínica."));
     } finally {
       setBorrando(false);
     }
@@ -76,6 +83,16 @@ const ClinicaSection: React.FC<Props> = ({
           </div>
           <button
             type="button"
+            className={styles.btnIcon}
+            onClick={() => setModal("editar")}
+            disabled={!puedeBorrar}
+            title={puedeBorrar ? `Editar ${clinicaNombre}` : "Elegí una clínica del padrón para poder editarla"}
+            aria-label="Editar clínica"
+          >
+            <Pencil size={15} />
+          </button>
+          <button
+            type="button"
             className={styles.btnIconDanger}
             onClick={() => { setBajaError(null); setShowBaja(true); }}
             disabled={!puedeBorrar}
@@ -88,7 +105,7 @@ const ClinicaSection: React.FC<Props> = ({
           >
             <Trash2 size={16} />
           </button>
-          <button type="button" className={styles.btnGhost} onClick={() => setShowAlta(true)} disabled={disabled}>
+          <button type="button" className={styles.btnGhost} onClick={() => setModal("alta")} disabled={disabled}>
             + Agregar clínica
           </button>
         </div>
@@ -102,11 +119,14 @@ const ClinicaSection: React.FC<Props> = ({
       </div>
 
       <AltaClinicaModal
-        isOpen={showAlta}
-        onClose={() => setShowAlta(false)}
+        isOpen={modal !== null}
+        clinica={aEditar}
+        onClose={() => setModal(null)}
         onCreated={(clinica) => {
-          setShowAlta(false);
+          setModal(null);
           onClinicaChange(clinica.cod, clinica);
+          // El combobox guarda el texto que tenía: se remonta para que muestre el nuevo.
+          setAutocompleteKey((k) => k + 1);
         }}
       />
 
