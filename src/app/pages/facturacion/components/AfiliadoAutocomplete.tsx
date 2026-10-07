@@ -2,35 +2,31 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import AppSearchSelect, { type AppSearchSelectOption } from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
 import { fetchAfiliados } from "../api";
 import type { AfiliadoRead } from "../types";
+import { etiquetaAfiliado } from "./etiquetas";
 
 interface Props {
-  value: string | null;
-  onChange: (dni: string | null, afiliado: AfiliadoRead | null) => void;
+  /** Id del afiliado elegido (no el número: puede no tenerlo). */
+  value: number | null;
+  onChange: (afiliado: AfiliadoRead | null) => void;
   disabled?: boolean;
-  /** Precarga la opción mostrada antes de que el usuario busque (usado al editar). */
+  /** Texto a mostrar antes de que el usuario busque (al editar, o tras crear uno). */
   presetLabel?: string;
   blurOnSelect?: boolean;
 }
 
 const AfiliadoAutocomplete: React.FC<Props> = ({ value, onChange, disabled, presetLabel, blurOnSelect }) => {
-  const [options, setOptions] = useState<AfiliadoRead[]>(() =>
-    value && presetLabel ? [{ id: 0, dni: value, nombre: presetLabel }] : [],
-  );
+  const [options, setOptions] = useState<AfiliadoRead[]>([]);
   const [loading, setLoading] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
-  // El `useState` de arriba solo corre al montar: si `value`/`presetLabel` cambian
-  // después (ej. se crea un afiliado nuevo desde "+ Agregar afiliado", o se resuelve
-  // por otro lado sin pasar por una búsqueda acá), `options` se queda vieja y
-  // `AppSearchSelect` no encuentra con qué label mostrar el `value` nuevo — el campo
-  // se ve vacío aunque el dato ya esté (el tilde verde de abajo, que lee el estado
-  // del padre directo, sí se actualiza — de ahí el desfasaje entre los dos).
+  // Lo elegido tiene que estar entre las opciones para que `AppSearchSelect` muestre
+  // su texto: al editar, o al crear uno desde "+ Agregar afiliado", no pasó por una
+  // búsqueda acá.
   useEffect(() => {
-    if (!value || !presetLabel) return;
+    if (value == null || !presetLabel) return;
     setOptions((prev) => {
-      const actual = prev.find((a) => a.dni === value);
-      if (actual && actual.nombre === presetLabel) return prev;
-      return [{ id: 0, dni: value, nombre: presetLabel }, ...prev.filter((a) => a.dni !== value)];
+      if (prev.some((a) => a.id === value && etiquetaAfiliado(a.dni, a.nombre) === presetLabel)) return prev;
+      return [{ id: value, dni: null, nombre: presetLabel }, ...prev.filter((a) => a.id !== value)];
     });
   }, [value, presetLabel]);
 
@@ -52,8 +48,8 @@ const AfiliadoAutocomplete: React.FC<Props> = ({ value, onChange, disabled, pres
   useEffect(() => () => { abortRef.current?.abort(); }, []);
 
   const selectOptions: AppSearchSelectOption[] = options.map((a) => ({
-    id: a.dni,
-    label: `${a.dni} · ${a.nombre}`,
+    id: a.id,
+    label: etiquetaAfiliado(a.dni, a.nombre),
   }));
 
   return (
@@ -61,17 +57,16 @@ const AfiliadoAutocomplete: React.FC<Props> = ({ value, onChange, disabled, pres
       options={selectOptions}
       value={value}
       onChange={(id) => {
-        const afiliado = options.find((a) => a.dni === String(id)) ?? null;
-        onChange(id ? String(id) : null, afiliado);
+        const afiliado = id == null ? null : options.find((a) => a.id === Number(id)) ?? null;
+        onChange(afiliado);
       }}
       onQueryChange={search}
       loading={loading}
       disabled={disabled}
       blurOnSelect={blurOnSelect}
-      // Prestaciones viejas guardaron el nombre del paciente con el identificador
-      // vacío (`dni_p = ''`). Ahí no hay opción que seleccionar, pero el nombre se
-      // muestra igual en el campo en vez de dejarlo en blanco.
-      initialInputValue={!value && presetLabel ? presetLabel : undefined}
+      // Prestaciones con el paciente fuera del padrón (sólo el nombre, sin afiliado):
+      // no hay opción que seleccionar, pero el nombre se muestra igual en el campo.
+      initialInputValue={value == null && presetLabel ? presetLabel : undefined}
     />
   );
 };

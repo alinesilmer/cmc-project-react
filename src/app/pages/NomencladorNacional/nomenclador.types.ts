@@ -207,7 +207,7 @@ export type RevalorizarItem = {
   cod_med: string;
   fecha_practica: string | null;
   conceptos: string;
-  estado: "revalorizada" | "sin_precio" | "error";
+  estado: "revalorizada" | "sin_precio" | "omitida" | "error";
   motivo: string | null;
   importe_antes: string;
   honorarios: string;
@@ -222,6 +222,8 @@ export type RevalorizarResult = {
   codigo: string;
   total: number;
   revalorizadas: number;
+  /** Automáticas abiertas que ya tienen ese precio (no vienen en `items`). */
+  sin_cambios: number;
   items: RevalorizarItem[];
 };
 
@@ -952,7 +954,7 @@ export type NiveladoCodigoIn = {
 };
 
 export type EstadoAplicarNivelado =
-  | "crear" | "creado" | "ya_tiene_precio" | "sin_quien_factura" | "suspendido" | "omitido";
+  | "crear" | "creado" | "reemplazar" | "reemplazado" | "sin_quien_factura" | "suspendido" | "omitido";
 
 export type AplicarNiveladoFila = {
   nomenclador_id: number;
@@ -964,6 +966,8 @@ export type AplicarNiveladoFila = {
   precios: number;
   precio: string | null;
   motivo: string | null;
+  /** Vigencias NE desde la fecha cargada en adelante que se borran de la base. */
+  vigencias_borradas: number;
 };
 
 export type AplicarNiveladoOut = {
@@ -974,7 +978,9 @@ export type AplicarNiveladoOut = {
   resumen: {
     total: number;
     crear: number;
-    ya_tiene_precio: number;
+    /** Ya tenían precio NE: se les carga la vigencia igual. */
+    reemplazar: number;
+    vigencias_borradas: number;
     sin_quien_factura: number;
     suspendido: number;
     omitido: number;

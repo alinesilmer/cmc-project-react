@@ -1,7 +1,7 @@
 // Espejo de `app/modules/facturacion/export/schemas.py` en el backend — los
 // literals tienen que coincidir carácter por carácter con los que acepta la API.
 import type { Tipo } from "../../types";
-import type { ColumnaVista, OrdenVista, VistaOpciones } from "../vista/types";
+import type { ColumnaVista, OrdenAlfabetico, OrdenVista, VistaOpciones } from "../vista/types";
 
 export type OrdenExport =
   | "nombre_socio" | "nro_socio" | "fecha_practica" | "fecha_carga" | "codigo"
@@ -57,6 +57,9 @@ export interface ExportOpciones extends ExportFiltros {
   // Como "Agrupar equipo quirúrgico" de la vista: el equipo se repite, de referencia
   // (sin sumar), bajo la cabeza.
   agrupar_equipo: boolean;
+  // "Por tipo": orden dentro de Honorarios individuales y de Sanatorios (como en la vista).
+  orden_honorarios: OrdenAlfabetico;
+  orden_sanatorio: OrdenAlfabetico;
   columnas: ColumnaExport[];
 }
 
@@ -80,7 +83,9 @@ export const opcionesDesdeVista = (v: VistaOpciones): ExportOpciones => {
     orden: ORDEN_VISTA_A_EXPORT[v.orden],
     direccion: v.direccion,
     agrupacion: v.agrupacion,
-    agrupar_equipo: v.agruparEquipo,
+    agrupar_equipo: true,
+    orden_honorarios: v.ordenHonorarios,
+    orden_sanatorio: v.ordenSanatorio,
     columnas: [
       "prestador", "matricula",
       ...v.columnas.flatMap((c) => COLUMNA_VISTA_A_EXPORT[c] ?? []),

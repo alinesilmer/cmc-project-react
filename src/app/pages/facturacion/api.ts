@@ -1,5 +1,6 @@
 import { getJSON, postJSON, patchJSON, delJSON, getJSONWithHeaders, postForm, getBlobLong } from "@/app/shared/lib/http";
 import type {
+  AutorizacionExistente,
   MedicoOption, ObraSocialOption, NomencladorOption, ClinicaOption,
   AfiliadoRead, PeriodoActivoResponse, PrecioResponse,
   PrestacionRead, PrestacionesCreate, PrestacionesComplementariaCreate, GuardadoResponse,
@@ -79,6 +80,10 @@ export const fetchClinicasTodas = () =>
 export const crearClinica = (body: { nombre: string }) =>
   traced("POST /clinicas", body, postJSON<ClinicaOption>(`${BASE}/clinicas`, body));
 
+/** Lápiz de la carga: por ahora, el nombre. */
+export const actualizarClinica = (cod: number, body: { nombre: string }) =>
+  traced("PATCH /clinicas", { cod, ...body }, patchJSON<ClinicaOption>(`${BASE}/clinicas/${cod}`, body));
+
 export const eliminarClinica = (cod: number) =>
   traced("DELETE /clinicas", { cod }, delJSON<void>(`${BASE}/clinicas/${cod}`));
 
@@ -95,8 +100,23 @@ export const fetchCodigosHabilitados = (nroSocio: string, q?: string, codObra?: 
 export const fetchAfiliados = (q: string, limit = 20) =>
   traced("GET /afiliados (búsqueda)", { q, limit }, getJSON<AfiliadoRead[]>(`${BASE}/afiliados`, { q, limit }));
 
-export const crearAfiliado = (body: { dni: string; nombre: string }) =>
+/** Al menos uno de los dos: un afiliado puede tener sólo nombre o sólo número. */
+export type AfiliadoBody = { dni: string | null; nombre: string | null };
+
+export const crearAfiliado = (body: AfiliadoBody) =>
   traced("POST /afiliados", body, postJSON<AfiliadoRead>(`${BASE}/afiliados`, body));
+
+/** Lápiz de la carga. Corrige también sus prestaciones de facturas abiertas. */
+export const actualizarAfiliado = (id: number, body: AfiliadoBody) =>
+  traced("PATCH /afiliados-id", { id, ...body }, patchJSON<AfiliadoRead>(`${BASE}/afiliados-id/${id}`, body));
+
+/** Por id (sirve también para los que no tienen número). 409 si tiene prestaciones. */
+export const eliminarAfiliadoPorId = (id: number) =>
+  traced("DELETE /afiliados-id", { id }, delJSON<void>(`${BASE}/afiliados-id/${id}`));
+
+/** El afiliado de un número (para saber su id al editar una prestación). */
+export const fetchAfiliado = (dni: string) =>
+  getJSON<AfiliadoRead>(`${BASE}/afiliados/${encodeURIComponent(dni)}`);
 
 // El identificador puede llevar barras ("1231233/00") — va encodeado; del lado del
 // backend la ruta es `{dni:path}`. Devuelve 204; 409 si el afiliado ya tiene
@@ -106,6 +126,9 @@ export const eliminarAfiliado = (dni: string) =>
 
 export const fetchPeriodoActivo = (cod_obra: string) =>
   traced("GET /periodo-activo", { cod_obra }, getJSON<PeriodoActivoResponse>(`${BASE}/periodo-activo`, { cod_obra }));
+
+export const fetchAutorizacionExistente = (cod_obra: string, autorizacion: string, excluir_id?: number) =>
+  getJSON<AutorizacionExistente[]>(`${BASE}/autorizaciones/existentes`, { cod_obra, autorizacion, excluir_id });
 
 export const fetchPrecio = (
   cod_medico: string, cod_obra: string, codigo: string, fecha?: string, via?: ViaPractica,

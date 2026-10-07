@@ -38,19 +38,20 @@ export default function VistaPanel({ opciones, onChange, prestadores, onClose }:
         </div>
 
         <div className={s.drawerBody}>
-          <OrdenVistaSection
-            orden={opciones.orden}
-            direccion={opciones.direccion}
-            agrupacion={opciones.agrupacion}
-            onChangeOrden={(orden) => onChange({ ...opciones, orden })}
-            onChangeDireccion={(direccion) => onChange({ ...opciones, direccion })}
-          />
           <AgrupacionVistaSection
             agrupacion={opciones.agrupacion}
-            agruparEquipo={opciones.agruparEquipo}
             onChangeAgrupacion={(agrupacion) => onChange({ ...opciones, agrupacion })}
-            onChangeAgruparEquipo={(agruparEquipo) => onChange({ ...opciones, agruparEquipo })}
           />
+          {/* En "Por socio" el orden es fijo: no hay nada que elegir. */}
+          {opciones.agrupacion !== "por_socio" && (
+            <OrdenVistaSection
+              orden={opciones.orden}
+              direccion={opciones.direccion}
+              agrupacion={opciones.agrupacion}
+              onChangeOrden={(orden) => onChange({ ...opciones, orden })}
+              onChangeDireccion={(direccion) => onChange({ ...opciones, direccion })}
+            />
+          )}
           <FiltrosVistaSection
             filtros={opciones}
             onChange={(filtros) => onChange({ ...opciones, ...filtros })}

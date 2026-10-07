@@ -12,6 +12,11 @@ export type OrdenDireccion = "asc" | "desc";
 
 export type AgrupacionVista = "por_socio" | "por_tipo" | "plana";
 
+// "Por tipo", en Honorarios individuales y Sanatorios: cómo se ordena dentro de cada médico
+// (y, en Sanatorios, dentro de cada clínica). "medico" = el orden de siempre (el elegido en
+// "Ordenar por"); "paciente" = pacientes A-Z.
+export type OrdenAlfabetico = "medico" | "paciente";
+
 export const OPCIONES_ORDEN_VISTA: { value: OrdenVista; label: string }[] = [
   { value: "fecha", label: "Fecha de práctica" },
   { value: "fecha_carga", label: "Fecha de carga" },
@@ -86,10 +91,8 @@ export interface VistaOpciones extends FiltrosVista {
   orden: OrdenVista;
   direccion: OrdenDireccion;
   agrupacion: AgrupacionVista;
-  // Muestra, indentadas debajo de la fila del cirujano, las de sus compañeros
-  // de equipo (ayudante/gastos) — sin sumarlas a su subtotal. Independiente
-  // del modo de agrupación: combina con cualquiera de los tres de arriba.
-  agruparEquipo: boolean;
+  ordenHonorarios: OrdenAlfabetico;
+  ordenSanatorio: OrdenAlfabetico;
   columnas: ColumnaVista[];
 }
 
@@ -97,7 +100,8 @@ export const VISTA_OPCIONES_DEFAULT: VistaOpciones = {
   orden: "nombre_socio",
   direccion: "asc",
   agrupacion: "por_socio",
-  agruparEquipo: true,
+  ordenHonorarios: "medico",
+  ordenSanatorio: "medico",
   columnas: COLUMNAS_VISTA_DEFAULT,
 };
 

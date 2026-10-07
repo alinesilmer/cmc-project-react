@@ -18,7 +18,7 @@ interface Props {
   via: ViaPractica;
   onViaChange: (via: ViaPractica) => void;
   onVolverATradicional?: () => void;
-  /** Solo los códigos de categoría "Honorarios individuales" admiten elegir vía. */
+  /** Solo los códigos que admiten laparoscopía (lo informa la API) ofrecen elegir vía. */
   mostrarVia: boolean;
   disabled?: boolean;
   errors?: Record<string, string>;

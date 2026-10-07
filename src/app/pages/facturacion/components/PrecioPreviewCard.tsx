@@ -1,13 +1,16 @@
 import React from "react";
 import type { PrecioResponse } from "../types";
 import { formatMoney, parseMoney } from "../money";
+import { etiquetaPrecio } from "./etiquetas";
 
 interface Props {
   precio: PrecioResponse;
   onVolverATradicional?: () => void;
 }
 
-const PrecioPreviewCard: React.FC<Props> = ({ precio, onVolverATradicional }) => (
+const PrecioPreviewCard: React.FC<Props> = ({ precio, onVolverATradicional }) => {
+  const etiqueta = etiquetaPrecio(precio);
+  return (
   <div
     style={{
       border: "1px solid #e2e8f0",
@@ -83,9 +86,25 @@ const PrecioPreviewCard: React.FC<Props> = ({ precio, onVolverATradicional }) =>
       )}
     </div>
 
-    {(precio.descripcion || (precio.via === "L" && precio.admitido)) && (
-      <p style={{ fontSize: 12, color: "#475569", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+    {(precio.descripcion || etiqueta || (precio.via === "L" && precio.admitido)) && (
+      <p style={{ fontSize: 12, color: "#475569", margin: 0, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         {precio.descripcion}
+        {etiqueta && (
+          <span
+            style={{
+              background: "#ecfdf5",
+              color: "#166534",
+              border: "1px solid #bbf7d0",
+              borderRadius: 999,
+              padding: "2px 8px",
+              fontSize: 11,
+              fontWeight: 600,
+            }}
+            title="De dónde sale el precio"
+          >
+            {etiqueta}
+          </span>
+        )}
         {precio.via === "L" && precio.admitido && (
           <span
             style={{
@@ -119,6 +138,7 @@ const PrecioPreviewCard: React.FC<Props> = ({ precio, onVolverATradicional }) =>
       </div>
     )}
   </div>
-);
+  );
+};
 
 export default PrecioPreviewCard;

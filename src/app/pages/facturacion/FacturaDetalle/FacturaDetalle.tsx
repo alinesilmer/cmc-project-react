@@ -22,8 +22,9 @@ import type { FiltrosVista, OrdenDireccion, OrdenVista, VistaOpciones } from "./
 import { COLUMNAS_VISTA_DISPONIBLES, ORDEN_TIPOS, PESO_COLUMNA, VISTA_OPCIONES_DEFAULT } from "./vista/types";
 import type { FilaAcciones, PrestacionConSocio } from "./FilaPrestacion";
 import GrupoTabla from "./GrupoTabla";
-import { sumarTotales } from "./totales";
+import { sumaEquipo, sumarTotales } from "./totales";
 import type { GrupoAcciones, VistaGrupo } from "./GrupoTabla";
+import { inferirEquipos } from "./equipo";
 import styles from "./FacturaDetalle.module.scss";
 
 // Set vacío compartido: los grupos sin filas ocupadas reciben siempre esta misma
@@ -76,6 +77,7 @@ const porFechaDesc = (a: PrestacionConSocio, b: PrestacionConSocio): number =>
   (b.fecha_practica ?? "").localeCompare(a.fecha_practica ?? "") || a.id - b.id;
 const porPacienteAZ = (a: PrestacionConSocio, b: PrestacionConSocio): number =>
   (a.nombre_paciente ?? "").localeCompare(b.nombre_paciente ?? "", "es", { sensitivity: "base" })
+  || (a.nro_afiliado ?? "").localeCompare(b.nro_afiliado ?? "", "es", { numeric: true })
   || porFechaDesc(a, b);
 // Sanatorios: las prestaciones de una misma clínica quedan seguidas (A-Z por clínica) para
 // poder intercalar el subtítulo con su nombre.
@@ -351,11 +353,15 @@ const FacturaDetalle: React.FC = () => {
     onMarcarTodos: (g) => handleMarcarTodos(g.miembros.map((p) => p.id), g.key),
     onDesmarcarTodos: (g) => handleDesmarcarTodos(g.miembros.map((p) => p.id), g.key),
     onMoverGrupo: handleMoverGrupo,
+    onOrdenAlfabetico: (tipo, valor) => setVistaOpciones((o) => (
+      tipo === "Sanatorio" ? { ...o, ordenSanatorio: valor } : { ...o, ordenHonorarios: valor }
+    )),
   };
   const accionesGrupo = useMemo<GrupoAcciones>(() => ({
     onMarcarTodos: (g) => accionesGrupoRef.current?.onMarcarTodos(g),
     onDesmarcarTodos: (g) => accionesGrupoRef.current?.onDesmarcarTodos(g),
     onMoverGrupo: (g, d) => accionesGrupoRef.current?.onMoverGrupo(g, d),
+    onOrdenAlfabetico: (t, v) => accionesGrupoRef.current?.onOrdenAlfabetico(t, v),
   }), []);
   const acciones = useMemo<FilaAcciones>(() => ({
     onToggleRevisado: (p) => accionesRef.current?.onToggleRevisado(p),
@@ -401,18 +407,25 @@ const FacturaDetalle: React.FC = () => {
     return out;
   }, [detalle]);
 
-  // Todas las prestaciones de cada equipo quirúrgico (cabeza + compañeros), sin
-  // filtrar — así el equipo se puede mostrar completo aunque algún filtro deje
-  // afuera a un compañero.
-  const equipoPorGrupo = useMemo(() => {
-    const map = new Map<number, PrestacionConSocio[]>();
+  // Equipo de cada cabeza (id cabeza → integrantes, sin ella), sin filtrar — así el equipo
+  // se muestra completo aunque algún filtro deje afuera a un integrante. Un ayudante o
+  // pediatra sin grupo se asigna a su cabeza por paciente + fecha (ver `inferirEquipos`).
+  // Los integrantes cuya cabeza ya no está en la factura quedan como filas comunes.
+  const { equipoPorCabeza, integrantes } = useMemo(() => {
+    const ids = new Set(todasFlat.map((p) => p.id));
+    const inferidos = inferirEquipos(todasFlat);
+    const porCabeza = new Map<number, PrestacionConSocio[]>();
+    const sueltos = new Set<number>();
     for (const p of todasFlat) {
-      if (p.grupo_equipo_id == null) continue;
-      const arr = map.get(p.grupo_equipo_id) ?? [];
+      const cabeza = p.grupo_equipo_id ?? inferidos.get(p.id);
+      if (cabeza == null || cabeza === p.id || !ids.has(cabeza)) continue;
+      const arr = porCabeza.get(cabeza) ?? [];
       arr.push(p);
-      map.set(p.grupo_equipo_id, arr);
+      porCabeza.set(cabeza, arr);
+      sueltos.add(p.id);
     }
-    return map;
+    porCabeza.forEach((arr) => arr.sort((a, b) => a.id - b.id));
+    return { equipoPorCabeza: porCabeza, integrantes: sueltos };
   }, [todasFlat]);
 
   const prestadoresOpciones = useMemo(
@@ -425,36 +438,36 @@ const FacturaDetalle: React.FC = () => {
     [todasFlat, vistaOpciones],
   );
 
-  // Equipo quirúrgico: con "Agrupar equipo", el ayudante/gastos/pediatra de una cabeza que
-  // pasa los filtros aparece ÚNICAMENTE anidado bajo ella (y cuenta en su grupo), no como
-  // línea propia en su socio. Las prestaciones sin equipo —o cuya cabeza quedó afuera de los
-  // filtros— siguen siendo líneas comunes de su socio.
+  // Equipo quirúrgico: el ayudante/gastos/pediatra de una cabeza son inseparables de ella,
+  // en cualquier agrupación. Los filtros y el orden se aplican a la CABEZA: si pasa, entra
+  // con todo su equipo (anidado debajo y sumado a su grupo); si no, el equipo entero queda
+  // afuera. Un integrante nunca es línea propia de su socio. Sólo las prestaciones sin equipo,
+  // o cuya cabeza ya no está en la factura (anulada), son líneas comunes.
   const { principales, hijosPorCabeza, visibles } = useMemo(() => {
+    const propias = filtradas.filter((p) => !integrantes.has(p.id));
     const hijos = new Map<number, PrestacionConSocio[]>();
-    if (vistaOpciones.agruparEquipo) {
-      for (const p of filtradas) {
-        if (p.grupo_equipo_id !== p.id) continue;
-        const otros = (equipoPorGrupo.get(p.id) ?? []).filter((m) => m.id !== p.id);
-        if (otros.length > 0) hijos.set(p.id, otros);
-      }
+    for (const p of propias) {
+      const otros = equipoPorCabeza.get(p.id);
+      if (otros && otros.length > 0) hijos.set(p.id, otros);
     }
-    const anidados = new Set<number>();
-    hijos.forEach((arr) => arr.forEach((m) => anidados.add(m.id)));
-    const propias = filtradas.filter((p) => !anidados.has(p.id));
     return {
       principales: propias,
       hijosPorCabeza: hijos,
       visibles: propias.flatMap((p) => [p, ...(hijos.get(p.id) ?? [])]),
     };
-  }, [filtradas, equipoPorGrupo, vistaOpciones.agruparEquipo]);
+  }, [filtradas, integrantes, equipoPorCabeza]);
 
   const vistaGrupos = useMemo<VistaGrupo[]>(() => {
     const miembrosDe = (arr: PrestacionConSocio[]) => arr.flatMap((p) => [p, ...(hijosPorCabeza.get(p.id) ?? [])]);
+    // Lo que suma a los totales del médico: en Honorarios individuales y Sanatorios el
+    // equipo se muestra pero no se suma (ver `sumaEquipo`).
+    const sumablesDe = (arr: PrestacionConSocio[]) =>
+      arr.flatMap((p) => [p, ...(sumaEquipo(p) ? hijosPorCabeza.get(p.id) ?? [] : [])]);
 
     if (vistaOpciones.agrupacion === "plana") {
       const ordenadas = [...principales].sort((a, b) => compararPorOrden(a, b, vistaOpciones.orden, vistaOpciones.direccion));
       const miembros = miembrosDe(ordenadas);
-      return [{ key: "__plana__", titulo: "", prestaciones: ordenadas, miembros, mostrarResumen: false, ...sumarTotales(miembros) }];
+      return [{ key: "__plana__", titulo: "", prestaciones: ordenadas, miembros, sumables: miembros, mostrarResumen: false, ...sumarTotales(miembros) }];
     }
 
     if (vistaOpciones.agrupacion === "por_tipo") {
@@ -465,14 +478,26 @@ const FacturaDetalle: React.FC = () => {
         .map(({ tipo, arr }) => {
           // Las filas de cada médico quedan seguidas (para poder cerrar con su subtotal);
           // el orden elegido rige dentro de cada médico.
+          // Honorarios individuales y Sanatorios traen un selector: "paciente" ordena los pacientes A-Z
+          // dentro de cada médico (y, en Sanatorios, de cada clínica, que siguen agrupadas A-Z).
+          const selector = tipo === "Honorarios individuales" ? vistaOpciones.ordenHonorarios
+            : tipo === "Sanatorio" ? vistaOpciones.ordenSanatorio : undefined;
+          const porPaciente = selector === "paciente";
           const ordenadas = [...arr].sort((a, b) =>
             porNombreMedico(a, b)
             || (tipo === "Sanatorio" ? porClinica(a, b) : 0)
-            || compararPorOrden(a, b, vistaOpciones.orden, vistaOpciones.direccion));
+            || (porPaciente
+              ? porPacienteAZ(a, b)
+              // "Médico": rige el orden elegido; lo que ese orden no distingue (con "nombre
+              // del socio" empatan todas las filas del socio) queda por paciente A-Z y no
+              // en el orden de carga. Igual que el exportable (`export/armado.py`).
+              : compararPorOrden(a, b, vistaOpciones.orden, vistaOpciones.direccion) || (selector ? porPacienteAZ(a, b) : 0)));
           const miembros = miembrosDe(ordenadas);
+          const sumables = sumablesDe(ordenadas);
           return {
             key: `tipo-${tipo}`, titulo: SUBTITULO_TIPO[tipo], subtitulo: SUBTITULO_TIPO[tipo], subtotalPorMedico: true,
-            prestaciones: ordenadas, miembros, mostrarResumen: true, ...sumarTotales(miembros),
+            ordenAlfabetico: selector ? { tipo, valor: selector } : undefined,
+            prestaciones: ordenadas, miembros, sumables, mostrarResumen: true, ...sumarTotales(sumables),
           };
         });
     }
@@ -497,14 +522,16 @@ const FacturaDetalle: React.FC = () => {
       const conFilas = tramos.filter((t) => t.prestaciones.length > 0);
       const prestaciones = conFilas.flatMap((t) => t.prestaciones);
       const miembros = miembrosDe(prestaciones);
+      const sumables = sumablesDe(prestaciones);
       return {
-        key: cod, titulo: `Socio ${cod} ${arr[0]?.nombreSocio ?? ""}`.trim(), prestaciones, miembros,
-        tramos: conFilas, mostrarResumen: true, ...sumarTotales(miembros),
+        key: cod, titulo: `Socio ${cod} ${arr[0]?.nombreSocio ?? ""}`.trim(), prestaciones, miembros, sumables,
+        tramos: conFilas, mostrarResumen: true, ...sumarTotales(sumables),
       };
     }).sort(porNombreSocio);
 
     return gruposMedicos;
-  }, [principales, hijosPorCabeza, vistaOpciones.agrupacion, vistaOpciones.orden, vistaOpciones.direccion]);
+  }, [principales, hijosPorCabeza, vistaOpciones.agrupacion, vistaOpciones.orden, vistaOpciones.direccion,
+    vistaOpciones.ordenHonorarios, vistaOpciones.ordenSanatorio]);
 
   const columnasActivas = useMemo(
     () => COLUMNAS_VISTA_DISPONIBLES.filter((c) => vistaOpciones.columnas.includes(c.key)),
@@ -539,7 +566,9 @@ const FacturaDetalle: React.FC = () => {
     const anterior = gruposCacheRef.current;
     const nuevo = new Map<string, { g: VistaGrupo; firma: unknown[] }>();
     const out = vistaGrupos.map((g) => {
-      const firma: unknown[] = [g.titulo, g.subtitulo, g.subtotalPorMedico, g.mostrarResumen, ...g.prestaciones];
+      const firma: unknown[] = [
+        g.titulo, g.subtitulo, g.subtotalPorMedico, g.ordenAlfabetico?.valor, g.mostrarResumen, ...g.prestaciones,
+      ];
       g.tramos?.forEach((t) => firma.push(t.key, t.prestaciones.length));
       const companeros: Record<number, PrestacionConSocio[]> = {};
       for (const p of g.prestaciones) {
@@ -613,7 +642,7 @@ const FacturaDetalle: React.FC = () => {
               <span className={styles.infoChip}>{detalle.total_prestaciones} prestación{detalle.total_prestaciones !== 1 ? "es" : ""}</span>
               {filtrosActivos && (
                 <span className={styles.infoChip}>
-                  Mostrando {filtradas.length} filtrada{filtradas.length !== 1 ? "s" : ""} — {formatMoney(totalFiltrado)}
+                  Mostrando {visibles.length} filtrada{visibles.length !== 1 ? "s" : ""} — {formatMoney(totalFiltrado)}
                 </span>
               )}
             </div>
@@ -643,7 +672,7 @@ const FacturaDetalle: React.FC = () => {
               {!loading && !error && detalle && detalle.total_prestaciones === 0 && (
                 <tr><td colSpan={columnasConPeso.length} className={styles.emptyCell}>Esta factura no tiene prestaciones.</td></tr>
               )}
-              {!loading && !error && detalle && detalle.total_prestaciones > 0 && filtradas.length === 0 && (
+              {!loading && !error && detalle && detalle.total_prestaciones > 0 && visibles.length === 0 && (
                 <tr><td colSpan={columnasConPeso.length} className={styles.emptyCell}>Ningún resultado con los filtros de vista actuales.</td></tr>
               )}
             </tbody>
@@ -660,7 +689,6 @@ const FacturaDetalle: React.FC = () => {
               grupoBusy={busyGroups.has(g.key)}
               esComplemento={esComplemento}
               esPorSocio={esPorSocio}
-              agruparEquipo={vistaOpciones.agruparEquipo}
             />
           ))}
         </div>

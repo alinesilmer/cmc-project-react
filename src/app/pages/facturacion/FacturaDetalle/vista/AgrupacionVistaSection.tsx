@@ -4,14 +4,10 @@ import s from "../export/export.module.scss";
 
 interface Props {
   agrupacion: AgrupacionVista;
-  agruparEquipo: boolean;
   onChangeAgrupacion: (agrupacion: AgrupacionVista) => void;
-  onChangeAgruparEquipo: (agruparEquipo: boolean) => void;
 }
 
-export default function AgrupacionVistaSection({
-  agrupacion, agruparEquipo, onChangeAgrupacion, onChangeAgruparEquipo,
-}: Props) {
+export default function AgrupacionVistaSection({ agrupacion, onChangeAgrupacion }: Props) {
   return (
     <div className={s.section}>
       <div className={s.sectionHeader}>
@@ -35,18 +31,9 @@ export default function AgrupacionVistaSection({
         ))}
       </div>
 
-      <label className={`${s.fieldToggle} ${agruparEquipo ? s.fieldToggleOn : ""}`}>
-        <input
-          type="checkbox"
-          className={s.fieldCheckbox}
-          checked={agruparEquipo}
-          onChange={(e) => onChangeAgruparEquipo(e.target.checked)}
-        />
-        <span className={s.fieldLabel}>Agrupar equipo quirúrgico</span>
-      </label>
       <p className={s.sectionHint}>
-        El ayudante/gastos/pediatra de una cirugía aparece únicamente indentado debajo del cirujano
-        y suma en su subtotal. Sin tildar, cada uno es una fila común dentro de su propio socio.
+        El ayudante, los gastos y el pediatra de una cirugía van siempre junto al médico de cabecera,
+        indentados debajo y sumados en su subtotal; los filtros y el orden se aplican al médico de cabecera.
       </p>
     </div>
   );

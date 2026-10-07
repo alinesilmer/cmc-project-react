@@ -95,7 +95,9 @@
 
 .estado_crear,
 .estado_creado { background: $ok-bg; color: $ok; }
-.estado_sin_quien_factura { background: $alerta-bg; color: $alerta; }
+.estado_sin_quien_factura,
+.estado_reemplazar,
+.estado_reemplazado { background: $alerta-bg; color: $alerta; }
 
 .pie {
   display: flex;

@@ -15,7 +15,8 @@ const fmt = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS",
 const ESTADOS: Record<EstadoAplicarNivelado, string> = {
   crear: "Se crea",
   creado: "Creado",
-  ya_tiene_precio: "Ya tiene precio",
+  reemplazar: "Se reemplaza",
+  reemplazado: "Reemplazado",
   sin_quien_factura: "Sin quién factura",
   suspendido: "Suspendido",
   omitido: "Omitido",
@@ -33,8 +34,9 @@ function motivoError(e: unknown, fallback: string): string {
 
 /**
  * Aplica un nomenclador nivelado a una obra social: da de alta sus códigos y les
- * crea precio con el galeno del nivel. Primero muestra qué haría ("Ver cambios");
- * lo que ya tiene precio en la obra social no se toca.
+ * crea precio con el galeno del nivel. Primero muestra qué haría ("Ver cambios").
+ * Lo que ya tiene precio NE recibe la vigencia igual: si es anterior a la vigente,
+ * las vigencias más nuevas se borran de la base.
  */
 export default function AplicarNiveladoModal({
   isOpen,
@@ -94,7 +96,7 @@ export default function AplicarNiveladoModal({
       }
     } catch (e) {
       setPreview(null);
-      setError(motivoError(e, "No se pudo calcular."));
+      setError(motivoError(e, dry ? "No se pudo calcular." : "No se pudo aplicar. Revisá en Precios por obra social si se cargó antes de reintentar."));
     } finally {
       setTrabajando(null);
     }
@@ -102,7 +104,7 @@ export default function AplicarNiveladoModal({
 
   const resultado = hecho ?? preview;
   const filas = (resultado?.filas ?? []).filter(
-    (f) => !soloCrear || f.estado === "crear" || f.estado === "creado" || f.estado === "sin_quien_factura",
+    (f) => !soloCrear || f.estado !== "suspendido" && f.estado !== "omitido",
   );
 
   return (
@@ -151,14 +153,19 @@ export default function AplicarNiveladoModal({
           <>
             {hecho && (
               <div className={styles.ok} role="status">
-                Listo: {hecho.resumen.crear} código{hecho.resumen.crear === 1 ? "" : "s"} con precio
+                Listo: {hecho.resumen.crear + hecho.resumen.reemplazar} código{hecho.resumen.crear + hecho.resumen.reemplazar === 1 ? "" : "s"} con precio
                 ({hecho.resumen.precios} precio{hecho.resumen.precios === 1 ? "" : "s"}) en {osNombre}.
               </div>
             )}
             <div className={styles.resumen}>
               <span className={styles.chipCrear}><strong>{resultado.resumen.crear}</strong> {hecho ? "creados" : "se crean"}</span>
               <span className={styles.chip}><strong>{resultado.resumen.precios}</strong> precios</span>
-              <span className={styles.chip}><strong>{resultado.resumen.ya_tiene_precio}</strong> ya tienen precio</span>
+              {resultado.resumen.reemplazar > 0 && (
+                <span className={styles.chip}><strong>{resultado.resumen.reemplazar}</strong> {hecho ? "reemplazados" : "se reemplazan"}</span>
+              )}
+              {resultado.resumen.vigencias_borradas > 0 && (
+                <span className={styles.chipAviso}><strong>{resultado.resumen.vigencias_borradas}</strong> vigencias {hecho ? "borradas" : "se borran"}</span>
+              )}
               {resultado.resumen.sin_quien_factura > 0 && (
                 <span className={styles.chipAviso}><strong>{resultado.resumen.sin_quien_factura}</strong> sin quién factura</span>
               )}
@@ -166,6 +173,11 @@ export default function AplicarNiveladoModal({
                 <span className={styles.chip}><strong>{resultado.resumen.suspendido + resultado.resumen.omitido}</strong> suspendidos u omitidos</span>
               )}
             </div>
+            {resultado.resumen.vigencias_borradas > 0 && !hecho && (
+              <p className={base.hintText}>
+                Hay códigos con vigencias desde el {vigencia.split("-").reverse().join("/")} en adelante: se eliminan de la base y esta queda como la última. Con la misma fecha, se actualiza.
+              </p>
+            )}
             {resultado.resumen.sin_quien_factura > 0 && (
               <p className={base.hintText}>
                 Los que no tienen quién factura se dan de alta sin precio: cargales la plantilla en la Ficha del código y volvé a aplicar.
@@ -191,6 +203,7 @@ export default function AplicarNiveladoModal({
                       <td>
                         <span className={`${styles.estado} ${styles[`estado_${f.estado}`] ?? ""}`}>{ESTADOS[f.estado]}</span>
                         {f.precios > 1 && <span className={base.hintText}> · {f.precios} especialidades</span>}
+                        {f.vigencias_borradas > 0 && <span className={base.hintText}> · borra {f.vigencias_borradas} vigencia{f.vigencias_borradas === 1 ? "" : "s"}</span>}
                       </td>
                       <td className={styles.num}>{f.precio != null ? fmt.format(parseMonto(f.precio)) : "—"}</td>
                     </tr>
@@ -218,7 +231,7 @@ export default function AplicarNiveladoModal({
               <button
                 type="button"
                 className={base.btnPrimary}
-                disabled={!preview || preview.resumen.crear + preview.resumen.sin_quien_factura === 0 || trabajando !== null}
+                disabled={!preview || preview.resumen.crear + preview.resumen.reemplazar + preview.resumen.sin_quien_factura === 0 || trabajando !== null}
                 onClick={() => void correr(false)}
               >
                 {trabajando === "aplicar" ? "Aplicando…" : `Aplicar en ${osNombre}`}

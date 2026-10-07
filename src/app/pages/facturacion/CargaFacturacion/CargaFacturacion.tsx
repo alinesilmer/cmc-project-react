@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FilePlus2, ArrowLeft, AlertTriangle } from "lucide-react";
@@ -18,6 +18,7 @@ import {
   fetchCodigosHabilitados,
   fetchClinicas,
   fetchClinicasTodas,
+  fetchAfiliado,
 } from "../api";
 import { detailMessage, versionLabel } from "../types";
 import type {
@@ -40,6 +41,7 @@ import { dedupePorId } from "../components/localSearch";
 
 import { usePeriodoActivo } from "./hooks/usePeriodoActivo";
 import { useNomencladorPrecio } from "./hooks/useNomencladorPrecio";
+import { useAutorizacionExistente } from "./hooks/useAutorizacionExistente";
 import { useHotkeys, isMod, isModalOpen } from "./hooks/useHotkeys";
 import { focusFirstField, nextFocusable, type FocusField } from "./focusNav";
 
@@ -73,6 +75,22 @@ const fetchPrestacionCabecera = async (id: string | number): Promise<PrestacionR
     return fetchPrestacion(p.grupo_equipo_id);
   }
   return p;
+};
+
+/** Los campos del formulario (Nro socio, Médico ejecutor, Clínica) para una fila
+ *  guardada — el mismo criterio que `seleccion_prestador_de` en el backend. Una fila
+ *  Sanatorio guarda al médico en `cod_medico` y la clínica en `cod_clinica`, pero se
+ *  cargó con la clínica arriba y el médico como ejecutor, y así se tiene que precargar. */
+const seleccionPrestadorDe = (p: PrestacionRead) => {
+  if (p.cod_medico_ejecutor) {
+    // Fila legacy: `cod_medico` era la clínica y el ejecutor iba aparte.
+    return { payee: p.cod_medico, ejecutor: p.cod_medico_ejecutor, clinica: null };
+  }
+  if (p.tipo === "Sanatorio" && p.cod_clinica != null) {
+    return { payee: String(p.cod_clinica), ejecutor: p.cod_medico, clinica: null };
+  }
+  // Médico solo, o médico con la clínica como ámbito (Honorarios individuales).
+  return { payee: p.cod_medico, ejecutor: null, clinica: p.cod_clinica ?? null };
 };
 
 // Reconstruye las líneas de ayudante desde el `grupo` de una prestación (al replicar o
@@ -252,6 +270,14 @@ const CargaFacturacion: React.FC = () => {
   // precarga quedan con "(valor actual)" o vacíos para siempre. No se puede usar
   // `editMeta` para esto — se setea al principio de la precarga, no al final.
   const [editHidratado, setEditHidratado] = useState(false);
+  // Editar arranca siempre arriba. Se entra desde listas largas (la tabla de abajo de
+  // esta misma pantalla, el detalle de la factura) y el panel no resetea el scroll al
+  // navegar: quedaba en la posición de la lista, o a mitad de camino porque la
+  // precarga cambia el alto de la página (loader → formulario) y corta el scroll
+  // suave. Se sube al cambiar de prestación y otra vez cuando el formulario aparece.
+  useLayoutEffect(() => {
+    if (isEdit) window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [isEdit, editId, editHidratado]);
   // Labels descriptivos para los autocompletes en edición: la prestación solo trae los
   // códigos, así que se resuelven contra las búsquedas para mostrar nombre/matrícula/desc.
   const [medicoPreset, setMedicoPreset] = useState<string | null>(null);
@@ -284,7 +310,9 @@ const CargaFacturacion: React.FC = () => {
   // próximo real es junio). null = usar el automático que sugiere el backend.
   const [periodoOverride, setPeriodoOverride] = useState<string | null>(null);
 
-  // Paciente
+  // Paciente. `afiliadoId` = el elegido del padrón (puede no tener número); `dni` y
+  // `nombrePaciente` son lo que se muestra y, sin afiliado, lo que se manda.
+  const [afiliadoId, setAfiliadoId] = useState<number | null>(null);
   const [dni, setDni] = useState("");
   const [nombrePaciente, setNombrePaciente] = useState("");
 
@@ -294,8 +322,6 @@ const CargaFacturacion: React.FC = () => {
 
   // Montos principales
   const [codNomenclador, setCodNomenclador] = useState<string | null>(null);
-  // Categoría del código elegido: la vía solo se ofrece para "Honorarios individuales".
-  const [codNomencladorCategoria, setCodNomencladorCategoria] = useState<string | null>(null);
   const [cantidad, setCantidad] = useState("1");
   const [sesion, setSesion] = useState("1");
   const [tipoCalculo, setTipoCalculo] = useState<TipoCalculo>("A");
@@ -435,6 +461,11 @@ const CargaFacturacion: React.FC = () => {
     via,
   });
 
+  // ¿El Nº de autorización ya está cargado en esta O.S.? Sólo avisa.
+  const autorizacionesExistentes = useAutorizacionExistente(
+    codObraEfectivo, autorizacion, editId ? Number(editId) : undefined,
+  );
+
   // Precio del PEDIATRA — socio y código propios, independientes del cirujano. Mismo
   // hook, segunda instancia: ya está debounceado y keyed por estas deps.
   const { precio: precioPediatra, loading: precioPediatraLoading } = useNomencladorPrecio({
@@ -463,17 +494,19 @@ const CargaFacturacion: React.FC = () => {
         const p = await fetchPrestacionCabecera(editId);
         if (!active) return;
         headPrestacionIdRef.current = p.id;
-        // El payee es una clínica sii viene un médico ejecutor (regla del backend).
-        const esOrg = p.cod_medico_ejecutor != null && p.cod_medico_ejecutor !== "";
-        setCodMedico(p.cod_medico);
+        // El payee es una clínica sii hay médico ejecutor (Sanatorio o fila legacy).
+        const sel = seleccionPrestadorDe(p);
+        const esOrg = sel.ejecutor != null;
+        setCodMedico(sel.payee);
         setPayeeEsOrganizacion(esOrg);
-        setCodMedicoEjecutor(p.cod_medico_ejecutor ?? null);
+        setCodMedicoEjecutor(sel.ejecutor);
+        setAfiliadoId(null);
         setDni(p.dni_paciente ?? "");
         setNombrePaciente(p.nombre_paciente ?? "");
         // La fecha es opcional: si la prestación se cargó sin fecha (carga por
         // cantidad) se deja vacía. Ponerle "hoy" la inventaría al guardar.
         setFechaPractica(p.fecha_practica ?? "");
-        setCodClinica(p.cod_clinica ?? null);
+        setCodClinica(sel.clinica);
         setAutorizacion(p.autorizacion ?? "");
         setCodNomenclador(p.cod_nomenclador ?? null);
         setCantidad(String(p.cantidad ?? 1));
@@ -527,24 +560,24 @@ const CargaFacturacion: React.FC = () => {
         const labelMedico = (m: MedicoOption) =>
           [m.nombre, m.matricula].filter((v) => v != null && v !== "").join(" · ") || null;
 
-        const payee = buscarMedico(p.cod_medico);
+        const payee = buscarMedico(sel.payee);
         if (payee) {
           setMedicoSeleccionado(payee);
           setMedicoPreset(labelMedico(payee));
         }
-        const ejecutor = esOrg ? buscarMedico(p.cod_medico_ejecutor) : null;
+        const ejecutor = buscarMedico(sel.ejecutor);
         if (ejecutor) {
           setMedicoEjecutor(ejecutor);
           setEjecutorPreset(labelMedico(ejecutor));
         }
 
         // Los códigos habilitados dependen del médico efectivo (ejecutor si es clínica).
-        const codMedForCodigos = esOrg ? (p.cod_medico_ejecutor ?? p.cod_medico) : p.cod_medico;
+        const codMedForCodigos = sel.ejecutor ?? sel.payee;
         const [nomRes, cliRes] = await Promise.allSettled([
           p.cod_nomenclador
             ? fetchCodigosHabilitados(codMedForCodigos, p.cod_nomenclador)
             : Promise.resolve([]),
-          p.cod_clinica != null ? fetchClinicas(String(p.cod_clinica)) : Promise.resolve([]),
+          sel.clinica != null ? fetchClinicas(String(sel.clinica)) : Promise.resolve([]),
         ]);
         if (!active) return;
 
@@ -552,11 +585,10 @@ const CargaFacturacion: React.FC = () => {
           const nom = nomRes.value.find((x) => x.codigo === p.cod_nomenclador);
           if (nom) {
             setCodigoPreset(nom.descripcion || null);
-            setCodNomencladorCategoria(nom.categoria ?? null);
           }
         }
         if (cliRes.status === "fulfilled") {
-          const cli = cliRes.value.find((x) => x.cod === p.cod_clinica);
+          const cli = cliRes.value.find((x) => x.cod === sel.clinica);
           if (cli) setClinicaPreset(cli.nombre || null);
         }
         // Ayudantes del equipo. Guardamos sus ids originales para reconciliar al
@@ -667,14 +699,23 @@ const CargaFacturacion: React.FC = () => {
     setPediatra(null);
   }, [codNomenclador]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Limpiar el nombre cuando se borra el identificador del paciente. La condición es
-  // "vacío", NO "menos de 8 caracteres": el campo no es sólo un DNI, también acepta el
-  // nro de afiliado de la obra social, que suele ser más corto (la mayoría de las
-  // prestaciones cargadas tienen uno de menos de 8). Con el tope de 8, elegir a uno de
-  // esos afiliados —o precargarlo al editar— borraba el nombre recién resuelto.
+  // Prestación precargada (editar / replicar) con número: se busca su afiliado para
+  // tener el id, que es con lo que se elige, se edita y se manda.
   useEffect(() => {
-    if (!dni) setNombrePaciente("");
-  }, [dni]);
+    if (afiliadoId != null || !dni) return;
+    let vigente = true;
+    fetchAfiliado(dni)
+      .then((a) => { if (vigente) setAfiliadoId(a.id); })
+      .catch(() => { /* fuera del padrón: queda con el número y el nombre copiados */ });
+    return () => { vigente = false; };
+  }, [dni, afiliadoId]);
+
+  /** Afiliado elegido, creado o editado en la sección Paciente (`null` = vaciado). */
+  const handleAfiliadoChange = useCallback((a: AfiliadoRead | null) => {
+    setAfiliadoId(a?.id ?? null);
+    setDni(a?.dni ?? "");
+    setNombrePaciente(a?.nombre ?? "");
+  }, []);
 
   const volverATradicional = useCallback(() => setVia("T"), []);
 
@@ -711,16 +752,18 @@ const CargaFacturacion: React.FC = () => {
         // su médico principal en la cabecera.
         const p = await fetchPrestacionCabecera(replicarParam);
         if (!active) return;
-        const esOrg = p.cod_medico_ejecutor != null && p.cod_medico_ejecutor !== "";
-        setCodMedico(p.cod_medico);
+        const sel = seleccionPrestadorDe(p);
+        const esOrg = sel.ejecutor != null;
+        setCodMedico(sel.payee);
         setPayeeEsOrganizacion(esOrg);
-        setCodMedicoEjecutor(p.cod_medico_ejecutor ?? null);
+        setCodMedicoEjecutor(sel.ejecutor);
+        setAfiliadoId(null);
         setDni(p.dni_paciente ?? "");
         setNombrePaciente(p.nombre_paciente ?? "");
         // La fecha es opcional: si la prestación se cargó sin fecha (carga por
         // cantidad) se deja vacía. Ponerle "hoy" la inventaría al guardar.
         setFechaPractica(p.fecha_practica ?? "");
-        setCodClinica(p.cod_clinica ?? null);
+        setCodClinica(sel.clinica);
         setAutorizacion(p.autorizacion ?? "");
         setCodNomenclador(p.cod_nomenclador ?? null);
         setCantidad(String(p.cantidad ?? 1));
@@ -741,20 +784,20 @@ const CargaFacturacion: React.FC = () => {
           setCoseguro(p.coseguro != null ? String(p.coseguro) : "0");
         }
 
-        const codMedForCodigos = esOrg ? (p.cod_medico_ejecutor ?? p.cod_medico) : p.cod_medico;
+        const codMedForCodigos = sel.ejecutor ?? sel.payee;
         const [payeeRes, ejeRes, osRes, nomRes, cliRes] = await Promise.allSettled([
-          fetchMedicos(p.cod_medico),
-          esOrg && p.cod_medico_ejecutor ? fetchMedicos(p.cod_medico_ejecutor) : Promise.resolve([]),
+          fetchMedicos(sel.payee),
+          sel.ejecutor ? fetchMedicos(sel.ejecutor) : Promise.resolve([]),
           p.cod_obra_social ? fetchObraSocialPorCodigo(p.cod_obra_social) : Promise.resolve([]),
           p.cod_nomenclador
             ? fetchCodigosHabilitados(codMedForCodigos, p.cod_nomenclador)
             : Promise.resolve([]),
-          p.cod_clinica != null ? fetchClinicas(String(p.cod_clinica)) : Promise.resolve([]),
+          sel.clinica != null ? fetchClinicas(String(sel.clinica)) : Promise.resolve([]),
         ]);
         if (!active) return;
 
         if (payeeRes.status === "fulfilled") {
-          const m = payeeRes.value.find((x) => x.cod === p.cod_medico);
+          const m = payeeRes.value.find((x) => String(x.cod) === sel.payee);
           if (m) {
             setMedicoSeleccionado(m);
             setMedicoPreset(
@@ -763,7 +806,7 @@ const CargaFacturacion: React.FC = () => {
           }
         }
         if (ejeRes.status === "fulfilled") {
-          const m = (ejeRes.value as MedicoOption[]).find((x) => x.cod === p.cod_medico_ejecutor);
+          const m = (ejeRes.value as MedicoOption[]).find((x) => String(x.cod) === sel.ejecutor);
           if (m) {
             setMedicoEjecutor(m);
             setEjecutorPreset(
@@ -787,11 +830,10 @@ const CargaFacturacion: React.FC = () => {
           const nom = nomRes.value.find((x) => x.codigo === p.cod_nomenclador);
           if (nom) {
             setCodigoPreset(nom.descripcion || null);
-            setCodNomencladorCategoria(nom.categoria ?? null);
           }
         }
         if (cliRes.status === "fulfilled") {
-          const cli = cliRes.value.find((x) => x.cod === p.cod_clinica);
+          const cli = cliRes.value.find((x) => x.cod === sel.clinica);
           if (cli) setClinicaPreset(cli.nombre || null);
         }
         // Ayudantes del equipo. Va después de setear codNomenclador (el efecto que
@@ -861,7 +903,9 @@ const CargaFacturacion: React.FC = () => {
     cod_medico: codMedico!,
     // El ejecutor solo se manda si el payee es una clínica.
     cod_medico_ejecutor: payeeEsOrganizacion ? codMedicoEjecutor : null,
+    afiliado_id: afiliadoId,
     dni_paciente: dni || null,
+    nombre_paciente: nombrePaciente || null,
     // Opcional: sin fecha el backend guarda NULL y cotiza al valor vigente de hoy.
     fecha_practica: fechaPractica || null,
     cod_clinica: codClinica,
@@ -957,7 +1001,6 @@ const CargaFacturacion: React.FC = () => {
     // refetchea solo y el efecto que sincroniza precio→honorarios los termina pisando.
     if (!mantener.codigo) {
       setCodNomenclador(null);
-      setCodNomencladorCategoria(null);
       setHonorarios("0");
       setGastos("0");
       setCoseguro("0");
@@ -998,6 +1041,7 @@ const CargaFacturacion: React.FC = () => {
       setEjecutorResetKey((k) => k + 1);
     }
     if (!mantener.paciente) {
+      setAfiliadoId(null);
       setDni("");
       setNombrePaciente("");
       setPacienteResetKey((k) => k + 1);
@@ -1078,6 +1122,7 @@ const CargaFacturacion: React.FC = () => {
       cod_medico_ejecutor: payeeEsOrganizacion ? codMedicoEjecutor : null,
       cod_obra_social: obraSocialEfectiva,
       periodo: periodoEfectivo,
+      afiliado_id: afiliadoId,
       dni_paciente: dni || null,
       fecha_practica: fechaPractica || null,
       cod_clinica: codClinica,
@@ -1103,6 +1148,7 @@ const CargaFacturacion: React.FC = () => {
       // 2. Reconciliar los ayudantes del equipo. Campos de la práctica que comparten
       // con la cabecera (se copian para que el grupo quede coherente).
       const shared = {
+        afiliado_id: afiliadoId,
         dni_paciente: dni || null,
         fecha_practica: fechaPractica || null,
         cod_clinica: codClinica,
@@ -1181,6 +1227,7 @@ const CargaFacturacion: React.FC = () => {
         const pedFields = {
           cod_medico: pediatra.codMedico,
           cod_medico_ejecutor: null,
+          afiliado_id: afiliadoId,
           dni_paciente: dni || null,
           fecha_practica: fechaPractica || null,
           cod_clinica: codClinica,
@@ -1264,7 +1311,9 @@ const CargaFacturacion: React.FC = () => {
         cod_medico: linea.codMedico,
         // El ayudante es un médico payee: nunca lleva ejecutor.
         cod_medico_ejecutor: null,
+        afiliado_id: mainItem.afiliado_id,
         dni_paciente: mainItem.dni_paciente,
+        nombre_paciente: mainItem.nombre_paciente,
         fecha_practica: mainItem.fecha_practica,
         cod_clinica: mainItem.cod_clinica,
         // Por defecto es un dato de la práctica, no del prestador: se copia igual que
@@ -1301,7 +1350,9 @@ const CargaFacturacion: React.FC = () => {
       items.push({
         cod_medico: pediatra.codMedico,
         cod_medico_ejecutor: null,
+        afiliado_id: mainItem.afiliado_id,
         dni_paciente: mainItem.dni_paciente,
+        nombre_paciente: mainItem.nombre_paciente,
         fecha_practica: mainItem.fecha_practica,
         cod_clinica: mainItem.cod_clinica,
         autorizacion: autorizacionPorIntegrante
@@ -1792,13 +1843,10 @@ const CargaFacturacion: React.FC = () => {
           {/* 3. Paciente */}
           <PacienteSection
             key={`paciente-${pacienteResetKey}`}
+            afiliadoId={afiliadoId}
             dni={dni}
             nombrePaciente={nombrePaciente}
-            onDniChange={setDni}
-            onAfiliadoFound={(a: AfiliadoRead) => {
-              setDni(a.dni);
-              setNombrePaciente(a.nombre);
-            }}
+            onAfiliadoChange={handleAfiliadoChange}
             disabled={formDisabled}
             error={errores.dni}
           />
@@ -1829,10 +1877,7 @@ const CargaFacturacion: React.FC = () => {
           <PrestacionSection
             key={`nom-${nomencladorResetKey}`}
             codNomenclador={codNomenclador}
-            onNomencladorChange={(cod, nom) => {
-              setCodNomenclador(cod);
-              setCodNomencladorCategoria(nom?.categoria ?? null);
-            }}
+            onNomencladorChange={(cod) => setCodNomenclador(cod)}
             codMedico={codMedicoEfectivo}
             codObra={codObraEfectivo}
             precio={precio}
@@ -1840,7 +1885,11 @@ const CargaFacturacion: React.FC = () => {
             precioError={precioError}
             via={via}
             onViaChange={setVia}
-            mostrarVia={codNomencladorCategoria === "Honorarios individuales"}
+            // La vía se ofrece cuando la API dice que el código admite laparoscopía (galeno de
+            // cirugía adulto/infantil, fuera del nivel tope) — no por la categoría del catálogo,
+            // que está mal cargada en parte de los códigos. Si ya está en "L" (p. ej. al editar, o
+            // porque esa cotización fue rechazada) queda visible para poder volver a Tradicional.
+            mostrarVia={!!codNomenclador && (precio?.admite_laparoscopia === true || via === "L")}
             onVolverATradicional={volverATradicional}
             // La fecha ya no bloquea el código: es opcional (carga por cantidad).
             disabled={formDisabled || !codMedicoEfectivo}
@@ -1893,16 +1942,35 @@ const CargaFacturacion: React.FC = () => {
               Autorización{" "}
               <span className={styles.sectionHint}>(opcional)</span>
             </span>
-            <div className={styles.filterField}>
-              <input
-                className={styles.input}
-                type="text"
-                maxLength={30}
-                value={autorizacion}
-                onChange={(e) => setAutorizacion(e.target.value)}
-                disabled={formDisabled}
-                placeholder="Nº de autorización de la obra social"
-              />
+            <div className={styles.autorizacionFila}>
+              <div className={styles.filterField}>
+                <input
+                  className={styles.input}
+                  type="text"
+                  maxLength={30}
+                  value={autorizacion}
+                  onChange={(e) => setAutorizacion(e.target.value)}
+                  disabled={formDisabled}
+                  placeholder="Nº de autorización de la obra social"
+                />
+              </div>
+              {autorizacionesExistentes.length > 0 && (
+                <div className={styles.autorizacionAviso} role="alert">
+                  <AlertTriangle size={14} style={{ flexShrink: 0 }} />
+                  <span>
+                    Esta autorización ya está cargada en esta obra social:{" "}
+                    {autorizacionesExistentes.map((a, i) => (
+                      <React.Fragment key={`${a.periodo}-${a.version}`}>
+                        {i > 0 && ", "}
+                        <strong>{a.periodo.slice(4)}/{a.periodo.slice(0, 4)}</strong>
+                        {a.version > 1 && ` (${versionLabel(a.version)})`}
+                        {` · ${a.cantidad} prestación${a.cantidad === 1 ? "" : "es"}`}
+                        {a.estado_factura && a.estado_factura !== "A" && " · cerrada"}
+                      </React.Fragment>
+                    ))}
+                  </span>
+                </div>
+              )}
             </div>
             {precio?.sin_precio && (
               <div className={styles.warningBox} style={{ textAlign: "left", display: "flex", alignItems: "center", gap: 8 }}>

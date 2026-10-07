@@ -24,7 +24,6 @@ import { Link, useSearchParams } from "react-router-dom";
 
 import styles from "./NomencladorPorOS.module.scss";
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
-import SelectorVigencia from "../components/SelectorVigencia";
 import {
   listGalenos,
   listValores,
@@ -184,6 +183,16 @@ function errorCoseguro(v: string): string | null {
 
 /** "2026-10-03" → "03/10/2026". */
 const fechaCorta = (iso: string) => iso.split("-").reverse().join("/");
+
+/** Aviso (no bloquea) de qué pasa con una vigencia que no es posterior a la vigente:
+ * la misma fecha la actualiza, una anterior borra las más nuevas. */
+function avisoVigencia(nueva: string, vigente: string | undefined): string | null {
+  if (!nueva || !vigente || nueva > vigente) return null;
+  if (nueva === vigente) {
+    return `Ya existe una vigencia desde el ${fechaCorta(vigente)}: se actualiza con estos valores, no se crea otra.`;
+  }
+  return `Es anterior a la vigente (${fechaCorta(vigente)}): se eliminan de la base las vigencias desde el ${fechaCorta(nueva)} en adelante y esta queda como la última.`;
+}
 
 /** El galeno nivelado que usa la ecuación (el primero), o null. Con galeno nivelado
  * el nivel del precio es el suyo: no se carga aparte. */
@@ -605,9 +614,6 @@ export default function NomencladorPorOS() {
   const [loadingValores, setLoadingValores] = useState(false);
   const [codeSearch, setCodeSearch] = useState("");
   const [origenFilter, setOrigenFilter] = useState<Origen | "todos">("todos");
-  // Qué carga se está mirando. Sin esto se traían todas las vigencias juntas y
-  // el mismo código salía repetido una vez por carga.
-  const [vigencia, setVigencia] = useState<string | null>(null);
   const [modalidadFilter, setModalidadFilter] = useState<
     ValorOut["modalidad"] | "todos"
   >("todos");
@@ -845,24 +851,21 @@ export default function NomencladorPorOS() {
     listGalenos({ obra_social_nro: selectedNroOS })
       .then(setGalenos)
       .catch(() => {});
-    loadValores(selectedNroOS, vigencia);
+    loadValores(selectedNroOS);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedNroOS, vigencia]);
+  }, [selectedNroOS]);
 
   const loadValores = useCallback(
-    async (osNro: number, vigenciaDesde?: string | null) => {
+    async (osNro: number) => {
       setLoadingValores(true);
       try {
-        // Sólo la vigencia elegida. Traerlas todas multiplicaba las filas por la
-        // cantidad de cargas de la obra social y no había forma de saber cuál se
-        // estaba leyendo. Sin vigencia (opción "Todas") se traen todas, que es el
-        // comportamiento viejo y sigue disponible a pedido.
+        // Sólo los precios en vigor (`estado: "activo"`): lo que se cerró al rotar un
+        // precio es historial y no se lista acá.
         const all: ValorOut[] = [];
         for (let p = 1; p <= 100; p++) {
           const batch = await listValores({
             obra_social_nro: osNro,
             estado: "activo",
-            ...(vigenciaDesde ? { vigencia_desde: vigenciaDesde } : {}),
             page: p,
             size: 200,
           });
@@ -959,7 +962,6 @@ export default function NomencladorPorOS() {
     setPage(1);
   }, [
     selectedNroOS,
-    vigencia,
     codeSearch,
     origenFilter,
     modalidadFilter,
@@ -1290,9 +1292,6 @@ export default function NomencladorPorOS() {
   function validateEcuacion(): boolean {
     const errs: Record<string, string> = {};
     if (!editEcu.vigencia_desde) errs.vigencia_desde = "Requerido";
-    else if (editTarget && editEcu.vigencia_desde <= editTarget.vigencia_desde) {
-      errs.vigencia_desde = `Tiene que ser posterior al ${fechaCorta(editTarget.vigencia_desde)}, desde cuando rige el precio actual.`;
-    }
     const cos = errorCoseguro(editEcu.coseguro);
     if (cos) errs.coseguro = cos;
     // Por presupuesto no tiene ecuación propia (H/G/A van en 0, ver `_crear_valor_con_
@@ -1453,6 +1452,9 @@ export default function NomencladorPorOS() {
       );
   const nucleoComunCambio =
     nucleoUnico && firmaPrecio(nucleoComun) !== nucleoInicial.current.comun;
+  /** La vigencia más nueva de los precios que se rotan (para el aviso de la fecha). */
+  const ultimaNucleo = (nucleoComunCambio ? nucleoVariantes : nucleoFilasCambiadas)
+    .map((v) => v.vigencia_desde).sort().pop();
   const nivelNucleo = galenoNivelado(
     nucleoUnico
       ? nucleoComun.componentes
@@ -1520,7 +1522,7 @@ export default function NomencladorPorOS() {
 
   const replicaActiva = replica.activo && replica.destinos.length > 0;
 
-  // ─── Prestaciones cargadas en $0 (código dado de alta sin precio) ───────────
+  // ─── Prestaciones abiertas del código que cambian con el precio nuevo ───────
 
   async function ofrecerRevalorizar(codigo: string) {
     if (!selectedNroOS) return;
@@ -1528,7 +1530,7 @@ export default function NomencladorPorOS() {
       const r = await revalorizarPrestaciones({
         cod_obra: String(selectedNroOS), codigo, dry_run: true,
       });
-      if (r.total > 0) setRevalorizar(r);
+      if (r.revalorizadas > 0) setRevalorizar(r);
     } catch {
       /* sin prestaciones para revalorizar o sin permiso: no se ofrece */
     }
@@ -1681,7 +1683,7 @@ export default function NomencladorPorOS() {
     } catch (e: unknown) {
       showToast("error", errMsg(e, "No se pudo guardar."));
       // Con precios por especialidad, las anteriores al error ya quedaron guardadas.
-      if (preciosSeparados && selectedNroOS) void loadValores(selectedNroOS, vigencia);
+      if (preciosSeparados && selectedNroOS) void loadValores(selectedNroOS);
     } finally {
       setSaving(false);
     }
@@ -1726,12 +1728,7 @@ export default function NomencladorPorOS() {
     const errs: Record<string, string> = {};
     const rota = nucleoComunCambio || nucleoFilasCambiadas.length > 0;
     if (rota && !editEcu.vigencia_desde) errs.vigencia_desde = "Requerido";
-    // La nueva vigencia tiene que ser posterior a la de los precios que se rotan.
-    const rotadas = nucleoComunCambio ? nucleoVariantes : nucleoFilasCambiadas;
-    const ultima = rotadas.map((v) => v.vigencia_desde).sort().pop();
-    if (rota && editEcu.vigencia_desde && ultima && editEcu.vigencia_desde <= ultima) {
-      errs.vigencia_desde = `Tiene que ser posterior al ${fechaCorta(ultima)}, desde cuando rige el precio actual.`;
-    }
+    // Cualquier fecha vale: igual o anterior a la vigente sólo avisa (`avisoVigencia`).
     if (editTarget.por_presupuesto) {
       if (nucleoComunCambio) {
         const c = errorCoseguro(nucleoComun.coseguro);
@@ -1799,10 +1796,10 @@ export default function NomencladorPorOS() {
       );
       const replicado = await replicarSiCorresponde(...replicas);
       if (!replicado) setModalKind(null);
-      loadValores(selectedNroOS, vigencia);
+      loadValores(selectedNroOS);
     } catch (e: unknown) {
       showToast("error", errMsg(e, "No se pudo actualizar el código."));
-      loadValores(selectedNroOS, vigencia);
+      loadValores(selectedNroOS);
     } finally {
       setSavingMeta(false);
     }
@@ -1922,12 +1919,6 @@ export default function NomencladorPorOS() {
                 </h2>
               </div>
               <div className={styles.toolbar}>
-                <SelectorVigencia
-                  obraSocialNro={selectedNroOS}
-                  valor={vigencia}
-                  onCambio={setVigencia}
-                  etiquetaTodas="Todas las vigencias"
-                />
                 <div className={styles.searchWrap}>
                   <Search size={14} className={styles.searchIcon} />
                   <input
@@ -3027,6 +3018,9 @@ export default function NomencladorPorOS() {
                       {editErrors.vigencia_desde && (
                         <span className={styles.errorMsg}>{editErrors.vigencia_desde}</span>
                       )}
+                      {avisoVigencia(editEcu.vigencia_desde, ultimaNucleo) && (
+                        <span className={styles.avisoPrecio}>{avisoVigencia(editEcu.vigencia_desde, ultimaNucleo)}</span>
+                      )}
                     </div>
                     {nucleoVariantes.length > 1 && (
                       <label className={styles.toggleRow}>
@@ -3113,6 +3107,11 @@ export default function NomencladorPorOS() {
                           {editErrors.vigencia_desde && (
                             <span className={styles.errorMsg}>
                               {editErrors.vigencia_desde}
+                            </span>
+                          )}
+                          {avisoVigencia(editEcu.vigencia_desde, editTarget.vigencia_desde) && (
+                            <span className={styles.avisoPrecio}>
+                              {avisoVigencia(editEcu.vigencia_desde, editTarget.vigencia_desde)}
                             </span>
                           )}
                         </div>
@@ -3288,15 +3287,17 @@ export default function NomencladorPorOS() {
       <Modal
         isOpen={revalorizar !== null}
         onClose={() => setRevalorizar(null)}
-        title="Revalorizar prestaciones cargadas en $0"
+        title="Actualizar prestaciones con el precio nuevo"
         size="large"
       >
         {revalorizar && (
           <div className={styles.revalorizar}>
             <p>
-              Hay <strong>{revalorizar.total} prestación{revalorizar.total === 1 ? "" : "es"} abierta{revalorizar.total === 1 ? "" : "s"}</strong>{" "}
-              del código {revalorizar.codigo} cargada{revalorizar.total === 1 ? "" : "s"} sin precio. Con el precio nuevo quedarían así
-              (las de períodos cerrados no se tocan):
+              Hay <strong>{revalorizar.revalorizadas} prestación{revalorizar.revalorizadas === 1 ? "" : "es"} abierta{revalorizar.revalorizadas === 1 ? "" : "s"}</strong>{" "}
+              del código {revalorizar.codigo} cuyo importe cambia con el precio nuevo (en $0 o con un precio
+              anterior). Quedarían así
+              {revalorizar.sin_cambios > 0 && `; otras ${revalorizar.sin_cambios} ya tienen este precio`}.
+              Las manuales y las de períodos cerrados no se tocan.
             </p>
             <div className={styles.tableWrap}>
               <table className={styles.table}>

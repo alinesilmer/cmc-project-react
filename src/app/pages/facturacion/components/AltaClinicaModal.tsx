@@ -1,39 +1,44 @@
 import React, { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Building2, X } from "lucide-react";
-import { crearClinica } from "../api";
+import { Building2, Pencil, X } from "lucide-react";
+import { actualizarClinica, crearClinica } from "../api";
 import type { ClinicaOption } from "../types";
+import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 import styles from "./AltaAfiliadoModal.module.scss";
 
 interface Props {
   isOpen: boolean;
+  /** Con una clínica, el modal la edita (el nombre) en vez de dar de alta otra. */
+  clinica?: { cod: number; nombre: string } | null;
   onClose: () => void;
   onCreated: (clinica: ClinicaOption) => void;
 }
 
 const NOMBRE_MAX = 40; // NOMBRE es VARCHAR(40) en listado_medico
 
-const AltaClinicaModal: React.FC<Props> = ({ isOpen, onClose, onCreated }) => {
+const AltaClinicaModal: React.FC<Props> = ({ isOpen, clinica, onClose, onCreated }) => {
+  const editando = !!clinica;
   const [nombre, setNombre] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isOpen) { setNombre(""); setError(null); }
-  }, [isOpen]);
+    if (isOpen) { setNombre(clinica?.nombre ?? ""); setError(null); }
+  }, [isOpen, clinica]);
 
   const handleSubmit = async () => {
     if (!nombre.trim()) return;
     setLoading(true);
     setError(null);
     try {
-      const clinica = await crearClinica({ nombre: nombre.trim() });
-      onCreated(clinica);
+      const guardada = clinica
+        ? await actualizarClinica(clinica.cod, { nombre: nombre.trim() })
+        : await crearClinica({ nombre: nombre.trim() });
+      onCreated(guardada);
       setNombre("");
       onClose();
-    } catch (e: any) {
-      const detail = e?.response?.data?.detail;
-      setError(typeof detail === "string" ? detail : "No se pudo dar de alta la clínica.");
+    } catch (e) {
+      setError(mensajeDeError(e, editando ? "No se pudo guardar la clínica." : "No se pudo dar de alta la clínica."));
     } finally {
       setLoading(false);
     }
@@ -58,11 +63,13 @@ const AltaClinicaModal: React.FC<Props> = ({ isOpen, onClose, onCreated }) => {
             onMouseDown={(e) => e.stopPropagation()}
           >
             <div className={styles.header}>
-              <span className={styles.headerIcon}><Building2 size={18} /></span>
+              <span className={styles.headerIcon}>{editando ? <Pencil size={18} /> : <Building2 size={18} />}</span>
               <div>
-                <h2 className={styles.title}>Agregar clínica</h2>
+                <h2 className={styles.title}>{editando ? "Editar clínica" : "Agregar clínica"}</h2>
                 <p className={styles.subtitle}>
-                  Cargá el nombre para poder facturar bajo esta clínica.
+                  {editando
+                    ? "Las prestaciones la referencian por su número: el nombre nuevo se ve en todas."
+                    : "Cargá el nombre para poder facturar bajo esta clínica."}
                 </p>
               </div>
               <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Cerrar" disabled={loading}>
@@ -97,7 +104,7 @@ const AltaClinicaModal: React.FC<Props> = ({ isOpen, onClose, onCreated }) => {
                 onClick={handleSubmit}
                 disabled={!nombre.trim() || loading}
               >
-                {loading ? "Guardando…" : "Dar de alta"}
+                {loading ? "Guardando…" : editando ? "Guardar" : "Dar de alta"}
               </button>
             </div>
           </motion.div>
