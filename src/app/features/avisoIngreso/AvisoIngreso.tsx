@@ -1,25 +1,35 @@
 import { useState } from "react";
 import Dialog from "@mui/material/Dialog";
 import { Heart, X } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "@/app/auth/AuthProvider";
-import { avisoPendiente, cerrarAviso } from "./reglasAviso";
+import { avisoPendiente, cerrarAviso, llevaAviso } from "./reglasAviso";
 import styles from "./AvisoIngreso.module.scss";
 
+const RUTA_INICIO = "/panel/dashboard";
+
 /**
- * Mensaje de buen trato, al ingresar. Habla del respeto como regla de todos,
- * sin señalar a quien lo lee: tiene que entenderse sin sonar a reto. Sólo se
- * cierra con la «X»: ni Escape ni un clic afuera, para que no se descarte sin
- * leerlo.
+ * Mensaje de buen trato, al ingresar y en cada visita a Inicio. Habla del
+ * respeto como regla de todos, sin señalar a quien lo lee: tiene que
+ * entenderse sin sonar a reto. Sólo se cierra con la «X»: ni Escape ni un
+ * clic afuera, para que no se descarte sin leerlo.
  */
 export default function AvisoIngreso() {
   const { user } = useAuth();
-  const [cerrado, setCerrado] = useState(false);
+  const location = useLocation();
+  // Cada navegación trae una `key` nueva: guardar la de la visita en la que se
+  // cerró hace que el aviso vuelva al entrar otra vez a Inicio, incluso con un
+  // clic en «Inicio» estando ya ahí.
+  const [visitaCerrada, setVisitaCerrada] = useState<string | null>(null);
 
-  if (cerrado || !avisoPendiente(user)) return null;
+  const enInicio = location.pathname.replace(/\/+$/, "") === RUTA_INICIO;
+  const porVisita = llevaAviso(user) && enInicio && visitaCerrada !== location.key;
+
+  if (!porVisita && !avisoPendiente(user)) return null;
 
   const cerrar = () => {
     cerrarAviso();
-    setCerrado(true);
+    setVisitaCerrada(location.key);
   };
 
   return (

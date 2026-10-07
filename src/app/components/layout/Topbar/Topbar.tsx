@@ -407,11 +407,12 @@ const TOP_NAV: TopEntry[] = [
       {
         heading: "Convenios",
         items: [
+          // Sin `perms`: las planillas las ve todo el personal. La ruta muestra
+          // el alta y la baja sólo a quien tiene `contenido:editar`.
           {
-            path: `${base}/convenios/planillas`,
+            path: `${base}/planillas`,
             icon: FileText,
             label: "Planillas de Consulta",
-            perms: ["contenido:editar"],
           },
           {
             path: `${base}/convenios/obras-sociales`,

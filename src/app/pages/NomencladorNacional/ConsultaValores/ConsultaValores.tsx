@@ -88,7 +88,7 @@ export default function ConsultaValores() {
     setNomLoading(true);
     nomDebounce.current = setTimeout(async () => {
       try {
-        const res = await listNomenclador({ q: q.trim(), activo: true, size: 15 });
+        const res = await listNomenclador({ q: q.trim(), en_descripcion: true, activo: true, size: 15 });
         setNomResults(res);
       } catch {
         setNomResults([]);
@@ -194,7 +194,7 @@ export default function ConsultaValores() {
               idx={3}
               label="Práctica"
               hint="por código o por nombre"
-              placeholder="Buscar por código…"
+              placeholder="Buscar por código o nombre…"
               query={nomSearch}
               onQueryChange={handleNomSearch}
               items={nomResults}

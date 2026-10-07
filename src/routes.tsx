@@ -8,6 +8,7 @@ import MedicoRouteGuard from "./app/auth/MedicoRouteGuard";
 import RequireWebEditor from "./app/auth/RequireWebEditor";
 import RequireScope from "./app/auth/RequireScope";
 import { useAuth } from "./app/auth/AuthProvider";
+import { usePermisos } from "./app/auth/usePermisos";
 import { isMedico } from "./app/auth/roles";
 
 // El layout del panel y su tema de MUI también van lazy: el sitio público (`/*`)
@@ -141,6 +142,15 @@ const AumentoPorcentual = lazy(() => import("./app/pages/NomencladorNacional/Aum
 function InicioRoute() {
   const { user } = useAuth();
   return isMedico(user) ? <InicioMedico /> : <DashboardPage />;
+}
+
+/**
+ * /panel/planillas: todos ven las planillas; quien tiene `contenido:editar`
+ * recibe la misma lista con el alta, la edición y la baja.
+ */
+function PlanillasRoute() {
+  const { can } = usePermisos();
+  return can("contenido:editar") ? <PlanillasAdmin /> : <PlanillasMedico />;
 }
 
 export default function RootRoutes() {
@@ -370,8 +380,8 @@ export default function RootRoutes() {
                 <Route path="validaciones/:slug" element={<ValidacionOS />} />
               </Route>
 
-              {/* Planillas de consulta: el médico las descarga, el Colegio las publica. */}
-              <Route path="planillas" element={<PlanillasMedico />} />
+              {/* Planillas de consulta: todos las descargan, el Colegio las publica. */}
+              <Route path="planillas" element={<PlanillasRoute />} />
               {/* La pantalla de publicación sube y borra planillas: el backend
                   exige `contenido:editar` en POST y DELETE (authz.py), así que
                   la ruta pide lo mismo. Sin el guard, quien no tenía el permiso

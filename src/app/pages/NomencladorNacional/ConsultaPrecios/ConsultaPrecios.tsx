@@ -85,7 +85,7 @@ export default function ConsultaPrecios() {
     nomDebounce.current = setTimeout(async () => {
       try {
         const res = await listNomenclador({
-          q: q.trim(), activo: true, size: 15, obra_social_nro: osNro,
+          q: q.trim(), en_descripcion: true, activo: true, size: 15, obra_social_nro: osNro,
         });
         setNomResults(res);
       } catch {
@@ -169,7 +169,7 @@ export default function ConsultaPrecios() {
               idx={2}
               label="Práctica"
               hint="por código o por nombre"
-              placeholder="Buscar por código…"
+              placeholder="Buscar por código o nombre…"
               query={nomSearch}
               onQueryChange={handleNomSearch}
               items={nomResults}
