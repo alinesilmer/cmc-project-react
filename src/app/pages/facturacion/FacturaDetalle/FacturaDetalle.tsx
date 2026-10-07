@@ -476,22 +476,22 @@ const FacturaDetalle: React.FC = () => {
         .map((arr, i) => ({ tipo: ORDEN_TIPOS[i], arr }))
         .filter(({ arr }) => arr.length > 0)
         .map(({ tipo, arr }) => {
-          // Las filas de cada médico quedan seguidas (para poder cerrar con su subtotal);
-          // el orden elegido rige dentro de cada médico.
-          // Honorarios individuales y Sanatorios traen un selector: "paciente" ordena los pacientes A-Z
-          // dentro de cada médico (y, en Sanatorios, de cada clínica, que siguen agrupadas A-Z).
+          // Honorarios individuales y Sanatorios traen un selector. Con "paciente" la sección
+          // entera va por paciente A-Z, sin partir por médico (en Sanatorios, dentro de cada
+          // clínica A-Z). Si no, las filas de cada médico quedan seguidas (para cerrar con su
+          // subtotal) y el orden elegido rige dentro de cada médico. Igual que el exportable
+          // (`export/armado.py`).
           const selector = tipo === "Honorarios individuales" ? vistaOpciones.ordenHonorarios
             : tipo === "Sanatorio" ? vistaOpciones.ordenSanatorio : undefined;
           const porPaciente = selector === "paciente";
-          const ordenadas = [...arr].sort((a, b) =>
-            porNombreMedico(a, b)
-            || (tipo === "Sanatorio" ? porClinica(a, b) : 0)
-            || (porPaciente
-              ? porPacienteAZ(a, b)
-              // "Médico": rige el orden elegido; lo que ese orden no distingue (con "nombre
-              // del socio" empatan todas las filas del socio) queda por paciente A-Z y no
-              // en el orden de carga. Igual que el exportable (`export/armado.py`).
-              : compararPorOrden(a, b, vistaOpciones.orden, vistaOpciones.direccion) || (selector ? porPacienteAZ(a, b) : 0)));
+          const ordenadas = [...arr].sort((a, b) => porPaciente
+            ? (tipo === "Sanatorio" ? porClinica(a, b) : 0) || porPacienteAZ(a, b)
+            : porNombreMedico(a, b)
+              || (tipo === "Sanatorio" ? porClinica(a, b) : 0)
+              // Lo que el orden elegido no distingue (con "nombre del socio" empatan todas
+              // las filas del socio) queda por paciente A-Z y no en el orden de carga.
+              || compararPorOrden(a, b, vistaOpciones.orden, vistaOpciones.direccion)
+              || (selector ? porPacienteAZ(a, b) : 0));
           const miembros = miembrosDe(ordenadas);
           const sumables = sumablesDe(ordenadas);
           return {

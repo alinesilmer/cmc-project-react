@@ -139,9 +139,12 @@ function GrupoTabla({
       bloque = [];
     };
     for (const p of prestaciones) {
-      // Un paciente en otra clínica es otro bloque.
+      // Nombre y número, como los ordena `porPacienteAZ`: así las filas de un paciente
+      // siempre quedan en un solo bloque. Un paciente en otra clínica es otro bloque.
       const clavePac = opts?.porPaciente
-        ? `${clavePaciente(p)}|${p.tipo === "Sanatorio" ? p.cod_clinica ?? "" : ""}` : undefined;
+        ? [p.nombre_paciente, p.nro_afiliado, p.tipo === "Sanatorio" ? p.cod_clinica : ""]
+            .map((v) => String(v ?? "").trim().toLowerCase().replace(/\s+/g, " ")).join("|")
+        : undefined;
       const cambioPaciente = clavePac !== undefined && clavePac !== pacientePrevio;
       if (cambioPaciente) cerrarPaciente();
       if (subtituloClinica && p.tipo === "Sanatorio") {
@@ -208,16 +211,17 @@ function GrupoTabla({
     const ps = g.prestaciones;
     let i = 0;
     while (i < ps.length) {
+      // Honorarios individuales / Sanatorios ordenados por paciente: la sección entera va
+      // por paciente (no por médico) y cada paciente cierra con su total, en lugar del
+      // subtotal del médico.
+      const porPaciente = g.ordenAlfabetico?.valor === "paciente";
       let j = i + 1;
-      if (g.subtotalPorMedico) {
+      if (g.subtotalPorMedico && !porPaciente) {
         while (j < ps.length && ps[j].cod_medico === ps[i].cod_medico) j += 1;
       } else {
         j = ps.length;
       }
       const tramo = ps.slice(i, j);
-      // Honorarios individuales / Sanatorios ordenados por paciente: en lugar del subtotal
-      // del médico, cada paciente cierra con su total.
-      const porPaciente = g.ordenAlfabetico?.valor === "paciente";
       out.push(...filasDe(tramo, `${g.key}-${i}`, { porPaciente, totalPaciente: porPaciente }));
       if (g.subtotalPorMedico && !porPaciente) {
         const medico = tramo[0];
