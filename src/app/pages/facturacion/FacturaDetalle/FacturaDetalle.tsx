@@ -543,8 +543,8 @@ const FacturaDetalle: React.FC = () => {
     if (sanatorios.length > 0) {
       const miembros = miembrosDe(sanatorios);
       gruposMedicos.push({
-        key: "sanatorios", titulo: "Sanatorios", prestaciones: sanatorios, miembros, sumables: miembros,
-        tramos: [{ key: "Sanatorio", subtitulo: "", prestaciones: sanatorios }],
+        key: "sanatorios", titulo: "Sanatorios", sinTituloDeSocio: true, prestaciones: sanatorios, miembros,
+        sumables: miembros, tramos: [{ key: "Sanatorio", subtitulo: "Sanatorios", prestaciones: sanatorios }],
         mostrarResumen: true, ...sumarTotales(miembros),
       });
     }

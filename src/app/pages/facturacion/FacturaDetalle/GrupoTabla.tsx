@@ -32,6 +32,9 @@ export interface VistaGrupo {
   // "Por socio": tramos con subtítulo (Consultas / Prácticas / Honorarios
   // individuales / Sanatorios) dentro de cada médico.
   tramos?: { key: string; subtitulo: string; prestaciones: PrestacionConSocio[] }[];
+  // "Por socio": el bloque único de Sanatorios no es de un médico, así que no lleva la fila
+  // de título de socio (sí el subtítulo "Sanatorios" del tramo).
+  sinTituloDeSocio?: boolean;
   // Equipo de cada cabeza del grupo (id cabeza → integrantes), resuelto por el padre. Sólo
   // se dibuja acá, anidado bajo la cabeza: no aparece como línea propia en su socio.
   companeros?: Record<number, PrestacionConSocio[]>;
@@ -251,17 +254,20 @@ function GrupoTabla({
   // "Por socio": fila de título del socio y, en cada uno, un subtítulo por tramo.
   const filasPorSocio = (): React.ReactNode[] => {
     const out: React.ReactNode[] = [];
-    out.push(
-      <tr key={`titulo-${g.key}`} className={styles.socioTituloRow}>
-        <td colSpan={colSpan}>{g.titulo}</td>
-      </tr>,
-    );
+    if (!g.sinTituloDeSocio) {
+      out.push(
+        <tr key={`titulo-${g.key}`} className={styles.socioTituloRow}>
+          <td colSpan={colSpan}>{g.titulo}</td>
+        </tr>,
+      );
+    }
     for (const t of g.tramos ?? [{ key: "todas", subtitulo: "", prestaciones: g.prestaciones }]) {
       if (t.subtitulo) {
         out.push(<tr key={`tramo-${g.key}-${t.key}`} className={styles.tramoRow}><td colSpan={colSpan}>{t.subtitulo}</td></tr>);
       }
-      // Honorarios individuales y Sanatorios van ordenados por paciente: cada uno con su subtítulo y su total.
-      const porPaciente = t.key === "Honorarios individuales" || t.key === "Sanatorio";
+      // Honorarios individuales va por paciente, cada uno con su subtítulo y su total. Sanatorios
+      // (bloque único) sólo ordena por paciente y socio: lleva el subtítulo de cada clínica.
+      const porPaciente = t.key === "Honorarios individuales";
       out.push(...filasDe(t.prestaciones, `${g.key}-${t.key}`, { porPaciente, totalPaciente: porPaciente }));
     }
     return out;
