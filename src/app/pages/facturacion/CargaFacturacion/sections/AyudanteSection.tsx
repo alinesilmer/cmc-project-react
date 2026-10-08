@@ -93,9 +93,11 @@ const AyudanteSection: React.FC<Props> = ({
         <span className={`${styles.infoChip} ${styles.chipNeutral}`}>
           {ayudantes.length}
         </span>
-        <span className={styles.sectionHint}>
-          este código usa {maxAyudantes} ayudante{maxAyudantes === 1 ? "" : "s"}
-        </span>
+        {maxAyudantes > 0 && (
+          <span className={styles.sectionHint}>
+            este código usa {maxAyudantes} ayudante{maxAyudantes === 1 ? "" : "s"}
+          </span>
+        )}
       </span>
 
       {ayudantes.map((linea, idx) => {

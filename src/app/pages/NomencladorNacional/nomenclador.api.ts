@@ -8,6 +8,8 @@ import {
   postForm,
 } from "@/app/shared/lib/http";
 import type {
+  HistorialPorCodigoOut,
+  TipoCodigo,
   NomencladorOut,
   NomencladorNiveladoOut,
   NiveladoCodigosOut,
@@ -346,6 +348,17 @@ export const getResumenPorVigencia = (
 ): Promise<ResumenVigenciaOut[]> =>
   getJSON<ResumenVigenciaOut[]>("/api/valores_nm/resumen_por_vigencia", { obra_social_nro });
 
+/** Historial de precios de una OS agrupado por código y variante (NN / NE), paginado
+ *  por código. Sale de `nm_historial_precio_codigo`. */
+export const getHistorialPorCodigo = (params: {
+  obra_social_nro: number;
+  q?: string;
+  tipo?: TipoCodigo;
+  page?: number;
+  size?: number;
+}): Promise<HistorialPorCodigoOut> =>
+  getJSON<HistorialPorCodigoOut>("/api/valores_nm/historial_por_codigo", params);
+
 // Elimina todos los valores (con componentes e historial) de una OS en una vigencia exacta.
 export const eliminarValoresPorVigencia = (
   obra_social_nro: number,
@@ -550,6 +563,7 @@ export const listCodigosPorOS = (params: {
   obra_social_nro: number;
   estado?: EstadoCodigoOS;
   q?: string;
+  tipo?: TipoCodigo;
   page?: number;
   size?: number;
 }): Promise<CodigosPorOSResult> => getJSON<CodigosPorOSResult>("/api/codigos_os/", params);

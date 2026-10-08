@@ -1542,13 +1542,20 @@ const CargaFacturacion: React.FC = () => {
       ? loadingComplemento || guardando || !complementoMeta
       : guardando;
   const maxAyudantes = precio?.cantidad_ayudantes ?? 0;
-  // La sección se muestra (en carga, replicar y edición) si el código admite ayudantes
-  // o si ya hay líneas cargadas (p. ej. un equipo cuyo código reporta 0 de referencia).
+  // La sección se muestra (en carga, replicar y edición) si la prestación es de
+  // Honorarios individuales o Sanatorio —por la categoría del código o porque la
+  // clínica lo fuerza—, si el código reporta ayudantes, o si ya hay líneas cargadas.
+  // Un código HI/Sanatorio sin `cantidad_ayudantes` cargado no la bloquea.
   // No aplica cuando esta carga ES un ayudante suelto (tipoPrestador="ayudante"): ese
   // modo factura un único monto y no arma equipo.
+  const tipoConEquipo =
+    precio?.tipo_codigo === "Honorarios individuales" ||
+    precio?.tipo_codigo === "Sanatorio" ||
+    payeeEsOrganizacion ||
+    codClinica != null;
   const admiteAyudante =
     tipoPrestador === "medico" &&
-    !!precio && !precioLoading && (maxAyudantes > 0 || ayudantes.length > 0);
+    !!precio && !precioLoading && (tipoConEquipo || maxAyudantes > 0 || ayudantes.length > 0);
 
   // Sección Pediatra: mismo criterio de "medico + precio resuelto" que ayudantes, más
   // el flag que trae el código (`admite_pediatra` — sólo parto/cesárea). Se mantiene

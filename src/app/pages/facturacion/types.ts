@@ -150,6 +150,9 @@ export interface PrecioResponse {
    *  calculan los honorarios — valor fijo o con un galeno (y su nivel, si es nivelado). */
   origen?: "NN" | "NE" | string | null;
   tipo_valor?: "fijo" | "calculable" | null;
+  /** `tipo` que da la categoría del código en la O.S., sin el que fuerza la clínica.
+   *  Con 'Honorarios individuales' o 'Sanatorio' siempre se ofrecen ayudantes. */
+  tipo_codigo?: Tipo | null;
   galeno_nombre?: string | null;
   galeno_nivel?: number | null;
 }

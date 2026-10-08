@@ -1,0 +1,256 @@
+@use "@/app/styles/all.scss" as *;
+
+// NN y NE con colores propios y bien distintos: es lo que el usuario pidió que no
+// se confunda. Se usan igual en el resumen de la fila y en los bloques del detalle.
+$nn: #1f5f99;
+$nn-fondo: #e8f1fb;
+$ne: #8a5414;
+$ne-fondo: #fbf1e3;
+
+.filtros {
+  display: flex;
+  align-items: flex-end;
+  gap: $spacing-3;
+  flex-wrap: wrap;
+  padding: $spacing-4 $spacing-5;
+  background-color: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-md;
+  box-shadow: $shadow-sm;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  min-width: 0;
+
+  label {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    color: $gray-600;
+  }
+}
+
+.buscar {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: 0 $spacing-3;
+  border: 1px solid $gray-300;
+  border-radius: $radio-md;
+  color: $gray-500;
+  background: $white;
+  min-width: 240px;
+
+  input {
+    border: 0;
+    outline: none;
+    padding: $spacing-2 0;
+    font-size: $font-size-sm;
+    color: $gray-800;
+    background: transparent;
+    width: 100%;
+  }
+
+  &:focus-within {
+    border-color: #9d91c2;
+    box-shadow: 0 0 0 2px #e7e3f4;
+  }
+
+  @media (max-width: 520px) { min-width: 0; }
+}
+
+.cuenta {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-size: $font-size-sm;
+  color: $gray-500;
+  padding-bottom: $spacing-2;
+}
+
+.lista {
+  background-color: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-md;
+  box-shadow: $shadow-sm;
+  overflow: hidden;
+}
+
+.codigo {
+  border-bottom: 1px solid $gray-100;
+  &:last-child { border-bottom: none; }
+}
+
+.codigoBtn {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 16px 72px minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-3 $spacing-4;
+  background: none;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: $gray-800;
+
+  &:hover { background-color: $gray-50; }
+  &:focus-visible { outline: 2px solid #9d91c2; outline-offset: -2px; }
+
+  @media (max-width: 760px) {
+    grid-template-columns: 16px 64px minmax(0, 1fr);
+    row-gap: $spacing-1;
+    .tipo, .versiones, .vigentes { grid-column: 3; justify-self: start; }
+  }
+}
+
+.caret {
+  color: $gray-400;
+  transition: transform 0.15s;
+  .abierto & { transform: rotate(90deg); }
+  @media (prefers-reduced-motion: reduce) { transition: none; }
+}
+
+.cod {
+  font-variant-numeric: tabular-nums;
+  font-weight: $font-weight-semibold;
+  font-size: $font-size-sm;
+}
+
+.desc {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: $font-size-sm;
+  color: $gray-700;
+}
+
+.tipo {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  border-radius: 999px;
+  padding: 2px 8px;
+  white-space: nowrap;
+  background: #e7e3f4;
+  color: #574e76;
+}
+.tipo_Consulta { background: #e6f4ea; color: #2b6b3c; }
+.tipo_Practica { background: #eef0f4; color: #4a5568; }
+.tipo_Honorariosindividuales { background: #f3e8fb; color: #6b3a8a; }
+
+.versiones {
+  font-size: $font-size-xs;
+  color: $gray-500;
+  white-space: nowrap;
+}
+
+.vigentes {
+  display: inline-flex;
+  gap: $spacing-2;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.precio {
+  font-size: $font-size-xs;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  border-radius: $radio-sm;
+  padding: 2px 8px;
+  border: 1px solid;
+
+  b { font-weight: $font-weight-bold; margin-right: 2px; }
+}
+.precioNN { color: $nn; background: $nn-fondo; border-color: rgba($nn, 0.25); }
+.precioNE { color: $ne; background: $ne-fondo; border-color: rgba($ne, 0.25); }
+
+.detalle {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  padding: 0 $spacing-4 $spacing-4 calc(#{$spacing-4} + 28px);
+
+  @media (max-width: 760px) { padding-left: $spacing-4; }
+}
+
+.bloque {
+  border: 1px solid;
+  border-radius: $radio-md;
+  overflow: hidden;
+}
+.bloqueNN { border-color: rgba($nn, 0.3); .bloqueHead { background: $nn-fondo; color: $nn; } .origenTag { background: $nn; } }
+.bloqueNE { border-color: rgba($ne, 0.3); .bloqueHead { background: $ne-fondo; color: $ne; } .origenTag { background: $ne; } }
+
+.bloqueHead {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-2 $spacing-3;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+}
+
+.origenTag {
+  color: $white;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.04em;
+  border-radius: $radio-sm;
+  padding: 1px 7px;
+}
+
+.variante + .variante { border-top: 1px dashed $gray-200; }
+
+.varianteNombre {
+  padding: $spacing-2 $spacing-3 0;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: $gray-600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tablaWrap { overflow-x: auto; }
+
+.tabla {
+  width: 100%;
+  min-width: 680px;
+  border-collapse: collapse;
+  font-size: $font-size-sm;
+  background: $white;
+
+  th {
+    padding: $spacing-2 $spacing-3;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    color: $gray-500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 1px solid $gray-100;
+  }
+
+  td {
+    padding: $spacing-2 $spacing-3;
+    border-bottom: 1px solid $gray-100;
+    color: $gray-700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  tr:last-child td { border-bottom: none; }
+}
+
+.r { text-align: right !important; }
+.fecha { color: $gray-600; }
+.total { color: $gray-800; font-weight: $font-weight-semibold; }
+.vigente td { background: $gray-50; font-weight: $font-weight-semibold; }
+
+.varUp { color: #16a34a; font-weight: $font-weight-semibold; }
+.varDown { color: #dc2626; font-weight: $font-weight-semibold; }
+.varNa { color: $gray-400; font-style: italic; }

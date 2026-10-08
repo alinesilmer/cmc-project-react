@@ -3,11 +3,12 @@ import {
   History, TrendingUp, TrendingDown, Minus,
   Search, ChevronUp, ChevronDown, ChevronsUpDown,
   Download, Loader2, SearchX, X as XIcon, CalendarDays,
-  Paperclip, Trash2, Upload,
+  Paperclip, Trash2, Upload, ListTree,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import s from "./ObrasSocialesDetalle.module.scss";
+import HistorialPorCodigo from "./HistorialPorCodigo";
 import { abrirAdjunto } from "@/app/shared/lib/archivos";
 import { downloadExcelSheet } from "@/app/shared/lib/excelExport";
 import { useNotify } from "../../../hooks/useNotify";
@@ -33,7 +34,7 @@ const money = new Intl.NumberFormat("es-AR", {
 // Filas por página en la tabla "valores por fecha".
 const PAGE_SIZE = 50;
 
-type HistorialView = "porcentual" | "por_fecha";
+type HistorialView = "porcentual" | "por_fecha" | "por_codigo";
 
 /** Fila de historial derivada de un Valor del nomenclador negociado (nm_valores). */
 type HistRow = {
@@ -374,7 +375,16 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
           <History size={15} />
           Valores por fecha
         </button>
+        <button
+          className={`${s.historialToggleBtn} ${historialView === "por_codigo" ? s.historialToggleBtnActive : ""}`}
+          onClick={() => setHistorialView("por_codigo")}
+        >
+          <ListTree size={15} />
+          Por código
+        </button>
       </div>
+
+      {historialView === "por_codigo" && <HistorialPorCodigo obraNro={obraNro} />}
 
       {/* ── Porcentual view ── */}
       {historialView === "porcentual" && isLoadingResumen && (

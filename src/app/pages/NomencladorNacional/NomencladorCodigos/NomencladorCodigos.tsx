@@ -24,7 +24,8 @@ import {
   listNomencladorNacional,
 } from "../nomenclador.api";
 import { usePermisos } from "../../../auth/usePermisos";
-import type { NomencladorOut, NomencladorNacionalOut } from "../nomenclador.types";
+import type { NomencladorOut, NomencladorNacionalOut, TipoCodigo } from "../nomenclador.types";
+import { TIPOS_CODIGO } from "../components/tipoCodigo";
 
 const PAGE_SIZE = 50;
 
@@ -44,6 +45,7 @@ export default function NomencladorCodigos() {
   const [search, setSearch] = useState("");
   const [filterComplejidad, setFilterComplejidad] = useState("");
   const [filterActivo, setFilterActivo] = useState("true");
+  const [filterTipo, setFilterTipo] = useState<TipoCodigo | "">("");
 
   const [nnOpciones, setNnOpciones] = useState<NomencladorNacionalOut[]>([]);
 
@@ -51,13 +53,14 @@ export default function NomencladorCodigos() {
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
 
   const load = useCallback(
-    async (p: number, q: string, comp: string, act: string) => {
+    async (p: number, q: string, comp: string, act: string, tipo: TipoCodigo | "") => {
       setLoading(true);
       try {
         const params: Record<string, unknown> = { page: p, size: PAGE_SIZE };
         if (q.trim()) params.q = q.trim();
         if (comp) params.complejidad = comp;
         if (act !== "") params.activo = act === "true";
+        if (tipo) params.tipo = tipo;
 
         const data = await listNomenclador(params as Parameters<typeof listNomenclador>[0]);
         setItems(data);
@@ -90,10 +93,10 @@ export default function NomencladorCodigos() {
 
   useEffect(() => {
     const t = setTimeout(() => {
-      load(page, search, filterComplejidad, filterActivo);
+      load(page, search, filterComplejidad, filterActivo, filterTipo);
     }, search.trim() ? 350 : 0);
     return () => clearTimeout(t);
-  }, [load, page, search, filterComplejidad, filterActivo]);
+  }, [load, page, search, filterComplejidad, filterActivo, filterTipo]);
 
   function showToast(type: "success" | "error", msg: string) {
     setToast({ type, msg });
@@ -174,6 +177,16 @@ export default function NomencladorCodigos() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+
+          <select
+            className={styles.filterSelect}
+            value={filterTipo}
+            onChange={(e) => { setFilterTipo(e.target.value as TipoCodigo | ""); setPage(1); }}
+            aria-label="Tipo"
+          >
+            <option value="">Todos los tipos</option>
+            {TIPOS_CODIGO.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+          </select>
 
           <select
             className={styles.filterSelect}

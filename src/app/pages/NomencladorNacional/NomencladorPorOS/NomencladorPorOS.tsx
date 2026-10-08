@@ -66,8 +66,10 @@ import type {
   Origen,
   ReplicaResultadoItem,
   ReplicarValoresFamiliaPayload,
+  TipoCodigo,
 } from "../nomenclador.types";
 import { ORIGEN_LABELS } from "../nomenclador.types";
+import { TIPOS_CODIGO, tipoDeCategoria } from "../components/tipoCodigo";
 import { today, parseMonto, compararGalenos } from "../nomenclador.helpers";
 
 // ─── Local types ──────────────────────────────────────────────────────────────
@@ -618,6 +620,7 @@ export default function NomencladorPorOS() {
     ValorOut["modalidad"] | "todos"
   >("todos");
   const [soloPresupuesto, setSoloPresupuesto] = useState(false);
+  const [tipoFilter, setTipoFilter] = useState<TipoCodigo | "todos">("todos");
   const [especialidadFilter, setEspecialidadFilter] = useState<
     number | "todos"
   >("todos");
@@ -894,6 +897,8 @@ export default function NomencladorPorOS() {
     if (modalidadFilter !== "todos")
       list = list.filter((v) => v.modalidad === modalidadFilter);
     if (soloPresupuesto) list = list.filter((v) => v.por_presupuesto);
+    if (tipoFilter !== "todos")
+      list = list.filter((v) => tipoDeCategoria(v.categoria_efectiva) === tipoFilter);
     if (especialidadFilter !== "todos") {
       // Mientras el set carga (undefined) no mostramos nada para no confundir.
       list = codigosDeEspecialidad
@@ -915,6 +920,7 @@ export default function NomencladorPorOS() {
     origenFilter,
     modalidadFilter,
     soloPresupuesto,
+    tipoFilter,
     especialidadFilter,
     codigosDeEspecialidad,
   ]);
@@ -966,6 +972,7 @@ export default function NomencladorPorOS() {
     origenFilter,
     modalidadFilter,
     soloPresupuesto,
+    tipoFilter,
     especialidadFilter,
   ]);
   // Ajustar si la página quedó fuera de rango (p. ej. tras cerrar un valor).
@@ -1968,6 +1975,15 @@ export default function NomencladorPorOS() {
                     Por presupuesto
                   </button>
                 </div>
+                <select
+                  className={`${styles.formSelect} ${styles.tipoSelect}`}
+                  value={tipoFilter}
+                  onChange={(e) => setTipoFilter(e.target.value as TipoCodigo | "todos")}
+                  aria-label="Tipo"
+                >
+                  <option value="todos">Todos los tipos</option>
+                  {TIPOS_CODIGO.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                </select>
                 <EspecialidadCombo
                   especialidades={especialidades}
                   value={

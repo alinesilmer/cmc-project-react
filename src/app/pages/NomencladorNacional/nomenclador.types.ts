@@ -34,6 +34,8 @@ export type NomencladorListParams = {
   /** Con `q`: busca también en la descripción del catálogo. */
   en_descripcion?: boolean;
   categoria?: string;
+  /** Consulta / Practica / Honorarios individuales; sin categoría cuenta como Practica. */
+  tipo?: TipoCodigo;
   complejidad?: string;
   /**
    * Solo cambia algo para el rol médico (acota a sus códigos habilitados en esa
@@ -540,6 +542,8 @@ export type ValorOut = {
   origen: Origen;
   nivel: number | null;
   complejidad: string | null;
+  /** La que vale en esta OS: la del valor > la del alta en la OS > la del catálogo. */
+  categoria_efectiva?: string | null;
   especialidad_id_colegio: number | null;
   por_presupuesto: boolean;
   /** Máximo de ayudantes admitidos para este código+OS. `null` = no lleva ayudantes —
@@ -809,6 +813,47 @@ export type ValorDocumentoOut = {
   created_at: string;
   /** Nombre de quien lo subió. `null` si no se pudo resolver. */
   subido_por_nombre: string | null;
+};
+
+/** Filtro por tipo de código. Sanatorio no se ofrece (decisión usuario 2026-10-08). */
+export type TipoCodigo = "Consulta" | "Practica" | "Honorarios individuales";
+
+/** Una versión del precio de una variante, del historial de la OS. */
+export type HistorialVersionOut = {
+  vigencia_desde: string;
+  vigencia_hasta: string | null;
+  honorarios: string;
+  ayudante: string;
+  gastos: string;
+  total: string;
+  /** Contra la versión anterior de la misma variante; `null` en la primera. */
+  variacion_pct: number | null;
+  motivo_cambio: string;
+};
+
+export type HistorialVarianteOut = {
+  origen: Origen;
+  especialidad_id_colegio: number | null;
+  especialidad: string | null;
+  /** De la más nueva a la más vieja. */
+  versiones: HistorialVersionOut[];
+};
+
+export type HistorialCodigoOut = {
+  nomenclador_id: number;
+  codigo: string;
+  descripcion: string;
+  categoria: string | null;
+  /** NN primero, después NE (base y por especialidad). */
+  variantes: HistorialVarianteOut[];
+};
+
+export type HistorialPorCodigoOut = {
+  obra_social_nro: number;
+  total: number;
+  page: number;
+  size: number;
+  items: HistorialCodigoOut[];
 };
 
 /** Una vigencia ya agregada: cuántos códigos y cuánto varió el promedio. */

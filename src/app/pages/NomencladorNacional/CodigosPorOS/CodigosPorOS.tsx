@@ -27,7 +27,9 @@ import type {
   Complejidad,
   EstadoCodigoOS,
   PreciosDependientes,
+  TipoCodigo,
 } from "../nomenclador.types";
+import { TIPOS_CODIGO } from "../components/tipoCodigo";
 
 /** "2026-10-03" → "03/10/2026". */
 const fechaCorta = (iso: string) => iso.split("-").reverse().join("/");
@@ -76,6 +78,7 @@ export default function CodigosPorOS() {
   const osParam = params.get("os");
   const [os, setOs] = useState<number | null>(osParam ? Number(osParam) : null);
   const [filtro, setFiltro] = useState<"todos" | EstadoCodigoOS>("todos");
+  const [tipo, setTipo] = useState<TipoCodigo | "">("");
   const [q, setQ] = useState(params.get("codigo") ?? "");
   const [qDebounced, setQDebounced] = useState(q);
   const [page, setPage] = useState(1);
@@ -96,7 +99,7 @@ export default function CodigosPorOS() {
   useEffect(() => {
     setPage(1);
     setSel(new Map());
-  }, [os, filtro, qDebounced]);
+  }, [os, filtro, qDebounced, tipo]);
 
   const osQuery = useObrasSociales();
   const osOptions = useMemo(
@@ -109,12 +112,13 @@ export default function CodigosPorOS() {
   const osNombre = osOptions.find((o) => o.id === os)?.label ?? "";
 
   const listado = useQuery({
-    queryKey: ["codigos-por-os", os, filtro, qDebounced, page],
+    queryKey: ["codigos-por-os", os, filtro, qDebounced, tipo, page],
     queryFn: () =>
       listCodigosPorOS({
         obra_social_nro: os as number,
         estado: filtro === "todos" ? undefined : filtro,
         q: qDebounced.trim() || undefined,
+        tipo: tipo || undefined,
         page,
         size: PAGE_SIZE,
       }),
@@ -192,6 +196,19 @@ export default function CodigosPorOS() {
               placeholder="Código o descripción…"
               disabled={os === null}
             />
+          </div>
+          <div className={base.formGroup}>
+            <label className={base.formLabel} htmlFor="cpo-tipo">Tipo</label>
+            <select
+              id="cpo-tipo"
+              className={base.formSelect}
+              value={tipo}
+              onChange={(e) => setTipo(e.target.value as TipoCodigo | "")}
+              disabled={os === null}
+            >
+              <option value="">Todos</option>
+              {TIPOS_CODIGO.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+            </select>
           </div>
         </div>
 
