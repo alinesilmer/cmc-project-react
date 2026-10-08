@@ -265,9 +265,9 @@ function GrupoTabla({
       if (t.subtitulo) {
         out.push(<tr key={`tramo-${g.key}-${t.key}`} className={styles.tramoRow}><td colSpan={colSpan}>{t.subtitulo}</td></tr>);
       }
-      // Honorarios individuales va por paciente, cada uno con su subtítulo y su total. Sanatorios
-      // (bloque único) sólo ordena por paciente y socio: lleva el subtítulo de cada clínica.
-      const porPaciente = t.key === "Honorarios individuales";
+      // Honorarios individuales y Sanatorios (bloque único, con el subtítulo de cada clínica)
+      // van por paciente, cada uno con su subtítulo y su total; el socio sólo ordena.
+      const porPaciente = t.key === "Honorarios individuales" || t.key === "Sanatorio";
       out.push(...filasDe(t.prestaciones, `${g.key}-${t.key}`, { porPaciente, totalPaciente: porPaciente }));
     }
     return out;
