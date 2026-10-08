@@ -75,22 +75,24 @@ const compararPorOrden = (
 // Orden fijo de "Por socio" — el mismo que arma el exportable (`export/armado.py`).
 const porFechaDesc = (a: PrestacionConSocio, b: PrestacionConSocio): number =>
   (b.fecha_practica ?? "").localeCompare(a.fecha_practica ?? "") || a.id - b.id;
-const porPacienteAZ = (a: PrestacionConSocio, b: PrestacionConSocio): number =>
+const porNombreYNumeroDePaciente = (a: PrestacionConSocio, b: PrestacionConSocio): number =>
   (a.nombre_paciente ?? "").localeCompare(b.nombre_paciente ?? "", "es", { sensitivity: "base" })
-  || (a.nro_afiliado ?? "").localeCompare(b.nro_afiliado ?? "", "es", { numeric: true })
-  || porFechaDesc(a, b);
+  || (a.nro_afiliado ?? "").localeCompare(b.nro_afiliado ?? "", "es", { numeric: true });
+const porPacienteAZ = (a: PrestacionConSocio, b: PrestacionConSocio): number =>
+  porNombreYNumeroDePaciente(a, b) || porFechaDesc(a, b);
 // Sanatorios: las prestaciones de una misma clínica quedan seguidas (A-Z por clínica) para
 // poder intercalar el subtítulo con su nombre.
 const nombreClinica = (p: PrestacionConSocio): string => p.nombre_clinica ?? String(p.cod_clinica ?? "");
 const porClinica = (a: PrestacionConSocio, b: PrestacionConSocio): number =>
   nombreClinica(a).localeCompare(nombreClinica(b), "es", { sensitivity: "base" });
-const porClinicaYPaciente = (a: PrestacionConSocio, b: PrestacionConSocio): number =>
-  porClinica(a, b) || porPacienteAZ(a, b);
+// Sanatorios: clínica A-Z → paciente A-Z → socio A-Z → fecha (más nueva primero). Igual que
+// el exportable (`_clave_sanatorio` en `export/armado.py`).
+const porSanatorio = (a: PrestacionConSocio, b: PrestacionConSocio): number =>
+  porClinica(a, b) || porNombreYNumeroDePaciente(a, b) || porNombreMedico(a, b) || porFechaDesc(a, b);
 const TRAMOS_MEDICO: { tipo: Tipo; subtitulo: string; comparar: typeof porFechaDesc }[] = [
   { tipo: "Consulta", subtitulo: "Consultas", comparar: porFechaDesc },
   { tipo: "Practica", subtitulo: "Prácticas", comparar: porFechaDesc },
   { tipo: "Honorarios individuales", subtitulo: "Honorarios individuales", comparar: porPacienteAZ },
-  { tipo: "Sanatorio", subtitulo: "Sanatorios", comparar: porClinicaYPaciente },
 ];
 // Subtítulo de cada sección de "Por tipo".
 const SUBTITULO_TIPO: Record<Tipo, string> = {
@@ -488,7 +490,7 @@ const FacturaDetalle: React.FC = () => {
             : tipo === "Sanatorio" ? vistaOpciones.ordenSanatorio : undefined;
           const porPaciente = selector === "paciente";
           const ordenadas = [...arr].sort((a, b) => porPaciente
-            ? (tipo === "Sanatorio" ? porClinica(a, b) : 0) || porPacienteAZ(a, b)
+            ? (tipo === "Sanatorio" ? porSanatorio(a, b) : porPacienteAZ(a, b))
             : porNombreMedico(a, b)
               || (tipo === "Sanatorio" ? porClinica(a, b) : 0)
               // Lo que el orden elegido no distingue (con "nombre del socio" empatan todas
@@ -509,11 +511,12 @@ const FacturaDetalle: React.FC = () => {
         });
     }
 
-    // por_socio (default): orden fijo. Médicos A-Z, cada uno con sus tramos por tipo.
-    // `cod_medico` es siempre el médico que cobra (la clínica, si hay, va en `cod_clinica`
-    // y se muestra como etiqueta en la fila), así que nunca se agrupa a un socio como clínica.
+    // por_socio (default): orden fijo. Médicos A-Z, cada uno con sus tramos por tipo, y al final
+    // un bloque único de Sanatorios (clínica → paciente → socio). `cod_medico` es siempre el
+    // médico que cobra (la clínica, si hay, va en `cod_clinica` y se muestra como etiqueta en
+    // la fila), así que nunca se agrupa a un socio como clínica.
     const medicos = new Map<string, PrestacionConSocio[]>();
-    for (const p of principales) {
+    for (const p of principales.filter((x) => x.tipo !== "Sanatorio")) {
       const arr = medicos.get(p.cod_medico) ?? [];
       arr.push(p);
       medicos.set(p.cod_medico, arr);
@@ -535,6 +538,16 @@ const FacturaDetalle: React.FC = () => {
         tramos: conFilas, mostrarResumen: true, ...sumarTotales(sumables),
       };
     }).sort(porNombreSocio);
+
+    const sanatorios = principales.filter((p) => p.tipo === "Sanatorio").sort(porSanatorio);
+    if (sanatorios.length > 0) {
+      const miembros = miembrosDe(sanatorios);
+      gruposMedicos.push({
+        key: "sanatorios", titulo: "Sanatorios", prestaciones: sanatorios, miembros, sumables: miembros,
+        tramos: [{ key: "Sanatorio", subtitulo: "", prestaciones: sanatorios }],
+        mostrarResumen: true, ...sumarTotales(miembros),
+      });
+    }
 
     return gruposMedicos;
   }, [principales, hijosPorCabeza, vistaOpciones.agrupacion, vistaOpciones.orden, vistaOpciones.direccion,

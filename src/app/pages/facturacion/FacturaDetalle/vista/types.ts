@@ -26,7 +26,7 @@ export const OPCIONES_ORDEN_VISTA: { value: OrdenVista; label: string }[] = [
 ];
 
 export const OPCIONES_AGRUPACION_VISTA: { value: AgrupacionVista; label: string; ayuda: string }[] = [
-  { value: "por_socio", label: "Por socio", ayuda: "Cada médico con sus consultas, prácticas, honorarios y sanatorios, y su resumen (orden fijo)" },
+  { value: "por_socio", label: "Por socio", ayuda: "Cada médico con sus consultas, prácticas y honorarios, y su resumen; al final los sanatorios por clínica, paciente y socio (orden fijo)" },
   { value: "por_tipo", label: "Por tipo", ayuda: "Consultas, prácticas, honorarios y sanatorios separados, con subtotal por médico" },
   { value: "plana", label: "Planilla plana", ayuda: "Sin cortes ni resúmenes, para revisar todo junto" },
 ];
