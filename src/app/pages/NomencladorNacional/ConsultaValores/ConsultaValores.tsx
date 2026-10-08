@@ -88,7 +88,12 @@ export default function ConsultaValores() {
     setNomLoading(true);
     nomDebounce.current = setTimeout(async () => {
       try {
-        const res = await listNomenclador({ q: q.trim(), en_descripcion: true, activo: true, size: 15 });
+        // Con la obra social elegida, el nombre buscado y mostrado es el que ella pactó:
+        // el del catálogo está vacío en muchos códigos.
+        const res = await listNomenclador({
+          q: q.trim(), en_descripcion: true, activo: true, size: 15,
+          ...(osNro ? { obra_social_nro: osNro } : {}),
+        });
         setNomResults(res);
       } catch {
         setNomResults([]);

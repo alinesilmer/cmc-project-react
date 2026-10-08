@@ -6,9 +6,11 @@ import { formatMoneda } from "../validaciones.types";
 import type { CodigoNomenclador } from "../validaciones.types";
 import s from "./CodigoSelect.module.scss";
 
-/** Códigos que pide el buscador por vez. Es el default del backend; se explicita
- * acá porque hay que pasarlo para llegar al parámetro `nroSocio`. */
-const LIMITE = 20;
+/** Códigos que pide el buscador por vez. Sin texto el backend devuelve los primeros
+ * habilitados del médico en esa obra social, así que alcanza para recorrerlos sin
+ * tipear; 50 es el máximo que acepta. Se explicita porque hay que pasarlo para llegar
+ * al parámetro `nroSocio`. */
+const LIMITE = 50;
 
 interface Props {
   /** NRO_OBRA_SOCIAL — define qué valor se muestra para cada código. */
