@@ -1,0 +1,288 @@
+// Mismo lenguaje visual que el resto del listado (ver FacturaDetalle.module.scss).
+$blue:       #3b6fd4;
+$blue-light: #e8efff;
+$green:      #166534;
+$border:     #e2e8f0;
+$surface:    #ffffff;
+$text-1:     #1a1f2e;
+$text-2:     #4a5568;
+$text-3:     #718096;
+$radius-sm:  6px;
+$radius-lg:  14px;
+$shadow-sm:  0 1px 4px rgba(0, 0, 0, .06);
+$shadow-md:  0 4px 16px rgba(0, 0, 0, .10);
+
+// ── Botones ───────────────────────────────────────────────────────────────────
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  background: $surface;
+  color: $text-2;
+  border: 1px solid $border;
+  border-radius: $radius-sm;
+  font-size: 0.83rem;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) { border-color: $blue; color: $blue; }
+  &:disabled { opacity: .5; cursor: default; }
+}
+
+.btnPrimario {
+  background: $blue;
+  border-color: $blue;
+  color: #fff;
+
+  &:hover:not(:disabled) { background: #2f5bbb; border-color: #2f5bbb; color: #fff; }
+}
+
+.btnIcono { padding: 0; width: 34px; justify-content: center; }
+
+// ── Chips ─────────────────────────────────────────────────────────────────────
+.chip {
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 20px;
+  padding: 3px 12px;
+  white-space: nowrap;
+}
+
+.chipOs { background: $blue-light; color: $blue; }
+.chipGris { background: #f1f5f9; color: $text-2; }
+.chipAbierta { background: #fef3c7; color: #92400e; font-weight: 700; }
+.chipCerrada { background: #dcfce7; color: $green; font-weight: 700; }
+.chipTotal { background: #f0fdf4; color: $green; border: 1px solid #bbf7d0; font-weight: 700; }
+
+// ── Encabezado simple (mientras carga) ────────────────────────────────────────
+.simple {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.tituloSimple { font-size: 1.35rem; font-weight: 700; color: $text-1; margin: 0; }
+
+// ── Ruta y acciones ───────────────────────────────────────────────────────────
+.migas {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.ruta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: $text-3;
+
+  strong { color: $text-1; font-weight: 600; }
+}
+
+.rutaLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: $blue;
+  cursor: pointer;
+
+  &:hover { text-decoration: underline; }
+}
+
+.acciones { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
+
+// ── Tarjeta del expediente ────────────────────────────────────────────────────
+.tarjeta {
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+  margin-bottom: 24px;
+  // Al volver desde la barra compacta, que no quede tapada por el topbar.
+  scroll-margin-top: 80px;
+}
+
+.principal {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 20px 24px 16px;
+}
+
+.icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: $blue-light;
+  color: $blue;
+  flex-shrink: 0;
+}
+
+.expediente { display: flex; flex-direction: column; gap: 2px; }
+
+.etiquetaChica {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: $text-3;
+}
+
+.numeroFila { display: flex; align-items: center; gap: 10px; }
+
+.numero {
+  font-size: 1.9rem;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  line-height: 1.1;
+  color: $text-1;
+}
+
+.copiar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: $surface;
+  color: $text-3;
+  border: 1px solid $border;
+  border-radius: $radius-sm;
+  cursor: pointer;
+
+  &:hover { color: $blue; border-color: $blue; }
+}
+
+.separador { width: 1px; align-self: stretch; background: $border; margin: 4px 8px; }
+
+.os { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1 1 260px; }
+.osNombre { font-size: 1.25rem; font-weight: 700; color: $text-1; overflow-wrap: anywhere; }
+.chips { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.estados { margin-left: auto; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+.estadoFila { display: flex; align-items: center; gap: 8px; }
+.estadoDe { font-size: 0.75rem; color: $text-3; }
+
+// ── Indicadores ───────────────────────────────────────────────────────────────
+.stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  border-top: 1px solid $border;
+
+  @media (max-width: 1100px) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (max-width: 640px) { grid-template-columns: minmax(0, 1fr); }
+}
+
+.stat {
+  padding: 14px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-right: 1px solid $border;
+
+  &:last-child { border-right: 0; }
+}
+
+.statTotal { background: #f0fdf4; border-bottom-right-radius: $radius-lg; }
+.statEtiqueta { font-size: 0.75rem; color: $text-3; }
+.statValor { font-size: 1.35rem; font-weight: 700; color: $text-1; }
+.statValorTotal { font-size: 1.6rem; font-weight: 800; color: $green; }
+.statDe { font-size: 0.82rem; font-weight: 600; color: $text-3; }
+.statNota { font-size: 0.75rem; color: $text-3; }
+.statTotal .statEtiqueta, .statTotal .statNota { color: $green; }
+
+.barra { height: 6px; border-radius: 6px; background: $border; overflow: hidden; }
+.barraRelleno { height: 100%; background: $blue; }
+
+.tipos { display: flex; flex-direction: column; gap: 3px; font-size: 0.75rem; color: $text-1; }
+.tipoFila { display: flex; justify-content: space-between; gap: 8px; }
+
+// ── Datos de la factura ───────────────────────────────────────────────────────
+.datos {
+  border-top: 1px solid $border;
+  padding: 14px 24px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.datosCabecera { display: flex; align-items: center; justify-content: space-between; }
+
+.datosGrilla {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px 24px;
+
+  @media (max-width: 1100px) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (max-width: 640px) { grid-template-columns: minmax(0, 1fr); }
+}
+
+.dato { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.datoEtiqueta { font-size: 0.75rem; color: $text-3; }
+.datoValor { font-size: 0.88rem; font-weight: 600; color: $text-1; overflow-wrap: anywhere; display: flex; flex-direction: column; gap: 2px; }
+
+// ── Barra compacta fija ───────────────────────────────────────────────────────
+// Fija debajo del topbar (el `top` lo pone el componente). Va a todo el ancho de la
+// ventana: el padding lateral de `.container` es 1.8rem.
+.compacta {
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 1.8rem;
+  background: $surface;
+  border-bottom: 1px solid $border;
+  box-shadow: $shadow-md;
+  overflow: hidden;
+}
+
+.compactaIcono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: $blue-light;
+  color: $blue;
+  flex-shrink: 0;
+}
+
+.compactaNumero { font-size: 1.05rem; font-weight: 800; color: $text-1; white-space: nowrap; }
+
+.compactaOs {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: $text-1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compactaCant { font-size: 0.82rem; color: $text-3; white-space: nowrap; }
+.compactaTotal { margin-left: auto; font-size: 0.82rem; padding: 4px 14px; }
+
+@media (max-width: 900px) {
+  .compactaCant, .compactaOs { display: none; }
+}

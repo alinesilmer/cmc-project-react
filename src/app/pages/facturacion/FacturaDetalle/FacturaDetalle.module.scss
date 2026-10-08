@@ -230,6 +230,8 @@ $shadow-md:  0 4px 16px rgba(0, 0, 0, .10);
 // se recorren los bloques de filas, que son tablas aparte con el mismo colgroup.
 .tablaEncabezado {
   position: sticky;
+  // Debajo del topbar; con la barra compacta del expediente a la vista, el `top` lo
+  // corre `FacturaDetalle` (estilo en línea sobre esta tabla).
   top: 65px;
   z-index: 5;
 }

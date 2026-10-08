@@ -1,11 +1,9 @@
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  ClipboardList, ArrowLeft, ArrowRightCircle, ArrowLeftCircle, Trash2,
-  Download, SlidersHorizontal,
-} from "lucide-react";
+import { ArrowRightCircle, ArrowLeftCircle, Trash2 } from "lucide-react";
 
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
+import { abrirAdjunto } from "@/app/shared/lib/archivos";
 import {
   fetchFacturaDetalle, marcarRevisado, anularPrestacion,
   moverPeriodo,
@@ -21,6 +19,7 @@ import VistaPanel from "./vista/VistaPanel";
 import type { FiltrosVista, OrdenDireccion, OrdenVista, VistaOpciones } from "./vista/types";
 import { cargarVistaSesion, COLUMNAS_VISTA_DISPONIBLES, guardarVistaSesion, ORDEN_TIPOS, PESO_COLUMNA } from "./vista/types";
 import type { FilaAcciones, PrestacionConSocio } from "./FilaPrestacion";
+import CabeceraExpediente, { ALTO_BARRA_COMPACTA } from "./CabeceraExpediente";
 import GrupoTabla from "./GrupoTabla";
 import { sumaEquipo, sumarTotales } from "./totales";
 import type { GrupoAcciones, VistaGrupo } from "./GrupoTabla";
@@ -37,18 +36,6 @@ type PendingAction =
   | { type: "eliminar"; p: PrestacionConSocio }
   | { type: "mover"; p: PrestacionConSocio; direccion: "siguiente" | "anterior" }
   | { type: "moverGrupo"; ids: number[]; marcadas: number; label: string; groupKey: string; direccion: "siguiente" | "anterior" };
-
-const estadoChipClass = (estado: string | null): string => {
-  if (estado === "A") return styles.chipAbierta;
-  if (estado === "C") return styles.chipCerrada;
-  return styles.chipCerrada;
-};
-
-const estadoLabel = (estado: string | null): string => {
-  if (estado === "A") return "Abierta";
-  if (estado === "C") return "Cerrada";
-  return estado || "—";
-};
 
 const compararPorOrden = (
   a: PrestacionConSocio, b: PrestacionConSocio, orden: OrdenVista, direccion: OrdenDireccion,
@@ -179,6 +166,8 @@ const FacturaDetalle: React.FC = () => {
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
   const [vistaOpen, setVistaOpen] = useState(false);
+  // Con la barra compacta fija a la vista, el encabezado de la tabla se pega debajo de ella.
+  const [barraCompacta, setBarraCompacta] = useState(false);
   // La vista se recuerda en la sesión: al volver de editar/replicar, o de otra factura,
   // queda como el usuario la dejó.
   const [vistaOpciones, setVistaOpciones] = useState<VistaOpciones>(cargarVistaSesion);
@@ -622,38 +611,16 @@ const FacturaDetalle: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <span className={styles.headerIcon}>
-          <ClipboardList size={22} />
-        </span>
-        <div>
-          <h1 className={styles.title}>Listado de prestaciones</h1>
-          <p className={styles.subtitle}>Período activo: {detalle?.periodo ?? "—"}</p>
-        </div>
-
-        <div className={styles.headerRight}>
-          {detalle && (
-            <>
-              <span className={`${styles.infoChip} ${styles.chipOs}`}>OS {detalle.cod_obra}</span>
-              <span className={`${styles.infoChip} ${estadoChipClass(detalle.estado)}`}>
-                {estadoLabel(detalle.estado)}
-              </span>
-              <span className={`${styles.infoChip} ${styles.chipTotal}`}>
-                Total: {formatMoney(detalle.total_importe)}
-              </span>
-            </>
-          )}
-          <button type="button" className={styles.backBtn} onClick={() => setVistaOpen(true)} disabled={!detalle}>
-            <SlidersHorizontal size={15} /> Vista
-          </button>
-          <button type="button" className={styles.backBtn} onClick={() => setExportOpen(true)} disabled={!detalle}>
-            <Download size={15} /> Exportar
-          </button>
-          <button type="button" className={styles.backBtn} onClick={() => navigate("/panel/facturacion/periodos")}>
-            <ArrowLeft size={15} /> Volver
-          </button>
-        </div>
-      </div>
+      <CabeceraExpediente
+        detalle={detalle}
+        filas={todasFlat}
+        onVista={() => setVistaOpen(true)}
+        onExportar={() => setExportOpen(true)}
+        onVolver={() => navigate("/panel/facturacion/periodos")}
+        onAbrirFactura={(idFactura) => navigate(`/panel/facturacion/periodos/${idFactura}`)}
+        onAbrirComprobante={(ruta) => { abrirAdjunto(ruta).catch((e: Error) => notify(e.message, "error")); }}
+        onCompactaChange={setBarraCompacta}
+      />
 
       <div className={styles.layout}>
         {detalle && (
@@ -670,7 +637,7 @@ const FacturaDetalle: React.FC = () => {
         )}
 
         <div className={styles.tableWrap}>
-          <table className={`${styles.table} ${styles.tablaEncabezado}`}>
+          <table className={`${styles.table} ${styles.tablaEncabezado}`} style={barraCompacta ? { top: 65 + ALTO_BARRA_COMPACTA } : undefined}>
             <colgroup>
               {columnasConPeso.map((c) => <col key={c.id} style={{ width: `${c.pct}%` }} />)}
             </colgroup>

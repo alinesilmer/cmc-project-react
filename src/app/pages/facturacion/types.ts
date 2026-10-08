@@ -480,6 +480,19 @@ export interface FacturaDetalleResponse {
   cod_obra: string;
   estado: string | null;
   estado_doctor: string | null;
+  // Datos de la cabecera para el encabezado del listado.
+  es_complemento?: boolean;
+  nombre_obra_social?: string | null;
+  numeros_factura?: string[];
+  fecha_cierre?: string | null;
+  fecha_envio?: string | null;
+  fecha_recepcion?: string | null;
+  cerrada_por?: string | null;
+  creada_por?: string | null;
+  creada_en?: string | null;
+  documento_url?: string | null;
+  afip?: string | null;
+  otras_versiones?: { id_factura: number; version: number }[];
   total_prestaciones: number;
   total_importe: Money;
   prestadores: PrestadorFacturaGrupo[];
