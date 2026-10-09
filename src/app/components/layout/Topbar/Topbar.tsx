@@ -582,6 +582,18 @@ const TOP_NAV: TopEntry[] = [
         ],
       },
       {
+        heading: "Facturación",
+        items: [
+          // TXT de facturación de UNNE (obra social 81) para subir a su portal.
+          {
+            path: `${base}/facturacion/herramientas/txt-unne`,
+            icon: FileText,
+            label: "TXT UNNE",
+            perms: ["facturacion:leer"],
+          },
+        ],
+      },
+      {
         heading: "Sistema",
         items: [
           {

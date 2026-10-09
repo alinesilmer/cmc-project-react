@@ -286,6 +286,17 @@ export const descargarExportCaratula = (facturaId: number | string, formato: "pd
     getBlobLong(`${BASE}/facturas/${facturaId}/export/caratula.${formato}`),
   );
 
+// TXT de facturación de UNNE (obra social 81). `tipo`/`nro_factura` solo hacen falta si la
+// factura todavía no está numerada.
+export const descargarTxtUnne = (
+  facturaId: number | string, params: { tipo?: string; nro_factura?: string } = {},
+) =>
+  traced(
+    `GET /facturas/${facturaId}/export/unne.txt`,
+    { facturaId, ...params },
+    getBlobLong(`${BASE}/facturas/${facturaId}/export/unne.txt`, params),
+  );
+
 // Detalle por médico: cruza todas las obras sociales del socio en un período.
 // Mismo membrete institucional que el export de factura (ver encabezado.py).
 export const descargarExportPorMedico = (

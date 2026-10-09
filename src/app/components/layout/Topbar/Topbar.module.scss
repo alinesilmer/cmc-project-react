@@ -140,7 +140,10 @@
   box-shadow:
     0 24px 48px -12px rgba(15, 23, 42, 0.18),
     0 8px 16px -8px rgba(15, 23, 42, 0.08);
-  max-width: min(640px, calc(100vw - 24px));
+  // Tope holgado: con 4 columnas (Herramientas) el contenido mide ~920px; con 640px las
+  // columnas se salían del fondo blanco. Si no entra, las columnas bajan de renglón.
+  max-width: min(960px, calc(100vw - 24px));
+  flex-wrap: wrap;
   animation: dropIn 0.16s ease;
 
   // invisible bridge covering the gap so hover survives the trip from trigger
