@@ -297,6 +297,14 @@ export const descargarTxtUnne = (
     getBlobLong(`${BASE}/facturas/${facturaId}/export/unne.txt`, params),
   );
 
+// Plano de Boreal (obra social 285) en Excel.
+export const descargarPlanoBoreal = (facturaId: number | string) =>
+  traced(
+    `GET /facturas/${facturaId}/export/boreal.xlsx`,
+    { facturaId },
+    getBlobLong(`${BASE}/facturas/${facturaId}/export/boreal.xlsx`),
+  );
+
 // Detalle por médico: cruza todas las obras sociales del socio en un período.
 // Mismo membrete institucional que el export de factura (ver encabezado.py).
 export const descargarExportPorMedico = (

@@ -591,6 +591,13 @@ const TOP_NAV: TopEntry[] = [
             label: "TXT UNNE",
             perms: ["facturacion:leer"],
           },
+          // Plano de Boreal (obra social 285) en Excel.
+          {
+            path: `${base}/facturacion/herramientas/plano-boreal`,
+            icon: FileSpreadsheet,
+            label: "Plano Boreal",
+            perms: ["facturacion:leer"],
+          },
         ],
       },
       {

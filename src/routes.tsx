@@ -136,6 +136,7 @@ const CodigosPorEspecialidad = lazy(
 const NomencladorGalenos = lazy(() => import("./app/pages/NomencladorNacional/NomencladorGalenos/NomencladorGalenos"));
 const ActualizarPreciosGalenos = lazy(() => import("./app/pages/NomencladorNacional/ActualizarPreciosGalenos/ActualizarPreciosGalenos"));
 const TxtUnne = lazy(() => import("./app/pages/facturacion/TxtUnne/TxtUnne"));
+const PlanoBoreal = lazy(() => import("./app/pages/facturacion/PlanoBoreal/PlanoBoreal"));
 const CompletarNomencladorNN = lazy(() => import("./app/pages/NomencladorNacional/CompletarNomencladorNN/CompletarNomencladorNN"));
 const AgregarCodigoObrasSociales = lazy(() => import("./app/pages/NomencladorNacional/AgregarCodigoObrasSociales/AgregarCodigoObrasSociales"));
 const ActualizacionesValores = lazy(() => import("./app/pages/NomencladorNacional/ActualizacionesValores/ActualizacionesValores"));
@@ -278,6 +279,7 @@ export default function RootRoutes() {
                   <Route path="periodos" element={<VerPeriodos />} />
                   <Route element={<RequireScope scope="export:generar" />}>
                     <Route path="herramientas/txt-unne" element={<TxtUnne />} />
+                    <Route path="herramientas/plano-boreal" element={<PlanoBoreal />} />
                   </Route>
                   <Route path="periodos/:id" element={<FacturacionFacturaDetalle />} />
                   <Route path="consulta" element={<ConsultaPrestacion />} />
