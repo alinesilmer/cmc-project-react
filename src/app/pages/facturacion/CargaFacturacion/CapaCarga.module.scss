@@ -1,0 +1,29 @@
+// Formulario de edición encima del listado: ocupa toda la ventana debajo del topbar
+// (64 px + borde) y tiene su propio scroll, así el del listado no se toca.
+.capa {
+  position: fixed;
+  top: 65px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  // Sobre la barra compacta del listado (40), debajo del topbar y sus menús (50).
+  z-index: 45;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: linear-gradient(135deg, #f0f4ff 0%, #fafbff 60%, #f5f0ff 100%);
+  box-shadow: 0 -8px 24px rgba(15, 23, 42, .08);
+  will-change: transform, opacity;
+}
+
+.cargando {
+  padding: 1.8rem;
+  color: #718096;
+  font-size: 0.9rem;
+}
+
+// Mientras está abierta, la página de atrás no scrollea. El ancho de la barra que
+// desaparece lo repone la capa con un padding (ver CapaCarga.tsx): sin eso el listado
+// cambia de ancho, se vuelve a acomodar entero y el scroll salta.
+:global(html.capa-carga-abierta) {
+  overflow: hidden;
+}

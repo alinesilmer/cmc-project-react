@@ -180,6 +180,7 @@ function FilaPrestacion({
   const tituloMover = (txt: string) => (p.revisado ? "Está marcada: desmarcala para moverla" : txt);
   return (
     <tr
+      data-prestacion-id={p.id}
       className={[
         styles.dataRow,
         p.revisado ? styles.rowRevisada : "",

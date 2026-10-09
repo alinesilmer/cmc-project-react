@@ -12,12 +12,9 @@ import {
   editarPrestacion,
   anularPrestacion,
   fetchMedicos,
-  fetchMedicosTodos,
   fetchObraSocialPorCodigo,
-  fetchObrasSocialesTodas,
   fetchCodigosHabilitados,
   fetchClinicas,
-  fetchClinicasTodas,
   fetchAfiliado,
 } from "../api";
 import { detailMessage, versionLabel } from "../types";
@@ -30,14 +27,14 @@ import type {
   PrestacionRead,
   PrestacionUpdate,
   MedicoOption,
-  ClinicaOption,
 } from "../types";
 import { parseMoney, formatMoney } from "../money";
 import { FACTURACION_ULTIMA_OS_KEY, FACTURACION_AUTORIZACION_POR_INTEGRANTE_KEY } from "../constants";
 
 import DuplicadoConfirmModal from "../components/DuplicadoConfirmModal";
 import NumericInput from "../components/NumericInput";
-import { dedupePorId } from "../components/localSearch";
+import { useCapaCarga } from "./capaCargaContexto";
+import { actualizarClinicas, cargarCatalogos, esperarCatalogos, useCatalogosCarga } from "./catalogosCarga";
 
 import { usePeriodoActivo } from "./hooks/usePeriodoActivo";
 import { useNomencladorPrecio } from "./hooks/useNomencladorPrecio";
@@ -93,21 +90,30 @@ const seleccionPrestadorDe = (p: PrestacionRead) => {
   return { payee: p.cod_medico, ejecutor: null, clinica: p.cod_clinica ?? null };
 };
 
+// El médico de una línea del equipo: de la lista precargada si está, si no del backend.
+const resolverMedico = async (
+  cod: string, medicos?: MedicoOption[],
+): Promise<MedicoOption | null> => {
+  const precargado = medicos?.find((m) => m.cod === cod);
+  if (precargado) return precargado;
+  try {
+    const rows = await fetchMedicos(cod);
+    return rows.find((m) => m.cod === cod) ?? null;
+  } catch {
+    return null; // best-effort: sin nombre, la línea igual funciona con el código.
+  }
+};
+
 // Reconstruye las líneas de ayudante desde el `grupo` de una prestación (al replicar o
 // editar un equipo). Resuelve el nombre de cada médico (best-effort) para el autocomplete.
 const buildAyudantesFromGrupo = async (
   grupo: PrestacionRead[],
+  medicos?: MedicoOption[],
 ): Promise<AyudanteLinea[]> => {
   const miembros = grupo.filter((g) => parseMoney(g.ayudante) > 0);
   return Promise.all(
     miembros.map(async (g) => {
-      let medico: MedicoOption | null = null;
-      try {
-        const rows = await fetchMedicos(g.cod_medico);
-        medico = rows.find((m) => m.cod === g.cod_medico) ?? null;
-      } catch {
-        // best-effort: sin nombre, la línea igual funciona con el código.
-      }
+      const medico = await resolverMedico(g.cod_medico, medicos);
       const precioAyudante = g.ayudante != null ? String(g.ayudante) : "0";
       return {
         ...crearAyudanteLinea(precioAyudante, g.autorizacion ?? ""),
@@ -129,25 +135,22 @@ const buildAyudantesFromGrupo = async (
 // así que el filtro de ayudantes (`ayudante > 0`) ya la deja afuera solo, sin cambios.
 const buildPediatraFromGrupo = async (
   grupo: PrestacionRead[],
+  medicos?: MedicoOption[],
 ): Promise<PediatraLinea | null> => {
   const g = grupo.find((m) => m.tipo_prestador === "Pediatra");
   if (!g) return null;
-  let medico: MedicoOption | null = null;
-  try {
-    const rows = await fetchMedicos(g.cod_medico);
-    medico = rows.find((m) => m.cod === g.cod_medico) ?? null;
-  } catch {
-    // best-effort: sin nombre, la línea igual funciona con el código.
-  }
-  let codigoPreset: string | null = null;
-  if (g.cod_nomenclador) {
-    try {
-      const codigos = await fetchCodigosHabilitados(g.cod_medico, g.cod_nomenclador);
-      codigoPreset = codigos.find((c) => c.codigo === g.cod_nomenclador)?.descripcion ?? null;
-    } catch {
-      // best-effort: sin descripción, el código igual queda cargado.
-    }
-  }
+  const [medico, codigoPreset] = await Promise.all([
+    resolverMedico(g.cod_medico, medicos),
+    (async () => {
+      if (!g.cod_nomenclador) return null;
+      try {
+        const codigos = await fetchCodigosHabilitados(g.cod_medico, g.cod_nomenclador);
+        return codigos.find((c) => c.codigo === g.cod_nomenclador)?.descripcion ?? null;
+      } catch {
+        return null; // best-effort: sin descripción, el código igual queda cargado.
+      }
+    })(),
+  ]);
   return {
     ...crearPediatraLinea(g.autorizacion ?? ""),
     prestacionId: g.id,
@@ -189,57 +192,34 @@ type Mantener = {
 const CargaFacturacion: React.FC = () => {
   const navigate = useNavigate();
   const notify = useAppSnackbar();
-  const { id: editId, facturaId: complementoParam } = useParams<{ id: string; facturaId: string }>();
+  // Dentro de la capa de edición rápida (ver CapaCarga) la ruta que matcheó es la del
+  // listado de atrás: el id y el `from` de la edición los da la capa.
+  const capa = useCapaCarga();
+  const params = useParams<{ id: string; facturaId: string }>();
+  const editId = capa ? capa.editId : params.id;
+  const complementoParam = capa ? undefined : params.facturaId;
   const [searchParams] = useSearchParams();
-  const fromFactura = searchParams.get("from");
+  const fromFactura = capa ? capa.from : searchParams.get("from");
   const isEdit = !!editId;
   const isComplemento = !!complementoParam;
   const complementoId = complementoParam ? Number(complementoParam) : null;
   // "Replicar carga": llega por query param en la carga normal (?replicar=<id>) desde
   // las tablas de prestaciones. Precarga todos los campos de esa prestación pero como
   // una carga nueva (POST), no como edición de la original.
-  const replicarParam = searchParams.get("replicar");
+  const replicarParam = capa ? null : searchParams.get("replicar");
   const isReplicando = !isEdit && !isComplemento && !!replicarParam;
   const [loadingReplicar, setLoadingReplicar] = useState(isReplicando);
 
-  // Precarga completa de médicos y obras sociales: antes de que el formulario se
-  // muestre, se piden una sola vez (en vez de un pedido por cada tecleo, lento con
-  // ~4.500 médicos) y de ahí en más los autocompletes de médico/obra social filtran
-  // en memoria. Bloquea el formulario entero con "Cargando formulario…" hasta que
-  // ambas listas estén — ver el gate más abajo. Redis lo va a hacer innecesario más
-  // adelante; por ahora es la forma más simple de sacarse de encima la latencia.
-  const [medicosPrecargados, setMedicosPrecargados] = useState<MedicoOption[] | null>(null);
-  const [obrasSocialesPrecargadas, setObrasSocialesPrecargadas] = useState<ObraSocialOption[] | null>(null);
-  const [clinicasPrecargadas, setClinicasPrecargadas] = useState<ClinicaOption[] | null>(null);
-  const [errorPrecarga, setErrorPrecarga] = useState(false);
-  const [reintentoPrecarga, setReintentoPrecarga] = useState(0);
-
-  useEffect(() => {
-    let active = true;
-    setErrorPrecarga(false);
-    (async () => {
-      try {
-        const [medicos, obrasSociales, clinicas] = await Promise.all([
-          fetchMedicosTodos(),
-          fetchObrasSocialesTodas(),
-          fetchClinicasTodas(),
-        ]);
-        if (!active) return;
-        // `listado_medico` tiene NRO_SOCIO duplicado en algunas filas (mismo médico
-        // cargado dos veces — dato legacy, no un caso de negocio real). Sin dedupar,
-        // el Autocomplete renderiza dos <li> con la misma key y React mezcla su
-        // contenido entre renders al filtrar — eso se veía como "el filtro falla".
-        setMedicosPrecargados(dedupePorId(medicos, (m) => m.cod));
-        setObrasSocialesPrecargadas(dedupePorId(obrasSociales, (o) => o.nro_obra_social));
-        setClinicasPrecargadas(dedupePorId(clinicas, (c) => c.cod));
-      } catch {
-        if (active) setErrorPrecarga(true);
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, [reintentoPrecarga]);
+  // Médicos, obras sociales y clínicas: listas completas para que los autocompletes
+  // filtren en memoria (un pedido por tecleo era lento con ~4.000 médicos). Vienen de
+  // una caché compartida (`catalogosCarga`): con copia guardada el formulario abre al
+  // instante y la versión actual llega de fondo. Sin copia, el formulario espera con
+  // "Cargando formulario…" — ver el gate más abajo.
+  const { catalogos, error: errorPrecarga } = useCatalogosCarga();
+  const medicosPrecargados = catalogos?.medicos ?? null;
+  const obrasSocialesPrecargadas = catalogos?.obrasSociales ?? null;
+  const clinicasPrecargadas = catalogos?.clinicas ?? null;
+  useEffect(() => { cargarCatalogos(); }, []);
 
   // Complementaria — OS/período fijos, tomados de la factura referenciada por id.
   const [complementoMeta, setComplementoMeta] = useState<{
@@ -263,7 +243,9 @@ const CargaFacturacion: React.FC = () => {
     estado: string | null;
   } | null>(null);
   const [loadingEdit, setLoadingEdit] = useState(isEdit);
-  const [editNotFound, setEditNotFound] = useState(false);
+  // Por qué no se pudo abrir la edición (null = se pudo). Un 404 es "no existe"; el resto
+  // se muestra tal cual, para no confundir un error de red o de permisos con eso.
+  const [errorEdicion, setErrorEdicion] = useState<string | null>(null);
   // "La primera precarga de edición terminó ENTERA (datos + labels de los
   // autocompletes)". Es lo que gatea el render del formulario: los autocompletes
   // fijan su texto al montar (ver AppSearchSelect) y si se muestran a mitad de la
@@ -276,8 +258,10 @@ const CargaFacturacion: React.FC = () => {
   // precarga cambia el alto de la página (loader → formulario) y corta el scroll
   // suave. Se sube al cambiar de prestación y otra vez cuando el formulario aparece.
   useLayoutEffect(() => {
-    if (isEdit) window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-  }, [isEdit, editId, editHidratado]);
+    if (!isEdit) return;
+    if (capa) capa.contenedor.current?.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    else window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [isEdit, editId, editHidratado, capa]);
   // Labels descriptivos para los autocompletes en edición: la prestación solo trae los
   // códigos, así que se resuelven contra las búsquedas para mostrar nombre/matrícula/desc.
   const [medicoPreset, setMedicoPreset] = useState<string | null>(null);
@@ -484,14 +468,16 @@ const CargaFacturacion: React.FC = () => {
   // formulario tampoco se muestra antes de tenerlas, así que no cuesta nada.
   useEffect(() => {
     if (!isEdit || !editId) return;
-    if (!medicosPrecargados || !obrasSocialesPrecargadas) return;
     let active = true;
     setLoadingEdit(true);
+    setErrorEdicion(null);
     (async () => {
       try {
         // Siempre desde la cabecera: si se clickeó "Editar" en un ayudante, resolvemos
         // el médico principal y el equipo real.
-        const p = await fetchPrestacionCabecera(editId);
+        // La prestación se pide sin esperar los catálogos (que en general ya están en
+        // la caché): las dos cosas en paralelo.
+        const [p, cat] = await Promise.all([fetchPrestacionCabecera(editId), esperarCatalogos()]);
         if (!active) return;
         headPrestacionIdRef.current = p.id;
         // El payee es una clínica sii hay médico ejecutor (Sanatorio o fila legacy).
@@ -529,7 +515,7 @@ const CargaFacturacion: React.FC = () => {
         // La obra social sale de la lista precargada: si el código no está en el
         // catálogo (pasa con filas importadas de CMC) se muestra el número solo.
         const os = p.cod_obra_social
-          ? obrasSocialesPrecargadas.find(
+          ? cat.obrasSociales.find(
               (x) => String(x.nro_obra_social) === String(p.cod_obra_social),
             ) ?? null
           : null;
@@ -556,7 +542,7 @@ const CargaFacturacion: React.FC = () => {
         // lista precargada — `/medicos/todos` ya trae médicos Y clínicas con
         // `es_organizacion`, así que sirve para el payee sea cual sea.
         const buscarMedico = (cod: string | null | undefined): MedicoOption | null =>
-          cod ? medicosPrecargados.find((m) => String(m.cod) === String(cod)) ?? null : null;
+          cod ? cat.medicos.find((m) => String(m.cod) === String(cod)) ?? null : null;
         const labelMedico = (m: MedicoOption) =>
           [m.nombre, m.matricula].filter((v) => v != null && v !== "").join(" · ") || null;
 
@@ -572,12 +558,16 @@ const CargaFacturacion: React.FC = () => {
         }
 
         // Los códigos habilitados dependen del médico efectivo (ejecutor si es clínica).
+        // Código, clínica, ayudantes y pediatra son independientes: todos a la vez.
         const codMedForCodigos = sel.ejecutor ?? sel.payee;
-        const [nomRes, cliRes] = await Promise.allSettled([
+        const grupo = p.grupo ?? [];
+        const [nomRes, cliRes, ayuRes, pedRes] = await Promise.allSettled([
           p.cod_nomenclador
             ? fetchCodigosHabilitados(codMedForCodigos, p.cod_nomenclador)
             : Promise.resolve([]),
           sel.clinica != null ? fetchClinicas(String(sel.clinica)) : Promise.resolve([]),
+          grupo.length > 0 ? buildAyudantesFromGrupo(grupo, cat.medicos) : Promise.resolve([]),
+          grupo.length > 0 ? buildPediatraFromGrupo(grupo, cat.medicos) : Promise.resolve(null),
         ]);
         if (!active) return;
 
@@ -593,28 +583,38 @@ const CargaFacturacion: React.FC = () => {
         }
         // Ayudantes del equipo. Guardamos sus ids originales para reconciliar al
         // guardar (los que se quiten se anulan).
-        if (p.grupo && p.grupo.length > 0) {
-          const lineas = await buildAyudantesFromGrupo(p.grupo);
-          if (active) {
-            ayudantesOriginalesRef.current = lineas
-              .map((l) => l.prestacionId)
-              .filter((v): v is number => v != null);
-            setAyudantes(lineas);
-            if (tieneAutorizacionDistintaPorIntegrante(p, lineas)) {
-              setAutorizacionPorIntegrante(true);
-            }
+        if (ayuRes.status === "rejected") throw ayuRes.reason;
+        const lineas = ayuRes.value;
+        if (lineas.length > 0) {
+          ayudantesOriginalesRef.current = lineas
+            .map((l) => l.prestacionId)
+            .filter((v): v is number => v != null);
+          setAyudantes(lineas);
+          if (tieneAutorizacionDistintaPorIntegrante(p, lineas)) {
+            setAutorizacionPorIntegrante(true);
           }
-          // Pediatra del equipo (si hay). Bloque paralelo al de arriba, no lo toca.
-          const lineaPediatra = await buildPediatraFromGrupo(p.grupo);
-          if (active && lineaPediatra) {
-            pediatraOriginalRef.current = lineaPediatra.prestacionId ?? null;
-            setPediatra(lineaPediatra);
-          }
+        }
+        // Pediatra del equipo (si hay). Bloque paralelo al de arriba, no lo toca.
+        if (pedRes.status === "rejected") throw pedRes.reason;
+        const lineaPediatra = pedRes.value;
+        if (lineaPediatra) {
+          pediatraOriginalRef.current = lineaPediatra.prestacionId ?? null;
+          setPediatra(lineaPediatra);
         }
         // Recién acá el formulario puede mostrarse: ya está todo, labels incluidos.
         if (active) setEditHidratado(true);
-      } catch {
-        setEditNotFound(true);
+      } catch (err) {
+        console.error("[CargaFacturacion] no se pudo precargar la edición", err);
+        if (!active) return;
+        const e = err as { message?: string; response?: { status?: number; data?: { detail?: unknown } } };
+        const status = e?.response?.status;
+        setErrorEdicion(
+          status === 404
+            ? "No se encontró la prestación solicitada."
+            : `No se pudo cargar la prestación${status ? ` (error ${status})` : ""}: ${
+              (e?.response?.data?.detail ? detailMessage(e.response.data.detail) : e?.message) || "error desconocido"
+            }.`,
+        );
       } finally {
         if (active) setLoadingEdit(false);
       }
@@ -622,7 +622,7 @@ const CargaFacturacion: React.FC = () => {
     return () => {
       active = false;
     };
-  }, [isEdit, editId, medicosPrecargados, obrasSocialesPrecargadas, loadPeriodo]);
+  }, [isEdit, editId, loadPeriodo]);
 
   // Carga de la factura complementaria: valida que sea un complemento abierto y fija
   // OS/período. Sostiene el badge del header y la búsqueda de precio/tabla.
@@ -1108,7 +1108,7 @@ const CargaFacturacion: React.FC = () => {
     if (!salioDeEdicion) return;
     setEditMeta(null);
     setEditHidratado(false);
-    setEditNotFound(false);
+    setErrorEdicion(null);
     setMedicoPreset(null);
     setEjecutorPreset(null);
     setCodigoPreset(null);
@@ -1291,8 +1291,16 @@ const CargaFacturacion: React.FC = () => {
       // el detalle de factura, según el `?from=`). Además de ser lo esperado, evita el
       // riesgo de un segundo guardado sobre un estado desactualizado: los ayudantes
       // recién creados todavía no tienen su `prestacionId` y se duplicarían.
+      if (capa) {
+        // El listado sigue abajo: se cierra la capa y él se recarga y resalta la fila.
+        capa.cerrar(Number(editId));
+        return;
+      }
       navigate(volverA);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      // Al detalle de factura se vuelve donde se estaba (lo restaura el listado): subir
+      // acá lo pisaría.
+      const vuelveAlListado = Boolean(fromFactura) && fromFactura !== "carga" && !isComplemento;
+      if (!vuelveAlListado) window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e: any) {
       notify(
         detailMessage(e?.response?.data?.detail) || "Error al guardar",
@@ -1595,7 +1603,7 @@ const CargaFacturacion: React.FC = () => {
             <button
               type="button"
               className={styles.periodoLinkBtn}
-              onClick={() => setReintentoPrecarga((k) => k + 1)}
+              onClick={() => cargarCatalogos()}
             >
               Reintentar
             </button>
@@ -1628,7 +1636,7 @@ const CargaFacturacion: React.FC = () => {
     );
   }
 
-  if (isEdit && editNotFound) {
+  if (isEdit && errorEdicion) {
     return (
       <div className={styles.container}>
         <div className={styles.header}>
@@ -1640,7 +1648,14 @@ const CargaFacturacion: React.FC = () => {
           </div>
         </div>
         <div className={styles.errorBox}>
-          No se encontró la prestación solicitada.
+          {errorEdicion}{" "}
+          <button
+            type="button"
+            className={styles.periodoLinkBtn}
+            onClick={() => (capa ? capa.cerrar() : navigate(volverA))}
+          >
+            Volver
+          </button>
         </div>
       </div>
     );
@@ -1745,7 +1760,7 @@ const CargaFacturacion: React.FC = () => {
           <button
             type="button"
             className={styles.backBtn}
-            onClick={() => navigate(volverA)}
+            onClick={() => (capa ? capa.cerrar() : navigate(volverA))}
           >
             <ArrowLeft size={15} /> Volver
           </button>
@@ -1940,14 +1955,14 @@ const CargaFacturacion: React.FC = () => {
                 // se agrega a la lista en memoria para que quede buscable/reseleccionable
                 // sin recargar la página.
                 if (clinica) {
-                  setClinicasPrecargadas((prev) => {
-                    if (!prev || prev.some((c) => c.cod === clinica.cod)) return prev;
+                  actualizarClinicas((prev) => {
+                    if (prev.some((c) => c.cod === clinica.cod)) return prev;
                     return [...prev, clinica].sort((a, b) => a.nombre.localeCompare(b.nombre));
                   });
                 }
               }}
               onClinicaDeleted={(cod) => {
-                setClinicasPrecargadas((prev) => (prev ? prev.filter((c) => c.cod !== cod) : prev));
+                actualizarClinicas((prev) => prev.filter((c) => c.cod !== cod));
               }}
               disabled={formDisabled}
               clinicasPrecargadas={clinicasPrecargadas}

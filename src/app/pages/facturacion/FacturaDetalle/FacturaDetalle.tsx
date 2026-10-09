@@ -1,9 +1,9 @@
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ArrowRightCircle, ArrowLeftCircle, Trash2 } from "lucide-react";
 
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
-import { abrirAdjunto } from "@/app/shared/lib/archivos";
+import { usePermisos } from "@/app/auth/usePermisos";
 import {
   fetchFacturaDetalle, marcarRevisado, anularPrestacion,
   moverPeriodo,
@@ -20,6 +20,11 @@ import type { FiltrosVista, OrdenDireccion, OrdenVista, VistaOpciones } from "./
 import { cargarVistaSesion, COLUMNAS_VISTA_DISPONIBLES, guardarVistaSesion, ORDEN_TIPOS, PESO_COLUMNA } from "./vista/types";
 import type { FilaAcciones, PrestacionConSocio } from "./FilaPrestacion";
 import CabeceraExpediente, { ALTO_BARRA_COMPACTA } from "./CabeceraExpediente";
+import { useRestaurarPosicion } from "./useRestaurarPosicion";
+import {
+  EVENTO_PRESTACION_EDITADA, precargarFormularioCarga, type DetallePrestacionEditada,
+} from "../CargaFacturacion/capaCargaContexto";
+import { cargarCatalogos } from "../CargaFacturacion/catalogosCarga";
 import GrupoTabla from "./GrupoTabla";
 import { sumaEquipo, sumarTotales } from "./totales";
 import type { GrupoAcciones, VistaGrupo } from "./GrupoTabla";
@@ -156,6 +161,8 @@ const hayFiltrosActivos = (f: FiltrosVista): boolean =>
 const FacturaDetalle: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { can } = usePermisos();
   const notify = useAppSnackbar();
 
   const [detalle, setDetalle] = useState<FacturaDetalleResponse | null>(null);
@@ -191,6 +198,29 @@ const FacturaDetalle: React.FC = () => {
 
   useEffect(() => { load(); }, [load]);
 
+  // Recarga después de editar en la capa: sin pasar por "Cargando…", así el listado no
+  // se vacía ni pierde el scroll; las filas se actualizan en el lugar.
+  const recargarEnSilencio = useCallback(async () => {
+    if (!id) return;
+    try {
+      setDetalle(await fetchFacturaDetalle(id));
+    } catch {
+      notify("No se pudo actualizar el listado. Recargá la página para ver los cambios.", "warning");
+    }
+  }, [id, notify]);
+
+  // El formulario de edición se abre al instante: su código y los catálogos (médicos,
+  // obras sociales, clínicas) se bajan de fondo mientras se mira el listado.
+  const puedeEditar = can("facturacion:cargar");
+  useEffect(() => {
+    if (!puedeEditar) return;
+    const t = window.setTimeout(() => {
+      precargarFormularioCarga();
+      cargarCatalogos();
+    }, 1500);
+    return () => window.clearTimeout(t);
+  }, [puedeEditar]);
+
   const withBusy = async (pid: number, fn: () => Promise<void>) => {
     setBusyIds((prev) => new Set(prev).add(pid));
     try {
@@ -220,12 +250,15 @@ const FacturaDetalle: React.FC = () => {
   };
 
   const handleEditar = (p: PrestacionConSocio) => {
-    navigate(`/panel/facturacion/carga/${p.id}?from=${id}`);
+    recordarFila(p.id); // al volver, el listado queda donde estaba y esta fila titila
+    // `fondo`: el formulario se abre encima del listado, que queda montado (CapaCarga).
+    navigate(`/panel/facturacion/carga/${p.id}?from=${id}`, { state: { fondo: location } });
   };
 
   // Precarga el formulario de carga con los datos de esta prestación, pero como una
   // prestación nueva (POST) — la original no se toca.
   const handleReplicar = (p: PrestacionConSocio) => {
+    recordarFila(null);
     navigate(`/panel/facturacion/carga?replicar=${p.id}`);
   };
 
@@ -600,6 +633,23 @@ const FacturaDetalle: React.FC = () => {
   // o abrir un panel responde al instante y la tabla se actualiza al terminar de calcularse.
   const gruposDibujados = useDeferredValue(gruposEstables);
 
+  // Al volver de editar (o de la carga) el listado reaparece en el mismo lugar, sin saltos:
+  // queda oculto hasta que la posición está calculada.
+  const { restaurando, recordarFila, resaltarFila } = useRestaurarPosicion(
+    id, detalle !== null && gruposDibujados === gruposEstables, error !== null,
+  );
+
+  // Se guardó una edición en la capa: se recarga el listado por debajo y, cuando la capa
+  // se fue, la fila titila en su lugar.
+  useEffect(() => {
+    const alEditar = (ev: Event) => {
+      const { id: filaId } = (ev as CustomEvent<DetallePrestacionEditada>).detail;
+      resaltarFila(filaId, recargarEnSilencio());
+    };
+    window.addEventListener(EVENTO_PRESTACION_EDITADA, alEditar);
+    return () => window.removeEventListener(EVENTO_PRESTACION_EDITADA, alEditar);
+  }, [resaltarFila, recargarEnSilencio]);
+
   const ocupadasDe = (g: VistaGrupo): ReadonlySet<number> => {
     if (busyIds.size === 0) return SIN_OCUPADAS;
     const ids = g.miembros.filter((p) => busyIds.has(p.id)).map((p) => p.id);
@@ -610,15 +660,13 @@ const FacturaDetalle: React.FC = () => {
   const totalFiltrado = useMemo(() => sumarTotales(visibles).totalSubtotal, [visibles]);
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} style={restaurando ? { visibility: "hidden" } : undefined}>
       <CabeceraExpediente
         detalle={detalle}
         filas={todasFlat}
         onVista={() => setVistaOpen(true)}
         onExportar={() => setExportOpen(true)}
         onVolver={() => navigate("/panel/facturacion/periodos")}
-        onAbrirFactura={(idFactura) => navigate(`/panel/facturacion/periodos/${idFactura}`)}
-        onAbrirComprobante={(ruta) => { abrirAdjunto(ruta).catch((e: Error) => notify(e.message, "error")); }}
         onCompactaChange={setBarraCompacta}
       />
 

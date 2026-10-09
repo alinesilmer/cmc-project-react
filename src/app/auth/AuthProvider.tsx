@@ -10,6 +10,7 @@ import { http } from "@/app/shared/lib/http";
 import { getAccessToken, getCookie, setAccessToken } from "../auth/token";
 import { refreshSession, listenRemoteLogout, type LogoutMotivo } from "./session";
 import { anotarIngreso } from "@/app/features/avisoIngreso/reglasAviso";
+import { olvidarCatalogos } from "@/app/pages/facturacion/CargaFacturacion/catalogosCarga";
 
 type AuthCtx = {
   user: User | null;
@@ -53,6 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAccessToken(null);
     sessionStorage.removeItem("me");
     delete http.defaults.headers.common["Authorization"];
+    olvidarCatalogos();
   };
 
   // Cierre de sesión forzado: por el interceptor de http.ts (401 que no se
@@ -61,6 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const goToLogin = (motivo: LogoutMotivo) => {
       setUser(null);
       sessionStorage.removeItem("me");
+      olvidarCatalogos();
       navigate("/panel/login", { replace: true, state: { motivo } });
     };
     const onLocalLogout = (ev: Event) => {

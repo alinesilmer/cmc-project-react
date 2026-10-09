@@ -347,6 +347,8 @@ export interface FacturaRead {
   creado_por?: string | null;
   creado_en?: string | null;
   creado_por_nombre?: string | null;
+  /** Nombre de la obra social (lo resuelve el backend en la lista). */
+  nombre_obra_social?: string | null;
   /** true si al menos una fila de detalle_facturacion de esta OS+período (cualquier
    *  versión) está publicada — visibilidad hacia el médico. Se actualiza en bloque
    *  con `publicarPeriodo`, único camino de la app para tocar este flag. */

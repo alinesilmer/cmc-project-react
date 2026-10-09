@@ -43,18 +43,6 @@ const estadoLabel = (estado: string | null): string => {
   }
 };
 
-const fmtFecha = (iso: string | null): string => {
-  if (!iso) return "—";
-  // `new Date("2026-11-01")` parsea las date-only como medianoche UTC, y al mostrarlas
-  // en hora local (AR = UTC-3) retroceden un día. Las fechas de la API (`fecha_practica`,
-  // `fecha`) son columnas DATE, así que se formatean sin pasar por Date.
-  const soloFecha = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
-  if (soloFecha) return `${soloFecha[3]}/${soloFecha[2]}/${soloFecha[1]}`;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
-};
-
 const VerPeriodos: React.FC = () => {
   const navigate = useNavigate();
   const notify = useAppSnackbar();
@@ -224,38 +212,38 @@ const VerPeriodos: React.FC = () => {
           <table className={styles.table}>
             <thead>
               <tr>
+                <th>Nº Exp.</th>
                 <th>Obra social</th>
                 <th>Período</th>
-                <th>Operador</th>
                 <th>Estado</th>
-                <th>Fecha de cierre</th>
                 <th>Factura</th>
-                <th>Nº Exp.</th>
                 <th>Total</th>
                 <th className={styles.thActions}>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {loading && (
-                <tr><td colSpan={9} className={styles.loadingCell}>Cargando…</td></tr>
+                <tr><td colSpan={7} className={styles.loadingCell}>Cargando…</td></tr>
               )}
               {!loading && rows.length === 0 && (
-                <tr><td colSpan={9} className={styles.emptyCell}>No se encontraron facturas.</td></tr>
+                <tr><td colSpan={7} className={styles.emptyCell}>No se encontraron facturas.</td></tr>
               )}
               {!loading && rows.map((row) => (
                 <tr key={row.id_prestaciones}>
-                  <td><span className={styles.osCell}>{row.cod_obr || "—"}</span></td>
+                  <td><span className={styles.facturaNro}>{row.id_prestaciones}</span></td>
+                  <td>
+                    <span className={styles.osCell}>{row.cod_obr || "—"}</span>
+                    {row.nombre_obra_social && <span className={styles.osNombre}>{row.nombre_obra_social}</span>}
+                  </td>
                   <td>
                     <span className={styles.periodoLabel}>{row.periodo_label || row.periodo}</span>
                     {row.periodo_label && <span className={styles.periodoCode}>{row.periodo}</span>}
                   </td>
-                  <td>{row.usuario || <span className={styles.mutedText}>—</span>}</td>
                   <td>
                     <span className={`${styles.estadoBadge} ${estadoBadgeClass(row.estado)}`}>
                       {estadoLabel(row.estado)}
                     </span>
                   </td>
-                  <td>{fmtFecha(row.fecha)}</td>
                   <td>
                     {row.nro_factura ? (
                       <span className={styles.facturaCell}>
@@ -268,7 +256,6 @@ const VerPeriodos: React.FC = () => {
                       <span className={styles.mutedText}>Sin factura</span>
                     )}
                   </td>
-                  <td><span className={styles.facturaNro}>{row.id_prestaciones}</span></td>
                   <td><span className={styles.totalCell}>{formatMoney(row.importe)}</span></td>
                   <td>
                     <div className={styles.actionsCell}>

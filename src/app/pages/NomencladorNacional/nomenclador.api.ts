@@ -71,6 +71,10 @@ import type {
   MesActualizaciones,
   ResumenVigenciaOut,
   ObraSocialFamiliaItem,
+  ImportarFijosPayload,
+  ImportarFijosPreviewOut,
+  ImportarFijosAplicarPayload,
+  ImportarFijosAplicarOut,
   ReplicarFamiliaResult,
   ReplicarValoresFamiliaPayload,
   ReplicarGalenoFamiliaPayload,
@@ -637,3 +641,17 @@ export const aplicarNivelado = (
   payload: { obra_social_nro: number; vigencia_desde: string; dry_run: boolean },
 ): Promise<AplicarNiveladoOut> =>
   postJSON<AplicarNiveladoOut>(`/api/nomencladores_nivelados/${slug}/aplicar`, payload, { timeout: 180_000 });
+
+// ─── Importar valores fijos NE desde Excel ───────────────────────────────────
+
+/** Qué pasaría con cada fila del Excel (no escribe). */
+export const previsualizarValoresFijos = (payload: ImportarFijosPayload): Promise<ImportarFijosPreviewOut> =>
+  postJSON<ImportarFijosPreviewOut>("/api/valores_nm/importar_fijos/previsualizar", payload, {
+    timeout: TIMEOUT_MASIVO_MS,
+  });
+
+/** Aplica las decisiones. 409 si los datos cambiaron desde la vista previa. */
+export const aplicarValoresFijos = (payload: ImportarFijosAplicarPayload): Promise<ImportarFijosAplicarOut> =>
+  postJSON<ImportarFijosAplicarOut>("/api/valores_nm/importar_fijos/aplicar", payload, {
+    timeout: TIMEOUT_MASIVO_MS,
+  });

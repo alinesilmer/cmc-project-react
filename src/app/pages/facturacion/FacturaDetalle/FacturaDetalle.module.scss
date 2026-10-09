@@ -686,3 +686,18 @@ $clinica-bg: #fed7aa;
   justify-content: flex-end;
   white-space: nowrap;
 }
+
+// Fila recién editada: al volver al listado titila en naranja claro unos segundos. Es un
+// atributo y no una clase: React reescribe el `className` de la fila al re-renderizar
+// (la recarga después de guardar) y se llevaba puesta la marca.
+tr[data-resaltada] td {
+  animation: parpadeoFila 0.85s ease-in-out 4;
+}
+
+@keyframes parpadeoFila {
+  50% { background-color: #fed7aa; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  tr[data-resaltada] td { animation: none; background-color: #fed7aa; }
+}

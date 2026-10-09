@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowLeft, Check, ChevronDown, ChevronUp, Copy, Download, FileCheck2, SlidersHorizontal,
+  ArrowLeft, Check, ChevronDown, Copy, Download, FileCheck2, SlidersHorizontal,
 } from "lucide-react";
 
 import { formatMoney, parseMoney } from "../money";
@@ -15,30 +15,12 @@ import styles from "./CabeceraExpediente.module.scss";
 export const ALTO_BARRA_COMPACTA = 56;
 // El alto del topbar de la app (64px + su borde): la barra fija va debajo.
 const ALTO_TOPBAR = 65;
-const CLAVE_DATOS_ABIERTOS = "facturacion:cabecera-datos-abiertos";
 
 const estadoChip = (estado: string | null | undefined) => (estado === "A" ? styles.chipAbierta : styles.chipCerrada);
 const estadoLabel = (estado: string | null | undefined) =>
   estado === "A" ? "Abierta" : estado === "C" ? "Cerrada" : estado || "—";
 
-/** "2026-10-01" → "01/10/2026" (sin pasar por Date: evita el corrimiento de zona horaria). */
-const fechaCorta = (iso?: string | null): string => {
-  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso ?? "");
-  return m ? `${m[3]}/${m[2]}/${m[1]}` : "—";
-};
-const fechaHora = (iso?: string | null): string => {
-  const m = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}:\d{2})/.exec(iso ?? "");
-  return m ? `${m[3]}/${m[2]}/${m[1]} ${m[4]}` : fechaCorta(iso);
-};
 const entero = (n: number): string => n.toLocaleString("es-AR");
-
-const leerDatosAbiertos = (): boolean => {
-  try {
-    return sessionStorage.getItem(CLAVE_DATOS_ABIERTOS) !== "0";
-  } catch {
-    return true;
-  }
-};
 
 interface Props {
   detalle: FacturaDetalleResponse | null;
@@ -47,18 +29,15 @@ interface Props {
   onVista: () => void;
   onExportar: () => void;
   onVolver: () => void;
-  onAbrirFactura: (idFactura: number) => void;
-  onAbrirComprobante: (ruta: string) => void;
   /** Avisa cuando la barra compacta aparece o desaparece. */
   onCompactaChange: (compacta: boolean) => void;
 }
 
 export default function CabeceraExpediente({
-  detalle, filas, onVista, onExportar, onVolver, onAbrirFactura, onAbrirComprobante, onCompactaChange,
+  detalle, filas, onVista, onExportar, onVolver, onCompactaChange,
 }: Props) {
   const cabeceraRef = useRef<HTMLDivElement>(null);
   const [compacta, setCompacta] = useState(false);
-  const [datosAbiertos, setDatosAbiertos] = useState(leerDatosAbiertos);
   const [copiado, setCopiado] = useState(false);
 
   // La barra compacta aparece cuando la cabecera completa se fue por arriba (debajo del
@@ -75,10 +54,6 @@ export default function CabeceraExpediente({
   }, [detalle]);
 
   useEffect(() => { onCompactaChange(compacta); }, [compacta, onCompactaChange]);
-
-  useEffect(() => {
-    try { sessionStorage.setItem(CLAVE_DATOS_ABIERTOS, datosAbiertos ? "1" : "0"); } catch { /* sin storage */ }
-  }, [datosAbiertos]);
 
   // Cantidades en unidades facturadas (cantidad × sesión), como el total de prestaciones.
   const stats = useMemo(() => {
@@ -132,16 +107,6 @@ export default function CabeceraExpediente({
 
   const nombreOs = detalle.nombre_obra_social || `Obra social ${detalle.cod_obra}`;
   const complemento = (detalle.version ?? 1) > 1;
-  const otras = detalle.otras_versiones ?? [];
-  const facturas = detalle.numeros_factura ?? [];
-  const nCerrada = detalle.estado === "C";
-
-  const dato = (etiqueta: string, valor: React.ReactNode) => (
-    <div className={styles.dato}>
-      <span className={styles.datoEtiqueta}>{etiqueta}</span>
-      <span className={styles.datoValor}>{valor}</span>
-    </div>
-  );
 
   return (
     <>
@@ -228,37 +193,6 @@ export default function CabeceraExpediente({
             <span className={`${styles.statValor} ${styles.statValorTotal}`}>{formatMoney(detalle.total_importe)}</span>
             <span className={styles.statNota}>suma de las {entero(detalle.total_prestaciones)} prestaciones</span>
           </div>
-        </div>
-
-        <div className={styles.datos}>
-          <div className={styles.datosCabecera}>
-            <span className={styles.etiquetaChica}>Datos de la factura</span>
-            <button type="button" className={styles.rutaLink} onClick={() => setDatosAbiertos((v) => !v)} aria-expanded={datosAbiertos}>
-              {datosAbiertos ? <>Ocultar <ChevronUp size={13} /></> : <>Mostrar <ChevronDown size={13} /></>}
-            </button>
-          </div>
-          {datosAbiertos && (
-            <div className={styles.datosGrilla}>
-              {dato("N.º de factura", facturas.length > 0 ? facturas.join(" · ") : "—")}
-              {dato("Fecha de cierre", fechaCorta(detalle.fecha_cierre))}
-              {dato("Enviada a la OS", fechaCorta(detalle.fecha_envio))}
-              {dato("Recibida por la OS", fechaCorta(detalle.fecha_recepcion))}
-              {dato("Comprobante", detalle.documento_url
-                ? <button type="button" className={styles.rutaLink} onClick={() => onAbrirComprobante(detalle.documento_url as string)}>Ver documento</button>
-                : "—")}
-              {dato("Creada por", detalle.creada_por ? `${detalle.creada_por}${detalle.creada_en ? ` · ${fechaHora(detalle.creada_en)}` : ""}` : "—")}
-              {dato("Cerrada por", nCerrada && detalle.cerrada_por ? detalle.cerrada_por : "—")}
-              {dato("Otras versiones", otras.length > 0
-                ? otras.map((o) => (
-                  <button key={o.id_factura} type="button" className={styles.rutaLink} onClick={() => onAbrirFactura(o.id_factura)}>
-                    v{o.version} · Exp. {o.id_factura}
-                  </button>
-                ))
-                : "Ninguna")}
-              {dato("Período de carga", detalle.periodo)}
-              {dato("AFIP", detalle.afip || "—")}
-            </div>
-          )}
         </div>
       </div>
 

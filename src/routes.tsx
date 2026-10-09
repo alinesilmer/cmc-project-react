@@ -1,5 +1,8 @@
-import { Suspense, lazy } from "react";
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { Suspense, lazy, useMemo } from "react";
+import { Routes, Route, Navigate, useLocation, matchPath, type Location } from "react-router-dom";
+import {
+  RUTA_EDICION, RutaCapaContext, type EstadoConFondo, type RutaCapa,
+} from "./app/pages/facturacion/CargaFacturacion/capaCargaContexto";
 import { AnimatePresence } from "framer-motion";
 
 // Structural components are always needed for the panel shell → keep eager.
@@ -136,6 +139,7 @@ const CompletarNomencladorNN = lazy(() => import("./app/pages/NomencladorNaciona
 const AgregarCodigoObrasSociales = lazy(() => import("./app/pages/NomencladorNacional/AgregarCodigoObrasSociales/AgregarCodigoObrasSociales"));
 const ActualizacionesValores = lazy(() => import("./app/pages/NomencladorNacional/ActualizacionesValores/ActualizacionesValores"));
 const ImportarPreciosPdf = lazy(() => import("./app/pages/NomencladorNacional/ImportarPreciosPdf/ImportarPreciosPdf"));
+const ImportarValoresFijos = lazy(() => import("./app/pages/NomencladorNacional/ImportarValoresFijos/ImportarValoresFijos"));
 const AumentoPorcentual = lazy(() => import("./app/pages/NomencladorNacional/AumentoPorcentual/AumentoPorcentual"));
 
 /** /panel/dashboard: el socio ve su portal, el personal el tablero de siempre. */
@@ -154,10 +158,24 @@ function PlanillasRoute() {
 }
 
 export default function RootRoutes() {
+  // Edición rápida desde el listado de una factura (ver CapaCarga): la URL es la de la
+  // edición pero las rutas se dibujan con la del listado (`fondo`), que queda montado
+  // debajo; la capa con el formulario la pone el layout del panel.
+  const location = useLocation();
+  const fondo = (location.state as EstadoConFondo | null)?.fondo as Location | undefined;
+  const edicion = fondo ? matchPath(RUTA_EDICION, location.pathname) : null;
+  const rutaCapa = useMemo<RutaCapa | null>(
+    () => edicion?.params.id
+      ? { editId: edicion.params.id, from: new URLSearchParams(location.search).get("from") }
+      : null,
+    [edicion?.params.id, location.search],
+  );
+
   return (
+    <RutaCapaContext.Provider value={rutaCapa}>
     <AnimatePresence mode="wait">
       <Suspense fallback={<div style={{ padding: 24 }}>Cargando…</div>}>
-        <Routes>
+        <Routes location={rutaCapa && fondo ? fondo : location}>
           <Route element={<TemaPanel />}>
           <Route path="/panel/login" element={<Login />} />
           <Route
@@ -409,6 +427,7 @@ export default function RootRoutes() {
               </Route>
               <Route element={<RequireScope scope="nomenclador:masivo" />}>
                 <Route path="nomenclador/importar-precios-pdf" element={<ImportarPreciosPdf />} />
+                <Route path="nomenclador/importar-valores-fijos" element={<ImportarValoresFijos />} />
                 <Route path="nomenclador/aumento-porcentual" element={<AumentoPorcentual />} />
                 <Route path="herramientas/completar-nomenclador-nn" element={<CompletarNomencladorNN />} />
                 <Route path="herramientas/agregar-codigo-obras-sociales" element={<AgregarCodigoObrasSociales />} />
@@ -480,5 +499,6 @@ export default function RootRoutes() {
         </Routes>
       </Suspense>
     </AnimatePresence>
+    </RutaCapaContext.Provider>
   );
 }

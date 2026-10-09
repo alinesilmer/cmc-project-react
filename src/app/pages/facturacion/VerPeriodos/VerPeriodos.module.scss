@@ -209,6 +209,12 @@ $shadow-md:  0 4px 16px rgba(0, 0, 0, .10);
   font-variant-numeric: tabular-nums;
 }
 
+.osNombre {
+  margin-left: 8px;
+  color: $text-2;
+  font-size: 0.82rem;
+}
+
 .totalCell {
   font-weight: 700;
   color: $green;
