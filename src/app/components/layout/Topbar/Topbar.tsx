@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -713,6 +720,15 @@ function menuVisible(
   return entry.columns.some((c) => columnVisible(c, can));
 }
 
+function entryVisible(entry: TopEntry, can: (code: string) => boolean): boolean {
+  return entry.kind === "link"
+    ? passesPerms(entry.perms, can)
+    : menuVisible(entry, can);
+}
+
+// Separación entre entradas de la barra (`.menubar { gap }`): entra en la cuenta del espacio.
+const GAP_MENUBAR = 2;
+
 // Pantallas donde la barra NO acompaña el scroll. El formulario de carga de
 // prestaciones es largo (formulario + listado del médico debajo) y la barra fija le
 // come alto útil mientras el operador baja; ahí se deja estática y se recupera al
@@ -749,11 +765,15 @@ export default function Topbar() {
   const [mobileExpanded, setMobileExpanded] = useState<Record<string, boolean>>(
     {},
   );
+  const [masExpanded, setMasExpanded] = useState<Record<string, boolean>>({});
+  // Cuántas entradas de la barra entran sin pisar el perfil; el resto va a «Más».
+  const [cabenN, setCabenN] = useState(Number.POSITIVE_INFINITY);
   const headerRef = useRef<HTMLElement>(null);
+  const menubarRef = useRef<HTMLElement>(null);
+  const medidorRef = useRef<HTMLDivElement>(null);
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // El chip del usuario no cabe junto al menú en pantallas chicas: ahí el nombre
-  // se muestra en la cabecera del drawer (ver más abajo), no en la barra.
+  // El nombre completo vive en el menú del avatar y en la cabecera del drawer.
   const userName = user?.nombre?.trim() ?? "";
   const userInitials = useMemo(() => {
     const partes = userName.split(/\s+/).filter(Boolean);
@@ -767,6 +787,52 @@ export default function Topbar() {
 
   const authLabel = isAuthenticated ? "Salir" : "Iniciar sesión";
   const AuthIcon = isAuthenticated ? LogOut : CircleUserRound;
+
+  const visibles = useMemo(
+    () => nav.filter((e) => entryVisible(e, can)),
+    [nav, can],
+  );
+  const visiblesKey = visibles
+    .map((e) => (e.kind === "link" ? e.path : e.id))
+    .join("|");
+
+  // Mide cuánto lugar queda en la barra y cuánto ocupa cada entrada (en un medidor
+  // invisible con las mismas clases, así el ancho no depende de lo que esté a la
+  // vista). Las que no entran pasan al desplegable «Más», en el mismo orden.
+  const medir = useCallback(() => {
+    const barra = menubarRef.current;
+    const medidor = medidorRef.current;
+    if (!barra || !medidor) return;
+    const disponible = barra.clientWidth;
+    if (disponible === 0) return; // barra oculta: en pantallas chicas manda el drawer
+    const anchos = Array.from(medidor.children, (c) =>
+      Math.ceil(c.getBoundingClientRect().width),
+    );
+    const anchoMas = (anchos.pop() ?? 0) + GAP_MENUBAR;
+    let usado = 0;
+    let n = 0;
+    for (let i = 0; i < anchos.length; i++) {
+      usado += anchos[i] + (i > 0 ? GAP_MENUBAR : 0);
+      const reserva = i < anchos.length - 1 ? anchoMas : 0;
+      if (usado + reserva > disponible) break;
+      n = i + 1;
+    }
+    setCabenN(n);
+  }, []);
+
+  useLayoutEffect(() => {
+    medir();
+    const barra = menubarRef.current;
+    if (!barra) return;
+    const ro = new ResizeObserver(medir);
+    ro.observe(barra);
+    // Con la tipografía recién cargada los anchos cambian.
+    void document.fonts?.ready.then(medir);
+    return () => ro.disconnect();
+  }, [medir, visiblesKey]);
+
+  const enBarra = visibles.slice(0, Math.min(cabenN, visibles.length));
+  const enMas = visibles.slice(enBarra.length);
 
   // Close menus on navigation.
   useEffect(() => {
@@ -960,6 +1026,146 @@ export default function Topbar() {
     );
   };
 
+  // ── «Más»: las entradas que no entran en la barra ─────────────────────────────
+  const renderMasEntry = (entry: TopEntry) => {
+    const Icon = entry.icon;
+    if (entry.kind === "link") {
+      const active = isActivePath(location.pathname, entry.path);
+      return (
+        <Link
+          key={entry.path}
+          to={entry.path}
+          className={`${styles.item} ${active ? styles.itemActive : ""}`}
+          aria-current={active ? "page" : undefined}
+          onClick={cerrarMenus}
+        >
+          <span className={styles.itemIcon}>
+            <Icon size={16} />
+          </span>
+          <span className={styles.itemLabel}>{entry.label}</span>
+        </Link>
+      );
+    }
+    const open = Boolean(masExpanded[entry.id]);
+    const active = entryActive(location.pathname, entry);
+    return (
+      <div key={entry.id} className={styles.mGroup}>
+        <button
+          type="button"
+          className={`${styles.item} ${styles.masBtn} ${active ? styles.itemActive : ""}`}
+          onClick={() => setMasExpanded((p) => ({ ...p, [entry.id]: !p[entry.id] }))}
+          aria-expanded={open}
+        >
+          <span className={styles.itemIcon}>
+            <Icon size={16} />
+          </span>
+          <span className={styles.itemLabel}>{entry.label}</span>
+          <ChevronDown
+            size={15}
+            className={`${styles.chev} ${open ? styles.chevOpen : ""}`}
+          />
+        </button>
+        {open && (
+          <div className={styles.mGroupBody}>{renderColumns(entry.columns)}</div>
+        )}
+      </div>
+    );
+  };
+
+  const renderMas = () => {
+    const open = openMenu === "mas";
+    const active = enMas.some((e) => entryActive(location.pathname, e));
+    return (
+      <div
+        className={styles.menu}
+        onMouseEnter={() => openMenuNow("mas")}
+        onMouseLeave={scheduleCloseMenu}
+      >
+        <button
+          type="button"
+          className={`${styles.topLink} ${styles.topTrigger} ${active ? styles.topActive : ""} ${open ? styles.topOpen : ""}`}
+          onClick={() => setOpenMenu((cur) => (cur === "mas" ? null : "mas"))}
+          onFocus={() => openMenuNow("mas")}
+          aria-expanded={open}
+          aria-haspopup="true"
+        >
+          <span className={styles.topLabel}>Más</span>
+          <ChevronDown
+            size={15}
+            className={`${styles.chev} ${open ? styles.chevOpen : ""}`}
+          />
+        </button>
+        {open && (
+          <div
+            className={`${styles.dropdown} ${styles.dropdownEnd} ${styles.masPanel}`}
+            role="menu"
+          >
+            {enMas.map(renderMasEntry)}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ── Perfil: avatar con el nombre completo y «Cerrar sesión» ────────────────────
+  const renderPerfil = () => {
+    if (!isAuthenticated) {
+      return (
+        <button
+          type="button"
+          className={styles.authButton}
+          onClick={handleAuth}
+          title={authLabel}
+        >
+          <AuthIcon size={17} />
+          <span className={styles.authText}>{authLabel}</span>
+        </button>
+      );
+    }
+    const open = openMenu === "perfil";
+    return (
+      <div
+        className={styles.perfil}
+        onMouseEnter={() => openMenuNow("perfil")}
+        onMouseLeave={scheduleCloseMenu}
+      >
+        <button
+          type="button"
+          className={`${styles.perfilBtn} ${open ? styles.perfilBtnOpen : ""}`}
+          onClick={() => setOpenMenu((cur) => (cur === "perfil" ? null : "perfil"))}
+          aria-haspopup="true"
+          aria-expanded={open}
+          onFocus={() => openMenuNow("perfil")}
+          aria-label={userName ? `Cuenta de ${userName}` : "Cuenta"}
+        >
+          <span className={styles.userAvatar} aria-hidden="true">
+            {userInitials || <CircleUserRound size={16} />}
+          </span>
+        </button>
+        {open && (
+          <div
+            className={`${styles.dropdown} ${styles.dropdownEnd} ${styles.perfilPanel}`}
+            role="menu"
+          >
+            {userName && <p className={styles.perfilNombre}>{userName}</p>}
+            <button
+              type="button"
+              role="menuitem"
+              className={styles.perfilSalir}
+              onClick={() => {
+                cerrarMenus();
+                void handleAuth();
+              }}
+            >
+              <LogOut size={16} />
+              Cerrar sesión
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // ── Mobile accordion entry ───────────────────────────────────────────────────
   const renderMobileEntry = (entry: TopEntry) => {
     if (entry.kind === "link") {
@@ -1029,29 +1235,17 @@ export default function Topbar() {
         </Link>
 
         {/* Desktop menubar */}
-        <nav className={styles.menubar} aria-label="Navegación principal">
-          {nav.map((entry, i) => renderTopEntry(entry, i, nav.length))}
+        <nav
+          className={styles.menubar}
+          aria-label="Navegación principal"
+          ref={menubarRef}
+        >
+          {enBarra.map((entry, i) => renderTopEntry(entry, i, enBarra.length))}
+          {enMas.length > 0 && renderMas()}
         </nav>
 
         <div className={styles.right}>
-          {isAuthenticated && userName && (
-            <div className={styles.userChip} title={userName}>
-              <span className={styles.userAvatar} aria-hidden="true">
-                {userInitials}
-              </span>
-              <span className={styles.userName}>{userName}</span>
-            </div>
-          )}
-
-          <button
-            type="button"
-            className={styles.authButton}
-            onClick={handleAuth}
-            title={authLabel}
-          >
-            <AuthIcon size={17} />
-            <span className={styles.authText}>{authLabel}</span>
-          </button>
+          {renderPerfil()}
 
           <button
             type="button"
@@ -1063,6 +1257,20 @@ export default function Topbar() {
             <Menu size={20} />
           </button>
         </div>
+      </div>
+
+      {/* Medidor invisible: ancho natural de cada entrada, para decidir cuáles van a «Más» */}
+      <div className={styles.medidor} ref={medidorRef} aria-hidden="true">
+        {visibles.map((e) => (
+          <span key={e.kind === "link" ? e.path : e.id} className={styles.topLink}>
+            <span className={styles.topLabel}>{e.label}</span>
+            {e.kind === "menu" && <ChevronDown size={15} className={styles.chev} />}
+          </span>
+        ))}
+        <span className={styles.topLink}>
+          <span className={styles.topLabel}>Más</span>
+          <ChevronDown size={15} className={styles.chev} />
+        </span>
       </div>
 
       {/* Mobile drawer */}

@@ -347,10 +347,8 @@ export type Padron = {
   MARCA?: string | null;
 };
 
-export const fetchObrasSociales = (marca: string = "S") =>
-  getJSON<ObraSocial[]>(
-    `/api/padrones/catalogo?marca=${encodeURIComponent(marca)}`
-  );
+export const fetchObrasSociales = (activo: boolean = true) =>
+  getJSON<ObraSocial[]>(`/api/padrones/catalogo?activo=${activo}`);
 
 export const fetchPadrones = (nroSocio: string | number) =>
   getJSON<Padron[]>(`/api/padrones/${nroSocio}`);

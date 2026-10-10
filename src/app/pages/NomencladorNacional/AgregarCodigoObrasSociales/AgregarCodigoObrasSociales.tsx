@@ -263,7 +263,7 @@ export default function AgregarCodigoObrasSociales() {
                 />
                 <span className={styles.osNro}>{o.nro_obra_social}</span>
                 <span className={styles.osNombre}>{o.nombre}</span>
-                {o.marca !== "S" && <span className={styles.osInactiva}>inactiva</span>}
+                {!o.activo && <span className={styles.osInactiva}>inactiva</span>}
               </label>
             </li>
           ))}

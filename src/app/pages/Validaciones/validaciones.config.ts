@@ -294,7 +294,7 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
     // nombre: "Medicus",
     // // 373 = MEDICUS,CORPORATE,FAMILY -MC- en `obras_sociales`. Ojo que hay una
     // // segunda: la 372 (MEDICUS FUERZAS DE SEGURIDAD, planes MS1/MS2 desde el
-    // // 01/06/2026), hoy con MARCA='N'. Si el Colegio la activa va como otra
+    // // 01/06/2026), hoy inactiva. Si el Colegio la activa va como otra
     // // entrada, no como un plan de esta: el catálogo es por NRO_OBRASOCIAL.
     // codigo: 373,
     // modo: "integrada",

@@ -5,7 +5,7 @@ export interface FilterState {
   nombre: string;
   condicion_iva: "" | "responsable_inscripto" | "exento";
   plazo_vencimiento: "" | "30" | "45" | "60";
-  marca: "" | "S" | "N";
+  activo: "" | "S" | "N";
   soloConEmail: boolean;
   soloConTelefono: boolean;
 }
@@ -14,7 +14,7 @@ export const EMPTY_FILTERS: FilterState = {
   nombre: "",
   condicion_iva: "",
   plazo_vencimiento: "",
-  marca: "",
+  activo: "",
   soloConEmail: false,
   soloConTelefono: false,
 };
@@ -37,7 +37,7 @@ export function useFilters(items: ObraSocialListItem[]) {
       if (filters.plazo_vencimiento) {
         if (String(it.plazo_vencimiento) !== filters.plazo_vencimiento) return false;
       }
-      if (filters.marca && it.marca !== filters.marca) return false;
+      if (filters.activo && it.activo !== (filters.activo === "S")) return false;
       if (filters.soloConEmail && !it.emails.some((e) => e.valor.trim())) return false;
       if (filters.soloConTelefono && !it.telefonos.some((t) => t.valor.trim())) return false;
       return true;
@@ -50,7 +50,7 @@ export function useFilters(items: ObraSocialListItem[]) {
     if (filters.condicion_iva)
       labels.push(filters.condicion_iva === "responsable_inscripto" ? "Factura A" : "Factura B");
     if (filters.plazo_vencimiento) labels.push(`Plazo: ${filters.plazo_vencimiento} días`);
-    if (filters.marca) labels.push(filters.marca === "S" ? "Habilitada: Sí" : "Habilitada: No");
+    if (filters.activo) labels.push(filters.activo === "S" ? "Activa: Sí" : "Activa: No");
     if (filters.soloConEmail) labels.push("Con email");
     if (filters.soloConTelefono) labels.push("Con teléfono");
     return labels;

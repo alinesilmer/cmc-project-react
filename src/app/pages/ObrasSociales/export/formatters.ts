@@ -13,8 +13,8 @@ export function formatPlazo(days?: number | null): string {
   return `${days} días`;
 }
 
-export function formatMarca(marca?: string | null): string {
-  return marca === "S" ? "Sí" : marca === "N" ? "No" : "—";
+export function formatActivo(activo?: boolean | null): string {
+  return activo === true ? "Sí" : activo === false ? "No" : "—";
 }
 
 export function formatEmails(item: ObraSocialListItem): string {

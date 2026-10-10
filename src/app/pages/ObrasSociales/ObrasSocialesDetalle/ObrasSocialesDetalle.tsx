@@ -1,13 +1,22 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useNavigate, useParams, Link, useLocation } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
   Building2, ChevronLeft, Pencil, FileText, Mail, Phone, MapPin,
-  CalendarDays, Receipt, Link2, Users, Hash, Copy, Check,
+  CalendarDays, Receipt, Link2, Users, Hash, Copy, Check, Trash2, CircleCheck, TriangleAlert,
 } from "lucide-react";
-import { getObraSocial } from "../obrasSociales.api";
-import type { ObraSocial, Documento } from "../obrasSociales.types";
-import { CONDICION_IVA_LABELS, TIPO_DOCUMENTO_LABELS, displayCuit } from "../obrasSociales.types";
+import { getObraSocial, deleteObraSocial } from "../obrasSociales.api";
+import type { ObraSocial, Documento, ReplicacionAltaOut } from "../obrasSociales.types";
+import {
+  CONDICION_IVA_LABELS,
+  PASO_REPLICACION_LABELS,
+  TIPO_DOCUMENTO_LABELS,
+  displayCuit,
+} from "../obrasSociales.types";
+import { OBRAS_SOCIALES_KEY } from "../useObrasSociales";
+import ConfirmModal from "@/app/components/ui/ConfirmModal/ConfirmModal";
+import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 import HistorialValores from "./HistorialValores";
 // «Pagos» deshabilitado a pedido del Colegio — el backend no registra su
 // router (ver app/api/routes.py y el docstring de ObraSocialPago en la API).
@@ -90,8 +99,46 @@ function DocumentoCard({ doc }: { doc: Documento }) {
   );
 }
 
+// Lo que se copió de la cabecera al crear la derivada (llega por el estado de la navegación).
+function ReplicacionResumen({ rep }: { rep: ReplicacionAltaOut }) {
+  const hayProblemas = rep.pasos.some((p) => p.estado === "error" || p.omitidos > 0);
+  return (
+    <section
+      className={`${s.card} ${s.cardFull} ${hayProblemas ? s.replicaAviso : s.replicaOk}`}
+      role="status"
+    >
+      <h2 className={s.cardTitle}>
+        {hayProblemas ? <TriangleAlert size={16} /> : <CircleCheck size={16} />} Replicado desde{" "}
+        {rep.cabecera_nombre}
+      </h2>
+      <ul className={s.replicaLista}>
+        {rep.pasos.map((p) => (
+          <li key={p.paso}>
+            <strong>{PASO_REPLICACION_LABELS[p.paso]}:</strong>{" "}
+            {p.estado === "error"
+              ? "no se pudo copiar."
+              : `${p.creados} copiado(s)${p.ya_existian ? `, ${p.ya_existian} ya existían` : ""}${
+                  p.omitidos ? `, ${p.omitidos} omitido(s)` : ""
+                }.`}
+            {p.detalle.length > 0 && (
+              <ul>
+                {p.detalle.map((d, i) => (
+                  <li key={i}>{d}</li>
+                ))}
+              </ul>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 export default function ObrasSocialesDetalle() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const queryClient = useQueryClient();
+  const replicacion = (location.state as { replicacion?: ReplicacionAltaOut } | null)?.replicacion;
   const { id } = useParams<{ id: string }>();
   const obraId = Number(id);
 
@@ -101,6 +148,9 @@ export default function ObrasSocialesDetalle() {
 
   const [activeTab, setActiveTab] = useState<ActiveTab>("datos");
   const { can } = usePermisos();
+  const notify = useNotify();
+  const [confirmarBaja, setConfirmarBaja] = useState(false);
+  const [dandoDeBaja, setDandoDeBaja] = useState(false);
 
   useEffect(() => {
     if (!obraId) return;
@@ -116,6 +166,22 @@ export default function ObrasSocialesDetalle() {
       }
     })();
   }, [obraId]);
+
+  // Baja lógica: la obra social queda con activo=false y sale de los listados y selectores.
+  const darDeBaja = async () => {
+    if (!obra) return;
+    setDandoDeBaja(true);
+    try {
+      await deleteObraSocial(obra.id);
+      queryClient.invalidateQueries({ queryKey: OBRAS_SOCIALES_KEY });
+      notify.success(`Se eliminó la obra social ${obra.nombre}.`);
+      navigate("/panel/convenios/obras-sociales");
+    } catch (e) {
+      notify.error(mensajeDeError(e, "No se pudo eliminar la obra social."));
+      setDandoDeBaja(false);
+      setConfirmarBaja(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -158,12 +224,20 @@ export default function ObrasSocialesDetalle() {
               <p className={s.titleSub}>Nº {obra.nro_obra_social} — {obra.denominacion}</p>
             </div>
           </div>
-          <Link to={`/panel/convenios/obras-sociales/${obra.id}/editar`} className={s.editBtn}>
-            <Pencil size={15} /> Editar
-          </Link>
+          <div className={s.headerActions}>
+            <Link to={`/panel/convenios/obras-sociales/${obra.id}/editar`} className={s.editBtn}>
+              <Pencil size={15} /> Editar
+            </Link>
+            {obra.activo && can("catalogo:editar") && (
+              <button type="button" className={s.deleteBtn} onClick={() => setConfirmarBaja(true)}>
+                <Trash2 size={15} /> Eliminar
+              </button>
+            )}
+          </div>
         </div>
 
         <div className={s.badgeRow}>
+          {!obra.activo && <span className={s.badgeBaja}>Dada de baja</span>}
           {obra.condicion_iva && (
             <span className={obra.condicion_iva === "responsable_inscripto" ? s.badgeA : s.badgeB}>
               {CONDICION_IVA_LABELS[obra.condicion_iva]}
@@ -238,6 +312,8 @@ export default function ObrasSocialesDetalle() {
             </div>
           </section>
 
+          {replicacion && <ReplicacionResumen rep={replicacion} />}
+
           {/* Relaciones */}
           {(obra.obra_social_principal || (obra.asociadas && obra.asociadas.length > 0)) && (
             <section className={`${s.card} ${s.cardFull}`}>
@@ -245,7 +321,7 @@ export default function ObrasSocialesDetalle() {
               <div className={s.relationsGrid}>
                 {obra.obra_social_principal && (
                   <div className={s.relationBlock}>
-                    <h3 className={s.relationLabel}>Obra Social Principal</h3>
+                    <h3 className={s.relationLabel}>Obra Social Cabecera</h3>
                     <Link to={`/panel/convenios/obras-sociales/${obra.obra_social_principal.id}`} className={s.relationLink}>
                       <Users size={14} />{obra.obra_social_principal.denominacion}
                     </Link>
@@ -253,7 +329,7 @@ export default function ObrasSocialesDetalle() {
                 )}
                 {obra.asociadas && obra.asociadas.length > 0 && (
                   <div className={s.relationBlock}>
-                    <h3 className={s.relationLabel}>Obras Sociales Asociadas ({obra.asociadas.length})</h3>
+                    <h3 className={s.relationLabel}>Obras Sociales Derivadas ({obra.asociadas.length})</h3>
                     <ul className={s.asociadasList}>
                       {obra.asociadas.map((a) => (
                         <li key={a.id}>
@@ -304,6 +380,20 @@ export default function ObrasSocialesDetalle() {
       {activeTab === "historial" && (
         <HistorialValores obraNro={obra.nro_obra_social} obraNombre={obra.nombre} />
       )}
+
+      <ConfirmModal
+        isOpen={confirmarBaja}
+        variant="danger"
+        title="Eliminar obra social"
+        message={
+          `Se va a dar de baja ${obra.nombre}: deja de aparecer en los listados y selectores ` +
+          "(padrón, facturación, nomenclador) y no se le pueden cargar prestaciones nuevas. " +
+          "No se borra ningún dato: lo ya cargado sigue visible."
+        }
+        confirmLabel={dandoDeBaja ? "Eliminando…" : "Sí, eliminar"}
+        onConfirm={() => { if (!dandoDeBaja) void darDeBaja(); }}
+        onCancel={() => { if (!dandoDeBaja) setConfirmarBaja(false); }}
+      />
     </div>
   );
 }

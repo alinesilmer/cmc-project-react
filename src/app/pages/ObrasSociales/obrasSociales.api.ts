@@ -4,12 +4,12 @@ import type {
   ObraSocial,
   ObraSocialListItem,
   ObraSocialFormData,
-  ObraSocialRef,
+  ObraSocialCreada,
 } from "./obrasSociales.types";
 
 // ─── Payload builder for create/update ────────────────────────────────────────
 
-function buildPayload(form: ObraSocialFormData) {
+function buildPayload(form: ObraSocialFormData, alta = false) {
   const plazo =
     form.plazo_vencimiento === "otro"
       ? Number(form.plazo_custom)
@@ -68,9 +68,17 @@ function buildPayload(form: ObraSocialFormData) {
     obra_social_principal_id: form.obra_social_principal_id
       ? Number(form.obra_social_principal_id)
       : null,
-    // Operación: sin esto una obra social nueva quedaba deshabilitada para el
-    // padrón por el default del backend (ver auditoría O-02).
-    marca: form.marca,
+    // Solo en el alta y con cabecera: qué copiar de ella.
+    replicar:
+      alta &&
+      form.obra_social_principal_id &&
+      (form.replicar_galenos || form.replicar_nomencladores || form.replicar_valores)
+        ? {
+            galenos: form.replicar_galenos,
+            nomencladores: form.replicar_nomencladores,
+            valores: form.replicar_valores,
+          }
+        : undefined,
     dia_corte: Number(form.dia_corte) || 20,
     contactos,
     direcciones,
@@ -87,7 +95,8 @@ function normalizeListItem(raw: ObraSocial): ObraSocialListItem {
     nombre: raw.nombre,
     denominacion: raw.denominacion,
     condicion_iva: raw.condicion_iva ?? null,
-    marca: raw.marca ?? null,
+    activo: raw.activo !== false,
+    obra_social_principal_id: raw.obra_social_principal_id ?? null,
     cuit: raw.cuit ?? null,
     direccion_real: raw.direccion_real ?? null,
     plazo_vencimiento: raw.plazo_vencimiento ?? null,
@@ -104,7 +113,7 @@ export async function listObrasSociales(
 ): Promise<ObraSocialListItem[]> {
   const { data } = await http.get<ObraSocial[]>("/api/obras_social/", {
     timeout: 20_000,
-    // Por default el backend oculta las dadas de baja (MARCA='N'). Un deep
+    // Por default el backend oculta las dadas de baja (activo=false). Un deep
     // link que busca por número puntual —p.ej. desde O.S. Actualizadas—
     // necesita poder traerlas de vuelta. Ver auditoría A-05.
     params: incluirInactivas ? { incluir_inactivas: true } : undefined,
@@ -130,32 +139,20 @@ export const getObraSocial = (id: number) =>
 
 // ─── CRUD ─────────────────────────────────────────────────────────────────────
 
+// El alta siembra el nomenclador NN y, si se pidió, copia galenos, códigos y valores de la
+// cabecera: puede tardar minutos.
+const TIMEOUT_ALTA_MS = 10 * 60_000;
+
 export const createObraSocial = (form: ObraSocialFormData) =>
-  postJSON<ObraSocial>("/api/obras_social/", buildPayload(form));
+  postJSON<ObraSocialCreada>("/api/obras_social/", buildPayload(form, true), {
+    timeout: TIMEOUT_ALTA_MS,
+  });
 
 export const updateObraSocial = (id: number, form: ObraSocialFormData) =>
   patchJSON<ObraSocial>(`/api/obras_social/${id}`, buildPayload(form));
 
 export const deleteObraSocial = (id: number) =>
   delJSON<void>(`/api/obras_social/${id}`);
-
-// ─── Autocomplete ─────────────────────────────────────────────────────────────
-
-export async function searchObrasSociales(
-  q: string,
-  excludeId?: number
-): Promise<ObraSocialRef[]> {
-  const all = await listObrasSociales(q);
-  return all
-    .filter((it) => it.id !== excludeId)
-    .slice(0, 20)
-    .map((it) => ({
-      id: it.id,
-      nro_obra_social: it.nro_obra_social,
-      nombre: it.nombre,
-      denominacion: it.denominacion,
-    }));
-}
 
 // ─── Documents ────────────────────────────────────────────────────────────────
 
@@ -177,12 +174,3 @@ export const uploadDocumento = (
 
 export const deleteDocumento = (obraId: number, docId: number) =>
   delJSON<void>(`/api/obras_social/${obraId}/documentos/${docId}`);
-
-// ─── Link / unlink asociada ───────────────────────────────────────────────────
-// Asociadas are read-only on the parent. To associate child → parent:
-//   PATCH /api/obras_social/{child_id}  { obra_social_principal_id: parent_id }
-// To remove:
-//   PATCH /api/obras_social/{child_id}  { obra_social_principal_id: null }
-
-export const setObraSocialPrincipal = (childId: number, principalId: number | null) =>
-  patchJSON<void>(`/api/obras_social/${childId}`, { obra_social_principal_id: principalId });

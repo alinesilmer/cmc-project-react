@@ -62,7 +62,8 @@ export interface ObraSocial {
   nro_obra_social: number;
   nombre: string;
   denominacion: string;
-  marca?: string | null;
+  // false = dada de baja (baja lógica).
+  activo: boolean;
   cuit?: string | null;
   direccion_real?: string | null;
   condicion_iva?: CondicionIVA | null;
@@ -81,13 +82,44 @@ export interface ObraSocial {
   updated_at?: string | null;
 }
 
+// Qué se copió de la cabecera al crear una derivada (ver `replicar` en el alta).
+export type PasoReplicacion = "galenos" | "codigos" | "nivelados" | "valores";
+
+export interface ReplicacionPasoOut {
+  paso: PasoReplicacion;
+  estado: "ok" | "parcial" | "omitido" | "error";
+  creados: number;
+  ya_existian: number;
+  omitidos: number;
+  detalle: string[];
+}
+
+export interface ReplicacionAltaOut {
+  cabecera_nro: number;
+  cabecera_nombre: string;
+  pasos: ReplicacionPasoOut[];
+}
+
+export interface ObraSocialCreada extends ObraSocial {
+  replicacion?: ReplicacionAltaOut | null;
+}
+
+export const PASO_REPLICACION_LABELS: Record<PasoReplicacion, string> = {
+  galenos: "Galenos",
+  codigos: "Códigos dados de alta",
+  nivelados: "Nomencladores nivelados",
+  valores: "Valores",
+};
+
 export interface ObraSocialListItem {
   id: number;
   nro_obra_social: number;
   nombre: string;
   denominacion: string;
   condicion_iva?: CondicionIVA | null;
-  marca?: string | null;
+  activo: boolean;
+  // Solo las derivadas la tienen: el id de su obra social cabecera.
+  obra_social_principal_id?: number | null;
   cuit?: string | null;
   direccion_real?: string | null;
   plazo_vencimiento?: number | null;
@@ -139,12 +171,13 @@ export interface ObraSocialFormData {
   fecha_alta_convenio: string;
   emails: ContactoEntry[];
   telefonos: ContactoEntry[];
-  // Relaciones
+  // Relaciones: id de la obra social cabecera (solo si la que se crea es una derivada).
   obra_social_principal_id: string;
-  asociadas_ids: number[];
-  // Operación: sin esto una obra social nueva quedaba MARCA="N" por default
-  // del backend y no aparecía en ningún selector de padrón (ver auditoría O-02).
-  marca: "S" | "N";
+  // Solo en el alta y con cabecera: qué copiar de ella.
+  replicar_galenos: boolean;
+  replicar_nomencladores: boolean;
+  replicar_valores: boolean;
+  // Ventana del período (ver el bloque «Facturación y Contacto»).
   dia_corte: string;
 }
 
@@ -166,8 +199,9 @@ export const EMPTY_FORM: ObraSocialFormData = {
   emails: [{ valor: "", etiqueta: "" }],
   telefonos: [{ valor: "", etiqueta: "" }],
   obra_social_principal_id: "",
-  asociadas_ids: [],
-  marca: "S",
+  replicar_galenos: false,
+  replicar_nomencladores: false,
+  replicar_valores: false,
   dia_corte: "20",
 };
 

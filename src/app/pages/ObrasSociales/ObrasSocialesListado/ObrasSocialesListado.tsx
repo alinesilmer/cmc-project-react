@@ -9,7 +9,9 @@ import {
   TableRow,
 } from "@/app/components/ui/Table/Table";
 import IconButton from "@/app/components/ui/IconButton/IconButton";
+import { useQueryClient } from "@tanstack/react-query";
 import { listObrasSociales, deleteObraSocial } from "../obrasSociales.api";
+import { OBRAS_SOCIALES_KEY } from "../useObrasSociales";
 import type { ObraSocialListItem } from "../obrasSociales.types";
 import ExportPanel from "../export/ExportPanel";
 // `new Date("2025-05-30")` se parsea como UTC y mostraba el día anterior en
@@ -74,6 +76,7 @@ export default function ObrasSocialesListado() {
   const [page, setPage] = useState(1);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const queryClient = useQueryClient();
   const [showExport, setShowExport] = useState(false);
 
   const load = useCallback(async () => {
@@ -116,6 +119,7 @@ export default function ObrasSocialesListado() {
     setDeletingId(id);
     try {
       await deleteObraSocial(id);
+      queryClient.invalidateQueries({ queryKey: OBRAS_SOCIALES_KEY });
       setItems((prev) => prev.filter((it) => it.id !== id));
     } catch {
       setError("No se pudo eliminar la obra social.");
@@ -349,8 +353,9 @@ export default function ObrasSocialesListado() {
           <div className={s.modalBox}>
             <h2 className={s.modalTitle}>¿Eliminar obra social?</h2>
             <p className={s.modalText}>
-              Esta acción no se puede deshacer. Se eliminará la obra social y
-              todos sus datos asociados.
+              Se da de baja la obra social: deja de aparecer en los listados y
+              selectores y no se le pueden cargar prestaciones nuevas. No se
+              borra ningún dato.
             </p>
             <div className={s.modalActions}>
               <Button

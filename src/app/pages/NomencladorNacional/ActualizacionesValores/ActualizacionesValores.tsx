@@ -214,7 +214,7 @@ export default function ActualizacionesValores() {
                             sólo se tiene el NRO_OBRASOCIAL, así que se enlaza a
                             la búsqueda por número en vez de al detalle.
                             `incluir_inactivas=true` porque el listado oculta
-                            por default las dadas de baja (MARCA='N') y una
+                            por default las dadas de baja (activo=false) y una
                             obra social puede haber actualizado precios antes
                             de darse de baja. Ver auditoría A-05. */}
                         <Link

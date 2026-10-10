@@ -28,7 +28,7 @@ type AlertType = "success" | "error" | "warning" | "info";
 // familia declarada ya las oculta el backend (`obra_social_principal_id`,
 // GET /api/padrones/catalogo). Lo que queda acá son planes secundarios SIN
 // declarar todavía — nadie confirmó de qué empresa son cada uno — más 445
-// (BOREAL SALUD), que está de baja (`MARCA='N'`).
+// (BOREAL SALUD), que está de baja (`activo=false`).
 const EXCLUDED_OS = new Set([30, 213, 216, 227, 282, 360, 445]);
 
 const normalize = (s: string) =>
@@ -76,7 +76,7 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
       try {
         setLoading(true);
         const [cat, prs] = await Promise.all([
-          fetchObrasSociales("S"),
+          fetchObrasSociales(),
           fetchPadrones(medicoId),
         ]);
         if (!alive) return;

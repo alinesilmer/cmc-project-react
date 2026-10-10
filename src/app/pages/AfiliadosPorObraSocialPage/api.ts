@@ -33,7 +33,8 @@ function mapObraSocialRawToOS(raw: any): ObraSocial {
     (Number.isFinite(Number(nro))
       ? `OS${String(Number(nro)).padStart(3, "0")}`
       : null);
-  const activa = raw?.ACTIVA ?? raw?.MARCA ?? undefined;
+  const activa =
+    raw?.ACTIVA ?? (typeof raw?.activo === "boolean" ? (raw.activo ? "S" : "N") : undefined);
   return {
     NRO_OBRA_SOCIAL: Number(nro),
     NOMBRE: String(nombre),
