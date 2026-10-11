@@ -412,6 +412,10 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
     }
   };
 
+  // Sin ninguna fila editable (todas de una factura cerrada) no hay nada que accionar: se saca la columna.
+  const hayAcciones = rows.some((r) => r.estado === "A");
+  const columnasTotal = hayAcciones ? 19 : 18;
+
   return (
     <div className={styles.wrap}>
       <div className={styles.header}>
@@ -454,15 +458,15 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                 <th>Valor unitario</th>
                 <th>Total</th>
                 <th>Tipo</th>
-                <th className={styles.thActions}>Acciones</th>
+                {hayAcciones && <th className={styles.thActions}>Acciones</th>}
               </tr>
             </thead>
             <tbody>
               {loading && (
-                <tr><td colSpan={19} className={styles.loadingCell}>Cargando…</td></tr>
+                <tr><td colSpan={columnasTotal} className={styles.loadingCell}>Cargando…</td></tr>
               )}
               {!loading && rows.length === 0 && (
-                <tr><td colSpan={19} className={styles.emptyCell}>Este médico no tiene prestaciones cargadas.</td></tr>
+                <tr><td colSpan={columnasTotal} className={styles.emptyCell}>Este médico no tiene prestaciones cargadas.</td></tr>
               )}
               {!loading && rows.map((row) => {
                 const editable = row.estado === "A";
@@ -575,8 +579,8 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                         </span>
                       ) : <span className={styles.mutedText}>—</span>}
                     </td>
-                    <td>
-                      <div className={styles.actionsCell}>
+                    {hayAcciones && <td>
+                      {editable && <div className={styles.actionsCell}>
                         <span className={`${styles.auditCheckboxWrap} ${row.revisado ? styles.auditCheckboxOn : ""}`}>
                           <input
                             type="checkbox"
@@ -631,12 +635,12 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                         >
                           <Trash2 size={15} />
                         </button>
-                      </div>
-                    </td>
+                      </div>}
+                    </td>}
                   </tr>
                   {esEquipo && abierto && (
                     <tr className={styles.teamDetailRow}>
-                      <td colSpan={19}>
+                      <td colSpan={columnasTotal}>
                         <div className={styles.teamDetailContent}>
                           <span className={styles.teamDetailLabel}>
                             <Users size={13} /> Integrantes del equipo

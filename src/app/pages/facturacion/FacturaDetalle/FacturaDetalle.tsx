@@ -475,7 +475,7 @@ const FacturaDetalle: React.FC = () => {
     const hijos = new Map<number, PrestacionConSocio[]>();
     for (const p of propias) {
       const otros = equipoPorCabeza.get(p.id);
-      if (otros && otros.length > 0) hijos.set(p.id, otros);
+      if (otros && otros.length > 0) hijos.set(p.id, otros.map((h) => ({ ...h, tipoCabeza: p.tipo })));
     }
     return {
       principales: propias,
@@ -580,16 +580,20 @@ const FacturaDetalle: React.FC = () => {
     [vistaOpciones.columnas],
   );
 
+  // Factura cerrada (estado distinto de abierta): no se modifica nada, así que se saca la
+  // columna de acciones y los botones de cada grupo.
+  const conAcciones = !detalle || detalle.estado == null || detalle.estado === "A";
+
   const columnasConPeso = useMemo(() => {
     const activos: { id: string; peso: number }[] = [
       { id: "id", peso: PESO_COLUMNA.id },
       { id: "socio", peso: PESO_COLUMNA.socio },
       ...columnasActivas.map((c) => ({ id: c.key, peso: PESO_COLUMNA[c.key] })),
-      { id: "acciones", peso: PESO_COLUMNA.acciones },
+      ...(conAcciones ? [{ id: "acciones", peso: PESO_COLUMNA.acciones }] : []),
     ];
     const suma = activos.reduce((s, c) => s + c.peso, 0) || 1;
     return activos.map((c) => ({ ...c, pct: (c.peso / suma) * 100 }));
-  }, [columnasActivas]);
+  }, [columnasActivas, conAcciones]);
 
   const esPorSocio = vistaOpciones.agrupacion === "por_socio";
 
@@ -694,7 +698,7 @@ const FacturaDetalle: React.FC = () => {
                 <th>ID</th>
                 <th>Socio</th>
                 {columnasActivas.map((c) => <th key={c.key}>{c.label}</th>)}
-                <th className={styles.thActions}>Acciones</th>
+                {conAcciones && <th className={styles.thActions}>Acciones</th>}
               </tr>
             </thead>
             <tbody>
@@ -723,6 +727,7 @@ const FacturaDetalle: React.FC = () => {
               busyIds={ocupadasDe(g)}
               grupoBusy={busyGroups.has(g.key)}
               esComplemento={esComplemento}
+              conAcciones={conAcciones}
               esPorSocio={esPorSocio}
             />
           ))}

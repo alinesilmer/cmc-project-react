@@ -20,6 +20,10 @@ export const sumarTotales = (arr: PrestacionConSocio[]) => arr.reduce(
 export const sumaEquipo = (cabeza: PrestacionConSocio): boolean =>
   cabeza.tipo !== "Honorarios individuales" && cabeza.tipo !== "Sanatorio";
 
+// Tipo con el que cuenta una fila en los resúmenes por tipo: el equipo cuenta con el de su cabeza
+// (el ayudante de una cirugía de Sanatorio suma en Sanatorios). Igual que el exportable.
+export const tipoParaTotales = (p: PrestacionConSocio) => p.tipoCabeza ?? p.tipo;
+
 export const RESUMEN_TIPO_LABEL: Record<Tipo, string> = {
   Consulta: "Consultas",
   Practica: "Prácticas",
@@ -31,7 +35,7 @@ export const RESUMEN_TIPO_LABEL: Record<Tipo, string> = {
 // solo los tipos que el grupo tiene, en el orden fijo de `ORDEN_TIPOS`.
 export const totalesPorTipo = (arr: PrestacionConSocio[]) => ORDEN_TIPOS
   .map((tipo) => {
-    const filas = arr.filter((p) => p.tipo === tipo);
+    const filas = arr.filter((p) => tipoParaTotales(p) === tipo);
     return { tipo, cantidad: filas.length, total: sumarTotales(filas).totalSubtotal };
   })
   .filter((t) => t.cantidad > 0);

@@ -69,11 +69,13 @@ interface Props {
   busyIds: ReadonlySet<number>;
   grupoBusy: boolean;
   esComplemento: boolean;
+  // false si la factura está cerrada: sin acciones por fila ni por grupo.
+  conAcciones: boolean;
   esPorSocio: boolean;
 }
 
 function GrupoTabla({
-  g, columnas, anchos, acciones, accionesGrupo, busyIds, grupoBusy, esComplemento, esPorSocio,
+  g, columnas, anchos, acciones, accionesGrupo, busyIds, grupoBusy, esComplemento, conAcciones, esPorSocio,
 }: Props) {
   const colSpan = anchos.length;
   // El subtítulo con el nombre de la clínica va en "Por socio" y "Por tipo" (no en la planilla plana).
@@ -90,6 +92,7 @@ function GrupoTabla({
       acciones={acciones}
       busy={busyIds.has(p.id)}
       esComplemento={esComplemento}
+      conAcciones={conAcciones}
       indent={opts?.indent}
       ultimoDelEquipo={opts?.ultimoDelEquipo}
       equipoHead={opts?.equipoHead}
@@ -283,7 +286,7 @@ function GrupoTabla({
               {RESUMEN_TIPO_LABEL[t.tipo]} ({t.cantidad}): <strong>{formatMoney(t.total)}</strong>
             </span>
           ))}
-          <div className={styles.resumenActions}>
+          {conAcciones && <div className={styles.resumenActions}>
             <button type="button" className={styles.resumenActionBtn} disabled={grupoBusy}
               onClick={() => accionesGrupo.onMarcarTodos(g)}>
               Marcar todos
@@ -304,7 +307,7 @@ function GrupoTabla({
                 </button>
               </>
             )}
-          </div>
+          </div>}
           <span className={styles.resumenTotalBadge}>Total: {formatMoney(g.totalSubtotal)}</span>
         </div>
       </td>

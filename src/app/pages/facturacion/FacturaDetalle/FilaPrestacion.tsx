@@ -15,6 +15,9 @@ export interface PrestacionConSocio extends PrestacionFacturaDetalle {
   cod_medico: string;
   nombreSocio: string | null;
   matriculaSocio: number | null;
+  // Solo en el equipo (ayudante/pediatra/gastos): el tipo de su cabeza. En los resúmenes por tipo el
+  // equipo cuenta con la cabeza, igual que en el exportable.
+  tipoCabeza?: Tipo | null;
 }
 
 // Acciones de una fila. El padre pasa SIEMPRE el mismo objeto (ver `acciones` en
@@ -162,6 +165,8 @@ interface Props {
   // Un complemento (version > 1) es una factura para un período ya cerrado y enviado:
   // mover sus prestaciones a otro período no tiene sentido, así que se ocultan esos botones.
   esComplemento: boolean;
+  // false si la factura está cerrada: no se puede tocar nada, así que no hay columna de acciones.
+  conAcciones: boolean;
   // Integrante del equipo, indentado bajo la cabeza (es una fila completa, con sus acciones).
   indent?: boolean;
   ultimoDelEquipo?: boolean;
@@ -174,7 +179,7 @@ interface Props {
 }
 
 function FilaPrestacion({
-  p, columnas, acciones, busy, esComplemento, indent, ultimoDelEquipo, equipoHead, clinicaInline, className,
+  p, columnas, acciones, busy, esComplemento, conAcciones, indent, ultimoDelEquipo, equipoHead, clinicaInline, className,
 }: Props) {
   const editable = p.estado === "A";
   const tituloMover = (txt: string) => (p.revisado ? "Está marcada: desmarcala para moverla" : txt);
@@ -205,7 +210,7 @@ function FilaPrestacion({
         </div>
       </td>
       {columnas.map((c) => renderCelda(p, c))}
-      <td>
+      {conAcciones && <td>
         {(
           <div className={styles.actionsCell}>
             <span className={`${styles.auditCheckboxWrap} ${p.revisado ? styles.auditCheckboxOn : ""}`}>
@@ -268,7 +273,7 @@ function FilaPrestacion({
             </button>
           </div>
         )}
-      </td>
+      </td>}
     </tr>
   );
 }
