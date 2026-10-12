@@ -22,7 +22,7 @@ import type {
   ImportarFijosPreviewOut,
 } from "../nomenclador.types";
 
-const ENCABEZADO = ["CODIGO", "DESCRIPCION", "VALOR"];
+const ENCABEZADO = ["CODIGO", "DESCRIPCION", "HONORARIOS", "GASTOS", "AYUDANTE"];
 const PAGE_SIZE = 50;
 
 const ESTADOS: { id: EstadoFilaFija; label: string; tono: "info" | "ok" | "warn" | "bad" }[] = [
@@ -69,7 +69,12 @@ function norm(v: unknown): string {
   return String(v ?? "").normalize("NFKD").replace(/[̀-ͯ]/g, "").toUpperCase().trim().replace(/\s+/g, " ");
 }
 
-/** Lee la primera hoja y exige CODIGO | DESCRIPCION | VALOR en la fila 1. */
+/** Importe de una celda: los números pasan tal cual; el texto lo interpreta el backend. */
+function importe(c: unknown): string | number | null {
+  return typeof c === "number" ? c : c == null || String(c).trim() === "" ? null : String(c);
+}
+
+/** Lee la primera hoja y exige CODIGO | DESCRIPCION | HONORARIOS | GASTOS | AYUDANTE en la fila 1. */
 async function leerArchivo(file: File): Promise<{ encabezado: (string | null)[]; filas: ImportarFijosFilaIn[] }> {
   const [hoja] = await readExcel(file);
   const grid = hoja?.grid ?? [];
@@ -84,13 +89,15 @@ async function leerArchivo(file: File): Promise<{ encabezado: (string | null)[];
   }
   const filas: ImportarFijosFilaIn[] = [];
   grid.slice(1).forEach((r, i) => {
-    const [codigo, descripcion, valor] = r ?? [];
-    if ([codigo, descripcion, valor].every((c) => c == null || String(c).trim() === "")) return;
+    const [codigo, descripcion, honorarios, gastos, ayudante] = r ?? [];
+    if ([codigo, descripcion, honorarios, gastos, ayudante].every((c) => c == null || String(c).trim() === "")) return;
     filas.push({
       fila: i + 2,
       codigo: codigo == null ? null : String(codigo).trim(),
       descripcion: descripcion == null ? null : String(descripcion),
-      valor: typeof valor === "number" ? valor : valor == null ? null : String(valor),
+      honorarios: importe(honorarios),
+      gastos: importe(gastos),
+      ayudante: importe(ayudante),
     });
   });
   if (!filas.length) throw new Error("El archivo no tiene filas debajo del encabezado.");
@@ -148,7 +155,8 @@ function PrecioActual({ f }: { f: FilaPreviaOut }) {
 }
 
 /**
- * Importar valores fijos NE de una obra social desde un Excel CODIGO | DESCRIPCION | VALOR.
+ * Importar valores fijos NE de una obra social desde un Excel
+ * CODIGO | DESCRIPCION | HONORARIOS | GASTOS | AYUDANTE.
  * Primero se previsualiza (el backend dice qué pasa con cada código y qué se puede hacer),
  * el usuario decide fila por fila y recién al confirmar se guarda. Si la OS tiene otras
  * de su familia (planes de la misma empresa), se ofrece cargar lo mismo en ellas.
@@ -413,7 +421,8 @@ export default function ImportarValoresFijos() {
         <p className={styles.formato}>
           Formato exigido, primera hoja, fila 1 (sin importar mayúsculas):
           {ENCABEZADO.map((c) => <span key={c} className={styles.col}>{c}</span>)}
-          · VALOR acepta 37965, "$ 1.234.567" o PRESUPUESTO. Todo se carga como NE fijo, en Honorarios.
+          · Los importes aceptan 37965 o "$ 1.234.567"; una celda vacía vale 0. Si HONORARIOS, GASTOS y AYUDANTE
+          vienen los tres vacíos, el código se carga por presupuesto. Todo se carga como NE fijo.
         </p>
         <ReplicarFamiliaBlock
           familia={familia}
@@ -494,7 +503,10 @@ export default function ImportarValoresFijos() {
                     <th>Fila</th>
                     <th>Código</th>
                     <th>Descripción</th>
-                    <th className={styles.r}>Valor nuevo</th>
+                    <th className={styles.r}>Honorarios</th>
+                    <th className={styles.r}>Gastos</th>
+                    <th className={styles.r}>Ayudante</th>
+                    <th className={styles.r}>Total nuevo</th>
                     <th>Precio NE actual</th>
                     <th>Estado</th>
                     <th>Qué hacer</th>
@@ -517,9 +529,18 @@ export default function ImportarValoresFijos() {
                             <span className={styles.sub}>En la OS: {f.descripcion_os}</span>
                           )}
                         </td>
-                        <td className={`${styles.r} ${styles.monto}`}>
-                          {f.por_presupuesto ? <span className={styles.presu}>PRESUPUESTO</span> : fmt(f.valor)}
-                        </td>
+                        {f.por_presupuesto ? (
+                          <td className={`${styles.r} ${styles.monto}`} colSpan={4}>
+                            <span className={styles.presu}>PRESUPUESTO</span>
+                          </td>
+                        ) : (
+                          <>
+                            <td className={`${styles.r} ${styles.monto}`}>{fmt(f.honorarios)}</td>
+                            <td className={`${styles.r} ${styles.monto}`}>{fmt(f.gastos)}</td>
+                            <td className={`${styles.r} ${styles.monto}`}>{fmt(f.ayudante)}</td>
+                            <td className={`${styles.r} ${styles.monto}`}><b>{fmt(f.total)}</b></td>
+                          </>
+                        )}
                         <td><PrecioActual f={f} /></td>
                         <td>
                           <span className={`${styles.pill} ${styles[`tono_${estado.tono}`]}`}>{estado.label}</span>

@@ -442,6 +442,27 @@ export type GalenoActualizarPrecioMasivoPayload =
   | { obra_social_nro: number; codigo: string; vigencia_desde: string; porcentaje: number }
   | { obra_social_nro: number; codigo: string; vigencia_desde: string; items: { nivel: number; nuevo_valor_unitario: number }[] };
 
+/** POST /api/galenos/actualizar_precios_lote — todo o nada. */
+export type GalenosPrecioLotePayload = {
+  obra_social_nro: number;
+  vigencia_desde: string;
+  /** Un valor unitario por código, para todos sus niveles vigentes. */
+  items: { codigo: string; nuevo_valor_unitario: number }[];
+};
+
+export type GalenosPrecioLoteResult = {
+  galenos: number;
+  /** Galenos x niveles rotados. */
+  filas: number;
+  valores_recalculados: number;
+};
+
+/** Cuerpo del 422 cuando algún galeno no se puede actualizar (no se aplicó nada). */
+export type GalenosPrecioLoteError = {
+  detail: string;
+  errores?: { codigo: string; nombre: string; motivo: string }[];
+};
+
 export type ActualizacionMasivaResult = {
   actualizados: number;
   errores: { motivo: string; [key: string]: unknown }[];
@@ -1055,7 +1076,10 @@ export type ImportarFijosFilaIn = {
   fila: number;
   codigo: string | null;
   descripcion: string | null;
-  valor: string | number | null;
+  /** Importes crudos de la planilla; HONORARIOS admite además "PRESUPUESTO". Vacío = 0. */
+  honorarios: string | number | null;
+  gastos: string | number | null;
+  ayudante: string | number | null;
 };
 
 export type ImportarFijosPayload = {
@@ -1104,7 +1128,11 @@ export type FilaPreviaOut = {
   descripcion_os: string | null;
   nomenclador_id: number | null;
   categoria: string | null;
-  valor: string | null;
+  /** Importes que se cargan; null si la fila no se pudo interpretar (o es por presupuesto). */
+  honorarios: string | null;
+  gastos: string | null;
+  ayudante: string | null;
+  total: string | null;
   por_presupuesto: boolean;
   estado: EstadoFilaFija;
   estado_base: EstadoFilaFija | null;

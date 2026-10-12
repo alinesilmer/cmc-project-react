@@ -78,6 +78,8 @@ import type {
   ReplicarFamiliaResult,
   ReplicarValoresFamiliaPayload,
   ReplicarGalenoFamiliaPayload,
+  GalenosPrecioLotePayload,
+  GalenosPrecioLoteResult,
 } from "./nomenclador.types";
 
 // ─── Nomenclador ──────────────────────────────────────────────────────────────
@@ -214,6 +216,17 @@ export const actualizarPrecioGaleno = (
   payload: GalenoActualizarPrecioPayload,
 ): Promise<GalenoOut> =>
   postJSON<GalenoOut>(`/api/galenos/${id}/actualizar_precio`, payload);
+
+/**
+ * Cambia el precio de varios galenos de una OS en una sola transacción: o se aplican todos
+ * o ninguno. Recalcula miles de valores, así que lleva el timeout largo.
+ */
+export const actualizarPreciosGalenosLote = (
+  payload: GalenosPrecioLotePayload,
+): Promise<GalenosPrecioLoteResult> =>
+  postJSON<GalenosPrecioLoteResult>("/api/galenos/actualizar_precios_lote", payload, {
+    timeout: TIMEOUT_MASIVO_MS,
+  });
 
 export const actualizarPrecioMasivoGaleno = (
   payload: GalenoActualizarPrecioMasivoPayload,

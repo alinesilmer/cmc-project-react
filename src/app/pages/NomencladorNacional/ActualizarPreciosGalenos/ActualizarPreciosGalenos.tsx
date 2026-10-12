@@ -21,11 +21,10 @@ import { hoyISO } from "@/app/shared/lib/fechas";
 import { compararGalenos } from "../nomenclador.helpers";
 import {
   listGalenos,
-  actualizarPrecioGaleno,
-  actualizarPrecioMasivoGaleno,
+  actualizarPreciosGalenosLote,
   cambiarVisibilidadGaleno,
 } from "../nomenclador.api";
-import type { GalenoOut } from "../nomenclador.types";
+import type { GalenoOut, GalenosPrecioLoteError } from "../nomenclador.types";
 import ConfirmModal from "@/app/components/ui/ConfirmModal/ConfirmModal";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -240,90 +239,56 @@ export default function ActualizarPreciosGalenos() {
     setSaving(true);
     setSaveResults([]);
 
-    const results: SaveResult[] = [];
+    // Un solo pedido y una sola transacción en el servidor: se aplican todos los galenos o
+    // ninguno. (Antes iba un pedido por galeno: con los lentos el navegador cortaba a los 15 s,
+    // el servidor igual los terminaba y los siguientes chocaban con ellos.)
+    const items = pendingEdits
+      .filter(([codigo]) => grupos.some((gr) => gr.codigo === codigo))
+      .map(([codigo, valStr]) => ({ codigo, nuevo_valor_unitario: parseFloat(valStr) }));
 
-    for (const [codigo, valStr] of pendingEdits) {
-      const grupo = grupos.find((gr) => gr.codigo === codigo);
-      if (!grupo) continue;
-      const valor = parseFloat(valStr);
-
-      try {
-        if (grupo.nivelado) {
-          // Un solo valor unitario para todos los niveles; cada nivel conserva sus unidades.
-          const res = await actualizarPrecioMasivoGaleno({
-            obra_social_nro: selectedOsNro,
+    try {
+      await actualizarPreciosGalenosLote({
+        obra_social_nro: selectedOsNro,
+        vigencia_desde: vigencia,
+        items,
+      });
+      setSaveResults(
+        items.map(({ codigo }) => {
+          const grupo = grupos.find((gr) => gr.codigo === codigo) as Grupo;
+          return {
             codigo,
-            vigencia_desde: vigencia,
-            items: grupo.niveles
-              .filter((n) => n.nivel != null)
-              .map((n) => ({
-                nivel: n.nivel as number,
-                nuevo_valor_unitario: valor,
-              })),
-          });
-          if (res.errores.length > 0) {
-            results.push({
-              codigo,
-              nombre: grupo.nombre,
-              ok: false,
-              msg: res.errores[0]?.motivo ?? "Error al actualizar",
-            });
-          } else if (res.actualizados === 0) {
-            results.push({
-              codigo,
-              nombre: grupo.nombre,
-              ok: false,
-              msg: "Sin cambios. ¿Ya existe un registro con esa vigencia? Elegí una fecha posterior.",
-            });
-          } else {
-            results.push({
-              codigo,
-              nombre: grupo.nombre,
-              ok: true,
-              msg: `${res.actualizados} nivel(es) actualizados`,
-            });
-          }
-        } else {
-          // Galeno sin nivel: un único registro.
-          await actualizarPrecioGaleno(grupo.niveles[0].id, {
-            nuevo_valor_unitario: valor,
-            vigencia_desde: vigencia,
-          });
-          results.push({ codigo, nombre: grupo.nombre, ok: true });
-        }
-      } catch (e: unknown) {
-        const err = e as { response?: { status?: number; data?: { detail?: string } } };
-        const is409 = err?.response?.status === 409;
-        const msg = err?.response?.data?.detail
-          ?? (is409
-            ? "Ya existe un registro con esa fecha de vigencia. Elegí una fecha posterior."
-            : "Error al actualizar");
-        results.push({ codigo, nombre: grupo.nombre, ok: false, msg });
+            nombre: grupo.nombre,
+            ok: true,
+            msg: grupo.nivelado ? `${grupo.niveles.length} nivel(es) actualizados` : undefined,
+          };
+        }),
+      );
+      setEdits({});
+      showToast("success", `${items.length} galeno(s) actualizados con éxito.`);
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: Partial<GalenosPrecioLoteError> } };
+      const data = err?.response?.data;
+      if (data?.errores?.length) {
+        // Se rechazó el lote entero: se marcan los galenos que lo impidieron.
+        setSaveResults(
+          data.errores.map((x) => ({ codigo: x.codigo, nombre: x.nombre, ok: false, msg: x.motivo })),
+        );
+        showToast("error", "No se aplicó ningún cambio. Revisá los galenos marcados.");
+      } else if (data) {
+        showToast("error", data.detail ?? "No se aplicó ningún cambio.");
+      } else {
+        // Sin respuesta (corte de red o timeout): el servidor puede haber terminado igual.
+        showToast(
+          "error",
+          "No se recibió respuesta del servidor. Verificá los valores actuales antes de reintentar.",
+        );
       }
+    } finally {
+      setSaving(false);
     }
 
-    // Limpia los edits que se guardaron con éxito.
-    setEdits((prev) => {
-      const next = { ...prev };
-      for (const r of results) if (r.ok) delete next[r.codigo];
-      return next;
-    });
-
-    setSaveResults(results);
-    setSaving(false);
-
-    // Refresca los valores actuales (el endpoint masivo no devuelve las filas).
+    // Refresca los valores actuales (el endpoint no devuelve las filas).
     await refreshGalenos(selectedOsNro);
-
-    const ok = results.filter((r) => r.ok).length;
-    const fail = results.filter((r) => !r.ok).length;
-    if (fail === 0) {
-      showToast("success", `${ok} galeno(s) actualizados con éxito.`);
-    } else if (ok === 0) {
-      showToast("error", "No se pudo actualizar ningún galeno.");
-    } else {
-      showToast("error", `${ok} actualizados, ${fail} con error.`);
-    }
   }
 
   function handleSaveAll() {
