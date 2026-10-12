@@ -2053,7 +2053,7 @@ export default function NomencladorPorOS() {
                                     ? (espMap[v.especialidad_id_colegio] ??
                                       `Esp. ${v.especialidad_id_colegio}`)
                                     : v.origen === "NE"
-                                      ? "Sin especialidad"
+                                      ? "Sin restricción de especialidad"
                                       : v.sin_restriccion_especialidad
                                         ? "Mismo valor · Sin restricción"
                                         : `Mismo valor · ${v.especialidades.length} especialidad${v.especialidades.length === 1 ? "" : "es"}`}
@@ -3020,7 +3020,7 @@ export default function NomencladorPorOS() {
                           <div className={styles.precioEspTitulo}>
                             {v.especialidad_id_colegio != null
                               ? (espMap[v.especialidad_id_colegio] ?? `Esp. ${v.especialidad_id_colegio}`)
-                              : "Sin especialidad"}
+                              : "Sin restricción de especialidad"}
                             <span className={styles.precioEspVigencia}>vigente desde {v.vigencia_desde}</span>
                           </div>
                           <BloquePrecio
