@@ -18,6 +18,7 @@ const ESTADOS: Record<EstadoAplicarNivelado, string> = {
   reemplazar: "Se reemplaza",
   reemplazado: "Reemplazado",
   sin_quien_factura: "Sin quién factura",
+  fuera_de_especialidad: "Fuera de especialidad",
   suspendido: "Suspendido",
   omitido: "Omitido",
 };
@@ -104,7 +105,7 @@ export default function AplicarNiveladoModal({
 
   const resultado = hecho ?? preview;
   const filas = (resultado?.filas ?? []).filter(
-    (f) => !soloCrear || f.estado !== "suspendido" && f.estado !== "omitido",
+    (f) => !soloCrear || f.estado !== "suspendido" && f.estado !== "omitido" && f.estado !== "fuera_de_especialidad",
   );
 
   return (
@@ -168,6 +169,9 @@ export default function AplicarNiveladoModal({
               )}
               {resultado.resumen.sin_quien_factura > 0 && (
                 <span className={styles.chipAviso}><strong>{resultado.resumen.sin_quien_factura}</strong> sin quién factura</span>
+              )}
+              {resultado.resumen.fuera_de_especialidad > 0 && (
+                <span className={styles.chip}><strong>{resultado.resumen.fuera_de_especialidad}</strong> fuera de especialidad</span>
               )}
               {resultado.resumen.suspendido + resultado.resumen.omitido > 0 && (
                 <span className={styles.chip}><strong>{resultado.resumen.suspendido + resultado.resumen.omitido}</strong> suspendidos u omitidos</span>

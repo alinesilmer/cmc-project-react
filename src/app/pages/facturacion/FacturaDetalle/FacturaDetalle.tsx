@@ -380,15 +380,11 @@ const FacturaDetalle: React.FC = () => {
     onMarcarTodos: (g) => handleMarcarTodos(g.miembros.map((p) => p.id), g.key),
     onDesmarcarTodos: (g) => handleDesmarcarTodos(g.miembros.map((p) => p.id), g.key),
     onMoverGrupo: handleMoverGrupo,
-    onOrdenAlfabetico: (tipo, valor) => setVistaOpciones((o) => (
-      tipo === "Sanatorio" ? { ...o, ordenSanatorio: valor } : { ...o, ordenHonorarios: valor }
-    )),
   };
   const accionesGrupo = useMemo<GrupoAcciones>(() => ({
     onMarcarTodos: (g) => accionesGrupoRef.current?.onMarcarTodos(g),
     onDesmarcarTodos: (g) => accionesGrupoRef.current?.onDesmarcarTodos(g),
     onMoverGrupo: (g, d) => accionesGrupoRef.current?.onMoverGrupo(g, d),
-    onOrdenAlfabetico: (t, v) => accionesGrupoRef.current?.onOrdenAlfabetico(t, v),
   }), []);
   const acciones = useMemo<FilaAcciones>(() => ({
     onToggleRevisado: (p) => accionesRef.current?.onToggleRevisado(p),
@@ -503,22 +499,15 @@ const FacturaDetalle: React.FC = () => {
         .map((arr, i) => ({ tipo: ORDEN_TIPOS[i], arr }))
         .filter(({ arr }) => arr.length > 0)
         .map(({ tipo, arr }) => {
-          // Honorarios individuales y Sanatorios traen un selector. Con "paciente" la sección
-          // entera va por paciente A-Z, sin partir por médico (en Sanatorios, dentro de cada
-          // clínica A-Z). Si no, las filas de cada médico quedan seguidas (para cerrar con su
-          // subtotal) y el orden elegido rige dentro de cada médico. Igual que el exportable
-          // (`export/armado.py`).
-          const selector = tipo === "Honorarios individuales" ? vistaOpciones.ordenHonorarios
-            : tipo === "Sanatorio" ? vistaOpciones.ordenSanatorio : undefined;
-          const porPaciente = selector === "paciente";
+          // Honorarios individuales y Sanatorios van SIEMPRE por paciente A-Z, sin partir por médico
+          // (en Sanatorios, dentro de cada clínica A-Z), igual que en "Por socio" y que el
+          // exportable (`export/armado.py`). Las demás secciones: las filas de cada médico quedan
+          // seguidas (para cerrar con su subtotal) y el orden elegido rige dentro de cada médico.
+          const porPaciente = tipo === "Honorarios individuales" || tipo === "Sanatorio";
           const ordenadas = [...arr].sort((a, b) => porPaciente
             ? (tipo === "Sanatorio" ? porSanatorio(a, b) : porPacienteAZ(a, b))
             : porNombreMedico(a, b)
-              || (tipo === "Sanatorio" ? porClinica(a, b) : 0)
-              // Lo que el orden elegido no distingue (con "nombre del socio" empatan todas
-              // las filas del socio) queda por paciente A-Z y no en el orden de carga.
-              || compararPorOrden(a, b, vistaOpciones.orden, vistaOpciones.direccion)
-              || (selector ? porPacienteAZ(a, b) : 0));
+              || compararPorOrden(a, b, vistaOpciones.orden, vistaOpciones.direccion));
           const miembros = miembrosDe(ordenadas);
           // El total de la sección es lo que se factura en ella: con el equipo de todas
           // las cirugías, también en Honorarios individuales y Sanatorios (que sí lo dejan
@@ -527,7 +516,7 @@ const FacturaDetalle: React.FC = () => {
           const sumables = miembros;
           return {
             key: `tipo-${tipo}`, titulo: SUBTITULO_TIPO[tipo], subtitulo: SUBTITULO_TIPO[tipo], subtotalPorMedico: true,
-            ordenAlfabetico: selector ? { tipo, valor: selector } : undefined,
+            porPaciente,
             prestaciones: ordenadas, miembros, sumables, mostrarResumen: true, ...sumarTotales(sumables),
           };
         });
@@ -572,8 +561,7 @@ const FacturaDetalle: React.FC = () => {
     }
 
     return gruposMedicos;
-  }, [principales, hijosPorCabeza, vistaOpciones.agrupacion, vistaOpciones.orden, vistaOpciones.direccion,
-    vistaOpciones.ordenHonorarios, vistaOpciones.ordenSanatorio]);
+  }, [principales, hijosPorCabeza, vistaOpciones.agrupacion, vistaOpciones.orden, vistaOpciones.direccion]);
 
   const columnasActivas = useMemo(
     () => COLUMNAS_VISTA_DISPONIBLES.filter((c) => vistaOpciones.columnas.includes(c.key)),
@@ -613,7 +601,7 @@ const FacturaDetalle: React.FC = () => {
     const nuevo = new Map<string, { g: VistaGrupo; firma: unknown[] }>();
     const out = vistaGrupos.map((g) => {
       const firma: unknown[] = [
-        g.titulo, g.subtitulo, g.subtotalPorMedico, g.ordenAlfabetico?.valor, g.mostrarResumen, ...g.prestaciones,
+        g.titulo, g.subtitulo, g.subtotalPorMedico, g.porPaciente, g.mostrarResumen, ...g.prestaciones,
       ];
       g.tramos?.forEach((t) => firma.push(t.key, t.prestaciones.length));
       const companeros: Record<number, PrestacionConSocio[]> = {};

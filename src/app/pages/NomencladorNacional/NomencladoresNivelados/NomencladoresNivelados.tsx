@@ -11,8 +11,10 @@ import type { AppSearchSelectOption } from "@/app/components/ui/AppSearchSelect/
 import ConfirmModal from "@/app/components/ui/ConfirmModal/ConfirmModal";
 import AplicarNiveladoModal from "../components/AplicarNiveladoModal";
 import { usePermisos } from "../../../auth/usePermisos";
+import { getEspecialidades } from "../../Especialidades/especialidades.api";
 import {
   actualizarCodigoNivelado,
+  actualizarEspecialidadesNivelado,
   agregarCodigoNivelado,
   listCodigosNivelado,
   listNivelados,
@@ -178,6 +180,15 @@ export default function NomencladoresNivelados() {
                 )}
               </div>
 
+              <EspecialidadesDelNomenclador
+                key={actual.slug}
+                slug={actual.slug}
+                seleccionadas={actual.especialidades}
+                puedeEditar={puedeEditar}
+                onGuardado={() => { showToast("success", "Especialidades guardadas."); void listado.refetch(); }}
+                onError={(m) => showToast("error", m)}
+              />
+
               <div className={styles.filtros} role="group" aria-label="Filtrar por nivel">
                 <button type="button" className={styles.chip} aria-pressed={filtro === "todos"} onClick={() => setFiltro("todos")}>
                   Todos <b>{actual.total_codigos}</b>
@@ -297,6 +308,129 @@ export default function NomencladoresNivelados() {
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+// ─── Especialidades a las que se aplica el nomenclador ───────────────────────
+
+function EspecialidadesDelNomenclador({
+  slug,
+  seleccionadas,
+  puedeEditar,
+  onGuardado,
+  onError,
+}: {
+  slug: string;
+  seleccionadas: number[];
+  puedeEditar: boolean;
+  onGuardado: () => void;
+  onError: (msg: string) => void;
+}) {
+  const { data: especialidades = [] } = useQuery({
+    queryKey: ["especialidades"],
+    queryFn: getEspecialidades,
+    staleTime: 30 * 60 * 1000,
+  });
+  const nombres = useMemo(
+    () => new Map(especialidades.map((e) => [e.id_colegio_espe, e.nombre])),
+    [especialidades],
+  );
+
+  const [editando, setEditando] = useState(false);
+  const [elegidas, setElegidas] = useState<Set<number>>(new Set(seleccionadas));
+  const [busqueda, setBusqueda] = useState("");
+  const [guardando, setGuardando] = useState(false);
+
+  function abrir() {
+    setElegidas(new Set(seleccionadas));
+    setBusqueda("");
+    setEditando(true);
+  }
+
+  const visibles = useMemo(() => {
+    const t = busqueda.trim().toLowerCase();
+    return [...especialidades]
+      .filter((e) => !t || e.nombre.toLowerCase().includes(t))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, "es", { sensitivity: "base" }));
+  }, [especialidades, busqueda]);
+
+  function alternar(id: number) {
+    setElegidas((prev) => {
+      const sig = new Set(prev);
+      if (!sig.delete(id)) sig.add(id);
+      return sig;
+    });
+  }
+
+  async function guardar() {
+    setGuardando(true);
+    try {
+      await actualizarEspecialidadesNivelado(slug, [...elegidas]);
+      setEditando(false);
+      onGuardado();
+    } catch (e) {
+      onError(detalleError(e, "No se pudieron guardar las especialidades."));
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  return (
+    <div className={styles.especialidades}>
+      <div className={styles.especialidadesCabecera}>
+        <span className={styles.especialidadesTitulo}>Se aplica a:</span>
+        {seleccionadas.length === 0 ? (
+          <span className={base.hintText}>todas las especialidades del código</span>
+        ) : (
+          seleccionadas.map((id) => (
+            <span key={id} className={styles.especialidadChip}>{nombres.get(id) ?? `Especialidad ${id}`}</span>
+          ))
+        )}
+        {puedeEditar && !editando && (
+          <button type="button" className={base.btnGhost} onClick={abrir}>Editar</button>
+        )}
+      </div>
+
+      {editando && (
+        <div className={styles.especialidadesEditor}>
+          <p className={base.hintText}>
+            Al aplicar el nomenclador a una obra social solo se carga precio en estas especialidades (las que
+            además tenga habilitadas el código). Sin ninguna marcada, se aplica a todas. Los códigos sin
+            restricción de especialidad se cotizan igual. No cambia los precios ya cargados.
+          </p>
+          <input
+            className={base.formInput}
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            placeholder="Buscar especialidad…"
+            aria-label="Buscar especialidad"
+          />
+          <div className={styles.especialidadesLista}>
+            {visibles.map((e) => (
+              <label key={e.id_colegio_espe} className={styles.especialidadOpcion}>
+                <input
+                  type="checkbox"
+                  checked={elegidas.has(e.id_colegio_espe)}
+                  onChange={() => alternar(e.id_colegio_espe)}
+                />
+                {e.nombre}
+              </label>
+            ))}
+          </div>
+          <div className={styles.especialidadesAcciones}>
+            <span className={base.hintText}>
+              {elegidas.size === 0 ? "Todas las especialidades" : `${elegidas.size} seleccionada${elegidas.size === 1 ? "" : "s"}`}
+            </span>
+            <button type="button" className={base.btnGhost} disabled={guardando} onClick={() => setEditando(false)}>
+              Cancelar
+            </button>
+            <button type="button" className={base.btnPrimary} disabled={guardando} onClick={() => void guardar()}>
+              Guardar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

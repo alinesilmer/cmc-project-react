@@ -968,6 +968,8 @@ export type NomencladorNiveladoOut = {
   galeno_codigo: string | null;
   galeno_nombre: string | null;
   niveles: number;
+  /** ID_COLEGIO_ESPE a las que se aplica el nomenclador; vacío = todas las del código. */
+  especialidades: number[];
   total_codigos: number;
   /** nivel → cantidad de códigos (las claves llegan como texto en el JSON). */
   por_nivel: Record<string, number>;
@@ -1000,7 +1002,8 @@ export type NiveladoCodigoIn = {
 };
 
 export type EstadoAplicarNivelado =
-  | "crear" | "creado" | "reemplazar" | "reemplazado" | "sin_quien_factura" | "suspendido" | "omitido";
+  | "crear" | "creado" | "reemplazar" | "reemplazado" | "sin_quien_factura" | "fuera_de_especialidad"
+  | "suspendido" | "omitido";
 
 export type AplicarNiveladoFila = {
   nomenclador_id: number;
@@ -1028,6 +1031,8 @@ export type AplicarNiveladoOut = {
     reemplazar: number;
     vigencias_borradas: number;
     sin_quien_factura: number;
+    /** Ninguna de sus especialidades en la O.S. es del nomenclador: no se les carga precio. */
+    fuera_de_especialidad: number;
     suspendido: number;
     omitido: number;
     precios: number;

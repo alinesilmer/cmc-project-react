@@ -32,7 +32,6 @@ import {
   deleteValor,
   listNomenclador,
   actualizarValor,
-  listCodigosPorEspecialidad,
   getCodigoOS,
   listCodigosPorOS,
   revalorizarPrestaciones,
@@ -69,7 +68,8 @@ import type {
   TipoCodigo,
 } from "../nomenclador.types";
 import { ORIGEN_LABELS } from "../nomenclador.types";
-import { TIPOS_CODIGO, tipoDeCategoria } from "../components/tipoCodigo";
+import { TIPOS_CODIGO } from "../components/tipoCodigo";
+import { useDebounce } from "../../Reportes/useDebounce";
 import { today, parseMonto, compararGalenos } from "../nomenclador.helpers";
 
 // ─── Local types ──────────────────────────────────────────────────────────────
@@ -615,10 +615,6 @@ export default function NomencladorPorOS() {
   const [valores, setValores] = useState<ValorOut[]>([]);
   const [loadingValores, setLoadingValores] = useState(false);
   const [codeSearch, setCodeSearch] = useState("");
-  const [origenFilter, setOrigenFilter] = useState<Origen | "todos">("todos");
-  const [modalidadFilter, setModalidadFilter] = useState<
-    ValorOut["modalidad"] | "todos"
-  >("todos");
   const [soloPresupuesto, setSoloPresupuesto] = useState(false);
   const [tipoFilter, setTipoFilter] = useState<TipoCodigo | "todos">("todos");
   const [especialidadFilter, setEspecialidadFilter] = useState<
@@ -739,34 +735,6 @@ export default function NomencladorPorOS() {
     [especialidades],
   );
 
-  // Códigos habilitados para la especialidad elegida EN ESTA OS (para acotar el
-  // listado). Se traen todos los pares (paginando) y se guardan como Set de códigos
-  // en mayúsculas — las especialidades son un dato por obra social.
-  const { data: codigosDeEspecialidad, isFetching: espFilterFetching } =
-    useQuery({
-      queryKey: [
-        "nomenclador-especialidad-codigos",
-        selectedNroOS,
-        especialidadFilter,
-      ],
-      queryFn: async () => {
-        const codigos = new Set<string>();
-        for (let p = 1; p <= 100; p++) {
-          const batch = await listCodigosPorEspecialidad({
-            obra_social_nro: selectedNroOS as number,
-            especialidad_id_colegio: especialidadFilter as number,
-            page: p,
-            size: 200,
-          });
-          batch.forEach((r) => codigos.add(r.codigo.toUpperCase()));
-          if (batch.length < 200) break;
-        }
-        return codigos;
-      },
-      enabled: especialidadFilter !== "todos" && selectedNroOS != null,
-      staleTime: 5 * 60 * 1000,
-    });
-
   const filteredOS = useMemo(() => {
     if (!osSearch.trim()) return osList.slice(0, 80);
     const q = osSearch.toLowerCase();
@@ -845,21 +813,52 @@ export default function NomencladorPorOS() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params, selectedNroOS, pendientesQuery.isFetched]);
 
+  // Hay algún filtro activo (búsqueda, tipo, especialidad o «Por presupuesto»). Sin filtros la
+  // tabla no trae nada. Los filtros los aplica el servidor: sólo baja lo que coincide.
+  const busqueda = useDebounce(codeSearch.trim(), 350);
+  const hayFiltros =
+    busqueda !== "" ||
+    tipoFilter !== "todos" ||
+    especialidadFilter !== "todos" ||
+    soloPresupuesto;
+  const filtrosServidor = {
+    q: busqueda || undefined,
+    tipo: tipoFilter === "todos" ? undefined : tipoFilter,
+    especialidad_habilitada: especialidadFilter === "todos" ? undefined : especialidadFilter,
+    por_presupuesto: soloPresupuesto ? true : undefined,
+  };
+  // Los filtros vigentes, para que cualquier recarga (tras guardar o rotar un precio) los respete.
+  const filtrosRef = useRef({ hayFiltros, filtrosServidor });
+  filtrosRef.current = { hayFiltros, filtrosServidor };
+  // Descarta la respuesta de una consulta vieja si ya se pidió otra.
+  const cargaVigente = useRef(0);
+
   useEffect(() => {
     if (!selectedNroOS) {
       setGalenos([]);
-      setValores([]);
       return;
     }
     listGalenos({ obra_social_nro: selectedNroOS })
       .then(setGalenos)
       .catch(() => {});
-    loadValores(selectedNroOS);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedNroOS]);
+
+  useEffect(() => {
+    if (selectedNroOS && hayFiltros) {
+      void loadValores(selectedNroOS);
+    } else {
+      cargaVigente.current += 1;
+      setValores([]);
+      setLoadingValores(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedNroOS, hayFiltros, busqueda, tipoFilter, especialidadFilter, soloPresupuesto]);
 
   const loadValores = useCallback(
     async (osNro: number) => {
+      const { hayFiltros: conFiltros, filtrosServidor: filtros } = filtrosRef.current;
+      if (!conFiltros) return;
+      const id = ++cargaVigente.current;
       setLoadingValores(true);
       try {
         // Sólo los precios en vigor (`estado: "activo"`): lo que se cerró al rotar un
@@ -869,17 +868,19 @@ export default function NomencladorPorOS() {
           const batch = await listValores({
             obra_social_nro: osNro,
             estado: "activo",
+            ...filtros,
             page: p,
             size: 200,
           });
+          if (id !== cargaVigente.current) return;
           all.push(...batch);
           if (batch.length < 200) break;
         }
         setValores(all);
       } catch {
-        showToast("error", "Error al cargar los valores.");
+        if (id === cargaVigente.current) showToast("error", "Error al cargar los valores.");
       } finally {
-        setLoadingValores(false);
+        if (id === cargaVigente.current) setLoadingValores(false);
       }
     },
     [],
@@ -890,47 +891,9 @@ export default function NomencladorPorOS() {
   // la reestructura) que todavía no se editaron.
   const resolvedDesc = useCallback((v: ValorOut) => v.descripcion ?? "", []);
 
-  const filteredValores = useMemo(() => {
-    let list = valores;
-    if (origenFilter !== "todos")
-      list = list.filter((v) => v.origen === origenFilter);
-    if (modalidadFilter !== "todos")
-      list = list.filter((v) => v.modalidad === modalidadFilter);
-    if (soloPresupuesto) list = list.filter((v) => v.por_presupuesto);
-    if (tipoFilter !== "todos")
-      list = list.filter((v) => tipoDeCategoria(v.categoria_efectiva) === tipoFilter);
-    if (especialidadFilter !== "todos") {
-      // Mientras el set carga (undefined) no mostramos nada para no confundir.
-      list = codigosDeEspecialidad
-        ? list.filter((v) => codigosDeEspecialidad.has(v.codigo.toUpperCase()))
-        : [];
-    }
-    if (codeSearch.trim()) {
-      const q = codeSearch.toLowerCase();
-      list = list.filter(
-        (v) =>
-          v.codigo.toLowerCase().includes(q) ||
-          (v.descripcion ?? "").toLowerCase().includes(q),
-      );
-    }
-    return list;
-  }, [
-    valores,
-    codeSearch,
-    origenFilter,
-    modalidadFilter,
-    soloPresupuesto,
-    tipoFilter,
-    especialidadFilter,
-    codigosDeEspecialidad,
-  ]);
-
-  // Loading combinado: valores de la OS + resolución del set de la especialidad.
-  const showLoading =
-    loadingValores ||
-    (especialidadFilter !== "todos" &&
-      !codigosDeEspecialidad &&
-      espFilterFetching);
+  // Lo que llega del servidor ya viene filtrado; sin filtros no se muestra nada.
+  const filteredValores = useMemo(() => (hayFiltros ? valores : []), [hayFiltros, valores]);
+  const showLoading = loadingValores;
 
   const grouped = useMemo(() => {
     const map = new Map<number, ValorOut[]>();
@@ -969,8 +932,6 @@ export default function NomencladorPorOS() {
   }, [
     selectedNroOS,
     codeSearch,
-    origenFilter,
-    modalidadFilter,
     soloPresupuesto,
     tipoFilter,
     especialidadFilter,
@@ -1629,7 +1590,7 @@ export default function NomencladorPorOS() {
             });
           }
         } finally {
-          if (creados.length > 0) setValores((prev) => [...creados, ...prev]);
+          if (creados.length > 0 && selectedNroOS) void loadValores(selectedNroOS);
         }
         showToast("success", `Precio cargado para ${creados.length} especialidades.`);
         void ofrecerRevalorizar(form.nomencladorLabel);
@@ -1640,7 +1601,7 @@ export default function NomencladorPorOS() {
       }
       if (form.origen === "NE" && form.sinRestriccion) {
         // Sin restricción: UNA sola fila "sin especialidad".
-        const v = await createValor({
+        await createValor({
           ...base,
           obra_social_nro: selectedNroOS,
           nomenclador_id: form.nomencladorId!,
@@ -1648,7 +1609,7 @@ export default function NomencladorPorOS() {
           especialidad_id_colegio: null,
           sin_restriccion_especialidad: true,
         });
-        setValores((prev) => [v, ...prev]);
+        void loadValores(selectedNroOS);
         showToast(
           "success",
           "Código agregado sin restricción por especialidad.",
@@ -1661,7 +1622,7 @@ export default function NomencladorPorOS() {
           origen: "NE",
           especialidades_id_colegio: [...form.especialidadesChecked],
         });
-        setValores((prev) => [...nuevos, ...prev]);
+        void loadValores(selectedNroOS);
         showToast(
           "success",
           nuevos.length > 1
@@ -1669,14 +1630,14 @@ export default function NomencladorPorOS() {
             : "Código agregado a la obra social.",
         );
       } else {
-        const v = await createValor({
+        await createValor({
           ...base,
           obra_social_nro: selectedNroOS,
           nomenclador_id: form.nomencladorId!,
           origen: form.origen,
           especialidad_id_colegio: null,
         });
-        setValores((prev) => [v, ...prev]);
+        void loadValores(selectedNroOS);
         showToast("success", "Código agregado a la obra social.");
       }
       void ofrecerRevalorizar(form.nomencladorLabel);
@@ -1942,30 +1903,6 @@ export default function NomencladorPorOS() {
                   />
                 </div>
                 <div className={styles.filterGroup}>
-                  {(["todos", "NN", "NE"] as const).map((o) => (
-                    <button
-                      key={o}
-                      className={`${styles.filterBtn} ${origenFilter === o ? styles.filterBtnActive : ""}`}
-                      onClick={() => setOrigenFilter(o)}
-                    >
-                      {o === "todos" ? "Todos" : o}
-                    </button>
-                  ))}
-                </div>
-                <div className={styles.filterGroup}>
-                  {(
-                    ["todos", "galeno", "fijo", "por_presupuesto"] as const
-                  ).map((m) => (
-                    <button
-                      key={m}
-                      className={`${styles.filterBtn} ${modalidadFilter === m ? styles.filterBtnActive : ""}`}
-                      onClick={() => setModalidadFilter(m)}
-                    >
-                      {m === "todos" ? "Toda modalidad" : MODALIDAD_LABELS[m]}
-                    </button>
-                  ))}
-                </div>
-                <div className={styles.filterGroup}>
                   <button
                     className={`${styles.filterBtn} ${soloPresupuesto ? styles.filterBtnActive : ""}`}
                     onClick={() => setSoloPresupuesto((v) => !v)}
@@ -2047,6 +1984,13 @@ export default function NomencladorPorOS() {
                       <tr>
                         <td colSpan={10} className={styles.loadingCell}>
                           Cargando…
+                        </td>
+                      </tr>
+                    ) : !hayFiltros ? (
+                      <tr>
+                        <td colSpan={10} className={styles.emptyCell}>
+                          Para ver los códigos de esta obra social, buscá por código o descripción,
+                          elegí un tipo de código o una especialidad, o filtrá por «Por presupuesto».
                         </td>
                       </tr>
                     ) : grouped.length === 0 ? (

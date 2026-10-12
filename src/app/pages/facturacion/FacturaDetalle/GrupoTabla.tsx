@@ -2,8 +2,7 @@ import React from "react";
 import { ArrowRightCircle, ArrowLeftCircle } from "lucide-react";
 
 import { formatMoney } from "../money";
-import type { Tipo } from "../types";
-import type { ColumnaVista, OrdenAlfabetico } from "./vista/types";
+import type { ColumnaVista } from "./vista/types";
 import { RESUMEN_TIPO_LABEL, sumaEquipo, sumarTotales, totalesPorTipo } from "./totales";
 import { clavePaciente } from "./equipo";
 import FilaPrestacion from "./FilaPrestacion";
@@ -26,9 +25,9 @@ export interface VistaGrupo {
   // las filas de cada médico.
   subtitulo?: string;
   subtotalPorMedico?: boolean;
-  // "Por tipo", sólo Honorarios individuales y Sanatorios: el selector de orden (médico /
-  // paciente A-Z) que se dibuja una única vez en el subtítulo de la sección.
-  ordenAlfabetico?: { tipo: Tipo; valor: OrdenAlfabetico };
+  // "Por tipo", sólo Honorarios individuales y Sanatorios: la sección entera va por paciente A-Z
+  // (con su subtítulo y su total), sin partir por médico.
+  porPaciente?: boolean;
   // "Por socio": tramos con subtítulo (Consultas / Prácticas / Honorarios
   // individuales / Sanatorios) dentro de cada médico.
   tramos?: { key: string; subtitulo: string; prestaciones: PrestacionConSocio[] }[];
@@ -47,7 +46,6 @@ export interface GrupoAcciones {
   onMarcarTodos: (g: VistaGrupo) => void;
   onDesmarcarTodos: (g: VistaGrupo) => void;
   onMoverGrupo: (g: VistaGrupo, direccion: "siguiente" | "anterior") => void;
-  onOrdenAlfabetico: (tipo: Tipo, valor: OrdenAlfabetico) => void;
 }
 
 // Filas por bloque. Cada bloque es una <table> propia con `content-visibility: auto`
@@ -189,26 +187,11 @@ function GrupoTabla({
   const filasListado = (): React.ReactNode[] => {
     const out: React.ReactNode[] = [];
     if (g.subtitulo) {
-      const orden = g.ordenAlfabetico;
       out.push(
         <tr key={`subtitulo-${g.key}`} className={styles.tipoTituloRow}>
           <td colSpan={colSpan}>
             <div className={styles.tipoTituloContent}>
               <span>{g.subtitulo}</span>
-              {orden && (
-                <span className={styles.ordenAlfaGroup} role="group" aria-label={`Orden de ${g.subtitulo}`}>
-                  {([["medico", "Médico A-Z"], ["paciente", "Paciente A-Z"]] as const).map(([valor, etiqueta]) => (
-                    <button
-                      key={valor}
-                      type="button"
-                      className={`${styles.ordenAlfaBtn} ${orden.valor === valor ? styles.ordenAlfaBtnOn : ""}`}
-                      onClick={() => accionesGrupo.onOrdenAlfabetico(orden.tipo, valor)}
-                    >
-                      {etiqueta}
-                    </button>
-                  ))}
-                </span>
-              )}
             </div>
           </td>
         </tr>,
@@ -217,10 +200,9 @@ function GrupoTabla({
     const ps = g.prestaciones;
     let i = 0;
     while (i < ps.length) {
-      // Honorarios individuales / Sanatorios ordenados por paciente: la sección entera va
-      // por paciente (no por médico) y cada paciente cierra con su total, en lugar del
-      // subtotal del médico.
-      const porPaciente = g.ordenAlfabetico?.valor === "paciente";
+      // Honorarios individuales / Sanatorios: la sección entera va por paciente (no por médico)
+      // y cada paciente cierra con su total, en lugar del subtotal del médico.
+      const porPaciente = Boolean(g.porPaciente);
       let j = i + 1;
       if (g.subtotalPorMedico && !porPaciente) {
         while (j < ps.length && ps[j].cod_medico === ps[i].cod_medico) j += 1;

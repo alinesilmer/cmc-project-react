@@ -273,6 +273,14 @@ export const listValores = (params: {
   vigente_a?: string;
   /** Filtra por la vigencia exacta (no "vigente a la fecha X"). */
   vigencia_desde?: string;
+  /** Contiene en el código o en la descripción. */
+  q?: string;
+  /** Por la categoría del código en la obra social (requiere `obra_social_nro`). */
+  tipo?: TipoCodigo;
+  /** true: sólo los precios por presupuesto. */
+  por_presupuesto?: boolean;
+  /** ID_COLEGIO_ESPE: códigos que la obra social tiene habilitados para esa especialidad. */
+  especialidad_habilitada?: number;
   page?: number;
   size?: number;
 }): Promise<ValorOut[]> => getJSON<ValorOut[]>("/api/valores_nm/", params);
@@ -630,6 +638,13 @@ export const actualizarCodigoNivelado = (
   payload: NiveladoCodigoIn,
 ): Promise<NiveladoCodigoOut> =>
   putJSON<NiveladoCodigoOut>(`/api/nomencladores_nivelados/${slug}/codigos/${nomencladorId}`, payload);
+
+/** A qué especialidades se aplica el nomenclador (vacío = todas las del código). */
+export const actualizarEspecialidadesNivelado = (
+  slug: string,
+  especialidades: number[],
+): Promise<{ especialidades: number[] }> =>
+  putJSON<{ especialidades: number[] }>(`/api/nomencladores_nivelados/${slug}/especialidades`, { especialidades });
 
 export const quitarCodigoNivelado = (slug: string, nomencladorId: number): Promise<void> =>
   delJSON<void>(`/api/nomencladores_nivelados/${slug}/codigos/${nomencladorId}`);

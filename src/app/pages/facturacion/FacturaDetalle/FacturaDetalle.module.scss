@@ -638,31 +638,6 @@ $clinica-bg: #fed7aa;
   gap: 8px 20px;
 }
 
-// Selector "Médico A-Z / Paciente A-Z" dentro del subtítulo de la sección.
-.ordenAlfaGroup {
-  display: inline-flex;
-  gap: 4px;
-  text-transform: none;
-  letter-spacing: 0;
-}
-
-.ordenAlfaBtn {
-  padding: 2px 10px;
-  border: 1px solid #9db6dd;
-  border-radius: 999px;
-  background: #fff;
-  color: #0c2a52;
-  font-size: .8em;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.ordenAlfaBtnOn {
-  background: #0c2a52;
-  border-color: #0c2a52;
-  color: #fff;
-}
-
 // "Por tipo": subtotal al cerrar las filas de cada médico.
 .subtotalMedicoRow td {
   background: #f6f8fc;

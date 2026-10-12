@@ -160,3 +160,69 @@
   align-items: center;
   gap: 12px;
 }
+
+// Especialidades a las que se aplica el nomenclador.
+.especialidades {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid $linea;
+  border-radius: $radio-lg;
+  background: $superficie;
+}
+
+.especialidadesCabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.especialidadesTitulo {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: $tinta;
+}
+
+.especialidadChip {
+  border: 1px solid $linea;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 0.8rem;
+  color: $tinta-2;
+}
+
+.especialidadesEditor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.especialidadesLista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 4px 12px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid $linea;
+  border-radius: $radio-lg;
+}
+
+.especialidadOpcion {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: $tinta-2;
+  cursor: pointer;
+}
+
+.especialidadesAcciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
