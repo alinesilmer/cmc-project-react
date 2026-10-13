@@ -19,7 +19,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import styles from "./ActualizarPreciosGalenos.module.scss";
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import { hoyISO } from "@/app/shared/lib/fechas";
-import { compararGalenos } from "../nomenclador.helpers";
+import { compararGalenos, avisoVigenciaGaleno } from "../nomenclador.helpers";
 import {
   listGalenos,
   actualizarPreciosGalenosLote,
@@ -195,10 +195,15 @@ export default function ActualizarPreciosGalenos() {
     [edits],
   );
 
-  const dateConflicts = useMemo(
-    () => galenos.filter((g) => g.vigencia_desde === vigencia),
-    [galenos, vigencia],
-  );
+  // La vigencia más nueva entre los galenos que se van a cambiar (o todos, si todavía no hay cambios):
+  // si la fecha elegida no es posterior, se avisa qué pasa (no se bloquea).
+  const avisoFecha = useMemo(() => {
+    const editados = new Set(pendingEdits.map(([codigo]) => codigo));
+    const masNueva = galenos
+      .filter((g) => editados.size === 0 || editados.has(g.codigo))
+      .reduce<string | undefined>((m, g) => (m === undefined || g.vigencia_desde > m ? g.vigencia_desde : m), undefined);
+    return avisoVigenciaGaleno(vigencia, masNueva);
+  }, [galenos, pendingEdits, vigencia]);
 
   function setEdit(codigo: string, val: string) {
     setEdits((prev) => ({ ...prev, [codigo]: val }));
@@ -446,16 +451,11 @@ export default function ActualizarPreciosGalenos() {
                 </span>
               </div>
 
-              {/* Date conflict warning */}
-              {dateConflicts.length > 0 && (
+              {/* Aviso de vigencia igual o anterior a la vigente */}
+              {avisoFecha && (
                 <div className={styles.conflictWarning}>
                   <AlertCircle size={14} />
-                  <span>
-                    {dateConflicts.length === galenos.length
-                      ? "Todos los galenos ya tienen vigencia desde esta fecha."
-                      : `${dateConflicts.length} galeno(s) ya tienen vigencia desde esta fecha.`}{" "}
-                    Elegí una fecha posterior para poder actualizar.
-                  </span>
+                  <span>{avisoFecha}</span>
                 </div>
               )}
 
@@ -534,7 +534,7 @@ export default function ActualizarPreciosGalenos() {
         isOpen={confirmOpen}
         variant="warning"
         title="Confirmar actualización"
-        message={`¿Actualizar el valor de ${pendingEdits.length} galeno(s) con vigencia desde ${vigencia}?\n\nEn los nivelados, el valor se aplica a todos los niveles (conservando sus unidades). Esta operación crea nuevos registros manteniendo el historial de valores anteriores.`}
+        message={`¿Actualizar el valor de ${pendingEdits.length} galeno(s) con vigencia desde ${vigencia}?\n\nEn los nivelados, el valor se aplica a todos los niveles (conservando sus unidades). ${avisoFecha ?? "Esta operación crea nuevos registros manteniendo el historial de valores anteriores."}`}
         confirmLabel="Actualizar"
         onConfirm={doSaveAll}
         onCancel={() => setConfirmOpen(false)}

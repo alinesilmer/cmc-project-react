@@ -55,7 +55,7 @@ import {
 import ConfirmModal from "@/app/components/ui/ConfirmModal/ConfirmModal";
 import GalenoCreateModal from "./GalenoCreateModal";
 import { hoyISO } from "@/app/shared/lib/fechas";
-import { compararGalenos } from "../nomenclador.helpers";
+import { compararGalenos, avisoVigenciaGaleno } from "../nomenclador.helpers";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -836,6 +836,11 @@ export default function NomencladorGalenos() {
                 {editErrors.vigencia_precio && (
                   <span className={styles.errorMsg}>
                     {editErrors.vigencia_precio}
+                  </span>
+                )}
+                {avisoVigenciaGaleno(editForm.vigencia_precio, editTarget.vigencia_desde) && (
+                  <span className={styles.hintText}>
+                    {avisoVigenciaGaleno(editForm.vigencia_precio, editTarget.vigencia_desde)}
                   </span>
                 )}
               </div>
