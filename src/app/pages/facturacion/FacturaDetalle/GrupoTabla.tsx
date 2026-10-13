@@ -3,7 +3,7 @@ import { ArrowRightCircle, ArrowLeftCircle } from "lucide-react";
 
 import { formatMoney } from "../money";
 import type { ColumnaVista } from "./vista/types";
-import { RESUMEN_TIPO_LABEL, sumaEquipo, sumarTotales, totalesPorTipo } from "./totales";
+import { RESUMEN_TIPO_LABEL, sumaEquipo, sumarTotales, sumarUnidades, totalesPorTipo } from "./totales";
 import { clavePaciente } from "./equipo";
 import FilaPrestacion from "./FilaPrestacion";
 import type { FilaAcciones, PrestacionConSocio } from "./FilaPrestacion";
@@ -221,7 +221,7 @@ function GrupoTabla({
           <tr key={`subtotal-${g.key}-${medico.cod_medico}-${medico.id}`} className={styles.subtotalMedicoRow}>
             <td colSpan={colSpan}>
               <div className={styles.subtotalMedicoContent}>
-                <span>Subtotal socio {medico.cod_medico} {medico.nombreSocio ?? ""} ({incluidas.length})</span>
+                <span>Subtotal socio {medico.cod_medico} {medico.nombreSocio ?? ""} ({sumarUnidades(incluidas)})</span>
                 <span className={styles.subtotalMedicoMontos}>
                   <span>Coseguro: <strong>{formatMoney(totales.totalCoseguro)}</strong></span>
                   <span>Total: <strong>{formatMoney(totales.totalSubtotal)}</strong></span>

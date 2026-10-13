@@ -4,13 +4,19 @@ import { parseMoney } from "../money";
 import { ORDEN_TIPOS } from "./vista/types";
 import type { PrestacionConSocio } from "./FilaPrestacion";
 
+// Unidades facturadas de una fila (cantidad × sesión): lo que cuenta como "prestaciones", no la fila.
+export const unidadesDe = (p: PrestacionConSocio): number => (p.cantidad || 1) * (p.sesion || 1);
+
+// Cantidad de prestaciones (unidades) de un conjunto de filas.
+export const sumarUnidades = (arr: PrestacionConSocio[]): number => arr.reduce((n, p) => n + unidadesDe(p), 0);
+
 export const sumarTotales = (arr: PrestacionConSocio[]) => arr.reduce(
   (acc, p) => {
     acc.totalHonorarios += parseMoney(p.honorarios);
     acc.totalGastos += parseMoney(p.gastos);
     acc.totalSubtotal += parseMoney(p.subtotal);
     // El coseguro se descuenta por unidad: el total es el de la fila × cantidad × sesión.
-    acc.totalCoseguro += parseMoney(p.coseguro) * (p.cantidad || 1) * (p.sesion || 1);
+    acc.totalCoseguro += parseMoney(p.coseguro) * unidadesDe(p);
     return acc;
   },
   { totalHonorarios: 0, totalGastos: 0, totalSubtotal: 0, totalCoseguro: 0 },
@@ -37,6 +43,6 @@ export const RESUMEN_TIPO_LABEL: Record<Tipo, string> = {
 export const totalesPorTipo = (arr: PrestacionConSocio[]) => ORDEN_TIPOS
   .map((tipo) => {
     const filas = arr.filter((p) => tipoParaTotales(p) === tipo);
-    return { tipo, cantidad: filas.length, total: sumarTotales(filas).totalSubtotal };
+    return { tipo, cantidad: sumarUnidades(filas), total: sumarTotales(filas).totalSubtotal };
   })
   .filter((t) => t.cantidad > 0);
