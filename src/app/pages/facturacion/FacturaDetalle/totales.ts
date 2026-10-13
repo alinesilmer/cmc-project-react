@@ -9,7 +9,8 @@ export const sumarTotales = (arr: PrestacionConSocio[]) => arr.reduce(
     acc.totalHonorarios += parseMoney(p.honorarios);
     acc.totalGastos += parseMoney(p.gastos);
     acc.totalSubtotal += parseMoney(p.subtotal);
-    acc.totalCoseguro += parseMoney(p.coseguro);
+    // El coseguro se descuenta por unidad: el total es el de la fila × cantidad × sesión.
+    acc.totalCoseguro += parseMoney(p.coseguro) * (p.cantidad || 1) * (p.sesion || 1);
     return acc;
   },
   { totalHonorarios: 0, totalGastos: 0, totalSubtotal: 0, totalCoseguro: 0 },
