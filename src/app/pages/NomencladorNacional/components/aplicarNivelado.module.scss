@@ -106,3 +106,152 @@
   gap: 8px;
   padding-top: 4px;
 }
+
+// ── Galeno de la obra social, cambio de nomenclador y ajustes por nivel ─────────────────
+.avisoCambio {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: $radio-sm;
+  background: $alerta-bg;
+  border: 1px solid $alerta-linea;
+  color: $alerta;
+  font-size: 0.86rem;
+
+  p { margin: 0; line-height: 1.45; }
+}
+
+.cifras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  span {
+    padding: 4px 10px;
+    border-radius: $radio-sm;
+    background: $superficie;
+    border: 1px solid $alerta-linea;
+    color: $tinta;
+    font-size: 0.8rem;
+  }
+  strong { font-variant-numeric: tabular-nums; }
+}
+
+.galeno {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid $linea;
+  border-radius: $radio-lg;
+
+  legend { padding: 0 6px; font-weight: 700; font-size: 0.85rem; color: $tinta; }
+}
+
+.modos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+
+  @media (max-width: 560px) { grid-template-columns: 1fr; }
+}
+
+.modo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
+  font-size: 0.86rem;
+  color: $tinta-2;
+  cursor: pointer;
+}
+
+.modoActivo { border: 2px solid $acento; background: $superficie-2; color: $tinta; font-weight: 600; padding: 8px 11px; }
+
+.gridNiveles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 8px 12px;
+
+  > p { grid-column: 1 / -1; margin: 0; }
+}
+
+.filaNivel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: $tinta-2;
+}
+
+.galenoOk {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
+  background: $superficie-2;
+  font-size: 0.86rem;
+}
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.ajustes {
+  border: 1px solid $linea;
+  border-radius: $radio-lg;
+  overflow: hidden;
+}
+
+.ajustesTitulo {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: $superficie-2;
+  border: 0;
+  font: inherit;
+  color: $tinta;
+  cursor: pointer;
+
+  span { color: $acento; font-weight: 600; font-size: 0.84rem; }
+}
+
+.ajustesCuerpo { display: flex; flex-direction: column; gap: 8px; padding: 10px 14px 14px; }
+
+.ajustesGrid {
+  display: grid;
+  grid-template-columns: 70px minmax(0, 1fr) minmax(0, 1fr);
+  gap: 6px 12px;
+  align-items: center;
+}
+
+.ajustesHead { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: $tinta-2; }
+
+.ajustesFila {
+  display: contents;
+
+  > span { font-weight: 600; font-size: 0.84rem; color: $tinta; }
+}
+
+.pieNota { margin-right: auto; align-self: center; }
+
+.btnPeligro {
+  padding: 9px 16px;
+  border: 0;
+  border-radius: $radio-sm;
+  background: $peligro;
+  color: #fff;
+  font-weight: 600;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled { opacity: 0.45; cursor: not-allowed; }
+}

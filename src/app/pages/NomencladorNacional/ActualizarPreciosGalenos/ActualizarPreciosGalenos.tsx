@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, Fragment } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Search,
   TrendingUp,
@@ -23,8 +24,9 @@ import {
   listGalenos,
   actualizarPreciosGalenosLote,
   cambiarVisibilidadGaleno,
+  getResumenGalenos,
 } from "../nomenclador.api";
-import type { GalenoOut, GalenosPrecioLoteError } from "../nomenclador.types";
+import type { GalenoOut, GalenoResumenOut, GalenosPrecioLoteError } from "../nomenclador.types";
 import ConfirmModal from "@/app/components/ui/ConfirmModal/ConfirmModal";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -105,6 +107,18 @@ export default function ActualizarPreciosGalenos() {
   const [toggling, setToggling] = useState<Record<string, boolean>>({}); // keyed by código
 
   const { data: osList = [] } = useObrasSociales();
+
+  // Con qué nomencladores se usa cada galeno, en qué modo y qué niveles se apartan de la escala.
+  const { data: resumen = [], refetch: refetchResumen } = useQuery({
+    queryKey: ["galenos-resumen", selectedOsNro],
+    queryFn: () => getResumenGalenos(selectedOsNro as number),
+    enabled: selectedOsNro != null,
+    staleTime: 30_000,
+  });
+  const resumenPorCodigo = useMemo(
+    () => new Map<string, GalenoResumenOut>(resumen.map((r) => [r.codigo, r])),
+    [resumen],
+  );
 
   const loadGalenos = useCallback(async (osNro: number) => {
     setLoadingOs(true);
@@ -289,6 +303,7 @@ export default function ActualizarPreciosGalenos() {
 
     // Refresca los valores actuales (el endpoint no devuelve las filas).
     await refreshGalenos(selectedOsNro);
+    void refetchResumen();
   }
 
   function handleSaveAll() {
@@ -489,6 +504,7 @@ export default function ActualizarPreciosGalenos() {
                   saveResults={saveResults}
                   toggling={toggling}
                   onToggleVisible={toggleVisible}
+                  resumenPorCodigo={resumenPorCodigo}
                 />
               )}
             </>
@@ -539,6 +555,7 @@ function PriceSection({
   saveResults,
   toggling,
   onToggleVisible,
+  resumenPorCodigo,
 }: {
   title: string;
   grupos: Grupo[];
@@ -549,6 +566,7 @@ function PriceSection({
   saveResults: SaveResult[];
   toggling: Record<string, boolean>;
   onToggleVisible: (grupo: Grupo) => void;
+  resumenPorCodigo: Map<string, GalenoResumenOut>;
 }) {
   return (
     <div className={styles.section}>
@@ -561,7 +579,7 @@ function PriceSection({
           <thead>
             <tr>
               <th>Nombre</th>
-              <th>Tipo</th>
+              <th>Modo</th>
               <th>Unidad actual</th>
               <th>Nueva unidad</th>
               <th>Visible en boletín</th>
@@ -576,6 +594,8 @@ function PriceSection({
                 parseFloat(val) >= 0;
               const result = saveResults.find((r) => r.codigo === grupo.codigo);
               const isOpen = !!expanded[grupo.codigo];
+              const info = resumenPorCodigo.get(grupo.codigo);
+              const ajustados = info ? new Map(info.niveles.map((x) => [x.nivel, x])) : new Map();
               return (
                 <Fragment key={grupo.codigo}>
                   <tr
@@ -610,10 +630,10 @@ function PriceSection({
                     <td>
                       {grupo.nivelado ? (
                         <span className={styles.nivelBadge}>
-                          Nivelado · {grupo.niveles.length} niveles
+                          {info?.modo === "por_nivel" ? "Precio por nivel" : "Calculado"} · {grupo.niveles.length} niveles
                         </span>
                       ) : (
-                        <span className={styles.sinNivelBadge}>Sin nivel</span>
+                        <span className={styles.sinNivelBadge}>Calculado</span>
                       )}
                     </td>
                     <td className={styles.priceCell}>
@@ -681,12 +701,17 @@ function PriceSection({
                     grupo.niveles.map((n) => {
                       const unidadActual = parseFloat(n.valor_unitario);
                       const unidadNueva = isDirty ? parseFloat(val) : null;
-                      const uHon = formatUnidades(n.unidades_honorarios);
-                      const uAyu = formatUnidades(n.unidades_ayudante);
-                      const honActual = honorarioDe(n.unidades_honorarios, unidadActual);
+                      // Unidades efectivas (ajuste de la OS o escala del nomenclador); si el
+                      // resumen todavía no llegó, las propias del galeno.
+                      const efectivo = ajustados.get(n.nivel ?? -1);
+                      const unidadesHon = efectivo ? efectivo.unidades_honorarios : n.unidades_honorarios;
+                      const unidadesAyu = efectivo ? efectivo.unidades_ayudante : n.unidades_ayudante;
+                      const uHon = formatUnidades(unidadesHon);
+                      const uAyu = formatUnidades(unidadesAyu);
+                      const honActual = honorarioDe(unidadesHon, unidadActual);
                       const honNuevo =
                         unidadNueva != null
-                          ? honorarioDe(n.unidades_honorarios, unidadNueva)
+                          ? honorarioDe(unidadesHon, unidadNueva)
                           : null;
                       return (
                         <tr key={n.id} className={styles.nivelRow}>
@@ -696,6 +721,11 @@ function PriceSection({
                             {uAyu != null && (
                               <span className={styles.nivelAyudante}>
                                 {" "}· {uAyu} ay.
+                              </span>
+                            )}
+                            {efectivo?.ajustado && (
+                              <span className={styles.ajustado} title="Esta obra social pactó unidades distintas a las de la escala del nomenclador">
+                                AJUSTADO
                               </span>
                             )}
                           </td>

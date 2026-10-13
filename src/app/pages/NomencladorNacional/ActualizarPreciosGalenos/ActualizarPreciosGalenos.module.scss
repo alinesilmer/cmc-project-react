@@ -690,3 +690,13 @@
 }
 .toastSuccess { background: #166534; color: #fff; }
 .toastError   { background: $peligro;    color: #fff; }
+
+.ajustado {
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #fbf1e3;
+  color: #8a5414;
+  font-size: 0.66rem;
+  font-weight: 700;
+}

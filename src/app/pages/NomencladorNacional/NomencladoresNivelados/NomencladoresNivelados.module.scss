@@ -226,3 +226,110 @@
   justify-content: flex-end;
   gap: 8px;
 }
+
+// Pestañas del nomenclador, escala, galenos y Nacional.
+.pestanas {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid $linea;
+}
+
+.pestana {
+  padding: 9px 16px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: $tinta-2;
+  cursor: pointer;
+
+  &:hover { color: $tinta; }
+}
+
+.pestanaOn { color: $acento; border-bottom-color: $acento; }
+
+.galenos { display: flex; flex-direction: column; gap: 12px; }
+
+.galenoTarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  border: 1px solid $linea;
+  border-radius: $radio-lg;
+  max-width: 360px;
+}
+
+.galenoTitulo { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: $tinta-3; }
+
+.escala {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+
+  @media (max-width: 1000px) { flex-direction: column; }
+}
+
+.escalaTabla {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid $linea;
+  border-radius: $radio-lg;
+  overflow-x: auto;
+}
+
+.escalaCabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid $linea;
+
+  p { margin: 2px 0 0; }
+}
+
+.escalaGrid {
+  display: grid;
+  grid-template-columns: 60px minmax(120px, 1fr) minmax(180px, 1.3fr);
+  gap: 6px 12px;
+  align-items: center;
+  padding: 10px 16px 14px;
+  min-width: 420px;
+}
+
+.th { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: $tinta-3; }
+.r { text-align: right; font-variant-numeric: tabular-nums; }
+.escalaFila { display: contents; }
+.ayudanteCelda { display: flex; flex-direction: column; gap: 2px; }
+.editado { border-color: $alerta-linea; background: $alerta-bg; }
+.link { align-self: flex-start; padding: 0; border: 0; background: none; color: $acento; font: inherit; font-size: 0.72rem; font-weight: 700; cursor: pointer; }
+
+.escalaLateral { width: 320px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; @media (max-width: 1000px) { width: 100%; } }
+
+.aviso {
+  padding: 12px 14px;
+  border-radius: $radio-lg;
+  background: $acento-tinte;
+  color: $acento;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.guardar, .previa {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid $linea;
+  border-radius: $radio-lg;
+  background: $superficie;
+  font-size: 0.86rem;
+}
+
+.previa { border-color: $alerta-linea; background: $alerta-bg; ul { margin: 6px 0 0; padding-left: 18px; } }
+.checkLinea { display: flex; align-items: flex-start; gap: 8px; line-height: 1.4; cursor: pointer; }
+.accionesEscala { display: flex; gap: 8px; flex-wrap: wrap; }

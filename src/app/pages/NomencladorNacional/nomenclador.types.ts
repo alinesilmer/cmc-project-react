@@ -292,6 +292,8 @@ export type GalenoOut = {
   activo: boolean;
   /** Solo para el boletín del médico: `false` lo oculta en /panel/boletin-valores. */
   visible: boolean;
+  /** `true`: la obra social pactó un precio fijo por nivel (1 unidad × el precio del nivel). */
+  precio_por_nivel: boolean;
   observacion: string | null;
   created_at: string;
 };
@@ -343,6 +345,10 @@ export type AltaNECeroResult = {
 export type ComponentesNNSugeridos = {
   disponible: boolean;
   motivo: string | null;
+  /** Sólo "por nomenclador": nivel del código, nomenclador y modo del galeno. */
+  nivel?: number | null;
+  nomenclador_nivelado_id?: number | null;
+  precio_por_nivel?: boolean | null;
   componentes: {
     concepto: "Honorarios" | "Ayudante" | "Gastos";
     galeno_id: number;
@@ -572,6 +578,9 @@ export type ValorOut = {
   cantidad_ayudantes: number | null;
   /** Importe que el afiliado paga de su bolsillo; se descuenta del total a facturar. */
   coseguro: string;
+  /** Nomenclador con el que se factura (`null` = valor fijo o manual) y su nombre. */
+  nomenclador_nivelado_id?: number | null;
+  nomenclador_nivelado?: string | null;
   /** Dato del PAR (obra_social_nro, código), no de esta variante puntual: el código
    * lo puede facturar cualquier especialidad en esta OS. Se edita en "Metadatos". */
   sin_restriccion_especialidad: boolean;
@@ -613,6 +622,8 @@ export type ValorCreatePayload = {
   por_presupuesto?: boolean;
   cantidad_ayudantes?: number | null;
   coseguro?: number;
+  /** Nomenclador con el que se factura; los componentes vienen de `getComponentesNomenclador`. */
+  nomenclador_nivelado_id?: number | null;
   vigencia_desde: string;
   observacion?: string | null;
   componentes: ComponentePayload[];
@@ -632,6 +643,7 @@ export type ValorCreateMultiPayload = {
   por_presupuesto?: boolean;
   cantidad_ayudantes?: number | null;
   coseguro?: number;
+  nomenclador_nivelado_id?: number | null;
   vigencia_desde: string;
   observacion?: string | null;
   componentes: ComponentePayload[];
@@ -667,6 +679,10 @@ export type ValorActualizarPayload = {
   /** Propaga la misma vigencia+componentes a las demás variantes NE del par
    * (OS + código), cada una conservando su propia especialidad. No aplica a NN. */
   aplicar_a_variantes?: boolean;
+  /** Cómo se factura el valor nuevo. Sin `definir_nomenclador` se conserva el del valor que
+   * se cierra; con él, `nomenclador_nivelado_id` lo fija (`null` = valor fijo o manual). */
+  definir_nomenclador?: boolean;
+  nomenclador_nivelado_id?: number | null;
 };
 
 /** Edición del "núcleo" de un código en una obra social: vale PARA TODAS sus
@@ -939,6 +955,7 @@ export type ReplicaAltaPayload = {
   por_presupuesto: boolean;
   cantidad_ayudantes?: number | null;
   coseguro: number;
+  nomenclador_nivelado_id?: number | null;
   vigencia_desde: string;
   observacion?: string | null;
   componentes: ComponentePayload[];
@@ -988,6 +1005,9 @@ export type NomencladorNiveladoOut = {
   galeno_grupo: string;
   galeno_codigo: string | null;
   galeno_nombre: string | null;
+  galeno_gastos_codigo: string | null;
+  /** `nacional`: el Nomenclador Nacional (sin escala por nivel; no se aplica a una OS). */
+  tipo: "nivelado" | "nacional";
   niveles: number;
   /** ID_COLEGIO_ESPE a las que se aplica el nomenclador; vacío = todas las del código. */
   especialidades: number[];
@@ -1040,11 +1060,108 @@ export type AplicarNiveladoFila = {
   vigencias_borradas: number;
 };
 
+/** Unidades de un nivel PARA ESTA obra social (pisan la escala del nomenclador). */
+export type AplicarNiveladoAjuste = {
+  nivel: number;
+  unidades_honorarios?: number | null;
+  unidades_ayudante?: number | null;
+};
+
+/** Cómo se crea el galeno de la OS si no lo tiene o cambia de nomenclador (7 ↔ 10 niveles). */
+export type AplicarNiveladoGaleno = {
+  /** `false`: calculado (unidades × `valor_unitario`). `true`: precio fijo por nivel. */
+  precio_por_nivel: boolean;
+  valor_unitario?: number | null;
+  precios_por_nivel?: Record<number, number> | null;
+  ajustes?: AplicarNiveladoAjuste[];
+};
+
+export type AplicarNiveladoPayload = {
+  obra_social_nro: number;
+  vigencia_desde: string;
+  dry_run: boolean;
+  galeno?: AplicarNiveladoGaleno | null;
+};
+
+/** La OS usa otro nomenclador con el mismo galeno: al aplicar se eliminan sus valores y se
+ * crean los del nuevo. */
+export type AplicarNiveladoCambio = {
+  desde_slug: string;
+  desde_nombre: string;
+  niveles_desde: number;
+  valores_eliminados: number;
+  codigos_sin_reemplazo: number;
+  valores_a_crear: number;
+};
+
+export type NiveladoGalenoNivel = {
+  nivel: number;
+  valor_unitario: string;
+  unidades_honorarios: string;
+  unidades_ayudante: string;
+  ajustado: boolean;
+};
+
+export type NiveladoEstadoOsOut = {
+  obra_social_nro: number;
+  obra_social: string;
+  niveles_nomenclador: number;
+  /** ok: tiene el galeno · falta: no lo tiene · otros_niveles: lo tiene con otra cantidad de niveles. */
+  galeno_estado: "ok" | "falta" | "otros_niveles";
+  niveles_os: number | null;
+  precio_por_nivel: boolean | null;
+  niveles: NiveladoGalenoNivel[];
+  cambio: AplicarNiveladoCambio | null;
+};
+
+export type NiveladoEscalaNivel = {
+  nivel: number;
+  unidades_honorarios: string | number;
+  /** `null`: el 25 % de las de honorarios. */
+  unidades_ayudante: string | number | null;
+};
+
+export type NiveladoEscalaOut = {
+  slug: string;
+  nombre: string;
+  galeno_codigo: string | null;
+  galeno_gastos_codigo: string | null;
+  niveles: NiveladoEscalaNivel[];
+  obras_sociales: number;
+};
+
+export type RecalcularNiveladoResult = {
+  dry_run: boolean;
+  obras_sociales: number;
+  valores: number;
+  detalle: { obra_social_nro: number; valores: number; crear: number; reemplazar: number }[];
+  errores: { obra_social_nro: number; motivo: string }[];
+};
+
+export type NomencladorDeCodigoOut = {
+  id: number;
+  slug: string;
+  nombre: string;
+  tipo: "nivelado" | "nacional";
+  niveles: number;
+  nivel_del_codigo: number | null;
+  unidades_del_codigo: string | null;
+};
+
+export type GalenoResumenOut = {
+  codigo: string;
+  nomencladores: string[];
+  modo: "calculado" | "por_nivel";
+  niveles: NiveladoGalenoNivel[];
+};
+
 export type AplicarNiveladoOut = {
   dry_run: boolean;
   obra_social_nro: number;
   nomenclador: string;
   galeno_nombre: string;
+  galeno_creado: boolean;
+  cambio: AplicarNiveladoCambio | null;
   resumen: {
     total: number;
     crear: number;

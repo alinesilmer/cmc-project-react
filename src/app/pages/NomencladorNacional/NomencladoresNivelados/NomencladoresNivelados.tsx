@@ -16,17 +16,32 @@ import {
   actualizarCodigoNivelado,
   actualizarEspecialidadesNivelado,
   agregarCodigoNivelado,
+  getEscalaNivelado,
+  guardarEscalaNivelado,
   listCodigosNivelado,
   listNivelados,
   listNomenclador,
   quitarCodigoNivelado,
+  recalcularNivelado,
 } from "../nomenclador.api";
-import type { NiveladoCodigoOut, NomencladorNiveladoOut } from "../nomenclador.types";
+import { today } from "../nomenclador.helpers";
+import type {
+  NiveladoCodigoOut,
+  NomencladorNiveladoOut,
+  RecalcularNiveladoResult,
+} from "../nomenclador.types";
 
 const PAGE_SIZE = 50;
 const RUTA = "/panel/nomenclador/nivelados";
 
 type Toast = { type: "success" | "error"; msg: string };
+type Pestana = "codigos" | "escala" | "especialidades" | "galenos";
+const PESTANAS: { id: Pestana; texto: string }[] = [
+  { id: "codigos", texto: "Códigos" },
+  { id: "escala", texto: "Escala" },
+  { id: "especialidades", texto: "Especialidades" },
+  { id: "galenos", texto: "Galenos" },
+];
 /** Filtro de la tabla: todos, un nivel, o los de unidades fijas. */
 type Filtro = "todos" | "unidades" | number;
 
@@ -40,10 +55,11 @@ function detalleError(e: unknown, fallback: string): string {
 }
 
 /**
- * Nomencladores nivelados: Cirugía adulto 7 y 10 niveles, Cirugía infantil, FASGO,
- * Urología… A cada código le corresponde el mismo nivel en todas las obras sociales;
- * lo que cambia es el precio del galeno por nivel. Desde acá se consulta y corrige el
- * nivel de cada código y se aplica el nomenclador a una obra social.
+ * Nomencladores: el Nacional y los nivelados (Cirugía adulto 7 y 10 niveles, Cirugía infantil,
+ * FASGO, Urología…). Cada uno tiene sus códigos con su nivel, su ESCALA de unidades por nivel y
+ * su galeno; el precio sale del galeno de cada obra social. Desde acá se consulta y corrige el
+ * nivel de cada código, se edita la escala (y se recalcula) y se aplica el nomenclador a una
+ * obra social.
  */
 export default function NomencladoresNivelados() {
   const { slug } = useParams<{ slug?: string }>();
@@ -55,6 +71,7 @@ export default function NomencladoresNivelados() {
   const [q, setQ] = useState("");
   const [qDebounced, setQDebounced] = useState("");
   const [page, setPage] = useState(1);
+  const [pestana, setPestana] = useState<Pestana>("codigos");
   const [aplicarOpen, setAplicarOpen] = useState(false);
   const [quitar, setQuitar] = useState<NiveladoCodigoOut | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
@@ -69,10 +86,11 @@ export default function NomencladoresNivelados() {
     return () => clearTimeout(t);
   }, [q]);
   useEffect(() => setPage(1), [slug, filtro, qDebounced]);
-  useEffect(() => setFiltro("todos"), [slug]);
+  useEffect(() => { setFiltro("todos"); setPestana("codigos"); }, [slug]);
 
   const listado = useQuery({ queryKey: ["nomencladores-nivelados"], queryFn: listNivelados });
-  const nomencladores = useMemo(() => listado.data ?? [], [listado.data]);
+  // El Nacional no es nivelado (no tiene niveles ni escala): no se lista acá.
+  const nomencladores = useMemo(() => (listado.data ?? []).filter((n) => n.tipo !== "nacional"), [listado.data]);
   const actual: NomencladorNiveladoOut | undefined = nomencladores.find((n) => n.slug === slug);
 
   // Sin slug en la URL: el primero.
@@ -135,8 +153,8 @@ export default function NomencladoresNivelados() {
           <div>
             <h1 className={base.title}>Nomencladores nivelados</h1>
             <p className={base.subtitle}>
-              El nivel de cada código es el mismo en todas las obras sociales; lo que cambia es el
-              precio del galeno por nivel que pacta cada una.
+              Cada nomenclador define sus códigos, el nivel de cada uno y su escala de unidades; lo que
+              cambia entre obras sociales es el precio del galeno que pacta cada una.
             </p>
           </div>
         </div>
@@ -169,8 +187,8 @@ export default function NomencladoresNivelados() {
                 <div>
                   <h2 className={styles.titulo}>{actual.nombre}</h2>
                   <p className={base.hintText}>
-                    Se cotiza con el <strong>{actual.galeno_nombre ?? actual.galeno_grupo}</strong> de{" "}
-                    {actual.niveles} niveles: cada código toma las unidades del galeno de su nivel.
+                    {actual.total_codigos} códigos · se cotiza con el <strong>{actual.galeno_nombre ?? actual.galeno_grupo}</strong> de{" "}
+                    {actual.niveles} niveles: las unidades de cada nivel salen de la pestaña Escala.
                   </p>
                 </div>
                 {puedeEditar && (
@@ -180,15 +198,45 @@ export default function NomencladoresNivelados() {
                 )}
               </div>
 
-              <EspecialidadesDelNomenclador
-                key={actual.slug}
-                slug={actual.slug}
-                seleccionadas={actual.especialidades}
-                puedeEditar={puedeEditar}
-                onGuardado={() => { showToast("success", "Especialidades guardadas."); void listado.refetch(); }}
-                onError={(m) => showToast("error", m)}
-              />
+              <div className={styles.pestanas} role="tablist" aria-label="Secciones del nomenclador">
+                {PESTANAS.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={pestana === p.id}
+                    className={`${styles.pestana} ${pestana === p.id ? styles.pestanaOn : ""}`}
+                    onClick={() => setPestana(p.id)}
+                  >
+                    {p.texto}
+                  </button>
+                ))}
+              </div>
 
+              {pestana === "escala" && (
+                <EscalaDelNomenclador
+                  key={actual.slug}
+                  slug={actual.slug}
+                  puedeEditar={puedeEditar}
+                  onToast={showToast}
+                />
+              )}
+
+              {pestana === "galenos" && <GalenosDelNomenclador nomenclador={actual} />}
+
+              {pestana === "especialidades" && (
+                <EspecialidadesDelNomenclador
+                  key={actual.slug}
+                  slug={actual.slug}
+                  seleccionadas={actual.especialidades}
+                  puedeEditar={puedeEditar}
+                  onGuardado={() => { showToast("success", "Especialidades guardadas."); void listado.refetch(); }}
+                  onError={(m) => showToast("error", m)}
+                />
+              )}
+
+              {pestana === "codigos" && (
+              <>
               <div className={styles.filtros} role="group" aria-label="Filtrar por nivel">
                 <button type="button" className={styles.chip} aria-pressed={filtro === "todos"} onClick={() => setFiltro("todos")}>
                   Todos <b>{actual.total_codigos}</b>
@@ -270,6 +318,8 @@ export default function NomencladoresNivelados() {
                   <button type="button" className={base.btnGhost} disabled={page >= totalPaginas} onClick={() => setPage((p) => p + 1)}>Siguiente</button>
                 </div>
               )}
+              </>
+              )}
             </>
           )}
         </section>
@@ -308,6 +358,205 @@ export default function NomencladoresNivelados() {
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+// ─── Galenos del nomenclador ─────────────────────────────────────────────────
+
+function GalenosDelNomenclador({ nomenclador }: { nomenclador: NomencladorNiveladoOut }) {
+  return (
+    <div className={styles.galenos}>
+      <div className={styles.galenoTarjeta}>
+        <span className={styles.galenoTitulo}>Galeno de honorarios y ayudante</span>
+        <strong>{nomenclador.galeno_nombre ?? nomenclador.galeno_codigo ?? nomenclador.galeno_grupo}</strong>
+        <span className={base.hintText}>{nomenclador.niveles} niveles</span>
+      </div>
+      <div className={styles.galenoTarjeta}>
+        <span className={styles.galenoTitulo}>Galeno de gastos</span>
+        <strong>{nomenclador.galeno_gastos_codigo ?? "gasto_quirurgico"}</strong>
+        <span className={base.hintText}>Sin niveles</span>
+      </div>
+      <p className={base.hintText}>
+        El precio de cada galeno lo pacta cada obra social y se carga al aplicar el nomenclador o desde{" "}
+        <Link to="/panel/nomenclador/actualizar-precios">Actualizar galenos</Link>.
+      </p>
+    </div>
+  );
+}
+
+// ─── Escala de unidades por nivel ────────────────────────────────────────────
+
+type FilaEscala = { nivel: number; uh: string; ua: string; manual: boolean };
+const aNum = (v: string) => { const n = parseFloat(v.replace(",", ".")); return Number.isFinite(n) ? n : null; };
+
+function EscalaDelNomenclador({
+  slug,
+  puedeEditar,
+  onToast,
+}: {
+  slug: string;
+  puedeEditar: boolean;
+  onToast: (type: "success" | "error", msg: string) => void;
+}) {
+  const escala = useQuery({ queryKey: ["nivelado-escala", slug], queryFn: () => getEscalaNivelado(slug) });
+  const [filas, setFilas] = useState<FilaEscala[]>([]);
+  const [recalcular, setRecalcular] = useState(true);
+  const [vigencia, setVigencia] = useState(today());
+  const [guardando, setGuardando] = useState(false);
+  const [previa, setPrevia] = useState<RecalcularNiveladoResult | null>(null);
+  const [aplicando, setAplicando] = useState(false);
+
+  useEffect(() => {
+    if (!escala.data) return;
+    setFilas(escala.data.niveles.map((n) => ({
+      nivel: n.nivel,
+      uh: String(Number(n.unidades_honorarios)),
+      ua: n.unidades_ayudante != null ? String(Number(n.unidades_ayudante)) : "",
+      manual: n.unidades_ayudante != null,
+    })));
+    setPrevia(null);
+  }, [escala.data]);
+
+  const filaCalculada = (f: FilaEscala) => {
+    const uh = aNum(f.uh) ?? 0;
+    const ua = f.manual ? (aNum(f.ua) ?? 0) : Math.round(uh * 25) / 100;
+    return { uh, ua };
+  };
+  const invalida = filas.some((f) => aNum(f.uh) == null || (f.manual && aNum(f.ua) == null));
+
+  function cambiar(nivel: number, cambio: Partial<FilaEscala>) {
+    setPrevia(null);
+    setFilas((prev) => prev.map((f) => (f.nivel === nivel ? { ...f, ...cambio } : f)));
+  }
+
+  async function guardar() {
+    setGuardando(true);
+    setPrevia(null);
+    try {
+      await guardarEscalaNivelado(slug, filas.map((f) => ({
+        nivel: f.nivel,
+        unidades_honorarios: aNum(f.uh) ?? 0,
+        unidades_ayudante: f.manual ? aNum(f.ua) : null,
+      })));
+      void escala.refetch();
+      if (!recalcular) {
+        onToast("success", "Escala guardada. Los valores ya cargados no cambian hasta recalcular.");
+        return;
+      }
+      setPrevia(await recalcularNivelado(slug, { vigencia_desde: vigencia, dry_run: true }));
+      onToast("success", "Escala guardada. Revisá la vista previa del recálculo.");
+    } catch (e) {
+      onToast("error", detalleError(e, "No se pudo guardar la escala."));
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  async function aplicarRecalculo() {
+    setAplicando(true);
+    try {
+      const r = await recalcularNivelado(slug, { vigencia_desde: vigencia, dry_run: false });
+      setPrevia(null);
+      onToast(
+        r.errores.length ? "error" : "success",
+        `Recalculado: ${r.valores} valores en ${r.obras_sociales} obras sociales${r.errores.length ? ` (${r.errores.length} con error)` : ""}.`,
+      );
+    } catch (e) {
+      onToast("error", detalleError(e, "No se pudo recalcular."));
+    } finally {
+      setAplicando(false);
+    }
+  }
+
+  if (escala.isLoading) return <p className={base.hintText}>Cargando…</p>;
+  if (filas.length === 0) return <p className={base.emptyText}>Este nomenclador todavía no tiene escala cargada.</p>;
+
+  return (
+    <div className={styles.escala}>
+      <div className={styles.escalaTabla}>
+        <div className={styles.escalaCabecera}>
+          <div>
+            <strong>Escala por nivel</strong>
+            <p className={base.hintText}>Unidades que se multiplican por el valor unitario del galeno de cada obra social.</p>
+          </div>
+        </div>
+        <div className={styles.escalaGrid}>
+          <span className={styles.th}>Nivel</span>
+          <span className={styles.th}>Unid. honorarios</span>
+          <span className={styles.th}>Unid. ayudante</span>
+          {filas.map((f) => {
+            const c = filaCalculada(f);
+            return (
+              <div key={f.nivel} className={styles.escalaFila}>
+                <strong>{f.nivel}</strong>
+                <input
+                  className={base.formInput} type="number" min="0" step="0.01" value={f.uh} disabled={!puedeEditar}
+                  aria-label={`Unidades de honorarios del nivel ${f.nivel}`}
+                  onChange={(e) => cambiar(f.nivel, { uh: e.target.value })}
+                />
+                <div className={styles.ayudanteCelda}>
+                  <input
+                    className={`${base.formInput} ${f.manual ? styles.editado : ""}`} type="number" min="0" step="0.01"
+                    value={f.manual ? f.ua : String(c.ua)} disabled={!puedeEditar}
+                    aria-label={`Unidades de ayudante del nivel ${f.nivel}`}
+                    onChange={(e) => cambiar(f.nivel, { ua: e.target.value, manual: true })}
+                  />
+                  {f.manual ? (
+                    puedeEditar && <button type="button" className={styles.link} onClick={() => cambiar(f.nivel, { manual: false, ua: "" })}>EDITADO · volver al 25 %</button>
+                  ) : <span className={base.hintText}>25 %</span>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <aside className={styles.escalaLateral}>
+        <div className={styles.aviso}>
+          <strong>El ayudante es el 25 % de los honorarios.</strong> Se completa solo; si hace falta se edita nivel por
+          nivel. Una obra social puede ajustar las unidades de un nivel al aplicar el nomenclador.
+        </div>
+        {puedeEditar && (
+          <div className={styles.guardar}>
+            <strong>Al guardar la escala</strong>
+            <label className={styles.checkLinea}>
+              <input type="checkbox" checked={recalcular} onChange={(e) => { setRecalcular(e.target.checked); setPrevia(null); }} />
+              Recalcular los valores de las {escala.data?.obras_sociales ?? 0} obras sociales que lo usan, desde
+            </label>
+            <input
+              className={base.formInput} type="date" value={vigencia} disabled={!recalcular}
+              aria-label="Vigencia del recálculo" onChange={(e) => { setVigencia(e.target.value); setPrevia(null); }}
+            />
+            <span className={base.hintText}>
+              Antes de aplicar se muestra una vista previa. Las obras sociales con niveles ajustados conservan su ajuste.
+            </span>
+            <div className={styles.accionesEscala}>
+              <button type="button" className={base.btnGhost} disabled={guardando || escala.isFetching} onClick={() => void escala.refetch()}>
+                Descartar
+              </button>
+              <button type="button" className={base.btnPrimary} disabled={guardando || invalida} onClick={() => void guardar()}>
+                {guardando ? "Guardando…" : recalcular ? "Guardar y ver vista previa" : "Guardar escala"}
+              </button>
+            </div>
+          </div>
+        )}
+        {previa && (
+          <div className={styles.previa} role="status">
+            <strong>Vista previa del recálculo</strong>
+            <span><b>{previa.valores}</b> valores en <b>{previa.obras_sociales}</b> obras sociales, desde el {vigencia.split("-").reverse().join("/")}.</span>
+            {previa.errores.length > 0 && (
+              <details>
+                <summary>{previa.errores.length} no se pueden recalcular</summary>
+                <ul>{previa.errores.map((x) => <li key={x.obra_social_nro}>{x.obra_social_nro}: {x.motivo}</li>)}</ul>
+              </details>
+            )}
+            <button type="button" className={base.btnPrimary} disabled={aplicando || previa.valores === 0} onClick={() => void aplicarRecalculo()}>
+              {aplicando ? "Recalculando…" : "Recalcular ahora"}
+            </button>
+          </div>
+        )}
+      </aside>
     </div>
   );
 }

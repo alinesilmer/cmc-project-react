@@ -1141,3 +1141,61 @@
   gap: 8px;
 }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+// "Cómo se factura": por nomenclador / valor fijo / manual.
+.comoFactura {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.comoFacturaOpciones {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+
+  @media (max-width: 720px) { grid-template-columns: 1fr; }
+}
+
+.comoFacturaOpcion {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 12px;
+  border: 1px solid #d0d6e2;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  color: #5b6b82;
+  line-height: 1.35;
+  cursor: pointer;
+
+  input { position: absolute; opacity: 0; pointer-events: none; }
+  strong { color: #1c2a3d; font-size: 0.86rem; }
+  &:has(input:disabled) { opacity: 0.5; cursor: not-allowed; }
+  &:has(input:focus-visible) { outline: 2px solid #5a79e1; outline-offset: 2px; }
+}
+
+.comoFacturaOn { border: 2px solid #173f70; background: #e8f0fb; padding: 9px 11px; strong { color: #173f70; } }
+
+.calculoNom {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #d0d6e2;
+  border-radius: 10px;
+}
+
+.calculoNomCab { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+
+.calculoNomTabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+
+  th { text-align: left; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; color: #5b6b82; padding: 4px 6px; }
+  td { padding: 5px 6px; border-top: 1px solid #edf0f6; font-variant-numeric: tabular-nums; }
+  th:last-child, td:last-child { text-align: right; }
+  tfoot td { font-weight: 600; }
+}

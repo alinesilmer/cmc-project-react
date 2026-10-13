@@ -19,7 +19,7 @@ import {
   Edit2,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 
 import styles from "./NomencladorPorOS.module.scss";
@@ -39,6 +39,9 @@ import {
   getFamiliaObraSocial,
   replicarValoresEnFamilia,
   getComponentesNN,
+  getComponentesNomenclador,
+  getNomencladoresDeCodigo,
+  listNivelados,
 } from "../nomenclador.api";
 import MultiSelectBuscable from "../../../components/molecules/MultiSelectBuscable/MultiSelectBuscable";
 import ReplicarFamiliaBlock, {
@@ -66,6 +69,8 @@ import type {
   ReplicaResultadoItem,
   ReplicarValoresFamiliaPayload,
   TipoCodigo,
+  ComponentesNNSugeridos,
+  NomencladorDeCodigoOut,
 } from "../nomenclador.types";
 import { ORIGEN_LABELS } from "../nomenclador.types";
 import { TIPOS_CODIGO } from "../components/tipoCodigo";
@@ -76,6 +81,9 @@ import { today, parseMonto, compararGalenos } from "../nomenclador.helpers";
 
 type ModalidadValor = "calculable" | "fijo";
 type ModalKind = "create" | "edit" | null;
+/** Cómo se factura un valor NE: por un nomenclador (escala + galeno de la OS), por un importe
+ * fijo o armado a mano (galeno × cantidad libres). */
+type ComoFactura = "nomenclador" | "fijo" | "manual";
 
 type ComponenteForm = {
   concepto: "Honorarios" | "Ayudante" | "Gastos";
@@ -91,6 +99,9 @@ type PrecioForm = {
   modalidad: ModalidadValor;
   componentes: ComponenteForm[];
   coseguro: string;
+  /** Sólo al editar un valor NE: cómo se factura (y con qué nomenclador). */
+  comoFactura?: ComoFactura;
+  nomencladorId?: number | null;
 };
 
 /** Precios activos que el código ya tiene en la O.S. (para no duplicarlos). */
@@ -108,6 +119,9 @@ type ValorForm = {
   nomencladorDesc: string;
   origen: Origen;
   modalidad: ModalidadValor;
+  comoFactura: ComoFactura;
+  /** Nomenclador elegido cuando `comoFactura` es "nomenclador". */
+  nomencladorSlug: string;
   vigencia_desde: string;
   /** Obligatoria: cómo nombra esta obra social al código. */
   descripcion: string;
@@ -138,6 +152,8 @@ function formVacio(): ValorForm {
     nomencladorDesc: "",
     origen: "NE",
     modalidad: "calculable",
+    comoFactura: "manual",
+    nomencladorSlug: "",
     vigencia_desde: today(),
     descripcion: "",
     porPresupuesto: false,
@@ -249,6 +265,25 @@ function precioDeValor(v: ValorOut): PrecioForm {
     modalidad: v.modalidad === "galeno" ? "calculable" : "fijo",
     componentes: compsFromOut(v.componentes),
     coseguro: v.coseguro && parseMonto(v.coseguro) !== 0 ? v.coseguro : "",
+    ...comoFacturaDe(v),
+  };
+}
+
+/** Cómo se factura hoy un valor NE (el NN va siempre por el Nacional: no se elige). */
+function comoFacturaDe(v: ValorOut): Pick<PrecioForm, "comoFactura" | "nomencladorId"> {
+  if (v.origen !== "NE" || v.por_presupuesto) return {};
+  if (v.modalidad === "fijo") return { comoFactura: "fijo", nomencladorId: null };
+  return v.nomenclador_nivelado_id != null
+    ? { comoFactura: "nomenclador", nomencladorId: v.nomenclador_nivelado_id }
+    : { comoFactura: "manual", nomencladorId: null };
+}
+
+/** Lo que se manda al servidor para que el valor nuevo siga (o cambie) su forma de facturarse. */
+function nomencladorPayload(p: Pick<PrecioForm, "comoFactura" | "nomencladorId">) {
+  if (p.comoFactura === undefined) return {};
+  return {
+    definir_nomenclador: true,
+    nomenclador_nivelado_id: p.comoFactura === "nomenclador" ? (p.nomencladorId ?? null) : null,
   };
 }
 
@@ -278,6 +313,8 @@ type EditEcuForm = {
   coseguro: string;
   /** Propaga la nueva vigencia+ecuación a las demás variantes NE del mismo código+OS. */
   aplicarAVariantes: boolean;
+  comoFactura?: ComoFactura;
+  nomencladorId?: number | null;
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -534,6 +571,256 @@ function ComponentEditor({
   );
 }
 
+// ─── ComoSeFactura: por nomenclador / valor fijo / manual ──────────────────────
+
+const COMO_FACTURA: { id: ComoFactura; titulo: string; texto: string }[] = [
+  { id: "nomenclador", titulo: "Por nomenclador", texto: "Calculado con el galeno de la obra social y la escala del nomenclador." },
+  { id: "fijo", titulo: "Valor fijo", texto: "Un importe en pesos por componente, sin galeno." },
+  { id: "manual", titulo: "Manual (galeno × cantidad)", texto: "Elegís el galeno y la cantidad de cada componente." },
+];
+
+function ComoSeFactura({
+  idBase = "como",
+  valor,
+  slug,
+  opciones,
+  cargandoOpciones,
+  calculo,
+  calculando,
+  error,
+  galenos,
+  onCambiar,
+  onSlug,
+}: {
+  /** Distingue los grupos de radios y los selects si hay más de uno en pantalla. */
+  idBase?: string;
+  valor: ComoFactura;
+  slug: string;
+  opciones: NomencladorDeCodigoOut[];
+  cargandoOpciones: boolean;
+  calculo: ComponentesNNSugeridos | null;
+  calculando: boolean;
+  error?: string;
+  galenos: GalenoOut[];
+  onCambiar: (c: ComoFactura) => void;
+  onSlug: (slug: string) => void;
+}) {
+  const galenoPorId = useMemo(() => new Map(galenos.map((g) => [g.id, g])), [galenos]);
+  const filas = (calculo?.disponible ? calculo.componentes : []).map((c) => {
+    const g = galenoPorId.get(c.galeno_id);
+    const cantidad = Number(c.cantidad);
+    return { ...c, cantidad, subtotal: g ? parseMonto(g.valor_unitario) * cantidad : null, vu: g ? parseMonto(g.valor_unitario) : null };
+  });
+  const total = filas.reduce((a, f) => a + (f.subtotal ?? 0), 0);
+
+  return (
+    <div className={styles.comoFactura}>
+      <span className={styles.formLabel}>Cómo se factura</span>
+      <div className={styles.comoFacturaOpciones} role="radiogroup" aria-label="Cómo se factura">
+        {COMO_FACTURA.map((o) => (
+          <label key={o.id} className={`${styles.comoFacturaOpcion} ${valor === o.id ? styles.comoFacturaOn : ""}`}>
+            <input
+              type="radio"
+              name={`${idBase}-factura`}
+              checked={valor === o.id}
+              disabled={o.id === "nomenclador" && !cargandoOpciones && opciones.length === 0}
+              onChange={() => onCambiar(o.id)}
+            />
+            <strong>{o.titulo}</strong>
+            <span>{o.texto}</span>
+          </label>
+        ))}
+      </div>
+      {valor !== "nomenclador" && !cargandoOpciones && opciones.length === 0 && (
+        <span className={styles.hintText}>Este código no pertenece a ningún nomenclador nivelado.</span>
+      )}
+      {valor === "nomenclador" && (
+        <>
+          <div className={styles.formGroup}>
+            <label className={styles.formLabel} htmlFor={`${idBase}-nom`}>Nomenclador *</label>
+            <select id={`${idBase}-nom`} className={styles.formSelect} value={slug} onChange={(e) => onSlug(e.target.value)}>
+              {opciones.map((n) => (
+                <option key={n.slug} value={n.slug}>{n.nombre}</option>
+              ))}
+            </select>
+          </div>
+          {calculando ? (
+            <span className={styles.hintText}>Calculando…</span>
+          ) : calculo && !calculo.disponible ? (
+            <span className={styles.errorMsg}>{calculo.motivo}</span>
+          ) : calculo ? (
+            <div className={styles.calculoNom}>
+              <div className={styles.calculoNomCab}>
+                <strong>Cálculo</strong>
+                <span className={styles.hintText}>
+                  Sólo lectura · sale del nomenclador{calculo.nivel != null ? ` · nivel ${calculo.nivel}` : ""}
+                  {calculo.precio_por_nivel ? " · precio fijo por nivel" : ""}
+                </span>
+              </div>
+              <table className={styles.calculoNomTabla}>
+                <thead><tr><th>Componente</th><th>Unidades</th><th>Galeno</th><th>Subtotal</th></tr></thead>
+                <tbody>
+                  {filas.map((f) => (
+                    <tr key={f.concepto}>
+                      <td>{f.concepto}</td>
+                      <td>{f.cantidad}</td>
+                      <td>{f.galeno_nombre}{f.vu != null ? ` · ${fmt.format(f.vu)}` : ""}</td>
+                      <td>{f.subtotal != null ? fmt.format(f.subtotal) : "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot><tr><td colSpan={3}>Total estimado</td><td><strong>{fmt.format(total)}</strong></td></tr></tfoot>
+              </table>
+              <span className={styles.hintText}>Si cambia el galeno o la escala, este valor se recalcula al aplicar el nomenclador.</span>
+            </div>
+          ) : error ? (
+            <span className={styles.errorMsg}>{error}</span>
+          ) : null}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── ComoSeFacturaEdit: lo mismo, al editar un valor que ya existe ──────────────
+
+type CambioComoFactura = {
+  comoFactura: ComoFactura;
+  nomencladorId: number | null;
+  modalidad: ModalidadValor;
+  componentes: ComponenteForm[];
+};
+
+/** "Cómo se factura" de un valor NE que se está editando. Muestra lo que el valor tiene hoy y
+ * sólo consulta al servidor cuando se elige otro nomenclador (los componentes salen de ahí). */
+function ComoSeFacturaEdit({
+  idBase,
+  osNro,
+  nomencladorId,
+  precio,
+  galenos,
+  onChange,
+}: {
+  idBase: string;
+  osNro: number;
+  /** Código del Colegio que se está editando (`nm_nomenclador.id`). */
+  nomencladorId: number;
+  precio: Pick<PrecioForm, "comoFactura" | "nomencladorId" | "componentes">;
+  galenos: GalenoOut[];
+  onChange: (cambio: CambioComoFactura) => void;
+}) {
+  const queryClient = useQueryClient();
+  const opcionesQuery = useQuery({
+    queryKey: ["nomencladores-de-codigo", nomencladorId],
+    queryFn: () => getNomencladoresDeCodigo(nomencladorId),
+    staleTime: 5 * 60 * 1000,
+  });
+  const [calculando, setCalculando] = useState(false);
+  const [aviso, setAviso] = useState<string | undefined>();
+  const galenoPorId = useMemo(() => new Map(galenos.map((g) => [g.id, g])), [galenos]);
+
+  const comoFactura = precio.comoFactura ?? "manual";
+  // El Nacional sólo se ofrece si el valor ya se factura así.
+  const opciones = (opcionesQuery.data ?? []).filter(
+    (n) => n.tipo === "nivelado" || n.id === precio.nomencladorId,
+  );
+  const elegido = opciones.find((n) => n.id === precio.nomencladorId);
+
+  // Lo que el valor tiene cargado, para mostrarlo de sólo lectura.
+  const calculo = useMemo<ComponentesNNSugeridos>(() => {
+    const filas = precio.componentes.filter((c) => c.galeno_id != null && Number(c.cantidad) > 0);
+    const hon = filas.find((c) => c.concepto === "Honorarios");
+    return {
+      disponible: true,
+      motivo: null,
+      nivel: hon?.galeno_id != null ? (galenoPorId.get(hon.galeno_id)?.nivel ?? null) : null,
+      componentes: filas.map((c, i) => ({
+        concepto: c.concepto,
+        galeno_id: c.galeno_id as number,
+        galeno_nombre: galenoPorId.get(c.galeno_id as number)?.nombre ?? "",
+        cantidad: String(c.cantidad),
+        orden: i,
+      })),
+    };
+  }, [precio.componentes, galenoPorId]);
+
+  async function usarNomenclador(n: NomencladorDeCodigoOut) {
+    setCalculando(true);
+    setAviso(undefined);
+    try {
+      const r = await queryClient.fetchQuery({
+        queryKey: ["componentes-nomenclador", osNro, nomencladorId, n.slug],
+        queryFn: () => getComponentesNomenclador(osNro, nomencladorId, n.slug),
+        staleTime: 0,
+      });
+      if (!r.disponible) {
+        setAviso(r.motivo ?? "No se puede calcular el valor con este nomenclador.");
+        return;
+      }
+      onChange({
+        comoFactura: "nomenclador",
+        nomencladorId: n.id,
+        modalidad: "calculable",
+        componentes: FIXED_CONCEPTOS.map((concepto) => {
+          const s = r.componentes.find((c) => c.concepto === concepto);
+          return {
+            concepto,
+            galeno_id: s?.galeno_id ?? null,
+            cantidad: s ? String(Number(s.cantidad)) : "",
+            valor_unitario: "",
+            opcional: concepto !== "Honorarios",
+          };
+        }),
+      });
+    } catch {
+      setAviso("No se pudieron calcular los componentes.");
+    } finally {
+      setCalculando(false);
+    }
+  }
+
+  function cambiar(c: ComoFactura) {
+    setAviso(undefined);
+    if (c === "nomenclador") {
+      const n = elegido ?? opciones[0];
+      if (n) void usarNomenclador(n);
+      return;
+    }
+    onChange({
+      comoFactura: c,
+      nomencladorId: null,
+      modalidad: c === "fijo" ? "fijo" : "calculable",
+      componentes: precio.componentes.map((x) => ({
+        ...x,
+        galeno_id: c === "fijo" ? null : x.galeno_id,
+        cantidad: c === "fijo" ? "" : x.cantidad,
+        valor_unitario: c === "fijo" ? x.valor_unitario : "",
+      })),
+    });
+  }
+
+  return (
+    <>
+      <ComoSeFactura
+        idBase={idBase}
+        valor={comoFactura}
+        slug={elegido?.slug ?? ""}
+        opciones={opciones}
+        cargandoOpciones={opcionesQuery.isLoading}
+        calculo={comoFactura === "nomenclador" ? calculo : null}
+        calculando={calculando}
+        galenos={galenos}
+        onCambiar={cambiar}
+        onSlug={(slug) => {
+          const n = opciones.find((x) => x.slug === slug);
+          if (n) void usarNomenclador(n);
+        }}
+      />
+      {aviso && <span className={styles.errorMsg}>{aviso}</span>}
+    </>
+  );
+}
+
 // ─── BloquePrecio: tipo de valor + componentes + coseguro ──────────────────────
 
 function BloquePrecio({
@@ -638,6 +925,9 @@ export default function NomencladorPorOS() {
   // Prestaciones cargadas en $0 para revalorizar después de guardar el precio.
   const [revalorizar, setRevalorizar] = useState<RevalorizarResult | null>(null);
   const [revalorizando, setRevalorizando] = useState(false)
+  /** Valor "por nomenclador": componentes calculados por el servidor (sólo lectura). */
+  const [nomCalc, setNomCalc] = useState<ComponentesNNSugeridos | null>(null);
+  const [nomCalcCargando, setNomCalcCargando] = useState(false);
   /** Resultado de precargar los componentes NN (unidades del Nomenclador Nacional). */
   const [nnMsg, setNnMsg] = useState<{
     tipo: "ok" | "error" | "cargando";
@@ -1110,6 +1400,89 @@ export default function NomencladorPorOS() {
     };
   }, [nnCreateOrigen, nnCreateNomId, selectedNroOS]);
 
+  // Alta NE "por nomenclador": con qué nomencladores se puede facturar el código elegido.
+  const nomencladoresQuery = useQuery({
+    queryKey: ["nomencladores-de-codigo", nnCreateNomId],
+    queryFn: () => getNomencladoresDeCodigo(nnCreateNomId as number),
+    enabled: nnCreateNomId != null && nnCreateOrigen === "NE",
+    staleTime: 5 * 60 * 1000,
+  });
+  const nomencladoresDelCodigo = useMemo(
+    () => (nomencladoresQuery.data ?? []).filter((n) => n.tipo === "nivelado"),
+    [nomencladoresQuery.data],
+  );
+  // El Nacional tiene su propia regla (rango del código): el NN lo usa solo; acá se ofrece sólo
+  // para valores NE calculados como el nacional.
+  const nomencladoresOpciones = nomencladoresQuery.data ?? [];
+
+  // Al elegir un código con nomenclador, "Por nomenclador" queda preseleccionado.
+  useEffect(() => {
+    if (nnCreateOrigen !== "NE" || nomencladoresDelCodigo.length === 0) return;
+    setForm((prev) =>
+      prev.comoFactura === "manual" && !prev.nomencladorSlug && !prev.porPresupuesto
+        ? { ...prev, comoFactura: "nomenclador", nomencladorSlug: nomencladoresDelCodigo[0].slug }
+        : prev,
+    );
+  }, [nnCreateOrigen, nomencladoresDelCodigo]);
+
+  // Componentes del valor "por nomenclador" (nivel del código + escala + galeno de la OS).
+  const comoFacturaCreate = modalKind === "create" ? form.comoFactura : null;
+  const nomSlugCreate = modalKind === "create" ? form.nomencladorSlug : "";
+  useEffect(() => {
+    if (comoFacturaCreate !== "nomenclador" || !nnCreateNomId || !selectedNroOS || !nomSlugCreate) {
+      setNomCalc(null);
+      return;
+    }
+    let vigente = true;
+    setNomCalcCargando(true);
+    getComponentesNomenclador(selectedNroOS, nnCreateNomId, nomSlugCreate)
+      .then((r) => {
+        if (!vigente) return;
+        setNomCalc(r);
+        if (!r.disponible) return;
+        setForm((prev) => ({
+          ...prev,
+          modalidad: "calculable",
+          componentes: FIXED_CONCEPTOS.map((concepto) => {
+            const s = r.componentes.find((c) => c.concepto === concepto);
+            return {
+              concepto,
+              galeno_id: s?.galeno_id ?? null,
+              cantidad: s ? String(Number(s.cantidad)) : "",
+              valor_unitario: "",
+              opcional: concepto !== "Honorarios",
+            };
+          }),
+        }));
+      })
+      .catch(() => {
+        if (vigente) setNomCalc({ disponible: false, motivo: "No se pudieron calcular los componentes.", componentes: [] });
+      })
+      .finally(() => {
+        if (vigente) setNomCalcCargando(false);
+      });
+    return () => {
+      vigente = false;
+    };
+  }, [comoFacturaCreate, nomSlugCreate, nnCreateNomId, selectedNroOS]);
+
+  /** Elige cómo se factura. "Fijo" y "Manual" usan el editor de siempre; "Por nomenclador" arma
+   * los componentes con el servidor. */
+  function changeComoFactura(c: ComoFactura) {
+    setForm((prev) => ({
+      ...prev,
+      comoFactura: c,
+      nomencladorSlug: c === "nomenclador" ? (prev.nomencladorSlug || nomencladoresDelCodigo[0]?.slug || "") : prev.nomencladorSlug,
+      modalidad: c === "fijo" ? "fijo" : "calculable",
+      componentes: prev.componentes.map((x) => ({
+        ...x,
+        galeno_id: c === "fijo" ? null : x.galeno_id,
+        cantidad: c === "fijo" ? "" : x.cantidad,
+        valor_unitario: c === "fijo" ? x.valor_unitario : "",
+      })),
+    }));
+  }
+
   function changeModalidad(m: ModalidadValor) {
     setForm((prev) => ({
       ...prev,
@@ -1251,6 +1624,13 @@ export default function NomencladorPorOS() {
         });
       } else {
         Object.assign(errs, erroresPrecio(precioComun, ""));
+        if (form.origen === "NE" && form.comoFactura === "nomenclador") {
+          // El editor de componentes está oculto: el error es el del cálculo por nomenclador.
+          for (const k of Object.keys(errs)) if (k.startsWith("comp_")) delete errs[k];
+          if (!nomCalc?.disponible) {
+            errs.calculo = nomCalc?.motivo ?? "Elegí un nomenclador con el que se pueda calcular el valor.";
+          }
+        }
       }
     }
     setErrors(errs);
@@ -1319,6 +1699,7 @@ export default function NomencladorPorOS() {
       componentes: compsFromOut(v.componentes),
       coseguro: v.coseguro && parseMonto(v.coseguro) !== 0 ? v.coseguro : "",
       aplicarAVariantes: false,
+      ...comoFacturaDe(v),
     });
     setEditErrors({});
   }
@@ -1541,6 +1922,13 @@ export default function NomencladorPorOS() {
       const componentes = form.porPresupuesto
         ? []
         : componentesPayload(form.modalidad, form.componentes);
+      // NN: siempre por el Nacional. NE: el nomenclador elegido (sin él: valor fijo o manual).
+      let nomencladorNiveladoId: number | null = null;
+      if (!form.porPresupuesto && form.origen === "NN") {
+        nomencladorNiveladoId = (await listNivelados()).find((n) => n.tipo === "nacional")?.id ?? null;
+      } else if (!form.porPresupuesto && form.comoFactura === "nomenclador") {
+        nomencladorNiveladoId = nomCalc?.nomenclador_nivelado_id ?? null;
+      }
       const base = {
         descripcion: form.descripcion.trim(),
         nivel: nivelCreate
@@ -1557,6 +1945,7 @@ export default function NomencladorPorOS() {
         vigencia_desde: form.vigencia_desde,
         observacion: form.observacion || null,
         componentes,
+        nomenclador_nivelado_id: preciosSeparados ? null : nomencladorNiveladoId,
       };
       const especialidadesAlta =
         form.origen === "NE" && !form.sinRestriccion
@@ -1727,6 +2116,7 @@ export default function NomencladorPorOS() {
       componentes: porPresupuesto ? [] : componentesPayload(p.modalidad, p.componentes),
       coseguro: p.coseguro.trim() ? parseMonto(p.coseguro) : 0,
       por_presupuesto: porPresupuesto,
+      ...(porPresupuesto ? {} : nomencladorPayload(p)),
     });
 
     setSavingMeta(true);
@@ -1792,6 +2182,7 @@ export default function NomencladorPorOS() {
         // un código por_presupuesto pierde esa condición al rotar vigencia.
         por_presupuesto: editTarget.por_presupuesto,
         aplicar_a_variantes: false,
+        ...(editTarget.por_presupuesto ? {} : nomencladorPayload(editEcu)),
       };
       await actualizarValor(editTarget.id, ecuacion);
       showToast("success", "Valores actualizados. Recargando…");
@@ -2047,6 +2438,9 @@ export default function NomencladorPorOS() {
                                 </td>
                                 <td className={styles.mutedText}>
                                   {MODALIDAD_LABELS[v.modalidad]}
+                                  {v.nomenclador_nivelado && (
+                                    <span className={styles.hintText}> · {v.nomenclador_nivelado}</span>
+                                  )}
                                 </td>
                                 <td className={styles.mutedText}>
                                   {v.especialidad_id_colegio
@@ -2699,9 +3093,24 @@ export default function NomencladorPorOS() {
                         {nnMsg.texto}
                       </span>
                     )}
+                    {form.origen === "NE" && (
+                      <ComoSeFactura
+                        valor={form.comoFactura}
+                        slug={form.nomencladorSlug}
+                        opciones={nomencladoresOpciones.filter((n) => n.tipo === "nivelado")}
+                        cargandoOpciones={nomencladoresQuery.isLoading}
+                        calculo={nomCalc}
+                        calculando={nomCalcCargando}
+                        error={errors.calculo}
+                        galenos={galenos}
+                        onCambiar={changeComoFactura}
+                        onSlug={(slug) => setForm((p) => ({ ...p, nomencladorSlug: slug }))}
+                      />
+                    )}
                     <BloquePrecio
                       precio={precioComun}
-                      conTipo={form.origen !== "NN"}
+                      conTipo={false}
+                      soloCoseguro={form.origen === "NE" && form.comoFactura === "nomenclador"}
                       galenos={galenos}
                       errors={errors}
                       onModalidad={changeModalidad}
@@ -3004,16 +3413,28 @@ export default function NomencladorPorOS() {
                       </label>
                     )}
                     {nucleoUnico ? (
+                      <>
+                      {nucleoOrigen === "NE" && !editTarget.por_presupuesto && selectedNroOS != null && (
+                        <ComoSeFacturaEdit
+                          idBase="nucleo-comun"
+                          osNro={selectedNroOS}
+                          nomencladorId={editTarget.nomenclador_id}
+                          precio={nucleoComun}
+                          galenos={galenos}
+                          onChange={(c) => actualizarNucleoPrecio("comun", (x) => ({ ...x, ...c }))}
+                        />
+                      )}
                       <BloquePrecio
                         precio={nucleoComun}
-                        conTipo={nucleoOrigen !== "NN"}
-                        soloCoseguro={editTarget.por_presupuesto}
+                        conTipo={false}
+                        soloCoseguro={editTarget.por_presupuesto || nucleoComun.comoFactura === "nomenclador"}
                         galenos={galenos}
                         errors={erroresDe(editErrors, "comun_")}
                         onModalidad={(m) => cambiarModalidadNucleo("comun", m)}
                         onCoseguro={(v) => actualizarNucleoPrecio("comun", (x) => ({ ...x, coseguro: v }))}
                         onComp={(idx, key, value) => cambiarCompNucleo("comun", idx, key, value)}
                       />
+                      </>
                     ) : (
                       nucleoVariantes.map((v) => (
                         <div key={v.id} className={styles.precioEsp}>
@@ -3023,10 +3444,20 @@ export default function NomencladorPorOS() {
                               : "Sin restricción de especialidad"}
                             <span className={styles.precioEspVigencia}>vigente desde {v.vigencia_desde}</span>
                           </div>
+                          {!v.por_presupuesto && selectedNroOS != null && (
+                            <ComoSeFacturaEdit
+                              idBase={`nucleo-${v.id}`}
+                              osNro={selectedNroOS}
+                              nomencladorId={v.nomenclador_id}
+                              precio={nucleoPrecios[v.id]}
+                              galenos={galenos}
+                              onChange={(c) => actualizarNucleoPrecio(v.id, (x) => ({ ...x, ...c }))}
+                            />
+                          )}
                           <BloquePrecio
                             precio={nucleoPrecios[v.id]}
-                            conTipo
-                            soloCoseguro={v.por_presupuesto}
+                            conTipo={false}
+                            soloCoseguro={v.por_presupuesto || nucleoPrecios[v.id].comoFactura === "nomenclador"}
                             galenos={galenos}
                             errors={erroresDe(editErrors, `fila_${v.id}_`)}
                             onModalidad={(m) => cambiarModalidadNucleo(v.id, m)}
@@ -3108,34 +3539,47 @@ export default function NomencladorPorOS() {
                       </div>
                       {!editTarget.por_presupuesto && (
                         <>
-                          <div className={styles.formRow2}>
-                            <div className={styles.formGroup}>
-                              <label className={styles.formLabel}>
-                                Tipo de valor
-                              </label>
-                              <select
-                                className={styles.formSelect}
-                                value={editEcu.modalidad}
-                                onChange={(e) =>
-                                  changeEditModalidad(
-                                    e.target.value as ModalidadValor,
-                                  )
-                                }
-                              >
-                                <option value="calculable">
-                                  Calculable (galeno × cantidad)
-                                </option>
-                                <option value="fijo">Fijo ($)</option>
-                              </select>
+                          {editTarget.origen === "NE" && selectedNroOS != null ? (
+                            <ComoSeFacturaEdit
+                              idBase="variante"
+                              osNro={selectedNroOS}
+                              nomencladorId={editTarget.nomenclador_id}
+                              precio={editEcu}
+                              galenos={galenos}
+                              onChange={(c) => setEditEcu((p) => ({ ...p, ...c }))}
+                            />
+                          ) : (
+                            <div className={styles.formRow2}>
+                              <div className={styles.formGroup}>
+                                <label className={styles.formLabel}>
+                                  Tipo de valor
+                                </label>
+                                <select
+                                  className={styles.formSelect}
+                                  value={editEcu.modalidad}
+                                  onChange={(e) =>
+                                    changeEditModalidad(
+                                      e.target.value as ModalidadValor,
+                                    )
+                                  }
+                                >
+                                  <option value="calculable">
+                                    Calculable (galeno × cantidad)
+                                  </option>
+                                  <option value="fijo">Fijo ($)</option>
+                                </select>
+                              </div>
                             </div>
-                          </div>
-                          <ComponentEditor
-                            modalidad={editEcu.modalidad}
-                            componentes={editEcu.componentes}
-                            galenos={galenos}
-                            errors={editErrors}
-                            onChange={updateEditComp}
-                          />
+                          )}
+                          {editEcu.comoFactura !== "nomenclador" && (
+                            <ComponentEditor
+                              modalidad={editEcu.modalidad}
+                              componentes={editEcu.componentes}
+                              galenos={galenos}
+                              errors={editErrors}
+                              onChange={updateEditComp}
+                            />
+                          )}
                         </>
                       )}
                       {(
