@@ -921,6 +921,9 @@ export default function NomencladorPorOS() {
   // Sin alta no se puede cargar precio (etapa 4).
   const [parAlta, setParAlta] = useState<CodigoObraSocialOut | null>(null);
   const [parCargando, setParCargando] = useState(false);
+  // Alta del código en la O.S. que se está editando con el lápiz del núcleo (para avisar
+  // quién lo factura y llevar a editarla).
+  const [altaEdicion, setAltaEdicion] = useState<CodigoObraSocialOut | null>(null);
   const [existentes, setExistentes] = useState<PreciosExistentes | null>(null);
   // Prestaciones cargadas en $0 para revalorizar después de guardar el precio.
   const [revalorizar, setRevalorizar] = useState<RevalorizarResult | null>(null);
@@ -1321,6 +1324,17 @@ export default function NomencladorPorOS() {
       setParCargando(false);
     }
   }
+
+  const nomencladorEnEdicion = modalKind === "edit" && editMode === "nucleo" ? editTarget?.nomenclador_id : undefined;
+  useEffect(() => {
+    setAltaEdicion(null);
+    if (!selectedNroOS || nomencladorEnEdicion == null) return;
+    let vigente = true;
+    getCodigoOS(selectedNroOS, nomencladorEnEdicion)
+      .then((p) => { if (vigente) setAltaEdicion(p); })
+      .catch(() => { /* sin alta legible: no se muestra el aviso */ });
+    return () => { vigente = false; };
+  }, [selectedNroOS, nomencladorEnEdicion]);
 
   function clearNom() {
     setParAlta(null);
@@ -3259,6 +3273,20 @@ export default function NomencladorPorOS() {
                     <div className={styles.editSectionTitle}>
                       Datos del código
                     </div>
+                    {altaEdicion && (
+                      <div className={styles.altaOk}>
+                        <EstadoCodigoPill estado={altaEdicion.estado} />
+                        <span>
+                          {altaEdicion.sin_restriccion_especialidad
+                            ? "Lo factura cualquier especialidad"
+                            : `Lo facturan ${altaEdicion.especialidades.length} especialidades`}
+                          {" · "}
+                          <Link to={`/panel/nomenclador/codigos-por-os?os=${selectedNroOS}&codigo=${editTarget.codigo}`}>
+                            Editar el alta
+                          </Link>
+                        </span>
+                      </div>
+                    )}
                     <div className={styles.formRow2}>
                       <div className={styles.formGroup}>
                         <label className={styles.formLabel}>Descripción</label>
