@@ -8,6 +8,7 @@ import type { FacturaDetalleResponse } from "../types";
 import { ORDEN_TIPOS } from "./vista/types";
 import { RESUMEN_TIPO_LABEL } from "./totales";
 import type { PrestacionConSocio } from "./FilaPrestacion";
+import ExportarOsBoton from "./ExportarOsBoton";
 import styles from "./CabeceraExpediente.module.scss";
 
 // Alto de la barra compacta fija. La tabla (`.tablaEncabezado`) lo suma a su `top` para
@@ -93,6 +94,7 @@ export default function CabeceraExpediente({
       <button type="button" className={`${styles.btn} ${styles.btnPrimario}`} onClick={onExportar} disabled={!detalle}>
         <Download size={15} /> Exportar
       </button>
+      <ExportarOsBoton detalle={detalle} />
     </>
   );
 

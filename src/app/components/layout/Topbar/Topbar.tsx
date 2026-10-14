@@ -605,6 +605,20 @@ const TOP_NAV: TopEntry[] = [
             label: "Plano Boreal",
             perms: ["facturacion:leer"],
           },
+          // Plano de OMINT (obra social 243) en Excel.
+          {
+            path: `${base}/facturacion/herramientas/plano-omint`,
+            icon: FileSpreadsheet,
+            label: "Plano OMINT",
+            perms: ["facturacion:leer"],
+          },
+          // TXT de prestaciones de DASUTEN - UTN (obra social 137).
+          {
+            path: `${base}/facturacion/herramientas/txt-dasuten`,
+            icon: FileText,
+            label: "TXT DASUTEN",
+            perms: ["facturacion:leer"],
+          },
         ],
       },
       {

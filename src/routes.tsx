@@ -137,6 +137,8 @@ const NomencladorGalenos = lazy(() => import("./app/pages/NomencladorNacional/No
 const ActualizarPreciosGalenos = lazy(() => import("./app/pages/NomencladorNacional/ActualizarPreciosGalenos/ActualizarPreciosGalenos"));
 const TxtUnne = lazy(() => import("./app/pages/facturacion/TxtUnne/TxtUnne"));
 const PlanoBoreal = lazy(() => import("./app/pages/facturacion/PlanoBoreal/PlanoBoreal"));
+const PlanoOmint = lazy(() => import("./app/pages/facturacion/PlanoOmint/PlanoOmint"));
+const TxtDasuten = lazy(() => import("./app/pages/facturacion/TxtDasuten/TxtDasuten"));
 const CompletarNomencladorNN = lazy(() => import("./app/pages/NomencladorNacional/CompletarNomencladorNN/CompletarNomencladorNN"));
 const AgregarCodigoObrasSociales = lazy(() => import("./app/pages/NomencladorNacional/AgregarCodigoObrasSociales/AgregarCodigoObrasSociales"));
 const ActualizacionesValores = lazy(() => import("./app/pages/NomencladorNacional/ActualizacionesValores/ActualizacionesValores"));
@@ -280,6 +282,8 @@ export default function RootRoutes() {
                   <Route element={<RequireScope scope="export:generar" />}>
                     <Route path="herramientas/txt-unne" element={<TxtUnne />} />
                     <Route path="herramientas/plano-boreal" element={<PlanoBoreal />} />
+                    <Route path="herramientas/plano-omint" element={<PlanoOmint />} />
+                    <Route path="herramientas/txt-dasuten" element={<TxtDasuten />} />
                   </Route>
                   <Route path="periodos/:id" element={<FacturacionFacturaDetalle />} />
                   <Route path="consulta" element={<ConsultaPrestacion />} />

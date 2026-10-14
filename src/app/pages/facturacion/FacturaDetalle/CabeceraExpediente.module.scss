@@ -42,6 +42,22 @@ $shadow-md:  0 4px 16px rgba(0, 0, 0, .10);
 
 .btnIcono { padding: 0; width: 34px; justify-content: center; }
 
+// Tipo y nº de factura que pide el TXT de UNNE cuando la factura todavía no está numerada.
+.numeroFactura {
+  height: 34px;
+  width: 130px;
+  padding: 0 10px;
+  border: 1px solid $border;
+  border-radius: $radius-sm;
+  font-size: 0.83rem;
+  font-family: inherit;
+  color: $text-1;
+}
+.numeroFacturaTipo { width: 44px; text-align: center; }
+
+.girando { animation: girar 1s linear infinite; }
+@keyframes girar { to { transform: rotate(360deg); } }
+
 // ── Chips ─────────────────────────────────────────────────────────────────────
 .chip {
   font-size: 0.75rem;

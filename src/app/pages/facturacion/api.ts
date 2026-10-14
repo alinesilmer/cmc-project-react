@@ -305,6 +305,22 @@ export const descargarPlanoBoreal = (facturaId: number | string) =>
     getBlobLong(`${BASE}/facturas/${facturaId}/export/boreal.xlsx`),
   );
 
+// Plano de OMINT (obra social 243) en Excel.
+export const descargarPlanoOmint = (facturaId: number | string) =>
+  traced(
+    `GET /facturas/${facturaId}/export/omint.xlsx`,
+    { facturaId },
+    getBlobLong(`${BASE}/facturas/${facturaId}/export/omint.xlsx`),
+  );
+
+// TXT de prestaciones de DASUTEN - UTN (obra social 137).
+export const descargarTxtDasuten = (facturaId: number | string) =>
+  traced(
+    `GET /facturas/${facturaId}/export/dasuten.txt`,
+    { facturaId },
+    getBlobLong(`${BASE}/facturas/${facturaId}/export/dasuten.txt`),
+  );
+
 // Detalle por médico: cruza todas las obras sociales del socio en un período.
 // Mismo membrete institucional que el export de factura (ver encabezado.py).
 export const descargarExportPorMedico = (
