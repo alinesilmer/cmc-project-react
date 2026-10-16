@@ -300,13 +300,6 @@
   color: color.adjust($warning-orange, $lightness: -18%);
 }
 
-.comentario {
-  display: block;
-  margin-top: 2px;
-  color: $gray-500;
-  font-style: italic;
-}
-
 .elegir {
   display: flex;
   flex-direction: column;

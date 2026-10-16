@@ -137,7 +137,6 @@ export default function TablaPrestaciones({ filas, decisiones, onElegir, onDesca
                       <>
                         {f.motivo || (f.aviso ? null : "—")}
                         {f.aviso && <span className={s.aviso}>{f.aviso}</span>}
-                        {f.comentarios && <span className={s.comentario}>{f.comentarios}</span>}
                       </>
                     )}
                   </td>

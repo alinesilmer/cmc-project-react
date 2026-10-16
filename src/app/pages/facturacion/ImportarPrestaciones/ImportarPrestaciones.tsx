@@ -359,7 +359,7 @@ export default function ImportarPrestaciones() {
       if (filtro === "avisos" && !(entra(f.resultado) && f.aviso)) return false;
       if (filtro === "equipos" && !f.equipo) return false;
       if (!q) return true;
-      return [f.medico, String(f.nroSocio ?? ""), f.matricula, f.codigo, f.descripcion, f.afiliado, f.comentarios, f.motivo, f.equipo]
+      return [f.medico, String(f.nroSocio ?? ""), f.matricula, f.codigo, f.descripcion, f.afiliado, f.motivo, f.equipo]
         .join(" ")
         .toLowerCase()
         .includes(q);
