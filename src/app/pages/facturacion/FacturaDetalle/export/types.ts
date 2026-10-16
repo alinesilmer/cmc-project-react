@@ -12,12 +12,12 @@ export type DireccionExport = "asc" | "desc";
 export type AgrupacionExport = "todo_junto" | "por_tipo" | "por_socio" | "plana";
 
 export type ColumnaExport =
-  | "nro_registro" | "prestador" | "matricula" | "autorizacion" | "fecha" | "codigo"
+  | "nro_registro" | "prestador" | "matricula" | "clinica" | "autorizacion" | "fecha" | "codigo"
   | "nro_afiliado" | "afiliado" | "cantidad" | "porcentaje"
   | "honorarios" | "gastos" | "coseguro" | "valor_unitario" | "via";
 
 export const COLUMNAS_DEFAULT: ColumnaExport[] = [
-  "nro_registro", "prestador", "matricula", "autorizacion", "fecha", "codigo",
+  "nro_registro", "prestador", "matricula", "clinica", "autorizacion", "fecha", "codigo",
   "nro_afiliado", "afiliado", "cantidad", "porcentaje", "honorarios", "gastos",
 ];
 
@@ -25,6 +25,7 @@ export const COLUMNAS_DISPONIBLES: { key: ColumnaExport; label: string }[] = [
   { key: "nro_registro", label: "Nro. de registro" },
   { key: "prestador", label: "Prestador" },
   { key: "matricula", label: "Matrícula" },
+  { key: "clinica", label: "Clínica (número)" },
   { key: "autorizacion", label: "Autorización" },
   { key: "fecha", label: "Fecha" },
   { key: "codigo", label: "Código" },
@@ -85,7 +86,7 @@ export const opcionesDesdeVista = (v: VistaOpciones): ExportOpciones => {
     orden_honorarios: v.ordenHonorarios,
     orden_sanatorio: v.ordenSanatorio,
     columnas: [
-      "nro_registro", "prestador", "matricula",
+      "nro_registro", "prestador", "matricula", "clinica",
       ...v.columnas.flatMap((c) => COLUMNA_VISTA_A_EXPORT[c] ?? []),
     ],
   };
