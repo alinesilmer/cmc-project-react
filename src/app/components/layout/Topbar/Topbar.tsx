@@ -224,6 +224,12 @@ const TOP_NAV: TopEntry[] = [
             label: "Registro de Facturación",
             perms: ["facturacion:registro"],
           },
+          {
+            path: `${base}/facturacion/importar`,
+            icon: FileSpreadsheet,
+            label: "Importar prestaciones",
+            perms: ["facturacion:cargar"],
+          },
         ],
       },
     ],

@@ -125,19 +125,36 @@ const AyudanteSection: React.FC<Props> = ({
             <div className={styles.fieldsRow}>
               <div className={`${styles.filterField} ${styles.filterFieldWide}`}>
                 <label className={styles.filterLabel}>Médico ayudante <span className={styles.errorText}>*</span></label>
-                <MedicoAutocomplete
-                  value={linea.codMedico}
-                  onChange={(cod, med) => updateLinea(linea.id, { codMedico: cod, medico: med })}
-                  disabled={disabled}
-                  // Precarga el texto cuando la línea viene de replicar/editar un equipo.
-                  presetLabel={
-                    linea.medico
-                      ? [linea.medico.nombre, linea.medico.matricula]
-                          .filter((v) => v != null && v !== "").join(" · ") || undefined
-                      : undefined
-                  }
-                  medicosPrecargados={medicosPrecargados}
-                />
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <MedicoAutocomplete
+                      value={linea.codMedico}
+                      onChange={(cod, med) => updateLinea(linea.id, { codMedico: cod, medico: med })}
+                      disabled={disabled}
+                      // Precarga el texto cuando la línea viene de replicar/editar un equipo.
+                      presetLabel={
+                        linea.medico
+                          ? [linea.medico.nombre, linea.medico.matricula]
+                              .filter((v) => v != null && v !== "").join(" · ") || undefined
+                          : undefined
+                      }
+                      medicosPrecargados={medicosPrecargados}
+                    />
+                  </div>
+                  {linea.medico?.condicion_impositiva && (
+                    <span className={`${styles.infoChip} ${styles.chipNeutral}`} style={{ flexShrink: 0 }}>
+                      {linea.medico.condicion_impositiva}
+                    </span>
+                  )}
+                </div>
+                {linea.medico?.especialidades && linea.medico.especialidades.length > 0 && (
+                  <div className={styles.medicoExtra}>
+                    <span className={styles.mutedText}>Especialidades:</span>
+                    {linea.medico.especialidades.map((esp) => (
+                      <span key={esp.id} className={styles.especialidadChip}>{esp.nombre}</span>
+                    ))}
+                  </div>
+                )}
                 {isDuplicateMain && <span className={styles.errorText}>No puede ser el mismo médico principal.</span>}
                 {isDuplicateOther && !isDuplicateMain && <span className={styles.errorText}>Ese médico ya está agregado como ayudante.</span>}
                 {error && !isDuplicateMain && !isDuplicateOther && <span className={styles.errorText}>{error}</span>}

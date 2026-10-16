@@ -234,11 +234,12 @@ export const editarPrestacion = (id: number, payload: PrestacionUpdate) =>
     patchJSON<PrestacionRead>(`${BASE}/prestaciones/${id}`, payload),
   );
 
-export const anularPrestacion = (id: number) =>
+/** `conEquipo`: si la fila es la cabecera de un equipo, anula también a sus integrantes. */
+export const anularPrestacion = (id: number, opts?: { conEquipo?: boolean }) =>
   traced(
     `DELETE /prestaciones/${id}`,
-    { id },
-    delJSON<void>(`${BASE}/prestaciones/${id}`),
+    { id, ...opts },
+    delJSON<void>(`${BASE}/prestaciones/${id}`, opts?.conEquipo ? { params: { con_equipo: true } } : undefined),
   );
 
 export const moverPeriodo = (payload: MoverPeriodoPayload) =>

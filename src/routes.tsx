@@ -70,6 +70,7 @@ const CobranzasPage = lazy(() => import("./app/pages/Cobranzas/CobranzasPage"));
 // Facturación (carga de prestaciones del Colegio)
 const CargaFacturacion = lazy(() => import("./app/pages/facturacion/CargaFacturacion/CargaFacturacion"));
 const CierrePeriodo = lazy(() => import("./app/pages/facturacion/CierrePeriodo/CierrePeriodo"));
+const ImportarPrestaciones = lazy(() => import("./app/pages/facturacion/ImportarPrestaciones/ImportarPrestaciones"));
 const RecalculoPrecios = lazy(() => import("./app/pages/facturacion/RecalculoPrecios/RecalculoPrecios"));
 const VerPeriodos = lazy(() => import("./app/pages/facturacion/VerPeriodos/VerPeriodos"));
 const Complementarias = lazy(() => import("./app/pages/facturacion/Complementarias/Complementarias"));
@@ -270,6 +271,7 @@ export default function RootRoutes() {
                 <Route element={<RequireScope scope="facturacion:cargar" />}>
                   <Route path="carga" element={<CargaFacturacion />} />
                   <Route path="carga/:id" element={<CargaFacturacion />} />
+                  <Route path="importar" element={<ImportarPrestaciones />} />
                 </Route>
                 <Route element={<RequireScope scope="facturacion:cerrar" />}>
                   <Route path="cierre" element={<CierrePeriodo />} />

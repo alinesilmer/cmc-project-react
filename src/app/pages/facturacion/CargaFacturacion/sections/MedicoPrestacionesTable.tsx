@@ -249,7 +249,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
     let active = true;
     (async () => {
       const res = await Promise.allSettled(
-        idsGrupo.map((gid) => listarPrestaciones({ grupo_equipo_id: gid, limit: 20 })),
+        idsGrupo.map((gid) => listarPrestaciones({ grupo_equipo_id: gid, estado: "A", limit: 20 })),
       );
       if (!active) return;
       const nuevos: Record<number, PrestacionRead[]> = {};
@@ -361,13 +361,27 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
   const handleMoverPeriodo = (row: PrestacionRead, direccion: "siguiente" | "anterior") =>
     setPendingAction({ type: "mover", row, direccion });
 
+  // Eliminar al médico (la cabecera) se lleva a todo su equipo; eliminar a un ayudante o al
+  // pediatra anula solo esa fila y el resto del equipo queda como estaba.
+  const esIntegrante = (row: PrestacionRead): boolean => {
+    const t = deriveTipoPrestador(row);
+    return t === "Ayudante" || t === "Pediatra";
+  };
+
   const executeEliminar = (row: PrestacionRead, onSuccess: () => void) =>
     withBusy(row.id, async () => {
       try {
-        await anularPrestacion(row.id);
-        notify("Prestación anulada.");
+        const conEquipo = !esIntegrante(row);
+        await anularPrestacion(row.id, { conEquipo });
+        notify(conEquipo && row.grupo_equipo_id != null ? "Prestación y equipo anulados." : "Prestación anulada.");
         // Sale de la tabla en el acto; el refetch de atrás reacomoda la paginación.
-        setRows((prev) => prev.filter((r) => r.id !== row.id));
+        setRows((prev) => prev.filter((r) => r.id !== row.id && !(conEquipo && row.grupo_equipo_id != null && r.grupo_equipo_id === row.grupo_equipo_id)));
+        // El equipo cambió: se descarta lo cacheado para que se vuelva a pedir.
+        if (row.grupo_equipo_id != null) {
+          const gid = row.grupo_equipo_id;
+          equiposPedidosRef.current.delete(gid);
+          setEquipos((prev) => { const next = { ...prev }; delete next[gid]; return next; });
+        }
         fetchData();
         onSuccess();
       } catch (e: any) {
@@ -696,7 +710,13 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
           message={
             <>El ID Nº <strong>{pendingAction.row.id}</strong> — ¿confirmás anular esta prestación?</>
           }
-          warning="Esta acción anula la prestación y no se puede deshacer."
+          warning={
+            esIntegrante(pendingAction.row)
+              ? "Esta acción anula solo a este integrante del equipo y no se puede deshacer."
+              : pendingAction.row.grupo_equipo_id != null
+                ? "Esta acción anula la prestación del médico y todo su equipo (ayudantes y pediatra), y no se puede deshacer."
+                : "Esta acción anula la prestación y no se puede deshacer."
+          }
           confirmLabel="Eliminar"
           onClose={() => setPendingAction(null)}
           onConfirm={handleConfirmPending}
