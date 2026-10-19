@@ -143,6 +143,54 @@
   }
 }
 
+// En la portada (fondo noche): el mismo vidrio de las fichas de «Accesos rápidos», en vez del blanco.
+.oscura {
+  border: 1px solid rgba($portada-crema, 0.12);
+  border-radius: 14px;
+  background: rgba($white, 0.04);
+  box-shadow: none;
+  transition: transform 0.25s ease, border-color 0.25s ease, background-color 0.25s ease;
+
+  &:hover,
+  &:focus-visible {
+    border-color: rgba($portada-oro, 0.55);
+    background: rgba($white, 0.07);
+    box-shadow: none;
+
+    .titulo {
+      color: $portada-oro;
+    }
+  }
+
+  &:focus-visible {
+    outline-color: $portada-oro;
+  }
+
+  .imagen {
+    background: rgba($white, 0.06);
+  }
+
+  .fecha {
+    color: rgba($portada-crema, 0.7);
+
+    svg {
+      color: $portada-oro;
+    }
+  }
+
+  .titulo {
+    color: $portada-crema;
+  }
+
+  .resumen {
+    color: rgba($portada-crema, 0.78);
+  }
+
+  .leer {
+    color: $portada-oro;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .card,
   .imagen img,

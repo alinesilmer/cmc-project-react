@@ -12,18 +12,20 @@ type Props = {
   publicacion: Noticia;
   /** A dónde lleva la tarjeta. */
   href: string;
+  /** Sobre fondo noche (la portada): vidrio en vez de blanco. */
+  oscuro?: boolean;
 };
 
 const MotionLink = motion.create(Link);
 
 /** Tarjeta de noticia o curso. */
-export default function TarjetaPublicacion({ publicacion, href }: Props) {
+export default function TarjetaPublicacion({ publicacion, href, oscuro = false }: Props) {
   const portada = publicacion.portada?.trim() || PORTADA_POR_DEFECTO;
 
   return (
     <MotionLink
       to={href}
-      className={styles.card}
+      className={oscuro ? `${styles.card} ${styles.oscura}` : styles.card}
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}

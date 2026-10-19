@@ -36,15 +36,33 @@
 
 // ── Escala del panel ─────────────────────────────────────────────────────────
 
+// Tamaño del texto que elige quien ve con dificultad (`data-texto`, ver `hooks/textoTamano.ts`): escala la raíz, y todo el panel está en rem.
+:root[data-panel] {
+  --escala-texto: 1;
+  font-size: calc(100% * var(--escala-texto));
+
+  .lucide {
+    zoom: var(--escala-texto);
+  }
+}
+
+:root[data-panel][data-texto="grande"] {
+  --escala-texto: 1.15;
+}
+
+:root[data-panel][data-texto="muy-grande"] {
+  --escala-texto: 1.3;
+}
+
 // Todo el panel al 80 %.
 @media (min-width: 1024px) {
   :root[data-panel] {
-    font-size: 80%;
+    font-size: calc(80% * var(--escala-texto));
   }
 
   // Los íconos (lucide) traen su tamaño en píxeles como atributo: es lo único que no sigue a la raíz, y se ajusta acá para todos.
   :root[data-panel] .lucide {
-    zoom: 0.8;
+    zoom: calc(0.8 * var(--escala-texto));
   }
 }
 

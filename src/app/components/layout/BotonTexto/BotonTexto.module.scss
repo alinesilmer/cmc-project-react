@@ -1,0 +1,25 @@
+// El botón es el de `BotonTema`; acá sólo los puntitos que marcan el tamaño elegido.
+.texto {
+  position: relative;
+}
+
+.niveles {
+  position: absolute;
+  bottom: 0.2rem;
+  left: 50%;
+  display: flex;
+  gap: 0.15rem;
+  transform: translateX(-50%);
+
+  i {
+    width: 0.25rem;
+    height: 0.25rem;
+    background: currentColor;
+    border-radius: 50%;
+    opacity: 0.3;
+  }
+
+  .activo {
+    opacity: 1;
+  }
+}

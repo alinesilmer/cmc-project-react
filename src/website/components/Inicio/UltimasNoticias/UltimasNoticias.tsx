@@ -38,7 +38,7 @@ export default function UltimasNoticias() {
       <div className={styles.grilla} aria-busy={isPending}>
         {isPending
           ? Array.from({ length: CUANTAS }, (_, i) => <div key={i} className={styles.esqueleto} />)
-          : ultimas.map((n) => <TarjetaPublicacion key={n.id} publicacion={n} href={`${RUTA}/${n.id}`} />)}
+          : ultimas.map((n) => <TarjetaPublicacion key={n.id} publicacion={n} href={`${RUTA}/${n.id}`} oscuro />)}
       </div>
     </section>
   );

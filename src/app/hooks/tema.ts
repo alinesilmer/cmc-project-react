@@ -1,40 +1,14 @@
-import { useSyncExternalStore } from "react";
+import { crearPreferencia } from "./preferencia";
 
 /** El tema del panel (claro u oscuro). */
 export type Tema = "claro" | "oscuro";
 
-const CLAVE = "cmc:tema";
+const TEMAS: readonly Tema[] = ["claro", "oscuro"];
 
-function leerGuardado(): Tema {
-  try {
-    return window.localStorage.getItem(CLAVE) === "oscuro" ? "oscuro" : "claro";
-  } catch {
-    return "claro";
-  }
-}
+const preferencia = crearPreferencia<Tema>("cmc:tema", TEMAS, "claro");
 
-let tema: Tema = leerGuardado();
-const suscriptores = new Set<() => void>();
-
-function suscribir(suscriptor: () => void): () => void {
-  suscriptores.add(suscriptor);
-  return () => suscriptores.delete(suscriptor);
-}
-
-export function elegirTema(siguiente: Tema): void {
-  if (siguiente === tema) return;
-  tema = siguiente;
-  try {
-    window.localStorage.setItem(CLAVE, siguiente);
-  } catch {
-    // Sin almacenamiento la elección dura lo que dura la pestaña.
-  }
-  suscriptores.forEach((s) => s());
-}
-
-export function useTema(): Tema {
-  return useSyncExternalStore(suscribir, () => tema);
-}
+export const elegirTema = preferencia.elegir;
+export const useTema = preferencia.useValor;
 
 /** El oscuro depende de `light-dark()` (Chrome y Edge 123, Firefox 120, Safari 17.5). */
 export const TEMA_OSCURO_DISPONIBLE =
