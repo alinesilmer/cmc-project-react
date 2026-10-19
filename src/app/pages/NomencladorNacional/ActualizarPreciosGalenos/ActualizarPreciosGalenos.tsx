@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, Fragment } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Search,
   TrendingUp,
@@ -18,14 +19,14 @@ import { AnimatePresence, motion } from "framer-motion";
 import styles from "./ActualizarPreciosGalenos.module.scss";
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import { hoyISO } from "@/app/shared/lib/fechas";
-import { compararGalenos } from "../nomenclador.helpers";
+import { compararGalenos, avisoVigenciaGaleno } from "../nomenclador.helpers";
 import {
   listGalenos,
-  actualizarPrecioGaleno,
-  actualizarPrecioMasivoGaleno,
+  actualizarPreciosGalenosLote,
   cambiarVisibilidadGaleno,
+  getResumenGalenos,
 } from "../nomenclador.api";
-import type { GalenoOut } from "../nomenclador.types";
+import type { GalenoOut, GalenoResumenOut, GalenosPrecioLoteError } from "../nomenclador.types";
 import ConfirmModal from "@/app/components/ui/ConfirmModal/ConfirmModal";
 import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
@@ -96,6 +97,18 @@ export default function ActualizarPreciosGalenos() {
   const [toggling, setToggling] = useState<Record<string, boolean>>({}); // keyed by código
 
   const { data: osList = [] } = useObrasSociales();
+
+  // Con qué nomencladores se usa cada galeno, en qué modo y qué niveles se apartan de la escala.
+  const { data: resumen = [], refetch: refetchResumen } = useQuery({
+    queryKey: ["galenos-resumen", selectedOsNro],
+    queryFn: () => getResumenGalenos(selectedOsNro as number),
+    enabled: selectedOsNro != null,
+    staleTime: 30_000,
+  });
+  const resumenPorCodigo = useMemo(
+    () => new Map<string, GalenoResumenOut>(resumen.map((r) => [r.codigo, r])),
+    [resumen],
+  );
 
   const loadGalenos = useCallback(async (osNro: number) => {
     setLoadingOs(true);
@@ -172,10 +185,15 @@ export default function ActualizarPreciosGalenos() {
     [edits],
   );
 
-  const dateConflicts = useMemo(
-    () => galenos.filter((g) => g.vigencia_desde === vigencia),
-    [galenos, vigencia],
-  );
+  // La vigencia más nueva entre los galenos que se van a cambiar (o todos, si todavía no hay cambios):
+  // si la fecha elegida no es posterior, se avisa qué pasa (no se bloquea).
+  const avisoFecha = useMemo(() => {
+    const editados = new Set(pendingEdits.map(([codigo]) => codigo));
+    const masNueva = galenos
+      .filter((g) => editados.size === 0 || editados.has(g.codigo))
+      .reduce<string | undefined>((m, g) => (m === undefined || g.vigencia_desde > m ? g.vigencia_desde : m), undefined);
+    return avisoVigenciaGaleno(vigencia, masNueva);
+  }, [galenos, pendingEdits, vigencia]);
 
   function setEdit(codigo: string, val: string) {
     setEdits((prev) => ({ ...prev, [codigo]: val }));
@@ -230,90 +248,57 @@ export default function ActualizarPreciosGalenos() {
     setSaving(true);
     setSaveResults([]);
 
-    const results: SaveResult[] = [];
+    // Un solo pedido y una sola transacción en el servidor: se aplican todos los galenos o
+    // ninguno. (Antes iba un pedido por galeno: con los lentos el navegador cortaba a los 15 s,
+    // el servidor igual los terminaba y los siguientes chocaban con ellos.)
+    const items = pendingEdits
+      .filter(([codigo]) => grupos.some((gr) => gr.codigo === codigo))
+      .map(([codigo, valStr]) => ({ codigo, nuevo_valor_unitario: parseFloat(valStr) }));
 
-    for (const [codigo, valStr] of pendingEdits) {
-      const grupo = grupos.find((gr) => gr.codigo === codigo);
-      if (!grupo) continue;
-      const valor = parseFloat(valStr);
-
-      try {
-        if (grupo.nivelado) {
-          // Un solo valor unitario para todos los niveles; cada nivel conserva sus unidades.
-          const res = await actualizarPrecioMasivoGaleno({
-            obra_social_nro: selectedOsNro,
+    try {
+      await actualizarPreciosGalenosLote({
+        obra_social_nro: selectedOsNro,
+        vigencia_desde: vigencia,
+        items,
+      });
+      setSaveResults(
+        items.map(({ codigo }) => {
+          const grupo = grupos.find((gr) => gr.codigo === codigo) as Grupo;
+          return {
             codigo,
-            vigencia_desde: vigencia,
-            items: grupo.niveles
-              .filter((n) => n.nivel != null)
-              .map((n) => ({
-                nivel: n.nivel as number,
-                nuevo_valor_unitario: valor,
-              })),
-          });
-          if (res.errores.length > 0) {
-            results.push({
-              codigo,
-              nombre: grupo.nombre,
-              ok: false,
-              msg: res.errores[0]?.motivo ?? "Error al actualizar",
-            });
-          } else if (res.actualizados === 0) {
-            results.push({
-              codigo,
-              nombre: grupo.nombre,
-              ok: false,
-              msg: "Sin cambios. ¿Ya existe un registro con esa vigencia? Elegí una fecha posterior.",
-            });
-          } else {
-            results.push({
-              codigo,
-              nombre: grupo.nombre,
-              ok: true,
-              msg: `${res.actualizados} nivel(es) actualizados`,
-            });
-          }
-        } else {
-          // Galeno sin nivel: un único registro.
-          await actualizarPrecioGaleno(grupo.niveles[0].id, {
-            nuevo_valor_unitario: valor,
-            vigencia_desde: vigencia,
-          });
-          results.push({ codigo, nombre: grupo.nombre, ok: true });
-        }
-      } catch (e: unknown) {
-        const err = e as { response?: { status?: number; data?: { detail?: string } } };
-        const is409 = err?.response?.status === 409;
-        const msg = err?.response?.data?.detail
-          ?? (is409
-            ? "Ya existe un registro con esa fecha de vigencia. Elegí una fecha posterior."
-            : "Error al actualizar");
-        results.push({ codigo, nombre: grupo.nombre, ok: false, msg });
+            nombre: grupo.nombre,
+            ok: true,
+            msg: grupo.nivelado ? `${grupo.niveles.length} nivel(es) actualizados` : undefined,
+          };
+        }),
+      );
+      setEdits({});
+      showToast("success", `${items.length} galeno(s) actualizados con éxito.`);
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: Partial<GalenosPrecioLoteError> } };
+      const data = err?.response?.data;
+      if (data?.errores?.length) {
+        // Se rechazó el lote entero: se marcan los galenos que lo impidieron.
+        setSaveResults(
+          data.errores.map((x) => ({ codigo: x.codigo, nombre: x.nombre, ok: false, msg: x.motivo })),
+        );
+        showToast("error", "No se aplicó ningún cambio. Revisá los galenos marcados.");
+      } else if (data) {
+        showToast("error", data.detail ?? "No se aplicó ningún cambio.");
+      } else {
+        // Sin respuesta (corte de red o timeout): el servidor puede haber terminado igual.
+        showToast(
+          "error",
+          "No se recibió respuesta del servidor. Verificá los valores actuales antes de reintentar.",
+        );
       }
+    } finally {
+      setSaving(false);
     }
 
-    // Limpia los edits que se guardaron con éxito.
-    setEdits((prev) => {
-      const next = { ...prev };
-      for (const r of results) if (r.ok) delete next[r.codigo];
-      return next;
-    });
-
-    setSaveResults(results);
-    setSaving(false);
-
-    // Refresca los valores actuales (el endpoint masivo no devuelve las filas).
+    // Refresca los valores actuales (el endpoint no devuelve las filas).
     await refreshGalenos(selectedOsNro);
-
-    const ok = results.filter((r) => r.ok).length;
-    const fail = results.filter((r) => !r.ok).length;
-    if (fail === 0) {
-      showToast("success", `${ok} galeno(s) actualizados con éxito.`);
-    } else if (ok === 0) {
-      showToast("error", "No se pudo actualizar ningún galeno.");
-    } else {
-      showToast("error", `${ok} actualizados, ${fail} con error.`);
-    }
+    void refetchResumen();
   }
 
   function handleSaveAll() {
@@ -451,16 +436,11 @@ export default function ActualizarPreciosGalenos() {
                 </span>
               </div>
 
-              {/* Date conflict warning */}
-              {dateConflicts.length > 0 && (
+              {/* Aviso de vigencia igual o anterior a la vigente */}
+              {avisoFecha && (
                 <div className={styles.conflictWarning}>
                   <AlertCircle size={14} />
-                  <span>
-                    {dateConflicts.length === galenos.length
-                      ? "Todos los galenos ya tienen vigencia desde esta fecha."
-                      : `${dateConflicts.length} galeno(s) ya tienen vigencia desde esta fecha.`}{" "}
-                    Elegí una fecha posterior para poder actualizar.
-                  </span>
+                  <span>{avisoFecha}</span>
                 </div>
               )}
 
@@ -509,6 +489,7 @@ export default function ActualizarPreciosGalenos() {
                   saveResults={saveResults}
                   toggling={toggling}
                   onToggleVisible={toggleVisible}
+                  resumenPorCodigo={resumenPorCodigo}
                 />
               )}
             </>
@@ -538,7 +519,7 @@ export default function ActualizarPreciosGalenos() {
         isOpen={confirmOpen}
         variant="warning"
         title="Confirmar actualización"
-        message={`¿Actualizar el valor de ${pendingEdits.length} galeno(s) con vigencia desde ${vigencia}?\n\nEn los nivelados, el valor se aplica a todos los niveles (conservando sus unidades). Esta operación crea nuevos registros manteniendo el historial de valores anteriores.`}
+        message={`¿Actualizar el valor de ${pendingEdits.length} galeno(s) con vigencia desde ${vigencia}?\n\nEn los nivelados, el valor se aplica a todos los niveles (conservando sus unidades). ${avisoFecha ?? "Esta operación crea nuevos registros manteniendo el historial de valores anteriores."}`}
         confirmLabel="Actualizar"
         onConfirm={doSaveAll}
         onCancel={() => setConfirmOpen(false)}
@@ -559,6 +540,7 @@ function PriceSection({
   saveResults,
   toggling,
   onToggleVisible,
+  resumenPorCodigo,
 }: {
   title: string;
   grupos: Grupo[];
@@ -569,6 +551,7 @@ function PriceSection({
   saveResults: SaveResult[];
   toggling: Record<string, boolean>;
   onToggleVisible: (grupo: Grupo) => void;
+  resumenPorCodigo: Map<string, GalenoResumenOut>;
 }) {
   return (
     <div className={styles.section}>
@@ -581,7 +564,7 @@ function PriceSection({
           <thead>
             <tr>
               <th>Nombre</th>
-              <th>Tipo</th>
+              <th>Modo</th>
               <th>Unidad actual</th>
               <th>Nueva unidad</th>
               <th>Visible en boletín</th>
@@ -596,6 +579,8 @@ function PriceSection({
                 parseFloat(val) >= 0;
               const result = saveResults.find((r) => r.codigo === grupo.codigo);
               const isOpen = !!expanded[grupo.codigo];
+              const info = resumenPorCodigo.get(grupo.codigo);
+              const ajustados = info ? new Map(info.niveles.map((x) => [x.nivel, x])) : new Map();
               return (
                 <Fragment key={grupo.codigo}>
                   <tr
@@ -630,10 +615,10 @@ function PriceSection({
                     <td>
                       {grupo.nivelado ? (
                         <span className={styles.nivelBadge}>
-                          Nivelado · {grupo.niveles.length} niveles
+                          {info?.modo === "por_nivel" ? "Precio por nivel" : "Calculado"} · {grupo.niveles.length} niveles
                         </span>
                       ) : (
-                        <span className={styles.sinNivelBadge}>Sin nivel</span>
+                        <span className={styles.sinNivelBadge}>Calculado</span>
                       )}
                     </td>
                     <td className={styles.priceCell}>
@@ -698,12 +683,17 @@ function PriceSection({
                     grupo.niveles.map((n) => {
                       const unidadActual = parseFloat(n.valor_unitario);
                       const unidadNueva = isDirty ? parseFloat(val) : null;
-                      const uHon = formatUnidades(n.unidades_honorarios);
-                      const uAyu = formatUnidades(n.unidades_ayudante);
-                      const honActual = honorarioDe(n.unidades_honorarios, unidadActual);
+                      // Unidades efectivas (ajuste de la OS o escala del nomenclador); si el
+                      // resumen todavía no llegó, las propias del galeno.
+                      const efectivo = ajustados.get(n.nivel ?? -1);
+                      const unidadesHon = efectivo ? efectivo.unidades_honorarios : n.unidades_honorarios;
+                      const unidadesAyu = efectivo ? efectivo.unidades_ayudante : n.unidades_ayudante;
+                      const uHon = formatUnidades(unidadesHon);
+                      const uAyu = formatUnidades(unidadesAyu);
+                      const honActual = honorarioDe(unidadesHon, unidadActual);
                       const honNuevo =
                         unidadNueva != null
-                          ? honorarioDe(n.unidades_honorarios, unidadNueva)
+                          ? honorarioDe(unidadesHon, unidadNueva)
                           : null;
                       return (
                         <tr key={n.id} className={styles.nivelRow}>
@@ -713,6 +703,11 @@ function PriceSection({
                             {uAyu != null && (
                               <span className={styles.nivelAyudante}>
                                 {" "}· {uAyu} ay.
+                              </span>
+                            )}
+                            {efectivo?.ajustado && (
+                              <span className={styles.ajustado} title="Esta obra social pactó unidades distintas a las de la escala del nomenclador">
+                                AJUSTADO
                               </span>
                             )}
                           </td>

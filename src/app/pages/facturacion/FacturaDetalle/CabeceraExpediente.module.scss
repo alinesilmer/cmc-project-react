@@ -1,0 +1,269 @@
+@use "@/app/styles/all.scss" as *;
+// Mismo lenguaje visual que el resto del listado (ver FacturaDetalle.module.scss).
+
+// ── Botones ───────────────────────────────────────────────────────────────────
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: 2.125rem;
+  padding: 0 0.875rem;
+  background: $white;
+  color: $gray-600;
+  border: 1px solid $gray-200;
+  border-radius: 0.375rem;
+  font-size: 0.83rem;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) { border-color: $tono-azul-450; color: $tono-azul-450; }
+  &:disabled { opacity: .5; cursor: default; }
+}
+
+.btnPrimario {
+  background: $tono-azul-450;
+  border-color: $tono-azul-450;
+  color: $white;
+
+  &:hover:not(:disabled) { background: $tono-azul-500; border-color: $tono-azul-500; color: $white; }
+}
+
+.btnIcono { padding: 0; width: 2.125rem; justify-content: center; }
+
+// Tipo y nº de factura que pide el TXT de UNNE cuando la factura todavía no está numerada.
+.numeroFactura {
+  height: 2.125rem;
+  width: 8.125rem;
+  padding: 0 0.625rem;
+  border: 1px solid $gray-200;
+  border-radius: 0.375rem;
+  font-size: 0.83rem;
+  font-family: inherit;
+  color: $carpeta-noche;
+}
+.numeroFacturaTipo { width: 2.75rem; text-align: center; }
+
+.girando { animation: girar 1s linear infinite; }
+@keyframes girar { to { transform: rotate(360deg); } }
+
+// ── Chips ─────────────────────────────────────────────────────────────────────
+.chip {
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 20px;
+  padding: 0.1875rem 0.75rem;
+  white-space: nowrap;
+}
+
+.chipOs { background: $secondary-blue; color: $tono-azul-450; }
+.chipGris { background: $gray-100; color: $gray-600; }
+.chipAbierta { background: $primary-yellow; color: $tono-naranja-550; font-weight: 700; }
+.chipCerrada { background: $tono-verde-50; color: $tono-verde-550; font-weight: 700; }
+.chipTotal { background: $cuaderno-papel; color: $tono-verde-550; border: 1px solid $tono-verde-50-b; font-weight: 700; }
+
+// ── Encabezado simple (mientras carga) ────────────────────────────────────────
+.simple {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.tituloSimple { font-size: 1.35rem; font-weight: 700; color: $carpeta-noche; margin: 0; }
+
+// ── Ruta y acciones ───────────────────────────────────────────────────────────
+.migas {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.ruta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: $tono-azul-400;
+
+  strong { color: $carpeta-noche; font-weight: 600; }
+}
+
+.rutaLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: $tono-azul-450;
+  cursor: pointer;
+
+  &:hover { text-decoration: underline; }
+}
+
+.acciones { margin-left: auto; display: flex; gap: 0.625rem; flex-wrap: wrap; }
+
+// ── Tarjeta del expediente ────────────────────────────────────────────────────
+.tarjeta {
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: 0.875rem;
+  box-shadow: 0 1px 4px rgba($black, .06);
+  margin-bottom: 1.5rem;
+  // Al volver desde la barra compacta, que no quede tapada por el topbar.
+  scroll-margin-top: 5rem;
+}
+
+.principal {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1.25rem 1.5rem 1rem;
+}
+
+.icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 12px;
+  background: $secondary-blue;
+  color: $tono-azul-450;
+  flex-shrink: 0;
+}
+
+.expediente { display: flex; flex-direction: column; gap: 0.125rem; }
+
+.etiquetaChica {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: $tono-azul-400;
+}
+
+.numeroFila { display: flex; align-items: center; gap: 0.625rem; }
+
+.numero {
+  font-size: 1.9rem;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  line-height: 1.1;
+  color: $carpeta-noche;
+}
+
+.copiar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.875rem;
+  height: 1.875rem;
+  background: $white;
+  color: $tono-azul-400;
+  border: 1px solid $gray-200;
+  border-radius: 0.375rem;
+  cursor: pointer;
+
+  &:hover { color: $tono-azul-450; border-color: $tono-azul-450; }
+}
+
+.separador { width: 1px; align-self: stretch; background: $gray-200; margin: 0.25rem 0.5rem; }
+
+.os { display: flex; flex-direction: column; gap: 0.375rem; min-width: 0; flex: 1 1 16.25rem; }
+.osNombre { font-size: 1.25rem; font-weight: 700; color: $carpeta-noche; overflow-wrap: anywhere; }
+.chips { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+
+.estados { margin-left: auto; display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end; }
+.estadoFila { display: flex; align-items: center; gap: 0.5rem; }
+.estadoDe { font-size: 0.75rem; color: $tono-azul-400; }
+
+// ── Indicadores ───────────────────────────────────────────────────────────────
+.stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  border-top: 1px solid $gray-200;
+
+  @media (max-width: 1100px) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (max-width: 640px) { grid-template-columns: minmax(0, 1fr); }
+}
+
+.stat {
+  padding: 0.875rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  border-right: 1px solid $gray-200;
+
+  &:last-child { border-right: 0; }
+}
+
+.statTotal { background: $cuaderno-papel; border-bottom-right-radius: 0.875rem; }
+.statEtiqueta { font-size: 0.75rem; color: $tono-azul-400; }
+.statValor { font-size: 1.35rem; font-weight: 700; color: $carpeta-noche; }
+.statValorTotal { font-size: 1.6rem; font-weight: 800; color: $tono-verde-550; }
+.statDe { font-size: 0.82rem; font-weight: 600; color: $tono-azul-400; }
+.statNota { font-size: 0.75rem; color: $tono-azul-400; }
+.statTotal .statEtiqueta, .statTotal .statNota { color: $tono-verde-550; }
+
+.barra { height: 0.375rem; border-radius: 6px; background: $gray-200; overflow: hidden; }
+.barraRelleno { height: 100%; background: $tono-azul-450; }
+
+.tipos { display: flex; flex-direction: column; gap: 0.1875rem; font-size: 0.75rem; color: $carpeta-noche; }
+.tipoFila { display: flex; justify-content: space-between; gap: 0.5rem; }
+
+// ── Barra compacta fija ───────────────────────────────────────────────────────
+// Fija debajo del topbar (el `top` lo pone el componente). Va a todo el ancho de la
+// ventana: el padding lateral de `.container` es 1.8rem.
+.compacta {
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 1.8rem;
+  background: $white;
+  border-bottom: 1px solid $gray-200;
+  box-shadow: 0 4px 16px rgba($black, .10);
+  overflow: hidden;
+}
+
+.compactaIcono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.125rem;
+  height: 2.125rem;
+  border-radius: 10px;
+  background: $secondary-blue;
+  color: $tono-azul-450;
+  flex-shrink: 0;
+}
+
+.compactaNumero { font-size: 1.05rem; font-weight: 800; color: $carpeta-noche; white-space: nowrap; }
+
+.compactaOs {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: $carpeta-noche;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compactaCant { font-size: 0.82rem; color: $tono-azul-400; white-space: nowrap; }
+.compactaTotal { margin-left: auto; font-size: 0.82rem; padding: 0.25rem 0.875rem; }
+
+@media (max-width: 900px) {
+  .compactaCant, .compactaOs { display: none; }
+}

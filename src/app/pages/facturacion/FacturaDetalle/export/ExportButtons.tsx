@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { abrirVentanaPdf } from "@/app/shared/lib/abrirPdf";
 import s from "./export.module.scss";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 
 interface Props {
-  onExport: (formato: "pdf" | "xlsx") => Promise<void>;
+  // Para el PDF recibe la pestaña ya abierta (ver `abrirVentanaPdf`) donde mostrarlo.
+  onExport: (formato: "pdf" | "xlsx", ventana: Window | null) => Promise<void>;
   disabled?: boolean;
   disabledHint?: string;
 }
@@ -15,9 +17,12 @@ export default function ExportButtons({ onExport, disabled, disabledHint }: Prop
   const handle = async (formato: "pdf" | "xlsx") => {
     setError(null);
     setCargando(formato);
+    // El PDF se abre en una pestaña nueva, que tiene que abrirse acá, dentro del clic.
+    const ventana = formato === "pdf" ? abrirVentanaPdf() : null;
     try {
-      await onExport(formato);
+      await onExport(formato, ventana);
     } catch (e: any) {
+      ventana?.close();
       setError(e?.message || "No se pudo generar el archivo.");
     } finally {
       setCargando(null);

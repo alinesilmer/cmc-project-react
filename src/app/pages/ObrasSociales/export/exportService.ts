@@ -4,7 +4,7 @@ import { hoyISO } from "@/app/shared/lib/fechas";
 import {
   formatFecha,
   formatPlazo,
-  formatMarca,
+  formatActivo,
   formatEmails,
   formatTelefonos,
   formatFactura,
@@ -45,7 +45,7 @@ export const DEFAULT_FIELDS: ExportField[] = [
   { key: "direccion_real",      label: "Dirección",         enabled: true  },
   { key: "emails",              label: "Emails",            enabled: true  },
   { key: "telefonos",           label: "Teléfonos",         enabled: true  },
-  { key: "marca",               label: "Hab. padrón",       enabled: false },
+  { key: "activo",              label: "Activa",            enabled: false },
   { key: "fecha_alta_convenio", label: "Alta convenio",     enabled: true  },
 ];
 
@@ -61,7 +61,7 @@ function getCellValue(item: ObraSocialListItem, key: string): string {
     case "direccion_real":      return item.direccion_real ?? "—";
     case "emails":              return formatEmails(item);
     case "telefonos":           return formatTelefonos(item);
-    case "marca":               return formatMarca(item.marca);
+    case "activo":              return formatActivo(item.activo);
     case "fecha_alta_convenio": return formatFecha(item.fecha_alta_convenio);
     default:                    return "—";
   }

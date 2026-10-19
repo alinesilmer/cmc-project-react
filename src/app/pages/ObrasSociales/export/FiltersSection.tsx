@@ -75,13 +75,13 @@ export default function FiltersSection({ filters, set, reset, hasActive }: Props
           </select>
         </div>
 
-        {/* Habilitada padrón */}
+        {/* Activa */}
         <div className={s.filterField}>
-          <label className={s.filterLabel}>Habilitada padrón</label>
+          <label className={s.filterLabel}>Activa</label>
           <select
             className={s.filterSelect}
-            value={filters.marca}
-            onChange={(e) => set("marca", e.target.value as FilterState["marca"])}
+            value={filters.activo}
+            onChange={(e) => set("activo", e.target.value as FilterState["activo"])}
           >
             <option value="">Todas</option>
             <option value="S">Sí</option>

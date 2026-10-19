@@ -1,15 +1,9 @@
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import {
-  ClipboardList,
-  ArrowRightCircle,
-  ArrowLeftCircle,
-  Trash2,
-  Download,
-  SlidersHorizontal,
-} from "lucide-react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { ArrowRightCircle, ArrowLeftCircle, Trash2 } from "lucide-react";
 
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
+import { usePermisos } from "@/app/auth/usePermisos";
 import {
   fetchFacturaDetalle, marcarRevisado, anularPrestacion,
   moverPeriodo,
@@ -23,15 +17,20 @@ import ConfirmActionModal from "../components/ConfirmActionModal";
 import ExportPanel from "./export/ExportPanel";
 import VistaPanel from "./vista/VistaPanel";
 import type { FiltrosVista, OrdenDireccion, OrdenVista, VistaOpciones } from "./vista/types";
-import { COLUMNAS_VISTA_DISPONIBLES, ORDEN_TIPOS, PESO_COLUMNA, VISTA_OPCIONES_DEFAULT } from "./vista/types";
+import { cargarVistaSesion, COLUMNAS_VISTA_DISPONIBLES, guardarVistaSesion, ORDEN_TIPOS, PESO_COLUMNA } from "./vista/types";
 import type { FilaAcciones, PrestacionConSocio } from "./FilaPrestacion";
+import CabeceraExpediente, { ALTO_BARRA_COMPACTA } from "./CabeceraExpediente";
+import { useRestaurarPosicion } from "./useRestaurarPosicion";
+import {
+  EVENTO_PRESTACION_EDITADA, precargarFormularioCarga, type DetallePrestacionEditada,
+} from "../CargaFacturacion/capaCargaContexto";
+import { cargarCatalogos } from "../CargaFacturacion/catalogosCarga";
 import GrupoTabla from "./GrupoTabla";
 import { sumaEquipo, sumarTotales } from "./totales";
 import type { GrupoAcciones, VistaGrupo } from "./GrupoTabla";
 import { inferirEquipos } from "./equipo";
 import styles from "./FacturaDetalle.module.scss";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
-import BackButton from "@/app/components/ui/BackButton/BackButton";
 
 // Set vacío compartido: los grupos sin filas ocupadas reciben siempre esta misma referencia y su memo no se invalida.
 const SIN_OCUPADAS: ReadonlySet<number> = new Set();
@@ -42,18 +41,6 @@ type PendingAction =
   | { type: "eliminar"; p: PrestacionConSocio }
   | { type: "mover"; p: PrestacionConSocio; direccion: "siguiente" | "anterior" }
   | { type: "moverGrupo"; ids: number[]; marcadas: number; label: string; groupKey: string; direccion: "siguiente" | "anterior" };
-
-const estadoChipClass = (estado: string | null): string => {
-  if (estado === "A") return styles.chipAbierta;
-  if (estado === "C") return styles.chipCerrada;
-  return styles.chipCerrada;
-};
-
-const estadoLabel = (estado: string | null): string => {
-  if (estado === "A") return "Abierta";
-  if (estado === "C") return "Cerrada";
-  return estado || "—";
-};
 
 const compararPorOrden = (
   a: PrestacionConSocio, b: PrestacionConSocio, orden: OrdenVista, direccion: OrdenDireccion,
@@ -79,21 +66,24 @@ const compararPorOrden = (
 // Orden fijo de "Por socio" — el mismo que arma el exportable (`export/armado.py`).
 const porFechaDesc = (a: PrestacionConSocio, b: PrestacionConSocio): number =>
   (b.fecha_practica ?? "").localeCompare(a.fecha_practica ?? "") || a.id - b.id;
-const porPacienteAZ = (a: PrestacionConSocio, b: PrestacionConSocio): number =>
+const porNombreYNumeroDePaciente = (a: PrestacionConSocio, b: PrestacionConSocio): number =>
   (a.nombre_paciente ?? "").localeCompare(b.nombre_paciente ?? "", "es", { sensitivity: "base" })
-  || (a.nro_afiliado ?? "").localeCompare(b.nro_afiliado ?? "", "es", { numeric: true })
-  || porFechaDesc(a, b);
-// Sanatorios: las prestaciones de una misma clínica quedan seguidas (A-Z por clínica) para poder intercalar el subtítulo con su nombre.
+  || (a.nro_afiliado ?? "").localeCompare(b.nro_afiliado ?? "", "es", { numeric: true });
+const porPacienteAZ = (a: PrestacionConSocio, b: PrestacionConSocio): number =>
+  porNombreYNumeroDePaciente(a, b) || porFechaDesc(a, b);
+// Sanatorios: las prestaciones de una misma clínica quedan seguidas (A-Z por clínica) para
+// poder intercalar el subtítulo con su nombre.
 const nombreClinica = (p: PrestacionConSocio): string => p.nombre_clinica ?? String(p.cod_clinica ?? "");
 const porClinica = (a: PrestacionConSocio, b: PrestacionConSocio): number =>
   nombreClinica(a).localeCompare(nombreClinica(b), "es", { sensitivity: "base" });
-const porClinicaYPaciente = (a: PrestacionConSocio, b: PrestacionConSocio): number =>
-  porClinica(a, b) || porPacienteAZ(a, b);
+// Sanatorios: clínica A-Z → paciente A-Z → socio A-Z → fecha (más nueva primero). Igual que
+// el exportable (`_clave_sanatorio` en `export/armado.py`).
+const porSanatorio = (a: PrestacionConSocio, b: PrestacionConSocio): number =>
+  porClinica(a, b) || porNombreYNumeroDePaciente(a, b) || porNombreMedico(a, b) || porFechaDesc(a, b);
 const TRAMOS_MEDICO: { tipo: Tipo; subtitulo: string; comparar: typeof porFechaDesc }[] = [
   { tipo: "Consulta", subtitulo: "Consultas", comparar: porFechaDesc },
   { tipo: "Practica", subtitulo: "Prácticas", comparar: porFechaDesc },
   { tipo: "Honorarios individuales", subtitulo: "Honorarios individuales", comparar: porPacienteAZ },
-  { tipo: "Sanatorio", subtitulo: "Sanatorios", comparar: porClinicaYPaciente },
 ];
 // Subtítulo de cada sección de "Por tipo".
 const SUBTITULO_TIPO: Record<Tipo, string> = {
@@ -168,6 +158,8 @@ const hayFiltrosActivos = (f: FiltrosVista): boolean =>
 const FacturaDetalle: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { can } = usePermisos();
   const notify = useAppSnackbar();
 
   const [detalle, setDetalle] = useState<FacturaDetalleResponse | null>(null);
@@ -178,7 +170,12 @@ const FacturaDetalle: React.FC = () => {
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
   const [vistaOpen, setVistaOpen] = useState(false);
-  const [vistaOpciones, setVistaOpciones] = useState<VistaOpciones>(VISTA_OPCIONES_DEFAULT);
+  // Con la barra compacta fija a la vista, el encabezado de la tabla se pega debajo de ella.
+  const [barraCompacta, setBarraCompacta] = useState(false);
+  // La vista se recuerda en la sesión: al volver de editar/replicar, o de otra factura,
+  // queda como el usuario la dejó.
+  const [vistaOpciones, setVistaOpciones] = useState<VistaOpciones>(cargarVistaSesion);
+  useEffect(() => { guardarVistaSesion(vistaOpciones); }, [vistaOpciones]);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -197,6 +194,29 @@ const FacturaDetalle: React.FC = () => {
   }, [id]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Recarga después de editar en la capa: sin pasar por "Cargando…", así el listado no
+  // se vacía ni pierde el scroll; las filas se actualizan en el lugar.
+  const recargarEnSilencio = useCallback(async () => {
+    if (!id) return;
+    try {
+      setDetalle(await fetchFacturaDetalle(id));
+    } catch {
+      notify("No se pudo actualizar el listado. Recargá la página para ver los cambios.", "warning");
+    }
+  }, [id, notify]);
+
+  // El formulario de edición se abre al instante: su código y los catálogos (médicos,
+  // obras sociales, clínicas) se bajan de fondo mientras se mira el listado.
+  const puedeEditar = can("facturacion:cargar");
+  useEffect(() => {
+    if (!puedeEditar) return;
+    const t = window.setTimeout(() => {
+      precargarFormularioCarga();
+      cargarCatalogos();
+    }, 1500);
+    return () => window.clearTimeout(t);
+  }, [puedeEditar]);
 
   const withBusy = async (pid: number, fn: () => Promise<void>) => {
     setBusyIds((prev) => new Set(prev).add(pid));
@@ -227,11 +247,14 @@ const FacturaDetalle: React.FC = () => {
   };
 
   const handleEditar = (p: PrestacionConSocio) => {
-    navigate(`/panel/facturacion/carga/${p.id}?from=${id}`);
+    recordarFila(p.id); // al volver, el listado queda donde estaba y esta fila titila
+    // `fondo`: el formulario se abre encima del listado, que queda montado (CapaCarga).
+    navigate(`/panel/facturacion/carga/${p.id}?from=${id}`, { state: { fondo: location } });
   };
 
   // Precarga el formulario de carga con los datos de esta prestación, pero como una prestación nueva (POST) — la original no se toca.
   const handleReplicar = (p: PrestacionConSocio) => {
+    recordarFila(null);
     navigate(`/panel/facturacion/carga?replicar=${p.id}`);
   };
 
@@ -352,15 +375,11 @@ const FacturaDetalle: React.FC = () => {
     onMarcarTodos: (g) => handleMarcarTodos(g.miembros.map((p) => p.id), g.key),
     onDesmarcarTodos: (g) => handleDesmarcarTodos(g.miembros.map((p) => p.id), g.key),
     onMoverGrupo: handleMoverGrupo,
-    onOrdenAlfabetico: (tipo, valor) => setVistaOpciones((o) => (
-      tipo === "Sanatorio" ? { ...o, ordenSanatorio: valor } : { ...o, ordenHonorarios: valor }
-    )),
   };
   const accionesGrupo = useMemo<GrupoAcciones>(() => ({
     onMarcarTodos: (g) => accionesGrupoRef.current?.onMarcarTodos(g),
     onDesmarcarTodos: (g) => accionesGrupoRef.current?.onDesmarcarTodos(g),
     onMoverGrupo: (g, d) => accionesGrupoRef.current?.onMoverGrupo(g, d),
-    onOrdenAlfabetico: (t, v) => accionesGrupoRef.current?.onOrdenAlfabetico(t, v),
   }), []);
   const acciones = useMemo<FilaAcciones>(() => ({
     onToggleRevisado: (p) => accionesRef.current?.onToggleRevisado(p),
@@ -437,7 +456,7 @@ const FacturaDetalle: React.FC = () => {
     const hijos = new Map<number, PrestacionConSocio[]>();
     for (const p of propias) {
       const otros = equipoPorCabeza.get(p.id);
-      if (otros && otros.length > 0) hijos.set(p.id, otros);
+      if (otros && otros.length > 0) hijos.set(p.id, otros.map((h) => ({ ...h, tipoCabeza: p.tipo })));
     }
     return {
       principales: propias,
@@ -464,30 +483,35 @@ const FacturaDetalle: React.FC = () => {
         .map((arr, i) => ({ tipo: ORDEN_TIPOS[i], arr }))
         .filter(({ arr }) => arr.length > 0)
         .map(({ tipo, arr }) => {
-          // Las filas de cada médico quedan seguidas (para poder cerrar con su subtotal); el orden elegido rige dentro de cada médico.
-          const selector = tipo === "Honorarios individuales" ? vistaOpciones.ordenHonorarios
-            : tipo === "Sanatorio" ? vistaOpciones.ordenSanatorio : undefined;
-          const porPaciente = selector === "paciente";
-          const ordenadas = [...arr].sort((a, b) =>
-            porNombreMedico(a, b)
-            || (tipo === "Sanatorio" ? porClinica(a, b) : 0)
-            || (porPaciente
-              ? porPacienteAZ(a, b)
-              // "Médico": rige el orden elegido; lo que ese orden no distingue.
-              : compararPorOrden(a, b, vistaOpciones.orden, vistaOpciones.direccion) || (selector ? porPacienteAZ(a, b) : 0)));
+          // Honorarios individuales y Sanatorios van SIEMPRE por paciente A-Z, sin partir por médico
+          // (en Sanatorios, dentro de cada clínica A-Z), igual que en "Por socio" y que el
+          // exportable (`export/armado.py`). Las demás secciones: las filas de cada médico quedan
+          // seguidas (para cerrar con su subtotal) y el orden elegido rige dentro de cada médico.
+          const porPaciente = tipo === "Honorarios individuales" || tipo === "Sanatorio";
+          const ordenadas = [...arr].sort((a, b) => porPaciente
+            ? (tipo === "Sanatorio" ? porSanatorio(a, b) : porPacienteAZ(a, b))
+            : porNombreMedico(a, b)
+              || compararPorOrden(a, b, vistaOpciones.orden, vistaOpciones.direccion));
           const miembros = miembrosDe(ordenadas);
-          const sumables = sumablesDe(ordenadas);
+          // El total de la sección es lo que se factura en ella: con el equipo de todas
+          // las cirugías, también en Honorarios individuales y Sanatorios (que sí lo dejan
+          // afuera del subtotal de cada médico, ver GrupoTabla). Así la suma de las
+          // secciones da el total de la factura. Igual que el exportable.
+          const sumables = miembros;
           return {
             key: `tipo-${tipo}`, titulo: SUBTITULO_TIPO[tipo], subtitulo: SUBTITULO_TIPO[tipo], subtotalPorMedico: true,
-            ordenAlfabetico: selector ? { tipo, valor: selector } : undefined,
+            porPaciente,
             prestaciones: ordenadas, miembros, sumables, mostrarResumen: true, ...sumarTotales(sumables),
           };
         });
     }
 
-    // por_socio (default): orden fijo.
+    // por_socio (default): orden fijo. Médicos A-Z, cada uno con sus tramos por tipo, y al final
+    // un bloque único de Sanatorios (clínica → paciente → socio). `cod_medico` es siempre el
+    // médico que cobra (la clínica, si hay, va en `cod_clinica` y se muestra como etiqueta en
+    // la fila), así que nunca se agrupa a un socio como clínica.
     const medicos = new Map<string, PrestacionConSocio[]>();
-    for (const p of principales) {
+    for (const p of principales.filter((x) => x.tipo !== "Sanatorio")) {
       const arr = medicos.get(p.cod_medico) ?? [];
       arr.push(p);
       medicos.set(p.cod_medico, arr);
@@ -510,25 +534,38 @@ const FacturaDetalle: React.FC = () => {
       };
     }).sort(porNombreSocio);
 
+    const sanatorios = principales.filter((p) => p.tipo === "Sanatorio").sort(porSanatorio);
+    if (sanatorios.length > 0) {
+      const miembros = miembrosDe(sanatorios);
+      gruposMedicos.push({
+        key: "sanatorios", titulo: "Sanatorios", sinTituloDeSocio: true, prestaciones: sanatorios, miembros,
+        sumables: miembros, tramos: [{ key: "Sanatorio", subtitulo: "Sanatorios", prestaciones: sanatorios }],
+        mostrarResumen: true, ...sumarTotales(miembros),
+      });
+    }
+
     return gruposMedicos;
-  }, [principales, hijosPorCabeza, vistaOpciones.agrupacion, vistaOpciones.orden, vistaOpciones.direccion,
-    vistaOpciones.ordenHonorarios, vistaOpciones.ordenSanatorio]);
+  }, [principales, hijosPorCabeza, vistaOpciones.agrupacion, vistaOpciones.orden, vistaOpciones.direccion]);
 
   const columnasActivas = useMemo(
     () => COLUMNAS_VISTA_DISPONIBLES.filter((c) => vistaOpciones.columnas.includes(c.key)),
     [vistaOpciones.columnas],
   );
 
+  // Factura cerrada (estado distinto de abierta): no se modifica nada, así que se saca la
+  // columna de acciones y los botones de cada grupo.
+  const conAcciones = !detalle || detalle.estado == null || detalle.estado === "A";
+
   const columnasConPeso = useMemo(() => {
     const activos: { id: string; peso: number }[] = [
       { id: "id", peso: PESO_COLUMNA.id },
       { id: "socio", peso: PESO_COLUMNA.socio },
       ...columnasActivas.map((c) => ({ id: c.key, peso: PESO_COLUMNA[c.key] })),
-      { id: "acciones", peso: PESO_COLUMNA.acciones },
+      ...(conAcciones ? [{ id: "acciones", peso: PESO_COLUMNA.acciones }] : []),
     ];
     const suma = activos.reduce((s, c) => s + c.peso, 0) || 1;
     return activos.map((c) => ({ ...c, pct: (c.peso / suma) * 100 }));
-  }, [columnasActivas]);
+  }, [columnasActivas, conAcciones]);
 
   const esPorSocio = vistaOpciones.agrupacion === "por_socio";
 
@@ -545,7 +582,7 @@ const FacturaDetalle: React.FC = () => {
     const nuevo = new Map<string, { g: VistaGrupo; firma: unknown[] }>();
     const out = vistaGrupos.map((g) => {
       const firma: unknown[] = [
-        g.titulo, g.subtitulo, g.subtotalPorMedico, g.ordenAlfabetico?.valor, g.mostrarResumen, ...g.prestaciones,
+        g.titulo, g.subtitulo, g.subtotalPorMedico, g.porPaciente, g.mostrarResumen, ...g.prestaciones,
       ];
       g.tramos?.forEach((t) => firma.push(t.key, t.prestaciones.length));
       const companeros: Record<number, PrestacionConSocio[]> = {};
@@ -568,6 +605,23 @@ const FacturaDetalle: React.FC = () => {
   // La tabla se dibuja con una versión "diferida" de los grupos.
   const gruposDibujados = useDeferredValue(gruposEstables);
 
+  // Al volver de editar (o de la carga) el listado reaparece en el mismo lugar, sin saltos:
+  // queda oculto hasta que la posición está calculada.
+  const { restaurando, recordarFila, resaltarFila } = useRestaurarPosicion(
+    id, detalle !== null && gruposDibujados === gruposEstables, error !== null,
+  );
+
+  // Se guardó una edición en la capa: se recarga el listado por debajo y, cuando la capa
+  // se fue, la fila titila en su lugar.
+  useEffect(() => {
+    const alEditar = (ev: Event) => {
+      const { id: filaId } = (ev as CustomEvent<DetallePrestacionEditada>).detail;
+      resaltarFila(filaId, recargarEnSilencio());
+    };
+    window.addEventListener(EVENTO_PRESTACION_EDITADA, alEditar);
+    return () => window.removeEventListener(EVENTO_PRESTACION_EDITADA, alEditar);
+  }, [resaltarFila, recargarEnSilencio]);
+
   const ocupadasDe = (g: VistaGrupo): ReadonlySet<number> => {
     if (busyIds.size === 0) return SIN_OCUPADAS;
     const ids = g.miembros.filter((p) => busyIds.has(p.id)).map((p) => p.id);
@@ -578,37 +632,15 @@ const FacturaDetalle: React.FC = () => {
   const totalFiltrado = useMemo(() => sumarTotales(visibles).totalSubtotal, [visibles]);
 
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <span className={styles.headerIcon}>
-          <ClipboardList size={22} />
-        </span>
-        <div>
-          <h1 className={styles.title}>Listado de prestaciones</h1>
-          <p className={styles.subtitle}>Período activo: {detalle?.periodo ?? "—"}</p>
-        </div>
-
-        <div className={styles.headerRight}>
-          {detalle && (
-            <>
-              <span className={`${styles.infoChip} ${styles.chipOs}`}>OS {detalle.cod_obra}</span>
-              <span className={`${styles.infoChip} ${estadoChipClass(detalle.estado)}`}>
-                {estadoLabel(detalle.estado)}
-              </span>
-              <span className={`${styles.infoChip} ${styles.chipTotal}`}>
-                Total: {formatMoney(detalle.total_importe)}
-              </span>
-            </>
-          )}
-          <button type="button" className={styles.backBtn} onClick={() => setVistaOpen(true)} disabled={!detalle}>
-            <SlidersHorizontal size={15} /> Vista
-          </button>
-          <button type="button" className={styles.backBtn} onClick={() => setExportOpen(true)} disabled={!detalle}>
-            <Download size={15} /> Exportar
-          </button>
-          <BackButton to="/panel/facturacion/periodos" />
-        </div>
-      </div>
+    <div className={styles.container} style={restaurando ? { visibility: "hidden" } : undefined}>
+      <CabeceraExpediente
+        detalle={detalle}
+        filas={todasFlat}
+        onVista={() => setVistaOpen(true)}
+        onExportar={() => setExportOpen(true)}
+        onVolver={() => navigate("/panel/facturacion/periodos")}
+        onCompactaChange={setBarraCompacta}
+      />
 
       <div className={styles.layout}>
         {detalle && (
@@ -625,7 +657,7 @@ const FacturaDetalle: React.FC = () => {
         )}
 
         <div className={styles.tableWrap}>
-          <Tabla className={`${styles.table} ${styles.tablaEncabezado}`}>
+          <Tabla className={`${styles.table} ${styles.tablaEncabezado}`} style={barraCompacta ? { top: 65 + ALTO_BARRA_COMPACTA } : undefined}>
             <colgroup>
               {columnasConPeso.map((c) => <col key={c.id} style={{ width: `${c.pct}%` }} />)}
             </colgroup>
@@ -634,7 +666,7 @@ const FacturaDetalle: React.FC = () => {
                 <th>ID</th>
                 <th>Socio</th>
                 {columnasActivas.map((c) => <th key={c.key}>{c.label}</th>)}
-                <th className={styles.thActions}>Acciones</th>
+                {conAcciones && <th className={styles.thActions}>Acciones</th>}
               </tr>
             </thead>
             <tbody>
@@ -663,6 +695,7 @@ const FacturaDetalle: React.FC = () => {
               busyIds={ocupadasDe(g)}
               grupoBusy={busyGroups.has(g.key)}
               esComplemento={esComplemento}
+              conAcciones={conAcciones}
               esPorSocio={esPorSocio}
             />
           ))}

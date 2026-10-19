@@ -2,9 +2,8 @@ import React from "react";
 import { ArrowRightCircle, ArrowLeftCircle } from "lucide-react";
 
 import { formatMoney } from "../money";
-import type { Tipo } from "../types";
-import type { ColumnaVista, OrdenAlfabetico } from "./vista/types";
-import { RESUMEN_TIPO_LABEL, sumaEquipo, sumarTotales, totalesPorTipo } from "./totales";
+import type { ColumnaVista } from "./vista/types";
+import { RESUMEN_TIPO_LABEL, sumaEquipo, sumarTotales, sumarUnidades, totalesPorTipo } from "./totales";
 import { clavePaciente } from "./equipo";
 import FilaPrestacion from "./FilaPrestacion";
 import type { FilaAcciones, PrestacionConSocio } from "./FilaPrestacion";
@@ -24,11 +23,17 @@ export interface VistaGrupo {
   // "Por tipo": subtítulo de la sección (Consultas, Prácticas…) y subtotal al cerrar las filas de cada médico.
   subtitulo?: string;
   subtotalPorMedico?: boolean;
-  // "Por tipo", sólo Honorarios individuales y Sanatorios: el selector de orden.
-  ordenAlfabetico?: { tipo: Tipo; valor: OrdenAlfabetico };
-  // "Por socio": tramos con subtítulo (Consultas / Prácticas / Honorarios individuales / Sanatorios) dentro de cada médico.
+  // "Por tipo", sólo Honorarios individuales y Sanatorios: la sección entera va por paciente A-Z
+  // (con su subtítulo y su total), sin partir por médico.
+  porPaciente?: boolean;
+  // "Por socio": tramos con subtítulo (Consultas / Prácticas / Honorarios
+  // individuales / Sanatorios) dentro de cada médico.
   tramos?: { key: string; subtitulo: string; prestaciones: PrestacionConSocio[] }[];
-  // Equipo de cada cabeza del grupo (id cabeza → integrantes), resuelto por el padre.
+  // "Por socio": el bloque único de Sanatorios no es de un médico, así que no lleva la fila
+  // de título de socio (sí el subtítulo "Sanatorios" del tramo).
+  sinTituloDeSocio?: boolean;
+  // Equipo de cada cabeza del grupo (id cabeza → integrantes), resuelto por el padre. Sólo
+  // se dibuja acá, anidado bajo la cabeza: no aparece como línea propia en su socio.
   companeros?: Record<number, PrestacionConSocio[]>;
   totalHonorarios: number;
   totalGastos: number;
@@ -39,7 +44,6 @@ export interface GrupoAcciones {
   onMarcarTodos: (g: VistaGrupo) => void;
   onDesmarcarTodos: (g: VistaGrupo) => void;
   onMoverGrupo: (g: VistaGrupo, direccion: "siguiente" | "anterior") => void;
-  onOrdenAlfabetico: (tipo: Tipo, valor: OrdenAlfabetico) => void;
 }
 
 // Filas por bloque. Cada bloque es una <table> propia con `content-visibility: auto` (ver `.bloqueFilas` en el SCSS).
@@ -56,11 +60,13 @@ interface Props {
   busyIds: ReadonlySet<number>;
   grupoBusy: boolean;
   esComplemento: boolean;
+  // false si la factura está cerrada: sin acciones por fila ni por grupo.
+  conAcciones: boolean;
   esPorSocio: boolean;
 }
 
 function GrupoTabla({
-  g, columnas, anchos, acciones, accionesGrupo, busyIds, grupoBusy, esComplemento, esPorSocio,
+  g, columnas, anchos, acciones, accionesGrupo, busyIds, grupoBusy, esComplemento, conAcciones, esPorSocio,
 }: Props) {
   const colSpan = anchos.length;
   // El subtítulo con el nombre de la clínica va en "Por socio" y "Por tipo" (no en la planilla plana).
@@ -77,6 +83,7 @@ function GrupoTabla({
       acciones={acciones}
       busy={busyIds.has(p.id)}
       esComplemento={esComplemento}
+      conAcciones={conAcciones}
       indent={opts?.indent}
       ultimoDelEquipo={opts?.ultimoDelEquipo}
       equipoHead={opts?.equipoHead}
@@ -124,9 +131,12 @@ function GrupoTabla({
       bloque = [];
     };
     for (const p of prestaciones) {
-      // Un paciente en otra clínica es otro bloque.
+      // Nombre y número, como los ordena `porPacienteAZ`: así las filas de un paciente
+      // siempre quedan en un solo bloque. Un paciente en otra clínica es otro bloque.
       const clavePac = opts?.porPaciente
-        ? `${clavePaciente(p)}|${p.tipo === "Sanatorio" ? p.cod_clinica ?? "" : ""}` : undefined;
+        ? [p.nombre_paciente, p.nro_afiliado, p.tipo === "Sanatorio" ? p.cod_clinica : ""]
+            .map((v) => String(v ?? "").trim().toLowerCase().replace(/\s+/g, " ")).join("|")
+        : undefined;
       const cambioPaciente = clavePac !== undefined && clavePac !== pacientePrevio;
       if (cambioPaciente) cerrarPaciente();
       if (subtituloClinica && p.tipo === "Sanatorio") {
@@ -163,26 +173,11 @@ function GrupoTabla({
   const filasListado = (): React.ReactNode[] => {
     const out: React.ReactNode[] = [];
     if (g.subtitulo) {
-      const orden = g.ordenAlfabetico;
       out.push(
         <tr key={`subtitulo-${g.key}`} className={styles.tipoTituloRow}>
           <td colSpan={colSpan}>
             <div className={styles.tipoTituloContent}>
               <span>{g.subtitulo}</span>
-              {orden && (
-                <span className={styles.ordenAlfaGroup} role="group" aria-label={`Orden de ${g.subtitulo}`}>
-                  {([["medico", "Médico A-Z"], ["paciente", "Paciente A-Z"]] as const).map(([valor, etiqueta]) => (
-                    <button
-                      key={valor}
-                      type="button"
-                      className={`${styles.ordenAlfaBtn} ${orden.valor === valor ? styles.ordenAlfaBtnOn : ""}`}
-                      onClick={() => accionesGrupo.onOrdenAlfabetico(orden.tipo, valor)}
-                    >
-                      {etiqueta}
-                    </button>
-                  ))}
-                </span>
-              )}
             </div>
           </td>
         </tr>,
@@ -191,15 +186,16 @@ function GrupoTabla({
     const ps = g.prestaciones;
     let i = 0;
     while (i < ps.length) {
+      // Honorarios individuales / Sanatorios: la sección entera va por paciente (no por médico)
+      // y cada paciente cierra con su total, en lugar del subtotal del médico.
+      const porPaciente = Boolean(g.porPaciente);
       let j = i + 1;
-      if (g.subtotalPorMedico) {
+      if (g.subtotalPorMedico && !porPaciente) {
         while (j < ps.length && ps[j].cod_medico === ps[i].cod_medico) j += 1;
       } else {
         j = ps.length;
       }
       const tramo = ps.slice(i, j);
-      // Honorarios individuales / Sanatorios ordenados por paciente: en lugar del subtotal del médico, cada paciente cierra con su total.
-      const porPaciente = g.ordenAlfabetico?.valor === "paciente";
       out.push(...filasDe(tramo, `${g.key}-${i}`, { porPaciente, totalPaciente: porPaciente }));
       if (g.subtotalPorMedico && !porPaciente) {
         const medico = tramo[0];
@@ -210,7 +206,7 @@ function GrupoTabla({
           <tr key={`subtotal-${g.key}-${medico.cod_medico}-${medico.id}`} className={styles.subtotalMedicoRow}>
             <td colSpan={colSpan}>
               <div className={styles.subtotalMedicoContent}>
-                <span>Subtotal socio {medico.cod_medico} {medico.nombreSocio ?? ""} ({incluidas.length})</span>
+                <span>Subtotal socio {medico.cod_medico} {medico.nombreSocio ?? ""} ({sumarUnidades(incluidas)})</span>
                 <span className={styles.subtotalMedicoMontos}>
                   <span>Coseguro: <strong>{formatMoney(totales.totalCoseguro)}</strong></span>
                   <span>Total: <strong>{formatMoney(totales.totalSubtotal)}</strong></span>
@@ -228,16 +224,19 @@ function GrupoTabla({
   // "Por socio": fila de título del socio y, en cada uno, un subtítulo por tramo.
   const filasPorSocio = (): React.ReactNode[] => {
     const out: React.ReactNode[] = [];
-    out.push(
-      <tr key={`titulo-${g.key}`} className={styles.socioTituloRow}>
-        <td colSpan={colSpan}>{g.titulo}</td>
-      </tr>,
-    );
+    if (!g.sinTituloDeSocio) {
+      out.push(
+        <tr key={`titulo-${g.key}`} className={styles.socioTituloRow}>
+          <td colSpan={colSpan}>{g.titulo}</td>
+        </tr>,
+      );
+    }
     for (const t of g.tramos ?? [{ key: "todas", subtitulo: "", prestaciones: g.prestaciones }]) {
       if (t.subtitulo) {
         out.push(<tr key={`tramo-${g.key}-${t.key}`} className={styles.tramoRow}><td colSpan={colSpan}>{t.subtitulo}</td></tr>);
       }
-      // Honorarios individuales y Sanatorios van ordenados por paciente: cada uno con su subtítulo y su total.
+      // Honorarios individuales y Sanatorios (bloque único, con el subtítulo de cada clínica)
+      // van por paciente, cada uno con su subtítulo y su total; el socio sólo ordena.
       const porPaciente = t.key === "Honorarios individuales" || t.key === "Sanatorio";
       out.push(...filasDe(t.prestaciones, `${g.key}-${t.key}`, { porPaciente, totalPaciente: porPaciente }));
     }
@@ -254,7 +253,7 @@ function GrupoTabla({
               {RESUMEN_TIPO_LABEL[t.tipo]} ({t.cantidad}): <strong>{formatMoney(t.total)}</strong>
             </span>
           ))}
-          <div className={styles.resumenActions}>
+          {conAcciones && <div className={styles.resumenActions}>
             <button type="button" className={styles.resumenActionBtn} disabled={grupoBusy}
               onClick={() => accionesGrupo.onMarcarTodos(g)}>
               Marcar todos
@@ -275,7 +274,7 @@ function GrupoTabla({
                 </button>
               </>
             )}
-          </div>
+          </div>}
           <span className={styles.resumenTotalBadge}>Total: {formatMoney(g.totalSubtotal)}</span>
         </div>
       </td>

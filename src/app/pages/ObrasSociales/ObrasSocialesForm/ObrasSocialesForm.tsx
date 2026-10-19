@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -6,21 +6,19 @@ import {
   Save,
   X,
   FileText,
-  Search,
   Plus,
   HousePlus,
   Trash2,
+  Info,
 } from "lucide-react";
 import {
   createObraSocial,
   updateObraSocial,
   getObraSocial,
-  searchObrasSociales,
   uploadDocumento,
   deleteDocumento,
-  setObraSocialPrincipal,
 } from "../obrasSociales.api";
-import { OBRAS_SOCIALES_KEY } from "../useObrasSociales";
+import { OBRAS_SOCIALES_KEY, useObrasSociales } from "../useObrasSociales";
 import {
   EMPTY_FORM,
   CONDICION_IVA_LABELS,
@@ -38,6 +36,8 @@ import type {
   ContactoEntry,
 } from "../obrasSociales.types";
 import { abrirAdjunto } from "@/app/shared/lib/archivos";
+import { mensajeDeError } from "@/app/shared/lib/httpErrors";
+import AppSearchSelect from "../../../components/ui/AppSearchSelect/AppSearchSelect";
 import { useNotify } from "../../../hooks/useNotify";
 import s from "./ObrasSocialesForm.module.scss";
 import Modal from "../../../components/ui/Modal/Modal";
@@ -131,123 +131,6 @@ function ContactoList({
       </button>
 
       {error && <span className={s.fieldError} role="alert">{error}</span>}
-    </div>
-  );
-}
-
-// ─── Asociadas selector ───────────────────────────────────────────────────────
-
-function AsociadasSelector({
-  selected,
-  onChange,
-  excludeId,
-}: {
-  selected: ObraSocialRef[];
-  onChange: (refs: ObraSocialRef[]) => void;
-  excludeId?: number;
-}) {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<ObraSocialRef[]>([]);
-  const [searching, setSearching] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const search = useCallback(
-    (q: string) => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      if (!q.trim()) {
-        setResults([]);
-        return;
-      }
-      debounceRef.current = setTimeout(async () => {
-        setSearching(true);
-        try {
-          const res = await searchObrasSociales(q, excludeId);
-          setResults(
-            res.filter((r) => !selected.some((s) => s.id === r.id))
-          );
-        } catch {
-          /* silent */
-        } finally {
-          setSearching(false);
-        }
-      }, 300);
-    },
-    [excludeId, selected]
-  );
-
-  useEffect(() => {
-    search(query);
-  }, [query, search]);
-
-  const add = (ref: ObraSocialRef) => {
-    onChange([...selected, ref]);
-    setQuery("");
-    setResults([]);
-  };
-
-  const remove = (id: number) => onChange(selected.filter((r) => r.id !== id));
-
-  return (
-    <div className={s.asociadasWrap}>
-      {selected.length > 0 && (
-        <ul className={s.tagList} aria-label="Obras sociales asociadas seleccionadas">
-          {selected.map((ref) => (
-            <li key={ref.id} className={s.tag}>
-              <span>{ref.denominacion}</span>
-              <button
-                type="button"
-                className={s.tagRemove}
-                onClick={() => remove(ref.id)}
-                aria-label={`Quitar ${ref.nombre}`}
-              >
-                <X size={12} />
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <div className={s.searchWrapInline}>
-        <Search size={14} className={s.searchIcon} aria-hidden="true" />
-        <input
-          type="search"
-          className={s.searchInput}
-          placeholder="Buscar obra social para asociar…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          aria-label="Buscar obra social para asociar"
-          autoComplete="off"
-        />
-      </div>
-
-      {(searching || results.length > 0) && (
-        <ul className={s.searchDropdown} role="listbox" aria-label="Resultados">
-          {searching && (
-            <li className={s.searchDropdownItem} aria-disabled="true">
-              Buscando…
-            </li>
-          )}
-          {!searching &&
-            results.map((ref) => (
-              <li key={ref.id} className={s.searchDropdownItem}>
-                <button
-                  type="button"
-                  onClick={() => add(ref)}
-                  className={s.searchDropdownBtn}
-                  role="option"
-                >
-                  <Plus size={13} />
-                  <span>{ref.denominacion}</span>
-                </button>
-              </li>
-            ))}
-          {!searching && results.length === 0 && query.trim() && (
-            <li className={s.searchDropdownItem} aria-disabled="true">
-              Sin resultados.
-            </li>
-          )}
-        </ul>
-      )}
     </div>
   );
 }
@@ -647,7 +530,6 @@ function OtrosDocList({ obraId, existingDocs, onReload, onQueueChange }: OtrosDo
 
 export default function ObrasSocialesForm() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const notify = useNotify();
   const { id } = useParams<{ id: string }>();
   const isEdit = Boolean(id);
@@ -662,15 +544,11 @@ export default function ObrasSocialesForm() {
   const [serverError, setServerError] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<number | undefined>(obraId);
 
-  // Relacionadas
+  // Obra social cabecera: solo si la que se crea es una derivada. `principalRef` guarda la
+  // que ya tenía al editar (puede estar de baja y no figurar en el listado).
   const [principalRef, setPrincipalRef] = useState<ObraSocialRef | null>(null);
-  const [principalQuery, setPrincipalQuery] = useState("");
-  const [principalResults, setPrincipalResults] = useState<ObraSocialRef[]>([]);
-  const [searchingPrincipal, setSearchingPrincipal] = useState(false);
-  const principalDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const [asociadasRefs, setAsociadasRefs] = useState<ObraSocialRef[]>([]);
-  const [originalAsociadasRefs, setOriginalAsociadasRefs] = useState<ObraSocialRef[]>([]);
+  const osQuery = useObrasSociales();
+  const queryClient = useQueryClient();
 
   // Documentos
   const [documentos, setDocumentos] = useState<Documento[]>([]);
@@ -718,17 +596,15 @@ export default function ObrasSocialesForm() {
           obra_social_principal_id: data.obra_social_principal
             ? String(data.obra_social_principal.id)
             : "",
-          asociadas_ids: data.asociadas?.map((a) => a.id) ?? [],
-          marca: data.marca === "S" ? "S" : "N",
+          replicar_galenos: false,
+          replicar_nomencladores: false,
+          replicar_valores: false,
           dia_corte: String(data.dia_corte ?? 20),
         });
 
         if (data.obra_social_principal) {
           setPrincipalRef(data.obra_social_principal);
         }
-        const loadedAsociadas = data.asociadas ?? [];
-        setAsociadasRefs(loadedAsociadas);
-        setOriginalAsociadasRefs(loadedAsociadas);
         setDocumentos(data.documentos ?? []);
       } catch {
         setServerError("No se pudo cargar la obra social.");
@@ -738,30 +614,45 @@ export default function ObrasSocialesForm() {
     })();
   }, [isEdit, obraId, reloadDocsTrigger]);
 
-  // ── Principal search ─────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (principalDebounce.current) clearTimeout(principalDebounce.current);
-    if (!principalQuery.trim()) {
-      setPrincipalResults([]);
-      return;
-    }
-    principalDebounce.current = setTimeout(async () => {
-      setSearchingPrincipal(true);
-      try {
-        const res = await searchObrasSociales(principalQuery, obraId);
-        setPrincipalResults(res);
-      } catch {
-        /* silent */
-      } finally {
-        setSearchingPrincipal(false);
-      }
-    }, 300);
-  }, [principalQuery, obraId]);
-
   // ── Field helpers ────────────────────────────────────────────────────────────
-  const set = (field: keyof ObraSocialFormData, value: string | number[]) => {
+  const set = (field: keyof ObraSocialFormData, value: string | boolean) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
+  };
+
+  // ── Obra social cabecera ─────────────────────────────────────────────────────
+  // Solo se puede elegir una cabecera: activa y que no sea ella misma derivada de otra.
+  const cabeceraId = form.obra_social_principal_id ? Number(form.obra_social_principal_id) : null;
+  const cabeceraOptions = (() => {
+    const opts = (osQuery.data ?? [])
+      .filter((o) => o.activo && !o.obra_social_principal_id && o.id !== obraId)
+      .map((o) => ({ id: o.id, label: o.denominacion }));
+    if (principalRef && !opts.some((o) => o.id === principalRef.id)) {
+      opts.unshift({ id: principalRef.id, label: principalRef.denominacion });
+    }
+    return opts;
+  })();
+  const cabeceraElegida = cabeceraOptions.find((o) => o.id === cabeceraId) ?? null;
+
+  const elegirCabecera = (val: string | number | null) => {
+    setForm((prev) => ({
+      ...prev,
+      obra_social_principal_id: val == null ? "" : String(val),
+      // Sin cabecera no hay nada que replicar.
+      ...(val == null
+        ? { replicar_galenos: false, replicar_nomencladores: false, replicar_valores: false }
+        : {}),
+    }));
+  };
+
+  // Los valores se apoyan en los galenos y en los códigos: al tildarlos se tildan los otros dos.
+  const tildarReplica = (campo: "galenos" | "nomencladores" | "valores", on: boolean) => {
+    setForm((prev) => ({
+      ...prev,
+      ...(campo === "valores" && on
+        ? { replicar_galenos: true, replicar_nomencladores: true, replicar_valores: true }
+        : { [`replicar_${campo}`]: on }),
+    }));
   };
 
   // ── Documentos pendientes ───────────────────────────────────────────────────
@@ -803,41 +694,6 @@ export default function ObrasSocialesForm() {
     }
   };
 
-  // ── Vínculos con asociadas ───────────────────────────────────────────────────
-  // Antes esto era un `Promise.allSettled` sin mirar el resultado: si el PATCH de una asociada fallaba.
-  const vincularAsociadas = async (
-    destinoId: number,
-    toAdd: ObraSocialRef[],
-    toRemove: ObraSocialRef[]
-  ) => {
-    const tareas: Array<{ nombre: string; run: () => Promise<unknown> }> = [
-      ...toAdd.map((r) => ({
-        nombre: r.denominacion,
-        run: () => setObraSocialPrincipal(r.id, destinoId),
-      })),
-      ...toRemove.map((r) => ({
-        nombre: r.denominacion,
-        run: () => setObraSocialPrincipal(r.id, null),
-      })),
-    ];
-    if (!tareas.length) return;
-
-    const resultados = await Promise.allSettled(tareas.map((t) => t.run()));
-    const fallaron = tareas
-      .filter((_, i) => resultados[i].status === "rejected")
-      .map((t) => t.nombre);
-
-    if (fallaron.length) {
-      notify.error(
-        fallaron.length === 1
-          ? "No se pudo vincular una obra social asociada"
-          : `No se pudieron vincular ${fallaron.length} obras sociales asociadas`,
-        fallaron.join(", "),
-        { duration: 8000 }
-      );
-    }
-  };
-
   // ── Submit ───────────────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -855,36 +711,30 @@ export default function ObrasSocialesForm() {
     setServerError(null);
     try {
       const payload = { ...form };
-      payload.obra_social_principal_id = principalRef
-        ? String(principalRef.id)
-        : "";
-
-      // Compute asociadas diff to PATCH each child individually
-      const originalIds = new Set(originalAsociadasRefs.map((r) => r.id));
-      const currentIds = new Set(asociadasRefs.map((r) => r.id));
-      const toAdd = asociadasRefs.filter((r) => !originalIds.has(r.id));
-      const toRemove = originalAsociadasRefs.filter((r) => !currentIds.has(r.id));
 
       if (isEdit && obraId) {
         await updateObraSocial(obraId, payload);
-        await vincularAsociadas(obraId, toAdd, toRemove);
         await subirPendientes(obraId);
         navigate(`/panel/convenios/obras-sociales/${obraId}`);
       } else {
         setCreando(true);
         const created = await createObraSocial(payload);
         setSavedId(created.id);
-        // Las asociadas son secundarias al alta: si una falla, la obra social ya existe igual y se resuelve editando.
-        await vincularAsociadas(created.id, toAdd, []);
         await subirPendientes(created.id);
-        navigate(`/panel/convenios/obras-sociales/${created.id}`);
+        // Si se replicó de la cabecera, el detalle muestra qué se copió y qué no.
+        navigate(`/panel/convenios/obras-sociales/${created.id}`, {
+          state: created.replicacion ? { replicacion: created.replicacion } : undefined,
+        });
       }
-    } catch {
+    } catch (err) {
       setServerError(
-        "Ocurrió un error al guardar. Verificá los datos e intentá nuevamente."
+        mensajeDeError(
+          err,
+          "Ocurrió un error al guardar. Verificá los datos e intentá nuevamente."
+        )
       );
     } finally {
-      // En el `finally` porque un alta puede fallar a mitad de camino (las asociadas, los adjuntos) con la obra social ya creada.
+      // En el `finally` porque un alta puede fallar a mitad de camino (los adjuntos) con la obra social ya creada.
       queryClient.removeQueries({ queryKey: [...OBRAS_SOCIALES_KEY, "detalle"] });
       void queryClient.invalidateQueries({ queryKey: OBRAS_SOCIALES_KEY });
       setSaving(false);
@@ -1023,68 +873,10 @@ export default function ObrasSocialesForm() {
           </div>
         </section>
 
-        {/* ── Sección 1B: Operación ── Sin esto, una obra social nueva quedaba MARCA="N" por el default del backend y no aparecía en ningún selector… */}
-        <section className={s.section}>
-          <h2 className={s.sectionTitle}>
-            <span className={s.paso} aria-hidden="true">2</span>
-            Operación
-          </h2>
-
-          <div className={s.field} id="field-marca">
-            <span className={s.label}>Habilitada en el padrón</span>
-            <div className={s.radioGroup}>
-              <label className={s.radioLabel}>
-                <input
-                  type="radio"
-                  name="marca"
-                  value="S"
-                  checked={form.marca === "S"}
-                  onChange={() => set("marca", "S")}
-                  className={s.radioInput}
-                />
-                Sí
-              </label>
-              <label className={s.radioLabel}>
-                <input
-                  type="radio"
-                  name="marca"
-                  value="N"
-                  checked={form.marca === "N"}
-                  onChange={() => set("marca", "N")}
-                  className={s.radioInput}
-                />
-                No
-              </label>
-            </div>
-            <span className={s.hint}>
-              Con «No» no figura en padrones.
-            </span>
-          </div>
-
-          <div className={`${s.field} ${s.fieldNarrow}`} id="field-dia_corte">
-            <label className={s.label} htmlFor="dia_corte">
-              Día de corte del período
-            </label>
-            <input
-              id="dia_corte"
-              type="number"
-              min={1}
-              max={28}
-              className={`${s.input} ${errors.dia_corte ? s.inputError : ""}`}
-              value={form.dia_corte}
-              onChange={(e) => set("dia_corte", e.target.value)}
-            />
-            <FieldError msg={errors.dia_corte} />
-            <span className={s.hint}>
-              1 = mes completo · 20 = del 20 al 20.
-            </span>
-          </div>
-        </section>
-
         {/* ── Sección 2: Dirección de facturación ── */}
         <section className={s.section}>
           <h2 className={s.sectionTitle}>
-            <span className={s.paso} aria-hidden="true">3</span>
+            <span className={s.paso} aria-hidden="true">2</span>
             Envío de facturas
           </h2>
 
@@ -1228,7 +1020,7 @@ export default function ObrasSocialesForm() {
         {/* ── Sección 3: Facturación y contacto ── */}
         <section className={s.section}>
           <h2 className={s.sectionTitle}>
-            <span className={s.paso} aria-hidden="true">4</span>
+            <span className={s.paso} aria-hidden="true">3</span>
             Facturación y contacto
           </h2>
           <div className={s.grid2}>
@@ -1315,120 +1107,107 @@ export default function ObrasSocialesForm() {
                 error={errors.telefonos}
               />
             </div>
+
+            {/* Día de corte del período */}
+            <div className={`${s.field} ${s.fieldNarrow}`} id="field-dia_corte">
+              <label className={s.label} htmlFor="dia_corte">
+                Día de corte del período
+              </label>
+              <input
+                id="dia_corte"
+                type="number"
+                min={1}
+                max={28}
+                className={`${s.input} ${errors.dia_corte ? s.inputError : ""}`}
+                value={form.dia_corte}
+                onChange={(e) => set("dia_corte", e.target.value)}
+              />
+              <FieldError msg={errors.dia_corte} />
+              <span className={s.hint}>
+                1 = mes completo (del 1 al último día). 20 = del 20 al 20 del mes siguiente.
+              </span>
+            </div>
           </div>
         </section>
 
         {/* ── Sección 4: Relaciones ── */}
         <section className={s.section}>
           <h2 className={s.sectionTitle}>
-            <span className={s.paso} aria-hidden="true">5</span>
+            <span className={s.paso} aria-hidden="true">4</span>
             Relaciones
           </h2>
-          <div className={s.grid2}>
-            {/* Obra social principal */}
-            <div className={s.field}>
-              <label className={s.label}>Obra Social Principal</label>
-              {principalRef ? (
-                <div className={s.principalSelected}>
-                  <span className={s.tag}>
-                    {principalRef.denominacion}
-                    <button
-                      type="button"
-                      className={s.tagRemove}
-                      onClick={() => {
-                        setPrincipalRef(null);
-                        setForm((f) => ({
-                          ...f,
-                          obra_social_principal_id: "",
-                        }));
-                      }}
-                      aria-label="Quitar obra social principal"
-                    >
-                      <X size={12} />
-                    </button>
-                  </span>
-                </div>
-              ) : (
-                <div className={s.searchWrapInline}>
-                  <Search
-                    size={14}
-                    className={s.searchIcon}
-                    aria-hidden="true"
-                  />
-                  <input
-                    type="search"
-                    className={s.searchInput}
-                    placeholder="Buscar obra social principal…"
-                    value={principalQuery}
-                    onChange={(e) => setPrincipalQuery(e.target.value)}
-                    autoComplete="off"
-                  />
-                </div>
-              )}
 
-              {!principalRef &&
-                (searchingPrincipal || principalResults.length > 0) && (
-                  <ul className={s.searchDropdown} role="listbox">
-                    {searchingPrincipal && (
-                      <li className={s.searchDropdownItem}>Buscando…</li>
-                    )}
-                    {!searchingPrincipal &&
-                      principalResults.map((ref) => (
-                        <li key={ref.id} className={s.searchDropdownItem}>
-                          <button
-                            type="button"
-                            className={s.searchDropdownBtn}
-                            onClick={() => {
-                              setPrincipalRef(ref);
-                              setForm((f) => ({
-                                ...f,
-                                obra_social_principal_id: String(ref.id),
-                              }));
-                              setPrincipalQuery("");
-                              setPrincipalResults([]);
-                            }}
-                          >
-                            <Plus size={13} />
-                            {ref.denominacion}
-                          </button>
-                        </li>
-                      ))}
-                    {!searchingPrincipal &&
-                      principalResults.length === 0 &&
-                      principalQuery.trim() && (
-                        <li className={s.searchDropdownItem}>
-                          Sin resultados.
-                        </li>
-                      )}
-                  </ul>
-                )}
-            </div>
-
-            {/* Obras sociales asociadas */}
-            <div className={s.field}>
-              <label className={s.label}>Obras Sociales Asociadas</label>
-              <AsociadasSelector
-                selected={asociadasRefs}
-                onChange={(refs) => {
-                  setAsociadasRefs(refs);
-                  setForm((f) => ({
-                    ...f,
-                    asociadas_ids: refs.map((r) => r.id),
-                  }));
-                }}
-                excludeId={obraId}
-              />
-              <span className={s.hint}>
-                Deja de figurar en padrones: se lista sólo la principal.
-              </span>
-            </div>
+          <div className={s.callout} role="note">
+            <Info size={18} className={s.calloutIcon} aria-hidden="true" />
+            <p>
+              <strong>Opcional.</strong> Elegí la cabecera solo si esta obra social es una derivada.
+            </p>
           </div>
+
+          <div className={`${s.field} ${s.fieldWide}`} id="field-obra_social_principal_id">
+            <label className={s.label}>Obra Social Cabecera</label>
+            <AppSearchSelect
+              options={cabeceraOptions}
+              value={cabeceraId}
+              loading={osQuery.isLoading}
+              disabled={osQuery.isLoading}
+              onChange={elegirCabecera}
+              initialInputValue={principalRef?.denominacion}
+            />
+            <span className={s.hint}>Se agrupa con su cabecera en el padrón de médicos.</span>
+          </div>
+
+          {/* Replicar de la cabecera: solo en el alta */}
+          {!isEdit && cabeceraElegida && (
+            <fieldset className={s.replicar}>
+              <legend className={s.replicarTitulo}>
+                Replicar desde {cabeceraElegida.label}
+              </legend>
+              <p className={s.hint}>Opcional. Se copia solo lo vigente, sin historial.</p>
+
+              <label className={s.replicarItem}>
+                <input
+                  type="checkbox"
+                  checked={form.replicar_galenos}
+                  onChange={(e) => tildarReplica("galenos", e.target.checked)}
+                />
+                <span>
+                  <strong>Galenos</strong>
+                  <small>Con sus precios, niveles y unidades.</small>
+                </span>
+              </label>
+
+              <label className={s.replicarItem}>
+                <input
+                  type="checkbox"
+                  checked={form.replicar_nomencladores}
+                  onChange={(e) => tildarReplica("nomencladores", e.target.checked)}
+                />
+                <span>
+                  <strong>Nomencladores</strong>
+                  <small>Códigos dados de alta (sin precio) y nomencladores nivelados. Los nivelados necesitan los galenos.</small>
+                </span>
+              </label>
+
+              <label className={s.replicarItem}>
+                <input
+                  type="checkbox"
+                  checked={form.replicar_valores}
+                  onChange={(e) => tildarReplica("valores", e.target.checked)}
+                />
+                <span>
+                  <strong>Valores</strong>
+                  <small>Precios vigentes. Marca también galenos y nomencladores, de los que dependen.</small>
+                </span>
+              </label>
+            </fieldset>
+          )}
         </section>
 
         {/* ── Sección 5: Documentos ── */}
         <section className={s.section}>
           <h2 className={s.sectionTitle}>
-            <span className={s.paso} aria-hidden="true">6</span>
+            <span className={s.paso} aria-hidden="true">5</span>
             Documentos
           </h2>
           <div className={s.docGrid}>
@@ -1503,10 +1282,11 @@ export default function ObrasSocialesForm() {
       >
         <div className={s.creandoBox} role="status" aria-live="polite">
           <span className={s.creandoSpinner} aria-hidden="true" />
-          <p className={s.creandoTitulo}>Creando obra social y su nomenclador</p>
+          <p className={s.creandoTitulo}>Creando la obra social</p>
           <p className={s.creandoTexto}>
-            Se están generando los galenos y los valores del Nomenclador Nacional. Puede
-            tardar unos segundos; no cierres esta ventana.
+            {form.replicar_galenos || form.replicar_nomencladores || form.replicar_valores
+              ? "Se están copiando de la cabecera lo que marcaste y generando el nomenclador NN. Puede tardar varios minutos si copiás valores; no cierres esta ventana."
+              : "Se están generando los galenos y los valores del Nomenclador Nacional. Puede tardar unos segundos; no cierres esta ventana."}
           </p>
         </div>
       </Modal>

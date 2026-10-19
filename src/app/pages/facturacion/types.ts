@@ -41,6 +41,8 @@ export type ClinicaOption = {
 /** Un afiliado puede tener sólo nombre o sólo número (al menos uno). */
 export interface AfiliadoRead {
   id: number; dni: string | null; nombre: string | null; usuario?: string; created_at?: string;
+  /** Sólo al editarlo: cuántas prestaciones de facturas abiertas se corrigieron con él. */
+  prestaciones_actualizadas?: number;
 }
 
 export interface PrestacionItem {
@@ -130,6 +132,9 @@ export interface PrecioResponse {
   /** De dónde sale el precio (etiqueta del cotizador): variante NN o NE y cómo se calculan los honorarios . */
   origen?: "NN" | "NE" | string | null;
   tipo_valor?: "fijo" | "calculable" | null;
+  /** `tipo` que da la categoría del código en la O.S., sin el que fuerza la clínica.
+   *  Con 'Honorarios individuales' o 'Sanatorio' siempre se ofrecen ayudantes. */
+  tipo_codigo?: Tipo | null;
   galeno_nombre?: string | null;
   galeno_nivel?: number | null;
 }
@@ -310,7 +315,11 @@ export interface FacturaRead {
   creado_por?: string | null;
   creado_en?: string | null;
   creado_por_nombre?: string | null;
-  /** true si al menos una fila de detalle_facturacion de esta OS+período (cualquier versión) está publicada — visibilidad hacia el médico. */
+  /** Nombre de la obra social (lo resuelve el backend en la lista). */
+  nombre_obra_social?: string | null;
+  /** true si al menos una fila de detalle_facturacion de esta OS+período (cualquier
+   *  versión) está publicada — visibilidad hacia el médico. Se actualiza en bloque
+   *  con `publicarPeriodo`, único camino de la app para tocar este flag. */
   publicado: boolean;
 }
 
@@ -423,6 +432,19 @@ export interface FacturaDetalleResponse {
   cod_obra: string;
   estado: string | null;
   estado_doctor: string | null;
+  // Datos de la cabecera para el encabezado del listado.
+  es_complemento?: boolean;
+  nombre_obra_social?: string | null;
+  numeros_factura?: string[];
+  fecha_cierre?: string | null;
+  fecha_envio?: string | null;
+  fecha_recepcion?: string | null;
+  cerrada_por?: string | null;
+  creada_por?: string | null;
+  creada_en?: string | null;
+  documento_url?: string | null;
+  afip?: string | null;
+  otras_versiones?: { id_factura: number; version: number }[];
   total_prestaciones: number;
   total_importe: Money;
   prestadores: PrestadorFacturaGrupo[];

@@ -7,8 +7,8 @@ import ConfirmModal from "@/app/components/ui/ConfirmModal/ConfirmModal";
 import Franja from "@/app/components/layout/Franja/Franja";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
 import { listObrasSociales, deleteObraSocial } from "../obrasSociales.api";
-import type { ObraSocialListItem } from "../obrasSociales.types";
 import { OBRAS_SOCIALES_KEY } from "../useObrasSociales";
+import type { ObraSocialListItem } from "../obrasSociales.types";
 import ExportPanel from "../export/ExportPanel";
 // `new Date("2025-05-30")` se parsea como UTC y mostraba el día anterior en Argentina.
 import { formatFecha } from "@/app/shared/lib/fechas";
@@ -267,7 +267,7 @@ export default function ObrasSocialesListado() {
       <ConfirmModal
         isOpen={confirmDeleteId !== null}
         title="¿Eliminar obra social?"
-        message="No se puede deshacer: se borra con todos sus datos."
+        message="Deja de aparecer en listados y selectores y no se le pueden cargar prestaciones nuevas. No se borra ningún dato."
         confirmLabel={deletingId !== null ? "Eliminando…" : "Sí, eliminar"}
         variant="danger"
         onConfirm={() => confirmDeleteId !== null && void handleDelete(confirmDeleteId)}

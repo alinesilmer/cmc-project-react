@@ -195,6 +195,12 @@
   font-variant-numeric: tabular-nums;
 }
 
+.osNombre {
+  margin-left: 8px;
+  color: $gray-600;
+  font-size: 0.82rem;
+}
+
 .totalCell {
   font-weight: 700;
   color: $tono-verde-550;

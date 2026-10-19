@@ -1,0 +1,101 @@
+@use "@/app/styles/all.scss" as *;
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-5;
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+}
+
+.spinner {
+  flex: none;
+  color: $primary-blue;
+  animation: girar 0.9s linear infinite;
+}
+
+.titulo {
+  margin: 0;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+}
+
+.subtitulo {
+  margin: 2px 0 0;
+  font-size: $font-size-sm;
+  color: $gray-600;
+}
+
+.avance {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+.texto {
+  display: flex;
+  justify-content: space-between;
+  gap: $spacing-3;
+  font-size: $font-size-sm;
+  color: $gray-700;
+  font-variant-numeric: tabular-nums;
+}
+
+.pista {
+  height: 0.6rem;
+  overflow: hidden;
+  background: $gray-200;
+  border-radius: 999px;
+}
+
+.relleno {
+  height: 100%;
+  background: $primary-blue;
+  border-radius: 999px;
+  transition: width 0.25s ease;
+
+  // Sin porcentaje: un tramo que va y viene, para que se note que algo pasa.
+  &.indeterminada {
+    width: 40%;
+    animation: ir-y-venir 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ir-y-venir {
+  0% {
+    margin-left: 0;
+  }
+  50% {
+    margin-left: 60%;
+  }
+  100% {
+    margin-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 3s;
+  }
+
+  .relleno {
+    transition: none;
+
+    &.indeterminada {
+      animation: none;
+      width: 100%;
+      opacity: 0.5;
+    }
+  }
+}

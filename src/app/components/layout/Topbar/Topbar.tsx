@@ -70,6 +70,8 @@ export default function Topbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<Record<string, boolean>>({});
   const headerRef = useRef<HTMLElement>(null);
+  const menubarRef = useRef<HTMLElement>(null);
+  const medidorRef = useRef<HTMLDivElement>(null);
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const userName = user?.nombre?.trim() ?? "";

@@ -29,6 +29,8 @@ export type NomencladorListParams = {
   /** Con `q`: busca también en la descripción del catálogo. */
   en_descripcion?: boolean;
   categoria?: string;
+  /** Consulta / Practica / Honorarios individuales; sin categoría cuenta como Practica. */
+  tipo?: TipoCodigo;
   complejidad?: string;
   /** Solo cambia algo para el rol médico (acota a sus códigos habilitados en esa OS). */
   obra_social_nro?: number;
@@ -183,7 +185,8 @@ type PropagarEspecialidadesItem = {
   motivo: string | null;
   agrega: number[];
   quita: number[];
-  conserva_por_precio: number[];
+  /** Subconjunto de `quita` con precio NE activo: el precio se da de baja con la especialidad. */
+  quita_con_precio: number[];
 };
 export type PropagarEspecialidadesResult = {
   dry_run: boolean;
@@ -279,6 +282,8 @@ export type GalenoOut = {
   activo: boolean;
   /** Solo para el boletín del médico: `false` lo oculta en /panel/boletin-valores. */
   visible: boolean;
+  /** `true`: la obra social pactó un precio fijo por nivel (1 unidad × el precio del nivel). */
+  precio_por_nivel: boolean;
   observacion: string | null;
   created_at: string;
 };
@@ -330,6 +335,10 @@ export type AltaNECeroResult = {
 export type ComponentesNNSugeridos = {
   disponible: boolean;
   motivo: string | null;
+  /** Sólo "por nomenclador": nivel del código, nomenclador y modo del galeno. */
+  nivel?: number | null;
+  nomenclador_nivelado_id?: number | null;
+  precio_por_nivel?: boolean | null;
   componentes: {
     concepto: "Honorarios" | "Ayudante" | "Gastos";
     galeno_id: number;
@@ -388,6 +397,27 @@ export type GalenoActualizarPrecioPayload = {
 export type GalenoActualizarPrecioMasivoPayload =
   | { obra_social_nro: number; codigo: string; vigencia_desde: string; porcentaje: number }
   | { obra_social_nro: number; codigo: string; vigencia_desde: string; items: { nivel: number; nuevo_valor_unitario: number }[] };
+
+/** POST /api/galenos/actualizar_precios_lote — todo o nada. */
+export type GalenosPrecioLotePayload = {
+  obra_social_nro: number;
+  vigencia_desde: string;
+  /** Un valor unitario por código, para todos sus niveles vigentes. */
+  items: { codigo: string; nuevo_valor_unitario: number }[];
+};
+
+export type GalenosPrecioLoteResult = {
+  galenos: number;
+  /** Galenos x niveles rotados. */
+  filas: number;
+  valores_recalculados: number;
+};
+
+/** Cuerpo del 422 cuando algún galeno no se puede actualizar (no se aplicó nada). */
+export type GalenosPrecioLoteError = {
+  detail: string;
+  errores?: { codigo: string; nombre: string; motivo: string }[];
+};
 
 export type ActualizacionMasivaResult = {
   actualizados: number;
@@ -489,12 +519,17 @@ export type ValorOut = {
   origen: Origen;
   nivel: number | null;
   complejidad: string | null;
+  /** La que vale en esta OS: la del valor > la del alta en la OS > la del catálogo. */
+  categoria_efectiva?: string | null;
   especialidad_id_colegio: number | null;
   por_presupuesto: boolean;
   /** Máximo de ayudantes admitidos para este código+OS. */
   cantidad_ayudantes: number | null;
   /** Importe que el afiliado paga de su bolsillo; se descuenta del total a facturar. */
   coseguro: string;
+  /** Nomenclador con el que se factura (`null` = valor fijo o manual) y su nombre. */
+  nomenclador_nivelado_id?: number | null;
+  nomenclador_nivelado?: string | null;
   /** Dato del PAR (obra_social_nro, código), no de esta variante puntual: el código lo puede facturar cualquier especialidad en esta OS. */
   sin_restriccion_especialidad: boolean;
   /** Especialidades habilitadas HOY para (obra_social_nro, código) — también dato del par, igual en todas las variantes activas. */
@@ -532,6 +567,8 @@ export type ValorCreatePayload = {
   por_presupuesto?: boolean;
   cantidad_ayudantes?: number | null;
   coseguro?: number;
+  /** Nomenclador con el que se factura; los componentes vienen de `getComponentesNomenclador`. */
+  nomenclador_nivelado_id?: number | null;
   vigencia_desde: string;
   observacion?: string | null;
   componentes: ComponentePayload[];
@@ -550,6 +587,7 @@ export type ValorCreateMultiPayload = {
   por_presupuesto?: boolean;
   cantidad_ayudantes?: number | null;
   coseguro?: number;
+  nomenclador_nivelado_id?: number | null;
   vigencia_desde: string;
   observacion?: string | null;
   componentes: ComponentePayload[];
@@ -567,6 +605,10 @@ export type ValorActualizarPayload = {
   por_presupuesto?: boolean;
   /** Propaga la misma vigencia+componentes a las demás variantes NE del par (OS + código), cada una conservando su propia especialidad. */
   aplicar_a_variantes?: boolean;
+  /** Cómo se factura el valor nuevo. Sin `definir_nomenclador` se conserva el del valor que
+   * se cierra; con él, `nomenclador_nivelado_id` lo fija (`null` = valor fijo o manual). */
+  definir_nomenclador?: boolean;
+  nomenclador_nivelado_id?: number | null;
 };
 
 /** Edición del "núcleo" de un código en una obra social: vale PARA TODAS sus especialidades. */
@@ -718,6 +760,47 @@ export type ValorDocumentoOut = {
   subido_por_nombre: string | null;
 };
 
+/** Filtro por tipo de código. Sanatorio no se ofrece (decisión usuario 2026-10-08). */
+export type TipoCodigo = "Consulta" | "Practica" | "Honorarios individuales";
+
+/** Una versión del precio de una variante, del historial de la OS. */
+export type HistorialVersionOut = {
+  vigencia_desde: string;
+  vigencia_hasta: string | null;
+  honorarios: string;
+  ayudante: string;
+  gastos: string;
+  total: string;
+  /** Contra la versión anterior de la misma variante; `null` en la primera. */
+  variacion_pct: number | null;
+  motivo_cambio: string;
+};
+
+export type HistorialVarianteOut = {
+  origen: Origen;
+  especialidad_id_colegio: number | null;
+  especialidad: string | null;
+  /** De la más nueva a la más vieja. */
+  versiones: HistorialVersionOut[];
+};
+
+export type HistorialCodigoOut = {
+  nomenclador_id: number;
+  codigo: string;
+  descripcion: string;
+  categoria: string | null;
+  /** NN primero, después NE (base y por especialidad). */
+  variantes: HistorialVarianteOut[];
+};
+
+export type HistorialPorCodigoOut = {
+  obra_social_nro: number;
+  total: number;
+  page: number;
+  size: number;
+  items: HistorialCodigoOut[];
+};
+
 /** Una vigencia ya agregada: cuántos códigos y cuánto varió el promedio. */
 export type ResumenVigenciaOut = {
   /** `YYYY-MM-DD`. */
@@ -780,6 +863,7 @@ type ReplicaAltaPayload = {
   por_presupuesto: boolean;
   cantidad_ayudantes?: number | null;
   coseguro: number;
+  nomenclador_nivelado_id?: number | null;
   vigencia_desde: string;
   observacion?: string | null;
   componentes: ComponentePayload[];
@@ -829,7 +913,12 @@ export type NomencladorNiveladoOut = {
   galeno_grupo: string;
   galeno_codigo: string | null;
   galeno_nombre: string | null;
+  galeno_gastos_codigo: string | null;
+  /** `nacional`: el Nomenclador Nacional (sin escala por nivel; no se aplica a una OS). */
+  tipo: "nivelado" | "nacional";
   niveles: number;
+  /** ID_COLEGIO_ESPE a las que se aplica el nomenclador; vacío = todas las del código. */
+  especialidades: number[];
   total_codigos: number;
   /** nivel → cantidad de códigos (las claves llegan como texto en el JSON). */
   por_nivel: Record<string, number>;
@@ -862,7 +951,8 @@ export type NiveladoCodigoIn = {
 };
 
 export type EstadoAplicarNivelado =
-  | "crear" | "creado" | "reemplazar" | "reemplazado" | "sin_quien_factura" | "suspendido" | "omitido";
+  | "crear" | "creado" | "reemplazar" | "reemplazado" | "sin_quien_factura" | "fuera_de_especialidad"
+  | "suspendido" | "omitido";
 
 type AplicarNiveladoFila = {
   nomenclador_id: number;
@@ -878,11 +968,108 @@ type AplicarNiveladoFila = {
   vigencias_borradas: number;
 };
 
+/** Unidades de un nivel PARA ESTA obra social (pisan la escala del nomenclador). */
+export type AplicarNiveladoAjuste = {
+  nivel: number;
+  unidades_honorarios?: number | null;
+  unidades_ayudante?: number | null;
+};
+
+/** Cómo se crea el galeno de la OS si no lo tiene o cambia de nomenclador (7 ↔ 10 niveles). */
+export type AplicarNiveladoGaleno = {
+  /** `false`: calculado (unidades × `valor_unitario`). `true`: precio fijo por nivel. */
+  precio_por_nivel: boolean;
+  valor_unitario?: number | null;
+  precios_por_nivel?: Record<number, number> | null;
+  ajustes?: AplicarNiveladoAjuste[];
+};
+
+export type AplicarNiveladoPayload = {
+  obra_social_nro: number;
+  vigencia_desde: string;
+  dry_run: boolean;
+  galeno?: AplicarNiveladoGaleno | null;
+};
+
+/** La OS usa otro nomenclador con el mismo galeno: al aplicar se eliminan sus valores y se
+ * crean los del nuevo. */
+export type AplicarNiveladoCambio = {
+  desde_slug: string;
+  desde_nombre: string;
+  niveles_desde: number;
+  valores_eliminados: number;
+  codigos_sin_reemplazo: number;
+  valores_a_crear: number;
+};
+
+export type NiveladoGalenoNivel = {
+  nivel: number;
+  valor_unitario: string;
+  unidades_honorarios: string;
+  unidades_ayudante: string;
+  ajustado: boolean;
+};
+
+export type NiveladoEstadoOsOut = {
+  obra_social_nro: number;
+  obra_social: string;
+  niveles_nomenclador: number;
+  /** ok: tiene el galeno · falta: no lo tiene · otros_niveles: lo tiene con otra cantidad de niveles. */
+  galeno_estado: "ok" | "falta" | "otros_niveles";
+  niveles_os: number | null;
+  precio_por_nivel: boolean | null;
+  niveles: NiveladoGalenoNivel[];
+  cambio: AplicarNiveladoCambio | null;
+};
+
+export type NiveladoEscalaNivel = {
+  nivel: number;
+  unidades_honorarios: string | number;
+  /** `null`: el 25 % de las de honorarios. */
+  unidades_ayudante: string | number | null;
+};
+
+export type NiveladoEscalaOut = {
+  slug: string;
+  nombre: string;
+  galeno_codigo: string | null;
+  galeno_gastos_codigo: string | null;
+  niveles: NiveladoEscalaNivel[];
+  obras_sociales: number;
+};
+
+export type RecalcularNiveladoResult = {
+  dry_run: boolean;
+  obras_sociales: number;
+  valores: number;
+  detalle: { obra_social_nro: number; valores: number; crear: number; reemplazar: number }[];
+  errores: { obra_social_nro: number; motivo: string }[];
+};
+
+export type NomencladorDeCodigoOut = {
+  id: number;
+  slug: string;
+  nombre: string;
+  tipo: "nivelado" | "nacional";
+  niveles: number;
+  nivel_del_codigo: number | null;
+  unidades_del_codigo: string | null;
+};
+
+export type GalenoResumenOut = {
+  codigo: string;
+  nomencladores: string[];
+  modo: "calculado" | "por_nivel";
+  niveles: NiveladoGalenoNivel[];
+};
+
 export type AplicarNiveladoOut = {
   dry_run: boolean;
   obra_social_nro: number;
   nomenclador: string;
   galeno_nombre: string;
+  galeno_creado: boolean;
+  cambio: AplicarNiveladoCambio | null;
   resumen: {
     total: number;
     crear: number;
@@ -890,10 +1077,131 @@ export type AplicarNiveladoOut = {
     reemplazar: number;
     vigencias_borradas: number;
     sin_quien_factura: number;
+    /** Ninguna de sus especialidades en la O.S. es del nomenclador: no se les carga precio. */
+    fuera_de_especialidad: number;
     suspendido: number;
     omitido: number;
     precios: number;
     altas: number;
   };
   filas: AplicarNiveladoFila[];
+};
+
+// ─── Importar valores fijos NE desde Excel ───────────────────────────────────
+
+export type EstadoFilaFija =
+  | "error" | "duplicado" | "sin_catalogo" | "suspendido" | "sin_alta"
+  | "sin_quien_factura" | "vigente_posterior" | "misma_vigencia" | "rotar" | "nuevo";
+
+export type AccionFija =
+  | "omitir" | "cargar" | "rotar" | "sobrescribir" | "reemplazar"
+  | "alta_y_cargar" | "reactivar_y_cargar" | "crear_y_cargar";
+
+export type ImportarFijosFilaIn = {
+  fila: number;
+  codigo: string | null;
+  descripcion: string | null;
+  /** Importes crudos de la planilla; HONORARIOS admite además "PRESUPUESTO". Vacío = 0. */
+  honorarios: string | number | null;
+  gastos: string | number | null;
+  ayudante: string | number | null;
+};
+
+export type ImportarFijosPayload = {
+  obra_social_nro: number;
+  vigencia_desde: string;
+  encabezado: (string | null)[];
+  filas: ImportarFijosFilaIn[];
+};
+
+export type DecisionFijaIn = {
+  fila: number;
+  estado_visto: EstadoFilaFija;
+  accion: AccionFija;
+  especialidades?: number[] | null;
+  sin_restriccion?: boolean | null;
+  categoria?: string | null;
+};
+
+export type ImportarFijosAplicarPayload = ImportarFijosPayload & {
+  decisiones: DecisionFijaIn[];
+  replicar_en: number[];
+};
+
+export type VarianteActualOut = {
+  especialidad_id_colegio: number | null;
+  especialidad: string | null;
+  precio_actual: string | null;
+  vigencia_desde: string | null;
+  vigencia_hasta: string | null;
+  variacion_pct: number | null;
+  posteriores: number;
+};
+
+export type ReplicaFilaOut = {
+  obra_social_nro: number;
+  estado: EstadoFilaFija;
+  accion: AccionFija | null;
+  motivo: string | null;
+};
+
+export type FilaPreviaOut = {
+  fila: number;
+  codigo: string;
+  codigo_excel: string | null;
+  descripcion_excel: string | null;
+  descripcion_os: string | null;
+  nomenclador_id: number | null;
+  categoria: string | null;
+  /** Importes que se cargan; null si la fila no se pudo interpretar (o es por presupuesto). */
+  honorarios: string | null;
+  gastos: string | null;
+  ayudante: string | null;
+  total: string | null;
+  por_presupuesto: boolean;
+  estado: EstadoFilaFija;
+  estado_base: EstadoFilaFija | null;
+  motivo: string | null;
+  acciones: AccionFija[];
+  accion_sugerida: AccionFija | null;
+  requiere_quien_factura: boolean;
+  especialidades: number[];
+  sin_restriccion: boolean;
+  variantes: VarianteActualOut[];
+  sin_cambio: boolean;
+  avisos: string[];
+  replicas: ReplicaFilaOut[];
+};
+
+export type ImportarFijosPreviewOut = {
+  obra_social_nro: number;
+  vigencia_desde: string;
+  familia: ObraSocialFamiliaItem[];
+  total: number;
+  por_estado: Partial<Record<EstadoFilaFija, number>>;
+  filas: FilaPreviaOut[];
+};
+
+export type ReplicaOSOut = {
+  obra_social_nro: number;
+  nombre: string;
+  estado: "ok" | "error";
+  motivo: string | null;
+  precios_creados: number;
+  filas_cargadas: number;
+  altas: number;
+  omitidas: { fila: number; codigo: string; motivo: string }[];
+};
+
+export type ImportarFijosAplicarOut = {
+  obra_social_nro: number;
+  vigencia_desde: string;
+  precios_creados: number;
+  filas_cargadas: number;
+  filas_rotadas: number;
+  altas: number;
+  codigos_creados: number;
+  vigencias_borradas: number;
+  omitidas: number;
+  replicas: ReplicaOSOut[];
 };

@@ -8,6 +8,8 @@ import {
   postForm,
 } from "@/app/shared/lib/http";
 import type {
+  HistorialPorCodigoOut,
+  TipoCodigo,
   NomencladorOut,
   NomencladorNiveladoOut,
   NiveladoCodigosOut,
@@ -66,9 +68,21 @@ import type {
   MesActualizaciones,
   ResumenVigenciaOut,
   ObraSocialFamiliaItem,
+  ImportarFijosPayload,
+  ImportarFijosPreviewOut,
+  ImportarFijosAplicarPayload,
+  ImportarFijosAplicarOut,
   ReplicarFamiliaResult,
   ReplicarValoresFamiliaPayload,
   ReplicarGalenoFamiliaPayload,
+  GalenosPrecioLotePayload,
+  GalenosPrecioLoteResult,
+  AplicarNiveladoPayload,
+  NiveladoEstadoOsOut,
+  NiveladoEscalaOut,
+  RecalcularNiveladoResult,
+  NomencladorDeCodigoOut,
+  GalenoResumenOut,
 } from "./nomenclador.types";
 
 // ─── Nomenclador ──────────────────────────────────────────────────────────────
@@ -188,6 +202,17 @@ export const actualizarPrecioGaleno = (
 ): Promise<GalenoOut> =>
   postJSON<GalenoOut>(`/api/galenos/${id}/actualizar_precio`, payload);
 
+/**
+ * Cambia el precio de varios galenos de una OS en una sola transacción: o se aplican todos
+ * o ninguno. Recalcula miles de valores, así que lleva el timeout largo.
+ */
+export const actualizarPreciosGalenosLote = (
+  payload: GalenosPrecioLotePayload,
+): Promise<GalenosPrecioLoteResult> =>
+  postJSON<GalenosPrecioLoteResult>("/api/galenos/actualizar_precios_lote", payload, {
+    timeout: TIMEOUT_MASIVO_MS,
+  });
+
 export const actualizarPrecioMasivoGaleno = (
   payload: GalenoActualizarPrecioMasivoPayload,
 ): Promise<ActualizacionMasivaResult> =>
@@ -240,6 +265,14 @@ export const listValores = (params: {
   vigente_a?: string;
   /** Filtra por la vigencia exacta (no "vigente a la fecha X"). */
   vigencia_desde?: string;
+  /** Contiene en el código o en la descripción. */
+  q?: string;
+  /** Por la categoría del código en la obra social (requiere `obra_social_nro`). */
+  tipo?: TipoCodigo;
+  /** true: sólo los precios por presupuesto. */
+  por_presupuesto?: boolean;
+  /** ID_COLEGIO_ESPE: códigos que la obra social tiene habilitados para esa especialidad. */
+  especialidad_habilitada?: number;
   page?: number;
   size?: number;
 }): Promise<ValorOut[]> => getJSON<ValorOut[]>("/api/valores_nm/", params);
@@ -296,6 +329,17 @@ export const getResumenPorVigencia = (
   obra_social_nro: number,
 ): Promise<ResumenVigenciaOut[]> =>
   getJSON<ResumenVigenciaOut[]>("/api/valores_nm/resumen_por_vigencia", { obra_social_nro });
+
+/** Historial de precios de una OS agrupado por código y variante (NN / NE), paginado
+ *  por código. Sale de `nm_historial_precio_codigo`. */
+export const getHistorialPorCodigo = (params: {
+  obra_social_nro: number;
+  q?: string;
+  tipo?: TipoCodigo;
+  page?: number;
+  size?: number;
+}): Promise<HistorialPorCodigoOut> =>
+  getJSON<HistorialPorCodigoOut>("/api/valores_nm/historial_por_codigo", params);
 
 // Elimina todos los valores (con componentes e historial) de una OS en una vigencia exacta.
 export const eliminarValoresPorVigencia = (
@@ -488,6 +532,7 @@ export const listCodigosPorOS = (params: {
   obra_social_nro: number;
   estado?: EstadoCodigoOS;
   q?: string;
+  tipo?: TipoCodigo;
   page?: number;
   size?: number;
 }): Promise<CodigosPorOSResult> => getJSON<CodigosPorOSResult>("/api/codigos_os/", params);
@@ -551,12 +596,75 @@ export const actualizarCodigoNivelado = (
 ): Promise<NiveladoCodigoOut> =>
   putJSON<NiveladoCodigoOut>(`/api/nomencladores_nivelados/${slug}/codigos/${nomencladorId}`, payload);
 
+/** A qué especialidades se aplica el nomenclador (vacío = todas las del código). */
+export const actualizarEspecialidadesNivelado = (
+  slug: string,
+  especialidades: number[],
+): Promise<{ especialidades: number[] }> =>
+  putJSON<{ especialidades: number[] }>(`/api/nomencladores_nivelados/${slug}/especialidades`, { especialidades });
+
 export const quitarCodigoNivelado = (slug: string, nomencladorId: number): Promise<void> =>
   delJSON<void>(`/api/nomencladores_nivelados/${slug}/codigos/${nomencladorId}`);
 
 /** Con `dry_run` sólo muestra qué haría. */
 export const aplicarNivelado = (
   slug: string,
-  payload: { obra_social_nro: number; vigencia_desde: string; dry_run: boolean },
+  payload: AplicarNiveladoPayload,
 ): Promise<AplicarNiveladoOut> =>
   postJSON<AplicarNiveladoOut>(`/api/nomencladores_nivelados/${slug}/aplicar`, payload, { timeout: 180_000 });
+
+/** Qué tiene la OS del galeno del nomenclador (falta, está bien, o de otra cantidad de niveles). */
+export const getEstadoOsNivelado = (slug: string, obra_social_nro: number): Promise<NiveladoEstadoOsOut> =>
+  getJSON<NiveladoEstadoOsOut>(`/api/nomencladores_nivelados/${slug}/estado_os`, { obra_social_nro });
+
+export const getEscalaNivelado = (slug: string): Promise<NiveladoEscalaOut> =>
+  getJSON<NiveladoEscalaOut>(`/api/nomencladores_nivelados/${slug}/escala`);
+
+export const guardarEscalaNivelado = (
+  slug: string,
+  niveles: { nivel: number; unidades_honorarios: number; unidades_ayudante: number | null }[],
+): Promise<NiveladoEscalaOut> =>
+  putJSON<NiveladoEscalaOut>(`/api/nomencladores_nivelados/${slug}/escala`, { niveles });
+
+/** Vuelve a calcular los valores del nomenclador en todas las obras sociales que lo usan. */
+export const recalcularNivelado = (
+  slug: string,
+  payload: { vigencia_desde: string; dry_run: boolean },
+): Promise<RecalcularNiveladoResult> =>
+  postJSON<RecalcularNiveladoResult>(`/api/nomencladores_nivelados/${slug}/recalcular`, payload, {
+    timeout: TIMEOUT_MASIVO_MS,
+  });
+
+/** Con qué nomencladores se puede facturar un código. */
+export const getNomencladoresDeCodigo = (nomenclador_id: number): Promise<NomencladorDeCodigoOut[]> =>
+  getJSON<NomencladorDeCodigoOut[]>("/api/nomencladores_nivelados/por_codigo", { nomenclador_id });
+
+/** Componentes de un valor que se factura por ese nomenclador (nivel, escala y galeno de la OS). */
+export const getComponentesNomenclador = (
+  obra_social_nro: number,
+  nomenclador_id: number,
+  nomenclador_slug: string,
+): Promise<ComponentesNNSugeridos> =>
+  getJSON<ComponentesNNSugeridos>("/api/valores_nm/componentes_nomenclador", {
+    obra_social_nro,
+    nomenclador_id,
+    nomenclador_slug,
+  });
+
+/** Por galeno de la OS: nomencladores que lo usan, modo de precio y niveles ajustados. */
+export const getResumenGalenos = (obra_social_nro: number): Promise<GalenoResumenOut[]> =>
+  getJSON<GalenoResumenOut[]>("/api/galenos/resumen_nomenclador", { obra_social_nro });
+
+// ─── Importar valores fijos NE desde Excel ───────────────────────────────────
+
+/** Qué pasaría con cada fila del Excel (no escribe). */
+export const previsualizarValoresFijos = (payload: ImportarFijosPayload): Promise<ImportarFijosPreviewOut> =>
+  postJSON<ImportarFijosPreviewOut>("/api/valores_nm/importar_fijos/previsualizar", payload, {
+    timeout: TIMEOUT_MASIVO_MS,
+  });
+
+/** Aplica las decisiones. 409 si los datos cambiaron desde la vista previa. */
+export const aplicarValoresFijos = (payload: ImportarFijosAplicarPayload): Promise<ImportarFijosAplicarOut> =>
+  postJSON<ImportarFijosAplicarOut>("/api/valores_nm/importar_fijos/aplicar", payload, {
+    timeout: TIMEOUT_MASIVO_MS,
+  });

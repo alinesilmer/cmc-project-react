@@ -201,7 +201,9 @@
 // Encabezado fijo: queda pegado debajo de la barra superior (64px + su borde) mientras se recorren los bloques de filas.
 .tablaEncabezado {
   position: sticky;
-  top: 4.0625rem;
+  // Debajo del topbar; con la barra compacta del expediente a la vista, el `top` lo
+  // corre `FacturaDetalle` (estilo en línea sobre esta tabla).
+  top: 65px;
   z-index: 5;
 }
 
@@ -642,4 +644,19 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   white-space: nowrap;
+}
+
+// Fila recién editada: al volver al listado titila en naranja claro unos segundos. Es un
+// atributo y no una clase: React reescribe el `className` de la fila al re-renderizar
+// (la recarga después de guardar) y se llevaba puesta la marca.
+tr[data-resaltada] td {
+  animation: parpadeoFila 0.85s ease-in-out 4;
+}
+
+@keyframes parpadeoFila {
+  50% { background-color: $tono-naranja-100; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  tr[data-resaltada] td { animation: none; background-color: $tono-naranja-100; }
 }

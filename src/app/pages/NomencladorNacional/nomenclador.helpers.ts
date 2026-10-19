@@ -35,3 +35,17 @@ export function compararGalenos(
   const d = ordenGaleno(a.codigo) - ordenGaleno(b.codigo);
   return d !== 0 ? d : (a.nombre ?? "").localeCompare(b.nombre ?? "");
 }
+
+/**
+ * Aviso (no bloquea) de qué pasa al cargar un valor de galeno con una vigencia que no es posterior
+ * a la vigente: la misma fecha corrige ese valor y una anterior borra las vigencias desde esa fecha
+ * (la que se carga queda como la última), igual que en los valores por obra social.
+ */
+export function avisoVigenciaGaleno(nueva: string, vigente: string | undefined): string | null {
+  if (!nueva || !vigente || nueva > vigente) return null;
+  const corta = (iso: string) => iso.split("-").reverse().join("/");
+  if (nueva === vigente) {
+    return `Ya existe una vigencia desde el ${corta(vigente)}: se corrige con este valor, no se crea otra.`;
+  }
+  return `Es anterior a la vigente (${corta(vigente)}): se eliminan de la base las vigencias desde el ${corta(nueva)} en adelante y esta queda como la última.`;
+}

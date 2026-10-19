@@ -14,8 +14,6 @@ import ConfirmActionModal from "../components/ConfirmActionModal";
 import styles from "./VerPeriodos.module.scss";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
-import { estadoLabel } from "@/app/pages/facturacion/utiles";
-import { fmtFecha } from "@/app/pages/facturacion/utiles";
 
 // Mismos estados que `FACTURA_ESTADOS_CERRADOS` en el backend (service.py): 'C' es el estado actual.
 const ESTADOS_CERRADOS = new Set(["C", "L", "LC"]);
@@ -34,6 +32,14 @@ const estadoBadgeClass = (estado: string | null): string => {
     case "A": return styles.estadoAbierta;
     case "C": return styles.estadoCerrada;
     default:  return styles.estadoDefault;
+  }
+};
+
+const estadoLabel = (estado: string | null): string => {
+  switch (estado) {
+    case "A": return "Abierta";
+    case "C": return "Cerrada";
+    default:  return estado || "—";
   }
 };
 
@@ -206,38 +212,38 @@ const VerPeriodos: React.FC = () => {
           <Tabla className={styles.table}>
             <thead>
               <tr>
+                <th>Nº Exp.</th>
                 <th>Obra social</th>
                 <th>Período</th>
-                <th>Operador</th>
                 <th>Estado</th>
-                <th>Fecha de cierre</th>
                 <th>Factura</th>
-                <th>Nº Exp.</th>
                 <th>Total</th>
                 <th className={styles.thActions}>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {loading && (
-                <tr><td colSpan={9} className={styles.loadingCell}>Cargando…</td></tr>
+                <tr><td colSpan={7} className={styles.loadingCell}>Cargando…</td></tr>
               )}
               {!loading && rows.length === 0 && (
-                <tr><td colSpan={9} className={styles.emptyCell}>No se encontraron facturas.</td></tr>
+                <tr><td colSpan={7} className={styles.emptyCell}>No se encontraron facturas.</td></tr>
               )}
               {!loading && rows.map((row) => (
                 <tr key={row.id_prestaciones}>
-                  <td><span className={styles.osCell}>{row.cod_obr || "—"}</span></td>
+                  <td><span className={styles.facturaNro}>{row.id_prestaciones}</span></td>
+                  <td>
+                    <span className={styles.osCell}>{row.cod_obr || "—"}</span>
+                    {row.nombre_obra_social && <span className={styles.osNombre}>{row.nombre_obra_social}</span>}
+                  </td>
                   <td>
                     <span className={styles.periodoLabel}>{row.periodo_label || row.periodo}</span>
                     {row.periodo_label && <span className={styles.periodoCode}>{row.periodo}</span>}
                   </td>
-                  <td>{row.usuario || <span className={styles.mutedText}>—</span>}</td>
                   <td>
                     <span className={`${styles.estadoBadge} ${estadoBadgeClass(row.estado)}`}>
                       {estadoLabel(row.estado)}
                     </span>
                   </td>
-                  <td>{fmtFecha(row.fecha)}</td>
                   <td>
                     {row.nro_factura ? (
                       <span className={styles.facturaCell}>
@@ -250,7 +256,6 @@ const VerPeriodos: React.FC = () => {
                       <span className={styles.mutedText}>Sin factura</span>
                     )}
                   </td>
-                  <td><span className={styles.facturaNro}>{row.id_prestaciones}</span></td>
                   <td><span className={styles.totalCell}>{formatMoney(row.importe)}</span></td>
                   <td>
                     <div className={styles.actionsCell}>

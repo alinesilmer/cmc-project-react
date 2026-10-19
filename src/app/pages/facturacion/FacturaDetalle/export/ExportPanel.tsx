@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { descargarExportDetalle, descargarExportCaratula } from "../../api";
 import { saveAs } from "@/app/shared/lib/fileSaver";
+import { mostrarPdf } from "@/app/shared/lib/abrirPdf";
 import type { FacturaDetalleResponse } from "../../types";
 import type { VistaOpciones } from "../vista/types";
 import type { ColumnaExport } from "./types";
@@ -34,20 +35,24 @@ export default function ExportPanel({ detalle, vista, onClose }: Props) {
   const [tab, setTab] = useState<"detalle" | "caratula">("detalle");
   const [columnas, setColumnas] = useState<ColumnaExport[]>(() => opcionesDesdeVista(vista).columnas);
 
-  const exportarDetalle = async (formato: "pdf" | "xlsx") => {
+  const exportarDetalle = async (formato: "pdf" | "xlsx", ventana: Window | null) => {
     try {
       const opciones = { ...opcionesDesdeVista(vista), columnas };
       const { blob, filename } = await descargarExportDetalle(detalle.id_factura, formato, opciones);
-      await saveAs(blob, filename ?? `detalle_factura_${detalle.id_factura}.${formato}`);
+      const nombre = filename ?? `detalle_factura_${detalle.id_factura}.${formato}`;
+      if (formato === "pdf") await mostrarPdf(blob, ventana, nombre);
+      else await saveAs(blob, nombre);
     } catch (err) {
       throw new Error(await extraerMensajeError(err));
     }
   };
 
-  const exportarCaratula = async (formato: "pdf" | "xlsx") => {
+  const exportarCaratula = async (formato: "pdf" | "xlsx", ventana: Window | null) => {
     try {
       const { blob, filename } = await descargarExportCaratula(detalle.id_factura, formato);
-      await saveAs(blob, filename ?? `caratula_factura_${detalle.id_factura}.${formato}`);
+      const nombre = filename ?? `caratula_factura_${detalle.id_factura}.${formato}`;
+      if (formato === "pdf") await mostrarPdf(blob, ventana, nombre);
+      else await saveAs(blob, nombre);
     } catch (err) {
       throw new Error(await extraerMensajeError(err));
     }

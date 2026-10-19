@@ -219,7 +219,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
     let active = true;
     (async () => {
       const res = await Promise.allSettled(
-        idsGrupo.map((gid) => listarPrestaciones({ grupo_equipo_id: gid, limit: 20 })),
+        idsGrupo.map((gid) => listarPrestaciones({ grupo_equipo_id: gid, estado: "A", limit: 20 })),
       );
       if (!active) return;
       const nuevos: Record<number, PrestacionRead[]> = {};
@@ -324,13 +324,27 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
   const handleMoverPeriodo = (row: PrestacionRead, direccion: "siguiente" | "anterior") =>
     setPendingAction({ type: "mover", row, direccion });
 
+  // Eliminar al médico (la cabecera) se lleva a todo su equipo; eliminar a un ayudante o al
+  // pediatra anula solo esa fila y el resto del equipo queda como estaba.
+  const esIntegrante = (row: PrestacionRead): boolean => {
+    const t = deriveTipoPrestador(row);
+    return t === "Ayudante" || t === "Pediatra";
+  };
+
   const executeEliminar = (row: PrestacionRead, onSuccess: () => void) =>
     withBusy(row.id, async () => {
       try {
-        await anularPrestacion(row.id);
-        notify("Prestación anulada.");
+        const conEquipo = !esIntegrante(row);
+        await anularPrestacion(row.id, { conEquipo });
+        notify(conEquipo && row.grupo_equipo_id != null ? "Prestación y equipo anulados." : "Prestación anulada.");
         // Sale de la tabla en el acto; el refetch de atrás reacomoda la paginación.
-        setRows((prev) => prev.filter((r) => r.id !== row.id));
+        setRows((prev) => prev.filter((r) => r.id !== row.id && !(conEquipo && row.grupo_equipo_id != null && r.grupo_equipo_id === row.grupo_equipo_id)));
+        // El equipo cambió: se descarta lo cacheado para que se vuelva a pedir.
+        if (row.grupo_equipo_id != null) {
+          const gid = row.grupo_equipo_id;
+          equiposPedidosRef.current.delete(gid);
+          setEquipos((prev) => { const next = { ...prev }; delete next[gid]; return next; });
+        }
         fetchData();
         onSuccess();
       } catch (e: any) {
@@ -375,6 +389,10 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
     }
   };
 
+  // Sin ninguna fila editable (todas de una factura cerrada) no hay nada que accionar: se saca la columna.
+  const hayAcciones = rows.some((r) => r.estado === "A");
+  const columnasTotal = hayAcciones ? 19 : 18;
+
   return (
     <div className={styles.wrap}>
       <div className={styles.header}>
@@ -416,15 +434,15 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                 <th>Valor unitario</th>
                 <th>Total</th>
                 <th>Tipo</th>
-                <th className={styles.thActions}>Acciones</th>
+                {hayAcciones && <th className={styles.thActions}>Acciones</th>}
               </tr>
             </thead>
             <tbody>
               {loading && (
-                <tr><td colSpan={19} className={styles.loadingCell}>Cargando…</td></tr>
+                <tr><td colSpan={columnasTotal} className={styles.loadingCell}>Cargando…</td></tr>
               )}
               {!loading && rows.length === 0 && (
-                <tr><td colSpan={19} className={styles.emptyCell}>Este médico no tiene prestaciones cargadas.</td></tr>
+                <tr><td colSpan={columnasTotal} className={styles.emptyCell}>Este médico no tiene prestaciones cargadas.</td></tr>
               )}
               {!loading && rows.map((row) => {
                 const editable = row.estado === "A";
@@ -517,7 +535,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                       {/* Honorarios + gastos; el ayudante cobra un único monto aparte. */}
                       {tipoPrestador === "Ayudante"
                         ? <span className={styles.mutedText}>—</span>
-                        : <span className={styles.moneyCell}>{formatMoney(parseMoney(row.honorarios) + parseMoney(row.gastos))}</span>}
+                        : <span className={styles.moneyCell}>{formatMoney(parseMoney(row.honorarios) + parseMoney(row.gastos) - parseMoney(row.coseguro))}</span>}
                     </td>
                     <td>
                       <span className={styles.subtotalCell}>{formatMoney(row.importe_total)}</span>
@@ -535,8 +553,8 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                         </span>
                       ) : <span className={styles.mutedText}>—</span>}
                     </td>
-                    <td>
-                      <div className={styles.actionsCell}>
+                    {hayAcciones && <td>
+                      {editable && <div className={styles.actionsCell}>
                         <span className={`${styles.auditCheckboxWrap} ${row.revisado ? styles.auditCheckboxOn : ""}`}>
                           <input
                             type="checkbox"
@@ -591,12 +609,12 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                         >
                           <Trash2 size={15} />
                         </button>
-                      </div>
-                    </td>
+                      </div>}
+                    </td>}
                   </tr>
                   {esEquipo && abierto && (
                     <tr className={styles.teamDetailRow}>
-                      <td colSpan={19}>
+                      <td colSpan={columnasTotal}>
                         <div className={styles.teamDetailContent}>
                           <span className={styles.teamDetailLabel}>
                             <Users size={13} /> Integrantes del equipo
@@ -652,7 +670,13 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
           message={
             <>El ID Nº <strong>{pendingAction.row.id}</strong> — ¿confirmás anular esta prestación?</>
           }
-          warning="Esta acción anula la prestación y no se puede deshacer."
+          warning={
+            esIntegrante(pendingAction.row)
+              ? "Esta acción anula solo a este integrante del equipo y no se puede deshacer."
+              : pendingAction.row.grupo_equipo_id != null
+                ? "Esta acción anula la prestación del médico y todo su equipo (ayudantes y pediatra), y no se puede deshacer."
+                : "Esta acción anula la prestación y no se puede deshacer."
+          }
           confirmLabel="Eliminar"
           onClose={() => setPendingAction(null)}
           onConfirm={handleConfirmPending}

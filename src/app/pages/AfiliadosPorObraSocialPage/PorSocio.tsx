@@ -57,7 +57,7 @@ export default function PorSocio() {
   // Sólo para ponerle nombre a cada número; cambia casi nunca.
   const catalogo = useQuery({
     queryKey: ["padrones", "catalogo"],
-    queryFn: () => fetchObrasSociales("S"),
+    queryFn: () => fetchObrasSociales(true),
     staleTime: DIEZ_MINUTOS,
   });
 

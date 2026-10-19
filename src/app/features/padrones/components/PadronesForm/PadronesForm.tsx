@@ -73,7 +73,7 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
       try {
         setLoading(true);
         const [cat, prs] = await Promise.all([
-          fetchObrasSociales("S"),
+          fetchObrasSociales(),
           fetchPadrones(medicoId),
         ]);
         if (!alive) return;

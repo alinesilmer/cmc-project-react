@@ -214,11 +214,12 @@ export const editarPrestacion = (id: number, payload: PrestacionUpdate) =>
     patchJSON<PrestacionRead>(`${BASE}/prestaciones/${id}`, payload),
   );
 
-export const anularPrestacion = (id: number) =>
+/** `conEquipo`: si la fila es la cabecera de un equipo, anula también a sus integrantes. */
+export const anularPrestacion = (id: number, opts?: { conEquipo?: boolean }) =>
   traced(
     `DELETE /prestaciones/${id}`,
-    { id },
-    delJSON<void>(`${BASE}/prestaciones/${id}`),
+    { id, ...opts },
+    delJSON<void>(`${BASE}/prestaciones/${id}`, opts?.conEquipo ? { params: { con_equipo: true } } : undefined),
   );
 
 export const moverPeriodo = (payload: MoverPeriodoPayload) =>
@@ -259,6 +260,41 @@ export const descargarExportCaratula = (facturaId: number | string, formato: "pd
     `GET /facturas/${facturaId}/export/caratula.${formato}`,
     { facturaId },
     getBlobLong(`${BASE}/facturas/${facturaId}/export/caratula.${formato}`),
+  );
+
+// TXT de facturación de UNNE (obra social 81). `tipo`/`nro_factura` solo hacen falta si la
+// factura todavía no está numerada.
+export const descargarTxtUnne = (
+  facturaId: number | string, params: { tipo?: string; nro_factura?: string } = {},
+) =>
+  traced(
+    `GET /facturas/${facturaId}/export/unne.txt`,
+    { facturaId, ...params },
+    getBlobLong(`${BASE}/facturas/${facturaId}/export/unne.txt`, params),
+  );
+
+// Plano de Boreal (obra social 285) en Excel.
+export const descargarPlanoBoreal = (facturaId: number | string) =>
+  traced(
+    `GET /facturas/${facturaId}/export/boreal.xlsx`,
+    { facturaId },
+    getBlobLong(`${BASE}/facturas/${facturaId}/export/boreal.xlsx`),
+  );
+
+// Plano de OMINT (obra social 243) en Excel.
+export const descargarPlanoOmint = (facturaId: number | string) =>
+  traced(
+    `GET /facturas/${facturaId}/export/omint.xlsx`,
+    { facturaId },
+    getBlobLong(`${BASE}/facturas/${facturaId}/export/omint.xlsx`),
+  );
+
+// TXT de prestaciones de DASUTEN - UTN (obra social 137).
+export const descargarTxtDasuten = (facturaId: number | string) =>
+  traced(
+    `GET /facturas/${facturaId}/export/dasuten.txt`,
+    { facturaId },
+    getBlobLong(`${BASE}/facturas/${facturaId}/export/dasuten.txt`),
   );
 
 // Detalle por médico: cruza todas las obras sociales del socio en un período.
