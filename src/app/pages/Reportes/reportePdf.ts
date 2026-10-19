@@ -1,9 +1,9 @@
 import {
   AZUL, CREMA, MARGEN, TW,
   fitText, loadPdfLibs, margenTabla, pintarFranja, pintarPies, redondearTabla, rotulo, tableStyles,
-} from "@/app/pages/AfiliadosPorObraSocialPage/pdfBuilder";
-import { CMC_LOGO_SRC, CMC_NAME, fetchAsDataUrl } from "@/app/pages/AfiliadosPorObraSocialPage/institution";
-import { fmtFechaVisible } from "@/app/pages/AfiliadosPorObraSocialPage/helpers";
+} from "@/app/shared/lib/documentos/pdfColegio";
+import { CMC_LOGO_SRC, CMC_NAME, fetchAsDataUrl } from "@/app/shared/lib/documentos/institucion";
+import { fmtFechaVisible } from "@/app/shared/lib/fechas";
 import { encabezadoDe, textoDeCelda, totalFacturado } from "./exportar";
 import type { ColumnaExport, DocumentoReporte } from "./exportar";
 

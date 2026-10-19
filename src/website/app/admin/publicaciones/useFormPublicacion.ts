@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { useConfirmacion } from "@/app/hooks/useConfirmacion";
 import { createNews, getNewsById, removeNewsDoc, updateNews } from "../../../lib/news.client";
 import { normalizar } from "../../../lib/texto";
 import type { DocumentoNoticia, Noticia, TipoPublicacion } from "../../../types";
@@ -18,6 +19,7 @@ const esNormaOperativa = (badge: string) => normalizar(badge).startsWith("normas
 /** Estado y guardado del formulario de alta/edición de una publicación. */
 export function useFormPublicacion(publicacion: Noticia | null, onGuardada: () => void) {
   const editandoId = publicacion?.id ?? null;
+  const { pedir, modal: modalConfirmacion } = useConfirmacion();
 
   const [campos, setCampos] = useState<CamposPublicacion>({
     titulo: publicacion?.titulo ?? "",
@@ -68,14 +70,21 @@ export function useFormPublicacion(publicacion: Noticia | null, onGuardada: () =
   const agregarAdjuntos = (archivos: File[]) => setAdjuntosNuevos((prev) => [...prev, ...archivos]);
   const quitarAdjunto = (indice: number) => setAdjuntosNuevos((prev) => prev.filter((_, i) => i !== indice));
 
-  const borrarDocumento = async (docId: number) => {
-    if (!editandoId || !confirm("¿Quitar este documento de la publicación?")) return;
+  const quitarDocumento = async (idPublicacion: string, docId: number) => {
     try {
-      await removeNewsDoc(editandoId, docId);
+      await removeNewsDoc(idPublicacion, docId);
       setDocumentos((prev) => prev.filter((d) => d.id !== docId));
     } catch {
       setError("No se pudo eliminar el documento.");
     }
+  };
+
+  const borrarDocumento = (docId: number) => {
+    if (editandoId === null) return;
+    pedir(
+      { titulo: "Quitar documento", mensaje: "¿Quitar este documento de la publicación?", confirmar: "Quitar" },
+      () => void quitarDocumento(editandoId, docId),
+    );
   };
 
   const guardar = async (e: FormEvent) => {
@@ -118,6 +127,7 @@ export function useFormPublicacion(publicacion: Noticia | null, onGuardada: () =
     quitarAdjunto,
     documentos,
     borrarDocumento,
+    modalConfirmacion,
     error,
     setError,
     guardando,

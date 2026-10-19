@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, Copy, Info, X } from "lucide-react";
 
-import { CMC_EMAIL, CMC_NAME, CMC_PHONE } from "./institution";
+import { CMC_EMAIL, CMC_NAME, CMC_PHONE } from "@/app/shared/lib/documentos/institucion";
 import { useDialogo } from "./useDialogo";
 // Mismo marco que «Datos a mostrar» y el recuento.
 import marco from "./ExportFieldsModal.module.scss";

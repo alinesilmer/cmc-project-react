@@ -54,3 +54,10 @@ export function saludoSegunHora(ahora: Date = new Date()): string {
   if (hora >= 12 && hora < 20) return "Buenas tardes";
   return "Buenas noches";
 }
+
+/** Fecha como se lee en un documento: DD/MM/AAAA. (`fmtDate` es para nombres de archivo.) */
+export function fmtFechaVisible(d: Date): string {
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  return `${dd}/${mm}/${d.getFullYear()}`;
+}

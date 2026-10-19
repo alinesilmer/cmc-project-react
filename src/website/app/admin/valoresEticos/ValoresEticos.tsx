@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { FileText } from "lucide-react";
+import { useConfirmacion } from "@/app/hooks/useConfirmacion";
 import Alerta from "../../../components/UI/Alerta/Alerta";
 import ZonaCarga from "./ZonaCarga";
 import HistorialValores from "./HistorialValores";
@@ -12,6 +13,7 @@ import styles from "./valoresEticos.module.scss";
 /** La solapa «Valores Éticos»: el PDF vigente, la carga de uno nuevo y el historial. */
 export default function ValoresEticos() {
   const { ultimo, historial, cargando, errorCarga, subir, borrar } = useValoresEticos();
+  const { pedir, modal } = useConfirmacion();
   const [error, setError] = useState<string | null>(null);
   const [exito, setExito] = useState<string | null>(null);
   const [subiendo, setSubiendo] = useState(false);
@@ -38,8 +40,7 @@ export default function ValoresEticos() {
     }
   };
 
-  const alBorrar = async (id: number) => {
-    if (!confirm("¿Eliminar este registro y su archivo?")) return;
+  const eliminar = async (id: number) => {
     setBorrando(id);
     setError(null);
     try {
@@ -50,6 +51,9 @@ export default function ValoresEticos() {
       setBorrando(null);
     }
   };
+
+  const alBorrar = (id: number) =>
+    pedir({ titulo: "Eliminar registro", mensaje: "¿Eliminar este registro y su archivo?" }, () => void eliminar(id));
 
   const mensajeError = error ?? (errorCarga ? "No se pudo cargar el archivo actual." : null);
 
@@ -92,6 +96,7 @@ export default function ValoresEticos() {
       <ZonaCarga subiendo={subiendo} onSubir={alSubir} onError={setError} />
 
       {!cargando && <HistorialValores historial={historial} borrando={borrando} onBorrar={alBorrar} onError={setError} />}
+      {modal}
     </div>
   );
 }

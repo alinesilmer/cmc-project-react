@@ -3,11 +3,11 @@ import type ExcelJS from "exceljs";
 import {
   C, E, FILETE, FONDO_BANDA, FONDO_BLANCO,
   colLetter, relleno, tramos, tryAddLogoImage,
-} from "@/app/pages/AfiliadosPorObraSocialPage/excelBuilder";
+} from "@/app/shared/lib/documentos/excelColegio";
 import {
   CMC_EMAIL, CMC_LOGO_SRC, CMC_NAME, CMC_PHONE, fetchAsDataUrl,
-} from "@/app/pages/AfiliadosPorObraSocialPage/institution";
-import { fmtFechaVisible } from "@/app/pages/AfiliadosPorObraSocialPage/helpers";
+} from "@/app/shared/lib/documentos/institucion";
+import { fmtFechaVisible } from "@/app/shared/lib/fechas";
 import { encabezadoDe, textoDeCelda, totalFacturado } from "./exportar";
 import type { DocumentoReporte } from "./exportar";
 

@@ -133,6 +133,7 @@ export default function FormPublicacion({ publicacion, onGuardada, onCancelar }:
           </Button>
         </div>
       </form>
+      {f.modalConfirmacion}
     </motion.div>
   );
 }

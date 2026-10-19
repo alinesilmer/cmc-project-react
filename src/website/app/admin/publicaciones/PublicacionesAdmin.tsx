@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
+import { useConfirmacion } from "@/app/hooks/useConfirmacion";
 import Button from "../../../components/UI/Button/Button";
 import Buscador from "../../../components/UI/Buscador/Buscador";
 import Paginacion from "../../../components/UI/Paginacion/Paginacion";
@@ -23,6 +24,7 @@ const SIN_PUBLICACIONES: Noticia[] = [];
 /** La solapa «Publicaciones»: filtros, alta/edición y el listado paginado. */
 export default function PublicacionesAdmin() {
   const queryClient = useQueryClient();
+  const { pedir, modal } = useConfirmacion();
   const [tipo, setTipo] = useState<FiltroTipo>("Todos");
   const [busqueda, setBusqueda] = useState("");
   const termino = useDebounce(busqueda);
@@ -58,8 +60,7 @@ export default function PublicacionesAdmin() {
     await refrescarPublicaciones(queryClient);
   };
 
-  const borrar = async (n: Noticia) => {
-    if (!confirm("¿Estás seguro de eliminar esta publicación?")) return;
+  const eliminar = async (n: Noticia) => {
     try {
       await removeNews(n.id);
       setError(null);
@@ -68,6 +69,12 @@ export default function PublicacionesAdmin() {
       setError("Error al eliminar la publicación. Por favor, intentá de nuevo.");
     }
   };
+
+  const borrar = (n: Noticia) =>
+    pedir(
+      { titulo: "Eliminar publicación", mensaje: "¿Estás seguro de eliminar esta publicación?" },
+      () => void eliminar(n),
+    );
 
   const mensajeError = error ?? (isError ? "Error al cargar las publicaciones. Intentá de nuevo." : null);
 
@@ -158,6 +165,7 @@ export default function PublicacionesAdmin() {
           </>
         )}
       </div>
+      {modal}
     </>
   );
 }

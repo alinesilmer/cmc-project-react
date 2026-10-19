@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import Lottie from "lottie-react";
+import React, { useEffect } from "react";
 import styles from "./SuccessModal.module.scss";
 
 type SuccessModalProps = {
@@ -10,7 +9,6 @@ type SuccessModalProps = {
   name?: string;
   title?: string;
   message?: string;
-  animationData?: object;
 };
 
 const SuccessModal: React.FC<SuccessModalProps> = ({
@@ -19,36 +17,13 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
   name,
   title,
   message,
-  animationData,
 }) => {
-  const [animData, setAnimData] = useState<object | null>(
-    animationData || null
-  );
-
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
-
-  useEffect(() => {
-    if (!open || animationData) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch("/animations/success.json");
-        if (!res.ok) throw new Error("Animation not found");
-        const json = await res.json();
-        if (!cancelled) setAnimData(json);
-      } catch {
-        setAnimData(null);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [open, animationData]);
 
   if (!open) return null;
 
@@ -78,35 +53,26 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
         </button>
 
         <div className={styles.successAnim}>
-          {animData ? (
-            <Lottie
-              animationData={animData}
-              loop={false}
-              autoplay
-              style={{ width: 140, height: 140 }}
+          <svg
+            className={styles.successIcon}
+            viewBox="0 0 120 120"
+            aria-hidden="true"
+          >
+            <circle
+              className={styles.successCircle}
+              cx="60"
+              cy="60"
+              r="46"
+              fill="none"
             />
-          ) : (
-            <svg
-              className={styles.successIcon}
-              viewBox="0 0 120 120"
-              aria-hidden="true"
-            >
-              <circle
-                className={styles.successCircle}
-                cx="60"
-                cy="60"
-                r="46"
-                fill="none"
-              />
-              <path
-                className={styles.successCheck}
-                d="M40 62 L54 74 L82 46"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          )}
+            <path
+              className={styles.successCheck}
+              d="M40 62 L54 74 L82 46"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
         </div>
 
         <div className={styles.modalBody}>

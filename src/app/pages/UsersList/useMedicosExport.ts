@@ -6,7 +6,7 @@ import { saveAs } from "@/app/shared/lib/fileSaver";
 
 import type { ExportColumnKey, MedicoRow } from "./medicosExport";
 import { DEFAULT_HEADERS, agruparPorEspecialidad, mapUIToQuery, pickValue } from "./medicosExport";
-import { pdfPorGrupos } from "@/app/pages/AfiliadosPorObraSocialPage/pdfBuilder";
+import { pdfPorGrupos } from "@/app/shared/lib/documentos/pdfPorGrupos";
 
 import { getJSON } from "@/app/shared/lib/http";
 import type { FilterSelection } from "../../types/filters";

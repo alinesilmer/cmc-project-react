@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Trash2, SquarePen, Save } from "lucide-react";
+import { useConfirmacion } from "@/app/hooks/useConfirmacion";
 import Button from "../../../components/UI/Button/Button";
 import BuscadorMedico from "./BuscadorMedico";
 import SelectorImagen from "./SelectorImagen";
@@ -16,6 +17,7 @@ type Props = {
 
 /** Un aviso del listado: se ve, se activa/desactiva y se edita en el lugar. */
 export default function TarjetaAviso({ aviso, onActualizar, onBorrar, onError }: Props) {
+  const { pedir, modal } = useConfirmacion();
   const [editando, setEditando] = useState(false);
   const [medico, setMedico] = useState<DoctorLite | null>(null);
   const [activo, setActivo] = useState(aviso.activo);
@@ -49,9 +51,11 @@ export default function TarjetaAviso({ aviso, onActualizar, onBorrar, onError }:
   const alternarActivo = () =>
     intentar(() => onActualizar(aviso, { activo: !aviso.activo }), "No pudimos cambiar el estado del aviso.");
 
-  const borrar = () => {
-    if (confirm("¿Eliminar esta publicidad?")) void intentar(() => onBorrar(aviso), "No pudimos eliminar el aviso.");
-  };
+  const borrar = () =>
+    pedir(
+      { titulo: "Eliminar publicidad", mensaje: "¿Eliminar esta publicidad?" },
+      () => void intentar(() => onBorrar(aviso), "No pudimos eliminar el aviso."),
+    );
 
   return (
     <motion.div className={styles.card} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
@@ -117,6 +121,7 @@ export default function TarjetaAviso({ aviso, onActualizar, onBorrar, onError }:
           </>
         )}
       </div>
+      {modal}
     </motion.div>
   );
 }

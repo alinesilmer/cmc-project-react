@@ -46,6 +46,8 @@ import {
   Wallet,
 } from "lucide-react";
 
+import { URL_BASE_LEGACY } from "@/app/shared/lib/urlLegacy";
+
 // ─── Modelo ───────────────────────────────────────────────────────────────────
 
 export type MenuLink = {
@@ -263,7 +265,7 @@ export const MENU_USUARIO: MenuLink[] = [
   { path: `${base}/admin/permissions`, icon: ShieldUser, label: "Permisos y roles", perms: ["rbac:gestionar"] },
   { path: `${base}/actividad`, icon: History, label: "Registro de actividad", perms: ["rbac:gestionar"] },
   // Atajo hacia el sistema legacy, sin scope propio.
-  { path: "https://legacy.colegiomedicocorrientes.com/principal.php", icon: Monitor, label: "Sistema viejo", external: true },
+  { path: `${URL_BASE_LEGACY}/principal.php`, icon: Monitor, label: "Sistema viejo", external: true },
 ];
 
 // ─── Socio (INGRESAR = 'D') ───────────────────────────────────────────────────

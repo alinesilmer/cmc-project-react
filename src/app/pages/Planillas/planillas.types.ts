@@ -1,3 +1,5 @@
+import { URL_BASE_LEGACY } from "@/app/shared/lib/urlLegacy";
+
 // Planillas de consulta que el Colegio publica para los médicos.
 
 export interface Planilla {
@@ -13,14 +15,9 @@ export interface Planilla {
   url?: string | null;
 }
 
-const LEGACY_BASE = (
-  (import.meta.env.VITE_URL_BASE_LEGACY as string | undefined) ??
-  "https://legacy.colegiomedicocorrientes.com"
-).replace(/\/+$/, "");
-
 /** URL del PDF. Se usa la que resolvió el backend; el fallback al sitio legacy cubre el caso de una API sin `LEGACY_BASE_URL` configurada. */
 export const urlPlanilla = (p: Planilla) =>
-  p.url ?? `${LEGACY_BASE}/${encodeURIComponent(p.archivo)}`;
+  p.url ?? `${URL_BASE_LEGACY}/${encodeURIComponent(p.archivo)}`;
 
 /** `FECHA` es un `varchar(10)` sin formato único: conviven `2026-05-16` y `11/02/2026`. */
 function parseFechaPlanilla(fecha: string): Date | null {

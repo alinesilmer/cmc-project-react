@@ -4,13 +4,6 @@ import { safeStr } from "@/app/shared/lib/utiles";
 /** INT32 max (2^31 − 1 = 2 147 483 647). */
 const INT32_MAX = 2_147_483_647;
 
-/** Fecha como se lee en un documento: DD/MM/AAAA. (`fmtDate` es para nombres de archivo.) */
-export function fmtFechaVisible(d: Date): string {
-  const dd = String(d.getDate()).padStart(2, "0");
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  return `${dd}/${mm}/${d.getFullYear()}`;
-}
-
 export function fmtDate(d: Date): string {
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, "0");
