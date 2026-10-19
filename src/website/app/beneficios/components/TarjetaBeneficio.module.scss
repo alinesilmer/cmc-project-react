@@ -5,18 +5,20 @@
   --acento: #{$primary-blue};
   --sobre-acento: #{$white};
 
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  cursor: pointer;
   background: $white;
   border-radius: 10px;
-  box-shadow: 0 1px 2px rgba(20, 35, 58, 0.05), 0 10px 26px rgba(20, 35, 58, 0.07);
+  box-shadow: 0 1px 2px rgba($tono-azul-850, 0.05), 0 10px 26px rgba($tono-azul-850, 0.07);
   transition: transform $transition-fast, box-shadow $transition-fast;
 
   &:hover {
     transform: translateY(-4px);
-    box-shadow: 0 1px 2px rgba(20, 35, 58, 0.05), 0 18px 34px rgba(20, 35, 58, 0.13);
+    box-shadow: 0 1px 2px rgba($tono-azul-850, 0.05), 0 18px 34px rgba($tono-azul-850, 0.13);
   }
 }
 
@@ -42,12 +44,11 @@
     right: -30px;
     top: -40px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.14);
+    background: rgba($white, 0.14);
   }
 }
 
-// La letra baja según el largo del texto: «10%» grande, una frase en dos
-// renglones. Si ni así entra, la tarjeta ofrece «Ver más».
+// La letra baja según el largo del texto: «10%» grande, una frase en dos renglones.
 .descuento {
   position: relative;
   z-index: 1;
@@ -91,7 +92,7 @@
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #6b7280;
+  color: $texto-gris;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -124,7 +125,7 @@
   font-size: 1.15rem;
   font-weight: 800;
   line-height: 1.25;
-  color: #14233a;
+  color: $tono-azul-850;
   // Siempre dos renglones de alto, así las descripciones arrancan parejas.
   min-height: calc(1.15rem * 1.25 * 2);
   display: -webkit-box;
@@ -138,7 +139,7 @@
   font-family: $font-normal;
   font-size: 0.92rem;
   line-height: 1.5;
-  color: #5b6474;
+  color: $tono-azul-600;
   white-space: pre-line; // la descripción se carga con saltos de línea
   display: -webkit-box;
   -webkit-line-clamp: 4;
@@ -154,7 +155,7 @@
   gap: 6px;
   margin: 0 20px;
   padding: 12px 0 16px;
-  border-top: 1px solid #efece4;
+  border-top: 1px solid $tono-amarillo-100-b;
 }
 
 .metaItem {
@@ -164,7 +165,7 @@
   min-width: 0;
   font-family: $font-normal;
   font-size: 0.85rem;
-  color: #5b6474;
+  color: $tono-azul-600;
 
   svg {
     width: 15px;
@@ -193,7 +194,6 @@
   font-size: 0.9rem;
   font-weight: 800;
   color: var(--acento);
-  cursor: pointer;
 
   svg {
     width: 16px;
@@ -201,13 +201,24 @@
     transition: transform 0.18s ease;
   }
 
-  &:hover svg {
+  .card:hover & svg {
     transform: translate(2px, -2px);
   }
+}
+
+// El botón invisible que cubre la tarjeta entera (por encima del contenido, debajo de nada).
+.abrir {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: inherit;
+  cursor: pointer;
 
   &:focus-visible {
-    outline: 2px solid var(--acento);
-    outline-offset: 2px;
-    border-radius: 4px;
+    outline: 3px solid var(--acento);
+    outline-offset: -3px;
   }
 }

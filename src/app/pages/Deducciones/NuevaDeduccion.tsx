@@ -1,15 +1,19 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { Check, Plus } from "lucide-react";
 
 import Button from "@/app/components/ui/Button/Button";
-import Card from "@/app/components/ui/Card/Card";
+import Franja from "@/app/components/layout/Franja/Franja";
+import BackButton from "@/app/components/ui/BackButton/BackButton";
 import AppSearchSelect, { type AppSearchSelectOption } from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
 import { createDeduccion, fetchDescuentos, fetchMedicos, fetchOpenPago } from "./api";
 import { useAppSnackbar } from "../../hooks/useAppSnackbar";
 import { MESES, formatMoney } from "./types";
 import type { DescuentoOption, MedicoOption, Pago } from "./types";
-import styles from "./NuevaDeduccion.module.scss";
+import s from "./NuevaDeduccion.module.scss";
+import lq from "@/app/pages/Pagos/Liquidacion.module.scss";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
+import { getErrorMessage } from "@/app/shared/lib/utiles";
 
 const currentYear = new Date().getFullYear();
 const YEARS = Array.from({ length: 8 }, (_, i) => currentYear + 2 - i);
@@ -47,14 +51,6 @@ const splitCuotas = (total: number, cuotas: number, mesInicio: number, anioInici
   }
   return rows;
 };
-
-const getErrorMessage = (e: any, fallback: string) => {
-  const detail = e?.response?.data?.detail;
-  if (typeof detail === "string" && detail.trim()) return detail;
-  if (typeof detail?.message === "string" && detail.message.trim()) return detail.message;
-  return e?.message ?? fallback;
-};
-
 const NuevaDeduccion: React.FC = () => {
   const navigate = useNavigate();
   const notify = useAppSnackbar();
@@ -192,154 +188,156 @@ const NuevaDeduccion: React.FC = () => {
   };
 
   return (
-    <div className={styles.page}>
-      <div className={styles.content}>
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
-        >
-          <div className={styles.header}>
-            <div>
-              <h1>Nueva deducción</h1>
-              <p>Creación manual de deducciones cuotificadas.</p>
+    <div className={lq.pagina}>
+      <Franja titulo="Nueva deducción" icono={Plus} />
+      <BackButton label="Volver" to="/panel/deducciones" />
+
+      {error && <div className={lq.error} role="alert">{error}</div>}
+
+      <div className={s.dos}>
+        <section className={s.hoja} aria-label="Datos de la deducción">
+          <h2 className={s.titulo}>Datos</h2>
+          <div className={s.grilla}>
+            <div className={`${lq.campo} ${s.entera}`}>
+              <span className={lq.rotulo}>Médico</span>
+              <AppSearchSelect
+                options={medicoOptions}
+                value={medicoId}
+                onChange={(id) => setMedicoId(id as number | null)}
+                onQueryChange={searchMedicos}
+                loading={loadingMedicos}
+                disabled={loadingData || creating}
+              />
             </div>
-            <Button variant="secondary" onClick={() => navigate("/panel/deducciones")}>
-              Volver
+            <div className={`${lq.campo} ${s.entera}`}>
+              <span className={lq.rotulo}>Concepto</span>
+              <AppSearchSelect
+                options={descuentoOptions}
+                value={descuentoId}
+                onChange={(id) => setDescuentoId(id as number | null)}
+                disabled={loadingData || creating}
+              />
+            </div>
+            <label className={lq.campo}>
+              <span className={lq.rotulo}>Monto total</span>
+              <input
+                className={lq.input}
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={montoTotal}
+                onChange={(e) => setMontoTotal(e.target.value)}
+                disabled={creating}
+              />
+            </label>
+            <label className={lq.campo}>
+              <span className={lq.rotulo}>Cuotas</span>
+              <input
+                className={lq.input}
+                type="number"
+                min="1"
+                step="1"
+                value={cuotas}
+                onChange={(e) => setCuotas(e.target.value)}
+                disabled={creating}
+              />
+            </label>
+            <label className={lq.campo}>
+              <span className={lq.rotulo}>Mes de inicio</span>
+              <select className={lq.select} value={mesInicio} onChange={(e) => setMesInicio(e.target.value)} disabled={creating}>
+                {MESES.map((m, i) => (
+                  <option key={m} value={i + 1}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className={lq.campo}>
+              <span className={lq.rotulo}>Año de inicio</span>
+              <select className={lq.select} value={anioInicio} onChange={(e) => setAnioInicio(e.target.value)} disabled={creating}>
+                {YEARS.map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className={`${lq.campo} ${s.entera}`}>
+              <span className={lq.rotulo}>Pagador (opcional)</span>
+              <AppSearchSelect
+                options={medicoOptions}
+                value={pagadorId}
+                onChange={(id) => setPagadorId(id as number | null)}
+                onQueryChange={searchMedicos}
+                loading={loadingMedicos}
+                disabled={loadingData || creating}
+              />
+            </div>
+          </div>
+          <div className={s.pie}>
+            <Button
+              variant="primary"
+              size="md"
+              leftIcon={<Check size={18} aria-hidden="true" />}
+              onClick={onSubmit}
+              disabled={!isValid || creating || loadingData}
+            >
+              {creating ? "Creando…" : "Crear deducción"}
             </Button>
           </div>
+        </section>
 
-          {error && <div className={styles.errorBanner}>{error}</div>}
-
-          <Card className={styles.formCard}>
-            <div className={styles.formGrid}>
-              <div className={styles.field}>
-                <label>Médico</label>
-                <AppSearchSelect
-                  options={medicoOptions}
-                  value={medicoId}
-                  onChange={(id) => setMedicoId(id as number | null)}
-                  onQueryChange={searchMedicos}
-                  loading={loadingMedicos}
-                  disabled={loadingData || creating}
-                />
-              </div>
-              <div className={styles.field}>
-                <label>Concepto de descuento</label>
-                <AppSearchSelect
-                  options={descuentoOptions}
-                  value={descuentoId}
-                  onChange={(id) => setDescuentoId(id as number | null)}
-                  disabled={loadingData || creating}
-                />
-              </div>
-              <div className={styles.field}>
-                <label>Monto total</label>
-                <input
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  value={montoTotal}
-                  onChange={(e) => setMontoTotal(e.target.value)}
-                  disabled={creating}
-                />
-              </div>
-              <div className={styles.field}>
-                <label>Cantidad de cuotas</label>
-                <input
-                  type="number"
-                  min="1"
-                  step="1"
-                  value={cuotas}
-                  onChange={(e) => setCuotas(e.target.value)}
-                  disabled={creating}
-                />
-              </div>
-              <div className={styles.field}>
-                <label>Mes inicio</label>
-                <select value={mesInicio} onChange={(e) => setMesInicio(e.target.value)} disabled={creating}>
-                  {MESES.map((m, i) => (
-                    <option key={m} value={i + 1}>
-                      {i + 1} - {m}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className={styles.field}>
-                <label>Año inicio</label>
-                <select value={anioInicio} onChange={(e) => setAnioInicio(e.target.value)} disabled={creating}>
-                  {YEARS.map((y) => (
-                    <option key={y} value={y}>
-                      {y}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className={`${styles.field} ${styles.full}`}>
-                <label>Pagador (opcional)</label>
-                <AppSearchSelect
-                  options={medicoOptions}
-                  value={pagadorId}
-                  onChange={(id) => setPagadorId(id as number | null)}
-                  onQueryChange={searchMedicos}
-                  loading={loadingMedicos}
-                  disabled={loadingData || creating}
-                />
-              </div>
+        <section className={s.hoja} aria-label="Cuotas">
+          <h2 className={s.titulo}>Cuotas</h2>
+          {preview.length > 0 && (
+            <p className={s.resumen}>
+              <b>{formatMoney(parsedMonto)}</b> en {preview.length} {preview.length === 1 ? "cuota" : "cuotas"}
+            </p>
+          )}
+          {firstInOpenPago && openPago && (
+            <div className={lq.alerta}>
+              La cuota 1 entra en el pago abierto ({MESES[openPago.mes - 1]} {openPago.anio}).
             </div>
-            <div className={styles.submitRow}>
-              <Button variant="primary" onClick={onSubmit} disabled={!isValid || creating || loadingData}>
-                {creating ? "Creando..." : "Confirmar"}
-              </Button>
-            </div>
-          </Card>
-
-          <Card className={styles.previewCard}>
-            <h3>Preview de cuotas</h3>
-            {firstInOpenPago && openPago && (
-              <div className={styles.infoBox}>
-                La cuota 1 se asignará automáticamente al pago abierto ({MESES[openPago.mes - 1]} {openPago.anio})
-                y se aplicará al cerrar el pago.
-              </div>
-            )}
-            <div className={styles.tableWrap}>
-              <table className={styles.table}>
-                <thead>
+          )}
+          <div className={lq.tablaCaja}>
+            <Tabla>
+              <thead>
+                <tr>
+                  <th>Cuota</th>
+                  <th>Período</th>
+                  <th>Monto</th>
+                  <th>Abona por caja</th>
+                </tr>
+              </thead>
+              <tbody>
+                {preview.length === 0 && (
                   <tr>
-                    <th>Cuota</th>
-                    <th>Período</th>
-                    <th className={styles.numCell}>Monto</th>
-                    <th className={styles.checkCell}>Abona por caja</th>
+                    <td colSpan={4} className={lq.vacio}>
+                      Cargá monto y cuotas para verlas.
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {preview.length === 0 && (
-                    <tr>
-                      <td colSpan={4} className={styles.emptyCell}>
-                        Ingresá monto y cuotas válidas para ver el preview.
-                      </td>
-                    </tr>
-                  )}
-                  {preview.map((row, i) => (
-                    <tr key={`${row.nro}-${row.mes}-${row.anio}`}>
-                      <td>{row.nro}/{parsedCuotas || 1}</td>
-                      <td>{String(row.mes).padStart(2, "0")}/{row.anio}</td>
-                      <td className={styles.numCell}>{formatMoney(row.monto)}</td>
-                      <td className={styles.checkCell}>
-                        <input
-                          type="checkbox"
-                          checked={pagaPorCaja[i] ?? false}
-                          onChange={() => togglePagaPorCaja(i)}
-                          disabled={creating}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        </motion.div>
+                )}
+                {preview.map((row, i) => (
+                  <tr key={`${row.nro}-${row.mes}-${row.anio}`}>
+                    <td>{row.nro}/{parsedCuotas || 1}</td>
+                    <td>{MESES[row.mes - 1]} {row.anio}</td>
+                    <td className={lq.monto}>{formatMoney(row.monto)}</td>
+                    <td>
+                      <input
+                        type="checkbox"
+                        className={s.check}
+                        checked={pagaPorCaja[i] ?? false}
+                        onChange={() => togglePagaPorCaja(i)}
+                        disabled={creating}
+                        aria-label={`Cuota ${row.nro} abona por caja`}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Tabla>
+          </div>
+        </section>
       </div>
     </div>
   );

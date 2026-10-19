@@ -4,6 +4,7 @@ import { Search, X } from "lucide-react";
 import { searchDoctors, type DoctorLite } from "../../../lib/ads.client";
 import { useDebounce } from "../../../hooks/useDebounce";
 import styles from "./BuscadorMedico.module.scss";
+import Button from "@/website/components/UI/Button/Button";
 
 type Props = {
   etiqueta: string;
@@ -23,10 +24,7 @@ function detalle(d: DoctorLite): string {
     .join(" · ");
 }
 
-/**
- * Buscador de médicos para asignar un aviso. El alta y la edición tenían cada
- * uno su copia, y buscaban en cada tecla: ahora espera a que se deje de escribir.
- */
+/** Buscador de médicos para asignar un aviso. */
 export default function BuscadorMedico({ etiqueta, elegido, onElegir }: Props) {
   const id = useId();
   const [texto, setTexto] = useState("");
@@ -65,18 +63,18 @@ export default function BuscadorMedico({ etiqueta, elegido, onElegir }: Props) {
       {elegido ? (
         <div className={styles.selectedDoctor}>
           <span>{elegido.nombre}</span>
-          <button type="button" onClick={() => onElegir(null)} aria-label="Quitar médico elegido">
+          <Button variant="plano" type="button" onClick={() => onElegir(null)} aria-label="Quitar médico elegido">
             <X aria-hidden="true" />
-          </button>
+          </Button>
         </div>
       ) : (
         texto &&
         resultados.length > 0 && (
           <div className={styles.dropdown} role="listbox" aria-label="Médicos encontrados">
             {resultados.map((d) => (
-              <button type="button" key={d.id} role="option" aria-selected={false} className={styles.dropdownItem} onClick={() => elegir(d)}>
+              <Button variant="plano" type="button" key={d.id} role="option" aria-selected={false} className={styles.dropdownItem} onClick={() => elegir(d)}>
                 {detalle(d)}
-              </button>
+              </Button>
             ))}
           </div>
         )

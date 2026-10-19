@@ -3,6 +3,7 @@ import Modal from "@/app/components/ui/Modal/Modal";
 import Button from "@/app/components/ui/Button/Button";
 import type { CierrePreviewResponse } from "../types";
 import { formatMoney } from "../money";
+import { AlertTriangle } from "lucide-react";
 
 interface Props {
   isOpen: boolean;
@@ -37,7 +38,7 @@ const ConfirmarCierreModal: React.FC<Props> = ({
         <li>Documento: {archivoNombre ?? "sin adjuntar"}</li>
       </ul>
       <div style={{ background: "#fffbeb", border: "1px solid #f59e0b", borderRadius: 6, padding: "8px 12px", fontSize: 12, color: "#92400e" }}>
-        ⚠ Esta acción <strong>NO se puede deshacer</strong> y habilita la liquidación.
+        <AlertTriangle size={14} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> Esta acción <strong>NO se puede deshacer</strong> y habilita la liquidación.
       </div>
       <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
         <Button variant="ghost" onClick={onClose} disabled={loading}>Cancelar</Button>

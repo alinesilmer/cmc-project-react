@@ -1,39 +1,60 @@
 @use "@/app/styles/all.scss" as *;
 
+// Calendario del Colegio, en clave editorial: título en grande sobre el fondo, el almanaque como una grilla de filetes y, al lado.
+
 .container {
-  padding: $spacing-8;
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-5;
+  width: 100%;
+  max-width: 1536px;
+  margin: 0 auto;
+  padding: $spacing-8 $spacing-12 $spacing-12;
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+  align-items: start;
+  gap: $spacing-6;
   min-height: 100%;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: minmax(0, 1fr);
+    padding: $spacing-8 $spacing-8 $spacing-10;
+  }
 
   @media (max-width: $breakpoint-md) { padding: $spacing-5; gap: $spacing-4; }
   @media (max-width: $breakpoint-sm) { padding: $spacing-4; }
 }
 
-.header { display: flex; align-items: center; gap: $spacing-4; }
-.headerIcon { color: $primary-blue; flex-shrink: 0; }
+.header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-end;
+  gap: $spacing-4;
+}
+
+// El título ya dice qué pantalla es: el ícono de al lado sobraba.
+.headerIcon { display: none; }
 
 .title {
   margin: 0;
-  font-size: $font-size-3xl;
-  font-weight: $font-weight-bold;
-  color: $gray-900;
-  line-height: 1.2;
-
-  @media (max-width: $breakpoint-sm) { font-size: $font-size-2xl; }
+  font-family: $fuente-titulos;
+  font-size: clamp(1.9rem, 4.4vw, 3.1rem);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  color: $primary-blue;
 }
 
 .subtitle { margin: $spacing-1 0 0; font-size: $font-size-sm; color: $gray-500; }
 
 .card {
+  border-radius: $radio-md;
+  min-width: 0;
   background: $white;
   border: 1px solid $gray-200;
-  border-radius: $border-radius-lg;
-  padding: $spacing-5;
-  box-shadow: $shadow-sm;
+  border-top: 3px solid $primary-blue;
+  padding: $spacing-6;
+  box-shadow: 0 1px 2px rgba($gray-900, 0.04);
+  animation: $anim-fade-in 0.3s ease-out;
 
-  @media (max-width: $breakpoint-sm) { padding: $spacing-3; }
+  @media (max-width: $breakpoint-sm) { padding: $spacing-4 $spacing-3; }
 }
 
 .loading {
@@ -45,7 +66,7 @@
   font-size: $font-size-sm;
 }
 
-.spin { animation: spin 0.9s linear infinite; }
+.spin { animation: $anim-spin 0.9s linear infinite; }
 
 // ── Cabecera del almanaque ──────────────────────────────────────────────────
 
@@ -53,67 +74,74 @@
   display: flex;
   align-items: center;
   gap: $spacing-3;
-  margin-bottom: $spacing-4;
+  margin-bottom: $spacing-5;
   flex-wrap: wrap;
 }
 
+// El mes es el dato de la pantalla: va en grande, a la izquierda.
 .calTitle {
-  margin: 0;
-  min-width: 170px;
-  text-align: center;
-  font-size: $font-size-lg;
-  font-weight: $font-weight-semibold;
+  order: -1;
+  margin: 0 $spacing-2 0 0;
+  min-width: 13rem;
+  font-family: $fuente-titulos;
+  font-size: $font-size-4xl;
+  font-weight: 800;
+  letter-spacing: -0.02em;
   color: $gray-900;
+
+  @media (max-width: $breakpoint-sm) { min-width: 0; flex: 1 1 100%; }
 }
 
 .navBtn {
+  border-radius: $radio-md;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  color: $gray-600;
+  width: 2.25rem;
+  height: 2.25rem;
+  color: $primary-blue;
   background: $white;
-  border: 1px solid $gray-200;
-  border-radius: $border-radius-sm;
+  border: 1px solid $gray-300;
   cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
 
-  &:hover { color: $primary-blue; border-color: $primary-blue; }
+  &:hover { color: $white; background: $primary-blue; border-color: $primary-blue; }
 }
 
 .filtros { display: flex; gap: $spacing-2; margin-left: auto; flex-wrap: wrap; }
 
 .chip {
+  border-radius: $radio-md;
   display: inline-flex;
   align-items: center;
-  gap: $spacing-1;
-  height: 28px;
+  gap: $spacing-2;
+  height: 2rem;
   padding: 0 $spacing-3;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
-  color: $gray-600;
+  font-family: inherit;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-700;
   background: $white;
-  border: 1px solid $gray-200;
-  border-radius: 999px;
+  border: 1px solid $gray-300;
   cursor: pointer;
   transition: color 0.15s, background 0.15s, border-color 0.15s;
 
-  &:hover { border-color: $gray-400; }
+  &:hover { border-color: $gray-500; }
 }
 
 .chipOn {
   color: $white;
-  background: $gray-700;
-  border-color: $gray-700;
+  background: $primary-blue;
+  border-color: $primary-blue;
 
   // El punto de color pierde sentido sobre el chip pintado del mismo color.
   .dot { background: rgba($white, 0.85) !important; }
 }
 
 .dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
+  border-radius: 2px;
+  width: 0.5rem;
+  height: 0.5rem;
   flex-shrink: 0;
   display: inline-block;
 }
@@ -123,56 +151,77 @@
 .semana {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: $spacing-1;
-  margin-bottom: $spacing-2;
+  padding-bottom: $spacing-2;
+  border-bottom: 2px solid $gray-900;
 
   span {
-    text-align: center;
+    padding-left: $spacing-2;
     font-size: $font-size-xs;
-    font-weight: $font-weight-semibold;
-    color: $gray-400;
+    font-weight: $font-weight-bold;
+    color: $primary-blue;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.12em;
   }
 }
 
+// Los filetes son los bordes de cada casilla: con un fondo asomando por el gap.
 .grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: $spacing-1;
+  border-left: 1px solid $gray-200;
 }
 
 .celda,
 .celdaVacia {
-  min-height: 84px;
-  border-radius: $border-radius-sm;
-  padding: $spacing-1;
+  min-height: 6.5rem;
+  padding: $spacing-2;
+  border-right: 1px solid $gray-200;
+  border-bottom: 1px solid $gray-200;
 
-  @media (max-width: $breakpoint-md) { min-height: 64px; }
-  @media (max-width: $breakpoint-sm) { min-height: 52px; padding: 2px; }
+  @media (max-width: $breakpoint-md) { min-height: 72px; }
+  @media (max-width: $breakpoint-sm) { min-height: 54px; padding: 3px; }
 }
 
 .celda {
-  background: $gray-50;
-  border: 1px solid transparent;
+  background: $white;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: $spacing-1;
   overflow: hidden;
+  transition: background-color 0.15s ease;
+
+  &:hover { background: $gray-50; }
 }
 
-.celdaVacia { background: transparent; }
+.celdaVacia { background: $gray-50; }
 
 .celdaHoy {
   background: $secondary-blue;
-  border-color: $primary-blue;
+
+  &:hover { background: $secondary-blue; }
+
+  // Hoy: el número en un bloque azul.
+  .celdaNum {
+    display: inline-grid;
+    place-items: center;
+    align-self: flex-start;
+    min-width: 1.7rem;
+    height: 1.7rem;
+    padding: 0 $spacing-1;
+    color: $white;
+    background: $primary-blue;
+  }
 }
 
 .celdaNum {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
-  color: $gray-500;
+  font-family: $fuente-titulos;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  line-height: 1.2;
+  color: $gray-700;
   font-variant-numeric: tabular-nums;
+
+  @media (max-width: $breakpoint-sm) { font-size: $font-size-sm; }
 }
 
 .celdaEventos {
@@ -183,68 +232,77 @@
 }
 
 .pill {
-  padding: 1px $spacing-1;
+  border-radius: $radio-xs;
+  padding: 2px $spacing-2;
   font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
   line-height: 1.35;
   color: $white;
-  border-radius: 3px;
   // Un título largo no puede ensanchar la casilla ni romper la grilla.
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 
   @media (max-width: $breakpoint-sm) {
-    // En pantallas chicas la casilla no da para leer el texto: queda el color
-    // como señal de que ese día tiene algo, y el detalle se ve en la lista.
-    height: 5px;
+    // En pantallas chicas la casilla no da para leer el texto: queda el color como señal de que ese día tiene algo.
+    height: 0.3125rem;
     padding: 0;
-    text-indent: -9999px;
+    text-indent: -624.9375rem;
   }
 }
 
 // ── Pestañas y lista ────────────────────────────────────────────────────────
 
+// Una barra continua; "Nuevo" queda a la derecha.
 .tabs {
   display: flex;
-  align-items: center;
-  gap: $spacing-2;
-  margin-bottom: $spacing-4;
+  align-items: stretch;
   flex-wrap: wrap;
+  margin-bottom: $spacing-4;
+  border-bottom: 2px solid $gray-900;
+
+  > .addBtn { margin: 0 0 $spacing-2 auto; align-self: center; }
 }
 
 .tab {
+  border-radius: $radio-md $radio-md 0 0;
   display: inline-flex;
   align-items: center;
   gap: $spacing-2;
-  height: 32px;
+  height: 2.5rem;
   padding: 0 $spacing-4;
+  font-family: inherit;
   font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
+  font-weight: $font-weight-semibold;
   color: $gray-600;
-  background: $white;
-  border: 1px solid $gray-200;
-  border-radius: $border-radius-md;
+  background: transparent;
+  border: 0;
   cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
 
-  &:hover { border-color: $gray-400; }
+  &:hover { color: $gray-900; background: $gray-50; }
 }
 
 .tabOn {
-  color: $primary-blue;
-  background: $secondary-blue;
-  border-color: $primary-blue;
-  font-weight: $font-weight-semibold;
+  color: $white;
+  background: $gray-900;
+
+  &:hover { color: $white; background: $gray-900; }
 }
 
-.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: $spacing-2; }
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 
 .row {
   display: flex;
   align-items: center;
   gap: $spacing-3;
-  padding: $spacing-3;
-  background: $gray-50;
-  border-radius: $border-radius-md;
+  min-height: 3.25rem;
+  padding: $spacing-2 $spacing-1;
+  border-bottom: 1px solid $gray-100;
+  transition: background-color 0.15s ease;
+
+  &:last-child { border-bottom: 0; }
+  &:hover { background: $gray-50; }
 }
 
 .rowInactivo { opacity: 0.55; }
@@ -252,58 +310,61 @@
 .rowMain { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
 
 .rowTitulo {
-  font-size: $font-size-base;
-  font-weight: $font-weight-medium;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
   color: $gray-900;
 }
 
 .rowCuando {
-  font-size: $font-size-xs;
+  font-size: $font-size-sm;
   color: $gray-500;
 }
 
 .rowActions { display: flex; gap: $spacing-1; margin-left: auto; flex-shrink: 0; }
 
 .empty {
-  padding: $spacing-4;
+  padding: $spacing-6;
   text-align: center;
   font-size: $font-size-sm;
-  color: $gray-400;
+  color: $gray-500;
 }
 
 // ── Formulario ──────────────────────────────────────────────────────────────
 
 .form {
+  border-radius: $radio-md;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
   gap: $spacing-3;
   padding: $spacing-4;
   margin-bottom: $spacing-4;
-  background: $secondary-blue;
-  border-radius: $border-radius-md;
+  background: $gray-50;
+  border: 1px solid $gray-200;
+  border-left: 3px solid $primary-blue;
+  animation: $anim-fade-in 0.2s ease-out;
 }
 
-.field { display: flex; flex-direction: column; gap: $spacing-1; }
+.field { display: flex; flex-direction: column; gap: $spacing-1; min-width: 0; }
 .fieldFull { grid-column: 1 / -1; }
 
 .label {
   font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
+  font-weight: $font-weight-semibold;
   color: $gray-600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
 }
 
 .input {
+  border-radius: $radio-md;
   width: 100%;
-  height: 34px;
+  height: 2.25rem;
   padding: 0 $spacing-3;
   font-size: $font-size-base;
   font-family: inherit;
   color: $gray-900;
   background: $white;
-  border: 1px solid $gray-200;
-  border-radius: $border-radius-md;
+  border: 1px solid $gray-300;
   outline: none;
 
   &:focus {
@@ -324,11 +385,11 @@
 .selectWrap { position: relative; }
 
 .selectBox {
+  border-radius: $radio-md;
   display: flex;
   align-items: center;
   background: $white;
   border: 1px solid $gray-200;
-  border-radius: $border-radius-md;
 
   &:focus-within {
     border-color: $primary-blue;
@@ -339,7 +400,7 @@
 .selectInput {
   flex: 1;
   min-width: 0;
-  height: 32px;
+  height: 2rem;
   padding: 0 $spacing-3;
   font-size: $font-size-base;
   font-family: inherit;
@@ -355,8 +416,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 32px;
+  width: 1.75rem;
+  height: 2rem;
   color: $gray-400;
   background: transparent;
   border: none;
@@ -367,23 +428,24 @@
 }
 
 .selectMenu {
+  border-radius: $radio-md;
   position: absolute;
   z-index: 30;
   top: calc(100% + 3px);
   left: 0;
   right: 0;
-  max-height: 220px;
+  max-height: 13.75rem;
   overflow-y: auto;
   list-style: none;
   margin: 0;
   padding: $spacing-1;
   background: $white;
   border: 1px solid $gray-200;
-  border-radius: $border-radius-md;
   box-shadow: $shadow-lg;
 }
 
 .selectOption {
+  border-radius: $radio-sm;
   display: flex;
   align-items: center;
   gap: $spacing-2;
@@ -394,7 +456,6 @@
   color: $gray-800;
   background: transparent;
   border: none;
-  border-radius: $border-radius-sm;
   cursor: pointer;
 
   &:hover { background: $secondary-blue; }
@@ -428,3 +489,14 @@
 .iconBtn { @extend %btn-icono; }
 
 .iconDanger { @extend %btn-icono-peligro; }
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .form { animation: none; }
+
+  .navBtn,
+  .chip,
+  .celda,
+  .tab,
+  .row { transition: none; }
+}

@@ -5,27 +5,23 @@ import NumericInput from "../../components/NumericInput";
 import type { MedicoOption, NomencladorOption, PrecioResponse, TipoCalculo } from "../../types";
 import { formatMoney, parseMoney } from "../../money";
 import styles from "../CargaFacturacion.module.scss";
+import { X } from "lucide-react";
 
-// Máximo 1 pediatra por prestación (decisión usuario 2026-09-17) — a diferencia de
-// AyudanteLinea[] esto es una única línea, nunca un arreglo.
+// Máximo 1 pediatra por prestación (decisión usuario 2026-09-17) — a diferencia de AyudanteLinea[] esto es una única línea, nunca un arreglo.
 export interface PediatraLinea {
   id: string;
-  /** Id de la prestación real cuando la línea viene de un equipo existente (al editar).
-   *  null/undefined = línea nueva → se crea con POST. Mismo patrón que AyudanteLinea. */
+  /** Id de la prestación real cuando la línea viene de un equipo existente (al editar). null/undefined = línea nueva → se crea con POST. */
   prestacionId?: number | null;
   codMedico: string | null;
   medico: MedicoOption | null;
-  /** Código PROPIO del pediatra — NO el del cirujano. Se busca igual que el código
-   *  principal: acotado a los habilitados de ESTE médico (ver NomencladorAutocomplete). */
+  /** Código PROPIO del pediatra — NO el del cirujano. */
   codNomenclador: string | null;
-  /** Label del autocomplete al precargar (editar/replicar), antes de que resuelva la
-   *  búsqueda por su cuenta. */
+  /** Label del autocomplete al precargar (editar/replicar), antes de que resuelva la búsqueda por su cuenta. */
   codigoPreset?: string | null;
   porcentaje: string;
   tipoCalculo: TipoCalculo;
   precioManual: string;
-  /** Nº de autorización propio — mismo criterio que en AyudanteLinea: sólo se usa con
-   *  "autorización por integrante" activo. */
+  /** Nº de autorización propio — mismo criterio que en AyudanteLinea: sólo se usa con "autorización por integrante" activo. */
   autorizacion: string;
 }
 
@@ -45,9 +41,7 @@ export const crearPediatraLinea = (autorizacion = ""): PediatraLinea => ({
   autorizacion,
 });
 
-// El pediatra cobra en HONORARIOS (de su propio código) — a diferencia de
-// totalAyudantes, que lee `precio.ayudante` del código PRINCIPAL, acá el monto sale
-// del precio del código PROPIO del pediatra (segundo lookup en CargaFacturacion.tsx).
+// El pediatra cobra en HONORARIOS (de su propio código) — a diferencia de totalAyudantes, que lee `precio.ayudante` del código PRINCIPAL.
 export const montoPediatra = (linea: PediatraLinea, precioPediatra: PrecioResponse | null): number => {
   if (!precioPediatra) return 0;
   const base = linea.tipoCalculo === "A" ? parseMoney(precioPediatra.honorarios) : parseMoney(linea.precioManual);
@@ -62,8 +56,7 @@ interface Props {
   precioPediatra: PrecioResponse | null;
   precioPediatraLoading: boolean;
   codMedicoMain: string | null;
-  /** Códigos de los otros integrantes ya cargados (cirujano + ayudantes), para no
-   *  permitir que el pediatra repita a ninguno. */
+  /** Códigos de los otros integrantes ya cargados (cirujano + ayudantes), para no permitir que el pediatra repita a ninguno. */
   codsEquipo: Set<string>;
   disabled?: boolean;
   error?: string;
@@ -94,7 +87,7 @@ const PediatraSection: React.FC<Props> = ({
             Pediatra
           </span>
           <button type="button" className={styles.removeBtn} onClick={onQuitar} disabled={disabled}>
-            ✕ Quitar
+            <X size={16} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> Quitar
           </button>
         </div>
 
@@ -187,9 +180,7 @@ const PediatraSection: React.FC<Props> = ({
           </div>
           <div className={styles.filterField}>
             <label className={styles.filterLabel}>Precio del pediatra</label>
-            {/* Mismo input siempre, igual que en Ayudante: en Automático muestra el
-                valor de SU código (no el del cirujano) y queda bloqueado; en Manual se
-                habilita. Mismo ancho que el resto de los campos del formulario. */}
+            {/* Mismo input siempre, igual que en Ayudante: en Automático muestra el valor de SU código (no el del cirujano) y queda bloqueado. */}
             <NumericInput
               className={styles.input}
               decimals min={0}

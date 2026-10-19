@@ -16,12 +16,10 @@ const ACCESOS: Acceso[] = [
   { icono: Newspaper, titulo: "Noticias", href: "/noticias" },
 ];
 
-/** Franja azul de la portada con los destinos más buscados. */
+/** Los destinos más buscados, como fichas de vidrio sobre la noche de la portada. */
 export default function AccesosRapidos() {
   return (
-    <Revelar como="section" className={styles.banda} aria-label="Accesos rápidos">
-      <div className={styles.circulo} aria-hidden="true" />
-
+    <Revelar como="section" className={styles.seccion} aria-label="Accesos rápidos">
       <h2 className={styles.titulo}>
         Accesos <em>rápidos</em>
       </h2>

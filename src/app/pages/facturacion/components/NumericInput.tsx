@@ -13,13 +13,7 @@ interface Props
   max?: number;
 }
 
-/**
- * Input numérico visualmente idéntico a los `type="number"` que reemplaza, pero
- * `type="text"` por debajo: bloquea cualquier tecleo que no sea un dígito (o un único
- * separador decimal en modo `decimals`), así se evita `e`/`+`/`-` y el cambio de valor
- * con la rueda del mouse que trae `type="number"`. El clamp de `min`/`max` se aplica
- * recién en `onBlur` — aplicarlo en cada tecla impediría vaciar el campo para retipear.
- */
+/** Input numérico visualmente idéntico a los `type="number"` que reemplaza, pero `type="text"` por debajo: bloquea cualquier tecleo que no sea un dígito. */
 const NumericInput: React.FC<Props> = ({
   value, onChange, decimals = false, min, max, onBlur, ...rest
 }) => {

@@ -1,0 +1,45 @@
+@use "@/website/styles/all.scss" as *;
+
+// Marcadores grises mientras carga, con la forma de la cabecera y la portada.
+.hueso {
+  display: block;
+  border-radius: 6px;
+  background: linear-gradient(90deg, $tono-azul-50-b 25%, $tono-azul-100 50%, $tono-azul-50-b 75%);
+  background-size: 200% 100%;
+  animation: brillo 1.4s ease-in-out infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+.huesoTitulo {
+  width: 100%;
+  height: 38px;
+}
+
+.huesoCorto {
+  width: 60%;
+}
+
+.huesoMeta {
+  width: 45%;
+  height: 16px;
+  margin-top: 8px;
+}
+
+.pagina > .huesoPortada {
+  width: min(100%, 980px);
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+}
+
+@keyframes brillo {
+  from {
+    background-position: 100% 0;
+  }
+
+  to {
+    background-position: -100% 0;
+  }
+}

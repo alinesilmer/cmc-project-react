@@ -1,11 +1,8 @@
 @use "@/app/styles/all.scss" as *;
 
-// Reportes y Estadísticas. La comparte el panel del Colegio y la vista del
-// médico: son la misma lectura con distinto alcance, así que no tiene sentido
-// mantener dos hojas que tienen que verse igual.
+// Reportes y Estadísticas. La comparte el panel del Colegio y la vista del médico: son la misma lectura con distinto alcance.
 
-// Cantos vivos, igual que el resto de las pantallas nuevas.
-$radius: 0;
+// Cantos de 6px, igual que el resto de las pantallas nuevas.
 
 .page {
   display: flex;
@@ -21,32 +18,106 @@ $radius: 0;
 }
 
 .content {
+  // El relleno va en variables porque la franja lo necesita para salirse de él.
+  --lado: #{$spacing-12};
+  --arriba: #{$spacing-6};
+
   flex: 1;
-  // Sin esto las tablas anchas estiran el item flex y aparece scroll horizontal
-  // en toda la página en vez de dentro de la tabla.
+  // Sin esto las tablas anchas estiran el item flex y aparece scroll horizontal en toda la página en vez de dentro de la tabla.
   min-width: 0;
-  padding: $spacing-10;
+  padding: var(--arriba) var(--lado) $spacing-10;
   display: flex;
   flex-direction: column;
   gap: $spacing-8;
-  background: linear-gradient(180deg, #f9fbff 0%, #f5f8fd 55%, #eef3fa 100%);
+  // Sin fondo propio: hereda el $gray-50 del body, como Inicio y Mi perfil.
 
   @media (max-width: 1200px) {
-    padding: $spacing-8;
+    --lado: #{$spacing-8};
+    --arriba: #{$spacing-8};
+    padding-bottom: $spacing-8;
     gap: $spacing-6;
   }
 
   @media (max-width: $breakpoint-md) {
-    padding: $spacing-5;
+    --lado: #{$spacing-5};
+    --arriba: #{$spacing-5};
+    padding-bottom: $spacing-5;
   }
 
   @media (max-width: 480px) {
-    padding: $spacing-4;
+    --lado: #{$spacing-4};
+    --arriba: #{$spacing-4};
+    padding-bottom: $spacing-4;
+  }
+}
+
+// ─── Franja ───────────────────────────────────────────────────────────────────
+
+// La misma franja azul de Validaciones y Padrones: título en crema, la trama de cruces y las solapas apoyadas en el borde.
+.franja {
+  @include franja-bloque;
+
+  // Del alto de todas las franjas con solapas; la cabecera se centra en el espacio que queda arriba de ellas.
+  & {
+    min-height: $franja-alto;
+  }
+
+  .head {
+    margin: auto 0;
+  }
+
+  .title {
+    @include titulo-franja;
+    color: $franja-crema;
+  }
+
+  .label {
+    color: $franja-crema;
+  }
+
+  .tabs {
+    align-items: flex-end;
+    gap: $spacing-2;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
+
+    @media (max-width: $breakpoint-md) {
+      overflow-x: auto;
+    }
+  }
+
+  .tab {
+    @include franja-solapa;
+
+    & {
+      flex: 0 0 auto;
+      height: auto;
+    }
+
+    &:hover {
+      color: $white;
+    }
+  }
+
+  // La elegida toma el color de la página que tiene debajo.
+  .tabOn,
+  .tabOn:hover {
+    @include franja-solapa-activa;
+    background: $gray-50;
+    border-color: $gray-50;
+
+    svg {
+      color: $franja-azul;
+    }
   }
 }
 
 // ─── Cabecera ─────────────────────────────────────────────────────────────────
 
+// Título en grande sobre el fondo, en el azul del sistema.
 .head {
   display: flex;
   align-items: flex-end;
@@ -57,11 +128,12 @@ $radius: 0;
 
 .title {
   margin: 0;
-  font-family: "Manrope", "Inter", sans-serif;
-  font-size: $font-size-3xl;
-  font-weight: $font-weight-bold;
-  color: $primary-blue-darker;
-  letter-spacing: -0.015em;
+  font-family: $fuente-titulos;
+  font-size: clamp(2rem, 4.6vw, 3.2rem);
+  font-weight: 800;
+  line-height: 1.02;
+  color: $primary-blue;
+  letter-spacing: -0.03em;
 }
 
 .subtitle {
@@ -87,16 +159,16 @@ $radius: 0;
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: $gray-500;
+  letter-spacing: 0.08em;
+  color: $primary-blue;
 }
 
 .input,
 .select {
-  height: 38px;
+  height: 2.375rem;
   padding: 0 $spacing-3;
   border: 1px solid $gray-300;
-  border-radius: $radius;
+  border-radius: $radio-md;
   background: $white;
   font-family: inherit;
   font-size: $font-size-base;
@@ -104,8 +176,8 @@ $radius: 0;
 
   &:focus {
     outline: none;
-    border-color: $accent-blue;
-    box-shadow: 0 0 0 3px rgba(90, 121, 225, 0.16);
+    border-color: $primary-blue;
+    box-shadow: 0 0 0 3px rgba($primary-blue, 0.16);
   }
 }
 
@@ -122,10 +194,21 @@ $radius: 0;
   background: $white;
   border: 1px solid $gray-200;
   border-top: 3px solid $primary-blue;
-  border-radius: $radius;
+  border-radius: $radio-md;
+  animation: $anim-fade-in 0.3s ease-out;
+
+  // El primero es la cifra principal: bloque azul del sistema.
+  &:first-child {
+    background: $primary-blue;
+    border-color: $primary-blue;
+
+    .kpiLabel { color: $primary-yellow; }
+    .kpiValue { color: $white; }
+    .kpiHint { color: rgba($white, 0.72); }
+  }
 }
 
-.kpiAccentGold { border-top-color: #c8a83c; }
+.kpiAccentGold { border-top-color: $tono-amarillo-250; }
 .kpiAccentBlue { border-top-color: $accent-blue; }
 .kpiAccentGreen { border-top-color: $success-green; }
 
@@ -134,18 +217,20 @@ $radius: 0;
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: $gray-500;
+  letter-spacing: 0.1em;
+  color: $gray-600;
 }
 
 .kpiValue {
   display: block;
-  margin-top: $spacing-2;
-  font-family: "Manrope", "Inter", sans-serif;
-  font-size: $font-size-3xl;
-  font-weight: $font-weight-bold;
+  margin-top: $spacing-3;
+  font-family: $fuente-titulos;
+  font-size: clamp(1.5rem, 2.4vw, 2.1rem);
+  font-weight: 800;
   color: $gray-900;
-  line-height: 1.1;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
   // Los importes largos no deben desarmar la grilla.
   overflow-wrap: anywhere;
 }
@@ -159,18 +244,39 @@ $radius: 0;
 
 // ─── Tarjetas / secciones ─────────────────────────────────────────────────────
 
+// Sin caja: la sección va sobre el fondo y la abre un filete oscuro.
 .card {
-  background: $white;
-  border: 1px solid $gray-200;
-  border-radius: $radius;
-  padding: $spacing-6;
+  padding: $spacing-5 0 0;
+  border-top: 2px solid $gray-900;
   display: flex;
   flex-direction: column;
   gap: $spacing-4;
   min-width: 0;
+  animation: $anim-fade-in 0.3s ease-out;
+}
 
-  @media (max-width: $breakpoint-md) {
-    padding: $spacing-4;
+// Los tres números del reporte por especialidad, en una tira.
+.totales {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-3 $spacing-10;
+  margin: 0;
+  padding: $spacing-4 $spacing-6;
+  color: $franja-crema;
+  background: $franja-azul;
+  border-radius: $radio-lg;
+
+  dt {
+    font-size: $font-size-sm;
+    opacity: 0.8;
+  }
+
+  dd {
+    margin: 0;
+    font-family: $fuente-titulos;
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-bold;
+    font-variant-numeric: tabular-nums;
   }
 }
 
@@ -184,9 +290,12 @@ $radius: 0;
 
 .cardTitle {
   margin: 0;
-  font-size: $font-size-xl;
-  font-weight: $font-weight-semibold;
-  color: $primary-blue-darker;
+  font-family: $fuente-titulos;
+  font-size: $font-size-3xl;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: $primary-blue;
 }
 
 .cardSub {
@@ -198,7 +307,7 @@ $radius: 0;
 .grid2 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
-  gap: $spacing-6;
+  gap: $spacing-8;
   align-items: start;
 
   @media (max-width: $breakpoint-md) {
@@ -209,10 +318,13 @@ $radius: 0;
 // ─── Tablas ───────────────────────────────────────────────────────────────────
 
 .tableWrap {
+  border-radius: $radio-md;
   // El scroll vive DENTRO de la tabla: la página nunca se mueve de costado.
   overflow-x: auto;
   min-width: 0;
   -webkit-overflow-scrolling: touch;
+  background: $white;
+  border: 1px solid $gray-200;
 }
 
 .table {
@@ -232,16 +344,21 @@ $radius: 0;
     font-size: $font-size-xs;
     font-weight: $font-weight-semibold;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: $gray-500;
-    background: $gray-50;
+    letter-spacing: 0.06em;
+    color: $white;
+    background: $primary-blue;
+    border-bottom: 0;
     position: sticky;
     top: 0;
     z-index: 1;
   }
 
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
   tbody tr:hover {
-    background: rgba(90, 121, 225, 0.05);
+    background: rgba($primary-blue, 0.05);
   }
 }
 
@@ -262,7 +379,8 @@ $radius: 0;
   background: none;
   padding: 0;
   font: inherit;
-  color: $primary-blue-lighter;
+  font-weight: $font-weight-semibold;
+  color: $primary-blue;
   cursor: pointer;
   text-align: left;
 
@@ -272,6 +390,7 @@ $radius: 0;
 }
 
 .rank {
+  border-radius: $radio-xs;
   display: inline-grid;
   place-items: center;
   width: 1.6rem;
@@ -283,8 +402,8 @@ $radius: 0;
 }
 
 .rankTop {
-  color: $primary-blue-darker;
-  background: $primary-yellow-light;
+  color: $primary-yellow;
+  background: $primary-blue;
 }
 
 // ─── Chips de estado ──────────────────────────────────────────────────────────
@@ -292,24 +411,27 @@ $radius: 0;
 .chip {
   display: inline-block;
   padding: 2px $spacing-2;
-  border-radius: $radius;
+  border-radius: $radio-md;
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
 }
 
-.chipAutorizada { background: #e6f4ea; color: #14682f; }
-.chipRechazada { background: #fdeaea; color: #a51f1f; }
-.chipPendiente { background: #fdf3e0; color: #8a5b06; }
+.chipAutorizada { background: $franja-perla; color: $tono-verde-550; }
+.chipRechazada { background: $tono-rojo-50; color: $tono-rojo-550-b; }
+.chipPendiente { background: $primary-yellow-light; color: $tono-naranja-450-b; }
 .chipCargada { background: $secondary-blue; color: $primary-blue-darker; }
 .chipNeutro { background: $gray-100; color: $gray-500; }
 
 // ─── Gráficos ─────────────────────────────────────────────────────────────────
 
 .chart {
+  border-radius: $radio-md;
   width: 100%;
-  // Alto fijo: Recharts necesita una altura concreta para el contenedor
-  // responsive, si no colapsa a 0.
+  // Alto fijo: Recharts necesita una altura concreta para el contenedor responsive, si no colapsa a 0.
   height: 17rem;
+  padding: $spacing-4 $spacing-3 $spacing-2;
+  background: $white;
+  border: 1px solid $gray-200;
 
   @media (max-width: $breakpoint-md) {
     height: 14rem;
@@ -317,6 +439,7 @@ $radius: 0;
 }
 
 .tooltip {
+  border-radius: $radio-md;
   background: $white;
   border: 1px solid $gray-300;
   padding: $spacing-3;
@@ -338,6 +461,7 @@ $radius: 0;
 // ─── Estados ──────────────────────────────────────────────────────────────────
 
 .skeleton {
+  border-radius: $radio-md;
   height: 4.6rem;
   background: linear-gradient(90deg, $gray-100 25%, $gray-200 37%, $gray-100 63%);
   background-size: 400% 100%;
@@ -354,6 +478,7 @@ $radius: 0;
 }
 
 .empty {
+  border-radius: $radio-md;
   padding: $spacing-8;
   text-align: center;
   font-size: $font-size-sm;
@@ -362,13 +487,14 @@ $radius: 0;
 }
 
 .error {
+  border-radius: $radio-md;
   display: flex;
   align-items: center;
   gap: $spacing-2;
   padding: $spacing-4;
-  border: 1px solid #fecaca;
-  background: #fef2f2;
-  color: #b91c1c;
+  border: 1px solid $tono-rojo-100;
+  background: $gray-100;
+  color: $tono-rojo-500;
   font-size: $font-size-sm;
 }
 
@@ -396,10 +522,10 @@ $radius: 0;
   display: inline-flex;
   align-items: center;
   gap: $spacing-1;
-  height: 34px;
+  height: 2.125rem;
   padding: 0 $spacing-3;
   border: 1px solid $gray-300;
-  border-radius: $radius;
+  border-radius: $radio-md;
   background: $white;
   font-size: $font-size-sm;
   color: $gray-700;
@@ -416,8 +542,7 @@ $radius: 0;
 }
 
 // ─── Panel embebido en el legajo del médico ───────────────────────────────────
-// No trae `.page` ni `.content`: vive dentro de la pestaña del perfil, que ya
-// pone su propio fondo y su padding.
+// No trae `.page` ni `.content`: vive dentro de la pestaña del perfil, que ya pone su propio fondo y su padding.
 
 .medicoPanel {
   display: flex;
@@ -429,14 +554,17 @@ $radius: 0;
 // ─── Selector de reporte ──────────────────────────────────────────────────────
 
 .tabs {
+  border-radius: $radio-md;
+  overflow: hidden;
   display: flex;
-  gap: $spacing-2;
+  gap: 0;
   flex-wrap: wrap;
-  padding-bottom: $spacing-1;
+  background: $white;
+  border: 1px solid $gray-200;
+  box-shadow: 0 8px 24px rgba($gray-900, 0.08);
 
   @media (max-width: $breakpoint-md) {
-    // En pantallas chicas la fila scrollea de costado en vez de envolverse:
-    // así el grupo se lee como una sola barra de opciones.
+    // En pantallas chicas la fila scrollea de costado en vez de envolverse: así el grupo se lee como una sola barra de opciones.
     flex-wrap: nowrap;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -447,18 +575,27 @@ $radius: 0;
   display: inline-flex;
   align-items: center;
   gap: $spacing-2;
-  flex-shrink: 0;
-  height: 40px;
-  padding: 0 $spacing-4;
-  border: 1px solid $gray-200;
-  border-radius: $radius;
-  background: $white;
+  justify-content: center;
+  flex: 1 0 auto;
+  height: 3.25rem;
+  padding: 0 $spacing-5;
+  border: 0;
+  border-radius: $radio-md;
+  background: transparent;
   font-family: inherit;
   font-size: $font-size-base;
-  font-weight: $font-weight-medium;
+  font-weight: $font-weight-semibold;
   color: $gray-600;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease;
+
+  svg {
+    transition: transform 0.2s ease;
+  }
+
+  &:hover svg {
+    transform: translateY(-2px);
+  }
 
   &:hover {
     background: $gray-50;
@@ -467,7 +604,7 @@ $radius: 0;
 
   &:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(90, 121, 225, 0.2);
+    box-shadow: 0 0 0 3px rgba($accent-blue, 0.2);
   }
 }
 
@@ -477,8 +614,12 @@ $radius: 0;
   color: $white;
   font-weight: $font-weight-semibold;
 
+  svg {
+    color: $primary-yellow;
+  }
+
   &:hover {
-    background: $primary-blue-lighter;
+    background: $primary-blue-darker;
     color: $white;
   }
 }
@@ -499,12 +640,12 @@ $radius: 0;
 }
 
 .searchInput {
-  height: 38px;
+  height: 2.375rem;
   width: 100%;
   min-width: 12rem;
   padding: 0 2rem 0 2.1rem;
   border: 1px solid $gray-300;
-  border-radius: $radius;
+  border-radius: $radio-md;
   background: $white;
   font-family: inherit;
   font-size: $font-size-base;
@@ -512,8 +653,8 @@ $radius: 0;
 
   &:focus {
     outline: none;
-    border-color: $accent-blue;
-    box-shadow: 0 0 0 3px rgba(90, 121, 225, 0.16);
+    border-color: $primary-blue;
+    box-shadow: 0 0 0 3px rgba($primary-blue, 0.16);
   }
 
   // Chrome dibuja su propia X en los input[type=search]; se usa la nuestra.
@@ -546,13 +687,15 @@ $radius: 0;
 // ─── Filtro activo (drill-down) ───────────────────────────────────────────────
 
 .filtroActivo {
+  border-radius: $radio-md;
   display: inline-flex;
   align-items: center;
   gap: $spacing-2;
   padding: $spacing-2 $spacing-3;
-  background: $secondary-blue;
-  border: 1px solid rgba(90, 121, 225, 0.3);
+  background: $primary-yellow;
+  border-left: 3px solid $primary-blue;
   font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
   color: $primary-blue-darker;
 }
 
@@ -568,5 +711,17 @@ $radius: 0;
 
   &:hover {
     opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kpi,
+  .card {
+    animation: none;
+  }
+
+  .tab,
+  .tab svg {
+    transition: none;
   }
 }

@@ -19,12 +19,7 @@ type Props = {
   acciones?: ReactNode;
 };
 
-/**
- * Cabecera de página: tarjeta blanca con el título a la izquierda y el panel
- * azul con el lema a la derecha. En el celular el panel pasa arriba como
- * franja. Reemplaza a los heros con foto de fondo, que pesaban cientos de KB
- * y tapaban el contenido.
- */
+/** Cabecera de página: tarjeta blanca con el título a la izquierda y el panel azul con el lema a la derecha. */
 export default function CabeceraFresca({ titulo, bajada, lema, destacados = [], compacto = false, children, acciones }: Props) {
   return (
     <section className={`${styles.cabecera} ${compacto ? styles.compacta : ""}`}>

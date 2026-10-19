@@ -1,7 +1,4 @@
 // Espejo de app/modules/reportes/schemas.py.
-//
-// Todo lo que devuelve el módulo son AGREGADOS calculados en la base, salvo
-// `PrestacionReporte`, que es el único listado fila por fila (y va paginado).
 
 export interface ResumenReporte {
   periodo: string;
@@ -138,18 +135,12 @@ export function moneyCompacto(v: number): string {
 
 // ─── Tamaño del ranking ───────────────────────────────────────────────────────
 
-/**
- * Sobre cuántos registros se arma un ranking.
- *
- * `0` = todos, acotado por el tope del servidor. Cambia lo que se PIDE a la
- * API, no lo que se filtra en pantalla: pedir 200 para mostrar 5 desperdicia
- * la consulta y hace más lenta la vista.
- */
+/** Sobre cuántos registros se arma un ranking. */
 export const TOPES = [5, 10, 25, 50, 0] as const;
 export type Tope = (typeof TOPES)[number];
 
 /** Espejo de `service.MAX_LIMIT` del backend: "Todos" no puede pasarse de acá. */
-export const TOPE_MAXIMO = 200;
+const TOPE_MAXIMO = 200;
 
 export const aLimite = (t: Tope): number => (t === 0 ? TOPE_MAXIMO : t);
 

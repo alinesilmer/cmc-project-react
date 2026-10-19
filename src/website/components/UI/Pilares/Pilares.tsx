@@ -8,22 +8,21 @@ export type Pilar = { icono: LucideIcon; titulo: string; texto?: string };
 type Props = {
   items: Pilar[];
   /** En escritorio; en el celular siempre va una debajo de la otra. */
-  columnas?: 1 | 2;
+  columnas?: 1 | 2 | 3;
   /** `false` para lo que está arriba de todo y anima apenas se monta. */
   alVerse?: boolean;
   /** Segundos antes de que entre la primera. */
   retraso?: number;
   className?: string;
+  /** Sobre fondo azul oscuro (la portada): fichas translúcidas con el ícono en dorado. */
+  oscuro?: boolean;
 };
 
-/**
- * Filas con ícono azul, una palabra fuerte y, si hace falta, una línea: qué hace el Colegio
- * en Nosotros, por qué asociarse en la portada.
- */
-export default function Pilares({ items, columnas = 1, alVerse = true, retraso = 0, className }: Props) {
+/** Filas con ícono azul, una palabra fuerte y, si hace falta, una línea: qué hace el Colegio en Nosotros, por qué asociarse en la portada. */
+export default function Pilares({ items, columnas = 1, alVerse = true, retraso = 0, className, oscuro = false }: Props) {
   return (
     <ul
-      className={`${styles.pilares} ${className ?? ""}`}
+      className={`${styles.pilares} ${oscuro ? styles.oscuro : ""} ${className ?? ""}`}
       style={{ "--columnas": columnas } as React.CSSProperties}
     >
       {items.map(({ icono: Icono, titulo, texto }, i) => (

@@ -1,3 +1,6 @@
+import { formatMoney } from "@/app/shared/lib/utiles";
+import { monthLabel } from "@/app/shared/lib/utiles";
+
 export type DeduccionEstado =
   | "pendiente"
   | "vencida"
@@ -5,7 +8,7 @@ export type DeduccionEstado =
   | "aplicado"
   | "eliminado";
 
-export type DeduccionOrigen = "manual" | "automatico";
+type DeduccionOrigen = "manual" | "automatico";
 
 export type DeduccionHistorialItem = {
   id: number;
@@ -32,13 +35,6 @@ export type DeduccionHistorialResponse = {
   size: number;
   items: DeduccionHistorialItem[];
   monto_total: number;
-};
-
-export type TopDeudorItem = {
-  medico_id: number;
-  medico_nombre: string;
-  nro_socio: number;
-  saldo_total: string;
 };
 
 export type DeduccionCreatePayload = {
@@ -106,16 +102,7 @@ export const MESES = [
   "Noviembre",
   "Diciembre",
 ];
+export { monthLabel };
 
-export const monthLabel = (month: number | null, year: number | null): string => {
-  if (!month || !year) return "—";
-  return `${String(month).padStart(2, "0")}/${year}`;
-};
+export { formatMoney };
 
-export const formatMoney = (value: string | number | null | undefined): string =>
-  Number(value ?? 0).toLocaleString("es-AR", {
-    style: "currency",
-    currency: "ARS",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });

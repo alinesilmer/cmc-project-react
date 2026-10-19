@@ -1,0 +1,74 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver SearchField.tsx. La píldora blanca de Validaciones, para todo el panel.
+
+.buscador {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+  width: min(100%, 34rem);
+  height: 3rem;
+  padding: 0 $spacing-5;
+  background: $white;
+  border: 1px solid $gray-300;
+  border-radius: 999px;
+  color: $gray-500;
+  transition: border-color 0.18s, box-shadow 0.18s;
+
+  &:focus-within {
+    border-color: $franja-azul;
+    box-shadow: 0 0 0 3px rgba($franja-azul, 0.14);
+    color: $franja-azul;
+  }
+
+  &:has(input:disabled) {
+    opacity: 0.6;
+  }
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: $font-size-lg;
+    color: $gray-900;
+
+    &::placeholder {
+      color: $gray-400;
+    }
+
+    // La cruz nativa de type=search duplicaría la nuestra.
+    &::-webkit-search-cancel-button {
+      appearance: none;
+    }
+  }
+}
+
+.ancho {
+  width: 100%;
+}
+
+.borrar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  color: $gray-500;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+
+  &:hover {
+    color: $gray-900;
+    background: $gray-100;
+  }
+}

@@ -1,9 +1,8 @@
 import type React from "react";
 import { useMemo } from "react";
-import { Download, ShieldCheck } from "lucide-react";
+import { BadgeCheck, Download, ShieldCheck } from "lucide-react";
 
-// Escudo recortado y con fondo transparente. `logoCMC.png` NO sirve acá: viene
-// sobre fondo negro, y sobre el azul de la tarjeta se vería un cuadrado negro.
+// Escudo recortado y con fondo transparente.
 import escudo from "../../assets/escudoCMC.png";
 import styles from "./Credencial.module.scss";
 
@@ -17,6 +16,8 @@ interface Props {
   especialidad?: string | null;
   /** `EXISTE === 'S'` en el legajo. */
   activo: boolean;
+  /** `false` para el personal del Colegio (INGRESAR distinto de 'D'). */
+  esMedico?: boolean;
 }
 
 /** 12867493 → "12.867.493". Vacío si no hay documento cargado. */
@@ -27,26 +28,21 @@ function formatearDocumento(doc?: string | number | null): string {
   return Number(soloDigitos).toLocaleString("es-AR");
 }
 
-/**
- * Credencial profesional del socio.
- *
- * Es la misma tarjeta que muestra la app móvil, para que el médico vea lo mismo
- * en los dos lados. En el sistema viejo esto era un PDF que se descargaba
- * (`credencial_pdf.php`, FPDF); acá se muestra en pantalla y el botón abre el
- * diálogo de impresión, que en Chrome permite guardarla como PDF.
- *
- * No inventa datos: todo sale del legajo. Si falta el documento o la
- * especialidad, se muestra el guion o se omite la línea.
- */
+/** Credencial profesional del socio. */
 const Credencial: React.FC<Props> = ({
   nombre,
   sexo,
   documento,
   especialidad,
   activo,
+  esMedico = true,
 }) => {
-  // Mismo criterio que el PDF legacy: 'F' → Dra., cualquier otra cosa → Dr.
-  const titulo = String(sexo ?? "").trim().toUpperCase() === "F" ? "Dra." : "Dr.";
+  // Mismo criterio que el PDF legacy: 'F' → Dra., cualquier otra cosa → Dr. El personal del Colegio también tiene legajo.
+  const titulo = !esMedico
+    ? ""
+    : String(sexo ?? "").trim().toUpperCase() === "F"
+      ? "Dra."
+      : "Dr.";
 
   const emitida = useMemo(
     () =>
@@ -84,10 +80,17 @@ const Credencial: React.FC<Props> = ({
         <img className={styles.escudo} src={escudo} alt="" aria-hidden="true" />
 
         <h3 className={styles.nombre}>
-          {titulo} {nombre}
+          {titulo ? `${titulo} ${nombre}` : nombre}
         </h3>
 
-        {especialidad && <p className={styles.especialidad}>{especialidad}</p>}
+        {esMedico
+          ? especialidad && <p className={styles.especialidad}>{especialidad}</p>
+          : (
+            <p className={styles.personal}>
+              <BadgeCheck size={14} strokeWidth={2.4} aria-hidden="true" />
+              Personal de Colegio Médico
+            </p>
+          )}
 
         <div className={styles.pie}>
           <div className={styles.dato}>
@@ -110,8 +113,8 @@ const Credencial: React.FC<Props> = ({
 
       <p className={styles.leyenda}>
         <ShieldCheck size={15} />
-        Documento válido como credencial profesional del Colegio Médico de
-        Corrientes. Emitida el {emitida}.
+        Documento válido como credencial {esMedico ? "profesional" : "del personal"} del
+        Colegio Médico de Corrientes. Emitida el {emitida}.
       </p>
     </div>
   );

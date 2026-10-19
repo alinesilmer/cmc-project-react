@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import ObraSocialAutocomplete from "../../components/ObraSocialAutocomplete";
 import type { ObraSocialOption, PeriodoActivoResponse } from "../../types";
 import styles from "../CargaFacturacion.module.scss";
+import { AlertTriangle } from "lucide-react";
 
 /** "202606" → "2026-06" (input type=month). */
 const periodoToMonthInput = (periodo: string) =>
@@ -15,8 +16,7 @@ const MESES = [
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
 ];
 
-/** "202606" → "Junio 2026". Fallback simple para períodos editados a mano, que no
- *  traen `periodo_label` del backend (ese label solo viene con el automático). */
+/** "202606" → "Junio 2026". */
 const periodoLabel = (periodo: string) => {
   const anio = periodo.slice(0, 4);
   const mes = Number(periodo.slice(4, 6));
@@ -42,8 +42,7 @@ const DatosGeneralesSection: React.FC<Props> = ({
 }) => {
   const [editando, setEditando] = useState(false);
 
-  // El automático es el piso: un período editado no puede ser anterior (el backend
-  // devuelve 422 si se manda uno menor a "último cerrado + 1").
+  // El automático es el piso: un período editado no puede ser anterior.
   const automatico = periodo?.periodo ?? null;
   const fueraDeRango = !!automatico && !!periodoOverride && periodoOverride < automatico;
 
@@ -63,8 +62,7 @@ const DatosGeneralesSection: React.FC<Props> = ({
             value={obraSocial?.nro_obra_social ?? null}
             onChange={(nro, os) => {
               onObraSocialChange(nro, os);
-              // El automático de la OS nueva puede ser cualquier otro período: el
-              // override anterior deja de tener sentido.
+              // El automático de la OS nueva puede ser cualquier otro período: el override anterior deja de tener sentido.
               onPeriodoOverrideChange(null);
               setEditando(false);
             }}
@@ -83,9 +81,7 @@ const DatosGeneralesSection: React.FC<Props> = ({
           ) : (
             <span className={styles.mutedText}>— (seleccioná una obra social)</span>
           )}
-          {/* Sin automático (obra social sin período cerrado previo, ver periodoError)
-             * no hay nada que ofrecer como sugerencia — pero el operador igual tiene que
-             * poder elegir uno a mano, así que el botón se habilita igual en ese caso. */}
+          {/* Sin automático (obra social sin período cerrado previo, ver periodoError) no hay nada que ofrecer como sugerencia . */}
           {(automatico || periodoError) && !editando && (
             <button
               type="button"
@@ -129,7 +125,7 @@ const DatosGeneralesSection: React.FC<Props> = ({
           )}
         </div>
       </div>
-      {periodoError && <div className={styles.errorBox}>⚠ {periodoError}</div>}
+      {periodoError && <div className={styles.errorBox}><AlertTriangle size={14} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> {periodoError}</div>}
     </div>
   );
 };

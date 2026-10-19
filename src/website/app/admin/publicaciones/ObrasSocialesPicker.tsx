@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { listObrasSocialesPublicas, OBRAS_SOCIALES_KEY } from "../../../lib/obrasSociales.client";
 import { coincide } from "../../../lib/texto";
 import styles from "./ObrasSocialesPicker.module.scss";
+import Button from "@/website/components/UI/Button/Button";
 
 type Props = {
   /** NRO_OBRASOCIAL ya asociados. */
@@ -11,14 +12,7 @@ type Props = {
   onChange: (nros: number[]) => void;
 };
 
-/**
- * Selector de obras sociales alcanzadas por una norma operativa.
- *
- * Es lo que consulta después el boletín de consulta común: la etiqueta decide
- * cómo se muestra la noticia, esta lista decide a qué obra social le
- * corresponde. Sin esto la norma se publica igual, pero no aparece en el
- * boletín.
- */
+/** Selector de obras sociales alcanzadas por una norma operativa. */
 export default function ObrasSocialesPicker({ value, onChange }: Props) {
   const [busqueda, setBusqueda] = useState("");
 
@@ -31,8 +25,7 @@ export default function ObrasSocialesPicker({ value, onChange }: Props) {
 
   const seleccionadas = useMemo(() => new Set(value), [value]);
 
-  // Las elegidas siempre visibles arriba; el resto se filtra por el buscador,
-  // que hace falta porque el padrón pasa las 300 obras sociales.
+  // Las elegidas siempre visibles arriba; el resto se filtra por el buscador, que hace falta porque el padrón pasa las 300 obras sociales.
   const filtradas = useMemo(
     () => opciones.filter((o) => coincide(busqueda, [o.nombre, String(o.nro)])),
     [opciones, busqueda]
@@ -47,7 +40,7 @@ export default function ObrasSocialesPicker({ value, onChange }: Props) {
       {elegidas.length > 0 && (
         <div className={styles.osChips}>
           {elegidas.map((o) => (
-            <button
+            <Button variant="plano"
               key={o.nro}
               type="button"
               className={styles.osChip}
@@ -55,7 +48,7 @@ export default function ObrasSocialesPicker({ value, onChange }: Props) {
               aria-label={`Quitar ${o.nombre}`}
             >
               {o.nombre} <X size={12} aria-hidden="true" />
-            </button>
+            </Button>
           ))}
         </div>
       )}

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Send } from "lucide-react";
 import { MAX_MENSAJE } from "./chatbot.engine";
 import styles from "./EntradaChat.module.scss";
+import Button from "@/website/components/UI/Button/Button";
 
 type Chip = { key: string; label: string };
 
@@ -19,8 +20,7 @@ export default function EntradaChat({ chips, mostrarChips, onChip, onEnviar, ocu
   const [texto, setTexto] = useState("");
   const input = useRef<HTMLInputElement>(null);
 
-  // Se monta al abrir el chat: el foco va directo a la caja de texto, después
-  // de que termina la animación de entrada.
+  // Se monta al abrir el chat: el foco va directo a la caja de texto, después de que termina la animación de entrada.
   useEffect(() => {
     const t = setTimeout(() => input.current?.focus(), 120);
     return () => clearTimeout(t);
@@ -37,9 +37,9 @@ export default function EntradaChat({ chips, mostrarChips, onChip, onEnviar, ocu
       {mostrarChips && (
         <div className={styles.chips} role="group" aria-label="Temas frecuentes">
           {chips.map((chip) => (
-            <button key={chip.key} className={styles.chip} onClick={() => onChip(chip.key)} type="button">
+            <Button variant="plano" key={chip.key} className={styles.chip} onClick={() => onChip(chip.key)} type="button">
               {chip.label}
-            </button>
+            </Button>
           ))}
         </div>
       )}
@@ -58,9 +58,9 @@ export default function EntradaChat({ chips, mostrarChips, onChip, onEnviar, ocu
           autoCorrect="off"
           spellCheck={false}
         />
-        <button type="submit" className={styles.sendBtn} disabled={!texto.trim() || ocupado} aria-label="Enviar mensaje">
+        <Button variant="plano" type="submit" className={styles.sendBtn} disabled={!texto.trim() || ocupado} aria-label="Enviar mensaje">
           <Send aria-hidden="true" />
-        </button>
+        </Button>
       </form>
     </>
   );

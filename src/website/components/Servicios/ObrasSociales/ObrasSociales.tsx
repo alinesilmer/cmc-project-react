@@ -16,12 +16,7 @@ type Props = {
 const VACIAS = new Set(["OBRA", "SOCIAL", "DE", "DEL", "LA", "LOS", "Y", "EL", "OS", "SA", "SRL"]);
 const TONOS = 4;
 
-/**
- * Las iniciales del monograma: la sigla entera cuando el nombre empieza con
- * una (IOSFA, OSPPRA, «OSPIL (Industria Lechera)») y si no, la inicial de las
- * dos primeras palabras que dicen algo (Swiss Medical → SM). Con la inicial
- * sola, todas las «OS…» decían «OS».
- */
+/** Las iniciales del monograma: la sigla entera cuando el nombre empieza con una (IOSFA, OSPPRA, «OSPIL (Industria Lechera)») y si no. */
 function monograma(nombre: string): string {
   const palabras = nombre
     .toUpperCase()

@@ -1,9 +1,4 @@
 // Navegación por teclado del formulario de carga.
-//
-// El foco se resuelve buscando en el DOM (`data-field`) y no con refs por campo: el
-// recorrido de "Enter avanza" necesita el orden real de los campos, que cambia solo
-// cuando aparece/desaparece la sección de ayudantes o se deshabilita un campo. Un
-// único mecanismo para foco y recorrido.
 
 export type FocusField =
   | "medico"
@@ -14,17 +9,7 @@ export type FocusField =
   | "codigo"
   | "guardar";
 
-/**
- * Enfoca el primer campo de la lista que exista y sea enfocable, en el orden dado.
- * Los campos se ubican por su `data-field`.
- *
- * La lista es de candidatos, no de campos garantizados: después de guardar, el primer
- * campo vacío depende de los checkboxes de "Mantener entre cargas" **y** de qué
- * secciones están montadas (en una complementaria la obra social va en el badge y no
- * hay input; el médico ejecutor sólo existe si el payee es una clínica). Pasar todos
- * los candidatos y caer al siguiente evita el caso peor: que el foco no quede en
- * ningún lado porque el campo elegido no estaba en pantalla.
- */
+/** Enfoca el primer campo de la lista que exista y sea enfocable, en el orden dado. */
 export function focusFirstField(
   container: HTMLElement | null,
   fields: FocusField[],
@@ -62,15 +47,7 @@ function isFocusable(el: HTMLElement): boolean {
   return el.getClientRects().length > 0;
 }
 
-/**
- * Siguiente campo a enfocar desde `current`, en orden de DOM.
- *
- * Sólo recorre campos de entrada — **nunca botones**. El pie tiene "Guardar" y
- * "Limpiar", y Paciente tiene "+ Agregar afiliado" pegado al campo: si los botones
- * entraran al recorrido, un Enter de más borraría el formulario o abriría un modal.
- * Cuando no queda campo siguiente devolvemos el botón Guardar, que es la salida
- * natural y deja el disparo final en manos del operador.
- */
+/** Siguiente campo a enfocar desde `current`, en orden de DOM. */
 export function nextFocusable(
   container: HTMLElement | null,
   current: HTMLElement,
@@ -83,8 +60,7 @@ export function nextFocusable(
     ),
   ).filter(isFocusable);
 
-  // Un grupo de radios es una sola parada, igual que con Tab: nos quedamos con el
-  // marcado (o el primero) para no frenar dos veces en Automático/Manual.
+  // Un grupo de radios es una sola parada, igual que con Tab: nos quedamos con el marcado.
   const fields = all.filter((el) => {
     const input = el as HTMLInputElement;
     if (input.type !== "radio" || !input.name) return true;

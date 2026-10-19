@@ -5,8 +5,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 1.5rem;
+  height: 1.5rem;
   padding: 0;
   border: 1px solid transparent;
   border-radius: $radio-md;
@@ -16,13 +16,13 @@
   transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
 
   &:hover {
-    color: #574e76;
-    background: #f2effa;
+    color: $tono-violeta-550-c;
+    background: $franja-perla;
     border-color: #d6d1eac0;
   }
 
   &:focus-visible {
-    outline: 2px solid #574e76;
+    outline: 2px solid $tono-violeta-550-c;
     outline-offset: 1px;
   }
 }

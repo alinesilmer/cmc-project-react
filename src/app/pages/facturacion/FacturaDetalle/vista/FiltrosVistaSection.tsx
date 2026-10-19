@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import type { Tipo } from "../../types";
 import type { FiltrosVista } from "./types";
 import s from "../export/export.module.scss";
+import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
 
 const TIPOS: Tipo[] = ["Consulta", "Practica", "Honorarios individuales", "Sanatorio"];
 
@@ -50,18 +51,16 @@ export default function FiltrosVistaSection({ filtros, onChange, prestadores }: 
         <div className={s.filterRow2}>
           <div className={s.filterField}>
             <label className={s.filterLabel}>Fecha desde</label>
-            <input
-              type="date" className={s.filterInput}
+            <CampoFecha
               value={filtros.fecha_desde ?? ""}
-              onChange={(e) => set("fecha_desde", e.target.value || undefined)}
+              onChange={(valor) => set("fecha_desde", valor || undefined)}
             />
           </div>
           <div className={s.filterField}>
             <label className={s.filterLabel}>Fecha hasta</label>
-            <input
-              type="date" className={s.filterInput}
+            <CampoFecha
               value={filtros.fecha_hasta ?? ""}
-              onChange={(e) => set("fecha_hasta", e.target.value || undefined)}
+              onChange={(valor) => set("fecha_hasta", valor || undefined)}
             />
           </div>
         </div>

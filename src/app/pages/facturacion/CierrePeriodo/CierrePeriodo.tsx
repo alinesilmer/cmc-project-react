@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FileCheck2, ArrowLeft, Paperclip } from "lucide-react";
+import { FileCheck2, Paperclip, AlertTriangle } from "lucide-react";
 
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
 import { previewCierre, cerrarPeriodo, fetchPeriodoActivo } from "../api";
@@ -11,6 +11,7 @@ import { formatMoney } from "../money";
 import ObraSocialAutocomplete from "../components/ObraSocialAutocomplete";
 import ConfirmarCierreModal from "./ConfirmarCierreModal";
 import styles from "./CierrePeriodo.module.scss";
+import BackButton from "@/app/components/ui/BackButton/BackButton";
 
 const TIPOS_FACTURA = ["A", "B", "C"];
 
@@ -102,9 +103,7 @@ const CierrePeriodo: React.FC = () => {
           <p className={styles.subtitle}>Cierre de período — genera la factura y habilita la liquidación.</p>
         </div>
         <div className={styles.headerRight}>
-          <button type="button" className={styles.backBtn} onClick={() => navigate("/panel/facturacion/periodos")}>
-            <ArrowLeft size={15} /> Volver
-          </button>
+          <BackButton to="/panel/facturacion/periodos" />
         </div>
       </div>
 
@@ -220,7 +219,7 @@ const CierrePeriodo: React.FC = () => {
 
         <div className={styles.section}>
           <div className={styles.warningBox}>
-            ⚠ El cierre es <strong>IRREVERSIBLE</strong>: genera la factura, pasa las prestaciones
+            <AlertTriangle size={14} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> El cierre es <strong>IRREVERSIBLE</strong>: genera la factura, pasa las prestaciones
             de estado A → C y las habilita para liquidación.
           </div>
         </div>

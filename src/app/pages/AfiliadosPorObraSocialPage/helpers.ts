@@ -1,13 +1,15 @@
 import type { ObraSocial, Prestador } from "./types";
+import { safeStr } from "@/app/shared/lib/utiles";
 
-/**
- * INT32 max (2^31 − 1 = 2 147 483 647).
- * Some backends / ORMs store this as a NOT NULL default when the real
- * DB value is NULL (e.g. a SMALLINT/INT phone column with no value).
- * We treat it as "empty".
-
- */
+/** INT32 max (2^31 − 1 = 2 147 483 647). */
 const INT32_MAX = 2_147_483_647;
+
+/** Fecha como se lee en un documento: DD/MM/AAAA. (`fmtDate` es para nombres de archivo.) */
+export function fmtFechaVisible(d: Date): string {
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  return `${dd}/${mm}/${d.getFullYear()}`;
+}
 
 export function fmtDate(d: Date): string {
   const yyyy = d.getFullYear();
@@ -22,17 +24,9 @@ export const normalize = (s: string): string =>
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .trim();
+export { safeStr };
 
-export function safeStr(v: unknown): string {
-  if (v === null || v === undefined) return "";
-  return String(v);
-}
-
-/**
- * Sanitises a phone field.
- * Rejects INT32_MAX sentinel values that backends use for NULL phone numbers.
- * Always returns a string so the value is safe to render or export.
- */
+/** Sanitises a phone field. */
 export function sanitizePhone(v: unknown): string {
   const s = safeStr(v).trim();
   if (!s) return "";
@@ -79,20 +73,12 @@ export function pickCodigoPostal(p: Prestador): string {
   return safeStr(p.codigo_postal ?? "");
 }
 
-/** Prestador inactivo en el padrón de esa obra social (MARCA = "N").
- *
- *  Es distinto de la baja del Colegio (`listado_medico.EXISTE`): un médico
- *  puede seguir siendo socio y estar de baja en una obra social puntual. Este
- *  es el estado que define si figura en ese padrón. */
+/** Prestador inactivo en el padrón de esa obra social (MARCA = "N"). */
 export function esInactivoEnPadron(p: { marca?: string | null }): boolean {
   return safeStr(p.marca).trim().toUpperCase() === "N";
 }
 
-/** ISO (YYYY-MM-DD) → DD/MM/AAAA, sin construir un Date.
- *
- *  Nada de `new Date(iso)`: sobre una fecha sin hora el navegador asume UTC y
- *  al formatearla en horario argentino resta un día. La base además guarda
- *  `0000-00-00` en los registros sin cargar. */
+/** ISO (YYYY-MM-DD) → DD/MM/AAAA, sin construir un Date. */
 export function fmtFechaCorta(v: unknown): string {
   const s = safeStr(v).slice(0, 10);
   if (!s || s.startsWith("0000")) return "";

@@ -1,6 +1,7 @@
 // src/app/register/hooks/useRegisterForm.ts
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useNotify } from "@/app/hooks/useNotify";
 import type { RegisterFormData, SpecialtyItem } from "@/app/types/register";
 import arPlaces from "@/app/shared/data/ar-provinces-localities.json";
 
@@ -32,6 +33,7 @@ export function useRegisterForm(
   opts?: { showAdherentePrompt?: boolean }
 ) {
   const navigate = useNavigate();
+  const notify = useNotify();
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [formData, setFormData] = useState<RegisterFormData>({
@@ -219,7 +221,7 @@ export function useRegisterForm(
         e?.response?.data?.detail ??
         e?.message ??
         "No se pudo guardar el borrador";
-      alert(typeof msg === "string" ? msg : JSON.stringify(msg));
+      notify.error(typeof msg === "string" ? msg : JSON.stringify(msg));
       console.error("saveAndContinue error:", e);
     }
   };
@@ -295,7 +297,7 @@ export function useRegisterForm(
           e?.response?.data?.detail ??
           e?.message ??
           "No se pudo enviar la solicitud";
-        alert(typeof msg === "string" ? msg : JSON.stringify(msg));
+        notify.error(typeof msg === "string" ? msg : JSON.stringify(msg));
         console.error("register (public) error:", e);
       }
       return;

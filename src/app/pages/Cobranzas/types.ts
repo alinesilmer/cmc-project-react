@@ -1,11 +1,5 @@
-export type CobranzasResumen = {
-  saldo_total: string;
-  saldo_liquidacion: string;
-  saldo_caja: string;
-  medicos_con_deuda: number;
-  conceptos_con_deuda: number;
-  cuotas_impagas: number;
-};
+import { formatMoney } from "@/app/shared/lib/utiles";
+import { monthLabel } from "@/app/shared/lib/utiles";
 
 export type CobranzaPorConceptoItem = {
   descuento_id: number;
@@ -18,7 +12,7 @@ export type CobranzaPorConceptoItem = {
   periodo_mas_antiguo: string | null; // "MM/AAAA"
 };
 
-export type CobranzaMedicoDeudorItem = {
+type CobranzaMedicoDeudorItem = {
   medico_id: number;
   nro_socio: number;
   medico_nombre: string;
@@ -40,7 +34,7 @@ export type CobranzaMedicosPage = {
   items: CobranzaMedicoDeudorItem[];
 };
 
-export type CobranzaCuotaItem = {
+type CobranzaCuotaItem = {
   deduccion_id: number;
   descuento_id: number;
   descuento_nombre: string;
@@ -62,7 +56,7 @@ export type CobranzaMedicoDetalle = {
   cuotas: CobranzaCuotaItem[];
 };
 
-export type CobranzaSocioDeudorItem = {
+type CobranzaSocioDeudorItem = {
   medico_id: number;
   nro_socio: number;
   medico_nombre: string;
@@ -96,18 +90,7 @@ export type CobranzaExportRow = {
   paga_por_caja: boolean;
   estado: string;
 };
+export { formatMoney };
 
-export type OrigenFiltro = "" | "liquidacion" | "caja";
+export { monthLabel };
 
-export const formatMoney = (value: string | number | null | undefined): string =>
-  Number(value ?? 0).toLocaleString("es-AR", {
-    style: "currency",
-    currency: "ARS",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-
-export const monthLabel = (month: number | null, year: number | null): string => {
-  if (!month || !year) return "—";
-  return `${String(month).padStart(2, "0")}/${year}`;
-};

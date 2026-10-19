@@ -46,8 +46,7 @@ export default function BeneficiosPage() {
     staleTime: 10 * 60 * 1000,
   });
 
-  // Las categorías salen de lo que realmente vino: un filtro con opciones
-  // vacías es peor que no tenerlo.
+  // Las categorías salen de lo que realmente vino: un filtro con opciones vacías es peor que no tenerlo.
   const categorias = useMemo(
     () => [TODAS, ...Array.from(new Set(items.map((b) => b.categoria))).sort((a, b) => a.localeCompare(b, "es"))],
     [items]

@@ -8,11 +8,7 @@ const MENSAJE = "Hola, olvidé mi contraseña del sistema del Colegio Médico. M
 
 type Props = { abierta: boolean };
 
-/**
- * Qué hacer si no recuerda la contraseña. No hay recuperación automática: la
- * blanquea el área de Padrones (POST /api/medicos/{id}/reset-password), así que
- * esto explica el camino y deja el WhatsApp a un toque.
- */
+/** Qué hacer si no recuerda la contraseña. */
 export default function AyudaPassword({ abierta }: Props) {
   return (
     <AnimatePresence initial={false}>

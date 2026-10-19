@@ -7,6 +7,8 @@ import {
   FileCode2,
   LayoutDashboard,
   ListOrdered,
+  Receipt,
+  Stethoscope,
   Users,
   X,
   type LucideIcon,
@@ -20,7 +22,6 @@ import {
   getMedicosDeCodigo,
   getObrasSociales,
   getPrestaciones,
-  getResumen,
 } from "./reportes.api";
 import type {
   CodigoStat,
@@ -41,14 +42,12 @@ import {
   type ValidacionEstado,
 } from "./reportes.types";
 import {
-  BotonesExportar,
   Buscador,
   Cargando,
   ErrorBox,
   EstadoChip,
   GraficoEvolucion,
   GraficoRanking,
-  Kpi,
   Pager,
   PagerSimple,
   SelectorMesAnio,
@@ -56,19 +55,30 @@ import {
   Vacio,
   type BarraDato,
 } from "./ReportesUI";
-import { exportarCsv, exportarExcel, nombreArchivo } from "./exportar";
+import { exportarCsv, exportarExcel, exportarPdf, nombreArchivo } from "./exportar";
+import type { ColumnaExport, DocumentoReporte } from "./exportar";
+import { useObrasSociales } from "@/app/pages/ObrasSociales/useObrasSociales";
+import Caja, { Cajas } from "@/app/components/ui/Caja/Caja";
+import { useCatalogoEspecialidades } from "@/app/pages/Especialidades/useCatalogoEspecialidades";
+import ReporteEspecialidad from "./ReporteEspecialidad";
+import ReporteCierres, { colsCierres, useCierres } from "./ReporteCierres";
+import { usePermisos } from "@/app/auth/usePermisos";
 import { useDebounce } from "./useDebounce";
 import styles from "./Reportes.module.scss";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
+import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 
 const LIMIT_TABLA = 25;
 const LIMIT_DETALLE = 25;
 
 /** Qué reporte se está mirando. Se muestra uno por vez. */
-type Vista = "resumen" | "codigos" | "medicos" | "obras" | "detalle";
+type Vista = "resumen" | "cierres" | "codigos" | "especialidades" | "medicos" | "obras" | "detalle";
 
 const VISTAS: { id: Vista; label: string; icono: LucideIcon }[] = [
   { id: "resumen", label: "Resumen", icono: LayoutDashboard },
+  { id: "cierres", label: "Cierres", icono: Receipt },
   { id: "codigos", label: "Códigos", icono: FileCode2 },
+  { id: "especialidades", label: "Especialidades", icono: Stethoscope },
   { id: "medicos", label: "Médicos", icono: Users },
   { id: "obras", label: "Obras sociales", icono: Building2 },
   { id: "detalle", label: "Prestaciones", icono: ListOrdered },
@@ -77,17 +87,7 @@ const VISTAS: { id: Vista; label: string; icono: LucideIcon }[] = [
 /** 5 minutos: los períodos cerrados no cambian, y los abiertos no tanto. */
 const STALE = 5 * 60 * 1000;
 
-/**
- * Reportes y Estadísticas del Colegio.
- *
- * Todo se calcula en la base (`/api/reportes`): acá sólo se pide lo que se
- * muestra. Cada tabla trae como mucho 25 filas y el detalle va paginado del
- * lado del servidor — nunca se descarga un período entero al navegador.
- *
- * La página está pensada para recorrerse "de arriba hacia abajo y hacia
- * adentro": los KPIs dan el panorama, los rankings dicen dónde mirar, y desde
- * cualquier fila se baja al detalle sin perder el período elegido.
- */
+/** Reportes y Estadísticas del Colegio. */
 const ReportesPage: React.FC = () => {
   // Años disponibles para el selector: los que cubren los últimos 24 períodos.
   const anios = useMemo(() => {
@@ -96,12 +96,12 @@ const ReportesPage: React.FC = () => {
   }, []);
   const [periodo, setPeriodo] = useState(periodoActual());
 
-  // Un reporte por vez. Además de no abrumar, hace que sólo se consulte lo que
-  // se está mirando: entrar a la pantalla dispara 2 queries en vez de 7.
+  // Un reporte por vez.
   const [vista, setVista] = useState<Vista>("resumen");
+  // La solapa «Cierres» lee las facturas: pide permiso de facturación.
+  const puedeFacturacion = usePermisos().can("facturacion:leer");
 
-  // Drill-down. Sólo uno a la vez: mezclar "código X" con "médico Y" daría una
-  // tabla que no responde a ninguna pregunta concreta.
+  // Drill-down. Sólo uno a la vez: mezclar "código X" con "médico Y" daría una tabla que no responde a ninguna pregunta concreta.
   const [codigoSel, setCodigoSel] = useState<string | null>(null);
   const [medicoSel, setMedicoSel] = useState<{ nro: string; nombre: string } | null>(null);
 
@@ -109,6 +109,8 @@ const ReportesPage: React.FC = () => {
   const [obraSocial, setObraSocial] = useState("");
   const [estado, setEstado] = useState<"" | ValidacionEstado>("");
   const [orden, setOrden] = useState<OrdenCodigos>("importe");
+  // `ID_COLEGIO_ESPE` de la especialidad del reporte por especialidad.
+  const [especialidadId, setEspecialidadId] = useState<number | null>(null);
   const [offset, setOffset] = useState(0);
 
   // El input responde a cada tecla; el pedido sale cuando el usuario frena.
@@ -117,13 +119,11 @@ const ReportesPage: React.FC = () => {
   const [buscarMedico, setBuscarMedico] = useState("");
   const qMedico = useDebounce(buscarMedico, 350);
 
-  // Paginación propia de cada tabla agregada. Se resetea sola cuando cambia
-  // algo que altera el conjunto de resultados (ver los efectos de más abajo).
+  // Paginación propia de cada tabla agregada.
   const [offsetCodigos, setOffsetCodigos] = useState(0);
   const [offsetMedicos, setOffsetMedicos] = useState(0);
 
-  // Sobre cuántos registros se arma cada ranking. Manda la consulta y el
-  // gráfico a la vez: si se piden 5, se piden 5 al servidor y se grafican 5.
+  // Sobre cuántos registros se arma cada ranking.
   const [topeCodigos, setTopeCodigos] = useState<Tope>(25);
   const [topeMedicos, setTopeMedicos] = useState<Tope>(25);
   const [topeObras, setTopeObras] = useState<Tope>(10);
@@ -137,12 +137,6 @@ const ReportesPage: React.FC = () => {
   }, [periodo, obraSocial, qMedico, topeMedicos]);
 
   const comun = { staleTime: STALE, retry: 1 } as const;
-
-  const resumen = useQuery({
-    queryKey: ["rep-resumen", periodo],
-    queryFn: () => getResumen(periodo),
-    ...comun,
-  });
 
   const evolucion = useQuery({
     queryKey: ["rep-evolucion", obraSocial],
@@ -168,6 +162,26 @@ const ReportesPage: React.FC = () => {
     ...comun,
   });
 
+  // El catálogo sólo hace falta en esa solapa; ya suele estar en caché.
+  const especialidades = useCatalogoEspecialidades();
+  const nombreEspecialidad =
+    especialidades.data?.find((e) => e.id_colegio_espe === especialidadId)?.nombre ?? "";
+
+  // Los códigos de UNA especialidad, de mayor a menor.
+  const porEspecialidad = useQuery({
+    queryKey: ["rep-especialidad", periodo, obraSocial, especialidadId],
+    queryFn: () =>
+      getCodigos({
+        periodo,
+        obra_social: obraSocial || undefined,
+        especialidad_id: especialidadId ?? undefined,
+        orden: "importe",
+        limit: aLimite(0),
+      }),
+    enabled: vista === "especialidades" && especialidadId !== null,
+    ...comun,
+  });
+
   const medicos = useQuery({
     queryKey: ["rep-medicos", periodo, obraSocial, qMedico, offsetMedicos, topeMedicos],
     queryFn: () =>
@@ -186,10 +200,25 @@ const ReportesPage: React.FC = () => {
   const obras = useQuery({
     queryKey: ["rep-obras", periodo, topeObras],
     queryFn: () => getObrasSociales({ periodo, limit: aLimite(topeObras) }),
-    // Alimenta el gráfico Y el selector de obra social del encabezado, que se
-    // usa desde cualquier vista: por eso no se gatea.
+    // Alimenta el gráfico Y el selector de obra social del encabezado, que se usa desde cualquier vista: por eso no se gatea.
     ...comun,
   });
+
+  // El selector de obra social ofrece el catálogo entero.
+  const catalogoObras = useObrasSociales();
+  const opcionesObra = useMemo(() => {
+    const delCatalogo = (catalogoObras.data ?? []).map((o) => ({
+      nro: String(o.nro_obra_social),
+      nombre: o.nombre,
+    }));
+    const lista = delCatalogo.length
+      ? delCatalogo
+      : (obras.data ?? []).map((o) => ({
+          nro: String(o.obra_social_nro),
+          nombre: o.nombre ?? `O.S. ${o.obra_social_nro}`,
+        }));
+    return lista.sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+  }, [catalogoObras.data, obras.data]);
 
   // Drill-down: quiénes facturaron el código elegido.
   const medicosDeCodigo = useQuery({
@@ -238,8 +267,7 @@ const ReportesPage: React.FC = () => {
         offset,
       }),
     enabled: vista === "detalle",
-    // Mantiene la página anterior visible mientras carga la siguiente: sin esto
-    // la tabla parpadea a vacío en cada click del paginador.
+    // Mantiene la página anterior visible mientras carga la siguiente: sin esto la tabla parpadea a vacío en cada click del paginador.
     placeholderData: (prev) => prev,
     ...comun,
   });
@@ -255,14 +283,7 @@ const ReportesPage: React.FC = () => {
     [medicos.data]
   );
 
-  /**
-   * Obras sociales: barras horizontales, NO torta.
-   *
-   * El Colegio tiene decenas de obras sociales. Una torta con esa cantidad de
-   * porciones es ilegible, y recortarla a 6 miente sobre el total. Las barras
-   * ordenadas se leen de un vistazo, aguantan nombres largos, y lo que queda
-   * afuera del top se agrupa en "Otras" para que la suma siga cerrando.
-   */
+  /** Obras sociales: barras horizontales, NO torta. */
   const barrasObras: BarraDato[] = useMemo(() => {
     const todas = obras.data ?? [];
     const TOP = 9;
@@ -298,31 +319,30 @@ const ReportesPage: React.FC = () => {
     setOffset(0); // cualquier cambio de filtro invalida la página actual
   };
 
-  // Columnas de exportación. Se exporta el valor CRUDO (número sin formatear)
-  // para que Excel pueda sumar la columna: el formato es cosa de la pantalla.
-  const colsCodigos = [
+  // Columnas de exportación. Se exporta el valor CRUDO (número sin formatear) para que Excel pueda sumar la columna: el formato es cosa de la pantalla.
+  const colsCodigos: ColumnaExport<CodigoStat>[] = [
     { header: "Código", value: (c: CodigoStat) => c.codigo },
     { header: "Descripción", value: (c: CodigoStat) => c.descripcion ?? "" },
-    { header: "Cantidad", value: (c: CodigoStat) => c.cantidad },
-    { header: "Prestaciones", value: (c: CodigoStat) => c.prestaciones },
-    { header: "Médicos", value: (c: CodigoStat) => c.medicos },
-    { header: "Facturado", value: (c: CodigoStat) => c.importe_total },
+    { header: "Cantidad", value: (c: CodigoStat) => c.cantidad, tipo: "numero" },
+    { header: "Prestaciones", value: (c: CodigoStat) => c.prestaciones, tipo: "numero" },
+    { header: "Médicos", value: (c: CodigoStat) => c.medicos, tipo: "numero" },
+    { header: "Facturado", value: (c: CodigoStat) => c.importe_total, tipo: "moneda" },
   ];
-  const colsMedicos = [
+  const colsMedicos: ColumnaExport<MedicoStat>[] = [
     { header: "Nro socio", value: (m: MedicoStat) => m.nro_socio },
     { header: "Médico", value: (m: MedicoStat) => m.nombre ?? "" },
-    { header: "Prestaciones", value: (m: MedicoStat) => m.prestaciones },
-    { header: "Cantidad", value: (m: MedicoStat) => m.cantidad },
-    { header: "Facturado", value: (m: MedicoStat) => m.importe_total },
+    { header: "Prestaciones", value: (m: MedicoStat) => m.prestaciones, tipo: "numero" },
+    { header: "Cantidad", value: (m: MedicoStat) => m.cantidad, tipo: "numero" },
+    { header: "Facturado", value: (m: MedicoStat) => m.importe_total, tipo: "moneda" },
   ];
-  const colsObras = [
+  const colsObras: ColumnaExport<ObraSocialStat>[] = [
     { header: "Nro O.S.", value: (o: ObraSocialStat) => o.obra_social_nro },
     { header: "Obra social", value: (o: ObraSocialStat) => o.nombre ?? "" },
-    { header: "Médicos", value: (o: ObraSocialStat) => o.medicos },
-    { header: "Prestaciones", value: (o: ObraSocialStat) => o.prestaciones },
-    { header: "Facturado", value: (o: ObraSocialStat) => o.importe_total },
+    { header: "Médicos", value: (o: ObraSocialStat) => o.medicos, tipo: "numero" },
+    { header: "Prestaciones", value: (o: ObraSocialStat) => o.prestaciones, tipo: "numero" },
+    { header: "Facturado", value: (o: ObraSocialStat) => o.importe_total, tipo: "moneda" },
   ];
-  const colsDetalle = [
+  const colsDetalle: ColumnaExport<PrestacionReporte>[] = [
     { header: "Fecha", value: (p: PrestacionReporte) => p.fecha ?? "" },
     { header: "Período", value: (p: PrestacionReporte) => p.periodo },
     { header: "Código", value: (p: PrestacionReporte) => p.codigo ?? "" },
@@ -338,20 +358,32 @@ const ReportesPage: React.FC = () => {
       value: (p: PrestacionReporte) => p.validacion_estado ?? "sin validar",
     },
     { header: "Autorización", value: (p: PrestacionReporte) => p.autorizacion ?? "" },
-    { header: "Cantidad", value: (p: PrestacionReporte) => p.cantidad },
-    { header: "Importe", value: (p: PrestacionReporte) => p.importe_total },
+    { header: "Cantidad", value: (p: PrestacionReporte) => p.cantidad, tipo: "numero" },
+    { header: "Importe", value: (p: PrestacionReporte) => p.importe_total, tipo: "moneda" },
   ];
 
   const [exportando, setExportando] = useState(false);
 
-  /**
-   * Baja el detalle COMPLETO del filtro actual, no sólo la página visible: un
-   * archivo con 25 filas de 1.771 no le sirve a nadie.
-   *
-   * Va de a 200 (el tope del servidor) y corta en 5.000 filas, para que una
-   * descarga sin filtrar no cuelgue el navegador ni castigue la base.
-   */
-  const bajarDetalle = async (formato: "csv" | "xlsx") => {
+  // Qué período y qué obra social abarca lo que se baja: va en la portada.
+  const nombreObraSocial = obraSocial
+    ? (opcionesObra.find((o) => o.nro === String(obraSocial))?.nombre ?? `O.S. ${obraSocial}`)
+    : "Todas las obras sociales";
+  const documentoDe = <T,>(
+    titulo: string,
+    base: string,
+    filas: T[],
+    columnas: ColumnaExport<T>[],
+  ): DocumentoReporte<T> => ({
+    titulo,
+    periodo: periodoLargo(periodo),
+    obraSocial: nombreObraSocial,
+    columnas,
+    filas,
+    nombre: nombreArchivo(base, periodo),
+  });
+
+  /** Baja el detalle COMPLETO del filtro actual, no sólo la página visible: un archivo con 25 filas de 1.771 no le sirve a nadie. */
+  const bajarDetalle = async (formato: "csv" | "xlsx" | "pdf") => {
     setExportando(true);
     try {
       const TOPE = 5000;
@@ -370,104 +402,84 @@ const ReportesPage: React.FC = () => {
         filas.push(...pag.items);
         if (filas.length >= pag.total || pag.items.length < PASO) break;
       }
-      const nombre = nombreArchivo("prestaciones", periodo);
-      if (formato === "csv") exportarCsv(filas, colsDetalle, nombre);
-      else await exportarExcel(filas, colsDetalle, nombre, "Prestaciones");
+      const reporte = documentoDe("Prestaciones", "prestaciones", filas, colsDetalle);
+      if (formato === "csv") exportarCsv(filas, colsDetalle, reporte.nombre);
+      else if (formato === "pdf") await exportarPdf(reporte);
+      else await exportarExcel(reporte);
     } finally {
       setExportando(false);
     }
   };
 
-  const r = resumen.data;
+  // Lo que ofrece la caja «Descargas»: siempre la tabla de la solapa abierta.
+  const cierres = useCierres(
+    periodo,
+    obraSocial,
+    (nro) => opcionesObra.find((o) => o.nro === nro)?.nombre ?? `O.S. ${nro}`,
+    vista === "cierres",
+  );
+
+  const descargasDe = <T,>(titulo: string, base: string, filas: T[], columnas: ColumnaExport<T>[]) => {
+    const reporte = documentoDe(titulo, base, filas, columnas);
+    return {
+      hay: filas.length > 0,
+      csv: async () => exportarCsv(filas, columnas, reporte.nombre),
+      excel: () => exportarExcel(reporte),
+      pdf: () => exportarPdf(reporte),
+    };
+  };
+  const descargas =
+    vista === "cierres"
+      ? descargasDe("Obras sociales cerradas", "cierres", cierres.filas, colsCierres)
+      : vista === "codigos"
+      ? descargasDe("Códigos", "codigos", codigos.data ?? [], colsCodigos)
+      : vista === "especialidades"
+        ? descargasDe(
+            nombreEspecialidad || "Especialidad",
+            "especialidad",
+            especialidadId === null ? [] : (porEspecialidad.data ?? []),
+            colsCodigos,
+          )
+      : vista === "medicos"
+        ? descargasDe("Médicos", "medicos", medicos.data ?? [], colsMedicos)
+        : vista === "obras"
+          ? descargasDe("Obras sociales", "obras-sociales", obras.data ?? [], colsObras)
+          : vista === "detalle"
+            ? {
+                hay: (detalle.data?.items ?? []).length > 0,
+                csv: () => bajarDetalle("csv"),
+                excel: () => bajarDetalle("xlsx"),
+                pdf: () => bajarDetalle("pdf"),
+              }
+            : null;
+
+  /** Corre una descarga con los botones bloqueados: armar el archivo tarda. */
+  const bajar = async (descarga: () => Promise<void>) => {
+    setExportando(true);
+    try {
+      await descarga();
+    } finally {
+      setExportando(false);
+    }
+  };
 
   return (
     <div className={styles.page}>
       <div className={styles.content}>
+        <div className={styles.franja}>
         <header className={styles.head}>
           <div>
             <h1 className={styles.title}>
               <BarChart3 size={26} style={{ verticalAlign: "-4px", marginRight: 8 }} />
               Reportes y estadísticas
             </h1>
-            <p className={styles.subtitle}>
-              Qué se facturó en {periodoLargo(periodo)}: por código, por médico y
-              por obra social.
-            </p>
           </div>
 
-          <div className={styles.controls}>
-            <SelectorMesAnio
-              periodo={periodo}
-              onChange={(v) => cambiarFiltro(() => setPeriodo(v))}
-              anios={anios}
-            />
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="os">
-                Obra social
-              </label>
-              <select
-                id="os"
-                className={styles.select}
-                value={obraSocial}
-                onChange={(e) => cambiarFiltro(() => setObraSocial(e.target.value))}
-              >
-                <option value="">Todas</option>
-                {(obras.data ?? []).map((o) => (
-                  <option key={o.obra_social_nro} value={o.obra_social_nro}>
-                    {o.nombre ?? `O.S. ${o.obra_social_nro}`}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
         </header>
 
-        {/* ── KPIs ── */}
-        {resumen.isError ? (
-          <ErrorBox>
-            No se pudieron cargar los totales del período. Puede que no tengas
-            permiso para ver reportes.
-          </ErrorBox>
-        ) : resumen.isLoading || !r ? (
-          <div className={styles.kpis}>
-            <Cargando filas={1} />
-            <Cargando filas={1} />
-            <Cargando filas={1} />
-            <Cargando filas={1} />
-          </div>
-        ) : (
-          <div className={styles.kpis}>
-            <Kpi
-              label="Facturado"
-              value={money.format(r.importe_total)}
-              hint={`Honorarios ${money.format(r.honorarios)}`}
-              accent="gold"
-            />
-            <Kpi
-              label="Prestaciones"
-              value={numero.format(r.prestaciones)}
-              hint={`${numero.format(r.codigos)} códigos distintos`}
-            />
-            <Kpi
-              label="Médicos"
-              value={numero.format(r.medicos)}
-              hint="con actividad en el período"
-              accent="blue"
-            />
-            <Kpi
-              label="Obras sociales"
-              value={numero.format(r.obras_sociales)}
-              hint="con prestaciones facturadas"
-              accent="green"
-            />
-          </div>
-        )}
-
-
-        {/* Un reporte por vez: elegir primero evita la pared de tablas y
-            hace que sólo se consulte lo que se está mirando. */}
+        {/* Un reporte por vez: elegir primero evita la pared de tablas y hace que sólo se consulte lo que se está mirando. */}
         <nav className={styles.tabs} aria-label="Tipo de reporte">
-          {VISTAS.map((v) => {
+          {VISTAS.filter((v) => v.id !== "cierres" || puedeFacturacion).map((v) => {
             const Icono = v.icono;
             const activa = vista === v.id;
             return (
@@ -484,6 +496,52 @@ const ReportesPage: React.FC = () => {
             );
           })}
         </nav>
+        </div>
+
+        <Cajas>
+          <Caja titulo="Configuración">
+              <SelectorMesAnio
+                periodo={periodo}
+                onChange={(v) => cambiarFiltro(() => setPeriodo(v))}
+                anios={anios}
+              />
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="os">
+                  Obra social
+                </label>
+                <select
+                  id="os"
+                  className={styles.select}
+                  value={obraSocial}
+                  onChange={(e) => cambiarFiltro(() => setObraSocial(e.target.value))}
+                >
+                  <option value="">Todas</option>
+                  {opcionesObra.map((o) => (
+                    <option key={o.nro} value={o.nro}>
+                      {o.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+          </Caja>
+          <Caja titulo="Descargas">
+            <BotonDescarga
+              formato="pdf"
+              onClick={() => descargas && void bajar(descargas.pdf)}
+              disabled={!descargas?.hay || exportando}
+            />
+            <BotonDescarga
+              formato="excel"
+              onClick={() => descargas && void bajar(descargas.excel)}
+              disabled={!descargas?.hay || exportando}
+            />
+            <BotonDescarga
+              formato="csv"
+              onClick={() => descargas && void bajar(descargas.csv)}
+              disabled={!descargas?.hay || exportando}
+            />
+          </Caja>
+        </Cajas>
 
         {/* ── Evolución ── */}
         {vista === "resumen" && (
@@ -530,24 +588,6 @@ const ReportesPage: React.FC = () => {
                   onChange={setBuscarMedico}
                   placeholder="Nombre o nro de socio…"
                 />
-                <BotonesExportar
-                  disabled={!(medicos.data ?? []).length}
-                  onCsv={() =>
-                    exportarCsv(
-                      medicos.data ?? [],
-                      colsMedicos,
-                      nombreArchivo("medicos", periodo)
-                    )
-                  }
-                  onExcel={() =>
-                    exportarExcel(
-                      medicos.data ?? [],
-                      colsMedicos,
-                      nombreArchivo("medicos", periodo),
-                      "Médicos"
-                    )
-                  }
-                />
               </div>
             </div>
 
@@ -561,7 +601,7 @@ const ReportesPage: React.FC = () => {
               <>
                 <GraficoRanking datos={barrasMedicos} />
                 <div className={styles.tableWrap}>
-                  <table className={styles.table}>
+                  <Tabla className={styles.table}>
                     <thead>
                       <tr>
                         <th>#</th>
@@ -600,7 +640,7 @@ const ReportesPage: React.FC = () => {
                         </tr>
                       ))}
                     </tbody>
-                  </table>
+                  </Tabla>
                 </div>
                 <PagerSimple
                   offset={offsetMedicos}
@@ -632,24 +672,6 @@ const ReportesPage: React.FC = () => {
                   onChange={setTopeObras}
                 />
               </div>
-              <BotonesExportar
-                disabled={!(obras.data ?? []).length}
-                onCsv={() =>
-                  exportarCsv(
-                    obras.data ?? [],
-                    colsObras,
-                    nombreArchivo("obras-sociales", periodo)
-                  )
-                }
-                onExcel={() =>
-                  exportarExcel(
-                    obras.data ?? [],
-                    colsObras,
-                    nombreArchivo("obras-sociales", periodo),
-                    "Obras sociales"
-                  )
-                }
-              />
             </div>
 
             {obras.isLoading ? (
@@ -662,7 +684,7 @@ const ReportesPage: React.FC = () => {
               <>
                 <GraficoRanking datos={barrasObras} />
                 <div className={styles.tableWrap}>
-                  <table className={styles.table}>
+                  <Tabla className={styles.table}>
                     <thead>
                       <tr>
                         <th>Obra social</th>
@@ -691,7 +713,7 @@ const ReportesPage: React.FC = () => {
                         </tr>
                       ))}
                     </tbody>
-                  </table>
+                  </Tabla>
                 </div>
               </>
             )}
@@ -699,7 +721,25 @@ const ReportesPage: React.FC = () => {
         </div>
         )}
 
+        {vista === "cierres" && <ReporteCierres cierres={cierres} />}
+
         {/* ── Tabla de códigos ── */}
+        {vista === "especialidades" && (
+          <ReporteEspecialidad
+            especialidades={especialidades.data ?? []}
+            especialidadId={especialidadId}
+            onEspecialidad={setEspecialidadId}
+            consulta={porEspecialidad}
+            onCodigo={(codigo) =>
+              cambiarFiltro(() => {
+                setMedicoSel(null);
+                setCodigoSel(codigo);
+                setVista("codigos");
+              })
+            }
+          />
+        )}
+
         {vista === "codigos" && (
         <section className={styles.card}>
           <div className={styles.cardHead}>
@@ -737,24 +777,6 @@ const ReportesPage: React.FC = () => {
                   <option value="codigo">Código</option>
                 </select>
               </div>
-              <BotonesExportar
-                disabled={!(codigos.data ?? []).length}
-                onCsv={() =>
-                  exportarCsv(
-                    codigos.data ?? [],
-                    colsCodigos,
-                    nombreArchivo("codigos", periodo)
-                  )
-                }
-                onExcel={() =>
-                  exportarExcel(
-                    codigos.data ?? [],
-                    colsCodigos,
-                    nombreArchivo("codigos", periodo),
-                    "Códigos"
-                  )
-                }
-              />
             </div>
           </div>
 
@@ -768,7 +790,7 @@ const ReportesPage: React.FC = () => {
             <>
             <GraficoRanking datos={barrasCodigos} />
             <div className={styles.tableWrap}>
-              <table className={styles.table}>
+              <Tabla className={styles.table}>
                 <thead>
                   <tr>
                     <th>Código</th>
@@ -804,7 +826,7 @@ const ReportesPage: React.FC = () => {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </Tabla>
               <PagerSimple
                 offset={offsetCodigos}
                 limit={aLimite(topeCodigos)}
@@ -847,7 +869,7 @@ const ReportesPage: React.FC = () => {
               <Vacio>Nadie facturó este código en el período.</Vacio>
             ) : (
               <div className={styles.tableWrap}>
-                <table className={styles.table}>
+                <Tabla className={styles.table}>
                   <thead>
                     <tr>
                       <th>#</th>
@@ -872,7 +894,7 @@ const ReportesPage: React.FC = () => {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </Tabla>
               </div>
             )}
           </section>
@@ -907,7 +929,7 @@ const ReportesPage: React.FC = () => {
               <Vacio>Este médico no facturó en el período.</Vacio>
             ) : (
               <div className={styles.tableWrap}>
-                <table className={styles.table}>
+                <Tabla className={styles.table}>
                   <thead>
                     <tr>
                       <th>Código</th>
@@ -926,7 +948,7 @@ const ReportesPage: React.FC = () => {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </Tabla>
               </div>
             )}
           </section>
@@ -961,11 +983,6 @@ const ReportesPage: React.FC = () => {
                 <option value="cargada">Cargada</option>
               </select>
             </div>
-            <BotonesExportar
-              disabled={!(detalle.data?.items ?? []).length || exportando}
-              onCsv={() => void bajarDetalle("csv")}
-              onExcel={() => void bajarDetalle("xlsx")}
-            />
           </div>
 
           {detalle.isError ? (
@@ -977,7 +994,7 @@ const ReportesPage: React.FC = () => {
           ) : (
             <>
               <div className={styles.tableWrap}>
-                <table className={styles.table}>
+                <Tabla className={styles.table}>
                   <thead>
                     <tr>
                       <th>Fecha</th>
@@ -1006,7 +1023,7 @@ const ReportesPage: React.FC = () => {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </Tabla>
               </div>
 
               <Pager

@@ -1,0 +1,7 @@
+@use "@/app/styles/all.scss" as *;
+
+.error {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: $danger-red;
+}

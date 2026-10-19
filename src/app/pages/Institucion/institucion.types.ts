@@ -1,9 +1,4 @@
 // Datos del Colegio: CUIT, CBU, domicilio, teléfonos y casillas de correo.
-//
-// Ningún tipo de lectura tiene campo de contraseña: `EmailInstitucion` expone
-// `tiene_password` y el texto sólo llega por `revelarPassword()`. Es la misma
-// separación que hace el backend, para que una pantalla nueva no pueda mostrar
-// una clave sin pedirla a propósito.
 
 export interface TelefonoInstitucion {
   id: number;
@@ -59,10 +54,7 @@ export interface Institucion {
 
   /** Si el servidor tiene `SECRETOS_KEY` y puede guardar contraseñas. */
   secretos_disponibles: boolean;
-  /**
-   * Si este usuario puede ver y cambiar las contraseñas. Es una lista nominal
-   * en el backend, no un permiso del catálogo: ser admin no alcanza.
-   */
+  /** Si este usuario puede ver y cambiar las contraseñas. */
   puede_ver_claves: boolean;
 }
 
@@ -86,8 +78,7 @@ export type EmailInput = Omit<
 >;
 
 // ── Formato ──────────────────────────────────────────────────────────────────
-// Se guarda en crudo y se muestra formateado: guardarlo con separadores haría
-// que dos CUIT iguales escritos distinto no coincidan nunca.
+// Se guarda en crudo y se muestra formateado: guardarlo con separadores haría que dos CUIT iguales escritos distinto no coincidan nunca.
 
 /** `30123456789` → `30-12345678-9`. */
 export function formatCuit(cuit?: string | null): string {

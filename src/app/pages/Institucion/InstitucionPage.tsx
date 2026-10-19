@@ -4,6 +4,7 @@ import {
   Check,
   Eye,
   EyeOff,
+  Globe,
   KeyRound,
   Landmark,
   Loader2,
@@ -13,6 +14,7 @@ import {
   Phone,
   Plus,
   Save,
+  StickyNote,
   Trash2,
   X,
 } from "lucide-react";
@@ -43,6 +45,8 @@ import {
   type TelefonoInstitucion,
 } from "./institucion.types";
 import s from "./Institucion.module.scss";
+import Franja from "@/app/components/layout/Franja/Franja";
+import MarcoModal from "@/app/components/ui/MarcoModal/MarcoModal";
 
 /** Los campos del formulario general, en el orden en que se muestran. */
 const CAMPOS: {
@@ -68,14 +72,7 @@ const CAMPOS: {
   { key: "horario_atencion", label: "Horario de atención", seccion: "otros", ancho: "full" },
 ];
 
-// `ingresos_brutos`, `provincia` y `codigo_postal` quedan fuera de la pantalla a
-// pedido del Colegio: el Colegio es uno solo y está en Corrientes, así que la
-// provincia y el CP no aportan nada, e Ingresos Brutos no se usa.
-//
-// Las columnas **siguen en la base y en la API**. Sacarlas sería una migración
-// destructiva a cambio de nada, y si mañana hacen falta alcanza con volver a
-// listarlas acá arriba. Por eso tampoco se mandan en el PUT: se copian de lo
-// que ya estaba guardado (ver `aplicar`), en vez de viajar vacías y borrarlo.
+// `ingresos_brutos`, `provincia` y `codigo_postal` quedan fuera de la pantalla a pedido del Colegio: el Colegio es uno solo y está en Corrientes.
 const VACIO: InstitucionInput = {
   razon_social: "", cuit: "", condicion_iva: "", ingresos_brutos: null,
   cbu: "", alias_cbu: "", banco: "", titular_cuenta: "",
@@ -88,20 +85,13 @@ const MAIL_VACIO: EmailInput = {
   etiqueta: "", direccion: "", servidor_entrante: "", servidor_saliente: "", notas: "",
 };
 
-/**
- * Datos del Colegio: CUIT, CBU, domicilio, teléfonos y casillas de correo.
- *
- * La contraseña nunca llega en el listado: la API devuelve `tiene_password` y
- * el texto se pide de a una, con un click que queda auditado. Por eso el ojo
- * dispara un request en vez de mostrar algo que ya estaba en memoria.
- */
+/** Datos del Colegio: CUIT, CBU, domicilio, teléfonos y casillas de correo. */
 export default function InstitucionPage() {
   const { error: avisarError, success: avisarOk } = useNotify();
   const { can } = usePermisos();
   const puedeEditar = can("catalogo:editar");
 
-  // Quién ve las contraseñas lo decide el backend con una lista nominal, no un
-  // scope: hoy son dos personas del Colegio, y ser admin no alcanza.
+  // Quién ve las contraseñas lo decide el backend con una lista nominal, no un scope: hoy son dos personas del Colegio.
   const [datos, setDatos] = useState<Institucion | null>(null);
   const puedeVerClaves = Boolean(datos?.puede_ver_claves);
   const [form, setForm] = useState<InstitucionInput>(VACIO);
@@ -130,8 +120,7 @@ export default function InstitucionPage() {
       domicilio: d.domicilio ?? "", localidad: d.localidad ?? "",
       sitio_web: d.sitio_web ?? "", horario_atencion: d.horario_atencion ?? "",
       notas: d.notas ?? "",
-      // Los tres que la pantalla ya no muestra viajan tal cual estaban: el PUT
-      // reemplaza todos los campos, así que omitirlos los borraría.
+      // Los tres que la pantalla ya no muestra viajan tal cual estaban: el PUT reemplaza todos los campos, así que omitirlos los borraría.
       ingresos_brutos: d.ingresos_brutos ?? null,
       provincia: d.provincia ?? null,
       codigo_postal: d.codigo_postal ?? null,
@@ -218,8 +207,7 @@ export default function InstitucionPage() {
 
   const alternarClave = async (m: EmailInstitucion) => {
     if (reveladas[m.id] !== undefined) {
-      // Ocultar es sacarla de memoria, no sólo dejar de dibujarla: si el
-      // usuario la escondió, no tiene por qué seguir en el estado de React.
+      // Ocultar es sacarla de memoria, no sólo dejar de dibujarla: si el usuario la escondió, no tiene por qué seguir en el estado de React.
       setReveladas((prev) => {
         const { [m.id]: _, ...resto } = prev;
         return resto;
@@ -284,8 +272,7 @@ export default function InstitucionPage() {
           >
             <span className={s.label}>{c.label}</span>
             {campo(c.key)}
-            {/* El valor formateado va debajo del input y no adentro: adentro
-                habría que reformatear en cada tecla y el cursor salta. */}
+            {/* El valor formateado va debajo del input y no adentro: adentro habría que reformatear en cada tecla y el cursor salta. */}
             {c.key === "cuit" && form.cuit ? (
               <span className={s.hint}>{formatCuit(form.cuit)}</span>
             ) : null}
@@ -309,383 +296,378 @@ export default function InstitucionPage() {
   }
 
   return (
-    <div className={s.container}>
-      <header className={s.header}>
-        <Building2 size={30} className={s.headerIcon} />
-        <div>
-          <h1 className={s.title}>Colegio Médico de Corrientes</h1>
-          <p className={s.subtitle}>Datos institucionales, contactos y casillas.</p>
-        </div>
+    <>
+      <Franja suelta titulo="Colegio Médico de Corrientes" icono={Building2} />
+      <div className={s.container}>
         {puedeEditar && (
-          <button
-            type="button"
-            className={s.primaryBtn}
-            onClick={guardar}
-            disabled={!sucio || guardando}
-          >
-            {guardando ? <Loader2 size={15} className={s.spin} /> : <Save size={15} />}
-            {guardando ? "Guardando…" : "Guardar"}
-          </button>
-        )}
-      </header>
-
-      {seccion("fiscal", "Datos fiscales", Building2)}
-      {seccion("banco", "Cuenta bancaria", Landmark)}
-      {seccion("domicilio", "Domicilio", MapPin)}
-      {seccion("otros", "Contacto", Building2)}
-
-      <section className={s.card}>
-        <h2 className={s.cardTitle}>
-          <Building2 size={16} /> Notas
-        </h2>
-        <textarea
-          className={s.textarea}
-          rows={3}
-          value={form.notas ?? ""}
-          disabled={!puedeEditar}
-          onChange={(e) => {
-            setForm((f) => ({ ...f, notas: e.target.value }));
-            setSucio(true);
-          }}
-        />
-      </section>
-
-      {/* ── Teléfonos ── */}
-      <section className={s.card}>
-        <h2 className={s.cardTitle}>
-          <Phone size={16} /> Teléfonos
-          {puedeEditar && (
+          <div className={s.acciones}>
             <button
               type="button"
-              className={s.addBtn}
-              onClick={() => setTelNuevo({ ...TEL_VACIO })}
+              className={s.primaryBtn}
+              onClick={guardar}
+              disabled={!sucio || guardando}
             >
-              <Plus size={14} /> Agregar
+              {guardando ? <Loader2 size={15} className={s.spin} /> : <Save size={15} />}
+              {guardando ? "Guardando…" : "Guardar"}
             </button>
-          )}
-        </h2>
+          </div>
+        )}
 
-        <ul className={s.list}>
-          {datos?.telefonos.map((t) =>
-            telEditando?.id === t.id ? (
-              <li key={t.id} className={s.rowEdit}>
-                <input
-                  className={s.input}
-                  placeholder="Etiqueta"
-                  value={telEditando.etiqueta ?? ""}
-                  onChange={(e) =>
-                    setTelEditando({ ...telEditando, etiqueta: e.target.value })
-                  }
-                />
-                <input
-                  className={s.input}
-                  placeholder="Número"
-                  value={telEditando.numero}
-                  onChange={(e) =>
-                    setTelEditando({ ...telEditando, numero: e.target.value })
-                  }
-                />
-                <div className={s.rowActions}>
-                  <button
-                    type="button"
-                    className={s.iconOk}
-                    onClick={() =>
-                      guardarTel(
-                        {
-                          etiqueta: telEditando.etiqueta,
-                          numero: telEditando.numero,
-                          notas: telEditando.notas,
-                        },
-                        telEditando.id
-                      )
+
+        {seccion("fiscal", "Datos fiscales", Building2)}
+        {seccion("banco", "Cuenta bancaria", Landmark)}
+        {seccion("domicilio", "Domicilio", MapPin)}
+        {seccion("otros", "Contacto", Globe)}
+
+        <section className={s.card}>
+          <h2 className={s.cardTitle}>
+            <StickyNote size={16} /> Notas
+          </h2>
+          <textarea
+            className={s.textarea}
+            rows={3}
+            value={form.notas ?? ""}
+            disabled={!puedeEditar}
+            onChange={(e) => {
+              setForm((f) => ({ ...f, notas: e.target.value }));
+              setSucio(true);
+            }}
+          />
+        </section>
+
+        {/* ── Teléfonos ── */}
+        <section className={s.card}>
+          <h2 className={s.cardTitle}>
+            <Phone size={16} /> Teléfonos
+            {puedeEditar && (
+              <button
+                type="button"
+                className={s.addBtn}
+                onClick={() => setTelNuevo({ ...TEL_VACIO })}
+              >
+                <Plus size={14} /> Agregar
+              </button>
+            )}
+          </h2>
+
+          <ul className={s.list}>
+            {datos?.telefonos.map((t) =>
+              telEditando?.id === t.id ? (
+                <li key={t.id} className={s.rowEdit}>
+                  <input
+                    className={s.input}
+                    placeholder="Etiqueta"
+                    value={telEditando.etiqueta ?? ""}
+                    onChange={(e) =>
+                      setTelEditando({ ...telEditando, etiqueta: e.target.value })
                     }
-                  >
-                    <Check size={15} />
-                  </button>
-                  <button
-                    type="button"
-                    className={s.iconBtn}
-                    onClick={() => setTelEditando(null)}
-                  >
-                    <X size={15} />
-                  </button>
-                </div>
-              </li>
-            ) : (
-              <li key={t.id} className={s.row}>
-                <span className={s.rowTag}>{t.etiqueta || "Teléfono"}</span>
-                <span className={s.rowMain}>{t.numero}</span>
-                {puedeEditar && (
+                  />
+                  <input
+                    className={s.input}
+                    placeholder="Número"
+                    value={telEditando.numero}
+                    onChange={(e) =>
+                      setTelEditando({ ...telEditando, numero: e.target.value })
+                    }
+                  />
                   <div className={s.rowActions}>
                     <button
                       type="button"
-                      className={s.iconBtn}
-                      onClick={() => setTelEditando(t)}
+                      className={s.iconOk}
+                      onClick={() =>
+                        guardarTel(
+                          {
+                            etiqueta: telEditando.etiqueta,
+                            numero: telEditando.numero,
+                            notas: telEditando.notas,
+                          },
+                          telEditando.id
+                        )
+                      }
                     >
-                      <Pencil size={14} />
+                      <Check size={15} />
                     </button>
                     <button
                       type="button"
-                      className={s.iconDanger}
-                      onClick={() => borrarTel(t)}
+                      className={s.iconBtn}
+                      onClick={() => setTelEditando(null)}
                     >
-                      <Trash2 size={14} />
+                      <X size={15} />
                     </button>
                   </div>
-                )}
-              </li>
-            )
-          )}
-
-          {telNuevo && (
-            <li className={s.rowEdit}>
-              <input
-                className={s.input}
-                placeholder="Etiqueta"
-                value={telNuevo.etiqueta ?? ""}
-                onChange={(e) => setTelNuevo({ ...telNuevo, etiqueta: e.target.value })}
-              />
-              <input
-                className={s.input}
-                placeholder="Número"
-                autoFocus
-                value={telNuevo.numero}
-                onChange={(e) => setTelNuevo({ ...telNuevo, numero: e.target.value })}
-              />
-              <div className={s.rowActions}>
-                <button
-                  type="button"
-                  className={s.iconOk}
-                  onClick={() => guardarTel(telNuevo)}
-                  disabled={!telNuevo.numero.trim()}
-                >
-                  <Check size={15} />
-                </button>
-                <button type="button" className={s.iconBtn} onClick={() => setTelNuevo(null)}>
-                  <X size={15} />
-                </button>
-              </div>
-            </li>
-          )}
-
-          {!datos?.telefonos.length && !telNuevo && (
-            <li className={s.empty}>Sin teléfonos cargados.</li>
-          )}
-        </ul>
-      </section>
-
-      {/* ── Casillas de correo ── */}
-      <section className={s.card}>
-        <h2 className={s.cardTitle}>
-          <Mail size={16} /> Casillas de correo
-          {puedeEditar && (
-            <button
-              type="button"
-              className={s.addBtn}
-              onClick={() => setMailNuevo({ ...MAIL_VACIO })}
-            >
-              <Plus size={14} /> Agregar
-            </button>
-          )}
-        </h2>
-
-        {datos && !datos.secretos_disponibles && (
-          <p className={s.aviso}>
-            El servidor no tiene configurada la llave de cifrado, así que no se
-            pueden guardar contraseñas. Los demás datos funcionan normalmente.
-          </p>
-        )}
-
-        <ul className={s.list}>
-          {datos?.emails.map((m) =>
-            mailEditando?.id === m.id ? (
-              <li key={m.id} className={s.rowEditMail}>
-                <input
-                  className={s.input}
-                  placeholder="Etiqueta"
-                  value={mailEditando.etiqueta ?? ""}
-                  onChange={(e) =>
-                    setMailEditando({ ...mailEditando, etiqueta: e.target.value })
-                  }
-                />
-                <input
-                  className={s.input}
-                  placeholder="direccion@colegio.com"
-                  value={mailEditando.direccion}
-                  onChange={(e) =>
-                    setMailEditando({ ...mailEditando, direccion: e.target.value })
-                  }
-                />
-                <div className={s.rowActions}>
-                  <button
-                    type="button"
-                    className={s.iconOk}
-                    onClick={() =>
-                      guardarMail(
-                        {
-                          etiqueta: mailEditando.etiqueta,
-                          direccion: mailEditando.direccion,
-                          servidor_entrante: mailEditando.servidor_entrante,
-                          servidor_saliente: mailEditando.servidor_saliente,
-                          notas: mailEditando.notas,
-                        },
-                        mailEditando.id
-                      )
-                    }
-                  >
-                    <Check size={15} />
-                  </button>
-                  <button
-                    type="button"
-                    className={s.iconBtn}
-                    onClick={() => setMailEditando(null)}
-                  >
-                    <X size={15} />
-                  </button>
-                </div>
-              </li>
-            ) : (
-              <li key={m.id} className={s.rowMail}>
-                <div className={s.mailMain}>
-                  <span className={s.rowTag}>{m.etiqueta || "Casilla"}</span>
-                  <span className={s.mailAddr}>{m.direccion}</span>
-                </div>
-
-                <div className={s.mailPass}>
-                  {puedeVerClaves && m.tiene_password ? (
-                    <>
-                      <code className={s.clave}>
-                        {reveladas[m.id] ?? "••••••••"}
-                      </code>
-                      <button
-                        type="button"
-                        className={s.iconBtn}
-                        title={reveladas[m.id] ? "Ocultar" : "Mostrar"}
-                        onClick={() => alternarClave(m)}
-                        disabled={revelando === m.id}
-                      >
-                        {revelando === m.id ? (
-                          <Loader2 size={14} className={s.spin} />
-                        ) : reveladas[m.id] ? (
-                          <EyeOff size={14} />
-                        ) : (
-                          <Eye size={14} />
-                        )}
-                      </button>
-                    </>
-                  ) : m.tiene_password ? (
-                    <span className={s.claveOculta}>Con contraseña</span>
-                  ) : (
-                    <span className={s.claveVacia}>Sin contraseña</span>
-                  )}
-                </div>
-
-                <div className={s.rowActions}>
-                  {puedeVerClaves && datos?.secretos_disponibles && (
-                    <button
-                      type="button"
-                      className={s.iconBtn}
-                      title="Cambiar contraseña"
-                      onClick={() => {
-                        setClaveDe(m);
-                        setClaveNueva("");
-                      }}
-                    >
-                      <KeyRound size={14} />
-                    </button>
-                  )}
+                </li>
+              ) : (
+                <li key={t.id} className={s.row}>
+                  <span className={s.rowTag}>{t.etiqueta || "Teléfono"}</span>
+                  <span className={s.rowMain}>{t.numero}</span>
                   {puedeEditar && (
-                    <>
+                    <div className={s.rowActions}>
                       <button
                         type="button"
                         className={s.iconBtn}
-                        onClick={() => setMailEditando(m)}
+                        onClick={() => setTelEditando(t)}
                       >
                         <Pencil size={14} />
                       </button>
                       <button
                         type="button"
                         className={s.iconDanger}
-                        onClick={() => borrarMail(m)}
+                        onClick={() => borrarTel(t)}
                       >
                         <Trash2 size={14} />
                       </button>
-                    </>
+                    </div>
                   )}
+                </li>
+              )
+            )}
+
+            {telNuevo && (
+              <li className={s.rowEdit}>
+                <input
+                  className={s.input}
+                  placeholder="Etiqueta"
+                  value={telNuevo.etiqueta ?? ""}
+                  onChange={(e) => setTelNuevo({ ...telNuevo, etiqueta: e.target.value })}
+                />
+                <input
+                  className={s.input}
+                  placeholder="Número"
+                  autoFocus
+                  value={telNuevo.numero}
+                  onChange={(e) => setTelNuevo({ ...telNuevo, numero: e.target.value })}
+                />
+                <div className={s.rowActions}>
+                  <button
+                    type="button"
+                    className={s.iconOk}
+                    onClick={() => guardarTel(telNuevo)}
+                    disabled={!telNuevo.numero.trim()}
+                  >
+                    <Check size={15} />
+                  </button>
+                  <button type="button" className={s.iconBtn} onClick={() => setTelNuevo(null)}>
+                    <X size={15} />
+                  </button>
                 </div>
               </li>
-            )
+            )}
+
+            {!datos?.telefonos.length && !telNuevo && (
+              <li className={s.empty}>Sin teléfonos cargados.</li>
+            )}
+          </ul>
+        </section>
+
+        {/* ── Casillas de correo ── */}
+        <section className={`${s.card} ${s.cardFull}`}>
+          <h2 className={s.cardTitle}>
+            <Mail size={16} /> Casillas de correo
+            {puedeEditar && (
+              <button
+                type="button"
+                className={s.addBtn}
+                onClick={() => setMailNuevo({ ...MAIL_VACIO })}
+              >
+                <Plus size={14} /> Agregar
+              </button>
+            )}
+          </h2>
+
+          {datos && !datos.secretos_disponibles && (
+            <p className={s.aviso}>
+              El servidor no tiene configurada la llave de cifrado, así que no se
+              pueden guardar contraseñas. Los demás datos funcionan normalmente.
+            </p>
           )}
 
-          {mailNuevo && (
-            <li className={s.rowEditMail}>
+          <ul className={s.list}>
+            {datos?.emails.map((m) =>
+              mailEditando?.id === m.id ? (
+                <li key={m.id} className={s.rowEditMail}>
+                  <input
+                    className={s.input}
+                    placeholder="Etiqueta"
+                    value={mailEditando.etiqueta ?? ""}
+                    onChange={(e) =>
+                      setMailEditando({ ...mailEditando, etiqueta: e.target.value })
+                    }
+                  />
+                  <input
+                    className={s.input}
+                    placeholder="direccion@colegio.com"
+                    value={mailEditando.direccion}
+                    onChange={(e) =>
+                      setMailEditando({ ...mailEditando, direccion: e.target.value })
+                    }
+                  />
+                  <div className={s.rowActions}>
+                    <button
+                      type="button"
+                      className={s.iconOk}
+                      onClick={() =>
+                        guardarMail(
+                          {
+                            etiqueta: mailEditando.etiqueta,
+                            direccion: mailEditando.direccion,
+                            servidor_entrante: mailEditando.servidor_entrante,
+                            servidor_saliente: mailEditando.servidor_saliente,
+                            notas: mailEditando.notas,
+                          },
+                          mailEditando.id
+                        )
+                      }
+                    >
+                      <Check size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      className={s.iconBtn}
+                      onClick={() => setMailEditando(null)}
+                    >
+                      <X size={15} />
+                    </button>
+                  </div>
+                </li>
+              ) : (
+                <li key={m.id} className={s.rowMail}>
+                  <div className={s.mailMain}>
+                    <span className={s.rowTag}>{m.etiqueta || "Casilla"}</span>
+                    <span className={s.mailAddr}>{m.direccion}</span>
+                  </div>
+
+                  <div className={s.mailPass}>
+                    {puedeVerClaves && m.tiene_password ? (
+                      <>
+                        <code className={s.clave}>
+                          {reveladas[m.id] ?? "••••••••"}
+                        </code>
+                        <button
+                          type="button"
+                          className={s.iconBtn}
+                          title={reveladas[m.id] ? "Ocultar" : "Mostrar"}
+                          onClick={() => alternarClave(m)}
+                          disabled={revelando === m.id}
+                        >
+                          {revelando === m.id ? (
+                            <Loader2 size={14} className={s.spin} />
+                          ) : reveladas[m.id] ? (
+                            <EyeOff size={14} />
+                          ) : (
+                            <Eye size={14} />
+                          )}
+                        </button>
+                      </>
+                    ) : m.tiene_password ? (
+                      <span className={s.claveOculta}>Con contraseña</span>
+                    ) : (
+                      <span className={s.claveVacia}>Sin contraseña</span>
+                    )}
+                  </div>
+
+                  <div className={s.rowActions}>
+                    {puedeVerClaves && datos?.secretos_disponibles && (
+                      <button
+                        type="button"
+                        className={s.iconBtn}
+                        title="Cambiar contraseña"
+                        onClick={() => {
+                          setClaveDe(m);
+                          setClaveNueva("");
+                        }}
+                      >
+                        <KeyRound size={14} />
+                      </button>
+                    )}
+                    {puedeEditar && (
+                      <>
+                        <button
+                          type="button"
+                          className={s.iconBtn}
+                          onClick={() => setMailEditando(m)}
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          className={s.iconDanger}
+                          onClick={() => borrarMail(m)}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </li>
+              )
+            )}
+
+            {mailNuevo && (
+              <li className={s.rowEditMail}>
+                <input
+                  className={s.input}
+                  placeholder="Etiqueta"
+                  value={mailNuevo.etiqueta ?? ""}
+                  onChange={(e) => setMailNuevo({ ...mailNuevo, etiqueta: e.target.value })}
+                />
+                <input
+                  className={s.input}
+                  placeholder="direccion@colegio.com"
+                  autoFocus
+                  value={mailNuevo.direccion}
+                  onChange={(e) => setMailNuevo({ ...mailNuevo, direccion: e.target.value })}
+                />
+                <div className={s.rowActions}>
+                  <button
+                    type="button"
+                    className={s.iconOk}
+                    onClick={() => guardarMail(mailNuevo)}
+                    disabled={!mailNuevo.direccion.trim()}
+                  >
+                    <Check size={15} />
+                  </button>
+                  <button type="button" className={s.iconBtn} onClick={() => setMailNuevo(null)}>
+                    <X size={15} />
+                  </button>
+                </div>
+              </li>
+            )}
+
+            {!datos?.emails.length && !mailNuevo && (
+              <li className={s.empty}>Sin casillas cargadas.</li>
+            )}
+          </ul>
+        </section>
+
+        {/* Cambio de contraseña. Va en un diálogo aparte y no inline con la edición de la casilla porque son dos permisos distintos. */}
+        {claveDe && (
+          <MarcoModal onClose={() => setClaveDe(null)} className={s.modal}>
+              <h3 className={s.modalTitle}>
+                <KeyRound size={16} /> Contraseña de {claveDe.direccion}
+              </h3>
               <input
                 className={s.input}
-                placeholder="Etiqueta"
-                value={mailNuevo.etiqueta ?? ""}
-                onChange={(e) => setMailNuevo({ ...mailNuevo, etiqueta: e.target.value })}
-              />
-              <input
-                className={s.input}
-                placeholder="direccion@colegio.com"
+                type="text"
                 autoFocus
-                value={mailNuevo.direccion}
-                onChange={(e) => setMailNuevo({ ...mailNuevo, direccion: e.target.value })}
+                placeholder="Nueva contraseña"
+                value={claveNueva}
+                onChange={(e) => setClaveNueva(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && guardarClave()}
               />
-              <div className={s.rowActions}>
-                <button
-                  type="button"
-                  className={s.iconOk}
-                  onClick={() => guardarMail(mailNuevo)}
-                  disabled={!mailNuevo.direccion.trim()}
-                >
-                  <Check size={15} />
+              <p className={s.modalHint}>
+                Se guarda cifrada. Dejalo vacío para borrarla.
+              </p>
+              <div className={s.modalActions}>
+                <button type="button" className={s.ghostBtn} onClick={() => setClaveDe(null)}>
+                  Cancelar
                 </button>
-                <button type="button" className={s.iconBtn} onClick={() => setMailNuevo(null)}>
-                  <X size={15} />
+                <button type="button" className={s.primaryBtn} onClick={guardarClave}>
+                  <Save size={15} /> Guardar
                 </button>
               </div>
-            </li>
-          )}
-
-          {!datos?.emails.length && !mailNuevo && (
-            <li className={s.empty}>Sin casillas cargadas.</li>
-          )}
-        </ul>
-      </section>
-
-      {/* Cambio de contraseña. Va en un diálogo aparte y no inline con la
-          edición de la casilla porque son dos permisos distintos: quien edita
-          la dirección no necesariamente puede tocar la clave. */}
-      {claveDe && (
-        <div className={s.overlay} onClick={() => setClaveDe(null)}>
-          <div className={s.modal} onClick={(e) => e.stopPropagation()}>
-            <h3 className={s.modalTitle}>
-              <KeyRound size={16} /> Contraseña de {claveDe.direccion}
-            </h3>
-            <input
-              className={s.input}
-              type="text"
-              autoFocus
-              placeholder="Nueva contraseña"
-              value={claveNueva}
-              onChange={(e) => setClaveNueva(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && guardarClave()}
-            />
-            <p className={s.modalHint}>
-              Se guarda cifrada. Dejalo vacío para borrarla.
-            </p>
-            <div className={s.modalActions}>
-              <button type="button" className={s.ghostBtn} onClick={() => setClaveDe(null)}>
-                Cancelar
-              </button>
-              <button type="button" className={s.primaryBtn} onClick={guardarClave}>
-                <Save size={15} /> Guardar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+            </MarcoModal>
+        )}
+      </div>
+    </>
   );
 }

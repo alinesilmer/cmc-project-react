@@ -1,6 +1,7 @@
 import type React from "react";
 import { X } from "lucide-react";
 import styles from "./Alerta.module.scss";
+import Button from "@/website/components/UI/Button/Button";
 
 type Props = {
   tono?: "error" | "exito" | "info";
@@ -9,19 +10,15 @@ type Props = {
   onCerrar?: () => void;
 };
 
-/**
- * Aviso en pantalla. Reemplaza a los `alert()` (bloquean la pestaña y no dejan
- * copiar el texto) y a las cuatro franjas de error que tenía el administrador,
- * cada una con su CSS.
- */
+/** Aviso en pantalla. Reemplaza a los `alert()` (bloquean la pestaña y no dejan copiar el texto) y a las cuatro franjas de error que… */
 export default function Alerta({ tono = "error", children, onCerrar }: Props) {
   return (
     <div className={`${styles.alerta} ${styles[tono]}`} role={tono === "error" ? "alert" : "status"}>
       <span>{children}</span>
       {onCerrar && (
-        <button type="button" className={styles.cerrar} onClick={onCerrar} aria-label="Cerrar el aviso">
+        <Button variant="plano" type="button" className={styles.cerrar} onClick={onCerrar} aria-label="Cerrar el aviso">
           <X aria-hidden="true" />
-        </button>
+        </Button>
       )}
     </div>
   );

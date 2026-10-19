@@ -23,19 +23,13 @@ import {
 } from "../../../components/molecules/ReplicarFamilia/replicaState";
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
 import { hoyISO } from "@/app/shared/lib/fechas";
+import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
+import { extractDetail } from "@/app/pages/NomencladorNacional/NomencladorGalenos/utiles";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-// hoyISO y no toISOString(): este último pasa la hora local a UTC, así que
-// después de las 21:00 en Argentina proponía la vigencia del día siguiente.
-// Ver src/app/lib/fechas.ts.
+// hoyISO y no toISOString(): este último pasa la hora local a UTC.
 const today = hoyISO;
-
-function extractDetail(e: unknown): string {
-  const err = e as { response?: { data?: { detail?: string } } };
-  return err?.response?.data?.detail ?? "Ocurrió un error inesperado.";
-}
-
 function parseOpt(s: string): number | null {
   const t = s.trim();
   if (t === "") return null;
@@ -686,11 +680,9 @@ function DraftCard({
               <label className={styles.formLabel}>
                 Vigente desde <span className={styles.req}>*</span>
               </label>
-              <input
-                type="date"
-                className={`${styles.formInput} ${e.vigencia_desde ? styles.inputError : ""}`}
+              <CampoFecha
                 value={draft.vigencia_desde}
-                onChange={(ev) => onField({ vigencia_desde: ev.target.value })}
+                onChange={(valor) => onField({ vigencia_desde: valor })}
               />
               {e.vigencia_desde && <span className={styles.errorMsg}>{e.vigencia_desde}</span>}
             </div>

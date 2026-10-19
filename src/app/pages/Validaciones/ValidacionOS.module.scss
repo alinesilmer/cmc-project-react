@@ -1,87 +1,72 @@
 @use "@/app/styles/all.scss" as *;
 
 .container {
-  padding: $spacing-8;
+  // En variables porque la franja las necesita para salirse del relleno.
+  --lado: #{$spacing-12};
+  --arriba: #{$spacing-8};
+
+  padding: $spacing-8 $spacing-12;
   display: flex;
   flex-direction: column;
   gap: $spacing-5;
   min-height: 100%;
 
+  // La franja ya trae su margen; el `gap` alcanza.
+  > :first-child {
+    margin-bottom: 0;
+  }
+
   @media (max-width: $breakpoint-md) {
+    --lado: #{$spacing-5};
+    --arriba: #{$spacing-5};
     padding: $spacing-5;
     gap: $spacing-4;
   }
 
   @media (max-width: $breakpoint-sm) {
+    --lado: #{$spacing-4};
+    --arriba: #{$spacing-4};
     padding: $spacing-4;
   }
 }
 
-.back {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  align-self: flex-start;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
-  color: $gray-500;
-  text-decoration: none;
+// El logo de la obra social en una placa blanca, al lado del nombre.
+.placa {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 5rem;
+  height: 5rem;
+  font-size: $font-size-2xl;
+  color: var(--os-color, #{$franja-azul});
+  background: $white;
+  border-radius: 10px;
+  box-shadow: 0 10px 24px -12px rgba($franja-noche, 0.7);
+  // Los logos están hechos para fondo blanco, también en el tema oscuro.
+  color-scheme: light;
 
-  &:hover {
-    color: $primary-blue;
+  img {
+    max-width: 3.9rem;
+    max-height: 3.9rem;
+    object-fit: contain;
   }
 }
+
+
 
 // ─── Encabezado ───────────────────────────────────────────────────────────────
-
-.header {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: $spacing-5;
-  flex-wrap: wrap;
-  padding: $spacing-5 $spacing-6;
-  background: $white;
-  border: 1px solid $gray-200;
-  border-left: 4px solid var(--os-color, #{$primary-blue});
-  border-radius: $border-radius-lg;
-  box-shadow: $shadow-sm;
-
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-4;
-  }
-}
-
-.headerMain {
-  display: flex;
-  align-items: center;
-  gap: $spacing-4;
-  min-width: 0;
-}
 
 .avatar {
   display: grid;
   place-items: center;
-  width: 52px;
-  height: 52px;
+  width: 3.25rem;
+  height: 3.25rem;
   flex-shrink: 0;
   border-radius: 50%;
   color: $white;
   font-size: $font-size-lg;
   font-weight: $font-weight-bold;
   letter-spacing: 0.5px;
-}
-
-.headerLogo {
-  width: 56px;
-  height: 56px;
-  flex-shrink: 0;
-  padding: 4px;
-  object-fit: contain;
-  background: $white;
-  border: 2px solid $gray-200;
-  border-radius: 50%;
 }
 
 .title {
@@ -96,105 +81,32 @@
   }
 }
 
-.subtitle {
-  margin: $spacing-1 0 0;
-  max-width: 60ch;
-  font-size: $font-size-sm;
-  color: $gray-500;
-  line-height: 1.5;
-}
+// Tres columnas que llenan el ancho (márgenes parejos): el formulario, el almanaque del período y el panel con el día límite y la info.
+.carga {
+  display: grid;
+  grid-template-columns: minmax(0, 2.4fr) minmax(13rem, 0.8fr) minmax(17rem, 1fr);
+  grid-template-areas: "form periodo panel";
+  align-items: start;
+  gap: $spacing-8 $spacing-12;
 
-// ─── Barra de período ─────────────────────────────────────────────────────────
+  > :first-child { grid-area: form; }
 
-.periodBar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: $spacing-5;
-  flex-wrap: wrap;
-  padding: $spacing-5 $spacing-6;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--os-color, #{$primary-blue}) 6%, $white), $white);
-  border: 1px solid $gray-200;
-  border-left: 4px solid var(--os-color, #{$primary-blue});
-  border-radius: $border-radius-xl;
-  box-shadow: $shadow-sm;
+  @media (max-width: $breakpoint-xl) {
+    grid-template-columns: minmax(0, 2fr) minmax(17rem, 1fr);
+    grid-template-areas:
+      "form periodo"
+      "form panel";
+  }
 
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-4;
+  @media (max-width: $breakpoint-lg) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "form" "periodo" "panel";
   }
 }
 
-.periodInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
+.cargaPeriodo { grid-area: periodo; min-width: 0; }
 
-.periodEyebrow {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--os-color, #{$primary-blue});
-}
-
-.periodLabel {
-  display: inline-flex;
-  align-items: center;
-  gap: $spacing-2;
-  font-size: $font-size-2xl;
-  font-weight: $font-weight-bold;
-  color: $gray-900;
-  text-transform: capitalize;
-
-  svg {
-    color: var(--os-color, #{$primary-blue});
-  }
-}
-
-.periodLabelLoading {
-  color: $gray-400;
-}
-
-.periodStats {
-  display: flex;
-  align-items: center;
-  gap: $spacing-6;
-
-  @media (max-width: $breakpoint-sm) {
-    gap: $spacing-4;
-  }
-}
-
-.periodStat {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 1px;
-}
-
-.periodStatValue {
-  font-size: $font-size-3xl;
-  font-weight: $font-weight-bold;
-  color: $gray-900;
-  font-variant-numeric: tabular-nums;
-  line-height: 1.1;
-}
-
-.periodStatMoney {
-  color: $success-green;
-}
-
-.periodStatLabel {
-  font-size: $font-size-xs;
-  color: $gray-500;
-}
-
-.periodStatDivider {
-  align-self: stretch;
-  width: 1px;
-  background: $gray-200;
-}
+.cargaPanel { grid-area: panel; min-width: 0; }
 
 // ─── Avisos ───────────────────────────────────────────────────────────────────
 
@@ -229,7 +141,7 @@
   @extend %aviso-base;
   background: rgba($warning-orange, 0.1);
   border: 1px solid rgba($warning-orange, 0.4);
-  color: #92400e;
+  color: $tono-naranja-550;
 
   svg {
     color: $warning-orange;
@@ -238,70 +150,9 @@
 
 .error {
   @extend %aviso-base;
-  background: #fff0f0;
-  border: 1px solid #fca5a5;
+  background: $gray-100;
+  border: 1px solid $tono-rojo-200;
   color: $danger-red;
-}
-
-// ─── Pestañas ─────────────────────────────────────────────────────────────────
-
-.tabs {
-  display: flex;
-  gap: $spacing-1;
-  padding-bottom: 2px;
-  border-bottom: 1px solid $gray-200;
-  overflow-x: auto;
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
-}
-
-.tab {
-  display: inline-flex;
-  align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-3 $spacing-4;
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -2px;
-  font-family: inherit;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
-  color: $gray-500;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: color 0.18s, border-color 0.18s;
-
-  &:hover {
-    color: $gray-800;
-  }
-}
-
-.tabActive {
-  color: $primary-blue;
-  font-weight: $font-weight-semibold;
-  border-bottom-color: $primary-blue;
-}
-
-.tabBadge {
-  display: grid;
-  place-items: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 5px;
-  border-radius: 999px;
-  background: $gray-200;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-bold;
-  color: $gray-700;
-
-  .tabActive & {
-    background: $primary-blue;
-    color: $white;
-  }
 }
 
 // ─── Paneles ──────────────────────────────────────────────────────────────────
@@ -335,46 +186,18 @@
   max-width: 72ch;
 }
 
-.formCard {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-4;
-  padding: $spacing-6;
-  background: $white;
-  border: 1px solid $gray-200;
-  border-radius: $border-radius-lg;
-  box-shadow: $shadow-sm;
-  max-width: 760px;
-
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-4;
-  }
-}
-
-// Selector de socio, sólo para personal del Colegio (ver !esMedico en
-// ValidacionOS.tsx). Mismo look que los campos de PrestacionForm.
+// Selector de socio, sólo para personal del Colegio (ver !esMedico en ValidacionOS.tsx).
 .socioField {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  max-width: 420px;
-}
-
-.socioLabel {
-  display: flex;
-  align-items: center;
-  gap: $spacing-2;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-bold;
-  color: $gray-700;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
+  gap: 0.3125rem;
+  max-width: 26.25rem;
 }
 
 .linkBtn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 0.375rem;
   background: none;
   border: none;
   padding: 0;
@@ -387,147 +210,6 @@
   &:hover {
     text-decoration: underline;
   }
-}
-
-// ─── Resultado de la validación ───────────────────────────────────────────────
-
-.resultado {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-4;
-  padding: $spacing-5;
-  border-radius: $border-radius-lg;
-  border: 1px solid;
-  max-width: 760px;
-  animation: resultadoIn 0.24s ease;
-
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
-  }
-}
-
-@keyframes resultadoIn {
-  from {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.resultado_autorizada {
-  background: rgba($success-green, 0.07);
-  border-color: rgba($success-green, 0.4);
-  color: $success-green;
-}
-
-.resultado_rechazada {
-  background: #fff5f5;
-  border-color: #fca5a5;
-  color: $danger-red;
-}
-
-.resultado_pendiente {
-  background: rgba($warning-orange, 0.08);
-  border-color: rgba($warning-orange, 0.45);
-  color: #92400e;
-}
-
-.resultado_cargada {
-  background: rgba($primary-blue, 0.06);
-  border-color: rgba($primary-blue, 0.35);
-  color: $primary-blue;
-}
-
-.resultadoHead {
-  display: flex;
-  align-items: flex-start;
-  gap: $spacing-3;
-
-  svg {
-    flex-shrink: 0;
-    margin-top: 2px;
-  }
-
-  strong {
-    display: block;
-    font-size: $font-size-lg;
-    font-weight: $font-weight-semibold;
-  }
-
-  p {
-    margin: 3px 0 0;
-    font-size: $font-size-sm;
-    color: $gray-700;
-    line-height: 1.5;
-  }
-}
-
-.resultadoClose {
-  position: absolute;
-  top: $spacing-3;
-  right: $spacing-3;
-  display: grid;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  background: transparent;
-  border: none;
-  border-radius: $border-radius-sm;
-  color: currentColor;
-  opacity: 0.6;
-  cursor: pointer;
-
-  &:hover {
-    opacity: 1;
-    background: rgba(0, 0, 0, 0.05);
-  }
-}
-
-.resultadoDatos {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: $spacing-4;
-  margin: 0;
-  padding-top: $spacing-4;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-
-  @media (max-width: $breakpoint-sm) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  dt {
-    font-size: $font-size-xs;
-    color: $gray-500;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-  }
-
-  dd {
-    margin: 3px 0 0;
-    font-size: $font-size-sm;
-    font-weight: $font-weight-medium;
-    color: $gray-900;
-    font-variant-numeric: tabular-nums;
-    word-break: break-word;
-  }
-}
-
-.resultadoTotal {
-  font-size: $font-size-lg !important;
-  font-weight: $font-weight-bold !important;
-}
-
-.resultadoAyuda {
-  margin: 0;
-  padding-top: $spacing-3;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-  font-size: $font-size-sm;
-  color: $gray-600;
-  line-height: 1.5;
 }
 
 // ─── Modales ──────────────────────────────────────────────────────────────────
@@ -552,8 +234,8 @@
 
 .modalError {
   padding: $spacing-2 $spacing-3;
-  background: #fff0f0;
-  border: 1px solid #fca5a5;
+  background: $gray-100;
+  border: 1px solid $tono-rojo-200;
   border-radius: $border-radius-sm;
   font-size: $font-size-sm;
   color: $danger-red;
@@ -563,7 +245,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 0.375rem;
   width: 100%;
   padding: $spacing-6;
   background: $gray-50;
@@ -621,7 +303,7 @@
   gap: $spacing-2;
   margin-top: $spacing-3;
   padding: 0 $spacing-6;
-  height: 44px;
+  height: 2.75rem;
   background: $primary-blue-dark;
   border-radius: $border-radius-md;
   color: $white;

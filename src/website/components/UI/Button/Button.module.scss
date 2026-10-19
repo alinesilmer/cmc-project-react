@@ -14,9 +14,28 @@
   cursor: pointer;
   border: none;
   transition: background $transition-fast, box-shadow $transition-fast,
-    border-color $transition-fast, color $transition-fast;
+    border-color $transition-fast, color $transition-fast,
+    transform 0.18s cubic-bezier(0.34, 1.4, 0.64, 1);
+
+  // Crece apenas al pasar el mouse y se achica al apretar.
+  &:hover {
+    transform: scale(1.02);
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &:hover,
+    &:active {
+      transform: none;
+    }
+  }
   // También se renderiza como <a>: sin subrayado ni el color del enlace.
-  text-decoration: none;
+  & {
+    text-decoration: none;
+  }
 
   &:disabled,
   &[aria-disabled="true"] {
@@ -51,30 +70,30 @@
   background: $primary-blue;
   color: $primary-yellow-light;
   font-weight: 600;
-  border: 1px solid rgba(#f7e9aa, 0.5);
+  border: 1px solid rgba($primary-yellow, 0.5);
   box-shadow: $shadow-md;
 
   &:hover:not(:disabled) {
-    background: #0c2243;
+    background: $tono-azul-850-b;
     box-shadow: $shadow-md;
-    border-color: rgba(#f7e9aa, 0.85);
+    border-color: rgba($primary-yellow, 0.85);
   }
 
   &:focus-visible {
-    outline-color: rgba(255, 255, 255, 0.85);
+    outline-color: rgba($white, 0.85);
   }
 }
 
 .secondary {
   background-color: $primary-yellow;
-  color: #685c29;
-  border: 1px solid rgba(#dec348, 0.6);
+  color: $tono-amarillo-700;
+  border: 1px solid rgba($tono-amarillo-400, 0.6);
   box-shadow: $shadow-md;
 
   &:hover:not(:disabled) {
-    background-color: #e0d39c;
+    background-color: $tono-amarillo-250-b;
     box-shadow: $shadow-lg;
-    color: #4d4521;
+    color: $tono-amarillo-800;
   }
 }
 
@@ -102,20 +121,20 @@
 
 // Ghost — designed for use on dark/image backgrounds
 .ghost {
-  background-color: rgba(255, 255, 255, 0.07);
-  color: rgba(255, 255, 255, 0.92);
-  border: 1.5px solid rgba(255, 255, 255, 0.42);
+  background-color: rgba($white, 0.07);
+  color: rgba($white, 0.92);
+  border: 1.5px solid rgba($white, 0.42);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
 
   &:hover:not(:disabled) {
-    background-color: rgba(255, 255, 255, 0.14);
-    border-color: rgba(255, 255, 255, 0.72);
+    background-color: rgba($white, 0.14);
+    border-color: rgba($white, 0.72);
     color: $white;
   }
 
   &:focus-visible {
-    outline-color: rgba(255, 255, 255, 0.85);
+    outline-color: rgba($white, 0.85);
   }
 }
 

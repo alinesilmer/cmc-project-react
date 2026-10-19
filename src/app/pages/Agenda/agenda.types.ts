@@ -1,10 +1,4 @@
 // Los tres calendarios del Colegio: feriados, cumpleaños y tareas del mes.
-// Una sola tabla discriminada por `tipo`; lo que cambia entre ellos es cómo se
-// ubica el evento en el almanaque:
-//
-//     "unica"    usa `fecha`        un día puntual de un año puntual
-//     "anual"    usa `dia` + `mes`  se repite cada año   (cumpleaños)
-//     "mensual"  usa `dia`          se repite cada mes   (tareas)
 
 export type TipoEvento = "feriado" | "cumpleanos" | "tarea";
 export type Recurrencia = "unica" | "anual" | "mensual";
@@ -27,12 +21,7 @@ export interface EventoAgenda {
   activo: boolean;
 }
 
-/**
- * Un evento ya ubicado en un día concreto del mes, tal como lo devuelve
- * `GET /api/agenda/mes`. La expansión la hace el backend: el 31 en un mes de 30
- * y el 29 de febrero son fáciles de resolver mal y habría que repetir la regla
- * en cada consumidor.
- */
+/** Un evento ya ubicado en un día concreto del mes, tal como lo devuelve `GET /api/agenda/mes`. */
 export interface OcurrenciaAgenda extends EventoAgenda {
   /** `YYYY-MM-DD` dentro del mes pedido. */
   ocurre_el: string;
@@ -40,11 +29,7 @@ export interface OcurrenciaAgenda extends EventoAgenda {
 
 export type EventoInput = Omit<EventoAgenda, "id">;
 
-/**
- * Alguien del personal del Colegio (rol ≠ `medico`), para el selector de
- * responsable. El evento guarda el nombre, no el `id`: `responsable` es texto
- * porque también admite un área ("Facturación").
- */
+/** Alguien del personal del Colegio (rol ≠ `medico`), para el selector de responsable. */
 export interface Responsable {
   id: number;
   nombre: string;
@@ -83,12 +68,7 @@ export const DIAS_SEMANA = ["Lu", "Ma", "Mi", "Ju", "Vi", "Sá", "Do"];
 
 const HEX = /^#(?:[0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
 
-/**
- * El color del evento si es un hex válido, si no el de su tipo.
- *
- * `color` es texto libre que viene de la API y termina en un `style`; sin
- * filtrarlo, un valor cargado a mano mete CSS arbitrario y rompe la grilla.
- */
+/** El color del evento si es un hex válido, si no el de su tipo. */
 export function colorDe(e: { color?: string | null; tipo: TipoEvento }): string {
   const c = e.color?.trim();
   return c && HEX.test(c) ? c : COLOR_TIPO[e.tipo];
@@ -107,10 +87,7 @@ export function describirCuando(e: EventoAgenda): string {
   return "—";
 }
 
-/**
- * En qué casilla arranca el mes, contando desde el lunes. Usa componentes
- * locales, sin el corrimiento de zona de `new Date("YYYY-MM-DD")`.
- */
+/** En qué casilla arranca el mes, contando desde el lunes. */
 export function offsetPrimerDia(anio: number, mes: number): number {
   return (new Date(anio, mes - 1, 1).getDay() + 6) % 7;
 }

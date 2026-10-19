@@ -1,9 +1,4 @@
 // Boletín de pediatría: qué códigos ve un pediatra en cada obra social.
-//
-// Es la lista del sistema viejo (`valores_boletin_pediatria_ajax.php`, que a su
-// vez salió de `pediatria.sql`): clave = NRO_OBRASOCIAL, valor = los códigos que
-// esa obra social reconoce para pediatría. Las que no tienen código numérico en
-// la referencia (DASUTEN, GRUPO MELD SALUD) quedaron afuera allá y acá.
 
 /** ID_COLEGIO_ESPE de Pediatría: quien la tenga en cualquiera de sus slots ve este boletín. */
 export const ESPECIALIDAD_PEDIATRIA = 39;
@@ -11,10 +6,7 @@ export const ESPECIALIDAD_PEDIATRIA = 39;
 /** La consulta común. No tiene precio de pediatría propio: se usa la del boletín general. */
 export const CODIGO_CONSULTA_COMUN = "420351";
 
-/**
- * Nombre corto de cada código, tomado de la descripción que tienen cargada las
- * obras sociales (que varía de redacción entre una y otra).
- */
+/** Nombre corto de cada código, tomado de la descripción que tienen cargada las obras sociales (que varía de redacción entre una y otra). */
 export const NOMBRE_CODIGO: Record<string, string> = {
   "420132": "Consulta de demanda espontánea",
   "420133": "Consulta 420133",

@@ -1,25 +1,21 @@
 @use "@/app/styles/all.scss" as *;
 
-$crema: #f7e9aa;
-$texto: #14233a;
-$texto-suave: #5b6474;
-
 // ─── Encabezado del formulario ────────────────────────────────────────────────
 
 .titulo {
-  margin: 0 0 6px;
-  font-family: "Manrope", sans-serif;
+  margin: 0 0 0.375rem;
+  font-family: $fuente-titulos;
   font-size: clamp(2rem, 3.4vw, 2.6rem);
   font-weight: 800;
   line-height: 1.05;
   letter-spacing: -0.025em;
-  color: $texto;
+  color: $tono-azul-750-b;
 }
 
 .bajada {
-  margin: 0 0 26px;
+  margin: 0 0 1.625rem;
   font-size: 1.05rem;
-  color: $texto-suave;
+  color: $carpeta-plata-costura;
 }
 
 // ─── Formulario ───────────────────────────────────────────────────────────────
@@ -27,36 +23,36 @@ $texto-suave: #5b6474;
 .form {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 1.125rem;
 }
 
 .mensaje {
   margin: 0;
-  padding: 12px 14px;
+  padding: 0.75rem 0.875rem;
   border-radius: 6px;
   font-size: 0.95rem;
   line-height: 1.4;
 }
 
 .mensajeError {
-  background: #fef2f2;
-  border: 1px solid #fca5a5;
-  color: #b91c1c;
+  background: $gray-100;
+  border: 1px solid $tono-rojo-200;
+  color: $tono-rojo-500;
 }
 
 .mensajeInfo {
-  background: #eef3ff;
-  border: 1px solid #dbeafe;
+  background: $secondary-blue;
+  border: 1px solid $gray-200;
   color: $primary-blue;
 }
 
 .olvide {
   align-self: flex-start;
-  margin-top: -6px;
-  padding: 4px 0;
+  margin-top: -0.375rem;
+  padding: 0.25rem 0;
   border: 0;
   background: none;
-  font-family: "Inter", sans-serif;
+  font-family: $fuente-texto;
   font-size: 0.95rem;
   font-weight: 600;
   color: $primary-blue;
@@ -73,14 +69,14 @@ $texto-suave: #5b6474;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  height: 58px;
-  margin-top: 4px;
+  gap: 0.625rem;
+  height: 3.625rem;
+  margin-top: 0.25rem;
   border: 0;
   border-radius: 8px;
   background: $primary-blue;
   color: $white;
-  font-family: "Manrope", sans-serif;
+  font-family: $fuente-titulos;
   font-size: 1.1rem;
   font-weight: 800;
   cursor: pointer;
@@ -88,8 +84,8 @@ $texto-suave: #5b6474;
   transition: background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
 
   svg {
-    width: 20px;
-    height: 20px;
+    width: 1.25rem;
+    height: 1.25rem;
     transition: transform 0.18s ease;
   }
 
@@ -103,7 +99,7 @@ $texto-suave: #5b6474;
   }
 
   &:focus-visible {
-    outline: 3px solid $crema;
+    outline: 3px solid $tono-amarillo-50;
     outline-offset: 2px;
   }
 
@@ -121,57 +117,57 @@ $texto-suave: #5b6474;
 
 .ayudaCuerpo {
   display: flex;
-  gap: 14px;
-  padding: 16px;
+  gap: 0.875rem;
+  padding: 1rem;
   border-radius: 8px;
-  background: #fbf6e1;
-  border: 1px solid rgba(#c9a94a, 0.35);
+  background: $primary-yellow-light;
+  border: 1px solid rgba($tono-amarillo-250, 0.35);
 }
 
 .ayudaIcono {
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
+  width: 2.5rem;
+  height: 2.5rem;
   border-radius: 6px;
-  background: $crema;
-  color: #4d441a;
+  background: $tono-amarillo-50;
+  color: $primary-yellow-dark;
 
   svg {
-    width: 20px;
-    height: 20px;
+    width: 1.25rem;
+    height: 1.25rem;
   }
 }
 
 .ayudaTitulo {
-  margin: 0 0 4px;
-  font-family: "Manrope", sans-serif;
+  margin: 0 0 0.25rem;
+  font-family: $fuente-titulos;
   font-weight: 800;
-  color: $texto;
+  color: $tono-azul-750-b;
 }
 
 .ayudaTexto {
-  margin: 0 0 12px;
+  margin: 0 0 0.75rem;
   font-size: 0.92rem;
   line-height: 1.45;
-  color: $texto-suave;
+  color: $carpeta-plata-costura;
 }
 
 .ayudaBoton {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
   border-radius: 6px;
-  background: #1d9148;
+  background: $success-green;
   color: $white;
   font-weight: 700;
   font-size: 0.95rem;
   text-decoration: none;
 
   &:hover {
-    background: #17773b;
+    background: $tono-verde-500-b;
     color: $white;
   }
 }
@@ -181,9 +177,9 @@ $texto-suave: #5b6474;
 .separador {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin: 26px 0 16px;
-  color: #9aa3b2;
+  gap: 0.75rem;
+  margin: 1.625rem 0 1rem;
+  color: $gray-400;
   font-size: 0.85rem;
 
   &::before,
@@ -191,14 +187,14 @@ $texto-suave: #5b6474;
     content: "";
     flex: 1;
     height: 1px;
-    background: #e8e4da;
+    background: $tono-gris-100-b;
   }
 }
 
 .secundarias {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 0.75rem;
 
   @media (max-width: 420px) {
     grid-template-columns: 1fr;
@@ -209,14 +205,14 @@ $texto-suave: #5b6474;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-height: 50px;
-  padding: 10px 12px;
-  border: 1.5px solid #e2ddd0;
+  gap: 0.5rem;
+  min-height: 3.125rem;
+  padding: 0.625rem 0.75rem;
+  border: 1.5px solid $tono-gris-100;
   border-radius: 8px;
   background: $white;
   color: $primary-blue;
-  font-family: "Inter", sans-serif;
+  font-family: $fuente-texto;
   font-size: 0.95rem;
   font-weight: 600;
   text-decoration: none;
@@ -224,8 +220,8 @@ $texto-suave: #5b6474;
   transition: border-color 0.18s ease, background 0.18s ease;
 
   svg {
-    width: 18px;
-    height: 18px;
+    width: 1.125rem;
+    height: 1.125rem;
     flex-shrink: 0;
   }
 

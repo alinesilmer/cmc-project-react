@@ -1,8 +1,6 @@
 import {
-  longDateTimeFormatter,
   shortDateFormatter,
 } from "./boletinConsultaComun.constants";
-import type { ConsultaComunItem } from "./boletinConsultaComun.types";
 
 export function safeNum(value: unknown): number {
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -53,38 +51,6 @@ export function buildPdfFilename(date: Date): string {
   const mm = String(date.getMonth() + 1).padStart(2, "0");
   const dd = String(date.getDate()).padStart(2, "0");
   return `Boletín-Informativo-${yyyy}${mm}${dd}.pdf`;
-}
-
-export function formatGeneratedDate(date: Date): string {
-  return longDateTimeFormatter.format(date);
-}
-
-export function getMostRecentLabel(items: ConsultaComunItem[]): string {
-  const timestamps = items
-    .map((item) => parseFecha(item.fechaCambio))
-    .filter((value): value is number => value != null);
-
-  if (timestamps.length === 0) return "Sin fecha informada";
-  return shortDateFormatter.format(new Date(Math.max(...timestamps)));
-}
-
-export function fitLines(
-  lines: string[],
-  maxLines: number,
-  withEllipsis = true
-): string[] {
-  if (lines.length <= maxLines) return lines;
-
-  const trimmed = lines.slice(0, maxLines);
-
-  if (withEllipsis && trimmed.length > 0) {
-    trimmed[trimmed.length - 1] = `${trimmed[trimmed.length - 1].replace(
-      /[….]$/,
-      ""
-    )}…`;
-  }
-
-  return trimmed;
 }
 
 export async function fetchAsDataUrl(src: string): Promise<string | null> {

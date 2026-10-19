@@ -7,13 +7,7 @@ import type { ButtonProps as MuiButtonProps } from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import type { SxProps, Theme } from "@mui/material/styles";
 
-/**
- * MUI-backed Button. Keeps the original in-house API and colors so every
- * existing `<Button variant="…">` call site renders a Material UI button
- * with the same look:
- *   primary = blue · secondary = yellow · third = gray/dark
- *   success = green (Excel) · danger = red (cancel/delete) · ghost = gray outline
- */
+/** MUI-backed Button. Keeps the original in-house API and colors so every existing `<Button variant="…">` call site renders a Material UI button with the same… */
 type ButtonVariant =
   | "primary"
   | "secondary"
@@ -24,7 +18,7 @@ type ButtonVariant =
 
 type ButtonSize = "sm" | "md" | "lg";
 
-export interface ButtonProps
+interface ButtonProps
   extends Omit<MuiButtonProps, "variant" | "size" | "color"> {
   variant?: ButtonVariant;
   size?: ButtonSize;
@@ -64,8 +58,8 @@ const VARIANT_SX: Record<ButtonVariant, SxProps<Theme>> = {
     "&:hover": { backgroundColor: "#d3c17a", color: "#4d4521" },
   },
   success: {
-    backgroundColor: "#ffffff",
-    color: "#1d9148",
+    backgroundColor: "var(--tema-superficie, #ffffff)",
+    color: "var(--tema-verde, #1d9148)",
     border: "1px solid rgba(29,145,72,0.32)",
     "&:hover": {
       backgroundColor: "rgba(29,145,72,0.06)",
@@ -73,8 +67,8 @@ const VARIANT_SX: Record<ButtonVariant, SxProps<Theme>> = {
     },
   },
   danger: {
-    backgroundColor: "#ffffff",
-    color: "#cc2a2a",
+    backgroundColor: "var(--tema-superficie, #ffffff)",
+    color: "var(--tema-rojo, #cc2a2a)",
     border: "1px solid rgba(204,42,42,0.3)",
     "&:hover": {
       backgroundColor: "rgba(204,42,42,0.05)",
@@ -83,10 +77,10 @@ const VARIANT_SX: Record<ButtonVariant, SxProps<Theme>> = {
   },
   ghost: {
     backgroundColor: "transparent",
-    color: "#1e293b",
+    color: "var(--tema-texto, #1e293b)",
     border: "1px solid rgba(148,163,184,0.6)",
     "&:hover": {
-      backgroundColor: "rgba(241,245,249,0.8)",
+      backgroundColor: "var(--tema-superficie-alta, rgba(241,245,249,0.8))",
       borderColor: "rgba(100,116,139,0.7)",
     },
   },

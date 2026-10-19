@@ -4,8 +4,7 @@ import type { PrecioResponse } from "../types";
 export const etiquetaAfiliado = (dni?: string | null, nombre?: string | null) =>
   [dni, nombre].filter(Boolean).join(" · ");
 
-/** De dónde sale el precio: NN → "Nomenclador Nacional"; NE de valor fijo → "Valor
- *  fijo"; NE calculable → el galeno de los honorarios, con su nivel si es nivelado. */
+/** De dónde sale el precio: NN → "Nomenclador Nacional"; NE de valor fijo → "Valor fijo"; NE calculable → el galeno de los honorarios. */
 export function etiquetaPrecio(p: PrecioResponse): string | null {
   if (!p.admitido || p.sin_precio || p.por_presupuesto || !p.origen) return null;
   if (p.origen === "NN") return "Nomenclador Nacional";

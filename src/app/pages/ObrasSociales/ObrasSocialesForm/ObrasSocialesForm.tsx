@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Camera,
-  ChevronLeft,
   Save,
   X,
   FileText,
@@ -20,6 +20,7 @@ import {
   deleteDocumento,
   setObraSocialPrincipal,
 } from "../obrasSociales.api";
+import { OBRAS_SOCIALES_KEY } from "../useObrasSociales";
 import {
   EMPTY_FORM,
   CONDICION_IVA_LABELS,
@@ -40,6 +41,11 @@ import { abrirAdjunto } from "@/app/shared/lib/archivos";
 import { useNotify } from "../../../hooks/useNotify";
 import s from "./ObrasSocialesForm.module.scss";
 import Modal from "../../../components/ui/Modal/Modal";
+import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
+import BackButton from "@/app/components/ui/BackButton/BackButton";
+import Button from "@/app/components/ui/Button/Button";
+import Franja from "@/app/components/layout/Franja/Franja";
+import FieldError from "@/app/components/ui/FieldError/FieldError";
 
 const TIPO_DOCUMENTOS: TipoDocumento[] = [
   "convenio",
@@ -48,15 +54,6 @@ const TIPO_DOCUMENTOS: TipoDocumento[] = [
 ];
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
-
-function FieldError({ msg }: { msg?: string }) {
-  if (!msg) return null;
-  return (
-    <span className={s.fieldError} role="alert">
-      {msg}
-    </span>
-  );
-}
 
 // ─── Contacto list (emails / teléfonos) ──────────────────────────────────────
 
@@ -266,9 +263,7 @@ function formatCUIT(raw: string): string {
 
 // ─── File validation ──────────────────────────────────────────────────────────
 
-// El backend valida por magic bytes contra una whitelist (app/common/uploads.py,
-// perfil DOCUMENTOS): PDF e imágenes. Word queda afuera — aceptarlo acá sólo
-// produce un 415 al subir.
+// El backend valida por magic bytes contra una whitelist (app/common/uploads.py, perfil DOCUMENTOS): PDF e imágenes.
 const DOC_ACCEPT = ".pdf,.jpg,.jpeg,.png,.webp,.tif,.tiff";
 
 function validateDocFile(f: File): string | null {
@@ -340,9 +335,7 @@ function DocRow({
       if (err) { setUploadError(err); return; }
     }
     setUploadError(null);
-    // Alta y edición se comportan igual: lo elegido queda encolado y se sube al
-    // guardar. Antes, en edición el archivo se quedaba en un estado local que el
-    // submit no miraba, así que se perdía sin aviso.
+    // Alta y edición se comportan igual: lo elegido queda encolado y se sube al guardar.
     onQueue(tipo, fileList);
     clearInputs();
   };
@@ -465,8 +458,7 @@ function OtrosDocList({ obraId, existingDocs, onReload, onQueueChange }: OtrosDo
   );
   const notify = useNotify();
 
-  // Al recargar los documentos del servidor se conservan las filas con archivo
-  // pendiente: si no, borrar un documento existente te vaciaba la cola visible.
+  // Al recargar los documentos del servidor se conservan las filas con archivo pendiente: si no, borrar un documento existente te vaciaba la cola visible.
   useEffect(() => {
     setEntries((prev) => [
       ...existingDocs.map((d) => ({
@@ -479,8 +471,6 @@ function OtrosDocList({ obraId, existingDocs, onReload, onQueueChange }: OtrosDo
   }, [existingDocs.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Sin el nombre escrito el archivo igual se sube: cae el nombre del archivo.
-  // Filtrar por `nombreCustom` no vacío hacía que un adjunto sin nombre
-  // desapareciera al guardar, sin aviso.
   const notifyQueue = (updated: OtroEntry[]) => {
     onQueueChange(
       updated
@@ -657,6 +647,7 @@ function OtrosDocList({ obraId, existingDocs, onReload, onQueueChange }: OtrosDo
 
 export default function ObrasSocialesForm() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const notify = useNotify();
   const { id } = useParams<{ id: string }>();
   const isEdit = Boolean(id);
@@ -666,8 +657,7 @@ export default function ObrasSocialesForm() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
-  // Solo en el alta: el back crea la OS y además siembra sus galenos y todo su
-  // nomenclador NN, lo que tarda varios segundos.
+  // Solo en el alta: el back crea la OS y además siembra sus galenos y todo su nomenclador NN, lo que tarda varios segundos.
   const [creando, setCreando] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<number | undefined>(obraId);
@@ -775,10 +765,7 @@ export default function ObrasSocialesForm() {
   };
 
   // ── Documentos pendientes ───────────────────────────────────────────────────
-  // Sube todo lo encolado y avisa por toast lo que falló. Antes esto era un
-  // `Promise.allSettled` sin mirar el resultado: un 415 del backend (por
-  // ejemplo, un .docx, que no acepta) terminaba en un alta "exitosa" sin
-  // documentos y sin ningún mensaje.
+  // Sube todo lo encolado y avisa por toast lo que falló.
   const subirPendientes = async (destinoId: number) => {
     const tareas: Array<{ nombre: string; run: () => Promise<unknown> }> = [];
 
@@ -817,10 +804,7 @@ export default function ObrasSocialesForm() {
   };
 
   // ── Vínculos con asociadas ───────────────────────────────────────────────────
-  // Antes esto era un `Promise.allSettled` sin mirar el resultado: si el PATCH
-  // de una asociada fallaba, la pantalla navegaba al detalle como si todo
-  // hubiera salido bien y el vínculo simplemente no quedaba. Mismo patrón que
-  // `subirPendientes` para los documentos. Ver auditoría O-08.
+  // Antes esto era un `Promise.allSettled` sin mirar el resultado: si el PATCH de una asociada fallaba.
   const vincularAsociadas = async (
     destinoId: number,
     toAdd: ObraSocialRef[],
@@ -890,8 +874,7 @@ export default function ObrasSocialesForm() {
         setCreando(true);
         const created = await createObraSocial(payload);
         setSavedId(created.id);
-        // Las asociadas son secundarias al alta: si una falla, la obra social ya
-        // existe igual y se resuelve editando.
+        // Las asociadas son secundarias al alta: si una falla, la obra social ya existe igual y se resuelve editando.
         await vincularAsociadas(created.id, toAdd, []);
         await subirPendientes(created.id);
         navigate(`/panel/convenios/obras-sociales/${created.id}`);
@@ -901,6 +884,9 @@ export default function ObrasSocialesForm() {
         "Ocurrió un error al guardar. Verificá los datos e intentá nuevamente."
       );
     } finally {
+      // En el `finally` porque un alta puede fallar a mitad de camino (las asociadas, los adjuntos) con la obra social ya creada.
+      queryClient.removeQueries({ queryKey: [...OBRAS_SOCIALES_KEY, "detalle"] });
+      void queryClient.invalidateQueries({ queryKey: OBRAS_SOCIALES_KEY });
       setSaving(false);
       setCreando(false);
     }
@@ -912,26 +898,17 @@ export default function ObrasSocialesForm() {
     return (
       <div className={s.loadingPage}>
         <span className={s.spinner} aria-hidden="true" />
-        <p>Cargando datos…</p>
+        <p>Cargando…</p>
       </div>
     );
   }
 
   return (
     <div className={s.container}>
-      {/* Page header */}
-      <div className={s.pageHeader}>
-        <button
-          type="button"
-          className={s.backBtn}
-          onClick={() => navigate("/panel/convenios/obras-sociales")}
-        >
-          <ChevronLeft size={18} /> Volver al listado
-        </button>
-        <div className={s.pageTitle}>
-          <HousePlus size={24} className={s.pageTitleIcon} aria-hidden="true" />
-          <h1>{isEdit ? "Editar Obra Social" : "Alta de Obra Social"}</h1>
-        </div>
+      <Franja titulo={isEdit ? "Editar obra social" : "Nueva obra social"} icono={HousePlus} />
+
+      <div>
+        <BackButton label="Obras sociales" to="/panel/convenios/obras-sociales" />
       </div>
 
       {serverError && (
@@ -943,7 +920,10 @@ export default function ObrasSocialesForm() {
       <form onSubmit={handleSubmit} noValidate className={s.form}>
         {/* ── Sección 1: Datos de la obra social ── */}
         <section className={s.section}>
-          <h2 className={s.sectionTitle}>Datos de la Obra Social</h2>
+          <h2 className={s.sectionTitle}>
+            <span className={s.paso} aria-hidden="true">1</span>
+            Datos
+          </h2>
           <div className={s.grid2}>
             {/* Número */}
             <div className={s.field} id="field-nro_obra_social">
@@ -961,9 +941,6 @@ export default function ObrasSocialesForm() {
                 maxLength={10}
               />
               <FieldError msg={errors.nro_obra_social} />
-              <span className={s.hint}>
-                La denominación se forma: Nº + Nombre
-              </span>
             </div>
 
             {/* Nombre */}
@@ -1046,13 +1023,12 @@ export default function ObrasSocialesForm() {
           </div>
         </section>
 
-        {/* ── Sección 1B: Operación ──
-            Sin esto, una obra social nueva quedaba MARCA="N" por el default
-            del backend y no aparecía en ningún selector de padrón, y
-            dia_corte no era editable desde ningún lado del front (siempre 20).
-            Ver auditoría O-02. */}
+        {/* ── Sección 1B: Operación ── Sin esto, una obra social nueva quedaba MARCA="N" por el default del backend y no aparecía en ningún selector… */}
         <section className={s.section}>
-          <h2 className={s.sectionTitle}>Operación</h2>
+          <h2 className={s.sectionTitle}>
+            <span className={s.paso} aria-hidden="true">2</span>
+            Operación
+          </h2>
 
           <div className={s.field} id="field-marca">
             <span className={s.label}>Habilitada en el padrón</span>
@@ -1081,7 +1057,7 @@ export default function ObrasSocialesForm() {
               </label>
             </div>
             <span className={s.hint}>
-              Con «No» no aparece en el selector de padrón ni en las asignaciones de médicos.
+              Con «No» no figura en padrones.
             </span>
           </div>
 
@@ -1100,14 +1076,17 @@ export default function ObrasSocialesForm() {
             />
             <FieldError msg={errors.dia_corte} />
             <span className={s.hint}>
-              1 = mes completo (del 1 al último día). 20 = del 20 al 20 del mes siguiente.
+              1 = mes completo · 20 = del 20 al 20.
             </span>
           </div>
         </section>
 
         {/* ── Sección 2: Dirección de facturación ── */}
         <section className={s.section}>
-          <h2 className={s.sectionTitle}>Dirección de Envío de Facturación</h2>
+          <h2 className={s.sectionTitle}>
+            <span className={s.paso} aria-hidden="true">3</span>
+            Envío de facturas
+          </h2>
 
           <div className={s.field} id="field-df_tipo">
             <span className={s.label}>Tipo de envío</span>
@@ -1226,9 +1205,6 @@ export default function ObrasSocialesForm() {
                   placeholder="Ej: 1650"
                   maxLength={10}
                 />
-                {form.df_tipo === "corrientes_capital" && (
-                  <span className={s.hint}>Código postal fijo de Corrientes Capital.</span>
-                )}
               </div>
 
               <div className={`${s.field} ${s.fullWidth}`}>
@@ -1251,7 +1227,10 @@ export default function ObrasSocialesForm() {
 
         {/* ── Sección 3: Facturación y contacto ── */}
         <section className={s.section}>
-          <h2 className={s.sectionTitle}>Facturación y Contacto</h2>
+          <h2 className={s.sectionTitle}>
+            <span className={s.paso} aria-hidden="true">4</span>
+            Facturación y contacto
+          </h2>
           <div className={s.grid2}>
             {/* Plazo vencimiento */}
             <div className={s.field} id="field-plazo_vencimiento">
@@ -1299,12 +1278,10 @@ export default function ObrasSocialesForm() {
               <label className={s.label} htmlFor="fecha_alta_convenio">
                 Fecha de Alta de Convenio
               </label>
-              <input
-                id="fecha_alta_convenio"
-                type="date"
-                className={`${s.input} ${errors.fecha_alta_convenio ? s.inputError : ""}`}
+              <CampoFecha
                 value={form.fecha_alta_convenio}
-                onChange={(e) => set("fecha_alta_convenio", e.target.value)}
+                onChange={(valor) => set("fecha_alta_convenio", valor)}
+                id="fecha_alta_convenio"
               />
               <FieldError msg={errors.fecha_alta_convenio} />
             </div>
@@ -1343,7 +1320,10 @@ export default function ObrasSocialesForm() {
 
         {/* ── Sección 4: Relaciones ── */}
         <section className={s.section}>
-          <h2 className={s.sectionTitle}>Relaciones entre Obras Sociales</h2>
+          <h2 className={s.sectionTitle}>
+            <span className={s.paso} aria-hidden="true">5</span>
+            Relaciones
+          </h2>
           <div className={s.grid2}>
             {/* Obra social principal */}
             <div className={s.field}>
@@ -1439,9 +1419,7 @@ export default function ObrasSocialesForm() {
                 excludeId={obraId}
               />
               <span className={s.hint}>
-                Marcarla acá la saca del selector de padrón: las asignaciones de
-                médicos sólo listan obras sociales sin principal, para que una
-                empresa con varios planes aparezca una sola vez.
+                Deja de figurar en padrones: se lista sólo la principal.
               </span>
             </div>
           </div>
@@ -1449,7 +1427,10 @@ export default function ObrasSocialesForm() {
 
         {/* ── Sección 5: Documentos ── */}
         <section className={s.section}>
-          <h2 className={s.sectionTitle}>Documentos</h2>
+          <h2 className={s.sectionTitle}>
+            <span className={s.paso} aria-hidden="true">6</span>
+            Documentos
+          </h2>
           <div className={s.docGrid}>
             {TIPO_DOCUMENTOS.map((tipo) => {
               const existing = documentos.find((d) => d.tipo === tipo);
@@ -1492,18 +1473,24 @@ export default function ObrasSocialesForm() {
 
         {/* ── Footer actions ── */}
         <div className={s.formFooter}>
-          <button
+          <Button
             type="button"
-            className={s.btnSecondary}
+            variant="ghost"
+            size="lg"
             onClick={() => navigate("/panel/convenios/obras-sociales")}
             disabled={saving}
           >
             Cancelar
-          </button>
-          <button type="submit" className={s.btnPrimary} disabled={saving}>
-            <Save size={16} />
-            {saving ? "Guardando…" : isEdit ? "Guardar cambios" : "Registrar obra social"}
-          </button>
+          </Button>
+          <Button
+            submit
+            variant="primary"
+            size="lg"
+            disabled={saving}
+            leftIcon={<Save size={18} aria-hidden="true" />}
+          >
+            {saving ? "Guardando…" : "Guardar"}
+          </Button>
         </div>
       </form>
 

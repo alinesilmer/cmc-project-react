@@ -1,19 +1,16 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Plus, Eye, Pencil, Trash2, RefreshCw, ClipboardList, Download } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-} from "@/app/components/ui/Table/Table";
-import IconButton from "@/app/components/ui/IconButton/IconButton";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ChevronLeft, ChevronRight, ClipboardList, Download, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
+import ConfirmModal from "@/app/components/ui/ConfirmModal/ConfirmModal";
+import Franja from "@/app/components/layout/Franja/Franja";
+import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
 import { listObrasSociales, deleteObraSocial } from "../obrasSociales.api";
 import type { ObraSocialListItem } from "../obrasSociales.types";
+import { OBRAS_SOCIALES_KEY } from "../useObrasSociales";
 import ExportPanel from "../export/ExportPanel";
-// `new Date("2025-05-30")` se parsea como UTC y mostraba el día anterior en
-// Argentina. Ver src/app/lib/fechas.ts.
+// `new Date("2025-05-30")` se parsea como UTC y mostraba el día anterior en Argentina.
 import { formatFecha } from "@/app/shared/lib/fechas";
 import s from "./ObrasSocialesListado.module.scss";
 import Button from "@/app/components/ui/Button/Button";
@@ -21,77 +18,39 @@ import SearchField from "@/app/components/ui/SearchField/SearchField";
 
 const PAGE_SIZE = 15;
 
-// Square, bordered icon button to keep the original .iconBtn look on MUI IconButton.
-const iconBtnSx = {
-  width: 28,
-  height: 28,
-  borderRadius: "0.45rem",
-  border: "1px solid #e2e8f0",
-  color: "#64748b",
-  "&:hover": {
-    backgroundColor: "rgba(173, 162, 198, 0.15)",
-    color: "#7B6CA8",
-    borderColor: "rgba(137,124,172,0.5)",
-  },
-} as const;
-
-const iconBtnDangerSx = {
-  ...iconBtnSx,
-  "&:hover": {
-    backgroundColor: "#fff0f0",
-    color: "#cc2a2a",
-    borderColor: "#cc2a2a",
-  },
-} as const;
-
-// Purple/lilac header — the background lives on the CELLS (not the row) so it
-// always paints under MUI + border-collapse. Applies only to this table.
-const headCellSx = {
-  color: "#ffffff",
-  backgroundColor: "#816eb0",
-  fontWeight: 600,
-  fontSize: "10px",
-  textTransform: "uppercase",
-  letterSpacing: "0.07em",
-  whiteSpace: "nowrap",
-  borderBottom: "none",
-} as const;
-
 export default function ObrasSocialesListado() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const [items, setItems] = useState<ObraSocialListItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  // Deep link desde Actualizaciones de Valores: `?q=<nro>` llega acá y antes
-  // se perdía porque el estado siempre arrancaba vacío. Ver auditoría O-13.
+  const queryClient = useQueryClient();
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  // Deep link desde Actualizaciones de Valores: `?q=<nro>` llega acá y antes se perdía porque el estado siempre arrancaba vacío.
   const [query, setQuery] = useState(() => searchParams.get("q") ?? "");
-  // Mismo deep link: si la obra social buscada está de baja (o si nunca tuvo
-  // fila en el catálogo), sin esto el link llevaba a un listado vacío. Ver
-  // auditoría A-05.
+  // Mismo deep link: si la obra social buscada está de baja (o si nunca tuvo fila en el catálogo).
   const incluirInactivas = searchParams.get("incluir_inactivas") === "true";
   const [page, setPage] = useState(1);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [showExport, setShowExport] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await listObrasSociales(undefined, incluirInactivas);
-      setItems(data);
-    } catch {
-      setError("No se pudo cargar el listado. Intentá nuevamente.");
-    } finally {
-      setLoading(false);
-    }
-  }, [incluirInactivas]);
+  // Misma clave que el combo de `useObrasSociales`, así que entrar acá muestra lo que ya está en caché.
+  const queryKey = incluirInactivas
+    ? ([...OBRAS_SOCIALES_KEY, "con-inactivas"] as const)
+    : OBRAS_SOCIALES_KEY;
+  const consulta = useQuery<ObraSocialListItem[]>({
+    queryKey,
+    queryFn: () => listObrasSociales(undefined, incluirInactivas),
+  });
+  const items = useMemo(() => consulta.data ?? [], [consulta.data]);
+  const loading = consulta.isPending;
+  const error =
+    deleteError ??
+    (consulta.isError ? "No se pudo cargar el listado. Intentá nuevamente." : null);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  const load = () => {
+    setDeleteError(null);
+    void consulta.refetch();
+  };
 
   // Reset to page 1 when search changes
   useEffect(() => {
@@ -116,9 +75,13 @@ export default function ObrasSocialesListado() {
     setDeletingId(id);
     try {
       await deleteObraSocial(id);
-      setItems((prev) => prev.filter((it) => it.id !== id));
+      queryClient.setQueryData<ObraSocialListItem[]>(queryKey, (prev) =>
+        prev?.filter((it) => it.id !== id)
+      );
+      // Vence también el combo que comparten Auditoría y Nomenclador: sin esto seguía ofreciendo la obra social borrada hasta diez minutos.
+      void queryClient.invalidateQueries({ queryKey: OBRAS_SOCIALES_KEY });
     } catch {
-      setError("No se pudo eliminar la obra social.");
+      setDeleteError("No se pudo eliminar la obra social.");
     } finally {
       setDeletingId(null);
       setConfirmDeleteId(null);
@@ -127,123 +90,97 @@ export default function ObrasSocialesListado() {
 
   return (
     <div className={s.container}>
-      {/* Header */}
-      <div className={s.header}>
-        <div className={s.headerLeft}>
-          <span className={s.headerIcon} aria-hidden="true">
-            <ClipboardList size={28} />
-          </span>
-          <div>
-            <h1 className={s.title}>Obras Sociales</h1>
-            <p className={s.subtitle}>
-              {loading
-                ? "Cargando…"
-                : `${filtered.length} obra${filtered.length !== 1 ? "s" : ""} social${filtered.length !== 1 ? "es" : ""} encontrada${filtered.length !== 1 ? "s" : ""}`}
-            </p>
-          </div>
-        </div>
+      <Franja titulo="Obras sociales" icono={ClipboardList} />
 
-        <div className={s.headerActions}>
+      <div className={s.barra}>
+        <SearchField
+          placeholder="Buscar por nombre o número…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onClear={() => setQuery("")}
+        />
+
+        <div className={s.acciones}>
           <Button
             variant="ghost"
-            size="sm"
+            size="md"
             onClick={load}
-            disabled={loading}
-            aria-label="Actualizar listado"
-            title="Actualizar"
-            leftIcon={<RefreshCw size={16} className={loading ? s.spinning : ""} />}
+            disabled={consulta.isFetching}
+            leftIcon={<RefreshCw size={18} aria-hidden="true" className={consulta.isFetching ? s.spinning : ""} />}
           >
-            <span className={s.btnLabel}>Actualizar</span>
+            Actualizar
           </Button>
           <Button
             variant="secondary"
-            size="sm"
+            size="md"
             onClick={() => setShowExport(true)}
             disabled={loading || items.length === 0}
-            title="Exportar"
-            leftIcon={<Download size={16} />}
+            leftIcon={<Download size={18} aria-hidden="true" />}
           >
-            <span className={s.btnLabel}>Exportables</span>
+            Exportar
           </Button>
           <Button
             variant="primary"
-            size="sm"
+            size="md"
             onClick={() => navigate("/panel/convenios/obras-sociales/alta")}
-            leftIcon={<Plus size={16} />}
+            leftIcon={<Plus size={18} aria-hidden="true" />}
           >
-            <span className={s.btnLabel}>Nueva Obra Social</span>
+            Nueva
           </Button>
         </div>
       </div>
 
-      {/* Search */}
-      <div className={s.searchRow}>
-        <div className={s.searchWrap}>
-          <SearchField
-            fullWidth
-            placeholder="Buscar por nombre o número…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {/* Error */}
       {error && (
         <div className={s.errorBanner} role="alert">
           {error}
         </div>
       )}
 
-      {/* Table */}
       <div className={s.tableWrapper}>
         {loading ? (
           <div className={s.loadingState}>
             <span className={s.spinner} aria-hidden="true" />
-            <p>Cargando obras sociales…</p>
+            <p>Cargando…</p>
           </div>
         ) : paginated.length === 0 ? (
           <div className={s.emptyState}>
             <ClipboardList size={40} className={s.emptyIcon} />
             <p>
-              {query
-                ? "No se encontraron obras sociales con ese criterio."
-                : "Todavía no hay obras sociales registradas."}
+              {query ? "Nada coincide con la búsqueda." : "Todavía no hay obras sociales."}
             </p>
             {!query && (
               <Button
                 variant="primary"
-                size="sm"
+                size="md"
                 onClick={() => navigate("/panel/convenios/obras-sociales/alta")}
                 leftIcon={<Plus size={16} />}
               >
-                Registrar primera obra social
+                Nueva obra social
               </Button>
             )}
           </div>
         ) : (
-          <Table className={s.table} aria-label="Listado de obras sociales">
-            <TableHead>
-              <TableRow>
-                <TableCell component="th" scope="col" sx={headCellSx}>Nº</TableCell>
-                <TableCell component="th" scope="col" sx={headCellSx}>Denominación</TableCell>
-                <TableCell component="th" scope="col" className={s.hideXs} sx={headCellSx}>Condición IVA</TableCell>
-                <TableCell component="th" scope="col" className={s.hideSm} sx={headCellSx}>Contacto</TableCell>
-                <TableCell component="th" scope="col" className={s.hideMd} sx={headCellSx}>Alta convenio</TableCell>
-                <TableCell component="th" scope="col" className={s.actionsCol} sx={headCellSx}>Acciones</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+          <Tabla aria-label="Listado de obras sociales">
+            <thead>
+              <tr>
+                <th scope="col">Nº</th>
+                <th scope="col">Obra social</th>
+                <th scope="col" className={s.hideXs}>Factura</th>
+                <th scope="col" className={s.hideSm}>Contacto</th>
+                <th scope="col" className={s.hideMd}>Alta convenio</th>
+                <th scope="col" className={s.actionsCol} />
+              </tr>
+            </thead>
+            <tbody>
               {paginated.map((os) => (
-                <TableRow key={os.id}>
-                  <TableCell className={s.nroCell}>{os.nro_obra_social}</TableCell>
-                  <TableCell>
+                <tr key={os.id}>
+                  <td className={s.nroCell}>{os.nro_obra_social}</td>
+                  <td>
                     <span className={s.nameCell}>{os.nombre}</span>
-                    <span className={s.denoCell}>{os.denominacion}</span>
-                  </TableCell>
-                  <TableCell className={s.hideXs}>
+                  </td>
+                  <td className={s.hideXs}>
                     {os.condicion_iva == null ? (
-                      <span className={s.badgeNeutral}>Sin definir</span>
+                      <span className={s.sinDato}>—</span>
                     ) : (
                       <span
                         className={
@@ -253,123 +190,89 @@ export default function ObrasSocialesListado() {
                         }
                       >
                         {os.condicion_iva === "responsable_inscripto"
-                          ? "Factura A"
-                          : "Factura B"}
+                          ? "A"
+                          : "B"}
                       </span>
                     )}
-                  </TableCell>
-                  <TableCell className={s.hideSm}>
+                  </td>
+                  <td className={s.hideSm}>
                     <span className={s.contactLine}>{os.emails?.[0]?.valor ?? "—"}</span>
                     <span className={s.contactLine}>{os.telefonos?.[0]?.valor ?? ""}</span>
-                  </TableCell>
-                  <TableCell className={s.hideMd}>{os.fecha_alta_convenio ? formatFecha(os.fecha_alta_convenio) : ''}</TableCell>
-                  <TableCell>
+                  </td>
+                  <td className={s.hideMd}>{os.fecha_alta_convenio ? formatFecha(os.fecha_alta_convenio) : ''}</td>
+                  <td>
                     <div className={s.actions}>
-                      <IconButton
-                        size="small"
-                        sx={iconBtnSx}
-                        onClick={() =>
-                          navigate(`/panel/convenios/obras-sociales/${os.id}`)
-                        }
-                        title="Ver detalle"
-                        aria-label={`Ver detalle de ${os.nombre}`}
-                      >
-                        <Eye size={15} />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        sx={iconBtnSx}
-                        onClick={() =>
-                          navigate(
-                            `/panel/convenios/obras-sociales/${os.id}/editar`
-                          )
-                        }
+                      <BotonVer
+                        onClick={() => navigate(`/panel/convenios/obras-sociales/${os.id}`)}
+                        etiqueta={`Ver ${os.nombre}`}
+                      />
+                      <button
+                        type="button"
+                        className={s.iconBtn}
+                        onClick={() => navigate(`/panel/convenios/obras-sociales/${os.id}/editar`)}
                         title="Editar"
                         aria-label={`Editar ${os.nombre}`}
                       >
-                        <Pencil size={15} />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        sx={iconBtnDangerSx}
+                        <Pencil size={18} aria-hidden="true" />
+                      </button>
+                      <button
+                        type="button"
+                        className={s.iconBtnDanger}
                         onClick={() => setConfirmDeleteId(os.id)}
                         title="Eliminar"
                         aria-label={`Eliminar ${os.nombre}`}
                         disabled={deletingId === os.id}
                       >
-                        <Trash2 size={15} />
-                      </IconButton>
+                        <Trash2 size={18} aria-hidden="true" />
+                      </button>
                     </div>
-                  </TableCell>
-                </TableRow>
+                  </td>
+                </tr>
               ))}
-            </TableBody>
-          </Table>
+            </tbody>
+          </Tabla>
         )}
       </div>
 
-      {/* Pagination */}
       {!loading && totalPages > 1 && (
         <div className={s.pagination} role="navigation" aria-label="Paginación">
           <Button
             variant="ghost"
-            size="sm"
+            size="md"
             disabled={page === 1}
             onClick={() => setPage((p) => p - 1)}
+            leftIcon={<ChevronLeft size={18} aria-hidden="true" />}
           >
-            ‹ Anterior
+            Anterior
           </Button>
           <span className={s.pageInfo}>
-            Página {page} de {totalPages}
+            {page} / {totalPages}
           </span>
           <Button
             variant="ghost"
-            size="sm"
+            size="md"
             disabled={page === totalPages}
             onClick={() => setPage((p) => p + 1)}
+            rightIcon={<ChevronRight size={18} aria-hidden="true" />}
           >
-            Siguiente ›
+            Siguiente
           </Button>
         </div>
       )}
 
-      {/* Export panel */}
       {showExport && (
         <ExportPanel items={items} onClose={() => setShowExport(false)} />
       )}
 
-      {/* Confirm delete modal */}
-      {confirmDeleteId !== null && (
-        <div
-          className={s.modalOverlay}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Confirmar eliminación"
-        >
-          <div className={s.modalBox}>
-            <h2 className={s.modalTitle}>¿Eliminar obra social?</h2>
-            <p className={s.modalText}>
-              Esta acción no se puede deshacer. Se eliminará la obra social y
-              todos sus datos asociados.
-            </p>
-            <div className={s.modalActions}>
-              <Button
-                variant="ghost"
-                onClick={() => setConfirmDeleteId(null)}
-              >
-                Cancelar
-              </Button>
-              <Button
-                variant="danger"
-                onClick={() => handleDelete(confirmDeleteId)}
-                disabled={deletingId === confirmDeleteId}
-              >
-                {deletingId === confirmDeleteId ? "Eliminando…" : "Sí, eliminar"}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        isOpen={confirmDeleteId !== null}
+        title="¿Eliminar obra social?"
+        message="No se puede deshacer: se borra con todos sus datos."
+        confirmLabel={deletingId !== null ? "Eliminando…" : "Sí, eliminar"}
+        variant="danger"
+        onConfirm={() => confirmDeleteId !== null && void handleDelete(confirmDeleteId)}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
     </div>
   );
 }

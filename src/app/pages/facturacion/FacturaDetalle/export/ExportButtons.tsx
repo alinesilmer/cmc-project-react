@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { FileSpreadsheet, FileText, Loader2 } from "lucide-react";
 import s from "./export.module.scss";
+import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 
 interface Props {
   onExport: (formato: "pdf" | "xlsx") => Promise<void>;
@@ -30,25 +30,19 @@ export default function ExportButtons({ onExport, disabled, disabledHint }: Prop
       {error && <p className={s.exportError}>{error}</p>}
 
       <div className={s.exportBtnRow}>
-        <button
-          type="button"
-          className={`${s.exportBtn} ${s.exportBtnExcel}`}
+        <BotonDescarga
+          formato="excel"
           onClick={() => handle("xlsx")}
           disabled={disabled || cargando !== null}
-        >
-          {cargando === "xlsx" ? <Loader2 size={16} className={s.spin} /> : <FileSpreadsheet size={16} />}
-          Excel
-        </button>
+          cargando={cargando === "xlsx"}
+        />
 
-        <button
-          type="button"
-          className={`${s.exportBtn} ${s.exportBtnPDF}`}
+        <BotonDescarga
+          formato="pdf"
           onClick={() => handle("pdf")}
           disabled={disabled || cargando !== null}
-        >
-          {cargando === "pdf" ? <Loader2 size={16} className={s.spin} /> : <FileText size={16} />}
-          PDF
-        </button>
+          cargando={cargando === "pdf"}
+        />
       </div>
     </div>
   );

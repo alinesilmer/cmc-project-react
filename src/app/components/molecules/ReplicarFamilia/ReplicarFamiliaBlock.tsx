@@ -17,10 +17,7 @@ type BlockProps = {
   disabled?: boolean;
 };
 
-/**
- * Check "Replicar en obras sociales relacionadas" + lista de los planes de la familia.
- * Arranca apagado; al prenderlo quedan todos tildados. Sin familia no se renderiza.
- */
+/** Check "Replicar en obras sociales relacionadas" + lista de los planes de la familia. */
 export default function ReplicarFamiliaBlock({ familia, value, onChange, descripcion, disabled }: BlockProps) {
   const options = useMemo(
     () => familia.map((f) => ({ value: f.nro_obra_social, label: f.nombre, hint: String(f.nro_obra_social) })),

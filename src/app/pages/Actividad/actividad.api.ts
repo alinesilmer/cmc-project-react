@@ -1,15 +1,6 @@
 import type { AccionUsuario, FiltrosActividad, PaginaActividad } from "./actividad.types";
 
 // Sin backend todavía: devuelve datos de ejemplo.
-//
-// Cuando la API exista, lo único que cambia es `getActividad`:
-//
-//     export const getActividad = (f: FiltrosActividad = {}) =>
-//       getJSON<PaginaActividad>("/api/actividad", f);
-//
-// y se borra el resto. La pantalla no se toca: habla contra el contrato de
-// `actividad.types.ts`, no contra este mock. Qué le falta al backend está en
-// INSTITUCION_AGENDA.md del repo de la API.
 
 /** Para que la pantalla avise que está mostrando humo. */
 export const USANDO_DATOS_DE_EJEMPLO = true;
@@ -98,13 +89,8 @@ export const USUARIOS_DISPONIBLES = Array.from(
   new Map(EJEMPLOS.map((e) => [e.usuario_id, { id: e.usuario_id!, nombre: e.usuario_nombre }])).values()
 ).sort((a, b) => a.nombre.localeCompare(b.nombre));
 
-/**
- * El registro paginado. **Hoy filtra en memoria sobre los datos de ejemplo**;
- * cuando exista la API, los mismos filtros viajan como query params.
- */
 export async function getActividad(f: FiltrosActividad = {}): Promise<PaginaActividad> {
-  // Latencia simulada: sin esto los estados de carga de la pantalla nunca se
-  // ven y no se sabe si están bien hasta que llega el backend real.
+  // Latencia simulada: sin esto los estados de carga de la pantalla nunca se ven y no se sabe si están bien hasta que llega…
   await new Promise((r) => setTimeout(r, 220));
 
   const page = f.page ?? 1;
@@ -116,8 +102,7 @@ export async function getActividad(f: FiltrosActividad = {}): Promise<PaginaActi
     if (f.usuario_id && a.usuario_id !== f.usuario_id) return false;
     if (f.modulo && a.modulo !== f.modulo) return false;
     if (f.resultado && a.resultado !== f.resultado) return false;
-    // Se compara sobre los 10 primeros caracteres del ISO (la parte `YYYY-MM-DD`)
-    // para no construir un Date y arrastrar el corrimiento de zona horaria.
+    // Se compara sobre los 10 primeros caracteres del ISO (la parte `YYYY-MM-DD`) para no construir un Date y arrastrar el corrimiento de zona horaria.
     if (f.desde && a.fecha.slice(0, 10) < f.desde) return false;
     if (f.hasta && a.fecha.slice(0, 10) > f.hasta) return false;
     return true;

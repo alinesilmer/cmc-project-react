@@ -24,7 +24,7 @@
 
   &:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.35);
+    box-shadow: 0 0 0 3px rgba($tono-azul-500-b, 0.35);
   }
 }
 

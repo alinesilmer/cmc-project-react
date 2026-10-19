@@ -1,7 +1,6 @@
 @use "@/app/styles/all.scss" as *;
 
 // Estilos compartidos por `PrestacionesTable` y `PeriodosTable`.
-// Hasta $breakpoint-md se muestra la tabla; abajo de eso, la lista de tarjetas.
 
 .tableWrap {
   overflow-x: auto;
@@ -95,13 +94,6 @@
   color: $gray-800;
 }
 
-.afiliadoNro {
-  display: block;
-  font-size: $font-size-xs;
-  color: $gray-500;
-  font-variant-numeric: tabular-nums;
-}
-
 .periodoNombre {
   font-weight: $font-weight-semibold;
   color: $gray-900;
@@ -131,7 +123,7 @@
 
 .chip_pendiente {
   background: rgba($warning-orange, 0.15);
-  color: #b45309;
+  color: $tono-naranja-450;
 }
 
 // Carga manual: el Colegio no autorizó nada, sólo registró la prestación.
@@ -150,8 +142,8 @@
 .iconBtn {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   background: $white;
   border: 1px solid $gray-300;
   border-radius: $border-radius-sm;
@@ -184,8 +176,8 @@
 .pdfBtn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px $spacing-3;
+  gap: 0.375rem;
+  padding: 0.375rem $spacing-3;
   background: $white;
   border: 1px solid $gray-300;
   border-radius: $border-radius-sm;
@@ -283,8 +275,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  height: 38px;
+  gap: 0.375rem;
+  height: 2.375rem;
   background: $white;
   border: 1px solid $gray-300;
   border-radius: $border-radius-md;
@@ -357,7 +349,7 @@
 }
 
 .skeletonRow {
-  height: 52px;
+  height: 3.25rem;
   border-radius: $border-radius-md;
   background: linear-gradient(90deg, $gray-100 25%, $gray-200 37%, $gray-100 63%);
   background-size: 400% 100%;

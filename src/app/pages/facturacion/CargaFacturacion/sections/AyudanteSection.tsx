@@ -4,20 +4,18 @@ import NumericInput from "../../components/NumericInput";
 import type { MedicoOption, PrecioResponse, TipoCalculo } from "../../types";
 import { formatMoney, parseMoney } from "../../money";
 import styles from "../CargaFacturacion.module.scss";
+import { X } from "lucide-react";
 
 export interface AyudanteLinea {
   id: string;
-  /** Id de la prestación real cuando la línea viene de un equipo existente (al editar).
-   *  null/undefined = línea nueva → se crea con POST. Sirve para reconciliar el grupo. */
+  /** Id de la prestación real cuando la línea viene de un equipo existente (al editar). null/undefined = línea nueva → se crea con POST. */
   prestacionId?: number | null;
   codMedico: string | null;
   medico: MedicoOption | null;
   porcentaje: string;
   tipoCalculo: TipoCalculo;
   precioManual: string;
-  /** Nº de autorización propio de este integrante. Solo se usa cuando el operador
-   *  activa "autorización por integrante" — con el checkbox apagado, se ignora y se
-   *  factura con el número de la cabecera (ver CargaFacturacion.tsx). */
+  /** Nº de autorización propio de este integrante. */
   autorizacion: string;
 }
 
@@ -61,8 +59,7 @@ interface Props {
   errors?: Record<string, string>;
   /** Lista completa precargada por CargaFacturacion.tsx — ver MedicoAutocomplete. */
   medicosPrecargados?: MedicoOption[];
-  /** true → cada ayudante lleva su propio Nº de autorización (input propio); false →
-   *  la sección no lo pide, se factura con el número de la cabecera. */
+  /** true → cada ayudante lleva su propio Nº de autorización (input propio); false → la sección no lo pide. */
   porIntegrante?: boolean;
 }
 
@@ -116,7 +113,7 @@ const AyudanteSection: React.FC<Props> = ({
                 onClick={() => quitarLinea(linea.id)}
                 disabled={disabled}
               >
-                ✕ Quitar
+                <X size={16} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> Quitar
               </button>
             </div>
 
@@ -189,8 +186,7 @@ const AyudanteSection: React.FC<Props> = ({
               </div>
               <div className={styles.filterField}>
                 <label className={styles.filterLabel}>Precio del ayudante</label>
-                {/* Mismo input siempre: en Automático muestra el valor del código y
-                    queda bloqueado; en Manual se habilita para editarlo. */}
+                {/* Mismo input siempre: en Automático muestra el valor del código y queda bloqueado; en Manual se habilita para editarlo. */}
                 <NumericInput
                   className={styles.input}
                   decimals min={0}

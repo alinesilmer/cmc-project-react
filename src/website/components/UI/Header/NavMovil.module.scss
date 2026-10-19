@@ -1,6 +1,5 @@
 @use "@/website/styles/all.scss" as *;
 
-$acento: $primary-blue;
 
 // Cubre el resto de la pantalla, debajo de la barra fija.
 .menu {
@@ -12,10 +11,21 @@ $acento: $primary-blue;
   overflow-y: auto;
   padding: 8px 20px 32px;
   background: $white;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid $borde-suave;
+  animation: menu-aparecer 0.18s ease both;
 
   @media (min-width: 601px) {
     top: 88px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes menu-aparecer {
+  from {
+    opacity: 0;
   }
 }
 
@@ -32,7 +42,7 @@ $acento: $primary-blue;
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: $acento;
+  color: $primary-blue;
 }
 
 .fila {
@@ -40,11 +50,11 @@ $acento: $primary-blue;
   align-items: center;
   gap: 14px;
   min-height: 54px;
-  border-bottom: 1px solid #f0f1f3;
+  border-bottom: 1px solid $tono-gris-50;
   font-family: $font-title;
   font-size: 1.02rem;
   font-weight: 700;
-  color: #1f2937;
+  color: $texto-oscuro;
   text-decoration: none;
 
   span {
@@ -54,7 +64,7 @@ $acento: $primary-blue;
 
 .activa {
   color: $primary-blue;
-  box-shadow: inset 3px 0 0 $acento;
+  box-shadow: inset 3px 0 0 $primary-blue;
   padding-left: 12px;
 }
 
@@ -68,7 +78,7 @@ $acento: $primary-blue;
 .flecha {
   width: 18px;
   height: 18px;
-  color: #9ca3af;
+  color: $tono-gris-350;
 }
 
 .ingresar {

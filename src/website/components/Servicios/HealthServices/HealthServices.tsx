@@ -10,9 +10,10 @@ const SERVICIOS: TarjetaIcono[] = [
   { icono: Headphones, titulo: "Soporte", texto: "Atención personalizada para tus consultas." },
 ];
 
-export default function HealthServices() {
+export default function HealthServices({ oscuro = false }: { oscuro?: boolean }) {
   return (
     <TarjetasIcono
+      oscuro={oscuro}
       id="servicios"
       titulo={
         <>

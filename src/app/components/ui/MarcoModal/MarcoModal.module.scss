@@ -1,0 +1,29 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver MarcoModal.tsx.
+
+.fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-6;
+  background: rgba($primary-blue-darker, 0.55);
+  backdrop-filter: blur(2px);
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-3;
+  }
+}
+
+// La base del panel va con especificidad cero: el tamaño lo pone cada pantalla.
+:where(.panel) {
+  max-width: 100%;
+  max-height: 92dvh;
+  overflow: auto;
+  background: $white;
+  border-radius: $radio-lg;
+  box-shadow: 0 18px 50px rgba($primary-blue-darker, 0.32);
+}

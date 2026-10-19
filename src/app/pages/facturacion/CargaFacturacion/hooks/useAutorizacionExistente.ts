@@ -5,11 +5,7 @@ import type { AutorizacionExistente } from "../../types";
 
 const DEBOUNCE_MS = 400;
 
-/**
- * Períodos de la O.S. donde ya está cargado el Nº de autorización que se está
- * tipeando. Sale una sola consulta cuando el operador deja de escribir; sólo avisa,
- * no bloquea el guardado. `excluirId`: la prestación que se está editando.
- */
+/** Períodos de la O.S. donde ya está cargado el Nº de autorización que se está tipeando. */
 export function useAutorizacionExistente(
   codObra: string | null, autorizacion: string, excluirId?: number,
 ): AutorizacionExistente[] {

@@ -1,54 +1,56 @@
+@use "@/app/styles/all.scss" as *;
+
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba($black, 0.45);
   z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: 1rem;
 }
 
 .modal {
-  background: #fff;
+  background: $white;
   border-radius: 14px;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 8px 40px rgba($black, 0.18);
   width: 100%;
-  max-width: 420px;
+  max-width: 26.25rem;
   overflow: hidden;
 }
 
 .header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 20px 22px 0;
+  gap: 0.75rem;
+  padding: 1.25rem 1.375rem 0;
 }
 
 .iconWrap {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 2.5rem;
+  height: 2.5rem;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
-.iconWrapDanger  { background: #fee2e2; color: #dc2626; }
-.iconWrapWarning { background: #fff7ed; color: #c2410c; }
-.iconWrapInfo    { background: #eff6ff; color: #2563eb; }
+.iconWrapDanger  { background: $tono-rojo-50; color: $tono-rojo-400; }
+.iconWrapWarning { background: $cuaderno-papel; color: $tono-rojo-450; }
+.iconWrapInfo    { background: $gray-100; color: $tono-azul-450-c; }
 
 .title {
   font-size: 1rem;
   font-weight: 700;
-  color: #1a1f2e;
+  color: $carpeta-noche;
   margin: 0;
 }
 
 .body {
-  padding: 12px 22px 22px;
-  color: #4a5568;
+  padding: 0.75rem 1.375rem 1.375rem;
+  color: $gray-600;
   font-size: 0.88rem;
   line-height: 1.55;
   white-space: pre-line;
@@ -57,28 +59,28 @@
 .footer {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  padding: 0 22px 20px;
+  gap: 0.625rem;
+  padding: 0 1.375rem 1.25rem;
 }
 
 .btnCancel {
-  height: 36px;
-  padding: 0 18px;
+  height: 2.25rem;
+  padding: 0 1.125rem;
   background: none;
-  border: 1px solid #e2e8f0;
+  border: 1px solid $gray-200;
   border-radius: 8px;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #4a5568;
+  color: $gray-600;
   cursor: pointer;
   transition: background 0.14s;
 
-  &:hover { background: #f7fafc; }
+  &:hover { background: $gray-50; }
 }
 
 .btnConfirm {
-  height: 36px;
-  padding: 0 18px;
+  height: 2.25rem;
+  padding: 0 1.125rem;
   border: none;
   border-radius: 8px;
   font-size: 0.85rem;
@@ -89,6 +91,6 @@
   &:hover { opacity: 0.88; }
 }
 
-.btnConfirmDanger  { background: #dc2626; color: #fff; }
-.btnConfirmWarning { background: #c2410c; color: #fff; }
-.btnConfirmInfo    { background: #2563eb; color: #fff; }
+.btnConfirmDanger  { background: $tono-rojo-400; color: $white; }
+.btnConfirmWarning { background: $tono-rojo-450; color: $white; }
+.btnConfirmInfo    { background: $tono-azul-450-c; color: $white; }

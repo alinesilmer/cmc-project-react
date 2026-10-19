@@ -1,0 +1,89 @@
+// Tipografías del panel, a prueba: Montserrat para títulos y Google Sans para el resto.
+@use "./variables.scss" as *;
+
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Google+Sans:wght@400;500;600;700&display=swap");
+
+// Interruptor del tema oscuro del panel.
+
+:root[data-tema="oscuro"] {
+  color-scheme: dark;
+}
+
+// `data-panel` lo pone `TemaPanel` mientras hay una ruta del panel abierta.
+:root[data-panel] {
+  --fuente-titulos: "Montserrat", "Manrope", sans-serif;
+  --fuente-texto: "Google Sans", "Inter", sans-serif;
+}
+
+// ── Lo que el plugin no alcanza ──────────────────────────────────────────────
+
+// rsuite (los modales) trae su propio `body { background: var(--rs-body) }` en blanco, y pisaba el fondo de toda pantalla que abre un modal.
+:root[data-tema="oscuro"] body {
+  background-color: #1f2630;
+}
+
+// Colores para estilos escritos en TSX (`sx` de MUI, `style`), que no pasan por el plugin.
+:root[data-tema="oscuro"] {
+  --tema-superficie: #222934;
+  --tema-superficie-alta: #2b3340;
+  --tema-borde: #3b4350;
+  --tema-borde-fuerte: #5c6675;
+  --tema-texto: #d3ddf0;
+  --tema-texto-suave: #8a9ab3;
+  --tema-verde: #5fc98a;
+  --tema-rojo: #e28277;
+}
+
+// ── Escala del panel ─────────────────────────────────────────────────────────
+
+// Todo el panel al 80 %.
+@media (min-width: 1024px) {
+  :root[data-panel] {
+    font-size: 80%;
+  }
+
+  // Los íconos (lucide) traen su tamaño en píxeles como atributo: es lo único que no sigue a la raíz, y se ajusta acá para todos.
+  :root[data-panel] .lucide {
+    zoom: 0.8;
+  }
+}
+
+// ── Cabeceras de tabla ───────────────────────────────────────────────────────
+
+// Todas las tablas del panel llevan la misma cabecera: azul del Colegio con letra amarillo claro.
+:root[data-panel] thead th {
+  color: $primary-yellow !important;
+  background: $primary-blue !important;
+}
+
+// Y las mismas filas: alternadas en blanco y gris claro, resaltadas en amarillo al pasar.
+:root[data-panel] table:not([data-lisa]) > tbody > tr:nth-child(even) {
+  // `$gray-50` casi no se distinguía del blanco: las filas parecían lisas.
+  background-color: $gray-100;
+}
+
+:root[data-panel] table:not([data-lisa]) > tbody > tr:hover {
+  background-color: $primary-yellow-light;
+}
+
+// Y la alineación: todo a la izquierda, títulos y datos, en todas las tablas.
+:root[data-panel] table :is(th, td):not([colspan]) {
+  text-align: left !important;
+}
+
+// Y el peso: los datos de las filas van en letra normal, sin negrita, en todas las tablas —el nombre, el número.
+:root[data-panel] table > tbody > tr > td:not([colspan]),
+:root[data-panel] table > tbody > tr > td:not([colspan]) *:not(.MuiButton-root) {
+  font-weight: $font-weight-normal !important;
+}
+
+// Lo mismo para las celdas que acomodan su contenido con flex (los botones de la fila, el título con su flecha de orden).
+:root[data-panel] table td:not([colspan]) > div[class],
+:root[data-panel] table th:not([colspan]) > :is(div, span, button)[class] {
+  justify-content: flex-start;
+}
+
+// Lo que va dentro de la cabecera (botones de orden, íconos) toma su color.
+:root[data-panel] thead th :is(button, a, svg) {
+  color: inherit;
+}

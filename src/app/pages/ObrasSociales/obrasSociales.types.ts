@@ -8,7 +8,7 @@ export type TipoDocumento =
   | "otros";
 
 // Used only as a form UI helper — not sent to the API
-export type TipoEnvioUI = "corrientes_capital" | "viaja";
+type TipoEnvioUI = "corrientes_capital" | "viaja";
 
 // ─── Labels (for display) ─────────────────────────────────────────────────────
 
@@ -33,7 +33,7 @@ export const PLAZO_OPTIONS = [
 
 // ─── Entity types (API responses) ─────────────────────────────────────────────
 
-export interface DireccionOut {
+interface DireccionOut {
   id?: number;
   provincia?: string | null;
   localidad?: string | null;
@@ -91,6 +91,7 @@ export interface ObraSocialListItem {
   cuit?: string | null;
   direccion_real?: string | null;
   plazo_vencimiento?: number | null;
+  dia_corte?: number;
   emails: ContactoEntry[];
   telefonos: ContactoEntry[];
   fecha_alta_convenio?: string | null;
@@ -99,8 +100,7 @@ export interface ObraSocialListItem {
 
 // ─── CUIT ─────────────────────────────────────────────────────────────────────
 
-// El CUIT viene de una columna legacy que puede traerlo con o sin guiones, y que
-// usa '0' como placeholder de "sin dato". Devuelve "" cuando no hay CUIT real.
+// El CUIT viene de una columna legacy que puede traerlo con o sin guiones, y que usa '0' como placeholder de "sin dato".
 export function displayCuit(raw?: string | null): string {
   const digits = (raw ?? "").replace(/\D/g, "");
   if (!digits || Number(digits) === 0) return "";
@@ -114,8 +114,6 @@ export interface ContactoEntry {
   valor: string;
   etiqueta: string;
 }
-
-export const EMPTY_CONTACTO: ContactoEntry = { valor: "", etiqueta: "" };
 
 // ─── Form data (controlled inputs) ────────────────────────────────────────────
 
@@ -142,8 +140,7 @@ export interface ObraSocialFormData {
   // Relaciones
   obra_social_principal_id: string;
   asociadas_ids: number[];
-  // Operación: sin esto una obra social nueva quedaba MARCA="N" por default
-  // del backend y no aparecía en ningún selector de padrón (ver auditoría O-02).
+  // Operación: sin esto una obra social nueva quedaba MARCA="N" por default del backend y no aparecía en ningún selector de padrón (ver auditoría O-02).
   marca: "S" | "N";
   dia_corte: string;
 }
@@ -175,10 +172,7 @@ export const EMPTY_FORM: ObraSocialFormData = {
 
 export type FormErrors = Partial<Record<keyof ObraSocialFormData, string>>;
 
-/**
- * Dígito verificador módulo 11. El formato `NN-NNNNNNNN-N` sólo valida que
- * tenga la forma de un CUIT; esto valida que sea uno real (ver auditoría O-12).
- */
+/** Dígito verificador módulo 11. El formato `NN-NNNNNNNN-N` sólo valida que tenga la forma de un CUIT; esto valida que sea uno real (ver auditoría O-12). */
 function cuitEsValido(cuit: string): boolean {
   const digitos = cuit.replace(/\D/g, "");
   if (digitos.length !== 11) return false;

@@ -1,0 +1,188 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver CampoPrestacion.tsx. Campos de letra grande —entre quienes cargan hay gente mayor— pero bajos, para que el formulario entre sin bajar la pantalla.
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  min-width: 0;
+  // Hasta un ancho cómodo de leer.
+  max-width: 34rem;
+}
+
+.fieldCorto {
+  max-width: 10rem;
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-family: $fuente-titulos;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $franja-azul;
+}
+
+.opcional {
+  padding: 1px $spacing-2;
+  font-family: $fuente-texto;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: $gray-500;
+  background: $gray-100;
+  border-radius: 999px;
+}
+
+// ─── Inputs ───────────────────────────────────────────────────────────────────
+
+.input {
+  width: 100%;
+  height: 3.25rem;
+  padding: 0 $spacing-4;
+  font-family: $fuente-titulos;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-normal;
+  font-variant-numeric: tabular-nums;
+  color: $gray-900;
+  background: $white;
+  border: 1.5px solid $gray-300;
+  border-radius: $radio-lg;
+  transition: border-color 0.18s, box-shadow 0.18s;
+
+  &::placeholder {
+    font-weight: $font-weight-medium;
+    color: $gray-400;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $franja-azul;
+    box-shadow: 0 0 0 3px rgba($franja-azul, 0.14);
+  }
+
+  &:disabled {
+    color: $gray-500;
+    background: $gray-100;
+    cursor: not-allowed;
+  }
+}
+
+.inputInvalid {
+  border-color: $danger-red;
+
+  &:focus,
+  &:focus-within {
+    border-color: $danger-red;
+    box-shadow: 0 0 0 3px rgba($danger-red, 0.12);
+  }
+}
+
+.uppercase {
+  text-transform: uppercase;
+}
+
+.inputShort {
+  width: 5rem;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.splitRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+}
+
+.splitSep {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $gray-400;
+}
+
+.moneyWrap {
+  display: flex;
+  align-items: center;
+  height: 3.25rem;
+  background: $white;
+  border: 1.5px solid $gray-300;
+  border-radius: $radio-lg;
+  transition: border-color 0.18s, box-shadow 0.18s;
+
+  &:focus-within {
+    border-color: $franja-azul;
+    box-shadow: 0 0 0 3px rgba($franja-azul, 0.14);
+  }
+}
+
+.moneyPrefix {
+  padding: 0 $spacing-2 0 $spacing-4;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $gray-500;
+}
+
+.moneyInput {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding-right: $spacing-4;
+  font-family: $fuente-titulos;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-normal;
+  color: $gray-900;
+  background: transparent;
+  border: none;
+  outline: none;
+}
+
+.error {
+  display: block;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $danger-red;
+}
+
+// ─── Consulta en vivo (cartel activo/inactivo debajo del campo) ────────────────
+// Mismo cartel que tenía el legacy de Nobis (panel-green/panel-orange/panel-red debajo del número de afiliado), ahora genérico para cualquier campo con `consultaEnVivo`.
+
+.liveCheck {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-3 $spacing-4;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  line-height: 1.35;
+  border-radius: $radio-md;
+
+  svg {
+    flex: none;
+  }
+}
+
+.liveCheckCargando {
+  color: $gray-500;
+  background: $gray-50;
+}
+
+.liveCheckOk {
+  color: $success-green;
+  background: rgba($success-green, 0.1);
+}
+
+.liveCheckError {
+  color: $danger-red;
+  background: rgba($danger-red, 0.08);
+}
+
+.spin {
+  animation: campo-gira 0.9s linear infinite;
+}
+
+@keyframes campo-gira {
+  to {
+    transform: rotate(360deg);
+  }
+}

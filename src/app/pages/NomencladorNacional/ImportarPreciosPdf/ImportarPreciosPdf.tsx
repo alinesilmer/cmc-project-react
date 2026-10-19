@@ -32,11 +32,11 @@ import {
   listVigenciasCargadas,
 } from "../nomenclador.api";
 import type { ImportarCSVResult } from "../nomenclador.types";
+import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
 
 const PREVIEW_LIMIT = 1000;
-// Estas cargas son siempre NE, sin especialidad puntual: el importador del backend
-// expande cada código a una fila por cada especialidad habilitada (mismo precio para
-// todas). Si el código no tiene ninguna habilitada, esa fila del CSV falla.
+// Estas cargas son siempre NE, sin especialidad puntual: el importador del backend expande cada código a una fila por cada especialidad habilitada.
 const ORIGEN = "NE";
 const ACCEPT: Record<FileKind, string> = { pdf: ".pdf", excel: ".xls,.xlsx", csv: ".csv" };
 
@@ -192,8 +192,7 @@ export default function ImportarPreciosPdf() {
     setImportResult(null);
     setOmitidos(0);
     try {
-      // Cargar por partes: se importan solo los códigos que aún no están cargados
-      // para esta OS en esta vigencia; los ya presentes se omiten (no se pisan).
+      // Cargar por partes: se importan solo los códigos que aún no están cargados para esta OS en esta vigencia; los ya presentes se omiten.
       const { codigos } = await listCodigosPorVigencia(os, vig);
       const yaCargados = new Set(codigos);
       const nuevos = rows.filter((r) => !yaCargados.has(r.codigo));
@@ -395,7 +394,7 @@ export default function ImportarPreciosPdf() {
             <div className={styles.metaGrid}>
               <div className={styles.field}>
                 <label className={styles.fieldLabel}>Vigencia</label>
-                <input type="date" className={styles.fieldInput} value={vigencia} onChange={(e) => setVigencia(e.target.value)} />
+                <CampoFecha value={vigencia} onChange={(valor) => setVigencia(valor)} />
               </div>
               <div className={styles.field}>
                 <label className={styles.fieldLabel}>N° Obra Social</label>
@@ -419,7 +418,7 @@ export default function ImportarPreciosPdf() {
                 </span>
               </div>
               <div className={styles.tableWrap}>
-                <table className={styles.table}>
+                <Tabla className={styles.table}>
                   <thead>
                     <tr>
                       <th>codigo</th>
@@ -457,7 +456,7 @@ export default function ImportarPreciosPdf() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </Tabla>
               </div>
             </div>
           )}

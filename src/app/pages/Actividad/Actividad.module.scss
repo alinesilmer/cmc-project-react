@@ -1,208 +1,118 @@
 @use "@/app/styles/all.scss" as *;
 
+// Registro de actividad: la franja, la caja de filtros, el buscador y la tabla (el componente compartido).
+
 .container {
-  padding: $spacing-8;
+  // En variables porque la franja las necesita para salirse del relleno.
+  --lado: #{$spacing-12};
+  --arriba: #{$spacing-8};
+
   display: flex;
   flex-direction: column;
-  gap: $spacing-4;
+  gap: $spacing-5;
   min-height: 100%;
+  padding: $spacing-8 $spacing-12;
 
-  @media (max-width: $breakpoint-md) { padding: $spacing-5; }
-  @media (max-width: $breakpoint-sm) { padding: $spacing-4; }
-}
+  // La franja ya trae su margen; el `gap` alcanza.
+  > :first-child {
+    margin-bottom: 0;
+  }
 
-.header { display: flex; align-items: center; gap: $spacing-4; }
-.headerIcon { color: $primary-blue; flex-shrink: 0; }
+  @media (max-width: $breakpoint-md) {
+    --lado: #{$spacing-5};
+    --arriba: #{$spacing-5};
+    padding: $spacing-5;
+  }
 
-.title {
-  margin: 0;
-  font-size: $font-size-3xl;
-  font-weight: $font-weight-bold;
-  color: $gray-900;
-  line-height: 1.2;
-
-  @media (max-width: $breakpoint-sm) { font-size: $font-size-2xl; }
-}
-
-.subtitle { margin: $spacing-1 0 0; font-size: $font-size-sm; color: $gray-500; }
-
-.avisoDemo {
-  display: flex;
-  align-items: flex-start;
-  gap: $spacing-3;
-  padding: $spacing-3 $spacing-4;
-  font-size: $font-size-sm;
-  line-height: 1.5;
-  color: $primary-yellow-dark;
-  background: $primary-yellow-light;
-  border-radius: $border-radius-md;
-
-  svg { flex-shrink: 0; margin-top: 1px; }
+  @media (max-width: $breakpoint-sm) {
+    --lado: #{$spacing-4};
+    --arriba: #{$spacing-4};
+    padding: $spacing-4;
+  }
 }
 
 // ── Filtros ─────────────────────────────────────────────────────────────────
 
-.filtros {
-  display: flex;
-  align-items: center;
-  gap: $spacing-2;
-  flex-wrap: wrap;
-}
+.campo {
+  display: grid;
+  gap: $spacing-1;
+  min-width: 11rem;
 
-.searchBox {
-  display: flex;
-  align-items: center;
-  gap: $spacing-2;
-  padding: 0 $spacing-3;
-  height: 34px;
-  flex: 1;
-  min-width: 220px;
-  max-width: 340px;
-  background: $white;
-  border: 1px solid $gray-200;
-  border-radius: $border-radius-md;
-
-  svg { flex-shrink: 0; color: $gray-400; }
-
-  &:focus-within {
-    border-color: $primary-blue;
-    box-shadow: 0 0 0 3px rgba($primary-blue, 0.12);
+  > span {
+    font-size: $font-size-sm;
+    color: $gray-500;
   }
-}
-
-.searchInput {
-  flex: 1;
-  min-width: 0;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-size: $font-size-base;
-  font-family: inherit;
-  color: $gray-900;
-
-  &::placeholder { color: $gray-400; }
-}
-
-.clearBtn {
-  display: inline-flex;
-  color: $gray-400;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-
-  &:hover { color: $danger-red; }
 }
 
 .select {
-  height: 34px;
-  padding: 0 $spacing-3;
-  font-size: $font-size-sm;
-  font-family: inherit;
-  color: $gray-800;
-  background: $white;
-  border: 1px solid $gray-200;
-  border-radius: $border-radius-md;
-  outline: none;
+  @extend %campo-texto;
+  height: 2.75rem;
+  border-color: $gray-300;
   cursor: pointer;
-
-  &:focus {
-    border-color: $primary-blue;
-    box-shadow: 0 0 0 3px rgba($primary-blue, 0.12);
-  }
 }
 
-.ghostBtn { @extend %btn-fantasma; }
+// «Limpiar» va al final del renglón, alineado con los campos.
+.limpiar {
+  align-self: flex-end;
+}
 
 // ── Tabla ───────────────────────────────────────────────────────────────────
 
 .card {
   background: $white;
   border: 1px solid $gray-200;
-  border-radius: $border-radius-lg;
-  box-shadow: $shadow-sm;
+  border-radius: $radio-lg;
+  box-shadow: 0 14px 34px -28px rgba($franja-azul, 0.55);
   overflow: hidden;
 }
 
-// La tabla scrollea dentro de su caja: sin esto, en mobile empuja el ancho de
-// toda la página y aparece scroll horizontal en el body.
-.tableWrap { overflow-x: auto; }
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: $font-size-sm;
-  min-width: 780px;
-
-  th {
-    padding: $spacing-3 $spacing-4;
-    text-align: left;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-semibold;
-    color: $gray-500;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    background: $gray-50;
-    border-bottom: 1px solid $gray-200;
-    white-space: nowrap;
-  }
-
-  td {
-    padding: $spacing-3 $spacing-4;
-    border-bottom: 1px solid $gray-100;
-    vertical-align: top;
-    color: $gray-800;
-  }
-
-  tbody tr:hover td { background: $gray-50; }
-  tbody tr:last-child td { border-bottom: none; }
+.tableWrap {
+  overflow-x: auto;
 }
 
-.colFecha { width: 145px; white-space: nowrap; font-variant-numeric: tabular-nums; color: $gray-600; }
-.colUsuario { width: 190px; }
-.colModulo { width: 130px; white-space: nowrap; color: $gray-600; }
-.colResultado { width: 130px; white-space: nowrap; }
-
-.usuario { display: block; font-weight: $font-weight-medium; color: $gray-900; }
-
-.rol {
-  display: block;
-  font-size: $font-size-xs;
-  color: $gray-400;
-  text-transform: capitalize;
+.colFecha {
+  font-variant-numeric: tabular-nums;
+  color: $gray-600;
+  white-space: nowrap;
 }
 
-.accion { display: block; color: $gray-900; }
-
-.ruta {
-  display: block;
-  margin-top: 2px;
-  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
-  font-size: $font-size-xs;
-  color: $gray-400;
-  word-break: break-all;
+.colUsuario,
+.colModulo,
+.colResultado {
+  white-space: nowrap;
 }
 
+.usuario {
+  color: $gray-900;
+}
+
+.accion {
+  color: $gray-900;
+}
+
+// El resultado: una píldora con el color que define `COLOR_RESULTADO`.
 .badge {
   display: inline-block;
-  padding: 2px $spacing-2;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  padding: $spacing-1 $spacing-3;
+  font-size: $font-size-sm;
   color: $white;
   border-radius: 999px;
+  // El color viene escrito en el TSX: en oscuro tiene que seguir leyéndose.
+  color-scheme: light;
 }
 
 .status {
   margin-left: $spacing-2;
   font-size: $font-size-xs;
-  color: $gray-400;
   font-variant-numeric: tabular-nums;
+  color: $gray-500;
 }
 
 .empty {
-  padding: $spacing-10 !important;
+  padding: $spacing-12 !important;
+  font-size: $font-size-lg;
+  color: $gray-500;
   text-align: center;
-  color: $gray-400;
 }
 
 .loading {
@@ -210,46 +120,50 @@
   align-items: center;
   justify-content: center;
   gap: $spacing-2;
-  padding: $spacing-3;
-  font-size: $font-size-sm;
+  padding: $spacing-4;
   color: $gray-500;
-  border-top: 1px solid $gray-100;
 }
 
-.spin { animation: spin 0.9s linear infinite; }
-
-// ── Paginador ───────────────────────────────────────────────────────────────
+.spin {
+  animation: actividad-gira 0.8s linear infinite;
+}
 
 .paginador {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: $spacing-3;
-  padding: $spacing-3 $spacing-4;
-  border-top: 1px solid $gray-100;
+  padding: $spacing-3 $spacing-5;
+  border-top: 1px solid $gray-200;
 }
 
-.total { font-size: $font-size-sm; color: $gray-500; margin-right: auto; }
-
-.pagina {
-  font-size: $font-size-sm;
-  color: $gray-600;
+.total {
+  margin-right: auto;
   font-variant-numeric: tabular-nums;
-  min-width: 56px;
-  text-align: center;
+  color: $gray-600;
 }
 
 .navBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  color: $gray-600;
-  background: $white;
-  border: 1px solid $gray-200;
-  border-radius: $border-radius-sm;
-  cursor: pointer;
+  @extend %btn-icono;
+  width: 2.5rem;
+  height: 2.5rem;
+}
 
-  &:hover:not(:disabled) { color: $primary-blue; border-color: $primary-blue; }
-  &:disabled { opacity: 0.4; cursor: not-allowed; }
+.pagina {
+  min-width: 4rem;
+  font-variant-numeric: tabular-nums;
+  color: $gray-700;
+  text-align: center;
+}
+
+@keyframes actividad-gira {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation: none;
+  }
 }

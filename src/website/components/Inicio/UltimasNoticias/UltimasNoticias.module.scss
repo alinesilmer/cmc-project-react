@@ -1,0 +1,85 @@
+@use "@/website/styles/all.scss" as *;
+
+// Lo último del Colegio: título con «Ver todas» a la derecha y tres tarjetas.
+
+.seccion {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.cabeza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.titulo {
+  margin: 0;
+  font-family: $font-title;
+  font-size: clamp(2.2rem, 4vw, 3.4rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: $portada-crema;
+
+  em {
+    font-style: normal;
+    color: $portada-oro;
+  }
+}
+
+.todas {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0 1.25rem;
+  font-family: $font-title;
+  font-size: 1rem;
+  font-weight: 700;
+  color: $portada-oro;
+  text-decoration: none;
+  border: 1px solid rgba($portada-oro, 0.5);
+  border-radius: 999px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+
+  &:hover { color: $portada-noche; background: $portada-oro; }
+
+  svg { width: 1.1rem; height: 1.1rem; transition: transform 0.2s ease; }
+  &:hover svg { transform: translateX(4px); }
+
+  &:focus-visible {
+    outline: 2px solid $portada-oro;
+    outline-offset: 3px;
+  }
+}
+
+.grilla {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+
+  @media (max-width: $breakpoint-desktop) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (max-width: $breakpoint-tablet) { grid-template-columns: minmax(0, 1fr); }
+}
+
+.esqueleto {
+  height: 22rem;
+  border-radius: 14px;
+  background: linear-gradient(100deg, rgba($white, 0.06) 30%, rgba($white, 0.14) 50%, rgba($white, 0.06) 70%);
+  background-size: 300% 100%;
+  animation: brillo 1.4s ease-in-out infinite;
+}
+
+@keyframes brillo {
+  0% { background-position: 130% 0; }
+  100% { background-position: -30% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .esqueleto { animation: none; }
+  .todas svg { transition: none; }
+}

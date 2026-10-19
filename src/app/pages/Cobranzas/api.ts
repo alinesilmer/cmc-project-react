@@ -4,7 +4,6 @@ import type {
   CobranzaMedicoDetalle,
   CobranzaMedicosPage,
   CobranzaPorConceptoItem,
-  CobranzasResumen,
   CobranzaSociosPage,
 } from "./types";
 
@@ -22,10 +21,6 @@ export type CobranzasFiltrosParams = {
   /** Acota la deuda a un solo concepto (detalle de socio dentro de "Por concepto"). */
   concepto_id?: number;
 };
-
-export const fetchResumen = (params: CobranzasFiltrosParams) =>
-  getJSON<CobranzasResumen>(`${COBRANZAS_URL}/resumen`, params);
-
 export const fetchPorConcepto = (params: CobranzasFiltrosParams) =>
   getJSON<CobranzaPorConceptoItem[]>(`${COBRANZAS_URL}/por_concepto`, params);
 

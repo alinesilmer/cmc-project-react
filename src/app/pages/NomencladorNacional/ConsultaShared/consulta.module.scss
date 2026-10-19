@@ -1,7 +1,6 @@
 @use "@/app/styles/all.scss" as *;
 
-// Consulta de Precios — "Registro de Valores"
-// Scoped design tokens (declared on .page so nothing leaks globally).
+// Consulta de Precios — "Registro de Valores" Scoped design tokens (declared on .page so nothing leaks globally).
 
 .page {
 
@@ -20,10 +19,10 @@
 // ── Page head (no brand bar — the sidebar owns app chrome) ─────────────────────
 .pagehead {
   max-width: 60ch;
-  margin-bottom: 22px;
+  margin-bottom: 1.375rem;
 }
 .pageTitle {
-  font-family: "Manrope", sans-serif;
+  font-family: $fuente-titulos;
   font-size: 2.05rem;
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -32,7 +31,7 @@
   text-wrap: balance;
 }
 .pageSub {
-  margin: 7px 0 0;
+  margin: 0.4375rem 0 0;
   color: $tinta-2;
   font-size: 0.96rem;
 }
@@ -40,15 +39,15 @@
 // ── Instrument (framed two-column) ────────────────────────────────────────────
 .instrument {
   display: grid;
-  grid-template-columns: 384px 1fr;
+  grid-template-columns: 24rem 1fr;
   background: $superficie;
   border: 1.5px solid $tinta;
-  box-shadow: 12px 12px 0 rgba(22, 25, 31, 0.06);
+  box-shadow: 12px 12px 0 rgba($franja-pizarra, 0.06);
 }
 
 .colQuery {
   border-right: 1.5px solid $tinta;
-  padding: 26px 26px 28px;
+  padding: 1.625rem 1.625rem 1.75rem;
 }
 .colResult {
   display: flex;
@@ -59,7 +58,7 @@
 .colTitle {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 0.5625rem;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
   font-size: 0.72rem;
@@ -67,12 +66,12 @@
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: $tinta;
-  margin-bottom: 22px;
+  margin-bottom: 1.375rem;
 
   &::before {
     content: "";
-    width: 12px;
-    height: 12px;
+    width: 0.75rem;
+    height: 0.75rem;
     background: $acento;
     flex-shrink: 0;
   }
@@ -80,16 +79,16 @@
 
 // ── Field (combobox) ──────────────────────────────────────────────────────────
 .field {
-  margin-bottom: 20px;
+  margin-bottom: 1.25rem;
 }
 .qlabel {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: 0.5rem;
   font-size: 0.82rem;
   font-weight: 700;
   color: $tinta;
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
 }
 .qIdx {
   font-variant-numeric: tabular-nums;
@@ -109,10 +108,10 @@
 .fieldControl {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 0.5625rem;
   width: 100%;
-  min-height: 50px;
-  padding: 0 12px;
+  min-height: 3.125rem;
+  padding: 0 0.75rem;
   background: $superficie;
   border: 1.5px solid $linea-2;
   cursor: text;
@@ -133,7 +132,7 @@
     font-size: 0.95rem;
     color: $tinta;
     width: 100%;
-    padding: 13px 0;
+    padding: 0.8125rem 0;
 
     &::placeholder { color: $tinta-3; }
   }
@@ -144,16 +143,16 @@
 .chosen {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
   width: 100%;
-  min-height: 50px;
-  padding: 7px 7px 7px 0;
+  min-height: 3.125rem;
+  padding: 0.4375rem 0.4375rem 0.4375rem 0;
   background: $acento-tinte;
   border: 1.5px solid $acento;
   border-left-width: 5px;
 }
 // For code-less items (e.g. especialidad): no left code tag, so pad the text in.
-.chosenPad { padding-left: 14px; }
+.chosenPad { padding-left: 0.875rem; }
 .chosenCode {
   align-self: stretch;
   display: flex;
@@ -162,9 +161,9 @@
   letter-spacing: 0.02em;
   font-weight: 700;
   font-size: 0.8rem;
-  color: #fff;
+  color: $white;
   background: $acento-fuerte;
-  padding: 5px 8px;
+  padding: 0.3125rem 0.5rem;
   flex-shrink: 0;
   letter-spacing: 0.02em;
 }
@@ -180,8 +179,8 @@
 }
 .chosenX {
   flex-shrink: 0;
-  width: 34px;
-  height: 34px;
+  width: 2.125rem;
+  height: 2.125rem;
   border: 0;
   background: transparent;
   color: $acento-fuerte;
@@ -190,7 +189,7 @@
   cursor: pointer;
   transition: background 0.12s;
 
-  &:hover { background: #fff; }
+  &:hover { background: $white; }
 }
 
 .menu {
@@ -204,15 +203,15 @@
   list-style: none;
   background: $superficie;
   border: 1.5px solid $tinta;
-  box-shadow: 8px 8px 0 rgba(22, 25, 31, 0.08);
-  max-height: 256px;
+  box-shadow: 8px 8px 0 rgba($franja-pizarra, 0.08);
+  max-height: 16rem;
   overflow-y: auto;
 }
 .opt {
   display: flex;
   align-items: center;
-  gap: 11px;
-  padding: 11px 12px;
+  gap: 0.6875rem;
+  padding: 0.6875rem 0.75rem;
   cursor: pointer;
   border-bottom: 1px solid $linea;
 
@@ -227,7 +226,7 @@
   font-size: 0.82rem;
   color: $acento-fuerte;
   flex-shrink: 0;
-  min-width: 56px;
+  min-width: 3.5rem;
 }
 .optText {
   font-size: 0.88rem;
@@ -237,7 +236,7 @@
   white-space: nowrap;
 }
 .optEmpty {
-  padding: 15px 12px;
+  padding: 0.9375rem 0.75rem;
   color: $tinta-3;
   font-size: 0.85rem;
   list-style: none;
@@ -248,13 +247,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 9px;
+  gap: 0.5625rem;
   width: 100%;
-  height: 52px;
-  margin-top: 6px;
+  height: 3.25rem;
+  margin-top: 0.375rem;
   border: 1.5px solid $acento-fuerte;
   background: $acento;
-  color: #fff;
+  color: $white;
   font-family: inherit;
   font-size: 0.98rem;
   font-weight: 700;
@@ -279,17 +278,17 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 40px 34px;
-  min-height: 360px;
+  padding: 2.5rem 2.125rem;
+  min-height: 22.5rem;
 }
 .promptLines {
   position: absolute;
   inset: 0;
-  padding: 0 34px;
+  padding: 0 2.125rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 26px;
+  gap: 1.625rem;
   opacity: 0.5;
   pointer-events: none;
 
@@ -309,10 +308,10 @@
   color: $acento-fuerte;
 }
 .promptTitle {
-  font-family: "Manrope", sans-serif;
+  font-family: $fuente-titulos;
   font-size: 1.5rem;
   font-weight: 700;
-  margin: 10px 0 8px;
+  margin: 0.625rem 0 0.5rem;
   color: $tinta;
 }
 .promptText {
@@ -325,15 +324,15 @@
 .loading {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 40px 34px;
-  min-height: 360px;
+  gap: 0.75rem;
+  padding: 2.5rem 2.125rem;
+  min-height: 22.5rem;
   color: $tinta-2;
   font-size: 0.95rem;
 }
 .pulse {
-  width: 14px;
-  height: 14px;
+  width: 0.875rem;
+  height: 0.875rem;
   background: $acento;
   animation: pulse 1s ease-in-out infinite;
 }
@@ -342,13 +341,13 @@
 .viaToggle {
   display: flex;
   flex-wrap: wrap;
-  gap: 14px;
-  margin: -8px 0 20px;
+  gap: 0.875rem;
+  margin: -0.5rem 0 1.25rem;
 }
 .viaOption {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 0.375rem;
   font-size: 0.85rem;
   color: $tinta-2;
   cursor: pointer;
@@ -358,9 +357,9 @@
 .viaDegradeNotice {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  margin: 0 26px 22px;
-  padding: 12px 16px;
+  gap: 0.625rem;
+  margin: 0 1.625rem 1.375rem;
+  padding: 0.75rem 1rem;
   background: $alerta-bg;
   border: 1.5px solid $alerta-linea;
   border-left: 4px solid $alerta-ico;
@@ -374,9 +373,9 @@
 .errorbox {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  margin: 26px;
-  padding: 18px 20px;
+  gap: 0.75rem;
+  margin: 1.625rem;
+  padding: 1.125rem 1.25rem;
   background: $alerta-bg;
   border: 1.5px solid $alerta-linea;
   border-left: 5px solid $alerta-ico;
@@ -398,8 +397,8 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 18px;
-  padding: 24px 28px 20px;
+  gap: 1.125rem;
+  padding: 1.5rem 1.75rem 1.25rem;
 }
 .regHeadmain { min-width: 0; }
 .tagCode {
@@ -408,14 +407,14 @@
   letter-spacing: 0.02em;
   font-weight: 700;
   font-size: 0.78rem;
-  color: #fff;
+  color: $white;
   background: $tinta;
-  padding: 4px 9px;
+  padding: 0.25rem 0.5625rem;
   letter-spacing: 0.04em;
-  margin-bottom: 12px;
+  margin-bottom: 0.75rem;
 }
 .regTitle {
-  font-family: "Manrope", sans-serif;
+  font-family: $fuente-titulos;
   font-size: 1.55rem;
   font-weight: 700;
   line-height: 1.2;
@@ -429,21 +428,21 @@
 .eligibility {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  margin-top: 12px;
-  padding: 5px 11px;
+  gap: 0.4375rem;
+  margin-top: 0.75rem;
+  padding: 0.3125rem 0.6875rem;
   font-size: 0.78rem;
   font-weight: 650;
   border: 1.5px solid;
 }
 .eligOk { color: $ok; border-color: $ok-linea; background: $ok-bg; }
 .eligNo { color: $alerta; border-color: $alerta-linea; background: $alerta-bg; }
-.eligPending { color: $tinta-3; border-color: $linea-2; background: #fff; }
+.eligPending { color: $tinta-3; border-color: $linea-2; background: $white; }
 .seal {
   flex-shrink: 0;
   border: 1.5px solid $alerta-ico;
   background: $alerta-bg;
-  padding: 8px 12px;
+  padding: 0.5rem 0.75rem;
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -466,19 +465,18 @@
   font-variant-numeric: tabular-nums;
 }
 
-// Divider between the header and the value — a clean solid rule with a short
-// gold lead segment (echoes the vigencia seal), no busy tick marks.
+// Divider between the header and the value — a clean solid rule with a short gold lead segment (echoes the vigencia seal).
 .regRuler {
   height: 3px;
-  background: linear-gradient(90deg, $alerta-ico 0 52px, $acento 52px);
+  background: linear-gradient(90deg, $alerta-ico 0 3.25rem, $acento 3.25rem);
 }
 
 .total {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 16px;
-  padding: 24px 28px;
+  gap: 1rem;
+  padding: 1.5rem 1.75rem;
   background: $acento-lavado;
   border-bottom: 2px solid $tinta;
 }
@@ -491,7 +489,7 @@
   max-width: 8em;
 }
 .totalValue {
-  font-family: "Manrope", sans-serif;
+  font-family: $fuente-titulos;
   font-size: 3rem;
   font-weight: 700;
   line-height: 1;
@@ -505,13 +503,13 @@
   letter-spacing: 0;
 }
 
-.ledger { padding: 14px 28px 22px; }
+.ledger { padding: 0.875rem 1.75rem 1.375rem; }
 .ledgerCap {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: 10px;
+  gap: 0.625rem;
   font-size: 0.64rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -520,8 +518,6 @@
   margin-bottom: 2px;
 }
 // Qué nomenclador ganó (NE / NNE / NN) y, si la variante lo tiene, su nivel.
-// Sin esto el importe no se puede auditar: dos variantes del mismo código dan
-// números distintos y no había forma de saber cuál se estaba viendo.
 .ledgerOrigen {
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -531,8 +527,8 @@
 .ledRow {
   display: flex;
   align-items: baseline;
-  gap: 10px;
-  padding: 11px 0;
+  gap: 0.625rem;
+  padding: 0.6875rem 0;
 }
 .ledLabel {
   display: flex;
@@ -542,8 +538,7 @@
   color: $tinta-2;
   font-weight: 550;
 }
-// La cuenta que da el importe de la derecha: cantidad × valor unitario del
-// galeno. En monoespaciada porque se lee contra la cifra del subtotal.
+// La cuenta que da el importe de la derecha: cantidad × valor unitario del galeno.
 .ledCuenta {
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
@@ -567,14 +562,13 @@
 }
 .ledValZero { color: $tinta-3; font-weight: 500; }
 
-// El copago va aparte de los conceptos: esos suman el valor de la práctica y
-// el copago no, lo paga el afiliado.
+// El copago va aparte de los conceptos: esos suman el valor de la práctica y el copago no, lo paga el afiliado.
 .copago {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin: 0 28px 22px;
-  padding: 12px 14px;
+  gap: 0.75rem;
+  margin: 0 1.75rem 1.375rem;
+  padding: 0.75rem 0.875rem;
   border: 1px solid $linea-2;
   border-left: 3px solid $acento-fuerte;
   background: $acento-lavado;
@@ -600,14 +594,13 @@
   font-variant-numeric: tabular-nums;
 }
 
-// Informational note below the whole panel — clearly visible, but calm
-// (soft blue, not a warning).
+// Informational note below the whole panel — clearly visible, but calm (soft blue, not a warning).
 .disclaimer {
   display: flex;
   align-items: center;
-  gap: 11px;
-  margin: 18px 0 0;
-  padding: 13px 18px;
+  gap: 0.6875rem;
+  margin: 1.125rem 0 0;
+  padding: 0.8125rem 1.125rem;
   background: $acento-tinte;
   border-left: 4px solid $acento;
   color: $tinta-2;
@@ -621,14 +614,14 @@
 .spin { animation: spin 0.7s linear infinite; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
-@keyframes reveal { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes reveal { from { opacity: 0; transform: translateY(0.5rem); } to { opacity: 1; transform: none; } }
 @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.7); } }
 
 // ── Responsive ────────────────────────────────────────────────────────────────
 @media (max-width: 820px) {
   .instrument {
     grid-template-columns: 1fr;
-    box-shadow: 8px 8px 0 rgba(22, 25, 31, 0.06);
+    box-shadow: 8px 8px 0 rgba($franja-pizarra, 0.06);
   }
   .colQuery {
     border-right: 0;
@@ -637,24 +630,21 @@
   .pageTitle { font-size: 1.8rem; }
 }
 @media (max-width: 480px) {
-  .page { padding: 20px 14px 48px; }
+  .page { padding: 1.25rem 0.875rem 3rem; }
   .regHead { flex-direction: column; }
-  .total { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .total { flex-direction: column; align-items: flex-start; gap: 0.375rem; }
   .totalValue { font-size: 2.4rem; }
   .regTitle { font-size: 1.35rem; }
 
-  // Los rellenos horizontales del panel eran de 26–28px y no bajaban nunca: en
-  // un teléfono de 375px se comían más de 50px de los ~347 disponibles y las
-  // filas del desglose quedaban apretadas contra los bordes.
-  .colQuery { padding: 20px 16px 22px; }
-  .regHead { padding: 20px 16px 16px; }
-  .total { padding: 18px 16px; }
-  .ledger { padding: 12px 16px 18px; }
-  .viaDegradeNotice { margin: 0 16px 18px; }
-  .disclaimer { padding: 12px 14px; }
+  // Los rellenos horizontales del panel eran de 26–28px y no bajaban nunca.
+  .colQuery { padding: 1.25rem 1rem 1.375rem; }
+  .regHead { padding: 1.25rem 1rem 1rem; }
+  .total { padding: 1.125rem 1rem; }
+  .ledger { padding: 0.75rem 1rem 1.125rem; }
+  .viaDegradeNotice { margin: 0 1rem 1.125rem; }
+  .disclaimer { padding: 0.75rem 0.875rem; }
 
-  // La cuenta "cantidad × valor" abajo del concepto, no al lado: en este ancho
-  // competía con el importe y los puntos suspensivos desaparecían.
+  // La cuenta "cantidad × valor" abajo del concepto, no al lado: en este ancho competía con el importe y los puntos suspensivos desaparecían.
   .ledRow { flex-wrap: wrap; }
   .ledCuenta { flex-basis: 100%; order: 3; }
 }

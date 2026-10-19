@@ -7,6 +7,7 @@ import { formatearFechaISO } from "../../../lib/fechas";
 import type { BeneficioPublico } from "../../../lib/beneficios.client";
 import { largoDescuento } from "../descuento";
 import styles from "./DetalleBeneficio.module.scss";
+import Button from "@/website/components/UI/Button/Button";
 
 type Props = {
   beneficio: BeneficioPublico;
@@ -42,9 +43,9 @@ export default function DetalleBeneficio({ beneficio: b, colores, onCerrar }: Pr
           <span className={styles.descuento} data-largo={largoDescuento(b.descuento)}>
             {b.descuento ?? <Tag aria-hidden="true" />}
           </span>
-          <button type="button" className={styles.cerrar} onClick={onCerrar} aria-label="Cerrar" autoFocus>
+          <Button variant="plano" type="button" className={styles.cerrar} onClick={onCerrar} aria-label="Cerrar" autoFocus>
             <X aria-hidden="true" />
-          </button>
+          </Button>
         </header>
 
         <div className={styles.cuerpo}>

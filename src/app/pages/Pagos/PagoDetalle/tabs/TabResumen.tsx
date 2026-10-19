@@ -2,10 +2,11 @@ import React, { useCallback, useEffect, useState } from "react";
 import type ExcelJS from "exceljs";
 import { saveAs } from "@/app/shared/lib/fileSaver";
 import { getJSON } from "@/app/shared/lib/http";
-import Button from "@/app/components/ui/Button/Button";
 import Card from "@/app/components/ui/Card/Card";
 import styles from "./tabs.module.scss";
 import { fmt, mesLabel } from "../../types";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
+import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 
 const VISTA_URL = (pagoId: number) => `/api/pagos/${pagoId}/vista_previa`;
 
@@ -591,12 +592,8 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
       <div className={styles.toolbar}>
         <div />
         <div style={{ display: "flex", gap: 8 }}>
-          <Button variant="secondary" size="sm" onClick={exportExcel}>
-            Exportar Excel
-          </Button>
-          <Button variant="secondary" size="sm" onClick={exportPDF}>
-            Exportar PDF
-          </Button>
+          <BotonDescarga formato="excel" onClick={exportExcel} />
+          <BotonDescarga formato="pdf" onClick={exportPDF} />
         </div>
       </div>
 
@@ -604,7 +601,7 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
       <SectionTitle>Liquidaciones</SectionTitle>
       <Card className={styles.tableCard} style={{ marginBottom: 28 }}>
         <div className={styles.tableWrap}>
-          <table className={styles.table}>
+          <Tabla className={styles.table}>
             <thead>
               <tr>
                 <th>Obra Social</th>
@@ -689,7 +686,7 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
                 </tr>
               </tfoot>
             )}
-          </table>
+          </Tabla>
         </div>
       </Card>
 
@@ -697,7 +694,7 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
       <SectionTitle>Deducciones</SectionTitle>
       <Card className={styles.tableCard} style={{ marginBottom: 28 }}>
         <div className={styles.tableWrap}>
-          <table className={styles.table}>
+          <Tabla className={styles.table}>
             <thead>
               <tr>
                 <th>Concepto</th>
@@ -733,7 +730,7 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
                 </tr>
               </tfoot>
             )}
-          </table>
+          </Tabla>
         </div>
       </Card>
 
@@ -741,7 +738,7 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
       <SectionTitle>Lotes de Ajuste</SectionTitle>
       <Card className={styles.tableCard} style={{ marginBottom: 28 }}>
         <div className={styles.tableWrap}>
-          <table className={styles.table}>
+          <Tabla className={styles.table}>
             <thead>
               <tr>
                 <th>Obra Social</th>
@@ -793,7 +790,7 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
                 </tr>
               </tfoot>
             )}
-          </table>
+          </Tabla>
         </div>
       </Card>
 
@@ -801,7 +798,7 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
       <SectionTitle>Refacturaciones</SectionTitle>
       <Card className={styles.tableCard} style={{ marginBottom: 28 }}>
         <div className={styles.tableWrap}>
-          <table className={styles.table}>
+          <Tabla className={styles.table}>
             <thead>
               <tr>
                 <th>Obra Social</th>
@@ -853,7 +850,7 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
                 </tr>
               </tfoot>
             )}
-          </table>
+          </Tabla>
         </div>
       </Card>
 

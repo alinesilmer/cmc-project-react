@@ -1,7 +1,5 @@
 @use "@/website/styles/all.scss" as *;
 
-$crema: #f7e9aa;
-$suave: #f1f5fb;
 
 .grilla {
   display: grid;
@@ -34,18 +32,18 @@ $suave: #f1f5fb;
   padding: 28px 24px 24px;
   border-radius: 10px;
   background: $white;
-  box-shadow: 0 1px 2px rgba(20, 35, 58, 0.05), 0 10px 26px rgba(20, 35, 58, 0.07);
+  box-shadow: 0 1px 2px rgba($tono-azul-850, 0.05), 0 10px 26px rgba($tono-azul-850, 0.07);
   text-decoration: none;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 
   &:hover,
   &:focus-visible {
     transform: translateY(-4px);
-    box-shadow: 0 1px 2px rgba(20, 35, 58, 0.05), 0 18px 34px rgba(20, 35, 58, 0.13);
+    box-shadow: 0 1px 2px rgba($tono-azul-850, 0.05), 0 18px 34px rgba($tono-azul-850, 0.13);
 
     .icono {
       background: $primary-blue;
-      color: $crema;
+      color: $primary-yellow;
     }
 
     .flecha {
@@ -83,7 +81,7 @@ $suave: #f1f5fb;
   width: 56px;
   height: 56px;
   border-radius: 8px;
-  background: $suave;
+  background: $fondo-suave;
   color: $primary-blue;
   transition: background 0.2s ease, color 0.2s ease;
 
@@ -110,7 +108,7 @@ $suave: #f1f5fb;
   gap: 4px;
   min-width: 0;
   font-size: 0.95rem;
-  color: #6b7280;
+  color: $texto-gris;
 
   strong {
     font-family: $font-title;
@@ -126,7 +124,7 @@ $suave: #f1f5fb;
   right: 22px;
   width: 22px;
   height: 22px;
-  color: #c3cad6;
+  color: $tono-azul-200;
   transition: color 0.2s ease, transform 0.2s ease;
 
   @media (max-width: 560px) {

@@ -6,37 +6,25 @@ import { formatMoneda } from "../validaciones.types";
 import type { CodigoNomenclador } from "../validaciones.types";
 import s from "./CodigoSelect.module.scss";
 
-/** Códigos que pide el buscador por vez. Es el default del backend; se explicita
- * acá porque hay que pasarlo para llegar al parámetro `nroSocio`. */
+/** Códigos que pide el buscador por vez. */
 const LIMITE = 20;
 
 interface Props {
   /** NRO_OBRA_SOCIAL — define qué valor se muestra para cada código. */
   obraSocial: number;
   value: string;
-  /** `opcion` viene completa (incluye el coseguro sugerido) para que el formulario
-   * pueda prellenar su propio campo "Coseguro" al elegir un código. */
+  /** `opcion` viene completa (incluye el coseguro sugerido) para que el formulario pueda prellenar su propio campo "Coseguro" al elegir un código. */
   onChange: (codigo: string, opcion?: CodigoNomenclador) => void;
   placeholder?: string;
   invalid?: boolean;
   /** Códigos que la obra social no acepta por convenio: no se listan. */
   bloqueados?: string[];
   disabled?: boolean;
-  /** Médico sobre el que se resuelve habilitación y precio. Lo manda el
-   * personal del Colegio al cargar en nombre de un socio; un médico logueado
-   * no lo necesita (el backend usa el del token). */
+  /** Médico sobre el que se resuelve habilitación y precio. */
   nroSocio?: number;
 }
 
-/**
- * Buscador de códigos del nomenclador. Reemplaza al `<datalist>` del legacy:
- * además del código muestra la descripción y el valor, que es lo que el
- * prestador necesita para elegir sin equivocarse.
- *
- * **Sólo lista lo que el médico puede facturar.** Antes los no habilitados se
- * mostraban en gris con el motivo; ahora se ocultan: el médico no los puede
- * usar, y verlos sólo servía para que intentara elegirlos.
- */
+/** Buscador de códigos del nomenclador. */
 export default function CodigoSelect({
   obraSocial,
   value,
@@ -67,9 +55,7 @@ export default function CodigoSelect({
       buscarCodigos(obraSocial, query, LIMITE, nroSocio)
         .then((res) => {
           if (cancelado) return;
-          // El backend ya descarta los no habilitados; acá se sacan además los
-          // que la obra social no acepta por convenio, que el backend no
-          // conoce a nivel de catálogo.
+          // El backend ya descarta los no habilitados; acá se sacan además los que la obra social no acepta por convenio.
           setOpciones(res.filter((op) => op.admitido && !bloqueados.includes(op.codigo)));
           setResaltado(0);
         })

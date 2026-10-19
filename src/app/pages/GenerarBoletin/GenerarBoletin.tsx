@@ -15,15 +15,13 @@ import { Download, Loader2, Calendar } from "lucide-react";
 import styles from "./GenerarBoletin.module.scss";
 import Button from "../../../website/components/UI/Button/Button";
 import CMCLogoUrl from "../../assets/logoCMC.png";
-// httpBare (no http): esta página vive en /generar-boletin, fuera de
-// RequireAuth y de acceso anónimo — no conviene que un 401 acá dispare el
-// refresh/redirect a /panel/login del interceptor de `http`.
-import { httpBare } from "@/app/shared/lib/http";
+// `http` y no `httpBare`: la ruta ahora va detrás de RequireAuth, y /api/valores/boletin exige sesión.
+import { http } from "@/app/shared/lib/http";
+import { axiosErrorMessage } from "@/app/shared/lib/utiles";
 
 registerLocale("es", es);
 
-// Ruta relativa: la baseURL por ambiente la resuelve la instancia `http`
-// compartida, no hay que armarla acá.
+// Ruta relativa: la baseURL por ambiente la resuelve la instancia `http` compartida, no hay que armarla acá.
 const ENDPOINTS = {
   valoresBoletin: `/api/valores/boletin`,
 };
@@ -205,7 +203,7 @@ function normalizeRow(r: any): ApiBoletinRow {
 }
 
 async function fetchValoresBoletin(params?: QueryParams): Promise<ApiBoletinRow[]> {
-  const { data } = await httpBare.get(ENDPOINTS.valoresBoletin, { params });
+  const { data } = await http.get(ENDPOINTS.valoresBoletin, { params });
   const arr = Array.isArray(data) ? data : [];
   return arr.map(normalizeRow);
 }
@@ -294,15 +292,6 @@ const formatCurrency = (value: number): string => {
     maximumFractionDigits: 2,
   });
 };
-
-function axiosErrorMessage(e: any): string {
-  const status = e?.response?.status;
-  const statusText = e?.response?.statusText;
-  if (status) return `Error ${status}${statusText ? ` ${statusText}` : ""}`;
-  if (e?.code === "ERR_NETWORK") return "Error de red (CORS o backend inaccesible)";
-  return "Error al consultar el backend";
-}
-
 function buildIndexBodyTwoCol(
   items: ObraSocialBoletin[],
   detailsStartPage: number
@@ -454,8 +443,7 @@ const GenerarBoletin = () => {
       setBoletinData([]);
       setLastUpdateISO(null);
     } finally {
-      if (!mountedRef.current) return;
-      setIsLoading(false);
+      if (mountedRef.current) setIsLoading(false);
     }
   }, []);
 
@@ -868,91 +856,9 @@ const GenerarBoletin = () => {
           alternateRowStyles: { fillColor: [248, 250, 252] },
         });
 
-        /* COMENTADO (NO ELIMINAR): AUTORIZACIONES
-        const rightColX = margin + contentWidth / 2 + 5;
-        const boxWidth = contentWidth / 2 - 5;
 
-        doc.setFillColor(...accentColor);
-        doc.setTextColor(255, 255, 255);
-        doc.roundedRect(rightColX, currentY, boxWidth, 40, 3, 3, "F");
 
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "bold");
-        doc.text("AUTORIZACIONES", rightColX + 5, currentY + 10);
 
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(8);
-        const autorizacionesText = normalizeText(os.autorizaciones?.trim() ? os.autorizaciones : "—", 400);
-        const autorizacionesLines = doc.splitTextToSize(autorizacionesText, boxWidth - 10);
-        doc.text(autorizacionesLines, rightColX + 5, currentY + 18);
-        */
-
-        /* COMENTADO (NO ELIMINAR): ANEXO IV
-        const anexoY = currentY + 50;
-        doc.setFillColor(...lightGray);
-        doc.setTextColor(...primaryColor);
-        doc.roundedRect(rightColX, anexoY, boxWidth, 45, 3, 3, "F");
-
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "bold");
-        doc.text("ANEXO IV:", rightColX + 5, anexoY + 10);
-
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(8);
-        doc.setTextColor(...mediumGray);
-        const anexoText = normalizeText(os.anexoIV?.trim() ? os.anexoIV : "—", 450);
-        const anexoLines = doc.splitTextToSize(anexoText, boxWidth - 10);
-        doc.text(anexoLines, rightColX + 5, anexoY + 18);
-        */
-
-        /* COMENTADO (NO ELIMINAR): INFORMACIÓN ADICIONAL
-        const addInfoY = 175;
-
-        doc.setFillColor(255, 255, 255);
-        doc.setDrawColor(...lightGray);
-        doc.roundedRect(margin, addInfoY, contentWidth, 55, 3, 3, "FD");
-
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(...primaryColor);
-        doc.text("Información Adicional", margin + 10, addInfoY + 12);
-
-        const additionalInfo: Array<[string, string]> = [
-          ["Traumatología PP:", normalizeText(os.traumatologiaPP || "—", 160)],
-          ["Clínica Pediátrica:", normalizeText(os.clinicaPediatrica || "—", 160)],
-        ];
-
-        let infoY2 = addInfoY + 22;
-        additionalInfo.forEach((item) => {
-          doc.setFontSize(9);
-          doc.setFont("helvetica", "bold");
-          doc.setTextColor(...primaryColor);
-          doc.text(item[0], margin + 10, infoY2);
-
-          doc.setFont("helvetica", "normal");
-          doc.setTextColor(...mediumGray);
-          doc.text(item[1], margin + 55, infoY2);
-          infoY2 += 8;
-        });
-        */
-
-        /* COMENTADO (NO ELIMINAR): RECORDATORIOS
-        const normasY = addInfoY + 60;
-        doc.setFillColor(...lightGray);
-        doc.roundedRect(margin, normasY, contentWidth, 30, 3, 3, "F");
-
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(...primaryColor);
-        doc.text("¡RECORDATORIOS!", margin + 10, normasY + 12);
-
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(8);
-        doc.setTextColor(...mediumGray);
-        const normasText = normalizeText(os.normas?.trim() ? os.normas : "—", 700);
-        const normasLines = doc.splitTextToSize(normasText, contentWidth - 20);
-        doc.text(normasLines, margin + 10, normasY + 20);
-        */
 
         addFooter(currentPage, totalPages);
       }

@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  BookOpen,
   ChevronLeft,
   ChevronRight,
   Gift,
   MapPin,
   Pencil,
   Plus,
-  Search,
   Trash2,
 } from "lucide-react";
 
@@ -15,6 +14,7 @@ import { saveAs } from "@/app/shared/lib/fileSaver";
 import escudoCMC from "../../assets/escudoCMC.png";
 import ActionModal from "@/app/components/ui/ActionModal/ActionModal";
 import Button from "@/app/components/ui/Button/Button";
+import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 import {
   createBeneficio,
   deleteBeneficio,
@@ -37,23 +37,39 @@ import type {
 import { generarRevistaPdf } from "./revistaPdf";
 import s from "./BeneficiosPage.module.scss";
 import { hoyISO } from "@/app/shared/lib/fechas";
+import { detalleDeError } from "@/app/shared/lib/httpErrors";
+import SearchField from "@/app/components/ui/SearchField/SearchField";
+import Franja from "@/app/components/layout/Franja/Franja";
+import FieldError from "@/app/components/ui/FieldError/FieldError";
 
-const PAGE_SIZE = 20;
+// Múltiplo de tres: la grilla de cupones va de a tres por fila.
+const PAGE_SIZE = 18;
+const BENEFICIOS_KEY = ["beneficios", "gestion"] as const;
 
-function FieldError({ msg }: { msg?: string }) {
-  if (!msg) return null;
-  return (
-    <span className={s.fieldError} role="alert">
-      {msg}
-    </span>
-  );
+/** «20%» → 20% / descuento; «2x1 martes» → 2x1 / martes: lo grande va en el talón. */
+function partirDescuento(descuento: string | null) {
+  const texto = descuento?.trim();
+  if (!texto) return null;
+  const corte = texto.search(/\s/);
+  if (corte < 0) return { grande: texto, chico: texto.endsWith("%") ? "descuento" : "" };
+  return { grande: texto.slice(0, corte), chico: texto.slice(corte + 1).trim() };
 }
 
 export default function BeneficiosPage() {
   // List state
-  const [items, setItems] = useState<Beneficio[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const consulta = useQuery({
+    queryKey: BENEFICIOS_KEY,
+    queryFn: () => getBeneficios({ limit: 200 }),
+  });
+  const items = useMemo(() => consulta.data ?? [], [consulta.data]);
+  const loading = consulta.isPending;
+  const [revistaError, setRevistaError] = useState<string | null>(null);
+  const loadError =
+    revistaError ??
+    (consulta.isError
+      ? detalleDeError(consulta.error, "No se pudieron cargar los beneficios.")
+      : null);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoriaFilter, setCategoriaFilter] = useState("");
   const [page, setPage] = useState(1);
@@ -69,32 +85,13 @@ export default function BeneficiosPage() {
   const [deleting, setDeleting] = useState<Beneficio | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  // ── Load list ──────────────────────────────────────────────────────────────
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setLoadError(null);
-
-    getBeneficios({ limit: 200 })
-      .then((data) => {
-        if (!cancelled) setItems(data);
-      })
-      .catch((err) => {
-        if (!cancelled)
-          setLoadError(
-            err?.response?.data?.detail ??
-              err?.message ??
-              "No se pudieron cargar los beneficios."
-          );
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  /** Corrige la caché al instante y vuelve a pedir el listado. */
+  const actualizarLista = (cambio: (prev: Beneficio[]) => Beneficio[]) => {
+    queryClient.setQueryData<Beneficio[]>(BENEFICIOS_KEY, (prev) => prev && cambio(prev));
+    void queryClient.invalidateQueries({ queryKey: BENEFICIOS_KEY });
+    void queryClient.invalidateQueries({ queryKey: ["beneficios-vigentes"] });
+    void queryClient.invalidateQueries({ queryKey: ["web", "beneficios-vigentes"] });
+  };
 
   // ── Client-side search + filter ────────────────────────────────────────────
   const filtered = useMemo(() => {
@@ -118,13 +115,12 @@ export default function BeneficiosPage() {
   }, [searchTerm, categoriaFilter]);
 
   // ── Revista ────────────────────────────────────────────────────────────────
-  // Se genera con TODOS los beneficios activos, no con el filtro de pantalla:
-  // la revista es material institucional, no un recorte de la búsqueda actual.
+  // Se genera con TODOS los beneficios activos, no con el filtro de pantalla: la revista es material institucional, no un recorte de la búsqueda actual.
   const [generandoRevista, setGenerandoRevista] = useState(false);
 
   const handleRevista = async () => {
     setGenerandoRevista(true);
-    setLoadError(null);
+    setRevistaError(null);
     try {
       const logo = new URL(escudoCMC, window.location.origin).href;
       const blob = await generarRevistaPdf(items, logo);
@@ -132,7 +128,7 @@ export default function BeneficiosPage() {
       saveAs(blob, `red-de-beneficios-${fecha}.pdf`);
     } catch (e) {
       console.error(e);
-      setLoadError("No se pudo generar la revista. Intentá de nuevo.");
+      setRevistaError("No se pudo generar la revista. Intentá de nuevo.");
     } finally {
       setGenerandoRevista(false);
     }
@@ -178,19 +174,15 @@ export default function BeneficiosPage() {
     try {
       if (editing) {
         const updated = await updateBeneficio(editing.id, payload);
-        setItems((prev) =>
+        actualizarLista((prev) =>
           prev.map((it) => (it.id === updated.id ? updated : it))
         );
       } else {
         const created = await createBeneficio(payload);
-        setItems((prev) => [...prev, created]);
+        actualizarLista((prev) => [...prev, created]);
       }
-    } catch (err: any) {
-      setSaveError(
-        err?.response?.data?.detail ??
-          err?.message ??
-          "Error al guardar. Intentá nuevamente."
-      );
+    } catch (err) {
+      setSaveError(detalleDeError(err, "Error al guardar. Intentá nuevamente."));
       throw err;
     }
   };
@@ -201,13 +193,10 @@ export default function BeneficiosPage() {
     setDeleteError(null);
     try {
       await deleteBeneficio(deleting.id);
-      setItems((prev) => prev.filter((it) => it.id !== deleting.id));
-    } catch (err: any) {
-      setDeleteError(
-        err?.response?.data?.detail ??
-          err?.message ??
-          "No se pudo eliminar el beneficio."
-      );
+      const borradoId = deleting.id;
+      actualizarLista((prev) => prev.filter((it) => it.id !== borradoId));
+    } catch (err) {
+      setDeleteError(detalleDeError(err, "No se pudo eliminar el beneficio."));
       throw err;
     }
   };
@@ -216,75 +205,57 @@ export default function BeneficiosPage() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className={s.container}>
-      <div className={s.header}>
-        <div className={s.headerLeft}>
-          <Gift size={32} className={s.headerIcon} aria-hidden="true" />
-          <div>
-            <h1 className={s.title}>Beneficios</h1>
-            <p className={s.subtitle}>
-              {loading
-                ? "Cargando…"
-                : `${items.length} beneficio${items.length !== 1 ? "s" : ""} · ${activos} activo${activos !== 1 ? "s" : ""} visible${activos !== 1 ? "s" : ""} en la app`}
-            </p>
+    <>
+      <Franja suelta titulo="Beneficios" icono={Gift} />
+      <div className={s.container}>
+        {loadError && (
+          <div className={s.errorBanner} role="alert">
+            {loadError}
           </div>
-        </div>
-        <div className={s.headerActions}>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleRevista}
-            disabled={activos === 0 || generandoRevista}
-            title={
-              activos === 0
-                ? "No hay beneficios activos para publicar"
-                : `Descargar la revista en PDF con ${activos} beneficio${activos === 1 ? "" : "s"}`
-            }
-          >
-            <BookOpen size={16} />
-            {generandoRevista ? "Generando…" : "Descargar revista"}
-          </Button>
-          <Button variant="secondary" size="sm" onClick={openCreate}>
-            <Plus size={16} />
-            Nuevo beneficio
-          </Button>
-        </div>
-      </div>
+        )}
 
-      {loadError && (
-        <div className={s.errorBanner} role="alert">
-          {loadError}
-        </div>
-      )}
-
-      <div className={s.searchRow}>
-        <div className={s.searchWrap}>
-          <Search size={16} className={s.searchIcon} aria-hidden="true" />
-          <input
-            type="search"
-            className={s.searchInput}
-            placeholder="Buscar por título, ubicación, descuento…"
+        <div className={s.barra}>
+          <SearchField
+            placeholder="Buscar beneficio…"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            aria-label="Buscar beneficios"
+            onClear={() => setSearchTerm("")}
+            ariaLabel="Buscar beneficios"
           />
+          <div className={s.acciones}>
+            <BotonDescarga
+              formato="pdf"
+              onClick={handleRevista}
+              disabled={activos === 0}
+              cargando={generandoRevista}
+            >
+              Revista
+            </BotonDescarga>
+            <Button
+              variant="primary"
+              size="md"
+              leftIcon={<Plus size={18} aria-hidden="true" />}
+              onClick={openCreate}
+            >
+              Nuevo
+            </Button>
+          </div>
         </div>
-        <select
-          className={s.filterSelect}
-          value={categoriaFilter}
-          onChange={(e) => setCategoriaFilter(e.target.value)}
-          aria-label="Filtrar por categoría"
-        >
-          <option value="">Todas las categorías</option>
-          {CATEGORIAS_BENEFICIO.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-      </div>
 
-      <div className={s.tableWrapper}>
+        <div className={s.rubros} role="group" aria-label="Categoría">
+          {["", ...CATEGORIAS_BENEFICIO].map((c) => (
+            <button
+              key={c || "todos"}
+              type="button"
+              aria-pressed={categoriaFilter === c}
+              className={`${s.rubro} ${categoriaFilter === c ? s.rubroOn : ""}`}
+              onClick={() => setCategoriaFilter(c)}
+            >
+              {c || "Todos"}
+            </button>
+          ))}
+        </div>
+
         {loading ? (
           <div className={s.loadingState}>
             <span className={s.spinner} aria-hidden="true" />
@@ -300,178 +271,180 @@ export default function BeneficiosPage() {
             </p>
           </div>
         ) : (
-          <div className={s.cardGrid}>
-            {paginated.map((item) => (
-              <article key={item.id} className={s.benefitCard}>
-                {/* Franja del color elegido: identifica el beneficio de un
-                    vistazo, igual que en la app del socio. */}
-                <span
-                  className={s.cardAccent}
-                  style={{ backgroundColor: item.color ?? "transparent" }}
-                  aria-hidden="true"
-                />
-
-                <div className={s.cardTop}>
-                  <span className={s.categoryChip}>{item.categoria}</span>
-                  <span
-                    className={`${s.badge} ${item.activo ? s.badgeOn : s.badgeOff}`}
+          <div className={s.cupones}>
+            {paginated.map((item) => {
+              const dto = partirDescuento(item.descuento);
+              return (
+                <article
+                  key={item.id}
+                  className={`${s.cupon} ${item.activo ? "" : s.off}`}
+                >
+                  {/* El talón lleva el color elegido, igual que la tarjeta en la app del socio. */}
+                  <div
+                    className={`${s.talon} ${item.color ? "" : s.talonSinColor}`}
+                    style={item.color ? { backgroundColor: item.color } : undefined}
                   >
-                    {item.activo ? "Activo" : "Inactivo"}
-                  </span>
-                </div>
+                    {dto ? (
+                      <>
+                        <b className={s.talonGrande}>{dto.grande}</b>
+                        {dto.chico && <small className={s.talonChico}>{dto.chico}</small>}
+                      </>
+                    ) : (
+                      <Gift size={40} aria-hidden="true" />
+                    )}
+                  </div>
 
-                <h3 className={s.cardTitle}>{item.titulo}</h3>
-                <p className={s.cardDesc}>{item.descripcion}</p>
-
-                <div className={s.cardMeta}>
-                  {item.descuento && (
-                    <span className={s.cardDiscount}>{item.descuento}</span>
-                  )}
-                  {item.ubicacion && (
-                    <span className={s.cardPlace}>
-                      <MapPin size={13} aria-hidden="true" />
-                      {item.ubicacion}
-                    </span>
-                  )}
-                </div>
-
-                <div className={s.cardActions}>
-                  <button
-                    type="button"
-                    className={s.iconBtn}
-                    onClick={() => openEdit(item)}
-                    title="Editar"
-                    aria-label={`Editar ${item.titulo}`}
-                  >
-                    <Pencil size={15} />
-                  </button>
-                  <button
-                    type="button"
-                    className={`${s.iconBtn} ${s.iconBtnDanger}`}
-                    onClick={() => {
-                      setDeleteError(null);
-                      setDeleting(item);
-                    }}
-                    title="Eliminar"
-                    aria-label={`Eliminar ${item.titulo}`}
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                </div>
-              </article>
-            ))}
+                  <div className={s.cuerpo}>
+                    <span className={s.rubroCupon}>{item.categoria}</span>
+                    <h3 className={s.cuponTitulo} title={item.descripcion}>
+                      {item.titulo}
+                    </h3>
+                    {item.ubicacion && (
+                      <span className={s.lugar}>
+                        <MapPin size={15} aria-hidden="true" />
+                        {item.ubicacion}
+                      </span>
+                    )}
+                    <div className={s.abajo}>
+                      <span className={`${s.chip} ${item.activo ? s.chipOk : s.chipNo}`}>
+                        {item.activo ? "Activo" : "Inactivo"}
+                      </span>
+                      <button
+                        type="button"
+                        className={s.iconBtn}
+                        onClick={() => openEdit(item)}
+                        title="Editar"
+                        aria-label={`Editar ${item.titulo}`}
+                      >
+                        <Pencil size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        className={`${s.iconBtn} ${s.iconBtnDanger}`}
+                        onClick={() => {
+                          setDeleteError(null);
+                          setDeleting(item);
+                        }}
+                        title="Eliminar"
+                        aria-label={`Eliminar ${item.titulo}`}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
-      </div>
 
-      {!loading && totalPages > 1 && (
-        <div className={s.pagination} role="navigation" aria-label="Paginación">
-          <button
-            className={s.pageBtn}
-            onClick={() => setPage((p) => p - 1)}
-            disabled={page === 1}
-            aria-label="Página anterior"
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <span className={s.pageInfo}>
-            Página {page} de {totalPages}
-          </span>
-          <button
-            className={s.pageBtn}
-            onClick={() => setPage((p) => p + 1)}
-            disabled={page === totalPages}
-            aria-label="Página siguiente"
-          >
-            <ChevronRight size={16} />
-          </button>
-        </div>
-      )}
-
-      {/* Create / edit */}
-      <ActionModal
-        open={modalOpen}
-        title={editing ? `Editar: ${editing.titulo}` : "Nuevo beneficio"}
-        size="sm"
-        onClose={() => setModalOpen(false)}
-        onConfirm={handleSave}
-        confirmText={editing ? "Guardar cambios" : "Crear beneficio"}
-        cancelText="Cancelar"
-      >
-        <div className={s.modalBody}>
-          <div className={s.field}>
-            <label className={s.label} htmlFor="ben-titulo">
-              Título <span className={s.required}>*</span>
-            </label>
-            <input
-              id="ben-titulo"
-              type="text"
-              className={`${s.input} ${formErrors.titulo ? s.inputError : ""}`}
-              value={formData.titulo}
-              onChange={(e) => setField("titulo", e.target.value)}
-              placeholder="Ej: Gimnasio Central"
-              maxLength={160}
-              autoComplete="off"
-            />
-            <FieldError msg={formErrors.titulo} />
+        {!loading && totalPages > 1 && (
+          <div className={s.pagination} role="navigation" aria-label="Paginación">
+            <button
+              className={s.pageBtn}
+              onClick={() => setPage((p) => p - 1)}
+              disabled={page === 1}
+              aria-label="Página anterior"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <span className={s.pageInfo}>
+              Página {page} de {totalPages}
+            </span>
+            <button
+              className={s.pageBtn}
+              onClick={() => setPage((p) => p + 1)}
+              disabled={page === totalPages}
+              aria-label="Página siguiente"
+            >
+              <ChevronRight size={16} />
+            </button>
           </div>
+        )}
 
-          <div className={s.field}>
-            <label className={s.label} htmlFor="ben-descripcion">
-              Descripción <span className={s.required}>*</span>
-            </label>
-            <textarea
-              id="ben-descripcion"
-              className={`${s.textarea} ${formErrors.descripcion ? s.inputError : ""}`}
-              value={formData.descripcion}
-              onChange={(e) => setField("descripcion", e.target.value)}
-              placeholder="Qué incluye el beneficio y cómo se accede"
-              rows={3}
-              maxLength={4000}
-            />
-            <FieldError msg={formErrors.descripcion} />
-          </div>
-
-          <div className={s.fieldRow}>
+        {/* Create / edit */}
+        <ActionModal
+          open={modalOpen}
+          title={editing ? `Editar: ${editing.titulo}` : "Nuevo beneficio"}
+          size="sm"
+          onClose={() => setModalOpen(false)}
+          onConfirm={handleSave}
+          confirmText={editing ? "Guardar cambios" : "Crear beneficio"}
+          cancelText="Cancelar"
+        >
+          <div className={s.modalBody}>
             <div className={s.field}>
-              <label className={s.label} htmlFor="ben-categoria">
-                Categoría <span className={s.required}>*</span>
-              </label>
-              <select
-                id="ben-categoria"
-                className={`${s.input} ${formErrors.categoria ? s.inputError : ""}`}
-                value={formData.categoria}
-                onChange={(e) => setField("categoria", e.target.value)}
-              >
-                <option value="">Elegir…</option>
-                {CATEGORIAS_BENEFICIO.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-              <FieldError msg={formErrors.categoria} />
-            </div>
-
-            <div className={s.field}>
-              <label className={s.label} htmlFor="ben-descuento">
-                Descuento
+              <label className={s.label} htmlFor="ben-titulo">
+                Título <span className={s.required}>*</span>
               </label>
               <input
-                id="ben-descuento"
+                id="ben-titulo"
                 type="text"
-                className={`${s.input} ${formErrors.descuento ? s.inputError : ""}`}
-                value={formData.descuento}
-                onChange={(e) => setField("descuento", e.target.value)}
-                placeholder="Ej: 20%, 2x1, Tarifa socio"
-                maxLength={60}
+                className={`${s.input} ${formErrors.titulo ? s.inputError : ""}`}
+                value={formData.titulo}
+                onChange={(e) => setField("titulo", e.target.value)}
+                placeholder="Ej: Gimnasio Central"
+                maxLength={160}
                 autoComplete="off"
               />
-              <FieldError msg={formErrors.descuento} />
+              <FieldError msg={formErrors.titulo} />
             </div>
-          </div>
 
-          <div className={s.fieldRow}>
+            <div className={s.field}>
+              <label className={s.label} htmlFor="ben-descripcion">
+                Descripción <span className={s.required}>*</span>
+              </label>
+              <textarea
+                id="ben-descripcion"
+                className={`${s.textarea} ${formErrors.descripcion ? s.inputError : ""}`}
+                value={formData.descripcion}
+                onChange={(e) => setField("descripcion", e.target.value)}
+                placeholder="Qué incluye el beneficio y cómo se accede"
+                rows={3}
+                maxLength={4000}
+              />
+              <FieldError msg={formErrors.descripcion} />
+            </div>
+
+            <div className={s.fieldRow}>
+              <div className={s.field}>
+                <label className={s.label} htmlFor="ben-categoria">
+                  Categoría <span className={s.required}>*</span>
+                </label>
+                <select
+                  id="ben-categoria"
+                  className={`${s.input} ${formErrors.categoria ? s.inputError : ""}`}
+                  value={formData.categoria}
+                  onChange={(e) => setField("categoria", e.target.value)}
+                >
+                  <option value="">Elegir…</option>
+                  {CATEGORIAS_BENEFICIO.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+                <FieldError msg={formErrors.categoria} />
+              </div>
+
+              <div className={s.field}>
+                <label className={s.label} htmlFor="ben-descuento">
+                  Descuento
+                </label>
+                <input
+                  id="ben-descuento"
+                  type="text"
+                  className={`${s.input} ${formErrors.descuento ? s.inputError : ""}`}
+                  value={formData.descuento}
+                  onChange={(e) => setField("descuento", e.target.value)}
+                  placeholder="Ej: 20%, 2x1 martes"
+                  maxLength={60}
+                  autoComplete="off"
+                />
+                <FieldError msg={formErrors.descuento} />
+              </div>
+            </div>
+
             <div className={s.field}>
               <label className={s.label} htmlFor="ben-ubicacion">
                 Ubicación
@@ -489,89 +462,79 @@ export default function BeneficiosPage() {
               <FieldError msg={formErrors.ubicacion} />
             </div>
 
+            <div className={s.field}>
+              <span className={s.label}>Color del talón</span>
+              <div className={s.swatchRow} role="group" aria-label="Color del talón">
+                <button
+                  type="button"
+                  className={`${s.swatchNone} ${!formData.color ? s.swatchActive : ""}`}
+                  onClick={() => setField("color", "")}
+                  title="Sin color"
+                  aria-pressed={!formData.color}
+                >
+                  Sin color
+                </button>
+                {COLOR_PRESETS.map((c) => {
+                  const selected =
+                    formData.color.toUpperCase() === c.value.toUpperCase();
+                  return (
+                    <button
+                      key={c.value}
+                      type="button"
+                      className={`${s.swatch} ${selected ? s.swatchActive : ""}`}
+                      style={{ backgroundColor: c.value }}
+                      onClick={() => setField("color", c.value)}
+                      title={c.label}
+                      aria-label={c.label}
+                      aria-pressed={selected}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+
+            <label className={s.checkboxRow} htmlFor="ben-activo">
+              <input
+                id="ben-activo"
+                type="checkbox"
+                checked={formData.activo}
+                onChange={(e) => setField("activo", e.target.checked)}
+              />
+              <span>Activo</span>
+            </label>
+
+            {saveError && (
+              <div className={s.saveError} role="alert">
+                {saveError}
+              </div>
+            )}
           </div>
+        </ActionModal>
 
-          <div className={s.field}>
-            <span className={s.label}>Color de la tarjeta</span>
-            <div className={s.swatchRow} role="group" aria-label="Color de la tarjeta">
-              <button
-                type="button"
-                className={`${s.swatchNone} ${!formData.color ? s.swatchActive : ""}`}
-                onClick={() => setField("color", "")}
-                title="Sin color"
-                aria-pressed={!formData.color}
-              >
-                Sin color
-              </button>
-              {COLOR_PRESETS.map((c) => {
-                const selected =
-                  formData.color.toUpperCase() === c.value.toUpperCase();
-                return (
-                  <button
-                    key={c.value}
-                    type="button"
-                    className={`${s.swatch} ${selected ? s.swatchActive : ""}`}
-                    style={{ backgroundColor: c.value }}
-                    onClick={() => setField("color", c.value)}
-                    title={c.label}
-                    aria-label={c.label}
-                    aria-pressed={selected}
-                  />
-                );
-              })}
-            </div>
-            <span className={s.fieldHint}>
-              Acento del beneficio en la app — para destacarlo.
-            </span>
+        {/* Delete confirm */}
+        <ActionModal
+          open={Boolean(deleting)}
+          title="Eliminar beneficio"
+          size="xs"
+          onClose={() => setDeleting(null)}
+          onConfirm={handleDelete}
+          confirmText="Eliminar"
+          cancelText="Cancelar"
+        >
+          <div className={s.modalBody}>
+            <p className={s.confirmText}>
+              ¿Eliminar <strong>{deleting?.titulo}</strong>? Esta acción no se puede
+              deshacer. Si sólo querés sacarlo de la app, editalo y desmarcá
+              «Activo».
+            </p>
+            {deleteError && (
+              <div className={s.saveError} role="alert">
+                {deleteError}
+              </div>
+            )}
           </div>
-
-          <label className={s.checkboxRow} htmlFor="ben-activo">
-            <input
-              id="ben-activo"
-              type="checkbox"
-              checked={formData.activo}
-              onChange={(e) => setField("activo", e.target.checked)}
-            />
-            <span>
-              Activo
-              <span className={s.fieldHint}>
-                {" "}
-                — sólo los activos se ven en la app de socios
-              </span>
-            </span>
-          </label>
-
-          {saveError && (
-            <div className={s.saveError} role="alert">
-              {saveError}
-            </div>
-          )}
-        </div>
-      </ActionModal>
-
-      {/* Delete confirm */}
-      <ActionModal
-        open={Boolean(deleting)}
-        title="Eliminar beneficio"
-        size="xs"
-        onClose={() => setDeleting(null)}
-        onConfirm={handleDelete}
-        confirmText="Eliminar"
-        cancelText="Cancelar"
-      >
-        <div className={s.modalBody}>
-          <p className={s.confirmText}>
-            ¿Eliminar <strong>{deleting?.titulo}</strong>? Esta acción no se puede
-            deshacer. Si sólo querés sacarlo de la app, editalo y desmarcá
-            «Activo».
-          </p>
-          {deleteError && (
-            <div className={s.saveError} role="alert">
-              {deleteError}
-            </div>
-          )}
-        </div>
-      </ActionModal>
-    </div>
+        </ActionModal>
+      </div>
+    </>
   );
 }

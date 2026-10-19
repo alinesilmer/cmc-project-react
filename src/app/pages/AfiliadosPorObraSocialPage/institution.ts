@@ -1,4 +1,5 @@
-import logo from "../../assets/logoCMC.png";
+// La versión de 25 KB (160×240).
+import logo from "@/website/assets/images/logoCMC-web.png";
 
 export const CMC_NAME = "Colegio Médico de Corrientes";
 export const CMC_PHONE = String(
@@ -11,10 +12,7 @@ export const CMC_EMAIL = String(
 export const CMC_LOGO_SRC =
   String((import.meta as any).env?.VITE_CMC_LOGO_URL || "") || logo;
 
-/**
- * Fetches an image URL and returns a data URL string.
- * Returns null on failure so callers can degrade gracefully.
- */
+/** Fetches an image URL and returns a data URL string. */
 export async function fetchAsDataUrl(src: string): Promise<string | null> {
   try {
     if (!src) return null;

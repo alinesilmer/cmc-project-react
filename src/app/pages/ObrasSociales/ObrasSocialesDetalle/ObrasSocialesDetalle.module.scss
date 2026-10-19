@@ -1,11 +1,22 @@
 @use "@/app/styles/all.scss" as *;
 
+// Ficha de obra social: la franja con el nombre y las solapas, «Editar» y las tarjetas.
+
 .container {
-  padding: $spacing-8;
+  // En variables porque la franja las necesita para salirse del relleno.
+  --lado: #{$spacing-12};
+  --arriba: #{$spacing-8};
+
   display: flex;
   flex-direction: column;
-  gap: $spacing-6;
+  gap: $spacing-5;
   min-height: 100%;
+  padding: $spacing-8 $spacing-12;
+
+  // La franja ya trae su margen; el `gap` alcanza.
+  > :first-child {
+    margin-bottom: 0;
+  }
 }
 
 .loadingPage {
@@ -13,17 +24,18 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: $spacing-16;
   gap: $spacing-4;
+  padding: $spacing-16;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
   color: $gray-500;
-  font-size: $font-size-base;
 }
 
 .spinner {
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   border: 3px solid $gray-200;
-  border-top-color: #5b5377;
+  border-top-color: $franja-azul;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -34,130 +46,10 @@
   }
 }
 
-// ─── Header ───────────────────────────────────────────────────────────────────
-
-.pageHeader {
+// «Editar», a la derecha.
+.barra {
   display: flex;
-  flex-direction: column;
-  gap: $spacing-4;
-}
-
-.backBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-2 $spacing-3;
-  background: none;
-  border: none;
-  color: $gray-600;
-  font-size: $font-size-sm;
-  cursor: pointer;
-  border-radius: $radio-md;
-  transition: color 0.15s, background-color 0.15s;
-  align-self: flex-start;
-
-  &:hover {
-    color: #6f6591;
-    background-color: #e7e3f4;
-  }
-}
-
-.titleRow {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: $spacing-4;
-  flex-wrap: wrap;
-}
-
-.titleLeft {
-  display: flex;
-  align-items: center;
-  gap: $spacing-4;
-}
-
-.titleIcon {
-  width: 56px;
-  height: 56px;
-  background-color: #e7e3f4;
- color: #786c99;
-  border-radius: $radio-sm;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.title {
-  font-size: $font-size-4xl;
-  font-weight: $font-weight-bold;
-  color: $gray-900;
-  margin: 0;
-  line-height: 1.2;
-}
-
-.titleSub {
-  font-size: $font-size-sm;
-  color: $gray-500;
-  margin: $spacing-1 0 0;
-}
-
-.editBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-3 $spacing-5;
-  background-color: $white;
-  color: #6f6591;
-  border: 1px solid #6f6591;
-  border-radius: $radio-md;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
-  text-decoration: none;
-  transition: background-color 0.18s;
-  white-space: nowrap;
-  align-self: flex-start;
-
-  &:hover {
-    background-color: #cdc3ed;
-  }
-}
-
-.badgeRow {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: $spacing-3;
-}
-
-.badgeA {
-  display: inline-block;
-  padding: $spacing-2 $spacing-4;
-  background-color: #cdc2e8;
-  color: #493c68;
-  border-radius: $radio-sm;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
-}
-
-.badgeB {
-  display: inline-block;
-  padding: $spacing-2 $spacing-4;
-  background-color: rgb(254, 250, 219);
-  color: #938a54;
-  border-radius: $radio-sm;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
-}
-
-.badgeNeutral {
-  display: inline-block;
-  padding: $spacing-2 $spacing-4;
-  background-color: $gray-100;
-  color: $gray-700;
-  border-radius: $radio-sm;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
+  justify-content: flex-end;
 }
 
 // ─── Content grid ─────────────────────────────────────────────────────────────
@@ -175,8 +67,9 @@
 
 .card {
   background-color: $white;
-  border-radius: $radio-sm;
-  box-shadow: $shadow-md;
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
+  box-shadow: 0 14px 34px -28px rgba($franja-azul, 0.55);
   padding: $spacing-6;
   display: flex;
   flex-direction: column;
@@ -190,13 +83,13 @@
 .cardTitle {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  font-size: $font-size-lg;
-  font-weight: $font-weight-semibold;
-  color: #574e76;
+  gap: $spacing-3;
   margin: 0;
-  padding-bottom: $spacing-4;
-  border-bottom: 1px solid #d6d1eac0;
+  font-family: $fuente-titulos;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  letter-spacing: -0.01em;
+  color: $franja-azul;
 }
 
 // ─── Info rows ────────────────────────────────────────────────────────────────
@@ -214,7 +107,7 @@
 }
 
 .infoIcon {
-  color: #665b83;
+  color: $franja-azul;
   flex-shrink: 0;
   margin-top: 1px;
   display: flex;
@@ -241,16 +134,15 @@
   word-break: break-word;
 }
 
-// Botón de copiar: discreto hasta que el mouse entra en la fila, pero siempre
-// visible al navegar con teclado y una vez copiado (para que se vea el tilde).
+// Botón de copiar: discreto hasta que el mouse entra en la fila, pero siempre visible al navegar con teclado y una vez copiado.
 .copyBtn {
   margin-left: auto;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 1.75rem;
+  height: 1.75rem;
   padding: 0;
   border: 1px solid transparent;
   border-radius: $radio-md;
@@ -266,13 +158,13 @@
   }
 
   &:hover {
-    color: #574e76;
-    background: #f2effa;
-    border-color: #d6d1eac0;
+    color: $franja-azul;
+    background: $gray-100;
+    border-color: $gray-200;
   }
 
   &:focus-visible {
-    outline: 2px solid #574e76;
+    outline: 2px solid $franja-azul;
     outline-offset: 1px;
   }
 }
@@ -318,19 +210,19 @@
   display: inline-flex;
   align-items: center;
   gap: $spacing-2;
-  color: #574e76;
+  color: $franja-azul;
   font-size: $font-size-base;
   font-weight: $font-weight-medium;
   text-decoration: none;
   padding: $spacing-2 $spacing-3;
   border-radius: $radio-md;
   border: 1px solid $secondary-blue;
-  background-color: #dfd9f3;
+  background-color: $gray-200;
   transition: background-color 0.15s, border-color 0.15s;
 
   &:hover {
-    background-color: #bab4ce;
-    border-color: #dfd9f3;
+    background-color: $gray-300;
+    border-color: $gray-200;
   }
 }
 
@@ -349,7 +241,7 @@
 
 .docGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(16.25rem, 1fr));
   gap: $spacing-4;
 }
 
@@ -383,21 +275,28 @@
 .docActiveBadge {
   display: inline-block;
   padding: $spacing-1 $spacing-3;
-  background-color: #b9a7e9;
-  color: #493c68;
+  background-color: $primary-yellow-light;
+  color: $franja-azul;
   border-radius: $radio-sm;
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
 }
 
 .docLink {
+  // Es un botón (el adjunto pide token), con cara de enlace.
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
   font-size: $font-size-sm;
   color: $primary-blue;
   text-decoration: underline;
   word-break: break-all;
 
   &:hover {
-    color: #6B5F8A;
+    color: $franja-azul;
   }
 }
 
@@ -481,8 +380,8 @@
 
 .errorBanner {
   padding: $spacing-4 $spacing-5;
-  background-color: #fff0f0;
-  border: 1px solid #fca5a5;
+  background-color: $gray-100;
+  border: 1px solid $tono-rojo-200;
   border-radius: $radio-md;
   color: $danger-red;
   font-size: $font-size-base;
@@ -492,12 +391,9 @@
 
 @media (max-width: $breakpoint-md) {
   .container {
+    --lado: #{$spacing-5};
+    --arriba: #{$spacing-5};
     padding: $spacing-5;
-    gap: $spacing-4;
-  }
-
-  .title {
-    font-size: $font-size-3xl;
   }
 
   .docGrid {
@@ -507,69 +403,9 @@
 
 @media (max-width: $breakpoint-sm) {
   .container {
+    --lado: #{$spacing-4};
+    --arriba: #{$spacing-4};
     padding: $spacing-4;
-    gap: $spacing-4;
-  }
-
-  .title {
-    font-size: $font-size-2xl;
-  }
-
-  .titleIcon {
-    width: 44px;
-    height: 44px;
-  }
-
-  .badgeRow {
-    gap: $spacing-2;
-  }
-}
-
-// ─── Tabs ─────────────────────────────────────────────────────────────────────
-
-.tabs {
-  display: flex;
-  gap: $spacing-6;
-  border-bottom: 1px solid $gray-200;
-}
-
-.tab {
-  position: relative;
-  padding: 10px 0;
-  background: transparent;
-  border: 0;
-  color: $gray-600;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
-  cursor: pointer;
-  outline: none;
-  -webkit-tap-highlight-color: transparent;
-  display: flex;
-  align-items: center;
-  gap: $spacing-2;
-
-  &:hover {
-    color: $gray-900;
-  }
-}
-
-.tabActive {
-  color: $gray-900;
-}
-
-.tabUnderline {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -1px;
-  height: 2px;
-  background: #6f6591;
-  border-radius: $radio-xs;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .tabUnderline {
-    transition: none !important;
   }
 }
 
@@ -581,354 +417,254 @@
   gap: $spacing-5;
 }
 
+// Las dos vistas: una pista azul con la activa en amarillo, como las pestañas del panel de Inicio.
 .historialToggleRow {
-  display: flex;
-  gap: $spacing-3;
-  flex-wrap: wrap;
+  display: inline-flex;
+  align-self: flex-start;
+  gap: $spacing-1;
+  padding: $spacing-1;
+  background: $franja-azul;
+  border-radius: 999px;
 }
 
 .historialToggleBtn {
   display: inline-flex;
   align-items: center;
   gap: $spacing-2;
-  padding: $spacing-2 $spacing-4;
-  background-color: $white;
-  border: 1px solid $gray-300;
-  border-radius: $radio-md;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
-  color: $gray-600;
+  min-height: 2.75rem;
+  padding: 0 $spacing-6;
+  font: inherit;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $franja-crema;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
   cursor: pointer;
-  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
 
   &:hover {
-    background-color: $gray-50;
-    border-color: $gray-400;
+    background: rgba($white, 0.12);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary-yellow;
+    outline-offset: 2px;
   }
 }
 
-.historialToggleBtnActive {
-  background-color: #e7e3f4;
-  border-color: #9d91c2;
-  color: #574e76;
+.historialToggleBtnActive,
+.historialToggleBtnActive:hover {
+  color: $franja-azul;
+  background: $primary-yellow;
 }
 
-.hLoadingState {
+.hLoadingState,
+.hEmptyState {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: $spacing-3;
   padding: $spacing-12;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
   color: $gray-500;
-  font-size: $font-size-base;
+  text-align: center;
+  background: $white;
+  border: 1px dashed $gray-300;
+  border-radius: $radio-lg;
+
+  svg {
+    flex-shrink: 0;
+    color: $gray-400;
+  }
 }
 
 .spinIcon {
   animation: spin 0.8s linear infinite;
 }
 
-.hEmptyState {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: $spacing-3;
-  padding: $spacing-12;
-  color: $gray-400;
-  font-size: $font-size-base;
-  text-align: center;
-}
-
-// ─── Porcentual timeline ──────────────────────────────────────────────────────
+// ─── Actualizaciones: una línea de tiempo ─────────────────────────────────────
 
 .porcentualList {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  background-color: $white;
+  background: $white;
   border: 1px solid $gray-200;
-  border-radius: $radio-md;
+  border-radius: $radio-lg;
+  box-shadow: 0 14px 34px -28px rgba($franja-azul, 0.55);
   overflow: hidden;
-  box-shadow: $shadow-sm;
 }
 
 .porcentualItem {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: $spacing-4;
-  padding: $spacing-4 $spacing-5;
-  border-bottom: 1px solid $gray-100;
+  gap: $spacing-3 $spacing-5;
+  padding: $spacing-4 $spacing-6;
+  border-bottom: 1px solid $gray-200;
 
   &:last-child {
-    border-bottom: none;
+    border-bottom: 0;
   }
 
-  &:hover {
-    background-color: $gray-50;
+  &:nth-child(even) {
+    background: $gray-100;
   }
 }
 
 .porcentualLeft {
   display: flex;
   align-items: center;
-  gap: $spacing-3;
+  gap: $spacing-4;
   min-width: 0;
 }
 
 .porcentualDot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background-color: #9d91c2;
   flex-shrink: 0;
+  width: 0.875rem;
+  height: 0.875rem;
+  background: $primary-yellow;
+  border: 3px solid $franja-azul;
+  border-radius: 50%;
 }
 
 .porcentualInfo {
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
-  min-width: 0;
+  gap: 2px;
 }
 
 .porcentualDate {
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
-  color: $gray-800;
+  font-family: $fuente-titulos;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $franja-azul;
 }
 
 .porcentualCount {
-  font-size: $font-size-xs;
+  font-size: $font-size-sm;
   color: $gray-500;
 }
 
 .porcentualRight {
   display: flex;
   align-items: center;
-  gap: $spacing-3;
-  flex-shrink: 0;
+  gap: $spacing-4;
 }
 
+// El porcentaje: lo que se viene a buscar, así que va grande.
 .porcentualPct {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-1;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
-  color: $gray-600;
+  gap: $spacing-2;
+  min-width: 7rem;
+  justify-content: center;
+  padding: $spacing-2 $spacing-4;
+  font-family: $fuente-titulos;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  font-variant-numeric: tabular-nums;
+  color: $gray-700;
+  background: $gray-200;
+  border-radius: 999px;
 }
 
 .porcentualPctUp {
-  color: #16a34a;
+  color: $tono-verde-550;
+  background: $tono-verde-50;
 }
 
 .porcentualPctDown {
-  color: #dc2626;
+  color: $tono-rojo-600;
+  background: $tono-rojo-50;
 }
 
 .porcentualPctNa {
-  font-size: $font-size-xs;
-  color: $gray-400;
-  font-style: italic;
+  min-width: 7rem;
+  padding: $spacing-2 $spacing-4;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-500;
+  text-align: center;
+  border: 1px dashed $gray-300;
+  border-radius: 999px;
 }
 
-.porcentualVerBtn {
-  padding: $spacing-1 $spacing-3;
-  background: none;
-  border: 1px solid #9d91c2;
-  border-radius: $radio-sm;
-  font-size: $font-size-xs;
-  color: #574e76;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background-color 0.15s;
-
-  &:hover {
-    background-color: #e7e3f4;
-  }
-}
-
-// ─── Por fecha section ────────────────────────────────────────────────────────
+// ─── Valores: la vigencia, su respaldo y la tabla ─────────────────────────────
 
 .porFechaSection {
   display: flex;
   flex-direction: column;
-  gap: $spacing-4;
+  gap: $spacing-5;
 }
 
 .porFechaHeader {
   display: flex;
-  align-items: center;
-  gap: $spacing-3;
-  padding: $spacing-4 $spacing-5;
-  background-color: $white;
-  border: 1px solid $gray-200;
-  border-radius: $radio-md;
-  box-shadow: $shadow-sm;
   flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-3 $spacing-4;
+  padding: $spacing-4 $spacing-6;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
+  box-shadow: 0 14px 34px -28px rgba($franja-azul, 0.55);
 }
 
 .porFechaLabel {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: $spacing-2;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
-  color: $gray-700;
-  white-space: nowrap;
+  font-family: $fuente-titulos;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $franja-azul;
 }
 
 .porFechaSelect {
-  padding: $spacing-2 $spacing-3;
+  min-width: 14rem;
+  height: 2.75rem;
+  padding: 0 $spacing-4;
+  font: inherit;
+  font-weight: $font-weight-normal;
+  font-variant-numeric: tabular-nums;
+  color: $gray-900;
+  background: $white;
   border: 1px solid $gray-300;
   border-radius: $radio-md;
-  font-size: $font-size-sm;
-  color: $gray-800;
-  background-color: $white;
   cursor: pointer;
-  min-width: 180px;
 
   &:focus {
+    border-color: $franja-azul;
     outline: none;
-    border-color: #9d91c2;
-    box-shadow: 0 0 0 2px #e7e3f4;
+    box-shadow: 0 0 0 3px rgba($franja-azul, 0.14);
   }
 }
-
-.availableDates {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: $spacing-2;
-}
-
-.availableDatesLabel {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
-  color: $gray-500;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
-
-.dateChip {
-  padding: $spacing-1 $spacing-3;
-  background-color: $gray-100;
-  border: 1px solid $gray-200;
-  border-radius: $radio-sm;
-  font-size: $font-size-xs;
-  color: $gray-700;
-  cursor: pointer;
-  transition: background-color 0.15s, border-color 0.15s;
-
-  &:hover {
-    background-color: $gray-200;
-  }
-}
-
-.dateChipActive {
-  background-color: #e7e3f4;
-  border-color: #9d91c2;
-  color: #574e76;
-  font-weight: $font-weight-semibold;
-}
-
-// ─── Table toolbar ────────────────────────────────────────────────────────────
 
 .hToolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: $spacing-3;
-  flex-wrap: wrap;
+  gap: $spacing-3 $spacing-5;
 }
 
 .hToolbarLeft {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: $spacing-3;
-  flex-wrap: wrap;
-}
-
-.filterBar {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.filterIcon {
-  position: absolute;
-  left: $spacing-3;
-  color: $gray-400;
-  pointer-events: none;
-}
-
-.filterInput {
-  padding: $spacing-2 $spacing-3 $spacing-2 $spacing-8;
-  border: 1px solid $gray-300;
-  border-radius: $radio-md;
-  font-size: $font-size-sm;
-  color: $gray-800;
-  background-color: $white;
-  width: 200px;
-
-  &:focus {
-    outline: none;
-    border-color: #9d91c2;
-    box-shadow: 0 0 0 2px #e7e3f4;
-  }
-}
-
-.filterClear {
-  position: absolute;
-  right: $spacing-2;
-  background: none;
-  border: none;
-  color: $gray-400;
-  cursor: pointer;
-  padding: 2px;
-  display: flex;
-  align-items: center;
-
-  &:hover {
-    color: $gray-700;
-  }
 }
 
 .countBadge {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
-  color: $gray-500;
-  background-color: $gray-100;
   padding: $spacing-1 $spacing-3;
-  border-radius: $radio-sm;
-  white-space: nowrap;
-}
-
-.exportBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-2 $spacing-4;
-  background-color: $white;
-  border: 1px solid $gray-300;
-  border-radius: $radio-md;
   font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
-  color: $gray-700;
-  cursor: pointer;
+  font-weight: $font-weight-semibold;
+  font-variant-numeric: tabular-nums;
+  color: $franja-azul;
+  background: $primary-yellow-light;
+  border-radius: 999px;
   white-space: nowrap;
-  transition: background-color 0.15s, border-color 0.15s;
-
-  &:hover:not(:disabled) {
-    background-color: $gray-50;
-    border-color: $gray-400;
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
 }
 
 // ─── Historial table ──────────────────────────────────────────────────────────
@@ -1005,7 +741,7 @@
 }
 
 .tdDesc {
-  max-width: 340px;
+  max-width: 21.25rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1042,7 +778,7 @@
 }
 
 .sortIconActive {
-  color: #6f6591;
+  color: $franja-azul;
 }
 
 .pagination {
@@ -1084,23 +820,22 @@
   font-variant-numeric: tabular-nums;
 }
 
-// ─── Documentos de una vigencia de valores ────────────────────────────────────
-// El respaldo de la actualización: lo que la obra social mandó. Va al lado de
-// la grilla de precios porque son las dos mitades del mismo registro.
+// ─── Respaldo de una vigencia ─────────────────────────────────────────────────
+// Lo que la obra social mandó: va arriba de la tabla porque es su origen.
 
 .docsPanel {
   display: flex;
   flex-direction: column;
   gap: $spacing-3;
-  padding: $spacing-4 $spacing-5;
-  background-color: $white;
+  padding: $spacing-4 $spacing-6;
+  background: $white;
   border: 1px solid $gray-200;
-  border-radius: $radio-md;
-  box-shadow: $shadow-sm;
+  border-radius: $radio-lg;
 }
 
 .docsHeader {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: $spacing-3;
@@ -1111,67 +846,50 @@
   align-items: center;
   gap: $spacing-2;
   margin: 0;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
-  color: $gray-800;
+  font-family: $fuente-titulos;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $franja-azul;
 }
 
-// Es un <label for> del input file, que se oculta: un file input nativo no se
-// puede estilar y acá tiene que verse como el resto de los botones.
+.docsUploadGroup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.docDescInput {
+  @extend %campo-texto;
+  width: 14rem;
+  height: 2.5rem;
+  border-color: $gray-300;
+}
+
 .docsUploadBtn {
   display: inline-flex;
   align-items: center;
   gap: $spacing-2;
-  padding: $spacing-1 $spacing-3;
-  background: none;
-  border: 1px solid #9d91c2;
-  border-radius: $radio-sm;
-  font-size: $font-size-xs;
-  color: #574e76;
+  height: 2.5rem;
+  padding: 0 $spacing-5;
+  font-weight: $font-weight-semibold;
+  color: $franja-crema;
+  background: $franja-azul;
+  border-radius: $radio-md;
   cursor: pointer;
-  white-space: nowrap;
-  transition: background-color 0.15s;
 
   &:hover {
-    background-color: #e7e3f4;
+    background: $primary-blue-darker;
   }
 
   &[aria-disabled="true"] {
-    opacity: 0.55;
-    cursor: not-allowed;
+    opacity: 0.6;
+    pointer-events: none;
   }
 }
 
 .docsInput {
   display: none;
-}
-
-.docsUploadGroup {
-  display: flex;
-  align-items: center;
-  gap: $spacing-2;
-  flex-shrink: 0;
-}
-
-// Nota opcional del operador ("addenda al convenio", "lista corregida"): el
-// backend ya la acepta desde siempre, faltaba dónde escribirla. Ver H-09.
-.docDescInput {
-  width: 180px;
-  padding: $spacing-1 $spacing-2;
-  border: 1px solid $gray-200;
-  border-radius: $border-radius-sm;
-  font-size: $font-size-xs;
-  font-family: inherit;
-  color: $gray-800;
-
-  &:focus {
-    outline: none;
-    border-color: #9d91c2;
-  }
-
-  &::placeholder {
-    color: $gray-400;
-  }
 }
 
 .docsList {
@@ -1184,84 +902,63 @@
   display: flex;
   align-items: center;
   gap: $spacing-3;
-  padding: $spacing-2 $spacing-3;
-  background-color: $gray-50;
-  border: 1px solid $gray-200;
-  border-radius: $radio-sm;
+  padding: $spacing-2 $spacing-4;
+  background: $gray-100;
+  border-radius: $radio-md;
 }
 
 .docNameCol {
-  flex: 1;
-  min-width: 0;
   display: flex;
+  flex: 1;
   flex-direction: column;
+  min-width: 0;
 }
 
+// Es un botón (el adjunto pide token), con cara de enlace.
 .docName {
-  min-width: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: $font-weight-semibold;
+  color: $franja-azul;
+  text-align: left;
+  text-decoration: underline;
+  background: none;
+  border: 0;
+  cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
-  color: $gray-800;
-  background: none;
-  border: none;
-  padding: 0;
-  text-align: left;
-  cursor: pointer;
-  font-family: inherit;
-
-  &:hover {
-    text-decoration: underline;
-  }
 }
 
-// Quién lo subió, resuelto desde ListadoMedico. Ver H-10.
 .docSubidoPor {
-  font-size: 10px;
-  color: $gray-400;
-}
-
-.docMeta {
-  flex-shrink: 0;
   font-size: $font-size-xs;
   color: $gray-500;
 }
 
+.docMeta {
+  font-size: $font-size-sm;
+  font-variant-numeric: tabular-nums;
+  color: $gray-500;
+  white-space: nowrap;
+}
+
 .docDeleteBtn {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  padding: $spacing-1;
-  background: none;
-  border: none;
-  border-radius: $radio-sm;
-  color: $gray-400;
-  cursor: pointer;
-
-  &:hover {
-    color: #dc2626;
-    background-color: $gray-100;
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+  @extend %btn-icono-peligro;
+  width: 2.25rem;
+  height: 2.25rem;
 }
 
 .docsEmpty {
   margin: 0;
-  font-size: $font-size-xs;
+  font-size: $font-size-sm;
   color: $gray-500;
 }
 
-// Contador de adjuntos en la lista de actualizaciones porcentuales.
 .docBadge {
   display: inline-flex;
   align-items: center;
   gap: $spacing-1;
-  font-size: $font-size-xs;
-  color: $gray-500;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-600;
 }

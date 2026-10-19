@@ -26,25 +26,11 @@ import {
 } from "./components/PanelImportacion";
 import { moneda } from "./formato";
 
-/**
- * Importación del reporte de liquidación de Swiss Medical.
- *
- * Mismo circuito que Prevención, con tres diferencias que vienen del reporte:
- *
- *  * **El código va tal cual.** Swiss factura con su nomenclador (mayormente de
- *    ocho dígitos), dado de alta en el catálogo con sus precios. No se recorta
- *    a seis: un código que no está en el catálogo queda sin cotizar.
- *  * **El copago ya lo cobró el médico en el consultorio**, así que se
- *    descuenta del importe que se le factura a la obra social.
- *  * **La matrícula trae la provincia** ("W-3972"). Las que no son de
- *    Corrientes no se pueden resolver contra el padrón del Colegio y quedan
- *    fuera: el número solo puede ser de otro médico en otra provincia.
- */
+/** Importación del reporte de liquidación de Swiss Medical. */
 
 const MENSAJE_VACIO = "El archivo no tiene ninguna práctica para leer.";
 
 const AYUDA =
-  "Subí el reporte de liquidación de Swiss Medical (.xlsx), con las columnas " +
   "transacción_ticket, transacción_item, fecha_prestacion, credencial, " +
   "apellido_afiliado, prestación, cantidad, autorización, copago y " +
   "efector_matricula.";
@@ -112,13 +98,12 @@ export default function ImportarSwiss() {
   return (
     <ReporteOS
       titulo="Importar Swiss Medical"
-      subtitulo="Subí el reporte de liquidación, revisá cómo queda repartido y confirmá para cargarlo en facturación."
       ayuda={AYUDA}
       estado={estado}
       detalleArchivo={estado.reporte?.rango}
       resumen={resumen}
       hayFilas={prestaciones.length > 0}
-      volverA={{ to: "/panel/importaciones", label: "Volver a importaciones" }}
+      volverA={{ to: "/panel/importaciones", label: "Volver" }}
       accept=".xlsx"
       filtros={<ControlesImportacion {...imp} />}
       acciones={<AccionesImportacion {...imp} onCorrer={(g) => void imp.correr(g)} />}

@@ -1,9 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-/**
- * `true` si el texto de un elemento recortado (`line-clamp` o `ellipsis`) no entra.
- * Se vuelve a medir cuando cambia el tamaño (otra columna, otro celular).
- */
+/** `true` si el texto de un elemento recortado (`line-clamp` o `ellipsis`) no entra. */
 export function useDesborda<T extends HTMLElement>() {
   const ref = useRef<T>(null);
   const [desborda, setDesborda] = useState(false);

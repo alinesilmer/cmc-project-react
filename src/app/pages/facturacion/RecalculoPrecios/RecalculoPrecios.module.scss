@@ -1,13 +1,8 @@
-// Lo propio del recálculo. El encuadre, campos, chips y botones vienen de
-// `CierrePeriodo.module.scss` (mismo lenguaje visual).
-$border: #e2e8f0;
-$text-2: #4a5568;
-$text-3: #718096;
-$green: #166534;
-$red: #b91c1c;
+@use "@/app/styles/all.scss" as *;
 
-// El molde de Cierre centra la tarjeta a 760px (es un formulario corto); acá
-// va una tabla ancha de antes → después, así que ocupa todo el ancho.
+// Lo propio del recálculo.
+
+// El molde de Cierre centra la tarjeta a 760px (es un formulario corto); acá va una tabla ancha de antes → después.
 .anchoCompleto.anchoCompleto {
   max-width: none;
 }
@@ -19,11 +14,11 @@ $red: #b91c1c;
 .cargando {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
+  gap: 0.625rem;
+  padding: 0.75rem 0.875rem;
   border-radius: 10px;
-  background: #eff6ff;
-  color: #1e40af;
+  background: $gray-100;
+  color: $tono-azul-600;
   font-size: 0.85rem;
   font-weight: 500;
 }
@@ -38,16 +33,15 @@ $red: #b91c1c;
   }
 }
 
-.chipGris { background: #f1f5f9; color: $text-2; }
-.chipSube { background: #f0fdf4; color: $green; border: 1px solid #bbf7d0; }
-.chipBaja { background: #fef2f2; color: $red; border: 1px solid #fecaca; }
+.chipGris { background: $gray-100; color: $gray-600; }
+.chipSube { background: $cuaderno-papel; color: $tono-verde-550; border: 1px solid $tono-verde-50-b; }
+.chipBaja { background: $gray-100; color: $tono-rojo-500; border: 1px solid $tono-rojo-100; }
 
-// Todas las filas, en bloques (ver TablaCambios.tsx). La cabecera es una tabla
-// aparte, pegada arriba del área con scroll.
+// Todas las filas, en bloques (ver TablaCambios.tsx).
 .tablaWrap {
   max-height: 70vh;
   overflow: auto;
-  border: 1px solid $border;
+  border: 1px solid $gray-200;
   border-radius: 10px;
 }
 
@@ -58,18 +52,18 @@ $red: #b91c1c;
   font-size: 0.8rem;
 
   th {
-    background: #f8fafc;
-    color: $text-3;
+    background: $gray-50;
+    color: $tono-azul-400;
     font-weight: 600;
     text-align: left;
-    padding: 8px 10px;
-    border-bottom: 1px solid $border;
+    padding: 0.5rem 0.625rem;
+    border-bottom: 1px solid $gray-200;
     white-space: nowrap;
   }
 
   td {
-    padding: 6px 10px;
-    border-bottom: 1px solid #f1f5f9;
+    padding: 0.375rem 0.625rem;
+    border-bottom: 1px solid $gray-100;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -82,11 +76,10 @@ $red: #b91c1c;
   z-index: 1;
 }
 
-// Bloque fuera de pantalla: el navegador no lo calcula ni lo pinta. El tamaño
-// estimado (50 filas × ~31px) evita que la barra de scroll salte.
+// Bloque fuera de pantalla: el navegador no lo calcula ni lo pinta.
 .bloque {
   content-visibility: auto;
-  contain-intrinsic-size: auto 1550px;
+  contain-intrinsic-size: auto 96.875rem;
 }
 
 .num {
@@ -95,30 +88,30 @@ $red: #b91c1c;
 }
 
 .antes {
-  color: $text-3;
+  color: $tono-azul-400;
   text-decoration: line-through;
 }
 
-.sube { color: $green; font-weight: 600; }
-.baja { color: $red; font-weight: 600; }
+.sube { color: $tono-verde-550; font-weight: 600; }
+.baja { color: $tono-rojo-500; font-weight: 600; }
 
 // Filas de un mismo equipo: marca a la izquierda para verlas juntas.
 .equipo td:first-child {
-  box-shadow: inset 3px 0 0 #93c5fd;
+  box-shadow: inset 3px 0 0 $tono-azul-200;
 }
 
 .publicada {
-  margin-left: 6px;
-  padding: 0 6px;
+  margin-left: 0.375rem;
+  padding: 0 0.375rem;
   border-radius: 6px;
-  background: #fef3c7;
-  color: #92400e;
+  background: $primary-yellow;
+  color: $tono-naranja-550;
   font-size: 0.7rem;
 }
 
 .omitidas {
   font-size: 0.8rem;
-  color: $text-2;
+  color: $gray-600;
 
   summary {
     cursor: pointer;
@@ -127,7 +120,7 @@ $red: #b91c1c;
 
   ul {
     margin: 0;
-    padding-left: 18px;
+    padding-left: 1.125rem;
   }
 
   li {
@@ -136,12 +129,12 @@ $red: #b91c1c;
 }
 
 .omitidasLista {
-  margin-top: 8px;
+  margin-top: 0.5rem;
   max-height: 50vh;
   overflow: auto;
 }
 
 .bloqueOmitidas {
   content-visibility: auto;
-  contain-intrinsic-size: auto 1000px;
+  contain-intrinsic-size: auto 62.5rem;
 }

@@ -1,343 +1,225 @@
 @use "@/app/styles/all.scss" as *;
 
-// ─── Page layout ──────────────────────────────────────────────────────────────
+// Beneficios de la app móvil: cada uno es un cupón con su talón de color.
+
+// ─── Página ───────────────────────────────────────────────────────────────────
 
 .container {
-  padding: $spacing-8;
+  width: 100%;
+  max-width: 1536px;
+  margin: 0 auto;
+  padding: $spacing-8 $spacing-12 $spacing-12;
   display: flex;
   flex-direction: column;
-  gap: $spacing-6;
+  gap: $spacing-5;
   min-height: 100%;
 
-  @media (max-width: $breakpoint-md) {
-    padding: $spacing-5;
-    gap: $spacing-4;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-4;
-  }
+  @media (max-width: 1200px) { padding: $spacing-8 $spacing-8 $spacing-10; }
+  @media (max-width: $breakpoint-md) { padding: $spacing-5; gap: $spacing-4; }
+  @media (max-width: $breakpoint-sm) { padding: $spacing-4; }
 }
 
-// ─── Header ───────────────────────────────────────────────────────────────────
-
-.header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: $spacing-4;
-  flex-wrap: wrap;
-}
-
-.headerLeft {
-  display: flex;
-  align-items: center;
-  gap: $spacing-4;
-}
-
-.headerIcon {
-  color: $primary-blue;
-  flex-shrink: 0;
-}
-
-.title {
-  font-size: $font-size-4xl;
-  font-weight: $font-weight-bold;
-  color: $gray-900;
-  margin: 0;
-  line-height: 1.2;
-
-  @media (max-width: $breakpoint-md) {
-    font-size: $font-size-3xl;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    font-size: $font-size-2xl;
-  }
-}
-
-.subtitle {
-  font-size: $font-size-sm;
-  color: $gray-500;
-  margin: $spacing-1 0 0;
-}
-
-.headerActions {
-  display: flex;
-  gap: $spacing-3;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-// ─── Error banner ─────────────────────────────────────────────────────────────
-
-.errorBanner {
-  padding: $spacing-4 $spacing-5;
-  background-color: #fff0f0;
-  border: 1px solid #fca5a5;
-  border-radius: $border-radius-md;
-  color: $danger-red;
-  font-size: $font-size-base;
-}
-
-// ─── Search + filters ─────────────────────────────────────────────────────────
-
-.searchRow {
-  display: flex;
-  gap: $spacing-3;
-  flex-wrap: wrap;
-}
-
-.searchWrap {
-  position: relative;
-  flex: 1;
-  min-width: 240px;
-  max-width: 440px;
-}
-
-.searchIcon {
-  position: absolute;
-  left: $spacing-3;
-  top: 50%;
-  transform: translateY(-50%);
-  color: $gray-400;
-  pointer-events: none;
-}
-
-.searchInput {
-  width: 100%;
-  padding: $spacing-3 $spacing-4 $spacing-3 $spacing-8;
-  border: 1px solid $gray-300;
-  border-radius: $border-radius-md;
-  font-size: $font-size-base;
-  color: $gray-800;
-  background-color: $white;
-  outline: none;
-  transition: border-color 0.18s, box-shadow 0.18s;
-  box-sizing: border-box;
-
-  &:focus {
-    border-color: $primary-blue;
-    box-shadow: 0 0 0 3px rgba($primary-blue, 0.12);
-  }
-
-  &::placeholder {
-    color: $gray-400;
-  }
-}
-
-.filterSelect {
+.errorBanner,
+.saveError {
+  border-radius: $radio-md;
   padding: $spacing-3 $spacing-4;
-  border: 1px solid $gray-300;
-  border-radius: $border-radius-md;
-  font-size: $font-size-base;
-  color: $gray-800;
-  background-color: $white;
-  outline: none;
-  cursor: pointer;
-  transition: border-color 0.18s, box-shadow 0.18s;
-
-  &:focus {
-    border-color: $primary-blue;
-    box-shadow: 0 0 0 3px rgba($primary-blue, 0.12);
-  }
+  background-color: $gray-100;
+  border-left: 3px solid $danger-red;
+  color: $danger-red;
+  font-size: $font-size-sm;
 }
 
-// ─── Table ────────────────────────────────────────────────────────────────────
+// ─── Buscador, acciones y rubros ──────────────────────────────────────────────
 
-.tableWrapper {
-  background-color: $white;
-  border-radius: $border-radius-sm;
-  box-shadow: $shadow-md;
-  overflow: hidden;
-  overflow-x: auto;
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  // En pantallas chicas se mantiene legible y el wrapper hace scroll horizontal
-  // en vez de aplastar las columnas.
-  min-width: 720px;
-
-  thead tr {
-    background-color: $primary-blue-dark;
-    border-bottom: 2px solid $gray-200;
-
-    th {
-      padding: $spacing-4 $spacing-5;
-      text-align: left;
-      font-size: $font-size-xs;
-      font-weight: $font-weight-semibold;
-      color: $white;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      white-space: nowrap;
-    }
-  }
-
-  tbody tr {
-    border-bottom: 1px solid $gray-100;
-    transition: background-color 0.15s;
-
-    &:last-child {
-      border-bottom: none;
-    }
-
-    &:hover {
-      background-color: $gray-50;
-    }
-
-    td {
-      padding: $spacing-4 $spacing-5;
-      font-size: $font-size-base;
-      color: $gray-800;
-      vertical-align: middle;
-    }
-  }
-
-  @media (max-width: $breakpoint-md) {
-    thead th,
-    tbody td {
-      padding: $spacing-3 $spacing-4;
-    }
-  }
-}
-
-.actionsCol {
-  width: 100px;
-  text-align: right !important;
-}
-
-.nameCell {
+.barra {
   display: flex;
-  align-items: stretch;
+  flex-wrap: wrap;
+  align-items: center;
   gap: $spacing-3;
-  min-width: 220px;
 }
 
-.colorBar {
-  flex-shrink: 0;
-  width: 4px;
-  align-self: stretch;
-  min-height: 32px;
-  border-radius: $border-radius-xl;
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-3;
+  margin-left: auto;
+}
+
+.rubros { display: flex; flex-wrap: wrap; gap: $spacing-2; }
+
+.rubro {
+  min-height: 2.5rem;
+  padding: 0 $spacing-5;
+  font-family: $fuente-titulos;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $gray-700;
+  background: $white;
+  border: 1px solid $gray-300;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+
+  &:hover { border-color: $franja-azul; }
+
+  &:focus-visible {
+    outline: 2px solid $franja-azul;
+    outline-offset: 2px;
+  }
+}
+
+.rubroOn,
+.rubroOn:hover {
+  color: $franja-crema;
+  background: $franja-azul;
+  border-color: $franja-azul;
+}
+
+// ─── Cupones ──────────────────────────────────────────────────────────────────
+
+.cupones {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
+  gap: $spacing-5;
+
+  @media (max-width: $breakpoint-sm) { grid-template-columns: minmax(0, 1fr); }
+}
+
+.cupon {
+  display: grid;
+  grid-template-columns: 8.25rem minmax(0, 1fr);
+  min-height: 10.5rem;
+  overflow: hidden;
+  background: $white;
   border: 1px solid $gray-200;
+  border-radius: 12px;
+  box-shadow: 0 18px 34px -26px rgba($primary-blue-darker, 0.7);
 }
 
-.nameText {
+// Inactivo: apagado y casi sin color, pero se sigue pudiendo editar.
+.off { opacity: 0.6; filter: saturate(0.3); }
+
+.talon {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-1;
+  padding: $spacing-3 $spacing-4 $spacing-3 $spacing-3;
+  color: $white;
+  text-align: center;
+  overflow-wrap: anywhere;
+  // El troquelado: medias lunas recortadas sobre el borde derecho.
+  -webkit-mask: radial-gradient(circle at 100% 50%, transparent 0.32rem, $black 0.36rem) 0 0 / 100% 1.1rem repeat-y;
+  mask: radial-gradient(circle at 100% 50%, transparent 0.32rem, $black 0.36rem) 0 0 / 100% 1.1rem repeat-y;
 }
 
-.itemTitle {
-  font-weight: $font-weight-semibold;
-  color: $gray-900;
+.talonSinColor { background: $primary-blue; }
+
+.talonGrande {
+  font-family: $fuente-titulos;
+  font-size: $font-size-4xl;
+  font-weight: $font-weight-bold;
+  line-height: 1;
+  letter-spacing: -0.03em;
 }
 
-.itemDesc {
-  font-size: $font-size-xs;
-  color: $gray-500;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  max-width: 380px;
-}
-
-.discountCell {
-  font-weight: $font-weight-semibold;
-  color: $primary-blue;
-  white-space: nowrap;
-}
-
-.mutedCell {
-  color: $gray-600;
-  font-size: $font-size-sm;
-  white-space: nowrap;
-}
-
-.categoryChip {
-  display: inline-block;
-  padding: 2px $spacing-3;
-  border-radius: $border-radius-xl;
-  background-color: $secondary-blue;
-  color: $primary-blue-dark;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
-  white-space: nowrap;
-}
-
-.expiredHint {
-  display: inline-block;
-  margin-left: $spacing-2;
-  padding: 1px $spacing-2;
-  border-radius: $border-radius-sm;
-  background-color: rgba($warning-orange, 0.14);
-  color: $warning-orange;
+.talonChico {
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  opacity: 0.9;
 }
 
-.badge {
-  display: inline-block;
-  padding: 2px $spacing-3;
-  border-radius: $border-radius-xl;
+.cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  min-width: 0;
+  padding: $spacing-4 $spacing-4 $spacing-3 $spacing-5;
+}
+
+.rubroCupon {
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
-  white-space: nowrap;
-}
-
-.badgeOn {
-  background-color: rgba($success-green, 0.14);
-  color: $success-green;
-}
-
-.badgeOff {
-  background-color: $gray-100;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: $gray-500;
 }
 
-// ─── Action buttons ───────────────────────────────────────────────────────────
+.cuponTitulo {
+  margin: 0;
+  font-family: $fuente-titulos;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  line-height: 1.2;
+  color: $primary-blue;
+  overflow-wrap: anywhere;
+}
 
-.actions {
+.lugar {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: $spacing-2;
+  gap: 0.375rem;
+  font-size: $font-size-base;
+  color: $gray-700;
+
+  svg { flex-shrink: 0; }
 }
 
-.iconBtn {
+.abajo {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin-top: auto;
+  padding-top: $spacing-2;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  margin-right: auto;
+  padding: 0.25rem 0.7rem;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  border-radius: 999px;
+}
+
+.chipOk { color: $tono-verde-550; background: $tono-verde-50; }
+.chipNo { color: $danger-red; background: $tono-rojo-50; }
+
+.iconBtn,
+.pageBtn {
+  border-radius: 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: $border-radius-md;
+  width: 2.375rem;
+  height: 2.375rem;
   border: 1px solid $gray-200;
   background-color: $white;
   color: $gray-600;
   cursor: pointer;
   transition: background-color 0.15s, color 0.15s, border-color 0.15s;
 
-  &:hover {
-    background-color: $secondary-blue;
-    color: $primary-blue;
+  &:hover:not(:disabled) {
+    background-color: $primary-blue;
+    color: $white;
     border-color: $primary-blue;
   }
+
+  &:disabled { opacity: 0.4; cursor: default; }
 }
 
-.iconBtnDanger:hover {
-  background-color: #fff0f0;
-  color: $danger-red;
+.iconBtnDanger { color: $danger-red; }
+
+.iconBtnDanger:hover:not(:disabled) {
+  background-color: $danger-red;
   border-color: $danger-red;
 }
 
-// ─── States ───────────────────────────────────────────────────────────────────
+// ─── Estados ──────────────────────────────────────────────────────────────────
 
 .loadingState,
 .emptyState {
@@ -350,32 +232,21 @@
   color: $gray-500;
   font-size: $font-size-base;
 
-  p {
-    text-align: center;
-    margin: 0;
-  }
+  p { text-align: center; margin: 0; }
 }
 
-.emptyIcon {
-  color: $gray-300;
-}
+.emptyIcon { color: $gray-300; }
 
 .spinner {
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   border: 3px solid $gray-200;
   border-top-color: $primary-blue;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: $anim-spin 0.8s linear infinite;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-// ─── Pagination ───────────────────────────────────────────────────────────────
+// ─── Paginación ───────────────────────────────────────────────────────────────
 
 .pagination {
   display: flex;
@@ -384,84 +255,45 @@
   gap: $spacing-3;
 }
 
-.pageBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: $border-radius-md;
-  border: 1px solid $gray-300;
-  background-color: $white;
-  color: $gray-700;
-  cursor: pointer;
-  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
-
-  &:hover:not(:disabled) {
-    background-color: $secondary-blue;
-    color: $primary-blue;
-    border-color: $primary-blue;
-  }
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: default;
-  }
-}
-
 .pageInfo {
+  min-width: 6.875rem;
   font-size: $font-size-sm;
   color: $gray-600;
-  min-width: 110px;
   text-align: center;
 }
 
-// ─── Modal form ───────────────────────────────────────────────────────────────
+// ─── Formulario del modal ─────────────────────────────────────────────────────
 
-.modalBody {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-5;
-  padding: $spacing-2 0;
-}
+.modalBody { display: flex; flex-direction: column; gap: $spacing-5; }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-2;
-  flex: 1;
-  min-width: 0;
-}
+.field { display: flex; flex-direction: column; gap: $spacing-2; flex: 1; min-width: 0; }
 
 .fieldRow {
   display: flex;
   gap: $spacing-4;
 
-  @media (max-width: $breakpoint-sm) {
-    flex-direction: column;
-  }
+  @media (max-width: $breakpoint-sm) { flex-direction: column; }
 }
 
 .label {
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
-  color: $gray-700;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: $gray-600;
 }
 
-.required {
-  color: $danger-red;
-  margin-left: $spacing-1;
-}
+.required { color: $danger-red; margin-left: 2px; }
 
 .input,
 .textarea {
+  border-radius: $radio-md;
   width: 100%;
-  padding: $spacing-3 $spacing-4;
+  padding: $spacing-3 $spacing-3;
   border: 1px solid $gray-300;
-  border-radius: $border-radius-md;
-  font-size: $font-size-base;
+  font-size: $font-size-lg;
   font-family: inherit;
-  color: $gray-800;
+  color: $gray-900;
   background-color: $white;
   outline: none;
   transition: border-color 0.18s, box-shadow 0.18s;
@@ -472,83 +304,74 @@
     box-shadow: 0 0 0 3px rgba($primary-blue, 0.12);
   }
 
-  &::placeholder {
-    color: $gray-400;
-  }
+  &::placeholder { color: $gray-400; }
 }
 
-.textarea {
-  resize: vertical;
-  min-height: 76px;
-}
+.textarea { resize: vertical; min-height: 5.25rem; line-height: 1.5; }
 
 .inputError {
   border-color: $danger-red;
 
-  &:focus {
-    box-shadow: 0 0 0 3px rgba($danger-red, 0.12);
-  }
+  &:focus { box-shadow: 0 0 0 3px rgba($danger-red, 0.12); }
 }
 
+// "Activo" como una banda que se marca entera, no una casilla suelta.
 .checkboxRow {
+  border-radius: $radio-md;
   display: flex;
   align-items: center;
   gap: $spacing-3;
-  font-size: $font-size-sm;
+  padding: $spacing-3 $spacing-4;
+  background: $gray-50;
+  border: 1px solid $gray-200;
+  font-size: $font-size-base;
   font-weight: $font-weight-semibold;
-  color: $gray-700;
+  color: $gray-800;
   cursor: pointer;
+  transition: border-color 0.15s ease;
+
+  &:hover { border-color: $primary-blue; }
 
   input {
-    width: 16px;
-    height: 16px;
+    width: 1.125rem;
+    height: 1.125rem;
     accent-color: $primary-blue;
     cursor: pointer;
   }
 }
 
-// ─── Color picker (swatches) ──────────────────────────────────────────────────
-
-.swatchRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: $spacing-2;
-}
+// Muestras de color, cuadradas como el resto.
+.swatchRow { display: flex; flex-wrap: wrap; align-items: center; gap: $spacing-2; }
 
 .swatch {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
+  border-radius: $radio-md;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
   border: 2px solid $white;
   box-shadow: 0 0 0 1px $gray-300;
   cursor: pointer;
-  padding: 0;
   transition: transform 0.12s, box-shadow 0.12s;
 
-  &:hover {
-    transform: scale(1.08);
-  }
+  &:hover { transform: translateY(-2px); }
 }
 
 .swatchNone {
+  border-radius: $radio-md;
   display: inline-flex;
   align-items: center;
-  height: 30px;
+  height: 2rem;
   padding: 0 $spacing-3;
-  border-radius: $border-radius-xl;
   border: 1px solid $gray-300;
   background-color: $white;
   color: $gray-600;
+  font-family: inherit;
   font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
+  font-weight: $font-weight-semibold;
   cursor: pointer;
   transition: border-color 0.12s, color 0.12s;
 
-  &:hover {
-    border-color: $primary-blue;
-    color: $primary-blue;
-  }
+  &:hover { border-color: $primary-blue; color: $primary-blue; }
 }
 
 .swatchActive {
@@ -559,127 +382,13 @@
 
 .fieldError {
   font-size: $font-size-xs;
-  color: $danger-red;
   font-weight: $font-weight-medium;
-}
-
-.fieldHint {
-  font-size: $font-size-xs;
-  color: $gray-500;
-  font-weight: $font-weight-normal;
-}
-
-.saveError {
-  padding: $spacing-3 $spacing-4;
-  background-color: #fff0f0;
-  border: 1px solid #fca5a5;
-  border-radius: $border-radius-md;
   color: $danger-red;
-  font-size: $font-size-sm;
 }
 
 .confirmText {
   margin: 0;
   font-size: $font-size-base;
+  line-height: 1.5;
   color: $gray-700;
-  line-height: 1.5;
-}
-
-/* ── Grilla de tarjetas ──────────────────────────────────────────────────────
-   Reemplaza a la tabla: un beneficio es una pieza visual (color, descuento,
-   categoría), no una fila de datos, y así el panel se parece a lo que el socio
-   termina viendo en la app. */
-.cardGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
-  gap: $spacing-4;
-  padding: $spacing-4;
-}
-
-.benefitCard {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-2;
-  padding: $spacing-5 $spacing-5 $spacing-4;
-  background: $white;
-  border: 1px solid $gray-200;
-  border-radius: $border-radius-lg;
-  transition: box-shadow 0.18s ease, transform 0.18s ease;
-
-  &:hover {
-    box-shadow: $shadow-md;
-    transform: translateY(-2px);
-  }
-}
-
-/* Franja del color elegido, sobre el borde superior de la tarjeta. */
-.cardAccent {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  border-radius: $border-radius-lg $border-radius-lg 0 0;
-}
-
-.cardTop {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: $spacing-2;
-}
-
-.cardTitle {
-  margin: 0;
-  font-size: $font-size-lg;
-  font-weight: $font-weight-semibold;
-  color: $gray-900;
-  line-height: 1.3;
-}
-
-.cardDesc {
-  margin: 0;
-  flex: 1;
-  font-size: $font-size-sm;
-  line-height: 1.5;
-  color: $gray-500;
-  /* Las descripciones son texto libre y largo: se recortan para que las
-     tarjetas de una misma fila no queden de alturas dispares. */
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.cardMeta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: $spacing-2 $spacing-3;
-  margin-top: $spacing-1;
-}
-
-.cardDiscount {
-  font-size: $font-size-base;
-  font-weight: $font-weight-bold;
-  color: $primary-blue;
-}
-
-.cardPlace {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: $font-size-sm;
-  color: $gray-500;
-}
-
-.cardActions {
-  display: flex;
-  justify-content: flex-end;
-  gap: $spacing-2;
-  margin-top: $spacing-2;
-  padding-top: $spacing-3;
-  border-top: 1px solid $gray-100;
 }

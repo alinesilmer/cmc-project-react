@@ -1,0 +1,98 @@
+@use "@/app/styles/all.scss" as *;
+
+// El día límite tiene que ser imposible de pasar por alto: hoja de almanaque grande sobre amarillo, con borde rojo.
+.corte {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: $spacing-4;
+  padding: $spacing-5 $spacing-6;
+  color-scheme: light;
+  color: $gray-900;
+  background: $primary-yellow;
+  border: 2px solid $danger-red;
+  border-left-width: 8px;
+  border-radius: $radio-lg;
+  box-shadow: 0 18px 30px -18px rgba($danger-red, 0.6);
+}
+
+.cuerpo {
+  display: flex;
+  align-items: center;
+  gap: $spacing-6;
+
+  @media (max-width: $breakpoint-sm) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: $spacing-4;
+  }
+}
+
+// En la columna angosta del formulario, la hoja va arriba del texto.
+.compacto {
+  .cuerpo {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: $spacing-4;
+  }
+
+  .corteValor {
+    font-size: $font-size-2xl;
+  }
+}
+
+.hoja {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: 7.5rem;
+  overflow: hidden;
+  text-align: center;
+  background: $white;
+  border-radius: $radio-lg;
+  box-shadow: 0 10px 18px -10px rgba($franja-noche, 0.7);
+}
+
+.hojaBanda {
+  padding: $spacing-1 0;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  color: $white;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  background: $danger-red;
+}
+
+.hojaDia {
+  padding: $spacing-2 0 $spacing-3;
+  font-family: $fuente-titulos;
+  font-size: 4rem;
+  font-weight: $font-weight-bold;
+  line-height: 1;
+  color: $danger-red;
+}
+
+// Título de la tarjeta, arriba de la hoja.
+.corteRotulo {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-family: $fuente-titulos;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  line-height: 1.25;
+  color: $danger-red;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+
+  svg { flex-shrink: 0; }
+}
+
+.corteValor {
+  display: block;
+  font-family: $fuente-titulos;
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  line-height: 1.15;
+  color: $franja-noche;
+}

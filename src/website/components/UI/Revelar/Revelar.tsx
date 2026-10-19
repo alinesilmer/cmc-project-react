@@ -1,6 +1,6 @@
+import { createElement, useEffect, useRef, useState } from "react";
 import type React from "react";
-import { motion, useReducedMotion } from "framer-motion";
-import { EASE } from "../../../lib/motion";
+import styles from "./Revelar.module.scss";
 
 type Etiqueta = "div" | "section" | "article" | "aside" | "header" | "li" | "p" | "h1" | "h2" | "ul";
 
@@ -13,10 +13,7 @@ type Props = {
   distancia?: number;
   retraso?: number;
   duracion?: number;
-  /**
-   * `true` (default): anima cuando entra en pantalla, una sola vez.
-   * `false`: anima apenas se monta (lo que está arriba de todo).
-   */
+  /** `true` (default): anima cuando entra en pantalla, una sola vez. */
   alVerse?: boolean;
   className?: string;
   style?: React.CSSProperties;
@@ -25,11 +22,7 @@ type Props = {
   "aria-label"?: string;
 };
 
-/**
- * La entrada animada del sitio. El mismo bloque —`initial`, `whileInView`,
- * `viewport`, `transition` y la curva— estaba copiado más de cuarenta veces
- * en diez archivos. Respeta «reducir movimiento» del sistema operativo.
- */
+/** La entrada animada del sitio. */
 export default function Revelar({
   children,
   como = "div",
@@ -38,30 +31,53 @@ export default function Revelar({
   retraso = 0,
   duracion = 0.6,
   alVerse = true,
+  className,
+  style,
   ...resto
 }: Props) {
-  const reducido = useReducedMotion();
-  const d = reducido ? 0 : distancia;
-  const inicio = {
-    opacity: 0,
-    x: desde === "izquierda" ? -d : desde === "derecha" ? d : 0,
-    y: desde === "abajo" ? d : 0,
-  };
-  const fin = { opacity: 1, x: 0, y: 0 };
+  const ref = useRef<HTMLElement>(null);
+  // Lo que anima al montarse arranca visto: la animación de CSS corre sola.
+  const [visto, setVisto] = useState(!alVerse);
 
-  const Componente = motion[como] as typeof motion.div;
-  const disparo = alVerse
-    ? { whileInView: fin, viewport: { once: true, margin: "-60px" } }
-    : { animate: fin };
+  useEffect(() => {
+    if (!alVerse) return;
+    const el = ref.current;
+    if (!el) return;
+    if (!("IntersectionObserver" in window)) {
+      setVisto(true);
+      return;
+    }
+    // Una sola vez, y recién cuando asoma 60px dentro de la pantalla.
+    const obs = new IntersectionObserver(
+      ([entrada]) => {
+        if (entrada.isIntersecting) {
+          setVisto(true);
+          obs.disconnect();
+        }
+      },
+      { rootMargin: "-60px" }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [alVerse]);
 
-  return (
-    <Componente
-      initial={inicio}
-      {...disparo}
-      transition={{ duration: duracion, ease: EASE, delay: retraso }}
-      {...resto}
-    >
-      {children}
-    </Componente>
+  const x = desde === "izquierda" ? -distancia : desde === "derecha" ? distancia : 0;
+  const y = desde === "abajo" ? distancia : 0;
+
+  return createElement(
+    como,
+    {
+      ...resto,
+      ref,
+      className: `${styles.revelar} ${visto ? styles.visto : ""} ${className ?? ""}`,
+      style: {
+        ...style,
+        "--rv-x": `${x}px`,
+        "--rv-y": `${y}px`,
+        "--rv-dur": `${duracion}s`,
+        "--rv-retraso": `${retraso}s`,
+      } as React.CSSProperties,
+    },
+    children
   );
 }

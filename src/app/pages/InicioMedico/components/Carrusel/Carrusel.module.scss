@@ -1,8 +1,6 @@
 @use "@/app/styles/all.scss" as *;
 
-// Cantos vivos, como el resto del portal del socio: $radius-sharp vale 0 y es
-// local de InicioMedico.module.scss, así que acá no se setea radio en vez de
-// duplicar el token (lo que su propio comentario pide no hacer).
+// Cantos vivos, como el resto del portal del socio: $radius-sharp vale 0 y es local de InicioMedico.module.scss.
 
 .wrap {
   position: relative;
@@ -11,10 +9,7 @@
   gap: $spacing-3;
 }
 
-/** La pista. Cada hijo se ancla al borde izquierdo al desplazarse.
- *
- * El padding vertical deja respirar el `translateY(-3px)` del hover de las
- * tarjetas: sin él, `overflow-x` recorta la tarjeta levantada por arriba. */
+/** La pista. Cada hijo se ancla al borde izquierdo al desplazarse. */
 .track {
   display: grid;
   grid-auto-flow: column;
@@ -25,9 +20,7 @@
   scroll-behavior: smooth;
   padding: $spacing-1 0 $spacing-3;
 
-  // La barra es parte del mueble, no un resto del navegador: fina, gris, sin
-  // la canaleta de Chrome, y se oscurece al pasar por encima. Firefox sólo
-  // entiende estas dos propiedades, y su barra fina ya viene sin canaleta.
+  // La barra es parte del mueble, no un resto del navegador: fina, gris, sin la canaleta de Chrome, y se oscurece al pasar por encima.
   scrollbar-width: thin;
   scrollbar-color: $gray-300 transparent;
 
@@ -41,7 +34,7 @@
   }
 
   &::-webkit-scrollbar {
-    height: 8px;
+    height: 0.5rem;
   }
 
   &::-webkit-scrollbar-track {
@@ -49,8 +42,6 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    // Sin `background-clip`, el pulgar toca los bordes y se ve como una franja;
-    // con el borde transparente queda una píldora flotando en el carril.
     background: $gray-300;
     border: 2px solid transparent;
     background-clip: content-box;

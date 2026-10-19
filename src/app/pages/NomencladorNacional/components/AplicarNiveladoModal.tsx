@@ -9,6 +9,9 @@ import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import { aplicarNivelado } from "../nomenclador.api";
 import { today, parseMonto } from "../nomenclador.helpers";
 import type { AplicarNiveladoOut, EstadoAplicarNivelado } from "../nomenclador.types";
+import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
+import { motivoError } from "@/app/pages/NomencladorNacional/utiles";
 
 const fmt = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 2 });
 
@@ -21,23 +24,7 @@ const ESTADOS: Record<EstadoAplicarNivelado, string> = {
   suspendido: "Suspendido",
   omitido: "Omitido",
 };
-
-/** El motivo del servidor: texto, o `{mensaje}` en los 409 de este endpoint. */
-function motivoError(e: unknown, fallback: string): string {
-  const d = (e as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail;
-  if (typeof d === "string") return d;
-  if (d && typeof d === "object" && typeof (d as { mensaje?: unknown }).mensaje === "string") {
-    return (d as { mensaje: string }).mensaje;
-  }
-  return fallback;
-}
-
-/**
- * Aplica un nomenclador nivelado a una obra social: da de alta sus códigos y les
- * crea precio con el galeno del nivel. Primero muestra qué haría ("Ver cambios").
- * Lo que ya tiene precio NE recibe la vigencia igual: si es anterior a la vigente,
- * las vigencias más nuevas se borran de la base.
- */
+/** Aplica un nomenclador nivelado a una obra social: da de alta sus códigos y les crea precio con el galeno del nivel. */
 export default function AplicarNiveladoModal({
   isOpen,
   slug,
@@ -131,13 +118,11 @@ export default function AplicarNiveladoModal({
           </div>
           <div className={base.formGroup}>
             <label className={base.formLabel} htmlFor="apl-vig">Vigente desde</label>
-            <input
-              id="apl-vig"
-              type="date"
-              className={base.formInput}
+            <CampoFecha
               value={vigencia}
+              onChange={(valor) => { setVigencia(valor); setPreview(null); }}
+              id="apl-vig"
               disabled={!!hecho}
-              onChange={(e) => { setVigencia(e.target.value); setPreview(null); }}
             />
           </div>
         </div>
@@ -188,7 +173,7 @@ export default function AplicarNiveladoModal({
               Ver sólo los que cambian
             </label>
             <div className={base.tableWrap}>
-              <table className={base.table}>
+              <Tabla className={base.table}>
                 <thead>
                   <tr><th>Código</th><th>Descripción</th><th>Nivel</th><th>Estado</th><th className={styles.num}>Precio</th></tr>
                 </thead>
@@ -209,7 +194,7 @@ export default function AplicarNiveladoModal({
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </Tabla>
             </div>
           </>
         )}

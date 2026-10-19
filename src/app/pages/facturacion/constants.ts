@@ -1,10 +1,5 @@
 import type { EstadoPrestacion, Tipo, TipoPrestador } from "./types";
 
-export const MESES = [
-  "Enero","Febrero","Marzo","Abril","Mayo","Junio",
-  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
-];
-
 export const ESTADO_LABEL: Record<EstadoPrestacion, string> = {
   A: "Abierto",
   C: "Cerrado",
@@ -37,5 +32,4 @@ export const TIPO_LABEL: Record<Tipo, string> = {
 export const CODIGOS_BLOQUEADOS = ["5000", "6000"];
 
 export const FACTURACION_ULTIMA_OS_KEY = "facturacion:ultimaOS";
-export const FACTURACION_FILTROS_KEY = "facturacion:listado:filtros";
 export const FACTURACION_AUTORIZACION_POR_INTEGRANTE_KEY = "facturacion:autorizacionPorIntegrante";

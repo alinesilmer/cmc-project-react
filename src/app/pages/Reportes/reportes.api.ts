@@ -13,8 +13,7 @@ import type {
 const BASE = "/api/reportes";
 
 // ─── Colegio ─────────────────────────────────────────────────────────────────
-// Todas exigen el scope `facturas:ver`: cruzan la facturación de todos los
-// médicos. El backend las rechaza con 403 si el usuario no lo tiene.
+// Todas exigen el scope `facturas:ver`: cruzan la facturación de todos los médicos.
 
 export const getResumen = (periodo: string): Promise<ResumenReporte> =>
   getJSON<ResumenReporte>(`${BASE}/resumen`, { periodo });
@@ -23,8 +22,7 @@ export const getCodigos = (params: {
   periodo: string;
   especialidad_id?: number;
   obra_social?: string;
-  /** Busca en código y descripción. Lo resuelve el backend, no el navegador:
-   *  la tabla muestra 25 filas pero el período tiene miles. */
+  /** Busca en código y descripción. */
   q?: string;
   orden?: OrdenCodigos;
   limit?: number;

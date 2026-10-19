@@ -1,8 +1,7 @@
 import { Handshake } from "lucide-react";
 import Revelar from "../../UI/Revelar/Revelar";
 import logoCMC from "../../../assets/images/logoCMC-web.png";
-// Servido desde el propio sitio: antes se cargaba a través del proxy de
-// imágenes del buscador Brave, que recibía la IP de cada visitante.
+// Servido desde el propio sitio: antes se cargaba a través del proxy de imágenes del buscador Brave, que recibía la IP de cada visitante.
 import logoNoble from "../../../assets/images/noble.png";
 import styles from "./AlianzaNoble.module.scss";
 

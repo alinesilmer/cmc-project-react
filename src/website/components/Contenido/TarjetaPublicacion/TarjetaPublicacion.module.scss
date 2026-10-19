@@ -1,9 +1,7 @@
 @use "@/website/styles/all.scss" as *;
 
-$crema: #f7e9aa;
 
-// Imagen arriba, texto abajo; todas del mismo alto en la grilla, con el
-// «Leer más» siempre al pie.
+// Imagen arriba, texto abajo; todas del mismo alto en la grilla, con el «Leer más» siempre al pie.
 .card {
   display: flex;
   flex-direction: column;
@@ -11,7 +9,7 @@ $crema: #f7e9aa;
   overflow: hidden;
   border-radius: 10px;
   background: $white;
-  box-shadow: 0 1px 2px rgba(20, 35, 58, 0.05), 0 10px 26px rgba(20, 35, 58, 0.08);
+  box-shadow: 0 1px 2px rgba($tono-azul-850, 0.05), 0 10px 26px rgba($tono-azul-850, 0.08);
   // Es un <a>: sin subrayado ni el azul del enlace.
   color: inherit;
   text-decoration: none;
@@ -20,7 +18,7 @@ $crema: #f7e9aa;
   &:hover,
   &:focus-visible {
     transform: translateY(-4px);
-    box-shadow: 0 1px 2px rgba(20, 35, 58, 0.05), 0 20px 38px rgba(20, 35, 58, 0.15);
+    box-shadow: 0 1px 2px rgba($tono-azul-850, 0.05), 0 20px 38px rgba($tono-azul-850, 0.15);
 
     .imagen img {
       transform: scale(1.05);
@@ -45,7 +43,7 @@ $crema: #f7e9aa;
   position: relative;
   aspect-ratio: 16 / 10;
   overflow: hidden;
-  background: #eef1f5;
+  background: $tono-azul-50;
 
   img {
     display: block;
@@ -63,7 +61,7 @@ $crema: #f7e9aa;
   max-width: calc(100% - 24px);
   padding: 5px 10px;
   border-radius: 4px;
-  background: $crema;
+  background: $primary-yellow;
   font-family: $font-title;
   font-size: 0.7rem;
   font-weight: 800;
@@ -73,7 +71,7 @@ $crema: #f7e9aa;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  box-shadow: 0 4px 10px rgba(12, 42, 82, 0.18);
+  box-shadow: 0 4px 10px rgba($primary-blue-dark, 0.18);
   pointer-events: none;
 }
 
@@ -91,7 +89,7 @@ $crema: #f7e9aa;
   gap: 6px;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #6b7280;
+  color: $texto-gris;
 
   svg {
     width: 14px;
@@ -107,7 +105,7 @@ $crema: #f7e9aa;
   font-weight: 800;
   line-height: 1.25;
   letter-spacing: -0.01em;
-  color: #14233a;
+  color: $tono-azul-850;
   transition: color 0.2s ease;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -119,7 +117,7 @@ $crema: #f7e9aa;
   margin: 0;
   font-size: 0.93rem;
   line-height: 1.55;
-  color: #5b6474;
+  color: $tono-azul-600;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;

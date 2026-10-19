@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  UserSearch, Search, AlertTriangle, FileSpreadsheet, FileText, Loader2,
+  UserSearch,
+  Search,
+  AlertTriangle,
 } from "lucide-react";
 
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
@@ -14,9 +16,9 @@ import TablaPorObraSocial from "../components/TablaPorObraSocial";
 import MedicoAutocomplete from "../components/MedicoAutocomplete";
 import { dedupePorId } from "../components/localSearch";
 import styles from "./DetallePorMedico.module.scss";
+import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 
-// Tope del backend por request (GET /prestaciones: limit <= 200) y freno de
-// seguridad para no traer indefinidamente si un médico tuviera muchísimas filas.
+// Tope del backend por request (GET /prestaciones: limit <= 200) y freno de seguridad para no traer indefinidamente si un médico tuviera muchísimas filas.
 const PAGE_LIMIT = 200;
 const MAX_FILAS = 5000;
 
@@ -34,11 +36,7 @@ const DetallePorMedico: React.FC = () => {
   const navigate = useNavigate();
   const notify = useAppSnackbar();
 
-  // Buscador de socio: por Nº de socio o por nombre (mismo `/medicos` que usa
-  // el resto de facturación) — antes era un input numérico que sólo aceptaba
-  // el número de socio tipeado a mano.
-  // Precarga completa de médicos (igual que el formulario de carga): el formulario de
-  // búsqueda no se muestra hasta tenerlos, y el autocomplete filtra en memoria.
+  // Buscador de socio: por Nº de socio o por nombre (mismo `/medicos` que usa el resto de facturación) .
   const [medicosPrecargados, setMedicosPrecargados] = useState<MedicoOption[] | null>(null);
   const [errorPrecarga, setErrorPrecarga] = useState(false);
   const [reintentoPrecarga, setReintentoPrecarga] = useState(0);
@@ -82,8 +80,7 @@ const DetallePorMedico: React.FC = () => {
     setLoading(true);
     setMedico(null);
     try {
-      // Se trae todo el detalle del médico en el período (paginando en lotes de
-      // 200) para poder mostrar los totales exactos, no sólo los de una página.
+      // Se trae todo el detalle del médico en el período (paginando en lotes de 200) para poder mostrar los totales exactos.
       let acumulado: PrestacionRead[] = [];
       let offset = 0;
       let total = Infinity;
@@ -110,9 +107,7 @@ const DetallePorMedico: React.FC = () => {
       setTruncado(corte);
       setBusqueda({ socio, periodo });
 
-      // Nombre/matrícula del médico: se resuelve por el socio que EFECTIVAMENTE
-      // trajo la consulta (el backend puede acotar al médico propio si la cuenta
-      // no tiene permiso para ver a otros), así el banner nunca miente.
+      // Nombre/matrícula del médico: se resuelve por el socio que EFECTIVAMENTE trajo la consulta.
       const socioReal = acumulado[0]?.cod_medico ?? socio;
       try {
         const meds = await fetchMedicos(socioReal, 10);
@@ -188,7 +183,7 @@ const DetallePorMedico: React.FC = () => {
         </div>
         {errorPrecarga ? (
           <div className={styles.emptyState}>
-            <p className={styles.emptyTextStrong}>⚠ No se pudieron cargar los médicos.</p>
+            <p className={styles.emptyTextStrong}><AlertTriangle size={14} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> No se pudieron cargar los médicos.</p>
             <button type="button" className={styles.searchBtn} onClick={() => setReintentoPrecarga((k) => k + 1)}>
               Reintentar
             </button>
@@ -293,30 +288,18 @@ const DetallePorMedico: React.FC = () => {
             </span>
 
             <div className={styles.exportGroup}>
-              <button
-                type="button"
-                className={`${styles.exportBtn} ${styles.exportBtnExcel}`}
+              <BotonDescarga
+                formato="excel"
                 onClick={() => exportar("xlsx")}
                 disabled={exportando !== null}
-                title="Exportar a Excel"
-              >
-                {exportando === "xlsx"
-                  ? <Loader2 size={15} className={styles.spin} />
-                  : <FileSpreadsheet size={15} />}
-                Excel
-              </button>
-              <button
-                type="button"
-                className={`${styles.exportBtn} ${styles.exportBtnPDF}`}
+                cargando={exportando === "xlsx"}
+              />
+              <BotonDescarga
+                formato="pdf"
                 onClick={() => exportar("pdf")}
                 disabled={exportando !== null}
-                title="Exportar a PDF"
-              >
-                {exportando === "pdf"
-                  ? <Loader2 size={15} className={styles.spin} />
-                  : <FileText size={15} />}
-                PDF
-              </button>
+                cargando={exportando === "pdf"}
+              />
             </div>
           </div>
         )}

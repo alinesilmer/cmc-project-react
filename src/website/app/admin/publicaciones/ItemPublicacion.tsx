@@ -6,6 +6,7 @@ import { linkWhatsApp } from "../../../lib/contacto";
 import { PUBLICACIONES } from "../../../components/Contenido/publicaciones";
 import type { Noticia } from "../../../types";
 import styles from "./ItemPublicacion.module.scss";
+import Button from "@/website/components/UI/Button/Button";
 
 type Props = {
   publicacion: Noticia;
@@ -59,12 +60,12 @@ export default function ItemPublicacion({ publicacion: n, onEditar, onBorrar }: 
         >
           <WhatsappIcon />
         </a>
-        <button type="button" onClick={() => onEditar(n)} title="Editar" aria-label="Editar publicación" className={styles.actionEdit}>
+        <Button variant="plano" type="button" onClick={() => onEditar(n)} title="Editar" aria-label="Editar publicación" className={styles.actionEdit}>
           <SquarePen />
-        </button>
-        <button type="button" onClick={() => onBorrar(n)} title="Eliminar" aria-label="Eliminar publicación" className={styles.actionDelete}>
+        </Button>
+        <Button variant="plano" type="button" onClick={() => onBorrar(n)} title="Eliminar" aria-label="Eliminar publicación" className={styles.actionDelete}>
           <Trash2 />
-        </button>
+        </Button>
       </div>
     </motion.div>
   );

@@ -1,10 +1,9 @@
 @use "@/website/styles/all.scss" as *;
 
-// El título a la izquierda y los seis motivos a la derecha; en pantallas
-// angostas, uno debajo del otro.
+// El título a la izquierda y los seis motivos a la derecha; en pantallas angostas, uno debajo del otro.
 .bienvenida {
   display: grid;
-  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
   align-items: center;
   gap: 28px clamp(28px, 4vw, 64px);
 
@@ -23,29 +22,29 @@
 .titulo {
   margin: 0;
   font-family: $font-title;
-  font-size: clamp(2rem, 3.8vw, 3.2rem);
+  font-size: clamp(2.2rem, 4vw, 3.4rem);
   font-weight: 800;
   line-height: 1.05;
   letter-spacing: -0.03em;
-  color: #14233a;
+  color: $portada-crema;
 
   em {
     font-style: normal;
-    color: $primary-blue;
+    color: $portada-oro;
   }
 }
 
 .pulso {
   width: min(180px, 60%);
   height: 28px;
-  color: rgba($primary-blue, 0.55);
+  color: rgba($portada-oro, 0.7);
 }
 
 .bajada {
   margin: 0;
   font-size: 1.2rem;
   font-weight: 500;
-  color: #5b6474;
+  color: rgba($portada-crema, 0.8);
 }
 
 .boton {

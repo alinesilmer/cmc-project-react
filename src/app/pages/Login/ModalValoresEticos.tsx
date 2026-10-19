@@ -8,11 +8,7 @@ import styles from "./ModalValoresEticos.module.scss";
 
 type Props = { abierto: boolean; onCerrar: () => void };
 
-/**
- * El boletín de Valores Éticos Mínimos en una ventana. En el celular muchos
- * navegadores no muestran un PDF dentro de la página: ahí se ofrecen abrirlo o
- * descargarlo, que funcionan siempre.
- */
+/** El boletín de Valores Éticos Mínimos en una ventana. */
 export default function ModalValoresEticos({ abierto, onCerrar }: Props) {
   const cerrar = useCallback(() => onCerrar(), [onCerrar]);
   useModal(abierto, cerrar);
@@ -67,7 +63,7 @@ export default function ModalValoresEticos({ abierto, onCerrar }: Props) {
               </a>
               <a href={pdf} download className={styles.principal}>
                 <Download aria-hidden="true" />
-                Descargar PDF
+                PDF
               </a>
             </footer>
           </motion.div>

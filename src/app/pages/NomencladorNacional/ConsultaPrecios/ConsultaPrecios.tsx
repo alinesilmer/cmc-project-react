@@ -13,8 +13,7 @@ import { useAuth } from "../../../auth/AuthProvider";
 
 export default function ConsultaPrecios() {
   const { user } = useAuth();
-  // ID_COLEGIO_ESPE en orden de prioridad (principal primero). La especialidad
-  // no se elige acá: la determina el usuario logueado.
+  // ID_COLEGIO_ESPE en orden de prioridad (principal primero).
   const doctorEspecialidades: number[] = user?.especialidades ?? [];
 
   // OS autocomplete
@@ -28,9 +27,7 @@ export default function ConsultaPrecios() {
   const [selectedNom, setSelectedNom] = useState<NomencladorOut | null>(null);
   const nomDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Vía de realización. Solo tiene efecto real en códigos de cirugía asociados a un
-  // galeno de 7/10 niveles: en el resto, el listado cae silenciosamente a "T" (ver
-  // aviso de degradado más abajo).
+  // Vía de realización. Solo tiene efecto real en códigos de cirugía asociados a un galeno de 7/10 niveles: en el resto.
   const [via, setVia] = useState<ViaPractica>("T");
 
   // Query result
@@ -76,9 +73,7 @@ export default function ConsultaPrecios() {
     if (nomDebounce.current) clearTimeout(nomDebounce.current);
     if (q.trim().length < 2) return;
 
-    // Sin obra social no se busca: para el rol médico el backend solo lista lo que
-    // puede facturar EN esa OS (sin restricción o con su especialidad); sin OS
-    // devolvía únicamente sus habilitaciones individuales, casi siempre nada.
+    // Sin obra social no se busca: para el rol médico el backend solo lista lo que puede facturar EN esa OS.
     if (!osNro) return;
 
     setNomLoading(true);

@@ -1,102 +1,26 @@
-// app/ui/useNotify.tsx
-"use client";
+import type { ReactNode } from "react";
 
-import * as React from "react";
-import { Notification, toaster } from "rsuite";
-import "rsuite/Notification/styles/index.css";
-import "rsuite/toaster/styles/index.css";
+import { publicarAviso, type Severidad } from "./avisos";
 
-type Placement =
-  | "topStart"
-  | "topCenter"
-  | "topEnd"
-  | "bottomStart"
-  | "bottomCenter"
-  | "bottomEnd";
+type Opts = { duration?: number };
+type Notificar = (title: ReactNode, body?: ReactNode, opts?: Opts) => void;
 
-type Opts = { placement?: Placement; duration?: number };
+const DURACION = 4000;
 
-// En RSuite el key es string
-export type ToastKey = string;
+const con =
+  (severidad: Severidad): Notificar =>
+  (title, body, opts) =>
+    publicarAviso({ severidad, titulo: title, cuerpo: body, duracion: opts?.duration ?? DURACION });
 
-export function useNotify(
-  defaults: Opts = { placement: "bottomEnd", duration: 4000 }
-) {
-  const defaultsRef = React.useRef(defaults);
+// Objeto de módulo: es el mismo en cada render, y sus funciones también.
+const notify = {
+  success: con("success"),
+  info: con("info"),
+  warning: con("warning"),
+  error: con("error"),
+};
 
-  const push = React.useCallback(
-    (n: React.ReactNode, opts?: Opts): ToastKey => {
-      const placement =
-        opts?.placement ?? defaultsRef.current.placement ?? "bottomEnd";
-      const duration = opts?.duration ?? defaultsRef.current.duration ?? 4000;
-      return toaster.push(n, { placement, duration }) as ToastKey;
-    },
-    []
-  );
-
-  const success = React.useCallback(
-    (title: React.ReactNode, body?: React.ReactNode, opts?: Opts): ToastKey =>
-      push(
-        <Notification type="success" header={title} closable>
-          {body}
-        </Notification>,
-        opts
-      ),
-    [push]
-  );
-  const info = React.useCallback(
-    (title: React.ReactNode, body?: React.ReactNode, opts?: Opts): ToastKey =>
-      push(
-        <Notification type="info" header={title} closable>
-          {body}
-        </Notification>,
-        opts
-      ),
-    [push]
-  );
-  const warning = React.useCallback(
-    (title: React.ReactNode, body?: React.ReactNode, opts?: Opts): ToastKey =>
-      push(
-        <Notification type="warning" header={title} closable>
-          {body}
-        </Notification>,
-        opts
-      ),
-    [push]
-  );
-  const error = React.useCallback(
-    (title: React.ReactNode, body?: React.ReactNode, opts?: Opts): ToastKey =>
-      push(
-        <Notification type="error" header={title} closable>
-          {body}
-        </Notification>,
-        opts
-      ),
-    [push]
-  );
-
-  const loading = React.useCallback(
-    (
-      title: React.ReactNode = "Procesando…",
-      body?: React.ReactNode,
-      opts?: Opts
-    ): ToastKey =>
-      push(
-        <Notification type="info" header={title} closable>
-          {body}
-        </Notification>,
-        { ...opts, duration: 0 }
-      ),
-    [push]
-  );
-
-  const remove = React.useCallback((key: ToastKey) => {
-    toaster.remove(key); // el tipo ya es string
-  }, []);
-
-  const clear = React.useCallback(() => {
-    toaster.clear();
-  }, []);
-
-  return { push, success, info, warning, error, loading, remove, clear };
+/** Aviso con título y, si hace falta, una segunda línea. */
+export function useNotify() {
+  return notify;
 }

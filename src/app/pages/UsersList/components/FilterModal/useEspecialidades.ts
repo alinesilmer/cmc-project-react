@@ -24,10 +24,7 @@ function normalizeOptions(data: unknown): EspecialidadOption[] {
     .filter((x) => x.value && x.value !== "0");
 }
 
-/**
- * Loads especialidades from the API with a global in-memory cache.
- * Re-opening the modal after the first successful load is instant (no network call).
- */
+/** Loads especialidades from the API with a global in-memory cache. */
 export function useEspecialidades() {
   const [especialidades, setEspecialidades] = useState<EspecialidadOption[]>(() =>
     hasEspecialidadesCatalog() ? getEspecialidadesCatalog() : []

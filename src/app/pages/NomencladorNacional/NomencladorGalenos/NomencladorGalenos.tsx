@@ -56,6 +56,9 @@ import ConfirmModal from "@/app/components/ui/ConfirmModal/ConfirmModal";
 import GalenoCreateModal from "./GalenoCreateModal";
 import { hoyISO } from "@/app/shared/lib/fechas";
 import { compararGalenos } from "../nomenclador.helpers";
+import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
+import { extractDetail } from "@/app/pages/NomencladorNacional/NomencladorGalenos/utiles";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -65,9 +68,7 @@ const fmt = new Intl.NumberFormat("es-AR", {
   maximumFractionDigits: 2,
 });
 
-// hoyISO y no toISOString(): este último pasa la hora local a UTC, así que
-// después de las 21:00 en Argentina proponía la vigencia del día siguiente.
-// Ver src/app/lib/fechas.ts.
+// hoyISO y no toISOString(): este último pasa la hora local a UTC.
 const today = hoyISO;
 
 function parseMonto(s: string | null | undefined): number | null {
@@ -80,12 +81,6 @@ function fmtUnidad(s: string | null | undefined): string {
   const n = parseMonto(s);
   return n == null ? "—" : n.toFixed(4);
 }
-
-function extractDetail(e: unknown): string {
-  const err = e as { response?: { data?: { detail?: string } } };
-  return err?.response?.data?.detail ?? "Ocurrió un error inesperado.";
-}
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type ModalKind = "create" | "edit" | "import" | "historial" | null;
@@ -205,8 +200,7 @@ export default function NomencladorGalenos() {
     setTimeout(() => setToast(null), 4500);
   }
 
-  // Los galenos de la obra social elegida, en el orden del boletín. Dentro de
-  // un mismo código los nivelados van por nivel, que es como se leen.
+  // Los galenos de la obra social elegida, en el orden del boletín.
   const osGalenosOrdenados = useMemo(
     () =>
       [...osGalenos].sort(
@@ -266,8 +260,7 @@ export default function NomencladorGalenos() {
 
   const replicaActiva = replica.activo && replica.destinos.length > 0;
 
-  /** Replica en la familia la acción recién guardada. true = hubo replicación (el modal
-   * queda abierto mostrando el resultado). */
+  /** Replica en la familia la acción recién guardada. true = hubo replicación (el modal queda abierto mostrando el resultado). */
   async function replicarGalenoSiCorresponde(
     accion: "valor" | "unidades",
     payload: Omit<
@@ -644,7 +637,7 @@ export default function NomencladorGalenos() {
                   </div>
                 ) : (
                   <div className={styles.osTable}>
-                    <table className={styles.table}>
+                    <Tabla className={styles.table}>
                       <thead>
                         <tr>
                           <th>Código</th>
@@ -721,7 +714,7 @@ export default function NomencladorGalenos() {
                           </tr>
                         ))}
                       </tbody>
-                    </table>
+                    </Tabla>
                   </div>
                 )}
               </>
@@ -821,14 +814,12 @@ export default function NomencladorGalenos() {
                 <label className={styles.formLabel}>
                   Vigente desde <span className={styles.req}>*</span>
                 </label>
-                <input
-                  type="date"
-                  className={`${styles.formInput} ${editErrors.vigencia_precio ? styles.inputError : ""}`}
+                <CampoFecha
                   value={editForm.vigencia_precio}
-                  onChange={(e) => {
+                  onChange={(valor) => {
                     setEditForm((p) => ({
                       ...p,
-                      vigencia_precio: e.target.value,
+                      vigencia_precio: valor,
                     }));
                     setEditErrors((p) => ({ ...p, vigencia_precio: "" }));
                   }}
@@ -886,14 +877,12 @@ export default function NomencladorGalenos() {
               <label className={styles.formLabel}>
                 Vigente desde <span className={styles.req}>*</span>
               </label>
-              <input
-                type="date"
-                className={`${styles.formInput} ${editErrors.vigencia_unidades ? styles.inputError : ""}`}
+              <CampoFecha
                 value={editForm.vigencia_unidades}
-                onChange={(e) =>
+                onChange={(valor) =>
                   setEditForm((p) => ({
                     ...p,
-                    vigencia_unidades: e.target.value,
+                    vigencia_unidades: valor,
                   }))
                 }
               />
@@ -1087,14 +1076,12 @@ export default function NomencladorGalenos() {
               <label className={styles.formLabel}>
                 Vigente desde <span className={styles.req}>*</span>
               </label>
-              <input
-                type="date"
-                className={`${styles.formInput} ${importErrors.vigencia_desde ? styles.inputError : ""}`}
+              <CampoFecha
                 value={importForm.vigencia_desde}
-                onChange={(e) =>
+                onChange={(valor) =>
                   setImportForm((p) => ({
                     ...p,
-                    vigencia_desde: e.target.value,
+                    vigencia_desde: valor,
                   }))
                 }
               />
@@ -1394,7 +1381,7 @@ export default function NomencladorGalenos() {
               <p className={styles.hintText}>No hay registros históricos.</p>
             ) : (
               <div className={styles.historialTable}>
-                <table className={styles.table}>
+                <Tabla className={styles.table}>
                   <thead>
                     <tr>
                       <th>Desde</th>
@@ -1438,7 +1425,7 @@ export default function NomencladorGalenos() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </Tabla>
               </div>
             )}
             <div className={styles.modalFooter}>

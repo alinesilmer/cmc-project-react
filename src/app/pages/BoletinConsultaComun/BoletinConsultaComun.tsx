@@ -3,30 +3,24 @@
 import { Fragment, useCallback, useMemo, useRef, useState } from "react";
 import {
   ExternalLink,
-  FileDown,
   FileText,
   Pencil,
   Plus,
   RefreshCcw,
-  Search,
+  Stethoscope,
   X,
 } from "lucide-react";
 
 import styles from "./BoletinConsultaComun.module.scss";
 import Button from "@/app/components/ui/Button/Button";
 import IconButton from "@/app/components/ui/IconButton/IconButton";
-import {
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-} from "@/app/components/ui/Table/Table";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
+import Caja, { Cajas } from "@/app/components/ui/Caja/Caja";
+import Franja from "@/app/components/layout/Franja/Franja";
 
 import {
   CONSULTA_COMUN_CODE,
   moneyFormatter,
-  shortDateFormatter,
 } from "./boletinConsultaComun.constants";
 import { generateConsultaComunPdf } from "./boletinConsultaComun.pdf";
 import { generateConsultaComunExcel } from "./boletinConsultaComun.excel";
@@ -36,6 +30,8 @@ import { useObservaciones } from "./useObservaciones";
 import { urlNorma, useNormasOperativas } from "./useNormasOperativas";
 import { formatApiDate } from "./boletinConsultaComun.helpers";
 import { SIN_GALENOS } from "./boletinConsultaComun.types";
+import SearchField from "@/app/components/ui/SearchField/SearchField";
+import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 
 type ObsLine =
   | { type: "header"; label: string; body: string }
@@ -206,101 +202,52 @@ export default function BoletinConsultaComun() {
 
   return (
     <div className={styles.container}>
-      {/* ── Summary panel ── */}
-      <section className={styles.panel}>
-        <div className={styles.panelTop}>
-          <div>
-            <h2 className={styles.panelTitle}>Vista previa</h2>
-            <p className={styles.panelDescription}>
-              El PDF siempre se genera con <strong>todas</strong> las obras
-              sociales disponibles para el código{" "}
-              <strong>{CONSULTA_COMUN_CODE}</strong>.
-            </p>
-          </div>
+      <Franja titulo="Consulta común" icono={Stethoscope} />
 
-          <div className={styles.actions}>
-            <Button
-              size="md"
-              variant="secondary"
-              onClick={() => void refetch()}
-              disabled={isLoading || isFetching || isGeneratingPdf}
-            >
-              <span className={styles.buttonInner}>
-                <RefreshCcw size={16} />
-                Actualizar datos
-              </span>
-            </Button>
+      <Cajas>
+        <Caja titulo="Configuración">
+          <Button
+            variant="ghost"
+            leftIcon={<RefreshCcw size={16} />}
+            onClick={() => void refetch()}
+            disabled={isLoading || isFetching || isGeneratingPdf}
+          >
+            Actualizar
+          </Button>
+          <span className={styles.alcance}>
+            Código <b>{CONSULTA_COMUN_CODE}</b> · <b>{data.length}</b> obras sociales
+          </span>
+        </Caja>
+        <Caja titulo="Descargas">
+          <BotonDescarga
+            formato="pdf"
+            onClick={() => void handleDownloadPdf()}
+            disabled={isLoading || isFetching || data.length === 0}
+            cargando={isGeneratingPdf}
+          />
+          <BotonDescarga
+            formato="excel"
+            onClick={() => void handleDownloadExcel()}
+            disabled={isLoading || isFetching || data.length === 0}
+            cargando={isGeneratingExcel}
+          />
+        </Caja>
+      </Cajas>
 
-            <Button
-              size="md"
-              variant="danger"
-              onClick={() => void handleDownloadPdf()}
-              disabled={isLoading || isFetching || isGeneratingPdf || data.length === 0}
-            >
-              <span className={styles.buttonInner}>
-                <FileDown size={16} />
-                {isGeneratingPdf ? "Generando PDF..." : "Descargar PDF"}
-              </span>
-            </Button>
-
-            <Button
-              size="md"
-              variant="ghost"
-              onClick={() => void handleDownloadExcel()}
-              disabled={isLoading || isFetching || isGeneratingExcel || data.length === 0}
-            >
-              <span className={styles.buttonInner}>
-                <FileDown size={16} />
-                {isGeneratingExcel ? "Generando Excel..." : "Descargar Excel"}
-              </span>
-            </Button>
-          </div>
-        </div>
-
-        <div className={styles.metaGrid}>
-          <div className={styles.metaCard}>
-            <span className={styles.metaLabel}>Práctica</span>
-            <span className={styles.metaValue}>Consulta Común</span>
-          </div>
-          <div className={styles.metaCard}>
-            <span className={styles.metaLabel}>Código</span>
-            <span className={styles.metaValue}>{CONSULTA_COMUN_CODE}</span>
-          </div>
-          <div className={styles.metaCard}>
-            <span className={styles.metaLabel}>Obras sociales</span>
-            <span className={styles.metaValue}>{data.length}</span>
-          </div>
-          <div className={styles.metaCard}>
-            <span className={styles.metaLabel}>Fecha del documento</span>
-            <span className={styles.metaValue}>
-              {shortDateFormatter.format(new Date())}
-            </span>
-          </div>
-        </div>
-
-        {exportError && <div className={styles.errorBox}>{exportError}</div>}
-      </section>
+      {exportError && <div className={styles.errorBox}>{exportError}</div>}
 
       {/* ── Observations panel ── */}
       <section className={styles.panel}>
         <div className={styles.panelTop}>
           <div>
-            <h2 className={styles.panelTitle}>Observaciones por obra social</h2>
-            <p className={styles.panelDescription}>
-              Agregue observaciones individuales o reutilice plantillas
-              compartidas. El texto se incluirá en la página del PDF de cada
-              obra social.
-            </p>
+            <h2 className={styles.panelTitle}>Observaciones</h2>
           </div>
         </div>
 
         {/* ── Templates manager ── */}
         <div className={styles.templatesSection}>
           <p className={styles.templatesLabel}>
-            Plantillas reutilizables
-            <span className={styles.templatesHint}>
-              — haga clic en una para aplicarla al campo en edición
-            </span>
+            Plantillas
           </p>
 
           <div className={styles.templatesRow}>
@@ -360,14 +307,12 @@ export default function BoletinConsultaComun() {
         </div>
 
         {/* ── Search bar ── */}
-        <div className={styles.searchBar}>
-          <Search className={styles.searchIcon} size={18} />
-          <input
-            className={styles.searchInput}
-            type="search"
+        <div className={styles.buscador}>
+          <SearchField
             placeholder="Buscar obra social por nombre o número…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            onClear={() => setSearch("")}
           />
         </div>
 
@@ -386,8 +331,7 @@ export default function BoletinConsultaComun() {
 
         {!isLoading && !error && data.length === 0 && (
           <div className={styles.emptyBox}>
-            No hay datos disponibles. Use "Actualizar datos" para cargar las
-            obras sociales.
+            Sin datos. Tocá «Actualizar».
           </div>
         )}
 
@@ -399,23 +343,23 @@ export default function BoletinConsultaComun() {
 
         {!isLoading && filteredItems.length > 0 && (
           <div className={styles.tableWrapper}>
-            <Table stickyHeader className={styles.table}>
-              <TableHead>
-                <TableRow>
-                  <TableCell component="th" className={styles.colNumber}>N°</TableCell>
-                  <TableCell component="th">Obra Social</TableCell>
-                  <TableCell component="th" className={styles.colAmount}>Valor</TableCell>
-                  <TableCell component="th" className={styles.colDate}>Últ. cambio</TableCell>
-                  <TableCell component="th" className={styles.colObs}>Obs.</TableCell>
-                  <TableCell component="th" className={styles.colAction} />
-                </TableRow>
-              </TableHead>
-              <TableBody>
+            <Tabla className={styles.table}>
+              <thead>
+                <tr>
+                  <th className={styles.colNumber}>N°</th>
+                  <th>Obra Social</th>
+                  <th className={styles.colAmount}>Valor</th>
+                  <th className={styles.colDate}>Últ. cambio</th>
+                  <th className={styles.colObs}>Obs.</th>
+                  <th className={styles.colAction} />
+                </tr>
+              </thead>
+              <tbody>
                 {filteredItems.map((item) => {
                   if (editingNro === item.nro) {
                     return (
-                      <TableRow key={item.nro}>
-                        <TableCell colSpan={6} className={styles.editRowCell}>
+                      <tr key={item.nro}>
+                        <td colSpan={6} className={styles.editRowCell}>
                           <p className={styles.editRowLabel}>
                             Editando:{" "}
                             <strong>
@@ -474,31 +418,29 @@ export default function BoletinConsultaComun() {
                               </Button>
                             </div>
                           </div>
-                        </TableCell>
-                      </TableRow>
+                        </td>
+                      </tr>
                     );
                   }
 
                   const hasObs = Boolean(observaciones[item.nro]);
                   const normas = normasPorOS.get(item.nro) ?? [];
-                  // La fila se despliega si hay observación **o** normas: una
-                  // obra social puede tener sólo normas y ahí el "—" escondía
-                  // que había algo para leer.
+                  // La fila se despliega si hay observación **o** normas.
                   const hasDetalle = hasObs || normas.length > 0;
                   const isViewingObs = viewingObsNro === item.nro;
 
                   return (
                     <Fragment key={item.nro}>
-                      <TableRow>
-                        <TableCell className={styles.numberCell}>{item.nro}</TableCell>
-                        <TableCell className={styles.nameCell}>{item.nombre}</TableCell>
-                        <TableCell className={styles.amountCell}>
+                      <tr>
+                        <td className={styles.numberCell}>{item.nro}</td>
+                        <td className={styles.nameCell}>{item.nombre}</td>
+                        <td className={styles.amountCell}>
                           {moneyFormatter.format(item.valor)}
-                        </TableCell>
-                        <TableCell className={styles.dateCell}>
+                        </td>
+                        <td className={styles.dateCell}>
                           {formatApiDate(item.fechaCambio)}
-                        </TableCell>
-                        <TableCell className={styles.obsCell}>
+                        </td>
+                        <td className={styles.obsCell}>
                           {hasDetalle ? (
                             <button
                               className={`${styles.obsBadge} ${isViewingObs ? styles.obsBadgeActive : ""}`}
@@ -529,8 +471,8 @@ export default function BoletinConsultaComun() {
                           ) : (
                             <span className={styles.obsBadgeEmpty}>—</span>
                           )}
-                        </TableCell>
-                        <TableCell className={styles.actionCell}>
+                        </td>
+                        <td className={styles.actionCell}>
                           <IconButton
                             size="small"
                             className={styles.editIconBtn}
@@ -540,12 +482,12 @@ export default function BoletinConsultaComun() {
                           >
                             <Pencil size={15} />
                           </IconButton>
-                        </TableCell>
-                      </TableRow>
+                        </td>
+                      </tr>
 
                       {isViewingObs && hasDetalle && (
-                        <TableRow>
-                          <TableCell colSpan={6} className={styles.obsViewCell}>
+                        <tr>
+                          <td colSpan={6} className={styles.obsViewCell}>
                             <div className={styles.obsViewInner}>
                               <div className={styles.obsViewToolbar}>
                                 <span className={styles.obsViewTitle}>
@@ -611,14 +553,14 @@ export default function BoletinConsultaComun() {
                                 </div>
                               )}
                             </div>
-                          </TableCell>
-                        </TableRow>
+                          </td>
+                        </tr>
                       )}
                     </Fragment>
                   );
                 })}
-              </TableBody>
-            </Table>
+              </tbody>
+            </Tabla>
           </div>
         )}
       </section>

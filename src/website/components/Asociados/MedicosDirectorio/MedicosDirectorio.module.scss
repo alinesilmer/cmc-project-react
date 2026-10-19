@@ -1,7 +1,5 @@
 @use "@/website/styles/all.scss" as *;
 
-$crema: #f7e9aa;
-$fondo-flyer: #f4f7fb;
 
 // ─── Barra de búsqueda ────────────────────────────────────────────────────────
 
@@ -35,7 +33,7 @@ $fondo-flyer: #f4f7fb;
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #6b7280;
+  color: $texto-gris;
   font-variant-numeric: tabular-nums;
 }
 
@@ -67,7 +65,7 @@ $fondo-flyer: #f4f7fb;
   border: 0;
   border-radius: 10px;
   background: $white;
-  box-shadow: 0 1px 2px rgba(20, 35, 58, 0.05), 0 10px 26px rgba(20, 35, 58, 0.08);
+  box-shadow: 0 1px 2px rgba($tono-azul-850, 0.05), 0 10px 26px rgba($tono-azul-850, 0.08);
   overflow: hidden;
   cursor: pointer;
   font-family: inherit;
@@ -77,7 +75,7 @@ $fondo-flyer: #f4f7fb;
   &:hover,
   &:focus-visible {
     transform: translateY(-4px);
-    box-shadow: 0 1px 2px rgba(20, 35, 58, 0.05), 0 20px 38px rgba(20, 35, 58, 0.15);
+    box-shadow: 0 1px 2px rgba($tono-azul-850, 0.05), 0 20px 38px rgba($tono-azul-850, 0.15);
 
     .ver {
       opacity: 1;
@@ -95,8 +93,7 @@ $fondo-flyer: #f4f7fb;
   }
 }
 
-// Los avisos son flyers, muchos en vertical: `contain` para verlos enteros,
-// sobre un fondo claro con el patrón de cruces del sitio.
+// Los avisos son flyers, muchos en vertical: `contain` para verlos enteros, sobre un fondo claro con el patrón de cruces del sitio.
 .media {
   position: relative;
   display: block;
@@ -114,7 +111,7 @@ $fondo-flyer: #f4f7fb;
     width: 100%;
     height: 100%;
     object-fit: contain;
-    filter: drop-shadow(0 6px 14px rgba(20, 35, 58, 0.15));
+    filter: drop-shadow(0 6px 14px rgba($tono-azul-850, 0.15));
     transition: transform 0.4s ease;
   }
 }
@@ -133,7 +130,7 @@ $fondo-flyer: #f4f7fb;
   font-family: $font-title;
   font-size: 0.8rem;
   font-weight: 800;
-  color: $crema;
+  color: $primary-yellow;
   white-space: nowrap;
   opacity: 0;
   transform: translate(-50%, 6px);
@@ -158,7 +155,7 @@ $fondo-flyer: #f4f7fb;
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  border-top: 1px solid #eef1f5;
+  border-top: 1px solid $tono-azul-50;
 }
 
 .iniciales {
@@ -172,7 +169,7 @@ $fondo-flyer: #f4f7fb;
   font-family: $font-title;
   font-size: 0.85rem;
   font-weight: 800;
-  color: $crema;
+  color: $primary-yellow;
 }
 
 .nombre {
@@ -193,7 +190,7 @@ $fondo-flyer: #f4f7fb;
 .esqueleto {
   aspect-ratio: 4 / 5.6;
   border-radius: 10px;
-  background: linear-gradient(90deg, #f1f3f6 25%, #e6e9ee 50%, #f1f3f6 75%);
+  background: linear-gradient(90deg, $tono-azul-50-b 25%, $tono-azul-100 50%, $tono-azul-50-b 75%);
   background-size: 200% 100%;
   animation: brillo 1.4s ease-in-out infinite;
 }
@@ -227,7 +224,7 @@ $fondo-flyer: #f4f7fb;
   padding: 32px 24px;
   text-align: center;
   font-size: 1rem;
-  color: #6b7280;
+  color: $texto-gris;
   background: $white;
   border: 1px dashed rgba($primary-blue, 0.25);
   border-radius: 10px;

@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { CloudUpload, FileText, X } from "lucide-react";
 import { PDF, accept, motivoDeRechazo } from "../../../lib/subidas";
 import styles from "./ZonaCarga.module.scss";
+import Button from "@/website/components/UI/Button/Button";
 
 type Props = {
   subiendo: boolean;
@@ -19,8 +20,7 @@ export default function ZonaCarga({ subiendo, onSubir, onError }: Props) {
   const [arrastrando, setArrastrando] = useState(false);
   const input = useRef<HTMLInputElement>(null);
 
-  // Se valida extensión y tamaño: el `type` del navegador llega vacío para
-  // varios archivos y el `accept` del input es sólo una sugerencia.
+  // Se valida extensión y tamaño: el `type` del navegador llega vacío para varios archivos y el `accept` del input es sólo una sugerencia.
   const elegir = (f: File | null) => {
     if (!f) return;
     const motivo = motivoDeRechazo(f, PDF);
@@ -84,7 +84,7 @@ export default function ZonaCarga({ subiendo, onSubir, onError }: Props) {
             <FileText size={28} aria-hidden="true" />
             <span className={styles.eticaFileName}>{archivo.name}</span>
             <span className={styles.eticaFileSize}>{enMb(archivo.size)} MB</span>
-            <button
+            <Button variant="plano"
               type="button"
               className={styles.eticaRemoveFile}
               onClick={(e) => {
@@ -94,7 +94,7 @@ export default function ZonaCarga({ subiendo, onSubir, onError }: Props) {
               aria-label="Quitar archivo"
             >
               <X size={16} aria-hidden="true" />
-            </button>
+            </Button>
           </div>
         ) : (
           <div className={styles.eticaDropzoneEmpty}>
@@ -108,14 +108,14 @@ export default function ZonaCarga({ subiendo, onSubir, onError }: Props) {
       </motion.div>
 
       <div className={styles.eticaActions}>
-        <button type="button" className={styles.eticaUploadBtn} disabled={!archivo || subiendo} onClick={subir}>
+        <Button variant="plano" type="button" className={styles.eticaUploadBtn} disabled={!archivo || subiendo} onClick={subir}>
           <CloudUpload size={16} aria-hidden="true" />
           {subiendo ? "Subiendo…" : "Subir y reemplazar PDF"}
-        </button>
+        </Button>
         {archivo && !subiendo && (
-          <button type="button" className={styles.eticaCancelBtn} onClick={limpiar}>
+          <Button variant="plano" type="button" className={styles.eticaCancelBtn} onClick={limpiar}>
             Cancelar
-          </button>
+          </Button>
         )}
       </div>
     </>

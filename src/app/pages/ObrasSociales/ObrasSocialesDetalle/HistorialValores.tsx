@@ -1,9 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  History, TrendingUp, TrendingDown, Minus,
-  Search, ChevronUp, ChevronDown, ChevronsUpDown,
-  Download, Loader2, SearchX, X as XIcon, CalendarDays,
-  Paperclip, Trash2, Upload,
+  History,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  ChevronUp,
+  ChevronDown,
+  ChevronsUpDown,
+  Loader2,
+  SearchX,
+  CalendarDays,
+  Paperclip,
+  Trash2,
+  Upload,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -22,6 +31,11 @@ import {
 import type {
   ValorOut, ValorEstado, Origen, ValorDocumentoOut,
 } from "../../NomencladorNacional/nomenclador.types";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
+import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
+import SearchField from "@/app/components/ui/SearchField/SearchField";
+import { formatFecha } from "@/app/shared/lib/fechas";
+import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
 
 const money = new Intl.NumberFormat("es-AR", {
   style: "currency",
@@ -64,10 +78,7 @@ function toHistRow(v: ValorOut): HistRow {
   return {
     id: v.id,
     codigo: v.codigo,
-    // La OS casi nunca pone `descripcion` propia (56.804 de 57.902 filas la
-    // tienen NULL): mostrar eso dejaba la columna vacía. `descripcion_efectiva`
-    // ya resuelve la herencia contra el catálogo del lado del servidor. Ver
-    // auditoría H-04.
+    // La OS casi nunca pone `descripcion` propia (56.804 de 57.902 filas la tienen NULL): mostrar eso dejaba la columna vacía.
     descripcion: v.descripcion_efectiva || v.descripcion,
     origen: v.origen,
     nivel: v.nivel,
@@ -82,18 +93,7 @@ function toHistRow(v: ValorOut): HistRow {
   };
 }
 
-/**
- * Valores de UNA vigencia exacta de la obra social, paginando en tandas de a
- * `CONCURRENCIA` en paralelo.
- *
- * Antes esto traía la obra social ENTERA — para NOBIS MEDICAL (N° 62), 3.334
- * filas con sus componentes en 17 requests y 4,29 MB — para terminar mostrando
- * sólo la vigencia que el usuario eligió. Ahora el filtro
- * `vigencia_desde` va en la query: sólo se pide lo que la grilla va a mostrar.
- * La otra pregunta —cuándo y cuánto actualizó la obra social, sin entrar a
- * ninguna fecha en particular— la resuelve `getResumenPorVigencia()`, que ya
- * viene agregada del servidor. Ver auditoría H-01.
- */
+/** Valores de UNA vigencia exacta de la obra social, paginando en tandas de a `CONCURRENCIA` en paralelo. */
 async function fetchValoresDeVigencia(nroOS: number, vigenciaDesde: string): Promise<HistRow[]> {
   const size = 200;
   const CONCURRENCIA = 5;
@@ -170,10 +170,7 @@ function SortIcon({ col, sortField, sortDir }: { col: ColKey; sortField: ColKey 
 
 type Props = { obraNro: number; obraNombre: string };
 
-/**
- * Historial de valores de una obra social (nomenclador negociado). Reutilizable:
- * lo usa la ficha de la OS y la consulta directa desde el menú lateral.
- */
+/** Historial de valores de una obra social (nomenclador negociado). */
 export default function HistorialValores({ obraNro, obraNombre }: Props) {
   const [historialView, setHistorialView] = useState<HistorialView>("porcentual");
   const [dateFilter, setDateFilter] = useState("");
@@ -184,7 +181,6 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
   const [page, setPage] = useState(1);
 
   // Agregado por vigencia — cuenta y variación promedio — sin bajar la grilla.
-  // Alimenta la vista "Actualizaciones porcentuales". Ver H-01/H-02.
   const { data: resumen = [], isLoading: isLoadingResumen } = useQuery({
     queryKey: ["os-resumen-vigencia", obraNro],
     queryFn: () => getResumenPorVigencia(obraNro),
@@ -192,8 +188,7 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Grilla completa, pero sólo de la vigencia elegida — se pide recién cuando
-  // hace falta, no al entrar a la pantalla.
+  // Grilla completa, pero sólo de la vigencia elegida — se pide recién cuando hace falta, no al entrar a la pantalla.
   const { data: dateRows = [], isLoading: isLoadingDateRows } = useQuery({
     queryKey: ["os-valores-vigencia", obraNro, dateFilter],
     queryFn: () => fetchValoresDeVigencia(obraNro, dateFilter),
@@ -202,13 +197,9 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
   });
 
   // ── Documentos de respaldo ─────────────────────────────────────────────────
-  // La otra mitad del registro de cada actualización: la nota, el Excel o el
-  // CSV con el que llegaron esos precios. Se traen todos los de la OS de una
-  // sola vez y se agrupan por vigencia acá — son unos pocos, y así la lista de
-  // actualizaciones puede mostrar el contador sin una request por fila.
+  // La otra mitad del registro de cada actualización: la nota, el Excel o el CSV con el que llegaron esos precios.
   const { error: avisarError, success: avisarOk } = useNotify();
-  // Sin esto, quien sólo puede leer (rol médico) veía "Adjuntar" y el tacho de
-  // basura y se enteraba de que no podía recién al hacer clic (403). Ver H-06.
+  // Sin esto, quien sólo puede leer (rol médico) veía "Adjuntar" y el tacho de basura y se enteraba de que no podía recién al…
   const { can } = usePermisos();
   const puedeEditarDocs = can("nomenclador:editar");
   const [subiendo, setSubiendo] = useState(false);
@@ -273,18 +264,14 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
   };
 
   // ── Porcentual groups ──────────────────────────────────────────────────────
-  // El agregado (cuenta + variación promedio) ya viene calculado del servidor
-  // contra `nm_historial_precio_codigo` — acá sólo se adapta la forma para el
-  // render. Ver H-01/H-02.
+  // El agregado (cuenta + variación promedio) ya viene calculado del servidor contra `nm_historial_precio_codigo` — acá sólo se adapta la forma para el render.
   const porcentualGroups = useMemo(
     () => resumen.map((r) => ({ date: r.vigencia_desde, count: r.cantidad, avgPct: r.avg_pct })),
     [resumen]
   );
 
   // ── Por fecha table ────────────────────────────────────────────────────────
-  // Se suman las vigencias que sólo tienen documento: la nota de la obra social
-  // suele llegar antes de que alguien cargue los precios, y si el selector se
-  // armara sólo con los valores, ese adjunto quedaría inalcanzable.
+  // Se suman las vigencias que sólo tienen documento: la nota de la obra social suele llegar antes de que alguien cargue los precios.
   const availableDates = useMemo(() => {
     const dates = new Set(resumen.map((r) => r.vigencia_desde));
     for (const doc of documentos) dates.add(doc.vigencia_desde);
@@ -359,20 +346,20 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
     <div className={s.historialContainer}>
 
       {/* Sub-view toggle */}
-      <div className={s.historialToggleRow}>
+      <div className={s.historialToggleRow} role="group" aria-label="Vista">
         <button
           className={`${s.historialToggleBtn} ${historialView === "porcentual" ? s.historialToggleBtnActive : ""}`}
           onClick={() => setHistorialView("porcentual")}
         >
-          <TrendingUp size={15} />
-          Actualizaciones porcentuales
+          <TrendingUp size={18} aria-hidden="true" />
+          Actualizaciones
         </button>
         <button
           className={`${s.historialToggleBtn} ${historialView === "por_fecha" ? s.historialToggleBtnActive : ""}`}
           onClick={() => setHistorialView("por_fecha")}
         >
-          <History size={15} />
-          Valores por fecha
+          <History size={18} aria-hidden="true" />
+          Valores
         </button>
       </div>
 
@@ -380,7 +367,7 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
       {historialView === "porcentual" && isLoadingResumen && (
         <div className={s.hLoadingState}>
           <Loader2 size={22} className={s.spinIcon} />
-          <span>Cargando historial de {obraNombre}…</span>
+          <span>Cargando…</span>
         </div>
       )}
       {historialView === "porcentual" && !isLoadingResumen && (
@@ -388,7 +375,7 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
           {porcentualGroups.length === 0 ? (
             <div className={s.hEmptyState}>
               <SearchX size={28} />
-              <span>No se encontraron registros de actualizaciones para esta obra social.</span>
+              <span>Sin actualizaciones</span>
             </div>
           ) : (
             <div className={s.porcentualList}>
@@ -403,17 +390,16 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
                         <span className={s.porcentualDate}>
                           {group.date
                             ? new Date(group.date + "T00:00:00").toLocaleDateString("es-AR", { dateStyle: "long" })
-                            : "Sin fecha registrada"}
+                            : "Sin fecha"}
                         </span>
                         <span className={s.porcentualCount}>
-                          {group.count} código{group.count !== 1 ? "s" : ""} actualizados
+                          {group.count} código{group.count !== 1 ? "s" : ""}
                         </span>
                       </div>
                     </div>
 
                     <div className={s.porcentualRight}>
-                      {/* Cuántos respaldos tiene esta actualización. Sin
-                          adjuntos no se dice nada: la fila ya es larga. */}
+                      {/* Cuántos respaldos tiene esta actualización. */}
                       {group.date && (docsPorVigencia.get(group.date)?.length ?? 0) > 0 && (
                         <span className={s.docBadge} title="Documentos de respaldo">
                           <Paperclip size={13} />
@@ -430,12 +416,7 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
                       )}
 
                       {group.date && (
-                        <button
-                          className={s.porcentualVerBtn}
-                          onClick={() => switchToDate(group.date!)}
-                        >
-                          Ver valores
-                        </button>
+                        <BotonVer onClick={() => switchToDate(group.date!)} etiqueta="Ver valores" />
                       )}
                     </div>
                   </div>
@@ -452,17 +433,17 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
           {/* Date select */}
           <div className={s.porFechaHeader}>
             <label className={s.porFechaLabel}>
-              <CalendarDays size={14} />
-              Vigencia desde
+              <CalendarDays size={18} aria-hidden="true" />
+              Vigencia
             </label>
             <select
               className={s.porFechaSelect}
               value={dateFilter}
               onChange={(e) => { setDateFilter(e.target.value); setCodeFilter(""); setSortField(null); }}
             >
-              <option value="">— Seleccioná una fecha —</option>
+              <option value="">Elegí una fecha</option>
               {availableDates.map((d) => (
-                <option key={d} value={d}>{d}</option>
+                <option key={d} value={d}>{formatFecha(d)}</option>
               ))}
             </select>
           </div>
@@ -470,26 +451,24 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
           {!dateFilter && (
             <div className={s.hEmptyState}>
               <CalendarDays size={28} />
-              <span>Seleccioná una vigencia para ver los valores.</span>
+              <span>Elegí una vigencia</span>
             </div>
           )}
 
-          {/* Respaldo de la actualización: la nota, el Excel o el CSV que
-              mandó la obra social. Va arriba de la grilla porque es el origen
-              de lo que la grilla muestra. */}
+          {/* Respaldo de la actualización: la nota, el Excel o el CSV que mandó la obra social. */}
           {dateFilter && (
             <div className={s.docsPanel}>
               <div className={s.docsHeader}>
                 <h3 className={s.docsTitle}>
-                  <Paperclip size={14} />
-                  Documentos de la actualización
+                  <Paperclip size={18} aria-hidden="true" />
+                  Respaldo
                 </h3>
                 {puedeEditarDocs && (
                   <div className={s.docsUploadGroup}>
                     <input
                       type="text"
                       className={s.docDescInput}
-                      placeholder="Nota (opcional)"
+                      placeholder="Nota"
                       value={docDescripcion}
                       onChange={(e) => setDocDescripcion(e.target.value)}
                       disabled={subiendo}
@@ -500,7 +479,7 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
                       htmlFor="valor-doc-file"
                       aria-disabled={subiendo}
                     >
-                      {subiendo ? <Loader2 size={13} className={s.spinIcon} /> : <Upload size={13} />}
+                      {subiendo ? <Loader2 size={16} className={s.spinIcon} /> : <Upload size={16} />}
                       {subiendo ? "Subiendo…" : "Adjuntar"}
                     </label>
                     <input
@@ -518,7 +497,7 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
 
               {docsDeLaFecha.length === 0 ? (
                 <p className={s.docsEmpty}>
-                  Sin documentos. Se aceptan PDF, Excel y CSV.
+                  Sin documentos · PDF, Excel o CSV
                 </p>
               ) : (
                 <div className={s.docsList}>
@@ -536,7 +515,7 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
                           {doc.nombre_original}
                         </button>
                         {doc.subido_por_nombre && (
-                          <span className={s.docSubidoPor}>Subido por {doc.subido_por_nombre}</span>
+                          <span className={s.docSubidoPor}>{doc.subido_por_nombre}</span>
                         )}
                       </div>
                       <span className={s.docMeta}>{pesoLegible(doc.size)}</span>
@@ -548,7 +527,7 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
                           aria-label={`Eliminar ${doc.nombre_original}`}
                           onClick={() => void borrarDoc(doc)}
                         >
-                          <Trash2 size={13} />
+                          <Trash2 size={16} aria-hidden="true" />
                         </button>
                       )}
                     </div>
@@ -561,14 +540,14 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
           {dateFilter && isLoadingDateRows && (
             <div className={s.hLoadingState}>
               <Loader2 size={22} className={s.spinIcon} />
-              <span>Cargando valores de la vigencia {dateFilter}…</span>
+              <span>Cargando…</span>
             </div>
           )}
 
           {dateFilter && !isLoadingDateRows && dateRows.length === 0 && (
             <div className={s.hEmptyState}>
               <SearchX size={28} />
-              <span>No hay valores registrados para la vigencia {dateFilter}.</span>
+              <span>Sin valores en esta vigencia</span>
             </div>
           )}
 
@@ -577,45 +556,35 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
               {/* Toolbar */}
               <div className={s.hToolbar}>
                 <div className={s.hToolbarLeft}>
-                  <div className={s.filterBar}>
-                    <Search size={14} className={s.filterIcon} />
-                    <input
-                      className={s.filterInput}
-                      placeholder="Filtrar por código o descripción..."
-                      value={codeFilter}
-                      onChange={(e) => setCodeFilter(e.target.value)}
-                    />
-                    {codeFilter && (
-                      <button className={s.filterClear} onClick={() => setCodeFilter("")}>
-                        <XIcon size={13} />
-                      </button>
-                    )}
-                  </div>
+                  <SearchField
+                    placeholder="Buscar código…"
+                    value={codeFilter}
+                    onChange={(e) => setCodeFilter(e.target.value)}
+                    onClear={() => setCodeFilter("")}
+                  />
                   <span className={s.countBadge}>
                     {codeFilter.trim()
                       ? `${displayRows.length} de ${dateRows.length}`
                       : `${dateRows.length} código${dateRows.length !== 1 ? "s" : ""}`}
                   </span>
                 </div>
-                <button
-                  className={s.exportBtn}
-                  disabled={displayRows.length === 0 || exporting}
+                <BotonDescarga
+                  formato="excel"
                   onClick={() => void handleExport()}
-                >
-                  {exporting ? <Loader2 size={14} className={s.spinIcon} /> : <Download size={14} />}
-                  {exporting ? "Exportando..." : "Exportar Excel"}
-                </button>
+                  disabled={displayRows.length === 0}
+                  cargando={exporting}
+                />
               </div>
 
               {displayRows.length === 0 && codeFilter.trim() ? (
                 <div className={s.hEmptyState}>
                   <SearchX size={28} />
-                  <span>Ningún código o descripción coincide con "{codeFilter}".</span>
+                  <span>Nada coincide con la búsqueda</span>
                 </div>
               ) : (
                 <>
                   <div className={s.tableContainer}>
-                    <table className={s.hTable}>
+                    <Tabla className={s.hTable}>
                       <thead>
                         <tr>
                           {COLS.map((col) => (
@@ -662,7 +631,7 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
                           </tr>
                         ))}
                       </tbody>
-                    </table>
+                    </Tabla>
                   </div>
 
                   {totalPages > 1 && (

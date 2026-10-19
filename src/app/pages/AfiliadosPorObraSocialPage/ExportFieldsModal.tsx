@@ -1,10 +1,26 @@
-import { useEffect, useRef } from "react";
+import { useState } from "react";
 import { createPortal } from "react-dom";
-import { AlertTriangle, Check, Database, Info, X } from "lucide-react";
+import {
+  Briefcase,
+  Check,
+  Database,
+  IdCard,
+  Landmark,
+  MapPin,
+  User,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 
+import Button from "@/app/components/ui/Button/Button";
+import { Solapa } from "@/app/components/layout/Franja/Franja";
+// El mismo modal que «Filtrar y exportar» de Socios.
+import m from "@/app/pages/UsersList/components/FilterModal/FilterModal.module.scss";
 import { CAMPOS, GRUPOS } from "./exportFields";
 import type { FieldGroup } from "./types";
+import { useDialogo } from "./useDialogo";
 import s from "./ExportFieldsModal.module.scss";
+import MarcoModal from "@/app/components/ui/MarcoModal/MarcoModal";
 
 type Props = {
   open: boolean;
@@ -16,139 +32,112 @@ type Props = {
   onToggleGroup: (grupo: FieldGroup) => void;
 };
 
-const ExportFieldsModal = ({
-  open, onClose, keys, sensibles, necesitaFicha,
-  onToggle, onToggleGroup,
-}: Props) => {
-  const panelRef = useRef<HTMLDivElement | null>(null);
+// Cada grupo es una solapa: rótulo de una palabra y su ícono.
+const SOLAPAS: Record<FieldGroup, { rotulo: string; Icono: LucideIcon }> = {
+  identificacion: { rotulo: "Identificación", Icono: IdCard },
+  profesional: { rotulo: "Profesional", Icono: Briefcase },
+  consultorio: { rotulo: "Consultorio", Icono: MapPin },
+  fiscal: { rotulo: "Fiscal", Icono: Landmark },
+  personal: { rotulo: "Personal", Icono: User },
+};
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    document.addEventListener("keydown", onKey);
-    // El fondo no debe scrollear detrás del panel en celular.
-    const previo = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    panelRef.current?.focus();
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = previo;
-    };
-  }, [open, onClose]);
+/** «Datos a mostrar» del padrón: qué columnas lleva la tabla y lo que se exporta. */
+const ExportFieldsModal = ({ open, onClose, keys, necesitaFicha, onToggle, onToggleGroup }: Props) => {
+  const panelRef = useDialogo(open, onClose);
+  const [grupo, setGrupo] = useState<FieldGroup>(GRUPOS[0].id);
 
   if (!open) return null;
 
+  const campos = CAMPOS.filter((c) => c.group === grupo);
+  const puestos = campos.filter((c) => keys.has(c.key)).length;
+  const elegidos = CAMPOS.filter((c) => keys.has(c.key));
+
   return createPortal(
-    <div className={s.overlay} onMouseDown={onClose} role="presentation">
-      <div
-        ref={panelRef}
-        className={s.panel}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="campos-titulo"
-        tabIndex={-1}
-        onMouseDown={(e) => e.stopPropagation()}
-      >
-        <header className={s.head}>
-          <h2 id="campos-titulo" className={s.title}>Datos a incluir</h2>
-          <button type="button" className={s.close} onClick={onClose} aria-label="Cerrar">
-            <X size={18} />
-          </button>
-        </header>
-
-        <div className={s.body}>
-          {GRUPOS.map((g) => {
-            const campos = CAMPOS.filter((c) => c.group === g.id);
-            const puestos = campos.filter((c) => keys.has(c.key)).length;
-            return (
-              <section key={g.id} className={s.group}>
-                <div className={s.groupHead}>
-                  <h3 className={s.groupTitle}>
-                    {g.label}
-                    {g.id === "personal" && (
-                      <span className={s.personalTag}>
-                        <AlertTriangle size={11} aria-hidden="true" /> Personales
-                      </span>
-                    )}
-                  </h3>
-                  <button
-                    type="button"
-                    className={s.groupToggle}
-                    onClick={() => onToggleGroup(g.id)}
+    <MarcoModal onClose={onClose} ref={panelRef} className={s.panel} aria-labelledby="campos-titulo">
+        <div className={m.modal}>
+          <header className={m.franja}>
+            <button type="button" className={m.cerrar} onClick={onClose} aria-label="Cerrar">
+              <X size={22} aria-hidden="true" />
+            </button>
+            <h2 id="campos-titulo" className={m.titulo}>Datos a mostrar</h2>
+            <div className={m.solapas} role="tablist">
+              {GRUPOS.map((g) => {
+                const { rotulo, Icono } = SOLAPAS[g.id];
+                return (
+                  <Solapa
+                    key={g.id}
+                    activa={grupo === g.id}
+                    onClick={() => setGrupo(g.id)}
+                    cuenta={CAMPOS.filter((c) => c.group === g.id && keys.has(c.key)).length}
                   >
-                    {puestos === campos.length ? "Quitar todos" : "Agregar todos"}
-                  </button>
-                </div>
+                    <Icono size={18} aria-hidden="true" /> {rotulo}
+                  </Solapa>
+                );
+              })}
+            </div>
+          </header>
 
-                <div className={s.options}>
-                  {campos.map((c) => {
-                    const activo = keys.has(c.key);
-                    return (
-                      <button
-                        key={c.key}
-                        type="button"
-                        role="checkbox"
-                        aria-checked={activo}
-                        className={`${s.option} ${activo ? s.optionOn : ""}`}
-                        onClick={() => onToggle(c.key)}
-                      >
-                        <span className={s.box} aria-hidden="true">
-                          {activo && <Check size={12} strokeWidth={3} />}
+          <div className={m.cuerpo}>
+            <section className={m.caja}>
+              <button type="button" className={m.selectAllBtn} onClick={() => onToggleGroup(grupo)}>
+                {puestos === campos.length ? "Quitar todos" : "Agregar todos"}
+              </button>
+
+              <div className={`${m.colOptions} ${s.opciones}`}>
+                {campos.map((c) => {
+                  const activo = keys.has(c.key);
+                  return (
+                    <button
+                      key={c.key}
+                      type="button"
+                      role="checkbox"
+                      aria-checked={activo}
+                      className={`${m.colOption} ${activo ? m.colOptionOn : ""}`}
+                      onClick={() => onToggle(c.key)}
+                    >
+                      <span className={m.colBox} aria-hidden="true">
+                        {activo && <Check size={12} strokeWidth={3} />}
+                      </span>
+                      <span className={m.colOptionLabel}>{c.label}</span>
+                      {c.source === "medico" && (
+                        <span className={s.slow} title="Se lee de la ficha completa">
+                          <Database size={13} aria-hidden="true" />
                         </span>
-                        <span className={s.optionLabel}>{c.label}</span>
-                        {c.source === "medico" && (
-                          <span className={s.slow} title="Requiere leer la ficha completa">
-                            <Database size={11} aria-hidden="true" />
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-            );
-          })}
-        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
 
-        <footer className={s.foot}>
-          <div className={s.notes}>
-            <span className={s.count}>
-              {keys.size} {keys.size === 1 ? "columna" : "columnas"}
-            </span>
-            {necesitaFicha && (
-              <span className={s.note}>
-                <Database size={12} aria-hidden="true" />
-                La primera exportación tarda un poco más: se leen las fichas completas.
-              </span>
-            )}
-            {sensibles > 0 && (
-              <span className={`${s.note} ${s.noteWarn}`}>
-                <AlertTriangle size={12} aria-hidden="true" />
-                Incluye {sensibles} {sensibles === 1 ? "dato personal" : "datos personales"}.
-                Revisá antes de enviarlo fuera del Colegio.
-              </span>
-            )}
-            {/* Pasadas las 12, el reparto de anchos deja todas las columnas en
-                el mínimo de 11 mm y el PDF se vuelve ilegible. El Excel no
-                tiene ese techo. */}
-            {keys.size > 12 && (
-              <span className={s.note}>
-                <Info size={12} aria-hidden="true" />
-                Con {keys.size} columnas el PDF queda muy apretado. Para este nivel
-                de detalle conviene el Excel.
-              </span>
-            )}
-            {!necesitaFicha && sensibles === 0 && keys.size <= 12 && (
-              <span className={s.note}>
-                <Info size={12} aria-hidden="true" />
-                Todas estas columnas ya están en pantalla: la exportación es inmediata.
-              </span>
-            )}
+            <aside className={m.resumen}>
+              <div className={m.resumenCabeza}>
+                <h3 className={m.resumenTitulo}>Resumen</h3>
+              </div>
+              <dl className={m.resumenLista}>
+                <div>
+                  <dt>Columnas</dt>
+                  <dd>{keys.size}</dd>
+                </div>
+              </dl>
+              <ul className={s.elegidos}>
+                {elegidos.map((c) => (
+                  <li key={c.key}>{c.label}</li>
+                ))}
+              </ul>
+              {/* Pasadas las 12, el reparto de anchos deja todas las columnas en el mínimo de 11 mm y el PDF se vuelve ilegible. */}
+              {keys.size > 12 && <p className={s.nota}>Más de 12: mejor Excel que PDF.</p>}
+              {necesitaFicha && keys.size <= 12 && <p className={s.nota}>La primera vez tarda más.</p>}
+            </aside>
           </div>
-          <button type="button" className={s.done} onClick={onClose}>Listo</button>
-        </footer>
-      </div>
-    </div>,
+
+          <footer className={m.pie}>
+            <Button onClick={onClose} variant="primary" size="lg">
+              Listo
+            </Button>
+          </footer>
+        </div>
+      </MarcoModal>,
     document.body
   );
 };

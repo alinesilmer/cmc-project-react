@@ -6,15 +6,14 @@ import type { PrestacionRead } from "../types";
 import { formatMoney } from "../money";
 import { agruparPorObraSocial } from "./agruparPorObraSocial";
 import styles from "./TablaPorObraSocial.module.scss";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
 
 interface Props {
   prestaciones: PrestacionRead[];
   cargando: boolean;
-  /** Sólo la usa "detalle-medico" (Colegio) — "Mi recepción" no tiene permiso
-   *  para entrar a la ficha completa de una prestación. */
+  /** Sólo la usa "detalle-medico" (Colegio) — "Mi recepción" no tiene permiso para entrar a la ficha completa de una prestación. */
   onRowClick?: (p: PrestacionRead) => void;
-  /** Muestra el Nº de obra social a la izquierda del nombre. Sólo para el personal
-   *  del Colegio ("detalle-medico"); el médico no lo ve en "Mi recepción". */
+  /** Muestra el Nº de obra social a la izquierda del nombre. */
   mostrarCodigoOS?: boolean;
 }
 
@@ -59,7 +58,7 @@ const TablaPorObraSocial: React.FC<Props> = ({ prestaciones, cargando, onRowClic
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
-      <table className={styles.table}>
+      <Tabla className={styles.table}>
         <colgroup>
           <col className={styles.colCodigo} />
           <col className={styles.colAfiliado} />
@@ -149,7 +148,7 @@ const TablaPorObraSocial: React.FC<Props> = ({ prestaciones, cargando, onRowClic
             </td>
           </tr>
         </tfoot>
-      </table>
+      </Tabla>
     </motion.div>
   );
 };

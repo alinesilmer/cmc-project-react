@@ -1,0 +1,170 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver Dialogo.tsx: cabecera azul, cuerpo blanco y pie gris con los botones.
+
+.dialogo {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow: hidden;
+  font-family: $fuente-texto;
+  border-radius: 14px;
+}
+
+.chico { max-width: 32rem; }
+.medio { max-width: 44rem; }
+.grande { max-width: 64rem; }
+
+.cabecera {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-4 $spacing-5;
+  color: $franja-crema;
+  background: $franja-azul;
+}
+
+.peligro { background: $tono-rojo-600; }
+
+.icono { flex-shrink: 0; color: $primary-yellow; }
+
+.titulo {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-family: $fuente-titulos;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  line-height: 1.25;
+  color: inherit;
+}
+
+.cerrar {
+  display: inline-grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  color: inherit;
+  background: rgba($white, 0.12);
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+
+  &:hover { background: rgba($white, 0.24); }
+
+  &:focus-visible {
+    outline: 2px solid $primary-yellow;
+    outline-offset: 2px;
+  }
+}
+
+.cuerpo {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: $spacing-4;
+  min-height: 0;
+  padding: $spacing-5;
+  overflow-y: auto;
+  font-size: $font-size-base;
+  line-height: 1.5;
+  color: $gray-800;
+
+  p { margin: 0; }
+
+  // Los controles sueltos toman el aspecto de la casa, sin clase propia.
+  :is(select, textarea, input:not([type="checkbox"], [type="radio"], [type="file"])) {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0 $spacing-3;
+    font-family: inherit;
+    font-size: $font-size-base;
+    font-weight: $font-weight-normal;
+    color: $gray-900;
+    background: $white;
+    border: 1px solid $gray-300;
+    border-radius: $radio-md;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+
+    &:focus {
+      border-color: $franja-azul;
+      box-shadow: 0 0 0 3px rgba($franja-azul, 0.14);
+    }
+
+    &:disabled { color: $gray-500; background: $gray-50; cursor: not-allowed; }
+  }
+
+  textarea { padding: $spacing-3; line-height: 1.5; resize: vertical; }
+}
+
+.pie {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: $spacing-3;
+  padding: $spacing-4 $spacing-5;
+  background: $gray-50;
+  border-top: 1px solid $gray-200;
+}
+
+// ── Piezas del contenido ──────────────────────────────────────────────────────
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  min-width: 0;
+}
+
+.rotulo {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-600;
+}
+
+.datos {
+  display: grid;
+  margin: 0;
+  overflow: hidden;
+  background: $gray-50;
+  border: 1px solid $gray-200;
+  border-radius: $radio-md;
+}
+
+.dato {
+  display: flex;
+  justify-content: space-between;
+  gap: $spacing-4;
+  padding: $spacing-3 $spacing-4;
+
+  & + & { border-top: 1px solid $gray-200; }
+
+  dt { font-size: $font-size-sm; color: $gray-500; }
+
+  dd {
+    margin: 0;
+    font-weight: $font-weight-semibold;
+    color: $gray-900;
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+}
+
+.aviso {
+  padding: $spacing-3 $spacing-4;
+  font-size: $font-size-sm;
+  color: $tono-amarillo-600;
+  background: $primary-yellow-light;
+  border-left: 4px solid $tono-amarillo-250-c;
+  border-radius: $radio-md;
+}
+
+.avisoPeligro {
+  color: $tono-rojo-600;
+  background: $tono-rojo-50;
+  border-left-color: $danger-red;
+}

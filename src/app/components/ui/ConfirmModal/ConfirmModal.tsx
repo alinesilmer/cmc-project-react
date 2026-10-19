@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, Trash2, Info } from "lucide-react";
 import styles from "./ConfirmModal.module.scss";
 
-export type ConfirmVariant = "danger" | "warning" | "info";
+type ConfirmVariant = "danger" | "warning" | "info";
 
 interface ConfirmModalProps {
   isOpen: boolean;

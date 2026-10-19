@@ -1,11 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-/**
- * Paginación en memoria de una lista ya filtrada.
- *
- * Vuelve a la página 1 cuando cambia `reinicio` (la búsqueda, un filtro): si
- * no, la pantalla puede quedar parada en una página que ya no existe.
- */
+/** Paginación en memoria de una lista ya filtrada. */
 export function usePaginacion<T>(items: T[], porPagina: number, reinicio?: unknown) {
   const [pagina, setPagina] = useState(1);
   const totalPaginas = Math.max(1, Math.ceil(items.length / porPagina));

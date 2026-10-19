@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type React from "react";
+import { Columns3, SearchX, SlidersHorizontal, X } from "lucide-react";
 
 import styles from "./FilterModal.module.scss";
 import Button from "@/app/components/ui/Button/Button";
+import { Solapa } from "@/app/components/layout/Franja/Franja";
 import type {
   FaltantesFilter,
   FilterSelection,
@@ -12,22 +14,27 @@ import type {
 } from "@/app/types/filters";
 
 import { useEspecialidades } from "./useEspecialidades";
+import { filtrosActivos } from "./resumenFiltros";
 import { ColumnsSection } from "./sections/ColumnsSection";
 import { OtrosSection } from "./sections/OtrosSection";
 import { FaltantesSection } from "./sections/FaltantesSection";
 import { FiltersResumen } from "./sections/FiltersResumen";
+import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 
 interface FilterModalProps {
   filters: FilterSelection;
   setFilters: React.Dispatch<React.SetStateAction<FilterSelection>>;
   exportError: string | null;
   exportLoading: boolean;
-  onExport: (format: "xlsx" | "csv", logoFile: File | null) => void;
+  onExport: (format: "xlsx" | "csv" | "pdf", logoFile: File | null) => void;
   onApply: () => void;
   onClose: () => void;
   resetFilters: () => void;
 }
 
+type Pestana = "columnas" | "filtros" | "faltantes";
+
+/** «Filtrar y exportar» de Socios: una cosa por vez en solapas (qué columnas, qué filtros. */
 const FilterModal: React.FC<FilterModalProps> = ({
   filters,
   setFilters,
@@ -38,17 +45,9 @@ const FilterModal: React.FC<FilterModalProps> = ({
   onClose,
   resetFilters,
 }) => {
-  const [expandedSections, setExpandedSections] = useState({
-    columns: true,
-    otros: true,
-    faltantes: false,
-  });
+  const [pestana, setPestana] = useState<Pestana>("columnas");
 
   const { especialidades, loading: espLoading, error: espError } = useEspecialidades();
-
-  const toggleSection = useCallback((section: keyof typeof expandedSections) => {
-    setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
-  }, []);
 
   const toggleColumn = useCallback((key: string) => {
     setFilters((prev) => ({
@@ -71,66 +70,85 @@ const FilterModal: React.FC<FilterModalProps> = ({
     setFilters((prev) => ({ ...prev, faltantes: { ...prev.faltantes, ...patch } }));
   }, [setFilters]);
 
+  const activos = useMemo(() => filtrosActivos(filters, especialidades), [filters, especialidades]);
+  const cuantosFiltros = activos.filter((a) => a.grupo !== "Faltantes").length;
+
   return (
-    <div className={styles.exportModalNew}>
-      <div className={styles.exportContent}>
-        <div className={styles.filterSections}>
-          <ColumnsSection
-            columns={filters.columns}
-            onToggleColumn={toggleColumn}
-            onSetColumns={setColumns}
-            expanded={expandedSections.columns}
-            onToggle={() => toggleSection("columns")}
-          />
-
-          <OtrosSection
-            otros={filters.otros}
-            onPatch={patchOtros}
-            especialidades={especialidades}
-            espLoading={espLoading}
-            espError={espError}
-            expanded={expandedSections.otros}
-            onToggle={() => toggleSection("otros")}
-          />
-
-          <FaltantesSection
-            faltantes={filters.faltantes}
-            onPatch={patchFaltantes}
-            expanded={expandedSections.faltantes}
-            onToggle={() => toggleSection("faltantes")}
-          />
+    <div className={styles.modal}>
+      <header className={styles.franja}>
+        <button type="button" className={styles.cerrar} onClick={onClose} aria-label="Cerrar">
+          <X size={22} aria-hidden="true" />
+        </button>
+        <h2 className={styles.titulo}>Filtrar y exportar</h2>
+        <div className={styles.solapas} role="tablist">
+          <Solapa
+            activa={pestana === "columnas"}
+            onClick={() => setPestana("columnas")}
+            cuenta={filters.columns.length}
+          >
+            <Columns3 size={18} aria-hidden="true" /> Columnas
+          </Solapa>
+          <Solapa
+            activa={pestana === "filtros"}
+            onClick={() => setPestana("filtros")}
+            cuenta={cuantosFiltros}
+          >
+            <SlidersHorizontal size={18} aria-hidden="true" /> Filtros
+          </Solapa>
+          <Solapa
+            activa={pestana === "faltantes"}
+            onClick={() => setPestana("faltantes")}
+            cuenta={filters.faltantes.enabled ? 1 : 0}
+          >
+            <SearchX size={18} aria-hidden="true" /> Faltantes
+          </Solapa>
         </div>
+      </header>
+
+      <div className={styles.cuerpo}>
+        <section className={styles.caja}>
+          {pestana === "columnas" && (
+            <ColumnsSection
+              columns={filters.columns}
+              onToggleColumn={toggleColumn}
+              onSetColumns={setColumns}
+            />
+          )}
+          {pestana === "filtros" && (
+            <OtrosSection
+              otros={filters.otros}
+              onPatch={patchOtros}
+              especialidades={especialidades}
+              espLoading={espLoading}
+              espError={espError}
+            />
+          )}
+          {pestana === "faltantes" && (
+            <FaltantesSection faltantes={filters.faltantes} onPatch={patchFaltantes} />
+          )}
+        </section>
 
         <FiltersResumen
-          filters={filters}
-          especialidades={especialidades}
+          columnas={filters.columns.length}
+          activos={activos}
           onReset={resetFilters}
         />
       </div>
 
       {exportError && <div className={styles.exportError}>{exportError}</div>}
 
-      <div className={styles.exportActionsRow}>
-        <div className={styles.exportActionsLeft}>
-          <Button onClick={onApply} variant="primary" size="md">
-            Filtrar
-          </Button>
-          <Button
-            onClick={() => onExport("xlsx", null)}
-            disabled={exportLoading}
-            variant="secondary"
-            size="md"
-          >
-            {exportLoading ? "Exportando..." : "Descargar Excel"}
-          </Button>
-        </div>
-
-        <div className={styles.exportActionsRight}>
-          <Button onClick={onClose} variant="secondary" size="md">
-            Cerrar
-          </Button>
-        </div>
-      </div>
+      <footer className={styles.pie}>
+        <Button onClick={onApply} variant="primary" size="lg">
+          Filtrar
+        </Button>
+        <BotonDescarga formato="excel" onClick={() => onExport("xlsx", null)} cargando={exportLoading} />
+        <BotonDescarga formato="pdf" onClick={() => onExport("pdf", null)} disabled={exportLoading}>
+          PDF por especialidad
+        </BotonDescarga>
+        <Button onClick={onClose} variant="ghost" size="lg" sx={{ ml: "auto" }}>
+          Cerrar
+        </Button>
+      </footer>
     </div>
   );
 };

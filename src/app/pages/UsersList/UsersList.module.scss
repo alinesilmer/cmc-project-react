@@ -1,13 +1,33 @@
 @use "@/app/styles/all.scss" as *;
 
 .container {
-  padding: $spacing-8;
+  // En variables porque la franja las necesita para salirse del relleno.
+  --lado: #{$spacing-12};
+  --arriba: #{$spacing-8};
+
+  padding: $spacing-8 $spacing-12;
   background-color: $gray-50;
   min-height: 100vh;
   height: 100%;
   
   @media (max-width: 768px) {
+    --lado: #{$spacing-4};
+    --arriba: #{$spacing-4};
     padding: $spacing-4;
+  }
+}
+
+// Debajo de la franja: el buscador a la izquierda y las acciones a la derecha.
+.barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-3 $spacing-4;
+  margin-bottom: $spacing-6;
+
+  .searchBar {
+    flex: 1 1 20rem;
+    margin-bottom: 0;
   }
 }
 
@@ -36,7 +56,7 @@
     
     button {
       flex: 1;
-      min-width: 120px;
+      min-width: 7.5rem;
     }
   }
 }
@@ -81,66 +101,6 @@
   @media (max-width: 480px) {
     width: 100%;
     padding: $spacing-3 $spacing-4;
-  }
-}
-
-.statsGrid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $spacing-6;
-  margin-bottom: $spacing-6;
-  
-  @media (max-width: 768px) {
-    gap: $spacing-4;
-  }
-  
-  @media (max-width: 480px) {
-    gap: $spacing-3;
-  }
-}
-
-.statCard {
-  background-color: $white;
-  padding: $spacing-6;
-  border-radius: $border-radius-md;
-  box-shadow: $shadow-md;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: $spacing-2;
-  flex: 1 1 220px;
-  min-width: 220px;
-  
-  @media (max-width: 768px) {
-    flex: 1 1 calc(50% - #{$spacing-2});
-    min-width: 0;
-    padding: $spacing-5;
-  }
-  
-  @media (max-width: 480px) {
-    flex: 1 1 100%;
-    padding: $spacing-4;
-  }
-}
-
-.statValue {
-  font-size: $font-size-4xl;
-  font-weight: $font-weight-bold;
-  color: $primary-blue;
-  
-  @media (max-width: 768px) {
-    font-size: $font-size-3xl;
-  }
-}
-
-.statLabel {
-  font-size: $font-size-sm;
-  color: $gray-600;
-  font-weight: $font-weight-medium;
-  text-align: center;
-  
-  @media (max-width: 480px) {
-    font-size: $font-size-xs;
   }
 }
 
@@ -190,7 +150,7 @@
   border-collapse: collapse;
   
   @media (max-width: 768px) {
-    min-width: 800px;
+    min-width: 50rem;
   }
 
   thead {
@@ -243,7 +203,7 @@
 
 
 .rowButton {
-  min-height: 34px;
+  min-height: 2.125rem;
   padding: 0 $spacing-4;
   border: 1px solid rgba($gray-300, 0.95);
   border-radius: $border-radius-md;
@@ -274,10 +234,10 @@
 
 .statusActive {
   display: inline-block;
-  padding: 4px 12px;
+  padding: 0.25rem 0.75rem;
   border-radius: $border-radius-md;
-  background-color: #d4edda;
-  color: #155724;
+  background-color: $tono-verde-100;
+  color: $tono-verde-600-b;
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   text-transform: capitalize;
@@ -285,10 +245,10 @@
 
 .statusInactive {
   display: inline-block;
-  padding: 4px 12px;
+  padding: 0.25rem 0.75rem;
   border-radius: $border-radius-md;
-  background-color: #f8d7da;
-  color: #721c24;
+  background-color: $tono-rojo-50;
+  color: $tono-rojo-650;
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   text-transform: capitalize;
@@ -305,10 +265,10 @@
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  background-color: #e8f0fe;
-  color: #1a56db;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  background-color: $secondary-blue;
+  color: $tono-azul-500-b;
   border-radius: 999px;
   font-size: $font-size-xs;
   font-weight: $font-weight-medium;
@@ -319,9 +279,9 @@
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1;
-  color: #1a56db;
+  color: $tono-azul-500-b;
   padding: 0;
   opacity: 0.7;
   transition: opacity 0.15s;
@@ -338,7 +298,7 @@
   font-size: $font-size-xs;
   color: $gray-500;
   text-decoration: underline;
-  padding: 4px 6px;
+  padding: 0.25rem 0.375rem;
 
   &:hover {
     color: $gray-800;
@@ -380,7 +340,7 @@
   font-size: $font-size-sm;
   color: $gray-600;
   font-weight: $font-weight-medium;
-  min-width: 80px;
+  min-width: 5rem;
   text-align: center;
 }
 

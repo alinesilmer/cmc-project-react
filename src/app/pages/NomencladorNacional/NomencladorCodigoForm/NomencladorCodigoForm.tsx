@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, ListOrdered, Save } from "lucide-react";
+import { AlertCircle, ArrowRight, CheckCircle2, ListOrdered, Save } from "lucide-react";
 
 import base from "../NomencladorCodigos/NomencladorCodigos.module.scss";
 import styles from "./NomencladorCodigoForm.module.scss";
@@ -32,6 +32,9 @@ import type {
   PropagarModo,
   ValorOut,
 } from "../nomenclador.types";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
+import BackButton from "@/app/components/ui/BackButton/BackButton";
+import { detalleError } from "@/app/pages/NomencladorNacional/utiles";
 
 const LISTADO_PATH = "/panel/nomenclador/codigos";
 const CODIGOS_OS_PATH = "/panel/nomenclador/codigos-por-os";
@@ -51,12 +54,6 @@ const moneda = new Intl.NumberFormat("es-AR", {
   currency: "ARS",
   maximumFractionDigits: 2,
 });
-
-function detalleError(e: unknown, fallback: string): string {
-  const d = (e as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail;
-  return typeof d === "string" ? d : fallback;
-}
-
 function fechaAR(iso: string | null): string {
   if (!iso) return "—";
   const [a, m, d] = iso.split("-");
@@ -69,16 +66,7 @@ function montoDe(v: ValorOut, concepto: string): number {
     .reduce((acc, c) => acc + (parseFloat(c.subtotal) || 0), 0);
 }
 
-/**
- * Página de un código del Colegio.
- *
- * Nuevo (`/codigos/nuevo`): solo la etapa 1 (datos de la práctica). Al crearlo se
- * pasa a su ficha, que ofrece seguir con las otras etapas sin obligar a ninguna.
- *
- * Existente (`/codigos/:id/editar`): la Ficha del código, con pestañas —
- * Obras sociales (estado en cada O.S. y alta en bloque), Datos (etapa 1), Quién
- * factura (etapa 2) y Boletín. La pestaña va en `?tab=` para poder enlazarla.
- */
+/** Página de un código del Colegio. */
 export default function NomencladorCodigoForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -127,9 +115,7 @@ export default function NomencladorCodigoForm() {
 
   return (
     <div className={base.container}>
-      <button type="button" className={styles.backBtn} onClick={() => navigate(LISTADO_PATH)}>
-        <ArrowLeft size={14} /> Volver a Gestión de Códigos
-      </button>
+      <BackButton label="Códigos" to={LISTADO_PATH} />
 
       <div className={base.header}>
         <div className={base.headerLeft}>
@@ -405,7 +391,7 @@ function TabObras({
       {resultado && <ResultadoAlta resultado={resultado} />}
 
       <div className={base.tableWrap}>
-        <table className={base.table}>
+        <Tabla className={base.table}>
           <thead>
             <tr>
               <th>
@@ -482,7 +468,7 @@ function TabObras({
               </tr>
             ))}
           </tbody>
-        </table>
+        </Tabla>
       </div>
       <p className={base.hintText}>
         «Dar de alta» deja el código en la obra social sin precio, con las especialidades de la
@@ -779,7 +765,7 @@ function TabEspecialidades({
 
           {preview && (
             <div className={base.tableWrap}>
-              <table className={base.table}>
+              <Tabla className={base.table}>
                 <thead><tr><th>Obra social</th><th>Cambios</th></tr></thead>
                 <tbody>
                   {preview.resultados.map((r) => (
@@ -795,7 +781,7 @@ function TabEspecialidades({
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </Tabla>
             </div>
           )}
 
@@ -880,7 +866,7 @@ function Boletin({
         </div>
       </div>
       <div className={base.tableWrap}>
-        <table className={base.table}>
+        <Tabla className={base.table}>
           <thead>
             <tr>
               <th>Origen</th>
@@ -916,7 +902,7 @@ function Boletin({
               );
             })}
           </tbody>
-        </table>
+        </Tabla>
       </div>
     </section>
   );

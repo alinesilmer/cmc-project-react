@@ -8,23 +8,16 @@ function maxCols(grid: Cell[][]): number {
   return grid.reduce((m, r) => Math.max(m, r.length), 0);
 }
 
-// Fila de la tabla de niveles/complejidades: alguna CELDA empieza con "NIVEL n" o
-// "COMPLEJIDAD n". Es preciso: no matchea una descripción normal que solo CONTENGA
-// "nivel 2" en el medio (ej. "TAC nivel 2 cerebral") — esa fila sí se lee.
+// Fila de la tabla de niveles/complejidades: alguna CELDA empieza con "NIVEL n" o "COMPLEJIDAD n".
 function isNivelesRow(r: Cell[]): boolean {
   return r.some((c) => /^\s*(nivel|complejidad)\s+\d+/i.test(String(c ?? "")));
 }
 
-/**
- * Auto-detecta las columnas. Si se pasa `codeSet` (catálogo CMC), la columna de código
- * es la que más celdas tiene que EXISTEN en el catálogo → detección a prueba de balas
- * (una columna de precios de 6 dígitos no coincide con el catálogo y no se elige).
- */
+/** Auto-detecta las columnas. Si se pasa `codeSet` (catálogo CMC). */
 export function autoDetectMapping(grid: Cell[][], codeSet?: Set<string>): ColMapping {
   const cols = maxCols(grid);
   const useCatalog = !!codeSet && codeSet.size > 0;
-  // La detección de columnas ignora las filas de niveles para que esa tabla no
-  // desvíe qué columna es código o precio de los códigos reales.
+  // La detección de columnas ignora las filas de niveles para que esa tabla no desvíe qué columna es código o precio de los códigos reales.
   const dataRows = grid.filter((r) => !isNivelesRow(r));
   const headerText = (c: number) =>
     grid.slice(0, 5).map((r) => String(r[c] ?? "")).join(" ").toLowerCase();
@@ -46,8 +39,6 @@ export function autoDetectMapping(grid: Cell[][], codeSet?: Set<string>): ColMap
     if (s > best) { best = s; codigoCol = c; }
   }
 
-  // ── columnas de precio (pista por encabezado; si no, la última columna numérica) ──
-  // precio1 = Honorarios (cirujano), precio2 = Ayudante, gastos = Gastos.
   let precio1: number | null = null;
   let precio2: number | null = null;
   let gastos: number | null = null;
@@ -69,10 +60,7 @@ export function autoDetectMapping(grid: Cell[][], codeSet?: Set<string>): ColMap
   return { codigo: codigoCol, precio1, precio2, gastos };
 }
 
-/**
- * Grilla + mapeo → filas. Salta niveles ("UNIDAD QUIRÚRGICA SEGÚN NIVEL DE COMPLEJIDAD").
- * Si se pasa `codeSet`, solo conserva filas cuyo código existe en el catálogo.
- */
+/** Grilla + mapeo → filas. */
 export function sheetToRows(grid: Cell[][], m: ColMapping, codeSet?: Set<string>): PrecioRow[] {
   const useCatalog = !!codeSet && codeSet.size > 0;
   const rows: PrecioRow[] = [];
@@ -113,7 +101,7 @@ export function sheetToRows(grid: Cell[][], m: ColMapping, codeSet?: Set<string>
 
 // ── Utilidades para el UI de mapeo ──────────────────────────────────────────────
 
-export function colLetter(n: number): string {
+function colLetter(n: number): string {
   let s = "";
   let x = n + 1;
   while (x > 0) { const m = (x - 1) % 26; s = String.fromCharCode(65 + m) + s; x = Math.floor((x - 1) / 26); }

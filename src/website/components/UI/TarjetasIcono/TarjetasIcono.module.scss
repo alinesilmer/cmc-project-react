@@ -1,9 +1,5 @@
 @use "@/website/styles/all.scss" as *;
 
-$crema: #f7e9aa;
-$suave: #f1f5fb;
-$gris: #6b7280;
-$sombra: 0 1px 2px rgba(20, 35, 58, 0.05), 0 10px 26px rgba(20, 35, 58, 0.07);
 
 .titulo {
   margin: 0 0 20px;
@@ -11,7 +7,7 @@ $sombra: 0 1px 2px rgba(20, 35, 58, 0.05), 0 10px 26px rgba(20, 35, 58, 0.07);
   font-size: clamp(1.6rem, 3vw, 2.1rem);
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: #14233a;
+  color: $tono-azul-850;
 
   em {
     font-style: normal;
@@ -43,7 +39,7 @@ $sombra: 0 1px 2px rgba(20, 35, 58, 0.05), 0 10px 26px rgba(20, 35, 58, 0.07);
   padding: 24px 20px;
   border-radius: 10px;
   background: $white;
-  box-shadow: $sombra;
+  box-shadow: $sombra-tarjeta;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 
   h3 {
@@ -58,16 +54,16 @@ $sombra: 0 1px 2px rgba(20, 35, 58, 0.05), 0 10px 26px rgba(20, 35, 58, 0.07);
     margin: 0;
     font-size: 0.93rem;
     line-height: 1.5;
-    color: $gris;
+    color: $texto-gris;
   }
 
   &:hover {
     transform: translateY(-4px);
-    box-shadow: 0 1px 2px rgba(20, 35, 58, 0.05), 0 18px 34px rgba(20, 35, 58, 0.13);
+    box-shadow: 0 1px 2px rgba($tono-azul-850, 0.05), 0 18px 34px rgba($tono-azul-850, 0.13);
 
     .icono {
       background: $primary-blue;
-      color: $crema;
+      color: $primary-yellow;
     }
   }
 
@@ -86,7 +82,7 @@ $sombra: 0 1px 2px rgba(20, 35, 58, 0.05), 0 10px 26px rgba(20, 35, 58, 0.07);
   width: 48px;
   height: 48px;
   border-radius: 8px;
-  background: $suave;
+  background: $fondo-suave;
   color: $primary-blue;
   transition: background 0.2s ease, color 0.2s ease;
 
@@ -94,4 +90,43 @@ $sombra: 0 1px 2px rgba(20, 35, 58, 0.05), 0 10px 26px rgba(20, 35, 58, 0.07);
     width: 24px;
     height: 24px;
   }
+}
+
+// Sobre la noche azul de la portada: título grande en crema con la palabra en dorado.
+.oscuro .titulo {
+  font-size: clamp(2.2rem, 4vw, 3.4rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: $portada-crema;
+
+  em { color: $portada-oro; }
+}
+
+// Las tarjetas sobre la noche: vidrio translúcido, ícono en aro dorado y el borde que se enciende al pasar.
+.oscuro .tarjeta {
+  gap: 10px;
+  padding: 26px 22px;
+  background: rgba($white, 0.04);
+  border: 1px solid rgba($portada-crema, 0.12);
+  border-radius: 14px;
+  box-shadow: none;
+  transition: transform 0.25s ease, border-color 0.25s ease, background-color 0.25s ease;
+
+  h3 { margin-top: 10px; color: $portada-crema; }
+  p { color: rgba($portada-crema, 0.7); }
+
+  &:hover {
+    background: rgba($white, 0.07);
+    border-color: rgba($portada-oro, 0.55);
+    box-shadow: none;
+
+    .icono { color: $portada-noche; background: $portada-oro; }
+  }
+}
+
+.oscuro .icono {
+  color: $portada-oro;
+  background: rgba($portada-oro, 0.1);
+  border: 1px solid rgba($portada-oro, 0.45);
+  border-radius: 50%;
 }

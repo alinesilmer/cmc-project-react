@@ -1,12 +1,6 @@
 import { useEffect, useRef } from "react";
 
-/**
- * Atajos a nivel ventana.
- *
- * El handler se lee desde un ref en cada evento, así el listener se registra una sola
- * vez (deps `[]`) pero siempre ve el estado fresco. Registrarlo en cada render también
- * funciona —era lo que se hacía antes— pero agrega y quita un listener por tecleo.
- */
+/** Atajos a nivel ventana. */
 export function useHotkeys(handler: (e: KeyboardEvent) => void): void {
   const ref = useRef(handler);
   ref.current = handler;

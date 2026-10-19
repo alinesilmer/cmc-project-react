@@ -19,6 +19,7 @@ const SegurosPage = lazy(() => import("./app/seguros/page"));
 const Asociados = lazy(() => import("./app/asociados/page"));
 const PrevencionSaludPage = lazy(() => import("./app/prevencion-salud/page"));
 const PreguntasFrecuentesPage = lazy(() => import("./app/preguntas-frecuentes/page"));
+const NoEncontrada = lazy(() => import("./app/no-encontrada/page"));
 
 import Header from "./components/UI/Header/Header";
 import Footer from "./components/UI/Footer/Footer";
@@ -49,25 +50,19 @@ export default function WebRoutes() {
       <Header />
       <ScrollToTop />
 
-      {/* El Suspense envuelve sólo las páginas: al cambiar de sección la cabecera
-          y el pie quedan quietos y sólo el medio espera. El alto mínimo evita que
-          el pie salte hacia arriba mientras carga. */}
+      {/* El Suspense envuelve sólo las páginas: al cambiar de sección la cabecera y el pie quedan quietos y sólo el medio espera. */}
+      {/* El <main> va acá, una sola vez: así todas las páginas marcan su contenido principal y ninguna tiene que acordarse de ponerlo. */}
+      <main>
       <Suspense fallback={<div style={{ minHeight: "80vh" }} aria-busy="true" />}>
       <Routes>
         {/* 403 opcional */}
         <Route path="/403" element={<Forbidden403 />} />
 
         {/* Admin: login público */}
-        {/* El admin del sitio y el panel son las mismas cuentas: quien
-            autoriza es RequireWebEditor contra la sesión del panel. Esta ruta
-            tenía su propio formulario y su propio token en localStorage;
-            quedó sólo la redirección. */}
+        {/* El admin del sitio y el panel son las mismas cuentas: quien autoriza es RequireWebEditor contra la sesión del panel. */}
         <Route path="/admin/login" element={<Navigate to="/panel/login" replace />} />
 
-        {/* El ABM de contenido se mudó al panel: es una herramienta del
-            sistema y acá quedaba envuelta en el Header, el Footer y el
-            Chatbot del sitio público. Se dejan las rutas viejas
-            redirigiendo para no romper enlaces guardados. */}
+        {/* El ABM de contenido se mudó al panel: es una herramienta del sistema y acá quedaba envuelta en el Header. */}
         <Route path="/admin/dashboard-web" element={<Navigate to="/panel/sitio" replace />} />
         <Route path="/admin/dashboard" element={<Navigate to="/panel/sitio" replace />} />
         <Route
@@ -94,10 +89,11 @@ export default function WebRoutes() {
         <Route path="/preguntas-frecuentes" element={<PreguntasFrecuentesPage />} />
      
 
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* Cualquier otra dirección: se avisa en vez de mandar al inicio. */}
+        <Route path="*" element={<NoEncontrada />} />
       </Routes>
       </Suspense>
+      </main>
 
       <Chatbot />
       <Footer />

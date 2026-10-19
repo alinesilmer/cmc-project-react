@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CalendarDays,
   ChevronLeft,
@@ -40,6 +41,13 @@ import {
   type TipoEvento,
 } from "./agenda.types";
 import s from "./Agenda.module.scss";
+import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
+import Franja from "@/app/components/layout/Franja/Franja";
+
+const AGENDA_KEY = ["agenda"] as const;
+const SIN_RESPONSABLES: Responsable[] = [];
+const SIN_OCURRENCIAS: OcurrenciaAgenda[] = [];
+const SIN_EVENTOS: EventoAgenda[] = [];
 
 /** Recurrencia por defecto de cada calendario. Igual que el backend. */
 const RECURRENCIA_POR_TIPO: Record<TipoEvento, Recurrencia> = {
@@ -76,17 +84,7 @@ function hoyPartes() {
   return { anio: d.getFullYear(), mes: d.getMonth() + 1, dia: d.getDate() };
 }
 
-/**
- * Los tres calendarios del Colegio: feriados, cumpleaños y tareas del mes.
- *
- * Arriba el almanaque, que muestra los tres juntos —el feriado, el cumpleaños y
- * el vencimiento caen en la misma casilla y así se ven—, y abajo la lista del
- * calendario seleccionado, que es donde se cargan y se editan.
- *
- * La expansión de las recurrencias a días concretos la hace el backend
- * (`GET /agenda/mes`): el 31 en un mes de 30 y el 29 de febrero se corren al
- * último día disponible en vez de desaparecer del calendario.
- */
+/** Los tres calendarios del Colegio: feriados, cumpleaños y tareas del mes. */
 export default function AgendaPage() {
   const { error: avisarError, success: avisarOk } = useNotify();
   const { can } = usePermisos();
@@ -101,68 +99,50 @@ export default function AgendaPage() {
   /** Filtro del almanaque: `null` = los tres juntos. */
   const [filtro, setFiltro] = useState<TipoEvento | null>(null);
 
-  const [ocurrencias, setOcurrencias] = useState<OcurrenciaAgenda[]>([]);
-  const [eventos, setEventos] = useState<EventoAgenda[]>([]);
-  const [cargandoMes, setCargandoMes] = useState(true);
-  const [cargandoLista, setCargandoLista] = useState(true);
+  const queryClient = useQueryClient();
 
   const [editando, setEditando] = useState<{ id?: number; body: EventoInput } | null>(null);
   const [guardando, setGuardando] = useState(false);
 
-  // El personal del Colegio para el selector de responsable. Se trae una sola
-  // vez —son ~20 filas y no cambian durante la sesión— y el filtrado va en el
-  // cliente. Un fallo acá no rompe nada: el campo sigue aceptando texto libre.
-  const [responsables, setResponsables] = useState<Responsable[]>([]);
-  const [cargandoResp, setCargandoResp] = useState(true);
+  // El personal del Colegio para el selector de responsable.
+  const consultaResp = useQuery({
+    queryKey: [...AGENDA_KEY, "responsables"],
+    queryFn: listResponsables,
+    staleTime: 30 * 60 * 1000,
+  });
+  const responsables = consultaResp.data ?? SIN_RESPONSABLES;
+  const cargandoResp = consultaResp.isPending;
+
+  // El almanaque y la lista de abajo son dos consultas independientes y se cargan por separado a propósito.
+  const consultaMes = useQuery({
+    queryKey: [...AGENDA_KEY, "mes", anio, mes, filtro],
+    queryFn: () => getMes(anio, mes, filtro ?? undefined),
+    placeholderData: (prev) => prev,
+  });
+  const ocurrencias = consultaMes.data ?? SIN_OCURRENCIAS;
+  const cargandoMes = consultaMes.isPending || consultaMes.isPlaceholderData;
+
+  const consultaLista = useQuery({
+    queryKey: [...AGENDA_KEY, "eventos", tipo],
+    queryFn: () => listEventos({ tipo }),
+  });
+  const eventos = consultaLista.data ?? SIN_EVENTOS;
+  const cargandoLista = consultaLista.isPending;
 
   useEffect(() => {
-    listResponsables()
-      .then(setResponsables)
-      .catch(() => setResponsables([]))
-      .finally(() => setCargandoResp(false));
-  }, []);
-
-  // El almanaque y la lista de abajo son dos consultas independientes y se
-  // cargan por separado a propósito. Con un solo `cargar()` que hiciera las
-  // dos, cambiar de pestaña abajo volvía a pedir el mes entero y cambiar un
-  // chip del calendario volvía a pedir la lista: dos requests por interacción,
-  // uno de ellos siempre al pedo.
-  const cargarMes = useCallback(async () => {
-    setCargandoMes(true);
-    try {
-      setOcurrencias(await getMes(anio, mes, filtro ?? undefined));
-    } catch {
-      avisarError("No se pudo cargar el calendario.");
-    } finally {
-      setCargandoMes(false);
-    }
-  }, [anio, mes, filtro, avisarError]);
-
-  const cargarLista = useCallback(async () => {
-    setCargandoLista(true);
-    try {
-      setEventos(await listEventos({ tipo }));
-    } catch {
-      avisarError("No se pudieron cargar los eventos.");
-    } finally {
-      setCargandoLista(false);
-    }
-  }, [tipo, avisarError]);
+    if (consultaMes.isError) avisarError("No se pudo cargar el calendario.");
+  }, [consultaMes.isError, avisarError]);
 
   useEffect(() => {
-    void cargarMes();
-  }, [cargarMes]);
+    if (consultaLista.isError) avisarError("No se pudieron cargar los eventos.");
+  }, [consultaLista.isError, avisarError]);
 
-  useEffect(() => {
-    void cargarLista();
-  }, [cargarLista]);
-
-  /** Tras crear, editar o borrar hay que refrescar las dos: la fila cambió y
-      su ocurrencia en el almanaque también. */
-  const cargar = useCallback(
-    () => Promise.all([cargarMes(), cargarLista()]),
-    [cargarMes, cargarLista]
-  );
+  /** Tras crear, editar o borrar hay que refrescar las dos: la fila cambió y su ocurrencia en el almanaque también. */
+  const cargar = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: [...AGENDA_KEY, "mes"] }),
+      queryClient.invalidateQueries({ queryKey: [...AGENDA_KEY, "eventos"] }),
+    ]);
 
   const irA = (delta: number) => {
     const m = mes + delta;
@@ -223,11 +203,7 @@ export default function AgendaPage() {
   const cambiar = (parche: Partial<EventoInput>) =>
     setEditando((prev) => (prev ? { ...prev, body: { ...prev.body, ...parche } } : prev));
 
-  /**
-   * Al cambiar la recurrencia se limpian los campos que dejan de aplicar. Sin
-   * esto, pasar de anual a única dejaría el `mes` viejo cargado y el backend
-   * rechazaría el guardado por incoherente.
-   */
+  /** Al cambiar la recurrencia se limpian los campos que dejan de aplicar. */
   const cambiarRecurrencia = (recurrencia: Recurrencia) =>
     cambiar({
       recurrencia,
@@ -239,282 +215,275 @@ export default function AgendaPage() {
   const esHoy = (d: number) => anio === hoy.anio && mes === hoy.mes && d === hoy.dia;
 
   return (
-    <div className={s.container}>
-      <header className={s.header}>
-        <CalendarDays size={30} className={s.headerIcon} />
-        <div>
-          <h1 className={s.title}>Calendario</h1>
-          <p className={s.subtitle}>Feriados, cumpleaños y tareas del mes.</p>
-        </div>
-      </header>
-
-      {/* ── Almanaque ── */}
-      <section className={s.card}>
-        <div className={s.calHead}>
-          <button type="button" className={s.navBtn} onClick={() => irA(-1)}>
-            <ChevronLeft size={16} />
-          </button>
-          <h2 className={s.calTitle}>
-            {MESES[mes - 1]} {anio}
-          </h2>
-          <button type="button" className={s.navBtn} onClick={() => irA(1)}>
-            <ChevronRight size={16} />
-          </button>
-
-          <div className={s.filtros}>
-            <button
-              type="button"
-              className={`${s.chip} ${filtro === null ? s.chipOn : ""}`}
-              onClick={() => setFiltro(null)}
-            >
-              Todos
+    <>
+      <Franja suelta titulo="Calendario" icono={CalendarDays} />
+      <div className={s.container}>
+        {/* ── Almanaque ── */}
+        <section className={s.card}>
+          <div className={s.calHead}>
+            <button type="button" className={s.navBtn} onClick={() => irA(-1)}>
+              <ChevronLeft size={16} />
             </button>
+            <h2 className={s.calTitle}>
+              {MESES[mes - 1]} {anio}
+            </h2>
+            <button type="button" className={s.navBtn} onClick={() => irA(1)}>
+              <ChevronRight size={16} />
+            </button>
+
+            <div className={s.filtros}>
+              <button
+                type="button"
+                className={`${s.chip} ${filtro === null ? s.chipOn : ""}`}
+                onClick={() => setFiltro(null)}
+              >
+                Todos
+              </button>
+              {TIPOS.map((t) => (
+                <button
+                  key={t.valor}
+                  type="button"
+                  className={`${s.chip} ${filtro === t.valor ? s.chipOn : ""}`}
+                  style={filtro === t.valor ? { background: t.color, borderColor: t.color } : undefined}
+                  onClick={() => setFiltro(t.valor)}
+                >
+                  <i className={s.dot} style={{ background: t.color }} />
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className={s.semana}>
+            {DIAS_SEMANA.map((d) => (
+              <span key={d}>{d}</span>
+            ))}
+          </div>
+
+          <div className={s.grid}>
+            {celdas.map((d, i) =>
+              d === null ? (
+                <div key={`v${i}`} className={s.celdaVacia} />
+              ) : (
+                <div key={d} className={`${s.celda} ${esHoy(d) ? s.celdaHoy : ""}`}>
+                  <span className={s.celdaNum}>{d}</span>
+                  <div className={s.celdaEventos}>
+                    {(porDia.get(d) ?? []).map((o) => (
+                      <span
+                        key={`${o.id}-${o.ocurre_el}`}
+                        className={s.pill}
+                        style={{ background: colorDe(o) }}
+                        title={
+                          o.responsable ? `${o.titulo} — ${o.responsable}` : o.titulo
+                        }
+                      >
+                        {o.titulo}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )
+            )}
+          </div>
+
+          {cargandoMes && (
+            <div className={s.loading}>
+              <Loader2 size={15} className={s.spin} /> Cargando…
+            </div>
+          )}
+        </section>
+
+        {/* ── Administración del calendario elegido ── */}
+        <section className={s.card}>
+          <div className={s.tabs}>
             {TIPOS.map((t) => (
               <button
                 key={t.valor}
                 type="button"
-                className={`${s.chip} ${filtro === t.valor ? s.chipOn : ""}`}
-                style={filtro === t.valor ? { background: t.color, borderColor: t.color } : undefined}
-                onClick={() => setFiltro(t.valor)}
+                className={`${s.tab} ${tipo === t.valor ? s.tabOn : ""}`}
+                onClick={() => {
+                  setTipo(t.valor);
+                  setEditando(null);
+                }}
               >
                 <i className={s.dot} style={{ background: t.color }} />
                 {t.label}
               </button>
             ))}
-          </div>
-        </div>
 
-        <div className={s.semana}>
-          {DIAS_SEMANA.map((d) => (
-            <span key={d}>{d}</span>
-          ))}
-        </div>
-
-        <div className={s.grid}>
-          {celdas.map((d, i) =>
-            d === null ? (
-              <div key={`v${i}`} className={s.celdaVacia} />
-            ) : (
-              <div key={d} className={`${s.celda} ${esHoy(d) ? s.celdaHoy : ""}`}>
-                <span className={s.celdaNum}>{d}</span>
-                <div className={s.celdaEventos}>
-                  {(porDia.get(d) ?? []).map((o) => (
-                    <span
-                      key={`${o.id}-${o.ocurre_el}`}
-                      className={s.pill}
-                      style={{ background: colorDe(o) }}
-                      title={
-                        o.responsable ? `${o.titulo} — ${o.responsable}` : o.titulo
-                      }
-                    >
-                      {o.titulo}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )
-          )}
-        </div>
-
-        {cargandoMes && (
-          <div className={s.loading}>
-            <Loader2 size={15} className={s.spin} /> Cargando…
-          </div>
-        )}
-      </section>
-
-      {/* ── Administración del calendario elegido ── */}
-      <section className={s.card}>
-        <div className={s.tabs}>
-          {TIPOS.map((t) => (
-            <button
-              key={t.valor}
-              type="button"
-              className={`${s.tab} ${tipo === t.valor ? s.tabOn : ""}`}
-              onClick={() => {
-                setTipo(t.valor);
-                setEditando(null);
-              }}
-            >
-              <i className={s.dot} style={{ background: t.color }} />
-              {t.label}
-            </button>
-          ))}
-
-          {puedeEditar && (
-            <button
-              type="button"
-              className={s.addBtn}
-              onClick={() => setEditando({ body: eventoVacio(tipo) })}
-            >
-              <Plus size={14} /> Nuevo {LABEL_TIPO[tipo]}
-            </button>
-          )}
-        </div>
-
-        {editando && (
-          <div className={s.form}>
-            <label className={s.field}>
-              <span className={s.label}>Título</span>
-              <input
-                className={s.input}
-                autoFocus
-                value={editando.body.titulo}
-                onChange={(e) => cambiar({ titulo: e.target.value })}
-              />
-            </label>
-
-            <label className={s.field}>
-              <span className={s.label}>Se repite</span>
-              <select
-                className={s.input}
-                value={editando.body.recurrencia}
-                onChange={(e) => cambiarRecurrencia(e.target.value as Recurrencia)}
-              >
-                {RECURRENCIAS.map((r) => (
-                  <option key={r.valor} value={r.valor}>
-                    {r.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            {editando.body.recurrencia === "unica" ? (
-              <label className={s.field}>
-                <span className={s.label}>Fecha</span>
-                <input
-                  type="date"
-                  className={s.input}
-                  value={editando.body.fecha ?? ""}
-                  onChange={(e) => cambiar({ fecha: e.target.value || null })}
-                />
-              </label>
-            ) : (
-              <>
-                <label className={s.field}>
-                  <span className={s.label}>Día</span>
-                  <input
-                    type="number"
-                    min={1}
-                    max={31}
-                    className={s.input}
-                    value={editando.body.dia ?? ""}
-                    onChange={(e) =>
-                      cambiar({ dia: e.target.value ? Number(e.target.value) : null })
-                    }
-                  />
-                </label>
-                {editando.body.recurrencia === "anual" && (
-                  <label className={s.field}>
-                    <span className={s.label}>Mes</span>
-                    <select
-                      className={s.input}
-                      value={editando.body.mes ?? ""}
-                      onChange={(e) =>
-                        cambiar({ mes: e.target.value ? Number(e.target.value) : null })
-                      }
-                    >
-                      <option value="">—</option>
-                      {MESES.map((m, i) => (
-                        <option key={m} value={i + 1}>
-                          {m}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                )}
-              </>
-            )}
-
-            {tipo === "tarea" && (
-              <label className={s.field}>
-                <span className={s.label}>Responsable</span>
-                <ResponsableSelect
-                  value={editando.body.responsable ?? ""}
-                  onChange={(responsable) => cambiar({ responsable })}
-                  opciones={responsables}
-                  cargando={cargandoResp}
-                />
-              </label>
-            )}
-
-            <label className={`${s.field} ${s.fieldFull}`}>
-              <span className={s.label}>Descripción</span>
-              <input
-                className={s.input}
-                value={editando.body.descripcion ?? ""}
-                onChange={(e) => cambiar({ descripcion: e.target.value })}
-              />
-            </label>
-
-            <div className={s.formActions}>
-              <button type="button" className={s.ghostBtn} onClick={() => setEditando(null)}>
-                <X size={15} /> Cancelar
-              </button>
+            {puedeEditar && (
               <button
                 type="button"
-                className={s.primaryBtn}
-                onClick={guardar}
-                disabled={!editando.body.titulo.trim() || guardando}
+                className={s.addBtn}
+                onClick={() => setEditando({ body: eventoVacio(tipo) })}
               >
-                {guardando ? <Loader2 size={15} className={s.spin} /> : <Save size={15} />}
-                Guardar
+                <Plus size={14} /> Nuevo {LABEL_TIPO[tipo]}
               </button>
-            </div>
+            )}
           </div>
-        )}
 
-        <ul className={s.list}>
-          {eventos.map((e) => (
-            <li key={e.id} className={`${s.row} ${!e.activo ? s.rowInactivo : ""}`}>
-              <i className={s.dot} style={{ background: colorDe(e) }} />
-              <div className={s.rowMain}>
-                <span className={s.rowTitulo}>{e.titulo}</span>
-                <span className={s.rowCuando}>
-                  {describirCuando(e)}
-                  {e.responsable ? ` · ${e.responsable}` : ""}
-                  {e.descripcion ? ` · ${e.descripcion}` : ""}
-                </span>
-              </div>
-              {puedeEditar && (
-                <div className={s.rowActions}>
-                  <button
-                    type="button"
-                    className={s.iconBtn}
-                    onClick={() =>
-                      setEditando({
-                        id: e.id,
-                        body: {
-                          tipo: e.tipo,
-                          titulo: e.titulo,
-                          descripcion: e.descripcion ?? "",
-                          recurrencia: e.recurrencia,
-                          fecha: e.fecha ?? null,
-                          dia: e.dia ?? null,
-                          mes: e.mes ?? null,
-                          medico_id: e.medico_id ?? null,
-                          responsable: e.responsable ?? "",
-                          color: e.color ?? null,
-                          activo: e.activo,
-                        },
-                      })
-                    }
-                  >
-                    <Pencil size={14} />
-                  </button>
-                  <button type="button" className={s.iconDanger} onClick={() => borrar(e)}>
-                    <Trash2 size={14} />
-                  </button>
-                </div>
+          {editando && (
+            <div className={s.form}>
+              <label className={s.field}>
+                <span className={s.label}>Título</span>
+                <input
+                  className={s.input}
+                  autoFocus
+                  value={editando.body.titulo}
+                  onChange={(e) => cambiar({ titulo: e.target.value })}
+                />
+              </label>
+
+              <label className={s.field}>
+                <span className={s.label}>Se repite</span>
+                <select
+                  className={s.input}
+                  value={editando.body.recurrencia}
+                  onChange={(e) => cambiarRecurrencia(e.target.value as Recurrencia)}
+                >
+                  {RECURRENCIAS.map((r) => (
+                    <option key={r.valor} value={r.valor}>
+                      {r.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              {editando.body.recurrencia === "unica" ? (
+                <label className={s.field}>
+                  <span className={s.label}>Fecha</span>
+                  <CampoFecha
+                    value={editando.body.fecha ?? ""}
+                    onChange={(valor) => cambiar({ fecha: valor || null })}
+                  />
+                </label>
+              ) : (
+                <>
+                  <label className={s.field}>
+                    <span className={s.label}>Día</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={31}
+                      className={s.input}
+                      value={editando.body.dia ?? ""}
+                      onChange={(e) =>
+                        cambiar({ dia: e.target.value ? Number(e.target.value) : null })
+                      }
+                    />
+                  </label>
+                  {editando.body.recurrencia === "anual" && (
+                    <label className={s.field}>
+                      <span className={s.label}>Mes</span>
+                      <select
+                        className={s.input}
+                        value={editando.body.mes ?? ""}
+                        onChange={(e) =>
+                          cambiar({ mes: e.target.value ? Number(e.target.value) : null })
+                        }
+                      >
+                        <option value="">—</option>
+                        {MESES.map((m, i) => (
+                          <option key={m} value={i + 1}>
+                            {m}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                </>
               )}
-            </li>
-          ))}
 
-          {!eventos.length && !cargandoLista && (
-            <li className={s.empty}>Sin {TIPOS.find((t) => t.valor === tipo)?.label.toLowerCase()} cargados.</li>
+              {tipo === "tarea" && (
+                <label className={s.field}>
+                  <span className={s.label}>Responsable</span>
+                  <ResponsableSelect
+                    value={editando.body.responsable ?? ""}
+                    onChange={(responsable) => cambiar({ responsable })}
+                    opciones={responsables}
+                    cargando={cargandoResp}
+                  />
+                </label>
+              )}
+
+              <label className={`${s.field} ${s.fieldFull}`}>
+                <span className={s.label}>Descripción</span>
+                <input
+                  className={s.input}
+                  value={editando.body.descripcion ?? ""}
+                  onChange={(e) => cambiar({ descripcion: e.target.value })}
+                />
+              </label>
+
+              <div className={s.formActions}>
+                <button type="button" className={s.ghostBtn} onClick={() => setEditando(null)}>
+                  <X size={15} /> Cancelar
+                </button>
+                <button
+                  type="button"
+                  className={s.primaryBtn}
+                  onClick={guardar}
+                  disabled={!editando.body.titulo.trim() || guardando}
+                >
+                  {guardando ? <Loader2 size={15} className={s.spin} /> : <Save size={15} />}
+                  Guardar
+                </button>
+              </div>
+            </div>
           )}
-        </ul>
-      </section>
-    </div>
+
+          <ul className={s.list}>
+            {eventos.map((e) => (
+              <li key={e.id} className={`${s.row} ${!e.activo ? s.rowInactivo : ""}`}>
+                <i className={s.dot} style={{ background: colorDe(e) }} />
+                <div className={s.rowMain}>
+                  <span className={s.rowTitulo}>{e.titulo}</span>
+                  <span className={s.rowCuando}>
+                    {describirCuando(e)}
+                    {e.responsable ? ` · ${e.responsable}` : ""}
+                    {e.descripcion ? ` · ${e.descripcion}` : ""}
+                  </span>
+                </div>
+                {puedeEditar && (
+                  <div className={s.rowActions}>
+                    <button
+                      type="button"
+                      className={s.iconBtn}
+                      onClick={() =>
+                        setEditando({
+                          id: e.id,
+                          body: {
+                            tipo: e.tipo,
+                            titulo: e.titulo,
+                            descripcion: e.descripcion ?? "",
+                            recurrencia: e.recurrencia,
+                            fecha: e.fecha ?? null,
+                            dia: e.dia ?? null,
+                            mes: e.mes ?? null,
+                            medico_id: e.medico_id ?? null,
+                            responsable: e.responsable ?? "",
+                            color: e.color ?? null,
+                            activo: e.activo,
+                          },
+                        })
+                      }
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button type="button" className={s.iconDanger} onClick={() => borrar(e)}>
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                )}
+              </li>
+            ))}
+
+            {!eventos.length && !cargandoLista && (
+              <li className={s.empty}>Sin {TIPOS.find((t) => t.valor === tipo)?.label.toLowerCase()} cargados.</li>
+            )}
+          </ul>
+        </section>
+      </div>
+    </>
   );
 }

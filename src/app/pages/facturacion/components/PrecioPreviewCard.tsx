@@ -2,6 +2,7 @@ import React from "react";
 import type { PrecioResponse } from "../types";
 import { formatMoney, parseMoney } from "../money";
 import { etiquetaPrecio } from "./etiquetas";
+import { AlertTriangle } from "lucide-react";
 
 interface Props {
   precio: PrecioResponse;
@@ -22,12 +23,7 @@ const PrecioPreviewCard: React.FC<Props> = ({ precio, onVolverATradicional }) =>
       gap: 8,
     }}
   >
-    {/* No sólo `!precio.admitido`: con `CARGA_SIN_PRECIO=true` (dev y prod) el
-        caso "sin valor vigente" vuelve `admitido=true` con montos en 0 para no
-        bloquear la carga (ver `resolver_precio`), pero `motivo` sigue trayendo
-        la explicación — que sin este chequeo nunca se mostraba. Los únicos dos
-        lugares donde el backend pone `motivo` son de rechazo/advertencia, así
-        que basta con que venga para mostrar el cartel. */}
+    {/* No sólo `!precio.admitido`: con `CARGA_SIN_PRECIO=true` (dev y prod) el caso "sin valor vigente" vuelve `admitido=true` con montos en 0 para no bloquear la carga. */}
     {precio.motivo && (
       <div
         style={{
@@ -43,7 +39,7 @@ const PrecioPreviewCard: React.FC<Props> = ({ precio, onVolverATradicional }) =>
           gap: 12,
         }}
       >
-        <span>⚠ {precio.motivo}</span>
+        <span><AlertTriangle size={14} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> {precio.motivo}</span>
         {precio.via === "L" && onVolverATradicional && (
           <button
             type="button"

@@ -27,8 +27,10 @@ import {
   SelectorMesAnio,
   Vacio,
 } from "./ReportesUI";
-import { exportarCsv, exportarExcel, nombreArchivo } from "./exportar";
+import { exportarCsv, exportarExcel, exportarPdf, nombreArchivo } from "./exportar";
+import type { ColumnaExport, DocumentoReporte } from "./exportar";
 import styles from "./Reportes.module.scss";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
 
 const LIMIT = 20;
 const STALE = 5 * 60 * 1000;
@@ -38,15 +40,7 @@ interface Props {
   nroSocio: string;
 }
 
-/**
- * Panel de facturación de UN médico, para la pestaña "Reportes" del legajo.
- * Sólo lo ve el Colegio (requiere `facturas:ver`) — el médico no tiene una
- * versión propia de este panel.
- *
- * Responde las preguntas concretas que se hacen en el mostrador: cuánto facturó
- * en el período, a qué obras sociales y con qué códigos — por ejemplo cuánto
- * lleva del 420101.
- */
+/** Panel de facturación de UN médico, para la pestaña "Reportes" del legajo. */
 const ReportesMedico: React.FC<Props> = ({ nroSocio }) => {
   const anios = useMemo(() => {
     const set = new Set(ultimosPeriodos(24).map((p) => Number(p.slice(0, 4))));
@@ -104,14 +98,29 @@ const ReportesMedico: React.FC<Props> = ({ nroSocio }) => {
     ...comun,
   });
 
-  const colsCodigos = [
+  // Los documentos del socio: el período y, en lugar de la obra social, de quién son.
+  const documentoDe = <T,>(
+    titulo: string,
+    base: string,
+    filas: T[],
+    columnas: ColumnaExport<T>[],
+  ): DocumentoReporte<T> => ({
+    titulo,
+    periodo: periodoLargo(periodo),
+    obraSocial: `Socio ${nroSocio}`,
+    columnas,
+    filas,
+    nombre: nombreArchivo(`${base}-socio-${nroSocio}`, periodo),
+  });
+
+  const colsCodigos: ColumnaExport<CodigoStat>[] = [
     { header: "Código", value: (c: CodigoStat) => c.codigo },
     { header: "Descripción", value: (c: CodigoStat) => c.descripcion ?? "" },
-    { header: "Cantidad", value: (c: CodigoStat) => c.cantidad },
-    { header: "Prestaciones", value: (c: CodigoStat) => c.prestaciones },
-    { header: "Facturado", value: (c: CodigoStat) => c.importe_total },
+    { header: "Cantidad", value: (c: CodigoStat) => c.cantidad, tipo: "numero" },
+    { header: "Prestaciones", value: (c: CodigoStat) => c.prestaciones, tipo: "numero" },
+    { header: "Facturado", value: (c: CodigoStat) => c.importe_total, tipo: "moneda" },
   ];
-  const colsDetalle = [
+  const colsDetalle: ColumnaExport<PrestacionReporte>[] = [
     { header: "Fecha", value: (p: PrestacionReporte) => p.fecha ?? "" },
     { header: "Código", value: (p: PrestacionReporte) => p.codigo ?? "" },
     { header: "Descripción", value: (p: PrestacionReporte) => p.descripcion ?? "" },
@@ -123,12 +132,11 @@ const ReportesMedico: React.FC<Props> = ({ nroSocio }) => {
       header: "Estado",
       value: (p: PrestacionReporte) => p.validacion_estado ?? "sin validar",
     },
-    { header: "Cantidad", value: (p: PrestacionReporte) => p.cantidad },
-    { header: "Importe", value: (p: PrestacionReporte) => p.importe_total },
+    { header: "Cantidad", value: (p: PrestacionReporte) => p.cantidad, tipo: "numero" },
+    { header: "Importe", value: (p: PrestacionReporte) => p.importe_total, tipo: "moneda" },
   ];
 
-  // El resumen es del período completo, no del médico: sus totales propios
-  // salen de la tabla de códigos.
+  // El resumen es del período completo, no del médico: sus totales propios salen de la tabla de códigos.
   const totalCodigos = (codigos.data ?? []).reduce(
     (a, c) => a + c.importe_total,
     0
@@ -210,8 +218,7 @@ const ReportesMedico: React.FC<Props> = ({ nroSocio }) => {
           />
           <Kpi
             label="Obras sociales"
-            // El resumen del Colegio cuenta las del período entero, no las de
-            // este médico — el detalle está en la tabla "Por obra social".
+            // El resumen del Colegio cuenta las del período entero, no las de este médico — el detalle está en la tabla "Por obra social".
             value="—"
             hint="ver el detalle"
             accent="blue"
@@ -224,10 +231,7 @@ const ReportesMedico: React.FC<Props> = ({ nroSocio }) => {
         <div className={styles.cardHead}>
           <div>
             <h3 className={styles.cardTitle}>Por código</h3>
-            <p className={styles.cardSub}>
-              Qué se facturó en {periodoLargo(periodo)}
-              {obraSocial ? ", en la obra social elegida" : ""}.
-            </p>
+            
           </div>
           <BotonesExportar
             disabled={!(codigos.data ?? []).length}
@@ -238,14 +242,8 @@ const ReportesMedico: React.FC<Props> = ({ nroSocio }) => {
                 nombreArchivo(`codigos-socio-${nroSocio}`, periodo)
               )
             }
-            onExcel={() =>
-              exportarExcel(
-                codigos.data ?? [],
-                colsCodigos,
-                nombreArchivo(`codigos-socio-${nroSocio}`, periodo),
-                "Códigos"
-              )
-            }
+            onExcel={() => exportarExcel(documentoDe("Códigos", "codigos", codigos.data ?? [], colsCodigos))}
+            onPdf={() => exportarPdf(documentoDe("Códigos", "codigos", codigos.data ?? [], colsCodigos))}
           />
         </div>
 
@@ -255,7 +253,7 @@ const ReportesMedico: React.FC<Props> = ({ nroSocio }) => {
           <Vacio>Sin facturación en este período.</Vacio>
         ) : (
           <div className={styles.tableWrap}>
-            <table className={styles.table}>
+            <Tabla className={styles.table}>
               <thead>
                 <tr>
                   <th>Código</th>
@@ -285,7 +283,7 @@ const ReportesMedico: React.FC<Props> = ({ nroSocio }) => {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </Tabla>
           </div>
         )}
       </section>
@@ -309,12 +307,10 @@ const ReportesMedico: React.FC<Props> = ({ nroSocio }) => {
               )
             }
             onExcel={() =>
-              exportarExcel(
-                detalle.data?.items ?? [],
-                colsDetalle,
-                nombreArchivo(`prestaciones-socio-${nroSocio}`, periodo),
-                "Prestaciones"
-              )
+              exportarExcel(documentoDe("Prestaciones", "prestaciones", detalle.data?.items ?? [], colsDetalle))
+            }
+            onPdf={() =>
+              exportarPdf(documentoDe("Prestaciones", "prestaciones", detalle.data?.items ?? [], colsDetalle))
             }
           />
         </div>
@@ -328,7 +324,7 @@ const ReportesMedico: React.FC<Props> = ({ nroSocio }) => {
         ) : (
           <>
             <div className={styles.tableWrap}>
-              <table className={styles.table}>
+              <Tabla className={styles.table}>
                 <thead>
                   <tr>
                     <th>Fecha</th>
@@ -357,7 +353,7 @@ const ReportesMedico: React.FC<Props> = ({ nroSocio }) => {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </Tabla>
             </div>
 
             <Pager

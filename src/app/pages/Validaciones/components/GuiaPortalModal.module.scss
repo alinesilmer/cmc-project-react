@@ -1,5 +1,7 @@
 @use "@/app/styles/all.scss" as *;
 
+// Guía de un portal externo, con el mismo lenguaje que la franja de Validaciones: cabecera azul con la trama de cruces.
+
 .overlay {
   position: fixed;
   inset: 0;
@@ -7,44 +9,57 @@
   display: grid;
   place-items: center;
   padding: $spacing-4;
-  background: rgba(15, 23, 42, 0.55);
-  overflow-y: auto;
+  background: rgba($franja-noche, 0.62);
+  backdrop-filter: blur(3px);
+  animation: guia-fondo 0.18s ease-out;
 }
 
 .card {
-  width: min(560px, 100%);
-  max-height: calc(100vh - #{$spacing-8});
   display: flex;
   flex-direction: column;
-  background: $white;
-  border-radius: $border-radius-lg;
-  box-shadow: $shadow-lg;
+  width: min(100%, 40rem);
+  max-height: calc(100vh - #{$spacing-8});
+  background: $franja-perla;
+  border-radius: 16px;
+  box-shadow: 0 40px 80px -30px rgba($franja-noche, 0.8);
   overflow: hidden;
+  animation: guia-entra 0.26s cubic-bezier(0.2, 0.9, 0.3, 1.2);
 }
 
 .header {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: $spacing-3;
-  padding: $spacing-4 $spacing-5;
-  border-bottom: 1px solid $gray-200;
+  gap: $spacing-5;
+  padding: $spacing-8 $spacing-8;
+  background: $franja-azul;
+  isolation: isolate;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    @include trama-cruces;
+  }
 }
 
 .logoRing {
   display: grid;
   place-items: center;
-  width: 48px;
-  height: 48px;
   flex-shrink: 0;
-  padding: 4px;
-  border-radius: 50%;
-  border: 2px solid var(--os-color, #{$gray-200});
+  width: 4.75rem;
+  height: 4.75rem;
+  font-family: $fuente-titulos;
+  font-weight: $font-weight-bold;
+  color: var(--os-color, #{$franja-azul});
   background: $white;
-  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0 10px 22px -12px rgba($franja-noche, 0.9);
 
   img {
-    max-width: 100%;
-    max-height: 100%;
+    max-width: 3.6rem;
+    max-height: 3.6rem;
     object-fit: contain;
   }
 }
@@ -52,57 +67,63 @@
 .titulo {
   flex: 1;
   margin: 0;
-  font-size: $font-size-lg;
-  font-weight: $font-weight-semibold;
-  color: $gray-900;
-  line-height: 1.3;
+  font-family: $fuente-titulos;
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: $franja-crema;
 }
 
 .close {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
   flex-shrink: 0;
-  background: none;
-  border: none;
-  border-radius: $border-radius-sm;
-  color: $gray-500;
+  width: 2.5rem;
+  height: 2.5rem;
+  color: $franja-crema;
+  background: transparent;
+  border: 1px solid rgba($franja-crema, 0.4);
+  border-radius: 50%;
   cursor: pointer;
+  transition: background-color 0.15s;
 
   &:hover {
-    background: $gray-100;
-    color: $gray-800;
+    background: rgba($white, 0.14);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary-yellow;
+    outline-offset: 2px;
   }
 }
 
 .body {
   display: flex;
   flex-direction: column;
-  gap: $spacing-4;
-  padding: $spacing-5;
+  gap: $spacing-5;
+  padding: $spacing-6 $spacing-8 $spacing-8;
   overflow-y: auto;
 }
 
-// ─── Credenciales ─────────────────────────────────────────────────────────────
+// ─── Usuario y clave ──────────────────────────────────────────────────────────
 
 .credBox {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-3;
-  padding: $spacing-4;
-  background: $secondary-blue;
-  border-radius: $border-radius-md;
+  display: grid;
+  gap: $spacing-4;
+  padding: $spacing-5;
+  background: $white;
+  border: 1.5px dashed $franja-azul;
+  box-shadow: 0 14px 30px -24px rgba($franja-azul, 0.7);
+  border-radius: $radio-lg;
 }
 
 .credLabel {
   display: block;
-  margin-bottom: 4px;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
-  color: $gray-600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  margin-bottom: $spacing-1;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  color: $franja-azul;
 }
 
 .credRow {
@@ -113,113 +134,151 @@
 
 .credValor {
   flex: 1;
+  min-width: 0;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
   font-size: $font-size-xl;
   font-weight: $font-weight-bold;
   color: $gray-900;
-  letter-spacing: 0.02em;
-  word-break: break-all;
+  overflow-wrap: anywhere;
 }
 
 .copy {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: $spacing-2;
   flex-shrink: 0;
-  padding: 6px $spacing-3;
-  background: $white;
-  border: 1px solid $gray-300;
-  border-radius: $border-radius-sm;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
-  color: $gray-700;
+  height: 2.5rem;
+  padding: 0 $spacing-4;
+  font: inherit;
+  font-weight: $font-weight-bold;
+  color: $white;
+  background: $franja-azul;
+  border: 0;
+  border-radius: 999px;
   cursor: pointer;
+  transition: background-color 0.15s;
 
   &:hover {
-    border-color: $primary-blue;
-    color: $primary-blue;
+    background: $franja-noche;
   }
 }
 
-.copied {
-  border-color: $success-green;
-  color: $success-green;
+.copied,
+.copied:hover {
+  background: $tono-verde-500;
 }
 
-// ─── Texto ────────────────────────────────────────────────────────────────────
+.credEstado {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-weight: $font-weight-semibold;
+  color: $gray-700;
+}
+
+.credGirando {
+  animation: guia-gira 0.9s linear infinite;
+}
+
+// ─── Texto y pasos ────────────────────────────────────────────────────────────
 
 .aviso {
   display: flex;
   align-items: flex-start;
-  gap: $spacing-2;
+  gap: $spacing-3;
   margin: 0;
-  padding: $spacing-3;
-  background: $gray-100;
-  border-left: 3px solid $primary-blue;
-  border-radius: $border-radius-sm;
-  font-size: $font-size-sm;
-  color: $gray-700;
-  line-height: 1.5;
+  padding: $spacing-4;
+  font-weight: $font-weight-semibold;
+  line-height: 1.45;
+  color: $tono-naranja-550-b;
+  background: $primary-yellow;
+  border-left: 4px solid $tono-amarillo-250-c;
+  border-radius: $radio-sm;
 
   svg {
     flex-shrink: 0;
-    margin-top: 2px;
-    color: $primary-blue;
+    margin-top: 0.15rem;
   }
 }
 
 .intro {
   margin: 0;
-  font-size: $font-size-sm;
-  color: $gray-600;
-  line-height: 1.55;
+  font-size: $font-size-lg;
+  line-height: 1.5;
+  color: $gray-700;
 }
 
+// Una hoja blanca con una línea que une los números, como un recorrido.
 .pasos {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-3;
+  display: grid;
   margin: 0;
-  padding: 0;
+  padding: $spacing-3 $spacing-6;
   list-style: none;
+  background: $white;
+  border-radius: $radio-lg;
+  box-shadow: 0 14px 30px -24px rgba($franja-azul, 0.7);
 
   li {
-    display: flex;
-    align-items: flex-start;
-    gap: $spacing-3;
-    font-size: $font-size-sm;
-    color: $gray-800;
-    line-height: 1.55;
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: $spacing-5;
+    padding: $spacing-4 0;
+    font-size: $font-size-lg;
+    line-height: 1.5;
+    color: $gray-900;
+
+    > span:last-child {
+      padding-top: 0.45rem;
+    }
+
+    &:not(:last-child)::before {
+      content: "";
+      position: absolute;
+      top: 3.6rem;
+      bottom: -0.9rem;
+      left: 1.3rem;
+      width: 2px;
+      background: $gray-200;
+    }
   }
 }
 
 .pasoN {
   display: grid;
   place-items: center;
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: $primary-blue;
-  color: $white;
-  font-size: $font-size-xs;
+  width: 2.75rem;
+  height: 2.75rem;
+  font-family: $fuente-titulos;
+  font-size: $font-size-xl;
   font-weight: $font-weight-bold;
+  color: $franja-crema;
+  background: $franja-azul;
+  border-radius: 50%;
 }
 
 .enlace {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: $spacing-2;
-  padding: $spacing-3 $spacing-4;
-  background: $primary-blue;
-  border-radius: $border-radius-md;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
+  gap: $spacing-3;
+  min-height: 3.75rem;
+  padding: 0 $spacing-6;
+  font-family: $fuente-titulos;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
   color: $white;
   text-decoration: none;
+  background: $franja-azul;
+  border-radius: $radio-lg;
+  box-shadow: 0 14px 24px -14px rgba($franja-azul, 0.9);
+  transition: background-color 0.15s, transform 0.15s;
 
   &:hover {
-    filter: brightness(1.08);
+    color: $white;
+    background: $franja-noche;
+    transform: translateY(-1px);
   }
 }
 
@@ -228,13 +287,39 @@
   align-items: flex-start;
   gap: $spacing-2;
   margin: 0;
-  font-size: $font-size-xs;
+  font-size: $font-size-sm;
+  line-height: 1.45;
   color: $gray-500;
-  line-height: 1.5;
 
   svg {
     flex-shrink: 0;
-    margin-top: 1px;
-    color: $gray-400;
+    margin-top: 0.15rem;
+  }
+}
+
+@keyframes guia-fondo {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes guia-entra {
+  from {
+    opacity: 0;
+    transform: translateY(1rem) scale(0.97);
+  }
+}
+
+@keyframes guia-gira {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .card,
+  .credGirando {
+    animation: none;
   }
 }

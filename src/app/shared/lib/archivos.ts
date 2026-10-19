@@ -1,8 +1,4 @@
-// src/app/shared/lib/archivos.ts
-// Abre un adjunto respetando lo que devuelve la API (§8 del doc de backend):
-// - rutas bajo /api/archivos/... exigen token y se piden como blob autenticado.
-// - todo lo demás (incluidos /uploads/web_noticias y /uploads/medicos_publicidad,
-//   que siguen siendo públicos a propósito) se abre tal cual, como hasta ahora.
+// src/app/shared/lib/archivos.ts Abre un adjunto respetando lo que devuelve la API (§8 del doc de backend).
 import { http } from "./http";
 
 const ARCHIVOS_PREFIX = "/api/archivos/";
@@ -45,8 +41,7 @@ export async function abrirAdjunto(ruta?: string | null): Promise<void> {
     const res = await http.get(ruta, { responseType: "blob" });
     const blobUrl = URL.createObjectURL(res.data as Blob);
     window.open(blobUrl, "_blank", "noopener,noreferrer");
-    // El blob se entregó a otra pestaña: liberamos después de darle tiempo
-    // a cargar, en vez de al desmontar (acá no hay un componente montado).
+    // El blob se entregó a otra pestaña: liberamos después de darle tiempo a cargar, en vez de al desmontar (acá no hay un componente montado).
     setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
   } catch (err: any) {
     const status = err?.response?.status;

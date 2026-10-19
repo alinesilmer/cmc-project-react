@@ -17,12 +17,7 @@ interface Props {
   advertencia?: string;
 }
 
-/**
- * El médico del padrón, o por qué no se pudo resolver.
- *
- * Cuando no se resuelve se muestra igual el nombre que escribió la obra social:
- * es lo único que le queda a quien tenga que buscarlo a mano.
- */
+/** El médico del padrón, o por qué no se pudo resolver. */
 export default function MedicoResuelto({
   resultado,
   nombreEnReporte,

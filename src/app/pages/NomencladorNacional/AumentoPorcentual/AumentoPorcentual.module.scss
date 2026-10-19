@@ -18,8 +18,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 2.75rem;
+  height: 2.75rem;
   border-radius: $radio-lg;
   background-color: $acento-tinte;
   color: $acento;
@@ -43,8 +43,8 @@
   gap: $spacing-4;
 }
 .panelDanger {
-  border-color: #f0cccc;
-  background-color: #fdf7f7;
+  border-color: $tono-rojo-100;
+  background-color: $gray-50;
 }
 .panelHeader {
   display: flex;
@@ -55,8 +55,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 1.625rem;
+  height: 1.625rem;
   border-radius: $radio-md;
   background-color: $acento;
   color: $white;
@@ -78,7 +78,7 @@
 }
 
 // ── OS picker ──────────────────────────────────────────────────────────────────
-.autocomplete { position: relative; max-width: 560px; }
+.autocomplete { position: relative; max-width: 35rem; }
 .inputWrap {
   display: flex;
   align-items: center;
@@ -87,7 +87,7 @@
   border-radius: $radio-md;
   padding: 0 $spacing-3;
   transition: border-color 0.15s, box-shadow 0.15s;
-  &:focus-within { border-color: $acento; box-shadow: 0 0 0 3px rgba(90, 78, 134, 0.12); }
+  &:focus-within { border-color: $acento; box-shadow: 0 0 0 3px rgba($tono-violeta-550-c, 0.12); }
 }
 .inputIcon { color: $gray-400; flex-shrink: 0; }
 .input {
@@ -106,11 +106,11 @@
   border: 1px solid $gray-300;
   border-radius: $radio-md;
   padding: $spacing-2 $spacing-3;
-  &:focus { border-color: $acento; box-shadow: 0 0 0 3px rgba(90, 78, 134, 0.12); }
+  &:focus { border-color: $acento; box-shadow: 0 0 0 3px rgba($tono-violeta-550-c, 0.12); }
 }
 .dropdown {
   position: absolute;
-  top: calc(100% + 4px);
+  top: calc(100% + 0.25rem);
   left: 0;
   right: 0;
   z-index: 30;
@@ -121,7 +121,7 @@
   border: 1px solid $gray-200;
   border-radius: $radio-md;
   box-shadow: $shadow-md;
-  max-height: 280px;
+  max-height: 17.5rem;
   overflow-y: auto;
 }
 .option {
@@ -138,7 +138,7 @@
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   color: $acento;
-  min-width: 44px;
+  min-width: 2.75rem;
 }
 .optionName {
   font-size: $font-size-sm;
@@ -155,7 +155,7 @@
   border: 1px solid $linea-2;
   border-radius: $radio-md;
   background-color: $acento-tinte;
-  max-width: 560px;
+  max-width: 35rem;
 }
 .chosenNro {
   font-variant-numeric: tabular-nums;
@@ -184,7 +184,7 @@
   display: inline-flex;
   padding: $spacing-1;
   border-radius: $radio-sm;
-  &:hover { background-color: rgba(0, 0, 0, 0.05); color: $gray-700; }
+  &:hover { background-color: rgba($black, 0.05); color: $gray-700; }
 }
 
 // ── Fields ─────────────────────────────────────────────────────────────────────
@@ -197,13 +197,13 @@
   display: flex;
   flex-direction: column;
   gap: $spacing-2;
-  min-width: 180px;
+  min-width: 11.25rem;
   flex: 1;
 }
 .fieldLabel {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 0.25rem;
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   text-transform: uppercase;
@@ -218,7 +218,7 @@
   font-size: $font-size-sm;
   color: $gray-800;
   background-color: $white;
-  &:focus { outline: none; border-color: $acento; box-shadow: 0 0 0 3px rgba(90, 78, 134, 0.12); }
+  &:focus { outline: none; border-color: $acento; box-shadow: 0 0 0 3px rgba($tono-violeta-550-c, 0.12); }
 }
 .pctInputWrap { position: relative; }
 .pctInput {
@@ -227,12 +227,12 @@
   border-radius: $radio-md;
   padding: $spacing-2 $spacing-6 $spacing-2 $spacing-3;
   font-size: $font-size-lg;
-  font-weight: $font-weight-semibold;
+  font-weight: $font-weight-normal;
   color: $gray-800;
-  &:focus { outline: none; border-color: $acento; box-shadow: 0 0 0 3px rgba(90, 78, 134, 0.12); }
+  &:focus { outline: none; border-color: $acento; box-shadow: 0 0 0 3px rgba($tono-violeta-550-c, 0.12); }
 }
-.pctUp { color: $ok; border-color: rgba(21, 128, 61, 0.5); }
-.pctDown { color: $peligro; border-color: rgba(185, 28, 28, 0.5); }
+.pctUp { color: $ok; border-color: rgba($tono-verde-500-b, 0.5); }
+.pctDown { color: $peligro; border-color: rgba($tono-rojo-500, 0.5); }
 .pctSuffix {
   position: absolute;
   right: $spacing-3;
@@ -251,14 +251,14 @@
   font-size: $font-size-sm;
   font-weight: $font-weight-medium;
 }
-.indicatorUp { background-color: #eef7f0; color: $ok; }
-.indicatorDown { background-color: #fdf0f0; color: $peligro; }
+.indicatorUp { background-color: $gray-100; color: $ok; }
+.indicatorDown { background-color: $gray-100; color: $peligro; }
 
 // ── Scope ──────────────────────────────────────────────────────────────────────
 .scopeTabs {
   display: inline-flex;
-  gap: 4px;
-  padding: 4px;
+  gap: 0.25rem;
+  padding: 0.25rem;
   background-color: $gray-100;
   border-radius: $radio-md;
   width: fit-content;
@@ -288,13 +288,13 @@
 .codesInputRow {
   display: flex;
   gap: $spacing-2;
-  max-width: 560px;
+  max-width: 35rem;
   .input { flex: 1; }
 }
 .rangeRow {
   display: flex;
   gap: $spacing-4;
-  max-width: 560px;
+  max-width: 35rem;
 }
 .chipsRow {
   display: flex;
@@ -305,8 +305,8 @@
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px $spacing-2;
+  gap: 0.25rem;
+  padding: 0.25rem $spacing-2;
   background-color: $acento-tinte;
   border: 1px solid $linea-2;
   border-radius: $radio-sm;
@@ -359,7 +359,7 @@
   border: 1px solid $acento;
   background-color: $acento;
   color: $white;
-  &:hover:not(:disabled) { background-color: #4b4071; }
+  &:hover:not(:disabled) { background-color: $tono-violeta-600-b; }
 }
 .btnSecondary {
   border: 1px solid $gray-300;
@@ -371,7 +371,7 @@
   border: 1px solid $peligro;
   background-color: $peligro;
   color: $white;
-  &:hover:not(:disabled) { background-color: #9c1717; }
+  &:hover:not(:disabled) { background-color: $tono-rojo-550-b; }
 }
 .btnGhost {
   border: 1px solid transparent;
@@ -413,7 +413,7 @@
 .resultErr {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0.25rem;
   color: $peligro;
   font-size: $font-size-sm;
   font-weight: $font-weight-medium;
@@ -443,7 +443,7 @@
   flex-wrap: wrap;
 }
 .statPill {
-  padding: 4px $spacing-3;
+  padding: 0.25rem $spacing-3;
   border-radius: $radio-sm;
   background-color: $acento-tinte;
   color: $acento;
@@ -482,7 +482,7 @@
 .codeCell { font-variant-numeric: tabular-nums; font-size: $font-size-xs; color: $gray-700; white-space: nowrap; }
 .descCell {
   color: $gray-600;
-  max-width: 320px;
+  max-width: 20rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -525,7 +525,7 @@
   gap: $spacing-3;
   cursor: pointer;
 
-  input { margin-top: 3px; width: 16px; height: 16px; flex-shrink: 0; }
+  input { margin-top: 3px; width: 1rem; height: 1rem; flex-shrink: 0; }
 
   span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
   strong { font-size: $font-size-sm; color: $gray-800; }
@@ -549,7 +549,7 @@
 
 .tipoBadge {
   display: inline-block;
-  padding: 2px 8px;
+  padding: 2px 0.5rem;
   border-radius: 999px;
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
@@ -557,10 +557,10 @@
   color: $gray-700;
 }
 
-.tipoGaleno { background-color: #efeaf8; color: #5b4a8a; }
+.tipoGaleno { background-color: $secondary-blue; color: $tono-violeta-550-d; }
 
 .estadoOk { color: $ok; font-size: $font-size-xs; font-weight: $font-weight-semibold; white-space: nowrap; }
 .estadoOmit { color: $gray-500; font-size: $font-size-xs; }
 .estadoErr { color: $peligro; font-size: $font-size-xs; }
 
-.statPillErr { background-color: #fdf0f0; color: $peligro; }
+.statPillErr { background-color: $gray-100; color: $peligro; }

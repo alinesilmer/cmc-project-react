@@ -8,8 +8,7 @@ import { filtrarYOrdenar } from "./localSearch";
 const osCache = new Map<string, { data: ObraSocialOption[]; ts: number }>();
 const CACHE_TTL = 5 * 60 * 1000;
 
-// Los códigos de obra social pueden tener 1 sola cifra (ej. "6") — la tolerancia de
-// 2 caracteres solo tiene sentido para texto (nombre), no para búsquedas numéricas.
+// Los códigos de obra social pueden tener 1 sola cifra (ej. "6") — la tolerancia de 2 caracteres solo tiene sentido para texto (nombre).
 const isNumeric = (s: string) => /^\d+$/.test(s);
 const minLenFor = (q: string) => (isNumeric(q) ? 1 : 2);
 
@@ -20,9 +19,7 @@ interface Props {
   blurOnSelect?: boolean;
   /** Nombre de la OS ya elegida, para mostrarla antes de buscar (usado al replicar). */
   presetLabel?: string;
-  /** Lista ya traída entera (ver CargaFacturacion.tsx): si viene, se filtra en
-   *  memoria y no se pega más a `/obras-sociales` por cada tecleo. Sin esto, busca
-   *  como siempre — el resto de las pantallas que usan este campo no se tocan. */
+  /** Lista ya traída entera (ver CargaFacturacion.tsx): si viene, se filtra en memoria y no se pega más a `/obras-sociales` por cada tecleo. */
   obrasSocialesPrecargadas?: ObraSocialOption[];
 }
 
@@ -57,8 +54,6 @@ const ObraSocialAutocomplete: React.FC<Props> = ({
   }, []);
 
   // Con la lista precargada entera (~140 filas), "buscar" es filtrar en memoria.
-  // Query vacío (campo recién clickeado) devuelve la lista completa: sin esto el
-  // dropdown abre sin ninguna opción hasta tipear.
   const buscarLocal = useCallback((q: string) => {
     if (!obrasSocialesPrecargadas) { setOptions([]); return; }
     if (q.length === 0) { setOptions(obrasSocialesPrecargadas); return; }

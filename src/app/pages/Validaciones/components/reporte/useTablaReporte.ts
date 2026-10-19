@@ -1,22 +1,10 @@
 // Búsqueda y paginado de la tabla de un reporte.
-//
-// Los reportes traen entre 500 y 1.200 prácticas. Pintarlas todas cuelga la
-// pantalla y no hay forma de encontrar una fila concreta sin buscarla, así que
-// las dos cosas van juntas y compartidas por las pantallas que leen reportes.
 
 import { useEffect, useMemo, useState } from "react";
+import { normalizar } from "@/app/shared/lib/utiles";
 
 /** Filas por página. */
-export const POR_PAGINA = 50;
-
-/** Sin acentos y en minúscula, para que «gonzalez» encuentre «González». */
-export const normalizar = (v: string): string =>
-  v
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .trim();
-
+const POR_PAGINA = 50;
 export function useTablaReporte<T>(
   filas: T[],
   /** Qué texto de cada fila se busca. Se compara ya normalizado. */

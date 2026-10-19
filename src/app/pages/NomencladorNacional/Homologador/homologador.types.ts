@@ -17,9 +17,3 @@ export interface HomologadorCreatePayload {
   observacion?: string | null;
 }
 
-export interface HomologadorUpdatePayload {
-  nomenclador_id?: number;
-  descripcion_origen?: string | null;
-  observacion?: string | null;
-  activo?: boolean;
-}

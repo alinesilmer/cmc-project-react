@@ -15,11 +15,7 @@ const DESTACADOS: Destacado[] = [
   { icono: Sparkles, texto: "Un paso y listo" },
 ];
 
-/**
- * Cambio de contraseña obligatorio: la cuenta todavía tiene la contraseña
- * provisoria del alta (ver RequireAuth). El backend cierra todas las sesiones
- * al cambiarla, así que al terminar se vuelve al login.
- */
+/** Cambio de contraseña obligatorio: la cuenta todavía tiene la contraseña provisoria del alta (ver RequireAuth). */
 export default function CambiarPassword() {
   const navigate = useNavigate();
   const [actual, setActual] = useState("");
@@ -41,8 +37,7 @@ export default function CambiarPassword() {
     setGuardando(true);
     try {
       const res = await changePassword(actual, nueva);
-      // Con relogin:true changePassword() ya dispara forceLogout, que manda al
-      // login con el aviso. Si por algún motivo no viniera, igual se sale.
+      // Con relogin:true changePassword() ya dispara forceLogout, que manda al login con el aviso.
       if (!res?.relogin) navigate("/panel/login", { replace: true });
     } catch (err) {
       setError(mensajeDeError(err, "No se pudo cambiar la contraseña. Verificá la contraseña actual."));

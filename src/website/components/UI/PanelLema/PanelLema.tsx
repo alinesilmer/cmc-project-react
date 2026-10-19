@@ -1,7 +1,5 @@
-import type { ReactNode } from "react";
-import { motion } from "framer-motion";
+import type { CSSProperties, ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
-import { EASE } from "../../../lib/motion";
 import LineaPulso from "../LineaPulso/LineaPulso";
 import styles from "./PanelLema.module.scss";
 
@@ -17,11 +15,7 @@ type Props = {
   compacto?: boolean;
 };
 
-/**
- * Panel azul con un círculo crema, un lema y tarjetas flotantes. Es la pieza
- * visual de las pantallas de acceso y de Socios. En pantallas chicas se reduce
- * a una franja, sin las tarjetas.
- */
+/** Panel azul con un círculo crema, un lema y tarjetas flotantes. */
 export default function PanelLema({ lema, destacados, className, compacto = false }: Props) {
   return (
     <aside className={`${styles.panel} ${compacto ? styles.compacto : ""} ${className ?? ""}`} aria-hidden="true">
@@ -34,18 +28,13 @@ export default function PanelLema({ lema, destacados, className, compacto = fals
 
       <ul className={styles.destacados}>
         {destacados.map(({ icono: Icono, texto }, i) => (
-          <motion.li
-            key={texto}
-            className={styles.destacado}
-            initial={{ opacity: 0, x: 18 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.25 + i * 0.12, ease: EASE }}
-          >
+          // `--i` escalona la entrada de cada tarjeta (ver la hoja).
+          <li key={texto} className={styles.destacado} style={{ "--i": i } as CSSProperties}>
             <span className={styles.destacadoIcono}>
               <Icono />
             </span>
             {texto}
-          </motion.li>
+          </li>
         ))}
       </ul>
     </aside>

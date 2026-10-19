@@ -46,7 +46,7 @@ export type FieldGroup =
   | "personal";
 
 /** De dónde sale el dato — define si la columna cuesta un pedido extra. */
-export type FieldSource = "padron" | "medico";
+type FieldSource = "padron" | "medico";
 
 export type ExportField = {
   key: string;

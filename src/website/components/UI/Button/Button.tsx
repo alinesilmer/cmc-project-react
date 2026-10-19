@@ -1,11 +1,11 @@
 import type React from "react";
-import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import styles from "./Button.module.scss";
 
 type Comun = {
   children?: React.ReactNode;
-  variant?: "primary" | "secondary" | "outline" | "default" | "ghost";
+  /** `plano`: sin aspecto propio, sólo el `className` de quien lo usa (chips, flechas, cerrar). */
+  variant?: "primary" | "secondary" | "outline" | "default" | "ghost" | "plano";
   size?: "small" | "medium" | "large" | "xlg";
   /** Ícono a la derecha del texto. */
   icon?: React.ReactNode;
@@ -18,20 +18,19 @@ type Comun = {
   title?: string;
 };
 
-type ComoBoton = Comun & {
-  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
-  type?: "button" | "submit" | "reset";
-  to?: never;
-  href?: never;
-};
+/** Como botón acepta cualquier atributo nativo (ARIA, foco, `ref`), para no tener que escribir un `<button>` suelto. */
+type ComoBoton = Comun &
+  Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, keyof Comun | "type"> & {
+    type?: "button" | "submit" | "reset";
+    ref?: React.Ref<HTMLButtonElement>;
+    to?: never;
+    href?: never;
+  };
 
 /** Navega dentro del sitio o del panel, sin recargar la página. */
 type ComoRuta = Comun & { to: string; href?: never };
 
-/**
- * Sale del sitio o abre algo del sistema: web, `tel:`, `mailto:`, descarga.
- * Las direcciones `http(s)` abren en otra pestaña.
- */
+/** Sale del sitio o abre algo del sistema: web, `tel:`, `mailto:`, descarga. */
 type ComoEnlace = Comun & {
   href: string;
   download?: boolean | string;
@@ -42,18 +41,7 @@ type ComoEnlace = Comun & {
 
 export type ButtonProps = ComoBoton | ComoRuta | ComoEnlace;
 
-const MotionLink = motion.create(Link);
-
-const HOVER = { scale: 1.02 };
-const TAP = { scale: 0.97 };
-const SPRING = { type: "spring", stiffness: 380, damping: 28 } as const;
-
-/**
- * Botón del sitio. Si hace falta que un botón lleve a otro lado se usa `to` o
- * `href` en vez de envolverlo en un `<a>`: un `<button>` dentro de un enlace
- * es HTML inválido, el lector de pantalla anuncia dos controles y en Socios
- * hacía que un mismo clic abriera WhatsApp y el mail a la vez.
- */
+/** Botón del sitio. Si hace falta que un botón lleve a otro lado se usa `to` o `href` en vez de envolverlo en un… */
 export default function Button(props: ButtonProps) {
   const {
     children,
@@ -66,19 +54,19 @@ export default function Button(props: ButtonProps) {
     disabled = false,
   } = props;
 
-  const clases = [
-    styles.button,
-    styles[variant],
-    styles[size],
-    fullWidth ? styles.fullWidth : "",
-    className ?? "",
-  ].join(" ");
+  const plano = variant === "plano";
+  const clases = plano
+    ? (className ?? "")
+    : [styles.button, styles[variant], styles[size], fullWidth ? styles.fullWidth : "", className ?? ""].join(" ");
 
-  const animacion = disabled
-    ? {}
-    : { whileHover: HOVER, whileTap: TAP, transition: SPRING };
-
-  const contenido = (
+  // El plano no envuelve: su contenido queda tal cual, para que la hoja de quien lo usa lo acomode.
+  const contenido = plano ? (
+    <>
+      {iconoIzquierda}
+      {children}
+      {icon}
+    </>
+  ) : (
     <span className={styles.content}>
       {iconoIzquierda && <span className={styles.icon}>{iconoIzquierda}</span>}
       {children}
@@ -90,41 +78,46 @@ export default function Button(props: ButtonProps) {
 
   if ("to" in props && props.to !== undefined) {
     return (
-      <MotionLink to={props.to} className={clases} aria-disabled={disabled || undefined} {...aria} {...animacion}>
+      <Link to={props.to} className={clases} aria-disabled={disabled || undefined} {...aria}>
         {contenido}
-      </MotionLink>
+      </Link>
     );
   }
 
   if ("href" in props && props.href !== undefined) {
     const externo = (props.nuevaPestana || /^https?:\/\//i.test(props.href)) && !props.download;
     return (
-      <motion.a
+      <a
         href={props.href}
         className={clases}
         download={props.download}
         aria-disabled={disabled || undefined}
         {...(externo ? { target: "_blank", rel: "noopener noreferrer" } : {})}
         {...aria}
-        {...animacion}
       >
         {contenido}
-      </motion.a>
+      </a>
     );
   }
 
-  const { onClick, type = "button" } = props as ComoBoton;
+  // Lo que no es propio del componente pasa directo al <button>.
+  const {
+    children: _hijos,
+    variant: _variante,
+    size: _tamano,
+    icon: _icono,
+    iconoIzquierda: _iconoIzquierda,
+    fullWidth: _anchoTotal,
+    className: _clase,
+    disabled: _deshabilitado,
+    to: _to,
+    href: _href,
+    type = "button",
+    ...nativos
+  } = props as ComoBoton;
   return (
-    <motion.button
-      type={type}
-      className={clases}
-      onClick={onClick}
-      disabled={disabled}
-      aria-disabled={disabled}
-      {...aria}
-      {...animacion}
-    >
+    <button {...nativos} type={type} className={clases} disabled={disabled} aria-disabled={disabled}>
       {contenido}
-    </motion.button>
+    </button>
   );
 }

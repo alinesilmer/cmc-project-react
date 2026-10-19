@@ -1,20 +1,14 @@
-// Parámetros de visualización de la tabla de listado — análogo a
-// `../export/types.ts`, pero todo se aplica en el cliente sobre datos que ya
-// están en memoria (el endpoint `/facturas/{id}/detalle` no tiene filtros ni
-// orden propios): no hay ida y vuelta al servidor al cambiar una opción acá.
+// Parámetros de visualización de la tabla de listado — análogo a `../export/types.ts`.
 import type { Tipo } from "../../types";
 
 export type OrdenVista = "fecha" | "fecha_carga" | "codigo" | "importe" | "nombre_socio";
 
-// Sentido del criterio de arriba — separado del criterio en sí (antes "monto_desc"
-// mezclaba las dos cosas en una sola opción, sin forma de pedir importe ascendente).
+// Sentido del criterio de arriba — separado del criterio en sí (antes "monto_desc" mezclaba las dos cosas en una sola opción.
 export type OrdenDireccion = "asc" | "desc";
 
 export type AgrupacionVista = "por_socio" | "por_tipo" | "plana";
 
-// "Por tipo", en Honorarios individuales y Sanatorios: cómo se ordena dentro de cada médico
-// (y, en Sanatorios, dentro de cada clínica). "medico" = el orden de siempre (el elegido en
-// "Ordenar por"); "paciente" = pacientes A-Z.
+// "Por tipo", en Honorarios individuales y Sanatorios: cómo se ordena dentro de cada médico (y, en Sanatorios, dentro de cada clínica).
 export type OrdenAlfabetico = "medico" | "paciente";
 
 export const OPCIONES_ORDEN_VISTA: { value: OrdenVista; label: string }[] = [
@@ -43,18 +37,12 @@ export interface FiltrosVista {
   tipos?: Tipo[];
 }
 
-export const FILTROS_VISTA_VACIOS: FiltrosVista = {};
-
 export type ColumnaVista =
   | "autorizacion" | "fecha" | "codigo" | "via" | "nro_afiliado" | "paciente"
   | "cantidad" | "porcentaje" | "honorarios" | "gastos" | "coseguro" | "tipo_prestador"
   | "valor_unitario" | "subtotal" | "tipo";
 
-// Mismo orden que las columnas fijas de la tabla (ID/Socio/Acciones no se
-// pueden ocultar, por eso no están acá) — `ColumnasVistaSection` y el thead
-// dinámico de `FacturaDetalle.tsx` iteran esta lista, nunca `opciones.columnas`
-// directamente, así el orden en pantalla no depende del orden en que se tildó
-// cada checkbox.
+// Mismo orden que las columnas fijas de la tabla (ID/Socio/Acciones no se pueden ocultar, por eso no están acá) .
 export const COLUMNAS_VISTA_DISPONIBLES: { key: ColumnaVista; label: string }[] = [
   { key: "autorizacion", label: "Autorización" },
   { key: "fecha", label: "Fecha" },
@@ -73,14 +61,9 @@ export const COLUMNAS_VISTA_DISPONIBLES: { key: ColumnaVista; label: string }[] 
   { key: "tipo", label: "Tipo" },
 ];
 
-export const COLUMNAS_VISTA_DEFAULT: ColumnaVista[] = COLUMNAS_VISTA_DISPONIBLES.map((c) => c.key);
+const COLUMNAS_VISTA_DEFAULT: ColumnaVista[] = COLUMNAS_VISTA_DISPONIBLES.map((c) => c.key);
 
-// Pesos relativos de ancho de columna — los mismos números que tenía cada
-// `th:nth-child` fijo en FacturaDetalle.module.scss cuando las 16 columnas
-// estaban siempre visibles. Con columnas que se pueden ocultar, el ancho ya
-// no puede depender de la posición (nth-child) — se recalcula en
-// `FacturaDetalle.tsx` como `peso / sumaDePesosVisibles * 100`, así la tabla
-// sigue ocupando el 100% del ancho sin importar cuántas columnas se muestren.
+// Pesos relativos de ancho de columna — los mismos números que tenía cada `th:nth-child` fijo en FacturaDetalle.module.scss cuando las 16 columnas estaban siempre visibles.
 export const PESO_COLUMNA: Record<"id" | "socio" | ColumnaVista | "acciones", number> = {
   id: 4, socio: 9, autorizacion: 6, fecha: 6, codigo: 6, via: 4, nro_afiliado: 6,
   paciente: 9, cantidad: 6, porcentaje: 4, honorarios: 6, gastos: 6, coseguro: 6,

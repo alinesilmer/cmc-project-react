@@ -7,11 +7,7 @@ type Props = {
   anyOf?: string[]; // pasa si tiene AL MENOS uno
 };
 
-/**
- * Guard de ruta: sin el scope requerido, renderiza <SinPermiso /> en vez del
- * contenido de la ruta. Mismo patrón que MedicoRouteGuard, pero por permiso
- * en lugar de por INGRESAR.
- */
+/** Guard de ruta: sin el scope requerido, renderiza <SinPermiso /> en vez del contenido de la ruta. */
 export default function RequireScope({ scope, anyOf }: Props) {
   const { can, canAny } = usePermisos();
 

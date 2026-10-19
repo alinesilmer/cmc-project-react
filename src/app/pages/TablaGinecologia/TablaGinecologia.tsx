@@ -1,11 +1,13 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Download, Save, ChevronDown, Loader2, Search } from "lucide-react";
+import { Save, ChevronDown, Loader2, Search } from "lucide-react";
 import { getJSON } from "@/app/shared/lib/http";
 import { SECCIONES, resolveUnidades, FASGO_BASE_2026 } from "./data/fasgo2026";
 import { OS_BASE_VALUES, OS_EXCLUSIONS } from "./data/osBaseValues";
 import styles from "./TablaGinecologia.module.scss";
 import { hoyISO } from "@/app/shared/lib/fechas";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
+import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 
 // ─── Obra Social ───────────────────────────────────────────────────────────────
 
@@ -188,9 +190,7 @@ export default function TablaGinecologia() {
             <Save size={14} />
             {saving ? "Guardando…" : "Guardar"}
           </button>
-          <button className={styles.exportBtn} onClick={() => void handleExport()}>
-            <Download size={14} /> Exportar Excel
-          </button>
+          <BotonDescarga formato="excel" onClick={() => void handleExport()} />
         </div>
       </div>
 
@@ -304,7 +304,7 @@ export default function TablaGinecologia() {
 
       {/* ── Desktop table ── */}
       <div className={styles.tableWrap}>
-        <table className={styles.table}>
+        <Tabla className={styles.table}>
           {filteredSections.map((sec) => (
             <tbody key={sec.id}>
               <tr>
@@ -358,7 +358,7 @@ export default function TablaGinecologia() {
               </tr>
             </tbody>
           )}
-        </table>
+        </Tabla>
       </div>
 
       {/* ── Mobile cards ── */}

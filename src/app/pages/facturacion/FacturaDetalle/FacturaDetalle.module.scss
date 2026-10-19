@@ -1,27 +1,10 @@
+@use "@/app/styles/all.scss" as *;
+
 // Mismo lenguaje visual que VerPeriodos / NomencladorPorOS ("Valores y nomencladores").
-$blue:       #3b6fd4;
-$blue-light: #e8efff;
-$blue-hover: #2f5bbb;
-$red:        #dc2626;
-$red-light:  #fee2e2;
-$green:      #166534;
-$audit-row:    #fff9bb;
-$audit-halo:   #fde68a;
-$audit-accent: #ca8a04;
-$border:     #e2e8f0;
-$surface:    #ffffff;
-$text-1:     #1a1f2e;
-$text-2:     #4a5568;
-$text-3:     #718096;
-$radius-sm:  6px;
-$radius-md:  10px;
-$radius-lg:  14px;
-$shadow-sm:  0 1px 4px rgba(0, 0, 0, .06);
-$shadow-md:  0 4px 16px rgba(0, 0, 0, .10);
 
 .container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f0f4ff 0%, #fafbff 60%, #f5f0ff 100%);
+  background: linear-gradient(135deg, $gray-100 0%, $gray-50 60%, $secondary-blue 100%);
   padding: 1.8rem;
   font-family: inherit;
 }
@@ -29,8 +12,8 @@ $shadow-md:  0 4px 16px rgba(0, 0, 0, .10);
 .header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
   flex-wrap: wrap;
 }
 
@@ -38,24 +21,24 @@ $shadow-md:  0 4px 16px rgba(0, 0, 0, .10);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
-  border-radius: $radius-md;
-  background: $blue-light;
-  color: $blue;
+  width: 2.625rem;
+  height: 2.625rem;
+  border-radius: 0.625rem;
+  background: $secondary-blue;
+  color: $tono-azul-450;
   flex-shrink: 0;
 }
 
 .title {
   font-size: 1.35rem;
   font-weight: 700;
-  color: $text-1;
+  color: $carpeta-noche;
   margin: 0;
 }
 
 .subtitle {
   font-size: 0.8rem;
-  color: $text-3;
+  color: $tono-azul-400;
   margin: 2px 0 0;
 }
 
@@ -63,124 +46,118 @@ $shadow-md:  0 4px 16px rgba(0, 0, 0, .10);
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
   flex-wrap: wrap;
 }
 
 .backBtn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 34px;
-  padding: 0 14px;
+  gap: 0.375rem;
+  height: 2.125rem;
+  padding: 0 0.875rem;
   background: none;
-  color: $text-2;
-  border: 1px solid $border;
-  border-radius: $radius-sm;
+  color: $gray-600;
+  border: 1px solid $gray-200;
+  border-radius: 0.375rem;
   font-size: 0.83rem;
   font-weight: 500;
   cursor: pointer;
   transition: background .15s;
 
-  &:hover { background: #fff; }
+  &:hover { background: $white; }
 }
 
 .infoChip {
   font-size: 0.75rem;
   font-weight: 600;
   border-radius: 20px;
-  padding: 3px 12px;
+  padding: 3px 0.75rem;
   white-space: nowrap;
 }
 
-.chipOs { background: $blue-light; color: $blue; }
-.chipTotal { background: #f0fdf4; color: $green; border: 1px solid #bbf7d0; }
-.chipAbierta { background: #fef3c7; color: #92400e; }
-.chipCerrada { background: #dcfce7; color: #166534; }
+.chipOs { background: $secondary-blue; color: $tono-azul-450; }
+.chipTotal { background: $cuaderno-papel; color: $tono-verde-550; border: 1px solid $tono-verde-50-b; }
+.chipAbierta { background: $primary-yellow; color: $tono-naranja-550; }
+.chipCerrada { background: $tono-verde-50; color: $tono-verde-550; }
 
-// Sin margen externo: la tarjeta (toolbar + tabla) anula el padding lateral de
-// `.container` (1.8rem) y va de borde a borde. El corrimiento va acá y no en la
-// tabla: esta tarjeta tiene `overflow: hidden` y recortaba lo que sobresalía.
+// Sin margen externo: la tarjeta (toolbar + tabla) anula el padding lateral de `.container` (1.8rem) y va de borde a borde.
 .layout {
   margin: 0 -1.8rem;
-  background: $surface;
-  border-top: 1px solid $border;
-  border-bottom: 1px solid $border;
-  box-shadow: $shadow-sm;
-  // `clip` y no `hidden`: recorta igual, pero no crea un contenedor de scroll, que
-  // es lo que impediría que el encabezado de la tabla quede fijo al bajar.
+  background: $white;
+  border-top: 1px solid $gray-200;
+  border-bottom: 1px solid $gray-200;
+  box-shadow: 0 1px 4px rgba($black, .06);
+  // `clip` y no `hidden`: recorta igual, pero no crea un contenedor de scroll.
   overflow: clip;
 }
 
 .toolbar {
   display: flex;
   align-items: flex-end;
-  gap: 12px;
+  gap: 0.75rem;
   flex-wrap: wrap;
-  padding: 14px 16px;
-  border-bottom: 1px solid $border;
-  background: #fafbfd;
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid $gray-200;
+  background: $gray-50;
 }
 
 .filterField {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  min-width: 190px;
+  gap: 0.3125rem;
+  min-width: 11.875rem;
 }
 
 .filterLabel {
   font-size: 0.7rem;
   font-weight: 700;
-  color: $text-3;
+  color: $tono-azul-400;
   letter-spacing: .05em;
   text-transform: uppercase;
 }
 
 .select {
-  height: 36px;
-  border: 1px solid $border;
-  border-radius: $radius-sm;
+  height: 2.25rem;
+  border: 1px solid $gray-200;
+  border-radius: 0.375rem;
   font-size: 0.84rem;
-  color: $text-1;
-  background: $surface;
+  color: $carpeta-noche;
+  background: $white;
   outline: none;
   box-sizing: border-box;
   transition: border-color .15s, box-shadow .15s;
-  padding: 0 28px 0 12px;
+  padding: 0 1.75rem 0 0.75rem;
   cursor: pointer;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 10px center;
+  background-position: right 0.625rem center;
 
   &:focus {
-    border-color: $blue;
-    box-shadow: 0 0 0 3px rgba(59, 111, 212, .12);
+    border-color: $tono-azul-450;
+    box-shadow: 0 0 0 3px rgba($tono-azul-450, .12);
   }
 }
 
 .toolbarStats {
   margin-left: auto;
   display: flex;
-  gap: 8px;
+  gap: 0.5rem;
   flex-wrap: wrap;
   align-items: center;
 }
 
 // ─── Tabla ──────────────────────────────────────────────────────────────────
-// Sin scroll: el contenido tiene que entrar en el ancho disponible, así que las
-// celdas envuelven texto en vez de forzar overflow horizontal.
+// Sin scroll: el contenido tiene que entrar en el ancho disponible, así que las celdas envuelven texto en vez de forzar overflow horizontal.
 .tableWrap {
   width: 100%;
 }
 
-// Bloque de filas fuera de pantalla: el navegador no lo calcula ni lo pinta hasta que
-// se acerca al área visible (el texto sigue en la página y el Ctrl+F lo encuentra).
-// `auto` recuerda el alto real una vez dibujado, así la barra de scroll no salta.
+// Bloque de filas fuera de pantalla: el navegador no lo calcula ni lo pinta hasta que se acerca al área visible.
 .bloqueFilas {
   content-visibility: auto;
-  contain-intrinsic-size: auto 1200px;
+  contain-intrinsic-size: auto 75rem;
 }
 
 .table {
@@ -188,105 +165,87 @@ $shadow-md:  0 4px 16px rgba(0, 0, 0, .10);
   table-layout: fixed;
   border-collapse: collapse;
   // Tamaño único para todo el texto de la tabla (header, celdas, badges, resumen).
-  font-size: 11px;
+  font-size: 0.6875rem;
 
   thead tr {
-    background: #0c2a52;
+    background: $primary-blue-darker;
   }
 
   th {
-    padding: 8px 8px;
+    padding: 0.5rem 0.5rem;
     text-align: left;
     font-size: inherit;
     font-weight: 700;
-    color: #fff;
+    color: $white;
     letter-spacing: .03em;
     text-transform: uppercase;
     word-break: break-word;
   }
 
   td {
-    padding: 8px 8px;
-    color: $text-1;
-    border-bottom: 1px solid #f1f4f8;
+    padding: 0.5rem 0.5rem;
+    color: $carpeta-noche;
+    border-bottom: 1px solid $gray-100;
     vertical-align: middle;
     word-break: break-word;
     overflow-wrap: anywhere;
   }
 
-  tbody tr.dataRow:hover { background: #f8faff; }
+  tbody tr.dataRow:hover { background: $gray-50; }
 
-  // Los anchos de columna ya no son fijos por posición (`th:nth-child`): con el
-  // selector de columnas del panel de vista la cantidad de columnas cambia, así
-  // que el ancho de cada una se calcula en `FacturaDetalle.tsx` (según el peso
-  // relativo de `PESO_COLUMNA`) y se aplica vía `<colgroup>` — eso es lo que
-  // `table-layout: fixed` necesita para repartir el 100% entre las que estén
-  // visibles en cada momento.
+  // Los anchos de columna ya no son fijos por posición (`th:nth-child`).
 }
 
 .thActions { text-align: right; }
 
-// Encabezado fijo: queda pegado debajo de la barra superior (64px + su borde) mientras
-// se recorren los bloques de filas, que son tablas aparte con el mismo colgroup.
+// Encabezado fijo: queda pegado debajo de la barra superior (64px + su borde) mientras se recorren los bloques de filas.
 .tablaEncabezado {
   position: sticky;
-  top: 65px;
+  top: 4.0625rem;
   z-index: 5;
 }
 
 .rowRevisada td {
-  background: $audit-row;
+  background: $tono-amarillo-50-b;
 }
 
 .rowAnulada td {
   opacity: 0.55;
 }
 
-// Recuadro de equipo quirúrgico (las filas del equipo siempre van con su cabeza): un
-// marco gris que arranca en la fila del cirujano y engloba, debajo, las de
-// sus compañeros (ayudante/gastos) — de sólo lectura a propósito, la
-// prestación real —donde sí se audita/edita/mueve— vive en el grupo del
-// propio compañero. Sólo esas filas de compañero llevan fondo gris; la del
-// cirujano se ve igual que cualquier otra, sólo que con el marco arriba.
-//
-// El marco lateral va únicamente en la primera/última celda de cada fila
-// (no en `td` a secas) porque si no las columnas del medio también quedarían
-// con una línea vertical entre ellas.
-$equipo-border: #d7dbe2;
-$equipo-bg: #f7f8fa;
+// Recuadro de equipo quirúrgico (las filas del equipo siempre van con su cabeza).
 
 .equipoGrupoHeadRow td {
-  border-top: 2px solid $equipo-border;
+  border-top: 2px solid $tono-gris-100;
 }
 
 .equipoGrupoHeadRow td:first-child {
-  border-left: 2px solid $equipo-border;
+  border-left: 2px solid $tono-gris-100;
 }
 
 .equipoGrupoHeadRow td:last-child {
-  border-right: 2px solid $equipo-border;
+  border-right: 2px solid $tono-gris-100;
 }
 
 .equipoPreviewRow td {
-  background: $equipo-bg;
-  color: $text-3;
+  background: $gray-50;
+  color: $tono-azul-400;
 }
 
 .equipoPreviewRow td:first-child {
-  border-left: 2px solid $equipo-border;
+  border-left: 2px solid $tono-gris-100;
 }
 
 .equipoPreviewRow td:last-child {
-  border-right: 2px solid $equipo-border;
+  border-right: 2px solid $tono-gris-100;
 }
 
 // Cierra el marco abajo, en la última fila del bloque de compañeros.
 .equipoPreviewRowLast td {
-  border-bottom: 2px solid $equipo-border;
+  border-bottom: 2px solid $tono-gris-100;
 }
 
 // Etiqueta de clínica (celda del socio).
-$clinica-bg: #fed7aa;
 
 .idCell {
   white-space: nowrap;
@@ -300,19 +259,19 @@ $clinica-bg: #fed7aa;
 
 .socioNro {
   font-weight: 700;
-  color: $blue;
+  color: $tono-azul-450;
   font-variant-numeric: tabular-nums;
   font-size: inherit;
 }
 
 .socioNombre {
-  color: $text-1;
+  color: $carpeta-noche;
   font-size: inherit;
   line-height: 1.25;
 }
 
 .socioMatricula {
-  color: $text-3;
+  color: $tono-azul-400;
   font-weight: 400;
 }
 
@@ -320,7 +279,7 @@ $clinica-bg: #fed7aa;
   font-family: 'Courier New', Courier, monospace;
   font-weight: 700;
   font-size: inherit;
-  color: $blue;
+  color: $tono-azul-450;
 }
 
 .cantidadCell {
@@ -331,27 +290,27 @@ $clinica-bg: #fed7aa;
 
 .cantidadMain {
   font-weight: 600;
-  color: $text-1;
+  color: $carpeta-noche;
 }
 
 .cantidadSub {
   font-size: inherit;
-  color: $text-3;
+  color: $tono-azul-400;
 }
 
 .moneyCell {
   font-variant-numeric: tabular-nums;
-  color: $text-1;
+  color: $carpeta-noche;
 }
 
 .subtotalCell {
   font-variant-numeric: tabular-nums;
   font-weight: 700;
-  color: $green;
+  color: $tono-verde-550;
 }
 
 .mutedText {
-  color: $text-3;
+  color: $tono-azul-400;
 }
 
 .tipoPrestadorBadge {
@@ -359,111 +318,111 @@ $clinica-bg: #fed7aa;
   font-size: inherit;
   font-weight: 700;
   border-radius: 4px;
-  padding: 2px 6px;
+  padding: 2px 0.375rem;
 }
 
-.tipoPrestadorMedico   { background: #eff6ff; color: #1d4ed8; }
-.tipoPrestadorAyudante  { background: #faf5ff; color: #6b21a8; }
-.tipoPrestadorGastos   { background: #fff7ed; color: #c2410c; }
-.tipoPrestadorPediatra { background: #eafaf7; color: #0f766e; }
+.tipoPrestadorMedico   { background: $gray-100; color: $tono-azul-500-b; }
+.tipoPrestadorAyudante  { background: $gray-50; color: $tono-violeta-550; }
+.tipoPrestadorGastos   { background: $cuaderno-papel; color: $tono-rojo-450; }
+.tipoPrestadorPediatra { background: $gray-100; color: $tono-turquesa-500; }
 
 .tipoBadge {
   display: inline-block;
   font-size: inherit;
   font-weight: 600;
   border-radius: 20px;
-  padding: 2px 7px;
-  background: #eef2f7;
-  color: #475569;
+  padding: 2px 0.4375rem;
+  background: $franja-perla;
+  color: $gray-600;
 }
 
-.tipoConsulta   { background: #e8f0ff; color: #0c2a52; }
-.tipoPractica   { background: #fef3c7; color: #92400e; }
-.tipoHonorarios { background: #f0fdf4; color: #166534; }
-.tipoSanatorio  { background: #faf5ff; color: #6b21a8; }
+.tipoConsulta   { background: $secondary-blue; color: $primary-blue-darker; }
+.tipoPractica   { background: $primary-yellow; color: $tono-naranja-550; }
+.tipoHonorarios { background: $cuaderno-papel; color: $tono-verde-550; }
+.tipoSanatorio  { background: $gray-50; color: $tono-violeta-550; }
 
 .viaBadge {
   display: inline-block;
   font-size: inherit;
   font-weight: 700;
   border-radius: 4px;
-  padding: 2px 6px;
-  background: #eef2f7;
-  color: #475569;
+  padding: 2px 0.375rem;
+  background: $franja-perla;
+  color: $gray-600;
 }
 
-.viaLaparoscopica { background: #e0e7ff; color: #3730a3; }
+.viaLaparoscopica { background: $gray-200; color: $tono-violeta-600; }
 
 .actionsCell {
   display: flex;
-  gap: 4px;
+  gap: 0.25rem;
   flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
 }
 
 .auditCheckbox {
-  width: 17px;
-  height: 17px;
+  width: 1.0625rem;
+  height: 1.0625rem;
   cursor: pointer;
-  accent-color: $audit-accent;
+  accent-color: $tono-amarillo-300;
 }
 
 .auditCheckboxWrap {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 23px;
-  height: 23px;
-  border-radius: $radius-sm;
+  width: 1.4375rem;
+  height: 1.4375rem;
+  border-radius: 0.375rem;
   transition: background .15s;
 }
 
 .auditCheckboxOn {
-  background: $audit-halo;
+  background: $tono-amarillo-100;
 }
 
 .iconBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 23px;
-  height: 23px;
+  width: 1.4375rem;
+  height: 1.4375rem;
   background: none;
   border: none;
-  border-radius: $radius-sm;
-  color: $text-2;
+  border-radius: 0.375rem;
+  color: $gray-600;
   cursor: pointer;
   transition: background .15s, color .15s;
 
-  &:hover:not(:disabled) { background: #f1f4f8; color: $text-1; }
+  &:hover:not(:disabled) { background: $gray-100; color: $carpeta-noche; }
   &:disabled { opacity: .35; cursor: not-allowed; }
 }
 
-.iconBtnEdit:hover:not(:disabled) { color: $blue; background: #eff6ff; }
-.iconBtnMove:hover:not(:disabled) { color: #92400e; background: #fffbeb; }
-.iconBtnDelete:hover:not(:disabled) { color: $red; background: $red-light; }
+.iconBtnEdit:hover:not(:disabled) { color: $tono-azul-450; background: $gray-100; }
+.iconBtnMove:hover:not(:disabled) { color: $tono-naranja-550; background: $cuaderno-papel; }
+.iconBtnDelete:hover:not(:disabled) { color: $tono-rojo-400; background: $tono-rojo-50; }
 
 // ─── Fila resumen ───────────────────────────────────────────────────────────
 .resumenRow td {
-  background: #f0f4ff;
-  border-top: 2px solid #dce7ff;
-  border-bottom: 2px solid #dce7ff;
-  padding: 10px 12px;
+  background: $gray-100;
+  border-top: 2px solid $tono-azul-50;
+  border-bottom: 2px solid $tono-azul-50;
+  padding: 0.625rem 0.75rem;
   white-space: normal;
 }
 
 .resumenContent {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
   flex-wrap: wrap;
   font-size: inherit;
 }
 
 .resumenLabel {
   font-weight: 700;
-  color: $text-1;
+  color: $carpeta-noche;
   white-space: nowrap;
 }
 
@@ -472,19 +431,19 @@ $clinica-bg: #fed7aa;
   font-size: inherit;
   font-weight: 600;
   border-radius: 20px;
-  padding: 2px 10px;
-  background: $surface;
-  border: 1px solid $border;
-  color: $text-2;
+  padding: 2px 0.625rem;
+  background: $white;
+  border: 1px solid $gray-200;
+  color: $gray-600;
   white-space: nowrap;
 }
 
 .resumenMoney {
   font-size: inherit;
-  color: $text-2;
+  color: $gray-600;
   white-space: nowrap;
 
-  strong { color: $text-1; }
+  strong { color: $carpeta-noche; }
 }
 
 .resumenTotalBadge {
@@ -492,9 +451,9 @@ $clinica-bg: #fed7aa;
   font-size: inherit;
   font-weight: 700;
   border-radius: 20px;
-  padding: 3px 12px;
-  background: $blue;
-  color: #fff;
+  padding: 3px 0.75rem;
+  background: $tono-azul-450;
+  color: $white;
   white-space: nowrap;
   margin-left: auto;
 }
@@ -502,130 +461,130 @@ $clinica-bg: #fed7aa;
 .resumenActions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 0.375rem;
   flex-wrap: wrap;
 }
 
 .resumenActionBtn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  height: 24px;
-  padding: 0 10px;
-  border: 1px solid $border;
+  gap: 0.25rem;
+  height: 1.5rem;
+  padding: 0 0.625rem;
+  border: 1px solid $gray-200;
   border-radius: 20px;
-  background: $surface;
-  color: $text-2;
+  background: $white;
+  color: $gray-600;
   font-size: inherit;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
   transition: background .15s, border-color .15s, color .15s;
 
-  &:hover:not(:disabled) { border-color: $blue; color: $blue; }
+  &:hover:not(:disabled) { border-color: $tono-azul-450; color: $tono-azul-450; }
   &:disabled { opacity: .5; cursor: not-allowed; }
 }
 
 .emptyCell {
   text-align: center;
-  color: $text-3;
-  padding: 40px 14px !important;
+  color: $tono-azul-400;
+  padding: 2.5rem 0.875rem !important;
   font-style: italic;
   white-space: normal;
 }
 
 .loadingCell {
   text-align: center;
-  color: $text-3;
-  padding: 40px 14px !important;
+  color: $tono-azul-400;
+  padding: 2.5rem 0.875rem !important;
   white-space: normal;
 }
 
 .errorBox {
-  margin: 16px;
-  background: #fef2f2;
-  border: 1px solid #fca5a5;
-  border-radius: $radius-sm;
-  padding: 12px 16px;
-  font-size: 13px;
-  color: #cc2a2a;
+  margin: 1rem;
+  background: $gray-100;
+  border: 1px solid $tono-rojo-200;
+  border-radius: 0.375rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.8125rem;
+  color: $danger-red;
 }
 
 // ─── Título del socio, subtítulos por tramo/tipo y subtotal por médico ─────────
 .socioTituloRow td {
-  background: #f6f8fc;
-  color: $text-1;
+  background: $gray-50;
+  color: $carpeta-noche;
   font-weight: 700;
-  padding: 7px 12px;
-  border-top: 2px solid $border;
+  padding: 0.4375rem 0.75rem;
+  border-top: 2px solid $gray-200;
 }
 
 .tramoRow td {
   text-align: center;
-  color: #334155;
+  color: $gray-700;
   font-size: .72em;
   font-weight: 600;
   letter-spacing: .06em;
   text-transform: uppercase;
-  padding: 5px 12px 3px 22px;
-  border-bottom: 1px dashed $border;
+  padding: 0.3125rem 0.75rem 3px 1.375rem;
+  border-bottom: 1px dashed $gray-200;
 }
 
 // Subtítulo de cada paciente (listas ordenadas por paciente), celeste y centrado.
 .pacienteSubtituloRow td {
-  background: #e0f2fe;
-  color: #075985;
+  background: $secondary-blue;
+  color: $tono-azul-550-b;
   font-size: .78em;
   font-weight: 700;
   letter-spacing: .04em;
   text-transform: uppercase;
   text-align: center;
-  padding: 5px 12px 4px;
-  border-bottom: 1px solid #bae6fd;
+  padding: 0.3125rem 0.75rem 0.25rem;
+  border-bottom: 1px solid $tono-azul-100;
 }
 
 // Cierre de cada paciente en "Por tipo" ordenado por paciente.
 .totalPacienteRow td {
-  background: #f0f9ff;
-  border-top: 1px solid #bae6fd;
-  border-bottom: 2px solid #bae6fd;
-  padding: 6px 12px;
+  background: $gray-100;
+  border-top: 1px solid $tono-azul-100;
+  border-bottom: 2px solid $tono-azul-100;
+  padding: 0.375rem 0.75rem;
 }
 
 // Subtítulo con el nombre de la clínica (mismo naranja que la etiqueta de clínica).
 .clinicaSubtituloRow td {
-  background: $clinica-bg;
-  color: #7c2d12;
+  background: $tono-naranja-100;
+  color: $tono-naranja-600;
   font-size: .78em;
   font-weight: 700;
   letter-spacing: .04em;
   text-transform: uppercase;
   text-align: center;
-  padding: 5px 12px 4px;
-  border-bottom: 1px solid #fdba74;
+  padding: 0.3125rem 0.75rem 0.25rem;
+  border-bottom: 1px solid $tono-naranja-150;
 }
 
 .clinicaTag {
   align-self: flex-start;
   margin-top: 2px;
-  padding: 0 6px;
+  padding: 0 0.375rem;
   border-radius: 5px;
-  background: $clinica-bg;
-  color: #7c2d12;
+  background: $tono-naranja-100;
+  color: $tono-naranja-600;
   font-size: .85em;
   white-space: nowrap;
 }
 
 // "Por tipo": subtítulo de cada sección (Consultas, Prácticas…).
 .tipoTituloRow td {
-  background: $blue-light;
-  color: #0c2a52;
+  background: $secondary-blue;
+  color: $primary-blue-darker;
   font-weight: 700;
   letter-spacing: .06em;
   text-transform: uppercase;
-  padding: 9px 12px;
-  box-shadow: inset 4px 0 0 $blue;
-  border-top: 8px solid $surface;
+  padding: 0.5625rem 0.75rem;
+  box-shadow: inset 4px 0 0 $tono-azul-450;
+  border-top: 8px solid $white;
 }
 
 .tipoTituloContent {
@@ -633,53 +592,53 @@ $clinica-bg: #fed7aa;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 8px 20px;
+  gap: 0.5rem 1.25rem;
 }
 
 // Selector "Médico A-Z / Paciente A-Z" dentro del subtítulo de la sección.
 .ordenAlfaGroup {
   display: inline-flex;
-  gap: 4px;
+  gap: 0.25rem;
   text-transform: none;
   letter-spacing: 0;
 }
 
 .ordenAlfaBtn {
-  padding: 2px 10px;
-  border: 1px solid #9db6dd;
+  padding: 2px 0.625rem;
+  border: 1px solid $tono-azul-250;
   border-radius: 999px;
-  background: #fff;
-  color: #0c2a52;
+  background: $white;
+  color: $primary-blue-darker;
   font-size: .8em;
   font-weight: 600;
   cursor: pointer;
 }
 
 .ordenAlfaBtnOn {
-  background: #0c2a52;
-  border-color: #0c2a52;
-  color: #fff;
+  background: $primary-blue-darker;
+  border-color: $primary-blue-darker;
+  color: $white;
 }
 
 // "Por tipo": subtotal al cerrar las filas de cada médico.
 .subtotalMedicoRow td {
-  background: #f6f8fc;
-  border-top: 1px solid $border;
-  border-bottom: 2px solid $border;
-  padding: 6px 12px;
+  background: $gray-50;
+  border-top: 1px solid $gray-200;
+  border-bottom: 2px solid $gray-200;
+  padding: 0.375rem 0.75rem;
 }
 
 .subtotalMedicoContent {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: 0.75rem;
   font-size: .9em;
-  color: $text-1;
+  color: $carpeta-noche;
 }
 
 .subtotalMedicoMontos {
   display: flex;
-  gap: 20px;
+  gap: 1.25rem;
   flex-wrap: wrap;
   justify-content: flex-end;
   white-space: nowrap;

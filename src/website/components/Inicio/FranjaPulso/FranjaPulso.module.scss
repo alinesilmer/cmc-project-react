@@ -1,0 +1,89 @@
+@use "@/website/styles/all.scss" as *;
+
+// Papel de electrocardiograma: cuadrícula fina cada 12px y gruesa cada 60px, sobre la noche de la portada.
+.franja {
+  height: 9.5rem;
+  overflow: hidden;
+  background-color: $portada-noche;
+  background-image:
+    linear-gradient(rgba($portada-crema, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba($portada-crema, 0.08) 1px, transparent 1px),
+    linear-gradient(rgba($portada-crema, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba($portada-crema, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px, 60px 60px, 12px 12px, 12px 12px;
+
+  @media (max-width: $breakpoint-tablet) { height: 7rem; }
+}
+
+.monitor {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.fondo,
+.tramo {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+// Sólo el fondo: en los tramos, `non-scaling-stroke` desarma el largo de guion medido con `pathLength`.
+.fondo { vector-effect: non-scaling-stroke; }
+
+// El trazo completo, apenas visible: el recorrido que el punto va a encender.
+.fondo {
+  stroke: rgba($portada-oro, 0.14);
+  stroke-width: 2;
+}
+
+// Cada tramo es un único guion de largo L (el hueco es mayor que todo el trazo); el dashoffset de L a L − 1.06 lo hace recorrer la línea.
+.tramo {
+  stroke: $portada-oro;
+  animation-duration: 3.4s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.cola {
+  animation-name: barrido-cola;
+  stroke-width: 2.5;
+  stroke-opacity: 0.22;
+  stroke-dasharray: 0.18 2;
+}
+
+.medio {
+  animation-name: barrido-medio;
+  stroke-width: 3;
+  stroke-opacity: 0.55;
+  stroke-dasharray: 0.07 2;
+}
+
+.punta {
+  animation-name: barrido-punta;
+  stroke-width: 4;
+  stroke-dasharray: 0.012 2;
+  filter: drop-shadow(0 0 6px $portada-oro);
+}
+
+// Valores literales: Chrome no resuelve `var()` en los keyframes de stroke-dashoffset.
+@keyframes barrido-cola {
+  from { stroke-dashoffset: 0.18; }
+  to { stroke-dashoffset: -0.88; }
+}
+
+@keyframes barrido-medio {
+  from { stroke-dashoffset: 0.07; }
+  to { stroke-dashoffset: -0.99; }
+}
+
+@keyframes barrido-punta {
+  from { stroke-dashoffset: 0.012; }
+  to { stroke-dashoffset: -1.048; }
+}
+
+// Sin movimiento: el trazo entero encendido, quieto.
+@media (prefers-reduced-motion: reduce) {
+  .tramo { display: none; animation: none; }
+  .fondo { stroke: $portada-oro; stroke-opacity: 0.7; }
+}

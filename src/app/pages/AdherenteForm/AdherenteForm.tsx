@@ -4,6 +4,9 @@ import { useNavigate } from "react-router-dom";
 import styles from "./AdherenteForm.module.scss";
 import BackButton from "@/app/components/ui/BackButton/BackButton";
 import SuccessModal from "@/app/components/ui/SuccessModal/SuccessModal";
+import { Search } from "lucide-react";
+import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
+import MarcoModal from "@/app/components/ui/MarcoModal/MarcoModal";
 
 /* Lightweight reject modal (inline so you don't need a new file) */
 type RejectProps = {
@@ -20,13 +23,7 @@ const RejectModal: React.FC<RejectProps> = ({
 }) => {
   if (!open) return null;
   return (
-    <div
-      className={styles.modalOverlay}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="reject-title"
-    >
-      <div className={styles.modalCard}>
+    <MarcoModal className={styles.modalCard}>
         <h3 id="reject-title" className={styles.modalTitle}>
           {title}
         </h3>
@@ -36,8 +33,7 @@ const RejectModal: React.FC<RejectProps> = ({
             Entendido
           </button>
         </div>
-      </div>
-    </div>
+      </MarcoModal>
   );
 };
 
@@ -138,13 +134,7 @@ const AdherenteForm: React.FC = () => {
 
           <div className={styles.row}>
             <label className={styles.label}>Date of birth</label>
-            <input
-              className={styles.input}
-              type="date"
-              value={dob}
-              onChange={(e) => setDob(e.target.value)}
-              placeholder="dd/mm/yyyy"
-            />
+            <CampoFecha value={dob} onChange={(valor) => setDob(valor)} />
           </div>
 
           <div className={styles.row}>
@@ -161,7 +151,7 @@ const AdherenteForm: React.FC = () => {
                 className={styles.searchIcon}
                 aria-label="Buscar dirección"
               >
-                🔍
+                <Search size={16} aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -242,13 +232,7 @@ const AdherenteForm: React.FC = () => {
 
           <div className={styles.row}>
             <label className={styles.label}>Entry date</label>
-            <input
-              className={styles.input}
-              type="date"
-              value={entryDate}
-              onChange={(e) => setEntryDate(e.target.value)}
-              placeholder="dd/mm/yyyy"
-            />
+            <CampoFecha value={entryDate} onChange={(valor) => setEntryDate(valor)} />
           </div>
 
           <div className={styles.row}>

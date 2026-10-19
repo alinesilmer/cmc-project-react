@@ -15,27 +15,9 @@ import type { PrestacionPrevencion, ReportePrevencion } from "./prevencion.parse
 import { buscarPorMatricula, esIdentificado } from "./medicosPorMatricula";
 import type { ResultadoMatricula } from "./medicosPorMatricula";
 import s from "./PrevencionSalud.module.scss";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
 
-/**
- * Lectura del reporte de facturación de Prevención Salud.
- *
- * Es la única obra social del panel que no valida prestación por prestación:
- * manda un reporte mensual del Colegio entero y hay que repartirlo entre los
- * médicos. Acá se lee ese archivo, se parte cada autorización en sus prácticas
- * y se busca a cada efector en `listado_medico` por su matrícula provincial,
- * para poder revisar antes de facturar qué filas quedaron sin dueño.
- *
- * El andamiaje (carga, resumen, avisos, estado vacío) lo pone `ReporteOS`, que
- * comparte con Swiss Medical; acá queda sólo la tabla y lo que es propio de
- * este reporte.
- *
- * **Todavía no graba.** Prevención Salud es la obra social 103, pero el
- * backend no la conoce: `POST /api/validaciones/prestaciones` despacha por
- * `obras.POR_NRO`, que no la tiene, así que hoy responde 422. Aunque la
- * tuviera, ese endpoint graba de a una prestación y para el médico logueado, y
- * este archivo son ~580 prácticas de ~150 médicos distintos. Falta el import
- * masivo del lado de la API.
- */
+/** Lectura del reporte de facturación de Prevención Salud. */
 
 type Fila = PrestacionPrevencion & { medico: ResultadoMatricula };
 
@@ -74,9 +56,7 @@ export default function PrevencionSalud() {
 
   const sinMedico = filas.filter((f) => !esIdentificado(f.medico)).length;
 
-  // Las que no cayeron en ningún médico no van en la tabla: son filas que no
-  // se pueden facturar y sólo ensucian la lectura de las que sí. Siguen
-  // contadas en el resumen y se ven con el filtro de arriba.
+  // Las que no cayeron en ningún médico no van en la tabla.
   const enTabla = useMemo(
     () =>
       soloSinMedico
@@ -118,7 +98,6 @@ export default function PrevencionSalud() {
   return (
     <ReporteOS
       titulo="Prevención Salud"
-      subtitulo="Subí el reporte de facturación y revisá cómo quedó repartido entre los médicos antes de facturarlo."
       ayuda={AYUDA}
       estado={estado}
       detalleArchivo={reporte?.rango}
@@ -146,7 +125,7 @@ export default function PrevencionSalud() {
       }
     >
       <div className={r.tableWrap}>
-        <table className={r.table}>
+        <Tabla className={r.table}>
           <thead>
             <tr>
               <th className={r.num}>#</th>
@@ -192,7 +171,7 @@ export default function PrevencionSalud() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </Tabla>
       </div>
 
       <PaginadoTabla

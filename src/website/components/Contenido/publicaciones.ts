@@ -24,11 +24,7 @@ type ConfigPublicacion = {
   volver: string;
 };
 
-/**
- * Noticias y cursos son la misma publicación con distinto `tipo`: tenían dos
- * listados y dos páginas de detalle copiadas línea por línea, que ya habían
- * empezado a separarse (los cursos no mostraban la etiqueta).
- */
+/** Noticias y cursos son la misma publicación con distinto `tipo`: tenían dos listados y dos páginas de detalle copiadas línea por línea. */
 export const PUBLICACIONES: Record<TipoPublicacion, ConfigPublicacion> = {
   Noticia: {
     ruta: "/noticias",

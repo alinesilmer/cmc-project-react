@@ -25,10 +25,7 @@ export function formatearFecha(fecha: Fechable, formato: FormatoFecha = "larga")
   return new Intl.DateTimeFormat("es-AR", FORMATOS[formato]).format(d);
 }
 
-/**
- * DD/MM/AAAA de una fecha ISO (`YYYY-MM-DD`) sin construir un `Date`: así no
- * se corre un día por la zona horaria.
- */
+/** DD/MM/AAAA de una fecha ISO (`YYYY-MM-DD`) sin construir un `Date`: así no se corre un día por la zona horaria. */
 export function formatearFechaISO(iso: string | null): string | null {
   if (!iso) return null;
   const [y, m, d] = iso.split("-");

@@ -8,15 +8,9 @@ import type { FilaResultado, ImportacionOut, PeriodoOpcion } from "../importacio
 import type { Filtro } from "../useImportador";
 import { fechaLegible, moneda, periodoLegible } from "../formato";
 import s from "./panel.module.scss";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
 
-/**
- * Los controles y la tabla de resultado de una importación.
- *
- * Son iguales para cualquier obra social: selector de período, botones de
- * previsualizar y confirmar, y la tabla con el desenlace de cada fila. Lo
- * único que cambia entre reportes es el parser y los endpoints, que viven en
- * la pantalla.
- */
+/** Los controles y la tabla de resultado de una importación. */
 
 const ETIQUETA: Record<string, string> = {
   grabable: "Entra",
@@ -153,8 +147,7 @@ export function AccionesImportacion({
 
 // ── Tabla ────────────────────────────────────────────────────────────────────
 
-/** Filas por página. Un reporte trae entre 500 y 1.200 prácticas: pintarlas
- * todas cuelga el navegador y no hay forma de leerlas de corrido igual. */
+/** Filas por página. Un reporte trae entre 500 y 1.200 prácticas: pintarlas todas cuelga el navegador y no hay forma de leerlas de corrido igual. */
 const POR_PAGINA = 50;
 
 export function TablaResultado({
@@ -186,7 +179,7 @@ export function TablaResultado({
   return (
     <>
     <div className={r.tableWrap}>
-      <table className={r.table}>
+      <Tabla className={r.table}>
         <thead>
           <tr>
             <th className={r.num}>#</th>
@@ -238,7 +231,7 @@ export function TablaResultado({
             );
           })}
         </tbody>
-      </table>
+      </Tabla>
     </div>
 
     {paginas > 1 && (

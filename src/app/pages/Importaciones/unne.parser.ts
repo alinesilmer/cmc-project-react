@@ -1,18 +1,4 @@
-// Lectura del Excel que exporta el sistema de UNNE (O.S. 81),
-// «presentación de liquidación web».
-//
-// Forma real (verificada sobre el de 09/2026, 1.468 filas): una sola hoja con
-// 18 columnas —
-//
-//   N° Referencia · N° Factura · Periodo · Provincia · Matrícula ·
-//   Apellido y Nombre Prestador · Reg. · Orden N° · Orden Tipo ·
-//   Fecha Práctica · Cantidad · Práctica · Descripción · Función · Norma ·
-//   DNI Paciente · Apellido y Nombre Paciente · Importe
-//
-// y cierra con una fila «TOTAL». Una orden puede traer varios ítems (`Reg.`
-// 1, 2, 3…): cada uno es una prestación aparte. El importe es el de la línea,
-// ya multiplicado por la cantidad. Qué hace el backend con cada columna está en
-// `cmc_api/app/modules/importaciones/unne/servicio.py`.
+// Lectura del Excel que exporta el sistema de UNNE (O.S. 81), «presentación de liquidación web».
 
 import {
   abrirLibro,
@@ -87,17 +73,8 @@ const ERROR_ENCABEZADOS =
 
 const utf8 = new TextDecoder("utf-8");
 
-/**
- * Repara los nombres que el sistema de UNNE exporta con el encoding roto.
- *
- * Vienen dos daños distintos:
- *  - UTF-8 leído como Latin-1 ("MUÃ\u0091OZ"): se recupera exacto.
- *  - La letra perdida del todo (`ÿ`): pasa con Ñ, Í, É, Á y Ü, sin forma de saber
- *    cuál era. Entre vocales, o al principio de palabra antes de vocal, casi
- *    siempre es Ñ (NUÑEZ, IBAÑEZ, ÑAÑEZ); en el resto queda "?". El DNI, que es lo
- *    que identifica al paciente, no se toca.
- */
-export function repararNombre(texto: string): string {
+/** Repara los nombres que el sistema de UNNE exporta con el encoding roto. */
+function repararNombre(texto: string): string {
   const recuperado = texto.replace(/Ã([\u0080-¿])/g, (_, c: string) =>
     utf8.decode(new Uint8Array([0xc3, c.charCodeAt(0)]))
   );

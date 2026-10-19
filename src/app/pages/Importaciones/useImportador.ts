@@ -1,8 +1,4 @@
 // El estado de una pantalla de importación.
-//
-// Los dos pasos —previsualizar y confirmar— son iguales para cualquier obra
-// social: sólo cambian el parser, los endpoints y las columnas de la tabla.
-// Eso queda acá, y cada pantalla aporta lo suyo.
 
 import { useEffect, useMemo, useState } from "react";
 
@@ -21,8 +17,7 @@ export function useImportador<T>(
   api: ApiImportador<T>,
   prestaciones: T[],
   archivo: string | null,
-  /** Cambia el destino de la carga (ej. la obra social de Prevención): se
-   * vuelven a pedir los períodos y se descarta lo previsualizado. */
+  /** Cambia el destino de la carga (ej. la obra social de Prevención): se vuelven a pedir los períodos y se descarta lo previsualizado. */
   destino: string | number = ""
 ) {
   const [periodos, setPeriodos] = useState<PeriodoOpcion[]>([]);
@@ -54,11 +49,7 @@ export function useImportador<T>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [destino]);
 
-  // Cambiar de archivo o de período invalida lo previsualizado: lo que se
-  // confirma tiene que ser exactamente lo que se vio. Se mira la lista de
-  // prácticas y no sólo el nombre: un reporte corregido suele volver a subirse
-  // con el mismo nombre, y con el nombre solo la pantalla seguía mostrando la
-  // previsualización vieja mientras «Confirmar» mandaba las filas nuevas.
+  // Cambiar de archivo o de período invalida lo previsualizado: lo que se confirma tiene que ser exactamente lo que se vio.
   useEffect(() => {
     setSalida(null);
     setConfirmado(false);
@@ -80,8 +71,7 @@ export function useImportador<T>(
       }
     } catch (e) {
       console.error("Importación:", e);
-      // El motivo lo da el backend (período cerrado, permiso faltante); el
-      // `message` de axios era sólo «Request failed with status code 409».
+      // El motivo lo da el backend (período cerrado, permiso faltante); el `message` de axios era sólo «Request failed with status code 409».
       setError(mensajeDeError(e, "No pudimos procesar el reporte en este momento."));
     } finally {
       setTrabajando(false);

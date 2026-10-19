@@ -1,18 +1,10 @@
 @use "@/app/styles/all.scss" as *;
 
-// Portal del socio. Hoja propia (antes reusaba Dashboard.module.scss): el Inicio
-// del médico dejó de ser un tablero de accesos para ser una vidriera —hero corto,
-// beneficios, convenios, tutoriales— y forzar las dos cosas en la misma hoja
-// obligaba a que cada cambio de una vigilara a la otra.
+// Portal del socio. Hoja propia (antes reusaba Dashboard.module.scss): el Inicio del médico dejó de ser un tablero de accesos para ser una vidriera.
 
-// Radio único de la pantalla: cantos vivos. Reemplaza a $border-radius-* (que va
-// de 0.34rem a 0.9rem) y a las píldoras de 999px de los badges. Se toca acá y
-// cambia toda la página — no repartir radios sueltos por las reglas de abajo.
-$radius-sharp: 0;
+// Radio único de la pantalla: cantos vivos.
 
-// Mismo shell y misma escala de padding que el resto del panel (ver
-// Dashboard.module.scss): el portal del socio no debe encuadrar distinto que
-// las pantallas que tiene al lado.
+// Mismo shell y misma escala de padding que el resto del panel (ver Dashboard.module.scss).
 .page {
   display: flex;
   min-height: 100vh;
@@ -28,18 +20,13 @@ $radius-sharp: 0;
 
 .content {
   flex: 1;
-  // Sin esto el item flex toma `min-width: auto` = su ancho min-content, y la
-  // tira de logos (`width: max-content`) lo estira más allá del viewport: el
-  // `overflow: hidden` del contenedor no descuenta esa contribución. Mismo
-  // motivo por el que AppLayout lo pone en su <main>.
+  // Sin esto el item flex toma `min-width: auto` = su ancho min-content, y la tira de logos (`width.
   min-width: 0;
   padding: $spacing-10;
   display: flex;
   flex-direction: column;
   gap: $spacing-12;
-  // Sin fondo propio: hereda el $gray-50 del body, igual que el resto del
-  // panel. El degradado azulado que había acá teñía la pantalla entera y la
-  // separaba visualmente de las pantallas vecinas.
+  // Sin fondo propio: hereda el $gray-50 del body, igual que el resto del panel.
 
   @media (max-width: 1200px) {
     padding: $spacing-8;
@@ -57,14 +44,12 @@ $radius-sharp: 0;
 }
 
 // ─── Hero ─────────────────────────────────────────────────────────────────────
-// Deliberadamente bajo: es un saludo y dos botones, no una portada. Todo lo que
-// el socio viene a hacer vive más abajo, así que el hero no debe empujarlo fuera
-// de pantalla.
+// Deliberadamente bajo: es un saludo y dos botones, no una portada.
 
 .hero {
   position: relative;
   overflow: hidden;
-  border-radius: $radius-sharp;
+  border-radius: 0;
   padding: $spacing-10 $spacing-12;
   color: $white;
   background:
@@ -107,7 +92,7 @@ $radius-sharp: 0;
 
 .greeting {
   margin: 0;
-  font-family: "Manrope", "Inter", sans-serif;
+  font-family: $fuente-titulos;
   font-size: $font-size-4xl;
   font-weight: $font-weight-bold;
   letter-spacing: -0.015em;
@@ -118,7 +103,7 @@ $radius-sharp: 0;
   margin: $spacing-3 0 0;
   font-size: $font-size-lg;
   line-height: 1.5;
-  color: rgba(255, 255, 255, 0.84);
+  color: rgba($white, 0.84);
 }
 
 .heroActions {
@@ -133,7 +118,7 @@ $radius-sharp: 0;
   align-items: center;
   gap: $spacing-2;
   padding: $spacing-3 $spacing-5;
-  border-radius: $radius-sharp;
+  border-radius: 0;
   font-size: $font-size-base;
   font-weight: $font-weight-semibold;
   text-decoration: none;
@@ -147,7 +132,7 @@ $radius-sharp: 0;
 .heroBtnPrimary {
   background: $primary-yellow;
   color: $primary-blue-darker;
-  box-shadow: 0 6px 16px rgba(247, 233, 170, 0.28);
+  box-shadow: 0 6px 16px rgba($tono-amarillo-50, 0.28);
 
   &:hover {
     background: $primary-yellow-light;
@@ -155,12 +140,12 @@ $radius-sharp: 0;
 }
 
 .heroBtnGhost {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba($white, 0.12);
   color: $white;
-  border: 1px solid rgba(255, 255, 255, 0.32);
+  border: 1px solid rgba($white, 0.32);
 
   &:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba($white, 0.2);
   }
 }
 
@@ -181,7 +166,7 @@ $radius-sharp: 0;
 
 .sectionTitle {
   margin: 0;
-  font-family: "Manrope", "Inter", sans-serif;
+  font-family: $fuente-titulos;
   font-size: $font-size-2xl;
   font-weight: $font-weight-bold;
   color: $primary-blue-darker;
@@ -223,7 +208,7 @@ $radius-sharp: 0;
   gap: $spacing-3;
   height: 100%;
   padding: $spacing-5;
-  border-radius: $radius-sharp;
+  border-radius: 0;
   background: $white;
   border: 1px solid $gray-200;
   text-decoration: none;
@@ -232,7 +217,7 @@ $radius-sharp: 0;
   &:hover {
     transform: translateY(-3px);
     box-shadow: $shadow-lg;
-    border-color: rgba(90, 121, 225, 0.4);
+    border-color: rgba($accent-blue, 0.4);
   }
 }
 
@@ -241,14 +226,14 @@ $radius-sharp: 0;
   place-items: center;
   width: 2.6rem;
   height: 2.6rem;
-  border-radius: $radius-sharp;
+  border-radius: 0;
   color: $white;
 }
 
 .accentDarkblue { background: linear-gradient(140deg, $primary-blue-darker, $primary-blue); }
 .accentBlue     { background: linear-gradient(140deg, $primary-blue, $accent-blue); }
-.accentAmber    { background: linear-gradient(140deg, #b4801f, $warning-orange); }
-.accentGold     { background: linear-gradient(140deg, #8a7420, #c8a83c); }
+.accentAmber    { background: linear-gradient(140deg, $tono-amarillo-350, $warning-orange); }
+.accentGold     { background: linear-gradient(140deg, $tono-amarillo-450-b, $tono-amarillo-250); }
 
 .accessTitle {
   margin: 0;
@@ -278,7 +263,7 @@ $radius-sharp: 0;
   flex-direction: column;
   gap: $spacing-2;
   padding: $spacing-5;
-  border-radius: $radius-sharp;
+  border-radius: 0;
   background: $white;
   border: 1px solid $gray-200;
   // El acento lo pinta cada beneficio con su `color` guardado en la BD.
@@ -309,7 +294,7 @@ $radius-sharp: 0;
 .benefitDescuento {
   flex-shrink: 0;
   padding: $spacing-1 $spacing-3;
-  border-radius: $radius-sharp;
+  border-radius: 0;
   font-size: $font-size-sm;
   font-weight: $font-weight-bold;
   color: $white;
@@ -330,8 +315,7 @@ $radius-sharp: 0;
   font-size: $font-size-sm;
   line-height: 1.5;
   color: $gray-500;
-  // Descripción libre y larga en la BD: se recorta para que la grilla no se
-  // desalinee por una tarjeta con cuatro párrafos.
+  // Descripción libre y larga en la BD: se recorta para que la grilla no se desalinee por una tarjeta con cuatro párrafos.
   display: -webkit-box;
   -webkit-line-clamp: 3;
   line-clamp: 3;
@@ -353,7 +337,7 @@ $radius-sharp: 0;
   position: relative;
   overflow: hidden;
   padding: $spacing-5 0;
-  border-radius: $radius-sharp;
+  border-radius: 0;
   background: $white;
   border: 1px solid $gray-200;
 
@@ -434,8 +418,8 @@ $radius-sharp: 0;
   flex-direction: column;
   gap: $spacing-3;
   padding: $spacing-5;
-  border-radius: $radius-sharp;
-  background: rgba(255, 255, 255, 0.6);
+  border-radius: 0;
+  background: rgba($white, 0.6);
   border: 1px dashed $gray-300;
 }
 
@@ -445,7 +429,7 @@ $radius-sharp: 0;
   flex-direction: column;
   gap: $spacing-3;
   padding: $spacing-5;
-  border-radius: $radius-sharp;
+  border-radius: 0;
   background: $white;
   border: 1px solid $gray-200;
 }
@@ -453,10 +437,9 @@ $radius-sharp: 0;
 .tutorialVideo {
   width: 100%;
   aspect-ratio: 16 / 9;
-  border-radius: $radius-sharp;
+  border-radius: 0;
   background: $gray-900;
-  // `contain` y no `cover`: recortar un tutorial puede tapar justo la parte de
-  // la pantalla que el video está explicando.
+  // `contain` y no `cover`: recortar un tutorial puede tapar justo la parte de la pantalla que el video está explicando.
   object-fit: contain;
 }
 
@@ -464,8 +447,8 @@ $radius-sharp: 0;
   display: grid;
   place-items: center;
   aspect-ratio: 16 / 9;
-  border-radius: $radius-sharp;
-  background: linear-gradient(140deg, $secondary-blue, #dbe6fb);
+  border-radius: 0;
+  background: linear-gradient(140deg, $secondary-blue, $gray-200);
   color: $primary-blue-lighter;
 }
 
@@ -485,7 +468,7 @@ $radius-sharp: 0;
 .soonBadge {
   align-self: flex-start;
   padding: $spacing-1 $spacing-3;
-  border-radius: $radius-sharp;
+  border-radius: 0;
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   text-transform: uppercase;
@@ -502,9 +485,9 @@ $radius-sharp: 0;
   justify-content: space-between;
   gap: $spacing-6;
   padding: $spacing-6 $spacing-8;
-  border-radius: $radius-sharp;
-  background: linear-gradient(120deg, $secondary-blue, #eef4ff);
-  border: 1px solid rgba(90, 121, 225, 0.24);
+  border-radius: 0;
+  background: linear-gradient(120deg, $secondary-blue, $gray-100);
+  border: 1px solid rgba($accent-blue, 0.24);
 
   @media (max-width: $breakpoint-md) {
     flex-direction: column;
@@ -532,7 +515,7 @@ $radius-sharp: 0;
   align-items: center;
   gap: $spacing-2;
   padding: $spacing-3 $spacing-5;
-  border-radius: $radius-sharp;
+  border-radius: 0;
   background: $primary-blue;
   color: $white;
   font-size: $font-size-base;
@@ -556,7 +539,7 @@ $radius-sharp: 0;
 
 .skeleton {
   height: 9.5rem;
-  border-radius: $radius-sharp;
+  border-radius: 0;
   background: linear-gradient(90deg, $gray-100 25%, $gray-200 37%, $gray-100 63%);
   background-size: 400% 100%;
   animation: shimmer 1.4s ease infinite;
@@ -573,9 +556,9 @@ $radius-sharp: 0;
 
 .empty {
   padding: $spacing-8;
-  border-radius: $radius-sharp;
+  border-radius: 0;
   border: 1px dashed $gray-300;
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba($white, 0.6);
   text-align: center;
   font-size: $font-size-sm;
   color: $gray-500;

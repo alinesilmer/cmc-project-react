@@ -1,20 +1,12 @@
 @use "./variables.scss" as *;
 
-/* Controles compartidos por las pantallas de administración.
- *
- * Son placeholders (`%`), no clases: Sass no emite nada hasta que alguien los
- * extiende, así que esto no agrega peso a los módulos que no los usan. Cada
- * módulo los engancha con el nombre de clase que ya tenía, así que el HTML no
- * cambia:
- *
- *     .primaryBtn { @extend %btn-primario; }
- */
+/* Controles compartidos por las pantallas de administración. */
 
 %control-base {
   display: inline-flex;
   align-items: center;
   gap: $spacing-2;
-  height: 34px;
+  height: 2.125rem;
   padding: 0 $spacing-4;
   font-size: $font-size-sm;
   font-family: inherit;
@@ -47,7 +39,7 @@
   display: inline-flex;
   align-items: center;
   gap: $spacing-1;
-  height: 30px;
+  height: 1.875rem;
   padding: 0 $spacing-3;
   font-size: $font-size-xs;
   font-family: inherit;
@@ -65,8 +57,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 1.875rem;
+  height: 1.875rem;
   color: $gray-500;
   background: $white;
   border: 1px solid $gray-200;
@@ -95,7 +87,7 @@
 /* El `<input>` de texto de los formularios de administración. */
 %campo-texto {
   width: 100%;
-  height: 34px;
+  height: 2.125rem;
   padding: 0 $spacing-3;
   font-size: $font-size-base;
   font-family: inherit;

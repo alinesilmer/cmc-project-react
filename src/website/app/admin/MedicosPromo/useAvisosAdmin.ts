@@ -5,10 +5,7 @@ const KEY = ["admin", "avisos-medicos"] as const;
 
 type Cambios = Partial<{ medico_id: number; activo: boolean }>;
 
-/**
- * Los avisos y sus operaciones. Cada cambio refresca también el directorio
- * público (/medicos-asociados), que lee los mismos avisos.
- */
+/** Los avisos y sus operaciones. */
 export function useAvisosAdmin() {
   const queryClient = useQueryClient();
   const { data: avisos = [], isPending } = useQuery({ queryKey: KEY, queryFn: () => listAds() });

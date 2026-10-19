@@ -1,33 +1,4 @@
 // Lectura del reporte de transacciones que emite Swiss Medical (O.S. 256).
-//
-// Como el de Prevención Salud, viene por el Colegio entero y no por médico: el
-// prestador es siempre el Colegio (48178) y lo que ata cada fila a alguien de
-// `listado_medico` es la matrícula del efector.
-//
-// Forma real del reporte (verificada sobre el de 20/08/2026 al 20/09/2026,
-// 1.127 filas): una sola hoja con 26 columnas —
-//
-//   prestador · Razón_Social · cuit · transacción_ticket · transacción_item ·
-//   fecha_transaccion · fecha_prestacion · credencial · apellido_afiliado ·
-//   condición_iva · prestación · prestación_denominación · cantidad ·
-//   transacción_tipo · autorización · copago · efector · efector_matricula ·
-//   efector_cuit · efector_razón_social · prescriptor · prescriptor_matricula ·
-//   prescriptor_razón_social · icd · terminal · terminal_domicilio
-//
-// Tres diferencias con el de Prevención Salud:
-//
-//  1. El grano ya viene desarmado. Una fila es un ítem facturable, con su
-//     código y su cantidad; no hay que partir celdas multi-práctica. Lo que sí
-//     se repite es el ticket: 48 de los 1.055 tickets traen más de un ítem
-//     (hasta 6), y eso se muestra como "2/3" igual que allá.
-//  2. Trae importe (`copago`) y número de afiliado (`credencial`), que en
-//     Prevención Salud no venían.
-//  3. La matrícula viene con la letra de la provincia adelante ("W-3972"). Ver
-//     `matriculaDeEfector` más abajo: no es un detalle cosmético.
-//
-// Las tres primeras columnas son constantes en todo el archivo (son los datos
-// del Colegio como prestador), así que se leen una vez como cabecera y no se
-// repiten en la tabla.
 
 import {
   abrirLibro,
@@ -83,7 +54,7 @@ export interface PrestacionSwiss {
 }
 
 /** Los datos del Colegio como prestador: constantes en todo el archivo. */
-export interface CabeceraSwiss {
+interface CabeceraSwiss {
   prestador: string;
   razonSocial: string;
   cuit: string;
@@ -122,8 +93,7 @@ type Clave =
   | "terminal"
   | "terminalDomicilio";
 
-// `normalizarTitulo` ya pasó a mayúsculas, sacó acentos y convirtió guiones
-// bajos y puntos en espacios, así que "Razón_Social" llega como "RAZON SOCIAL".
+// `normalizarTitulo` ya pasó a mayúsculas, sacó acentos y convirtió guiones bajos y puntos en espacios, así que "Razón_Social" llega como "RAZON SOCIAL".
 const COLUMNAS: ColumnaSpec<Clave>[] = [
   { key: "prestador", alias: ["PRESTADOR"] },
   { key: "razonSocial", alias: ["RAZON SOCIAL"] },
@@ -153,19 +123,10 @@ const COLUMNAS: ColumnaSpec<Clave>[] = [
   { key: "terminalDomicilio", alias: ["TERMINAL DOMICILIO"] },
 ];
 
-/**
- * Provincia y número de una matrícula del reporte.
- *
- * Swiss la manda con la letra de la provincia adelante: "W-3972" es Corrientes,
- * y en el reporte de septiembre hay una "H-6395", que es Chaco. La distinción
- * importa porque `claveMatricula` (el índice del padrón) se queda sólo con los
- * dígitos: sin mirar la letra, esa "H-6395" matchearía contra el médico 6395 de
- * Corrientes, que es otra persona. Por eso la pantalla marca las que no son W
- * en vez de darlas por resueltas.
- */
-export const CORRIENTES = "W";
+/** Provincia y número de una matrícula del reporte. */
+const CORRIENTES = "W";
 
-export const matriculaDeEfector = (
+const matriculaDeEfector = (
   valor: unknown
 ): { matricula: string; provincia: string } => {
   const matricula = textoCelda(valor);
@@ -173,8 +134,7 @@ export const matriculaDeEfector = (
   return { matricula, provincia: m ? m[1].toUpperCase() : "" };
 };
 
-/** `true` si la matrícula no es de Corrientes y por lo tanto no se puede
- * resolver contra `listado_medico` sólo por su número. */
+/** `true` si la matrícula no es de Corrientes y por lo tanto no se puede resolver contra `listado_medico` sólo por su número. */
 export const esDeOtraProvincia = (p: PrestacionSwiss): boolean =>
   p.provincia !== "" && p.provincia !== CORRIENTES;
 
@@ -241,8 +201,7 @@ export async function leerArchivoSwiss(file: File): Promise<ReporteSwiss> {
     // Los reportes pueden cerrar con filas de totales o separadores.
     .filter((f) => f.item || f.ticket || f.codigo);
 
-  // Cuántos ítems trae cada ticket, para poder mostrar "2/3" en los que se
-  // repiten. Se cuenta sobre las filas ya filtradas.
+  // Cuántos ítems trae cada ticket, para poder mostrar "2/3" en los que se repiten.
   const porTicket = new Map<string, number>();
   for (const f of crudas) porTicket.set(f.ticket, (porTicket.get(f.ticket) ?? 0) + 1);
 

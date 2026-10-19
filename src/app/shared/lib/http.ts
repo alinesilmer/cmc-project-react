@@ -21,18 +21,7 @@ export const httpBare = axios.create({
   timeout: 15000,
 });
 
-/**
- * Si la URL mueve credenciales y por lo tanto no se puede loguear en consola.
- *
- * El log de DEV imprime el body de cada request y el body de cada respuesta.
- * Para casi todo eso es útil; para el endpoint que devuelve la contraseña de
- * una casilla del Colegio, significa dejar la clave en claro en la consola del
- * navegador —y en cualquier extensión que lea la consola— cada vez que alguien
- * la mira con las devtools abiertas.
- *
- * El backend ya redacta estos cuerpos en `audit_log`; esto cierra el mismo
- * agujero del lado del cliente.
- */
+/** Si la URL mueve credenciales y por lo tanto no se puede loguear en consola. */
 const esSensible = (url?: string) =>
   Boolean(url && (url.includes("/password") || url.includes("/auth/")));
 
@@ -65,9 +54,7 @@ http.interceptors.request.use((config: RetriableConfig) => {
 
   const token = getAccessToken();
   if (token) config.headers["Authorization"] = `Bearer ${token}`;
-  // Recordamos con qué token salió esta request: si al recibir un 401
-  // el token vigente ya cambió, significa que otra request en vuelo ya
-  // refrescó — reintentamos directo en vez de disparar un segundo refresh.
+  // Recordamos con qué token salió esta request: si al recibir un 401 el token vigente ya cambió.
   config.__token = token;
 
   const method = (config.method ?? "").toUpperCase();
@@ -110,8 +97,7 @@ http.interceptors.response.use(
 
     original.__retried = true;
 
-    // Otra request ya renovó el token mientras esta viajaba: no hace falta
-    // un segundo refresh, alcanza con reintentar con el token vigente.
+    // Otra request ya renovó el token mientras esta viajaba: no hace falta un segundo refresh, alcanza con reintentar con el token vigente.
     const currentToken = getAccessToken();
     if (currentToken && currentToken !== original.__token) {
       original.headers = original.headers || {};
@@ -138,19 +124,7 @@ export const getJSON = async <T>(url: string, params?: Record<string, any>) => {
   return data as T;
 };
 
-export async function getJSONLong<T>(
-  url: string,
-  timeoutMs = 180_000, // 3 minutos por defecto
-  config?: AxiosRequestConfig
-): Promise<T> {
-  const r = await http.get<T>(url, { timeout: timeoutMs, ...config });
-  return r.data;
-}
-
 // `config` sirve sobre todo para subir el `timeout` de una llamada puntual.
-// El default de 15 s alcanza para la API sola, pero se queda corto cuando el
-// backend a su vez tiene que esperar a un tercero (ver TIMEOUT_OS_EN_LINEA en
-// pages/Validaciones/validaciones.api.ts).
 export const postJSON = async <T>(
   url: string,
   body?: any,
@@ -209,10 +183,7 @@ export const delJSONBody = async <T = unknown>(url: string, body?: any): Promise
   return data as T;
 };
 
-// Axios serializa un array como `columnas[]=a&columnas[]=b` por default —
-// FastAPI espera la clave repetida sin corchetes (`columnas=a&columnas=b`)
-// para bindear un `list[...]` en un Query param. Sin este serializer, todo
-// filtro/columna multivaluada del panel de exportación se pierde en silencio.
+// Axios serializa un array como `columnas[]=a&columnas[]=b` por default — FastAPI espera la clave repetida sin corchetes (`columnas=a&columnas=b`) para bindear un `list[...]` en un Query param.
 function serializeParamsRepetidos(params: Record<string, any>): string {
   const usp = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
@@ -226,11 +197,7 @@ function serializeParamsRepetidos(params: Record<string, any>): string {
   return usp.toString();
 }
 
-// Descarga de archivo (export a PDF/Excel): timeout largo porque el backend
-// puede tardar unos segundos generando el documento (facturas con miles de
-// prestaciones), y `responseType: "blob"` para no intentar parsear el binario
-// como JSON. El nombre de archivo se lee de `Content-Disposition` cuando el
-// caller no lo pisa explícitamente.
+// Descarga de archivo (export a PDF/Excel): timeout largo porque el backend puede tardar unos segundos generando el documento (facturas con miles de prestaciones).
 export async function getBlobLong(
   url: string,
   params?: Record<string, any>,

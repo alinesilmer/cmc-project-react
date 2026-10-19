@@ -8,17 +8,17 @@
   border-radius: $radio-lg;
   box-shadow: $shadow-sm;
   overflow: hidden;
-  min-height: 480px;
+  min-height: 30rem;
 
   @media (max-width: 760px) { flex-direction: column; }
 }
 
 .panel {
-  width: 250px;
+  width: 15.625rem;
   flex-shrink: 0;
   border-right: 1px solid $linea;
-  background: #fafbfd;
-  padding: 10px 8px;
+  background: $gray-50;
+  padding: 0.625rem 0.5rem;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -31,8 +31,8 @@
 }
 
 .panelTitulo {
-  margin: 0 0 6px;
-  padding: 0 8px;
+  margin: 0 0 0.375rem;
+  padding: 0 0.5rem;
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -44,7 +44,7 @@
   display: flex;
   flex-direction: column;
   gap: 1px;
-  padding: 8px 10px;
+  padding: 0.5rem 0.625rem;
   border-radius: $radio-sm;
   text-decoration: none;
   color: $tinta;
@@ -65,10 +65,10 @@
 .contenido {
   flex: 1;
   min-width: 0;
-  padding: 18px 20px;
+  padding: 1.125rem 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 0.875rem;
 }
 
 .cabecera {
@@ -76,11 +76,11 @@
   justify-content: space-between;
   align-items: flex-start;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .titulo {
-  margin: 0 0 4px;
+  margin: 0 0 0.25rem;
   font-size: 1.15rem;
   color: $tinta;
 }
@@ -88,7 +88,7 @@
 .filtros {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 0.375rem;
 }
 
 .chip {
@@ -96,7 +96,7 @@
   background: $superficie;
   color: $tinta-2;
   border-radius: 999px;
-  padding: 4px 10px;
+  padding: 0.25rem 0.625rem;
   font: inherit;
   font-size: 0.8rem;
   cursor: pointer;
@@ -109,23 +109,23 @@
 .barra {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 0.625rem;
   align-items: center;
   justify-content: space-between;
 }
 
-.buscar { flex: 1 1 240px; max-width: 360px; }
+.buscar { flex: 1 1 15rem; max-width: 22.5rem; }
 
 .agregar {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 0.5rem;
   align-items: center;
 
   select { width: auto; }
 }
 
-.agregarBuscar { width: 300px; max-width: 100%; }
+.agregarBuscar { width: 18.75rem; max-width: 100%; }
 
 .codigo {
   font-weight: 600;
@@ -136,27 +136,27 @@
 }
 
 .inactivo {
-  margin-left: 6px;
+  margin-left: 0.375rem;
   font-size: 0.7rem;
   font-weight: 600;
   color: $tinta-3;
 }
 
-.desc { min-width: 220px; }
+.desc { min-width: 13.75rem; }
 
 .nivel {
   display: flex;
-  gap: 6px;
+  gap: 0.375rem;
   align-items: center;
 
-  select { width: auto; min-width: 130px; height: 32px; }
+  select { width: auto; min-width: 8.125rem; height: 2rem; }
 }
 
-.unidades { width: 80px; height: 32px; }
+.unidades { width: 5rem; height: 2rem; }
 
 .paginacion {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 12px;
+  gap: 0.75rem;
 }

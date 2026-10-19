@@ -1,9 +1,6 @@
 import { getPublico } from "./http";
 
-/** Espejo de BeneficioOut del backend (app/modules/beneficios/schemas.py).
- *  Es la misma fila que administra el panel en src/app/pages/Beneficios —la
- *  base de la Revista de Beneficios para Socios—, sólo que `/vigentes` ya
- *  descarta los dados de baja y los vencidos. */
+/** Espejo de BeneficioOut del backend (app/modules/beneficios/schemas.py). */
 export interface BeneficioPublico {
   id: number;
   titulo: string;
@@ -18,9 +15,7 @@ export interface BeneficioPublico {
   updated_at: string;
 }
 
-/** GET /api/beneficios/vigentes — ruta pública (app/auth/public.py): la
- *  consume un visitante anónimo del sitio, sin token. El tope del backend es
- *  24 y no pagina. */
+/** GET /api/beneficios/vigentes — ruta pública (app/auth/public.py): la consume un visitante anónimo del sitio, sin token. */
 export const listBeneficiosVigentes = (limit?: number) =>
   getPublico<BeneficioPublico[]>(
     "/api/beneficios/vigentes",

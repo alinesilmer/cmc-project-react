@@ -1,274 +1,179 @@
 @use "@/app/styles/all.scss" as *;
 
-.form {
+// Ver PrestacionForm.tsx: la tarjeta con los bloques apilados.
+
+.tarjeta {
   display: flex;
   flex-direction: column;
-  gap: $spacing-5;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-top: 4px solid $franja-azul;
+  border-radius: $radio-lg;
+  box-shadow: 0 18px 40px -30px rgba($franja-azul, 0.6);
 }
 
-.grid {
+// Un bloque debajo del otro: a la izquierda el círculo con su nombre, a la derecha sus campos.
+.bloques {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: $spacing-4 $spacing-5;
+  gap: $spacing-3;
+  padding: $spacing-6 $spacing-8 $spacing-5;
 
   @media (max-width: $breakpoint-sm) {
-    grid-template-columns: 1fr;
+    padding: $spacing-5 $spacing-4;
   }
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 0;
-}
+.bloque {
+  position: relative;
+  display: grid;
+  grid-template-columns: 11rem minmax(0, 1fr);
+  align-items: start;
+  gap: $spacing-3 $spacing-5;
 
-.fieldFull {
-  grid-column: 1 / -1;
-}
-
-.fieldHalf {
-  grid-column: span 1;
+  // El hilo que baja de un círculo al siguiente: es la línea de avance, puesta al costado de los propios campos.
+  &:not(:last-child)::before {
+    content: "";
+    position: absolute;
+    top: 3.25rem;
+    bottom: -$spacing-3;
+    left: calc(1.375rem - 1.5px);
+    width: 3px;
+    background: $gray-200;
+    border-radius: 2px;
+    transition: background-color 0.2s;
+  }
 
   @media (max-width: $breakpoint-sm) {
-    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr);
+
+    &:not(:last-child)::before {
+      content: none;
+    }
   }
 }
 
-.label {
+// Centrado con el primer campo del bloque, que mide 3,25rem.
+.titulo {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  font-size: $font-size-xs;
+  gap: $spacing-3;
+  min-height: 3.25rem;
+  margin: 0;
+  font-family: $fuente-titulos;
+  font-size: $font-size-lg;
   font-weight: $font-weight-bold;
-  color: $gray-700;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-
-.opcional {
-  padding: 1px 6px;
-  border-radius: 999px;
-  background: $gray-100;
   color: $gray-500;
-  font-weight: $font-weight-medium;
-  text-transform: none;
-  letter-spacing: 0;
 }
 
-// ─── Inputs ───────────────────────────────────────────────────────────────────
-
-.input {
-  width: 100%;
-  height: 40px;
-  padding: 0 $spacing-3;
-  background: $white;
-  border: 1px solid $gray-300;
-  border-radius: $border-radius-md;
-  font-family: inherit;
-  font-size: $font-size-base;
-  color: $gray-800;
-  transition: border-color 0.18s, box-shadow 0.18s;
-
-  &::placeholder {
-    color: $gray-400;
-  }
-
-  &:focus {
-    outline: none;
-    border-color: $primary-blue;
-    box-shadow: 0 0 0 3px rgba($primary-blue, 0.12);
-  }
-
-  &:disabled {
-    background: $gray-100;
-    color: $gray-500;
-    cursor: not-allowed;
-  }
-}
-
-.inputInvalid {
-  border-color: $danger-red;
-
-  &:focus,
-  &:focus-within {
-    border-color: $danger-red;
-    box-shadow: 0 0 0 3px rgba($danger-red, 0.12);
-  }
-}
-
-.uppercase {
-  text-transform: uppercase;
-}
-
-.inputShort {
-  width: 72px;
+.circulo {
+  display: grid;
+  place-items: center;
   flex-shrink: 0;
-  text-align: center;
-}
-
-.splitRow {
-  display: flex;
-  align-items: center;
-  gap: $spacing-2;
-}
-
-.splitSep {
+  width: 2.75rem;
+  height: 2.75rem;
   color: $gray-400;
-  font-weight: $font-weight-bold;
+  background: $gray-50;
+  border: 2px solid $gray-200;
+  border-radius: 50%;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
 }
 
-.moneyWrap {
-  display: flex;
-  align-items: center;
-  height: 40px;
-  background: $white;
-  border: 1px solid $gray-300;
-  border-radius: $border-radius-md;
-  transition: border-color 0.18s, box-shadow 0.18s;
+.ahora {
+  .titulo {
+    color: $franja-azul;
+  }
 
-  &:focus-within {
-    border-color: $primary-blue;
-    box-shadow: 0 0 0 3px rgba($primary-blue, 0.12);
+  .circulo {
+    color: $franja-azul;
+    background: $primary-yellow;
+    border-color: $franja-azul;
   }
 }
 
-.moneyPrefix {
-  padding: 0 $spacing-2 0 $spacing-3;
-  color: $gray-500;
-  font-weight: $font-weight-semibold;
+.hecho {
+  .titulo {
+    color: $success-green;
+  }
+
+  .circulo {
+    color: $white;
+    background: $success-green;
+    border-color: $success-green;
+  }
+
+  &:not(:last-child)::before {
+    background: $success-green;
+  }
 }
 
-.moneyInput {
-  flex: 1;
-  min-width: 0;
-  height: 100%;
-  padding-right: $spacing-3;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-family: inherit;
-  font-size: $font-size-base;
-  color: $gray-800;
+.campos {
+  display: grid;
+  gap: $spacing-3;
 }
 
-.hint {
-  font-size: $font-size-xs;
-  color: $gray-500;
-  line-height: 1.4;
+// El buscador de médico, del ancho de los demás campos.
+.medico {
+  display: grid;
+  gap: $spacing-1;
+  max-width: 34rem;
 }
 
 .error {
-  display: block;
-  font-size: $font-size-xs;
-  color: $danger-red;
-  font-weight: $font-weight-medium;
-}
-
-// ─── Consulta en vivo (cartel activo/inactivo debajo del campo) ────────────────
-// Mismo cartel que tenía el legacy de Nobis (panel-green/panel-orange/panel-red
-// debajo del número de afiliado), ahora genérico para cualquier campo con
-// `consultaEnVivo`.
-
-.liveCheck {
-  display: flex;
-  align-items: center;
-  gap: $spacing-2;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
-  padding: $spacing-2 $spacing-3;
-  border-radius: $border-radius-md;
-  line-height: 1.35;
-
-  svg {
-    flex: none;
-  }
-}
-
-.liveCheckCargando {
-  color: $gray-500;
-  background: $gray-50;
-}
-
-.liveCheckOk {
-  color: $success-green;
-  background: rgba($success-green, 0.1);
-}
-
-.liveCheckError {
-  color: $danger-red;
-  background: rgba($danger-red, 0.08);
-}
-
-// ─── Acciones ─────────────────────────────────────────────────────────────────
-
-.actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: $spacing-3;
-  padding-top: $spacing-4;
-  border-top: 1px solid $gray-100;
-
-  @media (max-width: $breakpoint-sm) {
-    flex-direction: column-reverse;
-    align-items: stretch;
-  }
-}
-
-%btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: $spacing-2;
-  height: 42px;
-  padding: 0 $spacing-6;
-  border-radius: $border-radius-md;
-  font-family: inherit;
   font-size: $font-size-base;
   font-weight: $font-weight-semibold;
+  color: $danger-red;
+}
+
+.pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-3;
+  // Pegado abajo aunque la tarjeta se estire a la altura del almanaque.
+  margin-top: auto;
+  padding: $spacing-3 $spacing-8;
+  background: $gray-50;
+  border-top: 1px solid $gray-200;
+  border-radius: 0 0 $radio-lg $radio-lg;
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-4;
+  }
+}
+
+.limpiar {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  font: inherit;
+  min-height: 3rem;
+  padding: 0 $spacing-5;
+  font-weight: $font-weight-bold;
+  color: $white;
+  background: $danger-red;
+  border: 0;
+  border-radius: $radio-md;
   cursor: pointer;
-  transition: background 0.18s, box-shadow 0.18s, transform 0.12s;
+  transition: background-color 0.15s;
+
+  &:hover:not(:disabled) {
+    background: $tono-rojo-550-b;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $danger-red;
+    outline-offset: 2px;
+  }
 
   &:disabled {
+    opacity: 0.5;
     cursor: not-allowed;
-    opacity: 0.65;
   }
 }
 
-.btnPrimary {
-  @extend %btn;
-  background: $primary-blue-dark;
-  border: 1px solid $primary-blue-darker;
-  color: $white;
-
-  &:hover:not(:disabled) {
-    background: $primary-blue-darker;
-  }
-
-  &:active:not(:disabled) {
-    transform: translateY(1px);
-  }
-}
-
-.btnGhost {
-  @extend %btn;
-  background: transparent;
-  border: 1px solid $gray-300;
-  color: $gray-600;
-
-  &:hover:not(:disabled) {
-    background: $gray-100;
-    color: $gray-800;
-  }
-}
-
-.spin {
-  animation: spinner 0.9s linear infinite;
-}
-
-@keyframes spinner {
-  to {
-    transform: rotate(360deg);
+@media (prefers-reduced-motion: reduce) {
+  .circulo,
+  .bloque::before {
+    transition: none;
   }
 }

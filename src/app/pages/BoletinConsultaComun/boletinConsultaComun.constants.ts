@@ -23,8 +23,7 @@ export const EXCLUDED_OS = new Set([30, 377, 388, 380, 435, 216]);
 
 export const OBSERVATIONS_BY_OS: Readonly<Record<number, readonly string[]>> =
   Object.freeze({
-    // 75: ["Solo aplica bajo autorización previa."],
-    // 292: ["Importe sujeto a última actualización del convenio."],
+    // 75: ["Solo aplica bajo autorización previa."], 292: ["Importe sujeto a última actualización del convenio."],
   });
 
 const _moneyFormatter = new Intl.NumberFormat("es-AR", {
@@ -45,14 +44,6 @@ export const shortDateFormatter = new Intl.DateTimeFormat("es-AR", {
   dateStyle: "short",
 });
 
-export const longDateTimeFormatter = new Intl.DateTimeFormat("es-AR", {
-  dateStyle: "full",
-  timeStyle: "short",
-});
-
-// Ruta relativa: la baseURL por ambiente la resuelve la instancia `http`
-// compartida (src/app/lib/http.ts), no hay que armarla acá.
+// Ruta relativa: la baseURL por ambiente la resuelve la instancia `http` compartida (src/app/lib/http.ts), no hay que armarla acá.
 export const BOLETIN_ENDPOINTS = [`/api/valores/boletin`];
 
-export const SWISS_MEDICAL_NRO_OS = 256;
-export const SWISS_NOMENCLADO_URL = `/api/valores/nomenclado-swiss`;

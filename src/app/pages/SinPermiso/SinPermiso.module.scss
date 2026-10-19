@@ -1,13 +1,15 @@
+@use "@/app/styles/all.scss" as *;
+
 .wrap {
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 60vh;
-  padding: 24px;
+  padding: 1.5rem;
   text-align: center;
 }
 
 .message {
   font-size: 1rem;
-  color: #6b7280;
+  color: $gray-500;
 }

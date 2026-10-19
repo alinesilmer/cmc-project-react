@@ -1,0 +1,131 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver ResultadoCarga.tsx. El color del estado sale de `--estado`, que pone cada variante: sello lleno, filete a la izquierda y título del mismo color.
+
+.resultado {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: $spacing-5;
+  padding: $spacing-5 $spacing-6;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-left: 6px solid var(--estado);
+  border-radius: $radio-lg;
+  box-shadow: 0 14px 34px -28px rgba($franja-azul, 0.55);
+  animation: resultado-entra 0.24s ease;
+}
+
+.resultado_autorizada {
+  --estado: #{$success-green};
+}
+
+.resultado_cargada {
+  --estado: #{$franja-azul};
+}
+
+.resultado_pendiente {
+  --estado: $tono-naranja-450;
+}
+
+.resultado_rechazada {
+  --estado: #{$danger-red};
+}
+
+.sello {
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  color: $white;
+  background: var(--estado);
+  border-radius: 50%;
+  animation: resultado-sello 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+.texto {
+  strong {
+    display: block;
+    font-family: $fuente-titulos;
+    font-size: 1.9rem;
+    font-weight: $font-weight-bold;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--estado);
+  }
+
+  p {
+    margin: $spacing-1 0 0;
+    font-size: $font-size-lg;
+    line-height: 1.45;
+    color: $gray-700;
+  }
+}
+
+.datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-3 $spacing-10;
+  margin: $spacing-4 0 0;
+  padding-top: $spacing-4;
+  border-top: 1px dashed $gray-300;
+
+  dt {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $gray-500;
+  }
+
+  dd {
+    margin: $spacing-1 0 0;
+    font-size: $font-size-lg;
+    font-weight: $font-weight-bold;
+    font-variant-numeric: tabular-nums;
+    color: $gray-900;
+    overflow-wrap: anywhere;
+  }
+}
+
+.texto .ayuda {
+  font-size: $font-size-base;
+  color: $gray-500;
+}
+
+.cerrar {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  color: $gray-500;
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+
+  &:hover {
+    color: $gray-900;
+    background: $gray-100;
+  }
+}
+
+@keyframes resultado-entra {
+  from {
+    opacity: 0;
+    transform: translateY(-0.4rem);
+  }
+}
+
+@keyframes resultado-sello {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .resultado,
+  .sello {
+    animation: none;
+  }
+}

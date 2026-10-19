@@ -1,0 +1,88 @@
+@use "@/app/styles/all.scss" as *;
+
+// Los documentos obligatorios, como tres fichas sobre el fondo perla de la guía.
+
+.items {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: $spacing-4;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  @media (max-width: $breakpoint-sm) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-6 $spacing-4 $spacing-5;
+  text-align: center;
+  background: $white;
+  border-top: 4px solid $franja-azul;
+  border-radius: $radio-lg;
+  box-shadow: 0 14px 30px -24px rgba($franja-azul, 0.7);
+}
+
+.icono {
+  display: grid;
+  place-items: center;
+  width: 4rem;
+  height: 4rem;
+  color: $franja-crema;
+  background: $franja-azul;
+  border-radius: 50%;
+}
+
+.nombre {
+  font-family: $fuente-titulos;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: $franja-azul;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.sello {
+  padding: $spacing-1 $spacing-3;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  color: $danger-red;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 1.5px solid $danger-red;
+  border-radius: 999px;
+}
+
+.motivo {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-3;
+  margin: 0;
+  padding: $spacing-4 $spacing-5;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  line-height: 1.45;
+  color: $tono-rojo-500;
+  background: $tono-rojo-50;
+  border-left: 4px solid $danger-red;
+  border-radius: $radio-sm;
+
+  svg {
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+}
+
+// Título de la documentación cuando va debajo del día límite.
+.subtitulo {
+  margin: 0;
+  font-family: $fuente-titulos;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $franja-azul;
+}

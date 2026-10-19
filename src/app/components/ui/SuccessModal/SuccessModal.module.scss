@@ -1,7 +1,9 @@
+@use "@/app/styles/all.scss" as *;
+
 .modalOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(17, 24, 39, 0.5);
+  background: rgba($gray-900, 0.5);
   display: grid;
   place-items: center;
   z-index: 9999;
@@ -19,11 +21,11 @@
 
 .modal {
   position: relative;
-  width: min(520px, calc(100vw - 2rem));
+  width: min(32.5rem, calc(100vw - 2rem));
   max-width: 100%;
-  background: #fff;
+  background: $white;
   border-radius: 16px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 20px 25px -5px rgba($black, 0.1), 0 8px 10px -6px rgba($black, 0.1);
   overflow: hidden;
   animation: popIn 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
@@ -41,39 +43,39 @@
 
 .modalClose {
   position: absolute;
-  top: 10px;
-  right: 12px;
-  width: 36px;
-  height: 36px;
+  top: 0.625rem;
+  right: 0.75rem;
+  width: 2.25rem;
+  height: 2.25rem;
   border: none;
   border-radius: 9999px;
-  background: #f3f4f6;
-  color: #374151;
-  font-size: 22px;
+  background: $gray-100;
+  color: $gray-700;
+  font-size: 1.375rem;
   line-height: 1;
   cursor: pointer;
 }
 
 .modalClose:hover {
-  background: #e5e7eb;
+  background: $gray-200;
 }
 
 .successAnim {
-  padding: 28px 24px 8px 24px;
+  padding: 1.75rem 1.5rem 0.5rem 1.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .successIcon {
-  width: 120px;
-  height: 120px;
-  filter: drop-shadow(0 6px 14px rgba(16, 185, 129, 0.25));
+  width: 7.5rem;
+  height: 7.5rem;
+  filter: drop-shadow(0 6px 14px rgba($tono-verde-300, 0.25));
 }
 
 .successCircle,
 .successCheck {
-  stroke: #10b981;
+  stroke: $tono-verde-300;
   stroke-width: 8;
 }
 
@@ -96,30 +98,30 @@
 }
 
 .modalBody {
-  padding: 0 24px 8px 24px;
+  padding: 0 1.5rem 0.5rem 1.5rem;
   text-align: center;
 }
 
 .modalBody h3 {
   margin: 0 0 0.25rem 0;
   font-size: 1.25rem;
-  color: #111827;
+  color: $gray-900;
 }
 
 .modalBody p {
   margin: 0 0 0.75rem 0;
-  color: #4b5563;
+  color: $gray-600;
 }
 
 .modalActions {
-  padding: 0 24px 24px 24px;
+  padding: 0 1.5rem 1.5rem 1.5rem;
   display: flex;
   justify-content: center;
 }
 
 .modalPrimary {
-  background: #10b981;
-  color: #fff;
+  background: $tono-verde-300;
+  color: $white;
   border: none;
   border-radius: 10px;
   padding: 0.75rem 1.25rem;
@@ -130,13 +132,13 @@
 
 .modalPrimary:hover {
   transform: translateY(-1px);
-  background: #0ea371;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  background: $tono-verde-350-c;
+  box-shadow: 0 10px 15px -3px rgba($black, 0.1), 0 4px 6px -4px rgba($black, 0.1);
 }
 
 @media (max-width: 480px) {
   .modalBody {
-    padding: 0 18px 8px 18px;
+    padding: 0 1.125rem 0.5rem 1.125rem;
   }
   .modalBody h3 {
     font-size: 1.1rem;
@@ -145,7 +147,7 @@
     font-size: 0.9rem;
   }
   .modalActions {
-    padding: 0 18px 18px 18px;
+    padding: 0 1.125rem 1.125rem 1.125rem;
   }
   .modalPrimary {
     width: 100%;

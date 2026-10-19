@@ -1,8 +1,4 @@
-// El boletín de galenos dado vuelta: en vez de «qué paga esta obra social»,
-// «cuánto paga cada obra social por este valor».
-//
-// Los datos llegan agrupados por obra social (`ItemBoletin.galenos`). Acá se
-// reordenan una sola vez por tipo de valor, que es como los lee la pantalla.
+// El boletín de galenos dado vuelta: en vez de «qué paga esta obra social», «cuánto paga cada obra social por este valor».
 
 import { agruparPorCodigo, type GalenoItem } from "@/app/features/nomenclador/galenos";
 import type { ItemBoletin } from "@/app/pages/BoletinMedico/boletinMedico.api";
@@ -65,8 +61,7 @@ export function indexarValores(items: ItemBoletin[]): IndiceValores {
     }
   }
 
-  // Primero los que tienen casi todas las obras sociales: son los que más se
-  // consultan. Los raros (FASO, TAC) quedan al final de su grupo.
+  // Primero los que tienen casi todas las obras sociales: son los que más se consultan.
   const ordenados = [...tipos.values()].sort(
     (a, b) => b.obras - a.obras || porNombre(a, b)
   );

@@ -1,5 +1,4 @@
-// Las fuentes se cargan una sola vez desde index.html (con preconnect). Acá
-// había un @import que se copiaba en cada CSS que usa estas variables.
+// Las fuentes se cargan una sola vez desde index.html (con preconnect).
 
 // Colors
 $primary-blue: #173f70;
@@ -8,8 +7,9 @@ $primary-blue-shadow: #374b68;
 $primary-blue-lighter: #1b4c88;
 $accent-blue: #5a79e1;
 $primary-blue-dark: #3455c1;
-$primary-yellow: #f7e9aa;
-$primary-yellow-light: #f5eac0;
+// Amarillo claro del Colegio, en versión pastel (antes #f7e9aa y #f5eac0).
+$primary-yellow: #faf0c8;
+$primary-yellow-light: #fcf5dc;
 $primary-yellow-dark: #4d441a;
 $secondary-blue: #e8f0ff;
 $success-green: #1d9148;
@@ -28,7 +28,9 @@ $gray-900: #0f172a;
 $white: #ffffff;
 $black: #000000;
 
-// Typography
+// Typography Las dos familias del panel.
+$fuente-titulos: var(--fuente-titulos, "Manrope", sans-serif);
+$fuente-texto: var(--fuente-texto, "Inter", sans-serif);
 $font-size-xs: 0.63rem;
 $font-size-sm: 0.76rem;
 $font-size-base: 0.86rem;
@@ -74,3 +76,287 @@ $breakpoint-sm: 640px;
 $breakpoint-md: 768px;
 $breakpoint-lg: 1024px;
 $breakpoint-xl: 1280px;
+
+// Franjas azules (Inicio, Validaciones): la trama y el título son los mismos en todas, y se definen una sola vez.
+
+// Trama de cruces médicas, que se desvanece hacia la izquierda para no pelear con el título.
+@mixin trama-cruces {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='46' height='46'%3E%3Cpath d='M20 14h6v6h6v6h-6v6h-6v-6h-6v-6h6z' fill='%23fff' fill-opacity='.07'/%3E%3C/svg%3E");
+  mask-image: linear-gradient(to left, #000 10%, transparent 72%);
+}
+
+
+// El título grande de una franja.
+@mixin titulo-franja {
+  font-family: $fuente-titulos;
+  font-weight: 800;
+  font-size: clamp(1.9rem, 4.4vw, 3.2rem);
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+}
+
+// Colores de las pantallas con franja: el azul de arriba, el gris perla de abajo y el crema del título.
+$franja-azul: #14335c;
+$franja-perla: #eef0f3;
+$franja-crema: #f6efd9;
+// Con el panel en oscuro las franjas no usan el azul del Colegio —sobre fondo oscuro encandila— sino un azul casi negro.
+$franja-noche: #0b1524;
+
+// Alto de una franja con título y solapas.
+$franja-alto: 16.5rem;
+
+// Página con franja: azul hasta `$alto`, perla debajo, de borde a borde (los márgenes negativos deshacen el relleno de `AppLayout`.
+@mixin franja-pagina($alto) {
+  position: relative;
+  min-height: calc(100vh - 3.5rem);
+  margin: -0.5rem -1rem;
+  padding: 0.5rem 1rem;
+  // El plano de abajo es el color de fondo y la franja un degradé encima.
+  background-color: $franja-perla;
+  background-image: linear-gradient(180deg, $franja-azul 0, $franja-azul $alto, transparent $alto);
+  isolation: isolate;
+
+  @at-root :global(:root[data-tema="oscuro"]) & {
+    background-image: linear-gradient(180deg, $franja-noche 0, $franja-noche $alto, transparent $alto);
+  }
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    z-index: -1;
+    height: $alto;
+    @include trama-cruces;
+  }
+
+  @media (max-width: 640px) {
+    margin: -0.25rem -0.5rem;
+    padding: 0.25rem 0.5rem;
+  }
+}
+
+// Solapa apoyada en el borde de la franja.
+@mixin franja-solapa {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  min-height: 3.1rem;
+  padding: 0 $spacing-6;
+  font: inherit;
+  font-family: $fuente-titulos;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-medium;
+  // Los colores salen de variables para que una franja plateada los cambie.
+  color: var(--solapa-texto, #{$white});
+  background: var(--solapa-fondo, #{rgba($white, 0.16)});
+  border: 1px solid var(--solapa-borde, #{rgba($white, 0.3)});
+  border-bottom: 0;
+  // 8px = `$radio-lg`, que vive en `_superficies.scss` y desde acá no se ve.
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  transition: color 0.15s, background-color 0.15s;
+
+  &:hover {
+    background: var(--solapa-fondo-hover, #{rgba($white, 0.28)});
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary-yellow;
+    outline-offset: 2px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    flex: 1;
+    justify-content: center;
+    padding: 0 $spacing-3;
+    font-size: $font-size-base;
+  }
+}
+
+// La solapa elegida se funde con el plano de abajo y lleva un filete amarillo arriba: se distingue por color, por forma y por altura.
+@mixin franja-solapa-activa {
+  min-height: 3.5rem;
+  color: $franja-azul;
+  background: $franja-perla;
+  border-color: $franja-perla;
+  box-shadow: inset 0 4px 0 $primary-yellow;
+}
+
+// Franja como bloque: para una pantalla que ya tiene su relleno y no puede usar `franja-pagina`.
+@mixin franja-bloque {
+  --layout-lado: 1rem;
+  --layout-arriba: 0.5rem;
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-6;
+  margin: calc(-1 * (var(--arriba, 0rem) + var(--layout-arriba))) calc(-1 * (var(--lado, 0rem) + var(--layout-lado))) 0;
+  padding: calc(var(--arriba, 0rem) + #{$spacing-5}) calc(var(--lado, 0rem) + var(--layout-lado)) 0;
+  background: $franja-azul;
+  isolation: isolate;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    @include trama-cruces;
+  }
+
+  // En el teléfono el relleno de `AppLayout` es la mitad.
+  @media (max-width: 640px) {
+    --layout-lado: 0.5rem;
+    --layout-arriba: 0.25rem;
+  }
+
+  @at-root :global(:root[data-tema="oscuro"]) & {
+    background: $franja-noche;
+  }
+}
+
+// ── Valores de secciones ─────────────────────────────────────────────────────
+// Las hojas de cada sección no definen variables: todo valor con nombre vive acá, aunque lo use una sola pantalla.
+
+// Franjas, en oscuro: el plano de abajo.
+$franja-pizarra: #141b26;
+
+// Carpetas de Validaciones.
+$carpeta-solapa: 1.5rem;
+$carpeta-cuero: #5b3a22;
+$carpeta-cuero-lomo: #43291a;
+$carpeta-cuero-costura: #c9a36b;
+// Las de la sección: azul noche, costura celeste y nombre en crema.
+$carpeta-noche: #101d33;
+$carpeta-noche-lomo: #0a1322;
+$carpeta-noche-costura: #8fa3c4;
+// En oscuro: plata, con el nombre en tinta.
+$carpeta-plata: #c5cbd4;
+$carpeta-plata-lomo: #8f97a3;
+$carpeta-plata-costura: #5a6370;
+$carpeta-plata-nombre: #0f1b2e;
+// Grano del cuero: ruido generado por un filtro SVG embebido, sin imagen.
+$carpeta-grano: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .55 -.12'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)'/%3E%3C/svg%3E");
+
+// Cuaderno de tareas del Inicio.
+$cuaderno-renglon: 2.9rem;
+$cuaderno-margen: 2.9rem;
+$cuaderno-papel: #fdfaf2;
+$cuaderno-raya: rgba($primary-blue, 0.14);
+
+// Tonos de apoyo: colores que usan las secciones y no estaban en la paleta.
+$tono-amarillo-50: #f7e9aa;
+$tono-amarillo-50-b: #fef9c3;
+$tono-amarillo-100: #fde68a;
+$tono-amarillo-100-b: #fcd34d;
+$tono-amarillo-150: #fbbf24;
+$tono-amarillo-150-b: #f0c36d;
+$tono-amarillo-200: #d0c182;
+$tono-amarillo-250: #c8a83c;
+$tono-amarillo-250-b: #d9ae1f;
+$tono-amarillo-250-c: #e0a100;
+$tono-amarillo-300: #ca8a04;
+$tono-amarillo-300-b: #b8950a;
+$tono-amarillo-350: #b4801f;
+$tono-amarillo-450: #7a6a28;
+$tono-amarillo-450-b: #8a7420;
+$tono-amarillo-500: #8a6100;
+$tono-amarillo-600: #5c4300;
+$tono-azul-50: #dce7ff;
+$tono-azul-100: #bfdbfe;
+$tono-azul-150: #b3ceff;
+$tono-azul-200: #93c5fd;
+$tono-azul-200-b: #a5b4fc;
+$tono-azul-250: #9db6dd;
+$tono-azul-300: #0ea5e9;
+$tono-azul-350: #4f7cff;
+$tono-azul-350-b: #3498ff;
+$tono-azul-400: #718096;
+$tono-azul-400-b: #2a7eee;
+$tono-azul-450: #3b6fd4;
+$tono-azul-450-b: #1b56ff;
+$tono-azul-450-c: #2563eb;
+$tono-azul-500: #315cb8;
+$tono-azul-500-b: #1d4ed8;
+$tono-azul-500-c: #3d5fcc;
+$tono-azul-550: #0a3fd4;
+$tono-azul-550-b: #075985;
+$tono-azul-600: #1e40af;
+$tono-azul-600-b: #1e3a8a;
+$tono-azul-600-c: #0c4a6e;
+$tono-azul-650: #203769;
+$tono-azul-700: #243241;
+$tono-azul-750: #0f1e46;
+$tono-azul-750-b: #14233a;
+$tono-gris-50: #ecfdf3;
+$tono-gris-100: #d7dbe2;
+$tono-gris-100-b: #e8e4da;
+$tono-gris-100-c: #dcd6c8;
+$tono-gris-250: #a0acbe;
+$tono-gris-300: #9aa0a6;
+$tono-gris-450: #777777;
+$tono-gris-500: #666666;
+$tono-gris-600: #444b54;
+$tono-gris-750: #1c232b;
+$tono-gris-800: #121212;
+$tono-naranja-100: #fed7aa;
+$tono-naranja-150: #fdba74;
+$tono-naranja-250: #fb923c;
+$tono-naranja-350: #d97706;
+$tono-naranja-400: #b06a1f;
+$tono-naranja-450: #b45309;
+$tono-naranja-450-b: #975a16;
+$tono-naranja-550: #92400e;
+$tono-naranja-550-b: #7c4514;
+$tono-naranja-600: #78350f;
+$tono-rojo-50: #fee2e2;
+$tono-rojo-100: #fecaca;
+$tono-rojo-150: #f3b4b4;
+$tono-rojo-200: #fca5a5;
+$tono-rojo-250: #ff7a7a;
+$tono-rojo-350: #ef4444;
+$tono-rojo-400: #dc2626;
+$tono-rojo-450: #c2410c;
+$tono-rojo-500: #b91c1c;
+$tono-rojo-550: #9f1239;
+$tono-rojo-550-b: #a51f1f;
+$tono-rojo-600: #8f1b1b;
+$tono-rojo-600-b: #7a2828;
+$tono-rojo-650: #721c24;
+$tono-turquesa-100: #b7ede4;
+$tono-turquesa-150: #a3d2c9;
+$tono-turquesa-250: #7db7ad;
+$tono-turquesa-350: #5c9c92;
+$tono-turquesa-500: #0f766e;
+$tono-turquesa-550: #065f46;
+$tono-verde-50: #d1fae5;
+$tono-verde-50-b: #bbf7d0;
+$tono-verde-100: #cae7ca;
+$tono-verde-150: #86efac;
+$tono-verde-250: #34c77b;
+$tono-verde-250-b: #7cc596;
+$tono-verde-300: #10b981;
+$tono-verde-300-b: #22c55e;
+$tono-verde-350: #00b45a;
+$tono-verde-350-b: #16a34a;
+$tono-verde-350-c: #0ea371;
+$tono-verde-450: #0a8e64;
+$tono-verde-500: #107c57;
+$tono-verde-500-b: #0f7a3b;
+$tono-verde-550: #166534;
+$tono-verde-600: #065d06;
+$tono-verde-600-b: #155724;
+$tono-violeta-50: #f3e8ff;
+$tono-violeta-100: #e9d5ff;
+$tono-violeta-300: #818cf8;
+$tono-violeta-300-b: #9d91c2;
+$tono-violeta-400: #897cac;
+$tono-violeta-450: #786c99;
+$tono-violeta-500: #4f46e5;
+$tono-violeta-500-b: #6d28d9;
+$tono-violeta-550: #6b21a8;
+$tono-violeta-550-b: #4338ca;
+$tono-violeta-550-c: #574e76;
+$tono-violeta-550-d: #5b4a8a;
+$tono-violeta-600: #3730a3;
+$tono-violeta-600-b: #4b4071;

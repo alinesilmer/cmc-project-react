@@ -1,120 +1,83 @@
 @use "@/app/styles/all.scss" as *;
 
+// «Obras sociales actualizadas»: la franja, la caja con el año, el buscador y un bloque desplegable por mes.
+
 .container {
-  padding: $spacing-8;
+  // En variables porque la franja las necesita para salirse del relleno.
+  --lado: #{$spacing-12};
+  --arriba: #{$spacing-8};
+
   display: flex;
   flex-direction: column;
-  gap: $spacing-4;
+  gap: $spacing-5;
   min-height: 100%;
+  padding: $spacing-8 $spacing-12;
 
-  @media (max-width: $breakpoint-md) { padding: $spacing-5; }
-  @media (max-width: $breakpoint-sm) { padding: $spacing-4; }
+  // La franja ya trae su margen; el `gap` alcanza.
+  > :first-child {
+    margin-bottom: 0;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    --lado: #{$spacing-5};
+    --arriba: #{$spacing-5};
+    padding: $spacing-5;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    --lado: #{$spacing-4};
+    --arriba: #{$spacing-4};
+    padding: $spacing-4;
+  }
 }
 
-.header { display: flex; align-items: center; gap: $spacing-4; }
-.headerIcon { color: $primary-blue; flex-shrink: 0; }
-
-.title {
-  margin: 0;
-  font-size: $font-size-3xl;
-  font-weight: $font-weight-bold;
-  color: $gray-900;
-  line-height: 1.2;
-
-  @media (max-width: $breakpoint-sm) { font-size: $font-size-2xl; }
+.spin {
+  animation: $anim-spin 0.9s linear infinite;
 }
 
-.subtitle { margin: $spacing-1 0 0; font-size: $font-size-sm; color: $gray-500; }
-
-.spin { animation: spin 0.9s linear infinite; }
-
-// ── Barra de filtro ─────────────────────────────────────────────────────────
+// ── Barra: el buscador y, a la derecha, los años ────────────────────────────
 
 .barra {
   display: flex;
-  align-items: center;
-  gap: $spacing-4;
   flex-wrap: wrap;
-}
-
-.searchBox {
-  display: flex;
   align-items: center;
-  gap: $spacing-2;
-  padding: 0 $spacing-3;
-  height: 34px;
-  flex: 1;
-  min-width: 200px;
-  max-width: 320px;
-  background: $white;
-  border: 1px solid $gray-200;
-  border-radius: $radio-md;
-
-  svg { flex-shrink: 0; color: $gray-400; }
-
-  &:focus-within {
-    border-color: $primary-blue;
-    box-shadow: 0 0 0 3px rgba($primary-blue, 0.12);
-  }
+  justify-content: space-between;
+  gap: $spacing-3 $spacing-5;
 }
 
-.searchInput {
-  flex: 1;
-  min-width: 0;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-size: $font-size-base;
-  font-family: inherit;
-  color: $gray-900;
-
-  &::placeholder { color: $gray-400; }
-}
-
-.clearBtn {
-  display: inline-flex;
-  color: $gray-400;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-
-  &:hover { color: $danger-red; }
-}
-
-.select {
-  height: 34px;
-  padding: 0 $spacing-3;
-  font-size: $font-size-sm;
-  font-family: inherit;
-  color: $gray-800;
-  background: $white;
-  border: 1px solid $gray-200;
-  border-radius: $radio-md;
-  outline: none;
-  cursor: pointer;
-  flex-shrink: 0;
-
-  &:focus {
-    border-color: $primary-blue;
-    box-shadow: 0 0 0 3px rgba($primary-blue, 0.12);
-  }
-}
-
-.totales {
+.anios {
   display: flex;
-  gap: $spacing-4;
-  margin-left: auto;
-  font-size: $font-size-sm;
-  color: $gray-500;
+  flex-wrap: wrap;
+  gap: $spacing-2;
+}
 
-  strong { color: $gray-900; font-variant-numeric: tabular-nums; }
+.anio {
+  min-height: 2.75rem;
+  padding: 0 $spacing-5;
+  font: inherit;
+  font-weight: $font-weight-semibold;
+  font-variant-numeric: tabular-nums;
+  color: $gray-700;
+  background: $white;
+  border: 1px solid $gray-300;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.12s, border-color 0.12s, color 0.12s;
 
-  @media (max-width: $breakpoint-sm) {
-    margin-left: 0;
-    gap: $spacing-3;
-    font-size: $font-size-xs;
+  &:hover {
+    border-color: $franja-azul;
   }
+
+  &:focus-visible {
+    outline: 2px solid $franja-azul;
+    outline-offset: 2px;
+  }
+}
+
+.anioActivo {
+  color: $franja-crema;
+  background: $franja-azul;
+  border-color: $franja-azul;
 }
 
 .estado {
@@ -122,142 +85,144 @@
   align-items: center;
   justify-content: center;
   gap: $spacing-2;
-  padding: $spacing-12;
-  font-size: $font-size-sm;
-  color: $gray-400;
+  padding: $spacing-10 $spacing-5;
+  color: $gray-500;
   background: $white;
-  border: 1px solid $gray-200;
+  border: 1px dashed $gray-300;
   border-radius: $radio-lg;
 }
 
-// ── Meses ───────────────────────────────────────────────────────────────────
+// ── La hoja: una sola tabla, con un renglón-título por mes ──────────────────
 
-.meses { display: flex; flex-direction: column; gap: $spacing-3; }
-
-.mes {
+.hoja {
   background: $white;
   border: 1px solid $gray-200;
   border-radius: $radio-lg;
-  box-shadow: $shadow-sm;
-  overflow: hidden;
+  box-shadow: 0 14px 34px -28px rgba($franja-azul, 0.55);
+  overflow-x: auto;
 }
 
-.mesHead {
+// El mes: un renglón en crema que separa su grupo y lo abre o lo cierra.
+.mes td {
+  padding: 0 !important;
+  background: $primary-yellow-light;
+  border-top: 1px solid $gray-200;
+  border-bottom: 1px solid $gray-200 !important;
+}
+
+.mesBoton {
   display: flex;
   align-items: center;
   gap: $spacing-3;
   width: 100%;
-  padding: $spacing-4 $spacing-5;
-  background: $gray-50;
-  border: none;
-  border-bottom: 1px solid $gray-100;
-  cursor: pointer;
+  min-height: 3.25rem;
+  padding: 0 $spacing-5;
+  font: inherit;
+  color: $franja-azul;
   text-align: left;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
 
-  svg { color: $gray-400; flex-shrink: 0; }
-  &:hover { background: $gray-100; }
+  &:hover {
+    background: $primary-yellow;
+  }
 
-  @media (max-width: $breakpoint-sm) { padding: $spacing-3; }
-}
-
-.mesTitulo {
-  margin: 0;
-  font-size: $font-size-lg;
-  font-weight: $font-weight-semibold;
-  color: $gray-900;
-}
-
-.mesMeta {
-  margin-left: auto;
-  font-size: $font-size-xs;
-  color: $gray-500;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-}
-
-// ── Filas ───────────────────────────────────────────────────────────────────
-
-.lista { list-style: none; margin: 0; padding: 0; }
-
-.fila {
-  display: flex;
-  align-items: center;
-  gap: $spacing-3;
-  padding: $spacing-3 $spacing-5;
-  border-bottom: 1px solid $gray-100;
-
-  &:last-child { border-bottom: none; }
-  &:hover { background: $gray-50; }
-
-  @media (max-width: $breakpoint-sm) {
-    // En mobile la fila se apila: el nombre arriba, el resto abajo alineado a
-    // la izquierda. Sin esto el contador y el link se salen del ancho.
-    flex-wrap: wrap;
-    gap: $spacing-2;
-    padding: $spacing-3;
+  &:focus-visible {
+    outline: 2px solid $franja-azul;
+    outline-offset: -3px;
   }
 }
 
-.filaMain {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-  flex: 1;
+.mesTitulo {
+  font-family: $fuente-titulos;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  letter-spacing: -0.01em;
+}
 
-  @media (max-width: $breakpoint-sm) { flex-basis: 100%; }
+.mesCuenta {
+  display: grid;
+  place-items: center;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  padding: 0 $spacing-2;
+  font-weight: $font-weight-bold;
+  font-variant-numeric: tabular-nums;
+  color: $franja-crema;
+  background: $franja-azul;
+  border-radius: 999px;
+}
+
+.chev {
+  flex-shrink: 0;
+  transform: rotate(-90deg);
+  transition: transform 0.2s;
+}
+
+.chevAbierto {
+  transform: rotate(0deg);
+}
+
+.fila:hover {
+  background: $gray-50;
+}
+
+.sinDato {
+  color: $gray-400;
+}
+
+// ── Columnas ────────────────────────────────────────────────────────────────
+
+.colNro {
+  width: 6rem;
+}
+
+.colVer {
+  width: 6rem;
+  text-align: right !important;
+}
+
+.nro {
+  font-family: $fuente-titulos;
+  font-weight: $font-weight-bold;
+  font-variant-numeric: tabular-nums;
+  color: $franja-azul;
 }
 
 .osNombre {
-  font-size: $font-size-base;
-  font-weight: $font-weight-medium;
+  font-weight: $font-weight-semibold;
   color: $gray-900;
 }
-
-.osMeta { font-size: $font-size-xs; color: $gray-400; }
 
 .docBadge {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  padding: 2px $spacing-2;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
-  color: $success-green;
-  background: rgba($success-green, 0.1);
-  border-radius: $radio-sm;
-  flex-shrink: 0;
-}
-
-.codigos {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  min-width: 70px;
-  font-size: $font-size-base;
+  gap: $spacing-1;
+  padding: 2px $spacing-3;
+  font-size: $font-size-sm;
   font-weight: $font-weight-semibold;
-  color: $gray-900;
-  font-variant-numeric: tabular-nums;
-  flex-shrink: 0;
-
-  em {
-    font-style: normal;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-normal;
-    color: $gray-400;
-  }
-
-  @media (max-width: $breakpoint-sm) { align-items: flex-start; min-width: 0; }
+  color: $tono-verde-550;
+  background: $tono-verde-50;
+  border-radius: 999px;
 }
 
 .verLink {
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
-  color: $primary-blue;
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  font-weight: $font-weight-bold;
+  color: $franja-azul;
   text-decoration: none;
-  flex-shrink: 0;
 
-  &:hover { text-decoration: underline; }
+  &:hover {
+    text-decoration: underline;
+  }
+}
 
-  @media (max-width: $breakpoint-sm) { margin-left: auto; }
+@media (prefers-reduced-motion: reduce) {
+  .chev,
+  .anio {
+    transition: none;
+  }
 }

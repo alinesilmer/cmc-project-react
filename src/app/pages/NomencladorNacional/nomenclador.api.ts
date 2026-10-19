@@ -43,8 +43,6 @@ import type {
   GalenoActualizarUnidadesResult,
   GalenosImportarPayload,
   GalenosImportarResult,
-  GalenoImportarLotePayload,
-  GalenoImportarLoteResult,
   GalenoPlantillaOut,
   GalenoVisibilidadResult,
   ComponentesNNSugeridos,
@@ -54,7 +52,6 @@ import type {
   ValorOut,
   ValorCreatePayload,
   ValorCreateMultiPayload,
-  ValorUpdatePayload,
   ValorActualizarPayload,
   ValorNucleoPayload,
   TablaValorItem,
@@ -100,12 +97,7 @@ export const updateNomenclador = (
   putJSON<NomencladorDetalleOut>(`/api/nomenclador/${id}`, payload);
 
 /** Aplica la plantilla YA guardada del código a las obras sociales dadas. */
-/**
- * Timeout para las operaciones masivas, que pueden tardar minutos contra la
- * base de prod. Ejemplo: aplicar el 420351 a 65 O.S. × ~35 especialidades
- * creó 2.260 filas en ~100 s. Con el default de 15 s el navegador cortaba y
- * mostraba error mientras el backend terminaba bien.
- */
+/** Timeout para las operaciones masivas, que pueden tardar minutos contra la base de prod. */
 const TIMEOUT_MASIVO_MS = 10 * 60_000;
 
 export const aplicarEspecialidades = (
@@ -128,19 +120,12 @@ export const deleteNomenclador = (id: number): Promise<void> =>
   delJSON<void>(`/api/nomenclador/${id}`);
 
 // ─── Nomenclador Nacional ───────────────────────────────────────────────────
-// Catálogo NN, independiente del catálogo del Colegio de arriba. Uno o varios
-// códigos del Colegio pueden vincularse a la misma fila acá.
+// Catálogo NN, independiente del catálogo del Colegio de arriba.
 
 export const listNomencladorNacional = (
   params?: NomencladorNacionalListParams,
 ): Promise<NomencladorNacionalOut[]> =>
   getJSON<NomencladorNacionalOut[]>("/api/nomenclador_nacional/", params);
-
-export const listNomencladorNacionalCodigos = (): Promise<string[]> =>
-  getJSON<string[]>("/api/nomenclador_nacional/codigos", { activo: true });
-
-export const getNomencladorNacionalById = (id: number): Promise<NomencladorNacionalOut> =>
-  getJSON<NomencladorNacionalOut>(`/api/nomenclador_nacional/${id}`);
 
 export const createNomencladorNacional = (
   payload: NomencladorNacionalCreatePayload,
@@ -197,12 +182,6 @@ export const updateGaleno = (
   payload: GalenoUpdatePayload,
 ): Promise<GalenoOut> => putJSON<GalenoOut>(`/api/galenos/${id}`, payload);
 
-/** POST /api/galenos/importar_lote — alta masiva desde una planilla. */
-export const importarLoteGalenos = (
-  payload: GalenoImportarLotePayload,
-): Promise<GalenoImportarLoteResult> =>
-  postJSON<GalenoImportarLoteResult>("/api/galenos/importar_lote", payload);
-
 export const actualizarPrecioGaleno = (
   id: number,
   payload: GalenoActualizarPrecioPayload,
@@ -228,9 +207,6 @@ export const cambiarVisibilidadGaleno = (payload: {
 export const deleteGaleno = (id: number): Promise<void> =>
   delJSON<void>(`/api/galenos/${id}`);
 
-export const getGalenoById = (id: number): Promise<GalenoOut> =>
-  getJSON<GalenoOut>(`/api/galenos/${id}`);
-
 export const actualizarUnidadesGaleno = (
   id: number,
   payload: GalenoActualizarUnidadesPayload,
@@ -253,9 +229,6 @@ export const importarGalenosDeObraSocial = (
 export const listGalenoPlantillas = (): Promise<GalenoPlantillaOut[]> =>
   getJSON<GalenoPlantillaOut[]>("/api/galenos/plantillas");
 
-export const getGalenoPlantilla = (grupo: string): Promise<GalenoPlantillaOut> =>
-  getJSON<GalenoPlantillaOut>(`/api/galenos/plantillas/${grupo}`);
-
 // ─── Valores ──────────────────────────────────────────────────────────────────
 
 export const listValores = (params: {
@@ -274,8 +247,7 @@ export const listValores = (params: {
 export const createValor = (payload: ValorCreatePayload): Promise<ValorOut> =>
   postJSON<ValorOut>("/api/valores_nm/", payload);
 
-// Alta de una variante NE para varias especialidades a la vez (mismo precio, misma
-// vigencia): reemplaza el rol que tenía cargar un NNE.
+// Alta de una variante NE para varias especialidades a la vez (mismo precio, misma vigencia): reemplaza el rol que tenía cargar un NNE.
 export const createValorMulti = (
   payload: ValorCreateMultiPayload,
 ): Promise<ValorOut[]> => postJSON<ValorOut[]>("/api/valores_nm/multi", payload);
@@ -286,9 +258,7 @@ export const actualizarValor = (
 ): Promise<ValorOut> =>
   postJSON<ValorOut>(`/api/valores_nm/${id}/actualizar`, payload);
 
-// Aumento/baja porcentual lineal sobre los valores fijos de una OS (por origen),
-// opcionalmente acotado por códigos o por rango. Devuelve actualizados/omitidos/errores.
-// Aumento porcentual de valores fijos y/o galenos. Con `dry_run` es la vista previa.
+// Aumento/baja porcentual lineal sobre los valores fijos de una OS (por origen), opcionalmente acotado por códigos o por rango.
 export const actualizarPorcentajeValores = (
   payload: ActualizarPorcentajePayload,
 ): Promise<AumentoPorcentualResult> =>
@@ -298,8 +268,7 @@ export const actualizarPorcentajeValores = (
     { timeout: TIMEOUT_MASIVO_MS },
   );
 
-// Revierte el aumento de una fecha: solo valores abiertos por un aumento y galenos
-// rotados ese día. Con `dry_run` muestra qué se revertiría.
+// Revierte el aumento de una fecha: solo valores abiertos por un aumento y galenos rotados ese día.
 export const revertirActualizacionValores = (
   payload: RevertirActualizacionPayload,
 ): Promise<AumentoPorcentualResult> =>
@@ -309,19 +278,7 @@ export const revertirActualizacionValores = (
     { timeout: TIMEOUT_MASIVO_MS },
   );
 
-// Cantidad de valores ya cargados para una OS en una vigencia exacta (guard anti doble carga).
-export const contarValoresPorVigencia = (
-  obra_social_nro: number,
-  vigencia_desde: string,
-): Promise<{
-  obra_social_nro: number;
-  vigencia_desde: string;
-  cantidad: number;
-}> =>
-  getJSON("/api/valores_nm/por_vigencia", { obra_social_nro, vigencia_desde });
-
-// Códigos ya cargados para una OS en una vigencia exacta. Permite cargar la misma
-// vigencia por partes (varias hojas): se omiten los códigos ya presentes.
+// Códigos ya cargados para una OS en una vigencia exacta.
 export const listCodigosPorVigencia = (
   obra_social_nro: number,
   vigencia_desde: string,
@@ -334,13 +291,7 @@ export const listVigenciasCargadas = (
 ): Promise<{ vigencia_desde: string; cantidad: number }[]> =>
   getJSON("/api/valores_nm/vigencias", { obra_social_nro });
 
-/**
- * Cuándo y cuánto actualizó esta obra social, ya agregado por vigencia —
- * cantidad de códigos y variación promedio contra la versión anterior de cada
- * uno. Sale de `nm_historial_precio_codigo`, no de bajar la grilla completa de
- * `/api/valores_nm/`. Alimenta la vista "Actualizaciones porcentuales" del
- * historial. Ver auditoría H-01/H-02.
- */
+/** Cuándo y cuánto actualizó esta obra social, ya agregado por vigencia — cantidad de códigos y variación promedio contra la versión anterior de cada uno. */
 export const getResumenPorVigencia = (
   obra_social_nro: number,
 ): Promise<ResumenVigenciaOut[]> =>
@@ -373,14 +324,6 @@ export const importarValoresCsv = (
   return postForm<ImportarCSVResult>(`/api/valores_nm/importar_csv?${qs}`, fd);
 };
 
-export const getValorById = (id: number): Promise<ValorOut> =>
-  getJSON<ValorOut>(`/api/valores_nm/${id}`);
-
-export const updateValorMetadata = (
-  id: number,
-  payload: ValorUpdatePayload,
-): Promise<ValorOut> => putJSON<ValorOut>(`/api/valores_nm/${id}`, payload);
-
 export const updateNucleoPar = (
   obra_social_nro: number,
   nomenclador_id: number,
@@ -408,8 +351,7 @@ export const getTablaValores = async (params: {
     "/api/reportes_nm/tabla_valores",
     {
       params,
-      // El backend espera el param repetido (`especialidades=5&especialidades=12`),
-      // no con corchetes (`especialidades[]=5`), que es lo que serializa axios por default.
+      // El backend espera el param repetido (`especialidades=5&especialidades=12`), no con corchetes (`especialidades[]=5`), que es lo que serializa axios por default.
       paramsSerializer: { indexes: null },
     },
   );
@@ -417,8 +359,7 @@ export const getTablaValores = async (params: {
 };
 
 // ─── Códigos por especialidad (solo lectura, por obra social) ────────────────
-// Las especialidades se editan desde el modal de Valores (updateValorMetadata,
-// ver ValorUpdatePayload.especialidades) — esto es únicamente para consultarlas.
+// Las especialidades se editan desde el modal de Valores (updateValorMetadata, ver ValorUpdatePayload.especialidades) — esto es únicamente para consultarlas.
 
 export const listCodigosPorEspecialidad = (
   params: CodigoPorEspecialidadParams,
@@ -427,7 +368,6 @@ export const listCodigosPorEspecialidad = (
 
 // ─── Documentos de una vigencia de valores ────────────────────────────────────
 // El respaldo de cada actualización de precios: lo que la obra social mandó.
-// Ver app/modules/nomenclador/routes_valores_documentos.py.
 
 export const listValorDocumentos = (
   obra_social_nro: number,
@@ -437,6 +377,10 @@ export const listValorDocumentos = (
     obra_social_nro,
     ...(vigencia_desde ? { vigencia_desde } : {}),
   });
+
+/** Los documentos de todas las obras sociales, la vigencia más reciente primero. */
+export const listTodosValorDocumentos = (): Promise<ValorDocumentoOut[]> =>
+  getJSON<ValorDocumentoOut[]>("/api/valores_nm/documentos");
 
 /** Multipart: PDF, Excel (.xlsx/.xls) o CSV. */
 export const subirValorDocumento = (params: {
@@ -456,19 +400,13 @@ export const subirValorDocumento = (params: {
 export const eliminarValorDocumento = (id: number): Promise<void> =>
   delJSON<void>(`/api/valores_nm/documentos/${id}`);
 
-/**
- * Qué obras sociales actualizaron valores, por mes de vigencia.
- * Una sola llamada: el backend agrupa y devuelve ~9 meses. `nomenclador:leer`.
- */
+/** Qué obras sociales actualizaron valores, por mes de vigencia. */
 export const getActualizacionesPorMes = (): Promise<MesActualizaciones[]> =>
   getJSON<MesActualizaciones[]>("/api/valores_nm/actualizaciones");
 
 // ─── Replicar en obras sociales de la misma familia ──────────────────────────
 
-/**
- * Completa los 7 galenos base y los NN que le falten a una OS, sin tocar lo que
- * ya tiene. `dry_run` = vista previa (no guarda nada).
- */
+/** Completa los 7 galenos base y los NN que le falten a una OS, sin tocar lo que ya tiene. */
 export const completarBaseNN = (
   obra_social_nro: number,
   dry_run: boolean,
@@ -616,8 +554,7 @@ export const actualizarCodigoNivelado = (
 export const quitarCodigoNivelado = (slug: string, nomencladorId: number): Promise<void> =>
   delJSON<void>(`/api/nomencladores_nivelados/${slug}/codigos/${nomencladorId}`);
 
-/** Con `dry_run` sólo muestra qué haría. Timeout largo: aplicar da de alta y cotiza
- * cientos de códigos y con los 15 s por defecto el navegador cortaba antes. */
+/** Con `dry_run` sólo muestra qué haría. */
 export const aplicarNivelado = (
   slug: string,
   payload: { obra_social_nro: number; vigencia_desde: string; dry_run: boolean },

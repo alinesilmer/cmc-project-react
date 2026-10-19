@@ -1,152 +1,69 @@
 @use "@/app/styles/all.scss" as *;
 
+// Planillas: la franja, la caja para publicar (sólo el Colegio), el buscador y la tabla (el componente compartido).
+
 .container {
-  padding: $spacing-8;
+  // En variables porque la franja las necesita para salirse del relleno.
+  --lado: #{$spacing-12};
+  --arriba: #{$spacing-8};
+
   display: flex;
   flex-direction: column;
-  gap: $spacing-6;
+  gap: $spacing-5;
   min-height: 100%;
+  padding: $spacing-8 $spacing-12;
+
+  // La franja ya trae su margen; el `gap` alcanza.
+  > :first-child {
+    margin-bottom: 0;
+  }
 
   @media (max-width: $breakpoint-md) {
+    --lado: #{$spacing-5};
+    --arriba: #{$spacing-5};
     padding: $spacing-5;
-    gap: $spacing-5;
   }
 
   @media (max-width: $breakpoint-sm) {
+    --lado: #{$spacing-4};
+    --arriba: #{$spacing-4};
     padding: $spacing-4;
   }
 }
 
-.header {
-  display: flex;
-  align-items: center;
-  gap: $spacing-4;
-}
-
-.headerIcon {
-  color: $primary-blue;
-  flex-shrink: 0;
-}
-
-.title {
-  margin: 0;
-  font-size: $font-size-4xl;
-  font-weight: $font-weight-bold;
-  color: $gray-900;
-  line-height: 1.2;
-
-  @media (max-width: $breakpoint-md) {
-    font-size: $font-size-3xl;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    font-size: $font-size-2xl;
-  }
-}
-
-.subtitle {
-  margin: $spacing-1 0 0;
-  max-width: 66ch;
-  font-size: $font-size-sm;
-  color: $gray-500;
-  line-height: 1.5;
-}
-
-.searchBox {
-  display: flex;
-  align-items: center;
-  gap: $spacing-2;
-  padding: 0 $spacing-3;
-  height: 40px;
-  max-width: 360px;
-  background: $white;
-  border: 1px solid $gray-200;
-  border-radius: $radio-md;
-
-  svg {
-    flex-shrink: 0;
-    color: $gray-400;
-  }
-
-  input {
-    flex: 1;
-    min-width: 0;
-    border: none;
-    outline: none;
-    background: transparent;
-    font-size: $font-size-sm;
-    color: $gray-800;
-    font-family: inherit;
-
-    &::-webkit-search-cancel-button {
-      appearance: none;
-    }
-  }
-
-  &:focus-within {
-    border-color: $primary-blue;
-  }
-}
-
-// ─── Tabla ────────────────────────────────────────────────────────────────────
+// ── Tabla ───────────────────────────────────────────────────────────────────
 
 .tableWrap {
-  overflow-x: auto;
   background: $white;
   border: 1px solid $gray-200;
   border-radius: $radio-lg;
-  box-shadow: $shadow-sm;
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: $font-size-sm;
-
-  /** Cabecera en el azul institucional, igual que la del boletín del socio. */
-  th {
-    padding: $spacing-3 $spacing-4;
-    background: $primary-blue;
-    border-bottom: none;
-    text-align: left;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-semibold;
-    color: $primary-yellow-light;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    white-space: nowrap;
-  }
-
-  td {
-    padding: $spacing-3 $spacing-4;
-    border-bottom: 1px solid $gray-100;
-    color: $gray-800;
-    vertical-align: middle;
-  }
-
-  tbody tr:last-child td {
-    border-bottom: none;
-  }
-
-  tbody tr:hover {
-    background: $secondary-blue;
-  }
+  box-shadow: 0 14px 34px -28px rgba($franja-azul, 0.55);
+  overflow-x: auto;
 }
 
 .colFecha {
   width: 1%;
-  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
   color: $gray-600;
+  white-space: nowrap;
 }
 
 .colAccion {
   width: 1%;
   white-space: nowrap;
-  text-align: right;
+}
+
+.acciones {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: $spacing-2;
 }
 
 .descripcion {
-  font-weight: $font-weight-medium;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $gray-900;
 }
 
 .archivo {
@@ -157,32 +74,16 @@
   word-break: break-all;
 }
 
-.verBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px $spacing-3;
-  background: $secondary-blue;
-  border: 1px solid transparent;
-  border-radius: $radio-sm;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
-  color: $primary-blue;
-  text-decoration: none;
-  white-space: nowrap;
-  // Es un <button>: el PDF sale por /api/archivos, que pide token, así que no
-  // puede ser un <a href> plano.
-  font-family: inherit;
-  cursor: pointer;
+.iconBtn {
+  @extend %btn-icono;
+  width: 2.5rem;
+  height: 2.5rem;
+}
 
-  &:hover {
-    border-color: $primary-blue;
-  }
-
-  &:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-  }
+.iconBtnPeligro {
+  @extend %btn-icono-peligro;
+  width: 2.5rem;
+  height: 2.5rem;
 }
 
 .empty {
@@ -191,11 +92,13 @@
   align-items: center;
   gap: $spacing-3;
   padding: $spacing-12 $spacing-5;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $gray-500;
+  text-align: center;
   background: $white;
   border: 1px dashed $gray-300;
   border-radius: $radio-lg;
-  color: $gray-500;
-  text-align: center;
 
   svg {
     color: $gray-300;
@@ -203,133 +106,57 @@
 
   p {
     margin: 0;
-    font-size: $font-size-base;
   }
 }
 
-// ─── Alta (vista del Colegio) ─────────────────────────────────────────────────
+// ── Publicar (vista del Colegio) y modal de edición ─────────────────────────
 
-.uploadCard {
+.alta {
   display: flex;
-  flex-direction: column;
-  gap: $spacing-4;
-  padding: $spacing-5;
-  background: $white;
-  border: 1px solid $gray-200;
-  border-radius: $radio-lg;
-  box-shadow: $shadow-sm;
-}
-
-.uploadTitle {
-  display: flex;
-  align-items: center;
-  gap: $spacing-2;
-  margin: 0;
-  font-size: $font-size-lg;
-  font-weight: $font-weight-semibold;
-  color: $gray-900;
-
-  svg {
-    color: $primary-blue;
-  }
-}
-
-.uploadRow {
-  display: flex;
+  flex: 1 1 100%;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: $spacing-4;
+  gap: $spacing-3 $spacing-4;
 }
 
 .field {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
   flex: 1;
-  min-width: 220px;
+  flex-direction: column;
+  gap: $spacing-1;
+  min-width: 13.75rem;
 }
 
 .fieldFecha {
   flex: 0 0 auto;
-  min-width: 160px;
+  min-width: 11rem;
 }
 
 .label {
-  font-size: $font-size-xs;
+  font-size: $font-size-sm;
   font-weight: $font-weight-semibold;
-  color: $gray-600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  color: $gray-500;
 }
 
 .input {
-  height: 40px;
-  padding: 0 $spacing-3;
-  background: $white;
-  border: 1px solid $gray-200;
-  border-radius: $radio-md;
-  font-size: $font-size-sm;
-  font-family: inherit;
-  color: $gray-800;
-
-  &:focus {
-    outline: none;
-    border-color: $primary-blue;
-  }
+  @extend %campo-texto;
+  height: 2.75rem;
+  border-color: $gray-300;
 }
 
 .inputFile {
-  padding: 8px $spacing-3;
-  height: auto;
+  padding: 0.55rem $spacing-3;
 }
 
-.submitBtn {
-  display: inline-flex;
+.aviso {
+  display: flex;
+  flex: 1 1 100%;
   align-items: center;
-  gap: $spacing-2;
-  height: 40px;
-  padding: 0 $spacing-5;
-  background: $primary-blue;
-  border: none;
-  border-radius: $radio-md;
-  font-size: $font-size-sm;
+  gap: $spacing-3;
+  margin: 0;
   font-weight: $font-weight-semibold;
-  font-family: inherit;
-  color: $white;
-  cursor: pointer;
-
-  &:hover:not(:disabled) {
-    filter: brightness(1.08);
-  }
-
-  &:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-  }
-}
-
-.deleteBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-left: $spacing-2;
-  padding: 6px $spacing-3;
-  background: $white;
-  border: 1px solid $gray-200;
-  border-radius: $radio-sm;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
-  font-family: inherit;
   color: $danger-red;
-  cursor: pointer;
-  white-space: nowrap;
-
-  &:hover {
-    border-color: $danger-red;
-  }
 }
-
-// ─── Modal de edición ─────────────────────────────────────────────────────────
 
 .modalForm {
   display: flex;
@@ -341,23 +168,4 @@
   display: flex;
   justify-content: flex-end;
   gap: $spacing-2;
-}
-
-.aviso {
-  display: flex;
-  align-items: flex-start;
-  gap: $spacing-2;
-  margin: 0;
-  padding: $spacing-3 $spacing-4;
-  background: rgba($primary-yellow-light, 0.5);
-  border: 1px solid rgba($primary-yellow, 0.85);
-  border-radius: $radio-md;
-  font-size: $font-size-sm;
-  color: $primary-yellow-dark;
-  line-height: 1.5;
-
-  svg {
-    flex-shrink: 0;
-    margin-top: 2px;
-  }
 }

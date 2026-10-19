@@ -1,3 +1,5 @@
+@use "@/app/styles/all.scss" as *;
+
 .wrapper {
   display: flex;
   flex-direction: column;
@@ -8,11 +10,9 @@
 .actionBar {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  background: #f8fafc;
-  // border: 1px solid #e2e8f0;
-  // border-radius: 8px;
+  gap: 0.625rem;
+  padding: 0.625rem 0.875rem;
+  background: $gray-50;
   flex-wrap: wrap;
 }
 
@@ -24,10 +24,10 @@
 }
 
 .selectAllCheckbox {
-  width: 16px;
-  height: 16px;
+  width: 1rem;
+  height: 1rem;
   cursor: pointer;
-  accent-color: #1b56ff;
+  accent-color: $tono-azul-450-b;
 
   &:disabled {
     cursor: not-allowed;
@@ -36,37 +36,37 @@
 }
 
 .actionLabel {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
-  color: #1e293b;
+  color: $gray-800;
   white-space: nowrap;
 }
 
 .statusArea {
   display: flex;
   align-items: center;
-  min-height: 20px;
-  margin-left: 4px;
+  min-height: 1.25rem;
+  margin-left: 0.25rem;
 }
 
 .selectionCount {
-  font-size: 12px;
-  color: #64748b;
+  font-size: 0.75rem;
+  color: $gray-500;
 }
 
 .restrictionMsg {
-  font-size: 12px;
-  color: #b91c1c;
-  background: #fee2e2;
+  font-size: 0.75rem;
+  color: $tono-rojo-500;
+  background: $tono-rojo-50;
   border-radius: 5px;
-  padding: 3px 8px;
+  padding: 3px 0.5rem;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 0.25rem;
 
   &::before {
     content: "⚠";
-    font-size: 11px;
+    font-size: 0.6875rem;
   }
 }
 
@@ -78,41 +78,41 @@
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 0.8125rem;
 
   th,
   td {
-    padding: 9px 12px;
+    padding: 0.5625rem 0.75rem;
     text-align: left;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid $gray-200;
     vertical-align: middle;
   }
 
   thead th {
-    background: #f1f5f9;
+    background: $gray-100;
     font-weight: 600;
-    color: #475569;
-    font-size: 12px;
+    color: $gray-600;
+    font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     white-space: nowrap;
   }
 
   tbody tr:hover {
-    background: #f8fafc;
+    background: $gray-50;
   }
 }
 
 .checkboxCell {
-  width: 40px;
+  width: 2.5rem;
   text-align: center !important;
-  padding: 0 8px !important;
+  padding: 0 0.5rem !important;
 
   input[type="checkbox"] {
-    width: 15px;
-    height: 15px;
+    width: 0.9375rem;
+    height: 0.9375rem;
     cursor: pointer;
-    accent-color: #1b56ff;
+    accent-color: $tono-azul-450-b;
 
     &:disabled {
       cursor: not-allowed;
@@ -127,21 +127,21 @@
 }
 
 .rowSelected {
-  background: #eff6ff !important;
+  background: $gray-100 !important;
 }
 
 .stateCell {
   text-align: center !important;
-  color: #94a3b8;
-  padding: 32px 0 !important;
-  font-size: 13px;
+  color: $gray-400;
+  padding: 2rem 0 !important;
+  font-size: 0.8125rem;
 }
 
 /* ── Modal de confirmación ── */
 .modalBackdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.4);
+  background: rgba($gray-900, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -149,17 +149,17 @@
 }
 
 .modalCard {
-  background: #fff;
+  background: $white;
   border-radius: 12px;
-  padding: 24px 28px;
-  max-width: 420px;
-  width: calc(100% - 32px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  padding: 1.5rem 1.75rem;
+  max-width: 26.25rem;
+  width: calc(100% - 2rem);
+  box-shadow: 0 20px 40px rgba($black, 0.15);
 
   p {
-    font-size: 14px;
-    color: #1e293b;
-    margin: 0 0 20px;
+    font-size: 0.875rem;
+    color: $gray-800;
+    margin: 0 0 1.25rem;
     line-height: 1.5;
   }
 }
@@ -167,5 +167,5 @@
 .modalActions {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 0.5rem;
 }

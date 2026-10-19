@@ -1,16 +1,9 @@
 // Tipos del módulo de Validaciones (integraciones con obras sociales).
-//
-// El modelo replica lo que hoy hace el sistema PHP legacy: cada obra social
-// tiene un formulario propio y se valida contra el servicio de la obra social
-// (o se carga manualmente el número de validación obtenido por fuera). Lo que
-// cambia respecto del legacy es dónde termina: la prestación se guarda en
-// `detalle_facturacion` (`origen_carga='medico'`), en el período que marca
-// `periodo_medico_actual` para esa obra social — no en tablas propias.
 
 // ─── Formularios dinámicos ────────────────────────────────────────────────────
 
 /** Tipo de control que se renderiza para un campo del formulario de carga. */
-export type CampoTipo =
+type CampoTipo =
   | "numerico" // solo dígitos, con maxLength
   | "texto" // texto libre
   | "moneda" // importe en $
@@ -31,23 +24,14 @@ export interface CampoConfig {
   hint?: string;
   /** Fuerza mayúsculas mientras se escribe (nombres de afiliado). */
   uppercase?: boolean;
-  /**
-   * Segundo input pegado al principal, separado por "/".
-   * En el legacy son los pares `nro_afiliado_1` / `nro_afiliado_2`
-   * (número de afiliado + dígito verificador / orden familiar).
-   */
+  /** Segundo input pegado al principal, separado por "/". */
   sufijo?: {
     name: string;
     maxLength: number;
     placeholder?: string;
     label?: string;
   };
-  /**
-   * Si está seteado, el campo consulta en vivo mientras el prestador tipea
-   * (debounce + se cancela la consulta anterior si el valor cambió) y muestra
-   * el resultado debajo — igual que el cartel verde/rojo de "Afiliado ACTIVO"
-   * del legacy de Nobis. Nunca bloquea el envío: es sólo informativo.
-   */
+  /** Si está seteado, el campo consulta en vivo mientras el prestador tipea. */
   consultaEnVivo?: {
     /** Dígitos mínimos antes de disparar la consulta (Nobis: 6, como el legacy). */
     minLength: number;
@@ -69,32 +53,29 @@ export type PrestacionFormErrors = Record<string, string | undefined>;
 
 // ─── Catálogo de obras sociales ───────────────────────────────────────────────
 
-/**
- * `integrada` → el Colegio valida contra el servicio de la obra social desde
- * este panel. `externa` → la validación se hace en el portal de la obra social
- * y acá sólo dejamos el acceso directo.
- */
-export type ModoIntegracion = "integrada" | "externa";
+/** `integrada` → el Colegio valida contra el servicio de la obra social desde este panel. */
+type ModoIntegracion = "integrada" | "externa";
 
-export type EstadoIntegracion = "operativa" | "mantenimiento" | "restringida";
+type EstadoIntegracion = "operativa" | "mantenimiento" | "restringida";
 
-/**
- * `online`  → el servicio de la obra social responde la autorización en el acto.
- * `manual`  → el prestador autoriza por fuera y acá carga el número obtenido.
- */
-export type TipoValidacion = "online" | "manual";
+/** `online` → el servicio de la obra social responde la autorización en el acto. */
+type TipoValidacion = "online" | "manual";
 
-/**
- * Guía de acceso al portal de la obra social. Reemplaza los modales
- * `modalSwissGuide` / `modalUnionGuide` de `menu.php`: credenciales que el
- * Colegio comparte con el prestador, pasos y, si la hay, la guía en PDF.
- */
-export interface GuiaPortal {
+/** Guía de acceso al portal de la obra social. */
+/** Documentación que el médico tiene que presentar sí o sí; se avisa antes de abrir el portal. */
+interface RequisitosPortal {
+  titulo: string;
+  items: string[];
+  /** Qué pasa si falta alguno. */
+  motivo: string;
+}
+
+interface GuiaPortal {
   /** Texto del botón que abre la guía en la tarjeta. */
   chip: string;
   titulo: string;
-  /** Credenciales compartidas (usuario/clave). Se muestran con botón de copiar. */
-  credenciales?: { label: string; valor: string }[];
+  /** La guía lleva usuario y clave compartidos. */
+  credencialesRemotas?: boolean;
   /** Aviso destacado arriba de los pasos. */
   aviso?: string;
   intro?: string;
@@ -110,6 +91,8 @@ export interface ObraSocialConfig {
   nombre: string;
   /** NRO_OBRA_SOCIAL del sistema del Colegio. */
   codigo: number | null;
+  /** Otros NRO_OBRA_SOCIAL que son la misma obra social (complementarias, planes); no van a «Otros». */
+  otrosCodigos?: number[];
   modo: ModoIntegracion;
   estado: EstadoIntegracion;
   validacion?: TipoValidacion;
@@ -122,27 +105,16 @@ export interface ObraSocialConfig {
   descripcion: string;
   /** Portal externo (modo `externa`). */
   url?: string;
-  /**
-   * Ruta dentro del sitio del Colegio, cuando la obra social tiene su propia
-   * página institucional (por ejemplo Prevención Salud). Tiene prioridad
-   * sobre `url` a la hora de ofrecer el acceso.
-   */
+  /** Ruta dentro del sitio del Colegio, cuando la obra social tiene su propia página institucional (por ejemplo Prevención Salud). */
   sitioCmc?: string;
-  /**
-   * Pantalla propia dentro del panel para una obra social que no usa el
-   * formulario genérico (hoy Prevención Salud, que se carga por archivo).
-   * Tiene prioridad sobre `sitioCmc` y `url`.
-   */
+  /** Pantalla propia dentro del panel para una obra social que no usa el formulario genérico (hoy Prevención Salud, que se carga por archivo). */
   rutaPanel?: string;
   campos?: CampoConfig[];
   /** Cantidad de códigos de prestación que admite una misma autorización. */
   maxCodigos?: number;
   /** Permite adjuntar la orden/receta en PDF (hoy sólo Boreal). */
   permiteAdjuntarOrden?: boolean;
-  /**
-   * `true` cuando el backend ya sabe grabar prestaciones de esta obra social
-   * (`POST /api/validaciones/prestaciones`). Las lecturas funcionan para todas.
-   */
+  /** `true` cuando el backend ya sabe grabar prestaciones de esta obra social (`POST /api/validaciones/prestaciones`). */
   cargaImplementada?: boolean;
   /** Aviso que se muestra arriba del formulario. */
   nota?: string;
@@ -150,32 +122,18 @@ export interface ObraSocialConfig {
   codigosBloqueados?: string[];
   /** Guía de usuario/clave y pasos del portal (Swiss Medical, Unión Personal). */
   guia?: GuiaPortal;
+  requisitos?: RequisitosPortal;
 }
 
 // ─── Prestaciones ─────────────────────────────────────────────────────────────
 
-/**
- * Cada obra social contesta texto libre; el backend lo normaliza a estos cuatro
- * casos y lo guarda en `detalle_facturacion.validacion_estado`. `cargada` es el
- * caso de las obras sociales de carga manual, donde el Colegio no autorizó nada:
- * sólo registró lo que autorizó la obra social.
- *
- * `autorizada` y `cargada` facturan. `rechazada` y `pendiente` se muestran en el
- * listado con importe 0 y quedan fuera de la factura.
- */
+/** Cada obra social contesta texto libre; el backend lo normaliza a estos cuatro casos y lo guarda en `detalle_facturacion.validacion_estado`. */
 export type EstadoPrestacion = "autorizada" | "rechazada" | "pendiente" | "cargada";
 
-// Nobis grada el `P-Pendiente` como `rechazada` a propósito —importe 0, fuera
-// de factura, igual que un rechazo real— pero antes de mostrarlo como un
-// rechazo liso conviene avisar que la orden **sí existe** en Nobis, esperando
-// que el afiliado la gestione. El prefijo es el que arma
-// `ValidadorNobis.validar()` en el backend (`obras/nobis/validador.py`); si
-// cambia ahí, hay que cambiarlo acá.
+// Nobis grada el `P-Pendiente` como `rechazada` a propósito —importe 0, fuera de factura, igual que un rechazo real.
 const PREFIJO_PENDIENTE_OBRA_SOCIAL = "Pendiente de autorización de la obra social.";
 
-/** `true` si el detalle es el de una `rechazada` que en realidad quedó
- * pendiente de gestión en la obra social (hoy, sólo Nobis). No cambia el
- * `estado` — sigue siendo `rechazada` en la base—, sólo cómo se lo muestra. */
+/** `true` si el detalle es el de una `rechazada` que en realidad quedó pendiente de gestión en la obra social (hoy, sólo Nobis). */
 export const esPendienteDeObraSocial = (detalle?: string | null): boolean =>
   !!detalle && detalle.startsWith(PREFIJO_PENDIENTE_OBRA_SOCIAL);
 
@@ -211,20 +169,12 @@ export interface Periodo {
   cerrado?: boolean;
 }
 
-/** Respuesta del validador de la obra social.
- *
- * No hay estado "no sé": si la carga no terminó en `autorizada`/`cargada`, para
- * el prestador la prestación **no se cargó**, timeout incluido. Eso vale porque
- * el cliente espera más que el backend (ver TIMEOUT_OS_EN_LINEA en
- * validaciones.api.ts), así que un corte acá implica que el backend ya cerró
- * sin grabar. */
+/** Respuesta del validador de la obra social. */
 export interface ResultadoValidacion {
   estado: EstadoPrestacion;
   mensaje: string;
   prestacion?: Prestacion;
-  /** "Revisá los datos del afiliado y el código" al pie del rechazo. Sólo sirve
-   * cuando el problema puede estar en lo que se tipeó; ante un timeout o una
-   * caída de la obra social manda a revisar algo que estaba bien. */
+  /** "Revisá los datos del afiliado y el código" al pie del rechazo. */
   mostrarAyuda?: boolean;
 }
 
@@ -233,27 +183,16 @@ export interface CodigoNomenclador {
   descripcion: string;
   honorarios: number;
   gastos: number;
-  /** Coseguro sugerido para este código — informativo; lo que factura es lo que el
-   * médico tipea en el campo "Coseguro" del formulario, si la obra social lo pide. */
+  /** Coseguro sugerido para este código — informativo; lo que factura es lo que el médico tipea en el campo "Coseguro" del formulario. */
   coseguro: number;
-  /**
-   * `false` cuando el médico no tiene habilitación por especialidad para el
-   * código, o no hay precio vigente para esa obra social. `motivo` lo explica.
-   */
+  /** `false` cuando el médico no tiene habilitación por especialidad para el código, o no hay precio vigente para esa obra social. */
   admitido: boolean;
   motivo?: string | null;
 }
 
-export interface PrestadorInfo {
-  nroSocio: number;
-  nombre: string;
-  matricula: string;
-  especialidad: string;
-}
-
 // ─── Helpers de presentación ──────────────────────────────────────────────────
 
-export const MESES = [
+const MESES = [
   "Enero",
   "Febrero",
   "Marzo",

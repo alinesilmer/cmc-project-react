@@ -1,5 +1,4 @@
 @use "../../../styles/variables" as *;
-@use "../../../styles/admin" as *;
 
 // ─── Layout shell ──────────────────────────────────────────────────────────────
 
@@ -42,9 +41,9 @@
 }
 
 .tab {
-  border: 2px solid rgba(255, 255, 255, 0.55);
+  border: 2px solid rgba($white, 0.55);
   background: transparent;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba($white, 0.85);
   padding: 0.35rem 0.9rem;
   border-radius: $ad-radio;
   font-weight: 500;

@@ -80,22 +80,6 @@ export type DoctorProfile = {
   observacion?: string | null;
 };
 
-export type ConceptApp = {
-  resumen_id: number;
-  periodo: string;
-  created_at?: string | null;
-  monto_aplicado: number;
-  porcentaje_aplicado: number;
-};
-
-export type DoctorConcept = {
-  concepto_id: number; // nro_colegio
-  concepto_nro_colegio?: number | null;
-  concepto_nombre?: string | null;
-  saldo: number;
-  aplicaciones: ConceptApp[];
-};
-
 export type Especialidad = {
   id: string | number;
   id_colegio_espe: string | number;
@@ -103,8 +87,6 @@ export type Especialidad = {
 };
 
 export type Option = { id: string; label: string }; // id = nro_colegio (para conceptos) / ID (para especialidad)
-
-export type AssocEspMode = "add" | "edit";
 
 //#region ===== Rutas base =====
 const ESPECIALIDADES = () => `/api/especialidades/`;
@@ -196,13 +178,6 @@ export async function getMedicoEspecialidades(id: number | string) {
   return getJSON<DoctorEspecialidad[]>(MEDICOS_ESPEC(id));
 }
 
-export type UpsertEspecialidadBody = {
-  id_colegio: number; // requerido
-  n_resolucion?: string;
-  fecha_resolucion?: string; // "YYYY-MM-DD"
-  adjunto_id?: number; // si ya subiste un doc y querés linkearlo
-};
-
 export const addMedicoEspecialidad = (
   medicoId: string | number,
   payload: {
@@ -260,8 +235,7 @@ export const uploadDocumento = async (
   file: File
 ): Promise<number> => {
   const fd = new FormData();
-  // IMPORTANTE: si tu backend espera otro nombre de campo (p.ej., "adjunto" o "archivo"),
-  // cambiá "file" por el correcto.
+  // IMPORTANTE: si tu backend espera otro nombre de campo (p.ej., "adjunto" o "archivo"), cambiá "file" por el correcto.
   fd.set("file", file);
 
   const data = await postForm<{ id: number }>(

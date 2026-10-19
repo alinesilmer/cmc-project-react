@@ -2,11 +2,11 @@
 
 .pantalla {
   position: relative;
-  min-height: calc(100dvh - 72px);
+  min-height: calc(100dvh - 4.5rem);
   display: grid;
   place-items: center;
-  padding: 32px 20px 48px;
-  background: #f5f3ee;
+  padding: 2rem 1.25rem 3rem;
+  background: $gray-100;
   overflow: hidden;
 }
 
@@ -20,27 +20,27 @@
 }
 
 .manchaUno {
-  width: 520px;
-  height: 520px;
-  top: -220px;
-  left: -180px;
+  width: 32.5rem;
+  height: 32.5rem;
+  top: -13.75rem;
+  left: -11.25rem;
   background: rgba($primary-blue, 0.08);
 }
 
 .manchaDos {
-  width: 360px;
-  height: 360px;
-  bottom: -160px;
+  width: 22.5rem;
+  height: 22.5rem;
+  bottom: -10rem;
   right: 30%;
-  background: rgba(#f7e9aa, 0.55);
+  background: rgba($tono-amarillo-50, 0.55);
 }
 
 .marco {
   position: relative;
-  width: min(100%, 1120px);
+  width: min(100%, 70rem);
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
-  gap: 24px;
+  gap: 1.5rem;
   align-items: stretch;
 }
 
@@ -48,16 +48,16 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 44px clamp(24px, 4vw, 56px);
+  padding: 2.75rem clamp(1.5rem, 4vw, 3.5rem);
   background: $white;
   border-radius: 10px;
-  box-shadow: 0 1px 2px rgba(20, 35, 58, 0.05), 0 18px 48px rgba(20, 35, 58, 0.09);
+  box-shadow: 0 1px 2px rgba($tono-azul-750-b, 0.05), 0 18px 48px rgba($tono-azul-750-b, 0.09);
 }
 
 @media (max-width: 960px) {
   .marco {
     grid-template-columns: 1fr;
-    max-width: 560px;
+    max-width: 35rem;
   }
 
   // En el celular el panel va arriba del formulario.
@@ -68,11 +68,11 @@
 
 @media (max-width: 480px) {
   .pantalla {
-    padding: 16px 12px 32px;
+    padding: 1rem 0.75rem 2rem;
   }
 
   .formulario {
-    padding: 28px 20px;
+    padding: 1.75rem 1.25rem;
     border-radius: 10px;
   }
 }

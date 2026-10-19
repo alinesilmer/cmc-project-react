@@ -6,9 +6,7 @@ import s from "../export/export.module.scss";
 interface Props {
   orden: OrdenVista;
   direccion: OrdenDireccion;
-  // Sólo para el texto de ayuda de abajo: con agrupación este criterio ordena
-  // DENTRO de cada grupo, no la tabla entera. En "Por socio" la sección no se muestra
-  // (orden fijo, ver `VistaPanel`).
+  // Sólo para el texto de ayuda de abajo: con agrupación este criterio ordena DENTRO de cada grupo, no la tabla entera.
   agrupacion: Exclude<AgrupacionVista, "por_socio">;
   onChangeOrden: (orden: OrdenVista) => void;
   onChangeDireccion: (direccion: OrdenDireccion) => void;

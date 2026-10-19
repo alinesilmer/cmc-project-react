@@ -2,7 +2,7 @@
 
 .stepContent {
   display: flex;
-  gap: 10px;
+  gap: 0.625rem;
   width: 100%;
   flex-wrap: wrap;
 }
@@ -16,12 +16,12 @@
   margin-bottom: 2rem;
   font-size: 1.75rem;
   font-weight: 700;
-  color: #1f2937;
+  color: $gray-800;
 }
 
 .formGrid {
   display: flex;
-  gap: 10px;
+  gap: 0.625rem;
   width: 100%;
   flex-wrap: wrap;
 }
@@ -34,17 +34,17 @@
 .formGroup.withAttach {
   flex: 1 1 100%;
   flex-direction: row;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .formGroup.especialidadGroup {
   flex: 1 1 100%;
   flex-direction: row;
-  gap: 10px;
+  gap: 0.625rem;
   flex-wrap: wrap;
-  border: 1px #d1d5db;
+  border: 1px $gray-300;
   border-style: dashed;
-  padding: 20px;
+  padding: 1.25rem;
   border-radius: $border-radius-sm;
 }
 .formGroup.especialidadGroupMoreBoton {
@@ -52,17 +52,17 @@
   flex-direction: row;
   display: flex;
   align-items: center;
-  gap: 10px;
-  border: 1px #d1d5db;
+  gap: 0.625rem;
+  border: 1px $gray-300;
   border-style: dashed;
-  padding: 20px;
+  padding: 1.25rem;
   border-radius: $border-radius-sm;
 }
 .formGroup.especialidadGroup .formGroup.especialidadGroup {
   border: none;
   padding: 0;
-  border-top: 1px solid #c2c6cf;
-  padding-top: 10px;
+  border-top: 1px solid $carpeta-plata;
+  padding-top: 0.625rem;
 }
 .formGroup.especialidadGroupMoreBoton .note {
   font-weight: bold;
@@ -72,7 +72,7 @@
   flex: 1 1 50%;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 0.3125rem;
 }
 .formGroup.fullWidth {
   grid-column: 1 / -1;
@@ -81,18 +81,18 @@
 .formGroup label {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #374151;
+  color: $gray-700;
 }
 .formGroup input,
 .formGroup select,
 .formGroup textarea {
   padding: 0.75rem 1rem;
-  border: 2px solid #e5e7eb;
+  border: 2px solid $gray-200;
   border-radius: $border-radius-sm;
   font-size: 1rem;
   font-family: inherit;
   transition: 0.2s ease;
-  background: #fff;
+  background: $white;
   width: 100%;
   height: 100%;
 }
@@ -100,15 +100,15 @@
 .formGroup select:focus,
 .formGroup textarea:focus {
   outline: none;
-  border-color: #4f7cff;
-  box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.12);
+  border-color: $tono-azul-350;
+  box-shadow: 0 0 0 3px rgba($tono-azul-350, 0.12);
 }
 .error {
-  border-color: #ef4444 !important;
+  border-color: $tono-rojo-350 !important;
 }
 .errorText {
   font-size: 0.75rem;
-  color: #ef4444;
+  color: $tono-rojo-350;
   margin-top: 0.25rem;
   font-weight: 500;
 }
@@ -136,9 +136,9 @@
 .summarySection h3 {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #1f2937;
+  color: $gray-800;
   margin: 0 0 0.75rem 0;
-  border-bottom: 2px solid #eff6ff;
+  border-bottom: 2px solid $gray-100;
   padding-bottom: 0.5rem;
 }
 .summaryGrid {
@@ -148,7 +148,7 @@
 }
 .summaryGrid div {
   padding: 0.6rem;
-  background: #f9fafb;
+  background: $gray-50;
   border-radius: $border-radius-sm;
   font-size: 0.92rem;
 }
@@ -157,30 +157,30 @@
   padding: 1.25rem;
   border-radius: $border-radius-sm;
   margin-top: 1.25rem;
-  background: #f8fafc;
-  border: 1px solid #e5e7eb;
+  background: $gray-50;
+  border: 1px solid $gray-200;
 }
 .infoBox h4 {
   margin: 0 0 0.5rem 0;
-  color: #3d5fcc;
+  color: $tono-azul-500-c;
   font-size: 1.05rem;
   font-weight: 700;
 }
 .infoBox p {
   margin: 0.25rem 0;
-  color: #374151;
+  color: $gray-700;
 }
 .contactInfo {
   margin-top: 0.75rem;
   padding-top: 0.75rem;
-  border-top: 1px solid rgba(79, 124, 255, 0.2);
+  border-top: 1px solid rgba($tono-azul-350, 0.2);
 }
 .contactInfo p {
   margin: 0.2rem 0;
 }
 .contactInfo p:first-child {
   font-weight: 700;
-  color: #3d5fcc;
+  color: $tono-azul-500-c;
 }
 
 /* ---- Missing utility classes referenced in Steps.tsx ---- */
@@ -191,14 +191,14 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
-  padding-top: 4px;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
 }
 
 /* Small helper text below specialty group */
 .note {
   font-size: 0.78rem;
-  color: #6b7280;
+  color: $gray-500;
   line-height: 1.4;
   font-style: italic;
 }
@@ -214,7 +214,7 @@
 .labelRow {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0.25rem;
   flex: 1;
 }
 
@@ -232,16 +232,16 @@
 .formGroup select[disabled],
 .formGroup textarea[disabled] {
   cursor: not-allowed;
-  background: #f3f4f6;
-  color: #9ca3af;
+  background: $gray-100;
+  color: $gray-400;
 }
 
 .formGroup.especialidadGroup {
-  background: #fafafa;
+  background: $gray-50;
 }
 
 .summaryGrid div {
-  border: 1px solid #e5e7eb;
+  border: 1px solid $gray-200;
 }
 
 /* ---- Responsive ---- */
@@ -263,5 +263,113 @@
   }
   .actionsInline {
     justify-content: flex-start;
+  }
+}
+
+/* ── Variante panel ────────────────────────────────────────────────────────── Sólo dentro del alta del panel ([data-variante="panel"], que pone Layout): los formularios públicos comparten esta hoja y no cambian. */
+
+[data-variante="panel"] {
+  .stepContent { gap: $spacing-5 $spacing-6; padding: 0; }
+
+  // El título del paso ya está en la cabecera de la ficha: acá queda la ayuda.
+  .topTitle {
+    justify-content: flex-end;
+    margin-bottom: -$spacing-2;
+
+    h2 { display: none; }
+  }
+
+  .formGrid { gap: $spacing-5 $spacing-6; }
+
+  .formGroup {
+    gap: $spacing-2;
+    flex: 1 1 calc(50% - #{$spacing-6});
+    min-width: 14rem;
+  }
+
+  .formGroup.withAttach,
+  .formGroup.especialidadGroup,
+  .formGroup.especialidadGroupMoreBoton { flex: 1 1 100%; }
+
+  .formGroup.withAttach { gap: $spacing-6; }
+
+  .formGroup label {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-bold;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: $gray-600;
+  }
+
+  .formGroup input,
+  .formGroup select,
+  .formGroup textarea {
+    padding: $spacing-3;
+    border: 1px solid $gray-300;
+    border-radius: $radio-md;
+    font-size: $font-size-lg;
+    color: $gray-900;
+  }
+
+  .formGroup input:focus,
+  .formGroup select:focus,
+  .formGroup textarea:focus {
+    border-color: $primary-blue;
+    box-shadow: 0 0 0 3px rgba($primary-blue, 0.12);
+  }
+
+  .formGroup.especialidadGroup,
+  .formGroup.especialidadGroupMoreBoton {
+    padding: $spacing-5;
+    background: $gray-50;
+    border: 1px solid $gray-200;
+    border-left: 3px solid $primary-blue;
+    border-radius: $radio-md;
+  }
+
+  .formGroup.especialidadGroup .formGroup.especialidadGroup {
+    padding: $spacing-4 0 0;
+    background: transparent;
+    border: 0;
+    border-top: 1px solid $gray-200;
+    border-radius: 0;
+  }
+
+  .note { font-style: normal; color: $gray-500; }
+
+  .summarySection { width: 100%; margin-bottom: $spacing-2; }
+
+  .summarySection h3 {
+    margin: 0 0 $spacing-3;
+    padding-bottom: 0;
+    border-bottom: 0;
+    font-family: $fuente-titulos;
+    font-size: $font-size-sm;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: $primary-blue;
+  }
+
+  .summaryGrid { gap: 0 $spacing-6; }
+
+  .summaryGrid div {
+    padding: $spacing-3 0;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid $gray-100;
+    border-radius: 0;
+    font-size: $font-size-base;
+    color: $gray-800;
+  }
+
+  .infoBox {
+    width: 100%;
+    background: $primary-yellow-light;
+    border: 0;
+    border-left: 3px solid $primary-blue;
+    border-radius: $radio-md;
+
+    h4 { color: $primary-blue; }
   }
 }

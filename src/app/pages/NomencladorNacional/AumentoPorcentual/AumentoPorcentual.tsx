@@ -33,6 +33,8 @@ import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import { getEspecialidades } from "../../Especialidades/especialidades.api";
 import MultiSelectBuscable from "../../../components/molecules/MultiSelectBuscable/MultiSelectBuscable";
 import { mensajeDeError } from "@/app/shared/lib/httpErrors";
+import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
 
 const money = new Intl.NumberFormat("es-AR", {
   style: "currency",
@@ -132,7 +134,7 @@ function DetalleTabla({
       </div>
 
       <div className={styles.tableWrap}>
-        <table className={styles.table}>
+        <Tabla className={styles.table}>
           <thead>
             <tr>
               <th>Tipo</th>
@@ -202,7 +204,7 @@ function DetalleTabla({
               </tr>
             ))}
           </tbody>
-        </table>
+        </Tabla>
       </div>
       {visibles.length > LIMITE_FILAS && (
         <p className={styles.hint}>…y {visibles.length - LIMITE_FILAS} más.</p>
@@ -656,12 +658,7 @@ export default function AumentoPorcentual() {
                 <label className={styles.fieldLabel}>
                   <CalendarDays size={13} /> Vigencia desde
                 </label>
-                <input
-                  className={styles.dateInput}
-                  type="date"
-                  value={vigencia}
-                  onChange={(e) => setVigencia(e.target.value)}
-                />
+                <CampoFecha value={vigencia} onChange={(valor) => setVigencia(valor)} />
               </div>
 
               <div className={styles.field}>
@@ -981,12 +978,10 @@ export default function AumentoPorcentual() {
                 <label className={styles.fieldLabel}>
                   <CalendarDays size={13} /> Vigencia a revertir
                 </label>
-                <input
-                  className={styles.dateInput}
-                  type="date"
+                <CampoFecha
                   value={revertVigencia}
-                  onChange={(e) => {
-                    setRevertVigencia(e.target.value);
+                  onChange={(valor) => {
+                    setRevertVigencia(valor);
                     setRevertPreview(null);
                     setRevertResult(null);
                     setRevertConfirming(false);

@@ -1,0 +1,130 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver PeriodoAbierto.tsx. Un almanaque de escritorio: el lomo azul con sus dos anillas, la hoja blanca con el mes en grande y, debajo.
+
+.almanaque {
+  display: flex;
+  flex-direction: column;
+  min-height: 16rem;
+  border-radius: 14px;
+  // Las hojas de abajo del taco.
+  box-shadow:
+    0 5px 0 -1px $white,
+    0 5px 0 0 $gray-300,
+    0 10px 0 -2px $white,
+    0 10px 0 -1px $gray-300,
+    0 30px 44px -26px rgba($franja-noche, 0.55);
+  // Es un dibujo: no cambia con el tema oscuro.
+  color-scheme: light;
+  container-type: inline-size;
+}
+
+.lomo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+  padding: $spacing-4 min(#{$spacing-5}, 6cqi);
+  font-family: $fuente-titulos;
+  // Achica el rótulo en columnas angostas para que nunca se parta ni pise las anillas.
+  font-size: min(#{$font-size-sm}, 4.4cqi);
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  text-transform: uppercase;
+  color: $franja-crema;
+  background: $franja-azul;
+  border-radius: 14px 14px 0 0;
+  isolation: isolate;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    @include trama-cruces;
+  }
+
+  // Las anillas: un aro claro con el agujero de la hoja adentro.
+  i {
+    width: min(1.5rem, 9cqi);
+    height: min(1.5rem, 9cqi);
+    background: $franja-noche;
+    border: 0.35rem solid $franja-crema;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+}
+
+.hoja {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-6 $spacing-6 $spacing-5;
+  text-align: center;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-top: 0;
+  border-radius: 0 0 14px 14px;
+  // El mes se mide contra el ancho de la hoja.
+  container-type: inline-size;
+}
+
+// Una sola línea siempre: el tamaño sale del ancho de la hoja dividido por las letras del mes (--letras), con tope en 4.4rem.
+.mes {
+  margin: 0;
+  font-family: $fuente-titulos;
+  font-size: min(4.4rem, calc(100cqi / (var(--letras, 10) * 0.66)));
+  font-weight: $font-weight-bold;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: $franja-azul;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+// El año, con un filete amarillo a cada lado.
+.anio {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+  margin: $spacing-3 0 0;
+  font-family: $fuente-titulos;
+  font-size: $font-size-4xl;
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0.12em;
+  color: $gray-500;
+
+  &::before,
+  &::after {
+    content: "";
+    width: 2.25rem;
+    height: 3px;
+    background: $primary-yellow;
+    border-radius: 2px;
+  }
+}
+
+.cargando {
+  margin: 0;
+  font-family: $fuente-titulos;
+  font-size: $font-size-2xl;
+  color: $gray-400;
+}
+
+.cuenta {
+  margin: $spacing-5 0 0;
+  padding: $spacing-2 $spacing-5;
+  font-weight: $font-weight-semibold;
+  color: $franja-azul;
+  background: $primary-yellow;
+  border-radius: 999px;
+
+  b {
+    font-family: $fuente-titulos;
+    font-variant-numeric: tabular-nums;
+  }
+}

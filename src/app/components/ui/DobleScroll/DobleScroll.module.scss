@@ -1,0 +1,14 @@
+// Ver DobleScroll.tsx. La barra de arriba es un contenedor vacío del mismo ancho que el contenido: sólo existe para mostrar su barra de desplazamiento.
+
+.arriba {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.relleno {
+  height: 1px;
+}
+
+.cuerpo {
+  overflow-x: auto;
+}

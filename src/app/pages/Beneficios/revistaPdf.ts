@@ -9,16 +9,7 @@ import {
   rectPunteado, recortar, stroke, tinta, tituloEspaciado,
 } from "./revistaDraw";
 
-/**
- * Revista de Beneficios en PDF, generada con jsPDF.
- *
- * Se dibuja con primitivas en vez de rasterizar HTML (html2canvas): el texto
- * queda vectorial —nítido al imprimir, seleccionable y buscable— y el archivo
- * pesa una fracción. A cambio hay que llevar las coordenadas a mano, que es
- * lo que hace `revistaDraw.ts`.
- *
- * Tres partes: tapa, instructivo de la credencial y catálogo por categoría.
- */
+/** Revista de Beneficios en PDF, generada con jsPDF. */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Doc = any;
@@ -59,17 +50,7 @@ async function descargar(src: string): Promise<string | null> {
   });
 }
 
-/**
- * Reduce una captura y la reencoda a JPEG antes de meterla en el PDF.
- *
- * Las tres capturas de la guía pesan 1,5 MB en origen; incrustadas tal cual
- * convertirían un PDF de 25 KB en uno de varios MB, para imprimirlas a 56 mm
- * de ancho. A 900 px eso son ~400 dpi —más de lo que resuelve cualquier
- * impresora— y en JPEG 90 el conjunto baja a ~150 KB sin diferencia visible.
- *
- * Si no hay DOM (pruebas en Node) devuelve la original: el PDF sale más
- * pesado, no roto.
- */
+/** Reduce una captura y la reencoda a JPEG antes de meterla en el PDF. */
 function reducir(dataUrl: string, maxAncho: number): Promise<string> {
   return new Promise((ok) => {
     if (typeof document === "undefined") { ok(dataUrl); return; }
@@ -158,9 +139,7 @@ function dibujarCabecera(doc: Doc, logo: string | null, derecha: string) {
   tinta(doc, COLOR.turquesa);
   doc.text("DE CORRIENTES", x, 22.5, { baseline: "top", charSpace: 0.4 });
 
-  // Alineado a la derecha a mano: con `align:"right"` jsPDF mide el texto sin
-  // contar el `charSpace`, así que la cadena se dibuja más ancha de lo que
-  // calculó y se pasa del margen.
+  // Alineado a la derecha a mano: con `align:"right"` jsPDF mide el texto sin contar el `charSpace`.
   fuente(doc, 7.5, true);
   tinta(doc, COLOR.textoSuave);
   const etiqueta = derecha.toUpperCase();
@@ -250,8 +229,7 @@ function dibujarPasos(doc: Doc, y: number): number {
   return y + alto + 11;
 }
 
-/** Proporción de las capturas (900×636). Se fija para que las tres queden
- *  exactamente iguales aunque alguna se reemplace por otra ligeramente distinta. */
+/** Proporción de las capturas (900×636). */
 const RATIO_GUIA = 900 / 636;
 
 function dibujarGuias(doc: Doc, y: number, capturas: (string | null)[]): number {
@@ -269,8 +247,7 @@ function dibujarGuias(doc: Doc, y: number, capturas: (string | null)[]): number 
       } catch {
         rectPunteado(doc, x, y, w, alto);
       }
-      // Filete alrededor: sin él la captura se funde con el papel y no se lee
-      // como una pantalla.
+      // Filete alrededor: sin él la captura se funde con el papel y no se lee como una pantalla.
       stroke(doc, COLOR.grisBorde);
       doc.setLineWidth(0.3);
       doc.rect(x, y, w, alto, "S");
@@ -412,8 +389,7 @@ export async function generarRevistaPdf(
     doc.line(MARGEN + wCat + 14, y + 2.6, A4.ancho - MARGEN, y + 2.6);
     y += 8;
 
-    // De a dos: se mide la fila entera y se salta antes de dibujar, así ninguna
-    // tarjeta queda partida entre dos hojas.
+    // De a dos: se mide la fila entera y se salta antes de dibujar, así ninguna tarjeta queda partida entre dos hojas.
     for (let i = 0; i < lista.length; i += 2) {
       const fila = lista.slice(i, i + 2);
       const alto = Math.max(...fila.map((b) => altoTarjeta(doc, b)));

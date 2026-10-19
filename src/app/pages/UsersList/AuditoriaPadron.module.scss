@@ -1,20 +1,22 @@
 @use "@/app/styles/all.scss" as *;
 
-$radius: 0;
-
 .page { display: flex; min-height: 100vh; @media (max-width: 768px) { display: block; } }
 
 .content {
+  // En variables porque la franja las necesita para salirse del relleno.
+  --lado: #{$spacing-12};
+  --arriba: #{$spacing-10};
+
   flex: 1;
   min-width: 0;
-  padding: $spacing-10;
+  padding: $spacing-10 $spacing-12;
   display: flex;
   flex-direction: column;
   gap: $spacing-6;
-  background: linear-gradient(180deg, #f9fbff 0%, #f5f8fd 55%, #eef3fa 100%);
+  background: linear-gradient(180deg, $gray-50 0%, $gray-50 55%, $gray-100 100%);
 
-  @media (max-width: 1200px) { padding: $spacing-8; }
-  @media (max-width: $breakpoint-md) { padding: $spacing-5; gap: $spacing-5; }
+  @media (max-width: 1200px) { --lado: #{$spacing-8}; --arriba: #{$spacing-8}; padding: $spacing-8; }
+  @media (max-width: $breakpoint-md) { --lado: #{$spacing-5}; --arriba: #{$spacing-5}; padding: $spacing-5; gap: $spacing-5; }
 }
 
 .back {
@@ -28,21 +30,20 @@ $radius: 0;
 
 .title {
   margin: 0;
-  font-family: "Manrope", "Inter", sans-serif;
+  font-family: $fuente-titulos;
   font-size: $font-size-3xl; font-weight: $font-weight-bold;
   color: $primary-blue-darker; letter-spacing: -0.015em;
 }
 
 .subtitle { margin: $spacing-1 0 0; font-size: $font-size-base; color: $gray-500; max-width: 46rem; }
 
-/** Aclaración de que nada se modifica. Va arriba de todo a propósito: es lo
-    primero que alguien se pregunta al ver una pantalla que audita datos. */
+/** Aclaración de que nada se modifica. */
 .aviso {
   display: flex; align-items: flex-start; gap: $spacing-3;
   padding: $spacing-4 $spacing-5;
   background: $secondary-blue;
-  border: 1px solid rgba(90, 121, 225, 0.24);
-  border-radius: $radius;
+  border: 1px solid rgba($accent-blue, 0.24);
+  border-radius: 0;
   font-size: $font-size-sm; color: $primary-blue-darker; line-height: 1.5;
 }
 .aviso svg { flex-shrink: 0; margin-top: 1px; }
@@ -53,12 +54,12 @@ $radius: 0;
 
 .tarjetaTotal {
   padding: $spacing-5;
-  background: $white; border: 1px solid $gray-200; border-radius: $radius;
+  background: $white; border: 1px solid $gray-200; border-radius: 0;
   border-top: 3px solid $primary-blue;
 }
 .totalNum {
   display: block; margin-top: $spacing-2;
-  font-family: "Manrope", "Inter", sans-serif;
+  font-family: $fuente-titulos;
   font-size: $font-size-3xl; font-weight: $font-weight-bold; color: $gray-900; line-height: 1;
 }
 .totalLabel {
@@ -83,21 +84,20 @@ $radius: 0;
 .grupoTitulo::after { content: ""; flex: 1; height: 1px; background: $gray-200; }
 
 .chipSev {
-  padding: 2px $spacing-2; border-radius: $radius;
+  padding: 2px $spacing-2; border-radius: 0;
   font-size: $font-size-xs; font-weight: $font-weight-bold;
   text-transform: uppercase; letter-spacing: 0.06em;
 }
-.sevAlta  { background: #fdeaea; color: #a51f1f; }
-.sevMedia { background: #fdf3e0; color: #8a5b06; }
+.sevAlta  { background: $tono-rojo-50; color: $tono-rojo-550-b; }
+.sevMedia { background: $primary-yellow-light; color: $tono-naranja-450-b; }
 .sevBaja  { background: $secondary-blue; color: $primary-blue-darker; }
 .sevInfo  { background: $gray-100; color: $gray-600; }
 
 // ─── Chequeo ──────────────────────────────────────────────────────────────────
 
-.chequeo { background: $white; border: 1px solid $gray-200; border-radius: $radius; overflow: hidden; }
+.chequeo { background: $white; border: 1px solid $gray-200; border-radius: 0; overflow: hidden; }
 
-/** Todo el encabezado es el botón: un área grande de click es más fácil de
-    acertar que un chevron de 16px, sobre todo en pantallas táctiles. */
+/** Todo el encabezado es el botón: un área grande de click es más fácil de acertar que un chevron de 16px. */
 .chequeoHead {
   display: flex; align-items: center; gap: $spacing-4;
   width: 100%; padding: $spacing-4 $spacing-5;
@@ -105,7 +105,7 @@ $radius: 0;
   font-family: inherit;
 
   &:hover { background: $gray-50; }
-  &:focus-visible { outline: none; box-shadow: inset 0 0 0 2px rgba(90, 121, 225, 0.35); }
+  &:focus-visible { outline: none; box-shadow: inset 0 0 0 2px rgba($accent-blue, 0.35); }
 }
 
 .chequeoTexto { flex: 1; min-width: 0; }
@@ -114,7 +114,7 @@ $radius: 0;
 
 .casos {
   flex-shrink: 0; min-width: 4.2rem; text-align: right;
-  font-family: "Manrope", "Inter", sans-serif;
+  font-family: $fuente-titulos;
   font-size: $font-size-2xl; font-weight: $font-weight-bold; color: $gray-900;
   font-variant-numeric: tabular-nums;
 }
@@ -136,7 +136,7 @@ $radius: 0;
     font-size: $font-size-xs; font-weight: $font-weight-semibold;
     text-transform: uppercase; letter-spacing: 0.05em; color: $gray-500; background: $gray-50;
   }
-  tbody tr:hover { background: rgba(90, 121, 225, 0.05); }
+  tbody tr:hover { background: rgba($accent-blue, 0.05); }
 }
 
 .nombre { white-space: normal; min-width: 13rem; }
@@ -170,6 +170,6 @@ $radius: 0;
 
 .error {
   display: flex; align-items: center; gap: $spacing-2;
-  padding: $spacing-4; border: 1px solid #fecaca; background: #fef2f2;
-  color: #b91c1c; font-size: $font-size-sm;
+  padding: $spacing-4; border: 1px solid $tono-rojo-100; background: $gray-100;
+  color: $tono-rojo-500; font-size: $font-size-sm;
 }

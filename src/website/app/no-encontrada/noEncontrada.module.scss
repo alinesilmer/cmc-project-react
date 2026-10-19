@@ -1,0 +1,48 @@
+@use "@/website/styles/all.scss" as *;
+
+.aviso {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  // Centrado en el alto que deja ContenedorPagina.
+  flex: 1;
+  padding: 64px 0;
+  text-align: center;
+}
+
+.icono {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  background: $primary-blue;
+  color: $primary-yellow;
+
+  svg {
+    width: 34px;
+    height: 34px;
+  }
+}
+
+.titulo {
+  margin: 0;
+  font-family: $font-title;
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: $primary-blue-dark;
+
+  span {
+    color: $primary-blue;
+  }
+}
+
+.bajada {
+  margin: 0;
+  font-size: 1.1rem;
+  color: $tono-azul-650;
+}

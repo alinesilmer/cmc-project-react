@@ -2,11 +2,7 @@ import type { EstadoCodigoOS } from "../nomenclador.types";
 import { ESTADO_CODIGO_OS_LABEL } from "../nomenclador.types";
 import s from "./estadoCodigoPill.module.scss";
 
-/**
- * Estado de un código en una obra social, igual en todas las pantallas del flujo
- * (Ficha del código, Códigos por obra social, Valores por obra social):
- * Sin alta · Sin precio · Con precio · Suspendido.
- */
+/** Estado de un código en una obra social, igual en todas las pantallas del flujo (Ficha del código, Códigos por obra social. */
 export default function EstadoCodigoPill({
   estado,
   texto,

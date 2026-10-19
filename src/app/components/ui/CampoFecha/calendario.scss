@@ -1,0 +1,292 @@
+@use "@/app/styles/all.scss" as *;
+
+// El calendario que abren `CampoFecha` y `SelectorMes` (react-datepicker), uno solo para todo el panel.
+
+:root {
+  .react-datepicker-popper {
+    z-index: 1400;
+    padding-top: $spacing-2;
+  }
+
+  .react-datepicker {
+    padding: $spacing-4;
+    font-family: $fuente-texto;
+    font-size: $font-size-base;
+    color: $gray-900;
+    background: $white;
+    border: 1px solid $gray-200;
+    border-radius: 16px;
+    box-shadow: 0 4px 10px -4px rgba($franja-noche, 0.12), 0 28px 56px -24px rgba($franja-noche, 0.4);
+    animation: calendario-entra 0.16s ease-out;
+  }
+
+  .react-datepicker__month-container {
+    float: none;
+  }
+
+  .react-datepicker__header {
+    padding: 0;
+    background: transparent;
+    border: 0;
+  }
+
+  // ── Cabecera propia de CampoFecha: Mes Año ‹ › ──────────────────────────────
+  .calendario-cabeza {
+    display: flex;
+    align-items: center;
+    gap: $spacing-1;
+    margin-bottom: $spacing-3;
+  }
+
+  .calendario-mes,
+  .calendario-anio {
+    height: 2.5rem;
+    padding: 0 $spacing-2;
+    font-family: $fuente-titulos;
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    letter-spacing: -0.01em;
+    color: $franja-azul;
+    text-transform: capitalize;
+    background: transparent;
+    border: 0;
+    border-radius: $radio-lg;
+    cursor: pointer;
+    transition: background-color 0.12s;
+
+    &:hover,
+    &:focus-visible {
+      background: $gray-100;
+      outline: none;
+    }
+  }
+
+  .calendario-anio {
+    margin-right: auto;
+    color: $gray-500;
+  }
+
+  .calendario-flecha {
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    color: $franja-azul;
+    background: transparent;
+    border: 1px solid $gray-200;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.12s, border-color 0.12s;
+
+    &:hover:not(:disabled) {
+      background: $primary-yellow;
+      border-color: $primary-yellow;
+    }
+
+    &:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+  }
+
+  // ── Cabecera de la librería (selector de mes): ‹ 2026 › ─────────────────────
+  .react-datepicker-year-header,
+  .react-datepicker__current-month {
+    padding: $spacing-2 0 $spacing-4;
+    font-family: $fuente-titulos;
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    color: $franja-azul;
+    text-transform: capitalize;
+  }
+
+  .react-datepicker__navigation {
+    top: $spacing-4;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 1px solid $gray-200;
+    border-radius: 50%;
+
+    &:hover {
+      background: $primary-yellow;
+      border-color: $primary-yellow;
+    }
+  }
+
+  .react-datepicker__navigation--previous {
+    left: $spacing-4;
+  }
+
+  .react-datepicker__navigation--next {
+    right: $spacing-4;
+  }
+
+  .react-datepicker__navigation-icon {
+    top: 0.2rem;
+
+    &::before {
+      border-color: $franja-azul;
+      border-width: 2px 2px 0 0;
+    }
+  }
+
+  // ── Días ────────────────────────────────────────────────────────────────────
+  .react-datepicker__day-names {
+    margin: 0 0 $spacing-1;
+  }
+
+  .react-datepicker__day-name {
+    width: 2.75rem;
+    margin: 0;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-bold;
+    letter-spacing: 0.08em;
+    color: $gray-400;
+    text-transform: uppercase;
+  }
+
+  .react-datepicker__month {
+    margin: 0;
+  }
+
+  .react-datepicker__day {
+    position: relative;
+    width: 2.75rem;
+    margin: 0;
+    line-height: 2.75rem;
+    font-weight: $font-weight-medium;
+    font-variant-numeric: tabular-nums;
+    color: $gray-900;
+    border-radius: 50%;
+    transition: background-color 0.12s, color 0.12s;
+
+    &:hover {
+      background: $gray-100;
+      border-radius: 50%;
+    }
+  }
+
+  .react-datepicker__day--outside-month {
+    color: $gray-300;
+  }
+
+  // Hoy: un punto debajo del número, sin recuadro.
+  .react-datepicker__day--today {
+    font-weight: $font-weight-bold;
+    color: $franja-azul;
+
+    &::after {
+      content: "";
+      position: absolute;
+      bottom: 0.35rem;
+      left: 50%;
+      width: 0.3rem;
+      height: 0.3rem;
+      background: currentColor;
+      border-radius: 50%;
+      transform: translateX(-50%);
+    }
+  }
+
+  .react-datepicker__day--keyboard-selected {
+    color: $gray-900;
+    background: transparent;
+    box-shadow: inset 0 0 0 1.5px $gray-300;
+  }
+
+  .react-datepicker__day--selected,
+  .react-datepicker__day--selected:hover {
+    font-weight: $font-weight-bold;
+    color: $white;
+    background: $franja-azul;
+    box-shadow: 0 8px 16px -8px rgba($franja-azul, 0.9);
+  }
+
+  .react-datepicker__day--disabled {
+    color: $gray-300;
+    pointer-events: none;
+  }
+
+  // ── Meses (SelectorMes) ─────────────────────────────────────────────────────
+  .react-datepicker__monthPicker {
+    display: grid;
+    gap: $spacing-2;
+  }
+
+  .react-datepicker__month-wrapper {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: $spacing-2;
+  }
+
+  .react-datepicker__month-text {
+    width: auto;
+    margin: 0;
+    padding: $spacing-3 $spacing-5;
+    font-weight: $font-weight-semibold;
+    color: $gray-900;
+    text-transform: capitalize;
+    border-radius: 999px;
+    transition: background-color 0.12s;
+
+    &:hover {
+      background: $gray-100;
+    }
+  }
+
+  .react-datepicker__month-text--keyboard-selected {
+    color: $gray-900;
+    background: transparent;
+    box-shadow: inset 0 0 0 1.5px $gray-300;
+  }
+
+  .react-datepicker__month-text--selected,
+  .react-datepicker__month-text--selected:hover {
+    color: $white;
+    background: $franja-azul;
+    box-shadow: 0 8px 16px -8px rgba($franja-azul, 0.9);
+  }
+
+  .react-datepicker__month-text--disabled {
+    color: $gray-300;
+    pointer-events: none;
+  }
+
+  // ── Pie ─────────────────────────────────────────────────────────────────────
+  .react-datepicker__today-button {
+    width: fit-content;
+    margin: $spacing-3 auto 0;
+    padding: $spacing-2 $spacing-6;
+    font-family: $fuente-titulos;
+    font-weight: $font-weight-bold;
+    color: $franja-azul;
+    background: $primary-yellow;
+    border: 0;
+    border-radius: 999px;
+    transition: background-color 0.12s;
+
+    &:hover {
+      background: $franja-crema;
+    }
+  }
+
+  .react-datepicker__close-icon::after {
+    font-size: $font-size-xl;
+    color: $gray-500;
+    background: transparent;
+  }
+}
+
+@keyframes calendario-entra {
+  from {
+    opacity: 0;
+    transform: translateY(-0.4rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root .react-datepicker {
+    animation: none;
+  }
+}

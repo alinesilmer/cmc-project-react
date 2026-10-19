@@ -1,57 +1,23 @@
 // Cliente del módulo de validaciones — /api/validaciones (cmc_api).
-//
-// Lo que se valida se guarda en `detalle_facturacion` con `origen_carga='medico'`,
-// en el período que devuelve `periodo_medico_actual` para esa obra social: la
-// misma tabla y el mismo puntero que usa la carga del médico en facturación, así
-// que entra derecho a la liquidación. Lo que la obra social contestó queda en las
-// columnas `validacion_*` de esa misma fila.
-//
-// La escritura (POST /prestaciones) hoy acepta las de carga manual —Boreal (285)
-// y Omint (243)— y Sancor (411) en línea. Para el resto el backend responde 422
-// con el detalle; ver `cargaImplementada` en validaciones.config.ts.
-//
-// Una prestación que la obra social NO autorizó se graba igual (para que el
-// prestador vea qué pasó) pero con importe 0 y fuera de la factura.
 
 import { delJSON, getJSON, postForm, postJSON } from "@/app/shared/lib/http";
 import type {
   CodigoNomenclador,
   Periodo,
   Prestacion,
-  PrestadorInfo,
 } from "./validaciones.types";
 
 const BASE = "/api/validaciones";
 
 // Timeout de las llamadas que hacen que el backend consulte a la obra social.
-//
-// El default de axios (15 s, ver lib/http.ts) es más corto que lo que el propio
-// backend está dispuesto a esperar: `SANCOR_TIMEOUT` es 30 s. Con esa
-// diferencia, el navegador abandonaba operaciones que el servidor terminaba
-// igual — verificado el 2026-08-17, una baja que el backend resolvió en 30,3 s
-// y el panel reportó como "no pudimos eliminar la prestación", con la
-// prestación ya anulada.
-//
-// Cuando el alta es la que aparenta fallar el problema es peor: el médico
-// reintenta y **se emite una segunda autorización real**, consumiendo otro
-// token del afiliado.
-//
-// 45 s = los 30 del backend + margen para la base, el espejo al sistema viejo y
-// la red. Si sube `SANCOR_TIMEOUT`, subir esto también: tiene que ser siempre
-// mayor, nunca al revés.
 const TIMEOUT_OS_EN_LINEA = 45_000;
 
-/** `true` si la request se cortó del lado del navegador y no del servidor.
- *
- * Es la distinción que importa: un 4xx/5xx significa que el backend decidió y
- * la operación no se hizo; un corte por timeout significa que **no sabemos** en
- * qué quedó, y hay que ir a mirar antes de reintentar. */
+/** `true` si la request se cortó del lado del navegador y no del servidor. */
 export const esTimeoutDeRed = (err: unknown): boolean => {
   const e = err as { code?: string; message?: string; response?: unknown } | null;
   if (!e) return false;
   if (e.code === "ECONNABORTED" || e.code === "ETIMEDOUT") return true;
-  // Sin `response` no hubo respuesta del servidor; el texto de axios para el
-  // corte por tiempo es "timeout of 45000ms exceeded".
+  // Sin `response` no hubo respuesta del servidor; el texto de axios para el corte por tiempo es "timeout of 45000ms exceeded".
   return !e.response && /timeout/i.test(String(e.message ?? ""));
 };
 
@@ -75,6 +41,7 @@ interface PrestacionApi {
   mes: number;
   anio: number;
   obra_social: number;
+  orden?: string | null;
 }
 
 interface CodigoApi {
@@ -109,25 +76,10 @@ const toPrestacion = (p: PrestacionApi): Prestacion => ({
   mes: p.mes,
   anio: p.anio,
   obraSocial: p.obra_social,
+  orden: p.orden ?? null,
 });
 
 // ─── Lecturas ─────────────────────────────────────────────────────────────────
-
-/** GET /api/validaciones/prestador */
-export const getPrestador = async (nroSocio?: number): Promise<PrestadorInfo> => {
-  const r = await getJSON<{
-    nro_socio: number;
-    nombre: string;
-    matricula: number;
-    categoria: string;
-  }>(`${BASE}/prestador`, nroSocio ? { nro_socio: nroSocio } : undefined);
-  return {
-    nroSocio: r.nro_socio,
-    nombre: r.nombre,
-    matricula: String(r.matricula),
-    especialidad: "",
-  };
-};
 
 /** GET /api/validaciones/periodo-actual — período abierto para carga de médicos. */
 export const getPeriodoActual = (
@@ -165,13 +117,7 @@ export const getPeriodos = async (
   return filas.map((p) => ({ ...p, total: num(p.total) }));
 };
 
-/** GET /api/validaciones/codigos — nomenclador con el valor de esa obra social.
- *
- * `nroSocio` es imprescindible cuando carga el personal del Colegio: la
- * habilitación y el precio se resuelven contra las especialidades del médico,
- * y sin el parámetro el backend los resuelve contra el usuario logueado. Un
- * administrativo no tiene especialidades cargadas, así que sin esto **ningún
- * código le sale habilitado**. */
+/** GET /api/validaciones/codigos — nomenclador con el valor de esa obra social. */
 export const buscarCodigos = async (
   obraSocial: number,
   q: string,
@@ -202,9 +148,7 @@ interface AfiliadoNobisApi {
   estado: string;
 }
 
-/** GET /api/validaciones/nobis/afiliado — estado en vivo del afiliado (sólo
- * lectura, no bloquea el alta). Es el mismo `ConsultarAfiliado` del WSGeCROS
- * que usaba el legacy para el cartel debajo del campo. */
+/** GET /api/validaciones/nobis/afiliado — estado en vivo del afiliado (sólo lectura, no bloquea el alta). */
 export const consultarAfiliadoNobis = (nroAfiliado: string): Promise<AfiliadoNobisApi> =>
   getJSON<AfiliadoNobisApi>(`${BASE}/nobis/afiliado`, { nro_afiliado: nroAfiliado });
 
@@ -225,8 +169,7 @@ export interface CargarPrestacionPayload {
   nro_socio?: number;
 }
 
-/** POST /api/validaciones/prestaciones — carga manual (Boreal / Omint) y
- * autorización en línea (Sancor / OSPJN / Nobis / OSPM). */
+/** POST /api/validaciones/prestaciones — carga manual (Boreal / Omint) y autorización en línea (Sancor / OSPJN / Nobis / OSPM). */
 export const cargarPrestacion = async (
   payload: CargarPrestacionPayload
 ): Promise<Prestacion> => {
@@ -249,10 +192,7 @@ export const adjuntarOrden = async (
   return toPrestacion(r);
 };
 
-/** DELETE /api/validaciones/prestaciones/{id} — baja lógica (EXISTE='N').
- *
- * En Sancor y Nobis además intenta anular la autorización en la obra social
- * antes de marcar nada, así que también depende de un tercero. */
+/** DELETE /api/validaciones/prestaciones/{id} — baja lógica (EXISTE='N'). */
 export const eliminarPrestacion = (id: string, nroSocio?: number): Promise<void> => {
   // `delJSON` no acepta params, así que el socio va en la query string.
   const qs = nroSocio ? `?nro_socio=${encodeURIComponent(nroSocio)}` : "";
@@ -260,3 +200,10 @@ export const eliminarPrestacion = (id: string, nroSocio?: number): Promise<void>
     timeout: TIMEOUT_OS_EN_LINEA,
   });
 };
+
+/** Un dato de acceso a un portal externo, con su rótulo. */
+export type CredencialPortal = { label: string; valor: string };
+
+/** GET /api/validaciones/portales/{slug}/credenciales — usuario y clave que el Colegio comparte para un portal externo. */
+export const getCredencialesPortal = (slug: string): Promise<CredencialPortal[]> =>
+  getJSON<CredencialPortal[]>(`${BASE}/portales/${encodeURIComponent(slug)}/credenciales`);

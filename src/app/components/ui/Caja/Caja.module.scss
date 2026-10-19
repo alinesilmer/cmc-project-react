@@ -1,0 +1,38 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver Caja.tsx.
+
+.cajas {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  align-items: start;
+  gap: $spacing-5;
+
+  @media (max-width: $breakpoint-lg) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.caja {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-3;
+  min-width: 0;
+  padding: $spacing-5 $spacing-6;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
+  box-shadow: 0 14px 34px -26px rgba($primary-blue-darker, 0.55);
+}
+
+// Ocupa su propio renglón: los controles arrancan debajo.
+.titulo {
+  flex: 1 1 100%;
+  margin: 0;
+  font-family: $fuente-titulos;
+  font-size: $font-size-xl;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: $primary-blue;
+}

@@ -12,10 +12,12 @@ import { formatMoney } from "../money";
 import ObraSocialAutocomplete from "../components/ObraSocialAutocomplete";
 import ConfirmActionModal from "../components/ConfirmActionModal";
 import styles from "./VerPeriodos.module.scss";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
+import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
+import { estadoLabel } from "@/app/pages/facturacion/utiles";
+import { fmtFecha } from "@/app/pages/facturacion/utiles";
 
-// Mismos estados que `FACTURA_ESTADOS_CERRADOS` en el backend (service.py):
-// 'C' es el estado actual, 'L'/'LC' son históricos de CMC que se siguen
-// aceptando como cerrados por compatibilidad.
+// Mismos estados que `FACTURA_ESTADOS_CERRADOS` en el backend (service.py): 'C' es el estado actual.
 const ESTADOS_CERRADOS = new Set(["C", "L", "LC"]);
 
 const PAGE_SIZES = [25, 50, 100, 200];
@@ -33,26 +35,6 @@ const estadoBadgeClass = (estado: string | null): string => {
     case "C": return styles.estadoCerrada;
     default:  return styles.estadoDefault;
   }
-};
-
-const estadoLabel = (estado: string | null): string => {
-  switch (estado) {
-    case "A": return "Abierta";
-    case "C": return "Cerrada";
-    default:  return estado || "—";
-  }
-};
-
-const fmtFecha = (iso: string | null): string => {
-  if (!iso) return "—";
-  // `new Date("2026-11-01")` parsea las date-only como medianoche UTC, y al mostrarlas
-  // en hora local (AR = UTC-3) retroceden un día. Las fechas de la API (`fecha_practica`,
-  // `fecha`) son columnas DATE, así que se formatean sin pasar por Date.
-  const soloFecha = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
-  if (soloFecha) return `${soloFecha[3]}/${soloFecha[2]}/${soloFecha[1]}`;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
 };
 
 const VerPeriodos: React.FC = () => {
@@ -221,7 +203,7 @@ const VerPeriodos: React.FC = () => {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
         >
-          <table className={styles.table}>
+          <Tabla className={styles.table}>
             <thead>
               <tr>
                 <th>Obra social</th>
@@ -272,9 +254,7 @@ const VerPeriodos: React.FC = () => {
                   <td><span className={styles.totalCell}>{formatMoney(row.importe)}</span></td>
                   <td>
                     <div className={styles.actionsCell}>
-                      <button type="button" className={styles.btnView} onClick={() => handleVer(row)}>
-                        <Eye size={14} /> Ver
-                      </button>
+                      <BotonVer onClick={() => handleVer(row)} />
                       {row.estado && ESTADOS_CERRADOS.has(row.estado) && row.documento_url && (
                         <button type="button" className={styles.btnFactura} onClick={() => handleVerFactura(row)}>
                           <FileText size={14} /> Ver factura
@@ -293,7 +273,7 @@ const VerPeriodos: React.FC = () => {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </Tabla>
         </motion.div>
 
         <div className={styles.pagination}>

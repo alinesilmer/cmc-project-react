@@ -1,5 +1,4 @@
-// Lo propio de la tabla de Swiss Medical. El resto del andamiaje está en
-// `components/reporte/reporte.module.scss`.
+// Lo propio de la tabla de Swiss Medical.
 
 @use "@/app/styles/all.scss" as *;
 
@@ -15,8 +14,7 @@
   min-width: 13rem;
 }
 
-/** Fila que hay que revisar antes de facturar: sin médico en el padrón, o con
- * una matrícula que no es de Corrientes. */
+/** Fila que hay que revisar antes de facturar: sin médico en el padrón, o con una matrícula que no es de Corrientes. */
 .revisar td {
   background: rgba($warning-orange, 0.06);
 }

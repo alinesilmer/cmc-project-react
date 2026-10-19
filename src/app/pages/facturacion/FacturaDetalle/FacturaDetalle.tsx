@@ -1,8 +1,12 @@
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  ClipboardList, ArrowLeft, ArrowRightCircle, ArrowLeftCircle, Trash2,
-  Download, SlidersHorizontal,
+  ClipboardList,
+  ArrowRightCircle,
+  ArrowLeftCircle,
+  Trash2,
+  Download,
+  SlidersHorizontal,
 } from "lucide-react";
 
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
@@ -26,9 +30,10 @@ import { sumaEquipo, sumarTotales } from "./totales";
 import type { GrupoAcciones, VistaGrupo } from "./GrupoTabla";
 import { inferirEquipos } from "./equipo";
 import styles from "./FacturaDetalle.module.scss";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
+import BackButton from "@/app/components/ui/BackButton/BackButton";
 
-// Set vacío compartido: los grupos sin filas ocupadas reciben siempre esta misma
-// referencia y su memo no se invalida.
+// Set vacío compartido: los grupos sin filas ocupadas reciben siempre esta misma referencia y su memo no se invalida.
 const SIN_OCUPADAS: ReadonlySet<number> = new Set();
 
 const mismaFirma = (a: unknown[], b: unknown[]) => a.length === b.length && a.every((x, i) => x === b[i]);
@@ -58,8 +63,7 @@ const compararPorOrden = (
     case "fecha":
       return signo * (a.fecha_practica ?? "").localeCompare(b.fecha_practica ?? "");
     case "fecha_carga":
-      // `created` es ISO (se compara como texto); el id desempata las cargas del mismo
-      // segundo y cubre filas sin `created`.
+      // `created` es ISO (se compara como texto); el id desempata las cargas del mismo segundo y cubre filas sin `created`.
       return signo * ((a.created ?? "").localeCompare(b.created ?? "") || a.id - b.id);
     case "codigo":
       return signo * (a.codigo ?? "").localeCompare(b.codigo ?? "", "es");
@@ -79,8 +83,7 @@ const porPacienteAZ = (a: PrestacionConSocio, b: PrestacionConSocio): number =>
   (a.nombre_paciente ?? "").localeCompare(b.nombre_paciente ?? "", "es", { sensitivity: "base" })
   || (a.nro_afiliado ?? "").localeCompare(b.nro_afiliado ?? "", "es", { numeric: true })
   || porFechaDesc(a, b);
-// Sanatorios: las prestaciones de una misma clínica quedan seguidas (A-Z por clínica) para
-// poder intercalar el subtítulo con su nombre.
+// Sanatorios: las prestaciones de una misma clínica quedan seguidas (A-Z por clínica) para poder intercalar el subtítulo con su nombre.
 const nombreClinica = (p: PrestacionConSocio): string => p.nombre_clinica ?? String(p.cod_clinica ?? "");
 const porClinica = (a: PrestacionConSocio, b: PrestacionConSocio): number =>
   nombreClinica(a).localeCompare(nombreClinica(b), "es", { sensitivity: "base" });
@@ -119,9 +122,7 @@ const pasaFiltros = (p: PrestacionConSocio, f: FiltrosVista): boolean => {
 const sumarMoney = <T,>(arr: T[], get: (x: T) => string | null): string =>
   arr.reduce((s, x) => s + parseMoney(get(x)), 0).toFixed(2);
 
-// Saca del detalle ya cargado las prestaciones anuladas o movidas de período y
-// recalcula los mismos totales que arma el backend (`obtener_factura_detalle`),
-// para no tener que volver a pedir la factura entera después de cada acción.
+// Saca del detalle ya cargado las prestaciones anuladas o movidas de período y recalcula los mismos totales que arma el backend (`obtener_factura_detalle`).
 const quitarPrestaciones = (detalle: FacturaDetalleResponse, ids: number[]): FacturaDetalleResponse => {
   const fuera = new Set(ids);
   const unidades = (p: PrestacionFacturaDetalle) => (p.cantidad || 1) * (p.sesion || 1);
@@ -229,8 +230,7 @@ const FacturaDetalle: React.FC = () => {
     navigate(`/panel/facturacion/carga/${p.id}?from=${id}`);
   };
 
-  // Precarga el formulario de carga con los datos de esta prestación, pero como una
-  // prestación nueva (POST) — la original no se toca.
+  // Precarga el formulario de carga con los datos de esta prestación, pero como una prestación nueva (POST) — la original no se toca.
   const handleReplicar = (p: PrestacionConSocio) => {
     navigate(`/panel/facturacion/carga?replicar=${p.id}`);
   };
@@ -338,8 +338,7 @@ const FacturaDetalle: React.FC = () => {
     });
   };
 
-  // Objeto de acciones con identidad fija: delega en los handlers del render actual
-  // (que leen `detalle` fresco) sin invalidar el memo de cada fila.
+  // Objeto de acciones con identidad fija: delega en los handlers del render actual (que leen `detalle` fresco) sin invalidar el memo de cada fila.
   const accionesRef = useRef<FilaAcciones | null>(null);
   accionesRef.current = {
     onToggleRevisado: handleToggleRevisado,
@@ -383,12 +382,9 @@ const FacturaDetalle: React.FC = () => {
   };
 
   // ── Pipeline de vista: aplanar → filtrar → agrupar → ordenar ────────────────
-  // Todo en el cliente: el endpoint no tiene filtros/orden propios y ya trae
-  // todas las prestaciones de una — ver `vista/types.ts`.
+  // Todo en el cliente: el endpoint no tiene filtros/orden propios y ya trae todas las prestaciones de una — ver `vista/types.ts`.
 
-  // Cache por identidad: las acciones locales (tildar, mover, anular) sólo crean un
-  // objeto nuevo para las filas que tocan, así el resto mantiene su referencia y
-  // `FilaPrestacion` (memo) no se vuelve a dibujar.
+  // Cache por identidad: las acciones locales (tildar, mover, anular) sólo crean un objeto nuevo para las filas que tocan.
   const aplanadasRef = useRef(new WeakMap<PrestacionFacturaDetalle, PrestacionConSocio>());
   const todasFlat = useMemo<PrestacionConSocio[]>(() => {
     if (!detalle) return [];
@@ -407,10 +403,7 @@ const FacturaDetalle: React.FC = () => {
     return out;
   }, [detalle]);
 
-  // Equipo de cada cabeza (id cabeza → integrantes, sin ella), sin filtrar — así el equipo
-  // se muestra completo aunque algún filtro deje afuera a un integrante. Un ayudante o
-  // pediatra sin grupo se asigna a su cabeza por paciente + fecha (ver `inferirEquipos`).
-  // Los integrantes cuya cabeza ya no está en la factura quedan como filas comunes.
+  // Equipo de cada cabeza (id cabeza → integrantes, sin ella), sin filtrar .
   const { equipoPorCabeza, integrantes } = useMemo(() => {
     const ids = new Set(todasFlat.map((p) => p.id));
     const inferidos = inferirEquipos(todasFlat);
@@ -438,11 +431,7 @@ const FacturaDetalle: React.FC = () => {
     [todasFlat, vistaOpciones],
   );
 
-  // Equipo quirúrgico: el ayudante/gastos/pediatra de una cabeza son inseparables de ella,
-  // en cualquier agrupación. Los filtros y el orden se aplican a la CABEZA: si pasa, entra
-  // con todo su equipo (anidado debajo y sumado a su grupo); si no, el equipo entero queda
-  // afuera. Un integrante nunca es línea propia de su socio. Sólo las prestaciones sin equipo,
-  // o cuya cabeza ya no está en la factura (anulada), son líneas comunes.
+  // Equipo quirúrgico: el ayudante/gastos/pediatra de una cabeza son inseparables de ella, en cualquier agrupación.
   const { principales, hijosPorCabeza, visibles } = useMemo(() => {
     const propias = filtradas.filter((p) => !integrantes.has(p.id));
     const hijos = new Map<number, PrestacionConSocio[]>();
@@ -459,8 +448,7 @@ const FacturaDetalle: React.FC = () => {
 
   const vistaGrupos = useMemo<VistaGrupo[]>(() => {
     const miembrosDe = (arr: PrestacionConSocio[]) => arr.flatMap((p) => [p, ...(hijosPorCabeza.get(p.id) ?? [])]);
-    // Lo que suma a los totales del médico: en Honorarios individuales y Sanatorios el
-    // equipo se muestra pero no se suma (ver `sumaEquipo`).
+    // Lo que suma a los totales del médico: en Honorarios individuales y Sanatorios el equipo se muestra pero no se suma (ver `sumaEquipo`).
     const sumablesDe = (arr: PrestacionConSocio[]) =>
       arr.flatMap((p) => [p, ...(sumaEquipo(p) ? hijosPorCabeza.get(p.id) ?? [] : [])]);
 
@@ -476,10 +464,7 @@ const FacturaDetalle: React.FC = () => {
         .map((arr, i) => ({ tipo: ORDEN_TIPOS[i], arr }))
         .filter(({ arr }) => arr.length > 0)
         .map(({ tipo, arr }) => {
-          // Las filas de cada médico quedan seguidas (para poder cerrar con su subtotal);
-          // el orden elegido rige dentro de cada médico.
-          // Honorarios individuales y Sanatorios traen un selector: "paciente" ordena los pacientes A-Z
-          // dentro de cada médico (y, en Sanatorios, de cada clínica, que siguen agrupadas A-Z).
+          // Las filas de cada médico quedan seguidas (para poder cerrar con su subtotal); el orden elegido rige dentro de cada médico.
           const selector = tipo === "Honorarios individuales" ? vistaOpciones.ordenHonorarios
             : tipo === "Sanatorio" ? vistaOpciones.ordenSanatorio : undefined;
           const porPaciente = selector === "paciente";
@@ -488,9 +473,7 @@ const FacturaDetalle: React.FC = () => {
             || (tipo === "Sanatorio" ? porClinica(a, b) : 0)
             || (porPaciente
               ? porPacienteAZ(a, b)
-              // "Médico": rige el orden elegido; lo que ese orden no distingue (con "nombre
-              // del socio" empatan todas las filas del socio) queda por paciente A-Z y no
-              // en el orden de carga. Igual que el exportable (`export/armado.py`).
+              // "Médico": rige el orden elegido; lo que ese orden no distingue.
               : compararPorOrden(a, b, vistaOpciones.orden, vistaOpciones.direccion) || (selector ? porPacienteAZ(a, b) : 0)));
           const miembros = miembrosDe(ordenadas);
           const sumables = sumablesDe(ordenadas);
@@ -502,9 +485,7 @@ const FacturaDetalle: React.FC = () => {
         });
     }
 
-    // por_socio (default): orden fijo. Médicos A-Z, cada uno con sus tramos por tipo.
-    // `cod_medico` es siempre el médico que cobra (la clínica, si hay, va en `cod_clinica`
-    // y se muestra como etiqueta en la fila), así que nunca se agrupa a un socio como clínica.
+    // por_socio (default): orden fijo.
     const medicos = new Map<string, PrestacionConSocio[]>();
     for (const p of principales) {
       const arr = medicos.get(p.cod_medico) ?? [];
@@ -557,10 +538,7 @@ const FacturaDetalle: React.FC = () => {
   const columnasKeys = useMemo(() => columnasActivas.map((c) => c.key), [columnasActivas]);
   const anchos = useMemo(() => columnasConPeso.map((c) => c.pct), [columnasConPeso]);
 
-  // Grupos con identidad estable: si un grupo tiene exactamente las mismas filas (por
-  // referencia), el mismo armado y los mismos compañeros de equipo que en el render
-  // anterior, se reusa el objeto anterior y `GrupoTabla` (memo) no se vuelve a dibujar.
-  // Tildar una fila sólo redibuja el grupo de esa fila.
+  // Grupos con identidad estable: si un grupo tiene exactamente las mismas filas (por referencia).
   const gruposCacheRef = useRef(new Map<string, { g: VistaGrupo; firma: unknown[] }>());
   const gruposEstables = useMemo(() => {
     const anterior = gruposCacheRef.current;
@@ -587,8 +565,7 @@ const FacturaDetalle: React.FC = () => {
     return out;
   }, [vistaGrupos, hijosPorCabeza]);
 
-  // La tabla se dibuja con una versión "diferida" de los grupos: cambiar filtros/orden
-  // o abrir un panel responde al instante y la tabla se actualiza al terminar de calcularse.
+  // La tabla se dibuja con una versión "diferida" de los grupos.
   const gruposDibujados = useDeferredValue(gruposEstables);
 
   const ocupadasDe = (g: VistaGrupo): ReadonlySet<number> => {
@@ -629,9 +606,7 @@ const FacturaDetalle: React.FC = () => {
           <button type="button" className={styles.backBtn} onClick={() => setExportOpen(true)} disabled={!detalle}>
             <Download size={15} /> Exportar
           </button>
-          <button type="button" className={styles.backBtn} onClick={() => navigate("/panel/facturacion/periodos")}>
-            <ArrowLeft size={15} /> Volver
-          </button>
+          <BackButton to="/panel/facturacion/periodos" />
         </div>
       </div>
 
@@ -650,7 +625,7 @@ const FacturaDetalle: React.FC = () => {
         )}
 
         <div className={styles.tableWrap}>
-          <table className={`${styles.table} ${styles.tablaEncabezado}`}>
+          <Tabla className={`${styles.table} ${styles.tablaEncabezado}`}>
             <colgroup>
               {columnasConPeso.map((c) => <col key={c.id} style={{ width: `${c.pct}%` }} />)}
             </colgroup>
@@ -676,7 +651,7 @@ const FacturaDetalle: React.FC = () => {
                 <tr><td colSpan={columnasConPeso.length} className={styles.emptyCell}>Ningún resultado con los filtros de vista actuales.</td></tr>
               )}
             </tbody>
-          </table>
+          </Tabla>
           {!loading && !error && detalle && gruposDibujados.map((g) => (
             <GrupoTabla
               key={g.key}

@@ -1,19 +1,11 @@
-// Estado de una pantalla que lee un reporte de facturación de una obra social
-// y lo cruza contra el padrón de médicos.
-//
-// Es lo único que comparten Prevención Salud y Swiss Medical a nivel lógica: el
-// archivo lo lee un parser distinto en cada caso, pero el ciclo —leer, traer el
-// padrón, resolver la matrícula de cada fila, poder limpiar y volver a
-// empezar— es el mismo. El índice de matrículas se pide en paralelo con el
-// archivo porque no depende de lo que traiga la planilla.
+// Estado de una pantalla que lee un reporte de facturación de una obra social y lo cruza contra el padrón de médicos.
 
 import { useCallback, useState } from "react";
 
 import { getIndiceMatriculas } from "../../medicosPorMatricula";
 import type { IndiceMatriculas } from "../../medicosPorMatricula";
 
-/** Sólo un 403 es falta de permiso; cualquier otra falla se dice como falla.
- * Antes todo error decía «hace falta el permiso», y no era eso. */
+/** Sólo un 403 es falta de permiso; cualquier otra falla se dice como falla. */
 const mensajePadron = (e: unknown): string =>
   (e as { response?: { status?: number } })?.response?.status === 403
     ? "No tenés permiso para leer el padrón de médicos (medico:leer), así que las filas quedan sin identificar."
@@ -37,10 +29,7 @@ export interface OpcionesReporte<T> {
   contar: (reporte: T) => number;
   /** Qué decirle a quien subió un archivo del formato correcto pero vacío. */
   mensajeVacio: string;
-  /**
-   * `false` para no traer el padrón: las importaciones no lo usan, porque el
-   * médico lo resuelve el backend. Por defecto se trae.
-   */
+  /** `false` para no traer el padrón: las importaciones no lo usan, porque el médico lo resuelve el backend. */
   conPadron?: boolean;
 }
 
@@ -74,8 +63,7 @@ export function useReporteConPadron<T>(
           !conPadron
             ? Promise.resolve(null)
             : getIndiceMatriculas().catch((e) => {
-                // Sin el padrón no se puede mapear, pero el reporte se muestra
-                // igual: es preferible ver las filas sin médico que no ver nada.
+                // Sin el padrón no se puede mapear, pero el reporte se muestra igual: es preferible ver las filas sin médico que no ver nada.
                 setAvisoPadron(mensajePadron(e));
                 console.error("Padrón de matrículas:", e);
                 return null;

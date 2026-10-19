@@ -8,9 +8,7 @@ import type {
   CierrePreviewResponse, CierreResponse, CierrePayload, ListarPrestacionesParams,
   FacturaRead, ListarFacturasParams, FacturaDetalleResponse, ComplementoCreate,
   ViaPractica, PrestacionFicha,
-  CargaPorUsuario, CierresPorUsuario, ActividadEvento,
-  RegistroPorUsuarioParams, RegistroActividadParams,
-  PublicarPeriodoPayload, PublicarPeriodoResponse,
+  CargaPorUsuario, CierresPorUsuario, RegistroPorUsuarioParams, PublicarPeriodoPayload, PublicarPeriodoResponse,
   PeriodoPropio,
   RecalculoPayload, RecalculoResponse,
 } from "./types";
@@ -29,7 +27,7 @@ const log = (label: string, params: unknown, data: unknown) => {
 };
 
 const logError = (label: string, params: unknown, err: unknown) => {
-  console.groupCollapsed(`%c[facturacion] ${label} ❌`, "color:#cc2a2a;font-weight:600");
+  console.groupCollapsed(`%c[facturacion] ${label} (error)`, "color:#cc2a2a;font-weight:600");
   console.log("params →", params);
   console.error("error →", err);
   console.groupEnd();
@@ -49,10 +47,7 @@ async function traced<T>(label: string, params: unknown, promise: Promise<T>): P
 export const fetchMedicos = (q: string, limit = 20) =>
   traced("GET /medicos", { q, limit }, getJSON<MedicoOption[]>(`${BASE}/medicos`, { q, limit }));
 
-// Precarga completa para el formulario de Carga de Facturación (ver
-// CargaFacturacion.tsx): se pide una sola vez al entrar y de ahí en más el
-// médico/obra social/clínica se elige filtrando en memoria, sin ida y vuelta
-// al backend por cada tecleo.
+// Precarga completa para el formulario de Carga de Facturación (ver CargaFacturacion.tsx).
 export const fetchMedicosTodos = () =>
   traced("GET /medicos/todos", {}, getJSON<MedicoOption[]>(`${BASE}/medicos/todos`));
 
@@ -118,12 +113,6 @@ export const eliminarAfiliadoPorId = (id: number) =>
 export const fetchAfiliado = (dni: string) =>
   getJSON<AfiliadoRead>(`${BASE}/afiliados/${encodeURIComponent(dni)}`);
 
-// El identificador puede llevar barras ("1231233/00") — va encodeado; del lado del
-// backend la ruta es `{dni:path}`. Devuelve 204; 409 si el afiliado ya tiene
-// prestaciones no anuladas cargadas.
-export const eliminarAfiliado = (dni: string) =>
-  traced("DELETE /afiliados", { dni }, delJSON<void>(`${BASE}/afiliados/${encodeURIComponent(dni)}`));
-
 export const fetchPeriodoActivo = (cod_obra: string) =>
   traced("GET /periodo-activo", { cod_obra }, getJSON<PeriodoActivoResponse>(`${BASE}/periodo-activo`, { cod_obra }));
 
@@ -173,9 +162,7 @@ export const fetchFacturaDetalle = (id: number | string) =>
 export const fetchPrestacion = (id: number | string) =>
   traced(`GET /prestaciones/${id}`, { id }, getJSON<PrestacionRead>(`${BASE}/prestaciones/${id}`));
 
-// Ficha completa (pantalla de consulta): registro sin recortes + códigos resueltos a
-// nombre. Distinta de `fetchPrestacion`, que trae el shape recortado para precargar el
-// formulario de edición.
+// Ficha completa (pantalla de consulta): registro sin recortes + códigos resueltos a nombre.
 export const fetchPrestacionFicha = (id: number | string) =>
   traced(
     `GET /prestaciones/${id}/ficha`,
@@ -195,13 +182,6 @@ export const publicarPeriodo = (payload: PublicarPeriodoPayload) =>
     "PATCH /facturas/publicado",
     payload,
     patchJSON<PublicarPeriodoResponse>(`${BASE}/facturas/publicado`, payload),
-  );
-
-export const fetchRecientes = (cod_obra: string, usuario?: string) =>
-  traced(
-    "GET /prestaciones/recientes",
-    { cod_obra, usuario },
-    getJSON<PrestacionRead[]>(`${BASE}/prestaciones/recientes`, { cod_obra, usuario }),
   );
 
 export const crearPrestaciones = (payload: PrestacionesCreate, confirmar_duplicado = false) =>
@@ -248,8 +228,7 @@ export const moverPeriodo = (payload: MoverPeriodoPayload) =>
     postJSON<MoverPeriodoResponse>(`${BASE}/prestaciones/mover-periodo`, payload),
   );
 
-/** Recotiza con el precio vigente las prestaciones automáticas de una factura
- * abierta. Con `dry_run` sólo calcula. Puede tardar: cada fila hace su lookup. */
+/** Recotiza con el precio vigente las prestaciones automáticas de una factura abierta. */
 export const recalcularPrecios = (payload: RecalculoPayload) =>
   traced(
     "POST /recalcular-precios",
@@ -265,11 +244,7 @@ export const previewCierre = (cod_obra: string, periodo: string) =>
   );
 
 // ── Export (detalle + carátula) ──────────────────────────────────────────────
-// GET, no POST: es el patrón que ya usa el resto de la API para "exportar con
-// filtros" (`/api/deducciones/export`, `/api/cobranzas/export`) y permite que
-// el backend arme un `Content-Disposition: attachment` normal. `timeoutMs` más
-// largo que el default porque con miles de prestaciones el PDF/Excel puede
-// tardar unos segundos en generarse.
+// GET, no POST: es el patrón que ya usa el resto de la API para "exportar con filtros" (`/api/deducciones/export`.
 export const descargarExportDetalle = (
   facturaId: number | string, formato: "pdf" | "xlsx", opciones: ExportOpciones,
 ) =>
@@ -287,7 +262,6 @@ export const descargarExportCaratula = (facturaId: number | string, formato: "pd
   );
 
 // Detalle por médico: cruza todas las obras sociales del socio en un período.
-// Mismo membrete institucional que el export de factura (ver encabezado.py).
 export const descargarExportPorMedico = (
   nroSocio: number | string, periodo: string, formato: "pdf" | "xlsx",
 ) =>
@@ -328,13 +302,6 @@ export const listarCierresPorUsuario = (filtros: RegistroPorUsuarioParams) =>
     "GET /registro/cierres-por-usuario",
     filtros,
     getJSON<CierresPorUsuario[]>(`${BASE}/registro/cierres-por-usuario`, filtros as Record<string, any>),
-  );
-
-export const fetchActividadReciente = (params: RegistroActividadParams) =>
-  traced(
-    "GET /registro/actividad",
-    params,
-    getJSON<ActividadEvento[]>(`${BASE}/registro/actividad`, params as Record<string, any>),
   );
 
 export const cerrarPeriodo = (payload: CierrePayload) => {

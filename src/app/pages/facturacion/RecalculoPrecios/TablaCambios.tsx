@@ -3,17 +3,9 @@ import { memo } from "react";
 import type { RecalculoFila, RecalculoOmitida } from "../types";
 import { formatMoney, parseMoney } from "../money";
 import styles from "./RecalculoPrecios.module.scss";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
 
-/**
- * Tabla de las prestaciones que cambian y lista de las que no se tocan.
- *
- * Se dibujan TODAS (Sancor trae casi mil): así Ctrl+F encuentra cualquiera. Para
- * que no se trabe, las filas van en bloques de `POR_BLOQUE`, cada uno su propia
- * `<table>` con el mismo `colgroup` y `table-layout: fixed` (columnas alineadas), y
- * los bloques llevan `content-visibility: auto`: el navegador no calcula ni pinta
- * los que están fuera de pantalla. Misma técnica que la lista de prestaciones de la
- * factura (`FacturaDetalle/GrupoTabla.tsx`).
- */
+/** Tabla de las prestaciones que cambian y lista de las que no se tocan. */
 
 const POR_BLOQUE = 50;
 
@@ -76,7 +68,7 @@ function Fila({ f }: { f: RecalculoFila }) {
 export const TablaCambios = memo(function TablaCambios({ filas }: { filas: RecalculoFila[] }) {
   return (
     <div className={styles.tablaWrap}>
-      <table className={`${styles.tabla} ${styles.cabecera}`}>
+      <Tabla className={`${styles.tabla} ${styles.cabecera}`}>
         <Columnas />
         <thead>
           <tr>
@@ -92,14 +84,14 @@ export const TablaCambios = memo(function TablaCambios({ filas }: { filas: Recal
             <th className={styles.num}>Diferencia</th>
           </tr>
         </thead>
-      </table>
+      </Tabla>
       {enBloques(filas).map((bloque) => (
-        <table key={bloque[0].id} className={`${styles.tabla} ${styles.bloque}`}>
+        <Tabla key={bloque[0].id} className={`${styles.tabla} ${styles.bloque}`}>
           <Columnas />
           <tbody>
             {bloque.map((f) => <Fila key={f.id} f={f} />)}
           </tbody>
-        </table>
+        </Tabla>
       ))}
     </div>
   );

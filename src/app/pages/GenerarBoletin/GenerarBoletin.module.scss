@@ -6,7 +6,7 @@
   align-items: start;
   justify-content: start;
   padding: 2rem;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
+  background: linear-gradient(135deg, $gray-100 0%, $franja-perla 100%);
   flex-direction: column;
 }
 
@@ -22,17 +22,17 @@
   text-align: start;
 
   @media (max-width: 768px) {
-    font-size: 32px;
+    font-size: 2rem;
   }
 
   @media (max-width: 480px) {
-    font-size: 28px;
+    font-size: 1.75rem;
   }
 }
 
 .subtitle {
   font-size: 0.95rem;
-  color: #64748b;
+  color: $gray-500;
   margin: 0;
   line-height: 1.5;
 }
@@ -43,21 +43,21 @@
   gap: 1rem;
   margin-bottom: 1.5rem;
   padding: 1.25rem;
-  background: #f8fafc;
+  background: $gray-50;
   border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid $gray-200;
 }
 
 .infoVigencia {
   display: flex;
   justify-content: space-between;
-  width: 700px;
+  width: 43.75rem;
   flex-direction: row;
   margin-bottom: 1.5rem;
   padding: 1.25rem;
-  background: #f8fafc;
+  background: $gray-50;
   border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid $gray-200;
 }
 
 .infoItem {
@@ -70,7 +70,7 @@
 
 .infoLabel {
   font-size: 0.75rem;
-  color: #444b54;
+  color: $tono-gris-600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 500;
@@ -79,7 +79,7 @@
 .infoValue {
   font-size: 1rem;
   font-weight: 600;
-  color: #1e293b;
+  color: $gray-800;
 }
 
 .progress {
@@ -87,8 +87,8 @@
 }
 
 .progressBar {
-  height: 6px;
-  background: #e2e8f0;
+  height: 0.375rem;
+  background: $gray-200;
   border-radius: 3px;
   overflow: hidden;
   margin-bottom: 0.5rem;
@@ -96,14 +96,14 @@
 
 .progressFill {
   height: 100%;
-  background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+  background: linear-gradient(90deg, $tono-azul-350 0%, $tono-azul-500-b 100%);
   border-radius: 3px;
   transition: width 0.3s ease;
 }
 
 .progressText {
   font-size: 0.8rem;
-  color: #64748b;
+  color: $gray-500;
   text-align: center;
   display: block;
 }
@@ -139,7 +139,7 @@
     flex-direction: row;
     justify-content: space-between;
     padding: 0.5rem 0;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid $gray-200;
 
     &:last-child {
       border-bottom: none;
@@ -153,33 +153,33 @@
 
 .dateField {
   width: 100%;
-  height: 42px;
+  height: 2.625rem;
   display: flex;
   align-items: center;
-  border: 1px solid #e2e8f0;
+  border: 1px solid $gray-200;
   border-radius: 12px;
-  background: #ffffff;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  background: $white;
+  box-shadow: 0 1px 2px rgba($gray-900, 0.06);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
   overflow: hidden;
 }
 
 .dateField:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+  border-color: $gray-300;
+  box-shadow: 0 6px 18px rgba($gray-900, 0.08);
 }
 
 .dateField:focus-within {
-  border-color: #0c2a52;
-  box-shadow: 0 0 0 3px rgba(12, 42, 82, 0.14);
+  border-color: $primary-blue-darker;
+  box-shadow: 0 0 0 3px rgba($primary-blue-darker, 0.14);
 }
 
 .dateFieldError {
-  border-color: #ef4444;
+  border-color: $tono-rojo-350;
 }
 
 .dateFieldError:focus-within {
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+  box-shadow: 0 0 0 3px rgba($tono-rojo-350, 0.15);
 }
 
 .dateInput {
@@ -187,54 +187,54 @@
   height: 100%;
   border: 0;
   outline: none;
-  padding: 0 12px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #0f172a;
+  padding: 0 0.75rem;
+  font-size: 0.875rem;
+  font-weight: $font-weight-normal;
+  color: $gray-900;
   background: transparent;
 }
 
 .dateInput::placeholder {
-  font-weight: 500;
-  color: #64748b;
+  font-weight: $font-weight-normal;
+  color: $gray-500;
 }
 
 .dateIconWrap {
   height: 100%;
   display: inline-flex;
   align-items: center;
-  padding: 0 12px;
-  border-left: 1px solid #e2e8f0;
-  background: #f8fafc;
+  padding: 0 0.75rem;
+  border-left: 1px solid $gray-200;
+  background: $gray-50;
 }
 
 .datePickerIcon {
-  color: #0c2a52;
+  color: $primary-blue-darker;
 }
 
 :global(.react-datepicker) {
-  border: 1px solid #e2e8f0;
+  border: 1px solid $gray-200;
   border-radius: 14px;
-  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.15);
+  box-shadow: 0 18px 45px rgba($gray-900, 0.15);
   overflow: hidden;
 }
 
 :global(.react-datepicker__header) {
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  background: $gray-50;
+  border-bottom: 1px solid $gray-200;
 }
 
 :global(.react-datepicker__current-month),
 :global(.react-datepicker-time__header),
 :global(.react-datepicker-year-header) {
-  color: #0f172a;
+  color: $gray-900;
   font-weight: 700;
 }
 
 :global(.react-datepicker__day-name),
 :global(.react-datepicker__day),
 :global(.react-datepicker__time-name) {
-  color: #0f172a;
+  color: $gray-900;
 }
 
 :global(.react-datepicker__day:hover) {
@@ -244,8 +244,8 @@
 :global(.react-datepicker__day--selected),
 :global(.react-datepicker__day--keyboard-selected) {
   border-radius: 10px;
-  background: #0c2a52;
-  color: #ffffff;
+  background: $primary-blue-darker;
+  color: $white;
 }
 
 :global(.react-datepicker__triangle) {

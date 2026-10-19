@@ -1,65 +1,54 @@
 import type React from "react";
-import { Search } from "lucide-react";
-import TextField from "@mui/material/TextField";
-import InputAdornment from "@mui/material/InputAdornment";
+import { Search, X } from "lucide-react";
 
-/**
- * MUI-backed free-text search input. Drop-in replacement for the legacy
- * SearchBar molecule (same placeholder/value/onChange API) for the cases
- * where you filter a visible list as you type. For picking an entity from a
- * remote list, use AppSearchSelect (MUI Autocomplete) instead.
- */
+import s from "./SearchField.module.scss";
+
 interface SearchFieldProps {
   placeholder?: string;
   value?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  /** Con esto aparece la cruz para borrar cuando hay texto. */
+  onClear?: () => void;
+  ariaLabel?: string;
+  id?: string;
   className?: string;
+  /** Ocupa todo el ancho disponible en vez del ancho de lectura. */
   fullWidth?: boolean;
   disabled?: boolean;
 }
 
-const SearchField: React.FC<SearchFieldProps> = ({
-  placeholder = "Buscar...",
+/** EL buscador del panel: una sola forma en todas las pantallas. */
+export default function SearchField({
+  placeholder = "Buscar…",
   value,
   onChange,
+  onClear,
+  ariaLabel,
+  id,
   className,
-  fullWidth,
-  disabled,
-}) => {
-  return (
-    <TextField
-      type="search"
-      size="small"
-      className={className}
-      placeholder={placeholder}
-      value={value}
-      onChange={onChange}
-      disabled={disabled}
-      fullWidth={fullWidth}
-      InputProps={{
-        startAdornment: (
-          <InputAdornment position="start">
-            <Search size={18} />
-          </InputAdornment>
-        ),
-      }}
-      sx={{
-        minWidth: 240,
-        "& .MuiOutlinedInput-root": {
-          borderRadius: "8px",
-          backgroundColor: "#fff",
-          fontSize: "0.86rem",
-          "& fieldset": { borderColor: "#cbd5e1" },
-          "&:hover fieldset": { borderColor: "#94a3b8" },
-          "&.Mui-focused fieldset": {
-            borderColor: "#3455c1",
-            borderWidth: "1px",
-            boxShadow: "0 0 0 3px rgba(52,85,193,0.1)",
-          },
-        },
-      }}
-    />
-  );
-};
+  fullWidth = false,
+  disabled = false,
+}: SearchFieldProps) {
+  const clases = [s.buscador, fullWidth ? s.ancho : "", className ?? ""].filter(Boolean).join(" ");
 
-export default SearchField;
+  return (
+    <div className={clases}>
+      <Search size={17} aria-hidden="true" />
+      <input
+        id={id}
+        type="search"
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        aria-label={ariaLabel ?? placeholder}
+        autoComplete="off"
+        disabled={disabled}
+      />
+      {onClear && value && (
+        <button type="button" className={s.borrar} onClick={onClear} aria-label="Borrar la búsqueda">
+          <X size={16} aria-hidden="true" />
+        </button>
+      )}
+    </div>
+  );
+}

@@ -22,21 +22,7 @@ type Props = {
   onEnviado?: () => void;
 };
 
-/**
- * Formulario completo de corrección de datos.
- *
- * El médico ve TODO lo que tiene derecho a corregir, con lo que figura hoy,
- * edita lo que esté mal y manda una sola solicitud. El Colegio la revisa y, al
- * aprobarla, los cambios se escriben en el legajo automáticamente.
- *
- * La lista de campos **la manda el backend** (`/campos-editables`), no está
- * escrita acá: así el formulario nunca ofrece algo que el alta después va a
- * descartar, y sumar o quitar un campo editable es un solo cambio en el server.
- *
- * Datos como el nombre de registro, el número de socio, la matrícula o la
- * categoría no aparecen: los determina el Colegio y no son negociables desde
- * acá — el backend además los rechaza aunque alguien arme el request a mano.
- */
+/** Formulario completo de corrección de datos. */
 const FormularioCambiosModal: React.FC<Props> = ({ open, onClose, onEnviado }) => {
   const notify = useNotify();
 
@@ -52,8 +38,7 @@ const FormularioCambiosModal: React.FC<Props> = ({ open, onClose, onEnviado }) =
     staleTime: 10 * 60 * 1000,
   });
 
-  // Al abrir (y cuando llegan los campos) el formulario arranca con lo que hay
-  // hoy en el legajo: el médico corrige sobre lo real, no sobre una hoja vacía.
+  // Al abrir (y cuando llegan los campos) el formulario arranca con lo que hay hoy en el legajo: el médico corrige sobre lo real.
   useEffect(() => {
     if (!open || !campos.data) return;
     const inicial: Record<string, string> = {};
@@ -84,8 +69,7 @@ const FormularioCambiosModal: React.FC<Props> = ({ open, onClose, onEnviado }) =
     setEnviando(true);
     setError(null);
     try {
-      // Se mandan sólo los campos tocados: el backend igual descarta lo que no
-      // cambió, pero así el request dice exactamente lo que el socio pidió.
+      // Se mandan sólo los campos tocados: el backend igual descarta lo que no cambió, pero así el request dice exactamente lo que el socio pidió.
       const soloCambios: Record<string, string> = {};
       for (const c of cambiados) soloCambios[c.campo] = (valores[c.campo] ?? "").trim();
 

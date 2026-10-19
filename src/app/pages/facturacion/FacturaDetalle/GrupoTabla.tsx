@@ -9,31 +9,26 @@ import { clavePaciente } from "./equipo";
 import FilaPrestacion from "./FilaPrestacion";
 import type { FilaAcciones, PrestacionConSocio } from "./FilaPrestacion";
 import styles from "./FacturaDetalle.module.scss";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
 
 export interface VistaGrupo {
   key: string;
   titulo: string;
   // Prestaciones que se dibujan como línea propia del grupo.
   prestaciones: PrestacionConSocio[];
-  // Todo lo que cuenta en el grupo: las de arriba + el equipo anidado bajo cada cabeza
-  // (`companeros`). Los totales, "Marcar todos" y "Mover todos" se calculan sobre esto.
+  // Todo lo que cuenta en el grupo: las de arriba + el equipo anidado bajo cada cabeza (`companeros`).
   miembros: PrestacionConSocio[];
-  // Lo que suma a los totales del grupo: `miembros` menos el equipo de las cirugías de
-  // Honorarios individuales y Sanatorios (se muestra, pero no suma al médico).
+  // Lo que suma a los totales del grupo: `miembros` menos el equipo de las cirugías de Honorarios individuales y Sanatorios (se muestra.
   sumables: PrestacionConSocio[];
   mostrarResumen: boolean;
-  // "Por tipo": subtítulo de la sección (Consultas, Prácticas…) y subtotal al cerrar
-  // las filas de cada médico.
+  // "Por tipo": subtítulo de la sección (Consultas, Prácticas…) y subtotal al cerrar las filas de cada médico.
   subtitulo?: string;
   subtotalPorMedico?: boolean;
-  // "Por tipo", sólo Honorarios individuales y Sanatorios: el selector de orden (médico /
-  // paciente A-Z) que se dibuja una única vez en el subtítulo de la sección.
+  // "Por tipo", sólo Honorarios individuales y Sanatorios: el selector de orden.
   ordenAlfabetico?: { tipo: Tipo; valor: OrdenAlfabetico };
-  // "Por socio": tramos con subtítulo (Consultas / Prácticas / Honorarios
-  // individuales / Sanatorios) dentro de cada médico.
+  // "Por socio": tramos con subtítulo (Consultas / Prácticas / Honorarios individuales / Sanatorios) dentro de cada médico.
   tramos?: { key: string; subtitulo: string; prestaciones: PrestacionConSocio[] }[];
-  // Equipo de cada cabeza del grupo (id cabeza → integrantes), resuelto por el padre. Sólo
-  // se dibuja acá, anidado bajo la cabeza: no aparece como línea propia en su socio.
+  // Equipo de cada cabeza del grupo (id cabeza → integrantes), resuelto por el padre.
   companeros?: Record<number, PrestacionConSocio[]>;
   totalHonorarios: number;
   totalGastos: number;
@@ -47,11 +42,7 @@ export interface GrupoAcciones {
   onOrdenAlfabetico: (tipo: Tipo, valor: OrdenAlfabetico) => void;
 }
 
-// Filas por bloque. Cada bloque es una <table> propia con `content-visibility: auto`
-// (ver `.bloqueFilas` en el SCSS): el navegador sólo calcula y pinta los bloques que
-// están en pantalla, pero todas las filas siguen en la página (el Ctrl+F las
-// encuentra). Todas las tablas usan el mismo <colgroup> y `table-layout: fixed`,
-// así que las columnas quedan alineadas entre bloques.
+// Filas por bloque. Cada bloque es una <table> propia con `content-visibility: auto` (ver `.bloqueFilas` en el SCSS).
 const FILAS_POR_BLOQUE = 40;
 
 interface Props {
@@ -61,8 +52,7 @@ interface Props {
   anchos: number[];
   acciones: FilaAcciones;
   accionesGrupo: GrupoAcciones;
-  // Ids ocupados DE ESTE grupo (el mismo Set vacío si no hay): así una acción en
-  // otro grupo no invalida el memo de este.
+  // Ids ocupados DE ESTE grupo (el mismo Set vacío si no hay): así una acción en otro grupo no invalida el memo de este.
   busyIds: ReadonlySet<number>;
   grupoBusy: boolean;
   esComplemento: boolean;
@@ -94,9 +84,7 @@ function GrupoTabla({
     />
   );
 
-  // Cada cabeza de equipo arrastra, indentadas justo debajo, las filas de su equipo
-  // (ayudante/gastos/pediatra). Es el único lugar donde aparecen: no se repiten en su
-  // propio socio. Son filas completas (se tildan, editan y mueven como cualquier otra).
+  // Cada cabeza de equipo arrastra, indentadas justo debajo, las filas de su equipo (ayudante/gastos/pediatra).
   const filaConEquipo = (p: PrestacionConSocio): React.ReactNode[] => {
     const companeros = g.companeros?.[p.id];
     if (!companeros || companeros.length === 0) return [fila(p, { clinicaInline: true })];
@@ -108,10 +96,7 @@ function GrupoTabla({
     ];
   };
 
-  // Filas de una lista de prestaciones. En "Por socio"/"Por tipo", cuando cambia la clínica
-  // de las prestaciones de tipo Sanatorio se intercala un subtítulo (naranja) con su nombre.
-  // Con `porPaciente` (lista ordenada por paciente) cada paciente lleva su subtítulo celeste
-  // y, con `totalPaciente`, al terminar sus filas una línea con lo que suma (equipo incluido).
+  // Filas de una lista de prestaciones.
   const filasDe = (
     prestaciones: PrestacionConSocio[], keyBase: string,
     opts?: { porPaciente?: boolean; totalPaciente?: boolean },
@@ -174,9 +159,7 @@ function GrupoTabla({
     return out;
   };
 
-  // Lista plana / "Por tipo": filas en el orden recibido. Con `subtotalPorMedico`, un
-  // subtítulo arriba y, al terminar las filas de cada médico, su subtotal antes de pasar
-  // al siguiente.
+  // Lista plana / "Por tipo": filas en el orden recibido.
   const filasListado = (): React.ReactNode[] => {
     const out: React.ReactNode[] = [];
     if (g.subtitulo) {
@@ -215,14 +198,12 @@ function GrupoTabla({
         j = ps.length;
       }
       const tramo = ps.slice(i, j);
-      // Honorarios individuales / Sanatorios ordenados por paciente: en lugar del subtotal
-      // del médico, cada paciente cierra con su total.
+      // Honorarios individuales / Sanatorios ordenados por paciente: en lugar del subtotal del médico, cada paciente cierra con su total.
       const porPaciente = g.ordenAlfabetico?.valor === "paciente";
       out.push(...filasDe(tramo, `${g.key}-${i}`, { porPaciente, totalPaciente: porPaciente }));
       if (g.subtotalPorMedico && !porPaciente) {
         const medico = tramo[0];
-        // El equipo anidado bajo cada fila cuenta en el subtotal del socio de la cabeza,
-        // salvo en Honorarios individuales y Sanatorios.
+        // El equipo anidado bajo cada fila cuenta en el subtotal del socio de la cabeza, salvo en Honorarios individuales y Sanatorios.
         const incluidas = tramo.flatMap((p) => [p, ...(sumaEquipo(p) ? g.companeros?.[p.id] ?? [] : [])]);
         const totales = sumarTotales(incluidas);
         out.push(
@@ -309,16 +290,15 @@ function GrupoTabla({
   for (let i = 0; i < filas.length; i += FILAS_POR_BLOQUE) {
     bloques.push(
       <div key={i} className={styles.bloqueFilas}>
-        <table className={styles.table}>
+        <Tabla className={styles.table}>
           {colgroup}
           <tbody>{filas.slice(i, i + FILAS_POR_BLOQUE)}</tbody>
-        </table>
+        </Tabla>
       </div>,
     );
   }
   return <>{bloques}</>;
 }
 
-// Un grupo sólo se vuelve a dibujar si cambió algo suyo (sus filas, su estado de
-// "ocupado", las columnas). Abrir un panel o tildar una fila de otro socio no lo toca.
+// Un grupo sólo se vuelve a dibujar si cambió algo suyo (sus filas, su estado de "ocupado", las columnas).
 export default React.memo(GrupoTabla);

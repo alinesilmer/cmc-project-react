@@ -19,7 +19,7 @@ type ApiNormasResponse = {
 
 // ─── Modelo de la vista ───────────────────────────────────────────
 
-export type NormaOperativa = {
+type NormaOperativa = {
   id: number;
   titulo: string;
   /** Etiqueta con la que se publicó ("Normas Operativas"). */
@@ -35,20 +35,13 @@ const NORMAS_KEY = ["boletin-normas"] as const;
 /** URL pública de la noticia, la misma que ve el médico en el sitio. */
 export const urlNorma = (id: number) => `/noticias/${id}`;
 
-/**
- * Normas operativas asociadas a cada obra social.
- *
- * Una sola request para toda la tabla: la grilla tiene cientos de filas y
- * pedirlas de a una sería el peor uso posible del endpoint. El `staleTime`
- * largo va con lo que son — noticias que cambian de mes a mes, no valores.
- */
+/** Normas operativas asociadas a cada obra social. */
 export function useNormasOperativas() {
   const { data, isLoading } = useQuery({
     queryKey: NORMAS_KEY,
     queryFn: () => getJSON<ApiNormasResponse>("/api/boletin/normas"),
     staleTime: 10 * 60 * 1000,
-    // El boletín tiene que seguir sirviendo aunque las normas fallen: son un
-    // agregado a la fila, no el dato de la pantalla.
+    // El boletín tiene que seguir sirviendo aunque las normas fallen: son un agregado a la fila, no el dato de la pantalla.
     retry: 1,
   });
 

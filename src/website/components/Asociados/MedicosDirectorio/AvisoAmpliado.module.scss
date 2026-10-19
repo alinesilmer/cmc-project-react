@@ -1,6 +1,5 @@
 @use "@/website/styles/all.scss" as *;
 
-$crema: #f7e9aa;
 
 .fondo {
   position: fixed;
@@ -9,7 +8,7 @@ $crema: #f7e9aa;
   display: grid;
   place-items: center;
   padding: 20px;
-  background: rgba(12, 42, 82, 0.6);
+  background: rgba($primary-blue-dark, 0.6);
   backdrop-filter: blur(5px);
 
   @media (max-width: 640px) {
@@ -27,7 +26,7 @@ $crema: #f7e9aa;
   overflow: hidden;
   border-radius: 10px;
   background: $white;
-  box-shadow: 0 30px 80px rgba(6, 18, 38, 0.35);
+  box-shadow: 0 30px 80px rgba($tono-azul-900, 0.35);
 
   @media (max-width: 640px) {
     max-height: 92dvh;
@@ -48,7 +47,7 @@ $crema: #f7e9aa;
   border-radius: 8px;
   background: rgba($white, 0.94);
   color: $primary-blue-dark;
-  box-shadow: 0 4px 12px rgba(20, 35, 58, 0.15);
+  box-shadow: 0 4px 12px rgba($tono-azul-850, 0.15);
   cursor: pointer;
 
   svg {
@@ -58,7 +57,7 @@ $crema: #f7e9aa;
 
   &:hover {
     background: $primary-blue;
-    color: $crema;
+    color: $primary-yellow;
   }
 
   &:focus-visible {
@@ -74,7 +73,7 @@ $crema: #f7e9aa;
   min-height: 0;
   flex: 1;
   padding: 24px 64px;
-  background-color: #f4f7fb;
+  background-color: $fondo-flyer;
   background-image:
     linear-gradient(rgba($primary-blue, 0.04) 2px, transparent 2px),
     linear-gradient(90deg, rgba($primary-blue, 0.04) 2px, transparent 2px);
@@ -96,7 +95,7 @@ $crema: #f7e9aa;
     max-height: calc(100dvh - 200px);
     object-fit: contain;
     border-radius: 4px;
-    box-shadow: 0 12px 30px rgba(20, 35, 58, 0.18);
+    box-shadow: 0 12px 30px rgba($tono-azul-850, 0.18);
   }
 }
 
@@ -119,7 +118,7 @@ $crema: #f7e9aa;
   border-radius: 8px;
   background: $white;
   color: $primary-blue;
-  box-shadow: 0 6px 16px rgba(20, 35, 58, 0.15);
+  box-shadow: 0 6px 16px rgba($tono-azul-850, 0.15);
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 
@@ -130,7 +129,7 @@ $crema: #f7e9aa;
 
   &:hover {
     background: $primary-blue;
-    color: $crema;
+    color: $primary-yellow;
   }
 
   &:focus-visible {
@@ -158,7 +157,7 @@ $crema: #f7e9aa;
   align-items: center;
   gap: 14px;
   padding: 16px 20px;
-  border-top: 1px solid #eef1f5;
+  border-top: 1px solid $tono-azul-50;
 }
 
 .iniciales {
@@ -172,7 +171,7 @@ $crema: #f7e9aa;
   font-family: $font-title;
   font-size: 0.95rem;
   font-weight: 800;
-  color: $crema;
+  color: $primary-yellow;
 }
 
 .datos {
@@ -180,7 +179,7 @@ $crema: #f7e9aa;
   flex-direction: column;
   min-width: 0;
   font-size: 0.82rem;
-  color: #6b7280;
+  color: $texto-gris;
   font-variant-numeric: tabular-nums;
 
   strong {

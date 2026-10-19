@@ -1,82 +1,108 @@
 @use "@/app/styles/all.scss" as *;
 
+// Hub de validaciones, en dos planos: arriba una franja azul del Colegio con el título y el buscador; abajo.
+
+
+
+// Fondo de borde a borde: la envoltura deshace el relleno que `AppLayout` le pone a todas las pantallas (0,5rem × 1rem) y llega hasta abajo.
+.fondo {
+  position: relative;
+  min-height: calc(100vh - 3.5rem);
+  margin: -0.5rem -1rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(180deg, $franja-azul 0, $franja-azul $franja-alto, $franja-perla $franja-alto);
+  color-scheme: light;
+  isolation: isolate;
+
+  // La misma trama de cruces de la franja del Inicio, sobre la parte azul.
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    z-index: -1;
+    height: $franja-alto;
+    @include trama-cruces;
+
+    @media (max-width: $breakpoint-md) {
+      display: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    margin: -0.25rem -0.5rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  // En pantallas angostas el encabezado se apila y su alto ya no es fijo: la franja pasa a ser el fondo del propio encabezado.
+  @media (max-width: $breakpoint-md) {
+    background: $franja-perla;
+  }
+}
+
+// Los mismos costados que Reportes y el Inicio (2,25rem, 1,8rem y 1,125rem), sin ancho máximo: la grilla usa todo el ancho de la pantalla.
 .container {
-  padding: $spacing-8;
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-6;
+  width: 100%;
+  padding: $spacing-4 $spacing-12 $spacing-10;
   min-height: 100%;
 
-  @media (max-width: $breakpoint-md) {
-    padding: $spacing-5;
-    gap: $spacing-5;
-  }
+  @media (max-width: 1200px) { padding: $spacing-4 $spacing-8 $spacing-8; }
+  @media (max-width: $breakpoint-md) { padding: $spacing-2 $spacing-5 $spacing-6; }
+}
 
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-4;
-  }
+.escena {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-8;
+
+  @media (max-width: $breakpoint-md) { gap: $spacing-5; }
 }
 
 // ─── Header ───────────────────────────────────────────────────────────────────
 
+// Mide lo mismo que la franja menos el relleno de arriba de la página, así las solapas terminan justo donde termina el azul.
 .header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: $spacing-5;
-  flex-wrap: wrap;
-}
-
-.headerLeft {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
-  gap: $spacing-4;
-}
+  gap: $spacing-5 $spacing-10;
+  height: calc(#{$franja-alto} - 0.5rem - #{$spacing-4});
+  padding-top: $spacing-6;
 
-.headerIcon {
-  color: $primary-blue;
-  flex-shrink: 0;
+  @media (max-width: $breakpoint-md) {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+    // Se sale del relleno del contenedor ($spacing-5) y del de la página (1rem).
+    margin: -0.5rem calc(-1 * (1rem + #{$spacing-5})) 0;
+    padding: $spacing-8 calc(1rem + #{$spacing-5}) 0;
+    background: $franja-azul;
+  }
 }
 
 .title {
-  font-size: $font-size-4xl;
-  font-weight: $font-weight-bold;
-  color: $gray-900;
   margin: 0;
-  line-height: 1.2;
-
-  @media (max-width: $breakpoint-md) {
-    font-size: $font-size-3xl;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    font-size: $font-size-2xl;
-  }
-}
-
-.subtitle {
-  font-size: $font-size-sm;
-  color: $gray-500;
-  margin: $spacing-1 0 0;
-  max-width: 62ch;
+  // Mismo tamaño que el saludo del Inicio.
+  @include titulo-franja;
+  color: var(--franja-titulo, #{$franja-crema});
+  text-wrap: balance;
 }
 
 .searchBox {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  flex: 0 1 320px;
-  padding: 0 $spacing-4;
-  height: 42px;
+  gap: $spacing-4;
+  width: min(100%, 34rem);
+  padding: 0 $spacing-5;
+  height: 3rem;
   background: $white;
-  border: 1px solid $gray-200;
-  border-radius: $border-radius-lg;
-  color: $gray-400;
-  transition: border-color 0.18s, box-shadow 0.18s;
+  border: 1px solid $gray-300;
+  border-radius: 999px;
+  color: $gray-500;
+  transition: border-color 0.18s, box-shadow 0.18s, background-color 0.18s;
 
   &:focus-within {
-    border-color: $primary-blue;
-    box-shadow: 0 0 0 3px rgba($primary-blue, 0.12);
+    border-color: $franja-azul;
+    box-shadow: 0 0 0 3px rgba($franja-azul, 0.14);
+    color: $franja-azul;
   }
 
   input {
@@ -86,8 +112,8 @@
     outline: none;
     background: transparent;
     font-family: inherit;
-    font-size: $font-size-base;
-    color: $gray-800;
+    font-size: $font-size-lg;
+    color: $gray-900;
 
     &::placeholder {
       color: $gray-400;
@@ -100,6 +126,74 @@
   }
 }
 
+// ─── Filtros ──────────────────────────────────────────────────────────────────
+
+// Solapas grandes, con ícono y letra de 1rem: las usa gente mayor y tienen que encontrarse sin buscar.
+.filtros {
+  grid-column: 1 / -1;
+  align-self: end;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: $spacing-2;
+}
+
+.filtro {
+  @include franja-solapa;
+}
+
+.filtroActivo,
+.filtroActivo:hover {
+  @include franja-solapa-activa;
+}
+
+// ─── Nota de los portales externos ────────────────────────────────────────────
+
+// Aparece con el filtro «Portal externo».
+.nota {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+  padding: $spacing-4 $spacing-5;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-left: 4px solid $franja-azul;
+  border-radius: $radio-md;
+
+  @media (max-width: $breakpoint-sm) {
+    align-items: flex-start;
+    gap: $spacing-3;
+  }
+}
+
+.notaIcono {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 2.8rem;
+  height: 2.8rem;
+  color: $franja-crema;
+  background: $franja-azul;
+  border-radius: 50%;
+}
+
+.notaTitulo {
+  margin: 0;
+  font-family: $fuente-titulos;
+  font-size: $font-size-2xl;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: $franja-azul;
+}
+
+.notaTexto {
+  margin: 2px 0 0;
+  font-size: $font-size-lg;
+  line-height: 1.45;
+  color: $gray-600;
+}
+
 // ─── Vacío ────────────────────────────────────────────────────────────────────
 
 .empty {
@@ -110,7 +204,7 @@
   padding: $spacing-12 $spacing-5;
   background: $white;
   border: 1px dashed $gray-300;
-  border-radius: $border-radius-lg;
+  border-radius: $radio-md;
   color: $gray-500;
   text-align: center;
 
@@ -121,5 +215,77 @@
   p {
     margin: 0;
     font-size: $font-size-base;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .searchBox,
+  .filtro {
+    transition: none;
+  }
+}
+
+// ─── Tema oscuro ──────────────────────────────────────────────────────────────
+
+// Con el panel en oscuro la sección baja las luces.
+:global(:root[data-tema="oscuro"]) {
+
+  .fondo {
+    background: linear-gradient(180deg, $franja-noche 0, $franja-noche $franja-alto, $franja-pizarra $franja-alto);
+
+    @media (max-width: $breakpoint-md) {
+      background: $franja-pizarra;
+    }
+  }
+
+  .header {
+    @media (max-width: $breakpoint-md) {
+      background: $franja-noche;
+    }
+  }
+
+  .searchBox {
+    color: rgba($white, 0.7);
+    background: rgba($white, 0.06);
+    border-color: rgba($white, 0.2);
+
+    input {
+      color: $white;
+
+      &::placeholder {
+        color: rgba($white, 0.55);
+      }
+    }
+  }
+
+  .filtroActivo,
+  .filtroActivo:hover {
+    color: $franja-crema;
+    background: $franja-pizarra;
+    border-color: $franja-pizarra;
+  }
+
+  .nota,
+  .empty {
+    background: rgba($white, 0.05);
+    border-color: rgba($white, 0.16);
+  }
+
+  .nota {
+    border-left-color: $primary-yellow;
+  }
+
+  .notaIcono {
+    color: $franja-noche;
+    background: $primary-yellow;
+  }
+
+  .notaTitulo {
+    color: $franja-crema;
+  }
+
+  .notaTexto,
+  .empty {
+    color: rgba($white, 0.8);
   }
 }

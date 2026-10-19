@@ -1,7 +1,5 @@
 @use "@/website/styles/all.scss" as *;
 
-$crema: #f7e9aa;
-$verde-whatsapp: #25d366;
 
 .bloque {
   display: flex;
@@ -36,7 +34,7 @@ $verde-whatsapp: #25d366;
   align-items: center;
   gap: 14px;
   padding: 14px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid $borde-suave;
   border-radius: 10px;
   background: $white;
   text-decoration: none;
@@ -45,7 +43,7 @@ $verde-whatsapp: #25d366;
   &:hover,
   &:focus-visible {
     border-color: $verde-whatsapp;
-    box-shadow: 0 10px 24px rgba(20, 35, 58, 0.1);
+    box-shadow: 0 10px 24px rgba($tono-azul-850, 0.1);
     transform: translateY(-2px);
   }
 
@@ -75,7 +73,7 @@ $verde-whatsapp: #25d366;
   font-family: $font-title;
   font-size: 1.3rem;
   font-weight: 800;
-  color: $crema;
+  color: $primary-yellow;
 }
 
 .nombre {

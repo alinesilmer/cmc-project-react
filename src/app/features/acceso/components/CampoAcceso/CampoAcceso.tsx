@@ -13,10 +13,7 @@ type Props = Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "className"> &
   invalido?: boolean;
 };
 
-/**
- * Campo de las pantallas de acceso: etiqueta, ícono y, en las contraseñas, el
- * ojo para ver lo que se escribió. Lo usan el login y el cambio de contraseña.
- */
+/** Campo de las pantallas de acceso: etiqueta, ícono y, en las contraseñas, el ojo para ver lo que se escribió. */
 export default function CampoAcceso({ id, etiqueta, icono, secreto = false, ayuda, invalido = false, ...input }: Props) {
   const [visible, setVisible] = useState(false);
   const idAyuda = ayuda ? `${id}-ayuda` : undefined;

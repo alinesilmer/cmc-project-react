@@ -1,35 +1,17 @@
+import { esFechaValida } from "@/app/pages/Validaciones/utiles";
+import { fechaCorta } from "@/app/pages/Validaciones/utiles";
+import { fechaISO } from "@/app/pages/Validaciones/utiles";
+
 // Lectura del "Reporte de Facturación" que emite Prevención Salud.
-//
-// El archivo lo arma la obra social y viene por el Colegio entero, no por
-// médico: una fila por autorización, con la matrícula provincial del efector
-// como único dato que ata la fila a alguien de `listado_medico`.
-//
-// Forma real del reporte (verificada sobre el de 21/07/2026 al 20/08/2026):
-//
-//   Número de Autorización | Fecha de Realización | Afiliado | Profesional
-//   Efector | Matrícula MP | Conformidad | Práctica(s) Realizada(s) | Estado
-//
-// Dos cosas que no se parecen a las demás planillas del panel:
-//
-//  1. `Práctica(s) Realizada(s)` puede traer **varias** prácticas en una sola
-//     celda, separadas por saltos de línea y con el código pegado adelante
-//     ("420101 Consulta."). 39 de las 529 filas del reporte de agosto vienen
-//     así. La unidad facturable es la práctica, no la fila, así que se parte.
-//  2. No hay ni número de afiliado ni importe. El afiliado viene sólo por
-//     nombre y el precio hay que resolverlo después contra el nomenclador.
-//
-// Los encabezados no vienen siempre escritos igual (acentos, "N°" vs "NRO",
-// columnas corridas unas filas), así que se normaliza el texto del título y se
-// busca la fila de encabezados en vez de asumir que es la primera.
 
 /** Una práctica suelta, ya separada de la celda que la traía. */
-export interface PracticaPrevencion {
+interface PracticaPrevencion {
   codigo: string;
   descripcion: string;
 }
 
 /** Una fila del reporte = una autorización, con sus prácticas sin desarmar. */
-export interface AutorizacionPrevencion {
+interface AutorizacionPrevencion {
   nroAutorizacion: string;
   fecha: string;
   /** `fecha` en ISO (YYYY-MM-DD) para ordenar y comparar; "" si no se pudo leer. */
@@ -136,9 +118,7 @@ const COLUMNAS: ColumnaPrevencion[] = [
   { key: "estado", alias: ["ESTADO"] },
 ];
 
-/** Mayúsculas sin acentos, paréntesis ni puntuación: así "Práctica(s)
- * Realizada(s)", "PRACTICAS REALIZADAS" y "practicas realizadas" caen todas en
- * el mismo alias. */
+/** Mayúsculas sin acentos, paréntesis ni puntuación: así "Práctica(s) Realizada(s)", "PRACTICAS REALIZADAS" y "practicas realizadas" caen todas en el mismo alias. */
 const normalizar = (valor: unknown) =>
   String(valor ?? "")
     .normalize("NFD")
@@ -148,20 +128,6 @@ const normalizar = (valor: unknown) =>
     .replace(/\s+/g, " ")
     .trim()
     .toUpperCase();
-
-/** Las fechas vienen como celda de fecha de Excel (medianoche UTC), así que se
- * leen con los getters UTC: con los locales, en un huso al oeste de Greenwich
- * —el nuestro— toda fecha se corre un día para atrás. */
-const dosDigitos = (n: number) => String(n).padStart(2, "0");
-
-const fechaCorta = (d: Date) =>
-  `${dosDigitos(d.getUTCDate())}/${dosDigitos(d.getUTCMonth() + 1)}/${d.getUTCFullYear()}`;
-
-const fechaISO = (d: Date) =>
-  `${d.getUTCFullYear()}-${dosDigitos(d.getUTCMonth() + 1)}-${dosDigitos(d.getUTCDate())}`;
-
-const esFechaValida = (d: Date) => !Number.isNaN(d.getTime());
-
 const texto = (valor: unknown) =>
   valor instanceof Date && esFechaValida(valor)
     ? fechaCorta(valor)
@@ -181,12 +147,7 @@ function mapearColumnas(fila: unknown[]): Partial<Record<Clave, number>> {
   return mapa;
 }
 
-/** "420101 Consulta." → { codigo: "420101", descripcion: "Consulta." }
- *
- * Varias prácticas vienen en la misma celda separadas por saltos de línea. Si
- * alguna no tiene el código adelante no se descarta: se guarda entera como
- * descripción y sin código, para que se vea que quedó sin identificar en vez
- * de desaparecer de la cuenta. */
+/** "420101 Consulta." → { codigo: "420101", descripcion: "Consulta." } */
 function partirPracticas(valor: unknown): PracticaPrevencion[] {
   return String(valor ?? "")
     .split(/\r?\n/)
@@ -234,9 +195,7 @@ export async function leerArchivoPrevencion(
     });
   };
 
-  // El reporte trae dos hojas ("Reporte Facturacion" y "Resumen") y no hay nada
-  // que garantice el orden, así que se busca la que tenga los encabezados en
-  // vez de asumir que los datos están en la primera.
+  // El reporte trae dos hojas ("Reporte Facturacion" y "Resumen") y no hay nada que garantice el orden.
   let hoja = "";
   let grilla: unknown[][] = [];
   let indiceEncabezado = -1;

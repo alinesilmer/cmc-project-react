@@ -13,8 +13,7 @@ export type User = {
   /** ID_COLEGIO_ESPE en orden de prioridad (principal primero). Vacía si no tiene. */
   especialidades: number[];
   es_organizacion?: number | null;
-  /** Altas nuevas nacen en true (contraseña pública `cmc1785`); las cuentas
-   * existentes siempre llegan en false y nunca ven la pantalla de cambio. */
+  /** Altas nuevas nacen en true (contraseña pública `cmc1785`); las cuentas existentes siempre llegan en false y nunca ven la pantalla de cambio. */
   must_change_password: boolean;
 };
 
@@ -65,8 +64,7 @@ export async function changePassword(
     old_password: passwordActual,
     new_password: passwordNueva,
   });
-  // El backend cierra todas las sesiones del usuario al cambiar la
-  // contraseña (§7.3): hay que limpiar el estado local y mandar al login.
+  // El backend cierra todas las sesiones del usuario al cambiar la contraseña (§7.3): hay que limpiar el estado local y mandar al login.
   if (data?.relogin) forceLogout("password_changed");
   return data as { ok: boolean; relogin?: boolean };
 }

@@ -62,9 +62,9 @@ export default function ArchivosPublicacion(p: Props) {
                   <IconoArchivo tipo={tipoDeArchivo(f.type, f.name)} />
                   {f.name}
                 </span>
-                <button type="button" className={styles.removeBtn} onClick={() => p.onQuitarAdjunto(i)}>
+                <Button variant="plano" type="button" className={styles.removeBtn} onClick={() => p.onQuitarAdjunto(i)}>
                   Quitar
-                </button>
+                </Button>
               </li>
             ))}
           </ul>
@@ -83,9 +83,9 @@ export default function ArchivosPublicacion(p: Props) {
                     {nombreVisible(d)}
                   </a>
                 </span>
-                <button type="button" className={styles.removeBtn} onClick={() => p.onBorrarDocumento(d.id)}>
+                <Button variant="plano" type="button" className={styles.removeBtn} onClick={() => p.onBorrarDocumento(d.id)}>
                   Quitar
-                </button>
+                </Button>
               </li>
             ))}
           </ul>

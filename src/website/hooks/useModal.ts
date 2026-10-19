@@ -1,10 +1,6 @@
 import { useEffect, useRef } from "react";
 
-/**
- * Lo que necesita cualquier ventana modal mientras está abierta: la página de
- * atrás no scrollea, Escape la cierra y, al cerrarse, el foco vuelve a donde
- * estaba. Lo implementaban por separado el chatbot y el directorio de médicos.
- */
+/** Lo que necesita cualquier ventana modal mientras está abierta: la página de atrás no scrollea, Escape la cierra y, al cerrarse. */
 export function useModal(abierto: boolean, onCerrar: () => void): void {
   // Ref para no reinstalar los listeners cada vez que el padre crea otro `onCerrar`.
   const cerrar = useRef(onCerrar);

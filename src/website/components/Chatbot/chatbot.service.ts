@@ -1,8 +1,4 @@
-/**
- * Consultas a la API que hace el chatbot para responder con datos en vivo.
- * Los errores nunca llegan a la UI: el llamador recibe `null` y responde con
- * el texto genérico del intent.
- */
+/** Consultas a la API que hace el chatbot para responder con datos en vivo. */
 
 import { listObrasSocialesPublicas, type ObraSocialPublica } from "../../lib/obrasSociales.client";
 import { normalizar } from "../../lib/texto";
@@ -17,11 +13,7 @@ async function obrasSociales(signal?: AbortSignal): Promise<ObraSocialPublica[]>
   return lista;
 }
 
-/**
- * La obra social cuyo nombre contiene la consulta, o está contenido en ella
- * («sancor salud» encuentra «SANCOR»). Los nombres de menos de 3 letras se
- * ignoran: con siglas cortas cualquier mensaje daba un falso positivo.
- */
+/** La obra social cuyo nombre contiene la consulta, o está contenido en ella («sancor salud» encuentra «SANCOR»). */
 function buscarPorNombre(lista: ObraSocialPublica[], consulta: string): ObraSocialPublica | undefined {
   const q = normalizar(consulta);
   return lista.find((os) => {

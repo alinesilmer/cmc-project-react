@@ -55,8 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     delete http.defaults.headers.common["Authorization"];
   };
 
-  // Cierre de sesión forzado: por el interceptor de http.ts (401 que no se
-  // pudo refrescar) en esta pestaña, o por otra pestaña vía BroadcastChannel.
+  // Cierre de sesión forzado: por el interceptor de http.ts (401 que no se pudo refrescar) en esta pestaña, o por otra pestaña vía BroadcastChannel.
   useEffect(() => {
     const goToLogin = (motivo: LogoutMotivo) => {
       setUser(null);
@@ -90,16 +89,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (!token && csrf) {
-          // hay cookie de refresh pero ningún access todavía: hace falta un
-          // refresh explícito antes de poder pedir /auth/me. Pasa por el
-          // mismo single-flight que usa el interceptor de http.ts.
+          // hay cookie de refresh pero ningún access todavía: hace falta un refresh explícito antes de poder pedir /auth/me.
           const newToken = await refreshSession();
           http.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
         }
 
-        // fuente de verdad. Si el access de sessionStorage seguía siendo
-        // válido, esto responde directo; si venció, el interceptor de
-        // http.ts refresca una sola vez y reintenta antes de llegar acá.
+        // fuente de verdad. Si el access de sessionStorage seguía siendo válido, esto responde directo; si venció.
         const u = await apiMe();
         if (cancelled) return;
         setUser(u);

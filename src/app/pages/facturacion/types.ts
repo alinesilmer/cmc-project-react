@@ -6,7 +6,7 @@ export type Tipo = "Consulta" | "Practica" | "Honorarios individuales" | "Sanato
 
 export type Money = string;
 
-export interface MedicoEspecialidad {
+interface MedicoEspecialidad {
   id: number;
   nombre: string;
   n_resolucion?: string | null;
@@ -19,8 +19,7 @@ export type MedicoOption = {
   cod: string; nombre: string; matricula?: number | string; categoria?: string;
   condicion_impositiva?: string | null;
   especialidades?: MedicoEspecialidad[];
-  /** true cuando el payee elegido es una clínica (organización) en vez de un médico.
-   *  Lo marca el front al mezclar los buscadores de médicos y clínicas. */
+  /** true cuando el payee elegido es una clínica (organización) en vez de un médico. */
   es_organizacion?: boolean;
   localidad?: string | null;
 };
@@ -46,8 +45,7 @@ export interface AfiliadoRead {
 
 export interface PrestacionItem {
   cod_medico: string;
-  /** Solo si `cod_medico` es una clínica: NRO_SOCIO del médico que ejecutó (no cobra,
-   *  fija el precio por su especialidad). NULL cuando el payee ya es un médico. */
+  /** Solo si `cod_medico` es una clínica: NRO_SOCIO del médico que ejecutó (no cobra, fija el precio por su especialidad). */
   cod_medico_ejecutor?: string | null;
   /** Afiliado elegido del padrón: gana sobre `dni_paciente` (puede no tener número). */
   afiliado_id?: number | null;
@@ -67,25 +65,18 @@ export interface PrestacionItem {
   gastos?: number | Money | null;
   ayudante?: number | Money | null;
   porcentaje?: number;
-  /** Importe que el afiliado paga de su bolsillo; se descuenta del total. undefined/null =
-   *  usar el sugerido por el Valor del código. No se escala por `porcentaje`. */
+  /** Importe que el afiliado paga de su bolsillo; se descuenta del total. undefined/null = usar el sugerido por el Valor del código. */
   coseguro?: number | Money | null;
   grupo_equipo_id?: number | null;
-  /** Rol del integrante dentro del equipo. undefined/null = comportamiento histórico
-   *  (el rol se infiere del concepto en >0). "pediatra" es el único valor que hoy
-   *  cambia algo: fuerza tpo_funcion='P' en el backend, coseguro 0 y lo saca de la
-   *  elección de cabeza — el cirujano manda, aunque el pediatra también cobre
-   *  honorarios (de su PROPIO código, distinto al del cirujano). */
+  /** Rol del integrante dentro del equipo. undefined/null = comportamiento histórico (el rol se infiere del concepto en >0). */
   rol?: "pediatra" | null;
-  /** Solo si el código se carga sin precio: qué conceptos cotizar al revalorizar
-   *  (H honorarios, G gastos, A ayudante). Sin esto el backend asume "HG". */
+  /** Solo si el código se carga sin precio: qué conceptos cotizar al revalorizar (H honorarios, G gastos, A ayudante). */
   concepto_sin_precio?: "H" | "G" | "HG" | "A" | null;
 }
 
 export interface PrestacionesCreate {
   obra_social: string;
-  /** YYYYMM opcional: permite saltar el automático (último cerrado + 1) cuando ese
-   *  período no tuvo movimiento. Debe ser >= al automático o el backend responde 422. */
+  /** YYYYMM opcional: permite saltar el automático (último cerrado + 1) cuando ese período no tuvo movimiento. */
   periodo?: string | null;
   prestaciones: PrestacionItem[];
 }
@@ -126,26 +117,17 @@ export interface PrecioResponse {
   via: ViaPractica;
   /** Solo se completa si via="L" y el galeno cotizado es de 7 niveles. */
   nivel_cotizado?: number | null;
-  /** true → el código admite vía laparoscópica (la regla vive en la API: galeno de cirugía
-   *  adulto/infantil, fuera del nivel tope). Usar este flag para ofrecer la vía, no la
-   *  categoría del código. */
+  /** true → el código admite vía laparoscópica (la regla vive en la API: galeno de cirugía adulto/infantil, fuera del nivel tope). */
   admite_laparoscopia?: boolean;
   /** Coseguro sugerido desde el Valor del código — editable al cargar la prestación. */
   coseguro: Money;
-  /** true → este código admite sumar un pediatra al equipo (parto/cesárea). La lista de
-   *  códigos vive en el backend (no se duplica acá) — usar este flag, no hardcodear
-   *  110401/110403 en el front. */
+  /** true → este código admite sumar un pediatra al equipo (parto/cesárea). */
   admite_pediatra?: boolean;
-  /** true → esta obra social exige autorización previa para este código (override de
-   *  `nm_valores.requiere_autorizacion` > default del catálogo). El backend solo lo
-   *  hace obligatorio cuando carga el médico (422 sin número); del lado Colegio no
-   *  bloquea, así que el front avisa para que no se cargue sin querer sin el número. */
+  /** true → esta obra social exige autorización previa para este código (override de `nm_valores.requiere_autorizacion` > default del catálogo). */
   requiere_autorizacion?: boolean;
-  /** true → el código está dado de alta en la O.S. pero todavía sin precio: se carga
-   *  en $0 y queda "sin valorizar" hasta que se cargue el precio y se revalorice. */
+  /** true → el código está dado de alta en la O.S. pero todavía sin precio. */
   sin_precio?: boolean;
-  /** De dónde sale el precio (etiqueta del cotizador): variante NN o NE y cómo se
-   *  calculan los honorarios — valor fijo o con un galeno (y su nivel, si es nivelado). */
+  /** De dónde sale el precio (etiqueta del cotizador): variante NN o NE y cómo se calculan los honorarios . */
   origen?: "NN" | "NE" | string | null;
   tipo_valor?: "fijo" | "calculable" | null;
   galeno_nombre?: string | null;
@@ -162,13 +144,10 @@ export interface PrestacionRead {
   /** Resuelto en batch contra `obras_sociales` — no viene "crudo" del ORM. */
   nombre_obra_social?: string | null;
   cod_nomenclador?: string | null;
-  /** Descripción del nomenclador, resuelta en batch por `nomenclador_id`. `null` en
-   *  filas legacy sin ese vínculo (código que ya no existe en el catálogo). */
+  /** Descripción del nomenclador, resuelta en batch por `nomenclador_id`. */
   descripcion?: string | null;
   tipo?: Tipo | null;
-  /** "Medico" | "Ayudante" | "Gastos", derivado de qué monto está en >0. Siempre viene
-   *  poblado (tanto en el listado como en el detalle) — no confundir con el campo
-   *  homónimo, más completo, de `PrestacionFacturaDetalle`. */
+  /** "Medico" | "Ayudante" | "Gastos", derivado de qué monto está en >0. Siempre viene poblado (tanto en el listado como en el detalle) . */
   tipo_prestador?: TipoPrestador | null;
   grupo_equipo_id?: number | null;
   sesion?: number | null; cantidad?: number | null;
@@ -187,20 +166,16 @@ export interface PrestacionRead {
   tipo_calculo?: TipoCalculo | null;
   via?: ViaPractica | null;
   porcentaje?: number | null;
-  /** Fecha/hora de CARGA (no de práctica) — columna `created`. Es el criterio de orden
-   *  de los listados, no el ID: las importaciones masivas de CMC intercalan rangos. */
+  /** Fecha/hora de CARGA (no de práctica) — columna `created`. */
   created_at?: string | null;
   /** NRO_SOCIO de quien cargó la prestación. */
   usuario?: string | null;
-  /** Otros integrantes del equipo quirúrgico (típicamente los ayudantes). Solo lo trae
-   *  la cabeza (id == grupo_equipo_id); los anidados vienen con `grupo` en null. */
+  /** Otros integrantes del equipo quirúrgico (típicamente los ayudantes). */
   grupo?: PrestacionRead[] | null;
 }
 
 export type PrestacionUpdate = Partial<PrestacionItem> & {
-  /** Sólo en PATCH, no en el alta: cambiarlos mueve la fila a otra cabecera
-   *  `facturacion` (cod_obr+periodo+version) y la re-cotiza. Ver `editar_prestacion`
-   *  en el backend — no-op si coinciden con los que ya tenía la fila. */
+  /** Sólo en PATCH, no en el alta: cambiarlos mueve la fila a otra cabecera `facturacion` (cod_obr+periodo+version) y la re-cotiza. */
   cod_obra_social?: string;
   periodo?: string;
 };
@@ -289,13 +264,10 @@ export interface ListarPrestacionesParams {
   grupo_equipo_id?: number;
   dni_paciente?: string; nombre_paciente?: string;
   fecha_desde?: string; fecha_hasta?: string;
-  /** Sólo prestaciones cuya cabecera de facturación sigue abierta. Mira
-   *  `facturacion.estado` en vez del `estado` copiado en la prestación, que una carga
-   *  masiva por fuera de la API puede dejar desincronizado. */
+  /** Sólo prestaciones cuya cabecera de facturación sigue abierta. */
   solo_facturas_abiertas?: boolean;
   q?: string;
-  /** Busca el texto en `nro_orden` O en `autorizacion`. Segundo campo del buscador de
-   *  la pantalla de consulta; se combina con AND con el resto de los filtros. */
+  /** Busca el texto en `nro_orden` O en `autorizacion`. */
   orden_o_autorizacion?: string;
   /** true = sólo lo que el Colegio publicó ("Mi recepción"); omitido = todo. */
   publicado?: boolean;
@@ -327,24 +299,18 @@ export interface FacturaRead {
   importe: number | null;
   afip: string | null;
   usuario: string | null;
-  /** NOMBRE resuelto contra listado_medico (batch, no persistido). Puede venir
-   *  `null` aunque `usuario` exista: hay operadores del Colegio sin fila propia
-   *  en listado_medico (usuario no numérico, p. ej. "sbaier"). */
+  /** NOMBRE resuelto contra listado_medico (batch, no persistido). */
   usuario_nombre?: string | null;
   estado: string | null;
   /** En un complemento nace en "C": la fase médico está cerrada, es carga exclusiva del Colegio. */
   estado_doctor?: string | null;
   created: string | null;
   documento_url?: string | null;
-  /** Quién/cuándo se creó esta cabecera (alta, no cierre) — `null` en filas
-   *  históricas anteriores a este campo. Distinto de `usuario`/`created`, que
-   *  se pisan al cerrar y funcionan como "cerrado por"/"fecha de cierre". */
+  /** Quién/cuándo se creó esta cabecera (alta, no cierre) — `null` en filas históricas anteriores a este campo. */
   creado_por?: string | null;
   creado_en?: string | null;
   creado_por_nombre?: string | null;
-  /** true si al menos una fila de detalle_facturacion de esta OS+período (cualquier
-   *  versión) está publicada — visibilidad hacia el médico. Se actualiza en bloque
-   *  con `publicarPeriodo`, único camino de la app para tocar este flag. */
+  /** true si al menos una fila de detalle_facturacion de esta OS+período (cualquier versión) está publicada — visibilidad hacia el médico. */
   publicado: boolean;
 }
 
@@ -376,28 +342,11 @@ export interface CierresPorUsuario {
   importe_total: Money;
 }
 
-export interface ActividadEvento {
-  tipo: "cierre" | "carga";
-  usuario: string;
-  nombre?: string | null;
-  fecha: string;
-  cod_obra: string;
-  periodo: string;
-  referencia: string;
-  importe: Money;
-}
-
 export interface RegistroPorUsuarioParams {
   cod_obra?: string;
   periodo?: string;
   desde?: string;
   hasta?: string;
-  limit?: number;
-}
-
-export interface RegistroActividadParams {
-  cod_obra?: string;
-  periodo?: string;
   limit?: number;
 }
 
@@ -448,14 +397,13 @@ export interface PrestacionFacturaDetalle {
   tipo: Tipo | null;
   revisado: boolean;
   estado: EstadoPrestacion | null;
-  /** Vínculo ayudante/gastos → prestación cabeza de equipo (grupo_equipo_id ==
-   * su propio id). null si no tiene equipo quirúrgico asociado. */
+  /** Vínculo ayudante/gastos → prestación cabeza de equipo (grupo_equipo_id == su propio id). null si no tiene equipo quirúrgico asociado. */
   grupo_equipo_id?: number | null;
   id_especialidad?: number | null;
   especialidad_nombre?: string | null;
 }
 
-export interface PrestadorFacturaGrupo {
+interface PrestadorFacturaGrupo {
   cod_medico: string;
   nombre: string | null;
   matricula: number | null;
@@ -481,12 +429,8 @@ export interface FacturaDetalleResponse {
 }
 
 // ── Ficha completa de una prestación (pantalla de consulta, solo lectura) ────
-// A diferencia de `PrestacionRead` (recortado, pensado para el formulario de
-// edición), acá viene la fila TAL CUAL está en la base, sin recortes, más los
-// códigos resueltos a nombre. Los nombres de campo replican los del backend
-// (`PrestacionCrudaOut` en app/modules/facturacion/schemas.py), no los de
-// `PrestacionRead` — por eso `cod_med` y no `cod_medico`, etc.
-export interface PrestacionCruda {
+// A diferencia de `PrestacionRead` (recortado, pensado para el formulario de edición), acá viene la fila TAL CUAL está en la base, sin recortes.
+interface PrestacionCruda {
   id_detalle_prestaciones: number;
   periodo: string;
   periodo_label?: string | null;
@@ -543,7 +487,7 @@ export interface PrestacionCruda {
   urgencia?: string | null;
 }
 
-export interface SocioRef {
+interface SocioRef {
   nro_socio: number;
   nombre?: string | null;
   matricula_prov?: number | null;
@@ -551,12 +495,12 @@ export interface SocioRef {
   es_organizacion: boolean;
 }
 
-export interface ObraSocialRef {
+interface ObraSocialRef {
   nro_obrasocial: number;
   nombre?: string | null;
 }
 
-export interface NomencladorRef {
+interface NomencladorRef {
   id: number;
   codigo: string;
   descripcion?: string | null;
@@ -566,13 +510,13 @@ export interface NomencladorRef {
   resuelto_por_codigo: boolean;
 }
 
-export interface AfiliadoRef {
+interface AfiliadoRef {
   id: number;
   dni: string;
   nombre: string;
 }
 
-export interface AuditoriaEvento {
+interface AuditoriaEvento {
   id: number;
   timestamp: string;
   method: string;

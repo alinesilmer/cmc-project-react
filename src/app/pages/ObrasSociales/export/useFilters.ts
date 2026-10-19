@@ -10,7 +10,7 @@ export interface FilterState {
   soloConTelefono: boolean;
 }
 
-export const EMPTY_FILTERS: FilterState = {
+const EMPTY_FILTERS: FilterState = {
   nombre: "",
   condicion_iva: "",
   plazo_vencimiento: "",

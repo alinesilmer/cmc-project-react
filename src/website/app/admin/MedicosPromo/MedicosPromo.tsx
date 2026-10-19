@@ -8,8 +8,7 @@ import styles from "./MedicosPromo.module.scss";
 /** La solapa «Publicidad de doctores»: alta de avisos y el listado editable. */
 export default function AdminMedicosPromo() {
   const { avisos, cargando, crear, actualizar, borrar } = useAvisosAdmin();
-  // Un `alert()` bloquea la pestaña y no deja copiar el texto: los errores van
-  // en la pantalla, donde pasó la cosa.
+  // Un `alert()` bloquea la pestaña y no deja copiar el texto: los errores van en la pantalla, donde pasó la cosa.
   const [aviso, setAviso] = useState<string | null>(null);
 
   return (

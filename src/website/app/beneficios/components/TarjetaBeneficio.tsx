@@ -9,17 +9,11 @@ import DetalleBeneficio from "./DetalleBeneficio";
 import { largoDescuento } from "../descuento";
 import type { BeneficioPublico } from "../../../lib/beneficios.client";
 import styles from "./TarjetaBeneficio.module.scss";
+import Button from "@/website/components/UI/Button/Button";
 
 type Props = { beneficio: BeneficioPublico; indice: number };
 
-/**
- * Un beneficio. Todas las tarjetas tienen la misma forma aunque falten datos:
- * la banda de arriba siempre está y lleva sólo el descuento (o un ícono), con
- * la letra según su largo; la categoría va abajo, sobre el título, así no se
- * pelean por el mismo renglón. El título
- * ocupa dos renglones, la descripción hasta cuatro y el pie va al fondo.
- * Así la grilla queda alineada.
- */
+/** Un beneficio. Todas las tarjetas tienen la misma forma aunque falten datos: la banda de arriba siempre está y lleva sólo el descuento. */
 export default function TarjetaBeneficio({ beneficio: b, indice }: Props) {
   const vigencia = formatearFechaISO(b.vigencia_hasta);
   // El color lo elige quien carga el beneficio; se usa sólo como acento.
@@ -28,8 +22,7 @@ export default function TarjetaBeneficio({ beneficio: b, indice }: Props) {
     : undefined;
   const hayPie = Boolean(b.ubicacion || vigencia);
 
-  // Si el título o la descripción no entran, se ofrece verlo completo en una
-  // ventana: la tarjeta mantiene su alto y la grilla sigue alineada.
+  // Toda la tarjeta abre el detalle; «Ver más» sólo se muestra como pista cuando el título o el texto no entran.
   const titulo = useDesborda<HTMLHeadingElement>();
   const texto = useDesborda<HTMLParagraphElement>();
   const descuento = useDesborda<HTMLSpanElement>();
@@ -60,9 +53,9 @@ export default function TarjetaBeneficio({ beneficio: b, indice }: Props) {
           {b.descripcion}
         </p>
         {(titulo.desborda || texto.desborda || descuento.desborda) && (
-          <button type="button" className={styles.verMas} onClick={() => setAbierto(true)}>
-            Ver más <ArrowUpRight aria-hidden="true" />
-          </button>
+          <span className={styles.verMas} aria-hidden="true">
+            Ver más <ArrowUpRight />
+          </span>
         )}
       </div>
 
@@ -82,6 +75,13 @@ export default function TarjetaBeneficio({ beneficio: b, indice }: Props) {
           )}
         </footer>
       )}
+      {/* Cubre la tarjeta entera: un clic en cualquier parte abre el detalle, y con el teclado es un solo foco. */}
+      <Button
+        variant="plano"
+        className={styles.abrir}
+        onClick={() => setAbierto(true)}
+        aria-label={`Ver más sobre ${b.titulo}`}
+      />
       {abierto && <DetalleBeneficio beneficio={b} colores={acento} onCerrar={() => setAbierto(false)} />}
     </Revelar>
   );

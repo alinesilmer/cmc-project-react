@@ -31,27 +31,27 @@ export default function DetallePublicacion({ tipo }: { tipo: TipoPublicacion }) 
 
   if (isPending) {
     return (
-      <main className={styles.pagina} aria-busy="true">
+      <div className={styles.pagina} aria-busy="true">
         <div className={styles.cabecera} aria-hidden="true">
           <span className={`${styles.hueso} ${styles.huesoTitulo}`} />
           <span className={`${styles.hueso} ${styles.huesoTitulo} ${styles.huesoCorto}`} />
           <span className={`${styles.hueso} ${styles.huesoMeta}`} />
         </div>
         <span className={`${styles.hueso} ${styles.huesoPortada}`} aria-hidden="true" />
-      </main>
+      </div>
     );
   }
 
   if (isError || !publicacion) {
     return (
-      <main className={styles.pagina}>
+      <div className={styles.pagina}>
         <div className={styles.estado}>
           <p>{config.noEncontrada}</p>
           <Button to={config.ruta} variant="outline" iconoIzquierda={<ArrowLeft />}>
             {config.volver}
           </Button>
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -61,7 +61,7 @@ export default function DetallePublicacion({ tipo }: { tipo: TipoPublicacion }) 
   const mostrarResumen = resumen ? !normalizar(publicacion.contenido).includes(normalizar(resumen)) : false;
 
   return (
-    <main className={styles.pagina}>
+    <div className={styles.pagina}>
       <Revelar como="header" className={styles.cabecera} distancia={16} alVerse={false}>
         <Link to={config.ruta} className={styles.volver}>
           <ArrowLeft aria-hidden="true" />
@@ -103,6 +103,6 @@ export default function DetallePublicacion({ tipo }: { tipo: TipoPublicacion }) 
           {config.volver}
         </Button>
       </footer>
-    </main>
+    </div>
   );
 }

@@ -13,11 +13,7 @@ const GRUPOS: { id: ColumnGroup; label: string }[] = [
 ];
 
 // BUG FIX: key was "telefono_particular" — ExportColumnKey uses "tele_particular".
-// Wrong key caused blank phone column in every export.
-//
-// `group` sólo ordena el selector; `sensible` marca lo que no debería salir del
-// Colegio por descuido (mismo criterio que el selector de campos del padrón).
-export const AVAILABLE_COLUMNS: {
+const AVAILABLE_COLUMNS: {
   key: string;
   label: string;
   group: ColumnGroup;
@@ -55,14 +51,11 @@ interface Props {
   columns: string[];
   onToggleColumn: (key: string) => void;
   onSetColumns: (keys: string[]) => void;
-  expanded: boolean;
-  onToggle: () => void;
 }
 
-export function ColumnsSection({ columns, onToggleColumn, onSetColumns, expanded, onToggle }: Props) {
+export function ColumnsSection({ columns, onToggleColumn, onSetColumns }: Props) {
   const elegidas = new Set(columns);
   const allSelected = ALL_KEYS.every((k) => elegidas.has(k));
-  const sensibles = AVAILABLE_COLUMNS.filter((c) => c.sensible && elegidas.has(c.key)).length;
 
   const alternarGrupo = (grupo: ColumnGroup) => {
     const delGrupo = AVAILABLE_COLUMNS.filter((c) => c.group === grupo);
@@ -76,85 +69,64 @@ export function ColumnsSection({ columns, onToggleColumn, onSetColumns, expanded
   };
 
   return (
-    <div className={styles.filterSection}>
-      <button className={styles.filterSectionHeader} onClick={onToggle} type="button">
-        <span>Datos a incluir ({columns.length}/{ALL_KEYS.length})</span>
-        <span className={styles.chevron}>{expanded ? "▲" : "▼"}</span>
+    <>
+      <button
+        type="button"
+        className={styles.selectAllBtn}
+        onClick={() => onSetColumns(allSelected ? [] : [...ALL_KEYS])}
+      >
+        {allSelected ? "Quitar todos" : "Agregar todos"}
       </button>
 
-      {expanded && (
-        <div className={styles.filterSectionContent}>
-          <button
-            type="button"
-            className={styles.selectAllBtn}
-            onClick={() => onSetColumns(allSelected ? [] : [...ALL_KEYS])}
-          >
-            {allSelected ? "Quitar todos" : "Agregar todos"}
-          </button>
+      <div className={styles.colGroups}>
+        {GRUPOS.map((g) => {
+          const campos = AVAILABLE_COLUMNS.filter((c) => c.group === g.id);
+          const puestos = campos.filter((c) => elegidas.has(c.key)).length;
+          return (
+            <section key={g.id} className={styles.colGroup}>
+              <div className={styles.colGroupHead}>
+                <h4 className={styles.colGroupTitle}>
+                  {g.label}
+                  {g.id === "personal" && (
+                    <span className={styles.colPersonalTag}>
+                      <AlertTriangle size={11} aria-hidden="true" /> Personales
+                    </span>
+                  )}
+                </h4>
+                <button
+                  type="button"
+                  className={styles.colGroupToggle}
+                  onClick={() => alternarGrupo(g.id)}
+                >
+                  {puestos === campos.length ? "Quitar todos" : "Agregar todos"}
+                </button>
+              </div>
 
-          <div className={styles.colGroups}>
-            {GRUPOS.map((g) => {
-              const campos = AVAILABLE_COLUMNS.filter((c) => c.group === g.id);
-              const puestos = campos.filter((c) => elegidas.has(c.key)).length;
-              return (
-                <section key={g.id} className={styles.colGroup}>
-                  <div className={styles.colGroupHead}>
-                    <h4 className={styles.colGroupTitle}>
-                      {g.label}
-                      {g.id === "personal" && (
-                        <span className={styles.colPersonalTag}>
-                          <AlertTriangle size={11} aria-hidden="true" /> Personales
-                        </span>
-                      )}
-                    </h4>
+              <div className={styles.colOptions}>
+                {campos.map((c) => {
+                  const activo = elegidas.has(c.key);
+                  return (
                     <button
+                      key={c.key}
                       type="button"
-                      className={styles.colGroupToggle}
-                      onClick={() => alternarGrupo(g.id)}
+                      role="checkbox"
+                      aria-checked={activo}
+                      className={`${styles.colOption} ${activo ? styles.colOptionOn : ""}`}
+                      onClick={() => onToggleColumn(c.key)}
                     >
-                      {puestos === campos.length ? "Quitar todos" : "Agregar todos"}
+                      <span className={styles.colBox} aria-hidden="true">
+                        {activo && <Check size={12} strokeWidth={3} />}
+                      </span>
+                      <span className={styles.colOptionLabel}>{c.label}</span>
                     </button>
-                  </div>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })}
+      </div>
 
-                  <div className={styles.colOptions}>
-                    {campos.map((c) => {
-                      const activo = elegidas.has(c.key);
-                      return (
-                        <button
-                          key={c.key}
-                          type="button"
-                          role="checkbox"
-                          aria-checked={activo}
-                          className={`${styles.colOption} ${activo ? styles.colOptionOn : ""}`}
-                          onClick={() => onToggleColumn(c.key)}
-                        >
-                          <span className={styles.colBox} aria-hidden="true">
-                            {activo && <Check size={12} strokeWidth={3} />}
-                          </span>
-                          <span className={styles.colOptionLabel}>{c.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </section>
-              );
-            })}
-          </div>
-
-          <div className={styles.colNotes}>
-            <span className={styles.colCount}>
-              {columns.length} {columns.length === 1 ? "columna" : "columnas"}
-            </span>
-            {sensibles > 0 && (
-              <span className={styles.colNoteWarn}>
-                <AlertTriangle size={12} aria-hidden="true" />
-                Incluye {sensibles} {sensibles === 1 ? "dato personal" : "datos personales"}.
-                Revisá antes de enviarlo fuera del Colegio.
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
+    </>
   );
 }

@@ -1,36 +1,19 @@
 @use "@/website/styles/all.scss" as *;
 
-$crema: #f7e9aa;
-$verde-whatsapp: #25d366;
+
+// La superficie, el círculo, el título y la forma de las tarjetas son los de la banda azul compartida (styles/_bandaAzul.scss); acá va la disposición.
 
 .banda {
-  position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 28px 48px;
-  padding: 40px clamp(24px, 4vw, 52px);
-  border-radius: 10px;
-  background: $primary-blue;
-  color: $white;
-  overflow: hidden;
-  isolation: isolate;
-
-  @media (max-width: 480px) {
-    padding: 28px 20px;
-  }
+  @include banda-azul;
 }
 
 .circulo {
-  position: absolute;
-  width: 320px;
-  height: 320px;
-  right: -90px;
-  bottom: -200px;
-  border-radius: 50%;
-  background: rgba($crema, 0.12);
-  z-index: -1;
+  @include banda-circulo(bottom);
 }
 
 .texto {
@@ -40,25 +23,14 @@ $verde-whatsapp: #25d366;
 }
 
 .titulo {
-  margin: 0;
-  font-family: $font-title;
-  font-size: clamp(1.6rem, 2.8vw, 2.2rem);
-  font-weight: 800;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  color: $white;
-
-  em {
-    font-style: normal;
-    color: $crema;
-  }
+  @include banda-titulo;
 }
 
 .bajada {
   max-width: 52ch;
   margin: 0;
   font-size: 1.05rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba($white, 0.8);
 }
 
 .canales {
@@ -81,59 +53,15 @@ $verde-whatsapp: #25d366;
   gap: 14px;
   min-width: 240px;
   padding: 12px 14px 12px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
-  color: $white;
-  text-decoration: none;
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    transform 0.2s ease;
-
-  &:hover,
-  &:focus-visible {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba($crema, 0.7);
-    transform: translateY(-2px);
-
-    .flecha {
-      color: $crema;
-      transform: translate(2px, -2px);
-    }
-  }
-
-  &:focus-visible {
-    outline: 2px solid $crema;
-    outline-offset: 2px;
-  }
+  @include banda-tarjeta;
 
   @media (max-width: 640px) {
     min-width: 0;
   }
-
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-
-    &:hover,
-    &:focus-visible {
-      transform: none;
-    }
-  }
 }
 
 .icono {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 44px;
-  height: 44px;
-  border-radius: 6px;
-
-  svg {
-    width: 22px;
-    height: 22px;
-  }
+  @include banda-icono;
 
   [data-canal="whatsapp"] & {
     background: $verde-whatsapp;
@@ -141,7 +69,7 @@ $verde-whatsapp: #25d366;
   }
 
   [data-canal="email"] & {
-    background: $crema;
+    background: $primary-yellow;
     color: $primary-blue-dark;
   }
 }
@@ -158,7 +86,7 @@ $verde-whatsapp: #25d366;
     font-weight: 800;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: $crema;
+    color: $primary-yellow;
   }
 
   span {
@@ -171,12 +99,7 @@ $verde-whatsapp: #25d366;
 }
 
 .flecha {
+  @include banda-flecha;
   flex-shrink: 0;
-  width: 18px;
-  height: 18px;
   margin-left: auto;
-  color: rgba(255, 255, 255, 0.5);
-  transition:
-    color 0.2s ease,
-    transform 0.2s ease;
 }

@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
+import { ShieldCheck } from "lucide-react";
 import RequirePermission from "../../auth/RequirePermission";
 import s from "./PermissionsManager.module.scss";
 
@@ -11,6 +12,8 @@ import {
   removePermFromRole,
 } from "./api";
 import SearchField from "@/app/components/ui/SearchField/SearchField";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
+import Franja from "@/app/components/layout/Franja/Franja";
 
 // ---------- Mapeo visual de permisos ----------
 // Categorías por prefijo de código (mostrar ≠ almacenar)
@@ -115,110 +118,102 @@ const PermissionsManager: React.FC = () => {
   return (
     <RequirePermission scope="rbac:gestionar">
       <div className={s.container}>
-        
-        
-        <div className={s.header}>
-          <h1 className={s.title}>Gestor de Permisos</h1>
-          <p className={s.subtitle}>
-            Selecciona un rol para ver y modificar sus permisos asociados.
-          </p>
-        </div>
+        <Franja titulo="Permisos" icono={ShieldCheck} />
 
-        <div className={s.tableContainer}>
-          {/* Columna de Roles */}
-          <div className={s.groupSide}>
-            <table className={s.table}>
-              <thead>
-                <tr><th>Roles</th></tr>
-              </thead>
-              <tbody>
-                {loadingRoles ? (
-                  <tr><td style={{ textAlign: "center", padding: 12 }}>⏳ Cargando…</td></tr>
-                ) : roles.length === 0 ? (
-                  <tr><td style={{ textAlign: "center", padding: 12 }}>Sin roles</td></tr>
-                ) : (
-                  roles.map((r) => (
-                    <tr
-                      key={r.name}
-                      onClick={() => setActiveRole(r.name)}           // ← seguimos usando el "name" técnico
-                      style={{
-                        cursor: "pointer",
-                        background: activeRole === r.name ? "rgba(0,0,0,0.04)" : undefined,
-                      }}
-                    >
-                      <td>{roleDisplay(r.name)}</td>                  {/* ← mostramos la etiqueta */}
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+        <div className={s.mesa}>
+          <nav className={s.roles} aria-label="Roles">
+            <h2 className={s.rotulo}>Rol</h2>
+            {loadingRoles ? (
+              <p className={s.estado}>Cargando…</p>
+            ) : roles.length === 0 ? (
+              <p className={s.estado}>Sin roles</p>
+            ) : (
+              roles.map((r) => (
+                <button
+                  key={r.name}
+                  type="button"
+                  className={`${s.rol} ${activeRole === r.name ? s.rolActivo : ""}`}
+                  aria-pressed={activeRole === r.name}
+                  onClick={() => setActiveRole(r.name)}
+                >
+                  {roleDisplay(r.name)}
+                  {activeRole === r.name && !loadingRolePerms && (
+                    <span className={s.cuenta}>{rolePerms.length}</span>
+                  )}
+                </button>
+              ))
+            )}
+          </nav>
 
-          {/* Columna de Permisos */}
-          <div className={s.permsSide}>
-            <div className={s.searchBar} style={{ display: "flex", gap: 8 }}>
-              <SearchField
-                placeholder="Buscar permiso..."
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-              />
-
-              <select
-                className={s.searchInput}
-                value={category}
-                onChange={(e) => setCategory(e.target.value as any)}
-                style={{ maxWidth: 220 }}
-                aria-label="Categoría"
-              >
-                {Object.entries(CATEGORY_LABEL).map(([k, v]) => (
-                  <option key={k} value={k}>{v}</option>
-                ))}
-              </select>
+          <div className={s.permisos}>
+            <div className={s.categorias} role="group" aria-label="Categoría">
+              {Object.entries(CATEGORY_LABEL).map(([k, v]) => (
+                <button
+                  key={k}
+                  type="button"
+                  className={`${s.categoria} ${category === k ? s.categoriaActiva : ""}`}
+                  aria-pressed={category === k}
+                  onClick={() => setCategory(k)}
+                >
+                  {v}
+                </button>
+              ))}
             </div>
 
-            <table className={s.table} style={{ marginTop: 12 }}>
-              <thead>
-                <tr>
-                  <th>Permiso</th>
-                  <th style={{ width: 120 }}>Tiene</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loadingPerms || loadingRolePerms ? (
-                  <tr><td colSpan={2} style={{ textAlign: "center", padding: 12 }}>⏳ Cargando…</td></tr>
-                ) : filtered.length === 0 ? (
-                  <tr><td colSpan={2} style={{ textAlign: "center", padding: 12 }}>Sin resultados</td></tr>
-                ) : (
-                  filtered.map((p) => {
-                    const checked = roleHas(p.code);
-                    return (
-                      <tr key={p.code}>
-                        <td>
-                          <div style={{ display: "flex", flexDirection: "column" }}>
-                            <span>{p.label}</span>
-                            <small style={{ opacity: 0.6 }}>{p.code}</small>
-                          </div>
-                        </td>
-                        <td>
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={async (e) => {
-                              if (!activeRole) return;
-                              const next = e.target.checked;
-                              if (next) await addPermToRole(activeRole, p.code);
-                              else await removePermFromRole(activeRole, p.code);
-                              const rp = await getRolePerms(activeRole);
-                              setRolePerms(rp.map((x) => x.code));
-                            }}
-                          />
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+            <SearchField
+              placeholder="Buscar permiso…"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              onClear={() => setQ("")}
+            />
+
+            <div className={s.hoja}>
+              <Tabla>
+                <thead>
+                  <tr>
+                    <th>Permiso</th>
+                    <th className={s.colTiene}>Tiene</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loadingPerms || loadingRolePerms ? (
+                    <tr>
+                      <td colSpan={2} className={s.estado}>Cargando…</td>
+                    </tr>
+                  ) : filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan={2} className={s.estado}>Sin resultados</td>
+                    </tr>
+                  ) : (
+                    filtered.map((p) => {
+                      const checked = roleHas(p.code);
+                      return (
+                        <tr key={p.code}>
+                          {/* El código técnico queda en el globo: lo que se lee es la frase. */}
+                          <td title={p.code}>{p.label}</td>
+                          <td className={s.colTiene}>
+                            <input
+                              type="checkbox"
+                              className={s.llave}
+                              aria-label={p.label}
+                              checked={checked}
+                              onChange={async (e) => {
+                                if (!activeRole) return;
+                                const next = e.target.checked;
+                                if (next) await addPermToRole(activeRole, p.code);
+                                else await removePermFromRole(activeRole, p.code);
+                                const rp = await getRolePerms(activeRole);
+                                setRolePerms(rp.map((x) => x.code));
+                              }}
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </Tabla>
+            </div>
           </div>
         </div>
       </div>

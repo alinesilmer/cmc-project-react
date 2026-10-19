@@ -29,6 +29,7 @@ import type {
   NomencladorNacionalOut,
   NomencladorNacionalCreatePayload,
 } from "../nomenclador.types";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -289,7 +290,7 @@ export default function NomencladorNacionalTabla() {
 
         {/* Table */}
         <div className={styles.tableWrap}>
-          <table className={styles.table}>
+          <Tabla className={styles.table}>
             <thead>
               <tr>
                 <th>Código</th>
@@ -334,7 +335,7 @@ export default function NomencladorNacionalTabla() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </Tabla>
         </div>
 
         {/* Mobile cards */}

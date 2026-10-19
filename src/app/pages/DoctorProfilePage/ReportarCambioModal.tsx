@@ -10,8 +10,7 @@ import { useNotify } from "../../hooks/useNotify";
 import { crearSolicitudCambioPropia } from "../SolicitudesCambio/solicitudesCambio.api";
 import styles from "./ReportarCambioModal.module.scss";
 
-// Topes del backend (SolicitudCambioCrearIn). Se validan también acá para que el
-// socio vea el error mientras escribe y no después de un 422.
+// Topes del backend (SolicitudCambioCrearIn).
 const MAX_VALOR = 255;
 const MAX_MENSAJE = 2000;
 
@@ -31,11 +30,7 @@ type Props = {
   onCreated?: () => void;
 };
 
-/**
- * Reclamo de corrección de un dato del legajo. No edita nada: crea una
- * solicitud 'pendiente' que un admin aprueba o rechaza desde su bandeja, y
- * recién ahí aplica el cambio a mano. Por eso el texto habla de "pedido".
- */
+/** Reclamo de corrección de un dato del legajo. */
 const ReportarCambioModal: React.FC<Props> = ({ target, onClose, onCreated }) => {
   const notify = useNotify();
 
@@ -44,8 +39,7 @@ const ReportarCambioModal: React.FC<Props> = ({ target, onClose, onCreated }) =>
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Cada apertura arranca limpia: si no, el texto del reclamo anterior queda
-  // pegado al siguiente campo que el socio reporte.
+  // Cada apertura arranca limpia: si no, el texto del reclamo anterior queda pegado al siguiente campo que el socio reporte.
   useEffect(() => {
     if (target) {
       setValorPropuesto("");

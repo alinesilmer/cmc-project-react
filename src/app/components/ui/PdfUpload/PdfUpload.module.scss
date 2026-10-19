@@ -1,64 +1,69 @@
+@use "@/app/styles/all.scss" as *;
+
+// Sólo las animaciones compartidas: esta hoja no usa el resto de los tokens.
+@use "@/app/styles/animations.scss" as *;
+
 .iconTrigger {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0.75rem 1rem;
   border-radius: 8px;
-  border: 1px solid #d1d5db;
-  background: #ffffff;
+  border: 1px solid $gray-300;
+  background: $white;
   cursor: pointer;
   transition: box-shadow .15s ease, transform .05s ease;
-  box-shadow: 0 1px 2px rgba(0,0,0,.04);
+  box-shadow: 0 1px 2px rgba($black, .04);
 
-  &:hover { box-shadow: 0 4px 10px rgba(0,0,0,.08); }
+  &:hover { box-shadow: 0 0.25rem 0.625rem rgba($black, .08); }
   &:active { transform: scale(.98); }
 }
 
 .pdfImg {
-   width: 50px;
-  height: 50px;
+   width: 3.125rem;
+  height: 3.125rem;
   max-width: none;
   max-height: none;
   display: block;
   object-fit: contain;
 }
 
-.iconSuccess { border-color: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,.15); position: relative; }
+.iconSuccess { border-color: $tono-verde-300-b; box-shadow: 0 0 0 3px rgba($tono-verde-300-b, .15); position: relative; }
 .iconSuccess::after {
   content: "";
   position: absolute;
   right: -2px;
   top: -2px;
-  width: 10px;
-  height: 10px;
-  background: #22c55e;
-  border: 2px solid #fff;
+  width: 0.625rem;
+  height: 0.625rem;
+  background: $tono-verde-300-b;
+  border: 2px solid $white;
   border-radius: 999px;
 }
 
 .successBanner {
-  background: #ecfdf5;
-  color: #065f46;
-  border: 1px solid #10b981;
+  background: $gray-50;
+  color: $tono-turquesa-550;
+  border: 1px solid $tono-verde-300;
   border-radius: 8px;
-  padding: 8px 12px;
+  padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
-  margin: 0 4px;
+  margin: 0 0.25rem;
 }
 
 /* toast */
 .toast {
   position: fixed;
-  right: 16px;
-  bottom: 16px;
-  background: #16a34a;
-  color: #fff;
-  padding: 10px 14px;
+  right: 1rem;
+  bottom: 1rem;
+  background: $tono-verde-350-b;
+  color: $white;
+  padding: 0.625rem 0.875rem;
   border-radius: 10px;
-  box-shadow: 0 8px 30px rgba(0,0,0,.2);
+  box-shadow: 0 8px 30px rgba($black, .2);
   font-size: 0.875rem;
   z-index: 80;
-  animation: fadeIn .12s ease-out, slideInUp .25s ease-out;
+  animation: $anim-fade-in .12s ease-out, slideInUp .25s ease-out;
 }
 
 
@@ -67,129 +72,126 @@
 .modalOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.45);
+  background: rgba($gray-900, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 70;
-  padding: 16px;
-  animation: fadeIn .12s ease-out;
+  padding: 1rem;
+  animation: $anim-fade-in .12s ease-out;
 }
 
 .modal {
-  width: min(680px, 100%);
-  background: #fff;
+  width: min(42.5rem, 100%);
+  background: $white;
   border-radius: 12px;
-  box-shadow: 0 24px 70px rgba(0,0,0,.2);
-  padding: 16px;
+  box-shadow: 0 24px 70px rgba($black, .2);
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  animation: scaleIn .15s ease-out;
+  gap: 0.75rem;
+  animation: $anim-scale-in .15s ease-out;
 }
 
 .modalHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 4px 0;
+  padding: 0.25rem 0.25rem 0;
 }
 
 .modalTitle {
   margin: 0;
   font-size: 1rem;
   font-weight: 700;
-  color: #0f172a;
+  color: $gray-900;
 }
 
 .modalClose {
   background: transparent;
   border: 0;
-  font-size: 22px;
-  width: 32px;
-  height: 32px;
+  font-size: 1.375rem;
+  width: 2rem;
+  height: 2rem;
   border-radius: 8px;
   cursor: pointer;
-  color: #475569;
+  color: $gray-600;
 
-  &:hover { background: #f1f5f9; }
+  &:hover { background: $gray-100; }
 }
 
 .modalFooter {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-  padding-top: 4px;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
 }
 
 .primaryBtn {
-  background: #3b82f6;
-  color: #fff;
+  background: $tono-azul-350;
+  color: $white;
   border: 0;
-  padding: 8px 14px;
+  padding: 0.5rem 0.875rem;
   border-radius: 8px;
   cursor: pointer;
 
-  &:hover { background: #2563eb; }
+  &:hover { background: $tono-azul-450-c; }
 }
 
 .secondaryBtn {
-  background: #e5e7eb;
-  color: #111827;
+  background: $gray-200;
+  color: $gray-900;
   border: 0;
-  padding: 8px 14px;
+  padding: 0.5rem 0.875rem;
   border-radius: 8px;
   cursor: pointer;
 
-  &:hover { background: #d1d5db; }
+  &:hover { background: $gray-300; }
 }
 
-// .uploadContainer {
-//   margin-bottom: 1.5rem;
-// }
 
 .label {
   display: block;
   font-weight: 600;
-  color: #374151;
+  color: $gray-700;
   // margin-bottom: 0.5rem;
   font-size: 0.875rem;
 }
 
 .required {
-  color: #ef4444;
+  color: $tono-rojo-350;
 }
 
 .pdfOnly {
-  color: #6b7280;
+  color: $gray-500;
   font-weight: 400;
   font-size: 0.75rem;
   margin-left: 0.25rem;
 }
 
 .uploadArea {
-  border: 2px dashed #d1d5db;
+  border: 2px dashed $gray-300;
   border-radius: 8px;
   padding: 2rem;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  background-color: #fafafa;
+  background-color: $gray-50;
 
   &:hover {
-    border-color: #3b82f6;
-    background-color: #f8faff;
+    border-color: $tono-azul-350;
+    background-color: $gray-50;
   }
 
   &.dragActive {
-    border-color: #3b82f6;
-    background-color: #eff6ff;
+    border-color: $tono-azul-350;
+    background-color: $gray-100;
     transform: scale(1.02);
   }
 
   &.error {
-    border-color: #ef4444;
-    background-color: #fef2f2;
+    border-color: $tono-rojo-350;
+    background-color: $gray-100;
   }
 }
 
@@ -207,18 +209,18 @@
 .uploadIcon {
   width: 3rem;
   height: 3rem;
-  color: #6b7280;
+  color: $gray-500;
 }
 
 .uploadText {
   margin: 0;
-  color: #374151;
+  color: $gray-700;
   font-size: 1rem;
 }
 
 .uploadSubtext {
   margin: 0;
-  color: #6b7280;
+  color: $gray-500;
   font-size: 0.875rem;
 }
 
@@ -227,8 +229,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 1rem;
-  background-color: #f0f9ff;
-  border: 1px solid #0ea5e9;
+  background-color: $gray-100;
+  border: 1px solid $tono-azul-300;
   border-radius: 6px;
 }
 
@@ -241,7 +243,7 @@
 .pdfIcon {
   width: 2rem;
   height: 2rem;
-  color: #dc2626;
+  color: $tono-rojo-400;
 }
 
 .fileName {
@@ -250,19 +252,19 @@
   
   span:first-child {
     font-weight: 600;
-    color: #374151;
+    color: $gray-700;
     font-size: 0.875rem;
   }
 }
 
 .fileSize {
-  color: #6b7280;
+  color: $gray-500;
   font-size: 0.75rem;
 }
 
 .removeButton {
-  background: #ef4444;
-  color: white;
+  background: $tono-rojo-350;
+  color: $white;
   border: none;
   border-radius: 50%;
   width: 3rem;
@@ -276,13 +278,13 @@
   transition: background-color 0.2s ease;
 
   &:hover {
-    background-color: #dc2626;
+    background-color: $tono-rojo-400;
   }
 }
 
 .errorMessage {
   display: block;
-  color: #ef4444;
+  color: $tono-rojo-350;
   font-size: 0.75rem;
   margin-top: 0.25rem;
 }
@@ -303,6 +305,6 @@
 }
 
 @keyframes slideInUp {
-  from { transform: translateY(10px); opacity: 0; }
+  from { transform: translateY(0.625rem); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }

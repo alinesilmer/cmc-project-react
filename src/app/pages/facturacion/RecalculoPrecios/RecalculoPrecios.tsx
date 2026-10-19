@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Calculator, Eye, Loader2, RefreshCw } from "lucide-react";
+import { Calculator, Eye, Loader2, RefreshCw } from "lucide-react";
 
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
 import { fetchPeriodoActivo, previewCierre, recalcularPrecios } from "../api";
@@ -13,16 +12,9 @@ import ConfirmActionModal from "../components/ConfirmActionModal";
 import base from "../CierrePeriodo/CierrePeriodo.module.scss";
 import styles from "./RecalculoPrecios.module.scss";
 import { ListaOmitidas, TablaCambios } from "./TablaCambios";
+import BackButton from "@/app/components/ui/BackButton/BackButton";
 
-/**
- * Recálculo de precios de una factura abierta (O.S. + período), o de un código
- * de ella. Recotiza las prestaciones automáticas con el precio vigente a la
- * fecha de cada práctica (sin fecha: hoy) y la especialidad del médico, y
- * guarda el total con la misma fórmula que tenía cada fila. Las manuales, las
- * que no tienen precio y las que darían $0 quedan como están.
- *
- * Primero se previsualiza (no graba) y recién después se aplica.
- */
+/** Recálculo de precios de una factura abierta (O.S. + período), o de un código de ella. */
 
 /** Las filas de un mismo equipo juntas, en el orden en que aparece cada equipo. */
 function agruparPorEquipo(filas: RecalculoFila[]): RecalculoFila[] {
@@ -40,7 +32,6 @@ function agruparPorEquipo(filas: RecalculoFila[]): RecalculoFila[] {
 }
 
 const RecalculoPrecios: React.FC = () => {
-  const navigate = useNavigate();
   const notify = useAppSnackbar();
 
   const [obraSocial, setObraSocial] = useState<ObraSocialOption | null>(null);
@@ -149,9 +140,7 @@ const RecalculoPrecios: React.FC = () => {
           </p>
         </div>
         <div className={base.headerRight}>
-          <button type="button" className={base.backBtn} onClick={() => navigate("/panel/facturacion/periodos")}>
-            <ArrowLeft size={15} /> Volver
-          </button>
+          <BackButton to="/panel/facturacion/periodos" />
         </div>
       </div>
 

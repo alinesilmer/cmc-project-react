@@ -1,23 +1,24 @@
-import { motion } from "framer-motion";
 import { MessageCircle } from "lucide-react";
 import styles from "./BotonChat.module.scss";
+import Button from "@/website/components/UI/Button/Button";
 
-type Props = { idDialogo: string; onAbrir: () => void };
+type Props = {
+  idDialogo: string;
+  onAbrir: () => void;
+  /** Se llama al acercar el mouse o enfocar el botón, antes del clic. */
+  onPrecargar?: () => void;
+};
 
 /** El botón flotante «CONSULTAS» que abre el asistente. */
-export default function BotonChat({ idDialogo, onAbrir }: Props) {
+export default function BotonChat({ idDialogo, onAbrir, onPrecargar }: Props) {
   return (
-    <motion.div
-      className={styles.root}
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      transition={{ duration: 0.18 }}
-    >
-      <button
+    <div className={styles.root}>
+      <Button variant="plano"
         type="button"
         className={styles.fab}
         onClick={onAbrir}
+        onPointerEnter={onPrecargar}
+        onFocus={onPrecargar}
         aria-label="Abrir el asistente del Colegio"
         aria-haspopup="dialog"
         aria-controls={idDialogo}
@@ -26,7 +27,7 @@ export default function BotonChat({ idDialogo, onAbrir }: Props) {
           <MessageCircle aria-hidden="true" />
         </span>
         <span className={styles.fabLabel}>CONSULTAS</span>
-      </button>
-    </motion.div>
+      </Button>
+    </div>
   );
 }

@@ -1,8 +1,5 @@
 @use "@/website/styles/all.scss" as *;
 
-$crema: #f7e9aa;
-$suave: #f1f5fb;
-$gris: #6b7280;
 
 .pilares {
   display: grid;
@@ -23,10 +20,10 @@ $gris: #6b7280;
   gap: 16px;
   padding: 14px 18px;
   border-radius: 8px;
-  background: $suave;
+  background: $fondo-suave;
   font-size: 0.95rem;
   line-height: 1.45;
-  color: $gris;
+  color: $texto-gris;
 
   strong {
     display: block;
@@ -46,10 +43,56 @@ $gris: #6b7280;
   height: 44px;
   border-radius: 6px;
   background: $primary-blue;
-  color: $crema;
+  color: $primary-yellow;
 
   svg {
     width: 20px;
     height: 20px;
+  }
+}
+
+// Sobre la noche de la portada: el ícono arriba en un aro dorado, la palabra en crema, y el borde se enciende al pasar.
+.oscuro {
+  gap: 14px;
+
+  @media (max-width: 900px) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (max-width: 480px) { grid-template-columns: 1fr; }
+
+  .pilar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+    padding: 22px 20px 20px;
+    background: rgba($white, 0.04);
+    border: 1px solid rgba($portada-crema, 0.12);
+    border-radius: 14px;
+    transition: border-color 0.25s ease, background-color 0.25s ease, transform 0.25s ease;
+
+    &:hover {
+      background: rgba($white, 0.07);
+      border-color: rgba($portada-oro, 0.55);
+      transform: translateY(-3px);
+    }
+
+    strong {
+      margin: 0;
+      font-size: 1.12rem;
+      line-height: 1.25;
+      color: $portada-crema;
+    }
+  }
+
+  .icono {
+    width: 48px;
+    height: 48px;
+    color: $portada-oro;
+    background: rgba($portada-oro, 0.1);
+    border: 1px solid rgba($portada-oro, 0.45);
+    border-radius: 50%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pilar { transition: none; }
+    .pilar:hover { transform: none; }
   }
 }

@@ -6,26 +6,7 @@ import {
   pickDomicilioConsulta, pickMailParticular, pickCuit, pickCodigoPostal,
 } from "./helpers";
 
-/**
- * Catálogo único de columnas exportables.
- *
- * Todo lo que sabe el PDF, el Excel y el selector de campos sale de acá: la
- * etiqueta, de dónde se lee el dato, cuánto ancho ocupa y si es información
- * personal. Agregar una columna es agregar una entrada; no hay que tocar los
- * generadores.
- *
- * `source` decide el costo de la columna:
- *
- *  · `padron`  — ya viene en la respuesta del padrón. Gratis.
- *  · `medico`  — hay que traer la ficha completa (`GET /api/medicos/all`, un
- *                pedido para todo el padrón). Sólo se pide si el usuario
- *                eligió al menos una de estas columnas.
- *
- * `sensible` no bloquea nada —quien entra acá ya ve estos datos abriendo la
- * ficha del médico— pero el selector los agrupa y advierte aparte, para que
- * mandar el DNI de 500 profesionales a una obra social sea una decisión
- * tomada y no un descuido.
- */
+/** Catálogo único de columnas exportables. */
 
 export const GRUPOS: { id: FieldGroup; label: string }[] = [
   { id: "identificacion", label: "Identificación" },
@@ -72,8 +53,7 @@ export const CAMPOS: ExportField[] = [
   { key: "matfecha", label: "Fecha de matrícula", short: "Matriculado", group: "profesional",
     source: "medico", weight: 10, align: "center",
     get: (r) => fmtFechaCorta(r.extra?.fecha_matricula) },
-  // No hay columna "Estado en el padrón": la pantalla ya excluye a los dados de
-  // baja, así que sólo podría decir "Activo" en todas las filas.
+  // No hay columna "Estado en el padrón": la pantalla ya excluye a los dados de baja.
 
   // ── Consultorio ───────────────────────────────────────────────────────────
   { key: "tel", label: "Teléfono consultorio", short: "Teléfono", group: "consultorio",

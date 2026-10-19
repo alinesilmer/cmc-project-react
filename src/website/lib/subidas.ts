@@ -1,19 +1,4 @@
-/**
- * Validación de archivos antes de subirlos, espejando lo que exige la API.
- *
- * **Esto no es la barrera de seguridad.** Quien decide de verdad es el backend
- * (`app/common/uploads.py`), que mira los *magic bytes* del archivo y no el
- * nombre ni el `content-type` que declara el navegador — cualquiera de los dos
- * se falsea. Acá se replican las mismas reglas por dos motivos prácticos:
- *
- * 1. Sin esto, un archivo de 200 MB se sube entero para que la API lo rechace
- *    recién al final. Con conexiones del interior eso son minutos perdidos.
- * 2. El `accept` de un `<input type="file">` es sólo una sugerencia del
- *    diálogo: el usuario elige «Todos los archivos» y manda lo que quiera.
- *
- * Si cambian los límites en `app/core/config.py::MAX_UPLOAD_BYTES` o las listas
- * de `app/common/uploads.py`, hay que cambiarlos acá también.
- */
+/** Validación de archivos antes de subirlos, espejando lo que exige la API. */
 
 /** `settings.MAX_UPLOAD_BYTES` del backend. */
 const MAX_BYTES = 20 * 1024 * 1024;
@@ -40,9 +25,7 @@ const extensionDe = (nombre: string): string => {
 const enMb = (bytes: number): string =>
   (bytes / 1024 / 1024).toFixed(bytes < 1024 * 1024 ? 2 : 1);
 
-/**
- * `null` si el archivo pasa; si no, el motivo ya redactado para mostrar.
- */
+/** `null` si el archivo pasa; si no, el motivo ya redactado para mostrar. */
 export function motivoDeRechazo(file: File, exts: Extensiones): string | null {
   const ext = extensionDe(file.name);
 

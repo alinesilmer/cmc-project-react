@@ -1,0 +1,90 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver Franja.tsx. Todo lo visual sale de las piezas compartidas de `variables.scss` (`franja-bloque`, `titulo-franja`, `$franja-alto`).
+
+.franja {
+  @include franja-bloque;
+
+  & {
+    min-height: $franja-alto;
+    margin-bottom: $spacing-6;
+  }
+}
+
+// Sin contenedor con relleno alrededor: no hay de qué salirse, y el aire a los costados lo pone la propia franja (el mismo del Inicio).
+.suelta {
+  padding-right: calc(#{$spacing-12} + var(--layout-lado));
+  padding-left: calc(#{$spacing-12} + var(--layout-lado));
+
+  @media (max-width: $breakpoint-md) {
+    padding-right: calc(#{$spacing-4} + var(--layout-lado));
+    padding-left: calc(#{$spacing-4} + var(--layout-lado));
+  }
+}
+
+// `margin: auto 0` la centra en el espacio que queda sobre la fila de abajo.
+.cabeza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-4 $spacing-10;
+  margin: auto 0;
+  padding: $spacing-4 0;
+}
+
+.titulo {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+  margin: 0;
+  @include titulo-franja;
+  color: $franja-crema;
+
+  svg {
+    flex-shrink: 0;
+  }
+}
+
+.lateral {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-3;
+}
+
+.pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: $spacing-2;
+}
+
+.solapa {
+  @include franja-solapa;
+}
+
+// Se funde con el fondo de la página, que es gris claro.
+.solapaActiva,
+.solapaActiva:hover {
+  @include franja-solapa-activa;
+
+  & {
+    background: $gray-50;
+    border-color: $gray-50;
+  }
+}
+
+.cuenta {
+  display: grid;
+  place-items: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 $spacing-2;
+  font-family: $fuente-texto;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  color: $franja-azul;
+  background: $primary-yellow;
+  border-radius: 999px;
+}

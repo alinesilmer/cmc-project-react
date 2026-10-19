@@ -10,17 +10,7 @@ type ApiObraSocial = {
   nombre: string | null;
 };
 
-/**
- * GET /api/obras_social/ — ruta pública (app/auth/public.py), que ya recorta
- * CUIT, contactos y condiciones.
- *
- * Va por `httpBare` porque la consumen páginas públicas: un visitante anónimo
- * no tiene token y un 401 no debe disparar el refresh ni mandarlo al login.
- *
- * La leían Convenios, el chatbot y el selector del editor, cada uno con su
- * propio parser que probaba seis nombres de campo; el backend manda siempre
- * `nro_obra_social` y `nombre`.
- */
+/** GET /api/obras_social/ — ruta pública (app/auth/public.py), que ya recorta CUIT, contactos y condiciones. */
 export async function listObrasSocialesPublicas(
   signal?: AbortSignal
 ): Promise<ObraSocialPublica[]> {

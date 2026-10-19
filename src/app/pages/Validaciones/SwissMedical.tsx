@@ -11,21 +11,9 @@ import { esDeOtraProvincia, leerArchivoSwiss } from "./swissMedical.parser";
 import type { PrestacionSwiss, ReporteSwiss } from "./swissMedical.parser";
 import { formatMoneda } from "./validaciones.types";
 import s from "./SwissMedical.module.scss";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
 
-/**
- * Lectura del reporte de transacciones de Swiss Medical (O.S. 256).
- *
- * Es la herramienta del Colegio, no del médico: Swiss manda un archivo mensual
- * de todo el padrón y hay que repartirlo entre los efectores antes de
- * facturarlo. El médico no tiene nada que hacer acá —`destinoObraSocial` lo
- * manda al portal de Swiss, y `MedicoRouteGuard` le corta la URL directa.
- *
- * **Todavía no graba.** Swiss Medical no está en `obras.POR_NRO` del backend,
- * así que `POST /api/validaciones/prestaciones` responde 422. Y aunque
- * estuviera, ese endpoint graba de a una prestación para el médico logueado,
- * mientras que este archivo son ~1.100 ítems de ~180 médicos distintos: falta
- * el import masivo del lado de la API, igual que en Prevención Salud.
- */
+/** Lectura del reporte de transacciones de Swiss Medical (O.S. 256). */
 
 type Fila = PrestacionSwiss & {
   medico: ResultadoMatricula;
@@ -62,8 +50,7 @@ export default function SwissMedical() {
         ? buscarPorMatricula(indice, p.matricula)
         : ({ tipo: "sin-matricula" } as const);
 
-      // La provincia se avisa aunque la matrícula haya matcheado: justamente el
-      // riesgo es que matchee contra el médico equivocado.
+      // La provincia se avisa aunque la matrícula haya matcheado: justamente el riesgo es que matchee contra el médico equivocado.
       const revisar = esDeOtraProvincia(p)
         ? `Matrícula de otra provincia (${p.provincia})`
         : esIdentificado(medico)
@@ -135,7 +122,7 @@ export default function SwissMedical() {
       }
     >
       <div className={r.tableWrap}>
-        <table className={r.table}>
+        <Tabla className={r.table}>
           <thead>
             <tr>
               <th className={r.num}>#</th>
@@ -194,7 +181,7 @@ export default function SwissMedical() {
               <td className={r.num}>{formatMoneda(totales.copago)}</td>
             </tr>
           </tfoot>
-        </table>
+        </Tabla>
       </div>
     </ReporteOS>
   );

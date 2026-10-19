@@ -12,12 +12,7 @@ export type CamposPublicacion = {
   badge: string;
 };
 
-/**
- * La etiqueta es texto libre, así que se compara normalizada: "Normas
- * operativas", "NORMAS OPERATIVAS" y "Normas Operativas" son la misma cosa.
- * Esto decide sólo si se muestra el selector — lo que el boletín consulta es la
- * asociación guardada, no este texto.
- */
+/** La etiqueta es texto libre, así que se compara normalizada: "Normas operativas", "NORMAS OPERATIVAS" y "Normas Operativas" son la misma cosa. */
 const esNormaOperativa = (badge: string) => normalizar(badge).startsWith("normas operativas");
 
 /** Estado y guardado del formulario de alta/edición de una publicación. */
@@ -90,9 +85,7 @@ export function useFormPublicacion(publicacion: Noticia | null, onGuardada: () =
     try {
       const datos = {
         ...campos,
-        // Se manda siempre, también vacío: si la noticia dejó de ser norma
-        // operativa hay que desasociarla, no dejar el link viejo colgado en el
-        // boletín.
+        // Se manda siempre, también vacío: si la noticia dejó de ser norma operativa hay que desasociarla, no dejar el link viejo colgado en el boletín.
         obrasSociales: esNormaOperativa(campos.badge) ? obrasSociales : [],
       };
       if (editandoId) {

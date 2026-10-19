@@ -1,0 +1,292 @@
+@use "@/app/styles/all.scss" as *;
+
+// Presentación del legajo, nacida en «Mi perfil» y hoy también la del legajo que abre el personal desde el padrón (mismas reglas, otras pestañas).
+
+.miPerfil {
+  width: 100%;
+  max-width: 1344px;
+  margin: 0 auto;
+  padding: 0 $spacing-4 $spacing-6;
+
+  @media (max-width: $breakpoint-md) {
+    padding: 0;
+  }
+
+  // Sin tarjeta: el legajo va directo sobre el fondo de la página, a todo el ancho.
+  .headerCard {
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  // El azul del sistema (`$primary-blue`) en títulos y botones principales: el legajo usaba uno más claro, que acá se despega del resto del panel.
+  h5.section {
+    color: $primary-blue;
+  }
+
+  :global(.MuiButton-contained) {
+    background-color: $primary-blue;
+    border-color: $primary-blue-darker;
+
+    &:hover {
+      background-color: $primary-blue-darker;
+    }
+  }
+
+  // ── Cabecera ───────────────────────────────────────────────────────────────
+
+  .profileHeader {
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: $spacing-5;
+  }
+
+  .headerMain {
+    gap: $spacing-2;
+    min-width: 0;
+  }
+
+  .name {
+    font-family: $fuente-titulos;
+    font-weight: 800;
+    font-size: clamp(1.8rem, 4.4vw, 3rem);
+    line-height: 1.04;
+    letter-spacing: -0.03em;
+    color: $primary-blue;
+    overflow-wrap: anywhere;
+  }
+
+  .headerActions {
+    margin-top: 0;
+  }
+
+  // ── Pestañas ───────────────────────────────────────────────────────────────
+
+  .tabs {
+    border-radius: $radio-md;
+    overflow: hidden;
+    flex-wrap: wrap;
+    gap: 0;
+    margin-top: $spacing-5;
+    background: $white;
+    border: 1px solid $gray-200;
+    box-shadow: 0 8px 24px rgba($gray-900, 0.08);
+  }
+
+  .tab {
+    flex: 1 1 7.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-height: 4.5rem;
+    padding: 0 $spacing-3;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    transition: color 0.15s ease, background-color 0.15s ease;
+
+    &:hover {
+      background-color: $gray-50;
+    }
+
+    svg {
+      transition: transform 0.2s ease;
+    }
+
+    &:hover svg {
+      transform: translateY(-2px);
+    }
+  }
+
+  .tabActive {
+    color: $primary-blue;
+  }
+
+  .tabUnderline {
+    bottom: 0;
+    height: 3px;
+    border-radius: 0;
+  }
+
+  .tabBody {
+    padding-top: $spacing-5;
+  }
+
+  // ── Datos: un desplegable por bloque ───────────────────────────────────────
+
+  .mpDatos {
+    display: flex;
+    flex-direction: column;
+
+    gap: $spacing-2;
+
+    > h5.section {
+      margin: 0;
+      padding: 0;
+      border-bottom: 0;
+    }
+
+    > .infoGrid {
+      padding: $spacing-2 $spacing-2 $spacing-4;
+      animation: $anim-fade-in 0.2s ease;
+    }
+
+    // Con `.infoGrid` en el selector: sin él empataba en especificidad con el `display: grid` de más abajo y perdía, y el bloque nunca se cerraba.
+    > .infoGrid.mpCerrada {
+      display: none;
+    }
+
+    > .editPencil {
+      align-self: flex-end;
+      margin-bottom: $spacing-2;
+    }
+  }
+
+  .mpToggle {
+    border-radius: $radio-md;
+    display: flex;
+    align-items: center;
+    gap: $spacing-3;
+    width: 100%;
+    min-height: 3.25rem;
+    padding: 0 $spacing-4;
+    border: 0;
+    background: $primary-blue;
+    font-family: $fuente-titulos;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-bold;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: left;
+    color: $white;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background-color: $primary-blue-darker;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $accent-blue;
+      outline-offset: 2px;
+    }
+
+    > span {
+      flex: 1;
+    }
+  }
+
+  .mpChev {
+    color: $primary-yellow;
+    transition: transform 0.2s ease;
+  }
+
+  .mpChevAbierta {
+    transform: rotate(180deg);
+  }
+
+  // Dos columnas de filas: aprovecha el ancho en vez de obligar a bajar.
+  .mpDatos .infoGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 $spacing-10;
+
+    @media (max-width: $breakpoint-lg) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    > div {
+      flex-direction: row;
+      align-items: center;
+      gap: $spacing-4;
+      min-height: 2.75rem;
+      padding: $spacing-2 0;
+      border-bottom: 1px solid $gray-100;
+
+      @media (max-width: $breakpoint-sm) {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: $spacing-1;
+      }
+    }
+
+    > div > .label {
+      flex: 0 0 9.5rem;
+      font-size: $font-size-sm;
+      font-weight: $font-weight-medium;
+      text-transform: none;
+      color: $gray-700;
+
+      @media (max-width: $breakpoint-sm) {
+        flex-basis: auto;
+      }
+    }
+
+    > div > :not(.label) {
+      flex: 1;
+      min-width: 0;
+    }
+
+    > div > span:not(.label) {
+      font-size: $font-size-lg;
+      font-variant-numeric: tabular-nums;
+      overflow-wrap: anywhere;
+    }
+  }
+}
+
+// Menos aire arriba: el nombre y el estado suben hacia la barra.
+.mpContent {
+  padding-top: $spacing-3;
+
+  .topbar {
+    margin-bottom: $spacing-2;
+  }
+}
+
+// Estado del socio sobre el nombre: un punto y una palabra.
+.mpEstado {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $tono-verde-550;
+
+  &::before {
+    content: "";
+    width: 0.55rem;
+    height: 0.55rem;
+    background: $success-green;
+  }
+}
+
+.mpEstadoInactivo {
+  color: $tono-rojo-500;
+
+  &::before {
+    background: $danger-red;
+  }
+}
+
+.mpSub {
+  margin: 0;
+  font-size: $font-size-lg;
+  color: $gray-600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .miPerfil .tab,
+  .miPerfil .tab svg,
+  .miPerfil .mpToggle,
+  .miPerfil .mpChev {
+    transition: none;
+  }
+
+  .miPerfil .mpDatos > .infoGrid {
+    animation: none;
+  }
+}

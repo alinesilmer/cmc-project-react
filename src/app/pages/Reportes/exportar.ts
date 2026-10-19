@@ -1,18 +1,52 @@
 // Exportación de las tablas de reportes.
-//
-// Se exporta EXACTAMENTE lo que se está viendo (mismos filtros, mismo orden):
-// si el usuario exporta algo distinto de lo que tiene en pantalla, el archivo
-// deja de ser confiable para discutirlo con la obra social.
-//
-// El CSV se arma a mano —son datos tabulares simples y no justifica una
-// dependencia— y el Excel pasa por `lib/excelExport`, la única vía de escritura
-// del proyecto, que carga ExcelJS diferido para no sumarlo al bundle de quien
-// nunca exporta.
 
 export interface ColumnaExport<T> {
   header: string;
   /** Valor "crudo" para la celda: número para los importes, texto para el resto. */
   value: (row: T) => string | number | null;
+  /** Cómo se muestra un número: cantidad entera o importe. Sin esto es texto. */
+  tipo?: "numero" | "moneda";
+}
+
+/** Lo que hace falta para armar el PDF o el Excel de un reporte. */
+export interface DocumentoReporte<T> {
+  /** Qué se lista: «Médicos», «Códigos»… */
+  titulo: string;
+  /** Título del documento; sin esto es «Reporte de» + lo que se lista. */
+  encabezado?: string;
+  /** No sumar la columna de importes (precios unitarios, por ejemplo). */
+  sinTotal?: boolean;
+  /** «Octubre 2026». */
+  periodo: string;
+  /** «Todas las obras sociales» o el nombre de la elegida. */
+  obraSocial: string;
+  columnas: ColumnaExport<T>[];
+  filas: T[];
+  /** Nombre del archivo, sin extensión. */
+  nombre: string;
+}
+
+const MONEDA = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" });
+
+/** El valor de una celda como texto para leer: importes con `$`, miles con punto. */
+export function textoDeCelda<T>(columna: ColumnaExport<T>, fila: T): string {
+  const v = columna.value(fila);
+  if (v == null || v === "") return "";
+  if (typeof v !== "number") return String(v);
+  if (columna.tipo === "moneda") return MONEDA.format(v);
+  return columna.tipo === "numero" ? v.toLocaleString("es-AR") : String(v);
+}
+
+/** El título del documento: el propio o «Reporte de …». */
+export const encabezadoDe = (reporte: { titulo: string; encabezado?: string }): string =>
+  reporte.encabezado ?? `Reporte de ${reporte.titulo.toLowerCase()}`;
+
+/** Suma de la primera columna de importes, ya con formato; `null` si no hay ninguna. */
+export function totalFacturado<T>(columnas: ColumnaExport<T>[], filas: T[]): string | null {
+  const columna = columnas.find((c) => c.tipo === "moneda");
+  if (!columna) return null;
+  const total = filas.reduce((suma, f) => suma + (Number(columna.value(f)) || 0), 0);
+  return MONEDA.format(total);
 }
 
 function descargar(blob: Blob, nombre: string): void {
@@ -42,8 +76,7 @@ export function nombreArchivo(base: string, periodo?: string): string {
 function celdaCsv(v: string | number | null): string {
   if (v == null) return "";
   const s = String(v);
-  // Excel en es-AR interpreta la coma como separador de columnas, así que se
-  // usa `;` y se citan las celdas que puedan romper la fila.
+  // Excel en es-AR interpreta la coma como separador de columnas, así que se usa `;` y se citan las celdas que puedan romper la fila.
   return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
@@ -63,31 +96,12 @@ export function exportarCsv<T>(
   descargar(blob, `${nombre}.csv`);
 }
 
-export async function exportarExcel<T>(
-  filas: T[],
-  columnas: ColumnaExport<T>[],
-  nombre: string,
-  hoja = "Reporte"
-): Promise<void> {
-  const { buildExcelBlob } = await import("@/app/shared/lib/excelExport");
-  const headers = columnas.map((c) => c.header);
-  const datos = filas.map((f) => {
-    const o: Record<string, string | number | null> = {};
-    for (const c of columnas) o[c.header] = c.value(f);
-    return o;
-  });
-  // Ancho de columna aproximado por el largo del encabezado y de los datos.
-  const widths = columnas.map((c) =>
-    Math.min(
-      44,
-      Math.max(
-        c.header.length + 2,
-        ...filas.slice(0, 200).map((f) => String(c.value(f) ?? "").length + 2)
-      )
-    )
-  );
-  const blob = await buildExcelBlob([
-    { name: hoja, rows: datos, headers, widths },
-  ]);
-  descargar(blob, `${nombre}.xlsx`);
+export async function exportarExcel<T>(reporte: DocumentoReporte<T>): Promise<void> {
+  const { construirExcelReporte } = await import("./reporteExcel");
+  descargar(await construirExcelReporte(reporte), `${reporte.nombre}.xlsx`);
+}
+
+export async function exportarPdf<T>(reporte: DocumentoReporte<T>): Promise<void> {
+  const { construirPdfReporte } = await import("./reportePdf");
+  descargar(await construirPdfReporte(reporte), `${reporte.nombre}.pdf`);
 }

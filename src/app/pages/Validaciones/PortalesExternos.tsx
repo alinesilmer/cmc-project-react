@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft, Globe, Info } from "lucide-react";
+import { Globe, Info } from "lucide-react";
 
 import { OBRAS_EXTERNAS } from "./validaciones.config";
 import type { ObraSocialConfig } from "./validaciones.types";
@@ -8,21 +7,18 @@ import ObraSocialCard, {
   obraSocialCardStyles as card,
 } from "./components/ObraSocialCard";
 import GuiaPortalModal from "./components/GuiaPortalModal";
+import RequisitosModal from "./components/RequisitosModal";
 import s from "./PortalesExternos.module.scss";
+import BackButton from "@/app/components/ui/BackButton/BackButton";
 
-/**
- * Sólo las obras sociales que se validan fuera del panel. El hub de validaciones
- * ya las lista junto a las integradas; esta vista queda como acceso directo
- * desde el menú.
- */
+/** Sólo las obras sociales que se validan fuera del panel. */
 export default function PortalesExternos() {
   const [guia, setGuia] = useState<ObraSocialConfig | null>(null);
+  const [requisitos, setRequisitos] = useState<ObraSocialConfig | null>(null);
 
   return (
     <div className={s.container}>
-      <Link to="/panel/validaciones" className={s.back}>
-        <ArrowLeft size={16} /> Volver a validaciones
-      </Link>
+      <BackButton label="Validaciones" to="/panel/validaciones" />
 
       <header className={s.header}>
         <Globe size={32} className={s.headerIcon} />
@@ -37,7 +33,7 @@ export default function PortalesExternos() {
 
       <div className={card.grid}>
         {OBRAS_EXTERNAS.map((os) => (
-          <ObraSocialCard key={os.slug} os={os} onAbrirGuia={setGuia} />
+          <ObraSocialCard key={os.slug} os={os} onAbrirGuia={setGuia} onRequisitos={setRequisitos} />
         ))}
       </div>
 
@@ -48,6 +44,7 @@ export default function PortalesExternos() {
       </p>
 
       {guia && <GuiaPortalModal os={guia} onClose={() => setGuia(null)} />}
+      {requisitos && <RequisitosModal os={requisitos} onClose={() => setRequisitos(null)} />}
     </div>
   );
 }

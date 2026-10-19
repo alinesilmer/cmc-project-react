@@ -5,19 +5,13 @@ import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-} from "@/app/components/ui/Table/Table";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
 import SearchField from "@/app/components/ui/SearchField/SearchField";
 import Card from "@/app/components/ui/Card/Card";
 import Button from "@/app/components/ui/Button/Button";
 import styles from "./DoctorsList.module.scss";
 import { getJSON } from "@/app/shared/lib/http";
+import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
 
 type DoctorRow = {
   id: number;
@@ -26,22 +20,6 @@ type DoctorRow = {
   matricula_prov: number;
   documento: string;
 };
-
-const headCellSx = {
-  backgroundColor: "#f1f5f9",
-  color: "#334155",
-  fontWeight: 600,
-  fontSize: "0.76rem",
-  textTransform: "uppercase",
-  letterSpacing: "0.5px",
-  borderBottom: "none",
-} as const;
-
-const bodyCellSx = {
-  fontSize: "0.86rem",
-  color: "#0f172a",
-  borderBottom: "1px solid #e2e8f0",
-} as const;
 
 const DoctorsList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -100,62 +78,52 @@ const DoctorsList: React.FC = () => {
           </div>
 
           <Card className={styles.tableCard}>
-            <TableContainer>
-              <Table size="small" aria-label="Listado de médicos">
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={headCellSx}>Nro socio</TableCell>
-                    <TableCell sx={headCellSx}>Nombre</TableCell>
-                    <TableCell sx={headCellSx}>Matrícula prov.</TableCell>
-                    <TableCell sx={headCellSx}>DNI</TableCell>
-                    <TableCell sx={headCellSx} align="right">Acciones</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
+            <div className={styles.tablaScroll}>
+              <Tabla aria-label="Listado de médicos">
+                <thead>
+                  <tr>
+                    <th>Nro socio</th>
+                    <th>Nombre</th>
+                    <th>Matrícula prov.</th>
+                    <th>DNI</th>
+                    <th className={styles.aLaDerecha}>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
                   {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={5} align="center" sx={{ ...bodyCellSx, py: 4, color: "#64748b" }}>
+                    <tr>
+                      <td colSpan={5} className={styles.estadoTabla}>
                         Cargando…
-                      </TableCell>
-                    </TableRow>
+                      </td>
+                    </tr>
                   ) : err ? (
-                    <TableRow>
-                      <TableCell colSpan={5} align="center" sx={{ ...bodyCellSx, py: 4, color: "#cc2a2a", fontStyle: "italic" }}>
+                    <tr>
+                      <td colSpan={5} className={`${styles.estadoTabla} ${styles.estadoError}`}>
                         {err}
-                      </TableCell>
-                    </TableRow>
+                      </td>
+                    </tr>
                   ) : filtered.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} align="center" sx={{ ...bodyCellSx, py: 6, color: "#64748b", fontStyle: "italic" }}>
+                    <tr>
+                      <td colSpan={5} className={styles.estadoTabla}>
                         No se encontraron médicos.
-                      </TableCell>
-                    </TableRow>
+                      </td>
+                    </tr>
                   ) : (
                     filtered.map((doctor) => (
-                      <TableRow
-                        key={doctor.id}
-                        hover
-                        sx={{ "&:hover": { backgroundColor: "#f8fafc" } }}
-                      >
-                        <TableCell sx={bodyCellSx}>{doctor.nro_socio}</TableCell>
-                        <TableCell sx={bodyCellSx}>{doctor.nombre}</TableCell>
-                        <TableCell sx={bodyCellSx}>{doctor.matricula_prov}</TableCell>
-                        <TableCell sx={bodyCellSx}>{doctor.documento}</TableCell>
-                        <TableCell sx={bodyCellSx} align="right">
-                          <Button
-                            size="sm"
-                            variant="primary"
-                            onClick={() => navigate(`/doctors/${doctor.id}`)}
-                          >
-                            Ver
-                          </Button>
-                        </TableCell>
-                      </TableRow>
+                      <tr key={doctor.id}>
+                        <td>{doctor.nro_socio}</td>
+                        <td>{doctor.nombre}</td>
+                        <td>{doctor.matricula_prov}</td>
+                        <td>{doctor.documento}</td>
+                        <td className={styles.aLaDerecha}>
+                          <BotonVer onClick={() => navigate(`/doctors/${doctor.id}`)} />
+                        </td>
+                      </tr>
                     ))
                   )}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                </tbody>
+              </Tabla>
+            </div>
           </Card>
         </motion.div>
       </div>

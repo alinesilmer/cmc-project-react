@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Check } from "lucide-react";
 import AfiliadoAutocomplete from "../../components/AfiliadoAutocomplete";
 import { etiquetaAfiliado } from "../../components/etiquetas";
 import { mensajeDeError } from "@/app/shared/lib/httpErrors";
@@ -27,14 +27,11 @@ const PacienteSection: React.FC<Props> = ({
   const [showBaja, setShowBaja] = useState(false);
   const [borrando, setBorrando] = useState(false);
   const [bajaError, setBajaError] = useState<string | null>(null);
-  // El autocomplete conserva el texto tipeado aunque el `value` vuelva a null
-  // (ver AppSearchSelect): tras borrar o editar el afiliado hay que remontarlo para
-  // que el campo muestre lo que hay ahora y no a alguien que ya no existe.
+  // El autocomplete conserva el texto tipeado aunque el `value` vuelva a null (ver AppSearchSelect).
   const [autocompleteKey, setAutocompleteKey] = useState(0);
 
   const etiqueta = etiquetaAfiliado(dni, nombrePaciente);
-  // Estable mientras el modal está abierto: si cambiara en cada render, el modal
-  // volvería a cargar sus campos con cada tecla.
+  // Estable mientras el modal está abierto: si cambiara en cada render, el modal volvería a cargar sus campos con cada tecla.
   const aEditar = useMemo(
     () => (modal === "editar" && afiliadoId != null
       ? { id: afiliadoId, dni: dni || null, nombre: nombrePaciente || null }
@@ -54,8 +51,7 @@ const PacienteSection: React.FC<Props> = ({
       onAfiliadoChange(null);
       setAutocompleteKey((k) => k + 1);
     } catch (e) {
-      // Se cierra el modal para que el motivo (típicamente el 409 "tiene N
-      // prestaciones cargadas") quede visible bajo el campo y no tapado.
+      // Se cierra el modal para que el motivo (típicamente el 409 "tiene N prestaciones cargadas") quede visible bajo el campo y no tapado.
       setShowBaja(false);
       setBajaError(mensajeDeError(e, "No se pudo eliminar el afiliado."));
     } finally {
@@ -108,7 +104,7 @@ const PacienteSection: React.FC<Props> = ({
             </button>
           </div>
           {etiqueta && (
-            <span style={{ fontSize: 12, color: "#1d9148", fontWeight: 600 }}>✓ {etiqueta}</span>
+            <span style={{ fontSize: 12, color: "#1d9148", fontWeight: 600 }}><Check size={14} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> {etiqueta}</span>
           )}
           {error && <span className={styles.errorText}>{error}</span>}
           {bajaError && <span className={styles.errorText}>{bajaError}</span>}

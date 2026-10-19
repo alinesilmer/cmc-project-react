@@ -20,6 +20,8 @@ import {
   quitarCodigoNivelado,
 } from "../nomenclador.api";
 import type { NiveladoCodigoOut, NomencladorNiveladoOut } from "../nomenclador.types";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
+import { motivoError as detalleError } from "@/app/pages/NomencladorNacional/utiles";
 
 const PAGE_SIZE = 50;
 const RUTA = "/panel/nomenclador/nivelados";
@@ -27,22 +29,7 @@ const RUTA = "/panel/nomenclador/nivelados";
 type Toast = { type: "success" | "error"; msg: string };
 /** Filtro de la tabla: todos, un nivel, o los de unidades fijas. */
 type Filtro = "todos" | "unidades" | number;
-
-function detalleError(e: unknown, fallback: string): string {
-  const d = (e as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail;
-  if (typeof d === "string") return d;
-  if (d && typeof d === "object" && typeof (d as { mensaje?: unknown }).mensaje === "string") {
-    return (d as { mensaje: string }).mensaje;
-  }
-  return fallback;
-}
-
-/**
- * Nomencladores nivelados: Cirugía adulto 7 y 10 niveles, Cirugía infantil, FASGO,
- * Urología… A cada código le corresponde el mismo nivel en todas las obras sociales;
- * lo que cambia es el precio del galeno por nivel. Desde acá se consulta y corrige el
- * nivel de cada código y se aplica el nomenclador a una obra social.
- */
+/** Nomencladores nivelados: Cirugía adulto 7 y 10 niveles, Cirugía infantil, FASGO. */
 export default function NomencladoresNivelados() {
   const { slug } = useParams<{ slug?: string }>();
   const navigate = useNavigate();
@@ -213,7 +200,7 @@ export default function NomencladoresNivelados() {
               </div>
 
               <div className={base.tableWrap}>
-                <table className={base.table}>
+                <Tabla className={base.table}>
                   <thead>
                     <tr>
                       <th>Código</th>
@@ -249,7 +236,7 @@ export default function NomencladoresNivelados() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </Tabla>
               </div>
 
               {datos && datos.total > PAGE_SIZE && (

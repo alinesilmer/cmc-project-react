@@ -26,26 +26,11 @@ import {
 import { moneda } from "./formato";
 import s from "./components/panel.module.scss";
 
-/**
- * Importación del reporte mensual de Prevención Salud.
- *
- * Tres pasos, sin saltear ninguno: subir el archivo —lo lee el mismo parser
- * que `/panel/validaciones/prevencion-salud`—, elegir obra social y período y
- * previsualizar, y recién ahí confirmar.
- *
- * La previsualización es obligatoria a propósito: es donde se ve una matrícula
- * que no cayó en ningún socio o un código que la obra social no tiene
- * cotizado, antes de que exista una sola fila en facturación. Las matrículas
- * repetidas o sin socio quedan en «Elegir socio», como en UNNE.
- *
- * La obra social es la 103 o la 888, que es de prueba: mismo nomenclador, para
- * ensayar la importación sin tocar la facturación real.
- */
+/** Importación del reporte mensual de Prevención Salud. */
 
 const MENSAJE_VACIO = "El archivo no tiene ninguna práctica para leer.";
 
 const AYUDA =
-  "Subí el reporte de facturación de Prevención Salud (.xlsx, .xls o .csv). " +
   "Se usan Número de Autorización, Fecha de Realización, Afiliado, Matrícula MP, " +
   "Práctica(s) Realizada(s) y Estado; el resto de las columnas se ignora.";
 
@@ -133,13 +118,12 @@ export default function ImportarPrevencion() {
   return (
     <ReporteOS
       titulo="Importar Prevención Salud"
-      subtitulo="Subí el reporte mensual, revisá cómo queda repartido y confirmá para cargarlo en facturación."
       ayuda={AYUDA}
       estado={estado}
       detalleArchivo={estado.reporte?.rango}
       resumen={resumen}
       hayFilas={prestaciones.length > 0}
-      volverA={{ to: "/panel/importaciones", label: "Volver a importaciones" }}
+      volverA={{ to: "/panel/importaciones", label: "Volver" }}
       filtros={<ControlesImportacion {...imp} antes={selectorObraSocial} />}
       acciones={
         <AccionesImportacion

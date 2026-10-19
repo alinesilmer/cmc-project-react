@@ -6,6 +6,7 @@ import { useModal } from "../../../hooks/useModal";
 import { iniciales, nombreDe } from "./avisos";
 import type { PubAd } from "../../../lib/ads.client";
 import styles from "./AvisoAmpliado.module.scss";
+import Button from "@/website/components/UI/Button/Button";
 
 type Props = {
   /** Los avisos que se ven en la grilla (ya filtrados por la búsqueda). */
@@ -15,10 +16,7 @@ type Props = {
   onCerrar: () => void;
 };
 
-/**
- * El aviso de un médico a tamaño completo. Con las flechas (o ← →) se pasa al
- * siguiente sin cerrar: así se recorren los avisos como una galería.
- */
+/** El aviso de un médico a tamaño completo. */
 export default function AvisoAmpliado({ avisos, indice, onCambiar, onCerrar }: Props) {
   const cerrarRef = useRef<HTMLButtonElement>(null);
   useModal(true, onCerrar);
@@ -63,9 +61,9 @@ export default function AvisoAmpliado({ avisos, indice, onCambiar, onCerrar }: P
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
       >
-        <button ref={cerrarRef} type="button" className={styles.cerrar} onClick={onCerrar} aria-label="Cerrar">
+        <Button variant="plano" ref={cerrarRef} type="button" className={styles.cerrar} onClick={onCerrar} aria-label="Cerrar">
           <X aria-hidden="true" />
-        </button>
+        </Button>
 
         <div className={styles.media}>
           <AnimatePresence mode="wait" initial={false}>
@@ -87,12 +85,12 @@ export default function AvisoAmpliado({ avisos, indice, onCambiar, onCerrar }: P
 
           {total > 1 && (
             <>
-              <button type="button" className={`${styles.flecha} ${styles.izquierda}`} onClick={anterior} aria-label="Aviso anterior">
+              <Button variant="plano" type="button" className={`${styles.flecha} ${styles.izquierda}`} onClick={anterior} aria-label="Aviso anterior">
                 <ChevronLeft aria-hidden="true" />
-              </button>
-              <button type="button" className={`${styles.flecha} ${styles.derecha}`} onClick={siguiente} aria-label="Aviso siguiente">
+              </Button>
+              <Button variant="plano" type="button" className={`${styles.flecha} ${styles.derecha}`} onClick={siguiente} aria-label="Aviso siguiente">
                 <ChevronRight aria-hidden="true" />
-              </button>
+              </Button>
             </>
           )}
         </div>

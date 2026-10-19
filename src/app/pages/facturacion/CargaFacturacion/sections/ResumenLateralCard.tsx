@@ -1,5 +1,7 @@
 import React from "react";
-import Card from "@/app/components/ui/Card/Card";
+import { Check, Pin } from "lucide-react";
+
+import s from "./ResumenLateralCard.module.scss";
 
 type CampoMantenible =
   | "obraSocial" | "medico" | "paciente" | "fecha" | "clinica" | "autorizacion" | "codigo";
@@ -7,11 +9,9 @@ type CampoMantenible =
 interface Props {
   mantener: Record<CampoMantenible, boolean>;
   onMantenerChange: (k: CampoMantenible, v: boolean) => void;
-  /** En complementaria las prestaciones son rezagadas de fechas distintas: no tiene
-   *  sentido mantener la fecha, así que ese checkbox no se muestra. */
+  /** En complementaria las prestaciones son rezagadas de fechas distintas: no tiene sentido mantener la fecha, así que ese checkbox no se muestra. */
   showFecha?: boolean;
-  /** En complementaria la obra social es fija (viene de la factura), así que su checkbox
-   *  no se muestra. */
+  /** En complementaria la obra social es fija (viene de la factura), así que su checkbox no se muestra. */
   showObraSocial?: boolean;
 }
 
@@ -21,10 +21,11 @@ const ETIQUETAS: Record<CampoMantenible, string> = {
   paciente: "Paciente",
   fecha: "Fecha",
   clinica: "Clínica",
-  autorizacion: "Nro de autorización",
+  autorizacion: "Autorización",
   codigo: "Código",
 };
 
+/** Qué datos quedan puestos después de guardar, para cargar varias seguidas sin volver a escribirlos. */
 const ResumenLateralCard: React.FC<Props> = ({
   mantener, onMantenerChange, showFecha = true, showObraSocial = true,
 }) => {
@@ -35,38 +36,27 @@ const ResumenLateralCard: React.FC<Props> = ({
   );
 
   return (
-  // Barra fija arriba del formulario: el título y los checkboxes van en una sola
-  // línea, y bajan de renglón solos si no entran.
-  <aside>
-    <Card>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexWrap: "wrap",
-          gap: 18,
-        }}
-      >
-        <p style={{ fontSize: 12, fontWeight: 600, color: "#1a1f2e", margin: 0 }}>
-          Mantener entre cargas
-        </p>
+    <aside className={s.banda}>
+      <p className={s.titulo}>
+        <Pin size={18} aria-hidden="true" />
+        Mantener
+      </p>
+      <div className={s.opciones}>
         {campos.map((k) => (
-          <label
-            key={k}
-            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, cursor: "pointer" }}
-          >
+          <label key={k} className={`${s.opcion} ${mantener[k] ? s.puesta : ""}`}>
             <input
               type="checkbox"
               checked={mantener[k]}
               onChange={(e) => onMantenerChange(k, e.target.checked)}
             />
+            <span className={s.tilde} aria-hidden="true">
+              {mantener[k] && <Check size={13} strokeWidth={3} />}
+            </span>
             {ETIQUETAS[k]}
           </label>
         ))}
       </div>
-    </Card>
-  </aside>
+    </aside>
   );
 };
 

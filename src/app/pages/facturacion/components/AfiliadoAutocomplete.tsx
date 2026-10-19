@@ -19,9 +19,7 @@ const AfiliadoAutocomplete: React.FC<Props> = ({ value, onChange, disabled, pres
   const [loading, setLoading] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Lo elegido tiene que estar entre las opciones para que `AppSearchSelect` muestre
-  // su texto: al editar, o al crear uno desde "+ Agregar afiliado", no pasó por una
-  // búsqueda acá.
+  // Lo elegido tiene que estar entre las opciones para que `AppSearchSelect` muestre su texto: al editar, o al crear uno desde "+ Agregar afiliado".
   useEffect(() => {
     if (value == null || !presetLabel) return;
     setOptions((prev) => {
@@ -64,8 +62,7 @@ const AfiliadoAutocomplete: React.FC<Props> = ({ value, onChange, disabled, pres
       loading={loading}
       disabled={disabled}
       blurOnSelect={blurOnSelect}
-      // Prestaciones con el paciente fuera del padrón (sólo el nombre, sin afiliado):
-      // no hay opción que seleccionar, pero el nombre se muestra igual en el campo.
+      // Prestaciones con el paciente fuera del padrón (sólo el nombre, sin afiliado): no hay opción que seleccionar.
       initialInputValue={value == null && presetLabel ? presetLabel : undefined}
     />
   );

@@ -1,12 +1,7 @@
 export type Complejidad = "baja" | "media" | "alta";
 export type ValorEstado = "activo" | "cerrado";
 
-/**
- * Catálogo del Colegio — puro: código + clasificación + vínculo opcional al
- * Nomenclador Nacional. Descripción, especialidades y "sin restricción" dejaron
- * de vivir acá: son datos POR OBRA SOCIAL, se cargan desde el modal de Valores
- * (`ValorOut.especialidades` / `ValorUpdatePayload`, ver más abajo).
- */
+/** Catálogo del Colegio — puro: código + clasificación + vínculo opcional al Nomenclador Nacional. */
 export type NomencladorOut = {
   id: number;
   codigo: string;
@@ -35,10 +30,7 @@ export type NomencladorListParams = {
   en_descripcion?: boolean;
   categoria?: string;
   complejidad?: string;
-  /**
-   * Solo cambia algo para el rol médico (acota a sus códigos habilitados en esa
-   * OS). El catálogo en sí ya no distingue por obra social.
-   */
+  /** Solo cambia algo para el rol médico (acota a sus códigos habilitados en esa OS). */
   obra_social_nro?: number;
   activo?: boolean;
   page?: number;
@@ -59,8 +51,7 @@ export type NomencladorCreatePayload = {
 
 export type NomencladorUpdatePayload = Partial<NomencladorCreatePayload & { activo?: boolean }>;
 
-/** "Dar de alta en obras sociales" desde la Ficha del código: alta sin precio
- * donde falta; donde ya estaba, suma las especialidades de la plantilla. */
+/** "Dar de alta en obras sociales" desde la Ficha del código: alta sin precio donde falta; donde ya estaba, suma las especialidades de la plantilla. */
 export type AplicarAltaItem = {
   obra_social_nro: number;
   nombre: string;
@@ -126,8 +117,7 @@ export type CodigoObraSocialUpdate = Partial<{
   cerrar_precios: boolean;
 }>;
 
-/** 409 al editar el alta: quitar especialidades (o "sin restricción") deja precios
- * activos sin con qué cotizar. La pantalla pregunta y reintenta con `cerrar_precios`. */
+/** 409 al editar el alta: quitar especialidades (o "sin restricción") deja precios activos sin con qué cotizar. */
 export type PreciosDependientes = {
   tipo: "precios_dependientes";
   mensaje: string;
@@ -136,7 +126,7 @@ export type PreciosDependientes = {
   precios: { id: number; especialidad: string; vigencia_desde: string }[];
 };
 
-export type AltaCodigoItem = {
+type AltaCodigoItem = {
   obra_social_nro: number;
   nomenclador_id: number;
   descripcion?: string | null;
@@ -159,7 +149,7 @@ export type AltaCodigoResultado = {
   sin_quien_factura: boolean;
 };
 
-export type FichaObraSocialItem = {
+type FichaObraSocialItem = {
   obra_social_nro: number;
   nombre: string;
   estado: EstadoCodigoOS;
@@ -186,7 +176,7 @@ export type FichaCodigoOut = {
 };
 
 export type PropagarModo = "agregar" | "igualar";
-export type PropagarEspecialidadesItem = {
+type PropagarEspecialidadesItem = {
   obra_social_nro: number;
   nombre: string;
   estado: "actualizada" | "sin_cambios" | "salteada" | "error";
@@ -201,7 +191,7 @@ export type PropagarEspecialidadesResult = {
   resultados: PropagarEspecialidadesItem[];
 };
 
-export type RevalorizarItem = {
+type RevalorizarItem = {
   id: number;
   periodo: string;
   cod_med: string;
@@ -368,7 +358,7 @@ export type GalenoCreatePayload = {
   observacion?: string | null;
 };
 
-export type GalenoNivelItem = {
+type GalenoNivelItem = {
   nivel: number;
   valor_unitario: number;
   unidades_honorarios?: number | null;
@@ -389,46 +379,6 @@ export type GalenoUpdatePayload = {
 };
 
 // ─── Importación masiva desde planilla ────────────────────────────────────────
-
-/**
- * Nivel dentro de un lote. Igual que `GalenoNivelItem` pero con `nivel`
- * anulable: un galeno plano se manda como un único nivel con `nivel: null`
- * (así lo modela `nm_galenos`, donde nivel NULL = sin niveles).
- */
-export type GalenoLoteNivel = Omit<GalenoNivelItem, "nivel"> & {
-  nivel: number | null;
-};
-
-export type GalenoLoteItem = {
-  nombre: string;
-  niveles: GalenoLoteNivel[];
-};
-
-export type GalenoImportarLotePayload = {
-  obra_social_nro: number;
-  vigencia_desde: string;
-  galenos: GalenoLoteItem[];
-  observacion?: string | null;
-  /** `omitir` saltea los que ya están vigentes; `rotar` los reemplaza. */
-  si_existe?: "omitir" | "rotar";
-};
-
-export type GalenoLoteResultItem = {
-  nombre: string;
-  codigo: string;
-  estado: "creado" | "rotado" | "omitido" | "error";
-  niveles: number;
-  detalle?: string | null;
-};
-
-export type GalenoImportarLoteResult = {
-  total: number;
-  creados: number;
-  rotados: number;
-  omitidos: number;
-  errores: number;
-  items: GalenoLoteResultItem[];
-};
 
 export type GalenoActualizarPrecioPayload = {
   nuevo_valor_unitario: number;
@@ -480,7 +430,7 @@ export type GalenosImportarResult = {
 
 // ─── Plantillas de Galenos (solo lectura) ──────────────────────────────────────
 
-export type GalenoPlantillaNivelOut = {
+type GalenoPlantillaNivelOut = {
   /** null = galeno sin niveles */
   nivel: number | null;
   /** Siempre "0.00" — informativo; el precio real lo carga el operador al instanciar. */
@@ -509,7 +459,7 @@ export const ORIGEN_LABELS: Record<Origen, string> = {
   NN: "Nomenclador Nacional",
 };
 
-export type ValorComponenteOut = {
+type ValorComponenteOut = {
   id: number;
   valor_id: number;
   concepto: string;
@@ -541,17 +491,13 @@ export type ValorOut = {
   complejidad: string | null;
   especialidad_id_colegio: number | null;
   por_presupuesto: boolean;
-  /** Máximo de ayudantes admitidos para este código+OS. `null` = no lleva ayudantes —
-   * es lo que decide si "Agregar ayudante" aparece en Carga de Facturación. */
+  /** Máximo de ayudantes admitidos para este código+OS. */
   cantidad_ayudantes: number | null;
   /** Importe que el afiliado paga de su bolsillo; se descuenta del total a facturar. */
   coseguro: string;
-  /** Dato del PAR (obra_social_nro, código), no de esta variante puntual: el código
-   * lo puede facturar cualquier especialidad en esta OS. Se edita en "Metadatos". */
+  /** Dato del PAR (obra_social_nro, código), no de esta variante puntual: el código lo puede facturar cualquier especialidad en esta OS. */
   sin_restriccion_especialidad: boolean;
-  /** Especialidades habilitadas HOY para (obra_social_nro, código) — también dato
-   * del par, igual en todas las variantes activas. Se reemplaza por completo con
-   * `ValorUpdatePayload.especialidades`. */
+  /** Especialidades habilitadas HOY para (obra_social_nro, código) — también dato del par, igual en todas las variantes activas. */
   especialidades: number[];
   modalidad: "galeno" | "fijo" | "por_presupuesto";
   vigencia_desde: string;
@@ -576,8 +522,7 @@ export type ValorCreatePayload = {
   obra_social_nro: number;
   nomenclador_id: number;
   origen: Origen;
-  /** Obligatoria: cómo nombra ESTA obra social al código. Ya no hereda en silencio
-   * del catálogo del Colegio. */
+  /** Obligatoria: cómo nombra ESTA obra social al código. */
   descripcion: string;
   nivel?: number | null;
   complejidad?: string | null;
@@ -592,8 +537,7 @@ export type ValorCreatePayload = {
   componentes: ComponentePayload[];
 };
 
-/** Alta de una variante NE para varias especialidades a la vez (mismo precio, misma
- * vigencia): reemplaza el rol que tenía cargar un NNE. Ver POST /valores_nm/multi. */
+/** Alta de una variante NE para varias especialidades a la vez (mismo precio, misma vigencia): reemplaza el rol que tenía cargar un NNE. */
 export type ValorCreateMultiPayload = {
   obra_social_nro: number;
   nomenclador_id: number;
@@ -611,21 +555,6 @@ export type ValorCreateMultiPayload = {
   componentes: ComponentePayload[];
 };
 
-export type ValorUpdatePayload = {
-  /** Dato del par: se propaga a todas las variantes activas de (obra_social_nro,
-   * código) — incluida la NN. */
-  descripcion?: string | null;
-  sin_restriccion_especialidad?: boolean;
-  /** Reemplaza POR COMPLETO la habilitación del par (no se suma). `[]` = vaciar
-   * (rechazado con 409 si alguna especialidad todavía tiene un NE activo). Omitir
-   * = no tocar. Único lugar del sistema donde se editan especialidades. */
-  especialidades?: number[];
-  nivel?: number | null;
-  complejidad?: string | null;
-  cantidad_ayudantes?: number | null;
-  observacion?: string | null;
-};
-
 export type ValorActualizarPayload = {
   vigencia_desde: string;
   componentes: ComponentePayload[];
@@ -634,17 +563,13 @@ export type ValorActualizarPayload = {
   complejidad?: string | null;
   coseguro?: number;
   observacion?: string | null;
-  /** El valor que se cierra puede ser por_presupuesto (sin ecuación propia): el back
-   * no lo hereda del anterior, hay que mandarlo explícito o el nuevo valor queda con
-   * por_presupuesto=false y pierde esa condición. */
+  /** El valor que se cierra puede ser por_presupuesto (sin ecuación propia): el back no lo hereda del anterior. */
   por_presupuesto?: boolean;
-  /** Propaga la misma vigencia+componentes a las demás variantes NE del par
-   * (OS + código), cada una conservando su propia especialidad. No aplica a NN. */
+  /** Propaga la misma vigencia+componentes a las demás variantes NE del par (OS + código), cada una conservando su propia especialidad. */
   aplicar_a_variantes?: boolean;
 };
 
-/** Edición del "núcleo" de un código en una obra social: vale PARA TODAS sus
- * especialidades. Una sola transacción en el back (PUT /valores_nm/par/{os}/{nomenclador}). */
+/** Edición del "núcleo" de un código en una obra social: vale PARA TODAS sus especialidades. */
 export type ValorNucleoPayload = {
   descripcion?: string | null;
   nivel?: number | null;
@@ -655,25 +580,16 @@ export type ValorNucleoPayload = {
   ecuacion?: ValorActualizarPayload | null;
   /** true deja UNA sola fila "sin especialidad" (cierra las demás). */
   sin_restriccion_especialidad: boolean;
-  /** Especialidades deseadas (si no es sin restricción): agrega las nuevas clonando
-   * la primera variante y cierra las que se sacaron. */
+  /** Especialidades deseadas (si no es sin restricción): agrega las nuevas clonando la primera variante y cierra las que se sacaron. */
   especialidades: number[];
   /** Qué núcleo se edita cuando el código tiene NE y NN: las variantes NE o la fila NN. */
   origen?: "NE" | "NN";
-  /** false = no tocar quién factura ni crear/cerrar variantes (el lápiz del código
-   * sólo rota precios). Default del back: true. */
   tocar_especialidades?: boolean;
 };
 
 // ─── Actualización masiva por porcentaje ───────────────────────────────────────
 
-/**
- * Aumento/baja porcentual lineal sobre los valores de modalidad FIJA de una OS
- * en un `origen` dado. `filtro_codigos` limita a esos códigos; `filtro_rango`
- * limita a un rango [desde, hasta] (comparación por string, como el backend).
- * Sin ninguno de los dos, aplica a todos. Los valores calculables por galeno
- * quedan como `omitidos` (se actualizan subiendo el galeno).
- */
+/** Aumento/baja porcentual lineal sobre los valores de modalidad FIJA de una OS en un `origen` dado. */
 export type ActualizarPorcentajePayload = {
   obra_social_nro: number;
   origen: Origen;
@@ -723,7 +639,7 @@ export type AumentoPorcentualResult = {
 /** Vía de realización de la práctica. "T" = tradicional (default), "L" = laparoscópica. */
 export type ViaPractica = "T" | "L";
 
-export type TablaValorComponente = {
+type TablaValorComponente = {
   componente_id: number;
   concepto: "Honorarios" | "Ayudante" | "Gastos";
   tipo: "calculable" | "fijo";
@@ -745,15 +661,13 @@ export type TablaValorItem = {
   descripcion: string | null;
   nivel: number | null;
   por_presupuesto: boolean;
-  /** El código lo puede facturar cualquier especialidad en esta OS (dato de la
-   * variante ganadora — `Valor.sin_restriccion_especialidad`). */
+  /** El código lo puede facturar cualquier especialidad en esta OS (dato de la variante ganadora — `Valor.sin_restriccion_especialidad`). */
   sin_restriccion_especialidad: boolean;
   precio_total: string;
   vigencia_desde: string;
   vigencia_hasta: string | null;
   componentes: TablaValorComponente[];
-  /** Vía realmente aplicada en esta fila. Si se pidió "L" y el código no la admite,
-   *  el listado no rechaza: cae a su precio tradicional y esto queda en "T". */
+  /** Vía realmente aplicada en esta fila. */
   via_aplicada: ViaPractica;
 };
 
@@ -765,11 +679,7 @@ export type ImportarCSVResult = {
 };
 
 // ─── Códigos por especialidad (consulta de solo lectura, por obra social) ────
-//
-// Las especialidades pasaron a ser un dato por obra social (`nm_valor_
-// especialidad`) — se editan enteramente desde el modal de Valores
-// (`ValorUpdatePayload.especialidades`). Esto es solo lectura: GET
-// /api/nomenclador/especialidades ahora exige `obra_social_nro`.
+// Las especialidades pasaron a ser un dato por obra social (`nm_valor_ especialidad`) — se editan enteramente desde el modal de Valores (`ValorUpdatePayload.especialidades`).
 
 export type CodigoPorEspecialidadOut = {
   codigo: string;
@@ -789,14 +699,12 @@ export type CodigoPorEspecialidadParams = {
   size?: number;
 };
 
-/**
- * Documento respaldatorio de una vigencia de valores de una obra social: la
- * nota, el Excel o el CSV con el que llegaron los precios de esa actualización.
- * Fila de `nm_valores_documentos`, agrupada por (obra social, vigencia_desde).
- */
+/** Documento respaldatorio de una vigencia de valores de una obra social: la nota. */
 export type ValorDocumentoOut = {
   id: number;
   obra_social_nro: number;
+  /** Nombre de la obra social. `null` si salió del catálogo. */
+  obra_social_nombre?: string | null;
   /** La misma fecha que agrupa los valores de la actualización (`YYYY-MM-DD`). */
   vigencia_desde: string;
   nombre_original: string;
@@ -820,7 +728,7 @@ export type ResumenVigenciaOut = {
 };
 
 /** Una obra social que actualizó valores en una vigencia. */
-export interface ObraSocialActualizada {
+interface ObraSocialActualizada {
   obra_social_nro: number;
   nombre: string;
   /** `YYYY-MM-DD`. */
@@ -848,7 +756,7 @@ export type ObraSocialFamiliaItem = {
   es_principal: boolean;
 };
 
-export type ReplicaEstado = "replicado" | "creado" | "omitido" | "error";
+type ReplicaEstado = "replicado" | "creado" | "omitido" | "error";
 
 export type ReplicaResultadoItem = {
   obra_social_nro: number;
@@ -859,7 +767,7 @@ export type ReplicaResultadoItem = {
 
 export type ReplicarFamiliaResult = { resultados: ReplicaResultadoItem[] };
 
-export type ReplicaAltaPayload = {
+type ReplicaAltaPayload = {
   origen: Origen;
   /** [] = una sola fila sin especialidad (NN o NE sin restricción). */
   especialidades_id_colegio: number[];
@@ -956,7 +864,7 @@ export type NiveladoCodigoIn = {
 export type EstadoAplicarNivelado =
   | "crear" | "creado" | "reemplazar" | "reemplazado" | "sin_quien_factura" | "suspendido" | "omitido";
 
-export type AplicarNiveladoFila = {
+type AplicarNiveladoFila = {
   nomenclador_id: number;
   codigo: string;
   descripcion: string | null;

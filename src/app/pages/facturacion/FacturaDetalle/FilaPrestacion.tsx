@@ -6,19 +6,17 @@ import { TIPO_ABREV, TIPO_LABEL, TIPO_PRESTADOR_ABREV } from "../constants";
 import { formatMoney, parseMoney } from "../money";
 import type { ColumnaVista } from "./vista/types";
 import styles from "./FacturaDetalle.module.scss";
+import { viaLabel } from "@/app/pages/facturacion/utiles";
+import { fmtFecha } from "@/app/pages/facturacion/utiles";
 
-// La prestación "aplanada" con los datos de su socio ya resueltos — se arma una
-// sola vez a partir de `detalle.prestadores` y es la base de todo el pipeline
-// de vista (filtrar → agrupar → ordenar), en vez de depender de la agrupación
-// por-socio que ya viene armada del backend.
+// La prestación "aplanada" con los datos de su socio ya resueltos .
 export interface PrestacionConSocio extends PrestacionFacturaDetalle {
   cod_medico: string;
   nombreSocio: string | null;
   matriculaSocio: number | null;
 }
 
-// Acciones de una fila. El padre pasa SIEMPRE el mismo objeto (ver `acciones` en
-// FacturaDetalle.tsx): así `React.memo` puede saltear las filas que no cambiaron.
+// Acciones de una fila.
 export interface FilaAcciones {
   onToggleRevisado: (p: PrestacionConSocio) => void;
   onEditar: (p: PrestacionConSocio) => void;
@@ -26,19 +24,6 @@ export interface FilaAcciones {
   onMover: (p: PrestacionConSocio, direccion: "siguiente" | "anterior") => void;
   onEliminar: (p: PrestacionConSocio) => void;
 }
-
-const fmtFecha = (iso: string | null): string => {
-  if (!iso) return "—";
-  // `new Date("2026-11-01")` parsea las date-only como medianoche UTC, y al mostrarlas
-  // en hora local (AR = UTC-3) retroceden un día. Las fechas de la API (`fecha_practica`,
-  // `fecha`) son columnas DATE, así que se formatean sin pasar por Date.
-  const soloFecha = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
-  if (soloFecha) return `${soloFecha[3]}/${soloFecha[2]}/${soloFecha[1]}`;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
-};
-
 const tipoPrestadorClass = (t: string | null): string => {
   switch (t) {
     case "Medico":   return styles.tipoPrestadorMedico;
@@ -58,10 +43,6 @@ const tipoClass = (t: Tipo | null): string => {
     default:                       return "";
   }
 };
-
-const viaLabel = (v: string | null | undefined): string =>
-  v === "L" ? "Laparoscópica" : v === "T" ? "Tradicional" : "";
-
 const muted = <span className={styles.mutedText}>—</span>;
 
 const renderCelda = (p: PrestacionConSocio, col: ColumnaVista) => {
@@ -101,8 +82,7 @@ const renderCelda = (p: PrestacionConSocio, col: ColumnaVista) => {
     case "porcentaje":
       return <td key={col}>{p.porcentaje != null ? `${p.porcentaje}%` : "—"}</td>;
     case "honorarios":
-      // En la fila del ayudante se muestra lo que cobra (se guarda en `ayudante`, con
-      // honorarios en 0): así la columna cuadra con el total de la fila.
+      // En la fila del ayudante se muestra lo que cobra (se guarda en `ayudante`, con honorarios en 0).
       return (
         <td key={col}>
           <span className={styles.moneyCell}>
@@ -158,15 +138,13 @@ interface Props {
   columnas: ColumnaVista[];
   acciones: FilaAcciones;
   busy: boolean;
-  // Un complemento (version > 1) es una factura para un período ya cerrado y enviado:
-  // mover sus prestaciones a otro período no tiene sentido, así que se ocultan esos botones.
+  // Un complemento (version > 1) es una factura para un período ya cerrado y enviado: mover sus prestaciones a otro período no tiene sentido.
   esComplemento: boolean;
   // Integrante del equipo, indentado bajo la cabeza (es una fila completa, con sus acciones).
   indent?: boolean;
   ultimoDelEquipo?: boolean;
   equipoHead?: boolean;
-  // La clínica (si la hay) va como etiqueta en la celda del socio. En las prestaciones de
-  // tipo Sanatorio no: ahí la clínica es un subtítulo naranja que agrupa las filas.
+  // La clínica (si la hay) va como etiqueta en la celda del socio.
   clinicaInline?: boolean;
   // Clases extra para la fila.
   className?: string;
@@ -271,6 +249,5 @@ function FilaPrestacion({
   );
 }
 
-// Con cientos/miles de filas, re-renderizar todas por cada tilde o acción era lo que
-// trababa la pantalla: cada fila se vuelve a dibujar sólo si cambian sus props.
+// Con cientos/miles de filas, re-renderizar todas por cada tilde o acción era lo que trababa la pantalla.
 export default React.memo(FilaPrestacion);

@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
-import { Check, Copy, ExternalLink, Info, X } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Check, Copy, ExternalLink, Info, Loader2, X } from "lucide-react";
 
+import { getCredencialesPortal } from "../validaciones.api";
 import { iniciales } from "../validaciones.types";
 import type { ObraSocialConfig } from "../validaciones.types";
 import s from "./GuiaPortalModal.module.scss";
+import MarcoModal from "@/app/components/ui/MarcoModal/MarcoModal";
 
 interface Props {
   os: ObraSocialConfig;
@@ -34,7 +37,7 @@ function CopiarValor({ label, valor }: { label: string; valor: string }) {
           onClick={copiar}
           aria-label={`Copiar ${label.toLowerCase()}`}
         >
-          {copiado ? <Check size={13} /> : <Copy size={13} />}
+          {copiado ? <Check size={15} /> : <Copy size={15} />}
           {copiado ? "Copiado" : "Copiar"}
         </button>
       </div>
@@ -42,12 +45,19 @@ function CopiarValor({ label, valor }: { label: string; valor: string }) {
   );
 }
 
-/**
- * Guía de acceso al portal de una obra social. Reemplaza los modales
- * `modalSwissGuide` y `modalUnionGuide` de `menu.php`.
- */
+/** Guía de acceso al portal de una obra social. */
 export default function GuiaPortalModal({ os, onClose }: Props) {
   const guia = os.guia;
+
+  // El usuario y la clave se piden recién al abrir la guía.
+  const credenciales = useQuery({
+    queryKey: ["validaciones-portal-credenciales", os.slug],
+    queryFn: () => getCredencialesPortal(os.slug),
+    enabled: Boolean(guia?.credencialesRemotas),
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
+  });
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -60,14 +70,7 @@ export default function GuiaPortalModal({ os, onClose }: Props) {
   if (!guia) return null;
 
   return (
-    <div
-      className={s.overlay}
-      role="dialog"
-      aria-modal="true"
-      aria-label={guia.titulo}
-      onClick={onClose}
-    >
-      <div className={s.card} onClick={(e) => e.stopPropagation()}>
+    <MarcoModal onClose={onClose} className={s.card} aria-label={guia.titulo}>
         <div className={s.header}>
           <span className={s.logoRing} style={{ ["--os-color" as string]: os.color }}>
             {os.logo ? <img src={os.logo} alt="" /> : iniciales(os.nombre)}
@@ -79,17 +82,29 @@ export default function GuiaPortalModal({ os, onClose }: Props) {
         </div>
 
         <div className={s.body}>
-          {guia.credenciales && guia.credenciales.length > 0 && (
+          {guia.credencialesRemotas && (
             <div className={s.credBox}>
-              {guia.credenciales.map((c) => (
-                <CopiarValor key={c.label} label={c.label} valor={c.valor} />
-              ))}
+              {credenciales.isPending ? (
+                <span className={s.credEstado}>
+                  <Loader2 size={14} className={s.credGirando} aria-hidden="true" />
+                  Cargando…
+                </span>
+              ) : credenciales.isError || !credenciales.data?.length ? (
+                <span className={s.credEstado} role="alert">
+                  <Info size={14} aria-hidden="true" />
+                  No disponibles. Pedilos en el Colegio.
+                </span>
+              ) : (
+                credenciales.data.map((c) => (
+                  <CopiarValor key={c.label} label={c.label} valor={c.valor} />
+                ))
+              )}
             </div>
           )}
 
           {guia.aviso && (
             <p className={s.aviso}>
-              <Info size={15} />
+              <Info size={18} />
               {guia.aviso}
             </p>
           )}
@@ -112,7 +127,7 @@ export default function GuiaPortalModal({ os, onClose }: Props) {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <ExternalLink size={15} />
+              <ExternalLink size={18} />
               {guia.enlace.texto}
             </a>
           )}
@@ -124,7 +139,6 @@ export default function GuiaPortalModal({ os, onClose }: Props) {
             </p>
           )}
         </div>
-      </div>
-    </div>
+      </MarcoModal>
   );
 }

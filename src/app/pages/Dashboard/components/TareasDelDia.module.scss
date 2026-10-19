@@ -1,0 +1,369 @@
+@use "@/app/styles/all.scss" as *;
+
+// Las tareas del día como una hoja de cuaderno: anillado arriba, margen rojo y renglones.
+
+
+.cuaderno {
+  position: relative;
+  // Crece con la columna: los renglones en blanco llenan lo que sobre.
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  // Contexto propio: la hoja de abajo queda detrás de la página y de nada más.
+  isolation: isolate;
+  // Es papel: se queda claro también con el tema oscuro del panel.
+  color-scheme: light;
+
+  // La hoja de abajo, apenas corrida.
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0.375rem -0.3125rem -0.375rem 0.3125rem;
+    z-index: -1;
+    background: $cuaderno-papel;
+    border: 1px solid $gray-300;
+    border-radius: $radio-md;
+    transform: rotate(0.6deg);
+  }
+}
+
+.pagina {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: $cuaderno-papel;
+  border: 1px solid $gray-300;
+  border-radius: $radio-md;
+  box-shadow: 0 12px 28px -20px rgba($primary-blue-darker, 0.5);
+  overflow: hidden;
+}
+
+// Los agujeros del anillado y la línea de corte.
+.anillas {
+  height: 1.7rem;
+  background-image: radial-gradient(circle, $gray-400 0, $gray-400 0.28125rem, transparent 0.34375rem);
+  background-size: 1.75rem 100%;
+  background-position: 0.6rem center;
+  background-repeat: repeat-x;
+  border-bottom: 1px dashed $gray-300;
+}
+
+// El margen rojo corre de arriba abajo, también detrás del título.
+.hoja {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: $spacing-4;
+  background-image: linear-gradient(
+    to right,
+    transparent $cuaderno-margen,
+    rgba($danger-red, 0.5) $cuaderno-margen,
+    rgba($danger-red, 0.5) calc(#{$cuaderno-margen} + 2px),
+    transparent calc(#{$cuaderno-margen} + 2px)
+  );
+}
+
+.cabecera {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: $spacing-3;
+  padding: $spacing-4 $spacing-5 $spacing-2 calc(#{$cuaderno-margen} + #{$spacing-3});
+}
+
+.titulo {
+  margin: 0;
+  font-family: $fuente-titulos;
+  font-size: $font-size-2xl;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: $primary-blue;
+}
+
+.receta {
+  margin-right: $spacing-2;
+  font-style: italic;
+  font-weight: $font-weight-bold;
+  color: $danger-red;
+}
+
+.resumen {
+  display: inline-flex;
+  align-items: baseline;
+  gap: $spacing-3;
+}
+
+// Borra las tareas tildadas. Discreto: es texto subrayado, no un botón lleno.
+.limpiar {
+  padding: 0;
+  font: inherit;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-600;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+
+  &:hover {
+    color: $danger-red;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $accent-blue;
+    outline-offset: 2px;
+  }
+}
+
+.cuenta {
+  font-family: $fuente-titulos;
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  font-variant-numeric: tabular-nums;
+  color: $gray-500;
+}
+
+// Con pocas tareas igual se ven renglones en blanco.
+.renglones {
+  flex: 1;
+  min-height: $cuaderno-renglon * 6;
+  // El primer renglón queda en blanco, como al empezar una hoja.
+  padding: $cuaderno-renglon $spacing-4 0 calc(#{$cuaderno-margen} + #{$spacing-3});
+  background-image: linear-gradient(to bottom, transparent calc(#{$cuaderno-renglon} - 1px), $cuaderno-raya calc(#{$cuaderno-renglon} - 1px));
+  background-size: 100% $cuaderno-renglon;
+}
+
+.lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-2;
+
+  &:hover .accion,
+  &:focus-within .accion {
+    opacity: 1;
+  }
+}
+
+.marca {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+// La casilla real queda invisible pero enfocable; se dibuja `.tilde`.
+.casilla {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+
+  &:checked + .tilde {
+    background: $success-green;
+    border-color: $success-green;
+    color: $white;
+  }
+
+  &:focus-visible + .tilde {
+    outline: 2px solid $accent-blue;
+    outline-offset: 2px;
+  }
+}
+
+// La casilla va en el margen, a la izquierda de la línea roja.
+.tilde {
+  position: absolute;
+  top: calc((#{$cuaderno-renglon} - 1.125rem) / 2);
+  left: calc(-1 * (#{$cuaderno-margen} + #{$spacing-3}) + (#{$cuaderno-margen} - 1.125rem) / 2);
+  display: grid;
+  place-items: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  color: transparent;
+  background: $white;
+  border: 1.5px solid $gray-400;
+  border-radius: $radio-xs;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.texto {
+  display: block;
+  font-size: $font-size-xl;
+  line-height: $cuaderno-renglon;
+  color: $gray-800;
+  overflow-wrap: anywhere;
+}
+
+.itemHecha .texto {
+  color: $gray-400;
+  text-decoration: line-through;
+}
+
+// Etiqueta de prioridad, como un resaltador sobre el renglón.
+.prioridad {
+  flex-shrink: 0;
+  min-width: 3.4rem;
+  margin-top: calc((#{$cuaderno-renglon} - 1.25rem) / 2);
+  padding: 0 $spacing-2;
+  font: inherit;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  line-height: 1.25rem;
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-transform: uppercase;
+  border: 0;
+  border-radius: $radio-xs;
+  cursor: pointer;
+  transition: filter 0.15s;
+
+  &:hover {
+    filter: brightness(0.94);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $accent-blue;
+    outline-offset: 2px;
+  }
+}
+
+.alta {
+  color: $white;
+  background: $danger-red;
+}
+
+.media {
+  color: $primary-yellow-dark;
+  background: $primary-yellow;
+}
+
+.baja {
+  color: $gray-600;
+  background: $gray-200;
+}
+
+.itemHecha .prioridad {
+  opacity: 0.45;
+}
+
+// Editar y quitar: aparecen al pasar por el renglón.
+.accion {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 1.375rem;
+  height: 1.375rem;
+  margin-top: calc((#{$cuaderno-renglon} - 1.375rem) / 2);
+  padding: 0;
+  color: $gray-500;
+  background: transparent;
+  border: 0;
+  border-radius: $radio-xs;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+
+  &:hover {
+    color: $primary-blue;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $accent-blue;
+  }
+
+  // En táctil no hay hover: los botones quedan siempre a la vista.
+  @media (hover: none) {
+    opacity: 1;
+  }
+}
+
+.quitar:hover {
+  color: $danger-red;
+}
+
+// El renglón siguiente: se escribe directo sobre la hoja.
+.nueva {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  height: $cuaderno-renglon;
+
+  // Dentro del renglón ya está centrada: no necesita el margen de la lista.
+  .prioridad {
+    margin-top: 0;
+  }
+}
+
+.campo {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  font: inherit;
+  font-size: $font-size-xl;
+  color: $gray-900;
+  background: transparent;
+  border: 0;
+  outline: none;
+
+  &::placeholder {
+    color: $gray-400;
+  }
+}
+
+// Al editar, el campo ocupa el lugar del texto, sobre el mismo renglón.
+.campoEdicion {
+  height: $cuaderno-renglon;
+  box-shadow: inset 0 -2px 0 $primary-blue;
+}
+
+// Mientras se edita no hay texto: la etiqueta sólo sostiene la casilla.
+.item:has(.campoEdicion) .marca {
+  flex: 0 0 0;
+}
+
+.agregar {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  color: $white;
+  background: $primary-blue;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 0.15s, opacity 0.15s;
+
+  &:hover:not(:disabled) {
+    background: $primary-blue-darker;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $accent-blue;
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tilde,
+  .prioridad,
+  .accion,
+  .agregar {
+    transition: none;
+  }
+}

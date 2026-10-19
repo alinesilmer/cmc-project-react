@@ -10,19 +10,9 @@ import { iniciales, nombreDe } from "./avisos";
 import { listAdsPublicos, type PubAd } from "../../../lib/ads.client";
 import { coincide } from "../../../lib/texto";
 import styles from "./MedicosDirectorio.module.scss";
+import Button from "@/website/components/UI/Button/Button";
 
-/**
- * Directorio de avisos profesionales de médicos asociados.
- *
- * Reemplaza al carrusel con autoplay que había antes. El cambio no es estético:
- * el carrusel mostraba tres tarjetas y se movía solo cada 2,6 s, así que para
- * encontrar a alguien había que esperar a que pasara. Acá están todos a la vez
- * y se filtran por nombre.
- *
- * Ojo con qué es esta lista: son los médicos que publicaron su aviso en el
- * Colegio (`/api/publicidad-medicos`), no el padrón de asociados. La pantalla
- * lo dice explícitamente — ver `page.tsx`.
- */
+/** Directorio de avisos profesionales de médicos asociados. */
 
 const SIN_AVISOS: PubAd[] = [];
 
@@ -89,7 +79,7 @@ export default function MedicosDirectorio() {
                 // Techo al escalonado: con muchos avisos el último entraría tardísimo.
                 transition={{ duration: 0.24, delay: Math.min(i, 10) * 0.03 }}
               >
-                <button
+                <Button variant="plano"
                   type="button"
                   className={styles.tarjeta}
                   onClick={() => setAmpliado(i)}
@@ -121,7 +111,7 @@ export default function MedicosDirectorio() {
                     </span>
                     <span className={styles.nombre}>{nombre}</span>
                   </span>
-                </button>
+                </Button>
               </motion.li>
             );
           })}

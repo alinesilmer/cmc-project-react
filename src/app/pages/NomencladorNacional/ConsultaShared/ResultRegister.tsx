@@ -14,20 +14,14 @@ const money = new Intl.NumberFormat("es-AR", {
   maximumFractionDigits: 2,
 });
 
-// Todo Valor tiene siempre los 3 conceptos (Honorarios/Gastos/Ayudante) y todos
-// suman al precio_total: no existen componentes opcionales.
+// Todo Valor tiene siempre los 3 conceptos (Honorarios/Gastos/Ayudante) y todos suman al precio_total: no existen componentes opcionales.
 function findComp(componentes: TablaValorItem["componentes"], concepto: string) {
   return componentes.find(
     (c) => c.concepto.toLowerCase() === concepto.toLowerCase(),
   );
 }
 
-/**
- * Una fila del ledger. Con `comp` muestra además de dónde sale el número:
- * `cantidad × valor unitario del galeno`, que es exactamente la cuenta que hace
- * el backend (`subtotal = cantidad × valor_unitario`). Sin eso, el importe es
- * un dato que hay que creer; con eso, se puede verificar.
- */
+/** Una fila del ledger. */
 function LedgerRow({
   label,
   comp,
@@ -40,8 +34,7 @@ function LedgerRow({
   const value = parseFloat(comp.subtotal);
   const cantidad = parseFloat(comp.cantidad);
   const unitario = parseFloat(comp.valor_unitario);
-  // Con cantidad 0 (el caso típico de Ayudante) no hay cuenta que mostrar: el
-  // "0 × algo" es ruido, el importe en cero ya lo dice.
+  // Con cantidad 0 (el caso típico de Ayudante) no hay cuenta que mostrar: el "0 × algo" es ruido.
   const hayCuenta = showDesglose && cantidad > 0 && !isNaN(unitario);
 
   return (
@@ -63,24 +56,14 @@ function LedgerRow({
   );
 }
 
-/**
- * The "boleta de valores": código + descripción, gold vigencia seal, and the
- * three concepts (Honorarios / Gastos / Ayudante) itemised with the same
- * weight — none of them is the headline, they are components of one value.
- * Pure presentation — receives an already-resolved TablaValorItem.
- */
+/** The "boleta de valores": código + descripción, gold vigencia seal, and the three concepts (Honorarios / Gastos / Ayudante) itemised with the same weight. */
 type ResultRegisterProps = {
   result: TablaValorItem;
   /** Show the gold "Vigente desde" seal (consulta-valores: yes; consulta-precios: no). */
   showVigencia?: boolean;
   /** When set, shows a specialty eligibility chip. `valida === null` = still checking. */
   eligibility?: { nombre: string; valida: boolean | null } | null;
-  /**
-   * Muestra de dónde sale cada importe: el nomenclador que ganó y la cuenta
-   * `cantidad × unitario` de cada concepto. Va en consulta-valores, que es la
-   * pantalla de auditoría del convenio; consulta-precios es la consulta rápida
-   * del médico y ahí el desglose sería ruido.
-   */
+  /** Muestra de dónde sale cada importe: el nomenclador que ganó y la cuenta `cantidad × unitario` de cada concepto. */
   showDesglose?: boolean;
   /** Lo que paga el afiliado, si la obra social cobra copago. Sin copago, no se muestra. */
   copago?: number | null;
@@ -152,10 +135,7 @@ function ResultRegister({
           </span>
         </div>
       ) : (
-        /* Los tres conceptos se listan igual. Antes Honorarios iba aparte como
-           bloque destacado, con tipografía enorme y fondo propio: eso lo hacía
-           parecer de otra naturaleza que Gastos y Ayudante, cuando los tres son
-           componentes del mismo valor. */
+        /* Los tres conceptos se listan igual. */
         <div className={styles.ledger}>
           <div className={styles.ledgerCap}>
             Conceptos

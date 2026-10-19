@@ -1,16 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { User, Menu, X } from "lucide-react";
-import { AnimatePresence } from "framer-motion";
 import NavEscritorio from "./NavEscritorio";
 import NavMovil from "./NavMovil";
 import { useIrAlSistema } from "../../../hooks/useIrAlSistema";
 import logo from "../../../assets/images/logoCMC-web.png";
+import Button from "../Button/Button";
 import styles from "./Header.module.scss";
 
-/**
- * Cabecera del sitio: el nombre, el menú y el acceso, fija arriba.
- */
+/** Cabecera del sitio: el nombre, el menú y el acceso, fija arriba. */
 export default function Header() {
   const { pathname } = useLocation();
   const [menuAbierto, setMenuAbierto] = useState(false);
@@ -48,12 +46,18 @@ export default function Header() {
         <NavEscritorio />
 
         <div className={styles.derecha}>
-          <button type="button" className={styles.ingresar} onClick={ingresar}>
-            <User aria-hidden="true" />
-            <span>Ingresar</span>
-          </button>
+          {/* El mismo botón que «Asociarme»: amarillo, del componente compartido. */}
+          <Button
+            variant="secondary"
+            className={styles.ingresar}
+            iconoIzquierda={<User aria-hidden="true" />}
+            onClick={ingresar}
+            aria-label="Ingresar"
+          >
+            <span className={styles.ingresarTexto}>Ingresar</span>
+          </Button>
 
-          <button
+          <Button variant="plano"
             type="button"
             className={styles.hamburguesa}
             onClick={() => setMenuAbierto((v) => !v)}
@@ -62,13 +66,11 @@ export default function Header() {
             aria-controls="mobile-menu"
           >
             {menuAbierto ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
-          </button>
+          </Button>
         </div>
       </div>
 
-      <AnimatePresence>
-        {menuAbierto && <NavMovil onCerrar={() => setMenuAbierto(false)} onIngresar={ingresar} />}
-      </AnimatePresence>
+      {menuAbierto && <NavMovil onCerrar={() => setMenuAbierto(false)} onIngresar={ingresar} />}
     </header>
   );
 }

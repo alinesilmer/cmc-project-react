@@ -1,4 +1,6 @@
 @use "@/app/styles/all.scss" as *;
+// Los @keyframes compartidos, una sola vez para toda la aplicación.
+@use "./keyframes";
 
 * {
   margin: 0;
@@ -10,9 +12,7 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
-// Sin las flechitas de subir/bajar en los campos numéricos: en un precio o un
-// importe un clic de más cambia el valor sin que nadie lo note. Vale para todo
-// el sistema, campos de MUI incluidos (renderizan un <input type="number">).
+// Sin las flechitas de subir/bajar en los campos numéricos.
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -26,16 +26,14 @@ input[type="number"] {
 
 :root {
   // rsuite components resolve their font from this variable
-  --rs-font-family-base: "Inter", sans-serif;
+  --rs-font-family-base: #{$fuente-texto};
 }
 
 body {
-  // font-family: "Raleway", sans-serif;
-  // Numeros tabulares/alineados con las letras (en vez de "old-style" con descendentes).
   font-feature-settings:
     "pnum" on,
     "lnum" on;
-  font-family: "Inter", sans-serif;
+  font-family: $fuente-texto;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: $gray-50;
@@ -50,13 +48,13 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: "Manrope", sans-serif;
+  font-family: $fuente-titulos;
   font-feature-settings: normal;
   line-height: 1.15;
 }
 
 button {
-  font-family: "Inter", sans-serif;
+  font-family: $fuente-texto;
 }
 
 input,

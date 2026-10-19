@@ -1,4 +1,4 @@
-import { postJSON, getJSON, postForm } from "@/app/shared/lib/http";
+import { postJSON, postForm } from "@/app/shared/lib/http";
 import type { RegisterFormData } from "../../types/register";
 /* ===== tipos ===== */
 export type RegisterPayload = {
@@ -46,7 +46,7 @@ export type RegisterPayload = {
   }[];
 };
 
-export function buildRegisterPayload(form: any): RegisterPayload {
+function buildRegisterPayload(form: any): RegisterPayload {
   return {
     documentType: "DNI",
     documentNumber: String(form.documentNumber || "").trim(),
@@ -95,21 +95,6 @@ export type RegisterResponse = {
   solicitud_id: number;
   ok: boolean;
 };
-
-export type DocLabel =
-  | "documento"
-  | "titulo"
-  | "matricula_nac"
-  | "matricula_nacional"
-  | "matricula_prov"
-  | "resolucion"
-  | "habilitacion_municipal"
-  | "cuit"
-  | "condicion_impositiva"
-  | "anssal"
-  | "malapraxis"
-  | "cbu";
-
 /* ===== endpoints ===== */
 
 export async function registerMedico(
@@ -160,54 +145,3 @@ export const DOC_LABEL_MAP: Record<string, string> = {
   polizaImg: "malapraxis",
   cbuImg: "cbu",
 };
-
-export async function listSolicitudes(params?: {
-  estado?: "pendiente" | "aprobada" | "rechazada";
-  limit?: number;
-  offset?: number;
-}) {
-  return await getJSON("/auth/solicitudes", params);
-}
-
-// Deduce el label de backend a partir de la key del input de archivo.
-// Acepta variantes de nombre (dni/documento, matricula nac/nacional, etc.).
-function inferLabelFromKey(k: string): DocLabel | null {
-  const s = k.toLowerCase();
-
-  // DNI / Documento (solo a tabla documentos, no hay attach_documento en el modelo)
-  if (/(dni|documento)/.test(s)) return "documento";
-
-  if (/titulo/.test(s)) return "titulo";
-  if (/mat(ric|r[ií])cula.*(nac|nacional)/.test(s)) return "matricula_nac";
-  if (/mat(ric|r[ií])cula.*(prov|provinc)/.test(s)) return "matricula_prov";
-  if (/resol/.test(s)) return "resolucion";
-  if (/habil.*muni/.test(s)) return "habilitacion_municipal";
-  if (/cuit/.test(s)) return "cuit";
-  if (/cond.*impo/.test(s)) return "condicion_impositiva";
-  if (/anssal/.test(s)) return "anssal";
-  if (/malapra/.test(s)) return "malapraxis";
-  if (/cbu/.test(s)) return "cbu";
-
-  return null;
-}
-
-/** Envía el registro y sube adjuntos. Toasts y loaders quedan a cargo del llamador. */
-export async function sendRegister(
-  formData: any,
-  files: Record<string, File | null>
-) {
-  // 1) registrar
-  const payload = buildRegisterPayload(formData);
-  const { medico_id } = await registerMedico(payload);
-
-  // 2) adjuntos (si hay)
-  const entries = Object.entries(files || {});
-  for (const [key, file] of entries) {
-    if (!(file instanceof File)) continue;
-    const label = inferLabelFromKey(key);
-    if (!label) continue;
-    await uploadMedicoDocumento(medico_id, file, label);
-  }
-
-  return { medico_id };
-}

@@ -1,26 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
 import {
   AlertCircle,
   ChevronLeft,
   ChevronRight,
-  CircleDollarSign,
-  Download,
-  FileText,
-  Landmark,
   Layers,
   Loader2,
-  Search,
   SearchX,
   Users,
-  Wallet,
+  HandCoins,
 } from "lucide-react";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import SelectorMes from "@/app/components/ui/SelectorMes/SelectorMes";
 
-import Button from "@/app/components/ui/Button/Button";
 import Card from "@/app/components/ui/Card/Card";
+import SearchField from "@/app/components/ui/SearchField/SearchField";
+import Caja, { Cajas } from "@/app/components/ui/Caja/Caja";
+import Franja, { Solapa } from "@/app/components/layout/Franja/Franja";
 import { useAppSnackbar } from "../../hooks/useAppSnackbar";
 import {
   fetchDetalleMedico,
@@ -28,7 +22,6 @@ import {
   fetchMedicosPorConcepto,
   fetchPorConcepto,
   fetchPorSocio,
-  fetchResumen,
   type CobranzasFiltrosParams,
 } from "./api";
 import type {
@@ -36,10 +29,12 @@ import type {
   CobranzaMedicosPage,
   CobranzaPorConceptoItem,
   CobranzaSociosPage,
-  CobranzasResumen,
 } from "./types";
 import { formatMoney, monthLabel } from "./types";
 import styles from "./CobranzasPage.module.scss";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
+import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
+import { getErrorMessage } from "@/app/shared/lib/utiles";
 
 const PAGE_SIZE = 25;
 
@@ -49,14 +44,6 @@ type TabKey = "concepto" | "socio";
 /** Profundidad del drill-down dentro de cada pestaña. */
 type NivelConcepto = "lista" | "socios" | "detalle";
 type NivelSocio = "lista" | "detalle";
-
-const getErrorMessage = (e: any, fallback: string) => {
-  const detail = e?.response?.data?.detail;
-  if (typeof detail === "string" && detail.trim()) return detail;
-  if (typeof detail?.message === "string" && detail.message.trim()) return detail.message;
-  return e?.message ?? fallback;
-};
-
 const CobranzasPage: React.FC = () => {
   const notify = useAppSnackbar();
 
@@ -68,9 +55,7 @@ const CobranzasPage: React.FC = () => {
   const [hasta, setHasta] = useState<Date | null>(null);
   const [incluirFuturos, setIncluirFuturos] = useState(false);
 
-  // Un buscador por nivel: buscar un concepto, buscar un socio dentro de ese
-  // concepto y buscar un socio en la pestaña "Por socio" son tres búsquedas
-  // distintas; compartir el texto entre ellas confunde más de lo que ahorra.
+  // Un buscador por nivel: buscar un concepto, buscar un socio dentro de ese concepto y buscar un socio en la pestaña "Por socio" son…
   const [qConcepto, setQConcepto] = useState("");
   const [qMedicosDelConcepto, setQMedicosDelConcepto] = useState("");
   const [qSocio, setQSocio] = useState("");
@@ -92,8 +77,7 @@ const CobranzasPage: React.FC = () => {
   const [conceptoSel, setConceptoSel] = useState<CobranzaPorConceptoItem | null>(null);
   const [nivelSocio, setNivelSocio] = useState<NivelSocio>("lista");
 
-  // El detalle es la misma vista para las dos pestañas: cambia sólo si viene
-  // acotado a un concepto (flujo "Por concepto") o completo (flujo "Por socio").
+  // El detalle es la misma vista para las dos pestañas: cambia sólo si viene acotado a un concepto (flujo "Por concepto") o completo.
   const [detalleMedicoId, setDetalleMedicoId] = useState<number | null>(null);
   const [detalleMedicoNombre, setDetalleMedicoNombre] = useState("");
   const [detalleConceptoId, setDetalleConceptoId] = useState<number | undefined>(undefined);
@@ -106,20 +90,6 @@ const CobranzasPage: React.FC = () => {
     (tab === "socio" && nivelSocio === "lista");
 
   const qActivo = tab === "concepto" ? qConcepto : qSocio;
-
-  // ── Resumen (KPIs) ────────────────────────────────────────────────────
-  const [resumen, setResumen] = useState<CobranzasResumen | null>(null);
-
-  useEffect(() => {
-    if (!enLista) return;
-    let vivo = true;
-    fetchResumen({ ...filtrosBase, q: qActivo.trim() || undefined })
-      .then((r) => vivo && setResumen(r))
-      .catch(() => vivo && setResumen(null));
-    return () => {
-      vivo = false;
-    };
-  }, [enLista, filtrosBase, qActivo]);
 
   // ── Pestaña 1, nivel 1: lista de conceptos ────────────────────────────
   const [conceptosLoading, setConceptosLoading] = useState(true);
@@ -327,16 +297,6 @@ const CobranzasPage: React.FC = () => {
   const medicosLastPage = medicosPage ? Math.max(1, Math.ceil(medicosPage.total / PAGE_SIZE)) : 1;
   const sociosLastPage = sociosPage ? Math.max(1, Math.ceil(sociosPage.total / PAGE_SIZE)) : 1;
 
-  const subtitulo = enDetalle
-    ? detalleConceptoId && conceptoSel
-      ? `${detalleMedicoNombre} · ${conceptoSel.nombre}`
-      : `Deuda completa de ${detalleMedicoNombre}`
-    : tab === "concepto" && nivelConcepto === "socios" && conceptoSel
-      ? `Socios con deuda en ${conceptoSel.nombre}`
-      : tab === "concepto"
-        ? "Deuda agrupada por concepto de descuento"
-        : "Deuda de cada socio, cruzando todos los conceptos";
-
   // El buscador cambia de significado según el nivel en el que se esté.
   const buscador =
     tab === "concepto" && nivelConcepto === "socios"
@@ -362,562 +322,465 @@ const CobranzasPage: React.FC = () => {
 
   return (
     <div className={styles.page}>
-      <div className={styles.content}>
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
-        >
-          <div className={styles.header}>
-            <div>
-              <h1>Cobranzas</h1>
-              <p className={styles.subtitle}>{subtitulo}</p>
-            </div>
-            {enLista && (
-              <div className={styles.headerActions}>
-                <Button variant="secondary" leftIcon={<FileText size={14} />} onClick={exportPdf}>
-                  PDF
-                </Button>
-                <Button variant="secondary" leftIcon={<Download size={14} />} onClick={exportExcel}>
-                  Excel
-                </Button>
-              </div>
-            )}
-          </div>
+      <Franja titulo="Cobranzas" icono={HandCoins}>
+        <Solapa activa={tab === "concepto"} onClick={() => cambiarTab("concepto")}>
+          <Layers size={18} /> Por concepto
+        </Solapa>
+        <Solapa activa={tab === "socio"} onClick={() => cambiarTab("socio")}>
+          <Users size={18} /> Por socio
+        </Solapa>
+      </Franja>
 
-          {/* ── Pestañas ─────────────────────────────────────────────── */}
-          <div className={styles.tabs}>
-            <button
-              className={`${styles.tab} ${tab === "concepto" ? styles.tabActive : ""}`}
-              onClick={() => cambiarTab("concepto")}
-            >
-              <Layers size={15} /> Por concepto
-              {tab === "concepto" && (
-                <motion.span layoutId="cobranzas-tab-underline" className={styles.tabUnderline} />
-              )}
-            </button>
-            <button
-              className={`${styles.tab} ${tab === "socio" ? styles.tabActive : ""}`}
-              onClick={() => cambiarTab("socio")}
-            >
-              <Users size={15} /> Por socio
-              {tab === "socio" && (
-                <motion.span layoutId="cobranzas-tab-underline" className={styles.tabUnderline} />
-              )}
-            </button>
-          </div>
-
-          {/* ── Breadcrumb del drill-down ────────────────────────────── */}
-          {!enLista && (
-            <div className={styles.breadcrumb}>
-              <button onClick={() => cambiarTab(tab)}>
-                <ChevronLeft size={15} />
-                {tab === "concepto" ? "Conceptos" : "Socios"}
-              </button>
-              {tab === "concepto" && conceptoSel && (
-                <>
-                  <span>/</span>
-                  {nivelConcepto === "socios" ? (
-                    <span className={styles.current}>
-                      {conceptoSel.nro_colegio} · {conceptoSel.nombre}
-                    </span>
-                  ) : (
-                    <button onClick={() => setNivelConcepto("socios")}>
-                      {conceptoSel.nro_colegio} · {conceptoSel.nombre}
-                    </button>
-                  )}
-                </>
-              )}
-              {enDetalle && (
-                <>
-                  <span>/</span>
-                  <span className={styles.current}>{detalleMedicoNombre}</span>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* ── KPIs (sólo en las listas) ─────────────────────────────── */}
-          {enLista && (
-            <div className={styles.kpiRow}>
-              <div className={styles.kpiCard}>
-                <CircleDollarSign size={20} color="#3455c1" />
-                <div className={styles.kpiValue}>{formatMoney(resumen?.saldo_total)}</div>
-                <div className={styles.kpiLabel}>Saldo total</div>
-              </div>
-              <div className={styles.kpiCard}>
-                <Landmark size={20} color="#3455c1" />
-                <div className={styles.kpiValue}>{formatMoney(resumen?.saldo_liquidacion)}</div>
-                <div className={styles.kpiLabel}>Saldo por liquidación</div>
-              </div>
-              <div className={`${styles.kpiCard} ${styles.kpiCardCaja}`}>
-                <Wallet size={20} color="#f59e0b" />
-                <div className={styles.kpiValue}>{formatMoney(resumen?.saldo_caja)}</div>
-                <div className={styles.kpiLabel}>Saldo por caja (ventanilla)</div>
-              </div>
-              <div className={styles.kpiCard}>
-                {tab === "concepto" ? (
-                  <Users size={20} color="#3455c1" />
-                ) : (
-                  <Layers size={20} color="#3455c1" />
-                )}
-                <div className={styles.kpiValue}>
-                  {tab === "concepto"
-                    ? (resumen?.medicos_con_deuda ?? "—")
-                    : (resumen?.conceptos_con_deuda ?? "—")}
-                </div>
-                <div className={styles.kpiLabel}>
-                  {tab === "concepto" ? "Socios con deuda" : "Conceptos con deuda"}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ── Filtros ──────────────────────────────────────────────── */}
-          {!enDetalle && (
-            <Card className={styles.filtersCard}>
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <div className={styles.filtersRow}>
-                  <div className={`${styles.filterGroup} ${styles.wide}`}>
-                    <label>{buscador.label}</label>
-                    <div className={styles.searchInputWrap}>
-                      <Search size={14} />
-                      <input
-                        type="text"
-                        placeholder={buscador.placeholder}
-                        value={buscador.valor}
-                        onChange={(e) => buscador.set(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <div className={styles.filterGroup}>
-                    <label>Origen</label>
-                    <select value={origen} onChange={(e) => setOrigen(e.target.value as any)}>
-                      <option value="">Todos</option>
-                      <option value="liquidacion">Solo liquidación</option>
-                      <option value="caja">Solo caja</option>
-                    </select>
-                  </div>
-                  <div className={`${styles.filterGroup} ${styles.narrow}`}>
-                    <label>Período desde</label>
-                    <DatePicker
-                      label="MM/YYYY"
-                      views={["month", "year"]}
-                      openTo="month"
-                      value={desde}
-                      onChange={setDesde}
-                      slotProps={{
-                        textField: {
-                          size: "small",
-                          sx: { "& .MuiInputBase-root": { height: 37, fontSize: 13 } },
-                        },
-                      }}
-                    />
-                  </div>
-                  <div className={`${styles.filterGroup} ${styles.narrow}`}>
-                    <label>Período hasta</label>
-                    <DatePicker
-                      label="MM/YYYY"
-                      views={["month", "year"]}
-                      openTo="month"
-                      value={hasta}
-                      onChange={setHasta}
-                      slotProps={{
-                        textField: {
-                          size: "small",
-                          sx: { "& .MuiInputBase-root": { height: 37, fontSize: 13 } },
-                        },
-                      }}
-                    />
-                  </div>
-                  <div className={styles.checkboxGroup}>
-                    <input
-                      type="checkbox"
-                      id="incluir-futuros"
-                      checked={incluirFuturos}
-                      onChange={(e) => setIncluirFuturos(e.target.checked)}
-                    />
-                    <label htmlFor="incluir-futuros">Incluir futuros</label>
-                  </div>
-                </div>
-              </LocalizationProvider>
-            </Card>
-          )}
-
-          {/* ══ PESTAÑA "POR CONCEPTO" ═══════════════════════════════════ */}
-
-          {/* Nivel 1: conceptos */}
-          {tab === "concepto" && nivelConcepto === "lista" && (
+      {/* ── Breadcrumb del drill-down ────────────────────────────── */}
+      {!enLista && (
+        <div className={styles.breadcrumb}>
+          <button onClick={() => cambiarTab(tab)}>
+            <ChevronLeft size={15} />
+            {tab === "concepto" ? "Conceptos" : "Socios"}
+          </button>
+          {tab === "concepto" && conceptoSel && (
             <>
-              {conceptosError && <div className={styles.errorBanner}>{conceptosError}</div>}
-              <Card className={styles.tableCard}>
-                {conceptosLoading ? (
-                  <div className={styles.loadingState}>
-                    <Loader2 size={18} className={styles.spin} /> Cargando conceptos...
-                  </div>
-                ) : porConcepto.length === 0 ? (
-                  <div className={styles.emptyState}>
-                    <SearchX size={32} strokeWidth={1.6} />
-                    <div className={styles.emptyTitle}>Sin conceptos con deuda</div>
-                    <div className={styles.emptyHint}>
-                      Probá ampliar el rango de período o limpiar el buscador.
-                    </div>
-                  </div>
-                ) : (
-                  <div className={styles.tableWrap}>
-                    <table className={styles.table}>
-                      <thead>
-                        <tr>
-                          <th>Concepto</th>
-                          <th style={{ textAlign: "right" }}>Socios con deuda</th>
-                          <th style={{ textAlign: "right" }}>Cuotas impagas</th>
-                          <th>Período más antiguo</th>
-                          <th style={{ textAlign: "right" }}>Saldo</th>
-                          <th></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {porConcepto.map((item) => (
-                          <tr key={item.descuento_id} onClick={() => abrirConcepto(item)}>
-                            <td>
-                              <span className={styles.conceptCode}>{item.nro_colegio}</span>
-                              <strong>{item.nombre}</strong>
-                            </td>
-                            <td className={styles.numCell}>{item.medicos_con_deuda}</td>
-                            <td className={styles.numCell}>
-                              {item.cuotas_impagas.toLocaleString("es-AR")}
-                            </td>
-                            <td>{item.periodo_mas_antiguo ?? "—"}</td>
-                            <td className={styles.saldoCell}>
-                              <div className={styles.saldoValue}>{formatMoney(item.saldo)}</div>
-                              {Number(item.saldo_caja) > 0 && (
-                                <div className={styles.saldoCajaChip}>
-                                  Caja {formatMoney(item.saldo_caja)}
-                                </div>
-                              )}
-                            </td>
-                            <td className={styles.rowChevron}>
-                              <ChevronRight size={16} />
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </Card>
+              <span>/</span>
+              {nivelConcepto === "socios" ? (
+                <span className={styles.current}>
+                  {conceptoSel.nro_colegio} · {conceptoSel.nombre}
+                </span>
+              ) : (
+                <button onClick={() => setNivelConcepto("socios")}>
+                  {conceptoSel.nro_colegio} · {conceptoSel.nombre}
+                </button>
+              )}
             </>
           )}
-
-          {/* Nivel 2: socios adheridos al concepto */}
-          {tab === "concepto" && nivelConcepto === "socios" && conceptoSel && (
-            <>
-              <div className={styles.miniKpiRow}>
-                <div className={styles.miniKpiCard}>
-                  <div className={styles.miniKpiLabel}>Saldo del concepto</div>
-                  <div className={styles.miniKpiValue}>{formatMoney(conceptoSel.saldo)}</div>
-                </div>
-                <div className={styles.miniKpiCard}>
-                  <div className={styles.miniKpiLabel}>De eso, por caja</div>
-                  <div className={`${styles.miniKpiValue} ${styles.miniKpiValueCaja}`}>
-                    {formatMoney(conceptoSel.saldo_caja)}
-                  </div>
-                </div>
-                <div className={styles.miniKpiCard}>
-                  <div className={styles.miniKpiLabel}>Socios con deuda</div>
-                  <div className={styles.miniKpiValue}>{conceptoSel.medicos_con_deuda}</div>
-                </div>
-                <div className={styles.miniKpiCard}>
-                  <div className={styles.miniKpiLabel}>Deuda más antigua</div>
-                  <div className={styles.miniKpiValue}>{conceptoSel.periodo_mas_antiguo ?? "—"}</div>
-                </div>
-              </div>
-
-              {medicosError && <div className={styles.errorBanner}>{medicosError}</div>}
-
-              <Card className={styles.tableCard}>
-                {medicosLoading ? (
-                  <div className={styles.loadingState}>
-                    <Loader2 size={18} className={styles.spin} /> Cargando socios...
-                  </div>
-                ) : !medicosPage || medicosPage.items.length === 0 ? (
-                  <div className={styles.emptyState}>
-                    <SearchX size={32} strokeWidth={1.6} />
-                    <div className={styles.emptyTitle}>Sin socios deudores para este concepto</div>
-                  </div>
-                ) : (
-                  <>
-                    <div className={styles.tableWrap}>
-                      <table className={styles.table}>
-                        <thead>
-                          <tr>
-                            <th>Nro. socio</th>
-                            <th>Socio</th>
-                            <th style={{ textAlign: "right" }}>Cuotas impagas</th>
-                            <th>Período más antiguo</th>
-                            <th style={{ textAlign: "right" }}>Atraso</th>
-                            <th style={{ textAlign: "right" }}>Saldo</th>
-                            <th>Origen</th>
-                            <th></th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {medicosPage.items.map((m) => (
-                            <tr
-                              key={m.medico_id}
-                              onClick={() => abrirSocioDelConcepto(m.medico_id, m.medico_nombre)}
-                            >
-                              <td style={{ fontFamily: "ui-monospace, monospace" }}>{m.nro_socio}</td>
-                              <td>
-                                <strong>{m.medico_nombre}</strong>
-                                {m.pagador_nombre && (
-                                  <div className={styles.pagadorHint}>Paga: {m.pagador_nombre}</div>
-                                )}
-                              </td>
-                              <td className={styles.numCell}>{m.cuotas_impagas}</td>
-                              <td>{m.periodo_mas_antiguo ?? "—"}</td>
-                              <td
-                                className={styles.numCell}
-                                style={{
-                                  color: m.meses_atraso >= 12 ? "#b91c1c" : "#b45309",
-                                  fontWeight: 600,
-                                }}
-                              >
-                                {m.meses_atraso} meses
-                              </td>
-                              <td className={styles.numCell} style={{ fontWeight: 700 }}>
-                                {formatMoney(m.saldo)}
-                              </td>
-                              <td>
-                                <span
-                                  className={`${styles.badge} ${m.paga_por_caja ? styles.badgeCaja : styles.badgeLiquidacion}`}
-                                >
-                                  {m.paga_por_caja ? "Caja" : "Liquidación"}
-                                </span>
-                              </td>
-                              <td className={styles.rowChevron}>
-                                <ChevronRight size={16} />
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                    <div className={styles.paginationBar}>
-                      <button
-                        onClick={() => setMedicosPageNum((p) => Math.max(1, p - 1))}
-                        disabled={medicosPageNum <= 1 || medicosLoading}
-                      >
-                        ← Anterior
-                      </button>
-                      <span>
-                        Página {medicosPageNum} de {medicosLastPage} · {medicosPage.total} socios
-                      </span>
-                      <button
-                        onClick={() => setMedicosPageNum((p) => Math.min(medicosLastPage, p + 1))}
-                        disabled={medicosPageNum >= medicosLastPage || medicosLoading}
-                      >
-                        Siguiente →
-                      </button>
-                    </div>
-                  </>
-                )}
-              </Card>
-            </>
-          )}
-
-          {/* ══ PESTAÑA "POR SOCIO" ══════════════════════════════════════ */}
-
-          {tab === "socio" && nivelSocio === "lista" && (
-            <>
-              {sociosError && <div className={styles.errorBanner}>{sociosError}</div>}
-              <Card className={styles.tableCard}>
-                {sociosLoading ? (
-                  <div className={styles.loadingState}>
-                    <Loader2 size={18} className={styles.spin} /> Cargando socios...
-                  </div>
-                ) : !sociosPage || sociosPage.items.length === 0 ? (
-                  <div className={styles.emptyState}>
-                    <SearchX size={32} strokeWidth={1.6} />
-                    <div className={styles.emptyTitle}>Sin socios con deuda</div>
-                    <div className={styles.emptyHint}>
-                      Probá ampliar el rango de período o limpiar el buscador.
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className={styles.tableWrap}>
-                      <table className={styles.table}>
-                        <thead>
-                          <tr>
-                            <th>Nro. socio</th>
-                            <th>Socio</th>
-                            <th style={{ textAlign: "right" }}>Conceptos</th>
-                            <th style={{ textAlign: "right" }}>Cuotas impagas</th>
-                            <th>Período más antiguo</th>
-                            <th style={{ textAlign: "right" }}>Atraso</th>
-                            <th style={{ textAlign: "right" }}>Saldo</th>
-                            <th></th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {sociosPage.items.map((s) => (
-                            <tr
-                              key={s.medico_id}
-                              onClick={() => abrirSocio(s.medico_id, s.medico_nombre)}
-                            >
-                              <td style={{ fontFamily: "ui-monospace, monospace" }}>{s.nro_socio}</td>
-                              <td>
-                                <strong>{s.medico_nombre}</strong>
-                              </td>
-                              <td className={styles.numCell}>{s.conceptos_con_deuda}</td>
-                              <td className={styles.numCell}>{s.cuotas_impagas}</td>
-                              <td>{s.periodo_mas_antiguo ?? "—"}</td>
-                              <td
-                                className={styles.numCell}
-                                style={{
-                                  color: s.meses_atraso >= 12 ? "#b91c1c" : "#b45309",
-                                  fontWeight: 600,
-                                }}
-                              >
-                                {s.meses_atraso} meses
-                              </td>
-                              <td className={styles.saldoCell}>
-                                <div className={styles.saldoValue}>{formatMoney(s.saldo)}</div>
-                                {Number(s.saldo_caja) > 0 && (
-                                  <div className={styles.saldoCajaChip}>
-                                    Caja {formatMoney(s.saldo_caja)}
-                                  </div>
-                                )}
-                              </td>
-                              <td className={styles.rowChevron}>
-                                <ChevronRight size={16} />
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                    <div className={styles.paginationBar}>
-                      <button
-                        onClick={() => setSociosPageNum((p) => Math.max(1, p - 1))}
-                        disabled={sociosPageNum <= 1 || sociosLoading}
-                      >
-                        ← Anterior
-                      </button>
-                      <span>
-                        Página {sociosPageNum} de {sociosLastPage} · {sociosPage.total} socios
-                      </span>
-                      <button
-                        onClick={() => setSociosPageNum((p) => Math.min(sociosLastPage, p + 1))}
-                        disabled={sociosPageNum >= sociosLastPage || sociosLoading}
-                      >
-                        Siguiente →
-                      </button>
-                    </div>
-                  </>
-                )}
-              </Card>
-            </>
-          )}
-
-          {/* ══ DETALLE DE UN SOCIO (las dos pestañas) ═══════════════════ */}
-
           {enDetalle && (
             <>
-              <div className={styles.miniKpiRow}>
-                <div className={styles.miniKpiCard}>
-                  <div className={styles.miniKpiLabel}>
-                    {detalleConceptoId ? "Saldo en este concepto" : "Saldo total del socio"}
-                  </div>
-                  <div className={styles.miniKpiValue}>{formatMoney(detalle?.saldo_total)}</div>
-                </div>
-                <div className={styles.miniKpiCard}>
-                  <div className={styles.miniKpiLabel}>Nro. socio</div>
-                  <div className={styles.miniKpiValue}>{detalle?.nro_socio ?? "—"}</div>
-                </div>
-                <div className={styles.miniKpiCard}>
-                  <div className={styles.miniKpiLabel}>Cuotas impagas</div>
-                  <div className={styles.miniKpiValue}>{detalle?.cuotas.length ?? "—"}</div>
-                </div>
-              </div>
-
-              {detalleError && <div className={styles.errorBanner}>{detalleError}</div>}
-
-              <Card className={styles.tableCard}>
-                {detalleLoading ? (
-                  <div className={styles.loadingState}>
-                    <Loader2 size={18} className={styles.spin} /> Cargando detalle...
-                  </div>
-                ) : !detalle || detalle.cuotas.length === 0 ? (
-                  <div className={styles.emptyState}>
-                    <AlertCircle size={32} strokeWidth={1.6} />
-                    <div className={styles.emptyTitle}>Sin cuotas impagas para este socio</div>
-                  </div>
-                ) : (
-                  <div className={styles.tableWrap}>
-                    <table className={styles.table}>
-                      <thead>
-                        <tr>
-                          <th>Concepto</th>
-                          <th>Período</th>
-                          <th style={{ textAlign: "right" }}>Monto</th>
-                          <th style={{ textAlign: "right" }}>Aplicado</th>
-                          <th style={{ textAlign: "right" }}>Saldo</th>
-                          <th>Origen</th>
-                          <th>Estado</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {detalle.cuotas.map((c) => (
-                          <tr key={c.deduccion_id} style={{ cursor: "default" }}>
-                            <td>
-                              <span className={styles.conceptCode}>{c.nro_colegio}</span>
-                              {c.descuento_nombre}
-                            </td>
-                            <td>{monthLabel(c.mes_aplicar, c.anio_aplicar)}</td>
-                            <td className={styles.numCell}>{formatMoney(c.calculado_total)}</td>
-                            <td className={styles.numCell} style={{ color: "#94a3b8" }}>
-                              {formatMoney(c.monto_aplicado)}
-                            </td>
-                            <td className={styles.numCell} style={{ fontWeight: 700 }}>
-                              {formatMoney(c.saldo)}
-                            </td>
-                            <td>
-                              <span
-                                className={`${styles.badge} ${c.paga_por_caja ? styles.badgeCaja : styles.badgeLiquidacion}`}
-                              >
-                                {c.paga_por_caja ? "Caja" : "Liquidación"}
-                              </span>
-                            </td>
-                            <td>
-                              <span
-                                className={`${styles.badge} ${
-                                  c.estado === "en_pago"
-                                    ? styles.badgeEnPago
-                                    : c.estado === "aplicado"
-                                      ? styles.badgeAplicado
-                                      : styles.badgePendiente
-                                }`}
-                              >
-                                {c.estado === "en_pago"
-                                  ? "En pago"
-                                  : c.estado === "aplicado"
-                                    ? "Aplicado"
-                                    : "Pendiente"}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </Card>
+              <span>/</span>
+              <span className={styles.current}>{detalleMedicoNombre}</span>
             </>
           )}
-        </motion.div>
-      </div>
+        </div>
+      )}
+
+      {/* ── Configuración y descargas; debajo, el buscador ───────── */}
+      {!enDetalle && (
+        <>
+          <Cajas>
+            <Caja titulo="Configuración">
+              <label className={styles.filtro}>
+                <span>Origen</span>
+                <select value={origen} onChange={(e) => setOrigen(e.target.value as any)}>
+                  <option value="">Todos</option>
+                  <option value="liquidacion">Liquidación</option>
+                  <option value="caja">Caja</option>
+                </select>
+              </label>
+              <div className={styles.filtro}>
+                <span>Desde</span>
+                <SelectorMes value={desde} onChange={setDesde} />
+              </div>
+              <div className={styles.filtro}>
+                <span>Hasta</span>
+                <SelectorMes value={hasta} onChange={setHasta} />
+              </div>
+              <label className={styles.casilla}>
+                <input
+                  type="checkbox"
+                  checked={incluirFuturos}
+                  onChange={(e) => setIncluirFuturos(e.target.checked)}
+                />
+                Futuros
+              </label>
+            </Caja>
+            {enLista && (
+              <Caja titulo="Descargas">
+                <BotonDescarga formato="pdf" onClick={exportPdf} />
+                <BotonDescarga formato="excel" onClick={exportExcel} />
+              </Caja>
+            )}
+          </Cajas>
+
+          <SearchField
+            placeholder={buscador.placeholder}
+            value={buscador.valor}
+            onChange={(e) => buscador.set(e.target.value)}
+            onClear={() => buscador.set("")}
+            ariaLabel={buscador.label}
+          />
+        </>
+      )}
+
+      {/* ══ PESTAÑA "POR CONCEPTO" ═══════════════════════════════════ */}
+
+      {/* Nivel 1: conceptos */}
+      {tab === "concepto" && nivelConcepto === "lista" && (
+        <>
+          {conceptosError && <div className={styles.errorBanner}>{conceptosError}</div>}
+          <Card className={styles.tableCard}>
+            {conceptosLoading ? (
+              <div className={styles.loadingState}>
+                <Loader2 size={18} className={styles.spin} /> Cargando conceptos...
+              </div>
+            ) : porConcepto.length === 0 ? (
+              <div className={styles.emptyState}>
+                <SearchX size={32} strokeWidth={1.6} />
+                <div className={styles.emptyTitle}>Sin conceptos con deuda</div>
+                <div className={styles.emptyHint}>
+                  Probá ampliar el rango de período o limpiar el buscador.
+                </div>
+              </div>
+            ) : (
+              <div className={styles.tableWrap}>
+                <Tabla className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>Concepto</th>
+                      <th style={{ textAlign: "right" }}>Socios con deuda</th>
+                      <th style={{ textAlign: "right" }}>Cuotas impagas</th>
+                      <th>Período más antiguo</th>
+                      <th style={{ textAlign: "right" }}>Saldo</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {porConcepto.map((item) => (
+                      <tr key={item.descuento_id} onClick={() => abrirConcepto(item)}>
+                        <td>
+                          <span className={styles.conceptCode}>{item.nro_colegio}</span>
+                          {item.nombre}
+                        </td>
+                        <td className={styles.numCell}>{item.medicos_con_deuda}</td>
+                        <td className={styles.numCell}>
+                          {item.cuotas_impagas.toLocaleString("es-AR")}
+                        </td>
+                        <td>{item.periodo_mas_antiguo ?? "—"}</td>
+                        <td className={styles.saldoCell}>
+                          <div className={styles.saldoValue}>{formatMoney(item.saldo)}</div>
+                          {Number(item.saldo_caja) > 0 && (
+                            <div className={styles.saldoCajaChip}>
+                              Caja {formatMoney(item.saldo_caja)}
+                            </div>
+                          )}
+                        </td>
+                        <td className={styles.rowChevron}>
+                          <ChevronRight size={16} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Tabla>
+              </div>
+            )}
+          </Card>
+        </>
+      )}
+
+      {/* Nivel 2: socios adheridos al concepto */}
+      {tab === "concepto" && nivelConcepto === "socios" && conceptoSel && (
+        <>
+          <div className={styles.miniKpiRow}>
+            <div className={styles.miniKpiCard}>
+              <div className={styles.miniKpiLabel}>Saldo del concepto</div>
+              <div className={styles.miniKpiValue}>{formatMoney(conceptoSel.saldo)}</div>
+            </div>
+            <div className={styles.miniKpiCard}>
+              <div className={styles.miniKpiLabel}>De eso, por caja</div>
+              <div className={`${styles.miniKpiValue} ${styles.miniKpiValueCaja}`}>
+                {formatMoney(conceptoSel.saldo_caja)}
+              </div>
+            </div>
+            <div className={styles.miniKpiCard}>
+              <div className={styles.miniKpiLabel}>Socios con deuda</div>
+              <div className={styles.miniKpiValue}>{conceptoSel.medicos_con_deuda}</div>
+            </div>
+            <div className={styles.miniKpiCard}>
+              <div className={styles.miniKpiLabel}>Deuda más antigua</div>
+              <div className={styles.miniKpiValue}>{conceptoSel.periodo_mas_antiguo ?? "—"}</div>
+            </div>
+          </div>
+
+          {medicosError && <div className={styles.errorBanner}>{medicosError}</div>}
+
+          <Card className={styles.tableCard}>
+            {medicosLoading ? (
+              <div className={styles.loadingState}>
+                <Loader2 size={18} className={styles.spin} /> Cargando socios...
+              </div>
+            ) : !medicosPage || medicosPage.items.length === 0 ? (
+              <div className={styles.emptyState}>
+                <SearchX size={32} strokeWidth={1.6} />
+                <div className={styles.emptyTitle}>Sin socios deudores para este concepto</div>
+              </div>
+            ) : (
+              <>
+                <div className={styles.tableWrap}>
+                  <Tabla className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th>Nro. socio</th>
+                        <th>Socio</th>
+                        <th style={{ textAlign: "right" }}>Cuotas impagas</th>
+                        <th>Período más antiguo</th>
+                        <th style={{ textAlign: "right" }}>Atraso</th>
+                        <th style={{ textAlign: "right" }}>Saldo</th>
+                        <th>Origen</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {medicosPage.items.map((m) => (
+                        <tr
+                          key={m.medico_id}
+                          onClick={() => abrirSocioDelConcepto(m.medico_id, m.medico_nombre)}
+                        >
+                          <td style={{ fontFamily: "ui-monospace, monospace" }}>{m.nro_socio}</td>
+                          <td>
+                            <strong>{m.medico_nombre}</strong>
+                            {m.pagador_nombre && (
+                              <div className={styles.pagadorHint}>Paga: {m.pagador_nombre}</div>
+                            )}
+                          </td>
+                          <td className={styles.numCell}>{m.cuotas_impagas}</td>
+                          <td>{m.periodo_mas_antiguo ?? "—"}</td>
+                          <td
+                            className={styles.numCell}
+                            style={{
+                              color: m.meses_atraso >= 12 ? "#b91c1c" : "#b45309",
+                              fontWeight: 600,
+                            }}
+                          >
+                            {m.meses_atraso} meses
+                          </td>
+                          <td className={styles.numCell} style={{ fontWeight: 700 }}>
+                            {formatMoney(m.saldo)}
+                          </td>
+                          <td>
+                            <span
+                              className={`${styles.badge} ${m.paga_por_caja ? styles.badgeCaja : styles.badgeLiquidacion}`}
+                            >
+                              {m.paga_por_caja ? "Caja" : "Liquidación"}
+                            </span>
+                          </td>
+                          <td className={styles.rowChevron}>
+                            <ChevronRight size={16} />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Tabla>
+                </div>
+                <div className={styles.paginationBar}>
+                  <button
+                    onClick={() => setMedicosPageNum((p) => Math.max(1, p - 1))}
+                    disabled={medicosPageNum <= 1 || medicosLoading}
+                  >
+                    ← Anterior
+                  </button>
+                  <span>
+                    Página {medicosPageNum} de {medicosLastPage} · {medicosPage.total} socios
+                  </span>
+                  <button
+                    onClick={() => setMedicosPageNum((p) => Math.min(medicosLastPage, p + 1))}
+                    disabled={medicosPageNum >= medicosLastPage || medicosLoading}
+                  >
+                    Siguiente →
+                  </button>
+                </div>
+              </>
+            )}
+          </Card>
+        </>
+      )}
+
+      {/* ══ PESTAÑA "POR SOCIO" ══════════════════════════════════════ */}
+
+      {tab === "socio" && nivelSocio === "lista" && (
+        <>
+          {sociosError && <div className={styles.errorBanner}>{sociosError}</div>}
+          <Card className={styles.tableCard}>
+            {sociosLoading ? (
+              <div className={styles.loadingState}>
+                <Loader2 size={18} className={styles.spin} /> Cargando socios...
+              </div>
+            ) : !sociosPage || sociosPage.items.length === 0 ? (
+              <div className={styles.emptyState}>
+                <SearchX size={32} strokeWidth={1.6} />
+                <div className={styles.emptyTitle}>Sin socios con deuda</div>
+                <div className={styles.emptyHint}>
+                  Probá ampliar el rango de período o limpiar el buscador.
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className={styles.tableWrap}>
+                  <Tabla className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th>Nro. socio</th>
+                        <th>Socio</th>
+                        <th style={{ textAlign: "right" }}>Conceptos</th>
+                        <th style={{ textAlign: "right" }}>Cuotas impagas</th>
+                        <th>Período más antiguo</th>
+                        <th style={{ textAlign: "right" }}>Atraso</th>
+                        <th style={{ textAlign: "right" }}>Saldo</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sociosPage.items.map((s) => (
+                        <tr
+                          key={s.medico_id}
+                          onClick={() => abrirSocio(s.medico_id, s.medico_nombre)}
+                        >
+                          <td style={{ fontFamily: "ui-monospace, monospace" }}>{s.nro_socio}</td>
+                          <td>
+                            <strong>{s.medico_nombre}</strong>
+                          </td>
+                          <td className={styles.numCell}>{s.conceptos_con_deuda}</td>
+                          <td className={styles.numCell}>{s.cuotas_impagas}</td>
+                          <td>{s.periodo_mas_antiguo ?? "—"}</td>
+                          <td
+                            className={styles.numCell}
+                            style={{
+                              color: s.meses_atraso >= 12 ? "#b91c1c" : "#b45309",
+                              fontWeight: 600,
+                            }}
+                          >
+                            {s.meses_atraso} meses
+                          </td>
+                          <td className={styles.saldoCell}>
+                            <div className={styles.saldoValue}>{formatMoney(s.saldo)}</div>
+                            {Number(s.saldo_caja) > 0 && (
+                              <div className={styles.saldoCajaChip}>
+                                Caja {formatMoney(s.saldo_caja)}
+                              </div>
+                            )}
+                          </td>
+                          <td className={styles.rowChevron}>
+                            <ChevronRight size={16} />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Tabla>
+                </div>
+                <div className={styles.paginationBar}>
+                  <button
+                    onClick={() => setSociosPageNum((p) => Math.max(1, p - 1))}
+                    disabled={sociosPageNum <= 1 || sociosLoading}
+                  >
+                    ← Anterior
+                  </button>
+                  <span>
+                    Página {sociosPageNum} de {sociosLastPage} · {sociosPage.total} socios
+                  </span>
+                  <button
+                    onClick={() => setSociosPageNum((p) => Math.min(sociosLastPage, p + 1))}
+                    disabled={sociosPageNum >= sociosLastPage || sociosLoading}
+                  >
+                    Siguiente →
+                  </button>
+                </div>
+              </>
+            )}
+          </Card>
+        </>
+      )}
+
+      {/* ══ DETALLE DE UN SOCIO (las dos pestañas) ═══════════════════ */}
+
+      {enDetalle && (
+        <>
+          <div className={styles.miniKpiRow}>
+            <div className={styles.miniKpiCard}>
+              <div className={styles.miniKpiLabel}>
+                {detalleConceptoId ? "Saldo en este concepto" : "Saldo total del socio"}
+              </div>
+              <div className={styles.miniKpiValue}>{formatMoney(detalle?.saldo_total)}</div>
+            </div>
+            <div className={styles.miniKpiCard}>
+              <div className={styles.miniKpiLabel}>Nro. socio</div>
+              <div className={styles.miniKpiValue}>{detalle?.nro_socio ?? "—"}</div>
+            </div>
+            <div className={styles.miniKpiCard}>
+              <div className={styles.miniKpiLabel}>Cuotas impagas</div>
+              <div className={styles.miniKpiValue}>{detalle?.cuotas.length ?? "—"}</div>
+            </div>
+          </div>
+
+          {detalleError && <div className={styles.errorBanner}>{detalleError}</div>}
+
+          <Card className={styles.tableCard}>
+            {detalleLoading ? (
+              <div className={styles.loadingState}>
+                <Loader2 size={18} className={styles.spin} /> Cargando detalle...
+              </div>
+            ) : !detalle || detalle.cuotas.length === 0 ? (
+              <div className={styles.emptyState}>
+                <AlertCircle size={32} strokeWidth={1.6} />
+                <div className={styles.emptyTitle}>Sin cuotas impagas para este socio</div>
+              </div>
+            ) : (
+              <div className={styles.tableWrap}>
+                <Tabla className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>Concepto</th>
+                      <th>Período</th>
+                      <th style={{ textAlign: "right" }}>Monto</th>
+                      <th style={{ textAlign: "right" }}>Aplicado</th>
+                      <th style={{ textAlign: "right" }}>Saldo</th>
+                      <th>Origen</th>
+                      <th>Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {detalle.cuotas.map((c) => (
+                      <tr key={c.deduccion_id} style={{ cursor: "default" }}>
+                        <td>
+                          <span className={styles.conceptCode}>{c.nro_colegio}</span>
+                          {c.descuento_nombre}
+                        </td>
+                        <td>{monthLabel(c.mes_aplicar, c.anio_aplicar)}</td>
+                        <td className={styles.numCell}>{formatMoney(c.calculado_total)}</td>
+                        <td className={styles.numCell} style={{ color: "#94a3b8" }}>
+                          {formatMoney(c.monto_aplicado)}
+                        </td>
+                        <td className={styles.numCell} style={{ fontWeight: 700 }}>
+                          {formatMoney(c.saldo)}
+                        </td>
+                        <td>
+                          <span
+                            className={`${styles.badge} ${c.paga_por_caja ? styles.badgeCaja : styles.badgeLiquidacion}`}
+                          >
+                            {c.paga_por_caja ? "Caja" : "Liquidación"}
+                          </span>
+                        </td>
+                        <td>
+                          <span
+                            className={`${styles.badge} ${
+                              c.estado === "en_pago"
+                                ? styles.badgeEnPago
+                                : c.estado === "aplicado"
+                                  ? styles.badgeAplicado
+                                  : styles.badgePendiente
+                            }`}
+                          >
+                            {c.estado === "en_pago"
+                              ? "En pago"
+                              : c.estado === "aplicado"
+                                ? "Aplicado"
+                                : "Pendiente"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Tabla>
+              </div>
+            )}
+          </Card>
+        </>
+      )}
     </div>
   );
 };

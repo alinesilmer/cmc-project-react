@@ -4,7 +4,6 @@ import { ClipboardCheck, Eye, Handshake, HeartHandshake, Lightbulb, Network, Shi
 
 type Tarjeta = { icono: LucideIcon; titulo: string; texto: string };
 
-/** Qué hace el Colegio, en un verbo cada cosa. */
 export const PILARES: Tarjeta[] = [
   { icono: HeartHandshake, titulo: "Acompañamos", texto: "Cerca de cada profesional, en su día a día." },
   { icono: ClipboardCheck, titulo: "Gestionamos", texto: "Trámites y servicios, más simples." },

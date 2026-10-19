@@ -29,9 +29,7 @@ export default function ConsultaValores() {
   const [selectedNom, setSelectedNom] = useState<NomencladorOut | null>(null);
   const nomDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Vía de realización. Solo tiene efecto real en códigos de cirugía asociados a un
-  // galeno de 7/10 niveles: en el resto, el listado cae silenciosamente a "T" (ver
-  // aviso de degradado más abajo).
+  // Vía de realización. Solo tiene efecto real en códigos de cirugía asociados a un galeno de 7/10 niveles: en el resto.
   const [via, setVia] = useState<ViaPractica>("T");
 
   // Query result

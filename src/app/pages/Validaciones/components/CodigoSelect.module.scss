@@ -8,11 +8,11 @@
   display: flex;
   align-items: center;
   gap: $spacing-2;
-  padding: 0 $spacing-3;
-  height: 40px;
+  padding: 0 $spacing-4;
+  height: 3.25rem;
   background: $white;
-  border: 1px solid $gray-300;
-  border-radius: $border-radius-md;
+  border: 1.5px solid $gray-300;
+  border-radius: $radio-lg;
   transition: border-color 0.18s, box-shadow 0.18s;
 
   &:focus-within {
@@ -46,8 +46,8 @@
   outline: none;
   background: transparent;
   font-family: inherit;
-  font-size: $font-size-base;
-  color: $gray-800;
+  font-size: $font-size-lg;
+  color: $gray-900;
 
   &::placeholder {
     color: $gray-400;
@@ -75,13 +75,13 @@
 .list {
   position: absolute;
   z-index: 30;
-  top: calc(100% + 4px);
+  top: calc(100% + 0.25rem);
   left: 0;
   right: 0;
-  max-height: 288px;
+  max-height: 18rem;
   overflow-y: auto;
   margin: 0;
-  padding: 4px;
+  padding: 0.25rem;
   list-style: none;
   background: $white;
   border: 1px solid $gray-200;

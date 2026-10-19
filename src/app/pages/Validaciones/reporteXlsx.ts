@@ -1,14 +1,11 @@
-// Utilidades compartidas para leer los reportes de facturación que mandan las
-// obras sociales (Prevención Salud, Swiss Medical).
-//
-// Son planillas armadas por la obra social, no por nosotros: los encabezados
-// cambian de acento, de mayúsculas y de posición entre una emisión y otra, y
-// algunas traen hojas de resumen antes que las de datos. Todo lo que resuelve
-// eso vive acá una sola vez; lo que cambia de un reporte a otro es qué columnas
-// se buscan y qué se hace con cada fila, y eso queda en el parser de cada una.
+import { dosDigitos } from "@/app/pages/Validaciones/utiles";
+import { esFechaValida } from "@/app/pages/Validaciones/utiles";
+import { fechaCorta } from "@/app/pages/Validaciones/utiles";
+import { fechaISO } from "@/app/pages/Validaciones/utiles";
 
-/** Una columna buscada: la clave con la que la conoce el parser y los títulos
- * que la obra social pudo haber escrito, ya normalizados. */
+// Utilidades compartidas para leer los reportes de facturación que mandan las obras sociales (Prevención Salud, Swiss Medical).
+
+/** Una columna buscada: la clave con la que la conoce el parser y los títulos que la obra social pudo haber escrito, ya normalizados. */
 export interface ColumnaSpec<K extends string> {
   key: K;
   alias: string[];
@@ -24,11 +21,8 @@ export interface Encabezado<K extends string> {
   columnas: Partial<Record<K, number>>;
 }
 
-/** Mayúsculas sin acentos, paréntesis ni puntuación: así "Práctica(s)
- * Realizada(s)", "PRACTICAS REALIZADAS" y "practicas realizadas" caen todas en
- * el mismo alias. Los guiones bajos de los títulos de Swiss ("Razón_Social")
- * cuentan como separador. */
-export const normalizarTitulo = (valor: unknown): string =>
+/** Mayúsculas sin acentos, paréntesis ni puntuación: así "Práctica(s) Realizada(s)", "PRACTICAS REALIZADAS" y "practicas realizadas" caen todas en el mismo alias. */
+const normalizarTitulo = (valor: unknown): string =>
   String(valor ?? "")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
@@ -37,33 +31,13 @@ export const normalizarTitulo = (valor: unknown): string =>
     .replace(/\s+/g, " ")
     .trim()
     .toUpperCase();
-
-const dosDigitos = (n: number) => String(n).padStart(2, "0");
-
-const esFechaValida = (d: Date) => !Number.isNaN(d.getTime());
-
-/** Las celdas de fecha de Excel llegan a medianoche UTC, así que se leen con
- * los getters UTC: con los locales, en un huso al oeste de Greenwich —el
- * nuestro— toda fecha se corre un día para atrás. */
-const fechaCorta = (d: Date) =>
-  `${dosDigitos(d.getUTCDate())}/${dosDigitos(d.getUTCMonth() + 1)}/${d.getUTCFullYear()}`;
-
-const fechaISO = (d: Date) =>
-  `${d.getUTCFullYear()}-${dosDigitos(d.getUTCMonth() + 1)}-${dosDigitos(d.getUTCDate())}`;
-
-/** Texto de una celda, con la fecha ya formateada si vino como fecha.
- *
- * Recorta sólo las puntas: los reportes vienen con las columnas rellenadas a
- * ancho fijo ("42013200  ", "W-3972    "), pero el interior no se toca porque
- * hay nombres con doble espacio en los datos reales. */
+/** Texto de una celda, con la fecha ya formateada si vino como fecha. */
 export const textoCelda = (valor: unknown): string =>
   valor instanceof Date && esFechaValida(valor)
     ? fechaCorta(valor)
     : String(valor ?? "").trim();
 
-/** Una fecha leída de la planilla, en los dos formatos que hacen falta:
- * `corta` para mostrar y `iso` para ordenar y comparar. `iso` queda en "" si la
- * celda no era una fecha reconocible. */
+/** Una fecha leída de la planilla, en los dos formatos que hacen falta: `corta` para mostrar y `iso` para ordenar y comparar. */
 export interface FechaCelda {
   corta: string;
   iso: string;
@@ -71,9 +45,7 @@ export interface FechaCelda {
 
 const DD_MM_AAAA = /^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/;
 
-/** Acepta las tres formas en las que llegan las fechas: celda de fecha de
- * Excel, "20/09/2026" y "20/09/2026   16:05:48" (Swiss manda la hora pegada en
- * la misma celda, separada por relleno). */
+/** Acepta las tres formas en las que llegan las fechas: celda de fecha de Excel, "20/09/2026" y "20/09/2026 16:05:48". */
 export const fechaDeCelda = (valor: unknown): FechaCelda => {
   if (valor instanceof Date && esFechaValida(valor)) {
     return { corta: fechaCorta(valor), iso: fechaISO(valor) };
@@ -90,10 +62,7 @@ export const fechaDeCelda = (valor: unknown): FechaCelda => {
   };
 };
 
-/** Número de una celda que puede venir como número, como texto con coma
- * decimal o vacía. Devuelve 0 para lo que no se pueda leer: estos reportes
- * traen importes y cantidades, y un NaN propagado a un total es peor que un 0
- * visible. */
+/** Número de una celda que puede venir como número, como texto con coma decimal o vacía. */
 export const numeroDeCelda = (valor: unknown): number => {
   if (typeof valor === "number") return Number.isFinite(valor) ? valor : 0;
   const limpio = String(valor ?? "")
@@ -134,8 +103,7 @@ export type Libro = {
   grilla: (hoja: string) => unknown[][];
 };
 
-/** Abre el archivo y devuelve sus hojas. `xlsx` se importa acá adentro para que
- * no entre al bundle de quien nunca sube un reporte. */
+/** Abre el archivo y devuelve sus hojas. */
 export async function abrirLibro(file: File): Promise<Libro> {
   const XLSX = await import("xlsx");
   const wb = XLSX.read(await file.arrayBuffer(), {
@@ -157,14 +125,7 @@ export async function abrirLibro(file: File): Promise<Libro> {
   };
 }
 
-/**
- * Busca en qué hoja y en qué fila están los títulos.
- *
- * Recorre las hojas en orden y se queda con la primera fila que reconozca al
- * menos `minColumnas` de las buscadas, en lugar de asumir que los datos están
- * en la primera hoja y en la primera fila: Prevención Salud manda dos hojas sin
- * orden garantizado y algunos reportes arrancan con filas de membrete.
- */
+/** Busca en qué hoja y en qué fila están los títulos. */
 export function ubicarEncabezado<K extends string>(
   libro: Libro,
   columnas: ColumnaSpec<K>[],

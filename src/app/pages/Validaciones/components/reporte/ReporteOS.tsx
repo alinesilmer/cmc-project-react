@@ -1,9 +1,10 @@
 import { useRef } from "react";
-import { Link } from "react-router-dom";
-import { AlertTriangle, ArrowLeft, FileSpreadsheet, Trash2, Upload } from "lucide-react";
+import { AlertTriangle, FileSpreadsheet, Trash2, Upload } from "lucide-react";
 import type { ReactNode } from "react";
 
+import BackButton from "@/app/components/ui/BackButton/BackButton";
 import Button from "@/app/components/ui/Button/Button";
+import Franja from "@/app/components/layout/Franja/Franja";
 import type { EstadoReporte } from "./useReporteConPadron";
 import s from "./reporte.module.scss";
 
@@ -17,7 +18,6 @@ export interface DatoResumen {
 
 interface Props<T> {
   titulo: string;
-  subtitulo: string;
   /** Qué archivo se espera, para el estado vacío. */
   ayuda: string;
   estado: EstadoReporte<T>;
@@ -40,18 +40,9 @@ interface Props<T> {
   acciones?: ReactNode;
 }
 
-/**
- * Andamiaje de las pantallas que leen un reporte de facturación de una obra
- * social: volver, encabezado, carga del archivo, avisos, resumen y estado
- * vacío. La tabla la pone cada pantalla, porque las columnas no se parecen.
- *
- * Existe porque Prevención Salud y Swiss Medical hacen lo mismo con archivos
- * distintos; todo lo que no sea la tabla y el parser se resuelve una sola vez
- * acá.
- */
+/** Andamiaje de las pantallas que leen un reporte de facturación de una obra social: franja, volver, carga del archivo, avisos y resumen. */
 export default function ReporteOS<T>({
   titulo,
-  subtitulo,
   ayuda,
   estado,
   detalleArchivo,
@@ -66,8 +57,7 @@ export default function ReporteOS<T>({
 }: Props<T>) {
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // El input es no controlado: si no se le borra el valor, volver a elegir el
-  // mismo archivo no dispara `change` y parece que la pantalla se colgó.
+  // El input es no controlado: si no se le borra el valor.
   const resetInput = () => {
     if (inputRef.current) inputRef.current.value = "";
   };
@@ -79,19 +69,12 @@ export default function ReporteOS<T>({
 
   return (
     <div className={s.container}>
-      <Link to={volverA.to} className={s.back}>
-        <ArrowLeft size={16} /> {volverA.label}
-      </Link>
+      <Franja titulo={titulo} icono={FileSpreadsheet} />
 
-      <header className={s.header}>
-        <FileSpreadsheet size={32} className={s.headerIcon} />
-        <div>
-          <h1 className={s.title}>{titulo}</h1>
-          <p className={s.subtitle}>{subtitulo}</p>
-        </div>
-      </header>
+      <BackButton label={volverA.label} to={volverA.to} />
 
-      <div className={s.uploader}>
+      {/* La zona de carga es también el estado vacío: mientras no hay archivo dice qué columnas tiene que traer; con archivo, cuál se leyó. */}
+      <div className={`${s.uploader} ${estado.archivo ? s.uploaderLleno : ""}`}>
         <input
           ref={inputRef}
           type="file"
@@ -103,26 +86,39 @@ export default function ReporteOS<T>({
           }}
         />
 
+        <span className={s.uploaderIcono}>
+          <FileSpreadsheet size={30} aria-hidden="true" />
+        </span>
+
+        <div className={s.uploaderTexto}>
+          {estado.archivo ? (
+            <>
+              <strong>{estado.archivo}</strong>
+              {detalleArchivo && <span>{detalleArchivo}</span>}
+            </>
+          ) : (
+            <>
+              <strong>Subí el reporte</strong>
+              <span>{ayuda}</span>
+            </>
+          )}
+        </div>
+
         <Button
           type="button"
           variant="primary"
+          size="lg"
           isLoading={estado.leyendo}
           onClick={() => inputRef.current?.click()}
           leftIcon={<Upload size={18} />}
         >
-          Subir reporte
+          {estado.archivo ? "Cambiar" : "Elegir archivo"}
         </Button>
 
         {estado.archivo && (
-          <>
-            <span className={s.archivo}>
-              {estado.archivo}
-              {detalleArchivo && ` · ${detalleArchivo}`}
-            </span>
-            <button type="button" className={s.limpiar} onClick={limpiar}>
-              <Trash2 size={15} /> Quitar
-            </button>
-          </>
+          <button type="button" className={s.limpiar} onClick={limpiar}>
+            <Trash2 size={16} /> Quitar
+          </button>
         )}
       </div>
 
@@ -161,13 +157,6 @@ export default function ReporteOS<T>({
             </p>
           )}
         </>
-      )}
-
-      {!hayFilas && !estado.error && (
-        <div className={s.empty}>
-          <FileSpreadsheet size={30} />
-          <p>{ayuda}</p>
-        </div>
       )}
     </div>
   );

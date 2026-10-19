@@ -1,13 +1,22 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, ClipboardPlus, Pencil, Plus, Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ClipboardPlus,
+  Pencil,
+  Plus,
+  Stethoscope,
+} from "lucide-react";
 
 const PAGE_SIZE = 20;
 import ActionModal from "@/app/components/ui/ActionModal/ActionModal";
+import { detalleDeError } from "@/app/shared/lib/httpErrors";
+import { createEspecialidad, updateEspecialidad } from "./especialidades.api";
 import {
-  getEspecialidades,
-  createEspecialidad,
-  updateEspecialidad,
-} from "./especialidades.api";
+  ESPECIALIDADES_KEY,
+  useCatalogoEspecialidades,
+} from "./useCatalogoEspecialidades";
 import {
   EMPTY_ESPECIALIDAD_FORM,
   validateEspecialidadForm,
@@ -19,68 +28,47 @@ import type {
   EspecialidadFormData,
   EspecialidadFormErrors,
 } from "./especialidades.types";
+import Franja from "@/app/components/layout/Franja/Franja";
 import s from "./EspecialidadesPage.module.scss";
 import Button from "@/app/components/ui/Button/Button";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
+import SearchField from "@/app/components/ui/SearchField/SearchField";
+import FieldError from "@/app/components/ui/FieldError/FieldError";
 
 // ─── Field error helper ───────────────────────────────────────────────────────
-
-function FieldError({ msg }: { msg?: string }) {
-  if (!msg) return null;
-  return (
-    <span className={s.fieldError} role="alert">
-      {msg}
-    </span>
-  );
-}
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function EspecialidadesPage() {
   // List state
-  const [items, setItems] = useState<Especialidad[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const consulta = useCatalogoEspecialidades();
+  const loading = consulta.isPending;
+  const loadError = consulta.isError
+    ? detalleDeError(
+        consulta.error,
+        "No se pudieron cargar las especialidades.",
+      )
+    : null;
+  // Se ordena una copia: la caché es compartida con los combos del Nomenclador.
+  const items = useMemo(
+    () =>
+      [...(consulta.data ?? [])].sort((a, b) =>
+        a.nombre.localeCompare(b.nombre, "es"),
+      ),
+    [consulta.data],
+  );
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Especialidad | null>(null);
-  const [formData, setFormData] = useState<EspecialidadFormData>(EMPTY_ESPECIALIDAD_FORM);
+  const [formData, setFormData] = useState<EspecialidadFormData>(
+    EMPTY_ESPECIALIDAD_FORM,
+  );
   const [formErrors, setFormErrors] = useState<EspecialidadFormErrors>({});
   const [saveError, setSaveError] = useState<string | null>(null);
-
-  const abortRef = useRef<AbortController | null>(null);
-
-  // ── Load list ────────────────────────────────────────────────────────────────
-  useEffect(() => {
-    abortRef.current?.abort();
-    abortRef.current = new AbortController();
-    let cancelled = false;
-
-    setLoading(true);
-    setLoadError(null);
-
-    getEspecialidades()
-      .then((data) => {
-        if (!cancelled)
-          setItems(data.sort((a, b) => a.nombre.localeCompare(b.nombre, "es")));
-      })
-      .catch((err) => {
-        if (!cancelled)
-          setLoadError(
-            err?.response?.data?.detail ?? err?.message ?? "No se pudieron cargar las especialidades."
-          );
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-      abortRef.current?.abort();
-    };
-  }, []);
 
   // ── Client-side search ───────────────────────────────────────────────────────
   const filtered = useMemo(() => {
@@ -90,7 +78,7 @@ export default function EspecialidadesPage() {
       (it) =>
         it.nombre.toLowerCase().includes(q) ||
         String(it.id).includes(q) ||
-        String(it.id_colegio_espe).includes(q)
+        String(it.id_colegio_espe).includes(q),
     );
   }, [items, searchTerm]);
 
@@ -142,21 +130,24 @@ export default function EspecialidadesPage() {
     try {
       if (editing) {
         const updated = await updateEspecialidad(editing.id, payload);
-        setItems((prev) =>
-          prev
-            .map((it) => (it.id === updated.id ? updated : it))
-            .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"))
+        queryClient.setQueryData<Especialidad[]>(ESPECIALIDADES_KEY, (prev) =>
+          prev?.map((it) => (it.id === updated.id ? updated : it)),
         );
       } else {
         const created = await createEspecialidad(payload);
-        setItems((prev) =>
-          [...prev, created].sort((a, b) => a.nombre.localeCompare(b.nombre, "es"))
+        queryClient.setQueryData<Especialidad[]>(
+          ESPECIALIDADES_KEY,
+          (prev) => prev && [...prev, created],
         );
       }
+      // La caché se corrige al instante y además se vuelve a pedir: si el listado no había llegado a cargar.
+      void queryClient.invalidateQueries({ queryKey: ESPECIALIDADES_KEY });
       // On success ActionModal closes automatically
     } catch (err: any) {
       setSaveError(
-        err?.response?.data?.detail ?? err?.message ?? "Error al guardar. Intentá nuevamente."
+        err?.response?.data?.detail ??
+          err?.message ??
+          "Error al guardar. Intentá nuevamente.",
       );
       throw err; // re-throw → ActionModal stays open
     }
@@ -165,24 +156,7 @@ export default function EspecialidadesPage() {
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <div className={s.container}>
-      {/* Header */}
-      <div className={s.header}>
-        <div className={s.headerLeft}>
-          <ClipboardPlus size={32} className={s.headerIcon} aria-hidden="true" />
-          <div>
-            <h1 className={s.title}>Especialidades</h1>
-            <p className={s.subtitle}>
-              {loading ? "Cargando…" : `${items.length} especialidad${items.length !== 1 ? "es" : ""} registrada${items.length !== 1 ? "s" : ""}`}
-            </p>
-          </div>
-        </div>
-        <div className={s.headerActions}>
-          <Button variant="secondary" size="sm" onClick={openCreate}>
-            <Plus size={16} />
-            Nueva especialidad
-          </Button>
-        </div>
-      </div>
+      <Franja titulo="Especialidades" icono={Stethoscope} />
 
       {/* Load error */}
       {loadError && (
@@ -193,17 +167,16 @@ export default function EspecialidadesPage() {
 
       {/* Search */}
       <div className={s.searchRow}>
-        <div className={s.searchWrap}>
-          <Search size={16} className={s.searchIcon} aria-hidden="true" />
-          <input
-            type="search"
-            className={s.searchInput}
-            placeholder="Buscar por nombre, ID…"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            aria-label="Buscar especialidades"
-          />
-        </div>
+        <SearchField
+          placeholder="Buscar por nombre, ID…"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          ariaLabel="Buscar especialidades"
+        />
+        <Button variant="secondary" size="sm" onClick={openCreate}>
+          <Plus size={16} />
+          Nueva especialidad
+        </Button>
       </div>
 
       {/* Table */}
@@ -215,7 +188,11 @@ export default function EspecialidadesPage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className={s.emptyState}>
-            <ClipboardPlus size={40} className={s.emptyIcon} aria-hidden="true" />
+            <ClipboardPlus
+              size={40}
+              className={s.emptyIcon}
+              aria-hidden="true"
+            />
             <p>
               {searchTerm.trim()
                 ? "No se encontraron especialidades con ese criterio."
@@ -223,7 +200,7 @@ export default function EspecialidadesPage() {
             </p>
           </div>
         ) : (
-          <table className={s.table}>
+          <Tabla>
             <thead>
               <tr>
                 <th>ID Colegio</th>
@@ -252,7 +229,7 @@ export default function EspecialidadesPage() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </Tabla>
         )}
       </div>
 

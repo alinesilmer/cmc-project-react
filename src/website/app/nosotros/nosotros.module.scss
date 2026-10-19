@@ -1,11 +1,7 @@
 @use "@/website/styles/all.scss" as *;
 
-$crema: #f7e9aa;
 
-// Los tres verbos dentro de la cabecera: uno debajo del otro, porque la
-// tarjeta comparte el ancho con el panel azul y en columnas no entran.
-// `ul` para ganarle al `margin: 0` del componente sin depender del orden en
-// que se carguen los estilos.
+// Los tres verbos dentro de la cabecera: uno debajo del otro.
 ul.pilares {
   margin-top: 8px;
 }
@@ -65,26 +61,26 @@ ul.pilares {
     color: $white;
 
     p {
-      color: rgba(255, 255, 255, 0.85);
+      color: rgba($white, 0.85);
     }
 
     .propositoIcono {
-      background: $crema;
+      background: $primary-yellow;
       color: $primary-blue-dark;
     }
   }
 
   &:last-child {
-    background: #fdf8e4;
+    background: $tono-amarillo-50-b;
     color: $primary-blue-dark;
 
     p {
-      color: #374151;
+      color: $ad-texto;
     }
 
     .propositoIcono {
       background: $primary-blue;
-      color: $crema;
+      color: $primary-yellow;
     }
   }
 

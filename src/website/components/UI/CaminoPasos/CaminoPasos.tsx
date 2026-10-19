@@ -14,11 +14,7 @@ type Props = {
 /** Tiempo entre un paso y el siguiente. */
 const PAUSA = 0.45;
 
-/**
- * Pasos como un camino: la línea se dibuja y cada paso se enciende al llegar.
- * El último queda latiendo, porque es a donde se llega. Cuenta un trámite con
- * una palabra por paso en vez de un párrafo.
- */
+/** Pasos como un camino: la línea se dibuja y cada paso se enciende al llegar. */
 export default function CaminoPasos({ pasos, descripcion }: Props) {
   const reducido = useReducedMotion();
 

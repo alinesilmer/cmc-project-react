@@ -28,11 +28,7 @@ Párrafo 2 (línea en blanco entre párrafos).
 - Item 2
 **negrita**, *cursiva*, [link](https://...)`;
 
-/**
- * Editor del cuerpo de una publicación, con barra de formato y vista previa.
- * La vista previa usa el mismo componente que la página pública, así el
- * editor ve exactamente lo que se va a publicar.
- */
+/** Editor del cuerpo de una publicación, con barra de formato y vista previa. */
 export default function EditorMarkdown({ id, valor, onCambio }: Props) {
   const [vistaPrevia, setVistaPrevia] = useState(false);
   const area = useRef<HTMLTextAreaElement>(null);
@@ -63,13 +59,13 @@ export default function EditorMarkdown({ id, valor, onCambio }: Props) {
 
       <div className={styles.toolbar} role="toolbar" aria-label="Formato">
         {FORMATOS.map((f) => (
-          <button key={f.etiqueta} type="button" onClick={() => envolver(f.antes, f.despues)}>
+          <Button variant="plano" key={f.etiqueta} type="button" onClick={() => envolver(f.antes, f.despues)}>
             {f.etiqueta}
-          </button>
+          </Button>
         ))}
-        <button type="button" onClick={agregarEnlace}>
+        <Button variant="plano" type="button" onClick={agregarEnlace}>
           Enlace
-        </button>
+        </Button>
       </div>
 
       <textarea

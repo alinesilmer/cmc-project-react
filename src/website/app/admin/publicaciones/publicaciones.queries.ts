@@ -5,11 +5,7 @@ export type FiltroTipo = TipoPublicacion | "Todos";
 
 export const publicacionesAdminKey = (tipo: FiltroTipo) => ["admin", "publicaciones", tipo] as const;
 
-/**
- * Después de crear, editar o borrar: se invalida el listado del administrador
- * y también el del sitio, para que quien tenga las dos pestañas abiertas vea
- * el cambio sin recargar.
- */
+/** Después de crear, editar o borrar: se invalida el listado del administrador y también el del sitio. */
 export function refrescarPublicaciones(queryClient: QueryClient): Promise<void[]> {
   return Promise.all([
     queryClient.invalidateQueries({ queryKey: ["admin", "publicaciones"] }),

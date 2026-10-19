@@ -1,7 +1,5 @@
 @use "@/website/styles/all.scss" as *;
 
-$borde: #e5e7eb;
-$suave: #f1f5fb;
 
 .documentos {
   display: flex;
@@ -16,7 +14,7 @@ $suave: #f1f5fb;
   width: 40px;
   height: 40px;
   border-radius: 6px;
-  background: $suave;
+  background: $fondo-suave;
   color: $primary-blue;
 }
 
@@ -31,7 +29,7 @@ $suave: #f1f5fb;
 }
 
 .pdf {
-  border: 1px solid $borde;
+  border: 1px solid $borde-suave;
   border-radius: 10px;
   overflow: hidden;
 }
@@ -42,8 +40,8 @@ $suave: #f1f5fb;
   align-items: center;
   gap: 12px 14px;
   padding: 12px 14px;
-  border-bottom: 1px solid $borde;
-  background: #fafbfc;
+  border-bottom: 1px solid $borde-suave;
+  background: $tono-azul-50-c;
 }
 
 .pdfAcciones {
@@ -76,7 +74,7 @@ $suave: #f1f5fb;
 .sinVista {
   margin: 0;
   padding: 24px;
-  color: #6b7280;
+  color: $texto-gris;
 
   a {
     color: $primary-blue;
@@ -122,13 +120,13 @@ $suave: #f1f5fb;
   align-items: center;
   gap: 14px;
   padding: 10px 12px;
-  border: 1px solid $borde;
+  border: 1px solid $borde-suave;
   border-radius: 8px;
   transition: border-color 0.15s ease, background 0.15s ease;
 
   &:hover {
     border-color: rgba($primary-blue, 0.35);
-    background: #fafbfc;
+    background: $tono-azul-50-c;
   }
 
   .nombre {
@@ -158,6 +156,6 @@ $suave: #f1f5fb;
 
   &:hover,
   &:focus-visible {
-    background: $suave;
+    background: $fondo-suave;
   }
 }

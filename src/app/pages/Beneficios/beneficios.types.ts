@@ -1,6 +1,4 @@
 // ─── Entity ───────────────────────────────────────────────────────────────────
-import { hoyISO } from "@/app/shared/lib/fechas";
-
 export interface Beneficio {
   id: number;
   titulo: string;
@@ -15,8 +13,7 @@ export interface Beneficio {
   updated_at: string;
 }
 
-/** Paleta curada para el acento de la tarjeta. Se guarda el hex; `null` = sin
- *  color (la app usa su color por defecto). Mantener legible sobre texto claro. */
+/** Paleta curada para el acento de la tarjeta. */
 export const COLOR_PRESETS: { label: string; value: string }[] = [
   { label: "Azul", value: "#2563EB" },
   { label: "Turquesa", value: "#0D9488" },
@@ -30,9 +27,7 @@ export const COLOR_PRESETS: { label: string; value: string }[] = [
 
 const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
 
-/** Espejo de CATEGORIAS_BENEFICIO en app/db/models/beneficios.py.
- *  El backend valida contra esa lista: si se agrega una, hay que agregarla acá
- *  (o leerla de GET /api/beneficios/categorias, que devuelve exactamente esto). */
+/** Espejo de CATEGORIAS_BENEFICIO en app/db/models/beneficios.py. */
 export const CATEGORIAS_BENEFICIO = [
   "Salud",
   "Gastronomía",
@@ -57,8 +52,7 @@ export interface BeneficioCreatePayload {
   activo: boolean;
 }
 
-/** PATCH parcial — se manda el objeto completo del form, el backend sólo aplica
- *  las claves presentes. */
+/** PATCH parcial — se manda el objeto completo del form, el backend sólo aplica las claves presentes. */
 export type BeneficioUpdatePayload = Partial<BeneficioCreatePayload>;
 
 // ─── Form (todo string mientras se edita) ─────────────────────────────────────
@@ -157,16 +151,3 @@ export function beneficioToForm(item: Beneficio): BeneficioFormData {
   };
 }
 
-/** DD/MM/AAAA sin construir un Date (evita el corrimiento por zona horaria). */
-export function formatFecha(iso: string | null): string {
-  if (!iso) return "—";
-  const [y, m, d] = iso.split("-");
-  return y && m && d ? `${d}/${m}/${y}` : iso;
-}
-
-/** Un beneficio activo cuya vigencia ya pasó: la app lo sigue mostrando, así
- *  que el panel lo marca para que el admin lo desactive. */
-export function estaVencido(item: Beneficio): boolean {
-  if (!item.vigencia_hasta) return false;
-  return item.vigencia_hasta < hoyISO();
-}

@@ -20,16 +20,16 @@ export default function Welcome() {
     <section className={styles.bienvenida} aria-labelledby="bienvenida">
       <Revelar className={styles.texto}>
         <h2 id="bienvenida" className={styles.titulo}>
-          Donde la <em>comunidad</em> y el <em>bienestar</em> se unen
+          Comunidad y <em>bienestar</em>
         </h2>
         <LineaPulso className={styles.pulso} />
-        <p className={styles.bajada}>Respaldo institucional para el ejercicio de la medicina.</p>
-        <Button to="/socios" size="large" className={styles.boton} iconoIzquierda={<UserPlus />}>
+        <p className={styles.bajada}>Respaldo institucional para ejercer la medicina.</p>
+        <Button to="/socios" variant="secondary" size="large" className={styles.boton} iconoIzquierda={<UserPlus />}>
           Asociarme
         </Button>
       </Revelar>
 
-      <Pilares items={BENEFICIOS} columnas={2} />
+      <Pilares items={BENEFICIOS} columnas={3} oscuro />
     </section>
   );
 }

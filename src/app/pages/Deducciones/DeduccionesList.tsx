@@ -1,22 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppSnackbar } from "../../hooks/useAppSnackbar";
-import { motion } from "framer-motion";
 import {
-  Download,
-  FileText,
   Loader2,
   Pencil,
   Plus,
   Trash2,
+  Wallet,
   XCircle,
 } from "lucide-react";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import SelectorMes from "@/app/components/ui/SelectorMes/SelectorMes";
 
 import Button from "@/app/components/ui/Button/Button";
-import Card from "@/app/components/ui/Card/Card";
+import Franja from "@/app/components/layout/Franja/Franja";
+import Caja, { Cajas } from "@/app/components/ui/Caja/Caja";
+import Dialogo, { DialogoAviso, DialogoCampo, DialogoDatos } from "@/app/components/ui/Dialogo/Dialogo";
 import AppSearchSelect, {
   type AppSearchSelectOption,
 } from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
@@ -41,7 +39,9 @@ import type {
   MedicoOption,
 } from "./types";
 import { formatMoney, monthLabel } from "./types";
-import styles from "./DeduccionesList.module.scss";
+import lq from "@/app/pages/Pagos/Liquidacion.module.scss";
+import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
+import { getErrorMessage } from "@/app/shared/lib/utiles";
 
 const PAGE_SIZE = 50;
 const ESTADOS_UI: Array<{ value: DeduccionEstado | ""; label: string }> = [
@@ -60,21 +60,12 @@ const ESTADO_LABEL: Record<DeduccionEstado, string> = {
 };
 
 const statusClass = (status: DeduccionEstado) => {
-  if (status === "pendiente") return styles.badgePendiente;
-  if (status === "vencida") return styles.badgeVencida;
-  if (status === "en_pago") return styles.badgeEnPago;
-  if (status === "aplicado") return styles.badgeAplicado;
-  return styles.badgeEliminado;
+  if (status === "pendiente") return lq.abierto;
+  if (status === "vencida") return lq.anulado;
+  if (status === "en_pago") return lq.enLiquidacion;
+  if (status === "aplicado") return lq.aplicado;
+  return lq.cerrado;
 };
-
-const getErrorMessage = (e: any, fallback: string) => {
-  const detail = e?.response?.data?.detail;
-  if (typeof detail === "string" && detail.trim()) return detail;
-  if (typeof detail?.message === "string" && detail.message.trim())
-    return detail.message;
-  return e?.message ?? fallback;
-};
-
 const DeduccionesList: React.FC = () => {
   const navigate = useNavigate();
   const notify = useAppSnackbar();
@@ -348,8 +339,7 @@ const DeduccionesList: React.FC = () => {
     {
       key: "monto",
       header: "Monto",
-      alignRight: true,
-      render: (r) => formatMoney(r.monto),
+      render: (r) => <span className={lq.monto}>{formatMoney(r.monto)}</span>,
     },
     {
       key: "periodo",
@@ -362,73 +352,75 @@ const DeduccionesList: React.FC = () => {
       render: (r) =>
         r.origen === "manual"
           ? `${r.cuota_nro}/${r.cuotas_total ?? "—"}`
-          : "—",
+          : <span className={lq.tenue}>—</span>,
     },
     {
       key: "estado",
       header: "Estado",
       render: (r) => (
-        <span className={`${styles.badge} ${statusClass(r.estado)}`}>
+        <span className={`${lq.estado} ${statusClass(r.estado)}`}>
           {ESTADO_LABEL[r.estado]}
         </span>
       ),
     },
     {
       key: "acciones",
-      header: "Acciones",
+      header: "",
       render: (row) => {
         const isWorking = workingId === row.id;
         if (isWorking) {
           return (
-            <div className={styles.rowActions}>
-              <Loader2 size={14} className={styles.spin} />
+            <div className={lq.accionesFila}>
+              <Loader2 size={16} className={lq.gira} aria-label="Procesando" />
             </div>
           );
         }
         const isPendiente = row.estado === "pendiente" || row.estado === "vencida";
+        const editar = (
+          <button type="button" className={lq.botonIcono} onClick={() => openEdit(row)} title="Editar monto" aria-label="Editar monto">
+            <Pencil size={16} />
+          </button>
+        );
+        const eliminar = (
+          <button type="button" className={lq.botonIconoPeligro} onClick={onDelete(row)} title="Eliminar" aria-label="Eliminar">
+            <Trash2 size={16} />
+          </button>
+        );
         return (
-          <div className={styles.rowActions} onClick={(e) => e.stopPropagation()}>
+          <div className={lq.accionesFila} onClick={(e) => e.stopPropagation()}>
             {isPendiente && (
               <>
-                <button disabled={isWorking} onClick={onChangeEstado(row.id, "en_pago")}>
-                  {isWorking ? "..." : "Agregar al pago"}
+                <button type="button" className={lq.accionTexto} onClick={onChangeEstado(row.id, "en_pago")}>
+                  Agregar al pago
                 </button>
-                <button disabled={isWorking} onClick={onPagarEnCaja(row.id)}>
-                  {isWorking ? "..." : "Pagar en caja"}
+                <button type="button" className={lq.accionTexto} onClick={onPagarEnCaja(row.id)}>
+                  Pagar en caja
                 </button>
-                <button disabled={isWorking} onClick={() => openEdit(row)} title="Editar monto">
-                  <Pencil size={14} />
-                </button>
-                <button disabled={isWorking} onClick={onDelete(row)} title="Eliminar">
-                  <Trash2 size={14} />
-                </button>
+                {editar}
+                {eliminar}
               </>
             )}
             {row.estado === "en_pago" && (
               <>
-                <button disabled={isWorking} onClick={onChangeEstado(row.id, "pendiente")}>
-                  {isWorking ? "..." : "Quitar del pago"}
+                <button type="button" className={lq.accionTexto} onClick={onChangeEstado(row.id, "pendiente")}>
+                  Quitar del pago
                 </button>
-                <button disabled={isWorking} onClick={() => openEdit(row)} title="Editar monto">
-                  <Pencil size={14} />
-                </button>
-                <button disabled={isWorking} onClick={onDelete(row)} title="Eliminar">
-                  <Trash2 size={14} />
-                </button>
+                {editar}
+                {eliminar}
               </>
             )}
             {row.estado === "aplicado" && (
               <>
                 <button
-                  disabled={isWorking}
+                  type="button"
+                  className={lq.botonIcono}
                   onClick={onChangeEstado(row.id, "pendiente")}
                   title="Cancelar"
+                  aria-label="Cancelar"
                 >
-                  <XCircle size={14} />
+                  <XCircle size={16} />
                 </button>
-                <button disabled={isWorking} onClick={onDelete(row)} title="Eliminar">
-                  <Trash2 size={14} />
-                </button>
+                {eliminar}
               </>
             )}
           </div>
@@ -505,237 +497,185 @@ const DeduccionesList: React.FC = () => {
     },
   ];
 
+  const ocupadoEdit = editTarget ? workingId === editTarget.id : false;
+  const ocupadoCancel = cancelTarget ? workingId === cancelTarget.id : false;
+
   return (
-    <div className={styles.page}>
-      <div className={styles.content}>
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
-        >
-          <div className={styles.header}>
-            <div>
-              <h1>Deducciones</h1>
+    <div className={lq.pagina}>
+      <Franja titulo="Deducciones" icono={Wallet} />
+
+      <Cajas>
+        <Caja titulo="Configuración">
+          <div className={lq.filtros}>
+            <div className={`${lq.campo} ${lq.campoAncho}`}>
+              <span className={lq.rotulo}>Médico</span>
+              <AppSearchSelect
+                options={medicoOptions}
+                value={medicoId}
+                onChange={(id) => { setMedicoId(id as number | null); setPage(1); }}
+                onQueryChange={searchMedicos}
+                loading={medicosLoading}
+              />
             </div>
-            <div className={styles.headerActions}>
-              <Button variant="secondary" leftIcon={<FileText size={14} />} onClick={exportPdf}>
-                PDF
-              </Button>
-              <Button variant="secondary" leftIcon={<Download size={14} />} onClick={exportExcel}>
-                Excel
-              </Button>
-              <Button
-                variant="primary"
-                onClick={() => navigate("/panel/deducciones/nueva")}
-                leftIcon={<Plus size={16} />}
+            <label className={lq.campo}>
+              <span className={lq.rotulo}>Estado</span>
+              <select
+                className={lq.select}
+                value={estado}
+                onChange={(e) => { setEstado(e.target.value as DeduccionEstado | ""); setPage(1); }}
               >
-                Nueva deducción
-              </Button>
+                {ESTADOS_UI.map((opt) => (
+                  <option key={opt.value || "all"} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className={`${lq.campo} ${lq.campoAncho}`}>
+              <span className={lq.rotulo}>Concepto</span>
+              <AppSearchSelect
+                options={descuentoOptions}
+                value={conceptoId}
+                onChange={(id) => setConceptoId(id as number | null)}
+              />
+            </div>
+            <div className={lq.campo}>
+              <span className={lq.rotulo}>Desde</span>
+              <SelectorMes value={desde} onChange={(val) => { setDesde(val); setPage(1); }} />
+            </div>
+            <div className={lq.campo}>
+              <span className={lq.rotulo}>Hasta</span>
+              <SelectorMes value={hasta} onChange={(val) => { setHasta(val); setPage(1); }} />
             </div>
           </div>
-
-          {error && <div className={styles.errorBanner}>{error}</div>}
-
-          <div className={styles.layout}>
-            <section className={styles.mainPanel}>
-              <Card className={styles.filtersCard}>
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                  <div className={styles.filtersRow}>
-                    <div className={styles.filterGroup}>
-                      <label>Médico</label>
-                      <AppSearchSelect
-                        options={medicoOptions}
-                        value={medicoId}
-                        onChange={(id) => { setMedicoId(id as number | null); setPage(1); }}
-                        onQueryChange={searchMedicos}
-                        loading={medicosLoading}
-                      />
-                    </div>
-                    <div className={styles.filterGroup}>
-                      <label>Estado</label>
-                      <select
-                        value={estado}
-                        onChange={(e) => { setEstado(e.target.value as DeduccionEstado | ""); setPage(1); }}
-                      >
-                        {ESTADOS_UI.map((opt) => (
-                          <option key={opt.value || "all"} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className={styles.filterGroup}>
-                      <label>Concepto</label>
-                      <AppSearchSelect
-                        options={descuentoOptions}
-                        value={conceptoId}
-                        onChange={(id) => setConceptoId(id as number | null)}
-                      />
-                    </div>
-                    <div className={styles.filterGroup}>
-                      <label>Desde</label>
-                      <DatePicker
-                        label="MM/YYYY"
-                        views={["month", "year"]}
-                        openTo="month"
-                        value={desde}
-                        onChange={(val) => { setDesde(val); setPage(1); }}
-                        slotProps={{
-                          textField: {
-                            size: "small",
-                            sx: { "& .MuiInputBase-root": { height: 37, fontSize: 13 } },
-                          },
-                        }}
-                      />
-                    </div>
-                    <div className={styles.filterGroup}>
-                      <label>Hasta</label>
-                      <DatePicker
-                        label="MM/YYYY"
-                        views={["month", "year"]}
-                        openTo="month"
-                        value={hasta}
-                        onChange={(val) => { setHasta(val); setPage(1); }}
-                        slotProps={{
-                          textField: {
-                            size: "small",
-                            sx: { "& .MuiInputBase-root": { height: 37, fontSize: 13 } },
-                          },
-                        }}
-                      />
-                    </div>
-                  </div>
-                </LocalizationProvider>
-              </Card>
-
-              <Card className={styles.tableCard}>
-                {loading ? (
-                  <div className={styles.loadingState}>
-                    <Loader2 size={18} className={styles.spin} /> Cargando deducciones...
-                  </div>
-                ) : (
-                  <SelectableTable
-                    rows={filteredItems}
-                    columns={columns}
-                    actions={bulkActions}
-                    isSelectable={(r) => r.estado !== "eliminado"}
-                    rowClassName={(r) => workingId === r.id ? styles.rowLoading : undefined}
-                    emptyMessage="Sin deducciones para los filtros actuales."
-                    onActionComplete={refreshAll}
-                  />
-                )}
-              </Card>
-            </section>
+        </Caja>
+        <Caja titulo="Descargas">
+          <div className={lq.barra}>
+            <BotonDescarga formato="pdf" onClick={exportPdf} />
+            <BotonDescarga formato="excel" onClick={exportExcel} />
           </div>
-        </motion.div>
+        </Caja>
+      </Cajas>
+
+      <div className={lq.barra}>
+        <div className={lq.acciones}>
+          <Button
+            variant="primary"
+            size="md"
+            onClick={() => navigate("/panel/deducciones/nueva")}
+            leftIcon={<Plus size={18} aria-hidden="true" />}
+          >
+            Nueva deducción
+          </Button>
+        </div>
       </div>
 
-      <div className={styles.paginationBar}>
-        <button onClick={() => setPageSafe(page - 1)} disabled={page <= 1 || loading}>
+      {error && <div className={lq.error} role="alert">{error}</div>}
+
+      {loading ? (
+        <div className={`${lq.tablaCaja} ${lq.cargando}`}>
+          <Loader2 size={18} className={lq.gira} aria-hidden="true" /> Cargando deducciones…
+        </div>
+      ) : (
+        <SelectableTable
+          rows={filteredItems}
+          columns={columns}
+          actions={bulkActions}
+          isSelectable={(r) => r.estado !== "eliminado"}
+          rowClassName={(r) => workingId === r.id ? lq.filaOcupada : undefined}
+          emptyMessage="Sin deducciones para los filtros actuales."
+          onActionComplete={refreshAll}
+        />
+      )}
+
+      <nav className={lq.paginador} aria-label="Paginación">
+        <button type="button" onClick={() => setPageSafe(page - 1)} disabled={page <= 1 || loading}>
           ← Anterior
         </button>
         <span>Página {page} de {lastPage}</span>
-        <button onClick={() => setPageSafe(page + 1)} disabled={page >= lastPage || loading}>
+        <button type="button" onClick={() => setPageSafe(page + 1)} disabled={page >= lastPage || loading}>
           Siguiente →
         </button>
-      </div>
+      </nav>
 
-      {/* Modal editar monto */}
       {editTarget && (
-        <div className={styles.modalBackdrop} role="dialog" aria-modal="true">
-          <div className={styles.modalCard}>
-            <div className={styles.modalHeader}>
-              <h3>Editar deducción</h3>
-              <button onClick={() => setEditTarget(null)} aria-label="Cerrar">✕</button>
-            </div>
-            <div className={styles.modalBody}>
-              <p>Deducción #{editTarget.id} · {editTarget.descuento_nombre}</p>
-              <label>Monto</label>
-              <input
-                type="number"
-                min="0.01"
-                step="0.01"
-                value={editMonto}
-                onChange={(e) => setEditMonto(e.target.value)}
-              />
-              <label className={styles.checkboxLabel}>
-                <input
-                  type="checkbox"
-                  checked={editPagaPorCaja}
-                  onChange={(e) => setEditPagaPorCaja(e.target.checked)}
-                />
-                Abona por caja
-              </label>
-            </div>
-            <div className={styles.modalActions}>
-              <Button variant="secondary" onClick={() => setEditTarget(null)} disabled={workingId === editTarget.id}>
+        <Dialogo
+          titulo="Editar deducción"
+          icono={Pencil}
+          onClose={ocupadoEdit ? undefined : () => setEditTarget(null)}
+          acciones={
+            <>
+              <Button variant="ghost" onClick={() => setEditTarget(null)} disabled={ocupadoEdit}>
                 Cancelar
               </Button>
-              <Button variant="primary" onClick={saveEditMonto} disabled={workingId === editTarget.id}>
+              <Button variant="primary" onClick={saveEditMonto} disabled={ocupadoEdit}>
                 Guardar
               </Button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        >
+          <DialogoDatos
+            filas={[
+              { rotulo: "Deducción", valor: `#${editTarget.id}` },
+              { rotulo: "Concepto", valor: editTarget.descuento_nombre },
+            ]}
+          />
+          <DialogoCampo rotulo="Monto" htmlFor="ded-monto">
+            <input
+              id="ded-monto"
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={editMonto}
+              onChange={(e) => setEditMonto(e.target.value)}
+            />
+          </DialogoCampo>
+          <label className={lq.casilla}>
+            <input
+              type="checkbox"
+              checked={editPagaPorCaja}
+              onChange={(e) => setEditPagaPorCaja(e.target.checked)}
+            />
+            Abona por caja
+          </label>
+        </Dialogo>
       )}
 
-      {/* Modal confirmar eliminación individual */}
       {cancelTarget && (
-        <div className={styles.modalBackdrop} role="dialog" aria-modal="true">
-          <div className={styles.modalCard}>
-            <div className={styles.modalHeader}>
-              <h3>
-                {cancelTarget.origen === "automatico"
-                  ? "Eliminar deducción"
-                  : "Cancelar deducción"}
-              </h3>
-              <button
-                onClick={() => setCancelTarget(null)}
-                aria-label="Cerrar"
-                disabled={workingId === cancelTarget.id}
-              >
-                ✕
-              </button>
-            </div>
-            <div className={styles.modalBody}>
-              <p>
-                ¿Confirmás{" "}
-                {cancelTarget.origen === "automatico" ? "eliminar" : "cancelar"}{" "}
-                la deducción <strong>#{cancelTarget.id}</strong>?
-              </p>
-              <p>
-                <strong>Médico:</strong> {cancelTarget.medico_nombre}<br />
-                <strong>Concepto:</strong> {cancelTarget.descuento_nombre}<br />
-                <strong>Monto:</strong> {formatMoney(cancelTarget.monto)}<br />
-                <strong>Período:</strong>{" "}
-                {monthLabel(cancelTarget.mes_periodo, cancelTarget.anio_periodo)}
-              </p>
-              {cancelError && (
-                <div className={styles.errorInline}>{cancelError}</div>
-              )}
-            </div>
-            <div className={styles.modalActions}>
-              <Button
-                variant="secondary"
-                onClick={() => setCancelTarget(null)}
-                disabled={workingId === cancelTarget.id}
-              >
+        <Dialogo
+          titulo={cancelTarget.origen === "automatico" ? "Eliminar deducción" : "Cancelar deducción"}
+          icono={Trash2}
+          peligro
+          onClose={ocupadoCancel ? undefined : () => setCancelTarget(null)}
+          acciones={
+            <>
+              <Button variant="ghost" onClick={() => setCancelTarget(null)} disabled={ocupadoCancel}>
                 Volver
               </Button>
-              <Button
-                variant="danger"
-                onClick={confirmDelete}
-                disabled={workingId === cancelTarget.id}
-              >
-                {workingId === cancelTarget.id
+              <Button variant="danger" onClick={confirmDelete} disabled={ocupadoCancel}>
+                {ocupadoCancel
                   ? "Procesando…"
                   : cancelTarget.origen === "automatico"
                     ? "Eliminar"
                     : "Cancelar deducción"}
               </Button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        >
+          <p>
+            ¿Confirmás {cancelTarget.origen === "automatico" ? "eliminar" : "cancelar"} la deducción{" "}
+            <strong>#{cancelTarget.id}</strong>?
+          </p>
+          <DialogoDatos
+            filas={[
+              { rotulo: "Médico", valor: cancelTarget.medico_nombre },
+              { rotulo: "Concepto", valor: cancelTarget.descuento_nombre },
+              { rotulo: "Monto", valor: formatMoney(cancelTarget.monto) },
+              { rotulo: "Período", valor: monthLabel(cancelTarget.mes_periodo, cancelTarget.anio_periodo) },
+            ]}
+          />
+          {cancelError && <DialogoAviso tono="peligro">{cancelError}</DialogoAviso>}
+        </Dialogo>
       )}
     </div>
   );

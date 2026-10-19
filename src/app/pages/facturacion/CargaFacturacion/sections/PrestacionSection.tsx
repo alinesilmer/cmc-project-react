@@ -9,8 +9,7 @@ interface Props {
   codNomenclador: string | null;
   onNomencladorChange: (codigo: string | null, nom: NomencladorOption | null) => void;
   codMedico: string | null;
-  /** Obra social de la prestación — habilita que el autocomplete muestre la
-   * descripción que esa OS pactó en vez de la genérica del catálogo. */
+  /** Obra social de la prestación — habilita que el autocomplete muestre la descripción que esa OS pactó en vez de la genérica del catálogo. */
   codObra?: string | null;
   precio: PrecioResponse | null;
   precioLoading: boolean;

@@ -16,18 +16,13 @@ interface Props {
   onCreated: (afiliado: AfiliadoRead) => void;
 }
 
-// El identificador del paciente puede ser un DNI o un nro de afiliado de la obra
-// social (alfanumérico y con separadores, ej. "1231233/00"). Mismo criterio que
-// `AfiliadoCreate` en el backend: ^[A-Za-z0-9./-]+$ de 4 a 20 caracteres.
+// El identificador del paciente puede ser un DNI o un nro de afiliado de la obra social (alfanumérico y con separadores, ej. "1231233/00").
 const ID_MIN = 4;
 const ID_MAX = 20;
 /** Descarta lo que el backend rechazaría — incluidos los espacios. */
 const limpiarId = (v: string) => v.replace(/[^A-Za-z0-9./-]/g, "").slice(0, ID_MAX);
 
-/**
- * Alta o edición de un afiliado del padrón. Ningún campo es obligatorio por sí solo:
- * alcanza con el nombre o con el número (de los dos, al menos uno).
- */
+/** Alta o edición de un afiliado del padrón. */
 const AltaAfiliadoModal: React.FC<Props> = ({ isOpen, dni, afiliado, onClose, onCreated }) => {
   const editando = !!afiliado;
   const [dniInput, setDniInput] = useState(dni);
@@ -35,8 +30,7 @@ const AltaAfiliadoModal: React.FC<Props> = ({ isOpen, dni, afiliado, onClose, on
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Cada vez que se abre: en edición, los datos del afiliado; en alta, el
-  // identificador que ya se hubiera tipeado, editable por si hay que corregirlo.
+  // Cada vez que se abre: en edición, los datos del afiliado; en alta, el identificador que ya se hubiera tipeado.
   useEffect(() => {
     if (!isOpen) return;
     setError(null);

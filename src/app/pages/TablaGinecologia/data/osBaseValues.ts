@@ -13,10 +13,7 @@ export const OS_BASE_VALUES: Record<string, number> = {
   "151": 354.86,
 };
 
-/**
- * OS numbers that have practice-level exclusions.
- * Each entry lists the FASGO códigos that are NOT covered.
- */
+/** OS numbers that have practice-level exclusions. */
 export const OS_EXCLUSIONS: Record<string, { codigos: string[]; nota: string }> = {
   "425": {
     codigos: ["22.00.02", "22.01.03"],

@@ -1,107 +1,58 @@
 import { useMemo, useState } from "react";
-import { Search, X as XIcon, Building2, History } from "lucide-react";
+import { Building2, History } from "lucide-react";
 
 import styles from "./HistorialValoresConsulta.module.scss";
 import HistorialValores from "../ObrasSociales/ObrasSocialesDetalle/HistorialValores";
-import type { ObraSocialListItem } from "../ObrasSociales/obrasSociales.types";
 import { useObrasSociales } from "../ObrasSociales/useObrasSociales";
+import AppSearchSelect from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
+import type { AppSearchSelectOption } from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
+import Caja from "@/app/components/ui/Caja/Caja";
+import Franja from "@/app/components/layout/Franja/Franja";
 
-/**
- * Consulta directa del historial de valores de una obra social desde el menú
- * lateral, sin tener que entrar a la ficha de la OS. Elige una OS y muestra el
- * mismo panel de historial que la ficha.
- */
+/** Consulta directa del historial de valores de una obra social desde el menú, sin tener que entrar a la ficha de la OS. */
 export default function HistorialValoresConsulta() {
-  const [selected, setSelected] = useState<ObraSocialListItem | null>(null);
-  const [query, setQuery] = useState("");
-  const [open, setOpen] = useState(false);
+  const [nro, setNro] = useState<number | null>(null);
 
-  const { data: osList = [] } = useObrasSociales();
+  const { data: osList = [], isLoading } = useObrasSociales();
 
-  const filtered = useMemo(() => {
-    if (!query.trim()) return osList.slice(0, 50);
-    const q = query.toLowerCase();
-    return osList
-      .filter(
-        (os) =>
-          os.nombre.toLowerCase().includes(q) ||
-          String(os.nro_obra_social).includes(q),
-      )
-      .slice(0, 50);
-  }, [osList, query]);
+  // El número adelante: se puede buscar por nombre o por número en el mismo campo.
+  const opciones = useMemo<AppSearchSelectOption[]>(
+    () =>
+      osList.map((os) => ({
+        id: os.nro_obra_social,
+        label: `${os.nro_obra_social} · ${os.nombre}`,
+      })),
+    [osList],
+  );
+
+  const elegida = nro === null ? undefined : osList.find((os) => os.nro_obra_social === nro);
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <span className={styles.headerIcon}>
-          <History size={20} />
-        </span>
-        <div>
-          <h1 className={styles.title}>Historial de Valores</h1>
-          <p className={styles.subtitle}>
-            Consultá la evolución de precios de una obra social sin entrar a su ficha.
-          </p>
+      <Franja titulo="Historial de valores" icono={History} />
+
+      <Caja titulo="Obra social">
+        <div className={styles.selector}>
+          <AppSearchSelect
+            options={opciones}
+            value={nro}
+            loading={isLoading}
+            onChange={(id) => setNro(id == null ? null : Number(id))}
+          />
         </div>
-      </div>
+      </Caja>
 
-      <div className={styles.selectorCard}>
-        <label className={styles.selectorLabel}>Obra social</label>
-        {selected ? (
-          <div className={styles.chosen}>
-            <span className={styles.chosenNro}>{selected.nro_obra_social}</span>
-            <span className={styles.chosenName}>{selected.nombre}</span>
-            <button
-              type="button"
-              className={styles.chosenClear}
-              onClick={() => { setSelected(null); setQuery(""); }}
-              title="Cambiar obra social"
-              aria-label="Cambiar obra social"
-            >
-              <XIcon size={15} />
-            </button>
-          </div>
-        ) : (
-          <div className={styles.autocomplete}>
-            <div className={styles.inputWrap}>
-              <Search size={15} className={styles.inputIcon} />
-              <input
-                className={styles.input}
-                placeholder="Buscar por nombre o número…"
-                value={query}
-                onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
-                onFocus={() => setOpen(true)}
-                onBlur={() => setTimeout(() => setOpen(false), 150)}
-              />
-            </div>
-            {open && filtered.length > 0 && (
-              <ul className={styles.dropdown}>
-                {filtered.map((os) => (
-                  <li
-                    key={os.nro_obra_social}
-                    className={styles.option}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      setSelected(os);
-                      setQuery("");
-                      setOpen(false);
-                    }}
-                  >
-                    <span className={styles.optionNro}>{os.nro_obra_social}</span>
-                    <span className={styles.optionName}>{os.nombre}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
-      </div>
-
-      {selected ? (
-        <HistorialValores obraNro={selected.nro_obra_social} obraNombre={selected.nombre} />
+      {elegida ? (
+        // `key`: al cambiar de obra social el panel arranca de cero (vista, filtros y página), en vez de arrastrar los de la anterior.
+        <HistorialValores
+          key={elegida.nro_obra_social}
+          obraNro={elegida.nro_obra_social}
+          obraNombre={elegida.nombre}
+        />
       ) : (
         <div className={styles.prompt}>
-          <Building2 size={30} />
-          <span>Elegí una obra social para ver su historial de valores.</span>
+          <Building2 size={34} aria-hidden="true" />
+          <span>Elegí una obra social</span>
         </div>
       )}
     </div>

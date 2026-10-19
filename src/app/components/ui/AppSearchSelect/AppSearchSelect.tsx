@@ -16,14 +16,9 @@ type Props = {
   disabled?: boolean;
   loading?: boolean;
   onQueryChange?: (query: string) => void;
-  /** Al elegir una opción, MUI hace blur y el foco se pierde. Poner en `false` lo deja
-   *  en el campo, que es lo que necesita una pantalla con navegación por teclado. */
+  /** Al elegir una opción, MUI hace blur y el foco se pierde. */
   blurOnSelect?: boolean;
-  /** Texto con el que arranca el campo cuando NO hay opción seleccionada (`value` en
-   *  null) pero igual se sabe qué había. Se usa al editar registros viejos que
-   *  guardaron el nombre del paciente sin identificador: sin esto el input se ve
-   *  vacío aunque el dato exista. Solo se lee al montar; en cuanto el operador tipea
-   *  o elige algo, manda lo nuevo. */
+  /** Texto con el que arranca el campo cuando NO hay opción seleccionada (`value` en null) pero igual se sabe qué había. */
   initialInputValue?: string;
 };
 
@@ -37,11 +32,7 @@ const AppSearchSelect: React.FC<Props> = ({
   blurOnSelect = true,
   initialInputValue,
 }) => {
-  // `options` se reemplaza por completo en cada búsqueda remota, así que la opción ya
-  // seleccionada puede desaparecer de la lista (porque el usuario escribió algo nuevo
-  // sin llegar a elegir). "Pineamos" la opción elegida aparte para no perderla: si no,
-  // el `value` controlado de MUI cae a null y el campo se ve vacío aunque el
-  // seleccionado siga vivo por detrás.
+  // `options` se reemplaza por completo en cada búsqueda remota, así que la opción ya seleccionada puede desaparecer de la lista.
   const [pinned, setPinned] = useState<AppSearchSelectOption | null>(null);
 
   useEffect(() => {
@@ -54,11 +45,7 @@ const AppSearchSelect: React.FC<Props> = ({
 
   const [inputValue, setInputValue] = useState(selected?.label ?? initialInputValue ?? "");
 
-  // El seleccionado se antepone a la lista para que MUI no lo pierda de vista — pero
-  // solo mientras el texto siga siendo el suyo. En cuanto el operador tipea algo
-  // distinto (buscando otra cosa), dejar de anteponerlo: si no, con `autoHighlight`
-  // de abajo, Enter re-confirmaría el valor viejo en vez de tomar la primera
-  // coincidencia de lo que recién tipeó.
+  // El seleccionado se antepone a la lista para que MUI no lo pierda de vista — pero solo mientras el texto siga siendo el suyo.
   const mergedOptions =
     selected && inputValue === selected.label && !options.some((o) => String(o.id) === String(selected.id))
       ? [selected, ...options]
@@ -72,16 +59,9 @@ const AppSearchSelect: React.FC<Props> = ({
     <Autocomplete
       blurOnSelect={blurOnSelect}
       openOnFocus
-      // No limpiamos el texto tipeado al perder foco si no se eligió nada — se
-      // mantiene visible en vez de "borrarse" como pasaba antes.
+      // No limpiamos el texto tipeado al perder foco si no se eligió nada — se mantiene visible en vez de "borrarse" como pasaba antes.
       clearOnBlur={false}
-      // `autoSelect` confirma la opción resaltada al perder foco (blur), no solo con
-      // Enter — sin condicionarlo, con la lista completa mostrada al hacer click (sin
-      // tipear nada) terminaba "eligiendo" el primer ítem de la lista con solo
-      // clickear afuera para cerrar. Solo tiene sentido cuando el operador escribió
-      // algo (hay una búsqueda real de por medio): campo vacío + click afuera no debe
-      // seleccionar nada; campo con texto + click afuera sí toma la coincidencia
-      // resaltada, igual que Enter.
+      // `autoSelect` confirma la opción resaltada al perder foco (blur), no solo con Enter — sin condicionarlo, con la lista completa mostrada al hacer click.
       autoHighlight
       autoSelect={inputValue.length > 0}
       options={mergedOptions}
@@ -91,14 +71,7 @@ const AppSearchSelect: React.FC<Props> = ({
       onChange={(_, newVal) => {
         setPinned(newVal);
         setInputValue(newVal?.label ?? "");
-        // Notificar al padre en el mismo tick, sincrónicamente. Hubo una versión que
-        // difería esto con setTimeout creyendo que el remonte de campos hermanos
-        // competía con el cierre del Popper de MUI — no era eso (React aplica el
-        // cierre del portal y el alta del hermano en un mismo commit sin problema;
-        // la pantalla en blanco venía de que el traductor del navegador reescribía
-        // el DOM, ver el comentario de index.html). Diferirlo sí rompía algo real:
-        // el operador que elige con Enter y sigue tecleando de inmediato encontraba
-        // el estado del padre todavía sin actualizar.
+        // Notificar al padre en el mismo tick, sincrónicamente.
         onChange(newVal?.id ?? null);
       }}
       disabled={disabled}
@@ -117,18 +90,7 @@ const AppSearchSelect: React.FC<Props> = ({
         }
       }}
       onFocus={() => {
-        // Reabrir sugerencias para lo que ya estaba escrito, en vez de forzar una
-        // selección o dejar la lista vacía. Si ya hay una opción elegida, `inputValue`
-        // es su label compuesto (código · nombre · matrícula) — no lo que buscaría el
-        // usuario, así que no dispara una búsqueda nueva con eso.
-        //
-        // Se dispara también con `inputValue` vacío (antes solo si había texto
-        // tipeado): un campo recién clickeado, sin nada escrito, tiene que poder
-        // mostrar algo. Quien recibe el query decide qué hacer con "" — los campos
-        // con lista precargada entera (ver AppSearchSelect callers en facturación)
-        // devuelven la lista completa; el resto de los buscadores remotos ya
-        // ignoraban un query vacío (mismo guard que usaban al borrar el texto
-        // tipeado), así que no dispara nada nuevo para ellos.
+        // Reabrir sugerencias para lo que ya estaba escrito, en vez de forzar una selección o dejar la lista vacía.
         if (!selected) onQueryChange?.(inputValue);
       }}
       noOptionsText="Sin resultados"
@@ -162,10 +124,10 @@ const AppSearchSelect: React.FC<Props> = ({
             "& .MuiOutlinedInput-root": {
               fontSize: 13,
               borderRadius: "6px",
-              backgroundColor: "#fff",
+              backgroundColor: "var(--tema-superficie, #fff)",
               padding: "1px 8px 1px 4px !important",
-              "& fieldset": { borderColor: "#cbd5e1" },
-              "&:hover fieldset": { borderColor: "#94a3b8" },
+              "& fieldset": { borderColor: "var(--tema-borde, #cbd5e1)" },
+              "&:hover fieldset": { borderColor: "var(--tema-borde-fuerte, #94a3b8)" },
               "&.Mui-focused fieldset": {
                 borderColor: "#1b56ff",
                 borderWidth: "1px",

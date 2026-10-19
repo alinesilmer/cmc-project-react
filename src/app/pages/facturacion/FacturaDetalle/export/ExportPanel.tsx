@@ -12,8 +12,7 @@ import s from "./export.module.scss";
 
 interface Props {
   detalle: FacturaDetalleResponse;
-  // Cómo se está viendo el listado: el documento sale con esa agrupación, orden, dirección,
-  // filtros y equipo. Lo único que se elige acá son las columnas.
+  // Cómo se está viendo el listado: el documento sale con esa agrupación, orden, dirección, filtros y equipo.
   vista: VistaOpciones;
   onClose: () => void;
 }

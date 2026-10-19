@@ -1,7 +1,7 @@
-// src/app/pages/UsersList/medicosExport.ts
-// Helpers + mapping for Medicos export (/api/medicos/all)
+// src/app/pages/UsersList/medicosExport.ts Helpers + mapping for Medicos export (/api/medicos/all)
 import { getEspecialidadNameById } from "@/app/shared/lib/especialidadesCatalog";
 import type { FilterSelection } from "../../types/filters";
+import { fechaAISO } from "@/app/shared/lib/fechas";
 export type { FilterSelection };
 
 export type ExportColumnKey =
@@ -34,11 +34,8 @@ export type ExportColumnKey =
 
 export type MedicoRow = Record<string, unknown>;
 
-/**
- * ✅ KEYMAP: tries multiple possible keys for each "canonical" export key
- * so export doesn't break if backend/transform changes casing or naming.
- */
-export const KEYMAP: Record<ExportColumnKey, string[]> = {
+/** ✅ KEYMAP: tries multiple possible keys for each "canonical" export key so export doesn't break if backend/transform changes casing or naming. */
+const KEYMAP: Record<ExportColumnKey, string[]> = {
   id: ["id", "ID", "Id"],
   nro_socio: ["nro_socio", "NRO_SOCIO", "socio", "SOCIO"],
 
@@ -172,7 +169,8 @@ function toCleanString(v: unknown): string {
   if (isNil(v)) return "";
   if (typeof v === "string") return v.trim();
   if (typeof v === "number" || typeof v === "boolean") return String(v);
-  if (v instanceof Date) return v.toISOString().slice(0, 10);
+  // Componentes locales: por UTC, después de las 21 daría el día siguiente.
+  if (v instanceof Date) return fechaAISO(v);
   try {
     return JSON.stringify(v);
   } catch {
@@ -180,7 +178,7 @@ function toCleanString(v: unknown): string {
   }
 }
 
-function pickSpecialidadValue(row: MedicoRow): string {
+function especialidadesDe(row: MedicoRow): string[] {
   const nroKeys = [
     "nro_especialidad",
     "nro_especialidad2",
@@ -196,12 +194,38 @@ function pickSpecialidadValue(row: MedicoRow): string {
     const name = getEspecialidadNameById(v);
     names.push(name ?? String(v));
   }
-  return names.join(", ");
+  return names;
 }
 
-/**
- * Return best value for a canonical export key, checking multiple key variants.
- */
+function pickSpecialidadValue(row: MedicoRow): string {
+  return especialidadesDe(row).join(", ");
+}
+
+const SIN_ESPECIALIDAD = "Sin especialidad";
+
+/** Médicos agrupados por especialidad, en orden alfabético; los que no tienen ninguna van al final. */
+export function agruparPorEspecialidad(rows: MedicoRow[]): { nombre: string; medicos: MedicoRow[] }[] {
+  const grupos = new Map<string, MedicoRow[]>();
+  const sumar = (nombre: string, row: MedicoRow) => {
+    const lista = grupos.get(nombre);
+    if (lista) lista.push(row);
+    else grupos.set(nombre, [row]);
+  };
+  for (const row of rows) {
+    const nombres = new Set(especialidadesDe(row));
+    if (nombres.size === 0) sumar(SIN_ESPECIALIDAD, row);
+    for (const n of nombres) sumar(n, row);
+  }
+  const porNombre = (a: MedicoRow, b: MedicoRow) =>
+    pickValue(a, "nombre").localeCompare(pickValue(b, "nombre"), "es");
+  return [...grupos.entries()]
+    .sort(([a], [b]) =>
+      a === SIN_ESPECIALIDAD ? 1 : b === SIN_ESPECIALIDAD ? -1 : a.localeCompare(b, "es"),
+    )
+    .map(([nombre, medicos]) => ({ nombre, medicos: medicos.sort(porNombre) }));
+}
+
+/** Return best value for a canonical export key, checking multiple key variants. */
 export function pickValue(row: MedicoRow, canonicalKey: ExportColumnKey): string {
   if (canonicalKey === "especialidad") return pickSpecialidadValue(row);
 
@@ -213,9 +237,7 @@ export function pickValue(row: MedicoRow, canonicalKey: ExportColumnKey): string
   return "";
 }
 
-/**
- * ✅ Map UI filters -> backend query params for GET /api/medicos/all
- */
+/** ✅ Map UI filters -> backend query params for GET /api/medicos/all */
 export function mapUIToQuery(filters: FilterSelection) {
   const otros = filters?.otros ?? ({} as FilterSelection["otros"]);
   const v = filters?.vencimientos ?? ({} as FilterSelection["vencimientos"]);
@@ -259,14 +281,3 @@ export function mapUIToQuery(filters: FilterSelection) {
   };
 }
 
-/**
- * Build URLSearchParams skipping undefined / null / empty.
- */
-export function buildQS(params: Record<string, unknown>) {
-  const sp = new URLSearchParams();
-  Object.entries(params).forEach(([k, v]) => {
-    if (v === undefined || v === null || v === "") return;
-    sp.set(k, String(v));
-  });
-  return sp.toString();
-}

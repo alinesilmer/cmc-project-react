@@ -16,14 +16,7 @@ type Props = {
   iconoIzquierda?: React.ReactNode;
 };
 
-/**
- * Botón que abre el diálogo de archivos y valida lo elegido antes de
- * aceptarlo. El `accept` del input es sólo una sugerencia del diálogo, así que
- * la validación se hace igual (ver `lib/subidas.ts`).
- *
- * El editor de publicaciones y el de avisos tenían tres copias de esto, cada
- * una con su input oculto, su ref y su limpieza del valor.
- */
+/** Botón que abre el diálogo de archivos y valida lo elegido antes de aceptarlo. */
 export default function SelectorArchivo({
   extensiones,
   multiple = false,
@@ -42,8 +35,7 @@ export default function SelectorArchivo({
     e.target.value = "";
     if (!elegidos.length) return;
 
-    // Se aceptan los que sirven y se avisa por los que no, en vez de abortar
-    // toda la selección por un archivo suelto.
+    // Se aceptan los que sirven y se avisa por los que no, en vez de abortar toda la selección por un archivo suelto.
     const { validos, errores } = filtrarValidos(elegidos, extensiones);
     onError(errores.length ? errores.join(" ") : null);
     if (validos.length) onElegir(validos);

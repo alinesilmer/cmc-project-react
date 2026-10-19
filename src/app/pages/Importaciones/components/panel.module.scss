@@ -1,8 +1,7 @@
 @use "sass:color";
 @use "@/app/styles/all.scss" as *;
 
-// Lo propio de esta pantalla. El encuadre, la carga del archivo, el resumen y
-// la tabla salen de `Validaciones/components/reporte/reporte.module.scss`.
+// Lo propio de esta pantalla.
 
 .controles {
   display: flex;
@@ -65,8 +64,7 @@
 
 .omitida {
   background: rgba($warning-orange, 0.16);
-  // `darken()` quedó deprecada en Dart Sass; `color.adjust` con lightness
-  // negativo da exactamente el mismo color.
+  // `darken()` quedó deprecada en Dart Sass; `color.adjust` con lightness negativo da exactamente el mismo color.
   color: color.adjust($warning-orange, $lightness: -18%);
 }
 
@@ -162,8 +160,7 @@
   color: $primary-blue;
 }
 
-/** Paginado de la tabla de resultado. Un reporte trae más de mil prácticas:
- * se muestran de a 50 para que la pantalla no se cuelgue pintándolas todas. */
+/** Paginado de la tabla de resultado. */
 .paginado {
   display: flex;
   align-items: center;

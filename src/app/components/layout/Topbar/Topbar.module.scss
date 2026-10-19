@@ -1,278 +1,494 @@
 @use "@/app/styles/all.scss" as *;
 
-// ── Bar ─────────────────────────────────────────────────────────────────────────
+// Barra superior, diseño «Buscador»: arriba la marca, el buscador grande y la cuenta; abajo las secciones como solapas.
+
+// ── Barra ─────────────────────────────────────────────────────────────────────
 .topbar {
   position: sticky;
   top: 0;
   z-index: 50;
   width: 100%;
-  background: rgba($white, 0.85);
-  backdrop-filter: saturate(180%) blur(12px);
-  border-bottom: 1px solid rgba($gray-200, 0.8);
-  box-shadow: 0 6px 20px -12px rgba(15, 23, 42, 0.18);
-  font-family: "Inter", sans-serif;
+  background: $white;
+  border-bottom: 1px solid $gray-200;
+  box-shadow: 0 6px 20px -14px rgba($gray-900, 0.25);
+  font-family: $fuente-texto;
 }
 
-// Barra que no acompaña el scroll — ver `sinSticky()` en Topbar.tsx.
+// Barra que no acompaña el scroll: ver `sinSticky()` en Topbar.tsx.
 .topbarEstatica {
   position: static;
 }
 
 .inner {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(14rem, 1fr) minmax(0, 40rem) minmax(14rem, 1fr);
   align-items: center;
-  height: 64px;
-  padding: 0 $spacing-6;
+  gap: $spacing-6;
+  height: 4.5rem;
+  padding: 0 $spacing-8;
 }
 
-// ── Brand ────────────────────────────────────────────────────────────────────────
+// ── Marca ─────────────────────────────────────────────────────────────────────
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $spacing-3;
+  justify-self: start;
   text-decoration: none;
-  flex-shrink: 0;
-  padding-right: $spacing-5;
-  margin-right: $spacing-4;
-  border-right: 1px solid rgba($gray-200, 0.9);
-  height: 34px;
-}
-.logo {
-  width: 34px;
-  height: 34px;
-  object-fit: contain;
-  border-radius: 9px;
-}
-.brandText {
-  font-size: $font-size-lg;
-  font-weight: $font-weight-bold;
-  color: $primary-blue;
-  letter-spacing: 0.04em;
 }
 
-// ── Desktop menubar (full-height links + underline indicator) ─────────────────────
-.menubar {
+.logo {
+  display: block;
+  width: auto;
+  height: 2.75rem;
+}
+
+.brandText {
+  font-family: $fuente-titulos;
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  line-height: 1.15;
+  color: $franja-azul;
+}
+
+// ── Buscador ──────────────────────────────────────────────────────────────────
+.buscar {
   display: flex;
-  align-self: stretch;
-  align-items: stretch;
-  gap: 2px;
+  align-items: center;
+  gap: $spacing-3;
+  width: 100%;
+  height: 2.875rem;
+  padding: 0 $spacing-4;
+  font-family: inherit;
+  font-size: $font-size-base;
+  color: $gray-500;
+  text-align: left;
+  background: $franja-perla;
+  border: 1.5px solid transparent;
+  border-radius: 12px;
+  cursor: text;
+  transition: border-color 0.15s, background-color 0.15s;
+
+  svg { flex-shrink: 0; color: $franja-azul; }
+
+  &:hover { border-color: $gray-300; }
+
+  &:focus-visible {
+    outline: none;
+    border-color: $franja-azul;
+    box-shadow: 0 0 0 3px rgba($franja-azul, 0.14);
+  }
+}
+
+.buscarTexto {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.buscarAtajo {
+  display: inline-grid;
+  place-items: center;
+  height: 1.3rem;
+  padding: 0 0.4rem;
+  font-family: inherit;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: $gray-500;
+  border: 1px solid $gray-300;
+  border-radius: 5px;
+}
+
+// ── Lado derecho ──────────────────────────────────────────────────────────────
+.right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: $spacing-3;
   min-width: 0;
 }
 
-.menu {
-  display: flex;
+.cuenta {
   position: relative;
+  min-width: 0;
+}
+
+// Identifica la sesión activa: en equipos compartidos (mostrador del Colegio) evita facturar a nombre del socio anterior.
+.userChip {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  max-width: 100%;
+  height: 2.875rem;
+  padding: 0 $spacing-2 0 $spacing-3;
+  font-family: inherit;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+
+  &:hover { background: $gray-50; border-color: $gray-200; }
+
+  &:focus-visible {
+    outline: none;
+    border-color: $franja-azul;
+    box-shadow: 0 0 0 3px rgba($franja-azul, 0.14);
+  }
+}
+
+.userChipOpen { background: $gray-50; border-color: $gray-200; }
+
+.userAvatar {
+  flex-shrink: 0;
+  display: inline-grid;
+  place-items: center;
+  width: 2.375rem;
+  height: 2.375rem;
+  font-family: $fuente-titulos;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  color: $franja-azul;
+  background: $primary-yellow;
+  border-radius: 50%;
+}
+
+.userName {
+  min-width: 0;
+  font-family: $fuente-titulos;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-800;
+  // Los nombres del padrón son largos ("APELLIDO NOMBRE SEGUNDO"): se recortan para que la barra no se desarme.
+  max-width: 13rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdownCuenta {
+  top: calc(100% + 0.5rem);
+  min-width: 16rem;
+}
+
+.cuentaNombre {
+  margin: 0 0 $spacing-2;
+  padding: 0 $spacing-2 $spacing-3;
+  font-family: $fuente-titulos;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  color: $franja-azul;
+  border-bottom: 1px solid $gray-200;
+  overflow-wrap: anywhere;
+}
+
+.salir {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  width: 100%;
+  margin-top: $spacing-2;
+  padding: 0.6rem $spacing-2 0.6rem 0.625rem;
+  font-family: inherit;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $danger-red;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid $gray-200;
+  border-radius: 0 0 9px 9px;
+  cursor: pointer;
+
+  &:hover { background: $tono-rojo-50; }
+}
+
+// ── Solapas de secciones ──────────────────────────────────────────────────────
+.menubar {
+  display: flex;
+  align-items: stretch;
+  gap: $spacing-1;
+  // Aire entre las palabras y la línea de abajo; el subrayado activo sigue apoyado en la línea.
+  height: 3.75rem;
+  padding: 0 $spacing-6;
+}
+
+.menu {
+  position: relative;
+  display: flex;
 }
 
 .topLink {
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  height: 100%;
-  padding: 0 $spacing-3;
-  border: none;
-  background: transparent;
+  gap: 0.375rem;
+  padding: 0 $spacing-3 $spacing-2;
+  font-family: $fuente-titulos;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
   color: $gray-600;
-  font-family: inherit;
-  font-size: 0.9rem;
-  font-weight: 600;
   white-space: nowrap;
   text-decoration: none;
+  background: transparent;
+  border: 0;
   cursor: pointer;
-  transition: color 0.16s ease;
+  transition: color 0.15s;
 
-  // underline indicator anchored to the bottom edge of the bar
+  // El subrayado de la solapa activa, sobre el borde de la barra.
   &::after {
     content: "";
     position: absolute;
-    left: $spacing-3;
-    right: $spacing-3;
-    bottom: 0;
-    height: 2.5px;
+    left: $spacing-2;
+    right: $spacing-2;
+    bottom: -1px;
+    height: 3px;
+    background: $franja-azul;
     border-radius: 3px 3px 0 0;
-    background: $primary-blue;
     transform: scaleX(0);
-    transform-origin: center;
-    transition: transform 0.2s ease, opacity 0.2s ease;
+    transition: transform 0.18s ease;
   }
 
-  &:hover {
-    color: $gray-900;
-    &::after { transform: scaleX(1); opacity: 0.4; }
-  }
+  &:hover { color: $franja-azul; }
+
   &:focus-visible {
-    outline: none;
-    color: $gray-900;
-    &::after { transform: scaleX(1); opacity: 0.4; }
+    outline: 2px solid $franja-azul;
+    outline-offset: -4px;
+    border-radius: 6px;
   }
 }
-.topLabel { line-height: 1; }
 
 .topActive {
-  color: $primary-blue;
-  &::after { transform: scaleX(1); opacity: 1; }
+  color: $franja-azul;
+
+  &::after { transform: scaleX(1); }
 }
-.topOpen {
-  color: $gray-900;
-  &::after { transform: scaleX(1); opacity: 0.4; }
-}
+
+.topOpen { color: $franja-azul; }
 
 .chev {
-  color: $gray-400;
-  transition: transform 0.2s ease, color 0.2s ease;
+  flex-shrink: 0;
+  opacity: 0.55;
+  transition: transform 0.18s ease;
 }
-.chevOpen { transform: rotate(180deg); color: $gray-600; }
 
-// ── Dropdown ─────────────────────────────────────────────────────────────────────
+.chevOpen { transform: rotate(180deg); opacity: 1; }
+
+// ── Desplegable ───────────────────────────────────────────────────────────────
 .dropdown {
   position: absolute;
-  top: calc(100% + 8px);
+  top: 100%;
   left: 0;
   z-index: 60;
   display: flex;
-  padding: $spacing-4;
   gap: $spacing-4;
+  padding: $spacing-4;
   background: $white;
-  border: 1px solid rgba($gray-200, 0.7);
-  border-radius: 14px;
+  border: 1px solid $gray-200;
+  border-radius: 0 0 14px 14px;
   box-shadow:
-    0 24px 48px -12px rgba(15, 23, 42, 0.18),
-    0 8px 16px -8px rgba(15, 23, 42, 0.08);
-  max-width: min(640px, calc(100vw - 24px));
+    0 1.5rem 3rem -0.75rem rgba($gray-900, 0.2),
+    0 0.5rem 1rem -0.5rem rgba($gray-900, 0.08);
+  max-width: calc(100vw - 1.5rem);
   animation: dropIn 0.16s ease;
 
-  // invisible bridge covering the gap so hover survives the trip from trigger
+  // Puente invisible: el hover sobrevive el viaje del disparador al panel.
   &::before {
     content: "";
     position: absolute;
-    top: -10px;
+    top: -0.625rem;
     left: 0;
     right: 0;
-    height: 10px;
+    height: 0.625rem;
   }
 }
+
 .dropdownEnd {
   left: auto;
   right: 0;
 }
 
+.dropdownCuenta { border-radius: 14px; }
+
+// Las columnas no se achican: cada nombre entra entero, sin «…».
 .dropdownCol {
-  min-width: 196px;
+  flex-shrink: 0;
+  min-width: 13rem;
 
   & + & {
     padding-left: $spacing-4;
-    border-left: 1px solid rgba($gray-200, 0.7);
+    border-left: 1px solid $gray-200;
   }
 }
+
 .dropdownHeading {
   margin: 2px 0 $spacing-2;
   padding: 0 $spacing-2;
-  font-size: 10.5px;
+  font-family: $fuente-titulos;
+  font-size: $font-size-xs;
   font-weight: $font-weight-bold;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba($primary-blue, 0.75);
+  color: $gray-500;
 }
+
 .dropdownList {
-  list-style: none;
-  margin: 0;
-  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-// ── Item (dropdown + drawer) ─────────────────────────────────────────────────────
+// ── Ítem (desplegable y drawer) ───────────────────────────────────────────────
 .item {
   display: flex;
   align-items: center;
   gap: $spacing-3;
-  padding: 9px $spacing-2 9px 10px;
-  border-radius: 9px;
-  color: $gray-600;
-  font-size: 0.875rem;
-  font-weight: 500;
-  text-decoration: none;
+  padding: 0.5625rem $spacing-2 0.5625rem 0.625rem;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  color: $gray-700;
   white-space: nowrap;
+  text-decoration: none;
+  border-radius: 9px;
   transition: background-color 0.14s ease, color 0.14s ease;
 
   &:hover {
-    background: rgba($primary-blue, 0.06);
-    color: $primary-blue;
+    color: $franja-azul;
+    background: $franja-perla;
   }
 }
+
 .itemActive {
-  background: rgba($primary-blue, 0.09);
-  color: $primary-blue;
-  font-weight: 600;
+  font-weight: $font-weight-semibold;
+  color: $franja-azul;
+  background: rgba($franja-azul, 0.08);
 }
+
 .itemIcon {
   flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: $gray-400;
-  transition: color 0.14s ease;
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  color: $franja-azul;
+  background: $tono-azul-50;
+  border-radius: 8px;
+  transition: color 0.14s ease, background-color 0.14s ease;
 
   .item:hover &,
-  .itemActive & { color: $primary-blue; }
+  .itemActive & {
+    color: $primary-yellow;
+    background: $franja-azul;
+  }
 }
+
 .itemLabel {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-// ── Right cluster ────────────────────────────────────────────────────────────────
-.right {
-  display: flex;
-  align-items: center;
-  gap: $spacing-2;
-  flex-shrink: 0;
-  margin-left: $spacing-4;
-  padding-left: $spacing-4;
-  border-left: 1px solid rgba($gray-200, 0.9);
-}
-
-// ── Usuario logueado ─────────────────────────────────────────────────────────────
-// Identifica la sesión activa, que en equipos compartidos (mostrador del Colegio)
-// es la diferencia entre facturar a nombre propio o del socio anterior.
-.userChip {
+// ── Botones sueltos ───────────────────────────────────────────────────────────
+.authButton {
   display: inline-flex;
   align-items: center;
   gap: $spacing-2;
-  height: 38px;
-  padding: 0 $spacing-2;
-  min-width: 0; // permite que .userName recorte en vez de empujar la barra
-}
-
-.userAvatar {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: $primary-blue;
-  color: $white;
-  font-size: 0.7rem;
-  font-weight: $font-weight-bold;
-  letter-spacing: 0.02em;
-}
-
-.userName {
-  font-size: 0.875rem;
+  height: 2.5rem;
+  padding: 0 $spacing-4;
+  font-family: inherit;
+  font-size: $font-size-base;
   font-weight: $font-weight-semibold;
   color: $gray-700;
-  // Los nombres del padrón son largos ("APELLIDO NOMBRE SEGUNDO"): se recortan
-  // para que la barra no se desarme. El completo queda en el title.
-  max-width: 12rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+
+  &:hover {
+    color: $tono-rojo-400;
+    background: $gray-100;
+    border-color: $tono-rojo-100;
+  }
+
+  &:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba($tono-rojo-400, 0.16); }
+}
+
+.hamburger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  color: $gray-800;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: 10px;
+  cursor: pointer;
+
+  &:hover { background: $gray-100; }
+}
+
+// ── Drawer (celular) ──────────────────────────────────────────────────────────
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: none;
+  margin: 0;
+  padding: 0;
+  background: rgba($gray-900, 0.4);
+  border: none;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+
+.overlayOn { opacity: 1; pointer-events: auto; }
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 91;
+  display: none;
+  flex-direction: column;
+  width: min(86vw, 21.25rem);
+  height: 100dvh;
+  background: $white;
+  box-shadow: $shadow-md;
+  // Vive fuera del <header> (portal), así que no hereda su tipografía.
+  font-family: $fuente-texto;
+  transform: translateX(105%);
+  // Cerrado no se ve ni recibe foco: `visibility` se apaga recién cuando termina de deslizarse.
+  visibility: hidden;
+  transition: transform 0.24s ease, visibility 0s linear 0.24s;
+}
+
+.drawerOpen {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform 0.24s ease;
+}
+
+.drawerHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-4;
+  border-bottom: 1px solid $gray-200;
+}
+
+.drawerTitulo {
+  font-family: $fuente-titulos;
+  font-weight: $font-weight-bold;
+  color: $franja-azul;
 }
 
 .drawerUser {
@@ -283,7 +499,7 @@
 }
 
 .drawerUserName {
-  font-size: 0.9rem;
+  font-size: $font-size-base;
   font-weight: $font-weight-semibold;
   color: $gray-800;
   overflow: hidden;
@@ -291,111 +507,35 @@
   white-space: nowrap;
 }
 
-.authButton {
-  display: inline-flex;
-  align-items: center;
-  gap: $spacing-2;
-  height: 38px;
-  padding: 0 $spacing-3;
-  border: 1px solid rgba($gray-200, 0.9);
-  border-radius: 10px;
-  background: $white;
-  color: $gray-600;
-  font-family: inherit;
-  font-size: 0.875rem;
-  font-weight: $font-weight-semibold;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: background-color 0.16s ease, color 0.16s ease, border-color 0.16s ease;
-
-  &:hover {
-    background: #fef2f2;
-    border-color: #fecaca;
-    color: #dc2626;
-  }
-  &:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(#dc2626, 0.16); }
-}
-
-.hamburger {
-  display: none;
-  width: 42px;
-  height: 42px;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba($gray-200, 0.9);
-  border-radius: 10px;
-  background: $white;
-  color: $gray-800;
-  cursor: pointer;
-
-  &:hover { background: $gray-100; }
-}
-
-// ── Mobile drawer (hidden on desktop) ────────────────────────────────────────────
-.overlay {
-  position: fixed;
-  inset: 0;
-  display: none;
-  border: none;
-  padding: 0;
-  margin: 0;
-  background: rgba(15, 23, 42, 0.4);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.22s ease;
-  z-index: 90;
-}
-.overlayOn { opacity: 1; pointer-events: auto; }
-
-.drawer {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: min(86vw, 340px);
-  height: 100dvh;
-  display: none;
-  flex-direction: column;
-  background: $white;
-  box-shadow: $shadow-md;
-  transform: translateX(105%);
-  transition: transform 0.24s ease;
-  z-index: 91;
-}
-.drawerOpen { transform: translateX(0); }
-
-.drawerHead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: $spacing-4;
-  border-bottom: 1px solid rgba($gray-200, 0.9);
-}
 .drawerClose {
-  width: 38px;
-  height: 38px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 2.375rem;
+  height: 2.375rem;
+  color: $gray-700;
+  background: $gray-100;
   border: none;
   border-radius: 10px;
-  background: $gray-100;
-  color: $gray-700;
   cursor: pointer;
+
   &:hover { background: $gray-200; }
 }
+
 .drawerBody {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
-  padding: $spacing-3;
   display: flex;
   flex-direction: column;
   gap: 2px;
+  padding: $spacing-3;
+  overflow-y: auto;
 }
+
 .drawerFoot {
   padding: $spacing-3 $spacing-4;
-  border-top: 1px solid rgba($gray-200, 0.9);
+  border-top: 1px solid $gray-200;
+
   .authButton { width: 100%; justify-content: center; }
 }
 
@@ -405,57 +545,63 @@
   align-items: center;
   gap: $spacing-3;
   width: 100%;
-  min-height: 46px;
+  min-height: 2.875rem;
   padding: 0 $spacing-3;
-  border: none;
-  background: transparent;
-  border-radius: 9px;
-  color: $gray-700;
   font-family: inherit;
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $gray-700;
   text-decoration: none;
+  background: transparent;
+  border: none;
+  border-radius: 9px;
   cursor: pointer;
-  &:hover { background: $gray-100; color: $gray-900; }
 
-  .itemIcon { color: $gray-400; }
+  &:hover { color: $gray-900; background: $gray-100; }
 }
+
 .mGroup { display: flex; flex-direction: column; }
+
 .mGroupBody {
   display: flex;
   flex-direction: column;
   gap: $spacing-3;
-  margin: 4px 0 8px 20px;
-  padding-left: 14px;
-  border-left: 1px solid rgba($gray-200, 0.9);
+  margin: 0.25rem 0 0.5rem 1.25rem;
+  padding-left: 0.875rem;
+  border-left: 1px solid $gray-200;
 
   .dropdownCol { min-width: 0; }
   .dropdownCol + .dropdownCol { padding-left: 0; border-left: none; }
 }
 
+// Sólo opacidad: el `transform` lo usa el ajuste que mete el panel dentro de la pantalla.
 @keyframes dropIn {
-  from { opacity: 0; transform: translateY(-6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-// ── Responsive: collapse menubar into a drawer ───────────────────────────────────
+// ── Pantallas chicas: las solapas pasan al drawer ─────────────────────────────
+@media (max-width: 1200px) {
+  .inner { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .brandText { display: none; }
+  .menubar { padding: 0 $spacing-4; }
+  .topLink { padding: 0 $spacing-2; }
+}
+
 @media (max-width: 1024px) {
   .menubar { display: none; }
   .hamburger { display: inline-flex; }
   .overlay { display: block; }
   .drawer { display: flex; }
-  .right { margin-left: auto; border-left: none; padding-left: 0; }
-  .authText { display: none; }
-  .authButton { padding: 0 $spacing-3; }
-  // Sin la barra de menú el espacio es para el hamburguesa: el nombre completo
-  // pasa a la cabecera del drawer y acá queda sólo el avatar con las iniciales.
+  .inner { gap: $spacing-3; height: 4rem; padding: 0 $spacing-4; }
   .userName { display: none; }
+  .buscarAtajo { display: none; }
 }
 
 @media (max-width: 480px) {
   .inner { padding: 0 $spacing-3; }
-  .brand { padding-right: $spacing-3; margin-right: $spacing-2; }
-  .brandText { display: none; }
+  .buscarTexto { display: none; }
+  .buscar { width: 2.875rem; padding: 0; justify-content: center; justify-self: end; }
 }
 
 @media (prefers-reduced-motion: reduce) {

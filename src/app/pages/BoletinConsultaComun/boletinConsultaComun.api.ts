@@ -1,5 +1,3 @@
-import axios from "axios";
-
 import {
   BOLETIN_ENDPOINTS,
   CONSULTA_COMUN_CODE,
@@ -20,7 +18,6 @@ import type {
   ConsultaComunItem,
 } from "./boletinConsultaComun.types";
 import { SIN_GALENOS } from "./boletinConsultaComun.types";
-import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 import { http } from "@/app/shared/lib/http";
 
 function pickFirst<T = unknown>(
@@ -37,7 +34,7 @@ function pickFirst<T = unknown>(
   return fallback;
 }
 
-export function normalizeRow(input: unknown): ApiBoletinRow {
+function normalizeRow(input: unknown): ApiBoletinRow {
   const row = (input ?? {}) as Record<string, unknown>;
 
   const fechaCambioRaw = pickFirst(row, [
@@ -188,7 +185,7 @@ export function normalizeRow(input: unknown): ApiBoletinRow {
   };
 }
 
-export function extractRowsFromPayload(payload: unknown): unknown[] | null {
+function extractRowsFromPayload(payload: unknown): unknown[] | null {
   if (Array.isArray(payload)) return payload;
   if (!payload || typeof payload !== "object") return null;
 
@@ -229,11 +226,11 @@ export function extractRowsFromPayload(payload: unknown): unknown[] | null {
   return null;
 }
 
-export function extractCodes(value: unknown): string[] {
+function extractCodes(value: unknown): string[] {
   return String(value ?? "").match(/\d{4,6}/g) ?? [];
 }
 
-export function filterRowsByCodigo(
+function filterRowsByCodigo(
   rows: ApiBoletinRow[],
   codigo: string
 ): ApiBoletinRow[] {
@@ -266,7 +263,7 @@ function compareRowsByRecency(a: ApiBoletinRow, b: ApiBoletinRow): number {
   return a.id - b.id;
 }
 
-export function buildLatestPerOS(rows: ApiBoletinRow[]): ConsultaComunItem[] {
+function buildLatestPerOS(rows: ApiBoletinRow[]): ConsultaComunItem[] {
   const latestByOS = new Map<number, ApiBoletinRow>();
 
   for (const row of rows) {
@@ -304,38 +301,7 @@ export function buildLatestPerOS(rows: ApiBoletinRow[]): ConsultaComunItem[] {
     });
 }
 
-export function getErrorMessage(error: unknown): string {
-  if (axios.isAxiosError(error)) {
-    if (error.code === "ERR_CANCELED") {
-      return "La consulta fue cancelada.";
-    }
-
-    if (error.code === "ECONNABORTED") {
-      return "La consulta tardó demasiado tiempo. Intente nuevamente.";
-    }
-
-    const status = error.response?.status;
-    if (status === 400) return "Solicitud inválida al backend.";
-    // El 401 lo maneja el interceptor (refresh/login); si llega hasta acá ya
-    // falló ese intento. El 403 no se trata igual (§4): no hay refresh que
-    // arregle una falta de permiso, así que mostramos el detalle si vino.
-    if (status === 401) return "No tiene permisos para consultar este recurso.";
-    if (status === 403) {
-      return mensajeDeError(error, "No tiene permisos para consultar este recurso.");
-    }
-    if (status === 404) return "No se encontró el endpoint solicitado.";
-    if (status && status >= 500) {
-      return "El backend devolvió un error interno.";
-    }
-
-    return error.message || "No se pudo obtener la información desde el backend.";
-  }
-
-  if (error instanceof Error) return error.message;
-  return "Ocurrió un error inesperado.";
-}
-
-export async function fetchBoletinPage(
+async function fetchBoletinPage(
   endpoint: string,
   page: number,
   signal?: AbortSignal,
@@ -360,7 +326,7 @@ export async function fetchBoletinPage(
   return rows.map(normalizeRow);
 }
 
-export async function requestBoletinPage(
+async function requestBoletinPage(
   page: number,
   signal?: AbortSignal,
   codigo: string = CONSULTA_COMUN_CODE

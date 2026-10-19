@@ -1,14 +1,21 @@
 @use "@/app/styles/all.scss" as *;
 
-// ─── Page layout ──────────────────────────────────────────────────────────────
+// Alta y edición de obra social: la franja, «Volver» y los bloques numerados, cada uno con sus campos en una columna.
 
 .container {
-  padding: $spacing-8;
+  // En variables porque la franja las necesita para salirse del relleno.
+  --lado: #{$spacing-12};
+  --arriba: #{$spacing-8};
+
   display: flex;
   flex-direction: column;
-  gap: $spacing-6;
-  max-width: 900px;
-  margin: 0 auto;
+  gap: $spacing-5;
+  padding: $spacing-8 $spacing-12;
+
+  // La franja ya trae su margen; el `gap` alcanza.
+  > :first-child {
+    margin-bottom: 0;
+  }
 }
 
 .loadingPage {
@@ -16,65 +23,19 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: $spacing-16;
   gap: $spacing-4;
+  padding: $spacing-16;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
   color: $gray-500;
-  font-size: $font-size-base;
-}
-
-// ─── Page header ──────────────────────────────────────────────────────────────
-
-.pageHeader {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-3;
-}
-
-.backBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-2 $spacing-3;
-  background: none;
-  border: none;
-  color: $gray-600;
-  font-size: $font-size-sm;
-  cursor: pointer;
-  border-radius: $radio-md;
-  transition: color 0.15s, background-color 0.15s;
-  align-self: flex-start;
-
-  &:hover {
-    color: #8575ab;
-    background-color: rgba(173, 162, 198, 0.18);
-  }
-}
-
-.pageTitle {
-  display: flex;
-  align-items: center;
-  gap: $spacing-3;
-
-  h1 {
-    font-size: $font-size-4xl;
-    font-weight: $font-weight-bold;
-    color: #493c68;
-    margin: 0;
-    line-height: 1.2;
-  }
-}
-
-.pageTitleIcon {
-  color: #786c99;
-  flex-shrink: 0;
 }
 
 // ─── Error banner ─────────────────────────────────────────────────────────────
 
 .errorBanner {
   padding: $spacing-4 $spacing-5;
-  background-color: #fff0f0;
-  border: 1px solid #fca5a5;
+  background-color: $gray-100;
+  border: 1px solid $tono-rojo-200;
   border-radius: $radio-md;
   color: $danger-red;
   font-size: $font-size-base;
@@ -82,43 +43,61 @@
 
 // ─── Form ─────────────────────────────────────────────────────────────────────
 
+// Angosto a propósito: una columna de campos se lee de arriba abajo.
 .form {
   display: flex;
   flex-direction: column;
-  gap: $spacing-6;
+  gap: $spacing-5;
+  width: 100%;
+  max-width: 54rem;
+  margin: 0 auto;
 }
 
 // ─── Sections ─────────────────────────────────────────────────────────────────
 
 .section {
-  background-color: $white;
-  border-radius: $radio-sm;
-  box-shadow: $shadow-md;
-  padding: $spacing-8;
   display: flex;
   flex-direction: column;
-  gap: $spacing-6;
+  gap: $spacing-5;
+  padding: $spacing-6 $spacing-8;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
+  box-shadow: 0 14px 34px -28px rgba($franja-azul, 0.55);
 }
 
 .sectionTitle {
-  font-size: $font-size-xl;
-  font-weight: $font-weight-semibold;
-  color: #6f6591;
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
   margin: 0;
-  padding-bottom: $spacing-4;
-  border-bottom: 2px solid rgba(173, 162, 198, 0.18);
+  font-family: $fuente-titulos;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  letter-spacing: -0.01em;
+  color: $franja-azul;
+}
+
+.paso {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: $font-size-base;
+  font-variant-numeric: tabular-nums;
+  color: $franja-crema;
+  background: $franja-azul;
+  border-radius: 999px;
 }
 
 // ─── Grid ─────────────────────────────────────────────────────────────────────
 
+// Siempre una columna: los campos van uno debajo del otro.
 .grid2 {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: $spacing-5;
-
-  @media (max-width: $breakpoint-md) {
-    grid-template-columns: 1fr;
-  }
 }
 
 .fullWidth {
@@ -134,7 +113,7 @@
 }
 
 .fieldNarrow {
-  max-width: 220px;
+  max-width: 13.75rem;
 }
 
 .label {
@@ -168,8 +147,8 @@
   box-sizing: border-box;
 
   &:focus {
-    border-color: #897CAC;
-    box-shadow: 0 0 0 3px rgba(137, 124, 172, 0.12);
+    border-color: $franja-azul;
+    box-shadow: 0 0 0 3px rgba($franja-azul, 0.14);
   }
 
   &::placeholder {
@@ -214,10 +193,11 @@
 }
 
 .preview {
-  font-size: $font-size-xs;
-  color: #897CAC;
+  align-self: flex-start;
+  font-size: $font-size-sm;
+  color: $franja-azul;
   font-weight: $font-weight-semibold;
-  background-color: rgba(173, 162, 198, 0.18);
+  background-color: $primary-yellow-light;
   padding: $spacing-1 $spacing-3;
   border-radius: $radio-md;
 }
@@ -225,10 +205,10 @@
 // ─── Spinner ──────────────────────────────────────────────────────────────────
 
 .spinner {
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   border: 3px solid $gray-200;
-  border-top-color: #897CAC;
+  border-top-color: $franja-azul;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   flex-shrink: 0;
@@ -275,8 +255,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 1.875rem;
+  height: 1.875rem;
   border-radius: $radio-md;
   border: 1px solid $gray-200;
   background-color: $white;
@@ -286,7 +266,7 @@
   transition: background-color 0.15s, color 0.15s, border-color 0.15s;
 
   &:hover {
-    background-color: #fff0f0;
+    background-color: $gray-100;
     color: $danger-red;
     border-color: $danger-red;
   }
@@ -300,7 +280,7 @@
   background: none;
   border: 1px dashed $gray-300;
   border-radius: $radio-md;
-  color: #897CAC;
+  color: $franja-azul;
   font-size: $font-size-sm;
   font-weight: $font-weight-medium;
   cursor: pointer;
@@ -308,8 +288,8 @@
   transition: background-color 0.15s, border-color 0.15s;
 
   &:hover {
-    background-color: rgba(173, 162, 198, 0.18);
-    border-color: #897CAC;
+    background-color: rgba($franja-azul, 0.08);
+    border-color: $franja-azul;
     border-style: solid;
   }
 }
@@ -339,20 +319,20 @@
   user-select: none;
 
   &:has(.radioInput:checked) {
-    border-color: #897CAC;
-    background-color: rgba(173, 162, 198, 0.18);
-    color: #897CAC;
+    border-color: $franja-azul;
+    background-color: rgba($franja-azul, 0.08);
+    color: $franja-azul;
   }
 
   &:hover {
-    border-color: #897CAC;
+    border-color: $franja-azul;
   }
 }
 
 .radioInput {
-  width: 18px;
-  height: 18px;
-  accent-color: #897CAC;
+  width: 1.125rem;
+  height: 1.125rem;
+  accent-color: $franja-azul;
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -385,12 +365,12 @@
   align-items: center;
   gap: $spacing-2;
   padding: $spacing-2 $spacing-3;
-  background-color: rgba(173, 162, 198, 0.18);
-  color: #897CAC;
+  background-color: rgba($franja-azul, 0.08);
+  color: $franja-azul;
   border-radius: $radio-md;
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
-  max-width: 260px;
+  max-width: 16.25rem;
 
   span {
     overflow: hidden;
@@ -403,18 +383,18 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
   border: none;
   background: none;
-  color: #897CAC;
+  color: $franja-azul;
   cursor: pointer;
   border-radius: 50%;
   flex-shrink: 0;
   transition: background-color 0.15s;
 
   &:hover {
-    background-color: rgba(137, 124, 172, 0.15);
+    background-color: rgba($franja-azul, 0.12);
   }
 }
 
@@ -446,7 +426,7 @@
   border: 1px solid $gray-200;
   border-radius: $radio-md;
   box-shadow: $shadow-lg;
-  max-height: 220px;
+  max-height: 13.75rem;
   overflow-y: auto;
   z-index: 50;
 }
@@ -473,7 +453,7 @@
 
   &:hover {
     background-color: $gray-50;
-    color: #897CAC;
+    color: $franja-azul;
   }
 }
 
@@ -514,8 +494,8 @@
 .docActiveBadge {
   display: inline-block;
   padding: $spacing-1 $spacing-3;
-  background-color: #b9a7e9;
-  color: #493c68;
+  background-color: $primary-yellow-light;
+  color: $franja-azul;
   border-radius: $radio-sm;
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
@@ -556,12 +536,12 @@
 
 .docFileLink {
   font-size: $font-size-sm;
-  color: #897CAC;
+  color: $franja-azul;
   text-decoration: underline;
   word-break: break-all;
 
   &:hover {
-    color: #685d86;
+    color: $primary-blue-darker;
   }
 }
 
@@ -661,7 +641,7 @@
 .notaInput {
   @extend .input;
   flex: 1;
-  min-width: 200px;
+  min-width: 12.5rem;
   font-size: $font-size-sm;
 }
 
@@ -674,7 +654,7 @@
   align-items: center;
   gap: $spacing-2;
   padding: $spacing-2 $spacing-5;
-  background-color: #897CAC;
+  background-color: $franja-azul;
   color: $white;
   border: none;
   border-radius: $radio-md;
@@ -685,7 +665,7 @@
   transition: background-color 0.18s;
 
   &:hover {
-    background-color: #7A6E9A;
+    background-color: $primary-blue-darker;
   }
 
   &:disabled {
@@ -706,7 +686,7 @@
   flex-direction: column;
   gap: $spacing-2;
   width: 100%;
-  max-width: 280px;
+  max-width: 17.5rem;
 }
 
 .vigenciaLabel {
@@ -726,7 +706,7 @@
   align-items: center;
   gap: $spacing-3;
   padding: $spacing-2 $spacing-4;
-  background-color: rgba(173, 162, 198, 0.18);
+  background-color: rgba($franja-azul, 0.08);
   border-radius: $radio-md;
   flex-wrap: wrap;
 }
@@ -740,7 +720,7 @@
 
 .queuedNote {
   font-size: $font-size-xs;
-  color: #897CAC;
+  color: $franja-azul;
   font-weight: $font-weight-medium;
 }
 
@@ -754,102 +734,41 @@
 
 .formFooter {
   display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: $spacing-4;
-  padding: $spacing-5 0;
   flex-wrap: wrap;
-}
-
-.btnPrimary {
-  display: inline-flex;
   align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-4 $spacing-8;
-  background-color: #816eb0;
-  color: $white;
-  border: none;
-  border-radius: $radio-md;
-  font-size: $font-size-base;
-  font-weight: $font-weight-semibold;
-  cursor: pointer;
-  transition: background-color 0.18s;
-  white-space: nowrap;
-
-  &:hover {
-    background-color: #7A6E9A;
-  }
-
-  &:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-  }
-}
-
-.btnSecondary {
-  display: inline-flex;
-  align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-4 $spacing-8;
-  background-color: $white;
-  color: $gray-700;
-  border: 1px solid $gray-300;
-  border-radius: $radio-md;
-  font-size: $font-size-base;
-  font-weight: $font-weight-medium;
-  cursor: pointer;
-  transition: background-color 0.18s;
-  white-space: nowrap;
-
-  &:hover {
-    background-color: $gray-50;
-  }
-
-  &:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-  }
+  justify-content: flex-end;
+  gap: $spacing-3;
+  padding: $spacing-2 0 $spacing-6;
 }
 
 // ─── Responsive ───────────────────────────────────────────────────────────────
 
 @media (max-width: $breakpoint-md) {
   .container {
+    --lado: #{$spacing-5};
+    --arriba: #{$spacing-5};
     padding: $spacing-5;
   }
 
   .section {
     padding: $spacing-5;
-  }
-
-  .pageTitle h1 {
-    font-size: $font-size-3xl;
   }
 }
 
 @media (max-width: $breakpoint-sm) {
   .container {
+    --lado: #{$spacing-4};
+    --arriba: #{$spacing-4};
     padding: $spacing-4;
-    gap: $spacing-4;
   }
 
   .section {
     padding: $spacing-4;
   }
 
-  .pageTitle h1 {
-    font-size: $font-size-2xl;
-  }
-
   .formFooter {
     flex-direction: column-reverse;
     align-items: stretch;
-  }
-
-  .btnPrimary,
-  .btnSecondary {
-    justify-content: center;
-    padding: $spacing-4;
   }
 }
 
@@ -860,15 +779,15 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 12px;
-  padding: 12px 8px 8px;
+  gap: 0.75rem;
+  padding: 0.75rem 0.5rem 0.5rem;
 }
 
 .creandoSpinner {
-  width: 44px;
-  height: 44px;
+  width: 2.75rem;
+  height: 2.75rem;
   border: 4px solid $gray-200;
-  border-top-color: #897CAC;
+  border-top-color: $franja-azul;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 

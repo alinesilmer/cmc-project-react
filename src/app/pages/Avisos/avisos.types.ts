@@ -1,17 +1,9 @@
 // Avisos que el Colegio publica para los socios de la app móvil (cmc-app).
-// Backend: app/modules/avisos en cmc_api, tabla `avisos_push` (el nombre `avisos`
-// ya lo ocupa una tabla legacy del PHP viejo).
-//
-// El aviso queda visible en el app en cuanto se publica (el app consulta
-// GET /api/mobile/avisos). El despacho de la notificación push que despierta el
-// teléfono todavía NO está implementado en el backend: hace falta registro de
-// tokens de dispositivo + credenciales de FCM/Expo. Hasta entonces todos los
-// avisos vuelven con push_estado="pendiente".
 
 // ─── Entity ───────────────────────────────────────────────────────────────────
 
 /** Estado del despacho de la push, no del aviso en sí. */
-export type PushEstado = "pendiente" | "enviado" | "error";
+type PushEstado = "pendiente" | "enviado" | "error";
 
 export interface Aviso {
   id: number;
@@ -42,10 +34,7 @@ export interface AvisoCreatePayload {
 
 export type AvisoUpdatePayload = Partial<AvisoCreatePayload & { activo: boolean }>;
 
-/** Espejo de TIPOS_AVISO en app/db/models/avisos_push.py. El backend valida
- *  contra esa lista: si se agrega uno, hay que agregarlo acá (o leerlo de
- *  GET /api/avisos/tipos, que devuelve exactamente esto). El tipo define el
- *  ícono y el color con el que la app muestra el aviso. */
+/** Espejo de TIPOS_AVISO en app/db/models/avisos_push.py. */
 export const TIPOS_AVISO = [
   "General",
   "Institucional",
@@ -54,12 +43,7 @@ export const TIPOS_AVISO = [
   "Urgente",
 ] as const;
 
-export type TipoAviso = (typeof TIPOS_AVISO)[number];
-
-// Límites pensados para notificaciones push: Android corta el título alrededor
-// de los 65 caracteres y el cuerpo cerca de los 240. Mismos valores que
-// TITULO_MAX / MENSAJE_MAX en app/modules/avisos/schemas.py — la columna es más
-// ancha (120/500), el tope es de UX.
+// Límites pensados para notificaciones push: Android corta el título alrededor de los 65 caracteres y el cuerpo cerca de los 240. Mismos valores que…
 export const TITULO_MAX = 80;
 export const MENSAJE_MAX = 240;
 

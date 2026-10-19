@@ -22,7 +22,7 @@ export type FaltantesFilter = {
   mode: "missing" | "present";
 };
 
-export type VencimientosFilter = {
+type VencimientosFilter = {
   malapraxisVencida: boolean;
   malapraxisPorVencer: boolean;
   anssalVencido: boolean;

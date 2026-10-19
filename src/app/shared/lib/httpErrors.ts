@@ -1,8 +1,4 @@
-// src/app/lib/httpErrors.ts
-// Mensaje uniforme para mostrarle al usuario ante un error de la API.
-// El 403 no se trata como el 401 (§4): no dispara refresh ni reintento, sólo
-// un mensaje — "Falta el permiso 'x'" si el backend lo manda en `detail`,
-// o el genérico si no.
+// src/app/lib/httpErrors.ts Mensaje uniforme para mostrarle al usuario ante un error de la API.
 export function mensajeDeError(err: any, fallback = "Ocurrió un error"): string {
   const status = err?.response?.status;
   const detail = err?.response?.data?.detail ?? err?.response?.data?.message;
@@ -15,9 +11,17 @@ export function mensajeDeError(err: any, fallback = "Ocurrió un error"): string
 
   if (typeof detail === "string" && detail) return detail;
 
-  // Un 422 de pydantic trae una lista de errores. Se muestra el primero: es el
-  // campo que el usuario acaba de tocar.
+  // Un 422 de pydantic trae una lista de errores.
   if (Array.isArray(detail) && detail[0]?.msg) return String(detail[0].msg);
 
+  return fallback;
+}
+
+// El `detail` del backend si es texto; si no, el mensaje del propio error (red caída, timeout); si no, `fallback`.
+export function detalleDeError(err: unknown, fallback: string): string {
+  const e = err as { response?: { data?: { detail?: unknown } }; message?: unknown } | null;
+  const detail = e?.response?.data?.detail;
+  if (typeof detail === "string" && detail) return detail;
+  if (typeof e?.message === "string" && e.message) return e.message;
   return fallback;
 }

@@ -1,7 +1,4 @@
 // Formateo compartido por las pantallas de importación.
-//
-// Vive aparte de `PanelImportacion.tsx` porque ese archivo sólo puede exportar
-// componentes: mezclar constantes rompe el fast refresh del dev server.
 
 export const moneda = new Intl.NumberFormat("es-AR", {
   style: "currency",

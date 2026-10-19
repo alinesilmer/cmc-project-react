@@ -1,7 +1,6 @@
 import { getJSON } from "@/app/shared/lib/http";
 
-// Control de calidad del padrón. Es SOLO LECTURA: el backend señala legajos con
-// problemas y nadie corrige nada automáticamente (ver `auditoria.py`).
+// Control de calidad del padrón.
 
 export type Severidad = "alta" | "media" | "baja" | "info";
 

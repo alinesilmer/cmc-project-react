@@ -6,6 +6,7 @@ import { formatearFecha } from "../../../lib/fechas";
 import { nombreDeRuta } from "../../../lib/documentos";
 import type { ValoresEticosOut } from "./valoresEticos.api";
 import styles from "./HistorialValores.module.scss";
+import Button from "@/website/components/UI/Button/Button";
 
 type Props = {
   historial: ValoresEticosOut[];
@@ -20,7 +21,7 @@ export default function HistorialValores({ historial, borrando, onBorrar, onErro
 
   return (
     <div className={styles.eticaHistorial}>
-      <button
+      <Button variant="plano"
         type="button"
         className={styles.eticaHistorialToggle}
         onClick={() => setAbierto((v) => !v)}
@@ -28,7 +29,7 @@ export default function HistorialValores({ historial, borrando, onBorrar, onErro
       >
         <ChevronDown size={16} className={abierto ? styles.girado : ""} aria-hidden="true" />
         Historial ({historial.length})
-      </button>
+      </Button>
 
       <AnimatePresence>
         {abierto && (
@@ -52,7 +53,7 @@ export default function HistorialValores({ historial, borrando, onBorrar, onErro
                   </div>
                   <div className={styles.eticaHistorialActions}>
                     <VerPdf ruta={item.pdf_path} etiqueta="Ver" onError={onError} />
-                    <button
+                    <Button variant="plano"
                       type="button"
                       className={styles.eticaDeleteBtn}
                       onClick={() => onBorrar(item.id)}
@@ -60,7 +61,7 @@ export default function HistorialValores({ historial, borrando, onBorrar, onErro
                       aria-label="Eliminar"
                     >
                       <Trash2 size={15} aria-hidden="true" />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ))

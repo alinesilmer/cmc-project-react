@@ -29,11 +29,7 @@ const aparecer = {
   show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } },
 };
 
-/**
- * Botones grandes para contactar al Colegio: cómo llegar, llamar, escribir y,
- * si se pide, WhatsApp. Un verbo por botón; el dato va chico abajo. Los usan
- * Contacto y Socios.
- */
+/** Botones grandes para contactar al Colegio: cómo llegar, llamar, escribir y, si se pide, WhatsApp. */
 export default function AccionesContacto({ email = CONTACTO.emails.secretaria, asunto, mensajeWhatsApp }: Props) {
   const acciones: Accion[] = [
     { icono: MapPin, accion: "Cómo llegar", dato: CONTACTO.direccion, href: CONTACTO.mapa },

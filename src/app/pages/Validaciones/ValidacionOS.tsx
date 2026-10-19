@@ -1,29 +1,29 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, Navigate, useParams } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Navigate, useParams } from "react-router-dom";
 import {
   AlertTriangle,
-  ArrowLeft,
-  BadgeCheck,
-  CalendarDays,
   CircleAlert,
   ClipboardList,
   ExternalLink,
   FileUp,
   Info,
   PlusCircle,
-  UserRound,
-  X,
 } from "lucide-react";
 
 import { useAuth } from "../../auth/AuthProvider";
 import { isMedico } from "../../auth/roles";
 import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 import ActionModal from "@/app/components/ui/ActionModal/ActionModal";
+import BackButton from "@/app/components/ui/BackButton/BackButton";
+import Franja, { Solapa } from "@/app/components/layout/Franja/Franja";
 import MedicoAutocomplete from "../facturacion/components/MedicoAutocomplete";
 import type { MedicoOption } from "../facturacion/types";
+import PeriodoAbierto from "./components/PeriodoAbierto";
+import PanelObraSocial from "./components/PanelObraSocial";
 import PeriodosTable from "./components/PeriodosTable";
 import PrestacionesTable from "./components/PrestacionesTable";
 import PrestacionForm from "./components/PrestacionForm";
+import ResultadoCarga from "./components/ResultadoCarga";
 import { getObraSocial } from "./validaciones.config";
 import {
   adjuntarOrden,
@@ -34,12 +34,7 @@ import {
   getPeriodos,
   getPrestaciones,
 } from "./validaciones.api";
-import {
-  formatMoneda,
-  iniciales,
-  nombreMes,
-} from "./validaciones.types";
-import { esPendienteDeObraSocial } from "./validaciones.types";
+import { iniciales, nombreMes } from "./validaciones.types";
 import type {
   Periodo,
   Prestacion,
@@ -50,30 +45,23 @@ import s from "./ValidacionOS.module.scss";
 
 type TabId = "carga" | "listado";
 
-const hoy = new Date();
-
 export default function ValidacionOS() {
   const { slug } = useParams<{ slug: string }>();
   const os = getObraSocial(slug);
 
   const { user } = useAuth();
   const esMedico = isMedico(user);
-  // El personal del Colegio (rol no médico) tiene que elegir a qué socio le
-  // corresponde la carga: el backend, sin `nro_socio`, opera sobre el token
-  // de quien está logueado, y quien está logueado acá no es un médico.
+  // El personal del Colegio (rol no médico) tiene que elegir a qué socio le corresponde la carga: el backend, sin `nro_socio`.
   const [socio, setSocio] = useState<MedicoOption | null>(null);
-  const nroSocioElegido = esMedico || !socio ? undefined : Number(socio.cod);
-  const faltaElegirSocio = !esMedico && !socio;
+  // Un `cod` que no sea un número de socio válido cuenta como "sin elegir": el cliente omite `nro_socio` cuando es falsy.
+  const codSocio = esMedico || !socio ? NaN : Number(socio.cod);
+  const nroSocioElegido = Number.isInteger(codSocio) && codSocio > 0 ? codSocio : undefined;
+  const faltaElegirSocio = !esMedico && nroSocioElegido == null;
 
   const [tab, setTab] = useState<TabId>("carga");
-  const [mes, setMes] = useState(hoy.getMonth() + 1);
-  const [anio, setAnio] = useState(hoy.getFullYear());
-  // `mes`/`anio` arrancan en el mes calendario (ver `hoy` arriba) solo porque hace
-  // falta un valor inicial sincrónico — el período REAL es el puntero
-  // `periodo_medico_actual` que se pide abajo. Sin este flag la barra mostraba el
-  // mes de hoy por un instante y después "saltaba" al período abierto de verdad
-  // (ej. mostraba Septiembre y al toque cambiaba a Octubre) apenas resolvía el
-  // fetch — confuso cuando ya no coinciden porque el cron de cierre corrió.
+  const [mes, setMes] = useState(() => new Date().getMonth() + 1);
+  const [anio, setAnio] = useState(() => new Date().getFullYear());
+  // `mes`/`anio` arrancan en el mes calendario solo porque hace falta un valor inicial sincrónico .
   const [periodoListo, setPeriodoListo] = useState(false);
 
   const [prestaciones, setPrestaciones] = useState<Prestacion[]>([]);
@@ -83,11 +71,7 @@ export default function ValidacionOS() {
 
   const [enviando, setEnviando] = useState(false);
   const [resultado, setResultado] = useState<ResultadoValidacion | null>(null);
-  // Se incrementa después de un alta exitosa para remontar `PrestacionForm` con
-  // los campos vacíos. Sin esto el formulario quedaba con el afiliado, el token
-  // y el código cargados y el botón habilitado: un segundo clic —por costumbre
-  // o por duda— pedía **otra autorización real** por la misma práctica y
-  // consumía otro token de la credencial.
+  // Se incrementa después de un alta exitosa para remontar `PrestacionForm` con los campos vacíos.
   const [formKey, setFormKey] = useState(0);
 
   const [aEliminar, setAEliminar] = useState<Prestacion | null>(null);
@@ -95,23 +79,33 @@ export default function ValidacionOS() {
   const [archivo, setArchivo] = useState<File | null>(null);
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
 
-  // Detalle prestación-por-prestación de un período del listado (cualquiera,
-  // no sólo el abierto) — independiente de `prestaciones`/`mes`/`anio`, que
-  // son siempre los del período abierto (la barra de arriba no navega).
+  // Detalle prestación-por-prestación de un período del listado (cualquiera, no sólo el abierto) — independiente de `prestaciones`/`mes`/`anio`, que son siempre los del período abierto.
   const [verDetalle, setVerDetalle] = useState<Periodo | null>(null);
   const [prestacionesDetalle, setPrestacionesDetalle] = useState<Prestacion[]>([]);
   const [cargandoDetalle, setCargandoDetalle] = useState(false);
 
   const fileRef = useRef<HTMLInputElement>(null);
   const resultadoRef = useRef<HTMLDivElement>(null);
+  // Número de la última consulta lanzada.
+  const refrescoSeq = useRef(0);
+  const detalleSeq = useRef(0);
 
   const codigoOS = os?.codigo ?? null;
+
+  // Lo que se ve en pantalla pertenece a un socio y a una obra social: al cambiar cualquiera de los dos.
+  const limpiarContexto = useCallback(() => {
+    detalleSeq.current += 1;
+    setVerDetalle(null);
+    setPrestacionesDetalle([]);
+    setCargandoDetalle(false);
+    setResultado(null);
+  }, []);
 
   // ─── Carga de datos ────────────────────────────────────────────────────────
   const refrescar = useCallback(async () => {
     if (codigoOS == null) return;
-    // Personal del Colegio sin socio elegido todavía: no hay de quién traer
-    // nada (ver faltaElegirSocio).
+    const seq = ++refrescoSeq.current;
+    // Personal del Colegio sin socio elegido todavía: no hay de quién traer nada (ver faltaElegirSocio).
     if (faltaElegirSocio) {
       setPrestaciones([]);
       setPeriodos([]);
@@ -119,61 +113,78 @@ export default function ValidacionOS() {
       return;
     }
     setCargandoPeriodos(true);
+    // Hasta que no llega el puntero del período no se sabe qué mes pedir: consultar con el mes calendario mostraba totales de otro período.
+    if (!periodoListo) return;
     setErrorCarga(null);
     try {
       const [lista, periodosOS] = await Promise.all([
         getPrestaciones(codigoOS, mes, anio, nroSocioElegido),
         getPeriodos(codigoOS, nroSocioElegido),
       ]);
+      if (seq !== refrescoSeq.current) return;
       setPrestaciones(lista);
       setPeriodos(periodosOS);
     } catch {
-      setErrorCarga("No pudimos traer las prestaciones. Reintentá en unos segundos.");
+      if (seq === refrescoSeq.current) {
+        setErrorCarga("No pudimos traer las prestaciones. Reintentá en unos segundos.");
+      }
     } finally {
-      setCargandoPeriodos(false);
+      if (seq === refrescoSeq.current) setCargandoPeriodos(false);
     }
-  }, [codigoOS, mes, anio, faltaElegirSocio, nroSocioElegido]);
+  }, [codigoOS, mes, anio, faltaElegirSocio, nroSocioElegido, periodoListo]);
 
   useEffect(() => {
     void refrescar();
   }, [refrescar]);
 
-  // Trae las prestaciones de un período puntual del listado (no ata al
-  // período abierto): así "Ver detalle" no mueve la barra de arriba.
+  // Trae las prestaciones de un período puntual del listado (no ata al período abierto): así "Ver detalle" no mueve la barra de arriba.
   const abrirDetalle = useCallback(
     async (p: Periodo) => {
       if (codigoOS == null) return;
+      const seq = ++detalleSeq.current;
       setVerDetalle(p);
+      // Fuera la lista del detalle anterior: si esta consulta falla, quedaba bajo el título de este período.
+      setPrestacionesDetalle([]);
       setCargandoDetalle(true);
       try {
         const lista = await getPrestaciones(codigoOS, p.mes, p.anio, nroSocioElegido);
+        if (seq !== detalleSeq.current) return;
         setPrestacionesDetalle(lista);
       } catch {
+        if (seq !== detalleSeq.current) return;
+        // Sin datos no hay detalle que mostrar: una tabla vacía diría que el período no tiene prestaciones.
+        setVerDetalle(null);
         setErrorCarga("No pudimos traer las prestaciones de ese período. Reintentá en unos segundos.");
       } finally {
-        setCargandoDetalle(false);
+        if (seq === detalleSeq.current) setCargandoDetalle(false);
       }
     },
     [codigoOS, nroSocioElegido],
   );
 
-  // Después de eliminar/adjuntar sobre el detalle abierto, refresca esa misma
-  // lista — `refrescar()` sólo trae la del período abierto, que puede ser otro.
+  // Después de eliminar/adjuntar sobre el detalle abierto, refresca esa misma lista — `refrescar()` sólo trae la del período abierto, que puede ser otro.
   const refrescarDetalle = useCallback(async () => {
     if (!verDetalle || codigoOS == null) return;
-    const lista = await getPrestaciones(codigoOS, verDetalle.mes, verDetalle.anio, nroSocioElegido);
-    setPrestacionesDetalle(lista);
+    const seq = ++detalleSeq.current;
+    try {
+      const lista = await getPrestaciones(codigoOS, verDetalle.mes, verDetalle.anio, nroSocioElegido);
+      if (seq !== detalleSeq.current) return;
+      setPrestacionesDetalle(lista);
+    } catch {
+      if (seq !== detalleSeq.current) return;
+      setErrorCarga("No pudimos actualizar el listado. Reintentá en unos segundos.");
+    }
   }, [verDetalle, codigoOS, nroSocioElegido]);
 
-  // El período abierto lo define el Colegio (puntero `periodo_medico_actual`),
-  // no el calendario: arrancamos parados ahí y no en el mes de hoy.
+  // El período abierto lo define el Colegio (puntero `periodo_medico_actual`), no el calendario: arrancamos parados ahí y no en el mes de hoy.
   useEffect(() => {
     if (codigoOS == null) return;
     let cancelado = false;
-    // Al cambiar de obra social (sin remount: mismo componente, otro `slug` de
-    // ruta) hay que volver a mostrar "Cargando…" — si no, se ve por un instante
-    // el período de la obra social anterior.
+    // Al cambiar de obra social (sin remount: mismo componente, otro `slug` de ruta) hay que volver a mostrar "Cargando…" — si no.
     setPeriodoListo(false);
+    setPrestaciones([]);
+    setPeriodos([]);
+    limpiarContexto();
     getPeriodoActual(codigoOS)
       .then(({ mes: m, anio: a }) => {
         if (cancelado) return;
@@ -189,16 +200,7 @@ export default function ValidacionOS() {
     return () => {
       cancelado = true;
     };
-  }, [codigoOS]);
-
-  // Las rechazadas no suman: la obra social no las va a pagar.
-  const totalPeriodo = useMemo(
-    () =>
-      prestaciones
-        .filter((p) => p.estado !== "rechazada")
-        .reduce((acc, p) => acc + p.total, 0),
-    [prestaciones]
-  );
+  }, [codigoOS, limpiarContexto]);
 
   // Rutas inválidas o portales externos no tienen pantalla de carga propia.
   if (!os) return <Navigate to="/panel/validaciones" replace />;
@@ -219,8 +221,7 @@ export default function ValidacionOS() {
         obra_social: os.codigo,
         codigo: valores.codigo?.trim() ?? "",
         nombre_afiliado: valores.nombreAfiliado ?? "",
-        // Las O.S. en línea reciben el número y el dígito por separado; las de
-        // carga manual lo guardan ya unido.
+        // Las O.S. en línea reciben el número y el dígito por separado; las de carga manual lo guardan ya unido.
         nro_afiliado: os.validacion === "online" ? base : dv ? `${base}/${dv}` : base,
         barra_afiliado: dv ?? "",
         nro_validacion: valores.nroValidacion ?? "",
@@ -239,26 +240,14 @@ export default function ValidacionOS() {
               : "La prestación quedó cargada en el período.",
         prestacion,
       });
-      // Sólo se limpia cuando la prestación quedó cargada. Ante un rechazo los
-      // datos se conservan: casi siempre hay que corregir un dígito y reintentar.
+      // Sólo se limpia cuando la prestación quedó cargada.
       if (prestacion.estado === "autorizada" || prestacion.estado === "cargada") {
         setFormKey((k) => k + 1);
       }
       await Promise.all([refrescar(), refrescarDetalle()]);
       resultadoRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     } catch (err) {
-      // Regla única para el prestador: si no salió el cartel de autorizada, la
-      // prestación no se cargó. El timeout no es una excepción a eso.
-      //
-      // Se puede afirmar porque el cliente espera más que el backend
-      // (TIMEOUT_OS_EN_LINEA > SANCOR_TIMEOUT): si acá se corta, el backend ya
-      // desistió de Sancor y cerró con 502 sin grabar nada. Antes no era cierto
-      // —el navegador cortaba a los 15 s y el backend seguía hasta 30— y por
-      // eso hacía falta un estado intermedio.
-      //
-      // Igual se refresca la lista: si un backend excepcionalmente lento
-      // alcanzó a grabar, la prestación aparece en el listado y el prestador
-      // la ve antes de reintentar.
+      // Regla única para el prestador: si no salió el cartel de autorizada, la prestación no se cargó.
       const porTimeout = esTimeoutDeRed(err);
       if (porTimeout) await Promise.all([refrescar(), refrescarDetalle()]);
       setResultado({
@@ -282,10 +271,7 @@ export default function ValidacionOS() {
       await Promise.all([refrescar(), refrescarDetalle()]);
       setAEliminar(null);
     } catch (err) {
-      // Igual que en el alta: si cortó el navegador, la baja puede haberse
-      // hecho igual. Refrescamos y cerramos el modal — la lista es la que
-      // manda, y dejar "no pudimos eliminar" sobre una prestación que ya no
-      // está fue exactamente lo que pasó en las pruebas.
+      // Igual que en el alta: si cortó el navegador, la baja puede haberse hecho igual.
       if (esTimeoutDeRed(err)) {
         await Promise.all([refrescar(), refrescarDetalle()]);
         setAEliminar(null);
@@ -307,98 +293,55 @@ export default function ValidacionOS() {
       await Promise.all([refrescar(), refrescarDetalle()]);
       setAAdjuntar(null);
       setArchivo(null);
-    } catch {
-      setErrorAccion("No pudimos subir el archivo.");
+    } catch (err) {
+      // El backend explica el rechazo (no es un PDF, pesa de más).
+      setErrorAccion(mensajeDeError(err, "No pudimos subir el archivo."));
       throw new Error("upload failed");
     }
   };
 
-  // Entrar al listado siempre trae datos frescos. Importa después de un
-  // timeout: el aviso manda al médico a revisar acá si la prestación entró, y
-  // el último refresco pudo haber salido antes de que el backend terminara —
-  // una lista vacía y vieja lo llevaría a validar dos veces.
+  // Entrar al listado siempre trae datos frescos.
   const irATab = (destino: TabId) => {
     setTab(destino);
-    if (destino === "listado") void refrescar();
+    if (destino === "listado") {
+      void refrescar();
+      void refrescarDetalle();
+    }
   };
 
-  const TABS: { id: TabId; label: string; icon: typeof PlusCircle; badge?: number }[] = [
-    { id: "carga", label: "Cargar prestación", icon: PlusCircle },
-    {
-      id: "listado",
-      label: "Listado",
-      icon: ClipboardList,
-      badge: periodos.length,
-    },
-  ];
+  // El personal del Colegio elige a nombre de quién trabaja: es el primer bloque de la carga y también encabeza el listado.
+  const selectorMedico = (
+    <MedicoAutocomplete
+      value={socio?.cod ?? null}
+      presetLabel={socio?.nombre}
+      onChange={(_cod, medico) => {
+        setSocio(medico);
+        limpiarContexto();
+      }}
+    />
+  );
 
   return (
     <div className={s.container} style={{ ["--os-color" as string]: os.color }}>
-      {/* ── Encabezado ── */}
-      <Link to="/panel/validaciones" className={s.back}>
-        <ArrowLeft size={16} /> Volver a obras sociales
-      </Link>
-
-      <header className={s.header}>
-        <div className={s.headerMain}>
-          {os.logo ? (
-            <img src={os.logo} alt="" className={s.headerLogo} />
-          ) : (
-            <span className={s.avatar} style={{ background: os.color }}>
-              {iniciales(os.nombre)}
+      <Franja
+        titulo={
+          <>
+            <span className={s.placa}>
+              {os.logo ? <img src={os.logo} alt="" /> : iniciales(os.nombre)}
             </span>
-          )}
-          <h1 className={s.title}>{os.nombre}</h1>
-        </div>
+            {os.nombre}
+          </>
+        }
+      >
+        <Solapa activa={tab === "carga"} onClick={() => irATab("carga")}>
+          <PlusCircle size={18} /> Cargar
+        </Solapa>
+        <Solapa activa={tab === "listado"} onClick={() => irATab("listado")} cuenta={periodos.length}>
+          <ClipboardList size={18} /> Listado
+        </Solapa>
+      </Franja>
 
-      </header>
-
-      {/* ── Socio a validar (sólo personal del Colegio) ── */}
-      {!esMedico && (
-        <section className={s.formCard} style={{ maxWidth: 480 }}>
-          <div>
-            <h2 className={s.cardTitle}>Socio a validar</h2>
-            <p className={s.cardSub}>
-              Elegí el médico para el que vas a cargar esta prestación. El
-              período, el historial y la carga de acá abajo pasan a ser los suyos.
-            </p>
-          </div>
-          <div className={s.socioField}>
-            <label className={s.socioLabel}>
-              <UserRound size={14} /> Socio
-            </label>
-            <MedicoAutocomplete
-              value={socio?.cod ?? null}
-              onChange={(_cod, medico) => setSocio(medico)}
-            />
-          </div>
-        </section>
-      )}
-
-      {/* ── Período ── */}
-      <div className={s.periodBar}>
-        <div className={s.periodInfo}>
-          <span className={s.periodEyebrow}>Período abierto</span>
-          <div className={`${s.periodLabel} ${periodoListo ? "" : s.periodLabelLoading}`}>
-            <CalendarDays size={18} />
-            <span>{periodoListo ? `${nombreMes(mes)} ${anio}` : "Cargando…"}</span>
-          </div>
-        </div>
-
-        <div className={s.periodStats}>
-          <div className={s.periodStat}>
-            <span className={s.periodStatValue}>{prestaciones.length}</span>
-            <span className={s.periodStatLabel}>prestaciones</span>
-          </div>
-          <div className={s.periodStatDivider} />
-          <div className={s.periodStat}>
-            <span className={`${s.periodStatValue} ${s.periodStatMoney}`}>
-              {formatMoneda(totalPeriodo)}
-            </span>
-            <span className={s.periodStatLabel}>total del período</span>
-          </div>
-        </div>
-      </div>
+      <BackButton label="Volver" to="/panel/validaciones" />
 
       {os.nota && (
         <p className={s.nota}>
@@ -423,76 +366,51 @@ export default function ValidacionOS() {
         </p>
       )}
 
-      {/* ── Pestañas ── */}
-      <div className={s.tabs} role="tablist">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            role="tab"
-            aria-selected={tab === t.id}
-            className={`${s.tab} ${tab === t.id ? s.tabActive : ""}`}
-            onClick={() => irATab(t.id)}
-          >
-            <t.icon size={16} />
-            {t.label}
-            {t.badge != null && t.badge > 0 && (
-              <span className={s.tabBadge}>{t.badge}</span>
-            )}
-          </button>
-        ))}
-      </div>
-
       {/* ── Contenido ── */}
       {tab === "carga" && (
         <section className={s.panel}>
           <div ref={resultadoRef}>
             {resultado && (
-              <ResultadoBanner
-                resultado={resultado}
-                onCerrar={() => setResultado(null)}
-              />
+              <ResultadoCarga resultado={resultado} onCerrar={() => setResultado(null)} />
             )}
           </div>
 
-          <div className={s.formCard}>
-            <h2 className={s.cardTitle}>Nueva prestación</h2>
-            <p className={s.cardSub}>
-              {os.validacion === "online"
-                ? "Completá los datos del afiliado y el código. Consultamos a la obra social en el momento."
-                : "Cargá la autorización que ya obtuviste en el portal de la obra social."}
-            </p>
-            {faltaElegirSocio ? (
-              <p className={s.aviso}>
-                <AlertTriangle size={16} />
-                Elegí primero el socio arriba: la prestación se carga a su nombre.
-              </p>
-            ) : (
-              <PrestacionForm
-                key={formKey}
-                os={os}
-                enviando={enviando}
-                onSubmit={handleValidar}
-                nroSocio={nroSocioElegido}
+          <div className={s.carga}>
+            <PrestacionForm
+              key={`${os.slug}-${formKey}`}
+              os={os}
+              enviando={enviando}
+              onSubmit={handleValidar}
+              nroSocio={nroSocioElegido}
+              medico={
+                esMedico
+                  ? undefined
+                  : { control: selectorMedico, elegido: !faltaElegirSocio }
+              }
+            />
+            <div className={s.cargaPeriodo}>
+              <PeriodoAbierto
+                mes={mes}
+                anio={anio}
+                listo={periodoListo}
+                cantidad={faltaElegirSocio ? undefined : prestaciones.length}
               />
-            )}
+            </div>
+            <div className={s.cargaPanel}>
+              <PanelObraSocial codigo={os.codigo} />
+            </div>
           </div>
         </section>
       )}
 
       {tab === "listado" && (
         <section className={s.panel}>
+          {!esMedico && <div className={s.socioField}>{selectorMedico}</div>}
           {verDetalle ? (
             <>
               <div className={s.panelHead}>
                 <div>
-                  <button
-                    type="button"
-                    className={s.linkBtn}
-                    onClick={() => setVerDetalle(null)}
-                  >
-                    <ArrowLeft size={15} /> Volver al listado de períodos
-                  </button>
+                  <BackButton label="Períodos" onClick={() => setVerDetalle(null)} />
                   <h2 className={s.cardTitle}>
                     Prestaciones de {nombreMes(verDetalle.mes)} {verDetalle.anio}
                   </h2>
@@ -581,8 +499,7 @@ export default function ValidacionOS() {
 
           {aAdjuntar?.orden && (
             <p className={s.modalNota}>
-              Ya hay un archivo cargado: <strong>{aAdjuntar.orden}</strong>. Si subís
-              otro, lo reemplaza.
+              Ya hay un archivo cargado. Si subís otro, lo reemplaza.
             </p>
           )}
 
@@ -601,106 +518,16 @@ export default function ValidacionOS() {
             type="file"
             accept="application/pdf"
             hidden
-            onChange={(e) => setArchivo(e.target.files?.[0] ?? null)}
+            onChange={(e) => {
+              setArchivo(e.target.files?.[0] ?? null);
+              // Sin vaciarlo, volver a elegir el mismo archivo no dispara `change` y el botón de subir queda deshabilitado.
+              e.target.value = "";
+            }}
           />
 
           {errorAccion && <p className={s.modalError}>{errorAccion}</p>}
         </div>
       </ActionModal>
-    </div>
-  );
-}
-
-// ─── Banner de resultado ──────────────────────────────────────────────────────
-
-function ResultadoBanner({
-  resultado,
-  onCerrar,
-}: {
-  resultado: ResultadoValidacion;
-  onCerrar: () => void;
-}) {
-  const { estado, mensaje, prestacion, mostrarAyuda = true } = resultado;
-
-  // Nobis grada el `P-Pendiente` como `rechazada` en la base (importe 0,
-  // fuera de factura), pero acá corresponde el mismo aviso que un `pendiente`
-  // real: la orden existe en Nobis, sólo falta que el afiliado la gestione.
-  // Ver `esPendienteDeObraSocial` — no cambia `estado`, sólo cómo se muestra.
-  const pendienteDeGestion = estado === "rechazada" && esPendienteDeObraSocial(mensaje);
-  const estadoVisual = pendienteDeGestion ? "pendiente" : estado;
-
-  const Icono =
-    estadoVisual === "autorizada" || estadoVisual === "cargada"
-      ? BadgeCheck
-      : estadoVisual === "pendiente"
-        ? Info
-        : CircleAlert;
-
-  const titulo =
-    estadoVisual === "autorizada"
-      ? "Prestación autorizada"
-      : estadoVisual === "cargada"
-        ? "Prestación cargada"
-        : estadoVisual === "pendiente"
-          ? "Requiere gestión del afiliado"
-          : "No se pudo cargar la prestación";
-
-  return (
-    <div className={`${s.resultado} ${s[`resultado_${estadoVisual}`]}`} role="status">
-      <button
-        type="button"
-        className={s.resultadoClose}
-        onClick={onCerrar}
-        aria-label="Cerrar aviso"
-      >
-        <X size={16} />
-      </button>
-
-      <div className={s.resultadoHead}>
-        <Icono size={22} />
-        <div>
-          <strong>{titulo}</strong>
-          <p>{mensaje}</p>
-        </div>
-      </div>
-
-      {prestacion && (
-        <dl className={s.resultadoDatos}>
-          <div>
-            <dt>N° de validación</dt>
-            <dd>{prestacion.nroValidacion}</dd>
-          </div>
-          <div>
-            <dt>Afiliado</dt>
-            <dd>{prestacion.nombreAfiliado}</dd>
-          </div>
-          <div>
-            <dt>Código</dt>
-            <dd>
-              {prestacion.codigo} · {prestacion.descripcion}
-            </dd>
-          </div>
-          <div>
-            <dt>Honorarios</dt>
-            <dd>{formatMoneda(prestacion.honorarios)}</dd>
-          </div>
-          <div>
-            <dt>Gastos</dt>
-            <dd>{formatMoneda(prestacion.gastos)}</dd>
-          </div>
-          <div>
-            <dt>Total</dt>
-            <dd className={s.resultadoTotal}>{formatMoneda(prestacion.total)}</dd>
-          </div>
-        </dl>
-      )}
-
-      {!prestacion && estado === "rechazada" && mostrarAyuda && (
-        <p className={s.resultadoAyuda}>
-          Revisá los datos del afiliado y el código. Si el problema sigue, consultá en
-          el Colegio.
-        </p>
-      )}
     </div>
   );
 }
@@ -711,9 +538,7 @@ function PortalExterno({ slug }: { slug: string }) {
   const os = getObraSocial(slug)!;
   return (
     <div className={s.container}>
-      <Link to="/panel/validaciones" className={s.back}>
-        <ArrowLeft size={16} /> Volver a obras sociales
-      </Link>
+      <BackButton label="Volver" to="/panel/validaciones" />
 
       <div className={s.externo}>
         <span className={s.avatar} style={{ background: os.color }}>

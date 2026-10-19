@@ -1,19 +1,4 @@
 // Socios elegidos a mano en la previsualización (matrícula repetida o sin socio).
-//
-// La elección es POR FILA: elegir el socio de una práctica no toca las demás de
-// la misma matrícula (una matrícula repetida puede ser de socios distintos en
-// prácticas distintas). Lo mismo descartar.
-//
-// Las elecciones viven aparte de las prestaciones y se aplican recién al
-// mandarlas: así elegir no cambia la lista de filas, y `useImportador` no borra
-// la previsualización que se está mirando. Elegir o descartar deja la pantalla
-// "sin revisar" hasta volver a previsualizar, para que lo que se confirma sea
-// exactamente lo que se vio.
-//
-// Cada fila se identifica por su posición en el ARCHIVO. El backend numera las
-// que recibe (`FilaResultado.indice`), y esas no son las mismas una vez que se
-// descartó alguna: `enviadas` guarda, para la última previsualización, qué fila
-// del archivo es cada una.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 

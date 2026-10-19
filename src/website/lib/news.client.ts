@@ -3,10 +3,7 @@ import type { Noticia, NoticiaDetail, TipoPublicacion } from "../types";
 
 export type { TipoPublicacion };
 
-/**
- * La API mezcla camelCase y snake_case en las fechas según el endpoint. Se
- * normaliza acá, una vez, en vez de en cada pantalla que las muestra.
- */
+/** La API mezcla camelCase y snake_case en las fechas según el endpoint. */
 function adaptar<T extends Noticia>(n: unknown): T {
   const crudo = (n ?? {}) as Record<string, unknown>;
   return {
@@ -26,11 +23,7 @@ type Campos = {
   publicada?: boolean;
   autor?: string;
   badge?: string;
-  /**
-   * NRO_OBRASOCIAL alcanzados por la noticia (normas operativas). Viaja como
-   * CSV porque el alta es `multipart/form-data`, no JSON. Un array vacío
-   * desasocia todas; omitir el campo deja lo que ya estaba.
-   */
+  /** NRO_OBRASOCIAL alcanzados por la noticia (normas operativas). */
   obrasSociales?: number[];
 };
 
@@ -41,10 +34,7 @@ type OpcionesGuardado = {
   deleteDocIds?: number[];
 };
 
-/**
- * El alta y la edición mandan el mismo formulario; en la edición sólo viajan
- * los campos presentes, así el backend no pisa lo que no se tocó.
- */
+/** El alta y la edición mandan el mismo formulario; en la edición sólo viajan los campos presentes. */
 function armarFormulario(campos: Partial<Campos>, opts: OpcionesGuardado = {}): FormData {
   const fd = new FormData();
   const texto = ["titulo", "resumen", "contenido", "tipo", "badge"] as const;
@@ -79,8 +69,7 @@ export async function getNewsById(id: string | number): Promise<NoticiaDetail> {
   return adaptar<NoticiaDetail>(await getJSON<unknown>(rutaNoticia(id)));
 }
 
-// Las versiones del sitio público: sin sesión (ver `getPublico`). Las de arriba
-// las usa el editor del panel, que necesita su token para ver los borradores.
+// Las versiones del sitio público: sin sesión (ver `getPublico`).
 export async function listNewsPublicas(tipo: TipoPublicacion): Promise<Noticia[]> {
   const filas = await getPublico<unknown[]>("/api/noticias/", { tipo });
   return (filas ?? []).map((n) => adaptar<Noticia>(n));

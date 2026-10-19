@@ -1,87 +1,35 @@
-import { Link } from "react-router-dom";
-import { ExternalLink, Globe, KeyRound, Wrench, ArrowUpRight } from "lucide-react";
+import { KeyRound } from "lucide-react";
 
 import { useAuth } from "../../../auth/AuthProvider";
 import { isMedico } from "../../../auth/roles";
 import { destinoObraSocial } from "../validaciones.config";
-import { iniciales } from "../validaciones.types";
 import type { ObraSocialConfig } from "../validaciones.types";
+import Carpeta from "./Carpeta";
 import s from "./ObraSocialCard.module.scss";
 
 export { s as obraSocialCardStyles };
 
 interface Props {
   os: ObraSocialConfig;
-  /** Abre la guía de usuario y clave del portal (Swiss Medical, Unión Personal). */
   onAbrirGuia?: (os: ObraSocialConfig) => void;
+  /** Abre el paso previo (día límite y documentación) en lugar del portal. */
+  onRequisitos?: (os: ObraSocialConfig) => void;
 }
 
-/**
- * Tarjeta única del catálogo de validaciones. No distingue entre obras sociales
- * integradas y externas: cambia sólo el destino y el texto de la acción, así el
- * médico ve todas las obras sociales en la misma grilla.
- */
-export default function ObraSocialCard({ os, onAbrirGuia }: Props) {
+export default function ObraSocialCard({ os, onAbrirGuia, onRequisitos }: Props) {
   const { user } = useAuth();
   const { href, tipo } = destinoObraSocial(os, isMedico(user));
-  const deshabilitada = os.estado === "mantenimiento";
-
-  const cuerpo = (
-    <>
-      <span className={s.logoWrap} style={{ ["--os-color" as string]: os.color }}>
-        {os.logo ? (
-          <img src={os.logo} alt="" className={s.logo} loading="lazy" />
-        ) : (
-          <span className={s.logoFallback} style={{ background: os.color }}>
-            {iniciales(os.nombre)}
-          </span>
-        )}
-      </span>
-
-      <h2 className={s.nombre}>{os.nombre}</h2>
-
-      {deshabilitada ? (
-        <span className={`${s.accion} ${s.accionDisabled}`}>
-          <Wrench size={15} /> En mantenimiento
-        </span>
-      ) : (
-        <span className={s.accion}>
-          {tipo === "panel" && (
-            <>
-              Cargar prestación <ArrowUpRight size={15} />
-            </>
-          )}
-          {tipo === "cmc" && (
-            <>
-              <Globe size={15} /> Ver en el sitio del Colegio
-            </>
-          )}
-          {tipo === "portal" && (
-            <>
-              <ExternalLink size={15} /> Ir al portal
-            </>
-          )}
-        </span>
-      )}
-    </>
-  );
 
   return (
-    <div className={s.cell}>
-      {deshabilitada ? (
-        <div className={`${s.card} ${s.cardDisabled}`} aria-disabled="true">
-          {cuerpo}
-        </div>
-      ) : tipo === "portal" ? (
-        <a className={s.card} href={href} target="_blank" rel="noopener noreferrer">
-          {cuerpo}
-        </a>
-      ) : (
-        <Link className={s.card} to={href}>
-          {cuerpo}
-        </Link>
-      )}
-
+    <Carpeta
+      nombre={os.nombre}
+      logo={os.logo}
+      href={href}
+      externo={tipo === "portal"}
+      deshabilitada={os.estado === "mantenimiento"}
+      aviso="En mantenimiento"
+      onAbrir={(tipo === "portal" || os.requisitos) && onRequisitos ? () => onRequisitos(os) : undefined}
+    >
       {os.guia && onAbrirGuia && (
         <button
           type="button"
@@ -93,6 +41,6 @@ export default function ObraSocialCard({ os, onAbrirGuia }: Props) {
           {os.guia.chip}
         </button>
       )}
-    </div>
+    </Carpeta>
   );
 }

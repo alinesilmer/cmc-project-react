@@ -4,6 +4,7 @@ import { WHATSAPP_NUMBERS } from "./chatbot.enlaces";
 import { buildWhatsAppUrl } from "./chatbot.engine";
 import type { ChatMsg } from "./chatbot.types";
 import styles from "./ChatMensaje.module.scss";
+import Button from "@/website/components/UI/Button/Button";
 
 type Props = {
   mensaje: ChatMsg;
@@ -54,7 +55,7 @@ export default function ChatMensaje({ mensaje, ocupado, onOpcion, onNavegar }: P
       {mensaje.menuOptions && mensaje.menuOptions.length > 0 && (
         <div className={styles.menuOptions} role="group" aria-label="Opciones de consulta">
           {mensaje.menuOptions.map((opt) => (
-            <button
+            <Button variant="plano"
               key={opt.label}
               type="button"
               className={styles.menuOptionBtn}
@@ -62,7 +63,7 @@ export default function ChatMensaje({ mensaje, ocupado, onOpcion, onNavegar }: P
               disabled={ocupado}
             >
               {opt.label}
-            </button>
+            </Button>
           ))}
         </div>
       )}

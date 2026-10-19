@@ -27,6 +27,8 @@ import {
 } from "../nomenclador.api";
 import type { GalenoOut } from "../nomenclador.types";
 import ConfirmModal from "@/app/components/ui/ConfirmModal/ConfirmModal";
+import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -36,8 +38,7 @@ const fmt = new Intl.NumberFormat("es-AR", {
   maximumFractionDigits: 2,
 });
 
-// hoyISO y no toISOString(): este ultimo pasa a UTC, asi que despues de las
-// 21:00 en Argentina proponia la vigencia del dia siguiente. Ver lib/fechas.ts.
+// hoyISO y no toISOString(): este ultimo pasa a UTC, asi que despues de las 21:00 en Argentina proponia la vigencia del dia siguiente.
 const today = hoyISO;
 
 /** Un galeno agrupado por código: los nivelados agrupan todos sus niveles. */
@@ -59,18 +60,7 @@ function grupoValorActual(g: Grupo): string {
   return `${fmt.format(min)} – ${fmt.format(max)}`;
 }
 
-/**
- * Honorario de un nivel: unidades de honorarios × valor unitario del galeno.
- *
- * Es la misma cuenta que hace el backend al armar el componente "Honorarios" de
- * un valor (`subtotal = cantidad × valor_unitario`, ver
- * `nm_valores_componentes` y `services/nomenclador/service.py`). Se replica acá
- * para que al tipear un valor unitario nuevo se vea en pesos qué le pasa a cada
- * nivel, que es la cifra por la que se pregunta — el unitario solo no dice nada.
- *
- * `null` cuando el nivel no tiene unidades de honorarios cargadas: ahí no hay
- * cuenta que hacer, y mostrar $0 sería afirmar algo falso.
- */
+/** Honorario de un nivel: unidades de honorarios × valor unitario del galeno. */
 function honorarioDe(unidades: string | null, valorUnitario: number): number | null {
   if (unidades == null) return null;
   const u = parseFloat(unidades);
@@ -414,12 +404,7 @@ export default function ActualizarPreciosGalenos() {
                     <label className={styles.vigenciaLabel}>
                       Vigente desde
                     </label>
-                    <input
-                      type="date"
-                      className={styles.vigenciaInput}
-                      value={vigencia}
-                      onChange={(e) => setVigencia(e.target.value)}
-                    />
+                    <CampoFecha value={vigencia} onChange={(valor) => setVigencia(valor)} />
                   </div>
                   <button
                     className={styles.btnPrimary}
@@ -592,7 +577,7 @@ function PriceSection({
         <span className={styles.sectionCount}>{grupos.length}</span>
       </div>
       <div className={styles.tableWrap}>
-        <table className={styles.table}>
+        <Tabla className={styles.table}>
           <thead>
             <tr>
               <th>Nombre</th>
@@ -707,10 +692,7 @@ function PriceSection({
                     </td>
                   </tr>
 
-                  {/* Detalle de niveles (solo lectura). La fila se lee como una
-                      cuenta de izquierda a derecha: unidades × unitario = honorario.
-                      Con un valor nuevo tipeado, la última celda muestra a cuánto
-                      pasa el honorario de ese nivel. */}
+                  {/* Detalle de niveles (solo lectura). */}
                   {grupo.nivelado &&
                     isOpen &&
                     grupo.niveles.map((n) => {
@@ -769,7 +751,7 @@ function PriceSection({
               );
             })}
           </tbody>
-        </table>
+        </Tabla>
       </div>
     </div>
   );

@@ -1,16 +1,10 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import {
-  FileText,
-  Search,
-  X,
-  Info,
-  AlertTriangle,
-  Download,
-} from "lucide-react";
+import { AlertTriangle, FileText, Info } from "lucide-react";
 
-import Button from "@/app/components/ui/Button/Button";
+import Franja, { Solapa } from "@/app/components/layout/Franja/Franja";
+import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 import { useAuth } from "@/app/auth/AuthProvider";
 import { agruparPorCodigo } from "@/app/features/nomenclador/galenos";
 import type { GrupoGaleno } from "@/app/features/nomenclador/galenos";
@@ -21,17 +15,10 @@ import { descargarBoletin } from "./boletinMedico.pdf";
 import { moneda, normalizar } from "./boletinMedico.formato";
 import GrillaPediatria from "./GrillaPediatria";
 import s from "./BoletinMedico.module.scss";
+import SearchField from "@/app/components/ui/SearchField/SearchField";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
 
-/**
- * Valores del boletín, para el socio.
- *
- * Es la versión de panel del modal «Valores Boletín» de `menu.php`: el mismo
- * contenido —valor de consulta por obra social y valores de galeno— pero como
- * pantalla propia, buscable y legible en el teléfono, que es donde el médico la
- * mira antes de atender.
- *
- * Sólo lee. El boletín lo carga el Colegio desde sus propias pantallas.
- */
+/** Valores del boletín, para el socio. */
 
 type Vista = "consulta" | "pediatria" | "galenos" | "observaciones";
 
@@ -41,18 +28,13 @@ const VISTAS: { id: Vista; label: string }[] = [
   { id: "observaciones", label: "Observaciones" },
 ];
 
-/**
- * Para un pediatra la primera solapa es su boletín: los códigos de pediatría
- * de cada obra social en lugar del valor de consulta, como en el sistema viejo.
- * Los galenos no se le muestran (decisión del Colegio); las observaciones sí.
- */
+/** Para un pediatra la primera solapa es su boletín: los códigos de pediatría de cada obra social en lugar del valor de consulta. */
 const VISTAS_PEDIATRIA: { id: Vista; label: string }[] = [
   { id: "pediatria", label: "Valores de pediatría" },
   ...VISTAS.filter((v) => v.id !== "consulta" && v.id !== "galenos"),
 ];
 
-/** Referencia estable para el estado inicial: un `[]` nuevo por render
- * invalidaría los `useMemo` que filtran la lista. */
+/** Referencia estable para el estado inicial: un `[]` nuevo por render invalidaría los `useMemo` que filtran la lista. */
 const SIN_ITEMS: ItemBoletin[] = [];
 
 export default function BoletinMedico() {
@@ -64,8 +46,7 @@ export default function BoletinMedico() {
   const [busqueda, setBusqueda] = useState("");
   const [bajando, setBajando] = useState(false);
 
-  // El boletín cambia de un día para el otro, no dentro de una sesión: se
-  // mantiene en caché para que volver a la pantalla no vuelva a pedirlo todo.
+  // El boletín cambia de un día para el otro, no dentro de una sesión.
   const {
     data: items = SIN_ITEMS,
     isPending: cargando,
@@ -80,8 +61,7 @@ export default function BoletinMedico() {
     refetchOnReconnect: false,
   });
 
-  // Cada solapa lista sólo las obras sociales que tienen ese dato: una tarjeta
-  // vacía no le dice nada a nadie, y el contador de arriba quedaría mintiendo.
+  // Cada solapa lista sólo las obras sociales que tienen ese dato: una tarjeta vacía no le dice nada a nadie.
   const base = useMemo(() => {
     if (vista === "pediatria") return items.filter((i) => i.pediatria.length > 0);
     if (vista === "galenos") return items.filter((i) => i.galenos.length > 0);
@@ -99,8 +79,7 @@ export default function BoletinMedico() {
     );
   }, [base, busqueda]);
 
-  // Se baja el boletín entero, no lo que quedó filtrado en pantalla: el archivo
-  // es el boletín, no un recorte de lo que alguien estaba mirando.
+  // Se baja el boletín entero, no lo que quedó filtrado en pantalla: el archivo es el boletín.
   const bajar = async () => {
     setBajando(true);
     try {
@@ -112,10 +91,20 @@ export default function BoletinMedico() {
     }
   };
 
+  const franja = (
+    <Franja titulo="Valores del boletín" icono={FileText}>
+      {vistas.map(({ id, label }) => (
+        <Solapa key={id} activa={vista === id} onClick={() => setVista(id)} cuenta={cuantas(items, id)}>
+          {label}
+        </Solapa>
+      ))}
+    </Franja>
+  );
+
   if (cargando) {
     return (
       <div className={s.container}>
-        <Encabezado pediatria={pediatra} />
+        {franja}
         <div className={s.esqueletos} aria-busy="true" aria-live="polite">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className={s.esqueleto} />
@@ -128,7 +117,7 @@ export default function BoletinMedico() {
   if (error) {
     return (
       <div className={s.container}>
-        <Encabezado pediatria={pediatra} />
+        {franja}
         <p className={s.aviso} role="status">
           <AlertTriangle size={17} aria-hidden="true" />
           No pudimos cargar el boletín en este momento.
@@ -139,67 +128,36 @@ export default function BoletinMedico() {
 
   return (
     <div className={s.container}>
-      <Encabezado pediatria={pediatra} />
+      {franja}
 
       <div className={s.barra}>
-        <div className={s.tabs} role="tablist" aria-label="Qué parte del boletín ver">
-          {vistas.map(({ id, label }) => (
-            <button
-              key={id}
-              type="button"
-              role="tab"
-              aria-selected={vista === id}
-              className={vista === id ? `${s.tab} ${s.tabActiva}` : s.tab}
-              onClick={() => setVista(id)}
-            >
-              {label}
-            </button>
-          ))}
+        <SearchField
+          id="buscar-obra-social"
+          placeholder="Buscar obra social o número"
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          onClear={() => setBusqueda("")}
+          ariaLabel="Buscar obra social por nombre o número"
+        />
+
+        {busqueda && (
+          <p className={s.conteo} aria-live="polite">
+            {visibles.length} de {base.length}
+          </p>
+        )}
+
+        {/* Se baja el boletín entero, con las tres partes. */}
+        <div className={s.descarga}>
+          <BotonDescarga formato="pdf" onClick={() => void bajar()} cargando={bajando} disabled={items.length === 0}>
+            Boletín
+          </BotonDescarga>
         </div>
-
-        <div className={s.buscador}>
-          <Search size={17} className={s.lupa} aria-hidden="true" />
-          <input
-            id="buscar-obra-social"
-            type="search"
-            className={s.input}
-            placeholder="Buscar obra social o número"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            aria-label="Buscar obra social por nombre o número"
-            autoComplete="off"
-          />
-          {busqueda && (
-            <button
-              type="button"
-              className={s.limpiar}
-              onClick={() => setBusqueda("")}
-              aria-label="Borrar la búsqueda"
-            >
-              <X size={15} />
-            </button>
-          )}
-        </div>
-
-        <p className={s.conteo} aria-live="polite">
-          {busqueda
-            ? `${visibles.length} de ${base.length}`
-            : `${base.length} obras sociales`}
-        </p>
-
-        {/* Un solo botón: el archivo trae las tres solapas como tres hojas. */}
-        <Button
-          type="button"
-          variant="primary"
-          size="sm"
-          isLoading={bajando}
-          disabled={items.length === 0}
-          onClick={() => void bajar()}
-          leftIcon={<Download size={16} />}
-        >
-          Descargar boletín
-        </Button>
       </div>
+
+      <p className={s.nota}>
+        <Info size={16} aria-hidden="true" />
+        Valores sujetos a cambios.
+      </p>
 
       {visibles.length === 0 ? (
         <p className={s.aviso} role="status">
@@ -221,28 +179,18 @@ export default function BoletinMedico() {
   );
 }
 
-function Encabezado({ pediatria = false }: { pediatria?: boolean }) {
-  const bajada = pediatria
-    ? "Valores de pediatría y observaciones por obra social."
-    : "Valor de consulta y galenos por obra social.";
-
-  return (
-    <header className={s.header}>
-      <FileText size={30} className={s.headerIcon} aria-hidden="true" />
-      <div>
-        <h1 className={s.title}>Valores del boletín</h1>
-        <p className={s.subtitle}>
-          {bajada} Sujeto a cambios por actualizaciones permanentes.
-        </p>
-      </div>
-    </header>
-  );
+/** Cuántas obras sociales tienen el dato de cada solapa (lo que lista cada una). */
+function cuantas(items: ItemBoletin[], vista: Vista): number {
+  if (vista === "pediatria") return items.filter((i) => i.pediatria.length > 0).length;
+  if (vista === "galenos") return items.filter((i) => i.galenos.length > 0).length;
+  if (vista === "observaciones") return items.filter((i) => i.observaciones.length > 0).length;
+  return items.filter((i) => i.consulta !== null).length;
 }
 
 function TablaConsulta({ items }: { items: ItemBoletin[] }) {
   return (
     <div className={s.tableWrap}>
-      <table className={s.table}>
+      <Tabla className={s.table}>
         <thead>
           <tr>
             <th className={s.num}>N°</th>
@@ -261,7 +209,7 @@ function TablaConsulta({ items }: { items: ItemBoletin[] }) {
             </tr>
           ))}
         </tbody>
-      </table>
+      </Tabla>
     </div>
   );
 }
@@ -296,13 +244,7 @@ function GrillaGalenos({ items }: { items: ItemBoletin[] }) {
   );
 }
 
-/**
- * Las condiciones de cada obra social.
- *
- * Van en su propia solapa y no al pie de las otras dos porque no dependen del
- * precio: una obra social puede exigir bono o autorización aunque todavía no
- * tenga valores cargados, y ahí igual tiene que aparecer.
- */
+/** Las condiciones de cada obra social. */
 function GrillaObservaciones({ items }: { items: ItemBoletin[] }) {
   return (
     <ul className={s.grid}>
@@ -330,18 +272,7 @@ function GrillaObservaciones({ items }: { items: ItemBoletin[] }) {
   );
 }
 
-/**
- * Un galeno de la tarjeta.
- *
- * Se muestra la unidad del galeno y nada más. Los nivelados —Cirugía Adultos
- * llega a diez niveles y Ginecología a trece— ocupaban un renglón por nivel y
- * tapaban al resto, y el nivel que corresponde a cada práctica lo resuelve la
- * administración, no el socio.
- *
- * En casi todas las obras sociales los niveles de un mismo galeno comparten
- * valor unitario, así que el renglón es un número. Las excepciones son FASO y
- * Urología: ahí se muestra el rango en vez de elegir un nivel cualquiera.
- */
+/** Un galeno de la tarjeta. */
 function Galeno({ grupo }: { grupo: GrupoGaleno }) {
   const valor =
     grupo.minimo === grupo.maximo

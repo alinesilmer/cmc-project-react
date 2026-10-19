@@ -1,9 +1,6 @@
 @use "@/app/styles/all.scss" as *;
 
-/* Códigos por especialidad — catálogo de una OS recortado a una especialidad.
- * Todo lo que esta pantalla comparte con el resto de Auditoría y Nomenclador
- * (colores, radios, tabla, chips, estados) sale de `_superficies.scss`; acá
- * queda solo lo propio: los dos pasos y las columnas de origen. */
+/* Códigos por especialidad — catálogo de una OS recortado a una especialidad. */
 
 .page { @extend %pantalla; }
 .inner { @extend %contenido; }
@@ -17,7 +14,7 @@
 // ── Pasos (los dos combos) ────────────────────────────────────────────────────
 .steps {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 384px));
+  grid-template-columns: repeat(2, minmax(0, 24rem));
   gap: $spacing-5;
   align-items: end;
   margin-bottom: $spacing-4;
@@ -30,8 +27,7 @@
 .field {
   min-width: 0;
 
-  // El Combobox arrastra su propio margen inferior (viene de apilarse en la
-  // columna de consulta-precios); acá los dos van lado a lado.
+  // El Combobox arrastra su propio margen inferior (viene de apilarse en la columna de consulta-precios); acá los dos van lado a lado.
   > div { margin-bottom: 0; }
 }
 
@@ -52,7 +48,7 @@
 
 .searchBox {
   @extend %buscador;
-  flex: 1 1 240px;
+  flex: 1 1 15rem;
 }
 .searchIcon { @extend %buscador-icono; }
 .searchInput { @extend %buscador-campo; }
@@ -92,8 +88,7 @@
 
 .cCodigo { @extend %codigo; }
 
-// Marca los códigos `sin_restriccion_especialidad`: entran para cualquier
-// especialidad, no por el mapeo de la elegida.
+// Marca los códigos `sin_restriccion_especialidad`: entran para cualquier especialidad, no por el mapeo de la elegida.
 .univ {
   @extend %etiqueta;
   @extend %tono-neutro;
@@ -114,10 +109,9 @@
 
 // ── Origen del valor ──────────────────────────────────────────────────────────
 // NN nacional, NNE nacional de la obra social, NE variante por especialidad.
-// Un tono por origen para poder barrer la columna de un ojo.
 .origen {
   @extend %etiqueta;
-  min-width: 40px;
+  min-width: 2.5rem;
   font-variant-numeric: tabular-nums;
 }
 
@@ -146,18 +140,17 @@
 .c_media { @extend %tono-alerta; }
 .c_alta { @extend %tono-peligro; }
 
-// Celda de precio todavía en camino: la lista de códigos ya se pintó y estas
-// columnas entran cuando responde tabla_valores.
+// Celda de precio todavía en camino: la lista de códigos ya se pintó y estas columnas entran cuando responde tabla_valores.
 .pend {
   @extend %brillo;
   display: inline-block;
-  width: 42px;
-  height: 14px;
+  width: 2.625rem;
+  height: 0.875rem;
   border-radius: $radio-xs;
   vertical-align: middle;
 }
 
-.pendAncho { width: 76px; }
+.pendAncho { width: 4.75rem; }
 
 // Mientras los precios no llegaron no hay conteos por origen que mostrar.
 .chipsOff .chip { opacity: 0.5; }
@@ -173,8 +166,7 @@
   margin-bottom: $spacing-2;
 }
 
-// En celular la tabla se vuelve una lista de fichas: el código encabeza, el
-// resto baja con su etiqueta al costado.
+// En celular la tabla se vuelve una lista de fichas: el código encabeza, el resto baja con su etiqueta al costado.
 @media (max-width: $breakpoint-lg) {
   .tableScroll { overflow-x: visible; }
 

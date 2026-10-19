@@ -8,12 +8,7 @@ import {
   organizacionCanAccess,
 } from "./roles";
 
-/**
- * Recorta el panel para los usuarios médicos (INGRESAR = 'D'): si piden una ruta
- * fuera de `MEDICO_ALLOWED_PATHS` los devuelve al inicio. A las organizaciones
- * les saca además `ORGANIZACION_BLOCKED_PATHS`. Para el resto del personal es
- * transparente.
- */
+/** Recorta el panel para los usuarios médicos (INGRESAR = 'D'): si piden una ruta fuera de `MEDICO_ALLOWED_PATHS` los devuelve al inicio. */
 export default function MedicoRouteGuard() {
   const { user } = useAuth();
   const { pathname } = useLocation();

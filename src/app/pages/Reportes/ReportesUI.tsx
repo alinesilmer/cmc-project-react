@@ -4,21 +4,14 @@ import {
   AlertCircle,
   ChevronLeft,
   ChevronRight,
-  Download,
-  FileSpreadsheet,
-  Search,
-  X,
 } from "lucide-react";
 import {
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
-  Legend,
   Line,
   LineChart,
-  Pie,
-  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -39,9 +32,11 @@ import {
   type Tope,
   type ValidacionEstado,
 } from "./reportes.types";
+import SearchField from "@/app/components/ui/SearchField/SearchField";
+import SelectorMes from "@/app/components/ui/SelectorMes/SelectorMes";
+import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 
-// Piezas compartidas por el reporte del Colegio y el del médico. Son las mismas
-// lecturas con distinto alcance: mantenerlas acá evita que se separen.
+// Piezas compartidas por el reporte del Colegio y el del médico.
 
 // ─── KPI ──────────────────────────────────────────────────────────────────────
 
@@ -181,8 +176,7 @@ export const GraficoEvolucion = memo(function GraficoEvolucion({
             strokeWidth={2}
             dot={{ r: 2.5, fill: "#173f70" }}
             activeDot={{ r: 4.5 }}
-            // Sin animación: con 24 puntos y re-render por cambio de filtro,
-            // animar cada vez se ve nervioso y no aporta nada.
+            // Sin animación: con 24 puntos y re-render por cambio de filtro, animar cada vez se ve nervioso y no aporta nada.
             isAnimationActive={false}
           />
         </LineChart>
@@ -294,8 +288,7 @@ export function Pager({
 }
 
 // ─── Tamaño del ranking ───────────────────────────────────────────────────────
-// Las constantes viven en reportes.types.ts: este archivo exporta sólo
-// componentes, si no se rompe el fast refresh de Vite.
+// Las constantes viven en reportes.types.ts: este archivo exporta sólo componentes, si no se rompe el fast refresh de Vite.
 
 export function SelectorTope({
   value,
@@ -329,13 +322,7 @@ export function SelectorTope({
 
 // ─── Buscador ─────────────────────────────────────────────────────────────────
 
-/**
- * Caja de búsqueda de una tabla.
- *
- * El texto se debounce en el contenedor, NO acá: así el input responde a cada
- * tecla (se siente instantáneo) mientras el pedido al servidor sale recién
- * cuando el usuario frena.
- */
+/** Caja de búsqueda de una tabla. */
 export function Buscador({
   value,
   onChange,
@@ -352,27 +339,14 @@ export function Buscador({
       <label className={styles.label} htmlFor={id}>
         Buscar
       </label>
-      <div className={styles.searchBox}>
-        <Search size={15} className={styles.searchIcon} aria-hidden="true" />
-        <input
-          id={id}
-          type="search"
-          className={styles.searchInput}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-        />
-        {value && (
-          <button
-            type="button"
-            className={styles.searchClear}
-            onClick={() => onChange("")}
-            aria-label="Limpiar búsqueda"
-          >
-            <X size={14} />
-          </button>
-        )}
-      </div>
+      <SearchField
+        id={id}
+        fullWidth
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onClear={() => onChange("")}
+        placeholder={placeholder}
+      />
     </div>
   );
 }
@@ -382,90 +356,30 @@ export function Buscador({
 export function BotonesExportar({
   onCsv,
   onExcel,
+  onPdf,
   disabled,
 }: {
   onCsv: () => void;
   onExcel: () => void;
+  onPdf?: () => void;
   disabled?: boolean;
 }) {
   return (
     <div className={styles.exportBtns}>
-      <button
-        type="button"
-        className={styles.pageBtn}
-        onClick={onCsv}
-        disabled={disabled}
-        title="Descargar en CSV"
-      >
-        <Download size={14} /> CSV
-      </button>
-      <button
-        type="button"
-        className={styles.pageBtn}
-        onClick={onExcel}
-        disabled={disabled}
-        title="Descargar en Excel"
-      >
-        <FileSpreadsheet size={14} /> Excel
-      </button>
+      {onPdf && (
+        <BotonDescarga formato="pdf" onClick={onPdf} disabled={disabled} />
+      )}
+      <BotonDescarga formato="csv" onClick={onCsv} disabled={disabled} />
+      <BotonDescarga formato="excel" onClick={onExcel} disabled={disabled} />
     </div>
   );
 }
 
 // ─── Gráfico de torta (participación) ─────────────────────────────────────────
 
-export const GraficoTorta = memo(function GraficoTorta({
-  datos,
-}: {
-  datos: BarraDato[];
-}) {
-  if (!datos.length) return <Vacio>Sin datos para este período.</Vacio>;
-
-  return (
-    <div className={styles.chart}>
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie
-            data={datos}
-            dataKey="valor"
-            nameKey="etiqueta"
-            // Dona y no torta: el agujero deja leer las proporciones sin que el
-            // ojo compare áreas, que es donde la torta engaña.
-            innerRadius="52%"
-            outerRadius="80%"
-            paddingAngle={1.5}
-            isAnimationActive={false}
-          >
-            {datos.map((_, i) => (
-              <Cell key={i} fill={PALETA[i % PALETA.length]} />
-            ))}
-          </Pie>
-          <Tooltip content={<TooltipBarra />} />
-          <Legend
-            verticalAlign="bottom"
-            height={28}
-            wrapperStyle={{ fontSize: 11 }}
-          />
-        </PieChart>
-      </ResponsiveContainer>
-    </div>
-  );
-});
-
 // ─── Selector de mes y año ────────────────────────────────────────────────────
 
-const MESES_OPC = [
-  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
-];
-
-/**
- * Mes y año por separado.
- *
- * La facturación se organiza por período YYYYMM, pero nadie piensa "202608":
- * piensa "agosto" y "2026". Se muestran dos selects y se arma el período
- * internamente, que es lo que espera la API.
- */
+/** Período de facturación. */
 export function SelectorMesAnio({
   periodo,
   onChange,
@@ -475,59 +389,30 @@ export function SelectorMesAnio({
   onChange: (periodo: string) => void;
   anios: number[];
 }) {
-  const anio = Number(periodo.slice(0, 4));
-  const mes = Number(periodo.slice(4, 6));
-
-  const armar = (a: number, m: number) => `${a}${String(m).padStart(2, "0")}`;
+  const valor = new Date(Number(periodo.slice(0, 4)), Number(periodo.slice(4, 6)) - 1, 1);
+  const hayAnios = anios.length > 0;
 
   return (
-    <>
-      <div className={styles.field}>
-        <label className={styles.label} htmlFor="mes">
-          Mes
-        </label>
-        <select
-          id="mes"
-          className={styles.select}
-          value={mes}
-          onChange={(e) => onChange(armar(anio, Number(e.target.value)))}
-        >
-          {MESES_OPC.map((nombre, i) => (
-            <option key={nombre} value={i + 1}>
-              {nombre}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className={styles.field}>
-        <label className={styles.label} htmlFor="anio">
-          Año
-        </label>
-        <select
-          id="anio"
-          className={styles.select}
-          value={anio}
-          onChange={(e) => onChange(armar(Number(e.target.value), mes))}
-        >
-          {anios.map((a) => (
-            <option key={a} value={a}>
-              {a}
-            </option>
-          ))}
-        </select>
-      </div>
-    </>
+    <div className={styles.field}>
+      <label className={styles.label} htmlFor="periodo">
+        Período
+      </label>
+      <SelectorMes
+        id="periodo"
+        obligatorio
+        value={valor}
+        min={hayAnios ? new Date(Math.min(...anios), 0, 1) : undefined}
+        max={hayAnios ? new Date(Math.max(...anios), 11, 31) : undefined}
+        onChange={(d) => {
+          // A medio escribir no hay fecha: se espera a que esté completa.
+          if (d) onChange(`${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}`);
+        }}
+      />
+    </div>
   );
 }
 
-/**
- * Paginador para las tablas AGREGADAS (códigos, médicos).
- *
- * Esas consultas devuelven un array sin total: contar cuántos grupos distintos
- * hay exigiría un `COUNT(DISTINCT …)` extra por cada pedido, y no vale ese
- * costo sólo para escribir "de N". Se usa la regla clásica: si volvió una
- * página completa, es probable que haya otra.
- */
+/** Paginador para las tablas AGREGADAS (códigos, médicos). */
 export function PagerSimple({
   offset,
   limit,
@@ -578,34 +463,3 @@ export function PagerSimple({
 
 // ─── Selector de período ──────────────────────────────────────────────────────
 
-export function SelectorPeriodo({
-  value,
-  onChange,
-  periodos,
-  id = "periodo",
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  periodos: string[];
-  id?: string;
-}) {
-  return (
-    <div className={styles.field}>
-      <label className={styles.label} htmlFor={id}>
-        Período
-      </label>
-      <select
-        id={id}
-        className={styles.select}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      >
-        {periodos.map((p) => (
-          <option key={p} value={p}>
-            {periodoLargo(p)}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}

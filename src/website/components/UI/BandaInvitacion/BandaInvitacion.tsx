@@ -22,11 +22,7 @@ type Canal = {
   externo: boolean;
 };
 
-/**
- * Franja azul que invita a sumarse: obras sociales que quieren convenio,
- * comercios que quieren ofrecer un beneficio. Título corto y dos canales que
- * ya muestran el número y el mail, así nadie tiene que hacer clic para verlos.
- */
+/** Franja azul que invita a sumarse: obras sociales que quieren convenio, comercios que quieren ofrecer un beneficio. */
 export default function BandaInvitacion({ titulo, bajada, whatsapp, email }: Props) {
   const canales: Canal[] = [
     {

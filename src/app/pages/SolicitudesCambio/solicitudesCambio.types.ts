@@ -16,8 +16,7 @@ export interface SolicitudCambio {
   revisado_por_nombre: string | null;
   revisado_at: string | null;
   respuesta_admin: string | null;
-  /** Diff completo cuando la solicitud vino del formulario del portal.
-   *  `null` en las de la app móvil, que son de un solo campo. */
+  /** Diff completo cuando la solicitud vino del formulario del portal. */
   cambios: Record<string, { actual?: string; propuesto?: string; aplicado?: boolean }> | null;
   /** Cuándo se escribieron los cambios en el legajo. `null` = no se aplicó nada. */
   aplicado_at: string | null;
@@ -25,8 +24,7 @@ export interface SolicitudCambio {
   updated_at: string;
 }
 
-/** Lo que el socio ve de SU propio reclamo. No trae revisado_por/medico_nombre:
- *  quién lo resolvió es dato de la bandeja, no del reclamante. */
+/** Lo que el socio ve de SU propio reclamo. */
 export interface SolicitudCambioMia {
   id: number;
   campo: string;
@@ -39,17 +37,14 @@ export interface SolicitudCambioMia {
   created_at: string;
 }
 
-/** Un dato que el médico SÍ puede pedir corregir, con lo que figura hoy.
- *  La lista la define el backend (CAMPOS_EDITABLES_POR_MEDICO): el formulario
- *  no inventa campos, así que nunca ofrece algo que después se descarta. */
+/** Un dato que el médico SÍ puede pedir corregir, con lo que figura hoy. */
 export interface CampoEditable {
   campo: string;
   etiqueta: string;
   valor_actual: string | null;
 }
 
-/** Formulario completo. Sólo viajan los valores nuevos: el "valor actual" lo
- *  lee el backend de la base, no se le cree al cliente. */
+/** Formulario completo. Sólo viajan los valores nuevos: el "valor actual" lo lee el backend de la base, no se le cree al cliente. */
 export interface SolicitudCambioFormularioPayload {
   valores: Record<string, string>;
   mensaje: string;
@@ -78,8 +73,7 @@ export interface SolicitudCambioList {
 
 // ─── Etiquetas ────────────────────────────────────────────────────────────────
 
-/** Espejo de CAMPOS_CONOCIDOS en app/db/models/solicitud_cambio.py. La columna
- *  acepta otros valores, por eso el fallback muestra el crudo. */
+/** Espejo de CAMPOS_CONOCIDOS en app/db/models/solicitud_cambio.py. */
 const CAMPO_LABELS: Record<string, string> = {
   telefono: "Teléfono",
   email: "Email",

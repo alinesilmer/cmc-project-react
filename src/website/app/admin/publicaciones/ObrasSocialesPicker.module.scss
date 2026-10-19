@@ -1,5 +1,4 @@
 @use "../../../styles/variables" as *;
-@use "../../../styles/admin" as *;
 
 // ─── Selector de obras sociales (normas operativas) ────────────────────────────
 
@@ -34,8 +33,7 @@
   }
 }
 
-// Alto fijo con scroll: el padrón pasa las 300 obras sociales y sin tope la
-// lista empujaría el resto del formulario fuera de la pantalla.
+// Alto fijo con scroll: el padrón pasa las 300 obras sociales y sin tope la lista empujaría el resto del formulario fuera de la pantalla.
 .osList {
   max-height: 220px;
   overflow-y: auto;

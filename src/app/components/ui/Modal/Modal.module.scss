@@ -6,17 +6,16 @@
   display: flex;   
   justify-content: center;
   align-items: flex-start;   
-  padding-top: 24px;
-  background: rgba(0, 0, 0, 0.5);
+  padding-top: 1.5rem;
+  background: rgba($black, 0.5);
   backdrop-filter: blur(4px);
   z-index: 1000;
 }
 
 .modal {
   position: fixed;
-  top: 24px;
-  // Centrado con márgenes automáticos y no con translateX(-50%): framer-motion anima
-  // scale/y escribiendo `transform` inline, que pisaría el translate y correría el modal.
+  top: 1.5rem;
+  // Centrado con márgenes automáticos y no con translateX(-50%): framer-motion anima scale/y escribiendo `transform` inline, que pisaría el translate y correría el modal.
   left: 0;
   right: 0;
   margin-left: auto;
@@ -27,15 +26,15 @@
   border-radius: $border-radius-lg;
   box-shadow: $shadow-xl;
 
-  max-height: calc(100vh - 48px); 
+  max-height: calc(100vh - 3rem); 
   overflow: hidden;
 
   display: flex;
   flex-direction: column;
 
-  &.small { width: 90%; max-width: 400px; }
-  &.medium { width: 90%; max-width: 600px; }
-  &.large { width: 100%; max-width: 1100px; }
+  &.small { width: 90%; max-width: 25rem; }
+  &.medium { width: 90%; max-width: 37.5rem; }
+  &.large { width: 100%; max-width: 68.75rem; }
 }
 
 
@@ -58,4 +57,12 @@
   padding: $spacing-6;
   overflow-y: auto;
   flex: 1;
+}
+
+// Con `sinCabecera`: el contenido ocupa todo y resuelve su propio scroll.
+.contentPropio {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }

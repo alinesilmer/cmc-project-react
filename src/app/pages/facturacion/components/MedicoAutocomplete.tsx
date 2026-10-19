@@ -4,8 +4,7 @@ import { fetchMedicos } from "../api";
 import type { MedicoOption } from "../types";
 import { filtrarYOrdenar } from "./localSearch";
 
-// Los números de socio pueden tener 1 sola cifra (ej. "2") — la tolerancia de
-// 2 caracteres solo tiene sentido para texto (nombre), no para búsquedas numéricas.
+// Los números de socio pueden tener 1 sola cifra (ej. "2") — la tolerancia de 2 caracteres solo tiene sentido para texto (nombre).
 const isNumeric = (s: string) => /^\d+$/.test(s);
 const minLenFor = (q: string) => (isNumeric(q) ? 1 : 2);
 
@@ -17,9 +16,7 @@ interface Props {
   /** Precarga la opción mostrada antes de que el usuario busque (usado al editar). */
   presetLabel?: string;
   blurOnSelect?: boolean;
-  /** Lista ya traída entera (ver CargaFacturacion.tsx): si viene, se filtra en
-   *  memoria y no se pega más a `/medicos` por cada tecleo. Sin esto, busca como
-   *  siempre — el resto de las pantallas que usan este campo no se tocan. */
+  /** Lista ya traída entera (ver CargaFacturacion.tsx): si viene, se filtra en memoria y no se pega más a `/medicos` por cada tecleo. */
   medicosPrecargados?: MedicoOption[];
 }
 
@@ -39,9 +36,7 @@ const MedicoAutocomplete: React.FC<Props> = ({
     setLoading(true);
     try {
       const rows = await fetchMedicos(q);
-      // Este autocomplete es para médicos individuales (ejecutor, ayudante, equipo
-      // quirúrgico): /medicos mezcla médicos y organizaciones, así que se filtran las
-      // clínicas — no tiene sentido de negocio elegir una como ejecutor/ayudante.
+      // Este autocomplete es para médicos individuales (ejecutor, ayudante, equipo quirúrgico): /medicos mezcla médicos y organizaciones, así que se filtran las clínicas .
       setOptions(rows.filter((m) => !m.es_organizacion));
     } catch {
       // abort or network error
@@ -50,10 +45,7 @@ const MedicoAutocomplete: React.FC<Props> = ({
     }
   }, []);
 
-  // Mismo filtro (sin organizaciones) que el buscador remoto, pero en memoria —
-  // sobre la lista que ya trajo CargaFacturacion.tsx una sola vez. Query vacío
-  // (campo recién clickeado, nada tipeado) devuelve la lista completa: sin esto
-  // el dropdown abre sin ninguna opción hasta que se tipea.
+  // Mismo filtro (sin organizaciones) que el buscador remoto, pero en memoria — sobre la lista que ya trajo CargaFacturacion.tsx una sola vez.
   const buscarLocal = useCallback((q: string) => {
     if (!medicosPrecargados) { setOptions([]); return; }
     if (q.length === 0) {

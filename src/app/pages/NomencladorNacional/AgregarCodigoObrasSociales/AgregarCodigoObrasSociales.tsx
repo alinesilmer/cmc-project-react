@@ -18,29 +18,18 @@ import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import { altaNECero, listNomenclador } from "../nomenclador.api";
 import type { AltaNECeroOS, AltaNECeroResult, NomencladorOut } from "../nomenclador.types";
 import { mensajeDeError } from "@/app/shared/lib/httpErrors";
+import SearchField from "@/app/components/ui/SearchField/SearchField";
+import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
+import { fechaAR } from "@/app/pages/NomencladorNacional/utiles";
 
 /** Vigencia por defecto de las altas: 01/01/2026 (editable). */
 const VIGENCIA_DEFAULT = "2026-01-01";
 
 const num = new Intl.NumberFormat("es-AR");
-
-/** `aaaa-mm-dd` → `dd/mm/aaaa` sin pasar por Date (evita el corrimiento por UTC). */
-function fechaAR(iso: string): string {
-  const [a, m, d] = iso.split("-");
-  return `${d}/${m}/${a}`;
-}
-
 const normalizar = (s: string) =>
   s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
-/**
- * Herramientas → "Agregar código a obras sociales".
- *
- * Da de alta un código como NE en $0 en las obras sociales elegidas: una variante
- * por cada especialidad de la plantilla del código (o una sola sin especialidad si
- * el código es "sin restricción"), con la vigencia indicada. Lo que ya existe no se
- * toca. Primero se pide la vista previa (`dry_run`) y recién al confirmar se guarda.
- */
+/** Herramientas → "Agregar código a obras sociales". */
 export default function AgregarCodigoObrasSociales() {
   const osQuery = useObrasSociales();
 
@@ -209,12 +198,10 @@ export default function AgregarCodigoObrasSociales() {
           </div>
           <div className={styles.campoVigencia}>
             <label className={styles.label} htmlFor="vigencia-alta">Vigencia desde</label>
-            <input
-              id="vigencia-alta"
-              type="date"
-              className={styles.input}
+            <CampoFecha
               value={vigencia}
-              onChange={(e) => setVigencia(e.target.value)}
+              onChange={(valor) => setVigencia(valor)}
+              id="vigencia-alta"
               disabled={cargando === "aplicar"}
             />
           </div>
@@ -235,16 +222,13 @@ export default function AgregarCodigoObrasSociales() {
             </button>
           </div>
         </div>
-        <div className={styles.buscador}>
-          <Search size={15} />
-          <input
-            type="search"
-            placeholder="Buscar por nombre o número…"
-            value={filtroOs}
-            onChange={(e) => setFiltroOs(e.target.value)}
-            aria-label="Buscar obra social"
-          />
-        </div>
+        <SearchField
+          fullWidth
+          placeholder="Buscar por nombre o número…"
+          value={filtroOs}
+          onChange={(e) => setFiltroOs(e.target.value)}
+          ariaLabel="Buscar obra social"
+        />
         <ul className={styles.osLista}>
           {osQuery.isLoading && (
             <li className={styles.osVacio}><Loader2 size={14} className={styles.spin} /> Cargando…</li>

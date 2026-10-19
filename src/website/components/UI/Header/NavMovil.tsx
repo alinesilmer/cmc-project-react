@@ -1,9 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
 import { ChevronRight, User } from "lucide-react";
-import { motion } from "framer-motion";
 import { NAVEGACION, esActiva, type ItemNav } from "./navegacion";
 import { useModal } from "../../../hooks/useModal";
 import styles from "./NavMovil.module.scss";
+import Button from "@/website/components/UI/Button/Button";
 
 type Props = {
   onCerrar: () => void;
@@ -33,24 +33,16 @@ export default function NavMovil({ onCerrar, onIngresar }: Props) {
   };
 
   return (
-    <motion.nav
-      id="mobile-menu"
-      className={styles.menu}
-      aria-label="Menú"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.18 }}
-    >
+    <nav id="mobile-menu" className={styles.menu} aria-label="Menú">
       <ul className={styles.lista}>{secciones.map(fila)}</ul>
 
       <p className={styles.titulo}>Servicios</p>
       <ul className={styles.lista}>{servicios.map(fila)}</ul>
 
-      <button type="button" className={styles.ingresar} onClick={onIngresar}>
+      <Button variant="plano" type="button" className={styles.ingresar} onClick={onIngresar}>
         <User aria-hidden="true" />
         Ingresar
-      </button>
-    </motion.nav>
+      </Button>
+    </nav>
   );
 }

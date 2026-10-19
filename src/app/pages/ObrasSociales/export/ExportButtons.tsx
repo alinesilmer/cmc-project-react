@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { FileSpreadsheet, FileText, Loader2 } from "lucide-react";
 import type { ObraSocialListItem } from "../obrasSociales.types";
 import type { ExportField } from "./exportService";
 import { exportToExcel, exportToPDF } from "./exportService";
 import s from "./export.module.scss";
+import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 
 interface Props {
   items: ObraSocialListItem[];
@@ -53,33 +53,9 @@ export default function ExportButtons({ items, fields, appliedFilters }: Props) 
       )}
 
       <div className={s.exportBtnRow}>
-        <button
-          type="button"
-          className={`${s.exportBtn} ${s.exportBtnExcel}`}
-          onClick={handleExcel}
-          disabled={disabled || loadingExcel}
-        >
-          {loadingExcel ? (
-            <Loader2 size={16} className={s.spin} />
-          ) : (
-            <FileSpreadsheet size={16} />
-          )}
-          Excel
-        </button>
+        <BotonDescarga formato="excel" onClick={handleExcel} disabled={disabled} cargando={loadingExcel} />
 
-        <button
-          type="button"
-          className={`${s.exportBtn} ${s.exportBtnPDF}`}
-          onClick={handlePDF}
-          disabled={disabled || loadingPDF}
-        >
-          {loadingPDF ? (
-            <Loader2 size={16} className={s.spin} />
-          ) : (
-            <FileText size={16} />
-          )}
-          PDF
-        </button>
+        <BotonDescarga formato="pdf" onClick={handlePDF} disabled={disabled} cargando={loadingPDF} />
       </div>
     </div>
   );

@@ -1,6 +1,5 @@
 @use "@/website/styles/all.scss" as *;
 
-$crema: #f7e9aa;
 
 .panel {
   position: relative;
@@ -19,7 +18,7 @@ $crema: #f7e9aa;
   right: -140px;
   bottom: -200px;
   border-radius: 50%;
-  background: $crema;
+  background: $primary-yellow;
   z-index: -1;
 }
 
@@ -30,7 +29,7 @@ $crema: #f7e9aa;
   left: -110px;
   top: -110px;
   border-radius: 50%;
-  border: 44px solid rgba(255, 255, 255, 0.06);
+  border: 44px solid rgba($white, 0.06);
 }
 
 .lema {
@@ -47,7 +46,7 @@ $crema: #f7e9aa;
 
   em {
     font-style: normal;
-    color: $crema;
+    color: $primary-yellow;
   }
 }
 
@@ -69,13 +68,31 @@ $crema: #f7e9aa;
   gap: 10px;
   padding: 10px 16px 10px 10px;
   width: max-content;
-  background: rgba(255, 255, 255, 0.94);
+  background: rgba($white, 0.94);
   border-radius: 8px;
-  box-shadow: 0 12px 30px rgba(6, 18, 38, 0.22);
+  box-shadow: 0 12px 30px rgba($tono-azul-900, 0.22);
   font-family: $font-title;
   font-size: 0.95rem;
   font-weight: 700;
   color: $primary-blue-dark;
+  // Entran desde la derecha, escalonadas por `--i`.
+  animation: lema-destacado 0.5s cubic-bezier(0.22, 1, 0.36, 1) calc(0.25s + var(--i, 0) * 0.12s) both;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes lema-destacado {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .destacadoIcono {
@@ -85,7 +102,7 @@ $crema: #f7e9aa;
   height: 36px;
   border-radius: 6px;
   background: $primary-blue;
-  color: $crema;
+  color: $primary-yellow;
 
   svg {
     width: 18px;
@@ -150,8 +167,7 @@ $crema: #f7e9aa;
 
 // ─── Detalles médicos: cruces tenues y un pulso que late ──────────────────────
 
-// Patrón de cruces sanitarias, casi transparente. SVG en línea: no es una
-// descarga más.
+// Patrón de cruces sanitarias, casi transparente.
 .cruces {
   position: absolute;
   inset: 0;
@@ -160,7 +176,7 @@ $crema: #f7e9aa;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56'%3E%3Cpath d='M24 16h8v8h8v8h-8v8h-8v-8h-8v-8h8z' fill='%23ffffff'/%3E%3C/svg%3E");
   background-size: 56px 56px;
   // Se desvanece hacia abajo, donde van el círculo y las tarjetas.
-  mask-image: linear-gradient(to bottom, #000 0%, transparent 75%);
+  mask-image: linear-gradient(to bottom, $black 0%, transparent 75%);
 }
 
 .pulso {
@@ -170,7 +186,7 @@ $crema: #f7e9aa;
   top: 52%;
   width: 100%;
   height: 64px;
-  color: rgba(255, 255, 255, 0.22);
+  color: rgba($white, 0.22);
   z-index: -1;
 
   @media (max-width: 960px) {

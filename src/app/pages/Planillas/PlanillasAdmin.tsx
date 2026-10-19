@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FileText, FolderOpen, Info, Pencil, Search, Trash2, Upload } from "lucide-react";
+import { useRef, useState } from "react";
+import { CircleAlert, FileText, Pencil, Trash2, Upload } from "lucide-react";
 
 import { abrirAdjunto } from "@/app/shared/lib/archivos";
 import { hoyISO } from "@/app/shared/lib/fechas";
@@ -7,31 +7,22 @@ import { useNotify } from "../../hooks/useNotify";
 import Modal from "@/app/components/ui/Modal/Modal";
 import ConfirmModal from "@/app/components/ui/ConfirmModal/ConfirmModal";
 import Button from "@/app/components/ui/Button/Button";
-import { createPlanilla, deletePlanilla, editPlanilla, getPlanillas } from "./planillas.api";
-import {
-  formatFechaPlanilla,
-  ordenarPlanillas,
-  urlPlanilla,
-  type Planilla,
-} from "./planillas.types";
+import { createPlanilla, deletePlanilla, editPlanilla } from "./planillas.api";
+import { usePlanillas } from "./usePlanillas";
+import { urlPlanilla, type Planilla } from "./planillas.types";
 import s from "./Planillas.module.scss";
+import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
+import Caja from "@/app/components/ui/Caja/Caja";
+import Franja from "@/app/components/layout/Franja/Franja";
+import ListaPlanillas from "./components/ListaPlanillas";
 
-/**
- * Alta, edición y baja de las planillas que ven los médicos. Reemplaza
- * `planilla_consulta_colegio.php` del legacy.
- *
- * El alta sube el PDF a `uploads/planillas/`; la edición corrige descripción,
- * fecha o el PDF sin tener que dar de baja y volver a publicar; la baja es
- * lógica (`avisos.EXISTE='N'`), igual que `borrar_avisos.php`.
- */
+/** Alta, edición y baja de las planillas que ven los médicos. */
 export default function PlanillasAdmin() {
   // Ver la nota en PlanillasMedico: el objeto de useNotify() no es estable.
   const { error: avisarError, success: avisarOk } = useNotify();
-  const [planillas, setPlanillas] = useState<Planilla[]>([]);
-  const [cargando, setCargando] = useState(true);
+  const { planillas, cargando, actualizar: setPlanillas } = usePlanillas(avisarError);
   const [subiendo, setSubiendo] = useState(false);
   const [borrando, setBorrando] = useState<number | null>(null);
-  const [busqueda, setBusqueda] = useState("");
 
   const [descripcion, setDescripcion] = useState("");
   const [fecha, setFecha] = useState(hoyISO());
@@ -46,30 +37,6 @@ export default function PlanillasAdmin() {
   const [guardandoEdit, setGuardandoEdit] = useState(false);
 
   const [aConfirmar, setAConfirmar] = useState<Planilla | null>(null);
-
-  const cargar = useCallback(
-    () =>
-      getPlanillas()
-        .then(setPlanillas)
-        .catch(() => avisarError("No se pudieron cargar las planillas."))
-        .finally(() => setCargando(false)),
-    [avisarError]
-  );
-
-  useEffect(() => {
-    void cargar();
-  }, [cargar]);
-
-  const ordenadas = useMemo(() => ordenarPlanillas(planillas), [planillas]);
-
-  const visibles = useMemo(() => {
-    const q = busqueda.trim().toLowerCase();
-    if (!q) return ordenadas;
-    return ordenadas.filter(
-      (p) =>
-        p.descripcion.toLowerCase().includes(q) || p.archivo.toLowerCase().includes(q)
-    );
-  }, [ordenadas, busqueda]);
 
   const subir = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,8 +68,7 @@ export default function PlanillasAdmin() {
   const abrirEdicion = (p: Planilla) => {
     setEditando(p);
     setEditDescripcion(p.descripcion);
-    // `fecha` puede venir en `DD/MM/AAAA` en las filas históricas; el input
-    // date necesita ISO, así que se reusa el mismo parser que ordena la tabla.
+    // `fecha` puede venir en `DD/MM/AAAA` en las filas históricas; el input date necesita ISO, así que se reusa el mismo parser que ordena la tabla.
     const iso = /^\d{4}-\d{2}-\d{2}$/.test(p.fecha) ? p.fecha : "";
     setEditFecha(iso);
     setEditArchivo(null);
@@ -154,53 +120,31 @@ export default function PlanillasAdmin() {
 
   return (
     <div className={s.container}>
-      <header className={s.header}>
-        <FileText size={32} className={s.headerIcon} />
-        <div>
-          <h1 className={s.title}>Planillas de consulta</h1>
-          <p className={s.subtitle}>
-            Lo que subas acá es lo que ven los médicos en su portal.
-          </p>
-        </div>
-      </header>
+      <Franja titulo="Planillas" icono={FileText} />
 
-      <form className={s.uploadCard} onSubmit={subir}>
-        <h2 className={s.uploadTitle}>
-          <Upload size={17} /> Subir una planilla
-        </h2>
-
-        <div className={s.uploadRow}>
-          <div className={s.field}>
-            <label className={s.label} htmlFor="planilla-desc">
-              Descripción
-            </label>
+      <Caja titulo="Publicar">
+        <form className={s.alta} onSubmit={subir}>
+          <label className={s.field}>
+            <span className={s.label}>Descripción</span>
             <input
               id="planilla-desc"
               type="text"
               className={s.input}
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
-              placeholder="Ej: Planilla consulta Swiss Medical"
+              placeholder="Planilla consulta Swiss Medical"
             />
-          </div>
+          </label>
 
           <div className={`${s.field} ${s.fieldFecha}`}>
             <label className={s.label} htmlFor="planilla-fecha">
               Fecha
             </label>
-            <input
-              id="planilla-fecha"
-              type="date"
-              className={s.input}
-              value={fecha}
-              onChange={(e) => setFecha(e.target.value)}
-            />
+            <CampoFecha value={fecha} onChange={(valor) => setFecha(valor)} id="planilla-fecha" />
           </div>
 
-          <div className={s.field}>
-            <label className={s.label} htmlFor="planilla-file">
-              Archivo PDF
-            </label>
+          <label className={s.field}>
+            <span className={s.label}>PDF</span>
             <input
               id="planilla-file"
               ref={fileRef}
@@ -213,87 +157,56 @@ export default function PlanillasAdmin() {
               }}
               required
             />
-          </div>
+          </label>
 
-          <button type="submit" className={s.submitBtn} disabled={!archivo || subiendo}>
-            <Upload size={15} /> {subiendo ? "Subiendo…" : "Subir"}
-          </button>
-        </div>
+          <Button
+            submit
+            size="md"
+            variant="primary"
+            leftIcon={<Upload size={18} aria-hidden="true" />}
+            disabled={!archivo || subiendo}
+          >
+            {subiendo ? "Subiendo…" : "Subir"}
+          </Button>
+        </form>
 
         {error && (
-          <p className={s.aviso}>
-            <Info size={16} />
+          <p className={s.aviso} role="alert">
+            <CircleAlert size={18} aria-hidden="true" />
             {error}
           </p>
         )}
-      </form>
+      </Caja>
 
-      <div className={s.searchBox}>
-        <Search size={17} />
-        <input
-          type="search"
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          placeholder="Buscar planilla…"
-          aria-label="Buscar planilla"
-        />
-      </div>
-
-      {visibles.length === 0 ? (
-        <div className={s.empty}>
-          <FolderOpen size={30} />
-          <p>
-            {cargando
-              ? "Cargando planillas…"
-              : busqueda
-                ? `No encontramos planillas que coincidan con «${busqueda}».`
-                : "No hay planillas publicadas."}
-          </p>
-        </div>
-      ) : (
-        <div className={s.tableWrap}>
-          <table className={s.table}>
-            <thead>
-              <tr>
-                <th className={s.colFecha}>Fecha</th>
-                <th>Planilla</th>
-                <th className={s.colAccion}>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visibles.map((p) => (
-                <tr key={p.id}>
-                  <td className={s.colFecha}>{formatFechaPlanilla(p.fecha)}</td>
-                  <td>
-                    <span className={s.descripcion}>{p.descripcion}</span>
-                    <span className={s.archivo}>{p.archivo}</span>
-                  </td>
-                  <td className={s.colAccion}>
-                    <button type="button" className={s.verBtn} onClick={() => ver(p)}>
-                      <FileText size={13} /> Ver PDF
-                    </button>
-                    <button
-                      type="button"
-                      className={s.verBtn}
-                      onClick={() => abrirEdicion(p)}
-                    >
-                      <Pencil size={13} /> Editar
-                    </button>
-                    <button
-                      type="button"
-                      className={s.deleteBtn}
-                      onClick={() => setAConfirmar(p)}
-                      disabled={borrando === p.id}
-                    >
-                      <Trash2 size={13} /> Borrar
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <ListaPlanillas
+        planillas={planillas}
+        cargando={cargando}
+        vacio="Todavía no hay planillas."
+        onVer={ver}
+        acciones={(p) => (
+          <>
+            <button
+              type="button"
+              className={s.iconBtn}
+              onClick={() => abrirEdicion(p)}
+              aria-label={`Editar «${p.descripcion}»`}
+              title="Editar"
+            >
+              <Pencil size={18} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              className={s.iconBtnPeligro}
+              onClick={() => setAConfirmar(p)}
+              disabled={borrando === p.id}
+              aria-label={`Borrar «${p.descripcion}»`}
+              title="Borrar"
+            >
+              <Trash2 size={18} aria-hidden="true" />
+            </button>
+          </>
+        )}
+      />
 
       <Modal
         isOpen={editando !== null}
@@ -320,18 +233,16 @@ export default function PlanillasAdmin() {
               <label className={s.label} htmlFor="edit-fecha">
                 Fecha
               </label>
-              <input
-                id="edit-fecha"
-                type="date"
-                className={s.input}
+              <CampoFecha
                 value={editFecha}
-                onChange={(e) => setEditFecha(e.target.value)}
+                onChange={(valor) => setEditFecha(valor)}
+                id="edit-fecha"
               />
             </div>
 
             <div className={s.field}>
               <label className={s.label} htmlFor="edit-file">
-                Reemplazar PDF (opcional)
+                Reemplazar PDF
               </label>
               <input
                 id="edit-file"
@@ -353,7 +264,7 @@ export default function PlanillasAdmin() {
                 Cancelar
               </Button>
               <Button type="submit" variant="primary" disabled={guardandoEdit}>
-                {guardandoEdit ? "Guardando…" : "Guardar cambios"}
+                {guardandoEdit ? "Guardando…" : "Guardar"}
               </Button>
             </div>
           </form>

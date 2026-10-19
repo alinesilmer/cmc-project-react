@@ -1,6 +1,5 @@
 @use "@/website/styles/all.scss" as *;
 
-$crema: #f7e9aa;
 
 .grilla {
   display: grid;
@@ -29,7 +28,7 @@ $crema: #f7e9aa;
     right: -70px;
     bottom: -90px;
     border-radius: 50%;
-    background: rgba($crema, 0.14);
+    background: rgba($primary-yellow, 0.14);
   }
 
   @media (max-width: 480px) {
@@ -44,7 +43,7 @@ $crema: #f7e9aa;
   height: 52px;
   margin-bottom: 18px;
   border-radius: 8px;
-  background: $crema;
+  background: $primary-yellow;
   color: $primary-blue;
 
   svg {
@@ -68,11 +67,11 @@ $crema: #f7e9aa;
   align-items: baseline;
   gap: 12px;
   padding-bottom: 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  border-bottom: 1px solid rgba($white, 0.16);
 
   dt {
     font-size: 1rem;
-    color: rgba(255, 255, 255, 0.85);
+    color: rgba($white, 0.85);
   }
 
   dd {
@@ -80,7 +79,7 @@ $crema: #f7e9aa;
     font-family: $font-title;
     font-size: 2rem;
     font-weight: 800;
-    color: $crema;
+    color: $primary-yellow;
   }
 }
 
@@ -89,5 +88,5 @@ $crema: #f7e9aa;
   z-index: 1;
   margin: 14px 0 0;
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba($white, 0.7);
 }

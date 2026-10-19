@@ -14,8 +14,7 @@ function leerGuardado(): Set<string> | null {
     if (!crudo) return null;
     const arr = JSON.parse(crudo);
     if (!Array.isArray(arr)) return null;
-    // Filtrar contra el catálogo evita que una clave retirada resucite como
-    // columna fantasma en el PDF.
+    // Filtrar contra el catálogo evita que una clave retirada resucite como columna fantasma en el PDF.
     const validas = arr.filter((k) => typeof k === "string" && CAMPOS_POR_KEY.has(k));
     return validas.length ? new Set<string>(validas) : null;
   } catch {

@@ -16,11 +16,7 @@ type Props = {
 
 const MotionLink = motion.create(Link);
 
-/**
- * Tarjeta de noticia o curso. Es un enlace de verdad y no un `<article>` con
- * `role="button"`: así se puede abrir en otra pestaña, el lector de pantalla
- * la anuncia como enlace y no hay un `<button>` anidado adentro.
- */
+/** Tarjeta de noticia o curso. */
 export default function TarjetaPublicacion({ publicacion, href }: Props) {
   const portada = publicacion.portada?.trim() || PORTADA_POR_DEFECTO;
 

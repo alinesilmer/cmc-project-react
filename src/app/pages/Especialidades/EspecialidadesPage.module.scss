@@ -3,18 +3,26 @@
 // ─── Page layout ──────────────────────────────────────────────────────────────
 
 .container {
-  padding: $spacing-8;
+  // En variables porque la franja las necesita para salirse del relleno.
+  --lado: #{$spacing-12};
+  --arriba: #{$spacing-8};
+
+  padding: $spacing-8 $spacing-12;
   display: flex;
   flex-direction: column;
   gap: $spacing-6;
   min-height: 100%;
 
   @media (max-width: $breakpoint-md) {
+    --lado: #{$spacing-5};
+    --arriba: #{$spacing-5};
     padding: $spacing-5;
     gap: $spacing-4;
   }
 
   @media (max-width: $breakpoint-sm) {
+    --lado: #{$spacing-4};
+    --arriba: #{$spacing-4};
     padding: $spacing-4;
   }
 }
@@ -79,8 +87,8 @@
 
 .errorBanner {
   padding: $spacing-4 $spacing-5;
-  background-color: #fff0f0;
-  border: 1px solid #fca5a5;
+  background-color: $gray-100;
+  border: 1px solid $tono-rojo-200;
   border-radius: $border-radius-md;
   color: $danger-red;
   font-size: $font-size-base;
@@ -90,13 +98,16 @@
 
 .searchRow {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
   gap: $spacing-3;
 }
 
 .searchWrap {
   position: relative;
   flex: 1;
-  max-width: 440px;
+  max-width: 27.5rem;
 }
 
 .searchIcon {
@@ -140,49 +151,8 @@
   overflow-x: auto;
 }
 
-.table {
-  width: 100%;
-  border-collapse: collapse;
-
-  thead tr {
-    background-color: $primary-blue-dark;
-    border-bottom: 2px solid $gray-200;
-
-    th {
-      padding: $spacing-4 $spacing-5;
-      text-align: left;
-      font-size: $font-size-xs;
-      font-weight: $font-weight-semibold;
-      color: $white;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      white-space: nowrap;
-    }
-  }
-
-  tbody tr {
-    border-bottom: 1px solid $gray-100;
-    transition: background-color 0.15s;
-
-    &:last-child {
-      border-bottom: none;
-    }
-
-    &:hover {
-      background-color: $gray-50;
-    }
-
-    td {
-      padding: $spacing-4 $spacing-5;
-      font-size: $font-size-base;
-      color: $gray-800;
-      vertical-align: middle;
-    }
-  }
-}
-
 .actionsCol {
-  width: 80px;
+  width: 5rem;
   text-align: right !important;
 }
 
@@ -212,8 +182,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 1.875rem;
+  height: 1.875rem;
   border-radius: $border-radius-md;
   border: 1px solid $gray-200;
   background-color: $white;
@@ -262,8 +232,8 @@
 }
 
 .spinner {
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   border: 3px solid $gray-200;
   border-top-color: $primary-blue;
   border-radius: 50%;
@@ -289,8 +259,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   border-radius: $border-radius-md;
   border: 1px solid $gray-300;
   background-color: $white;
@@ -313,7 +283,7 @@
 .pageInfo {
   font-size: $font-size-sm;
   color: $gray-600;
-  min-width: 110px;
+  min-width: 6.875rem;
   text-align: center;
 }
 
@@ -397,8 +367,8 @@
 
 .saveError {
   padding: $spacing-3 $spacing-4;
-  background-color: #fff0f0;
-  border: 1px solid #fca5a5;
+  background-color: $gray-100;
+  border: 1px solid $tono-rojo-200;
   border-radius: $border-radius-md;
   color: $danger-red;
   font-size: $font-size-sm;

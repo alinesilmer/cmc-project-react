@@ -57,9 +57,7 @@ function buildPayload(form: ObraSocialFormData) {
   return {
     nro_obra_social: Number(form.nro_obra_social),
     nombre: form.nombre.trim(),
-    // Sólo dígitos: la base guarda el CUIT crudo (columna legacy
-    // `varchar(11)`), y mandar los guiones que agrega el input de una
-    // obra social a otra rompía esa longitud. Ver auditoría O-12.
+    // Sólo dígitos: la base guarda el CUIT crudo (columna legacy `varchar(11)`).
     cuit: form.cuit.replace(/\D/g, "") || null,
     direccion_real: form.direccion_real.trim() || null,
     condicion_iva: form.condicion_iva || null,
@@ -68,8 +66,7 @@ function buildPayload(form: ObraSocialFormData) {
     obra_social_principal_id: form.obra_social_principal_id
       ? Number(form.obra_social_principal_id)
       : null,
-    // Operación: sin esto una obra social nueva quedaba deshabilitada para el
-    // padrón por el default del backend (ver auditoría O-02).
+    // Operación: sin esto una obra social nueva quedaba deshabilitada para el padrón por el default del backend (ver auditoría O-02).
     marca: form.marca,
     dia_corte: Number(form.dia_corte) || 20,
     contactos,
@@ -91,6 +88,7 @@ function normalizeListItem(raw: ObraSocial): ObraSocialListItem {
     cuit: raw.cuit ?? null,
     direccion_real: raw.direccion_real ?? null,
     plazo_vencimiento: raw.plazo_vencimiento ?? null,
+    dia_corte: raw.dia_corte,
     emails: raw.emails ?? [],
     telefonos: raw.telefonos ?? [],
     fecha_alta_convenio: raw.fecha_alta_convenio ?? null,
@@ -104,14 +102,11 @@ export async function listObrasSociales(
 ): Promise<ObraSocialListItem[]> {
   const { data } = await http.get<ObraSocial[]>("/api/obras_social/", {
     timeout: 20_000,
-    // Por default el backend oculta las dadas de baja (MARCA='N'). Un deep
-    // link que busca por número puntual —p.ej. desde O.S. Actualizadas—
-    // necesita poder traerlas de vuelta. Ver auditoría A-05.
+    // Por default el backend oculta las dadas de baja (MARCA='N').
     params: incluirInactivas ? { incluir_inactivas: true } : undefined,
   });
 
-  // El backend ya devuelve orden alfabético ascendente (ver auditoría O-15):
-  // no hace falta reordenar acá.
+  // El backend ya devuelve orden alfabético ascendente (ver auditoría O-15): no hace falta reordenar acá.
   const items = data.map(normalizeListItem);
 
   if (!q) return items;
@@ -179,10 +174,6 @@ export const deleteDocumento = (obraId: number, docId: number) =>
   delJSON<void>(`/api/obras_social/${obraId}/documentos/${docId}`);
 
 // ─── Link / unlink asociada ───────────────────────────────────────────────────
-// Asociadas are read-only on the parent. To associate child → parent:
-//   PATCH /api/obras_social/{child_id}  { obra_social_principal_id: parent_id }
-// To remove:
-//   PATCH /api/obras_social/{child_id}  { obra_social_principal_id: null }
 
 export const setObraSocialPrincipal = (childId: number, principalId: number | null) =>
   patchJSON<void>(`/api/obras_social/${childId}`, { obra_social_principal_id: principalId });

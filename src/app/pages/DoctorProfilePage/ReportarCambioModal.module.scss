@@ -1,10 +1,8 @@
 @use "@/app/styles/all.scss" as *;
 
 // Cantos vivos, igual que el portal del socio (InicioMedico.module.scss).
-$radius-sharp: 0;
 
 // Botón chiquito que va pegado a la etiqueta de cada dato en "Mi perfil".
-// Discreto a propósito: es una salida de emergencia, no una acción principal.
 .reportBtn {
   display: inline-flex;
   align-items: center;
@@ -28,10 +26,6 @@ $radius-sharp: 0;
 }
 
 // El botón de cierre que trae rsuite es un aspa gris diminuta pegada al borde.
-// Se reestiliza en vez de reemplazarlo (como hace ActionModal con el suyo) para
-// no perder el `onClose` ni el manejo de foco que rsuite ya le cablea.
-// Va scopeado a este modal: `.modal` viaja al elemento .rs-modal, así que no
-// toca ningún otro diálogo de la app.
 .modal {
   :global(.rs-modal-header) {
     // Aire para que el aspa no se monte sobre el título.
@@ -47,15 +41,14 @@ $radius-sharp: 0;
     width: 1.9rem;
     height: 1.9rem;
     padding: 0;
-    border: 1px solid rgba(204, 42, 42, 0.32);
-    border-radius: $radius-sharp;
-    background: rgba(204, 42, 42, 0.08);
+    border: 1px solid rgba($danger-red, 0.32);
+    border-radius: 0;
+    background: rgba($danger-red, 0.08);
     color: $danger-red;
     opacity: 1;
     transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 
-    // rsuite pinta el aspa con un svg propio; heredar el color evita depender
-    // de si la versión usa fill o stroke.
+    // rsuite pinta el aspa con un svg propio; heredar el color evita depender de si la versión usa fill o stroke.
     svg {
       width: 0.95rem;
       height: 0.95rem;
@@ -71,7 +64,7 @@ $radius-sharp: 0;
 
     &:focus-visible {
       outline: none;
-      box-shadow: 0 0 0 3px rgba(204, 42, 42, 0.24);
+      box-shadow: 0 0 0 3px rgba($danger-red, 0.24);
     }
   }
 }
@@ -101,7 +94,7 @@ $radius-sharp: 0;
 
 .current {
   padding: $spacing-3 $spacing-4;
-  border-radius: $radius-sharp;
+  border-radius: 0;
   background: $gray-100;
   border: 1px solid $gray-200;
   font-size: $font-size-base;
@@ -113,7 +106,7 @@ $radius-sharp: 0;
 .textarea {
   width: 100%;
   padding: $spacing-3 $spacing-4;
-  border-radius: $radius-sharp;
+  border-radius: 0;
   border: 1px solid $gray-300;
   font-family: inherit;
   font-size: $font-size-base;
@@ -123,7 +116,7 @@ $radius-sharp: 0;
   &:focus {
     outline: none;
     border-color: $accent-blue;
-    box-shadow: 0 0 0 3px rgba(90, 121, 225, 0.16);
+    box-shadow: 0 0 0 3px rgba($accent-blue, 0.16);
   }
 }
 
@@ -161,7 +154,7 @@ $radius-sharp: 0;
 /** Marca el campo tocado: de un vistazo se ve qué se está pidiendo cambiar. */
 .inputCambiado {
   border-color: $warning-orange;
-  background: #fffbf2;
+  background: $cuaderno-papel;
 }
 
 .restaurar {
@@ -197,16 +190,16 @@ $radius-sharp: 0;
   padding: $spacing-3 $spacing-4;
   background: $gray-100;
   border: 1px solid $gray-200;
-  border-radius: $radius-sharp;
+  border-radius: 0;
   font-size: $font-size-sm;
   color: $gray-700;
 }
 
 .note {
   padding: $spacing-3 $spacing-4;
-  border-radius: $radius-sharp;
+  border-radius: 0;
   background: $secondary-blue;
-  border: 1px solid rgba(90, 121, 225, 0.24);
+  border: 1px solid rgba($accent-blue, 0.24);
   font-size: $font-size-sm;
   color: $primary-blue-darker;
   line-height: 1.5;

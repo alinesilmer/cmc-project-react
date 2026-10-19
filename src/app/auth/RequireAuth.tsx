@@ -11,8 +11,7 @@ export default function RequireAuth() {
   if (!user)
     return <Navigate to="/panel/login" replace state={{ from: loc }} />;
 
-  // Cubre la sesión restaurada por cookie, donde el usuario nunca pasa por
-  // Login.tsx (que ya tiene su propio gate en el submit).
+  // Cubre la sesión restaurada por cookie, donde el usuario nunca pasa por Login.tsx (que ya tiene su propio gate en el submit).
   if (user.must_change_password && loc.pathname !== CAMBIAR_PASSWORD_PATH) {
     return <Navigate to={CAMBIAR_PASSWORD_PATH} replace />;
   }

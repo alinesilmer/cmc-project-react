@@ -1,0 +1,94 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver ResumenLateralCard.tsx.
+
+.banda {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-3 $spacing-6;
+  padding: $spacing-4 $spacing-6;
+  background: $franja-azul;
+  border-radius: $radio-lg;
+  box-shadow: 0 18px 34px -24px rgba($franja-noche, 0.8);
+  overflow: hidden;
+  isolation: isolate;
+  // Pieza de color propio: no cambia con el tema oscuro.
+  color-scheme: light;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    @include trama-cruces;
+  }
+}
+
+.titulo {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin: 0;
+  font-family: $fuente-titulos;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $franja-crema;
+}
+
+.opciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-2;
+}
+
+.opcion {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-2 $spacing-4;
+  font-weight: $font-weight-semibold;
+  color: $franja-crema;
+  border: 1px solid rgba($franja-crema, 0.35);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.12s, border-color 0.12s, color 0.12s;
+
+  // El checkbox sigue estando para el teclado y los lectores de pantalla.
+  input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  &:hover {
+    border-color: $franja-crema;
+  }
+
+  &:focus-within {
+    outline: 2px solid $primary-yellow;
+    outline-offset: 2px;
+  }
+}
+
+.tilde {
+  display: grid;
+  place-items: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 1.5px solid rgba($franja-crema, 0.6);
+  border-radius: 4px;
+}
+
+.puesta {
+  color: $franja-azul;
+  background: $primary-yellow;
+  border-color: $primary-yellow;
+
+  .tilde {
+    color: $white;
+    background: $franja-azul;
+    border-color: $franja-azul;
+  }
+}

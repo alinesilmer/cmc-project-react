@@ -7,15 +7,15 @@
 .container {
   display: flex;
   min-height: 100vh;
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: linear-gradient(135deg, #f9fafb 0%, #eff6ff 100%);
+  font-family: $fuente-texto;
+  background: linear-gradient(135deg, $gray-50 0%, $gray-100 100%);
   justify-content: center;
 }
 
 .sideBar {
-  width: 320px;
-  background: white;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  width: 20rem;
+  background: $white;
+  box-shadow: 0 20px 25px -5px rgba($black, 0.1), 0 10px 10px -5px rgba($black, 0.04);
   position: fixed;
   height: 100vh;
   left: 0;
@@ -36,8 +36,8 @@
 }
 
 .logo img {
-  width: 100px;
-  height: 60px;
+  width: 6.25rem;
+  height: 3.75rem;
   margin-bottom: 1rem;
   border-radius: $border-radius-sm;
   object-fit: contain;
@@ -46,7 +46,7 @@
 .logo h1 {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1f2937;
+  color: $gray-800;
   margin: 0;
 }
 
@@ -70,10 +70,10 @@
 .stepItem:not(:last-child)::after {
   content: "";
   position: absolute;
-  left: 22px;
-  bottom: -24px;
+  left: 1.375rem;
+  bottom: -1.5rem;
   width: 2px;
-  height: 24px;
+  height: 1.5rem;
   background: $white;
   transition: background 0.3s ease;
 }
@@ -98,29 +98,29 @@
 }
 
 .stepItem.completed .stepIcon {
-  background: #10b981;
-  color: #ffffff;
+  background: $tono-verde-300;
+  color: $white;
 }
 
 .stepItem.completed .stepTitle {
-  color: #4b5563;
+  color: $gray-600;
 }
 
 .stepItem.completed::after {
-  background: #10b981;
+  background: $tono-verde-300;
 }
 
 .stepIcon {
-  width: 44px;
-  height: 44px;
+  width: 2.75rem;
+  height: 2.75rem;
   border-radius: $border-radius-sm;
-  background: #e5e7eb;
+  background: $gray-200;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.125rem;
   font-weight: 600;
-  color: #6b7280;
+  color: $gray-500;
   transition: all 0.3s ease;
   flex-shrink: 0;
 }
@@ -131,7 +131,7 @@
 
 .stepNumber {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: $gray-500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 0.25rem;
@@ -140,12 +140,12 @@
 .stepTitle {
   font-size: 1rem;
   font-weight: 500;
-  color: #374151;
+  color: $gray-700;
   transition: all 0.3s ease;
 }
 
 .mainContent {
-  margin-left: 100px;
+  margin-left: 6.25rem;
   position: absolute;
   display: flex;
   align-items: center;
@@ -155,11 +155,11 @@
 
 .formContainer {
   max-width: 900px;
-  width: 900px;
+  width: 56.25rem;
   margin: 0;
-  background: white;
+  background: $white;
   border-radius: $border-radius-sm;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 15px -3px rgba($black, 0.1), 0 4px 6px -2px rgba($black, 0.05);
   overflow: hidden;
 }
 
@@ -182,7 +182,7 @@
 .stepContent h2 {
   font-size: 1.875rem;
   font-weight: 700;
-  color: #1f2937;
+  color: $gray-800;
   margin: 0;
   text-align: center;
 }
@@ -205,7 +205,7 @@
 .formGroup label {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #374151;
+  color: $gray-700;
   margin-bottom: 0.5rem;
   display: block;
 }
@@ -214,12 +214,12 @@
 .formGroup select,
 .formGroup textarea {
   padding: 0.75rem 1rem;
-  border: 2px solid #e5e7eb;
+  border: 2px solid $gray-200;
   border-radius: $border-radius-sm;
   font-size: 1rem;
   font-family: inherit;
   transition: all 0.3s ease;
-  background: #ffffff;
+  background: $white;
   width: 100%;
 }
 
@@ -227,43 +227,43 @@
 .formGroup select:focus,
 .formGroup textarea:focus {
   outline: none;
-  border-color: #4f7cff;
-  box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.1);
+  border-color: $tono-azul-350;
+  box-shadow: 0 0 0 3px rgba($tono-azul-350, 0.1);
 }
 
 .formGroup input:hover,
 .formGroup select:hover,
 .formGroup textarea:hover {
-  border-color: #d1d5db;
+  border-color: $gray-300;
 }
 
 .formGroup input.error,
 .formGroup select.error,
 .formGroup textarea.error {
-  border-color: #ef4444;
+  border-color: $tono-rojo-350;
 }
 
 .formGroup input.error:focus,
 .formGroup select.error:focus,
 .formGroup textarea.error:focus {
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  box-shadow: 0 0 0 3px rgba($tono-rojo-350, 0.1);
 }
 
 .formGroup input::placeholder,
 .formGroup select::placeholder,
 .formGroup textarea::placeholder {
-  color: #9ca3af;
+  color: $gray-400;
 }
 
 .disabledInput {
-  background: #f9fafb;
-  color: #6b7280;
+  background: $gray-50;
+  color: $gray-500;
   cursor: not-allowed;
 }
 
 .errorText {
   font-size: 0.75rem;
-  color: #ef4444;
+  color: $tono-rojo-350;
   margin-top: 0.25rem;
   font-weight: 500;
 }
@@ -309,7 +309,7 @@
 }
 
 .hint {
-  color: #4b5563;
+  color: $gray-600;
   font-size: 0.875rem;
   font-style: italic;
   line-height: 1.4;
@@ -328,7 +328,7 @@
   cursor: pointer;
   font-size: 1rem;
   font-weight: 500;
-  color: #374151;
+  color: $gray-700;
   user-select: none;
 }
 
@@ -339,9 +339,9 @@
 }
 
 .checkmark {
-  width: 22px;
-  height: 22px;
-  border: 2px solid #d1d5db;
+  width: 1.375rem;
+  height: 1.375rem;
+  border: 2px solid $gray-300;
   border-radius: 0.25rem;
   margin-right: 0.75rem;
   position: relative;
@@ -355,15 +355,15 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%) scale(0);
-  color: #ffffff;
-  font-size: 13px;
+  color: $white;
+  font-size: 0.8125rem;
   font-weight: bold;
   transition: transform 0.2s ease;
 }
 
 .checkboxLabel input[type="checkbox"]:checked + .checkmark {
-  background: #4f7cff;
-  border-color: #4f7cff;
+  background: $tono-azul-350;
+  border-color: $tono-azul-350;
 }
 
 .checkboxLabel input[type="checkbox"]:checked + .checkmark::after {
@@ -371,7 +371,7 @@
 }
 
 .checkboxLabel:hover .checkmark {
-  border-color: #4f7cff;
+  border-color: $tono-azul-350;
 }
 
 .navigationButtons {
@@ -379,8 +379,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem 2.5rem;
-  background: #f9fafb;
-  border-top: 1px solid #e5e7eb;
+  background: $gray-50;
+  border-top: 1px solid $gray-200;
 }
 
 
@@ -393,9 +393,9 @@
 
 .backBtn {
   appearance: none;
-  border: 2px solid #d1d5db;
-  background: #fff;
-  color: #374151;
+  border: 2px solid $gray-300;
+  background: $white;
+  color: $gray-700;
   padding: .6rem 1rem;
   border-radius: $border-radius-sm;
   font-weight: 600;
@@ -403,7 +403,7 @@
   cursor: pointer;
   font-size: 0.875rem;
 }
-.backBtn:hover { background: #f9fafb; transform: translateY(-1px); border-color: #9ca3af; }
+.backBtn:hover { background: $gray-50; transform: translateY(-1px); border-color: $gray-400; }
 .backBtn:active { transform: translateY(0); }
 
 
@@ -411,7 +411,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid $gray-200;
   padding: 1rem 1.5rem;
   border-radius: 0 0 1rem 1rem;
   margin-top: .5rem;
@@ -426,35 +426,35 @@
   transition: .2s ease;
   cursor: pointer;
   font-size: 0.9rem;
-  min-width: 120px;
+  min-width: 7.5rem;
 }
 
 .prev {
-  background: #fff;
-  color: #374151;
-  border: 2px solid #d1d5db;
+  background: $white;
+  color: $gray-700;
+  border: 2px solid $gray-300;
 }
-.prev:hover { background: #f3f4f6; transform: translateY(-1px); }
+.prev:hover { background: $gray-100; transform: translateY(-1px); }
 .prev:active { transform: translateY(0); }
 
 .next {
-  background: #4f7cff;
-  color: #fff;
+  background: $tono-azul-350;
+  color: $white;
 }
-.next:hover { background: #3d5fcc; transform: translateY(-1px); }
+.next:hover { background: $tono-azul-500-c; transform: translateY(-1px); }
 .next:active { transform: translateY(0); }
 
 .submit {
-  background: #10b981;
-  color: #fff;
+  background: $tono-verde-300;
+  color: $white;
 }
-.submit:hover { background: #0a8e64; transform: translateY(-1px); }
+.submit:hover { background: $tono-verde-450; transform: translateY(-1px); }
 .submit:active { transform: translateY(0); }
 
 .modalOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, .5);
+  background: rgba($gray-900, .5);
   display: grid;
   place-items: center;
   padding: 1rem;
@@ -463,24 +463,24 @@
 
 .modal {
   width: 100%;
-  max-width: 520px;
-  background: #fff;
+  max-width: 32.5rem;
+  background: $white;
   border-radius: $border-radius-sm;
-  box-shadow: 0 25px 50px -12px rgba(0,0,0,.25);
+  box-shadow: 0 25px 50px -12px rgba($black, .25);
   padding: 1.25rem 1.25rem 1rem;
   text-align: center;
 }
 
 .animWrap {
-  height: 140px;
+  height: 8.75rem;
   display: grid;
   place-items: center;
   margin-bottom: .25rem;
   position: relative;
 }
 .fallbackIcon {
-  width: 120px;
-  height: 120px;
+  width: 7.5rem;
+  height: 7.5rem;
   position: absolute;
 }
 
@@ -488,11 +488,11 @@
   margin: .25rem 0 .5rem;
   font-size: 1.25rem;
   font-weight: 800;
-  color: #0f172a;
+  color: $gray-900;
 }
 .modal p {
   margin: 0 auto .75rem;
-  color: #334155;
+  color: $gray-700;
   font-size: .95rem;
   max-width: 40ch;
 }
@@ -513,17 +513,17 @@
   transition: .2s ease;
 }
 .primary {
-  background: #1d4ed8;
-  color: #fff;
+  background: $tono-azul-500-b;
+  color: $white;
 }
-.primary:hover { background: #153eab; transform: translateY(-1px); }
+.primary:hover { background: $tono-azul-600; transform: translateY(-1px); }
 .primary:active { transform: translateY(0); }
 
 .secondary {
-  background: #f3f4f6;
-  color: #111827;
+  background: $gray-100;
+  color: $gray-900;
 }
-.secondary:hover { background: #e5e7eb; transform: translateY(-1px); }
+.secondary:hover { background: $gray-200; transform: translateY(-1px); }
 .secondary:active { transform: translateY(0); }
 
 @media (max-width: 640px) {
@@ -550,7 +550,7 @@
 .nextButton:hover,
 .submitButton:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 6px -1px rgba($black, 0.1), 0 2px 4px -1px rgba($black, 0.06);
 }
 
 .prevButton:active,
@@ -560,33 +560,33 @@
 }
 
 .prevButton {
-  background: #ffffff;
-  color: #4b5563;
-  border: 2px solid #d1d5db;
+  background: $white;
+  color: $gray-600;
+  border: 2px solid $gray-300;
 }
 
 .prevButton:hover {
-  background: #f9fafb;
-  border-color: #9ca3af;
+  background: $gray-50;
+  border-color: $gray-400;
 }
 
 .nextButton,
 .submitButton {
-  background: #4f7cff;
-  color: #ffffff;
+  background: $tono-azul-350;
+  color: $white;
 }
 
 .nextButton:hover,
 .submitButton:hover {
-  background: #3d5fcc;
+  background: $tono-azul-500-c;
 }
 
 .submitButton {
-  background: #10b981;
+  background: $tono-verde-300;
 }
 
 .submitButton:hover {
-  background: rgb(6, 93, 6);
+  background: $tono-verde-600;
 }
 
 .summarySection {
@@ -596,10 +596,10 @@
 .summarySection h3 {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1f2937;
+  color: $gray-800;
   margin-bottom: 1rem;
   padding-bottom: 0.5rem;
-  border-bottom: 2px solid #eff6ff;
+  border-bottom: 2px solid $gray-100;
 }
 
 .summaryGrid {
@@ -610,13 +610,13 @@
 
 .summaryGrid div {
   padding: 0.5rem;
-  background: #f9fafb;
+  background: $gray-50;
   border-radius: 0.25rem;
   font-size: 0.875rem;
 }
 
 .summaryGrid div strong {
-  color: #374151;
+  color: $gray-700;
 }
 
 .infoBox {
@@ -628,13 +628,13 @@
 .infoBox h4 {
   font-size: 1.125rem;
   font-weight: 600;
-  color: #3d5fcc;
+  color: $tono-azul-500-c;
   margin: 0 0 0.75rem 0;
 }
 
 .infoBox p {
   font-size: 0.875rem;
-  color: #374151;
+  color: $gray-700;
   margin: 0 0 0.5rem 0;
   line-height: 1.5;
 }
@@ -642,7 +642,7 @@
 .contactInfo {
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid rgba(79, 124, 255, 0.2);
+  border-top: 1px solid rgba($tono-azul-350, 0.2);
 }
 
 .contactInfo p {
@@ -651,7 +651,7 @@
 
 .contactInfo p:first-child {
   font-weight: 600;
-  color: #3d5fcc;
+  color: $tono-azul-500-c;
 }
 
 @keyframes scaleIn {
@@ -670,21 +670,21 @@
 }
 
 .stepItem:hover:not(.active):not(.completed) {
-  background: rgba(79, 124, 255, 0.05);
+  background: rgba($tono-azul-350, 0.05);
 }
 
 .stepItem:hover:not(.active):not(.completed) .stepIcon {
-  background: rgba(79, 124, 255, 0.1);
-  color: #4f7cff;
+  background: rgba($tono-azul-350, 0.1);
+  color: $tono-azul-350;
 }
 
 @media (max-width: 1024px) {
   .sideBar {
-    width: 280px;
+    width: 17.5rem;
   }
 
   .mainContent {
-    margin-left: 280px;
+    margin-left: 17.5rem;
   }
 }
 
@@ -720,7 +720,7 @@
 
   .stepItem {
     flex-shrink: 0;
-    min-width: 140px;
+    min-width: 8.75rem;
   }
 
   .stepItem::after {
@@ -770,5 +770,35 @@
 
   .navigationButtons {
     display: none;
+  }
+}
+
+/* ── Variante panel ────────────────────────────────────────────────────────── Barra de acciones del alta dentro del panel. */
+
+[data-variante="panel"] {
+  // "Cancelar" pasa a la barra de abajo (ver RegisterBase).
+  .actionBar { display: none; }
+
+  .nav {
+    gap: $spacing-3;
+    flex-wrap: wrap;
+    margin-top: 0;
+    padding: $spacing-5 0 0;
+    border-top: 1px solid $gray-200;
+    border-radius: 0;
+
+    :global(.MuiButton-contained) {
+      background-color: $primary-blue;
+      border-color: $primary-blue-darker;
+      color: $white;
+
+      &:hover { background-color: $primary-blue-darker; color: $white; }
+    }
+  }
+
+  .navIzquierda {
+    display: flex;
+    gap: $spacing-2;
+    flex-wrap: wrap;
   }
 }

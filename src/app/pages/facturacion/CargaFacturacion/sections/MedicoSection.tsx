@@ -6,8 +6,7 @@ import styles from "../CargaFacturacion.module.scss";
 
 interface Props {
   codMedico: string | null;
-  /** Controlado por el padre: si lo guardara acá, el remount al resetear borraría
-   *  los chips aunque "Mantener médico" esté activo. */
+  /** Controlado por el padre: si lo guardara acá, el remount al resetear borraría los chips aunque "Mantener médico" esté activo. */
   medico: MedicoOption | null;
   onMedicoChange: (cod: string | null, medico: MedicoOption | null) => void;
   disabled?: boolean;

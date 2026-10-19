@@ -1,0 +1,43 @@
+// Los @keyframes compartidos del panel, con nombre global.
+
+@keyframes cmc-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cmc-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes cmc-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes cmc-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes cmc-shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}

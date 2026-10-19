@@ -1,488 +1,266 @@
 @use "@/app/styles/all.scss" as *;
 
-/* ── Contenedor genérico de tab ── */
+// Solapas del detalle de un pago: la misma cara que el resto de Liquidación (ver ../../Liquidacion.module.scss).
+
+// ── Contenedor y barra de herramientas ────────────────────────────────────────
 .tabWrap {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
   width: 100%;
 }
 
-/* ── Toolbar del tab ── */
 .toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: $spacing-3;
-  margin-bottom: $spacing-4;
-  flex-wrap: wrap;
 }
 
 .toolbarLeft {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: $spacing-3;
-  flex-wrap: wrap;
 }
 
-/* ── Card / tabla ── */
+// ── Tabla (encabezado y rayado salen de las reglas globales de tema.scss) ─────
 .tableCard {
-  padding: 0;
   overflow: hidden;
-  border-radius: $border-radius-lg;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-  background: #fff;
-  margin: 15px 0;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
 }
 
-.tableWrap {
-  overflow-x: auto;
-}
+.tableWrap { overflow-x: auto; }
 
 .table {
   width: 100%;
   border-collapse: collapse;
 
-  th {
-    background: linear-gradient(135deg, #1b56ff 0%, #0a3fd4 100%);
-    color: #fff;
-    padding: 11px 14px;
-    text-align: left;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    white-space: nowrap;
-  }
-
   td {
-    padding: 10px 14px;
-    font-size: 13px;
-    border-bottom: 1px solid #f0f2f5;
+    padding: $spacing-3 $spacing-4;
+    font-size: $font-size-base;
     vertical-align: middle;
-  }
-
-  tbody tr:hover {
-    background: #f7f9ff;
+    border-bottom: 1px solid $gray-100;
   }
 }
 
-.numCell {
-  text-align: right;
-}
+.numCell { font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-.emptyCell {
-  padding: 40px;
-  text-align: center;
-  color: $gray-500;
-  font-size: $font-size-sm;
-}
-
+.emptyCell,
 .loadingState {
-  padding: 40px;
+  padding: $spacing-12 $spacing-5;
   text-align: center;
   color: $gray-500;
 }
 
-/* ── Badges ── */
+.totalsRow td {
+  background: $franja-perla;
+  border-top: 2px solid $gray-300;
+  border-bottom: none;
+}
+
+// ── Píldoras de estado ────────────────────────────────────────────────────────
 .badge {
-  display: inline-block;
-  padding: 3px 10px;
-  border-radius: 99px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-/* Pagos */
-.estadoA {
-  background: #fef3c7;
-  color: #92400e;
-}
-.estadoC {
-  background: #e5e7eb;
-  color: #374151;
-}
-
-/* Lotes */
-.loteA {
-  background: #fef3c7;
-  color: #92400e;
-}
-.loteC {
-  background: #e5e7eb;
-  color: #374151;
-}
-.loteL {
-  background: #dbeafe;
-  color: #1d4ed8;
-}
-.loteAP {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-/* Recibos */
-.reciboEmitido {
-  background: #dbeafe;
-  color: #1d4ed8;
-}
-.reciboAnulado {
-  background: #fee2e2;
-  color: #b91c1c;
-}
-.reciboPagado {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-/* PagoMedico */
-.medicoLiquidado {
-  background: #d1fae5;
-  color: #065f46;
-}
-.medicoPendiente {
-  background: #fef3c7;
-  color: #92400e;
-}
-.medicoPagado {
-  background: #dbeafe;
-  color: #1d4ed8;
-}
-
-/* Tipo lote */
-.tipoNormal {
-  background: #e5e7eb;
-  color: #374151;
-}
-.tipoRefacturacion {
-  background: #ede9fe;
-  color: #6d28d9;
-}
-
-/* Ajuste tipo */
-.tipoD {
-  background: #fee2e2;
-  color: #b91c1c;
-}
-.tipoC {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-/* ── Errores ── */
-.errorBanner {
-  background: #fee2e2;
-  border: 1px solid #fecaca;
-  color: #b91c1c;
-  padding: 10px 14px;
-  border-radius: $border-radius-md;
-  margin-bottom: $spacing-3;
-  font-size: 13px;
-}
-
-/* ── Totals row ── */
-.totalsRow {
-  background: #f0f2f5;
-  td {
-    border-top: 2px solid #d1d5db;
-    border-bottom: none;
-    font-weight: 700;
-  }
-}
-
-/* ── Paginación ── */
-.pagination {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  border-top: 1px solid #f0f2f5;
-  flex-wrap: wrap;
-  gap: 8px;
-}
+  gap: 0.375rem;
+  padding: 0.25rem 0.7rem;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  white-space: nowrap;
+  border-radius: 999px;
 
-.paginationInfo {
-  font-size: 12px;
-  color: $gray-500;
-}
-
-.paginationControls {
-  display: flex;
-  gap: 4px;
-}
-
-.pageBtn {
-  min-width: 32px;
-  height: 32px;
-  padding: 0 8px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: #fff;
-  font-size: 13px;
-  cursor: pointer;
-  color: $gray-700;
-  transition:
-    background 0.15s,
-    color 0.15s;
-
-  &:hover:not(:disabled) {
-    background: #f0f4ff;
-    border-color: #1b56ff;
-    color: #1b56ff;
-  }
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
+  &::before {
+    content: "";
+    width: 0.45rem;
+    height: 0.45rem;
+    background: currentColor;
+    border-radius: 50%;
   }
 }
 
-.pageBtnActive {
-  background: #1b56ff;
-  border-color: #1b56ff;
-  color: #fff;
-  font-weight: 600;
-  &:hover {
-    background: #0a3fd4;
-  }
-}
+// Abierto / pendiente: azul; cerrado: gris; en liquidación o emitido: ámbar; aplicado, pagado o liquidado: verde; anulado: rojo.
+.estadoA, .loteA, .medicoPendiente { color: $tono-azul-600; background: $tono-azul-50; }
+.estadoC, .loteC, .tipoNormal { color: $gray-600; background: $gray-100; }
+.loteL, .reciboEmitido, .medicoPagado { color: $tono-amarillo-600; background: $tono-amarillo-50-b; }
+.loteAP, .reciboPagado, .medicoLiquidado, .tipoC { color: $tono-verde-550; background: $tono-verde-50; }
+.reciboAnulado, .tipoD { color: $danger-red; background: $tono-rojo-50; }
+.tipoRefacturacion { color: $tono-naranja-550; background: $tono-naranja-100; }
 
-/* ── Row actions ── */
-.rowActions {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
-/* ── Modal ── */
-.modalBackdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(15, 23, 42, 0.35);
-  display: grid;
-  place-items: center;
-  z-index: 10000;
-}
-
-.modalCard {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-  width: min(500px, calc(100vw - 32px));
-  padding: 24px;
-  max-height: calc(100vh - 40px);
-  overflow-y: auto;
-}
-
-.modalCardLg {
-  width: min(640px, calc(100vw - 32px));
-}
-
-.modalHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-  h3 {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 700;
-    color: $gray-900;
-  }
-}
-
-.modalClose {
-  border: 0;
-  background: transparent;
-  font-size: 20px;
-  cursor: pointer;
-  opacity: 0.5;
-  line-height: 1;
-  &:hover {
-    opacity: 1;
-  }
-}
-
-.modalBody {
-  font-size: 14px;
-  color: $gray-700;
-  margin-bottom: 20px;
-}
-
-.formRow {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 14px;
-}
-
-.formLabel {
-  font-size: 12px;
-  font-weight: 600;
-  color: $gray-600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.formInput,
-.formSelect {
-  padding: 9px 12px;
-  border: 1px solid $gray-300;
-  border-radius: $border-radius-md;
-  font-size: 14px;
-  color: $gray-800;
-  outline: none;
-  background: #fff;
-  transition: border-color 0.15s;
-  &:focus {
-    border-color: #1b56ff;
-    box-shadow: 0 0 0 3px rgba(27, 86, 255, 0.08);
-  }
-  &:disabled {
-    background: $gray-100;
-    cursor: not-allowed;
-  }
-}
-
-.formTextarea {
-  padding: 9px 12px;
-  border: 1px solid $gray-300;
-  border-radius: $border-radius-md;
-  font-size: 14px;
-  color: $gray-800;
-  outline: none;
-  background: #fff;
-  resize: vertical;
-  min-height: 80px;
-  transition: border-color 0.15s;
-  &:focus {
-    border-color: #1b56ff;
-  }
-  &:disabled {
-    background: $gray-100;
-  }
-}
-
+// ── Avisos ────────────────────────────────────────────────────────────────────
+.errorBanner,
 .errorInline {
-  color: #b91c1c;
-  font-size: 13px;
-  margin-bottom: 12px;
-  padding: 8px 12px;
-  background: #fee2e2;
-  border-radius: $border-radius-md;
+  padding: $spacing-3 $spacing-4;
+  font-size: $font-size-sm;
+  color: $danger-red;
+  background: $tono-rojo-50;
+  border-left: 4px solid $danger-red;
+  border-radius: $radio-md;
 }
 
 .successInline {
-  color: #065f46;
-  font-size: 13px;
-  margin-bottom: 12px;
-  padding: 8px 12px;
-  background: #d1fae5;
-  border-radius: $border-radius-md;
+  padding: $spacing-3 $spacing-4;
+  font-size: $font-size-sm;
+  color: $tono-verde-550;
+  background: $tono-verde-50;
+  border-left: 4px solid $success-green;
+  border-radius: $radio-md;
 }
 
-.modalActions {
+// ── Paginación ────────────────────────────────────────────────────────────────
+.pagination {
   display: flex;
-  justify-content: flex-end;
-  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+  padding: $spacing-3 $spacing-4;
+  border-top: 1px solid $gray-100;
 }
 
-/* ── Search autocomplete ── */
-.searchWrap {
-  position: relative;
+.paginationInfo { font-size: $font-size-sm; color: $gray-500; }
+
+.paginationControls { display: flex; gap: $spacing-1; }
+
+.pageBtn {
+  min-width: 2.25rem;
+  height: 2.25rem;
+  padding: 0 $spacing-2;
+  font-family: inherit;
+  font-size: $font-size-sm;
+  color: $gray-700;
+  background: $white;
+  border: 1px solid $gray-300;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+
+  &:hover:not(:disabled) { color: $franja-azul; border-color: $franja-azul; }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
 }
+
+.pageBtnActive,
+.pageBtnActive:hover:not(:disabled) {
+  font-weight: $font-weight-semibold;
+  color: $white;
+  background: $franja-azul;
+  border-color: $franja-azul;
+}
+
+// ── Acciones de una fila ──────────────────────────────────────────────────────
+.rowActions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+// ── Campos (dentro de los diálogos; el control toma el aspecto de Dialogo) ────
+.formRow {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+.formLabel {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-600;
+}
+
+.formInput,
+.formSelect,
+.formTextarea {
+  width: 100%;
+  font-family: inherit;
+  font-weight: $font-weight-normal;
+}
+
+.formTextarea { min-height: 5rem; }
+
+// ── Autocompletado de médico ──────────────────────────────────────────────────
+.searchWrap { position: relative; }
 
 .searchResults {
   position: absolute;
   top: 100%;
-  left: 0;
   right: 0;
-  background: #fff;
+  left: 0;
+  z-index: 100;
+  max-height: 12.5rem;
+  overflow-y: auto;
+  background: $white;
   border: 1px solid $gray-200;
   border-top: none;
-  border-radius: 0 0 $border-radius-md $border-radius-md;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
-  max-height: 200px;
-  overflow-y: auto;
-  z-index: 100;
+  border-radius: 0 0 $radio-md $radio-md;
+  box-shadow: 0 6px 16px rgba($black, 0.12);
 }
 
 .searchResultItem {
-  padding: 9px 12px;
-  font-size: 13px;
-  cursor: pointer;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  transition: background 0.1s;
-  &:hover {
-    background: #f0f4ff;
-  }
+  padding: $spacing-2 $spacing-3;
+  font-size: $font-size-sm;
+  cursor: pointer;
+
+  &:hover { background: $franja-perla; }
 }
 
-.searchResultName {
-  color: $gray-900;
-  font-weight: 500;
-}
-.searchResultMeta {
-  color: $gray-500;
-  font-size: 11px;
-}
+.searchResultName { color: $gray-900; }
+.searchResultMeta { font-size: $font-size-xs; color: $gray-500; }
 
 .selectedMedico {
-  padding: 8px 12px;
-  background: $secondary-blue;
-  border: 1px solid $gray-200;
-  border-radius: $border-radius-md;
-  font-size: 13px;
-  color: $primary-blue;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: $spacing-2;
+  padding: $spacing-2 $spacing-3;
+  font-size: $font-size-sm;
+  color: $franja-azul;
+  background: $tono-azul-50;
+  border-radius: $radio-md;
 
   button {
+    font-size: $font-size-base;
+    color: $gray-500;
     background: transparent;
     border: none;
     cursor: pointer;
-    font-size: 14px;
-    color: $gray-500;
-    &:hover {
-      color: #b91c1c;
-    }
+
+    &:hover { color: $danger-red; }
   }
 }
 
-/* ── Expanded row ── */
-.rowExpanded {
-  background: #f7f9ff;
-}
+// ── Fila desplegada ───────────────────────────────────────────────────────────
+.rowExpanded { background: $gray-50; }
 
-.detailRow td {
-  padding: 0 !important;
-}
+.detailRow td { padding: 0 !important; }
 
 .detailCell {
-  padding: 16px 24px !important;
-  background: #f8faff;
-  border-bottom: 2px solid #e5e7eb;
+  padding: $spacing-4 $spacing-6 !important;
+  background: $gray-50;
+  border-bottom: 2px solid $gray-200;
 }
 
-/* ── CTA vacío ── */
+// ── Vacío con acción ──────────────────────────────────────────────────────────
 .ctaBox {
-  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-4;
+  padding: $spacing-12 $spacing-5;
   text-align: center;
   color: $gray-500;
+  background: $white;
+  border: 1px dashed $gray-300;
+  border-radius: $radio-lg;
 
-  p {
-    margin: 0 0 16px;
-    font-size: 14px;
-  }
+  p { margin: 0; font-size: $font-size-base; }
 }
 
-/* ── Negative/positive amounts ── */
-.negative {
-  color: #b91c1c;
-}
-.positive {
-  color: #065f46;
-}
+// ── Montos ────────────────────────────────────────────────────────────────────
+.negative { color: $danger-red; }
+.positive { color: $tono-verde-550; }

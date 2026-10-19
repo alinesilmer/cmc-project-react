@@ -3,6 +3,7 @@ import PublicacionesAdmin from "../publicaciones/PublicacionesAdmin";
 import AdminMedicosPromo from "../MedicosPromo/MedicosPromo";
 import ValoresEticos from "../valoresEticos/ValoresEticos";
 import styles from "./dashboard.module.scss";
+import Button from "@/website/components/UI/Button/Button";
 
 const SOLAPAS = [
   { id: "noticias", etiqueta: "Publicaciones" },
@@ -14,13 +15,9 @@ type Solapa = (typeof SOLAPAS)[number]["id"];
 
 const esSolapa = (v: string | null): v is Solapa => SOLAPAS.some((s) => s.id === v);
 
-/**
- * Administrador del contenido del sitio (/panel/sitio). Cada solapa es su
- * propio componente; acá sólo se elige cuál mostrar.
- */
+/** Administrador del contenido del sitio (/panel/sitio). */
 export default function DashboardPage() {
-  // La solapa sale de la URL para que `?tab=promo` siga siendo enlazable: es a
-  // donde redirige la vieja dirección del sitio (/admin/medicos-promo).
+  // La solapa sale de la URL para que `?tab=promo` siga siendo enlazable: es a donde redirige la vieja dirección del sitio (/admin/medicos-promo).
   const [params, setParams] = useSearchParams();
   const pedida = params.get("tab");
   const solapa: Solapa = esSolapa(pedida) ? pedida : "noticias";
@@ -33,7 +30,7 @@ export default function DashboardPage() {
           <h1>Panel de Administración</h1>
           <div className={styles.tabs} role="tablist" aria-label="Secciones del administrador">
             {SOLAPAS.map((s) => (
-              <button
+              <Button variant="plano"
                 key={s.id}
                 type="button"
                 role="tab"
@@ -42,7 +39,7 @@ export default function DashboardPage() {
                 onClick={() => elegir(s.id)}
               >
                 {s.etiqueta}
-              </button>
+              </Button>
             ))}
           </div>
         </div>

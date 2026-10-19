@@ -1,9 +1,4 @@
-// src/app/auth/session.ts
-// Único lugar que refresca el access token y que cierra sesión a la fuerza.
-// Serializa el refresh entre requests concurrentes de la misma pestaña
-// (single-flight) y entre pestañas (lock en localStorage + BroadcastChannel),
-// porque un /auth/refresh duplicado con el mismo token es leído por el
-// servidor como reuso y cierra todas las sesiones del socio (§7.4).
+// src/app/auth/session.ts Único lugar que refresca el access token y que cierra sesión a la fuerza.
 import { http, httpBare } from "@/app/shared/lib/http";
 import { getCookie, setAccessToken } from "./token";
 
@@ -28,9 +23,7 @@ function postMessage(msg: ChannelMsg) {
     channel.postMessage(msg);
     return;
   }
-  // Fallback sin BroadcastChannel: notificar por localStorage y borrar
-  // enseguida. No dejamos el token persistido, sólo disparamos el evento
-  // "storage" en las otras pestañas.
+  // Fallback sin BroadcastChannel: notificar por localStorage y borrar enseguida.
   const key = "auth:broadcast_fallback";
   localStorage.setItem(key, JSON.stringify({ ...msg, ts: Date.now() }));
   localStorage.removeItem(key);

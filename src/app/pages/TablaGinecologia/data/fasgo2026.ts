@@ -2,12 +2,12 @@
 
 export const FASGO_BASE_2026 = 432;
 
-export const UNIDADES_POR_NIVEL: Record<number, number> = {
+const UNIDADES_POR_NIVEL: Record<number, number> = {
   1: 180, 2: 350, 3: 600, 4: 900, 5: 1200, 6: 1800,
   7: 2250, 8: 2700, 9: 3250, 10: 4000, 11: 4500, 12: 6250, 13: 9400,
 };
 
-export type TipoValor = "UNIDADES_GALENO" | "NIVEL_COMPLEJIDAD";
+type TipoValor = "UNIDADES_GALENO" | "NIVEL_COMPLEJIDAD";
 
 export type PracticaFASGO = {
   codigo:  string;

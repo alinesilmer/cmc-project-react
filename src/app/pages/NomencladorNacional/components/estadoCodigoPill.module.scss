@@ -3,8 +3,8 @@
 .pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 2px 9px;
+  gap: 0.375rem;
+  padding: 2px 0.5625rem;
   border-radius: 999px;
   border: 1px solid transparent;
   font-size: 0.72rem;
@@ -13,13 +13,13 @@
 
   &::before {
     content: "";
-    width: 7px;
-    height: 7px;
+    width: 0.4375rem;
+    height: 0.4375rem;
     border-radius: 50%;
     background: currentColor;
   }
 }
 .sin_alta   { background: $papel;     color: $tinta-3; border-color: $linea; }
 .sin_precio { background: $alerta-bg; color: $alerta;  border-color: $alerta-linea; }
-.con_precio { background: $ok-bg;     color: #166534;  border-color: $ok-linea; }
-.suspendido { background: #fef2f2;    color: $peligro; border-color: #f3b4b4; }
+.con_precio { background: $ok-bg;     color: $tono-verde-550;  border-color: $ok-linea; }
+.suspendido { background: $gray-100;    color: $peligro; border-color: $tono-rojo-150; }

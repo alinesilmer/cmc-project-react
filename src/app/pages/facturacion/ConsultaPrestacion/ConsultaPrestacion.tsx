@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  Search, ArrowLeft, AlertTriangle, Users, History, FileSearch,
+  Search,
+  AlertTriangle,
+  Users,
+  History,
+  FileSearch,
 } from "lucide-react";
 
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
@@ -11,10 +15,11 @@ import type { EstadoPrestacion, PrestacionFicha, PrestacionRead } from "../types
 import { formatMoney } from "../money";
 import PrestacionStateChip from "../components/PrestacionStateChip";
 import styles from "./ConsultaPrestacion.module.scss";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
+import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
+import BackButton from "@/app/components/ui/BackButton/BackButton";
 
-// Igual que en MedicoPrestacionesTable: las fechas DATE de la API vienen
-// "YYYY-MM-DD" — parsear con `new Date` las corre un día por el huso horario
-// (AR = UTC-3). Se formatean sin pasar por Date.
+// Igual que en MedicoPrestacionesTable: las fechas DATE de la API vienen "YYYY-MM-DD" .
 const fmtFecha = (iso: string | null | undefined): string => {
   if (!iso) return "—";
   const soloFecha = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
@@ -24,8 +29,7 @@ const fmtFecha = (iso: string | null | undefined): string => {
   return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
 };
 
-// `created_at` / los timestamps de auditoría sí son datetime completos — acá el
-// corrimiento de huso no aplica, se puede pasar por `Date` sin problema.
+// `created_at` / los timestamps de auditoría sí son datetime completos — acá el corrimiento de huso no aplica, se puede pasar por `Date` sin problema.
 const fmtFechaHora = (iso: string | null | undefined): string => {
   if (!iso) return "—";
   const d = new Date(iso);
@@ -53,8 +57,7 @@ const ConsultaPrestacion: React.FC = () => {
   const [loadingLista, setLoadingLista] = useState(false);
   const [buscadoAut, setBuscadoAut] = useState("");
 
-  // Ficha: se dispara desde el :id de la URL, no desde el input — así un deep-link
-  // o el botón "Ver ficha" de la lista (que navega) también la cargan.
+  // Ficha: se dispara desde el :id de la URL, no desde el input .
   useEffect(() => {
     if (!idParam) {
       setFicha(null);
@@ -123,9 +126,7 @@ const ConsultaPrestacion: React.FC = () => {
   const onIdKeyDown = (e: React.KeyboardEvent) => { if (e.key === "Enter") buscarPorId(); };
   const onAutKeyDown = (e: React.KeyboardEvent) => { if (e.key === "Enter") buscarPorAutorizacion(); };
 
-  // `idParam` sigue presente en la URL aunque el fetch haya dado 404 — no alcanza
-  // para decidir qué mostrar. Distinguir "hay :id" (¿mostramos la sección ficha?) de
-  // "esa ficha se resolvió" (¿la encontramos?).
+  // `idParam` sigue presente en la URL aunque el fetch haya dado 404 — no alcanza para decidir qué mostrar.
   const enModoFicha = !!idParam;
   const mostrandoFicha = enModoFicha && !loadingFicha && !!ficha;
   const mostrandoNoEncontrada = enModoFicha && !loadingFicha && !ficha && !!notFoundId;
@@ -249,7 +250,7 @@ const ConsultaPrestacion: React.FC = () => {
                 {lista!.length > 1 && " — un mismo número de autorización puede cubrir varios ítems de un equipo."}
               </div>
               <div className={styles.tableWrap}>
-                <table className={styles.table}>
+                <Tabla className={styles.table}>
                   <thead>
                     <tr>
                       <th>ID</th>
@@ -269,14 +270,12 @@ const ConsultaPrestacion: React.FC = () => {
                         <td className={styles.codeCell}>{row.cod_nomenclador ?? "—"}</td>
                         <td className={`${styles.tdRight} ${styles.moneyCell}`}>{formatMoney(row.importe_total)}</td>
                         <td className={styles.thRight}>
-                          <button type="button" className={styles.btnVer} onClick={() => verFicha(row.id)}>
-                            Ver ficha
-                          </button>
+                          <BotonVer onClick={() => verFicha(row.id)} etiqueta="Ver ficha" />
                         </td>
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </Tabla>
               </div>
             </div>
           )
@@ -285,9 +284,7 @@ const ConsultaPrestacion: React.FC = () => {
         {/* ── Ficha completa ── */}
         {mostrandoFicha && ficha && (
           <div>
-            <button type="button" className={styles.backBtn} onClick={volver}>
-              <ArrowLeft size={14} /> Volver a la búsqueda
-            </button>
+            <BackButton onClick={volver} />
 
             <div className={styles.fichaHero}>
               <span className={styles.fichaId}>#{ficha.prestacion.id_detalle_prestaciones}</span>
@@ -439,7 +436,7 @@ const ConsultaPrestacion: React.FC = () => {
                   </p>
                 ) : (
                   <div className={styles.tableWrap}>
-                    <table className={styles.table}>
+                    <Tabla className={styles.table}>
                       <thead>
                         <tr>
                           <th>ID</th>
@@ -458,7 +455,7 @@ const ConsultaPrestacion: React.FC = () => {
                           </tr>
                         ))}
                       </tbody>
-                    </table>
+                    </Tabla>
                   </div>
                 )}
               </div>
@@ -502,7 +499,7 @@ const ConsultaPrestacion: React.FC = () => {
                   </p>
                 ) : (
                   <div className={styles.tableWrap}>
-                    <table className={styles.table}>
+                    <Tabla className={styles.table}>
                       <thead>
                         <tr>
                           <th>Fecha</th>
@@ -521,7 +518,7 @@ const ConsultaPrestacion: React.FC = () => {
                           </tr>
                         ))}
                       </tbody>
-                    </table>
+                    </Tabla>
                   </div>
                 )}
               </div>

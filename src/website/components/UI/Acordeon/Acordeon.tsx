@@ -3,13 +3,9 @@ import { useId, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { EASE } from "../../../lib/motion";
+import Button from "@/website/components/UI/Button/Button";
 
-/**
- * Las clases las pone cada pantalla: el acordeón de Socios y el de Preguntas
- * frecuentes se ven distintos a propósito. Lo que comparten es el
- * comportamiento —abrir, cerrar, animar— y la accesibilidad, que es lo que
- * antes estaba escrito dos veces.
- */
+/** Las clases las pone cada pantalla: el acordeón de Socios y el de Preguntas frecuentes se ven distintos a propósito. */
 type ClasesAcordeon = {
   raiz?: string;
   raizAbierta?: string;
@@ -48,7 +44,7 @@ export default function Acordeon({
 
   return (
     <div className={`${clases.raiz ?? ""} ${abierto ? clases.raizAbierta ?? "" : ""}`}>
-      <button
+      <Button variant="plano"
         type="button"
         id={id}
         className={clases.cabecera}
@@ -61,7 +57,7 @@ export default function Acordeon({
           className={`${clases.chevron ?? ""} ${abierto ? clases.chevronAbierto ?? "" : ""}`}
           aria-hidden="true"
         />
-      </button>
+      </Button>
 
       <AnimatePresence initial={false}>
         {abierto && (

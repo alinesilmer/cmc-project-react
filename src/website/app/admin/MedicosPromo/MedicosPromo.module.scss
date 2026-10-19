@@ -1,5 +1,4 @@
 @use "../../../styles/variables" as *;
-@use "../../../styles/admin" as *;
 
 .wrap {
   display: flex;
@@ -9,10 +8,10 @@
 
 .formSection,
 .listSection {
-  background: #fff;
+  background: $white;
   padding: 30px;
   border-radius: $ad-radio;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px rgba($black, 0.06);
 }
 
 .form {
@@ -82,7 +81,7 @@
   border: 1px solid $ad-borde;
   border-radius: $ad-radio;
   padding: 10px;
-  background: #fff;
+  background: $white;
 }
 
 .thumb {

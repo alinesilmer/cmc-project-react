@@ -7,11 +7,7 @@ import {
   coerceToStringArray,
 } from "./helpers";
 
-/**
- * Todas las llamadas usan `http`, el cliente compartido: es el que agrega el
- * `Authorization` y resuelve la base de la API. Con `axios` pelado los pedidos
- * salían sin token y la API entera está detrás de `enforce_authz`.
- */
+/** Todas las llamadas usan `http`, el cliente compartido: es el que agrega el `Authorization` y resuelve la base de la API. */
 
 const ENDPOINTS = {
   obrasSociales: "/api/obras_social/",
@@ -79,8 +75,7 @@ function mapItemToPrestador(it: any): Prestador {
     apellido_nombre: nombre,
     nombre,
     matricula_prov: pick(src, it, "MATRICULA_PROV", "matricula_prov"),
-    // Estos cuatro ya venían en la respuesta y se descartaban al mapear; son
-    // columnas de exportación que no cuestan ningún pedido extra.
+    // Estos cuatro ya venían en la respuesta y se descartaban al mapear; son columnas de exportación que no cuestan ningún pedido extra.
     matricula_nac: pick(src, it, "MATRICULA_NAC", "matricula_nac"),
     categoria: pick(src, it, "CATEGORIA", "categoria"),
     marca: pick(src, it, "MARCA", "marca"),
@@ -97,10 +92,7 @@ function mapItemToPrestador(it: any): Prestador {
 export async function fetchObrasSociales(
   signal?: AbortSignal
 ): Promise<ObraSocial[]> {
-  // Una empresa con varios planes (Swiss Medical, Medife, Sancor...) tiene
-  // un único padrón: `solo_principales` oculta los planes asociados para que
-  // el selector la liste una sola vez. El endpoint expande a toda la familia
-  // igual, así que el resultado del padrón/export no cambia.
+  // Una empresa con varios planes (Swiss Medical, Medife, Sancor...) tiene un único padrón.
   const { data } = await http.get(ENDPOINTS.obrasSociales, {
     signal,
     timeout: 20_000,
@@ -116,9 +108,7 @@ export async function fetchPrestadoresAllPages(
   nroOS: number,
   signal?: AbortSignal
 ): Promise<Prestador[]> {
-  // `/medicos/export` devuelve el mismo universo de filas que `/medicos`
-  // (misma familia, mismo dedup por NRO_SOCIO) pero sin paginar: un solo
-  // pedido en vez de recorrer 5-6 páginas de `size=200`.
+  // `/medicos/export` devuelve el mismo universo de filas que `/medicos` (misma familia, mismo dedup por NRO_SOCIO) pero sin paginar.
   const { data } = await http.get(ENDPOINTS.medicosExportByOS(nroOS), {
     timeout: 60_000,
     signal,

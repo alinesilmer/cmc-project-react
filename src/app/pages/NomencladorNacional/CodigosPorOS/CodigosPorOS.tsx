@@ -28,10 +28,9 @@ import type {
   EstadoCodigoOS,
   PreciosDependientes,
 } from "../nomenclador.types";
-
-/** "2026-10-03" → "03/10/2026". */
-const fechaCorta = (iso: string) => iso.split("-").reverse().join("/");
-
+import Tabla from "@/app/components/ui/Tabla/Tabla";
+import { fechaCorta } from "@/app/pages/NomencladorNacional/utiles";
+import { detalleError } from "@/app/pages/NomencladorNacional/utiles";
 const PRECIOS_PATH = "/panel/nomenclador/precios/por-obra-social";
 const PAGE_SIZE = 50;
 type Toast = { type: "success" | "error"; msg: string };
@@ -43,12 +42,6 @@ const FILTROS: { id: "todos" | EstadoCodigoOS; label: string }[] = [
   { id: "sin_alta", label: "Sin alta" },
   { id: "suspendido", label: "Suspendidos" },
 ];
-
-function detalleError(e: unknown, fallback: string): string {
-  const d = (e as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail;
-  return typeof d === "string" ? d : fallback;
-}
-
 function quienFactura(i: CodigoPorOSItem): React.ReactNode {
   if (i.estado === "sin_alta") {
     if (i.plantilla_sin_restriccion) return <span className={base.hintText}>Plantilla: sin restricción</span>;
@@ -60,15 +53,7 @@ function quienFactura(i: CodigoPorOSItem): React.ReactNode {
   return <span className={styles.peligro}>Nadie</span>;
 }
 
-/**
- * Etapa 3 del nomenclador — "Códigos por obra social".
- *
- * Qué códigos reconoce cada obra social y en qué condiciones, SIN precio: dar de alta
- * (uno o varios a la vez), editar la descripción en la O.S., autorización, ayudantes y
- * quién lo factura, suspender y reactivar. El precio se carga en la etapa 4 (Precios
- * por obra social), que exige esta alta. Admite `?os=…&codigo=…` para llegar desde
- * la Ficha del código.
- */
+/** Etapa 3 del nomenclador — "Códigos por obra social". */
 export default function CodigosPorOS() {
   const [params, setParams] = useSearchParams();
   const { can } = usePermisos();
@@ -162,10 +147,6 @@ export default function CodigosPorOS() {
           <span className={base.headerIcon}><ClipboardList size={20} /></span>
           <div>
             <h1 className={base.title}>Códigos por obra social</h1>
-            <p className={base.subtitle}>
-              Etapa 3: qué códigos reconoce cada obra social y quién los factura. No pide precio:
-              un código dado de alta ya se puede facturar y el precio se carga después.
-            </p>
           </div>
         </div>
       </div>
@@ -231,7 +212,7 @@ export default function CodigosPorOS() {
             )}
 
             <div className={base.tableWrap}>
-              <table className={base.table}>
+              <Tabla className={base.table}>
                 <thead>
                   <tr>
                     <th>
@@ -306,7 +287,7 @@ export default function CodigosPorOS() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </Tabla>
             </div>
 
             {datos && datos.total > PAGE_SIZE && (
@@ -443,7 +424,7 @@ function AltaModal({
           </div>
         </div>
         <div className={base.tableWrap}>
-          <table className={base.table}>
+          <Tabla className={base.table}>
             <thead><tr><th>Código</th><th>Descripción en la obra social</th><th>Quién factura</th></tr></thead>
             <tbody>
               {items.map((i) => (
@@ -475,7 +456,7 @@ function AltaModal({
                 </tr>
               ))}
             </tbody>
-          </table>
+          </Tabla>
         </div>
         {sinQuien.length > 0 && (
           <p className={styles.aviso}>

@@ -1,13 +1,4 @@
-/**
- * Primitivas de dibujo de la revista de beneficios.
- *
- * Separadas del armado de páginas para que `revistaPdf.ts` se lea como el
- * índice de la revista y no como una lista de coordenadas.
- *
- * Todo va en milímetros y en jsPDF nativo: nada de rasterizar HTML. El texto
- * sale vectorial —se puede seleccionar, buscar e imprimir nítido a cualquier
- * tamaño— que es justamente lo que se pierde con html2canvas.
- */
+/** Primitivas de dibujo de la revista de beneficios. */
 
 export type RGB = [number, number, number];
 
@@ -41,15 +32,9 @@ export function fuente(doc: Doc, pt: number, negrita = false) {
 }
 
 /** pt → mm, para calcular alturas de renglón a partir del cuerpo tipográfico. */
-export const pt = (v: number) => v * 0.3528;
+const pt = (v: number) => v * 0.3528;
 
-/**
- * Degradé vertical por bandas.
- *
- * jsPDF no expone degradados, así que se pintan tiras de 1 mm interpolando el
- * color. A esa altura la banda es invisible y el resultado es indistinguible
- * de un degradé real, sin incrustar una imagen de fondo.
- */
+/** Degradé vertical por bandas. */
 export function degradeVertical(
   doc: Doc, x: number, y: number, w: number, h: number, desde: RGB, hasta: RGB
 ) {
@@ -79,18 +64,7 @@ export function rectPunteado(
 }
 
 /** Escribe texto con ajuste de línea y devuelve la Y donde terminó. */
-/**
- * Texto centrado con espaciado entre letras, centrado de verdad.
- *
- * `doc.text(t, ancho/2, y, { align: "center", charSpace })` **queda corrido**:
- * jsPDF calcula el ancho para centrar sin contar el `charSpace`, así que el
- * texto arranca en el centro correcto de su versión sin espaciar y se extiende
- * hacia la derecha. Medido en jsPDF 4.2.1: el título de la tapa daba el mismo
- * `Td` con y sin `charSpace`, y terminaba 10,8 mm a la derecha del centro.
- *
- * Acá se calcula el ancho real —base más el espaciado entre glifos— y se dibuja
- * alineado a la izquierda desde la posición que corresponde.
- */
+/** Texto centrado con espaciado entre letras, centrado de verdad. */
 export function tituloEspaciado(
   doc: Doc,
   texto: string,
@@ -98,8 +72,7 @@ export function tituloEspaciado(
   charSpace: number,
   anchoCaja = A4.ancho
 ): void {
-  // `charSpace × (n - 1)`: el espaciado va entre letras, así que no cuenta
-  // después de la última — si contara, el texto quedaría corrido media letra.
+  // `charSpace × (n - 1)`: el espaciado va entre letras, así que no cuenta después de la última — si contara.
   const ancho = doc.getTextWidth(texto) + charSpace * Math.max(texto.length - 1, 0);
   doc.text(texto, (anchoCaja - ancho) / 2, y, { charSpace });
 }

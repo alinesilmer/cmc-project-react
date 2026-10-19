@@ -1,5 +1,4 @@
-// Las fuentes se cargan una sola vez desde index.html (con preconnect). Acá
-// había un @import que se copiaba en cada CSS que usa estas variables.
+// Las fuentes se cargan una sola vez desde index.html (con preconnect).
 
 // Global UI scale
 $ui-scale: 0.9;
@@ -59,6 +58,7 @@ $font-size-hero: 3rem;
 $font-normal: "Inter", sans-serif;
 $font-title: "Manrope", sans-serif;
 $font-playfair: "Manrope", sans-serif;
+$font-mono: "Courier New", monospace;
 
 // Espaciado
 $spacing-xs: 0.5rem * $ui-scale;
@@ -90,3 +90,104 @@ $breakpoint-wide: 1280px;
 $transition-fast: 0.2s ease;
 $transition-normal: 0.3s ease;
 $transition-slow: 0.5s ease;
+
+// Portada (Inicio): noche azul, crema y oro del sello, y la serif de los titulares.
+$portada-noche: #0b1a36;
+$portada-noche-2: #102449;
+// El azul de las fichas de vidrio sobre la noche (Accesos rápidos): barra y pie del sitio.
+$portada-barra: #18284a;
+$portada-crema: #f6efd9;
+$portada-oro: #f5df98;
+$fuente-display: "Bodoni Moda", "Times New Roman", serif;
+
+// ─── Apoyos del sitio (antes repetidos en cada hoja de sección) ──────────────
+$fondo-suave: #f1f5fb;
+// El fondo de /panel/login, que comparten todas las páginas del sitio menos la portada.
+$fondo-acceso: #f1f5f9;
+$fondo-flyer: #f4f7fb;
+$texto-gris: #6b7280;
+$texto-oscuro: #1f2937;
+$borde-suave: #e5e7eb;
+$verde-whatsapp: #25d366;
+$sombra-tarjeta: 0 1px 2px rgba(20, 35, 58, 0.05), 0 10px 26px rgba(20, 35, 58, 0.07);
+$ancho-lectura: 760px;
+
+// ─── Escala del administrador de contenido ───────────────────────────────────
+// La usan todas las pantallas de /panel/sitio (publicaciones, avisos de médicos, valores éticos).
+
+// Superficies
+$ad-fondo: #f4f6fa;
+$ad-superficie: #ffffff;
+$ad-superficie-2: #f8fafc;
+
+// Tinte de marca, para hover y selección
+$ad-tinte: #eef3ff;
+$ad-tinte-fuerte: #dbeafe;
+$ad-enlace: #1d4ed8;
+
+// Bordes: uno para contornos, otro para lo que sólo separa
+$ad-borde: #dde2ec;
+$ad-borde-fuerte: #c5cfe0;
+
+// Texto
+$ad-texto: #374151;
+$ad-texto-2: #6b7280;
+$ad-texto-3: #8a99b3;
+
+// Semánticos
+$ad-peligro: #dc2626;
+$ad-peligro-oscuro: #b91c1c;
+$ad-peligro-borde: #fca5a5;
+$ad-peligro-fondo: #fef2f2;
+$ad-peligro-suave: #fee2e2;
+$ad-ok: #166534;
+$ad-ok-fondo: #dcfce7;
+$ad-whatsapp: #25d366;
+
+// Un solo radio para controles y tarjetas, y la píldora para los chips.
+$ad-radio: 10px;
+$ad-radio-chico: 6px;
+$ad-radio-pill: 999px;
+
+// El chat es una superficie chica y densa, así que necesita una escala de neutros más fina que la del sitio.
+$chat-borde: #e6eaf1;
+$chat-fondo-sutil: #f7f9fc;
+$chat-burbuja: #eef2f8;
+$chat-texto: #1e293b;
+$chat-texto-suave: #64748b;
+$chat-placeholder: #9aa5b8;
+$chat-deshabilitado: #cbd5e1;
+$chat-wa: #16a34a;
+
+// Un solo radio para la ventana: antes convivían tres (7px, 14px y 16px) según el modo y el breakpoint, y se notaba al expandir.
+$chat-radio: 16px;
+$chat-radio-control: 10px;
+
+// ─── Tonos de apoyo del sitio (colores que antes estaban escritos a mano) ───
+$tono-amarillo-100: #ece8dd;
+$tono-amarillo-50: #f7f5ef;
+$tono-azul-600: #5b6474;
+$tono-azul-900: #061226;
+$tono-azul-850: #14233a;
+$tono-azul-650: #4b5563;
+$tono-amarillo-100-b: #efece4;
+$tono-amarillo-50-b: #fdf8e4;
+$tono-azul-200: #c3cad6;
+$tono-amarillo-250: #fde68a;
+$tono-naranja-700: #92400e;
+$tono-amarillo-50-c: #f5f3ee;
+$tono-azul-50: #eef1f5;
+$tono-azul-50-b: #f1f3f6;
+$tono-azul-100: #e6e9ee;
+$tono-verde-400: #4ade80;
+$tono-azul-50-c: #fafbfc;
+$tono-azul-50-d: #e8eef7;
+$tono-azul-850-b: #0c2243;
+$tono-amarillo-700: #685c29;
+$tono-amarillo-400: #dec348;
+$tono-amarillo-250-b: #e0d39c;
+$tono-amarillo-800: #4d4521;
+$tono-amarillo-100-c: #ebe7dd;
+$tono-azul-100-b: #dfe4ec;
+$tono-gris-50: #f0f1f3;
+$tono-gris-350: #9ca3af;

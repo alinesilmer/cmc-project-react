@@ -8,8 +8,7 @@ import styles from "./Requisitos.module.scss";
 
 const opcional = (r: Requisito) => Boolean(r.tags?.includes("no-obligatorio"));
 
-// Agrupados por lo que hay que hacer con cada papel: así la etiqueta se lee
-// una vez en el título del grupo y no repetida en cada tarjeta.
+// Agrupados por lo que hay que hacer con cada papel.
 const GRUPOS: { titulo: string; icono: LucideIcon; items: Requisito[] }[] = [
   { titulo: "Legalizados", icono: Stamp, items: PRINCIPALES },
   { titulo: "Copias", icono: Copy, items: COPIAS_SIMPLES.filter((r) => !opcional(r)) },

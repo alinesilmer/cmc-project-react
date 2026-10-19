@@ -1,9 +1,4 @@
 // Catálogo de obras sociales del validador.
-//
-// Los campos, longitudes y códigos salen de los formularios del sistema legacy
-// (`sancor_1.php`, `ospm_1.php`, `omint_1.php`, `boreal_1.php`, `judicial_1.php`,
-// `swiss_1.php`, `nobis/nobis.php` y la grilla de `menu.php`). Mantener esta
-// tabla alineada con el backend cuando se conecte la API real.
 
 import { consultarAfiliadoNobis } from "./validaciones.api";
 import type {
@@ -35,10 +30,7 @@ const campoCodigo: CampoConfig = {
   label: "Código de prestación",
   tipo: "codigo",
   required: true,
-  placeholder: "Buscá por código o descripción",
-  // El buscador ya sólo lista lo facturable: el backend descarta los no
-  // habilitados y el front saca además los bloqueados por convenio.
-  hint: "Solo se listan los códigos que podés facturar en esta obra social",
+  placeholder: "Buscá por código o descripción"
 };
 
 const campoNombreAfiliado: CampoConfig = {
@@ -51,10 +43,7 @@ const campoNombreAfiliado: CampoConfig = {
   placeholder: "Nombre completo",
 };
 
-/** Igual que el cartel verde/rojo de "Afiliado ACTIVO" del legacy de Nobis
- * (`nobis.php`): consulta `ConsultarAfiliado` en vivo y no bloquea nada — el
- * legacy corre con `$nobis_require_active = false`, así que se puede cargar
- * igual aunque el afiliado figure inactivo. */
+/** Igual que el cartel verde/rojo de "Afiliado ACTIVO" del legacy de Nobis (`nobis.php`): consulta `ConsultarAfiliado` en vivo y no bloquea nada . */
 async function consultarAfiliadoNobisEnVivo(
   valor: string
 ): Promise<ConsultaEnVivoResultado> {
@@ -73,6 +62,7 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
     slug: "sancor",
     nombre: "Sancor Salud",
     codigo: 411,
+    otrosCodigos: [158, 273],
     modo: "integrada",
     estado: "operativa",
     validacion: "online",
@@ -110,6 +100,7 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
     slug: "ospjn",
     nombre: "OSPJN · Poder Judicial",
     codigo: 151,
+    otrosCodigos: [360],
     modo: "integrada",
     estado: "operativa",
     validacion: "online",
@@ -136,11 +127,7 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
   {
     slug: "nobis",
     nombre: "Nobis Salud",
-    // 62, no 402. El 402 nunca existió: ni en `obras_sociales`, ni en el
-    // nomenclador, ni en el sistema viejo — llegó como número de relleno en un
-    // docstring del backend y se copió acá. Con 402 el panel no servía ni para
-    // leer: el buscador de códigos devolvía [] y el alta moría en 422 "la obra
-    // social 402 todavía no está implementada". Corregido 2026-08-19.
+    // 62, no 402. El 402 nunca existió: ni en `obras_sociales`, ni en el nomenclador, ni en el sistema viejo .
     codigo: 62,
     modo: "integrada",
     estado: "operativa",
@@ -159,9 +146,7 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
         required: true,
         maxLength: 20,
         placeholder: "Número de credencial",
-        // Mismo cartel que tenía el legacy debajo del campo: activo/inactivo
-        // en vivo, sin bloquear el envío. minLength 6 = el mismo umbral que
-        // usaba `shouldQueryAfiliado()` en nobis.php.
+        // Mismo cartel que tenía el legacy debajo del campo: activo/inactivo en vivo.
         consultaEnVivo: { minLength: 6, consultar: consultarAfiliadoNobisEnVivo },
       },
       {
@@ -169,10 +154,7 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
         label: "Token de la credencial",
         tipo: "numerico",
         required: true,
-        // 6, no 4. Los tokens de Nobis son de 6 dígitos (290894, 666766); con
-        // el límite en 4 el médico no podía tipear el suyo completo y Nobis
-        // contestaba "Token incorrecto". El de Sancor sí es de 4 — son formatos
-        // distintos y por eso el largo va por obra social. Corregido 2026-08-19.
+        // 6, no 4. Los tokens de Nobis son de 6 dígitos (290894, 666766).
         maxLength: 6,
         placeholder: "123456",
         hint: "6 dígitos que muestra la credencial del afiliado",
@@ -219,6 +201,7 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
     slug: "omint",
     nombre: "Omint",
     codigo: 243,
+    otrosCodigos: [227],
     modo: "integrada",
     estado: "operativa",
     validacion: "manual",
@@ -286,91 +269,53 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
     ],
   },
 
-  // Medicus oculta hasta que la carga esté conectada en el backend (la 373
-  // todavía responde 422). Para reactivarla, descomentar este bloque y el
-  // import de `logoMedicus`.
-  // {
-    // slug: "medicus",
-    // nombre: "Medicus",
-    // // 373 = MEDICUS,CORPORATE,FAMILY -MC- en `obras_sociales`. Ojo que hay una
-    // // segunda: la 372 (MEDICUS FUERZAS DE SEGURIDAD, planes MS1/MS2 desde el
-    // // 01/06/2026), hoy con MARCA='N'. Si el Colegio la activa va como otra
-    // // entrada, no como un plan de esta: el catálogo es por NRO_OBRASOCIAL.
-    // codigo: 373,
-    // modo: "integrada",
-    // estado: "operativa",
-    // validacion: "online",
-    // protocolo: "REST · HL7 v2.4 (canal Traditum)",
-    // color: "#004b8d",
-    // logo: logoMedicus,
-    // // El backend todavía no conoce la 373: `obras.POR_NRO` no la tiene, así que
-    // // `POST /prestaciones` responde 422 y la pantalla muestra el aviso de
-    // // «carga no conectada». Las lecturas (períodos, prestaciones, códigos) sí
-    // // funcionan porque son genéricas. Ver la guía de integración de Traditum.
-    // cargaImplementada: false,
-    // descripcion:
-      // "Autorización en línea contra Medicus a través del canal Traditum.",
-    // campos: [
-      // {
-        // name: "nroAfiliado",
-        // label: "Número de afiliado",
-        // tipo: "numerico",
-        // required: true,
-        // maxLength: 13,
-        // placeholder: "09227263000",
-        // hint: "La credencial completa, sin guiones ni espacios",
-        // // Falta el cartel de afiliado activo. Medicus lo resuelve con el
-        // // mensaje de elegibilidad ZQI^Z01, así que en cuanto exista
-        // // `GET /api/validaciones/medicus/elegibilidad` va acá un
-        // // `consultaEnVivo` igual al de Nobis. No se cableó antes para no
-        // // dejar un cartel rojo permanente contra un endpoint inexistente.
-      // },
-      // campoCodigo,
-      // {
-        // name: "cantidad",
-        // label: "Cantidad",
-        // tipo: "entero",
-        // min: 1,
-        // max: 99,
-        // placeholder: "1",
-        // hint: "Cuántas unidades de la práctica se solicitan",
-      // },
-      // // El diagnóstico (segmento DG1) no se le pide al médico: Sancor lo manda
-      // // fijo desde el backend (`Z111^CONSULTA^I10`) y el reporte de Swiss trae
-      // // la columna `icd` vacía en las 1.127 filas, así que el Colegio no lo
-      // // registra. Si Medicus llega a exigir uno real, se agrega acá.
-    // ],
-  // },
+  // Medicus oculta hasta que la carga esté conectada en el backend (la 373 todavía responde 422).
 
   // ── Portales externos ──────────────────────────────────────────────────────
-  // Estas obras sociales no se validan desde el panel: en `menu.php` el enlace
-  // sale del sitio del Colegio hacia el portal de la obra social.
+  // Estas obras sociales no se validan desde el panel: en `menu.php` el enlace sale del sitio del Colegio hacia el portal de la obra social.
   {
     slug: "ioscor",
     nombre: "IOSCOR",
     codigo: null,
+    otrosCodigos: [304],
     modo: "externa",
     estado: "operativa",
     color: "#1d6fb8",
     logo: logoIoscor,
     descripcion: "Validá en el portal de socios de IOSCOR con tu usuario de prestador.",
-    url: "http://socios.comecorammeco.com/users/login",
+    url: "https://socios.comecorammeco.com/users/login",
   },
   {
     slug: "iosfa",
     nombre: "IOSFA",
     codigo: null,
+    otrosCodigos: [8],
     modo: "externa",
     estado: "operativa",
     color: "#0d5c63",
     logo: logoIosfa,
     descripcion: "Validador web de la Obra Social de las Fuerzas Armadas.",
-    url: "http://validador.iosfa.gob.ar:5080/Login/Login.aspx",
+    // Por https el validador atiende en el puerto de siempre; el 5080 es sólo el de http.
+    url: "https://validador.iosfa.gob.ar/Login/Login.aspx",
+    requisitos: {
+      titulo: "Documentación obligatoria",
+      items: ["Planilla", "Bono", "Tickets"],
+      motivo: "Sin los tres, el Colegio Médico de Corrientes no puede presentar la prestación.",
+    },
+    guia: {
+      chip: "Usuario",
+      titulo: "IOSFA — Usuario",
+      // El dato no va acá: este archivo termina en el bundle público.
+      credencialesRemotas: true,
+      pasos: ["Ingresá con este usuario, escrito CON GUIONES."],
+      enlace: { href: "https://validador.iosfa.gob.ar/Login/Login.aspx", texto: "Ir a IOSFA" },
+    },
   },
   {
     slug: "issunne",
     nombre: "ISSUNNE",
     codigo: null,
+    otrosCodigos: [81],
     modo: "externa",
     estado: "operativa",
     color: "#8a1538",
@@ -382,12 +327,20 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
     slug: "medife",
     nombre: "Medifé",
     codigo: 296,
+    otrosCodigos: [377, 380, 388],
     modo: "externa",
     estado: "operativa",
     color: "#00a99d",
     logo: logoMedife,
     descripcion: "Validación a través de Traditum, la plataforma que usa Medifé.",
     url: "https://menu.traditum.com/View/Main.aspx",
+    guia: {
+      chip: "Usuario y clave",
+      titulo: "Medifé — Usuario y clave",
+      credencialesRemotas: true,
+      pasos: ["Ingresá a Traditum con este usuario y clave."],
+      enlace: { href: "https://menu.traditum.com/View/Main.aspx", texto: "Ir a Traditum" },
+    },
   },
   {
     slug: "osdepym",
@@ -411,16 +364,18 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
     logo: logoPrevencion,
     descripcion:
       "Las prestaciones se cargan desde el panel subiendo el reporte de facturación de Prevención Salud.",
-    // El backend todavía no conoce la 103: `obras.POR_NRO` no la tiene, así que
-    // `POST /prestaciones` responde 422. El número está acá para identificarla
-    // y para que la pantalla de carga por archivo lo tenga a mano el día que
-    // exista el import; la carga real sigue sin implementarse.
+    // El backend todavía no conoce la 103: `obras.POR_NRO` no la tiene.
     cargaImplementada: false,
-    // Sólo el Colegio entra por acá (sube el reporte de facturación de todo
-    // el padrón); el médico no tiene nada que hacer en esa pantalla, así que
-    // `destinoObraSocial` la salta para él y usa `url` en su lugar.
+    // Sólo el Colegio entra por acá (sube el reporte de facturación de todo el padrón).
     rutaPanel: "/panel/validaciones/prevencion-salud",
     url: "https://autogestionprestadores.prevencionsalud.com.ar/",
+    guia: {
+      chip: "Usuario y clave",
+      titulo: "Prevención Salud — Usuario y clave",
+      credencialesRemotas: true,
+      pasos: ["Ingresá a la autogestión de prestadores con este usuario y clave."],
+      enlace: { href: "https://autogestionprestadores.prevencionsalud.com.ar/", texto: "Ir a Prevención Salud" },
+    },
   },
   {
     slug: "swiss-medical",
@@ -432,10 +387,7 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
     logo: logoSwiss,
     descripcion:
       "Las prestaciones y órdenes se cargan en el portal de prestadores de Swiss Medical, con tu usuario propio.",
-    // Sólo el Colegio entra por acá: Swiss manda un reporte mensual de todo
-    // el padrón y esta pantalla lo reparte entre los efectores. Para el
-    // médico `destinoObraSocial` saltea `rutaPanel` y usa `url`, así que la
-    // tarjeta lo sigue mandando al portal de Swiss.
+    // Sólo el Colegio entra por acá: Swiss manda un reporte mensual de todo el padrón y esta pantalla lo reparte entre los efectores.
     rutaPanel: "/panel/validaciones/swiss-medical",
     url: "https://www.swissmedical.com.ar/prestadores/",
     nota: "¿Todavía no tenés usuario? El Colegio te da tu N° de Prestador y la guía de registro paso a paso.",
@@ -459,6 +411,7 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
     slug: "upcn",
     nombre: "UPCN · Unión Personal",
     codigo: null,
+    otrosCodigos: [122, 216],
     modo: "externa",
     estado: "operativa",
     color: "#c4973a",
@@ -470,10 +423,8 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
     guia: {
       chip: "Usuario y clave",
       titulo: "Unión Personal — Usuario y clave",
-      credenciales: [
-        { label: "Usuario", valor: "42036" },
-        { label: "Clave", valor: "4040" },
-      ],
+      // El usuario y la clave no van acá: este archivo termina en el bundle público.
+      credencialesRemotas: true,
       intro:
         "Ingresá al portal de Unión Personal con estos datos y seguí estos pasos para autorizar una prestación.",
       pasos: [
@@ -492,24 +443,18 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
 export const getObraSocial = (slug?: string) =>
   OBRAS_SOCIALES.find((os) => os.slug === slug);
 
-/** Se validan y cargan desde el panel. */
-export const OBRAS_INTEGRADAS = OBRAS_SOCIALES.filter((os) => os.modo === "integrada");
-
 /** Se validan fuera del panel (portal de la obra social o página del Colegio). */
 export const OBRAS_EXTERNAS = OBRAS_SOCIALES.filter((os) => os.modo === "externa");
 
-/**
- * Destino de la tarjeta de una obra social.
- * `panel`  → se valida y carga desde acá.
- * `cmc`    → tiene página propia en el sitio del Colegio.
- * `portal` → se valida en el sitio de la obra social (enlace externo).
- *
- * `esMedico` sólo importa para `rutaPanel`: hoy la única obra social que lo usa
- * es Prevención Salud, y esa pantalla propia es la herramienta del Colegio para
- * repartir el reporte de facturación entre médicos — no algo que el médico
- * pueda operar. Para él, la tarjeta cae al siguiente caso (`url`, portal
- * externo) como si `rutaPanel` no existiera.
- */
+/** Números del catálogo que ya tienen carpeta propia; el resto va a la solapa «Otros». */
+export const CODIGOS_CON_CARPETA = new Set(
+  OBRAS_SOCIALES.flatMap((os) => [...(os.codigo === null ? [] : [os.codigo]), ...(os.otrosCodigos ?? [])])
+);
+
+/** Tampoco van a «Otros»: Farmacia con coseguro (30) y la de prueba (888). */
+export const OCULTAS_EN_OTROS = new Set([30, 888]);
+
+/** Destino de la tarjeta de una obra social. */
 export const destinoObraSocial = (
   os: ObraSocialConfig,
   esMedico: boolean

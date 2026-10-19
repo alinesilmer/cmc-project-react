@@ -1,11 +1,4 @@
-/**
- * Búsqueda de texto del sitio: sin acentos, sin mayúsculas y sin signos, así
- * «cardiologia» encuentra «Cardiología» y «Ramirez» a «Ramírez».
- *
- * Había cinco copias de esto (listados, beneficios, convenios, directorio y el
- * chatbot), cada una con su variante; dos quitaban los signos y tres no, así
- * que una misma búsqueda daba resultados distintos según la pantalla.
- */
+/** Búsqueda de texto del sitio: sin acentos, sin mayúsculas y sin signos, así «cardiologia» encuentra «Cardiología» y «Ramirez» a «Ramírez». */
 export function normalizar(texto: string): string {
   return texto
     .normalize("NFD")
@@ -16,10 +9,7 @@ export function normalizar(texto: string): string {
     .trim();
 }
 
-/**
- * `true` si todas las palabras de `busqueda` aparecen en alguno de los
- * `campos`, en cualquier orden. Los campos nulos se ignoran.
- */
+/** `true` si todas las palabras de `busqueda` aparecen en alguno de los `campos`, en cualquier orden. */
 export function coincide(
   busqueda: string,
   campos: ReadonlyArray<string | null | undefined>

@@ -4,7 +4,9 @@ import type React from "react";
 import { useEffect, useMemo, useState, useRef } from "react";
 import styles from "./UsersList.module.scss";
 import { getJSON } from "@/app/shared/lib/http";
+import { ShieldCheck, SlidersHorizontal, Users } from "lucide-react";
 import Button from "@/app/components/ui/Button/Button";
+import Franja from "@/app/components/layout/Franja/Franja";
 import Modal from "@/app/components/ui/Modal/Modal";
 import FilterModal from "@/app/pages/UsersList/components/FilterModal/FilterModal";
 import { useNavigate } from "react-router-dom";
@@ -17,6 +19,9 @@ import { useMedicosExport } from "./useMedicosExport";
 import { useEspecialidades } from "@/app/pages/UsersList/components/FilterModal/useEspecialidades";
 
 import LogoCMCUrl from "../../assets/logoCMC.png";
+import SearchField from "@/app/components/ui/SearchField/SearchField";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
+import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
 
 type MedicoRow = Record<string, unknown>;
 
@@ -65,9 +70,7 @@ function normalizeAdherente(row: any): boolean | null {
   return normalizeBool(raw);
 }
 
-// Especialidades para la columna: resuelve nro_especialidad -> nombre y OMITE
-// los códigos que no tienen nombre en el catálogo (p. ej. el 420 genérico),
-// para que no se vea el número suelto al lado de los nombres.
+// Especialidades para la columna: resuelve nro_especialidad -> nombre y OMITE los códigos que no tienen nombre en el catálogo (p. ej. el 420 genérico).
 function pickEspecialidadNames(row: any): string {
   const nroKeys = [
     "nro_especialidad",
@@ -111,12 +114,7 @@ function toUserRow(m: any) {
   };
 }
 
-/* ================================
-   Especialidades múltiples
-   - Lee especialidad1..especialidadN
-   - Dedup
-   - Quita "médico" si hay otras
-================================ */
+/* ================================ Especialidades múltiples - Lee especialidad1..especialidadN - Dedup - Quita "médico" si hay otras ================================ */
 function splitTokens(v: any): string[] {
   if (isEmptyValue(v)) return [];
   if (Array.isArray(v)) return v.map((x) => String(x ?? "").trim()).filter(Boolean);
@@ -234,9 +232,7 @@ function matchEspecialidad(row: any, selected: string): boolean {
   });
 }
 
-/* ================================
-   Fechas + vencimientos
-================================ */
+/* ================================ Fechas + vencimientos ================================ */
 function parseDateAny(v: any): Date | null {
   if (!v) return null;
   if (v instanceof Date) return isNaN(v.getTime()) ? null : v;
@@ -328,9 +324,7 @@ function getVencDate(row: MedicoRow, kind: keyof typeof VENC_KEYS): Date | null 
   return parseDateAny(raw);
 }
 
-/* ================================
-   Faltantes
-================================ */
+/* ================================ Faltantes ================================ */
 const MISSING_FIELD_KEYS: Record<MissingFieldKey, string[]> = {
   telefono_consulta: ["telefono_consulta", "TELEFONO_CONSULTA", "tel_consulta", "TEL_CONSULTA"],
   domicilio_consulta: ["domicilio_consulta", "DOMICILIO_CONSULTA"],
@@ -382,9 +376,7 @@ function isMissingField(row: MedicoRow, field: MissingFieldKey): boolean {
   return isEmptyValue(raw);
 }
 
-/* ================================
-   Aplica filtros (tabla)
-================================ */
+/* ================================ Aplica filtros (tabla) ================================ */
 function applyMedicosFilters(rows: MedicoRow[], filters: FilterSelection): MedicoRow[] {
   const o = filters.otros;
   const v = filters.vencimientos;
@@ -640,7 +632,7 @@ const UsersList: React.FC = () => {
     setPage(0);
   }
 
-  async function handleExportWithFilters(format: "xlsx" | "csv", _ignoredLogo: File | null) {
+  async function handleExportWithFilters(format: "xlsx" | "csv" | "pdf", _ignoredLogo: File | null) {
     if (!filters.columns || filters.columns.length === 0) {
       setExportError("Seleccioná al menos una columna");
       return;
@@ -773,45 +765,33 @@ const UsersList: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <div>
-          <h1 className={styles.title}>Socios</h1>
-          <p className={styles.subtitle}>Gestión de médicos asociados</p>
-        </div>
-        <div className={styles.headerActions}>
-          {/* Control de calidad del padrón: sólo lectura, no modifica datos. */}
-          <Button variant="ghost" onClick={() => navigate("/panel/users/auditoria")}>
-            Control de datos
-          </Button>
-          <Button onClick={() => setIsExportOpen(true)}>Filtrar y Exportar</Button>
-        </div>
-      </div>
+      <Franja titulo="Socios" icono={Users} />
 
-      <div className={styles.statsGrid}>
-        <div className={styles.statCard}>
-          <div className={styles.statValue}>{filteredUsers.filter((u) => u.status === "activo").length}</div>
-          <div className={styles.statLabel}>Activos (pág.)</div>
-        </div>
-        <div className={styles.statCard}>
-          <div className={styles.statValue}>{filteredUsers.length}</div>
-          <div className={styles.statLabel}>En esta página</div>
-        </div>
-        <div className={styles.statCard}>
-          <div className={styles.statValue}>
-            {page + 1}{isLastPage ? "" : "+"}
-          </div>
-          <div className={styles.statLabel}>Página</div>
-        </div>
-      </div>
-
-      <div className={styles.searchBar}>
-        <input
-          type="text"
-          className={styles.searchInput}
-          placeholder="Buscar por nombre, matrícula o número de socio..."
+      <div className={styles.barra}>
+        <SearchField
+          className={styles.searchBar}
+          fullWidth
+          placeholder="Buscar por nombre, matrícula o número de socio…"
           value={searchTerm}
           onChange={handleSearchChange}
         />
+        <div className={styles.headerActions}>
+          {/* Control de calidad del padrón: sólo lectura, no modifica datos. */}
+          <Button
+            variant="ghost"
+            leftIcon={<ShieldCheck size={17} aria-hidden="true" />}
+            onClick={() => navigate("/panel/users/auditoria")}
+          >
+            Control de datos
+          </Button>
+          <Button
+            variant="secondary"
+            leftIcon={<SlidersHorizontal size={17} aria-hidden="true" />}
+            onClick={() => setIsExportOpen(true)}
+          >
+            Filtrar y exportar
+          </Button>
+        </div>
       </div>
 
       {activeChips.length > 0 && (
@@ -847,7 +827,7 @@ const UsersList: React.FC = () => {
       )}
 
       <div className={styles.tableContainer}>
-        <table className={styles.table}>
+        <Tabla className={styles.table}>
           <thead>
             <tr>
               <th>Nro. Socio</th>
@@ -880,19 +860,16 @@ const UsersList: React.FC = () => {
                     </span>
                   </td>
                   <td>
-                    <button
-                      className={styles.rowButton}
+                    <BotonVer
                       onClick={() => navigate(`/panel/doctors/${user.id}`)}
-                      aria-label={`Ver más de ${user.name}`}
-                    >
-                      Ver
-                    </button>
+                      etiqueta={`Ver más de ${user.name}`}
+                    />
                   </td>
                 </tr>
               ))
             )}
           </tbody>
-        </table>
+        </Tabla>
       </div>
 
       <div className={styles.pagination}>
@@ -921,7 +898,7 @@ const UsersList: React.FC = () => {
         </button>
       </div>
 
-      <Modal isOpen={isExportOpen} onClose={() => setIsExportOpen(false)} title="Filtrar y descargar" size="large">
+      <Modal isOpen={isExportOpen} onClose={() => setIsExportOpen(false)} title="Filtrar y exportar" size="large" sinCabecera>
         <FilterModal
           filters={filters}
           setFilters={setFilters}

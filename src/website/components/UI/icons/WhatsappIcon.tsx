@@ -6,10 +6,7 @@ type Props = SVGProps<SVGSVGElement> & {
   title?: string;
 };
 
-/**
- * WhatsApp brand glyph. lucide-react does not ship brand icons, so this small
- * inline SVG replaces the former `react-icons/fa` FaWhatsapp usage.
- */
+/** WhatsApp brand glyph. lucide-react does not ship brand icons, so this small inline SVG replaces the former `react-icons/fa` FaWhatsapp usage. */
 export default function WhatsappIcon({
   size = "1em",
   title,

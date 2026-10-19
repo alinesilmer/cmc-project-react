@@ -1,29 +1,31 @@
 import { memo, useCallback, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import type { Prestador } from "./types";
-import {
-  safeStr,
-  pickNroPrestador,
-  pickNombre,
-  pickMatriculaProv,
-  pickTelefonoConsulta,
-  pickEspecialidad,
-} from "./helpers";
-import styles from "./AfiliadosPorObraSocialPage.module.scss";
+
+import DobleScroll from "@/app/components/ui/DobleScroll/DobleScroll";
+import type { ExportField, ExportRow } from "./types";
+import styles from "./Padrones.module.scss";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
+import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
 
 const PAGE_SIZE = 50;
 
 type Props = {
-  rows: Prestador[];
+  rows: ExportRow[];
+  /** Las columnas elegidas en «Datos a mostrar», en el orden del catálogo. */
+  campos: ExportField[];
   tableQuery: string;
   totalCount: number;
+  /** Las fichas todavía no llegaron: esas columnas se ven en espera. */
+  fichasPendientes: boolean;
   onNavigate: (id: unknown) => void;
 };
 
 const AfiliadosPorObraSocialTable = memo(function AfiliadosPorObraSocialTable({
   rows,
+  campos,
   tableQuery,
   totalCount,
+  fichasPendientes,
   onNavigate,
 }: Props) {
   const [page, setPage] = useState(1);
@@ -43,75 +45,66 @@ const AfiliadosPorObraSocialTable = memo(function AfiliadosPorObraSocialTable({
 
   return (
     <>
-      <div className={styles.resultsHeader}>
-        <p className={styles.resultsCount}>
-          Mostrando{" "}
-          <strong>
-            {rows.length === totalCount
-              ? rows.length
-              : `${rows.length} (filtrado de ${totalCount})`}
-          </strong>{" "}
-          {rows.length === 1 ? "prestador" : "prestadores"}
-          {rows.length > PAGE_SIZE && (
-            <> &mdash; página <strong>{page}</strong> de{" "}
-            <strong>{totalPages}</strong></>
-          )}
-        </p>
-      </div>
+      <p className={styles.resultsCount}>
+        <strong>
+          {rows.length === totalCount
+            ? rows.length
+            : `${rows.length} de ${totalCount}`}
+        </strong>{" "}
+        {rows.length === 1 ? "prestador" : "prestadores"}
+        {rows.length > PAGE_SIZE && (
+          <> · página <strong>{page}</strong> de <strong>{totalPages}</strong></>
+        )}
+      </p>
 
-      <div className={styles.tableWrapper}>
-        <table className={styles.table}>
+      <DobleScroll className={styles.tableWrapper}>
+        <Tabla className={styles.table}>
           <thead>
             <tr>
-              <th>N° Socio</th>
-              <th>Nombre Completo</th>
-              <th>Matrícula Prov.</th>
-              <th>Teléfono</th>
-              <th>Especialidades</th>
-              <th>Acciones</th>
+              {campos.map((c) => (
+                <th key={c.key} className={c.align === "center" ? styles.centrada : undefined}>
+                  {c.short}
+                </th>
+              ))}
+              <th className={styles.colAccion} aria-label="Acciones" />
             </tr>
           </thead>
           <tbody>
             {pageRows.length === 0 ? (
               <tr>
-                <td colSpan={6} className={styles.noResults}>
+                <td colSpan={campos.length + 1} className={styles.noResults}>
                   No se encontraron prestadores que coincidan con &ldquo;
                   {tableQuery}&rdquo;
                 </td>
               </tr>
             ) : (
-              pageRows.map((p, idx) => {
-                const nro = safeStr(pickNroPrestador(p));
-                const nom = safeStr(pickNombre(p));
-                const mat = safeStr(pickMatriculaProv(p));
-                const tel = safeStr(pickTelefonoConsulta(p));
-                const esp = safeStr(pickEspecialidad(p));
-                const key = String(p.id ?? `${nro}-${mat}-${idx}`);
-
-                return (
-                  <tr key={key}>
-                    <td>{nro || "—"}</td>
-                    <td className={styles.tdName}>{nom || "—"}</td>
-                    <td>{mat || "—"}</td>
-                    <td>{tel || "—"}</td>
-                    <td>{esp || "—"}</td>
-                    <td>
-                      <button
-                        type="button"
-                        className={styles.rowButton}
-                        onClick={() => onNavigate(p.id)}
-                        disabled={!p.id}
+              pageRows.map((p, idx) => (
+                <tr key={String(p.id ?? `${p.nro_socio ?? ""}-${p.matricula_prov ?? ""}-${idx}`)}>
+                  {campos.map((c) => {
+                    const enEspera = fichasPendientes && c.source === "medico";
+                    const valor = enEspera ? "" : c.get(p);
+                    return (
+                      <td
+                        key={c.key}
+                        className={`${c.align === "center" ? styles.centrada : ""} ${c.key === "nom" ? styles.tdName : ""}`}
                       >
-                        Ver
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })
+                        {enEspera ? (
+                          <span className={styles.hueso} />
+                        ) : (
+                          valor || <span className={styles.vacio}>—</span>
+                        )}
+                      </td>
+                    );
+                  })}
+                  <td className={styles.colAccion}>
+                    <BotonVer onClick={() => onNavigate(p.id)} disabled={!p.id} />
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
-        </table>
-      </div>
+        </Tabla>
+      </DobleScroll>
 
       {totalPages > 1 && (
         <div className={styles.pagination}>

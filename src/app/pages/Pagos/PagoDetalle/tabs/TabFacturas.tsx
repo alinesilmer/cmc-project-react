@@ -18,6 +18,9 @@ import {
   mesLabel,
 } from "../../types";
 import AppSearchSelect from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
+import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
+import { PERIODOS_DISP_URL } from "@/app/pages/Pagos/utiles";
+import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
 
 const LIQUIDACIONES_URL = (pagoId: number) =>
   `/api/liquidacion/liquidaciones_por_os/?pago_id=${pagoId}`;
@@ -25,9 +28,6 @@ const CREAR_LIQ_URL = "/api/liquidacion/liquidaciones_por_os/crear";
 const DEL_LIQ_URL = (id: number) =>
   `/api/liquidacion/liquidaciones_por_os/${id}`;
 const OBRAS_SOCIALES_URL = "/api/obras_social/";
-const PERIODOS_DISP_URL = (id: number) =>
-  `/api/periodos/disponibles?obra_social_id=${id}`;
-
 type Props = {
   pago: Pago;
   pagoId: number;
@@ -201,16 +201,12 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
       key: "acciones",
       header: "Acciones",
       render: (r) => (
-        <Button
-          size="sm"
-          variant="secondary"
+        <BotonVer
           onClick={(e) => {
             e.stopPropagation();
             navigate(`/panel/liquidation/${pagoId}/facturas/${r.id}`);
           }}
-        >
-          Ver
-        </Button>
+        />
       ),
     },
   ];
@@ -275,27 +271,30 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
 
       {/* Modal agregar */}
       {addOpen && (
-        <div
-          className={styles.modalBackdrop}
-          role="dialog"
-          aria-modal="true"
-          onClick={() => !adding && setAddOpen(false)}
-        >
-          <div
-            className={styles.modalCard}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className={styles.modalHeader}>
-              <h3>Agregar Factura</h3>
-              <button
-                className={styles.modalClose}
+        <Dialogo
+          titulo="Agregar factura"
+          onClose={() => setAddOpen(false)}
+          acciones={
+            <>
+              <Button
+                variant="secondary"
                 onClick={() => setAddOpen(false)}
-                aria-label="Cerrar"
+                disabled={adding}
               >
-                ✕
-              </button>
-            </div>
-            <div className={styles.modalBody}>
+                Cancelar
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleAdd}
+                disabled={
+                  adding || !selectedOS || !selectedMes || !selectedAnio
+                }
+              >
+                {adding ? "Agregando…" : "Agregar"}
+              </Button>
+            </>
+          }
+        >
               <div className={styles.formRow}>
                 <label className={styles.formLabel}>Obra Social</label>
                 <AppSearchSelect
@@ -345,27 +344,7 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
                   </select>
                 )}
               </div>
-            </div>
-            <div className={styles.modalActions}>
-              <Button
-                variant="secondary"
-                onClick={() => setAddOpen(false)}
-                disabled={adding}
-              >
-                Cancelar
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleAdd}
-                disabled={
-                  adding || !selectedOS || !selectedMes || !selectedAnio
-                }
-              >
-                {adding ? "Agregando…" : "Agregar"}
-              </Button>
-            </div>
-          </div>
-        </div>
+            </Dialogo>
       )}
     </div>
   );

@@ -9,19 +9,13 @@ import type {
 
 const BASE = "/api/agenda";
 
-/**
- * El listado plano de un calendario, para la pantalla de edición: las reglas
- * ("el 14 de marzo, todos los años"), no sus ocurrencias. `catalogo:leer`.
- */
+/** El listado plano de un calendario, para la pantalla de edición: las reglas ("el 14 de marzo, todos los años"), no sus ocurrencias. */
 export const listEventos = (params?: {
   tipo?: TipoEvento;
   incluir_inactivos?: boolean;
 }): Promise<EventoAgenda[]> => getJSON<EventoAgenda[]>(`${BASE}/`, params);
 
-/**
- * Qué cae en ese mes, ya resuelto a fechas concretas por el backend.
- * Es lo que dibuja la grilla del almanaque. `catalogo:leer`.
- */
+/** Qué cae en ese mes, ya resuelto a fechas concretas por el backend. */
 export const getMes = (
   anio: number,
   mes: number,
@@ -29,14 +23,7 @@ export const getMes = (
 ): Promise<OcurrenciaAgenda[]> =>
   getJSON<OcurrenciaAgenda[]>(`${BASE}/mes`, { anio, mes, ...(tipo ? { tipo } : {}) });
 
-/**
- * El personal del Colegio (rol distinto de `medico`), para el selector de
- * responsable. Requiere `medico:leer`, que el rol `medico` no tiene.
- *
- * Son ~20 filas, así que se traen todas de una y el filtrado va en el cliente:
- * un request por tecla para una lista de ese tamaño sería peor experiencia y
- * más carga que traerla entera una vez.
- */
+/** El personal del Colegio (rol distinto de `medico`), para el selector de responsable. */
 export const listResponsables = (): Promise<Responsable[]> =>
   getJSON<Responsable[]>(`${BASE}/responsables`);
 

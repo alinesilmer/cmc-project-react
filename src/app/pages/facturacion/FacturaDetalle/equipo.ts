@@ -1,8 +1,4 @@
 // Equipo quirúrgico: qué prestaciones van pegadas a qué médico de cabecera.
-//
-// Lo normal es que el ayudante/pediatra traiga `grupo_equipo_id` (apunta a la cabeza). Pero
-// hay ayudantes y pediatras cargados sueltos, sin grupo: de todas formas van con su médico
-// de cabecera, así que acá se lo busca entre las prestaciones de la misma factura.
 import type { PrestacionConSocio } from "./FilaPrestacion";
 
 // Códigos (parto / cesárea) cuya carga habilita un pediatra: ahí está su cabecera.
@@ -22,12 +18,7 @@ const puedeSerCabeza = (p: PrestacionConSocio): boolean =>
   || (p.grupo_equipo_id == null && p.tipo_prestador !== "Ayudante" && p.tipo_prestador !== "Pediatra"
     && p.tipo_prestador !== "Gastos");
 
-/**
- * Para cada ayudante/pediatra SIN grupo, la cabeza que le corresponde (id integrante → id
- * cabeza): misma factura, mismo paciente y misma fecha de práctica, de otro socio. Si hay
- * varias, gana la que ya es cabeza de un equipo, después la misma clínica y el mismo
- * código, y por último la de id más cercano (anterior primero). Sin candidata, queda suelto.
- */
+/** Para cada ayudante/pediatra SIN grupo, la cabeza que le corresponde (id integrante → id cabeza): misma factura, mismo paciente y misma fecha de práctica. */
 export function inferirEquipos(prestaciones: PrestacionConSocio[]): Map<number, number> {
   const porClave = new Map<string, PrestacionConSocio[]>();
   for (const p of prestaciones) {

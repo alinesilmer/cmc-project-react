@@ -1,14 +1,4 @@
-// El boletín de galenos en PDF: una ficha por obra social, en dos columnas,
-// con un índice alfabético en la primera página.
-//
-// Es una lista de precios para imprimir o mandar: quien la recibe busca una
-// obra social, no compara. Por eso va por obra social —al revés que la
-// pantalla— y el índice lleva a la página de cada una.
-//
-// Se dibuja a mano con jsPDF y no con `jspdf-autotable`: las fichas tienen
-// alto variable y se acomodan en columnas, que es justo lo que una tabla no
-// hace. Primero se calcula dónde cae cada ficha y recién después se dibuja,
-// porque el índice necesita los números de página antes de escribirse.
+// El boletín de galenos en PDF: una ficha por obra social, en dos columnas, con un índice alfabético en la primera página.
 
 import type { jsPDF } from "jspdf";
 import logoSrc from "@/website/assets/images/logoCMC-web.png";
@@ -23,11 +13,13 @@ import {
 import { agruparPorCodigo } from "@/app/features/nomenclador/galenos";
 import type { ItemBoletin } from "@/app/pages/BoletinMedico/boletinMedico.api";
 import { moneda } from "@/app/pages/BoletinMedico/boletinMedico.formato";
+import { pagina } from "@/app/shared/lib/utiles";
 
 type Color = [number, number, number];
 
 const AZUL: Color = [23, 63, 112]; // $primary-blue
 const AMARILLO: Color = [245, 234, 192]; // $primary-yellow-light
+const CREMA: Color = [245, 239, 224];
 const TINTA: Color = [20, 35, 58];
 const GRIS: Color = [100, 116, 139];
 const LINEA: Color = [221, 226, 234];
@@ -39,6 +31,51 @@ const SEPARACION = 6;
 const PIE = 14;
 /** Dónde arranca el contenido en las páginas que no son la primera. */
 const ARRIBA = MARGEN + 9;
+/** La portada va adelante: las hojas del boletín arrancan en la 2. */
+const PORTADA = 1;
+/** Rótulo chico en mayúscula, como los del padrón. */
+function rotulo(doc: jsPDF, texto: string, x: number, y: number, align: "left" | "right", color: Color, tenue = false): void {
+  doc.setFont("helvetica", tenue ? "normal" : "bold");
+  doc.setFontSize(tenue ? 6.5 : 7.5);
+  doc.setTextColor(...color);
+  doc.text(texto.toUpperCase(), x, y, { align, charSpace: 0.25 });
+}
+
+/** Portada: azul a página llena, con el título en Times. */
+function dibujarPortada(doc: jsPDF, logo: string | null, obras: number, fecha: string): void {
+  const w = doc.internal.pageSize.getWidth();
+  const h = doc.internal.pageSize.getHeight();
+
+  doc.setFillColor(...AZUL);
+  doc.rect(0, 0, w, h, "F");
+
+  rotulo(doc, CMC_NAME, MARGEN, 16, "left", CREMA);
+  rotulo(doc, fecha, w - MARGEN, 16, "right", CREMA);
+
+  if (logo) {
+    try {
+      const { width, height } = doc.getImageProperties(logo);
+      const altoLogo = 30;
+      doc.addImage(logo, getImageFormat(logo), MARGEN, 62, height > 0 ? (altoLogo * width) / height : altoLogo, altoLogo);
+    } catch {
+      // Un logo ilegible no puede impedir la descarga.
+    }
+  }
+
+  doc.setTextColor(...CREMA);
+  doc.setFont("times", "normal");
+  doc.setFontSize(52);
+  doc.text("Boletín", MARGEN, h / 2 - 4);
+  doc.text("de galenos", MARGEN, h / 2 + 16);
+
+  // Un filete amarillo corto, bajo el título.
+  doc.setFillColor(...AMARILLO);
+  doc.rect(MARGEN, h / 2 + 24, 26, 1.2, "F");
+
+  rotulo(doc, "Obras sociales", MARGEN, h - 22, "left", CREMA, true);
+  rotulo(doc, String(obras), MARGEN, h - 17, "left", CREMA);
+  rotulo(doc, CMC_SUBTITLE, w - MARGEN, h - 17, "right", CREMA, true);
+}
 
 const ALTO_RENGLON = 5.8;
 const ALTO_DETALLE = 3.2;
@@ -117,8 +154,7 @@ function ubicarFichas(fichas: Ficha[], desde: number, anchoFicha: number, altoPa
   const arribaDe = (p: number) => (p === 1 ? desde : ARRIBA);
 
   for (const f of fichas) {
-    // Una ficha que no entra en lo que queda de la columna pasa entera a la
-    // siguiente: partida en dos no se sabe de qué obra social es la mitad.
+    // Una ficha que no entra en lo que queda de la columna pasa entera a la siguiente.
     if (y + f.alto > limite && y > arribaDe(pagina)) {
       if (columna === 0) {
         columna = 1;
@@ -195,7 +231,7 @@ function dibujarIndice(doc: jsPDF, fichas: Ficha[], y: number, columnas: number,
   fichas.forEach((f, i) => {
     const x = MARGEN + Math.floor(i / filas) * (anchoCol + SEPARACION);
     const yi = y + 5 + (i % filas) * ALTO_INDICE;
-    const numero = String(f.pagina);
+    const numero = String(f.pagina + PORTADA);
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7.8);
@@ -216,13 +252,12 @@ function dibujarIndice(doc: jsPDF, fichas: Ficha[], y: number, columnas: number,
       doc.setLineDashPattern([], 0);
     }
 
-    doc.link(x, yi - 3.2, anchoCol, ALTO_INDICE, { pageNumber: f.pagina });
+    doc.link(x, yi - 3.2, anchoCol, ALTO_INDICE, { pageNumber: f.pagina + PORTADA });
   });
 }
 
 export async function descargarBoletinGalenos(items: ItemBoletin[]): Promise<void> {
-  // Por `import()` dinámico: jsPDF no entra al bundle de una pantalla que casi
-  // siempre sólo se lee.
+  // Por `import()` dinámico: jsPDF no entra al bundle de una pantalla que casi siempre sólo se lee.
   const { jsPDF: JsPDF } = await import("jspdf");
   const doc = new JsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
@@ -233,15 +268,12 @@ export async function descargarBoletinGalenos(items: ItemBoletin[]): Promise<voi
   const hoy = new Date();
   const emitido = `Emitido el ${hoy.toLocaleDateString("es-AR")}`;
 
-  // El logo liviano del sitio (26 KB): el del panel pesa 1,9 MB y jsPDF lo
-  // guarda sin comprimir, con lo que el PDF salía de más de 6 MB.
-  // Es opcional a propósito: si la red falla, el boletín igual sale.
+  // El logo liviano del sitio (26 KB): el del panel pesa 1,9 MB y jsPDF lo guarda sin comprimir.
   const logo = await fetchAsDataUrl(logoSrc);
 
   const fichas = armarFichas(doc, items, anchoFicha);
 
-  // Tres columnas de índice; con muchas obras sociales se suman hasta cinco
-  // para que no se coma la primera página entera.
+  // Tres columnas de índice; con muchas obras sociales se suman hasta cinco para que no se coma la primera página entera.
   const yIndice = MARGEN + 27;
   let columnas = 3;
   while (columnas < 5 && Math.ceil(fichas.length / columnas) * ALTO_INDICE > alto * 0.45) columnas += 1;
@@ -249,10 +281,13 @@ export async function descargarBoletinGalenos(items: ItemBoletin[]): Promise<voi
 
   ubicarFichas(fichas, finIndice, anchoFicha, alto);
   const paginas = Math.max(1, ...fichas.map((f) => f.pagina));
-  for (let p = 2; p <= paginas; p++) doc.addPage();
-
-  // ── Primera página: encabezado e índice ───────────────────────────────────
+  // La hoja 1 es la portada; el boletín ocupa de la 2 en adelante.
+  for (let p = 1; p <= paginas; p++) doc.addPage();
   doc.setPage(1);
+  dibujarPortada(doc, logo, fichas.length, hoy.toLocaleDateString("es-AR"));
+
+  // ── Primera hoja del boletín: encabezado e índice ───────────────────────────────────
+  doc.setPage(1 + PORTADA);
   let xTitulo = MARGEN;
   if (logo) {
     try {
@@ -264,47 +299,50 @@ export async function descargarBoletinGalenos(items: ItemBoletin[]): Promise<voi
       // Un logo ilegible no puede impedir la descarga.
     }
   }
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(16);
+  rotulo(doc, CMC_NAME, xTitulo, MARGEN + 3, "left", AZUL);
+  rotulo(doc, emitido, ancho - MARGEN, MARGEN + 3, "right", GRIS, true);
+  doc.setFont("times", "normal");
+  doc.setFontSize(22);
   doc.setTextColor(...AZUL);
-  doc.text("Boletín de galenos", xTitulo, MARGEN + 7.5);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(...GRIS);
-  doc.text(CMC_NAME, xTitulo, MARGEN + 13);
-  doc.text(emitido, ancho - MARGEN, MARGEN + 7.5, { align: "right" });
+  doc.text("Boletín de galenos", xTitulo, MARGEN + 14);
+
   doc.setDrawColor(...AZUL);
-  doc.setLineWidth(0.7);
+  doc.setLineWidth(0.25);
   doc.line(MARGEN, MARGEN + 20, ancho - MARGEN, MARGEN + 20);
 
   dibujarIndice(doc, fichas, yIndice, columnas, anchoUtil);
 
   // ── Fichas ────────────────────────────────────────────────────────────────
   for (const f of fichas) {
-    doc.setPage(f.pagina);
+    doc.setPage(f.pagina + PORTADA);
     dibujarFicha(doc, f, anchoFicha);
   }
 
   // ── Cabecera corrida y pie ────────────────────────────────────────────────
+  const total = paginas + PORTADA;
   for (let p = 1; p <= paginas; p++) {
-    doc.setPage(p);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.setTextColor(...GRIS);
+    const hoja = p + PORTADA;
+    doc.setPage(hoja);
 
     if (p > 1) {
-      doc.text(`Boletín de galenos · ${CMC_NAME}`, MARGEN, MARGEN + 2);
-      doc.text(emitido, ancho - MARGEN, MARGEN + 2, { align: "right" });
+      rotulo(doc, `Boletín de galenos  ·  ${CMC_NAME}`, MARGEN, MARGEN + 2, "left", AZUL);
+      rotulo(doc, emitido, ancho - MARGEN, MARGEN + 2, "right", GRIS, true);
       doc.setDrawColor(...AZUL);
-      doc.setLineWidth(0.5);
+      doc.setLineWidth(0.25);
       doc.line(MARGEN, MARGEN + 4.5, ancho - MARGEN, MARGEN + 4.5);
     }
 
-    doc.setDrawColor(...LINEA);
+    doc.setDrawColor(...AZUL);
     doc.setLineWidth(0.2);
     doc.line(MARGEN, alto - 11, ancho - MARGEN, alto - 11);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.5);
+    doc.setTextColor(...GRIS);
     doc.text(CMC_SUBTITLE, MARGEN, alto - 7);
-    doc.text(`${p} de ${paginas}`, ancho - MARGEN, alto - 7, { align: "right" });
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(...AZUL);
+    doc.text(`${pagina(hoja)}  de  ${pagina(total)}`, ancho - MARGEN, alto - 7, { align: "right" });
   }
 
   doc.save(nombreArchivo(hoy));

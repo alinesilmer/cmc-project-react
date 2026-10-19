@@ -1,0 +1,151 @@
+@use "@/app/styles/all.scss" as *;
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-5;
+  min-width: 0;
+}
+
+// Una pista azul con la pastilla activa en amarillo, como las solapas del Inicio.
+.chips {
+  display: flex;
+  gap: $spacing-1;
+  padding: $spacing-1;
+  background: $franja-azul;
+  border-radius: 999px;
+}
+
+.chip {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+  min-height: 2.75rem;
+  padding: 0 $spacing-4;
+  font: inherit;
+  font-weight: $font-weight-bold;
+  color: $franja-crema;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+
+  &:hover {
+    background: rgba($white, 0.12);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary-yellow;
+    outline-offset: 2px;
+  }
+}
+
+.chipActivo,
+.chipActivo:hover {
+  color: $franja-noche;
+  background: $primary-yellow;
+}
+
+.contenido {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-6;
+}
+
+// Cuenta de observaciones sobre la solapa «Info», para que se vea sin abrirla.
+.cuenta {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.4rem;
+  height: 1.4rem;
+  padding: 0 0.375rem;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  font-variant-numeric: tabular-nums;
+  color: $white;
+  background: $danger-red;
+  border-radius: 999px;
+}
+
+// Observaciones: cabecera azul y cada una numerada en su renglón, para que no pasen desapercibidas.
+.info {
+  overflow: hidden;
+  background: $white;
+  border: 2px solid $franja-azul;
+  border-radius: $radio-lg;
+  box-shadow: 0 18px 30px -20px rgba($franja-azul, 0.7);
+}
+
+.infoTitulo {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  margin: 0;
+  padding: $spacing-4 $spacing-5;
+  font-family: $fuente-titulos;
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  line-height: 1.25;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: $franja-crema;
+  background: $franja-azul;
+}
+
+.infoIcono {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  color: $franja-azul;
+  background: $primary-yellow;
+  border-radius: 50%;
+}
+
+.lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: obs;
+
+  li {
+    position: relative;
+    padding: $spacing-4 $spacing-5 $spacing-4 3.75rem;
+    font-size: $font-size-lg;
+    font-weight: $font-weight-medium;
+    line-height: 1.45;
+    color: $gray-900;
+    counter-increment: obs;
+
+    & + li { border-top: 1px solid $gray-200; }
+
+    &:nth-child(even) { background: $primary-yellow-light; }
+
+    &::before {
+      content: counter(obs);
+      position: absolute;
+      top: $spacing-4;
+      left: $spacing-5;
+      display: grid;
+      place-items: center;
+      width: 1.75rem;
+      height: 1.75rem;
+      font-family: $fuente-titulos;
+      font-size: $font-size-sm;
+      font-weight: $font-weight-bold;
+      color: $franja-crema;
+      background: $franja-azul;
+      border-radius: 50%;
+    }
+  }
+}
+
+.vacio {
+  margin: 0;
+  padding: $spacing-5;
+  color: $gray-500;
+}

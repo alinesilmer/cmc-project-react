@@ -3,6 +3,7 @@ import { FileText, Inbox, Paperclip, Trash2 } from "lucide-react";
 import { esPendienteDeObraSocial, formatFecha, formatMoneda } from "../validaciones.types";
 import type { EstadoPrestacion, Prestacion } from "../validaciones.types";
 import s from "./Tablas.module.scss";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
 
 interface Props {
   prestaciones: Prestacion[];
@@ -19,17 +20,14 @@ const ETIQUETA_ESTADO: Record<EstadoPrestacion, string> = {
   cargada: "Cargada",
 };
 
-export function EstadoChip({
+function EstadoChip({
   estado,
   detalle,
 }: {
   estado: EstadoPrestacion;
   detalle?: string;
 }) {
-  // Nobis grada el `P-Pendiente` como `rechazada` en la base (importe 0,
-  // fuera de factura — ver `validaciones.types.ts::esPendienteDeObraSocial`),
-  // pero mostrarlo como un rechazo liso confunde: la orden sí existe en
-  // Nobis, esperando que el afiliado la gestione. Sólo cambia el chip, no el
+  // Nobis grada el `P-Pendiente` como `rechazada` en la base (importe 0, fuera de factura — ver `validaciones.types.ts::esPendienteDeObraSocial`), pero mostrarlo como un rechazo liso confunde.
   // dato: el resto del panel sigue filtrando por `estado === "rechazada"`.
   const pendienteDeGestion = estado === "rechazada" && esPendienteDeObraSocial(detalle);
   const claseEstado = pendienteDeGestion ? "pendiente" : estado;
@@ -66,13 +64,14 @@ export default function PrestacionesTable({
     );
 
   const totalPeriodo = prestaciones
-    .filter((p) => p.estado === "autorizada")
+    // `cargada` también factura: es el estado de Boreal y Omint, que con el filtro sólo por `autorizada` mostraban siempre $ 0.
+    .filter((p) => p.estado === "autorizada" || p.estado === "cargada")
     .reduce((acc, p) => acc + p.total, 0);
 
   return (
     <>
       <div className={s.tableWrap}>
-        <table className={s.table}>
+        <Tabla className={s.table}>
           <thead>
             <tr>
               <th>Fecha</th>
@@ -94,9 +93,9 @@ export default function PrestacionesTable({
                   <span className={s.codigo}>{p.codigo}</span>
                   <span className={s.codigoDesc}>{p.descripcion}</span>
                 </td>
+                {/* Sólo el nombre: el número de afiliado no queda a la vista una vez cargada la prestación. */}
                 <td>
                   <span className={s.afiliadoNombre}>{p.nombreAfiliado}</span>
-                  <span className={s.afiliadoNro}>{p.nroAfiliado}</span>
                 </td>
                 <td className={s.mono}>{p.nroValidacion ?? "—"}</td>
                 <td>
@@ -113,7 +112,7 @@ export default function PrestacionesTable({
                       <button
                         type="button"
                         className={`${s.iconBtn} ${p.orden ? s.iconBtnOk : ""}`}
-                        title={p.orden ? `Orden: ${p.orden}` : "Adjuntar orden en PDF"}
+                        title={p.orden ? "Orden adjunta" : "Adjuntar orden en PDF"}
                         onClick={() => onAdjuntar(p)}
                       >
                         {p.orden ? <FileText size={15} /> : <Paperclip size={15} />}
@@ -143,7 +142,7 @@ export default function PrestacionesTable({
               <td />
             </tr>
           </tfoot>
-        </table>
+        </Tabla>
       </div>
 
       {/* Mismas filas, en tarjetas, para pantallas chicas. */}
@@ -167,7 +166,6 @@ export default function PrestacionesTable({
                 <dt>Afiliado</dt>
                 <dd>
                   {p.nombreAfiliado}
-                  <span className={s.afiliadoNro}>{p.nroAfiliado}</span>
                 </dd>
               </div>
               <div>

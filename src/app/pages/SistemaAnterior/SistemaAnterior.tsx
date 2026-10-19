@@ -14,16 +14,10 @@ const DESTACADOS: Destacado[] = [
   { icono: Undo2, texto: "Podés volver cuando quieras" },
 ];
 
-// El enlace vence a los cinco minutos: se renueva antes para que el botón
-// nunca apunte a uno muerto.
+// El enlace vence a los cinco minutos: se renueva antes para que el botón nunca apunte a uno muerto.
 const RENOVAR_MS = 4 * 60 * 1000;
 
-/**
- * Pantalla intermedia hacia el legacy. La primera vez salta sola; si el
- * usuario vuelve atrás —porque el legacy no cargó o porque terminó— se queda
- * acá y ofrece reintentar, volver al sitio o cerrar sesión, en vez de dejarlo
- * frente a la página de error del otro servidor.
- */
+/** Pantalla intermedia hacia el legacy. */
 export default function SistemaAnterior() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -50,10 +44,7 @@ export default function SistemaAnterior() {
     window.location.href = url;
   }, [saltaSolo, url]);
 
-  // Al volver atrás el navegador puede restaurar la página congelada tal como
-  // quedó: en modo «saltando», con un enlace quizá vencido y la sesión de
-  // entonces. Se recarga para arrancar de cero; la marca del salto hace que
-  // esta vez no vuelva a irse sola.
+  // Al volver atrás el navegador puede restaurar la página congelada tal como quedó: en modo «saltando».
   useEffect(() => {
     const alVolver = (e: PageTransitionEvent) => {
       if (e.persisted) window.location.reload();

@@ -5,13 +5,13 @@
 .cuerpo {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 0.875rem;
 }
 
 .controles {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  gap: 12px;
+  gap: 0.75rem;
 
   @media (max-width: 560px) { grid-template-columns: 1fr; }
 }
@@ -19,15 +19,15 @@
 .osFija {
   font-size: 0.9rem;
   color: $tinta;
-  padding-top: 8px;
+  padding-top: 0.5rem;
 }
 
 .error {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 12px;
+  gap: 0.5rem 0.75rem;
   align-items: center;
-  padding: 10px 12px;
+  padding: 0.625rem 0.75rem;
   border-radius: $radio-sm;
   background: $peligro-bg;
   border: 1px solid $peligro-linea;
@@ -38,7 +38,7 @@
 }
 
 .ok {
-  padding: 10px 12px;
+  padding: 0.625rem 0.75rem;
   border-radius: $radio-sm;
   background: $ok-bg;
   border: 1px solid $ok-linea;
@@ -50,13 +50,13 @@
 .resumen {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .chip,
 .chipCrear,
 .chipAviso {
-  padding: 4px 10px;
+  padding: 0.25rem 0.625rem;
   border-radius: 999px;
   border: 1px solid $linea;
   background: $superficie;
@@ -72,19 +72,19 @@
 .check {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   font-size: 0.84rem;
   color: $tinta-2;
   cursor: pointer;
 }
 
 .codigo { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
-.desc { min-width: 200px; }
+.desc { min-width: 12.5rem; }
 .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 .estado {
   display: inline-block;
-  padding: 1px 8px;
+  padding: 1px 0.5rem;
   border-radius: 999px;
   font-size: 0.72rem;
   font-weight: 700;
@@ -103,6 +103,6 @@
   display: flex;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 8px;
-  padding-top: 4px;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
 }

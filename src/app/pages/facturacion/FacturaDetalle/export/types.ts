@@ -1,26 +1,20 @@
-// Espejo de `app/modules/facturacion/export/schemas.py` en el backend — los
-// literals tienen que coincidir carácter por carácter con los que acepta la API.
+// Espejo de `app/modules/facturacion/export/schemas.py` en el backend — los literals tienen que coincidir carácter por carácter con los que acepta la API.
 import type { Tipo } from "../../types";
 import type { ColumnaVista, OrdenAlfabetico, OrdenVista, VistaOpciones } from "../vista/types";
 
-export type OrdenExport =
+type OrdenExport =
   | "nombre_socio" | "nro_socio" | "fecha_practica" | "fecha_carga" | "codigo"
   | "importe" | "importe_desc" | "nombre_afiliado" | "especialidad";
 
-export type DireccionExport = "asc" | "desc";
+type DireccionExport = "asc" | "desc";
 
-export type AgrupacionExport = "todo_junto" | "por_tipo" | "por_socio" | "plana";
+type AgrupacionExport = "todo_junto" | "por_tipo" | "por_socio" | "plana";
 
 export type ColumnaExport =
   | "prestador" | "matricula" | "autorizacion" | "fecha" | "codigo"
   | "nro_afiliado" | "afiliado" | "cantidad" | "porcentaje"
   | "honorarios" | "gastos" | "coseguro" | "diagnostico" | "via" | "especialidad"
   | "estado_validacion";
-
-export const COLUMNAS_DEFAULT: ColumnaExport[] = [
-  "prestador", "matricula", "autorizacion", "fecha", "codigo",
-  "nro_afiliado", "afiliado", "cantidad", "porcentaje", "honorarios", "gastos",
-];
 
 export const COLUMNAS_DISPONIBLES: { key: ColumnaExport; label: string }[] = [
   { key: "prestador", label: "Prestador" },
@@ -41,7 +35,7 @@ export const COLUMNAS_DISPONIBLES: { key: ColumnaExport; label: string }[] = [
   { key: "estado_validacion", label: "Estado validación" },
 ];
 
-export interface ExportFiltros {
+interface ExportFiltros {
   fecha_desde?: string;
   fecha_hasta?: string;
   id_especialidad?: number;
@@ -54,8 +48,7 @@ export interface ExportOpciones extends ExportFiltros {
   orden: OrdenExport;
   direccion: DireccionExport;
   agrupacion: AgrupacionExport;
-  // Como "Agrupar equipo quirúrgico" de la vista: el equipo se repite, de referencia
-  // (sin sumar), bajo la cabeza.
+  // Como "Agrupar equipo quirúrgico" de la vista: el equipo se repite, de referencia (sin sumar), bajo la cabeza.
   agrupar_equipo: boolean;
   // "Por tipo": orden dentro de Honorarios individuales y de Sanatorios (como en la vista).
   orden_honorarios: OrdenAlfabetico;
@@ -63,8 +56,7 @@ export interface ExportOpciones extends ExportFiltros {
   columnas: ColumnaExport[];
 }
 
-// Columnas de la vista que existen en el export. El socio (nombre y matrícula) siempre
-// se ve en la vista, así que va siempre; "TP" y "Valor unitario" no tienen equivalente.
+// Columnas de la vista que existen en el export.
 const COLUMNA_VISTA_A_EXPORT: Partial<Record<ColumnaVista, ColumnaExport>> = {
   autorizacion: "autorizacion", fecha: "fecha", codigo: "codigo", via: "via",
   nro_afiliado: "nro_afiliado", paciente: "afiliado", cantidad: "cantidad", porcentaje: "porcentaje",
@@ -76,8 +68,7 @@ const ORDEN_VISTA_A_EXPORT: Record<OrdenVista, OrdenExport> = {
   importe: "importe", nombre_socio: "nombre_socio",
 };
 
-// Lo que se exporta es lo que se está viendo: misma agrupación, orden, dirección, filtros,
-// equipo y columnas. En el panel de exportar sólo se pueden cambiar las columnas.
+// Lo que se exporta es lo que se está viendo: misma agrupación, orden, dirección, filtros, equipo y columnas.
 export const opcionesDesdeVista = (v: VistaOpciones): ExportOpciones => {
   const out: ExportOpciones = {
     orden: ORDEN_VISTA_A_EXPORT[v.orden],

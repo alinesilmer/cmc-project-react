@@ -11,10 +11,7 @@ type Props = {
   placeholder?: string;
 };
 
-/**
- * Selector de especialidad con búsqueda por texto (combobox).
- * Escribí para filtrar por nombre o ID; hacé click para elegir; la × limpia el filtro.
- */
+/** Selector de especialidad con búsqueda por texto (combobox). */
 export default function EspecialidadCombo({
   especialidades,
   value,

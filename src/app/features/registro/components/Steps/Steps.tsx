@@ -3,15 +3,14 @@ import React from "react";
 import styles from "./Steps.module.scss";
 import HelpButton from "@/app/components/ui/HelpButton/HelpButton";
 import PdfUpload from "@/app/components/ui/PdfUpload/PdfUpload";
-import esES from "rsuite/locales/es_ES";
 import type {
   RegisterFormData,
   SpecialtyItem,
 } from "@/app/types/register";
 
 import Button from "@/app/components/ui/Button/Button";
-import { DatePicker } from "rsuite";
-import "rsuite/DatePicker/styles/index.css";
+import { Mail, Phone, MapPin } from "lucide-react";
+import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
 
 // -------------------- utils fecha (dd-MM-yyyy ↔ Date) --------------------
 const dateToStr = (d: Date | null): string => {
@@ -52,7 +51,17 @@ const strToDate = (v?: string | null): Date | null => {
   return new Date(year, month - 1, day, 12, 0, 0, 0);
 };
 
-// -------------------- DateField controlado (rsuite) --------------------
+/** Lo que haya en el formulario → yyyy-MM-dd, el formato de `CampoFecha`. */
+const aValorDeInput = (v?: string | null): string => {
+  const d = strToDate(v);
+  if (!d) return "";
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${mm}-${dd}`;
+};
+
+// -------------------- DateField --------------------
+// El campo de fecha compartido del panel.
 type DateFieldProps = {
   value: string;
   onChange: (val: string) => void;
@@ -60,30 +69,12 @@ type DateFieldProps = {
   placeholder?: string;
 };
 
-const DateField: React.FC<DateFieldProps> = ({
-  value,
-  onChange,
-  error,
-  placeholder = "dd-mm-aaaa",
-}) => {
+const DateField: React.FC<DateFieldProps> = ({ value, onChange, error }) => {
   return (
     <div className={styles.formGroup}>
-      <DatePicker
-        // se usa SOLO al montar el componente
-        defaultValue={strToDate(value)}
-        // cada vez que el usuario elige una fecha válida,
-        // avisamos al form en formato string
-        onChange={(d: Date | null) => {
-          onChange(dateToStr(d));
-        }}
-        locale={esES.DatePicker}
-        format="dd-MM-yyyy"
-        oneTap
-        placeholder={placeholder}
-        style={{ width: "100%", height: "100%" }}
-        cleanable
-        size="lg"
-        className={error ? styles.error : undefined}
+      <CampoFecha
+        value={aValorDeInput(value)}
+        onChange={(valor) => onChange(dateToStr(strToDate(valor)))}
       />
       {error && <span className={styles.errorText}>{error}</span>}
     </div>
@@ -128,11 +119,14 @@ type Props = {
   setFileErrs: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   specItems: SpecialtyItem[];
   setSpecItems: React.Dispatch<React.SetStateAction<SpecialtyItem[]>>;
+  /** Sin el botón «¿Cómo subir documentos?»: el personal del Colegio no lo necesita. */
+  sinAyuda?: boolean;
 };
 
 const Steps: React.FC<Props> = (props) => {
   const {
     step,
+    sinAyuda = false,
     formData,
     errors,
     provinces,
@@ -217,7 +211,7 @@ const Steps: React.FC<Props> = (props) => {
       <div className={styles.stepContent}>
         <div className={styles.topTitle}>
           <h2>Datos Personales</h2>
-          <HelpButton />
+          {!sinAyuda && <HelpButton />}
         </div>
 
         <FieldWithAttach
@@ -397,7 +391,7 @@ const Steps: React.FC<Props> = (props) => {
       <div className={styles.stepContent}>
         <div className={styles.topTitle}>
           <h2>Datos Profesionales</h2>
-          <HelpButton />
+          {!sinAyuda && <HelpButton />}
         </div>
 
         <div className={styles.formGrid}>
@@ -593,9 +587,6 @@ const Steps: React.FC<Props> = (props) => {
                   </FieldWithAttach>
 
                   <div className={styles.actionsInline}>
-                    {/* <button type="button" onClick={() => removeSpec(idx)} className={styles.removeBtn}>
-                      Quitar
-                    </button> */}
                     <Button
                       variant="danger"
                       size="sm"
@@ -614,9 +605,6 @@ const Steps: React.FC<Props> = (props) => {
             <div
               className={`${styles.formGroup} ${styles.especialidadGroupMoreBoton}`}
             >
-              {/* <button type="button" onClick={addSpec} className={styles.addBtn}>
-                Agregar especialidad
-              </button> */}
               <Button
                 type="button"
                 onClick={addSpec}
@@ -670,7 +658,7 @@ const Steps: React.FC<Props> = (props) => {
       <div className={styles.stepContent}>
         <div className={styles.topTitle}>
           <h2>Datos Impositivos</h2>
-          <HelpButton />
+          {!sinAyuda && <HelpButton />}
         </div>
 
         <div className={styles.formGrid}>
@@ -877,9 +865,9 @@ const Steps: React.FC<Props> = (props) => {
           <p>
             <strong>Contacto:</strong>
           </p>
-          <p>📧 registro@cmcorrientes.org.ar</p>
-          <p>📞 (0379) 442-3456</p>
-          <p>📍 Av. 3 de Abril 1234, Corrientes Capital</p>
+          <p><Mail size={14} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> registro@cmcorrientes.org.ar</p>
+          <p><Phone size={14} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> (0379) 442-3456</p>
+          <p><MapPin size={14} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> Av. 3 de Abril 1234, Corrientes Capital</p>
         </div>
       </div>
     </div>

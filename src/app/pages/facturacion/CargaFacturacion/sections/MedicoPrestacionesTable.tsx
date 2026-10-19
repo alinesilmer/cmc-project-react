@@ -13,11 +13,10 @@ import { detailMessage } from "../../types";
 import { formatMoney, parseMoney } from "../../money";
 import ConfirmActionModal from "../../components/ConfirmActionModal";
 import styles from "./MedicoPrestacionesTable.module.scss";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
+import { viaLabel } from "@/app/pages/facturacion/utiles";
 
-// Esta tabla NO pagina: muestra todas las prestaciones del médico en el período que se
-// está cargando. Como el endpoint topea el `limit` en 200, se piden páginas hasta
-// agotar el listado. `MAX_PAGINAS` es un freno de seguridad para no encadenar pedidos
-// sin fin si el backend devolviera siempre páginas llenas.
+// Esta tabla NO pagina: muestra todas las prestaciones del médico en el período que se está cargando.
 const PAGE_SIZE = 200;
 const MAX_PAGINAS = 25;
 
@@ -39,9 +38,7 @@ interface Props {
 
 const fmtFecha = (iso: string | null | undefined): string => {
   if (!iso) return "—";
-  // `new Date("2026-11-01")` parsea las date-only como medianoche UTC, y al mostrarlas
-  // en hora local (AR = UTC-3) retroceden un día. Las fechas de la API (`fecha_practica`,
-  // `fecha`) son columnas DATE, así que se formatean sin pasar por Date.
+  // `new Date("2026-11-01")` parsea las date-only como medianoche UTC, y al mostrarlas en hora local (AR = UTC-3) retroceden un día.
   const soloFecha = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
   if (soloFecha) return `${soloFecha[3]}/${soloFecha[2]}/${soloFecha[1]}`;
   const d = new Date(iso);
@@ -49,8 +46,7 @@ const fmtFecha = (iso: string | null | undefined): string => {
   return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
 };
 
-/** Código de OS normalizado: la columna puede traerlo con espacios o ceros a la
- *  izquierda, y así no coincidiría con el `nro_obra_social` numérico del buscador. */
+/** Código de OS normalizado: la columna puede traerlo con espacios o ceros a la izquierda, y así no coincidiría con el `nro_obra_social` numérico del buscador. */
 const normCodOs = (cod: string | null | undefined): string | null => {
   const t = (cod ?? "").trim();
   if (!t) return null;
@@ -61,10 +57,7 @@ const normCodOs = (cod: string | null | undefined): string | null => {
 const fmtObraSocial = (cod: string, nombres: Record<string, string>): string =>
   nombres[cod] ? `(${cod}) ${nombres[cod]}` : `(${cod})`;
 
-// `listar_prestaciones` ya puebla `tipo_prestador` (vía `_to_prestacion_read_list`),
-// así que la fila trae el badge correcto de entrada — incluido "Pediatra", que por
-// montos sería indistinguible de "Medico" (ambos cobran honorarios). La derivación
-// local queda sólo de fallback para filas que no lo traigan.
+// `listar_prestaciones` ya puebla `tipo_prestador` (vía `_to_prestacion_read_list`), así que la fila trae el badge correcto de entrada — incluido "Pediatra".
 const deriveTipoPrestador = (row: PrestacionRead): TipoPrestador => {
   if (row.tipo_prestador) return row.tipo_prestador;
   if (parseMoney(row.ayudante) > 0) return "Ayudante";
@@ -73,9 +66,7 @@ const deriveTipoPrestador = (row: PrestacionRead): TipoPrestador => {
   return null;
 };
 
-// Sigla + nombre largo para el `title`. "Gastos" es la línea que factura la clínica
-// (el sanatorio cobra los gastos), por eso se rotula como Clínica de cara al operador
-// aunque el backend la nombre por el concepto que cobra.
+// Sigla + nombre largo para el `title`.
 const tipoPrestadorAbrev = (t: TipoPrestador): string | null => {
   switch (t) {
     case "Medico":   return "M";
@@ -126,10 +117,6 @@ const tipoClass = (t: Tipo | null | undefined): string => {
     default:                       return "";
   }
 };
-
-const viaLabel = (v: string | null | undefined): string =>
-  v === "L" ? "Laparoscópica" : v === "T" ? "Tradicional" : "";
-
 const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, medicoMatricula, codObra, periodo, refreshKey }) => {
   const navigate = useNavigate();
   const notify = useAppSnackbar();
@@ -144,18 +131,14 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
   const [loading, setLoading] = useState(false);
   const [busyIds, setBusyIds] = useState<Set<number>>(new Set());
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
-  // El listado solo trae `cod_obra_social`: los nombres se resuelven aparte y se
-  // cachean por código (las páginas repiten la misma OS una y otra vez).
+  // El listado solo trae `cod_obra_social`: los nombres se resuelven aparte y se cachean por código (las páginas repiten la misma OS una y otra vez).
   const [nombresOs, setNombresOs] = useState<Record<string, string>>({});
   const osPedidasRef = useRef<Set<string>>(new Set());
 
-  // Filas con `grupo_equipo_id`: son parte de un equipo (cabecera + ayudante(s) +
-  // gastos). Se cachean por id de grupo para no repetir el pedido al volver a
-  // renderizar ni al cambiar de página si reaparece el mismo equipo.
+  // Filas con `grupo_equipo_id`: son parte de un equipo (cabecera + ayudante(s) + gastos).
   const [equipos, setEquipos] = useState<Record<number, PrestacionRead[]>>({});
   const equiposPedidosRef = useRef<Set<number>>(new Set());
-  // Nombres de los socios que integran esos equipos (el listado de un equipo solo
-  // trae `cod_medico`, no el nombre — se resuelve aparte igual que la obra social).
+  // Nombres de los socios que integran esos equipos (el listado de un equipo solo trae `cod_medico`, no el nombre .
   const [nombresIntegrantes, setNombresIntegrantes] = useState<Record<string, string>>({});
   const integrantesPedidosRef = useRef<Set<string>>(new Set());
   const [equiposAbiertos, setEquiposAbiertos] = useState<Set<number>>(new Set());
@@ -168,15 +151,9 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
         cod_medico: codMedico,
         cod_obra: codObra ?? undefined,
         periodo: periodo ?? undefined,
-        // Esta tabla es la de trabajo bajo el formulario de carga: solo tiene sentido
-        // mostrar lo que todavía se puede tocar. Las cerradas (ya facturadas) y las
-        // anuladas quedan afuera — para verlas está el listado de Períodos/Facturas.
+        // Esta tabla es la de trabajo bajo el formulario de carga: solo tiene sentido mostrar lo que todavía se puede tocar.
         estado: "A" as const,
-        // El `estado` de arriba es una copia denormalizada de "mi factura está abierta"
-        // y puede mentir: una reimportación masiva dejó 1.572 prestaciones en 'A' sobre
-        // una factura ya cerrada, y esta tabla las mostraba como editables cuando el
-        // operador guardaba con "Mantener médico" y sin obra social (ahí no hay filtro
-        // de OS/período que las tape). Esto obliga al backend a mirar la cabecera real.
+        // El `estado` de arriba es una copia denormalizada de "mi factura está abierta" y puede mentir.
         solo_facturas_abiertas: true,
       };
       const todas: PrestacionRead[] = [];
@@ -201,13 +178,10 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
     }
   }, [codMedico, codObra, periodo, notify]);
 
-  // `refreshKey` no se lee acá dentro: es un disparador explícito del padre para
-  // volver a pedir el listado después de guardar.
+  // `refreshKey` no se lee acá dentro: es un disparador explícito del padre para volver a pedir el listado después de guardar.
   useEffect(() => { fetchData(); }, [fetchData, refreshKey]);
 
   // Resuelve los nombres de las obras sociales que aparecen en la página actual.
-  // Se marcan como pedidas aunque falle: sin eso, un código sin match dispararía el
-  // fetch en cada render (la respuesta nunca llenaría el cache).
   useEffect(() => {
     const faltantes = Array.from(
       new Set(rows.map((r) => normCodOs(r.cod_obra_social)).filter((c): c is string => !!c)),
@@ -217,15 +191,13 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
 
     let active = true;
     (async () => {
-      // Sin `limit`: el endpoint lo topea en 20 y cualquier valor mayor responde 422.
-      // Best-effort: si una falla, esa celda queda solo con el número.
+      // Sin `limit`: el endpoint lo topea en 20 y cualquier valor mayor responde 422. Best-effort: si una falla, esa celda queda solo con el número.
       const res = await Promise.allSettled(faltantes.map((cod) => fetchObraSocialPorCodigo(cod)));
       if (!active) return;
       const nuevos: Record<string, string> = {};
       res.forEach((r, i) => {
         if (r.status !== "fulfilled") return;
-        // `/obras-sociales` es un buscador: puede traer parecidos, así que se toma
-        // el que coincide exacto con el código de la prestación.
+        // `/obras-sociales` es un buscador: puede traer parecidos, así que se toma el que coincide exacto con el código de la prestación.
         const os = r.value.find((x) => String(x.nro_obra_social) === faltantes[i]);
         // Los nombres vienen de una columna CHAR: llegan con espacios al final.
         const nombre = os?.nombre?.trim();
@@ -236,9 +208,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
     return () => { active = false; };
   }, [rows]);
 
-  // Por cada fila con `grupo_equipo_id`, trae el resto del equipo (cabecera +
-  // ayudante(s) + gastos) para poder mostrarlo agrupado. Se cachea por id de grupo
-  // — el mismo equipo puede reaparecer en otra página o tras un refresh.
+  // Por cada fila con `grupo_equipo_id`, trae el resto del equipo (cabecera + ayudante(s) + gastos) para poder mostrarlo agrupado.
   useEffect(() => {
     const idsGrupo = Array.from(
       new Set(rows.map((r) => r.grupo_equipo_id).filter((g): g is number => g != null)),
@@ -259,8 +229,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
       });
       if (Object.keys(nuevos).length > 0) {
         setEquipos((prev) => ({ ...prev, ...nuevos }));
-        // Los equipos arrancan desplegados: el operador tiene que ver de entrada
-        // quiénes lo integran, sin necesidad de clickear el badge.
+        // Los equipos arrancan desplegados: el operador tiene que ver de entrada quiénes lo integran, sin necesidad de clickear el badge.
         setEquiposAbiertos((prev) => {
           const next = new Set(prev);
           Object.keys(nuevos).forEach((gid) => next.add(Number(gid)));
@@ -271,8 +240,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
     return () => { active = false; };
   }, [rows]);
 
-  // Nombres de los socios que integran los equipos ya traídos (el listado por
-  // `grupo_equipo_id` solo trae `cod_medico`, igual que el listado principal).
+  // Nombres de los socios que integran los equipos ya traídos (el listado por `grupo_equipo_id` solo trae `cod_medico`, igual que el listado principal).
   useEffect(() => {
     const codsVistos = new Set<string>();
     Object.values(equipos).forEach((miembros) => miembros.forEach((m) => codsVistos.add(m.cod_medico)));
@@ -305,8 +273,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
     });
   };
 
-  // "(nro) nombre" de un integrante del equipo — usa el médico de esta pantalla si
-  // coincide (ya lo tenemos por props) y si no busca en el cache resuelto aparte.
+  // "(nro) nombre" de un integrante del equipo — usa el médico de esta pantalla si coincide.
   const nombreIntegrante = (cod: string): string | null => {
     if (cod === codMedico) return medicoNombre ?? null;
     return nombresIntegrantes[cod] ?? null;
@@ -336,22 +303,18 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
     });
   };
 
-  // El destino es la misma pantalla con otro id/query: React Router no resetea el
-  // scroll, y como el click se hace desde la tabla (abajo de todo) el formulario
-  // quedaría fuera de vista. Se sube a mano.
+  // El destino es la misma pantalla con otro id/query: React Router no resetea el scroll, y como el click se hace desde la tabla.
   const irAlFormulario = (to: string) => {
     navigate(to);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // `from=carga` le dice al formulario de edición que, al guardar, tiene que volver
-  // acá (al formulario de carga) y no al listado general de períodos.
+  // `from=carga` le dice al formulario de edición que, al guardar, tiene que volver acá (al formulario de carga) y no al listado general de períodos.
   const handleEditar = (row: PrestacionRead) => {
     irAlFormulario(`/panel/facturacion/carga/${row.id}?from=carga`);
   };
 
-  // Precarga el formulario de carga con los datos de esta fila, pero como una
-  // prestación nueva (POST) — la original no se toca.
+  // Precarga el formulario de carga con los datos de esta fila, pero como una prestación nueva (POST) — la original no se toca.
   const handleReplicar = (row: PrestacionRead) => {
     irAlFormulario(`/panel/facturacion/carga?replicar=${row.id}`);
   };
@@ -420,8 +383,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
         </span>
         <div>
           <h2 className={styles.title}>Listado de prestaciones</h2>
-          {/* Se nombra al médico en vez de decir "el seleccionado": tras guardar la
-              tabla sigue mostrándolo aunque el formulario ya lo haya limpiado. */}
+          {/* Se nombra al médico en vez de decir "el seleccionado": tras guardar la tabla sigue mostrándolo aunque el formulario ya lo haya limpiado. */}
           <p className={styles.subtitle}>
             Prestaciones de {medicoNombre ? `${codMedico} · ${medicoNombre}` : `el socio ${codMedico}`}
             {codObra && ` · obra social ${codObra}`}
@@ -433,7 +395,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
 
       <div className={styles.layout}>
         <div className={styles.tableWrap}>
-          <table className={styles.table}>
+          <Tabla className={styles.table}>
             <thead>
               <tr>
                 <th>ID</th>
@@ -469,8 +431,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                 const busy = busyIds.has(row.id);
                 const tipoPrestador = deriveTipoPrestador(row);
                 const codOs = normCodOs(row.cod_obra_social);
-                // Un equipo real tiene otros integrantes además de esta fila (cabecera,
-                // ayudante(s), gastos). Si solo aparece esta fila no hay nada que agrupar.
+                // Un equipo real tiene otros integrantes además de esta fila (cabecera, ayudante(s), gastos).
                 const gid = row.grupo_equipo_id ?? null;
                 const equipo = gid != null ? equipos[gid] : undefined;
                 const companeros = equipo ? equipo.filter((m) => m.id !== row.id) : [];
@@ -569,8 +530,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                     <td>
                       {row.tipo ? (
                         <span className={`${styles.tipoBadge} ${tipoClass(row.tipo)}`} title={row.tipo}>
-                          {/* Si apareciera un tipo nuevo sin sigla, se muestra tal cual
-                              en vez de perder el dato. */}
+                          {/* Si apareciera un tipo nuevo sin sigla, se muestra tal cual en vez de perder el dato. */}
                           {tipoAbrev(row.tipo) ?? row.tipo}
                         </span>
                       ) : <span className={styles.mutedText}>—</span>}
@@ -672,7 +632,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                 );
               })}
             </tbody>
-          </table>
+          </Tabla>
         </div>
 
         {/* Sin paginado: el pie sólo informa cuántas filas hay en pantalla. */}

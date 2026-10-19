@@ -19,12 +19,7 @@ export default function RequireWebEditor({
   const { can } = usePermisos();
   const loc = useLocation();
 
-  // Todo lo que hace esta pantalla —noticias, cursos, avisos de médicos—
-  // está gobernado por `contenido:editar` en el backend (authz.py). Quien lo
-  // tiene ya puede crear y borrar por API, así que dejarlo entrar a la UI no
-  // habilita nada nuevo: sólo deja de ser exclusivo del rol `editor_web`,
-  // que hoy tiene una sola cuenta. Se reusa el permiso que ya existe en vez
-  // de agregar un scope.
+  // Todo lo que hace esta pantalla —noticias, cursos, avisos de médicos— está gobernado por `contenido:editar` en el backend (authz.py).
   const puedeAdministrarContenido = isWebEditor(user) || can("contenido:editar");
 
   if (!ready) return null; // spinner

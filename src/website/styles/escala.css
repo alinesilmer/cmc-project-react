@@ -1,10 +1,4 @@
-/*
- * El sitio público al 90 % en pantallas de escritorio: se veía grande.
- * `zoom` achica todo parejo (texto, márgenes, imágenes) y lo soportan todos
- * los navegadores actuales. La clase la pone `router.tsx` mientras se está en
- * el sitio, así el panel no cambia. En celulares y tablets no se aplica: ahí
- * achicar sólo empeoraría la lectura.
- */
+/* El sitio público al 90 % en pantallas de escritorio: se veía grande. */
 @media (min-width: 1024px) {
   html.sitio-escala {
     zoom: 0.9;

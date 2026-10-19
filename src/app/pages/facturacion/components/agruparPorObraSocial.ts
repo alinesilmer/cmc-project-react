@@ -10,13 +10,7 @@ export interface GrupoObraSocial {
   totalImporte: number;
 }
 
-/**
- * Agrupa un listado plano de prestaciones por obra social, con subtotal por
- * grupo — las anuladas (`estado === "X"`) no suman, mismo criterio que ya usa
- * el resumen de `DetallePorMedico.tsx` y "Las rechazadas no suman" en
- * `Validaciones/components/PrestacionesTable.tsx`. Grupos ordenados por
- * nombre; dentro de cada grupo se conserva el orden recibido.
- */
+/** Agrupa un listado plano de prestaciones por obra social, con subtotal por grupo — las anuladas (`estado === "X"`) no suman. */
 export function agruparPorObraSocial(prestaciones: PrestacionRead[]): GrupoObraSocial[] {
   const porClave = new Map<string, GrupoObraSocial>();
 
@@ -30,12 +24,7 @@ export function agruparPorObraSocial(prestaciones: PrestacionRead[]): GrupoObraS
     }
     grupo.prestaciones.push(p);
     if (p.estado !== "X") {
-      // `honorarios`/`gastos` son el valor UNITARIO de la prestación — el backend
-      // recién multiplica por cantidad*sesión al calcular `importe_total`
-      // (ver calcular_importe_total en service.py). Hay que hacer la misma
-      // multiplicación acá para que el subtotal del grupo sea consistente con
-      // el total (si no, "Honorarios" queda muy por debajo de lo que corresponde
-      // en prestaciones con cantidad/sesión > 1).
+      // `honorarios`/`gastos` son el valor UNITARIO de la prestación — el backend recién multiplica por cantidad*sesión al calcular `importe_total` (ver calcular_importe_total en service.py).
       const unidades = (p.cantidad ?? 1) * (p.sesion ?? 1);
       grupo.totalHonorarios += parseMoney(p.honorarios) * unidades;
       grupo.totalGastos += parseMoney(p.gastos) * unidades;

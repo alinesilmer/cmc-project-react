@@ -1,40 +1,36 @@
 @use "@/app/styles/all.scss" as *;
 
-// Los controles de esta pantalla son más altos que `$alto-control`: la usan
-// personas de todas las edades y un botón de 40px se erra fácil con el dedo.
-$alto: 46px;
+// Los controles de esta pantalla miden 2,875rem, más que `$alto-control`.
 
 .pantalla {
   @extend %pantalla;
+  // En variables porque la franja las necesita para salirse del relleno.
+  --lado: #{$spacing-12};
+  --arriba: #{$spacing-8};
+
   display: flex;
   flex-direction: column;
   gap: $spacing-5;
   min-height: 100%;
-}
+  padding: $spacing-8 $spacing-12;
 
-// ─── Encabezado ───────────────────────────────────────────────────────────────
+  // La franja ya trae su margen; el `gap` alcanza.
+  > :first-child {
+    margin-bottom: 0;
+  }
 
-.encabezado {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: $spacing-3 $spacing-5;
-}
-
-.titulo {
-  @extend %titulo;
-}
-
-.bajada {
-  @extend %subtitulo;
-  font-size: $font-size-lg;
+  @media (max-width: $breakpoint-sm) {
+    --lado: #{$spacing-3};
+    --arriba: #{$spacing-4};
+    padding: $spacing-4 $spacing-3 $spacing-8;
+  }
 }
 
 // ─── Qué valor comparar ───────────────────────────────────────────────────────
 
 .selectorBotones {
   display: flex;
+  flex: 1 1 100%;
   flex-direction: column;
   gap: $spacing-3;
 
@@ -61,10 +57,9 @@ $alto: 46px;
 
 .valorBoton {
   @extend %chip;
-  height: $alto;
+  height: 2.875rem;
   padding: 0 $spacing-4;
   font-size: $font-size-base;
-  font-weight: $font-weight-semibold;
   color: $tinta;
 
   &:focus-visible {
@@ -73,8 +68,7 @@ $alto: 46px;
   }
 }
 
-// A diferencia de `%chip-activo`, relleno: es la decisión principal de la
-// pantalla y tiene que verse de lejos cuál está elegido.
+// A diferencia de `%chip-activo`, relleno: es la decisión principal de la pantalla y tiene que verse de lejos cuál está elegido.
 .valorBotonActivo {
   background: $acento;
   border-color: $acento;
@@ -88,6 +82,7 @@ $alto: 46px;
 
 .selectorLista {
   display: none;
+  flex: 1 1 100%;
   flex-direction: column;
   gap: $spacing-2;
 
@@ -99,58 +94,39 @@ $alto: 46px;
 .select {
   @extend %select;
   width: 100%;
-  height: $alto;
+  height: 2.875rem;
   font-size: $font-size-lg;
-  font-weight: $font-weight-semibold;
+  font-weight: $font-weight-normal;
   color: $tinta;
 }
 
-// ─── Barra de la lista ────────────────────────────────────────────────────────
+// ─── Título de la lista ──────────────────────────────────────────────────────
 
-.barraLista {
+// Qué valor se está comparando; al buscar, cuántas quedaron.
+.pregunta {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: baseline;
   gap: $spacing-3;
-  margin-top: $spacing-2;
-}
-
-.pregunta {
-  flex: 1 1 18rem;
   margin: 0;
-  font-family: "Manrope", sans-serif;
+  font-family: $fuente-titulos;
   font-size: $font-size-2xl;
   font-weight: $font-weight-bold;
   letter-spacing: -0.01em;
   color: $acento;
 
   span {
-    color: $tinta;
+    font-family: $fuente-texto;
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    font-variant-numeric: tabular-nums;
+    color: $tinta-3;
   }
-}
-
-.buscador {
-  @extend %buscador;
-  flex: 1 1 16rem;
-  max-width: 24rem;
-}
-
-.campo {
-  @extend %buscador-campo;
-  height: $alto;
-}
-
-.lupa {
-  @extend %buscador-icono;
-}
-
-.limpiar {
-  @extend %buscador-limpiar;
 }
 
 .orden {
   @extend %grupo-opciones;
-  height: $alto;
+  height: 2.875rem;
 }
 
 .opcion {
@@ -167,63 +143,48 @@ $alto: 46px;
   @extend %opcion-activa;
 }
 
-.conteo {
-  margin: 0;
-  font-size: $font-size-base;
-  color: $tinta-3;
-  font-variant-numeric: tabular-nums;
-}
+// ─── Lista ───────────────────────────────────────────────────────────────────
 
-// ─── Lista ────────────────────────────────────────────────────────────────────
-
+// La tabla es el componente compartido; acá van el marco y lo propio de las columnas.
 .lista {
   @extend %tarjeta-flotante;
-  list-style: none;
-  margin: 0;
-  padding: 0 $spacing-5;
+  overflow-x: auto;
 }
 
-.fila {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1.2fr) minmax(0, 1fr) auto;
-  align-items: center;
-  gap: $spacing-2 $spacing-4;
-  padding: $spacing-3 0;
-  border-bottom: 1px solid $linea;
+.colNro {
+  width: 5rem;
+}
 
-  &:last-child {
-    border-bottom: none;
-  }
+.colBarra {
+  width: 32%;
 
   @media (max-width: $breakpoint-sm) {
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    display: none;
   }
+}
+
+.colMonto,
+.monto {
+  text-align: right !important;
 }
 
 .nro {
-  display: grid;
-  place-items: center;
-  min-width: 44px;
-  height: 40px;
-  padding: 0 $spacing-2;
-  border-radius: $radio-sm;
-  background: $acento-lavado;
-  color: $acento;
-  font-family: "Manrope", sans-serif;
+  font-family: $fuente-titulos;
   font-weight: $font-weight-bold;
   font-variant-numeric: tabular-nums;
+  color: $acento;
 }
 
 .nombre {
-  font-family: "Manrope", sans-serif;
+  font-family: $fuente-titulos;
   font-size: $font-size-lg;
-  font-weight: $font-weight-bold;
   line-height: 1.25;
   color: $tinta;
 }
 
 .barra {
-  height: 10px;
+  display: block;
+  height: 0.625rem;
   border-radius: $radio-xs;
   background: $acento-lavado;
   overflow: hidden;
@@ -233,10 +194,6 @@ $alto: 46px;
     height: 100%;
     border-radius: $radio-xs;
     background: $acento;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    display: none;
   }
 }
 
@@ -253,14 +210,13 @@ $alto: 46px;
 }
 
 .niveles {
-  grid-column: 2 / -1;
   font-size: $font-size-base;
   color: $tinta-3;
 
   summary {
     display: inline-flex;
     align-items: center;
-    min-height: 32px;
+    min-height: 2rem;
     color: $acento;
     font-weight: $font-weight-semibold;
     cursor: pointer;
@@ -306,7 +262,7 @@ $alto: 46px;
 
 .esqueletoFila {
   @extend %esqueleto-fila;
-  height: 62px;
+  height: 3.875rem;
 }
 
 .error {

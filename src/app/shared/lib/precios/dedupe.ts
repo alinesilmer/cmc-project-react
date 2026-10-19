@@ -6,10 +6,7 @@ function rowTotal(r: PrecioRow): number {
   return (parseFloat(r.precio_1) || 0) + (parseFloat(r.precio_2) || 0) + (parseFloat(r.gastos) || 0);
 }
 
-/**
- * Si un código aparece varias veces, conserva la fila de mayor precio total y descarta
- * las demás. Preserva el orden de primera aparición.
- */
+/** Si un código aparece varias veces, conserva la fila de mayor precio total y descarta las demás. */
 export function dedupeByCodigo(rows: PrecioRow[]): PrecioRow[] {
   const best = new Map<string, PrecioRow>();
   for (const r of rows) {

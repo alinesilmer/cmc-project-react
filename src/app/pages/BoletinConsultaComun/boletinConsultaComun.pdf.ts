@@ -29,8 +29,7 @@ export async function generateConsultaComunPdf(
 ) {
   items = [...items].sort((a, b) => b.valor - a.valor);
 
-  // El PDF se lee fuera del panel, así que los links a las normas van
-  // absolutos: `/noticias/12` impreso en papel no lleva a ninguna parte.
+  // El PDF se lee fuera del panel, así que los links a las normas van absolutos: `/noticias/12` impreso en papel no lleva a ninguna parte.
   const baseUrl =
     typeof window === "undefined" ? "" : window.location.origin;
 
@@ -57,19 +56,41 @@ export async function generateConsultaComunPdf(
   const marginX = 16;
 
   const palette = {
-    navy: [32, 55, 105] as const,
-    blue: [49, 92, 184] as const,
-    softBlue: [234, 241, 252] as const,
-    line: [221, 229, 240] as const,
-    text: [36, 43, 52] as const,
-    muted: [102, 112, 133] as const,
-    green: [16, 124, 87] as const,
+    navy: [23, 63, 112] as const,
+    // Cabecera de las tablas: un azul más profundo.
+    deepNavy: [12, 42, 82] as const,
+    blue: [23, 63, 112] as const,
+    cream: [245, 239, 224] as const,
+    yellow: [247, 233, 170] as const,
+    // Fondo de las tarjetas y de las filas alternadas.
+    softBlue: [241, 245, 249] as const,
+    line: [203, 213, 225] as const,
+    text: [15, 23, 42] as const,
+    muted: [100, 116, 139] as const,
+    green: [23, 63, 112] as const,
     white: [255, 255, 255] as const,
-    // Ámbar para las normas operativas: la ficha ya usa azul para todo, y en
-    // blanco y negro el contraste con la card de observaciones se pierde.
+    // Ámbar para las normas operativas: la ficha ya usa azul para todo.
     amber: [176, 106, 31] as const,
     softAmber: [252, 245, 234] as const,
   };
+
+  /** "\02": el número de página con la barra de la portada. */
+  const pagina = (n: number) => `\\${String(n).padStart(2, "0")}`;
+
+  /** Rótulo chico en mayúscula, como los de la portada. */
+  function rotulo(
+    texto: string,
+    x: number,
+    y: number,
+    align: "left" | "right",
+    color: readonly [number, number, number],
+    tenue = false
+  ) {
+    doc.setFont("helvetica", tenue ? "normal" : "bold");
+    doc.setFontSize(tenue ? 6.5 : 7.5);
+    doc.setTextColor(...color);
+    doc.text(texto.toUpperCase(), x, y, { align, charSpace: 0.25 });
+  }
 
   const detailPagesStart = 2 + Math.max(1, Math.ceil(items.length / 22));
 
@@ -79,108 +100,103 @@ export async function generateConsultaComunPdf(
   }
 
   function drawFooter(pageNumber: number, totalPages: number) {
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.setTextColor(...palette.muted);
-
-    doc.setDrawColor(...palette.line);
+    // La portada va sin pie: es azul de borde a borde.
+    if (pageNumber === 1) return;
+    doc.setDrawColor(...palette.navy);
+    doc.setLineWidth(0.2);
     doc.line(marginX, pageHeight - 12, pageWidth - marginX, pageHeight - 12);
 
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.5);
+    doc.setTextColor(...palette.muted);
     doc.text(
-      `${CMC_NAME} · ${CMC_EMAIL} · ${CMC_PHONE}`,
+      `${CMC_NAME}  ·  ${CMC_PHONE}  ·  ${CMC_EMAIL}`,
       marginX,
       pageHeight - 7.2
     );
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(...palette.navy);
     doc.text(
-      `Página ${pageNumber} de ${totalPages}`,
+      `${pagina(pageNumber)}  de  ${pagina(totalPages)}`,
       pageWidth - marginX,
       pageHeight - 7.2,
       { align: "right" }
     );
   }
 
+  /** Encabezado de las hojas blancas: rótulos, título en Times y un filete. */
   function drawHeaderSection(
     title: string,
     subtitle?: string,
     showBackToIndex = false
   ) {
-    doc.setFillColor(...palette.navy);
-    doc.rect(0, 0, pageWidth, 24, "F");
+    let x = marginX;
+    if (logoDataUrl) {
+      // El logo es de 2:3; se respeta la proporción.
+      addLogo(marginX, 7, 12, 18);
+      x = marginX + 17;
+    }
 
-    addLogo(marginX, 5.2, 12, 12);
+    rotulo(CMC_NAME, x, 12, "left", palette.navy);
+    rotulo(mes, pageWidth - marginX, 12, "right", palette.navy);
+    // La aclaración institucional, más tenue, a la altura del título.
+    rotulo(CMC_SUBTITLE, pageWidth - marginX, 25, "right", palette.muted, true);
 
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.setTextColor(...palette.white);
-    doc.text(CMC_NAME, logoDataUrl ? marginX + 16 : marginX, 11);
+    doc.setFont("times", "normal");
+    doc.setFontSize(22);
+    doc.setTextColor(...palette.navy);
+    doc.text(normalizeText(title, 46), x, 25);
 
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.8);
-    doc.text(CMC_SUBTITLE, logoDataUrl ? marginX + 16 : marginX, 16);
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.8);
-    doc.text(mes, pageWidth - marginX, 10, { align: "right" });
-
-    doc.setTextColor(...palette.text);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    doc.text(title, marginX, 36);
+    doc.setDrawColor(...palette.navy);
+    doc.setLineWidth(0.25);
+    doc.line(marginX, 31, pageWidth - marginX, 31);
 
     if (subtitle) {
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(10.2);
+      doc.setFontSize(9.5);
       doc.setTextColor(...palette.muted);
-      doc.text(subtitle, marginX, 42);
+      doc.text(subtitle, marginX, 40);
     }
 
     if (showBackToIndex) {
-      const label = "Volver al índice";
+      const label = "VOLVER AL ÍNDICE";
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(9);
-      doc.setTextColor(...palette.white);
-      const x = pageWidth - marginX - doc.getTextWidth(label);
-      const y = 17;
-      doc.text(label, x, y);
-      (doc as any).link(x, y - 4, doc.getTextWidth(label), 6, {
-        pageNumber: 2,
-      });
+      doc.setFontSize(7.5);
+      doc.setTextColor(...palette.navy);
+      const ancho = doc.getTextWidth(label);
+      const lx = pageWidth - marginX - ancho;
+      doc.text(label, lx, 25);
+      (doc as any).link(lx, 21, ancho, 6, { pageNumber: 2 });
     }
   }
 
+  /** Portada: azul a página llena, como la del padrón. */
   function drawCover() {
     doc.setFillColor(...palette.navy);
-    doc.rect(0, 0, pageWidth, 74, "F");
+    doc.rect(0, 0, pageWidth, pageHeight, "F");
 
-    addLogo((pageWidth - 30) / 2, 18, 30, 30);
+    rotulo(CMC_NAME, marginX, 16, "left", palette.cream);
+    rotulo(mes, pageWidth - marginX, 16, "right", palette.cream);
 
-    doc.setTextColor(...palette.white);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(22);
-    doc.text("Boletín Informativo de Valores", pageWidth / 2, 58, {
-      align: "center",
-    });
+    addLogo(marginX, 62, 24, 36);
 
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(12);
-    doc.text("Valorización de Consultas y Prácticas", pageWidth / 2, 66, {
-      align: "center",
-    });
+    doc.setTextColor(...palette.cream);
+    doc.setFont("times", "normal");
+    doc.setFontSize(52);
+    doc.text("Boletín", marginX, pageHeight / 2 - 4);
+    doc.text("de valores", marginX, pageHeight / 2 + 16);
+    doc.setFontSize(20);
+    doc.text("Consulta común", marginX, pageHeight / 2 + 30);
 
-    doc.setDrawColor(...palette.line);
-    doc.setLineWidth(0.35);
-    doc.line(24, 188, pageWidth - 24, 188);
+    // Un filete amarillo corto, bajo el título.
+    doc.setFillColor(...palette.yellow);
+    doc.rect(marginX, pageHeight / 2 + 37, 26, 1.2, "F");
 
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.setTextColor(...palette.text);
-    doc.text("Contacto institucional", 24, 202);
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10.4);
-    doc.setTextColor(...palette.muted);
-    doc.text(`Email: ${CMC_EMAIL}`, 24, 212);
-    doc.text(`Teléfono: ${CMC_PHONE}`, 24, 220);
+    rotulo("Obras sociales", marginX, pageHeight - 22, "left", palette.cream, true);
+    rotulo(String(items.length), marginX, pageHeight - 17, "left", palette.cream);
+    rotulo("Contacto", pageWidth - marginX, pageHeight - 22, "right", palette.cream, true);
+    rotulo(`${CMC_EMAIL}  ·  ${CMC_PHONE}`, pageWidth - marginX, pageHeight - 17, "right", palette.cream);
   }
 
   function drawIndexPages() {
@@ -197,12 +213,12 @@ export async function generateConsultaComunPdf(
       const start = indexPage * itemsPerPage;
       const chunk = items.slice(start, start + itemsPerPage);
 
-      doc.setFillColor(...palette.softBlue);
+      doc.setFillColor(...palette.deepNavy);
       doc.roundedRect(marginX, 50, pageWidth - marginX * 2, 10, 2.5, 2.5, "F");
 
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(10);
-      doc.setTextColor(...palette.navy);
+      doc.setFontSize(9);
+      doc.setTextColor(...palette.cream);
       doc.text("N°", marginX + 4, 56.5);
       doc.text("Obra Social", marginX + 20, 56.5);
       doc.text("Valor", pageWidth - 54, 56.5);
@@ -213,8 +229,11 @@ export async function generateConsultaComunPdf(
         const absoluteIndex = start + idx;
         const targetPage = detailPagesStart + absoluteIndex;
 
-        doc.setDrawColor(...palette.line);
-        doc.line(marginX, y + 4.8, pageWidth - marginX, y + 4.8);
+        // Una fila blanca, una gris claro.
+        if (idx % 2 === 1) {
+          doc.setFillColor(...palette.softBlue);
+          doc.rect(marginX, y - 5.2, pageWidth - marginX * 2, 10, "F");
+        }
 
         doc.setFont("helvetica", "normal");
         doc.setFontSize(9.8);
@@ -258,17 +277,15 @@ export async function generateConsultaComunPdf(
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8.5);
     doc.setTextColor(...palette.muted);
-    doc.text("Valor vigente", marginX + 6, 55.5);
+    doc.text("VALOR VIGENTE", marginX + 6, 55.5, { charSpace: 0.25 });
 
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(20);
+    doc.setFont("times", "normal");
+    doc.setFontSize(24);
     doc.setTextColor(...palette.green);
     doc.text(moneyFormatter.format(item.valor), marginX + 6, 65);
 
     // ── Galenos ──────────────────────────────────────────────────
-    // Cuántos y cuáles depende de la obra social, así que la grilla se arma
-    // con lo que haya y baja de renglón sola. El nombre puede ocupar dos
-    // líneas ("Galeno Cirugía Adultos N3" no entra en una columna).
+    // Cuántos y cuáles depende de la obra social, así que la grilla se arma con lo que haya y baja de renglón sola.
     let curY = 76;
 
     doc.setDrawColor(...palette.line);
@@ -354,8 +371,7 @@ export async function generateConsultaComunPdf(
     // Right edge of card minus right padding — must be set with font active.
     const cardRight = pageWidth - marginX - 6;
     const textWidth = cardRight - textX;
-    // Line height derived from font metrics: 9.5pt × 1.15 factor ≈ 4.6mm; keep
-    // a small overhead so the card is always tall enough to contain the text.
+    // Line height derived from font metrics: 9.5pt × 1.15 factor ≈ 4.6mm.
     const lineH = 5.2;
 
     // Set font NOW so splitTextToSize uses correct glyph widths.
@@ -407,8 +423,7 @@ export async function generateConsultaComunPdf(
     }
 
     // ── Normas operativas ────────────────────────────────────────
-    // A diferencia de Observaciones, si no hay no se dibuja nada: un
-    // "sin normas operativas" en cada una de las ~300 fichas es ruido.
+    // A diferencia de Observaciones, si no hay no se dibuja nada: un "sin normas operativas" en cada una de las ~300 fichas es ruido.
     const normas = normasPorOS?.get(item.nro) ?? [];
     if (normas.length === 0) return;
 
@@ -446,8 +461,7 @@ export async function generateConsultaComunPdf(
       const url = `${baseUrl}/noticias/${norma.id}`;
       let lineY = curY + cardPadY + lineH - 0.8;
 
-      // El título es el link: en pantalla se hace click, y la URL impresa de
-      // abajo es para la copia en papel, donde el link no sirve.
+      // El título es el link: en pantalla se hace click, y la URL impresa de abajo es para la copia en papel.
       doc.setFont("helvetica", "bold");
       doc.setFontSize(9.5);
       doc.setTextColor(...palette.text);

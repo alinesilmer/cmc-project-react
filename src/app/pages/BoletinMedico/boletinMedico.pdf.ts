@@ -1,16 +1,4 @@
 // El boletín del socio, en un solo PDF.
-//
-// Un botón y un archivo con todo: valor de consulta (o, para un pediatra, los
-// valores de pediatría), galenos y observaciones, uno detrás del otro. Separarlo en tres descargas obligaría al médico a
-// juntarlas después, y lo que necesita llevarse es el boletín completo.
-//
-// Se exporta lo que la pantalla tiene cargado —el catálogo entero, no el
-// resultado de la búsqueda—: el archivo es el boletín, no un recorte de lo que
-// alguien estaba mirando cuando apretó el botón.
-//
-// Las tres secciones son tablas de `jspdf-autotable`, que es lo que ya usa el
-// resto del panel para exportar. Se carga por `import()` dinámico para no
-// sumar jsPDF al bundle de una pantalla que casi siempre sólo se lee.
 
 import {
   CMC_NAME,
@@ -100,23 +88,14 @@ export async function descargarBoletin(items: ItemBoletin[]): Promise<void> {
 
   y += 24;
 
-  // El índice se dibuja al final, cuando ya se sabe en qué página cayó cada
-  // sección, pero va arriba de todo: se le reserva el lugar ahora y se vuelve
-  // a la página 1 al cerrar. Insertar una página aparte habría dejado el
-  // encabezado del Colegio huérfano en la segunda.
+  // El índice se dibuja al final, cuando ya se sabe en qué página cayó cada sección, pero va arriba de todo.
   const yIndice = y;
   y += ALTO_INDICE;
 
   /** Dónde arranca cada sección, para enlazarla desde el índice. */
   const destinos: { titulo: string; pagina: number }[] = [];
 
-  /**
-   * Cabecera de sección, en el azul del sistema.
-   *
-   * Si no entra el título más un par de filas, abre página: sin esto el
-   * título quedaba pegado al borde inferior y la tabla arrancaba en la
-   * siguiente, con el índice apuntando a una página donde no se ve nada.
-   */
+  /** Cabecera de sección, en el azul del sistema. */
   const ALTO_MINIMO = 32;
   const seccion = (titulo: string, desde: number): number => {
     let yTitulo = desde;
@@ -142,7 +121,6 @@ export async function descargarBoletin(items: ItemBoletin[]): Promise<void> {
 
   // ── Valores de pediatría (sólo pediatras) ──────────────────────────────────
   // Para un pediatra reemplazan al valor de consulta, igual que en pantalla.
-  // Una fila por código, con la obra social repetida, como los galenos.
   const pediatria = items.flatMap((i) =>
     i.pediatria.map((v) => [String(i.nro), i.nombre, v.codigo, v.nombre, moneda.format(v.valor)])
   );
@@ -183,8 +161,7 @@ export async function descargarBoletin(items: ItemBoletin[]): Promise<void> {
   }
 
   // ── Galenos (no para pediatras, igual que en pantalla) ─────────────────────
-  // Una fila por galeno, con la obra social repetida: en papel se lee de
-  // corrido y se puede buscar por nombre de galeno, no sólo por obra social.
+  // Una fila por galeno, con la obra social repetida: en papel se lee de corrido y se puede buscar por nombre de galeno.
   const galenos = items.flatMap((i) =>
     agruparPorCodigo(i.galenos).map((g) => [
       String(i.nro),
@@ -213,8 +190,7 @@ export async function descargarBoletin(items: ItemBoletin[]): Promise<void> {
   }
 
   // ── Observaciones ──────────────────────────────────────────────────────────
-  // Las condiciones van en una sola celda por obra social, una por renglón:
-  // partidas en filas se pierde de un vistazo cuáles son del mismo convenio.
+  // Las condiciones van en una sola celda por obra social, una por renglón.
   const observaciones = items
     .filter((i) => i.observaciones.length > 0)
     .map((i) => [String(i.nro), i.nombre, i.observaciones.join("\n")]);
@@ -232,9 +208,7 @@ export async function descargarBoletin(items: ItemBoletin[]): Promise<void> {
   }
 
   // ── Índice ─────────────────────────────────────────────────────────────────
-  // Recién acá se sabe en qué página quedó cada sección. Cada renglón es un
-  // enlace interno (`doc.link`) y además un marcador del PDF (`outline`), que
-  // es el panel lateral de navegación del lector.
+  // Recién acá se sabe en qué página quedó cada sección.
   doc.setPage(1);
   let yi = yIndice;
 

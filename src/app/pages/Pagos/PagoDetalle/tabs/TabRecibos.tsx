@@ -6,6 +6,8 @@ import SelectableTable from "@/app/components/ui/SelectableTable/SelectableTable
 import type { ColumnDef } from "@/app/components/ui/SelectableTable/types";
 import styles from "./tabs.module.scss";
 import { type Pago, fmt } from "../../types";
+import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
+import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
 
 const GENERAR_URL    = (pagoId: number) => `/api/pagos/${pagoId}/recibos/generar`;
 const EMITIR_TODOS_URL = (pagoId: number) => `/api/pagos/${pagoId}/recibos/emitir_todos`;
@@ -439,13 +441,7 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
               Eliminar
             </Button>
           )}
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={(e) => { e.stopPropagation(); generatePDF(r); }}
-          >
-            PDF
-          </Button>
+          <BotonDescarga formato="pdf" onClick={(e) => { e.stopPropagation(); generatePDF(r); }} />
           {isClosed && !["emitido", "anulado", "pagado"].includes(r.estado) && (
             <Button
               size="sm"
@@ -506,17 +502,26 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
 
       {/* Modal generar/actualizar */}
       {generarOpen && (
-        <div className={styles.modalBackdrop} role="dialog" aria-modal="true">
-          <div className={styles.modalCard}>
-            <div className={styles.modalHeader}>
-              <h3>Generar / Actualizar Recibos</h3>
-              <button
-                className={styles.modalClose}
+        <Dialogo
+          titulo="Generar o actualizar recibos"
+          onClose={() => { setGenerarOpen(false); setGenerarResult(null); setGenerarError(null); }}
+          acciones={
+            <>
+              <Button
+                variant="secondary"
                 onClick={() => { setGenerarOpen(false); setGenerarResult(null); setGenerarError(null); }}
-                aria-label="Cerrar"
-              >✕</button>
-            </div>
-            <div className={styles.modalBody}>
+                disabled={generando}
+              >
+                {generarResult != null ? "Cerrar" : "Cancelar"}
+              </Button>
+              {generarResult == null && (
+                <Button variant="primary" onClick={handleGenerar} disabled={generando}>
+                  {generando ? "Generando…" : "Generar"}
+                </Button>
+              )}
+            </>
+          }
+        >
               {generarError && <div className={styles.errorInline}>{generarError}</div>}
               {generarResult != null ? (
                 <div className={styles.successInline}>
@@ -532,38 +537,31 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
                 </p>
               )}
               {generando && <p style={{ color: "#64748b" }}>Generando… por favor esperá.</p>}
-            </div>
-            <div className={styles.modalActions}>
-              <Button
-                variant="secondary"
-                onClick={() => { setGenerarOpen(false); setGenerarResult(null); setGenerarError(null); }}
-                disabled={generando}
-              >
-                {generarResult != null ? "Cerrar" : "Cancelar"}
-              </Button>
-              {generarResult == null && (
-                <Button variant="primary" onClick={handleGenerar} disabled={generando}>
-                  {generando ? "Generando…" : "Generar"}
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
+            </Dialogo>
       )}
 
       {/* Modal emitir todos */}
       {emitirOpen && (
-        <div className={styles.modalBackdrop} role="dialog" aria-modal="true">
-          <div className={styles.modalCard}>
-            <div className={styles.modalHeader}>
-              <h3>Emitir Todos los Recibos</h3>
-              <button
-                className={styles.modalClose}
+        <Dialogo
+          titulo="Emitir todos los recibos"
+          onClose={() => { setEmitirOpen(false); setEmitirResult(null); setEmitirError(null); }}
+          acciones={
+            <>
+              <Button
+                variant="secondary"
                 onClick={() => { setEmitirOpen(false); setEmitirResult(null); setEmitirError(null); }}
-                aria-label="Cerrar"
-              >✕</button>
-            </div>
-            <div className={styles.modalBody}>
+                disabled={emitiendo}
+              >
+                {emitirResult != null ? "Cerrar" : "Cancelar"}
+              </Button>
+              {emitirResult == null && (
+                <Button variant="primary" onClick={handleEmitirTodos} disabled={emitiendo}>
+                  {emitiendo ? "Emitiendo…" : "Emitir todos"}
+                </Button>
+              )}
+            </>
+          }
+        >
               {emitirError && <div className={styles.errorInline}>{emitirError}</div>}
               {emitirResult != null ? (
                 <div className={styles.successInline}>
@@ -579,55 +577,32 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
                 </p>
               )}
               {emitiendo && <p style={{ color: "#64748b" }}>Procesando…</p>}
-            </div>
-            <div className={styles.modalActions}>
-              <Button
-                variant="secondary"
-                onClick={() => { setEmitirOpen(false); setEmitirResult(null); setEmitirError(null); }}
-                disabled={emitiendo}
-              >
-                {emitirResult != null ? "Cerrar" : "Cancelar"}
-              </Button>
-              {emitirResult == null && (
-                <Button variant="primary" onClick={handleEmitirTodos} disabled={emitiendo}>
-                  {emitiendo ? "Emitiendo…" : "Emitir todos"}
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
+            </Dialogo>
       )}
 
       {/* Modal eliminar */}
       {deleteTarget && (
-        <div className={styles.modalBackdrop} role="dialog" aria-modal="true">
-          <div className={styles.modalCard}>
-            <div className={styles.modalHeader}>
-              <h3>Eliminar Recibo</h3>
-              <button
-                className={styles.modalClose}
-                onClick={() => setDeleteTarget(null)}
-                aria-label="Cerrar"
-                disabled={deleting}
-              >✕</button>
-            </div>
-            <div className={styles.modalBody}>
-              <p>
-                ¿Eliminar el recibo <strong>{deleteTarget.nro_recibo}</strong>?
-                <br />
-                <span style={{ fontSize: 12, color: "#64748b" }}>Esta acción no se puede deshacer.</span>
-              </p>
-            </div>
-            <div className={styles.modalActions}>
+        <Dialogo
+          titulo="Eliminar recibo"
+          peligro
+          onClose={(deleting) ? undefined : () => setDeleteTarget(null)}
+          acciones={
+            <>
               <Button variant="secondary" onClick={() => setDeleteTarget(null)} disabled={deleting}>
                 Cancelar
               </Button>
               <Button variant="danger" onClick={handleDelete} disabled={deleting}>
                 {deleting ? "Eliminando…" : "Eliminar"}
               </Button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        >
+              <p>
+                ¿Eliminar el recibo <strong>{deleteTarget.nro_recibo}</strong>?
+                <br />
+                <span style={{ fontSize: 12, color: "#64748b" }}>Esta acción no se puede deshacer.</span>
+              </p>
+            </Dialogo>
       )}
     </div>
   );

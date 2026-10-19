@@ -1,14 +1,12 @@
-import { downloadExcelSheet } from "@/app/shared/lib/excelExport";
 import { etiquetaGaleno } from "@/app/features/nomenclador/galenos";
+import { hoyISO } from "@/app/shared/lib/fechas";
+import { exportarExcel } from "@/app/pages/Reportes/exportar";
+import type { ColumnaExport } from "@/app/pages/Reportes/exportar";
 import { CONSULTA_COMUN_CODE } from "./boletinConsultaComun.constants";
 import { formatApiDate } from "./boletinConsultaComun.helpers";
 import type { ConsultaComunItem, ObservacionesMap } from "./boletinConsultaComun.types";
 
-/**
- * Las columnas de galeno ya no son nueve fijas: cada obra social tiene las
- * suyas. Se arma la unión de todas para que la hoja quede rectangular, y la que
- * no tenga una queda vacía —no en cero, que se leería como un precio pactado.
- */
+/** Las columnas de galeno ya no son nueve fijas: cada obra social tiene las suyas. */
 function columnasDeGaleno(items: ConsultaComunItem[]): string[] {
   const vistas = new Set<string>();
   for (const item of items) {
@@ -19,35 +17,38 @@ function columnasDeGaleno(items: ConsultaComunItem[]): string[] {
   );
 }
 
+/** Excel del boletín, con la misma hoja que los reportes y el padrón (título en banda azul, tarjetas de resumen, tabla sin grilla). */
 export async function generateConsultaComunExcel(
   items: ConsultaComunItem[],
   observaciones: ObservacionesMap
 ) {
-  const columnas = columnasDeGaleno(items);
+  const filas = [...items].sort((a, b) => b.valor - a.valor);
 
-  const rows = [...items].sort((a, b) => b.valor - a.valor).map((item) => {
-    const valores = new Map(item.galenos.map((g) => [etiquetaGaleno(g), g.valor]));
-    const galenos: Record<string, number | string> = {};
-    for (const col of columnas) galenos[col] = valores.get(col) ?? "";
+  const columnas: ColumnaExport<ConsultaComunItem>[] = [
+    { header: "N°", value: (i) => i.nro },
+    { header: "Obra social", value: (i) => i.nombre },
+    { header: `Valor (${CONSULTA_COMUN_CODE})`, value: (i) => i.valor, tipo: "moneda" },
+    { header: "Último cambio", value: (i) => formatApiDate(i.fechaCambio) },
+    { header: "Observación", value: (i) => observaciones[i.nro] ?? "" },
+    ...columnasDeGaleno(items).map(
+      (etiqueta): ColumnaExport<ConsultaComunItem> => ({
+        header: etiqueta,
+        value: (i) => i.galenos.find((g) => etiquetaGaleno(g) === etiqueta)?.valor ?? null,
+        tipo: "moneda",
+      }),
+    ),
+  ];
 
-    return {
-      "N°": item.nro,
-      "Obra Social": item.nombre,
-      [`Valor (${CONSULTA_COMUN_CODE})`]: item.valor,
-      "Fecha Cambio": formatApiDate(item.fechaCambio),
-      "Observación": observaciones[item.nro] ?? "",
-      ...galenos,
-    };
+  const hoy = new Date();
+  await exportarExcel({
+    encabezado: "Boletín de consulta común",
+    titulo: "Consulta común",
+    periodo: hoy.toLocaleDateString("es-AR", { month: "long", year: "numeric" }),
+    obraSocial: "Todas las obras sociales",
+    columnas,
+    filas,
+    // El total de una columna de precios unitarios no significa nada.
+    sinTotal: true,
+    nombre: `Boletin-ConsultaComun-${hoyISO().replace(/-/g, "")}`,
   });
-
-  const date = new Date()
-    .toISOString()
-    .slice(0, 10)
-    .replace(/-/g, "");
-
-  await downloadExcelSheet(
-    `Boletin-ConsultaComun-${date}.xlsx`,
-    "Consulta Común",
-    rows
-  );
 }

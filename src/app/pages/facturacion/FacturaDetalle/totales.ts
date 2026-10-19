@@ -15,8 +15,7 @@ export const sumarTotales = (arr: PrestacionConSocio[]) => arr.reduce(
   { totalHonorarios: 0, totalGastos: 0, totalSubtotal: 0, totalCoseguro: 0 },
 );
 
-// El equipo (ayudante/pediatra/gastos) de una cirugía de Honorarios individuales o Sanatorio
-// se muestra bajo su cabeza pero NO suma al total del médico; en el resto sí.
+// El equipo (ayudante/pediatra/gastos) de una cirugía de Honorarios individuales o Sanatorio se muestra bajo su cabeza pero NO suma al total del médico.
 export const sumaEquipo = (cabeza: PrestacionConSocio): boolean =>
   cabeza.tipo !== "Honorarios individuales" && cabeza.tipo !== "Sanatorio";
 
@@ -27,8 +26,7 @@ export const RESUMEN_TIPO_LABEL: Record<Tipo, string> = {
   Sanatorio: "Sanatorios",
 };
 
-// Total en dinero (honorarios + gastos de cada fila, ya con % y cantidad) por tipo,
-// solo los tipos que el grupo tiene, en el orden fijo de `ORDEN_TIPOS`.
+// Total en dinero (honorarios + gastos de cada fila, ya con % y cantidad) por tipo, solo los tipos que el grupo tiene.
 export const totalesPorTipo = (arr: PrestacionConSocio[]) => ORDEN_TIPOS
   .map((tipo) => {
     const filas = arr.filter((p) => p.tipo === tipo);

@@ -7,11 +7,7 @@ type Props = {
   onElegir: (codigo: string) => void;
 };
 
-/**
- * Qué valor comparar. En la computadora son botones, todos a la vista; en el
- * teléfono no entran y pasan a ser un desplegable, que es el control que el
- * sistema operativo ya muestra grande.
- */
+/** Qué valor comparar. En la computadora son botones, todos a la vista; en el teléfono no entran y pasan a ser un desplegable. */
 export default function SelectorValor({ tipos, elegido, onElegir }: Props) {
   const grupos = [
     { rotulo: "Valores", tipos: tipos.filter((t) => !t.nivelado) },

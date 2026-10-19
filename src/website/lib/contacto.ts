@@ -1,10 +1,4 @@
-/**
- * Datos de contacto del Colegio, en un solo lugar.
- *
- * Estaban repetidos en el Footer, Contacto, Socios, Convenios, Quinta, Seguros
- * y el chatbot, y ya se habían separado: el Footer mostraba el 252323 pero el
- * enlace marcaba el 722121.
- */
+/** Datos de contacto del Colegio, en un solo lugar. */
 
 const TELEFONO_SEDE = "3794252323";
 
@@ -39,10 +33,7 @@ export function linkWhatsApp(numero: string, mensaje?: string): string {
   return mensaje ? `${base}?text=${encodeURIComponent(mensaje)}` : base;
 }
 
-/**
- * Comercios, emprendimientos y empresas que quieren sumar un beneficio para
- * los socios. Lo atiende Alejandra.
- */
+/** Comercios, emprendimientos y empresas que quieren sumar un beneficio para los socios. */
 export const CONVENIO_COMERCIOS = {
   whatsapp: "5493794532535",
   whatsappVisible: "379 453-2535",
@@ -69,8 +60,7 @@ export function linkEmail(
   const params = new URLSearchParams();
   if (opciones.asunto) params.set("subject", opciones.asunto);
   if (opciones.cuerpo) params.set("body", opciones.cuerpo);
-  // URLSearchParams codifica los espacios como `+`, que los clientes de correo
-  // muestran literal: se pasan a `%20`.
+  // URLSearchParams codifica los espacios como `+`, que los clientes de correo muestran literal: se pasan a `%20`.
   const qs = params.toString().replace(/\+/g, "%20");
   return `mailto:${email}${qs ? `?${qs}` : ""}`;
 }

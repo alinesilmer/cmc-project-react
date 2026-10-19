@@ -1,0 +1,112 @@
+@use "./variables.scss" as *;
+
+// Banda azul con accesos: el bloque de «Accesos rápidos» de la portada y la «Banda de invitación» del pie de las páginas.
+
+
+/// La superficie: azul del sitio, cantos de 10px y el recorte del círculo.
+@mixin banda-azul {
+  position: relative;
+  padding: 40px clamp(24px, 4vw, 52px);
+  border-radius: 10px;
+  background: $primary-blue;
+  color: $white;
+  overflow: hidden;
+  isolation: isolate;
+
+  @media (max-width: 480px) {
+    padding: 28px 20px;
+  }
+}
+
+/// El círculo crema que asoma por una esquina. `$lado`: `top` o `bottom`.
+@mixin banda-circulo($lado: top) {
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  right: -90px;
+  #{$lado}: -200px;
+  border-radius: 50%;
+  background: rgba($primary-yellow, 0.12);
+  z-index: -1;
+}
+
+/// El título, con la palabra destacada (`<em>`) en crema.
+@mixin banda-titulo {
+  margin: 0;
+  font-family: $font-title;
+  font-size: clamp(1.6rem, 2.8vw, 2.2rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: $white;
+
+  em {
+    font-style: normal;
+    color: $primary-yellow;
+  }
+}
+
+// Una tarjeta-enlace sobre la banda.
+@mixin banda-tarjeta {
+  border: 1px solid rgba($white, 0.18);
+  border-radius: 8px;
+  background: rgba($white, 0.06);
+  color: $white;
+  text-decoration: none;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+
+  &:hover,
+  &:focus-visible {
+    background: rgba($white, 0.12);
+    border-color: rgba($primary-yellow, 0.7);
+    color: $white;
+    transform: translateY(-2px);
+
+    .flecha {
+      color: $primary-yellow;
+      transform: translate(2px, -2px);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary-yellow;
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    &:hover,
+    &:focus-visible {
+      transform: none;
+    }
+  }
+}
+
+/// El cuadrado del ícono de una tarjeta. El color lo pone cada banda.
+@mixin banda-icono {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+
+  svg {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+/// La flecha de una tarjeta, apagada hasta que se le pasa el mouse.
+@mixin banda-flecha {
+  width: 18px;
+  height: 18px;
+  color: rgba($white, 0.5);
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
+}

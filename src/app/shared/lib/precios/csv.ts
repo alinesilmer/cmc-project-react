@@ -15,11 +15,7 @@ export function rowsToCsv(
   return "﻿" + header + "\r\n" + body + (body ? "\r\n" : "");
 }
 
-/**
- * CSV por componente que espera el backend: precio_1 → Honorarios, precio_2 → Ayudante,
- * gastos → Gastos; todos fijos (cantidad 0, sin galeno). Por presupuesto → fila con
- * `presupuesto` = x. Solo se emite una línea por componente cuando tiene valor.
- */
+/** CSV por componente que espera el backend: precio_1 → Honorarios, precio_2 → Ayudante, gastos → Gastos; todos fijos (cantidad 0, sin galeno). */
 export function buildComponentCsv(rows: PrecioRow[], origen: string): string {
   const header =
     "codigo_colegio,origen,descripcion,valor_unitario,nivel,especialidad,concepto,galeno_codigo,cantidad,presupuesto";

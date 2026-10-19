@@ -1,16 +1,17 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { getJSON, postJSON, delJSON } from "@/app/shared/lib/http";
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
 import Button from "@/app/components/ui/Button/Button";
-import Card from "@/app/components/ui/Card/Card";
+import Franja from "@/app/components/layout/Franja/Franja";
+import Caja from "@/app/components/ui/Caja/Caja";
+import Dialogo, { DialogoAviso, DialogoCampo, DialogoDatos } from "@/app/components/ui/Dialogo/Dialogo";
 import SelectableTable from "@/app/components/ui/SelectableTable/SelectableTable";
 import type {
   ActionDef,
   ColumnDef,
 } from "@/app/components/ui/SelectableTable/types";
-import styles from "./DebitosCreditos.module.scss";
+import lq from "../Liquidacion.module.scss";
 import {
   type ObraSocial,
   type PeriodoDisp,
@@ -20,6 +21,10 @@ import {
   fmt,
 } from "../types";
 import AppSearchSelect from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
+import { ArrowLeftRight, Plus, Trash2 } from "lucide-react";
+import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
+import { ESTADO_URL } from "@/app/pages/Pagos/utiles";
+import { DELETE_LOTE_URL } from "@/app/pages/Pagos/utiles";
 
 const LISTA_URL = (params: Record<string, string>) => {
   const p = new URLSearchParams(params);
@@ -30,9 +35,6 @@ const PERIODOS_DISP_URL = (id: number) =>
   `/api/periodos/disponibles_lotes_ajustes?obra_social_id=${id}`;
 const OBTENER_O_CREAR_URL = "/api/lotes/snaps/obtener_o_crear";
 const CREAR_SF_URL = "/api/lotes/snaps/crear_sin_factura";
-const ESTADO_URL = (id: number) => `/api/lotes/snaps/${id}/estado`;
-const DELETE_LOTE_URL = (id: number) => `/api/lotes/snaps/${id}`;
-
 type LoteListItem = {
   id: number;
   tipo: "normal" | "refacturacion" | "sin_factura";
@@ -52,10 +54,10 @@ const estadoLabel = (e: string) =>
   e;
 const estadoClass = (e: string) =>
   ({
-    A: styles.estadoA,
-    C: styles.estadoC,
-    L: styles.estadoL,
-    AP: styles.estadoAP,
+    A: lq.abierto,
+    C: lq.cerrado,
+    L: lq.enLiquidacion,
+    AP: lq.aplicado,
   })[e] ?? "";
 
 const currentYear = new Date().getFullYear();
@@ -265,47 +267,30 @@ const DebitosCreditos: React.FC = () => {
       key: "tipo",
       header: "Tipo",
       render: (l) => (
-        <span
-          style={{
-            display: "inline-block",
-            padding: "2px 8px",
-            borderRadius: 99,
-            fontSize: 11,
-            fontWeight: 600,
-            background: l.tipo === "sin_factura" ? "#f3e8ff" : "#dbeafe",
-            color: l.tipo === "sin_factura" ? "#6d28d9" : "#1e40af",
-          }}
-        >
-          {l.tipo === "sin_factura" ? "Sin Factura" : "Normal"}
+        <span className={`${lq.tipo} ${l.tipo === "sin_factura" ? lq.tipoSinFactura : lq.tipoNormal}`}>
+          {l.tipo === "sin_factura" ? "Sin factura" : "Normal"}
         </span>
       ),
     },
     {
       key: "obra_social_nombre",
-      header: "Obra Social",
+      header: "Obra social",
       render: (l) => (
-        <div>
-          <div style={{ fontWeight: 500 }}>{l.obra_social_nombre}</div>
-          <div style={{ fontSize: 11, color: "#94a3b8" }}>
-            #{l.obra_social_id}
-          </div>
-        </div>
+        <span>
+          <span className={lq.tenue}>#{l.obra_social_id}</span> {l.obra_social_nombre}
+        </span>
       ),
     },
     {
       key: "nro_factura",
-      header: "Nro. Factura",
-      render: (l) => (
-        <span style={{ fontFamily: "monospace", fontSize: 11 }}>
-          {l.nro_factura ?? "—"}
-        </span>
-      ),
+      header: "Factura",
+      render: (l) => <span className={lq.mono}>{l.nro_factura ?? "—"}</span>,
     },
     {
       key: "periodo",
       header: "Período",
       render: (l) => (
-        <span style={{ whiteSpace: "nowrap" }}>
+        <span className={lq.monto}>
           {mesLabel(l.mes_periodo)} {l.anio_periodo}
         </span>
       ),
@@ -314,7 +299,7 @@ const DebitosCreditos: React.FC = () => {
       key: "estado",
       header: "Estado",
       render: (l) => (
-        <span className={`${styles.estadoBadge} ${estadoClass(l.estado)}`}>
+        <span className={`${lq.estado} ${estadoClass(l.estado)}`}>
           {estadoLabel(l.estado)}
         </span>
       ),
@@ -322,41 +307,24 @@ const DebitosCreditos: React.FC = () => {
     {
       key: "pago_id",
       header: "Pago",
-      render: (l) =>
-        l.pago_id ? (
-          `#${l.pago_id}`
-        ) : (
-          <span style={{ color: "#94a3b8" }}>—</span>
-        ),
+      render: (l) => (l.pago_id ? `#${l.pago_id}` : <span className={lq.tenue}>—</span>),
     },
     {
       key: "total_debitos",
       header: "Débitos",
-      alignRight: true,
-      render: (l) => (
-        <span className={styles.negative}>
-          -${fmt(l.total_debitos)}
-        </span>
-      ),
+      render: (l) => <span className={`${lq.monto} ${lq.menos}`}>-${fmt(l.total_debitos)}</span>,
     },
     {
       key: "total_creditos",
       header: "Créditos",
-      alignRight: true,
-      render: (l) => (
-        <span className={styles.positive}>
-          +${fmt(l.total_creditos)}
-        </span>
-      ),
+      render: (l) => <span className={`${lq.monto} ${lq.mas}`}>+${fmt(l.total_creditos)}</span>,
     },
     {
       key: "acciones",
-      header: "Acciones",
+      header: "",
       render: (l) => (
-        <div className={styles.rowActions}>
-          <Button
-            size="sm"
-            variant="secondary"
+        <div className={lq.accionesFila}>
+          <BotonVer
             onClick={(e) => {
               e.stopPropagation();
               const base =
@@ -365,20 +333,20 @@ const DebitosCreditos: React.FC = () => {
                   : "/panel/debitos-creditos";
               navigate(`${base}/${l.id}`);
             }}
-          >
-            Ver
-          </Button>
+          />
           {l.estado !== "L" && l.estado !== "AP" && (
-            <Button
-              size="sm"
-              variant="danger"
+            <button
+              type="button"
+              className={lq.botonIconoPeligro}
+              title="Eliminar"
+              aria-label={`Eliminar lote de ${l.obra_social_nombre}`}
               onClick={(e) => {
                 e.stopPropagation();
                 openDeleteModal(l);
               }}
             >
-              Eliminar
-            </Button>
+              <Trash2 size={16} />
+            </button>
           )}
         </div>
       ),
@@ -432,200 +400,95 @@ const DebitosCreditos: React.FC = () => {
     },
   ];
 
+  const opcionesOs = obras.map((o) => ({
+    id: String(o.nro_obra_social),
+    label: `${o.nro_obra_social} - ${o.nombre}`,
+  }));
+
   return (
-    <div className={styles.page}>
-      <div className={styles.content}>
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          <div className={styles.header}>
-            <div className={styles.headerLeft}>
-              <div className={styles.breadcrumb}>
-                LIQUIDACIÓN / DÉBITOS Y CRÉDITOS
-              </div>
-              <h1 className={styles.title}>Débitos y Créditos</h1>
-            </div>
-            <Button variant="primary" onClick={openAddModal}>
-              + Nuevo Lote
-            </Button>
-            <Button variant="secondary" onClick={openAddSfModal}>
-              + Nuevo Lote sin factura
-            </Button>
+    <div className={lq.pagina}>
+      <Franja titulo="Débitos y créditos" icono={ArrowLeftRight} />
+
+      <Caja titulo="Configuración">
+        <div className={lq.filtros}>
+          <div className={`${lq.campo} ${lq.campoAncho}`}>
+            <span className={lq.rotulo}>Obra social</span>
+            <AppSearchSelect
+              options={opcionesOs}
+              value={filterOs || null}
+              onChange={(val) => setFilterOs(val ? String(val) : "")}
+            />
           </div>
+          <label className={lq.campo}>
+            <span className={lq.rotulo}>Mes</span>
+            <select className={lq.select} value={filterMes} onChange={(e) => setFilterMes(e.target.value)}>
+              <option value="">Todos</option>
+              {MESES.map((m, i) => (
+                <option key={i + 1} value={i + 1}>{m}</option>
+              ))}
+            </select>
+          </label>
+          <label className={lq.campo}>
+            <span className={lq.rotulo}>Año</span>
+            <select className={lq.select} value={filterAnio} onChange={(e) => setFilterAnio(e.target.value)}>
+              <option value="">Todos</option>
+              {YEARS.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </label>
+          <label className={lq.campo}>
+            <span className={lq.rotulo}>Estado</span>
+            <select className={lq.select} value={filterEstado} onChange={(e) => setFilterEstado(e.target.value)}>
+              <option value="">Todos</option>
+              <option value="A">Abierto</option>
+              <option value="C">Cerrado</option>
+              <option value="L">En liquidaciones</option>
+              <option value="AP">Aplicado</option>
+            </select>
+          </label>
+          <label className={lq.campo}>
+            <span className={lq.rotulo}>Tipo</span>
+            <select className={lq.select} value={filterTipo} onChange={(e) => setFilterTipo(e.target.value)}>
+              <option value="">Todos</option>
+              <option value="normal">Normal</option>
+              <option value="sin_factura">Sin factura</option>
+            </select>
+          </label>
+        </div>
+      </Caja>
 
-          {/* Filtros */}
-          <Card className={styles.filterCard}>
-            <div className={styles.filterRow}>
-              <div className={styles.filterGroup} style={{ minWidth: 300 }}>
-                <label className={styles.filterLabel}>Obra Social</label>
-                <AppSearchSelect
-                  options={obras.map((o) => ({
-                    id: String(o.nro_obra_social),
-                    label: `${o.nro_obra_social} - ${o.nombre}`,
-                  }))}
-                  value={filterOs || null}
-                  onChange={(val) => setFilterOs(val ? String(val) : "")}
-                />
-              </div>
-              <div className={styles.filterGroup}>
-                <label className={styles.filterLabel}>Mes</label>
-                <select
-                  className={styles.filterSelect}
-                  value={filterMes}
-                  onChange={(e) => setFilterMes(e.target.value)}
-                >
-                  <option value="">Todos</option>
-                  {MESES.map((m, i) => (
-                    <option key={i + 1} value={i + 1}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className={styles.filterGroup}>
-                <label className={styles.filterLabel}>Año</label>
-                <select
-                  className={styles.filterSelect}
-                  value={filterAnio}
-                  onChange={(e) => setFilterAnio(e.target.value)}
-                >
-                  <option value="">Todos</option>
-                  {YEARS.map((y) => (
-                    <option key={y} value={y}>
-                      {y}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className={styles.filterGroup}>
-                <label className={styles.filterLabel}>Estado</label>
-                <select
-                  className={styles.filterSelect}
-                  value={filterEstado}
-                  onChange={(e) => setFilterEstado(e.target.value)}
-                >
-                  <option value="">Todos</option>
-                  <option value="A">Abierto</option>
-                  <option value="C">Cerrado</option>
-                  <option value="L">En Liquidaciones</option>
-                  <option value="AP">Aplicado</option>
-                </select>
-              </div>
-              <div className={styles.filterGroup}>
-                <label className={styles.filterLabel}>Tipo</label>
-                <select
-                  className={styles.filterSelect}
-                  value={filterTipo}
-                  onChange={(e) => setFilterTipo(e.target.value)}
-                >
-                  <option value="">Todos</option>
-                  <option value="normal">Normal</option>
-                  <option value="sin_factura">Sin factura</option>
-                </select>
-              </div>
-              {/* <div className={styles.filterActions}>
-                <Button
-                  variant="secondary"
-                  onClick={fetchLotes}
-                  disabled={loading}
-                >
-                  {loading ? "Buscando…" : "Buscar"}
-                </Button>
-              </div> */}
-            </div>
-          </Card>
-
-          {error && <div className={styles.errorBanner}>{error}</div>}
-
-          <SelectableTable
-            rows={lotes}
-            columns={columns}
-            actions={bulkActions}
-            isSelectable={(r) => r.estado === "A" || r.estado === "C"}
-            emptyMessage="Sin lotes que coincidan con los filtros."
-            loading={loading}
-            onActionComplete={fetchLotes}
-          />
-        </motion.div>
+      <div className={lq.barra}>
+        <div className={lq.acciones}>
+          <Button variant="ghost" size="md" leftIcon={<Plus size={18} aria-hidden="true" />} onClick={openAddSfModal}>
+            Lote sin factura
+          </Button>
+          <Button variant="primary" size="md" leftIcon={<Plus size={18} aria-hidden="true" />} onClick={openAddModal}>
+            Nuevo lote
+          </Button>
+        </div>
       </div>
 
-      {/* Modal sin factura */}
+      {error && <div className={lq.error} role="alert">{error}</div>}
+
+      <SelectableTable
+        rows={lotes}
+        columns={columns}
+        actions={bulkActions}
+        isSelectable={(r) => r.estado === "A" || r.estado === "C"}
+        emptyMessage="Sin lotes que coincidan con los filtros."
+        loading={loading}
+        onActionComplete={fetchLotes}
+      />
+
       {addSfOpen && (
-        <div
-          className={styles.modalBackdrop}
-          role="dialog"
-          aria-modal="true"
-          onClick={() => !addingSf && setAddSfOpen(false)}
-        >
-          <div
-            className={styles.modalCard}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className={styles.modalHeader}>
-              <h3>Nuevo Lote Sin Factura</h3>
-              <button
-                className={styles.modalClose}
-                onClick={() => setAddSfOpen(false)}
-                aria-label="Cerrar"
-              >
-                ✕
-              </button>
-            </div>
-            <div className={styles.modalBody}>
-              <div className={styles.formRow}>
-                <label className={styles.formLabel}>Obra Social</label>
-                <AppSearchSelect
-                  options={obras.map((o) => ({
-                    id: String(o.nro_obra_social),
-                    label: `${o.nro_obra_social} - ${o.nombre}`,
-                  }))}
-                  value={addSfOs || null}
-                  onChange={(val) => setAddSfOs(val ? String(val) : "")}
-                  disabled={obrasLoading || addingSf}
-                  loading={obrasLoading}
-                />
-              </div>
-              <div className={styles.formRow}>
-                <label className={styles.formLabel}>Mes</label>
-                <select
-                  className={styles.formSelect}
-                  value={addSfMes}
-                  onChange={(e) => setAddSfMes(e.target.value)}
-                  disabled={addingSf}
-                >
-                  <option value="">Seleccioná un mes…</option>
-                  {MESES.map((m, i) => (
-                    <option key={i + 1} value={i + 1}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className={styles.formRow}>
-                <label className={styles.formLabel}>Año</label>
-                <select
-                  className={styles.formSelect}
-                  value={addSfAnio}
-                  onChange={(e) => setAddSfAnio(e.target.value)}
-                  disabled={addingSf}
-                >
-                  <option value="">Seleccioná un año…</option>
-                  {YEARS.map((y) => (
-                    <option key={y} value={y}>
-                      {y}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div className={styles.modalActions}>
-              <Button
-                variant="secondary"
-                onClick={() => setAddSfOpen(false)}
-                disabled={addingSf}
-              >
+        <Dialogo
+          titulo="Nuevo lote sin factura"
+          icono={Plus}
+          onClose={addingSf ? undefined : () => setAddSfOpen(false)}
+          acciones={
+            <>
+              <Button variant="ghost" onClick={() => setAddSfOpen(false)} disabled={addingSf}>
                 Cancelar
               </Button>
               <Button
@@ -633,236 +496,148 @@ const DebitosCreditos: React.FC = () => {
                 onClick={handleAddSinFactura}
                 disabled={addingSf || !addSfOs || !addSfMes || !addSfAnio}
               >
-                {addingSf ? "Creando…" : "Crear Lote"}
+                {addingSf ? "Creando…" : "Crear lote"}
               </Button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        >
+          <DialogoCampo rotulo="Obra social">
+            <AppSearchSelect
+              options={opcionesOs}
+              value={addSfOs || null}
+              onChange={(val) => setAddSfOs(val ? String(val) : "")}
+              disabled={obrasLoading || addingSf}
+              loading={obrasLoading}
+            />
+          </DialogoCampo>
+          <DialogoCampo rotulo="Mes" htmlFor="sf-mes">
+            <select id="sf-mes" value={addSfMes} onChange={(e) => setAddSfMes(e.target.value)} disabled={addingSf}>
+              <option value="">Elegí un mes…</option>
+              {MESES.map((m, i) => (
+                <option key={i + 1} value={i + 1}>{m}</option>
+              ))}
+            </select>
+          </DialogoCampo>
+          <DialogoCampo rotulo="Año" htmlFor="sf-anio">
+            <select id="sf-anio" value={addSfAnio} onChange={(e) => setAddSfAnio(e.target.value)} disabled={addingSf}>
+              <option value="">Elegí un año…</option>
+              {YEARS.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </DialogoCampo>
+        </Dialogo>
       )}
 
-      {/* Modal eliminar lote */}
       {deleteTarget && (
-        <div
-          className={styles.modalBackdrop}
-          role="dialog"
-          aria-modal="true"
-          onClick={closeDeleteModal}
-        >
-          <div
-            className={styles.modalCard}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className={styles.modalHeader}>
-              <h3>
-                {deleteStep === 1 ? "Eliminar Lote" : "Confirmar eliminación"}
-              </h3>
-              <button
-                className={styles.modalClose}
-                onClick={closeDeleteModal}
-                aria-label="Cerrar"
-              >
-                ✕
-              </button>
-            </div>
-
-            {deleteStep === 1 && (
+        <Dialogo
+          titulo={deleteStep === 1 ? "Eliminar lote" : "Confirmar eliminación"}
+          icono={Trash2}
+          peligro
+          onClose={deleting ? undefined : closeDeleteModal}
+          acciones={
+            deleteStep === 1 ? (
               <>
-                <div className={styles.modalBody}>
-                  <p style={{ margin: 0 }}>
-                    Estás por eliminar el siguiente lote:
-                  </p>
-                  <div className={styles.deleteInfoBox}>
-                    <div className={styles.deleteInfoRow}>
-                      <span className={styles.deleteInfoLabel}>
-                        Obra Social
-                      </span>
-                      <span>
-                        {deleteTarget.obra_social_nombre} (#
-                        {deleteTarget.obra_social_id})
-                      </span>
-                    </div>
-                    <div className={styles.deleteInfoRow}>
-                      <span className={styles.deleteInfoLabel}>Período</span>
-                      <span>
-                        {mesLabel(deleteTarget.mes_periodo)}{" "}
-                        {deleteTarget.anio_periodo}
-                      </span>
-                    </div>
-                    <div className={styles.deleteInfoRow}>
-                      <span className={styles.deleteInfoLabel}>Tipo</span>
-                      <span>
-                        {deleteTarget.tipo === "sin_factura"
-                          ? "Sin Factura"
-                          : "Normal"}
-                      </span>
-                    </div>
-                    {deleteTarget.nro_factura && (
-                      <div className={styles.deleteInfoRow}>
-                        <span className={styles.deleteInfoLabel}>
-                          Nro. Factura
-                        </span>
-                        <span style={{ fontFamily: "monospace" }}>
-                          {deleteTarget.nro_factura}
-                        </span>
-                      </div>
-                    )}
-                    <div className={styles.deleteInfoRow}>
-                      <span className={styles.deleteInfoLabel}>Estado</span>
-                      <span
-                        className={`${styles.estadoBadge} ${estadoClass(deleteTarget.estado)}`}
-                      >
+                <Button variant="ghost" onClick={closeDeleteModal}>Cancelar</Button>
+                <Button variant="danger" onClick={() => setDeleteStep(2)}>Continuar</Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" onClick={() => setDeleteStep(1)} disabled={deleting}>Volver</Button>
+                <Button variant="danger" onClick={handleDeleteConfirm} disabled={deleting}>
+                  {deleting ? "Eliminando…" : "Eliminar definitivamente"}
+                </Button>
+              </>
+            )
+          }
+        >
+          {deleteStep === 1 ? (
+            <>
+              <DialogoDatos
+                filas={[
+                  { rotulo: "Obra social", valor: `${deleteTarget.obra_social_nombre} (#${deleteTarget.obra_social_id})` },
+                  { rotulo: "Período", valor: `${mesLabel(deleteTarget.mes_periodo)} ${deleteTarget.anio_periodo}` },
+                  { rotulo: "Tipo", valor: deleteTarget.tipo === "sin_factura" ? "Sin factura" : "Normal" },
+                  ...(deleteTarget.nro_factura
+                    ? [{ rotulo: "Factura", valor: <span className={lq.mono}>{deleteTarget.nro_factura}</span> }]
+                    : []),
+                  {
+                    rotulo: "Estado",
+                    valor: (
+                      <span className={`${lq.estado} ${estadoClass(deleteTarget.estado)}`}>
                         {estadoLabel(deleteTarget.estado)}
                       </span>
-                    </div>
-                  </div>
-                  <div className={styles.deleteWarning}>
-                    <strong>⚠ Atención:</strong> todos los ajustes (débitos y
-                    créditos) asociados a este lote serán eliminados de forma
-                    permanente y no podrán recuperarse.
-                  </div>
-                </div>
-                <div className={styles.modalActions}>
-                  <Button variant="secondary" onClick={closeDeleteModal}>
-                    Cancelar
-                  </Button>
-                  <Button variant="danger" onClick={() => setDeleteStep(2)}>
-                    Continuar
-                  </Button>
-                </div>
-              </>
-            )}
-
-            {deleteStep === 2 && (
-              <>
-                <div className={styles.modalBody}>
-                  <p style={{ margin: 0 }}>
-                    ¿Confirmás que querés eliminar definitivamente el lote de{" "}
-                    <strong>{deleteTarget.obra_social_nombre}</strong> —{" "}
-                    <strong>
-                      {mesLabel(deleteTarget.mes_periodo)}{" "}
-                      {deleteTarget.anio_periodo}
-                    </strong>
-                    ?
-                  </p>
-                  <div className={styles.deleteWarning}>
-                    Esta acción <strong>no se puede deshacer</strong>. Todos los
-                    ajustes asociados a este lote se eliminarán permanentemente.
-                  </div>
-                </div>
-                <div className={styles.modalActions}>
-                  <Button
-                    variant="secondary"
-                    onClick={() => setDeleteStep(1)}
-                    disabled={deleting}
-                  >
-                    Volver
-                  </Button>
-                  <Button
-                    variant="danger"
-                    onClick={handleDeleteConfirm}
-                    disabled={deleting}
-                  >
-                    {deleting ? "Eliminando…" : "Eliminar definitivamente"}
-                  </Button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
+                    ),
+                  },
+                ]}
+              />
+              <DialogoAviso tono="peligro">
+                Se borran para siempre todos los débitos y créditos de este lote.
+              </DialogoAviso>
+            </>
+          ) : (
+            <>
+              <p>
+                ¿Eliminar definitivamente el lote de <strong>{deleteTarget.obra_social_nombre}</strong>,{" "}
+                <strong>{mesLabel(deleteTarget.mes_periodo)} {deleteTarget.anio_periodo}</strong>?
+              </p>
+              <DialogoAviso tono="peligro">No se puede deshacer.</DialogoAviso>
+            </>
+          )}
+        </Dialogo>
       )}
 
-      {/* Modal agregar */}
       {addOpen && (
-        <div
-          className={styles.modalBackdrop}
-          role="dialog"
-          aria-modal="true"
-          onClick={() => !adding && setAddOpen(false)}
-        >
-          <div
-            className={styles.modalCard}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className={styles.modalHeader}>
-              <h3>Nuevo Lote D/C</h3>
-              <button
-                className={styles.modalClose}
-                onClick={() => setAddOpen(false)}
-                aria-label="Cerrar"
-              >
-                ✕
-              </button>
-            </div>
-            <div className={styles.modalBody}>
-              <div className={styles.formRow}>
-                <label className={styles.formLabel}>Obra Social</label>
-                <AppSearchSelect
-                  options={obras.map((o) => ({
-                    id: String(o.nro_obra_social),
-                    label: `${o.nro_obra_social} - ${o.nombre}`,
-                  }))}
-                  value={addOs || null}
-                  onChange={(val) => handleAddOsChange(val ? String(val) : "")}
-                  disabled={obrasLoading || adding}
-                  loading={obrasLoading}
-                />
-              </div>
-              <div className={styles.formRow}>
-                <label className={styles.formLabel}>Período disponible</label>
-                {!addOs ? (
-                  <span className={styles.hintText}>
-                    Seleccioná una obra social primero.
-                  </span>
-                ) : periodosLoading ? (
-                  <span className={styles.hintText}>Cargando períodos…</span>
-                ) : (
-                  <select
-                    className={styles.formSelect}
-                    value={
-                      periodosAnio && periodosMes
-                        ? `${periodosAnio}-${periodosMes}`
-                        : ""
-                    }
-                    onChange={handlePeriodoChange}
-                    disabled={adding}
-                  >
-                    <option value="">Seleccioná un período…</option>
-                    {periodos.map((p) => (
-                      <option
-                        key={`${p.ANIO}-${p.MES}`}
-                        value={`${p.ANIO}-${p.MES}`}
-                      >
-                        {mesLabel(p.MES)} {p.ANIO}
-                        {p.NRO_FACT_1
-                          ? ` — ${p.NRO_FACT_1}${p.NRO_FACT_2 ? `-${p.NRO_FACT_2}` : ""}`
-                          : ""}
-                      </option>
-                    ))}
-                    {periodos.length === 0 && (
-                      <option disabled>Sin períodos disponibles</option>
-                    )}
-                  </select>
-                )}
-              </div>
-            </div>
-            <div className={styles.modalActions}>
-              <Button
-                variant="secondary"
-                onClick={() => setAddOpen(false)}
-                disabled={adding}
-              >
-                Cancelar
-              </Button>
+        <Dialogo
+          titulo="Nuevo lote de débitos y créditos"
+          icono={Plus}
+          onClose={adding ? undefined : () => setAddOpen(false)}
+          acciones={
+            <>
+              <Button variant="ghost" onClick={() => setAddOpen(false)} disabled={adding}>Cancelar</Button>
               <Button
                 variant="primary"
                 onClick={handleAdd}
                 disabled={adding || !addOs || !periodosMes || !periodosAnio}
               >
-                {adding ? "Creando…" : "Crear / Abrir Lote"}
+                {adding ? "Creando…" : "Crear o abrir lote"}
               </Button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        >
+          <DialogoCampo rotulo="Obra social">
+            <AppSearchSelect
+              options={opcionesOs}
+              value={addOs || null}
+              onChange={(val) => handleAddOsChange(val ? String(val) : "")}
+              disabled={obrasLoading || adding}
+              loading={obrasLoading}
+            />
+          </DialogoCampo>
+          <DialogoCampo rotulo="Período" htmlFor="dc-periodo">
+            {!addOs ? (
+              <p className={lq.tenue}>Elegí primero la obra social.</p>
+            ) : periodosLoading ? (
+              <p className={lq.tenue}>Cargando períodos…</p>
+            ) : (
+              <select
+                id="dc-periodo"
+                value={periodosAnio && periodosMes ? `${periodosAnio}-${periodosMes}` : ""}
+                onChange={handlePeriodoChange}
+                disabled={adding}
+              >
+                <option value="">Elegí un período…</option>
+                {periodos.map((p) => (
+                  <option key={`${p.ANIO}-${p.MES}`} value={`${p.ANIO}-${p.MES}`}>
+                    {mesLabel(p.MES)} {p.ANIO}
+                    {p.NRO_FACT_1 ? ` — ${p.NRO_FACT_1}${p.NRO_FACT_2 ? `-${p.NRO_FACT_2}` : ""}` : ""}
+                  </option>
+                ))}
+                {periodos.length === 0 && <option disabled>Sin períodos disponibles</option>}
+              </select>
+            )}
+          </DialogoCampo>
+        </Dialogo>
       )}
     </div>
   );

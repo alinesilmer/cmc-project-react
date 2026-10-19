@@ -5,12 +5,14 @@ import { useCallback, useState } from "react";
 import { saveAs } from "@/app/shared/lib/fileSaver";
 
 import type { ExportColumnKey, MedicoRow } from "./medicosExport";
-import { DEFAULT_HEADERS, mapUIToQuery, pickValue } from "./medicosExport";
+import { DEFAULT_HEADERS, agruparPorEspecialidad, mapUIToQuery, pickValue } from "./medicosExport";
+import { pdfPorGrupos } from "@/app/pages/AfiliadosPorObraSocialPage/pdfBuilder";
 
 import { getJSON } from "@/app/shared/lib/http";
 import type { FilterSelection } from "../../types/filters";
 
-type ExportFormat = "xlsx" | "csv";
+/** `pdf` es siempre el listado por especialidad, como el de Padrones. */
+type ExportFormat = "xlsx" | "csv" | "pdf";
 
 function safeStr(v: unknown) {
   return v == null ? "" : String(v);
@@ -67,22 +69,12 @@ export function useMedicosExport() {
           return false;
         }
 
-        // build backend params
-        const params = {
+        // Un solo pedido: la API ordena sólo por nombre y, por tandas, los homónimos podrían repetirse o faltar.
+        const rows = await getJSON<MedicoRow[]>("/api/medicos/all", {
           ...mapUIToQuery(filters),
-          limit: 2000,
+          limit: 20000,
           skip: 0,
-        };
-
-        const payload = await getJSON<any>("/api/medicos/all", params);
-
-        const rows: MedicoRow[] = Array.isArray(payload)
-          ? payload
-          : Array.isArray(payload?.items)
-            ? payload.items
-            : Array.isArray(payload?.data)
-              ? payload.data
-              : [];
+        });
 
         const filenameBase = "Medicos";
         const now = new Date();
@@ -92,6 +84,20 @@ export function useMedicosExport() {
           const headers = cols.map((k) => DEFAULT_HEADERS[k] ?? k);
           const dataRows = rows.map((r) => cols.map((k) => pickValue(r, k)));
           downloadCSV(`${filenameBase}.csv`, headers, dataRows);
+          return true;
+        }
+
+        if (format === "pdf") {
+          const blob = await pdfPorGrupos({
+            encabezado: "Todos los socios",
+            total: rows.length,
+            head: cols.map((k) => DEFAULT_HEADERS[k] ?? k),
+            grupos: agruparPorEspecialidad(rows).map((g) => ({
+              titulo: g.nombre,
+              filas: g.medicos.map((r) => cols.map((k) => pickValue(r, k))),
+            })),
+          });
+          saveAs(blob, `${filenameBase} por especialidad.pdf`);
           return true;
         }
 
@@ -107,10 +113,7 @@ export function useMedicosExport() {
           views: [{ state: "frozen", ySplit: 6 }], // freeze below header row
         });
 
-        // Row layout:
-        // 1..4 header zone (logo + title)
-        // 5 metadata
-        // 6 column headers
+        // Row layout: 1..4 header zone (logo + title) 5 metadata 6 column headers
         const HEADER_ROW = 6;
 
         ws.getRow(1).height = 22;

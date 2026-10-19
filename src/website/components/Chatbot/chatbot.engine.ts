@@ -1,6 +1,4 @@
-/**
- * Motor de intents: lógica pura, sin efectos ni UI.
- */
+/** Motor de intents: lógica pura, sin efectos ni UI. */
 
 import { INTENTS } from "./chatbot.config";
 import { WHATSAPP_NUMBERS, type DepartamentoWhatsApp } from "./chatbot.enlaces";
@@ -33,10 +31,7 @@ const OS_STOP_WORDS = new Set([
   "pagar", "pago",
 ]);
 
-/**
- * El posible nombre de una obra social dentro de un mensaje: lo que queda al
- * sacar las palabras de relleno. Vacío si no queda nada.
- */
+/** El posible nombre de una obra social dentro de un mensaje: lo que queda al sacar las palabras de relleno. */
 export function extractObrasSocialesQuery(mensaje: string): string {
   return normalizar(mensaje)
     .split(" ")
@@ -44,13 +39,7 @@ export function extractObrasSocialesQuery(mensaje: string): string {
     .join(" ");
 }
 
-/**
- * Limpia lo que escribió el usuario: sin espacios de más y con tope de largo.
- *
- * No escapa HTML: el texto se muestra como nodo de texto de React, que ya lo
- * escapa. Escaparlo acá además hacía que quien escribía «<» viera «&lt;» en su
- * propio mensaje.
- */
+/** Limpia lo que escribió el usuario: sin espacios de más y con tope de largo. */
 export function sanitizeInput(mensaje: string): string {
   return mensaje.replace(/\s+/g, " ").trim().slice(0, MAX_MENSAJE);
 }

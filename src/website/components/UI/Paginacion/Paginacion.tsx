@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import styles from "./Paginacion.module.scss";
+import Button from "@/website/components/UI/Button/Button";
 
 type Props = {
   pagina: number;
@@ -17,16 +18,13 @@ function paginasVisibles(actual: number, total: number): (number | "…")[] {
   return [1, "…", actual - 1, actual, actual + 1, "…", total];
 }
 
-/**
- * Paginador del sitio. Lo usan los listados públicos y el administrador de
- * publicaciones, que tenía su propia versión con otra lógica de rango.
- */
+/** Paginador del sitio. Lo usan los listados públicos y el administrador de publicaciones, que tenía su propia versión con otra lógica de rango. */
 export default function Paginacion({ pagina, totalPaginas, onCambiar, etiqueta }: Props) {
   if (totalPaginas <= 1) return null;
 
   return (
     <nav className={styles.paginacion} aria-label={etiqueta}>
-      <button
+      <Button variant="plano"
         type="button"
         className={styles.boton}
         onClick={() => onCambiar(pagina - 1)}
@@ -34,7 +32,7 @@ export default function Paginacion({ pagina, totalPaginas, onCambiar, etiqueta }
         aria-label="Página anterior"
       >
         <ChevronLeft aria-hidden="true" />
-      </button>
+      </Button>
 
       {paginasVisibles(pagina, totalPaginas).map((p, i) =>
         p === "…" ? (
@@ -42,7 +40,7 @@ export default function Paginacion({ pagina, totalPaginas, onCambiar, etiqueta }
             …
           </span>
         ) : (
-          <button
+          <Button variant="plano"
             key={p}
             type="button"
             className={`${styles.boton} ${p === pagina ? styles.activa : ""}`}
@@ -51,11 +49,11 @@ export default function Paginacion({ pagina, totalPaginas, onCambiar, etiqueta }
             aria-label={`Página ${p}`}
           >
             {p}
-          </button>
+          </Button>
         )
       )}
 
-      <button
+      <Button variant="plano"
         type="button"
         className={styles.boton}
         onClick={() => onCambiar(pagina + 1)}
@@ -63,7 +61,7 @@ export default function Paginacion({ pagina, totalPaginas, onCambiar, etiqueta }
         aria-label="Página siguiente"
       >
         <ChevronRight aria-hidden="true" />
-      </button>
+      </Button>
     </nav>
   );
 }

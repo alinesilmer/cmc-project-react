@@ -1,4 +1,4 @@
-export const LARGO_MINIMO = 6;
+const LARGO_MINIMO = 6;
 
 export type DatosPassword = { actual: string; nueva: string; repetir: string };
 

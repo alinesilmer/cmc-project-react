@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, Download, Info, Search, X } from "lucide-react";
+import { AlertTriangle, Coins, Info } from "lucide-react";
 
-import Button from "@/app/components/ui/Button/Button";
+import Caja, { Cajas } from "@/app/components/ui/Caja/Caja";
+import Franja from "@/app/components/layout/Franja/Franja";
 import { fetchBoletinMedico, type ItemBoletin } from "@/app/pages/BoletinMedico/boletinMedico.api";
 import { normalizar } from "@/app/pages/BoletinMedico/boletinMedico.formato";
 import { descargarBoletinGalenos } from "./boletinValoresGalenos.pdf";
@@ -10,6 +11,8 @@ import { indexarValores, ordenarFilas, type Orden } from "./valoresGalenos";
 import ListaValores from "./ListaValores";
 import SelectorValor from "./SelectorValor";
 import s from "./BoletinValoresGalenos.module.scss";
+import SearchField from "@/app/components/ui/SearchField/SearchField";
+import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 
 const SIN_ITEMS: ItemBoletin[] = [];
 
@@ -18,13 +21,7 @@ const ORDENES: { id: Orden; label: string }[] = [
   { id: "nombre", label: "A – Z" },
 ];
 
-/**
- * Boletín de galenos, para el Colegio.
- *
- * Se elige un valor —Galeno Quirúrgico, Gasto Radiológico— y la pantalla
- * muestra una sola lista: cada obra social y cuánto paga. Lee lo mismo que
- * «Valores del boletín» del socio y comparte su caché.
- */
+/** Boletín de galenos, para el Colegio. */
 export default function BoletinValoresGalenos() {
   const [elegido, setElegido] = useState<string | null>(null);
   const [orden, setOrden] = useState<Orden>("valor");
@@ -71,24 +68,7 @@ export default function BoletinValoresGalenos() {
     }
   };
 
-  const encabezado = (
-    <header className={s.encabezado}>
-      <div>
-        <h1 className={s.titulo}>Boletín de galenos</h1>
-        <p className={s.bajada}>Elegí un valor y compará todas las obras sociales.</p>
-      </div>
-      <Button
-        type="button"
-        variant="primary"
-        isLoading={bajando}
-        disabled={items.length === 0}
-        onClick={() => void bajar()}
-        leftIcon={<Download size={17} />}
-      >
-        Descargar PDF
-      </Button>
-    </header>
-  );
+  const encabezado = <Franja titulo="Boletín de galenos" icono={Coins} />;
 
   if (cargando) {
     return (
@@ -131,50 +111,50 @@ export default function BoletinValoresGalenos() {
     <div className={s.pantalla}>
       {encabezado}
 
-      <SelectorValor tipos={indice.tipos} elegido={codigo} onElegir={setElegido} />
-
-      <div className={s.barraLista}>
-        <h2 className={s.pregunta}>
-          {tipo.nombre}: <span>cuánto paga cada obra social</span>
-        </h2>
-
-        <div className={s.buscador}>
-          <Search size={17} className={s.lupa} aria-hidden="true" />
-          <input
-            id="buscar-obra-social"
-            type="search"
-            className={s.campo}
-            placeholder="Buscar obra social o número"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            aria-label="Buscar obra social por nombre o número"
-            autoComplete="off"
+      <Cajas>
+        <Caja titulo="Configuración">
+          <SelectorValor tipos={indice.tipos} elegido={codigo} onElegir={setElegido} />
+          <div className={s.orden} role="group" aria-label="Orden de la lista">
+            {ORDENES.map(({ id, label }) => (
+              <button
+                key={id}
+                type="button"
+                className={orden === id ? `${s.opcion} ${s.opcionActiva}` : s.opcion}
+                aria-pressed={orden === id}
+                onClick={() => setOrden(id)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </Caja>
+        <Caja titulo="Descargas">
+          <BotonDescarga
+            formato="pdf"
+            onClick={() => void bajar()}
+            disabled={items.length === 0}
+            cargando={bajando}
           />
-          {busqueda && (
-            <button type="button" className={s.limpiar} onClick={() => setBusqueda("")} aria-label="Borrar la búsqueda">
-              <X size={15} />
-            </button>
-          )}
-        </div>
+        </Caja>
+      </Cajas>
 
-        <div className={s.orden} role="group" aria-label="Orden de la lista">
-          {ORDENES.map(({ id, label }) => (
-            <button
-              key={id}
-              type="button"
-              className={orden === id ? `${s.opcion} ${s.opcionActiva}` : s.opcion}
-              aria-pressed={orden === id}
-              onClick={() => setOrden(id)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
+      <SearchField
+        id="buscar-obra-social"
+        placeholder="Buscar obra social o número"
+        value={busqueda}
+        onChange={(e) => setBusqueda(e.target.value)}
+        onClear={() => setBusqueda("")}
+        ariaLabel="Buscar obra social por nombre o número"
+      />
 
-      <p className={s.conteo} aria-live="polite">
-        {busqueda ? `${visibles.length} de ${todas.length}` : `${todas.length} obras sociales`}
-      </p>
+      <h2 className={s.pregunta}>
+        {tipo.nombre}
+        {busqueda && (
+          <span aria-live="polite">
+            {visibles.length} de {todas.length}
+          </span>
+        )}
+      </h2>
 
       {visibles.length === 0 ? (
         <p className={s.vacio} role="status">

@@ -1,0 +1,31 @@
+@use "@/app/styles/all.scss" as *;
+
+.boton {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 2.375rem;
+  height: 2.375rem;
+  padding: 0;
+  color: $gray-600;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: $radio-md;
+  cursor: pointer;
+  transition: color 0.15s, background-color 0.15s, border-color 0.15s;
+
+  &:hover {
+    color: $primary-blue;
+    background: $gray-100;
+    border-color: $gray-200;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $accent-blue;
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}

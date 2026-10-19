@@ -1,342 +1,271 @@
 @use "@/app/styles/all.scss" as *;
 
-// ─── Page layout ──────────────────────────────────────────────────────────────
+// Bandeja de solicitudes de cambio, en clave editorial: título en grande sobre el fondo.
+
+// ─── Página ───────────────────────────────────────────────────────────────────
 
 .container {
-  padding: $spacing-8;
+  width: 100%;
+  max-width: 1312px;
+  margin: 0 auto;
+  padding: $spacing-8 $spacing-12 $spacing-12;
   display: flex;
   flex-direction: column;
   gap: $spacing-6;
   min-height: 100%;
 
-  @media (max-width: $breakpoint-md) {
-    padding: $spacing-5;
-    gap: $spacing-4;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-4;
-  }
+  @media (max-width: 1200px) { padding: $spacing-8 $spacing-8 $spacing-10; }
+  @media (max-width: $breakpoint-md) { padding: $spacing-5; gap: $spacing-4; }
+  @media (max-width: $breakpoint-sm) { padding: $spacing-4; }
 }
-
-// ─── Header ───────────────────────────────────────────────────────────────────
 
 .header {
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: space-between;
   gap: $spacing-4;
   flex-wrap: wrap;
 }
 
-.headerLeft {
-  display: flex;
-  align-items: center;
-  gap: $spacing-4;
-}
+.headerLeft { display: flex; align-items: flex-end; gap: $spacing-4; min-width: 0; }
 
-.headerIcon {
-  color: $primary-blue;
-  flex-shrink: 0;
-}
+// El título ya dice qué pantalla es: el ícono de al lado sobraba.
+.headerIcon { display: none; }
 
 .title {
-  font-size: $font-size-4xl;
-  font-weight: $font-weight-bold;
-  color: $gray-900;
   margin: 0;
-  line-height: 1.2;
-
-  @media (max-width: $breakpoint-md) {
-    font-size: $font-size-3xl;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    font-size: $font-size-2xl;
-  }
+  font-family: $fuente-titulos;
+  font-size: clamp(1.9rem, 4.4vw, 3.1rem);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  color: $primary-blue;
 }
 
-.subtitle {
-  font-size: $font-size-sm;
-  color: $gray-500;
-  margin: $spacing-1 0 0;
-  max-width: 62ch;
-}
-
-// ─── Error banner ─────────────────────────────────────────────────────────────
+.subtitle { margin: $spacing-1 0 0; font-size: $font-size-sm; color: $gray-500; }
 
 .errorBanner {
-  padding: $spacing-4 $spacing-5;
-  background-color: #fff0f0;
-  border: 1px solid #fca5a5;
-  border-radius: $border-radius-md;
-  color: $danger-red;
-  font-size: $font-size-base;
-}
-
-// ─── Tabs ─────────────────────────────────────────────────────────────────────
-
-.tabs {
-  display: flex;
-  gap: $spacing-2;
-  flex-wrap: wrap;
-  border-bottom: 1px solid $gray-200;
-}
-
-.tab {
-  display: inline-flex;
-  align-items: center;
-  gap: $spacing-2;
+  border-radius: $radio-md;
   padding: $spacing-3 $spacing-4;
-  border: none;
-  border-bottom: 2px solid transparent;
-  background: none;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
-  color: $gray-600;
-  cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
-
-  &:hover {
-    color: $primary-blue;
-  }
-}
-
-.tabActive {
-  color: $primary-blue;
-  border-bottom-color: $primary-blue;
-  font-weight: $font-weight-semibold;
-}
-
-.tabBadge {
-  display: inline-block;
-  min-width: 20px;
-  padding: 1px $spacing-2;
-  border-radius: $border-radius-xl;
   background-color: $gray-100;
-  color: $gray-600;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
-  text-align: center;
+  border-left: 3px solid $danger-red;
+  color: $danger-red;
+  font-size: $font-size-sm;
 }
 
-.tabBadgeAlert {
-  background-color: rgba($warning-orange, 0.16);
-  color: $warning-orange;
-}
+// ─── Estados ──────────────────────────────────────────────────────────────────
 
-// ─── Lista de tarjetas ────────────────────────────────────────────────────────
+// Una barra continua; en pantallas chicas scrollea de costado.
+// ─── Solicitudes ──────────────────────────────────────────────────────────────
 
-.list {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-4;
-}
+.list { display: flex; flex-direction: column; gap: $spacing-4; }
 
 .card {
+  border-radius: $radio-md;
   display: flex;
   flex-direction: column;
   gap: $spacing-4;
-  padding: $spacing-5;
-  background-color: $white;
+  padding: $spacing-5 $spacing-6;
+  background: $white;
   border: 1px solid $gray-200;
-  border-radius: $border-radius-md;
-  box-shadow: $shadow-sm;
+  border-left: 4px solid $primary-blue;
+  animation: $anim-fade-in 0.3s ease-out;
+
+  @media (max-width: $breakpoint-sm) { padding: $spacing-4; }
 }
 
 .cardHead {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: $spacing-4;
-  flex-wrap: wrap;
-}
-
-.doctor {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.doctorName {
-  font-size: $font-size-lg;
-  font-weight: $font-weight-semibold;
-  color: $gray-900;
-}
-
-.doctorMeta {
-  font-size: $font-size-xs;
-  color: $gray-500;
-}
-
-.cardHeadRight {
-  display: flex;
-  align-items: center;
-  gap: $spacing-2;
-  flex-wrap: wrap;
-}
-
-.campoChip {
-  display: inline-block;
-  padding: 2px $spacing-3;
-  border-radius: $border-radius-xl;
-  background-color: $secondary-blue;
-  color: $primary-blue-dark;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
-  white-space: nowrap;
-}
-
-.badge {
-  display: inline-block;
-  padding: 2px $spacing-3;
-  border-radius: $border-radius-xl;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
-  white-space: nowrap;
-}
-
-.badge_pendiente {
-  background-color: rgba($warning-orange, 0.14);
-  color: $warning-orange;
-}
-
-.badge_aprobada {
-  background-color: rgba($success-green, 0.14);
-  color: $success-green;
-}
-
-.badge_rechazada {
-  background-color: #fff0f0;
-  color: $danger-red;
-}
-
-// ─── Valor actual → propuesto ─────────────────────────────────────────────────
-
-.values {
-  display: flex;
-  align-items: stretch;
   gap: $spacing-3;
   flex-wrap: wrap;
 }
 
+.doctor { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+.doctorName {
+  font-family: $fuente-titulos;
+  font-size: $font-size-2xl;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: $gray-900;
+}
+
+.doctorMeta { font-size: $font-size-sm; color: $gray-500; }
+
+.cardHeadRight { display: flex; align-items: center; gap: $spacing-4; flex-wrap: wrap; }
+
+.campoChip {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: $primary-blue;
+  white-space: nowrap;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  white-space: nowrap;
+
+  // Un punto cuadrado en vez de una pastilla de color.
+  &::before {
+    content: "";
+    width: 0.4375rem;
+    height: 0.4375rem;
+    background: currentColor;
+  }
+}
+
+.badge_pendiente { color: $tono-naranja-550; }
+.badge_aprobada { color: $tono-verde-550; }
+.badge_rechazada { color: $tono-rojo-500; }
+
+// ─── Valor actual → propuesto ─────────────────────────────────────────────────
+
+.cambiosLista { display: flex; flex-direction: column; gap: $spacing-3; }
+
+.values {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: $spacing-3;
+
+  // Con formulario completo, el nombre del campo encabeza su par de valores.
+  > .campoChip { grid-column: 1 / -1; }
+
+  @media (max-width: $breakpoint-sm) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .valueBox {
+  border-radius: $radio-md;
   display: flex;
   flex-direction: column;
   gap: $spacing-1;
-  flex: 1;
-  min-width: 160px;
+  min-width: 0;
   padding: $spacing-3 $spacing-4;
-  border-radius: $border-radius-md;
-  background-color: $gray-50;
-  border: 1px solid $gray-100;
+  background: $gray-50;
+  border: 1px solid $gray-200;
+
+  // El propuesto es lo que se está pidiendo: en el azul del sistema.
+  &:last-child {
+    background: $primary-blue;
+    border-color: $primary-blue;
+
+    .valueLabel { color: $primary-yellow; }
+  }
 }
 
 .valueLabel {
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
-  color: $gray-500;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  color: $gray-500;
 }
 
-.valueCurrent {
-  font-size: $font-size-base;
-  color: $gray-600;
-  word-break: break-word;
-}
-
+.valueCurrent,
 .valueProposed {
-  font-size: $font-size-base;
+  font-size: $font-size-lg;
   font-weight: $font-weight-semibold;
-  color: $primary-blue-dark;
-  word-break: break-word;
+  overflow-wrap: anywhere;
 }
+
+.valueCurrent { color: $gray-600; }
+.valueProposed { color: $white; }
 
 .valueArrow {
   align-self: center;
-  color: $gray-400;
-  flex-shrink: 0;
+  color: $primary-blue;
+
+  @media (max-width: $breakpoint-sm) { transform: rotate(90deg); justify-self: center; }
+}
+
+.avisoAplica {
+  border-radius: $radio-md;
+  margin: 0;
+  padding: $spacing-2 $spacing-3;
+  background: $primary-yellow-light;
+  border-left: 3px solid $primary-blue;
+  font-size: $font-size-sm;
+  color: $primary-yellow-dark;
 }
 
 .message {
   margin: 0;
-  padding: $spacing-3 $spacing-4;
-  border-left: 3px solid $gray-200;
+  padding-left: $spacing-4;
+  border-left: 2px solid $gray-300;
   font-size: $font-size-base;
+  line-height: 1.55;
   color: $gray-700;
-  line-height: 1.5;
   white-space: pre-wrap;
-  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
-// ─── Acciones ─────────────────────────────────────────────────────────────────
+// ─── Acciones y resolución ────────────────────────────────────────────────────
 
 .cardActions {
   display: flex;
   gap: $spacing-3;
   flex-wrap: wrap;
+  padding-top: $spacing-4;
+  border-top: 1px solid $gray-100;
 }
 
 .actionBtn {
+  border-radius: $radio-md;
   display: inline-flex;
   align-items: center;
   gap: $spacing-2;
-  padding: $spacing-2 $spacing-5;
-  border-radius: $border-radius-md;
+  min-height: 2.5rem;
+  padding: 0 $spacing-5;
   border: 1px solid transparent;
-  font-size: $font-size-sm;
+  font-family: inherit;
+  font-size: $font-size-base;
   font-weight: $font-weight-semibold;
   cursor: pointer;
-  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 
-  &:disabled {
-    opacity: 0.5;
-    cursor: default;
-  }
+  &:disabled { opacity: 0.5; cursor: default; }
 }
 
 .approveBtn {
-  background-color: $success-green;
+  background: $primary-blue;
+  border-color: $primary-blue;
   color: $white;
 
-  &:hover:not(:disabled) {
-    filter: brightness(0.94);
-  }
+  &:hover:not(:disabled) { background: $primary-blue-darker; border-color: $primary-blue-darker; }
 }
 
 .rejectBtn {
-  background-color: $white;
-  color: $danger-red;
-  border-color: $danger-red;
+  background: $white;
+  border-color: $gray-300;
+  color: $gray-700;
 
-  &:hover:not(:disabled) {
-    background-color: #fff0f0;
-  }
+  &:hover:not(:disabled) { background: $danger-red; border-color: $danger-red; color: $white; }
 }
 
 .resolution {
   display: flex;
   flex-direction: column;
   gap: $spacing-1;
-  padding-top: $spacing-2;
-  border-top: 1px dashed $gray-200;
+  padding-top: $spacing-4;
+  border-top: 1px solid $gray-100;
 }
 
-.resolutionMeta {
-  font-size: $font-size-xs;
-  color: $gray-500;
-}
+.resolutionMeta { font-size: $font-size-sm; color: $gray-500; }
 
-.resolutionText {
-  font-size: $font-size-sm;
-  color: $gray-700;
-  font-style: italic;
-  word-break: break-word;
-}
+.resolutionText { font-size: $font-size-base; font-style: italic; color: $gray-700; }
 
-// ─── States ───────────────────────────────────────────────────────────────────
+// ─── Estados de la lista ──────────────────────────────────────────────────────
 
 .loadingState,
 .emptyState {
@@ -348,36 +277,22 @@
   gap: $spacing-4;
   color: $gray-500;
   font-size: $font-size-base;
-  background-color: $white;
-  border: 1px solid $gray-200;
-  border-radius: $border-radius-md;
 
-  p {
-    text-align: center;
-    margin: 0;
-  }
+  p { text-align: center; margin: 0; }
 }
 
-.emptyIcon {
-  color: $gray-300;
-}
+.emptyIcon { color: $gray-300; }
 
 .spinner {
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   border: 3px solid $gray-200;
   border-top-color: $primary-blue;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: $anim-spin 0.8s linear infinite;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-// ─── Pagination ───────────────────────────────────────────────────────────────
+// ─── Paginación ───────────────────────────────────────────────────────────────
 
 .pagination {
   display: flex;
@@ -387,82 +302,70 @@
 }
 
 .pageBtn {
+  border-radius: $radio-md;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: $border-radius-md;
-  border: 1px solid $gray-300;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid $gray-200;
   background-color: $white;
-  color: $gray-700;
+  color: $gray-600;
   cursor: pointer;
   transition: background-color 0.15s, color 0.15s, border-color 0.15s;
 
   &:hover:not(:disabled) {
-    background-color: $secondary-blue;
-    color: $primary-blue;
+    background-color: $primary-blue;
+    color: $white;
     border-color: $primary-blue;
   }
 
-  &:disabled {
-    opacity: 0.4;
-    cursor: default;
-  }
+  &:disabled { opacity: 0.4; cursor: default; }
 }
 
 .pageInfo {
+  min-width: 6.875rem;
   font-size: $font-size-sm;
   color: $gray-600;
-  min-width: 110px;
   text-align: center;
 }
 
-// ─── Modal ────────────────────────────────────────────────────────────────────
+// ─── Modal de rechazo ─────────────────────────────────────────────────────────
 
-.modalBody {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-5;
-  padding: $spacing-2 0;
-}
+.modalBody { display: flex; flex-direction: column; gap: $spacing-4; }
 
 .confirmText {
   margin: 0;
   font-size: $font-size-base;
-  color: $gray-700;
   line-height: 1.5;
+  color: $gray-700;
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-2;
-}
+.field { display: flex; flex-direction: column; gap: $spacing-2; }
 
 .label {
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
-  color: $gray-700;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: $gray-600;
 }
 
-.required {
-  color: $danger-red;
-  margin-left: $spacing-1;
-}
+.required { color: $danger-red; margin-left: 2px; }
 
 .textarea {
+  border-radius: $radio-md;
   width: 100%;
-  padding: $spacing-3 $spacing-4;
+  min-height: 5.25rem;
+  padding: $spacing-3;
   border: 1px solid $gray-300;
-  border-radius: $border-radius-md;
-  font-size: $font-size-base;
+  font-size: $font-size-lg;
   font-family: inherit;
-  color: $gray-800;
+  line-height: 1.5;
+  color: $gray-900;
   background-color: $white;
   outline: none;
   resize: vertical;
-  min-height: 76px;
   transition: border-color 0.18s, box-shadow 0.18s;
   box-sizing: border-box;
 
@@ -471,39 +374,23 @@
     box-shadow: 0 0 0 3px rgba($primary-blue, 0.12);
   }
 
-  &::placeholder {
-    color: $gray-400;
-  }
+  &::placeholder { color: $gray-400; }
 }
 
 .inputError {
   border-color: $danger-red;
 
-  &:focus {
-    box-shadow: 0 0 0 3px rgba($danger-red, 0.12);
-  }
+  &:focus { box-shadow: 0 0 0 3px rgba($danger-red, 0.12); }
 }
 
 .fieldError {
   font-size: $font-size-xs;
-  color: $danger-red;
   font-weight: $font-weight-medium;
+  color: $danger-red;
 }
 
-/* ── Formulario completo (solicitudes con varios campos) ────────────────────
-   Una fila por campo, con el mismo "actual → propuesto" que ya se usaba para
-   la solicitud de un solo dato. */
-.cambiosLista {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
-.avisoAplica {
-  margin: 0.2rem 0 0;
-  font-size: 0.78rem;
-  color: #8a5b06;
-  background: #fdf3e0;
-  border: 1px solid #f5d9a8;
-  padding: 0.45rem 0.7rem;
+@media (prefers-reduced-motion: reduce) {
+  .card { animation: none; }
+  .tab,
+  .actionBtn { transition: none; }
 }

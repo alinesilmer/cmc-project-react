@@ -169,7 +169,6 @@ export const INTENTS_OBRAS_SOCIALES: Intent[] = [
       "Para consultar si una práctica requiere autorización previa, ingrese " +
       "al sector Normativas de nuestra página web, donde encontrará el " +
       "listado actualizado de prácticas y sus requerimientos.",
-    links: [{ label: "Ver Normativas", href: "/normativas" }],
   },
   {
     id: "consultar_valores_os",

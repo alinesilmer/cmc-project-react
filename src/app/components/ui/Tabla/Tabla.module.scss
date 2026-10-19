@@ -1,0 +1,30 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver Tabla.tsx. Los colores de la cabecera y de las filas alternadas salen de las reglas globales de `tema.scss`.
+
+:where(.tabla) {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+:where(.tabla) th {
+  padding: $spacing-4 $spacing-5;
+  font-family: $fuente-titulos;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0.03em;
+  text-align: left;
+  white-space: nowrap;
+}
+
+:where(.tabla) td {
+  padding: $spacing-4 $spacing-5;
+  font-size: $font-size-base;
+  color: $gray-800;
+  vertical-align: middle;
+  border-bottom: 1px solid $gray-200;
+}
+
+:where(.tabla) tbody tr:last-child td {
+  border-bottom: 0;
+}

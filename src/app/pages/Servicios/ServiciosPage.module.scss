@@ -1,18 +1,26 @@
 @use "@/app/styles/all.scss" as *;
 
 .container {
-  padding: $spacing-8;
+  // En variables porque la franja las necesita para salirse del relleno.
+  --lado: #{$spacing-12};
+  --arriba: #{$spacing-8};
+
+  padding: $spacing-8 $spacing-12;
   display: flex;
   flex-direction: column;
   gap: $spacing-8;
   min-height: 100%;
 
   @media (max-width: $breakpoint-md) {
+    --lado: #{$spacing-5};
+    --arriba: #{$spacing-5};
     padding: $spacing-5;
     gap: $spacing-6;
   }
 
   @media (max-width: $breakpoint-sm) {
+    --lado: #{$spacing-4};
+    --arriba: #{$spacing-4};
     padding: $spacing-4;
   }
 }
@@ -67,7 +75,7 @@
 .sectionTitle {
   font-size: $font-size-xl;
   font-weight: $font-weight-semibold;
-  color: $gray-800;
+  color: $primary-blue;
   margin: 0;
   padding-bottom: $spacing-3;
   border-bottom: 2px solid $gray-200;
@@ -81,8 +89,8 @@
 
 .errorBanner {
   padding: $spacing-4 $spacing-5;
-  background-color: #fff0f0;
-  border: 1px solid #fca5a5;
+  background-color: $gray-100;
+  border: 1px solid $tono-rojo-200;
   border-radius: $border-radius-md;
   color: $danger-red;
   font-size: $font-size-base;
@@ -96,7 +104,7 @@
 .searchWrap {
   position: relative;
   flex: 1;
-  max-width: 480px;
+  max-width: 30rem;
 }
 
 .searchIcon {
@@ -186,7 +194,7 @@
 }
 
 .checkCol {
-  width: 140px;
+  width: 8.75rem;
   text-align: center !important;
 }
 
@@ -198,8 +206,8 @@
 }
 
 .checkbox {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
   accent-color: $primary-blue;
   cursor: pointer;
 
@@ -261,8 +269,8 @@
 }
 
 .spinner {
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   border: 3px solid $gray-200;
   border-top-color: $primary-blue;
   border-radius: 50%;
@@ -270,8 +278,8 @@
 }
 
 .spinnerSm {
-  width: 14px;
-  height: 14px;
+  width: 0.875rem;
+  height: 0.875rem;
   border: 2px solid $gray-200;
   border-top-color: $primary-blue;
   border-radius: 50%;
@@ -296,8 +304,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   border-radius: $border-radius-md;
   border: 1px solid $gray-300;
   background-color: $white;
@@ -320,6 +328,6 @@
 .pageInfo {
   font-size: $font-size-sm;
   color: $gray-600;
-  min-width: 110px;
+  min-width: 6.875rem;
   text-align: center;
 }

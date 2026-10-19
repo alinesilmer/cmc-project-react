@@ -32,11 +32,7 @@ function BuscarSocio({ valor, onElegir }: { valor: number | null; onElegir: (n: 
   );
 }
 
-/**
- * Celda «Médico» de una fila en `elegir_socio`: selector entre los candidatos
- * de la matrícula (o buscador si no tiene ninguno) y la opción de descartar.
- * La elección vale sólo para esta fila.
- */
+/** Celda «Médico» de una fila en `elegir_socio`: selector entre los candidatos de la matrícula (o buscador si no tiene ninguno) y la opción de descartar. */
 export default function ElegirSocio({
   fila,
   valor,

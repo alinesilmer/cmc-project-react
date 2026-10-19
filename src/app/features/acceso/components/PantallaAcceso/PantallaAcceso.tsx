@@ -13,11 +13,7 @@ type Props = {
   children: ReactNode;
 };
 
-/**
- * El marco de las pantallas de acceso (login y cambio de contraseña): el
- * formulario a la izquierda y el panel azul a la derecha. En el celular el
- * panel queda como franja arriba del formulario.
- */
+/** El marco de las pantallas de acceso (login y cambio de contraseña): el formulario a la izquierda y el panel azul a la derecha. */
 export default function PantallaAcceso({ lema, destacados, children }: Props) {
   return (
     <div className={styles.pantalla}>

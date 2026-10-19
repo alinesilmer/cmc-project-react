@@ -18,10 +18,7 @@ const aparecer = {
   show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring" as const, stiffness: 320, damping: 26 } },
 };
 
-/**
- * Un requisito: ícono y dos o tres palabras. El texto completo —con la
- * aclaración, si la hay— aparece recién al tocarla.
- */
+/** Un requisito: ícono y dos o tres palabras. */
 export default function TarjetaRequisito({ item }: { item: Requisito }) {
   const Icono = item.icono;
   const importante = item.tags?.includes("importante");

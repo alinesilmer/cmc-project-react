@@ -4,6 +4,8 @@ import Button from "@/app/components/ui/Button/Button";
 import Card from "@/app/components/ui/Card/Card";
 import styles from "./tabs.module.scss";
 import { type Pago, fmt } from "../../types";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
+import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
 
 const GEN_URL = (pagoId: number) => `/api/pagos/${pagoId}/pago_medico_actualizado`;
 
@@ -172,7 +174,7 @@ const DetallePanel: React.FC<{ detalle: Detalle }> = ({ detalle }) => {
         {liquidaciones.length === 0 ? (
           <span style={{ fontSize: 12, color: "#94a3b8" }}>Sin liquidaciones.</span>
         ) : (
-          <table className={styles.table} style={{ fontSize: 12 }}>
+          <Tabla className={styles.table} style={{ fontSize: 12 }}>
             <thead>
               <tr>
                 <th>Obra Social</th>
@@ -219,7 +221,7 @@ const DetallePanel: React.FC<{ detalle: Detalle }> = ({ detalle }) => {
                 </React.Fragment>
               ))}
             </tbody>
-          </table>
+          </Tabla>
         )}
       </div>
 
@@ -231,7 +233,7 @@ const DetallePanel: React.FC<{ detalle: Detalle }> = ({ detalle }) => {
         {deducciones.length === 0 ? (
           <span style={{ fontSize: 12, color: "#94a3b8" }}>Sin deducciones.</span>
         ) : (
-          <table className={styles.table} style={{ fontSize: 12, maxWidth: 520 }}>
+          <Tabla className={styles.table} style={{ fontSize: 12, maxWidth: 520 }}>
             <thead>
               <tr>
                 <th>Concepto</th>
@@ -254,7 +256,7 @@ const DetallePanel: React.FC<{ detalle: Detalle }> = ({ detalle }) => {
                 <td className={`${styles.numCell} ${styles.negative}`}>-${fmt(detalle.deducciones.total)}</td>
               </tr>
             </tfoot>
-          </table>
+          </Tabla>
         )}
       </div>
     </div>
@@ -323,7 +325,7 @@ const TabVistaPreviaPago: React.FC<Props> = ({ pagoId }) => {
       {rows.length > 0 && (
         <Card className={styles.tableCard}>
           <div className={styles.tableWrap}>
-            <table className={styles.table}>
+            <Tabla className={styles.table}>
               <thead>
                 <tr>
                   <th style={{ width: 32 }} />
@@ -400,30 +402,41 @@ const TabVistaPreviaPago: React.FC<Props> = ({ pagoId }) => {
                   </tr>
                 </tfoot>
               )}
-            </table>
+            </Tabla>
           </div>
         </Card>
       )}
 
       {/* Modal generar */}
       {confirmOpen && (
-        <div className={styles.modalBackdrop} role="dialog" aria-modal="true">
-          <div className={styles.modalCard}>
-            <div className={styles.modalHeader}>
-              <h3>Generar Liquidación por Médico</h3>
-              <button
-                className={styles.modalClose}
+        <Dialogo
+          titulo="Generar liquidación por médico"
+          onClose={() => {
+                  setConfirmOpen(false);
+                  setGenResult(null);
+                  setGenError(null);
+                }}
+          acciones={
+            <>
+              <Button
+                variant="secondary"
                 onClick={() => {
                   setConfirmOpen(false);
                   setGenResult(null);
                   setGenError(null);
                 }}
-                aria-label="Cerrar"
+                disabled={generating}
               >
-                ✕
-              </button>
-            </div>
-            <div className={styles.modalBody}>
+                {genResult ? "Cerrar" : "Cancelar"}
+              </Button>
+              {!genResult && (
+                <Button variant="primary" onClick={handleGenerar} disabled={generating}>
+                  {generating ? "Generando…" : "Sí, generar"}
+                </Button>
+              )}
+            </>
+          }
+        >
               {genError && <div className={styles.errorInline}>{genError}</div>}
               {genResult && (
                 <div className={styles.successInline}>
@@ -442,27 +455,7 @@ const TabVistaPreviaPago: React.FC<Props> = ({ pagoId }) => {
               {generating && (
                 <p style={{ color: "#64748b" }}>Generando… por favor esperá.</p>
               )}
-            </div>
-            <div className={styles.modalActions}>
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  setConfirmOpen(false);
-                  setGenResult(null);
-                  setGenError(null);
-                }}
-                disabled={generating}
-              >
-                {genResult ? "Cerrar" : "Cancelar"}
-              </Button>
-              {!genResult && (
-                <Button variant="primary" onClick={handleGenerar} disabled={generating}>
-                  {generating ? "Generando…" : "Sí, generar"}
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
+            </Dialogo>
       )}
     </div>
   );

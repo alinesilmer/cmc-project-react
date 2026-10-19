@@ -89,13 +89,35 @@
 }
 
 .ok {
-  background: rgba(0, 180, 90, 0.12);
-  color: #0f7a3b;
-  border: 1px solid rgba(0, 180, 90, 0.25);
+  background: rgba($tono-verde-350, 0.12);
+  color: $tono-verde-500-b;
+  border: 1px solid rgba($tono-verde-350, 0.25);
 }
 
 .debt {
-  background: rgba(220, 50, 50, 0.12);
-  color: #8f1b1b;
-  border: 1px solid rgba(220, 50, 50, 0.25);
+  background: rgba($tono-rojo-400, 0.12);
+  color: $tono-rojo-600;
+  border: 1px solid rgba($tono-rojo-400, 0.25);
+}
+
+// ── Tabla (el componente compartido): lo propio de este listado ─────────────
+
+.tablaScroll {
+  overflow-x: auto;
+}
+
+.aLaDerecha {
+  text-align: right !important;
+}
+
+// Fila única de «Cargando…», error o sin resultados.
+.estadoTabla {
+  padding: $spacing-8 $spacing-4 !important;
+  text-align: center !important;
+  color: $gray-500;
+}
+
+.estadoError {
+  font-style: italic;
+  color: $danger-red;
 }

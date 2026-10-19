@@ -1,0 +1,332 @@
+@use "@/app/styles/all.scss" as *;
+
+// Piezas comunes de Liquidación (pagos, débitos y créditos, refacturaciones, deducciones): una sola hoja para que todas se vean iguales.
+
+// ── Página ────────────────────────────────────────────────────────────────────
+.pagina {
+  // En variables porque la franja las necesita para salirse del relleno.
+  --lado: #{$spacing-12};
+  --arriba: #{$spacing-8};
+
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-5;
+  min-height: 100%;
+  padding: $spacing-8 $spacing-12 $spacing-12;
+
+  // La franja ya trae su margen; el `gap` alcanza.
+  > :first-child { margin-bottom: 0; }
+
+  @media (max-width: 1200px) {
+    --lado: #{$spacing-8};
+    padding-right: $spacing-8;
+    padding-left: $spacing-8;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    --lado: #{$spacing-5};
+    --arriba: #{$spacing-5};
+    padding: $spacing-5;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    --lado: #{$spacing-4};
+    --arriba: #{$spacing-4};
+    padding: $spacing-4;
+  }
+}
+
+// ── Filtros (dentro de la Caja «Configuración») ───────────────────────────────
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: $spacing-4;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  min-width: 10rem;
+}
+
+.campoAncho { min-width: min(22rem, 100%); flex: 1; }
+
+.rotulo {
+  font-size: $font-size-sm;
+  color: $gray-500;
+}
+
+.select,
+.input {
+  @extend %campo-texto;
+
+  & {
+    box-sizing: border-box;
+    min-width: 0;
+    height: 2.75rem;
+    border-color: $gray-300;
+  }
+}
+
+.select { cursor: pointer; }
+
+// ── Barra de acciones (debajo de la franja, a la derecha) ─────────────────────
+.barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-3;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-3;
+  margin-left: auto;
+}
+
+// ── Estados: una píldora por estado, los mismos colores en todas las pantallas ─
+.estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.7rem;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  white-space: nowrap;
+  border-radius: 999px;
+
+  &::before {
+    content: "";
+    width: 0.45rem;
+    height: 0.45rem;
+    background: currentColor;
+    border-radius: 50%;
+  }
+}
+
+.abierto { color: $tono-azul-600; background: $tono-azul-50; }
+.cerrado { color: $gray-600; background: $gray-100; }
+.enLiquidacion { color: $tono-amarillo-600; background: $tono-amarillo-50-b; }
+.aplicado { color: $tono-verde-550; background: $tono-verde-50; }
+.anulado { color: $danger-red; background: $tono-rojo-50; }
+
+// ── Montos ────────────────────────────────────────────────────────────────────
+.monto { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.menos { color: $danger-red; }
+.mas { color: $tono-verde-550; }
+.neto { color: $franja-azul; }
+
+// ── Tabla ─────────────────────────────────────────────────────────────────────
+.tablaCaja {
+  overflow-x: auto;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
+}
+
+.fila { cursor: pointer; }
+
+.accionesFila {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.botonIcono {
+  @extend %btn-icono;
+
+  & {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 8px;
+  }
+}
+
+.botonIconoPeligro {
+  @extend %btn-icono-peligro;
+
+  & {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 8px;
+  }
+}
+
+.mono { font-family: ui-monospace, Consolas, monospace; font-size: $font-size-sm; }
+.tenue { color: $gray-400; }
+
+// ── Estados de la pantalla ────────────────────────────────────────────────────
+.vacio,
+.cargando {
+  padding: $spacing-12 $spacing-5;
+  text-align: center;
+  color: $gray-500;
+}
+
+.error {
+  padding: $spacing-3 $spacing-4;
+  font-size: $font-size-sm;
+  color: $danger-red;
+  background: $tono-rojo-50;
+  border-left: 4px solid $danger-red;
+  border-radius: $radio-md;
+}
+
+.alerta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-3 $spacing-4;
+  font-size: $font-size-sm;
+  color: $tono-amarillo-600;
+  background: $primary-yellow-light;
+  border-left: 4px solid $tono-amarillo-250-c;
+  border-radius: $radio-md;
+}
+
+.enlace {
+  font: inherit;
+  font-weight: $font-weight-semibold;
+  color: $franja-azul;
+  text-decoration: underline;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+// ── Tipo de lote ──────────────────────────────────────────────────────────────
+.tipo {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  white-space: nowrap;
+  border-radius: 999px;
+}
+
+.tipoNormal { color: $tono-azul-600; background: $tono-azul-50; }
+.tipoSinFactura { color: $tono-naranja-550; background: $tono-naranja-100; }
+.tipoRefacturacion { color: $tono-verde-550; background: $tono-verde-50; }
+
+// ── Acciones con texto en una fila (Agregar al pago, Pagar en caja) ───────────
+.accionTexto {
+  height: 2.25rem;
+  padding: 0 $spacing-3;
+  font-family: inherit;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $franja-azul;
+  white-space: nowrap;
+  background: $white;
+  border: 1px solid $gray-300;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+
+  &:hover:not(:disabled) { color: $white; background: $franja-azul; border-color: $franja-azul; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.filaOcupada { opacity: 0.5; }
+
+.gira { animation: $anim-spin 0.8s linear infinite; }
+
+// ── Paginador ─────────────────────────────────────────────────────────────────
+.paginador {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-4;
+  font-size: $font-size-sm;
+  color: $gray-600;
+
+  button {
+    height: 2.5rem;
+    padding: 0 $spacing-4;
+    font-family: inherit;
+    font-weight: $font-weight-semibold;
+    color: $franja-azul;
+    background: $white;
+    border: 1px solid $gray-300;
+    border-radius: 999px;
+    cursor: pointer;
+
+    &:hover:not(:disabled) { border-color: $franja-azul; }
+    &:disabled { opacity: 0.45; cursor: not-allowed; }
+  }
+}
+
+// ── Casilla con rótulo (dentro de diálogos y formularios) ─────────────────────
+.casilla {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-3 $spacing-4;
+  font-weight: $font-weight-semibold;
+  color: $gray-800;
+  background: $gray-50;
+  border: 1px solid $gray-200;
+  border-radius: $radio-md;
+  cursor: pointer;
+
+  input { width: 1.125rem; height: 1.125rem; accent-color: $franja-azul; cursor: pointer; }
+}
+
+// ── Tira de resumen de un detalle (estado, totales y la acción principal) ─────
+.tira {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-4 $spacing-8;
+  padding: $spacing-4 $spacing-6;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
+}
+
+.tiraDato {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+
+  span { font-size: $font-size-xs; letter-spacing: 0.06em; text-transform: uppercase; color: $gray-500; }
+
+  b {
+    font-family: $fuente-titulos;
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    color: $gray-900;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+}
+
+.tiraNeto b { font-size: $font-size-2xl; color: $franja-azul; }
+
+// El color del monto gana sobre el gris del valor.
+.tiraDato b.menos { color: $danger-red; }
+.tiraDato b.mas { color: $tono-verde-550; }
+
+.tiraTexto {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  color: $gray-600;
+}
+
+.tiraAccion { margin-left: auto; }
+
+// El período junto al título de la franja de un detalle.
+.franjaDato {
+  padding: $spacing-2 $spacing-4;
+  font-family: $fuente-titulos;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $franja-azul;
+  background: $primary-yellow;
+  border-radius: 999px;
+}

@@ -6,8 +6,7 @@ import type { ChatMsg } from "./chatbot.types";
 
 const DEMORA_ESCRIBIENDO_MS = 650;
 
-// Tope de mensajes: 10 por minuto. El bot no consulta nada caro, pero sin
-// esto un script podía martillar /api/obras_social desde la página pública.
+// Tope de mensajes: 10 por minuto.
 const LIMITE_MENSAJES = 10;
 const VENTANA_MS = 60_000;
 

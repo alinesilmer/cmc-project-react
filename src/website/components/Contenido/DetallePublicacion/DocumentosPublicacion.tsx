@@ -7,11 +7,7 @@ import styles from "./DocumentosPublicacion.module.scss";
 
 type Props = { documentos: DocumentoNoticia[] };
 
-/**
- * Los adjuntos de una publicación: el primer PDF se muestra embebido (suele
- * ser la norma o el programa del curso), las imágenes en galería y el resto
- * como lista de descargas.
- */
+/** Los adjuntos de una publicación: el primer PDF se muestra embebido (suele ser la norma o el programa del curso). */
 export default function DocumentosPublicacion({ documentos }: Props) {
   const { pdf, imagen, otro } = agruparPorTipo(documentos);
   const [destacado, ...otrosPdf] = pdf;

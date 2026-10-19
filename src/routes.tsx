@@ -11,24 +11,20 @@ import { useAuth } from "./app/auth/AuthProvider";
 import { usePermisos } from "./app/auth/usePermisos";
 import { isMedico } from "./app/auth/roles";
 
-// El layout del panel y su tema de MUI también van lazy: el sitio público (`/*`)
-// no los usa y así no entran en el bundle de entrada.
+// El layout del panel y su tema de MUI también van lazy: el sitio público.
 const TemaPanel = lazy(() => import("./app/TemaPanel"));
 const AppLayout = lazy(() => import("@/app/components/layout/AppLayout/AppLayout"));
 
-// Pages are lazy-loaded (route-level code splitting) so each route ships its own
-// chunk instead of bloating the main bundle.
+// Pages are lazy-loaded (route-level code splitting) so each route ships its own chunk instead of bloating the main bundle.
 const DashboardPage = lazy(() => import("./app/pages/Dashboard/Dashboard"));
 const InicioMedico = lazy(() => import("./app/pages/InicioMedico/InicioMedico"));
 const MiPerfil = lazy(() => import("./app/pages/MiPerfil/MiPerfil"));
-// Reportes carga Recharts, que pesa: va lazy para no meterlo en el bundle de
-// quienes nunca abren la pantalla.
+// Reportes carga Recharts, que pesa: va lazy para no meterlo en el bundle de quienes nunca abren la pantalla.
 const ReportesPage = lazy(() => import("./app/pages/Reportes/ReportesPage"));
 const DoctorsPage = lazy(() => import("./app/pages/DoctorsList/DoctorsList"));
 const SocialWorksPage = lazy(() => import("./app/pages/SocialWorkSection/SocialWorkSection"));
 const DoctorProfilePage = lazy(() => import("./app/pages/DoctorProfilePage/DoctorProfilePage"));
 const PadronPorSocio = lazy(() => import("./app/pages/PadronPorSocio/PadronPorSocio"));
-const PadronIoscor = lazy(() => import("./app/pages/PadronIoscor/PadronIoscor"));
 const UsersList = lazy(() => import("./app/pages/UsersList/UsersList"));
 // Control de calidad del padrón: sólo lectura, señala legajos con problemas.
 const AuditoriaPadron = lazy(
@@ -36,16 +32,9 @@ const AuditoriaPadron = lazy(
 );
 const RegisterSocio = lazy(() => import("./app/pages/RegisterSocio/RegisterSocio"));
 const PermissionsManager = lazy(() => import("./app/pages/PermissionsManager/PermissionsManager"));
-const UsersManagerDashboard = lazy(() => import("./app/pages/UsersManagerDashboard/UsersManagerDashboard"));
-const Config = lazy(() => import("./app/pages/Config/Config"));
 const Help = lazy(() => import("./app/pages/Help/Help"));
 const Login = lazy(() => import("./app/pages/Login/Login"));
-const Register = lazy(() => import("./app/pages/Register/Register"));
 const AdherenteForm = lazy(() => import("@/app/pages/AdherenteForm/AdherenteForm"));
-const ObrasSocialesRegisterPage = lazy(() => import("./app/pages/ObrasSocialesRegisterPage/ObrasSocialesRegisterPage"));
-const PadronesPage = lazy(() => import("./app/pages/PadronesPage/PadronesPage"));
-const AdminPadrones = lazy(() => import("./app/pages/AdminPadrones/AdminPadrones"));
-const AdminPadronesDetail = lazy(() => import("./app/pages/AdminPadronesDetail/AdminPadronesDetail"));
 const Boletin = lazy(() => import("./app/pages/Boletin/Boletin"));
 const AfiliadosPorObraSocialPage = lazy(() => import("./app/pages/AfiliadosPorObraSocialPage/AfiliadosPorObraSocialPage"));
 const GenerarBoletin = lazy(() => import("./app/pages/GenerarBoletin/GenerarBoletin"));
@@ -78,10 +67,7 @@ const MiRecepcion = lazy(() => import("./app/pages/facturacion/MiRecepcion/MiRec
 
 // WEBSITE
 const WebRoutes = lazy(() => import("./website/router"));
-// El ABM de contenido del sitio. Los componentes siguen en `src/website/`
-// porque es funcionalidad del sitio —usan sus clientes y su Button—, pero
-// las rutas viven acá para que rendericen dentro del panel y no envueltas
-// en el Header, el Footer y el Chatbot de la página pública.
+// El ABM de contenido del sitio.
 const BoletinMedico = lazy(() => import("./app/pages/BoletinMedico/BoletinMedico"));
 const SitioContenido = lazy(() => import("./website/app/admin/dashboard/page"));
 const ImportacionesHub = lazy(() => import("./app/pages/Importaciones/ImportacionesHub"));
@@ -99,7 +85,6 @@ const SolicitudesCambioPage = lazy(() => import("./app/pages/SolicitudesCambio/S
 const AvisosPage = lazy(() => import("./app/pages/Avisos/AvisosPage"));
 const ServiciosPage = lazy(() => import("./app/pages/Servicios/ServiciosPage"));
 const TablaGinecologia = lazy(() => import("./app/pages/TablaGinecologia/TablaGinecologia"));
-const BoletinGalenos = lazy(() => import("./app/pages/BoletinGalenos/BoletinGalenos"));
 const BoletinValoresGalenos = lazy(() => import("./app/pages/BoletinValoresGalenos/BoletinValoresGalenos"));
 const ValidacionesHub = lazy(() => import("./app/pages/Validaciones/ValidacionesHub"));
 const ValidacionOS = lazy(() => import("./app/pages/Validaciones/ValidacionOS"));
@@ -144,10 +129,7 @@ function InicioRoute() {
   return isMedico(user) ? <InicioMedico /> : <DashboardPage />;
 }
 
-/**
- * /panel/planillas: todos ven las planillas; quien tiene `contenido:editar`
- * recibe la misma lista con el alta, la edición y la baja.
- */
+/** /panel/planillas: todos ven las planillas; quien tiene `contenido:editar` recibe la misma lista con el alta, la edición y la baja. */
 function PlanillasRoute() {
   const { can } = usePermisos();
   return can("contenido:editar") ? <PlanillasAdmin /> : <PlanillasMedico />;
@@ -160,18 +142,11 @@ export default function RootRoutes() {
         <Routes>
           <Route element={<TemaPanel />}>
           <Route path="/panel/login" element={<Login />} />
-          <Route
-            path="/panel/register-os"
-            element={<ObrasSocialesRegisterPage />}
-          />
-          <Route path="/panel/register" element={<Register />} />
-          {/* La página de requisitos para asociarse vive en el sitio público
-              (`/socios`): es material para quien todavía no es socio. Se deja
-              la ruta vieja redirigiendo para no romper enlaces guardados. */}
+          {/* El médico todavía no se registra solo: tiene que acercarse al Colegio, y el alta la hace el personal desde /panel/register-socio. */}
+          <Route path="/panel/register" element={<Navigate to="/socios" replace />} />
+          {/* La página de requisitos para asociarse vive en el sitio público (`/socios`): es material para quien todavía no es socio. */}
           <Route path="/panel/info" element={<Navigate to="/socios" replace />} />
           <Route path="/panel/adherente" element={<AdherenteForm />} />
-          <Route path="/panel/padrones" element={<PadronesPage />} />
-          <Route path="/generar-boletin" element={<GenerarBoletin />} />
 
           <Route element={<RequireAuth />}>
             <Route path="/panel" element={<AppLayout />}>
@@ -181,19 +156,14 @@ export default function RootRoutes() {
               <Route element={<MedicoRouteGuard />}>
               <Route path="dashboard" element={<InicioRoute />} />
 
-              {/* Valores del boletín, sólo lectura. Es la versión de panel del
-                  modal «Valores Boletín» del sistema viejo, que el socio abría
-                  desde su menú. Va dentro del guard del médico y sin
-                  RequireScope: lee los mismos endpoints que ya usa su
-                  Consulta de Precios. */}
+              {/* Valores del boletín, sólo lectura. */}
               <Route path="boletin-valores" element={<BoletinMedico />} />
 
               <Route element={<RequireScope anyOf={["medico:leer_propio", "medico:leer"]} />}>
                 <Route path="mi-perfil" element={<MiPerfil />} />
               </Route>
 
-              {/* Reportes del Colegio: además de esta ruta, el backend exige
-                  `reporte:leer` — el guard de acá es sólo comodidad de UI. */}
+              {/* Reportes del Colegio: además de esta ruta, el backend exige `reporte:leer` — el guard de acá es sólo comodidad de UI. */}
               <Route element={<RequireScope scope="reporte:leer" />}>
                 <Route path="reportes" element={<ReportesPage />} />
               </Route>
@@ -275,13 +245,11 @@ export default function RootRoutes() {
               </Route>
 
               <Route element={<RequireScope scope="padron:leer" />}>
-                <Route path="padron-ioscor" element={<PadronIoscor />} />
               </Route>
 
               <Route element={<RequireScope scope="medico:leer" />}>
                 <Route path="users" element={<UsersList />} />
                 <Route path="users/auditoria" element={<AuditoriaPadron />} />
-                <Route path="users-manager" element={<UsersManagerDashboard />} />
               </Route>
 
               <Route element={<RequireScope scope="medico:crear" />}>
@@ -292,13 +260,10 @@ export default function RootRoutes() {
                 <Route path="cobranzas" element={<CobranzasPage />} />
               </Route>
 
-              {/* Contenido del sitio público: noticias, cursos, valores éticos y
-                  avisos de médicos. `RequireWebEditor` acepta el rol editor_web
-                  o `contenido:editar`, que es lo que el backend ya exige. */}
+              {/* Contenido del sitio público: noticias, cursos, valores éticos y avisos de médicos. */}
               <Route element={<RequireWebEditor />}>
                 <Route path="sitio" element={<SitioContenido />} />
-                {/* La solapa vive dentro de la pantalla; la dirección vieja
-                    del sitio sigue funcionando y cae en ella. */}
+                {/* La solapa vive dentro de la pantalla; la dirección vieja del sitio sigue funcionando y cae en ella. */}
                 <Route
                   path="sitio/medicos-promo"
                   element={<Navigate to="/panel/sitio?tab=promo" replace />}
@@ -307,14 +272,10 @@ export default function RootRoutes() {
 
               <Route element={<RequireScope scope="rbac:gestionar" />}>
                 <Route path="admin/permissions" element={<PermissionsManager />} />
-                {/* Registro de acciones del personal. Va con `rbac:gestionar`
-                    —el mismo criterio que `auditoria:leer`, que es de admin—
-                    porque muestra qué hizo cada empleado. Todavía sin backend:
-                    la pantalla avisa que los datos son de ejemplo. */}
+                {/* Registro de acciones del personal. */}
                 <Route path="actividad" element={<ActividadPage />} />
               </Route>
 
-              <Route path="config" element={<Config />} />
               <Route path="help" element={<Help />} />
 
               <Route element={<RequireScope scope="nomenclador:leer" />}>
@@ -327,14 +288,7 @@ export default function RootRoutes() {
                   path="tabla-ginecologia"
                   element={<TablaGinecologia />}
                 />
-                <Route
-                  path="boletin-galenos"
-                  element={<BoletinGalenos />}
-                />
-                {/* Los valores de galeno del boletín, para el Colegio: se
-                    elige un valor y se comparan todas las obras sociales.
-                    `boletin-galenos` es otra cosa: el formulario de carga,
-                    todavía sin backend. */}
+                {/* Los valores de galeno del boletín, para el Colegio: se elige un valor y se comparan todas las obras sociales. */}
                 <Route
                   path="boletin-valores-galenos"
                   element={<BoletinValoresGalenos />}
@@ -348,12 +302,7 @@ export default function RootRoutes() {
                 />
               </Route>
 
-              {/* Importaciones masivas: obras sociales que mandan un reporte
-                  mensual en vez de validar prestación por prestación. Es carga
-                  del Colegio en nombre de terceros, así que va con el mismo
-                  permiso que la carga manual. Queda fuera de
-                  MEDICO_ALLOWED_PATHS, que es lista blanca: el socio no llega
-                  ni por URL. */}
+              {/* Importaciones masivas: obras sociales que mandan un reporte mensual en vez de validar prestación por prestación. */}
               <Route element={<RequireScope scope="facturacion:cargar" />}>
                 <Route path="importaciones" element={<ImportacionesHub />} />
                 <Route
@@ -382,11 +331,7 @@ export default function RootRoutes() {
 
               {/* Planillas de consulta: todos las descargan, el Colegio las publica. */}
               <Route path="planillas" element={<PlanillasRoute />} />
-              {/* La pantalla de publicación sube y borra planillas: el backend
-                  exige `contenido:editar` en POST y DELETE (authz.py), así que
-                  la ruta pide lo mismo. Sin el guard, quien no tenía el permiso
-                  no veía el ítem en el menú pero llegaba igual por la URL y se
-                  encontraba con el formulario de carga. */}
+              {/* La pantalla de publicación sube y borra planillas: el backend exige `contenido:editar` en POST y DELETE (authz.py), así que la ruta pide lo mismo. */}
               <Route element={<RequireScope scope="contenido:editar" />}>
                 <Route path="convenios/planillas" element={<PlanillasAdmin />} />
               </Route>
@@ -421,9 +366,7 @@ export default function RootRoutes() {
 
               <Route element={<RequireScope scope="catalogo:leer" />}>
                 <Route path="especialidades" element={<EspecialidadesPage />} />
-                {/* Datos del propio Colegio y los tres calendarios. El guard
-                    de acá es comodidad de UI; el backend exige lo mismo, y las
-                    contraseñas de las casillas además `rbac:gestionar`. */}
+                {/* Datos del propio Colegio y los tres calendarios. */}
                 <Route path="institucion" element={<InstitucionPage />} />
                 <Route path="agenda" element={<AgendaPage />} />
               </Route>
@@ -461,13 +404,11 @@ export default function RootRoutes() {
               </Route>
             </Route>
 
-            <Route element={<RequireScope scope="padron:leer" />}>
-              <Route path="/panel/admin-padrones" element={<AdminPadrones />} />
-              <Route
-                path="/panel/admin-padrones-detail"
-                element={<AdminPadronesDetail />}
-              />
+            {/* Fuera de AppLayout porque tiene su propia pantalla, pero con sesión: los valores que muestra salen de /api/valores/boletin, que exige `catalogo:leer`. */}
+            <Route element={<RequireScope scope="catalogo:leer" />}>
+              <Route path="/generar-boletin" element={<GenerarBoletin />} />
             </Route>
+
             <Route
               path="/panel/cambiar-password"
               element={<CambiarPassword />}

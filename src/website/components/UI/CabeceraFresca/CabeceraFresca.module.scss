@@ -24,9 +24,9 @@
   padding: 48px clamp(24px, 4vw, 52px);
   background: $white;
   // Sobre el fondo blanco de la página, el borde la recorta.
-  border: 1px solid #ebe7dd;
+  border: 1px solid $tono-amarillo-100-c;
   border-radius: 10px;
-  box-shadow: 0 1px 2px rgba(20, 35, 58, 0.05), 0 18px 48px rgba(20, 35, 58, 0.09);
+  box-shadow: 0 1px 2px rgba($tono-azul-850, 0.05), 0 18px 48px rgba($tono-azul-850, 0.09);
 
   @media (max-width: 480px) {
     gap: 28px;
@@ -46,7 +46,7 @@
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.03em;
-  color: #14233a;
+  color: $tono-azul-850;
 
   span {
     color: $primary-blue;
@@ -73,7 +73,7 @@
   margin: 0;
   font-size: 1.2rem;
   font-weight: 500;
-  color: #5b6474;
+  color: $tono-azul-600;
 }
 
 // El pulso bajo el título: el detalle médico, chico y en azul.

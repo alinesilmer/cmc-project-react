@@ -10,17 +10,7 @@ interface Props {
   etiqueta: string;
 }
 
-/**
- * Pista horizontal con anclaje y botones de avance.
- *
- * Reemplaza al recorte por cantidad: la sección muestra todo lo que haya y el
- * socio lo recorre, en vez de ver sólo los primeros y no enterarse del resto.
- *
- * Sin librerías: es `overflow-x` con `scroll-snap`, así que el gesto táctil y
- * la rueda del mouse ya funcionan solos y los botones son un agregado para
- * mouse y teclado. La pista es foco tabulable para poder recorrerla con las
- * flechas.
- */
+/** Pista horizontal con anclaje y botones de avance. */
 export default function Carrusel({ children, etiqueta }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [alInicio, setAlInicio] = useState(true);
@@ -42,8 +32,7 @@ export default function Carrusel({ children, etiqueta }: Props) {
     medir();
     el.addEventListener("scroll", medir, { passive: true });
 
-    // El ancho útil cambia con la ventana y también cuando termina de cargar
-    // el contenido, así que se observa el elemento y no sólo `resize`.
+    // El ancho útil cambia con la ventana y también cuando termina de cargar el contenido, así que se observa el elemento y no sólo `resize`.
     const observer = new ResizeObserver(medir);
     observer.observe(el);
 

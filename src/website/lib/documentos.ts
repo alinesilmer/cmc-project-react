@@ -2,11 +2,7 @@ export type TipoArchivo = "pdf" | "imagen" | "otro";
 
 const EXT_IMAGEN = /\.(png|jpe?g|gif|webp|avif|bmp)$/i;
 
-/**
- * Qué es un archivo, por su `content-type` o, si no vino, por la extensión.
- * Lo usaban el editor de publicaciones y las dos páginas de detalle, cada uno
- * con su propia copia.
- */
+/** Qué es un archivo, por su `content-type` o, si no vino, por la extensión. */
 export function tipoDeArchivo(contentType: string | null | undefined, nombre: string): TipoArchivo {
   const ct = (contentType ?? "").toLowerCase();
   if (ct === "application/pdf" || nombre.toLowerCase().endsWith(".pdf")) return "pdf";

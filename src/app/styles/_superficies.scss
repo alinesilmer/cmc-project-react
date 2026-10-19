@@ -1,28 +1,7 @@
 @use "./variables.scss" as *;
+@use "./animations.scss" as *;
 
-/* Superficies compartidas por Auditoría y Nomenclador.
- *
- * Antes cada pantalla de estas dos secciones traía su propia paleta copiada
- * (ocho archivos definían el mismo `$blue: #3b6fd4` y el mismo juego de
- * sombras, y tres más lo repetían como custom properties `--accent`), su propio
- * radio y su propia familia tipográfica. El resultado: nueve dialectos para el
- * mismo diseño y un azul que además no era el del Topbar.
- *
- * Acá vive el único juego de tokens. Todo sale de `variables.scss`, así que las
- * pantallas usan los mismos colores que el resto del panel.
- *
- * Igual que `_controles.scss`, son placeholders (`%`): Sass no emite nada hasta
- * que alguien los extiende, así que no suman peso a los módulos que no los
- * usan. Cada módulo los engancha con el nombre de clase que ya tenía:
- *
- *     .tableWrap { @extend %tarjeta; }
- *
- * Dos tipografías, no más (las que ya carga `globals.scss`):
- *   · Manrope → títulos (`%titulo`; los h1-h6 ya la toman de globals).
- *   · Inter   → todo lo demás, incluidos los códigos de práctica, que se
- *               distinguen con `%codigo` (cifras tabulares + tracking) en vez
- *               de con una tercera familia monoespaciada.
- */
+/* Superficies compartidas por Auditoría y Nomenclador. */
 
 // ── Superficie ────────────────────────────────────────────────────────────────
 $superficie:     $white;    // tarjetas, filas
@@ -61,8 +40,7 @@ $peligro-bg:     #fef2f2;
 $peligro-linea:  #f3b7b7;
 
 // ── Radios ────────────────────────────────────────────────────────────────────
-// Más cuadrados que `$border-radius-*`. Sin pastillas de 999px: los chips y los
-// controles redondos eran lo que hacía que cada pantalla se leyera distinta.
+// Más cuadrados que `$border-radius-*`.
 $radio-xs:       3px;  // etiquetas y badges
 $radio-sm:       4px;  // inputs, botones, chips
 $radio-md:       6px;  // tarjetas y contenedores de tabla
@@ -70,15 +48,13 @@ $radio-lg:       8px;  // modales y paneles grandes
 
 // ── Sombras ───────────────────────────────────────────────────────────────────
 $sombra-tarjeta: 0 1px 2px rgba($gray-900, 0.05);
-$sombra-flotante: 0 1px 2px rgba($gray-900, 0.05), 0 8px 24px rgba($gray-900, 0.06);
+$sombra-flotante: 0 1px 2px rgba($gray-900, 0.05), 0 0.5rem 1.5rem rgba($gray-900, 0.06);
 
 // ── Alturas de control ────────────────────────────────────────────────────────
 // Una sola: buscador, selects y toggles quedan sobre la misma línea.
-$alto-control:   40px;
+$alto-control:   2.5rem;
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// Estructura de página
-// ═══════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════ Estructura de página ═══════════════════════════════════════════════════════════════════════════════
 
 %pantalla {
   min-height: 100vh;
@@ -102,7 +78,7 @@ $alto-control:   40px;
 
 %titulo {
   margin: 0;
-  font-family: "Manrope", sans-serif;
+  font-family: $fuente-titulos;
   font-size: $font-size-4xl;
   font-weight: $font-weight-bold;
   letter-spacing: -0.02em;
@@ -141,9 +117,7 @@ $alto-control:   40px;
   border: 0;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// Contenedores
-// ═══════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════ Contenedores ═══════════════════════════════════════════════════════════════════════════════
 
 %tarjeta {
   background: $superficie;
@@ -158,9 +132,7 @@ $alto-control:   40px;
   overflow: hidden;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// Tabla
-// ═══════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════ Tabla ═══════════════════════════════════════════════════════════════════════════════
 
 %tabla {
   width: 100%;
@@ -217,9 +189,7 @@ $alto-control:   40px;
   letter-spacing: -0.01em;
 }
 
-/* El código de práctica. Reemplaza a las cinco familias monoespaciadas que
- * había repartidas (ui-monospace, Courier New, monospace, ...): con cifras
- * tabulares y un poco de tracking, Inter separa el dato igual de bien. */
+/* El código de práctica. */
 %codigo {
   font-variant-numeric: tabular-nums;
   font-weight: $font-weight-semibold;
@@ -232,9 +202,7 @@ $alto-control:   40px;
   color: $linea-2;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// Etiquetas y chips
-// ═══════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════ Etiquetas y chips ═══════════════════════════════════════════════════════════════════════════════
 
 /* Badge de estado. Se combina con un tono: `@extend %etiqueta, %tono-ok;` */
 %etiqueta {
@@ -258,8 +226,8 @@ $alto-control:   40px;
 %pastilla-numero {
   display: inline-grid;
   place-items: center;
-  min-width: 24px;
-  height: 22px;
+  min-width: 1.5rem;
+  height: 1.375rem;
   padding: 0 $spacing-1;
   border-radius: $radio-xs;
   background: $papel;
@@ -295,9 +263,7 @@ $alto-control:   40px;
   font-weight: $font-weight-semibold;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// Controles
-// ═══════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════ Controles ═══════════════════════════════════════════════════════════════════════════════
 
 %buscador {
   position: relative;
@@ -342,8 +308,8 @@ $alto-control:   40px;
   right: $spacing-2;
   display: grid;
   place-items: center;
-  width: 22px;
-  height: 22px;
+  width: 1.375rem;
+  height: 1.375rem;
   border: none;
   border-radius: $radio-xs;
   background: $acento-tinte;
@@ -438,9 +404,7 @@ $alto-control:   40px;
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// Estados
-// ═══════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════ Estados ═══════════════════════════════════════════════════════════════════════════════
 
 %estado-vacio {
   display: flex;
@@ -493,14 +457,13 @@ $alto-control:   40px;
 }
 
 %esqueleto-fila {
-  height: 44px;
+  height: 2.75rem;
   @extend %brillo;
 }
 
-/* El degradé que se desplaza. Sirve tanto para una fila entera como para una
- * celda suelta que todavía no tiene dato. */
+/* El degradé que se desplaza. */
 %brillo {
   background: linear-gradient(90deg, $superficie-2 25%, $papel 50%, $superficie-2 75%);
   background-size: 200% 100%;
-  animation: shimmer 1.2s infinite linear;
+  animation: $anim-shimmer 1.2s infinite linear;
 }

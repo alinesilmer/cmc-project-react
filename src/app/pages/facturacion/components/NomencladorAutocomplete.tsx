@@ -4,19 +4,14 @@ import { fetchCodigosHabilitados } from "../api";
 import type { NomencladorOption } from "../types";
 import { CODIGOS_BLOQUEADOS } from "../constants";
 
-// Cacheado por médico y obra social — los códigos habilitados de un socio no son los
-// mismos que los de otro, y la descripción depende de la OS.
+// Cacheado por médico y obra social — los códigos habilitados de un socio no son los mismos que los de otro.
 const cache = new Map<string, { data: NomencladorOption[]; ts: number }>();
 const CACHE_TTL = 5 * 60 * 1000;
 
 const normalizar = (s: string) =>
   s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
-/** Filtra por código o por nombre. La búsqueda es local porque el backend sólo sabe
- * filtrar por código, y además el nombre que se muestra es el que pactó la obra
- * social, que no siempre coincide con el del catálogo. Cada palabra tipeada tiene que
- * aparecer en el código o en la descripción; las coincidencias por código van primero
- * para que Enter siga tomando el código que se estaba tipeando. */
+/** Filtra por código o por nombre. */
 const filtrar = (lista: NomencladorOption[], query: string): NomencladorOption[] => {
   const palabras = normalizar(query).split(/[^a-z0-9]+/).filter(Boolean);
   if (!palabras.length) return lista;
@@ -37,8 +32,7 @@ interface Props {
   onChange: (codigo: string | null, nom: NomencladorOption | null) => void;
   /** Médico ya elegido en el formulario — los códigos habilitados dependen de él. */
   codMedico: string | null;
-  /** Obra social de la prestación — si se sabe, la descripción de cada código es la
-   * que esa OS pactó en su propio `nm_valores` en vez de la genérica del catálogo. */
+  /** Obra social de la prestación — si se sabe. */
   codObra?: string | null;
   disabled?: boolean;
   /** Precarga la opción mostrada antes de que el usuario busque (usado al editar). */
@@ -54,8 +48,7 @@ const NomencladorAutocomplete: React.FC<Props> = ({ value, onChange, codMedico, 
   const [loading, setLoading] = useState(false);
   const pedidoRef = useRef(0);
 
-  // Al cambiar (o perder) el médico u obra social, los códigos habilitados anteriores
-  // ya no valen — se carga la lista completa habilitada para el nuevo (sin `q`).
+  // Al cambiar (o perder) el médico u obra social, los códigos habilitados anteriores ya no valen .
   useEffect(() => {
     const pedido = ++pedidoRef.current;
     setHabilitados([]);

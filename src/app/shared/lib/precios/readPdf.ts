@@ -11,8 +11,7 @@ import { dedupeByCodigo } from "./dedupe";
 
 type Token = { str: string; x: number; y: number };
 
-// Un token es "precio": miles con punto (2.193.590,36), coma decimal (450678,0861 · 0,00)
-// o el caso con punto decimal ($ 0.00).
+// Un token es "precio": miles con punto (2.193.590,36), coma decimal (450678,0861 · 0,00) o el caso con punto decimal ($ 0.00).
 const PRICE_TOKEN_RE =
   /^\$?\s*(?:\d{1,3}(?:\.\d{3})+(?:,\d+)?|\d+,\d+|\d+\.\d{1,2})$/;
 
@@ -55,8 +54,7 @@ function parseLine(line: Token[]): PrecioRow | null {
   const candidates = prices.length >= 3 ? prices.slice(0, prices.length - 1) : prices;
   const ordered = [...candidates].sort((a, b) => b.val - a.val).slice(0, 2);
 
-  // El PDF no expone columnas: no se puede aislar Gastos de forma confiable, así que
-  // queda vacío. Gastos se carga por la ruta Excel/CSV, donde la columna es explícita.
+  // El PDF no expone columnas: no se puede aislar Gastos de forma confiable, así que queda vacío.
   return {
     codigo,
     precio_1: ordered[0]?.str ?? "",

@@ -4,7 +4,6 @@ import {
   ChevronRight,
   History,
   Loader2,
-  Search,
   TriangleAlert,
   X,
 } from "lucide-react";
@@ -26,23 +25,16 @@ import {
   type ResultadoAccion,
 } from "./actividad.types";
 import s from "./Actividad.module.scss";
+import SearchField from "@/app/components/ui/SearchField/SearchField";
+import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
+import Button from "@/app/components/ui/Button/Button";
+import Caja from "@/app/components/ui/Caja/Caja";
+import Franja from "@/app/components/layout/Franja/Franja";
 
 const TAMANO = 20;
 
-/**
- * Registro de acciones del personal del Colegio — todos los que **no** son
- * médicos.
- *
- * ⚠ **La API todavía no existe.** La pantalla está terminada y habla contra el
- * contrato de `actividad.types.ts`; mientras tanto `actividad.api.ts` devuelve
- * datos de ejemplo y arriba se muestra un aviso para que nadie confunda esto
- * con actividad real. Cuando el backend esté, se cambia una función en el
- * archivo de API y esta pantalla no se toca.
- *
- * La materia prima ya existe del lado del servidor: `audit_log` guarda cada
- * request mutante con usuario, rol, ruta, status e IP. Lo que falta es filtrar
- * por rol distinto de `medico` y traducir la ruta a una frase legible.
- */
+/** Registro de acciones del personal del Colegio — todos los que **no** son médicos. */
 export default function ActividadPage() {
   const { error: avisarError } = useNotify();
 
@@ -78,8 +70,7 @@ export default function ActividadPage() {
     return () => clearTimeout(t);
   }, [busqueda]);
 
-  /** Cualquier cambio de filtro vuelve a la página 1: quedarse en la 3 de un
-      resultado que ahora tiene una sola página deja la tabla vacía. */
+  /** Cualquier cambio de filtro vuelve a la página 1. */
   const setFiltro = (parche: Partial<FiltrosActividad>) =>
     setFiltros((f) => ({ ...f, ...parche, page: 1 }));
 
@@ -98,102 +89,98 @@ export default function ActividadPage() {
 
   return (
     <div className={s.container}>
-      <header className={s.header}>
-        <History size={30} className={s.headerIcon} />
-        <div>
-          <h1 className={s.title}>Registro de actividad</h1>
-          <p className={s.subtitle}>Acciones del personal del Colegio.</p>
-        </div>
-      </header>
+      <Franja titulo="Actividad" icono={History} />
 
-      {USANDO_DATOS_DE_EJEMPLO && (
-        <div className={s.avisoDemo}>
-          <TriangleAlert size={17} />
-          <span>
-            <strong>Datos de ejemplo.</strong> El registro real todavía no está
-            conectado; lo que se ve abajo es una muestra para revisar la pantalla.
-          </span>
-        </div>
-      )}
+      <Caja titulo="Configuración">
+        <label className={s.campo}>
+          <span>Usuario</span>
+          <select
+            className={s.select}
+            value={filtros.usuario_id ?? ""}
+            onChange={(e) =>
+              setFiltro({ usuario_id: e.target.value ? Number(e.target.value) : undefined })
+            }
+          >
+            <option value="">Todos</option>
+            {USUARIOS_DISPONIBLES.map((u) => (
+              <option key={u.id} value={u.id}>{u.nombre}</option>
+            ))}
+          </select>
+        </label>
 
-      <section className={s.filtros}>
-        <div className={s.searchBox}>
-          <Search size={15} />
-          <input
-            className={s.searchInput}
-            placeholder="Buscar por acción o usuario…"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
+        <label className={s.campo}>
+          <span>Módulo</span>
+          <select
+            className={s.select}
+            value={filtros.modulo ?? ""}
+            onChange={(e) => setFiltro({ modulo: e.target.value || undefined })}
+          >
+            <option value="">Todos</option>
+            {MODULOS_DISPONIBLES.map((m) => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
+        </label>
+
+        <label className={s.campo}>
+          <span>Resultado</span>
+          <select
+            className={s.select}
+            value={filtros.resultado ?? ""}
+            onChange={(e) =>
+              setFiltro({ resultado: (e.target.value || undefined) as ResultadoAccion | undefined })
+            }
+          >
+            <option value="">Todos</option>
+            {RESULTADOS.map((r) => (
+              <option key={r.valor} value={r.valor}>{r.label}</option>
+            ))}
+          </select>
+        </label>
+
+        <div className={s.campo}>
+          <span>Desde</span>
+          <CampoFecha
+            value={filtros.desde ?? ""}
+            onChange={(valor) => setFiltro({ desde: valor || undefined })}
+            ariaLabel="Desde"
           />
-          {busqueda && (
-            <button type="button" className={s.clearBtn} onClick={() => setBusqueda("")}>
-              <X size={14} />
-            </button>
-          )}
         </div>
 
-        <select
-          className={s.select}
-          value={filtros.usuario_id ?? ""}
-          onChange={(e) =>
-            setFiltro({ usuario_id: e.target.value ? Number(e.target.value) : undefined })
-          }
-        >
-          <option value="">Todos los usuarios</option>
-          {USUARIOS_DISPONIBLES.map((u) => (
-            <option key={u.id} value={u.id}>{u.nombre}</option>
-          ))}
-        </select>
-
-        <select
-          className={s.select}
-          value={filtros.modulo ?? ""}
-          onChange={(e) => setFiltro({ modulo: e.target.value || undefined })}
-        >
-          <option value="">Todos los módulos</option>
-          {MODULOS_DISPONIBLES.map((m) => (
-            <option key={m} value={m}>{m}</option>
-          ))}
-        </select>
-
-        <select
-          className={s.select}
-          value={filtros.resultado ?? ""}
-          onChange={(e) =>
-            setFiltro({ resultado: (e.target.value || undefined) as ResultadoAccion | undefined })
-          }
-        >
-          <option value="">Cualquier resultado</option>
-          {RESULTADOS.map((r) => (
-            <option key={r.valor} value={r.valor}>{r.label}</option>
-          ))}
-        </select>
-
-        <input
-          type="date"
-          className={s.select}
-          title="Desde"
-          value={filtros.desde ?? ""}
-          onChange={(e) => setFiltro({ desde: e.target.value || undefined })}
-        />
-        <input
-          type="date"
-          className={s.select}
-          title="Hasta"
-          value={filtros.hasta ?? ""}
-          onChange={(e) => setFiltro({ hasta: e.target.value || undefined })}
-        />
+        <div className={s.campo}>
+          <span>Hasta</span>
+          <CampoFecha
+            value={filtros.hasta ?? ""}
+            onChange={(valor) => setFiltro({ hasta: valor || undefined })}
+            ariaLabel="Hasta"
+          />
+        </div>
 
         {hayFiltros && (
-          <button type="button" className={s.ghostBtn} onClick={limpiar}>
-            <X size={14} /> Limpiar
-          </button>
+          <div className={s.limpiar}>
+            <Button
+              type="button"
+              variant="danger"
+              size="md"
+              onClick={limpiar}
+              leftIcon={<X size={18} aria-hidden="true" />}
+            >
+              Limpiar
+            </Button>
+          </div>
         )}
-      </section>
+      </Caja>
+
+      <SearchField
+        placeholder="Buscar acción o usuario…"
+        value={busqueda}
+        onChange={(e) => setBusqueda(e.target.value)}
+        onClear={() => setBusqueda("")}
+      />
 
       <section className={s.card}>
         <div className={s.tableWrap}>
-          <table className={s.table}>
+          <Tabla>
             <thead>
               <tr>
                 <th className={s.colFecha}>Fecha</th>
@@ -208,16 +195,17 @@ export default function ActividadPage() {
                 <tr key={a.id}>
                   <td className={s.colFecha}>{formatMomento(a.fecha)}</td>
                   <td className={s.colUsuario}>
-                    <span className={s.usuario}>{a.usuario_nombre}</span>
-                    {a.usuario_rol && <span className={s.rol}>{a.usuario_rol}</span>}
+                    <span className={s.usuario} title={a.usuario_rol ?? undefined}>
+                      {a.usuario_nombre}
+                    </span>
                   </td>
                   <td>
-                    <span className={s.accion}>{a.descripcion}</span>
-                    {/* La ruta cruda queda a mano para soporte, en chico: sirve
-                        cuando la frase no alcanza para entender qué pasó. */}
-                    <span className={s.ruta}>
-                      {a.metodo} {a.ruta}
-                      {a.ip ? ` · ${a.ip}` : ""}
+                    {/* La ruta cruda queda a mano para soporte, en el globo: sirve cuando la frase no alcanza para entender qué pasó. */}
+                    <span
+                      className={s.accion}
+                      title={`${a.metodo} ${a.ruta}${a.ip ? ` · ${a.ip}` : ""}`}
+                    >
+                      {a.descripcion}
                     </span>
                   </td>
                   <td className={s.colModulo}>{a.modulo}</td>
@@ -236,17 +224,17 @@ export default function ActividadPage() {
               {!items.length && !cargando && (
                 <tr>
                   <td colSpan={5} className={s.empty}>
-                    {hayFiltros ? "Nada coincide con esos filtros." : "Sin actividad registrada."}
+                    {hayFiltros ? "Nada coincide con los filtros" : "Sin actividad"}
                   </td>
                 </tr>
               )}
             </tbody>
-          </table>
+          </Tabla>
         </div>
 
         {cargando && (
           <div className={s.loading}>
-            <Loader2 size={15} className={s.spin} /> Cargando…
+            <Loader2 size={18} className={s.spin} /> Cargando…
           </div>
         )}
 
@@ -258,9 +246,10 @@ export default function ActividadPage() {
             type="button"
             className={s.navBtn}
             disabled={page <= 1}
+            aria-label="Anterior"
             onClick={() => setFiltros((f) => ({ ...f, page: page - 1 }))}
           >
-            <ChevronLeft size={15} />
+            <ChevronLeft size={18} aria-hidden="true" />
           </button>
           <span className={s.pagina}>
             {page} / {paginas}
@@ -269,9 +258,10 @@ export default function ActividadPage() {
             type="button"
             className={s.navBtn}
             disabled={page >= paginas}
+            aria-label="Siguiente"
             onClick={() => setFiltros((f) => ({ ...f, page: page + 1 }))}
           >
-            <ChevronRight size={15} />
+            <ChevronRight size={18} aria-hidden="true" />
           </button>
         </div>
       </section>

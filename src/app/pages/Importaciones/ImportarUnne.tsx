@@ -21,18 +21,7 @@ import {
 } from "./components/PanelImportacion";
 import { moneda, periodoLegible } from "./formato";
 
-/**
- * Importación del Excel que exporta el sistema de UNNE (O.S. 81).
- *
- * Mismo circuito que Swiss y Prevención (previsualizar → confirmar), con dos
- * diferencias:
- *
- *  * **El importe lo pone UNNE.** No se recotiza: nuestro nomenclador sólo
- *    parte las filas "Hon+Gto" en honorarios y gastos, y avisa si no coincide.
- *  * **Matrículas con más de un socio, o con ninguno.** En vez de descartarlas,
- *    quedan en «Elegir socio»: se elige acá, fila por fila, o se descartan, y
- *    se vuelve a previsualizar antes de confirmar.
- */
+/** Importación del Excel que exporta el sistema de UNNE (O.S. 81). */
 
 const MENSAJE_VACIO = "El archivo no tiene ninguna orden para leer.";
 
@@ -78,8 +67,7 @@ export default function ImportarUnne() {
   const imp = useImportador(API, prestaciones, estado.archivo);
   const { setPeriodo } = imp;
 
-  // Período: por defecto el que declara el Excel. Si todavía no tiene cabecera
-  // de facturación, igual se ofrece (se crea al confirmar).
+  // Período: por defecto el que declara el Excel.
   const periodoArchivo = estado.reporte?.periodo ?? "";
   const periodos = useMemo(() => {
     if (!periodoArchivo || imp.periodos.some((p) => p.periodo === periodoArchivo)) return imp.periodos;
@@ -125,13 +113,12 @@ export default function ImportarUnne() {
   return (
     <ReporteOS
       titulo="Importar UNNE"
-      subtitulo="Subí el Excel que exporta el sistema de UNNE, revisá cómo queda repartido y confirmá para cargarlo en facturación."
       ayuda={AYUDA}
       estado={estado}
       detalleArchivo={estado.reporte?.rango}
       resumen={resumen}
       hayFilas={prestaciones.length > 0}
-      volverA={{ to: "/panel/importaciones", label: "Volver a importaciones" }}
+      volverA={{ to: "/panel/importaciones", label: "Volver" }}
       accept=".xlsx"
       filtros={<ControlesImportacion {...imp} periodos={periodos} />}
       acciones={<AccionesImportacion {...imp} bloqueo={bloqueo} onCorrer={(g) => void imp.correr(g)} />}

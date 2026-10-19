@@ -1,11 +1,11 @@
 @use "@/website/styles/all.scss" as *;
 
-$crema: #f7e9aa;
 
 .footer {
-  background: $primary-blue-dark;
-  border-top: 4px solid $crema;
-  color: rgba(255, 255, 255, 0.78);
+  // El mismo azul y la misma línea clara que la barra de arriba.
+  background: $portada-barra;
+  border-top: 1px solid rgba($portada-crema, 0.38);
+  color: rgba($white, 0.78);
 }
 
 .contenido {
@@ -51,7 +51,7 @@ $crema: #f7e9aa;
     display: flex;
     flex-direction: column;
     padding-left: 14px;
-    border-left: 1px solid rgba(255, 255, 255, 0.2);
+    border-left: 1px solid rgba($white, 0.2);
     font-family: $font-title;
     font-size: 1rem;
     font-weight: 800;
@@ -65,7 +65,7 @@ $crema: #f7e9aa;
     font-size: 0.75rem;
     font-weight: 600;
     letter-spacing: 0.2em;
-    color: $crema;
+    color: $primary-yellow;
   }
 }
 
@@ -74,13 +74,13 @@ $crema: #f7e9aa;
   align-items: center;
   gap: 8px;
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba($white, 0.78);
   text-decoration: none;
 
   svg {
     width: 18px;
     height: 18px;
-    color: $crema;
+    color: $primary-yellow;
   }
 
   &:hover {
@@ -92,13 +92,13 @@ $crema: #f7e9aa;
   h2 {
     margin: 0 0 18px;
     padding-bottom: 10px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    border-bottom: 1px solid rgba($white, 0.12);
     font-family: $font-title;
     font-size: 0.78rem;
     font-weight: 800;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: $crema;
+    color: $primary-yellow;
   }
 
   ul {
@@ -112,7 +112,7 @@ $crema: #f7e9aa;
 
   a {
     font-size: 0.92rem;
-    color: rgba(255, 255, 255, 0.78);
+    color: rgba($white, 0.78);
     text-decoration: none;
     transition: color 0.15s ease;
 
@@ -133,7 +133,7 @@ $crema: #f7e9aa;
     width: 16px;
     height: 16px;
     margin-top: 2px;
-    color: $crema;
+    color: $primary-yellow;
   }
 
   span {
@@ -142,7 +142,7 @@ $crema: #f7e9aa;
 }
 
 .pie {
-  background: rgba(0, 0, 0, 0.18);
+  background: rgba($black, 0.18);
 }
 
 .pieContenido {
@@ -154,14 +154,14 @@ $crema: #f7e9aa;
   margin: 0 auto;
   padding: 16px 24px;
   font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba($white, 0.55);
 
   p {
     margin: 0;
   }
 
   a {
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba($white, 0.8);
     font-weight: 600;
     text-decoration: none;
 
@@ -177,12 +177,12 @@ $crema: #f7e9aa;
   gap: 6px;
   margin-left: auto;
   padding: 6px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba($white, 0.2);
   border-radius: 4px;
   background: none;
   font: inherit;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba($white, 0.8);
   cursor: pointer;
   transition: border-color 0.15s ease, color 0.15s ease;
 
@@ -192,7 +192,7 @@ $crema: #f7e9aa;
   }
 
   &:hover {
-    border-color: $crema;
+    border-color: $primary-yellow;
     color: $white;
   }
 

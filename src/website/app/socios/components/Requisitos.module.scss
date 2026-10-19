@@ -21,7 +21,7 @@
     font-size: clamp(1.8rem, 3vw, 2.4rem);
     font-weight: 800;
     letter-spacing: -0.02em;
-    color: #14233a;
+    color: $tono-azul-850;
   }
 }
 
@@ -34,7 +34,7 @@
   background: $white;
   font-weight: 600;
   color: $primary-blue;
-  box-shadow: 0 6px 16px rgba(20, 35, 58, 0.06);
+  box-shadow: 0 6px 16px rgba($tono-azul-850, 0.06);
 }
 
 .mano {
@@ -76,7 +76,7 @@
   padding: 0 6px;
   border-radius: 6px;
   background: $primary-blue;
-  color: #f7e9aa;
+  color: $primary-yellow;
   font-size: 0.85rem;
 }
 

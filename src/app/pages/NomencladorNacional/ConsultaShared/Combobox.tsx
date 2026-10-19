@@ -3,13 +3,8 @@ import { Search, X as XIcon, Loader2 } from "lucide-react";
 
 import styles from "./consulta.module.scss";
 
-/**
- * Controlled, presentational autocomplete. The parent owns the data source
- * (sync-filtered list or async search) and passes `items`, `query`, `loading`.
- * Generic over the item shape via `getKey` / `getCode` / `getText` accessors,
- * so the same component drives the obra-social and código fields.
- */
-export type ComboboxProps<T> = {
+/** Controlled, presentational autocomplete. The parent owns the data source (sync-filtered list or async search) and passes `items`, `query`, `loading`. */
+type ComboboxProps<T> = {
   /** Step index shown before the label (1, 2, …). */
   idx: number;
   label: string;

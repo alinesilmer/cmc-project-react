@@ -15,6 +15,7 @@ import type { Complejidad, ViaPractica } from "../nomenclador.types";
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import type { Especialidad } from "../../Especialidades/especialidades.types";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
 
 const money = new Intl.NumberFormat("es-AR", {
   style: "currency",
@@ -99,10 +100,7 @@ export default function CodigosPorEspecialidad() {
     return orden.filter((e) => normalize(e.nombre).includes(q)).slice(0, 50);
   }, [espList, espSearch]);
 
-  // Las tres cargas arrancan en paralelo y cada una tiene su propia caché, con
-  // la clave más chica que la identifica: así cambiar de especialidad no vuelve
-  // a pedir el catálogo de la OS, ni cambiar de OS el mapeo de la especialidad.
-  // `gcTime` largo para que ir y volver del menú no recargue nada.
+  // Las tres cargas arrancan en paralelo y cada una tiene su propia caché, con la clave más chica que la identifica.
 
   // El catálogo de la OS: la fuente que define qué códigos puede ver el usuario.
   const catalogo = useQuery({
@@ -122,8 +120,7 @@ export default function CodigosPorEspecialidad() {
     queryFn: () => fetchCodigosDeEspecialidad(osNro as number, espId as number),
   });
 
-  // Descripción + "sin restricción" de cada código con precio en la OS — ya no
-  // vienen del catálogo del Colegio, son datos de la variante ganadora por OS.
+  // Descripción + "sin restricción" de cada código con precio en la OS — ya no vienen del catálogo del Colegio.
   const descripciones = useQuery({
     queryKey: ["nomenclador-descripciones-os", osNro],
     enabled: osNro != null,
@@ -132,10 +129,7 @@ export default function CodigosPorEspecialidad() {
     queryFn: () => fetchDescripcionesOS(osNro as number),
   });
 
-  // Los precios son la carga más pesada y NO bloquean la tabla: la lista de
-  // códigos se pinta con las dos fuentes de arriba y estas columnas entran
-  // después. `placeholderData` mantiene los precios viejos visibles mientras se
-  // recalculan al cambiar de vía, en vez de vaciar la tabla.
+  // Los precios son la carga más pesada y NO bloquean la tabla.
   const valores = useQuery({
     queryKey: ["tabla-valores-especialidad", osNro, espId, via],
     enabled: osNro != null && espId != null,
@@ -156,15 +150,11 @@ export default function CodigosPorEspecialidad() {
   const cargandoPrecios = listo && !valores.data && !valores.isError;
   const conError = catalogo.isError || mapeo.isError || descripciones.isError;
 
-  // El cruce. `catalogo` es el cerco: con rol médico ya viene recortado por el
-  // backend, así que elegir otra especialidad en el combo nunca muestra de más.
-  // Descripción y "sin restricción" salen de `descripciones` (por OS, ya no del
-  // catálogo) — códigos sin precio cargado todavía quedan con descripción vacía.
+  // El cruce. `catalogo` es el cerco: con rol médico ya viene recortado por el backend.
   const filas = useMemo<Fila[]>(() => {
     if (!listo || !catalogo.data || !mapeo.data) return [];
 
-    // Todavía puede no haber precios: la fila se arma igual y las columnas de
-    // origen/nivel/total quedan pendientes hasta que llegue `valores`.
+    // Todavía puede no haber precios: la fila se arma igual y las columnas de origen/nivel/total quedan pendientes hasta que llegue `valores`.
     const porCodigo = new Map(
       (valores.data ?? []).map((v) => [v.codigo.toUpperCase(), v] as const),
     );
@@ -175,8 +165,7 @@ export default function CodigosPorEspecialidad() {
       const cod = n.codigo.toUpperCase();
       const info = descPorCodigo.get(cod);
       const universal = info?.universal ?? false;
-      // Entra si está mapeado a la especialidad elegida o si es universal
-      // (`sin_restriccion_especialidad`), igual que el gate del backend.
+      // Entra si está mapeado a la especialidad elegida o si es universal (`sin_restriccion_especialidad`), igual que el gate del backend.
       if (!mapeo.data.has(cod) && !universal) continue;
 
       const v = porCodigo.get(cod);
@@ -402,8 +391,7 @@ export default function CodigosPorEspecialidad() {
               </div>
             </div>
 
-            {/* Los chips son también el resumen (cuántos NN, NNE, NE): sin los
-                precios todavía no hay números que mostrar. */}
+            {/* Los chips son también el resumen (cuántos NN, NNE, NE): sin los precios todavía no hay números que mostrar. */}
             <div
               className={`${styles.chips} ${cargandoPrecios ? styles.chipsOff : ""}`}
               role="group"
@@ -471,7 +459,7 @@ export default function CodigosPorEspecialidad() {
 
             <div className={styles.tableWrap}>
               <div className={styles.tableScroll}>
-                <table className={styles.table}>
+                <Tabla className={styles.table}>
                   <thead>
                     <tr>
                       <th scope="col">Código</th>
@@ -547,7 +535,7 @@ export default function CodigosPorEspecialidad() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </Tabla>
               </div>
             </div>
 

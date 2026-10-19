@@ -17,11 +17,18 @@ const ReactQueryDevtools = import.meta.env.DEV
     )
   : null;
 
-const queryClient = new QueryClient();
+// Un 4xx no cambia por repetirlo (sin permiso, no existe, dato inválido): el error se muestra enseguida.
+function reintentarLectura(fallos: number, err: unknown): boolean {
+  const status = (err as { response?: { status?: number } } | null)?.response?.status;
+  if (status !== undefined && status >= 400 && status < 500) return false;
+  return fallos < 2;
+}
 
-// Vite dispara este evento cuando un <link rel="modulepreload"> falla — mismo
-// escenario de chunk viejo borrado por un deploy que cubre ChunkErrorBoundary, pero
-// esta vía no siempre pasa por un throw que un Error Boundary llegue a capturar.
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: reintentarLectura } },
+});
+
+// Vite dispara este evento cuando un <link rel="modulepreload"> falla — mismo escenario de chunk viejo borrado por un deploy que cubre ChunkErrorBoundary.
 window.addEventListener("vite:preloadError", () => {
   if (sessionStorage.getItem(CHUNK_RELOAD_FLAG) === "1") return;
   sessionStorage.setItem(CHUNK_RELOAD_FLAG, "1");

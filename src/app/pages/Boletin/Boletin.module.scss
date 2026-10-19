@@ -1,472 +1,214 @@
 @use "@/app/styles/all.scss" as *;
 
+// Ranking de valores: la franja, la consulta y las descargas en dos cajas, el buscador y la tabla (el componente compartido) con el podio marcado.
+
 .container {
-  padding: $spacing-8;
-  background-color: $gray-50;
-  min-height: 100vh;
-}
+  // En variables porque la franja las necesita para salirse del relleno.
+  --lado: #{$spacing-12};
+  --arriba: #{$spacing-8};
 
-.header {
-  text-align: left;
-  margin-bottom: $spacing-8;
-  animation: fadeIn 0.5s ease-out;
-
-  @media (max-width: $breakpoint-sm) {
-    margin-bottom: $spacing-6;
-  }
-}
-
-.headerContent {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: $spacing-1;
-}
+  gap: $spacing-5;
+  min-height: 100%;
+  padding: $spacing-8 $spacing-12;
 
-.title {
-  font-size: $font-size-4xl;
-  font-weight: $font-weight-bold;
-  color: $gray-900;
-  margin: 0 0 $spacing-2 0;
+  // La franja ya trae su margen; el `gap` alcanza.
+  > :first-child {
+    margin-bottom: 0;
+  }
 
   @media (max-width: $breakpoint-md) {
-    font-size: $font-size-3xl;
+    --lado: #{$spacing-5};
+    --arriba: #{$spacing-5};
+    padding: $spacing-5;
   }
 
   @media (max-width: $breakpoint-sm) {
-    font-size: $font-size-2xl;
-  }
-}
-
-.subtitle {
-  font-size: $font-size-lg;
-  color: $gray-600;
-  margin: 0;
-
-  @media (max-width: $breakpoint-sm) {
-    font-size: $font-size-base;
-    padding: 0 $spacing-2;
-  }
-}
-
-.card {
-  background: $white;
-  border: 1px solid $gray-200;
-  border-radius: $radio-sm;
-  box-shadow: $shadow-md;
-  margin-bottom: $spacing-6;
-  overflow: hidden;
-
-  @media (max-width: $breakpoint-sm) {
-    border-radius: $radio-lg;
-    margin-bottom: $spacing-4;
-  }
-}
-
-.cardHeader {
-  padding: $spacing-6 $spacing-6 $spacing-4;
-  border-bottom: 1px solid $gray-200;
-
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-4 $spacing-4 $spacing-3;
-  }
-}
-
-.cardTitle {
-  font-size: $font-size-2xl;
-  font-weight: $font-weight-bold;
-  color: $gray-900;
-  margin: 0 0 $spacing-2;
-
-  @media (max-width: $breakpoint-sm) {
-    font-size: $font-size-xl;
-  }
-}
-
-.cardDescription {
-  font-size: $font-size-base;
-  color: $gray-600;
-  margin: 0;
-
-  @media (max-width: $breakpoint-sm) {
-    font-size: $font-size-sm;
-  }
-}
-
-.cardContent {
-  padding: $spacing-6;
-
-  @media (max-width: $breakpoint-sm) {
+    --lado: #{$spacing-4};
+    --arriba: #{$spacing-4};
     padding: $spacing-4;
   }
 }
 
-.fieldGroup {
+// ── Consulta ────────────────────────────────────────────────────────────────
+
+.consulta {
   display: flex;
-  flex-direction: column;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: $spacing-3 $spacing-4;
+}
+
+.campo {
+  display: grid;
   gap: $spacing-1;
-  margin-bottom: $spacing-5;
-  max-width: 320px;
+  min-width: 11rem;
+
+  > span {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $gray-500;
+  }
 }
 
-.fieldLabel {
-  font-size: $font-size-base;
-  font-weight: $font-weight-semibold;
-  color: $gray-700;
-}
-
-.fieldInput {
-  padding: $spacing-3 $spacing-4;
-  border: 1px solid $gray-300;
-  border-radius: $radio-sm;
-  font-size: $font-size-base;
+.entrada {
+  width: 100%;
+  height: 2.75rem;
+  padding: 0 $spacing-4;
+  font: inherit;
+  font-weight: $font-weight-normal;
+  font-variant-numeric: tabular-nums;
   color: $gray-900;
   background: $white;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-
-  &::placeholder {
-    color: $gray-400;
-  }
+  border: 1px solid $gray-300;
+  border-radius: $radio-md;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
 
   &:focus {
-    outline: none;
-    border-color: $primary-blue;
-    box-shadow: 0 0 0 3px rgba($primary-blue, 0.1);
+    border-color: $franja-azul;
+    box-shadow: 0 0 0 3px rgba($franja-azul, 0.14);
   }
 }
 
-.fieldInputError {
+.entradaError {
   border-color: $danger-red;
-
-  &:focus {
-    border-color: $danger-red;
-    box-shadow: 0 0 0 3px rgba($danger-red, 0.1);
-  }
 }
 
-.fieldError {
-  font-size: $font-size-sm;
-  color: $danger-red;
-  margin: 0;
-}
-
-.actions {
-  display: flex;
-  gap: $spacing-4;
-  justify-content: center;
-
-  @media (max-width: $breakpoint-sm) {
-    flex-direction: column;
-    gap: $spacing-3;
-  }
-}
+// ── Estados ─────────────────────────────────────────────────────────────────
 
 .progressBar {
-  width: 100%;
   height: 4px;
   background: $gray-200;
-  border-radius: $radio-sm;
+  border-radius: 2px;
   overflow: hidden;
-  margin-top: $spacing-4;
 }
 
 .progressFill {
+  width: 40%;
   height: 100%;
-  background: linear-gradient(90deg, $primary-blue 0%, $accent-blue 100%);
-  animation: progress 1.5s ease-in-out infinite;
-}
-
-@keyframes progress {
-  0% {
-    width: 0%;
-    margin-left: 0%;
-  }
-  50% {
-    width: 50%;
-    margin-left: 25%;
-  }
-  100% {
-    width: 0%;
-    margin-left: 100%;
-  }
+  background: $franja-azul;
+  border-radius: 2px;
+  animation: ranking-avanza 1.1s ease-in-out infinite;
 }
 
 .errorMessage {
   display: flex;
   align-items: center;
   gap: $spacing-3;
-  padding: $spacing-4;
-  background: rgba($danger-red, 0.1);
-  border: 1px solid $danger-red;
-  border-radius: $radio-md;
-  color: $danger-red;
-  font-size: $font-size-base;
-  margin-top: $spacing-4;
-
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-3;
-    gap: $spacing-2;
-    font-size: $font-size-sm;
-  }
-}
-
-.errorIcon {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-}
-
-.resultsHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: $spacing-4;
-
-  @media (max-width: $breakpoint-md) {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
-
-.resultsCount {
-  font-size: $font-size-sm;
-  color: $gray-600;
   margin: 0;
-  font-weight: $font-weight-medium;
-
-  @media (max-width: $breakpoint-sm) {
-    font-size: $font-size-xs;
-  }
-}
-
-.searchWrapper {
-  position: relative;
-  width: 100%;
-  max-width: 320px;
-
-  @media (max-width: $breakpoint-md) {
-    max-width: 100%;
-  }
-}
-
-.searchIcon {
-  position: absolute;
-  left: $spacing-3;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 20px;
-  height: 20px;
-  color: $gray-400;
-  pointer-events: none;
-}
-
-.searchInput {
-  width: 100%;
-  padding: $spacing-3 $spacing-3 $spacing-3 $spacing-10;
-  border: 1px solid $gray-300;
+  padding: $spacing-3 $spacing-4;
+  font-weight: $font-weight-semibold;
+  color: $danger-red;
+  background: $gray-100;
+  border: 1px solid $tono-rojo-200;
   border-radius: $radio-md;
-  font-size: $font-size-base;
-  color: $gray-900;
-  background: $white;
-  transition: all 0.2s ease;
-
-  &::placeholder {
-    color: $gray-400;
-  }
-
-  &:focus {
-    outline: none;
-    border-color: $primary-blue;
-    box-shadow: 0 0 0 3px rgba($primary-blue, 0.1);
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    font-size: $font-size-sm;
-    padding: $spacing-2 $spacing-2 $spacing-2 $spacing-8;
-  }
 }
+
+// ── Tabla ───────────────────────────────────────────────────────────────────
 
 .tableWrapper {
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
+  box-shadow: 0 14px 34px -28px rgba($franja-azul, 0.55);
   overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-
-  @media (max-width: $breakpoint-md) {
-    margin: 0 (-$spacing-6);
-
-    &::-webkit-scrollbar {
-      height: 8px;
-    }
-
-    &::-webkit-scrollbar-track {
-      background: $gray-100;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background: $gray-300;
-      border-radius: $radio-sm;
-    }
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    margin: 0 (-$spacing-4);
-  }
 }
 
-.table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-
-  @media (max-width: $breakpoint-md) {
-    min-width: 700px;
-  }
-}
-
-.table thead tr {
-    background:  $primary-blue-dark;
-}
-
-.table th {
-  padding: $spacing-4 $spacing-4;
-  text-align: left;
-  font-size: $font-size-base;
-  font-weight: $font-weight-bold;
-  color: $white;
-  border-bottom: 2px solid $primary-blue;
-
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-3;
-    font-size: $font-size-sm;
-  }
-}
-
-.thContent {
-  display: flex;
-  align-items: center;
-  gap: $spacing-2;
-}
-
-.thIcon {
-  width: 18px;
-  height: 18px;
-  color: rgb(255, 239, 149);
-
-  @media (max-width: $breakpoint-sm) {
-    width: 16px;
-    height: 16px;
-  }
-}
-
-.thRank {
-  width: 120px;
-
-  @media (max-width: $breakpoint-sm) {
-    width: 100px;
-  }
-}
-
-/* Columna N° */
-.thNumber {
-  width: 110px;
-
-  @media (max-width: $breakpoint-sm) {
-    width: 90px;
-  }
-}
-
-.thName {
-  min-width: 250px;
-}
-
-.thAmount {
-  width: 180px;
-  text-align: right !important;
-
-  @media (max-width: $breakpoint-sm) {
-    width: 150px;
-  }
-}
-
-.table tbody tr {
-  transition: background-color 0.2s ease;
-
-  &:nth-child(even) {
-    background: $gray-50;
-  }
-
-  &:hover {
-    background: $secondary-blue;
-  }
-}
-
-.table td {
-  padding: $spacing-4 $spacing-4;
-  font-size: $font-size-base;
-  color: $gray-900;
-  border-bottom: 1px solid $gray-200;
-
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-3;
-    font-size: $font-size-sm;
-  }
-}
-
+.thRank,
 .tdRank {
-  font-weight: $font-weight-bold;
+  width: 7rem;
+  text-align: center !important;
 }
 
-/* Celda N° */
+.thNumber,
 .tdNumber {
-  font-weight: $font-weight-semibold;
-  color: $gray-700;
+  width: 7rem;
+}
+
+.tdNumber {
   font-variant-numeric: tabular-nums;
-}
-
-.rankBadge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 36px;
-  height: 36px;
-  padding: 0 $spacing-2;
-  background: $gray-200;
-  border-radius: $radio-md;
-  font-size: $font-size-lg;
-  font-weight: $font-weight-bold;
-  color: $gray-700;
-
-  @media (max-width: $breakpoint-sm) {
-    min-width: 32px;
-    height: 32px;
-    font-size: $font-size-base;
-  }
-}
-
-.rankFirst {
-  background: #ffffff;
-  border: 1px solid #eed15b;
-  box-shadow: 0 2px 8px rgba($warning-orange, 0.3);
-}
-
-.rankSecond {
-  background: #ffffff;
-  border: 1px solid $gray-400;
-  box-shadow: 0 2px 8px rgba($gray-400, 0.3);
-}
-
-.rankThird {
-  background: #ffffff;
-  border: 1px solid #cd7f32;
-  box-shadow: 0 2px 8px rgba(#cd7f32, 0.3);
+  color: $gray-500;
 }
 
 .tdName {
-  font-weight: $font-weight-medium;
+  font-weight: $font-weight-semibold;
+  color: $gray-900;
+}
+
+.thAmount,
+.tdAmount {
+  text-align: right !important;
 }
 
 .tdAmount {
-  text-align: right;
-  font-weight: $font-weight-semibold;
+  font-family: $fuente-titulos;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
   font-variant-numeric: tabular-nums;
-  color: $primary-blue;
+  color: $franja-azul;
+  white-space: nowrap;
+}
+
+// El puesto: un círculo; oro, plata y bronce para los tres primeros.
+.rankBadge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  padding: 0 $spacing-2;
+  font-family: $fuente-titulos;
+  font-weight: $font-weight-bold;
+  font-variant-numeric: tabular-nums;
+  color: $gray-600;
+  background: transparent;
+  border: 1px solid $gray-300;
+  border-radius: 999px;
+}
+
+// El podio se lee igual en oscuro: oro, plata y bronce no se apagan.
+.rankFirst,
+.rankSecond,
+.rankThird {
+  color-scheme: light;
+}
+
+.rankFirst {
+  color: $tono-amarillo-600;
+  background: $tono-amarillo-100-b;
+  border-color: $tono-amarillo-250-b;
+  box-shadow: 0 6px 14px -6px rgba($tono-amarillo-300-b, 0.8);
+}
+
+.rankSecond {
+  // Plata de verdad: brillo metálico y borde oscuro, para que no se confunda con el gris de las filas ni con los puestos comunes.
+  color: $tono-gris-750;
+  background: linear-gradient(145deg, $gray-50 0%, $carpeta-plata 38%, $carpeta-plata-lomo 62%, $gray-200 100%);
+  border-color: $tono-azul-400;
+  box-shadow: 0 6px 14px -6px rgba($gray-600, 0.85), inset 0 1px 0 rgba($white, 0.8);
+}
+
+.rankThird {
+  color: $white;
+  background: $tono-naranja-400;
+  border-color: $tono-naranja-450-b;
+  box-shadow: 0 6px 14px -6px rgba($tono-naranja-550-b, 0.7);
+}
+
+@keyframes ranking-avanza {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(350%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progressFill {
+    animation: none;
+  }
 }

@@ -17,14 +17,7 @@ type Args = {
   necesitaFicha: boolean;
 };
 
-/**
- * Prepara las filas y dispara la descarga.
- *
- * La ficha completa (`/api/medicos/all`) se pide sólo cuando hace falta: porque
- * el usuario eligió una columna que el padrón no trae, o porque una columna de
- * contacto que sí trae vino vacía en alguna fila. Con la selección por defecto
- * no se pide nada y la exportación es instantánea.
- */
+/** Prepara las filas y dispara la descarga. */
 export function useExportar({ selectedOS, rows, campos, necesitaFicha }: Args) {
   const [exportingPdf, setExportingPdf] = useState<ExportingPdfMode>(null);
   const [exportingExcel, setExportingExcel] = useState(false);
@@ -70,8 +63,6 @@ export function useExportar({ selectedOS, rows, campos, necesitaFicha }: Args) {
     } catch (e: unknown) {
       const err = e as { name?: string; response?: { status?: number } };
       if (ctrl.signal.aborted || err?.name === "AbortError") return;
-      // 403 = tiene padron:leer pero no medicos:leer. Es un caso real y el
-      // mensaje genérico no ayudaría a entender qué destildar.
       if (err?.response?.status === 403) {
         setError(
           "No tenés permiso para leer las fichas de los médicos. " +

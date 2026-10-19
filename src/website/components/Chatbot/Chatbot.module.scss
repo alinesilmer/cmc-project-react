@@ -1,5 +1,4 @@
 @use "../../styles/variables" as *;
-@use "chat" as *;
 
 
 // ─── Backdrop (expanded mode only) ───────────────────────────────────────────
@@ -18,23 +17,21 @@
 .window {
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: $white;
   border-radius: $chat-radio;
   box-shadow:
     0 18px 52px rgba($primary-blue-dark, 0.22),
-    0 3px 10px rgba(0, 0, 0, 0.07);
+    0 3px 10px rgba($black, 0.07);
   overflow: hidden;
 }
 
-// Normal (corner) position
-// Expanded (centered modal) position
+// Normal (corner) position Expanded (centered modal) position
 .windowExpanded {
   position: fixed;
   inset: 0;
   margin: auto;
   width: min(900px, 94vw);
-  // Un height fit-content sin piso hacía que con dos mensajes el modal quedara
-  // diminuto y saltara de alto a medida que avanzaba la conversación.
+  // Un height fit-content sin piso hacía que con dos mensajes el modal quedara diminuto y saltara de alto a medida que avanzaba la conversación.
   height: fit-content;
   min-height: min(600px, 82vh);
   max-height: 90vh;
@@ -65,8 +62,8 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.18);
-  border: 1.5px solid rgba(255, 255, 255, 0.32);
+  background: rgba($white, 0.18);
+  border: 1.5px solid rgba($white, 0.32);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -98,27 +95,26 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba($white, 0.78);
   font-size: 0.7rem;
   line-height: 1.25;
 
-  // Punto de "en línea" como caja y no como carácter: el bullet tipográfico
-  // cambia de tamaño y de línea base según la fuente que cargue.
+  // Punto de "en línea" como caja y no como carácter: el bullet tipográfico cambia de tamaño y de línea base según la fuente que cargue.
   &::before {
     content: "";
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #4ade80;
-    box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.28);
+    background: $tono-verde-400;
+    box-shadow: 0 0 0 2px rgba($tono-verde-400, 0.28);
     flex-shrink: 0;
   }
 }
 
 .closeBtn {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba($white, 0.12);
   border: none;
-  color: #fff;
+  color: $white;
   width: 28px;
   height: 28px;
   border-radius: 8px;
@@ -131,7 +127,7 @@
   transition: background $transition-fast;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.26);
+    background: rgba($white, 0.26);
   }
 
   &:focus-visible {

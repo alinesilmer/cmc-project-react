@@ -1,6 +1,5 @@
 @use "@/website/styles/all.scss" as *;
 
-$crema: #f7e9aa;
 
 // Dos tarjetas iguales con los logos y, entre ellas, el apretón de manos.
 .alianza {
@@ -28,10 +27,10 @@ $crema: #f7e9aa;
   place-items: center;
   height: 150px;
   padding: 20px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid $borde-suave;
   border-radius: 10px;
   background: $white;
-  box-shadow: 0 10px 26px rgba(20, 35, 58, 0.07);
+  box-shadow: 0 10px 26px rgba($tono-azul-850, 0.07);
 
   @media (max-width: 480px) {
     height: 110px;
@@ -67,8 +66,8 @@ $crema: #f7e9aa;
   border: 4px solid $white;
   border-radius: 50%;
   background: $primary-blue;
-  color: $crema;
-  box-shadow: 0 8px 20px rgba(23, 63, 112, 0.3);
+  color: $primary-yellow;
+  box-shadow: 0 8px 20px rgba($primary-blue, 0.3);
 
   svg {
     width: 26px;

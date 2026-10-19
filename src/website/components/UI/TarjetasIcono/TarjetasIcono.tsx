@@ -13,15 +13,14 @@ type Props = {
   items: TarjetaIcono[];
   /** En escritorio; en tablet son dos y en el celular una. */
   columnas?: number;
+  /** Sobre fondo azul oscuro (la portada): el título pasa a crema y dorado. */
+  oscuro?: boolean;
 };
 
-/**
- * Una grilla de tarjetas blancas con ícono, una palabra y una línea: valores
- * en Nosotros, requisitos de la Quinta, lo que incluye Prevención Salud.
- */
-export default function TarjetasIcono({ id, titulo, items, columnas = 4 }: Props) {
+/** Una grilla de tarjetas blancas con ícono, una palabra y una línea: valores en Nosotros, requisitos de la Quinta, lo que incluye Prevención Salud. */
+export default function TarjetasIcono({ id, titulo, items, columnas = 4, oscuro = false }: Props) {
   return (
-    <section aria-labelledby={id}>
+    <section aria-labelledby={id} className={oscuro ? styles.oscuro : undefined}>
       <Revelar como="h2" id={id} className={styles.titulo}>
         {titulo}
       </Revelar>

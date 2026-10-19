@@ -8,6 +8,8 @@ import { detailMessage } from "../types";
 import { formatMoney } from "../money";
 import ObraSocialAutocomplete from "../components/ObraSocialAutocomplete";
 import styles from "./RegistroFacturacion.module.scss";
+import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
 
 const periodoActual = (): string => {
   const d = new Date();
@@ -113,11 +115,11 @@ const RegistroFacturacion: React.FC = () => {
         </div>
         <div className={styles.filterField}>
           <label className={styles.filterLabel}>Desde</label>
-          <input className={styles.input} type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
+          <CampoFecha value={desde} onChange={(valor) => setDesde(valor)} />
         </div>
         <div className={styles.filterField}>
           <label className={styles.filterLabel}>Hasta</label>
-          <input className={styles.input} type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} />
+          <CampoFecha value={hasta} onChange={(valor) => setHasta(valor)} />
         </div>
         <button type="button" className={styles.clearBtn} onClick={handleLimpiarGlobal}>
           Limpiar filtros
@@ -130,7 +132,7 @@ const RegistroFacturacion: React.FC = () => {
           <h2 className={styles.sectionTitle}>Carga por usuario</h2>
         </div>
         <div className={styles.tableWrap}>
-          <table className={styles.table}>
+          <Tabla className={styles.table}>
             <thead>
               <tr><th>#</th><th>Usuario</th><th>Prestaciones cargadas</th><th>Importe total</th></tr>
             </thead>
@@ -156,7 +158,7 @@ const RegistroFacturacion: React.FC = () => {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </Tabla>
         </div>
       </div>
 
@@ -166,7 +168,7 @@ const RegistroFacturacion: React.FC = () => {
           <h2 className={styles.sectionTitle}>Cierres por operador</h2>
         </div>
         <div className={styles.tableWrap}>
-          <table className={styles.table}>
+          <Tabla className={styles.table}>
             <thead>
               <tr><th>#</th><th>Usuario</th><th>Facturas cerradas</th><th>Importe total</th></tr>
             </thead>
@@ -192,7 +194,7 @@ const RegistroFacturacion: React.FC = () => {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </Tabla>
         </div>
       </div>
     </div>

@@ -4,14 +4,7 @@ import { hoyISO } from "@/app/features/nomenclador/galenos";
 import { listValores } from "../nomenclador.api";
 import type { TablaValorItem } from "../nomenclador.types";
 
-/**
- * El copago del valor que se está mostrando, si la obra social lo cobra.
- *
- * `tabla_valores` devuelve el precio pero no el coseguro, que vive en el valor
- * (`nm_valores.coseguro`). Se pide aparte a `/api/valores_nm/` —mismo permiso,
- * `nomenclador:leer`— y se toma la variante que ganó en la tabla: misma
- * vigencia, mismo origen y misma especialidad. `null` = no hay copago.
- */
+/** El copago del valor que se está mostrando, si la obra social lo cobra. */
 export function useCopago(obraSocialNro: number | null, resultado: TablaValorItem | null): number | null {
   const { data = null } = useQuery({
     queryKey: [

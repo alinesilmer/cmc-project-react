@@ -8,7 +8,6 @@ import type {
   DescuentoOption,
   MedicoOption,
   Pago,
-  TopDeudorItem,
 } from "./types";
 
 const DEDUCCIONES_URL = "/api/deducciones";
@@ -33,9 +32,6 @@ export const fetchDeduccionesHistorial = (params: HistorialParams) =>
 
 export const fetchDeduccionesHistorialExport = (params: Omit<HistorialParams, "page" | "size">) =>
   getJSON<DeduccionHistorialItem[]>(`${DEDUCCIONES_URL}/export`, params);
-
-export const fetchTopDeudores = (limit = 10) =>
-  getJSON<TopDeudorItem[]>("/api/deducciones/top-deudores", { limit });
 
 export const updateDeduccionEstado = (id: number, estado: "en_pago" | "pendiente" | "aplicado") =>
   patchJSON<DeduccionHistorialItem>(`${DEDUCCIONES_URL}/${id}`, { estado });

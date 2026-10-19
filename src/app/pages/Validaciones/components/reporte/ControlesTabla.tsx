@@ -1,7 +1,8 @@
-import { ChevronLeft, ChevronRight, Search, X } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import Button from "@/app/components/ui/Button/Button";
 import s from "./reporte.module.scss";
+import SearchField from "@/app/components/ui/SearchField/SearchField";
 
 /** Buscador de la tabla de un reporte. */
 export function BuscadorTabla({
@@ -14,27 +15,12 @@ export function BuscadorTabla({
   placeholder: string;
 }) {
   return (
-    <div className={s.buscador}>
-      <Search size={16} className={s.buscadorLupa} aria-hidden="true" />
-      <input
-        type="search"
-        value={valor}
-        onChange={(e) => onCambio(e.target.value)}
-        placeholder={placeholder}
-        aria-label={placeholder}
-        autoComplete="off"
-      />
-      {valor && (
-        <button
-          type="button"
-          className={s.buscadorLimpiar}
-          onClick={() => onCambio("")}
-          aria-label="Borrar la búsqueda"
-        >
-          <X size={14} />
-        </button>
-      )}
-    </div>
+    <SearchField
+      value={valor}
+      onChange={(e) => onCambio(e.target.value)}
+      onClear={() => onCambio("")}
+      placeholder={placeholder}
+    />
   );
 }
 

@@ -1,8 +1,10 @@
+@use "@/website/styles/all.scss" as *;
+
 // La foto, protagonista: ancha y baja, con un acercamiento lento al pasar.
 .foto {
   overflow: hidden;
   border-radius: 10px;
-  box-shadow: 0 18px 40px rgba(12, 42, 82, 0.14);
+  box-shadow: 0 18px 40px rgba($primary-blue-dark, 0.14);
 
   img {
     display: block;

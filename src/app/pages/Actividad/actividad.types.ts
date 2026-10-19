@@ -1,7 +1,4 @@
 // Registro de acciones del personal del Colegio (todos los que NO son médicos).
-//
-// El backend todavía no existe. Este es el contrato que la API va a tener que
-// cumplir; mientras tanto `actividad.api.ts` devuelve datos de ejemplo.
 
 /** Sale del status HTTP. */
 export type ResultadoAccion = "ok" | "error" | "denegado";
@@ -16,11 +13,7 @@ export interface AccionUsuario {
   /** Rol al momento de la acción. Nunca `medico`: la pantalla los excluye. */
   usuario_rol: string | null;
 
-  /**
-   * Qué hizo, en castellano y ya resuelto: "Cerró el pago #4821". Lo arma el
-   * backend: para resolver el id hace falta el contexto del momento de la
-   * acción, no el de la consulta.
-   */
+  /** Qué hizo, en castellano y ya resuelto: "Cerró el pago #4821". */
   descripcion: string;
   /** Agrupador para el filtro: "Pagos", "Facturación", "Nomenclador". */
   modulo: string;
@@ -74,10 +67,7 @@ export const LABEL_RESULTADO: Record<ResultadoAccion, string> = {
   denegado: "Sin permiso",
 };
 
-/**
- * `2026-08-21T14:32:07-03:00` → `21/08/2026 14:32`. Acá sí se usa `new Date`
- * porque el string trae hora y zona; el corrimiento afecta a las fechas sueltas.
- */
+/** `2026-08-21T14:32:07-03:00` → `21/08/2026 14:32`. */
 export function formatMomento(iso: string): string {
   const d = new Date(iso);
   if (isNaN(d.getTime())) return iso;

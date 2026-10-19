@@ -16,6 +16,7 @@ import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import { completarBaseNN } from "../nomenclador.api";
 import type { CompletarBaseNNResult } from "../nomenclador.types";
 import { mensajeDeError } from "@/app/shared/lib/httpErrors";
+import { fechaAR } from "@/app/pages/NomencladorNacional/utiles";
 
 const money = new Intl.NumberFormat("es-AR", {
   style: "currency",
@@ -23,25 +24,7 @@ const money = new Intl.NumberFormat("es-AR", {
   maximumFractionDigits: 2,
 });
 const num = new Intl.NumberFormat("es-AR");
-
-/** `aaaa-mm-dd` → `dd/mm/aaaa` sin pasar por Date (evita el corrimiento por UTC). */
-function fechaAR(iso: string): string {
-  const [a, m, d] = iso.split("-");
-  return `${d}/${m}/${a}`;
-}
-
-/**
- * Herramientas → "Completar nomenclador NN".
- *
- * Deja una obra social —nueva o existente— con los 7 galenos base y todos sus
- * valores NN, como si se acabara de dar de alta, pero SIN tocar lo que ya
- * tiene: lo existente se informa y se saltea. Lo que falta se crea en $0 con
- * vigencia 01/01/1900; después alcanza con cargar el precio de los galenos base
- * (Nomenclador → Actualizar Unidades) y los NN rotan solos.
- *
- * Al elegir la obra social se pide la vista previa (`dry_run`): el mismo
- * informe que el real, sin guardar nada.
- */
+/** Herramientas → "Completar nomenclador NN". */
 export default function CompletarNomencladorNN() {
   const osQuery = useObrasSociales();
   const [os, setOs] = useState<number | null>(null);

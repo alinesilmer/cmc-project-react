@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { motion } from "framer-motion";
 import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
 import {
@@ -12,7 +11,8 @@ import {
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
 import BackButton from "@/app/components/ui/BackButton/BackButton";
 import Button from "@/app/components/ui/Button/Button";
-import Card from "@/app/components/ui/Card/Card";
+import Franja from "@/app/components/layout/Franja/Franja";
+import lq from "../Liquidacion.module.scss";
 import SelectableTable from "@/app/components/ui/SelectableTable/SelectableTable";
 import styles from "./LoteDetalle.module.scss";
 import {
@@ -24,6 +24,15 @@ import {
 } from "../types";
 import type ExcelJS from "exceljs";
 import { saveAs } from "@/app/shared/lib/fileSaver";
+import { Check, ArrowLeftRight } from "lucide-react";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
+import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
+import { LOTE_URL } from "@/app/pages/Pagos/LoteDetalle/utiles";
+import { ITEMS_URL } from "@/app/pages/Pagos/LoteDetalle/utiles";
+import { ITEM_URL } from "@/app/pages/Pagos/LoteDetalle/utiles";
+import { ESTADO_URL } from "@/app/pages/Pagos/LoteDetalle/utiles";
+import { ESTADO_TONO, estadoLabel } from "@/app/pages/Pagos/LoteDetalle/utiles";
+import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
 
 const OBSERVACION_OPTIONS = [
   "Falta firma",
@@ -32,24 +41,9 @@ const OBSERVACION_OPTIONS = [
   "Falta datos",
   "Otro",
 ];
-
-const LOTE_URL = (id: string | number) => `/api/lotes/snaps/${id}`;
-const ITEMS_URL = (id: string | number) => `/api/lotes/snaps/${id}/items`;
-const ITEM_URL = (loteId: string | number, ajusteId: number) =>
-  `/api/lotes/snaps/${loteId}/items/${ajusteId}`;
-const ESTADO_URL = (id: string | number) => `/api/lotes/snaps/${id}/estado`;
 const BUSCAR_ATENCIONES_URL = "/api/lotes/snaps/buscar_atenciones";
 
 type EditForm = { tipo: "d" | "c"; honorarios: string; gastos: string; observacion: string };
-
-const estadoLabel = (e: string) => {
-  if (e === "A") return "Abierto";
-  if (e === "C") return "Cerrado";
-  if (e === "L") return "En Liquidaciones";
-  if (e === "AP") return "Aplicado";
-  return e;
-};
-
 const transitionLabels: Record<string, string> = {
   cerrar: "Cerrar Lote",
   reabrir: "Reabrir Lote",
@@ -67,7 +61,7 @@ const transitionDescriptions: Record<string, string> = {
 };
 
 const LoteDetalle: React.FC = () => {
-  const { pagoId, loteId } = useParams<{ pagoId: string; loteId: string }>();
+  const { loteId } = useParams<{ loteId: string }>();
   const notify = useAppSnackbar();
 
   const [lote, setLote] = useState<LoteAjuste | null>(null);
@@ -400,100 +394,69 @@ const LoteDetalle: React.FC = () => {
     : "—";
 
   return (
-    <div className={styles.page}>
-      <div className={styles.content}>
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          {/* Header */}
-          <div className={styles.header}>
-            <div className={styles.headerLeft}>
-              <BackButton />
-              <div className={styles.breadcrumb}>
-                LIQUIDACIÓN{pagoId ? ` / PAGO ${pagoId}` : ""} /{" "}
-                {lote?.tipo === "refacturacion" ? "REFACTURACIONES" : "LOTES"} /
-                LOTE {loteId}
+    <div className={lq.pagina}>
+          <Franja titulo={`Lote ${loteId}`} icono={ArrowLeftRight} lateral={<span className={lq.franjaDato}>{periodo}</span>} />
+          <BackButton label="Volver" />
+
+          {lote && (
+            <div className={lq.tira}>
+              <span className={`${lq.tipo} ${lote.tipo === "refacturacion" ? lq.tipoRefacturacion : lq.tipoNormal}`}>
+                {lote.tipo === "refacturacion" ? "Refacturación" : "Normal"}
+              </span>
+              {lote.snap_origen_id && (
+                <span className={lq.tiraTexto}>Corrige el lote #{lote.snap_origen_id}</span>
+              )}
+              <span className={`${lq.estado} ${lq[ESTADO_TONO[lote.estado] ?? "cerrado"]}`}>
+                {estadoLabel(lote.estado)}
+              </span>
+              <div className={lq.tiraDato}>
+                <span>Obra social</span>
+                <b>#{lote.obra_social_id}</b>
               </div>
-              <h1 className={styles.title}>
-                Lote {loteId} — OS {lote?.obra_social_id ?? "…"} · {periodo}
-              </h1>
-              {lote && (
-                <div className={styles.chips}>
-                  <span
-                    className={`${styles.chip} ${lote.tipo === "refacturacion" ? styles.chipRefac : ""}`}
-                  >
-                    {lote.tipo === "refacturacion" ? "Refacturación" : "Normal"}
-                  </span>
-                  {lote.snap_origen_id && (
-                    <span
-                      className={styles.chip}
-                      style={{ fontSize: 11, color: "#64748b" }}
-                    >
-                      Corrige lote #{lote.snap_origen_id}
-                    </span>
-                  )}
-                  <span
-                    className={`${styles.estadoBadge} ${styles[`estado${lote.estado}`]}`}
-                  >
-                    {estadoLabel(lote.estado)}
-                  </span>
-                  {lote.pago_id && (
-                    <span className={styles.chip} style={{ fontSize: 11 }}>
-                      Pago #{lote.pago_id}
-                    </span>
-                  )}
-                  <span className={`${styles.chip} ${styles.chipRed}`}>
-                    Débitos: -${fmt(lote.total_debitos)}
-                  </span>
-                  <span className={`${styles.chip} ${styles.chipGreen}`}>
-                    Créditos: +${fmt(lote.total_creditos)}
-                  </span>
+              {lote.pago_id && (
+                <div className={lq.tiraDato}>
+                  <span>Pago</span>
+                  <b>#{lote.pago_id}</b>
                 </div>
               )}
-            </div>
-            <div className={styles.headerActions}>
-              {!isApplied && isOpen && (
-                <Button
-                  variant="secondary"
-                  onClick={() => setTransitionModal("cerrar")}
-                >
-                  Cerrar Lote
-                </Button>
-              )}
-              {!isApplied && isClosed && (
-                <>
-                  <Button
-                    variant="secondary"
-                    onClick={() => setTransitionModal("reabrir")}
-                  >
-                    Reabrir
+              <div className={lq.tiraDato}>
+                <span>Débitos</span>
+                <b className={lq.menos}>-${fmt(lote.total_debitos)}</b>
+              </div>
+              <div className={lq.tiraDato}>
+                <span>Créditos</span>
+                <b className={lq.mas}>+${fmt(lote.total_creditos)}</b>
+              </div>
+              <div className={`${lq.tiraAccion} ${lq.acciones}`}>
+                {!isApplied && isOpen && (
+                  <Button variant="primary" size="md" onClick={() => setTransitionModal("cerrar")}>
+                    Cerrar lote
                   </Button>
-                  <Button
-                    variant="primary"
-                    onClick={() => setTransitionModal("en_liquidaciones")}
-                  >
-                    Pasar a Liquidaciones
+                )}
+                {!isApplied && isClosed && (
+                  <>
+                    <Button variant="ghost" size="md" onClick={() => setTransitionModal("reabrir")}>
+                      Reabrir
+                    </Button>
+                    <Button variant="primary" size="md" onClick={() => setTransitionModal("en_liquidaciones")}>
+                      Pasar a liquidaciones
+                    </Button>
+                  </>
+                )}
+                {!isApplied && isInLiq && (
+                  <Button variant="danger" size="md" onClick={() => setTransitionModal("quitar")}>
+                    Quitar del pago
                   </Button>
-                </>
-              )}
-              {!isApplied && isInLiq && (
-                <Button
-                  variant="secondary"
-                  onClick={() => setTransitionModal("quitar")}
-                >
-                  Quitar del Pago
-                </Button>
-              )}
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {error && <div className={styles.errorBanner}>{error}</div>}
 
           {/* Panel 1: Search + Form (only when open and not applied) */}
           {isOpen && !isApplied && !loading && (
-            <Card className={styles.searchPanel}>
+            <section className={styles.searchPanel}>
               <div className={styles.panelHeader}>
                 <span className={styles.panelTitle}>Buscar prestación</span>
               </div>
@@ -514,7 +477,7 @@ const LoteDetalle: React.FC = () => {
 
               {/* Results table */}
               <div className={styles.resultsWrap}>
-                <table className={`${styles.table} ${styles.tableSearch}`}>
+                <Tabla className={`${styles.table} ${styles.tableSearch}`}>
                   <thead>
                     <tr>
                       <th>Nro Orden</th>
@@ -574,7 +537,7 @@ const LoteDetalle: React.FC = () => {
                         </tr>
                       ))}
                   </tbody>
-                </table>
+                </Tabla>
               </div>
 
               {/* Inline form */}
@@ -710,7 +673,7 @@ const LoteDetalle: React.FC = () => {
               <div className={styles.submitRow}>
                 {selectedAtencion && (
                   <span className={styles.selectedBadge}>
-                    ✓ Seleccionado: {selectedAtencion.nro_consulta} —{" "}
+                    <Check size={14} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> Seleccionado: {selectedAtencion.nro_consulta} —{" "}
                     {selectedAtencion.nombre_prestador}
                   </span>
                 )}
@@ -722,11 +685,11 @@ const LoteDetalle: React.FC = () => {
                   {confirming ? "Guardando…" : "Confirmar"}
                 </Button>
               </div>
-            </Card>
+            </section>
           )}
 
           {/* Panel 2: Ajustes table */}
-          <Card className={styles.tableCard}>
+          <section className={styles.tableCard}>
             <div className={styles.panelToolbar}>
               <span className={styles.panelTitle}>
                 Ajustes del lote
@@ -735,22 +698,8 @@ const LoteDetalle: React.FC = () => {
                 )}
               </span>
               <div className={styles.exportActions}>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={exportPDF}
-                  disabled={ajustes.length === 0}
-                >
-                  Exportar PDF
-                </Button>
-                <Button
-                  variant="success"
-                  size="sm"
-                  onClick={exportExcel}
-                  disabled={ajustes.length === 0}
-                >
-                  Exportar Excel
-                </Button>
+                <BotonDescarga formato="pdf" onClick={exportPDF} disabled={ajustes.length === 0} />
+                <BotonDescarga formato="excel" onClick={exportExcel} disabled={ajustes.length === 0} />
               </div>
             </div>
             <SelectableTable
@@ -887,25 +836,32 @@ const LoteDetalle: React.FC = () => {
                 </span>
               </div>
             )}
-          </Card>
-        </motion.div>
-      </div>
+          </section>
 
       {/* Edit modal */}
       {editTarget && (
-        <div className={styles.modalBackdrop} role="dialog" aria-modal="true">
-          <div className={styles.modalCard}>
-            <div className={styles.modalHeader}>
-              <h3>Editar Ajuste #{editTarget.id}</h3>
-              <button
-                className={styles.modalClose}
+        <Dialogo
+          titulo={`Editar ajuste #${editTarget.id}`}
+          onClose={() => setEditTarget(null)}
+          acciones={
+            <>
+              <Button
+                variant="secondary"
                 onClick={() => setEditTarget(null)}
-                aria-label="Cerrar"
+                disabled={editSaving}
               >
-                ✕
-              </button>
-            </div>
-            <div className={styles.modalBody}>
+                Cancelar
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleEditSave}
+                disabled={editSaving}
+              >
+                {editSaving ? "Guardando…" : "Guardar Cambios"}
+              </Button>
+            </>
+          }
+        >
               <div className={styles.formRow}>
                 <label className={styles.formLabel}>Tipo</label>
                 <div className={styles.tipoToggle}>
@@ -968,48 +924,16 @@ const LoteDetalle: React.FC = () => {
                   disabled={editSaving}
                 />
               </div>
-            </div>
-            <div className={styles.modalActions}>
-              <Button
-                variant="secondary"
-                onClick={() => setEditTarget(null)}
-                disabled={editSaving}
-              >
-                Cancelar
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleEditSave}
-                disabled={editSaving}
-              >
-                {editSaving ? "Guardando…" : "Guardar Cambios"}
-              </Button>
-            </div>
-          </div>
-        </div>
+            </Dialogo>
       )}
 
       {/* Transition modal */}
       {transitionModal && (
-        <div className={styles.modalBackdrop} role="dialog" aria-modal="true">
-          <div className={styles.modalCard}>
-            <div className={styles.modalHeader}>
-              <h3>{transitionLabels[transitionModal]}</h3>
-              <button
-                className={styles.modalClose}
-                onClick={() => setTransitionModal(null)}
-                aria-label="Cerrar"
-              >
-                ✕
-              </button>
-            </div>
-            <div className={styles.modalBody}>
-              {!transitioning && (
-                <p>{transitionDescriptions[transitionModal]}</p>
-              )}
-              {transitioning && <p style={{ color: "#64748b" }}>Procesando…</p>}
-            </div>
-            <div className={styles.modalActions}>
+        <Dialogo
+          titulo={transitionLabels[transitionModal]}
+          onClose={() => setTransitionModal(null)}
+          acciones={
+            <>
               <Button
                 variant="secondary"
                 onClick={() => setTransitionModal(null)}
@@ -1024,9 +948,14 @@ const LoteDetalle: React.FC = () => {
               >
                 {transitioning ? "Procesando…" : "Confirmar"}
               </Button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        >
+              {!transitioning && (
+                <p>{transitionDescriptions[transitionModal]}</p>
+              )}
+              {transitioning && <p style={{ color: "#64748b" }}>Procesando…</p>}
+            </Dialogo>
       )}
     </div>
   );

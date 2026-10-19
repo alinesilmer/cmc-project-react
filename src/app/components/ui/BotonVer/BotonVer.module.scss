@@ -1,0 +1,11 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver BotonVer.tsx.
+
+.ver {
+  @extend %btn-icono;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  text-decoration: none;
+}

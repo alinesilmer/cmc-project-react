@@ -37,24 +37,14 @@ export const updateMail = (id: number, body: EmailInput): Promise<EmailInstituci
 
 export const deleteMail = (id: number): Promise<void> => delJSON<void>(`${BASE}/mails/${id}`);
 
-/**
- * Guarda o borra la contraseña de una casilla (`null` la borra). `rbac:gestionar`.
- * La respuesta confirma con `tiene_password`, sin devolver el valor.
- */
+/** Guarda o borra la contraseña de una casilla (`null` la borra). */
 export const savePassword = (
   id: number,
   password: string | null
 ): Promise<EmailInstitucion> =>
   putJSON<EmailInstitucion>(`${BASE}/mails/${id}/password`, { password });
 
-/**
- * Devuelve la contraseña en claro. `rbac:gestionar`.
- *
- * **Es POST aunque no modifique nada**, y eso es a propósito: el middleware de
- * auditoría del backend sólo registra métodos mutantes, así que con un GET las
- * lecturas de credenciales no dejarían rastro. Cada llamada a esto queda
- * anotada en `audit_log` con usuario, IP y hora.
- */
+/** Devuelve la contraseña en claro. */
 export const revelarPassword = (
   id: number
 ): Promise<{ id: number; direccion: string; password: string }> =>

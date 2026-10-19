@@ -2,6 +2,7 @@
 
 import type React from "react";
 import styles from "./HelpModal.module.scss";
+import { Lightbulb } from "lucide-react";
 
 interface HelpModalProps {
   isOpen: boolean;
@@ -62,7 +63,7 @@ const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
           </div>
 
           <div className={styles.tips}>
-            <h4>💡 Consejos útiles</h4>
+            <h4><Lightbulb size={16} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> Consejos útiles</h4>
             <ul>
               <li>Solo se aceptan archivos PDF</li>
               <li>El tamaño máximo es de 10MB</li>

@@ -5,7 +5,6 @@ import type { ClinicaOption } from "../types";
 import { filtrarYOrdenar } from "./localSearch";
 
 // El backend busca por nombre, o por documento/CUIT/nº socio si el término es numérico.
-// La tolerancia de 2 caracteres solo aplica al texto; en numérico alcanza con 1.
 const isNumeric = (s: string) => /^\d+$/.test(s);
 const minLenFor = (q: string) => (isNumeric(q) ? 1 : 2);
 
@@ -16,9 +15,7 @@ interface Props {
   /** Precarga la opción mostrada antes de que el usuario busque (usado al editar). */
   presetLabel?: string;
   blurOnSelect?: boolean;
-  /** Lista ya traída entera (ver CargaFacturacion.tsx, derivada de `medicosPrecargados`
-   *  filtrando `es_organizacion`): si viene, se filtra en memoria y no se pega más a
-   *  `/clinicas` por cada tecleo. Sin esto, busca como siempre. */
+  /** Lista ya traída entera (ver CargaFacturacion.tsx, derivada de `medicosPrecargados` filtrando `es_organizacion`): si viene. */
   clinicasPrecargadas?: ClinicaOption[];
 }
 
@@ -46,9 +43,7 @@ const ClinicaAutocomplete: React.FC<Props> = ({
     }
   }, []);
 
-  // Con la lista precargada entera, "buscar" es filtrar en memoria. Query vacío
-  // (campo recién clickeado) devuelve la lista completa: sin esto el dropdown
-  // abre sin ninguna opción hasta tipear.
+  // Con la lista precargada entera, "buscar" es filtrar en memoria.
   const buscarLocal = useCallback((q: string) => {
     if (!clinicasPrecargadas) { setOptions([]); return; }
     if (q.length === 0) { setOptions(clinicasPrecargadas); return; }
@@ -62,8 +57,7 @@ const ClinicaAutocomplete: React.FC<Props> = ({
 
   const selectOptions: AppSearchSelectOption[] = options.map((c) => ({
     id: c.cod,
-    // Sin nº de socio/código: una clínica no se identifica por matrícula ni nº de
-    // socio (eso es de médicos individuales), solo por su nombre.
+    // Sin nº de socio/código: una clínica no se identifica por matrícula ni nº de socio (eso es de médicos individuales), solo por su nombre.
     label: c.nombre,
     subtitle: c.localidad ?? undefined,
   }));

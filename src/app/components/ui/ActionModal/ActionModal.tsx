@@ -5,10 +5,7 @@ import { Modal, Animation, Loader } from "rsuite";
 import { X } from "lucide-react";
 import Button from "@/app/components/ui/Button/Button";
 
-// CSS base de los componentes RSuite que usa el modal. Va acá (y no en cada
-// página) para que el diálogo tenga siempre su layout — antes sólo lo cargaba
-// DoctorProfilePage y, si esa ruta no se había visitado, el modal salía sin
-// estilos.
+// CSS base de los componentes RSuite que usa el modal.
 import "rsuite/Modal/styles/index.css";
 import "rsuite/Loader/styles/index.css";
 
@@ -90,8 +87,7 @@ const ActionModal: React.FC<ActionModalProps> = ({
       className={phaseClass}
       backdropClassName={phaseClass}
     >
-      {/* Botón de cierre propio: en rsuite 6 el ícono del close por defecto vive
-          en un stylesheet base que no importamos, así que salía roto. */}
+      {/* Botón de cierre propio: en rsuite 6 el ícono del close por defecto vive en un stylesheet base que no importamos, así que salía roto. */}
       <Modal.Header closeButton={false}>
         <Modal.Title>{title}</Modal.Title>
         <button

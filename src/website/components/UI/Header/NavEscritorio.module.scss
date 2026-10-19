@@ -1,9 +1,9 @@
 @use "@/website/styles/all.scss" as *;
 
-$crema: #f7e9aa;
-$hover: #f1f5fb;
 
 .nav {
+  // Referencia del fondo azul, que se posiciona contra el menú entero.
+  position: relative;
   display: flex;
   align-items: center;
   gap: 2px;
@@ -26,39 +26,56 @@ $hover: #f1f5fb;
   font-size: 0.92rem;
   font-weight: 700;
   white-space: nowrap;
-  color: #374151;
+  color: rgba($portada-crema, 0.85);
   text-decoration: none;
   transition: background 0.18s ease, color 0.18s ease;
 
   &:hover {
-    background: $hover;
-    color: $primary-blue;
+    background: rgba($white, 0.08);
+    color: $portada-oro;
   }
 
   &:focus-visible {
-    outline: 2px solid $primary-blue;
+    outline: 2px solid $portada-oro;
     outline-offset: 2px;
   }
 }
 
 .activa {
   font-weight: 800;
-  color: $crema;
+  color: $portada-noche;
 
   &:hover {
     background: transparent;
-    color: $crema;
+    color: $portada-noche;
   }
 }
 
-// El fondo azul de la sección actual: va detrás de la palabra y se desliza de
-// un enlace a otro.
+// El fondo azul de la sección actual: un único elemento del menú, detrás de las palabras, que se desliza hasta el enlace activo.
 .fondo {
   position: absolute;
-  inset: 0;
-  z-index: -1;
+  top: 0;
+  left: 0;
   border-radius: 8px;
-  background: $primary-blue;
+  background: $portada-oro;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.fondoVisible {
+  opacity: 1;
+}
+
+// Recién después de la primera colocación: al cargar no tiene que entrar deslizándose desde la esquina.
+.fondoAnimado {
+  transition:
+    transform 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.15s ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 }
 
 .grupo {
@@ -70,8 +87,7 @@ $hover: #f1f5fb;
   }
 }
 
-// La flecha de Servicios, dentro de su enlace: abre la lista con el teclado o
-// en pantallas táctiles.
+// La flecha de Servicios, dentro de su enlace: abre la lista con el teclado o en pantallas táctiles.
 .flecha {
   position: absolute;
   top: 50%;
@@ -85,7 +101,7 @@ $hover: #f1f5fb;
   border: 0;
   border-radius: 4px;
   background: none;
-  color: #6b7280;
+  color: rgba($portada-crema, 0.6);
   cursor: pointer;
 
   svg {
@@ -95,11 +111,11 @@ $hover: #f1f5fb;
   }
 
   &:hover {
-    color: $primary-blue;
+    color: $portada-oro;
   }
 
   &:focus-visible {
-    outline: 2px solid $primary-blue;
+    outline: 2px solid $portada-oro;
   }
 }
 
@@ -108,7 +124,7 @@ $hover: #f1f5fb;
 }
 
 .grupo:has(.activa) .flecha {
-  color: rgba($crema, 0.8);
+  color: rgba($portada-noche, 0.7);
 }
 
 .panel {
@@ -121,9 +137,15 @@ $hover: #f1f5fb;
   padding: 8px;
   list-style: none;
   background: $white;
-  border: 1px solid #e5e7eb;
+  border: 1px solid $borde-suave;
   border-radius: 10px;
-  box-shadow: 0 18px 40px rgba(12, 42, 82, 0.14);
+  box-shadow: 0 18px 40px rgba($primary-blue-dark, 0.14);
+  // `transform` y no `translate`: esa propiedad ya centra la lista.
+  animation: panel-aparecer 0.16s ease both;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 
   // Puente invisible entre el enlace y la lista: el mouse no la cierra al bajar.
   &::before {
@@ -145,13 +167,13 @@ $hover: #f1f5fb;
   font-family: $font-normal;
   font-size: 0.92rem;
   font-weight: 500;
-  color: #1f2937;
+  color: $texto-oscuro;
   text-decoration: none;
   transition: background 0.15s ease, color 0.15s ease;
 
   &:hover,
   &:focus-visible {
-    background: $hover;
+    background: $fondo-suave;
     color: $primary-blue;
   }
 }
@@ -163,7 +185,7 @@ $hover: #f1f5fb;
   width: 34px;
   height: 34px;
   border-radius: 6px;
-  background: $hover;
+  background: $fondo-suave;
   color: $primary-blue;
 
   svg {
@@ -174,6 +196,13 @@ $hover: #f1f5fb;
 
   .opcion:hover & {
     background: $primary-blue;
-    color: $crema;
+    color: $primary-yellow;
+  }
+}
+
+@keyframes panel-aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
   }
 }

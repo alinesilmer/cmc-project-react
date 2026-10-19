@@ -19,10 +19,7 @@ import {
 type EnlaceNav = { etiqueta: string; ruta: string; icono: LucideIcon };
 export type ItemNav = EnlaceNav & { hijos?: EnlaceNav[] };
 
-/**
- * El menú del sitio, con un ícono por sección: el escritorio y el celular lo
- * dibujan cada uno a su manera, pero la lista es una sola.
- */
+/** El menú del sitio, con un ícono por sección: el escritorio y el celular lo dibujan cada uno a su manera. */
 export const NAVEGACION: ItemNav[] = [
   { etiqueta: "Inicio", ruta: "/", icono: House },
   { etiqueta: "Nosotros", ruta: "/nosotros", icono: Users },

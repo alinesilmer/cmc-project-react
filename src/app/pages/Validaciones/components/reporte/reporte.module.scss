@@ -1,104 +1,116 @@
-// Estilos del andamiaje de las pantallas que leen un reporte de facturación
-// (Prevención Salud, Swiss Medical). Salieron tal cual de
-// `PrevencionSalud.module.scss`, que era el único que los tenía.
-//
-// Lo que es propio de cada reporte —anchos de columna, colores de estado— vive
-// en el módulo de esa pantalla, no acá.
+// Estilos del andamiaje de las pantallas que leen un reporte de facturación (Prevención Salud, Swiss Medical).
 
 @use "@/app/styles/all.scss" as *;
 
 .container {
-  padding: $spacing-8;
+  // En variables porque la franja las necesita para salirse del relleno.
+  --lado: #{$spacing-12};
+  --arriba: #{$spacing-8};
+
+  padding: $spacing-8 $spacing-12;
   display: flex;
   flex-direction: column;
   gap: $spacing-5;
   min-height: 100%;
 
+  // La franja ya trae su margen; el `gap` alcanza.
+  > :first-child {
+    margin-bottom: 0;
+  }
+
   @media (max-width: $breakpoint-md) {
+    --lado: #{$spacing-5};
+    --arriba: #{$spacing-5};
     padding: $spacing-5;
   }
 
   @media (max-width: $breakpoint-sm) {
+    --lado: #{$spacing-4};
+    --arriba: #{$spacing-4};
     padding: $spacing-4;
   }
 }
 
-.back {
-  display: inline-flex;
-  align-items: center;
-  gap: $spacing-2;
-  align-self: flex-start;
-  font-size: $font-size-sm;
-  color: $gray-500;
-  text-decoration: none;
-
-  &:hover {
-    color: $primary-blue;
-  }
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  gap: $spacing-4;
-}
-
-.headerIcon {
-  color: $primary-blue;
-  flex-shrink: 0;
-}
-
-.title {
-  font-size: $font-size-3xl;
-  font-weight: $font-weight-bold;
-  color: $gray-900;
-  margin: 0;
-  line-height: 1.2;
-
-  @media (max-width: $breakpoint-sm) {
-    font-size: $font-size-2xl;
-  }
-}
-
-.subtitle {
-  font-size: $font-size-sm;
-  color: $gray-500;
-  margin: $spacing-1 0 0;
-  max-width: 62ch;
-}
-
 // ─── Carga del archivo ────────────────────────────────────────────────────────
 
+// Una hoja con borde punteado: el ícono, qué archivo va (o cuál se leyó) y el botón.
 .uploader {
   display: flex;
-  align-items: center;
-  gap: $spacing-3;
   flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-4 $spacing-5;
+  padding: $spacing-6 $spacing-8;
+  background: $white;
+  border: 2px dashed $gray-300;
+  border-radius: $radio-lg;
+}
+
+.uploaderLleno {
+  border-style: solid;
+  border-width: 1px;
+  border-color: $gray-200;
+  border-left: 6px solid $success-green;
+  box-shadow: 0 14px 34px -28px rgba($franja-azul, 0.55);
+
+  .uploaderIcono {
+    color: $white;
+    background: $success-green;
+  }
+}
+
+.uploaderIcono {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 4rem;
+  height: 4rem;
+  color: $franja-azul;
+  background: $primary-yellow;
+  border-radius: 50%;
+}
+
+.uploaderTexto {
+  display: grid;
+  gap: $spacing-1;
+  flex: 1 1 18rem;
+  min-width: 0;
+
+  strong {
+    font-family: $fuente-titulos;
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-bold;
+    letter-spacing: -0.02em;
+    color: $franja-azul;
+    overflow-wrap: anywhere;
+  }
+
+  span {
+    font-size: $font-size-sm;
+    line-height: 1.45;
+    color: $gray-500;
+  }
 }
 
 .fileInput {
   display: none;
 }
 
-.archivo {
-  font-size: $font-size-sm;
-  color: $gray-700;
-}
-
 .limpiar {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-1;
-  border: none;
-  background: none;
-  padding: 0;
+  gap: $spacing-2;
+  min-height: 2.75rem;
+  padding: 0 $spacing-4;
+  font: inherit;
+  font-weight: $font-weight-bold;
+  color: $white;
+  background: $danger-red;
+  border: 0;
+  border-radius: $radio-md;
   cursor: pointer;
-  font-family: inherit;
-  font-size: $font-size-sm;
-  color: $gray-500;
 
   &:hover {
-    color: $danger-red;
+    background: $tono-rojo-550-b;
   }
 }
 
@@ -133,40 +145,48 @@
 
 // ─── Resumen del reporte ──────────────────────────────────────────────────────
 
+// Una sola tira con los números del archivo, separados por un filete.
 .resumen {
   display: flex;
   flex-wrap: wrap;
-  gap: $spacing-3;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
+  box-shadow: 0 14px 34px -28px rgba($franja-azul, 0.55);
 }
 
 .dato {
   display: flex;
+  flex: 1 1 9rem;
   flex-direction: column;
   gap: $spacing-1;
-  min-width: 7rem;
-  padding: $spacing-3 $spacing-4;
-  background: $white;
-  border: 1px solid $gray-200;
-  border-radius: $border-radius-lg;
+  padding: $spacing-4 $spacing-6;
+
+  & + & {
+    border-left: 1px solid $gray-200;
+  }
 
   strong {
-    font-size: $font-size-xl;
+    font-family: $fuente-titulos;
+    font-size: $font-size-3xl;
     font-weight: $font-weight-bold;
-    color: $gray-900;
     font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+    color: $franja-azul;
   }
 
   span {
-    font-size: $font-size-xs;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
     color: $gray-500;
   }
 }
 
 .datoAlerta {
-  border-color: rgba($warning-orange, 0.4);
+  background: $primary-yellow-light;
 
   strong {
-    color: $warning-orange;
+    color: $tono-naranja-450;
   }
 }
 
@@ -196,33 +216,13 @@
   box-shadow: $shadow-sm;
 }
 
+// Va sobre el componente `Tabla`, que pone celdas, filas alternadas y resaltado: acá sólo lo propio de un reporte (renglones de una línea.
 .table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: $font-size-sm;
   white-space: nowrap;
-
-  th,
-  td {
-    padding: $spacing-3 $spacing-4;
-    text-align: left;
-    border-bottom: 1px solid $gray-200;
-  }
 
   thead th {
     position: sticky;
     top: 0;
-    background: $gray-50;
-    color: $gray-600;
-    font-weight: $font-weight-semibold;
-  }
-
-  tbody tr:hover {
-    background: rgba($primary-blue, 0.04);
-  }
-
-  tbody td {
-    color: $gray-800;
   }
 
   tfoot td {
@@ -269,35 +269,12 @@
   padding: 1px $spacing-2;
   border-radius: $border-radius-sm;
   background: rgba($warning-orange, 0.12);
-  color: #b45309;
+  color: $tono-naranja-450;
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
 }
 
-.empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: $spacing-3;
-  padding: $spacing-12 $spacing-5;
-  background: $white;
-  border: 1px dashed $gray-300;
-  border-radius: $border-radius-lg;
-  color: $gray-500;
-  text-align: center;
-
-  svg {
-    color: $gray-300;
-  }
-
-  p {
-    margin: 0;
-    max-width: 60ch;
-  }
-}
-
-/** Acciones al pie de la tabla (confirmar una importación, por ejemplo). Van
- * pegadas a la derecha y envuelven en pantallas angostas. */
+/** Acciones al pie de la tabla (confirmar una importación, por ejemplo). */
 .acciones {
   display: flex;
   align-items: center;

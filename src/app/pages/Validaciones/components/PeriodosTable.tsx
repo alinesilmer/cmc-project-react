@@ -3,6 +3,7 @@ import { CalendarRange, ChevronRight } from "lucide-react";
 import { formatMoneda, nombreMes } from "../validaciones.types";
 import type { Periodo } from "../validaciones.types";
 import s from "./Tablas.module.scss";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
 
 interface Props {
   periodos: Periodo[];
@@ -31,7 +32,7 @@ export default function PeriodosTable({ periodos, cargando, onVerDetalle }: Prop
   return (
     <>
       <div className={s.tableWrap}>
-        <table className={s.table}>
+        <Tabla className={s.table}>
           <thead>
             <tr>
               <th>Período</th>
@@ -62,7 +63,7 @@ export default function PeriodosTable({ periodos, cargando, onVerDetalle }: Prop
               </tr>
             ))}
           </tbody>
-        </table>
+        </Tabla>
       </div>
 
       <ul className={s.cardList}>

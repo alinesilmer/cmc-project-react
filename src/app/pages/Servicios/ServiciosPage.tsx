@@ -1,9 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Building2, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Building2, ChevronLeft, ChevronRight } from "lucide-react";
 import { getJSON, patchJSON } from "@/app/shared/lib/http";
+import Franja from "@/app/components/layout/Franja/Franja";
 import s from "./ServiciosPage.module.scss";
+import SearchField from "@/app/components/ui/SearchField/SearchField";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
 
 const PAGE_SIZE = 20;
+const ORGANIZACIONES_KEY = ["medicos", "organizaciones"] as const;
 
 type MedicoRow = {
   id: number;
@@ -47,9 +52,26 @@ function toMedicoRow(raw: Record<string, unknown>): MedicoRow {
 }
 
 export default function ServiciosPage() {
-  const [orgs, setOrgs] = useState<MedicoRow[]>([]);
-  const [loadingOrgs, setLoadingOrgs] = useState(true);
-  const [orgsError, setOrgsError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const consultaOrgs = useQuery({
+    queryKey: ORGANIZACIONES_KEY,
+    queryFn: async () => {
+      const data = await getJSON<Record<string, unknown>[]>("/api/medicos/all", {
+        es_organizacion: 1,
+        limit: 500,
+      });
+      return (Array.isArray(data) ? data : [])
+        .map(toMedicoRow)
+        .filter((r) => r.es_organizacion === 1);
+    },
+  });
+  const orgs = useMemo(() => consultaOrgs.data ?? [], [consultaOrgs.data]);
+  const loadingOrgs = consultaOrgs.isPending;
+  const orgsError = consultaOrgs.isError
+    ? consultaOrgs.error.message || "Error al cargar organizaciones."
+    : null;
+  const setOrgs = (cambio: (prev: MedicoRow[]) => MedicoRow[]) =>
+    queryClient.setQueryData<MedicoRow[]>(ORGANIZACIONES_KEY, (prev) => prev && cambio(prev));
   const [orgsPage, setOrgsPage] = useState(1);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -61,32 +83,6 @@ export default function ServiciosPage() {
   const [updateErrors, setUpdateErrors] = useState<Record<number, string>>({});
 
   const searchDebounceRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoadingOrgs(true);
-    setOrgsError(null);
-
-    getJSON<Record<string, unknown>[]>("/api/medicos/all", { es_organizacion: 1, limit: 500 })
-      .then((data) => {
-        if (cancelled) return;
-        const rows = (Array.isArray(data) ? data : [])
-          .map(toMedicoRow)
-          .filter((r) => r.es_organizacion === 1);
-        setOrgs(rows);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        setOrgsError(err?.message ?? "Error al cargar organizaciones.");
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingOrgs(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   useEffect(() => {
     if (searchDebounceRef.current) window.clearTimeout(searchDebounceRef.current);
@@ -143,6 +139,8 @@ export default function ServiciosPage() {
       } else {
         setOrgs((prev) => prev.filter((o) => o.id !== id));
       }
+      // Descarta cualquier lectura que haya salido antes de guardar: si llegara después, pisaría el cambio con el estado viejo.
+      void queryClient.invalidateQueries({ queryKey: ORGANIZACIONES_KEY });
 
       setSearchResults((prev) =>
         prev.map((r) => (r.id === id ? { ...r, es_organizacion: newValue } : r))
@@ -171,39 +169,19 @@ export default function ServiciosPage() {
 
   return (
     <div className={s.container}>
-      <div className={s.header}>
-        <div className={s.headerLeft}>
-          <Building2 size={32} className={s.headerIcon} aria-hidden="true" />
-          <div>
-            <h1 className={s.title}>Servicios</h1>
-            <p className={s.subtitle}>
-              {loadingOrgs
-                ? "Cargando…"
-                : `${orgs.length} organización${orgs.length !== 1 ? "es" : ""} registrada${orgs.length !== 1 ? "s" : ""}`}
-            </p>
-          </div>
-        </div>
-      </div>
+      <Franja titulo="Servicios" icono={Building2} />
 
       {/* Buscar y asignar: arriba, porque es lo que se viene a hacer acá. */}
       <section className={s.section}>
         <h2 className={s.sectionTitle}>Buscar y asignar organización</h2>
-        <p className={s.sectionSubtitle}>
-          Buscá un socio por nombre, matrícula o número de socio y marcá si es una organización.
-        </p>
 
         <div className={s.searchRow}>
-          <div className={s.searchWrap}>
-            <Search size={16} className={s.searchIcon} aria-hidden="true" />
-            <input
-              type="search"
-              className={s.searchInput}
-              placeholder="Buscar por nombre, matrícula o número de socio…"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              aria-label="Buscar socio"
-            />
-          </div>
+          <SearchField
+            placeholder="Buscar por nombre, matrícula o número de socio…"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            ariaLabel="Buscar socio"
+          />
         </div>
 
         {searchError && (
@@ -224,7 +202,7 @@ export default function ServiciosPage() {
                 <p>No se encontraron socios con ese criterio.</p>
               </div>
             ) : (
-              <table className={s.table}>
+              <Tabla className={s.table}>
                 <thead>
                   <tr>
                     <th>Nro. Socio</th>
@@ -260,7 +238,7 @@ export default function ServiciosPage() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </Tabla>
             )}
           </div>
         )}
@@ -292,7 +270,7 @@ export default function ServiciosPage() {
               <p>No hay organizaciones registradas.</p>
             </div>
           ) : (
-            <table className={s.table}>
+            <Tabla className={s.table}>
               <thead>
                 <tr>
                   <th>Nro. Socio</th>
@@ -328,7 +306,7 @@ export default function ServiciosPage() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </Tabla>
           )}
         </div>
 

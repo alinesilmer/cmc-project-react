@@ -5,6 +5,7 @@ import { getJSON, postJSON, putJSON, patchJSON, delJSON } from "@/app/shared/lib
 import Button from "@/app/components/ui/Button/Button";
 import styles from "./SelectableTable.module.scss";
 import type { ActionDef, SelectableTableProps } from "./types";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
 
 function buildUrl<T>(action: ActionDef<T>, row: T): string {
   const base = action.endpoint(row);
@@ -178,7 +179,7 @@ function SelectableTable<T extends { id: number | string }>({
 
       {/* ── Tabla ── */}
       <div className={styles.tableWrap}>
-        <table className={styles.table}>
+        <Tabla className={styles.table}>
           <thead>
             <tr>
               <th className={styles.checkboxCell} />
@@ -249,7 +250,7 @@ function SelectableTable<T extends { id: number | string }>({
                 );
               })}
           </tbody>
-        </table>
+        </Tabla>
       </div>
 
       {/* ── Modal de confirmación ── */}

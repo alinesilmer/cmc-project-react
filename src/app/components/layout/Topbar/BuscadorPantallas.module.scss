@@ -1,0 +1,144 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver BuscadorPantallas.tsx: la paleta que abre Ctrl K, arriba al centro.
+
+.paleta {
+  font-family: $fuente-texto;
+  align-self: flex-start;
+  width: min(41rem, 100%);
+  margin-top: 6vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+}
+
+.entrada {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  height: 3.875rem;
+  padding: 0 $spacing-5;
+  border-bottom: 1px solid $gray-200;
+
+  svg { flex-shrink: 0; color: $primary-blue; }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    font-family: inherit;
+    font-size: $font-size-xl;
+    font-weight: $font-weight-normal;
+    color: $gray-900;
+    background: transparent;
+    border: 0;
+    outline: none;
+
+    &::placeholder { color: $gray-400; }
+  }
+}
+
+kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.4rem;
+  height: 1.3rem;
+  padding: 0 0.35rem;
+  font-family: inherit;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: $gray-500;
+  border: 1px solid $gray-300;
+  border-radius: 5px;
+}
+
+.resultados {
+  max-height: min(26rem, 60vh);
+  overflow-y: auto;
+  padding: $spacing-2 $spacing-2 $spacing-3;
+}
+
+.grupo {
+  margin: $spacing-3 $spacing-3 $spacing-1;
+  font-family: $fuente-titulos;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: $gray-500;
+}
+
+.op {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: 0.6rem $spacing-3;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.icono {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  color: $primary-blue;
+  background: $tono-azul-50;
+  border-radius: 9px;
+}
+
+.nombre {
+  min-width: 0;
+  font-family: $fuente-titulos;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $gray-900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  mark {
+    color: inherit;
+    background: $primary-yellow;
+    border-radius: 3px;
+  }
+}
+
+.seccion {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: $font-size-sm;
+  color: $gray-500;
+}
+
+.opSel {
+  background: $franja-azul;
+
+  .icono { color: $franja-azul; background: $primary-yellow; }
+  .nombre { color: $white; }
+  .nombre mark { color: $franja-azul; }
+  .seccion { color: rgba($white, 0.75); }
+}
+
+.vacio {
+  margin: 0;
+  padding: $spacing-8 $spacing-5;
+  text-align: center;
+  color: $gray-500;
+}
+
+.pie {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-5;
+  padding: $spacing-3 $spacing-5;
+  font-size: $font-size-sm;
+  color: $gray-500;
+  background: $gray-50;
+  border-top: 1px solid $gray-200;
+
+  span { display: inline-flex; align-items: center; gap: $spacing-1; }
+
+  @media (max-width: $breakpoint-sm) { display: none; }
+}

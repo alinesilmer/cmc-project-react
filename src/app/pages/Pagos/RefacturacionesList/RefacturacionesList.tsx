@@ -1,16 +1,17 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { getJSON, postJSON } from "@/app/shared/lib/http";
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
 import Button from "@/app/components/ui/Button/Button";
-import Card from "@/app/components/ui/Card/Card";
+import Franja from "@/app/components/layout/Franja/Franja";
+import Caja from "@/app/components/ui/Caja/Caja";
+import Dialogo, { DialogoCampo } from "@/app/components/ui/Dialogo/Dialogo";
 import SelectableTable from "@/app/components/ui/SelectableTable/SelectableTable";
 import type {
   ActionDef,
   ColumnDef,
 } from "@/app/components/ui/SelectableTable/types";
-import styles from "./RefacturacionesList.module.scss";
+import lq from "../Liquidacion.module.scss";
 import {
   type ObraSocial,
   type PeriodoDisp,
@@ -20,6 +21,11 @@ import {
   fmt,
 } from "../types";
 import AppSearchSelect from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
+import { Plus, RotateCcw, Search } from "lucide-react";
+import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
+import { ESTADO_URL } from "@/app/pages/Pagos/utiles";
+import { DELETE_LOTE_URL } from "@/app/pages/Pagos/utiles";
+import { PERIODOS_DISP_URL } from "@/app/pages/Pagos/utiles";
 
 const LISTA_URL = (params: Record<string, string>) => {
   const p = new URLSearchParams({ tipo: "refacturacion", ...params });
@@ -28,12 +34,7 @@ const LISTA_URL = (params: Record<string, string>) => {
 const POR_OS_PERIODO_URL = (osId: number, mes: number, anio: number) =>
   `/api/lotes/snaps/por_os_periodo?obra_social_id=${osId}&mes_periodo=${mes}&anio_periodo=${anio}`;
 const OBRAS_SOCIALES_URL = "/api/obras_social/";
-const PERIODOS_DISP_URL = (id: number) =>
-  `/api/periodos/disponibles?obra_social_id=${id}`;
 const CREAR_REFAC_URL = "/api/lotes/snaps/crear_refacturacion";
-const ESTADO_URL = (id: number) => `/api/lotes/snaps/${id}/estado`;
-const DELETE_LOTE_URL = (id: number) => `/api/lotes/snaps/${id}`;
-
 type LoteListItem = {
   id: number;
   tipo: "normal" | "refacturacion";
@@ -52,7 +53,7 @@ type LoteListItem = {
 const estadoLabel = (e: string) =>
   ({ A: "Abierto", C: "Cerrado", L: "En Liquidaciones" })[e] ?? e;
 const estadoClass = (e: string) =>
-  ({ A: styles.estadoA, C: styles.estadoC, L: styles.estadoL })[e] ?? "";
+  ({ A: lq.abierto, C: lq.cerrado, L: lq.enLiquidacion })[e] ?? "";
 
 const currentYear = new Date().getFullYear();
 const YEARS = Array.from({ length: 6 }, (_, i) => currentYear - i);
@@ -208,30 +209,23 @@ const RefacturacionesList: React.FC = () => {
   const columns: ColumnDef<LoteListItem>[] = [
     {
       key: "obra_social_nombre",
-      header: "Obra Social",
+      header: "Obra social",
       render: (l) => (
-        <div>
-          <div style={{ fontWeight: 500 }}>{l.obra_social_nombre}</div>
-          <div style={{ fontSize: 11, color: "#94a3b8" }}>
-            #{l.obra_social_id}
-          </div>
-        </div>
+        <span>
+          <span className={lq.tenue}>#{l.obra_social_id}</span> {l.obra_social_nombre}
+        </span>
       ),
     },
     {
       key: "nro_factura",
-      header: "Nro. Factura",
-      render: (l) => (
-        <span style={{ fontFamily: "monospace", fontSize: 11 }}>
-          {l.nro_factura ?? "—"}
-        </span>
-      ),
+      header: "Factura",
+      render: (l) => <span className={lq.mono}>{l.nro_factura ?? "—"}</span>,
     },
     {
       key: "periodo",
       header: "Período",
       render: (l) => (
-        <span style={{ whiteSpace: "nowrap" }}>
+        <span className={lq.monto}>
           {mesLabel(l.mes_periodo)} {l.anio_periodo}
         </span>
       ),
@@ -242,7 +236,8 @@ const RefacturacionesList: React.FC = () => {
       render: (l) =>
         l.snap_origen_id ? (
           <button
-            className={styles.loteLink}
+            type="button"
+            className={lq.enlace}
             onClick={(e) => {
               e.stopPropagation();
               navigate(`/panel/debitos-creditos/${l.snap_origen_id}`);
@@ -251,14 +246,14 @@ const RefacturacionesList: React.FC = () => {
             Lote #{l.snap_origen_id}
           </button>
         ) : (
-          <span style={{ color: "#94a3b8" }}>—</span>
+          <span className={lq.tenue}>—</span>
         ),
     },
     {
       key: "estado",
       header: "Estado",
       render: (l) => (
-        <span className={`${styles.estadoBadge} ${estadoClass(l.estado)}`}>
+        <span className={`${lq.estado} ${estadoClass(l.estado)}`}>
           {estadoLabel(l.estado)}
         </span>
       ),
@@ -266,47 +261,28 @@ const RefacturacionesList: React.FC = () => {
     {
       key: "pago_id",
       header: "Pago",
-      render: (l) =>
-        l.pago_id ? (
-          `#${l.pago_id}`
-        ) : (
-          <span style={{ color: "#94a3b8" }}>—</span>
-        ),
+      render: (l) => (l.pago_id ? `#${l.pago_id}` : <span className={lq.tenue}>—</span>),
     },
     {
       key: "total_debitos",
       header: "Débitos",
-      alignRight: true,
-      render: (l) => (
-        <span className={styles.negative}>
-          -${fmt(l.total_debitos)}
-        </span>
-      ),
+      render: (l) => <span className={`${lq.monto} ${lq.menos}`}>-${fmt(l.total_debitos)}</span>,
     },
     {
       key: "total_creditos",
       header: "Créditos",
-      alignRight: true,
-      render: (l) => (
-        <span className={styles.positive}>
-          +${fmt(l.total_creditos)}
-        </span>
-      ),
+      render: (l) => <span className={`${lq.monto} ${lq.mas}`}>+${fmt(l.total_creditos)}</span>,
     },
     {
       key: "acciones",
-      header: "Acciones",
+      header: "",
       render: (l) => (
-        <Button
-          size="sm"
-          variant="secondary"
+        <BotonVer
           onClick={(e) => {
             e.stopPropagation();
             navigate(`/panel/refacturaciones/${l.id}`);
           }}
-        >
-          Ver
-        </Button>
+        />
       ),
     },
   ];
@@ -365,189 +341,86 @@ const RefacturacionesList: React.FC = () => {
     },
   ];
 
+  const opcionesOs = obras.map((o) => ({
+    id: String(o.nro_obra_social),
+    label: `${o.nro_obra_social} — ${o.nombre}`,
+  }));
+
   return (
-    <div className={styles.page}>
-      <div className={styles.content}>
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          <div className={styles.header}>
-            <div className={styles.headerLeft}>
-              <div className={styles.breadcrumb}>
-                LIQUIDACIÓN / REFACTURACIONES
-              </div>
-              <h1 className={styles.title}>Refacturaciones</h1>
-            </div>
-            <Button variant="primary" onClick={openAddModal}>
-              + Nueva Refacturación
-            </Button>
+    <div className={lq.pagina}>
+      <Franja titulo="Refacturaciones" icono={RotateCcw} />
+
+      <Caja titulo="Configuración">
+        <div className={lq.filtros}>
+          <div className={`${lq.campo} ${lq.campoAncho}`}>
+            <span className={lq.rotulo}>Obra social</span>
+            <AppSearchSelect
+              options={opcionesOs}
+              value={filterOs || null}
+              onChange={(val) => setFilterOs(val ? String(val) : "")}
+            />
           </div>
+          <label className={lq.campo}>
+            <span className={lq.rotulo}>Mes</span>
+            <select className={lq.select} value={filterMes} onChange={(e) => setFilterMes(e.target.value)}>
+              <option value="">Todos</option>
+              {MESES.map((m, i) => (
+                <option key={i + 1} value={i + 1}>{m}</option>
+              ))}
+            </select>
+          </label>
+          <label className={lq.campo}>
+            <span className={lq.rotulo}>Año</span>
+            <select className={lq.select} value={filterAnio} onChange={(e) => setFilterAnio(e.target.value)}>
+              <option value="">Todos</option>
+              {YEARS.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </label>
+          <label className={lq.campo}>
+            <span className={lq.rotulo}>Estado</span>
+            <select className={lq.select} value={filterEstado} onChange={(e) => setFilterEstado(e.target.value)}>
+              <option value="">Todos</option>
+              <option value="A">Abierto</option>
+              <option value="C">Cerrado</option>
+              <option value="L">En liquidaciones</option>
+            </select>
+          </label>
+          <Button variant="ghost" size="md" leftIcon={<Search size={18} aria-hidden="true" />} onClick={fetchLotes} disabled={loading}>
+            {loading ? "Buscando…" : "Buscar"}
+          </Button>
+        </div>
+      </Caja>
 
-          {/* Filtros */}
-          <Card className={styles.filterCard}>
-            <div className={styles.filterRow}>
-              <div className={styles.filterGroup} style={{ minWidth: 300 }}>
-                <label className={styles.filterLabel}>Obra Social</label>
-                <AppSearchSelect
-                  options={obras.map((o) => ({
-                    id: String(o.nro_obra_social),
-                    label: `${o.nro_obra_social} — ${o.nombre}`,
-                  }))}
-                  value={filterOs || null}
-                  onChange={(val) => setFilterOs(val ? String(val) : "")}
-                />
-              </div>
-              <div className={styles.filterGroup}>
-                <label className={styles.filterLabel}>Mes</label>
-                <select
-                  className={styles.filterSelect}
-                  value={filterMes}
-                  onChange={(e) => setFilterMes(e.target.value)}
-                >
-                  <option value="">Todos</option>
-                  {MESES.map((m, i) => (
-                    <option key={i + 1} value={i + 1}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className={styles.filterGroup}>
-                <label className={styles.filterLabel}>Año</label>
-                <select
-                  className={styles.filterSelect}
-                  value={filterAnio}
-                  onChange={(e) => setFilterAnio(e.target.value)}
-                >
-                  <option value="">Todos</option>
-                  {YEARS.map((y) => (
-                    <option key={y} value={y}>
-                      {y}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className={styles.filterGroup}>
-                <label className={styles.filterLabel}>Estado</label>
-                <select
-                  className={styles.filterSelect}
-                  value={filterEstado}
-                  onChange={(e) => setFilterEstado(e.target.value)}
-                >
-                  <option value="">Todos</option>
-                  <option value="A">Abierto</option>
-                  <option value="C">Cerrado</option>
-                  <option value="L">En Liquidaciones</option>
-                </select>
-              </div>
-              <div className={styles.filterActions}>
-                <Button
-                  variant="secondary"
-                  onClick={fetchLotes}
-                  disabled={loading}
-                >
-                  {loading ? "Buscando…" : "Buscar"}
-                </Button>
-              </div>
-            </div>
-          </Card>
-
-          {error && <div className={styles.errorBanner}>{error}</div>}
-
-          <SelectableTable
-            rows={lotes}
-            columns={columns}
-            actions={bulkActions}
-            isSelectable={(r) => r.estado === "A" || r.estado === "C"}
-            emptyMessage="Sin refacturaciones que coincidan con los filtros."
-            loading={loading}
-            onActionComplete={fetchLotes}
-          />
-        </motion.div>
+      <div className={lq.barra}>
+        <div className={lq.acciones}>
+          <Button variant="primary" size="md" leftIcon={<Plus size={18} aria-hidden="true" />} onClick={openAddModal}>
+            Nueva refacturación
+          </Button>
+        </div>
       </div>
 
-      {/* Modal agregar */}
+      {error && <div className={lq.error} role="alert">{error}</div>}
+
+      <SelectableTable
+        rows={lotes}
+        columns={columns}
+        actions={bulkActions}
+        isSelectable={(r) => r.estado === "A" || r.estado === "C"}
+        emptyMessage="Sin refacturaciones que coincidan con los filtros."
+        loading={loading}
+        onActionComplete={fetchLotes}
+      />
+
       {addOpen && (
-        <div
-          className={styles.modalBackdrop}
-          role="dialog"
-          aria-modal="true"
-          onClick={() => !adding && setAddOpen(false)}
-        >
-          <div
-            className={styles.modalCard}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className={styles.modalHeader}>
-              <h3>Nueva Refacturación</h3>
-              <button
-                className={styles.modalClose}
-                onClick={() => setAddOpen(false)}
-                aria-label="Cerrar"
-              >
-                ✕
-              </button>
-            </div>
-            <div className={styles.modalBody}>
-              <div className={styles.formRow}>
-                <label className={styles.formLabel}>Obra Social</label>
-                <AppSearchSelect
-                  options={obras.map((o) => ({
-                    id: String(o.nro_obra_social),
-                    label: `${o.nro_obra_social} — ${o.nombre}`,
-                  }))}
-                  value={addOs || null}
-                  onChange={(val) => handleAddOsChange(val ? String(val) : "")}
-                  disabled={obrasLoading || adding}
-                  loading={obrasLoading}
-                />
-              </div>
-              <div className={styles.formRow}>
-                <label className={styles.formLabel}>Período disponible</label>
-                {!addOs ? (
-                  <span className={styles.hintText}>
-                    Seleccioná una obra social primero.
-                  </span>
-                ) : periodosLoading ? (
-                  <span className={styles.hintText}>Cargando períodos…</span>
-                ) : (
-                  <select
-                    className={styles.formSelect}
-                    value={
-                      periodosAnio && periodosMes
-                        ? `${periodosAnio}-${periodosMes}`
-                        : ""
-                    }
-                    onChange={handlePeriodoChange}
-                    disabled={adding}
-                  >
-                    <option value="">Seleccioná un período…</option>
-                    {periodos.map((p) => (
-                      <option
-                        key={`${p.ANIO}-${p.MES}`}
-                        value={`${p.ANIO}-${p.MES}`}
-                      >
-                        {mesLabel(p.MES)} {p.ANIO}
-                        {p.NRO_FACT_1
-                          ? ` — ${p.NRO_FACT_1}${p.NRO_FACT_2 ? `-${p.NRO_FACT_2}` : ""}`
-                          : ""}
-                      </option>
-                    ))}
-                    {periodos.length === 0 && (
-                      <option disabled>Sin períodos disponibles</option>
-                    )}
-                  </select>
-                )}
-              </div>
-            </div>
-            <div className={styles.modalActions}>
-              <Button
-                variant="secondary"
-                onClick={() => setAddOpen(false)}
-                disabled={adding}
-              >
+        <Dialogo
+          titulo="Nueva refacturación"
+          icono={RotateCcw}
+          onClose={adding ? undefined : () => setAddOpen(false)}
+          acciones={
+            <>
+              <Button variant="ghost" onClick={() => setAddOpen(false)} disabled={adding}>
                 Cancelar
               </Button>
               <Button
@@ -555,11 +428,44 @@ const RefacturacionesList: React.FC = () => {
                 onClick={handleAdd}
                 disabled={adding || !addOs || !periodosMes || !periodosAnio}
               >
-                {adding ? "Creando…" : "Crear Refacturación"}
+                {adding ? "Creando…" : "Crear refacturación"}
               </Button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        >
+          <DialogoCampo rotulo="Obra social">
+            <AppSearchSelect
+              options={opcionesOs}
+              value={addOs || null}
+              onChange={(val) => handleAddOsChange(val ? String(val) : "")}
+              disabled={obrasLoading || adding}
+              loading={obrasLoading}
+            />
+          </DialogoCampo>
+          <DialogoCampo rotulo="Período" htmlFor="rf-periodo">
+            {!addOs ? (
+              <p className={lq.tenue}>Elegí primero la obra social.</p>
+            ) : periodosLoading ? (
+              <p className={lq.tenue}>Cargando períodos…</p>
+            ) : (
+              <select
+                id="rf-periodo"
+                value={periodosAnio && periodosMes ? `${periodosAnio}-${periodosMes}` : ""}
+                onChange={handlePeriodoChange}
+                disabled={adding}
+              >
+                <option value="">Elegí un período…</option>
+                {periodos.map((p) => (
+                  <option key={`${p.ANIO}-${p.MES}`} value={`${p.ANIO}-${p.MES}`}>
+                    {mesLabel(p.MES)} {p.ANIO}
+                    {p.NRO_FACT_1 ? ` — ${p.NRO_FACT_1}${p.NRO_FACT_2 ? `-${p.NRO_FACT_2}` : ""}` : ""}
+                  </option>
+                ))}
+                {periodos.length === 0 && <option disabled>Sin períodos disponibles</option>}
+              </select>
+            )}
+          </DialogoCampo>
+        </Dialogo>
       )}
     </div>
   );

@@ -7,7 +7,7 @@
   justify-content: space-between;
   gap: 20px 32px;
   padding: 28px 32px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid $borde-suave;
   border-radius: 10px;
 
   h2 {
@@ -16,7 +16,7 @@
     font-size: clamp(1.5rem, 2.6vw, 1.9rem);
     font-weight: 800;
     letter-spacing: -0.02em;
-    color: #14233a;
+    color: $tono-azul-850;
 
     em {
       font-style: normal;

@@ -8,8 +8,7 @@
 .content {
   flex: 1 1 auto;
   min-width: 0;
-  /* Extra breathing room around every route, on top of each page's own gutter.
-     Body background is gray-50, so this blends seamlessly with page backgrounds. */
+  /* Extra breathing room around every route, on top of each page's own gutter. */
   padding: 0.5rem 1rem;
 
   @media (max-width: 640px) {

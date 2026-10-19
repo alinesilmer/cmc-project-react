@@ -18,10 +18,7 @@ export type Cell = string | number | boolean | null;
 /** Una hoja del libro (Excel puede traer varias; CSV trae una). */
 export type SheetData = { name: string; grid: Cell[][] };
 
-/**
- * Mapeo de columnas de una hoja. `precio1` = Honorarios (cirujano),
- * `precio2` = Ayudante y `gastos` = Gastos; los dos últimos son opcionales.
- */
+/** Mapeo de columnas de una hoja. */
 export type ColMapping = {
   codigo: number;
   precio1: number;

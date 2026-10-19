@@ -3,7 +3,7 @@ import { Search } from "lucide-react";
 
 import styles from "./MultiSelectBuscable.module.scss";
 
-export type MultiSelectOption<V extends string | number> = {
+type MultiSelectOption<V extends string | number> = {
   value: V;
   label: string;
   /** Texto chico a la derecha (ej: el número de la obra social). */
@@ -18,18 +18,14 @@ type Props<V extends string | number> = {
   noun: string;
   disabled?: boolean;
   loading?: boolean;
-  /** Opciones que se muestran pero no se pueden tildar, con el motivo al lado
-   * (ej. "Ya tiene precio"). "Seleccionar todos" las saltea. */
+  /** Opciones que se muestran pero no se pueden tildar, con el motivo al lado (ej. "Ya tiene precio"). */
   bloqueadas?: Map<V, string>;
 };
 
 const normalizar = (s: string) =>
   s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
-/**
- * Lista con checks, buscador y "Seleccionar todos / Desmarcar todos". Los botones
- * de selección masiva actúan solo sobre lo que el buscador deja visible.
- */
+/** Lista con checks, buscador y "Seleccionar todos / Desmarcar todos". */
 export default function MultiSelectBuscable<V extends string | number>({
   options: optionsSinOrdenar,
   selected,

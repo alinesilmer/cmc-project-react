@@ -6,7 +6,7 @@
   gap: 48px;
   min-height: 80vh;
   padding: 32px 20px 72px;
-  background: $white;
+  @include fondo-acceso;
 
   // Cada sección ocupa el mismo ancho que las demás.
   > * {

@@ -1,6 +1,7 @@
 import { useId, useRef } from "react";
 import { Search, X } from "lucide-react";
 import styles from "./Buscador.module.scss";
+import Button from "@/website/components/UI/Button/Button";
 
 type Props = {
   valor: string;
@@ -13,10 +14,7 @@ type Props = {
   compacto?: boolean;
 };
 
-/**
- * Campo de búsqueda con lupa y botón para borrar. Había cinco versiones, una
- * por pantalla, con el mismo marcado y estilos casi iguales.
- */
+/** Campo de búsqueda con lupa y botón para borrar. */
 export default function Buscador({ valor, onCambio, placeholder, etiqueta, className, compacto = false }: Props) {
   const id = useId();
   const input = useRef<HTMLInputElement>(null);
@@ -44,9 +42,9 @@ export default function Buscador({ valor, onCambio, placeholder, etiqueta, class
         spellCheck={false}
       />
       {valor && (
-        <button type="button" className={styles.limpiar} onClick={limpiar} aria-label="Borrar la búsqueda">
+        <Button variant="plano" type="button" className={styles.limpiar} onClick={limpiar} aria-label="Borrar la búsqueda">
           <X aria-hidden="true" />
-        </button>
+        </Button>
       )}
     </div>
   );

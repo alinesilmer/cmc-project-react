@@ -1,5 +1,4 @@
 @use "../../../styles/variables" as *;
-@use "../../../styles/admin" as *;
 
 .editor {
   display: flex;
@@ -48,7 +47,7 @@
 .textarea {
   width: 100%;
   white-space: pre-wrap;
-  font-family: "Courier New", monospace;
+  font-family: $font-mono;
   font-size: 0.88rem;
 }
 

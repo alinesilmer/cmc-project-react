@@ -7,7 +7,7 @@
   display: grid;
   place-items: center;
   padding: 20px;
-  background: rgba(12, 42, 82, 0.45);
+  background: rgba($primary-blue-dark, 0.45);
   backdrop-filter: blur(4px);
 
   @media (max-width: 640px) {
@@ -25,7 +25,7 @@
   overflow-y: auto;
   background: $white;
   border-radius: 10px;
-  box-shadow: 0 30px 80px rgba(6, 18, 38, 0.35);
+  box-shadow: 0 30px 80px rgba($tono-azul-900, 0.35);
 
   @media (max-width: 640px) {
     border-radius: 10px 10px 0 0;
@@ -52,12 +52,11 @@
     right: 40px;
     top: -60px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.14);
+    background: rgba($white, 0.14);
   }
 }
 
-// En la ventana hay lugar: el descuento se lee entero, en los renglones que
-// haga falta, con la letra según su largo.
+// En la ventana hay lugar: el descuento se lee entero, en los renglones que haga falta, con la letra según su largo.
 .descuento {
   position: relative;
   z-index: 1;
@@ -91,7 +90,7 @@
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #6b7280;
+  color: $texto-gris;
 
   &::before {
     content: "";
@@ -116,7 +115,7 @@
   height: 40px;
   border: 0;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba($white, 0.2);
   color: inherit;
   cursor: pointer;
 
@@ -126,7 +125,7 @@
   }
 
   &:hover {
-    background: rgba(255, 255, 255, 0.32);
+    background: rgba($white, 0.32);
   }
 }
 
@@ -143,14 +142,14 @@
   font-size: 1.4rem;
   font-weight: 800;
   line-height: 1.2;
-  color: #14233a;
+  color: $tono-azul-850;
 }
 
 .texto {
   margin: 0;
   font-size: 1rem;
   line-height: 1.6;
-  color: #4b5563;
+  color: $tono-azul-650;
   white-space: pre-line; // la descripción se carga con saltos de línea
 }
 
@@ -159,9 +158,9 @@
   flex-direction: column;
   gap: 8px;
   padding-top: 14px;
-  border-top: 1px solid #efece4;
+  border-top: 1px solid $tono-amarillo-100-b;
   font-size: 0.92rem;
-  color: #5b6474;
+  color: $tono-azul-600;
 
   span {
     display: flex;

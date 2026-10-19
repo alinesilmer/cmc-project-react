@@ -27,11 +27,10 @@ import { getBeneficiosVigentes } from "../Beneficios/beneficios.api";
 import type { Beneficio } from "../Beneficios/beneficios.types";
 import styles from "./InicioMedico.module.scss";
 
-import heroImage from "../../assets/bg2.png";
+// WebP de 107 KB: va debajo de un degradé casi opaco.
+import heroImage from "../../assets/bg2.webp";
 
-// Logos de las obras sociales con convenio. Import estático (no `import.meta.glob`)
-// para que Vite los versione y para que agregar una obra social sea una línea
-// visible en el diff y no un efecto lateral de copiar un archivo a la carpeta.
+// Logos de las obras sociales con convenio.
 import logoBoreal from "../../assets/obras-sociales/boreal.png";
 import logoIoscor from "../../assets/obras-sociales/ioscor.jpg";
 import logoIosfa from "../../assets/obras-sociales/iosfa.jpg";
@@ -49,9 +48,7 @@ import logoUpcn from "../../assets/obras-sociales/upcn.png";
 const WHATSAPP_URL =
   "https://wa.me/5493794532335?text=¡Hola!,%20necesito%20soporte%20con%20el%20sistema%20del%20Colegio%20Médico";
 
-// La vidriera los trae todos: antes se cortaba en 6 y el socio no tenía cómo
-// enterarse de que había más. Ahora se recorren en el carrusel, así que la
-// sección sigue ocupando el mismo alto sin importar cuántos haya.
+// La vidriera los trae todos: antes se cortaba en 6 y el socio no tenía cómo enterarse de que había más.
 
 const OBRAS_SOCIALES: { src: string; nombre: string }[] = [
   { src: logoIoscor, nombre: "IOSCOR" },
@@ -119,16 +116,7 @@ const ACCESOS: QuickAction[] = [
   },
 ];
 
-/**
- * Los tutoriales publicados. Todavía sin backend: cuando exista, esta constante
- * se reemplaza por la query y el resto de la sección no cambia.
- *
- * Los videos se sirven desde Cloudinary y no desde `src/assets`: el mp4 de
- * Medife pesa 41 MB, más del doble que todo el bundle de la aplicación. En el
- * repo entraría a la historia de git para siempre y saldría del mismo servidor
- * que atiende la API; desde el CDN llega por streaming, con calidad adaptativa
- * en móvil.
- */
+/** Los tutoriales publicados. Todavía sin backend: cuando exista, esta constante se reemplaza por la query y el resto de la sección no cambia. */
 type Tutorial = { titulo: string; descripcion: string; url: string };
 
 const TUTORIALES: Tutorial[] = [
@@ -150,11 +138,7 @@ const TUTORIALES_PENDIENTES = [
   "Cargar tu documentación al legajo",
 ];
 
-/**
- * Portal de los usuarios médicos (INGRESAR = 'D'): hero corto, accesos, la
- * vidriera de beneficios y convenios, y el módulo de tutoriales por venir.
- * El recorte de rutas equivalente vive en `MedicoRouteGuard`.
- */
+/** Portal de los usuarios médicos (INGRESAR = 'D'): hero corto, accesos, la vidriera de beneficios y convenios, y el módulo de tutoriales por venir. */
 const InicioMedico: React.FC = () => {
   const { user } = useAuth();
 
@@ -162,17 +146,14 @@ const InicioMedico: React.FC = () => {
 
   const nombre = user?.nombre?.trim() ?? "";
 
-  // Las clínicas no validan afiliados (ver ORGANIZACION_BLOCKED_PATHS) ni tienen
-  // beneficios de socio: se les saca todo lo que lleva a /panel/validaciones, la
-  // vidriera de beneficios y la de obras sociales con validación web.
+  // Las clínicas no validan afiliados (ver ORGANIZACION_BLOCKED_PATHS) ni tienen beneficios de socio: se les saca todo lo que lleva a /panel/validaciones.
   const esOrg = esOrganizacion(user);
   const accesos = esOrg
     ? ACCESOS.filter((a) => !a.link.startsWith("/panel/validaciones"))
     : ACCESOS;
   const tutoriales = esOrg ? [] : TUTORIALES;
 
-  // La vidriera es accesoria: si falla, el resto del portal tiene que seguir
-  // sirviendo. Por eso no se propaga el error, sólo se oculta la sección.
+  // La vidriera es accesoria: si falla, el resto del portal tiene que seguir sirviendo.
   const {
     data: beneficios = [],
     isLoading: beneficiosLoading,
@@ -249,8 +230,7 @@ const InicioMedico: React.FC = () => {
                   Consultar un precio
                 </Link>
 
-                {/* El sitio institucional es el mismo SPA en "/" — no es un
-                    enlace externo, por eso va con Link y sin target _blank. */}
+                {/* El sitio institucional es el mismo SPA en "/" — no es un enlace externo, por eso va con Link y sin target _blank. */}
                 <Link to="/" className={`${styles.heroBtn} ${styles.heroBtnGhost}`}>
                   <Globe size={17} />
                   Ir al sitio del Colegio
@@ -301,12 +281,7 @@ const InicioMedico: React.FC = () => {
           </div>
         </section>
 
-        {/* ── Beneficios ──
-            Datos en vivo de GET /api/beneficios/vigentes (activos y no vencidos).
-            La sección se muestra SIEMPRE: antes se ocultaba cuando no había
-            nada cargado, y eso hacía que pareciera que la funcionalidad no
-            existía. Con el estado vacío explícito se entiende que está lista y
-            esperando que el Colegio cargue los convenios desde el panel. */}
+        {/* ── Beneficios ── Datos en vivo de GET /api/beneficios/vigentes (activos y no vencidos). */}
         {!esOrg && (
           <section className={styles.section}>
             <div className={styles.sectionHead}>
@@ -358,8 +333,7 @@ const InicioMedico: React.FC = () => {
             </div>
 
             <div className={styles.logoStrip}>
-              {/* La lista va duplicada: el keyframe corre hasta -50% y engancha
-                  con el principio, que es la misma secuencia. */}
+              {/* La lista va duplicada: el keyframe corre hasta -50% y engancha con el principio, que es la misma secuencia. */}
               <div className={styles.logoTrack}>
                 {[...OBRAS_SOCIALES, ...OBRAS_SOCIALES].map((os, i) => (
                   <img
@@ -391,11 +365,7 @@ const InicioMedico: React.FC = () => {
           <div className={styles.tutorialGrid}>
             {tutoriales.map((t) => (
               <article key={t.url} className={styles.tutorialCardVideo}>
-                {/*
-                  `preload="none"` y no "metadata": el video no se descarga
-                  hasta que alguien lo pide. En el portal entra todo el padrón,
-                  la mayoría desde el celular, y casi nadie va a abrirlo.
-                */}
+                {/* `preload="none"` y no "metadata": el video no se descarga hasta que alguien lo pide. */}
                 <video
                   className={styles.tutorialVideo}
                   src={t.url}

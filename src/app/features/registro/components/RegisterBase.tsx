@@ -6,11 +6,12 @@ import styles from "./Register.module.scss";
 import { useNavigate } from "react-router-dom";
 import { useRegisterForm } from "@/app/features/registro/hooks/useRegisterForm";
 import Button from "@/app/components/ui/Button/Button";
+import type { LucideIcon } from "lucide-react";
 
 type Props = {
   mode: "public" | "admin";
   showAdherentePrompt?: boolean; // sólo para público
-  stepsMeta: { id: number; title: string; icon: string }[];
+  stepsMeta: { id: number; title: string; icon: LucideIcon }[];
   specialties: { id: number; id_colegio_espe: number; nombre: string }[];
   adherenteAnim?: object | null;
 };
@@ -31,6 +32,8 @@ const RegisterBase: React.FC<Props> = ({
         currentStep={rf.step}
         onBack={rf.prevStep}
         showBack={rf.step > 1}
+        variante={mode === "admin" ? "panel" : undefined}
+        titulo="Nuevo socio"
         headerCta={
           mode === "public" ? (
             <button
@@ -64,6 +67,7 @@ const RegisterBase: React.FC<Props> = ({
 
         <Steps
           step={rf.step}
+          sinAyuda={mode === "admin"}
           formData={rf.formData}
           errors={rf.errors}
           provinces={rf.provinces}
@@ -81,7 +85,23 @@ const RegisterBase: React.FC<Props> = ({
 
         {/* NAV: cambia según modo y step */}
         <div className={styles.nav}>
-          {rf.step > 1 ? (
+          {mode === "admin" ? (
+            // En el panel "Cancelar" va acá abajo, con el resto de las acciones; la barra de arriba se oculta por CSS.
+            <div className={styles.navIzquierda}>
+              <Button
+                variant="ghost"
+                size="md"
+                onClick={() => nav("/panel/dashboard")}
+              >
+                Cancelar
+              </Button>
+              {rf.step > 1 && (
+                <Button variant="ghost" size="md" onClick={rf.prevStep}>
+                  ← Atrás
+                </Button>
+              )}
+            </div>
+          ) : rf.step > 1 ? (
             <Button variant="ghost" size="md" onClick={rf.prevStep}>
               ← Atrás
             </Button>

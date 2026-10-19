@@ -13,6 +13,8 @@ interface ModalProps {
   children: ReactNode;
   size?: "small" | "medium" | "large";
   showCloseButton?: boolean;
+  /** El contenido dibuja su propia cabecera y maneja su relleno y su scroll. */
+  sinCabecera?: boolean;
 }
 
 export default function Modal({
@@ -22,6 +24,7 @@ export default function Modal({
   children,
   size = "medium",
   showCloseButton = true,
+  sinCabecera = false,
 }: ModalProps) {
   return (
     <AnimatePresence>
@@ -37,12 +40,14 @@ export default function Modal({
           <motion.div
             role="dialog"
             aria-modal="true"
+            aria-label={title}
             className={`${styles.modal} ${styles[size]}`}
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
           >
+            {!sinCabecera && (
             <div className={styles.header}>
               <h2 className={styles.title}>{title}</h2>
               {showCloseButton && (
@@ -56,7 +61,8 @@ export default function Modal({
                 </Button>
               )}
             </div>
-            <div className={styles.content}>{children}</div>
+            )}
+            <div className={sinCabecera ? styles.contentPropio : styles.content}>{children}</div>
           </motion.div>
         </>
       )}

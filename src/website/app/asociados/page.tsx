@@ -14,9 +14,7 @@ export default function MedicosAsociadosPage() {
 
   return (
     <ContenedorPagina>
-      {/* La lista sale de `/api/publicidad-medicos`: son los socios que
-          publicaron su aviso, no el padrón. La bajada lo dice para que nadie
-          concluya que un médico no está asociado porque no aparece. */}
+      {/* La lista sale de `/api/publicidad-medicos`: son los socios que publicaron su aviso, no el padrón. */}
       <CabeceraFresca
         titulo={
           <>

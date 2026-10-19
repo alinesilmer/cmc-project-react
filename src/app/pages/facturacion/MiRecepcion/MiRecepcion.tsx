@@ -6,12 +6,13 @@ import { listarPeriodosPropios, listarPrestaciones } from "../api";
 import { detailMessage } from "../types";
 import type { PeriodoPropio, PrestacionRead } from "../types";
 import TablaPorObraSocial from "../components/TablaPorObraSocial";
+import Franja from "@/app/components/layout/Franja/Franja";
 import styles from "./MiRecepcion.module.scss";
 
-// Mismo tope que "detalle-medico": el backend pagina de a 200 (GET
-// /prestaciones: limit <= 200), esto es sólo un freno de seguridad.
+// Mismo tope que "detalle-medico": el backend pagina de a 200 (GET /prestaciones: limit <= 200), esto es sólo un freno de seguridad.
 const PAGE_LIMIT = 200;
 const MAX_FILAS = 5000;
+const MAX_PILDORAS = 6;
 
 const MiRecepcion: React.FC = () => {
   const notify = useAppSnackbar();
@@ -22,8 +23,7 @@ const MiRecepcion: React.FC = () => {
   const [cargandoPeriodos, setCargandoPeriodos] = useState(true);
   const [cargandoDetalle, setCargandoDetalle] = useState(false);
 
-  // Al montar: qué períodos tienen algo publicado. Por defecto, el más
-  // reciente (el backend ya los devuelve en ese orden).
+  // Al montar: qué períodos tienen algo publicado.
   useEffect(() => {
     let cancelado = false;
     setCargandoPeriodos(true);
@@ -45,8 +45,7 @@ const MiRecepcion: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Detalle del período elegido — todo lo publicado, en cualquier obra social
-  // (la ownership del backend ya lo acota al médico logueado).
+  // Detalle del período elegido — todo lo publicado, en cualquier obra social (la ownership del backend ya lo acota al médico logueado).
   useEffect(() => {
     if (!periodoElegido) {
       setRows([]);
@@ -81,58 +80,59 @@ const MiRecepcion: React.FC = () => {
     return () => { cancelado = true; };
   }, [periodoElegido, notify]);
 
+  const hayPeriodos = !cargandoPeriodos && periodos && periodos.length > 0;
+  // Con muchos períodos, píldoras para los más recientes y el resto en una lista.
+  const recientes = periodos?.slice(0, MAX_PILDORAS) ?? [];
+  const anteriores = periodos?.slice(MAX_PILDORAS) ?? [];
+
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <span className={styles.headerIcon}>
-          <Receipt size={22} />
-        </span>
-        <div>
-          <h1 className={styles.title}>Mi recepción</h1>
-          <p className={styles.subtitle}>
-            Las prestaciones que el Colegio ya te publicó, agrupadas por obra social.
-          </p>
+      <Franja titulo="Mi recepción" icono={Receipt} />
+
+      {hayPeriodos && (
+        <div className={styles.periodos} role="group" aria-label="Período">
+          {recientes.map((p) => (
+            <button
+              key={p.periodo}
+              type="button"
+              aria-pressed={periodoElegido === p.periodo}
+              className={`${styles.periodo} ${periodoElegido === p.periodo ? styles.periodoActivo : ""}`}
+              onClick={() => setPeriodoElegido(p.periodo)}
+            >
+              {p.periodo_label}
+            </button>
+          ))}
+          {anteriores.length > 0 && (
+            <select
+              className={styles.anteriores}
+              value={anteriores.some((p) => p.periodo === periodoElegido) ? periodoElegido : ""}
+              onChange={(e) => e.target.value && setPeriodoElegido(e.target.value)}
+              aria-label="Períodos anteriores"
+            >
+              <option value="">Anteriores…</option>
+              {anteriores.map((p) => (
+                <option key={p.periodo} value={p.periodo}>{p.periodo_label}</option>
+              ))}
+            </select>
+          )}
         </div>
-      </div>
+      )}
 
-      <div className={styles.layout}>
-        {!cargandoPeriodos && periodos && periodos.length > 0 && (
-          <div className={styles.toolbar}>
-            <div className={styles.filterField}>
-              <label className={styles.filterLabel}>Período</label>
-              <select
-                className={styles.select}
-                value={periodoElegido}
-                onChange={(e) => setPeriodoElegido(e.target.value)}
-              >
-                {periodos.map((p) => (
-                  <option key={p.periodo} value={p.periodo}>{p.periodo_label}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        )}
+      {cargandoPeriodos && (
+        <div className={styles.emptyState}>
+          <p className={styles.emptyText}>Cargando tus períodos…</p>
+        </div>
+      )}
 
-        {cargandoPeriodos && (
-          <div className={styles.emptyState}>
-            <p className={styles.emptyText}>Cargando tus períodos…</p>
-          </div>
-        )}
+      {!cargandoPeriodos && periodos && periodos.length === 0 && (
+        <div className={styles.emptyState}>
+          <span className={styles.emptyIcon}><Receipt size={28} /></span>
+          <p className={styles.emptyTextStrong}>Todavía no tenés nada publicado.</p>
+          <p className={styles.emptyText}>Cuando el Colegio publique un período, lo vas a ver acá.</p>
+        </div>
+      )}
 
-        {!cargandoPeriodos && periodos && periodos.length === 0 && (
-          <div className={styles.emptyState}>
-            <span className={styles.emptyIcon}><Receipt size={24} /></span>
-            <p className={styles.emptyTextStrong}>Todavía no tenés nada publicado.</p>
-            <p className={styles.emptyText}>
-              Cuando el Colegio publique un período, vas a poder verlo acá.
-            </p>
-          </div>
-        )}
-
-        {!cargandoPeriodos && periodos && periodos.length > 0 && (
-          <TablaPorObraSocial prestaciones={rows} cargando={cargandoDetalle} />
-        )}
-      </div>
+      {hayPeriodos && <TablaPorObraSocial prestaciones={rows} cargando={cargandoDetalle} />}
     </div>
   );
 };

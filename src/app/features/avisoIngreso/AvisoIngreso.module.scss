@@ -14,8 +14,8 @@
   z-index: 1;
   display: grid;
   place-items: center;
-  width: 46px;
-  height: 46px;
+  width: 2.875rem;
+  height: 2.875rem;
   border: none;
   border-radius: 50%;
   background: rgba($white, 0.85);
@@ -24,8 +24,8 @@
   transition: background 0.15s, color 0.15s;
 
   svg {
-    width: 24px;
-    height: 24px;
+    width: 1.5rem;
+    height: 1.5rem;
   }
 
   &:hover {
@@ -50,8 +50,8 @@
 .corazon {
   display: grid;
   place-items: center;
-  width: 104px;
-  height: 104px;
+  width: 6.5rem;
+  height: 6.5rem;
   border-radius: 50%;
   background: $white;
   color: $danger-red;
@@ -59,8 +59,8 @@
   animation: latido 1.8s ease-in-out infinite;
 
   svg {
-    width: 52px;
-    height: 52px;
+    width: 3.25rem;
+    height: 3.25rem;
     fill: currentColor;
   }
 }
@@ -94,7 +94,7 @@
 
 .titulo {
   margin: 0 0 $spacing-4;
-  font-family: "Manrope", sans-serif;
+  font-family: $fuente-titulos;
   font-size: clamp(2.1rem, 6vw, 3rem);
   font-weight: 800;
   line-height: 1.08;
@@ -118,7 +118,7 @@
 
 .gracias {
   margin: 0;
-  font-family: "Manrope", sans-serif;
+  font-family: $fuente-titulos;
   font-size: 1.7rem;
   font-weight: 800;
   color: $primary-blue;

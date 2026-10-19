@@ -1,14 +1,6 @@
-// Tabla agrupada por obra social, compartida por "detalle-medico" (Colegio) y
-// "Mi recepción" (médico). Mismo lenguaje visual que DetallePorMedico.module.scss
-// y FacturaDetalle.module.scss (de donde se adaptan las clases de fila-resumen).
-$blue:    #3b6fd4;
-$green:   #166534;
-$border:  #e2e8f0;
-$surface: #ffffff;
-$text-1:  #1a1f2e;
-$text-2:  #4a5568;
-$text-3:  #718096;
-$radius-sm: 6px;
+@use "@/app/styles/all.scss" as *;
+
+// Tabla agrupada por obra social, compartida por "detalle-medico" (Colegio) y "Mi recepción" (médico).
 
 .tableWrap { overflow-x: auto; }
 
@@ -24,37 +16,35 @@ $radius-sm: 6px;
   font-size: 0.83rem;
 
   thead tr {
-    background: #0c2a52;
-    border-bottom: 1px solid $border;
+    background: $primary-blue-darker;
+    border-bottom: 1px solid $gray-200;
   }
 
   th {
-    padding: 10px 12px;
+    padding: 0.625rem 0.75rem;
     text-align: left;
     font-size: 0.7rem;
     font-weight: 700;
-    color: #fff;
+    color: $white;
     letter-spacing: .04em;
     text-transform: uppercase;
     white-space: nowrap;
   }
 
   td {
-    padding: 10px 12px;
-    color: $text-1;
-    border-bottom: 1px solid #f1f4f8;
+    padding: 0.625rem 0.75rem;
+    color: $carpeta-noche;
+    border-bottom: 1px solid $gray-100;
     vertical-align: middle;
   }
 
   tbody tr:not(.resumenRow) {
     transition: background .1s;
-    &:hover { background: #f8faff; }
+    &:hover { background: $gray-50; }
   }
 }
 
-// Honorarios/Gastos/Total: alineados a la izquierda, como el resto de las
-// columnas (no a la derecha, que es lo habitual para columnas de dinero —
-// pedido explícito).
+// Honorarios/Gastos/Total: alineados a la izquierda, como el resto de las columnas (no a la derecha, que es lo habitual para columnas de dinero .
 .thMoney { text-align: left; }
 .tdMoney { text-align: left; }
 
@@ -71,40 +61,40 @@ $radius-sm: 6px;
   display: block;
   font-family: 'Courier New', Courier, monospace;
   font-weight: 700;
-  color: $blue;
+  color: $tono-azul-450;
 }
 .codeDesc {
   display: block;
   font-size: 0.72rem;
   font-weight: 400;
-  color: $text-3;
+  color: $tono-azul-400;
   text-decoration: none;
   white-space: normal;
 }
 
-.moneyCell { font-variant-numeric: tabular-nums; color: $text-1; }
+.moneyCell { font-variant-numeric: tabular-nums; color: $carpeta-noche; }
 
 .subtotalCell {
   font-variant-numeric: tabular-nums;
   font-weight: 700;
-  color: $green;
+  color: $tono-verde-550;
 }
 
-.mutedText { color: $text-3; }
+.mutedText { color: $tono-azul-400; }
 
 // ─── Fila resumen (encabezado de grupo, ANTES del detalle) ────────────────────
 .resumenRow td {
-  background: #f0f4ff;
-  border-top: 2px solid #dce7ff;
-  border-bottom: 2px solid #dce7ff;
-  padding: 10px 12px;
+  background: $gray-100;
+  border-top: 2px solid $tono-azul-50;
+  border-bottom: 2px solid $tono-azul-50;
+  padding: 0.625rem 0.75rem;
   white-space: normal;
 }
 
 .resumenContent {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
   flex-wrap: wrap;
   font-size: inherit;
 }
@@ -113,34 +103,34 @@ $radius-sm: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 1.5rem;
+  height: 1.5rem;
   padding: 0;
   border: none;
   border-radius: 50%;
   background: transparent;
-  color: $text-2;
+  color: $gray-600;
   cursor: pointer;
   flex-shrink: 0;
   transition: background .15s;
 
   svg { transition: transform .15s; }
 
-  &:hover { background: rgba(59, 111, 212, .12); color: $blue; }
+  &:hover { background: rgba($tono-azul-450, .12); color: $tono-azul-450; }
 }
 
 .toggleBtnColapsado svg { transform: rotate(-90deg); }
 
 .resumenLabel {
   font-weight: 700;
-  color: $text-1;
+  color: $carpeta-noche;
   font-size: 0.95rem;
   white-space: nowrap;
 }
 
 .resumenCodigo {
   font-weight: 700;
-  color: $text-1;
+  color: $carpeta-noche;
   font-size: 0.95rem;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -148,10 +138,10 @@ $radius-sm: 6px;
 
 .resumenMoney {
   font-size: inherit;
-  color: $text-2;
+  color: $gray-600;
   white-space: nowrap;
 
-  strong { color: $text-1; }
+  strong { color: $carpeta-noche; }
 }
 
 .resumenTotalBadge {
@@ -159,27 +149,27 @@ $radius-sm: 6px;
   font-size: inherit;
   font-weight: 700;
   border-radius: 20px;
-  padding: 3px 12px;
-  background: $blue;
-  color: #fff;
+  padding: 3px 0.75rem;
+  background: $tono-azul-450;
+  color: $white;
   white-space: nowrap;
   margin-left: auto;
 }
 
 // ─── Total general ─────────────────────────────────────────────────────────
 .totalGeneralRow td {
-  padding: 14px 12px;
-  border-top: 2px solid $text-1;
+  padding: 0.875rem 0.75rem;
+  border-top: 2px solid $carpeta-noche;
   border-bottom: none;
   font-weight: 700;
-  color: $text-1;
+  color: $carpeta-noche;
 }
 
 .totalGeneralValue {
   font-variant-numeric: tabular-nums;
   font-size: 1.05rem;
   font-weight: 700;
-  color: $green;
+  color: $tono-verde-550;
 }
 
 // ─── Estados vacíos ────────────────────────────────────────────────────────
@@ -188,10 +178,10 @@ $radius-sm: 6px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 48px 24px;
+  gap: 0.375rem;
+  padding: 3rem 1.5rem;
   text-align: center;
 }
 
-.emptyText { font-size: 0.85rem; color: $text-3; margin: 0; }
-.emptyTextStrong { font-size: 0.9rem; font-weight: 600; color: $text-2; margin: 0; }
+.emptyText { font-size: 0.85rem; color: $tono-azul-400; margin: 0; }
+.emptyTextStrong { font-size: 0.9rem; font-weight: 600; color: $gray-600; margin: 0; }

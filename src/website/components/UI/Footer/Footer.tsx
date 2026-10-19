@@ -4,9 +4,9 @@ import { NAVEGACION } from "../Header/navegacion";
 import { CONTACTO, linkWhatsApp } from "../../../lib/contacto";
 import logo from "../../../assets/images/logoCMC-web.png";
 import styles from "./Footer.module.scss";
+import Button from "@/website/components/UI/Button/Button";
 
-// Las columnas salen del mismo menú que la cabecera: agregar una sección la
-// suma en los dos lados.
+// Las columnas salen del mismo menú que la cabecera: agregar una sección la suma en los dos lados.
 const INSTITUCIONAL = NAVEGACION.filter((i) => !i.hijos && i.ruta !== "/");
 const SERVICIOS = NAVEGACION.find((i) => i.hijos)?.hijos ?? [];
 
@@ -95,10 +95,10 @@ export default function Footer() {
               DevHorizon
             </a>
           </p>
-          <button type="button" className={styles.arriba} onClick={volverArriba}>
+          <Button variant="plano" type="button" className={styles.arriba} onClick={volverArriba}>
             <ArrowUp aria-hidden="true" />
             Volver arriba
-          </button>
+          </Button>
         </div>
       </div>
     </footer>

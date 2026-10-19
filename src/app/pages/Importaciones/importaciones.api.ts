@@ -1,10 +1,4 @@
 // Cliente de /api/importaciones.
-//
-// El archivo lo parsea el front (`prevencion.parser.ts`, el mismo lector que
-// usa la pantalla de Validaciones) y acá se mandan las filas ya leídas. El
-// backend no confía en ellas: vuelve a resolver médico, código y precio contra
-// la base. Del reporte sólo toma lo que únicamente él sabe — autorización,
-// fecha, paciente y estado.
 
 import { getJSON, postJSON } from "@/app/shared/lib/http";
 import type { PrestacionPrevencion } from "@/app/pages/Validaciones/prevencion.parser";
@@ -25,10 +19,10 @@ export interface PeriodosOut {
 }
 
 /** Lo que el backend decidió para cada fila. */
-export type ResultadoFila = "grabable" | "grabada" | "duplicada" | "omitida" | "elegir_socio";
+type ResultadoFila = "grabable" | "grabada" | "duplicada" | "omitida" | "elegir_socio";
 
 /** Socio posible para una matrícula repetida o sin socio. */
-export interface CandidatoSocio {
+interface CandidatoSocio {
   nroSocio: number;
   nombre: string;
 }
@@ -62,7 +56,7 @@ export interface FilaResultado {
   idDetalle: number | null;
 }
 
-export interface ResumenImportacion {
+interface ResumenImportacion {
   periodo: string;
   total: number;
   grabables: number;
@@ -81,8 +75,7 @@ export interface ImportacionOut {
   filas: FilaResultado[];
 }
 
-// El backend habla snake_case; el front, camelCase. La traducción va acá y no
-// desparramada por la pantalla.
+// El backend habla snake_case; el front, camelCase.
 
 interface ApiFila {
   indice: number;
@@ -122,13 +115,7 @@ interface ApiOut {
   filas: ApiFila[];
 }
 
-/**
- * Previsualizar y confirmar procesan el reporte entero: cientos de filas, cada
- * una con su médico, su código y su precio. Con los 15 s por defecto un mes
- * grande puede cortar del lado del navegador mientras el backend sigue, y en
- * «confirmar» eso es grave: la importación queda grabada y la pantalla dice
- * que falló. (El reporte de agosto, 581 prácticas, tarda ~2 s en local.)
- */
+/** Previsualizar y confirmar procesan el reporte entero: cientos de filas, cada una con su médico, su código y su precio. */
 const LARGO = { timeout: 120_000 };
 
 const num = (v: number | string): number => {
@@ -174,8 +161,7 @@ const aSalida = (res: ApiOut): ImportacionOut => ({
   filas: (res.filas ?? []).map(aFila),
 });
 
-/** Obras sociales en las que se carga el reporte de Prevención. La 888 es de
- * prueba: tiene el mismo nomenclador y sirve para ensayar sin tocar la 103. */
+/** Obras sociales en las que se carga el reporte de Prevención. */
 export const OBRAS_PREVENCION = [
   { nro: 103, nombre: "Prevención Salud" },
   { nro: 888, nombre: "Prueba Prevención" },
@@ -197,12 +183,10 @@ function aCuerpo(
     obra_social: obraSocial,
     filas: prestaciones.map((p) => ({
       nro_autorizacion: p.nroAutorizacion,
-      // `fechaISO` es "" cuando la celda no era una fecha: el backend lo
-      // rechaza como fila sin fecha, que es lo correcto.
+      // `fechaISO` es "" cuando la celda no era una fecha: el backend lo rechaza como fila sin fecha, que es lo correcto.
       fecha: p.fechaISO || null,
       afiliado: p.afiliado,
-      // Sólo lo que se graba o se usa para resolver: el médico sale de la
-      // matrícula, así que «Profesional Efector» y «Conformidad» no viajan.
+      // Sólo lo que se graba o se usa para resolver: el médico sale de la matrícula, así que «Profesional Efector» y «Conformidad» no viajan.
       matricula: p.matricula,
       codigo: p.codigo,
       descripcion: p.descripcion,
@@ -245,8 +229,7 @@ export async function confirmarPrevencion(
 
 // ─── Swiss Medical ────────────────────────────────────────────────────────────
 
-/** El reporte de Swiss trae datos que el de Prevención no: número de afiliado
- * (la credencial), cantidad real y copago ya cobrado al paciente. */
+/** El reporte de Swiss trae datos que el de Prevención no: número de afiliado (la credencial), cantidad real y copago ya cobrado al paciente. */
 function aCuerpoSwiss(
   prestaciones: PrestacionSwiss[],
   periodo: string,
@@ -256,15 +239,12 @@ function aCuerpoSwiss(
     periodo: periodo || null,
     archivo,
     filas: prestaciones.map((p) => ({
-      // El `transacción_item` identifica la práctica en el sistema de Swiss y
-      // es único en todo el reporte; la columna `autorización` viene vacía en
-      // el 99% de las filas, así que sola no sirve para detectar duplicados.
+      // El `transacción_item` identifica la práctica en el sistema de Swiss y es único en todo el reporte.
       nro_autorizacion: p.item || p.autorizacion,
       fecha: p.fechaISO || null,
       afiliado: p.afiliado,
       profesional: p.efectorNombre,
-      // Va con la letra de provincia ("W-3972"): el backend la necesita para
-      // descartar las matrículas que no son de Corrientes.
+      // Va con la letra de provincia ("W-3972"): el backend la necesita para descartar las matrículas que no son de Corrientes.
       matricula: p.matricula,
       conformidad: "",
       codigo: p.codigo,

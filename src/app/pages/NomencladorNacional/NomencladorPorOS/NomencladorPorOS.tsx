@@ -69,6 +69,9 @@ import type {
 } from "../nomenclador.types";
 import { ORIGEN_LABELS } from "../nomenclador.types";
 import { today, parseMonto, compararGalenos } from "../nomenclador.helpers";
+import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
+import { fechaCorta } from "@/app/pages/NomencladorNacional/utiles";
 
 // ─── Local types ──────────────────────────────────────────────────────────────
 
@@ -83,8 +86,7 @@ type ComponenteForm = {
   opcional: boolean;
 };
 
-/** Lo que se cotiza: tipo de valor, componentes y coseguro. En "Cargar precio" hay
- * uno compartido (el del form) o uno por especialidad. */
+/** Lo que se cotiza: tipo de valor, componentes y coseguro. */
 type PrecioForm = {
   modalidad: ModalidadValor;
   componentes: ComponenteForm[];
@@ -112,13 +114,11 @@ type ValorForm = {
   porPresupuesto: boolean;
   nivel: string;
   complejidad: string;
-  /** Máximo de ayudantes admitidos — vacío = no lleva. Es lo único que habilita
-   * "Agregar ayudante" en Carga de Facturación (`precio.cantidad_ayudantes`). */
+  /** Máximo de ayudantes admitidos — vacío = no lleva. */
   cantidad_ayudantes: string;
   coseguro: string;
   observacion: string;
-  /** Especialidades tildadas para la variante NE a crear — una fila por cada una
-   * (ver POST /valores_nm/multi). Sin uso para NN. */
+  /** Especialidades tildadas para la variante NE a crear — una fila por cada una (ver POST /valores_nm/multi). */
   especialidadesChecked: Set<number>;
   /** NE "sin restricción por especialidad": una sola fila, sin lista de especialidades. */
   sinRestriccion: boolean;
@@ -180,12 +180,7 @@ function errorCoseguro(v: string): string | null {
   if (isNaN(n)) return "Importe inválido";
   return n < 0 ? "El coseguro no puede ser negativo" : null;
 }
-
-/** "2026-10-03" → "03/10/2026". */
-const fechaCorta = (iso: string) => iso.split("-").reverse().join("/");
-
-/** Aviso (no bloquea) de qué pasa con una vigencia que no es posterior a la vigente:
- * la misma fecha la actualiza, una anterior borra las más nuevas. */
+/** Aviso (no bloquea) de qué pasa con una vigencia que no es posterior a la vigente: la misma fecha la actualiza. */
 function avisoVigencia(nueva: string, vigente: string | undefined): string | null {
   if (!nueva || !vigente || nueva > vigente) return null;
   if (nueva === vigente) {
@@ -194,8 +189,7 @@ function avisoVigencia(nueva: string, vigente: string | undefined): string | nul
   return `Es anterior a la vigente (${fechaCorta(vigente)}): se eliminan de la base las vigencias desde el ${fechaCorta(nueva)} en adelante y esta queda como la última.`;
 }
 
-/** El galeno nivelado que usa la ecuación (el primero), o null. Con galeno nivelado
- * el nivel del precio es el suyo: no se carga aparte. */
+/** El galeno nivelado que usa la ecuación (el primero), o null. */
 function galenoNivelado(
   comps: ComponenteForm[],
   galenoPorId: Map<number, GalenoOut>,
@@ -257,11 +251,9 @@ type EditMode = "nucleo" | "variante";
 
 type EditMetaForm = {
   descripcion: string;
-  /** Dato del par (obra_social_nro, código) — se propaga en el back a todas las
-   * variantes activas del mismo par (incluida la NN) al guardar. */
+  /** Dato del par (obra_social_nro, código) — se propaga en el back a todas las variantes activas del mismo par (incluida la NN) al guardar. */
   sin_restriccion_especialidad: boolean;
-  /** Especialidades habilitadas HOY para el par. Se reemplaza por completo al
-   * guardar (no se suma) — único lugar del sistema donde se editan. */
+  /** Especialidades habilitadas HOY para el par. */
   especialidades: number[];
   nivel: string;
   complejidad: string;
@@ -314,20 +306,7 @@ function initComps(): ComponenteForm[] {
   }));
 }
 
-/**
- * El importe de un concepto suelto, o `null` si el valor no lo tiene cargado.
- *
- * La tabla muestra los tres por separado —honorario, ayudante y gastos— en vez
- * del total sumado: se facturan y se cobran por separado, y el número que se
- * busca al mirar un código es el honorario, no la suma.
- *
- * En un componente calculable el monto es `subtotal` (cantidad × galeno); en uno
- * fijo es `valor_unitario`, porque esas filas guardan el importe ahí y dejan la
- * cantidad en 0 —su `subtotal` sería 0—.
- *
- * `null` y no `0` a propósito: "no tiene ayudante" y "el ayudante vale cero" se
- * muestran distinto (— contra $ 0,00).
- */
+/** El importe de un concepto suelto, o `null` si el valor no lo tiene cargado. */
 function montoDe(
   v: ValorOut,
   concepto: ComponenteForm["concepto"],
@@ -373,9 +352,7 @@ function ComponentEditor({
   errors,
   onChange,
 }: CompEditorProps) {
-  // Los activos, en el orden del boletín y con los niveles seguidos. El select
-  // se recorre a ojo buscando un galeno puntual, así que el orden en que el
-  // operador los tiene en la cabeza es el que importa.
+  // Los activos, en el orden del boletín y con los niveles seguidos.
   const galenosOrdenados = useMemo(
     () =>
       galenos
@@ -391,8 +368,7 @@ function ComponentEditor({
     [galenos],
   );
 
-  // Subtotal orientativo: galeno × cantidad (calculable) o el valor fijo. `null` = no se
-  // puede calcular todavía (sin galeno, o cantidad en 0 = la completa el back).
+  // Subtotal orientativo: galeno × cantidad (calculable) o el valor fijo.
   function subtotal(comp: ComponenteForm): number | null {
     if (modalidad === "fijo") {
       const v = parseFloat(comp.valor_unitario);
@@ -632,7 +608,6 @@ export default function NomencladorPorOS() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   // Etapa 3: el alta del código elegido en esta O.S. (descripción, quién factura).
-  // Sin alta no se puede cargar precio (etapa 4).
   const [parAlta, setParAlta] = useState<CodigoObraSocialOut | null>(null);
   const [parCargando, setParCargando] = useState(false);
   const [existentes, setExistentes] = useState<PreciosExistentes | null>(null);
@@ -664,13 +639,10 @@ export default function NomencladorPorOS() {
   });
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
   const [savingMeta, setSavingMeta] = useState(false);
-  // "nucleo" = el código PARA TODAS sus especialidades; "variante" = una sola fila
-  // (solo valores, vigencia y coseguro). El NN es una fila única: mismo valor para
-  // cualquier especialidad, pero se gestiona por el núcleo igual que el NE.
+  // "nucleo" = el código PARA TODAS sus especialidades; "variante" = una sola fila (solo valores, vigencia y coseguro).
   const [editMode, setEditMode] = useState<EditMode>("variante");
   const [nucleoOrigen, setNucleoOrigen] = useState<"NE" | "NN">("NE");
-  // Lápiz del código = rotar precios. Las filas del código (una por especialidad en
-  // NE), el precio de cada una y si se cargan todas con el mismo.
+  // Lápiz del código = rotar precios.
   const [nucleoVariantes, setNucleoVariantes] = useState<ValorOut[]>([]);
   const [nucleoMismo, setNucleoMismo] = useState(true);
   const [nucleoComun, setNucleoComun] = useState<PrecioForm>(() => ({
@@ -736,9 +708,7 @@ export default function NomencladorPorOS() {
     [especialidades],
   );
 
-  // Códigos habilitados para la especialidad elegida EN ESTA OS (para acotar el
-  // listado). Se traen todos los pares (paginando) y se guardan como Set de códigos
-  // en mayúsculas — las especialidades son un dato por obra social.
+  // Códigos habilitados para la especialidad elegida EN ESTA OS (para acotar el listado).
   const { data: codigosDeEspecialidad, isFetching: espFilterFetching } =
     useQuery({
       queryKey: [
@@ -859,8 +829,7 @@ export default function NomencladorPorOS() {
     async (osNro: number) => {
       setLoadingValores(true);
       try {
-        // Sólo los precios en vigor (`estado: "activo"`): lo que se cerró al rotar un
-        // precio es historial y no se lista acá.
+        // Sólo los precios en vigor (`estado: "activo"`): lo que se cerró al rotar un precio es historial y no se lista acá.
         const all: ValorOut[] = [];
         for (let p = 1; p <= 100; p++) {
           const batch = await listValores({
@@ -882,9 +851,7 @@ export default function NomencladorPorOS() {
     [],
   );
 
-  // Ya no hay fallback al catálogo del Colegio: descripcion es obligatoria en el
-  // alta nueva, así que solo queda vacía en filas viejas (previas a la fase 2 de
-  // la reestructura) que todavía no se editaron.
+  // Ya no hay fallback al catálogo del Colegio: descripcion es obligatoria en el alta nueva, así que solo queda vacía en filas viejas.
   const resolvedDesc = useCallback((v: ValorOut) => v.descripcion ?? "", []);
 
   const filteredValores = useMemo(() => {
@@ -1018,8 +985,7 @@ export default function NomencladorPorOS() {
     void cargarAlta(n.id);
   }
 
-  /** Trae el alta del código en la O.S. y precarga lo que viene de ahí: descripción,
-   * quién factura, complejidad y ayudantes. */
+  /** Trae el alta del código en la O.S. y precarga lo que viene de ahí: descripción, quién factura, complejidad y ayudantes. */
   async function cargarAlta(nomencladorId: number) {
     if (!selectedNroOS) return;
     setParCargando(true);
@@ -1027,8 +993,7 @@ export default function NomencladorPorOS() {
     setExistentes(null);
     try {
       const p = await getCodigoOS(selectedNroOS, nomencladorId);
-      // Precios activos del código en la O.S.: las especialidades que ya tienen
-      // no se vuelven a cargar acá (se rotan con el lápiz).
+      // Precios activos del código en la O.S.: las especialidades que ya tienen no se vuelven a cargar acá (se rotan con el lápiz).
       const activos = (
         await listValores({ obra_social_nro: selectedNroOS, codigo: p.codigo, estado: "activo", size: 200 })
       ).filter((v) => v.nomenclador_id === nomencladorId);
@@ -1087,10 +1052,7 @@ export default function NomencladorPorOS() {
     });
   }
 
-  // Alta NN: con el código elegido, precarga Honorarios/Gastos/Ayudante con el
-  // galeno que corresponde al rango del código y las unidades del Nomenclador
-  // Nacional — la misma regla con la que se generan los NN al crear la OS.
-  // Se dispara al elegir el código o al pasar a NN (en cualquier orden).
+  // Alta NN: con el código elegido, precarga Honorarios/Gastos/Ayudante con el galeno que corresponde al rango del código y las unidades del Nomenclador Nacional .
   const nnCreateOrigen = modalKind === "create" ? form.origen : null;
   const nnCreateNomId = modalKind === "create" ? form.nomencladorId : null;
   useEffect(() => {
@@ -1175,8 +1137,7 @@ export default function NomencladorPorOS() {
     coseguro: form.coseguro,
   };
 
-  /** Tilda/destilda "Mismos precios". Al separar, cada especialidad arranca con
-   * una copia de lo que ya estaba cargado en el precio común. */
+  /** Tilda/destilda "Mismos precios". Al separar, cada especialidad arranca con una copia de lo que ya estaba cargado en el precio común. */
   function cambiarMismoPrecio(mismo: boolean) {
     setForm((prev) => {
       if (mismo) return { ...prev, mismoPrecio: true };
@@ -1294,8 +1255,7 @@ export default function NomencladorPorOS() {
     if (!editEcu.vigencia_desde) errs.vigencia_desde = "Requerido";
     const cos = errorCoseguro(editEcu.coseguro);
     if (cos) errs.coseguro = cos;
-    // Por presupuesto no tiene ecuación propia (H/G/A van en 0, ver `_crear_valor_con_
-    // componentes` en el back) — solo importan vigencia_desde y coseguro, ya chequeados.
+    // Por presupuesto no tiene ecuación propia (H/G/A van en 0, ver `_crear_valor_con_ componentes` en el back) — solo importan vigencia_desde y coseguro, ya chequeados.
     if (!editTarget?.por_presupuesto) {
       const hon = editEcu.componentes[0];
       if (editEcu.modalidad === "calculable") {
@@ -1367,8 +1327,7 @@ export default function NomencladorPorOS() {
 
   /** Lápiz del código "núcleo": edita TODAS las especialidades a la vez. */
   function openEditNucleo(nomencladorId: number, origen: "NE" | "NN") {
-    // NE: las variantes por especialidad. NN: su fila única (mismo valor para cualquier
-    // especialidad); se gestiona igual pero sin filas por especialidad.
+    // NE: las variantes por especialidad.
     const grupo = valores
       .filter((v) => v.nomenclador_id === nomencladorId && v.origen === origen)
       .sort((x, y) => x.id - y.id);
@@ -1388,8 +1347,7 @@ export default function NomencladorPorOS() {
       porFila[v.id] = precioDeValor(v);
     });
     const comun = precioDeValor(base);
-    // "Mismo precio" arranca tildado si hoy todas valen lo mismo; si no, cada
-    // especialidad muestra el suyo.
+    // "Mismo precio" arranca tildado si hoy todas valen lo mismo; si no, cada especialidad muestra el suyo.
     const firmas = new Set(filas.map((v) => firmaPrecio(porFila[v.id])));
     nucleoInicial.current = {
       comun: firmaPrecio(comun),
@@ -1492,8 +1450,7 @@ export default function NomencladorPorOS() {
     setReplicaError(null);
   }
 
-  /** Replica en la familia lo recién guardado. true = hubo replicación (el modal queda
-   * abierto mostrando el resultado); false = no había nada que replicar. */
+  /** Replica en la familia lo recién guardado. true = hubo replicación (el modal queda abierto mostrando el resultado); false = no había nada que replicar. */
   async function replicarSiCorresponde(
     ...payloads: Omit<
       ReplicarValoresFamiliaPayload,
@@ -1589,8 +1546,7 @@ export default function NomencladorPorOS() {
           ? [...form.especialidadesChecked]
           : [];
       if (preciosSeparados) {
-        // Un precio por especialidad: una alta por cada una. Si una falla, las
-        // anteriores quedan guardadas y se avisa cuál no entró.
+        // Un precio por especialidad: una alta por cada una.
         const creados: ValorOut[] = [];
         const replicas: Parameters<typeof replicarSiCorresponde> = [];
         try {
@@ -1710,8 +1666,7 @@ export default function NomencladorPorOS() {
     }));
   }
 
-  /** El motivo que manda el servidor, sólo si es texto. Los errores de validación
-   * llegan como lista de objetos: mostrarlos tal cual rompía el aviso. */
+  /** El motivo que manda el servidor, sólo si es texto. */
   function errMsg(e: unknown, fallback: string): string {
     const d = (e as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail;
     if (typeof d === "string") return d;
@@ -1721,8 +1676,7 @@ export default function NomencladorPorOS() {
     return fallback;
   }
 
-  // Lápiz del código: datos del código + rotar precios (de todas juntas o de cada
-  // especialidad). Quién factura no se toca acá: es del alta (etapa 3).
+  // Lápiz del código: datos del código + rotar precios (de todas juntas o de cada especialidad).
   async function handleSaveNucleo() {
     if (!editTarget || !selectedNroOS) return;
     const errs: Record<string, string> = {};
@@ -1814,8 +1768,7 @@ export default function NomencladorPorOS() {
         vigencia_desde: editEcu.vigencia_desde,
         componentes: buildEcuComponentes(),
         coseguro: editEcu.coseguro.trim() ? parseMonto(editEcu.coseguro) : 0,
-        // Explícito: el back NO lo hereda del valor que cierra, así que si no se manda
-        // un código por_presupuesto pierde esa condición al rotar vigencia.
+        // Explícito: el back NO lo hereda del valor que cierra, así que si no se manda un código por_presupuesto pierde esa condición al rotar vigencia.
         por_presupuesto: editTarget.por_presupuesto,
         aplicar_a_variantes: false,
       };
@@ -1866,9 +1819,7 @@ export default function NomencladorPorOS() {
         </span>
         <div>
           <h1 className={styles.title}>Valores por Obra Social</h1>
-          <p className={styles.subtitle}>
-            Listado y carga de los valores de cada código por obra social
-          </p>
+          
         </div>
       </div>
 
@@ -2005,7 +1956,7 @@ export default function NomencladorPorOS() {
 
               {/* Table */}
               <div className={styles.tableWrap}>
-                <table className={styles.table}>
+                <Tabla className={styles.table}>
                   <thead>
                     <tr>
                       <th>Origen</th>
@@ -2096,8 +2047,7 @@ export default function NomencladorPorOS() {
                                   {v.nivel != null ? `Niv. ${v.nivel}` : "—"}
                                 </td>
                                 {v.por_presupuesto ? (
-                                  // El chip ocupa las tres columnas de importe:
-                                  // sin precio pactado no hay nada que desglosar.
+                                  // El chip ocupa las tres columnas de importe: sin precio pactado no hay nada que desglosar.
                                   <td colSpan={3}>
                                     <span className={styles.presupuestoChip}>
                                       Por presupuesto
@@ -2157,7 +2107,7 @@ export default function NomencladorPorOS() {
                       })
                     )}
                   </tbody>
-                </table>
+                </Tabla>
               </div>
 
               {/* Mobile cards */}
@@ -2175,8 +2125,7 @@ export default function NomencladorPorOS() {
                         </span>
                       </div>
                       <p className={styles.cardDesc}>{resolvedDesc(v)}</p>
-                      {/* En mobile el honorario va arriba, junto al código, y los
-                        otros dos conceptos abajo sólo si el valor los tiene. */}
+                      {/* En mobile el honorario va arriba, junto al código, y los otros dos conceptos abajo sólo si el valor los tiene. */}
                       {!v.por_presupuesto && (
                         <p className={styles.cardConceptos}>
                           {montoDe(v, "Ayudante") != null && (
@@ -2348,7 +2297,7 @@ export default function NomencladorPorOS() {
                           >
                             <Loader2
                               size={14}
-                              style={{ animation: "spin .7s linear infinite" }}
+                              style={{ animation: "cmc-spin .7s linear infinite" }}
                             />
                           </span>
                         )}
@@ -2474,10 +2423,7 @@ export default function NomencladorPorOS() {
                   )}
                 </div>
 
-                {/* Especialidades — solo NE. Una fila por cada tildada (POST /valores_nm/multi):
-                    mismo precio, misma vigencia, filas separadas. Se puede elegir
-                    cualquier especialidad del catálogo: crear la variante la habilita
-                    automáticamente para este código en esta OS si todavía no lo estaba. */}
+                {/* Especialidades — solo NE. */}
                 {form.origen === "NE" && (
                   <div className={styles.formGroup}>
                     <label className={styles.formLabel}>
@@ -2592,14 +2538,12 @@ export default function NomencladorPorOS() {
                     <label className={styles.formLabel}>
                       Vigente desde <span className={styles.req}>*</span>
                     </label>
-                    <input
-                      type="date"
-                      className={`${styles.formInput} ${errors.vigencia_desde ? styles.inputError : ""}`}
+                    <CampoFecha
                       value={form.vigencia_desde}
-                      onChange={(e) => {
+                      onChange={(valor) => {
                         setForm((p) => ({
                           ...p,
-                          vigencia_desde: e.target.value,
+                          vigencia_desde: valor,
                         }));
                         setErrors((p) => ({ ...p, vigencia_desde: "" }));
                       }}
@@ -2877,8 +2821,7 @@ export default function NomencladorPorOS() {
                   </div>
                 )}
 
-                {/* Metadatos: núcleo (todas las especialidades) o fila NN. La variante suelta
-                    NO los tiene: solo valores, vigencia y coseguro. */}
+                {/* Metadatos: núcleo (todas las especialidades) o fila NN. */}
                 {editMode === "nucleo" && (
                   <div className={styles.editSection}>
                     <div className={styles.editSectionTitle}>
@@ -2993,8 +2936,7 @@ export default function NomencladorPorOS() {
                   </div>
                 )}
 
-                {/* Valores, vigencia y coseguro. En el núcleo es opcional (abre una vigencia
-                    nueva en TODAS las variantes); en una variante suelta es lo único editable. */}
+                {/* Valores, vigencia y coseguro. */}
                 {editMode === "nucleo" && (
                   <div className={styles.editSection}>
                     <div className={styles.editSectionTitle}>Precios</div>
@@ -3006,12 +2948,10 @@ export default function NomencladorPorOS() {
                       <label className={styles.formLabel}>
                         Nueva vigencia desde <span className={styles.req}>*</span>
                       </label>
-                      <input
-                        type="date"
-                        className={`${styles.formInput} ${editErrors.vigencia_desde ? styles.inputError : ""}`}
+                      <CampoFecha
                         value={editEcu.vigencia_desde}
-                        onChange={(e) => {
-                          setEditEcu((p) => ({ ...p, vigencia_desde: e.target.value }));
+                        onChange={(valor) => {
+                          setEditEcu((p) => ({ ...p, vigencia_desde: valor }));
                           setEditErrors((p) => ({ ...p, vigencia_desde: "" }));
                         }}
                       />
@@ -3089,14 +3029,12 @@ export default function NomencladorPorOS() {
                             Nueva vigencia desde{" "}
                             <span className={styles.req}>*</span>
                           </label>
-                          <input
-                            type="date"
-                            className={`${styles.formInput} ${editErrors.vigencia_desde ? styles.inputError : ""}`}
+                          <CampoFecha
                             value={editEcu.vigencia_desde}
-                            onChange={(e) => {
+                            onChange={(valor) => {
                               setEditEcu((p) => ({
                                 ...p,
-                                vigencia_desde: e.target.value,
+                                vigencia_desde: valor,
                               }));
                               setEditErrors((p) => ({
                                 ...p,
@@ -3300,7 +3238,7 @@ export default function NomencladorPorOS() {
               Las manuales y las de períodos cerrados no se tocan.
             </p>
             <div className={styles.tableWrap}>
-              <table className={styles.table}>
+              <Tabla className={styles.table}>
                 <thead>
                   <tr><th>Período</th><th>Médico</th><th>Fecha</th><th className={styles.num}>Antes</th><th className={styles.num}>Después</th><th /></tr>
                 </thead>
@@ -3316,7 +3254,7 @@ export default function NomencladorPorOS() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </Tabla>
             </div>
             <div className={styles.revalorizarAcciones}>
               <button type="button" className={styles.btnGhost} onClick={() => setRevalorizar(null)}>Ahora no</button>

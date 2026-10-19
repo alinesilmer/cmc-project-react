@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Layers, Search, Eye, Plus, FilePlus2, FileCheck2 } from "lucide-react";
+import { Layers, Search, Plus, FilePlus2, FileCheck2 } from "lucide-react";
 
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
 import { listarFacturas } from "../api";
@@ -11,6 +11,10 @@ import { formatMoney } from "../money";
 import ObraSocialAutocomplete from "../components/ObraSocialAutocomplete";
 import NuevaComplementariaModal from "./NuevaComplementariaModal";
 import styles from "./Complementarias.module.scss";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
+import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
+import { estadoLabel } from "@/app/pages/facturacion/utiles";
+import { fmtFecha } from "@/app/pages/facturacion/utiles";
 
 const PAGE_SIZES = [25, 50, 100, 200];
 const DEFAULT_LIMIT = 50;
@@ -27,26 +31,6 @@ const estadoBadgeClass = (estado: string | null): string => {
     case "C": return styles.estadoCerrada;
     default:  return styles.estadoDefault;
   }
-};
-
-const estadoLabel = (estado: string | null): string => {
-  switch (estado) {
-    case "A": return "Abierta";
-    case "C": return "Cerrada";
-    default:  return estado || "—";
-  }
-};
-
-const fmtFecha = (iso: string | null): string => {
-  if (!iso) return "—";
-  // `new Date("2026-11-01")` parsea las date-only como medianoche UTC, y al mostrarlas
-  // en hora local (AR = UTC-3) retroceden un día. Las fechas de la API (`fecha_practica`,
-  // `fecha`) son columnas DATE, así que se formatean sin pasar por Date.
-  const soloFecha = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
-  if (soloFecha) return `${soloFecha[3]}/${soloFecha[2]}/${soloFecha[1]}`;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
 };
 
 const Complementarias: React.FC = () => {
@@ -198,7 +182,7 @@ const Complementarias: React.FC = () => {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
         >
-          <table className={styles.table}>
+          <Tabla className={styles.table}>
             <thead>
               <tr>
                 <th>Obra social</th>
@@ -275,19 +259,15 @@ const Complementarias: React.FC = () => {
                           </button>
                         </>
                       )}
-                      <button
-                        type="button"
-                        className={styles.btnView}
+                      <BotonVer
                         onClick={() => navigate(`/panel/facturacion/periodos/${row.id_prestaciones}`)}
-                      >
-                        <Eye size={14} /> Ver
-                      </button>
+                      />
                     </div>
                   </td>
                 </tr>
               ))}
             </tbody>
-          </table>
+          </Tabla>
         </motion.div>
 
         <div className={styles.pagination}>

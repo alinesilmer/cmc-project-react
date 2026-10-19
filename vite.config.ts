@@ -1,11 +1,16 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
+import temaOscuro from "./config/postcssTemaOscuro";
 
 export default defineConfig({
   plugins: [react()],
   base: "/", // se sirve en raíz del dominio/subdominio
   assetsInclude: ["**/*.xlsx", "**/*.pdf"],
+  // El tema oscuro del panel se genera acá, sobre el CSS ya compilado.
+  css: {
+    postcss: { plugins: [temaOscuro()] },
+  },
   build: {
     outDir: path.resolve(__dirname, "dist"),
     emptyOutDir: true,

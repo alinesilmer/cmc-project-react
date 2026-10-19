@@ -25,6 +25,7 @@ import {
 } from "../nomenclador.api";
 import { usePermisos } from "../../../auth/usePermisos";
 import type { NomencladorOut, NomencladorNacionalOut } from "../nomenclador.types";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
 
 const PAGE_SIZE = 50;
 
@@ -157,7 +158,6 @@ export default function NomencladorCodigos() {
           <span className={styles.headerIcon}><ListOrdered size={20} /></span>
           <div>
             <h1 className={styles.title}>Gestión de Códigos</h1>
-            <p className={styles.subtitle}>Catálogo maestro de prestaciones médicas del Colegio</p>
           </div>
         </div>
       </div>
@@ -205,7 +205,7 @@ export default function NomencladorCodigos() {
 
         {/* Table */}
         <div className={styles.tableWrap}>
-          <table className={styles.table}>
+          <Tabla className={styles.table}>
             <thead>
               <tr>
                 <th>Código</th>
@@ -256,7 +256,7 @@ export default function NomencladorCodigos() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </Tabla>
         </div>
 
         {/* Mobile cards */}

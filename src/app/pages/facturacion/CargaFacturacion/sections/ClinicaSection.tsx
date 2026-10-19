@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Check } from "lucide-react";
 import ClinicaAutocomplete from "../../components/ClinicaAutocomplete";
 import AltaClinicaModal from "../../components/AltaClinicaModal";
 import ConfirmActionModal from "../../components/ConfirmActionModal";
@@ -10,16 +10,14 @@ import styles from "../CargaFacturacion.module.scss";
 
 interface Props {
   codClinica: number | null;
-  /** Nombre resuelto en vivo: hint de edición (antes "clinicaPreset") y, ahora
-   *  también, el nombre de lo que el operador acaba de elegir/crear en modo alta. */
+  /** Nombre resuelto en vivo: hint de edición (antes "clinicaPreset") y, ahora también, el nombre de lo que el operador acaba de elegir/crear en modo alta. */
   clinicaNombre: string | null;
   onClinicaChange: (cod: number | null, clinica: ClinicaOption | null) => void;
   /** Para que el padre saque la clínica borrada de `clinicasPrecargadas`. */
   onClinicaDeleted?: (cod: number) => void;
   disabled?: boolean;
   clinicasPrecargadas?: ClinicaOption[] | null;
-  /** Reset "externo" (reset de formulario completo / payee pasa a organización) —
-   *  viene del padre, se combina con el reset local post-borrado. */
+  /** Reset "externo" (reset de formulario completo / payee pasa a organización) — viene del padre, se combina con el reset local post-borrado. */
   resetKey: number;
 }
 
@@ -31,9 +29,7 @@ const ClinicaSection: React.FC<Props> = ({
   const [showBaja, setShowBaja] = useState(false);
   const [borrando, setBorrando] = useState(false);
   const [bajaError, setBajaError] = useState<string | null>(null);
-  // El autocomplete conserva el texto tipeado aunque el `value` vuelva a null (ver
-  // AppSearchSelect): tras borrar la clínica hay que remontarlo para que el campo
-  // quede realmente vacío y no muestre a algo que ya no existe.
+  // El autocomplete conserva el texto tipeado aunque el `value` vuelva a null (ver AppSearchSelect).
   const [autocompleteKey, setAutocompleteKey] = useState(0);
 
   const puedeBorrar = Boolean(codClinica && clinicaNombre) && !disabled;
@@ -56,8 +52,7 @@ const ClinicaSection: React.FC<Props> = ({
       onClinicaDeleted?.(codClinica);
       setAutocompleteKey((k) => k + 1);
     } catch (e) {
-      // Se cierra el modal para que el motivo (típicamente el 409 "tiene N
-      // prestaciones cargadas") quede visible bajo el campo y no tapado.
+      // Se cierra el modal para que el motivo (típicamente el 409 "tiene N prestaciones cargadas") quede visible bajo el campo y no tapado.
       setShowBaja(false);
       setBajaError(mensajeDeError(e, "No se pudo eliminar la clínica."));
     } finally {
@@ -109,11 +104,9 @@ const ClinicaSection: React.FC<Props> = ({
             + Agregar clínica
           </button>
         </div>
-        {/* Una clínica recién creada/elegida por este camino (no por click directo en
-         *  una opción del dropdown) puede no reflejarse en el texto del combobox — ver
-         *  el mismo patrón en PacienteSection. Este chip es la confirmación visible. */}
+        {/* Una clínica recién creada/elegida por este camino (no por click directo en una opción del dropdown) puede no reflejarse en el texto del combobox. */}
         {clinicaNombre && (
-          <span style={{ fontSize: 12, color: "#1d9148", fontWeight: 600 }}>✓ {clinicaNombre}</span>
+          <span style={{ fontSize: 12, color: "#1d9148", fontWeight: 600 }}><Check size={14} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> {clinicaNombre}</span>
         )}
         {bajaError && <span className={styles.errorText}>{bajaError}</span>}
       </div>

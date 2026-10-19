@@ -1,13 +1,32 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { AlertTriangle, Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  AlertTriangle,
+  BarChart3,
+  BriefcaseMedical,
+  Building2,
+  ChevronDown,
+  Contact,
+  FileText,
+  HandCoins,
+  Landmark,
+  Pencil,
+  Plus,
+  ScrollText,
+  ShieldCheck,
+  Stethoscope,
+  Trash2,
+  User,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
 import Card from "@/app/components/ui/Card/Card";
+import Franja from "@/app/components/layout/Franja/Franja";
 import Button from "@/app/components/ui/Button/Button";
 import CopyButton from "@/app/components/ui/CopyButton/CopyButton";
 import styles from "./DoctorProfilePage.module.scss";
@@ -15,9 +34,8 @@ import styles from "./DoctorProfilePage.module.scss";
 import RequirePermission from "../../auth/RequirePermission";
 import { usePermisos } from "../../auth/usePermisos";
 import { useAuth } from "../../auth/AuthProvider";
-import { esOrganizacion } from "../../auth/roles";
+import { esOrganizacion, INGRESAR_MEDICO, isMedico } from "../../auth/roles";
 import BackButton from "@/app/components/ui/BackButton/BackButton";
-import ReportesMedico from "../Reportes/ReportesMedico";
 import Credencial from "./Credencial";
 import FormularioCambiosModal from "./FormularioCambiosModal";
 import ReportarCambioModal from "./ReportarCambioModal";
@@ -84,7 +102,7 @@ import ActionModal from "@/app/components/ui/ActionModal/ActionModal";
 import { useNotify } from "../../hooks/useNotify";
 import { abrirAdjunto } from "@/app/shared/lib/archivos";
 import { formatFecha } from "@/app/shared/lib/fechas";
-import PadronesForm from "@/app/features/padrones/components/PadronesForm/PadronesForm";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
 
 /* ===================== helpers labels ===================== */
 const ATTACH_PRETTY: Record<string, string> = {
@@ -176,7 +194,7 @@ const toYmd2 = (v: any): string | null => {
   return s;
 };
 
-export function normalizePatch(input: Record<string, any>) {
+function normalizePatch(input: Record<string, any>) {
   const out: Record<string, any> = {};
   for (const [k, raw] of Object.entries(input || {})) {
     if (!WL.has(k)) continue;
@@ -206,9 +224,7 @@ function toYmd(d?: Date | null): string | null {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-// Parse a YYYY-MM-DD string as LOCAL midnight (not UTC).
-// new Date("2024-01-15") parses as UTC midnight which in AR (UTC-3) becomes
-// Jan 14 at 21:00 — the datepicker then shows the wrong day.
+// Parse a YYYY-MM-DD string as LOCAL midnight (not UTC). new Date("2024-01-15") parses as UTC midnight which in AR (UTC-3) becomes Jan 14 at 21:00.
 function parseLocalDate(s: string): Date {
   const parts = s.split("-");
   if (parts.length === 3) {
@@ -222,13 +238,10 @@ function parseLocalDate(s: string): Date {
 
 const fmt = (v: any) =>
   v === undefined || v === null || v === "" ? "—" : String(v);
-// Fecha de nacimiento e ingreso son fechas de calendario: con `new Date(s)` el
-// parser las lee como UTC y mostraba el día anterior. Ver src/app/lib/fechas.ts.
+// Fecha de nacimiento e ingreso son fechas de calendario: con `new Date(s)` el parser las lee como UTC y mostraba el día anterior.
 const fmtDate = (s?: string | null) => (s ? formatFecha(s) : "—");
 
-// Valor del legajo con botón de copiar al lado. `copy` es lo que va al
-// portapapeles cuando difiere de lo mostrado (CUIT y CBU se copian sin
-// separadores, que es como los piden los portales y homebanking).
+// Valor del legajo con botón de copiar al lado.
 function Copiable({
   label,
   value,
@@ -299,8 +312,38 @@ type TabKey =
   | "especialidades"
   | "padrones"
   | "credencial"
+  | "valoresPdf"
   | "reportes"
   | "permisos";
+
+// El resto de las pestañas se rotula con su clave capitalizada.
+const TAB_LABELS: Partial<Record<TabKey, string>> = {
+  valoresPdf: "Valores PDF",
+};
+
+type SeccionDatos = "personales" | "profesionales" | "impositivos";
+
+// Íconos de las pestañas, en "Mi perfil" y en el legajo del Colegio.
+const TAB_ICONS: Partial<Record<TabKey, LucideIcon>> = {
+  datos: User,
+  documentos: FileText,
+  conceptos: HandCoins,
+  especialidades: Stethoscope,
+  padrones: Building2,
+  credencial: Contact,
+  valoresPdf: ScrollText,
+  reportes: BarChart3,
+  permisos: ShieldCheck,
+};
+
+// Sólo la abre el personal: que no viaje en el chunk del legajo del socio.
+const ValoresPdfTab = lazy(() => import("./ValoresPdfTab"));
+
+// Estas dos pestañas son del lado del Colegio y traen lo más pesado del legajo: Reportes, la librería de gráficos; Padrones, la animación de confirmación.
+const ReportesMedico = lazy(() => import("../Reportes/ReportesMedico"));
+const PadronesForm = lazy(
+  () => import("@/app/features/padrones/components/PadronesForm/PadronesForm")
+);
 
 const DEFAULT_LABELS = [...ATTACH_KEYS, "otro"];
 
@@ -324,38 +367,57 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
 
   const [tab, setTab] = useState<TabKey>("datos");
 
-  // En modo lectura el socio ve solo su legajo: "conceptos" (descuentos) y
-  // "padrones" son administrativos y sus controles mutan al tocarlos.
-  // "reportes" es SÓLO del lado del Colegio (ReportesMedico exige
-  // `facturas:ver`): el médico no tiene panel propio de facturación.
-  // "credencial" va en las dos vistas: el socio necesita la suya y el Colegio
-  // la consulta desde el legajo. No expone nada que el médico no vea ya. Una
-  // organización (clínica) no tiene credencial profesional.
-  const visibleTabs: TabKey[] = readOnly
-    ? esOrganizacion(user)
-      ? ["datos", "documentos", "especialidades"]
-      : ["datos", "documentos", "especialidades", "credencial"]
-    : [
-        "datos",
-        "documentos",
-        "especialidades",
-        "conceptos",
-        "padrones",
-        "credencial",
-        "reportes",
-      ];
-
+  // En modo lectura el socio ve solo su legajo: "conceptos" (descuentos) y "padrones" son administrativos y sus controles mutan al tocarlos.
   const [data, setData] = useState<DoctorProfileX | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Reclamo de corrección: sólo existe en modo lectura, que es como el socio ve
-  // su propio legajo. El admin no lo necesita — edita el dato directamente.
+  // El personal del Colegio también tiene legajo en `listado_medico`, pero no es médico: sin "Dr./Dra." en la credencial y sin especialidades.
+  const esLegajoPropio = user?.id != null && String(user.id) === medicoId;
+  const ingresarLegajo: string | null =
+    (data as any)?.ingresar ?? (esLegajoPropio ? user?.ingresar : null) ?? null;
+  const legajoEsMedico =
+    ingresarLegajo == null || ingresarLegajo === INGRESAR_MEDICO;
+
+  // Línea bajo el nombre en "Mi perfil": especialidad · matrícula · socio.
+  const resumenLegajo = [
+    legajoEsMedico
+      ? (data as any)?.especialidades?.[0]?.especialidad_nombre
+      : "Personal de Colegio Médico",
+    (data as any)?.matricula_prov ? `MP ${(data as any).matricula_prov}` : null,
+    (data as any)?.nro_socio ? `Socio ${(data as any).nro_socio}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  // «Valores PDF» es del personal y sólo en "Mi perfil": junta los PDF que se adjuntan en el historial de valores de cada obra social.
+  const visibleTabs: TabKey[] = (
+    readOnly
+      ? esOrganizacion(user)
+        ? (["datos", "documentos", "especialidades"] as TabKey[])
+        : ([
+            "datos",
+            "documentos",
+            "especialidades",
+            "credencial",
+            ...(isMedico(user) ? [] : ["valoresPdf"]),
+          ] as TabKey[])
+      : ([
+          "datos",
+          "documentos",
+          "especialidades",
+          "conceptos",
+          "padrones",
+          "credencial",
+          "reportes",
+        ] as TabKey[])
+  ).filter((k) => k !== "especialidades" || legajoEsMedico);
+
+  // Reclamo de corrección: sólo existe en modo lectura, que es como el socio ve su propio legajo.
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
   // Formulario completo: el socio revisa todos sus datos editables de una.
   const [formularioOpen, setFormularioOpen] = useState(false);
 
-  /** Botón "reportar" al lado de la etiqueta de un dato. `campo` es el valor que
-   *  viaja a la columna homónima, así que debe salir de CAMPOS_CONOCIDOS. */
+  /** Botón "reportar" al lado de la etiqueta de un dato. */
   function ReportarBtn({
     campo,
     label,
@@ -365,7 +427,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
     label: string;
     valorActual?: unknown;
   }) {
-    if (!readOnly) return null;
+    if (!readOnly || editaSuLegajo) return null;
     return (
       <button
         type="button"
@@ -387,9 +449,50 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
 
   const { can } = usePermisos();
 
+  // El personal con `medico:editar` ya puede editar cualquier legajo desde el padrón: en "Mi perfil" edita el suyo en vez de pedir la corrección.
+  const editaSuLegajo =
+    readOnly && esLegajoPropio && !isMedico(user) && can("medico:editar");
+
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [draft, setDraft] = useState<Partial<DoctorProfileX>>({});
+
+  // Cada bloque de datos es un desplegable.
+  const [seccionesAbiertas, setSeccionesAbiertas] = useState<
+    Record<SeccionDatos, boolean>
+  >({ personales: !readOnly, profesionales: true, impositivos: !readOnly });
+  const seccionAbierta = (s: SeccionDatos) =>
+    isEditing || seccionesAbiertas[s];
+
+  /** Título de un bloque de la pestaña Datos: el botón que lo abre y lo cierra. */
+  function tituloSeccion(
+    seccion: SeccionDatos,
+    Icono: LucideIcon,
+    texto: string,
+    style?: React.CSSProperties,
+  ) {
+    const abierta = seccionAbierta(seccion);
+    return (
+      <h5 className={styles.section} style={style}>
+        <button
+          type="button"
+          className={styles.mpToggle}
+          aria-expanded={abierta}
+          onClick={() =>
+            setSeccionesAbiertas((p) => ({ ...p, [seccion]: !p[seccion] }))
+          }
+        >
+          <Icono size={18} aria-hidden="true" />
+          <span>{texto}</span>
+          <ChevronDown
+            size={18}
+            aria-hidden="true"
+            className={`${styles.mpChev} ${abierta ? styles.mpChevAbierta : ""}`}
+          />
+        </button>
+      </h5>
+    );
+  }
 
   const [rolesAll, setRolesAll] = useState<Role[]>([]);
   const [userRoles, setUserRoles] = useState<string[]>([]);
@@ -469,7 +572,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
       setDelEspOpen(false);
       setEspToDelete(null);
     } catch (e: any) {
-      alert(e?.message || "No se pudo quitar la especialidad.");
+      notify.error(e?.message || "No se pudo quitar la especialidad.");
     } finally {
       setDelEspBusy(false);
       setRmEspBusy(null);
@@ -849,7 +952,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
       }
       await performUploadAndMap(pendingUpload);
     } catch (e: any) {
-      alert(e?.message || "No se pudo reemplazar el documento.");
+      notify.error(e?.message || "No se pudo reemplazar el documento.");
     } finally {
       setPendingUpload(null);
       setReplaceOpen(false);
@@ -875,7 +978,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
       setDelDocOpen(false);
       setDocToDelete(null);
     } catch (e: any) {
-      alert(e?.message || "No se pudo eliminar el documento.");
+      notify.error(e?.message || "No se pudo eliminar el documento.");
     } finally {
       setDelDocBusy(false);
     }
@@ -939,8 +1042,10 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
   }
 
   return (
+    <>
+      {!readOnly && <Franja suelta titulo="Socio" icono={User} />}
     <div className={styles.page}>
-      <div className={styles.content}>
+      <div className={`${styles.content} ${styles.mpContent}`}>
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
@@ -961,31 +1066,22 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
               <p>No se encontró el profesional solicitado.</p>
             </Card>
           ) : (
-            <div className={styles.profileLayout}>
+            <div
+              className={`${styles.profileLayout} ${styles.miPerfil}`}
+            >
               <div className={styles.rightCol}>
                 <Card className={styles.headerCard}>
                   <div className={styles.profileHeader}>
-                    <div className={styles.avatarSmall} aria-label={data.name}>
-                      {data.name
-                        ?.split(" ")
-                        .map((w) => w[0])
-                        .slice(0, 2)
-                        .join("")}
-                    </div>
-
                     <div className={styles.headerMain}>
+                      <span
+                        className={`${styles.mpEstado} ${
+                          existe === "S" ? "" : styles.mpEstadoInactivo
+                        }`}
+                      >
+                        {existe === "S" ? "Activo" : "Inactivo"}
+                      </span>
                       <h2 className={styles.name}>{data.name}</h2>
-                      <div className={styles.roleRow}>
-                        <span className={styles.location}>N° socio:</span>
-                        <span className={styles.role}>
-                          {(data as any).nro_socio || "—"}
-                        </span>
-                        <span className={styles.dot}>•</span>
-                        <span className={styles.location}>Mat. provincial:</span>
-                        <span className={styles.role}>
-                          {(data as any).matricula_prov}
-                        </span>
-                      </div>
+                      <p className={styles.mpSub}>{resumenLegajo}</p>
                     </div>
 
                     {!readOnly && (
@@ -1013,7 +1109,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                                 d ? ({ ...d, existe: next } as any) : d
                               );
                             } catch (e: any) {
-                              alert(
+                              notify.error(
                                 e?.message || "No se pudo actualizar el estado."
                               );
                             } finally {
@@ -1035,12 +1131,8 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                     </div>
                     )}
 
-                    {/* Salida general para lo que no tiene su propio "reportar"
-                        al lado (especialidades, padrón, cualquier otra cosa).
-                        Va en .headerActions —igual que los controles del admin—
-                        para que el `margin-left: auto` lo alinee al borde
-                        derecho en vez de dejarlo pegado al nombre. */}
-                    {readOnly && (
+                    {/* Salida general para lo que no tiene su propio "reportar" al lado (especialidades, padrón, cualquier otra cosa). */}
+                    {readOnly && !editaSuLegajo && (
                       <div className={styles.headerActions}>
                         <Button
                           variant="ghost"
@@ -1048,14 +1140,16 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                           title="Revisar y corregir tus datos"
                         >
                           <Pencil size={16} />
-                          &nbsp;Corregir mis datos
+                          &nbsp;Corregir
                         </Button>
                       </div>
                     )}
                   </div>
 
                   <div className={styles.tabs} id="doctor-tabs-root">
-                    {visibleTabs.map((k) => (
+                    {visibleTabs.map((k) => {
+                      const TabIcon = TAB_ICONS[k];
+                      return (
                       <button
                         key={k}
                         className={`${styles.tab} ${
@@ -1063,7 +1157,8 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                         }`}
                         onClick={() => setTab(k)}
                       >
-                        {k[0].toUpperCase() + k.slice(1)}
+                        {TabIcon && <TabIcon size={20} aria-hidden="true" />}
+                        {TAB_LABELS[k] ?? k[0].toUpperCase() + k.slice(1)}
                         {tab === k && (
                           <motion.span
                             layoutId="tab-underline"
@@ -1071,9 +1166,9 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                           />
                         )}
                       </button>
-                    ))}
-                    {/* Permisos es administración de RBAC, no parte del legajo: queda
-                        fuera de "Mi perfil" aunque el socio tenga rbac:gestionar. */}
+                      );
+                    })}
+                    {/* Permisos es administración de RBAC, no parte del legajo: queda fuera de "Mi perfil" aunque el socio tenga rbac:gestionar. */}
                     {!readOnly && (
                       <RequirePermission scope="rbac:gestionar">
                         <button
@@ -1082,6 +1177,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                           }`}
                           onClick={() => setTab("permisos")}
                         >
+                          <ShieldCheck size={20} aria-hidden="true" />
                           Permisos
                           {tab === "permisos" && (
                             <motion.span
@@ -1101,9 +1197,9 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 8 }}
-                        className={styles.tabBody}
+                        className={`${styles.tabBody} ${styles.mpDatos}`}
                       >
-                        {!readOnly && can("medico:editar") && (
+                        {((!readOnly && can("medico:editar")) || editaSuLegajo) && (
                         <button
                           type="button"
                           className={styles.editPencil}
@@ -1126,8 +1222,12 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                         </button>
                         )}
 
-                        <h5 className={styles.section}>Datos personales</h5>
-                        <div className={styles.infoGrid}>
+                        {tituloSeccion("personales", User, "Datos personales")}
+                        <div
+                          className={`${styles.infoGrid} ${
+                            seccionAbierta("personales") ? "" : styles.mpCerrada
+                          }`}
+                        >
                           <div>
                             <span className={styles.label}>
                               Nombre (registro)
@@ -1320,10 +1420,17 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                           </div>
                         </div>
 
-                        <h5 className={styles.section} style={{ marginTop: 24 }}>
-                          Datos profesionales
-                        </h5>
-                        <div className={styles.infoGrid}>
+                        {tituloSeccion(
+                          "profesionales",
+                          BriefcaseMedical,
+                          "Datos profesionales",
+                          { marginTop: 24 },
+                        )}
+                        <div
+                          className={`${styles.infoGrid} ${
+                            seccionAbierta("profesionales") ? "" : styles.mpCerrada
+                          }`}
+                        >
                           <div>
                             <span className={styles.label}>Nº socio</span>
                             {isEditing ? (
@@ -1424,10 +1531,17 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                           </div>
                         </div>
 
-                        <h5 className={styles.section} style={{ marginTop: 24 }}>
-                          Datos impositivos
-                        </h5>
-                        <div className={styles.infoGrid}>
+                        {tituloSeccion(
+                          "impositivos",
+                          Landmark,
+                          "Datos impositivos",
+                          { marginTop: 24 },
+                        )}
+                        <div
+                          className={`${styles.infoGrid} ${
+                            seccionAbierta("impositivos") ? "" : styles.mpCerrada
+                          }`}
+                        >
                           <div>
                             <span className={styles.label}>
                               Condición impositiva
@@ -1496,8 +1610,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                           </div>
                           <div>
                             <span className={styles.label}>CBU</span>
-                            {/* Es el campo contra el que se pagan las liquidaciones: gate
-                                propio, independiente de medico:editar. */}
+                            {/* Es el campo contra el que se pagan las liquidaciones: gate propio, independiente de medico:editar. */}
                             {isEditing && can("medico:editar_bancario") ? (
                               RText("cbu")
                             ) : (
@@ -1506,8 +1619,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                               </Copiable>
                             )}
                           </div>
-                          {/* Apunte interno del Colegio sobre el médico: no le
-                              corresponde verlo a él, sólo al personal que lo carga. */}
+                          {/* Apunte interno del Colegio sobre el médico: no le corresponde verlo a él, sólo al personal que lo carga. */}
                           {!readOnly && (
                             <div>
                               <span className={styles.label}>Observación</span>
@@ -1548,7 +1660,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                                   setIsEditing(false);
                                   setDraft({});
                                 } catch (e: any) {
-                                  alert(
+                                  notify.error(
                                     e?.message ||
                                       "No se pudo guardar los cambios."
                                   );
@@ -1584,25 +1696,9 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                         <div className={styles.docsHeaderInline}>
                           <h5 className={styles.section}>Documentación</h5>
                           <div className={styles.docActionsRight}>
-                            <Button
-                              variant="primary"
-                              onClick={() => {
-                                docs.forEach((d) => {
-                                  const a = document.createElement("a");
-                                  a.href = d.url;
-                                  a.download = d.file_name;
-                                  document.body.appendChild(a);
-                                  a.click();
-                                  a.remove();
-                                });
-                              }}
-                            >
-                              Descargar todo
-                            </Button>
                             {!readOnly && can("medico:documento") && (
                             <Button
                               variant="ghost"
-                              style={{ marginLeft: 8 }}
                               onClick={() => {
                                 setDocFile(null);
                                 setDocCustom("");
@@ -1703,7 +1799,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
 
                         {!espLoading && !especErr && (
                           <div className={styles.tableWrap}>
-                            <table className={styles.table}>
+                            <Tabla className={styles.table}>
                               <thead>
                                 <tr>
                                   <th>ID colegio</th>
@@ -1779,7 +1875,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                                   })
                                 )}
                               </tbody>
-                            </table>
+                            </Tabla>
                           </div>
                         )}
                       </motion.div>
@@ -1815,7 +1911,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
 
                         {!sdLoading && !sdError && (
                           <div className={styles.tableWrap}>
-                            <table className={styles.table}>
+                            <Tabla className={styles.table}>
                               <thead>
                                 <tr>
                                   <th style={{ width: "40%" }}>Concepto</th>
@@ -1908,7 +2004,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                                   ))
                                 )}
                               </tbody>
-                            </table>
+                            </Tabla>
                           </div>
                         )}
                       </motion.div>
@@ -1923,7 +2019,9 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                         className={`${styles.tabBodyPadrones}`}
                       >
                         <div className={styles.padronesWrap}>
-                          <PadronesForm medicoId={medicoId} />
+                          <Suspense fallback={null}>
+                            <PadronesForm medicoId={medicoId} />
+                          </Suspense>
                         </div>
                       </motion.div>
                     )}
@@ -1949,13 +2047,27 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                           activo={
                             String((data as any).existe ?? "").toUpperCase() === "S"
                           }
+                          esMedico={legajoEsMedico}
                         />
                       </motion.div>
                     )}
 
-                    {/* `!readOnly` acompaña a la pestaña: aunque el botón ya no
-                        se dibuja en "Mi perfil", el panel tampoco se renderiza
-                        si `tab` llegara a valer "reportes" por otra vía. */}
+                    {/* Misma condición que la pestaña: el panel no se dibuja aunque `tab` llegara a valer "valoresPdf" por otra vía. */}
+                    {tab === "valoresPdf" && visibleTabs.includes("valoresPdf") && (
+                      <motion.div
+                        key="tab-valores-pdf"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 8 }}
+                        className={styles.tabBody}
+                      >
+                        <Suspense fallback={null}>
+                          <ValoresPdfTab />
+                        </Suspense>
+                      </motion.div>
+                    )}
+
+                    {/* `!readOnly` acompaña a la pestaña: aunque el botón ya no se dibuja en "Mi perfil". */}
                     {tab === "reportes" && !readOnly && data && (
                       <motion.div
                         key="tab-reportes"
@@ -1964,9 +2076,11 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                         exit={{ opacity: 0, y: 8 }}
                         className={styles.tabBody}
                       >
-                        <ReportesMedico
-                          nroSocio={String((data as any).nro_socio ?? medicoId)}
-                        />
+                        <Suspense fallback={null}>
+                          <ReportesMedico
+                            nroSocio={String((data as any).nro_socio ?? medicoId)}
+                          />
+                        </Suspense>
                       </motion.div>
                     )}
 
@@ -1981,7 +2095,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                         >
                           <div className={styles.tableWrap}>
                             <h5 className={styles.section}>Roles</h5>
-                            <table className={styles.table}>
+                            <Tabla className={styles.table}>
                               <tbody>
                                 {rbacLoading ? (
                                   <tr>
@@ -2037,12 +2151,12 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                                   })
                                 )}
                               </tbody>
-                            </table>
+                            </Tabla>
                           </div>
 
                           <div className={styles.tableWrap}>
                             <h5 className={styles.section}>Permisos</h5>
-                            <table className={styles.table}>
+                            <Tabla className={styles.table}>
                               <tbody>
                                 {rbacLoading ? (
                                   <tr>
@@ -2095,7 +2209,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                                   })
                                 )}
                               </tbody>
-                            </table>
+                            </Tabla>
                           </div>
                         </motion.div>
                       </RequirePermission>
@@ -2397,6 +2511,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
         onClose={() => setFormularioOpen(false)}
       />
     </div>
+    </>
   );
 };
 

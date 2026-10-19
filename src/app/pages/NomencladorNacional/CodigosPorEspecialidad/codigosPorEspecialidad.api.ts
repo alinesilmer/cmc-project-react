@@ -1,24 +1,4 @@
 // Carga de la tabla "códigos por especialidad" de una obra social.
-//
-// Fase 2 de la reestructura del nomenclador: descripción y "sin restricción de
-// especialidad" dejaron de ser del catálogo del Colegio — son datos por (obra
-// social, código), en `nm_valores`. Cuatro fuentes:
-//
-//  1. `/api/nomenclador/?obra_social_nro=N` — QUÉ códigos ve el usuario logueado
-//     (con rol médico, ya recortado a lo habilitado). Da la membresía; ya no da
-//     descripción ni "sin restricción".
-//  2. `/api/reportes_nm/tabla_valores` SIN filtro de especialidad — descripción y
-//     "sin restricción" de cada código CON PRECIO VIGENTE en esa OS (`Valor.
-//     descripcion` / `Valor.sin_restriccion_especialidad` de la variante ganadora).
-//     Los códigos sin precio cargado todavía no tienen esta info — quedan con
-//     descripción vacía y "sin restricción" en false hasta que se les cargue un
-//     Valor.
-//  3. `/api/nomenclador/especialidades?obra_social_nro=N&especialidad_id_colegio=E`
-//     — QUÉ códigos están habilitados para esa especialidad EN ESTA OS
-//     (`nm_valor_especialidad`).
-//  4. `/api/reportes_nm/tabla_valores` con `especialidades=[E]` — CUÁNTO vale cada
-//     código en esa OS con esa especialidad, colapsado a una fila por código, con
-//     `origen` (NE > NN), `nivel` y los componentes.
 
 import { paginar } from "@/app/shared/lib/paginar";
 import {
@@ -67,8 +47,7 @@ export async function fetchCodigosDeEspecialidad(
   return new Set(filas.map((f) => f.codigo.toUpperCase()));
 }
 
-/** Descripción + "sin restricción" de cada código CON PRECIO vigente en la OS, sin
- * filtrar por especialidad — dato de la variante ganadora, ya no del catálogo. */
+/** Descripción + "sin restricción" de cada código CON PRECIO vigente en la OS, sin filtrar por especialidad — dato de la variante ganadora. */
 export async function fetchDescripcionesOS(
   obraSocialNro: number,
 ): Promise<Map<string, { descripcion: string; universal: boolean }>> {

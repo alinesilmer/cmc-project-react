@@ -24,10 +24,7 @@ type Props = {
   rutaDetalle: string;
 };
 
-/**
- * Listado público de publicaciones: buscador, filtro por etiqueta, grilla de
- * tarjetas cuadradas y paginación. Lo comparten /noticias y /cursos.
- */
+/** Listado público de publicaciones: buscador, filtro por etiqueta, grilla de tarjetas cuadradas y paginación. */
 export default function ListadoContenido({ items, loading, textos, rutaDetalle }: Props) {
   const [etiqueta, setEtiqueta] = useState<string | null>(null);
   const [busqueda, setBusqueda] = useState("");
@@ -38,8 +35,7 @@ export default function ListadoContenido({ items, loading, textos, rutaDetalle }
     [items]
   );
 
-  // Busca en título, resumen, autor y etiqueta. El contenido queda afuera a
-  // propósito: trae mucho ruido de HTML y devuelve resultados que no se ven.
+  // Busca en título, resumen, autor y etiqueta.
   const filtradas = useMemo(
     () =>
       items.filter(

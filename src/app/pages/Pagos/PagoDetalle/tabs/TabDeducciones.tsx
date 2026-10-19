@@ -5,6 +5,8 @@ import Button from "@/app/components/ui/Button/Button";
 import Card from "@/app/components/ui/Card/Card";
 import styles from "./tabs.module.scss";
 import { type Pago, type Concepto, fmt } from "../../types";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
+import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
 
 const CONCEPTOS_URL = "/api/conceptos";
 const CONCEPTO_URL = (id: number) => `/api/conceptos/${id}`;
@@ -204,7 +206,7 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
           <div className={styles.loadingState}>Cargando descuentos…</div>
         ) : (
           <div className={styles.tableWrap}>
-            <table className={styles.table}>
+            <Tabla className={styles.table}>
               <thead>
                 <tr>
                   <th>ID</th>
@@ -265,37 +267,18 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </Tabla>
           </div>
         )}
       </Card>
 
       {/* Modal generar */}
       {genTarget && (
-        <div className={styles.modalBackdrop} role="dialog" aria-modal="true">
-          <div className={styles.modalCard}>
-            <div className={styles.modalHeader}>
-              <h3>Generar Concepto</h3>
-              <button
-                className={styles.modalClose}
-                onClick={() => setGenTarget(null)}
-                aria-label="Cerrar"
-              >
-                ✕
-              </button>
-            </div>
-            <div className={styles.modalBody}>
-              {!generating && (
-                <p>
-                  ¿Generar el descuento <strong>"{genTarget.nombre}"</strong>{" "}
-                  para el pago actual?
-                  <br />
-                  Se calculará el monto por cada médico.
-                </p>
-              )}
-              {generating && <p style={{ color: "#64748b" }}>Generando…</p>}
-            </div>
-            <div className={styles.modalActions}>
+        <Dialogo
+          titulo="Generar concepto"
+          onClose={() => setGenTarget(null)}
+          acciones={
+            <>
               <Button
                 variant="secondary"
                 onClick={() => setGenTarget(null)}
@@ -310,34 +293,46 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
               >
                 {generating ? "Generando…" : "Sí, generar"}
               </Button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        >
+              {!generating && (
+                <p>
+                  ¿Generar el descuento <strong>"{genTarget.nombre}"</strong>{" "}
+                  para el pago actual?
+                  <br />
+                  Se calculará el monto por cada médico.
+                </p>
+              )}
+              {generating && <p style={{ color: "#64748b" }}>Generando…</p>}
+            </Dialogo>
       )}
 
       {/* Modal deshacer */}
       {deshacerTarget && (
-        <div
-          className={styles.modalBackdrop}
-          role="dialog"
-          aria-modal="true"
-          onClick={() => !deshaciendo && setDeshacerTarget(null)}
-        >
-          <div
-            className={styles.modalCard}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className={styles.modalHeader}>
-              <h3>Deshacer descuentos generados</h3>
-              <button
-                className={styles.modalClose}
-                onClick={() => !deshaciendo && setDeshacerTarget(null)}
-                aria-label="Cerrar"
+        <Dialogo
+          titulo="Deshacer descuentos generados"
+          peligro
+          onClose={() => !deshaciendo && setDeshacerTarget(null)}
+          acciones={
+            <>
+              <Button
+                variant="secondary"
+                onClick={() => setDeshacerTarget(null)}
+                disabled={deshaciendo}
               >
-                ✕
-              </button>
-            </div>
-            <div className={styles.modalBody}>
+                Cancelar
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleDeshacer}
+                disabled={deshaciendo}
+              >
+                {deshaciendo ? "Deshaciendo…" : "Sí, deshacer"}
+              </Button>
+            </>
+          }
+        >
               {!deshaciendo && (
                 <>
                   <p>
@@ -357,42 +352,33 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
                 </>
               )}
               {deshaciendo && <p style={{ color: "#64748b" }}>Deshaciendo…</p>}
-            </div>
-            <div className={styles.modalActions}>
-              <Button
-                variant="secondary"
-                onClick={() => setDeshacerTarget(null)}
-                disabled={deshaciendo}
-              >
-                Cancelar
-              </Button>
-              <Button
-                variant="danger"
-                onClick={handleDeshacer}
-                disabled={deshaciendo}
-              >
-                {deshaciendo ? "Deshaciendo…" : "Sí, deshacer"}
-              </Button>
-            </div>
-          </div>
-        </div>
+            </Dialogo>
       )}
 
       {/* Modal editar descuento */}
       {editTarget && (
-        <div className={styles.modalBackdrop} role="dialog" aria-modal="true">
-          <div className={styles.modalCard}>
-            <div className={styles.modalHeader}>
-              <h3>Editar Concepto</h3>
-              <button
-                className={styles.modalClose}
+        <Dialogo
+          titulo="Editar concepto"
+          onClose={() => setEditTarget(null)}
+          acciones={
+            <>
+              <Button
+                variant="secondary"
                 onClick={() => setEditTarget(null)}
-                aria-label="Cerrar"
+                disabled={editSaving}
               >
-                ✕
-              </button>
-            </div>
-            <div className={styles.modalBody}>
+                Cancelar
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleEditSave}
+                disabled={editSaving}
+              >
+                {editSaving ? "Guardando…" : "Guardar"}
+              </Button>
+            </>
+          }
+        >
               <p style={{ margin: 0, fontWeight: 600 }}>{editTarget.nombre}</p>
               <p
                 style={{
@@ -428,25 +414,7 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
                   disabled={editSaving}
                 />
               </div>
-            </div>
-            <div className={styles.modalActions}>
-              <Button
-                variant="secondary"
-                onClick={() => setEditTarget(null)}
-                disabled={editSaving}
-              >
-                Cancelar
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleEditSave}
-                disabled={editSaving}
-              >
-                {editSaving ? "Guardando…" : "Guardar"}
-              </Button>
-            </div>
-          </div>
-        </div>
+            </Dialogo>
       )}
     </div>
   );
