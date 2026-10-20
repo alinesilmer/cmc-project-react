@@ -1,13 +1,18 @@
 import type { ColumnaVista } from "./types";
-import { COLUMNAS_VISTA_DISPONIBLES } from "./types";
+import { COLUMNAS_SOLO_CON_DOCUMENTACION, COLUMNAS_VISTA_DISPONIBLES } from "./types";
 import s from "../export/export.module.scss";
 
 interface Props {
   columnas: ColumnaVista[];
   onChange: (columnas: ColumnaVista[]) => void;
+  /** La obra social tiene la documentación digital: recién ahí se ofrece la columna «Documentos». */
+  conDocumentacion?: boolean;
 }
 
-export default function ColumnasVistaSection({ columnas, onChange }: Props) {
+export default function ColumnasVistaSection({ columnas, onChange, conDocumentacion = false }: Props) {
+  const disponibles = COLUMNAS_VISTA_DISPONIBLES.filter(
+    (c) => conDocumentacion || !COLUMNAS_SOLO_CON_DOCUMENTACION.includes(c.key),
+  );
   const toggle = (key: ColumnaVista) => {
     onChange(
       columnas.includes(key) ? columnas.filter((c) => c !== key) : [...columnas, key],
@@ -18,11 +23,11 @@ export default function ColumnasVistaSection({ columnas, onChange }: Props) {
     <div className={s.section}>
       <div className={s.sectionHeader}>
         <h3 className={s.sectionTitle}>Columnas</h3>
-        <span className={s.fieldCount}>{columnas.length} de {COLUMNAS_VISTA_DISPONIBLES.length}</span>
+        <span className={s.fieldCount}>{disponibles.filter((c) => columnas.includes(c.key)).length} de {disponibles.length}</span>
       </div>
-      <p className={s.sectionHint}>ID, Socio y Acciones siempre se muestran.</p>
+      <p className={s.sectionHint}>Socio y Acciones siempre se muestran.</p>
       <div className={s.fieldGrid}>
-        {COLUMNAS_VISTA_DISPONIBLES.map((c) => {
+        {disponibles.map((c) => {
           const on = columnas.includes(c.key);
           return (
             <label key={c.key} className={`${s.fieldToggle} ${on ? s.fieldToggleOn : ""}`}>

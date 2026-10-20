@@ -5,7 +5,6 @@ import {
   CircleAlert,
   ClipboardList,
   ExternalLink,
-  FileUp,
   Info,
   PlusCircle,
 } from "lucide-react";
@@ -14,6 +13,8 @@ import { useAuth } from "../../auth/AuthProvider";
 import { isMedico } from "../../auth/roles";
 import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 import ActionModal from "@/app/components/ui/ActionModal/ActionModal";
+import DocumentosModal from "@/app/components/ui/DocumentosModal/DocumentosModal";
+import type { DocumentoItem } from "@/app/components/ui/DocumentosUploader/DocumentosUploader";
 import BackButton from "@/app/components/ui/BackButton/BackButton";
 import Franja, { Solapa } from "@/app/components/layout/Franja/Franja";
 import MedicoAutocomplete from "../facturacion/components/MedicoAutocomplete";
@@ -26,16 +27,19 @@ import PrestacionForm from "./components/PrestacionForm";
 import ResultadoCarga from "./components/ResultadoCarga";
 import { getObraSocial } from "./validaciones.config";
 import {
-  adjuntarOrden,
+  agregarDocumentos,
   cargarPrestacion,
+  eliminarDocumento,
   eliminarPrestacion,
   esTimeoutDeRed,
   getPeriodoActual,
   getPeriodos,
   getPrestaciones,
+  reemplazarDocumento,
 } from "./validaciones.api";
 import { iniciales, nombreMes } from "./validaciones.types";
 import type {
+  DocumentoDigital,
   Periodo,
   Prestacion,
   PrestacionFormValues,
@@ -75,8 +79,8 @@ export default function ValidacionOS() {
   const [formKey, setFormKey] = useState(0);
 
   const [aEliminar, setAEliminar] = useState<Prestacion | null>(null);
-  const [aAdjuntar, setAAdjuntar] = useState<Prestacion | null>(null);
-  const [archivo, setArchivo] = useState<File | null>(null);
+  // Prestación cuya documentación digital se está gestionando (se busca en las listas: así se ve lo que cambia).
+  const [docsDe, setDocsDe] = useState<string | null>(null);
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
 
   // Detalle prestación-por-prestación de un período del listado (cualquiera, no sólo el abierto) — independiente de `prestaciones`/`mes`/`anio`, que son siempre los del período abierto.
@@ -84,7 +88,6 @@ export default function ValidacionOS() {
   const [prestacionesDetalle, setPrestacionesDetalle] = useState<Prestacion[]>([]);
   const [cargandoDetalle, setCargandoDetalle] = useState(false);
 
-  const fileRef = useRef<HTMLInputElement>(null);
   const resultadoRef = useRef<HTMLDivElement>(null);
   // Número de la última consulta lanzada.
   const refrescoSeq = useRef(0);
@@ -208,7 +211,7 @@ export default function ValidacionOS() {
 
   // ─── Acciones ──────────────────────────────────────────────────────────────
 
-  const handleValidar = async (valores: PrestacionFormValues) => {
+  const handleValidar = async (valores: PrestacionFormValues, documentos: File[]) => {
     if (os.codigo == null) return;
     if (faltaElegirSocio) return; // el formulario ni se muestra en este caso
     setEnviando(true);
@@ -217,7 +220,8 @@ export default function ValidacionOS() {
       // El dígito verificador viaja pegado al número, como lo guarda el legacy.
       const dv = valores.barraAfiliado?.trim();
       const base = valores.nroAfiliado ?? valores.dni ?? "";
-      const prestacion = await cargarPrestacion({
+      const prestacion = await cargarPrestacion(
+        {
         obra_social: os.codigo,
         codigo: valores.codigo?.trim() ?? "",
         nombre_afiliado: valores.nombreAfiliado ?? "",
@@ -229,7 +233,9 @@ export default function ValidacionOS() {
         coseguro: Number(String(valores.coseguro ?? "0").replace(",", ".")) || 0,
         cantidad: Number(valores.cantidad ?? 1) || 1,
         nro_socio: nroSocioElegido,
-      });
+        },
+        documentos,
+      );
       setResultado({
         estado: prestacion.estado,
         mensaje:
@@ -285,19 +291,15 @@ export default function ValidacionOS() {
     }
   };
 
-  const handleAdjuntar = async () => {
-    if (!aAdjuntar || !archivo) return;
-    setErrorAccion(null);
-    try {
-      await adjuntarOrden(aAdjuntar.id, archivo, nroSocioElegido);
-      await Promise.all([refrescar(), refrescarDetalle()]);
-      setAAdjuntar(null);
-      setArchivo(null);
-    } catch (err) {
-      // El backend explica el rechazo (no es un PDF, pesa de más).
-      setErrorAccion(mensajeDeError(err, "No pudimos subir el archivo."));
-      throw new Error("upload failed");
-    }
+  // Documentación digital: cada acción llama a la API y vuelve a traer las listas.
+  const aItem = (d: DocumentoDigital): DocumentoItem => ({
+    id: d.id, nombre: d.nombre, tamano: d.size, contentType: d.contentType, origen: d.origen, url: d.url,
+  });
+  const prestacionDocs = docsDe
+    ? [...prestaciones, ...prestacionesDetalle].find((p) => p.id === docsDe) ?? null
+    : null;
+  const tras = async () => {
+    await Promise.all([refrescar(), refrescarDetalle()]);
   };
 
   // Entrar al listado siempre trae datos frescos.
@@ -424,10 +426,7 @@ export default function ValidacionOS() {
                 cargando={cargandoDetalle}
                 permiteAdjuntarOrden={os.permiteAdjuntarOrden}
                 onEliminar={setAEliminar}
-                onAdjuntar={(p) => {
-                  setArchivo(null);
-                  setAAdjuntar(p);
-                }}
+                onDocumentos={(p) => setDocsDe(p.id)}
               />
             </>
           ) : (
@@ -478,56 +477,28 @@ export default function ValidacionOS() {
         )}
       </ActionModal>
 
-      {/* ── Modal: adjuntar orden ── */}
-      <ActionModal
-        open={Boolean(aAdjuntar)}
-        title="Adjuntar orden"
-        confirmText="Subir archivo"
-        confirmDisabled={!archivo}
-        onClose={() => {
-          setAAdjuntar(null);
-          setArchivo(null);
-          setErrorAccion(null);
-        }}
-        onConfirm={handleAdjuntar}
-      >
-        <div className={s.modalBody}>
-          <p>
-            Subí la orden o receta en PDF de la prestación{" "}
-            <strong>{aAdjuntar?.codigo}</strong>.
-          </p>
-
-          {aAdjuntar?.orden && (
-            <p className={s.modalNota}>
-              Ya hay un archivo cargado. Si subís otro, lo reemplaza.
-            </p>
-          )}
-
-          <button
-            type="button"
-            className={s.dropzone}
-            onClick={() => fileRef.current?.click()}
-          >
-            <FileUp size={22} />
-            <span>{archivo ? archivo.name : "Elegir archivo PDF"}</span>
-            <em>Hasta 5 MB</em>
-          </button>
-
-          <input
-            ref={fileRef}
-            type="file"
-            accept="application/pdf"
-            hidden
-            onChange={(e) => {
-              setArchivo(e.target.files?.[0] ?? null);
-              // Sin vaciarlo, volver a elegir el mismo archivo no dispara `change` y el botón de subir queda deshabilitado.
-              e.target.value = "";
-            }}
-          />
-
-          {errorAccion && <p className={s.modalError}>{errorAccion}</p>}
-        </div>
-      </ActionModal>
+      {/* ── Modal: documentación digital de la prestación ── */}
+      {prestacionDocs && (
+        <DocumentosModal
+          isOpen
+          onClose={() => setDocsDe(null)}
+          titulo="Documentación"
+          subtitulo={<><strong>{prestacionDocs.codigo}</strong> · {prestacionDocs.nombreAfiliado}</>}
+          documentos={prestacionDocs.documentos.map(aItem)}
+          onAgregar={async (archivos) => {
+            await agregarDocumentos(prestacionDocs.id, archivos, nroSocioElegido);
+            await tras();
+          }}
+          onReemplazar={async (doc, archivo) => {
+            await reemplazarDocumento(prestacionDocs.id, Number(doc.id), archivo, nroSocioElegido);
+            await tras();
+          }}
+          onEliminar={async (doc) => {
+            await eliminarDocumento(prestacionDocs.id, Number(doc.id), nroSocioElegido);
+            await tras();
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -114,6 +114,8 @@ export interface PrecioResponse {
   snapshot?: Array<Record<string, unknown>> | null;
   admitido: boolean; motivo?: string | null;
   por_presupuesto: boolean;
+  /** El código exige documentación digital en esta obra social. */
+  requiere_documentacion?: boolean;
   /** Máximo de ayudantes admitidos para ese código+OS. null/0 = no admite ayudantes. */
   cantidad_ayudantes?: number | null;
   via: ViaPractica;
@@ -195,6 +197,9 @@ export interface CierrePreviewResponse {
   cod_obra: string; periodo: string; cantidad: number; importe_total: Money; cerrado: boolean;
   /** Prestaciones cargadas en $0 por falta de precio. */
   sin_valorizar?: number;
+  /** Con documentación digital no se cierra con prestaciones sin auditar. */
+  documentacion_digital?: boolean;
+  sin_auditar?: number;
 }
 
 /** Recálculo de precios de una factura abierta (o de un código de ella). */
@@ -410,6 +415,22 @@ export interface PrestacionFacturaDetalle {
   grupo_equipo_id?: number | null;
   id_especialidad?: number | null;
   especialidad_nombre?: string | null;
+  /** Documentación digital (sólo con la obra social habilitada): si el código la exige y cuántos archivos tiene. */
+  requiere_documentacion?: boolean;
+  documentos_count?: number;
+}
+
+/** Un archivo de la documentación digital de una prestación. */
+export interface DocumentoPrestacion {
+  id: number;
+  nombre: string;
+  /** Ruta de la API: pide token, se abre con `abrirAdjunto()`. */
+  url: string | null;
+  content_type: string;
+  size: number;
+  origen: "medico" | "colegio";
+  posicion: number;
+  created_at?: string | null;
 }
 
 interface PrestadorFacturaGrupo {
@@ -447,6 +468,8 @@ export interface FacturaDetalleResponse {
   otras_versiones?: { id_factura: number; version: number }[];
   total_prestaciones: number;
   total_importe: Money;
+  /** La obra social trabaja con documentación digital: ahí «Total a facturar» suma sólo lo auditado y no se cierra con prestaciones sin auditar. */
+  documentacion_digital?: boolean;
   prestadores: PrestadorFacturaGrupo[];
 }
 

@@ -97,7 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           http.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
         }
 
-        // fuente de verdad. Si el access de sessionStorage seguía siendo válido, esto responde directo; si venció.
+        // fuente de verdad. El access token vive solo en memoria: tras un reload se obtuvo recién con el refresh de arriba.
         const u = await apiMe();
         if (cancelled) return;
         setUser(u);

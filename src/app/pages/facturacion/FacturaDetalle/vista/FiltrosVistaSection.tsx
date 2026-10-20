@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { Tipo } from "../../types";
-import type { FiltrosVista } from "./types";
+import type { FiltroDocumentacion, FiltrosVista } from "./types";
 import s from "../export/export.module.scss";
 import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
 
@@ -15,9 +15,11 @@ interface Props {
   filtros: FiltrosVista;
   onChange: (filtros: FiltrosVista) => void;
   prestadores: PrestadorOpcion[];
+  /** La obra social tiene la documentación digital: se ofrece el filtro de documentación. */
+  conDocumentacion?: boolean;
 }
 
-export default function FiltrosVistaSection({ filtros, onChange, prestadores }: Props) {
+export default function FiltrosVistaSection({ filtros, onChange, prestadores, conDocumentacion = false }: Props) {
   const [busquedaSocio, setBusquedaSocio] = useState("");
 
   const set = <K extends keyof FiltrosVista>(key: K, value: FiltrosVista[K]) =>
@@ -80,6 +82,22 @@ export default function FiltrosVistaSection({ filtros, onChange, prestadores }: 
             <option value="no">Sólo no revisadas</option>
           </select>
         </div>
+
+        {conDocumentacion && (
+          <div className={s.filterField}>
+            <label className={s.filterLabel}>Documentación</label>
+            <select
+              className={s.filterSelect}
+              value={filtros.documentacion ?? ""}
+              onChange={(e) => set("documentacion", (e.target.value || undefined) as FiltroDocumentacion | undefined)}
+            >
+              <option value="">Todas</option>
+              <option value="con">Con documentos</option>
+              <option value="falta">Falta documentación</option>
+              <option value="no_requiere">No la requiere</option>
+            </select>
+          </div>
+        )}
 
         <div className={s.filterField}>
           <label className={s.filterLabel}>Especialidad (ID Colegio)</label>

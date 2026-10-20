@@ -660,3 +660,39 @@ tr[data-resaltada] td {
 @media (prefers-reduced-motion: reduce) {
   tr[data-resaltada] td { animation: none; background-color: $tono-naranja-100; }
 }
+
+// Documentación digital: cuántos archivos tiene la prestación, o que le faltan.
+.docChip {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  border-radius: 999px;
+}
+.docChipOk { color: #14532d; background: #dcfce7; }
+.docChipFalta { color: #7c2d12; background: #ffedd5; }
+
+// Detalle | Documentación (sólo en las obras sociales con documentación digital).
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 0.75rem;
+  border-bottom: 1px solid #d9dee7;
+}
+.tab {
+  padding: 0.7rem 1.1rem;
+  font-size: 0.95rem;
+  color: #374151;
+  background: none;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+
+  &:hover { color: #1d4ed8; }
+}
+.tabActiva {
+  font-weight: 700;
+  color: #1d4ed8;
+  border-bottom-color: #1d4ed8;
+}

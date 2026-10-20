@@ -19,6 +19,8 @@ import type {
   NomencladorDetalleOut,
   AplicarEspecialidadesResult,
   AltaCodigosPayload,
+  AccionCodigosOS,
+  AccionCodigosResult,
   AltaCodigoResultado,
   CodigoObraSocialOut,
   CodigoObraSocialUpdate,
@@ -533,9 +535,20 @@ export const listCodigosPorOS = (params: {
   estado?: EstadoCodigoOS;
   q?: string;
   tipo?: TipoCodigo;
+  /** Rango de códigos (numéricos, ambos extremos incluidos). */
+  codigo_desde?: number;
+  codigo_hasta?: number;
   page?: number;
   size?: number;
 }): Promise<CodigosPorOSResult> => getJSON<CodigosPorOSResult>("/api/codigos_os/", params);
+
+/** Una acción sobre varios códigos de una obra social, con un resultado por código. */
+export const accionCodigosOS = (payload: {
+  obra_social_nro: number;
+  nomenclador_ids: number[];
+  accion: AccionCodigosOS;
+}): Promise<AccionCodigosResult> =>
+  postJSON<AccionCodigosResult>("/api/codigos_os/acciones", payload, { timeout: TIMEOUT_MASIVO_MS });
 
 export const getCodigoOS = (os: number, nomencladorId: number): Promise<CodigoObraSocialOut> =>
   getJSON<CodigoObraSocialOut>(`/api/codigos_os/${os}/${nomencladorId}`);

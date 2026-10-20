@@ -1,0 +1,25 @@
+@use "@/app/styles/all.scss" as *;
+
+.cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  min-width: 0;
+}
+
+.subtitulo {
+  margin: 0;
+  font-size: $font-size-sm;
+  color: $gray-700;
+}
+
+.ayuda {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: $gray-600;
+}
+
+.pie {
+  display: flex;
+  justify-content: flex-end;
+}

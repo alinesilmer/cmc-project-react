@@ -269,3 +269,19 @@
   &:hover:not(:disabled) { background: $tono-rojo-500; }
   &:disabled { opacity: .55; cursor: not-allowed; }
 }
+
+// Con documentación digital, el cierre se bloquea mientras haya prestaciones sin auditar.
+.bloqueo {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  margin: 0 1.5rem 1rem;
+  padding: 0.75rem 0.875rem;
+  font-size: 0.875rem;
+  color: #7c2d12;
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  border-radius: 8px;
+
+  svg { flex: none; margin-top: 0.15rem; }
+}

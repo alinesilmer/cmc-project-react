@@ -132,6 +132,18 @@ const renderCelda = (p: PrestacionConSocio, col: ColumnaVista) => {
           ) : muted}
         </td>
       );
+    case "documentos": {
+      // Sólo lectura: los documentos se gestionan desde la edición de la prestación.
+      const n = p.documentos_count ?? 0;
+      if (n > 0) {
+        return <td key={col}><span className={`${styles.docChip} ${styles.docChipOk}`}>{n} archivo{n === 1 ? "" : "s"}</span></td>;
+      }
+      return (
+        <td key={col}>
+          {p.requiere_documentacion ? <span className={`${styles.docChip} ${styles.docChipFalta}`}>Falta</span> : muted}
+        </td>
+      );
+    }
     default:
       return null;
   }
@@ -174,7 +186,7 @@ function FilaPrestacion({
         className ?? "",
       ].filter(Boolean).join(" ")}
     >
-      <td className={styles.idCell}>{p.id}</td>
+      {columnas.includes("id") && <td className={styles.idCell}>{p.id}</td>}
       <td>
         <div className={styles.socioCell}>
           <span className={styles.socioNro}>

@@ -63,6 +63,9 @@ export function usePrestacionForm(os: ObraSocialConfig, nroSocio?: number) {
   const [valores, setValores] = useState<PrestacionFormValues>(() => valoresIniciales(os));
   const [errores, setErrores] = useState<PrestacionFormErrors>({});
   const [liveChecks, setLiveChecks] = useState<Record<string, EstadoLiveCheck>>({});
+  // Documentación digital: si el código elegido la exige y los archivos elegidos para enviar con la prestación.
+  const [requiereDocumentacion, setRequiereDocumentacion] = useState(false);
+  const [archivos, setArchivos] = useState<File[]>([]);
 
   // Refs porque no necesitan re-render por sí solos: sólo coordinan qué request es la vigente.
   const liveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
@@ -73,6 +76,7 @@ export function usePrestacionForm(os: ObraSocialConfig, nroSocio?: number) {
   useEffect(() => {
     setValores((prev) => (prev.codigo ? { ...prev, codigo: "" } : prev));
     setErrores((prev) => (prev.codigo ? { ...prev, codigo: undefined } : prev));
+    setRequiereDocumentacion(false);
   }, [nroSocio]);
 
   // Al desmontar (o cambiar de obra social), no dejar timers colgados.
@@ -141,6 +145,8 @@ export function usePrestacionForm(os: ObraSocialConfig, nroSocio?: number) {
   const limpiar = () => {
     setValores(valoresIniciales(os));
     setErrores({});
+    setRequiereDocumentacion(false);
+    setArchivos([]);
     Object.values(liveTimers.current).forEach(clearTimeout);
     liveTimers.current = {};
     liveUltimoValor.current = {};
@@ -154,7 +160,10 @@ export function usePrestacionForm(os: ObraSocialConfig, nroSocio?: number) {
     return errs;
   };
 
-  return { valores, errores, liveChecks, setCampo, limpiar, revisar, dispararConsultaEnVivo };
+  return {
+    valores, errores, liveChecks, setCampo, limpiar, revisar, dispararConsultaEnVivo,
+    requiereDocumentacion, setRequiereDocumentacion, archivos, setArchivos,
+  };
 }
 
 export type PrestacionFormEstado = ReturnType<typeof usePrestacionForm>;

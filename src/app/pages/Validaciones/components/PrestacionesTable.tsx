@@ -8,9 +8,21 @@ import Tabla from "@/app/components/ui/Tabla/Tabla";
 interface Props {
   prestaciones: Prestacion[];
   cargando: boolean;
+  /** Obra social donde el médico puede adjuntar la orden aunque no sea obligatoria. */
   permiteAdjuntarOrden?: boolean;
   onEliminar: (p: Prestacion) => void;
-  onAdjuntar?: (p: Prestacion) => void;
+  /** Abre la gestión de documentos de la prestación (ver, agregar, reemplazar, eliminar). */
+  onDocumentos?: (p: Prestacion) => void;
+}
+
+/** Hay algo que mostrar de la documentación: la exige, ya tiene archivos, o la obra social deja adjuntar la orden. */
+function conDocumentos(p: Prestacion, permiteAdjuntarOrden: boolean): boolean {
+  return p.documentacion !== "no_aplica" || p.documentos.length > 0 || permiteAdjuntarOrden;
+}
+
+function textoDocumentos(p: Prestacion): string {
+  if (p.documentacion === "falta") return "Falta documentación";
+  return p.documentos.length > 0 ? `Documentos (${p.documentos.length})` : "Adjuntar";
 }
 
 const ETIQUETA_ESTADO: Record<EstadoPrestacion, string> = {
@@ -44,7 +56,7 @@ export default function PrestacionesTable({
   cargando,
   permiteAdjuntarOrden = false,
   onEliminar,
-  onAdjuntar,
+  onDocumentos,
 }: Props) {
   if (cargando)
     return (
@@ -108,14 +120,15 @@ export default function PrestacionesTable({
                 </td>
                 <td className={s.center}>
                   <div className={s.rowActions}>
-                    {permiteAdjuntarOrden && onAdjuntar && (
+                    {onDocumentos && conDocumentos(p, permiteAdjuntarOrden) && (
                       <button
                         type="button"
-                        className={`${s.iconBtn} ${p.orden ? s.iconBtnOk : ""}`}
-                        title={p.orden ? "Orden adjunta" : "Adjuntar orden en PDF"}
-                        onClick={() => onAdjuntar(p)}
+                        className={`${s.docBtn} ${p.documentacion === "falta" ? s.docBtnFalta : p.documentos.length ? s.docBtnOk : ""}`}
+                        title="Documentación de la prestación"
+                        onClick={() => onDocumentos(p)}
                       >
-                        {p.orden ? <FileText size={15} /> : <Paperclip size={15} />}
+                        {p.documentos.length ? <FileText size={15} /> : <Paperclip size={15} />}
+                        {textoDocumentos(p)}
                       </button>
                     )}
                     <button
@@ -183,14 +196,14 @@ export default function PrestacionesTable({
             )}
 
             <div className={s.cardActions}>
-              {permiteAdjuntarOrden && onAdjuntar && (
+              {onDocumentos && conDocumentos(p, permiteAdjuntarOrden) && (
                 <button
                   type="button"
-                  className={s.cardBtn}
-                  onClick={() => onAdjuntar(p)}
+                  className={`${s.cardBtn} ${p.documentacion === "falta" ? s.docBtnFalta : ""}`}
+                  onClick={() => onDocumentos(p)}
                 >
-                  {p.orden ? <FileText size={15} /> : <Paperclip size={15} />}
-                  {p.orden ? "Ver orden" : "Adjuntar orden"}
+                  {p.documentos.length ? <FileText size={15} /> : <Paperclip size={15} />}
+                  {textoDocumentos(p)}
                 </button>
               )}
               <button

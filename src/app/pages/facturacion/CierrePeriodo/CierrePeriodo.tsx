@@ -90,7 +90,9 @@ const CierrePeriodo: React.FC = () => {
     }
   };
 
-  const canCerrar = !!preview && !preview.cerrado && preview.cantidad > 0 && !cerrando;
+  // Con documentación digital hay que auditar todo antes de cerrar.
+  const bloqueadaPorAuditoria = !!preview?.documentacion_digital && (preview.sin_auditar ?? 0) > 0;
+  const canCerrar = !!preview && !preview.cerrado && preview.cantidad > 0 && !cerrando && !bloqueadaPorAuditoria;
 
   return (
     <div className={styles.container}>
@@ -223,6 +225,16 @@ const CierrePeriodo: React.FC = () => {
             de estado A → C y las habilita para liquidación.
           </div>
         </div>
+
+        {bloqueadaPorAuditoria && (
+          <div className={styles.bloqueo} role="alert">
+            <AlertTriangle size={18} aria-hidden="true" />
+            <span>
+              <strong>No se puede cerrar esta factura:</strong> hay {preview?.sin_auditar} prestaci{preview?.sin_auditar === 1 ? "ón" : "ones"} sin
+              auditar. Auditalas desde el listado de la factura (el check de auditoría de cada prestación) y volvé a intentar.
+            </span>
+          </div>
+        )}
 
         <div className={styles.formFooter}>
           <button type="button" className={styles.btnGhost} onClick={() => navigate("/panel/facturacion/periodos")} disabled={cerrando}>

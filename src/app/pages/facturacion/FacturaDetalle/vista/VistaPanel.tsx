@@ -1,6 +1,6 @@
 import { X, RotateCcw } from "lucide-react";
 import type { VistaOpciones } from "./types";
-import { VISTA_OPCIONES_DEFAULT } from "./types";
+import { migrarColumnas, VISTA_OPCIONES_DEFAULT } from "./types";
 import OrdenVistaSection from "./OrdenVistaSection";
 import AgrupacionVistaSection from "./AgrupacionVistaSection";
 import FiltrosVistaSection from "./FiltrosVistaSection";
@@ -18,9 +18,11 @@ interface Props {
   onChange: (opciones: VistaOpciones) => void;
   prestadores: PrestadorOpcion[];
   onClose: () => void;
+  /** La obra social tiene la documentación digital: se ofrece la columna «Documentos» y el filtro de documentación. */
+  conDocumentacion?: boolean;
 }
 
-export default function VistaPanel({ opciones, onChange, prestadores, onClose }: Props) {
+export default function VistaPanel({ opciones, onChange, prestadores, onClose, conDocumentacion = false }: Props) {
   return (
     <>
       <div className={s.backdrop} onClick={onClose} aria-hidden="true" />
@@ -56,15 +58,25 @@ export default function VistaPanel({ opciones, onChange, prestadores, onClose }:
             filtros={opciones}
             onChange={(filtros) => onChange({ ...opciones, ...filtros })}
             prestadores={prestadores}
+            conDocumentacion={conDocumentacion}
           />
           <ColumnasVistaSection
             columnas={opciones.columnas}
-            onChange={(columnas) => onChange({ ...opciones, columnas })}
+            onChange={(columnas) => onChange({ ...opciones, columnas, columnasV: 2 })}
+            conDocumentacion={conDocumentacion}
           />
           <PresetsVistaSection
             opciones={opciones}
             // Un preset puede ser de antes de que existiera alguna opción: lo que falte toma el valor por defecto.
-            onAplicar={(preset) => onChange({ ...VISTA_OPCIONES_DEFAULT, ...preset })}
+            onAplicar={(preset) =>
+              onChange({
+                ...VISTA_OPCIONES_DEFAULT,
+                ...preset,
+                // Un preset de antes de «ID» y «Documentos» no los trae en su lista: se completan (ver `migrarColumnas`).
+                columnas: migrarColumnas(preset.columnas, preset.columnasV),
+                columnasV: 2,
+              })
+            }
           />
           <div className={s.section}>
             <button
