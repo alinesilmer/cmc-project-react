@@ -20,6 +20,7 @@ import {
 } from "../obrasSociales.api";
 import { OBRAS_SOCIALES_KEY, useObrasSociales } from "../useObrasSociales";
 import {
+  DIA_CORTE_ULTIMO,
   EMPTY_FORM,
   CONDICION_IVA_LABELS,
   TIPO_DOCUMENTO_LABELS,
@@ -536,6 +537,7 @@ export default function ObrasSocialesForm() {
   const obraId = id ? Number(id) : undefined;
 
   const [form, setForm] = useState<ObraSocialFormData>(EMPTY_FORM);
+  const ultimoDia = Number(form.dia_corte) === DIA_CORTE_ULTIMO;
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
@@ -1118,11 +1120,25 @@ export default function ObrasSocialesForm() {
                 id="dia_corte"
                 type="number"
                 min={1}
-                max={28}
+                max={DIA_CORTE_ULTIMO}
+                disabled={ultimoDia}
                 className={`${s.input} ${errors.dia_corte ? s.inputError : ""}`}
                 value={form.dia_corte}
                 onChange={(e) => set("dia_corte", e.target.value)}
               />
+              <label className={s.replicarItem}>
+                <input
+                  type="checkbox"
+                  checked={ultimoDia}
+                  onChange={(e) =>
+                    set("dia_corte", e.target.checked ? String(DIA_CORTE_ULTIMO) : EMPTY_FORM.dia_corte)
+                  }
+                />
+                <span>
+                  <strong>Último día del mes</strong>
+                  <small>El corte cae siempre en el último día real (28, 29, 30 o 31).</small>
+                </span>
+              </label>
               <FieldError msg={errors.dia_corte} />
               <span className={s.hint}>
                 1 = mes completo (del 1 al último día). 20 = del 20 al 20 del mes siguiente.
