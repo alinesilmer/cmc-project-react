@@ -58,7 +58,7 @@ const OBRAS_SOCIALES: { src: string; nombre: string }[] = [
   { src: logoMedife, nombre: "Medifé" },
   { src: logoPrevencion, nombre: "Prevención Salud" },
   { src: logoIssunne, nombre: "ISSUNNE" },
-  { src: logoIosfa, nombre: "IOSFA" },
+  { src: logoIosfa, nombre: "OSFA" },
   { src: logoOspjn, nombre: "OSPJN" },
   { src: logoOspm, nombre: "OSPM" },
   { src: logoNobis, nombre: "Nobis" },

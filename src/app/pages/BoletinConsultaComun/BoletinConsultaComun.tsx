@@ -1,169 +1,61 @@
-"use client";
-
-import { Fragment, useCallback, useMemo, useRef, useState } from "react";
-import {
-  ExternalLink,
-  FileText,
-  Pencil,
-  Plus,
-  RefreshCcw,
-  Stethoscope,
-  X,
-} from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { Stethoscope } from "lucide-react";
 
 import styles from "./BoletinConsultaComun.module.scss";
-import Button from "@/app/components/ui/Button/Button";
-import IconButton from "@/app/components/ui/IconButton/IconButton";
-import Tabla from "@/app/components/ui/Tabla/Tabla";
 import Caja, { Cajas } from "@/app/components/ui/Caja/Caja";
-import Franja from "@/app/components/layout/Franja/Franja";
+import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
+import Franja, { Solapa } from "@/app/components/layout/Franja/Franja";
+import { useObrasSociales } from "@/app/pages/ObrasSociales/useObrasSociales";
+import { detalleDeError } from "@/app/shared/lib/httpErrors";
 
-import {
-  CONSULTA_COMUN_CODE,
-  moneyFormatter,
-} from "./boletinConsultaComun.constants";
+import { CONSULTA_COMUN_CODE, EXCLUDED_OS } from "./boletinConsultaComun.constants";
 import { generateConsultaComunPdf } from "./boletinConsultaComun.pdf";
 import { generateConsultaComunExcel } from "./boletinConsultaComun.excel";
 import { useConsultaComunQuery } from "./useConsultaComunQuery";
 import { useGalenoQuery } from "./useGalenoQuery";
 import { useObservaciones } from "./useObservaciones";
-import { urlNorma, useNormasOperativas } from "./useNormasOperativas";
-import { formatApiDate } from "./boletinConsultaComun.helpers";
+import { useNormasOperativas } from "./useNormasOperativas";
 import { SIN_GALENOS } from "./boletinConsultaComun.types";
-import SearchField from "@/app/components/ui/SearchField/SearchField";
-import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
+import ObservacionesTab from "./components/ObservacionesTab";
+import ValoresTab from "./components/ValoresTab";
 
-type ObsLine =
-  | { type: "header"; label: string; body: string }
-  | { type: "text"; body: string };
-
-function parseObsLines(raw: string): ObsLine[] {
-  const cleaned = raw
-    .replace(/^[\s)?(|\\[\]{}]+/, "")
-    .replace(/[\s)?(|\\[\]{}]+$/, "")
-    .trim();
-
-  if (!cleaned) return [];
-
-  return cleaned
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter(Boolean)
-    .map((line): ObsLine => {
-      const colonIdx = line.indexOf(":");
-      if (colonIdx > 2 && colonIdx < line.length - 1) {
-        const before = line.slice(0, colonIdx).trim();
-        const after = line.slice(colonIdx + 1).trim();
-        const letters = (before.match(/[a-záéíóúüñA-ZÁÉÍÓÚÜÑ]/g) ?? []).length;
-        const uppers = (before.match(/[A-ZÁÉÍÓÚÜÑ]/g) ?? []).length;
-        if (letters > 0 && uppers / letters >= 0.55 && before.length >= 3) {
-          return { type: "header", label: before, body: after };
-        }
-      }
-      return { type: "text", body: line };
-    });
-}
+type Pestana = "observaciones" | "valor";
 
 export default function BoletinConsultaComun() {
+  const [pestana, setPestana] = useState<Pestana>("observaciones");
   const [exportError, setExportError] = useState<string | null>(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [isGeneratingExcel, setIsGeneratingExcel] = useState(false);
-  const [search, setSearch] = useState("");
-  const [editingNro, setEditingNro] = useState<number | null>(null);
-  const [viewingObsNro, setViewingObsNro] = useState<number | null>(null);
-  const [editDraft, setEditDraft] = useState("");
-  const [newTemplate, setNewTemplate] = useState("");
-  const newTemplateInputRef = useRef<HTMLInputElement>(null);
 
-  const {
-    data = [],
-    error,
-    isLoading,
-    isFetching,
-    refetch,
-  } = useConsultaComunQuery();
-
+  const { data = [], error, isLoading, isFetching } = useConsultaComunQuery();
+  const catalogo = useObrasSociales();
   const { data: galenoMap } = useGalenoQuery();
-
-  const {
-    observaciones,
-    saveObservacion,
-    savingNro,
-    templates,
-    addTemplate,
-    removeTemplate,
-    isSavingTemplate,
-  } = useObservaciones();
-
+  const obs = useObservaciones();
   const { normasPorOS } = useNormasOperativas();
+  const { observaciones } = obs;
 
-  const filteredItems = useMemo(
+  // Todas las obras sociales del catálogo: una puede tener observación sin tener valor cargado.
+  const obras = useMemo(
     () =>
-      data.filter(
-        (item) =>
-          !search.trim() ||
-          item.nombre.toLowerCase().includes(search.toLowerCase()) ||
-          String(item.nro).includes(search.trim())
-      ),
-    [data, search]
+      (catalogo.data ?? [])
+        .filter((o) => o.nro_obra_social && !EXCLUDED_OS.has(o.nro_obra_social))
+        .map((o) => ({
+          nro: o.nro_obra_social,
+          nombre: (o.nombre || o.denominacion || `OS ${o.nro_obra_social}`).trim(),
+        })),
+    [catalogo.data]
   );
+  const conObservacion = useMemo(() => obras.filter((o) => observaciones[o.nro]).length, [obras, observaciones]);
 
-  /** Items with real observations + real GALENO values — used only for PDF/Excel. */
+  /** Valores + observaciones + galenos reales: lo que llevan el PDF y el Excel. */
   const dataForExport = useMemo(
     () =>
       data.map((item) => ({
         ...item,
-        observaciones: observaciones[item.nro]
-          ? [observaciones[item.nro]]
-          : item.observaciones,
+        observaciones: observaciones[item.nro] ? [observaciones[item.nro]] : item.observaciones,
         galenos: galenoMap?.get(item.nro) ?? SIN_GALENOS,
       })),
     [data, observaciones, galenoMap]
-  );
-
-  const handleEdit = useCallback(
-    (nro: number) => {
-      setViewingObsNro(null);
-      setEditingNro(nro);
-      setEditDraft(observaciones[nro] ?? "");
-    },
-    [observaciones]
-  );
-
-  const handleSave = useCallback(
-    async (nro: number) => {
-      await saveObservacion(nro, editDraft);
-      setEditingNro(null);
-    },
-    [saveObservacion, editDraft]
-  );
-
-  const handleCancelEdit = useCallback(() => {
-    setEditingNro(null);
-    setEditDraft("");
-  }, []);
-
-  const handleToggleObsView = useCallback((nro: number) => {
-    setViewingObsNro((prev) => (prev === nro ? null : nro));
-  }, []);
-
-  const handleApplyTemplate = useCallback((texto: string) => {
-    setEditDraft(texto);
-  }, []);
-
-  const handleAddTemplate = useCallback(async () => {
-    const text = newTemplate.trim();
-    if (!text) return;
-    await addTemplate(text);
-    setNewTemplate("");
-    newTemplateInputRef.current?.focus();
-  }, [addTemplate, newTemplate]);
-
-  const handleNewTemplateKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Enter") void handleAddTemplate();
-    },
-    [handleAddTemplate]
   );
 
   const handleDownloadPdf = useCallback(async () => {
@@ -173,11 +65,7 @@ export default function BoletinConsultaComun() {
     try {
       await generateConsultaComunPdf(dataForExport, normasPorOS);
     } catch (err) {
-      setExportError(
-        err instanceof Error
-          ? `No se pudo generar el PDF. ${err.message}`
-          : "No se pudo generar el PDF."
-      );
+      setExportError(err instanceof Error ? `No se pudo generar el PDF. ${err.message}` : "No se pudo generar el PDF.");
     } finally {
       setIsGeneratingPdf(false);
     }
@@ -190,380 +78,49 @@ export default function BoletinConsultaComun() {
     try {
       await generateConsultaComunExcel(dataForExport, observaciones);
     } catch (err) {
-      setExportError(
-        err instanceof Error
-          ? `No se pudo generar el Excel. ${err.message}`
-          : "No se pudo generar el Excel."
-      );
+      setExportError(err instanceof Error ? `No se pudo generar el Excel. ${err.message}` : "No se pudo generar el Excel.");
     } finally {
       setIsGeneratingExcel(false);
     }
   }, [dataForExport, observaciones, isGeneratingExcel]);
 
+  const sinDatos = isLoading || data.length === 0;
+
   return (
     <div className={styles.container}>
-      <Franja titulo="Consulta común" icono={Stethoscope} />
+      <Franja titulo="Consulta común" icono={Stethoscope}>
+        <Solapa activa={pestana === "observaciones"} onClick={() => setPestana("observaciones")} cuenta={conObservacion}>
+          Observaciones
+        </Solapa>
+        <Solapa activa={pestana === "valor"} onClick={() => setPestana("valor")} cuenta={data.length}>
+          Valor consulta {CONSULTA_COMUN_CODE}
+        </Solapa>
+      </Franja>
 
       <Cajas>
-        <Caja titulo="Configuración">
-          <Button
-            variant="ghost"
-            leftIcon={<RefreshCcw size={16} />}
-            onClick={() => void refetch()}
-            disabled={isLoading || isFetching || isGeneratingPdf}
-          >
-            Actualizar
-          </Button>
-          <span className={styles.alcance}>
-            Código <b>{CONSULTA_COMUN_CODE}</b> · <b>{data.length}</b> obras sociales
-          </span>
-        </Caja>
         <Caja titulo="Descargas">
-          <BotonDescarga
-            formato="pdf"
-            onClick={() => void handleDownloadPdf()}
-            disabled={isLoading || isFetching || data.length === 0}
-            cargando={isGeneratingPdf}
-          />
-          <BotonDescarga
-            formato="excel"
-            onClick={() => void handleDownloadExcel()}
-            disabled={isLoading || isFetching || data.length === 0}
-            cargando={isGeneratingExcel}
-          />
+          <BotonDescarga formato="pdf" onClick={() => void handleDownloadPdf()} disabled={sinDatos || isFetching} cargando={isGeneratingPdf} />
+          <BotonDescarga formato="excel" onClick={() => void handleDownloadExcel()} disabled={sinDatos || isFetching} cargando={isGeneratingExcel} />
         </Caja>
       </Cajas>
 
-      {exportError && <div className={styles.errorBox}>{exportError}</div>}
+      {exportError && <div className={`${styles.aviso} ${styles.avisoError}`}>{exportError}</div>}
 
-      {/* ── Observations panel ── */}
-      <section className={styles.panel}>
-        <div className={styles.panelTop}>
-          <div>
-            <h2 className={styles.panelTitle}>Observaciones</h2>
-          </div>
-        </div>
-
-        {/* ── Templates manager ── */}
-        <div className={styles.templatesSection}>
-          <p className={styles.templatesLabel}>
-            Plantillas
-          </p>
-
-          <div className={styles.templatesRow}>
-            {templates.map((tpl) => (
-              <span key={tpl.id} className={styles.templateChip}>
-                <button
-                  className={styles.templateChipText}
-                  onClick={() => handleApplyTemplate(tpl.texto)}
-                  disabled={editingNro === null}
-                  title={
-                    editingNro === null
-                      ? "Abra una obra social para editar primero"
-                      : `Aplicar: ${tpl.texto}`
-                  }
-                >
-                  {tpl.texto}
-                </button>
-                <button
-                  className={styles.templateChipRemove}
-                  onClick={() => void removeTemplate(tpl.id)}
-                  title="Eliminar plantilla"
-                  aria-label={`Eliminar plantilla: ${tpl.texto}`}
-                >
-                  <X size={12} />
-                </button>
-              </span>
-            ))}
-            {templates.length === 0 && (
-              <span className={styles.templatesEmpty}>
-                Sin plantillas. Agregue una observación de uso frecuente.
-              </span>
-            )}
-          </div>
-
-          <div className={styles.addTemplateRow}>
-            <input
-              ref={newTemplateInputRef}
-              className={styles.addTemplateInput}
-              type="text"
-              placeholder="Nueva plantilla…"
-              value={newTemplate}
-              onChange={(e) => setNewTemplate(e.target.value)}
-              onKeyDown={handleNewTemplateKeyDown}
-              maxLength={1000}
-              disabled={isSavingTemplate}
-            />
-            <button
-              className={styles.addTemplateBtn}
-              onClick={() => void handleAddTemplate()}
-              disabled={!newTemplate.trim() || isSavingTemplate}
-              title="Agregar plantilla"
-            >
-              <Plus size={16} />
-              Agregar
-            </button>
-          </div>
-        </div>
-
-        {/* ── Search bar ── */}
-        <div className={styles.buscador}>
-          <SearchField
-            placeholder="Buscar obra social por nombre o número…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onClear={() => setSearch("")}
-          />
-        </div>
-
-        {isLoading && (
-          <div className={styles.loadingBox}>
-            <span className={styles.loader} />
-            Cargando obras sociales…
-          </div>
-        )}
-
-        {error && !isLoading && (
-          <div className={styles.errorBox}>
-            No se pudieron cargar los datos. Intente actualizar.
-          </div>
-        )}
-
-        {!isLoading && !error && data.length === 0 && (
-          <div className={styles.emptyBox}>
-            Sin datos. Tocá «Actualizar».
-          </div>
-        )}
-
-        {!isLoading && data.length > 0 && filteredItems.length === 0 && (
-          <div className={styles.emptyBox}>
-            Sin resultados para "{search}".
-          </div>
-        )}
-
-        {!isLoading && filteredItems.length > 0 && (
-          <div className={styles.tableWrapper}>
-            <Tabla className={styles.table}>
-              <thead>
-                <tr>
-                  <th className={styles.colNumber}>N°</th>
-                  <th>Obra Social</th>
-                  <th className={styles.colAmount}>Valor</th>
-                  <th className={styles.colDate}>Últ. cambio</th>
-                  <th className={styles.colObs}>Obs.</th>
-                  <th className={styles.colAction} />
-                </tr>
-              </thead>
-              <tbody>
-                {filteredItems.map((item) => {
-                  if (editingNro === item.nro) {
-                    return (
-                      <tr key={item.nro}>
-                        <td colSpan={6} className={styles.editRowCell}>
-                          <p className={styles.editRowLabel}>
-                            Editando:{" "}
-                            <strong>
-                              {item.nombre} (N° {item.nro})
-                            </strong>
-                          </p>
-
-                          {templates.length > 0 && (
-                            <div className={styles.inlineTemplates}>
-                              <span className={styles.inlineTemplatesLabel}>
-                                Plantillas:
-                              </span>
-                              {templates.map((tpl) => (
-                                <button
-                                  key={tpl.id}
-                                  className={styles.inlineTemplateChip}
-                                  onClick={() => handleApplyTemplate(tpl.texto)}
-                                  title={`Aplicar: ${tpl.texto}`}
-                                >
-                                  {tpl.texto}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-
-                          <textarea
-                            className={styles.obsTextarea}
-                            value={editDraft}
-                            onChange={(e) => setEditDraft(e.target.value)}
-                            maxLength={1000}
-                            placeholder="Ingrese la observación… (déjela vacía para eliminarla)"
-                            // eslint-disable-next-line jsx-a11y/no-autofocus
-                            autoFocus
-                          />
-
-                          <div className={styles.editRowMeta}>
-                            <span className={styles.charCount}>
-                              {editDraft.length}/1000 carácteres
-                            </span>
-                            <div className={styles.editRowActions}>
-                              <Button
-                                size="md"
-                                variant="secondary"
-                                onClick={handleCancelEdit}
-                                disabled={savingNro === item.nro}
-                              >
-                                Cancelar
-                              </Button>
-                              <Button
-                                size="md"
-                                variant="primary"
-                                onClick={() => void handleSave(item.nro)}
-                                disabled={savingNro === item.nro}
-                              >
-                                {savingNro === item.nro ? "Guardando…" : "Guardar"}
-                              </Button>
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  }
-
-                  const hasObs = Boolean(observaciones[item.nro]);
-                  const normas = normasPorOS.get(item.nro) ?? [];
-                  // La fila se despliega si hay observación **o** normas.
-                  const hasDetalle = hasObs || normas.length > 0;
-                  const isViewingObs = viewingObsNro === item.nro;
-
-                  return (
-                    <Fragment key={item.nro}>
-                      <tr>
-                        <td className={styles.numberCell}>{item.nro}</td>
-                        <td className={styles.nameCell}>{item.nombre}</td>
-                        <td className={styles.amountCell}>
-                          {moneyFormatter.format(item.valor)}
-                        </td>
-                        <td className={styles.dateCell}>
-                          {formatApiDate(item.fechaCambio)}
-                        </td>
-                        <td className={styles.obsCell}>
-                          {hasDetalle ? (
-                            <button
-                              className={`${styles.obsBadge} ${isViewingObs ? styles.obsBadgeActive : ""}`}
-                              onClick={() => handleToggleObsView(item.nro)}
-                              disabled={editingNro !== null}
-                              title={
-                                isViewingObs
-                                  ? "Cerrar"
-                                  : normas.length > 0
-                                    ? `Ver observación y ${normas.length} norma(s) operativa(s)`
-                                    : "Ver observación"
-                              }
-                            >
-                              {isViewingObs ? (
-                                "Cerrar"
-                              ) : (
-                                <>
-                                  Ver
-                                  {normas.length > 0 && (
-                                    <span className={styles.normasCount}>
-                                      <FileText size={12} />
-                                      {normas.length}
-                                    </span>
-                                  )}
-                                </>
-                              )}
-                            </button>
-                          ) : (
-                            <span className={styles.obsBadgeEmpty}>—</span>
-                          )}
-                        </td>
-                        <td className={styles.actionCell}>
-                          <IconButton
-                            size="small"
-                            className={styles.editIconBtn}
-                            onClick={() => handleEdit(item.nro)}
-                            title="Editar observación"
-                            disabled={editingNro !== null}
-                          >
-                            <Pencil size={15} />
-                          </IconButton>
-                        </td>
-                      </tr>
-
-                      {isViewingObs && hasDetalle && (
-                        <tr>
-                          <td colSpan={6} className={styles.obsViewCell}>
-                            <div className={styles.obsViewInner}>
-                              <div className={styles.obsViewToolbar}>
-                                <span className={styles.obsViewTitle}>
-                                  {hasObs ? "Observación" : "Normas operativas"} ·{" "}
-                                  {item.nombre}
-                                </span>
-                                <button
-                                  className={styles.obsViewEditBtn}
-                                  onClick={() => handleEdit(item.nro)}
-                                >
-                                  <Pencil size={13} />
-                                  {hasObs ? "Editar" : "Agregar observación"}
-                                </button>
-                              </div>
-
-                              {hasObs && (
-                              <div className={styles.obsBlock}>
-                                {parseObsLines(observaciones[item.nro] ?? "").map(
-                                  (line, i) =>
-                                    line.type === "header" ? (
-                                      <div key={i} className={styles.obsItem}>
-                                        <span className={styles.obsItemHeader}>
-                                          {line.label}
-                                        </span>
-                                        <span className={styles.obsItemBody}>
-                                          {line.body}
-                                        </span>
-                                      </div>
-                                    ) : (
-                                      <div key={i} className={styles.obsItemPlain}>
-                                        <span className={styles.obsItemBody}>
-                                          {line.body}
-                                        </span>
-                                      </div>
-                                    )
-                                )}
-                              </div>
-                              )}
-
-                              {normas.length > 0 && (
-                                <div className={styles.normasBlock}>
-                                  <span className={styles.obsViewTitle}>
-                                    Normas operativas
-                                  </span>
-                                  {normas.map((norma) => (
-                                    <a
-                                      key={norma.id}
-                                      className={styles.normaItem}
-                                      href={urlNorma(norma.id)}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                    >
-                                      <FileText size={15} />
-                                      <span className={styles.normaTitulo}>
-                                        {norma.titulo}
-                                      </span>
-                                      <span className={styles.normaFecha}>
-                                        {formatApiDate(norma.fecha)}
-                                      </span>
-                                      <ExternalLink size={13} />
-                                    </a>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </Fragment>
-                  );
-                })}
-              </tbody>
-            </Tabla>
-          </div>
-        )}
-      </section>
+      {pestana === "observaciones" ? (
+        <ObservacionesTab
+          obras={obras}
+          cargando={catalogo.isLoading}
+          error={catalogo.error ? detalleDeError(catalogo.error, "No se pudieron cargar las obras sociales.") : null}
+          obs={obs}
+          normasPorOS={normasPorOS}
+        />
+      ) : (
+        <ValoresTab
+          items={data}
+          cargando={isLoading}
+          error={error ? detalleDeError(error, "No se pudieron cargar los valores.") : null}
+        />
+      )}
     </div>
   );
 }

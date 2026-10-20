@@ -6,13 +6,14 @@ import type { ConsultaComunItem } from "./boletinConsultaComun.types";
 
 export function useConsultaComunQuery() {
   return useQuery<ConsultaComunItem[], Error>({
-    queryKey: ["valores-boletin", "consulta-comun", CONSULTA_COMUN_CODE],
-    queryFn: ({ signal }) => fetchConsultaComun(signal),
-    staleTime: 10 * 60 * 1000,
+    queryKey: ["nm-consulta-comun", CONSULTA_COMUN_CODE],
+    queryFn: fetchConsultaComun,
+    // Corto y con refresco al volver a la pestaña: el valor lo cambia Nomenclador y acá tiene que verse solo.
+    staleTime: 60 * 1000,
     gcTime: 30 * 60 * 1000,
     retry: 1,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     placeholderData: (previousData) => previousData,
     notifyOnChangeProps: ["data", "error", "isLoading", "isFetching"],
   });

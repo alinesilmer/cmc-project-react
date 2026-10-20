@@ -1,4 +1,4 @@
-import { AlertTriangle, ClipboardList, ExternalLink, Receipt, Ticket, X, type LucideIcon } from "lucide-react";
+import { AlertTriangle, ClipboardList, ExternalLink, Ticket, X, type LucideIcon } from "lucide-react";
 
 import { useAuth } from "@/app/auth/AuthProvider";
 import { isMedico } from "@/app/auth/roles";
@@ -20,7 +20,6 @@ interface Props {
 const ICONOS: Record<string, LucideIcon> = {
   planilla: ClipboardList,
   bono: Ticket,
-  tickets: Receipt,
 };
 
 /** Paso previo al portal de la obra social: día límite de presentación y, si tiene, la documentación obligatoria. */

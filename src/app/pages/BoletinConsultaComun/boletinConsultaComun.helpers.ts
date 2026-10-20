@@ -1,6 +1,4 @@
-import {
-  shortDateFormatter,
-} from "./boletinConsultaComun.constants";
+import { formatFecha } from "@/app/shared/lib/fechas";
 
 export function safeNum(value: unknown): number {
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -34,16 +32,9 @@ export function normalizeText(value: unknown, maxLen = 180): string {
   return text.length > maxLen ? `${text.slice(0, maxLen - 1)}…` : text;
 }
 
-export function parseFecha(value: string | null): number | null {
-  if (!value) return null;
-  const timestamp = Date.parse(value);
-  return Number.isFinite(timestamp) ? timestamp : null;
-}
-
+/** Fecha de calendario o instante en `DD/MM/AAAA`, sin correr un día por la zona horaria. */
 export function formatApiDate(value: string | null): string {
-  const timestamp = parseFecha(value);
-  if (timestamp == null) return "Sin fecha informada";
-  return shortDateFormatter.format(new Date(timestamp));
+  return value ? formatFecha(value) : "Sin fecha informada";
 }
 
 export function buildPdfFilename(date: Date): string {

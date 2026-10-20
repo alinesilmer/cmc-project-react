@@ -287,7 +287,7 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
   },
   {
     slug: "iosfa",
-    nombre: "IOSFA",
+    nombre: "OSFA",
     codigo: null,
     otrosCodigos: [8],
     modo: "externa",
@@ -299,16 +299,16 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
     url: "https://validador.iosfa.gob.ar/Login/Login.aspx",
     requisitos: {
       titulo: "Documentación obligatoria",
-      items: ["Planilla", "Bono", "Tickets"],
-      motivo: "Sin los tres, el Colegio Médico de Corrientes no puede presentar la prestación.",
+      items: ["Planilla", "Bono"],
+      motivo: "Sin los dos, el Colegio Médico de Corrientes no puede presentar la prestación.",
     },
     guia: {
       chip: "Usuario",
-      titulo: "IOSFA — Usuario",
+      titulo: "OSFA — Usuario",
       // El dato no va acá: este archivo termina en el bundle público.
       credencialesRemotas: true,
       pasos: ["Ingresá con este usuario, escrito CON GUIONES."],
-      enlace: { href: "https://validador.iosfa.gob.ar/Login/Login.aspx", texto: "Ir a IOSFA" },
+      enlace: { href: "https://validador.iosfa.gob.ar/Login/Login.aspx", texto: "Ir a OSFA" },
     },
   },
   {

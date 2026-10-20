@@ -1,397 +1,85 @@
+// Valor de la consulta común por obra social, leído del nomenclador nuevo (`nm_historial_precio_codigo`).
+
+import { getJSON } from "@/app/shared/lib/http";
+import { hoyISO } from "@/app/shared/lib/fechas";
+import { aNumero } from "@/app/shared/lib/utiles";
+import { listObrasSociales } from "@/app/pages/ObrasSociales/obrasSociales.api";
 import {
-  BOLETIN_ENDPOINTS,
   CONSULTA_COMUN_CODE,
   EXCLUDED_OS,
-  MAX_API_PAGES,
-  OBSERVATIONS_BY_OS,
-  PAGE_SIZE,
   SWISS_MEDICAL_CODE,
-  SWISS_MEDICAL_NOMBRE,
+  SWISS_MEDICAL_NRO,
 } from "./boletinConsultaComun.constants";
-import {
-  normalizeText,
-  parseFecha,
-  safeNum,
-} from "./boletinConsultaComun.helpers";
-import type {
-  ApiBoletinRow,
-  ConsultaComunItem,
-} from "./boletinConsultaComun.types";
-import { SIN_GALENOS } from "./boletinConsultaComun.types";
-import { http } from "@/app/shared/lib/http";
+import { normalizeText } from "./boletinConsultaComun.helpers";
+import { SIN_GALENOS, type ConsultaComunItem } from "./boletinConsultaComun.types";
 
-function pickFirst<T = unknown>(
-  obj: Record<string, unknown>,
-  keys: string[],
-  fallback?: T
-): T | undefined {
-  for (const key of keys) {
-    const value = obj[key];
-    if (value !== undefined && value !== null) {
-      return value as T;
-    }
-  }
-  return fallback;
+interface ApiPrecio {
+  obra_social_nro: number;
+  precio_total: number | string;
+  vigencia_desde: string | null;
+  /** `null` = precio general; si no, el de una especialidad. */
+  especialidad_id_colegio?: number | null;
 }
 
-function normalizeRow(input: unknown): ApiBoletinRow {
-  const row = (input ?? {}) as Record<string, unknown>;
+interface ApiBoletinOut {
+  items: ApiPrecio[];
+}
 
-  const fechaCambioRaw = pickFirst(row, [
-    "fecha_cambio",
-    "FECHA_CAMBIO",
-    "fechaCambio",
-    "updated_at",
-    "UPDATED_AT",
-    "updatedAt",
-    "fecha",
-    "FECHA",
+/** El precio general le gana al de una especialidad; entre iguales, la vigencia más reciente y, si empatan, el precio más alto. */
+function gana(item: ApiPrecio, previo: ApiPrecio): boolean {
+  const esGeneral = item.especialidad_id_colegio == null;
+  if (esGeneral !== (previo.especialidad_id_colegio == null)) return esGeneral;
+
+  const nueva = item.vigencia_desde ?? "";
+  const vieja = previo.vigencia_desde ?? "";
+  if (nueva !== vieja) return nueva > vieja;
+  return aNumero(item.precio_total) > aNumero(previo.precio_total);
+}
+
+/** Un precio por obra social para un código a una fecha. */
+async function preciosPorOS(codigo: string, fecha: string): Promise<Map<number, ApiPrecio>> {
+  const res = await getJSON<ApiBoletinOut>("/api/reportes_nm/boletin", { fecha, codigo });
+  const porOS = new Map<number, ApiPrecio>();
+  for (const item of res.items ?? []) {
+    if (!item.obra_social_nro) continue;
+    const previo = porOS.get(item.obra_social_nro);
+    if (!previo || gana(item, previo)) porOS.set(item.obra_social_nro, item);
+  }
+  return porOS;
+}
+
+export async function fetchConsultaComun(): Promise<ConsultaComunItem[]> {
+  const fecha = hoyISO();
+
+  const [obras, consulta, swiss] = await Promise.all([
+    listObrasSociales(),
+    preciosPorOS(CONSULTA_COMUN_CODE, fecha),
+    // Swiss Medical factura la consulta con su propio código; si no está cargado se sigue sin él.
+    preciosPorOS(SWISS_MEDICAL_CODE, fecha).catch(() => new Map<number, ApiPrecio>()),
   ]);
 
-  const fechaVigenciaRaw = pickFirst(row, [
-    "fecha_vigencia",
-    "FECHA_VIGENCIA",
-    "fechaVigencia",
-  ]);
+  const swissPrecio = swiss.get(SWISS_MEDICAL_NRO);
+  if (swissPrecio) consulta.set(SWISS_MEDICAL_NRO, swissPrecio);
 
-  return {
-    id: Number(
-      pickFirst(row, ["id", "ID", "pk", "Pk", "PK"], 0)
-    ),
-
-    codigos: String(
-      pickFirst(row, [
-        "codigos",
-        "CODIGOS",
-        "codigo",
-        "CODIGO",
-        "cod_nom",
-        "COD_NOM",
-        "cod_nomenclador",
-        "COD_NOMENCLADOR",
-      ], CONSULTA_COMUN_CODE)
-    ).trim(),
-
-    nro_obrasocial: Number(
-      pickFirst(row, [
-        "nro_obrasocial",
-        "NRO_OBRASOCIAL",
-        "nro_obra_social",
-        "NRO_OBRA_SOCIAL",
-        "nroOS",
-        "obra_social_numero",
-        "OBRA_SOCIAL_NUMERO",
-      ], 0)
-    ),
-
-    obra_social:
-      pickFirst<string | null>(row, [
-        "obra_social",
-        "OBRA_SOCIAL",
-        "nombre_obra_social",
-        "NOMBRE_OBRA_SOCIAL",
-        "obraSocial",
-        "nombre",
-        "NOMBRE",
-      ], null) != null
-        ? String(
-            pickFirst(row, [
-              "obra_social",
-              "OBRA_SOCIAL",
-              "nombre_obra_social",
-              "NOMBRE_OBRA_SOCIAL",
-              "obraSocial",
-              "nombre",
-              "NOMBRE",
-            ])
-          )
-        : null,
-
-    honorarios_a: safeNum(
-      pickFirst(row, [
-        "honorarios_a",
-        "HONORARIOS_A",
-        "honorariosA",
-        "valor",
-        "VALOR",
-        "importe",
-        "IMPORTE",
-      ], 0)
-    ),
-
-    honorarios_b: safeNum(
-      pickFirst(row, [
-        "honorarios_b",
-        "HONORARIOS_B",
-        "honorariosB",
-      ], 0)
-    ),
-
-    honorarios_c: safeNum(
-      pickFirst(row, [
-        "honorarios_c",
-        "HONORARIOS_C",
-        "honorariosC",
-      ], 0)
-    ),
-
-    gastos: safeNum(
-      pickFirst(row, ["gastos", "GASTOS"], 0)
-    ),
-
-    ayudante_a: safeNum(
-      pickFirst(row, [
-        "ayudante_a",
-        "AYUDANTE_A",
-        "ayudanteA",
-      ], 0)
-    ),
-
-    ayudante_b: safeNum(
-      pickFirst(row, [
-        "ayudante_b",
-        "AYUDANTE_B",
-        "ayudanteB",
-      ], 0)
-    ),
-
-    ayudante_c: safeNum(
-      pickFirst(row, [
-        "ayudante_c",
-        "AYUDANTE_C",
-        "ayudanteC",
-      ], 0)
-    ),
-
-    c_p_h_s: String(
-      pickFirst(row, [
-        "c_p_h_s",
-        "C_P_H_S",
-        "tipo",
-        "TIPO",
-      ], "")
-    ).trim(),
-
-    fecha_cambio:
-      fechaCambioRaw != null && String(fechaCambioRaw).trim() !== ""
-        ? String(fechaCambioRaw).trim()
-        : null,
-
-    fecha_vigencia:
-      fechaVigenciaRaw != null && String(fechaVigenciaRaw).trim() !== ""
-        ? String(fechaVigenciaRaw).trim()
-        : null,
-
-  };
-}
-
-function extractRowsFromPayload(payload: unknown): unknown[] | null {
-  if (Array.isArray(payload)) return payload;
-  if (!payload || typeof payload !== "object") return null;
-
-  const obj = payload as Record<string, unknown>;
-
-  if (Array.isArray(obj.results)) return obj.results;
-  if (Array.isArray(obj.RESULTS)) return obj.RESULTS;
-
-  if (Array.isArray(obj.items)) return obj.items;
-  if (Array.isArray(obj.ITEMS)) return obj.ITEMS;
-
-  if (Array.isArray(obj.data)) return obj.data;
-  if (Array.isArray(obj.DATA)) return obj.DATA;
-
-  if (Array.isArray(obj.rows)) return obj.rows;
-  if (Array.isArray(obj.ROWS)) return obj.ROWS;
-
-  if (obj.data && typeof obj.data === "object") {
-    const dataObj = obj.data as Record<string, unknown>;
-    if (Array.isArray(dataObj.results)) return dataObj.results;
-    if (Array.isArray(dataObj.RESULTS)) return dataObj.RESULTS;
-    if (Array.isArray(dataObj.items)) return dataObj.items;
-    if (Array.isArray(dataObj.ITEMS)) return dataObj.ITEMS;
-    if (Array.isArray(dataObj.rows)) return dataObj.rows;
-    if (Array.isArray(dataObj.ROWS)) return dataObj.ROWS;
-  }
-
-  if (obj.DATA && typeof obj.DATA === "object") {
-    const dataObj = obj.DATA as Record<string, unknown>;
-    if (Array.isArray(dataObj.results)) return dataObj.results;
-    if (Array.isArray(dataObj.RESULTS)) return dataObj.RESULTS;
-    if (Array.isArray(dataObj.items)) return dataObj.items;
-    if (Array.isArray(dataObj.ITEMS)) return dataObj.ITEMS;
-    if (Array.isArray(dataObj.rows)) return dataObj.rows;
-    if (Array.isArray(dataObj.ROWS)) return dataObj.ROWS;
-  }
-
-  return null;
-}
-
-function extractCodes(value: unknown): string[] {
-  return String(value ?? "").match(/\d{4,6}/g) ?? [];
-}
-
-function filterRowsByCodigo(
-  rows: ApiBoletinRow[],
-  codigo: string
-): ApiBoletinRow[] {
-  const target = String(codigo).trim();
-  if (!target) return rows;
-
-  const matched = rows.filter((row) => {
-    const codes = [
-      ...extractCodes(row.codigos),
-      ...extractCodes(row.c_p_h_s),
-    ];
-    return codes.includes(target);
-  });
-
-  return matched.length > 0 ? matched : rows;
-}
-
-function compareRowsByRecency(a: ApiBoletinRow, b: ApiBoletinRow): number {
-  const aDate = parseFecha(a.fecha_cambio);
-  const bDate = parseFecha(b.fecha_cambio);
-
-  if (aDate != null && bDate != null) {
-    if (aDate !== bDate) return aDate - bDate;
-  } else if (aDate != null && bDate == null) {
-    return 1;
-  } else if (aDate == null && bDate != null) {
-    return -1;
-  }
-
-  return a.id - b.id;
-}
-
-function buildLatestPerOS(rows: ApiBoletinRow[]): ConsultaComunItem[] {
-  const latestByOS = new Map<number, ApiBoletinRow>();
-
-  for (const row of rows) {
-    if (!row.nro_obrasocial || EXCLUDED_OS.has(row.nro_obrasocial)) continue;
-
-    const current = latestByOS.get(row.nro_obrasocial);
-
-    if (!current) {
-      latestByOS.set(row.nro_obrasocial, row);
-      continue;
-    }
-
-    if (compareRowsByRecency(row, current) > 0) {
-      latestByOS.set(row.nro_obrasocial, row);
-    }
-  }
-
-  return Array.from(latestByOS.entries())
-    .map(([nro, row]) => ({
-      nro,
-      nombre: normalizeText(row.obra_social ?? `OS ${nro}`),
-      valor: row.honorarios_a,
-      fechaCambio: row.fecha_cambio,
-      observaciones: [...(OBSERVATIONS_BY_OS[nro] ?? [])].map((x) =>
-        normalizeText(x, 1000)
-      ),
-      galenos: SIN_GALENOS,
-    }))
-    .sort((a, b) => {
-      const byName = a.nombre.localeCompare(b.nombre, "es", {
-        sensitivity: "base",
-      });
-      if (byName !== 0) return byName;
-      return a.nro - b.nro;
-    });
-}
-
-async function fetchBoletinPage(
-  endpoint: string,
-  page: number,
-  signal?: AbortSignal,
-  codigo: string = CONSULTA_COMUN_CODE
-): Promise<ApiBoletinRow[]> {
-  const response = await http.get(endpoint, {
-    signal,
-    timeout: 20000,
-    params: {
-      codigo,
-      page,
-      size: PAGE_SIZE,
-    },
-  });
-
-  const rows = extractRowsFromPayload(response.data);
-
-  if (!rows) {
-    throw new Error("La respuesta del backend no tiene un formato válido.");
-  }
-
-  return rows.map(normalizeRow);
-}
-
-async function requestBoletinPage(
-  page: number,
-  signal?: AbortSignal,
-  codigo: string = CONSULTA_COMUN_CODE
-): Promise<ApiBoletinRow[]> {
-  let lastError: unknown = null;
-
-  for (const endpoint of BOLETIN_ENDPOINTS) {
-    try {
-      return await fetchBoletinPage(endpoint, page, signal, codigo);
-    } catch (error) {
-      lastError = error;
-    }
-  }
-
-  throw lastError instanceof Error
-    ? lastError
-    : new Error("No se pudo consultar el endpoint de valores.");
-}
-
-async function fetchAllPagesForCode(
-  codigo: string,
-  signal?: AbortSignal
-): Promise<ApiBoletinRow[]> {
-  const rows: ApiBoletinRow[] = [];
-  let previousSignature = "";
-
-  for (let page = 1; page <= MAX_API_PAGES; page += 1) {
-    const pageRows = await requestBoletinPage(page, signal, codigo);
-
-    if (pageRows.length === 0) break;
-
-    const signature = `${pageRows.length}-${pageRows[0]?.id ?? "x"}-${
-      pageRows[pageRows.length - 1]?.id ?? "y"
-    }`;
-
-    if (signature === previousSignature) break;
-
-    previousSignature = signature;
-    rows.push(...pageRows);
-
-    if (pageRows.length < PAGE_SIZE) break;
-  }
-
-  return rows;
-}
-
-export async function fetchConsultaComun(
-  signal?: AbortSignal
-): Promise<ConsultaComunItem[]> {
-  // Fetch consulta común (420351) and Swiss Medical (42010100) in parallel.
-  const [consultaRows, swissRows] = await Promise.all([
-    fetchAllPagesForCode(CONSULTA_COMUN_CODE, signal),
-    fetchAllPagesForCode(SWISS_MEDICAL_CODE, signal).catch(() => [] as ApiBoletinRow[]),
-  ]);
-
-  // Apply name override for Swiss Medical rows that have no obra_social set.
-  const swissNormalized = swissRows.map((row) =>
-    row.obra_social ? row : { ...row, obra_social: SWISS_MEDICAL_NOMBRE }
+  const nombres = new Map(
+    obras.map((o) => [o.nro_obra_social, (o.nombre || o.denominacion || "").trim()] as const)
   );
 
-  // Merge: consulta común rows first, Swiss Medical fills in missing OS entries.
-  const consultaFiltered = filterRowsByCodigo(consultaRows, CONSULTA_COMUN_CODE);
-  const knownOS = new Set(consultaFiltered.map((r) => r.nro_obrasocial));
-  const swissOnly = swissNormalized.filter((r) => !knownOS.has(r.nro_obrasocial));
+  const items: ConsultaComunItem[] = [];
+  for (const [nro, precio] of consulta) {
+    const valor = aNumero(precio.precio_total);
+    if (valor <= 0 || EXCLUDED_OS.has(nro)) continue;
+    items.push({
+      nro,
+      nombre: normalizeText(nombres.get(nro) || `OS ${nro}`),
+      valor,
+      fechaCambio: precio.vigencia_desde,
+      observaciones: [],
+      galenos: SIN_GALENOS,
+    });
+  }
 
-  const allRows = [...consultaFiltered, ...swissOnly];
-  return buildLatestPerOS(allRows);
+  return items.sort(
+    (a, b) => a.nombre.localeCompare(b.nombre, "es", { sensitivity: "base" }) || a.nro - b.nro
+  );
 }

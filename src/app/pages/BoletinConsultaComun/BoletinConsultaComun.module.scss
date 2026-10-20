@@ -19,666 +19,186 @@
   margin-bottom: 0;
 }
 
-// El buscador, separado de las plantillas de arriba y de la tabla de abajo.
-.buscador {
-  margin: $spacing-6 0 $spacing-5;
+.seccion {
+  min-width: 0;
 }
 
-// Qué abarca el boletín, al lado de «Actualizar».
-.alcance {
-  color: $gray-600;
-
-  b {
-    color: $franja-azul;
-  }
-}
-
-.hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(20rem, 0.95fr);
-  gap: 1.25rem;
-  align-items: stretch;
-}
-
-.heroLeft,
-.contactCard,
-.panel {
-  background: rgba($white, 0.96);
-   box-shadow: $shadow-md;
-}
-
-
-
-.heroLeft {
-  border-radius: $radio-md;
-  padding: 1.75rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.badgeRow {
+// Buscador y filtros, encima de la tabla.
+.barra {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.625rem;
+  align-items: center;
+  gap: 0.75rem 1rem;
   margin-bottom: 1rem;
 }
 
-.badge,
-.badgeMuted {
+// ── Avisos de estado ──
+
+.aviso {
+  padding: 0.875rem 1rem;
+  border-radius: $radio-md;
+  background: $gray-50;
+  border: 1px dashed $gray-300;
+  color: $gray-600;
+}
+
+.avisoError {
+  border: 1px solid $tono-rojo-100;
+  color: $tono-rojo-500;
+}
+
+// ── Pestaña Observaciones: lista a la izquierda, plantillas a la derecha ──
+
+.obsLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22rem;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.pildoras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.pildora {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  min-height: 2.125rem;
-  padding: 0 0.75rem;
-  border-radius: $radio-md;
-  font-size: 0.88rem;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-}
+  height: 2.25rem;
+  padding: 0 0.875rem;
+  border-radius: 999px;
+  border: 1px solid $gray-300;
+  background: $white;
+  color: $gray-600;
+  font-family: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 
-.badge {
-  background: rgba($tono-azul-500, 0.12);
-  color: $primary-blue-lighter;
-  border: 1px solid rgba($tono-azul-500, 0.18);
-}
-
-.badgeMuted {
-  background: rgba($tono-verde-500, 0.1);
-  color: $tono-verde-500;
-  border: 1px solid rgba($tono-verde-500, 0.16);
-}
-
-.title {
-  margin: 0;
-  font-size: clamp(1.9rem, 2.2vw, 2.7rem);
-  line-height: 1.08;
-  letter-spacing: -0.03em;
-  color: $tono-azul-650;
-}
-
-.subtitle {
-  margin: 0.875rem 0 0;
-  max-width: 53.75rem;
-  font-size: 1rem;
-  line-height: 1.65;
-  color: $carpeta-plata-costura;
-}
-
-.contactCard {
-  border-radius: $radio-md;
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.875rem;
-  justify-content: center;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(247, 250, 255, 0.98) 100%);
-}
-
-.contactLogo {
-  width: 4.25rem;
-  height: 4.25rem;
-  object-fit: contain;
-}
-
-.contactTitle {
-  font-size: 1.08rem;
-  font-weight: 800;
-  color: $tono-azul-650;
-}
-
-.contactItem {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  color: $carpeta-plata-costura;
-  font-size: 0.95rem;
-
-  svg {
-    flex: 0 0 auto;
+  &:hover {
+    border-color: $tono-azul-500;
     color: $tono-azul-500;
   }
 }
 
-.panel {
-  border-radius: $radio-md;
-  padding: 1.5rem;
-}
+.pildoraActiva {
+  background: $franja-azul;
+  border-color: $franja-azul;
+  color: $white;
 
-.panelTop {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1.125rem;
-  margin-bottom: 1.125rem;
-}
-
-.panelTitle {
-  margin: 0;
-  font-size: 1.28rem;
-  font-weight: 800;
-  color: $tono-azul-650;
-}
-
-.panelDescription {
-  margin: 0.5rem 0 0;
-  color: $gray-500;
-  line-height: 1.55;
-  max-width: 47.5rem;
-}
-
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.625rem;
-  justify-content: flex-end;
-}
-
-.buttonInner {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.metaGrid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.875rem;
-  margin-bottom: 1.125rem;
-}
-
-.metaCard {
-  border-radius: $radio-md;
-  padding: 1rem 1.125rem;
-  border: 1px solid $gray-300;
-}
-
-.metaLabel {
-  display: block;
-  font-size: 0.82rem;
-  color: $tono-azul-400;
-  margin-bottom: 0.375rem;
-}
-
-.metaValue {
-  display: block;
-  font-size: 1rem;
-  font-weight: 700;
-  color: $tono-azul-650;
-}
-
-.searchBar {
-  position: relative;
-  margin-bottom: 3rem;
-}
-
-.searchIcon {
-  position: absolute;
-  left: 0.875rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: $tono-azul-400;
-  pointer-events: none;
-}
-
-.searchInput {
-  width: 100%;
-  height: 3rem;
-  border-radius: $radio-md;
-  border: 1px solid $tono-gris-100;
-  background: $white;
-  padding: 0 1rem 0 2.625rem;
-  font-size: 0.96rem;
-  color: $tono-azul-700;
-  outline: none;
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    background-color 0.2s ease;
-
-  &:focus {
-    border-color: $tono-azul-500;
-    box-shadow: 0 0 0 4px rgba($tono-azul-500, 0.12);
-  }
-
-  &::placeholder {
-    color: $gray-400;
+  &:hover {
+    color: $white;
   }
 }
 
-.loadingBox,
-.errorBox,
-.emptyBox,
-.resultsBar {
-  border-radius: $radio-lg;
-  padding: 0.875rem 1rem;
+.pildoraCuenta {
+  min-width: 1.5rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: rgba($tono-azul-500, 0.14);
+  font-size: 0.78rem;
+  line-height: 1.4rem;
+  text-align: center;
 }
 
-.loadingBox {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  background: $gray-50;
-  border: 1px solid $gray-200;
-  color: $tono-azul-500;
-  font-weight: 600;
+.pildoraActiva .pildoraCuenta {
+  background: rgba($white, 0.22);
 }
 
-.loader {
-  width: 1.125rem;
-  height: 1.125rem;
-  border-radius: $radio-sm;
-  border: 2px solid rgba($tono-azul-500, 0.18);
-  border-top-color: $tono-azul-500;
-  animation: spin 0.9s linear infinite;
-}
+// ── Tabla ──
 
-.errorBox {
-  background: $gray-50;
-  border: 1px solid $tono-rojo-100;
-  color: $tono-rojo-500;
-  font-weight: 600;
-}
-
-.emptyBox {
-  background: $gray-50;
-  border: 1px dashed $tono-gris-100;
-  color: $gray-500;
-}
-
-.resultsBar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 0.875rem;
-  background: $gray-50;
-  border: 1px solid $gray-200;
-  color: $carpeta-plata-costura;
-}
-
-.fetchingHint {
-  color: $tono-azul-500;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.tableWrapper {
+.tablaWrap {
   overflow: auto;
   border-radius: $radio-md;
   border: 1px solid $gray-200;
   background: $white;
 }
 
-.table {
+.tabla {
   width: 100%;
-  min-width: 55rem;
-  border-collapse: separate;
-  border-spacing: 0;
+  min-width: 40rem;
 }
 
-.table thead th {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  background:  $primary-blue-dark;
-  color: $white;
-  font-size: $font-size-base;
-  font-weight: 700;
-  text-align: left;
-  padding: 0.875rem 1rem;
-  border-bottom: 1px solid rgba($white, 0.08);
+.colNro,
+.nro {
+  width: 6rem;
+}
+
+.colNombre {
+  width: 16rem;
+}
+
+.colValor,
+.valor {
+  width: 12rem;
   white-space: nowrap;
 }
 
-.table tbody td {
-  padding: 0.875rem 1rem;
-  border-bottom: 1px solid $franja-perla;
-  font-size: $font-size-base;
-  vertical-align: middle;
-}
-
-.table tbody tr {
-  transition: background-color 0.18s ease;
-}
-
-.table tbody tr:hover {
-  background: $gray-50;
-}
-
-.colNumber,
-.numberCell {
-  width: 7.5rem;
-}
-
-.colAmount,
-.amountCell {
-  width: 11.25rem;
-  text-align: right;
+.colFecha,
+.fecha {
+  width: 11rem;
   white-space: nowrap;
 }
 
-.colDate,
-.dateCell {
-  width: 10rem;
-  white-space: nowrap;
+.colAccion,
+.acciones {
+  width: 6.5rem;
 }
 
-.colObs,
-.obsCell {
-  width: 5.625rem;
-  text-align: center;
-}
-
-.nameCell {
-  color: $tono-azul-700;
-  font-weight: 400;
-}
-
-.numberCell {
+.nro {
   color: $tono-azul-500;
-  font-weight: 600;
 }
 
-.amountCell {
+.valor {
   color: $tono-verde-500;
-  font-weight: 600;
-  letter-spacing: 0.01em;
 }
 
-.dateCell {
+.fecha {
   color: $gray-500;
 }
 
-.obsBadge,
-.obsBadgeEmpty {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 3.125rem;
-  height: 1.75rem;
-  padding: 0 0.625rem;
-  border-radius: $radio-sm;
-  font-size: 0.82rem;
-  font-weight: 700;
-}
+// ── La observación en la tabla ──
 
-.obsBadge {
-  background: rgba($tono-azul-500, 0.12);
-  color: $tono-azul-500;
-  border: none;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background-color 0.15s ease, color 0.15s ease;
-
-  &:hover:not(:disabled) {
-    background: rgba($tono-azul-500, 0.2);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-}
-
-.obsBadgeActive {
-  background: $tono-azul-500;
-  color: $white;
-
-  &:hover:not(:disabled) {
-    background: $primary-blue-lighter;
-  }
-}
-
-.obsBadgeEmpty {
-  background: $gray-100;
-  color: $gray-400;
-}
-
-/* ── Observation view row ──────────────────────────────── */
-
-.obsViewCell {
-  padding: 0;
-  background: $gray-50;
-  border-left: 3px solid $tono-azul-500;
-  border-bottom: 2px solid $gray-200;
-}
-
-.obsViewInner {
-  padding: 1rem 1.25rem 1.125rem;
+.obsTexto {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.25rem;
 }
 
-.obsViewToolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.obsViewTitle {
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: $tono-azul-400;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-}
-
-.obsViewEditBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3125rem;
-  padding: 0.25rem 0.75rem;
-  border-radius: $radio-md;
-  border: 1px solid rgba($tono-azul-500, 0.3);
-  background: rgba($tono-azul-500, 0.07);
-  color: $primary-blue-lighter;
-  font-size: 0.82rem;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
-
-  &:hover {
-    background: rgba($tono-azul-500, 0.14);
-    border-color: rgba($tono-azul-500, 0.45);
-  }
-}
-
-.obsBlock {
-  display: flex;
-  flex-direction: column;
-  gap: 0.375rem;
-}
-
-.obsItem,
-.obsItemPlain {
-  padding: 0.6875rem 1rem;
-  border-radius: $radio-md;
-  background: $white;
-  border: 1px solid $gray-200;
-}
-
-.obsItemPlain {
-  border-left: 3px solid $gray-200;
-}
-
-.obsItem {
-  border-left: 3px solid $tono-azul-500;
-}
-
-.obsItemHeader {
-  display: block;
-  font-size: 0.74rem;
-  font-weight: 800;
-  color: $tono-azul-650;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 0.3125rem;
-}
-
-.obsItemBody {
-  display: block;
-  font-size: 0.94rem;
-  color: $primary-blue-shadow;
-  line-height: 1.6;
+.obsRenglon {
+  margin: 0;
+  line-height: 1.5;
   white-space: pre-wrap;
-  word-break: break-word;
   overflow-wrap: anywhere;
 }
 
-/* ── Templates manager ─────────────────────────────────── */
-
-.templatesSection {
-  margin-bottom: 1.25rem;
-  padding: 1rem 1.125rem;
-  border-radius: $radio-md;
-  background: $gray-50;
-  border: 1px solid $gray-300;
-}
-
-.templatesLabel {
-  margin: 0 0 0.75rem;
-  font-size: 0.88rem;
-  font-weight: 700;
+.obsRotulo {
   color: $tono-azul-650;
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
-.templatesHint {
-  font-weight: 400;
-  color: $tono-azul-400;
-}
-
-.templatesRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  min-height: 2rem;
-  margin-bottom: 0.75rem;
-  align-items: center;
-}
-
-.templatesEmpty {
-  font-size: 0.86rem;
-  color: $gray-400;
-  font-style: italic;
-}
-
-.templateChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0;
-  border-radius: $radio-md;
-  border: 1px solid rgba($tono-azul-500, 0.22);
-  background: rgba($tono-azul-500, 0.07);
-  overflow: hidden;
-  max-width: 20rem;
-}
-
-.templateChipText {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.3125rem 0.625rem 0.3125rem 0.75rem;
-  font-size: 0.85rem;
-  font-family: inherit;
-  color: $primary-blue-lighter;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 17.5rem;
-  transition: background-color 0.15s ease;
-
-  &:hover:not(:disabled) {
-    background: rgba($tono-azul-500, 0.1);
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.55;
-  }
-}
-
-.templateChipRemove {
-  background: none;
-  border: none;
-  border-left: 1px solid rgba($tono-azul-500, 0.15);
-  cursor: pointer;
-  padding: 0.3125rem 0.5625rem;
-  color: $tono-azul-400;
-  display: inline-flex;
-  align-items: center;
-  transition: color 0.15s ease, background-color 0.15s ease;
-  flex-shrink: 0;
-
-  &:hover {
-    color: $tono-rojo-500;
-    background: rgba($tono-rojo-500, 0.07);
-  }
-}
-
-.addTemplateRow {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.addTemplateInput {
-  flex: 1;
-  height: 2.375rem;
-  border-radius: $radio-md;
-  border: 1px solid $tono-gris-100;
-  background: $white;
-  padding: 0 0.875rem;
-  font-size: 0.9rem;
-  font-family: inherit;
-  color: $tono-azul-700;
-  outline: none;
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
-
-  &:focus {
-    border-color: $tono-azul-500;
-    box-shadow: 0 0 0 3px rgba($tono-azul-500, 0.1);
-  }
-
-  &::placeholder {
-    color: $tono-gris-250;
-  }
-
-  &:disabled {
-    background: $gray-100;
-    opacity: 0.6;
-  }
-}
-
-.addTemplateBtn {
+.agregar {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  height: 2.375rem;
-  padding: 0 1rem;
+  padding: 0.3rem 0.75rem;
   border-radius: $radio-md;
-  border: 1px solid rgba($tono-azul-500, 0.28);
-  background: rgba($tono-azul-500, 0.08);
-  color: $primary-blue-lighter;
-  font-size: 0.88rem;
-  font-weight: 700;
+  border: 1px dashed $gray-300;
+  background: transparent;
+  color: $gray-500;
   font-family: inherit;
+  font-size: 0.88rem;
   cursor: pointer;
-  white-space: nowrap;
-  transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease;
+  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
 
   &:hover:not(:disabled) {
-    background: rgba($tono-azul-500, 0.14);
-    border-color: rgba($tono-azul-500, 0.4);
+    border-color: $tono-azul-500;
+    color: $tono-azul-500;
+    background: rgba($tono-azul-500, 0.06);
   }
 
   &:disabled {
@@ -687,242 +207,49 @@
   }
 }
 
-/* ── Inline template chips (inside edit row) ───────────── */
-
-.inlineTemplates {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.375rem;
-  align-items: center;
-  margin-bottom: 0.625rem;
-}
-
-.inlineTemplatesLabel {
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: $carpeta-plata-costura;
-  margin-right: 2px;
-  white-space: nowrap;
-}
-
-.inlineTemplateChip {
-  background: $white;
-  border: 1px solid rgba($tono-azul-500, 0.25);
-  border-radius: $radio-md;
-  padding: 0.25rem 0.75rem;
-  font-size: 0.83rem;
-  font-family: inherit;
-  color: $primary-blue-lighter;
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-  max-width: 15rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease;
-
-  &:hover {
-    background: rgba($tono-azul-500, 0.1);
-    border-color: rgba($tono-azul-500, 0.4);
-  }
-}
-
-/* ── Observation edit row ──────────────────────────────── */
-
-.colAction {
-  width: 3.25rem;
-}
-
-.actionCell {
-  text-align: center;
-}
-
-.editIconBtn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.3125rem 0.4375rem;
+.editar {
   color: $tono-azul-400;
-  border-radius: $radio-md;
-  display: inline-flex;
-  align-items: center;
-  transition:
-    color 0.15s ease,
-    background-color 0.15s ease;
 
   &:hover:not(:disabled) {
     color: $tono-azul-500;
     background: rgba($tono-azul-500, 0.1);
   }
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
 }
 
-.editRowCell {
-  padding: 1.125rem 1.25rem;
-  background: rgba($secondary-blue, 0.45);
-  border-left: 3px solid $tono-azul-500;
-}
+// ── Normas operativas de la obra social ──
 
-.editRowLabel {
-  margin: 0 0 0.75rem;
-  font-size: 0.91rem;
-  color: $carpeta-plata-costura;
-}
-
-.obsTextarea {
-  width: 100%;
-  border-radius: $radio-md;
-  border: 1px solid $gray-300;
-  padding: 0.625rem 0.875rem;
-  font-size: 0.93rem;
-  font-family: inherit;
-  color: $tono-azul-700;
-  resize: vertical;
-  min-height: 5rem;
-  max-height: 11.25rem;
-  outline: none;
-  background: $white;
-  box-sizing: border-box;
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
-
-  &:focus {
-    border-color: $tono-azul-500;
-    box-shadow: 0 0 0 3px rgba($tono-azul-500, 0.11);
-  }
-
-  &::placeholder {
-    color: $tono-gris-250;
-  }
-}
-
-.editRowMeta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.75rem;
-  margin-top: 0.625rem;
-  flex-wrap: wrap;
-}
-
-.charCount {
-  font-size: 0.8rem;
-  color: $gray-400;
-}
-
-.editRowActions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-/* ─────────────────────────────────────────────────────── */
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (max-width: 1200px) {
-  .hero {
-    grid-template-columns: 1fr;
-  }
-
-  .metaGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 780px) {
-  .container {
-    padding: 1rem;
-  }
-
-  .heroLeft,
-  .contactCard,
-  .panel {
-    padding: 1.125rem;
-    border-radius: $radio-lg;
-  }
-
-  .panelTop {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .actions {
-    width: 100%;
-    justify-content: stretch;
-
-    > * {
-      flex: 1 1 auto;
-    }
-  }
-
-  .metaGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .resultsBar {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
-/* ── Normas operativas (noticias asociadas a la obra social) ──── */
-
-/* Contador dentro del badge "Ver": avisa que además de la observación hay normas. */
-.normasCount {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  margin-left: 0.375rem;
-  padding-left: 0.375rem;
-  border-left: 1px solid currentColor;
-  font-size: 0.76rem;
-}
-
-.normasBlock {
+.normas {
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
 }
 
-.normaItem {
+.norma {
   display: flex;
   align-items: center;
-  gap: 0.5625rem;
-  padding: 0.625rem 0.875rem;
+  gap: 0.5rem;
+  padding: 0.35rem 0.625rem;
   border-radius: $radio-md;
-  background: $white;
-  border: 1px solid $gray-200;
   border-left: 3px solid $tono-naranja-400;
+  background: $cuaderno-papel;
   color: $tono-azul-700;
+  font-size: 0.85rem;
   text-decoration: none;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
-
-  &:hover {
-    background: $cuaderno-papel;
-    border-color: $tono-gris-100-c;
-    border-left-color: $tono-naranja-400;
-  }
 
   svg {
     flex-shrink: 0;
     color: $tono-naranja-400;
+  }
+
+  &:hover {
+    text-decoration: underline;
   }
 }
 
 .normaTitulo {
   flex: 1;
   min-width: 0;
-  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -930,6 +257,268 @@
 
 .normaFecha {
   flex-shrink: 0;
-  font-size: 0.8rem;
   color: $gray-500;
+  font-size: 0.8rem;
+}
+
+// ── Editor en la propia fila ──
+
+.editorCelda {
+  padding: 0;
+  background: rgba($secondary-blue, 0.45);
+  border-left: 3px solid $tono-azul-500;
+}
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.125rem 1.25rem;
+}
+
+.editorTitulo {
+  margin: 0;
+  color: $tono-azul-650;
+  font-size: 1rem;
+}
+
+.editorPlantillas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.editorRotulo {
+  color: $gray-600;
+  font-size: 0.82rem;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.chip {
+  max-width: 100%;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba($tono-azul-500, 0.3);
+  background: $white;
+  color: $primary-blue-lighter;
+  font-family: inherit;
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background: rgba($tono-azul-500, 0.1);
+    border-color: $tono-azul-500;
+  }
+}
+
+// Una plantilla ya sumada al texto: otro toque la saca.
+.chipPuesta {
+  background: $tono-azul-500;
+  border-color: $tono-azul-500;
+  color: $white;
+
+  &:hover {
+    background: $primary-blue-lighter;
+    color: $white;
+  }
+}
+
+.editorCampo {
+  width: 100%;
+  min-height: 7rem;
+  max-height: 16rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: $radio-md;
+  border: 1px solid $gray-300;
+  background: $white;
+  color: $tono-azul-700;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: $font-weight-normal;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:focus {
+    border-color: $tono-azul-500;
+    box-shadow: 0 0 0 3px rgba($tono-azul-500, 0.12);
+  }
+
+  &::placeholder {
+    color: $gray-400;
+  }
+}
+
+.editorPie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.contador {
+  color: $gray-500;
+  font-size: 0.8rem;
+}
+
+.editorAcciones {
+  display: flex;
+  gap: 0.5rem;
+}
+
+// ── Plantillas ──
+
+.plantillas {
+  position: sticky;
+  top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+  border-radius: $radio-md;
+  border: 1px solid $gray-200;
+  background: $white;
+  box-shadow: $shadow-md;
+}
+
+.plantillasTitulo {
+  margin: 0;
+  color: $primary-blue-dark;
+  font-size: 1.15rem;
+}
+
+.plantillasAlta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.plantillasCampo {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: $radio-md;
+  border: 1px solid $gray-300;
+  background: $white;
+  color: $tono-azul-700;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: $font-weight-normal;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:focus {
+    border-color: $tono-azul-500;
+    box-shadow: 0 0 0 3px rgba($tono-azul-500, 0.12);
+  }
+
+  &:disabled {
+    background: $gray-100;
+    opacity: 0.6;
+  }
+}
+
+.plantillasAgregar {
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: 2.25rem;
+  padding: 0 1rem;
+  border-radius: $radio-md;
+  border: 1px solid rgba($tono-azul-500, 0.3);
+  background: rgba($tono-azul-500, 0.08);
+  color: $primary-blue-lighter;
+  font-family: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background: rgba($tono-azul-500, 0.14);
+    border-color: $tono-azul-500;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+.plantillasLista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plantillaItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.5rem 0.5rem 0.5rem 0.75rem;
+  border-radius: $radio-md;
+  background: $gray-50;
+  border: 1px solid $gray-200;
+}
+
+.plantillaTexto {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.plantillaQuitar {
+  flex-shrink: 0;
+  display: inline-flex;
+  padding: 0.25rem;
+  border: none;
+  border-radius: $radio-md;
+  background: none;
+  color: $gray-400;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+
+  &:hover {
+    color: $tono-rojo-500;
+    background: rgba($tono-rojo-500, 0.08);
+  }
+}
+
+.vacioChico {
+  margin: 0;
+  color: $gray-500;
+  font-size: 0.88rem;
+}
+
+@media (max-width: 1100px) {
+  .obsLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .plantillas {
+    position: static;
+  }
+}
+
+@media (max-width: 780px) {
+  .container {
+    padding: 1rem;
+  }
 }

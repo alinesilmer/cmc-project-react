@@ -2,9 +2,7 @@ import logo from "../../assets/logoCMC.png";
 
 export const CONSULTA_COMUN_CODE = "420351";
 export const SWISS_MEDICAL_CODE = "42010100";
-export const SWISS_MEDICAL_NOMBRE = "Swiss Medical";
-export const PAGE_SIZE = 500;
-export const MAX_API_PAGES = 50;
+export const SWISS_MEDICAL_NRO = 256;
 
 export const CMC_NAME = "Colegio Médico de Corrientes";
 export const CMC_PHONE = String(
@@ -21,11 +19,6 @@ export const CMC_LOGO_SRC =
 /** Obras sociales excluded from UI, PDF, and Excel. */
 export const EXCLUDED_OS = new Set([30, 377, 388, 380, 435, 216]);
 
-export const OBSERVATIONS_BY_OS: Readonly<Record<number, readonly string[]>> =
-  Object.freeze({
-    // 75: ["Solo aplica bajo autorización previa."], 292: ["Importe sujeto a última actualización del convenio."],
-  });
-
 const _moneyFormatter = new Intl.NumberFormat("es-AR", {
   style: "currency",
   currency: "ARS",
@@ -39,11 +32,3 @@ export const moneyFormatter = {
     return _moneyFormatter.format(Number.isFinite(n) ? n : 0);
   },
 };
-
-export const shortDateFormatter = new Intl.DateTimeFormat("es-AR", {
-  dateStyle: "short",
-});
-
-// Ruta relativa: la baseURL por ambiente la resuelve la instancia `http` compartida (src/app/lib/http.ts), no hay que armarla acá.
-export const BOLETIN_ENDPOINTS = [`/api/valores/boletin`];
-
