@@ -70,7 +70,7 @@ export interface ObraSocial {
   plazo_vencimiento?: number | null;
   fecha_alta_convenio?: string | null;
   obra_social_principal_id?: number | null;
-  // 1 = mes completo, 20 = del 20 al 20, 31 = último día del mes. Default 20 en el backend.
+  // 2 a 27 = del D al D (20 = del 20 al 20), 31 = último día del mes. Default 20 en el backend.
   dia_corte?: number;
   // Trabaja con documentación digital: los códigos que la exigen se marcan en «Códigos por obra social».
   documentacion_digital?: boolean;
@@ -183,8 +183,16 @@ export interface ObraSocialFormData {
   documentacion_digital: boolean;
 }
 
-/** `dia_corte` que el backend interpreta como "último día del mes" (lo recorta al largo de cada mes). */
+/** `dia_corte` que se guarda para "último día del mes": el backend lo recorta al largo de cada mes. */
 export const DIA_CORTE_ULTIMO = 31;
+/** Desde este día en adelante el corte es siempre el último día del mes. */
+export const DIA_CORTE_DESDE_ULTIMO = 28;
+
+/** Pasa a "último día del mes" (31) cualquier día desde el 28; el resto queda como lo escribió el usuario. */
+export function normalizarDiaCorte(valor: string): string {
+  const n = Number(valor);
+  return valor.trim() !== "" && n >= DIA_CORTE_DESDE_ULTIMO ? String(DIA_CORTE_ULTIMO) : valor;
+}
 
 export const EMPTY_FORM: ObraSocialFormData = {
   nro_obra_social: "",
@@ -251,8 +259,8 @@ export function validateObraSocialForm(data: ObraSocialFormData): FormErrors {
     errors.dia_corte = "Elegí el día de corte del período.";
   } else {
     const diaCorte = Number(data.dia_corte.trim());
-    if (!Number.isInteger(diaCorte) || diaCorte < 1 || diaCorte > 31)
-      errors.dia_corte = "Tiene que ser un día entre 1 y 31.";
+    if (!Number.isInteger(diaCorte) || diaCorte < 2 || diaCorte > DIA_CORTE_ULTIMO)
+      errors.dia_corte = "Tiene que ser un día entre 2 y 27, o el último día del mes.";
   }
 
   if (data.plazo_vencimiento === "otro" && !data.plazo_custom.trim())
