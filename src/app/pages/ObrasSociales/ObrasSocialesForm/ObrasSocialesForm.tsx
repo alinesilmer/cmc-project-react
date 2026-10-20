@@ -600,6 +600,7 @@ export default function ObrasSocialesForm() {
           replicar_nomencladores: false,
           replicar_valores: false,
           dia_corte: String(data.dia_corte ?? 20),
+          documentacion_digital: !!data.documentacion_digital,
         });
 
         if (data.obra_social_principal) {
@@ -1204,10 +1205,29 @@ export default function ObrasSocialesForm() {
           )}
         </section>
 
-        {/* ── Sección 5: Documentos ── */}
+        {/* ── Sección 5: Documentación digital ── */}
         <section className={s.section}>
           <h2 className={s.sectionTitle}>
             <span className={s.paso} aria-hidden="true">5</span>
+            Documentación Digital
+          </h2>
+          <label className={s.replicarItem}>
+            <input
+              type="checkbox"
+              checked={form.documentacion_digital}
+              onChange={(e) => set("documentacion_digital", e.target.checked)}
+            />
+            <span>
+              <strong>Habilitada</strong>
+              <small>Los códigos que llevan documentación se marcan en «Códigos por obra social».</small>
+            </span>
+          </label>
+        </section>
+
+        {/* ── Sección 6: Documentos ── */}
+        <section className={s.section}>
+          <h2 className={s.sectionTitle}>
+            <span className={s.paso} aria-hidden="true">6</span>
             Documentos
           </h2>
           <div className={s.docGrid}>

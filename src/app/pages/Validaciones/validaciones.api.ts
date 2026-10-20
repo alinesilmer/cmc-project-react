@@ -1,8 +1,9 @@
 // Cliente del módulo de validaciones — /api/validaciones (cmc_api).
 
-import { delJSON, getJSON, postForm, postJSON } from "@/app/shared/lib/http";
+import { delJSON, getJSON, http, postForm, postJSON } from "@/app/shared/lib/http";
 import type {
   CodigoNomenclador,
+  DocumentoDigital,
   Periodo,
   Prestacion,
 } from "./validaciones.types";
@@ -42,6 +43,16 @@ interface PrestacionApi {
   anio: number;
   obra_social: number;
   orden?: string | null;
+  documentos?: {
+    id: number;
+    nombre: string;
+    url: string | null;
+    content_type: string;
+    size: number;
+    origen: "medico" | "colegio";
+    posicion?: number;
+  }[];
+  documentacion?: Prestacion["documentacion"];
 }
 
 interface CodigoApi {
@@ -53,6 +64,7 @@ interface CodigoApi {
   coseguro: number | string;
   admitido: boolean;
   motivo: string | null;
+  requiere_documentacion?: boolean;
 }
 
 // Los DECIMAL de MySQL llegan como string por JSON.
@@ -77,6 +89,18 @@ const toPrestacion = (p: PrestacionApi): Prestacion => ({
   anio: p.anio,
   obraSocial: p.obra_social,
   orden: p.orden ?? null,
+  documentos: (p.documentos ?? []).map(
+    (d): DocumentoDigital => ({
+      id: d.id,
+      nombre: d.nombre,
+      url: d.url,
+      contentType: d.content_type,
+      size: d.size,
+      origen: d.origen,
+      posicion: d.posicion ?? 0,
+    })
+  ),
+  documentacion: p.documentacion ?? "no_aplica",
 });
 
 // ─── Lecturas ─────────────────────────────────────────────────────────────────
@@ -138,6 +162,7 @@ export const buscarCodigos = async (
     coseguro: num(c.coseguro),
     admitido: c.admitido,
     motivo: c.motivo,
+    requiereDocumentacion: c.requiere_documentacion ?? false,
   }));
 };
 
@@ -169,27 +194,69 @@ export interface CargarPrestacionPayload {
   nro_socio?: number;
 }
 
-/** POST /api/validaciones/prestaciones — carga manual (Boreal / Omint) y autorización en línea (Sancor / OSPJN / Nobis / OSPM). */
+/**
+ * POST /api/validaciones/prestaciones — carga manual (Boreal / Omint) y autorización en línea (Sancor / OSPJN / Nobis / OSPM).
+ * Con `documentos` va por `/prestaciones/documentada` (multipart): los archivos se graban junto con la prestación.
+ */
 export const cargarPrestacion = async (
-  payload: CargarPrestacionPayload
+  payload: CargarPrestacionPayload,
+  documentos: File[] = []
 ): Promise<Prestacion> => {
-  const r = await postJSON<PrestacionApi>(`${BASE}/prestaciones`, payload, {
-    timeout: TIMEOUT_OS_EN_LINEA,
+  if (documentos.length === 0) {
+    const r = await postJSON<PrestacionApi>(`${BASE}/prestaciones`, payload, {
+      timeout: TIMEOUT_OS_EN_LINEA,
+    });
+    return toPrestacion(r);
+  }
+  const form = new FormData();
+  form.append("datos", JSON.stringify(payload));
+  documentos.forEach((f) => form.append("documentos", f));
+  const r = await postForm<PrestacionApi>(`${BASE}/prestaciones/documentada`, form, {
+    timeout: TIMEOUT_OS_EN_LINEA * 2,
   });
   return toPrestacion(r);
 };
 
-/** POST /api/validaciones/prestaciones/{id}/orden — sube la orden en PDF. */
-export const adjuntarOrden = async (
+const qsSocio = (nroSocio?: number) => (nroSocio ? `?nro_socio=${encodeURIComponent(nroSocio)}` : "");
+
+/** POST /api/validaciones/prestaciones/{id}/documentos — suma archivos (PDF, JPG o PNG) a la prestación. */
+export const agregarDocumentos = async (
   id: string,
+  archivos: File[],
+  nroSocio?: number
+): Promise<Prestacion> => {
+  const form = new FormData();
+  archivos.forEach((f) => form.append("documentos", f));
+  const r = await postForm<PrestacionApi>(`${BASE}/prestaciones/${id}/documentos${qsSocio(nroSocio)}`, form);
+  return toPrestacion(r);
+};
+
+/** PUT /api/validaciones/prestaciones/{id}/documentos/{doc} — cambia un documento conservando su lugar. */
+export const reemplazarDocumento = async (
+  id: string,
+  docId: number,
   archivo: File,
   nroSocio?: number
 ): Promise<Prestacion> => {
   const form = new FormData();
   form.append("archivo", archivo);
-  const qs = nroSocio ? `?nro_socio=${encodeURIComponent(nroSocio)}` : "";
-  const r = await postForm<PrestacionApi>(`${BASE}/prestaciones/${id}/orden${qs}`, form);
-  return toPrestacion(r);
+  const { data } = await http.put<PrestacionApi>(
+    `${BASE}/prestaciones/${id}/documentos/${docId}${qsSocio(nroSocio)}`,
+    form
+  );
+  return toPrestacion(data);
+};
+
+/** DELETE /api/validaciones/prestaciones/{id}/documentos/{doc} — 409 si es el último de una prestación que los exige. */
+export const eliminarDocumento = async (
+  id: string,
+  docId: number,
+  nroSocio?: number
+): Promise<Prestacion> => {
+  const { data } = await http.delete<PrestacionApi>(
+    `${BASE}/prestaciones/${id}/documentos/${docId}${qsSocio(nroSocio)}`
+  );
+  return toPrestacion(data);
 };
 
 /** DELETE /api/validaciones/prestaciones/{id} — baja lógica (EXISTE='N'). */

@@ -10,9 +10,10 @@
 
 .filtrosTop {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.75rem;
 
+  @media (max-width: 960px) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   @media (max-width: 720px) { grid-template-columns: 1fr; }
 }
 
@@ -54,6 +55,34 @@
   justify-content: space-between;
   gap: 0.625rem;
   flex-wrap: wrap;
+}
+
+// Barra de acciones sobre las filas marcadas, al estilo del Django Admin.
+.barraAcciones {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
+  background: $superficie;
+}
+.accionFila {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+
+  label { font-size: 0.85rem; color: $tinta-2; }
+}
+.accionSelect { min-width: 18rem; max-width: 100%; }
+.docSi { font-weight: 700; color: $tono-verde-550; }
+.docNo { color: $tinta-3; }
+.noAplica {
+  margin: 0;
+  padding-left: 1.125rem;
+  font-size: 0.85rem;
+  color: $tinta-2;
 }
 
 .filaSel td { background: $acento-tinte; }

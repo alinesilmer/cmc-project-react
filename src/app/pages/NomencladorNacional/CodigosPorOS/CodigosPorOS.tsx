@@ -14,6 +14,7 @@ import { usePermisos } from "../../../auth/usePermisos";
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import { getEspecialidades } from "../../Especialidades/especialidades.api";
 import {
+  accionCodigosOS,
   cambiarEstadoCodigoOS,
   darDeAltaCodigos,
   getCodigoOS,
@@ -21,6 +22,8 @@ import {
   updateCodigoOS,
 } from "../nomenclador.api";
 import type {
+  AccionCodigosOS,
+  AccionCodigosResult,
   AltaCodigoResultado,
   CodigoObraSocialOut,
   CodigoPorOSItem,
@@ -55,6 +58,39 @@ function quienFactura(i: CodigoPorOSItem): React.ReactNode {
   return <span className={styles.peligro}>Nadie</span>;
 }
 
+type AccionElegida = "alta" | AccionCodigosOS;
+
+const TEXTO_ACCION: Record<AccionCodigosOS, string> = {
+  suspender: "Suspender códigos",
+  reactivar: "Reactivar códigos",
+  activar_documentacion: "Activar documentación digital",
+  desactivar_documentacion: "Desactivar documentación digital",
+};
+
+/**
+ * Las opciones del menú de acciones según lo marcado en la tabla. Cada una trae los ids a los que
+ * aplica: el resto de lo marcado no corresponde y no se toca. Las de documentación digital sólo
+ * aparecen si la obra social la tiene habilitada.
+ */
+function opcionesDeAccion(
+  marcados: CodigoPorOSItem[],
+  conDocumentacion: boolean,
+): { id: AccionElegida; label: string; ids: number[] }[] {
+  const ids = (f: (i: CodigoPorOSItem) => boolean) => marcados.filter(f).map((i) => i.nomenclador_id);
+  const sinAlta = ids((i) => i.estado === "sin_alta");
+  const activos = ids((i) => i.estado === "sin_precio" || i.estado === "con_precio");
+  const suspendidos = ids((i) => i.estado === "suspendido");
+  const sinDoc = ids((i) => i.estado !== "sin_alta" && !i.requiere_documentacion);
+  const conDoc = ids((i) => i.estado !== "sin_alta" && i.requiere_documentacion);
+  const out: { id: AccionElegida; label: string; ids: number[] }[] = [];
+  if (sinAlta.length) out.push({ id: "alta", label: `Dar de alta (${sinAlta.length})`, ids: sinAlta });
+  if (activos.length) out.push({ id: "suspender", label: TEXTO_ACCION.suspender, ids: activos });
+  if (suspendidos.length) out.push({ id: "reactivar", label: TEXTO_ACCION.reactivar, ids: suspendidos });
+  if (conDocumentacion && sinDoc.length) out.push({ id: "activar_documentacion", label: TEXTO_ACCION.activar_documentacion, ids: sinDoc });
+  if (conDocumentacion && conDoc.length) out.push({ id: "desactivar_documentacion", label: TEXTO_ACCION.desactivar_documentacion, ids: conDoc });
+  return out;
+}
+
 /** Etapa 3 del nomenclador — "Códigos por obra social". */
 export default function CodigosPorOS() {
   const [params, setParams] = useSearchParams();
@@ -66,11 +102,20 @@ export default function CodigosPorOS() {
   const [tipo, setTipo] = useState<TipoCodigo | "">("");
   const [q, setQ] = useState(params.get("codigo") ?? "");
   const [qDebounced, setQDebounced] = useState(q);
+  // Rango de códigos (sólo dígitos). Se aplica con una pausa, igual que el buscador.
+  const [desde, setDesde] = useState("");
+  const [hasta, setHasta] = useState("");
+  const [rango, setRango] = useState({ desde: "", hasta: "" });
   const [page, setPage] = useState(1);
   const [sel, setSel] = useState<Map<number, CodigoPorOSItem>>(new Map());
   const [altaOpen, setAltaOpen] = useState(false);
   const [editando, setEditando] = useState<number | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
+  // Barra de acciones (estilo Django Admin): la elegida, la confirmación pendiente y el resultado.
+  const [accion, setAccion] = useState<AccionElegida | "">("");
+  const [aConfirmar, setAConfirmar] = useState<{ accion: AccionCodigosOS; ids: number[] } | null>(null);
+  const [ejecutando, setEjecutando] = useState(false);
+  const [resultado, setResultado] = useState<AccionCodigosResult | null>(null);
 
   const showToast = useCallback((type: Toast["type"], msg: string) => {
     setToast({ type, msg });
@@ -82,9 +127,13 @@ export default function CodigosPorOS() {
     return () => clearTimeout(t);
   }, [q]);
   useEffect(() => {
+    const t = setTimeout(() => setRango({ desde, hasta }), 300);
+    return () => clearTimeout(t);
+  }, [desde, hasta]);
+  useEffect(() => {
     setPage(1);
     setSel(new Map());
-  }, [os, filtro, qDebounced, tipo]);
+  }, [os, filtro, qDebounced, tipo, rango]);
 
   const osQuery = useObrasSociales();
   const osOptions = useMemo(
@@ -97,13 +146,15 @@ export default function CodigosPorOS() {
   const osNombre = osOptions.find((o) => o.id === os)?.label ?? "";
 
   const listado = useQuery({
-    queryKey: ["codigos-por-os", os, filtro, qDebounced, tipo, page],
+    queryKey: ["codigos-por-os", os, filtro, qDebounced, tipo, rango, page],
     queryFn: () =>
       listCodigosPorOS({
         obra_social_nro: os as number,
         estado: filtro === "todos" ? undefined : filtro,
         q: qDebounced.trim() || undefined,
         tipo: tipo || undefined,
+        codigo_desde: rango.desde ? Number(rango.desde) : undefined,
+        codigo_hasta: rango.hasta ? Number(rango.hasta) : undefined,
         page,
         size: PAGE_SIZE,
       }),
@@ -141,8 +192,45 @@ export default function CodigosPorOS() {
   }
 
   const items = datos?.items ?? [];
-  const seleccionables = items.filter((i) => i.estado === "sin_alta");
   const totalPaginas = datos ? Math.max(1, Math.ceil(datos.total / PAGE_SIZE)) : 1;
+  const conDocumentacion = !!datos?.documentacion_digital;
+  const columnas = 6 + (conDocumentacion ? 1 : 0);
+
+  // Qué se puede hacer con lo marcado: las opciones del menú salen de ahí.
+  const marcados = useMemo(() => [...sel.values()], [sel]);
+  const opciones = useMemo(() => opcionesDeAccion(marcados, conDocumentacion), [marcados, conDocumentacion]);
+  useEffect(() => {
+    if (accion && !opciones.some((o) => o.id === accion)) setAccion("");
+  }, [accion, opciones]);
+
+  function ejecutarAccion() {
+    if (!accion) return;
+    if (accion === "alta") {
+      setAltaOpen(true);
+      return;
+    }
+    const op = opciones.find((o) => o.id === accion);
+    if (op) setAConfirmar({ accion, ids: op.ids });
+  }
+
+  async function confirmarAccion() {
+    if (os == null || !aConfirmar) return;
+    setEjecutando(true);
+    try {
+      const r = await accionCodigosOS({ obra_social_nro: os, nomenclador_ids: aConfirmar.ids, accion: aConfirmar.accion });
+      setAConfirmar(null);
+      setAccion("");
+      setSel(new Map());
+      listado.refetch();
+      if (r.resultados.some((x) => x.estado === "no_aplica")) setResultado(r);
+      else showToast("success", `${TEXTO_ACCION[aConfirmar.accion]}: ${r.aplicados} código${r.aplicados === 1 ? "" : "s"}.`);
+    } catch (e) {
+      setAConfirmar(null);
+      showToast("error", detalleError(e, "No se pudo aplicar la acción."));
+    } finally {
+      setEjecutando(false);
+    }
+  }
 
   return (
     <div className={base.container}>
@@ -191,6 +279,30 @@ export default function CodigosPorOS() {
               {TIPOS_CODIGO.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
           </div>
+          <div className={base.formGroup}>
+            <label className={base.formLabel} htmlFor="cpo-desde">Código desde</label>
+            <input
+              id="cpo-desde"
+              className={base.formInput}
+              inputMode="numeric"
+              value={desde}
+              onChange={(e) => setDesde(e.target.value.replace(/\D/g, ""))}
+              placeholder="Ej: 170000"
+              disabled={os === null}
+            />
+          </div>
+          <div className={base.formGroup}>
+            <label className={base.formLabel} htmlFor="cpo-hasta">Código hasta</label>
+            <input
+              id="cpo-hasta"
+              className={base.formInput}
+              inputMode="numeric"
+              value={hasta}
+              onChange={(e) => setHasta(e.target.value.replace(/\D/g, ""))}
+              placeholder="Ej: 420200"
+              disabled={os === null}
+            />
+          </div>
         </div>
 
         {os === null ? (
@@ -218,13 +330,25 @@ export default function CodigosPorOS() {
             </div>
 
             {puedeEditar && (
-              <div className={styles.barraSel}>
-                <span className={base.hintText}>
-                  {sel.size > 0 ? `${sel.size} código${sel.size === 1 ? "" : "s"} seleccionado${sel.size === 1 ? "" : "s"}` : "Tildá códigos sin alta para darlos de alta juntos."}
+              <div className={styles.barraAcciones}>
+                <div className={styles.accionFila}>
+                  <label htmlFor="cpo-accion">Acción:</label>
+                  <select
+                    id="cpo-accion"
+                    className={`${base.formSelect} ${styles.accionSelect}`}
+                    value={accion}
+                    onChange={(e) => setAccion(e.target.value as AccionElegida | "")}
+                  >
+                    <option value="">---------</option>
+                    {opciones.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+                  </select>
+                  <button type="button" className={base.btnGhost} disabled={!accion || ejecutando} onClick={ejecutarAccion}>
+                    Ir
+                  </button>
+                </div>
+                <span className={base.hintText} aria-live="polite">
+                  {sel.size} de {items.length} seleccionados
                 </span>
-                <button type="button" className={base.btnPrimary} disabled={sel.size === 0} onClick={() => setAltaOpen(true)}>
-                  Dar de alta {sel.size > 0 ? sel.size : ""} en {osNombre.split(" · ")[1] ?? "la obra social"}
-                </button>
               </div>
             )}
 
@@ -236,13 +360,13 @@ export default function CodigosPorOS() {
                       {puedeEditar && (
                         <input
                           type="checkbox"
-                          aria-label="Seleccionar los códigos sin alta de esta página"
-                          disabled={seleccionables.length === 0}
-                          checked={seleccionables.length > 0 && seleccionables.every((i) => sel.has(i.nomenclador_id))}
+                          aria-label="Seleccionar todos los códigos de esta página"
+                          disabled={items.length === 0}
+                          checked={items.length > 0 && items.every((i) => sel.has(i.nomenclador_id))}
                           onChange={(e) =>
                             setSel((prev) => {
                               const n = new Map(prev);
-                              for (const i of seleccionables) {
+                              for (const i of items) {
                                 if (e.target.checked) n.set(i.nomenclador_id, i);
                                 else n.delete(i.nomenclador_id);
                               }
@@ -256,18 +380,19 @@ export default function CodigosPorOS() {
                     <th>Descripción en la obra social</th>
                     <th>Quién factura</th>
                     <th>Estado</th>
+                    {conDocumentacion && <th>Doc. digital</th>}
                     <th />
                   </tr>
                 </thead>
                 <tbody>
                   {listado.isLoading ? (
-                    <tr><td colSpan={6} className={base.loadingCell}>Cargando…</td></tr>
+                    <tr><td colSpan={columnas} className={base.loadingCell}>Cargando…</td></tr>
                   ) : items.length === 0 ? (
-                    <tr><td colSpan={6} className={base.emptyCell}>No hay códigos con ese filtro.</td></tr>
+                    <tr><td colSpan={columnas} className={base.emptyCell}>No hay códigos con ese filtro.</td></tr>
                   ) : items.map((i) => (
                     <tr key={i.nomenclador_id} className={sel.has(i.nomenclador_id) ? styles.filaSel : undefined}>
                       <td>
-                        {puedeEditar && i.estado === "sin_alta" && (
+                        {puedeEditar && (
                           <input type="checkbox" aria-label={`Seleccionar ${i.codigo}`} checked={sel.has(i.nomenclador_id)} onChange={() => toggle(i)} />
                         )}
                       </td>
@@ -279,6 +404,11 @@ export default function CodigosPorOS() {
                       </td>
                       <td>{quienFactura(i)}</td>
                       <td><EstadoCodigoPill estado={i.estado} /></td>
+                      {conDocumentacion && (
+                        <td className={i.requiere_documentacion ? styles.docSi : styles.docNo}>
+                          {i.requiere_documentacion ? "Sí" : "—"}
+                        </td>
+                      )}
                       <td className={styles.acciones}>
                         {i.estado === "sin_alta" && puedeEditar && (
                           <button type="button" className={base.btnGhost} onClick={() => { setSel(new Map([[i.nomenclador_id, i]])); setAltaOpen(true); }}>
@@ -323,7 +453,7 @@ export default function CodigosPorOS() {
           isOpen={altaOpen}
           os={os}
           osNombre={osNombre}
-          items={[...sel.values()]}
+          items={marcados.filter((i) => i.estado === "sin_alta")}
           onClose={() => setAltaOpen(false)}
           onHecho={(n) => {
             setAltaOpen(false);
@@ -340,6 +470,40 @@ export default function CodigosPorOS() {
           onClose={() => setEditando(null)}
           onGuardado={(msg) => { setEditando(null); listado.refetch(); showToast("success", msg); }}
         />
+      )}
+
+      {aConfirmar && (
+        <Modal isOpen onClose={() => !ejecutando && setAConfirmar(null)} title={TEXTO_ACCION[aConfirmar.accion]} size="small">
+          <div className={styles.modalBody}>
+            <p>
+              Se aplica a <strong>{aConfirmar.ids.length}</strong> de los <strong>{sel.size}</strong> códigos seleccionados
+              {aConfirmar.ids.length < sel.size ? ". Los demás no corresponden a esta acción y no se tocan." : "."}
+            </p>
+            <div className={styles.modalFooter}>
+              <span className={styles.flex1} />
+              <button type="button" className={base.btnGhost} onClick={() => setAConfirmar(null)} disabled={ejecutando}>Cancelar</button>
+              <button type="button" className={base.btnPrimary} onClick={() => void confirmarAccion()} disabled={ejecutando}>
+                {ejecutando ? <><span className={base.spinner} /> Aplicando…</> : "Confirmar"}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+      {resultado && (
+        <Modal isOpen onClose={() => setResultado(null)} title={TEXTO_ACCION[resultado.accion]} size="small">
+          <div className={styles.modalBody}>
+            <p>Se aplicó a <strong>{resultado.aplicados}</strong> código{resultado.aplicados === 1 ? "" : "s"}. No correspondió en:</p>
+            <ul className={styles.noAplica}>
+              {resultado.resultados.filter((x) => x.estado === "no_aplica").map((x) => (
+                <li key={x.nomenclador_id}><strong>{x.codigo}</strong>: {x.motivo}</li>
+              ))}
+            </ul>
+            <div className={styles.modalFooter}>
+              <span className={styles.flex1} />
+              <button type="button" className={base.btnPrimary} onClick={() => setResultado(null)}>Cerrar</button>
+            </div>
+          </div>
+        </Modal>
       )}
 
       <AnimatePresence>
@@ -513,7 +677,7 @@ function EditarAltaModal({
   const [par, setPar] = useState<CodigoObraSocialOut | null>(null);
   const [form, setForm] = useState({
     descripcion: "", categoria: "", complejidad: "" as Complejidad | "", requiere_autorizacion: false,
-    cantidad_ayudantes: "", observacion: "", sin_restriccion: false, especialidades: [] as number[],
+    requiere_documentacion: false, cantidad_ayudantes: "", observacion: "", sin_restriccion: false, especialidades: [] as number[],
   });
   const [guardando, setGuardando] = useState(false);
   // Quitar especialidades con precio: qué precios se cerrarían si se confirma.
@@ -540,6 +704,7 @@ function EditarAltaModal({
           categoria: p.categoria ?? "",
           complejidad: p.complejidad ?? "",
           requiere_autorizacion: !!p.requiere_autorizacion,
+          requiere_documentacion: p.requiere_documentacion,
           cantidad_ayudantes: p.cantidad_ayudantes != null ? String(p.cantidad_ayudantes) : "",
           observacion: p.observacion ?? "",
           sin_restriccion: p.sin_restriccion_especialidad,
@@ -562,6 +727,8 @@ function EditarAltaModal({
         categoria: form.categoria || null,
         complejidad: form.complejidad || null,
         requiere_autorizacion: form.requiere_autorizacion,
+        // Con la obra social sin documentación digital el check no se puede tocar: no se manda.
+        ...(par?.documentacion_digital ? { requiere_documentacion: form.requiere_documentacion } : {}),
         cantidad_ayudantes: form.cantidad_ayudantes.trim() === "" ? null : Number(form.cantidad_ayudantes),
         observacion: form.observacion.trim() || null,
         sin_restriccion_especialidad: form.sin_restriccion,
@@ -639,6 +806,18 @@ function EditarAltaModal({
             <label className={styles.check}>
               <input type="checkbox" checked={form.requiere_autorizacion} onChange={(e) => setForm((f) => ({ ...f, requiere_autorizacion: e.target.checked }))} />
               Requiere autorización de la obra social
+            </label>
+            <label className={styles.check}>
+              <input
+                type="checkbox"
+                checked={form.requiere_documentacion}
+                disabled={!par.documentacion_digital}
+                onChange={(e) => setForm((f) => ({ ...f, requiere_documentacion: e.target.checked }))}
+              />
+              Lleva documentación digital
+              {!par.documentacion_digital && (
+                <span className={base.hintText}> (la obra social no la tiene habilitada)</span>
+              )}
             </label>
 
             <h3 className={styles.subtitulo}>Quién lo factura en esta obra social</h3>

@@ -17,7 +17,9 @@ import ConfirmActionModal from "../components/ConfirmActionModal";
 import ExportPanel from "./export/ExportPanel";
 import VistaPanel from "./vista/VistaPanel";
 import type { FiltrosVista, OrdenDireccion, OrdenVista, VistaOpciones } from "./vista/types";
-import { cargarVistaSesion, COLUMNAS_VISTA_DISPONIBLES, guardarVistaSesion, ORDEN_TIPOS, PESO_COLUMNA } from "./vista/types";
+import {
+  cargarVistaSesion, COLUMNAS_SOLO_CON_DOCUMENTACION, COLUMNAS_VISTA_DISPONIBLES, guardarVistaSesion, ORDEN_TIPOS, PESO_COLUMNA,
+} from "./vista/types";
 import type { FilaAcciones, PrestacionConSocio } from "./FilaPrestacion";
 import CabeceraExpediente, { ALTO_BARRA_COMPACTA } from "./CabeceraExpediente";
 import { useRestaurarPosicion } from "./useRestaurarPosicion";
@@ -26,6 +28,7 @@ import {
 } from "../CargaFacturacion/capaCargaContexto";
 import { cargarCatalogos } from "../CargaFacturacion/catalogosCarga";
 import GrupoTabla from "./GrupoTabla";
+import PestanaDocumentacion from "./documentacion/PestanaDocumentacion";
 import { sumaEquipo, sumarTotales } from "./totales";
 import type { GrupoAcciones, VistaGrupo } from "./GrupoTabla";
 import { inferirEquipos } from "./equipo";
@@ -106,6 +109,9 @@ const pasaFiltros = (p: PrestacionConSocio, f: FiltrosVista): boolean => {
   if (f.revisado !== undefined && p.revisado !== f.revisado) return false;
   if (f.cod_medicos && f.cod_medicos.length > 0 && !f.cod_medicos.includes(p.cod_medico)) return false;
   if (f.id_especialidad !== undefined && (p.id_especialidad ?? null) !== f.id_especialidad) return false;
+  if (f.documentacion === "con" && (p.documentos_count ?? 0) === 0) return false;
+  if (f.documentacion === "falta" && !(p.requiere_documentacion && (p.documentos_count ?? 0) === 0)) return false;
+  if (f.documentacion === "no_requiere" && p.requiere_documentacion) return false;
   return true;
 };
 
@@ -153,7 +159,7 @@ const marcarRevisadoLocal = (detalle: FacturaDetalleResponse, ids: number[], val
 const hayFiltrosActivos = (f: FiltrosVista): boolean =>
   Boolean(f.fecha_desde || f.fecha_hasta || f.revisado !== undefined
     || (f.tipos && f.tipos.length > 0) || (f.cod_medicos && f.cod_medicos.length > 0)
-    || f.id_especialidad !== undefined);
+    || f.id_especialidad !== undefined || f.documentacion !== undefined);
 
 const FacturaDetalle: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -170,6 +176,8 @@ const FacturaDetalle: React.FC = () => {
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
   const [vistaOpen, setVistaOpen] = useState(false);
+  // Obras sociales con documentación digital: el detalle tiene una segunda pestaña.
+  const [pestana, setPestana] = useState<"detalle" | "documentacion">("detalle");
   // Con la barra compacta fija a la vista, el encabezado de la tabla se pega debajo de ella.
   const [barraCompacta, setBarraCompacta] = useState(false);
   // La vista se recuerda en la sesión: al volver de editar/replicar, o de otra factura,
@@ -240,9 +248,12 @@ const FacturaDetalle: React.FC = () => {
     if (!detalle) return;
     const nextValue = !p.revisado;
     setDetalle(marcarRevisadoLocal(detalle, [p.id], nextValue));
-    marcarRevisado(nextValue ? { marcados: [p.id] } : { desmarcados: [p.id] }).catch(() => {
+    marcarRevisado(nextValue ? { marcados: [p.id] } : { desmarcados: [p.id] }).catch((e) => {
       setDetalle((cur) => cur ? marcarRevisadoLocal(cur, [p.id], !nextValue) : cur);
-      notify("No se pudo actualizar el estado de auditoría.", "error");
+      // El servidor explica por qué (por ejemplo, que la prestación exige documentación y no la tiene).
+      notify(e?.response?.status === 409
+        ? detailMessage(e?.response?.data?.detail)
+        : "No se pudo actualizar el estado de auditoría.", "error");
     });
   };
 
@@ -547,9 +558,15 @@ const FacturaDetalle: React.FC = () => {
     return gruposMedicos;
   }, [principales, hijosPorCabeza, vistaOpciones.agrupacion, vistaOpciones.orden, vistaOpciones.direccion]);
 
+  const conDocumentacion = !!detalle?.documentacion_digital;
+  const mostrarId = vistaOpciones.columnas.includes("id");
+  // El ID se dibuja aparte (antes del socio): acá van las demás columnas elegidas.
   const columnasActivas = useMemo(
-    () => COLUMNAS_VISTA_DISPONIBLES.filter((c) => vistaOpciones.columnas.includes(c.key)),
-    [vistaOpciones.columnas],
+    () => COLUMNAS_VISTA_DISPONIBLES.filter((c) =>
+      c.key !== "id"
+      && vistaOpciones.columnas.includes(c.key)
+      && (conDocumentacion || !COLUMNAS_SOLO_CON_DOCUMENTACION.includes(c.key))),
+    [vistaOpciones.columnas, conDocumentacion],
   );
 
   // Factura cerrada (estado distinto de abierta): no se modifica nada, así que se saca la
@@ -558,21 +575,24 @@ const FacturaDetalle: React.FC = () => {
 
   const columnasConPeso = useMemo(() => {
     const activos: { id: string; peso: number }[] = [
-      { id: "id", peso: PESO_COLUMNA.id },
+      ...(mostrarId ? [{ id: "id", peso: PESO_COLUMNA.id }] : []),
       { id: "socio", peso: PESO_COLUMNA.socio },
       ...columnasActivas.map((c) => ({ id: c.key, peso: PESO_COLUMNA[c.key] })),
       ...(conAcciones ? [{ id: "acciones", peso: PESO_COLUMNA.acciones }] : []),
     ];
     const suma = activos.reduce((s, c) => s + c.peso, 0) || 1;
     return activos.map((c) => ({ ...c, pct: (c.peso / suma) * 100 }));
-  }, [columnasActivas, conAcciones]);
+  }, [columnasActivas, conAcciones, mostrarId]);
 
   const esPorSocio = vistaOpciones.agrupacion === "por_socio";
 
   // Un complemento (version > 1) no mueve prestaciones de período (ver FilaPrestacion).
   const esComplemento = (detalle?.version ?? 1) > 1;
 
-  const columnasKeys = useMemo(() => columnasActivas.map((c) => c.key), [columnasActivas]);
+  const columnasKeys = useMemo(
+    () => [...(mostrarId ? (["id"] as const) : []), ...columnasActivas.map((c) => c.key)],
+    [columnasActivas, mostrarId],
+  );
   const anchos = useMemo(() => columnasConPeso.map((c) => c.pct), [columnasConPeso]);
 
   // Grupos con identidad estable: si un grupo tiene exactamente las mismas filas (por referencia).
@@ -642,6 +662,30 @@ const FacturaDetalle: React.FC = () => {
         onCompactaChange={setBarraCompacta}
       />
 
+      {detalle?.documentacion_digital && (
+        <nav className={styles.tabs} aria-label="Secciones de la factura">
+          <button
+            type="button"
+            className={`${styles.tab} ${pestana === "detalle" ? styles.tabActiva : ""}`}
+            aria-current={pestana === "detalle" ? "page" : undefined}
+            onClick={() => setPestana("detalle")}
+          >
+            Detalle
+          </button>
+          <button
+            type="button"
+            className={`${styles.tab} ${pestana === "documentacion" ? styles.tabActiva : ""}`}
+            aria-current={pestana === "documentacion" ? "page" : undefined}
+            onClick={() => setPestana("documentacion")}
+          >
+            Documentación
+          </button>
+        </nav>
+      )}
+
+      {pestana === "documentacion" && detalle?.documentacion_digital ? (
+        <PestanaDocumentacion detalle={detalle} filas={todasFlat} vista={vistaOpciones} />
+      ) : (
       <div className={styles.layout}>
         {detalle && (
           <div className={styles.toolbar}>
@@ -663,7 +707,7 @@ const FacturaDetalle: React.FC = () => {
             </colgroup>
             <thead>
               <tr>
-                <th>ID</th>
+                {mostrarId && <th>ID</th>}
                 <th>Socio</th>
                 {columnasActivas.map((c) => <th key={c.key}>{c.label}</th>)}
                 {conAcciones && <th className={styles.thActions}>Acciones</th>}
@@ -701,6 +745,7 @@ const FacturaDetalle: React.FC = () => {
           ))}
         </div>
       </div>
+      )}
 
       {pendingAction?.type === "eliminar" && (
         <ConfirmActionModal
@@ -767,6 +812,7 @@ const FacturaDetalle: React.FC = () => {
           onChange={setVistaOpciones}
           prestadores={prestadoresOpciones}
           onClose={() => setVistaOpen(false)}
+          conDocumentacion={conDocumentacion}
         />
       )}
     </div>

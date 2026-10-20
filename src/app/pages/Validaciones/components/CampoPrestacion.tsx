@@ -40,6 +40,7 @@ export default function CampoPrestacion({ campo, os, form, enviando, nroSocio, s
         value={valor}
         onChange={(codigo, opcion) => {
           setCampo(campo.name, codigo);
+          form.setRequiereDocumentacion(Boolean(opcion?.requiereDocumentacion));
           // Prellena el coseguro sugerido del código — solo si esta obra social pide ese campo (hoy Boreal).
           if (opcion && opcion.coseguro > 0 && os.campos?.some((c) => c.name === "coseguro")) {
             setCampo("coseguro", String(opcion.coseguro));

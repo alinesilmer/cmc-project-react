@@ -156,8 +156,24 @@ export interface Prestacion {
   mes: number;
   anio: number;
   obraSocial: number;
-  /** Nombre del archivo de la orden adjunta, si tiene. */
+  /** Ruta del primer documento adjunto (el front anterior mostraba sólo la orden). */
   orden?: string | null;
+  /** Documentación digital de la prestación. */
+  documentos: DocumentoDigital[];
+  /** `falta` = la obra social y el código la exigen y no tiene ningún archivo. */
+  documentacion: "no_aplica" | "falta" | "completa";
+}
+
+/** Un archivo de la documentación digital de una prestación. */
+export interface DocumentoDigital {
+  id: number;
+  nombre: string;
+  /** Ruta de la API: pide token, se abre con `abrirAdjunto()`. */
+  url: string | null;
+  contentType: string;
+  size: number;
+  origen: "medico" | "colegio";
+  posicion: number;
 }
 
 export interface Periodo {
@@ -188,6 +204,8 @@ export interface CodigoNomenclador {
   /** `false` cuando el médico no tiene habilitación por especialidad para el código, o no hay precio vigente para esa obra social. */
   admitido: boolean;
   motivo?: string | null;
+  /** El código exige documentación digital en esta obra social: el formulario pide los archivos. */
+  requiereDocumentacion?: boolean;
 }
 
 // ─── Helpers de presentación ──────────────────────────────────────────────────

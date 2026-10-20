@@ -78,10 +78,14 @@ export type CodigoPorOSItem = {
   especialidades_os: number;
   especialidades_plantilla: number;
   plantilla_sin_restriccion: boolean;
+  /** El código exige documentación digital en esta obra social. */
+  requiere_documentacion: boolean;
 };
 
 export type CodigosPorOSResult = {
   obra_social_nro: number;
+  /** La obra social tiene la documentación digital habilitada. */
+  documentacion_digital: boolean;
   total: number;
   page: number;
   size: number;
@@ -98,6 +102,9 @@ export type CodigoObraSocialOut = {
   categoria: string | null;
   complejidad: Complejidad | null;
   requiere_autorizacion: boolean | null;
+  requiere_documentacion: boolean;
+  /** La obra social tiene la documentación digital habilitada (si no, el check se deshabilita). */
+  documentacion_digital: boolean;
   cantidad_ayudantes: number | null;
   observacion: string | null;
   sin_restriccion_especialidad: boolean;
@@ -111,6 +118,7 @@ export type CodigoObraSocialUpdate = Partial<{
   categoria: string | null;
   complejidad: Complejidad | null;
   requiere_autorizacion: boolean | null;
+  requiere_documentacion: boolean;
   cantidad_ayudantes: number | null;
   observacion: string | null;
   sin_restriccion_especialidad: boolean;
@@ -140,6 +148,22 @@ export type AltaCodigosPayload = {
   items: AltaCodigoItem[];
   requiere_autorizacion?: boolean | null;
   cantidad_ayudantes?: number | null;
+};
+
+/** Acciones de la barra de la tabla de "Códigos por obra social". */
+export type AccionCodigosOS = "suspender" | "reactivar" | "activar_documentacion" | "desactivar_documentacion";
+
+export type AccionCodigoResultado = {
+  nomenclador_id: number;
+  codigo: string;
+  estado: "aplicado" | "no_aplica";
+  motivo: string | null;
+};
+
+export type AccionCodigosResult = {
+  accion: AccionCodigosOS;
+  aplicados: number;
+  resultados: AccionCodigoResultado[];
 };
 
 export type AltaCodigoResultado = {

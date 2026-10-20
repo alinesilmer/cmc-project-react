@@ -5,6 +5,7 @@ import { FilePlus2, AlertTriangle, ArrowLeft } from "lucide-react";
 
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
 import {
+  agregarDocumentosPrestacion,
   crearPrestaciones,
   crearPrestacionesComplementaria,
   fetchPrestacion,
@@ -36,6 +37,7 @@ import NumericInput from "../components/NumericInput";
 import { useCapaCarga } from "./capaCargaContexto";
 import { actualizarClinicas, cargarCatalogos, esperarCatalogos, useCatalogosCarga } from "./catalogosCarga";
 
+import DocumentacionSection from "./sections/DocumentacionSection";
 import { usePeriodoActivo } from "./hooks/usePeriodoActivo";
 import { useNomencladorPrecio } from "./hooks/useNomencladorPrecio";
 import { useAutorizacionExistente } from "./hooks/useAutorizacionExistente";
@@ -325,6 +327,8 @@ const CargaFacturacion: React.FC = () => {
     codigo: false,
   }));
   const [guardando, setGuardando] = useState(false);
+  // Documentación digital (alta): archivos que se suben junto con la prestación; son opcionales desde el Colegio.
+  const [documentosNuevos, setDocumentosNuevos] = useState<File[]>([]);
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [duplicado, setDuplicado] = useState<{
     mensaje: string;
@@ -903,6 +907,7 @@ const CargaFacturacion: React.FC = () => {
       setCoseguro("0");
       setNomencladorResetKey((k) => k + 1);
     }
+    setDocumentosNuevos([]);
     setTipoCalculo("A");
     setVia("T");
     setPorcentaje("100");
@@ -1264,6 +1269,18 @@ const CargaFacturacion: React.FC = () => {
         `Prestación guardada — total ${result.importe_total}` +
           (result.periodo ? ` (período ${result.periodo})` : ""),
       );
+      // Los documentos van a la prestación principal (la primera); si falla la subida, la prestación ya quedó guardada
+      // como «Falta documentación» y se completa desde la edición.
+      if (documentosNuevos.length > 0 && result.ids?.length) {
+        try {
+          await agregarDocumentosPrestacion(result.ids[0], documentosNuevos);
+        } catch (err: any) {
+          notify(
+            `La prestación se guardó, pero no se pudieron subir los documentos: ${(detailMessage(err?.response?.data?.detail) || "error al subirlos").replace(/\.$/, "")}. Completalos desde la edición.`,
+            "warning",
+          );
+        }
+      }
       // Antes de resetear: el reset puede limpiar el médico y la tabla lo necesita para seguir mostrando lo que se acaba de cargar.
       setUltimoMedico(medicoSeleccionado);
       setRefreshKey((k) => k + 1);
@@ -1714,6 +1731,16 @@ const CargaFacturacion: React.FC = () => {
                   : "Elegí un médico para ver sus códigos habilitados."
                 : undefined
             }
+          />
+
+          {/* 5b. Documentación digital: sólo si la obra social y el código la exigen (o ya tiene archivos). */}
+          <DocumentacionSection
+            requiere={!!precio?.requiere_documentacion}
+            prestacionId={isEdit && editId ? Number(editId) : null}
+            archivos={documentosNuevos}
+            onArchivosChange={setDocumentosNuevos}
+            disabled={guardando}
+            subtitulo={codNomenclador ? <>Código <strong>{codNomenclador}</strong></> : undefined}
           />
 
           {/* 6. Clínica — se oculta si el payee (Nº socio) ya es una clínica: sería redundante volver a pedirla acá. */}

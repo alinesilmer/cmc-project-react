@@ -1,0 +1,118 @@
+@use "@/app/styles/all.scss" as *;
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  min-width: 0;
+}
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2 $spacing-4;
+  padding: $spacing-2 $spacing-3;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: 8px;
+}
+
+.datos {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  min-width: 0;
+}
+
+.tipo {
+  flex: none;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 0.6875rem;
+  font-weight: $font-weight-bold;
+  color: $white;
+}
+.tipoPdf { background: #b91c1c; }
+.tipoImg { background: #1d4ed8; }
+
+.nombres {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.nombre {
+  overflow: hidden;
+  font-size: $font-size-sm;
+  color: $gray-900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.detalle {
+  font-size: 0.75rem;
+  color: $gray-600;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.boton,
+.icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  min-height: 2.125rem;
+  padding: 0 0.625rem;
+  font-size: 0.8125rem;
+  color: $gray-800;
+  background: $white;
+  border: 1px solid $gray-300;
+  border-radius: 8px;
+  cursor: pointer;
+
+  &:hover:not(:disabled) { background: $gray-100; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+.icono { width: 2.125rem; padding: 0; }
+.peligro { color: #b91c1c; border-color: #e5b4b4; }
+
+.zona {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: $spacing-4;
+  font-size: $font-size-sm;
+  text-align: center;
+  color: $gray-800;
+  background: $white;
+  border: 2px dashed $gray-400;
+  border-radius: 10px;
+  cursor: pointer;
+
+  span { font-size: 0.8125rem; color: $gray-600; }
+  &:hover { border-color: $primary-blue; }
+}
+.zonaActiva { border-color: $primary-blue; background: $gray-100; }
+.zonaOcupada { opacity: 0.6; cursor: not-allowed; }
+
+.error {
+  margin: 0;
+  font-size: $font-size-sm;
+  color: #b91c1c;
+}

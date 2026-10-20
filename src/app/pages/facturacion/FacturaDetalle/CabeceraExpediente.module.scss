@@ -205,6 +205,37 @@
 }
 
 .statTotal { background: $cuaderno-papel; border-bottom-right-radius: 0.875rem; }
+
+// Con documentación digital hay siete indicadores: cuatro por fila, y el total ocupa lo que queda de la segunda.
+.statsDoc {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+
+  .stat:nth-child(n + 5) { border-top: 1px solid $gray-200; }
+  .statTotal { grid-column: span 2; }
+
+  @media (max-width: 1100px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    .statTotal { grid-column: span 2; }
+  }
+  @media (max-width: 640px) {
+    grid-template-columns: minmax(0, 1fr);
+    .statTotal { grid-column: auto; }
+  }
+}
+
+.alertaCierre {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.625rem 1.5rem;
+  font-size: 0.82rem;
+  color: #7c2d12;
+  background: #fff7ed;
+  border-top: 1px solid #fdba74;
+
+  svg { flex: none; margin-top: 0.15rem; }
+}
 .statEtiqueta { font-size: 0.75rem; color: $tono-azul-400; }
 .statValor { font-size: 1.35rem; font-weight: 700; color: $carpeta-noche; }
 .statValorTotal { font-size: 1.6rem; font-weight: 800; color: $tono-verde-550; }

@@ -1,6 +1,6 @@
 // Espejo de `app/modules/facturacion/export/schemas.py` en el backend — los literals tienen que coincidir carácter por carácter con los que acepta la API.
 import type { Tipo } from "../../types";
-import type { ColumnaVista, OrdenAlfabetico, OrdenVista, VistaOpciones } from "../vista/types";
+import type { ColumnaVista, FiltroDocumentacion, OrdenAlfabetico, OrdenVista, VistaOpciones } from "../vista/types";
 
 type OrdenExport =
   | "nombre_socio" | "nro_socio" | "fecha_practica" | "fecha_carga" | "codigo"
@@ -46,6 +46,7 @@ interface ExportFiltros {
   cod_medicos?: string[];
   revisado?: boolean;
   tipos?: Tipo[];
+  documentacion?: FiltroDocumentacion;
 }
 
 export interface ExportOpciones extends ExportFiltros {
@@ -93,5 +94,6 @@ export const opcionesDesdeVista = (v: VistaOpciones): ExportOpciones => {
   if (v.cod_medicos && v.cod_medicos.length > 0) out.cod_medicos = v.cod_medicos;
   if (v.revisado !== undefined) out.revisado = v.revisado;
   if (v.tipos && v.tipos.length > 0) out.tipos = v.tipos;
+  if (v.documentacion) out.documentacion = v.documentacion;
   return out;
 };

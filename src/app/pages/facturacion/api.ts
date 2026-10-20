@@ -1,4 +1,4 @@
-import { getJSON, postJSON, patchJSON, delJSON, getJSONWithHeaders, postForm, getBlobLong } from "@/app/shared/lib/http";
+import { getJSON, postJSON, patchJSON, delJSON, getJSONWithHeaders, postForm, getBlobLong, http } from "@/app/shared/lib/http";
 import type {
   AutorizacionExistente,
   MedicoOption, ObraSocialOption, NomencladorOption, ClinicaOption,
@@ -11,6 +11,7 @@ import type {
   CargaPorUsuario, CierresPorUsuario, RegistroPorUsuarioParams, PublicarPeriodoPayload, PublicarPeriodoResponse,
   PeriodoPropio,
   RecalculoPayload, RecalculoResponse,
+  DocumentoPrestacion,
 } from "./types";
 import type { ExportOpciones } from "./FacturaDetalle/export/types";
 import type { VistaOpciones, VistaPreset } from "./FacturaDetalle/vista/types";
@@ -242,6 +243,39 @@ export const previewCierre = (cod_obra: string, periodo: string) =>
     "GET /cierre/preview",
     { cod_obra, periodo },
     getJSON<CierrePreviewResponse>(`${BASE}/cierre/preview`, { cod_obra, periodo }),
+  );
+
+// ── Documentación digital de una prestación (el Colegio) ─────────────────────
+export const listarDocumentosPrestacion = (id: number) =>
+  getJSON<DocumentoPrestacion[]>(`${BASE}/prestaciones/${id}/documentos`);
+
+export const agregarDocumentosPrestacion = (id: number, archivos: File[]) => {
+  const form = new FormData();
+  archivos.forEach((f) => form.append("documentos", f));
+  return postForm<DocumentoPrestacion[]>(`${BASE}/prestaciones/${id}/documentos`, form, { timeout: 120_000 });
+};
+
+export const reemplazarDocumentoPrestacion = async (id: number, docId: number, archivo: File) => {
+  const form = new FormData();
+  form.append("archivo", archivo);
+  const { data } = await http.put<DocumentoPrestacion[]>(`${BASE}/prestaciones/${id}/documentos/${docId}`, form);
+  return data;
+};
+
+export const eliminarDocumentoPrestacion = async (id: number, docId: number) => {
+  const { data } = await http.delete<DocumentoPrestacion[]>(`${BASE}/prestaciones/${id}/documentos/${docId}`);
+  return data;
+};
+
+export const reordenarDocumentosPrestacion = (id: number, ids: number[]) =>
+  patchJSON<DocumentoPrestacion[]>(`${BASE}/prestaciones/${id}/documentos/orden`, { ids });
+
+/** PDF con la documentación de toda la factura (los médicos de la A a la Z). 409 si hay pendientes. */
+export const descargarDocumentacionPdf = (facturaId: number | string, opciones: ExportOpciones) =>
+  traced(
+    `GET /facturas/${facturaId}/export/documentacion.pdf`,
+    opciones,
+    getBlobLong(`${BASE}/facturas/${facturaId}/export/documentacion.pdf`, opciones as Record<string, any>),
   );
 
 // ── Export (detalle + carátula) ──────────────────────────────────────────────

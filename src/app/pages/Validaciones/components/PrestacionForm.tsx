@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import { Check, ShieldCheck, Trash2 } from "lucide-react";
 
 import Button from "@/app/components/ui/Button/Button";
+import DocumentosUploader from "@/app/components/ui/DocumentosUploader/DocumentosUploader";
+import type { DocumentoItem } from "@/app/components/ui/DocumentosUploader/DocumentosUploader";
 import CampoPrestacion from "./CampoPrestacion";
 import { armarPasos, PASO_MEDICO } from "./pasosCarga";
 import type { PasoCarga } from "./pasosCarga";
@@ -13,7 +15,7 @@ import s from "./PrestacionForm.module.scss";
 interface Props {
   os: ObraSocialConfig;
   enviando: boolean;
-  onSubmit: (valores: PrestacionFormValues) => void;
+  onSubmit: (valores: PrestacionFormValues, documentos: File[]) => void;
   nroSocio?: number;
   /** Primer bloque del personal del Colegio: elegir a nombre de quién se carga. */
   medico?: { control: ReactNode; elegido: boolean };
@@ -81,8 +83,26 @@ export default function PrestacionForm({ os, enviando, onSubmit, nroSocio, medic
     );
     if (conError >= 0) return irA(conError);
 
-    onSubmit(form.valores);
+    // Si el código exige documentación, sin al menos un archivo no se valida.
+    if (form.requiereDocumentacion && form.archivos.length === 0) return;
+
+    onSubmit(form.valores, form.requiereDocumentacion ? form.archivos : []);
   };
+
+  const itemsDocumentos: DocumentoItem[] = form.archivos.map((f, i) => ({
+    id: `${i}-${f.name}-${f.size}`,
+    nombre: f.name,
+    tamano: f.size,
+    contentType: f.type,
+    archivo: f,
+  }));
+  const verLocal = (item: DocumentoItem) => {
+    if (!item.archivo) return;
+    const url = URL.createObjectURL(item.archivo);
+    window.open(url, "_blank", "noopener,noreferrer");
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  };
+  const faltanArchivos = form.requiereDocumentacion && form.archivos.length === 0;
 
   const limpiar = () => {
     form.limpiar();
@@ -144,6 +164,22 @@ export default function PrestacionForm({ os, enviando, onSubmit, nroSocio, medic
         })}
       </div>
 
+      {form.requiereDocumentacion && (
+        <section className={s.documentacion} aria-labelledby="doc-obligatoria">
+          <h2 id="doc-obligatoria" className={s.documentacionTitulo}>Documentación obligatoria</h2>
+          <DocumentosUploader
+            items={itemsDocumentos}
+            ocupado={enviando}
+            onVer={verLocal}
+            onAgregar={(nuevos) => form.setArchivos((prev) => [...prev, ...nuevos])}
+            onReemplazar={(item, archivo) =>
+              form.setArchivos((prev) => prev.map((f) => (f === item.archivo ? archivo : f)))
+            }
+            onEliminar={(item) => form.setArchivos((prev) => prev.filter((f) => f !== item.archivo))}
+          />
+        </section>
+      )}
+
       <div className={s.pie}>
         <button type="button" className={s.limpiar} onClick={limpiar} disabled={enviando}>
           <Trash2 size={18} aria-hidden="true" /> Limpiar
@@ -153,6 +189,7 @@ export default function PrestacionForm({ os, enviando, onSubmit, nroSocio, medic
           leftIcon={<ShieldCheck size={22} aria-hidden="true" />}
           sx={BOTON_GRANDE}
           isLoading={enviando}
+          disabled={faltanArchivos}
         >
           {enviando ? (enLinea ? "Validando…" : "Guardando…") : enLinea ? "Validar" : "Cargar"}
         </Button>

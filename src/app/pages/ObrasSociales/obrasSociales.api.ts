@@ -78,6 +78,7 @@ function buildPayload(form: ObraSocialFormData, alta = false) {
           }
         : undefined,
     dia_corte: Number(form.dia_corte) || 20,
+    documentacion_digital: form.documentacion_digital,
     contactos,
     direcciones,
   };

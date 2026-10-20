@@ -72,6 +72,8 @@ export interface ObraSocial {
   obra_social_principal_id?: number | null;
   // 1 = mes completo, 20 = del 20 al 20. Default 20 en el backend.
   dia_corte?: number;
+  // Trabaja con documentación digital: los códigos que la exigen se marcan en «Códigos por obra social».
+  documentacion_digital?: boolean;
   emails?: ContactoEntry[];
   telefonos?: ContactoEntry[];
   obra_social_principal?: ObraSocialRef | null;
@@ -177,6 +179,8 @@ export interface ObraSocialFormData {
   replicar_valores: boolean;
   // Ventana del período (ver el bloque «Facturación y Contacto»).
   dia_corte: string;
+  // Sección «Documentación Digital».
+  documentacion_digital: boolean;
 }
 
 export const EMPTY_FORM: ObraSocialFormData = {
@@ -201,6 +205,7 @@ export const EMPTY_FORM: ObraSocialFormData = {
   replicar_nomencladores: false,
   replicar_valores: false,
   dia_corte: "20",
+  documentacion_digital: false,
 };
 
 // ─── Validation errors ────────────────────────────────────────────────────────

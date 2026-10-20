@@ -368,3 +368,23 @@
     background-position: 0 50%;
   }
 }
+
+// Botón de documentación digital de la prestación (el texto dice cuántos hay o que faltan).
+.docBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 2rem;
+  padding: 0 0.625rem;
+  font-size: 0.8125rem;
+  color: $gray-800;
+  background: $white;
+  border: 1px solid $gray-300;
+  border-radius: 8px;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover { background: $gray-100; }
+}
+.docBtnOk { color: #14532d; border-color: #86efac; background: #f0fdf4; }
+.docBtnFalta { color: #7c2d12; border-color: #fdba74; background: #fff7ed; font-weight: 600; }

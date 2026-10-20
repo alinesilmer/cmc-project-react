@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Check, ChevronDown, Copy, Download, FileCheck2, SlidersHorizontal,
+  AlertTriangle, Check, ChevronDown, Copy, Download, FileCheck2, SlidersHorizontal,
 } from "lucide-react";
 
 import { formatMoney, parseMoney } from "../money";
@@ -77,6 +77,29 @@ export default function CabeceraExpediente({
       porTipo: ORDEN_TIPOS.map((tipo) => ({ tipo, cantidad: porTipo.get(tipo) ?? 0 })).filter((t) => t.cantidad > 0),
     };
   }, [filas]);
+
+  // Documentación digital: «Total a facturar» suma sólo lo auditado y la «Proyección» todo. Se calcula de las
+  // filas (no del detalle del servidor) para que tildar «Auditado» actualice las cards al instante.
+  const conDocumentacion = !!detalle?.documentacion_digital;
+  const doc = useMemo(() => {
+    let proyectado = 0;
+    let auditado = 0;
+    let auditadas = 0;
+    let requieren = 0;
+    let conDocs = 0;
+    for (const p of filas) {
+      const monto = parseMoney(p.subtotal);
+      proyectado += monto;
+      if (p.revisado) { auditado += monto; auditadas += 1; }
+      if (p.requiere_documentacion) {
+        requieren += 1;
+        if ((p.documentos_count ?? 0) > 0) conDocs += 1;
+      }
+    }
+    return { proyectado, auditado, sinAuditar: filas.length - auditadas, requieren, conDocs };
+  }, [filas]);
+  const totalMostrado = conDocumentacion ? doc.auditado : parseMoney(detalle?.total_importe);
+  const abierta = detalle?.estado === "A";
 
   const copiar = async () => {
     if (!detalle) return;
@@ -160,7 +183,7 @@ export default function CabeceraExpediente({
           </div>
         </div>
 
-        <div className={styles.stats}>
+        <div className={`${styles.stats} ${conDocumentacion ? styles.statsDoc : ""}`}>
           <div className={styles.stat}>
             <span className={styles.statEtiqueta}>Prestaciones</span>
             <span className={styles.statValor}>{entero(detalle.total_prestaciones)}</span>
@@ -175,6 +198,15 @@ export default function CabeceraExpediente({
               <div className={styles.barraRelleno} style={{ width: `${stats.porcentaje}%` }} />
             </div>
           </div>
+          {conDocumentacion && (
+            <div className={styles.stat}>
+              <span className={styles.statEtiqueta}>Con documentación</span>
+              <span className={styles.statValor}>
+                {entero(doc.conDocs)} <span className={styles.statDe}>/ {entero(doc.requieren)}</span>
+              </span>
+              <span className={styles.statNota}>prestaciones que la requieren</span>
+            </div>
+          )}
           <div className={styles.stat}>
             <span className={styles.statEtiqueta}>Por tipo</span>
             <div className={styles.tipos}>
@@ -191,12 +223,33 @@ export default function CabeceraExpediente({
             <span className={styles.statValor}>{formatMoney(stats.coseguro)}</span>
             <span className={styles.statNota}>ya descontado del total</span>
           </div>
+          {conDocumentacion && (
+            <div className={styles.stat}>
+              <span className={styles.statEtiqueta}>Proyección a facturar</span>
+              <span className={styles.statValor}>{formatMoney(doc.proyectado)}</span>
+              <span className={styles.statNota}>auditadas y sin auditar</span>
+            </div>
+          )}
           <div className={`${styles.stat} ${styles.statTotal}`}>
             <span className={styles.statEtiqueta}>Total a facturar</span>
-            <span className={`${styles.statValor} ${styles.statValorTotal}`}>{formatMoney(detalle.total_importe)}</span>
-            <span className={styles.statNota}>suma de las {entero(detalle.total_prestaciones)} prestaciones</span>
+            <span className={`${styles.statValor} ${styles.statValorTotal}`}>{formatMoney(totalMostrado)}</span>
+            <span className={styles.statNota}>
+              {conDocumentacion
+                ? `solo las ${entero(filas.length - doc.sinAuditar)} auditadas`
+                : `suma de las ${entero(detalle.total_prestaciones)} prestaciones`}
+            </span>
           </div>
         </div>
+
+        {conDocumentacion && abierta && doc.sinAuditar > 0 && (
+          <div className={styles.alertaCierre} role="alert">
+            <AlertTriangle size={16} aria-hidden="true" />
+            <span>
+              <strong>No se puede cerrar esta factura:</strong> hay {entero(doc.sinAuditar)} prestaci{doc.sinAuditar === 1 ? "ón" : "ones"} sin
+              auditar. El «Total a facturar» suma solo las auditadas; la «Proyección» suma todas.
+            </span>
+          </div>
+        )}
       </div>
 
       {compacta && (
@@ -208,7 +261,7 @@ export default function CabeceraExpediente({
           <span className={`${styles.chip} ${styles.chipGris}`}>{detalle.periodo_label || detalle.periodo}</span>
           <span className={`${styles.chip} ${estadoChip(detalle.estado)}`}>{estadoLabel(detalle.estado)}</span>
           <span className={styles.compactaCant}>{entero(detalle.total_prestaciones)} prestaciones</span>
-          <span className={`${styles.chip} ${styles.chipTotal} ${styles.compactaTotal}`}>Total {formatMoney(detalle.total_importe)}</span>
+          <span className={`${styles.chip} ${styles.chipTotal} ${styles.compactaTotal}`}>Total {formatMoney(totalMostrado)}</span>
           {botones}
           <button
             type="button" className={`${styles.btn} ${styles.btnIcono}`} aria-label="Ir al encabezado completo"
