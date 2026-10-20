@@ -46,7 +46,7 @@ import logoSwiss from "../../assets/obras-sociales/swiss-medical.png";
 import logoUpcn from "../../assets/obras-sociales/upcn.png";
 
 const WHATSAPP_URL =
-  "https://wa.me/5493794532335?text=¡Hola!,%20necesito%20soporte%20con%20el%20sistema%20del%20Colegio%20Médico";
+  "https://wa.me/5493794252323?text=¡Hola!,%20necesito%20soporte%20con%20el%20sistema%20del%20Colegio%20Médico";
 
 // La vidriera los trae todos: antes se cortaba en 6 y el socio no tenía cómo enterarse de que había más.
 
