@@ -1,14 +1,28 @@
 @use "@/app/styles/all.scss" as *;
 
+// Alto mínimo de la franja sin solapas.
+$franja-alto-compacta: 8.5rem;
+
 // Ver Franja.tsx. Todo lo visual sale de las piezas compartidas de `variables.scss` (`franja-bloque`, `titulo-franja`, `$franja-alto`).
 
 .franja {
   @include franja-bloque;
 
   & {
-    min-height: $franja-alto;
-    margin-bottom: $spacing-6;
+    // Franja angosta: el título y las solapas ocupan lo justo, y nunca más del 30% del alto de la ventana.
+    // `clip` y no `hidden` para no crear un contenedor de scroll; si la ventana es muy baja las solapas que no entren se recortan.
+    min-height: $franja-alto-compacta;
+    max-height: 30vh;
+    gap: $spacing-3;
+    padding-top: calc(var(--arriba, 0rem) + #{$spacing-4});
+    margin-bottom: $spacing-5;
+    overflow: clip;
   }
+}
+
+// Sin fila de solapas el relleno de abajo iguala al de arriba, para que el título quede centrado en vertical.
+.sinPie {
+  padding-bottom: calc(var(--arriba, 0rem) + #{$spacing-4});
 }
 
 // Sin contenedor con relleno alrededor: no hay de qué salirse, y el aire a los costados lo pone la propia franja (el mismo del Inicio).
@@ -28,17 +42,19 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: $spacing-4 $spacing-10;
+  gap: $spacing-2 $spacing-10;
   margin: auto 0;
-  padding: $spacing-4 0;
+  padding: $spacing-3 0;
 }
 
 .titulo {
   display: flex;
   align-items: center;
-  gap: $spacing-4;
+  gap: $spacing-3;
   margin: 0;
   @include titulo-franja;
+  // Más chico que el título de las franjas altas (`titulo-franja` llega a 3.2rem).
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
   color: $franja-crema;
 
   svg {
@@ -62,6 +78,12 @@
 
 .solapa {
   @include franja-solapa;
+
+  & {
+    min-height: 2.5rem;
+    padding: 0 $spacing-5;
+    font-size: $font-size-base;
+  }
 }
 
 // Se funde con el fondo de la página, que es gris claro.
@@ -70,6 +92,7 @@
   @include franja-solapa-activa;
 
   & {
+    min-height: 2.75rem;
     background: $gray-50;
     border-color: $gray-50;
   }

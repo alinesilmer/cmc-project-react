@@ -50,23 +50,47 @@ export type Ajuste = {
   fecha_prestacion: string | null;
 };
 
+// Fila de GET /api/lotes/snaps/buscar_atenciones (PrestacionCMCSearchRow).
+// `id` es id_detalle_prestaciones: lo que queda guardado en Ajuste.id_atencion.
 export type AtencionSearchRow = {
   id: number;
-  nro_socio: number;
-  nombre_prestador: string;
-  nombre_afiliado: string;
-  nro_consulta: string;
-  codigo_prestacion: string;
-  fecha_prestacion: string;
-  valor_cirujia: number;
-  mes_periodo: number;
-  anio_periodo: number;
-  nro_obra_social: number;
+  cod_med: string;
+  medico_nombre: string | null;
+  nom_ape_p: string | null;
+  cod_nom: string | null;
+  tpo_funcion: string | null;
+  fecha_practica: string | null;
+  nro_orden: string | null;
+  honorarios: string | null;
+  gastos: string | null;
+  ayudante: string | null;
+  importe_total: string | null;
+  periodo: string;
+  cod_obr: string;
 };
+
+// Fila de GET /api/periodos/disponibles_lotes_ajustes: una factura cerrada (original o complementaria).
+export type FacturaDisp = {
+  FACTURA_ID: number;
+  ANIO: number;
+  MES: number;
+  NRO_FACTURA: string;
+  TIPO_FACTURA: string;
+  VERSION: number;
+  ESTADO: string;
+  PERIODO: string;
+};
+
+export const etiquetaFactura = (f: Pick<FacturaDisp, "NRO_FACTURA" | "VERSION">) =>
+  `${f.NRO_FACTURA} · ${f.VERSION > 1 ? `complementaria ${f.VERSION - 1}` : "original"}`;
 
 export type LoteAjuste = {
   id: number;
   obra_social_id: number;
+  obra_social_nombre?: string | null;
+  factura_id?: number | null;
+  nro_factura?: string | null;
+  factura_version?: number | null;
   mes_periodo: number;
   anio_periodo: number;
   tipo: "normal" | "refacturacion" | "sin_factura";

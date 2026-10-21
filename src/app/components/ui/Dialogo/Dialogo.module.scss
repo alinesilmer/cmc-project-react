@@ -75,7 +75,9 @@
   p { margin: 0; }
 
   // Los controles sueltos toman el aspecto de la casa, sin clase propia.
-  :is(select, textarea, input:not([type="checkbox"], [type="radio"], [type="file"])) {
+  // Los de MUI (AppSearchSelect, Autocomplete) quedan afuera: su borde lo dibuja
+  // el fieldset, y si el <input> de adentro también tenía uno se veía doble.
+  :is(select, textarea, input:not([type="checkbox"], [type="radio"], [type="file"])):not(:global(.MuiInputBase-input)) {
     width: 100%;
     min-height: 2.75rem;
     padding: 0 $spacing-3;

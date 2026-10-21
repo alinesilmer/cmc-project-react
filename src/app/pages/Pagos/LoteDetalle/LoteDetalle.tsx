@@ -1,8 +1,7 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import Autocomplete from "@mui/material/Autocomplete";
-import TextField from "@mui/material/TextField";
 import {
+  delJSON,
   getJSON,
   patchJSON,
   postJSON,
@@ -13,7 +12,6 @@ import BackButton from "@/app/components/ui/BackButton/BackButton";
 import Button from "@/app/components/ui/Button/Button";
 import Franja from "@/app/components/layout/Franja/Franja";
 import lq from "../Liquidacion.module.scss";
-import SelectableTable from "@/app/components/ui/SelectableTable/SelectableTable";
 import styles from "./LoteDetalle.module.scss";
 import {
   type LoteAjuste,
@@ -24,14 +22,17 @@ import {
 } from "../types";
 import type ExcelJS from "exceljs";
 import { saveAs } from "@/app/shared/lib/fileSaver";
-import { Check, ArrowLeftRight } from "lucide-react";
+import { ArrowLeftRight, X } from "lucide-react";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
-import { LOTE_URL } from "@/app/pages/Pagos/LoteDetalle/utiles";
-import { ITEMS_URL } from "@/app/pages/Pagos/LoteDetalle/utiles";
-import { ITEM_URL } from "@/app/pages/Pagos/LoteDetalle/utiles";
-import { ESTADO_URL } from "@/app/pages/Pagos/LoteDetalle/utiles";
-import { ESTADO_TONO, estadoLabel } from "@/app/pages/Pagos/LoteDetalle/utiles";
+import {
+  ESTADO_TONO,
+  ESTADO_URL,
+  ITEMS_URL,
+  ITEM_URL,
+  LOTE_URL,
+  estadoLabel,
+} from "@/app/pages/Pagos/LoteDetalle/utiles";
 import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
 
 const OBSERVACION_OPTIONS = [
@@ -39,11 +40,10 @@ const OBSERVACION_OPTIONS = [
   "Falta sello",
   "Diferencia de valores",
   "Falta datos",
-  "Otro",
 ];
+const OTRO = "__otro__";
 const BUSCAR_ATENCIONES_URL = "/api/lotes/snaps/buscar_atenciones";
 
-type EditForm = { tipo: "d" | "c"; honorarios: string; gastos: string; observacion: string };
 const transitionLabels: Record<string, string> = {
   cerrar: "Cerrar Lote",
   reabrir: "Reabrir Lote",
@@ -60,6 +60,23 @@ const transitionDescriptions: Record<string, string> = {
   quitar: "¿Quitar este lote del pago? Volverá al estado Cerrado.",
 };
 
+type Grupo = {
+  medicoId: number;
+  nombre: string;
+  nroSocio: number | null;
+  items: Ajuste[];
+  neto: number;
+};
+
+const firmado = (a: Ajuste) => (a.tipo === "d" ? -1 : 1) * Number(a.total);
+
+const signo = (n: number) => `${n < 0 ? "−" : n > 0 ? "+" : ""}$${fmt(Math.abs(n))}`;
+
+const detalleError = (e: any, porDefecto: string) => {
+  const detail = e?.response?.data?.detail;
+  return typeof detail === "string" ? detail : (e?.message ?? porDefecto);
+};
+
 const LoteDetalle: React.FC = () => {
   const { loteId } = useParams<{ loteId: string }>();
   const notify = useAppSnackbar();
@@ -68,7 +85,7 @@ const LoteDetalle: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Search panel (only when open)
+  // Barra de carga rápida (solo con el lote abierto)
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<AtencionSearchRow[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -80,48 +97,57 @@ const LoteDetalle: React.FC = () => {
   const [newObservacion, setNewObservacion] = useState("");
   const [newObsIsOtro, setNewObsIsOtro] = useState(false);
   const [confirming, setConfirming] = useState(false);
-  const atencionesCacheRef = useRef<Map<number, AtencionSearchRow>>(new Map());
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Edit modal
-  const [editTarget, setEditTarget] = useState<Ajuste | null>(null);
-  const [editForm, setEditForm] = useState<EditForm>({
-    tipo: "d",
-    honorarios: "",
-    gastos: "",
-    observacion: "",
-  });
-  const [editSaving, setEditSaving] = useState(false);
+  // Edición en la tabla: lo que el usuario escribió y todavía no se guardó
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [savingId, setSavingId] = useState<number | null>(null);
 
+  const [agrupar, setAgrupar] = useState(true);
 
-  // State transition
+  const [deleteTarget, setDeleteTarget] = useState<Ajuste | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   const [transitionModal, setTransitionModal] = useState<
     "cerrar" | "reabrir" | "en_liquidaciones" | "quitar" | null
   >(null);
   const [transitioning, setTransitioning] = useState(false);
 
-  const loadLote = useCallback(async () => {
-    if (!loteId) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getJSON<LoteAjuste>(LOTE_URL(loteId));
-      setLote(data);
-    } catch (e: any) {
-      setError(e?.message || "No se pudo cargar el lote.");
-    } finally {
-      setLoading(false);
-    }
-  }, [loteId]);
+  // `silencioso`: recarga después de editar sin tapar la tabla con el cargando.
+  const loadLote = useCallback(
+    async (silencioso = false) => {
+      if (!loteId) return;
+      if (!silencioso) setLoading(true);
+      setError(null);
+      try {
+        const data = await getJSON<LoteAjuste>(LOTE_URL(loteId));
+        setLote(data);
+      } catch (e: any) {
+        setError(e?.message || "No se pudo cargar el lote.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [loteId],
+  );
 
   useEffect(() => {
     loadLote();
   }, [loadLote]);
 
-  // Debounced search
+  const handleSelectAtencion = (row: AtencionSearchRow) => {
+    setSelectedAtencion(row);
+    setSearchResults([]);
+    setNewHonorarios(String(row.honorarios ?? 0));
+    setNewGastos(String(row.gastos ?? 0));
+  };
+
+  // Búsqueda con espera; un número que da una sola prestación la elige sola.
   useEffect(() => {
-    if (!lote || !searchQuery.trim() || searchQuery.length < 2) {
-      setSearchResults([]);
+    const q = searchQuery.trim();
+    if (!lote || q.length < 2 || selectedAtencion) {
+      if (!selectedAtencion) setSearchResults([]);
       return;
     }
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
@@ -132,13 +158,15 @@ const LoteDetalle: React.FC = () => {
           obra_social_id: String(lote.obra_social_id),
           mes_periodo: String(lote.mes_periodo),
           anio_periodo: String(lote.anio_periodo),
-          q: searchQuery,
+          q,
           limit: "50",
         });
-        const data = await getJSON<AtencionSearchRow[]>(
-          `${BUSCAR_ATENCIONES_URL}?${qs}`,
-        );
-        setSearchResults(data ?? []);
+        // Un lote de una factura sólo busca entre las prestaciones de esa factura.
+        if (lote.factura_id) qs.set("factura_id", String(lote.factura_id));
+        const data =
+          (await getJSON<AtencionSearchRow[]>(`${BUSCAR_ATENCIONES_URL}?${qs}`)) ?? [];
+        if (/^\d+$/.test(q) && data.length === 1) handleSelectAtencion(data[0]);
+        else setSearchResults(data);
       } catch {
         setSearchResults([]);
       } finally {
@@ -148,19 +176,22 @@ const LoteDetalle: React.FC = () => {
     return () => {
       if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
     };
-  }, [searchQuery, lote]);
+    // handleSelectAtencion solo usa setters: no hace falta como dependencia.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, lote, selectedAtencion]);
 
-  const handleSelectAtencion = (row: AtencionSearchRow) => {
-    setSelectedAtencion(row);
-    setNewHonorarios(String(row.valor_cirujia));
-    setNewGastos("0");
-    atencionesCacheRef.current.set(row.id, row);
+  const limpiarSeleccion = () => {
+    setSelectedAtencion(null);
+    setSearchResults([]);
+    setNewHonorarios("");
+    setNewGastos("");
   };
 
-  const handleConfirm = async () => {
+  const handleConfirm = async (ev?: React.FormEvent) => {
+    ev?.preventDefault();
     if (!loteId) return;
     if (!selectedAtencion) {
-      notify("Seleccioná una prestación de la tabla.", "error");
+      notify("Elegí una prestación: buscá por ID, nro de orden, socio o afiliado.", "error");
       return;
     }
     if (!newHonorarios || isNaN(Number(newHonorarios)) || Number(newHonorarios) < 0) {
@@ -184,77 +215,83 @@ const LoteDetalle: React.FC = () => {
         gastos: Number(newGastos),
         observacion: newObservacion.trim() || null,
       });
-      await loadLote();
-      setSelectedAtencion(null);
+      await loadLote(true);
+      // Se conservan el tipo y el motivo: se suelen cargar varios seguidos.
       setSearchQuery("");
-      setSearchResults([]);
-      setNewHonorarios("");
-      setNewGastos("");
-      setNewObservacion("");
-      setNewObsIsOtro(false);
-      setNewTipo("d");
+      limpiarSeleccion();
       notify("Ajuste agregado correctamente.");
+      searchInputRef.current?.focus();
     } catch (e: any) {
-      const detail = e?.response?.data?.detail;
-      notify(
-        typeof detail === "string"
-          ? detail
-          : (e?.message ?? "Error al agregar ajuste."),
-        "error",
-      );
+      notify(detalleError(e, "Error al agregar ajuste."), "error");
     } finally {
       setConfirming(false);
     }
   };
 
-  const openEdit = (a: Ajuste) => {
-    setEditTarget(a);
-    setEditForm({
-      tipo: a.tipo as "d" | "c",
-      honorarios: String(a.honorarios),
-      gastos: String(a.gastos),
-      observacion: a.observacion ?? "",
-    });
-  };
-
-  const handleEditSave = async () => {
-    if (!loteId || !editTarget) return;
-    if (!editForm.honorarios || isNaN(Number(editForm.honorarios)) || Number(editForm.honorarios) < 0) {
-      notify("Los honorarios deben ser un valor válido.", "error");
-      return;
-    }
-    if (!editForm.gastos || isNaN(Number(editForm.gastos)) || Number(editForm.gastos) < 0) {
-      notify("Los gastos deben ser un valor válido.", "error");
-      return;
-    }
-    if (Number(editForm.honorarios) === 0 && Number(editForm.gastos) === 0) {
+  // Guarda un cambio hecho sobre la fila (importe, tipo o motivo).
+  const guardarAjuste = async (
+    a: Ajuste,
+    cambio: Partial<{ tipo: "d" | "c"; honorarios: number; gastos: number; observacion: string }>,
+  ) => {
+    if (!loteId) return;
+    const honorarios = cambio.honorarios ?? Number(a.honorarios);
+    const gastos = cambio.gastos ?? Number(a.gastos);
+    if (honorarios === 0 && gastos === 0) {
       notify("Honorarios y gastos no pueden ser ambos 0.", "error");
       return;
     }
-    setEditSaving(true);
+    setSavingId(a.id);
     try {
-      await putJSON(ITEM_URL(loteId, editTarget.id), {
-        tipo: editForm.tipo,
-        honorarios: Number(editForm.honorarios),
-        gastos: Number(editForm.gastos),
-        observacion: editForm.observacion.trim() || null,
+      await putJSON(ITEM_URL(loteId, a.id), {
+        tipo: cambio.tipo ?? a.tipo,
+        honorarios,
+        gastos,
+        observacion: cambio.observacion ?? a.observacion ?? null,
       });
-      setEditTarget(null);
-      await loadLote();
-      notify("Ajuste actualizado.");
+      await loadLote(true);
     } catch (e: any) {
-      const detail = e?.response?.data?.detail;
-      notify(
-        typeof detail === "string"
-          ? detail
-          : (e?.message ?? "Error al guardar."),
-        "error",
-      );
+      notify(detalleError(e, "Error al guardar."), "error");
     } finally {
-      setEditSaving(false);
+      setSavingId(null);
     }
   };
 
+  const keyDraft = (a: Ajuste, campo: "honorarios" | "gastos") => `${a.id}:${campo}`;
+
+  const quitarDraft = (key: string) =>
+    setDrafts((d) => {
+      const { [key]: _quitado, ...resto } = d;
+      return resto;
+    });
+
+  const commitImporte = (a: Ajuste, campo: "honorarios" | "gastos") => {
+    const key = keyDraft(a, campo);
+    const texto = drafts[key];
+    if (texto === undefined) return;
+    quitarDraft(key);
+    const valor = Number(texto);
+    if (texto.trim() === "" || isNaN(valor) || valor < 0) {
+      notify("El importe debe ser un valor válido.", "error");
+      return;
+    }
+    if (valor === Number(a[campo])) return;
+    guardarAjuste(a, { [campo]: valor });
+  };
+
+  const handleDelete = async () => {
+    if (!loteId || !deleteTarget) return;
+    setDeleting(true);
+    try {
+      await delJSON(ITEM_URL(loteId, deleteTarget.id));
+      setDeleteTarget(null);
+      await loadLote(true);
+      notify("Ajuste eliminado.");
+    } catch (e: any) {
+      notify(detalleError(e, "Error al eliminar el ajuste."), "error");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const handleTransition = async () => {
     if (!loteId || !transitionModal) return;
@@ -275,15 +312,49 @@ const LoteDetalle: React.FC = () => {
         `Lote ${transitionLabels[transitionModal].toLowerCase()} correctamente.`,
       );
     } catch (e: any) {
-      const detail = e?.response?.data?.detail;
-      notify(
-        typeof detail === "string" ? detail : (e?.message ?? "Error."),
-        "error",
-      );
+      notify(detalleError(e, "Error."), "error");
     } finally {
       setTransitioning(false);
     }
   };
+
+  const isOpen = lote?.estado === "A";
+  const isClosed = lote?.estado === "C";
+  const isInLiq = lote?.estado === "L";
+  const editable = isOpen;
+  const ajustes = lote?.ajustes ?? [];
+  const periodo = lote
+    ? `${mesLabel(lote.mes_periodo)} ${lote.anio_periodo}`
+    : "—";
+
+  const grupos: Grupo[] = useMemo(() => {
+    if (!agrupar) {
+      return [{ medicoId: 0, nombre: "", nroSocio: null, items: ajustes, neto: 0 }];
+    }
+    const porMedico = new Map<number, Grupo>();
+    for (const a of ajustes) {
+      let g = porMedico.get(a.medico_id);
+      if (!g) {
+        g = {
+          medicoId: a.medico_id,
+          nombre: a.nombre_prestador ?? `Médico ${a.medico_id}`,
+          nroSocio: a.nro_socio,
+          items: [],
+          neto: 0,
+        };
+        porMedico.set(a.medico_id, g);
+      }
+      g.items.push(a);
+      g.neto += firmado(a);
+    }
+    return [...porMedico.values()].sort((x, y) => x.nombre.localeCompare(y.nombre, "es"));
+  }, [ajustes, agrupar]);
+
+  const cantMedicos = useMemo(
+    () => new Set(ajustes.map((a) => a.medico_id)).size,
+    [ajustes],
+  );
+  const neto = lote ? Number(lote.total_creditos) - Number(lote.total_debitos) : 0;
 
   const exportExcel = async () => {
     if (!lote) return;
@@ -292,6 +363,7 @@ const LoteDetalle: React.FC = () => {
     const ws = wb.addWorksheet("Ajustes");
     ws.columns = [
       { header: "Tipo", key: "tipo", width: 10 },
+      { header: "ID Prestación", key: "id_atencion", width: 14 },
       { header: "Nro Orden", key: "nro_consulta", width: 14 },
       { header: "Socio", key: "socio", width: 30 },
       { header: "Código Prest.", key: "codigo_prestacion", width: 16 },
@@ -302,23 +374,17 @@ const LoteDetalle: React.FC = () => {
       { header: "Total", key: "total", width: 14 },
       { header: "Observación", key: "observacion", width: 30 },
     ] as ExcelJS.Column[];
-    (lote.ajustes ?? []).forEach((a) => {
-      const cached = a.id_atencion
-        ? atencionesCacheRef.current.get(a.id_atencion)
-        : null;
-      const nroConsulta = a.nro_consulta ?? cached?.nro_consulta;
-      const nombrePrestador = a.nombre_prestador ?? cached?.nombre_prestador;
-      const nroSocio = a.nro_socio ?? cached?.nro_socio;
+    ajustes.forEach((a) => {
       ws.addRow({
         tipo: a.tipo === "d" ? "Débito" : "Crédito",
-        nro_consulta: nroConsulta ?? a.id_atencion ?? "—",
-        socio: nombrePrestador
-          ? `${nroSocio ?? ""} ${nombrePrestador}`.trim()
+        id_atencion: a.id_atencion ?? "—",
+        nro_consulta: a.nro_consulta ?? "—",
+        socio: a.nombre_prestador
+          ? `${a.nro_socio ?? ""} ${a.nombre_prestador}`.trim()
           : `Médico ${a.medico_id}`,
-        codigo_prestacion:
-          a.codigo_prestacion ?? cached?.codigo_prestacion ?? "—",
-        fecha_prestacion: a.fecha_prestacion ?? cached?.fecha_prestacion ?? "—",
-        nombre_afiliado: a.nombre_afiliado ?? cached?.nombre_afiliado ?? "—",
+        codigo_prestacion: a.codigo_prestacion ?? "—",
+        fecha_prestacion: a.fecha_prestacion ?? "—",
+        nombre_afiliado: a.nombre_afiliado ?? "—",
         honorarios: Number(a.honorarios),
         gastos: Number(a.gastos),
         total: Number(a.total),
@@ -347,6 +413,7 @@ const LoteDetalle: React.FC = () => {
       head: [
         [
           "Tipo",
+          "ID prest.",
           "Nro Orden",
           "Socio",
           "Código",
@@ -357,129 +424,348 @@ const LoteDetalle: React.FC = () => {
           "Observación",
         ],
       ],
-      body: (lote.ajustes ?? []).map((a) => {
-        const cached = a.id_atencion
-          ? atencionesCacheRef.current.get(a.id_atencion)
-          : null;
-        const nroConsulta = a.nro_consulta ?? cached?.nro_consulta;
-        const nombrePrestador = a.nombre_prestador ?? cached?.nombre_prestador;
-        const nroSocio = a.nro_socio ?? cached?.nro_socio;
-        return [
-          a.tipo === "d" ? "Débito" : "Crédito",
-          nroConsulta ?? a.id_atencion ?? "—",
-          nombrePrestador
-            ? `${nroSocio ?? ""} ${nombrePrestador}`.trim()
-            : `Médico ${a.medico_id}`,
-          a.codigo_prestacion ?? cached?.codigo_prestacion ?? "—",
-          a.fecha_prestacion ?? cached?.fecha_prestacion ?? "—",
-          `$${fmt(a.honorarios)}`,
-          `$${fmt(a.gastos)}`,
-          `$${fmt(a.total)}`,
-          a.observacion ?? "—",
-        ];
-      }),
+      body: ajustes.map((a) => [
+        a.tipo === "d" ? "Débito" : "Crédito",
+        a.id_atencion ?? "—",
+        a.nro_consulta ?? "—",
+        a.nombre_prestador
+          ? `${a.nro_socio ?? ""} ${a.nombre_prestador}`.trim()
+          : `Médico ${a.medico_id}`,
+        a.codigo_prestacion ?? "—",
+        a.fecha_prestacion ?? "—",
+        `$${fmt(a.honorarios)}`,
+        `$${fmt(a.gastos)}`,
+        `$${fmt(a.total)}`,
+        a.observacion ?? "—",
+      ]),
       styles: { fontSize: 9 },
       headStyles: { fillColor: [27, 86, 255] },
     });
     doc.save(`lote_${loteId}_ajustes.pdf`);
   };
 
-  const isOpen = lote?.estado === "A";
-  const isClosed = lote?.estado === "C";
-  const isInLiq = lote?.estado === "L";
-  const isApplied = lote?.estado === "AP";
-  const ajustes = lote?.ajustes ?? [];
-  const periodo = lote
-    ? `${mesLabel(lote.mes_periodo)} ${lote.anio_periodo}`
-    : "—";
+  const renderImporte = (a: Ajuste, campo: "honorarios" | "gastos") => {
+    if (!editable) return <span>${fmt(a[campo])}</span>;
+    const key = keyDraft(a, campo);
+    return (
+      <input
+        className={styles.cell}
+        type="number"
+        min="0"
+        step="0.01"
+        aria-label={campo === "honorarios" ? "Honorarios" : "Gastos"}
+        value={drafts[key] ?? a[campo]}
+        disabled={savingId === a.id}
+        onChange={(e) => setDrafts((d) => ({ ...d, [key]: e.target.value }))}
+        onBlur={() => commitImporte(a, campo)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+          if (e.key === "Escape") quitarDraft(key);
+        }}
+      />
+    );
+  };
+
+  const renderFila = (a: Ajuste) => {
+    const motivoEnLista = !a.observacion || OBSERVACION_OPTIONS.includes(a.observacion);
+    return (
+      <tr key={a.id} className={savingId === a.id ? lq.filaOcupada : undefined}>
+        <td>
+          {editable ? (
+            <button
+              type="button"
+              className={`${styles.tipoBadge} ${styles.tipoCambiable} ${a.tipo === "d" ? styles.tipoD : styles.tipoC}`}
+              title="Cambiar entre débito y crédito"
+              disabled={savingId === a.id}
+              onClick={() => guardarAjuste(a, { tipo: a.tipo === "d" ? "c" : "d" })}
+            >
+              {a.tipo === "d" ? "Débito" : "Crédito"}
+            </button>
+          ) : (
+            <span className={`${styles.tipoBadge} ${a.tipo === "d" ? styles.tipoD : styles.tipoC}`}>
+              {a.tipo === "d" ? "Débito" : "Crédito"}
+            </span>
+          )}
+        </td>
+        <td className={styles.numCell}>{a.id_atencion ?? <span className={lq.tenue}>—</span>}</td>
+        <td className={styles.numCell}>{a.nro_consulta ?? <span className={lq.tenue}>—</span>}</td>
+        {!agrupar && (
+          <td>
+            {a.nombre_prestador ?? <span className={lq.tenue}>Médico {a.medico_id}</span>}
+            {a.nro_socio != null && <span className={lq.tenue}> #{a.nro_socio}</span>}
+          </td>
+        )}
+        <td>{a.codigo_prestacion ?? <span className={lq.tenue}>—</span>}</td>
+        <td className={styles.numCell}>{a.fecha_prestacion ?? <span className={lq.tenue}>—</span>}</td>
+        <td>{a.nombre_afiliado ?? <span className={lq.tenue}>—</span>}</td>
+        <td className={styles.numCell}>{renderImporte(a, "honorarios")}</td>
+        <td className={styles.numCell}>{renderImporte(a, "gastos")}</td>
+        <td className={`${styles.numCell} ${a.tipo === "d" ? styles.negative : styles.positive}`}>
+          {a.tipo === "d" ? "−" : "+"}${fmt(a.total)}
+        </td>
+        <td>
+          {editable ? (
+            <select
+              className={styles.cellSelect}
+              aria-label="Motivo"
+              value={a.observacion ?? ""}
+              disabled={savingId === a.id}
+              onChange={(e) => guardarAjuste(a, { observacion: e.target.value })}
+            >
+              <option value="">—</option>
+              {!motivoEnLista && <option value={a.observacion!}>{a.observacion}</option>}
+              {OBSERVACION_OPTIONS.map((o) => (
+                <option key={o} value={o}>
+                  {o}
+                </option>
+              ))}
+            </select>
+          ) : (
+            (a.observacion ?? <span className={lq.tenue}>—</span>)
+          )}
+        </td>
+        {editable && (
+          <td>
+            <button
+              type="button"
+              className={lq.botonIconoPeligro}
+              title="Eliminar ajuste"
+              aria-label="Eliminar ajuste"
+              onClick={() => setDeleteTarget(a)}
+            >
+              <X size={16} />
+            </button>
+          </td>
+        )}
+      </tr>
+    );
+  };
+
+  const columnasTabla = 10 + (agrupar ? 0 : 1) + (editable ? 1 : 0);
 
   return (
     <div className={lq.pagina}>
-          <Franja titulo={`Lote ${loteId}`} icono={ArrowLeftRight} lateral={<span className={lq.franjaDato}>{periodo}</span>} />
-          <BackButton label="Volver" />
+      <Franja titulo={`Lote ${loteId}`} icono={ArrowLeftRight} lateral={<span className={lq.franjaDato}>{periodo}</span>} />
+      <BackButton label="Volver" />
 
-          {lote && (
-            <div className={lq.tira}>
-              <span className={`${lq.tipo} ${lote.tipo === "refacturacion" ? lq.tipoRefacturacion : lq.tipoNormal}`}>
-                {lote.tipo === "refacturacion" ? "Refacturación" : "Normal"}
-              </span>
-              {lote.snap_origen_id && (
-                <span className={lq.tiraTexto}>Corrige el lote #{lote.snap_origen_id}</span>
-              )}
-              <span className={`${lq.estado} ${lq[ESTADO_TONO[lote.estado] ?? "cerrado"]}`}>
-                {estadoLabel(lote.estado)}
-              </span>
-              <div className={lq.tiraDato}>
-                <span>Obra social</span>
-                <b>#{lote.obra_social_id}</b>
+      {lote && (
+        <div className={lq.tira}>
+          <span className={`${lq.estado} ${lq[ESTADO_TONO[lote.estado] ?? "cerrado"]}`}>
+            {estadoLabel(lote.estado)}
+          </span>
+          <div className={lq.tiraDato}>
+            <span>Obra social</span>
+            <b>
+              #{lote.obra_social_id}
+              {lote.obra_social_nombre ? ` · ${lote.obra_social_nombre}` : ""}
+            </b>
+          </div>
+          {lote.nro_factura && (
+            <div className={lq.tiraDato}>
+              <span>Factura</span>
+              <b>
+                {lote.nro_factura}
+                {lote.factura_version ? ` · ${lote.factura_version > 1 ? `complementaria ${lote.factura_version - 1}` : "original"}` : ""}
+              </b>
+            </div>
+          )}
+          {lote.snap_origen_id && (
+            <span className={lq.tiraTexto}>Corrige el lote #{lote.snap_origen_id}</span>
+          )}
+          {lote.pago_id && (
+            <div className={lq.tiraDato}>
+              <span>Pago</span>
+              <b>#{lote.pago_id}</b>
+            </div>
+          )}
+          <div className={`${lq.tiraAccion} ${lq.acciones}`}>
+            {isOpen && (
+              <Button variant="primary" size="md" onClick={() => setTransitionModal("cerrar")}>
+                Cerrar lote
+              </Button>
+            )}
+            {isClosed && (
+              <>
+                <Button variant="ghost" size="md" onClick={() => setTransitionModal("reabrir")}>
+                  Reabrir
+                </Button>
+                <Button variant="primary" size="md" onClick={() => setTransitionModal("en_liquidaciones")}>
+                  Pasar a liquidaciones
+                </Button>
+              </>
+            )}
+            {isInLiq && (
+              <Button variant="danger" size="md" onClick={() => setTransitionModal("quitar")}>
+                Quitar del pago
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {error && <div className={styles.errorBanner}>{error}</div>}
+
+      {/* Barra de carga rápida: solo con el lote abierto */}
+      {editable && !loading && (
+        <form className={styles.barraCarga} onSubmit={handleConfirm}>
+          <div className={styles.barraCampos}>
+            <div className={`${styles.campo} ${styles.campoBuscar}`}>
+              <label className={styles.formLabel} htmlFor="lote-buscar">
+                ID de prestación, nro de orden, socio o afiliado
+              </label>
+              <input
+                id="lote-buscar"
+                ref={searchInputRef}
+                className={styles.formInput}
+                type="text"
+                autoComplete="off"
+                value={searchQuery}
+                disabled={confirming}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  if (selectedAtencion) limpiarSeleccion();
+                }}
+              />
+            </div>
+            <div className={styles.campo}>
+              <span className={styles.formLabel}>Tipo</span>
+              <div className={styles.seg} role="group" aria-label="Tipo de ajuste">
+                <button
+                  type="button"
+                  className={`${styles.segBtn} ${newTipo === "d" ? styles.segDebito : ""}`}
+                  aria-pressed={newTipo === "d"}
+                  onClick={() => setNewTipo("d")}
+                  disabled={confirming}
+                >
+                  Débito
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.segBtn} ${newTipo === "c" ? styles.segCredito : ""}`}
+                  aria-pressed={newTipo === "c"}
+                  onClick={() => setNewTipo("c")}
+                  disabled={confirming}
+                >
+                  Crédito
+                </button>
               </div>
-              {lote.pago_id && (
-                <div className={lq.tiraDato}>
-                  <span>Pago</span>
-                  <b>#{lote.pago_id}</b>
+            </div>
+            <div className={`${styles.campo} ${styles.campoImporte}`}>
+              <label className={styles.formLabel} htmlFor="lote-hon">Honorarios</label>
+              <input
+                id="lote-hon"
+                className={styles.formInput}
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                value={newHonorarios}
+                onChange={(e) => setNewHonorarios(e.target.value)}
+                disabled={confirming}
+              />
+            </div>
+            <div className={`${styles.campo} ${styles.campoImporte}`}>
+              <label className={styles.formLabel} htmlFor="lote-gas">Gastos</label>
+              <input
+                id="lote-gas"
+                className={styles.formInput}
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                value={newGastos}
+                onChange={(e) => setNewGastos(e.target.value)}
+                disabled={confirming}
+              />
+            </div>
+            <div className={`${styles.campo} ${styles.campoMotivo}`}>
+              <label className={styles.formLabel} htmlFor="lote-motivo">Motivo (opcional)</label>
+              {newObsIsOtro ? (
+                <div className={styles.motivoOtro}>
+                  <input
+                    id="lote-motivo"
+                    className={styles.formInput}
+                    type="text"
+                    placeholder="Escribí el motivo…"
+                    value={newObservacion}
+                    onChange={(e) => setNewObservacion(e.target.value)}
+                    disabled={confirming}
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    className={lq.enlace}
+                    onClick={() => {
+                      setNewObsIsOtro(false);
+                      setNewObservacion("");
+                    }}
+                    disabled={confirming}
+                  >
+                    Volver
+                  </button>
                 </div>
+              ) : (
+                <select
+                  id="lote-motivo"
+                  className={styles.formInput}
+                  value={newObservacion}
+                  disabled={confirming}
+                  onChange={(e) => {
+                    if (e.target.value === OTRO) {
+                      setNewObsIsOtro(true);
+                      setNewObservacion("");
+                    } else {
+                      setNewObservacion(e.target.value);
+                    }
+                  }}
+                >
+                  <option value="">Sin motivo</option>
+                  {OBSERVACION_OPTIONS.map((o) => (
+                    <option key={o} value={o}>
+                      {o}
+                    </option>
+                  ))}
+                  <option value={OTRO}>Otro…</option>
+                </select>
               )}
-              <div className={lq.tiraDato}>
-                <span>Débitos</span>
-                <b className={lq.menos}>-${fmt(lote.total_debitos)}</b>
-              </div>
-              <div className={lq.tiraDato}>
-                <span>Créditos</span>
-                <b className={lq.mas}>+${fmt(lote.total_creditos)}</b>
-              </div>
-              <div className={`${lq.tiraAccion} ${lq.acciones}`}>
-                {!isApplied && isOpen && (
-                  <Button variant="primary" size="md" onClick={() => setTransitionModal("cerrar")}>
-                    Cerrar lote
-                  </Button>
-                )}
-                {!isApplied && isClosed && (
-                  <>
-                    <Button variant="ghost" size="md" onClick={() => setTransitionModal("reabrir")}>
-                      Reabrir
-                    </Button>
-                    <Button variant="primary" size="md" onClick={() => setTransitionModal("en_liquidaciones")}>
-                      Pasar a liquidaciones
-                    </Button>
-                  </>
-                )}
-                {!isApplied && isInLiq && (
-                  <Button variant="danger" size="md" onClick={() => setTransitionModal("quitar")}>
-                    Quitar del pago
-                  </Button>
-                )}
-              </div>
+            </div>
+            <Button
+              type="submit"
+              variant="primary"
+              size="md"
+              disabled={confirming || !selectedAtencion}
+            >
+              {confirming ? "Guardando…" : "Agregar"}
+            </Button>
+          </div>
+
+          {selectedAtencion && (
+            <div className={styles.resumenSel}>
+              <span>
+                #{selectedAtencion.id} · <b>{selectedAtencion.medico_nombre ?? "Médico sin nombre"}</b>{" "}
+                #{selectedAtencion.cod_med} · Orden {selectedAtencion.nro_orden ?? "—"} · {selectedAtencion.cod_nom ?? "—"}
+                {selectedAtencion.fecha_practica ? ` · ${selectedAtencion.fecha_practica}` : ""} · Afiliado{" "}
+                {selectedAtencion.nom_ape_p ?? "—"} · Facturado ${fmt(selectedAtencion.honorarios)} + ${fmt(selectedAtencion.gastos)}
+              </span>
+              <button type="button" className={lq.enlace} onClick={limpiarSeleccion}>
+                Cambiar
+              </button>
             </div>
           )}
 
-          {error && <div className={styles.errorBanner}>{error}</div>}
-
-          {/* Panel 1: Search + Form (only when open and not applied) */}
-          {isOpen && !isApplied && !loading && (
-            <section className={styles.searchPanel}>
-              <div className={styles.panelHeader}>
-                <span className={styles.panelTitle}>Buscar prestación</span>
-              </div>
-
-              {/* Search input */}
-              <div className={styles.searchRow}>
-                <input
-                  className={styles.searchInput}
-                  type="text"
-                  placeholder="Buscar por Nro de orden, Nro de socio o nombre del socio…"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setSelectedAtencion(null);
-                  }}
-                />
-              </div>
-
-              {/* Results table */}
-              <div className={styles.resultsWrap}>
+          {!selectedAtencion && searchQuery.trim().length >= 2 && (
+            <div className={styles.resultados}>
+              {searchLoading ? (
+                <div className={styles.emptyCell}>Buscando…</div>
+              ) : searchResults.length === 0 ? (
+                <div className={styles.emptyCell}>
+                  Sin resultados para "{searchQuery.trim()}". Solo se encuentran prestaciones ya liquidadas de este período.
+                </div>
+              ) : (
                 <Tabla className={`${styles.table} ${styles.tableSearch}`}>
                   <thead>
                     <tr>
+                      <th>ID</th>
                       <th>Nro Orden</th>
                       <th>Socio</th>
                       <th>Código</th>
@@ -489,456 +775,148 @@ const LoteDetalle: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {searchLoading && (
-                      <tr>
-                        <td colSpan={6} className={styles.emptyCell}>
-                          Buscando…
+                    {searchResults.map((row) => (
+                      <tr
+                        key={row.id}
+                        className={styles.clickableRow}
+                        onClick={() => handleSelectAtencion(row)}
+                      >
+                        <td>{row.id}</td>
+                        <td>{row.nro_orden}</td>
+                        <td>
+                          <div>{row.medico_nombre}</div>
+                          <div className={lq.tenue}>#{row.cod_med}</div>
                         </td>
+                        <td>{row.cod_nom}</td>
+                        <td>{row.fecha_practica}</td>
+                        <td>{row.nom_ape_p}</td>
+                        <td className={styles.numCell}>${fmt(row.importe_total)}</td>
                       </tr>
-                    )}
-                    {!searchLoading &&
-                      searchQuery.length >= 2 &&
-                      searchResults.length === 0 && (
-                        <tr>
-                          <td colSpan={6} className={styles.emptyCell}>
-                            Sin resultados para "{searchQuery}".
-                          </td>
-                        </tr>
-                      )}
-                    {!searchLoading && searchQuery.length < 2 && (
-                      <tr>
-                        <td colSpan={6} className={styles.emptyCell}>
-                          Ingresá al menos 2 caracteres para buscar.
-                        </td>
-                      </tr>
-                    )}
-                    {!searchLoading &&
-                      searchResults.map((row) => (
-                        <tr
-                          key={row.id}
-                          className={`${styles.clickableRow} ${selectedAtencion?.id === row.id ? styles.selectedRow : ""}`}
-                          onClick={() => handleSelectAtencion(row)}
-                        >
-                          <td>{row.nro_consulta}</td>
-                          <td>
-                            <div style={{ fontWeight: 500 }}>
-                              {row.nombre_prestador}
-                            </div>
-                            <div style={{ fontSize: 11, color: "#64748b" }}>
-                              #{row.nro_socio}
-                            </div>
-                          </td>
-                          <td>{row.codigo_prestacion}</td>
-                          <td>{row.fecha_prestacion}</td>
-                          <td>{row.nombre_afiliado}</td>
-                          <td className={styles.numCell}>
-                            ${fmt(row.valor_cirujia)}
-                          </td>
-                        </tr>
-                      ))}
+                    ))}
                   </tbody>
                 </Tabla>
-              </div>
-
-              {/* Inline form */}
-              <div className={styles.formInline}>
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>Honorarios</label>
-                  <input
-                    className={styles.formInput}
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={newHonorarios}
-                    onChange={(e) => setNewHonorarios(e.target.value)}
-                    disabled={confirming}
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>Gastos</label>
-                  <input
-                    className={styles.formInput}
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={newGastos}
-                    onChange={(e) => setNewGastos(e.target.value)}
-                    disabled={confirming}
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>Tipo</label>
-                  <div className={styles.tipoToggle}>
-                    <button
-                      type="button"
-                      className={`${styles.tipoBtn} ${newTipo === "d" ? styles.tipoBtnActive : ""}`}
-                      onClick={() => setNewTipo("d")}
-                      disabled={confirming}
-                    >
-                      Débito
-                    </button>
-                    <button
-                      type="button"
-                      className={`${styles.tipoBtn} ${newTipo === "c" ? styles.tipoBtnActiveC : ""}`}
-                      onClick={() => setNewTipo("c")}
-                      disabled={confirming}
-                    >
-                      Crédito
-                    </button>
-                  </div>
-                </div>
-                <div className={`${styles.formGroup} ${styles.formGroupGrow}`}>
-                  <label className={styles.formLabel}>Observación</label>
-                  {newObsIsOtro ? (
-                    <div style={{ display: "flex", gap: 6 }}>
-                      <input
-                        className={styles.formInput}
-                        type="text"
-                        placeholder="Escribí el motivo…"
-                        value={newObservacion}
-                        onChange={(e) => setNewObservacion(e.target.value)}
-                        disabled={confirming}
-                        autoFocus
-                        style={{ flex: 1 }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setNewObsIsOtro(false);
-                          setNewObservacion("");
-                        }}
-                        disabled={confirming}
-                        style={{
-                          fontSize: 12,
-                          color: "#64748b",
-                          background: "none",
-                          border: "none",
-                          cursor: "pointer",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        ← Volver
-                      </button>
-                    </div>
-                  ) : (
-                    <Autocomplete
-                      options={OBSERVACION_OPTIONS}
-                      value={newObservacion || null}
-                      onChange={(_, val) => {
-                        if (val === "Otro") {
-                          setNewObsIsOtro(true);
-                          setNewObservacion("");
-                        } else {
-                          setNewObservacion(val ?? "");
-                        }
-                      }}
-                      disabled={confirming}
-                      noOptionsText="Sin resultados"
-                      slotProps={{ popper: { style: { zIndex: 10000 } } }}
-                      sx={{ width: "100%" }}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          size="small"
-                          placeholder="Seleccioná un motivo… (opcional)"
-                          sx={{
-                            "& .MuiOutlinedInput-root": {
-                              fontSize: 13,
-                              borderRadius: "6px",
-                              backgroundColor: "#fff",
-                              padding: "1px 8px 1px 4px !important",
-                              "& fieldset": { borderColor: "#cbd5e1" },
-                              "&:hover fieldset": { borderColor: "#94a3b8" },
-                              "&.Mui-focused fieldset": {
-                                borderColor: "#1b56ff",
-                                borderWidth: "1px",
-                                boxShadow: "0 0 0 3px rgba(27,86,255,0.1)",
-                              },
-                            },
-                            "& .MuiAutocomplete-input": {
-                              padding: "6px 4px !important",
-                              fontSize: "13px",
-                            },
-                          }}
-                        />
-                      )}
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* Submit row */}
-              <div className={styles.submitRow}>
-                {selectedAtencion && (
-                  <span className={styles.selectedBadge}>
-                    <Check size={14} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> Seleccionado: {selectedAtencion.nro_consulta} —{" "}
-                    {selectedAtencion.nombre_prestador}
-                  </span>
-                )}
-                <Button
-                  variant="primary"
-                  onClick={handleConfirm}
-                  disabled={confirming || !selectedAtencion}
-                >
-                  {confirming ? "Guardando…" : "Confirmar"}
-                </Button>
-              </div>
-            </section>
-          )}
-
-          {/* Panel 2: Ajustes table */}
-          <section className={styles.tableCard}>
-            <div className={styles.panelToolbar}>
-              <span className={styles.panelTitle}>
-                Ajustes del lote
-                {ajustes.length > 0 && (
-                  <span className={styles.countBadge}>{ajustes.length}</span>
-                )}
-              </span>
-              <div className={styles.exportActions}>
-                <BotonDescarga formato="pdf" onClick={exportPDF} disabled={ajustes.length === 0} />
-                <BotonDescarga formato="excel" onClick={exportExcel} disabled={ajustes.length === 0} />
-              </div>
+              )}
             </div>
-            <SelectableTable
-              rows={ajustes}
-              columns={[
-                {
-                  key: "tipo",
-                  header: "Tipo",
-                  render: (a) => (
-                    <span className={`${styles.tipoBadge} ${a.tipo === "d" ? styles.tipoD : styles.tipoC}`}>
-                      {a.tipo === "d" ? "Débito" : "Crédito"}
-                    </span>
-                  ),
-                },
-                {
-                  key: "nro_consulta",
-                  header: "Nro Orden",
-                  render: (a) => {
-                    const cached = a.id_atencion ? atencionesCacheRef.current.get(a.id_atencion) : null;
-                    const nroConsulta = a.nro_consulta ?? cached?.nro_consulta ?? null;
-                    return nroConsulta ?? a.id_atencion ?? <span style={{ color: "#94a3b8" }}>—</span>;
-                  },
-                },
-                {
-                  key: "nombre_prestador",
-                  header: "Socio",
-                  render: (a) => {
-                    const cached = a.id_atencion ? atencionesCacheRef.current.get(a.id_atencion) : null;
-                    const nombrePrestador = a.nombre_prestador ?? cached?.nombre_prestador ?? null;
-                    const nroSocio = a.nro_socio ?? cached?.nro_socio ?? null;
-                    return nombrePrestador ? (
-                      <>
-                        <div style={{ fontWeight: 500 }}>{nombrePrestador}</div>
-                        {nroSocio && <div style={{ fontSize: 11, color: "#64748b" }}>#{nroSocio}</div>}
-                      </>
-                    ) : (
-                      <span style={{ color: "#94a3b8", fontSize: 12 }}>Médico {a.medico_id}</span>
-                    );
-                  },
-                },
-                {
-                  key: "codigo_prestacion",
-                  header: "Código",
-                  render: (a) => {
-                    const cached = a.id_atencion ? atencionesCacheRef.current.get(a.id_atencion) : null;
-                    return (a.codigo_prestacion ?? cached?.codigo_prestacion) ?? <span style={{ color: "#94a3b8" }}>—</span>;
-                  },
-                },
-                {
-                  key: "fecha_prestacion",
-                  header: "Fecha",
-                  render: (a) => {
-                    const cached = a.id_atencion ? atencionesCacheRef.current.get(a.id_atencion) : null;
-                    return (a.fecha_prestacion ?? cached?.fecha_prestacion) ?? <span style={{ color: "#94a3b8" }}>—</span>;
-                  },
-                },
-                {
-                  key: "nombre_afiliado",
-                  header: "Afiliado",
-                  render: (a) => {
-                    const cached = a.id_atencion ? atencionesCacheRef.current.get(a.id_atencion) : null;
-                    return (a.nombre_afiliado ?? cached?.nombre_afiliado) ?? <span style={{ color: "#94a3b8" }}>—</span>;
-                  },
-                },
-                {
-                  key: "honorarios",
-                  header: "Honorarios",
-                  alignRight: true,
-                  render: (a) => <span>${fmt(a.honorarios)}</span>,
-                },
-                {
-                  key: "gastos",
-                  header: "Gastos",
-                  alignRight: true,
-                  render: (a) => <span>${fmt(a.gastos)}</span>,
-                },
-                {
-                  key: "total",
-                  header: "Total",
-                  alignRight: true,
-                  render: (a) => (
-                    <span className={a.tipo === "d" ? styles.negative : styles.positive}>
-                      {a.tipo === "d" ? "-" : "+"}${fmt(a.total)}
-                    </span>
-                  ),
-                },
-                {
-                  key: "observacion",
-                  header: "Observación",
-                  render: (a) => (
-                    <span style={{ maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>
-                      {a.observacion ?? <span style={{ color: "#94a3b8" }}>—</span>}
-                    </span>
-                  ),
-                },
-                ...(isOpen && !isApplied ? [{
-                  key: "acciones",
-                  header: "Acciones",
-                  render: (a: Ajuste) => (
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={(e: React.MouseEvent) => { e.stopPropagation(); openEdit(a); }}
-                    >
-                      Editar
-                    </Button>
-                  ),
-                }] : []),
-              ]}
-              actions={isOpen && !isApplied ? [
-                {
-                  label: "Eliminar",
-                  method: "DELETE" as const,
-                  endpoint: (a: Ajuste) => ITEM_URL(loteId!, a.id),
-                  confirmMessage: (n: number) => `¿Eliminar ${n} ajuste${n !== 1 ? "s" : ""}? Esta acción no se puede deshacer.`,
-                  onSuccess: (ok: number, fail: number) => {
-                    if (ok) notify(`${ok} ajuste${ok !== 1 ? "s eliminados" : " eliminado"}.`);
-                    if (fail) notify(`${fail} no pudo${fail !== 1 ? "ron" : ""} eliminarse.`, "error");
-                  },
-                },
-              ] : []}
-              isSelectable={() => isOpen && !isApplied}
-              emptyMessage="Sin ajustes en este lote."
-              loading={loading}
-              onActionComplete={loadLote}
-            />
-            {ajustes.length > 0 && lote && (
-              <div className={styles.totalsRow}>
-                <span>TOTAL ({ajustes.length} ajustes)</span>
-                <span>
-                  <span className={styles.negative}>-${fmt(lote.total_debitos)}</span>
-                  {" / "}
-                  <span className={styles.positive}>+${fmt(lote.total_creditos)}</span>
-                </span>
-              </div>
-            )}
-          </section>
+          )}
+        </form>
+      )}
 
-      {/* Edit modal */}
-      {editTarget && (
+      {/* Ajustes del lote, agrupados por médico */}
+      <section className={styles.tableCard}>
+        <div className={styles.panelToolbar}>
+          <div className={styles.totalesBarra}>
+            <span className={styles.panelTitle}>
+              Ajustes del lote
+              {ajustes.length > 0 && <span className={styles.countBadge}>{ajustes.length}</span>}
+            </span>
+            {lote && ajustes.length > 0 && (
+              <>
+                <span className={lq.tenue}>
+                  {cantMedicos} médico{cantMedicos !== 1 ? "s" : ""}
+                </span>
+                <b className={styles.negative}>−${fmt(lote.total_debitos)}</b>
+                <b className={styles.positive}>+${fmt(lote.total_creditos)}</b>
+                <b>Neto {signo(neto)}</b>
+              </>
+            )}
+          </div>
+          <div className={styles.exportActions}>
+            <label className={styles.agruparLbl}>
+              <input
+                type="checkbox"
+                checked={agrupar}
+                onChange={(e) => setAgrupar(e.target.checked)}
+              />
+              Agrupar por médico
+            </label>
+            <BotonDescarga formato="pdf" onClick={exportPDF} disabled={ajustes.length === 0} />
+            <BotonDescarga formato="excel" onClick={exportExcel} disabled={ajustes.length === 0} />
+          </div>
+        </div>
+        <div className={styles.tablaScroll}>
+          <Tabla className={styles.table}>
+            <thead>
+              <tr>
+                <th>Tipo</th>
+                <th>ID prest.</th>
+                <th>Nro orden</th>
+                {!agrupar && <th>Médico</th>}
+                <th>Código</th>
+                <th>Fecha</th>
+                <th>Afiliado</th>
+                <th className={styles.numCell}>Honorarios</th>
+                <th className={styles.numCell}>Gastos</th>
+                <th className={styles.numCell}>Total</th>
+                <th>Motivo</th>
+                {editable && <th aria-label="Acciones" />}
+              </tr>
+            </thead>
+            <tbody>
+              {loading && (
+                <tr>
+                  <td colSpan={columnasTabla} className={styles.emptyCell}>Cargando…</td>
+                </tr>
+              )}
+              {!loading && ajustes.length === 0 && (
+                <tr>
+                  <td colSpan={columnasTabla} className={styles.emptyCell}>Sin ajustes en este lote.</td>
+                </tr>
+              )}
+              {!loading &&
+                grupos.map((g) => (
+                  <React.Fragment key={agrupar ? g.medicoId : "todos"}>
+                    {agrupar && (
+                      <tr className={styles.grupoFila}>
+                        <td colSpan={8}>
+                          {g.nombre}
+                          {g.nroSocio != null && <span className={lq.tenue}> #{g.nroSocio}</span>}
+                          <span className={lq.tenue}> · {g.items.length} ajuste{g.items.length !== 1 ? "s" : ""}</span>
+                        </td>
+                        <td className={`${styles.numCell} ${g.neto < 0 ? styles.negative : styles.positive}`}>
+                          {signo(g.neto)}
+                        </td>
+                        <td colSpan={1 + (editable ? 1 : 0)} />
+                      </tr>
+                    )}
+                    {g.items.map(renderFila)}
+                  </React.Fragment>
+                ))}
+            </tbody>
+          </Tabla>
+        </div>
+      </section>
+
+      {deleteTarget && (
         <Dialogo
-          titulo={`Editar ajuste #${editTarget.id}`}
-          onClose={() => setEditTarget(null)}
+          titulo="Eliminar ajuste"
+          peligro
+          onClose={deleting ? undefined : () => setDeleteTarget(null)}
           acciones={
             <>
-              <Button
-                variant="secondary"
-                onClick={() => setEditTarget(null)}
-                disabled={editSaving}
-              >
+              <Button variant="secondary" onClick={() => setDeleteTarget(null)} disabled={deleting}>
                 Cancelar
               </Button>
-              <Button
-                variant="primary"
-                onClick={handleEditSave}
-                disabled={editSaving}
-              >
-                {editSaving ? "Guardando…" : "Guardar Cambios"}
+              <Button variant="danger" onClick={handleDelete} disabled={deleting}>
+                {deleting ? "Eliminando…" : "Eliminar"}
               </Button>
             </>
           }
         >
-              <div className={styles.formRow}>
-                <label className={styles.formLabel}>Tipo</label>
-                <div className={styles.tipoToggle}>
-                  <button
-                    type="button"
-                    className={`${styles.tipoBtn} ${editForm.tipo === "d" ? styles.tipoBtnActive : ""}`}
-                    onClick={() => setEditForm((f) => ({ ...f, tipo: "d" }))}
-                    disabled={editSaving}
-                  >
-                    Débito
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.tipoBtn} ${editForm.tipo === "c" ? styles.tipoBtnActiveC : ""}`}
-                    onClick={() => setEditForm((f) => ({ ...f, tipo: "c" }))}
-                    disabled={editSaving}
-                  >
-                    Crédito
-                  </button>
-                </div>
-              </div>
-              <div className={styles.formRow}>
-                <label className={styles.formLabel}>Honorarios</label>
-                <input
-                  className={styles.formInput}
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={editForm.honorarios}
-                  onChange={(e) =>
-                    setEditForm((f) => ({ ...f, honorarios: e.target.value }))
-                  }
-                  disabled={editSaving}
-                />
-              </div>
-              <div className={styles.formRow}>
-                <label className={styles.formLabel}>Gastos</label>
-                <input
-                  className={styles.formInput}
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={editForm.gastos}
-                  onChange={(e) =>
-                    setEditForm((f) => ({ ...f, gastos: e.target.value }))
-                  }
-                  disabled={editSaving}
-                />
-              </div>
-              <div className={styles.formRow}>
-                <label className={styles.formLabel}>Observación</label>
-                <input
-                  className={styles.formInput}
-                  type="text"
-                  placeholder="Motivo del ajuste…"
-                  value={editForm.observacion}
-                  onChange={(e) =>
-                    setEditForm((f) => ({ ...f, observacion: e.target.value }))
-                  }
-                  disabled={editSaving}
-                />
-              </div>
-            </Dialogo>
+          <p>
+            ¿Eliminar el {deleteTarget.tipo === "d" ? "débito" : "crédito"} de{" "}
+            <strong>${fmt(deleteTarget.total)}</strong>
+            {deleteTarget.nombre_prestador ? ` de ${deleteTarget.nombre_prestador}` : ""}? No se puede deshacer.
+          </p>
+        </Dialogo>
       )}
 
-      {/* Transition modal */}
       {transitionModal && (
         <Dialogo
           titulo={transitionLabels[transitionModal]}
           onClose={() => setTransitionModal(null)}
           acciones={
             <>
-              <Button
-                variant="secondary"
-                onClick={() => setTransitionModal(null)}
-                disabled={transitioning}
-              >
+              <Button variant="secondary" onClick={() => setTransitionModal(null)} disabled={transitioning}>
                 Cancelar
               </Button>
               <Button
@@ -951,11 +929,9 @@ const LoteDetalle: React.FC = () => {
             </>
           }
         >
-              {!transitioning && (
-                <p>{transitionDescriptions[transitionModal]}</p>
-              )}
-              {transitioning && <p style={{ color: "#64748b" }}>Procesando…</p>}
-            </Dialogo>
+          {!transitioning && <p>{transitionDescriptions[transitionModal]}</p>}
+          {transitioning && <p style={{ color: "#64748b" }}>Procesando…</p>}
+        </Dialogo>
       )}
     </div>
   );
