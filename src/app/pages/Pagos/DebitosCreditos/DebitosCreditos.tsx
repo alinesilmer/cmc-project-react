@@ -140,6 +140,8 @@ const DebitosCreditos: React.FC = () => {
     if (filterAnio) p.anio = filterAnio;
     if (filterEstado) p.estado = filterEstado;
     if (filterTipo) p.tipo = filterTipo;
+    // Las refacturaciones se ven sólo en su pantalla.
+    else p.excluir_tipo = "refacturacion";
     return p;
   }, [filterOs, filterMes, filterAnio, filterEstado, filterTipo]);
 

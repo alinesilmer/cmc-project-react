@@ -558,17 +558,11 @@ const LoteDetalle: React.FC = () => {
             <b>
               #{lote.obra_social_id}
               {lote.obra_social_nombre ? ` · ${lote.obra_social_nombre}` : ""}
+              {lote.nro_factura
+                ? ` · Factura ${lote.nro_factura}${lote.factura_version ? ` (${lote.factura_version > 1 ? `complementaria ${lote.factura_version - 1}` : "original"})` : ""}`
+                : ""}
             </b>
           </div>
-          {lote.nro_factura && (
-            <div className={lq.tiraDato}>
-              <span>Factura</span>
-              <b>
-                {lote.nro_factura}
-                {lote.factura_version ? ` · ${lote.factura_version > 1 ? `complementaria ${lote.factura_version - 1}` : "original"}` : ""}
-              </b>
-            </div>
-          )}
           {lote.snap_origen_id && (
             <span className={lq.tiraTexto}>Corrige el lote #{lote.snap_origen_id}</span>
           )}
