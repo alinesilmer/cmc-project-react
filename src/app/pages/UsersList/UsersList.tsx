@@ -60,8 +60,7 @@ function pickFirst(row: any, keys: string[]): any {
 
 function isActiveRow(row: any): boolean {
   if (typeof (row as any)?.activo !== "undefined") return Boolean(Number((row as any).activo));
-  const ex = ((row as any)?.EXISTE ?? (row as any)?.existe ?? "").toString().trim().toUpperCase();
-  return ex === "S";
+  return (row as any)?.estado_cuenta === "activo";
 }
 
 function normalizeAdherente(row: any): boolean | null {

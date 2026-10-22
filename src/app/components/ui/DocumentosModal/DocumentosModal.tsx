@@ -24,6 +24,8 @@ interface Props {
   onMover?: (doc: DocumentoItem, delta: -1 | 1) => Promise<void>;
   /** Contenido debajo de la lista (por ejemplo el check de auditado). */
   pie?: ReactNode;
+  /** Sólo ver los documentos (p. ej. período cerrado): sin agregar, reemplazar, eliminar ni ordenar. */
+  soloLectura?: boolean;
 }
 
 /**
@@ -31,7 +33,7 @@ interface Props {
  * Maneja el «ocupado» y el mensaje de error de cada acción; qué hace cada una lo define quien lo usa.
  */
 export default function DocumentosModal({
-  isOpen, onClose, titulo, subtitulo, documentos, onAgregar, onReemplazar, onEliminar, onMover, pie,
+  isOpen, onClose, titulo, subtitulo, documentos, onAgregar, onReemplazar, onEliminar, onMover, pie, soloLectura = false,
 }: Props) {
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +57,10 @@ export default function DocumentosModal({
     <Modal isOpen={isOpen} onClose={onClose} title={titulo} size="large">
       <div className={styles.cuerpo}>
         {subtitulo && <p className={styles.subtitulo}>{subtitulo}</p>}
-        {onMover && documentos.length > 1 && (
+        {soloLectura && (
+          <p className={styles.ayuda}>El período está cerrado: la documentación se puede ver, pero ya no modificar.</p>
+        )}
+        {onMover && !soloLectura && documentos.length > 1 && (
           <p className={styles.ayuda}>Con las flechas cambiás el orden en el que salen en el PDF de la factura.</p>
         )}
         <DocumentosUploader
@@ -63,6 +68,7 @@ export default function DocumentosModal({
           ocupado={ocupado}
           error={error}
           onVer={ver}
+          soloLectura={soloLectura}
           onAgregar={(a) => ejecutar(() => onAgregar(a), "No pudimos subir los archivos.")}
           onReemplazar={(d, a) => ejecutar(() => onReemplazar(d, a), "No pudimos reemplazar el archivo.")}
           onEliminar={(d) => ejecutar(() => onEliminar(d), "No pudimos eliminar el archivo.")}

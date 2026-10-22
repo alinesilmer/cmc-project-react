@@ -26,6 +26,15 @@ export type DoctorEspecialidad = {
   adjunto_url?: string | null;
 };
 
+/** `listado_medico.estado_cuenta`: sólo "activo" inicia sesión. */
+export type EstadoCuenta = "pendiente" | "activo" | "baja";
+
+export const ETIQUETA_ESTADO_CUENTA: Record<EstadoCuenta, string> = {
+  pendiente: "Pendiente",
+  activo: "Activo",
+  baja: "Baja",
+};
+
 export type DoctorProfile = {
   id: number;
   nro_socio: string;
@@ -51,7 +60,9 @@ export type DoctorProfile = {
   provincia?: string | null;
   codigo_postal?: string | null;
   categoria?: string | null;
-  existe?: string | null;
+  estado_cuenta?: EstadoCuenta | null;
+  /** Rol principal del legajo; "medico" es un socio. */
+  rol?: string | null;
   fecha_nac?: string | null;
 
   // personales extra
@@ -132,7 +143,6 @@ export const UPDATE_WHITELIST = [
   "documento",
   "cuit",
   "fecha_nac",
-  "existe",
   "provincia",
   "localidad",
   "codigo_postal",
@@ -250,9 +260,9 @@ export const uploadDocumento = async (
 export const getListEspecialidades = () =>
   getJSON<Especialidad[]>(ESPECIALIDADES());
 
-// PATCH /medicos/:id/existe
-export const setMedicoExiste = (id: string | number, existe: "S" | "N") =>
-  patchJSON(`/api/medicos/${id}/existe`, { existe });
+// PATCH /medicos/:id/estado — fuera de "activo" la API le corta las sesiones a la persona.
+export const setMedicoEstado = (id: string | number, estado_cuenta: EstadoCuenta) =>
+  patchJSON(`/api/medicos/${id}/estado`, { estado_cuenta });
 
 // DELETE /medicos/:id
 export const deleteMedico = (id: string | number) =>

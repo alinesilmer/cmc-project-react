@@ -28,7 +28,6 @@ import {
   ListPlus,
   Medal,
   Megaphone,
-  Monitor,
   Newspaper,
   Percent,
   Plus,
@@ -45,8 +44,6 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
-
-import { URL_BASE_LEGACY } from "@/app/shared/lib/urlLegacy";
 
 // ─── Modelo ───────────────────────────────────────────────────────────────────
 
@@ -264,11 +261,9 @@ export const MENU_USUARIO: MenuLink[] = [
   { path: `${base}/institucion`, icon: Building2, label: "Datos del Colegio", perms: ["catalogo:leer"] },
   { path: `${base}/admin/permissions`, icon: ShieldUser, label: "Permisos y roles", perms: ["rbac:gestionar"] },
   { path: `${base}/actividad`, icon: History, label: "Registro de actividad", perms: ["rbac:gestionar"] },
-  // Atajo hacia el sistema legacy, sin scope propio.
-  { path: `${URL_BASE_LEGACY}/principal.php`, icon: Monitor, label: "Sistema viejo", external: true },
 ];
 
-// ─── Socio (INGRESAR = 'D') ───────────────────────────────────────────────────
+// ─── Socio (rol medico) ──────────────────────────────────────────────────────────
 
 export const DOCTOR_TOP_NAV: TopEntry[] = [
   { kind: "link", path: `${base}/dashboard`, icon: Home, label: "Inicio" },

@@ -34,7 +34,7 @@ import styles from "./DoctorProfilePage.module.scss";
 import RequirePermission from "../../auth/RequirePermission";
 import { usePermisos } from "../../auth/usePermisos";
 import { useAuth } from "../../auth/AuthProvider";
-import { esOrganizacion, INGRESAR_MEDICO, isMedico } from "../../auth/roles";
+import { esOrganizacion, isMedico, ROL_MEDICO } from "../../auth/roles";
 import BackButton from "@/app/components/ui/BackButton/BackButton";
 import Credencial from "./Credencial";
 import FormularioCambiosModal from "./FormularioCambiosModal";
@@ -73,7 +73,9 @@ import {
   getEffective,
   updateMedico,
   UPDATE_WHITELIST,
-  setMedicoExiste,
+  setMedicoEstado,
+  ETIQUETA_ESTADO_CUENTA,
+  type EstadoCuenta,
   deleteMedico,
   getDocumentoLabels,
   addMedicoDocumento,
@@ -373,10 +375,8 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
 
   // El personal del Colegio también tiene legajo en `listado_medico`, pero no es médico: sin "Dr./Dra." en la credencial y sin especialidades.
   const esLegajoPropio = user?.id != null && String(user.id) === medicoId;
-  const ingresarLegajo: string | null =
-    (data as any)?.ingresar ?? (esLegajoPropio ? user?.ingresar : null) ?? null;
-  const legajoEsMedico =
-    ingresarLegajo == null || ingresarLegajo === INGRESAR_MEDICO;
+  const rolLegajo: string | null = data?.rol ?? (esLegajoPropio ? user?.role : null) ?? null;
+  const legajoEsMedico = rolLegajo == null || rolLegajo === ROL_MEDICO;
 
   // Línea bajo el nombre en "Mi perfil": especialidad · matrícula · socio.
   const resumenLegajo = [
@@ -524,7 +524,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
   const [docs, setDocs] = useState<DoctorDocument[]>([]);
   const [docsLoading, setDocsLoading] = useState(false);
 
-  const [existe, setExiste] = useState<"S" | "N">("N");
+  const [estadoCuenta, setEstadoCuenta] = useState<EstadoCuenta>("pendiente");
   const [toggleBusy, setToggleBusy] = useState(false);
   const [delOpen, setDelOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -679,8 +679,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
           fecha_ingreso: getFechaIngreso(raw),
         } as DoctorProfileX;
         setData(normalized);
-        if (normalized?.existe)
-          setExiste(normalized.existe.toUpperCase() === "S" ? "S" : "N");
+        if (normalized?.estado_cuenta) setEstadoCuenta(normalized.estado_cuenta);
       } finally {
         if (alive) setLoading(false);
       }
@@ -1075,10 +1074,10 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                     <div className={styles.headerMain}>
                       <span
                         className={`${styles.mpEstado} ${
-                          existe === "S" ? "" : styles.mpEstadoInactivo
+                          estadoCuenta === "activo" ? "" : styles.mpEstadoInactivo
                         }`}
                       >
-                        {existe === "S" ? "Activo" : "Inactivo"}
+                        {ETIQUETA_ESTADO_CUENTA[estadoCuenta]}
                       </span>
                       <h2 className={styles.name}>{data.name}</h2>
                       <p className={styles.mpSub}>{resumenLegajo}</p>
@@ -1088,26 +1087,24 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                     <div className={styles.headerActions}>
                       <div
                         className={styles.toggleWrap}
-                        title="Habilitar / Inhabilitar socio"
+                        title="Activar / dar de baja la cuenta (la baja cierra sus sesiones)"
                       >
                         <span
                           className={styles.muted}
                           style={{ marginRight: 8 }}
                         >
-                          {existe === "S" ? "Habilitado" : "Inhabilitado"}
+                          {ETIQUETA_ESTADO_CUENTA[estadoCuenta]}
                         </span>
                         <Toggle
-                          checked={existe === "S"}
+                          checked={estadoCuenta === "activo"}
                           loading={toggleBusy}
                           onChange={async (checked: boolean) => {
                             try {
                               setToggleBusy(true);
-                              const next = checked ? "S" : "N";
-                              await setMedicoExiste(medicoId, next);
-                              setExiste(next);
-                              setData((d) =>
-                                d ? ({ ...d, existe: next } as any) : d
-                              );
+                              const next: EstadoCuenta = checked ? "activo" : "baja";
+                              await setMedicoEstado(medicoId, next);
+                              setEstadoCuenta(next);
+                              setData((d) => (d ? { ...d, estado_cuenta: next } : d));
                             } catch (e: any) {
                               notify.error(
                                 e?.message || "No se pudo actualizar el estado."
@@ -1295,11 +1292,8 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                           <div>
                             <span className={styles.label}>Estado</span>
                             <span>
-                              {(data as any).existe
-                                ? String((data as any).existe).toUpperCase() ===
-                                  "S"
-                                  ? "Activo"
-                                  : "Inactivo"
+                              {data.estado_cuenta
+                                ? ETIQUETA_ESTADO_CUENTA[data.estado_cuenta]
                                 : "—"}
                             </span>
                           </div>
@@ -2044,9 +2038,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                           documento={(data as any).documento}
                           // Primera especialidad adherida; si no tiene, no se muestra.
                           especialidad={especs[0]?.nombre ?? null}
-                          activo={
-                            String((data as any).existe ?? "").toUpperCase() === "S"
-                          }
+                          activo={data.estado_cuenta === "activo"}
                           esMedico={legajoEsMedico}
                         />
                       </motion.div>

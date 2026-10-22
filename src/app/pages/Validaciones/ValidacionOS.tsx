@@ -427,6 +427,7 @@ export default function ValidacionOS() {
                 permiteAdjuntarOrden={os.permiteAdjuntarOrden}
                 onEliminar={setAEliminar}
                 onDocumentos={(p) => setDocsDe(p.id)}
+                soloLectura={Boolean(verDetalle.cerrado)}
               />
             </>
           ) : (
@@ -485,6 +486,7 @@ export default function ValidacionOS() {
           titulo="Documentación"
           subtitulo={<><strong>{prestacionDocs.codigo}</strong> · {prestacionDocs.nombreAfiliado}</>}
           documentos={prestacionDocs.documentos.map(aItem)}
+          soloLectura={tab === "listado" && Boolean(verDetalle?.cerrado)}
           onAgregar={async (archivos) => {
             await agregarDocumentos(prestacionDocs.id, archivos, nroSocioElegido);
             await tras();

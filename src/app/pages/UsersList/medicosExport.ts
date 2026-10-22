@@ -59,7 +59,7 @@ const KEYMAP: Record<ExportColumnKey, string[]> = {
   ],
   domicilio_consulta: ["domicilio_consulta", "DOMICILIO_CONSULTA"],
 
-  activo: ["activo", "ACTIVO", "estado", "ESTADO", "EXISTE", "existe"],
+  activo: ["estado_cuenta", "activo", "ACTIVO", "estado", "ESTADO"],
 
   sexo: ["sexo", "SEXO"],
   provincia: ["provincia", "PROVINCIA"],

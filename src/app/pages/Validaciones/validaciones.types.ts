@@ -181,7 +181,7 @@ export interface Periodo {
   anio: number;
   cantidad: number;
   total: number;
-  /** El Colegio cerró el período: no se puede cargar ni eliminar. */
+  /** El período ya no se puede operar (para el médico: su fase cerró): no se puede cargar, eliminar ni tocar la documentación. */
   cerrado?: boolean;
 }
 

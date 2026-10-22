@@ -42,7 +42,6 @@ const Boletin = lazy(() => import("./app/pages/Boletin/Boletin"));
 const AfiliadosPorObraSocialPage = lazy(() => import("./app/pages/AfiliadosPorObraSocialPage/AfiliadosPorObraSocialPage"));
 const GenerarBoletin = lazy(() => import("./app/pages/GenerarBoletin/GenerarBoletin"));
 const CambiarPassword = lazy(() => import("./app/pages/CambiarPassword/CambiarPassword"));
-const SistemaAnterior = lazy(() => import("./app/pages/SistemaAnterior/SistemaAnterior"));
 
 // Liquidación (nuevo módulo)
 const PagosList = lazy(() => import("./app/pages/Pagos/PagosList/PagosList"));
@@ -444,7 +443,6 @@ export default function RootRoutes() {
               path="/panel/cambiar-password"
               element={<CambiarPassword />}
             />
-            <Route path="/panel/sistema-anterior" element={<SistemaAnterior />} />
           </Route>
           </Route>
 

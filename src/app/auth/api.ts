@@ -7,9 +7,8 @@ export type User = {
   nro_socio?: number | null;
   nombre: string;
   scopes: string[];
+  /** Rol principal: "medico" es un socio; el resto, personal del Colegio. */
   role?: string | null;
-  /** 'D' = médico; otros valores = personal administrativo */
-  ingresar?: string | null;
   /** ID_COLEGIO_ESPE en orden de prioridad (principal primero). Vacía si no tiene. */
   especialidades: number[];
   es_organizacion?: number | null;
@@ -28,7 +27,6 @@ function normalizeUser(raw: any): User {
       ? [raw.scopes]
       : [],
     role: raw?.role ?? null,
-    ingresar: raw?.ingresar ?? raw?.INGRESAR ?? null,
     especialidades: Array.isArray(raw?.especialidades) ? raw.especialidades : [],
     es_organizacion: raw?.es_organizacion != null ? Number(raw.es_organizacion) : null,
     must_change_password: Boolean(raw?.must_change_password),

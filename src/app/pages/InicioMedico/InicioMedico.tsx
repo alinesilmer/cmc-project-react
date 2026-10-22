@@ -138,7 +138,7 @@ const TUTORIALES_PENDIENTES = [
   "Cargar tu documentación al legajo",
 ];
 
-/** Portal de los usuarios médicos (INGRESAR = 'D'): hero corto, accesos, la vidriera de beneficios y convenios, y el módulo de tutoriales por venir. */
+/** Portal de los usuarios médicos (rol `medico`): hero corto, accesos, la vidriera de beneficios y convenios, y el módulo de tutoriales por venir. */
 const InicioMedico: React.FC = () => {
   const { user } = useAuth();
 
