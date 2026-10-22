@@ -15,6 +15,7 @@ import {
   DollarSign,
   FileBoxIcon,
   FileCode2,
+  FileSpreadsheet,
   FileText,
   FileUp,
   Gift,
@@ -161,6 +162,7 @@ export const TOP_NAV: TopEntry[] = [
           { path: `${base}/users`, icon: BookUser, label: "Listado de socios", perms: ["medico:leer"] },
           { path: `${base}/register-socio`, icon: UserPlus, label: "Agregar socio", perms: ["medico:crear"] },
           { path: `${base}/afiliadospadron`, icon: Newspaper, label: "Padrones", perms: ["padron:leer"] },
+          { path: `${base}/actualizar-padrones`, icon: ClipboardList, label: "Actualizar padrones", perms: ["padron:editar"] },
           { path: `${base}/cobranzas`, icon: Wallet, label: "Cobranzas", perms: ["cobranza:leer"] },
           // `solicitud:leer` para verlas; aprobar o rechazar se gatea dentro de la pantalla.
           { path: `${base}/solicitudes-cambio`, icon: Inbox, label: "Solicitudes de cambio", perms: ["solicitud:leer"] },
@@ -218,6 +220,8 @@ export const TOP_NAV: TopEntry[] = [
         heading: "Cambios masivos",
         items: [
           { path: `${base}/nomenclador/aumento-porcentual`, icon: Percent, label: "Aumento porcentual", perms: ["nomenclador:masivo"] },
+          // Excel con los valores fijos NE de una obra social: vista previa y después aplica.
+          { path: `${base}/nomenclador/importar-valores-fijos`, icon: FileSpreadsheet, label: "Importar valores fijos", perms: ["nomenclador:masivo"] },
           { path: `${base}/nomenclador/actualizar-precios`, icon: TrendingUp, label: "Actualizar unidades", perms: ["nomenclador:editar"] },
           // Completa galenos base + valores NN faltantes de una OS en $0, sin tocar lo que ya tiene.
           { path: `${base}/herramientas/completar-nomenclador-nn`, icon: DatabaseZap, label: "Completar nomenclador NN", perms: ["nomenclador:masivo"] },

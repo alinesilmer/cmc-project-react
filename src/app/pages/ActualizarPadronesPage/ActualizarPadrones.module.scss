@@ -1,0 +1,255 @@
+@use "sass:color";
+@use "@/app/styles/all.scss" as *;
+
+// Lo propio de «Actualizar padrones»; la franja, el selector, la tabla y la paginación vienen de Padrones.module.scss.
+
+.nota {
+  margin: 0;
+  font-size: $font-size-sm;
+  color: $gray-600;
+}
+
+// ── Cifras del padrón ────────────────────────────────────────────────────────
+
+.cifras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-3;
+}
+
+.cifra {
+  display: flex;
+  flex-direction: column;
+  min-width: 8rem;
+  padding: $spacing-2 $spacing-4;
+  background: $gray-50;
+  border: 1px solid $gray-200;
+  border-radius: $radio-md;
+
+  strong {
+    font-family: $fuente-titulos;
+    font-size: $font-size-xl;
+    font-weight: 800;
+    color: $primary-blue;
+  }
+
+  span {
+    font-size: $font-size-sm;
+    color: $gray-600;
+  }
+}
+
+// ── Vistas: todos / sin adherir / ya adheridos ───────────────────────────────
+
+.segmentos {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: $gray-100;
+  border-radius: 999px;
+}
+
+.segmento {
+  height: 2.4rem;
+  padding: 0 $spacing-4;
+  font: inherit;
+  font-size: $font-size-base;
+  color: $gray-600;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+
+  &:hover {
+    color: $primary-blue;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $accent-blue;
+    outline-offset: 2px;
+  }
+}
+
+.segmentoActivo,
+.segmentoActivo:hover {
+  font-weight: $font-weight-semibold;
+  color: $primary-blue;
+  background: $white;
+  box-shadow: 0 1px 2px rgba($primary-blue-darker, 0.18);
+}
+
+// ── Tabla ────────────────────────────────────────────────────────────────────
+
+.colCheck {
+  width: 1%;
+  padding-right: 0 !important;
+  text-align: center;
+}
+
+.check {
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0;
+  accent-color: $primary-blue;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+.filaTildada td {
+  background: $secondary-blue;
+}
+
+.filaBloqueada td {
+  color: $gray-600;
+}
+
+// Mientras llega la página siguiente la tabla queda a la vista, apagada.
+.recargando {
+  opacity: 0.55;
+  transition: opacity 0.15s;
+}
+
+.estado {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px $spacing-3;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  white-space: nowrap;
+  border-radius: 999px;
+}
+
+.estadoAd {
+  color: color.adjust($success-green, $lightness: -12%);
+  background: rgba($success-green, 0.14);
+}
+
+.estadoNuevo {
+  color: $primary-yellow-dark;
+  background: $primary-yellow;
+}
+
+.estadoQuita {
+  color: color.adjust($danger-red, $lightness: -8%);
+  background: rgba($danger-red, 0.12);
+}
+
+.libre {
+  font-size: $font-size-base;
+  color: $gray-600;
+}
+
+.paginaDe {
+  font-size: $font-size-base;
+  color: $gray-600;
+}
+
+// ── Barra de selección ───────────────────────────────────────────────────────
+
+// Queda pegada abajo: se tilda en la tabla y se confirma sin volver a subir.
+.barra {
+  position: sticky;
+  bottom: $spacing-4;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-4;
+  padding: $spacing-3 $spacing-5;
+  color: $white;
+  background: $franja-azul;
+  border-radius: $radio-lg;
+  box-shadow: 0 16px 36px -14px rgba($primary-blue-darker, 0.7);
+}
+
+.barraQuitar {
+  background: color.adjust($danger-red, $lightness: -14%);
+}
+
+.barraTexto {
+  display: flex;
+  flex: 1 1 18rem;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+
+  strong {
+    font-family: $fuente-titulos;
+    font-size: $font-size-lg;
+    font-weight: $font-weight-bold;
+  }
+
+  span {
+    overflow: hidden;
+    font-size: $font-size-sm;
+    color: rgba($white, 0.82);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.barraLimpiar,
+.barraAccion {
+  height: 2.75rem;
+  padding: 0 $spacing-5;
+  font: inherit;
+  font-size: $font-size-base;
+  border-radius: $radio-sm;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid $white;
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+.barraLimpiar {
+  color: $white;
+  background: transparent;
+  border: 1px solid rgba($white, 0.45);
+
+  &:disabled {
+    opacity: 0.5;
+  }
+}
+
+.barraAccion {
+  font-weight: $font-weight-semibold;
+  color: $franja-azul;
+  background: $franja-crema;
+  border: 0;
+
+  &:disabled {
+    color: rgba($white, 0.7);
+    background: rgba($white, 0.2);
+  }
+}
+
+.barraQuitar .barraAccion:not(:disabled) {
+  color: color.adjust($danger-red, $lightness: -14%);
+}
+
+@media (max-width: $breakpoint-md) {
+  .barra {
+    bottom: 0;
+    border-radius: $radio-lg $radio-lg 0 0;
+  }
+
+  .barraLimpiar,
+  .barraAccion {
+    flex: 1 1 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recargando {
+    transition: none;
+  }
+}

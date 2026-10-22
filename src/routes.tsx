@@ -27,6 +27,7 @@ const ReportesPage = lazy(() => import("./app/pages/Reportes/ReportesPage"));
 const DoctorsPage = lazy(() => import("./app/pages/DoctorsList/DoctorsList"));
 const SocialWorksPage = lazy(() => import("./app/pages/SocialWorkSection/SocialWorkSection"));
 const DoctorProfilePage = lazy(() => import("./app/pages/DoctorProfilePage/DoctorProfilePage"));
+const ActualizarPadronesPage = lazy(() => import("./app/pages/ActualizarPadronesPage/ActualizarPadronesPage"));
 const PadronPorSocio = lazy(() => import("./app/pages/PadronPorSocio/PadronPorSocio"));
 const UsersList = lazy(() => import("./app/pages/UsersList/UsersList"));
 // Control de calidad del padrón: sólo lectura, señala legajos con problemas.
@@ -127,7 +128,6 @@ const TxtDasuten = lazy(() => import("./app/pages/facturacion/TxtDasuten/TxtDasu
 const CompletarNomencladorNN = lazy(() => import("./app/pages/NomencladorNacional/CompletarNomencladorNN/CompletarNomencladorNN"));
 const AgregarCodigoObrasSociales = lazy(() => import("./app/pages/NomencladorNacional/AgregarCodigoObrasSociales/AgregarCodigoObrasSociales"));
 const ActualizacionesValores = lazy(() => import("./app/pages/NomencladorNacional/ActualizacionesValores/ActualizacionesValores"));
-const ImportarPreciosPdf = lazy(() => import("./app/pages/NomencladorNacional/ImportarPreciosPdf/ImportarPreciosPdf"));
 const ImportarValoresFijos = lazy(() => import("./app/pages/NomencladorNacional/ImportarValoresFijos/ImportarValoresFijos"));
 const AumentoPorcentual = lazy(() => import("./app/pages/NomencladorNacional/AumentoPorcentual/AumentoPorcentual"));
 
@@ -194,6 +194,11 @@ export default function RootRoutes() {
                 <Route path="doctors" element={<DoctorsPage />} />
                 <Route path="doctors/:id" element={<DoctorProfilePage />} />
                 <Route path="padron-socio" element={<PadronPorSocio />} />
+              </Route>
+
+              {/* Altas y bajas masivas de socios en el padrón de una obra social: el backend exige `padron:editar`. */}
+              <Route element={<RequireScope scope="padron:editar" />}>
+                <Route path="actualizar-padrones" element={<ActualizarPadronesPage />} />
               </Route>
 
               <Route path="social-works" element={<SocialWorksPage />} />
@@ -382,7 +387,6 @@ export default function RootRoutes() {
                 <Route path="nomenclador/actualizaciones" element={<ActualizacionesValores />} />
               </Route>
               <Route element={<RequireScope scope="nomenclador:masivo" />}>
-                <Route path="nomenclador/importar-precios-pdf" element={<ImportarPreciosPdf />} />
                 <Route path="nomenclador/importar-valores-fijos" element={<ImportarValoresFijos />} />
                 <Route path="nomenclador/aumento-porcentual" element={<AumentoPorcentual />} />
                 <Route path="herramientas/completar-nomenclador-nn" element={<CompletarNomencladorNN />} />
