@@ -176,9 +176,38 @@
 
 .separador { width: 1px; align-self: stretch; background: $gray-200; margin: 0.25rem 0.5rem; }
 
-.os { display: flex; flex-direction: column; gap: 0.375rem; min-width: 0; flex: 1 1 16.25rem; }
-.osNombre { font-size: 1.25rem; font-weight: 700; color: $carpeta-noche; overflow-wrap: anywhere; }
-.chips { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+// Obra social y período: mismo formato que el nº de expediente, un poco más chico para que entren nombres largos.
+.bloque { display: flex; flex-direction: column; gap: 0.125rem; min-width: 0; }
+.bloqueOs { flex: 1 1 16.25rem; }
+
+.valorGrande {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  line-height: 1.15;
+  color: $carpeta-noche;
+  overflow-wrap: anywhere;
+}
+.valorNro { color: $tono-azul-450; white-space: nowrap; }
+
+.periodoFila { display: flex; align-items: center; gap: 0.5rem; }
+
+.flecha {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.875rem;
+  height: 1.875rem;
+  background: $white;
+  color: $tono-azul-400;
+  border: 1px solid $gray-200;
+  border-radius: 0.375rem;
+  cursor: pointer;
+
+  &:hover:not(:disabled) { color: $tono-azul-450; border-color: $tono-azul-450; }
+  &:disabled { opacity: .4; cursor: default; }
+}
 
 .estados { margin-left: auto; display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end; }
 .estadoFila { display: flex; align-items: center; gap: 0.5rem; }

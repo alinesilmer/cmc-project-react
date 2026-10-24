@@ -8,7 +8,7 @@ import Franja from "@/app/components/layout/Franja/Franja";
 import SearchField from "@/app/components/ui/SearchField/SearchField";
 import lq from "../Liquidacion.module.scss";
 import styles from "./FacturaDetalle.module.scss";
-import { type Liquidacion, fmt, mesLabel } from "../types";
+import { type Liquidacion, fmt, mesLabel, nroFacturaMarcado } from "../types";
 import type ExcelJS from "exceljs";
 import { saveAs } from "@/app/shared/lib/fileSaver";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
@@ -133,7 +133,7 @@ const FacturaDetalle: React.FC = () => {
           {liq.nro_factura && (
             <div className={lq.tiraDato}>
               <span>Factura</span>
-              <b className={lq.mono}>{liq.nro_factura}</b>
+              <b className={lq.mono}>{nroFacturaMarcado(liq.nro_factura, liq.factura_version)}</b>
             </div>
           )}
           <div className={lq.tiraDato}>

@@ -566,6 +566,11 @@ const LoteDetalle: React.FC = () => {
           {lote.snap_origen_id && (
             <span className={lq.tiraTexto}>Corrige el lote #{lote.snap_origen_id}</span>
           )}
+          {lote.factura_en_pago === false && (
+            <span className={lq.tiraTexto}>
+              Esta factura todavía no está en el pago{lote.pago_id ? ` #${lote.pago_id}` : " abierto"}. Se puede pasar igual.
+            </span>
+          )}
           {lote.pago_id && (
             <div className={lq.tiraDato}>
               <span>Pago</span>
@@ -753,19 +758,20 @@ const LoteDetalle: React.FC = () => {
                 <div className={styles.emptyCell}>Buscando…</div>
               ) : searchResults.length === 0 ? (
                 <div className={styles.emptyCell}>
-                  Sin resultados para "{searchQuery.trim()}". Solo se encuentran prestaciones ya liquidadas de este período.
+                  Sin resultados para "{searchQuery.trim()}". Se buscan las prestaciones cerradas o liquidadas de la factura de este lote.
                 </div>
               ) : (
                 <Tabla className={`${styles.table} ${styles.tableSearch}`}>
                   <thead>
                     <tr>
-                      <th>ID</th>
+                      <th>Nº registro</th>
                       <th>Nro Orden</th>
                       <th>Socio</th>
                       <th>Código</th>
                       <th>Fecha</th>
                       <th>Afiliado</th>
                       <th className={styles.numCell}>Importe</th>
+                      <th className={styles.numCell}>Ya debitado</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -785,6 +791,9 @@ const LoteDetalle: React.FC = () => {
                         <td>{row.fecha_practica}</td>
                         <td>{row.nom_ape_p}</td>
                         <td className={styles.numCell}>${fmt(row.importe_total)}</td>
+                        <td className={styles.numCell}>
+                          {Number(row.ya_debitado) !== 0 ? `$${fmt(row.ya_debitado)}` : <span className={lq.tenue}>—</span>}
+                        </td>
                       </tr>
                     ))}
                   </tbody>

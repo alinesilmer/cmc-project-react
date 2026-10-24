@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import DatePicker, { registerLocale } from "react-datepicker";
 import { es } from "date-fns/locale/es";
@@ -28,6 +29,8 @@ type Props = {
   disabled?: boolean;
   required?: boolean;
   className?: string;
+  /** El calendario sólo se abre al tocar el ícono; el campo queda para escribir. */
+  calendarioSoloEnIcono?: boolean;
 };
 
 /** `12102026` → `12/10/2026` mientras se escribe, sin tener que tipear las barras. */
@@ -56,7 +59,9 @@ export default function CampoFecha({
   disabled = false,
   required = false,
   className,
+  calendarioSoloEnIcono = false,
 }: Props) {
+  const [abierto, setAbierto] = useState(false);
   const minimo = min ? (parseFechaLocal(min) ?? undefined) : undefined;
   const maximo = max ? (parseFechaLocal(max) ?? undefined) : undefined;
   const anios = aniosPosibles(minimo, maximo);
@@ -142,13 +147,36 @@ export default function CampoFecha({
             </button>
           </div>
         )}
+        // Con `open` controlado el campo no abre el calendario al enfocarlo ni al hacer clic.
+        {...(calendarioSoloEnIcono && {
+          open: abierto,
+          onClickOutside: () => setAbierto(false),
+          onSelect: () => setAbierto(false),
+          onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => {
+            if (e.key === "Escape" || e.key === "Tab") setAbierto(false);
+          },
+        })}
         disabled={disabled}
         required={required}
         aria-label={ariaLabel}
         autoComplete="off"
         className={s.entrada}
       />
-      <CalendarDays size={17} className={s.icono} aria-hidden="true" />
+      {calendarioSoloEnIcono ? (
+        <button
+          type="button"
+          className={`${s.icono} ${s.iconoBoton}`}
+          onClick={() => setAbierto((a) => !a)}
+          disabled={disabled}
+          aria-label="Abrir calendario"
+          aria-expanded={abierto}
+          tabIndex={-1}
+        >
+          <CalendarDays size={17} aria-hidden="true" />
+        </button>
+      ) : (
+        <CalendarDays size={17} className={s.icono} aria-hidden="true" />
+      )}
     </div>
   );
 }

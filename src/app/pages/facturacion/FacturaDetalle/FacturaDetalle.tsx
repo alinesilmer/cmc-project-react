@@ -1,6 +1,6 @@
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { ArrowRightCircle, ArrowLeftCircle, Trash2 } from "lucide-react";
+import { ArrowRightCircle, ArrowLeftCircle } from "lucide-react";
 
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
 import { usePermisos } from "@/app/auth/usePermisos";
@@ -9,11 +9,12 @@ import {
   moverPeriodo,
 } from "../api";
 import type {
-  FacturaDetalleResponse, PrestacionFacturaDetalle, Tipo,
+  FacturaDetalleResponse, MotivoEliminacion, PrestacionFacturaDetalle, Tipo,
 } from "../types";
 import { detailMessage } from "../types";
 import { formatMoney, parseMoney } from "../money";
 import ConfirmActionModal from "../components/ConfirmActionModal";
+import EliminarPrestacionModal from "../components/EliminarPrestacionModal";
 import ExportPanel from "./export/ExportPanel";
 import VistaPanel from "./vista/VistaPanel";
 import type { FiltrosVista, OrdenDireccion, OrdenVista, VistaOpciones } from "./vista/types";
@@ -202,6 +203,8 @@ const FacturaDetalle: React.FC = () => {
   }, [id]);
 
   useEffect(() => { load(); }, [load]);
+  // Al pasar a otro período la pestaña de documentación puede no existir en esa factura.
+  useEffect(() => { setPestana("detalle"); }, [id]);
 
   // Recarga después de editar en la capa: sin pasar por "Cargando…", así el listado no
   // se vacía ni pierde el scroll; las filas se actualizan en el lugar.
@@ -274,10 +277,12 @@ const FacturaDetalle: React.FC = () => {
   const handleMoverPeriodo = (p: PrestacionConSocio, direccion: "siguiente" | "anterior") =>
     setPendingAction({ type: "mover", p, direccion });
 
-  const executeEliminar = (p: PrestacionConSocio, onSuccess: () => void) =>
+  const executeEliminar = (
+    p: PrestacionConSocio, motivo: MotivoEliminacion, detalle: string | null, onSuccess: () => void,
+  ) =>
     withBusy(p.id, async () => {
       try {
-        await anularPrestacion(p.id);
+        await anularPrestacion(p.id, { motivo, detalle });
         notify("Prestación anulada.");
         setDetalle((cur) => cur ? quitarPrestaciones(cur, [p.id]) : cur);
         onSuccess();
@@ -402,11 +407,10 @@ const FacturaDetalle: React.FC = () => {
 
   const handleConfirmPending = () => {
     if (!pendingAction) return;
-    if (pendingAction.type === "eliminar") {
-      executeEliminar(pendingAction.p, () => setPendingAction(null));
-    } else if (pendingAction.type === "mover") {
+    // Eliminar confirma desde su propio diálogo (con el motivo): no pasa por acá.
+    if (pendingAction.type === "mover") {
       executeMoverPeriodo(pendingAction.p, pendingAction.direccion, () => setPendingAction(null));
-    } else {
+    } else if (pendingAction.type === "moverGrupo") {
       executeMoverGrupo(pendingAction.ids, pendingAction.groupKey, pendingAction.direccion, () => setPendingAction(null));
     }
   };
@@ -659,6 +663,7 @@ const FacturaDetalle: React.FC = () => {
         onVista={() => setVistaOpen(true)}
         onExportar={() => setExportOpen(true)}
         onVolver={() => navigate("/panel/facturacion/periodos")}
+        onIrAFactura={(idFactura) => navigate(`/panel/facturacion/periodos/${idFactura}`)}
         onCompactaChange={setBarraCompacta}
       />
 
@@ -748,18 +753,14 @@ const FacturaDetalle: React.FC = () => {
       )}
 
       {pendingAction?.type === "eliminar" && (
-        <ConfirmActionModal
+        <EliminarPrestacionModal
           isOpen
-          icon={Trash2}
-          variant="danger"
-          title="Eliminar prestación"
-          message={
-            <>El ID Nº <strong>{pendingAction.p.id}</strong> — ¿confirmás anular esta prestación?</>
-          }
-          warning="Esta acción anula la prestación y no se puede deshacer."
-          confirmLabel="Eliminar"
+          prestacionId={pendingAction.p.id}
+          descripcion={<>{pendingAction.p.nombreSocio ?? `Socio ${pendingAction.p.cod_medico}`} · código {pendingAction.p.codigo ?? "—"}</>}
+          aviso="No se puede deshacer. El médico deja de verla en su panel."
           onClose={() => setPendingAction(null)}
-          onConfirm={handleConfirmPending}
+          onConfirm={(motivo, detalle) =>
+            executeEliminar(pendingAction.p, motivo, detalle, () => setPendingAction(null))}
           loading={busyIds.has(pendingAction.p.id)}
         />
       )}

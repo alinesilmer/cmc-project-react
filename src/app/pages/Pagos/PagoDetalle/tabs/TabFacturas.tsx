@@ -13,13 +13,15 @@ import {
   type Pago,
   type Liquidacion,
   type ObraSocial,
-  type PeriodoDisp,
+  type FacturaPagoDisp,
+  avisoDeCarga,
+  etiquetaFactura,
+  nroFacturaMarcado,
   fmt,
   mesLabel,
 } from "../../types";
 import AppSearchSelect from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
-import { PERIODOS_DISP_URL } from "@/app/pages/Pagos/utiles";
 import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
 
 const LIQUIDACIONES_URL = (pagoId: number) =>
@@ -28,6 +30,8 @@ const CREAR_LIQ_URL = "/api/liquidacion/liquidaciones_por_os/crear";
 const DEL_LIQ_URL = (id: number) =>
   `/api/liquidacion/liquidaciones_por_os/${id}`;
 const OBRAS_SOCIALES_URL = "/api/obras_social/";
+const FACTURAS_PARA_PAGO_URL = (osId: number, pagoId: number) =>
+  `/api/periodos/facturas_para_pago?obra_social_id=${osId}&pago_id=${pagoId}`;
 type Props = {
   pago: Pago;
   pagoId: number;
@@ -43,16 +47,17 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
   const [rows, setRows] = useState<Liquidacion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Prestaciones que quedaron afuera de la última factura agregada; se queda hasta cerrarlo.
+  const [avisoCarga, setAvisoCarga] = useState<string | null>(null);
 
   // Modal agregar
   const [addOpen, setAddOpen] = useState(false);
   const [obrasSociales, setObrasSociales] = useState<ObraSocial[]>([]);
   const [loadingOS, setLoadingOS] = useState(false);
   const [selectedOS, setSelectedOS] = useState<number | "">("");
-  const [periodos, setPeriodos] = useState<PeriodoDisp[]>([]);
-  const [loadingPeriodos, setLoadingPeriodos] = useState(false);
-  const [selectedMes, setSelectedMes] = useState<number | "">("");
-  const [selectedAnio, setSelectedAnio] = useState<number | "">("");
+  const [facturas, setFacturas] = useState<FacturaPagoDisp[]>([]);
+  const [loadingFacturas, setLoadingFacturas] = useState(false);
+  const [selectedFactura, setSelectedFactura] = useState("");
   const [adding, setAdding] = useState(false);
 
   const fetchRows = useCallback(async () => {
@@ -74,9 +79,8 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
 
   const openAddModal = async () => {
     setSelectedOS("");
-    setSelectedMes("");
-    setSelectedAnio("");
-    setPeriodos([]);
+    setSelectedFactura("");
+    setFacturas([]);
     setAddOpen(true);
     if (obrasSociales.length === 0) {
       setLoadingOS(true);
@@ -94,49 +98,46 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
   const handleOSSelect = async (val: string | number | null) => {
     const numVal = val ? Number(val) : ("" as const);
     setSelectedOS(numVal);
-    setSelectedMes("");
-    setSelectedAnio("");
-    setPeriodos([]);
+    setSelectedFactura("");
+    setFacturas([]);
     if (!numVal) return;
-    setLoadingPeriodos(true);
+    setLoadingFacturas(true);
     try {
-      const data = await getJSON<PeriodoDisp[]>(PERIODOS_DISP_URL(numVal));
-      setPeriodos(Array.isArray(data) ? data : []);
+      const data = await getJSON<FacturaPagoDisp[]>(
+        FACTURAS_PARA_PAGO_URL(numVal, pagoId),
+      );
+      setFacturas(Array.isArray(data) ? data : []);
     } catch {
-      setPeriodos([]);
+      setFacturas([]);
     } finally {
-      setLoadingPeriodos(false);
+      setLoadingFacturas(false);
     }
   };
 
-  const handlePeriodoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = e.target.value;
-    if (!val) {
-      setSelectedMes("");
-      setSelectedAnio("");
-      return;
-    }
-    const [anio, mes] = val.split("-").map(Number);
-    setSelectedAnio(anio);
-    setSelectedMes(mes);
-  };
-
-  const getPeriodoAnio = (p: PeriodoDisp) => p.ANIO;
-  const getPeriodoMes = (p: PeriodoDisp) => p.MES;
+  const facturaElegida = facturas.find(
+    (f) => String(f.FACTURA_ID) === selectedFactura,
+  );
 
   const handleAdd = async () => {
-    if (!selectedOS || !selectedMes || !selectedAnio) return;
+    if (!selectedOS || !selectedFactura) return;
     setAdding(true);
     try {
       const created = await postJSON<Liquidacion>(CREAR_LIQ_URL, {
         pago_id: pagoId,
         obra_social_id: selectedOS,
-        mes_periodo: selectedMes,
-        anio_periodo: selectedAnio,
+        factura_id: Number(selectedFactura),
       });
       setRows((prev) => [...prev, created]);
       setAddOpen(false);
-      notify("Factura agregada correctamente.");
+      const r = created.resumen_carga;
+      const afuera = r ? avisoDeCarga(r) : "";
+      if (r && afuera) {
+        setAvisoCarga(`Factura ${created.nro_factura}: ${r.cargadas} de ${r.total} prestaciones cargadas. Revisar: ${afuera}.`);
+        notify(`Factura agregada con ${r.total - r.cargadas - r.ya_liquidadas} prestaciones sin cargar.`, "warning");
+      } else {
+        setAvisoCarga(null);
+        notify(r ? `Factura agregada: ${r.cargadas} de ${r.total} prestaciones cargadas.` : "Factura agregada correctamente.");
+      }
       onRefresh?.();
     } catch (e: any) {
       const detail = e?.response?.data?.detail;
@@ -161,7 +162,7 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
     {
       key: "nro_factura",
       header: "Nro. Factura",
-      render: (r) => r.nro_factura || "—",
+      render: (r) => nroFacturaMarcado(r.nro_factura, r.factura_version),
     },
     {
       key: "total_honorarios",
@@ -254,6 +255,14 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
       </div>
 
       {error && <div className={styles.errorBanner}>{error}</div>}
+      {avisoCarga && (
+        <div className={styles.errorBanner} role="status">
+          {avisoCarga}{" "}
+          <button type="button" onClick={() => setAvisoCarga(null)} style={{ textDecoration: "underline", background: "none", border: 0, cursor: "pointer", color: "inherit" }}>
+            Cerrar aviso
+          </button>
+        </div>
+      )}
 
       <SelectableTable
         rows={rows}
@@ -286,9 +295,7 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
               <Button
                 variant="primary"
                 onClick={handleAdd}
-                disabled={
-                  adding || !selectedOS || !selectedMes || !selectedAnio
-                }
+                disabled={adding || !selectedOS || !selectedFactura}
               >
                 {adding ? "Agregando…" : "Agregar"}
               </Button>
@@ -309,39 +316,44 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
                 />
               </div>
               <div className={styles.formRow}>
-                <label className={styles.formLabel}>Período disponible</label>
+                <label className={styles.formLabel} htmlFor="pago-factura">
+                  Factura a pagar
+                </label>
                 {!selectedOS ? (
                   <span style={{ fontSize: 12, color: "#94a3b8" }}>
                     Seleccioná una obra social primero.
                   </span>
-                ) : loadingPeriodos ? (
+                ) : loadingFacturas ? (
                   <span style={{ fontSize: 13, color: "#64748b" }}>
-                    Cargando períodos…
+                    Cargando facturas…
+                  </span>
+                ) : facturas.length === 0 ? (
+                  <span style={{ fontSize: 12, color: "#94a3b8" }}>
+                    Esta obra social no tiene facturas con prestaciones por pagar.
                   </span>
                 ) : (
                   <select
+                    id="pago-factura"
                     className={styles.formSelect}
-                    value={
-                      selectedAnio && selectedMes
-                        ? `${selectedAnio}-${selectedMes}`
-                        : ""
-                    }
-                    onChange={handlePeriodoChange}
+                    value={selectedFactura}
+                    onChange={(e) => setSelectedFactura(e.target.value)}
                     disabled={adding}
                   >
-                    <option value="">Seleccioná un período…</option>
-                    {periodos.map((p) => (
-                      <option
-                        key={`${getPeriodoAnio(p)}-${getPeriodoMes(p)}`}
-                        value={`${getPeriodoAnio(p)}-${getPeriodoMes(p)}`}
-                      >
-                        {mesLabel(getPeriodoMes(p))} {getPeriodoAnio(p)}
+                    <option value="">Seleccioná una factura…</option>
+                    {facturas.map((f) => (
+                      <option key={f.FACTURA_ID} value={f.FACTURA_ID}>
+                        {etiquetaFactura(f)} — {mesLabel(f.MES)} {f.ANIO}
                       </option>
                     ))}
-                    {periodos.length === 0 && (
-                      <option disabled>Sin períodos disponibles</option>
-                    )}
                   </select>
+                )}
+                {facturaElegida && (
+                  <span style={{ fontSize: 12, color: "#64748b" }}>
+                    {facturaElegida.CANTIDAD} prestaci
+                    {facturaElegida.CANTIDAD !== 1 ? "ones" : "ón"} cerrada
+                    {facturaElegida.CANTIDAD !== 1 ? "s" : ""} por $
+                    {fmt(facturaElegida.IMPORTE)}
+                  </span>
                 )}
               </div>
             </Dialogo>

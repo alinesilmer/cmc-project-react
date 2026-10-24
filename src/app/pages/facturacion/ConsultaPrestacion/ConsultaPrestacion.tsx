@@ -11,9 +11,9 @@ import {
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
 import { fetchPrestacionFicha, listarPrestaciones } from "../api";
 import { detailMessage } from "../types";
-import type { EstadoPrestacion, PrestacionFicha, PrestacionRead } from "../types";
+import type { PrestacionFicha, PrestacionRead } from "../types";
 import { formatMoney } from "../money";
-import PrestacionStateChip from "../components/PrestacionStateChip";
+import { FranjaEstado, LineaDeTiempo } from "./HistorialFicha";
 import styles from "./ConsultaPrestacion.module.scss";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
@@ -287,20 +287,27 @@ const ConsultaPrestacion: React.FC = () => {
             <BackButton onClick={volver} />
 
             <div className={styles.fichaHero}>
-              <span className={styles.fichaId}>#{ficha.prestacion.id_detalle_prestaciones}</span>
-              <PrestacionStateChip estado={(ficha.prestacion.estado as EstadoPrestacion) ?? "A"} />
-              <span className={`${styles.chip} ${styles.chipBlue}`}>
+              <div className={styles.fichaEncabezado}>
+                <h2 className={styles.fichaTitulo}>
+                  Registro <span className={styles.fichaId}>{ficha.prestacion.id_detalle_prestaciones}</span>
+                </h2>
+                {(ficha.nomenclador || ficha.prestacion.cod_nom) && (
+                  <span className={styles.fichaCodigo}>
+                    {ficha.nomenclador?.codigo ?? ficha.prestacion.cod_nom}
+                    {ficha.nomenclador?.descripcion && ` · ${ficha.nomenclador.descripcion}`}
+                  </span>
+                )}
+              </div>
+              <p className={styles.fichaMeta}>
                 Origen: {ORIGEN_LABEL[ficha.prestacion.origen_carga ?? ""] ?? ficha.prestacion.origen_carga ?? "—"}
-              </span>
-              <span className={`${styles.chip} ${styles.chipNeutral}`}>
-                Período {ficha.prestacion.periodo_label ?? ficha.prestacion.periodo}
-              </span>
-              <span className={`${styles.chip} ${styles.chipNeutral}`}>
-                <History size={11} /> Cargada el {fmtFechaHora(ficha.prestacion.created)}
-                {ficha.prestacion.usuario && ` · ${ficha.cargado_por?.nombre ?? ficha.prestacion.usuario}`}
-              </span>
+                {" · "}Período {ficha.prestacion.periodo_label ?? ficha.prestacion.periodo}
+                {" · "}Cargada el {fmtFechaHora(ficha.prestacion.created)}
+                {ficha.prestacion.usuario && ` por ${ficha.cargado_por?.nombre ?? ficha.prestacion.usuario}`}
+              </p>
+              <FranjaEstado ficha={ficha} />
             </div>
 
+            <div className={styles.fichaCuerpo}>
             <div className={styles.grid}>
               {/* Médico */}
               <div className={styles.card}>
@@ -490,39 +497,6 @@ const ConsultaPrestacion: React.FC = () => {
                 </p>
               </div>
 
-              {/* Auditoría */}
-              <div className={`${styles.card} ${styles.gridFull}`}>
-                <p className={styles.cardTitle}><History size={13} /> Auditoría</p>
-                {ficha.auditoria.length === 0 ? (
-                  <p className={styles.mutedText} style={{ fontSize: "0.82rem", margin: 0 }}>
-                    Sin movimientos registrados desde que se cargó.
-                  </p>
-                ) : (
-                  <div className={styles.tableWrap}>
-                    <Tabla className={styles.table}>
-                      <thead>
-                        <tr>
-                          <th>Fecha</th>
-                          <th>Acción</th>
-                          <th>Usuario</th>
-                          <th>Resultado</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {ficha.auditoria.map((ev) => (
-                          <tr key={ev.id}>
-                            <td>{fmtFechaHora(ev.timestamp)}</td>
-                            <td>{ev.method === "PATCH" ? "Edición" : ev.method === "DELETE" ? "Anulación" : ev.method}</td>
-                            <td>{ev.nombre ?? ev.nro_socio ?? "—"}</td>
-                            <td>{ev.status_code}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </Tabla>
-                  </div>
-                )}
-              </div>
-
               {/* Otros campos (legado) */}
               <div className={`${styles.card} ${styles.cardLegacy} ${styles.gridFull}`}>
                 <p className={styles.cardTitle}>Otros campos de la fila</p>
@@ -550,6 +524,50 @@ const ConsultaPrestacion: React.FC = () => {
                   detalle / respuesta) — vacíos salvo que la fila venga del portal del médico.
                 </p>
               </div>
+            </div>
+
+            {/* Historial */}
+            <aside className={styles.lateral}>
+              <div className={`${styles.card} ${styles.cardHistorial}`}>
+                <p className={styles.cardTitle}><History size={13} /> Historial</p>
+                <LineaDeTiempo ficha={ficha} />
+              </div>
+
+              {/* Lo único que hay de las ediciones y eliminaciones anteriores al historial. */}
+              {ficha.auditoria.length > 0 && (
+                <details className={`${styles.card} ${styles.cardLegacy}`}>
+                  <summary className={styles.cardTitle}>
+                    Peticiones registradas ({ficha.auditoria.length})
+                  </summary>
+                  <div className={styles.tableWrap}>
+                    <Tabla className={styles.table}>
+                      <thead>
+                        <tr>
+                          <th>Fecha</th>
+                          <th>Acción</th>
+                          <th>Usuario</th>
+                          <th>Resultado</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ficha.auditoria.map((ev) => (
+                          <tr key={ev.id}>
+                            <td>{fmtFechaHora(ev.timestamp)}</td>
+                            <td>{ev.method === "PATCH" ? "Edición" : ev.method === "DELETE" ? "Eliminación" : ev.method}</td>
+                            <td>{ev.nombre ?? ev.nro_socio ?? "—"}</td>
+                            <td>{ev.status_code}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </Tabla>
+                  </div>
+                  <p className={styles.legacyNote}>
+                    De la auditoría general: cada petición que modificó esta prestación, también las
+                    rechazadas. Sirve para lo anterior al historial.
+                  </p>
+                </details>
+              )}
+            </aside>
             </div>
           </div>
         )}

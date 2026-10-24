@@ -971,6 +971,7 @@ const CargaFacturacion: React.FC = () => {
     if (!mantener.paciente) pendientes.push("paciente");
     if (!mantener.fecha) pendientes.push("fecha");
     if (!mantener.codigo) pendientes.push("codigo");
+    if (!mantener.autorizacion) pendientes.push("autorizacion");
     pendingFocusRef.current = pendientes;
   };
 
@@ -1088,7 +1089,7 @@ const CargaFacturacion: React.FC = () => {
       // 3. Los ayudantes originales que ya no están → se anulan.
       const removidos = ayudantesOriginalesRef.current.filter((id) => !idsVigentes.has(id));
       for (const id of removidos) {
-        await anularPrestacion(id);
+        await anularPrestacion(id, { motivo: "equipo_editado" });
       }
 
       // 2b. Reconciliar el PEDIATRA — bloque PARALELO al de ayudantes: no reutiliza ni modifica el de arriba.
@@ -1131,7 +1132,7 @@ const CargaFacturacion: React.FC = () => {
         } else {
           // Nuevo. Si había un pediatra ORIGINAL distinto, se reemplaza: se anula antes de crear el nuevo .
           if (pediatraOriginalId) {
-            await anularPrestacion(pediatraOriginalId);
+            await anularPrestacion(pediatraOriginalId, { motivo: "equipo_editado" });
           }
           await crearPrestaciones({
             obra_social: obraSocialEfectiva,
@@ -1141,7 +1142,7 @@ const CargaFacturacion: React.FC = () => {
         }
       } else if (pediatraOriginalId) {
         // Se quitó el pediatra que había, sin agregar uno nuevo → se anula.
-        await anularPrestacion(pediatraOriginalId);
+        await anularPrestacion(pediatraOriginalId, { motivo: "equipo_editado" });
       }
 
       notify("Prestación actualizada.");
@@ -1696,6 +1697,7 @@ const CargaFacturacion: React.FC = () => {
                 value={fechaPractica}
                 onChange={(valor) => setFechaPractica(valor)}
                 disabled={formDisabled}
+                calendarioSoloEnIcono
               />
               <span className={styles.mutedText}>
                 {fechaPractica
@@ -1778,7 +1780,7 @@ const CargaFacturacion: React.FC = () => {
               <span className={styles.sectionHint}>(opcional)</span>
             </span>
             <div className={styles.autorizacionFila}>
-              <div className={styles.filterField}>
+              <div className={styles.filterField} data-field="autorizacion">
                 <input
                   className={styles.input}
                   type="text"

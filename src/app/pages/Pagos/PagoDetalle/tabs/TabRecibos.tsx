@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { getJSON, postJSON, patchJSON, delJSONBody } from "@/app/shared/lib/http";
+import { getJSON, postJSON, delJSONBody } from "@/app/shared/lib/http";
 import { useAppSnackbar } from "../../../../hooks/useAppSnackbar";
 import Button from "@/app/components/ui/Button/Button";
 import SelectableTable from "@/app/components/ui/SelectableTable/SelectableTable";
@@ -10,8 +10,6 @@ import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
 
 const GENERAR_URL    = (pagoId: number) => `/api/pagos/${pagoId}/recibos/generar`;
-const EMITIR_TODOS_URL = (pagoId: number) => `/api/pagos/${pagoId}/recibos/emitir_todos`;
-const ESTADO_URL     = (pagoId: number) => `/api/pagos/${pagoId}/recibos/estado`;
 const DELETE_URL     = (pagoId: number) => `/api/pagos/${pagoId}/recibos`;
 const LIST_URL = (pagoId: number, estado: string) => {
   const p = new URLSearchParams({ skip: "0", limit: "1000" });
@@ -52,7 +50,12 @@ type DeduccionItem = {
   nombre_deduccion: string;
   periodo_a_aplicar: string;
   total: number;
+  // Cuando el médico paga la deducción de otro socio (por ejemplo, la cuota de su esposa).
+  por_cuenta_de?: { nro_socio: number | null; nombre: string | null };
 };
+
+const nombreDeduccion = (d: DeduccionItem) =>
+  d.por_cuenta_de ? `${d.nombre_deduccion} (por pago del socio Nº ${d.por_cuenta_de.nro_socio ?? "—"})` : d.nombre_deduccion;
 
 type Detalle = {
   liquidaciones: Record<string, LiquidacionDetalle>;
@@ -73,7 +76,7 @@ type ReciboRow = {
   pago_medico_id?: number;
   total_neto: string | number;
   emision_timestamp: string | null;
-  estado: "en_revision" | "liquidado" | "emitido" | "anulado" | "pagado" | string;
+  estado: "en_revision" | "liquidado" | "emitido" | string;
   detalle_json?: DetalleJson;
 };
 
@@ -83,14 +86,10 @@ const ESTADO_LABEL: Record<string, string> = {
   en_revision: "En revisión",
   liquidado: "Liquidado",
   emitido: "Emitido",
-  anulado: "Anulado",
-  pagado: "Pagado",
 };
 
 const estadoClass = (e: string) => {
   if (e === "emitido")    return styles.reciboEmitido;
-  if (e === "anulado")    return styles.reciboAnulado;
-  if (e === "pagado")     return styles.reciboPagado;
   if (e === "liquidado")  return styles.medicoLiquidado;
   if (e === "en_revision") return styles.medicoPendiente;
   return "";
@@ -101,17 +100,14 @@ const ESTADO_OPTIONS = [
   { value: "en_revision", label: "En revisión" },
   { value: "liquidado",   label: "Liquidado" },
   { value: "emitido",     label: "Emitido" },
-  { value: "anulado",     label: "Anulado" },
-  { value: "pagado",      label: "Pagado" },
 ];
 
 // ── Componente ────────────────────────────────────────────────────
 
 type Props = { pago: Pago; pagoId: number };
 
-const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
+const TabRecibos: React.FC<Props> = ({ pagoId }) => {
   const notify = useAppSnackbar();
-  const isClosed = pago.estado === "C";
 
   const [rows, setRows] = useState<ReciboRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -124,11 +120,6 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
   const [generarResult, setGenerarResult] = useState<number | null>(null);
   const [generarError, setGenerarError] = useState<string | null>(null);
 
-  // Modal emitir todos
-  const [emitirOpen, setEmitirOpen]     = useState(false);
-  const [emitiendo, setEmitiendo]       = useState(false);
-  const [emitirResult, setEmitirResult] = useState<number | null>(null);
-  const [emitirError, setEmitirError]   = useState<string | null>(null);
 
   // Modal eliminar
   const [deleteTarget, setDeleteTarget] = useState<ReciboRow | null>(null);
@@ -164,30 +155,6 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
       setGenerarError(e?.response?.data?.detail ?? e?.message ?? "Error al generar.");
     } finally {
       setGenerando(false);
-    }
-  };
-
-  const handleEmitirTodos = async () => {
-    setEmitiendo(true);
-    setEmitirError(null);
-    try {
-      const result = await postJSON<ReciboRow[]>(EMITIR_TODOS_URL(pagoId));
-      setEmitirResult(Array.isArray(result) ? result.length : 0);
-      await loadData(estadoFiltro);
-    } catch (e: any) {
-      setEmitirError(e?.response?.data?.detail ?? e?.message ?? "Error al emitir.");
-    } finally {
-      setEmitiendo(false);
-    }
-  };
-
-  const handleEmitirUno = async (recibo: ReciboRow) => {
-    try {
-      await patchJSON(ESTADO_URL(pagoId), { recibo_ids: [recibo.id], estado: "emitido" });
-      notify(`Recibo ${recibo.nro_recibo} emitido correctamente.`);
-      await loadData(estadoFiltro);
-    } catch (e: any) {
-      notify(e?.response?.data?.detail ?? e?.message ?? "Error al emitir.", "error");
     }
   };
 
@@ -334,7 +301,7 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
         autoTable(doc, {
           startY: y,
           head: [["Concepto", "Período", "Total"]],
-          body: deds.map((dd) => [dd.nombre_deduccion, dd.periodo_a_aplicar, `-$${fmt(dd.total)}`]),
+          body: deds.map((dd) => [nombreDeduccion(dd), dd.periodo_a_aplicar, `-$${fmt(dd.total)}`]),
           styles: { fontSize: 9, cellPadding: 5 },
           headStyles: { fillColor: [55, 65, 81], textColor: 255, fontStyle: "bold" },
           columnStyles: { 2: { halign: "right", textColor: [185, 28, 28] } },
@@ -432,7 +399,7 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
       header: "Acciones",
       render: (r) => (
         <div className={styles.rowActions}>
-          {r.estado !== "pagado" && (
+          {r.estado !== "emitido" && (
             <Button
               size="sm"
               variant="danger"
@@ -442,15 +409,6 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
             </Button>
           )}
           <BotonDescarga formato="pdf" onClick={(e) => { e.stopPropagation(); generatePDF(r); }} />
-          {isClosed && !["emitido", "anulado", "pagado"].includes(r.estado) && (
-            <Button
-              size="sm"
-              variant="primary"
-              onClick={(e) => { e.stopPropagation(); handleEmitirUno(r); }}
-            >
-              Emitir
-            </Button>
-          )}
         </div>
       ),
     },
@@ -479,14 +437,6 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
           >
             Generar / Actualizar
           </Button>
-          {isClosed && (
-            <Button
-              variant="primary"
-              onClick={() => { setEmitirResult(null); setEmitirError(null); setEmitirOpen(true); }}
-            >
-              Emitir todos
-            </Button>
-          )}
         </div>
       </div>
 
@@ -537,46 +487,6 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
                 </p>
               )}
               {generando && <p style={{ color: "#64748b" }}>Generando… por favor esperá.</p>}
-            </Dialogo>
-      )}
-
-      {/* Modal emitir todos */}
-      {emitirOpen && (
-        <Dialogo
-          titulo="Emitir todos los recibos"
-          onClose={() => { setEmitirOpen(false); setEmitirResult(null); setEmitirError(null); }}
-          acciones={
-            <>
-              <Button
-                variant="secondary"
-                onClick={() => { setEmitirOpen(false); setEmitirResult(null); setEmitirError(null); }}
-                disabled={emitiendo}
-              >
-                {emitirResult != null ? "Cerrar" : "Cancelar"}
-              </Button>
-              {emitirResult == null && (
-                <Button variant="primary" onClick={handleEmitirTodos} disabled={emitiendo}>
-                  {emitiendo ? "Emitiendo…" : "Emitir todos"}
-                </Button>
-              )}
-            </>
-          }
-        >
-              {emitirError && <div className={styles.errorInline}>{emitirError}</div>}
-              {emitirResult != null ? (
-                <div className={styles.successInline}>
-                  ¡Listo! Se emitieron <strong>{emitirResult}</strong> recibos.
-                </div>
-              ) : !emitiendo && (
-                <p>
-                  Se emitirán todos los recibos pendientes de este pago.
-                  <br />
-                  <span style={{ fontSize: 12, color: "#64748b" }}>
-                    Solo se procesan recibos en estado "en revisión" o "liquidado".
-                  </span>
-                </p>
-              )}
-              {emitiendo && <p style={{ color: "#64748b" }}>Procesando…</p>}
             </Dialogo>
       )}
 

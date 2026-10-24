@@ -43,6 +43,14 @@ import lq from "@/app/pages/Pagos/Liquidacion.module.scss";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 import { getErrorMessage } from "@/app/shared/lib/utiles";
 
+const CONCEPTO_SALDO_DEUDOR = "Saldo deudor de débitos";
+
+// En las deudas por débitos, `cuota_nro` guarda el pago de origen; no es un número de cuota.
+const etiquetaCuota = (r: { descuento_nombre: string; cuota_nro: number; cuotas_total: number | null }) =>
+  r.descuento_nombre === CONCEPTO_SALDO_DEUDOR
+    ? `Pago #${r.cuota_nro}`
+    : `${r.cuota_nro}/${r.cuotas_total ?? "—"}`;
+
 const PAGE_SIZE = 50;
 const ESTADOS_UI: Array<{ value: DeduccionEstado | ""; label: string }> = [
   { value: "", label: "Todos" },
@@ -290,7 +298,7 @@ const DeduccionesList: React.FC = () => {
         Periodo: monthLabel(row.mes_periodo, row.anio_periodo),
         Cuota:
           row.origen === "manual"
-            ? `${row.cuota_nro}/${row.cuotas_total ?? "—"}`
+            ? etiquetaCuota(row)
             : "",
         Estado: row.estado,
         Origen: row.origen,
@@ -318,7 +326,7 @@ const DeduccionesList: React.FC = () => {
           formatMoney(row.monto),
           monthLabel(row.mes_periodo, row.anio_periodo),
           row.origen === "manual"
-            ? `${row.cuota_nro}/${row.cuotas_total ?? "—"}`
+            ? etiquetaCuota(row)
             : "",
           row.estado,
           row.origen,
@@ -351,7 +359,7 @@ const DeduccionesList: React.FC = () => {
       header: "Cuota",
       render: (r) =>
         r.origen === "manual"
-          ? `${r.cuota_nro}/${r.cuotas_total ?? "—"}`
+          ? etiquetaCuota(r)
           : <span className={lq.tenue}>—</span>,
     },
     {

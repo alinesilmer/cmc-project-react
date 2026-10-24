@@ -15,6 +15,8 @@ const GENERAR_URL = (pagoId: number, descId: number) =>
 const POR_PAGO_URL = (pagoId: number) => `/api/deducciones/por_pago/${pagoId}`;
 const DESHACER_URL = (pagoId: number, descId: number) =>
   `/api/deducciones/${pagoId}/colegio/deshacer/${descId}`;
+const REFRESCAR_URL = (pagoId: number) =>
+  `/api/deducciones/${pagoId}/deducciones/refrescar`;
 
 type GenResult = {
   generados: number;
@@ -25,6 +27,10 @@ type DeshacerResult = {
   pago_id: number;
   eliminadas: number;
   monto_revertido: string;
+};
+type RefrescarResult = {
+  pago_id: number;
+  manuales_enroladas: number;
 };
 type PorPagoResult = {
   existe: boolean;
@@ -44,6 +50,8 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
 
   // Deducciones ya generadas para este pago
   const [generadoInfo, setGeneradoInfo] = useState<PorPagoResult | null>(null);
+
+  const [refrescando, setRefrescando] = useState(false);
 
   // Modal generar
   const [genTarget, setGenTarget] = useState<Concepto | null>(null);
@@ -74,7 +82,10 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
       try {
         const data = await getJSON<any[]>(CONCEPTOS_URL);
         setDescuentos(
-          (data ?? []).map((d: any) => ({
+          (data ?? [])
+            // 9900 = «Saldo deudor de débitos»: lo crea el cierre del pago, no se genera a mano.
+            .filter((d: any) => Number(d.nro_colegio) !== 9900)
+            .map((d: any) => ({
             id: d.id,
             nombre: d.nombre ?? d.concepto ?? "",
             nro_colegio: d.nro_colegio ?? 0,
@@ -97,6 +108,28 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
       (item) =>
         item.descuento_id === descId && item.generado_en_pago_id !== null,
     ) ?? false;
+
+  const handleRefrescar = async () => {
+    setRefrescando(true);
+    try {
+      const r = await postJSON<RefrescarResult>(REFRESCAR_URL(pagoId));
+      notify(
+        r.manuales_enroladas
+          ? `Entraron al pago ${r.manuales_enroladas} cuota${r.manuales_enroladas !== 1 ? "s" : ""} pendiente${r.manuales_enroladas !== 1 ? "s" : ""}.`
+          : "Deducciones al día. No había cuotas nuevas para este pago.",
+      );
+      await loadGeneradoInfo();
+      onRefresh?.();
+    } catch (e: any) {
+      const detail = e?.response?.data?.detail;
+      notify(
+        typeof detail === "string" ? detail : (e?.message ?? "No se pudo refrescar."),
+        "error",
+      );
+    } finally {
+      setRefrescando(false);
+    }
+  };
 
   const handleGenerar = async () => {
     if (!genTarget) return;
@@ -197,9 +230,21 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
           {descuentos.length} descuento{descuentos.length !== 1 ? "s" : ""}{" "}
           disponibles
         </span>
+        {pago.estado === "A" && (
+          <div className={styles.toolbarLeft}>
+            <Button variant="secondary" onClick={handleRefrescar} disabled={refrescando}>
+              {refrescando ? "Refrescando…" : "Refrescar deducciones"}
+            </Button>
+          </div>
+        )}
       </div>
 
       {error && <div className={styles.errorBanner}>{error}</div>}
+      {pago.estado === "A" && !!pago.deducciones_dirty && (
+        <div className={styles.errorBanner} role="status">
+          Las deducciones cambiaron y la vista previa quedó vieja. Tocá «Refrescar deducciones» para actualizarla.
+        </div>
+      )}
 
       <Card className={styles.tableCard}>
         {loading ? (
@@ -214,14 +259,14 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
                   <th>Nro. Colegio</th>
                   <th className={styles.numCell}>Precio fijo</th>
                   <th className={styles.numCell}>Porcentaje</th>
-                  {pago.estado !== "C" && <th>Acciones</th>}
+                  {pago.estado === "A" && <th>Acciones</th>}
                 </tr>
               </thead>
               <tbody>
                 {descuentos.length === 0 && (
                   <tr>
                     <td
-                      colSpan={pago.estado !== "C" ? 6 : 5}
+                      colSpan={pago.estado === "A" ? 6 : 5}
                       className={styles.emptyCell}
                     >
                       Sin descuentos disponibles.
@@ -235,7 +280,7 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
                     <td>{d.nro_colegio}</td>
                     <td className={styles.numCell}>${fmt(d.precio)}</td>
                     <td className={styles.numCell}>{d.porcentaje}%</td>
-                    {pago.estado !== "C" && (
+                    {pago.estado === "A" && (
                       <td>
                         <div className={styles.rowActions}>
                           <Button

@@ -4,7 +4,7 @@ import { saveAs } from "@/app/shared/lib/fileSaver";
 import { getJSON } from "@/app/shared/lib/http";
 import Card from "@/app/components/ui/Card/Card";
 import styles from "./tabs.module.scss";
-import { fmt, mesLabel } from "../../types";
+import { fmt, mesLabel, nroFacturaMarcado } from "../../types";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 
@@ -15,6 +15,7 @@ type LiquidacionItem = {
   obra_social_id: number;
   obra_social_nombre: string;
   nro_factura: string | null;
+  factura_version?: number | null;
   mes_periodo: number;
   anio_periodo: number;
   total_bruto: string;
@@ -219,7 +220,7 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
       const r = ws.addRow([
         liq.obra_social_nombre,
         liq.obra_social_id,
-        liq.nro_factura ?? "—",
+        nroFacturaMarcado(liq.nro_factura, liq.factura_version),
         `${mesLabel(liq.mes_periodo)} ${liq.anio_periodo}`,
         Number(liq.total_bruto),
         Number(liq.total_honorarios),
@@ -475,7 +476,7 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
       ],
       liquidaciones.items.map((liq) => [
         liq.obra_social_nombre,
-        liq.nro_factura ?? "—",
+        nroFacturaMarcado(liq.nro_factura, liq.factura_version),
         `${mesLabel(liq.mes_periodo)} ${liq.anio_periodo}`,
         `$${fmt(liq.total_bruto)}`,
         `$${fmt(liq.total_honorarios)}`,
@@ -635,7 +636,7 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
                     </div>
                   </td>
                   <td style={{ fontFamily: "monospace", fontSize: 11 }}>
-                    {liq.nro_factura ?? "—"}
+                    {nroFacturaMarcado(liq.nro_factura, liq.factura_version)}
                   </td>
                   <td style={{ whiteSpace: "nowrap" }}>
                     {mesLabel(liq.mes_periodo)} {liq.anio_periodo}

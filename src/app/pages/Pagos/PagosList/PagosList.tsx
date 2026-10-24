@@ -117,8 +117,8 @@ const PagosList: React.FC = () => {
     }
   };
 
-  const estadoLabel = (e: string) => e === "A" ? "Abierto" : "Cerrado";
-  const estadoClass = (e: string) => e === "A" ? l.abierto : l.cerrado;
+  const estadoLabel = (e: string) => e === "A" ? "Abierto" : e === "P" ? "Pagado" : "Cerrado";
+  const estadoClass = (e: string) => e === "A" ? l.abierto : e === "P" ? l.aplicado : l.cerrado;
 
   return (
     <div className={l.pagina}>
@@ -146,6 +146,7 @@ const PagosList: React.FC = () => {
               <option value="">Todos</option>
               <option value="A">Abierto</option>
               <option value="C">Cerrado</option>
+              <option value="P">Pagado</option>
             </select>
           </label>
         </div>

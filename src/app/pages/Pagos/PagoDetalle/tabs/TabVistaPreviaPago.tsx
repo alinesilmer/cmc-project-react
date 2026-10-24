@@ -52,6 +52,7 @@ type DeduccionItem = {
   nro_deduccion: number;
   nombre_deduccion: string;
   periodo_a_aplicar: string;
+  por_cuenta_de?: { nro_socio: number | null; nombre: string | null };
   total: number;
 };
 
@@ -244,7 +245,15 @@ const DetallePanel: React.FC<{ detalle: Detalle }> = ({ detalle }) => {
             <tbody>
               {deducciones.map((d, i) => (
                 <tr key={i}>
-                  <td>{d.nombre_deduccion}</td>
+                  <td>
+                    {d.nombre_deduccion}
+                    {d.por_cuenta_de && (
+                      <span style={{ display: "block", fontSize: 11, color: "#64748b" }}>
+                        Por pago del socio Nº {d.por_cuenta_de.nro_socio ?? "—"}
+                        {d.por_cuenta_de.nombre ? ` · ${d.por_cuenta_de.nombre}` : ""}
+                      </span>
+                    )}
+                  </td>
                   <td>{d.periodo_a_aplicar}</td>
                   <td className={`${styles.numCell} ${styles.negative}`}>-${fmt(d.total)}</td>
                 </tr>

@@ -573,8 +573,71 @@ interface AuditoriaEvento {
   request_body?: string | null;
 }
 
+/** Por qué el Colegio elimina una prestación. `equipo_editado` no se elige: lo manda la
+ * carga al quitar o reemplazar un integrante del equipo. */
+export type MotivoEliminacion =
+  | "duplicado"
+  | "error_carga"
+  | "sin_documentacion"
+  | "sin_autorizacion"
+  | "otro"
+  | "equipo_editado";
+
+export const MOTIVO_ELIMINACION_LABEL: Record<MotivoEliminacion, string> = {
+  duplicado: "Duplicada",
+  error_carga: "Error de carga",
+  sin_documentacion: "Sin documentación",
+  sin_autorizacion: "Sin autorización",
+  otro: "Otro",
+  equipo_editado: "Se editó el equipo",
+};
+
+/** Los que se eligen en el diálogo de eliminar, en este orden. */
+export const MOTIVOS_ELIMINACION_ELEGIBLES: MotivoEliminacion[] = [
+  "duplicado", "error_carga", "sin_documentacion", "sin_autorizacion", "otro",
+];
+
+/** Evento del historial de la prestación (`audit_log_facturacion`). */
+export interface HistorialEvento {
+  id: number;
+  ocurrido_en: string;
+  tipo: string;
+  estado_antes?: string | null;
+  estado_despues?: string | null;
+  actor_tipo: string;
+  actor_socio?: number | null;
+  actor_nombre?: string | null;
+  motivo_codigo?: string | null;
+  motivo_texto?: string | null;
+  cambios?: Record<string, [unknown, unknown]> | null;
+  contexto?: Record<string, unknown> | null;
+  fuente: string;
+}
+
+export type ClaseEstadoFicha =
+  | "vigente"
+  | "cerrada"
+  | "liquidada"
+  | "eliminada_colegio"
+  | "eliminada_medico"
+  | "eliminada"
+  | "rechazada_os";
+
+/** La franja de estado de la ficha: quién la eliminó y por qué, o qué respondió la O.S. */
+export interface EstadoFicha {
+  clase: ClaseEstadoFicha;
+  motivo_codigo?: string | null;
+  motivo_texto?: string | null;
+  actor_tipo?: string | null;
+  actor_socio?: number | null;
+  actor_nombre?: string | null;
+  ocurrido_en?: string | null;
+  respuesta_os?: string | null;
+}
+
 export interface PrestacionFicha {
   prestacion: PrestacionCruda;
+  estado: EstadoFicha;
   medico?: SocioRef | null;
   clinica?: SocioRef | null;
   cargado_por?: SocioRef | null;
@@ -583,6 +646,9 @@ export interface PrestacionFicha {
   paciente?: AfiliadoRef | null;
   factura?: FacturaRead | null;
   equipo: PrestacionRead[];
+  /** El más reciente primero. */
+  historial: HistorialEvento[];
+  /** Peticiones de la auditoría general: lo que hay de antes del historial. */
   auditoria: AuditoriaEvento[];
 }
 
