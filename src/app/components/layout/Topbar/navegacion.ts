@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowLeftRight,
+  ArrowRightToLine,
   BarChart3,
   BookOpen,
   BookUser,
@@ -18,6 +19,7 @@ import {
   FileSpreadsheet,
   FileText,
   FileUp,
+  HandCoins,
   Gift,
   Globe,
   History,
@@ -139,6 +141,8 @@ export const TOP_NAV: TopEntry[] = [
           { path: `${base}/liquidation`, icon: DollarSign, label: "Pagos", perms: ["pago:leer"] },
           { path: `${base}/debitos-creditos`, icon: ArrowLeftRight, label: "Débitos y créditos", perms: ["lote:leer"] },
           { path: `${base}/refacturaciones`, icon: RotateCcw, label: "Refacturaciones", perms: ["lote:leer"] },
+          { path: `${base}/adelantos`, icon: ArrowRightToLine, label: "Adelantos", perms: ["lote:leer"] },
+          { path: `${base}/compensaciones`, icon: HandCoins, label: "Compensaciones", perms: ["compensacion:leer"] },
         ],
       },
       {

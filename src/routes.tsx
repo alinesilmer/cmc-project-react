@@ -52,6 +52,9 @@ const LoteDetalle = lazy(() => import("./app/pages/Pagos/LoteDetalle/LoteDetalle
 const LoteDetalleSinFactura = lazy(() => import("./app/pages/Pagos/LoteDetalle/LoteDetalleSinFactura"));
 const DebitosCreditos = lazy(() => import("./app/pages/Pagos/DebitosCreditos/DebitosCreditos"));
 const RefacturacionesList = lazy(() => import("./app/pages/Pagos/RefacturacionesList/RefacturacionesList"));
+const Adelantos = lazy(() => import("./app/pages/Pagos/Adelantos/Adelantos"));
+const AdelantoDetalle = lazy(() => import("./app/pages/Pagos/Adelantos/AdelantoDetalle"));
+const Compensaciones = lazy(() => import("./app/pages/Pagos/Compensaciones/Compensaciones"));
 const DeduccionesList = lazy(() => import("./app/pages/Deducciones/DeduccionesList"));
 const NuevaDeduccion = lazy(() => import("./app/pages/Deducciones/NuevaDeduccion"));
 const CobranzasPage = lazy(() => import("./app/pages/Cobranzas/CobranzasPage"));
@@ -230,6 +233,12 @@ export default function RootRoutes() {
                 />
                 <Route path="refacturaciones" element={<RefacturacionesList />} />
                 <Route path="refacturaciones/:loteId" element={<LoteDetalle />} />
+                <Route path="adelantos" element={<Adelantos />} />
+                <Route path="adelantos/:adelantoId" element={<AdelantoDetalle />} />
+              </Route>
+
+              <Route element={<RequireScope scope="compensacion:leer" />}>
+                <Route path="compensaciones" element={<Compensaciones />} />
               </Route>
 
               <Route element={<RequireScope scope="deduccion:leer" />}>

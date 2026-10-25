@@ -318,6 +318,7 @@ const RefacturacionesList: React.FC = () => {
           <div className={`${lq.campo} ${lq.campoAncho}`}>
             <span className={lq.rotulo}>Obra social</span>
             <AppSearchSelect
+              ordenar
               options={opcionesOs}
               value={filterOs || null}
               onChange={(val) => setFilterOs(val ? String(val) : "")}
@@ -399,6 +400,7 @@ const RefacturacionesList: React.FC = () => {
         >
           <DialogoCampo rotulo="Obra social">
             <AppSearchSelect
+              ordenar
               options={opcionesOs}
               value={addOs || null}
               onChange={(val) => handleAddOsChange(val ? String(val) : "")}

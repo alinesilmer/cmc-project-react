@@ -1,13 +1,15 @@
 import React, { useState } from "react";
-import { getJSON } from "@/app/shared/lib/http";
+import { getJSON, patchJSON, postJSON } from "@/app/shared/lib/http";
 import Button from "@/app/components/ui/Button/Button";
 import Card from "@/app/components/ui/Card/Card";
 import styles from "./tabs.module.scss";
-import { type Pago, fmt } from "../../types";
+import { type Pago, fmt, nroFacturaMarcado } from "../../types";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
 
 const GEN_URL = (pagoId: number) => `/api/pagos/${pagoId}/pago_medico_actualizado`;
+const REFRESCAR_URL = (pagoId: number) => `/api/deducciones/${pagoId}/deducciones/refrescar`;
+const DEDUCCION_URL = (id: number) => `/api/deducciones/${id}`;
 
 // ── Tipos del response ────────────────────────────────────────────
 
@@ -54,10 +56,34 @@ type DeduccionItem = {
   periodo_a_aplicar: string;
   por_cuenta_de?: { nro_socio: number | null; nombre: string | null };
   total: number;
+  // Sólo en el pago abierto: las deducciones que suman este renglón y si se puede quitar del pago
+  // (los porcentuales automáticos; las cuotas no).
+  ids?: number[];
+  quitable?: boolean;
+};
+
+type AdelantoDetalleItem = {
+  adelanto_id: number;
+  obra_social: string;
+  nro_factura: string | null;
+  factura_version: number | null;
+  periodo: string;
+  prestaciones: number;
+  total_honorarios: number;
+  total_gastos: number;
+  total: number;
+};
+
+type CompensacionDetalleItem = {
+  compensacion_id: number;
+  leyenda: string;
+  importe: number;
 };
 
 type Detalle = {
   liquidaciones: Record<string, LiquidacionDetalle>;
+  adelantos?: { total: number; detalle: AdelantoDetalleItem[] };
+  compensaciones?: { total: number; detalle: CompensacionDetalleItem[] };
   deducciones: { total: number; detalle: DeduccionItem[] };
 };
 
@@ -160,8 +186,15 @@ const ChevronIcon: React.FC<{ open: boolean }> = ({ open }) => (
 
 // ── Panel de detalle ──────────────────────────────────────────────
 
-const DetallePanel: React.FC<{ detalle: Detalle }> = ({ detalle }) => {
+const DetallePanel: React.FC<{
+  detalle: Detalle;
+  abierto: boolean;
+  quitando: string | null;
+  onQuitar: (clave: string, ids: number[]) => void;
+}> = ({ detalle, abierto, quitando, onQuitar }) => {
   const liquidaciones = Object.entries(detalle.liquidaciones);
+  const adelantos = detalle.adelantos?.detalle ?? [];
+  const compensaciones = detalle.compensaciones?.detalle ?? [];
   const deducciones = detalle.deducciones.detalle;
 
   return (
@@ -226,6 +259,73 @@ const DetallePanel: React.FC<{ detalle: Detalle }> = ({ detalle }) => {
         )}
       </div>
 
+      {/* Adelantos */}
+      {adelantos.length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+            Adelantos
+          </div>
+          <Tabla className={styles.table} style={{ fontSize: 12 }}>
+            <thead>
+              <tr>
+                <th>Adelanto</th>
+                <th>Obra Social</th>
+                <th>Factura</th>
+                <th className={styles.numCell}>Prest.</th>
+                <th className={styles.numCell}>Honorarios</th>
+                <th className={styles.numCell}>Gastos</th>
+                <th className={styles.numCell}>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {adelantos.map((a) => (
+                <tr key={a.adelanto_id}>
+                  <td style={{ fontWeight: 500 }}>#{a.adelanto_id}</td>
+                  <td>{a.obra_social}</td>
+                  <td>
+                    {nroFacturaMarcado(a.nro_factura, a.factura_version)}
+                    <span style={{ display: "block", fontSize: 11, color: "#64748b" }}>{a.periodo}</span>
+                  </td>
+                  <td className={styles.numCell}>{a.prestaciones}</td>
+                  <td className={styles.numCell}>${fmt(a.total_honorarios)}</td>
+                  <td className={styles.numCell}>${fmt(a.total_gastos)}</td>
+                  <td className={styles.numCell}>${fmt(a.total)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </Tabla>
+        </div>
+      )}
+
+      {/* Compensaciones */}
+      {compensaciones.length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+            Compensaciones
+          </div>
+          <Tabla className={styles.table} style={{ fontSize: 12, maxWidth: 620 }}>
+            <thead>
+              <tr>
+                <th>Compensación</th>
+                <th>Leyenda del recibo</th>
+                <th className={styles.numCell}>Importe</th>
+              </tr>
+            </thead>
+            <tbody>
+              {compensaciones.map((c) => (
+                <tr key={c.compensacion_id}>
+                  <td style={{ fontWeight: 500 }}>#{c.compensacion_id}</td>
+                  <td>{c.leyenda}</td>
+                  <td className={`${styles.numCell} ${c.importe < 0 ? styles.negative : styles.positive}`}>
+                    {c.importe < 0 ? "-" : "+"}${fmt(Math.abs(c.importe))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Tabla>
+        </div>
+      )}
+
       {/* Deducciones */}
       <div>
         <div style={{ fontSize: 12, fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
@@ -240,6 +340,7 @@ const DetallePanel: React.FC<{ detalle: Detalle }> = ({ detalle }) => {
                 <th>Concepto</th>
                 <th>Período</th>
                 <th className={styles.numCell}>Total</th>
+                {abierto && <th aria-label="Quitar del pago" />}
               </tr>
             </thead>
             <tbody>
@@ -256,6 +357,20 @@ const DetallePanel: React.FC<{ detalle: Detalle }> = ({ detalle }) => {
                   </td>
                   <td>{d.periodo_a_aplicar}</td>
                   <td className={`${styles.numCell} ${styles.negative}`}>-${fmt(d.total)}</td>
+                  {abierto && (
+                    <td>
+                      {d.quitable && d.ids?.length ? (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          disabled={quitando !== null}
+                          onClick={() => onQuitar(`${d.nro_deduccion}-${d.periodo_a_aplicar}`, d.ids!)}
+                        >
+                          {quitando === `${d.nro_deduccion}-${d.periodo_a_aplicar}` ? "Quitando…" : "Quitar"}
+                        </Button>
+                      ) : null}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -263,6 +378,7 @@ const DetallePanel: React.FC<{ detalle: Detalle }> = ({ detalle }) => {
               <tr className={styles.totalsRow}>
                 <td colSpan={2}>TOTAL</td>
                 <td className={`${styles.numCell} ${styles.negative}`}>-${fmt(detalle.deducciones.total)}</td>
+                {abierto && <td />}
               </tr>
             </tfoot>
           </Tabla>
@@ -276,7 +392,7 @@ const DetallePanel: React.FC<{ detalle: Detalle }> = ({ detalle }) => {
 
 type Props = { pago: Pago; pagoId: number };
 
-const TabVistaPreviaPago: React.FC<Props> = ({ pagoId }) => {
+const TabVistaPreviaPago: React.FC<Props> = ({ pago, pagoId }) => {
   const [rows, setRows] = useState<MedicoRow[]>([]);
   const [totales, setTotales] = useState<Totales | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
@@ -294,7 +410,25 @@ const TabVistaPreviaPago: React.FC<Props> = ({ pagoId }) => {
       return next;
     });
 
-  const handleGenerar = async () => {
+  const [quitando, setQuitando] = useState<string | null>(null);
+
+  // Saca del pago un porcentual (contribución, impuesto…) sin tocar las cuotas: lo cancela, y no vuelve a
+  // aparecer en este pago. Después refresca la vista previa de deducciones y recarga a los médicos.
+  const quitarDelPago = async (clave: string, ids: number[]) => {
+    setQuitando(clave);
+    try {
+      for (const id of ids) await patchJSON(DEDUCCION_URL(id), { estado: "cancelado" });
+      await postJSON(REFRESCAR_URL(pagoId));
+      await handleGenerar(true);
+    } catch (e: any) {
+      const detail = e?.response?.data?.detail;
+      setGenError(typeof detail === "string" ? detail : (e?.message ?? "No se pudo quitar la deducción del pago."));
+    } finally {
+      setQuitando(null);
+    }
+  };
+
+  const handleGenerar = async (conservarAbiertos = false) => {
     setGenerating(true);
     setGenError(null);
     try {
@@ -302,7 +436,7 @@ const TabVistaPreviaPago: React.FC<Props> = ({ pagoId }) => {
       const { rows: newRows, totales: newTotales } = transformResponse(data);
       setRows(newRows);
       setTotales(newTotales);
-      setExpandedRows(new Set());
+      if (!conservarAbiertos) setExpandedRows(new Set());
       setGenResult({ total_medicos: newTotales.total_medicos });
     } catch (e: any) {
       setGenError(e?.message || "Error al generar.");
@@ -387,7 +521,7 @@ const TabVistaPreviaPago: React.FC<Props> = ({ pagoId }) => {
                       {isOpen && (
                         <tr>
                           <td colSpan={10} style={{ padding: 0, border: "none" }}>
-                            <DetallePanel detalle={r.detalle} />
+                            <DetallePanel detalle={r.detalle} abierto={pago.estado === "A"} quitando={quitando} onQuitar={quitarDelPago} />
                           </td>
                         </tr>
                       )}
@@ -439,7 +573,7 @@ const TabVistaPreviaPago: React.FC<Props> = ({ pagoId }) => {
                 {genResult ? "Cerrar" : "Cancelar"}
               </Button>
               {!genResult && (
-                <Button variant="primary" onClick={handleGenerar} disabled={generating}>
+                <Button variant="primary" onClick={() => void handleGenerar()} disabled={generating}>
                   {generating ? "Generando…" : "Sí, generar"}
                 </Button>
               )}

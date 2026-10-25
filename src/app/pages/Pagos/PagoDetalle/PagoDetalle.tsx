@@ -34,7 +34,7 @@ const TABS: {
   label: string;
   disabledWhen?: (p: import("../types").Pago | null) => boolean;
 }[] = [
-  { key: "facturas", label: "Facturas" },
+  { key: "facturas", label: "Contenido del pago" },
   { key: "deducciones", label: "Deducciones" },
   { key: "preview", label: "Vista previa" },
   { key: "medico", label: "Por médico" },

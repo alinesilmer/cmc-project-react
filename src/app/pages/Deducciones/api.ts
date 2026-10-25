@@ -8,15 +8,23 @@ import type {
   DescuentoOption,
   MedicoOption,
   Pago,
+  ResumenPagoAbierto,
 } from "./types";
 
 const DEDUCCIONES_URL = "/api/deducciones";
+// La raíz lleva barra final: sin ella FastAPI responde 307 hacia una URL absoluta y, con el proxy
+// de desarrollo (otro origen), el navegador descarta el Authorization y la API contesta 401 «Falta token».
+const DEDUCCIONES_RAIZ = `${DEDUCCIONES_URL}/`;
 
 type HistorialParams = {
   page?: number;
   size?: number;
   medico_id?: number;
-  estado?: DeduccionEstado | "";
+  descuento_id?: number;
+  /** Uno o varios estados separados por coma: «pendiente,vencida». */
+  estado?: DeduccionEstado | string;
+  /** Sólo deducciones de médicos que participan en el pago abierto. */
+  solo_en_pago?: boolean;
   origen?: "manual" | "automatico" | "";
   mes_desde?: number;
   anio_desde?: number;
@@ -28,7 +36,7 @@ export const fetchDeduccion = (id: number) =>
   getJSON<DeduccionHistorialItem>(`${DEDUCCIONES_URL}/${id}`);
 
 export const fetchDeduccionesHistorial = (params: HistorialParams) =>
-  getJSON<DeduccionHistorialResponse>(DEDUCCIONES_URL, params);
+  getJSON<DeduccionHistorialResponse>(DEDUCCIONES_RAIZ, params);
 
 export const fetchDeduccionesHistorialExport = (params: Omit<HistorialParams, "page" | "size">) =>
   getJSON<DeduccionHistorialItem[]>(`${DEDUCCIONES_URL}/export`, params);
@@ -46,7 +54,7 @@ export const deleteDeduccion = (id: number) =>
   delJSON<{ id: number; origen: string; estado: string }>(`${DEDUCCIONES_URL}/${id}`);
 
 export const createDeduccion = (payload: DeduccionCreatePayload) =>
-  postJSON<DeduccionRead[]>(DEDUCCIONES_URL, payload);
+  postJSON<DeduccionRead[]>(DEDUCCIONES_RAIZ, payload);
 
 export const pagarEnCaja = (id: number) =>
   postJSON<DeduccionHistorialItem>(`${DEDUCCIONES_URL}/${id}/pagar`, {});
@@ -67,11 +75,12 @@ export const fetchDescuentos = async (): Promise<DescuentoOption[]> => {
 };
 
 export const fetchMedicos = async (query: string): Promise<MedicoOption[]> => {
-  const params: Record<string, unknown> = { limit: 50, skip: 0 };
+  // El servidor ya los trae de la A a la Z y, al buscar, con lo que coincide completo primero (ver /api/medicos/selector).
+  const params: Record<string, unknown> = { limit: 50 };
   const q = query.trim();
-  if (q.length >= 2) params.q = q;
+  if (q) params.q = q;
 
-  const raw = await getJSON<any[]>("/api/medicos/all", params);
+  const raw = await getJSON<any[]>("/api/medicos/selector", params);
   return (raw ?? [])
     .map((m) => ({
       id: Number(m?.id ?? m?.ID ?? 0),
@@ -90,4 +99,17 @@ export const fetchMedicos = async (query: string): Promise<MedicoOption[]> => {
 export const fetchOpenPago = async (): Promise<Pago | null> => {
   const pagos = await getJSON<Pago[]>("/api/pagos/", { estado: "A", skip: 0, limit: 1 });
   return Array.isArray(pagos) && pagos.length > 0 ? pagos[0] : null;
+};
+
+/** Lo que el pago abierto va a descontar: cantidad, total y detalle por concepto (misma cuenta que la tira del pago). */
+export const fetchResumenPagoAbierto = async (pagoId: number): Promise<ResumenPagoAbierto> => {
+  const vp = await getJSON<any>(`/api/pagos/${pagoId}/vista_previa`);
+  const items = (vp?.deducciones?.items ?? []) as Array<{ descuento_nombre: string; cantidad_socios: number; total_monto: number | string }>;
+  return {
+    cantidad: items.reduce((acc, i) => acc + Number(i.cantidad_socios ?? 0), 0),
+    total: Number(vp?.deducciones?.totales?.total_monto ?? 0),
+    conceptos: items
+      .map((i) => ({ nombre: i.descuento_nombre || "Sin concepto", cantidad: Number(i.cantidad_socios ?? 0), monto: Number(i.total_monto ?? 0) }))
+      .sort((a, b) => b.monto - a.monto),
+  };
 };

@@ -1,0 +1,72 @@
+@use "@/app/styles/all.scss" as *;
+
+// Compensaciones: lo propio de la pantalla. Las piezas comunes (píldoras de estado, filtros, botones)
+// salen de ../Liquidacion.module.scss.
+
+.intro {
+  max-width: 46rem;
+  margin: 0;
+  line-height: 1.55;
+  color: $gray-600;
+}
+
+.celdaDoble {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  small { font-size: $font-size-sm; color: $gray-500; }
+}
+
+.anulada { color: $gray-500; text-decoration: line-through; }
+
+// Elegir si es a favor o en contra del socio.
+.sentidos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $spacing-3;
+
+  @media (max-width: 520px) { grid-template-columns: 1fr; }
+}
+
+.sentido {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-3;
+  padding: $spacing-3 $spacing-4;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-md;
+  cursor: pointer;
+
+  input { width: 1.125rem; height: 1.125rem; margin-top: 0.15rem; cursor: pointer; }
+}
+
+.sentidoFavor { background: $tono-verde-50; border-color: $tono-verde-550; input { accent-color: $tono-verde-550; } }
+.sentidoContra { background: $tono-rojo-50; border-color: $danger-red; input { accent-color: $danger-red; } }
+
+.destinos {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+.totales {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-4;
+}
+
+.total {
+  flex: 1 1 14rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: $spacing-3 $spacing-4;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
+
+  span { font-size: $font-size-sm; font-weight: $font-weight-semibold; color: $gray-600; }
+  b { font-size: $font-size-xl; font-variant-numeric: tabular-nums; }
+}

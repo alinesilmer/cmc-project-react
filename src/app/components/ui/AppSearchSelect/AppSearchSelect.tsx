@@ -3,6 +3,8 @@ import TextField from "@mui/material/TextField";
 import CircularProgress from "@mui/material/CircularProgress";
 import React, { useEffect, useState } from "react";
 
+import { ordenarOpciones } from "./ordenarOpciones";
+
 export type AppSearchSelectOption = {
   id: string | number;
   label: string;
@@ -20,6 +22,11 @@ type Props = {
   blurOnSelect?: boolean;
   /** Texto con el que arranca el campo cuando NO hay opción seleccionada (`value` en null) pero igual se sabe qué había. */
   initialInputValue?: string;
+  /**
+   * Lista de la A a la Z y, al buscar, primero lo que coincide completo (el código igual, el nombre igual) y después
+   * lo que empieza igual y lo que lo contiene. Ver `ordenarOpciones`. Con `onQueryChange` el orden lo trae el servidor.
+   */
+  ordenar?: boolean;
 };
 
 const AppSearchSelect: React.FC<Props> = ({
@@ -31,6 +38,7 @@ const AppSearchSelect: React.FC<Props> = ({
   onQueryChange,
   blurOnSelect = true,
   initialInputValue,
+  ordenar = false,
 }) => {
   // `options` se reemplaza por completo en cada búsqueda remota, así que la opción ya seleccionada puede desaparecer de la lista.
   const [pinned, setPinned] = useState<AppSearchSelectOption | null>(null);
@@ -76,7 +84,14 @@ const AppSearchSelect: React.FC<Props> = ({
       }}
       disabled={disabled}
       loading={loading}
-      filterOptions={onQueryChange ? (x) => x : undefined}
+      filterOptions={
+        onQueryChange
+          ? (x) => x
+          : ordenar
+            // Con una opción ya elegida el campo muestra su etiqueta: se ofrece la lista completa, no sólo esa.
+            ? (opts, estado) => ordenarOpciones(opts, selected && estado.inputValue === selected.label ? "" : estado.inputValue)
+            : undefined
+      }
       isOptionEqualToValue={(opt, val) => String(opt.id) === String(val.id)}
       onInputChange={(_, val, reason) => {
         if (reason === "input") {

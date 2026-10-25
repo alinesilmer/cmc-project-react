@@ -14,6 +14,10 @@ export type Pago = {
   total_creditos: string;
   total_neto: string;
   total_deduccion: string;
+  // La parte de total_bruto que viene de adelantos.
+  total_adelantos?: string;
+  // Compensaciones del pago, con signo (+ a favor de socios, − en contra). Ya están en total_neto, no en total_bruto.
+  total_compensaciones?: string;
 };
 
 // Qué pasó con las prestaciones de una factura al agregarla al pago.
@@ -25,6 +29,10 @@ export type ResumenCarga = {
   sin_medico: number[];
   sin_medico_cantidad?: number;
   funcion_desconocida: number;
+  // Las paga un adelanto: la factura entra sin ellas.
+  reservadas?: number;
+  importe_reservado?: string;
+  adelantos_reservantes?: number[];
 };
 
 // Lo que quedó afuera (o con un supuesto), en una frase. Vacío si entró todo.
@@ -37,6 +45,10 @@ export const avisoDeCarga = (r: ResumenCarga): string => {
   if (r.importe_cero) partes.push(`${r.importe_cero} con importe en 0`);
   if (r.funcion_desconocida) partes.push(`${r.funcion_desconocida} con función desconocida, cargadas como médico`);
   if (r.ya_liquidadas) partes.push(`${r.ya_liquidadas} ya liquidadas en otro pago`);
+  if (r.reservadas) {
+    const adelantos = (r.adelantos_reservantes ?? []).map((a) => `#${a}`).join(", ");
+    partes.push(`${r.reservadas} reservadas en adelantos${adelantos ? ` (${adelantos})` : ""}, las paga el adelanto`);
+  }
   return partes.join("; ");
 };
 
@@ -126,6 +138,9 @@ export const nroFacturaMarcado = (nro?: string | null, version?: number | null) 
 export type FacturaPagoDisp = FacturaDisp & {
   CANTIDAD: number;
   IMPORTE: number;
+  // Prestaciones de la factura reservadas en adelantos: no entran a este pago.
+  RESERVADAS?: number;
+  IMPORTE_RESERVADO?: number;
 };
 
 export type LoteAjuste = {

@@ -401,6 +401,7 @@ const DebitosCreditos: React.FC = () => {
           <div className={`${lq.campo} ${lq.campoAncho}`}>
             <span className={lq.rotulo}>Obra social</span>
             <AppSearchSelect
+              ordenar
               options={opcionesOs}
               value={filterOs || null}
               onChange={(val) => setFilterOs(val ? String(val) : "")}
@@ -490,6 +491,7 @@ const DebitosCreditos: React.FC = () => {
         >
           <DialogoCampo rotulo="Obra social">
             <AppSearchSelect
+              ordenar
               options={opcionesOs}
               value={addSfOs || null}
               onChange={(val) => setAddSfOs(val ? String(val) : "")}
@@ -594,6 +596,7 @@ const DebitosCreditos: React.FC = () => {
         >
           <DialogoCampo rotulo="Obra social">
             <AppSearchSelect
+              ordenar
               options={opcionesOs}
               value={addOs || null}
               onChange={(val) => handleAddOsChange(val ? String(val) : "")}

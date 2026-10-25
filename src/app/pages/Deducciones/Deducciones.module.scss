@@ -1,0 +1,372 @@
+@use "@/app/styles/all.scss" as *;
+
+// Deducciones: la página scrollea con el body, como el resto del panel. El lateral del pago abierto
+// y la cabecera de la tabla se quedan pegados bajo la barra superior mientras se baja por la lista.
+// Las piezas comunes (píldoras de estado, botones, paginador) salen de Liquidacion.module.scss.
+
+// Alto de la barra superior, que es sticky (ver Topbar.module.scss): la fila de la marca y el buscador
+// (`.inner`, 4.5rem) más la de las secciones (`.menubar`, 3.75rem) y la línea de abajo. Con la pantalla
+// angosta la fila de secciones desaparece y queda sólo `.inner` (4rem). Más el aire que se deja debajo.
+$alto-topbar: calc(4.5rem + 3.75rem + 1px);
+$alto-topbar-chica: calc(4rem + 1px);
+$aire: 1rem;
+
+// ── Encabezado: una línea de contexto y las acciones de la pantalla ───────────
+.encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3 $spacing-5;
+}
+
+.contexto {
+  margin: 0;
+  max-width: 40rem;
+  font-size: $font-size-base;
+  line-height: 1.5;
+  color: $gray-600;
+
+  strong { color: $gray-900; }
+}
+
+// ── Filtros: una sola tarjeta ─────────────────────────────────────────────────
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: $spacing-3 $spacing-4;
+  padding: $spacing-3 $spacing-4;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
+}
+
+.limpiar {
+  height: 2.75rem;
+  padding: 0 $spacing-3;
+  font-family: inherit;
+  font-weight: $font-weight-semibold;
+  color: $franja-azul;
+  background: none;
+  border: 0;
+  cursor: pointer;
+
+  &:hover { text-decoration: underline; }
+}
+
+// ── Cuerpo: la lista y el lateral ─────────────────────────────────────────────
+.cuerpo {
+  display: flex;
+  gap: $spacing-5;
+  align-items: flex-start;
+
+  @media (max-width: 1000px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.lista {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: $spacing-3;
+  min-width: 0;
+}
+
+.listaCabeza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+}
+
+// Pestañas de estado
+.pestanas {
+  display: flex;
+  padding: 3px;
+  background: $gray-200;
+  border-radius: $radio-lg;
+}
+
+.pestana {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  height: 2.4rem;
+  padding: 0 $spacing-4;
+  font-family: inherit;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $gray-700;
+  white-space: nowrap;
+  background: transparent;
+  border: 0;
+  border-radius: $radio-md;
+  cursor: pointer;
+
+  small {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $gray-600;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.pestanaActiva {
+  color: $franja-azul;
+  background: $white;
+  box-shadow: 0 1px 3px rgba($gray-900, 0.14);
+}
+
+.soloPago {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-size: $font-size-sm;
+  color: $gray-600;
+  cursor: pointer;
+
+  input { width: 1rem; height: 1rem; accent-color: $franja-azul; }
+}
+
+// La tabla no tiene scroll propio: baja con la página. Sin `overflow` a propósito, porque un contenedor con
+// overflow haría que la cabecera pegajosa se pegara a la caja y no a la ventana.
+.tablaCaja {
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
+
+  thead th {
+    position: sticky;
+    top: $alto-topbar;
+    z-index: 2;
+
+    &:first-child { border-top-left-radius: $radio-lg; }
+    &:last-child { border-top-right-radius: $radio-lg; }
+
+    @media (max-width: 1024px) { top: $alto-topbar-chica; }
+  }
+
+  // Angosto: los paneles se apilan y la tabla scrollea de costado dentro de su caja (ahí la cabecera no se pega).
+  @media (max-width: 1000px) {
+    overflow-x: auto;
+
+    thead th { position: static; }
+  }
+}
+
+.tablaVieja { opacity: 0.55; transition: opacity 0.15s; }
+
+.celdaCheck { width: 2.6rem; padding-right: 0 !important; }
+
+.celdaDoble {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  small { font-size: $font-size-sm; color: $gray-500; }
+}
+
+// El tema del panel alinea todo a la izquierda, también los montos.
+.celdaMonto { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.etiquetaVencida {
+  margin-left: $spacing-2;
+  padding: 0.1rem 0.5rem;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  color: $danger-red;
+  background: $tono-rojo-50;
+  border-radius: 999px;
+}
+
+.filaSeleccionada { background: $tono-azul-50 !important; }
+
+.vacioTabla {
+  padding: $spacing-12 $spacing-5;
+  text-align: center;
+  color: $gray-500;
+}
+
+.pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+  font-size: $font-size-sm;
+  color: $gray-600;
+}
+
+.pieNav {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+
+  button {
+    height: 2.2rem;
+    padding: 0 $spacing-4;
+    font-family: inherit;
+    font-weight: $font-weight-semibold;
+    color: $franja-azul;
+    background: $white;
+    border: 1px solid $gray-300;
+    border-radius: 999px;
+    cursor: pointer;
+
+    &:hover:not(:disabled) { border-color: $franja-azul; }
+    &:disabled { opacity: 0.45; cursor: not-allowed; }
+  }
+}
+
+// ── Lateral: el pago abierto y lo seleccionado. Acompaña el scroll; si no entra en la ventana, scrollea solo ──
+.lateral {
+  position: sticky;
+  top: calc(#{$alto-topbar} + #{$aire});
+  display: flex;
+  flex: 0 0 26rem;
+  flex-direction: column;
+  gap: $spacing-4;
+  max-width: 30rem;
+  max-height: calc(100dvh - #{$alto-topbar} - #{$aire} * 2);
+  padding-right: 2px;
+  overflow-y: auto;
+
+  @media (max-width: 1024px) {
+    top: calc(#{$alto-topbar-chica} + #{$aire});
+    max-height: calc(100dvh - #{$alto-topbar-chica} - #{$aire} * 2);
+  }
+
+  @media (max-width: 1000px) {
+    position: static;
+    flex-basis: auto;
+    max-width: none;
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  padding: $spacing-5;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
+}
+
+.panelCabeza {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+}
+
+.panelRotulo {
+  display: block;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: $gray-500;
+}
+
+.panelTitulo {
+  margin: 0;
+  font-family: $fuente-titulos;
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+}
+
+.datos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $spacing-3;
+}
+
+.dato {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: $spacing-3;
+  background: $gray-50;
+  border-radius: $radio-md;
+
+  span { font-size: $font-size-sm; color: $gray-600; }
+
+  b {
+    font-family: $fuente-titulos;
+    font-size: $font-size-2xl;
+    color: $gray-900;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.nota {
+  margin: 0;
+  font-size: $font-size-sm;
+  line-height: 1.5;
+  color: $gray-600;
+}
+
+.conceptos {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid $gray-200;
+
+  li {
+    display: flex;
+    justify-content: space-between;
+    gap: $spacing-3;
+    padding: $spacing-2 0;
+    font-size: $font-size-sm;
+    border-bottom: 1px solid $gray-200;
+
+    span { min-width: 0; color: $gray-900; }
+    em { font-style: normal; color: $gray-500; }
+    b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  }
+}
+
+.seleccion {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  padding: $spacing-5;
+  background: $tono-azul-50;
+  border: 1px solid $tono-azul-100;
+  border-radius: $radio-lg;
+}
+
+.seleccionCabeza {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  color: $franja-azul;
+
+  b { font-variant-numeric: tabular-nums; }
+}
+
+.seleccionBotones {
+  display: flex;
+  gap: $spacing-2;
+
+  > * { flex: 1; }
+}
+
+.sinSeleccion {
+  padding: $spacing-4 $spacing-5;
+  font-size: $font-size-sm;
+  color: $gray-600;
+  background: $gray-100;
+  border: 1px dashed $gray-300;
+  border-radius: $radio-lg;
+}

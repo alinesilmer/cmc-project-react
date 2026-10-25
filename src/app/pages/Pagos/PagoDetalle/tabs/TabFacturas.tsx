@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getJSON, postJSON } from "@/app/shared/lib/http";
+import { getJSON, patchJSON, postJSON } from "@/app/shared/lib/http";
 import { useAppSnackbar } from "../../../../hooks/useAppSnackbar";
 import Button from "@/app/components/ui/Button/Button";
 import SelectableTable from "@/app/components/ui/SelectableTable/SelectableTable";
@@ -23,6 +23,19 @@ import {
 import AppSearchSelect from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
 import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
+import {
+  COMPENSACIONES_LISTA_URL,
+  COMPENSACION_ESTADO_URL,
+  type Compensacion,
+  importeConSigno,
+} from "../../Compensaciones/utiles";
+import {
+  ADELANTOS_LISTA_URL,
+  ADELANTO_ESTADO_URL,
+  type AdelantoListaRow,
+  estadoAdelantoLabel,
+} from "../../Adelantos/utiles";
 
 const LIQUIDACIONES_URL = (pagoId: number) =>
   `/api/liquidacion/liquidaciones_por_os/?pago_id=${pagoId}`;
@@ -50,6 +63,14 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
   // Prestaciones que quedaron afuera de la última factura agregada; se queda hasta cerrarlo.
   const [avisoCarga, setAvisoCarga] = useState<string | null>(null);
 
+  // Adelantos que están en este pago (se pagan además de las facturas)
+  const [adelantos, setAdelantos] = useState<AdelantoListaRow[]>([]);
+  const [quitandoAdelanto, setQuitandoAdelanto] = useState<number | null>(null);
+
+  // Compensaciones de este pago (plata a favor o en contra de socios, sin concepto)
+  const [compensaciones, setCompensaciones] = useState<Compensacion[]>([]);
+  const [quitandoComp, setQuitandoComp] = useState<number | null>(null);
+
   // Modal agregar
   const [addOpen, setAddOpen] = useState(false);
   const [obrasSociales, setObrasSociales] = useState<ObraSocial[]>([]);
@@ -76,6 +97,62 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
   useEffect(() => {
     fetchRows();
   }, [fetchRows]);
+
+  const fetchAdelantos = useCallback(async () => {
+    try {
+      const data = await getJSON<AdelantoListaRow[]>(ADELANTOS_LISTA_URL, { pago_id: pagoId });
+      setAdelantos(Array.isArray(data) ? data : []);
+    } catch {
+      setAdelantos([]);
+    }
+  }, [pagoId]);
+
+  useEffect(() => {
+    void fetchAdelantos();
+  }, [fetchAdelantos]);
+
+  const fetchCompensaciones = useCallback(async () => {
+    try {
+      const data = await getJSON<{ items: Compensacion[] }>(COMPENSACIONES_LISTA_URL, { pago_id: pagoId });
+      setCompensaciones(Array.isArray(data?.items) ? data.items : []);
+    } catch {
+      setCompensaciones([]);
+    }
+  }, [pagoId]);
+
+  useEffect(() => {
+    void fetchCompensaciones();
+  }, [fetchCompensaciones]);
+
+  const quitarCompensacion = async (c: Compensacion) => {
+    setQuitandoComp(c.id);
+    try {
+      await patchJSON(COMPENSACION_ESTADO_URL(c.id), { estado: "pendiente" });
+      notify(`Compensación #${c.id} quitada del pago.`);
+      await fetchCompensaciones();
+      onRefresh?.();
+    } catch (e: any) {
+      const detail = e?.response?.data?.detail;
+      notify(typeof detail === "string" ? detail : (e?.message ?? "No se pudo quitar la compensación."), "error");
+    } finally {
+      setQuitandoComp(null);
+    }
+  };
+
+  const quitarAdelanto = async (a: AdelantoListaRow) => {
+    setQuitandoAdelanto(a.id);
+    try {
+      await patchJSON(ADELANTO_ESTADO_URL(a.id), { estado: "C" });
+      notify(`Adelanto #${a.id} quitado del pago.`);
+      await fetchAdelantos();
+      onRefresh?.();
+    } catch (e: any) {
+      const detail = e?.response?.data?.detail;
+      notify(typeof detail === "string" ? detail : (e?.message ?? "No se pudo quitar el adelanto."), "error");
+    } finally {
+      setQuitandoAdelanto(null);
+    }
+  };
 
   const openAddModal = async () => {
     setSelectedOS("");
@@ -133,7 +210,11 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
       const afuera = r ? avisoDeCarga(r) : "";
       if (r && afuera) {
         setAvisoCarga(`Factura ${created.nro_factura}: ${r.cargadas} de ${r.total} prestaciones cargadas. Revisar: ${afuera}.`);
-        notify(`Factura agregada con ${r.total - r.cargadas - r.ya_liquidadas} prestaciones sin cargar.`, "warning");
+        notify(
+          `Factura agregada con ${r.total - r.cargadas - r.ya_liquidadas - (r.reservadas ?? 0)} prestaciones sin cargar` +
+            (r.reservadas ? ` y ${r.reservadas} reservadas en adelantos.` : "."),
+          "warning",
+        );
       } else {
         setAvisoCarga(null);
         notify(r ? `Factura agregada: ${r.cargadas} de ${r.total} prestaciones cargadas.` : "Factura agregada correctamente.");
@@ -278,6 +359,165 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
         onActionComplete={fetchRows}
       />
 
+      {(adelantos.length > 0 || isOpen) && (
+        <section aria-labelledby="pago-adelantos" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div className={styles.toolbar}>
+            <h3 id="pago-adelantos" style={{ margin: 0, fontSize: 18 }}>Adelantos en este pago</h3>
+            <div className={styles.toolbarLeft}>
+              <Button variant="ghost" onClick={() => navigate("/panel/adelantos")}>
+                Ir a Adelantos →
+              </Button>
+            </div>
+          </div>
+          {adelantos.length === 0 ? (
+            <span style={{ fontSize: 13, color: "#64748b" }}>
+              Ningún adelanto en este pago. Los adelantos cerrados se pasan al pago desde Adelantos.
+            </span>
+          ) : (
+            <>
+              <Tabla>
+                <thead>
+                  <tr>
+                    <th>N°</th>
+                    <th>Obra social</th>
+                    <th>Factura</th>
+                    <th>Médicos</th>
+                    <th>Prest.</th>
+                    <th>Importe</th>
+                    <th>Estado</th>
+                    <th aria-label="Acciones" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {adelantos.map((a) => (
+                    <tr key={a.id}>
+                      <td>#{a.id}</td>
+                      <td>{a.obra_social_nombre}</td>
+                      <td>
+                        {nroFacturaMarcado(a.nro_factura, a.factura_version)}
+                        <br />
+                        <small style={{ color: "#64748b" }}>
+                          {mesLabel(a.mes_periodo)} {a.anio_periodo}
+                        </small>
+                      </td>
+                      <td>
+                        {a.medico_nombre ?? "—"}
+                        {a.medicos > 1 && (
+                          <>
+                            <br />
+                            <small style={{ color: "#64748b" }}>y {a.medicos - 1} más</small>
+                          </>
+                        )}
+                      </td>
+                      <td>{a.prestaciones}</td>
+                      <td>${fmt(a.importe)}</td>
+                      <td>{estadoAdelantoLabel(a.estado)}</td>
+                      <td>
+                        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                          <BotonVer onClick={() => navigate(`/panel/adelantos/${a.id}`)} />
+                          {isOpen && a.estado === "L" && (
+                            <Button
+                              size="sm"
+                              variant="danger"
+                              disabled={quitandoAdelanto === a.id}
+                              onClick={() => void quitarAdelanto(a)}
+                            >
+                              {quitandoAdelanto === a.id ? "Quitando…" : "Quitar del pago"}
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Tabla>
+              <span style={{ fontSize: 13, color: "#64748b" }}>
+                Las facturas de arriba entran sin las prestaciones de estos adelantos: las paga el adelanto. Factura y adelanto
+                pueden estar en el mismo pago.
+              </span>
+            </>
+          )}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+            <Resumen rotulo="Facturas" valor={`$${fmt(Number(pago.total_bruto) - Number(pago.total_adelantos ?? 0))}`} />
+            <Resumen rotulo="Adelantos" valor={`$${fmt(pago.total_adelantos ?? 0)}`} />
+            <Resumen
+              rotulo="Compensaciones"
+              valor={importeConSigno(pago.total_compensaciones ?? 0)}
+              nota={`${compensaciones.length} en este pago`}
+            />
+            <Resumen
+              rotulo="Producción (base de porcentuales)"
+              valor={`$${fmt(pago.total_bruto)}`}
+              nota="Facturas + adelantos. Las compensaciones no entran."
+              destacado
+            />
+          </div>
+        </section>
+      )}
+
+      {(compensaciones.length > 0 || isOpen) && (
+        <section aria-labelledby="pago-compensaciones" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div className={styles.toolbar}>
+            <h3 id="pago-compensaciones" style={{ margin: 0, fontSize: 18 }}>Compensaciones en este pago</h3>
+            <div className={styles.toolbarLeft}>
+              <Button variant="ghost" onClick={() => navigate("/panel/compensaciones")}>
+                Ir a Compensaciones →
+              </Button>
+            </div>
+          </div>
+          {compensaciones.length === 0 ? (
+            <span style={{ fontSize: 13, color: "#64748b" }}>
+              Ninguna compensación en este pago. Se pasan al pago desde Compensaciones.
+            </span>
+          ) : (
+            <>
+              <Tabla>
+                <thead>
+                  <tr>
+                    <th>N°</th>
+                    <th>Socio</th>
+                    <th>Leyenda del recibo</th>
+                    <th>Importe</th>
+                    <th aria-label="Acciones" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {compensaciones.map((c) => (
+                    <tr key={c.id}>
+                      <td>#{c.id}</td>
+                      <td>
+                        {c.medico_nombre ?? "—"}
+                        {c.medico_nro_socio ? (
+                          <>
+                            <br />
+                            <small style={{ color: "#64748b" }}>Socio {c.medico_nro_socio}</small>
+                          </>
+                        ) : null}
+                      </td>
+                      <td>{c.leyenda}</td>
+                      <td style={{ fontWeight: 700, color: Number(c.importe) < 0 ? "#b42318" : "#13623a" }}>
+                        {importeConSigno(c.importe)}
+                      </td>
+                      <td>
+                        {isOpen && c.estado === "en_pago" && (
+                          <Button size="sm" variant="danger" disabled={quitandoComp === c.id} onClick={() => void quitarCompensacion(c)}>
+                            {quitandoComp === c.id ? "Quitando…" : "Quitar del pago"}
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Tabla>
+              <span style={{ fontSize: 13, color: "#64748b" }}>
+                La negativa se resta antes de las deducciones, como un débito. Si al socio no le alcanza, al cerrar el pago el
+                faltante queda como «Saldo deudor de débitos» y se le cobra en el próximo pago.
+              </span>
+            </>
+          )}
+        </section>
+      )}
+
       {/* Modal agregar */}
       {addOpen && (
         <Dialogo
@@ -305,6 +545,7 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
               <div className={styles.formRow}>
                 <label className={styles.formLabel}>Obra Social</label>
                 <AppSearchSelect
+                  ordenar
                   options={obrasSociales.map((os) => ({
                     id: String(os.nro_obra_social),
                     label: `${os.nro_obra_social} - ${os.nombre}`,
@@ -355,11 +596,51 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
                     {fmt(facturaElegida.IMPORTE)}
                   </span>
                 )}
+                {facturaElegida && (facturaElegida.RESERVADAS ?? 0) > 0 && (
+                  <div
+                    role="note"
+                    style={{
+                      marginTop: 8,
+                      padding: "10px 12px",
+                      fontSize: 13,
+                      lineHeight: 1.5,
+                      color: "#5c3300",
+                      background: "#fff7e6",
+                      border: "1px solid #f5d9a0",
+                      borderRadius: 10,
+                    }}
+                  >
+                    <b>
+                      {facturaElegida.RESERVADAS} prestaci{facturaElegida.RESERVADAS !== 1 ? "ones quedan" : "ón queda"} afuera
+                    </b>{" "}
+                    (${fmt(facturaElegida.IMPORTE_RESERVADO ?? 0)}): reservada
+                    {facturaElegida.RESERVADAS !== 1 ? "s" : ""} en adelantos. Se pagan cuando esos adelantos pasen a un pago.
+                  </div>
+                )}
               </div>
             </Dialogo>
       )}
     </div>
   );
 };
+
+const Resumen: React.FC<{ rotulo: string; valor: string; destacado?: boolean; nota?: string }> = ({ rotulo, valor, destacado, nota }) => (
+  <div
+    style={{
+      flex: "1 1 200px",
+      display: "flex",
+      flexDirection: "column",
+      gap: 4,
+      padding: "12px 16px",
+      background: destacado ? "#eef4fc" : "#fff",
+      border: `1px solid ${destacado ? "#c9daf0" : "#e2e8f0"}`,
+      borderRadius: 14,
+    }}
+  >
+    <span style={{ fontSize: 12, fontWeight: 600, color: destacado ? "#173f70" : "#475569" }}>{rotulo}</span>
+    <b style={{ fontSize: 20, fontVariantNumeric: "tabular-nums", color: destacado ? "#173f70" : "inherit" }}>{valor}</b>
+    {nota && <span style={{ fontSize: 12, color: destacado ? "#173f70" : "#475569" }}>{nota}</span>}
+  </div>
+);
 
 export default TabFacturas;
