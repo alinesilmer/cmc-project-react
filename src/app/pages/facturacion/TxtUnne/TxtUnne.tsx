@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Download, FileText, Loader2 } from "lucide-react";
+import { Download, FileText } from "lucide-react";
 
 import { descargarTxtUnne, listarFacturas } from "../api";
 import type { FacturaRead } from "../types";
@@ -7,6 +7,7 @@ import { formatMoney } from "../money";
 import { saveAs } from "@/app/shared/lib/fileSaver";
 import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 import styles from "./TxtUnne.module.scss";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
 
 const OBRA_SOCIAL_UNNE = "81";
 
@@ -166,7 +167,7 @@ export default function TxtUnne() {
 
             <div className={styles.acciones}>
               <button type="button" className={styles.btn} disabled={!puedeGenerar} onClick={generar}>
-                {generando ? <Loader2 size={16} className={styles.girando} /> : <Download size={16} />}
+                {generando ? <Cargando size={16} /> : <Download size={16} />}
                 {generando ? "Generando…" : "Descargar TXT"}
               </button>
               {hecho && <span className={styles.ok}>{hecho}</span>}

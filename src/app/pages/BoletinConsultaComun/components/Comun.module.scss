@@ -1,0 +1,53 @@
+@use "@/app/styles/all.scss" as *;
+
+
+.seccion {
+  min-width: 0;
+}
+
+// Buscador y filtros, encima de la tabla.
+.barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+// ── Avisos de estado ──
+
+.aviso {
+  padding: 0.875rem 1rem;
+  border-radius: $radio-md;
+  background: $gray-50;
+  border: 1px dashed $gray-300;
+  color: $gray-600;
+}
+
+.avisoError {
+  border: 1px solid $tono-rojo-100;
+  color: $tono-rojo-500;
+}
+
+// ── Tabla ──
+
+.tablaWrap {
+  overflow: auto;
+  border-radius: $radio-md;
+  border: 1px solid $gray-200;
+  background: $white;
+}
+
+.tabla {
+  width: 100%;
+  min-width: 40rem;
+}
+
+.colNro,
+.nro {
+  width: 6rem;
+}
+
+.nro {
+  color: $tono-azul-500;
+}

@@ -1,4 +1,4 @@
-import { CONTACTO, linkWhatsApp } from "../../../lib/contacto";
+import { CONTACTO, linkWhatsApp } from "@/website/lib/contacto";
 
 /** WhatsApp de Servicios, con el mensaje ya escrito. Lo usan la cabecera y el convenio. */
 export const CONSULTAR_SEGUROS = linkWhatsApp(

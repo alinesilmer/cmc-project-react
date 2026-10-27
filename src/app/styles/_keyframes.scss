@@ -41,3 +41,18 @@
   from { background-position: 200% 0; }
   to   { background-position: -200% 0; }
 }
+
+@keyframes cmc-shimmer-largo {
+  from { background-position: 100% 0; }
+  to   { background-position: 0 0; }
+}
+
+@keyframes cmc-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes cmc-slide-right {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}

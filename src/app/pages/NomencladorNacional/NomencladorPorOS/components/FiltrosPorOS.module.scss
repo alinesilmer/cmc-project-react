@@ -1,0 +1,21 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver FiltrosPorOS.tsx.
+
+.barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-4;
+}
+
+.barra .filtro {
+  width: auto;
+  min-width: 11rem;
+  border-radius: 999px;
+}
+
+// Empuja «Cargar precio» al borde derecho.
+.cargar {
+  margin-left: auto;
+}

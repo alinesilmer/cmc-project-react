@@ -1,5 +1,5 @@
 // src/app/auth/usePermisos.ts
-import { useAuth } from "./AuthProvider";
+import { useAuth } from "./useAuth";
 import { hasScope } from "./scopes";
 
 export function usePermisos() {

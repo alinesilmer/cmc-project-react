@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import Esqueletos from "../../UI/Esqueletos/Esqueletos";
-import { coincide } from "../../../lib/texto";
-import type { ObraSocialPublica } from "../../../lib/obrasSociales.client";
+import { coincide } from "@/website/lib/texto";
+import type { ObraSocialPublica } from "@/website/lib/obrasSociales.client";
 import styles from "./ObrasSociales.module.scss";
 
 type Props = {

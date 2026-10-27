@@ -7,9 +7,9 @@ import FiltroChips from "../../UI/FiltroChips/FiltroChips";
 import Paginacion from "../../UI/Paginacion/Paginacion";
 import Button from "../../UI/Button/Button";
 import Esqueletos from "../../UI/Esqueletos/Esqueletos";
-import { usePaginacion } from "../../../hooks/usePaginacion";
-import { coincide } from "../../../lib/texto";
-import type { Noticia } from "../../../types";
+import { usePaginacion } from "@/website/hooks/usePaginacion";
+import { coincide } from "@/website/lib/texto";
+import type { Noticia } from "@/website/types";
 import type { TextosListado } from "../publicaciones";
 import styles from "./ListadoContenido.module.scss";
 

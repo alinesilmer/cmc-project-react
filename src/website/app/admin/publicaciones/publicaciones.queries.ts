@@ -1,5 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
-import type { TipoPublicacion } from "../../../types";
+import type { TipoPublicacion } from "@/website/types";
 
 export type FiltroTipo = TipoPublicacion | "Todos";
 

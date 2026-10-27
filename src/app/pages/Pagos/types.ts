@@ -1,3 +1,4 @@
+import { formatoImporte } from "@/app/shared/lib/formatos";
 // Tipos compartidos del módulo Pagos / Liquidación
 
 export type Pago = {
@@ -117,9 +118,40 @@ export const MESES = [
 export const mesLabel = (m: number) => MESES[(m - 1) % 12] ?? String(m);
 
 // Sin `style: "currency"` a propósito: los ~100+ call-sites de `fmt()` en este módulo ya anteponen "$"/"-$"/"+$" a mano — agregar el símbolo acá lo duplicaría.
-const currency = new Intl.NumberFormat("es-AR", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
 export const fmt = (n: number | string | null | undefined) =>
-  currency.format(Number(n ?? 0));
+  formatoImporte.format(Number(n ?? 0));
+
+export type LoteListItem = {
+  id: number;
+  tipo: "normal" | "refacturacion" | "sin_factura";
+  estado: "A" | "C" | "L" | "AP";
+  mes_periodo: number;
+  anio_periodo: number;
+  pago_id: number | null;
+  obra_social_id: number;
+  obra_social_nombre: string;
+  nro_factura: string | null;
+  total_debitos: string;
+  total_creditos: string;
+};
+
+export type RefacturacionListItem = {
+  id: number;
+  tipo: "normal" | "refacturacion";
+  estado: "A" | "C" | "L";
+  mes_periodo: number;
+  anio_periodo: number;
+  pago_id: number | null;
+  obra_social_id: number;
+  obra_social_nombre: string;
+  nro_factura: string | null;
+  snap_origen_id: number | null;
+  total_debitos: string;
+  total_creditos: string;
+};
+
+export type MedicoResult = {
+  id: number;
+  nro_socio: number | null;
+  nombre: string;
+};

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Layers, Search, Plus, FilePlus2, FileCheck2 } from "lucide-react";
 
-import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
+import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import { listarFacturas } from "../api";
 import type { FacturaRead, ListarFacturasParams, ObraSocialOption } from "../types";
 import { detailMessage, versionLabel } from "../types";
@@ -15,6 +15,8 @@ import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
 import { estadoLabel } from "@/app/pages/facturacion/utiles";
 import { fmtFecha } from "@/app/pages/facturacion/utiles";
+import Paginador from "@/app/components/ui/Paginador/Paginador";
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 
 const PAGE_SIZES = [25, 50, 100, 200];
 const DEFAULT_LIMIT = 50;
@@ -56,8 +58,9 @@ const Complementarias: React.FC = () => {
       const { data, totalCount: tc } = await listarFacturas(f);
       setRows(data);
       setTotalCount(tc);
-    } catch (e: any) {
-      notify(detailMessage(e?.response?.data?.detail) || "Error al cargar las facturas complementarias.", "error");
+    } catch (e) {
+      const err = comoErrorApi(e);
+      notify(detailMessage(err?.response?.data?.detail) || "Error al cargar las facturas complementarias.", "error");
     } finally {
       setLoading(false);
     }
@@ -287,31 +290,13 @@ const Complementarias: React.FC = () => {
                 <option key={s} value={s}>{s} por página</option>
               ))}
             </select>
-            <div className={styles.pageBtns}>
-              <button
-                type="button"
-                className={styles.pageBtn}
-                disabled={offset === 0 || loading}
-                onClick={() => setFiltros((f) => ({ ...f, offset: Math.max(0, offset - limit) }))}
-              >
-                ◀ Anterior
-              </button>
-              <button
-                type="button"
-                className={styles.pageBtn}
-                disabled={
-                  (totalCount !== undefined && offset + limit >= totalCount) ||
-                  rows.length < limit ||
-                  loading
-                }
-                onClick={() => setFiltros((f) => ({ ...f, offset: offset + limit }))}
-              >
-                Siguiente ▶
-              </button>
-            </div>
-            <span className={styles.pageInfo}>
-              Página {page}{totalPages ? ` / ${totalPages}` : ""}
-            </span>
+            <Paginador
+              pagina={page}
+              totalPaginas={totalPages}
+              hayMas={!((totalCount !== undefined && offset + limit >= totalCount) || rows.length < limit)}
+              onCambiar={(p) => setFiltros((f) => ({ ...f, offset: (p - 1) * limit }))}
+              ocupado={loading}
+            />
           </div>
         </div>
       </div>

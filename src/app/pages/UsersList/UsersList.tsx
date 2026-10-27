@@ -3,7 +3,7 @@
 import type React from "react";
 import { useEffect, useMemo, useState, useRef } from "react";
 import styles from "./UsersList.module.scss";
-import { getJSON } from "@/app/shared/lib/http";
+import { listarSocios, type MedicoRow } from "./usersList.api";
 import { ShieldCheck, SlidersHorizontal, Users } from "lucide-react";
 import Button from "@/app/components/ui/Button/Button";
 import Franja from "@/app/components/layout/Franja/Franja";
@@ -22,10 +22,10 @@ import LogoCMCUrl from "../../assets/logoCMC.png";
 import SearchField from "@/app/components/ui/SearchField/SearchField";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
+import Paginador from "@/app/components/ui/Paginador/Paginador";
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 
-type MedicoRow = Record<string, unknown>;
-
-function normalizeBool(v: any): boolean {
+function normalizeBool(v: unknown): boolean {
   if (typeof v === "boolean") return v;
   if (typeof v === "number") return v !== 0;
   if (typeof v === "string") {
@@ -35,7 +35,7 @@ function normalizeBool(v: any): boolean {
   return false;
 }
 
-function normalizeText(v: any): string {
+function normalizeText(v: unknown): string {
   return String(v ?? "")
     .toLowerCase()
     .normalize("NFD")
@@ -43,14 +43,14 @@ function normalizeText(v: any): string {
     .trim();
 }
 
-function isEmptyValue(v: any): boolean {
+function isEmptyValue(v: unknown): boolean {
   if (v === null || typeof v === "undefined") return true;
   if (typeof v === "string") return v.trim() === "";
   if (Array.isArray(v)) return v.length === 0;
   return false;
 }
 
-function pickFirst(row: any, keys: string[]): any {
+function pickFirst(row: MedicoRow, keys: string[]): unknown {
   for (const k of keys) {
     const v = row?.[k];
     if (!isEmptyValue(v)) return v;
@@ -58,20 +58,20 @@ function pickFirst(row: any, keys: string[]): any {
   return "";
 }
 
-function isActiveRow(row: any): boolean {
-  if (typeof (row as any)?.activo !== "undefined") return Boolean(Number((row as any).activo));
-  const ex = ((row as any)?.EXISTE ?? (row as any)?.existe ?? "").toString().trim().toUpperCase();
+function isActiveRow(row: MedicoRow): boolean {
+  if (typeof row?.activo !== "undefined") return Boolean(Number(row.activo));
+  const ex = String(row.EXISTE ?? row.existe ?? "").trim().toUpperCase();
   return ex === "S";
 }
 
-function normalizeAdherente(row: any): boolean | null {
-  const raw = (row as any)?.adherente ?? (row as any)?.ES_ADHERENTE ?? (row as any)?.es_adherente;
+function normalizeAdherente(row: MedicoRow): boolean | null {
+  const raw = row?.adherente ?? row?.ES_ADHERENTE ?? row?.es_adherente;
   if (raw === null || typeof raw === "undefined" || raw === "") return null;
   return normalizeBool(raw);
 }
 
 // Especialidades para la columna: resuelve nro_especialidad -> nombre y OMITE los códigos que no tienen nombre en el catálogo (p. ej. el 420 genérico).
-function pickEspecialidadNames(row: any): string {
+function pickEspecialidadNames(row: MedicoRow): string {
   const nroKeys = [
     "nro_especialidad",
     "nro_especialidad2",
@@ -95,27 +95,31 @@ function pickEspecialidadNames(row: any): string {
   return names.join(", ");
 }
 
-function toUserRow(m: any) {
+/** Un valor de la API para mostrarlo: texto o número, nada más. */
+const escalar = (v: unknown): string | number | null =>
+  typeof v === "string" || typeof v === "number" ? v : null;
+
+function toUserRow(m: MedicoRow) {
   const status = isActiveRow(m) ? "activo" : "inactivo";
   const a = normalizeAdherente(m);
   const os = String(m?.obra_social ?? m?.OBRA_SOCIAL ?? "").trim();
 //"telefono_consulta", "TELEFONO_CONSULTA", "tel_consulta", "TEL_CONSULTA"
   return {
-    id: m?.id ?? m?.ID ?? null,
-    nro_socio: m?.nro_socio ?? m?.NRO_SOCIO ?? null,
-    name: m?.nombre ?? m?.NOMBRE ?? "—",
+    id: escalar(m?.id ?? m?.ID),
+    nro_socio: escalar(m?.nro_socio ?? m?.NRO_SOCIO),
+    name: String(m?.nombre ?? m?.NOMBRE ?? "—"),
     especialidad: pickEspecialidadNames(m) || "—",
-    phone: m?.telefono_consulta ?? m?.TELEFONO_CONSULTA ?? m?.tel_consulta ?? m.TEL_CONSULTA ?? "—",
-    joinDate: (m?.fecha_ingreso ?? m?.FECHA_INGRESO ?? m?.joinDate) ?? null,
+    phone: String(m?.telefono_consulta ?? m?.TELEFONO_CONSULTA ?? m?.tel_consulta ?? m.TEL_CONSULTA ?? "—"),
+    joinDate: escalar(m?.fecha_ingreso ?? m?.FECHA_INGRESO ?? m?.joinDate),
     status,
-    matriculaProv: m?.MATRICULA_PROV ?? m?.matricula_prov ?? "—",
+    matriculaProv: String(m?.MATRICULA_PROV ?? m?.matricula_prov ?? "—"),
     adherente: a,
     obraSocial: os ? os : "—",
   };
 }
 
 /* ================================ Especialidades múltiples - Lee especialidad1..especialidadN - Dedup - Quita "médico" si hay otras ================================ */
-function splitTokens(v: any): string[] {
+function splitTokens(v: unknown): string[] {
   if (isEmptyValue(v)) return [];
   if (Array.isArray(v)) return v.map((x) => String(x ?? "").trim()).filter(Boolean);
   if (typeof v === "string") {
@@ -126,8 +130,8 @@ function splitTokens(v: any): string[] {
   return [String(v).trim()].filter(Boolean);
 }
 
-function collectEspecialidadColumns(row: any, max = 12): any[] {
-  const out: any[] = [];
+function collectEspecialidadColumns(row: MedicoRow, max = 12): unknown[] {
+  const out: unknown[] = [];
   const pushKey = (k: string) => {
     const v = row?.[k];
     if (!isEmptyValue(v)) out.push(v);
@@ -154,7 +158,7 @@ function collectEspecialidadColumns(row: any, max = 12): any[] {
   return out;
 }
 
-function getEspecialidadesTokens(row: any): string[] {
+function getEspecialidadesTokens(row: MedicoRow): string[] {
   const tokensRaw: string[] = [];
 
   // 1) columnas especialidad1..N (tu caso real)
@@ -163,12 +167,12 @@ function getEspecialidadesTokens(row: any): string[] {
 
   // 2) compat: si backend manda "ESPECIALIDADES" como string/array
   const rawCombined =
-    (row as any)?.ESPECIALIDADES ??
-    (row as any)?.especialidades ??
-    (row as any)?.ESPECIALIDAD ??
-    (row as any)?.especialidad ??
-    (row as any)?.ESPECIALIDAD_NOMBRE ??
-    (row as any)?.especialidad_nombre ??
+    row?.ESPECIALIDADES ??
+    row?.especialidades ??
+    row?.ESPECIALIDAD ??
+    row?.especialidad ??
+    row?.ESPECIALIDAD_NOMBRE ??
+    row?.especialidad_nombre ??
     null;
 
   for (const v of splitTokens(rawCombined)) tokensRaw.push(v);
@@ -202,7 +206,7 @@ function getEspecialidadesTokens(row: any): string[] {
   return out;
 }
 
-function matchEspecialidad(row: any, selected: string): boolean {
+function matchEspecialidad(row: MedicoRow, selected: string): boolean {
   if (!selected) return true;
 
   // Cuando viene "id:X" del selector, comparar directamente contra nro_especialidad
@@ -233,7 +237,7 @@ function matchEspecialidad(row: any, selected: string): boolean {
 }
 
 /* ================================ Fechas + vencimientos ================================ */
-function parseDateAny(v: any): Date | null {
+function parseDateAny(v: unknown): Date | null {
   if (!v) return null;
   if (v instanceof Date) return isNaN(v.getTime()) ? null : v;
 
@@ -368,7 +372,7 @@ function isMissingField(row: MedicoRow, field: MissingFieldKey): boolean {
       "nro_especialidad6",
     ];
     return !nroKeys.some((k) => {
-      const v = (row as any)?.[k];
+      const v = row?.[k];
       return v !== null && v !== undefined && v !== 0 && v !== "0" && v !== "";
     });
   }
@@ -539,7 +543,7 @@ const UsersList: React.FC = () => {
   // committed: lo que se envió al servidor al clickear "Filtrar"
   const [committedFilters, setCommittedFilters] = useState<FilterSelection>(initialFilters);
 
-  // Cache del logo en File (solo 1 fetch)
+  // Cache del logo en File: se pide recién al exportar, una sola vez.
   const logoFilePromiseRef = useRef<Promise<File | null> | null>(null);
   const getFixedLogoFile = async (): Promise<File | null> => {
     if (logoFilePromiseRef.current) return logoFilePromiseRef.current;
@@ -558,11 +562,6 @@ const UsersList: React.FC = () => {
 
     return logoFilePromiseRef.current;
   };
-
-  useEffect(() => {
-    void getFixedLogoFile();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   function handleApplyFilters() {
     setPage(0);
@@ -590,7 +589,7 @@ const UsersList: React.FC = () => {
       setError(null);
 
       const q = searchTerm.trim();
-      const filterParams = mapUIToQuery(committedFilters as any);
+      const filterParams = mapUIToQuery(committedFilters);
       const params: Record<string, unknown> = {
         ...filterParams,
         skip: page * PAGE_SIZE,
@@ -599,15 +598,16 @@ const UsersList: React.FC = () => {
       if (q.length >= 2) params.q = q;
 
       try {
-        const data = await getJSON<MedicoRow[]>("/api/medicos/all", params);
+        const data = await listarSocios(params);
         if (cancelled) return;
         const rows: MedicoRow[] = Array.isArray(data) ? data : [];
         setRawUsers(rows);
         setIsLastPage(rows.length < PAGE_SIZE);
         setInitialized(true);
-      } catch (err: any) {
+      } catch (err) {
+        const error = comoErrorApi(err);
         if (cancelled) return;
-        setError(err?.message || "Error al cargar los datos");
+        setError(error?.message || "Error al cargar los datos");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -617,7 +617,6 @@ const UsersList: React.FC = () => {
       cancelled = true;
       if (debounceRef.current) window.clearTimeout(debounceRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [committedFilters, searchTerm, page]);
 
   // El servidor ya aplica la mayoría de los filtros; client-only: adherente, tieneMalapraxis (belt-and-suspenders)
@@ -872,31 +871,7 @@ const UsersList: React.FC = () => {
         </Tabla>
       </div>
 
-      <div className={styles.pagination}>
-        <button
-          className={styles.pageBtn}
-          onClick={() => setPage(0)}
-          disabled={page === 0 || loading}
-          aria-label="Primera página"
-        >
-          ««
-        </button>
-        <button
-          className={styles.pageBtn}
-          onClick={() => setPage((p) => Math.max(0, p - 1))}
-          disabled={page === 0 || loading}
-        >
-          ‹ Anterior
-        </button>
-        <span className={styles.pageInfo}>Página {page + 1}</span>
-        <button
-          className={styles.pageBtn}
-          onClick={() => setPage((p) => p + 1)}
-          disabled={isLastPage || loading}
-        >
-          Siguiente ›
-        </button>
-      </div>
+      <Paginador pagina={page + 1} hayMas={!isLastPage} onCambiar={(p) => setPage(p - 1)} ocupado={loading} conPrimera />
 
       <Modal isOpen={isExportOpen} onClose={() => setIsExportOpen(false)} title="Filtrar y exportar" size="large" sinCabecera>
         <FilterModal

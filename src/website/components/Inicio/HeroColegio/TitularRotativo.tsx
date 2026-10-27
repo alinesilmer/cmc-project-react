@@ -1,4 +1,4 @@
-import { useRotacion } from "../../../hooks/useRotacion";
+import { useRotacion } from "@/website/hooks/useRotacion";
 import styles from "./HeroColegio.module.scss";
 
 /** Cada frase: lo que va en recto y la palabra que va en cursiva dorada. */

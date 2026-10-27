@@ -24,11 +24,6 @@ input[type="number"] {
   appearance: textfield;
 }
 
-:root {
-  // rsuite components resolve their font from this variable
-  --rs-font-family-base: #{$fuente-texto};
-}
-
 body {
   font-feature-settings:
     "pnum" on,

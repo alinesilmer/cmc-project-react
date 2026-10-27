@@ -17,16 +17,27 @@ export type User = {
   must_change_password: boolean;
 };
 
-function normalizeUser(raw: any): User {
+/** El usuario como lo manda la API: todo opcional, porque se normaliza antes de usarlo. */
+type UsuarioCrudo = {
+  id?: number;
+  nro_socio?: number | null;
+  nombre?: string;
+  scopes?: string[] | string | null;
+  role?: string | null;
+  ingresar?: string | null;
+  INGRESAR?: string | null;
+  especialidades?: number[];
+  es_organizacion?: number | string | null;
+  must_change_password?: boolean;
+};
+
+function normalizeUser(raw: UsuarioCrudo | null | undefined): User {
+  const scopes = raw?.scopes;
   return {
-    id: raw?.id,
+    id: Number(raw?.id),
     nro_socio: raw?.nro_socio ?? null,
     nombre: raw?.nombre ?? "",
-    scopes: Array.isArray(raw?.scopes)
-      ? raw.scopes
-      : raw?.scopes
-      ? [raw.scopes]
-      : [],
+    scopes: Array.isArray(scopes) ? scopes : scopes ? [scopes] : [],
     role: raw?.role ?? null,
     ingresar: raw?.ingresar ?? raw?.INGRESAR ?? null,
     especialidades: Array.isArray(raw?.especialidades) ? raw.especialidades : [],

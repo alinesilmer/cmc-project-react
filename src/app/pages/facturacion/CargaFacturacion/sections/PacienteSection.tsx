@@ -7,7 +7,8 @@ import AltaAfiliadoModal from "../../components/AltaAfiliadoModal";
 import ConfirmActionModal from "../../components/ConfirmActionModal";
 import { eliminarAfiliadoPorId } from "../../api";
 import type { AfiliadoRead } from "../../types";
-import styles from "../CargaFacturacion.module.scss";
+import comun from "../Comun.module.scss";;
+import paleta from "@/app/styles/paleta.module.scss";
 
 interface Props {
   /** Afiliado elegido del padrón (por id: puede no tener número). */
@@ -60,14 +61,14 @@ const PacienteSection: React.FC<Props> = ({
   };
 
   return (
-    <div className={styles.section}>
-      <span className={styles.sectionTitle}>
-        Paciente / afiliado <span className={styles.sectionHint}>(opcional)</span>
+    <div className={comun.section}>
+      <span className={comun.sectionTitle}>
+        Paciente / afiliado <span className={comun.sectionHint}>(opcional)</span>
       </span>
-      <div className={styles.fieldsRow}>
-        <div className={`${styles.filterField} ${styles.filterFieldWide}`} data-field="paciente">
+      <div className={comun.fieldsRow}>
+        <div className={`${comun.filterField} ${comun.filterFieldWide}`} data-field="paciente">
           {/* El identificador puede ser el DNI o el nro de afiliado de la OS. */}
-          <label className={styles.filterLabel}>Paciente (nombre, DNI o nro de afiliado)</label>
+          <label className={comun.filterLabel}>Paciente (nombre, DNI o nro de afiliado)</label>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <AfiliadoAutocomplete
@@ -81,7 +82,7 @@ const PacienteSection: React.FC<Props> = ({
             </div>
             <button
               type="button"
-              className={styles.btnIcon}
+              className={comun.btnIcon}
               onClick={() => setModal("editar")}
               disabled={!elegido}
               title={elegido ? `Editar a ${etiqueta}` : "Elegí un afiliado del padrón para poder editarlo"}
@@ -91,7 +92,7 @@ const PacienteSection: React.FC<Props> = ({
             </button>
             <button
               type="button"
-              className={styles.btnIconDanger}
+              className={comun.btnIconDanger}
               onClick={() => { setBajaError(null); setShowBaja(true); }}
               disabled={!elegido}
               title={elegido ? `Eliminar del padrón a ${etiqueta}` : "Elegí un afiliado del padrón para poder eliminarlo"}
@@ -99,15 +100,15 @@ const PacienteSection: React.FC<Props> = ({
             >
               <Trash2 size={16} />
             </button>
-            <button type="button" className={styles.btnGhost} onClick={() => setModal("alta")} disabled={disabled}>
+            <button type="button" className={comun.btnGhost} onClick={() => setModal("alta")} disabled={disabled}>
               + Agregar afiliado
             </button>
           </div>
           {etiqueta && (
-            <span style={{ fontSize: 12, color: "#1d9148", fontWeight: 600 }}><Check size={14} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> {etiqueta}</span>
+            <span style={{ fontSize: 12, color: paleta.successGreen, fontWeight: 600 }}><Check size={14} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> {etiqueta}</span>
           )}
-          {error && <span className={styles.errorText}>{error}</span>}
-          {bajaError && <span className={styles.errorText}>{bajaError}</span>}
+          {error && <span className={comun.errorText}>{error}</span>}
+          {bajaError && <span className={comun.errorText}>{bajaError}</span>}
         </div>
       </div>
 

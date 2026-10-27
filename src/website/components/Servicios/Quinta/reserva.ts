@@ -1,4 +1,4 @@
-import { CONTACTO, linkWhatsApp } from "../../../lib/contacto";
+import { CONTACTO, linkWhatsApp } from "@/website/lib/contacto";
 
 /** WhatsApp de Servicios, con el pedido de reserva ya escrito. */
 export const RESERVAR_QUINTA = linkWhatsApp(

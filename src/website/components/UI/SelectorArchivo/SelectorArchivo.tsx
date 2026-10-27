@@ -1,7 +1,7 @@
 import type React from "react";
 import { useRef } from "react";
 import Button, { type ButtonProps } from "../Button/Button";
-import { accept, filtrarValidos, type Extensiones } from "../../../lib/subidas";
+import { accept, filtrarValidos, type Extensiones } from "@/website/lib/subidas";
 
 type Props = {
   extensiones: Extensiones;

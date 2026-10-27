@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getJSON, postJSON } from "@/app/shared/lib/http";
-import { useAppSnackbar } from "../../../../hooks/useAppSnackbar";
+import { crearLiquidacion, listarLiquidacionesDePago, listarObrasSociales, listarPeriodosDisponibles, urlLiquidacion } from "@/app/pages/Pagos/pagos.api";
+import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import Button from "@/app/components/ui/Button/Button";
 import SelectableTable from "@/app/components/ui/SelectableTable/SelectableTable";
 import type {
@@ -19,15 +19,10 @@ import {
 } from "../../types";
 import AppSearchSelect from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
-import { PERIODOS_DISP_URL } from "@/app/pages/Pagos/utiles";
 import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
+import paleta from "@/app/styles/paleta.module.scss";
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 
-const LIQUIDACIONES_URL = (pagoId: number) =>
-  `/api/liquidacion/liquidaciones_por_os/?pago_id=${pagoId}`;
-const CREAR_LIQ_URL = "/api/liquidacion/liquidaciones_por_os/crear";
-const DEL_LIQ_URL = (id: number) =>
-  `/api/liquidacion/liquidaciones_por_os/${id}`;
-const OBRAS_SOCIALES_URL = "/api/obras_social/";
 type Props = {
   pago: Pago;
   pagoId: number;
@@ -59,10 +54,11 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await getJSON<Liquidacion[]>(LIQUIDACIONES_URL(pagoId));
+      const data = await listarLiquidacionesDePago(pagoId);
       setRows(Array.isArray(data) ? data : []);
-    } catch (e: any) {
-      setError(e?.message || "No se pudieron cargar las facturas.");
+    } catch (e) {
+      const err = comoErrorApi(e);
+      setError(err?.message || "No se pudieron cargar las facturas.");
     } finally {
       setLoading(false);
     }
@@ -81,7 +77,7 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
     if (obrasSociales.length === 0) {
       setLoadingOS(true);
       try {
-        const data = await getJSON<ObraSocial[]>(OBRAS_SOCIALES_URL);
+        const data = await listarObrasSociales();
         setObrasSociales(Array.isArray(data) ? data : []);
       } catch {
         /* ignore */
@@ -100,7 +96,7 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
     if (!numVal) return;
     setLoadingPeriodos(true);
     try {
-      const data = await getJSON<PeriodoDisp[]>(PERIODOS_DISP_URL(numVal));
+      const data = await listarPeriodosDisponibles(numVal);
       setPeriodos(Array.isArray(data) ? data : []);
     } catch {
       setPeriodos([]);
@@ -128,7 +124,7 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
     if (!selectedOS || !selectedMes || !selectedAnio) return;
     setAdding(true);
     try {
-      const created = await postJSON<Liquidacion>(CREAR_LIQ_URL, {
+      const created = await crearLiquidacion({
         pago_id: pagoId,
         obra_social_id: selectedOS,
         mes_periodo: selectedMes,
@@ -138,12 +134,13 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
       setAddOpen(false);
       notify("Factura agregada correctamente.");
       onRefresh?.();
-    } catch (e: any) {
-      const detail = e?.response?.data?.detail;
+    } catch (e) {
+      const err = comoErrorApi(e);
+      const detail = err?.response?.data?.detail;
       notify(
         typeof detail === "string"
           ? detail
-          : (e?.message ?? "Error al agregar la factura."),
+          : (err?.message ?? "Error al agregar la factura."),
         "error",
       );
     } finally {
@@ -215,7 +212,7 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
     {
       label: "Quitar del pago",
       method: "DELETE",
-      endpoint: (r) => DEL_LIQ_URL(r.id),
+      endpoint: (r) => urlLiquidacion(r.id),
       restrictions: [
         {
           message: "No se pueden quitar facturas de un pago cerrado.",
@@ -243,7 +240,7 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
   return (
     <div className={styles.tabWrap}>
       <div className={styles.toolbar}>
-        <span style={{ fontSize: 13, color: "#64748b" }}>
+        <span style={{ fontSize: 13, color: paleta.gray500 }}>
           {rows.length} factura{rows.length !== 1 ? "s" : ""} en este pago
         </span>
         <div className={styles.toolbarLeft}>
@@ -311,11 +308,11 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
               <div className={styles.formRow}>
                 <label className={styles.formLabel}>Período disponible</label>
                 {!selectedOS ? (
-                  <span style={{ fontSize: 12, color: "#94a3b8" }}>
+                  <span style={{ fontSize: 12, color: paleta.gray400 }}>
                     Seleccioná una obra social primero.
                   </span>
                 ) : loadingPeriodos ? (
-                  <span style={{ fontSize: 13, color: "#64748b" }}>
+                  <span style={{ fontSize: 13, color: paleta.gray500 }}>
                     Cargando períodos…
                   </span>
                 ) : (

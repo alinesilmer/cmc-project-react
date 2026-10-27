@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { ArrowUpRight, Mail } from "lucide-react";
 import Revelar from "../Revelar/Revelar";
 import WhatsappIcon from "../icons/WhatsappIcon";
-import { linkEmail, linkWhatsApp } from "../../../lib/contacto";
+import { linkEmail, linkWhatsApp } from "@/website/lib/contacto";
 import styles from "./BandaInvitacion.module.scss";
 
 type Props = {

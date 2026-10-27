@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
-import { FileText, Loader2, SearchX } from "lucide-react";
+import { FileText, SearchX } from "lucide-react";
 
 import styles from "./ValoresPdfTab.module.scss";
 import { abrirAdjunto } from "@/app/shared/lib/archivos";
@@ -11,6 +11,7 @@ import { listTodosValorDocumentos } from "@/app/pages/NomencladorNacional/nomenc
 import type { ValorDocumentoOut } from "@/app/pages/NomencladorNacional/nomenclador.types";
 import SearchField from "@/app/components/ui/SearchField/SearchField";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
 
 const PDF = "application/pdf";
 
@@ -61,7 +62,7 @@ export default function ValoresPdfTab() {
   if (isLoading) {
     return (
       <div className={styles.estado}>
-        <Loader2 size={22} className={styles.spin} />
+        <Cargando size={22} />
       </div>
     );
   }

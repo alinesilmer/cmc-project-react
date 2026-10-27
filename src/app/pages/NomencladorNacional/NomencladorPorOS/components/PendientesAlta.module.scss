@@ -1,0 +1,36 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver PendientesAlta.tsx.
+
+.texto {
+  display: block;
+  margin-bottom: $spacing-3;
+}
+
+.fichas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.ficha {
+  padding: $spacing-1 $spacing-3;
+  font-size: $font-size-sm;
+  font-variant-numeric: tabular-nums;
+  color: $franja-azul;
+  background: $white;
+  border: 1px solid $tono-amarillo-200;
+  border-radius: 999px;
+  cursor: pointer;
+
+  &:hover {
+    background: $primary-yellow-light;
+    border-color: $primary-yellow-dark;
+  }
+}
+
+.mas {
+  font-size: $font-size-sm;
+  color: $franja-azul;
+}

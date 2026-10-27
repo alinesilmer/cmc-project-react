@@ -5,7 +5,7 @@ import { ORDEN_TIPOS } from "./vista/types";
 import type { PrestacionConSocio } from "./FilaPrestacion";
 
 // Unidades facturadas de una fila (cantidad × sesión): lo que cuenta como "prestaciones", no la fila.
-export const unidadesDe = (p: PrestacionConSocio): number => (p.cantidad || 1) * (p.sesion || 1);
+const unidadesDe = (p: PrestacionConSocio): number => (p.cantidad || 1) * (p.sesion || 1);
 
 // Cantidad de prestaciones (unidades) de un conjunto de filas.
 export const sumarUnidades = (arr: PrestacionConSocio[]): number => arr.reduce((n, p) => n + unidadesDe(p), 0);
@@ -28,7 +28,7 @@ export const sumaEquipo = (cabeza: PrestacionConSocio): boolean =>
 
 // Tipo con el que cuenta una fila en los resúmenes por tipo: el equipo cuenta con el de su cabeza
 // (el ayudante de una cirugía de Sanatorio suma en Sanatorios). Igual que el exportable.
-export const tipoParaTotales = (p: PrestacionConSocio) => p.tipoCabeza ?? p.tipo;
+const tipoParaTotales = (p: PrestacionConSocio) => p.tipoCabeza ?? p.tipo;
 
 export const RESUMEN_TIPO_LABEL: Record<Tipo, string> = {
   Consulta: "Consultas",

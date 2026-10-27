@@ -1,18 +1,13 @@
 import { memo } from "react";
-import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { CheckCircle2, XCircle } from "lucide-react";
 
 import styles from "./consulta.module.scss";
 import { ORIGEN_LABELS, type TablaValorItem } from "../nomenclador.types";
+import { formatoPesos, formatoUnidades } from "@/app/shared/lib/formatos";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
 
 // Unidades sin ceros de relleno: `17.5000` → `17,5`.
-const unidades = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 4 });
 
-const money = new Intl.NumberFormat("es-AR", {
-  style: "currency",
-  currency: "ARS",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
 
 // Todo Valor tiene siempre los 3 conceptos (Honorarios/Gastos/Ayudante) y todos suman al precio_total: no existen componentes opcionales.
 function findComp(componentes: TablaValorItem["componentes"], concepto: string) {
@@ -43,14 +38,14 @@ function LedgerRow({
         {label}
         {hayCuenta && (
           <span className={styles.ledCuenta}>
-            {unidades.format(cantidad)} × {money.format(unitario)}
+            {formatoUnidades.format(cantidad)} × {formatoPesos.format(unitario)}
             {comp.galeno_nivel != null && ` · nivel ${comp.galeno_nivel}`}
           </span>
         )}
       </span>
       <span className={styles.ledDots} aria-hidden="true" />
       <span className={`${styles.ledVal} ${value === 0 ? styles.ledValZero : ""}`}>
-        {money.format(value)}
+        {formatoPesos.format(value)}
       </span>
     </div>
   );
@@ -103,7 +98,7 @@ function ResultRegister({
             >
               {eligibility.valida === null ? (
                 <>
-                  <Loader2 size={13} className={styles.spin} /> {eligibility.nombre}: verificando…
+                  <Cargando size={13} /> {eligibility.nombre}: verificando…
                 </>
               ) : eligibility.valida ? (
                 <>
@@ -162,7 +157,7 @@ function ResultRegister({
             Copago
             <span className={styles.copagoNota}>Lo paga el afiliado</span>
           </span>
-          <span className={styles.copagoVal}>{money.format(copago)}</span>
+          <span className={styles.copagoVal}>{formatoPesos.format(copago)}</span>
         </div>
       )}
     </article>

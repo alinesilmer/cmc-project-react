@@ -1,0 +1,146 @@
+@use "@/app/styles/all.scss" as *;
+
+// ─── Footer ───────────────────────────────────────────────────────────────────
+
+.formFooter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: $spacing-3;
+  padding: $spacing-2 0 $spacing-6;
+}
+
+// ─── Responsive ───────────────────────────────────────────────────────────────
+
+@media (max-width: $breakpoint-md) {
+  .container {
+    --lado: #{$spacing-5};
+    --arriba: #{$spacing-5};
+    padding: $spacing-5;
+  }
+
+  .section {
+    padding: $spacing-5;
+  }
+}
+
+@media (max-width: $breakpoint-sm) {
+  .container {
+    --lado: #{$spacing-4};
+    --arriba: #{$spacing-4};
+    padding: $spacing-4;
+  }
+
+  .section {
+    padding: $spacing-4;
+  }
+
+  .formFooter {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+}
+
+// ─── Modal "creando obra social" ─────────────────────────────────────────────
+
+.creandoBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.5rem 0.5rem;
+}
+
+
+.creandoTitulo {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.creandoTexto {
+  margin: 0;
+  font-size: 0.85rem;
+  color: $gray-600;
+  max-width: 34ch;
+  line-height: 1.45;
+}
+
+// ─── Relaciones: callout + replicar de la cabecera ────────────────────────────
+
+.callout {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-3;
+  padding: $spacing-4;
+  background-color: rgba(173, 162, 198, 0.14);
+  border: 1px solid rgba(137, 124, 172, 0.35);
+  border-radius: $radio-md;
+  font-size: $font-size-sm;
+  color: $gray-700;
+  line-height: 1.5;
+
+  p {
+    margin: 0;
+  }
+}
+
+.calloutIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #897cac;
+}
+
+.fieldWide {
+  max-width: 520px;
+}
+
+.replicar {
+  margin: 0;
+  padding: $spacing-4;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  border: 1px solid $gray-200;
+  border-radius: $radio-md;
+}
+
+.replicarTitulo {
+  padding: 0 $spacing-2;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-800;
+}
+
+.replicarItem {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-3;
+  cursor: pointer;
+
+  input {
+    flex-shrink: 0;
+    margin-top: 3px;
+    accent-color: #897cac;
+  }
+
+  span {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  strong {
+    font-size: $font-size-sm;
+    color: $gray-800;
+  }
+
+  small {
+    font-size: $font-size-xs;
+    color: $gray-500;
+    line-height: 1.45;
+  }
+}

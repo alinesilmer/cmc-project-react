@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  ChevronLeft,
-  ChevronRight,
   Gift,
   MapPin,
   Pencil,
@@ -41,6 +39,8 @@ import { detalleDeError } from "@/app/shared/lib/httpErrors";
 import SearchField from "@/app/components/ui/SearchField/SearchField";
 import Franja from "@/app/components/layout/Franja/Franja";
 import FieldError from "@/app/components/ui/FieldError/FieldError";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
+import Paginador from "@/app/components/ui/Paginador/Paginador";
 
 // Múltiplo de tres: la grilla de cupones va de a tres por fila.
 const PAGE_SIZE = 18;
@@ -258,7 +258,7 @@ export default function BeneficiosPage() {
 
         {loading ? (
           <div className={s.loadingState}>
-            <span className={s.spinner} aria-hidden="true" />
+            <Cargando size={32} tono="marca" aria-hidden="true" />
             <p>Cargando beneficios…</p>
           </div>
         ) : filtered.length === 0 ? (
@@ -339,27 +339,7 @@ export default function BeneficiosPage() {
         )}
 
         {!loading && totalPages > 1 && (
-          <div className={s.pagination} role="navigation" aria-label="Paginación">
-            <button
-              className={s.pageBtn}
-              onClick={() => setPage((p) => p - 1)}
-              disabled={page === 1}
-              aria-label="Página anterior"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <span className={s.pageInfo}>
-              Página {page} de {totalPages}
-            </span>
-            <button
-              className={s.pageBtn}
-              onClick={() => setPage((p) => p + 1)}
-              disabled={page === totalPages}
-              aria-label="Página siguiente"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
+          <Paginador pagina={page} totalPaginas={totalPages} onCambiar={setPage} />
         )}
 
         {/* Create / edit */}

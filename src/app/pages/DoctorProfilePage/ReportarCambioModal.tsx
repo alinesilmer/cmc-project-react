@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Modal } from "rsuite";
-import "rsuite/Modal/styles/index.css";
-import { AlertTriangle } from "lucide-react";
+import Dialog from "@mui/material/Dialog";
+import { AlertTriangle, X } from "lucide-react";
 
 import Button from "@/app/components/ui/Button/Button";
 import { useNotify } from "../../hooks/useNotify";
@@ -97,17 +96,19 @@ const ReportarCambioModal: React.FC<Props> = ({ target, onClose, onCreated }) =>
   }
 
   return (
-    <Modal
+    <Dialog
       open={open}
-      onClose={saving ? () => {} : onClose}
-      size="sm"
-      className={styles.modal}
+      onClose={saving ? undefined : onClose}
+      maxWidth={false}
+      slotProps={{ paper: { className: styles.modal, style: { width: 600, maxWidth: "calc(100% - 1.5rem)" } } }}
     >
-      <Modal.Header>
-        <Modal.Title>Reportar un dato incorrecto</Modal.Title>
-      </Modal.Header>
+      <div className={styles.cabeza}>
+        <h2 className={styles.titulo}>Reportar un dato incorrecto</h2>
+        <button type="button" className={styles.cerrar} onClick={onClose} disabled={saving} aria-label="Cerrar">
+          <X size={16} aria-hidden="true" />
+        </button>
+      </div>
 
-      <Modal.Body>
         <div className={styles.form}>
           <p className={styles.note}>
             Esto no modifica tu legajo: envía un pedido al Colegio. Un
@@ -174,8 +175,7 @@ const ReportarCambioModal: React.FC<Props> = ({ target, onClose, onCreated }) =>
             </Button>
           </div>
         </div>
-      </Modal.Body>
-    </Modal>
+    </Dialog>
   );
 };
 

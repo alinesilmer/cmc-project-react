@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { X } from "lucide-react";
-import { listObrasSocialesPublicas, OBRAS_SOCIALES_KEY } from "../../../lib/obrasSociales.client";
-import { coincide } from "../../../lib/texto";
-import styles from "./ObrasSocialesPicker.module.scss";
-import Button from "@/website/components/UI/Button/Button";
+
+import s from "./ObrasSocialesPicker.module.scss";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
+import Fichas from "@/app/components/ui/Fichas/Fichas";
+import SearchField from "@/app/components/ui/SearchField/SearchField";
+import { listObrasSocialesPublicas, OBRAS_SOCIALES_KEY } from "@/website/lib/obrasSociales.client";
+import { coincide } from "@/website/lib/texto";
 
 type Props = {
   /** NRO_OBRASOCIAL ya asociados. */
@@ -28,57 +30,47 @@ export default function ObrasSocialesPicker({ value, onChange }: Props) {
   // Las elegidas siempre visibles arriba; el resto se filtra por el buscador, que hace falta porque el padrón pasa las 300 obras sociales.
   const filtradas = useMemo(
     () => opciones.filter((o) => coincide(busqueda, [o.nombre, String(o.nro)])),
-    [opciones, busqueda]
+    [opciones, busqueda],
   );
   const elegidas = useMemo(() => opciones.filter((o) => seleccionadas.has(o.nro)), [opciones, seleccionadas]);
 
-  const alternar = (nro: number) =>
-    onChange(seleccionadas.has(nro) ? value.filter((n) => n !== nro) : [...value, nro]);
+  const alternar = (nro: number) => onChange(seleccionadas.has(nro) ? value.filter((n) => n !== nro) : [...value, nro]);
 
   return (
-    <div className={styles.osPicker}>
+    <div className={s.selector}>
       {elegidas.length > 0 && (
-        <div className={styles.osChips}>
-          {elegidas.map((o) => (
-            <Button variant="plano"
-              key={o.nro}
-              type="button"
-              className={styles.osChip}
-              onClick={() => alternar(o.nro)}
-              aria-label={`Quitar ${o.nombre}`}
-            >
-              {o.nombre} <X size={12} aria-hidden="true" />
-            </Button>
-          ))}
-        </div>
+        <Fichas
+          items={elegidas.map((o) => ({ clave: String(o.nro), texto: o.nombre }))}
+          onQuitar={(clave) => alternar(Number(clave))}
+          onLimpiar={() => onChange([])}
+        />
       )}
 
-      <input
-        type="search"
-        value={busqueda}
-        onChange={(e) => setBusqueda(e.target.value)}
-        placeholder="Buscar obra social por nombre o número…"
-        aria-label="Buscar obra social"
-      />
+      <SearchField value={busqueda} onChange={(e) => setBusqueda(e.target.value)} onClear={() => setBusqueda("")} placeholder="Nombre o número" ariaLabel="Buscar obra social" />
 
-      {isPending && <p className={styles.osHint}>Cargando obras sociales…</p>}
-      {isError && <p className={styles.osHint}>No se pudieron cargar las obras sociales.</p>}
+      {isPending && (
+        <p className={s.aviso}>
+          <Cargando size={14} /> Cargando obras sociales…
+        </p>
+      )}
+      {isError && <p className={s.aviso} role="alert">No se pudieron cargar las obras sociales.</p>}
 
       {!isPending && !isError && (
-        <div className={styles.osList}>
+        <ul className={s.lista}>
           {filtradas.length === 0 ? (
-            <p className={styles.osHint}>Sin resultados para «{busqueda}».</p>
+            <li className={s.aviso}>{busqueda ? `Sin resultados para «${busqueda}».` : "No hay obras sociales para elegir."}</li>
           ) : (
             filtradas.map((o) => (
-              <label key={o.nro} className={styles.osOption}>
-                <input type="checkbox" checked={seleccionadas.has(o.nro)} onChange={() => alternar(o.nro)} />
-                <span>
-                  {o.nro} · {o.nombre}
-                </span>
-              </label>
+              <li key={o.nro}>
+                <label className={s.opcion}>
+                  <input type="checkbox" checked={seleccionadas.has(o.nro)} onChange={() => alternar(o.nro)} />
+                  <span className={s.nro}>{o.nro}</span>
+                  <span>{o.nombre}</span>
+                </label>
+              </li>
             ))
           )}
-        </div>
+        </ul>
       )}
     </div>
   );

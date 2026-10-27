@@ -1,6 +1,6 @@
 import { motion, useReducedMotion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
-import { EASE } from "../../../lib/motion";
+import { EASE } from "@/website/lib/motion";
 import styles from "./CaminoPasos.module.scss";
 
 type Paso = { icono: LucideIcon; palabra: string };

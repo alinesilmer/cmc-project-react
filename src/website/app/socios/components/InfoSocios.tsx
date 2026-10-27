@@ -1,7 +1,7 @@
 import { Wallet } from "lucide-react";
-import Revelar from "../../../components/UI/Revelar/Revelar";
-import AccionesContacto from "../../../components/Contacto/AccionesContacto/AccionesContacto";
-import { CONTACTO } from "../../../lib/contacto";
+import Revelar from "@/website/components/UI/Revelar/Revelar";
+import AccionesContacto from "@/website/components/Contacto/AccionesContacto/AccionesContacto";
+import { CONTACTO } from "@/website/lib/contacto";
 import { ARANCELES } from "../socios.data";
 import styles from "./InfoSocios.module.scss";
 

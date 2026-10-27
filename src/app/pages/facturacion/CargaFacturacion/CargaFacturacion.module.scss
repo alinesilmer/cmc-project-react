@@ -1,5 +1,6 @@
 @use "@/app/styles/all.scss" as *;
 
+
 // Mismo lenguaje visual que VerPeriodos / FacturaDetalle / CierrePeriodo ("Valores y nomencladores").
 
 .container {
@@ -48,12 +49,6 @@
   margin: 0;
 }
 
-.subtitle {
-  font-size: 0.8rem;
-  color: $tono-azul-400;
-  margin: 2px 0 0;
-}
-
 .headerRight {
   margin-left: auto;
   display: flex;
@@ -80,70 +75,6 @@
   &:hover {
     background: $white;
   }
-}
-
-.infoChip {
-  font-size: 0.75rem;
-  font-weight: 600;
-  border-radius: 20px;
-  padding: 3px 0.75rem;
-  white-space: nowrap;
-}
-
-.chipNeutral {
-  background: $secondary-blue;
-  color: $tono-azul-450;
-}
-.chipWarning {
-  background: $primary-yellow;
-  color: $tono-naranja-550;
-}
-
-// ─── Editor de período (carga normal) ──────────────────────────────────────
-.periodoLinkBtn {
-  background: none;
-  border: none;
-  padding: 0;
-  font-size: 0.76rem;
-  font-weight: 600;
-  color: $tono-azul-450;
-  cursor: pointer;
-  text-decoration: underline;
-
-  &:hover { color: $primary-blue-dark; }
-  &:disabled {
-    color: $tono-azul-400;
-    cursor: not-allowed;
-    text-decoration: none;
-  }
-}
-
-.periodoEditorRow {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.375rem;
-}
-
-.medicoExtra {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 0.375rem;
-  margin-top: 0.5rem;
-}
-
-.especialidadChip {
-  display: inline-block;
-  font-size: 0.72rem;
-  font-weight: 600;
-  border-radius: 20px;
-  padding: 2px 0.625rem;
-  background: $white;
-  border: 1px solid $gray-200;
-  color: $gray-600;
-  white-space: nowrap;
 }
 
 // ─── Aviso de complementaria ────────────────────────────────────────────────
@@ -206,128 +137,6 @@
   }
 }
 
-// ─── Secciones del formulario ───────────────────────────────────────────────
-// El contenido de cada sección queda centrado dentro de la card (el card en sí no se achica).
-.section {
-  padding: 1.125rem 1.25rem;
-  border-bottom: 1px solid $gray-200;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  width: 100%;
-  max-width: 40rem;
-  margin: 0 auto;
-
-  &:last-child {
-    border-bottom: none;
-  }
-
-  @media (max-width: 560px) {
-    padding: 1rem 0.875rem;
-  }
-}
-
-.sectionTitle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: $tono-azul-450;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  text-align: center;
-}
-
-.sectionHint {
-  font-size: 0.7rem;
-  font-weight: 400;
-  color: $tono-azul-400;
-  letter-spacing: normal;
-  text-transform: none;
-}
-
-.fieldsRow {
-  display: flex;
-  flex-direction: column;
-  gap: 0.875rem;
-  width: 100%;
-}
-
-.filterField {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3125rem;
-  width: 100%;
-
-  // Sin esto el chip se estira a todo el ancho del campo y deja de leerse como píldora.
-  .infoChip {
-    align-self: center;
-  }
-}
-
-.filterFieldWide {
-  width: 100%;
-}
-
-.filterLabel {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: $gray-600;
-  text-align: center;
-
-  .req {
-    color: $tono-rojo-400;
-  }
-}
-
-// ─── Inputs / selects (incl. los que renderizan los subcomponentes) ────────
-.input,
-.select {
-  width: 100%;
-  height: 2.25rem;
-  border: 1px solid $gray-200;
-  border-radius: 0.375rem;
-  font-size: 0.84rem;
-  color: $carpeta-noche;
-  background: $white;
-  outline: none;
-  box-sizing: border-box;
-  text-align: center;
-  transition:
-    border-color 0.15s,
-    box-shadow 0.15s;
-
-  &:focus {
-    border-color: $tono-azul-450;
-    box-shadow: 0 0 0 3px rgba($tono-azul-450, 0.12);
-  }
-
-  &::placeholder {
-    color: $tono-azul-400;
-  }
-
-  &:disabled {
-    background: $gray-100;
-    cursor: not-allowed;
-  }
-}
-
-.input {
-  padding: 0 0.75rem;
-}
-
-.select {
-  padding: 0 1.75rem 0 0.75rem;
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.625rem center;
-}
-
 // Cascada a los <input>/<select> nativos que renderizan MedicoSection, PacienteSection, PrestacionSection, AyudanteSection, etc. (todas privadas a esta pantalla).
 .layout {
   input[type="text"]:not([class*="Mui"]),
@@ -376,74 +185,6 @@
   }
 }
 
-.readonlyField {
-  height: 2.25rem;
-  padding: 0 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid $gray-200;
-  border-radius: 0.375rem;
-  font-size: 0.84rem;
-  color: $gray-600;
-  background: $gray-100;
-}
-
-.radioRow {
-  display: flex;
-  justify-content: center;
-  gap: 1.25rem;
-}
-
-.radioColumn {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.5rem;
-}
-
-.radioLabel {
-  display: flex;
-  align-items: center;
-  gap: 0.3125rem;
-  font-size: 0.84rem;
-  color: $gray-600;
-  cursor: pointer;
-}
-
-// ─── Estados / avisos ───────────────────────────────────────────────────────
-.errorText {
-  font-size: 0.76rem;
-  color: $tono-rojo-400;
-  text-align: center;
-}
-
-.mutedText {
-  font-size: 0.78rem;
-  color: $tono-azul-400;
-  text-align: center;
-}
-
-.errorBox {
-  background: $gray-100;
-  border: 1px solid $tono-rojo-200;
-  border-radius: 0.375rem;
-  padding: 0.625rem 0.875rem;
-  font-size: 0.8rem;
-  color: $danger-red;
-  text-align: center;
-}
-
-.warningBox {
-  background: $cuaderno-papel;
-  border: 1px solid $tono-amarillo-100;
-  border-radius: 0.375rem;
-  padding: 0.625rem 0.875rem;
-  font-size: 0.78rem;
-  color: $tono-naranja-550;
-  text-align: center;
-}
-
 // Autorización: el campo ocupa el ancho de la sección, igual que los demás, y el aviso de "ya cargada" va debajo con el mismo ancho.
 .autorizacionFila {
   display: flex;
@@ -461,23 +202,6 @@
   padding: 0.375rem 0.625rem;
   font-size: 0.78rem;
   color: $tono-naranja-550;
-}
-
-.totalRow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.625rem;
-  padding: 0.5rem 0.75rem;
-  background: $secondary-blue;
-  border-radius: 0.375rem;
-  font-size: 0.84rem;
-  color: $gray-600;
-
-  strong {
-    font-size: 0.95rem;
-    color: $tono-azul-450;
-  }
 }
 
 // Encima del total: mismo formato, sin fondo, para que el total siga siendo lo que resalta.
@@ -507,89 +231,6 @@
   border-top: 1px solid $gray-200;
 }
 
-.btnGhost {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  height: 2.25rem;
-  padding: 0 1rem;
-  background: none;
-  color: $gray-600;
-  border: 1px solid $gray-200;
-  border-radius: 0.375rem;
-  font-size: 0.84rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.15s;
-
-  &:hover:not(:disabled) {
-    background: $gray-100;
-  }
-  &:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-  }
-}
-
-// Botón cuadrado de solo icono al lado de un campo: editar lo seleccionado (afiliado, clínica).
-.btnIcon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: 2.25rem;
-  height: 2.25rem;
-  padding: 0;
-  background: none;
-  color: $gray-600;
-  border: 1px solid $gray-200;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  transition:
-    background 0.15s,
-    border-color 0.15s,
-    color 0.15s;
-
-  &:hover:not(:disabled) {
-    background: $secondary-blue;
-    border-color: $tono-azul-450;
-    color: $tono-azul-450;
-  }
-  &:disabled {
-    color: $tono-azul-400;
-    opacity: 0.55;
-    cursor: not-allowed;
-  }
-}
-
-.btnIconDanger {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: 2.25rem;
-  height: 2.25rem;
-  padding: 0;
-  background: none;
-  color: $tono-rojo-400;
-  border: 1px solid $gray-200;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  transition:
-    background 0.15s,
-    border-color 0.15s;
-
-  &:hover:not(:disabled) {
-    background: $tono-rojo-50;
-    border-color: $tono-rojo-400;
-  }
-  &:disabled {
-    color: $tono-azul-400;
-    opacity: 0.55;
-    cursor: not-allowed;
-  }
-}
-
 .btnPrimary {
   display: inline-flex;
   align-items: center;
@@ -612,79 +253,6 @@
     opacity: 0.55;
     cursor: not-allowed;
   }
-}
-
-// ─── Ayudante quirúrgico (dentro de PrestacionSection/AyudanteSection) ─────
-.addAyudanteBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.625rem 1rem;
-  background: none;
-  border: 1px dashed $gray-200;
-  border-radius: 0.375rem;
-  color: $tono-azul-450;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  text-align: center;
-  transition:
-    background 0.15s,
-    border-color 0.15s;
-
-  &:hover:not(:disabled) {
-    background: $secondary-blue;
-    border-color: $tono-azul-450;
-  }
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-}
-
-.ayudanteBox {
-  border: 1px solid $secondary-blue;
-  border-radius: 0.625rem;
-  padding: 1rem;
-  background: $gray-50;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.ayudanteHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.removeBtn {
-  font-size: 0.76rem;
-  color: $tono-rojo-400;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 2px 0.375rem;
-
-  &:hover {
-    text-decoration: underline;
-  }
-}
-
-// ─── Pediatra (equipo de parto/cesárea) ─────────────────────────────────────
-// Acento teal — no colisiona con el azul del cirujano ni el violeta del badge de ayudante (ver MedicoPrestacionesTable.module.scss).
-
-.pediatraSection {
-  .sectionTitle {
-    color: $tono-turquesa-500;
-  }
-}
-
-.pediatraBox {
-  border-color: $tono-turquesa-100;
-  background: $gray-100;
 }
 
 .addPediatraBtn {

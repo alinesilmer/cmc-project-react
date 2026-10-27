@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getJSON, postJSON } from "@/app/shared/lib/http";
-import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
+import { crearRefacturacion, listarObrasSociales, listarPeriodosDisponibles, listarRefacturaciones, lotesPorOsPeriodo } from "@/app/pages/Pagos/pagos.api";
+import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import Button from "@/app/components/ui/Button/Button";
 import Franja from "@/app/components/layout/Franja/Franja";
 import Caja from "@/app/components/ui/Caja/Caja";
@@ -15,40 +15,17 @@ import lq from "../Liquidacion.module.scss";
 import {
   type ObraSocial,
   type PeriodoDisp,
-  type LoteAjuste,
   mesLabel,
   MESES,
   fmt,
+  type RefacturacionListItem,
 } from "../types";
 import AppSearchSelect from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
 import { Plus, RotateCcw, Search } from "lucide-react";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
 import { ESTADO_URL } from "@/app/pages/Pagos/utiles";
 import { DELETE_LOTE_URL } from "@/app/pages/Pagos/utiles";
-import { PERIODOS_DISP_URL } from "@/app/pages/Pagos/utiles";
-
-const LISTA_URL = (params: Record<string, string>) => {
-  const p = new URLSearchParams({ tipo: "refacturacion", ...params });
-  return `/api/lotes/snaps/lista?${p}`;
-};
-const POR_OS_PERIODO_URL = (osId: number, mes: number, anio: number) =>
-  `/api/lotes/snaps/por_os_periodo?obra_social_id=${osId}&mes_periodo=${mes}&anio_periodo=${anio}`;
-const OBRAS_SOCIALES_URL = "/api/obras_social/";
-const CREAR_REFAC_URL = "/api/lotes/snaps/crear_refacturacion";
-type LoteListItem = {
-  id: number;
-  tipo: "normal" | "refacturacion";
-  estado: "A" | "C" | "L";
-  mes_periodo: number;
-  anio_periodo: number;
-  pago_id: number | null;
-  obra_social_id: number;
-  obra_social_nombre: string;
-  nro_factura: string | null;
-  snap_origen_id: number | null;
-  total_debitos: string;
-  total_creditos: string;
-};
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 
 const estadoLabel = (e: string) =>
   ({ A: "Abierto", C: "Cerrado", L: "En Liquidaciones" })[e] ?? e;
@@ -69,7 +46,7 @@ const RefacturacionesList: React.FC = () => {
   const [filterEstado, setFilterEstado] = useState("A");
 
   // List
-  const [lotes, setLotes] = useState<LoteListItem[]>([]);
+  const [lotes, setLotes] = useState<RefacturacionListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -97,10 +74,11 @@ const RefacturacionesList: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await getJSON<LoteListItem[]>(LISTA_URL(buildParams()));
+      const data = await listarRefacturaciones(buildParams());
       setLotes(data ?? []);
-    } catch (e: any) {
-      setError(e?.message || "No se pudieron cargar las refacturaciones.");
+    } catch (e) {
+      const err = comoErrorApi(e);
+      setError(err?.message || "No se pudieron cargar las refacturaciones.");
     } finally {
       setLoading(false);
     }
@@ -115,7 +93,7 @@ const RefacturacionesList: React.FC = () => {
     (async () => {
       setObrasLoading(true);
       try {
-        const data = await getJSON<ObraSocial[]>(OBRAS_SOCIALES_URL);
+        const data = await listarObrasSociales();
         setObras(data ?? []);
       } finally {
         setObrasLoading(false);
@@ -139,7 +117,7 @@ const RefacturacionesList: React.FC = () => {
     if (!val) return;
     setPeriodosLoading(true);
     try {
-      const data = await getJSON<PeriodoDisp[]>(PERIODOS_DISP_URL(Number(val)));
+      const data = await listarPeriodosDisponibles(Number(val));
       setPeriodos(data ?? []);
     } catch {
       setPeriodos([]);
@@ -167,12 +145,10 @@ const RefacturacionesList: React.FC = () => {
       // Resolve snap_origen_id: latest refac or normal lote for this OS+period
       let snapOrigenId: number | null = null;
       try {
-        const existing = await getJSON<LoteAjuste[]>(
-          POR_OS_PERIODO_URL(
-            Number(addOs),
-            Number(periodosMes),
-            Number(periodosAnio),
-          ),
+        const existing = await lotesPorOsPeriodo(
+          Number(addOs),
+          Number(periodosMes),
+          Number(periodosAnio),
         );
         const refacs = (existing ?? []).filter(
           (l) => l.tipo === "refacturacion",
@@ -186,19 +162,20 @@ const RefacturacionesList: React.FC = () => {
         /* proceed without snap */
       }
 
-      const lote = await postJSON<LoteAjuste>(CREAR_REFAC_URL, {
+      const lote = await crearRefacturacion({
         obra_social_id: Number(addOs),
         mes_periodo: Number(periodosMes),
         anio_periodo: Number(periodosAnio),
         snap_origen_id: snapOrigenId,
       });
       navigate(`/panel/refacturaciones/${lote.id}`);
-    } catch (e: any) {
-      const detail = e?.response?.data?.detail;
+    } catch (e) {
+      const err = comoErrorApi(e);
+      const detail = err?.response?.data?.detail;
       notify(
         typeof detail === "string"
           ? detail
-          : (e?.message ?? "Error al crear refacturación."),
+          : (err?.message ?? "Error al crear refacturación."),
         "error",
       );
     } finally {
@@ -206,7 +183,7 @@ const RefacturacionesList: React.FC = () => {
     }
   };
 
-  const columns: ColumnDef<LoteListItem>[] = [
+  const columns: ColumnDef<RefacturacionListItem>[] = [
     {
       key: "obra_social_nombre",
       header: "Obra social",
@@ -287,7 +264,7 @@ const RefacturacionesList: React.FC = () => {
     },
   ];
 
-  const bulkActions: ActionDef<LoteListItem>[] = [
+  const bulkActions: ActionDef<RefacturacionListItem>[] = [
     {
       label: "Pasar al pago",
       method: "PATCH",

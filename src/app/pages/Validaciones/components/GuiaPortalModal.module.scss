@@ -1,19 +1,4 @@
 @use "@/app/styles/all.scss" as *;
-
-// Guía de un portal externo, con el mismo lenguaje que la franja de Validaciones: cabecera azul con la trama de cruces.
-
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1200;
-  display: grid;
-  place-items: center;
-  padding: $spacing-4;
-  background: rgba($franja-noche, 0.62);
-  backdrop-filter: blur(3px);
-  animation: guia-fondo 0.18s ease-out;
-}
-
 .card {
   display: flex;
   flex-direction: column;
@@ -174,10 +159,6 @@
   gap: $spacing-2;
   font-weight: $font-weight-semibold;
   color: $gray-700;
-}
-
-.credGirando {
-  animation: guia-gira 0.9s linear infinite;
 }
 
 // ─── Texto y pasos ────────────────────────────────────────────────────────────

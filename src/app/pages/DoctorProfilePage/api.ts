@@ -78,6 +78,10 @@ export type DoctorProfile = {
   vencimiento_cobertura?: string | null;
   cbu?: string | null;
   observacion?: string | null;
+
+  // del legajo, usados para decidir qué mostrar
+  ingresar?: string | null;
+  especialidades?: { especialidad_nombre?: string | null }[];
 };
 
 export type Especialidad = {
@@ -167,7 +171,7 @@ export const UPDATE_WHITELIST = [
 
 export const updateMedico = (
   id: string | number,
-  payload: Record<string, any>
+  payload: Record<string, unknown>
 ) => putJSON(`/api/medicos/${id}`, payload);
 
 export async function getMedicoDocumentos(id: number | string) {
@@ -188,15 +192,7 @@ export const addMedicoEspecialidad = (
   }
 ) => postJSON(`/api/medicos/${medicoId}/especialidades`, payload); // -> 204 sin body
 
-export const editMedicoEspecialidad = (
-  medicoId: string | number,
-  idColegio: string | number,
-  payload: {
-    n_resolucion?: string | null;
-    fecha_resolucion?: string | null; // "YYYY-MM-DD"
-    adjunto_id?: number | null;
-  }
-) => patchJSON(`/api/medicos/${medicoId}/especialidades/${idColegio}`, payload); // -> 204 sin bod
+ // -> 204 sin bod
 
 export const removeMedicoEspecialidad = (
   medicoId: string | number,
@@ -387,8 +383,27 @@ export const patchSocioDescuento = (
 export const deleteSocioDescuento = (id: number) =>
   delJSON<void>(`/api/deducciones/socios/${id}`);
 
+// Las filas llegan con nombres de columna distintos según el origen: se leen todos.
+type ConceptoCrudo = {
+  id?: number | string;
+  desc_id?: number | string;
+  nombre?: string;
+  concepto?: string;
+  name?: string;
+  nro_colegio?: number | string | null;
+};
+
+type MedicoCrudo = {
+  id?: number | string;
+  ID?: number | string;
+  nro_socio?: number | string | null;
+  NRO_SOCIO?: number | string | null;
+  nombre?: string;
+  NOMBRE?: string;
+};
+
 export const fetchDescuentosConceptos = async (): Promise<DescuentoConcept[]> => {
-  const raw = await getJSON<any[]>("/api/conceptos");
+  const raw = await getJSON<ConceptoCrudo[]>("/api/conceptos");
   return (raw ?? [])
     .map((d) => ({
       id: Number(d?.id ?? d?.desc_id ?? 0),
@@ -403,7 +418,7 @@ export const searchMedicosForPagador = async (query: string): Promise<MedicoSear
   const params: Record<string, unknown> = { limit: 50, skip: 0 };
   const q = query.trim();
   if (q.length >= 2) params.q = q;
-  const raw = await getJSON<any[]>("/api/medicos/all", params);
+  const raw = await getJSON<MedicoCrudo[]>("/api/medicos/all", params);
   return (raw ?? [])
     .map((m) => ({
       id: Number(m?.id ?? m?.ID ?? 0),

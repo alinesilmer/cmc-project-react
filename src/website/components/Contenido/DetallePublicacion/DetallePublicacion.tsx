@@ -6,12 +6,12 @@ import Button from "../../UI/Button/Button";
 import Revelar from "../../UI/Revelar/Revelar";
 import ContenidoMarkdown from "../ContenidoMarkdown/ContenidoMarkdown";
 import DocumentosPublicacion from "./DocumentosPublicacion";
-import { getNewsPublica } from "../../../lib/news.client";
-import { formatearFecha } from "../../../lib/fechas";
-import { minutosDeLectura, normalizar } from "../../../lib/texto";
-import { useTituloPagina } from "../../../hooks/useTituloPagina";
+import { getNewsPublica } from "@/website/lib/news.client";
+import { formatearFecha } from "@/website/lib/fechas";
+import { minutosDeLectura, normalizar } from "@/website/lib/texto";
+import { useTituloPagina } from "@/website/hooks/useTituloPagina";
 import { AUTOR_POR_DEFECTO, PUBLICACIONES, publicacionKey } from "../publicaciones";
-import type { TipoPublicacion } from "../../../types";
+import type { TipoPublicacion } from "@/website/types";
 import styles from "./DetallePublicacion.module.scss";
 
 /** /noticias/:id y /cursos/:id. */

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { Pencil, UserPlus, X } from "lucide-react";
 import { actualizarAfiliado, crearAfiliado } from "../api";
 import type { AfiliadoRead } from "../types";
 import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 import styles from "./AltaAfiliadoModal.module.scss";
+import MarcoModal from "@/app/components/ui/MarcoModal/MarcoModal";
 
 interface Props {
   isOpen: boolean;
@@ -65,27 +65,16 @@ const AltaAfiliadoModal: React.FC<Props> = ({ isOpen, dni, afiliado, onClose, on
   };
 
   return (
-    <AnimatePresence>
+    <>
       {isOpen && (
-        <motion.div
-          className={styles.overlay}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onMouseDown={onClose}
+        <MarcoModal
+          onClose={onClose}
+          className={styles.modal}
           // El modal se monta dentro del formulario de carga: que el foco y las teclas no
           // le lleguen (centra el campo enfocado scrolleando la página y usa Enter para avanzar).
           onFocus={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
         >
-          <motion.div
-            className={styles.modal}
-            initial={{ opacity: 0, scale: 0.94, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.94, y: 10 }}
-            transition={{ duration: 0.16 }}
-            onMouseDown={(e) => e.stopPropagation()}
-          >
             <div className={styles.header}>
               <span className={styles.headerIcon}>{editando ? <Pencil size={18} /> : <UserPlus size={18} />}</span>
               <div>
@@ -142,10 +131,9 @@ const AltaAfiliadoModal: React.FC<Props> = ({ isOpen, dni, afiliado, onClose, on
                 {loading ? "Guardando…" : editando ? "Guardar" : "Dar de alta"}
               </button>
             </div>
-          </motion.div>
-        </motion.div>
+          </MarcoModal>
       )}
-    </AnimatePresence>
+    </>
   );
 };
 

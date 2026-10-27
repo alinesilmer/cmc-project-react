@@ -1,12 +1,14 @@
-import Button from "../../../components/UI/Button/Button";
-import SelectorArchivo from "../../../components/UI/SelectorArchivo/SelectorArchivo";
-import IconoArchivo from "../../../components/UI/IconoArchivo/IconoArchivo";
-import { useVistaPrevia } from "../../../hooks/useVistaPrevia";
-import { DOCUMENTOS, IMAGENES } from "../../../lib/subidas";
-import { nombreVisible, tipoDeArchivo } from "../../../lib/documentos";
-import type { DocumentoNoticia } from "../../../types";
-import estilosForm from "./formPublicacion.module.scss";
-import styles from "./ArchivosPublicacion.module.scss";
+import { X } from "lucide-react";
+
+import s from "./ArchivosPublicacion.module.scss";
+import Button from "@/app/components/ui/Button/Button";
+import c from "@/app/components/ui/Paso/Campos.module.scss";
+import SelectorArchivo from "@/website/components/UI/SelectorArchivo/SelectorArchivo";
+import IconoArchivo from "@/website/components/UI/IconoArchivo/IconoArchivo";
+import { useVistaPrevia } from "@/website/hooks/useVistaPrevia";
+import { DOCUMENTOS, IMAGENES } from "@/website/lib/subidas";
+import { nombreVisible, tipoDeArchivo } from "@/website/lib/documentos";
+import type { DocumentoNoticia } from "@/website/types";
 
 type Props = {
   portada: File | null;
@@ -28,41 +30,41 @@ export default function ArchivosPublicacion(p: Props) {
 
   return (
     <>
-      <div className={estilosForm.inputGroup}>
-        <span className={estilosForm.etiqueta}>Portada (opcional)</span>
-        <div className={styles.imageRow}>
-          <SelectorArchivo extensiones={IMAGENES} onElegir={([f]) => p.onElegirPortada(f)} onError={p.onError}>
+      <div className={`${c.campo} ${c.campoAncho}`}>
+        <span className={c.rotulo}>Portada (opcional)</span>
+        <div className={s.fila}>
+          <SelectorArchivo extensiones={IMAGENES} variant="outline" onElegir={([f]) => p.onElegirPortada(f)} onError={p.onError}>
             {p.portada ? "Cambiar portada" : vistaPortada ? "Reemplazar portada" : "Subir portada"}
           </SelectorArchivo>
           {vistaPortada && (
-            <Button variant="outline" size="medium" onClick={p.onQuitarPortada}>
+            <Button variant="ghost" onClick={p.onQuitarPortada}>
               Quitar portada
             </Button>
           )}
         </div>
         {vistaPortada && (
-          <div className={styles.previewMedia}>
+          <div className={s.portada}>
             <img src={vistaPortada} alt="Vista previa de portada" />
           </div>
         )}
       </div>
 
-      <div className={estilosForm.inputGroup}>
-        <span className={estilosForm.etiqueta}>Adjuntos (imágenes o PDFs)</span>
-        <div className={styles.imageRow}>
-          <SelectorArchivo extensiones={DOCUMENTOS} multiple onElegir={p.onAgregarAdjuntos} onError={p.onError}>
+      <div className={`${c.campo} ${c.campoAncho}`}>
+        <span className={c.rotulo}>Adjuntos (imágenes o PDFs)</span>
+        <div className={s.fila}>
+          <SelectorArchivo extensiones={DOCUMENTOS} variant="outline" multiple onElegir={p.onAgregarAdjuntos} onError={p.onError}>
             Agregar adjuntos
           </SelectorArchivo>
         </div>
         {p.adjuntosNuevos.length > 0 && (
-          <ul className={styles.attachList}>
+          <ul className={s.lista}>
             {p.adjuntosNuevos.map((f, i) => (
-              <li key={`${f.name}-${i}`} className={styles.attachItem}>
-                <span className={styles.attachInfo}>
+              <li key={`${f.name}-${i}`} className={s.item}>
+                <span className={s.nombre}>
                   <IconoArchivo tipo={tipoDeArchivo(f.type, f.name)} />
                   {f.name}
                 </span>
-                <Button variant="plano" type="button" className={styles.removeBtn} onClick={() => p.onQuitarAdjunto(i)}>
+                <Button variant="ghost" size="sm" leftIcon={<X size={14} aria-hidden="true" />} onClick={() => p.onQuitarAdjunto(i)}>
                   Quitar
                 </Button>
               </li>
@@ -72,18 +74,18 @@ export default function ArchivosPublicacion(p: Props) {
       </div>
 
       {p.documentos.length > 0 && (
-        <div className={estilosForm.inputGroup}>
-          <span className={estilosForm.etiqueta}>Documentos existentes</span>
-          <ul className={styles.attachList}>
+        <div className={`${c.campo} ${c.campoAncho}`}>
+          <span className={c.rotulo}>Documentos existentes</span>
+          <ul className={s.lista}>
             {p.documentos.map((d) => (
-              <li key={d.id} className={styles.attachItem}>
-                <span className={styles.attachInfo}>
+              <li key={d.id} className={s.item}>
+                <span className={s.nombre}>
                   <IconoArchivo tipo={tipoDeArchivo(d.content_type, d.path)} />
                   <a href={d.path} target="_blank" rel="noopener noreferrer" title={nombreVisible(d)}>
                     {nombreVisible(d)}
                   </a>
                 </span>
-                <Button variant="plano" type="button" className={styles.removeBtn} onClick={() => p.onBorrarDocumento(d.id)}>
+                <Button variant="ghost" size="sm" leftIcon={<X size={14} aria-hidden="true" />} onClick={() => p.onBorrarDocumento(d.id)}>
                   Quitar
                 </Button>
               </li>

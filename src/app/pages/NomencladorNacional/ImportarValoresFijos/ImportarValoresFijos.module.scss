@@ -339,16 +339,6 @@ $bad-fondo: #fbe9e7;
   color: $gray-600;
 }
 .replicaNo { color: $warn; }
-
-.paginacion {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: $spacing-3;
-  padding: $spacing-3;
-  border-top: 1px solid $gray-100;
-}
-
 // ── Pie fijo ────────────────────────────────────────────────────────────────
 .pie {
   position: sticky;
@@ -402,8 +392,3 @@ $bad-fondo: #fbe9e7;
   flex-wrap: wrap;
 }
 
-.spin {
-  animation: ivf-spin 0.8s linear infinite;
-  @media (prefers-reduced-motion: reduce) { animation: none; }
-}
-@keyframes ivf-spin { to { transform: rotate(360deg); } }

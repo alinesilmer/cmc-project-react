@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  ChevronLeft,
-  ChevronRight,
   ClipboardPlus,
   Pencil,
   Plus,
@@ -34,6 +32,8 @@ import Button from "@/app/components/ui/Button/Button";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import SearchField from "@/app/components/ui/SearchField/SearchField";
 import FieldError from "@/app/components/ui/FieldError/FieldError";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
+import Paginador from "@/app/components/ui/Paginador/Paginador";
 
 // ─── Field error helper ───────────────────────────────────────────────────────
 
@@ -143,11 +143,9 @@ export default function EspecialidadesPage() {
       // La caché se corrige al instante y además se vuelve a pedir: si el listado no había llegado a cargar.
       void queryClient.invalidateQueries({ queryKey: ESPECIALIDADES_KEY });
       // On success ActionModal closes automatically
-    } catch (err: any) {
+    } catch (err) {
       setSaveError(
-        err?.response?.data?.detail ??
-          err?.message ??
-          "Error al guardar. Intentá nuevamente.",
+        detalleDeError(err, "Error al guardar. Intentá nuevamente."),
       );
       throw err; // re-throw → ActionModal stays open
     }
@@ -183,7 +181,7 @@ export default function EspecialidadesPage() {
       <div className={s.tableWrapper}>
         {loading ? (
           <div className={s.loadingState}>
-            <span className={s.spinner} aria-hidden="true" />
+            <Cargando size={32} tono="marca" aria-hidden="true" />
             <p>Cargando especialidades…</p>
           </div>
         ) : filtered.length === 0 ? (
@@ -235,27 +233,7 @@ export default function EspecialidadesPage() {
 
       {/* Pagination */}
       {!loading && totalPages > 1 && (
-        <div className={s.pagination} role="navigation" aria-label="Paginación">
-          <button
-            className={s.pageBtn}
-            onClick={() => setPage((p) => p - 1)}
-            disabled={page === 1}
-            aria-label="Página anterior"
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <span className={s.pageInfo}>
-            Página {page} de {totalPages}
-          </span>
-          <button
-            className={s.pageBtn}
-            onClick={() => setPage((p) => p + 1)}
-            disabled={page === totalPages}
-            aria-label="Página siguiente"
-          >
-            <ChevronRight size={16} />
-          </button>
-        </div>
+        <Paginador pagina={page} totalPaginas={totalPages} onCambiar={setPage} />
       )}
 
       {/* Create / Edit modal */}

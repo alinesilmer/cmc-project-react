@@ -1,8 +1,8 @@
 import React from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import styles from "./ConfirmActionModal.module.scss";
+import MarcoModal from "@/app/components/ui/MarcoModal/MarcoModal";
 
 interface Props {
   isOpen: boolean;
@@ -20,23 +20,9 @@ interface Props {
 const ConfirmActionModal: React.FC<Props> = ({
   isOpen, icon: Icon, variant = "primary", title, message, warning, confirmLabel, onClose, onConfirm, loading,
 }) => (
-  <AnimatePresence>
+  <>
     {isOpen && (
-      <motion.div
-        className={styles.overlay}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onMouseDown={onClose}
-      >
-        <motion.div
-          className={styles.modal}
-          initial={{ opacity: 0, scale: 0.94, y: 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.94, y: 10 }}
-          transition={{ duration: 0.16 }}
-          onMouseDown={(e) => e.stopPropagation()}
-        >
+      <MarcoModal onClose={onClose} className={styles.modal}>
           <div className={styles.header}>
             <span className={`${styles.headerIcon} ${variant === "danger" ? styles.headerIconDanger : ""}`}>
               <Icon size={18} />
@@ -65,10 +51,9 @@ const ConfirmActionModal: React.FC<Props> = ({
               {loading ? "Procesando…" : confirmLabel}
             </button>
           </div>
-        </motion.div>
-      </motion.div>
+        </MarcoModal>
     )}
-  </AnimatePresence>
+  </>
 );
 
 export default ConfirmActionModal;

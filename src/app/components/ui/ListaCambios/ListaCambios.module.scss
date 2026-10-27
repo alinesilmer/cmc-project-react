@@ -1,0 +1,63 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver ListaCambios.tsx.
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: $spacing-1 $spacing-3;
+  padding: $spacing-3 $spacing-4;
+  font-size: $font-size-sm;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-left-width: 4px;
+  border-radius: $radio-md;
+
+  svg {
+    flex-shrink: 0;
+    align-self: center;
+  }
+}
+
+.nuevo {
+  border-left-color: $ok;
+
+  svg {
+    color: $ok;
+  }
+}
+
+.igual {
+  border-left-color: $gray-300;
+
+  svg {
+    color: $gray-400;
+  }
+}
+
+.error {
+  border-left-color: $peligro;
+
+  svg {
+    color: $peligro;
+  }
+}
+
+.titulo {
+  color: $gray-800;
+}
+
+.detalle {
+  flex: 1 1 14rem;
+  color: $gray-500;
+}

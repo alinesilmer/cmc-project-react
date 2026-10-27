@@ -1,13 +1,11 @@
 import { KeyRound } from "lucide-react";
 
-import { useAuth } from "../../../auth/AuthProvider";
-import { isMedico } from "../../../auth/roles";
+import { useAuth } from "@/app/auth/useAuth";
+import { isMedico } from "@/app/auth/roles";
 import { destinoObraSocial } from "../validaciones.config";
 import type { ObraSocialConfig } from "../validaciones.types";
 import Carpeta from "./Carpeta";
 import s from "./ObraSocialCard.module.scss";
-
-export { s as obraSocialCardStyles };
 
 interface Props {
   os: ObraSocialConfig;

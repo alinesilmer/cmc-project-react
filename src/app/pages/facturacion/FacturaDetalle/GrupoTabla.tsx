@@ -7,7 +7,8 @@ import { RESUMEN_TIPO_LABEL, sumaEquipo, sumarTotales, sumarUnidades, totalesPor
 import { clavePaciente } from "./equipo";
 import FilaPrestacion from "./FilaPrestacion";
 import type { FilaAcciones, PrestacionConSocio } from "./FilaPrestacion";
-import styles from "./FacturaDetalle.module.scss";
+import comun from "./Comun.module.scss";
+import styles from "./GrupoTabla.module.scss";;
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 
 export interface VistaGrupo {
@@ -289,7 +290,7 @@ function GrupoTabla({
   for (let i = 0; i < filas.length; i += FILAS_POR_BLOQUE) {
     bloques.push(
       <div key={i} className={styles.bloqueFilas}>
-        <Tabla className={styles.table}>
+        <Tabla className={comun.table}>
           {colgroup}
           <tbody>{filas.slice(i, i + FILAS_POR_BLOQUE)}</tbody>
         </Tabla>

@@ -3,9 +3,11 @@ import MedicoAutocomplete from "../../components/MedicoAutocomplete";
 import NomencladorAutocomplete from "../../components/NomencladorAutocomplete";
 import NumericInput from "../../components/NumericInput";
 import type { MedicoOption, NomencladorOption, PrecioResponse, TipoCalculo } from "../../types";
-import { formatMoney, parseMoney } from "../../money";
-import styles from "../CargaFacturacion.module.scss";
+import { formatMoney } from "../../money";
+import comun from "../Comun.module.scss";
+import styles from "./PediatraSection.module.scss";;
 import { X } from "lucide-react";
+import { montoPediatra } from "./pediatra.helpers";
 
 // Máximo 1 pediatra por prestación (decisión usuario 2026-09-17) — a diferencia de AyudanteLinea[] esto es una única línea, nunca un arreglo.
 export interface PediatraLinea {
@@ -24,30 +26,6 @@ export interface PediatraLinea {
   /** Nº de autorización propio — mismo criterio que en AyudanteLinea: sólo se usa con "autorización por integrante" activo. */
   autorizacion: string;
 }
-
-const nuevoId = () =>
-  typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `pe-${Date.now()}-${Math.random()}`;
-
-export const crearPediatraLinea = (autorizacion = ""): PediatraLinea => ({
-  id: nuevoId(),
-  prestacionId: null,
-  codMedico: null,
-  medico: null,
-  codNomenclador: null,
-  codigoPreset: null,
-  porcentaje: "100",
-  tipoCalculo: "A",
-  precioManual: "0",
-  autorizacion,
-});
-
-// El pediatra cobra en HONORARIOS (de su propio código) — a diferencia de totalAyudantes, que lee `precio.ayudante` del código PRINCIPAL.
-export const montoPediatra = (linea: PediatraLinea, precioPediatra: PrecioResponse | null): number => {
-  if (!precioPediatra) return 0;
-  const base = linea.tipoCalculo === "A" ? parseMoney(precioPediatra.honorarios) : parseMoney(linea.precioManual);
-  const porc = parseInt(linea.porcentaje, 10);
-  return base * ((Number.isNaN(porc) ? 100 : porc) / 100);
-};
 
 interface Props {
   linea: PediatraLinea;
@@ -75,26 +53,26 @@ const PediatraSection: React.FC<Props> = ({
   const monto = montoPediatra(linea, precioPediatra);
 
   return (
-    <div className={`${styles.section} ${styles.pediatraSection}`}>
-      <span className={styles.sectionTitle}>
+    <div className={`${comun.section} ${comun.pediatraSection}`}>
+      <span className={comun.sectionTitle}>
         Pediatra
-        <span className={styles.sectionHint}>recepción del recién nacido</span>
+        <span className={comun.sectionHint}>recepción del recién nacido</span>
       </span>
 
-      <div className={`${styles.ayudanteBox} ${styles.pediatraBox}`}>
-        <div className={styles.ayudanteHeader}>
-          <span className={styles.sectionTitle} style={{ textTransform: "none", fontSize: "0.86rem" }}>
+      <div className={`${comun.ayudanteBox} ${styles.pediatraBox}`}>
+        <div className={comun.ayudanteHeader}>
+          <span className={comun.sectionTitle} style={{ textTransform: "none", fontSize: "0.86rem" }}>
             Pediatra
           </span>
-          <button type="button" className={styles.removeBtn} onClick={onQuitar} disabled={disabled}>
+          <button type="button" className={comun.removeBtn} onClick={onQuitar} disabled={disabled}>
             <X size={16} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> Quitar
           </button>
         </div>
 
-        <div className={styles.fieldsRow}>
-          <div className={`${styles.filterField} ${styles.filterFieldWide}`}>
-            <label className={styles.filterLabel}>
-              Médico pediatra <span className={styles.errorText}>*</span>
+        <div className={comun.fieldsRow}>
+          <div className={`${comun.filterField} ${comun.filterFieldWide}`}>
+            <label className={comun.filterLabel}>
+              Médico pediatra <span className={comun.errorText}>*</span>
             </label>
             <MedicoAutocomplete
               value={linea.codMedico}
@@ -108,18 +86,18 @@ const PediatraSection: React.FC<Props> = ({
               }
               medicosPrecargados={medicosPrecargados}
             />
-            {isDuplicateMain && <span className={styles.errorText}>No puede ser el mismo médico principal.</span>}
+            {isDuplicateMain && <span className={comun.errorText}>No puede ser el mismo médico principal.</span>}
             {isDuplicateOther && !isDuplicateMain && (
-              <span className={styles.errorText}>Ese médico ya está agregado en el equipo.</span>
+              <span className={comun.errorText}>Ese médico ya está agregado en el equipo.</span>
             )}
-            {error && !isDuplicateMain && !isDuplicateOther && <span className={styles.errorText}>{error}</span>}
+            {error && !isDuplicateMain && !isDuplicateOther && <span className={comun.errorText}>{error}</span>}
           </div>
         </div>
 
-        <div className={styles.fieldsRow}>
-          <div className={`${styles.filterField} ${styles.filterFieldWide}`}>
-            <label className={styles.filterLabel}>
-              Código que factura el pediatra <span className={styles.errorText}>*</span>
+        <div className={comun.fieldsRow}>
+          <div className={`${comun.filterField} ${comun.filterFieldWide}`}>
+            <label className={comun.filterLabel}>
+              Código que factura el pediatra <span className={comun.errorText}>*</span>
             </label>
             <NomencladorAutocomplete
               value={linea.codNomenclador}
@@ -134,10 +112,10 @@ const PediatraSection: React.FC<Props> = ({
         </div>
 
         {porIntegrante && (
-          <div className={styles.filterField}>
-            <label className={styles.filterLabel}>Nº de autorización</label>
+          <div className={comun.filterField}>
+            <label className={comun.filterLabel}>Nº de autorización</label>
             <input
-              className={styles.input}
+              className={comun.input}
               type="text"
               maxLength={30}
               value={linea.autorizacion}
@@ -148,11 +126,11 @@ const PediatraSection: React.FC<Props> = ({
           </div>
         )}
 
-        <div className={styles.filterField}>
-          <label className={styles.filterLabel}>Tipo de cálculo</label>
-          <div className={styles.radioRow}>
+        <div className={comun.filterField}>
+          <label className={comun.filterLabel}>Tipo de cálculo</label>
+          <div className={comun.radioRow}>
             {([["A", "Automático"], ["M", "Manual"]] as const).map(([v, label]) => (
-              <label key={v} className={styles.radioLabel}>
+              <label key={v} className={comun.radioLabel}>
                 <input
                   type="radio"
                   name={`pediatraTipoCalculo-${linea.id}`}
@@ -167,22 +145,22 @@ const PediatraSection: React.FC<Props> = ({
           </div>
         </div>
 
-        <div className={styles.fieldsRow}>
-          <div className={styles.filterField}>
-            <label className={styles.filterLabel}>Porcentaje (%)</label>
+        <div className={comun.fieldsRow}>
+          <div className={comun.filterField}>
+            <label className={comun.filterLabel}>Porcentaje (%)</label>
             <NumericInput
-              className={styles.input}
+              className={comun.input}
               min={1}
               value={linea.porcentaje}
               onChange={(v) => update({ porcentaje: v })}
               disabled={disabled}
             />
           </div>
-          <div className={styles.filterField}>
-            <label className={styles.filterLabel}>Precio del pediatra</label>
+          <div className={comun.filterField}>
+            <label className={comun.filterLabel}>Precio del pediatra</label>
             {/* Mismo input siempre, igual que en Ayudante: en Automático muestra el valor de SU código (no el del cirujano) y queda bloqueado. */}
             <NumericInput
-              className={styles.input}
+              className={comun.input}
               decimals min={0}
               value={linea.tipoCalculo === "A" ? (precioPediatra?.honorarios ?? "0") : linea.precioManual}
               onChange={(v) => update({ precioManual: v })}
@@ -191,12 +169,12 @@ const PediatraSection: React.FC<Props> = ({
           </div>
         </div>
 
-        <div className={styles.totalRow}>
+        <div className={comun.totalRow}>
           <span>Total del pediatra:</span>
           <strong>{formatMoney(precioPediatraLoading ? 0 : monto)}</strong>
         </div>
 
-        <p className={styles.mutedText} style={{ fontSize: "0.72rem" }}>
+        <p className={comun.mutedText} style={{ fontSize: "0.72rem" }}>
           Coseguro de esta fila: {formatMoney(0)} — siempre lo cubre el cirujano.
         </p>
       </div>

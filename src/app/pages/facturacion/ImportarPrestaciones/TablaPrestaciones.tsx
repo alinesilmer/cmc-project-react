@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 
-import Button from "@/app/components/ui/Button/Button";
 import { fechaLegible, moneda } from "@/app/pages/Importaciones/formato";
 import r from "@/app/pages/Validaciones/components/reporte/reporte.module.scss";
 
 import type { Decision, FilaResultado } from "./importarPrestaciones.api";
 import s from "./ImportarPrestaciones.module.scss";
+import Paginador from "@/app/components/ui/Paginador/Paginador";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
 
 /** Filas por página: una planilla puede traer miles y pintarlas todas cuelga el navegador. */
 const POR_PAGINA = 50;
@@ -52,7 +52,7 @@ export default function TablaPrestaciones({ filas, decisiones, onElegir, onDesca
   return (
     <>
       <div className={r.tableWrap}>
-        <table className={r.table}>
+        <Tabla className={r.table}>
           <thead>
             <tr>
               <th className={r.num}>Fila</th>
@@ -144,35 +144,17 @@ export default function TablaPrestaciones({ filas, decisiones, onElegir, onDesca
               );
             })}
           </tbody>
-        </table>
+        </Tabla>
       </div>
 
       {paginas > 1 && (
-        <nav className={s.paginado} aria-label="Paginado de resultados">
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            disabled={pagina === 1}
-            onClick={() => setPagina((p) => p - 1)}
-            leftIcon={<ChevronLeft size={16} />}
-          >
-            Anterior
-          </Button>
-          <span className={s.paginaActual} aria-live="polite">
-            {(pagina - 1) * POR_PAGINA + 1}–{Math.min(pagina * POR_PAGINA, filas.length)} de {filas.length}
-          </span>
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            disabled={pagina === paginas}
-            onClick={() => setPagina((p) => p + 1)}
-            rightIcon={<ChevronRight size={16} />}
-          >
-            Siguiente
-          </Button>
-        </nav>
+        <Paginador
+          pagina={pagina}
+          totalPaginas={paginas}
+          onCambiar={setPagina}
+          estado={`${(pagina - 1) * POR_PAGINA + 1}–${Math.min(pagina * POR_PAGINA, filas.length)} de ${filas.length}`}
+          etiqueta="Paginado de resultados"
+        />
       )}
     </>
   );

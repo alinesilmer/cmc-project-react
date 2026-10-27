@@ -6,6 +6,7 @@ import { CMC_LOGO_SRC, CMC_NAME, fetchAsDataUrl } from "@/app/shared/lib/documen
 import { fmtFechaVisible } from "@/app/shared/lib/fechas";
 import { encabezadoDe, textoDeCelda, totalFacturado } from "./exportar";
 import type { ColumnaExport, DocumentoReporte } from "./exportar";
+import type { jsPDF } from "jspdf";
 
 // PDF de un reporte, con el mismo dibujo que el padrón de prestadores: portada azul a página llena y, después.
 
@@ -22,7 +23,7 @@ function anchosDe<T>(columnas: ColumnaExport<T>[], filas: T[]): number[] {
 
 type Portada = { titulo: string; periodo: string; obraSocial: string; registros: number; facturado: string | null; fecha: string };
 
-function pintarPortada(doc: any, p: Portada) {
+function pintarPortada(doc: jsPDF, p: Portada) {
   const w = doc.internal.pageSize.getWidth();
   const h = doc.internal.pageSize.getHeight();
 

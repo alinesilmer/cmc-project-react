@@ -3,8 +3,10 @@ import { useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Download, ExternalLink, FileText, X } from "lucide-react";
 import { useModal } from "@/website/hooks/useModal";
-import pdf from "../../assets/CMC_08_2026.pdf";
 import styles from "./ModalValoresEticos.module.scss";
+
+// Vive en public/: reemplazar el archivo actualiza el PDF sin recompilar la app.
+const pdf = `${import.meta.env.BASE_URL}valores-eticos.pdf`;
 
 type Props = { abierto: boolean; onCerrar: () => void };
 

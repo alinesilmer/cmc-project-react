@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Building2, ChevronLeft, ChevronRight } from "lucide-react";
-import { getJSON, patchJSON } from "@/app/shared/lib/http";
+import { Building2 } from "lucide-react";
+import { buscarSocios, listarOrganizaciones, marcarOrganizacion } from "./servicios.api";
 import Franja from "@/app/components/layout/Franja/Franja";
 import s from "./ServiciosPage.module.scss";
 import SearchField from "@/app/components/ui/SearchField/SearchField";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
+import Paginador from "@/app/components/ui/Paginador/Paginador";
 
 const PAGE_SIZE = 20;
 const ORGANIZACIONES_KEY = ["medicos", "organizaciones"] as const;
@@ -56,10 +58,7 @@ export default function ServiciosPage() {
   const consultaOrgs = useQuery({
     queryKey: ORGANIZACIONES_KEY,
     queryFn: async () => {
-      const data = await getJSON<Record<string, unknown>[]>("/api/medicos/all", {
-        es_organizacion: 1,
-        limit: 500,
-      });
+      const data = await listarOrganizaciones();
       return (Array.isArray(data) ? data : [])
         .map(toMedicoRow)
         .filter((r) => r.es_organizacion === 1);
@@ -98,10 +97,7 @@ export default function ServiciosPage() {
       setSearching(true);
       setSearchError(null);
       try {
-        const data = await getJSON<Record<string, unknown>[]>("/api/medicos/all", {
-          q,
-          limit: 50,
-        });
+        const data = await buscarSocios(q);
         setSearchResults((Array.isArray(data) ? data : []).map(toMedicoRow));
       } catch (err: unknown) {
         setSearchError((err as { message?: string })?.message ?? "Error al buscar.");
@@ -128,7 +124,7 @@ export default function ServiciosPage() {
     });
 
     try {
-      await patchJSON(`/api/medicos/${id}/organizacion`, { es_organizacion: newValue });
+      await marcarOrganizacion(id, newValue);
 
       if (newValue === 1) {
         const updated = { ...row, es_organizacion: 1 };
@@ -194,7 +190,7 @@ export default function ServiciosPage() {
           <div className={s.tableWrapper}>
             {searching ? (
               <div className={s.loadingState}>
-                <span className={s.spinner} aria-hidden="true" />
+                <Cargando size={32} tono="marca" aria-hidden="true" />
                 <p>Buscando…</p>
               </div>
             ) : searchResults.length === 0 ? (
@@ -228,7 +224,7 @@ export default function ServiciosPage() {
                             aria-label={`Marcar ${row.nombre} como organización`}
                           />
                           {updating.has(row.id) && (
-                            <span className={s.spinnerSm} aria-hidden="true" />
+                            <Cargando size={14} tono="marca" aria-hidden="true" />
                           )}
                         </label>
                         {updateErrors[row.id] && (
@@ -261,7 +257,7 @@ export default function ServiciosPage() {
         <div className={s.tableWrapper}>
           {loadingOrgs ? (
             <div className={s.loadingState}>
-              <span className={s.spinner} aria-hidden="true" />
+              <Cargando size={32} tono="marca" aria-hidden="true" />
               <p>Cargando organizaciones…</p>
             </div>
           ) : orgsFiltered.length === 0 ? (
@@ -296,7 +292,7 @@ export default function ServiciosPage() {
                           aria-label={`Marcar ${org.nombre} como organización`}
                         />
                         {updating.has(org.id) && (
-                          <span className={s.spinnerSm} aria-hidden="true" />
+                          <Cargando size={14} tono="marca" aria-hidden="true" />
                         )}
                       </label>
                       {updateErrors[org.id] && (
@@ -311,27 +307,7 @@ export default function ServiciosPage() {
         </div>
 
         {!loadingOrgs && orgsPageCount > 1 && (
-          <div className={s.pagination} role="navigation" aria-label="Paginación organizaciones">
-            <button
-              className={s.pageBtn}
-              onClick={() => setOrgsPage((p) => p - 1)}
-              disabled={orgsPage === 1}
-              aria-label="Página anterior"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <span className={s.pageInfo}>
-              Página {orgsPage} de {orgsPageCount}
-            </span>
-            <button
-              className={s.pageBtn}
-              onClick={() => setOrgsPage((p) => p + 1)}
-              disabled={orgsPage === orgsPageCount}
-              aria-label="Página siguiente"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
+          <Paginador pagina={orgsPage} totalPaginas={orgsPageCount} onCambiar={setOrgsPage} etiqueta="Paginación organizaciones" />
         )}
       </section>
     </div>

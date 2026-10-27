@@ -9,7 +9,7 @@ import { recontar } from "./recuento";
 import { useDialogo } from "./useDialogo";
 // Mismo marco que «Datos a mostrar»: fondo, panel, cabecera y pie.
 import marco from "./ExportFieldsModal.module.scss";
-import s from "./Padrones.module.scss";
+import s from "./RecuentoModal.module.scss";;
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
 import MarcoModal from "@/app/components/ui/MarcoModal/MarcoModal";
 

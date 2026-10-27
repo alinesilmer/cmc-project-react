@@ -1,0 +1,64 @@
+@use "@/app/styles/all.scss" as *;
+
+
+// Sección Padrones, con la misma franja de Validaciones: arriba el azul con el título y las dos solapas.
+
+.fondo {
+  @include franja-pagina($franja-alto);
+}
+
+.container {
+  width: 100%;
+  padding: 0 $spacing-12 $spacing-12;
+
+  @media (max-width: 1200px) {
+    padding: 0 $spacing-8 $spacing-10;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    padding: 0 $spacing-4 $spacing-8;
+  }
+}
+
+// ── Cabecera ─────────────────────────────────────────────────────────────────
+
+// Mide lo que la franja menos el relleno de arriba de la página, así las solapas terminan justo donde termina el azul.
+.cabecera {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: $spacing-4;
+  height: calc(#{$franja-alto} - 0.5rem);
+  margin-bottom: $spacing-6;
+  padding-top: $spacing-6;
+}
+
+// `margin: auto 0` lo centra en el espacio que queda sobre las solapas.
+.title {
+  margin: auto 0;
+  @include titulo-franja;
+  color: var(--franja-titulo, #{$franja-crema});
+}
+
+.solapas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: $spacing-2;
+}
+
+.solapaActiva,
+.solapaActiva:hover {
+  @include franja-solapa-activa;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+
+  // `display: flex` le ganaría al atributo: la solapa oculta tiene que ocultarse.
+  &[hidden] {
+    display: none;
+  }
+}

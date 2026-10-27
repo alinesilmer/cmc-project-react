@@ -1,0 +1,109 @@
+@use "@/app/styles/all.scss" as *;
+
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.125rem 1.25rem;
+}
+
+.editorTitulo {
+  margin: 0;
+  color: $tono-azul-650;
+  font-size: 1rem;
+}
+
+.editorPlantillas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.editorRotulo {
+  color: $gray-600;
+  font-size: 0.82rem;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.chip {
+  max-width: 100%;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba($tono-azul-500, 0.3);
+  background: $white;
+  color: $primary-blue-lighter;
+  font-family: inherit;
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background: rgba($tono-azul-500, 0.1);
+    border-color: $tono-azul-500;
+  }
+}
+
+// Una plantilla ya sumada al texto: otro toque la saca.
+.chipPuesta {
+  background: $tono-azul-500;
+  border-color: $tono-azul-500;
+  color: $white;
+
+  &:hover {
+    background: $primary-blue-lighter;
+    color: $white;
+  }
+}
+
+.editorCampo {
+  width: 100%;
+  min-height: 7rem;
+  max-height: 16rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: $radio-md;
+  border: 1px solid $gray-300;
+  background: $white;
+  color: $tono-azul-700;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: $font-weight-normal;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:focus {
+    border-color: $tono-azul-500;
+    box-shadow: 0 0 0 3px rgba($tono-azul-500, 0.12);
+  }
+
+  &::placeholder {
+    color: $gray-400;
+  }
+}
+
+.editorPie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.contador {
+  color: $gray-500;
+  font-size: 0.8rem;
+}
+
+.editorAcciones {
+  display: flex;
+  gap: 0.5rem;
+}

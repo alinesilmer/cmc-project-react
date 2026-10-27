@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
-  Loader2,
   Pencil,
   Plus,
   Save,
@@ -27,7 +27,6 @@ import {
 import {
   colorDe,
   DIAS_SEMANA,
-  LABEL_TIPO,
   MESES,
   TIPOS,
   describirCuando,
@@ -40,14 +39,20 @@ import {
   type Responsable,
   type TipoEvento,
 } from "./agenda.types";
+import { fijosDelMes, fijosSinRepetir } from "./diasFijos";
 import s from "./Agenda.module.scss";
 import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
 import Franja from "@/app/components/layout/Franja/Franja";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
+import Paginador from "@/app/components/ui/Paginador/Paginador";
+import Button from "@/app/components/ui/Button/Button";
+import BotonAccion from "@/app/components/ui/BotonAccion/BotonAccion";
 
 const AGENDA_KEY = ["agenda"] as const;
 const SIN_RESPONSABLES: Responsable[] = [];
 const SIN_OCURRENCIAS: OcurrenciaAgenda[] = [];
 const SIN_EVENTOS: EventoAgenda[] = [];
+const POR_PAGINA = 10;
 
 /** Recurrencia por defecto de cada calendario. Igual que el backend. */
 const RECURRENCIA_POR_TIPO: Record<TipoEvento, Recurrencia> = {
@@ -76,6 +81,25 @@ function eventoVacio(tipo: TipoEvento): EventoInput {
     color: null,
     activo: true,
   };
+}
+
+/** El texto del botón de alta de cada calendario. */
+const NUEVO: Record<TipoEvento, string> = {
+  feriado: "Nuevo feriado",
+  cumpleanos: "Nuevo cumpleaños",
+  tarea: "Nueva tarea",
+};
+
+/** El sello de fecha de cada fila: el día en grande y debajo el mes (o «C/MES» si se repite todos los meses). */
+function chipFecha(e: EventoAgenda): { dia: string; mes: string } {
+  const abreviado = (m: number) => MESES[m - 1].slice(0, 3).toUpperCase();
+  if (e.recurrencia === "unica" && e.fecha) {
+    const [, m, d] = e.fecha.split("-");
+    return { dia: String(Number(d)), mes: abreviado(Number(m)) };
+  }
+  if (e.recurrencia === "anual" && e.dia && e.mes) return { dia: String(e.dia), mes: abreviado(e.mes) };
+  if (e.recurrencia === "mensual" && e.dia) return { dia: String(e.dia), mes: "C/MES" };
+  return { dia: "—", mes: "" };
 }
 
 /** Hoy, en componentes locales — nunca `toISOString()`, que adelanta el día. */
@@ -115,8 +139,8 @@ export default function AgendaPage() {
 
   // El almanaque y la lista de abajo son dos consultas independientes y se cargan por separado a propósito.
   const consultaMes = useQuery({
-    queryKey: [...AGENDA_KEY, "mes", anio, mes, filtro],
-    queryFn: () => getMes(anio, mes, filtro ?? undefined),
+    queryKey: [...AGENDA_KEY, "mes", anio, mes],
+    queryFn: () => getMes(anio, mes),
     placeholderData: (prev) => prev,
   });
   const ocurrencias = consultaMes.data ?? SIN_OCURRENCIAS;
@@ -126,8 +150,18 @@ export default function AgendaPage() {
     queryKey: [...AGENDA_KEY, "eventos", tipo],
     queryFn: () => listEventos({ tipo }),
   });
-  const eventos = consultaLista.data ?? SIN_EVENTOS;
+  const cargados = consultaLista.data ?? SIN_EVENTOS;
   const cargandoLista = consultaLista.isPending;
+  const eventos = useMemo(
+    () => [...cargados, ...fijosSinRepetir(cargados, tipo)],
+    [cargados, tipo]
+  );
+
+  const [pagina, setPagina] = useState(1);
+  const totalPaginas = Math.max(1, Math.ceil(eventos.length / POR_PAGINA));
+  // Si se borra el último de la página, se vuelve a la anterior en vez de quedar vacía.
+  const paginaActual = Math.min(pagina, totalPaginas);
+  const visibles = eventos.slice((paginaActual - 1) * POR_PAGINA, paginaActual * POR_PAGINA);
 
   useEffect(() => {
     if (consultaMes.isError) avisarError("No se pudo cargar el calendario.");
@@ -152,14 +186,27 @@ export default function AgendaPage() {
   };
 
   /** Las ocurrencias agrupadas por día del mes, para pintar la grilla. */
+  /** Todo lo del mes elegido, de los tres calendarios; las cuentas de cada solapa salen de acá. */
+  const delMes = useMemo(
+    () => [...ocurrencias, ...fijosDelMes(anio, mes, ocurrencias, null)],
+    [ocurrencias, anio, mes]
+  );
+
+  const conteoMes = useMemo(() => {
+    const cuenta: Record<TipoEvento, number> = { feriado: 0, cumpleanos: 0, tarea: 0 };
+    for (const o of delMes) cuenta[o.tipo] += 1;
+    return cuenta;
+  }, [delMes]);
+
   const porDia = useMemo(() => {
     const mapa = new Map<number, OcurrenciaAgenda[]>();
-    for (const o of ocurrencias) {
+    for (const o of delMes) {
+      if (filtro && o.tipo !== filtro) continue;
       const d = Number(o.ocurre_el.slice(8, 10));
       mapa.set(d, [...(mapa.get(d) ?? []), o]);
     }
     return mapa;
-  }, [ocurrencias]);
+  }, [delMes, filtro]);
 
   const celdas = useMemo(() => {
     const offset = offsetPrimerDia(anio, mes);
@@ -213,44 +260,57 @@ export default function AgendaPage() {
     });
 
   const esHoy = (d: number) => anio === hoy.anio && mes === hoy.mes && d === hoy.dia;
+  const irAHoy = () => {
+    setAnio(hoy.anio);
+    setMes(hoy.mes);
+  };
+
+  const totalMes = useMemo(() => [...porDia.values()].reduce((n, evs) => n + evs.length, 0), [porDia]);
+  const etiquetaTipo = TIPOS.find((t) => t.valor === tipo)?.label.toLowerCase();
 
   return (
     <>
       <Franja suelta titulo="Calendario" icono={CalendarDays} />
       <div className={s.container}>
         {/* ── Almanaque ── */}
-        <section className={s.card}>
+        <section className={s.almanaque}>
           <div className={s.calHead}>
-            <button type="button" className={s.navBtn} onClick={() => irA(-1)}>
-              <ChevronLeft size={16} />
-            </button>
-            <h2 className={s.calTitle}>
-              {MESES[mes - 1]} {anio}
-            </h2>
-            <button type="button" className={s.navBtn} onClick={() => irA(1)}>
-              <ChevronRight size={16} />
-            </button>
+            <div className={s.calTitulo}>
+              <h2>
+                {MESES[mes - 1]}
+                <em>.</em>
+              </h2>
+              <p>
+                {anio} · {totalMes} {totalMes === 1 ? "evento" : "eventos"}
+              </p>
+            </div>
 
-            <div className={s.filtros}>
-              <button
-                type="button"
-                className={`${s.chip} ${filtro === null ? s.chipOn : ""}`}
-                onClick={() => setFiltro(null)}
-              >
-                Todos
-              </button>
+            <div className={s.leyenda} role="group" aria-label="Calendarios">
               {TIPOS.map((t) => (
                 <button
                   key={t.valor}
                   type="button"
-                  className={`${s.chip} ${filtro === t.valor ? s.chipOn : ""}`}
-                  style={filtro === t.valor ? { background: t.color, borderColor: t.color } : undefined}
-                  onClick={() => setFiltro(t.valor)}
+                  className={`${s.leyendaItem} ${filtro === t.valor ? s.leyendaOn : ""}`}
+                  style={{ "--c": t.color } as CSSProperties}
+                  aria-pressed={filtro === t.valor}
+                  onClick={() => setFiltro(filtro === t.valor ? null : t.valor)}
                 >
-                  <i className={s.dot} style={{ background: t.color }} />
+                  <i className={s.cuadro} />
                   {t.label}
                 </button>
               ))}
+            </div>
+
+            <div className={s.mandos}>
+              <button type="button" className={s.navBtn} aria-label="Mes anterior" onClick={() => irA(-1)}>
+                <ChevronLeft size={18} />
+              </button>
+              <button type="button" className={s.hoyBtn} onClick={irAHoy}>
+                Hoy
+              </button>
+              <button type="button" className={s.navBtn} aria-label="Mes siguiente" onClick={() => irA(1)}>
+                <ChevronRight size={18} />
+              </button>
             </div>
           </div>
 
@@ -261,65 +321,83 @@ export default function AgendaPage() {
           </div>
 
           <div className={s.grid}>
-            {celdas.map((d, i) =>
-              d === null ? (
-                <div key={`v${i}`} className={s.celdaVacia} />
-              ) : (
-                <div key={d} className={`${s.celda} ${esHoy(d) ? s.celdaHoy : ""}`}>
+            {celdas.map((d, i) => {
+              if (d === null) return <div key={`v${i}`} className={s.celdaVacia} />;
+              const evs = porDia.get(d) ?? [];
+              const clases = [
+                s.celda,
+                evs.length ? s.celdaCon : "",
+                esHoy(d) ? s.celdaHoy : "",
+                i % 7 >= 5 ? s.celdaLibre : "",
+              ].join(" ");
+              return (
+                <div
+                  key={d}
+                  className={clases}
+                  style={evs[0] ? ({ "--c": colorDe(evs[0]) } as CSSProperties) : undefined}
+                >
                   <span className={s.celdaNum}>{d}</span>
-                  <div className={s.celdaEventos}>
-                    {(porDia.get(d) ?? []).map((o) => (
-                      <span
-                        key={`${o.id}-${o.ocurre_el}`}
-                        className={s.pill}
-                        style={{ background: colorDe(o) }}
-                        title={
-                          o.responsable ? `${o.titulo} — ${o.responsable}` : o.titulo
-                        }
-                      >
-                        {o.titulo}
-                      </span>
-                    ))}
-                  </div>
+                  {evs.slice(0, 2).map((o) => (
+                    <span
+                      key={`${o.id}-${o.ocurre_el}`}
+                      className={s.celdaTitulo}
+                      title={o.responsable ? `${o.titulo} — ${o.responsable}` : o.titulo}
+                    >
+                      {o.titulo}
+                    </span>
+                  ))}
+                  {evs.length > 2 && (
+                    <span className={s.celdaMas} title={evs.slice(2).map((o) => o.titulo).join(", ")}>
+                      +{evs.length - 2} más
+                    </span>
+                  )}
                 </div>
-              )
-            )}
+              );
+            })}
           </div>
 
           {cargandoMes && (
             <div className={s.loading}>
-              <Loader2 size={15} className={s.spin} /> Cargando…
+              <Cargando size={15} /> Cargando…
             </div>
           )}
         </section>
 
         {/* ── Administración del calendario elegido ── */}
-        <section className={s.card}>
-          <div className={s.tabs}>
+        <section className={s.admin}>
+          <div className={s.adminCab}>
+            <h2>Administrar</h2>
+            {puedeEditar && (
+              <Button
+                variant="secondary"
+                leftIcon={<Plus size={16} aria-hidden="true" />}
+                onClick={() => setEditando({ body: eventoVacio(tipo) })}
+              >
+                {NUEVO[tipo]}
+              </Button>
+            )}
+          </div>
+
+          <div className={s.solapas} role="tablist">
             {TIPOS.map((t) => (
               <button
                 key={t.valor}
                 type="button"
-                className={`${s.tab} ${tipo === t.valor ? s.tabOn : ""}`}
+                role="tab"
+                aria-selected={tipo === t.valor}
+                className={`${s.solapa} ${tipo === t.valor ? s.solapaOn : ""}`}
+                style={{ "--c": t.color } as CSSProperties}
                 onClick={() => {
                   setTipo(t.valor);
+                  setPagina(1);
                   setEditando(null);
                 }}
               >
-                <i className={s.dot} style={{ background: t.color }} />
+                <i className={s.dot} />
                 {t.label}
+                <small>{conteoMes[t.valor]}</small>
               </button>
             ))}
-
-            {puedeEditar && (
-              <button
-                type="button"
-                className={s.addBtn}
-                onClick={() => setEditando({ body: eventoVacio(tipo) })}
-              >
-                <Plus size={14} /> Nuevo {LABEL_TIPO[tipo]}
-              </button>
-            )}
           </div>
 
           {editando && (
@@ -425,7 +503,7 @@ export default function AgendaPage() {
                   onClick={guardar}
                   disabled={!editando.body.titulo.trim() || guardando}
                 >
-                  {guardando ? <Loader2 size={15} className={s.spin} /> : <Save size={15} />}
+                  {guardando ? <Cargando size={15} /> : <Save size={15} />}
                   Guardar
                 </button>
               </div>
@@ -433,55 +511,59 @@ export default function AgendaPage() {
           )}
 
           <ul className={s.list}>
-            {eventos.map((e) => (
-              <li key={e.id} className={`${s.row} ${!e.activo ? s.rowInactivo : ""}`}>
-                <i className={s.dot} style={{ background: colorDe(e) }} />
-                <div className={s.rowMain}>
-                  <span className={s.rowTitulo}>{e.titulo}</span>
-                  <span className={s.rowCuando}>
-                    {describirCuando(e)}
-                    {e.responsable ? ` · ${e.responsable}` : ""}
-                    {e.descripcion ? ` · ${e.descripcion}` : ""}
-                  </span>
-                </div>
-                {puedeEditar && (
-                  <div className={s.rowActions}>
-                    <button
-                      type="button"
-                      className={s.iconBtn}
-                      onClick={() =>
-                        setEditando({
-                          id: e.id,
-                          body: {
-                            tipo: e.tipo,
-                            titulo: e.titulo,
-                            descripcion: e.descripcion ?? "",
-                            recurrencia: e.recurrencia,
-                            fecha: e.fecha ?? null,
-                            dia: e.dia ?? null,
-                            mes: e.mes ?? null,
-                            medico_id: e.medico_id ?? null,
-                            responsable: e.responsable ?? "",
-                            color: e.color ?? null,
-                            activo: e.activo,
-                          },
-                        })
-                      }
-                    >
-                      <Pencil size={14} />
-                    </button>
-                    <button type="button" className={s.iconDanger} onClick={() => borrar(e)}>
-                      <Trash2 size={14} />
-                    </button>
+            {visibles.map((e) => {
+              const chip = chipFecha(e);
+              return (
+                <li key={e.id} className={`${s.row} ${!e.activo ? s.rowInactivo : ""}`}>
+                  <div className={s.fecha}>
+                    <b>{chip.dia}</b>
+                    <small>{chip.mes}</small>
                   </div>
-                )}
-              </li>
-            ))}
+                  <div className={s.rowMain}>
+                    <span className={s.rowTitulo}>{e.titulo}</span>
+                    <span className={s.rowCuando}>
+                      {describirCuando(e)}
+                      {e.responsable ? ` · ${e.responsable}` : ""}
+                      {e.descripcion ? ` · ${e.descripcion}` : ""}
+                    </span>
+                  </div>
+                  {puedeEditar && e.id > 0 && (
+                    <div className={s.rowActions}>
+                      <BotonAccion
+                        icono={Pencil}
+                        etiqueta="Editar"
+                        onClick={() =>
+                          setEditando({
+                            id: e.id,
+                            body: {
+                              tipo: e.tipo,
+                              titulo: e.titulo,
+                              descripcion: e.descripcion ?? "",
+                              recurrencia: e.recurrencia,
+                              fecha: e.fecha ?? null,
+                              dia: e.dia ?? null,
+                              mes: e.mes ?? null,
+                              medico_id: e.medico_id ?? null,
+                              responsable: e.responsable ?? "",
+                              color: e.color ?? null,
+                              activo: e.activo,
+                            },
+                          })
+                        }
+                      />
+                      <BotonAccion icono={Trash2} etiqueta="Eliminar" peligro onClick={() => borrar(e)} />
+                    </div>
+                  )}
+                </li>
+              );
+            })}
 
-            {!eventos.length && !cargandoLista && (
-              <li className={s.empty}>Sin {TIPOS.find((t) => t.valor === tipo)?.label.toLowerCase()} cargados.</li>
-            )}
+            {!eventos.length && !cargandoLista && <li className={s.empty}>Sin {etiquetaTipo} cargados.</li>}
           </ul>
+
+          <div className={s.pie}>
+            <Paginador pagina={paginaActual} totalPaginas={totalPaginas} onCambiar={setPagina} />
+          </div>
         </section>
       </div>
     </>

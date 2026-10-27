@@ -1,340 +1,48 @@
 "use client";
 
-import React, { Suspense, lazy, useEffect, useMemo, useState } from "react";
+import React, { Suspense, lazy, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import {
-  AlertTriangle,
-  BarChart3,
-  BriefcaseMedical,
-  Building2,
-  ChevronDown,
-  Contact,
-  FileText,
-  HandCoins,
-  Landmark,
-  Pencil,
-  Plus,
-  ScrollText,
-  ShieldCheck,
-  Stethoscope,
-  Trash2,
-  User,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { Pencil, ShieldCheck, Trash2, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
 import Card from "@/app/components/ui/Card/Card";
 import Franja from "@/app/components/layout/Franja/Franja";
 import Button from "@/app/components/ui/Button/Button";
-import CopyButton from "@/app/components/ui/CopyButton/CopyButton";
 import styles from "./DoctorProfilePage.module.scss";
 
 import RequirePermission from "../../auth/RequirePermission";
 import { usePermisos } from "../../auth/usePermisos";
-import { useAuth } from "../../auth/AuthProvider";
+import { useAuth } from "../../auth/useAuth";
 import { esOrganizacion, INGRESAR_MEDICO, isMedico } from "../../auth/roles";
 import BackButton from "@/app/components/ui/BackButton/BackButton";
 import Credencial from "./Credencial";
 import FormularioCambiosModal from "./FormularioCambiosModal";
 import ReportarCambioModal from "./ReportarCambioModal";
 import type { ReportTarget } from "./ReportarCambioModal";
-import reportStyles from "./ReportarCambioModal.module.scss";
-import type {
-  DoctorProfile,
-  DoctorDocument,
-  DoctorEspecialidad,
-  Role,
-  Permission,
-  Option,
-  Especialidad,
-  ObraSocial,
-  Padron,
-  SocioDescuento,
-} from "./api";
+import { deleteMedico } from "./api";
 
-import {
-  getMedicoDetail,
-  getMedicoDocumentos,
-  getMedicoEspecialidades,
-  getListEspecialidades,
-  addMedicoEspecialidad,
-  editMedicoEspecialidad,
-  removeMedicoEspecialidad,
-  uploadDocumento,
-  listRoles,
-  listPermissions,
-  getUserRoles,
-  addUserRole,
-  delUserRole,
-  getOverrides,
-  setOverride,
-  getEffective,
-  updateMedico,
-  UPDATE_WHITELIST,
-  setMedicoExiste,
-  deleteMedico,
-  getDocumentoLabels,
-  addMedicoDocumento,
-  deleteMedicoDocumento,
-  setMedicoAttach,
-  clearMedicoAttach,
-  fetchObrasSociales,
-  fetchPadrones,
-  addPadronByOS,
-  removePadronByOS,
-  getSociosDescuento,
-  createSocioDescuento,
-  patchSocioDescuento,
-  deleteSocioDescuento,
-  fetchDescuentosConceptos,
-  searchMedicosForPagador,
-} from "./api";
-import AppSearchSelect from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
-import type { AppSearchSelectOption } from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
-
-import { Modal, Toggle, Notification } from "rsuite";
-import "rsuite/Modal/styles/index.css";
-import "rsuite/Toggle/styles/index.css";
-import { Animation } from "rsuite";
+import Switch from "@mui/material/Switch";
 import ActionModal from "@/app/components/ui/ActionModal/ActionModal";
 import { useNotify } from "../../hooks/useNotify";
-import { abrirAdjunto } from "@/app/shared/lib/archivos";
-import { formatFecha } from "@/app/shared/lib/fechas";
-import Tabla from "@/app/components/ui/Tabla/Tabla";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
 
-/* ===================== helpers labels ===================== */
-const ATTACH_PRETTY: Record<string, string> = {
-  attach_titulo: "Título",
-  attach_matricula_nac: "Matrícula nacional",
-  attach_matricula_prov: "Matrícula provincial",
-  attach_resolucion: "Resolución",
-  attach_habilitacion_municipal: "Habilitación municipal",
-  attach_cuit: "CUIT",
-  attach_condicion_impositiva: "Condición impositiva",
-  attach_anssal: "ANSSAL",
-  attach_malapraxis: "Malapraxis",
-  attach_cbu: "CBU",
-  attach_dni: "Documento",
-};
-
-const ATTACH_KEYS = Object.keys(ATTACH_PRETTY);
-
-const stripAttach = (k: string) => k.replace(/^attach_/, "").toLowerCase();
-
-function prettyFromAnyLabel(label: string) {
-  if (label.startsWith("attach_")) return ATTACH_PRETTY[label] ?? label;
-  const words = label.replace(/_/g, " ").toLowerCase().split(" ");
-  const cap = words
-    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
-    .join(" ");
-  return cap.replace(/\bDni\b/, "Documento").replace(/\bCuit\b/, "CUIT");
-}
-
-const formatOption = (opt: string) =>
-  opt === "otro" ? "Otro" : ATTACH_PRETTY[opt] ?? opt;
-
-const normalizeForCompare = (label: string) => stripAttach(label);
-
-/* ========================================================== */
-
-type DoctorProfileX = DoctorProfile & { fecha_ingreso?: string | null };
-
-const getFechaIngreso = (obj: any): string | null => {
-  const v =
-    obj?.fecha_ingreso ??
-    obj?.fechaIngreso ??
-    obj?.FECHA_INGRESO ??
-    obj?.fec_ingreso ??
-    obj?.FEC_INGRESO ??
-    null;
-  return v === undefined ? null : v;
-};
-
-const WL = new Set<string>(UPDATE_WHITELIST as unknown as string[]);
-WL.add("fecha_ingreso");
-
-const DATE_FIELDS = new Set([
-  "fecha_nac",
-  "fecha_recibido",
-  "fecha_matricula",
-  "fecha_resolucion",
-  "vencimiento_anssal",
-  "vencimiento_malapraxis",
-  "vencimiento_cobertura",
-  "fecha_ingreso",
-]);
-
-const INT_FIELDS = new Set([
-  "anssal",
-  "cobertura",
-  "nro_socio",
-  "matricula_prov",
-  "matricula_nac",
-]);
-
-const isBlankish = (v: any) =>
-  v === undefined || v === null || (typeof v === "string" && v.trim() === "");
-const isDashish = (v: any) => typeof v === "string" && /^-+$/.test(v.trim());
-
-const toYmd2 = (v: any): string | null => {
-  if (!v) return null;
-  if (v instanceof Date && !isNaN(v as any)) {
-    const d = v as Date;
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    return `${d.getFullYear()}-${mm}-${dd}`;
-  }
-  const s = String(v).trim();
-  if (!s) return null;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  const m = s.match(/^(\d{2})-(\d{2})-(\d{4})$/);
-  if (m) return `${m[3]}-${m[2]}-${m[1]}`;
-  return s;
-};
-
-function normalizePatch(input: Record<string, any>) {
-  const out: Record<string, any> = {};
-  for (const [k, raw] of Object.entries(input || {})) {
-    if (!WL.has(k)) continue;
-    if (isBlankish(raw) || isDashish(raw)) {
-      out[k] = null;
-      continue;
-    }
-    if (DATE_FIELDS.has(k)) {
-      out[k] = toYmd2(raw);
-      continue;
-    }
-    if (INT_FIELDS.has(k)) {
-      const s = String(raw).replace(/\./g, "").replace(/,/g, "").trim();
-      out[k] = /^\d+$/.test(s) ? Number(s) : null;
-      continue;
-    }
-    out[k] = raw;
-  }
-  return out;
-}
-
-function toYmd(d?: Date | null): string | null {
-  if (!d) return null;
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
-
-// Parse a YYYY-MM-DD string as LOCAL midnight (not UTC). new Date("2024-01-15") parses as UTC midnight which in AR (UTC-3) becomes Jan 14 at 21:00.
-function parseLocalDate(s: string): Date {
-  const parts = s.split("-");
-  if (parts.length === 3) {
-    const y = Number(parts[0]);
-    const m = Number(parts[1]);
-    const d = Number(parts[2]);
-    if (y && m && d) return new Date(y, m - 1, d);
-  }
-  return new Date(s);
-}
-
-const fmt = (v: any) =>
-  v === undefined || v === null || v === "" ? "—" : String(v);
-// Fecha de nacimiento e ingreso son fechas de calendario: con `new Date(s)` el parser las lee como UTC y mostraba el día anterior.
-const fmtDate = (s?: string | null) => (s ? formatFecha(s) : "—");
-
-// Valor del legajo con botón de copiar al lado.
-function Copiable({
-  label,
-  value,
-  copy,
-  enabled,
-  children,
-}: {
-  label: string;
-  value: unknown;
-  copy?: string;
-  enabled: boolean;
-  children: React.ReactNode;
-}) {
-  const texto = copy ?? (isBlankish(value) || isDashish(value) ? "" : String(value).trim());
-  if (!enabled || !texto) return <span>{children}</span>;
-  return (
-    <span className={styles.valueRow}>
-      {children}
-      <CopyButton label={label} value={texto} />
-    </span>
-  );
-}
-
-const soloDigitos = (v: unknown) => (v == null ? "" : String(v).replace(/\D/g, ""));
-
-// Standalone pagador select with own query/options state
-const PagadorSelect: React.FC<{
-  value: number | null;
-  disabled?: boolean;
-  onChange: (v: number | null) => void;
-}> = ({ value, disabled, onChange }) => {
-  const [query, setQuery] = useState("");
-  const [options, setOptions] = useState<AppSearchSelectOption[]>([]);
-
-  useEffect(() => {
-    let alive = true;
-    searchMedicosForPagador(query).then((medicos) => {
-      if (!alive) return;
-      setOptions(
-        medicos.map((m) => ({
-          id: m.id,
-          label: m.nro_socio != null ? `${m.nro_socio} - ${m.nombre}` : m.nombre,
-        }))
-      );
-    }).catch(() => { if (alive) setOptions([]); });
-    return () => { alive = false; };
-  }, [query]);
-
-  return (
-    <AppSearchSelect
-      options={options}
-      value={value}
-      disabled={disabled}
-      onQueryChange={setQuery}
-      onChange={(val) => {
-        // AppSearchSelect devuelve string | number; acá el pagador es un id numérico.
-        const id = val == null ? null : Number(val);
-        onChange(id != null && Number.isFinite(id) ? id : null);
-      }}
-    />
-  );
-};
-
-type TabKey =
-  | "datos"
-  | "documentos"
-  | "conceptos"
-  | "especialidades"
-  | "padrones"
-  | "credencial"
-  | "valoresPdf"
-  | "reportes"
-  | "permisos";
-
-// El resto de las pestañas se rotula con su clave capitalizada.
-const TAB_LABELS: Partial<Record<TabKey, string>> = {
-  valoresPdf: "Valores PDF",
-};
-
-type SeccionDatos = "personales" | "profesionales" | "impositivos";
-
-// Íconos de las pestañas, en "Mi perfil" y en el legajo del Colegio.
-const TAB_ICONS: Partial<Record<TabKey, LucideIcon>> = {
-  datos: User,
-  documentos: FileText,
-  conceptos: HandCoins,
-  especialidades: Stethoscope,
-  padrones: Building2,
-  credencial: Contact,
-  valoresPdf: ScrollText,
-  reportes: BarChart3,
-  permisos: ShieldCheck,
-};
+import ModalesDocumentos from "./legajo/ModalesDocumentos";
+import ModalesEspecialidades from "./legajo/ModalesEspecialidades";
+import TabConceptos from "./legajo/TabConceptos";
+import TabDatos from "./legajo/TabDatos";
+import TabDocumentos from "./legajo/TabDocumentos";
+import TabEspecialidades from "./legajo/TabEspecialidades";
+import TabPermisos from "./legajo/TabPermisos";
+import { crearReportar } from "./legajo/reportar";
+import { TAB_ICONS, TAB_LABELS } from "./legajo/pestanas";
+import type { TabKey } from "./legajo/legajo.types";
+import { useLegajoConceptos } from "./legajo/useLegajoConceptos";
+import { useLegajoDatos } from "./legajo/useLegajoDatos";
+import { useLegajoDocumentos } from "./legajo/useLegajoDocumentos";
+import { useLegajoEspecialidades } from "./legajo/useLegajoEspecialidades";
+import { useLegajoPermisos } from "./legajo/useLegajoPermisos";
+import { mensajeDe } from "./legajo/legajo.helpers";
 
 // Sólo la abre el personal: que no viaje en el chunk del legajo del socio.
 const ValoresPdfTab = lazy(() => import("./ValoresPdfTab"));
@@ -344,8 +52,6 @@ const ReportesMedico = lazy(() => import("../Reportes/ReportesMedico"));
 const PadronesForm = lazy(
   () => import("@/app/features/padrones/components/PadronesForm/PadronesForm")
 );
-
-const DEFAULT_LABELS = [...ATTACH_KEYS, "otro"];
 
 type DoctorProfilePageProps = {
   /** Fija el legajo en vez de tomarlo de la URL (lo usa "Mi perfil"). */
@@ -364,27 +70,32 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
   const notify = useNotify();
   const location = useLocation();
   const { user } = useAuth();
+  const { can } = usePermisos();
 
   const [tab, setTab] = useState<TabKey>("datos");
 
-  // En modo lectura el socio ve solo su legajo: "conceptos" (descuentos) y "padrones" son administrativos y sus controles mutan al tocarlos.
-  const [data, setData] = useState<DoctorProfileX | null>(null);
-  const [loading, setLoading] = useState(true);
+  const datos = useLegajoDatos(medicoId, readOnly);
+  const { data, loading, existe, toggleBusy, cambiarExistencia } = datos;
+  const documentos = useLegajoDocumentos(medicoId, tab);
+  const especialidades = useLegajoEspecialidades(medicoId, tab);
+  const { especs } = especialidades;
+  const conceptos = useLegajoConceptos(medicoId, tab);
+  const permisos = useLegajoPermisos(medicoId, tab, readOnly);
 
   // El personal del Colegio también tiene legajo en `listado_medico`, pero no es médico: sin "Dr./Dra." en la credencial y sin especialidades.
   const esLegajoPropio = user?.id != null && String(user.id) === medicoId;
   const ingresarLegajo: string | null =
-    (data as any)?.ingresar ?? (esLegajoPropio ? user?.ingresar : null) ?? null;
+    data?.ingresar ?? (esLegajoPropio ? user?.ingresar : null) ?? null;
   const legajoEsMedico =
     ingresarLegajo == null || ingresarLegajo === INGRESAR_MEDICO;
 
   // Línea bajo el nombre en "Mi perfil": especialidad · matrícula · socio.
   const resumenLegajo = [
     legajoEsMedico
-      ? (data as any)?.especialidades?.[0]?.especialidad_nombre
+      ? data?.especialidades?.[0]?.especialidad_nombre
       : "Personal de Colegio Médico",
-    (data as any)?.matricula_prov ? `MP ${(data as any).matricula_prov}` : null,
-    (data as any)?.nro_socio ? `Socio ${(data as any).nro_socio}` : null,
+    data?.matricula_prov ? `MP ${data.matricula_prov}` : null,
+    data?.nro_socio ? `Socio ${data.nro_socio}` : null,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -417,246 +128,18 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
   // Formulario completo: el socio revisa todos sus datos editables de una.
   const [formularioOpen, setFormularioOpen] = useState(false);
 
-  /** Botón "reportar" al lado de la etiqueta de un dato. */
-  function ReportarBtn({
-    campo,
-    label,
-    valorActual,
-  }: {
-    campo: string;
-    label: string;
-    valorActual?: unknown;
-  }) {
-    if (!readOnly || editaSuLegajo) return null;
-    return (
-      <button
-        type="button"
-        className={reportStyles.reportBtn}
-        title={`Reportar que "${label}" está mal`}
-        onClick={() =>
-          setReportTarget({
-            campo,
-            label,
-            valorActual:
-              valorActual == null || valorActual === "" ? null : String(valorActual),
-          })
-        }
-      >
-        reportar
-      </button>
-    );
-  }
-
-  const { can } = usePermisos();
-
   // El personal con `medico:editar` ya puede editar cualquier legajo desde el padrón: en "Mi perfil" edita el suyo en vez de pedir la corrección.
   const editaSuLegajo =
     readOnly && esLegajoPropio && !isMedico(user) && can("medico:editar");
+  const reportar = crearReportar(readOnly && !editaSuLegajo, setReportTarget);
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [draft, setDraft] = useState<Partial<DoctorProfileX>>({});
-
-  // Cada bloque de datos es un desplegable.
-  const [seccionesAbiertas, setSeccionesAbiertas] = useState<
-    Record<SeccionDatos, boolean>
-  >({ personales: !readOnly, profesionales: true, impositivos: !readOnly });
-  const seccionAbierta = (s: SeccionDatos) =>
-    isEditing || seccionesAbiertas[s];
-
-  /** Título de un bloque de la pestaña Datos: el botón que lo abre y lo cierra. */
-  function tituloSeccion(
-    seccion: SeccionDatos,
-    Icono: LucideIcon,
-    texto: string,
-    style?: React.CSSProperties,
-  ) {
-    const abierta = seccionAbierta(seccion);
-    return (
-      <h5 className={styles.section} style={style}>
-        <button
-          type="button"
-          className={styles.mpToggle}
-          aria-expanded={abierta}
-          onClick={() =>
-            setSeccionesAbiertas((p) => ({ ...p, [seccion]: !p[seccion] }))
-          }
-        >
-          <Icono size={18} aria-hidden="true" />
-          <span>{texto}</span>
-          <ChevronDown
-            size={18}
-            aria-hidden="true"
-            className={`${styles.mpChev} ${abierta ? styles.mpChevAbierta : ""}`}
-          />
-        </button>
-      </h5>
-    );
-  }
-
-  const [rolesAll, setRolesAll] = useState<Role[]>([]);
-  const [userRoles, setUserRoles] = useState<string[]>([]);
-  const [permList, setPermList] = useState<Permission[]>([]);
-  const [overrides, setOverrides] = useState<Record<string, boolean>>({});
-  const [effective, setEffective] = useState<string[]>([]);
-  const [rbacLoading, setRbacLoading] = useState(false);
-
-  const [especs, setEspecs] = useState<DoctorEspecialidad[]>([]);
-  const [espLoading, setEspLoading] = useState(false);
-  const [especErr, setEspecErr] = useState<string | null>(null);
-  const [rmEspBusy, setRmEspBusy] = useState<number | null>(null);
-
-  const [assocEspOpen, setAssocEspOpen] = useState(false);
-  const [assocEspId, setAssocEspId] = useState<string>("");
-  const [assocEspBusy, setAssocEspBusy] = useState(false);
-  const [assocEspResol, setAssocEspResol] = useState("");
-  const [assocEspDate, setAssocEspDate] = useState<Date | null>(null);
-  const [assocEspFile, setAssocEspFile] = useState<File | null>(null);
-
-  const [delEspOpen, setDelEspOpen] = useState(false);
-  const [espToDelete, setEspToDelete] = useState<DoctorEspecialidad | null>(
-    null
-  );
-  const [delEspBusy, setDelEspBusy] = useState(false);
-
-  const [espOptions, setEspOptions] = useState<Option[]>([]);
-
-  const [docs, setDocs] = useState<DoctorDocument[]>([]);
-  const [docsLoading, setDocsLoading] = useState(false);
-
-  const [existe, setExiste] = useState<"S" | "N">("N");
-  const [toggleBusy, setToggleBusy] = useState(false);
   const [delOpen, setDelOpen] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-
-  const [docOpen, setDocOpen] = useState(false);
-  const [docLabel, setDocLabel] = useState<string>("attach_titulo");
-  const [docCustom, setDocCustom] = useState<string>("");
-  const [docFile, setDocFile] = useState<File | null>(null);
-  const [docBusy, setDocBusy] = useState(false);
-  const [labelOptions, setLabelOptions] = useState<string[]>(DEFAULT_LABELS);
-
-  const [replaceOpen, setReplaceOpen] = useState(false);
-  const [replacePretty, setReplacePretty] = useState<string>("");
-  const [pendingUpload, setPendingUpload] = useState<{
-    attachKey: string | null;
-    labelNormalized: string;
-    file: File;
-  } | null>(null);
-
-  const [delDocOpen, setDelDocOpen] = useState(false);
-  const [docToDelete, setDocToDelete] = useState<DoctorDocument | null>(null);
-  const [delDocBusy, setDelDocBusy] = useState(false);
-
-  // ===== Conceptos (SocioDescuento) state =====
-  const [sociosDescuento, setSociosDescuento] = useState<SocioDescuento[]>([]);
-  const [sdLoading, setSdLoading] = useState(false);
-  const [sdError, setSdError] = useState<string | null>(null);
-  const [conceptOptions, setConceptOptions] = useState<AppSearchSelectOption[]>([]);
-  const [patchingId, setPatchingId] = useState<number | null>(null);
-  const [deletingId, setDeletingId] = useState<number | null>(null);
-  // new row state
-  const [newRowOpen, setNewRowOpen] = useState(false);
-  const [newConceptId, setNewConceptId] = useState<number | null>(null);
-  const [newPagadorId, setNewPagadorId] = useState<number | null>(null);
-  const [savingNew, setSavingNew] = useState(false);
-
-  async function confirmDeleteEsp() {
-    if (!espToDelete || !id) return;
-    try {
-      setDelEspBusy(true);
-      setRmEspBusy(espToDelete.id);
-      await removeMedicoEspecialidad(id, espToDelete.id);
-      const rr = await getMedicoEspecialidades(medicoId);
-      setEspecs(rr);
-      setDelEspOpen(false);
-      setEspToDelete(null);
-    } catch (e: any) {
-      notify.error(e?.message || "No se pudo quitar la especialidad.");
-    } finally {
-      setDelEspBusy(false);
-      setRmEspBusy(null);
-    }
-  }
-
-  function setField<K extends keyof DoctorProfileX>(
-    key: K,
-    val: DoctorProfileX[K]
-  ) {
-    setDraft((d) => ({ ...d, [key]: val }));
-  }
-
-  const RText = (key: keyof DoctorProfileX, placeholder = "") => (
-    <input
-      className={styles.input}
-      value={(draft[key] as any) ?? ""}
-      onChange={(e) => setField(key, e.target.value as any)}
-      placeholder={placeholder}
-    />
-  );
-
-  const RNumber = (key: keyof DoctorProfileX) => (
-    <input
-      className={styles.input}
-      value={(draft[key] as any) ?? ""}
-      onChange={(e) =>
-        setField(
-          key,
-          e.target.value === "" ? ("" as any) : (Number(e.target.value) as any)
-        )
-      }
-      inputMode="numeric"
-    />
-  );
-
-  const RSexo = (key: keyof DoctorProfileX = "sexo" as any) => (
-    <select
-      className={styles.select}
-      value={(draft[key] as any) ?? ""}
-      onChange={(e) => setField(key, e.target.value as any)}
-    >
-      <option value="">—</option>
-      <option value="M">Masculino</option>
-      <option value="F">Femenino</option>
-    </select>
-  );
-
-  const RCondicion_impositiva = (
-    key: keyof DoctorProfileX = "condicion_impositiva" as any
-  ) => (
-    <select
-      className={styles.select}
-      value={(draft[key] as any) ?? ""}
-      onChange={(e) => setField(key, e.target.value as any)}
-    >
-      <option value="">—</option>
-      <option value="Monotributista">Monotributista</option>
-      <option value="Responsable Inscripto">Responsable Inscripto</option>
-      <option value="Exento">Exento</option>
-      <option value="Rentas">Rentas</option>
-    </select>
-  );
-
-  const RDate = (key: keyof DoctorProfileX) => {
-    const curr = draft[key] as string | null | undefined;
-    const asDate = curr ? parseLocalDate(curr) : null;
-    return (
-      <DatePicker
-        selected={asDate}
-        onChange={(d) => setField(key, toYmd(d) as any)}
-        className={styles.dateInput}
-        dateFormat="dd-MM-yyyy"
-        placeholderText="dd-MM-aaaa"
-        closeOnScroll
-        showPopperArrow={false}
-      />
-    );
-  };
 
   useEffect(() => {
-    const fromPath = (location.state as any)?.fromPath as string | undefined;
+    const estado = location.state as { fromPath?: string; tab?: string } | null;
+    const fromPath = estado?.fromPath;
     const cameFromAfiliados =
-      (location.state as any)?.tab === "padrones" ||
+      estado?.tab === "padrones" ||
       (typeof fromPath === "string" &&
         fromPath.includes("/panel/afiliadospadron")) ||
       sessionStorage.getItem("cmc_open_padrones_next") === "1";
@@ -665,381 +148,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
 
     sessionStorage.removeItem("cmc_open_padrones_next");
     setTab("padrones");
-  }, []);
-
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      setLoading(true);
-      try {
-        const raw = (await getMedicoDetail(medicoId)) as any;
-        if (!alive) return;
-        const normalized = {
-          ...raw,
-          fecha_ingreso: getFechaIngreso(raw),
-        } as DoctorProfileX;
-        setData(normalized);
-        if (normalized?.existe)
-          setExiste(normalized.existe.toUpperCase() === "S" ? "S" : "N");
-      } finally {
-        if (alive) setLoading(false);
-      }
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [medicoId]);
-
-  useEffect(() => {
-    if (tab !== "permisos" || readOnly) return;
-    let alive = true;
-    (async () => {
-      setRbacLoading(true);
-      try {
-        const [allRoles, userRs, permsAll, ovs, eff] = await Promise.all([
-          listRoles(),
-          getUserRoles(medicoId),
-          listPermissions(),
-          getOverrides(medicoId),
-          getEffective(medicoId),
-        ]);
-        if (!alive) return;
-        setRolesAll(allRoles);
-        setUserRoles(userRs.map((r) => r.name));
-        setPermList(permsAll);
-        const map: Record<string, boolean> = {};
-        ovs.forEach((o) => (map[o.code] = o.allow));
-        setOverrides(map);
-        setEffective(eff.permissions);
-      } finally {
-        if (alive) setRbacLoading(false);
-      }
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [tab, medicoId, readOnly]);
-
-  useEffect(() => {
-    if (tab !== "especialidades") return;
-    let alive = true;
-    (async () => {
-      setEspLoading(true);
-      try {
-        const r = await getMedicoEspecialidades(medicoId);
-        if (!alive) return;
-        setEspecs(r);
-      } finally {
-        if (alive) setEspLoading(false);
-      }
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [tab, medicoId]);
-
-  useEffect(() => {
-    if (tab !== "documentos") return;
-    let alive = true;
-    (async () => {
-      setDocsLoading(true);
-      try {
-        const r = await getMedicoDocumentos(medicoId);
-        if (!alive) return;
-        setDocs(r);
-      } finally {
-        if (alive) setDocsLoading(false);
-      }
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [tab, medicoId]);
-
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        const list = await getListEspecialidades();
-        if (!alive) return;
-        const opts = (list || []).map((e: Especialidad) => ({
-          id: String((e as any).id_colegio_espe ?? (e as any).id),
-          label: (e as any).nombre || `ID ${(e as any).id}`,
-        }));
-        setEspOptions(opts);
-      } catch (err) {
-        setEspOptions([]);
-        console.error("No se pudo cargar especialidades:", err);
-      }
-    })();
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        const labels = await getDocumentoLabels().catch(() => DEFAULT_LABELS);
-        if (!alive) return;
-        const final = labels?.length ? labels : DEFAULT_LABELS;
-        const cleaned = final.filter(
-          (k) => k === "otro" || ATTACH_KEYS.includes(k)
-        );
-        setLabelOptions(cleaned.length ? cleaned : DEFAULT_LABELS);
-        setDocLabel((cleaned[0] as string) || "attach_titulo");
-      } catch {
-        setLabelOptions(DEFAULT_LABELS);
-        setDocLabel("attach_titulo");
-      }
-    })();
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  // ===== Conceptos useEffects =====
-  useEffect(() => {
-    if (tab !== "conceptos") return;
-    let alive = true;
-    (async () => {
-      setSdLoading(true);
-      setSdError(null);
-      try {
-        const [rows, descuentos] = await Promise.all([
-          getSociosDescuento(medicoId),
-          fetchDescuentosConceptos(),
-        ]);
-        if (!alive) return;
-        setSociosDescuento(rows);
-        setConceptOptions(
-          descuentos.map((d) => ({
-            id: d.id,
-            label: d.nro_colegio ? `${d.nro_colegio} - ${d.nombre}` : d.nombre,
-          }))
-        );
-      } catch (e: any) {
-        if (alive) setSdError(e?.message || "Error al cargar conceptos");
-      } finally {
-        if (alive) setSdLoading(false);
-      }
-    })();
-    return () => { alive = false; };
-  }, [tab, medicoId]);
-
-  async function handlePatchSocioDescuento(
-    id: number,
-    field: "descuento_id" | "pagador_medico_id",
-    value: number | null
-  ) {
-    setPatchingId(id);
-    try {
-      const updated = await patchSocioDescuento(id, { [field]: value });
-      setSociosDescuento((prev) => prev.map((sd) => (sd.id === id ? updated : sd)));
-      notify.success("Concepto actualizado");
-    } catch (e: any) {
-      notify.error(e?.message || "Error al actualizar");
-    } finally {
-      setPatchingId(null);
-    }
-  }
-
-  async function handleDeleteSocioDescuento(id: number) {
-    setDeletingId(id);
-    try {
-      await deleteSocioDescuento(id);
-      setSociosDescuento((prev) => prev.filter((sd) => sd.id !== id));
-      notify.success("Concepto eliminado");
-    } catch (e: any) {
-      notify.error(e?.message || "Error al eliminar");
-    } finally {
-      setDeletingId(null);
-    }
-  }
-
-  async function handleSaveNewSocioDescuento() {
-    if (!newConceptId) return;
-    setSavingNew(true);
-    try {
-      const created = await createSocioDescuento({
-        medico_id: Number(medicoId),
-        descuento_id: newConceptId,
-        pagador_medico_id: newPagadorId ?? null,
-      });
-      setSociosDescuento((prev) => [...prev, created]);
-      setNewRowOpen(false);
-      setNewConceptId(null);
-      setNewPagadorId(null);
-      notify.success("Concepto agregado");
-    } catch (e: any) {
-      notify.error(e?.message || "Error al guardar");
-    } finally {
-      setSavingNew(false);
-    }
-  }
-
-  async function reloadDocs() {
-    setDocsLoading(true);
-    try {
-      const r = await getMedicoDocumentos(medicoId);
-      setDocs(r);
-    } finally {
-      setDocsLoading(false);
-    }
-  }
-
-  const tryUploadDocumento = async () => {
-    if (!docFile) return;
-
-    const attachKey = docLabel !== "otro" ? docLabel : null;
-    const labelNormalized =
-      docLabel === "otro"
-        ? docCustom.trim().toLowerCase().replace(/\s+/g, "_")
-        : stripAttach(docLabel);
-
-    if (attachKey) {
-      const exists = docs.find(
-        (d) => normalizeForCompare(d.label) === labelNormalized
-      );
-      if (exists) {
-        setPendingUpload({ attachKey, labelNormalized, file: docFile });
-        setReplacePretty(ATTACH_PRETTY[attachKey] || attachKey);
-        setReplaceOpen(true);
-        return;
-      }
-    }
-
-    await performUploadAndMap({
-      attachKey,
-      labelNormalized,
-      file: docFile,
-    });
-  };
-
-  const performUploadAndMap = async (payload: {
-    attachKey: string | null;
-    labelNormalized: string;
-    file: File;
-  }) => {
-    const { attachKey, labelNormalized, file } = payload;
-    setDocBusy(true);
-    try {
-      const created = await addMedicoDocumento(medicoId, file, labelNormalized);
-
-      if (attachKey) {
-        await setMedicoAttach(medicoId, attachKey, created.id);
-      }
-
-      await reloadDocs();
-
-      setDocOpen(false);
-      setDocFile(null);
-      setDocCustom("");
-    } finally {
-      setDocBusy(false);
-    }
-  };
-
-  const handleConfirmReplace = async () => {
-    if (!pendingUpload) return;
-    try {
-      const existing = docs.find(
-        (d) => normalizeForCompare(d.label) === pendingUpload.labelNormalized
-      );
-      if (existing) {
-        await deleteMedicoDocumento(medicoId, existing.id);
-      }
-      await performUploadAndMap(pendingUpload);
-    } catch (e: any) {
-      notify.error(e?.message || "No se pudo reemplazar el documento.");
-    } finally {
-      setPendingUpload(null);
-      setReplaceOpen(false);
-    }
-  };
-
-  const askDeleteDoc = (doc: DoctorDocument) => {
-    setDocToDelete(doc);
-    setDelDocOpen(true);
-  };
-
-  const confirmDeleteDoc = async () => {
-    if (!docToDelete) return;
-    try {
-      setDelDocBusy(true);
-      const normalized = normalizeForCompare(docToDelete.label);
-      const attachKey = ATTACH_KEYS.find((k) => stripAttach(k) === normalized);
-      if (attachKey) {
-        await clearMedicoAttach(medicoId, attachKey);
-      }
-      await deleteMedicoDocumento(medicoId, docToDelete.id);
-      await reloadDocs();
-      setDelDocOpen(false);
-      setDocToDelete(null);
-    } catch (e: any) {
-      notify.error(e?.message || "No se pudo eliminar el documento.");
-    } finally {
-      setDelDocBusy(false);
-    }
-  };
-
-  function AnimatedModal({
-    open,
-    onClose,
-    size = "sm",
-    title,
-    children,
-  }: {
-    open: boolean;
-    onClose: () => void;
-    size?: "xs" | "sm" | "md" | "lg" | "full";
-    title: React.ReactNode;
-    children: React.ReactNode;
-  }) {
-    const [mounted, setMounted] = React.useState(open);
-    const [show, setShow] = React.useState(open);
-
-    React.useEffect(() => {
-      if (open) {
-        setMounted(true);
-        requestAnimationFrame(() => setShow(true));
-      } else {
-        setShow(false);
-      }
-    }, [open]);
-
-    return (
-      <Modal
-        open={mounted}
-        onClose={() => setShow(false)}
-        size={size}
-        className={styles.animatedModal}
-      >
-        <Modal.Header>
-          <Modal.Title>{title}</Modal.Title>
-        </Modal.Header>
-
-        <Animation.Transition
-          in={show}
-          timeout={220}
-          enteringClassName="slideUp-entering"
-          enteredClassName="slideUp-entered"
-          exitingClassName="slideUp-exiting"
-          exitedClassName="slideUp-exited"
-          onExited={() => {
-            setMounted(false);
-            onClose();
-          }}
-        >
-          <div className="slideUp-sheet">
-            <Modal.Body>{children}</Modal.Body>
-            <Modal.Footer />
-          </div>
-        </Animation.Transition>
-      </Modal>
-    );
-  }
+  }, [location.state, medicoId]);
 
   return (
     <>
@@ -1058,7 +167,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
 
           {loading ? (
             <Card className={styles.loadingCard}>
-              <div className={styles.loader} aria-label="Cargando perfil…" />
+              <Cargando size={36} tono="marca" aria-label="Cargando perfil…" />
               <p>Cargando perfil…</p>
             </Card>
           ) : !data ? (
@@ -1096,26 +205,11 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                         >
                           {existe === "S" ? "Habilitado" : "Inhabilitado"}
                         </span>
-                        <Toggle
+                        <Switch
                           checked={existe === "S"}
-                          loading={toggleBusy}
-                          onChange={async (checked: boolean) => {
-                            try {
-                              setToggleBusy(true);
-                              const next = checked ? "S" : "N";
-                              await setMedicoExiste(medicoId, next);
-                              setExiste(next);
-                              setData((d) =>
-                                d ? ({ ...d, existe: next } as any) : d
-                              );
-                            } catch (e: any) {
-                              notify.error(
-                                e?.message || "No se pudo actualizar el estado."
-                              );
-                            } finally {
-                              setToggleBusy(false);
-                            }
-                          }}
+                          disabled={toggleBusy}
+                          onChange={(_e, checked) => cambiarExistencia(checked)}
+                          inputProps={{ "aria-label": "Habilitar o inhabilitar socio" }}
                         />
                       </div>
 
@@ -1199,489 +293,13 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                         exit={{ opacity: 0, y: 8 }}
                         className={`${styles.tabBody} ${styles.mpDatos}`}
                       >
-                        {((!readOnly && can("medico:editar")) || editaSuLegajo) && (
-                        <button
-                          type="button"
-                          className={styles.editPencil}
-                          aria-label={isEditing ? "Cancelar edición" : "Editar"}
-                          title={isEditing ? "Cancelar edición" : "Editar"}
-                          onClick={() => {
-                            if (!isEditing) {
-                              setDraft({
-                                ...(data as any),
-                                fecha_ingreso: getFechaIngreso(data),
-                              });
-                              setIsEditing(true);
-                            } else {
-                              setIsEditing(false);
-                              setDraft({});
-                            }
-                          }}
-                        >
-                          <Pencil size={16} />
-                        </button>
-                        )}
-
-                        {tituloSeccion("personales", User, "Datos personales")}
-                        <div
-                          className={`${styles.infoGrid} ${
-                            seccionAbierta("personales") ? "" : styles.mpCerrada
-                          }`}
-                        >
-                          <div>
-                            <span className={styles.label}>
-                              Nombre (registro)
-                            </span>
-                            {isEditing ? (
-                              RText("name")
-                            ) : (
-                              <span>{fmt((data as any).name)}</span>
-                            )}
-                          </div>
-                          <div>
-                            <span className={styles.label}>Nombre</span>
-                            {isEditing ? (
-                              RText("nombre_")
-                            ) : (
-                              <span>{fmt((data as any).nombre_)}</span>
-                            )}
-                          </div>
-                          <div>
-                            <span className={styles.label}>Apellido</span>
-                            {isEditing ? (
-                              RText("apellido")
-                            ) : (
-                              <span>{fmt((data as any).apellido)}</span>
-                            )}
-                          </div>
-                          <div>
-                            <span className={styles.label}>Sexo</span>
-                            {isEditing ? (
-                              RSexo("sexo")
-                            ) : (
-                              <span>{fmt((data as any).sexo)}</span>
-                            )}
-                          </div>
-                          <div>
-                            <span className={styles.label}>Documento</span>
-                            {isEditing ? (
-                              RText("documento")
-                            ) : (
-                              <Copiable label="Documento" value={(data as any).documento} enabled={!readOnly}>
-                                {fmt((data as any).documento)}
-                              </Copiable>
-                            )}
-                          </div>
-                          <div>
-                            <span className={styles.label}>CUIT</span>
-                            {isEditing ? (
-                              RText("cuit")
-                            ) : (
-                              <Copiable label="CUIT" value={(data as any).cuit} copy={soloDigitos((data as any).cuit)} enabled={!readOnly}>
-                                {fmt((data as any).cuit)}
-                              </Copiable>
-                            )}
-                          </div>
-                          <div>
-                            <span className={styles.label}>
-                              Fecha de nacimiento
-                            </span>
-                            {isEditing ? (
-                              RDate("fecha_nac")
-                            ) : (
-                              <span>{fmtDate((data as any).fecha_nac)}</span>
-                            )}
-                          </div>
-                          <div>
-                            <span className={styles.label}>Estado</span>
-                            <span>
-                              {(data as any).existe
-                                ? String((data as any).existe).toUpperCase() ===
-                                  "S"
-                                  ? "Activo"
-                                  : "Inactivo"
-                                : "—"}
-                            </span>
-                          </div>
-
-                          <div>
-                            <span className={styles.label}>Provincia</span>
-                            {isEditing ? (
-                              RText("provincia")
-                            ) : (
-                              <span>{fmt((data as any).provincia)}</span>
-                            )}
-                          </div>
-                          <div>
-                            <span className={styles.label}>Localidad</span>
-                            {isEditing ? (
-                              RText("localidad")
-                            ) : (
-                              <span>{fmt((data as any).localidad)}</span>
-                            )}
-                          </div>
-                          <div>
-                            <span className={styles.label}>Código postal</span>
-                            {isEditing ? (
-                              RText("codigo_postal")
-                            ) : (
-                              <span>{fmt((data as any).codigo_postal)}</span>
-                            )}
-                          </div>
-
-                          <div>
-                            <span className={styles.label}>
-                              Domicilio particular
-                              <ReportarBtn
-                                campo="domicilio"
-                                label="Domicilio particular"
-                                valorActual={(data as any).domicilio_particular}
-                              />
-                            </span>
-                            {isEditing ? (
-                              RText("domicilio_particular")
-                            ) : (
-                              <Copiable label="Domicilio" value={(data as any).domicilio_particular} enabled={!readOnly}>
-                                {fmt((data as any).domicilio_particular)}
-                              </Copiable>
-                            )}
-                          </div>
-                          <div>
-                            <span className={styles.label}>
-                              Tel. particular
-                              <ReportarBtn
-                                campo="telefono"
-                                label="Tel. particular"
-                                valorActual={(data as any).tele_particular}
-                              />
-                            </span>
-                            {isEditing ? (
-                              RText("tele_particular")
-                            ) : (
-                              <Copiable label="Teléfono" value={(data as any).tele_particular} enabled={!readOnly}>
-                                {fmt((data as any).tele_particular)}
-                              </Copiable>
-                            )}
-                          </div>
-                          <div>
-                            <span className={styles.label}>
-                              Celular particular
-                              <ReportarBtn
-                                campo="telefono"
-                                label="Celular particular"
-                                valorActual={(data as any).celular_particular}
-                              />
-                            </span>
-                            {isEditing ? (
-                              RText("celular_particular")
-                            ) : (
-                              <Copiable label="Celular" value={(data as any).celular_particular} enabled={!readOnly}>
-                                {fmt((data as any).celular_particular)}
-                              </Copiable>
-                            )}
-                          </div>
-
-                          <div>
-                            <span className={styles.label}>
-                              E-mail particular
-                              <ReportarBtn
-                                campo="email"
-                                label="E-mail particular"
-                                valorActual={(data as any).mail_particular}
-                              />
-                            </span>
-                            {isEditing ? (
-                              RText("mail_particular")
-                            ) : (
-                              <Copiable label="E-mail" value={(data as any).mail_particular} enabled={!readOnly}>
-                                <a
-                                  className={styles.link}
-                                  href={
-                                    (data as any).mail_particular
-                                      ? `mailto:${(data as any).mail_particular}`
-                                      : undefined
-                                  }
-                                >
-                                  {fmt((data as any).mail_particular)}
-                                </a>
-                              </Copiable>
-                            )}
-                          </div>
-
-                          <div>
-                            <span className={styles.label}>
-                              Fecha de Ingreso
-                            </span>
-                            {isEditing ? (
-                              RDate("fecha_ingreso")
-                            ) : (
-                              <span>{fmtDate(getFechaIngreso(data))}</span>
-                            )}
-                          </div>
-                        </div>
-
-                        {tituloSeccion(
-                          "profesionales",
-                          BriefcaseMedical,
-                          "Datos profesionales",
-                          { marginTop: 24 },
-                        )}
-                        <div
-                          className={`${styles.infoGrid} ${
-                            seccionAbierta("profesionales") ? "" : styles.mpCerrada
-                          }`}
-                        >
-                          <div>
-                            <span className={styles.label}>Nº socio</span>
-                            {isEditing ? (
-                              RText("nro_socio")
-                            ) : (
-                              <Copiable label="Nº socio" value={(data as any).nro_socio} enabled={!readOnly}>
-                                {fmt((data as any).nro_socio)}
-                              </Copiable>
-                            )}
-                          </div>
-                          <div>
-                            <span className={styles.label}>Categoría</span>
-                            {isEditing ? (
-                              RText("categoria")
-                            ) : (
-                              <span>{fmt((data as any).categoria)}</span>
-                            )}
-                          </div>
-                          <div>
-                            <span className={styles.label}>Título</span>
-                            {isEditing ? (
-                              RText("titulo")
-                            ) : (
-                              <span>{fmt((data as any).titulo)}</span>
-                            )}
-                          </div>
-                          <div>
-                            <span className={styles.label}>Matrícula prov.</span>
-                            {isEditing ? (
-                              RText("matricula_prov")
-                            ) : (
-                              <Copiable label="Matrícula provincial" value={(data as any).matricula_prov} enabled={!readOnly}>
-                                {fmt((data as any).matricula_prov)}
-                              </Copiable>
-                            )}
-                          </div>
-                          <div>
-                            <span className={styles.label}>Matrícula nac.</span>
-                            {isEditing ? (
-                              RText("matricula_nac")
-                            ) : (
-                              <Copiable label="Matrícula nacional" value={(data as any).matricula_nac} enabled={!readOnly}>
-                                {fmt((data as any).matricula_nac)}
-                              </Copiable>
-                            )}
-                          </div>
-                          <div>
-                            <span className={styles.label}>Fecha recibido</span>
-                            {isEditing ? (
-                              RText("fecha_recibido")
-                            ) : (
-                              <span>{fmt((data as any).fecha_recibido)}</span>
-                            )}
-                          </div>
-                          <div>
-                            <span className={styles.label}>Fecha matrícula</span>
-                            {isEditing ? (
-                              RText("fecha_matricula")
-                            ) : (
-                              <span>{fmt((data as any).fecha_matricula)}</span>
-                            )}
-                          </div>
-                          <div>
-                            <span className={styles.label}>
-                              Domicilio de consulta
-                              <ReportarBtn
-                                campo="domicilio"
-                                label="Domicilio de consulta"
-                                valorActual={(data as any).domicilio_consulta}
-                              />
-                            </span>
-                          </div>
-                          <div>
-                            {isEditing ? (
-                              RText("domicilio_consulta")
-                            ) : (
-                              <Copiable label="Domicilio de consulta" value={(data as any).domicilio_consulta} enabled={!readOnly}>
-                                {fmt((data as any).domicilio_consulta)}
-                              </Copiable>
-                            )}
-                          </div>
-                          <div>
-                            <span className={styles.label}>
-                              Tel. consulta
-                              <ReportarBtn
-                                campo="telefono"
-                                label="Tel. consulta"
-                                valorActual={(data as any).telefono_consulta}
-                              />
-                            </span>
-                            {isEditing ? (
-                              RText("telefono_consulta")
-                            ) : (
-                              <Copiable label="Teléfono de consulta" value={(data as any).telefono_consulta} enabled={!readOnly}>
-                                {fmt((data as any).telefono_consulta)}
-                              </Copiable>
-                            )}
-                          </div>
-                        </div>
-
-                        {tituloSeccion(
-                          "impositivos",
-                          Landmark,
-                          "Datos impositivos",
-                          { marginTop: 24 },
-                        )}
-                        <div
-                          className={`${styles.infoGrid} ${
-                            seccionAbierta("impositivos") ? "" : styles.mpCerrada
-                          }`}
-                        >
-                          <div>
-                            <span className={styles.label}>
-                              Condición impositiva
-                            </span>
-                            {isEditing ? (
-                              RCondicion_impositiva("condicion_impositiva")
-                            ) : (
-                              <span>
-                                {fmt((data as any).condicion_impositiva)}
-                              </span>
-                            )}
-                          </div>
-                          <div>
-                            <span className={styles.label}>ANSSAL</span>
-                            {isEditing ? (
-                              RNumber("anssal")
-                            ) : (
-                              <span>{fmt((data as any).anssal)}</span>
-                            )}
-                          </div>
-                          <div>
-                            <span className={styles.label}>Venc. ANSSAL</span>
-                            {isEditing ? (
-                              RDate("vencimiento_anssal")
-                            ) : (
-                              <span>{fmt((data as any).vencimiento_anssal)}</span>
-                            )}
-                          </div>
-                          <div>
-                            <span className={styles.label}>Malapraxis</span>
-                            {isEditing ? (
-                              RText("malapraxis")
-                            ) : (
-                              <span>{fmt((data as any).malapraxis)}</span>
-                            )}
-                          </div>
-                          <div>
-                            <span className={styles.label}>
-                              Venc. malapraxis
-                            </span>
-                            {isEditing ? (
-                              RDate("vencimiento_malapraxis")
-                            ) : (
-                              <span>
-                                {fmt((data as any).vencimiento_malapraxis)}
-                              </span>
-                            )}
-                          </div>
-                          <div>
-                            <span className={styles.label}>Cobertura</span>
-                            {isEditing ? (
-                              RNumber("cobertura")
-                            ) : (
-                              <span>{fmt((data as any).cobertura)}</span>
-                            )}
-                          </div>
-                          <div>
-                            <span className={styles.label}>Venc. cobertura</span>
-                            {isEditing ? (
-                              RDate("vencimiento_cobertura")
-                            ) : (
-                              <span>
-                                {fmt((data as any).vencimiento_cobertura)}
-                              </span>
-                            )}
-                          </div>
-                          <div>
-                            <span className={styles.label}>CBU</span>
-                            {/* Es el campo contra el que se pagan las liquidaciones: gate propio, independiente de medico:editar. */}
-                            {isEditing && can("medico:editar_bancario") ? (
-                              RText("cbu")
-                            ) : (
-                              <Copiable label="CBU" value={(data as any).cbu} copy={soloDigitos((data as any).cbu)} enabled={!readOnly}>
-                                {fmt((data as any).cbu)}
-                              </Copiable>
-                            )}
-                          </div>
-                          {/* Apunte interno del Colegio sobre el médico: no le corresponde verlo a él, sólo al personal que lo carga. */}
-                          {!readOnly && (
-                            <div>
-                              <span className={styles.label}>Observación</span>
-                              {isEditing ? (
-                                RText("observacion")
-                              ) : (
-                                <span>{fmt((data as any).observacion)}</span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-
-                        {isEditing && (
-                          <div className={styles.editActions}>
-                            <Button
-                              variant="primary"
-                              disabled={saving}
-                              onClick={async () => {
-                                if (!data) return;
-                                try {
-                                  setSaving(true);
-                                  const payload: Record<string, any> = {};
-                                  Object.entries(draft).forEach(([k, v]) => {
-                                    if (v !== undefined) payload[k] = v;
-                                  });
-                                  await updateMedico(
-                                    (data as any).id,
-                                    normalizePatch(payload)
-                                  );
-                                  const rawFresh = (await getMedicoDetail(
-                                    String((data as any).id)
-                                  )) as any;
-                                  const fresh = {
-                                    ...rawFresh,
-                                    fecha_ingreso: getFechaIngreso(rawFresh),
-                                  } as DoctorProfileX;
-                                  setData(fresh);
-                                  setIsEditing(false);
-                                  setDraft({});
-                                } catch (e: any) {
-                                  notify.error(
-                                    e?.message ||
-                                      "No se pudo guardar los cambios."
-                                  );
-                                } finally {
-                                  setSaving(false);
-                                }
-                              }}
-                            >
-                              {saving ? "Guardando…" : "Guardar cambios"}
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              onClick={() => {
-                                setIsEditing(false);
-                                setDraft({});
-                              }}
-                            >
-                              Cancelar
-                            </Button>
-                          </div>
-                        )}
+                        <TabDatos
+                          data={data}
+                          readOnly={readOnly}
+                          editaSuLegajo={editaSuLegajo}
+                          edicion={datos}
+                          reportar={reportar}
+                        />
                       </motion.div>
                     )}
 
@@ -1693,69 +311,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                         exit={{ opacity: 0, y: 8 }}
                         className={styles.tabBody}
                       >
-                        <div className={styles.docsHeaderInline}>
-                          <h5 className={styles.section}>Documentación</h5>
-                          <div className={styles.docActionsRight}>
-                            {!readOnly && can("medico:documento") && (
-                            <Button
-                              variant="ghost"
-                              onClick={() => {
-                                setDocFile(null);
-                                setDocCustom("");
-                                setDocLabel(labelOptions[0] || "attach_titulo");
-                                setDocOpen(true);
-                              }}
-                            >
-                              <Plus size={16} />
-                              &nbsp;Agregar documento
-                            </Button>
-                            )}
-                          </div>
-                        </div>
-
-                        {docsLoading ? (
-                          <p className={styles.muted}>Cargando…</p>
-                        ) : docs.length === 0 ? (
-                          <p className={styles.muted}>No hay documentos.</p>
-                        ) : (
-                          <ul className={styles.docList}>
-                            {docs.map((doc) => (
-                              <li key={doc.id} className={styles.docItem}>
-                                <div>
-                                  <p className={styles.docLabel}>
-                                    {prettyFromAnyLabel(doc.label)}
-                                  </p>
-                                  <p className={styles.docName}>
-                                    {doc.file_name}
-                                  </p>
-                                </div>
-                                <div className={styles.docActions}>
-                                  <Button
-                                    variant="primary"
-                                    size="sm"
-                                    onClick={() =>
-                                      abrirAdjunto(doc.url).catch((e) =>
-                                        notify.error(e.message)
-                                      )
-                                    }
-                                  >
-                                    Descargar
-                                  </Button>
-                                  {!readOnly && can("medico:documento") && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    style={{ marginLeft: 8 }}
-                                    onClick={() => askDeleteDoc(doc)}
-                                  >
-                                    Eliminar
-                                  </Button>
-                                  )}
-                                </div>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
+                        <TabDocumentos readOnly={readOnly} documentos={documentos} />
                       </motion.div>
                     )}
 
@@ -1767,117 +323,10 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                         exit={{ opacity: 0, y: 8 }}
                         className={styles.tabBody}
                       >
-                        <div className={styles.conceptsHeader}>
-                          <h5 className={styles.section}>
-                            Especialidades adheridas
-                          </h5>
-                          {!readOnly && (
-                          <Button
-                            variant="primary"
-                            onClick={() => {
-                              setAssocEspOpen(true);
-                              setAssocEspId("");
-                              setAssocEspResol("");
-                              setAssocEspDate(null);
-                              setAssocEspFile(null);
-                            }}
-                          >
-                            <Plus size={16} />
-                            &nbsp;Agregar especialidad
-                          </Button>
-                          )}
-                        </div>
-
-                        {espLoading && (
-                          <p className={styles.muted}>
-                            Cargando especialidades…
-                          </p>
-                        )}
-                        {especErr && (
-                          <p className={styles.errorInline}>{especErr}</p>
-                        )}
-
-                        {!espLoading && !especErr && (
-                          <div className={styles.tableWrap}>
-                            <Tabla className={styles.table}>
-                              <thead>
-                                <tr>
-                                  <th>ID colegio</th>
-                                  <th>Especialidad</th>
-                                  <th>N° resolución</th>
-                                  <th>Fecha resolución</th>
-                                  <th>Adjunto</th>
-                                  {!readOnly && <th style={{ width: 120 }}>Acciones</th>}
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {(especs || []).length === 0 ? (
-                                  <tr>
-                                    <td
-                                      colSpan={readOnly ? 5 : 6}
-                                      className={styles.mutedCenter}
-                                    >
-                                      Sin especialidades asociadas.
-                                    </td>
-                                  </tr>
-                                ) : (
-                                  especs.map((r) => {
-                                    const removing = rmEspBusy === r.id;
-                                    return (
-                                      <tr key={r.id}>
-                                        <td>{r.id}</td>
-                                        <td>{r.nombre ?? `ID ${r.id}`}</td>
-                                        <td>{r.n_resolucion ?? "—"}</td>
-                                        <td>
-                                          {r.fecha_resolucion
-                                            ? new Date(
-                                                r.fecha_resolucion
-                                              ).toLocaleDateString("es-AR")
-                                            : "—"}
-                                        </td>
-                                        <td>
-                                          {r.adjunto_url ? (
-                                            <Button
-                                              size="sm"
-                                              variant="primary"
-                                              onClick={() => {
-                                                if (r.adjunto_url)
-                                                  abrirAdjunto(r.adjunto_url).catch((e) =>
-                                                    notify.error(e.message)
-                                                  );
-                                              }}
-                                              title="Abrir adjunto"
-                                              style={{ padding: "4px 8px" }}
-                                            >
-                                              Ver adjunto
-                                            </Button>
-                                          ) : (
-                                            "—"
-                                          )}
-                                        </td>
-                                        {!readOnly && (
-                                        <td>
-                                          <Button
-                                            size="sm"
-                                            variant="danger"
-                                            disabled={removing}
-                                            onClick={() => {
-                                              setEspToDelete(r);
-                                              setDelEspOpen(true);
-                                            }}
-                                          >
-                                            {removing ? "Quitando…" : "Quitar"}
-                                          </Button>
-                                        </td>
-                                        )}
-                                      </tr>
-                                    );
-                                  })
-                                )}
-                              </tbody>
-                            </Tabla>
-                          </div>
-                        )}
+                        <TabEspecialidades
+                          readOnly={readOnly}
+                          especialidades={especialidades}
+                        />
                       </motion.div>
                     )}
 
@@ -1889,124 +338,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                         exit={{ opacity: 0, y: 8 }}
                         className={styles.tabBody}
                       >
-                        <div className={styles.conceptsHeader}>
-                          <h5 className={styles.section}>Conceptos asignados</h5>
-                          {!newRowOpen && (
-                            <Button
-                              variant="primary"
-                              onClick={() => {
-                                setNewRowOpen(true);
-                                setNewConceptId(null);
-                                setNewPagadorId(null);
-                              }}
-                            >
-                              <Plus size={16} />
-                              &nbsp;Agregar
-                            </Button>
-                          )}
-                        </div>
-
-                        {sdLoading && <p className={styles.muted}>Cargando conceptos…</p>}
-                        {sdError && <p className={styles.errorInline}>{sdError}</p>}
-
-                        {!sdLoading && !sdError && (
-                          <div className={styles.tableWrap}>
-                            <Tabla className={styles.table}>
-                              <thead>
-                                <tr>
-                                  <th style={{ width: "40%" }}>Concepto</th>
-                                  <th style={{ width: "40%" }}>Pagador</th>
-                                  <th style={{ width: 120 }}>Acciones</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {newRowOpen && (
-                                  <tr>
-                                    <td>
-                                      <AppSearchSelect
-                                        options={conceptOptions}
-                                        value={newConceptId}
-                                        onChange={(v) => setNewConceptId(v as number | null)}
-                                      />
-                                    </td>
-                                    <td>
-                                      <PagadorSelect
-                                        value={newPagadorId}
-                                        onChange={(v) => setNewPagadorId(v)}
-                                      />
-                                    </td>
-                                    <td>
-                                      <div style={{ display: "flex", gap: 6 }}>
-                                        <Button
-                                          variant="primary"
-                                          disabled={!newConceptId || savingNew}
-                                          onClick={handleSaveNewSocioDescuento}
-                                        >
-                                          {savingNew ? "Guardando…" : "Guardar"}
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          onClick={() => {
-                                            setNewRowOpen(false);
-                                            setNewConceptId(null);
-                                            setNewPagadorId(null);
-                                          }}
-                                        >
-                                          Cancelar
-                                        </Button>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                )}
-                                {sociosDescuento.length === 0 && !newRowOpen ? (
-                                  <tr>
-                                    <td colSpan={3} className={styles.mutedCenter}>
-                                      Sin conceptos asignados.
-                                    </td>
-                                  </tr>
-                                ) : (
-                                  sociosDescuento.map((sd) => (
-                                    <tr key={sd.id}>
-                                      <td style={{ minWidth: 200 }}>
-                                        <AppSearchSelect
-                                          options={conceptOptions}
-                                          value={sd.descuento_id}
-                                          disabled={patchingId === sd.id}
-                                          onChange={(v) => {
-                                            if (v != null && Number(v) !== sd.descuento_id) {
-                                              handlePatchSocioDescuento(sd.id, "descuento_id", Number(v));
-                                            }
-                                          }}
-                                        />
-                                      </td>
-                                      <td style={{ minWidth: 200 }}>
-                                        <PagadorSelect
-                                          value={sd.pagador_medico_id}
-                                          disabled={patchingId === sd.id}
-                                          onChange={(v) => {
-                                            if (v !== sd.pagador_medico_id) {
-                                              handlePatchSocioDescuento(sd.id, "pagador_medico_id", v);
-                                            }
-                                          }}
-                                        />
-                                      </td>
-                                      <td>
-                                        <button
-                                          className={styles.iconButton}
-                                          title="Eliminar"
-                                          disabled={deletingId === sd.id}
-                                          onClick={() => handleDeleteSocioDescuento(sd.id)}
-                                        >
-                                          <Trash2 size={15} />
-                                        </button>
-                                      </td>
-                                    </tr>
-                                  ))
-                                )}
-                              </tbody>
-                            </Tabla>
-                          </div>
-                        )}
+                        <TabConceptos conceptos={conceptos} />
                       </motion.div>
                     )}
 
@@ -2036,16 +368,16 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                       >
                         <Credencial
                           nombre={
-                            (data as any).apellido && (data as any).nombre_
-                              ? `${String((data as any).apellido).toUpperCase()} ${(data as any).nombre_}`
-                              : ((data as any).name ?? "")
+                            data.apellido && data.nombre_
+                              ? `${String(data.apellido).toUpperCase()} ${data.nombre_}`
+                              : (data.name ?? "")
                           }
-                          sexo={(data as any).sexo}
-                          documento={(data as any).documento}
+                          sexo={data.sexo}
+                          documento={data.documento}
                           // Primera especialidad adherida; si no tiene, no se muestra.
                           especialidad={especs[0]?.nombre ?? null}
                           activo={
-                            String((data as any).existe ?? "").toUpperCase() === "S"
+                            String(data.existe ?? "").toUpperCase() === "S"
                           }
                           esMedico={legajoEsMedico}
                         />
@@ -2078,7 +410,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                       >
                         <Suspense fallback={null}>
                           <ReportesMedico
-                            nroSocio={String((data as any).nro_socio ?? medicoId)}
+                            nroSocio={String(data.nro_socio ?? medicoId)}
                           />
                         </Suspense>
                       </motion.div>
@@ -2093,124 +425,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                           exit={{ opacity: 0, y: 8 }}
                           className={`${styles.tabBody} ${styles.perms}`}
                         >
-                          <div className={styles.tableWrap}>
-                            <h5 className={styles.section}>Roles</h5>
-                            <Tabla className={styles.table}>
-                              <tbody>
-                                {rbacLoading ? (
-                                  <tr>
-                                    <td className={styles.mutedCenter}>
-                                      Cargando…
-                                    </td>
-                                  </tr>
-                                ) : rolesAll.length === 0 ? (
-                                  <tr>
-                                    <td className={styles.mutedCenter}>
-                                      Sin roles
-                                    </td>
-                                  </tr>
-                                ) : (
-                                  rolesAll.map((r) => {
-                                    const checked = userRoles.includes(r.name);
-                                    return (
-                                      <tr key={r.name}>
-                                        <td>
-                                          <input
-                                            type="checkbox"
-                                            checked={checked}
-                                            onChange={async (e) => {
-                                              if (e.target.checked)
-                                                await addUserRole(
-                                                  medicoId,
-                                                  r.name
-                                                );
-                                              else
-                                                await delUserRole(
-                                                  medicoId,
-                                                  r.name
-                                                );
-                                              const rs = await getUserRoles(
-                                                medicoId
-                                              );
-                                              setUserRoles(
-                                                rs.map((x) => x.name)
-                                              );
-                                              const eff = await getEffective(
-                                                medicoId
-                                              );
-                                              setEffective(eff.permissions);
-                                            }}
-                                          />
-                                        </td>
-                                        <td>
-                                          {r.name.charAt(0).toUpperCase() +
-                                            r.name.slice(1)}
-                                        </td>
-                                      </tr>
-                                    );
-                                  })
-                                )}
-                              </tbody>
-                            </Tabla>
-                          </div>
-
-                          <div className={styles.tableWrap}>
-                            <h5 className={styles.section}>Permisos</h5>
-                            <Tabla className={styles.table}>
-                              <tbody>
-                                {rbacLoading ? (
-                                  <tr>
-                                    <td className={styles.mutedCenter}>
-                                      Cargando…
-                                    </td>
-                                  </tr>
-                                ) : permList.length === 0 ? (
-                                  <tr>
-                                    <td className={styles.mutedCenter}>
-                                      Sin permisos
-                                    </td>
-                                  </tr>
-                                ) : (
-                                  permList.map((p) => {
-                                    const has = effective.includes(p.code);
-                                    return (
-                                      <tr key={p.code}>
-                                        <td>{p.description}</td>
-                                        <td style={{ textAlign: "right" }}>
-                                          <input
-                                            type="checkbox"
-                                            checked={has}
-                                            onChange={async (e) => {
-                                              await setOverride(
-                                                medicoId,
-                                                p.code,
-                                                e.target.checked
-                                              );
-                                              const eff = await getEffective(
-                                                medicoId
-                                              );
-                                              setEffective(eff.permissions);
-                                              const ovs = await getOverrides(
-                                                medicoId
-                                              );
-                                              const map: Record<
-                                                string,
-                                                boolean
-                                              > = {};
-                                              ovs.forEach(
-                                                (o) => (map[o.code] = o.allow)
-                                              );
-                                              setOverrides(map);
-                                            }}
-                                          />
-                                        </td>
-                                      </tr>
-                                    );
-                                  })
-                                )}
-                              </tbody>
-                            </Tabla>
-                          </div>
+                          <TabPermisos permisos={permisos} />
                         </motion.div>
                       </RequirePermission>
                     )}
@@ -2222,216 +437,13 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
         </motion.div>
       </div>
 
-      <ActionModal
-        open={docOpen}
-        onClose={() => setDocOpen(false)}
-        size="sm"
-        title="Agregar documento"
-        confirmText="Subir"
-        confirmDisabled={!docFile || (docLabel === "otro" && !docCustom.trim())}
-        onConfirm={async () => {
-          try {
-            await tryUploadDocumento();
-            notify.success(
-              "Documento agregado",
-              "El archivo se subió correctamente."
-            );
-          } catch (e: any) {
-            notify.error("No se pudo agregar el documento", e?.message);
-            throw e;
-          }
-        }}
-      >
-        <div className={styles.rsField}>
-          <label>Tipo de documento</label>
-          <select
-            className={styles.select}
-            value={docLabel}
-            onChange={(e) => setDocLabel(e.target.value)}
-          >
-            {(labelOptions || DEFAULT_LABELS).map((l) => (
-              <option key={l} value={l}>
-                {formatOption(l)}
-              </option>
-            ))}
-          </select>
-        </div>
+      <ModalesDocumentos medicoId={medicoId} documentos={documentos} />
 
-        {docLabel === "otro" && (
-          <div className={styles.rsField}>
-            <label>Descripción (label)</label>
-            <input
-              className={styles.input}
-              value={docCustom}
-              onChange={(e) => setDocCustom(e.target.value)}
-              placeholder="Ej: constancia_especial"
-            />
-            <small className={styles.muted}>
-              Se guardará como etiqueta{" "}
-              <code>
-                {docCustom.trim().toLowerCase().replace(/\s+/g, "_") ||
-                  "constancia_especial"}
-              </code>
-            </small>
-          </div>
-        )}
-
-        <div className={styles.rsField}>
-          <label>Archivo</label>
-          <input
-            type="file"
-            accept=".pdf,.jpg,.jpeg,.png"
-            onChange={(e) => setDocFile(e.target.files?.[0] ?? null)}
-          />
-        </div>
-      </ActionModal>
-
-      <ActionModal
-        open={replaceOpen}
-        onClose={() => {
-          setReplaceOpen(false);
-          setPendingUpload(null);
-        }}
-        size="xs"
-        title="Reemplazar documento"
-        confirmText="Reemplazar"
-        onConfirm={async () => {
-          try {
-            await handleConfirmReplace();
-            notify.success("Documento reemplazado", "Se actualizó el archivo.");
-          } catch (e: any) {
-            notify.error("No se pudo reemplazar el documento", e?.message);
-            throw e;
-          }
-        }}
-      >
-        <p style={{ lineHeight: 1.5 }}>
-          Ya existe un documento del tipo <strong>{replacePretty}</strong>. Si
-          continuás, el archivo actual será <strong>reemplazado</strong>.
-        </p>
-        <p>¿Querés continuar?</p>
-      </ActionModal>
-
-      <ActionModal
-        open={delDocOpen}
-        onClose={() => setDelDocOpen(false)}
-        size="xs"
-        title="Eliminar documento"
-        confirmText="Eliminar"
-        onConfirm={async () => {
-          if (!docToDelete) return;
-          try {
-            const normalized = normalizeForCompare(docToDelete.label);
-            const attachKey = ATTACH_KEYS.find(
-              (k) => stripAttach(k) === normalized
-            );
-            if (attachKey) {
-              await clearMedicoAttach(medicoId, attachKey);
-            }
-            await deleteMedicoDocumento(medicoId, docToDelete.id);
-            await reloadDocs();
-            setDocToDelete(null);
-            notify.success("Documento eliminado");
-          } catch (e: any) {
-            notify.error("No se pudo eliminar el documento", e?.message);
-            throw e;
-          }
-        }}
-      >
-        <p>
-          ¿Seguro que querés eliminar{" "}
-          <strong>
-            {docToDelete
-              ? prettyFromAnyLabel(docToDelete.label)
-              : "este documento"}
-          </strong>
-          ?
-        </p>
-      </ActionModal>
-
-      <ActionModal
-        open={assocEspOpen}
-        onClose={() => setAssocEspOpen(false)}
-        size="lg"
-        title="Agregar especialidad"
-        confirmText="Asociar"
-        confirmDisabled={!assocEspId}
-        onConfirm={async () => {
-          if (!id || !assocEspId) return;
-          try {
-            let adjuntoId: number | null = null;
-            if (assocEspFile) {
-              adjuntoId = await uploadDocumento(id, assocEspFile);
-            }
-            await addMedicoEspecialidad(id, {
-              id_colegio: Number(assocEspId),
-              n_resolucion: assocEspResol?.trim() || null,
-              fecha_resolucion: toYmd(assocEspDate),
-              adjunto_id: adjuntoId,
-            });
-            const rr = await getMedicoEspecialidades(medicoId);
-            setEspecs(rr);
-            setAssocEspId("");
-            setAssocEspResol("");
-            setAssocEspDate(null);
-            setAssocEspFile(null);
-            notify.success("Especialidad asociada");
-          } catch (e: any) {
-            notify.error("No se pudo asociar la especialidad", e?.message);
-            throw e;
-          }
-        }}
-      >
-        <div className={styles.modalGrid}>
-          <div className={styles.field}>
-            <label>Especialidad</label>
-            <select
-              className={styles.select}
-              value={assocEspId}
-              onChange={(e) => setAssocEspId(e.target.value)}
-            >
-              <option value="">Seleccionar…</option>
-              {espOptions.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className={styles.field}>
-            <label>N° de resolución</label>
-            <input
-              className={styles.input}
-              value={assocEspResol}
-              onChange={(e) => setAssocEspResol(e.target.value)}
-              placeholder="Ej: 12345/2024"
-            />
-          </div>
-
-          <div className={styles.field}>
-            <label>Fecha de resolución</label>
-            <DatePicker
-              selected={assocEspDate}
-              onChange={(d) => setAssocEspDate(d)}
-              className={styles.dateInput}
-              dateFormat="dd-MM-yyyy"
-              placeholderText="dd-MM-aaaa"
-              closeOnScroll
-              showPopperArrow={false}
-            />
-          </div>
-
-          <div className={styles.field}>
-            <label>Adjunto (PDF/JPG/PNG)</label>
-            <input
-              type="file"
-              accept=".pdf,.jpg,.jpeg,.png"
-              onChange={(e) => setAssocEspFile(e.target.files?.[0] ?? null)}
-            />
-          </div>
-        </div>
-      </ActionModal>
+      <ModalesEspecialidades
+        id={id}
+        medicoId={medicoId}
+        especialidades={especialidades}
+      />
 
       <ActionModal
         open={delOpen}
@@ -2445,8 +457,8 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
             notify.success("Socio eliminado");
             setDelOpen(false);
             nav("/doctors");
-          } catch (e: any) {
-            notify.error("No se pudo eliminar el socio", e?.message);
+          } catch (e: unknown) {
+            notify.error("No se pudo eliminar el socio", mensajeDe(e));
             throw e;
           }
         }}
@@ -2459,46 +471,6 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
           </p>
           <p>¿Querés continuar?</p>
         </div>
-      </ActionModal>
-
-      <ActionModal
-        open={delEspOpen}
-        onClose={() => {
-          setDelEspOpen(false);
-          setEspToDelete(null);
-        }}
-        size="xs"
-        title="Quitar especialidad"
-        confirmText="Confirmar"
-        onConfirm={async () => {
-          if (!id || !espToDelete) return;
-          try {
-            await removeMedicoEspecialidad(id, espToDelete.id);
-            const rr = await getMedicoEspecialidades(medicoId);
-            setEspecs(rr);
-            setEspToDelete(null);
-
-            notify.success("Especialidad quitada");
-          } catch (e: any) {
-            notify.error("No se pudo quitar la especialidad", e?.message);
-            throw e;
-          }
-        }}
-      >
-        <p style={{ lineHeight: 1.5 }}>
-          Vas a quitar la especialidad{" "}
-          <strong>
-            {espToDelete
-              ? espToDelete.nombre ?? `ID ${espToDelete.id}`
-              : "seleccionada"}
-          </strong>{" "}
-          (ID colegio: {espToDelete?.id}).
-        </p>
-        <p style={{ marginTop: 8 }}>
-          Esta acción solo desvincula la especialidad del profesional; no elimina
-          la especialidad del catálogo.
-        </p>
-        <p style={{ marginTop: 8 }}>¿Querés continuar?</p>
       </ActionModal>
 
       <ReportarCambioModal

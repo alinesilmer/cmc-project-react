@@ -1,0 +1,14 @@
+@use "@/app/styles/all.scss" as *;
+
+
+.colAccion {
+  width: 1%;
+  text-align: right !important;
+  white-space: nowrap;
+}
+
+.noResults {
+  padding: $spacing-10 $spacing-4 !important;
+  text-align: center;
+  color: $gray-500 !important;
+}

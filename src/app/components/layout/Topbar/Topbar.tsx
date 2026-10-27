@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ChevronDown, CircleUserRound, LogOut, Menu, Search } from "lucide-react";
 
 import styles from "./Topbar.module.scss";
-import { useAuth } from "@/app/auth/AuthProvider";
+import { useAuth } from "@/app/auth/useAuth";
 import { esOrganizacion, isMedico } from "@/app/auth/roles";
 import { usePermisos } from "@/app/auth/usePermisos";
 import { hasScope } from "@/app/auth/scopes";

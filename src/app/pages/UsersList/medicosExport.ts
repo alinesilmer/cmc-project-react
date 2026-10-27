@@ -189,7 +189,7 @@ function especialidadesDe(row: MedicoRow): string[] {
   ];
   const names: string[] = [];
   for (const k of nroKeys) {
-    const v = (row as any)?.[k];
+    const v = row?.[k];
     if (!v || v === 0 || v === "0") continue;
     const name = getEspecialidadNameById(v);
     names.push(name ?? String(v));
@@ -231,7 +231,7 @@ export function pickValue(row: MedicoRow, canonicalKey: ExportColumnKey): string
 
   const candidates = KEYMAP[canonicalKey] ?? [canonicalKey];
   for (const k of candidates) {
-    const v = (row as any)?.[k];
+    const v = row?.[k];
     if (!isNil(v)) return toCleanString(v);
   }
   return "";

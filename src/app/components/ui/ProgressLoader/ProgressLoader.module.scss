@@ -15,7 +15,6 @@
 .spinner {
   flex: none;
   color: $primary-blue;
-  animation: girar 0.9s linear infinite;
 }
 
 .titulo {
@@ -66,11 +65,6 @@
   }
 }
 
-@keyframes girar {
-  to {
-    transform: rotate(360deg);
-  }
-}
 
 @keyframes ir-y-venir {
   0% {

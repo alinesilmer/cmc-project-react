@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Receipt } from "lucide-react";
 
-import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
+import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import { listarPeriodosPropios, listarPrestaciones } from "../api";
 import { detailMessage } from "../types";
 import type { PeriodoPropio, PrestacionRead } from "../types";
 import TablaPorObraSocial from "../components/TablaPorObraSocial";
 import Franja from "@/app/components/layout/Franja/Franja";
 import styles from "./MiRecepcion.module.scss";
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 
 // Mismo tope que "detalle-medico": el backend pagina de a 200 (GET /prestaciones: limit <= 200), esto es sólo un freno de seguridad.
 const PAGE_LIMIT = 200;
@@ -33,9 +34,9 @@ const MiRecepcion: React.FC = () => {
         setPeriodos(lista);
         if (lista.length > 0) setPeriodoElegido(lista[0].periodo);
       })
-      .catch((e: any) => {
+      .catch((e: unknown) => {
         if (cancelado) return;
-        notify(detailMessage(e?.response?.data?.detail) || "No pudimos traer tus períodos.", "error");
+        notify(detailMessage(comoErrorApi(e).response?.data?.detail) || "No pudimos traer tus períodos.", "error");
         setPeriodos([]);
       })
       .finally(() => {
@@ -68,9 +69,10 @@ const MiRecepcion: React.FC = () => {
           offset += PAGE_LIMIT;
         }
         if (!cancelado) setRows(acumulado);
-      } catch (e: any) {
+      } catch (e) {
+        const err = comoErrorApi(e);
         if (!cancelado) {
-          notify(detailMessage(e?.response?.data?.detail) || "No pudimos traer el detalle.", "error");
+          notify(detailMessage(err?.response?.data?.detail) || "No pudimos traer el detalle.", "error");
           setRows([]);
         }
       } finally {

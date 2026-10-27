@@ -2,7 +2,7 @@ import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useSt
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ArrowRightCircle, ArrowLeftCircle, Trash2 } from "lucide-react";
 
-import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
+import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import { usePermisos } from "@/app/auth/usePermisos";
 import {
   fetchFacturaDetalle, marcarRevisado, anularPrestacion,
@@ -32,8 +32,10 @@ import PestanaDocumentacion from "./documentacion/PestanaDocumentacion";
 import { sumaEquipo, sumarTotales } from "./totales";
 import type { GrupoAcciones, VistaGrupo } from "./GrupoTabla";
 import { inferirEquipos } from "./equipo";
-import styles from "./FacturaDetalle.module.scss";
+import comun from "./Comun.module.scss";
+import styles from "./FacturaDetalle.module.scss";;
 import Tabla from "@/app/components/ui/Tabla/Tabla";
+import { comoErrorApi, detalleObjeto } from "@/app/shared/lib/httpErrors";
 
 // Set vacío compartido: los grupos sin filas ocupadas reciben siempre esta misma referencia y su memo no se invalida.
 const SIN_OCUPADAS: ReadonlySet<number> = new Set();
@@ -192,8 +194,9 @@ const FacturaDetalle: React.FC = () => {
     try {
       const data = await fetchFacturaDetalle(id);
       setDetalle(data);
-    } catch (e: any) {
-      const detail = e?.response?.data?.detail;
+    } catch (e) {
+      const err = comoErrorApi(e);
+      const detail = err?.response?.data?.detail;
       setError(typeof detail === "string" ? detail : "No se pudo cargar el detalle de la factura.");
       setDetalle(null);
     } finally {
@@ -281,12 +284,13 @@ const FacturaDetalle: React.FC = () => {
         notify("Prestación anulada.");
         setDetalle((cur) => cur ? quitarPrestaciones(cur, [p.id]) : cur);
         onSuccess();
-      } catch (e: any) {
-        const status = e?.response?.status;
+      } catch (e) {
+        const err = comoErrorApi(e);
+        const status = err?.response?.status;
         if (status === 403) {
           notify("Solo podés anular tus propias prestaciones.", "error");
         } else {
-          const detail = e?.response?.data?.detail;
+          const detail = err?.response?.data?.detail;
           notify(typeof detail === "string" ? detail : "No se pudo anular.", "error");
         }
       }
@@ -305,9 +309,10 @@ const FacturaDetalle: React.FC = () => {
         notify(`Prestación movida al período ${result.periodo_destino}.`);
         setDetalle((cur) => cur ? quitarPrestaciones(cur, result.ids_movidos) : cur);
         onSuccess();
-      } catch (e: any) {
-        const detail = e?.response?.data?.detail;
-        const msg = typeof detail === "string" ? detail : detail?.mensaje ?? "No se pudo mover la prestación.";
+      } catch (e) {
+        const err = comoErrorApi(e);
+        const detail = err.response?.data?.detail;
+        const msg = typeof detail === "string" ? detail : detalleObjeto(e)?.mensaje ?? "No se pudo mover la prestación.";
         notify(msg, "error");
       }
     });
@@ -319,8 +324,9 @@ const FacturaDetalle: React.FC = () => {
         await marcarRevisado({ marcados: ids });
         notify(`Se marcaron ${ids.length} prestación${ids.length !== 1 ? "es" : ""} como auditadas.`);
         setDetalle((cur) => cur ? marcarRevisadoLocal(cur, ids, true) : cur);
-      } catch (e: any) {
-        notify(detailMessage(e?.response?.data?.detail) || "No se pudo marcar el grupo.", "error");
+      } catch (e) {
+        const err = comoErrorApi(e);
+        notify(detailMessage(err?.response?.data?.detail) || "No se pudo marcar el grupo.", "error");
       }
     });
   };
@@ -332,8 +338,9 @@ const FacturaDetalle: React.FC = () => {
         await marcarRevisado({ desmarcados: ids });
         notify(`Se desmarcaron ${ids.length} prestación${ids.length !== 1 ? "es" : ""}.`);
         setDetalle((cur) => cur ? marcarRevisadoLocal(cur, ids, false) : cur);
-      } catch (e: any) {
-        notify(detailMessage(e?.response?.data?.detail) || "No se pudo desmarcar el grupo.", "error");
+      } catch (e) {
+        const err = comoErrorApi(e);
+        notify(detailMessage(err?.response?.data?.detail) || "No se pudo desmarcar el grupo.", "error");
       }
     });
   };
@@ -364,9 +371,10 @@ const FacturaDetalle: React.FC = () => {
         notify(`Se movieron ${result.ids_movidos.length} prestación${result.ids_movidos.length !== 1 ? "es" : ""} al período ${result.periodo_destino}.`);
         setDetalle((cur) => cur ? quitarPrestaciones(cur, result.ids_movidos) : cur);
         onSuccess();
-      } catch (e: any) {
-        const detail = e?.response?.data?.detail;
-        const msg = typeof detail === "string" ? detail : detail?.mensaje ?? "No se pudo mover el grupo.";
+      } catch (e) {
+        const err = comoErrorApi(e);
+        const detail = err.response?.data?.detail;
+        const msg = typeof detail === "string" ? detail : detalleObjeto(e)?.mensaje ?? "No se pudo mover el grupo.";
         notify(msg, "error");
       }
     });
@@ -701,7 +709,7 @@ const FacturaDetalle: React.FC = () => {
         )}
 
         <div className={styles.tableWrap}>
-          <Tabla className={`${styles.table} ${styles.tablaEncabezado}`} style={barraCompacta ? { top: 65 + ALTO_BARRA_COMPACTA } : undefined}>
+          <Tabla className={`${comun.table} ${styles.tablaEncabezado}`} style={barraCompacta ? { top: 65 + ALTO_BARRA_COMPACTA } : undefined}>
             <colgroup>
               {columnasConPeso.map((c) => <col key={c.id} style={{ width: `${c.pct}%` }} />)}
             </colgroup>

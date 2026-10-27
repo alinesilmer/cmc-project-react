@@ -159,19 +159,3 @@
   font-weight: $font-weight-semibold;
   color: $primary-blue;
 }
-
-/** Paginado de la tabla de resultado. */
-.paginado {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: $spacing-4;
-  margin-top: $spacing-4;
-  flex-wrap: wrap;
-}
-
-.paginaActual {
-  font-size: $font-size-sm;
-  color: $gray-600;
-  font-variant-numeric: tabular-nums;
-}

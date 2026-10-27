@@ -12,9 +12,16 @@
   padding: $spacing-6;
   background: rgba($primary-blue-darker, 0.55);
   backdrop-filter: blur(2px);
+  animation: aparecer 0.16s ease-out;
 
   @media (max-width: $breakpoint-sm) {
     padding: $spacing-3;
+  }
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
   }
 }
 
@@ -26,4 +33,12 @@
   background: $white;
   border-radius: $radio-lg;
   box-shadow: 0 18px 50px rgba($primary-blue-darker, 0.32);
+  animation: $anim-scale-in 0.16s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fondo,
+  :where(.panel) {
+    animation: none;
+  }
 }

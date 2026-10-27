@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Download, FileSpreadsheet, Loader2 } from "lucide-react";
+import { Download, FileSpreadsheet } from "lucide-react";
 
 import { descargarPlanoBoreal, listarFacturas } from "../api";
 import type { FacturaRead } from "../types";
@@ -8,6 +8,7 @@ import { saveAs } from "@/app/shared/lib/fileSaver";
 import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 // Mismo formato que las demás herramientas de exportación de Facturación.
 import styles from "../TxtUnne/TxtUnne.module.scss";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
 
 const OBRA_SOCIAL_BOREAL = "285";
 
@@ -131,7 +132,7 @@ export default function PlanoBoreal() {
 
             <div className={styles.acciones}>
               <button type="button" className={styles.btn} disabled={!factura || generando} onClick={generar}>
-                {generando ? <Loader2 size={16} className={styles.girando} /> : <Download size={16} />}
+                {generando ? <Cargando size={16} /> : <Download size={16} />}
                 {generando ? "Generando…" : "Descargar Excel"}
               </button>
               {hecho && <span className={styles.ok}>{hecho}</span>}

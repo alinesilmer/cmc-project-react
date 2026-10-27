@@ -132,6 +132,4 @@ $shadow-sm:  0 1px 4px rgba(0, 0, 0, .06);
   &:disabled { opacity: .55; cursor: default; }
 }
 
-.girando { animation: girar 0.9s linear infinite; }
 
-@keyframes girar { to { transform: rotate(360deg); } }

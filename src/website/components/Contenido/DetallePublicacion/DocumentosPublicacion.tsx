@@ -1,8 +1,8 @@
 import { Download, ExternalLink } from "lucide-react";
 import Button from "../../UI/Button/Button";
 import IconoArchivo from "../../UI/IconoArchivo/IconoArchivo";
-import { agruparPorTipo, nombreVisible } from "../../../lib/documentos";
-import type { DocumentoNoticia } from "../../../types";
+import { agruparPorTipo, nombreVisible } from "@/website/lib/documentos";
+import type { DocumentoNoticia } from "@/website/types";
 import styles from "./DocumentosPublicacion.module.scss";
 
 type Props = { documentos: DocumentoNoticia[] };

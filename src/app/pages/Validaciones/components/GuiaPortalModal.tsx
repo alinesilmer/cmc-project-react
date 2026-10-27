@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Copy, ExternalLink, Info, Loader2, X } from "lucide-react";
+import { Check, Copy, ExternalLink, Info, X } from "lucide-react";
 
 import { getCredencialesPortal } from "../validaciones.api";
 import { iniciales } from "../validaciones.types";
 import type { ObraSocialConfig } from "../validaciones.types";
 import s from "./GuiaPortalModal.module.scss";
 import MarcoModal from "@/app/components/ui/MarcoModal/MarcoModal";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
 
 interface Props {
   os: ObraSocialConfig;
@@ -86,7 +87,7 @@ export default function GuiaPortalModal({ os, onClose }: Props) {
             <div className={s.credBox}>
               {credenciales.isPending ? (
                 <span className={s.credEstado}>
-                  <Loader2 size={14} className={s.credGirando} aria-hidden="true" />
+                  <Cargando size={14} aria-hidden="true" />
                   Cargando…
                 </span>
               ) : credenciales.isError || !credenciales.data?.length ? (

@@ -1,0 +1,230 @@
+@use "@/app/styles/all.scss" as *;
+
+// ─── Warning box ──────────────────────────────────────────────────────────────
+.warningBox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  background: $cuaderno-papel;
+  border: 1px solid $tono-amarillo-100;
+  border-radius: $radio-sm;
+  font-size: 0.82rem;
+  color: $tono-naranja-550;
+  line-height: 1.5;
+}
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+
+// ─── Toast ────────────────────────────────────────────────────────────────────
+.toast {
+  position: fixed;
+  bottom: 1.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: $radio-sm;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: $shadow-md;
+  z-index: 500;
+  white-space: nowrap;
+}
+.toastSuccess { background: $tono-verde-550; color: $white; }
+.toastError   { background: $peligro;    color: $white; }
+
+// ─── Galeno type badges ───────────────────────────────────────────────────────
+.nivelBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 0.5rem;
+  border-radius: $radio-lg;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: $gray-100;
+  color: $tono-azul-500-b;
+  border: 1px solid $tono-azul-100;
+  letter-spacing: .03em;
+}
+.sinNivelBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 0.5rem;
+  border-radius: $radio-lg;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: $gray-50;
+  color: $tinta-3;
+  border: 1px solid $linea;
+  letter-spacing: .03em;
+}
+
+// ─── Unit cell ────────────────────────────────────────────────────────────────
+.unitCell {
+  font-size: 0.79rem;
+  color: $tinta-2;
+  font-variant-numeric: tabular-nums;
+}
+
+// ─── Checkbox row ─────────────────────────────────────────────────────────────
+.checkRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+  padding: 0.375rem 0;
+}
+.checkInput {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+  accent-color: $acento;
+  flex-shrink: 0;
+}
+.checkLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: $tinta;
+}
+
+// ─── Units block ──────────────────────────────────────────────────────────────
+.unitsBlock {
+  background: $gray-50;
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
+  padding: 0.75rem 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.unitsBlockTitle {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: $tinta-2;
+  margin: 0;
+}
+.formRow3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.625rem;
+
+  @media (max-width: 480px) { grid-template-columns: 1fr; }
+}
+.unitLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: $tinta-3;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.unitInput {
+  height: 2.25rem;
+  padding: 0 0.625rem;
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
+  font-size: 0.84rem;
+  color: $tinta;
+  background: $superficie;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+
+  &:focus { border-color: $acento; box-shadow: 0 0 0 3px rgba($tono-azul-450, .1); }
+}
+
+// ─── Nivelado section ─────────────────────────────────────────────────────────
+.nivelSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.nivelList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.nivelCard {
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
+  background: $gray-50;
+  padding: 0.625rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.nivelCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.nivelNum {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: $acento;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.removeNivelBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  background: none;
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
+  color: $tinta-3;
+  cursor: pointer;
+  padding: 0;
+  transition: background .12s, color .12s;
+
+  &:hover { background: $peligro-bg; color: $peligro; border-color: $peligro; }
+}
+.addNivelBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+  height: 2.125rem;
+  padding: 0 0.875rem;
+  background: $acento-tinte;
+  color: $acento;
+  border: 1px dashed $acento;
+  border-radius: $radio-sm;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .12s;
+  align-self: flex-start;
+
+  &:hover { background: $tono-azul-50; }
+}
+
+// ─── Optional / hint ──────────────────────────────────────────────────────────
+.optional {
+  font-weight: 400;
+  color: $tinta-3;
+  font-size: 0.78rem;
+}
+.hintText {
+  font-size: 0.77rem;
+  color: $tinta-3;
+  line-height: 1.4;
+  margin: 0;
+}
+
+// ─── Section separator ────────────────────────────────────────────────────────
+.sectionSep {
+  height: 1px;
+  background: $linea;
+  margin: 0.25rem 0;
+}
+.sectionTitle {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: $tinta;
+  margin: 0;
+}

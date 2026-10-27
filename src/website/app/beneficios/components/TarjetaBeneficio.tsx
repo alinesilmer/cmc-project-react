@@ -1,13 +1,13 @@
 import type React from "react";
 import { useState } from "react";
 import { MapPin, Tag, CalendarClock, ArrowUpRight } from "lucide-react";
-import Revelar from "../../../components/UI/Revelar/Revelar";
-import { formatearFechaISO } from "../../../lib/fechas";
-import { textoSobre } from "../../../lib/color";
-import { useDesborda } from "../../../hooks/useDesborda";
+import Revelar from "@/website/components/UI/Revelar/Revelar";
+import { formatearFechaISO } from "@/website/lib/fechas";
+import { textoSobre } from "@/website/lib/color";
+import { useDesborda } from "@/website/hooks/useDesborda";
 import DetalleBeneficio from "./DetalleBeneficio";
 import { largoDescuento } from "../descuento";
-import type { BeneficioPublico } from "../../../lib/beneficios.client";
+import type { BeneficioPublico } from "@/website/lib/beneficios.client";
 import styles from "./TarjetaBeneficio.module.scss";
 import Button from "@/website/components/UI/Button/Button";
 

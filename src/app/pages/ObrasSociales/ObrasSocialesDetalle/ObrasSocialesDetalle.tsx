@@ -11,6 +11,7 @@ import { OBRAS_SOCIALES_KEY } from "../useObrasSociales";
 import type { ObraSocial, Documento, ReplicacionAltaOut } from "../obrasSociales.types";
 import {
   CONDICION_IVA_LABELS,
+  ENVIO_PLATAFORMA,
   PASO_REPLICACION_LABELS,
   TIPO_DOCUMENTO_LABELS,
   displayCuit,
@@ -18,14 +19,14 @@ import {
 import ConfirmModal from "@/app/components/ui/ConfirmModal/ConfirmModal";
 import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 import HistorialValores from "./HistorialValores";
-// «Pagos» deshabilitado a pedido del Colegio — el backend no registra su router (ver app/api/routes.py y el docstring de ObraSocialPago en la API).
 import { abrirAdjunto } from "@/app/shared/lib/archivos";
 import { formatFechaLarga } from "@/app/shared/lib/fechas";
-import { useNotify } from "../../../hooks/useNotify";
-import { usePermisos } from "../../../auth/usePermisos";
+import { useNotify } from "@/app/hooks/useNotify";
+import { usePermisos } from "@/app/auth/usePermisos";
 import s from "./ObrasSocialesDetalle.module.scss";
 import Button from "@/app/components/ui/Button/Button";
 import Franja, { Solapa } from "@/app/components/layout/Franja/Franja";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
 
 type ActiveTab = "datos" | "documentos" | "historial";
 
@@ -171,7 +172,7 @@ export default function ObrasSocialesDetalle() {
   if (loading) {
     return (
       <div className={s.loadingPage}>
-        <span className={s.spinner} />
+        <Cargando size={32} tono="marca" />
         <p>Cargando…</p>
       </div>
     );
@@ -193,7 +194,6 @@ export default function ObrasSocialesDetalle() {
 
   return (
     <div className={s.container}>
-      {/* «Pagos» deshabilitado (ver la nota en los imports). */}
       <Franja titulo={obra.nombre} icono={Building2}>
         {(
           [
@@ -258,7 +258,7 @@ export default function ObrasSocialesDetalle() {
                   {dir.localidad && <InfoRow icon={MapPin} label="Localidad" value={dir.localidad} />}
                   {dir.direccion && <InfoRow icon={MapPin} label="Envío de facturas" value={dir.direccion} />}
                   {dir.codigo_postal && <InfoRow icon={MapPin} label="Código postal" value={dir.codigo_postal} />}
-                  {dir.horario && <InfoRow icon={CalendarDays} label="Horario" value={dir.horario} copy={null} />}
+                  {dir.horario && <InfoRow icon={CalendarDays} label={dir.direccion?.startsWith(ENVIO_PLATAFORMA) ? "Detalle" : "Horario"} value={dir.horario} copy={null} />}
                 </>
               )}
             </div>

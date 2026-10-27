@@ -1,0 +1,274 @@
+@use "@/app/styles/all.scss" as *;
+
+// ─── Buttons ──────────────────────────────────────────────────────────────────
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: 2.375rem;
+  padding: 0 1.125rem;
+  background: $acento;
+  color: $white;
+  border: none;
+  border-radius: $radio-sm;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s;
+
+  &:hover:not(:disabled) { background: $acento-fuerte; }
+  &:disabled { opacity: .55; cursor: not-allowed; }
+}
+.btnGhost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: 2.375rem;
+  padding: 0 1rem;
+  background: none;
+  color: $tinta-2;
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
+  font-size: 0.84rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .14s;
+
+  &:hover { background: $gray-100; }
+}
+.btnOrange {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+  height: 1.875rem;
+  padding: 0 0.625rem;
+  background: $alerta-bg;
+  color: $alerta;
+  border: 1px solid $alerta-linea;
+  border-radius: $radio-sm;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .14s;
+
+  &:hover { background: $franja-crema; }
+}
+.btnEdit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.875rem;
+  height: 1.875rem;
+  background: none;
+  color: $tinta-2;
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
+  cursor: pointer;
+  transition: background .14s, color .14s;
+
+  &:hover { background: $acento-tinte; color: $acento; border-color: $acento; }
+}.modal {
+  background: $superficie;
+  border-radius: $radio-lg;
+  box-shadow: 0 20px 60px rgba($black, .18);
+  width: 100%;
+  max-width: 32.5rem;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.modalWide {
+  max-width: 47.5rem;
+  min-height: 25rem;
+}
+.modalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1.25rem 1.25rem 0.875rem;
+  border-bottom: 1px solid $linea;
+}
+.modalTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: $tinta;
+  margin: 0;
+}
+.modalSubtitle {
+  font-size: 0.8rem;
+  color: $tinta-3;
+  margin: 3px 0 0;
+}
+.modalClose {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.875rem;
+  height: 1.875rem;
+  background: none;
+  border: none;
+  color: $tinta-3;
+  cursor: pointer;
+  border-radius: $radio-sm;
+  flex-shrink: 0;
+  transition: background .12s;
+
+  &:hover { background: $peligro-bg; color: $peligro; }
+}
+.modalBody {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.625rem;
+  padding-top: 0.375rem;
+}
+
+// ─── Form elements ────────────────────────────────────────────────────────────
+.formRow2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+
+  @media (max-width: 480px) { grid-template-columns: 1fr; }
+}
+
+/* ── Autocomplete Obra Social (Importar de otra OS) ── */
+.osAcWrap {
+  position: relative;
+}
+.osAcDropdown {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  max-height: 13.75rem;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-md;
+  box-shadow: 0 8px 24px rgba($black, 0.12);
+}
+.osAcItem {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.4375rem 0.625rem;
+  border-radius: $radio-sm;
+  cursor: pointer;
+  font-size: 0.85rem;
+
+  &:hover { background: $secondary-blue; }
+}
+.osAcSelected {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid $tono-azul-100;
+  border-radius: $radio-md;
+  background: $secondary-blue;
+}
+.osAcNro {
+  font-weight: 700;
+  color: $tono-violeta-500;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+.osAcName {
+  color: $carpeta-noche;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.osAcClear {
+  margin-left: auto;
+  display: inline-flex;
+  border: none;
+  background: none;
+  color: $tono-azul-400;
+  cursor: pointer;
+
+  &:hover { color: $tono-rojo-400; }
+}
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3125rem;
+}
+.formLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: $tinta-2;
+}
+.req { color: $peligro; }
+.formInput,
+.formSelect {
+  height: 2.5rem;
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
+  font-size: 0.875rem;
+  color: $tinta;
+  background: $superficie;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color .15s, box-shadow .15s;
+
+  &:focus {
+    border-color: $acento;
+    box-shadow: 0 0 0 3px rgba($tono-azul-450, .12);
+  }
+}
+.formInput { padding: 0 0.75rem; }
+.formSelect {
+  padding: 0 1.75rem 0 0.75rem;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.625rem center;
+}
+.formTextarea {
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
+  font-size: 0.875rem;
+  color: $tinta;
+  background: $superficie;
+  outline: none;
+  padding: 0.5rem 0.75rem;
+  resize: vertical;
+  min-height: 4.5rem;
+  font-family: inherit;
+  box-sizing: border-box;
+  transition: border-color .15s, box-shadow .15s;
+
+  &:focus {
+    border-color: $acento;
+    box-shadow: 0 0 0 3px rgba($tono-azul-450, .12);
+  }
+}
+.inputError {
+  border-color: $peligro !important;
+}
+.errorMsg {
+  font-size: 0.76rem;
+  color: $peligro;
+  font-weight: 500;
+}
+.convenioHint {
+  font-size: 0.77rem;
+  color: $tinta-3;
+  margin-top: 2px;
+}

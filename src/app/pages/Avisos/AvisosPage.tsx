@@ -28,6 +28,7 @@ import s from "./AvisosPage.module.scss";
 import { detalleDeError } from "@/app/shared/lib/httpErrors";
 import Franja from "@/app/components/layout/Franja/Franja";
 import FieldError from "@/app/components/ui/FieldError/FieldError";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
 
 const AVISOS_KEY = ["avisos", "historial"] as const;
 
@@ -240,7 +241,7 @@ export default function AvisosPage() {
 
           {loading ? (
             <div className={s.loadingState}>
-              <span className={s.spinner} aria-hidden="true" />
+              <Cargando size={32} tono="marca" aria-hidden="true" />
               <p>Cargando avisos…</p>
             </div>
           ) : enviados.length === 0 ? (

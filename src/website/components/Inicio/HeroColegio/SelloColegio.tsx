@@ -1,4 +1,4 @@
-import escudo from "../../../assets/images/escudoCMC.webp";
+import escudo from "@/website/assets/images/escudoCMC.webp";
 import styles from "./HeroColegio.module.scss";
 
 const ANILLO = "COLEGIO MÉDICO DE CORRIENTES · MÁS DE 70 AÑOS JUNTO A LOS MÉDICOS · ";

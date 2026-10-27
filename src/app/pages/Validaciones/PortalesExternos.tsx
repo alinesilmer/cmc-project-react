@@ -3,9 +3,8 @@ import { Globe, Info } from "lucide-react";
 
 import { OBRAS_EXTERNAS } from "./validaciones.config";
 import type { ObraSocialConfig } from "./validaciones.types";
-import ObraSocialCard, {
-  obraSocialCardStyles as card,
-} from "./components/ObraSocialCard";
+import ObraSocialCard from "./components/ObraSocialCard";
+import card from "./components/ObraSocialCard.module.scss";
 import GuiaPortalModal from "./components/GuiaPortalModal";
 import RequisitosModal from "./components/RequisitosModal";
 import s from "./PortalesExternos.module.scss";

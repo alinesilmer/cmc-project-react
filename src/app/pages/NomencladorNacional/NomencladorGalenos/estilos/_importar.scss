@@ -1,0 +1,198 @@
+@use "@/app/styles/all.scss" as *;
+
+// ─── Import results ───────────────────────────────────────────────────────────
+.importResult {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  background: $gray-50;
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
+  padding: 0.75rem;
+}
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+.statBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: $superficie;
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
+  padding: 0.5rem 0.375rem;
+}
+.statCreado { border-color: $tono-verde-50-b; background: $cuaderno-papel; }
+.statRotado { border-color: $tono-azul-100; background: $gray-100; }
+.statNum {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: $tinta;
+  line-height: 1;
+}
+.statLabel {
+  font-size: 0.68rem;
+  color: $tinta-3;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.errorList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.errorListTitle {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: $peligro;
+  margin: 0;
+}
+.errorItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.375rem;
+  font-size: 0.78rem;
+  color: $peligro;
+  line-height: 1.4;
+}
+
+.convertBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  background: $cuaderno-papel;
+  border: 1px solid $tono-amarillo-100;
+  border-radius: $radio-sm;
+  padding: 0.625rem 0.75rem;
+  color: $tono-naranja-550;
+
+  p {
+    margin: 0 0 0.5rem;
+    font-size: 0.8rem;
+    line-height: 1.45;
+  }
+  svg { flex-shrink: 0; margin-top: 2px; }
+}
+
+// ─── Historial table ──────────────────────────────────────────────────────────
+.historialTable {
+  overflow-x: auto;
+  max-height: 23.75rem;
+  overflow-y: auto;
+}
+
+// ─── Crear galenos desde plantilla (multi-OS) ──────────────────────────────────
+.osChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-bottom: 0.25rem;
+}
+.osChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.5rem 0.25rem 0.625rem;
+  border: 1px solid $tono-azul-100;
+  border-radius: $radio-lg;
+  background: $secondary-blue;
+  font-size: 0.8rem;
+  color: $tinta;
+}
+.osChipClear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: $tinta-3;
+  cursor: pointer;
+  transition: background .12s, color .12s;
+
+  &:hover { background: $peligro-bg; color: $peligro; }
+}
+.draftList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.draftCard {
+  border: 1px solid $linea;
+  border-radius: $radio-md;
+  background: $superficie;
+  padding: 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  box-shadow: $shadow-sm;
+}
+.draftHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.draftTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: $tinta;
+}
+.draftCode {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: $alerta;
+  background: $alerta-bg;
+  border: 1px solid $alerta-linea;
+  border-radius: $radio-sm;
+  padding: 1px 0.375rem;
+}
+.nivelInlineField {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+.nivelNumInput {
+  width: 3.5rem;
+  height: 1.75rem;
+  padding: 0 0.5rem;
+  border: 1px solid $linea;
+  border-radius: $radio-sm;
+  font-size: 0.82rem;
+  color: $tinta;
+  background: $superficie;
+  outline: none;
+  box-sizing: border-box;
+
+  &:focus { border-color: $acento; }
+}
+.resultList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+.resultRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  padding: 0.5rem 0.625rem;
+  border-radius: $radio-sm;
+  background: $gray-50;
+  border: 1px solid $linea;
+
+  svg { flex-shrink: 0; margin-top: 2px; }
+}
+.resultOk { color: $ok; }
+.resultErr { color: $peligro; }

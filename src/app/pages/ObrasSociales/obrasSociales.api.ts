@@ -1,5 +1,6 @@
 import { http } from "@/app/shared/lib/http";
 import { getJSON, postJSON, patchJSON, delJSON, postForm } from "@/app/shared/lib/http";
+import { textoPlataforma } from "./obrasSociales.types";
 import type {
   ObraSocial,
   ObraSocialListItem,
@@ -33,7 +34,10 @@ function buildPayload(form: ObraSocialFormData, alta = false) {
     form.df_codigo_postal.trim() ||
     form.df_horario.trim();
 
-  const direcciones = hasAddress
+  const direcciones =
+    form.df_tipo === "plataforma"
+      ? [{ provincia: null, localidad: null, direccion: textoPlataforma(form.df_paquete), codigo_postal: null, horario: form.df_horario.trim() || null }]
+      : hasAddress
     ? [
         {
           provincia:

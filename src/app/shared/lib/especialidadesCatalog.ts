@@ -18,7 +18,7 @@ export function hasEspecialidadesCatalog(): boolean {
   return map.size > 0;
 }
 
-export function getEspecialidadNameById(id: any): string | null {
+export function getEspecialidadNameById(id: unknown): string | null {
   const key = String(id ?? "").trim();
   if (!key || key === "0") return null;
   return map.get(key) ?? null;

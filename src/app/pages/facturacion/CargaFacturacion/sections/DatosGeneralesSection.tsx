@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import ObraSocialAutocomplete from "../../components/ObraSocialAutocomplete";
 import type { ObraSocialOption, PeriodoActivoResponse } from "../../types";
-import styles from "../CargaFacturacion.module.scss";
+import comun from "../Comun.module.scss";
+import styles from "./DatosGeneralesSection.module.scss";;
 import { AlertTriangle } from "lucide-react";
 
 /** "202606" → "2026-06" (input type=month). */
@@ -53,11 +54,11 @@ const DatosGeneralesSection: React.FC<Props> = ({
       : (periodo?.periodo_label ?? (periodoMostrado ? periodoLabel(periodoMostrado) : null));
 
   return (
-    <div className={styles.section}>
-      <span className={styles.sectionTitle}>Datos generales</span>
-      <div className={styles.fieldsRow}>
-        <div className={`${styles.filterField} ${styles.filterFieldWide}`} data-field="obraSocial">
-          <label className={styles.filterLabel}>Obra social <span className={styles.errorText}>*</span></label>
+    <div className={comun.section}>
+      <span className={comun.sectionTitle}>Datos generales</span>
+      <div className={comun.fieldsRow}>
+        <div className={`${comun.filterField} ${comun.filterFieldWide}`} data-field="obraSocial">
+          <label className={comun.filterLabel}>Obra social <span className={comun.errorText}>*</span></label>
           <ObraSocialAutocomplete
             value={obraSocial?.nro_obra_social ?? null}
             onChange={(nro, os) => {
@@ -72,20 +73,20 @@ const DatosGeneralesSection: React.FC<Props> = ({
             obrasSocialesPrecargadas={obrasSocialesPrecargadas}
           />
         </div>
-        <div className={styles.filterField}>
-          <label className={styles.filterLabel}>Período{periodoOverride ? " (editado)" : " activo"}</label>
+        <div className={comun.filterField}>
+          <label className={comun.filterLabel}>Período{periodoOverride ? " (editado)" : " activo"}</label>
           {labelMostrado ? (
-            <span className={`${styles.infoChip} ${periodoOverride ? styles.chipWarning : styles.chipNeutral}`}>
+            <span className={`${comun.infoChip} ${periodoOverride ? styles.chipWarning : comun.chipNeutral}`}>
               {labelMostrado}
             </span>
           ) : (
-            <span className={styles.mutedText}>— (seleccioná una obra social)</span>
+            <span className={comun.mutedText}>— (seleccioná una obra social)</span>
           )}
           {/* Sin automático (obra social sin período cerrado previo, ver periodoError) no hay nada que ofrecer como sugerencia . */}
           {(automatico || periodoError) && !editando && (
             <button
               type="button"
-              className={styles.periodoLinkBtn}
+              className={comun.periodoLinkBtn}
               onClick={() => setEditando(true)}
               disabled={disabled}
             >
@@ -96,7 +97,7 @@ const DatosGeneralesSection: React.FC<Props> = ({
             <div className={styles.periodoEditorRow}>
               <input
                 type="month"
-                className={styles.input}
+                className={comun.input}
                 value={periodoMostrado ? periodoToMonthInput(periodoMostrado) : ""}
                 onChange={(e) =>
                   onPeriodoOverrideChange(e.target.value ? monthInputToPeriodo(e.target.value) : null)
@@ -106,7 +107,7 @@ const DatosGeneralesSection: React.FC<Props> = ({
               {automatico && (
                 <button
                   type="button"
-                  className={styles.periodoLinkBtn}
+                  className={comun.periodoLinkBtn}
                   onClick={() => {
                     onPeriodoOverrideChange(null);
                     setEditando(false);
@@ -119,13 +120,13 @@ const DatosGeneralesSection: React.FC<Props> = ({
             </div>
           )}
           {fueraDeRango && (
-            <span className={styles.errorText}>
+            <span className={comun.errorText}>
               No puede ser anterior a {periodo?.periodo_label} (el período sugerido).
             </span>
           )}
         </div>
       </div>
-      {periodoError && <div className={styles.errorBox}><AlertTriangle size={14} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> {periodoError}</div>}
+      {periodoError && <div className={comun.errorBox}><AlertTriangle size={14} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> {periodoError}</div>}
     </div>
   );
 };

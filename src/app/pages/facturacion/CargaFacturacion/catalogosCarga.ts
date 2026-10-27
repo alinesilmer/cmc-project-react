@@ -82,7 +82,7 @@ const escribirDisco = async (valor: CatalogosCarga | null) => {
 // ── API ───────────────────────────────────────────────────────────────────────
 
 /** Pide los catálogos al backend (un solo pedido en vuelo a la vez) y los guarda. */
-export function refrescarCatalogos(): Promise<void> {
+function refrescarCatalogos(): Promise<void> {
   if (enCurso) return enCurso;
   enCurso = (async () => {
     try {
@@ -162,5 +162,3 @@ export function useCatalogosCarga(): Estado {
   return useSyncExternalStore(suscribir, instantanea, instantanea);
 }
 
-/** Para precargar el formulario antes de abrirlo (sin suscribirse). */
-export const catalogosEnMemoria = () => estado.catalogos;

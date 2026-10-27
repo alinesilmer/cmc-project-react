@@ -47,10 +47,6 @@
   gap: $spacing-2;
 }
 
-.spinning {
-  animation: os-gira 0.8s linear infinite;
-}
-
 .errorBanner {
   padding: $spacing-3 $spacing-4;
   font-weight: $font-weight-semibold;
@@ -183,39 +179,9 @@
   }
 }
 
-.spinner {
-  width: 2rem;
-  height: 2rem;
-  border: 3px solid $gray-200;
-  border-top-color: $franja-azul;
-  border-radius: 50%;
-  animation: os-gira 0.8s linear infinite;
-}
-
 .emptyIcon {
   color: $gray-300;
 }
-
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: $spacing-5;
-}
-
-.pageInfo {
-  font-weight: $font-weight-semibold;
-  font-variant-numeric: tabular-nums;
-  color: $gray-600;
-  white-space: nowrap;
-}
-
-@keyframes os-gira {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .spinning,
   .spinner {

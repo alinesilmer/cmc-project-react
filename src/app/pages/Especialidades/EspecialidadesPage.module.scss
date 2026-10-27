@@ -81,8 +81,6 @@
   flex-wrap: wrap;
 }
 
-
-
 // ─── Error banner ─────────────────────────────────────────────────────────────
 
 .errorBanner {
@@ -229,65 +227,7 @@
 
 .emptyIcon {
   color: $gray-300;
-}
-
-.spinner {
-  width: 2rem;
-  height: 2rem;
-  border: 3px solid $gray-200;
-  border-top-color: $primary-blue;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-// ─── Pagination ───────────────────────────────────────────────────────────────
-
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: $spacing-3;
-}
-
-.pageBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: $border-radius-md;
-  border: 1px solid $gray-300;
-  background-color: $white;
-  color: $gray-700;
-  cursor: pointer;
-  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
-
-  &:hover:not(:disabled) {
-    background-color: $secondary-blue;
-    color: $primary-blue;
-    border-color: $primary-blue;
-  }
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: default;
-  }
-}
-
-.pageInfo {
-  font-size: $font-size-sm;
-  color: $gray-600;
-  min-width: 6.875rem;
-  text-align: center;
-}
-
-// ─── Modal form ───────────────────────────────────────────────────────────────
+}// ─── Modal form ───────────────────────────────────────────────────────────────
 
 .modalBody {
   display: flex;

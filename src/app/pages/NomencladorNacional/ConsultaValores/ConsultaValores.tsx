@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from "react";
-import { Search, Loader2, AlertCircle, AlertTriangle } from "lucide-react";
+import { Search, AlertCircle, AlertTriangle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import styles from "../ConsultaShared/consulta.module.scss";
@@ -12,6 +12,7 @@ import type { NomencladorOut, TablaValorItem, ViaPractica } from "../nomenclador
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import type { Especialidad } from "../../Especialidades/especialidades.types";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
 
 export default function ConsultaValores() {
   // OS autocomplete
@@ -237,7 +238,7 @@ export default function ConsultaValores() {
               onClick={handleSearch}
               disabled={!canSearch || loading}
             >
-              {loading ? <Loader2 size={17} className={styles.spin} /> : <Search size={17} />}
+              {loading ? <Cargando size={17} /> : <Search size={17} />}
               Consultar precio
             </button>
           </div>

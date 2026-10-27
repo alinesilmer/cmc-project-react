@@ -46,7 +46,7 @@ export interface Decision {
 
 // ── Lo que devuelve el backend ───────────────────────────────────────────────
 
-export type ResultadoFila =
+type ResultadoFila =
   | "grabable"
   | "grabada"
   | "duplicada"
@@ -54,7 +54,7 @@ export type ResultadoFila =
   | "elegir_socio"
   | "descartada";
 
-export interface CandidatoSocio {
+interface CandidatoSocio {
   nroSocio: number;
   nombre: string;
 }

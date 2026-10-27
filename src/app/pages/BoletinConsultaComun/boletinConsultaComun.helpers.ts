@@ -1,30 +1,8 @@
 import { formatFecha } from "@/app/shared/lib/fechas";
-
-export function safeNum(value: unknown): number {
-  if (typeof value === "number" && Number.isFinite(value)) return value;
-
-  if (typeof value === "string") {
-    const raw = value.trim();
-    if (!raw) return 0;
-
-    let normalized = raw;
-
-    if (raw.includes(",")) {
-      normalized = raw.replace(/\./g, "").replace(",", ".");
-    } else if (/^\d{1,3}(\.\d{3})+$/.test(raw)) {
-      normalized = raw.replace(/\./g, "");
-    }
-
-    const parsed = Number(normalized);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-
-  return 0;
-}
+import { sinControl } from "@/app/shared/lib/utiles";
 
 export function normalizeText(value: unknown, maxLen = 180): string {
-  const text = String(value ?? "")
-    .replace(/[\u0000-\u001F\u007F]+/g, " ")
+  const text = sinControl(String(value ?? ""), " ")
     .replace(/\s{2,}/g, " ")
     .trim();
 

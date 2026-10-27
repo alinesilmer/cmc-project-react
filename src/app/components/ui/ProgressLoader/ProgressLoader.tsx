@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
-import { Loader2 } from "lucide-react";
 
 import styles from "./ProgressLoader.module.scss";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
 
 interface ProgressLoaderProps {
   /** Qué se está haciendo («Importando prestaciones…»). */
@@ -41,7 +41,7 @@ export default function ProgressLoader({
   return (
     <div className={`${styles.root} ${className ?? ""}`}>
       <div className={styles.cabecera}>
-        <Loader2 size={30} className={styles.spinner} aria-hidden="true" />
+        <Cargando size={30} className={styles.spinner} aria-hidden="true" />
         <div>
           <h2 id={titleId} className={styles.titulo}>
             {title}

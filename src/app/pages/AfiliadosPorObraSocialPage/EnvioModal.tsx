@@ -6,7 +6,7 @@ import { CMC_EMAIL, CMC_NAME, CMC_PHONE } from "@/app/shared/lib/documentos/inst
 import { useDialogo } from "./useDialogo";
 // Mismo marco que «Datos a mostrar» y el recuento.
 import marco from "./ExportFieldsModal.module.scss";
-import s from "./Padrones.module.scss";
+import s from "./EnvioModal.module.scss";;
 import MarcoModal from "@/app/components/ui/MarcoModal/MarcoModal";
 
 type Props = {

@@ -46,7 +46,7 @@ export type RegisterPayload = {
   }[];
 };
 
-function buildRegisterPayload(form: any): RegisterPayload {
+function buildRegisterPayload(form: RegisterFormData): RegisterPayload {
   return {
     documentType: "DNI",
     documentNumber: String(form.documentNumber || "").trim(),
@@ -95,15 +95,16 @@ export type RegisterResponse = {
   solicitud_id: number;
   ok: boolean;
 };
+const esPayload = (input: RegisterFormData | RegisterPayload): input is RegisterPayload =>
+  "documentType" in input && Boolean(input.documentType);
+
 /* ===== endpoints ===== */
 
 export async function registerMedico(
   input: RegisterFormData | RegisterPayload,
   specialtiesPayload?: RegisterPayload["specialties"]
 ): Promise<RegisterResponse> {
-  const payload: RegisterPayload = (input as any).documentType
-    ? (input as RegisterPayload)
-    : buildRegisterPayload(input);
+  const payload: RegisterPayload = esPayload(input) ? input : buildRegisterPayload(input);
 
   if (specialtiesPayload && specialtiesPayload.length) {
     payload.specialties = specialtiesPayload.map((it) => ({

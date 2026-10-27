@@ -1,6 +1,6 @@
 // src/auth/RequirePermission.tsx
 import type { ReactNode } from "react";
-import { useAuth } from "./AuthProvider";
+import { useAuth } from "./useAuth";
 import { hasScope } from "./scopes";
 
 type Props = {

@@ -3,8 +3,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowRight,
   Check,
-  ChevronLeft,
-  ChevronRight,
   CircleCheck,
   CircleX,
   Clock,
@@ -33,6 +31,8 @@ import type {
 import s from "./SolicitudesCambioPage.module.scss";
 import { detalleDeError } from "@/app/shared/lib/httpErrors";
 import Franja, { Solapa } from "@/app/components/layout/Franja/Franja";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
+import Paginador from "@/app/components/ui/Paginador/Paginador";
 
 const PAGE_SIZE = 20;
 const SOLICITUDES_KEY = ["solicitudes-cambio", "gestion"] as const;
@@ -102,11 +102,9 @@ export default function SolicitudesCambioPage() {
     try {
       await approveSolicitudCambio(item.id);
       await recargar();
-    } catch (err: any) {
+    } catch (err) {
       setActionError(
-        err?.response?.data?.detail ??
-          err?.message ??
-          "No se pudo aprobar la solicitud."
+        detalleDeError(err, "No se pudo aprobar la solicitud.")
       );
     } finally {
       setBusyId(null);
@@ -131,11 +129,9 @@ export default function SolicitudesCambioPage() {
     try {
       await rejectSolicitudCambio(rejecting.id, texto);
       await recargar();
-    } catch (err: any) {
+    } catch (err) {
       setMotivoError(
-        err?.response?.data?.detail ??
-          err?.message ??
-          "No se pudo rechazar la solicitud."
+        detalleDeError(err, "No se pudo rechazar la solicitud.")
       );
       throw err;
     }
@@ -169,7 +165,7 @@ export default function SolicitudesCambioPage() {
         <div className={s.list}>
           {loading ? (
             <div className={s.loadingState}>
-              <span className={s.spinner} aria-hidden="true" />
+              <Cargando size={32} tono="marca" aria-hidden="true" />
               <p>Cargando solicitudes…</p>
             </div>
           ) : items.length === 0 ? (
@@ -300,27 +296,7 @@ export default function SolicitudesCambioPage() {
         </div>
 
         {!loading && totalPages > 1 && (
-          <div className={s.pagination} role="navigation" aria-label="Paginación">
-            <button
-              className={s.pageBtn}
-              onClick={() => setPage((p) => p - 1)}
-              disabled={page === 1}
-              aria-label="Página anterior"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <span className={s.pageInfo}>
-              Página {page} de {totalPages}
-            </span>
-            <button
-              className={s.pageBtn}
-              onClick={() => setPage((p) => p + 1)}
-              disabled={page === totalPages}
-              aria-label="Página siguiente"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
+          <Paginador pagina={page} totalPaginas={totalPages} onCambiar={setPage} />
         )}
 
         {/* Modal de rechazo */}

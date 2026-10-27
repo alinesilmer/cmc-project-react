@@ -77,7 +77,7 @@ const PermissionsManager: React.FC = () => {
       const [r, p] = await Promise.all([listRoles(), listPermissions()]);
       setRoles(r);
       setPerms(p);
-      if (!activeRole && r.length) setActiveRole(r[0].name);
+      setActiveRole((actual) => actual ?? r[0]?.name ?? null);
       setLoadingRoles(false);
       setLoadingPerms(false);
     })();
@@ -86,12 +86,20 @@ const PermissionsManager: React.FC = () => {
   // Cargar permisos del rol activo
   useEffect(() => {
     if (!activeRole) return;
+    // Si cambia el rol antes de que llegue la respuesta, se descarta.
+    let vigente = true;
     (async () => {
       setLoadingRolePerms(true);
-      const rp = await getRolePerms(activeRole);
-      setRolePerms(rp.map((x) => x.code));
-      setLoadingRolePerms(false);
+      try {
+        const rp = await getRolePerms(activeRole);
+        if (vigente) setRolePerms(rp.map((x) => x.code));
+      } finally {
+        if (vigente) setLoadingRolePerms(false);
+      }
     })();
+    return () => {
+      vigente = false;
+    };
   }, [activeRole]);
 
   // Permisos con mapeo (label + categoría)

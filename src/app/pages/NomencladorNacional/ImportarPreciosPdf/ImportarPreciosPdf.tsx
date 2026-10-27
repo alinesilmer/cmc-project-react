@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   FileUp,
   Download,
-  Loader2,
   AlertCircle,
   CheckCircle2,
   Database,
@@ -34,6 +33,7 @@ import {
 import type { ImportarCSVResult } from "../nomenclador.types";
 import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
 
 const PREVIEW_LIMIT = 1000;
 // Estas cargas son siempre NE, sin especialidad puntual: el importador del backend expande cada código a una fila por cada especialidad habilitada.
@@ -320,7 +320,7 @@ export default function ImportarPreciosPdf() {
                   )}
                 </div>
                 {parsing ? (
-                  <Loader2 size={18} className={styles.spin} />
+                  <Cargando size={18} />
                 ) : (
                   <div className={styles.fileActions}>
                     <button type="button" className={styles.btnPrimary} onClick={downloadCsv} disabled={!canDownload} title={!canDownload ? "Completá vigencia y N° obra social" : undefined}>
@@ -478,7 +478,7 @@ export default function ImportarPreciosPdf() {
               </div>
               <div className={styles.importRow}>
                 <button type="button" className={styles.btnPrimary} onClick={importToDb} disabled={!canDownload || importing} title={!canDownload ? "Completá vigencia y N° obra social" : undefined}>
-                  {importing ? <Loader2 size={15} className={styles.spin} /> : <Database size={15} />}
+                  {importing ? <Cargando size={15} /> : <Database size={15} />}
                   {importing ? "Importando…" : "Importar a base de datos"}
                 </button>
               </div>
@@ -525,7 +525,7 @@ export default function ImportarPreciosPdf() {
           <div className={styles.field}>
             <label className={styles.fieldLabel}>Vigencia a eliminar</label>
             {loadingVigencias ? (
-              <span className={styles.muted}><Loader2 size={14} className={styles.spin} /> Cargando…</span>
+              <span className={styles.muted}><Cargando size={14} /> Cargando…</span>
             ) : !delOS.trim() ? (
               <span className={styles.muted}>Ingresá una obra social.</span>
             ) : vigenciasList.length === 0 ? (
@@ -547,7 +547,7 @@ export default function ImportarPreciosPdf() {
               <span className={styles.confirmText}>¿Eliminar <strong>todos</strong> los códigos de la obra social {delOS} en la vigencia {selectedVigencia}? Es un borrado definitivo, no se puede deshacer.</span>
               <div className={styles.confirmActions}>
                 <button type="button" className={styles.btnDanger} onClick={doDelete} disabled={deleting}>
-                  {deleting ? <Loader2 size={14} className={styles.spin} /> : <Trash2 size={14} />} Sí, eliminar
+                  {deleting ? <Cargando size={14} /> : <Trash2 size={14} />} Sí, eliminar
                 </button>
                 <button type="button" className={styles.btnGhost} onClick={() => setConfirmingDelete(false)} disabled={deleting}>Cancelar</button>
               </div>

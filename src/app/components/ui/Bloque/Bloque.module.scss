@@ -1,0 +1,14 @@
+@use "@/app/styles/all.scss" as *;
+
+// Zona de resultados dentro de un paso: la vista previa o el detalle, sobre fondo gris claro.
+
+.bloque {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  min-width: 0;
+  padding: $spacing-5;
+  background: $gray-50;
+  border: 1px solid $gray-200;
+  border-radius: $radio-md;
+}

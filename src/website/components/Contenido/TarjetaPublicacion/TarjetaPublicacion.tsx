@@ -2,8 +2,8 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowRight, Calendar } from "lucide-react";
 import styles from "./TarjetaPublicacion.module.scss";
-import type { Noticia } from "../../../types";
-import { formatearFecha } from "../../../lib/fechas";
+import type { Noticia } from "@/website/types";
+import { formatearFecha } from "@/website/lib/fechas";
 
 const PORTADA_POR_DEFECTO =
   "https://res.cloudinary.com/dcfkgepmp/image/upload/q_auto/f_auto/w_800,c_limit/v1764076138/20251125_1004_Portada_M%C3%A9dica_Moderna_simple_compose_01kaxhrn6nfm2t5ftq9htn6c9v_q4kx1d.png";

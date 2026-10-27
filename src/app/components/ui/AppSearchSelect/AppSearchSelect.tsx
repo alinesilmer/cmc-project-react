@@ -2,6 +2,7 @@ import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
 import CircularProgress from "@mui/material/CircularProgress";
 import React, { useEffect, useState } from "react";
+import paleta from "@/app/styles/paleta.module.scss";
 
 export type AppSearchSelectOption = {
   id: string | number;
@@ -102,7 +103,7 @@ const AppSearchSelect: React.FC<Props> = ({
           <div>
             <div style={{ fontSize: 13 }}>{option.label}</div>
             {option.subtitle && (
-              <div style={{ fontSize: 11, color: "#94a3b8" }}>{option.subtitle}</div>
+              <div style={{ fontSize: 11, color: paleta.gray400 }}>{option.subtitle}</div>
             )}
           </div>
         </li>
@@ -129,7 +130,7 @@ const AppSearchSelect: React.FC<Props> = ({
               "& fieldset": { borderColor: "var(--tema-borde, #cbd5e1)" },
               "&:hover fieldset": { borderColor: "var(--tema-borde-fuerte, #94a3b8)" },
               "&.Mui-focused fieldset": {
-                borderColor: "#1b56ff",
+                borderColor: paleta.tonoAzul450B,
                 borderWidth: "1px",
                 boxShadow: "0 0 0 3px rgba(27,86,255,0.1)",
               },

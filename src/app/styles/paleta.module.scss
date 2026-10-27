@@ -1,0 +1,63 @@
+@use "@/app/styles/all.scss" as *;
+
+// La paleta para el código TypeScript: los colores que no pueden ir en una hoja (`style`, `sx`, gráficos).
+// Se importa como `import paleta from "@/app/styles/paleta.module.scss"`. Ver `variables.scss`.
+:export {
+  accentBlue: $accent-blue;
+  gray100: $gray-100;
+  gray200: $gray-200;
+  gray300: $gray-300;
+  gray400: $gray-400;
+  gray50: $gray-50;
+  gray500: $gray-500;
+  gray600: $gray-600;
+  gray700: $gray-700;
+  gray800: $gray-800;
+  gray900: $gray-900;
+  primaryBlue: $primary-blue;
+  primaryBlueDark: $primary-blue-dark;
+  primaryBlueDarker: $primary-blue-darker;
+  primaryBlueLighter: $primary-blue-lighter;
+  primaryYellowDark: $primary-yellow-dark;
+  secondaryBlue: $secondary-blue;
+  successGreen: $success-green;
+  tonoAmarillo100B: $tono-amarillo-100-b;
+  tonoAmarillo200: $tono-amarillo-200;
+  tonoAmarillo200B: $tono-amarillo-200-b;
+  tonoAmarillo50C: $tono-amarillo-50-c;
+  tonoAmarillo50D: $tono-amarillo-50-d;
+  tonoAmarillo50E: $tono-amarillo-50-e;
+  tonoAmarillo600B: $tono-amarillo-600-b;
+  tonoAzul100B: $tono-azul-100-b;
+  tonoAzul200: $tono-azul-200;
+  tonoAzul200C: $tono-azul-200-c;
+  tonoAzul300B: $tono-azul-300-b;
+  tonoAzul300C: $tono-azul-300-c;
+  tonoAzul400: $tono-azul-400;
+  tonoAzul450B: $tono-azul-450-b;
+  tonoAzul450D: $tono-azul-450-d;
+  tonoAzul50B: $tono-azul-50-b;
+  tonoAzul50C: $tono-azul-50-c;
+  tonoAzul500B: $tono-azul-500-b;
+  tonoAzul550: $tono-azul-550;
+  tonoAzul550C: $tono-azul-550-c;
+  tonoAzul600: $tono-azul-600;
+  tonoAzul650B: $tono-azul-650-b;
+  tonoAzul750C: $tono-azul-750-c;
+  tonoGris50: $tono-gris-50;
+  tonoNaranja450: $tono-naranja-450;
+  tonoNaranja550: $tono-naranja-550;
+  tonoRojo400: $tono-rojo-400;
+  tonoRojo50: $tono-rojo-50;
+  tonoRojo50B: $tono-rojo-50-b;
+  tonoRojo500: $tono-rojo-500;
+  tonoRojo550C: $tono-rojo-550-c;
+  tonoVerde450B: $tono-verde-450-b;
+  tonoVerde50B: $tono-verde-50-b;
+  tonoVerde50C: $tono-verde-50-c;
+  tonoVerde50D: $tono-verde-50-d;
+  tonoVerde550: $tono-verde-550;
+  tonoVioleta600: $tono-violeta-600;
+  warningOrange: $warning-orange;
+  white: $white;
+}

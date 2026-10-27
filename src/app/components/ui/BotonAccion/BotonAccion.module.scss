@@ -1,0 +1,16 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver BotonAccion.tsx.
+
+.accion {
+  @extend %btn-icono;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  text-decoration: none;
+}
+
+.peligro:hover:not(:disabled) {
+  color: $danger-red;
+  border-color: $danger-red;
+}

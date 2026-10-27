@@ -9,8 +9,8 @@ import {
 } from "../../auditoria.api";
 // La hoja es la del control de datos del padrón.
 import styles from "../../AuditoriaPadron.module.scss";
+import { formatoNumero } from "@/app/shared/lib/formatos";
 
-const numero = new Intl.NumberFormat("es-AR");
 
 const claseSev = (s: Severidad) =>
   ({ alta: styles.sevAlta, media: styles.sevMedia, baja: styles.sevBaja, info: styles.sevInfo })[s];
@@ -74,7 +74,7 @@ export default function ListaChequeos<C extends ChequeoPadron>({ chequeos, abier
                     </span>
 
                     <span className={`${styles.casos} ${c.casos === 0 ? styles.casosCero : ""}`}>
-                      {numero.format(c.casos)}
+                      {formatoNumero.format(c.casos)}
                     </span>
                   </button>
 

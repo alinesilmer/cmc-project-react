@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import RegisterBase from "@/app/features/registro/components/RegisterBase";
 import { FileText, GraduationCap, ListChecks, User } from "lucide-react";
-import { getJSON } from "@/app/shared/lib/http";
+import { listarEspecialidades, type Especialidad } from "./api";
 
 const stepsMeta = [
   { id: 1, title: "Datos Personales", icon: User },
@@ -13,12 +13,12 @@ const stepsMeta = [
 ];
 
 const RegisterSocioPage: React.FC = () => {
-  const [specialties, setSpecialties] = useState<any[]>([]);
+  const [specialties, setSpecialties] = useState<Especialidad[]>([]);
 
   useEffect(() => {
     (async () => {
       try {
-        const data = await getJSON<any[]>("/api/especialidades/");
+        const data = await listarEspecialidades();
         setSpecialties(data || []);
       } catch {
         setSpecialties([]);
@@ -29,7 +29,6 @@ const RegisterSocioPage: React.FC = () => {
   return (
     <RegisterBase
       mode="admin"
-      showAdherentePrompt={false}
       stepsMeta={stepsMeta}
       specialties={specialties}
     />

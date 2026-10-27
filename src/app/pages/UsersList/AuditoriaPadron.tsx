@@ -16,9 +16,9 @@ import ListaChequeos from "./components/ListaChequeos/ListaChequeos";
 import styles from "./AuditoriaPadron.module.scss";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BackButton from "@/app/components/ui/BackButton/BackButton";
+import { formatoNumero } from "@/app/shared/lib/formatos";
 
 const LIMITE_DETALLE = 50;
-const numero = new Intl.NumberFormat("es-AR");
 
 /** "2050-05-01" → "01/05/2050", sin construir un Date (evita el corrimiento). */
 function fecha(iso: string | null): string {
@@ -92,7 +92,7 @@ const AuditoriaPadron: React.FC = () => {
               <div className={styles.tarjetaTotal}>
                 <span className={styles.totalLabel}>Legajos</span>
                 <span className={styles.totalNum}>
-                  {numero.format(resumen.data?.total ?? 0)}
+                  {formatoNumero.format(resumen.data?.total ?? 0)}
                 </span>
                 <span className={styles.totalHint}>en el padrón</span>
               </div>
@@ -103,7 +103,7 @@ const AuditoriaPadron: React.FC = () => {
                 >
                   <span className={styles.totalLabel}>{SEVERIDAD_LABEL[sev]}</span>
                   <span className={styles.totalNum}>
-                    {numero.format(totales[sev])}
+                    {formatoNumero.format(totales[sev])}
                   </span>
                   <span className={styles.totalHint}>
                     {totales[sev] === 1 ? "observación" : "observaciones"}
@@ -152,7 +152,7 @@ const AuditoriaPadron: React.FC = () => {
                               </td>
                               <td className={styles.num}>
                                 {f.documento && f.documento > 0 ? (
-                                  numero.format(f.documento)
+                                  formatoNumero.format(f.documento)
                                 ) : (
                                   <span className={styles.falta}>—</span>
                                 )}
@@ -184,8 +184,8 @@ const AuditoriaPadron: React.FC = () => {
                       <p className={styles.pieDetalle}>
                         <Info size={13} style={{ verticalAlign: "-2px" }} />{" "}
                         Se muestran los primeros{" "}
-                        {numero.format((detalle.data ?? []).length)} de{" "}
-                        {numero.format(c.casos)}.
+                        {formatoNumero.format((detalle.data ?? []).length)} de{" "}
+                        {formatoNumero.format(c.casos)}.
                       </p>
                     )}
                   </>

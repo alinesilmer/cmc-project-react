@@ -11,52 +11,18 @@ import React, {
 import DatePicker, { registerLocale } from "react-datepicker";
 import { es } from "date-fns/locale/es";
 import "react-datepicker/dist/react-datepicker.css";
-import { Download, Loader2, Calendar } from "lucide-react";
+import { Download, Calendar } from "lucide-react";
 import styles from "./GenerarBoletin.module.scss";
-import Button from "../../../website/components/UI/Button/Button";
+import Button from "@/website/components/UI/Button/Button";
 import CMCLogoUrl from "../../assets/logoCMC.png";
 // `http` y no `httpBare`: la ruta ahora va detrás de RequireAuth, y /api/valores/boletin exige sesión.
-import { http } from "@/app/shared/lib/http";
-import { axiosErrorMessage } from "@/app/shared/lib/utiles";
+import { fetchValoresBoletin, type ApiBoletinRow } from "./generarBoletin.api";
+import { axiosErrorMessage, sinControl } from "@/app/shared/lib/utiles";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
 
 registerLocale("es", es);
 
 // Ruta relativa: la baseURL por ambiente la resuelve la instancia `http` compartida, no hay que armarla acá.
-const ENDPOINTS = {
-  valoresBoletin: `/api/valores/boletin`,
-};
-
-type ApiBoletinRow = {
-  id: number;
-  nro_obrasocial: number;
-  obra_social: string | null;
-  nivel: number;
-  fecha_cambio: string;
-
-  consulta: number;
-  galeno_quirurgico: number;
-  gastos_quirurgicos: number;
-  galeno_practica: number;
-  galeno_radiologico: number;
-  gastos_radiologico: number;
-  gastos_bioquimicos: number;
-  otros_gastos: number;
-  galeno_cirugia_adultos: number;
-  galeno_cirugia_infantil: number;
-  consulta_especial: number;
-
-  categoria_a: string | null;
-  categoria_b: string | null;
-  categoria_c: string | null;
-};
-
-type QueryParams = {
-  nro_obrasocial?: number;
-  nivel?: number;
-  fecha_cambio?: string;
-  categoria?: "A" | "B" | "C";
-};
-
 type ObraSocialBoletin = {
   id: number;
   nombre: string;
@@ -134,7 +100,7 @@ function parseDateDDMMYYYY(input: string): Date | null {
   const t = String(input || "").trim();
   if (!t) return null;
 
-  const m = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/.exec(t);
+  const m = /^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/.exec(t);
   if (!m) return null;
 
   const d = Number(m[1]);
@@ -153,59 +119,13 @@ function parseDateDDMMYYYY(input: string): Date | null {
   return dt;
 }
 
-function safeNum(v: any): number {
-  if (typeof v === "number" && Number.isFinite(v)) return v;
-  if (typeof v === "string") {
-    const n = Number(v.replace(",", "."));
-    return Number.isFinite(n) ? n : 0;
-  }
-  return 0;
-}
-
-function normalizeText(s: any, maxLen = 120): string {
-  const t = String(s ?? "")
+function normalizeText(s: unknown, maxLen = 120): string {
+  const t = sinControl(String(s ?? ""), "")
     .replace(/[\r\n\t]+/g, " ")
     .replace(/\s{2,}/g, " ")
-    .replace(/[\u0000-\u001F\u007F]/g, "")
     .trim();
   if (!t) return "";
   return t.length > maxLen ? `${t.slice(0, maxLen - 1)}…` : t;
-}
-
-function normalizeRow(r: any): ApiBoletinRow {
-  return {
-    id: Number(r?.id ?? r?.ID ?? 0),
-    nro_obrasocial: Number(r?.nro_obrasocial ?? r?.NRO_OBRASOCIAL ?? 0),
-    obra_social: (r?.obra_social ?? r?.OBRA_SOCIAL ?? null) as string | null,
-    nivel: Number(r?.nivel ?? r?.NIVEL ?? 0),
-    fecha_cambio: String(r?.fecha_cambio ?? r?.FECHA_CAMBIO ?? ""),
-
-    consulta: safeNum(r?.consulta ?? r?.CONSULTA),
-    galeno_quirurgico: safeNum(r?.galeno_quirurgico ?? r?.GALENO_QUIRURGICO),
-    gastos_quirurgicos: safeNum(r?.gastos_quirurgicos ?? r?.GASTOS_QUIRURGICOS),
-    galeno_practica: safeNum(r?.galeno_practica ?? r?.GALENO_PRACTICA),
-    galeno_radiologico: safeNum(r?.galeno_radiologico ?? r?.GALENO_RADIOLOGICO),
-    gastos_radiologico: safeNum(r?.gastos_radiologico ?? r?.GASTOS_RADIOLOGICO),
-    gastos_bioquimicos: safeNum(r?.gastos_bioquimicos ?? r?.GASTOS_BIOQUIMICOS),
-    otros_gastos: safeNum(r?.otros_gastos ?? r?.OTROS_GASTOS),
-    galeno_cirugia_adultos: safeNum(
-      r?.galeno_cirugia_adultos ?? r?.GALENO_CIRUGIA_ADULTOS
-    ),
-    galeno_cirugia_infantil: safeNum(
-      r?.galeno_cirugia_infantil ?? r?.GALENO_CIRUGIA_INFANTIL
-    ),
-    consulta_especial: safeNum(r?.consulta_especial ?? r?.CONSULTA_ESPECIAL),
-
-    categoria_a: (r?.categoria_a ?? r?.CATEGORIA_A ?? null) as string | null,
-    categoria_b: (r?.categoria_b ?? r?.CATEGORIA_B ?? null) as string | null,
-    categoria_c: (r?.categoria_c ?? r?.CATEGORIA_C ?? null) as string | null,
-  };
-}
-
-async function fetchValoresBoletin(params?: QueryParams): Promise<ApiBoletinRow[]> {
-  const { data } = await http.get(ENDPOINTS.valoresBoletin, { params });
-  const arr = Array.isArray(data) ? data : [];
-  return arr.map(normalizeRow);
 }
 
 function buildPerOS(
@@ -437,7 +357,7 @@ const GenerarBoletin = () => {
         const dt = parseISODateLocal(built.lastISO);
         setVigenciaDate(dt);
       }
-    } catch (e: any) {
+    } catch (e) {
       if (!mountedRef.current) return;
       setLoadError(axiosErrorMessage(e));
       setBoletinData([]);
@@ -740,8 +660,8 @@ const GenerarBoletin = () => {
           ) {
             const txt = String(data.cell.raw ?? "").trim();
             if (txt) {
-              data.cell.styles.fillColor = lightGray as any;
-              data.cell.styles.textColor = accentColor as any;
+              data.cell.styles.fillColor = lightGray;
+              data.cell.styles.textColor = accentColor;
               data.cell.styles.fontStyle = "bold";
               data.cell.styles.halign = "center";
             }
@@ -865,7 +785,7 @@ const GenerarBoletin = () => {
 
       safeSetProgress(100);
       doc.save("Boletin_de_Valores.pdf");
-    } catch (e: any) {
+    } catch (e) {
       if (mountedRef.current) setLoadError(axiosErrorMessage(e));
     } finally {
       generatingRef.current = false;
@@ -909,9 +829,9 @@ const GenerarBoletin = () => {
                 setVigenciaDate(d as Date | null);
               }}
               value={vigenciaInput}
-              onChangeRaw={(e: any) => {
+              onChangeRaw={(e) => {
                 userTouchedVigenciaRef.current = true;
-                const raw = String(e?.target?.value ?? "");
+                const raw = String((e?.target as HTMLInputElement | undefined)?.value ?? "");
                 setVigenciaInput(raw);
 
                 const t = raw.trim();
@@ -935,7 +855,7 @@ const GenerarBoletin = () => {
                   setVigenciaError(false);
                   return;
                 }
-                setVigenciaError(!Boolean(parseDateDDMMYYYY(t)));
+                setVigenciaError(!parseDateDDMMYYYY(t));
               }}
               locale="es"
               dateFormat="dd/MM/yyyy"
@@ -975,7 +895,7 @@ const GenerarBoletin = () => {
       >
         {isGenerating || isLoading ? (
           <>
-            <Loader2 size={20} className={styles.spinner} />
+            <Cargando size={20} className={styles.spinner} />
             {isGenerating ? "Generando..." : "Cargando..."}
           </>
         ) : (

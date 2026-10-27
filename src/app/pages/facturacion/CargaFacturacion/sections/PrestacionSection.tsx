@@ -3,7 +3,8 @@ import NomencladorAutocomplete from "../../components/NomencladorAutocomplete";
 import PrecioPreviewCard from "../../components/PrecioPreviewCard";
 import type { NomencladorOption, PrecioResponse, ViaPractica } from "../../types";
 import CircularProgress from "@mui/material/CircularProgress";
-import styles from "../CargaFacturacion.module.scss";
+import comun from "../Comun.module.scss";
+import styles from "./PrestacionSection.module.scss";;
 
 interface Props {
   codNomenclador: string | null;
@@ -30,11 +31,11 @@ const PrestacionSection: React.FC<Props> = ({
   via, onViaChange, onVolverATradicional, mostrarVia,
   disabled, errors = {}, presetLabel, blockedHint,
 }) => (
-  <div className={styles.section}>
-    <span className={styles.sectionTitle}>Prestación</span>
-    <div className={`${styles.filterField} ${styles.filterFieldWide}`} data-field="codigo">
-      <label className={styles.filterLabel}>
-        Código <span className={styles.errorText}>*</span>
+  <div className={comun.section}>
+    <span className={comun.sectionTitle}>Prestación</span>
+    <div className={`${comun.filterField} ${comun.filterFieldWide}`} data-field="codigo">
+      <label className={comun.filterLabel}>
+        Código <span className={comun.errorText}>*</span>
         {precioLoading && <CircularProgress size={12} style={{ marginLeft: 8 }} />}
       </label>
       <NomencladorAutocomplete
@@ -46,13 +47,13 @@ const PrestacionSection: React.FC<Props> = ({
         presetLabel={presetLabel}
         blurOnSelect={false}
       />
-      {blockedHint && <span className={styles.mutedText}>{blockedHint}</span>}
-      {errors.codNomenclador && <span className={styles.errorText}>{errors.codNomenclador}</span>}
+      {blockedHint && <span className={comun.mutedText}>{blockedHint}</span>}
+      {errors.codNomenclador && <span className={comun.errorText}>{errors.codNomenclador}</span>}
     </div>
 
     {mostrarVia && (
-      <div className={styles.filterField}>
-        <label className={styles.filterLabel}>Vía</label>
+      <div className={comun.filterField}>
+        <label className={comun.filterLabel}>Vía</label>
         <div className={styles.radioColumn}>
           {(
             [
@@ -60,7 +61,7 @@ const PrestacionSection: React.FC<Props> = ({
               ["L", "Laparoscópica"],
             ] as const
           ).map(([v, label]) => (
-            <label key={v} className={styles.radioLabel}>
+            <label key={v} className={comun.radioLabel}>
               <input
                 type="radio"
                 name="via"
@@ -76,7 +77,7 @@ const PrestacionSection: React.FC<Props> = ({
       </div>
     )}
 
-    {precioError && <div className={styles.errorText}>{precioError}</div>}
+    {precioError && <div className={comun.errorText}>{precioError}</div>}
     {precio && !precioLoading && (
       <PrecioPreviewCard precio={precio} onVolverATradicional={onVolverATradicional} />
     )}

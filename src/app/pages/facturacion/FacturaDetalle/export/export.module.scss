@@ -9,7 +9,7 @@
   inset: 0;
   background: rgba($black, 0.35);
   z-index: 200;
-  animation: fadeIn 0.2s ease;
+  animation: $anim-fade 0.2s ease;
 }
 
 .drawer {
@@ -24,21 +24,11 @@
   z-index: 201;
   display: flex;
   flex-direction: column;
-  animation: slideIn 0.22s ease;
+  animation: $anim-slide-right 0.22s ease;
 
   @media (max-width: 640px) {
     width: 100vw;
   }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideIn {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
 }
 
 // ─── Header ──────────────────────────────────────────────────────────────────
@@ -567,10 +557,4 @@
   color: $white;
 }
 
-.spin {
-  animation: spin 0.8s linear infinite;
-}
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}

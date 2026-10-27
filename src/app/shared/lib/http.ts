@@ -1,5 +1,6 @@
 import axios from "axios";
 import type { AxiosRequestConfig, InternalAxiosRequestConfig } from "axios";
+import { AxiosHeaders } from "axios";
 import { getAccessToken } from "@/app/auth/token";
 import { API_URL } from "@/app/config/env";
 import { refreshSession, forceLogout } from "@/app/auth/session";
@@ -25,21 +26,25 @@ export const httpBare = axios.create({
 const esSensible = (url?: string) =>
   Boolean(url && (url.includes("/password") || url.includes("/auth/")));
 
-const isFormDataLike = (d: any) => {
-  if (!d) return false;
+/** Parámetros de query: cualquier objeto (un filtro tipado o un literal). */
+export type Parametros = object;
+
+const isFormDataLike = (d: unknown) => {
+  if (!d || typeof d !== "object") return false;
   // detecta instancias nativas y objetos con append()
   return (
     (typeof FormData !== "undefined" && d instanceof FormData) ||
-    (typeof d.append === "function" &&
+    ("append" in d &&
+      typeof d.append === "function" &&
       Object.prototype.toString.call(d) === "[object FormData]")
   );
 };
 
 http.interceptors.request.use((config: RetriableConfig) => {
-  config.headers = config.headers ?? ({} as any);
+  config.headers = config.headers ?? new AxiosHeaders();
   config.headers["Accept"] = "application/json";
 
-  const body = config.data as any;
+  const body: unknown = config.data;
   const isFD = isFormDataLike(body);
 
   // Con FormData no se fija Content-Type: el navegador agrega el boundary.
@@ -119,7 +124,7 @@ http.interceptors.response.use(
 );
 
 // Helpers JSON
-export const getJSON = async <T>(url: string, params?: Record<string, any>) => {
+export const getJSON = async <T>(url: string, params?: Parametros) => {
   const { data } = await http.get(url, { params });
   return data as T;
 };
@@ -127,7 +132,7 @@ export const getJSON = async <T>(url: string, params?: Record<string, any>) => {
 // `config` sirve sobre todo para subir el `timeout` de una llamada puntual.
 export const postJSON = async <T>(
   url: string,
-  body?: any,
+  body?: unknown,
   config?: AxiosRequestConfig
 ) => {
   const { data } = await http.post(url, body ?? {}, config);
@@ -156,7 +161,7 @@ export const patchForm = async <T = unknown>(
 
 export const putJSON = async <T = unknown>(
   url: string,
-  body?: any
+  body?: unknown
 ): Promise<T> => {
   const { data } = await http.put(url, body ?? {});
   return data as T;
@@ -164,7 +169,7 @@ export const putJSON = async <T = unknown>(
 
 export const patchJSON = async <T = unknown>(
   url: string,
-  body?: any
+  body?: unknown
 ): Promise<T> => {
   const { data } = await http.patch(url, body ?? {});
   return data as T;
@@ -178,13 +183,13 @@ export const delJSON = async <T = unknown>(
   return data as T;
 };
 
-export const delJSONBody = async <T = unknown>(url: string, body?: any): Promise<T> => {
+export const delJSONBody = async <T = unknown>(url: string, body?: unknown): Promise<T> => {
   const { data } = await http.delete(url, { data: body ?? {} });
   return data as T;
 };
 
 // Axios serializa un array como `columnas[]=a&columnas[]=b` por default — FastAPI espera la clave repetida sin corchetes (`columnas=a&columnas=b`) para bindear un `list[...]` en un Query param.
-function serializeParamsRepetidos(params: Record<string, any>): string {
+function serializeParamsRepetidos(params: Parametros): string {
   const usp = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
     if (value === undefined || value === null) continue;
@@ -200,7 +205,7 @@ function serializeParamsRepetidos(params: Record<string, any>): string {
 // Descarga de archivo (export a PDF/Excel): timeout largo porque el backend puede tardar unos segundos generando el documento (facturas con miles de prestaciones).
 export async function getBlobLong(
   url: string,
-  params?: Record<string, any>,
+  params?: Parametros,
   timeoutMs = 180_000
 ): Promise<{ blob: Blob; filename?: string }> {
   const res = await http.get(url, {
@@ -216,7 +221,7 @@ export async function getBlobLong(
 
 export const getJSONWithHeaders = async <T>(
   url: string,
-  params?: Record<string, any>
+  params?: Parametros
 ): Promise<{ data: T; totalCount: number | undefined }> => {
   const res = await http.get<T>(url, { params });
   const raw = Number(res.headers["x-total-count"] ?? NaN);

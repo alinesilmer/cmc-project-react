@@ -1,0 +1,113 @@
+@use "@/app/styles/all.scss" as *;
+
+// Campos de los pasos: rótulo arriba, control debajo y una ayuda corta; compartido por todos los pasos.
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  min-width: 0;
+  max-width: 34rem;
+}
+
+// Para campos de texto largo: ocupa todo el ancho del paso.
+.campoAncho {
+  max-width: none;
+}
+
+// Un formulario dentro de un paso: los campos uno debajo del otro.
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-5;
+}
+
+.rotulo {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-700;
+}
+
+.entrada,
+.seleccion {
+  width: 100%;
+  padding: $spacing-3 $spacing-4;
+  font-size: $font-size-base;
+  font-weight: $font-weight-normal;
+  color: $gray-800;
+  background: $white;
+  border: 1px solid $gray-300;
+  border-radius: $radio-md;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.18s, box-shadow 0.18s;
+
+  &:focus {
+    border-color: $franja-azul;
+    box-shadow: 0 0 0 3px rgba($franja-azul, 0.14);
+  }
+
+  &::placeholder {
+    color: $gray-400;
+  }
+
+  &:disabled {
+    background: $gray-100;
+    cursor: not-allowed;
+  }
+}
+
+.seleccion {
+  cursor: pointer;
+}
+
+.ayuda {
+  margin: 0;
+  font-size: $font-size-xs;
+  color: $gray-500;
+}
+
+.casilla {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-3;
+  cursor: pointer;
+
+  input {
+    flex-shrink: 0;
+    width: 1.1rem;
+    height: 1.1rem;
+    margin-top: 0.2rem;
+    accent-color: $franja-azul;
+  }
+
+  span {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  strong {
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    color: $gray-800;
+  }
+}
+
+// Botones de un paso, en fila.
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-3;
+}
+
+// Título de una parte dentro de un paso.
+.subtitulo {
+  margin: 0;
+  font-family: $fuente-titulos;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $franja-azul;
+}

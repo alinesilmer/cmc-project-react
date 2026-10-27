@@ -1,8 +1,10 @@
 import { Upload } from "lucide-react";
-import SelectorArchivo from "../../../components/UI/SelectorArchivo/SelectorArchivo";
-import { useVistaPrevia } from "../../../hooks/useVistaPrevia";
-import { IMAGENES } from "../../../lib/subidas";
-import styles from "./MedicosPromo.module.scss";
+
+import s from "./MedicosPromo.module.scss";
+import c from "@/app/components/ui/Paso/Campos.module.scss";
+import SelectorArchivo from "@/website/components/UI/SelectorArchivo/SelectorArchivo";
+import { useVistaPrevia } from "@/website/hooks/useVistaPrevia";
+import { IMAGENES } from "@/website/lib/subidas";
 
 type Props = {
   etiqueta: string;
@@ -18,9 +20,9 @@ export default function SelectorImagen({ etiqueta, textoBoton, archivo, onArchiv
   const vista = useVistaPrevia(archivo);
 
   return (
-    <div className={styles.row}>
-      <span className={styles.etiqueta}>{etiqueta}</span>
-      <div className={styles.fileRow}>
+    <div className={c.campo}>
+      <span className={c.rotulo}>{etiqueta}</span>
+      <div className={s.fila}>
         <SelectorArchivo
           extensiones={IMAGENES}
           variant="outline"
@@ -31,10 +33,10 @@ export default function SelectorImagen({ etiqueta, textoBoton, archivo, onArchiv
         >
           {textoBoton}
         </SelectorArchivo>
-        {archivo && <span className={styles.filename}>{archivo.name}</span>}
+        {archivo && <span className={s.archivo}>{archivo.name}</span>}
       </div>
       {vista && (
-        <div className={styles.preview}>
+        <div className={s.vista}>
           <img src={vista} alt="Vista previa del aviso" />
         </div>
       )}

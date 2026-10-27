@@ -6,6 +6,8 @@ import type { CierrePreviewResponse, FacturaRead, ObraSocialOption } from "../ty
 import { detailMessage } from "../types";
 import { formatMoney } from "../money";
 import ObraSocialAutocomplete from "../components/ObraSocialAutocomplete";
+import paleta from "@/app/styles/paleta.module.scss";
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 
 interface Props {
   isOpen: boolean;
@@ -63,9 +65,10 @@ const NuevaComplementariaModal: React.FC<Props> = ({ isOpen, onClose, onCreated 
       try {
         const data = await previewCierre(String(obraSocial.nro_obra_social), periodo);
         if (!cancelado) setPreview(data);
-      } catch (e: any) {
+      } catch (e) {
+        const err = comoErrorApi(e);
         if (!cancelado) {
-          setError(detailMessage(e?.response?.data?.detail));
+          setError(detailMessage(err?.response?.data?.detail));
           setPreview(null);
         }
       } finally {
@@ -85,9 +88,10 @@ const NuevaComplementariaModal: React.FC<Props> = ({ isOpen, onClose, onCreated 
         periodo,
       });
       onCreated(factura);
-    } catch (e: any) {
-      const status = e?.response?.status;
-      setError(ERRORES[status] ?? detailMessage(e?.response?.data?.detail) ?? "Error al abrir el complemento.");
+    } catch (e) {
+      const err = comoErrorApi(e);
+      const status = err?.response?.status;
+      setError((status !== undefined ? ERRORES[status] : undefined) ?? detailMessage(err?.response?.data?.detail) ?? "Error al abrir el complemento.");
     } finally {
       setCreando(false);
     }
@@ -99,13 +103,13 @@ const NuevaComplementariaModal: React.FC<Props> = ({ isOpen, onClose, onCreated 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Nueva factura complementaria" size="small">
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        <p style={{ fontSize: 13, color: "#334155", margin: 0 }}>
+        <p style={{ fontSize: 13, color: paleta.gray700, margin: 0 }}>
           Abre una factura adicional para un período <strong>ya cerrado</strong>, donde cargar las
           prestaciones que quedaron afuera del envío original.
         </p>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-          <label style={{ fontSize: 11, fontWeight: 700, color: "#718096", letterSpacing: ".05em", textTransform: "uppercase" }}>
+          <label style={{ fontSize: 11, fontWeight: 700, color: paleta.tonoAzul400, letterSpacing: ".05em", textTransform: "uppercase" }}>
             Obra social
           </label>
           <ObraSocialAutocomplete
@@ -116,7 +120,7 @@ const NuevaComplementariaModal: React.FC<Props> = ({ isOpen, onClose, onCreated 
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-          <label style={{ fontSize: 11, fontWeight: 700, color: "#718096", letterSpacing: ".05em", textTransform: "uppercase" }}>
+          <label style={{ fontSize: 11, fontWeight: 700, color: paleta.tonoAzul400, letterSpacing: ".05em", textTransform: "uppercase" }}>
             Período (YYYYMM)
           </label>
           <input
@@ -128,29 +132,29 @@ const NuevaComplementariaModal: React.FC<Props> = ({ isOpen, onClose, onCreated 
             placeholder="Ej. 202607"
             disabled={!obraSocial || creando}
             style={{
-              height: 36, padding: "0 12px", border: "1px solid #e2e8f0",
-              borderRadius: 6, fontSize: 13, color: "#1a1f2e", outline: "none",
+              height: 36, padding: "0 12px", border: `1px solid ${paleta.gray200}`,
+              borderRadius: 6, fontSize: 13, color: paleta.tonoAzul750C, outline: "none",
               boxSizing: "border-box",
             }}
           />
         </div>
 
         {previewLoading && (
-          <span style={{ fontSize: 12, color: "#718096" }}>Cargando período…</span>
+          <span style={{ fontSize: 12, color: paleta.tonoAzul400 }}>Cargando período…</span>
         )}
 
         {preview && (
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 12, fontWeight: 600, borderRadius: 20, padding: "3px 10px", background: "#eef2f7", color: "#475569" }}>
+            <span style={{ fontSize: 12, fontWeight: 600, borderRadius: 20, padding: "3px 10px", background: paleta.gray100, color: paleta.gray600 }}>
               {preview.cantidad} prestación{preview.cantidad !== 1 ? "es" : ""}
             </span>
-            <span style={{ fontSize: 12, fontWeight: 600, borderRadius: 20, padding: "3px 10px", background: "#dcfce7", color: "#166534" }}>
+            <span style={{ fontSize: 12, fontWeight: 600, borderRadius: 20, padding: "3px 10px", background: paleta.tonoVerde50C, color: paleta.tonoVerde550 }}>
               Total: {formatMoney(preview.importe_total)}
             </span>
             <span style={{
               fontSize: 12, fontWeight: 600, borderRadius: 20, padding: "3px 10px",
-              background: preview.cerrado ? "#dcfce7" : "#fef3c7",
-              color: preview.cerrado ? "#166534" : "#92400e",
+              background: preview.cerrado ? paleta.tonoVerde50C : paleta.tonoAmarillo50D,
+              color: preview.cerrado ? paleta.tonoVerde550 : paleta.tonoNaranja550,
             }}>
               {preview.cerrado ? "Cerrado" : "Abierto"}
             </span>
@@ -158,14 +162,14 @@ const NuevaComplementariaModal: React.FC<Props> = ({ isOpen, onClose, onCreated 
         )}
 
         {preview && !preview.cerrado && (
-          <div style={{ background: "#fffbeb", border: "1px solid #f59e0b", borderRadius: 6, padding: "8px 12px", fontSize: 12, color: "#92400e" }}>
+          <div style={{ background: paleta.tonoAmarillo50C, border: `1px solid ${paleta.warningOrange}`, borderRadius: 6, padding: "8px 12px", fontSize: 12, color: paleta.tonoNaranja550 }}>
             Este período todavía está abierto — cargá las prestaciones ahí. Un complemento solo tiene
             sentido cuando la factura anterior ya se cerró y se envió.
           </div>
         )}
 
         {error && (
-          <div style={{ background: "#fee2e2", border: "1px solid #dc2626", borderRadius: 6, padding: "8px 12px", fontSize: 12, color: "#991b1b" }}>
+          <div style={{ background: paleta.tonoRojo50, border: `1px solid ${paleta.tonoRojo400}`, borderRadius: 6, padding: "8px 12px", fontSize: 12, color: paleta.tonoRojo550C }}>
             {error}
           </div>
         )}

@@ -1,8 +1,8 @@
 import { Handshake } from "lucide-react";
 import Revelar from "../../UI/Revelar/Revelar";
-import logoCMC from "../../../assets/images/logoCMC-web.png";
+import logoCMC from "@/website/assets/images/logoCMC-web.png";
 // Servido desde el propio sitio: antes se cargaba a través del proxy de imágenes del buscador Brave, que recibía la IP de cada visitante.
-import logoNoble from "../../../assets/images/noble.png";
+import logoNoble from "@/website/assets/images/noble.png";
 import styles from "./AlianzaNoble.module.scss";
 
 /** El Colegio y NOBLE, lado a lado: lo que la página de Seguros tiene que decir. */

@@ -42,7 +42,6 @@ import type {
   GalenoCreateNivelesPayload,
   GalenoUpdatePayload,
   GalenoActualizarPrecioPayload,
-  GalenoActualizarPrecioMasivoPayload,
   GalenoActualizarUnidadesPayload,
   GalenoActualizarUnidadesResult,
   GalenosImportarPayload,
@@ -52,7 +51,6 @@ import type {
   ComponentesNNSugeridos,
   AltaNECeroResult,
   CompletarBaseNNResult,
-  ActualizacionMasivaResult,
   ValorOut,
   ValorCreatePayload,
   ValorCreateMultiPayload,
@@ -214,14 +212,6 @@ export const actualizarPreciosGalenosLote = (
   postJSON<GalenosPrecioLoteResult>("/api/galenos/actualizar_precios_lote", payload, {
     timeout: TIMEOUT_MASIVO_MS,
   });
-
-export const actualizarPrecioMasivoGaleno = (
-  payload: GalenoActualizarPrecioMasivoPayload,
-): Promise<ActualizacionMasivaResult> =>
-  postJSON<ActualizacionMasivaResult>(
-    "/api/galenos/actualizar_precio_masivo",
-    payload,
-  );
 
 /** Muestra/oculta el galeno (todos sus niveles) de una OS en el boletín del médico. */
 export const cambiarVisibilidadGaleno = (payload: {

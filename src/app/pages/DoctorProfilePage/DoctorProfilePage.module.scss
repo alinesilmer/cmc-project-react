@@ -404,21 +404,6 @@ h5.section {
   gap: $spacing-3;
 }
 
-.loader {
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 50%;
-  border: 3px solid rgba($black, 0.1);
-  border-top-color: $primary-blue;
-  animation: spin 0.9s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .portal {
   position: fixed;
   inset: 0;
@@ -429,14 +414,6 @@ h5.section {
   align-items: center;
   justify-content: center;
 }
-
-.overlay {
-  position: absolute;
-  inset: 0;
-  background: $black;
-  opacity: 0.45;
-}
-
 .popup {
   position: absolute;
   transform: translateX(-50%);

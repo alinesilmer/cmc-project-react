@@ -11,7 +11,8 @@ import {
   searchMedicosForPagador,
 } from "@/app/pages/DoctorProfilePage/api";
 import { esInactivoEnPadron, safeStr } from "./helpers";
-import styles from "./Padrones.module.scss";
+import comun from "./Comun.module.scss";
+import styles from "./PorSocio.module.scss";;
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 
 const DIEZ_MINUTOS = 10 * 60 * 1000;
@@ -89,7 +90,7 @@ export default function PorSocio() {
         {socioId !== null && (
           <button
             type="button"
-            className={styles.ajusteBtn}
+            className={comun.ajusteBtn}
             onClick={() => navigate(`/panel/doctors/${socioId}`, { state: { tab: "padrones" } })}
           >
             Abrir legajo
@@ -99,42 +100,42 @@ export default function PorSocio() {
       </div>
 
       {socioId === null ? (
-        <div className={styles.emptyState}>
-          <UserRound size={40} className={styles.emptyIcon} />
-          <h3 className={styles.emptyTitle}>Buscá un socio</h3>
+        <div className={comun.emptyState}>
+          <UserRound size={40} className={comun.emptyIcon} />
+          <h3 className={comun.emptyTitle}>Buscá un socio</h3>
         </div>
       ) : padrones.isPending ? (
-        <div className={styles.loadingState}>
-          <div className={styles.progressBar}><div className={styles.progressFill} /></div>
-          <p className={styles.loadingText}>Cargando obras sociales…</p>
+        <div className={comun.loadingState}>
+          <div className={comun.progressBar}><div className={comun.progressFill} /></div>
+          <p className={comun.loadingText}>Cargando obras sociales…</p>
         </div>
       ) : padrones.isError ? (
-        <div className={styles.errorMessage}>No se pudo cargar el padrón de este socio.</div>
+        <div className={comun.errorMessage}>No se pudo cargar el padrón de este socio.</div>
       ) : filas.length === 0 ? (
-        <div className={styles.emptyState}>
-          <h3 className={styles.emptyTitle}>Este socio no figura en ninguna obra social</h3>
+        <div className={comun.emptyState}>
+          <h3 className={comun.emptyTitle}>Este socio no figura en ninguna obra social</h3>
         </div>
       ) : (
         <>
-          <p className={styles.resultsCount}>
+          <p className={comun.resultsCount}>
             <strong>{filas.length}</strong> {filas.length === 1 ? "obra social" : "obras sociales"}
           </p>
-          <div className={styles.tableWrapper}>
-            <Tabla className={styles.table}>
+          <div className={comun.tableWrapper}>
+            <Tabla className={comun.table}>
               <thead>
                 <tr>
-                  <th className={styles.centrada}>N.º</th>
+                  <th className={comun.centrada}>N.º</th>
                   <th>Obra social</th>
-                  <th className={styles.centrada}>Categoría</th>
+                  <th className={comun.centrada}>Categoría</th>
                 </tr>
               </thead>
               <tbody>
                 {filas.map((f) => (
                   <tr key={f.nro}>
-                    <td className={styles.centrada}>{f.nro}</td>
-                    <td className={styles.tdName}>{f.nombre}</td>
-                    <td className={styles.centrada}>
-                      {f.categoria || <span className={styles.vacio}>—</span>}
+                    <td className={comun.centrada}>{f.nro}</td>
+                    <td className={comun.tdName}>{f.nombre}</td>
+                    <td className={comun.centrada}>
+                      {f.categoria || <span className={comun.vacio}>—</span>}
                     </td>
                   </tr>
                 ))}

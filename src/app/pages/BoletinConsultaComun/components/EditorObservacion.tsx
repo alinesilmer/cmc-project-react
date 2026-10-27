@@ -2,7 +2,7 @@ import { useState, type KeyboardEvent } from "react";
 
 import Button from "@/app/components/ui/Button/Button";
 import type { Plantilla } from "../useObservaciones";
-import s from "../BoletinConsultaComun.module.scss";
+import s from "./EditorObservacion.module.scss";
 
 const MAX = 1000;
 
@@ -82,7 +82,6 @@ export default function EditorObservacion({ nombre, inicial, plantillas, guardan
         maxLength={MAX}
         rows={5}
         placeholder="Escribí la observación. Un renglón por condición."
-        // eslint-disable-next-line jsx-a11y/no-autofocus
         autoFocus
       />
 

@@ -1,0 +1,43 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver Resultado.tsx.
+
+.resultado {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+.ok {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin: 0;
+  font-size: $font-size-base;
+  color: $ok;
+
+  svg {
+    flex-shrink: 0;
+  }
+}
+
+.error {
+  color: $peligro;
+}
+
+.errorTitulo,
+.errorAccion {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin: 0;
+  font-size: $font-size-sm;
+  color: $peligro;
+}
+
+.lista {
+  margin: $spacing-1 0 0;
+  padding-left: $spacing-6;
+  font-size: $font-size-xs;
+  color: $gray-600;
+}

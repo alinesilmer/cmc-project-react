@@ -1,10 +1,6 @@
 import type React from "react";
 import { memo } from "react";
-import {
-  AlertCircle,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -35,6 +31,8 @@ import {
 import SearchField from "@/app/components/ui/SearchField/SearchField";
 import SelectorMes from "@/app/components/ui/SelectorMes/SelectorMes";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
+import Paginador from "@/app/components/ui/Paginador/Paginador";
+import paleta from "@/app/styles/paleta.module.scss";
 
 // Piezas compartidas por el reporte del Colegio y el del médico.
 
@@ -153,17 +151,17 @@ export const GraficoEvolucion = memo(function GraficoEvolucion({
     <div className={styles.chart}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={datos} margin={{ top: 8, right: 12, bottom: 4, left: 4 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke={paleta.gray200} vertical={false} />
           <XAxis
             dataKey="periodo"
             tickFormatter={periodoCorto}
-            tick={{ fontSize: 11, fill: "#64748b" }}
+            tick={{ fontSize: 11, fill: paleta.gray500 }}
             tickLine={false}
-            axisLine={{ stroke: "#cbd5e1" }}
+            axisLine={{ stroke: paleta.gray300 }}
           />
           <YAxis
             tickFormatter={moneyCompacto}
-            tick={{ fontSize: 11, fill: "#64748b" }}
+            tick={{ fontSize: 11, fill: paleta.gray500 }}
             tickLine={false}
             axisLine={false}
             width={54}
@@ -172,9 +170,9 @@ export const GraficoEvolucion = memo(function GraficoEvolucion({
           <Line
             type="monotone"
             dataKey="importe_total"
-            stroke="#173f70"
+            stroke={paleta.primaryBlue}
             strokeWidth={2}
-            dot={{ r: 2.5, fill: "#173f70" }}
+            dot={{ r: 2.5, fill: paleta.primaryBlue }}
             activeDot={{ r: 4.5 }}
             // Sin animación: con 24 puntos y re-render por cambio de filtro, animar cada vez se ve nervioso y no aporta nada.
             isAnimationActive={false}
@@ -193,7 +191,7 @@ export interface BarraDato {
   detalle?: string;
 }
 
-const PALETA = ["#173f70", "#1b4c88", "#3455c1", "#5a79e1", "#7e97ea", "#a2b4f0"];
+const PALETA = [paleta.primaryBlue, paleta.primaryBlueLighter, paleta.primaryBlueDark, paleta.accentBlue, paleta.tonoAzul300C, paleta.tonoAzul200C];
 
 export const GraficoRanking = memo(function GraficoRanking({
   datos,
@@ -210,18 +208,18 @@ export const GraficoRanking = memo(function GraficoRanking({
           layout="vertical"
           margin={{ top: 4, right: 16, bottom: 4, left: 4 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke={paleta.gray200} horizontal={false} />
           <XAxis
             type="number"
             tickFormatter={moneyCompacto}
-            tick={{ fontSize: 11, fill: "#64748b" }}
+            tick={{ fontSize: 11, fill: paleta.gray500 }}
             tickLine={false}
-            axisLine={{ stroke: "#cbd5e1" }}
+            axisLine={{ stroke: paleta.gray300 }}
           />
           <YAxis
             type="category"
             dataKey="etiqueta"
-            tick={{ fontSize: 11, fill: "#475569" }}
+            tick={{ fontSize: 11, fill: paleta.gray600 }}
             tickLine={false}
             axisLine={false}
             width={120}
@@ -255,35 +253,17 @@ export function Pager({
 }) {
   const desde = total === 0 ? 0 : offset + 1;
   const hasta = Math.min(offset + limit, total);
-  const hayAnterior = offset > 0;
-  const haySiguiente = hasta < total;
 
   return (
-    <div className={styles.pager}>
-      <span className={styles.pagerInfo}>
-        {total === 0
-          ? "Sin resultados"
-          : `${numero.format(desde)}–${numero.format(hasta)} de ${numero.format(total)}`}
-      </span>
-      <div className={styles.pagerBtns}>
-        <button
-          type="button"
-          className={styles.pageBtn}
-          onClick={() => onChange(Math.max(0, offset - limit))}
-          disabled={!hayAnterior || cargando}
-        >
-          <ChevronLeft size={15} /> Anterior
-        </button>
-        <button
-          type="button"
-          className={styles.pageBtn}
-          onClick={() => onChange(offset + limit)}
-          disabled={!haySiguiente || cargando}
-        >
-          Siguiente <ChevronRight size={15} />
-        </button>
-      </div>
-    </div>
+    <Paginador
+      pagina={Math.floor(offset / limit) + 1}
+      totalPaginas={Math.max(1, Math.ceil(total / limit))}
+      onCambiar={(p) => onChange((p - 1) * limit)}
+      ocupado={cargando}
+      resumen={
+        total === 0 ? "Sin resultados" : `${numero.format(desde)}–${numero.format(hasta)} de ${numero.format(total)}`
+      }
+    />
   );
 }
 
@@ -433,31 +413,13 @@ export function PagerSimple({
   if (!hayAnterior && !haySiguiente) return null;
 
   return (
-    <div className={styles.pager}>
-      <span className={styles.pagerInfo}>
-        {cantidad === 0
-          ? "Sin resultados"
-          : `${numero.format(offset + 1)}–${numero.format(offset + cantidad)}`}
-      </span>
-      <div className={styles.pagerBtns}>
-        <button
-          type="button"
-          className={styles.pageBtn}
-          onClick={() => onChange(Math.max(0, offset - limit))}
-          disabled={!hayAnterior || cargando}
-        >
-          <ChevronLeft size={15} /> Anterior
-        </button>
-        <button
-          type="button"
-          className={styles.pageBtn}
-          onClick={() => onChange(offset + limit)}
-          disabled={!haySiguiente || cargando}
-        >
-          Siguiente <ChevronRight size={15} />
-        </button>
-      </div>
-    </div>
+    <Paginador
+      pagina={Math.floor(offset / limit) + 1}
+      hayMas={haySiguiente}
+      onCambiar={(p) => onChange((p - 1) * limit)}
+      ocupado={cargando}
+      resumen={cantidad === 0 ? "Sin resultados" : `${numero.format(offset + 1)}–${numero.format(offset + cantidad)}`}
+    />
   );
 }
 

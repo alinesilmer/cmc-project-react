@@ -321,23 +321,7 @@
   color: $gray-500;
   text-decoration: underline;
   cursor: pointer;
-}
-
-.paginado {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: $spacing-4;
-  flex-wrap: wrap;
-}
-
-.paginaActual {
-  font-size: $font-size-sm;
-  color: $gray-600;
-  font-variant-numeric: tabular-nums;
-}
-
-.sinFilas {
+}.sinFilas {
   margin: 0;
   padding: $spacing-6 $spacing-5;
   text-align: center;

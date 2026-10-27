@@ -1,0 +1,58 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver Parametros.tsx: el porcentaje es la cifra grande del paso.
+
+.cifra {
+  position: relative;
+  max-width: 16rem;
+}
+
+.cifraEntrada {
+  width: 100%;
+  padding: $spacing-3 $spacing-10 $spacing-3 $spacing-4;
+  font-family: $fuente-titulos;
+  font-size: $font-size-4xl;
+  font-weight: $font-weight-normal;
+  font-variant-numeric: tabular-nums;
+  color: $gray-800;
+  background: $white;
+  border: 1px solid $gray-300;
+  border-radius: $radio-md;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.18s, box-shadow 0.18s;
+
+  &:focus {
+    border-color: $franja-azul;
+    box-shadow: 0 0 0 3px rgba($franja-azul, 0.14);
+  }
+}
+
+.simbolo {
+  position: absolute;
+  top: 50%;
+  right: $spacing-4;
+  transform: translateY(-50%);
+  font-size: $font-size-2xl;
+  color: $gray-400;
+  pointer-events: none;
+}
+
+.sube {
+  color: $ok;
+}
+
+.baja {
+  color: $peligro;
+}
+
+.frase {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin: 0;
+  padding: $spacing-3 $spacing-4;
+  font-size: $font-size-base;
+  background: $gray-100;
+  border-radius: $radio-md;
+}

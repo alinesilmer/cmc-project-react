@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Trash2, SquarePen, Save } from "lucide-react";
-import { useConfirmacion } from "@/app/hooks/useConfirmacion";
-import Button from "../../../components/UI/Button/Button";
+import { Save, SquarePen, Trash2 } from "lucide-react";
+
 import BuscadorMedico from "./BuscadorMedico";
 import SelectorImagen from "./SelectorImagen";
-import type { DoctorLite, PubAd } from "../../../lib/ads.client";
-import styles from "./MedicosPromo.module.scss";
+import s from "./MedicosPromo.module.scss";
+import Button from "@/app/components/ui/Button/Button";
+import c from "@/app/components/ui/Paso/Campos.module.scss";
+import { useConfirmacion } from "@/app/hooks/useConfirmacion";
+import type { DoctorLite, PubAd } from "@/website/lib/ads.client";
 
 type Props = {
   aviso: PubAd;
@@ -48,8 +49,7 @@ export default function TarjetaAviso({ aviso, onActualizar, onBorrar, onError }:
     }
   };
 
-  const alternarActivo = () =>
-    intentar(() => onActualizar(aviso, { activo: !aviso.activo }), "No pudimos cambiar el estado del aviso.");
+  const alternarActivo = () => intentar(() => onActualizar(aviso, { activo: !aviso.activo }), "No pudimos cambiar el estado del aviso.");
 
   const borrar = () =>
     pedir(
@@ -58,63 +58,50 @@ export default function TarjetaAviso({ aviso, onActualizar, onBorrar, onError }:
     );
 
   return (
-    <motion.div className={styles.card} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-      <div className={styles.thumb}>
-        {aviso.adjunto_path ? (
-          <img src={aviso.adjunto_path} alt={titulo} loading="lazy" />
-        ) : (
-          <div className={styles.placeholder}>Sin imagen</div>
-        )}
+    <article className={s.tarjeta}>
+      <div className={s.miniatura}>
+        {aviso.adjunto_path ? <img src={aviso.adjunto_path} alt={titulo} loading="lazy" /> : <span>Sin imagen</span>}
       </div>
 
-      <div className={styles.body}>
-        <div className={styles.title}>{titulo}</div>
+      <div className={s.cuerpo}>
+        <h3 className={s.titulo}>{titulo}</h3>
 
         {editando ? (
           <>
-            <div className={styles.row}>
-              <BuscadorMedico etiqueta="Cambiar médico" elegido={medico} onElegir={setMedico} />
-            </div>
+            <BuscadorMedico etiqueta="Cambiar médico" elegido={medico} onElegir={setMedico} />
 
-            <div className={styles.rowInline}>
-              <label className={styles.switchLabel}>
-                <input type="checkbox" checked={activo} onChange={(e) => setActivo(e.target.checked)} />
-                <span>Activo</span>
-              </label>
-            </div>
+            <label className={c.casilla}>
+              <input type="checkbox" checked={activo} onChange={(e) => setActivo(e.target.checked)} />
+              <span>
+                <strong>Activo</strong>
+              </span>
+            </label>
 
-            <SelectorImagen
-              etiqueta="Reemplazar imagen"
-              textoBoton="Subir"
-              size="small"
-              archivo={imagen}
-              onArchivo={setImagen}
-              onError={onError}
-            />
+            <SelectorImagen etiqueta="Reemplazar imagen" textoBoton="Subir" size="small" archivo={imagen} onArchivo={setImagen} onError={onError} />
 
-            <div className={styles.cardActions}>
-              <Button variant="primary" size="small" iconoIzquierda={<Save />} onClick={guardar}>
+            <div className={c.acciones}>
+              <Button size="sm" leftIcon={<Save size={14} aria-hidden="true" />} onClick={guardar}>
                 Guardar
               </Button>
-              <Button variant="outline" size="small" onClick={() => setEditando(false)}>
+              <Button variant="ghost" size="sm" onClick={() => setEditando(false)}>
                 Cancelar
               </Button>
             </div>
           </>
         ) : (
           <>
-            <div className={styles.statusRow}>
-              <label className={styles.switchLabel}>
-                <input type="checkbox" checked={aviso.activo} onChange={alternarActivo} />
-                <span>{aviso.activo ? "Activo" : "Inactivo"}</span>
-              </label>
-            </div>
+            <label className={c.casilla}>
+              <input type="checkbox" checked={aviso.activo} onChange={alternarActivo} />
+              <span>
+                <strong>{aviso.activo ? "Activo" : "Inactivo"}</strong>
+              </span>
+            </label>
 
-            <div className={styles.cardActions}>
-              <Button variant="outline" size="small" iconoIzquierda={<SquarePen />} onClick={editar}>
+            <div className={c.acciones}>
+              <Button variant="ghost" size="sm" leftIcon={<SquarePen size={14} aria-hidden="true" />} onClick={editar}>
                 Editar
               </Button>
-              <Button variant="outline" size="small" iconoIzquierda={<Trash2 />} onClick={borrar}>
+              <Button variant="danger" size="sm" leftIcon={<Trash2 size={14} aria-hidden="true" />} onClick={borrar}>
                 Eliminar
               </Button>
             </div>
@@ -122,6 +109,6 @@ export default function TarjetaAviso({ aviso, onActualizar, onBorrar, onError }:
         )}
       </div>
       {modal}
-    </motion.div>
+    </article>
   );
 }

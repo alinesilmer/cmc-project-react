@@ -1,39 +1,40 @@
-import { useEffect, useState } from "react";
-import { FileText } from "lucide-react";
-import { useConfirmacion } from "@/app/hooks/useConfirmacion";
-import Alerta from "../../../components/UI/Alerta/Alerta";
+import { useState } from "react";
+import { FileText, Upload } from "lucide-react";
+
 import ZonaCarga from "./ZonaCarga";
 import HistorialValores from "./HistorialValores";
 import VerPdf from "./VerPdf";
 import { useValoresEticos } from "./useValoresEticos";
-import { formatearFecha } from "../../../lib/fechas";
-import { nombreDeRuta } from "../../../lib/documentos";
-import styles from "./valoresEticos.module.scss";
+import s from "./ValoresEticos.module.scss";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
+import Paso from "@/app/components/ui/Paso/Paso";
+import c from "@/app/components/ui/Paso/Campos.module.scss";
+import { ErrorAccion } from "@/app/components/ui/ResultadoAccion/ResultadoAccion";
+import { useConfirmacion } from "@/app/hooks/useConfirmacion";
+import { useNotify } from "@/app/hooks/useNotify";
+import { formatearFecha } from "@/website/lib/fechas";
+import { nombreDeRuta } from "@/website/lib/documentos";
 
 /** La solapa «Valores Éticos»: el PDF vigente, la carga de uno nuevo y el historial. */
 export default function ValoresEticos() {
   const { ultimo, historial, cargando, errorCarga, subir, borrar } = useValoresEticos();
   const { pedir, modal } = useConfirmacion();
-  const [error, setError] = useState<string | null>(null);
-  const [exito, setExito] = useState<string | null>(null);
+  const notify = useNotify();
   const [subiendo, setSubiendo] = useState(false);
   const [borrando, setBorrando] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (!exito) return;
-    const t = setTimeout(() => setExito(null), 4000);
-    return () => clearTimeout(t);
-  }, [exito]);
+  const avisarError = (mensaje: string | null) => {
+    if (mensaje) notify.error(mensaje);
+  };
 
   const alSubir = async (archivo: File, observaciones: string) => {
     setSubiendo(true);
-    setError(null);
     try {
       await subir(archivo, observaciones);
-      setExito("PDF subido correctamente.");
+      notify.success("PDF subido correctamente.");
       return true;
     } catch {
-      setError("Error al subir el archivo. Intentá de nuevo.");
+      notify.error("No se pudo subir el archivo. Intentá de nuevo.");
       return false;
     } finally {
       setSubiendo(false);
@@ -42,11 +43,10 @@ export default function ValoresEticos() {
 
   const eliminar = async (id: number) => {
     setBorrando(id);
-    setError(null);
     try {
       await borrar(id);
     } catch {
-      setError("Error al eliminar. Intentá de nuevo.");
+      notify.error("No se pudo eliminar. Intentá de nuevo.");
     } finally {
       setBorrando(null);
     }
@@ -55,48 +55,35 @@ export default function ValoresEticos() {
   const alBorrar = (id: number) =>
     pedir({ titulo: "Eliminar registro", mensaje: "¿Eliminar este registro y su archivo?" }, () => void eliminar(id));
 
-  const mensajeError = error ?? (errorCarga ? "No se pudo cargar el archivo actual." : null);
-
   return (
-    <div className={styles.eticaSection}>
-      <div className={styles.eticaHeader}>
-        <h2>Valores Éticos</h2>
-        <p className={styles.eticaDesc}>
-          Subí un nuevo PDF para reemplazar el Boletín de Valores Éticos Mínimos que se muestra en el Inicio y en
-          el Login. El archivo actual seguirá visible hasta que confirmes la carga.
-        </p>
-      </div>
+    <>
+      <Paso icono={FileText} titulo="Archivo actual">
+        {errorCarga && <ErrorAccion>No se pudo cargar el archivo actual.</ErrorAccion>}
+        {cargando ? (
+          <p className={c.ayuda}>
+            <Cargando size={14} /> Cargando…
+          </p>
+        ) : ultimo ? (
+          <div className={s.actual}>
+            <div className={s.datos}>
+              <span className={s.nombre}>{nombreDeRuta(ultimo.pdf_path)}</span>
+              <span className={s.fecha}>{formatearFecha(ultimo.fecha_update, "conHora")}</span>
+              {ultimo.observaciones && <span className={s.observaciones}>{ultimo.observaciones}</span>}
+            </div>
+            <VerPdf ruta={ultimo.pdf_path} etiqueta="Ver PDF" onError={avisarError} />
+          </div>
+        ) : (
+          <p className={c.ayuda}>Todavía no hay un archivo cargado.</p>
+        )}
+        <p className={c.ayuda}>Es el Boletín de Valores Éticos Mínimos del Inicio y del Login. Sigue visible hasta que subas otro.</p>
+      </Paso>
 
-      {exito && (
-        <Alerta tono="exito" onCerrar={() => setExito(null)}>
-          {exito}
-        </Alerta>
-      )}
-      {mensajeError && <Alerta onCerrar={() => setError(null)}>{mensajeError}</Alerta>}
+      <Paso icono={Upload} titulo="Subir uno nuevo">
+        <ZonaCarga subiendo={subiendo} onSubir={alSubir} onError={avisarError} />
+      </Paso>
 
-      <div className={styles.eticaCurrent}>
-        <FileText className={styles.eticaCurrentIcon} aria-hidden="true" />
-        <div>
-          <span className={styles.eticaCurrentLabel}>Archivo actual</span>
-          {cargando ? (
-            <span className={styles.eticaLoadingText}>Cargando…</span>
-          ) : ultimo ? (
-            <>
-              <span className={styles.eticaCurrentName}>{nombreDeRuta(ultimo.pdf_path)}</span>
-              <span className={styles.eticaCurrentDate}>{formatearFecha(ultimo.fecha_update, "conHora")}</span>
-              {ultimo.observaciones && <span className={styles.eticaCurrentObs}>{ultimo.observaciones}</span>}
-            </>
-          ) : (
-            <span className={styles.eticaCurrentEmpty}>Sin archivo cargado</span>
-          )}
-        </div>
-        {ultimo && <VerPdf ruta={ultimo.pdf_path} etiqueta="Ver PDF" onError={setError} />}
-      </div>
-
-      <ZonaCarga subiendo={subiendo} onSubir={alSubir} onError={setError} />
-
-      {!cargando && <HistorialValores historial={historial} borrando={borrando} onBorrar={alBorrar} onError={setError} />}
+      {!cargando && <HistorialValores historial={historial} borrando={borrando} onBorrar={alBorrar} onError={avisarError} />}
       {modal}
-    </div>
+    </>
   );
 }

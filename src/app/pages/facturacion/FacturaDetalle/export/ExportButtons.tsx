@@ -2,6 +2,7 @@ import { useState } from "react";
 import { abrirVentanaPdf } from "@/app/shared/lib/abrirPdf";
 import s from "./export.module.scss";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 
 interface Props {
   // Para el PDF recibe la pestaña ya abierta (ver `abrirVentanaPdf`) donde mostrarlo.
@@ -21,9 +22,10 @@ export default function ExportButtons({ onExport, disabled, disabledHint }: Prop
     const ventana = formato === "pdf" ? abrirVentanaPdf() : null;
     try {
       await onExport(formato, ventana);
-    } catch (e: any) {
+    } catch (e) {
+      const err = comoErrorApi(e);
       ventana?.close();
-      setError(e?.message || "No se pudo generar el archivo.");
+      setError(err?.message || "No se pudo generar el archivo.");
     } finally {
       setCargando(null);
     }

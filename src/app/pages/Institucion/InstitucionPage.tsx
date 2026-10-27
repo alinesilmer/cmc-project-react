@@ -7,7 +7,6 @@ import {
   Globe,
   KeyRound,
   Landmark,
-  Loader2,
   Mail,
   MapPin,
   Pencil,
@@ -47,6 +46,7 @@ import {
 import s from "./Institucion.module.scss";
 import Franja from "@/app/components/layout/Franja/Franja";
 import MarcoModal from "@/app/components/ui/MarcoModal/MarcoModal";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
 
 /** Los campos del formulario general, en el orden en que se muestran. */
 const CAMPOS: {
@@ -289,7 +289,7 @@ export default function InstitucionPage() {
     return (
       <div className={s.container}>
         <div className={s.loading}>
-          <Loader2 size={18} className={s.spin} /> Cargando…
+          <Cargando size={18} /> Cargando…
         </div>
       </div>
     );
@@ -307,7 +307,7 @@ export default function InstitucionPage() {
               onClick={guardar}
               disabled={!sucio || guardando}
             >
-              {guardando ? <Loader2 size={15} className={s.spin} /> : <Save size={15} />}
+              {guardando ? <Cargando size={15} /> : <Save size={15} />}
               {guardando ? "Guardando…" : "Guardar"}
             </button>
           </div>
@@ -550,7 +550,7 @@ export default function InstitucionPage() {
                           disabled={revelando === m.id}
                         >
                           {revelando === m.id ? (
-                            <Loader2 size={14} className={s.spin} />
+                            <Cargando size={14} />
                           ) : reveladas[m.id] ? (
                             <EyeOff size={14} />
                           ) : (

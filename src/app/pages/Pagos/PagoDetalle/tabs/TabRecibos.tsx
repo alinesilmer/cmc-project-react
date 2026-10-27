@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { getJSON, postJSON, patchJSON, delJSONBody } from "@/app/shared/lib/http";
-import { useAppSnackbar } from "../../../../hooks/useAppSnackbar";
+import { borrarRecibos, cambiarEstadoRecibos, emitirTodosLosRecibos, generarRecibos, listarRecibos } from "@/app/pages/Pagos/pagos.api";
+import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import Button from "@/app/components/ui/Button/Button";
 import SelectableTable from "@/app/components/ui/SelectableTable/SelectableTable";
 import type { ColumnDef } from "@/app/components/ui/SelectableTable/types";
@@ -8,16 +8,10 @@ import styles from "./tabs.module.scss";
 import { type Pago, fmt } from "../../types";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
-
-const GENERAR_URL    = (pagoId: number) => `/api/pagos/${pagoId}/recibos/generar`;
-const EMITIR_TODOS_URL = (pagoId: number) => `/api/pagos/${pagoId}/recibos/emitir_todos`;
-const ESTADO_URL     = (pagoId: number) => `/api/pagos/${pagoId}/recibos/estado`;
-const DELETE_URL     = (pagoId: number) => `/api/pagos/${pagoId}/recibos`;
-const LIST_URL = (pagoId: number, estado: string) => {
-  const p = new URLSearchParams({ skip: "0", limit: "1000" });
-  if (estado) p.set("estado", estado);
-  return `/api/pagos/${pagoId}/recibos?${p}`;
-};
+import paleta from "@/app/styles/paleta.module.scss";
+import { comoErrorApi, detalleDeError } from "@/app/shared/lib/httpErrors";
+import { finDeTabla } from "@/app/shared/lib/documentos/pdfColegio";
+import type { CellHookData, CellInput } from "jspdf-autotable";
 
 // ── Tipos ─────────────────────────────────────────────────────────
 
@@ -140,10 +134,11 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await getJSON<ReciboRow[]>(LIST_URL(pagoId, estado));
+      const data = await listarRecibos<ReciboRow>(pagoId, estado);
       setRows(data ?? []);
-    } catch (e: any) {
-      setError(e?.message || "No se pudieron cargar los recibos.");
+    } catch (e) {
+      const err = comoErrorApi(e);
+      setError(err?.message || "No se pudieron cargar los recibos.");
     } finally {
       setLoading(false);
     }
@@ -157,11 +152,11 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
     setGenerando(true);
     setGenerarError(null);
     try {
-      const result = await postJSON<ReciboRow[]>(GENERAR_URL(pagoId));
+      const result = await generarRecibos<ReciboRow[]>(pagoId);
       setGenerarResult(Array.isArray(result) ? result.length : 0);
       await loadData(estadoFiltro);
-    } catch (e: any) {
-      setGenerarError(e?.response?.data?.detail ?? e?.message ?? "Error al generar.");
+    } catch (e) {
+      setGenerarError(detalleDeError(e, "Error al generar."));
     } finally {
       setGenerando(false);
     }
@@ -171,11 +166,11 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
     setEmitiendo(true);
     setEmitirError(null);
     try {
-      const result = await postJSON<ReciboRow[]>(EMITIR_TODOS_URL(pagoId));
+      const result = await emitirTodosLosRecibos<ReciboRow[]>(pagoId);
       setEmitirResult(Array.isArray(result) ? result.length : 0);
       await loadData(estadoFiltro);
-    } catch (e: any) {
-      setEmitirError(e?.response?.data?.detail ?? e?.message ?? "Error al emitir.");
+    } catch (e) {
+      setEmitirError(detalleDeError(e, "Error al emitir."));
     } finally {
       setEmitiendo(false);
     }
@@ -183,11 +178,11 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
 
   const handleEmitirUno = async (recibo: ReciboRow) => {
     try {
-      await patchJSON(ESTADO_URL(pagoId), { recibo_ids: [recibo.id], estado: "emitido" });
+      await cambiarEstadoRecibos(pagoId, { recibo_ids: [recibo.id], estado: "emitido" });
       notify(`Recibo ${recibo.nro_recibo} emitido correctamente.`);
       await loadData(estadoFiltro);
-    } catch (e: any) {
-      notify(e?.response?.data?.detail ?? e?.message ?? "Error al emitir.", "error");
+    } catch (e) {
+      notify(detalleDeError(e, "Error al emitir."), "error");
     }
   };
 
@@ -195,16 +190,17 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      await delJSONBody(DELETE_URL(pagoId), { recibo_ids: [deleteTarget.id] });
+      await borrarRecibos(pagoId, { recibo_ids: [deleteTarget.id] });
       notify(`Recibo ${deleteTarget.nro_recibo} eliminado.`);
       setDeleteTarget(null);
       await loadData(estadoFiltro);
-    } catch (e: any) {
-      const detail = e?.response?.data;
-      if (detail?.reason === "recibos_pagados") {
+    } catch (e) {
+      const err = comoErrorApi(e);
+      const datos = err.response?.data;
+      if (datos?.reason === "recibos_pagados") {
         notify("No se pueden eliminar recibos en estado 'pagado'.", "error");
       } else {
-        notify(detail?.message ?? detail?.detail ?? e?.message ?? "Error al eliminar.", "error");
+        notify(typeof datos?.message === "string" ? datos.message : detalleDeError(e, "Error al eliminar."), "error");
       }
       setDeleteTarget(null);
     } finally {
@@ -220,7 +216,7 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
     const detalle = dj?.detalle;
 
     const { jsPDF } = await import("jspdf");
-    const autoTable = (await import("jspdf-autotable")).default as any;
+    const autoTable = (await import("jspdf-autotable")).default;
     const doc = new jsPDF({ unit: "pt", format: "A4" });
     const pageW = doc.internal.pageSize.getWidth();
     const left = 40;
@@ -275,11 +271,11 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
         doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(27, 86, 255);
         doc.text("Desglose por Obra Social", left, y); y += 6;
 
-        const liqBody: any[][] = [];
+        const liqBody: CellInput[][] = [];
         for (const [, liq] of liqEntries) {
           // Fila cabecera de OS
           liqBody.push([
-            { content: `${liq.obra_social} — ${liq.periodo}`, colSpan: 6, styles: { fontStyle: "bold" as const, fillColor: [237, 242, 255] as any } },
+            { content: `${liq.obra_social} — ${liq.periodo}`, colSpan: 6, styles: { fontStyle: "bold" as const, fillColor: [237, 242, 255] as [number, number, number] } },
           ]);
           // Fila totales de la OS
           liqBody.push([
@@ -287,29 +283,29 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
             { content: `$${fmt(liq.total_honorarios)}`, styles: { halign: "right" as const } },
             { content: `$${fmt(liq.total_gastos)}`,     styles: { halign: "right" as const } },
             { content: `$${fmt(liq.total_bruto)}`,      styles: { halign: "right" as const } },
-            { content: `-$${fmt(liq.debitos.total)}`,   styles: { halign: "right" as const, textColor: [185, 28, 28] as any } },
-            { content: `+$${fmt(liq.creditos.total)}`,  styles: { halign: "right" as const, textColor: [6, 95, 70] as any } },
+            { content: `-$${fmt(liq.debitos.total)}`,   styles: { halign: "right" as const, textColor: [185, 28, 28] as [number, number, number] } },
+            { content: `+$${fmt(liq.creditos.total)}`,  styles: { halign: "right" as const, textColor: [6, 95, 70] as [number, number, number] } },
           ]);
           // Ajustes débito
           for (const aj of liq.debitos.detalle) {
             liqBody.push([
-              { content: `    ↳ Débito Lote #${aj.lote_id}${aj.observacion ? ` — ${aj.observacion}` : ""}`, styles: { fontSize: 8, textColor: [100, 100, 100] as any } },
+              { content: `    ↳ Débito Lote #${aj.lote_id}${aj.observacion ? ` — ${aj.observacion}` : ""}`, styles: { fontSize: 8, textColor: [100, 100, 100] as [number, number, number] } },
               { content: `$${fmt(aj.honorarios)}`, styles: { halign: "right" as const, fontSize: 8 } },
               { content: `$${fmt(aj.gastos)}`,     styles: { halign: "right" as const, fontSize: 8 } },
               { content: `$${fmt(aj.honorarios + aj.gastos)}`, styles: { halign: "right" as const, fontSize: 8 } },
-              { content: `-$${fmt(aj.total)}`, styles: { halign: "right" as const, fontSize: 8, textColor: [185, 28, 28] as any } },
+              { content: `-$${fmt(aj.total)}`, styles: { halign: "right" as const, fontSize: 8, textColor: [185, 28, 28] as [number, number, number] } },
               "",
             ]);
           }
           // Ajustes crédito
           for (const aj of liq.creditos.detalle) {
             liqBody.push([
-              { content: `    ↳ Crédito Lote #${aj.lote_id}${aj.observacion ? ` — ${aj.observacion}` : ""}`, styles: { fontSize: 8, textColor: [100, 100, 100] as any } },
+              { content: `    ↳ Crédito Lote #${aj.lote_id}${aj.observacion ? ` — ${aj.observacion}` : ""}`, styles: { fontSize: 8, textColor: [100, 100, 100] as [number, number, number] } },
               { content: `$${fmt(aj.honorarios)}`, styles: { halign: "right" as const, fontSize: 8 } },
               { content: `$${fmt(aj.gastos)}`,     styles: { halign: "right" as const, fontSize: 8 } },
               { content: `$${fmt(aj.honorarios + aj.gastos)}`, styles: { halign: "right" as const, fontSize: 8 } },
               "",
-              { content: `+$${fmt(aj.total)}`, styles: { halign: "right" as const, fontSize: 8, textColor: [6, 95, 70] as any } },
+              { content: `+$${fmt(aj.total)}`, styles: { halign: "right" as const, fontSize: 8, textColor: [6, 95, 70] as [number, number, number] } },
             ]);
           }
         }
@@ -323,7 +319,7 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
           columnStyles: { 1: { halign: "right" }, 2: { halign: "right" }, 3: { halign: "right" }, 4: { halign: "right" }, 5: { halign: "right" } },
           margin: { left, right: 40 },
         });
-        y = (doc as any).lastAutoTable.finalY + 16;
+        y = finDeTabla(doc) + 16;
       }
 
       // ── Deducciones ──
@@ -340,7 +336,7 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
           columnStyles: { 2: { halign: "right", textColor: [185, 28, 28] } },
           margin: { left, right: 40 },
         });
-        y = (doc as any).lastAutoTable.finalY + 16;
+        y = finDeTabla(doc) + 16;
       }
 
       // ── Resumen ──
@@ -375,7 +371,7 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
         styles: { fontSize: 10, cellPadding: 6 },
         headStyles: { fillColor: [27, 86, 255], textColor: 255, fontStyle: "bold" },
         columnStyles: { 1: { halign: "right" } },
-        didParseCell: (hook: any) => {
+        didParseCell: (hook: CellHookData) => {
           if (hook.section === "body" && hook.row.index === netoIdx) {
             hook.cell.styles.fontStyle = "bold";
             hook.cell.styles.fillColor = [240, 244, 255];
@@ -400,7 +396,7 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
         <div>
           <div style={{ fontWeight: 500 }}>{r.detalle_json?.info_medico?.nombre ?? `Médico #${r.medico_id}`}</div>
           {r.detalle_json?.info_medico?.nro_socio != null && (
-            <div style={{ fontSize: 11, color: "#94a3b8" }}>Socio #{r.detalle_json.info_medico.nro_socio}</div>
+            <div style={{ fontSize: 11, color: paleta.gray400 }}>Socio #{r.detalle_json.info_medico.nro_socio}</div>
           )}
         </div>
       ),
@@ -531,12 +527,12 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
                 <p>
                   Se generarán o actualizarán los recibos para todos los médicos del pago.
                   <br />
-                  <span style={{ fontSize: 12, color: "#64748b" }}>
+                  <span style={{ fontSize: 12, color: paleta.gray500 }}>
                     Esta operación es idempotente — si ya existen, se actualizan.
                   </span>
                 </p>
               )}
-              {generando && <p style={{ color: "#64748b" }}>Generando… por favor esperá.</p>}
+              {generando && <p style={{ color: paleta.gray500 }}>Generando… por favor esperá.</p>}
             </Dialogo>
       )}
 
@@ -571,12 +567,12 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
                 <p>
                   Se emitirán todos los recibos pendientes de este pago.
                   <br />
-                  <span style={{ fontSize: 12, color: "#64748b" }}>
+                  <span style={{ fontSize: 12, color: paleta.gray500 }}>
                     Solo se procesan recibos en estado "en revisión" o "liquidado".
                   </span>
                 </p>
               )}
-              {emitiendo && <p style={{ color: "#64748b" }}>Procesando…</p>}
+              {emitiendo && <p style={{ color: paleta.gray500 }}>Procesando…</p>}
             </Dialogo>
       )}
 
@@ -600,7 +596,7 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
               <p>
                 ¿Eliminar el recibo <strong>{deleteTarget.nro_recibo}</strong>?
                 <br />
-                <span style={{ fontSize: 12, color: "#64748b" }}>Esta acción no se puede deshacer.</span>
+                <span style={{ fontSize: 12, color: paleta.gray500 }}>Esta acción no se puede deshacer.</span>
               </p>
             </Dialogo>
       )}

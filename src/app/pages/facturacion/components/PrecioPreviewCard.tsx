@@ -3,6 +3,7 @@ import type { PrecioResponse } from "../types";
 import { formatMoney, parseMoney } from "../money";
 import { etiquetaPrecio } from "./etiquetas";
 import { AlertTriangle } from "lucide-react";
+import paleta from "@/app/styles/paleta.module.scss";
 
 interface Props {
   precio: PrecioResponse;
@@ -14,10 +15,10 @@ const PrecioPreviewCard: React.FC<Props> = ({ precio, onVolverATradicional }) =>
   return (
   <div
     style={{
-      border: "1px solid #e2e8f0",
+      border: `1px solid ${paleta.gray200}`,
       borderRadius: 8,
       padding: "12px 16px",
-      background: "#f8fafc",
+      background: paleta.gray50,
       display: "flex",
       flexDirection: "column",
       gap: 8,
@@ -27,12 +28,12 @@ const PrecioPreviewCard: React.FC<Props> = ({ precio, onVolverATradicional }) =>
     {precio.motivo && (
       <div
         style={{
-          background: "#fffbeb",
-          border: "1px solid #f59e0b",
+          background: paleta.tonoAmarillo50C,
+          border: `1px solid ${paleta.warningOrange}`,
           borderRadius: 6,
           padding: "8px 12px",
           fontSize: 12,
-          color: "#92400e",
+          color: paleta.tonoNaranja550,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -46,11 +47,11 @@ const PrecioPreviewCard: React.FC<Props> = ({ precio, onVolverATradicional }) =>
             onClick={onVolverATradicional}
             style={{
               background: "none",
-              border: "1px solid #92400e",
+              border: `1px solid ${paleta.tonoNaranja550}`,
               borderRadius: 4,
               padding: "2px 8px",
               fontSize: 11,
-              color: "#92400e",
+              color: paleta.tonoNaranja550,
               cursor: "pointer",
               whiteSpace: "nowrap",
             }}
@@ -63,34 +64,34 @@ const PrecioPreviewCard: React.FC<Props> = ({ precio, onVolverATradicional }) =>
 
     <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
       <div>
-        <span style={{ fontSize: 11, color: "#64748b", display: "block" }}>Honorarios</span>
+        <span style={{ fontSize: 11, color: paleta.gray500, display: "block" }}>Honorarios</span>
         <strong style={{ fontSize: 14 }}>{formatMoney(precio.honorarios)}</strong>
       </div>
       <div>
-        <span style={{ fontSize: 11, color: "#64748b", display: "block" }}>Gastos</span>
+        <span style={{ fontSize: 11, color: paleta.gray500, display: "block" }}>Gastos</span>
         <strong style={{ fontSize: 14 }}>{formatMoney(precio.gastos)}</strong>
       </div>
       <div>
-        <span style={{ fontSize: 11, color: "#64748b", display: "block" }}>Ayudante</span>
+        <span style={{ fontSize: 11, color: paleta.gray500, display: "block" }}>Ayudante</span>
         <strong style={{ fontSize: 14 }}>{formatMoney(precio.ayudante)}</strong>
       </div>
       {parseMoney(precio.coseguro) > 0 && (
         <div>
-          <span style={{ fontSize: 11, color: "#64748b", display: "block" }}>Coseguro sugerido</span>
+          <span style={{ fontSize: 11, color: paleta.gray500, display: "block" }}>Coseguro sugerido</span>
           <strong style={{ fontSize: 14 }}>{formatMoney(precio.coseguro)}</strong>
         </div>
       )}
     </div>
 
     {(precio.descripcion || etiqueta || (precio.via === "L" && precio.admitido)) && (
-      <p style={{ fontSize: 12, color: "#475569", margin: 0, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+      <p style={{ fontSize: 12, color: paleta.gray600, margin: 0, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         {precio.descripcion}
         {etiqueta && (
           <span
             style={{
-              background: "#ecfdf5",
-              color: "#166534",
-              border: "1px solid #bbf7d0",
+              background: paleta.tonoGris50,
+              color: paleta.tonoVerde550,
+              border: `1px solid ${paleta.tonoVerde50B}`,
               borderRadius: 999,
               padding: "2px 8px",
               fontSize: 11,
@@ -104,8 +105,8 @@ const PrecioPreviewCard: React.FC<Props> = ({ precio, onVolverATradicional }) =>
         {precio.via === "L" && precio.admitido && (
           <span
             style={{
-              background: "#e0e7ff",
-              color: "#3730a3",
+              background: paleta.tonoAzul50B,
+              color: paleta.tonoVioleta600,
               borderRadius: 999,
               padding: "2px 8px",
               fontSize: 11,
@@ -122,12 +123,12 @@ const PrecioPreviewCard: React.FC<Props> = ({ precio, onVolverATradicional }) =>
     {precio.por_presupuesto && (
       <div
         style={{
-          background: "#eff6ff",
-          border: "1px solid #93c5fd",
+          background: paleta.tonoAzul50C,
+          border: `1px solid ${paleta.tonoAzul200}`,
           borderRadius: 6,
           padding: "8px 12px",
           fontSize: 12,
-          color: "#1e40af",
+          color: paleta.tonoAzul600,
         }}
       >
         ℹ Este código requiere carga manual del importe (por presupuesto).

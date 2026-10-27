@@ -2,9 +2,11 @@ import React from "react";
 import MedicoAutocomplete from "../../components/MedicoAutocomplete";
 import NumericInput from "../../components/NumericInput";
 import type { MedicoOption, PrecioResponse, TipoCalculo } from "../../types";
-import { formatMoney, parseMoney } from "../../money";
-import styles from "../CargaFacturacion.module.scss";
+import { formatMoney } from "../../money";
+import comun from "../Comun.module.scss";
+import styles from "./AyudanteSection.module.scss";;
 import { X } from "lucide-react";
+import { crearAyudanteLinea, montoLinea } from "./ayudante.helpers";
 
 export interface AyudanteLinea {
   id: string;
@@ -18,36 +20,6 @@ export interface AyudanteLinea {
   /** Nº de autorización propio de este integrante. */
   autorizacion: string;
 }
-
-const nuevoId = () =>
-  typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `ay-${Date.now()}-${Math.random()}`;
-
-export const crearAyudanteLinea = (precioAutomatico: string, autorizacion = ""): AyudanteLinea => ({
-  id: nuevoId(),
-  prestacionId: null,
-  codMedico: null,
-  medico: null,
-  porcentaje: "100",
-  tipoCalculo: "A",
-  precioManual: precioAutomatico,
-  autorizacion,
-});
-
-const montoLinea = (linea: AyudanteLinea, precio: PrecioResponse): number => {
-  const base = linea.tipoCalculo === "A" ? parseMoney(precio.ayudante) : parseMoney(linea.precioManual);
-  const porc = parseInt(linea.porcentaje, 10);
-  return base * ((Number.isNaN(porc) ? 100 : porc) / 100);
-};
-
-export const totalAyudantes = (
-  lineas: AyudanteLinea[],
-  precio: PrecioResponse | null,
-  cantidad = 1,
-  sesion = 1,
-): number => {
-  if (!precio) return 0;
-  return lineas.reduce((acc, l) => acc + montoLinea(l, precio), 0) * cantidad * sesion;
-};
 
 interface Props {
   precio: PrecioResponse;
@@ -84,14 +56,14 @@ const AyudanteSection: React.FC<Props> = ({
     new Set(ayudantes.filter((l) => l.id !== excluirId && l.codMedico).map((l) => l.codMedico));
 
   return (
-    <div className={styles.section}>
-      <span className={styles.sectionTitle}>
+    <div className={comun.section}>
+      <span className={comun.sectionTitle}>
         Ayudantes quirúrgicos
-        <span className={`${styles.infoChip} ${styles.chipNeutral}`}>
+        <span className={`${comun.infoChip} ${comun.chipNeutral}`}>
           {ayudantes.length}
         </span>
         {maxAyudantes > 0 && (
-          <span className={styles.sectionHint}>
+          <span className={comun.sectionHint}>
             este código usa {maxAyudantes} ayudante{maxAyudantes === 1 ? "" : "s"}
           </span>
         )}
@@ -104,14 +76,14 @@ const AyudanteSection: React.FC<Props> = ({
         const monto = montoLinea(linea, precio);
 
         return (
-          <div key={linea.id} className={styles.ayudanteBox}>
-            <div className={styles.ayudanteHeader}>
-              <span className={styles.sectionTitle} style={{ textTransform: "none", fontSize: "0.86rem" }}>
+          <div key={linea.id} className={comun.ayudanteBox}>
+            <div className={comun.ayudanteHeader}>
+              <span className={comun.sectionTitle} style={{ textTransform: "none", fontSize: "0.86rem" }}>
                 Ayudante {idx + 1}
               </span>
               <button
                 type="button"
-                className={styles.removeBtn}
+                className={comun.removeBtn}
                 onClick={() => quitarLinea(linea.id)}
                 disabled={disabled}
               >
@@ -119,9 +91,9 @@ const AyudanteSection: React.FC<Props> = ({
               </button>
             </div>
 
-            <div className={styles.fieldsRow}>
-              <div className={`${styles.filterField} ${styles.filterFieldWide}`}>
-                <label className={styles.filterLabel}>Médico ayudante <span className={styles.errorText}>*</span></label>
+            <div className={comun.fieldsRow}>
+              <div className={`${comun.filterField} ${comun.filterFieldWide}`}>
+                <label className={comun.filterLabel}>Médico ayudante <span className={comun.errorText}>*</span></label>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <MedicoAutocomplete
@@ -139,30 +111,30 @@ const AyudanteSection: React.FC<Props> = ({
                     />
                   </div>
                   {linea.medico?.condicion_impositiva && (
-                    <span className={`${styles.infoChip} ${styles.chipNeutral}`} style={{ flexShrink: 0 }}>
+                    <span className={`${comun.infoChip} ${comun.chipNeutral}`} style={{ flexShrink: 0 }}>
                       {linea.medico.condicion_impositiva}
                     </span>
                   )}
                 </div>
                 {linea.medico?.especialidades && linea.medico.especialidades.length > 0 && (
-                  <div className={styles.medicoExtra}>
-                    <span className={styles.mutedText}>Especialidades:</span>
+                  <div className={comun.medicoExtra}>
+                    <span className={comun.mutedText}>Especialidades:</span>
                     {linea.medico.especialidades.map((esp) => (
-                      <span key={esp.id} className={styles.especialidadChip}>{esp.nombre}</span>
+                      <span key={esp.id} className={comun.especialidadChip}>{esp.nombre}</span>
                     ))}
                   </div>
                 )}
-                {isDuplicateMain && <span className={styles.errorText}>No puede ser el mismo médico principal.</span>}
-                {isDuplicateOther && !isDuplicateMain && <span className={styles.errorText}>Ese médico ya está agregado como ayudante.</span>}
-                {error && !isDuplicateMain && !isDuplicateOther && <span className={styles.errorText}>{error}</span>}
+                {isDuplicateMain && <span className={comun.errorText}>No puede ser el mismo médico principal.</span>}
+                {isDuplicateOther && !isDuplicateMain && <span className={comun.errorText}>Ese médico ya está agregado como ayudante.</span>}
+                {error && !isDuplicateMain && !isDuplicateOther && <span className={comun.errorText}>{error}</span>}
               </div>
             </div>
 
             {porIntegrante && (
-              <div className={styles.filterField}>
-                <label className={styles.filterLabel}>Nº de autorización</label>
+              <div className={comun.filterField}>
+                <label className={comun.filterLabel}>Nº de autorización</label>
                 <input
-                  className={styles.input}
+                  className={comun.input}
                   type="text"
                   maxLength={30}
                   value={linea.autorizacion}
@@ -173,11 +145,11 @@ const AyudanteSection: React.FC<Props> = ({
               </div>
             )}
 
-            <div className={styles.filterField}>
-              <label className={styles.filterLabel}>Tipo de cálculo</label>
-              <div className={styles.radioRow}>
+            <div className={comun.filterField}>
+              <label className={comun.filterLabel}>Tipo de cálculo</label>
+              <div className={comun.radioRow}>
                 {([["A", "Automático"], ["M", "Manual"]] as const).map(([v, label]) => (
-                  <label key={v} className={styles.radioLabel}>
+                  <label key={v} className={comun.radioLabel}>
                     <input
                       type="radio"
                       name={`ayudanteTipoCalculo-${linea.id}`}
@@ -192,22 +164,22 @@ const AyudanteSection: React.FC<Props> = ({
               </div>
             </div>
 
-            <div className={styles.fieldsRow}>
-              <div className={styles.filterField}>
-                <label className={styles.filterLabel}>Porcentaje (%)</label>
+            <div className={comun.fieldsRow}>
+              <div className={comun.filterField}>
+                <label className={comun.filterLabel}>Porcentaje (%)</label>
                 <NumericInput
-                  className={styles.input}
+                  className={comun.input}
                   min={1}
                   value={linea.porcentaje}
                   onChange={(v) => updateLinea(linea.id, { porcentaje: v })}
                   disabled={disabled}
                 />
               </div>
-              <div className={styles.filterField}>
-                <label className={styles.filterLabel}>Precio del ayudante</label>
+              <div className={comun.filterField}>
+                <label className={comun.filterLabel}>Precio del ayudante</label>
                 {/* Mismo input siempre: en Automático muestra el valor del código y queda bloqueado; en Manual se habilita para editarlo. */}
                 <NumericInput
-                  className={styles.input}
+                  className={comun.input}
                   decimals min={0}
                   value={linea.tipoCalculo === "A" ? precio.ayudante : linea.precioManual}
                   onChange={(v) => updateLinea(linea.id, { precioManual: v })}
@@ -216,7 +188,7 @@ const AyudanteSection: React.FC<Props> = ({
               </div>
             </div>
 
-            <div className={styles.totalRow}>
+            <div className={comun.totalRow}>
               <span>Total de este ayudante:</span>
               <strong>{formatMoney(monto)}</strong>
             </div>
@@ -232,7 +204,7 @@ const AyudanteSection: React.FC<Props> = ({
       >
         <span style={{ fontSize: 16 }}>+</span>
         <span>Agregar ayudante</span>
-        <span className={styles.sectionHint}>(valor automático: {formatMoney(precio.ayudante)})</span>
+        <span className={comun.sectionHint}>(valor automático: {formatMoney(precio.ayudante)})</span>
       </button>
     </div>
   );

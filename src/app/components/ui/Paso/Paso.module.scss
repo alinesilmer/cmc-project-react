@@ -1,0 +1,61 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver Paso.tsx.
+
+.paso {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-5;
+  min-width: 0;
+  padding: $spacing-6 $spacing-8;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
+  box-shadow: 0 14px 34px -28px rgba($franja-azul, 0.55);
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-5;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-4;
+  }
+}
+
+.titulo {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  margin: 0;
+  font-family: $fuente-titulos;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  letter-spacing: -0.01em;
+  color: $franja-azul;
+}
+
+.marca {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: $font-size-base;
+  font-variant-numeric: tabular-nums;
+  color: $franja-crema;
+  background: $franja-azul;
+  border-radius: 999px;
+}
+
+.peligro {
+  border-color: $tono-rojo-200;
+
+  .titulo {
+    color: $danger-red;
+  }
+
+  .marca {
+    color: $white;
+    background: $danger-red;
+  }
+}

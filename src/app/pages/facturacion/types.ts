@@ -587,7 +587,7 @@ export interface PrestacionFicha {
 }
 
 export const detailMessage = (detail: unknown): string =>
-  typeof detail === "string" ? detail : (detail as any)?.mensaje ?? "Error";
+  typeof detail === "string" ? detail : (detail as { mensaje?: string } | null)?.mensaje ?? "Error";
 
 /** "Original" para la v1; los complementos se numeran desde 1 (v2 = "Complemento 1"). */
 export const versionLabel = (version: number): string =>

@@ -13,8 +13,8 @@ import type { AplicarNiveladoAjuste, AplicarNiveladoGaleno, AplicarNiveladoOut, 
 import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import { motivoError } from "@/app/pages/NomencladorNacional/utiles";
+import { formatoNumero2, formatoPesos } from "@/app/shared/lib/formatos";
 
-const fmt = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 2 });
 const aNumero = (v: string): number | null => {
   const n = parseFloat(v.replace(",", "."));
   return Number.isFinite(n) && n >= 0 ? n : null;
@@ -22,7 +22,6 @@ const aNumero = (v: string): number | null => {
 
 type Ajuste = { uh: string; ua: string };
 
-const num = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 });
 
 const ESTADOS: Record<EstadoAplicarNivelado, string> = {
   crear: "Se crea",
@@ -307,7 +306,7 @@ export default function AplicarNiveladoModal({
             <div className={styles.chips}>
               {estado.niveles.map((n) => (
                 <span key={n.nivel} className={`${styles.chip} ${n.ajustado ? styles.chipAviso : ""}`}>
-                  Nivel {n.nivel}: {fmt.format(parseMonto(n.valor_unitario))}
+                  Nivel {n.nivel}: {formatoPesos.format(parseMonto(n.valor_unitario))}
                   {n.ajustado && " · ajustado"}
                 </span>
               ))}
@@ -343,13 +342,13 @@ export default function AplicarNiveladoModal({
                         <input
                           type="number" min="0" step="0.01" className={base.formInput}
                           value={a.uh} aria-label={`Unidades de honorarios del nivel ${n}`}
-                          placeholder={escH != null ? num.format(escH) : ""}
+                          placeholder={escH != null ? formatoNumero2.format(escH) : ""}
                           onChange={(e) => { setAjustes((p) => ({ ...p, [n]: { ...a, uh: e.target.value } })); cambiaronDatos(); }}
                         />
                         <input
                           type="number" min="0" step="0.01" className={base.formInput}
                           value={a.ua} aria-label={`Unidades de ayudante del nivel ${n}`}
-                          placeholder={escA != null ? num.format(escA) : ""}
+                          placeholder={escA != null ? formatoNumero2.format(escA) : ""}
                           onChange={(e) => { setAjustes((p) => ({ ...p, [n]: { ...a, ua: e.target.value } })); cambiaronDatos(); }}
                         />
                       </div>
@@ -440,7 +439,7 @@ export default function AplicarNiveladoModal({
                         {f.precios > 1 && <span className={base.hintText}> · {f.precios} especialidades</span>}
                         {f.vigencias_borradas > 0 && <span className={base.hintText}> · borra {f.vigencias_borradas} vigencia{f.vigencias_borradas === 1 ? "" : "s"}</span>}
                       </td>
-                      <td className={styles.num}>{f.precio != null ? fmt.format(parseMonto(f.precio)) : "—"}</td>
+                      <td className={styles.num}>{f.precio != null ? formatoPesos.format(parseMonto(f.precio)) : "—"}</td>
                     </tr>
                   ))}
                 </tbody>

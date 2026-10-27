@@ -1,0 +1,244 @@
+@use "@/app/styles/all.scss" as *;
+
+.tdDescEmpty {
+  color: $gray-400;
+}
+
+.tdRight {
+  text-align: right;
+}
+
+.tdMoney {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: $gray-800;
+}
+
+.tdDate {
+  white-space: nowrap;
+  color: $gray-600;
+  font-size: $font-size-xs;
+}
+
+.tdNull {
+  color: $gray-400;
+}
+
+.sortIconNeutral {
+  color: $gray-400;
+  opacity: 0.6;
+}
+
+.sortIconActive {
+  color: $franja-azul;
+}// ─── Respaldo de una vigencia ─────────────────────────────────────────────────
+// Lo que la obra social mandó: va arriba de la tabla porque es su origen.
+
+.docsPanel {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  padding: $spacing-4 $spacing-6;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
+}
+
+.docsHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+}
+
+.docsTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin: 0;
+  font-family: $fuente-titulos;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $franja-azul;
+}
+
+.docsUploadGroup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.docDescInput {
+  @extend %campo-texto;
+  width: 14rem;
+  height: 2.5rem;
+  border-color: $gray-300;
+}
+
+.docsUploadBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  height: 2.5rem;
+  padding: 0 $spacing-5;
+  font-weight: $font-weight-semibold;
+  color: $franja-crema;
+  background: $franja-azul;
+  border-radius: $radio-md;
+  cursor: pointer;
+
+  &:hover {
+    background: $primary-blue-darker;
+  }
+
+  &[aria-disabled="true"] {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+}
+
+.docsInput {
+  display: none;
+}
+
+.docsList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+.docItem {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-2 $spacing-4;
+  background: $gray-100;
+  border-radius: $radio-md;
+}
+
+.docNameCol {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+// Es un botón (el adjunto pide token), con cara de enlace.
+.docName {
+  padding: 0;
+  font: inherit;
+  font-weight: $font-weight-semibold;
+  color: $franja-azul;
+  text-align: left;
+  text-decoration: underline;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.docSubidoPor {
+  font-size: $font-size-xs;
+  color: $gray-500;
+}
+
+.docMeta {
+  font-size: $font-size-sm;
+  font-variant-numeric: tabular-nums;
+  color: $gray-500;
+  white-space: nowrap;
+}
+
+.docDeleteBtn {
+  @extend %btn-icono-peligro;
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.docsEmpty {
+  margin: 0;
+  font-size: $font-size-sm;
+  color: $gray-500;
+}
+
+.docBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-600;
+}
+
+// ─── Eliminar (baja lógica) + aviso de lo replicado ───────────────────────────
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $spacing-3;
+}
+
+.deleteBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-3 $spacing-5;
+  background-color: $white;
+  color: $danger-red;
+  border: 1px solid $danger-red;
+  border-radius: $radio-md;
+  font-family: inherit;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  white-space: nowrap;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: background-color 0.18s, color 0.18s;
+
+  &:hover {
+    background-color: $danger-red;
+    color: $white;
+  }
+}
+
+.badgeBaja {
+  display: inline-block;
+  padding: $spacing-2 $spacing-4;
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-radius: $radio-sm;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+}
+
+.replicaOk {
+  background-color: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.replicaAviso {
+  background-color: #fffbeb;
+  border-color: #fde68a;
+}
+
+.replicaLista {
+  margin: 0;
+  padding-left: $spacing-5;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  font-size: $font-size-sm;
+  color: $gray-700;
+
+  ul {
+    margin: $spacing-1 0 0;
+    padding-left: $spacing-4;
+    font-size: $font-size-xs;
+    color: $gray-600;
+  }
+}

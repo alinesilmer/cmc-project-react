@@ -1,0 +1,73 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver Paginador.tsx.
+.paginador {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem 1.25rem;
+  margin-top: $spacing-4;
+}
+
+.resumen {
+  color: $gray-600;
+}
+
+.controles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-3;
+}
+
+.estado {
+  min-width: 7rem;
+  color: $gray-600;
+  text-align: center;
+}
+
+.numeros {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.numero {
+  min-width: 2.25rem;
+  height: 2.25rem;
+  padding: 0 0.5rem;
+  border-radius: $radio-md;
+  border: 1px solid $gray-300;
+  background: $white;
+  color: $gray-700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    border-color: $franja-azul;
+    color: $franja-azul;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.numeroActivo {
+  background: $franja-azul;
+  border-color: $franja-azul;
+  color: $white;
+
+  &:hover:not(:disabled) {
+    color: $white;
+  }
+}
+
+.hueco {
+  padding: 0 0.25rem;
+  color: $gray-500;
+}

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, X, AlertCircle, Building2, Stethoscope } from "lucide-react";
+import { AlertCircle, Building2, Stethoscope } from "lucide-react";
 
 import styles from "./codigosPorEspecialidad.module.scss";
 import Combobox from "../ConsultaShared/Combobox";
@@ -16,13 +16,13 @@ import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import type { Especialidad } from "../../Especialidades/especialidades.types";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
+import { formatoPesos } from "@/app/shared/lib/formatos";
+import PaginaPasos from "@/app/components/layout/PaginaPasos/PaginaPasos";
+import Button from "@/app/components/ui/Button/Button";
+import SearchField from "@/app/components/ui/SearchField/SearchField";
+import Segmentos from "@/app/components/ui/Segmentos/Segmentos";
+import c from "@/app/components/ui/Paso/Campos.module.scss";
 
-const money = new Intl.NumberFormat("es-AR", {
-  style: "currency",
-  currency: "ARS",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
 
 // Búsqueda sin acentos: "cardiologia" encuentra "Cardiología".
 function normalize(str: string) {
@@ -50,6 +50,11 @@ type Fila = {
   precioTotal: number | null;
   porPresupuesto: boolean;
 };
+
+const VIAS: { valor: ViaPractica; rotulo: string }[] = [
+  { valor: "T", rotulo: "Tradicional" },
+  { valor: "L", rotulo: "Laparoscópica" },
+];
 
 const ORIGEN_LABEL: Record<Origen, string> = {
   NN: "Nomenclador nacional",
@@ -250,15 +255,7 @@ export default function CodigosPorEspecialidad() {
   ];
 
   return (
-    <div className={styles.page}>
-      <div className={styles.inner}>
-        <div className={styles.pagehead}>
-          <h1 className={styles.pageTitle}>Códigos por especialidad</h1>
-          <p className={styles.pageSub}>
-            Elegí la obra social y después la especialidad.
-          </p>
-        </div>
-
+    <PaginaPasos titulo="Códigos por especialidad" icono={Stethoscope} ancha>
         {/* ── Pasos ── */}
         <div className={styles.steps}>
           <div className={styles.field}>
@@ -302,41 +299,22 @@ export default function CodigosPorEspecialidad() {
         {hayTabla && (
           <>
             <div className={styles.tools}>
-              <div className={styles.searchBox}>
-                <Search size={16} className={styles.searchIcon} aria-hidden="true" />
-                <label htmlFor="cpe-buscar" className={styles.srOnly}>
-                  Buscar práctica
-                </label>
-                <input
-                  id="cpe-buscar"
-                  type="search"
-                  className={styles.searchInput}
-                  placeholder="Código o práctica…"
-                  value={query}
-                  onChange={(e) => {
-                    setQuery(e.target.value);
-                    setVisibles(LOTE);
-                  }}
-                  autoComplete="off"
-                  spellCheck={false}
-                />
-                {query && (
-                  <button
-                    type="button"
-                    className={styles.searchClear}
-                    onClick={() => {
-                      setQuery("");
-                      setVisibles(LOTE);
-                    }}
-                    aria-label="Limpiar búsqueda"
-                  >
-                    <X size={14} />
-                  </button>
-                )}
-              </div>
+              <SearchField
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setVisibles(LOTE);
+                }}
+                onClear={() => {
+                  setQuery("");
+                  setVisibles(LOTE);
+                }}
+                placeholder="Código o práctica"
+                ariaLabel="Buscar práctica"
+              />
 
               <select
-                className={styles.select}
+                className={`${c.seleccion} ${styles.filtro}`}
                 aria-label="Complejidad"
                 value={complejidadFiltro}
                 onChange={(e) => {
@@ -351,7 +329,7 @@ export default function CodigosPorEspecialidad() {
               </select>
 
               <select
-                className={styles.select}
+                className={`${c.seleccion} ${styles.filtro}`}
                 aria-label="Nivel"
                 disabled={cargandoPrecios}
                 value={nivelFiltro}
@@ -368,27 +346,15 @@ export default function CodigosPorEspecialidad() {
                 ))}
               </select>
 
-              <div className={styles.viaToggle} role="group" aria-label="Vía">
-                {(
-                  [
-                    ["T", "Tradicional"],
-                    ["L", "Laparoscópica"],
-                  ] as const
-                ).map(([v, label]) => (
-                  <button
-                    key={v}
-                    type="button"
-                    className={`${styles.viaBtn} ${via === v ? styles.viaBtnOn : ""}`}
-                    aria-pressed={via === v}
-                    onClick={() => {
-                      setVia(v);
-                      setVisibles(LOTE);
-                    }}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
+              <Segmentos
+                ariaLabel="Vía"
+                opciones={VIAS}
+                valor={via}
+                onChange={(v) => {
+                  setVia(v);
+                  setVisibles(LOTE);
+                }}
+              />
             </div>
 
             {/* Los chips son también el resumen (cuántos NN, NNE, NE): sin los precios todavía no hay números que mostrar. */}
@@ -527,7 +493,7 @@ export default function CodigosPorEspecialidad() {
                           ) : f.porPresupuesto ? (
                             <span className={styles.presupuesto}>A presupuesto</span>
                           ) : f.precioTotal != null && f.precioTotal > 0 ? (
-                            money.format(f.precioTotal)
+                            formatoPesos.format(f.precioTotal)
                           ) : (
                             <span className={styles.dash}>—</span>
                           )}
@@ -540,17 +506,12 @@ export default function CodigosPorEspecialidad() {
             </div>
 
             {restantes > 0 && (
-              <button
-                type="button"
-                className={styles.masBtn}
-                onClick={() => setVisibles((v) => v + LOTE)}
-              >
+              <Button variant="ghost" onClick={() => setVisibles((v) => v + LOTE)}>
                 Ver más ({restantes})
-              </button>
+              </Button>
             )}
           </>
         )}
-      </div>
-    </div>
+    </PaginaPasos>
   );
 }

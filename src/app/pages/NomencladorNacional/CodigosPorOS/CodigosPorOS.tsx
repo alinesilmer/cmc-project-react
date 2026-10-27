@@ -6,11 +6,11 @@ import { AlertCircle, CheckCircle2, ClipboardList, Pencil } from "lucide-react";
 
 import base from "../NomencladorCodigos/NomencladorCodigos.module.scss";
 import styles from "./CodigosPorOS.module.scss";
-import AppSearchSelect from "../../../components/ui/AppSearchSelect/AppSearchSelect";
-import Modal from "../../../components/ui/Modal/Modal";
-import MultiSelectBuscable from "../../../components/molecules/MultiSelectBuscable/MultiSelectBuscable";
+import AppSearchSelect from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
+import Modal from "@/app/components/ui/Modal/Modal";
+import MultiSelectBuscable from "@/app/components/molecules/MultiSelectBuscable/MultiSelectBuscable";
 import EstadoCodigoPill from "../components/EstadoCodigoPill";
-import { usePermisos } from "../../../auth/usePermisos";
+import { usePermisos } from "@/app/auth/usePermisos";
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import { getEspecialidades } from "../../Especialidades/especialidades.api";
 import {
@@ -36,6 +36,14 @@ import Tabla from "@/app/components/ui/Tabla/Tabla";
 import { fechaCorta } from "@/app/pages/NomencladorNacional/utiles";
 import { detalleError } from "@/app/pages/NomencladorNacional/utiles";
 import { TIPOS_CODIGO } from "../components/tipoCodigo";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
+import Paginador from "@/app/components/ui/Paginador/Paginador";
+import PaginaPasos from "@/app/components/layout/PaginaPasos/PaginaPasos";
+import BotonAccion from "@/app/components/ui/BotonAccion/BotonAccion";
+import Button from "@/app/components/ui/Button/Button";
+import SearchField from "@/app/components/ui/SearchField/SearchField";
+import Vacio from "@/app/components/ui/Vacio/Vacio";
+import c from "@/app/components/ui/Paso/Campos.module.scss";
 const PRECIOS_PATH = "/panel/nomenclador/precios/por-obra-social";
 const PAGE_SIZE = 50;
 type Toast = { type: "success" | "error"; msg: string };
@@ -233,220 +241,194 @@ export default function CodigosPorOS() {
   }
 
   return (
-    <div className={base.container}>
-      <div className={base.header}>
-        <div className={base.headerLeft}>
-          <span className={base.headerIcon}><ClipboardList size={20} /></span>
-          <div>
-            <h1 className={base.title}>Códigos por obra social</h1>
-          </div>
+    <PaginaPasos titulo="Códigos por obra social" icono={ClipboardList} ancha>
+      <div className={styles.filtros}>
+        <div className={`${c.campo} ${styles.campoOs}`}>
+          <label className={c.rotulo} htmlFor="cpo-os">Obra social</label>
+          <AppSearchSelect
+            options={osOptions}
+            value={os}
+            loading={osQuery.isLoading}
+            disabled={osQuery.isLoading}
+            onChange={(v) => elegirOs(v == null ? null : Number(v))}
+          />
         </div>
+
+        <SearchField
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          onClear={() => setQ("")}
+          placeholder="Código o descripción"
+          ariaLabel="Buscar código"
+          disabled={os === null}
+        />
+
+        <select
+          className={`${c.seleccion} ${styles.filtro}`}
+          value={tipo}
+          onChange={(e) => setTipo(e.target.value as TipoCodigo | "")}
+          disabled={os === null}
+          aria-label="Tipo"
+        >
+          <option value="">Todos los tipos</option>
+          {TIPOS_CODIGO.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+        </select>
+
+        <input
+          className={`${c.entrada} ${styles.rango}`}
+          inputMode="numeric"
+          value={desde}
+          onChange={(e) => setDesde(e.target.value.replace(/\D/g, ""))}
+          placeholder="Código desde"
+          aria-label="Código desde"
+          disabled={os === null}
+        />
+        <input
+          className={`${c.entrada} ${styles.rango}`}
+          inputMode="numeric"
+          value={hasta}
+          onChange={(e) => setHasta(e.target.value.replace(/\D/g, ""))}
+          placeholder="Código hasta"
+          aria-label="Código hasta"
+          disabled={os === null}
+        />
       </div>
 
-      <section className={`${base.body} ${styles.section}`}>
-        <div className={styles.filtrosTop}>
-          <div className={base.formGroup}>
-            <label className={base.formLabel} htmlFor="cpo-os">Obra social</label>
-            <AppSearchSelect
-              options={osOptions}
-              value={os}
-              loading={osQuery.isLoading}
-              disabled={osQuery.isLoading}
-              onChange={(v) => elegirOs(v == null ? null : Number(v))}
-            />
+      {os === null ? (
+        <Vacio icono={ClipboardList}>Elegí una obra social</Vacio>
+      ) : (
+        <>
+          <div className={styles.kpis} role="group" aria-label="Filtrar por estado">
+            {FILTROS.map((f) => {
+              const n = !datos ? "—" : f.id === "todos"
+                ? Object.values(datos.conteos).reduce((a, b) => a + b, 0)
+                : datos.conteos[f.id];
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  aria-pressed={filtro === f.id}
+                  className={`${styles.kpi} ${styles[`kpi_${f.id}`] ?? ""} ${filtro === f.id ? styles.kpiOn : ""}`}
+                  onClick={() => setFiltro(f.id)}
+                >
+                  <strong>{n}</strong>
+                  <span>{f.label}</span>
+                </button>
+              );
+            })}
           </div>
-          <div className={base.formGroup}>
-            <label className={base.formLabel} htmlFor="cpo-q">Buscar código</label>
-            <input
-              id="cpo-q"
-              className={base.formInput}
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Código o descripción…"
-              disabled={os === null}
-            />
-          </div>
-          <div className={base.formGroup}>
-            <label className={base.formLabel} htmlFor="cpo-tipo">Tipo</label>
-            <select
-              id="cpo-tipo"
-              className={base.formSelect}
-              value={tipo}
-              onChange={(e) => setTipo(e.target.value as TipoCodigo | "")}
-              disabled={os === null}
-            >
-              <option value="">Todos</option>
-              {TIPOS_CODIGO.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-            </select>
-          </div>
-          <div className={base.formGroup}>
-            <label className={base.formLabel} htmlFor="cpo-desde">Código desde</label>
-            <input
-              id="cpo-desde"
-              className={base.formInput}
-              inputMode="numeric"
-              value={desde}
-              onChange={(e) => setDesde(e.target.value.replace(/\D/g, ""))}
-              placeholder="Ej: 170000"
-              disabled={os === null}
-            />
-          </div>
-          <div className={base.formGroup}>
-            <label className={base.formLabel} htmlFor="cpo-hasta">Código hasta</label>
-            <input
-              id="cpo-hasta"
-              className={base.formInput}
-              inputMode="numeric"
-              value={hasta}
-              onChange={(e) => setHasta(e.target.value.replace(/\D/g, ""))}
-              placeholder="Ej: 420200"
-              disabled={os === null}
-            />
-          </div>
-        </div>
 
-        {os === null ? (
-          <p className={base.emptyText}>Elegí una obra social para ver sus códigos.</p>
-        ) : (
-          <>
-            <div className={styles.kpis} role="group" aria-label="Filtrar por estado">
-              {FILTROS.map((f) => {
-                const n = !datos ? "—" : f.id === "todos"
-                  ? Object.values(datos.conteos).reduce((a, b) => a + b, 0)
-                  : datos.conteos[f.id];
-                return (
-                  <button
-                    key={f.id}
-                    type="button"
-                    aria-pressed={filtro === f.id}
-                    className={`${styles.kpi} ${styles[`kpi_${f.id}`] ?? ""} ${filtro === f.id ? styles.kpiOn : ""}`}
-                    onClick={() => setFiltro(f.id)}
-                  >
-                    <strong>{n}</strong>
-                    <span>{f.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {puedeEditar && (
-              <div className={styles.barraAcciones}>
-                <div className={styles.accionFila}>
-                  <label htmlFor="cpo-accion">Acción:</label>
-                  <select
-                    id="cpo-accion"
-                    className={`${base.formSelect} ${styles.accionSelect}`}
-                    value={accion}
-                    onChange={(e) => setAccion(e.target.value as AccionElegida | "")}
-                  >
-                    <option value="">---------</option>
-                    {opciones.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-                  </select>
-                  <button type="button" className={base.btnGhost} disabled={!accion || ejecutando} onClick={ejecutarAccion}>
-                    Ir
-                  </button>
-                </div>
-                <span className={base.hintText} aria-live="polite">
-                  {sel.size} de {items.length} seleccionados
-                </span>
+          {puedeEditar && (
+            <div className={styles.barraAcciones}>
+              <div className={styles.accionFila}>
+                <select
+                  id="cpo-accion"
+                  className={`${c.seleccion} ${styles.accionSelect}`}
+                  value={accion}
+                  onChange={(e) => setAccion(e.target.value as AccionElegida | "")}
+                  aria-label="Acción sobre lo seleccionado"
+                >
+                  <option value="">Acción…</option>
+                  {opciones.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+                </select>
+                <Button variant="ghost" disabled={!accion || ejecutando} onClick={ejecutarAccion}>
+                  Aplicar
+                </Button>
               </div>
-            )}
+              <span className={styles.seleccionados} aria-live="polite">
+                {sel.size} de {items.length} seleccionados
+              </span>
+            </div>
+          )}
 
-            <div className={base.tableWrap}>
-              <Tabla className={base.table}>
-                <thead>
-                  <tr>
-                    <th>
+          <div className={styles.envoltorio}>
+            <Tabla>
+              <thead>
+                <tr>
+                  <th>
+                    {puedeEditar && (
+                      <input
+                        type="checkbox"
+                        aria-label="Seleccionar todos los códigos de esta página"
+                        disabled={items.length === 0}
+                        checked={items.length > 0 && items.every((i) => sel.has(i.nomenclador_id))}
+                        onChange={(e) =>
+                          setSel((prev) => {
+                            const n = new Map(prev);
+                            for (const i of items) {
+                              if (e.target.checked) n.set(i.nomenclador_id, i);
+                              else n.delete(i.nomenclador_id);
+                            }
+                            return n;
+                          })
+                        }
+                      />
+                    )}
+                  </th>
+                  <th>Código</th>
+                  <th>Descripción en la obra social</th>
+                  <th>Quién factura</th>
+                  <th>Estado</th>
+                  {conDocumentacion && <th>Doc. digital</th>}
+                  <th aria-label="Acciones" />
+                </tr>
+              </thead>
+              <tbody>
+                {listado.isLoading ? (
+                  <tr><td colSpan={columnas}>Cargando…</td></tr>
+                ) : items.length === 0 ? (
+                  <tr><td colSpan={columnas}>No hay códigos con ese filtro.</td></tr>
+                ) : items.map((i) => (
+                  <tr key={i.nomenclador_id} className={sel.has(i.nomenclador_id) ? styles.filaSel : undefined}>
+                    <td>
                       {puedeEditar && (
-                        <input
-                          type="checkbox"
-                          aria-label="Seleccionar todos los códigos de esta página"
-                          disabled={items.length === 0}
-                          checked={items.length > 0 && items.every((i) => sel.has(i.nomenclador_id))}
-                          onChange={(e) =>
-                            setSel((prev) => {
-                              const n = new Map(prev);
-                              for (const i of items) {
-                                if (e.target.checked) n.set(i.nomenclador_id, i);
-                                else n.delete(i.nomenclador_id);
-                              }
-                              return n;
-                            })
-                          }
-                        />
+                        <input type="checkbox" aria-label={`Seleccionar ${i.codigo}`} checked={sel.has(i.nomenclador_id)} onChange={() => toggle(i)} />
                       )}
-                    </th>
-                    <th>Código</th>
-                    <th>Descripción en la obra social</th>
-                    <th>Quién factura</th>
-                    <th>Estado</th>
-                    {conDocumentacion && <th>Doc. digital</th>}
-                    <th />
-                  </tr>
-                </thead>
-                <tbody>
-                  {listado.isLoading ? (
-                    <tr><td colSpan={columnas} className={base.loadingCell}>Cargando…</td></tr>
-                  ) : items.length === 0 ? (
-                    <tr><td colSpan={columnas} className={base.emptyCell}>No hay códigos con ese filtro.</td></tr>
-                  ) : items.map((i) => (
-                    <tr key={i.nomenclador_id} className={sel.has(i.nomenclador_id) ? styles.filaSel : undefined}>
-                      <td>
-                        {puedeEditar && (
-                          <input type="checkbox" aria-label={`Seleccionar ${i.codigo}`} checked={sel.has(i.nomenclador_id)} onChange={() => toggle(i)} />
-                        )}
+                    </td>
+                    <td className={styles.codigo}>
+                      <Link to={`/panel/nomenclador/codigos/${i.nomenclador_id}/editar`}>{i.codigo}</Link>
+                    </td>
+                    <td className={styles.desc}>
+                      {i.descripcion_os ?? <span className={base.hintText}>{i.descripcion_colegio ?? "—"}</span>}
+                    </td>
+                    <td>{quienFactura(i)}</td>
+                    <td><EstadoCodigoPill estado={i.estado} /></td>
+                    {conDocumentacion && (
+                      <td className={i.requiere_documentacion ? styles.docSi : styles.docNo}>
+                        {i.requiere_documentacion ? "Sí" : "—"}
                       </td>
-                      <td className={styles.codigo}>
-                        <Link to={`/panel/nomenclador/codigos/${i.nomenclador_id}/editar`}>{i.codigo}</Link>
-                      </td>
-                      <td className={styles.desc}>
-                        {i.descripcion_os ?? <span className={base.hintText}>{i.descripcion_colegio ?? "—"}</span>}
-                      </td>
-                      <td>{quienFactura(i)}</td>
-                      <td><EstadoCodigoPill estado={i.estado} /></td>
-                      {conDocumentacion && (
-                        <td className={i.requiere_documentacion ? styles.docSi : styles.docNo}>
-                          {i.requiere_documentacion ? "Sí" : "—"}
-                        </td>
-                      )}
-                      <td className={styles.acciones}>
+                    )}
+                    <td>
+                      <div className={styles.acciones}>
                         {i.estado === "sin_alta" && puedeEditar && (
-                          <button type="button" className={base.btnGhost} onClick={() => { setSel(new Map([[i.nomenclador_id, i]])); setAltaOpen(true); }}>
+                          <Button variant="ghost" size="sm" onClick={() => { setSel(new Map([[i.nomenclador_id, i]])); setAltaOpen(true); }}>
                             Dar de alta
-                          </button>
+                          </Button>
                         )}
                         {i.estado === "suspendido" && puedeEditar && (
-                          <button type="button" className={base.btnGhost} onClick={() => reactivar(i)}>Reactivar</button>
+                          <Button variant="ghost" size="sm" onClick={() => reactivar(i)}>Reactivar</Button>
                         )}
                         {(i.estado === "sin_precio" || i.estado === "con_precio") && (
                           <>
-                            {puedeEditar && (
-                              <button type="button" className={base.btnGhost} onClick={() => setEditando(i.nomenclador_id)} aria-label={`Editar ${i.codigo}`}>
-                                <Pencil size={13} /> Editar
-                              </button>
-                            )}
-                            <Link className={i.estado === "sin_precio" ? base.btnPrimary : base.btnGhost} to={`${PRECIOS_PATH}?os=${os}&codigo=${i.codigo}`}>
+                            {puedeEditar && <BotonAccion icono={Pencil} etiqueta={`Editar ${i.codigo}`} onClick={() => setEditando(i.nomenclador_id)} />}
+                            <Link className={i.estado === "sin_precio" ? styles.cargarPrecio : styles.verPrecio} to={`${PRECIOS_PATH}?os=${os}&codigo=${i.codigo}`}>
                               {i.estado === "sin_precio" ? "Cargar precio" : "Precio"}
                             </Link>
                           </>
                         )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Tabla>
-            </div>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Tabla>
+          </div>
 
-            {datos && datos.total > PAGE_SIZE && (
-              <div className={styles.paginacion}>
-                <button type="button" className={base.btnGhost} disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Anterior</button>
-                <span className={base.hintText}>Página {page} de {totalPaginas} · {datos.total} códigos</span>
-                <button type="button" className={base.btnGhost} disabled={page >= totalPaginas} onClick={() => setPage((p) => p + 1)}>Siguiente</button>
-              </div>
-            )}
-          </>
-        )}
-      </section>
+          {datos && datos.total > PAGE_SIZE && (
+            <Paginador pagina={page} totalPaginas={totalPaginas} onCambiar={setPage} resumen={`${datos.total} códigos`} />
+          )}
+        </>
+      )}
 
       {os !== null && (
         <AltaModal
@@ -483,7 +465,7 @@ export default function CodigosPorOS() {
               <span className={styles.flex1} />
               <button type="button" className={base.btnGhost} onClick={() => setAConfirmar(null)} disabled={ejecutando}>Cancelar</button>
               <button type="button" className={base.btnPrimary} onClick={() => void confirmarAccion()} disabled={ejecutando}>
-                {ejecutando ? <><span className={base.spinner} /> Aplicando…</> : "Confirmar"}
+                {ejecutando ? <><Cargando size={14} /> Aplicando…</> : "Confirmar"}
               </button>
             </div>
           </div>
@@ -519,7 +501,7 @@ export default function CodigosPorOS() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </PaginaPasos>
   );
 }
 
@@ -653,7 +635,7 @@ function AltaModal({
         <div className={styles.modalFooter}>
           <button type="button" className={base.btnGhost} onClick={onClose}>Cancelar</button>
           <button type="button" className={base.btnPrimary} onClick={confirmar} disabled={guardando || items.length === 0}>
-            {guardando ? <><span className={base.spinner} /> Dando de alta…</> : `Dar de alta ${items.length}`}
+            {guardando ? <><Cargando size={14} /> Dando de alta…</> : `Dar de alta ${items.length}`}
           </button>
         </div>
       </div>
@@ -876,7 +858,7 @@ function EditarAltaModal({
           <span className={styles.flex1} />
           <button type="button" className={base.btnGhost} onClick={onClose}>Cancelar</button>
           <button type="button" className={base.btnPrimary} onClick={() => void guardar()} disabled={guardando || !par}>
-            {guardando ? <><span className={base.spinner} /> Guardando…</> : "Guardar"}
+            {guardando ? <><Cargando size={14} /> Guardando…</> : "Guardar"}
           </button>
         </div>
         )}

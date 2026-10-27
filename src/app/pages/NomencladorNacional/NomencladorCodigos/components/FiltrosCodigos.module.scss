@@ -1,0 +1,21 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver FiltrosCodigos.tsx.
+
+.barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-4;
+}
+
+.barra .filtro {
+  width: auto;
+  min-width: 11rem;
+  border-radius: 999px;
+}
+
+// Empuja «Nuevo código» al borde derecho.
+.nuevo {
+  margin-left: auto;
+}

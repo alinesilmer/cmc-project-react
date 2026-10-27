@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   login as apiLogin,
@@ -9,22 +9,10 @@ import {
 import { http } from "@/app/shared/lib/http";
 import { getAccessToken, getCookie, setAccessToken } from "../auth/token";
 import { refreshSession, listenRemoteLogout, type LogoutMotivo } from "./session";
+import { Ctx } from "./useAuth";
 import { anotarIngreso } from "@/app/features/avisoIngreso/reglasAviso";
 import { olvidarCatalogos } from "@/app/pages/facturacion/CargaFacturacion/catalogosCarga";
 
-type AuthCtx = {
-  user: User | null;
-  login: (nroSocio: number, password: string) => Promise<User>;
-  logout: () => Promise<void>;
-  ready: boolean;
-};
-
-const Ctx = createContext<AuthCtx | undefined>(undefined);
-export const useAuth = () => {
-  const ctx = useContext(Ctx);
-  if (!ctx) throw new Error("useAuth must be used within <AuthProvider>");
-  return ctx;
-};
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [ready, setReady] = useState(false);
@@ -36,7 +24,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (cached) {
       try {
         setUser(JSON.parse(cached) as User);
-      } catch {}
+      } catch {
+        // La copia guardada no se pudo leer: se ignora y se pide a la API.
+      }
     }
   }, []);
 

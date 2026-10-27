@@ -2,7 +2,7 @@ import type React from "react";
 import { useId, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
-import { EASE } from "../../../lib/motion";
+import { EASE } from "@/website/lib/motion";
 import Button from "@/website/components/UI/Button/Button";
 
 /** Las clases las pone cada pantalla: el acordeón de Socios y el de Preguntas frecuentes se ven distintos a propósito. */

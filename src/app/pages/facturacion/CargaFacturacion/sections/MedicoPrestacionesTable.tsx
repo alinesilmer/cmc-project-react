@@ -4,7 +4,7 @@ import {
   ClipboardList, Pencil, Copy, ArrowRightCircle, ArrowLeftCircle, Trash2, Users, ChevronDown, ChevronUp,
 } from "lucide-react";
 
-import { useAppSnackbar } from "../../../../hooks/useAppSnackbar";
+import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import {
   listarPrestaciones, anularPrestacion, marcarRevisado, moverPeriodo, fetchObraSocialPorCodigo, fetchMedicos,
 } from "../../api";
@@ -15,6 +15,7 @@ import ConfirmActionModal from "../../components/ConfirmActionModal";
 import styles from "./MedicoPrestacionesTable.module.scss";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import { viaLabel } from "@/app/pages/facturacion/utiles";
+import { comoErrorApi, detalleObjeto } from "@/app/shared/lib/httpErrors";
 
 // Esta tabla NO pagina: muestra todas las prestaciones del médico en el período que se está cargando.
 const PAGE_SIZE = 200;
@@ -171,8 +172,9 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
       }
       setRows(todas);
       setTotalCount(total ?? todas.length);
-    } catch (e: any) {
-      notify(detailMessage(e?.response?.data?.detail) || "Error al cargar las prestaciones del médico.", "error");
+    } catch (e) {
+      const err = comoErrorApi(e);
+      notify(detailMessage(err?.response?.data?.detail) || "Error al cargar las prestaciones del médico.", "error");
     } finally {
       setLoading(false);
     }
@@ -347,12 +349,13 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
         }
         fetchData();
         onSuccess();
-      } catch (e: any) {
-        const status = e?.response?.status;
+      } catch (e) {
+        const err = comoErrorApi(e);
+        const status = err?.response?.status;
         if (status === 403) {
           notify("Solo podés anular tus propias prestaciones.", "error");
         } else {
-          notify(detailMessage(e?.response?.data?.detail) || "No se pudo anular.", "error");
+          notify(detailMessage(err?.response?.data?.detail) || "No se pudo anular.", "error");
         }
       }
     });
@@ -373,9 +376,10 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
         notify(`Prestación movida al período ${result.periodo_destino}.`);
         fetchData();
         onSuccess();
-      } catch (e: any) {
-        const detail = e?.response?.data?.detail;
-        const msg = typeof detail === "string" ? detail : detail?.mensaje ?? "No se pudo mover la prestación.";
+      } catch (e) {
+        const err = comoErrorApi(e);
+        const detail = err.response?.data?.detail;
+        const msg = typeof detail === "string" ? detail : detalleObjeto(e)?.mensaje ?? "No se pudo mover la prestación.";
         notify(msg, "error");
       }
     });

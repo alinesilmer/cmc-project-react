@@ -14,20 +14,10 @@ import {
   etiquetaGaleno,
 } from "@/app/features/nomenclador/galenos";
 import type { ItemBoletin } from "./boletinMedico.api";
+import { formatoPesos } from "@/app/shared/lib/formatos";
+import { finDeTabla, loadPdfLibs } from "@/app/shared/lib/documentos/pdfColegio";
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- jsPDF y autoTable no
-   traen tipos utilizables con el import dinámico; el resto del módulo sí. */
-
-async function cargarLibs(): Promise<{ JsPDF: any; autoTable: any }> {
-  const [jspdfMod, autotableMod] = await Promise.all([
-    import("jspdf"),
-    import("jspdf-autotable"),
-  ]);
-  return {
-    JsPDF: (jspdfMod as any)?.jsPDF ?? (jspdfMod as any)?.default ?? jspdfMod,
-    autoTable: (autotableMod as any)?.default ?? autotableMod,
-  };
-}
+const cargarLibs = loadPdfLibs;
 
 const AZUL: [number, number, number] = [23, 63, 112]; // $primary-blue
 const AMARILLO: [number, number, number] = [245, 234, 192]; // $primary-yellow-light
@@ -39,11 +29,6 @@ const MARGEN = 14;
 /** Alto reservado arriba para el índice: título más tres renglones. */
 const ALTO_INDICE = 26;
 
-const moneda = new Intl.NumberFormat("es-AR", {
-  style: "currency",
-  currency: "ARS",
-  minimumFractionDigits: 2,
-});
 
 const nombreArchivo = (hoy: Date): string => {
   const dd = (n: number) => String(n).padStart(2, "0");
@@ -122,7 +107,7 @@ export async function descargarBoletin(items: ItemBoletin[]): Promise<void> {
   // ── Valores de pediatría (sólo pediatras) ──────────────────────────────────
   // Para un pediatra reemplazan al valor de consulta, igual que en pantalla.
   const pediatria = items.flatMap((i) =>
-    i.pediatria.map((v) => [String(i.nro), i.nombre, v.codigo, v.nombre, moneda.format(v.valor)])
+    i.pediatria.map((v) => [String(i.nro), i.nombre, v.codigo, v.nombre, formatoPesos.format(v.valor)])
   );
   if (pediatria.length > 0) {
     autoTable(doc, {
@@ -137,7 +122,7 @@ export async function descargarBoletin(items: ItemBoletin[]): Promise<void> {
         4: { cellWidth: 30, halign: "right" },
       },
     });
-    y = (doc as any).lastAutoTable.finalY + 10;
+    y = finDeTabla(doc) + 10;
   }
 
   // ── Valor de consulta ──────────────────────────────────────────────────────
@@ -150,14 +135,14 @@ export async function descargarBoletin(items: ItemBoletin[]): Promise<void> {
       body: consulta.map((i) => [
         String(i.nro),
         i.nombre,
-        moneda.format(i.consulta as number),
+        formatoPesos.format(i.consulta as number),
       ]),
       columnStyles: {
         0: { cellWidth: 16, halign: "right" },
         2: { cellWidth: 32, halign: "right" },
       },
     });
-    y = (doc as any).lastAutoTable.finalY + 10;
+    y = finDeTabla(doc) + 10;
   }
 
   // ── Galenos (no para pediatras, igual que en pantalla) ─────────────────────
@@ -168,8 +153,8 @@ export async function descargarBoletin(items: ItemBoletin[]): Promise<void> {
       i.nombre,
       g.nombre,
       g.minimo === g.maximo
-        ? moneda.format(g.minimo)
-        : `${moneda.format(g.minimo)} – ${moneda.format(g.maximo)}`,
+        ? formatoPesos.format(g.minimo)
+        : `${formatoPesos.format(g.minimo)} – ${formatoPesos.format(g.maximo)}`,
       g.niveles.length > 1 ? g.niveles.map(etiquetaGaleno).join(", ") : "",
     ])
   );
@@ -186,7 +171,7 @@ export async function descargarBoletin(items: ItemBoletin[]): Promise<void> {
         4: { cellWidth: 44, textColor: GRIS, fontSize: 7.5 },
       },
     });
-    y = (doc as any).lastAutoTable.finalY + 10;
+    y = finDeTabla(doc) + 10;
   }
 
   // ── Observaciones ──────────────────────────────────────────────────────────
@@ -242,7 +227,7 @@ export async function descargarBoletin(items: ItemBoletin[]): Promise<void> {
     // El área clicable cubre el renglón entero, no sólo las letras.
     doc.link(MARGEN, yi - 3.6, ancho - MARGEN * 2, 5, { pageNumber: pagina });
     try {
-      (doc as any).outline?.add(null, titulo, { pageNumber: pagina });
+      doc.outline?.add(null, titulo, { pageNumber: pagina });
     } catch {
       // Sin marcadores el PDF sirve igual: los enlaces del índice ya funcionan.
     }

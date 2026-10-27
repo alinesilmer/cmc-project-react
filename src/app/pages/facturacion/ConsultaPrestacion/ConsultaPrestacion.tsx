@@ -8,7 +8,7 @@ import {
   FileSearch,
 } from "lucide-react";
 
-import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
+import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import { fetchPrestacionFicha, listarPrestaciones } from "../api";
 import { detailMessage } from "../types";
 import type { EstadoPrestacion, PrestacionFicha, PrestacionRead } from "../types";
@@ -18,6 +18,7 @@ import styles from "./ConsultaPrestacion.module.scss";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
 import BackButton from "@/app/components/ui/BackButton/BackButton";
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 
 // Igual que en MedicoPrestacionesTable: las fechas DATE de la API vienen "YYYY-MM-DD" .
 const fmtFecha = (iso: string | null | undefined): string => {
@@ -72,13 +73,14 @@ const ConsultaPrestacion: React.FC = () => {
         const data = await fetchPrestacionFicha(idParam);
         if (!active) return;
         setFicha(data);
-      } catch (e: any) {
+      } catch (e) {
+        const err = comoErrorApi(e);
         if (!active) return;
-        if (e?.response?.status === 404) {
+        if (err?.response?.status === 404) {
           setFicha(null);
           setNotFoundId(idParam);
         } else {
-          notify(detailMessage(e?.response?.data?.detail) || "No se pudo cargar la prestación.", "error");
+          notify(detailMessage(err?.response?.data?.detail) || "No se pudo cargar la prestación.", "error");
         }
       } finally {
         if (active) setLoadingFicha(false);
@@ -107,8 +109,9 @@ const ConsultaPrestacion: React.FC = () => {
     try {
       const { data } = await listarPrestaciones({ orden_o_autorizacion: v, limit: 100 });
       setLista(data);
-    } catch (e: any) {
-      notify(detailMessage(e?.response?.data?.detail) || "Error al buscar.", "error");
+    } catch (e) {
+      const err = comoErrorApi(e);
+      notify(detailMessage(err?.response?.data?.detail) || "Error al buscar.", "error");
     } finally {
       setLoadingLista(false);
     }

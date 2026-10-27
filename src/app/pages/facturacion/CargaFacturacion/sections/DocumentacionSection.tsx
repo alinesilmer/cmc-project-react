@@ -12,7 +12,7 @@ import {
   reordenarDocumentosPrestacion,
 } from "../../api";
 import type { DocumentoPrestacion } from "../../types";
-import styles from "../CargaFacturacion.module.scss";
+import comun from "../Comun.module.scss";;
 
 interface Props {
   /** El código elegido exige documentación digital en esta obra social. */
@@ -71,8 +71,8 @@ export default function DocumentacionSection({
       id: `${i}-${f.name}-${f.size}`, nombre: f.name, tamano: f.size, contentType: f.type, archivo: f,
     }));
     return (
-      <div className={styles.section}>
-        <span className={styles.sectionTitle}>Documentación digital</span>
+      <div className={comun.section}>
+        <span className={comun.sectionTitle}>Documentación digital</span>
         <DocumentosUploader
           items={items}
           ocupado={disabled}
@@ -81,7 +81,7 @@ export default function DocumentacionSection({
           onReemplazar={(item, archivo) => onArchivosChange(archivos.map((f) => (f === item.archivo ? archivo : f)))}
           onEliminar={(item) => onArchivosChange(archivos.filter((f) => f !== item.archivo))}
         />
-        <div className={styles.warningBox} style={{ textAlign: "left", display: "flex", alignItems: "center", gap: 8 }}>
+        <div className={comun.warningBox} style={{ textAlign: "left", display: "flex", alignItems: "center", gap: 8 }}>
           <AlertTriangle size={14} style={{ flexShrink: 0 }} />
           <span>
             Desde el Colegio no es obligatorio en la carga: si no adjuntás ahora, la prestación queda como{" "}
@@ -94,12 +94,12 @@ export default function DocumentacionSection({
 
   const faltan = requiere && docs.length === 0;
   return (
-    <div className={styles.section}>
-      <span className={styles.sectionTitle}>Documentación digital</span>
+    <div className={comun.section}>
+      <span className={comun.sectionTitle}>Documentación digital</span>
       <div>
         <button
           type="button"
-          className={styles.btnGhost}
+          className={comun.btnGhost}
           onClick={() => setAbierto(true)}
           disabled={disabled}
           style={{ display: "inline-flex", alignItems: "center", gap: 6 }}

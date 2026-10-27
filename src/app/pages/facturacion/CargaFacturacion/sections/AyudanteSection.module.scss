@@ -1,0 +1,32 @@
+@use "@/app/styles/all.scss" as *;
+
+
+// ─── Ayudante quirúrgico (dentro de PrestacionSection/AyudanteSection) ─────
+.addAyudanteBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.625rem 1rem;
+  background: none;
+  border: 1px dashed $gray-200;
+  border-radius: 0.375rem;
+  color: $tono-azul-450;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+
+  &:hover:not(:disabled) {
+    background: $secondary-blue;
+    border-color: $tono-azul-450;
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}

@@ -1,0 +1,51 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver Fichas.tsx.
+
+.fichas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-2;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ficha {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-1 $spacing-3;
+  font-size: $font-size-sm;
+  font-variant-numeric: tabular-nums;
+  color: $franja-azul;
+  background: $primary-yellow-light;
+  border-radius: 999px;
+}
+
+.quitar {
+  display: inline-flex;
+  padding: 0;
+  color: $franja-azul;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+
+  &:hover {
+    color: $danger-red;
+  }
+}
+
+.limpiar {
+  font-size: $font-size-xs;
+  color: $gray-500;
+  text-decoration: underline;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+
+  &:hover {
+    color: $gray-700;
+  }
+}

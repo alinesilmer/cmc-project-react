@@ -1,0 +1,8 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver Alcance.tsx.
+
+.agregar {
+  display: flex;
+  gap: $spacing-3;
+}

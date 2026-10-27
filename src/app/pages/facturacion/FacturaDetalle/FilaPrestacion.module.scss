@@ -1,0 +1,233 @@
+@use "@/app/styles/all.scss" as *;
+
+
+.rowRevisada td {
+  background: $tono-amarillo-50-b;
+}
+
+.rowAnulada td {
+  opacity: 0.55;
+}
+
+// Recuadro de equipo quirúrgico (las filas del equipo siempre van con su cabeza).
+
+.equipoGrupoHeadRow td {
+  border-top: 2px solid $tono-gris-100;
+}
+
+.equipoGrupoHeadRow td:first-child {
+  border-left: 2px solid $tono-gris-100;
+}
+
+.equipoGrupoHeadRow td:last-child {
+  border-right: 2px solid $tono-gris-100;
+}
+
+.equipoPreviewRow td {
+  background: $gray-50;
+  color: $tono-azul-400;
+}
+
+.equipoPreviewRow td:first-child {
+  border-left: 2px solid $tono-gris-100;
+}
+
+.equipoPreviewRow td:last-child {
+  border-right: 2px solid $tono-gris-100;
+}
+
+// Cierra el marco abajo, en la última fila del bloque de compañeros.
+.equipoPreviewRowLast td {
+  border-bottom: 2px solid $tono-gris-100;
+}
+
+// Etiqueta de clínica (celda del socio).
+
+.idCell {
+  white-space: nowrap;
+}
+
+.socioCell {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.socioNro {
+  font-weight: 700;
+  color: $tono-azul-450;
+  font-variant-numeric: tabular-nums;
+  font-size: inherit;
+}
+
+.socioNombre {
+  color: $carpeta-noche;
+  font-size: inherit;
+  line-height: 1.25;
+}
+
+.socioMatricula {
+  color: $tono-azul-400;
+  font-weight: 400;
+}
+
+.codeCell {
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 700;
+  font-size: inherit;
+  color: $tono-azul-450;
+}
+
+.cantidadCell {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.cantidadMain {
+  font-weight: 600;
+  color: $carpeta-noche;
+}
+
+.cantidadSub {
+  font-size: inherit;
+  color: $tono-azul-400;
+}
+
+.moneyCell {
+  font-variant-numeric: tabular-nums;
+  color: $carpeta-noche;
+}
+
+.subtotalCell {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: $tono-verde-550;
+}
+
+.mutedText {
+  color: $tono-azul-400;
+}
+
+.tipoPrestadorBadge {
+  display: inline-block;
+  font-size: inherit;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 2px 0.375rem;
+}
+
+.tipoPrestadorMedico   { background: $gray-100; color: $tono-azul-500-b; }
+
+.tipoPrestadorAyudante  { background: $gray-50; color: $tono-violeta-550; }
+
+.tipoPrestadorGastos   { background: $cuaderno-papel; color: $tono-rojo-450; }
+
+.tipoPrestadorPediatra { background: $gray-100; color: $tono-turquesa-500; }
+
+.tipoBadge {
+  display: inline-block;
+  font-size: inherit;
+  font-weight: 600;
+  border-radius: 20px;
+  padding: 2px 0.4375rem;
+  background: $franja-perla;
+  color: $gray-600;
+}
+
+.tipoConsulta   { background: $secondary-blue; color: $primary-blue-darker; }
+
+.tipoPractica   { background: $primary-yellow; color: $tono-naranja-550; }
+
+.tipoHonorarios { background: $cuaderno-papel; color: $tono-verde-550; }
+
+.tipoSanatorio  { background: $gray-50; color: $tono-violeta-550; }
+
+.viaBadge {
+  display: inline-block;
+  font-size: inherit;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 2px 0.375rem;
+  background: $franja-perla;
+  color: $gray-600;
+}
+
+.viaLaparoscopica { background: $gray-200; color: $tono-violeta-600; }
+
+.actionsCell {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.auditCheckbox {
+  width: 1.0625rem;
+  height: 1.0625rem;
+  cursor: pointer;
+  accent-color: $tono-amarillo-300;
+}
+
+.auditCheckboxWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4375rem;
+  height: 1.4375rem;
+  border-radius: 0.375rem;
+  transition: background .15s;
+}
+
+.auditCheckboxOn {
+  background: $tono-amarillo-100;
+}
+
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4375rem;
+  height: 1.4375rem;
+  background: none;
+  border: none;
+  border-radius: 0.375rem;
+  color: $gray-600;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+
+  &:hover:not(:disabled) { background: $gray-100; color: $carpeta-noche; }
+  &:disabled { opacity: .35; cursor: not-allowed; }
+}
+
+.iconBtnEdit:hover:not(:disabled) { color: $tono-azul-450; background: $gray-100; }
+
+.iconBtnMove:hover:not(:disabled) { color: $tono-naranja-550; background: $cuaderno-papel; }
+
+.iconBtnDelete:hover:not(:disabled) { color: $tono-rojo-400; background: $tono-rojo-50; }
+
+.clinicaTag {
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 0 0.375rem;
+  border-radius: 5px;
+  background: $tono-naranja-100;
+  color: $tono-naranja-600;
+  font-size: .85em;
+  white-space: nowrap;
+}
+
+// Documentación digital: cuántos archivos tiene la prestación, o que le faltan.
+.docChip {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  border-radius: 999px;
+}
+
+.docChipOk { color: #14532d; background: #dcfce7; }
+
+.docChipFalta { color: #7c2d12; background: #ffedd5; }

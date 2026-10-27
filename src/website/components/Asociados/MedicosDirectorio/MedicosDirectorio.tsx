@@ -7,8 +7,8 @@ import Buscador from "../../UI/Buscador/Buscador";
 import Esqueletos from "../../UI/Esqueletos/Esqueletos";
 import AvisoAmpliado from "./AvisoAmpliado";
 import { iniciales, nombreDe } from "./avisos";
-import { listAdsPublicos, type PubAd } from "../../../lib/ads.client";
-import { coincide } from "../../../lib/texto";
+import { listAdsPublicos, type PubAd } from "@/website/lib/ads.client";
+import { coincide } from "@/website/lib/texto";
 import styles from "./MedicosDirectorio.module.scss";
 import Button from "@/website/components/UI/Button/Button";
 

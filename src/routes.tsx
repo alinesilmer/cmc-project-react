@@ -3,14 +3,13 @@ import { Routes, Route, Navigate, useLocation, matchPath, type Location } from "
 import {
   RUTA_EDICION, RutaCapaContext, type EstadoConFondo, type RutaCapa,
 } from "./app/pages/facturacion/CargaFacturacion/capaCargaContexto";
-import { AnimatePresence } from "framer-motion";
 
 // Structural components are always needed for the panel shell → keep eager.
 import RequireAuth from "./app/auth/RequireAuth";
 import MedicoRouteGuard from "./app/auth/MedicoRouteGuard";
 import RequireWebEditor from "./app/auth/RequireWebEditor";
 import RequireScope from "./app/auth/RequireScope";
-import { useAuth } from "./app/auth/AuthProvider";
+import { useAuth } from "./app/auth/useAuth";
 import { usePermisos } from "./app/auth/usePermisos";
 import { isMedico } from "./app/auth/roles";
 
@@ -37,7 +36,6 @@ const RegisterSocio = lazy(() => import("./app/pages/RegisterSocio/RegisterSocio
 const PermissionsManager = lazy(() => import("./app/pages/PermissionsManager/PermissionsManager"));
 const Help = lazy(() => import("./app/pages/Help/Help"));
 const Login = lazy(() => import("./app/pages/Login/Login"));
-const AdherenteForm = lazy(() => import("@/app/pages/AdherenteForm/AdherenteForm"));
 const Boletin = lazy(() => import("./app/pages/Boletin/Boletin"));
 const AfiliadosPorObraSocialPage = lazy(() => import("./app/pages/AfiliadosPorObraSocialPage/AfiliadosPorObraSocialPage"));
 const GenerarBoletin = lazy(() => import("./app/pages/GenerarBoletin/GenerarBoletin"));
@@ -88,8 +86,6 @@ const BeneficiosPage = lazy(() => import("./app/pages/Beneficios/BeneficiosPage"
 const SolicitudesCambioPage = lazy(() => import("./app/pages/SolicitudesCambio/SolicitudesCambioPage"));
 const AvisosPage = lazy(() => import("./app/pages/Avisos/AvisosPage"));
 const ServiciosPage = lazy(() => import("./app/pages/Servicios/ServiciosPage"));
-const TablaGinecologia = lazy(() => import("./app/pages/TablaGinecologia/TablaGinecologia"));
-const BoletinValoresGalenos = lazy(() => import("./app/pages/BoletinValoresGalenos/BoletinValoresGalenos"));
 const ValidacionesHub = lazy(() => import("./app/pages/Validaciones/ValidacionesHub"));
 const ValidacionOS = lazy(() => import("./app/pages/Validaciones/ValidacionOS"));
 const PortalesExternos = lazy(() => import("./app/pages/Validaciones/PortalesExternos"));
@@ -160,7 +156,6 @@ export default function RootRoutes() {
 
   return (
     <RutaCapaContext.Provider value={rutaCapa}>
-    <AnimatePresence mode="wait">
       <Suspense fallback={<div style={{ padding: 24 }}>Cargando…</div>}>
         <Routes location={rutaCapa && fondo ? fondo : location}>
           <Route element={<TemaPanel />}>
@@ -169,7 +164,6 @@ export default function RootRoutes() {
           <Route path="/panel/register" element={<Navigate to="/socios" replace />} />
           {/* La página de requisitos para asociarse vive en el sitio público (`/socios`): es material para quien todavía no es socio. */}
           <Route path="/panel/info" element={<Navigate to="/socios" replace />} />
-          <Route path="/panel/adherente" element={<AdherenteForm />} />
 
           <Route element={<RequireAuth />}>
             <Route path="/panel" element={<AppLayout />}>
@@ -314,15 +308,6 @@ export default function RootRoutes() {
                   path="historial-valores"
                   element={<HistorialValoresConsulta />}
                 />
-                <Route
-                  path="tabla-ginecologia"
-                  element={<TablaGinecologia />}
-                />
-                {/* Los valores de galeno del boletín, para el Colegio: se elige un valor y se comparan todas las obras sociales. */}
-                <Route
-                  path="boletin-valores-galenos"
-                  element={<BoletinValoresGalenos />}
-                />
               </Route>
 
               <Route element={<RequireScope scope="catalogo:leer" />}>
@@ -451,7 +436,6 @@ export default function RootRoutes() {
           <Route path="/*" element={<WebRoutes />} />
         </Routes>
       </Suspense>
-    </AnimatePresence>
     </RutaCapaContext.Provider>
   );
 }

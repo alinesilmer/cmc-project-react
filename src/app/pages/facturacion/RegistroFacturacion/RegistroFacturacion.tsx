@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { History } from "lucide-react";
 
-import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
+import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import { listarCargaPorUsuario, listarCierresPorUsuario } from "../api";
 import type { ObraSocialOption, CargaPorUsuario, CierresPorUsuario } from "../types";
 import { detailMessage } from "../types";
@@ -10,6 +10,7 @@ import ObraSocialAutocomplete from "../components/ObraSocialAutocomplete";
 import styles from "./RegistroFacturacion.module.scss";
 import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 
 const periodoActual = (): string => {
   const d = new Date();
@@ -58,8 +59,9 @@ const RegistroFacturacion: React.FC = () => {
       try {
         const carga = await listarCargaPorUsuario(params);
         setCargaRows(carga);
-      } catch (e: any) {
-        notify(detailMessage(e?.response?.data?.detail) || "Error al cargar el ranking de carga por usuario.", "error");
+      } catch (e) {
+        const err = comoErrorApi(e);
+        notify(detailMessage(err?.response?.data?.detail) || "Error al cargar el ranking de carga por usuario.", "error");
       } finally {
         setCargaLoading(false);
       }
@@ -68,14 +70,14 @@ const RegistroFacturacion: React.FC = () => {
       try {
         const cierres = await listarCierresPorUsuario(params);
         setCierresUsuarioRows(cierres);
-      } catch (e: any) {
-        notify(detailMessage(e?.response?.data?.detail) || "Error al cargar el ranking de cierres por operador.", "error");
+      } catch (e) {
+        const err = comoErrorApi(e);
+        notify(detailMessage(err?.response?.data?.detail) || "Error al cargar el ranking de cierres por operador.", "error");
       } finally {
         setCierresUsuarioLoading(false);
       }
     }, 300);
     return () => { if (rangosDebounce.current) clearTimeout(rangosDebounce.current); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [codObra, periodo, desde, hasta, notify]);
 
   return (

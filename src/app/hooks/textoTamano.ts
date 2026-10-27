@@ -13,7 +13,6 @@ function marcarRaiz(tamano: TextoTamano): void {
 
 const preferencia = crearPreferencia<TextoTamano>("cmc:texto", TEXTO_TAMANOS, "normal", marcarRaiz);
 
-export const elegirTextoTamano = preferencia.elegir;
 export const useTextoTamano = preferencia.useValor;
 
 /** Pasa al tamaño siguiente (normal → grande → muy grande → normal), sobre lo que hay guardado en este instante. */

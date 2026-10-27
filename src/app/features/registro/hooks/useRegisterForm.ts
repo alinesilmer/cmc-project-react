@@ -22,16 +22,14 @@ import {
   saveContinueAdmin,
   // opcional: setExisteAdmin,
 } from "@/app/pages/RegisterSocio/api";
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 
 type Mode = "public" | "admin";
 
 // Cambiá esto si tu ruta de detalle es otra (p.ej. "/panel/medicos")
 const DETAIL_ROUTE_PREFIX = "/doctors";
 
-export function useRegisterForm(
-  mode: Mode,
-  opts?: { showAdherentePrompt?: boolean }
-) {
+export function useRegisterForm(mode: Mode) {
   const navigate = useNavigate();
   const notify = useNotify();
 
@@ -81,9 +79,6 @@ export function useRegisterForm(
   const [provinces, setProvinces] = useState<string[]>([]);
   const [localities, setLocalities] = useState<string[]>([]);
   const localitiesCache = useRef<Map<string, string[]>>(new Map());
-  const [askAdherente, setAskAdherente] = useState(
-    Boolean(opts?.showAdherentePrompt)
-  );
 
   // id del médico creado/actualizado en admin
   const [medicoId, setMedicoId] = useState<number | null>(null);
@@ -130,9 +125,9 @@ export function useRegisterForm(
   };
 
   const nextStep = () => {
-    if (validateStep(step)) setStep((p) => (p < 4 ? ((p + 1) as any) : p));
+    if (validateStep(step)) setStep((p) => (p < 4 ? ((p + 1) as 1 | 2 | 3 | 4) : p));
   };
-  const prevStep = () => setStep((p) => (p > 1 ? ((p - 1) as any) : p));
+  const prevStep = () => setStep((p) => (p > 1 ? ((p - 1) as 1 | 2 | 3 | 4) : p));
 
   // Construye specialties payload desde principal + extras (se usa solo en público)
   const buildSpecialtiesPayload = () => {
@@ -163,7 +158,6 @@ export function useRegisterForm(
   const buildPartialPayload = () => {
     return {
       // Identificación
-      documentType: toUndef((formData as any).documentType), // si existiera
       documentNumber: toUndef(formData.documentNumber),
       firstName: toUndef(formData.firstName),
       lastName: toUndef(formData.lastName),
@@ -215,11 +209,12 @@ export function useRegisterForm(
       );
       if (!medicoId) setMedicoId(res.medico_id);
       // Avanzamos solo si el botón es "Guardar y continuar"
-      setStep((s) => (s < 4 ? ((s + 1) as any) : s));
-    } catch (e: any) {
+      setStep((s) => (s < 4 ? ((s + 1) as 1 | 2 | 3 | 4) : s));
+    } catch (e) {
+      const err = comoErrorApi(e);
       const msg =
-        e?.response?.data?.detail ??
-        e?.message ??
+        err?.response?.data?.detail ??
+        err?.message ??
         "No se pudo guardar el borrador";
       notify.error(typeof msg === "string" ? msg : JSON.stringify(msg));
       console.error("saveAndContinue error:", e);
@@ -292,10 +287,11 @@ export function useRegisterForm(
           await uploadMedicoDocumento(medico_id, file, label);
         }
         navigate("/");
-      } catch (e: any) {
+      } catch (e) {
+        const err = comoErrorApi(e);
         const msg =
-          e?.response?.data?.detail ??
-          e?.message ??
+          err?.response?.data?.detail ??
+          err?.message ??
           "No se pudo enviar la solicitud";
         notify.error(typeof msg === "string" ? msg : JSON.stringify(msg));
         console.error("register (public) error:", e);
@@ -327,10 +323,6 @@ export function useRegisterForm(
     // catálogos
     provinces,
     localities,
-
-    // adherente modal (sólo público)
-    askAdherente,
-    setAskAdherente,
 
     // handlers utilitarios
     onChange,

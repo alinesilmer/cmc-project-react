@@ -5,7 +5,7 @@ import PantallaAcceso, { type Destacado } from "@/app/features/acceso/components
 import CampoAcceso from "@/app/features/acceso/components/CampoAcceso/CampoAcceso";
 import AyudaPassword from "./AyudaPassword";
 import ModalValoresEticos from "./ModalValoresEticos";
-import { useAuth } from "../../auth/AuthProvider";
+import { useAuth } from "../../auth/useAuth";
 import { destinoDe, irADestino } from "../../auth/destino";
 import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 import { saludoSegunHora } from "@/app/shared/lib/fechas";

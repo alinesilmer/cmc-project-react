@@ -6,7 +6,7 @@ import type { ReplicaState } from "./replicaState";
 import type {
   ObraSocialFamiliaItem,
   ReplicaResultadoItem,
-} from "../../../pages/NomencladorNacional/nomenclador.types";
+} from "@/app/pages/NomencladorNacional/nomenclador.types";
 
 type BlockProps = {
   familia: ObraSocialFamiliaItem[];

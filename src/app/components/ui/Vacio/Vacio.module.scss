@@ -1,0 +1,23 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver Vacio.tsx.
+
+.vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-3;
+  padding: $spacing-16;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $gray-500;
+  text-align: center;
+  background: $white;
+  border: 1px dashed $gray-300;
+  border-radius: $radio-lg;
+
+  svg {
+    color: $gray-300;
+  }
+}

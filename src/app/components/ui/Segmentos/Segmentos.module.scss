@@ -1,0 +1,36 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver Segmentos.tsx.
+
+.pista {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: $spacing-1;
+  width: fit-content;
+  max-width: 100%;
+  padding: $spacing-1;
+  background: $gray-100;
+  border-radius: 999px;
+}
+
+.opcion {
+  padding: $spacing-2 $spacing-5;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $gray-600;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+
+  &:hover {
+    color: $gray-800;
+  }
+}
+
+.activa,
+.activa:hover {
+  color: $franja-crema;
+  background: $franja-azul;
+}

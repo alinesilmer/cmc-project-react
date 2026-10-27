@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppSnackbar } from "../../hooks/useAppSnackbar";
 import {
-  Loader2,
   Pencil,
   Plus,
   Trash2,
@@ -42,6 +41,9 @@ import { formatMoney, monthLabel } from "./types";
 import lq from "@/app/pages/Pagos/Liquidacion.module.scss";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 import { getErrorMessage } from "@/app/shared/lib/utiles";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
+import Paginador from "@/app/components/ui/Paginador/Paginador";
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 
 const PAGE_SIZE = 50;
 const ESTADOS_UI: Array<{ value: DeduccionEstado | ""; label: string }> = [
@@ -137,7 +139,7 @@ const DeduccionesList: React.FC = () => {
       });
       setItems(Array.isArray(data.items) ? data.items : []);
       setTotal(Number(data.total ?? 0));
-    } catch (e: any) {
+    } catch (e) {
       setError(getErrorMessage(e, "No se pudieron cargar las deducciones."));
     } finally {
       setLoading(false);
@@ -180,8 +182,9 @@ const DeduccionesList: React.FC = () => {
     try {
       const updated = await fetchDeduccion(id);
       setItems((prev) => prev.map((item) => (item.id === id ? updated : item)));
-    } catch (e: any) {
-      if (e?.response?.status === 404) {
+    } catch (e) {
+      const err = comoErrorApi(e);
+      if (err?.response?.status === 404) {
         setItems((prev) => prev.filter((item) => item.id !== id));
       }
     }
@@ -199,7 +202,7 @@ const DeduccionesList: React.FC = () => {
         await updateDeduccionEstado(id, next);
         await refreshRow(id);
         notify("Estado actualizado correctamente.");
-      } catch (e: any) {
+      } catch (e) {
         notify(getErrorMessage(e, "No se pudo actualizar el estado."), "error");
       } finally {
         setWorkingId(null);
@@ -212,7 +215,7 @@ const DeduccionesList: React.FC = () => {
       await pagarEnCaja(id);
       await refreshRow(id);
       notify("Pago en caja registrado correctamente.");
-    } catch (e: any) {
+    } catch (e) {
       notify(getErrorMessage(e, "No se pudo registrar el pago en caja."), "error");
     } finally {
       setWorkingId(null);
@@ -234,7 +237,7 @@ const DeduccionesList: React.FC = () => {
       setCancelTarget(null);
       await refreshRow(targetId);
       notify("Deducción eliminada.");
-    } catch (e: any) {
+    } catch (e) {
       setCancelError(
         getErrorMessage(e, "No se pudo eliminar la deducción."),
       );
@@ -263,7 +266,7 @@ const DeduccionesList: React.FC = () => {
       setEditTarget(null);
       await refreshRow(targetId);
       notify("Deducción actualizada correctamente.");
-    } catch (e: any) {
+    } catch (e) {
       notify(getErrorMessage(e, "No se pudo editar el monto."), "error");
     } finally {
       setWorkingId(null);
@@ -296,7 +299,7 @@ const DeduccionesList: React.FC = () => {
         Origen: row.origen,
       }));
       await downloadExcelSheet("deducciones.xlsx", "Deducciones", rows);
-    } catch (e: any) {
+    } catch (e) {
       notify(getErrorMessage(e, "No se pudo exportar a Excel."), "error");
     }
   };
@@ -327,7 +330,7 @@ const DeduccionesList: React.FC = () => {
         headStyles: { fillColor: [27, 86, 255], textColor: 255 },
       });
       doc.save("deducciones.pdf");
-    } catch (e: any) {
+    } catch (e) {
       notify(getErrorMessage(e, "No se pudo exportar a PDF."), "error");
     }
   };
@@ -371,7 +374,7 @@ const DeduccionesList: React.FC = () => {
         if (isWorking) {
           return (
             <div className={lq.accionesFila}>
-              <Loader2 size={16} className={lq.gira} aria-label="Procesando" />
+              <Cargando size={16} aria-label="Procesando" />
             </div>
           );
         }
@@ -574,7 +577,7 @@ const DeduccionesList: React.FC = () => {
 
       {loading ? (
         <div className={`${lq.tablaCaja} ${lq.cargando}`}>
-          <Loader2 size={18} className={lq.gira} aria-hidden="true" /> Cargando deducciones…
+          <Cargando size={18} aria-hidden="true" /> Cargando deducciones…
         </div>
       ) : (
         <SelectableTable
@@ -588,15 +591,7 @@ const DeduccionesList: React.FC = () => {
         />
       )}
 
-      <nav className={lq.paginador} aria-label="Paginación">
-        <button type="button" onClick={() => setPageSafe(page - 1)} disabled={page <= 1 || loading}>
-          ← Anterior
-        </button>
-        <span>Página {page} de {lastPage}</span>
-        <button type="button" onClick={() => setPageSafe(page + 1)} disabled={page >= lastPage || loading}>
-          Siguiente →
-        </button>
-      </nav>
+      <Paginador pagina={page} totalPaginas={lastPage} onCambiar={setPageSafe} ocupado={loading} />
 
       {editTarget && (
         <Dialogo

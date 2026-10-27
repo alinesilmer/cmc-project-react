@@ -1,0 +1,124 @@
+@use "@/app/styles/all.scss" as *;
+
+// Tabla de galenos: el campo del valor nuevo, los niveles y el estado de cada fila.
+
+.envoltorio {
+  overflow-x: auto;
+  border: 1px solid $gray-200;
+  border-radius: $radio-md;
+}
+
+.monto {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+// Un galeno oculto en el boletín se apaga, sin tocar el fondo de la fila.
+.oculto td:not(:last-child) {
+  opacity: 0.55;
+}
+
+.nombreToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: 0;
+  font: inherit;
+  color: $franja-azul;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.celdaValor {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.valor {
+  width: 12rem;
+  padding: $spacing-2 $spacing-3;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-normal;
+  font-variant-numeric: tabular-nums;
+  color: $gray-800;
+  background: $white;
+  border: 1px solid $gray-300;
+  border-radius: $radio-md;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.18s, box-shadow 0.18s;
+
+  &:focus {
+    border-color: $franja-azul;
+    box-shadow: 0 0 0 3px rgba($franja-azul, 0.14);
+  }
+
+  &::placeholder {
+    color: $gray-400;
+  }
+
+  &:disabled {
+    background: $gray-100;
+  }
+}
+
+.valorSucio {
+  border-color: $primary-yellow-dark;
+}
+
+.valorGuardado {
+  border-color: $ok;
+}
+
+.valorError {
+  border-color: $peligro;
+}
+
+.iconoOk {
+  color: $ok;
+}
+
+.iconoError {
+  color: $peligro;
+}
+
+// Filas de los niveles: sólo lectura, más chicas.
+.nivel td {
+  font-size: $font-size-xs;
+  color: $gray-600;
+}
+
+.ajustado {
+  margin-left: $spacing-2;
+  padding: 1px $spacing-2;
+  font-size: $font-size-xs;
+  color: $franja-azul;
+  background: $primary-yellow-light;
+  border-radius: 999px;
+}
+
+.sinDato {
+  color: $gray-400;
+}
+
+.cambio {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.previo {
+  color: $gray-500;
+  text-decoration: line-through;
+}
+
+.nuevoHon {
+  color: $ok;
+}

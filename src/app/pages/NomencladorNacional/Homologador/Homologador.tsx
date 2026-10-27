@@ -7,13 +7,13 @@ import {
   GitMerge,
   CheckCircle2,
   AlertCircle,
-  Loader2,
   X as XIcon,
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 
 import styles from "./Homologador.module.scss";
+import PanelObrasSociales from "@/app/components/ui/PanelObrasSociales/PanelObrasSociales";
 import ConfirmModal from "@/app/components/ui/ConfirmModal/ConfirmModal";
 import { listHomologaciones, createHomologacion, deleteHomologacion } from "./homologador.api";
 import { listNomenclador } from "../nomenclador.api";
@@ -21,6 +21,7 @@ import type { HomologadorOut } from "./homologador.types";
 import type { NomencladorOut } from "../nomenclador.types";
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -28,7 +29,6 @@ export default function Homologador() {
   const queryClient = useQueryClient();
 
   const [selectedOS, setSelectedOS] = useState<ObraSocialListItem | null>(null);
-  const [osSearch, setOsSearch] = useState("");
   const [mapSearch, setMapSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
@@ -72,14 +72,6 @@ export default function Homologador() {
   }
 
   // ── Filtered lists ────────────────────────────────────────────────────────
-
-  const filteredOS = useMemo(() => {
-    if (!osSearch.trim()) return osList.slice(0, 80);
-    const q = osSearch.toLowerCase();
-    return osList
-      .filter((os) => os.nombre.toLowerCase().includes(q) || String(os.nro_obra_social).includes(q))
-      .slice(0, 80);
-  }, [osList, osSearch]);
 
   const filteredMaps = useMemo(() => {
     if (!mapSearch.trim()) return homologaciones;
@@ -212,33 +204,19 @@ export default function Homologador() {
 
       <div className={styles.layout}>
 
-        {/* ── OS panel ── */}
-        <div className={styles.osPanel}>
-          <div className={styles.osPanelHeader}>
-            <p className={styles.osPanelTitle}>Obra social</p>
-            <div className={styles.osSearchWrap}>
-              <Search size={13} className={styles.osSearchIcon} />
-              <input
-                className={styles.osSearchInput}
-                placeholder="Buscar…"
-                value={osSearch}
-                onChange={(e) => setOsSearch(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className={styles.osList}>
-            {filteredOS.map((os) => (
-              <button
-                key={os.nro_obra_social}
-                className={`${styles.osItem} ${selectedOS?.nro_obra_social === os.nro_obra_social ? styles.osItemSelected : ""}`}
-                onMouseEnter={() => prefetchOS(os.nro_obra_social)}
-                onClick={() => { setSelectedOS(os); setShowAdd(false); setMapSearch(""); }}
-              >
-                <span className={styles.osNro}>{os.nro_obra_social}</span>
-                <span className={styles.osNombre}>{os.nombre}</span>
-              </button>
-            ))}
-          </div>
+        <div className={styles.lateral}>
+          <PanelObrasSociales
+            obras={osList}
+            elegida={selectedOS?.nro_obra_social ?? null}
+            onResaltar={prefetchOS}
+            onElegir={(nro) => {
+              const os = osList.find((o) => o.nro_obra_social === nro);
+              if (!os) return;
+              setSelectedOS(os);
+              setShowAdd(false);
+              setMapSearch("");
+            }}
+          />
         </div>
 
         {/* ── Content ── */}
@@ -323,7 +301,7 @@ export default function Homologador() {
                                 onChange={(e) => handleNomSearch(e.target.value)}
                                 onKeyDown={(e) => { if (e.key === "Enter" && nomResults.length > 0) selectNom(nomResults[0]); }}
                               />
-                              {nomLoading && <Loader2 size={13} className={`${styles.autocompleteSpinner} ${styles.spin}`} />}
+                              {nomLoading && <Cargando size={13} className={styles.autocompleteSpinner} />}
                             </div>
                             {nomResults.length > 0 && (
                               <ul className={styles.autocompleteDropdown}>
@@ -347,7 +325,7 @@ export default function Homologador() {
 
                     <div className={styles.addActions}>
                       <button className={styles.btnSave} onClick={handleCreate} disabled={saving}>
-                        {saving ? <><Loader2 size={13} className={styles.spin} /> Guardando…</> : "Guardar"}
+                        {saving ? <><Cargando size={13} /> Guardando…</> : "Guardar"}
                       </button>
                       <button className={styles.btnCancel} onClick={cancelAdd}>Cancelar</button>
                     </div>
@@ -358,7 +336,7 @@ export default function Homologador() {
               {/* Mapping list */}
               {loadingMaps ? (
                 <div className={styles.loadingRow}>
-                  <Loader2 size={16} className={styles.spin} /> Cargando equivalencias…
+                  <Cargando size={16} /> Cargando equivalencias…
                 </div>
               ) : filteredMaps.length === 0 ? (
                 <div className={styles.emptyState}>
@@ -396,7 +374,7 @@ export default function Homologador() {
                         title="Eliminar equivalencia"
                       >
                         {deleting === m.id
-                          ? <Loader2 size={14} className={styles.spin} />
+                          ? <Cargando size={14} />
                           : <Trash2 size={14} />
                         }
                       </button>

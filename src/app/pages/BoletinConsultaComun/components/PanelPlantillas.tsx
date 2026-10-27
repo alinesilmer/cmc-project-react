@@ -2,7 +2,7 @@ import { useState, type KeyboardEvent } from "react";
 import { Plus, X } from "lucide-react";
 
 import type { Plantilla } from "../useObservaciones";
-import s from "../BoletinConsultaComun.module.scss";
+import s from "./PanelPlantillas.module.scss";
 
 interface Props {
   plantillas: Plantilla[];

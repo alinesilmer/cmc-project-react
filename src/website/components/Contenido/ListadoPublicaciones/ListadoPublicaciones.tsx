@@ -2,10 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import ContenedorPagina from "../../UI/ContenedorPagina/ContenedorPagina";
 import CabeceraFresca from "../../UI/CabeceraFresca/CabeceraFresca";
 import ListadoContenido from "../ListadoContenido/ListadoContenido";
-import { listNewsPublicas } from "../../../lib/news.client";
-import { useTituloPagina } from "../../../hooks/useTituloPagina";
+import { listNewsPublicas } from "@/website/lib/news.client";
+import { useTituloPagina } from "@/website/hooks/useTituloPagina";
 import { PUBLICACIONES, publicacionesKey } from "../publicaciones";
-import type { Noticia, TipoPublicacion } from "../../../types";
+import type { Noticia, TipoPublicacion } from "@/website/types";
 
 const SIN_ITEMS: Noticia[] = [];
 

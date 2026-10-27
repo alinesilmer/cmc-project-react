@@ -1,12 +1,13 @@
+import { memo } from "react";
 import { SquarePen, Trash2 } from "lucide-react";
-import { motion } from "framer-motion";
-import WhatsappIcon from "../../../components/UI/icons/WhatsappIcon";
-import { formatearFecha } from "../../../lib/fechas";
-import { linkWhatsApp } from "../../../lib/contacto";
-import { PUBLICACIONES } from "../../../components/Contenido/publicaciones";
-import type { Noticia } from "../../../types";
-import styles from "./ItemPublicacion.module.scss";
-import Button from "@/website/components/UI/Button/Button";
+
+import s from "./ItemPublicacion.module.scss";
+import BotonAccion from "@/app/components/ui/BotonAccion/BotonAccion";
+import WhatsappIcon from "@/website/components/UI/icons/WhatsappIcon";
+import { formatearFecha } from "@/website/lib/fechas";
+import { linkWhatsApp } from "@/website/lib/contacto";
+import { PUBLICACIONES } from "@/website/components/Contenido/publicaciones";
+import type { Noticia } from "@/website/types";
 
 type Props = {
   publicacion: Noticia;
@@ -20,53 +21,44 @@ function linkCompartir(n: Noticia): string {
   return linkWhatsApp("", `${n.titulo} – ${url}`);
 }
 
-/** Tarjeta de una publicación en el administrador, con sus acciones. */
-export default function ItemPublicacion({ publicacion: n, onEditar, onBorrar }: Props) {
+/** La tarjeta de una publicación: portada, estado, título, resumen y sus acciones. */
+function ItemPublicacion({ publicacion: n, onEditar, onBorrar }: Props) {
   const esCurso = n.tipo === "Curso";
 
   return (
-    <motion.div
-      className={`${styles.noticiaItem} ${esCurso ? styles.tipoCurso : styles.tipoNoticia}`}
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.22 }}
-    >
-      <div className={styles.noticiaContent}>
-        <div className={styles.cardMeta}>
-          <span className={`${styles.badge} ${esCurso ? styles.badgeCurso : styles.badgeNoticia}`}>
-            {n.tipo ?? "Noticia"}
-          </span>
-          <span className={`${styles.statusBadge} ${n.publicada ? styles.statusPublished : styles.statusDraft}`}>
-            {n.publicada ? "Publicada" : "Borrador"}
-          </span>
-        </div>
-        <h3 title={n.titulo}>{n.titulo}</h3>
-        <p>{n.resumen}</p>
-        {n.fechaCreacion && (
-          <time className={styles.cardDate} dateTime={String(n.fechaCreacion)}>
-            {formatearFecha(n.fechaCreacion, "corta")}
-          </time>
-        )}
+    <article className={s.tarjeta}>
+      <div className={s.miniatura}>
+        {n.portada ? <img src={n.portada} alt="" loading="lazy" /> : <span>Sin portada</span>}
       </div>
 
-      <div className={styles.noticiaActions}>
-        <a
-          href={linkCompartir(n)}
-          target="_blank"
-          rel="noopener noreferrer"
-          title="Compartir por WhatsApp"
-          aria-label="Compartir por WhatsApp"
-          className={styles.actionWhatsapp}
-        >
-          <WhatsappIcon />
-        </a>
-        <Button variant="plano" type="button" onClick={() => onEditar(n)} title="Editar" aria-label="Editar publicación" className={styles.actionEdit}>
-          <SquarePen />
-        </Button>
-        <Button variant="plano" type="button" onClick={() => onBorrar(n)} title="Eliminar" aria-label="Eliminar publicación" className={styles.actionDelete}>
-          <Trash2 />
-        </Button>
+      <div className={s.cuerpo}>
+        <div className={s.pastillas}>
+          <span className={`${s.pastilla} ${esCurso ? s.curso : s.noticia}`}>{n.tipo ?? "Noticia"}</span>
+          <span className={`${s.pastilla} ${n.publicada ? s.publicada : s.borrador}`}>{n.publicada ? "Publicada" : "Borrador"}</span>
+        </div>
+
+        <h3 className={s.titulo} title={n.titulo}>
+          {n.titulo}
+        </h3>
+        <p className={s.resumen}>{n.resumen}</p>
+
+        <div className={s.pie}>
+          {n.fechaCreacion ? (
+            <time className={s.fecha} dateTime={String(n.fechaCreacion)}>
+              {formatearFecha(n.fechaCreacion, "corta")}
+            </time>
+          ) : (
+            <span />
+          )}
+          <div className={s.acciones}>
+            <BotonAccion icono={WhatsappIcon} etiqueta="Compartir por WhatsApp" href={linkCompartir(n)} />
+            <BotonAccion icono={SquarePen} etiqueta="Editar publicación" onClick={() => onEditar(n)} />
+            <BotonAccion icono={Trash2} etiqueta="Eliminar publicación" peligro onClick={() => onBorrar(n)} />
+          </div>
+        </div>
       </div>
-    </motion.div>
+    </article>
   );
 }
+
+export default memo(ItemPublicacion);

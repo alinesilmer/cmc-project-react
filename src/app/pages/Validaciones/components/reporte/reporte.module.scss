@@ -338,24 +338,7 @@
 
   &:hover { background: $gray-100; color: $gray-900; }
   &:focus-visible { outline: 2px solid $primary-blue; outline-offset: 2px; }
-}
-
-.paginado {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: $spacing-4;
-  margin-top: $spacing-4;
-  flex-wrap: wrap;
-}
-
-.paginaActual {
-  font-size: $font-size-sm;
-  color: $gray-600;
-  font-variant-numeric: tabular-nums;
-}
-
-/** Fila de filtros: buscador a la izquierda, casillas a la derecha. */
+}/** Fila de filtros: buscador a la izquierda, casillas a la derecha. */
 .filtros2 {
   display: flex;
   align-items: center;

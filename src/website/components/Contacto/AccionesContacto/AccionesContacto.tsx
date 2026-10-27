@@ -3,7 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import { Mail, MapPin, Phone } from "lucide-react";
 import { motion } from "framer-motion";
 import WhatsappIcon from "../../UI/icons/WhatsappIcon";
-import { CONTACTO, linkEmail, linkWhatsApp } from "../../../lib/contacto";
+import { CONTACTO, linkEmail, linkWhatsApp } from "@/website/lib/contacto";
 import styles from "./AccionesContacto.module.scss";
 
 type Accion = {

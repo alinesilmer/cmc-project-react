@@ -180,7 +180,7 @@ const NuevaDeduccion: React.FC = () => {
       });
       notify("Deducción creada correctamente.");
       navigate("/panel/deducciones");
-    } catch (e: any) {
+    } catch (e) {
       notify(getErrorMessage(e, "No se pudo crear la deducción."), "error");
     } finally {
       setCreating(false);

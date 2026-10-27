@@ -6,10 +6,10 @@ import { AlertCircle, ArrowRight, CheckCircle2, ListOrdered, Save } from "lucide
 
 import base from "../NomencladorCodigos/NomencladorCodigos.module.scss";
 import styles from "./NomencladorCodigoForm.module.scss";
-import AppSearchSelect from "../../../components/ui/AppSearchSelect/AppSearchSelect";
-import MultiSelectBuscable from "../../../components/molecules/MultiSelectBuscable/MultiSelectBuscable";
+import AppSearchSelect from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
+import MultiSelectBuscable from "@/app/components/molecules/MultiSelectBuscable/MultiSelectBuscable";
 import EstadoCodigoPill from "../components/EstadoCodigoPill";
-import { usePermisos } from "../../../auth/usePermisos";
+import { usePermisos } from "@/app/auth/usePermisos";
 import { getEspecialidades } from "../../Especialidades/especialidades.api";
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import {
@@ -34,7 +34,15 @@ import type {
 } from "../nomenclador.types";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BackButton from "@/app/components/ui/BackButton/BackButton";
+import Button from "@/app/components/ui/Button/Button";
+import { Solapa } from "@/app/components/layout/Franja/Franja";
+import PaginaPasos from "@/app/components/layout/PaginaPasos/PaginaPasos";
+import Paso from "@/app/components/ui/Paso/Paso";
+import c from "@/app/components/ui/Paso/Campos.module.scss";
 import { detalleError } from "@/app/pages/NomencladorNacional/utiles";
+import { formatoPesos } from "@/app/shared/lib/formatos";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
+import FieldError from "@/app/components/ui/FieldError/FieldError";
 
 const LISTADO_PATH = "/panel/nomenclador/codigos";
 const CODIGOS_OS_PATH = "/panel/nomenclador/codigos-por-os";
@@ -49,11 +57,6 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "boletin", label: "Boletín" },
 ];
 
-const moneda = new Intl.NumberFormat("es-AR", {
-  style: "currency",
-  currency: "ARS",
-  maximumFractionDigits: 2,
-});
 function fechaAR(iso: string | null): string {
   if (!iso) return "—";
   const [a, m, d] = iso.split("-");
@@ -113,27 +116,21 @@ export default function NomencladorCodigoForm() {
     setParams(next, { replace: true });
   }
 
-  return (
-    <div className={base.container}>
-      <BackButton label="Códigos" to={LISTADO_PATH} />
+  const titulo =
+    nomId === null ? "Nuevo código" : ficha ? `${ficha.codigo} · ${ficha.descripcion ?? "Sin descripción"}` : "Código";
 
-      <div className={base.header}>
-        <div className={base.headerLeft}>
-          <span className={base.headerIcon}><ListOrdered size={20} /></span>
-          <div>
-            <h1 className={base.title}>
-              {nomId === null ? "Nuevo código" : ficha ? `${ficha.codigo} · ${ficha.descripcion ?? "Sin descripción"}` : "Código"}
-            </h1>
-            <p className={base.subtitle}>
-              {nomId === null
-                ? "Etapa 1: los datos de la práctica. Las obras sociales, quién lo factura y los precios se cargan después."
-                : ficha
-                  ? [ficha.categoria, ficha.complejidad && `Complejidad ${ficha.complejidad}`].filter(Boolean).join(" · ") || "Catálogo del Colegio"
-                  : "Catálogo del Colegio"}
-            </p>
-          </div>
-        </div>
-      </div>
+  const solapas =
+    nomId === null
+      ? undefined
+      : TABS.map((s) => (
+          <Solapa key={s.id} activa={tab === s.id} onClick={() => irATab(s.id)}>
+            {s.label}
+          </Solapa>
+        ));
+
+  return (
+    <PaginaPasos titulo={titulo} icono={ListOrdered} ancha={nomId !== null} solapas={solapas}>
+      <BackButton label="Códigos" to={LISTADO_PATH} />
 
       {nomId === null ? (
         <DatosCodigo
@@ -158,21 +155,6 @@ export default function NomencladorCodigoForm() {
           )}
 
           {ficha && <ChecklistEtapas ficha={ficha} onTab={irATab} />}
-
-          <nav className={styles.tabs} role="tablist" aria-label="Secciones del código">
-            {TABS.map((t) => (
-              <button
-                key={t.id}
-                role="tab"
-                type="button"
-                aria-selected={tab === t.id}
-                className={`${styles.tab} ${tab === t.id ? styles.tabOn : ""}`}
-                onClick={() => irATab(t.id)}
-              >
-                {t.label}
-              </button>
-            ))}
-          </nav>
 
           {tab === "obras" && (
             <TabObras
@@ -220,7 +202,7 @@ export default function NomencladorCodigoForm() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </PaginaPasos>
   );
 }
 
@@ -375,7 +357,7 @@ function TabObras({
             disabled={sel.size === 0 || trabajando}
             onClick={() => darDeAlta([...sel])}
           >
-            {trabajando ? <><span className={base.spinner} /> Dando de alta…</> : `Dar de alta en ${sel.size} seleccionada${sel.size === 1 ? "" : "s"}`}
+            {trabajando ? <><Cargando size={14} /> Dando de alta…</> : `Dar de alta en ${sel.size} seleccionada${sel.size === 1 ? "" : "s"}`}
           </button>
         )}
       </div>
@@ -440,7 +422,7 @@ function TabObras({
                 </td>
                 <td>
                   {o.precio_tipo === "igual" && o.precio_total != null
-                    ? `${moneda.format(Number(o.precio_total))} · todas`
+                    ? `${formatoPesos.format(Number(o.precio_total))} · todas`
                     : o.precio_tipo === "por_especialidad"
                       ? `${o.variantes} variante${o.variantes === 1 ? "" : "s"}`
                       : "—"}
@@ -571,65 +553,74 @@ function DatosCodigo({
     }
   }
 
-  if (cargando) return <p className={base.emptyText}>Cargando…</p>;
+  if (cargando) {
+    return (
+      <Paso numero={1} titulo="Datos del código">
+        <Cargando size={18} tono="marca" />
+      </Paso>
+    );
+  }
 
   return (
-    <section className={`${base.body} ${styles.section}`}>
-      <h2 className={styles.sectionHeading}>Datos del código</h2>
-      <div className={base.formRow3}>
-        <div className={base.formGroup}>
-          <label className={base.formLabel} htmlFor="cod-codigo">
-            Código <span className={base.req}>*</span>
-          </label>
+    <Paso numero={1} titulo="Datos del código">
+      <div className={c.formulario}>
+        <div className={c.campo}>
+          <label className={c.rotulo} htmlFor="cod-codigo">Código</label>
           <input
             id="cod-codigo"
-            className={`${base.formInput} ${errorCodigo ? base.inputError : ""}`}
+            className={c.entrada}
             value={codigo}
             disabled={nomId !== null}
             onChange={(e) => { setCodigo(e.target.value); setErrorCodigo(""); }}
             placeholder="ej: 420101"
+            aria-invalid={!!errorCodigo}
           />
-          {errorCodigo && <span className={base.errorMsg}>{errorCodigo}</span>}
+          {errorCodigo && <FieldError msg={errorCodigo} />}
         </div>
-        <div className={base.formGroup}>
-          <label className={base.formLabel} htmlFor="cod-categoria">Categoría</label>
-          <select id="cod-categoria" className={base.formSelect} value={categoria} onChange={(e) => setCategoria(e.target.value)}>
+
+        <div className={c.campo}>
+          <label className={c.rotulo} htmlFor="cod-categoria">Categoría</label>
+          <select id="cod-categoria" className={c.seleccion} value={categoria} onChange={(e) => setCategoria(e.target.value)}>
             <option value="">— Sin especificar —</option>
             <option value="Consulta">Consulta</option>
             <option value="Practica">Práctica</option>
             <option value="Honorarios individuales">Honorarios individuales</option>
           </select>
         </div>
-        <div className={base.formGroup}>
-          <label className={base.formLabel} htmlFor="cod-complejidad">Complejidad</label>
-          <select id="cod-complejidad" className={base.formSelect} value={complejidad} onChange={(e) => setComplejidad(e.target.value as Complejidad | "")}>
+
+        <div className={c.campo}>
+          <label className={c.rotulo} htmlFor="cod-complejidad">Complejidad</label>
+          <select id="cod-complejidad" className={c.seleccion} value={complejidad} onChange={(e) => setComplejidad(e.target.value as Complejidad | "")}>
             <option value="">— Sin especificar —</option>
             <option value="baja">Baja</option>
             <option value="media">Media</option>
             <option value="alta">Alta</option>
           </select>
         </div>
+
+        <div className={`${c.campo} ${c.campoAncho}`}>
+          <label className={c.rotulo} htmlFor="cod-desc">Descripción</label>
+          <input
+            id="cod-desc"
+            className={c.entrada}
+            value={descripcion}
+            onChange={(e) => setDescripcion(e.target.value)}
+            placeholder="Nombre del código en el catálogo"
+          />
+        </div>
+
+        <div className={`${c.campo} ${c.campoAncho}`}>
+          <label className={c.rotulo} htmlFor="cod-obs">Observación</label>
+          <textarea id="cod-obs" className={c.entrada} rows={3} value={observacion} onChange={(e) => setObservacion(e.target.value)} placeholder="Opcional" />
+        </div>
       </div>
-      <div className={base.formGroup}>
-        <label className={base.formLabel} htmlFor="cod-desc">Descripción del Colegio</label>
-        <input
-          id="cod-desc"
-          className={base.formInput}
-          value={descripcion}
-          onChange={(e) => setDescripcion(e.target.value)}
-          placeholder="Se ofrece como nombre al darlo de alta en una obra social"
-        />
+
+      <div className={c.acciones}>
+        <Button leftIcon={<Save size={16} aria-hidden="true" />} isLoading={guardando} onClick={guardar}>
+          {nomId === null ? "Crear código" : "Guardar datos"}
+        </Button>
       </div>
-      <div className={base.formGroup}>
-        <label className={base.formLabel} htmlFor="cod-obs">Observación</label>
-        <textarea id="cod-obs" className={base.formTextarea} value={observacion} onChange={(e) => setObservacion(e.target.value)} placeholder="Observaciones opcionales…" />
-      </div>
-      <div className={styles.actions}>
-        <button type="button" className={base.btnPrimary} onClick={guardar} disabled={guardando}>
-          {guardando ? <><span className={base.spinner} /> Guardando…</> : <><Save size={15} /> {nomId === null ? "Crear código" : "Guardar datos"}</>}
-        </button>
-      </div>
-    </section>
+    </Paso>
   );
 }
 
@@ -736,7 +727,7 @@ function TabEspecialidades({
         {puedeEditar && (
           <div className={styles.actions}>
             <button type="button" className={base.btnPrimary} onClick={guardar} disabled={guardando}>
-              {guardando ? <><span className={base.spinner} /> Guardando…</> : <><Save size={15} /> Guardar plantilla</>}
+              {guardando ? <><Cargando size={14} /> Guardando…</> : <><Save size={15} /> Guardar plantilla</>}
             </button>
           </div>
         )}
@@ -787,7 +778,7 @@ function TabEspecialidades({
 
           <div className={styles.actions}>
             <button type="button" className={base.btnGhost} disabled={osSel.length === 0 || propagando !== null} onClick={() => propagar(true)}>
-              {propagando === "preview" ? <><span className={base.spinner} /> Calculando…</> : "Ver cambios"}
+              {propagando === "preview" ? <><Cargando size={14} /> Calculando…</> : "Ver cambios"}
             </button>
             <button
               type="button"
@@ -795,7 +786,7 @@ function TabEspecialidades({
               disabled={!preview || preview.dry_run === false || propagando !== null}
               onClick={() => propagar(false)}
             >
-              {propagando === "aplicar" ? <><span className={base.spinner} /> Actualizando…</> : `Actualizar ${osSel.length} obra${osSel.length === 1 ? "" : "s"} social${osSel.length === 1 ? "" : "es"}`}
+              {propagando === "aplicar" ? <><Cargando size={14} /> Actualizando…</> : `Actualizar ${osSel.length} obra${osSel.length === 1 ? "" : "s"} social${osSel.length === 1 ? "" : "es"}`}
             </button>
           </div>
         </section>
@@ -893,10 +884,10 @@ function Boletin({
                 <tr key={v.id}>
                   <td><span className={base.badge}>{v.origen}</span></td>
                   <td>{v.especialidad_id_colegio != null ? (espNombre.get(v.especialidad_id_colegio) ?? v.especialidad_id_colegio) : "—"}</td>
-                  <td className={styles.num}>{moneda.format(h)}</td>
-                  <td className={styles.num}>{moneda.format(g)}</td>
-                  <td className={styles.num}>{moneda.format(a)}</td>
-                  <td className={styles.num}>{moneda.format(h + g + a)}</td>
+                  <td className={styles.num}>{formatoPesos.format(h)}</td>
+                  <td className={styles.num}>{formatoPesos.format(g)}</td>
+                  <td className={styles.num}>{formatoPesos.format(a)}</td>
+                  <td className={styles.num}>{formatoPesos.format(h + g + a)}</td>
                   <td>{v.vigencia_desde}</td>
                 </tr>
               );

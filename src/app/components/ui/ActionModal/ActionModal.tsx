@@ -1,16 +1,12 @@
 "use client";
 
 import React from "react";
-import { Modal, Animation, Loader } from "rsuite";
+import Dialog from "@mui/material/Dialog";
+import Zoom from "@mui/material/Zoom";
 import { X } from "lucide-react";
 import Button from "@/app/components/ui/Button/Button";
-
-// CSS base de los componentes RSuite que usa el modal.
-import "rsuite/Modal/styles/index.css";
-import "rsuite/Loader/styles/index.css";
-
-// IMPORTANTE: importá el CSS del modal para que los @keyframes se apliquen.
-import "./ActionModal.module.scss";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
+import s from "./ActionModal.module.scss";
 
 type ActionModalProps = {
   open: boolean;
@@ -24,7 +20,10 @@ type ActionModalProps = {
   children: React.ReactNode;
 };
 
-const ANIM_MS = 120; // misma duración que en el CSS
+const ANIM_MS = 120;
+
+// Anchos en px de cada tamaño.
+const ANCHOS = { xs: 400, sm: 600, md: 800, lg: 968 } as const;
 
 const ActionModal: React.FC<ActionModalProps> = ({
   open,
@@ -37,28 +36,18 @@ const ActionModal: React.FC<ActionModalProps> = ({
   confirmDisabled = false,
   children,
 }) => {
-  // Mantengo montado hasta terminar animación de salida
-  const [mounted, setMounted] = React.useState(open);
-  const [inStage, setInStage] = React.useState(open);
+  // `visible` baja primero para animar la salida; `onClose` recién se llama al terminar.
+  const [visible, setVisible] = React.useState(open);
   const [busy, setBusy] = React.useState(false);
+  const idTitulo = React.useId();
 
   React.useEffect(() => {
-    if (open) {
-      setMounted(true);
-      requestAnimationFrame(() => setInStage(true));
-    } else {
-      setInStage(false);
-    }
+    setVisible(open);
   }, [open]);
 
   const handleClose = () => {
     if (busy) return; // no cerrar si está confirmando
-    setInStage(false);
-  };
-
-  const handleExited = () => {
-    setMounted(false);
-    onClose();
+    setVisible(false);
   };
 
   const handleConfirm = async () => {
@@ -66,7 +55,7 @@ const ActionModal: React.FC<ActionModalProps> = ({
     try {
       setBusy(true);
       await onConfirm(); // si falla, queda abierto
-      setInStage(false); // éxito => cerrar con anim
+      setVisible(false); // éxito => cerrar con anim
     } catch {
       // el padre puede mostrar el error; dejamos abierto
     } finally {
@@ -74,76 +63,56 @@ const ActionModal: React.FC<ActionModalProps> = ({
     }
   };
 
-  if (!mounted) return null;
-
-  // Clase dinámica para sincronizar backdrop + dialog
-  const phaseClass = `amodal-zoom ${inStage ? "am-in" : "am-out"}`;
+  const sinMovimiento =
+    typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
   return (
-    <Modal
-      open={mounted}
+    <Dialog
+      open={visible}
       onClose={handleClose}
-      size={size}
-      className={phaseClass}
-      backdropClassName={phaseClass}
+      maxWidth={false}
+      fullScreen={size === "full"}
+      slots={{ transition: Zoom }}
+      transitionDuration={sinMovimiento ? 0 : ANIM_MS}
+      slotProps={{
+        transition: { onExited: () => onClose() },
+        paper: {
+          className: s.panel,
+          // Sin la capa de elevación con que MUI aclara el panel en oscuro: el fondo es el del tema.
+          style: {
+            backgroundImage: "none",
+            ...(size === "full" ? {} : { width: ANCHOS[size], maxWidth: "calc(100% - 1.5rem)" }),
+          },
+          "aria-labelledby": idTitulo,
+        },
+      }}
     >
-      {/* Botón de cierre propio: en rsuite 6 el ícono del close por defecto vive en un stylesheet base que no importamos, así que salía roto. */}
-      <Modal.Header closeButton={false}>
-        <Modal.Title>{title}</Modal.Title>
-        <button
-          type="button"
-          className="amodal-close"
-          onClick={handleClose}
-          disabled={busy}
-          aria-label="Cerrar"
-        >
+      <div className={s.cabecera}>
+        <h2 id={idTitulo} className={s.titulo}>
+          {title}
+        </h2>
+        <button type="button" className={s.cerrar} onClick={handleClose} disabled={busy} aria-label="Cerrar">
           <X size={18} aria-hidden="true" />
         </button>
-      </Modal.Header>
+      </div>
 
-      <Animation.Transition
-        in={inStage}
-        timeout={ANIM_MS}
-        enteringClassName="am-entering"
-        enteredClassName="am-entered"
-        exitingClassName="am-exiting"
-        exitedClassName="am-exited"
-        onExited={handleExited}
-      >
-        <div className="am-sheet">
-          <Modal.Body>{children}</Modal.Body>
-          <Modal.Footer>
-            <Button variant="ghost" onClick={handleClose} disabled={busy}>
-              {cancelText}
-            </Button>
-            <Button
-              variant="primary"
-              onClick={handleConfirm}
-              disabled={confirmDisabled || busy}
-              style={{ marginLeft: 8, position: "relative" }}
-            >
-              {busy && (
-                <span
-                  style={{
-                    position: "absolute",
-                    left: 10,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    display: "inline-flex",
-                    alignItems: "center",
-                  }}
-                >
-                  <Loader speed="fast" size="xs" />
-                </span>
-              )}
-              <span style={{ paddingLeft: busy ? 16 : 0 }}>
-                {busy ? "Procesando…" : confirmText}
-              </span>
-            </Button>
-          </Modal.Footer>
-        </div>
-      </Animation.Transition>
-    </Modal>
+      <div className={s.cuerpo}>{children}</div>
+
+      <div className={s.pie}>
+        <Button variant="ghost" onClick={handleClose} disabled={busy}>
+          {cancelText}
+        </Button>
+        <Button
+          variant="primary"
+          onClick={handleConfirm}
+          disabled={confirmDisabled || busy}
+          style={{ marginLeft: 8, position: "relative" }}
+        >
+          {busy && <Cargando size={14} className={s.procesando} />}
+          <span style={{ paddingLeft: busy ? 16 : 0 }}>{busy ? "Procesando…" : confirmText}</span>
+        </Button>
+      </div>
+    </Dialog>
   );
 };
 

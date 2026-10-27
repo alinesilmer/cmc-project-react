@@ -1,20 +1,14 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { getJSON, postJSON, delJSON, patchJSON } from "@/app/shared/lib/http";
-import { useAppSnackbar } from "../../../../hooks/useAppSnackbar";
+import { deshacerDescuento, editarConcepto, generarDescuento, getDeduccionesPorPago, listarConceptos } from "@/app/pages/Pagos/pagos.api";
+import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import Button from "@/app/components/ui/Button/Button";
 import Card from "@/app/components/ui/Card/Card";
 import styles from "./tabs.module.scss";
 import { type Pago, type Concepto, fmt } from "../../types";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
-
-const CONCEPTOS_URL = "/api/conceptos";
-const CONCEPTO_URL = (id: number) => `/api/conceptos/${id}`;
-const GENERAR_URL = (pagoId: number, descId: number) =>
-  `/api/deducciones/${pagoId}/colegio/bulk_generar_descuento/${descId}`;
-const POR_PAGO_URL = (pagoId: number) => `/api/deducciones/por_pago/${pagoId}`;
-const DESHACER_URL = (pagoId: number, descId: number) =>
-  `/api/deducciones/${pagoId}/colegio/deshacer/${descId}`;
+import paleta from "@/app/styles/paleta.module.scss";
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 
 type GenResult = {
   generados: number;
@@ -26,12 +20,20 @@ type DeshacerResult = {
   eliminadas: number;
   monto_revertido: string;
 };
+type ConceptoApi = {
+  id: number;
+  nombre?: string;
+  concepto?: string;
+  nro_colegio?: number | null;
+  precio?: number | string;
+  porcentaje?: number | string;
+};
 type PorPagoResult = {
   existe: boolean;
   pago_id: number;
   total: number;
   monto_total: string;
-  items: any[];
+  items: { descuento_id: number; generado_en_pago_id: number | null }[];
 };
 
 type Props = { pago: Pago; pagoId: number; onRefresh?: () => void };
@@ -61,7 +63,7 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
 
   const loadGeneradoInfo = useCallback(async () => {
     try {
-      const info = await getJSON<PorPagoResult>(POR_PAGO_URL(pagoId));
+      const info = await getDeduccionesPorPago<PorPagoResult>(pagoId);
       setGeneradoInfo(info);
     } catch {
       // silencioso — no es crítico
@@ -72,9 +74,9 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
     (async () => {
       setLoading(true);
       try {
-        const data = await getJSON<any[]>(CONCEPTOS_URL);
+        const data = await listarConceptos<ConceptoApi>();
         setDescuentos(
-          (data ?? []).map((d: any) => ({
+          (data ?? []).map((d) => ({
             id: d.id,
             nombre: d.nombre ?? d.concepto ?? "",
             nro_colegio: d.nro_colegio ?? 0,
@@ -82,8 +84,9 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
             porcentaje: Number(d.porcentaje ?? 0),
           })),
         );
-      } catch (e: any) {
-        setError(e?.message || "No se pudieron cargar los descuentos.");
+      } catch (e) {
+        const err = comoErrorApi(e);
+        setError(err?.message || "No se pudieron cargar los descuentos.");
       } finally {
         setLoading(false);
       }
@@ -102,21 +105,20 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
     if (!genTarget) return;
     setGenerating(true);
     try {
-      const result = await postJSON<GenResult>(
-        GENERAR_URL(pagoId, genTarget.id),
-      );
+      const result = await generarDescuento<GenResult>(pagoId, genTarget.id);
       notify(
         `${result.generados} médicos procesados, ${result.actualizados} actualizados. Total: $${fmt(result.cargado_total)}`,
       );
       setGenTarget(null);
       await loadGeneradoInfo();
       onRefresh?.();
-    } catch (e: any) {
-      const detail = e?.response?.data?.detail;
+    } catch (e) {
+      const err = comoErrorApi(e);
+      const detail = err?.response?.data?.detail;
       notify(
         typeof detail === "string"
           ? detail
-          : (e?.message ?? "Error al generar descuentos."),
+          : (err?.message ?? "Error al generar descuentos."),
         "error",
       );
     } finally {
@@ -128,21 +130,20 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
     if (!deshacerTarget) return;
     setDeshaciendo(true);
     try {
-      const result = await delJSON<DeshacerResult>(
-        DESHACER_URL(pagoId, deshacerTarget.id),
-      );
+      const result = await deshacerDescuento<DeshacerResult>(pagoId, deshacerTarget.id);
       notify(
         `Se deshicieron ${result.eliminadas} deducción${result.eliminadas !== 1 ? "es" : ""}. Monto revertido: $${fmt(result.monto_revertido)}`,
       );
       setDeshacerTarget(null);
       await loadGeneradoInfo();
       onRefresh?.();
-    } catch (e: any) {
-      const detail = e?.response?.data?.detail;
+    } catch (e) {
+      const err = comoErrorApi(e);
+      const detail = err?.response?.data?.detail;
       notify(
         typeof detail === "string"
           ? detail
-          : (e?.message ?? "Error al deshacer deducciones."),
+          : (err?.message ?? "Error al deshacer deducciones."),
         "error",
       );
     } finally {
@@ -160,7 +161,7 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
     if (!editTarget) return;
     setEditSaving(true);
     try {
-      const updated = await patchJSON<any>(CONCEPTO_URL(editTarget.id), {
+      const updated = await editarConcepto<Pick<ConceptoApi, "precio" | "porcentaje">>(editTarget.id, {
         precio: Number(editPrecio),
         porcentaje: Number(editPorcentaje),
       });
@@ -177,12 +178,13 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
       );
       setEditTarget(null);
       notify("Concepto guardado correctamente.");
-    } catch (e: any) {
-      const detail = e?.response?.data?.detail;
+    } catch (e) {
+      const err = comoErrorApi(e);
+      const detail = err?.response?.data?.detail;
       notify(
         typeof detail === "string"
           ? detail
-          : (e?.message ?? "Error al guardar."),
+          : (err?.message ?? "Error al guardar."),
         "error",
       );
     } finally {
@@ -193,7 +195,7 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
   return (
     <div className={styles.tabWrap}>
       <div className={styles.toolbar}>
-        <span style={{ fontSize: 13, color: "#64748b" }}>
+        <span style={{ fontSize: 13, color: paleta.gray500 }}>
           {descuentos.length} descuento{descuentos.length !== 1 ? "s" : ""}{" "}
           disponibles
         </span>
@@ -304,7 +306,7 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
                   Se calculará el monto por cada médico.
                 </p>
               )}
-              {generating && <p style={{ color: "#64748b" }}>Generando…</p>}
+              {generating && <p style={{ color: paleta.gray500 }}>Generando…</p>}
             </Dialogo>
       )}
 
@@ -343,7 +345,7 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
                     style={{
                       margin: "8px 0 0",
                       fontSize: 12,
-                      color: "#64748b",
+                      color: paleta.gray500,
                     }}
                   >
                     Solo se eliminan deducciones con origen automático y estado
@@ -351,7 +353,7 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
                   </p>
                 </>
               )}
-              {deshaciendo && <p style={{ color: "#64748b" }}>Deshaciendo…</p>}
+              {deshaciendo && <p style={{ color: paleta.gray500 }}>Deshaciendo…</p>}
             </Dialogo>
       )}
 
@@ -383,7 +385,7 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
               <p
                 style={{
                   fontSize: 12,
-                  color: "#64748b",
+                  color: paleta.gray500,
                   margin: "4px 0 12px",
                 }}
               >

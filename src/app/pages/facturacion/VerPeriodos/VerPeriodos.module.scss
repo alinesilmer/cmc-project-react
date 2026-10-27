@@ -363,30 +363,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.625rem;
-}
-
-.pageBtns {
-  display: inline-flex;
-  gap: 0.5rem;
-}
-
-.pageBtn {
-  height: 2rem;
-  padding: 0 0.875rem;
-  border: 1px solid $gray-200;
-  border-radius: 0.375rem;
-  background: $white;
-  color: $carpeta-noche;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background .15s, border-color .15s, color .15s;
-
-  &:hover:not(:disabled) { border-color: $tono-azul-450; color: $tono-azul-450; }
-  &:disabled { opacity: .45; cursor: not-allowed; }
-}
-
-.pageSelect {
+}.pageSelect {
   height: 2rem;
   padding: 0 1.625rem 0 0.625rem;
   border: 1px solid $gray-200;

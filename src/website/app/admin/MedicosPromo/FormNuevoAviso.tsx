@@ -1,9 +1,12 @@
 import { useState, type FormEvent } from "react";
-import Button from "../../../components/UI/Button/Button";
+import { Plus } from "lucide-react";
+
 import BuscadorMedico from "./BuscadorMedico";
 import SelectorImagen from "./SelectorImagen";
-import type { DoctorLite } from "../../../lib/ads.client";
-import styles from "./MedicosPromo.module.scss";
+import Button from "@/app/components/ui/Button/Button";
+import Paso from "@/app/components/ui/Paso/Paso";
+import c from "@/app/components/ui/Paso/Campos.module.scss";
+import type { DoctorLite } from "@/website/lib/ads.client";
 
 type Props = {
   onCrear: (medicoId: number, activo: boolean, imagen: File) => Promise<void>;
@@ -38,28 +41,26 @@ export default function FormNuevoAviso({ onCrear, onError }: Props) {
   };
 
   return (
-    <section className={styles.formSection}>
-      <h2>Agregar publicidad de médico</h2>
-      <form onSubmit={guardar} className={styles.form}>
-        <div className={styles.row}>
-          <BuscadorMedico key={vuelta} etiqueta="Médico" elegido={medico} onElegir={setMedico} />
-        </div>
+    <Paso icono={Plus} titulo="Agregar publicidad de médico">
+      <form onSubmit={guardar} className={c.formulario}>
+        <BuscadorMedico key={vuelta} etiqueta="Médico" elegido={medico} onElegir={setMedico} />
 
-        <div className={styles.rowInline}>
-          <label className={styles.switchLabel}>
-            <input type="checkbox" checked={activo} onChange={(e) => setActivo(e.target.checked)} />
-            <span>Activo</span>
-          </label>
-        </div>
+        <label className={c.casilla}>
+          <input type="checkbox" checked={activo} onChange={(e) => setActivo(e.target.checked)} />
+          <span>
+            <strong>Activo</strong>
+            <small className={c.ayuda}>Apagado, no se muestra en el sitio.</small>
+          </span>
+        </label>
 
         <SelectorImagen etiqueta="Imagen" textoBoton="Subir imagen" archivo={imagen} onArchivo={setImagen} onError={onError} />
 
-        <div className={styles.actions}>
-          <Button type="submit" variant="primary" size="medium" disabled={guardando}>
-            {guardando ? "Guardando…" : "Guardar publicidad"}
+        <div className={c.acciones}>
+          <Button submit isLoading={guardando}>
+            Guardar publicidad
           </Button>
         </div>
       </form>
-    </section>
+    </Paso>
   );
 }

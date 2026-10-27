@@ -1,9 +1,9 @@
 import { ArrowDown, BadgeCheck, FolderOpen, Gift, Handshake, MapPin, ShieldCheck } from "lucide-react";
-import Button from "../../../components/UI/Button/Button";
-import CabeceraFresca from "../../../components/UI/CabeceraFresca/CabeceraFresca";
-import CaminoPasos from "../../../components/UI/CaminoPasos/CaminoPasos";
-import WhatsappIcon from "../../../components/UI/icons/WhatsappIcon";
-import { CONTACTO, linkWhatsApp } from "../../../lib/contacto";
+import Button from "@/website/components/UI/Button/Button";
+import CabeceraFresca from "@/website/components/UI/CabeceraFresca/CabeceraFresca";
+import CaminoPasos from "@/website/components/UI/CaminoPasos/CaminoPasos";
+import WhatsappIcon from "@/website/components/UI/icons/WhatsappIcon";
+import { CONTACTO, linkWhatsApp } from "@/website/lib/contacto";
 import { MENSAJE_WHATSAPP } from "../socios.data";
 
 const PASOS = [

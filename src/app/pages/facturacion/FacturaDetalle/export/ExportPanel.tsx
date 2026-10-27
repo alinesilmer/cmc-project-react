@@ -10,6 +10,7 @@ import { opcionesDesdeVista } from "./types";
 import ColumnasSection from "./ColumnasSection";
 import ExportButtons from "./ExportButtons";
 import s from "./export.module.scss";
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 
 interface Props {
   detalle: FacturaDetalleResponse;
@@ -18,17 +19,18 @@ interface Props {
   onClose: () => void;
 }
 
-async function extraerMensajeError(err: any): Promise<string> {
-  const data = err?.response?.data;
+async function extraerMensajeError(err: unknown): Promise<string> {
+  const error = comoErrorApi(err);
+  const data: unknown = error.response?.data;
   if (data instanceof Blob) {
     try {
-      const parsed = JSON.parse(await data.text());
+      const parsed = JSON.parse(await data.text()) as { detail?: unknown } | null;
       if (parsed?.detail) return String(parsed.detail);
     } catch {
       // el blob no era JSON — sigue al mensaje genérico de abajo
     }
   }
-  return err?.message || "No se pudo generar el archivo.";
+  return error.message || "No se pudo generar el archivo.";
 }
 
 export default function ExportPanel({ detalle, vista, onClose }: Props) {

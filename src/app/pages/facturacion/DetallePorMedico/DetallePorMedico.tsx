@@ -6,7 +6,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 
-import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
+import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import { listarPrestaciones, fetchMedicos, fetchMedicosTodos, descargarExportPorMedico } from "../api";
 import { detailMessage } from "../types";
 import type { MedicoOption, PrestacionRead, Tipo } from "../types";
@@ -17,6 +17,7 @@ import MedicoAutocomplete from "../components/MedicoAutocomplete";
 import { dedupePorId } from "../components/localSearch";
 import styles from "./DetallePorMedico.module.scss";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 
 // Tope del backend por request (GET /prestaciones: limit <= 200) y freno de seguridad para no traer indefinidamente si un médico tuviera muchísimas filas.
 const PAGE_LIMIT = 200;
@@ -115,8 +116,9 @@ const DetallePorMedico: React.FC = () => {
       } catch {
         // El detalle ya se muestra igual; el nombre es un extra.
       }
-    } catch (e: any) {
-      notify(detailMessage(e?.response?.data?.detail) || "Error al cargar el detalle.", "error");
+    } catch (e) {
+      const err = comoErrorApi(e);
+      notify(detailMessage(err?.response?.data?.detail) || "Error al cargar el detalle.", "error");
     } finally {
       setLoading(false);
     }
@@ -139,8 +141,9 @@ const DetallePorMedico: React.FC = () => {
     try {
       const { blob, filename } = await descargarExportPorMedico(busqueda.socio, busqueda.periodo, formato);
       await saveAs(blob, filename ?? `detalle_medico_${busqueda.socio}_${busqueda.periodo}.${formato}`);
-    } catch (e: any) {
-      notify(detailMessage(e?.response?.data?.detail) || "No se pudo generar el archivo.", "error");
+    } catch (e) {
+      const err = comoErrorApi(e);
+      notify(detailMessage(err?.response?.data?.detail) || "No se pudo generar el archivo.", "error");
     } finally {
       setExportando(null);
     }

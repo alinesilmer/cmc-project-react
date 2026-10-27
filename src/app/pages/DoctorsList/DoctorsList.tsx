@@ -10,16 +10,9 @@ import SearchField from "@/app/components/ui/SearchField/SearchField";
 import Card from "@/app/components/ui/Card/Card";
 import Button from "@/app/components/ui/Button/Button";
 import styles from "./DoctorsList.module.scss";
-import { getJSON } from "@/app/shared/lib/http";
+import { listarMedicos, type DoctorRow } from "./doctorsList.api";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
-
-type DoctorRow = {
-  id: number;
-  nro_socio: number;
-  nombre: string;
-  matricula_prov: number;
-  documento: string;
-};
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 
 const DoctorsList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -38,10 +31,11 @@ const DoctorsList: React.FC = () => {
       setErr(null);
       try {
         const params = searchTerm ? { q: searchTerm } : undefined;
-        const data = await getJSON<DoctorRow[]>("/api/medicos", params);
+        const data = await listarMedicos(params);
         if (!ignore) setRows(data);
-      } catch (e: any) {
-        if (!ignore && e?.name !== "AbortError") setErr(e?.message || "No se pudieron cargar los médicos");
+      } catch (e) {
+        const err = comoErrorApi(e);
+        if (!ignore && err?.name !== "AbortError") setErr(err?.message || "No se pudieron cargar los médicos");
       } finally {
         if (!ignore) setLoading(false);
       }

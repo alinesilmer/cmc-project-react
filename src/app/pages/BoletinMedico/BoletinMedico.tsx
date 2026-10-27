@@ -5,7 +5,8 @@ import { AlertTriangle, FileText, Info } from "lucide-react";
 
 import Franja, { Solapa } from "@/app/components/layout/Franja/Franja";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
-import { useAuth } from "@/app/auth/AuthProvider";
+import { useAuth } from "@/app/auth/useAuth";
+import { isMedico } from "@/app/auth/roles";
 import { agruparPorCodigo } from "@/app/features/nomenclador/galenos";
 import type { GrupoGaleno } from "@/app/features/nomenclador/galenos";
 import { fetchBoletinMedico } from "./boletinMedico.api";
@@ -34,13 +35,22 @@ const VISTAS_PEDIATRIA: { id: Vista; label: string }[] = [
   ...VISTAS.filter((v) => v.id !== "consulta" && v.id !== "galenos"),
 ];
 
+/** El personal del Colegio ve las cuatro solapas, la de pediatría incluida, para revisar lo que ve cada socio. */
+const VISTAS_PERSONAL: { id: Vista; label: string }[] = [
+  VISTAS[0],
+  { id: "pediatria", label: "Valores de pediatría" },
+  ...VISTAS.slice(1),
+];
+
 /** Referencia estable para el estado inicial: un `[]` nuevo por render invalidaría los `useMemo` que filtran la lista. */
 const SIN_ITEMS: ItemBoletin[] = [];
 
 export default function BoletinMedico() {
   const { user } = useAuth();
   const pediatra = esPediatra(user?.especialidades);
-  const vistas = pediatra ? VISTAS_PEDIATRIA : VISTAS;
+  const personal = !isMedico(user);
+  const vistas = pediatra ? VISTAS_PEDIATRIA : personal ? VISTAS_PERSONAL : VISTAS;
+  const conPediatria = pediatra || personal;
 
   const [vista, setVista] = useState<Vista>(vistas[0].id);
   const [busqueda, setBusqueda] = useState("");
@@ -52,8 +62,8 @@ export default function BoletinMedico() {
     isPending: cargando,
     isError: error,
   } = useQuery<ItemBoletin[]>({
-    queryKey: ["boletin-medico", { pediatria: pediatra }],
-    queryFn: () => fetchBoletinMedico({ pediatria: pediatra }),
+    queryKey: ["boletin-medico", { pediatria: conPediatria }],
+    queryFn: () => fetchBoletinMedico({ pediatria: conPediatria }),
     staleTime: 30 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
     retry: 1,
@@ -83,7 +93,8 @@ export default function BoletinMedico() {
   const bajar = async () => {
     setBajando(true);
     try {
-      await descargarBoletin(items);
+      // El PDF de pediatría reemplaza a la consulta y a los galenos: el personal baja el boletín general.
+      await descargarBoletin(personal ? items.map((i) => ({ ...i, pediatria: [] })) : items);
     } catch (e) {
       console.error("Descarga del boletín:", e);
     } finally {

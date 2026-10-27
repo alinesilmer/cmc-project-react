@@ -342,7 +342,7 @@ export async function exportToPDF(
 
     // ── Page header repeat + footer ──
     didDrawPage: (data) => {
-      const pageCount   = (doc.internal as any).getNumberOfPages();
+      const pageCount   = doc.getNumberOfPages();
       const currentPage = data.pageNumber;
 
       // Repeat header band on subsequent pages

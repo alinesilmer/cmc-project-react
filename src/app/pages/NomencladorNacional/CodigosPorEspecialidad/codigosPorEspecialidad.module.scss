@@ -2,14 +2,9 @@
 
 /* Códigos por especialidad — catálogo de una OS recortado a una especialidad. */
 
-.page { @extend %pantalla; }
-.inner { @extend %contenido; }
 .srOnly { @extend %oculto-visual; }
 
 // ── Encabezado ────────────────────────────────────────────────────────────────
-.pagehead { @extend %encabezado; }
-.pageTitle { @extend %titulo; }
-.pageSub { @extend %subtitulo; }
 
 // ── Pasos (los dos combos) ────────────────────────────────────────────────────
 .steps {
@@ -232,4 +227,10 @@
     padding-top: $spacing-2;
     border-top: 1px dashed $linea;
   }
+}
+
+.filtro {
+  width: auto;
+  min-width: 10rem;
+  border-radius: 999px;
 }

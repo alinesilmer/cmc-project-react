@@ -1,28 +1,19 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  Camera,
-  Save,
-  X,
-  FileText,
-  Plus,
-  HousePlus,
-  Trash2,
-  Info,
-} from "lucide-react";
+import { Save, HousePlus, Info } from "lucide-react";
 import {
   createObraSocial,
   updateObraSocial,
   getObraSocial,
   uploadDocumento,
-  deleteDocumento,
 } from "../obrasSociales.api";
 import { OBRAS_SOCIALES_KEY, useObrasSociales } from "../useObrasSociales";
 import {
   EMPTY_FORM,
+  PAQUETE_LABELS,
+  leerPlataforma,
   CONDICION_IVA_LABELS,
-  TIPO_DOCUMENTO_LABELS,
   PLAZO_OPTIONS,
   validateObraSocialForm,
   displayCuit,
@@ -33,498 +24,22 @@ import type {
   ObraSocialRef,
   TipoDocumento,
   Documento,
-  ContactoEntry,
 } from "../obrasSociales.types";
-import { abrirAdjunto } from "@/app/shared/lib/archivos";
 import { mensajeDeError } from "@/app/shared/lib/httpErrors";
-import AppSearchSelect from "../../../components/ui/AppSearchSelect/AppSearchSelect";
-import { useNotify } from "../../../hooks/useNotify";
+import AppSearchSelect from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
+import { useNotify } from "@/app/hooks/useNotify";
 import s from "./ObrasSocialesForm.module.scss";
-import Modal from "../../../components/ui/Modal/Modal";
+import Modal from "@/app/components/ui/Modal/Modal";
 import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
 import BackButton from "@/app/components/ui/BackButton/BackButton";
 import Button from "@/app/components/ui/Button/Button";
 import Franja from "@/app/components/layout/Franja/Franja";
 import FieldError from "@/app/components/ui/FieldError/FieldError";
-
-const TIPO_DOCUMENTOS: TipoDocumento[] = [
-  "convenio",
-  "normas",
-  "valores_convenidos",
-];
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-// ─── Contacto list (emails / teléfonos) ──────────────────────────────────────
-
-function ContactoList({
-  entries,
-  onChange,
-  tipo,
-  error,
-}: {
-  entries: ContactoEntry[];
-  onChange: (entries: ContactoEntry[]) => void;
-  tipo: "email" | "telefono";
-  error?: string;
-}) {
-  const placeholderValor =
-    tipo === "email" ? "Ej: auditoria@os.com.ar" : "Ej: +54 379 4123456";
-  const placeholderEtiqueta =
-    tipo === "email" ? "Ej: Auditoría" : "Ej: Pagos";
-  const inputType = tipo === "email" ? "email" : "tel";
-
-  const update = (i: number, field: keyof ContactoEntry, value: string) => {
-    const next = entries.map((e, idx) =>
-      idx === i ? { ...e, [field]: value } : e
-    );
-    onChange(next);
-  };
-
-  const remove = (i: number) => {
-    onChange(entries.filter((_, idx) => idx !== i));
-  };
-
-  const add = () => {
-    onChange([...entries, { valor: "", etiqueta: "" }]);
-  };
-
-  return (
-    <div className={s.contactoList}>
-      {entries.map((entry, i) => (
-        <div key={i} className={s.contactoRow}>
-          <input
-            type="text"
-            className={s.input}
-            value={entry.etiqueta}
-            onChange={(e) => update(i, "etiqueta", e.target.value)}
-            placeholder={placeholderEtiqueta}
-            maxLength={80}
-            aria-label="Descripción"
-          />
-          <input
-            type={inputType}
-            className={s.input}
-            value={entry.valor}
-            onChange={(e) => update(i, "valor", e.target.value)}
-            placeholder={placeholderValor}
-            maxLength={tipo === "email" ? 200 : 50}
-            aria-label={tipo === "email" ? "Email" : "Teléfono"}
-          />
-          {entries.length > 1 && (
-            <button
-              type="button"
-              className={s.contactoRemoveBtn}
-              onClick={() => remove(i)}
-              aria-label="Eliminar"
-              title="Eliminar"
-            >
-              <X size={14} />
-            </button>
-          )}
-        </div>
-      ))}
-
-      <button type="button" className={s.contactoAddBtn} onClick={add}>
-        <Plus size={14} />
-        {tipo === "email" ? "Agregar email" : "Agregar teléfono"}
-      </button>
-
-      {error && <span className={s.fieldError} role="alert">{error}</span>}
-    </div>
-  );
-}
-
-// ─── CUIT auto-format ─────────────────────────────────────────────────────────
-
-function formatCUIT(raw: string): string {
-  const digits = raw.replace(/\D/g, "").slice(0, 11);
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 10) return `${digits.slice(0, 2)}-${digits.slice(2)}`;
-  return `${digits.slice(0, 2)}-${digits.slice(2, 10)}-${digits.slice(10)}`;
-}
-
-// ─── File validation ──────────────────────────────────────────────────────────
-
-// El backend valida por magic bytes contra una whitelist (app/common/uploads.py, perfil DOCUMENTOS): PDF e imágenes.
-const DOC_ACCEPT = ".pdf,.jpg,.jpeg,.png,.webp,.tif,.tiff";
-
-function validateDocFile(f: File): string | null {
-  const allowed = [
-    "application/pdf",
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-    "image/tiff",
-  ];
-  if (!allowed.includes(f.type))
-    return "Solo se aceptan PDF o imágenes (JPG, PNG, WEBP, TIFF).";
-  if (f.size > 10 * 1024 * 1024)
-    return "El archivo no puede superar los 10 MB.";
-  return null;
-}
-
-// ─── Document row (fixed types) ───────────────────────────────────────────────
-
-interface DocRowProps {
-  obraId?: number;
-  tipo: TipoDocumento;
-  existing?: Documento;
-  onUploaded: () => void;
-  onQueue: (tipo: TipoDocumento, files: File[]) => void;
-  onRemoveQueued: (tipo: TipoDocumento, index: number) => void;
-  queued?: File[];
-}
-
-function DocRow({
-  obraId,
-  tipo,
-  existing,
-  onUploaded,
-  onQueue,
-  onRemoveQueued,
-  queued,
-}: DocRowProps) {
-  const [deleting, setDeleting] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const cameraRef = useRef<HTMLInputElement>(null);
-  const notify = useNotify();
-
-  const clearInputs = () => {
-    if (inputRef.current) inputRef.current.value = "";
-    if (cameraRef.current) cameraRef.current.value = "";
-  };
-
-  const handleDelete = async () => {
-    if (!obraId || !existing) return;
-    setDeleting(true);
-    setUploadError(null);
-    try {
-      await deleteDocumento(obraId, existing.id);
-      onUploaded();
-    } catch {
-      setUploadError("No se pudo eliminar el documento.");
-    } finally {
-      setDeleting(false);
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const fileList = Array.from(e.target.files ?? []);
-    if (!fileList.length) return;
-    for (const f of fileList) {
-      const err = validateDocFile(f);
-      if (err) { setUploadError(err); return; }
-    }
-    setUploadError(null);
-    // Alta y edición se comportan igual: lo elegido queda encolado y se sube al guardar.
-    onQueue(tipo, fileList);
-    clearInputs();
-  };
-
-  const removeFile = (index: number) => {
-    onRemoveQueued(tipo, index);
-    clearInputs();
-  };
-
-  return (
-    <div className={s.docRow}>
-      <div className={s.docHeader}>
-        <span className={s.docTipo}>
-          <FileText size={14} aria-hidden="true" />
-          {TIPO_DOCUMENTO_LABELS[tipo]}
-        </span>
-        {existing && <span className={s.docActiveBadge}>Archivo activo</span>}
-      </div>
-
-      {existing && (
-        <div className={s.existingFileRow}>
-          <button
-            type="button"
-            className={s.docFileLink}
-            style={{ background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit", textAlign: "left" }}
-            onClick={() => abrirAdjunto(existing.url).catch((e) => notify.error(e.message))}
-          >
-            {TIPO_DOCUMENTO_LABELS[tipo]}
-          </button>
-          <button
-            type="button"
-            className={s.docHistoryBtn}
-            onClick={handleDelete}
-            disabled={deleting}
-            aria-label="Eliminar documento"
-            title="Eliminar documento"
-          >
-            <Trash2 size={13} />
-            {deleting ? "Eliminando…" : "Eliminar"}
-          </button>
-        </div>
-      )}
-
-      <div className={s.uploadArea}>
-        <div className={s.uploadInputRow}>
-          <input
-            ref={inputRef}
-            type="file"
-            accept={DOC_ACCEPT}
-            multiple
-            onChange={handleFileChange}
-            className={s.fileInput}
-            aria-label={`Seleccionar archivo para ${TIPO_DOCUMENTO_LABELS[tipo]}`}
-          />
-          <label className={s.cameraBtn}>
-            <Camera size={14} aria-hidden="true" />
-            Tomar foto
-            <input
-              ref={cameraRef}
-              type="file"
-              accept="image/*"
-              multiple
-              style={{ display: "none" }}
-              onChange={handleFileChange}
-            />
-          </label>
-        </div>
-
-        {queued && queued.length > 0 && (
-          <div className={s.queuedFileList}>
-            {queued.map((f, i) => (
-              <div key={i} className={s.queuedFile}>
-                <span className={s.queuedFileName}>{f.name}</span>
-                <span className={s.queuedNote}>Se subirá al guardar</span>
-                <button
-                  type="button"
-                  className={s.contactoRemoveBtn}
-                  onClick={() => removeFile(i)}
-                  aria-label="Quitar archivo"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {uploadError && (
-          <span className={s.fieldError} role="alert">{uploadError}</span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Otros documents — dynamic list ──────────────────────────────────────────
-
-interface OtroEntry {
-  tempId: string;
-  nombreCustom: string;
-  file?: File;
-  existing?: Documento;
-  uploadError?: string;
-}
-
-interface OtrosDocListProps {
-  obraId?: number;
-  existingDocs: Documento[];
-  onReload: () => void;
-  onQueueChange: (entries: Array<{ nombreCustom: string; file: File }>) => void;
-}
-
-function OtrosDocList({ obraId, existingDocs, onReload, onQueueChange }: OtrosDocListProps) {
-  const [entries, setEntries] = useState<OtroEntry[]>(() =>
-    existingDocs.map((d) => ({
-      tempId: String(d.id),
-      nombreCustom: d.nombre_custom ?? "",
-      existing: d,
-    }))
-  );
-  const notify = useNotify();
-
-  // Al recargar los documentos del servidor se conservan las filas con archivo pendiente: si no, borrar un documento existente te vaciaba la cola visible.
-  useEffect(() => {
-    setEntries((prev) => [
-      ...existingDocs.map((d) => ({
-        tempId: String(d.id),
-        nombreCustom: d.nombre_custom ?? "",
-        existing: d,
-      })),
-      ...prev.filter((e) => !e.existing && e.file),
-    ]);
-  }, [existingDocs.length]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Sin el nombre escrito el archivo igual se sube: cae el nombre del archivo.
-  const notifyQueue = (updated: OtroEntry[]) => {
-    onQueueChange(
-      updated
-        .filter((e) => e.file)
-        .map((e) => ({
-          nombreCustom: e.nombreCustom.trim() || e.file!.name,
-          file: e.file!,
-        }))
-    );
-  };
-
-  const updateEntry = (tempId: string, patch: Partial<OtroEntry>) => {
-    setEntries((prev) => {
-      const next = prev.map((e) => (e.tempId === tempId ? { ...e, ...patch } : e));
-      notifyQueue(next);
-      return next;
-    });
-  };
-
-  const addEntry = () => {
-    setEntries((prev) => [
-      ...prev,
-      { tempId: crypto.randomUUID(), nombreCustom: "" },
-    ]);
-  };
-
-  const removeEntry = (tempId: string) => {
-    setEntries((prev) => {
-      const next = prev.filter((e) => e.tempId !== tempId);
-      notifyQueue(next);
-      return next;
-    });
-  };
-
-  const handleDeleteExisting = async (entry: OtroEntry) => {
-    if (!obraId || !entry.existing) return;
-    try {
-      await deleteDocumento(obraId, entry.existing.id);
-      onReload();
-    } catch {
-      updateEntry(entry.tempId, { uploadError: "No se pudo eliminar el documento." });
-    }
-  };
-
-  const handleFileChange = (tempId: string, e: React.ChangeEvent<HTMLInputElement>) => {
-    const fileList = Array.from(e.target.files ?? []);
-    if (!fileList.length) return;
-
-    for (const f of fileList) {
-      const err = validateDocFile(f);
-      if (err) { updateEntry(tempId, { uploadError: err }); return; }
-    }
-
-    // First file goes to the current entry
-    updateEntry(tempId, { file: fileList[0], uploadError: undefined });
-
-    // Each additional file becomes a new entry
-    if (fileList.length > 1) {
-      setEntries((prev) => {
-        const newEntries: OtroEntry[] = fileList.slice(1).map((f) => ({
-          tempId: crypto.randomUUID(),
-          nombreCustom: "",
-          file: f,
-        }));
-        const next = [...prev, ...newEntries];
-        notifyQueue(next);
-        return next;
-      });
-    }
-  };
-
-  return (
-    <div className={s.otrosDocList}>
-      {entries.map((entry) => (
-        <div key={entry.tempId} className={s.docRow}>
-          <div className={s.docHeader}>
-            <span className={s.docTipo}>
-              <FileText size={14} aria-hidden="true" />
-              Documento personalizado
-            </span>
-            {entry.existing && <span className={s.docActiveBadge}>Archivo activo</span>}
-            {!entry.existing && (
-              <button
-                type="button"
-                className={s.docHistoryBtn}
-                onClick={() => removeEntry(entry.tempId)}
-                aria-label="Eliminar entrada"
-              >
-                <X size={13} /> Quitar
-              </button>
-            )}
-            {entry.existing && obraId && (
-              <button
-                type="button"
-                className={s.docHistoryBtn}
-                onClick={() => handleDeleteExisting(entry)}
-                aria-label="Eliminar documento"
-                title="Eliminar documento del servidor"
-              >
-                <Trash2 size={13} /> Eliminar
-              </button>
-            )}
-          </div>
-
-          <input
-            type="text"
-            className={s.nombreCustomInput}
-            placeholder="Nombre del documento"
-            value={entry.nombreCustom}
-            onChange={(e) => updateEntry(entry.tempId, { nombreCustom: e.target.value })}
-            maxLength={120}
-            aria-label="Nombre del documento personalizado"
-            readOnly={Boolean(entry.existing)}
-          />
-
-          {entry.existing && (
-            <button
-              type="button"
-              className={s.docFileLink}
-              style={{ background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit", textAlign: "left" }}
-              onClick={() =>
-                abrirAdjunto(entry.existing!.url).catch((e) => notify.error(e.message))
-              }
-            >
-              {entry.nombreCustom || "Ver archivo"}
-            </button>
-          )}
-
-          <div className={s.uploadArea}>
-            <div className={s.uploadInputRow}>
-              <input
-                type="file"
-                accept={DOC_ACCEPT}
-                className={s.fileInput}
-                onChange={(e) => handleFileChange(entry.tempId, e)}
-                aria-label={`Seleccionar archivo para ${entry.nombreCustom || "documento personalizado"}`}
-              />
-              <label className={s.cameraBtn}>
-                <Camera size={14} aria-hidden="true" />
-                Tomar foto
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  style={{ display: "none" }}
-                  onChange={(e) => handleFileChange(entry.tempId, e)}
-                />
-              </label>
-            </div>
-
-            {entry.file && (
-              <div className={s.queuedFile}>
-                <span className={s.queuedFileName}>{entry.file.name}</span>
-                <span className={s.queuedNote}>Se subirá al guardar</span>
-              </div>
-            )}
-
-            {entry.uploadError && (
-              <span className={s.fieldError} role="alert">{entry.uploadError}</span>
-            )}
-          </div>
-        </div>
-      ))}
-
-      <button type="button" className={s.contactoAddBtn} onClick={addEntry}>
-        <Plus size={14} />
-        Agregar documento personalizado
-      </button>
-    </div>
-  );
-}
+import Cargando from "@/app/components/ui/Cargando/Cargando";
+import { ContactoList } from "./ContactoList";
+import { TIPO_DOCUMENTOS, formatCUIT } from "./documentos.helpers";
+import { DocRow } from "./DocRow";
+import { OtrosDocList } from "./OtrosDocList";
 
 // ─── Main form ────────────────────────────────────────────────────────────────
 
@@ -574,7 +89,13 @@ export default function ObrasSocialesForm() {
 
         const dir = data.direccion?.[0];
         const dfTipo: ObraSocialFormData["df_tipo"] =
-          dir?.codigo_postal === "3400" ? "corrientes_capital" : dir ? "viaja" : "";
+          leerPlataforma(dir?.direccion) !== undefined
+            ? "plataforma"
+            : dir?.codigo_postal === "3400"
+            ? "corrientes_capital"
+            : dir
+            ? "viaja"
+            : "";
 
         setForm({
           nro_obra_social: String(data.nro_obra_social),
@@ -588,6 +109,7 @@ export default function ObrasSocialesForm() {
           df_direccion: dir?.direccion ?? "",
           df_codigo_postal: dir?.codigo_postal ?? "",
           df_horario: dir?.horario ?? "",
+          df_paquete: leerPlataforma(dir?.direccion) ?? "",
           plazo_vencimiento: plazoField,
           plazo_custom: plazoField === "otro" ? plazoRaw : "",
           fecha_alta_convenio: data.fecha_alta_convenio?.slice(0, 10) ?? "",
@@ -748,7 +270,7 @@ export default function ObrasSocialesForm() {
   if (loading) {
     return (
       <div className={s.loadingPage}>
-        <span className={s.spinner} aria-hidden="true" />
+        <Cargando size={32} tono="marca" aria-hidden="true" />
         <p>Cargando…</p>
       </div>
     );
@@ -927,10 +449,73 @@ export default function ObrasSocialesForm() {
                 />
                 Viaja
               </label>
+
+              <label className={s.radioLabel}>
+                <input
+                  type="radio"
+                  name="df_tipo"
+                  value="plataforma"
+                  checked={form.df_tipo === "plataforma"}
+                  onChange={() => {
+                    setForm((f) => ({
+                      ...f,
+                      df_tipo: "plataforma",
+                      df_provincia: "",
+                      df_localidad: "",
+                      df_direccion: "",
+                      df_codigo_postal: "",
+                      df_horario: "",
+                      df_paquete: "",
+                    }));
+                    if (errors.df_tipo)
+                      setErrors((prev) => ({ ...prev, df_tipo: undefined }));
+                  }}
+                  className={s.radioInput}
+                />
+                Se sube por plataforma
+              </label>
             </div>
           </div>
 
-          {form.df_tipo && (
+          {form.df_tipo === "plataforma" && (
+            <div className={s.grid2}>
+              <div className={s.field} id="field-df_paquete">
+                <span className={s.label}>Paquete</span>
+                <div className={s.radioGroup}>
+                  {(Object.keys(PAQUETE_LABELS) as Array<keyof typeof PAQUETE_LABELS>).map((p) => (
+                    <label key={p} className={s.radioLabel}>
+                      <input
+                        type="radio"
+                        name="df_paquete"
+                        value={p}
+                        checked={form.df_paquete === p}
+                        onChange={() => set("df_paquete", p)}
+                        className={s.radioInput}
+                      />
+                      {PAQUETE_LABELS[p]}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className={`${s.field} ${s.fullWidth}`}>
+                <label className={s.label} htmlFor="df_horario">
+                  Detalle
+                </label>
+                <input
+                  id="df_horario"
+                  type="text"
+                  className={s.input}
+                  value={form.df_horario}
+                  onChange={(e) => set("df_horario", e.target.value)}
+                  placeholder="Ej: portal, usuario, qué incluye el paquete"
+                  maxLength={150}
+                />
+              </div>
+            </div>
+          )}
+
+          {form.df_tipo && form.df_tipo !== "plataforma" && (
             <div className={s.grid2}>
               {form.df_tipo === "viaja" && (
                 <>
@@ -1301,7 +886,7 @@ export default function ObrasSocialesForm() {
         showCloseButton={false}
       >
         <div className={s.creandoBox} role="status" aria-live="polite">
-          <span className={s.creandoSpinner} aria-hidden="true" />
+          <Cargando size={44} tono="marca" aria-hidden="true" />
           <p className={s.creandoTitulo}>Creando la obra social</p>
           <p className={s.creandoTexto}>
             {form.replicar_galenos || form.replicar_nomencladores || form.replicar_valores

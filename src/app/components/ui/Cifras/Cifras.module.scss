@@ -1,0 +1,38 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver Cifras.tsx.
+
+.cifras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-3 $spacing-8;
+  margin: 0;
+}
+
+.cifra {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: $spacing-1;
+  color: $franja-azul;
+}
+
+.numero {
+  margin: 0;
+  font-family: $fuente-titulos;
+  font-size: $font-size-4xl;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.rotulo {
+  font-size: $font-size-sm;
+  color: $gray-600;
+}
+
+.apagada {
+  color: $gray-500;
+}
+
+.error {
+  color: $peligro;
+}

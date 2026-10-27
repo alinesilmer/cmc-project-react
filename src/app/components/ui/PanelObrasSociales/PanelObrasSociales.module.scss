@@ -1,0 +1,125 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver PanelObrasSociales.tsx.
+
+.panel {
+  @extend %tarjeta-flotante;
+  position: sticky;
+  top: $spacing-4;
+  display: flex;
+  flex-direction: column;
+  max-height: 72vh;
+  min-width: 0;
+
+  @media (max-width: 900px) {
+    position: static;
+    max-height: 18rem;
+  }
+}
+
+.cabeza {
+  display: grid;
+  gap: $spacing-3;
+  padding: $spacing-4;
+  border-bottom: 1px solid $linea;
+}
+
+.titulo {
+  margin: 0;
+  font-family: $fuente-titulos;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  letter-spacing: -0.02em;
+  color: $franja-azul;
+}
+
+.lista {
+  display: grid;
+  gap: $spacing-1;
+  align-content: start;
+  flex: 1;
+  overflow-y: auto;
+  padding: $spacing-2;
+}
+
+.ficha {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  width: 100%;
+  padding: $spacing-2 $spacing-3 $spacing-2 $spacing-2;
+  font-family: inherit;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: $radio-md;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+
+  &:hover { background: $gray-100; }
+  &:focus-visible { outline: 2px solid $acento; outline-offset: -2px; }
+}
+
+.fichaActiva,
+.fichaActiva:hover {
+  background: $franja-azul;
+
+  .nombre { color: $franja-crema; }
+
+  .numero {
+    color: $franja-azul;
+    background: $primary-yellow;
+  }
+}
+
+.monograma {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  font-family: $fuente-titulos;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.02em;
+  color: $white;
+  border-radius: 50%;
+}
+
+.tono0 { background: $franja-azul; }
+.tono1 { background: $primary-blue-lighter; }
+.tono2 { background: $primary-blue-dark; }
+.tono3 { background: $tono-verde-550; }
+.tono4 { background: $danger-red; }
+.tono5 { background: $tono-amarillo-300; }
+
+.nombre {
+  flex: 1;
+  min-width: 0;
+  font-size: $font-size-sm;
+  line-height: 1.25;
+  color: $tinta;
+}
+
+.numero {
+  flex-shrink: 0;
+  padding: 0.1rem 0.55rem;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  font-variant-numeric: tabular-nums;
+  color: $franja-azul;
+  background: $franja-perla;
+  border-radius: 999px;
+}
+
+.vacio {
+  margin: 0;
+  padding: $spacing-5;
+  font-size: $font-size-sm;
+  text-align: center;
+  color: $tinta-3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ficha { transition: none; }
+}

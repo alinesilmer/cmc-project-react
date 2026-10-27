@@ -1,11 +1,12 @@
-import { memo, useCallback, useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { memo, useEffect, useState } from "react";
 
 import DobleScroll from "@/app/components/ui/DobleScroll/DobleScroll";
 import type { ExportField, ExportRow } from "./types";
-import styles from "./Padrones.module.scss";
+import comun from "./Comun.module.scss";
+import styles from "./AfiliadosPorObraSocialTable.module.scss";;
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
+import Paginador from "@/app/components/ui/Paginador/Paginador";
 
 const PAGE_SIZE = 50;
 
@@ -37,15 +38,9 @@ const AfiliadosPorObraSocialTable = memo(function AfiliadosPorObraSocialTable({
   const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const pageRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const prevPage = useCallback(() => setPage((p) => Math.max(1, p - 1)), []);
-  const nextPage = useCallback(
-    () => setPage((p) => Math.min(totalPages, p + 1)),
-    [totalPages]
-  );
-
   return (
     <>
-      <p className={styles.resultsCount}>
+      <p className={comun.resultsCount}>
         <strong>
           {rows.length === totalCount
             ? rows.length
@@ -57,12 +52,12 @@ const AfiliadosPorObraSocialTable = memo(function AfiliadosPorObraSocialTable({
         )}
       </p>
 
-      <DobleScroll className={styles.tableWrapper}>
-        <Tabla className={styles.table}>
+      <DobleScroll className={comun.tableWrapper}>
+        <Tabla className={comun.table}>
           <thead>
             <tr>
               {campos.map((c) => (
-                <th key={c.key} className={c.align === "center" ? styles.centrada : undefined}>
+                <th key={c.key} className={c.align === "center" ? comun.centrada : undefined}>
                   {c.short}
                 </th>
               ))}
@@ -86,12 +81,12 @@ const AfiliadosPorObraSocialTable = memo(function AfiliadosPorObraSocialTable({
                     return (
                       <td
                         key={c.key}
-                        className={`${c.align === "center" ? styles.centrada : ""} ${c.key === "nom" ? styles.tdName : ""}`}
+                        className={`${c.align === "center" ? comun.centrada : ""} ${c.key === "nom" ? comun.tdName : ""}`}
                       >
                         {enEspera ? (
-                          <span className={styles.hueso} />
+                          <span className={comun.hueso} />
                         ) : (
-                          valor || <span className={styles.vacio}>—</span>
+                          valor || <span className={comun.vacio}>—</span>
                         )}
                       </td>
                     );
@@ -107,61 +102,7 @@ const AfiliadosPorObraSocialTable = memo(function AfiliadosPorObraSocialTable({
       </DobleScroll>
 
       {totalPages > 1 && (
-        <div className={styles.pagination}>
-          <button
-            type="button"
-            className={styles.paginationBtn}
-            onClick={prevPage}
-            disabled={page === 1}
-            aria-label="Página anterior"
-          >
-            <ChevronLeft size={16} />
-          </button>
-
-          <div className={styles.paginationPages}>
-            {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .filter(
-                (n) =>
-                  n === 1 ||
-                  n === totalPages ||
-                  (n >= page - 2 && n <= page + 2)
-              )
-              .reduce<(number | "…")[]>((acc, n, i, arr) => {
-                if (i > 0 && n - (arr[i - 1] as number) > 1) acc.push("…");
-                acc.push(n);
-                return acc;
-              }, [])
-              .map((n, i) =>
-                n === "…" ? (
-                  <span key={`ellipsis-${i}`} className={styles.paginationEllipsis}>
-                    …
-                  </span>
-                ) : (
-                  <button
-                    key={n}
-                    type="button"
-                    className={`${styles.paginationBtn} ${
-                      n === page ? styles.paginationBtnActive : ""
-                    }`}
-                    onClick={() => setPage(n as number)}
-                    aria-current={n === page ? "page" : undefined}
-                  >
-                    {n}
-                  </button>
-                )
-              )}
-          </div>
-
-          <button
-            type="button"
-            className={styles.paginationBtn}
-            onClick={nextPage}
-            disabled={page === totalPages}
-            aria-label="Página siguiente"
-          >
-            <ChevronRight size={16} />
-          </button>
-        </div>
+        <Paginador pagina={page} totalPaginas={totalPages} onCambiar={setPage} numerado />
       )}
     </>
   );

@@ -269,19 +269,7 @@
 }
 
 // ─── SPINNER ──────────────────────────────────────────────────
-.spinner {
-  display: inline-block;
-  width: 0.875rem;
-  height: 0.875rem;
-  border: 2px solid $tono-azul-100;
-  border-top-color: $tono-azul-500-b;
-  border-radius: 50%;
-  animation: spin 0.65s linear infinite;
-}
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
 
 // ─── ITEM CONTENT ─────────────────────────────────────────────
 .insuranceInfo {
@@ -345,12 +333,7 @@
   border-radius: 10px;
   background: linear-gradient(90deg, $gray-100 25%, $gray-200 50%, $gray-100 75%);
   background-size: 200% 100%;
-  animation: shimmer 1.2s infinite;
-}
-
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  animation: $anim-shimmer 1.2s infinite;
 }
 
 // ─── DOWNLOADS ────────────────────────────────────────────────

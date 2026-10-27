@@ -1,10 +1,10 @@
-import { useId, useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, X } from "lucide-react";
-import { searchDoctors, type DoctorLite } from "../../../lib/ads.client";
-import { useDebounce } from "../../../hooks/useDebounce";
-import styles from "./BuscadorMedico.module.scss";
-import Button from "@/website/components/UI/Button/Button";
+
+import AppSearchSelect from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
+import c from "@/app/components/ui/Paso/Campos.module.scss";
+import { searchDoctors, type DoctorLite } from "@/website/lib/ads.client";
+import { useDebounce } from "@/website/hooks/useDebounce";
 
 type Props = {
   etiqueta: string;
@@ -24,61 +24,31 @@ function detalle(d: DoctorLite): string {
     .join(" · ");
 }
 
-/** Buscador de médicos para asignar un aviso. */
+/** Buscador de médicos para asignar un aviso: por nombre, socio, DNI o matrícula. */
 export default function BuscadorMedico({ etiqueta, elegido, onElegir }: Props) {
-  const id = useId();
   const [texto, setTexto] = useState("");
   const consulta = useDebounce(texto.trim(), 250);
 
-  const { data: resultados = [] } = useQuery({
+  const { data: resultados = [], isFetching } = useQuery({
     queryKey: ["admin", "buscar-medico", consulta],
     queryFn: () => searchDoctors(consulta),
     enabled: consulta.length >= 2 && !elegido,
     staleTime: 60 * 1000,
   });
 
-  const elegir = (d: DoctorLite) => {
-    onElegir(d);
-    setTexto(d.nombre);
-  };
+  const opciones = useMemo(() => resultados.map((d) => ({ id: d.id, label: detalle(d) })), [resultados]);
 
   return (
-    <div className={styles.buscador}>
-      <label htmlFor={id}>{etiqueta}</label>
-      <div className={styles.searchWrap}>
-        <Search aria-hidden="true" />
-        <input
-          id={id}
-          type="search"
-          placeholder="Nombre, socio, DNI o matrícula…"
-          value={texto}
-          onChange={(e) => {
-            setTexto(e.target.value);
-            if (elegido) onElegir(null);
-          }}
-          autoComplete="off"
-        />
-      </div>
-
-      {elegido ? (
-        <div className={styles.selectedDoctor}>
-          <span>{elegido.nombre}</span>
-          <Button variant="plano" type="button" onClick={() => onElegir(null)} aria-label="Quitar médico elegido">
-            <X aria-hidden="true" />
-          </Button>
-        </div>
-      ) : (
-        texto &&
-        resultados.length > 0 && (
-          <div className={styles.dropdown} role="listbox" aria-label="Médicos encontrados">
-            {resultados.map((d) => (
-              <Button variant="plano" type="button" key={d.id} role="option" aria-selected={false} className={styles.dropdownItem} onClick={() => elegir(d)}>
-                {detalle(d)}
-              </Button>
-            ))}
-          </div>
-        )
-      )}
+    <div className={c.campo}>
+      <span className={c.rotulo}>{etiqueta}</span>
+      <AppSearchSelect
+        options={opciones}
+        value={elegido?.id ?? null}
+        loading={isFetching}
+        onQueryChange={setTexto}
+        onChange={(id) => onElegir(id == null ? null : (resultados.find((d) => d.id === id) ?? null))}
+      />
+      <p className={c.ayuda}>Nombre, socio, DNI o matrícula.</p>
     </div>
   );
 }

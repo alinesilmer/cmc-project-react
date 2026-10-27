@@ -1,0 +1,23 @@
+@use "@/app/styles/all.scss" as *;
+
+// ── Envío de la lista ────────────────────────────────────────────────────────
+
+.envioTexto {
+  display: block;
+  width: 100%;
+  padding: $spacing-4;
+  font: inherit;
+  font-size: $font-size-base;
+  line-height: 1.6;
+  color: $gray-900;
+  background: $gray-50;
+  border: 1px solid $gray-200;
+  border-radius: $radio-md;
+  resize: vertical;
+
+  &:focus {
+    outline: none;
+    border-color: $primary-blue;
+    box-shadow: 0 0 0 3px rgba($primary-blue, 0.12);
+  }
+}

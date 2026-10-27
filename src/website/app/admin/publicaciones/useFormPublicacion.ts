@@ -1,8 +1,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useConfirmacion } from "@/app/hooks/useConfirmacion";
-import { createNews, getNewsById, removeNewsDoc, updateNews } from "../../../lib/news.client";
-import { normalizar } from "../../../lib/texto";
-import type { DocumentoNoticia, Noticia, TipoPublicacion } from "../../../types";
+import { createNews, getNewsById, removeNewsDoc, updateNews } from "@/website/lib/news.client";
+import { normalizar } from "@/website/lib/texto";
+import type { DocumentoNoticia, Noticia, TipoPublicacion } from "@/website/types";
 
 export type CamposPublicacion = {
   titulo: string;

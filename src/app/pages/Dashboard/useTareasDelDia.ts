@@ -17,7 +17,7 @@ import { PRIORIDADES, type Prioridad, type Tarea } from "./tareas.types";
 export { PRIORIDADES };
 export type { Prioridad, Tarea };
 
-export const TAREAS_KEY = ["tareas-del-dia"] as const;
+const TAREAS_KEY = ["tareas-del-dia"] as const;
 
 const MAXIMO = 30;
 const LARGO_MAXIMO = 140;

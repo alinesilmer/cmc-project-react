@@ -4,7 +4,8 @@ import { Building2, UserRound, type LucideIcon, FolderOpen } from "lucide-react"
 import { usePermisos } from "@/app/auth/usePermisos";
 import PorObraSocial from "./PorObraSocial";
 import PorSocio from "./PorSocio";
-import styles from "./Padrones.module.scss";
+import comun from "./Comun.module.scss";
+import styles from "./AfiliadosPorObraSocialPage.module.scss";;
 
 type Vista = "obra-social" | "socio";
 
@@ -70,7 +71,7 @@ export default function AfiliadosPorObraSocialPage({
                     type="button"
                     role="tab"
                     aria-selected={activa}
-                    className={`${styles.solapa} ${activa ? styles.solapaActiva : ""}`}
+                    className={`${comun.solapa} ${activa ? styles.solapaActiva : ""}`}
                     onClick={() => setElegida(s.id)}
                   >
                     <Icono size={16} strokeWidth={1.8} aria-hidden="true" />

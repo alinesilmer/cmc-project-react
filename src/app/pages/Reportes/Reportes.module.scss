@@ -465,16 +465,11 @@
   height: 4.6rem;
   background: linear-gradient(90deg, $gray-100 25%, $gray-200 37%, $gray-100 63%);
   background-size: 400% 100%;
-  animation: shimmer 1.4s ease infinite;
+  animation: $anim-shimmer-largo 1.4s ease infinite;
 
   @media (prefers-reduced-motion: reduce) {
     animation: none;
   }
-}
-
-@keyframes shimmer {
-  from { background-position: 100% 0; }
-  to { background-position: 0 0; }
 }
 
 .empty {
@@ -496,52 +491,7 @@
   background: $gray-100;
   color: $tono-rojo-500;
   font-size: $font-size-sm;
-}
-
-// ─── Paginación ───────────────────────────────────────────────────────────────
-
-.pager {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: $spacing-3;
-  flex-wrap: wrap;
-}
-
-.pagerInfo {
-  font-size: $font-size-sm;
-  color: $gray-500;
-}
-
-.pagerBtns {
-  display: flex;
-  gap: $spacing-2;
-}
-
-.pageBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: $spacing-1;
-  height: 2.125rem;
-  padding: 0 $spacing-3;
-  border: 1px solid $gray-300;
-  border-radius: $radio-md;
-  background: $white;
-  font-size: $font-size-sm;
-  color: $gray-700;
-  cursor: pointer;
-
-  &:hover:not(:disabled) {
-    background: $gray-100;
-  }
-
-  &:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
-}
-
-// ─── Panel embebido en el legajo del médico ───────────────────────────────────
+}// ─── Panel embebido en el legajo del médico ───────────────────────────────────
 // No trae `.page` ni `.content`: vive dentro de la pestaña del perfil, que ya pone su propio fondo y su padding.
 
 .medicoPanel {

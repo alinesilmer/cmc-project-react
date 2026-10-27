@@ -1,0 +1,277 @@
+@use "@/app/styles/all.scss" as *;
+
+// Alta y edición de obra social: la franja, «Volver» y los bloques numerados, cada uno con sus campos en una columna.
+
+.container {
+  // En variables porque la franja las necesita para salirse del relleno.
+  --lado: #{$spacing-12};
+  --arriba: #{$spacing-8};
+
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-5;
+  padding: $spacing-8 $spacing-12;
+
+  // La franja ya trae su margen; el `gap` alcanza.
+  > :first-child {
+    margin-bottom: 0;
+  }
+}
+
+.loadingPage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-4;
+  padding: $spacing-16;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $gray-500;
+}
+
+// ─── Error banner ─────────────────────────────────────────────────────────────
+
+.errorBanner {
+  padding: $spacing-4 $spacing-5;
+  background-color: $gray-100;
+  border: 1px solid $tono-rojo-200;
+  border-radius: $radio-md;
+  color: $danger-red;
+  font-size: $font-size-base;
+}
+
+// ─── Form ─────────────────────────────────────────────────────────────────────
+
+// Angosto a propósito: una columna de campos se lee de arriba abajo.
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-5;
+  width: 100%;
+  max-width: 54rem;
+  margin: 0 auto;
+}
+
+// ─── Sections ─────────────────────────────────────────────────────────────────
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-5;
+  padding: $spacing-6 $spacing-8;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
+  box-shadow: 0 14px 34px -28px rgba($franja-azul, 0.55);
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  margin: 0;
+  font-family: $fuente-titulos;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  letter-spacing: -0.01em;
+  color: $franja-azul;
+}
+
+.paso {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: $font-size-base;
+  font-variant-numeric: tabular-nums;
+  color: $franja-crema;
+  background: $franja-azul;
+  border-radius: 999px;
+}
+
+// ─── Grid ─────────────────────────────────────────────────────────────────────
+
+// Siempre una columna: los campos van uno debajo del otro.
+.grid2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: $spacing-5;
+}
+
+.fullWidth {
+  grid-column: 1 / -1;
+}
+
+// ─── Fields ───────────────────────────────────────────────────────────────────
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+.fieldNarrow {
+  max-width: 13.75rem;
+}
+
+.label {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-700;
+}
+
+.required {
+  color: $danger-red;
+  margin-left: $spacing-1;
+}
+
+.optional {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-normal;
+  color: $gray-400;
+  margin-left: $spacing-2;
+}
+
+.input {
+  width: 100%;
+  padding: $spacing-3 $spacing-4;
+  border: 1px solid $gray-300;
+  border-radius: $radio-md;
+  font-size: $font-size-base;
+  color: $gray-800;
+  background-color: $white;
+  outline: none;
+  transition: border-color 0.18s, box-shadow 0.18s;
+  box-sizing: border-box;
+
+  &:focus {
+    border-color: $franja-azul;
+    box-shadow: 0 0 0 3px rgba($franja-azul, 0.14);
+  }
+
+  &::placeholder {
+    color: $gray-400;
+  }
+}
+
+.select {
+  @extend .input;
+  cursor: pointer;
+  appearance: auto;
+}
+
+.inputError {
+  border-color: $danger-red;
+
+  &:focus {
+    box-shadow: 0 0 0 3px rgba($danger-red, 0.12);
+  }
+}
+
+.inputReadonly {
+  background-color: $gray-100;
+  color: $gray-600;
+  cursor: default;
+
+  &:focus {
+    border-color: $gray-300;
+    box-shadow: none;
+  }
+}
+
+.fieldError {
+  font-size: $font-size-xs;
+  color: $danger-red;
+  font-weight: $font-weight-medium;
+}
+
+.hint {
+  font-size: $font-size-xs;
+  color: $gray-500;
+}
+
+.preview {
+  align-self: flex-start;
+  font-size: $font-size-sm;
+  color: $franja-azul;
+  font-weight: $font-weight-semibold;
+  background-color: $primary-yellow-light;
+  padding: $spacing-1 $spacing-3;
+  border-radius: $radio-md;
+}
+
+// ─── Contacto list ────────────────────────────────────────────────────────────
+
+.contactoList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+.contactoRow {
+  display: grid;
+  grid-template-columns: 1fr 2fr auto;
+  gap: $spacing-3;
+  align-items: center;
+
+  @media (max-width: $breakpoint-sm) {
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+
+    // valor spans full width on mobile
+    input:nth-child(2) {
+      grid-column: 1;
+    }
+
+    // remove button aligns to the right of the etiqueta row
+    button {
+      grid-row: 1;
+      grid-column: 2;
+    }
+  }
+}
+
+.contactoRemoveBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.875rem;
+  height: 1.875rem;
+  border-radius: $radio-md;
+  border: 1px solid $gray-200;
+  background-color: $white;
+  color: $gray-400;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+
+  &:hover {
+    background-color: $gray-100;
+    color: $danger-red;
+    border-color: $danger-red;
+  }
+}
+
+.contactoAddBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-2 $spacing-4;
+  background: none;
+  border: 1px dashed $gray-300;
+  border-radius: $radio-md;
+  color: $franja-azul;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: background-color 0.15s, border-color 0.15s;
+
+  &:hover {
+    background-color: rgba($franja-azul, 0.08);
+    border-color: $franja-azul;
+    border-style: solid;
+  }
+}

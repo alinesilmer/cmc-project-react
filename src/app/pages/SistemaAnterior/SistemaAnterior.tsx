@@ -3,7 +3,7 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, History, Home, LogOut, RotateCw, ShieldCheck, Undo2, UserCheck } from "lucide-react";
 import PantallaAcceso, { type Destacado } from "@/app/features/acceso/components/PantallaAcceso/PantallaAcceso";
-import { useAuth } from "@/app/auth/AuthProvider";
+import { useAuth } from "@/app/auth/useAuth";
 import { destinoDe, marcarSalto, pedirEnlaceLegacy, yaSeIntentoElSalto } from "@/app/auth/destino";
 import Header from "@/website/components/UI/Header/Header";
 import styles from "./SistemaAnterior.module.scss";

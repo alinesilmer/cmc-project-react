@@ -153,14 +153,6 @@
 }
 
 .unidades { width: 5rem; height: 2rem; }
-
-.paginacion {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.75rem;
-}
-
 // Especialidades a las que se aplica el nomenclador.
 .especialidades {
   display: flex;
@@ -333,3 +325,10 @@
 .previa { border-color: $alerta-linea; background: $alerta-bg; ul { margin: 6px 0 0; padding-left: 18px; } }
 .checkLinea { display: flex; align-items: flex-start; gap: 8px; line-height: 1.4; cursor: pointer; }
 .accionesEscala { display: flex; gap: 8px; flex-wrap: wrap; }
+
+// La tabla de códigos dentro de la tarjeta del nomenclador.
+.tablaWrap {
+  overflow-x: auto;
+  border: 1px solid $linea;
+  border-radius: $radio-lg;
+}

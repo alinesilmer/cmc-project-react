@@ -177,9 +177,6 @@
   background: rgba($danger-red, 0.08);
 }
 
-.spin {
-  animation: campo-gira 0.9s linear infinite;
-}
 
 @keyframes campo-gira {
   to {

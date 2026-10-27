@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Calculator, Eye, Loader2, RefreshCw } from "lucide-react";
+import { Calculator, Eye, RefreshCw } from "lucide-react";
 
-import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
+import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import { fetchPeriodoActivo, previewCierre, recalcularPrecios } from "../api";
 import type { CierrePreviewResponse, ObraSocialOption, RecalculoFila, RecalculoResponse } from "../types";
 import { mensajeDeError } from "@/app/shared/lib/httpErrors";
@@ -13,6 +13,7 @@ import base from "../CierrePeriodo/CierrePeriodo.module.scss";
 import styles from "./RecalculoPrecios.module.scss";
 import { ListaOmitidas, TablaCambios } from "./TablaCambios";
 import BackButton from "@/app/components/ui/BackButton/BackButton";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
 
 /** Recálculo de precios de una factura abierta (O.S. + período), o de un código de ella. */
 
@@ -214,7 +215,7 @@ const RecalculoPrecios: React.FC = () => {
 
           {trabajando && (
             <div className={styles.cargando}>
-              <Loader2 size={22} className={styles.spin} />
+              <Cargando size={22} />
               <span>
                 {trabajando === "previa"
                   ? "Calculando la vista previa… puede tardar en facturas grandes."

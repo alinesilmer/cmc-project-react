@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { ChevronRight, User } from "lucide-react";
 import { NAVEGACION, esActiva, type ItemNav } from "./navegacion";
-import { useModal } from "../../../hooks/useModal";
+import { useModal } from "@/website/hooks/useModal";
 import styles from "./NavMovil.module.scss";
 import Button from "@/website/components/UI/Button/Button";
 

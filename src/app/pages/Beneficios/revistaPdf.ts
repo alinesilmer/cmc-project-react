@@ -1,18 +1,18 @@
 import type { Beneficio } from "./beneficios.types";
 // Capturas del instructivo "¿Dónde encuentro mi credencial?".
-import guia1 from "../../assets/crede.png";
-import guia2 from "../../assets/crede2.png";
+import guia1 from "../../assets/crede.jpg";
+import guia2 from "../../assets/crede2.jpg";
 import guia3 from "../../assets/crede3.png";
 import {
   A4, ANCHO_UTIL, COLOR, MARGEN,
   altoParrafo, chip, degradeVertical, fill, fuente, parrafo,
   rectPunteado, recortar, stroke, tinta, tituloEspaciado,
 } from "./revistaDraw";
+import type { jsPDF } from "jspdf";
 
 /** Revista de Beneficios en PDF, generada con jsPDF. */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-type Doc = any;
+type Doc = jsPDF;
 
 const PIE_Y = A4.alto - 14;
 const TOPE_CONTENIDO = A4.alto - 22; // por debajo de esto, salto de página
@@ -20,8 +20,8 @@ const TOPE_CONTENIDO = A4.alto - 22; // por debajo de esto, salto de página
 const escapar = (s: unknown) => String(s ?? "").replace(/\s+/g, " ").trim();
 
 async function cargarJsPdf() {
-  const mod: any = await import("jspdf");
-  return mod?.jsPDF ?? mod?.default ?? mod;
+  const mod = await import("jspdf");
+  return mod.jsPDF ?? mod.default;
 }
 
 /** Ancho al que se reducen las capturas antes de incrustarlas. */

@@ -1,9 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { saveAs } from "@/app/shared/lib/fileSaver";
 
 import styles from "./PadronesForm.module.scss";
-import SuccessModal from "@/app/components/ui/SuccessModal/SuccessModal";
 import Alert from "@/app/components/ui/Alert/Alert";
 
 import {
@@ -16,11 +14,11 @@ import {
 } from "@/app/pages/DoctorProfilePage/api";
 import { useNotify } from "@/app/hooks/useNotify";
 import { X } from "lucide-react";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
+import paleta from "@/app/styles/paleta.module.scss";
 
 type Props = {
   medicoId: number | string;
-  onPreview?: (selected: string[]) => void;
-  onSubmit?: (selected: string[]) => void;
 };
 
 type AlertType = "success" | "error" | "warning" | "info";
@@ -32,16 +30,17 @@ const normalize = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
 function padronOSId(p: Padron): number {
+  const fila: Record<string, unknown> = { ...p };
   return Number(
-    (p as any)?.NRO_OBRA_SOCIAL ??
-      (p as any)?.NRO_OBRASOCIAL ??
-      (p as any)?.nro_obra_social ??
-      (p as any)?.nro_obrasocial ??
+    fila.NRO_OBRA_SOCIAL ??
+      fila.NRO_OBRASOCIAL ??
+      fila.nro_obra_social ??
+      fila.nro_obrasocial ??
       0
   );
 }
 
-const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
+const PadronesForm: React.FC<Props> = ({ medicoId }) => {
   const [loading, setLoading] = useState(true);
   const [pendingOS, setPendingOS] = useState<Set<number>>(new Set());
 
@@ -53,16 +52,12 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
 
   const [query, setQuery] = useState("");
 
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [successMessage, setSuccessMessage] = useState<string | undefined>();
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertType, setAlertType] = useState<AlertType>("info");
   const [alertTitle, setAlertTitle] = useState("");
   const [alertMessage, setAlertMessage] = useState("");
   const [alertShowActions, setAlertShowActions] = useState(false);
   const [alertOnConfirm, setAlertOnConfirm] = useState<(() => void) | null>(null);
-
-  const navigate = useNavigate();
 
   // ─────────────────────────────────────────────────────────────
   // CARGA INICIAL
@@ -264,7 +259,9 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
           if (id) s.add(id);
         });
         setSelected(s);
-      } catch {}
+      } catch {
+        // El error ya se avisó arriba: si tampoco se puede resincronizar, queda la lista que se veía.
+      }
     } finally {
       setPendingOS((prev) => {
         const copy = new Set(prev);
@@ -277,65 +274,6 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
 
   const handleSelectAllFiltered = () => void bulkApplyForList(filteredCatalog, true);
   const handleClearAllFiltered = () => void bulkApplyForList(filteredCatalog, false);
-
-  // ─────────────────────────────────────────────────────────────
-  // PREVIEW / SUBMIT
-  // ─────────────────────────────────────────────────────────────
-  const handlePreview = () => {
-    if (!onPreview) return;
-    if (selected.size === 0) {
-      setAlertType("info");
-      setAlertTitle("No hay obras sociales seleccionadas");
-      setAlertMessage("Seleccioná al menos una obra social para previsualizar.");
-      setAlertShowActions(false);
-      setAlertOnConfirm(null);
-      setAlertOpen(true);
-      return;
-    }
-    onPreview(Array.from(selected).map(String));
-  };
-
-  const confirmSubmit = () => {
-    const selectedIds = Array.from(selected).map(String);
-    onSubmit?.(selectedIds);
-
-    const names = catalog
-      .filter((os) => selected.has(os.NRO_OBRA_SOCIAL))
-      .map((os) => os.NOMBRE);
-
-    let msg: string;
-    if (names.length === 1) msg = `Se envió el padrón de la obra social ${names[0]}.`;
-    else if (names.length > 1 && names.length <= 3)
-      msg = `Se enviaron los padrones de: ${names.join(", ")}.`;
-    else msg = `Se enviaron los padrones de ${names.length} obras sociales seleccionadas.`;
-
-    setSuccessMessage(msg + " Nuestro equipo revisará la información a la brevedad.");
-    setShowSuccess(true);
-  };
-
-  const handleSubmit = () => {
-    if (!onSubmit) return;
-    if (selected.size === 0) {
-      setAlertType("warning");
-      setAlertTitle("Seleccioná al menos una obra social");
-      setAlertMessage("Para enviar los padrones, marcá al menos una obra social.");
-      setAlertShowActions(false);
-      setAlertOnConfirm(null);
-      setAlertOpen(true);
-      return;
-    }
-    setAlertType("warning");
-    setAlertTitle("¿Confirmar envío de padrones?");
-    setAlertMessage("Se enviarán los padrones de las obras sociales seleccionadas.");
-    setAlertShowActions(true);
-    setAlertOnConfirm(() => confirmSubmit);
-    setAlertOpen(true);
-  };
-
-  const handleSuccessClose = () => {
-    setShowSuccess(false);
-    navigate("/");
-  };
 
   // ─────────────────────────────────────────────────────────────
   // EXPORTS
@@ -413,8 +351,8 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
       <div className={styles.controlsRow}>
         <div className={styles.searchWrapper}>
           <svg className={styles.searchIcon} viewBox="0 0 20 20" fill="none">
-            <circle cx="8.5" cy="8.5" r="5.5" stroke="#9ca3af" strokeWidth="1.5" />
-            <path d="M13 13l4 4" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" />
+            <circle cx="8.5" cy="8.5" r="5.5" stroke={paleta.tonoAzul300B} strokeWidth="1.5" />
+            <path d="M13 13l4 4" stroke={paleta.tonoAzul300B} strokeWidth="1.5" strokeLinecap="round" />
           </svg>
           <input
             className={styles.searchInput}
@@ -445,8 +383,8 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
             title={query.trim() ? "Seleccionar las obras sociales filtradas" : "Seleccionar todas"}
           >
             <svg viewBox="0 0 16 16" fill="none">
-              <rect x="1" y="1" width="14" height="14" rx="3" stroke="currentColor" strokeWidth="1.5" fill="#1d4ed8" />
-              <path d="M4.5 8l2.5 2.5 4.5-5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <rect x="1" y="1" width="14" height="14" rx="3" stroke="currentColor" strokeWidth="1.5" fill={paleta.tonoAzul500B} />
+              <path d="M4.5 8l2.5 2.5 4.5-5" stroke={paleta.white} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             {query.trim() ? "Sel. filtradas" : "Seleccionar todas"}
           </button>
@@ -501,7 +439,7 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
               >
                 <span className={styles.checkboxWrap}>
                   {pending ? (
-                    <span className={styles.spinner} />
+                    <Cargando size={14} tono="marca" />
                   ) : (
                     <input
                       type="checkbox"
@@ -518,7 +456,7 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
                 {checked && !pending && (
                   <span className={styles.checkBadge} aria-hidden>
                     <svg viewBox="0 0 12 12" fill="none">
-                      <path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M2 6l3 3 5-5" stroke={paleta.white} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </span>
                 )}
@@ -537,13 +475,6 @@ const PadronesForm: React.FC<Props> = ({ medicoId, onPreview, onSubmit }) => {
           ↓ PDF
         </button>
       </div>
-
-      <SuccessModal
-        open={showSuccess}
-        onClose={handleSuccessClose}
-        title="¡Padrones enviados con éxito!"
-        message={successMessage}
-      />
 
       {alertOpen && (
         <Alert

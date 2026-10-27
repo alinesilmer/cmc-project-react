@@ -1,0 +1,22 @@
+@use "@/app/styles/all.scss" as *;
+
+
+.colValor,
+.valor {
+  width: 12rem;
+  white-space: nowrap;
+}
+
+.colFecha,
+.fecha {
+  width: 11rem;
+  white-space: nowrap;
+}
+
+.valor {
+  color: $tono-verde-500;
+}
+
+.fecha {
+  color: $gray-500;
+}

@@ -1,8 +1,6 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
 
-import Button from "@/app/components/ui/Button/Button";
-import s from "./reporte.module.scss";
 import SearchField from "@/app/components/ui/SearchField/SearchField";
+import Paginador from "@/app/components/ui/Paginador/Paginador";
 
 /** Buscador de la tabla de un reporte. */
 export function BuscadorTabla({
@@ -43,32 +41,12 @@ export function PaginadoTabla({
   if (paginas <= 1) return null;
 
   return (
-    <nav className={s.paginado} aria-label="Paginado de la tabla">
-      <Button
-        type="button"
-        variant="secondary"
-        size="sm"
-        disabled={pagina === 1}
-        onClick={() => onPagina(pagina - 1)}
-        leftIcon={<ChevronLeft size={16} />}
-      >
-        Anterior
-      </Button>
-
-      <span className={s.paginaActual} aria-live="polite">
-        {desde}–{hasta} de {total}
-      </span>
-
-      <Button
-        type="button"
-        variant="secondary"
-        size="sm"
-        disabled={pagina === paginas}
-        onClick={() => onPagina(pagina + 1)}
-        rightIcon={<ChevronRight size={16} />}
-      >
-        Siguiente
-      </Button>
-    </nav>
+    <Paginador
+      pagina={pagina}
+      totalPaginas={paginas}
+      onCambiar={onPagina}
+      estado={`${desde}–${hasta} de ${total}`}
+      etiqueta="Paginado de la tabla"
+    />
   );
 }

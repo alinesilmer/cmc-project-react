@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import { useAuth } from "@/app/auth/AuthProvider";
+import { useAuth } from "@/app/auth/useAuth";
 import { usePermisos } from "@/app/auth/usePermisos";
 import { vistasVisibles, type Vista } from "./vistasInicio";
 import TareasDelDia from "./components/TareasDelDia";

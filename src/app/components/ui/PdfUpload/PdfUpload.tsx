@@ -4,6 +4,7 @@ import type React from "react";
 import { useState, useRef, useEffect, useId } from "react";
 import { createPortal } from "react-dom";
 import styles from "./PdfUpload.module.scss";
+import paleta from "@/app/styles/paleta.module.scss";
 
 type ValidationReason = "type" | "size";
 
@@ -279,7 +280,7 @@ const PdfUpload: React.FC<PdfUploadProps> = ({
               </button>
             </div>
 
-            <div style={{ padding: "1rem 0", lineHeight: "1.6", color: "#374151" }}>
+            <div style={{ padding: "1rem 0", lineHeight: "1.6", color: paleta.tonoAzul650B }}>
               <p style={{ margin: "0 0 1rem 0" }}>
                 <strong>Pasos simples:</strong>
               </p>
@@ -288,7 +289,7 @@ const PdfUpload: React.FC<PdfUploadProps> = ({
                 <li style={{ marginBottom: "0.5rem" }}>Selecciona tu archivo</li>
                 <li style={{ marginBottom: "0.5rem" }}>O suéltalo en el área de carga</li>
               </ol>
-              <p style={{ margin: 0, fontSize: "0.875rem", color: "#6b7280" }}>
+              <p style={{ margin: 0, fontSize: "0.875rem", color: paleta.tonoAzul450D }}>
                 <strong>Importante:</strong> Solo PDF o imagen, hasta {maxMb}MB.
               </p>
             </div>

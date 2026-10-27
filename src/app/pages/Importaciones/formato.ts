@@ -1,10 +1,7 @@
+import { formatoPesos } from "@/app/shared/lib/formatos";
 // Formateo compartido por las pantallas de importación.
 
-export const moneda = new Intl.NumberFormat("es-AR", {
-  style: "currency",
-  currency: "ARS",
-  minimumFractionDigits: 2,
-});
+export const moneda = formatoPesos;
 
 /** "202608" → "08/2026". El período se guarda pegado y se lee separado. */
 export const periodoLegible = (p: string): string =>

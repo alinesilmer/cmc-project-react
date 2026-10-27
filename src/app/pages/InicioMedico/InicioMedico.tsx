@@ -19,7 +19,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-import { useAuth } from "../../auth/AuthProvider";
+import { useAuth } from "../../auth/useAuth";
 import { saludoSegunHora } from "@/app/shared/lib/fechas";
 import { esOrganizacion } from "../../auth/roles";
 import Carrusel from "./components/Carrusel/Carrusel";

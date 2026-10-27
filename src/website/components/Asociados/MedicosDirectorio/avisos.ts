@@ -1,4 +1,4 @@
-import type { PubAd } from "../../../lib/ads.client";
+import type { PubAd } from "@/website/lib/ads.client";
 
 /** El nombre a mostrar; si el aviso no lo trae, el id del médico. */
 export const nombreDe = (ad: PubAd): string => ad.medico_nombre?.trim() || `Médico #${ad.medico_id}`;

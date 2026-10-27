@@ -123,6 +123,21 @@
 
 
 
+// El filtro de tipo queda al lado del buscador.
+.filtroTipo {
+  flex: 0 1 9.5rem;
+  min-width: 0;
+  height: 2.375rem;
+  padding: 0 $spacing-3;
+  font: inherit;
+  font-size: $font-size-base;
+  color: $gray-900;
+  background: $white;
+  border: 1px solid $gray-300;
+  border-radius: $radio-md;
+  cursor: pointer;
+}
+
 // El selector de obra social baja a su propio renglón, a todo el ancho.
 .selector {
   flex: 1 1 100%;

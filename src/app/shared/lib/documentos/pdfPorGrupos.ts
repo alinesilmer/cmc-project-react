@@ -5,9 +5,10 @@ import {
   AMARILLO, AZUL, CREMA, HEADER_H, MARGEN, TW,
   fitText, loadPdfLibs, margenTabla, pintarFranja, pintarPies, redondearTabla, rotulo, tableStyles,
 } from "./pdfColegio";
+import type { jsPDF } from "jspdf";
 
 /** Sello «Padrón vigente»: un recuadro doble apenas girado, dibujado con líneas. */
-function sello(doc: any, cx: number, cy: number) {
+function sello(doc: jsPDF, cx: number, cy: number) {
   const ang = (5 * Math.PI) / 180;
   const girar = (dx: number, dy: number): [number, number] => [
     cx + dx * Math.cos(ang) + dy * Math.sin(ang),
@@ -41,7 +42,7 @@ type Portada = {
 };
 
 /** Fondo y marco de la portada: azul a página llena, esquinas, título y sello. */
-export function pintarPortada(doc: any, { osName, total, fecha }: Portada) {
+export function pintarPortada(doc: jsPDF, { osName, total, fecha }: Portada) {
   const w = doc.internal.pageSize.getWidth();
   const h = doc.internal.pageSize.getHeight();
 
@@ -69,7 +70,7 @@ const INDICE = { x: 124, arriba: 34, abajo: 30, renglon: 8.2, separacion: 10 };
 
 /** Dibuja los renglones de una hoja de índice, con su enlace a la página. */
 function renderTocEntries(
-  doc: any,
+  doc: jsPDF,
   entries: { label: string; tocPage: number }[],
   maxPerCol: number,
 ) {
@@ -96,7 +97,7 @@ function renderTocEntries(
     doc.line(x, y + 3, fin, y + 3);
 
     doc.link(x, y - 5, anchoCol, INDICE.renglon, { pageNumber: entry.tocPage });
-    try { (doc as any).outline?.add(null, entry.label, { pageNumber: entry.tocPage }); } catch { /* skip */ }
+    try { doc.outline?.add(null, entry.label, { pageNumber: entry.tocPage }); } catch { /* skip */ }
   });
 }
 
@@ -130,7 +131,7 @@ export async function pdfPorGrupos({ encabezado, total, head, columnStyles, grup
   // ── Render content sections ────────────────────────────────────────────────
   grupos.forEach((grupo, idx) => {
     if (idx > 0) doc.addPage();
-    const startPage: number = (doc as any).internal.getNumberOfPages();
+    const startPage: number = doc.getNumberOfPages();
     const espLabel = grupo.titulo;
     sections.push({ label: espLabel, page: startPage });
     const n = grupo.filas.length;
@@ -158,7 +159,7 @@ export async function pdfPorGrupos({ encabezado, total, head, columnStyles, grup
 
   // Insert blank pages at the front (inserted in reverse so page order is correct)
   for (let i = 0; i < numTocPages; i++) {
-    (doc as any).insertPage(1);
+    doc.insertPage(1);
   }
   // After insertions: TOC pages are 1..numTocPages, content pages shifted by numTocPages
 

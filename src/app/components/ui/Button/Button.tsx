@@ -6,6 +6,7 @@ import MuiBtn from "@mui/material/Button";
 import type { ButtonProps as MuiButtonProps } from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import type { SxProps, Theme } from "@mui/material/styles";
+import paleta from "@/app/styles/paleta.module.scss";
 
 /** MUI-backed Button. Keeps the original in-house API and colors so every existing `<Button variant="…">` call site renders a Material UI button with the same… */
 type ButtonVariant =
@@ -40,22 +41,22 @@ const MUI_VARIANT: Record<ButtonVariant, "contained" | "outlined" | "text"> = {
 
 const VARIANT_SX: Record<ButtonVariant, SxProps<Theme>> = {
   primary: {
-    backgroundColor: "#3455c1",
-    color: "#ffffff",
-    border: "1px solid #0c2a52",
-    "&:hover": { backgroundColor: "#0c2a52" },
+    backgroundColor: paleta.primaryBlueDark,
+    color: paleta.white,
+    border: `1px solid ${paleta.primaryBlueDarker}`,
+    "&:hover": { backgroundColor: paleta.primaryBlueDarker },
   },
   third: {
-    backgroundColor: "#0f172a",
-    color: "#ffffff",
+    backgroundColor: paleta.gray900,
+    color: paleta.white,
     border: "1px solid rgba(0,0,0,0.3)",
-    "&:hover": { backgroundColor: "#1e293b" },
+    "&:hover": { backgroundColor: paleta.gray800 },
   },
   secondary: {
-    backgroundColor: "#f5eac0",
-    color: "#4d441a",
-    border: "1px solid #d0c182",
-    "&:hover": { backgroundColor: "#d3c17a", color: "#4d4521" },
+    backgroundColor: paleta.tonoAmarillo50E,
+    color: paleta.primaryYellowDark,
+    border: `1px solid ${paleta.tonoAmarillo200}`,
+    "&:hover": { backgroundColor: paleta.tonoAmarillo200B, color: paleta.tonoAmarillo600B },
   },
   success: {
     backgroundColor: "var(--tema-superficie, #ffffff)",

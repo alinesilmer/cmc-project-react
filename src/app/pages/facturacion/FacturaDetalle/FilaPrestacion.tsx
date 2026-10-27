@@ -5,7 +5,8 @@ import type { PrestacionFacturaDetalle, Tipo } from "../types";
 import { TIPO_ABREV, TIPO_LABEL, TIPO_PRESTADOR_ABREV } from "../constants";
 import { formatMoney, parseMoney } from "../money";
 import type { ColumnaVista } from "./vista/types";
-import styles from "./FacturaDetalle.module.scss";
+import comun from "./Comun.module.scss";
+import styles from "./FilaPrestacion.module.scss";;
 import { viaLabel } from "@/app/pages/facturacion/utiles";
 import { fmtFecha } from "@/app/pages/facturacion/utiles";
 
@@ -177,7 +178,7 @@ function FilaPrestacion({
     <tr
       data-prestacion-id={p.id}
       className={[
-        styles.dataRow,
+        comun.dataRow,
         p.revisado ? styles.rowRevisada : "",
         p.estado === "X" ? styles.rowAnulada : "",
         indent ? styles.equipoPreviewRow : "",

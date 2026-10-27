@@ -3,7 +3,7 @@ import { safeStr as cellText } from "@/app/shared/lib/utiles";
 /** Escritura de Excel — única vía del proyecto. */
 
 /** Una hoja del libro. Las filas son objetos: las claves son los encabezados. */
-export type ExcelSheet = {
+type ExcelSheet = {
   /** Nombre de la pestaña. Excel corta en 31 caracteres, así que se trunca acá. */
   name: string;
   rows: Record<string, unknown>[];
@@ -80,7 +80,7 @@ async function buildExcelBlob(sheets: ExcelSheet[]): Promise<Blob> {
 }
 
 /** Arma el libro y dispara la descarga. Es el camino normal. */
-export async function downloadExcel(
+async function downloadExcel(
   filename: string,
   sheets: ExcelSheet[]
 ): Promise<void> {

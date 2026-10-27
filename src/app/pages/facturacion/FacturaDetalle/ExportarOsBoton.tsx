@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { LucideIcon } from "lucide-react";
-import { FileSpreadsheet, FileText, Loader2 } from "lucide-react";
+import { FileSpreadsheet, FileText } from "lucide-react";
 
 import { useNotify } from "@/app/hooks/useNotify";
 import { saveAs } from "@/app/shared/lib/fileSaver";
@@ -10,6 +10,7 @@ import {
 } from "../api";
 import type { FacturaDetalleResponse } from "../types";
 import styles from "./CabeceraExpediente.module.scss";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
 
 type Descargar = (facturaId: number, params: { tipo?: string; nro_factura?: string }) => Promise<{ blob: Blob }>;
 
@@ -114,7 +115,7 @@ export default function ExportarOsBoton({ detalle }: { detalle: FacturaDetalleRe
         type="button" className={styles.btn} onClick={generar}
         disabled={generando || (pedirNumero && (tipo.trim() === "" || nro.trim() === ""))}
       >
-        {generando ? <Loader2 size={15} className={styles.girando} /> : <Icono size={15} />} {exportable.texto}
+        {generando ? <Cargando size={15} /> : <Icono size={15} />} {exportable.texto}
       </button>
     </>
   );

@@ -1,13 +1,15 @@
 import { CMC_EMAIL, CMC_NAME, CMC_PHONE, getImageFormat } from "./institucion";
 import { pagina } from "@/app/shared/lib/utiles";
+import type { jsPDF } from "jspdf";
+import type autoTableFn from "jspdf-autotable";
 
-export async function loadPdfLibs(): Promise<{ JsPDF: any; autoTable: any }> {
+export async function loadPdfLibs(): Promise<{ JsPDF: typeof jsPDF; autoTable: typeof autoTableFn }> {
   const [jspdfMod, autotableMod] = await Promise.all([
     import("jspdf"),
     import("jspdf-autotable"),
   ]);
-  const JsPDF = jspdfMod?.jsPDF ?? jspdfMod?.default ?? jspdfMod;
-  const autoTable = autotableMod?.default ?? autotableMod;
+  const JsPDF = jspdfMod.jsPDF ?? jspdfMod.default;
+  const autoTable = autotableMod.default ?? autotableMod.autoTable;
   return { JsPDF, autoTable };
 }
 
@@ -61,7 +63,7 @@ export function tableStyles(n: number) {
 
 /** Rótulo chico en mayúscula; `alto` = renglón de arriba, más tenue. */
 export function rotulo(
-  doc: any, texto: string, x: number, y: number,
+  doc: jsPDF, texto: string, x: number, y: number,
   align: "left" | "right", tenue = false, color: Rgb = CREMA,
 ) {
   doc.setFont("helvetica", tenue ? "normal" : "bold");
@@ -71,7 +73,7 @@ export function rotulo(
 }
 
 /** Encabezado de cada hoja de listado, sobre blanco: los mismos rótulos y el título en Times de la portada, pero en azul. */
-export function pintarFranja(doc: any, logo: string | null, osName: string, titulo: string, detalle: string) {
+export function pintarFranja(doc: jsPDF, logo: string | null, osName: string, titulo: string, detalle: string) {
   const w = doc.internal.pageSize.getWidth();
 
   let x = MARGEN;
@@ -97,7 +99,7 @@ export function pintarFranja(doc: any, logo: string | null, osName: string, titu
 }
 
 /** Redondea las esquinas de la tabla. autoTable sólo dibuja rectángulos, así que se tapa cada esquina con una cuña blanca. */
-export function redondearTabla(doc: any, y0: number, y1: number) {
+export function redondearTabla(doc: jsPDF, y0: number, y1: number) {
   const x0 = MARGEN;
   const x1 = MARGEN + TW;
   const r = RADIO;
@@ -126,10 +128,10 @@ export function redondearTabla(doc: any, y0: number, y1: number) {
 }
 
 /** Pie de las hojas de listado: contacto a la izquierda, "\02 de \14" a la derecha. */
-export function pintarPies(doc: any, desde: number) {
+export function pintarPies(doc: jsPDF, desde: number) {
   const w = doc.internal.pageSize.getWidth();
   const h = doc.internal.pageSize.getHeight();
-  const total: number = doc.internal.getNumberOfPages();
+  const total: number = doc.getNumberOfPages();
 
   for (let n = desde; n <= total; n++) {
     doc.setPage(n);
@@ -145,7 +147,7 @@ export function pintarPies(doc: any, desde: number) {
 }
 
 /** Truncate text so it fits within maxW mm at the current font size. */
-export function fitText(doc: any, text: string, maxW: number): string {
+export function fitText(doc: jsPDF, text: string, maxW: number): string {
   if (doc.getTextWidth(text) <= maxW) return text;
   let t = text;
   while (t.length > 1 && doc.getTextWidth(t + "…") > maxW) t = t.slice(0, -1);
@@ -153,3 +155,8 @@ export function fitText(doc: any, text: string, maxW: number): string {
 }
 
 export const margenTabla = { left: MARGEN, right: MARGEN, top: HEADER_H + 5, bottom: 16 };
+
+/** Dónde terminó la última tabla que dibujó autoTable en este documento. */
+export function finDeTabla(doc: jsPDF): number {
+  return (doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY ?? 0;
+}

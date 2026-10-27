@@ -1,0 +1,18 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver Cargando.tsx.
+.giro {
+  flex: none;
+  animation: $anim-spin 0.8s linear infinite;
+}
+
+// El azul del Colegio, para cuando el indicador es el protagonista de la pantalla.
+.marca {
+  color: $primary-blue;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .giro {
+    animation-duration: 2.4s;
+  }
+}

@@ -7,3 +7,9 @@ $anim-scale-in: global(cmc-scale-in);
 $anim-spin: global(cmc-spin);
 /// Brillo de las filas fantasma mientras carga.
 $anim-shimmer: global(cmc-shimmer);
+/// Brillo para degradés de fondo al 400 % (esqueletos de lista).
+$anim-shimmer-largo: global(cmc-shimmer-largo);
+/// Aparición solo por opacidad (fondos de modal y de drawer).
+$anim-fade: global(cmc-fade);
+/// Entrada de un drawer desde la derecha.
+$anim-slide-right: global(cmc-slide-right);

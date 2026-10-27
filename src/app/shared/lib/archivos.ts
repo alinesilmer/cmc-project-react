@@ -1,5 +1,6 @@
 // src/app/shared/lib/archivos.ts Abre un adjunto respetando lo que devuelve la API (§8 del doc de backend).
 import { http } from "./http";
+import { comoErrorApi } from "./httpErrors";
 
 const ARCHIVOS_PREFIX = "/api/archivos/";
 
@@ -16,13 +17,16 @@ function mensajeDeError(status: number | undefined, detail?: string): string {
   }
 }
 
-async function detalleDeBlobError(err: any): Promise<string | undefined> {
-  const data = err?.response?.data;
-  if (!(data instanceof Blob)) return err?.response?.data?.detail;
+async function detalleDeBlobError(err: unknown): Promise<string | undefined> {
+  const data: unknown = comoErrorApi(err).response?.data;
+  if (!(data instanceof Blob)) {
+    const detalle = comoErrorApi(err).response?.data?.detail;
+    return typeof detalle === "string" ? detalle : undefined;
+  }
   try {
     const text = await data.text();
-    const parsed = JSON.parse(text);
-    return parsed?.detail;
+    const parsed = JSON.parse(text) as { detail?: unknown } | null;
+    return typeof parsed?.detail === "string" ? parsed.detail : undefined;
   } catch {
     return undefined;
   }
@@ -43,8 +47,9 @@ export async function abrirAdjunto(ruta?: string | null): Promise<void> {
     window.open(blobUrl, "_blank", "noopener,noreferrer");
     // El blob se entregó a otra pestaña: liberamos después de darle tiempo a cargar, en vez de al desmontar (acá no hay un componente montado).
     setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
-  } catch (err: any) {
-    const status = err?.response?.status;
+  } catch (err) {
+    const error = comoErrorApi(err);
+    const status = error?.response?.status;
     const detail = await detalleDeBlobError(err);
     throw new Error(mensajeDeError(status, detail));
   }

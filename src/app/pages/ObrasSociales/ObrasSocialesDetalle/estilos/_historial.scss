@@ -1,0 +1,201 @@
+@use "@/app/styles/all.scss" as *;
+
+// ─── Responsive ───────────────────────────────────────────────────────────────
+
+@media (max-width: $breakpoint-md) {
+  .container {
+    --lado: #{$spacing-5};
+    --arriba: #{$spacing-5};
+    padding: $spacing-5;
+  }
+
+  .docGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: $breakpoint-sm) {
+  .container {
+    --lado: #{$spacing-4};
+    --arriba: #{$spacing-4};
+    padding: $spacing-4;
+  }
+}
+
+// ─── Historial container ──────────────────────────────────────────────────────
+
+.historialContainer {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-5;
+}
+
+// Las dos vistas: una pista azul con la activa en amarillo, como las pestañas del panel de Inicio.
+.historialToggleRow {
+  display: inline-flex;
+  align-self: flex-start;
+  gap: $spacing-1;
+  padding: $spacing-1;
+  background: $franja-azul;
+  border-radius: 999px;
+}
+
+.historialToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  min-height: 2.75rem;
+  padding: 0 $spacing-6;
+  font: inherit;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $franja-crema;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba($white, 0.12);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary-yellow;
+    outline-offset: 2px;
+  }
+}
+
+.historialToggleBtnActive,
+.historialToggleBtnActive:hover {
+  color: $franja-azul;
+  background: $primary-yellow;
+}
+
+.hLoadingState,
+.hEmptyState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-3;
+  padding: $spacing-12;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $gray-500;
+  text-align: center;
+  background: $white;
+  border: 1px dashed $gray-300;
+  border-radius: $radio-lg;
+
+  svg {
+    flex-shrink: 0;
+    color: $gray-400;
+  }
+}
+
+// ─── Actualizaciones: una línea de tiempo ─────────────────────────────────────
+
+.porcentualList {
+  display: flex;
+  flex-direction: column;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
+  box-shadow: 0 14px 34px -28px rgba($franja-azul, 0.55);
+  overflow: hidden;
+}
+
+.porcentualItem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3 $spacing-5;
+  padding: $spacing-4 $spacing-6;
+  border-bottom: 1px solid $gray-200;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  &:nth-child(even) {
+    background: $gray-100;
+  }
+}
+
+.porcentualLeft {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+  min-width: 0;
+}
+
+.porcentualDot {
+  flex-shrink: 0;
+  width: 0.875rem;
+  height: 0.875rem;
+  background: $primary-yellow;
+  border: 3px solid $franja-azul;
+  border-radius: 50%;
+}
+
+.porcentualInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.porcentualDate {
+  font-family: $fuente-titulos;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $franja-azul;
+}
+
+.porcentualCount {
+  font-size: $font-size-sm;
+  color: $gray-500;
+}
+
+.porcentualRight {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+}
+
+// El porcentaje: lo que se viene a buscar, así que va grande.
+.porcentualPct {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  min-width: 7rem;
+  justify-content: center;
+  padding: $spacing-2 $spacing-4;
+  font-family: $fuente-titulos;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  font-variant-numeric: tabular-nums;
+  color: $gray-700;
+  background: $gray-200;
+  border-radius: 999px;
+}
+
+.porcentualPctUp {
+  color: $tono-verde-550;
+  background: $tono-verde-50;
+}
+
+.porcentualPctDown {
+  color: $tono-rojo-600;
+  background: $tono-rojo-50;
+}
+
+.porcentualPctNa {
+  min-width: 7rem;
+  padding: $spacing-2 $spacing-4;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $gray-500;
+  text-align: center;
+  border: 1px dashed $gray-300;
+  border-radius: 999px;
+}

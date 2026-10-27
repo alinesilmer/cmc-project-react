@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
-import { getJSON, postJSON, putJSON } from "@/app/shared/lib/http";
-import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
+import { cerrarPago, editarPago, getPago, reabrirPago } from "@/app/pages/Pagos/pagos.api";
+import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import BackButton from "@/app/components/ui/BackButton/BackButton";
 import Button from "@/app/components/ui/Button/Button";
 import lq from "../Liquidacion.module.scss";
@@ -16,10 +16,7 @@ import TabVistaPreviaPago from "./tabs/TabVistaPreviaPago";
 import TabRecibos from "./tabs/TabRecibos";
 import TabExportables from "./tabs/TabExportables";
 import { DollarSign, Lock, LockOpen, Pencil } from "lucide-react";
-
-const PAGO_URL = (id: string | number) => `/api/pagos/${id}`;
-const CERRAR_URL = (id: string | number) => `/api/pagos/${id}/cerrar`;
-const REABRIR_URL = (id: string | number) => `/api/pagos/${id}/reabrir`;
+import { comoErrorApi, detalleDeError, detalleObjeto } from "@/app/shared/lib/httpErrors";
 
 type Tab =
   | "facturas"
@@ -74,13 +71,14 @@ const PagoDetalle: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await getJSON<Pago>(PAGO_URL(pagoId));
+      const data = await getPago(pagoId);
       setPago(data);
-    } catch (e: any) {
-      if (e?.response?.status === 404) {
+    } catch (e) {
+      const err = comoErrorApi(e);
+      if (err?.response?.status === 404) {
         navigate("/panel/liquidation", { replace: true });
       } else {
-        setError(e?.message || "No se pudo cargar el pago.");
+        setError(err?.message || "No se pudo cargar el pago.");
       }
     } finally {
       setLoading(false);
@@ -95,9 +93,7 @@ const PagoDetalle: React.FC = () => {
     if (!pagoId || !confirmAction) return;
     setActionBusy(true);
     try {
-      const url =
-        confirmAction === "cerrar" ? CERRAR_URL(pagoId) : REABRIR_URL(pagoId);
-      const updated = await postJSON<Pago>(url);
+      const updated = await (confirmAction === "cerrar" ? cerrarPago(pagoId) : reabrirPago(pagoId));
       setPago(updated);
       notify(
         confirmAction === "cerrar"
@@ -105,18 +101,16 @@ const PagoDetalle: React.FC = () => {
           : "Pago reabierto correctamente.",
       );
       setConfirmAction(null);
-    } catch (e: any) {
-      const detail = e?.response?.data?.detail;
-      if (typeof detail === "object" && detail?.pago_id) {
+    } catch (e) {
+      const conflicto = detalleObjeto(e);
+      if (conflicto?.pago_id) {
         notify(
-          `${detail.message ?? "Conflicto"} Ver pago #${detail.pago_id}.`,
+          `${conflicto.message ?? "Conflicto"} Ver pago #${conflicto.pago_id}.`,
           "error",
         );
       } else {
         notify(
-          typeof detail === "string"
-            ? detail
-            : (e?.message ?? "Error al cambiar estado."),
+          detalleDeError(e, "Error al cambiar estado."),
           "error",
         );
       }
@@ -134,15 +128,15 @@ const PagoDetalle: React.FC = () => {
     if (!pagoId) return;
     setSavingDesc(true);
     try {
-      const updated = await putJSON<Pago>(PAGO_URL(pagoId), {
+      const updated = await editarPago(pagoId, {
         descripcion: editDesc.trim() || null,
       });
       setPago(updated);
       setEditDescOpen(false);
       notify("Descripción guardada.");
-    } catch (e: any) {
+    } catch (e) {
       notify(
-        e?.response?.data?.detail ?? e?.message ?? "Error al guardar.",
+        detalleDeError(e, "Error al guardar."),
         "error",
       );
     } finally {

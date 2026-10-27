@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Search, X as XIcon, Loader2 } from "lucide-react";
+import { Search, X as XIcon } from "lucide-react";
 
 import styles from "./consulta.module.scss";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
 
 /** Controlled, presentational autocomplete. The parent owns the data source (sync-filtered list or async search) and passes `items`, `query`, `loading`. */
 type ComboboxProps<T> = {
@@ -114,7 +115,7 @@ function Combobox<T>({
               }}
               onKeyDown={onKeyDown}
             />
-            {loading && <Loader2 size={16} className={`${styles.fieldSpin} ${styles.spin}`} />}
+            {loading && <Cargando size={16} className={styles.fieldSpin} />}
           </label>
 
           {showMenu && (

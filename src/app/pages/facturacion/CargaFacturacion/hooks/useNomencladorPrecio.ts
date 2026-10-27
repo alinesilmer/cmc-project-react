@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { fetchPrecio } from "../../api";
 import type { PrecioResponse, ViaPractica } from "../../types";
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 
 const DEBOUNCE_MS = 250;
 
@@ -33,8 +34,9 @@ export function useNomencladorPrecio({ codMedico, codObra, codigo, fecha, via }:
       try {
         const data = await fetchPrecio(codMedico, codObra, codigo, fecha ?? undefined, via);
         setPrecio(data);
-      } catch (e: any) {
-        const detail = e?.response?.data?.detail;
+      } catch (e) {
+        const err = comoErrorApi(e);
+        const detail = err?.response?.data?.detail;
         setError(typeof detail === "string" ? detail : "No se pudo obtener el precio.");
         setPrecio(null);
       } finally {

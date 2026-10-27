@@ -51,8 +51,11 @@ export const createDeduccion = (payload: DeduccionCreatePayload) =>
 export const pagarEnCaja = (id: number) =>
   postJSON<DeduccionHistorialItem>(`${DEDUCCIONES_URL}/${id}/pagar`, {});
 
+type ConceptoCrudo = { id?: number | string; desc_id?: number | string; nombre?: string; concepto?: string; name?: string; nro_colegio?: string | number | null };
+type MedicoCrudo = { id?: number | string; ID?: number | string; nro_socio?: number | string | null; NRO_SOCIO?: number | string | null; nombre?: string; NOMBRE?: string };
+
 export const fetchDescuentos = async (): Promise<DescuentoOption[]> => {
-  const raw = await getJSON<any[]>("/api/conceptos");
+  const raw = await getJSON<ConceptoCrudo[]>("/api/conceptos");
   return (raw ?? [])
     .map((d) => {
       const nro_colegio = String(d?.nro_colegio ?? "").trim();
@@ -71,7 +74,7 @@ export const fetchMedicos = async (query: string): Promise<MedicoOption[]> => {
   const q = query.trim();
   if (q.length >= 2) params.q = q;
 
-  const raw = await getJSON<any[]>("/api/medicos/all", params);
+  const raw = await getJSON<MedicoCrudo[]>("/api/medicos/all", params);
   return (raw ?? [])
     .map((m) => ({
       id: Number(m?.id ?? m?.ID ?? 0),

@@ -1,0 +1,48 @@
+@use "@/app/styles/all.scss" as *;
+
+.actionBar {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin: 0 0 1rem 0;
+}
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid $gray-200;
+  padding: 1rem 1.5rem;
+  border-radius: 0 0 1rem 1rem;
+  margin-top: .5rem;
+}
+
+/* ── Variante panel ────────────────────────────────────────────────────────── Barra de acciones del alta dentro del panel. */
+
+[data-variante="panel"] {
+  // "Cancelar" pasa a la barra de abajo (ver RegisterBase).
+  .actionBar { display: none; }
+
+  .nav {
+    gap: $spacing-3;
+    flex-wrap: wrap;
+    margin-top: 0;
+    padding: $spacing-5 0 0;
+    border-top: 1px solid $gray-200;
+    border-radius: 0;
+
+    :global(.MuiButton-contained) {
+      background-color: $primary-blue;
+      border-color: $primary-blue-darker;
+      color: $white;
+
+      &:hover { background-color: $primary-blue-darker; color: $white; }
+    }
+  }
+
+  .navIzquierda {
+    display: flex;
+    gap: $spacing-2;
+    flex-wrap: wrap;
+  }
+}

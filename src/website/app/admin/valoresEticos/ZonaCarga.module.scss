@@ -1,177 +1,90 @@
-@use "../../../styles/variables" as *;
+@use "@/app/styles/all.scss" as *;
 
+// Ver ZonaCarga.tsx: la zona para arrastrar el PDF.
 
-.eticaDropzone {
-  border: 2px dashed $ad-borde-fuerte;
-  border-radius: $ad-radio;
-  background: $ad-superficie-2;
-  padding: $spacing-xl $spacing-lg;
+.zona {
+  display: grid;
+  place-items: center;
+  min-height: 9rem;
+  padding: $spacing-6;
+  color: $gray-500;
+  text-align: center;
+  background: $gray-50;
+  border: 2px dashed $gray-300;
+  border-radius: $radio-lg;
   cursor: pointer;
-  transition: border-color $transition-fast, background $transition-fast;
-  position: relative;
+  transition: border-color 0.18s, background-color 0.18s;
 
-  &:hover {
-    border-color: $primary-blue;
-    background: $ad-tinte;
+  &:hover,
+  &:focus-visible {
+    border-color: $franja-azul;
+    outline: none;
   }
 }
 
-.eticaDropzoneActive {
-  border-color: $primary-blue;
-  background: $ad-tinte;
+.activa {
+  background: $primary-yellow-light;
+  border-color: $franja-azul;
 }
 
-.eticaDropzoneFilled {
+.llena {
   border-style: solid;
-  border-color: $primary-blue;
-  background: $ad-tinte;
+  border-color: $ok;
 }
 
-.eticaFileInput {
-  display: none;
+// El input real queda fuera de la vista: la zona entera hace de botón.
+.entrada {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
 }
 
-.eticaDropzoneEmpty {
+.vacia {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  text-align: center;
+  gap: $spacing-2;
+
+  svg {
+    color: $gray-400;
+  }
 }
 
-.eticaUploadIcon {
-  color: $ad-texto-3;
-}
-
-.eticaDropzoneText {
+.texto {
   margin: 0;
-  font-size: 0.92rem;
-  color: $ad-texto;
+  font-size: $font-size-base;
+  color: $gray-700;
 
   span {
-    color: $primary-blue;
-    font-weight: 600;
+    color: $franja-azul;
     text-decoration: underline;
   }
 }
 
-.eticaDropzoneHint {
+.limite {
   margin: 0;
-  font-size: 0.78rem;
-  color: $ad-texto-3;
+  font-size: $font-size-xs;
+  color: $gray-500;
 }
 
-.eticaFilePreview {
+.elegido {
   display: flex;
-  align-items: center;
-  gap: $spacing-sm;
   flex-wrap: wrap;
-
-  svg { color: $primary-blue; flex-shrink: 0; }
-}
-
-.eticaFileName {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: $dark-gray;
-  flex: 1;
-  word-break: break-all;
-}
-
-.eticaFileSize {
-  font-size: 0.8rem;
-  color: $ad-texto-3;
-  flex-shrink: 0;
-}
-
-.eticaRemoveFile {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: $ad-peligro;
-  display: inline-flex;
   align-items: center;
-  padding: 2px;
-  border-radius: $ad-radio-chico;
-  transition: background $transition-fast;
-  flex-shrink: 0;
-
-  &:hover { background: $ad-peligro-suave; }
+  justify-content: center;
+  gap: $spacing-3;
+  color: $franja-azul;
 }
 
-.eticaActions {
-  display: flex;
-  gap: $spacing-sm;
-  align-items: center;
-  flex-wrap: wrap;
+.nombre {
+  color: $gray-800;
+  overflow-wrap: anywhere;
 }
 
-.eticaUploadBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 0.55rem 1.2rem;
-  border-radius: $ad-radio;
-  border: none;
-  background: $primary-blue;
-  color: $white;
-  font-family: inherit;
-  font-size: 0.92rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background $transition-fast, opacity $transition-fast;
-
-  &:hover:not(:disabled) { background: $primary-blue-dark; }
-  &:disabled { opacity: 0.45; cursor: not-allowed; }
-}
-
-.eticaCancelBtn {
-  padding: 0.55rem 1rem;
-  border-radius: $ad-radio;
-  border: 1px solid $ad-borde;
-  background: $white;
-  font-family: inherit;
-  font-size: 0.92rem;
-  font-weight: 600;
-  color: $ad-texto;
-  cursor: pointer;
-  transition: border-color $transition-fast, background $transition-fast;
-
-  &:hover {
-    border-color: $primary-blue;
-    background: $ad-tinte;
-  }
-}
-
-.eticaObsField {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-
-  label {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: $ad-texto-2;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-  }
-}
-
-.eticaObsTextarea {
-  resize: vertical;
-  min-height: 56px;
-  border: 1px solid $ad-borde;
-  border-radius: $ad-radio;
-  padding: 8px 12px;
-  font-family: inherit;
-  font-size: 0.9rem;
-  color: $dark-gray;
-  background: $ad-superficie-2;
-  transition: border-color $transition-fast;
-
-  &:focus {
-    outline: none;
-    border-color: $primary-blue;
-    background: $white;
-  }
+.tamano {
+  font-size: $font-size-sm;
+  color: $gray-500;
 }

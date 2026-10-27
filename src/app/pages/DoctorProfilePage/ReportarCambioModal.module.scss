@@ -25,47 +25,57 @@
   }
 }
 
-// El botón de cierre que trae rsuite es un aspa gris diminuta pegada al borde.
+// La ventana de los reclamos: el título a la izquierda y el aspa roja a la derecha.
 .modal {
-  :global(.rs-modal-header) {
-    // Aire para que el aspa no se monte sobre el título.
-    padding-inline-end: 2.75rem;
+  padding: $spacing-4;
+  border-radius: 6px;
+}
+
+.cabeza {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+  margin-bottom: $spacing-4;
+}
+
+.titulo {
+  margin: 0;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $gray-900;
+}
+
+.cerrar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.9rem;
+  height: 1.9rem;
+  padding: 0;
+  border: 1px solid rgba($danger-red, 0.32);
+  border-radius: 0;
+  background: rgba($danger-red, 0.08);
+  color: $danger-red;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+  &:hover:not(:disabled),
+  &:focus-visible {
+    background: $danger-red;
+    border-color: $danger-red;
+    color: $white;
   }
 
-  :global(.rs-modal-header-close) {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    top: $spacing-3;
-    inset-inline-end: $spacing-3;
-    width: 1.9rem;
-    height: 1.9rem;
-    padding: 0;
-    border: 1px solid rgba($danger-red, 0.32);
-    border-radius: 0;
-    background: rgba($danger-red, 0.08);
-    color: $danger-red;
-    opacity: 1;
-    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba($danger-red, 0.24);
+  }
 
-    // rsuite pinta el aspa con un svg propio; heredar el color evita depender de si la versión usa fill o stroke.
-    svg {
-      width: 0.95rem;
-      height: 0.95rem;
-      fill: currentColor;
-    }
-
-    &:hover,
-    &:focus-visible {
-      background: $danger-red;
-      border-color: $danger-red;
-      color: $white;
-    }
-
-    &:focus-visible {
-      outline: none;
-      box-shadow: 0 0 0 3px rgba($danger-red, 0.24);
-    }
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
   }
 }
 

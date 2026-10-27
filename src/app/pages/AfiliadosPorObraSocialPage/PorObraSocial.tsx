@@ -28,7 +28,8 @@ import ExportFieldsModal from "./ExportFieldsModal";
 import RecuentoModal from "./RecuentoModal";
 import EnvioModal from "./EnvioModal";
 import AfiliadosPorObraSocialTable from "./AfiliadosPorObraSocialTable";
-import styles from "./Padrones.module.scss";
+import comun from "./Comun.module.scss";
+import styles from "./PorObraSocial.module.scss";;
 import Caja, { Cajas } from "@/app/components/ui/Caja/Caja";
 import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import SearchField from "@/app/components/ui/SearchField/SearchField";
@@ -190,7 +191,7 @@ export default function PorObraSocial() {
             <span className={styles.osButtonValue}>
               {selectedOS?.NOMBRE ?? (loadingObras ? "Cargando…" : "Seleccioná una obra social")}
             </span>
-            <ChevronDown className={`${styles.chevron} ${osDropdownOpen ? styles.chevronOpen : ""}`} />
+            <ChevronDown className={`${comun.chevron} ${osDropdownOpen ? styles.chevronOpen : ""}`} />
           </button>
 
           {osDropdownOpen && (
@@ -209,7 +210,7 @@ export default function PorObraSocial() {
                 {loadingObras ? (
                   <div className={styles.emptyMessage}>Cargando obras sociales…</div>
                 ) : errorObras ? (
-                  <div className={styles.errorMessage}>{errorObras}</div>
+                  <div className={comun.errorMessage}>{errorObras}</div>
                 ) : filteredOS.length === 0 ? (
                   <div className={styles.emptyMessage}>Sin resultados para &ldquo;{osQuery}&rdquo;</div>
                 ) : (
@@ -231,7 +232,7 @@ export default function PorObraSocial() {
 
           {/* Las columnas elegidas valen para la tabla y para lo que se exporta: lo que se ve es lo que sale en el archivo. */}
           <div className={styles.cajaFila}>
-            <button type="button" className={styles.ajusteBtn} onClick={() => setCamposOpen(true)}>
+            <button type="button" className={comun.ajusteBtn} onClick={() => setCamposOpen(true)}>
             <SlidersHorizontal size={15} aria-hidden="true" />
             Datos a mostrar
             <b>{campos.seleccionados.length}</b>
@@ -241,7 +242,7 @@ export default function PorObraSocial() {
               </span>
             )}
           </button>
-            <button type="button" className={styles.ajusteBtn} onClick={() => setRecuentoOpen(true)} disabled={!padronListo}>
+            <button type="button" className={comun.ajusteBtn} onClick={() => setRecuentoOpen(true)} disabled={!padronListo}>
             <ClipboardCheck size={15} aria-hidden="true" />
             Recuento de errores
           </button>
@@ -272,7 +273,7 @@ export default function PorObraSocial() {
           />
         </div>
           <div className={styles.cajaFila}>
-            <button type="button" className={styles.ajusteBtn} onClick={() => setEnvioOpen(true)} disabled={!padronListo}>
+            <button type="button" className={comun.ajusteBtn} onClick={() => setEnvioOpen(true)} disabled={!padronListo}>
             <Mail size={15} aria-hidden="true" />
             Envío de lista de prestadores
           </button>
@@ -281,7 +282,7 @@ export default function PorObraSocial() {
       </Cajas>
 
       {exportar.error && (
-        <div className={styles.errorMessage} role="alert">
+        <div className={comun.errorMessage} role="alert">
           {exportar.error}
           <button
             type="button"
@@ -322,17 +323,17 @@ export default function PorObraSocial() {
       {selectedOS && fichas.error && <p className={styles.inactivosHint}>{fichas.error}</p>}
 
       {!selectedOS ? (
-        <div className={styles.emptyState}>
-          <Building2 size={40} className={styles.emptyIcon} />
-          <h3 className={styles.emptyTitle}>Seleccioná una obra social</h3>
+        <div className={comun.emptyState}>
+          <Building2 size={40} className={comun.emptyIcon} />
+          <h3 className={comun.emptyTitle}>Seleccioná una obra social</h3>
         </div>
       ) : loadingPrestadores ? (
-        <div className={styles.loadingState}>
-          <div className={styles.progressBar}><div className={styles.progressFill} /></div>
-          <p className={styles.loadingText}>Cargando prestadores…</p>
+        <div className={comun.loadingState}>
+          <div className={comun.progressBar}><div className={comun.progressFill} /></div>
+          <p className={comun.loadingText}>Cargando prestadores…</p>
         </div>
       ) : errorPrestadores ? (
-        <div className={styles.errorMessage}>{errorPrestadores}</div>
+        <div className={comun.errorMessage}>{errorPrestadores}</div>
       ) : (
         <AfiliadosPorObraSocialTable
           rows={fichas.filas}

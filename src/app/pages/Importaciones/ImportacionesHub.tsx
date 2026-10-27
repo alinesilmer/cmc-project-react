@@ -1,7 +1,8 @@
 import { FileUp } from "lucide-react";
 
 import Franja from "@/app/components/layout/Franja/Franja";
-import Carpeta, { carpetaStyles } from "@/app/pages/Validaciones/components/Carpeta";
+import Carpeta from "@/app/pages/Validaciones/components/Carpeta";
+import carpetaStyles from "@/app/pages/Validaciones/components/ObraSocialCard.module.scss";
 import { IMPORTADORES } from "./importaciones.config";
 import s from "./ImportacionesHub.module.scss";
 

@@ -1,5 +1,5 @@
 import { FileText, Image, Paperclip } from "lucide-react";
-import type { TipoArchivo } from "../../../lib/documentos";
+import type { TipoArchivo } from "@/website/lib/documentos";
 
 type Props = { tipo: TipoArchivo; size?: number; className?: string };
 

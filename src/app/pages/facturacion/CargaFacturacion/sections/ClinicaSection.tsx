@@ -6,7 +6,8 @@ import ConfirmActionModal from "../../components/ConfirmActionModal";
 import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 import { eliminarClinica } from "../../api";
 import type { ClinicaOption } from "../../types";
-import styles from "../CargaFacturacion.module.scss";
+import comun from "../Comun.module.scss";;
+import paleta from "@/app/styles/paleta.module.scss";
 
 interface Props {
   codClinica: number | null;
@@ -61,9 +62,9 @@ const ClinicaSection: React.FC<Props> = ({
   };
 
   return (
-    <div className={styles.section}>
-      <span className={styles.sectionTitle}>Clínica</span>
-      <div className={styles.filterField}>
+    <div className={comun.section}>
+      <span className={comun.sectionTitle}>Clínica</span>
+      <div className={comun.filterField}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <ClinicaAutocomplete
@@ -78,7 +79,7 @@ const ClinicaSection: React.FC<Props> = ({
           </div>
           <button
             type="button"
-            className={styles.btnIcon}
+            className={comun.btnIcon}
             onClick={() => setModal("editar")}
             disabled={!puedeBorrar}
             title={puedeBorrar ? `Editar ${clinicaNombre}` : "Elegí una clínica del padrón para poder editarla"}
@@ -88,7 +89,7 @@ const ClinicaSection: React.FC<Props> = ({
           </button>
           <button
             type="button"
-            className={styles.btnIconDanger}
+            className={comun.btnIconDanger}
             onClick={() => { setBajaError(null); setShowBaja(true); }}
             disabled={!puedeBorrar}
             title={
@@ -100,15 +101,15 @@ const ClinicaSection: React.FC<Props> = ({
           >
             <Trash2 size={16} />
           </button>
-          <button type="button" className={styles.btnGhost} onClick={() => setModal("alta")} disabled={disabled}>
+          <button type="button" className={comun.btnGhost} onClick={() => setModal("alta")} disabled={disabled}>
             + Agregar clínica
           </button>
         </div>
         {/* Una clínica recién creada/elegida por este camino (no por click directo en una opción del dropdown) puede no reflejarse en el texto del combobox. */}
         {clinicaNombre && (
-          <span style={{ fontSize: 12, color: "#1d9148", fontWeight: 600 }}><Check size={14} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> {clinicaNombre}</span>
+          <span style={{ fontSize: 12, color: paleta.successGreen, fontWeight: 600 }}><Check size={14} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> {clinicaNombre}</span>
         )}
-        {bajaError && <span className={styles.errorText}>{bajaError}</span>}
+        {bajaError && <span className={comun.errorText}>{bajaError}</span>}
       </div>
 
       <AltaClinicaModal

@@ -1,3 +1,4 @@
+import { formatoPesos } from "@/app/shared/lib/formatos";
 // Exportación de las tablas de reportes.
 
 export interface ColumnaExport<T> {
@@ -26,14 +27,13 @@ export interface DocumentoReporte<T> {
   nombre: string;
 }
 
-const MONEDA = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" });
 
 /** El valor de una celda como texto para leer: importes con `$`, miles con punto. */
 export function textoDeCelda<T>(columna: ColumnaExport<T>, fila: T): string {
   const v = columna.value(fila);
   if (v == null || v === "") return "";
   if (typeof v !== "number") return String(v);
-  if (columna.tipo === "moneda") return MONEDA.format(v);
+  if (columna.tipo === "moneda") return formatoPesos.format(v);
   return columna.tipo === "numero" ? v.toLocaleString("es-AR") : String(v);
 }
 
@@ -46,7 +46,7 @@ export function totalFacturado<T>(columnas: ColumnaExport<T>[], filas: T[]): str
   const columna = columnas.find((c) => c.tipo === "moneda");
   if (!columna) return null;
   const total = filas.reduce((suma, f) => suma + (Number(columna.value(f)) || 0), 0);
-  return MONEDA.format(total);
+  return formatoPesos.format(total);
 }
 
 function descargar(blob: Blob, nombre: string): void {

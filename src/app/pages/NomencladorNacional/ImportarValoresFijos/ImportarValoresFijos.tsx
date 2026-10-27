@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { AlertCircle, CheckCircle2, FileSpreadsheet, FileUp, Loader2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, FileSpreadsheet, FileUp } from "lucide-react";
 
 import styles from "./ImportarValoresFijos.module.scss";
-import AppSearchSelect from "../../../components/ui/AppSearchSelect/AppSearchSelect";
-import Modal from "../../../components/ui/Modal/Modal";
-import MultiSelectBuscable from "../../../components/molecules/MultiSelectBuscable/MultiSelectBuscable";
-import ReplicarFamiliaBlock from "../../../components/molecules/ReplicarFamilia/ReplicarFamiliaBlock";
-import { destinosReplica, type ReplicaState } from "../../../components/molecules/ReplicarFamilia/replicaState";
+import AppSearchSelect from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
+import Modal from "@/app/components/ui/Modal/Modal";
+import MultiSelectBuscable from "@/app/components/molecules/MultiSelectBuscable/MultiSelectBuscable";
+import ReplicarFamiliaBlock from "@/app/components/molecules/ReplicarFamilia/ReplicarFamiliaBlock";
+import { destinosReplica, type ReplicaState } from "@/app/components/molecules/ReplicarFamilia/replicaState";
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import { getEspecialidades } from "../../Especialidades/especialidades.api";
 import { readExcel } from "@/app/shared/lib/precios/readExcel";
@@ -21,6 +21,10 @@ import type {
   ImportarFijosFilaIn,
   ImportarFijosPreviewOut,
 } from "../nomenclador.types";
+import { formatoPesos } from "@/app/shared/lib/formatos";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
+import Paginador from "@/app/components/ui/Paginador/Paginador";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
 
 const ENCABEZADO = ["CODIGO", "DESCRIPCION", "HONORARIOS", "GASTOS", "AYUDANTE"];
 const PAGE_SIZE = 50;
@@ -58,8 +62,7 @@ const ACCION_EN_REPLICA: Partial<Record<AccionFija, string>> = {
 };
 const CATEGORIAS = ["Practica", "Consulta", "Honorarios individuales"];
 
-const money = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 2 });
-const fmt = (v: string | null) => (v == null ? "—" : money.format(Number(v)));
+const fmt = (v: string | null) => (v == null ? "—" : formatoPesos.format(Number(v)));
 const fechaCorta = (iso: string) => iso.split("-").reverse().join("/");
 
 type Decision = { accion: AccionFija | ""; especialidades: number[]; sinRestriccion: boolean; categoria: string };
@@ -401,7 +404,7 @@ export default function ImportarValoresFijos() {
           <div className={styles.campo}>
             <span className={styles.label}>Archivo (.xlsx)</span>
             <button type="button" className={styles.archivo} onClick={() => inputRef.current?.click()} disabled={leyendo || aplicando}>
-              {leyendo ? <Loader2 size={16} className={styles.spin} /> : <FileUp size={16} />}
+              {leyendo ? <Cargando size={16} /> : <FileUp size={16} />}
               {archivo ? (
                 <>
                   <b>{archivo.nombre}</b>
@@ -414,7 +417,7 @@ export default function ImportarValoresFijos() {
             <input ref={inputRef} type="file" accept=".xlsx,.xls" hidden onChange={(e) => elegirArchivo(e.target.files?.[0])} />
           </div>
           <button type="button" className={styles.btnPrimary} onClick={previsualizar} disabled={!puedePrevisualizar}>
-            {previsualizando && <Loader2 size={15} className={styles.spin} />}
+            {previsualizando && <Cargando size={15} />}
             Previsualizar
           </button>
         </div>
@@ -497,7 +500,7 @@ export default function ImportarValoresFijos() {
               )}
             </div>
             <div className={styles.tablaWrap}>
-              <table className={styles.tabla}>
+              <Tabla className={styles.tabla}>
                 <thead>
                   <tr>
                     <th>Fila</th>
@@ -607,14 +610,10 @@ export default function ImportarValoresFijos() {
                     );
                   })}
                 </tbody>
-              </table>
+              </Tabla>
             </div>
             {totalPages > 1 && (
-              <div className={styles.paginacion} role="navigation" aria-label="Paginación">
-                <button type="button" className={styles.btnSecondary} disabled={page === 1} onClick={() => setPage((p) => p - 1)}>‹ Anterior</button>
-                <span className={styles.muted}>Página {page} de {totalPages}</span>
-                <button type="button" className={styles.btnSecondary} disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>Siguiente ›</button>
-              </div>
+              <Paginador pagina={page} totalPaginas={totalPages} onCambiar={setPage} />
             )}
           </section>
 
@@ -666,7 +665,7 @@ export default function ImportarValoresFijos() {
         <div className={styles.modalAcciones}>
           <button type="button" className={styles.btnSecondary} onClick={() => setConfirmando(false)} disabled={aplicando}>Volver</button>
           <button type="button" className={styles.btnPrimary} onClick={confirmar} disabled={aplicando}>
-            {aplicando && <Loader2 size={15} className={styles.spin} />}
+            {aplicando && <Cargando size={15} />}
             Cargar precios
           </button>
         </div>

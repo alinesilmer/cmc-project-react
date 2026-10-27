@@ -187,8 +187,8 @@ export const TOP_NAV: TopEntry[] = [
       {
         heading: "Boletines",
         items: [
-          { path: `${base}/boletin-consulta-comun`, icon: FileBoxIcon, label: "Boletín mensual", perms: ["catalogo:leer"] },
-          { path: `${base}/boletin-valores-galenos`, icon: Sigma, label: "Boletín galenos", perms: ["nomenclador:leer"] },
+          { path: `${base}/boletin-consulta-comun`, icon: FileBoxIcon, label: "Editar boletín", perms: ["catalogo:leer"] },
+          { path: `${base}/boletin-valores`, icon: FileText, label: "Boletín (vista del médico)", perms: ["nomenclador:leer"] },
           { path: `${base}/boletin`, icon: Medal, label: "Ranking de valores", perms: ["nomenclador:leer"] },
           { path: `${base}/nomenclador/actualizaciones`, icon: CalendarClock, label: "Obras sociales actualizadas", perms: ["nomenclador:leer"] },
           // Sin `perms`: las planillas las ve todo el personal.

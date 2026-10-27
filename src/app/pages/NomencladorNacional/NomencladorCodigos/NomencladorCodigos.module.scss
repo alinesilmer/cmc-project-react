@@ -1,6 +1,5 @@
 @use "@/app/styles/all.scss" as *;
 
-
 .container {
   min-height: 100vh;
   background: $papel;
@@ -354,20 +353,6 @@
   font-size: 0.85rem;
   padding: 1.5rem 0;
 }
-
-// ─── Modal ────────────────────────────────────────────────────────────────────
-.backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba($gray-900, .45);
-  backdrop-filter: blur(3px);
-  z-index: 200;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-}
-
 .modal {
   background: $superficie;
   border-radius: $radio-lg;
@@ -564,18 +549,6 @@
   }
 }
 
-.spinner {
-  display: inline-block;
-  width: 0.875rem;
-  height: 0.875rem;
-  border: 2px solid rgba($white, .4);
-  border-top-color: $white;
-  border-radius: 50%;
-  animation: spin .7s linear infinite;
-}
-
-@keyframes spin { to { transform: rotate(360deg); } }
-
 .toast {
   position: fixed;
   bottom: 1.75rem;
@@ -595,37 +568,3 @@
 
 .toastSuccess { background: $tono-verde-550; color: $white; }
 .toastError   { background: $peligro;    color: $white; }
-
-.paginationBar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.625rem;
-  padding: 0.75rem 1rem;
-  border-top: 1px solid $linea;
-  background: $gray-50;
-  font-size: 0.82rem;
-  color: $tinta-3;
-
-  @media (max-width: 640px) { flex-direction: column; align-items: flex-start; }
-}
-
-.paginationButtons {
-  display: flex;
-  gap: 0.375rem;
-}
-
-.btnPage {
-  height: 1.875rem;
-  padding: 0 0.75rem;
-  border: 1px solid $linea;
-  border-radius: $radio-sm;
-  background: $superficie;
-  color: $tinta-2;
-  font-size: 0.82rem;
-  cursor: pointer;
-  transition: background .12s;
-
-  &:hover:not(:disabled) { background: $acento-tinte; color: $acento; border-color: $tono-azul-150; }
-  &:disabled { opacity: .45; cursor: not-allowed; }
-}

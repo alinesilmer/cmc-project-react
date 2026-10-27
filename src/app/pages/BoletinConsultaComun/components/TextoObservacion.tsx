@@ -1,4 +1,4 @@
-import s from "../BoletinConsultaComun.module.scss";
+import s from "./TextoObservacion.module.scss";
 
 type Renglon =
   | { tipo: "rotulo"; rotulo: string; cuerpo: string }

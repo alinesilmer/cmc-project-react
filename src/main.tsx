@@ -2,7 +2,6 @@ import { StrictMode, Suspense, lazy } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import "./app/styles/globals.scss";
-import "./app/styles/rsuite-toaster-overrides.css";
 
 import RootRoutes from "./routes";
 import ChunkErrorBoundary, { CHUNK_RELOAD_FLAG } from "./app/ChunkErrorBoundary";

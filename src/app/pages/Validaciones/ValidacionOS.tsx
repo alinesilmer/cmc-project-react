@@ -9,7 +9,7 @@ import {
   PlusCircle,
 } from "lucide-react";
 
-import { useAuth } from "../../auth/AuthProvider";
+import { useAuth } from "../../auth/useAuth";
 import { isMedico } from "../../auth/roles";
 import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 import ActionModal from "@/app/components/ui/ActionModal/ActionModal";

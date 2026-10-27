@@ -1,6 +1,6 @@
 // src/app/auth/RequireWebEditor.tsx
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { useAuth } from "./AuthProvider";
+import { useAuth } from "./useAuth";
 import { usePermisos } from "./usePermisos";
 import { isWebEditor } from "./roles";
 

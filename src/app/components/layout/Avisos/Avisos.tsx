@@ -54,7 +54,7 @@ export default function Avisos() {
         position: "fixed",
         right: 16,
         bottom: 16,
-        // Por encima de los modales (MUI 1300, rsuite 1050).
+        // Por encima de los modales (MUI 1300).
         zIndex: 1400,
         display: "flex",
         flexDirection: "column",

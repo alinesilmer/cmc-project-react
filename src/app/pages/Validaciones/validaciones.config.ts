@@ -187,7 +187,7 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
     campos: [
       {
         name: "dni",
-        label: "DNI del afiliado",
+        label: "DNI afiliado",
         tipo: "numerico",
         required: true,
         maxLength: 8,

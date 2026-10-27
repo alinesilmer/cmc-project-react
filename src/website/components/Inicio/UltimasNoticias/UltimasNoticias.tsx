@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import Revelar from "../../UI/Revelar/Revelar";
 import TarjetaPublicacion from "../../Contenido/TarjetaPublicacion/TarjetaPublicacion";
-import { listNewsPublicas } from "../../../lib/news.client";
+import { listNewsPublicas } from "@/website/lib/news.client";
 import { PUBLICACIONES, publicacionesKey } from "../../Contenido/publicaciones";
 import styles from "./UltimasNoticias.module.scss";
 

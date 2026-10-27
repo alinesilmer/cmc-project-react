@@ -3,14 +3,14 @@ import logo from "@/website/assets/images/logoCMC-web.png";
 
 export const CMC_NAME = "Colegio Médico de Corrientes";
 export const CMC_PHONE = String(
-  (import.meta as any).env?.VITE_CMC_PHONE ?? "(0379) 4252323"
+  import.meta.env.VITE_CMC_PHONE ?? "(0379) 4252323"
 );
 export const CMC_EMAIL = String(
-  (import.meta as any).env?.VITE_CMC_EMAIL ??
+  import.meta.env.VITE_CMC_EMAIL ??
     "padronescolegiomedico@gmail.com"
 );
 export const CMC_LOGO_SRC =
-  String((import.meta as any).env?.VITE_CMC_LOGO_URL || "") || logo;
+  String(import.meta.env.VITE_CMC_LOGO_URL || "") || logo;
 
 /** Fetches an image URL and returns a data URL string. */
 export async function fetchAsDataUrl(src: string): Promise<string | null> {

@@ -10,6 +10,7 @@ import { pdfPorGrupos } from "@/app/shared/lib/documentos/pdfPorGrupos";
 
 import { getJSON } from "@/app/shared/lib/http";
 import type { FilterSelection } from "../../types/filters";
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 
 /** `pdf` es siempre el listado por especialidad, como el de Padrones. */
 type ExportFormat = "xlsx" | "csv" | "pdf";
@@ -224,11 +225,12 @@ export function useMedicosExport() {
         );
 
         return true;
-      } catch (e: any) {
+      } catch (e) {
+        const err = comoErrorApi(e);
         const msg =
-          e?.response?.data?.detail
-            ? String(e.response.data.detail)
-            : e?.message || "Error exportando";
+          err?.response?.data?.detail
+            ? String(err.response.data.detail)
+            : err?.message || "Error exportando";
 
         setExportError(msg);
         return false;

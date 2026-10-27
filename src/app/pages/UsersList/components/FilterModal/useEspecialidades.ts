@@ -7,11 +7,12 @@ import {
   hasEspecialidadesCatalog,
   setEspecialidadesCatalog,
 } from "@/app/shared/lib/especialidadesCatalog";
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 
 function normalizeOptions(data: unknown): EspecialidadOption[] {
   if (!Array.isArray(data)) return [];
   return data
-    .map((e: any) => {
+    .map((e: Record<string, unknown> | null) => {
       const rawVal =
         e?.id_colegio_espe ?? e?.id ?? e?.ID ?? e?.codigo ?? e?.CODIGO ?? e?.value ?? "";
       const rawLabel =
@@ -47,8 +48,9 @@ export function useEspecialidades() {
           setEspecialidades(opts);
           setEspecialidadesCatalog(opts);
         }
-      } catch (err: any) {
-        if (!aborted) setError(err?.message ?? "No se pudo cargar especialidades");
+      } catch (err) {
+        const error = comoErrorApi(err);
+        if (!aborted) setError(error?.message ?? "No se pudo cargar especialidades");
       } finally {
         if (!aborted) setLoading(false);
       }

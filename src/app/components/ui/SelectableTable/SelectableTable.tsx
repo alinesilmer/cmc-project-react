@@ -6,6 +6,7 @@ import Button from "@/app/components/ui/Button/Button";
 import styles from "./SelectableTable.module.scss";
 import type { ActionDef, SelectableTableProps } from "./types";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
+import paleta from "@/app/styles/paleta.module.scss";
 
 function buildUrl<T>(action: ActionDef<T>, row: T): string {
   const base = action.endpoint(row);
@@ -144,7 +145,7 @@ function SelectableTable<T extends { id: number | string }>({
           displayEmpty
           sx={{ minWidth: 200, fontSize: 13 }}
           renderValue={(val) =>
-            val ? val : <span style={{ color: "#94a3b8" }}>Seleccionar...</span>
+            val ? val : <span style={{ color: paleta.gray400 }}>Seleccionar...</span>
           }
         >
           {actions.map((a) => (
@@ -243,7 +244,7 @@ function SelectableTable<T extends { id: number | string }>({
                       >
                         {col.render
                           ? col.render(row)
-                          : String((row as any)[col.key] ?? "")}
+                          : String((row as Record<string, unknown>)[col.key] ?? "")}
                       </td>
                     ))}
                   </tr>

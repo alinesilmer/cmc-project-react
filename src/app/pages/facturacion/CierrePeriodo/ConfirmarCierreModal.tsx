@@ -4,6 +4,7 @@ import Button from "@/app/components/ui/Button/Button";
 import type { CierrePreviewResponse } from "../types";
 import { formatMoney } from "../money";
 import { AlertTriangle } from "lucide-react";
+import paleta from "@/app/styles/paleta.module.scss";
 
 interface Props {
   isOpen: boolean;
@@ -22,13 +23,13 @@ const ConfirmarCierreModal: React.FC<Props> = ({
 }) => (
   <Modal isOpen={isOpen} onClose={onClose} title="Confirmar cierre de período" size="small">
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <p style={{ fontSize: 13, color: "#334155", margin: 0 }}>
+      <p style={{ fontSize: 13, color: paleta.gray700, margin: 0 }}>
         Vas a cerrar <strong>{osNombre}</strong> · período {preview.periodo}.
       </p>
-      <ul style={{ fontSize: 13, color: "#334155", margin: 0, paddingLeft: 20 }}>
+      <ul style={{ fontSize: 13, color: paleta.gray700, margin: 0, paddingLeft: 20 }}>
         <li>{preview.cantidad} prestaciones</li>
         {(preview.sin_valorizar ?? 0) > 0 && (
-          <li style={{ color: "#92400e", fontWeight: 600 }}>
+          <li style={{ color: paleta.tonoNaranja550, fontWeight: 600 }}>
             {preview.sin_valorizar} sin valorizar (en $0 por falta de precio)
           </li>
         )}
@@ -37,7 +38,7 @@ const ConfirmarCierreModal: React.FC<Props> = ({
         {nroFactura && <li>Nº de factura: {nroFactura}</li>}
         <li>Documento: {archivoNombre ?? "sin adjuntar"}</li>
       </ul>
-      <div style={{ background: "#fffbeb", border: "1px solid #f59e0b", borderRadius: 6, padding: "8px 12px", fontSize: 12, color: "#92400e" }}>
+      <div style={{ background: paleta.tonoAmarillo50C, border: `1px solid ${paleta.warningOrange}`, borderRadius: 6, padding: "8px 12px", fontSize: 12, color: paleta.tonoNaranja550 }}>
         <AlertTriangle size={14} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> Esta acción <strong>NO se puede deshacer</strong> y habilita la liquidación.
       </div>
       <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>

@@ -1,5 +1,5 @@
 import WhatsappIcon from "../../UI/icons/WhatsappIcon";
-import { linkWhatsApp } from "../../../lib/contacto";
+import { linkWhatsApp } from "@/website/lib/contacto";
 import styles from "./Asesoras.module.scss";
 
 /** Las asesoras de Prevención Salud dedicadas al convenio. */

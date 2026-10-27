@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { Stethoscope } from "lucide-react";
 
 import styles from "./BoletinConsultaComun.module.scss";
+import comun from "./components/Comun.module.scss";
 import Caja, { Cajas } from "@/app/components/ui/Caja/Caja";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 import Franja, { Solapa } from "@/app/components/layout/Franja/Franja";
@@ -104,7 +105,7 @@ export default function BoletinConsultaComun() {
         </Caja>
       </Cajas>
 
-      {exportError && <div className={`${styles.aviso} ${styles.avisoError}`}>{exportError}</div>}
+      {exportError && <div className={`${comun.aviso} ${comun.avisoError}`}>{exportError}</div>}
 
       {pestana === "observaciones" ? (
         <ObservacionesTab

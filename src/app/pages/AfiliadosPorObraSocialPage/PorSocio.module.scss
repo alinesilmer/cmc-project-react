@@ -1,0 +1,17 @@
+@use "@/app/styles/all.scss" as *;
+
+
+// ── Barra: selector y exportaciones ──────────────────────────────────────────
+
+.barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-3;
+}
+
+.socioPicker {
+  flex: 1 1 22rem;
+  max-width: 36rem;
+  min-width: 0;
+}

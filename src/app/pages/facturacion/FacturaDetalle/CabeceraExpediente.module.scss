@@ -44,8 +44,6 @@
 }
 .numeroFacturaTipo { width: 2.75rem; text-align: center; }
 
-.girando { animation: girar 1s linear infinite; }
-@keyframes girar { to { transform: rotate(360deg); } }
 
 // ── Chips ─────────────────────────────────────────────────────────────────────
 .chip {

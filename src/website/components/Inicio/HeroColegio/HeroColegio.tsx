@@ -1,7 +1,7 @@
 import { ArrowRight, MessageCircle } from "lucide-react";
 import Button from "../../UI/Button/Button";
 import Revelar from "../../UI/Revelar/Revelar";
-import { useIrAlSistema } from "../../../hooks/useIrAlSistema";
+import { useIrAlSistema } from "@/website/hooks/useIrAlSistema";
 import { abrirChatbot } from "../../Chatbot/abrirChatbot";
 import TitularRotativo from "./TitularRotativo";
 import SelloColegio from "./SelloColegio";

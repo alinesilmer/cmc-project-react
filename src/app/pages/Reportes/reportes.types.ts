@@ -1,3 +1,4 @@
+import { formatoNumero, formatoPesos, formatoPesosEnteros } from "@/app/shared/lib/formatos";
 // Espejo de app/modules/reportes/schemas.py.
 
 export interface ResumenReporte {
@@ -111,20 +112,11 @@ export function ultimosPeriodos(n = 24): string[] {
   return out;
 }
 
-export const money = new Intl.NumberFormat("es-AR", {
-  style: "currency",
-  currency: "ARS",
-  maximumFractionDigits: 0,
-});
+export const money = formatoPesosEnteros;
 
-export const moneyExacto = new Intl.NumberFormat("es-AR", {
-  style: "currency",
-  currency: "ARS",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
+export const moneyExacto = formatoPesos;
 
-export const numero = new Intl.NumberFormat("es-AR");
+export const numero = formatoNumero;
 
 /** Importes grandes en los ejes: 35.716.523 → "35,7 M". */
 export function moneyCompacto(v: number): string {

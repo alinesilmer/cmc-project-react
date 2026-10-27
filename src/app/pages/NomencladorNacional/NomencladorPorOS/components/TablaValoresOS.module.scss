@@ -1,0 +1,76 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver TablaValoresOS.tsx.
+
+.envoltorio {
+  overflow-x: auto;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
+  box-shadow: 0 14px 34px -28px rgba($franja-azul, 0.55);
+}
+
+// El encabezado de cada código: la franja crema que separa un grupo del siguiente.
+.grupo td {
+  background: $primary-yellow-light;
+}
+
+.grupoCabeza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-3;
+}
+
+.codigo {
+  font-size: $font-size-lg;
+  font-variant-numeric: tabular-nums;
+  color: $franja-azul;
+}
+
+.descripcion {
+  flex: 1;
+  min-width: 0;
+  color: $gray-700;
+}
+
+.origen {
+  display: inline-block;
+  padding: 2px $spacing-3;
+  font-size: $font-size-xs;
+  border-radius: 999px;
+}
+
+.ne {
+  color: $franja-azul;
+  background: $primary-yellow-light;
+}
+
+.nn {
+  color: $franja-azul;
+  background: $secondary-blue;
+}
+
+.tenue {
+  color: $gray-500;
+}
+
+.monto,
+.fecha {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.presupuesto {
+  display: inline-block;
+  padding: 2px $spacing-3;
+  font-size: $font-size-xs;
+  color: $franja-azul;
+  background: $gray-100;
+  border-radius: 999px;
+}
+
+.acciones {
+  display: flex;
+  gap: $spacing-2;
+}

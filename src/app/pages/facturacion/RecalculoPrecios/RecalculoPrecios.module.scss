@@ -23,15 +23,7 @@
   font-weight: 500;
 }
 
-.spin {
-  animation: girar 0.9s linear infinite;
-}
 
-@keyframes girar {
-  to {
-    transform: rotate(360deg);
-  }
-}
 
 .chipGris { background: $gray-100; color: $gray-600; }
 .chipSube { background: $cuaderno-papel; color: $tono-verde-550; border: 1px solid $tono-verde-50-b; }

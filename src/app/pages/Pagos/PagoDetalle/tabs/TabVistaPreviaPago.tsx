@@ -1,13 +1,13 @@
 import React, { useState } from "react";
-import { getJSON } from "@/app/shared/lib/http";
+import { getPagoMedicoActualizado } from "@/app/pages/Pagos/pagos.api";
 import Button from "@/app/components/ui/Button/Button";
 import Card from "@/app/components/ui/Card/Card";
 import styles from "./tabs.module.scss";
 import { type Pago, fmt } from "../../types";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
-
-const GEN_URL = (pagoId: number) => `/api/pagos/${pagoId}/pago_medico_actualizado`;
+import paleta from "@/app/styles/paleta.module.scss";
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 
 // ── Tipos del response ────────────────────────────────────────────
 
@@ -164,15 +164,15 @@ const DetallePanel: React.FC<{ detalle: Detalle }> = ({ detalle }) => {
   const deducciones = detalle.deducciones.detalle;
 
   return (
-    <div style={{ padding: "12px 16px", background: "#f8fafc", borderTop: "1px solid #e2e8f0" }}>
+    <div style={{ padding: "12px 16px", background: paleta.gray50, borderTop: `1px solid ${paleta.gray200}` }}>
 
       {/* Liquidaciones */}
       <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: paleta.gray600, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
           Liquidaciones
         </div>
         {liquidaciones.length === 0 ? (
-          <span style={{ fontSize: 12, color: "#94a3b8" }}>Sin liquidaciones.</span>
+          <span style={{ fontSize: 12, color: paleta.gray400 }}>Sin liquidaciones.</span>
         ) : (
           <Tabla className={styles.table} style={{ fontSize: 12 }}>
             <thead>
@@ -199,8 +199,8 @@ const DetallePanel: React.FC<{ detalle: Detalle }> = ({ detalle }) => {
                     <td className={`${styles.numCell} ${styles.positive}`}>+${fmt(liq.creditos.total)}</td>
                   </tr>
                   {liq.debitos.detalle.map((aj, i) => (
-                    <tr key={`deb-${i}`} style={{ background: "#fff1f2" }}>
-                      <td colSpan={4} style={{ paddingLeft: 24, fontSize: 11, color: "#64748b" }}>
+                    <tr key={`deb-${i}`} style={{ background: paleta.tonoRojo50B }}>
+                      <td colSpan={4} style={{ paddingLeft: 24, fontSize: 11, color: paleta.gray500 }}>
                         ↳ Débito · Lote #{aj.lote_id}{aj.observacion ? ` — ${aj.observacion}` : ""}
                       </td>
                       <td className={styles.numCell} style={{ fontSize: 11 }}>${fmt(aj.honorarios + aj.gastos)}</td>
@@ -209,8 +209,8 @@ const DetallePanel: React.FC<{ detalle: Detalle }> = ({ detalle }) => {
                     </tr>
                   ))}
                   {liq.creditos.detalle.map((aj, i) => (
-                    <tr key={`crd-${i}`} style={{ background: "#f0fdf4" }}>
-                      <td colSpan={4} style={{ paddingLeft: 24, fontSize: 11, color: "#64748b" }}>
+                    <tr key={`crd-${i}`} style={{ background: paleta.tonoVerde50D }}>
+                      <td colSpan={4} style={{ paddingLeft: 24, fontSize: 11, color: paleta.gray500 }}>
                         ↳ Crédito · Lote #{aj.lote_id}{aj.observacion ? ` — ${aj.observacion}` : ""}
                       </td>
                       <td className={styles.numCell} style={{ fontSize: 11 }}>${fmt(aj.honorarios + aj.gastos)}</td>
@@ -227,11 +227,11 @@ const DetallePanel: React.FC<{ detalle: Detalle }> = ({ detalle }) => {
 
       {/* Deducciones */}
       <div>
-        <div style={{ fontSize: 12, fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: paleta.gray600, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
           Deducciones
         </div>
         {deducciones.length === 0 ? (
-          <span style={{ fontSize: 12, color: "#94a3b8" }}>Sin deducciones.</span>
+          <span style={{ fontSize: 12, color: paleta.gray400 }}>Sin deducciones.</span>
         ) : (
           <Tabla className={styles.table} style={{ fontSize: 12, maxWidth: 520 }}>
             <thead>
@@ -289,14 +289,15 @@ const TabVistaPreviaPago: React.FC<Props> = ({ pagoId }) => {
     setGenerating(true);
     setGenError(null);
     try {
-      const data = await getJSON<ApiResponse>(GEN_URL(pagoId));
+      const data = await getPagoMedicoActualizado<ApiResponse>(pagoId);
       const { rows: newRows, totales: newTotales } = transformResponse(data);
       setRows(newRows);
       setTotales(newTotales);
       setExpandedRows(new Set());
       setGenResult({ total_medicos: newTotales.total_medicos });
-    } catch (e: any) {
-      setGenError(e?.message || "Error al generar.");
+    } catch (e) {
+      const err = comoErrorApi(e);
+      setGenError(err?.message || "Error al generar.");
     } finally {
       setGenerating(false);
     }
@@ -305,7 +306,7 @@ const TabVistaPreviaPago: React.FC<Props> = ({ pagoId }) => {
   return (
     <div className={styles.tabWrap}>
       <div className={styles.toolbar}>
-        <span style={{ fontSize: 13, color: "#64748b" }}>
+        <span style={{ fontSize: 13, color: paleta.gray500 }}>
           {totales ? `${totales.total_medicos} médicos` : "—"}
         </span>
         <div className={styles.toolbarLeft}>
@@ -349,12 +350,12 @@ const TabVistaPreviaPago: React.FC<Props> = ({ pagoId }) => {
                         style={{ cursor: "pointer" }}
                         onClick={() => toggleRow(r.medico_id)}
                       >
-                        <td style={{ textAlign: "center", color: "#64748b" }}>
+                        <td style={{ textAlign: "center", color: paleta.gray500 }}>
                           <ChevronIcon open={isOpen} />
                         </td>
                         <td>
                           <div style={{ fontWeight: 500 }}>{r.nombre}</div>
-                          <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                          <div style={{ fontSize: 11, color: paleta.gray400 }}>
                             Socio #{r.nro_socio} · Mat. {r.matricula}
                           </div>
                         </td>
@@ -447,13 +448,13 @@ const TabVistaPreviaPago: React.FC<Props> = ({ pagoId }) => {
                 <p>
                   ¿Generar (o actualizar) la liquidación por médico para este pago?
                   <br />
-                  <span style={{ fontSize: 12, color: "#64748b" }}>
+                  <span style={{ fontSize: 12, color: paleta.gray500 }}>
                     Esta operación es idempotente — se puede ejecutar múltiples veces.
                   </span>
                 </p>
               )}
               {generating && (
-                <p style={{ color: "#64748b" }}>Generando… por favor esperá.</p>
+                <p style={{ color: paleta.gray500 }}>Generando… por favor esperá.</p>
               )}
             </Dialogo>
       )}

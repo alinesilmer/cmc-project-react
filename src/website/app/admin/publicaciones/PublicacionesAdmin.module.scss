@@ -1,0 +1,21 @@
+@use "@/app/styles/all.scss" as *;
+
+// Barra de filtros y tarjetas de la solapa «Publicaciones».
+
+.barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-4;
+}
+
+// Empuja «Nueva publicación» al borde derecho.
+.nueva {
+  margin-left: auto;
+}
+
+.tarjetas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+  gap: $spacing-5;
+}

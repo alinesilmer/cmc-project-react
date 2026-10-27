@@ -10,7 +10,7 @@ import AppSearchSelect from "@/app/components/ui/AppSearchSelect/AppSearchSelect
 import type { AppSearchSelectOption } from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
 import ConfirmModal from "@/app/components/ui/ConfirmModal/ConfirmModal";
 import AplicarNiveladoModal from "../components/AplicarNiveladoModal";
-import { usePermisos } from "../../../auth/usePermisos";
+import { usePermisos } from "@/app/auth/usePermisos";
 import { getEspecialidades } from "../../Especialidades/especialidades.api";
 import {
   actualizarCodigoNivelado,
@@ -28,6 +28,12 @@ import type { NiveladoCodigoOut, NomencladorNiveladoOut, RecalcularNiveladoResul
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import { motivoError as detalleError } from "@/app/pages/NomencladorNacional/utiles";
 import { today } from "../nomenclador.helpers";
+import Paginador from "@/app/components/ui/Paginador/Paginador";
+import { Solapa } from "@/app/components/layout/Franja/Franja";
+import PaginaPasos from "@/app/components/layout/PaginaPasos/PaginaPasos";
+import BotonAccion from "@/app/components/ui/BotonAccion/BotonAccion";
+import Button from "@/app/components/ui/Button/Button";
+import SearchField from "@/app/components/ui/SearchField/SearchField";
 
 const PAGE_SIZE = 50;
 const RUTA = "/panel/nomenclador/nivelados";
@@ -127,21 +133,16 @@ export default function NomencladoresNivelados() {
 
   const niveles = actual ? Array.from({ length: actual.niveles }, (_, i) => i + 1) : [];
 
-  return (
-    <div className={base.container}>
-      <div className={base.header}>
-        <div className={base.headerLeft}>
-          <span className={base.headerIcon}><ListOrdered size={20} /></span>
-          <div>
-            <h1 className={base.title}>Nomencladores nivelados</h1>
-            <p className={base.subtitle}>
-              Cada nomenclador define sus códigos, el nivel de cada uno y su escala de unidades; lo que
-              cambia entre obras sociales es el precio del galeno que pacta cada una.
-            </p>
-          </div>
-        </div>
-      </div>
+  const solapas = actual
+    ? PESTANAS.map((p) => (
+        <Solapa key={p.id} activa={pestana === p.id} onClick={() => setPestana(p.id)}>
+          {p.texto}
+        </Solapa>
+      ))
+    : undefined;
 
+  return (
+    <PaginaPasos titulo="Nomencladores nivelados" icono={ListOrdered} ancha solapas={solapas}>
       <div className={styles.layout}>
         <nav className={styles.panel} aria-label="Nomencladores">
           <p className={styles.panelTitulo}>Nomencladores</p>
@@ -169,30 +170,12 @@ export default function NomencladoresNivelados() {
                 <div>
                   <h2 className={styles.titulo}>{actual.nombre}</h2>
                   <p className={base.hintText}>
-                    {actual.total_codigos} códigos · se cotiza con el <strong>{actual.galeno_nombre ?? actual.galeno_grupo}</strong> de{" "}
-                    {actual.niveles} niveles: las unidades de cada nivel salen de la pestaña Escala.
+                    {actual.total_codigos} códigos · {actual.niveles} niveles · <strong>{actual.galeno_nombre ?? actual.galeno_grupo}</strong>
                   </p>
                 </div>
                 {puedeEditar && (
-                  <button type="button" className={base.btnPrimary} onClick={() => setAplicarOpen(true)}>
-                    Aplicar a una obra social
-                  </button>
+                  <Button onClick={() => setAplicarOpen(true)}>Aplicar a una obra social</Button>
                 )}
-              </div>
-
-              <div className={styles.pestanas} role="tablist" aria-label="Secciones del nomenclador">
-                {PESTANAS.map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={pestana === p.id}
-                    className={`${styles.pestana} ${pestana === p.id ? styles.pestanaOn : ""}`}
-                    onClick={() => setPestana(p.id)}
-                  >
-                    {p.texto}
-                  </button>
-                ))}
               </div>
 
               {pestana === "escala" && (
@@ -236,12 +219,12 @@ export default function NomencladoresNivelados() {
               </div>
 
               <div className={styles.barra}>
-                <input
-                  className={`${base.formInput} ${styles.buscar}`}
+                <SearchField
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
-                  placeholder="Buscar por código o descripción…"
-                  aria-label="Buscar código"
+                  onClear={() => setQ("")}
+                  placeholder="Código o descripción"
+                  ariaLabel="Buscar código"
                 />
                 {puedeEditar && (
                   <AgregarCodigo
@@ -253,21 +236,21 @@ export default function NomencladoresNivelados() {
                 )}
               </div>
 
-              <div className={base.tableWrap}>
-                <Tabla className={base.table}>
+              <div className={styles.tablaWrap}>
+                <Tabla>
                   <thead>
                     <tr>
                       <th>Código</th>
                       <th>Descripción</th>
                       <th>Nivel</th>
-                      {puedeEditar && <th className={base.thActions} />}
+                      {puedeEditar && <th aria-label="Acciones" />}
                     </tr>
                   </thead>
                   <tbody>
                     {codigos.isLoading ? (
-                      <tr><td colSpan={4} className={base.loadingCell}>Cargando…</td></tr>
+                      <tr><td colSpan={4}>Cargando…</td></tr>
                     ) : (datos?.items.length ?? 0) === 0 ? (
-                      <tr><td colSpan={4} className={base.emptyCell}>No hay códigos con ese filtro.</td></tr>
+                      <tr><td colSpan={4}>No hay códigos con ese filtro.</td></tr>
                     ) : datos!.items.map((c) => (
                       <tr key={c.nomenclador_id}>
                         <td className={styles.codigo}>
@@ -281,10 +264,8 @@ export default function NomencladoresNivelados() {
                           ) : c.nivel != null ? `Nivel ${c.nivel}` : `${Number(c.unidades)} unidades`}
                         </td>
                         {puedeEditar && (
-                          <td className={base.actionsCell}>
-                            <button type="button" className={base.btnDanger} onClick={() => setQuitar(c)} aria-label={`Quitar ${c.codigo}`}>
-                              <Trash2 size={13} />
-                            </button>
+                          <td>
+                            <BotonAccion icono={Trash2} etiqueta={`Quitar ${c.codigo}`} peligro onClick={() => setQuitar(c)} />
                           </td>
                         )}
                       </tr>
@@ -294,11 +275,7 @@ export default function NomencladoresNivelados() {
               </div>
 
               {datos && datos.total > PAGE_SIZE && (
-                <div className={styles.paginacion}>
-                  <button type="button" className={base.btnGhost} disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Anterior</button>
-                  <span className={base.hintText}>Página {page} de {totalPaginas} · {datos.total} códigos</span>
-                  <button type="button" className={base.btnGhost} disabled={page >= totalPaginas} onClick={() => setPage((p) => p + 1)}>Siguiente</button>
-                </div>
+                <Paginador pagina={page} totalPaginas={totalPaginas} onCambiar={setPage} resumen={`${datos.total} códigos`} />
               )}
               </>
               )}
@@ -340,7 +317,7 @@ export default function NomencladoresNivelados() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </PaginaPasos>
   );
 }
 

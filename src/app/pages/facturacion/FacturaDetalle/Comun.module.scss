@@ -1,0 +1,38 @@
+@use "@/app/styles/all.scss" as *;
+
+
+.table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  // Tamaño único para todo el texto de la tabla (header, celdas, badges, resumen).
+  font-size: 0.6875rem;
+
+  thead tr {
+    background: $primary-blue-darker;
+  }
+
+  th {
+    padding: 0.5rem 0.5rem;
+    text-align: left;
+    font-size: inherit;
+    font-weight: 700;
+    color: $white;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    word-break: break-word;
+  }
+
+  td {
+    padding: 0.5rem 0.5rem;
+    color: $carpeta-noche;
+    border-bottom: 1px solid $gray-100;
+    vertical-align: middle;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  tbody tr.dataRow:hover { background: $gray-50; }
+
+  // Los anchos de columna ya no son fijos por posición (`th:nth-child`).
+}

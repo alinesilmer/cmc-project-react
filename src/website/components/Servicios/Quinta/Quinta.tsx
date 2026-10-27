@@ -1,7 +1,7 @@
 import { IdCard, Megaphone, Wallet } from "lucide-react";
 import Revelar from "../../UI/Revelar/Revelar";
 import TarjetasIcono, { type TarjetaIcono } from "../../UI/TarjetasIcono/TarjetasIcono";
-import { CONTACTO } from "../../../lib/contacto";
+import { CONTACTO } from "@/website/lib/contacto";
 import styles from "./Quinta.module.scss";
 
 const FOTO = "https://res.cloudinary.com/dcfkgepmp/image/upload/q_auto/f_auto/w_1600,c_limit/v1762471702/quintacmc3_s6sffw.jpg";

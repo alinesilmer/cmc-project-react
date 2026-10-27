@@ -1,9 +1,11 @@
 import { useRef, useState } from "react";
-import { motion } from "framer-motion";
 import { CloudUpload, FileText, X } from "lucide-react";
-import { PDF, accept, motivoDeRechazo } from "../../../lib/subidas";
-import styles from "./ZonaCarga.module.scss";
-import Button from "@/website/components/UI/Button/Button";
+
+import s from "./ZonaCarga.module.scss";
+import BotonAccion from "@/app/components/ui/BotonAccion/BotonAccion";
+import Button from "@/app/components/ui/Button/Button";
+import c from "@/app/components/ui/Paso/Campos.module.scss";
+import { PDF, accept, motivoDeRechazo } from "@/website/lib/subidas";
 
 type Props = {
   subiendo: boolean;
@@ -39,21 +41,31 @@ export default function ZonaCarga({ subiendo, onSubir, onError }: Props) {
 
   return (
     <>
-      <div className={styles.eticaObsField}>
-        <label htmlFor="etica-obs">Observaciones (opcional)</label>
+      <div className={`${c.campo} ${c.campoAncho}`}>
+        <label className={c.rotulo} htmlFor="etica-obs">Observaciones (opcional)</label>
         <textarea
           id="etica-obs"
-          className={styles.eticaObsTextarea}
+          className={c.entrada}
           value={observaciones}
           onChange={(e) => setObservaciones(e.target.value)}
           placeholder="Ej: Versión aprobada mayo 2026"
           rows={2}
+          maxLength={500}
         />
       </div>
 
-      <motion.div
-        className={`${styles.eticaDropzone} ${arrastrando ? styles.eticaDropzoneActive : ""} ${archivo ? styles.eticaDropzoneFilled : ""}`}
+      <div
+        className={`${s.zona} ${arrastrando ? s.activa : ""} ${archivo ? s.llena : ""}`}
+        role="button"
+        tabIndex={0}
+        aria-label="Elegir un PDF"
         onClick={() => input.current?.click()}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            input.current?.click();
+          }
+        }}
         onDragOver={(e) => {
           e.preventDefault();
           setArrastrando(true);
@@ -64,56 +76,56 @@ export default function ZonaCarga({ subiendo, onSubir, onError }: Props) {
           setArrastrando(false);
           elegir(e.dataTransfer.files[0] ?? null);
         }}
-        whileHover={{ scale: 1.01 }}
-        whileTap={{ scale: 0.99 }}
-        transition={{ type: "spring", stiffness: 380, damping: 28 }}
       >
         <input
           ref={input}
           type="file"
           accept={accept(PDF)}
-          className={styles.eticaFileInput}
-          aria-label="Elegir PDF"
+          className={s.entrada}
+          tabIndex={-1}
+          aria-hidden="true"
+          onClick={(e) => e.stopPropagation()}
           onChange={(e) => {
             elegir(e.target.files?.[0] ?? null);
             e.target.value = "";
           }}
         />
         {archivo ? (
-          <div className={styles.eticaFilePreview}>
+          <div className={s.elegido}>
             <FileText size={28} aria-hidden="true" />
-            <span className={styles.eticaFileName}>{archivo.name}</span>
-            <span className={styles.eticaFileSize}>{enMb(archivo.size)} MB</span>
-            <Button variant="plano"
-              type="button"
-              className={styles.eticaRemoveFile}
+            <span className={s.nombre}>{archivo.name}</span>
+            <span className={s.tamano}>{enMb(archivo.size)} MB</span>
+            <BotonAccion
+              icono={X}
+              etiqueta="Quitar archivo"
               onClick={(e) => {
                 e.stopPropagation();
                 setArchivo(null);
               }}
-              aria-label="Quitar archivo"
-            >
-              <X size={16} aria-hidden="true" />
-            </Button>
+            />
           </div>
         ) : (
-          <div className={styles.eticaDropzoneEmpty}>
-            <CloudUpload size={36} className={styles.eticaUploadIcon} aria-hidden="true" />
-            <p className={styles.eticaDropzoneText}>
-              Arrastrá un PDF acá o <span>hacé click para seleccionar</span>
+          <div className={s.vacia}>
+            <CloudUpload size={36} aria-hidden="true" />
+            <p className={s.texto}>
+              Arrastrá un PDF acá o <span>hacé click para elegirlo</span>
             </p>
-            <p className={styles.eticaDropzoneHint}>Solo archivos PDF · Máx. 20 MB</p>
+            <p className={s.limite}>Sólo PDF · hasta 20 MB</p>
           </div>
         )}
-      </motion.div>
+      </div>
 
-      <div className={styles.eticaActions}>
-        <Button variant="plano" type="button" className={styles.eticaUploadBtn} disabled={!archivo || subiendo} onClick={subir}>
-          <CloudUpload size={16} aria-hidden="true" />
-          {subiendo ? "Subiendo…" : "Subir y reemplazar PDF"}
+      <div className={c.acciones}>
+        <Button
+          leftIcon={<CloudUpload size={16} aria-hidden="true" />}
+          disabled={!archivo}
+          isLoading={subiendo}
+          onClick={subir}
+        >
+          Subir y reemplazar PDF
         </Button>
         {archivo && !subiendo && (
-          <Button variant="plano" type="button" className={styles.eticaCancelBtn} onClick={limpiar}>
+          <Button variant="ghost" onClick={limpiar}>
             Cancelar
           </Button>
         )}

@@ -1,16 +1,12 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import {
-  Search,
   Plus,
   Edit2,
   Trash2,
-  X as XIcon,
   Save,
   ListOrdered,
   CheckCircle2,
   AlertCircle,
-  ChevronLeft,
-  ChevronRight,
   ToggleLeft,
   ToggleRight,
 } from "lucide-react";
@@ -30,6 +26,17 @@ import type {
   NomencladorNacionalCreatePayload,
 } from "../nomenclador.types";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
+import Paginador from "@/app/components/ui/Paginador/Paginador";
+import PaginaPasos from "@/app/components/layout/PaginaPasos/PaginaPasos";
+import BotonAccion from "@/app/components/ui/BotonAccion/BotonAccion";
+import Button from "@/app/components/ui/Button/Button";
+import SearchField from "@/app/components/ui/SearchField/SearchField";
+import Segmentos from "@/app/components/ui/Segmentos/Segmentos";
+import Vacio from "@/app/components/ui/Vacio/Vacio";
+import c from "@/app/components/ui/Paso/Campos.module.scss";
+import Dialogo, { DialogoCampo } from "@/app/components/ui/Dialogo/Dialogo";
+import FieldError from "@/app/components/ui/FieldError/FieldError";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -78,6 +85,12 @@ function nullableNum(s: string): number | null {
 }
 
 const PAGE_SIZE = 50;
+
+const ESTADOS = [
+  { valor: "true", rotulo: "Activos" },
+  { valor: "false", rotulo: "Inactivos" },
+  { valor: "", rotulo: "Todos" },
+];
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -234,63 +247,51 @@ export default function NomencladorNacionalTabla() {
   }, []);
 
   return (
-    <div className={styles.container}>
-      {/* Header */}
-      <div className={styles.header}>
-        <div className={styles.headerLeft}>
-          <span className={styles.headerIcon}><ListOrdered size={20} /></span>
-          <div>
-            <h1 className={styles.title}>Nomenclador Nacional</h1>
-            <p className={styles.subtitle}>
-              Catálogo NN — independiente del catálogo del Colegio. Alimenta la generación
-              automática de valores NN.
-            </p>
-          </div>
+    <PaginaPasos titulo="Nomenclador Nacional" icono={ListOrdered} ancha>
+      <div className={styles.barra}>
+        <SearchField
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onClear={() => setSearch("")}
+          placeholder="Código o descripción"
+          ariaLabel="Buscar por código o descripción"
+        />
+
+        <select
+          className={`${c.seleccion} ${styles.filtro}`}
+          value={filterComplejidad}
+          onChange={(e) => { setFilterComplejidad(e.target.value); setPage(1); }}
+          aria-label="Complejidad"
+        >
+          <option value="">Toda complejidad</option>
+          <option value="baja">Baja</option>
+          <option value="media">Media</option>
+          <option value="alta">Alta</option>
+        </select>
+
+        <Segmentos
+          ariaLabel="Estado"
+          opciones={ESTADOS}
+          valor={filterActivo}
+          onChange={(v) => { setFilterActivo(v); setPage(1); }}
+        />
+
+        <div className={styles.nuevo}>
+          <Button leftIcon={<Plus size={16} aria-hidden="true" />} onClick={openCreate}>
+            Nuevo código NN
+          </Button>
         </div>
       </div>
 
-      <div className={styles.body}>
-        {/* Toolbar */}
-        <div className={styles.toolbar}>
-          <div className={styles.searchWrap}>
-            <Search size={15} className={styles.searchIcon} />
-            <input
-              className={styles.searchInput}
-              placeholder="Buscar por código o descripción…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-
-          <select
-            className={styles.filterSelect}
-            value={filterComplejidad}
-            onChange={(e) => { setFilterComplejidad(e.target.value); setPage(1); }}
-          >
-            <option value="">Todas las complejidades</option>
-            <option value="baja">Baja</option>
-            <option value="media">Media</option>
-            <option value="alta">Alta</option>
-          </select>
-
-          <select
-            className={styles.filterSelect}
-            value={filterActivo}
-            onChange={(e) => { setFilterActivo(e.target.value); setPage(1); }}
-          >
-            <option value="true">Activos</option>
-            <option value="false">Inactivos</option>
-            <option value="">Todos</option>
-          </select>
-
-          <button className={styles.btnPrimary} onClick={openCreate}>
-            <Plus size={15} /> Nuevo código NN
-          </button>
-        </div>
-
-        {/* Table */}
-        <div className={styles.tableWrap}>
-          <Tabla className={styles.table}>
+      {loading && items.length === 0 ? (
+        <Vacio icono={ListOrdered}>
+          <Cargando size={18} tono="marca" /> Cargando…
+        </Vacio>
+      ) : items.length === 0 ? (
+        <Vacio icono={ListOrdered}>Sin resultados</Vacio>
+      ) : (
+        <div className={`${styles.envoltorio} ${loading ? styles.apagada : ""}`}>
+          <Tabla>
             <thead>
               <tr>
                 <th>Código</th>
@@ -298,218 +299,134 @@ export default function NomencladorNacionalTabla() {
                 <th>Categoría</th>
                 <th>Complejidad</th>
                 <th>Estado</th>
-                <th className={styles.thActions}>Acciones</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {loading ? (
-                <tr><td colSpan={6} className={styles.loadingCell}>Cargando…</td></tr>
-              ) : items.length === 0 ? (
-                <tr><td colSpan={6} className={styles.emptyCell}>Sin resultados</td></tr>
-              ) : items.map((item) => (
+              {items.map((item) => (
                 <tr key={item.id}>
-                  <td><span className={styles.codeCell}>{item.codigo}</span></td>
-                  <td>{item.descripcion ?? <span style={{ color: "#718096" }}>—</span>}</td>
-                  <td>{item.categoria ?? <span style={{ color: "#718096" }}>—</span>}</td>
+                  <td className={styles.codigo}>{item.codigo}</td>
+                  <td>{item.descripcion ?? "—"}</td>
+                  <td>{item.categoria ?? "—"}</td>
                   <td><ComplejidadBadge v={item.complejidad} /></td>
                   <td>
                     <span className={`${styles.badge} ${item.activo ? styles.activo : styles.inactivo}`}>
                       {item.activo ? "Activo" : "Inactivo"}
                     </span>
                   </td>
-                  <td className={styles.actionsCell}>
-                    <button
-                      className={`${styles.btnToggle} ${!item.activo ? styles.inactive : ""}`}
-                      onClick={() => handleToggle(item)}
-                      title={item.activo ? "Desactivar" : "Activar"}
-                    >
-                      {item.activo ? <ToggleRight size={13} /> : <ToggleLeft size={13} />}
-                    </button>
-                    <button className={styles.btnEdit} onClick={() => openEdit(item)} title="Editar">
-                      <Edit2 size={13} />
-                    </button>
-                    <button className={styles.btnDanger} onClick={() => handleDelete(item.id)} title="Eliminar">
-                      <Trash2 size={13} />
-                    </button>
+                  <td>
+                    <div className={styles.acciones}>
+                      <BotonAccion
+                        icono={item.activo ? ToggleRight : ToggleLeft}
+                        etiqueta={item.activo ? "Desactivar" : "Activar"}
+                        onClick={() => handleToggle(item)}
+                      />
+                      <BotonAccion icono={Edit2} etiqueta="Editar" onClick={() => openEdit(item)} />
+                      <BotonAccion icono={Trash2} etiqueta="Eliminar" peligro onClick={() => handleDelete(item.id)} />
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </Tabla>
         </div>
+      )}
 
-        {/* Mobile cards */}
-        <div className={styles.cardList}>
-          {loading ? (
-            <p className={styles.emptyText}>Cargando…</p>
-          ) : items.length === 0 ? (
-            <p className={styles.emptyText}>Sin resultados</p>
-          ) : items.map((item) => (
-            <div key={item.id} className={styles.card}>
-              <div className={styles.cardTop}>
-                <span className={styles.codeCell}>{item.codigo}</span>
-                <span className={`${styles.badge} ${item.activo ? styles.activo : styles.inactivo}`}>
-                  {item.activo ? "Activo" : "Inactivo"}
-                </span>
-              </div>
-              <p className={styles.cardDesc}>{item.descripcion}</p>
-              <div className={styles.cardMeta}>
-                {item.categoria && <span className={styles.badge}>{item.categoria}</span>}
-                {item.complejidad && <ComplejidadBadge v={item.complejidad} />}
-              </div>
-              <div className={styles.cardActions}>
-                <button className={styles.btnEdit} onClick={() => openEdit(item)}><Edit2 size={13} /> Editar</button>
-                <button className={styles.btnDanger} onClick={() => handleDelete(item.id)}><Trash2 size={13} /> Eliminar</button>
-              </div>
-            </div>
-          ))}
-        </div>
+      <Paginador pagina={page} hayMas={hasMore} onCambiar={setPage} ocupado={loading} />
 
-        {/* Pagination */}
-        <div className={styles.paginationBar}>
-          <span>Página {page}</span>
-          <div className={styles.paginationButtons}>
-            <button className={styles.btnPage} disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
-              <ChevronLeft size={14} />
-            </button>
-            <button className={styles.btnPage} disabled={!hasMore} onClick={() => setPage((p) => p + 1)}>
-              <ChevronRight size={14} />
-            </button>
-          </div>
-        </div>
-      </div>
+      {modalOpen && (
+        <Dialogo
+          titulo={editingId ? "Editar código NN" : "Nuevo código NN"}
+          icono={ListOrdered}
+          ancho="medio"
+          onClose={closeModal}
+          acciones={
+            <>
+              <Button variant="ghost" onClick={closeModal}>Cancelar</Button>
+              <Button leftIcon={<Save size={16} aria-hidden="true" />} isLoading={saving} onClick={handleSave}>
+                Guardar
+              </Button>
+            </>
+          }
+        >
+          <DialogoCampo rotulo="Código" htmlFor="nn-codigo">
+            <input
+              id="nn-codigo"
+              value={form.codigo}
+              onChange={(e) => setField("codigo", e.target.value)}
+              placeholder="ej: 420101"
+              aria-invalid={!!errors.codigo}
+            />
+            <FieldError msg={errors.codigo} />
+          </DialogoCampo>
 
-      {/* ── Modal ── */}
-      <AnimatePresence>
-        {modalOpen && (
-          <motion.div
-            className={styles.backdrop}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className={styles.modal}
-              initial={{ opacity: 0, scale: 0.96, y: 12 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 12 }}
-              transition={{ duration: 0.16 }}
-              onClick={(e) => e.stopPropagation()}
+          <DialogoCampo rotulo="Descripción" htmlFor="nn-descripcion">
+            <input
+              id="nn-descripcion"
+              value={form.descripcion}
+              onChange={(e) => setField("descripcion", e.target.value)}
+              placeholder="ej: Consulta médica general"
+            />
+          </DialogoCampo>
+
+          <DialogoCampo rotulo="Categoría" htmlFor="nn-categoria">
+            <select id="nn-categoria" value={form.categoria} onChange={(e) => setField("categoria", e.target.value)}>
+              <option value="">— Sin especificar —</option>
+              <option value="Consulta">Consulta</option>
+              <option value="Practica">Práctica</option>
+              <option value="Honorarios individuales">Honorarios individuales</option>
+            </select>
+          </DialogoCampo>
+
+          <DialogoCampo rotulo="Complejidad" htmlFor="nn-complejidad">
+            <select
+              id="nn-complejidad"
+              value={form.complejidad}
+              onChange={(e) => setField("complejidad", e.target.value as Complejidad | "")}
             >
-              <div className={styles.modalHeader}>
-                <div>
-                  <h2 className={styles.modalTitle}>{editingId ? "Editar código NN" : "Nuevo código NN"}</h2>
-                  <p className={styles.modalSubtitle}>Catálogo del Nomenclador Nacional</p>
-                </div>
-                <button className={styles.modalClose} onClick={closeModal}><XIcon size={18} /></button>
-              </div>
+              <option value="">— Sin especificar —</option>
+              <option value="baja">Baja</option>
+              <option value="media">Media</option>
+              <option value="alta">Alta</option>
+            </select>
+          </DialogoCampo>
 
-              <div className={styles.modalBody}>
-                <div className={styles.formRow2}>
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>Código <span className={styles.req}>*</span></label>
-                    <input
-                      className={`${styles.formInput} ${errors.codigo ? styles.inputError : ""}`}
-                      value={form.codigo}
-                      onChange={(e) => setField("codigo", e.target.value)}
-                      placeholder="ej: 420101"
-                    />
-                    {errors.codigo && <span className={styles.errorMsg}>{errors.codigo}</span>}
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>Categoría</label>
-                    <select
-                      className={styles.formSelect}
-                      value={form.categoria}
-                      onChange={(e) => setField("categoria", e.target.value)}
-                    >
-                      <option value="">— Sin especificar —</option>
-                      <option value="Consulta">Consulta</option>
-                      <option value="Practica">Práctica</option>
-                      <option value="Honorarios individuales">Honorarios individuales</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>Descripción</label>
-                  <input
-                    className={styles.formInput}
-                    value={form.descripcion}
-                    onChange={(e) => setField("descripcion", e.target.value)}
-                    placeholder="ej: Consulta médica general"
-                  />
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>Complejidad</label>
-                  <select
-                    className={styles.formSelect}
-                    value={form.complejidad}
-                    onChange={(e) => setField("complejidad", e.target.value as Complejidad | "")}
-                    style={{ maxWidth: 260 }}
-                  >
-                    <option value="">— Sin especificar —</option>
-                    <option value="baja">Baja</option>
-                    <option value="media">Media</option>
-                    <option value="alta">Alta</option>
-                  </select>
-                </div>
-
-                <div className={styles.sectionTitle}>Unidades por defecto</div>
-                <p className={styles.hintText}>
-                  Se usan para calcular los Valores NN de cada obra social (unidad × galeno).
-                </p>
-                <div className={styles.formRow3}>
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>Honorarios</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      className={styles.formInput}
-                      value={form.unidades_honorarios}
-                      onChange={(e) => setField("unidades_honorarios", e.target.value)}
-                      placeholder="0.00"
-                    />
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>Ayudante</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      className={styles.formInput}
-                      value={form.unidades_ayudante}
-                      onChange={(e) => setField("unidades_ayudante", e.target.value)}
-                      placeholder="0.00"
-                    />
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>Gastos</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      className={styles.formInput}
-                      value={form.unidades_gastos}
-                      onChange={(e) => setField("unidades_gastos", e.target.value)}
-                      placeholder="0.00"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className={styles.modalFooter}>
-                <button className={styles.btnGhost} onClick={closeModal}>Cancelar</button>
-                <button className={styles.btnPrimary} onClick={handleSave} disabled={saving}>
-                  {saving ? <><span className={styles.spinner} /> Guardando…</> : <><Save size={15} /> Guardar</>}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          <h3 className={styles.unidadesTitulo}>Unidades por defecto</h3>
+            <DialogoCampo rotulo="Honorarios" htmlFor="nn-honorarios">
+              <input
+                id="nn-honorarios"
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.unidades_honorarios}
+                onChange={(e) => setField("unidades_honorarios", e.target.value)}
+                placeholder="0.00"
+              />
+            </DialogoCampo>
+            <DialogoCampo rotulo="Ayudante" htmlFor="nn-ayudante">
+              <input
+                id="nn-ayudante"
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.unidades_ayudante}
+                onChange={(e) => setField("unidades_ayudante", e.target.value)}
+                placeholder="0.00"
+              />
+            </DialogoCampo>
+            <DialogoCampo rotulo="Gastos" htmlFor="nn-gastos">
+              <input
+                id="nn-gastos"
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.unidades_gastos}
+                onChange={(e) => setField("unidades_gastos", e.target.value)}
+                placeholder="0.00"
+              />
+            </DialogoCampo>
+        </Dialogo>
+      )}
 
       {/* Toast */}
       <AnimatePresence>
@@ -535,6 +452,6 @@ export default function NomencladorNacionalTabla() {
         onConfirm={doDelete}
         onCancel={() => setDeleteTargetId(null)}
       />
-    </div>
+    </PaginaPasos>
   );
 }

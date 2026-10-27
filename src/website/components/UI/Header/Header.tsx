@@ -3,8 +3,8 @@ import { Link, useLocation } from "react-router-dom";
 import { User, Menu, X } from "lucide-react";
 import NavEscritorio from "./NavEscritorio";
 import NavMovil from "./NavMovil";
-import { useIrAlSistema } from "../../../hooks/useIrAlSistema";
-import logo from "../../../assets/images/logoCMC-web.png";
+import { useIrAlSistema } from "@/website/hooks/useIrAlSistema";
+import logo from "@/website/assets/images/logoCMC-web.png";
 import Button from "../Button/Button";
 import styles from "./Header.module.scss";
 

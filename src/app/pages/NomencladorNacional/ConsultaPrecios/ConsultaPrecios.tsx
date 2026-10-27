@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from "react";
-import { Search, Loader2, AlertCircle, AlertTriangle } from "lucide-react";
+import { Search, AlertCircle, AlertTriangle } from "lucide-react";
 
 import styles from "../ConsultaShared/consulta.module.scss";
 import Combobox from "../ConsultaShared/Combobox";
@@ -9,7 +9,8 @@ import { listNomenclador, getTablaValores } from "../nomenclador.api";
 import type { NomencladorOut, TablaValorItem, ViaPractica } from "../nomenclador.types";
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
-import { useAuth } from "../../../auth/AuthProvider";
+import { useAuth } from "@/app/auth/useAuth";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
 
 export default function ConsultaPrecios() {
   const { user } = useAuth();
@@ -210,7 +211,7 @@ export default function ConsultaPrecios() {
               onClick={handleSearch}
               disabled={!canSearch || loading}
             >
-              {loading ? <Loader2 size={17} className={styles.spin} /> : <Search size={17} />}
+              {loading ? <Cargando size={17} /> : <Search size={17} />}
               Consultar precio
             </button>
           </div>

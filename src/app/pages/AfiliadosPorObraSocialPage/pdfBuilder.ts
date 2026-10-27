@@ -92,7 +92,7 @@ export async function buildSimplePdf(
   });
 
   // La portada va adelante; el listado empieza en la hoja 2.
-  (doc as any).insertPage(1);
+  doc.insertPage(1);
   doc.setPage(1);
   pintarPortada(doc, { osName, total: rows.length, fecha: date });
   pintarPies(doc, 2);

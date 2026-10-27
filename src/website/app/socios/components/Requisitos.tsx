@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Stamp, Copy, CircleDashed, Hand } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import Revelar from "../../../components/UI/Revelar/Revelar";
+import Revelar from "@/website/components/UI/Revelar/Revelar";
 import TarjetaRequisito from "./TarjetaRequisito";
 import { COPIAS_SIMPLES, PRINCIPALES, type Requisito } from "../socios.data";
 import styles from "./Requisitos.module.scss";

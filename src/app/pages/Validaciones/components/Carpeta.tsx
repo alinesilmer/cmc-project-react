@@ -82,5 +82,3 @@ export default function Carpeta({ nombre, logo, href, externo, deshabilitada, av
     </div>
   );
 }
-
-export { s as carpetaStyles };

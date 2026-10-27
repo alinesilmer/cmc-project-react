@@ -1,5 +1,7 @@
 // Tipos del módulo de Validaciones (integraciones con obras sociales).
 
+import { formatoPesos } from "@/app/shared/lib/formatos";
+
 // ─── Formularios dinámicos ────────────────────────────────────────────────────
 
 /** Tipo de control que se renderiza para un campo del formulario de carga. */
@@ -227,12 +229,7 @@ const MESES = [
 
 export const nombreMes = (mes: number) => MESES[mes - 1] ?? String(mes);
 
-export const formatMoneda = (valor: number) =>
-  new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency: "ARS",
-    minimumFractionDigits: 2,
-  }).format(valor ?? 0);
+export const formatMoneda = (valor: number) => formatoPesos.format(valor ?? 0);
 
 export const formatFecha = (iso: string) => {
   const [anio, mes, dia] = iso.split("-");

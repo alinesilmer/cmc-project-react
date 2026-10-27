@@ -15,6 +15,7 @@ import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
 import Caja from "@/app/components/ui/Caja/Caja";
 import Franja from "@/app/components/layout/Franja/Franja";
 import ListaPlanillas from "./components/ListaPlanillas";
+import { detalleDeError } from "@/app/shared/lib/httpErrors";
 
 /** Alta, edición y baja de las planillas que ven los médicos. */
 export default function PlanillasAdmin() {
@@ -58,8 +59,8 @@ export default function PlanillasAdmin() {
       setArchivo(null);
       if (fileRef.current) fileRef.current.value = "";
       avisarOk("Planilla publicada.");
-    } catch (err: any) {
-      setError(err?.response?.data?.detail ?? "No se pudo subir la planilla.");
+    } catch (err) {
+      setError(detalleDeError(err, "No se pudo subir la planilla."));
     } finally {
       setSubiendo(false);
     }
@@ -93,8 +94,8 @@ export default function PlanillasAdmin() {
       setPlanillas((prev) => prev.map((x) => (x.id === actualizada.id ? actualizada : x)));
       setEditando(null);
       avisarOk("Planilla actualizada.");
-    } catch (err: any) {
-      avisarError(err?.response?.data?.detail ?? "No se pudo actualizar la planilla.");
+    } catch (err) {
+      avisarError(detalleDeError(err, "No se pudo actualizar la planilla."));
     } finally {
       setGuardandoEdit(false);
     }
@@ -107,8 +108,8 @@ export default function PlanillasAdmin() {
       await deletePlanilla(p.id);
       setPlanillas((prev) => prev.filter((x) => x.id !== p.id));
       avisarOk("Planilla dada de baja.");
-    } catch (err: any) {
-      avisarError(err?.response?.data?.detail ?? "No se pudo dar de baja la planilla.");
+    } catch (err) {
+      avisarError(detalleDeError(err, "No se pudo dar de baja la planilla."));
     } finally {
       setBorrando(null);
       setAConfirmar(null);

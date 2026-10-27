@@ -5,7 +5,7 @@ import { CircleAlert, Search, Trophy } from "lucide-react";
 
 import styles from "./Boletin.module.scss";
 import Button from "@/app/components/ui/Button/Button";
-import { http } from "@/app/shared/lib/http";
+import { fetchRanking, type RankedOS } from "./boletin.api";
 import { formatFecha, hoyISO } from "@/app/shared/lib/fechas";
 import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
@@ -16,12 +16,8 @@ import SearchField from "@/app/components/ui/SearchField/SearchField";
 import { exportarExcel, exportarPdf } from "@/app/pages/Reportes/exportar";
 import type { ColumnaExport, DocumentoReporte } from "@/app/pages/Reportes/exportar";
 import { axiosErrorMessage } from "@/app/shared/lib/utiles";
-
-type RankedOS = {
-  nro: number;
-  nombre: string;
-  honorariosA: number;
-};
+import { formatoPesos } from "@/app/shared/lib/formatos";
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 
 type RankedEntry = {
   row: RankedOS;
@@ -29,55 +25,6 @@ type RankedEntry = {
   rankLabel: string;
 };
 
-const money = new Intl.NumberFormat("es-AR", {
-  style: "currency",
-  currency: "ARS",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-
-function safeNum(v: any): number {
-  if (typeof v === "number" && Number.isFinite(v)) return v;
-  if (typeof v === "string") {
-    const raw = v.trim();
-    if (!raw) return 0;
-
-    let normalized = raw;
-
-    if (raw.includes(",")) {
-      normalized = raw.replace(/\./g, "").replace(",", ".");
-    } else if (/^\d{1,3}(\.\d{3})+$/.test(raw)) {
-      normalized = raw.replace(/\./g, "");
-    }
-
-    const n = Number(normalized);
-    return Number.isFinite(n) ? n : 0;
-  }
-  return 0;
-}
-
-function normalizeText(s: any, maxLen = 160): string {
-  const t = String(s ?? "")
-    .replace(/[\r\n\t]+/g, " ")
-    .replace(/\s{2,}/g, " ")
-    .trim();
-
-  if (!t) return "";
-  return t.length > maxLen ? `${t.slice(0, maxLen - 1)}…` : t;
-}
-
-/** El ranking a una fecha, desde el nomenclador nuevo. */
-async function fetchRanking(codigo: string, fecha: string): Promise<RankedOS[]> {
-  const { data } = await http.get("/api/reportes_nm/ranking_valores", {
-    params: { codigo, ...(fecha ? { fecha_referencia: fecha } : {}) },
-  });
-  const filas = Array.isArray(data?.ranking) ? data.ranking : [];
-  return filas.map((r: any) => ({
-    nro: Number(r?.obra_social_nro ?? 0),
-    nombre: normalizeText(r?.nombre_os ?? `OS ${r?.obra_social_nro ?? ""}`),
-    honorariosA: safeNum(r?.valor),
-  }));
-}
 
 function buildRankedEntries(items: RankedOS[]): RankedEntry[] {
   const sorted = [...items].sort((a, b) => {
@@ -163,7 +110,7 @@ export default function Boletin() {
       if (!mountedRef.current) return;
       setData(latest);
       if (latest.length === 0) setError("No se encontraron resultados para ese código.");
-    } catch (e: any) {
+    } catch (e) {
       if (!mountedRef.current) return;
       setError(axiosErrorMessage(e));
       setData([]);
@@ -204,9 +151,10 @@ export default function Boletin() {
       const documento = documentoDe(ranked, codigo, fecha);
       if (formato === "pdf") await exportarPdf(documento);
       else await exportarExcel(documento);
-    } catch (e: any) {
+    } catch (e) {
+      const err = comoErrorApi(e);
       setError(
-        `No se pudo generar el ${formato === "pdf" ? "PDF" : "Excel"}. ${e?.message ? String(e.message) : ""}`.trim(),
+        `No se pudo generar el ${formato === "pdf" ? "PDF" : "Excel"}. ${err?.message ? String(err.message) : ""}`.trim(),
       );
     } finally {
       setBajando(null);
@@ -320,7 +268,7 @@ export default function Boletin() {
                     </td>
                     <td className={styles.tdNumber}>{row.nro}</td>
                     <td className={styles.tdName}>{row.nombre}</td>
-                    <td className={styles.tdAmount}>{money.format(row.honorariosA)}</td>
+                    <td className={styles.tdAmount}>{formatoPesos.format(row.honorariosA)}</td>
                   </tr>
                 ))}
               </tbody>

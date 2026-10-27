@@ -11,16 +11,15 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { useAuth } from "@/app/auth/AuthProvider";
+import { useAuth } from "@/app/auth/useAuth";
 import { isMedico } from "@/app/auth/roles";
 import { CODIGOS_CON_CARPETA, OBRAS_SOCIALES, OCULTAS_EN_OTROS, destinoObraSocial } from "./validaciones.config";
 import Carpeta from "./components/Carpeta";
 import { OBRAS_SOCIALES_KEY } from "@/app/pages/ObrasSociales/useObrasSociales";
 import { listObrasSociales } from "@/app/pages/ObrasSociales/obrasSociales.api";
 import type { ObraSocialConfig } from "./validaciones.types";
-import ObraSocialCard, {
-  obraSocialCardStyles as card,
-} from "./components/ObraSocialCard";
+import ObraSocialCard from "./components/ObraSocialCard";
+import card from "./components/ObraSocialCard.module.scss";
 import GuiaPortalModal from "./components/GuiaPortalModal";
 import InfoObraSocialModal from "./components/InfoObraSocialModal";
 import type { ObraSocialListItem } from "@/app/pages/ObrasSociales/obrasSociales.types";

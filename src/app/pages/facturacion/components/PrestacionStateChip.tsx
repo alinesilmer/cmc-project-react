@@ -1,12 +1,13 @@
 import React from "react";
 import type { EstadoPrestacion } from "../types";
 import { ESTADO_LABEL } from "../constants";
+import paleta from "@/app/styles/paleta.module.scss";
 
 const CHIP_STYLES: Record<EstadoPrestacion, React.CSSProperties> = {
-  A: { background: "#fef3c7", color: "#92400e" },
-  C: { background: "#dcfce7", color: "#1d9148" },
-  L: { background: "#e8f0ff", color: "#0c2a52" },
-  X: { background: "#e2e8f0", color: "#475569", textDecoration: "line-through" },
+  A: { background: paleta.tonoAmarillo50D, color: paleta.tonoNaranja550 },
+  C: { background: paleta.tonoVerde50C, color: paleta.successGreen },
+  L: { background: paleta.secondaryBlue, color: paleta.primaryBlueDarker },
+  X: { background: paleta.gray200, color: paleta.gray600, textDecoration: "line-through" },
 };
 
 interface Props {

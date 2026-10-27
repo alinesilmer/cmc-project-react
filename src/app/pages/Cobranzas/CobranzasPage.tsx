@@ -4,7 +4,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Layers,
-  Loader2,
   SearchX,
   Users,
   HandCoins,
@@ -35,6 +34,9 @@ import styles from "./CobranzasPage.module.scss";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 import { getErrorMessage } from "@/app/shared/lib/utiles";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
+import Paginador from "@/app/components/ui/Paginador/Paginador";
+import paleta from "@/app/styles/paleta.module.scss";
 
 const PAGE_SIZE = 25;
 
@@ -101,7 +103,7 @@ const CobranzasPage: React.FC = () => {
     setConceptosError(null);
     try {
       setPorConcepto(await fetchPorConcepto({ ...filtrosBase, q: qConcepto.trim() || undefined }));
-    } catch (e: any) {
+    } catch (e) {
       setConceptosError(getErrorMessage(e, "No se pudieron cargar los conceptos."));
     } finally {
       setConceptosLoading(false);
@@ -131,7 +133,7 @@ const CobranzasPage: React.FC = () => {
           size: PAGE_SIZE,
         }),
       );
-    } catch (e: any) {
+    } catch (e) {
       setMedicosError(getErrorMessage(e, "No se pudieron cargar los socios del concepto."));
     } finally {
       setMedicosLoading(false);
@@ -160,7 +162,7 @@ const CobranzasPage: React.FC = () => {
           size: PAGE_SIZE,
         }),
       );
-    } catch (e: any) {
+    } catch (e) {
       setSociosError(getErrorMessage(e, "No se pudieron cargar los socios deudores."));
     } finally {
       setSociosLoading(false);
@@ -191,7 +193,7 @@ const CobranzasPage: React.FC = () => {
           concepto_id: detalleConceptoId,
         }),
       );
-    } catch (e: any) {
+    } catch (e) {
       setDetalleError(getErrorMessage(e, "No se pudo cargar el detalle del socio."));
     } finally {
       setDetalleLoading(false);
@@ -259,7 +261,7 @@ const CobranzasPage: React.FC = () => {
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Cobranzas");
       XLSX.writeFile(wb, "cobranzas.xlsx");
-    } catch (e: any) {
+    } catch (e) {
       notify(getErrorMessage(e, "No se pudo exportar a Excel."), "error");
     }
   };
@@ -288,7 +290,7 @@ const CobranzasPage: React.FC = () => {
         headStyles: { fillColor: [27, 86, 255], textColor: 255 },
       });
       doc.save("cobranzas.pdf");
-    } catch (e: any) {
+    } catch (e) {
       notify(getErrorMessage(e, "No se pudo exportar a PDF."), "error");
     }
   };
@@ -368,7 +370,7 @@ const CobranzasPage: React.FC = () => {
             <Caja titulo="Configuración">
               <label className={styles.filtro}>
                 <span>Origen</span>
-                <select value={origen} onChange={(e) => setOrigen(e.target.value as any)}>
+                <select value={origen} onChange={(e) => setOrigen(e.target.value as typeof origen)}>
                   <option value="">Todos</option>
                   <option value="liquidacion">Liquidación</option>
                   <option value="caja">Caja</option>
@@ -418,7 +420,7 @@ const CobranzasPage: React.FC = () => {
           <Card className={styles.tableCard}>
             {conceptosLoading ? (
               <div className={styles.loadingState}>
-                <Loader2 size={18} className={styles.spin} /> Cargando conceptos...
+                <Cargando size={18} /> Cargando conceptos...
               </div>
             ) : porConcepto.length === 0 ? (
               <div className={styles.emptyState}>
@@ -503,7 +505,7 @@ const CobranzasPage: React.FC = () => {
           <Card className={styles.tableCard}>
             {medicosLoading ? (
               <div className={styles.loadingState}>
-                <Loader2 size={18} className={styles.spin} /> Cargando socios...
+                <Cargando size={18} /> Cargando socios...
               </div>
             ) : !medicosPage || medicosPage.items.length === 0 ? (
               <div className={styles.emptyState}>
@@ -544,7 +546,7 @@ const CobranzasPage: React.FC = () => {
                           <td
                             className={styles.numCell}
                             style={{
-                              color: m.meses_atraso >= 12 ? "#b91c1c" : "#b45309",
+                              color: m.meses_atraso >= 12 ? paleta.tonoRojo500 : paleta.tonoNaranja450,
                               fontWeight: 600,
                             }}
                           >
@@ -568,23 +570,13 @@ const CobranzasPage: React.FC = () => {
                     </tbody>
                   </Tabla>
                 </div>
-                <div className={styles.paginationBar}>
-                  <button
-                    onClick={() => setMedicosPageNum((p) => Math.max(1, p - 1))}
-                    disabled={medicosPageNum <= 1 || medicosLoading}
-                  >
-                    ← Anterior
-                  </button>
-                  <span>
-                    Página {medicosPageNum} de {medicosLastPage} · {medicosPage.total} socios
-                  </span>
-                  <button
-                    onClick={() => setMedicosPageNum((p) => Math.min(medicosLastPage, p + 1))}
-                    disabled={medicosPageNum >= medicosLastPage || medicosLoading}
-                  >
-                    Siguiente →
-                  </button>
-                </div>
+                <Paginador
+                  pagina={medicosPageNum}
+                  totalPaginas={medicosLastPage}
+                  onCambiar={setMedicosPageNum}
+                  ocupado={medicosLoading}
+                  resumen={`${medicosPage.total} socios`}
+                />
               </>
             )}
           </Card>
@@ -599,7 +591,7 @@ const CobranzasPage: React.FC = () => {
           <Card className={styles.tableCard}>
             {sociosLoading ? (
               <div className={styles.loadingState}>
-                <Loader2 size={18} className={styles.spin} /> Cargando socios...
+                <Cargando size={18} /> Cargando socios...
               </div>
             ) : !sociosPage || sociosPage.items.length === 0 ? (
               <div className={styles.emptyState}>
@@ -641,7 +633,7 @@ const CobranzasPage: React.FC = () => {
                           <td
                             className={styles.numCell}
                             style={{
-                              color: s.meses_atraso >= 12 ? "#b91c1c" : "#b45309",
+                              color: s.meses_atraso >= 12 ? paleta.tonoRojo500 : paleta.tonoNaranja450,
                               fontWeight: 600,
                             }}
                           >
@@ -663,23 +655,13 @@ const CobranzasPage: React.FC = () => {
                     </tbody>
                   </Tabla>
                 </div>
-                <div className={styles.paginationBar}>
-                  <button
-                    onClick={() => setSociosPageNum((p) => Math.max(1, p - 1))}
-                    disabled={sociosPageNum <= 1 || sociosLoading}
-                  >
-                    ← Anterior
-                  </button>
-                  <span>
-                    Página {sociosPageNum} de {sociosLastPage} · {sociosPage.total} socios
-                  </span>
-                  <button
-                    onClick={() => setSociosPageNum((p) => Math.min(sociosLastPage, p + 1))}
-                    disabled={sociosPageNum >= sociosLastPage || sociosLoading}
-                  >
-                    Siguiente →
-                  </button>
-                </div>
+                <Paginador
+                  pagina={sociosPageNum}
+                  totalPaginas={sociosLastPage}
+                  onCambiar={setSociosPageNum}
+                  ocupado={sociosLoading}
+                  resumen={`${sociosPage.total} socios`}
+                />
               </>
             )}
           </Card>
@@ -712,7 +694,7 @@ const CobranzasPage: React.FC = () => {
           <Card className={styles.tableCard}>
             {detalleLoading ? (
               <div className={styles.loadingState}>
-                <Loader2 size={18} className={styles.spin} /> Cargando detalle...
+                <Cargando size={18} /> Cargando detalle...
               </div>
             ) : !detalle || detalle.cuotas.length === 0 ? (
               <div className={styles.emptyState}>
@@ -742,7 +724,7 @@ const CobranzasPage: React.FC = () => {
                         </td>
                         <td>{monthLabel(c.mes_aplicar, c.anio_aplicar)}</td>
                         <td className={styles.numCell}>{formatMoney(c.calculado_total)}</td>
-                        <td className={styles.numCell} style={{ color: "#94a3b8" }}>
+                        <td className={styles.numCell} style={{ color: paleta.gray400 }}>
                           {formatMoney(c.monto_aplicado)}
                         </td>
                         <td className={styles.numCell} style={{ fontWeight: 700 }}>

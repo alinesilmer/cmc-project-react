@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { AlertTriangle, Info } from "lucide-react";
-import Acordeon from "../../../components/UI/Acordeon/Acordeon";
+import Acordeon from "@/website/components/UI/Acordeon/Acordeon";
 import type { Requisito } from "../socios.data";
 import styles from "./TarjetaRequisito.module.scss";
 

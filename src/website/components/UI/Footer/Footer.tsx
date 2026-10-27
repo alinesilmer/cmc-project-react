@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 import { ArrowUp, Instagram, MapPin, Phone, Mail } from "lucide-react";
 import { NAVEGACION } from "../Header/navegacion";
-import { CONTACTO, linkWhatsApp } from "../../../lib/contacto";
-import logo from "../../../assets/images/logoCMC-web.png";
+import { CONTACTO, linkWhatsApp } from "@/website/lib/contacto";
+import logo from "@/website/assets/images/logoCMC-web.png";
 import styles from "./Footer.module.scss";
 import Button from "@/website/components/UI/Button/Button";
 

@@ -1,5 +1,6 @@
 @use "@/app/styles/all.scss" as *;
 
+
 // Mismo lenguaje visual que VerPeriodos / NomencladorPorOS ("Valores y nomencladores").
 
 .container {
@@ -9,65 +10,6 @@
   font-family: inherit;
 }
 
-.header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-}
-
-.headerIcon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.625rem;
-  height: 2.625rem;
-  border-radius: 0.625rem;
-  background: $secondary-blue;
-  color: $tono-azul-450;
-  flex-shrink: 0;
-}
-
-.title {
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: $carpeta-noche;
-  margin: 0;
-}
-
-.subtitle {
-  font-size: 0.8rem;
-  color: $tono-azul-400;
-  margin: 2px 0 0;
-}
-
-.headerRight {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  flex-wrap: wrap;
-}
-
-.backBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  height: 2.125rem;
-  padding: 0 0.875rem;
-  background: none;
-  color: $gray-600;
-  border: 1px solid $gray-200;
-  border-radius: 0.375rem;
-  font-size: 0.83rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background .15s;
-
-  &:hover { background: $white; }
-}
-
 .infoChip {
   font-size: 0.75rem;
   font-weight: 600;
@@ -75,11 +17,6 @@
   padding: 3px 0.75rem;
   white-space: nowrap;
 }
-
-.chipOs { background: $secondary-blue; color: $tono-azul-450; }
-.chipTotal { background: $cuaderno-papel; color: $tono-verde-550; border: 1px solid $tono-verde-50-b; }
-.chipAbierta { background: $primary-yellow; color: $tono-naranja-550; }
-.chipCerrada { background: $tono-verde-50; color: $tono-verde-550; }
 
 // Sin margen externo: la tarjeta (toolbar + tabla) anula el padding lateral de `.container` (1.8rem) y va de borde a borde.
 .layout {
@@ -102,44 +39,6 @@
   background: $gray-50;
 }
 
-.filterField {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3125rem;
-  min-width: 11.875rem;
-}
-
-.filterLabel {
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: $tono-azul-400;
-  letter-spacing: .05em;
-  text-transform: uppercase;
-}
-
-.select {
-  height: 2.25rem;
-  border: 1px solid $gray-200;
-  border-radius: 0.375rem;
-  font-size: 0.84rem;
-  color: $carpeta-noche;
-  background: $white;
-  outline: none;
-  box-sizing: border-box;
-  transition: border-color .15s, box-shadow .15s;
-  padding: 0 1.75rem 0 0.75rem;
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.625rem center;
-
-  &:focus {
-    border-color: $tono-azul-450;
-    box-shadow: 0 0 0 3px rgba($tono-azul-450, .12);
-  }
-}
-
 .toolbarStats {
   margin-left: auto;
   display: flex;
@@ -154,48 +53,6 @@
   width: 100%;
 }
 
-// Bloque de filas fuera de pantalla: el navegador no lo calcula ni lo pinta hasta que se acerca al área visible.
-.bloqueFilas {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 75rem;
-}
-
-.table {
-  width: 100%;
-  table-layout: fixed;
-  border-collapse: collapse;
-  // Tamaño único para todo el texto de la tabla (header, celdas, badges, resumen).
-  font-size: 0.6875rem;
-
-  thead tr {
-    background: $primary-blue-darker;
-  }
-
-  th {
-    padding: 0.5rem 0.5rem;
-    text-align: left;
-    font-size: inherit;
-    font-weight: 700;
-    color: $white;
-    letter-spacing: .03em;
-    text-transform: uppercase;
-    word-break: break-word;
-  }
-
-  td {
-    padding: 0.5rem 0.5rem;
-    color: $carpeta-noche;
-    border-bottom: 1px solid $gray-100;
-    vertical-align: middle;
-    word-break: break-word;
-    overflow-wrap: anywhere;
-  }
-
-  tbody tr.dataRow:hover { background: $gray-50; }
-
-  // Los anchos de columna ya no son fijos por posición (`th:nth-child`).
-}
-
 .thActions { text-align: right; }
 
 // Encabezado fijo: queda pegado debajo de la barra superior (64px + su borde) mientras se recorren los bloques de filas.
@@ -205,286 +62,6 @@
   // corre `FacturaDetalle` (estilo en línea sobre esta tabla).
   top: 65px;
   z-index: 5;
-}
-
-.rowRevisada td {
-  background: $tono-amarillo-50-b;
-}
-
-.rowAnulada td {
-  opacity: 0.55;
-}
-
-// Recuadro de equipo quirúrgico (las filas del equipo siempre van con su cabeza).
-
-.equipoGrupoHeadRow td {
-  border-top: 2px solid $tono-gris-100;
-}
-
-.equipoGrupoHeadRow td:first-child {
-  border-left: 2px solid $tono-gris-100;
-}
-
-.equipoGrupoHeadRow td:last-child {
-  border-right: 2px solid $tono-gris-100;
-}
-
-.equipoPreviewRow td {
-  background: $gray-50;
-  color: $tono-azul-400;
-}
-
-.equipoPreviewRow td:first-child {
-  border-left: 2px solid $tono-gris-100;
-}
-
-.equipoPreviewRow td:last-child {
-  border-right: 2px solid $tono-gris-100;
-}
-
-// Cierra el marco abajo, en la última fila del bloque de compañeros.
-.equipoPreviewRowLast td {
-  border-bottom: 2px solid $tono-gris-100;
-}
-
-// Etiqueta de clínica (celda del socio).
-
-.idCell {
-  white-space: nowrap;
-}
-
-.socioCell {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.socioNro {
-  font-weight: 700;
-  color: $tono-azul-450;
-  font-variant-numeric: tabular-nums;
-  font-size: inherit;
-}
-
-.socioNombre {
-  color: $carpeta-noche;
-  font-size: inherit;
-  line-height: 1.25;
-}
-
-.socioMatricula {
-  color: $tono-azul-400;
-  font-weight: 400;
-}
-
-.codeCell {
-  font-family: 'Courier New', Courier, monospace;
-  font-weight: 700;
-  font-size: inherit;
-  color: $tono-azul-450;
-}
-
-.cantidadCell {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.cantidadMain {
-  font-weight: 600;
-  color: $carpeta-noche;
-}
-
-.cantidadSub {
-  font-size: inherit;
-  color: $tono-azul-400;
-}
-
-.moneyCell {
-  font-variant-numeric: tabular-nums;
-  color: $carpeta-noche;
-}
-
-.subtotalCell {
-  font-variant-numeric: tabular-nums;
-  font-weight: 700;
-  color: $tono-verde-550;
-}
-
-.mutedText {
-  color: $tono-azul-400;
-}
-
-.tipoPrestadorBadge {
-  display: inline-block;
-  font-size: inherit;
-  font-weight: 700;
-  border-radius: 4px;
-  padding: 2px 0.375rem;
-}
-
-.tipoPrestadorMedico   { background: $gray-100; color: $tono-azul-500-b; }
-.tipoPrestadorAyudante  { background: $gray-50; color: $tono-violeta-550; }
-.tipoPrestadorGastos   { background: $cuaderno-papel; color: $tono-rojo-450; }
-.tipoPrestadorPediatra { background: $gray-100; color: $tono-turquesa-500; }
-
-.tipoBadge {
-  display: inline-block;
-  font-size: inherit;
-  font-weight: 600;
-  border-radius: 20px;
-  padding: 2px 0.4375rem;
-  background: $franja-perla;
-  color: $gray-600;
-}
-
-.tipoConsulta   { background: $secondary-blue; color: $primary-blue-darker; }
-.tipoPractica   { background: $primary-yellow; color: $tono-naranja-550; }
-.tipoHonorarios { background: $cuaderno-papel; color: $tono-verde-550; }
-.tipoSanatorio  { background: $gray-50; color: $tono-violeta-550; }
-
-.viaBadge {
-  display: inline-block;
-  font-size: inherit;
-  font-weight: 700;
-  border-radius: 4px;
-  padding: 2px 0.375rem;
-  background: $franja-perla;
-  color: $gray-600;
-}
-
-.viaLaparoscopica { background: $gray-200; color: $tono-violeta-600; }
-
-.actionsCell {
-  display: flex;
-  gap: 0.25rem;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  align-items: center;
-}
-
-.auditCheckbox {
-  width: 1.0625rem;
-  height: 1.0625rem;
-  cursor: pointer;
-  accent-color: $tono-amarillo-300;
-}
-
-.auditCheckboxWrap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.4375rem;
-  height: 1.4375rem;
-  border-radius: 0.375rem;
-  transition: background .15s;
-}
-
-.auditCheckboxOn {
-  background: $tono-amarillo-100;
-}
-
-.iconBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.4375rem;
-  height: 1.4375rem;
-  background: none;
-  border: none;
-  border-radius: 0.375rem;
-  color: $gray-600;
-  cursor: pointer;
-  transition: background .15s, color .15s;
-
-  &:hover:not(:disabled) { background: $gray-100; color: $carpeta-noche; }
-  &:disabled { opacity: .35; cursor: not-allowed; }
-}
-
-.iconBtnEdit:hover:not(:disabled) { color: $tono-azul-450; background: $gray-100; }
-.iconBtnMove:hover:not(:disabled) { color: $tono-naranja-550; background: $cuaderno-papel; }
-.iconBtnDelete:hover:not(:disabled) { color: $tono-rojo-400; background: $tono-rojo-50; }
-
-// ─── Fila resumen ───────────────────────────────────────────────────────────
-.resumenRow td {
-  background: $gray-100;
-  border-top: 2px solid $tono-azul-50;
-  border-bottom: 2px solid $tono-azul-50;
-  padding: 0.625rem 0.75rem;
-  white-space: normal;
-}
-
-.resumenContent {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  flex-wrap: wrap;
-  font-size: inherit;
-}
-
-.resumenLabel {
-  font-weight: 700;
-  color: $carpeta-noche;
-  white-space: nowrap;
-}
-
-.resumenBadge {
-  display: inline-block;
-  font-size: inherit;
-  font-weight: 600;
-  border-radius: 20px;
-  padding: 2px 0.625rem;
-  background: $white;
-  border: 1px solid $gray-200;
-  color: $gray-600;
-  white-space: nowrap;
-}
-
-.resumenMoney {
-  font-size: inherit;
-  color: $gray-600;
-  white-space: nowrap;
-
-  strong { color: $carpeta-noche; }
-}
-
-.resumenTotalBadge {
-  display: inline-block;
-  font-size: inherit;
-  font-weight: 700;
-  border-radius: 20px;
-  padding: 3px 0.75rem;
-  background: $tono-azul-450;
-  color: $white;
-  white-space: nowrap;
-  margin-left: auto;
-}
-
-.resumenActions {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  flex-wrap: wrap;
-}
-
-.resumenActionBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  height: 1.5rem;
-  padding: 0 0.625rem;
-  border: 1px solid $gray-200;
-  border-radius: 20px;
-  background: $white;
-  color: $gray-600;
-  font-size: inherit;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background .15s, border-color .15s, color .15s;
-
-  &:hover:not(:disabled) { border-color: $tono-azul-450; color: $tono-azul-450; }
-  &:disabled { opacity: .5; cursor: not-allowed; }
 }
 
 .emptyCell {
@@ -502,150 +79,6 @@
   white-space: normal;
 }
 
-.errorBox {
-  margin: 1rem;
-  background: $gray-100;
-  border: 1px solid $tono-rojo-200;
-  border-radius: 0.375rem;
-  padding: 0.75rem 1rem;
-  font-size: 0.8125rem;
-  color: $danger-red;
-}
-
-// ─── Título del socio, subtítulos por tramo/tipo y subtotal por médico ─────────
-.socioTituloRow td {
-  background: $gray-50;
-  color: $carpeta-noche;
-  font-weight: 700;
-  padding: 0.4375rem 0.75rem;
-  border-top: 2px solid $gray-200;
-}
-
-.tramoRow td {
-  text-align: center;
-  color: $gray-700;
-  font-size: .72em;
-  font-weight: 600;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  padding: 0.3125rem 0.75rem 3px 1.375rem;
-  border-bottom: 1px dashed $gray-200;
-}
-
-// Subtítulo de cada paciente (listas ordenadas por paciente), celeste y centrado.
-.pacienteSubtituloRow td {
-  background: $secondary-blue;
-  color: $tono-azul-550-b;
-  font-size: .78em;
-  font-weight: 700;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  text-align: center;
-  padding: 0.3125rem 0.75rem 0.25rem;
-  border-bottom: 1px solid $tono-azul-100;
-}
-
-// Cierre de cada paciente en "Por tipo" ordenado por paciente.
-.totalPacienteRow td {
-  background: $gray-100;
-  border-top: 1px solid $tono-azul-100;
-  border-bottom: 2px solid $tono-azul-100;
-  padding: 0.375rem 0.75rem;
-}
-
-// Subtítulo con el nombre de la clínica (mismo naranja que la etiqueta de clínica).
-.clinicaSubtituloRow td {
-  background: $tono-naranja-100;
-  color: $tono-naranja-600;
-  font-size: .78em;
-  font-weight: 700;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  text-align: center;
-  padding: 0.3125rem 0.75rem 0.25rem;
-  border-bottom: 1px solid $tono-naranja-150;
-}
-
-.clinicaTag {
-  align-self: flex-start;
-  margin-top: 2px;
-  padding: 0 0.375rem;
-  border-radius: 5px;
-  background: $tono-naranja-100;
-  color: $tono-naranja-600;
-  font-size: .85em;
-  white-space: nowrap;
-}
-
-// "Por tipo": subtítulo de cada sección (Consultas, Prácticas…).
-.tipoTituloRow td {
-  background: $secondary-blue;
-  color: $primary-blue-darker;
-  font-weight: 700;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  padding: 0.5625rem 0.75rem;
-  box-shadow: inset 4px 0 0 $tono-azul-450;
-  border-top: 8px solid $white;
-}
-
-.tipoTituloContent {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 0.5rem 1.25rem;
-}
-
-// Selector "Médico A-Z / Paciente A-Z" dentro del subtítulo de la sección.
-.ordenAlfaGroup {
-  display: inline-flex;
-  gap: 0.25rem;
-  text-transform: none;
-  letter-spacing: 0;
-}
-
-.ordenAlfaBtn {
-  padding: 2px 0.625rem;
-  border: 1px solid $tono-azul-250;
-  border-radius: 999px;
-  background: $white;
-  color: $primary-blue-darker;
-  font-size: .8em;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.ordenAlfaBtnOn {
-  background: $primary-blue-darker;
-  border-color: $primary-blue-darker;
-  color: $white;
-}
-
-// "Por tipo": subtotal al cerrar las filas de cada médico.
-.subtotalMedicoRow td {
-  background: $gray-50;
-  border-top: 1px solid $gray-200;
-  border-bottom: 2px solid $gray-200;
-  padding: 0.375rem 0.75rem;
-}
-
-.subtotalMedicoContent {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.75rem;
-  font-size: .9em;
-  color: $carpeta-noche;
-}
-
-.subtotalMedicoMontos {
-  display: flex;
-  gap: 1.25rem;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  white-space: nowrap;
-}
-
 // Fila recién editada: al volver al listado titila en naranja claro unos segundos. Es un
 // atributo y no una clase: React reescribe el `className` de la fila al re-renderizar
 // (la recarga después de guardar) y se llevaba puesta la marca.
@@ -661,18 +94,6 @@ tr[data-resaltada] td {
   tr[data-resaltada] td { animation: none; background-color: $tono-naranja-100; }
 }
 
-// Documentación digital: cuántos archivos tiene la prestación, o que le faltan.
-.docChip {
-  display: inline-block;
-  padding: 2px 8px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  white-space: nowrap;
-  border-radius: 999px;
-}
-.docChipOk { color: #14532d; background: #dcfce7; }
-.docChipFalta { color: #7c2d12; background: #ffedd5; }
-
 // Detalle | Documentación (sólo en las obras sociales con documentación digital).
 .tabs {
   display: flex;
@@ -680,6 +101,7 @@ tr[data-resaltada] td {
   margin-top: 0.75rem;
   border-bottom: 1px solid #d9dee7;
 }
+
 .tab {
   padding: 0.7rem 1.1rem;
   font-size: 0.95rem;
@@ -691,6 +113,7 @@ tr[data-resaltada] td {
 
   &:hover { color: #1d4ed8; }
 }
+
 .tabActiva {
   font-weight: 700;
   color: #1d4ed8;

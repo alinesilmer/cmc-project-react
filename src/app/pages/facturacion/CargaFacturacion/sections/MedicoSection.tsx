@@ -2,7 +2,7 @@ import React from "react";
 import PayeeAutocomplete from "../../components/PayeeAutocomplete";
 import MedicoAutocomplete from "../../components/MedicoAutocomplete";
 import type { MedicoOption } from "../../types";
-import styles from "../CargaFacturacion.module.scss";
+import comun from "../Comun.module.scss";;
 
 interface Props {
   codMedico: string | null;
@@ -31,10 +31,10 @@ const MedicoSection: React.FC<Props> = ({
   ejecutorDisabled, ejecutorError, ejecutorPresetLabel, ejecutorResetKey,
   medicosPrecargados,
 }) => (
-  <div className={styles.section}>
-    <span className={styles.sectionTitle}>Médico / Clínica</span>
-    <div className={`${styles.filterField} ${styles.filterFieldWide}`} data-field="medico">
-      <label className={styles.filterLabel}>Nº socio <span className={styles.errorText}>*</span></label>
+  <div className={comun.section}>
+    <span className={comun.sectionTitle}>Médico / Clínica</span>
+    <div className={`${comun.filterField} ${comun.filterFieldWide}`} data-field="medico">
+      <label className={comun.filterLabel}>Nº socio <span className={comun.errorText}>*</span></label>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <PayeeAutocomplete
@@ -47,33 +47,33 @@ const MedicoSection: React.FC<Props> = ({
           />
         </div>
         {medico?.es_organizacion && (
-          <span className={`${styles.infoChip} ${styles.chipNeutral}`} style={{ flexShrink: 0 }}>
+          <span className={`${comun.infoChip} ${comun.chipNeutral}`} style={{ flexShrink: 0 }}>
             Clínica
           </span>
         )}
         {medico?.condicion_impositiva && (
-          <span className={`${styles.infoChip} ${styles.chipNeutral}`} style={{ flexShrink: 0 }}>
+          <span className={`${comun.infoChip} ${comun.chipNeutral}`} style={{ flexShrink: 0 }}>
             {medico.condicion_impositiva}
           </span>
         )}
       </div>
-      {error && <span className={styles.errorText}>{error}</span>}
+      {error && <span className={comun.errorText}>{error}</span>}
 
       {!medico?.es_organizacion && medico?.especialidades && medico.especialidades.length > 0 && (
-        <div className={styles.medicoExtra}>
-          <span className={styles.mutedText}>Especialidades:</span>
+        <div className={comun.medicoExtra}>
+          <span className={comun.mutedText}>Especialidades:</span>
           {medico.especialidades.map((esp) => (
-            <span key={esp.id} className={styles.especialidadChip}>{esp.nombre}</span>
+            <span key={esp.id} className={comun.especialidadChip}>{esp.nombre}</span>
           ))}
         </div>
       )}
     </div>
 
     {payeeEsOrganizacion && (
-      <div className={`${styles.filterField} ${styles.filterFieldWide}`} data-field="medicoEjecutor">
-        <label className={styles.filterLabel}>
-          Médico ejecutor <span className={styles.errorText}>*</span>{" "}
-          <span className={styles.sectionHint}>no cobra; fija el precio por su especialidad</span>
+      <div className={`${comun.filterField} ${comun.filterFieldWide}`} data-field="medicoEjecutor">
+        <label className={comun.filterLabel}>
+          Médico ejecutor <span className={comun.errorText}>*</span>{" "}
+          <span className={comun.sectionHint}>no cobra; fija el precio por su especialidad</span>
         </label>
         <MedicoAutocomplete
           key={`ejecutor-${ejecutorResetKey ?? 0}`}
@@ -84,13 +84,13 @@ const MedicoSection: React.FC<Props> = ({
           blurOnSelect={false}
           medicosPrecargados={medicosPrecargados}
         />
-        {ejecutorError && <span className={styles.errorText}>{ejecutorError}</span>}
+        {ejecutorError && <span className={comun.errorText}>{ejecutorError}</span>}
 
         {medicoEjecutor?.especialidades && medicoEjecutor.especialidades.length > 0 && (
-          <div className={styles.medicoExtra}>
-            <span className={styles.mutedText}>Especialidades:</span>
+          <div className={comun.medicoExtra}>
+            <span className={comun.mutedText}>Especialidades:</span>
             {medicoEjecutor.especialidades.map((esp) => (
-              <span key={esp.id} className={styles.especialidadChip}>{esp.nombre}</span>
+              <span key={esp.id} className={comun.especialidadChip}>{esp.nombre}</span>
             ))}
           </div>
         )}

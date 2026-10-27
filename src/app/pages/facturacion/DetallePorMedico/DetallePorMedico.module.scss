@@ -215,13 +215,7 @@
   &:hover:not(:disabled) { background: $gray-100; border-color: $tono-rojo-200; }
 }
 
-.spin {
-  animation: dpm-spin 0.9s linear infinite;
-}
 
-@keyframes dpm-spin {
-  to { transform: rotate(360deg); }
-}
 
 // ─── Tabla ──────────────────────────────────────────────────────────────────
 .tableWrap { overflow-x: auto; }

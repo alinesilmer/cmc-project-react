@@ -105,14 +105,6 @@
 }
 .alerta { color: $alerta; font-weight: 600; }
 .peligro { color: $peligro; font-weight: 600; }
-
-.paginacion {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-}
-
 // ─── Modales ────────────────────────────────────────────────────────────────
 .modalBody {
   display: flex;
@@ -195,4 +187,71 @@
 .btnPeligro {
   background: $peligro;
   border-color: $peligro;
+}
+
+// ─── Rediseño ─────────────────────────────────────────────────────────────────
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: $spacing-4;
+}
+
+.campoOs {
+  flex: 1 1 22rem;
+  max-width: 30rem;
+}
+
+.filtro {
+  width: auto;
+  min-width: 11rem;
+  border-radius: 999px;
+}
+
+.rango {
+  width: 10rem;
+  border-radius: 999px;
+}
+
+.seleccionados {
+  font-size: $font-size-sm;
+  color: $gray-500;
+  font-variant-numeric: tabular-nums;
+}
+
+.envoltorio {
+  overflow-x: auto;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
+  box-shadow: 0 14px 34px -28px rgba($franja-azul, 0.55);
+}
+
+.cargarPrecio,
+.verPrecio {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0 $spacing-3;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  text-decoration: none;
+  white-space: nowrap;
+  border-radius: $radio-md;
+}
+
+.cargarPrecio {
+  color: $white;
+  background: $primary-blue-dark;
+  border: 1px solid $primary-blue-darker;
+
+  &:hover { background: $primary-blue-darker; }
+}
+
+.verPrecio {
+  color: $gray-800;
+  border: 1px solid $gray-300;
+
+  &:hover { background: $gray-100; }
 }

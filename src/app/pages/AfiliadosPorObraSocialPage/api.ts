@@ -15,7 +15,10 @@ const ENDPOINTS = {
   medicosExportByOS: (nroOS: number) => `/api/padrones/obras-sociales/${nroOS}/medicos/export`,
 };
 
-function mapObraSocialRawToOS(raw: any): ObraSocial {
+/** Una fila tal como llega de la API: sin tipo hasta que se la mapea. */
+type Crudo = Record<string, unknown>;
+
+function mapObraSocialRawToOS(raw: Crudo | null | undefined): ObraSocial {
   const nro =
     raw?.NRO_OBRA_SOCIAL ??
     raw?.NRO_OBRASOCIAL ??
@@ -24,13 +27,12 @@ function mapObraSocialRawToOS(raw: any): ObraSocial {
     0;
   const nombre =
     raw?.NOMBRE ?? raw?.OBRA_SOCIAL ?? raw?.obra_social ?? raw?.nombre ?? "";
-  const codigo =
-    raw?.CODIGO ??
+  const codigo = (raw?.CODIGO ??
     (Number.isFinite(Number(nro))
       ? `OS${String(Number(nro)).padStart(3, "0")}`
-      : null);
-  const activa =
-    raw?.ACTIVA ?? (typeof raw?.activo === "boolean" ? (raw.activo ? "S" : "N") : undefined);
+      : null)) as string | null;
+  const activo = raw?.activo;
+  const activa = (raw?.ACTIVA ?? (typeof activo === "boolean" ? (activo ? "S" : "N") : undefined)) as ObraSocial["ACTIVA"];
   return {
     NRO_OBRA_SOCIAL: Number(nro),
     NOMBRE: String(nombre),
@@ -39,32 +41,34 @@ function mapObraSocialRawToOS(raw: any): ObraSocial {
   };
 }
 
-function unwrapPrestadorSource(it: any) {
-  return it?.prestador ?? it?.medico ?? it?.doctor ?? it?.data ?? it?.item ?? it;
+function unwrapPrestadorSource(it: Crudo | null | undefined): Crudo | null | undefined {
+  return (it?.prestador ?? it?.medico ?? it?.doctor ?? it?.data ?? it?.item ?? it) as Crudo | null | undefined;
 }
 
-/** Primer valor no vacío entre varios alias de la misma columna. */
-function pick(src: any, it: any, ...claves: string[]) {
+/** Primer valor no vacío entre varios alias de la misma columna; `T` es el tipo que promete la API. */
+function pick<T = string>(src: Crudo | null | undefined, it: Crudo | null | undefined, ...claves: string[]): T | null {
   for (const k of claves) {
     const v = src?.[k] ?? it?.[k];
-    if (v !== null && v !== undefined && v !== "") return v;
+    if (v !== null && v !== undefined && v !== "") return v as T;
   }
   return null;
 }
 
-function mapItemToPrestador(it: any): Prestador {
+type Numerico = string | number;
+
+function mapItemToPrestador(it: Crudo): Prestador {
   const src = unwrapPrestadorSource(it);
 
-  const id = pick(src, it, "ID", "id");
-  const nro = pick(src, it, "NRO_SOCIO", "nro_socio", "SOCIO", "socio");
+  const id = pick<Numerico>(src, it, "ID", "id");
+  const nro = pick<Numerico>(src, it, "NRO_SOCIO", "nro_socio", "SOCIO", "socio");
   const nombre = pick(src, it, "NOMBRE", "nombre");
 
   const telefono_consulta = sanitizePhone(
     pick(src, it, "tel_consulta", "TEL_CONSULTA", "TELEFONO_CONSULTA", "telefono_consulta")
   );
 
-  const especialidadesRaw = pick(src, it, "ESPECIALIDADES", "especialidades");
-  const especialidadSingle = pick(src, it, "ESPECIALIDAD", "especialidad");
+  const especialidadesRaw = pick<unknown>(src, it, "ESPECIALIDADES", "especialidades");
+  const especialidadSingle = pick<unknown>(src, it, "ESPECIALIDAD", "especialidad");
   const especialidades = cleanEspecialidades(coerceToStringArray(especialidadesRaw));
   const especialidad =
     especialidades[0] ?? (especialidadSingle ? safeStr(especialidadSingle) : null);
@@ -75,9 +79,9 @@ function mapItemToPrestador(it: any): Prestador {
     socio: nro,
     apellido_nombre: nombre,
     nombre,
-    matricula_prov: pick(src, it, "MATRICULA_PROV", "matricula_prov"),
+    matricula_prov: pick<Numerico>(src, it, "MATRICULA_PROV", "matricula_prov"),
     // Estos cuatro ya venían en la respuesta y se descartaban al mapear; son columnas de exportación que no cuestan ningún pedido extra.
-    matricula_nac: pick(src, it, "MATRICULA_NAC", "matricula_nac"),
+    matricula_nac: pick<Numerico>(src, it, "MATRICULA_NAC", "matricula_nac"),
     categoria: pick(src, it, "CATEGORIA", "categoria"),
     marca: pick(src, it, "MARCA", "marca"),
     especialidades,

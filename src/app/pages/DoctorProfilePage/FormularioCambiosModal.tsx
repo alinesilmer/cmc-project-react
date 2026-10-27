@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Modal } from "rsuite";
-import "rsuite/Modal/styles/index.css";
-import { AlertTriangle, Check, RotateCcw } from "lucide-react";
+import Dialog from "@mui/material/Dialog";
+import { AlertTriangle, Check, RotateCcw, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import Button from "@/app/components/ui/Button/Button";
@@ -94,17 +93,19 @@ const FormularioCambiosModal: React.FC<Props> = ({ open, onClose, onEnviado }) =
   }
 
   return (
-    <Modal
+    <Dialog
       open={open}
-      onClose={enviando ? () => {} : onClose}
-      size="md"
-      className={styles.modal}
+      onClose={enviando ? undefined : onClose}
+      maxWidth={false}
+      slotProps={{ paper: { className: styles.modal, style: { width: 800, maxWidth: "calc(100% - 1.5rem)" } } }}
     >
-      <Modal.Header>
-        <Modal.Title>Corregir mis datos</Modal.Title>
-      </Modal.Header>
+      <div className={styles.cabeza}>
+        <h2 className={styles.titulo}>Corregir mis datos</h2>
+        <button type="button" className={styles.cerrar} onClick={onClose} disabled={enviando} aria-label="Cerrar">
+          <X size={16} aria-hidden="true" />
+        </button>
+      </div>
 
-      <Modal.Body>
         <div className={styles.form}>
           <p className={styles.note}>
             Editá lo que esté mal y enviá el formulario. Esto no cambia tu legajo
@@ -206,8 +207,7 @@ const FormularioCambiosModal: React.FC<Props> = ({ open, onClose, onEnviado }) =
             </Button>
           </div>
         </div>
-      </Modal.Body>
-    </Modal>
+    </Dialog>
   );
 };
 

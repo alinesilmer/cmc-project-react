@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
-  X as XIcon, Plus, Save, Loader2, Building2,
+  X as XIcon, Plus, Save, Building2,
   CheckCircle2, AlertCircle, Trash2,
 } from "lucide-react";
-import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 
 import styles from "./NomencladorGalenos.module.scss";
@@ -17,14 +16,17 @@ import type {
 import AplicarNiveladoModal from "../components/AplicarNiveladoModal";
 import ReplicarFamiliaBlock, {
   ErrorReplica, ResultadoReplica,
-} from "../../../components/molecules/ReplicarFamilia/ReplicarFamiliaBlock";
+} from "@/app/components/molecules/ReplicarFamilia/ReplicarFamiliaBlock";
 import {
   REPLICA_INICIAL, destinosReplica, type ReplicaState,
-} from "../../../components/molecules/ReplicarFamilia/replicaState";
+} from "@/app/components/molecules/ReplicarFamilia/replicaState";
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
 import { hoyISO } from "@/app/shared/lib/fechas";
 import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
 import { extractDetail } from "@/app/pages/NomencladorNacional/NomencladorGalenos/utiles";
+import Button from "@/app/components/ui/Button/Button";
+import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
+import paleta from "@/app/styles/paleta.module.scss";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -472,13 +474,28 @@ export default function GalenoCreateModal({
 
   return (
     <Modal
-      title="Nuevo galeno desde plantilla"
-      subtitle="Elegí una o más obras sociales y armá sus galenos a partir de plantillas prearmadas"
+      title="Nuevo galeno"
       onClose={onClose}
-      wide
+      acciones={
+        results ? (
+          <Button onClick={onClose}>Cerrar</Button>
+        ) : (
+          <>
+            <Button variant="ghost" onClick={onClose}>Cancelar</Button>
+            <Button
+              leftIcon={<Save size={16} aria-hidden="true" />}
+              onClick={handleSubmit}
+              disabled={totalDrafts === 0}
+              isLoading={submitting}
+            >
+              Crear {totalDrafts > 0 ? `${totalDrafts} ` : ""}galeno{totalDrafts !== 1 ? "s" : ""}{destinosReplica(replica).length > 0 ? " y replicar" : ""}
+            </Button>
+          </>
+        )
+      }
     >
       {results ? (
-        <ResultSummary results={results} osName={osName} nivelados={nivelados} onClose={onClose} />
+        <ResultSummary results={results} osName={osName} nivelados={nivelados} />
       ) : (
         <>
           {/* Selección de obras sociales */}
@@ -593,18 +610,6 @@ export default function GalenoCreateModal({
             </>
           )}
 
-          <div className={styles.modalFooter}>
-            <button className={styles.btnGhost} onClick={onClose}>Cancelar</button>
-            <button
-              className={styles.btnPrimary}
-              onClick={handleSubmit}
-              disabled={submitting || totalDrafts === 0}
-            >
-              {submitting
-                ? <><Loader2 size={14} className={styles.spin} /> Creando…</>
-                : <><Save size={15} /> Crear {totalDrafts > 0 ? `${totalDrafts} ` : ""}galeno{totalDrafts !== 1 ? "s" : ""}{destinosReplica(replica).length > 0 ? " y replicar" : ""}</>}
-            </button>
-          </div>
         </>
       )}
     </Modal>
@@ -805,13 +810,12 @@ function DraftCard({
 // ─── Result summary ───────────────────────────────────────────────────────────
 
 function ResultSummary({
-  results, osName, nivelados, onClose,
+  results, osName, nivelados,
 }: {
   results: SubmitResult[];
   osName: (nro: number) => string;
   /** Nomencladores nivelados: el galeno recién creado puede ser el de uno. */
   nivelados: NomencladorNiveladoOut[];
-  onClose: () => void;
 }) {
   const ok = results.filter((r) => r.ok).length;
   const failed = results.length - ok;
@@ -822,7 +826,7 @@ function ResultSummary({
   );
   return (
     <>
-      <div className={styles.warningBox} style={{ background: "#f0fdf4", borderColor: "#bbf7d0", color: "#166534" }}>
+      <div className={styles.warningBox} style={{ background: paleta.tonoVerde50D, borderColor: paleta.tonoVerde50B, color: paleta.tonoVerde550 }}>
         <CheckCircle2 size={15} style={{ flexShrink: 0, marginTop: 1 }} />
         <span>
           {ok} galeno{ok !== 1 ? "s" : ""} creado{ok !== 1 ? "s" : ""}
@@ -866,9 +870,6 @@ function ResultSummary({
           ))}
         </div>
       )}
-      <div className={styles.modalFooter}>
-        <button className={styles.btnPrimary} onClick={onClose}>Cerrar</button>
-      </div>
       {aplicar && (
         <AplicarNiveladoModal
           isOpen
@@ -885,38 +886,15 @@ function ResultSummary({
 
 // ─── Modal wrapper ────────────────────────────────────────────────────────────
 
-function Modal({ title, subtitle, onClose, children, wide }: {
+function Modal({ title, onClose, acciones, children }: {
   title: string;
-  subtitle?: string;
   onClose: () => void;
+  acciones: ReactNode;
   children: ReactNode;
-  wide?: boolean;
 }) {
   return (
-    <motion.div
-      className={styles.backdrop}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-    >
-      <motion.div
-        className={`${styles.modal} ${wide ? styles.modalWide : ""}`}
-        initial={{ opacity: 0, scale: 0.96, y: 12 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.96, y: 12 }}
-        transition={{ duration: 0.16 }}
-      >
-        <div className={styles.modalHeader}>
-          <div>
-            <h2 className={styles.modalTitle}>{title}</h2>
-            {subtitle && <p className={styles.modalSubtitle}>{subtitle}</p>}
-          </div>
-          <button className={styles.modalClose} onClick={onClose}>
-            <XIcon size={18} />
-          </button>
-        </div>
-        <div className={styles.modalBody}>{children}</div>
-      </motion.div>
-    </motion.div>
+    <Dialogo titulo={title} icono={Plus} ancho="grande" onClose={onClose} acciones={acciones}>
+      {children}
+    </Dialogo>
   );
 }

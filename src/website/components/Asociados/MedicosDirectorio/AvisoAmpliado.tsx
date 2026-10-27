@@ -2,9 +2,9 @@ import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, ImageOff, X } from "lucide-react";
-import { useModal } from "../../../hooks/useModal";
+import { useModal } from "@/website/hooks/useModal";
 import { iniciales, nombreDe } from "./avisos";
-import type { PubAd } from "../../../lib/ads.client";
+import type { PubAd } from "@/website/lib/ads.client";
 import styles from "./AvisoAmpliado.module.scss";
 import Button from "@/website/components/UI/Button/Button";
 

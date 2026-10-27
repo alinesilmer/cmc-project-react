@@ -70,8 +70,6 @@
   font-size: $font-size-sm;
 }
 
-.spin { animation: $anim-spin 0.9s linear infinite; }
-
 // ── Secciones ───────────────────────────────────────────────────────────────
 
 .card {
@@ -365,20 +363,6 @@
 .iconOk { @extend %btn-icono-ok; }
 
 .iconDanger { @extend %btn-icono-peligro; }
-
-// ── Diálogo de contraseña ───────────────────────────────────────────────────
-
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: $spacing-4;
-  background: rgba($gray-900, 0.45);
-}
-
 .modal {
   border-radius: $radio-md;
   width: 100%;

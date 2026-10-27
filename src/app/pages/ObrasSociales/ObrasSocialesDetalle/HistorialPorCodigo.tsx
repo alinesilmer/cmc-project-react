@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, Loader2, Search, SearchX } from "lucide-react";
+import { ChevronRight, Search, SearchX } from "lucide-react";
 
 import { getHistorialPorCodigo } from "../../NomencladorNacional/nomenclador.api";
 import type {
@@ -18,16 +18,14 @@ import {
 import { formatFecha } from "@/app/shared/lib/fechas";
 import s from "./ObrasSocialesDetalle.module.scss";
 import h from "./HistorialPorCodigo.module.scss";
+import { formatoPesos } from "@/app/shared/lib/formatos";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
+import Paginador from "@/app/components/ui/Paginador/Paginador";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
 
 const PAGE_SIZE = 50;
 
-const money = new Intl.NumberFormat("es-AR", {
-  style: "currency",
-  currency: "ARS",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-const fmt = (v: string) => money.format(Number(v) || 0);
+const fmt = (v: string) => formatoPesos.format(Number(v) || 0);
 
 const MOTIVO_LABEL: Record<string, string> = {
   carga_inicial: "Carga inicial",
@@ -49,7 +47,7 @@ function Variacion({ pct }: { pct: number | null }) {
 function TablaVersiones({ v }: { v: HistorialVarianteOut }) {
   return (
     <div className={h.tablaWrap}>
-      <table className={h.tabla}>
+      <Tabla className={h.tabla}>
         <thead>
           <tr>
             <th>Desde</th>
@@ -76,7 +74,7 @@ function TablaVersiones({ v }: { v: HistorialVarianteOut }) {
             </tr>
           ))}
         </tbody>
-      </table>
+      </Tabla>
     </div>
   );
 }
@@ -196,14 +194,14 @@ export default function HistorialPorCodigo({ obraNro }: { obraNro: number }) {
           </select>
         </div>
         <span className={h.cuenta}>
-          {isFetching && <Loader2 size={13} className={s.spinIcon} />}
+          {isFetching && <Cargando size={13} />}
           {data ? `${data.total.toLocaleString("es-AR")} código${data.total === 1 ? "" : "s"}` : ""}
         </span>
       </div>
 
       {isLoading ? (
         <div className={s.hLoadingState}>
-          <Loader2 size={22} className={s.spinIcon} />
+          <Cargando size={22} />
           <span>Cargando historial…</span>
         </div>
       ) : !data || data.items.length === 0 ? (
@@ -217,15 +215,7 @@ export default function HistorialPorCodigo({ obraNro }: { obraNro: number }) {
             {data.items.map((c) => <FilaCodigo key={c.nomenclador_id} c={c} />)}
           </div>
           {totalPages > 1 && (
-            <div className={s.pagination} role="navigation" aria-label="Paginación">
-              <button type="button" className={s.pageBtn} disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
-                ‹ Anterior
-              </button>
-              <span className={s.pageInfo}>Página {page} de {totalPages}</span>
-              <button type="button" className={s.pageBtn} disabled={page === totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>
-                Siguiente ›
-              </button>
-            </div>
+            <Paginador pagina={page} totalPaginas={totalPages} onCambiar={setPage} />
           )}
         </>
       )}

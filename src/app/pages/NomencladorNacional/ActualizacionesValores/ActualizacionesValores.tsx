@@ -4,7 +4,6 @@ import {
   CalendarClock,
   ChevronDown,
   FileCheck2,
-  Loader2,
 } from "lucide-react";
 
 import { getActualizacionesPorMes } from "../nomenclador.api";
@@ -15,6 +14,7 @@ import SearchField from "@/app/components/ui/SearchField/SearchField";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
 import s from "./ActualizacionesValores.module.scss";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -111,7 +111,7 @@ export default function ActualizacionesValores() {
 
       {isLoading ? (
         <div className={s.estado}>
-          <Loader2 size={17} className={s.spin} /> Cargando…
+          <Cargando size={17} /> Cargando…
         </div>
       ) : isError ? (
         <div className={s.estado}>No se pudieron cargar las actualizaciones.</div>

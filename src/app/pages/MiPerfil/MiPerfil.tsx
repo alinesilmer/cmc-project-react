@@ -1,7 +1,7 @@
 import { UserRound } from "lucide-react";
 import type React from "react";
 
-import { useAuth } from "../../auth/AuthProvider";
+import { useAuth } from "../../auth/useAuth";
 import DoctorProfilePage from "../DoctorProfilePage/DoctorProfilePage";
 import Franja from "@/app/components/layout/Franja/Franja";
 

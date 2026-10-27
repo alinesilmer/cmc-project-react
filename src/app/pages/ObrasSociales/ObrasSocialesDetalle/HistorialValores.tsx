@@ -7,7 +7,6 @@ import {
   ChevronUp,
   ChevronDown,
   ChevronsUpDown,
-  Loader2,
   SearchX,
   CalendarDays,
   Paperclip,
@@ -21,8 +20,8 @@ import s from "./ObrasSocialesDetalle.module.scss";
 import HistorialPorCodigo from "./HistorialPorCodigo";
 import { abrirAdjunto } from "@/app/shared/lib/archivos";
 import { downloadExcelSheet } from "@/app/shared/lib/excelExport";
-import { useNotify } from "../../../hooks/useNotify";
-import { usePermisos } from "../../../auth/usePermisos";
+import { useNotify } from "@/app/hooks/useNotify";
+import { usePermisos } from "@/app/auth/usePermisos";
 import {
   eliminarValorDocumento,
   getResumenPorVigencia,
@@ -38,13 +37,11 @@ import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 import SearchField from "@/app/components/ui/SearchField/SearchField";
 import { formatFecha } from "@/app/shared/lib/fechas";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
+import { formatoPesos } from "@/app/shared/lib/formatos";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
+import Paginador from "@/app/components/ui/Paginador/Paginador";
+import { detalleDeError } from "@/app/shared/lib/httpErrors";
 
-const money = new Intl.NumberFormat("es-AR", {
-  style: "currency",
-  currency: "ARS",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
 
 // Filas por página en la tabla "valores por fecha".
 const PAGE_SIZE = 50;
@@ -243,8 +240,8 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
       await refetchDocumentos();
       setDocDescripcion("");
       avisarOk("Documento adjuntado.");
-    } catch (e: any) {
-      avisarError(e?.response?.data?.detail ?? "No se pudo subir el documento.");
+    } catch (e) {
+      avisarError(detalleDeError(e, "No se pudo subir el documento."));
     } finally {
       setSubiendo(false);
       // Sin esto, volver a elegir el mismo archivo no dispara el change.
@@ -258,8 +255,8 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
     try {
       await eliminarValorDocumento(doc.id);
       await refetchDocumentos();
-    } catch (e: any) {
-      avisarError(e?.response?.data?.detail ?? "No se pudo eliminar el documento.");
+    } catch (e) {
+      avisarError(detalleDeError(e, "No se pudo eliminar el documento."));
     } finally {
       setBorrandoDoc(null);
     }
@@ -377,7 +374,7 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
       {/* ── Porcentual view ── */}
       {historialView === "porcentual" && isLoadingResumen && (
         <div className={s.hLoadingState}>
-          <Loader2 size={22} className={s.spinIcon} />
+          <Cargando size={22} />
           <span>Cargando…</span>
         </div>
       )}
@@ -490,7 +487,7 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
                       htmlFor="valor-doc-file"
                       aria-disabled={subiendo}
                     >
-                      {subiendo ? <Loader2 size={16} className={s.spinIcon} /> : <Upload size={16} />}
+                      {subiendo ? <Cargando size={16} /> : <Upload size={16} />}
                       {subiendo ? "Subiendo…" : "Adjuntar"}
                     </label>
                     <input
@@ -550,7 +547,7 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
 
           {dateFilter && isLoadingDateRows && (
             <div className={s.hLoadingState}>
-              <Loader2 size={22} className={s.spinIcon} />
+              <Cargando size={22} />
               <span>Cargando…</span>
             </div>
           )}
@@ -633,10 +630,10 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
                               </>
                             ) : (
                               <>
-                                <td className={`${s.tdRight} ${s.tdMoney}`}>{money.format(row.honorarios)}</td>
-                                <td className={`${s.tdRight} ${s.tdMoney}`}>{money.format(row.ayudante)}</td>
-                                <td className={`${s.tdRight} ${s.tdMoney}`}>{money.format(row.gastos)}</td>
-                                <td className={`${s.tdRight} ${s.tdMoney}`}>{money.format(row.total)}</td>
+                                <td className={`${s.tdRight} ${s.tdMoney}`}>{formatoPesos.format(row.honorarios)}</td>
+                                <td className={`${s.tdRight} ${s.tdMoney}`}>{formatoPesos.format(row.ayudante)}</td>
+                                <td className={`${s.tdRight} ${s.tdMoney}`}>{formatoPesos.format(row.gastos)}</td>
+                                <td className={`${s.tdRight} ${s.tdMoney}`}>{formatoPesos.format(row.total)}</td>
                               </>
                             )}
                           </tr>
@@ -646,25 +643,7 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
                   </div>
 
                   {totalPages > 1 && (
-                    <div className={s.pagination} role="navigation" aria-label="Paginación">
-                      <button
-                        type="button"
-                        className={s.pageBtn}
-                        disabled={page === 1}
-                        onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      >
-                        ‹ Anterior
-                      </button>
-                      <span className={s.pageInfo}>Página {page} de {totalPages}</span>
-                      <button
-                        type="button"
-                        className={s.pageBtn}
-                        disabled={page === totalPages}
-                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                      >
-                        Siguiente ›
-                      </button>
-                    </div>
+                    <Paginador pagina={page} totalPaginas={totalPages} onCambiar={setPage} />
                   )}
                 </>
               )}

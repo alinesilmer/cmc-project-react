@@ -16,12 +16,9 @@ export default function TemaPanel() {
     raiz.dataset.panel = "";
     if (oscuro) raiz.dataset.tema = "oscuro";
     else delete raiz.dataset.tema;
-    // El tema oscuro que rsuite ya trae para sus modales.
-    raiz.classList.toggle("rs-theme-dark", oscuro);
     return () => {
       delete raiz.dataset.panel;
       delete raiz.dataset.tema;
-      raiz.classList.remove("rs-theme-dark");
     };
   }, [oscuro]);
 

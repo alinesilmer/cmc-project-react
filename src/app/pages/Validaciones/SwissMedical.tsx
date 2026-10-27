@@ -101,7 +101,6 @@ export default function SwissMedical() {
   return (
     <ReporteOS
       titulo="Swiss Medical"
-      subtitulo="Subí el reporte de transacciones y revisá cómo quedó repartido entre los médicos antes de facturarlo."
       ayuda={AYUDA}
       estado={estado}
       detalleArchivo={reporte?.rango}

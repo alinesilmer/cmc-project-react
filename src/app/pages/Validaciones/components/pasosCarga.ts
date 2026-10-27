@@ -32,7 +32,7 @@ const ICONO: Record<Grupo, LucideIcon> = {
 export const PASO_MEDICO: PasoCarga = { id: "medico", titulo: "Médico", icono: UserRound, campos: [] };
 
 function tituloDe(grupo: Grupo, campos: CampoConfig[]): string {
-  if (grupo === "afiliado") return "Afiliado";
+  if (grupo === "afiliado") return campos.every((c) => c.name === "dni") ? "DNI afiliado" : "Afiliado";
   if (grupo === "practica") return "Práctica";
   // El token sale de la credencial; el número de validación, del portal.
   return campos.some((c) => c.name === "token") ? "Token" : "Autorización";

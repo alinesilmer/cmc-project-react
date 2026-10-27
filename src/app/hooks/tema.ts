@@ -1,7 +1,7 @@
 import { crearPreferencia } from "./preferencia";
 
 /** El tema del panel (claro u oscuro). */
-export type Tema = "claro" | "oscuro";
+type Tema = "claro" | "oscuro";
 
 const TEMAS: readonly Tema[] = ["claro", "oscuro"];
 

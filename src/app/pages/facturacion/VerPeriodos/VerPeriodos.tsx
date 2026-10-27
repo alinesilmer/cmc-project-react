@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Receipt, Search, Eye, EyeOff, FileText } from "lucide-react";
 
-import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
+import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import { abrirAdjunto } from "@/app/shared/lib/archivos";
 import { listarFacturas, publicarPeriodo } from "../api";
 import type { FacturaRead, ListarFacturasParams, ObraSocialOption } from "../types";
@@ -14,6 +14,8 @@ import ConfirmActionModal from "../components/ConfirmActionModal";
 import styles from "./VerPeriodos.module.scss";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
+import Paginador from "@/app/components/ui/Paginador/Paginador";
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 
 // Mismos estados que `FACTURA_ESTADOS_CERRADOS` en el backend (service.py): 'C' es el estado actual.
 const ESTADOS_CERRADOS = new Set(["C", "L", "LC"]);
@@ -68,8 +70,9 @@ const VerPeriodos: React.FC = () => {
       const { data, totalCount: tc } = await listarFacturas(f);
       setRows(data);
       setTotalCount(tc);
-    } catch (e: any) {
-      notify(detailMessage(e?.response?.data?.detail) || "Error al cargar las facturas.", "error");
+    } catch (e) {
+      const err = comoErrorApi(e);
+      notify(detailMessage(err?.response?.data?.detail) || "Error al cargar las facturas.", "error");
     } finally {
       setLoading(false);
     }
@@ -113,8 +116,9 @@ const VerPeriodos: React.FC = () => {
       notify(`Período ${nuevoEstado ? "publicado" : "despublicado"}.`, "success");
       setAPublicar(null);
       await fetchData(filtros);
-    } catch (e: any) {
-      notify(detailMessage(e?.response?.data?.detail) || "No pudimos actualizar la publicación.", "error");
+    } catch (e) {
+      const err = comoErrorApi(e);
+      notify(detailMessage(err?.response?.data?.detail) || "No pudimos actualizar la publicación.", "error");
     } finally {
       setPublicando(false);
     }
@@ -298,31 +302,13 @@ const VerPeriodos: React.FC = () => {
                 <option key={s} value={s}>{s} por página</option>
               ))}
             </select>
-            <div className={styles.pageBtns}>
-              <button
-                type="button"
-                className={styles.pageBtn}
-                disabled={offset === 0 || loading}
-                onClick={() => setFiltros((f) => ({ ...f, offset: Math.max(0, offset - limit) }))}
-              >
-                ◀ Anterior
-              </button>
-              <button
-                type="button"
-                className={styles.pageBtn}
-                disabled={
-                  (totalCount !== undefined && offset + limit >= totalCount) ||
-                  rows.length < limit ||
-                  loading
-                }
-                onClick={() => setFiltros((f) => ({ ...f, offset: offset + limit }))}
-              >
-                Siguiente ▶
-              </button>
-            </div>
-            <span className={styles.pageInfo}>
-              Página {page}{totalPages ? ` / ${totalPages}` : ""}
-            </span>
+            <Paginador
+              pagina={page}
+              totalPaginas={totalPages}
+              hayMas={!((totalCount !== undefined && offset + limit >= totalCount) || rows.length < limit)}
+              onCambiar={(p) => setFiltros((f) => ({ ...f, offset: (p - 1) * limit }))}
+              ocupado={loading}
+            />
           </div>
         </div>
       </div>

@@ -8,7 +8,30 @@ export type TipoDocumento =
   | "otros";
 
 // Used only as a form UI helper — not sent to the API
-type TipoEnvioUI = "corrientes_capital" | "viaja";
+type TipoEnvioUI = "corrientes_capital" | "viaja" | "plataforma";
+
+// Sin campo propio en la API: se guarda como texto de la dirección («Se sube por plataforma · Con paquete»).
+export const ENVIO_PLATAFORMA = "Se sube por plataforma";
+
+export type PaqueteEnvio = "con" | "sin";
+
+export const PAQUETE_LABELS: Record<PaqueteEnvio, string> = {
+  con: "Con paquete",
+  sin: "Sin paquete",
+};
+
+/** El texto de la dirección de una obra social que sube las facturas por plataforma. */
+export function textoPlataforma(paquete: PaqueteEnvio | ""): string {
+  return paquete ? `${ENVIO_PLATAFORMA} · ${PAQUETE_LABELS[paquete]}` : ENVIO_PLATAFORMA;
+}
+
+/** Si la dirección guardada es la de plataforma, qué paquete tiene; si no, `undefined`. */
+export function leerPlataforma(direccion: string | null | undefined): PaqueteEnvio | "" | undefined {
+  if (!direccion?.startsWith(ENVIO_PLATAFORMA)) return undefined;
+  if (direccion.includes(PAQUETE_LABELS.con)) return "con";
+  if (direccion.includes(PAQUETE_LABELS.sin)) return "sin";
+  return "";
+}
 
 // ─── Labels (for display) ─────────────────────────────────────────────────────
 
@@ -87,7 +110,7 @@ export interface ObraSocial {
 // Qué se copió de la cabecera al crear una derivada (ver `replicar` en el alta).
 export type PasoReplicacion = "galenos" | "codigos" | "nivelados" | "valores";
 
-export interface ReplicacionPasoOut {
+interface ReplicacionPasoOut {
   paso: PasoReplicacion;
   estado: "ok" | "parcial" | "omitido" | "error";
   creados: number;
@@ -164,6 +187,8 @@ export interface ObraSocialFormData {
   df_direccion: string;
   df_codigo_postal: string;
   df_horario: string;
+  // Sólo con envío por plataforma.
+  df_paquete: PaqueteEnvio | "";
   // Vencimiento
   plazo_vencimiento: "30" | "45" | "60" | "otro" | "";
   plazo_custom: string;
@@ -195,6 +220,7 @@ export const EMPTY_FORM: ObraSocialFormData = {
   df_direccion: "",
   df_codigo_postal: "",
   df_horario: "",
+  df_paquete: "",
   plazo_vencimiento: "",
   plazo_custom: "",
   fecha_alta_convenio: "",

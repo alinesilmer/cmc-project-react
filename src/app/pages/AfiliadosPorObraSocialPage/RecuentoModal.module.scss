@@ -1,0 +1,73 @@
+@use "@/app/styles/all.scss" as *;
+
+
+// ── Recuento de errores ──────────────────────────────────────────────────────
+
+.recuentoResumen {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin: 0 0 $spacing-3;
+  font-size: $font-size-lg;
+  color: $gray-700;
+
+  strong {
+    font-family: $fuente-titulos;
+    font-size: $font-size-2xl;
+    font-weight: 800;
+    color: $primary-blue;
+  }
+
+  svg {
+    color: $success-green;
+  }
+}
+
+.recuentoAviso {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin: 0 0 $spacing-3;
+  font-size: $font-size-sm;
+  color: $gray-500;
+}
+
+.recuentoLista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recuentoItem {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-2 0;
+  border-bottom: 1px solid $gray-100;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.recuentoNro {
+  flex: 0 0 4.5rem;
+  font-size: $font-size-sm;
+  font-variant-numeric: tabular-nums;
+  color: $gray-500;
+}
+
+.recuentoNombre {
+  flex: 1;
+  min-width: 0;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $gray-900;
+  overflow-wrap: anywhere;
+}
+
+.recuentoPie {
+  margin: $spacing-3 0 0;
+  font-size: $font-size-sm;
+  color: $gray-500;
+}

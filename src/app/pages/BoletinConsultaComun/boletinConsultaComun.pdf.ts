@@ -167,7 +167,7 @@ export async function generateConsultaComunPdf(
       const ancho = doc.getTextWidth(label);
       const lx = pageWidth - marginX - ancho;
       doc.text(label, lx, 25);
-      (doc as any).link(lx, 21, ancho, 6, { pageNumber: 2 });
+      doc.link(lx, 21, ancho, 6, { pageNumber: 2 });
     }
   }
 
@@ -247,7 +247,7 @@ export async function generateConsultaComunPdf(
         });
         doc.text(String(targetPage), pageWidth - 22, y, { align: "right" });
 
-        (doc as any).link(marginX, y - 5, pageWidth - marginX * 2, 8, {
+        doc.link(marginX, y - 5, pageWidth - marginX * 2, 8, {
           pageNumber: targetPage,
         });
 

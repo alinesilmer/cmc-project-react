@@ -2,7 +2,7 @@ import { useState } from "react";
 import Dialog from "@mui/material/Dialog";
 import { Heart, X } from "lucide-react";
 import { useLocation } from "react-router-dom";
-import { useAuth } from "@/app/auth/AuthProvider";
+import { useAuth } from "@/app/auth/useAuth";
 import { avisoPendiente, cerrarAviso, llevaAviso } from "./reglasAviso";
 import styles from "./AvisoIngreso.module.scss";
 

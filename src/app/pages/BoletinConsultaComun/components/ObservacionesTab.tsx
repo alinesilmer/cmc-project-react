@@ -13,11 +13,12 @@ import type { Plantilla, useObservaciones } from "../useObservaciones";
 import EditorObservacion from "./EditorObservacion";
 import PanelPlantillas from "./PanelPlantillas";
 import TextoObservacion from "./TextoObservacion";
-import s from "../BoletinConsultaComun.module.scss";
+import s from "./ObservacionesTab.module.scss";
+import comun from "./Comun.module.scss";
 
 type Filtro = "todas" | "con" | "sin";
 
-export interface ObraSimple {
+interface ObraSimple {
   nro: number;
   nombre: string;
 }
@@ -87,8 +88,8 @@ export default function ObservacionesTab({ obras, cargando, error, obs, normasPo
 
   return (
     <div className={s.obsLayout}>
-      <section className={s.seccion}>
-        <div className={s.barra}>
+      <section className={comun.seccion}>
+        <div className={comun.barra}>
           <SearchField
             placeholder="Buscar obra social por nombre o número…"
             value={busqueda}
@@ -111,18 +112,18 @@ export default function ObservacionesTab({ obras, cargando, error, obs, normasPo
           </div>
         </div>
 
-        {cargando && <div className={s.aviso}>Cargando obras sociales…</div>}
-        {error && !cargando && <div className={`${s.aviso} ${s.avisoError}`}>{error}</div>}
+        {cargando && <div className={comun.aviso}>Cargando obras sociales…</div>}
+        {error && !cargando && <div className={`${comun.aviso} ${comun.avisoError}`}>{error}</div>}
         {!cargando && !error && visibles.length === 0 && (
-          <div className={s.aviso}>{busqueda ? `Sin resultados para «${busqueda}».` : "No hay obras sociales en este filtro."}</div>
+          <div className={comun.aviso}>{busqueda ? `Sin resultados para «${busqueda}».` : "No hay obras sociales en este filtro."}</div>
         )}
 
         {visibles.length > 0 && (
-          <div className={s.tablaWrap}>
-            <Tabla className={s.tabla}>
+          <div className={comun.tablaWrap}>
+            <Tabla className={comun.tabla}>
               <thead>
                 <tr>
-                  <th className={s.colNro}>N°</th>
+                  <th className={comun.colNro}>N°</th>
                   <th className={s.colNombre}>Obra social</th>
                   <th>Observación</th>
                   <th className={s.colAccion}>Acciones</th>
@@ -151,7 +152,7 @@ export default function ObservacionesTab({ obras, cargando, error, obs, normasPo
                   const normas = normasPorOS.get(o.nro) ?? [];
                   return (
                     <tr key={o.nro}>
-                      <td className={s.nro}>{o.nro}</td>
+                      <td className={comun.nro}>{o.nro}</td>
                       <td>{o.nombre}</td>
                       <td>
                         {texto ? (

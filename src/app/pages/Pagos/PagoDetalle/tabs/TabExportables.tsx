@@ -1,11 +1,10 @@
 import React, { useState } from "react";
-import { getJSON } from "@/app/shared/lib/http";
-import { useAppSnackbar } from "../../../../hooks/useAppSnackbar";
+import { getInforme } from "@/app/pages/Pagos/pagos.api";
+import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import Button from "@/app/components/ui/Button/Button";
 import styles from "./tabs.module.scss";
 import type { Pago } from "../../types";
-
-const INFORME_URL = (pagoId: number, tipo: string) => `/api/pagos/${pagoId}/informe/${tipo}`;
+import { detalleDeError } from "@/app/shared/lib/httpErrors";
 
 type InformeMedico = {
   medico_id: number;
@@ -75,15 +74,15 @@ const TabExportables: React.FC<Props> = ({ pagoId }) => {
   const handleExport = async (tipo: InformeTipo, filename: string) => {
     setBusy(tipo);
     try {
-      const data = await getJSON<InformeResponse>(INFORME_URL(pagoId, tipo));
+      const data = await getInforme<InformeResponse>(pagoId, tipo);
       if (!data.medicos.length) {
         notify("No hay médicos en este informe.", "warning");
         return;
       }
       generarCSV(data.medicos, filename);
       notify(`CSV generado: ${data.cantidad} médico(s), total $${data.total_neto}.`);
-    } catch (e: any) {
-      notify(e?.response?.data?.detail ?? e?.message ?? "Error al generar el informe.", "error");
+    } catch (e) {
+      notify(detalleDeError(e, "Error al generar el informe."), "error");
     } finally {
       setBusy(null);
     }

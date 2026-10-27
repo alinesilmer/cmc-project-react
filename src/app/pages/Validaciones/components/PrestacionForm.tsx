@@ -23,10 +23,8 @@ interface Props {
 
 /** Lleva el cursor al primer campo del bloque `indice`. */
 function enfocarBloque(contenedor: HTMLElement | null, indice: number) {
-  contenedor
-    ?.querySelectorAll<HTMLElement>("[data-bloque]")
-    [indice]?.querySelector<HTMLElement>("input:not([disabled])")
-    ?.focus();
+  const bloques = contenedor?.querySelectorAll<HTMLElement>("[data-bloque]");
+  bloques?.[indice]?.querySelector<HTMLElement>("input:not([disabled])")?.focus();
 }
 
 // Alto y ancho del botón del pie: grande, fácil de acertar.

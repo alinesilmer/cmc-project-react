@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FileCheck2, Paperclip, AlertTriangle } from "lucide-react";
 
-import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
+import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import { previewCierre, cerrarPeriodo, fetchPeriodoActivo } from "../api";
 import type { CierrePreviewResponse, ObraSocialOption } from "../types";
 import { detailMessage } from "../types";
@@ -12,6 +12,8 @@ import ObraSocialAutocomplete from "../components/ObraSocialAutocomplete";
 import ConfirmarCierreModal from "./ConfirmarCierreModal";
 import styles from "./CierrePeriodo.module.scss";
 import BackButton from "@/app/components/ui/BackButton/BackButton";
+import paleta from "@/app/styles/paleta.module.scss";
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 
 const TIPOS_FACTURA = ["A", "B", "C"];
 
@@ -60,8 +62,9 @@ const CierrePeriodo: React.FC = () => {
       try {
         const data = await previewCierre(String(obraSocial.nro_obra_social), periodo);
         setPreview(data);
-      } catch (e: any) {
-        setPreviewError(detailMessage(e?.response?.data?.detail));
+      } catch (e) {
+        const err = comoErrorApi(e);
+        setPreviewError(detailMessage(err?.response?.data?.detail));
         setPreview(null);
       } finally {
         setPreviewLoading(false);
@@ -83,8 +86,9 @@ const CierrePeriodo: React.FC = () => {
       notify(`Factura #${result.id_factura} generada — ${formatMoney(result.importe_total)}`);
       setConfirmOpen(false);
       navigate("/panel/facturacion/periodos");
-    } catch (e: any) {
-      notify(detailMessage(e?.response?.data?.detail) || "Error al cerrar.", "error");
+    } catch (e) {
+      const err = comoErrorApi(e);
+      notify(detailMessage(err?.response?.data?.detail) || "Error al cerrar.", "error");
     } finally {
       setCerrando(false);
     }
@@ -159,7 +163,7 @@ const CierrePeriodo: React.FC = () => {
           )}
 
           {preview && (preview.sin_valorizar ?? 0) > 0 && !preview.cerrado && (
-            <div className={styles.errorBox} style={{ background: "#fffbeb", borderColor: "#fcd34d", color: "#92400e" }}>
+            <div className={styles.errorBox} style={{ background: paleta.tonoAmarillo50C, borderColor: paleta.tonoAmarillo100B, color: paleta.tonoNaranja550 }}>
               Quedan {preview.sin_valorizar} prestación{preview.sin_valorizar === 1 ? "" : "es"} sin valorizar
               (cargadas en $0 porque el código todavía no tenía precio). Podés cerrar igual o esperar a que se
               cargue el precio y revalorizarlas desde Valores por obra social.

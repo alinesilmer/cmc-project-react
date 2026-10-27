@@ -1,0 +1,56 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver TablaCodigos.tsx.
+
+.envoltorio {
+  overflow-x: auto;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
+  box-shadow: 0 14px 34px -28px rgba($franja-azul, 0.55);
+  transition: opacity 0.18s;
+}
+
+.apagada {
+  opacity: 0.6;
+}
+
+.codigo {
+  font-variant-numeric: tabular-nums;
+  color: $franja-azul;
+}
+
+.pastilla {
+  display: inline-block;
+  padding: 2px $spacing-3;
+  font-size: $font-size-xs;
+  text-transform: capitalize;
+  background: $gray-100;
+  border-radius: 999px;
+}
+
+.baja {
+  color: $ok;
+}
+
+.media {
+  color: $franja-azul;
+  background: $primary-yellow-light;
+}
+
+.alta {
+  color: $peligro;
+}
+
+.activo {
+  color: $ok;
+}
+
+.inactivo {
+  color: $gray-600;
+}
+
+.acciones {
+  display: flex;
+  gap: $spacing-2;
+}

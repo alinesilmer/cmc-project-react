@@ -1,4 +1,5 @@
 /** Primitivas de dibujo de la revista de beneficios. */
+import type { jsPDF } from "jspdf";
 
 export type RGB = [number, number, number];
 
@@ -19,8 +20,7 @@ export const COLOR = {
   placeholder: [182, 196, 212] as RGB,
 };
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-type Doc = any;
+type Doc = jsPDF;
 
 export function fill(doc: Doc, c: RGB) { doc.setFillColor(c[0], c[1], c[2]); }
 export function stroke(doc: Doc, c: RGB) { doc.setDrawColor(c[0], c[1], c[2]); }

@@ -2,13 +2,8 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
-import {
-  getJSON,
-  patchJSON,
-  postJSON,
-  putJSON,
-} from "@/app/shared/lib/http";
-import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
+import { agregarItem, buscarAtenciones, cambiarEstadoLote, editarItem, getLote } from "@/app/pages/Pagos/pagos.api";
+import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import BackButton from "@/app/components/ui/BackButton/BackButton";
 import Button from "@/app/components/ui/Button/Button";
 import Franja from "@/app/components/layout/Franja/Franja";
@@ -27,12 +22,10 @@ import { saveAs } from "@/app/shared/lib/fileSaver";
 import { Check, ArrowLeftRight } from "lucide-react";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
-import { LOTE_URL } from "@/app/pages/Pagos/LoteDetalle/utiles";
-import { ITEMS_URL } from "@/app/pages/Pagos/LoteDetalle/utiles";
-import { ITEM_URL } from "@/app/pages/Pagos/LoteDetalle/utiles";
-import { ESTADO_URL } from "@/app/pages/Pagos/LoteDetalle/utiles";
-import { ESTADO_TONO, estadoLabel } from "@/app/pages/Pagos/LoteDetalle/utiles";
+import { ESTADO_TONO, ITEM_URL, estadoLabel } from "@/app/pages/Pagos/LoteDetalle/utiles";
 import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
+import paleta from "@/app/styles/paleta.module.scss";
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 
 const OBSERVACION_OPTIONS = [
   "Falta firma",
@@ -41,7 +34,6 @@ const OBSERVACION_OPTIONS = [
   "Falta datos",
   "Otro",
 ];
-const BUSCAR_ATENCIONES_URL = "/api/lotes/snaps/buscar_atenciones";
 
 type EditForm = { tipo: "d" | "c"; honorarios: string; gastos: string; observacion: string };
 const transitionLabels: Record<string, string> = {
@@ -105,10 +97,11 @@ const LoteDetalle: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await getJSON<LoteAjuste>(LOTE_URL(loteId));
+      const data = await getLote(loteId);
       setLote(data);
-    } catch (e: any) {
-      setError(e?.message || "No se pudo cargar el lote.");
+    } catch (e) {
+      const err = comoErrorApi(e);
+      setError(err?.message || "No se pudo cargar el lote.");
     } finally {
       setLoading(false);
     }
@@ -135,9 +128,7 @@ const LoteDetalle: React.FC = () => {
           q: searchQuery,
           limit: "50",
         });
-        const data = await getJSON<AtencionSearchRow[]>(
-          `${BUSCAR_ATENCIONES_URL}?${qs}`,
-        );
+        const data = await buscarAtenciones(qs);
         setSearchResults(data ?? []);
       } catch {
         setSearchResults([]);
@@ -177,7 +168,7 @@ const LoteDetalle: React.FC = () => {
     }
     setConfirming(true);
     try {
-      await postJSON(ITEMS_URL(loteId), {
+      await agregarItem(loteId, {
         tipo: newTipo,
         id_atencion: selectedAtencion.id,
         honorarios: Number(newHonorarios),
@@ -194,12 +185,13 @@ const LoteDetalle: React.FC = () => {
       setNewObsIsOtro(false);
       setNewTipo("d");
       notify("Ajuste agregado correctamente.");
-    } catch (e: any) {
-      const detail = e?.response?.data?.detail;
+    } catch (e) {
+      const err = comoErrorApi(e);
+      const detail = err?.response?.data?.detail;
       notify(
         typeof detail === "string"
           ? detail
-          : (e?.message ?? "Error al agregar ajuste."),
+          : (err?.message ?? "Error al agregar ajuste."),
         "error",
       );
     } finally {
@@ -233,7 +225,7 @@ const LoteDetalle: React.FC = () => {
     }
     setEditSaving(true);
     try {
-      await putJSON(ITEM_URL(loteId, editTarget.id), {
+      await editarItem(loteId, editTarget.id, {
         tipo: editForm.tipo,
         honorarios: Number(editForm.honorarios),
         gastos: Number(editForm.gastos),
@@ -242,12 +234,13 @@ const LoteDetalle: React.FC = () => {
       setEditTarget(null);
       await loadLote();
       notify("Ajuste actualizado.");
-    } catch (e: any) {
-      const detail = e?.response?.data?.detail;
+    } catch (e) {
+      const err = comoErrorApi(e);
+      const detail = err?.response?.data?.detail;
       notify(
         typeof detail === "string"
           ? detail
-          : (e?.message ?? "Error al guardar."),
+          : (err?.message ?? "Error al guardar."),
         "error",
       );
     } finally {
@@ -266,18 +259,17 @@ const LoteDetalle: React.FC = () => {
       quitar: "C",
     };
     try {
-      const res = await patchJSON<LoteAjuste>(ESTADO_URL(loteId), {
-        estado: estadoMap[transitionModal],
-      });
+      const res = await cambiarEstadoLote(loteId, estadoMap[transitionModal]);
       setLote(res);
       setTransitionModal(null);
       notify(
         `Lote ${transitionLabels[transitionModal].toLowerCase()} correctamente.`,
       );
-    } catch (e: any) {
-      const detail = e?.response?.data?.detail;
+    } catch (e) {
+      const err = comoErrorApi(e);
+      const detail = err?.response?.data?.detail;
       notify(
-        typeof detail === "string" ? detail : (e?.message ?? "Error."),
+        typeof detail === "string" ? detail : (err?.message ?? "Error."),
         "error",
       );
     } finally {
@@ -524,7 +516,7 @@ const LoteDetalle: React.FC = () => {
                             <div style={{ fontWeight: 500 }}>
                               {row.nombre_prestador}
                             </div>
-                            <div style={{ fontSize: 11, color: "#64748b" }}>
+                            <div style={{ fontSize: 11, color: paleta.gray500 }}>
                               #{row.nro_socio}
                             </div>
                           </td>
@@ -612,7 +604,7 @@ const LoteDetalle: React.FC = () => {
                         disabled={confirming}
                         style={{
                           fontSize: 12,
-                          color: "#64748b",
+                          color: paleta.gray500,
                           background: "none",
                           border: "none",
                           cursor: "pointer",
@@ -647,12 +639,12 @@ const LoteDetalle: React.FC = () => {
                             "& .MuiOutlinedInput-root": {
                               fontSize: 13,
                               borderRadius: "6px",
-                              backgroundColor: "#fff",
+                              backgroundColor: paleta.white,
                               padding: "1px 8px 1px 4px !important",
-                              "& fieldset": { borderColor: "#cbd5e1" },
-                              "&:hover fieldset": { borderColor: "#94a3b8" },
+                              "& fieldset": { borderColor: paleta.gray300 },
+                              "&:hover fieldset": { borderColor: paleta.gray400 },
                               "&.Mui-focused fieldset": {
-                                borderColor: "#1b56ff",
+                                borderColor: paleta.tonoAzul450B,
                                 borderWidth: "1px",
                                 boxShadow: "0 0 0 3px rgba(27,86,255,0.1)",
                               },
@@ -720,7 +712,7 @@ const LoteDetalle: React.FC = () => {
                   render: (a) => {
                     const cached = a.id_atencion ? atencionesCacheRef.current.get(a.id_atencion) : null;
                     const nroConsulta = a.nro_consulta ?? cached?.nro_consulta ?? null;
-                    return nroConsulta ?? a.id_atencion ?? <span style={{ color: "#94a3b8" }}>—</span>;
+                    return nroConsulta ?? a.id_atencion ?? <span style={{ color: paleta.gray400 }}>—</span>;
                   },
                 },
                 {
@@ -733,10 +725,10 @@ const LoteDetalle: React.FC = () => {
                     return nombrePrestador ? (
                       <>
                         <div style={{ fontWeight: 500 }}>{nombrePrestador}</div>
-                        {nroSocio && <div style={{ fontSize: 11, color: "#64748b" }}>#{nroSocio}</div>}
+                        {nroSocio && <div style={{ fontSize: 11, color: paleta.gray500 }}>#{nroSocio}</div>}
                       </>
                     ) : (
-                      <span style={{ color: "#94a3b8", fontSize: 12 }}>Médico {a.medico_id}</span>
+                      <span style={{ color: paleta.gray400, fontSize: 12 }}>Médico {a.medico_id}</span>
                     );
                   },
                 },
@@ -745,7 +737,7 @@ const LoteDetalle: React.FC = () => {
                   header: "Código",
                   render: (a) => {
                     const cached = a.id_atencion ? atencionesCacheRef.current.get(a.id_atencion) : null;
-                    return (a.codigo_prestacion ?? cached?.codigo_prestacion) ?? <span style={{ color: "#94a3b8" }}>—</span>;
+                    return (a.codigo_prestacion ?? cached?.codigo_prestacion) ?? <span style={{ color: paleta.gray400 }}>—</span>;
                   },
                 },
                 {
@@ -753,7 +745,7 @@ const LoteDetalle: React.FC = () => {
                   header: "Fecha",
                   render: (a) => {
                     const cached = a.id_atencion ? atencionesCacheRef.current.get(a.id_atencion) : null;
-                    return (a.fecha_prestacion ?? cached?.fecha_prestacion) ?? <span style={{ color: "#94a3b8" }}>—</span>;
+                    return (a.fecha_prestacion ?? cached?.fecha_prestacion) ?? <span style={{ color: paleta.gray400 }}>—</span>;
                   },
                 },
                 {
@@ -761,7 +753,7 @@ const LoteDetalle: React.FC = () => {
                   header: "Afiliado",
                   render: (a) => {
                     const cached = a.id_atencion ? atencionesCacheRef.current.get(a.id_atencion) : null;
-                    return (a.nombre_afiliado ?? cached?.nombre_afiliado) ?? <span style={{ color: "#94a3b8" }}>—</span>;
+                    return (a.nombre_afiliado ?? cached?.nombre_afiliado) ?? <span style={{ color: paleta.gray400 }}>—</span>;
                   },
                 },
                 {
@@ -791,7 +783,7 @@ const LoteDetalle: React.FC = () => {
                   header: "Observación",
                   render: (a) => (
                     <span style={{ maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>
-                      {a.observacion ?? <span style={{ color: "#94a3b8" }}>—</span>}
+                      {a.observacion ?? <span style={{ color: paleta.gray400 }}>—</span>}
                     </span>
                   ),
                 },
@@ -954,7 +946,7 @@ const LoteDetalle: React.FC = () => {
               {!transitioning && (
                 <p>{transitionDescriptions[transitionModal]}</p>
               )}
-              {transitioning && <p style={{ color: "#64748b" }}>Procesando…</p>}
+              {transitioning && <p style={{ color: paleta.gray500 }}>Procesando…</p>}
             </Dialogo>
       )}
     </div>

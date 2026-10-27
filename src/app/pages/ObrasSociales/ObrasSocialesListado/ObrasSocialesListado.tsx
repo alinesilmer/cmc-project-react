@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, ClipboardList, Download, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { ClipboardList, Download, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import ConfirmModal from "@/app/components/ui/ConfirmModal/ConfirmModal";
 import Franja from "@/app/components/layout/Franja/Franja";
@@ -15,6 +15,8 @@ import { formatFecha } from "@/app/shared/lib/fechas";
 import s from "./ObrasSocialesListado.module.scss";
 import Button from "@/app/components/ui/Button/Button";
 import SearchField from "@/app/components/ui/SearchField/SearchField";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
+import Paginador from "@/app/components/ui/Paginador/Paginador";
 
 const PAGE_SIZE = 15;
 
@@ -106,7 +108,7 @@ export default function ObrasSocialesListado() {
             size="md"
             onClick={load}
             disabled={consulta.isFetching}
-            leftIcon={<RefreshCw size={18} aria-hidden="true" className={consulta.isFetching ? s.spinning : ""} />}
+            leftIcon={consulta.isFetching ? <Cargando size={18} aria-hidden="true" /> : <RefreshCw size={18} aria-hidden="true" />}
           >
             Actualizar
           </Button>
@@ -139,7 +141,7 @@ export default function ObrasSocialesListado() {
       <div className={s.tableWrapper}>
         {loading ? (
           <div className={s.loadingState}>
-            <span className={s.spinner} aria-hidden="true" />
+            <Cargando size={32} tono="marca" aria-hidden="true" />
             <p>Cargando…</p>
           </div>
         ) : paginated.length === 0 ? (
@@ -235,29 +237,7 @@ export default function ObrasSocialesListado() {
       </div>
 
       {!loading && totalPages > 1 && (
-        <div className={s.pagination} role="navigation" aria-label="Paginación">
-          <Button
-            variant="ghost"
-            size="md"
-            disabled={page === 1}
-            onClick={() => setPage((p) => p - 1)}
-            leftIcon={<ChevronLeft size={18} aria-hidden="true" />}
-          >
-            Anterior
-          </Button>
-          <span className={s.pageInfo}>
-            {page} / {totalPages}
-          </span>
-          <Button
-            variant="ghost"
-            size="md"
-            disabled={page === totalPages}
-            onClick={() => setPage((p) => p + 1)}
-            rightIcon={<ChevronRight size={18} aria-hidden="true" />}
-          >
-            Siguiente
-          </Button>
-        </div>
+        <Paginador pagina={page} totalPaginas={totalPages} onCambiar={setPage} />
       )}
 
       {showExport && (

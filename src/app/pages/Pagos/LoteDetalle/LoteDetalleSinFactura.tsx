@@ -1,12 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import {
-  getJSON,
-  patchJSON,
-  postJSON,
-  putJSON,
-} from "@/app/shared/lib/http";
-import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
+import { agregarItem, buscarMedicos, cambiarEstadoLote, editarItem, getLote } from "@/app/pages/Pagos/pagos.api";
+import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import BackButton from "@/app/components/ui/BackButton/BackButton";
 import Button from "@/app/components/ui/Button/Button";
 import Franja from "@/app/components/layout/Franja/Franja";
@@ -19,26 +14,16 @@ import {
   type Ajuste,
   fmt,
   mesLabel,
+  type MedicoResult,
 } from "../types";
 import type ExcelJS from "exceljs";
 import { saveAs } from "@/app/shared/lib/fileSaver";
 import { Check, ArrowLeftRight } from "lucide-react";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
-import { LOTE_URL } from "@/app/pages/Pagos/LoteDetalle/utiles";
-import { ITEMS_URL } from "@/app/pages/Pagos/LoteDetalle/utiles";
-import { ITEM_URL } from "@/app/pages/Pagos/LoteDetalle/utiles";
-import { ESTADO_URL } from "@/app/pages/Pagos/LoteDetalle/utiles";
-import { ESTADO_TONO, estadoLabel } from "@/app/pages/Pagos/LoteDetalle/utiles";
+import { ESTADO_TONO, ITEM_URL, estadoLabel } from "@/app/pages/Pagos/LoteDetalle/utiles";
 import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
-const MEDICOS_SEARCH_URL = (q: string) =>
-  `/api/medicos?q=${encodeURIComponent(q)}&limit=20&skip=0`;
-
-type MedicoResult = {
-  id: number;
-  nro_socio: number | null;
-  nombre: string;
-};
-
+import paleta from "@/app/styles/paleta.module.scss";
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 type EditForm = { tipo: "d" | "c"; honorarios: string; gastos: string; observacion: string };
 const transitionLabels: Record<string, string> = {
   cerrar: "Cerrar Lote",
@@ -92,10 +77,11 @@ const LoteDetalleSinFactura: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await getJSON<LoteAjuste>(LOTE_URL(loteId));
+      const data = await getLote(loteId);
       setLote(data);
-    } catch (e: any) {
-      setError(e?.message || "No se pudo cargar el lote.");
+    } catch (e) {
+      const err = comoErrorApi(e);
+      setError(err?.message || "No se pudo cargar el lote.");
     } finally {
       setLoading(false);
     }
@@ -116,7 +102,7 @@ const LoteDetalleSinFactura: React.FC = () => {
     medicoDebounceRef.current = setTimeout(async () => {
       setMedicoLoading(true);
       try {
-        const data = await getJSON<MedicoResult[]>(MEDICOS_SEARCH_URL(medicoQuery));
+        const data = await buscarMedicos(medicoQuery);
         setMedicoResults(data ?? []);
         setShowMedicoDropdown(true);
       } catch {
@@ -156,7 +142,7 @@ const LoteDetalleSinFactura: React.FC = () => {
     }
     setConfirming(true);
     try {
-      await postJSON(ITEMS_URL(loteId), {
+      await agregarItem(loteId, {
         tipo: newTipo,
         medico_id: selectedMedico.id,
         honorarios: Number(newHonorarios),
@@ -172,10 +158,11 @@ const LoteDetalleSinFactura: React.FC = () => {
       setNewObservacion("");
       setNewTipo("d");
       notify("Ajuste agregado correctamente.");
-    } catch (e: any) {
-      const detail = e?.response?.data?.detail;
+    } catch (e) {
+      const err = comoErrorApi(e);
+      const detail = err?.response?.data?.detail;
       notify(
-        typeof detail === "string" ? detail : (e?.message ?? "Error al agregar ajuste."),
+        typeof detail === "string" ? detail : (err?.message ?? "Error al agregar ajuste."),
         "error",
       );
     } finally {
@@ -204,7 +191,7 @@ const LoteDetalleSinFactura: React.FC = () => {
     }
     setEditSaving(true);
     try {
-      await putJSON(ITEM_URL(loteId, editTarget.id), {
+      await editarItem(loteId, editTarget.id, {
         tipo: editForm.tipo,
         honorarios: Number(editForm.honorarios),
         gastos: Number(editForm.gastos),
@@ -213,10 +200,11 @@ const LoteDetalleSinFactura: React.FC = () => {
       setEditTarget(null);
       await loadLote();
       notify("Ajuste actualizado.");
-    } catch (e: any) {
-      const detail = e?.response?.data?.detail;
+    } catch (e) {
+      const err = comoErrorApi(e);
+      const detail = err?.response?.data?.detail;
       notify(
-        typeof detail === "string" ? detail : (e?.message ?? "Error al guardar."),
+        typeof detail === "string" ? detail : (err?.message ?? "Error al guardar."),
         "error",
       );
     } finally {
@@ -234,16 +222,15 @@ const LoteDetalleSinFactura: React.FC = () => {
       quitar: "C",
     };
     try {
-      const res = await patchJSON<LoteAjuste>(ESTADO_URL(loteId), {
-        estado: estadoMap[transitionModal],
-      });
+      const res = await cambiarEstadoLote(loteId, estadoMap[transitionModal]);
       setLote(res);
       setTransitionModal(null);
       notify(`Lote ${transitionLabels[transitionModal].toLowerCase()} correctamente.`);
-    } catch (e: any) {
-      const detail = e?.response?.data?.detail;
+    } catch (e) {
+      const err = comoErrorApi(e);
+      const detail = err?.response?.data?.detail;
       notify(
-        typeof detail === "string" ? detail : (e?.message ?? "Error."),
+        typeof detail === "string" ? detail : (err?.message ?? "Error."),
         "error",
       );
     } finally {
@@ -330,7 +317,7 @@ const LoteDetalleSinFactura: React.FC = () => {
         a.nombre_prestador ? (
           <>
             <div style={{ fontWeight: 500 }}>{a.nombre_prestador}</div>
-            {a.nro_socio != null && <div style={{ fontSize: 11, color: "#64748b" }}>#{a.nro_socio}</div>}
+            {a.nro_socio != null && <div style={{ fontSize: 11, color: paleta.gray500 }}>#{a.nro_socio}</div>}
           </>
         ) : (
           <span style={{ fontFamily: "monospace", fontSize: 12 }}>#{a.nro_socio ?? a.medico_id}</span>
@@ -364,7 +351,7 @@ const LoteDetalleSinFactura: React.FC = () => {
       header: "Observación",
       render: (a) => (
         <span style={{ maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>
-          {a.observacion ?? <span style={{ color: "#94a3b8" }}>—</span>}
+          {a.observacion ?? <span style={{ color: paleta.gray400 }}>—</span>}
         </span>
       ),
     },
@@ -479,12 +466,12 @@ const LoteDetalleSinFactura: React.FC = () => {
                   {showMedicoDropdown && (
                     <div className={styles.autocompleteDropdown}>
                       {medicoLoading && (
-                        <div className={styles.acItem} style={{ color: "#94a3b8" }}>
+                        <div className={styles.acItem} style={{ color: paleta.gray400 }}>
                           Buscando…
                         </div>
                       )}
                       {!medicoLoading && medicoResults.length === 0 && (
-                        <div className={styles.acItem} style={{ color: "#94a3b8" }}>
+                        <div className={styles.acItem} style={{ color: paleta.gray400 }}>
                           Sin resultados.
                         </div>
                       )}
@@ -720,7 +707,7 @@ const LoteDetalleSinFactura: React.FC = () => {
           }
         >
               {!transitioning && <p>{transitionDescriptions[transitionModal]}</p>}
-              {transitioning && <p style={{ color: "#64748b" }}>Procesando…</p>}
+              {transitioning && <p style={{ color: paleta.gray500 }}>Procesando…</p>}
             </Dialogo>
       )}
     </div>

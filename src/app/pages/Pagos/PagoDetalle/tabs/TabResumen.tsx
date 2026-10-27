@@ -1,14 +1,15 @@
 import React, { useCallback, useEffect, useState } from "react";
 import type ExcelJS from "exceljs";
 import { saveAs } from "@/app/shared/lib/fileSaver";
-import { getJSON } from "@/app/shared/lib/http";
+import { getVistaPrevia } from "@/app/pages/Pagos/pagos.api";
 import Card from "@/app/components/ui/Card/Card";
 import styles from "./tabs.module.scss";
 import { fmt, mesLabel } from "../../types";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
-
-const VISTA_URL = (pagoId: number) => `/api/pagos/${pagoId}/vista_previa`;
+import paleta from "@/app/styles/paleta.module.scss";
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
+import { finDeTabla } from "@/app/shared/lib/documentos/pdfColegio";
 
 type LiquidacionItem = {
   liquidacion_id: number;
@@ -80,7 +81,7 @@ type Props = { pagoId: number };
 const SectionTitle: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => (
-  <h3 style={{ fontSize: 14, fontWeight: 700, color: "#1e293b" }}>
+  <h3 style={{ fontSize: 14, fontWeight: 700, color: paleta.gray800 }}>
     {children}
   </h3>
 );
@@ -94,10 +95,11 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await getJSON<VistaPrevia>(VISTA_URL(pagoId));
+      const res = await getVistaPrevia<VistaPrevia>(pagoId);
       setData(res);
-    } catch (e: any) {
-      setError(e?.message || "No se pudo cargar la vista previa.");
+    } catch (e) {
+      const err = comoErrorApi(e);
+      setError(err?.message || "No se pudo cargar la vista previa.");
     } finally {
       setLoading(false);
     }
@@ -430,8 +432,8 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
       autoTable(doc, {
         startY: y,
         head,
-        body: body as any,
-        foot: foot as any,
+        body,
+        foot,
         theme: "grid",
         headStyles: {
           fillColor: primaryBlue,
@@ -453,7 +455,7 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
         },
       });
 
-      y = (doc as any).lastAutoTable.finalY + 24;
+      y = finDeTabla(doc) + 24;
     };
 
     // Liquidaciones
@@ -630,7 +632,7 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
                     <div style={{ fontWeight: 500 }}>
                       {liq.obra_social_nombre}
                     </div>
-                    <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                    <div style={{ fontSize: 11, color: paleta.gray400 }}>
                       #{liq.obra_social_id}
                     </div>
                   </td>
@@ -761,7 +763,7 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
                     <div style={{ fontWeight: 500 }}>
                       {lote.obra_social_nombre}
                     </div>
-                    <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                    <div style={{ fontSize: 11, color: paleta.gray400 }}>
                       #{lote.obra_social_id}
                     </div>
                   </td>
@@ -821,7 +823,7 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
                     <div style={{ fontWeight: 500 }}>
                       {lote.obra_social_nombre}
                     </div>
-                    <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                    <div style={{ fontSize: 11, color: paleta.gray400 }}>
                       #{lote.obra_social_id}
                     </div>
                   </td>
@@ -865,8 +867,8 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
       >
         <div
           style={{
-            background: "linear-gradient(135deg, #1b56ff 0%, #0a3fd4 100%)",
-            color: "#fff",
+            background: `linear-gradient(135deg, ${paleta.tonoAzul450B} 0%, ${paleta.tonoAzul550} 100%)`,
+            color: paleta.white,
             borderRadius: 10,
             padding: "14px 28px",
             display: "flex",

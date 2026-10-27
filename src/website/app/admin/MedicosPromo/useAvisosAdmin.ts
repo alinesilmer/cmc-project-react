@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createAd, listAds, removeAd, updateAd, type PubAd } from "../../../lib/ads.client";
+import { createAd, listAds, removeAd, updateAd, type PubAd } from "@/website/lib/ads.client";
 
 const KEY = ["admin", "avisos-medicos"] as const;
 

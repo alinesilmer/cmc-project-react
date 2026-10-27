@@ -1,0 +1,69 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver ListaObrasSociales.tsx.
+
+.cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+}
+
+.lista {
+  max-height: 22rem;
+  margin: 0;
+  padding: $spacing-1;
+  overflow-y: auto;
+  list-style: none;
+  border: 1px solid $gray-200;
+  border-radius: $radio-md;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-2 $spacing-3;
+  font-size: $font-size-sm;
+  border-radius: $radio-sm;
+  cursor: pointer;
+
+  &:hover {
+    background: $primary-yellow-light;
+  }
+
+  input {
+    accent-color: $franja-azul;
+  }
+}
+
+.nro {
+  min-width: 3rem;
+  font-variant-numeric: tabular-nums;
+  color: $franja-azul;
+}
+
+.nombre {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: $gray-800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inactiva {
+  font-size: $font-size-xs;
+  color: $gray-500;
+}
+
+.vacio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+  padding: $spacing-6;
+  font-size: $font-size-sm;
+  color: $gray-500;
+}

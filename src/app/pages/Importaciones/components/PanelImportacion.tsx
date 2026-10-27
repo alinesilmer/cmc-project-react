@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { CheckCircle2, Save, Eye, ChevronLeft, ChevronRight } from "lucide-react";
+import { CheckCircle2, Save, Eye } from "lucide-react";
 
 import Button from "@/app/components/ui/Button/Button";
 import r from "@/app/pages/Validaciones/components/reporte/reporte.module.scss";
@@ -9,6 +9,7 @@ import type { Filtro } from "../useImportador";
 import { fechaLegible, moneda, periodoLegible } from "../formato";
 import s from "./panel.module.scss";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
+import Paginador from "@/app/components/ui/Paginador/Paginador";
 
 /** Los controles y la tabla de resultado de una importación. */
 
@@ -235,34 +236,13 @@ export function TablaResultado({
     </div>
 
     {paginas > 1 && (
-      <nav className={s.paginado} aria-label="Paginado de resultados">
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          disabled={pagina === 1}
-          onClick={() => setPagina((p) => p - 1)}
-          leftIcon={<ChevronLeft size={16} />}
-        >
-          Anterior
-        </Button>
-
-        <span className={s.paginaActual} aria-live="polite">
-          {(pagina - 1) * POR_PAGINA + 1}–
-          {Math.min(pagina * POR_PAGINA, filas.length)} de {filas.length}
-        </span>
-
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          disabled={pagina === paginas}
-          onClick={() => setPagina((p) => p + 1)}
-          rightIcon={<ChevronRight size={16} />}
-        >
-          Siguiente
-        </Button>
-      </nav>
+      <Paginador
+        pagina={pagina}
+        totalPaginas={paginas}
+        onCambiar={setPagina}
+        estado={`${(pagina - 1) * POR_PAGINA + 1}–${Math.min(pagina * POR_PAGINA, filas.length)} de ${filas.length}`}
+        etiqueta="Paginado de resultados"
+      />
     )}
     </>
   );

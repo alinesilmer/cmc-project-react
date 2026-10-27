@@ -50,10 +50,10 @@ function SelectorObraSocial({ valor, onChange }: { valor: number | null; onChang
   );
 }
 
-type TablaProps = { vista: Vista; busqueda: string; obraSocial: number | null };
+type TablaProps = { vista: Vista; busqueda: string; obraSocial: number | null; tipo: string };
 
-function TablaVista({ vista, busqueda, obraSocial }: TablaProps) {
-  const { filas, cargando, error, aviso } = vista.useFilas(busqueda, obraSocial);
+function TablaVista({ vista, busqueda, obraSocial, tipo }: TablaProps) {
+  const { filas, cargando, error, aviso } = vista.useFilas(busqueda, obraSocial, tipo);
 
   if (aviso) return <p className={s.aviso}>{aviso}</p>;
   if (error) return <p className={s.aviso}>No se pudo cargar.</p>;
@@ -110,6 +110,7 @@ export default function VistaRapida({ vistas }: { vistas: Vista[] }) {
   const [texto, setTexto] = useState("");
   const [busqueda, setBusqueda] = useState("");
   const [obraSocial, setObraSocial] = useState<number | null>(leerObraGuardada);
+  const [tipo, setTipo] = useState("todos");
 
   // Se busca cuando se deja de escribir, no en cada tecla.
   useEffect(() => {
@@ -121,6 +122,7 @@ export default function VistaRapida({ vistas }: { vistas: Vista[] }) {
     setElegidaId(id);
     setTexto("");
     setBusqueda("");
+    setTipo("todos");
   };
 
   const elegirObra = (nro: number | null) => {
@@ -163,10 +165,19 @@ export default function VistaRapida({ vistas }: { vistas: Vista[] }) {
             placeholder={vista.buscar}
             ariaLabel={`Buscar en ${vista.titulo}`}
           />
+          {vista.tipos && (
+            <select className={s.filtroTipo} value={tipo} onChange={(e) => setTipo(e.target.value)} aria-label="Tipo">
+              {vista.tipos.map((t) => (
+                <option key={t.valor} value={t.valor}>
+                  {t.rotulo}
+                </option>
+              ))}
+            </select>
+          )}
           {vista.eligeObraSocial && <SelectorObraSocial valor={obraSocial} onChange={elegirObra} />}
         </div>
         {/* La `key` monta una tabla por vista: cada una llama a su propio hook. */}
-        <TablaVista key={vista.id} vista={vista} busqueda={busqueda} obraSocial={obraSocial} />
+        <TablaVista key={vista.id} vista={vista} busqueda={busqueda} obraSocial={obraSocial} tipo={tipo} />
       </div>
 
      

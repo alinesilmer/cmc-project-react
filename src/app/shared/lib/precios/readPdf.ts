@@ -7,7 +7,7 @@ import { findCodigo } from "./codigo";
 import { normalizePrice, isPorPresupuesto } from "./precio";
 import { dedupeByCodigo } from "./dedupe";
 
-(pdfjsLib as any).GlobalWorkerOptions.workerSrc = pdfWorker;
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 type Token = { str: string; x: number; y: number };
 
@@ -66,14 +66,14 @@ function parseLine(line: Token[]): PrecioRow | null {
 
 export async function readPdf(file: File): Promise<PrecioRow[]> {
   const buffer = await file.arrayBuffer();
-  const pdf = await (pdfjsLib as any).getDocument({ data: buffer }).promise;
+  const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
 
   const rows: PrecioRow[] = [];
   for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
     const page = await pdf.getPage(pageNum);
     const content = await page.getTextContent();
     const tokens: Token[] = content.items
-      .map((it: any) => ({ str: String(it.str ?? ""), x: it.transform?.[4] ?? 0, y: it.transform?.[5] ?? 0 }))
+      .map((it) => ("str" in it ? { str: String(it.str ?? ""), x: it.transform?.[4] ?? 0, y: it.transform?.[5] ?? 0 } : { str: "", x: 0, y: 0 }))
       .filter((t: Token) => t.str.trim() !== "");
     for (const line of groupIntoLines(tokens)) {
       const row = parseLine(line);

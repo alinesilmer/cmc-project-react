@@ -1,0 +1,90 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver DetalleTabla.tsx. El color de la fila y el peso los fija la regla global de tablas.
+
+.detalle {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  min-width: 0;
+}
+
+.barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+}
+
+.envoltorio {
+  overflow-x: auto;
+  border: 1px solid $gray-200;
+  border-radius: $radio-md;
+}
+
+.tipo {
+  display: inline-block;
+  padding: 2px $spacing-3;
+  font-size: $font-size-xs;
+  color: $gray-700;
+  background: $gray-100;
+  border-radius: 999px;
+}
+
+.tipoGaleno {
+  color: $franja-azul;
+  background: $secondary-blue;
+}
+
+.codigo {
+  font-size: $font-size-xs;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.descripcion {
+  max-width: 20rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actual,
+.nuevo {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.actual {
+  color: $gray-500;
+}
+
+.nuevo {
+  color: $ok;
+}
+
+.estadoOk,
+.estadoOmitido,
+.estadoError {
+  font-size: $font-size-xs;
+}
+
+.estadoOk {
+  color: $ok;
+  white-space: nowrap;
+}
+
+.estadoOmitido {
+  color: $gray-500;
+}
+
+.estadoError {
+  color: $peligro;
+}
+
+.nota {
+  margin: 0;
+  font-size: $font-size-sm;
+  color: $gray-500;
+}

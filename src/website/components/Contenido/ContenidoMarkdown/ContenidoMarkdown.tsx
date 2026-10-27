@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { markdownSeguro } from "../../../lib/markdown";
+import { markdownSeguro } from "@/website/lib/markdown";
 
 type Props = {
   contenido: string;

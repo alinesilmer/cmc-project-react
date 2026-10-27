@@ -1,96 +1,39 @@
 @use "@/app/styles/all.scss" as *;
 
-/* app/components/molecules/ActionModal/ActionModal.module.scss */
+// El diálogo de acción: cabecera azul con el título, cuerpo que scrollea y pie con los botones.
 
-/* ===== Zoom modal sync con backdrop (muy rápido) ===== */
-:root {
-  --amodal-dur: 120ms; /* velocidad del zoom */
-  --amodal-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-/* Neutralizamos transiciones internas de RSuite para este modal */
-:global(.amodal-zoom.rs-modal .rs-anim-fade),
-:global(.amodal-zoom.rs-modal-backdrop) {
-  transition: none !important;
-}
-
-/* Backdrop: fade in/out sincronizado usando nuestras clases de fase */
-@keyframes amodalFadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-@keyframes amodalFadeOut {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
+// El fondo del panel lo pone el tema de MUI; acá van la forma y la sombra.
+.panel {
+  display: flex;
+  flex-direction: column;
+  margin: 1rem;
+  padding: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 24px 48px -12px rgba($primary-blue-darker, 0.35);
 }
 
-:global(.amodal-zoom.am-in.rs-modal-backdrop) {
-  animation: amodalFadeIn var(--amodal-dur) var(--amodal-ease) both;
-}
-:global(.amodal-zoom.am-out.rs-modal-backdrop) {
-  animation: amodalFadeOut var(--amodal-dur) var(--amodal-ease) both;
-}
-
-/* Dialog: zoom in/out + leve fade */
-@keyframes amodalZoomIn {
-  from {
-    transform: scale(0.96);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-@keyframes amodalZoomOut {
-  from {
-    transform: scale(1);
-    opacity: 1;
-  }
-  to {
-    transform: scale(0.96);
-    opacity: 0;
-  }
-}
-
-:global(.amodal-zoom.rs-modal .rs-modal-dialog) {
-  transform-origin: 50% 40vh;
-  will-change: transform, opacity;
-}
-
-/* Entrando / saliendo: usamos am-in / am-out propias */
-:global(.amodal-zoom.am-in.rs-modal .rs-modal-dialog) {
-  animation: amodalZoomIn var(--amodal-dur) var(--amodal-ease) both;
-}
-:global(.amodal-zoom.am-out.rs-modal .rs-modal-dialog) {
-  animation: amodalZoomOut var(--amodal-dur) var(--amodal-ease) both;
-}
-
-/* Respeto a usuarios con “reduced motion” */
-@media (prefers-reduced-motion: reduce) {
-  :global(.amodal-zoom.rs-modal-backdrop),
-  :global(.amodal-zoom.rs-modal .rs-modal-dialog) {
-    animation: none !important;
-  }
-}
-
-/* ===== Botón de cierre propio (reemplaza el de rsuite) ===== */
-:global(.amodal-zoom.rs-modal .rs-modal-header) {
+.cabecera {
   position: relative;
-  padding-inline-end: 2.5rem; /* espacio para el botón de cierre */
+  flex: none;
+  padding: 1rem 3.4rem 1rem 1.5rem;
+  background: $primary-blue;
 }
-:global(.amodal-close) {
+
+.titulo {
+  margin: 0;
+  font-family: var(--fuente-titulos, "Manrope", sans-serif);
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: $white;
+}
+
+.cerrar {
   position: absolute;
-  top: -2px;
-  inset-inline-end: 0;
+  top: 50%;
+  inset-inline-end: 0.75rem;
+  transform: translateY(-50%);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -98,91 +41,67 @@
   height: 2rem;
   padding: 0;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   background: transparent;
-  color: var(--rs-gray-600, $tono-gris-500);
+  color: rgba($white, 0.8);
   cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease;
-}
-:global(.amodal-close:hover) {
-  background: rgba($black, 0.06);
-  color: var(--rs-gray-900, $tono-gris-800);
-}
-:global(.amodal-close:focus-visible) {
-  outline: 2px solid var(--rs-blue-500, $tono-azul-350-b);
-  outline-offset: 2px;
-}
-:global(.amodal-close:disabled) {
-  opacity: 0.4;
-  cursor: default;
-}
 
-/* ===== Responsive: el diálogo nunca desborda el viewport ===== */
-/* El cuerpo scrollea si el formulario es más alto que la pantalla; el header y el footer (botones) quedan siempre visibles. */
-:global(.amodal-zoom.rs-modal .rs-modal-body) {
-  max-height: min(70vh, 38.75rem);
-  overflow-y: auto;
-}
+  &:hover {
+    background: rgba($white, 0.14);
+    color: $tono-amarillo-50;
+  }
 
-@media (max-width: 640px) {
-  :global(.amodal-zoom.rs-modal) {
-    --rs-modal-margin-top: 1rem;
+  &:focus-visible {
+    outline: 2px solid $tono-amarillo-50;
+    outline-offset: 2px;
   }
-  :global(.amodal-zoom.rs-modal .rs-modal-dialog) {
-    width: auto !important;
-    margin-inline: 0.75rem !important;
-  }
-  :global(.amodal-zoom.rs-modal .rs-modal-body) {
-    max-height: 76vh;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
   }
 }
 
-/* ===== Estilo editorial ===== */
-/* Cantos de 6px, cabecera en el azul del sistema y pie separado por un filete. */
-:global(.amodal-zoom.rs-modal .rs-modal-dialog) {
-  padding: 0;
-  border-radius: 6px;
-  box-shadow: 0 24px 48px -12px rgba($primary-blue-darker, 0.35);
-}
-:global(.amodal-zoom.rs-modal .rs-modal-header) {
-  padding: 1rem 3.4rem 1rem 1.5rem;
-  background: $primary-blue;
-}
-:global(.amodal-zoom.rs-modal .rs-modal-title) {
-  font-family: var(--fuente-titulos, "Manrope", sans-serif);
-  font-size: 1.1rem;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  color: $white;
-}
-:global(.amodal-zoom .amodal-close) {
-  top: 50%;
-  inset-inline-end: 0.75rem;
-  transform: translateY(-50%);
-  border-radius: 6px;
-  color: rgba($white, 0.8);
-}
-:global(.amodal-zoom .amodal-close:hover) {
-  background: rgba($white, 0.14);
-  color: $tono-amarillo-50;
-}
-:global(.amodal-zoom .amodal-close:focus-visible) {
-  outline-color: $tono-amarillo-50;
-}
-:global(.amodal-zoom.rs-modal .rs-modal-body) {
-  margin-top: 0;
+// El cuerpo scrollea si el formulario es más alto que la pantalla; la cabecera y el pie (botones) quedan siempre visibles.
+.cuerpo {
   padding: 1.5rem;
+  overflow-y: auto;
+  max-height: min(70vh, 38.75rem);
 }
-:global(.amodal-zoom.rs-modal .rs-modal-footer) {
+
+.pie {
+  flex: none;
+  display: flex;
+  justify-content: flex-end;
   padding: 0.9rem 1.5rem;
   background: $gray-50;
   border-top: 1px solid $gray-200;
+
+  // El botón de confirmar es de MUI y trae su color por `sx`: se pisa por especificidad para que use el azul del sistema.
+  :global(.MuiButton-contained) {
+    background-color: $primary-blue;
+    border-color: $primary-blue-darker;
+
+    &:hover {
+      background-color: $primary-blue-darker;
+    }
+  }
 }
-/* El botón de confirmar es de MUI y trae su color por `sx`: se pisa por especificidad para que use el azul del sistema. */
-:global(.amodal-zoom.rs-modal .rs-modal-footer .MuiButton-contained) {
-  background-color: $primary-blue;
-  border-color: $primary-blue-darker;
+
+.procesando {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  margin-top: -7px;
 }
-:global(.amodal-zoom.rs-modal .rs-modal-footer .MuiButton-contained:hover) {
-  background-color: $primary-blue-darker;
+
+@media (max-width: 640px) {
+  .panel {
+    margin: 1rem 0.75rem;
+  }
+
+  .cuerpo {
+    max-height: 76vh;
+  }
 }

@@ -1,9 +1,10 @@
-import { CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle } from "lucide-react";
 
 import CodigoSelect from "./CodigoSelect";
 import type { PrestacionFormEstado } from "./usePrestacionForm";
 import type { CampoConfig, ObraSocialConfig } from "../validaciones.types";
 import s from "./CampoPrestacion.module.scss";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
 
 interface Props {
   campo: CampoConfig;
@@ -163,7 +164,7 @@ export default function CampoPrestacion({ campo, os, form, enviando, nroSocio, s
         >
           {liveCheck.loading ? (
             <>
-              <Loader2 size={16} className={s.spin} /> Consultando afiliado…
+              <Cargando size={16} /> Consultando afiliado…
             </>
           ) : liveCheck.resultado?.ok ? (
             <>

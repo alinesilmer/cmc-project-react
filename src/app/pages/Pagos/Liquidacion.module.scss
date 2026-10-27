@@ -232,34 +232,6 @@
 }
 
 .filaOcupada { opacity: 0.5; }
-
-.gira { animation: $anim-spin 0.8s linear infinite; }
-
-// ── Paginador ─────────────────────────────────────────────────────────────────
-.paginador {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: $spacing-4;
-  font-size: $font-size-sm;
-  color: $gray-600;
-
-  button {
-    height: 2.5rem;
-    padding: 0 $spacing-4;
-    font-family: inherit;
-    font-weight: $font-weight-semibold;
-    color: $franja-azul;
-    background: $white;
-    border: 1px solid $gray-300;
-    border-radius: 999px;
-    cursor: pointer;
-
-    &:hover:not(:disabled) { border-color: $franja-azul; }
-    &:disabled { opacity: 0.45; cursor: not-allowed; }
-  }
-}
-
 // ── Casilla con rótulo (dentro de diálogos y formularios) ─────────────────────
 .casilla {
   display: flex;

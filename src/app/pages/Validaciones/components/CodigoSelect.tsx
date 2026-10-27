@@ -1,10 +1,11 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { Check, Loader2, Search } from "lucide-react";
+import { Check, Search } from "lucide-react";
 
 import { buscarCodigos } from "../validaciones.api";
 import { formatMoneda } from "../validaciones.types";
 import type { CodigoNomenclador } from "../validaciones.types";
 import s from "./CodigoSelect.module.scss";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
 
 /** Códigos que pide el buscador por vez. Sin texto el backend devuelve los primeros
  * habilitados del médico en esa obra social, así que alcanza para recorrerlos sin
@@ -153,7 +154,7 @@ export default function CodigoSelect({
           }}
           onKeyDown={onKeyDown}
         />
-        {cargando && abierto && <Loader2 size={15} className={s.spinner} />}
+        {cargando && abierto && <Cargando size={15} className={s.spinner} />}
       </div>
 
       {!abierto && seleccionado && seleccionado.coseguro > 0 && (

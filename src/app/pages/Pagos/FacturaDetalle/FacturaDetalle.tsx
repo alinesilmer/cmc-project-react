@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowUpRight, Receipt } from "lucide-react";
-import { getJSON } from "@/app/shared/lib/http";
+import { detallesVista, getLiquidacionPorOs } from "@/app/pages/Pagos/pagos.api";
 import BackButton from "@/app/components/ui/BackButton/BackButton";
 import Button from "@/app/components/ui/Button/Button";
 import Franja from "@/app/components/layout/Franja/Franja";
@@ -13,14 +13,8 @@ import type ExcelJS from "exceljs";
 import { saveAs } from "@/app/shared/lib/fileSaver";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 
-const LIQ_URL = (id: string | number) => `/api/liquidacion/liquidaciones_por_os/${id}`;
-const DETALLES_VISTA_URL = (id: string | number, search?: string, medicoId?: string) => {
-  const p = new URLSearchParams();
-  if (search) p.set("search", search);
-  if (medicoId) p.set("medico_id", medicoId);
-  return `/api/liquidacion/liquidaciones_por_os/${id}/detalles_vista?${p}`;
-};
 
 type DcItem = { ajuste_id: number; tipo: "D" | "C"; honorarios: number; gastos: number; total: number; obs: string | null };
 
@@ -72,14 +66,15 @@ const FacturaDetalle: React.FC = () => {
     setError(null);
     try {
       const [liqData, vistaData] = await Promise.all([
-        getJSON<Liquidacion>(LIQ_URL(liquidacionId)),
-        getJSON<VistaRow[]>(DETALLES_VISTA_URL(liquidacionId, searchDebounce || undefined)),
+        getLiquidacionPorOs(liquidacionId),
+        detallesVista<VistaRow>(liquidacionId, searchDebounce || undefined),
       ]);
       setLiq(liqData);
       setRows(vistaData ?? []);
       setHasMore((vistaData ?? []).length === PAGE_SIZE);
-    } catch (e: any) {
-      setError(e?.message || "No se pudo cargar la factura.");
+    } catch (e) {
+      const err = comoErrorApi(e);
+      setError(err?.message || "No se pudo cargar la factura.");
     } finally {
       setLoading(false);
     }

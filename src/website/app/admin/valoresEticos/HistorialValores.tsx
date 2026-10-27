@@ -1,12 +1,14 @@
-import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, FileText, Trash2 } from "lucide-react";
+import { History, Trash2 } from "lucide-react";
+
 import VerPdf from "./VerPdf";
-import { formatearFecha } from "../../../lib/fechas";
-import { nombreDeRuta } from "../../../lib/documentos";
+import s from "./HistorialValores.module.scss";
+import BotonAccion from "@/app/components/ui/BotonAccion/BotonAccion";
+import Paso from "@/app/components/ui/Paso/Paso";
+import c from "@/app/components/ui/Paso/Campos.module.scss";
+import Tabla from "@/app/components/ui/Tabla/Tabla";
+import { formatearFecha } from "@/website/lib/fechas";
+import { nombreDeRuta } from "@/website/lib/documentos";
 import type { ValoresEticosOut } from "./valoresEticos.api";
-import styles from "./HistorialValores.module.scss";
-import Button from "@/website/components/UI/Button/Button";
 
 type Props = {
   historial: ValoresEticosOut[];
@@ -15,60 +17,41 @@ type Props = {
   onError: (mensaje: string) => void;
 };
 
-/** Las versiones anteriores del PDF, plegadas por defecto. */
+/** Las versiones anteriores del PDF, una fila por archivo. */
 export default function HistorialValores({ historial, borrando, onBorrar, onError }: Props) {
-  const [abierto, setAbierto] = useState(false);
-
   return (
-    <div className={styles.eticaHistorial}>
-      <Button variant="plano"
-        type="button"
-        className={styles.eticaHistorialToggle}
-        onClick={() => setAbierto((v) => !v)}
-        aria-expanded={abierto}
-      >
-        <ChevronDown size={16} className={abierto ? styles.girado : ""} aria-hidden="true" />
-        Historial ({historial.length})
-      </Button>
-
-      <AnimatePresence>
-        {abierto && (
-          <motion.div
-            className={styles.eticaHistorialList}
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            {historial.length === 0 ? (
-              <p className={styles.eticaNoData}>Sin registros anteriores.</p>
-            ) : (
-              historial.map((item) => (
-                <div key={item.id} className={styles.eticaHistorialItem}>
-                  <FileText size={16} className={styles.icono} aria-hidden="true" />
-                  <div className={styles.eticaHistorialMeta}>
-                    <span className={styles.eticaHistorialName}>{nombreDeRuta(item.pdf_path)}</span>
-                    <span className={styles.eticaHistorialDate}>{formatearFecha(item.fecha_update, "conHora")}</span>
-                    {item.observaciones && <span className={styles.eticaHistorialObs}>{item.observaciones}</span>}
-                  </div>
-                  <div className={styles.eticaHistorialActions}>
-                    <VerPdf ruta={item.pdf_path} etiqueta="Ver" onError={onError} />
-                    <Button variant="plano"
-                      type="button"
-                      className={styles.eticaDeleteBtn}
-                      onClick={() => onBorrar(item.id)}
-                      disabled={borrando === item.id}
-                      aria-label="Eliminar"
-                    >
-                      <Trash2 size={15} aria-hidden="true" />
-                    </Button>
-                  </div>
-                </div>
-              ))
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+    <Paso icono={History} titulo={`Historial (${historial.length})`}>
+      {historial.length === 0 ? (
+        <p className={c.ayuda}>Sin registros anteriores.</p>
+      ) : (
+        <div className={s.envoltorio}>
+          <Tabla>
+            <thead>
+              <tr>
+                <th>Archivo</th>
+                <th>Fecha</th>
+                <th>Observaciones</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {historial.map((item) => (
+                <tr key={item.id}>
+                  <td className={s.archivo}>{nombreDeRuta(item.pdf_path)}</td>
+                  <td className={s.fecha}>{formatearFecha(item.fecha_update, "conHora")}</td>
+                  <td>{item.observaciones ?? "—"}</td>
+                  <td>
+                    <div className={s.acciones}>
+                      <VerPdf ruta={item.pdf_path} etiqueta="Ver" onError={onError} compacto />
+                      <BotonAccion icono={Trash2} etiqueta="Eliminar" peligro disabled={borrando === item.id} onClick={() => onBorrar(item.id)} />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Tabla>
+        </div>
+      )}
+    </Paso>
   );
 }

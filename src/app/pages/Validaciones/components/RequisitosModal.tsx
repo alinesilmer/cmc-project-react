@@ -1,6 +1,6 @@
 import { AlertTriangle, ClipboardList, ExternalLink, Ticket, X, type LucideIcon } from "lucide-react";
 
-import { useAuth } from "@/app/auth/AuthProvider";
+import { useAuth } from "@/app/auth/useAuth";
 import { isMedico } from "@/app/auth/roles";
 import MarcoModal from "@/app/components/ui/MarcoModal/MarcoModal";
 import { useObrasSociales } from "@/app/pages/ObrasSociales/useObrasSociales";

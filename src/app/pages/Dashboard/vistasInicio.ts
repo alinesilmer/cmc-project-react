@@ -1,12 +1,15 @@
 import type { LucideIcon } from "lucide-react";
-import { FileCode2, Receipt, Users } from "lucide-react";
+import { CalendarDays, FileCode2, Users } from "lucide-react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { getJSON } from "@/app/shared/lib/http";
-import { listarFacturas } from "@/app/pages/facturacion/api";
+import { hoyISO } from "@/app/shared/lib/fechas";
+import { getMes } from "@/app/pages/Agenda/agenda.api";
+import { LABEL_TIPO, MESES, type OcurrenciaAgenda } from "@/app/pages/Agenda/agenda.types";
+import { fijosDelMes } from "@/app/pages/Agenda/diasFijos";
 import { formatMoney } from "@/app/pages/facturacion/money";
 import { getTablaValores } from "@/app/pages/NomencladorNacional/nomenclador.api";
-import { useObrasSociales } from "@/app/pages/ObrasSociales/useObrasSociales";
+import type { TablaValorItem } from "@/app/pages/NomencladorNacional/nomenclador.types";
 
 /** Cuántas filas muestra cada vista del Inicio. */
 const FILAS = 10;
@@ -36,8 +39,10 @@ export type Vista = {
   buscar: string;
   /** Suma el selector de obra social al lado del buscador. */
   eligeObraSocial?: boolean;
+  /** Suma un filtro por tipo; el primero es «todos». */
+  tipos?: { valor: string; rotulo: string }[];
   /** Hook: sólo lo llama `TablaVista`, que se monta una vez por vista. */
-  useFilas: (busqueda: string, obraSocial: number | null) => EstadoFilas;
+  useFilas: (busqueda: string, obraSocial: number | null, tipo: string) => EstadoFilas;
 };
 
 const texto = (v: unknown): string =>
@@ -73,14 +78,34 @@ function useFilasSocios(busqueda: string): EstadoFilas {
   };
 }
 
+/** Los tipos de código del Inicio: de dónde sale el valor y cómo se calcula. */
+const TIPOS_CODIGO_INICIO = [
+  { valor: "todos", rotulo: "Todos los tipos" },
+  { valor: "NN", rotulo: "NN" },
+  { valor: "NE", rotulo: "NE" },
+  { valor: "fijo", rotulo: "Fijo" },
+  { valor: "presupuesto", rotulo: "A presupuesto" },
+];
+
+/** Con un tipo elegido se piden más filas: el filtro se hace acá y las primeras diez no alcanzarían. */
+const FILAS_CON_FILTRO = 200;
+
+function coincideTipo(v: TablaValorItem, tipo: string): boolean {
+  if (tipo === "NN" || tipo === "NE") return v.origen === tipo;
+  if (tipo === "fijo") return v.componentes.some((c) => c.tipo === "fijo");
+  if (tipo === "presupuesto") return v.por_presupuesto;
+  return true;
+}
+
 // Los valores vigentes de una obra social: sin elegirla no hay precio que mostrar.
-function useFilasCodigos(busqueda: string, obraSocial: number | null): EstadoFilas {
+function useFilasCodigos(busqueda: string, obraSocial: number | null, tipo: string): EstadoFilas {
+  const size = tipo === "todos" ? FILAS : FILAS_CON_FILTRO;
   const consulta = useQuery({
-    queryKey: ["inicio", "valores", obraSocial, busqueda],
+    queryKey: ["inicio", "valores", obraSocial, busqueda, size],
     queryFn: () =>
       getTablaValores({
         obra_social_nro: obraSocial ?? 0,
-        size: FILAS,
+        size,
         ...(busqueda ? { codigo: busqueda } : {}),
       }),
     enabled: obraSocial !== null,
@@ -93,46 +118,63 @@ function useFilasCodigos(busqueda: string, obraSocial: number | null): EstadoFil
   }
 
   return {
-    filas: (consulta.data ?? []).map((v) => [
-      v.codigo,
-      texto(v.descripcion),
-      v.por_presupuesto ? "Presupuesto" : formatMoney(v.precio_total),
-    ]),
+    filas: (consulta.data ?? [])
+      .filter((v) => coincideTipo(v, tipo))
+      .slice(0, FILAS)
+      .map((v) => [
+        v.codigo,
+        texto(v.descripcion),
+        v.por_presupuesto ? "Presupuesto" : formatMoney(v.precio_total),
+      ]),
     cargando: consulta.isPending,
     error: consulta.isError,
   };
 }
 
-/** Tope de facturas abiertas que se traen: el filtro por nombre se hace acá. */
-const ABIERTAS = 100;
-
-// Las obras sociales con el período abierto —las que se están cargando— y lo que llevan facturado hasta ahora.
-function useFilasFacturacion(busqueda: string): EstadoFilas {
-  const consulta = useQuery({
-    queryKey: ["inicio", "facturas-abiertas"],
-    queryFn: () => listarFacturas({ estado: "A", limit: ABIERTAS }),
-    // Es plata que cambia con cada carga: se vuelve a pedir al entrar.
-    staleTime: 0,
+/** Lo del calendario de un mes: comparte la caché con la pantalla del Calendario. */
+function useMesAgenda(anio: number, mes: number) {
+  return useQuery({
+    queryKey: ["agenda", "mes", anio, mes],
+    queryFn: () => getMes(anio, mes),
+    staleTime: CINCO_MINUTOS,
   });
-  // Sólo para mostrar el nombre: si el catálogo no llega, queda el número.
-  const obras = useObrasSociales();
-  const nombres = new Map((obras.data ?? []).map((o) => [String(o.nro_obra_social), o.nombre]));
+}
 
+// Lo que viene en el calendario: desde hoy, de este mes y del siguiente, ordenado por fecha.
+function useFilasCalendario(busqueda: string): EstadoFilas {
+  const hoy = new Date();
+  const anio = hoy.getFullYear();
+  const mes = hoy.getMonth() + 1;
+  const sigAnio = mes === 12 ? anio + 1 : anio;
+  const sigMes = mes === 12 ? 1 : mes + 1;
+
+  const actual = useMesAgenda(anio, mes);
+  const siguiente = useMesAgenda(sigAnio, sigMes);
+
+  const cargados = [...(actual.data ?? []), ...(siguiente.data ?? [])];
+  const todos: OcurrenciaAgenda[] = [
+    ...(actual.data ?? []),
+    ...fijosDelMes(anio, mes, actual.data ?? [], null),
+    ...(siguiente.data ?? []),
+    ...fijosDelMes(sigAnio, sigMes, siguiente.data ?? [], null),
+  ];
+  const desde = hoyISO();
   const buscado = sinAcentos(busqueda);
-  const abiertas = (consulta.data?.data ?? []).map((f) => ({
-    obra: nombres.get(String(f.cod_obr)) ?? `O.S. ${f.cod_obr}`,
-    codigo: String(f.cod_obr),
-    periodo: f.periodo_label || f.periodo,
-    total: formatMoney(f.importe),
-  }));
-  const halladas = buscado
-    ? abiertas.filter((f) => sinAcentos(f.obra).includes(buscado) || f.codigo.includes(buscado))
-    : abiertas;
+
+  const filas = todos
+    .filter((o) => o.ocurre_el >= desde && (!buscado || sinAcentos(o.titulo).includes(buscado)))
+    .sort((a, b) => a.ocurre_el.localeCompare(b.ocurre_el) || a.titulo.localeCompare(b.titulo, "es"))
+    .slice(0, FILAS)
+    .map((o) => {
+      const [, m, d] = o.ocurre_el.split("-");
+      const tipo = LABEL_TIPO[o.tipo];
+      return [`${Number(d)} ${MESES[Number(m) - 1].slice(0, 3).toLowerCase()}`, o.titulo, tipo.charAt(0).toUpperCase() + tipo.slice(1)];
+    });
 
   return {
-    filas: halladas.slice(0, FILAS).map((f) => [f.obra, f.periodo, f.total]),
-    cargando: consulta.isPending,
-    error: consulta.isError,
+    filas,
+    cargando: cargados.length === 0 && (actual.isPending || siguiente.isPending),
+    error: actual.isError && siguiente.isError,
   };
 }
 
@@ -162,21 +204,18 @@ const VISTAS: Vista[] = [
     ],
     buscar: "Código",
     eligeObraSocial: true,
+    tipos: TIPOS_CODIGO_INICIO,
     useFilas: useFilasCodigos,
   },
   {
-    id: "facturacion",
-    titulo: "Facturación",
-    icono: Receipt,
-    permiso: "facturacion:leer",
-    ruta: `${base}/facturacion/periodos`,
-    columnas: [
-      { titulo: "Obra social" },
-      { titulo: "Período", angosta: true },
-      { titulo: "Hasta ahora", angosta: true, derecha: true },
-    ],
-    buscar: "Obra social",
-    useFilas: useFilasFacturacion,
+    id: "calendario",
+    titulo: "Calendario",
+    icono: CalendarDays,
+    permiso: "catalogo:leer",
+    ruta: `${base}/agenda`,
+    columnas: [{ titulo: "Fecha", angosta: true }, { titulo: "Evento" }, { titulo: "Tipo", angosta: true }],
+    buscar: "Evento",
+    useFilas: useFilasCalendario,
   },
 ];
 

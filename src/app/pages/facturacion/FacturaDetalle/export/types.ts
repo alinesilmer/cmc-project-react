@@ -15,11 +15,6 @@ export type ColumnaExport =
   | "nro_afiliado" | "afiliado" | "cantidad" | "porcentaje"
   | "honorarios" | "gastos" | "coseguro" | "valor_unitario" | "via";
 
-export const COLUMNAS_DEFAULT: ColumnaExport[] = [
-  "nro_registro", "prestador", "matricula", "clinica", "autorizacion", "fecha", "codigo",
-  "nro_afiliado", "afiliado", "cantidad", "porcentaje", "honorarios", "gastos",
-];
-
 export const COLUMNAS_DISPONIBLES: { key: ColumnaExport; label: string }[] = [
   { key: "nro_registro", label: "Nro. de registro" },
   { key: "prestador", label: "Prestador" },

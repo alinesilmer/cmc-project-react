@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getJSON, postJSON, delJSON } from "@/app/shared/lib/http";
-import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
+import { borrarLote, crearLoteSinFactura, listarLotes, listarObrasSociales, listarPeriodosParaLotes, obtenerOCrearLote } from "@/app/pages/Pagos/pagos.api";
+import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import Button from "@/app/components/ui/Button/Button";
 import Franja from "@/app/components/layout/Franja/Franja";
 import Caja from "@/app/components/ui/Caja/Caja";
@@ -15,39 +15,17 @@ import lq from "../Liquidacion.module.scss";
 import {
   type ObraSocial,
   type PeriodoDisp,
-  type LoteAjuste,
   mesLabel,
   MESES,
   fmt,
+  type LoteListItem,
 } from "../types";
 import AppSearchSelect from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
 import { ArrowLeftRight, Plus, Trash2 } from "lucide-react";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
 import { ESTADO_URL } from "@/app/pages/Pagos/utiles";
 import { DELETE_LOTE_URL } from "@/app/pages/Pagos/utiles";
-
-const LISTA_URL = (params: Record<string, string>) => {
-  const p = new URLSearchParams(params);
-  return `/api/lotes/snaps/lista?${p}`;
-};
-const OBRAS_SOCIALES_URL = "/api/obras_social/";
-const PERIODOS_DISP_URL = (id: number) =>
-  `/api/periodos/disponibles_lotes_ajustes?obra_social_id=${id}`;
-const OBTENER_O_CREAR_URL = "/api/lotes/snaps/obtener_o_crear";
-const CREAR_SF_URL = "/api/lotes/snaps/crear_sin_factura";
-type LoteListItem = {
-  id: number;
-  tipo: "normal" | "refacturacion" | "sin_factura";
-  estado: "A" | "C" | "L" | "AP";
-  mes_periodo: number;
-  anio_periodo: number;
-  pago_id: number | null;
-  obra_social_id: number;
-  obra_social_nombre: string;
-  nro_factura: string | null;
-  total_debitos: string;
-  total_creditos: string;
-};
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 
 const estadoLabel = (e: string) =>
   ({ A: "Abierto", C: "Cerrado", L: "En Liquidaciones", AP: "Aplicado" })[e] ??
@@ -109,16 +87,17 @@ const DebitosCreditos: React.FC = () => {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      await delJSON(DELETE_LOTE_URL(deleteTarget.id));
+      await borrarLote(deleteTarget.id);
       notify("Lote eliminado correctamente.");
       setDeleteTarget(null);
       fetchLotes();
-    } catch (e: any) {
-      const detail = e?.response?.data?.detail;
+    } catch (e) {
+      const err = comoErrorApi(e);
+      const detail = err?.response?.data?.detail;
       notify(
         typeof detail === "string"
           ? detail
-          : (e?.message ?? "Error al eliminar el lote."),
+          : (err?.message ?? "Error al eliminar el lote."),
         "error",
       );
     } finally {
@@ -147,10 +126,11 @@ const DebitosCreditos: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await getJSON<LoteListItem[]>(LISTA_URL(buildParams()));
+      const data = await listarLotes(buildParams());
       setLotes(data ?? []);
-    } catch (e: any) {
-      setError(e?.message || "No se pudieron cargar los lotes.");
+    } catch (e) {
+      const err = comoErrorApi(e);
+      setError(err?.message || "No se pudieron cargar los lotes.");
     } finally {
       setLoading(false);
     }
@@ -164,7 +144,7 @@ const DebitosCreditos: React.FC = () => {
     (async () => {
       setObrasLoading(true);
       try {
-        const data = await getJSON<ObraSocial[]>(OBRAS_SOCIALES_URL);
+        const data = await listarObrasSociales();
         setObras(data ?? []);
       } finally {
         setObrasLoading(false);
@@ -188,7 +168,7 @@ const DebitosCreditos: React.FC = () => {
     if (!val) return;
     setPeriodosLoading(true);
     try {
-      const data = await getJSON<PeriodoDisp[]>(PERIODOS_DISP_URL(Number(val)));
+      const data = await listarPeriodosParaLotes(Number(val));
       setPeriodos(data ?? []);
     } catch {
       setPeriodos([]);
@@ -213,18 +193,19 @@ const DebitosCreditos: React.FC = () => {
     if (!addOs || !periodosMes || !periodosAnio) return;
     setAdding(true);
     try {
-      const lote = await postJSON<LoteAjuste>(OBTENER_O_CREAR_URL, {
+      const lote = await obtenerOCrearLote({
         obra_social_id: Number(addOs),
         mes_periodo: Number(periodosMes),
         anio_periodo: Number(periodosAnio),
       });
       navigate(`/panel/debitos-creditos/${lote.id}`);
-    } catch (e: any) {
-      const detail = e?.response?.data?.detail;
+    } catch (e) {
+      const err = comoErrorApi(e);
+      const detail = err?.response?.data?.detail;
       notify(
         typeof detail === "string"
           ? detail
-          : (e?.message ?? "Error al crear el lote."),
+          : (err?.message ?? "Error al crear el lote."),
         "error",
       );
     } finally {
@@ -243,18 +224,19 @@ const DebitosCreditos: React.FC = () => {
     if (!addSfOs || !addSfMes || !addSfAnio) return;
     setAddingSf(true);
     try {
-      const lote = await postJSON<LoteAjuste>(CREAR_SF_URL, {
+      const lote = await crearLoteSinFactura({
         obra_social_id: Number(addSfOs),
         mes_periodo: Number(addSfMes),
         anio_periodo: Number(addSfAnio),
       });
       navigate(`/panel/debitos-creditos-sin-factura/${lote.id}`);
-    } catch (e: any) {
-      const detail = e?.response?.data?.detail;
+    } catch (e) {
+      const err = comoErrorApi(e);
+      const detail = err?.response?.data?.detail;
       notify(
         typeof detail === "string"
           ? detail
-          : (e?.message ?? "Error al crear el lote."),
+          : (err?.message ?? "Error al crear el lote."),
         "error",
       );
     } finally {

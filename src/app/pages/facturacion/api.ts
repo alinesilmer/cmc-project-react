@@ -133,7 +133,7 @@ export const listarPrestaciones = (filtros: ListarPrestacionesParams) =>
   traced(
     "GET /prestaciones (paginado)",
     filtros,
-    getJSONWithHeaders<PrestacionRead[]>(`${BASE}/prestaciones`, filtros as Record<string, any>),
+    getJSONWithHeaders<PrestacionRead[]>(`${BASE}/prestaciones`, filtros),
   );
 
 export const listarPeriodosPropios = () =>
@@ -143,7 +143,7 @@ export const listarFacturas = (filtros: ListarFacturasParams) =>
   traced(
     "GET /facturas (paginado)",
     filtros,
-    getJSONWithHeaders<FacturaRead[]>(`${BASE}/facturas`, filtros as Record<string, any>),
+    getJSONWithHeaders<FacturaRead[]>(`${BASE}/facturas`, filtros),
   );
 
 export const crearComplemento = (payload: ComplementoCreate) =>
@@ -275,7 +275,7 @@ export const descargarDocumentacionPdf = (facturaId: number | string, opciones: 
   traced(
     `GET /facturas/${facturaId}/export/documentacion.pdf`,
     opciones,
-    getBlobLong(`${BASE}/facturas/${facturaId}/export/documentacion.pdf`, opciones as Record<string, any>),
+    getBlobLong(`${BASE}/facturas/${facturaId}/export/documentacion.pdf`, opciones),
   );
 
 // ── Export (detalle + carátula) ──────────────────────────────────────────────
@@ -286,7 +286,7 @@ export const descargarExportDetalle = (
   traced(
     `GET /facturas/${facturaId}/export/detalle.${formato}`,
     opciones,
-    getBlobLong(`${BASE}/facturas/${facturaId}/export/detalle.${formato}`, opciones as Record<string, any>),
+    getBlobLong(`${BASE}/facturas/${facturaId}/export/detalle.${formato}`, opciones),
   );
 
 export const descargarExportCaratula = (facturaId: number | string, formato: "pdf" | "xlsx") =>
@@ -364,14 +364,14 @@ export const listarCargaPorUsuario = (filtros: RegistroPorUsuarioParams) =>
   traced(
     "GET /registro/carga-por-usuario",
     filtros,
-    getJSON<CargaPorUsuario[]>(`${BASE}/registro/carga-por-usuario`, filtros as Record<string, any>),
+    getJSON<CargaPorUsuario[]>(`${BASE}/registro/carga-por-usuario`, filtros),
   );
 
 export const listarCierresPorUsuario = (filtros: RegistroPorUsuarioParams) =>
   traced(
     "GET /registro/cierres-por-usuario",
     filtros,
-    getJSON<CierresPorUsuario[]>(`${BASE}/registro/cierres-por-usuario`, filtros as Record<string, any>),
+    getJSON<CierresPorUsuario[]>(`${BASE}/registro/cierres-por-usuario`, filtros),
   );
 
 export const cerrarPeriodo = (payload: CierrePayload) => {

@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DollarSign, Plus, Trash2 } from "lucide-react";
-import { getJSON, postJSON, delJSON } from "@/app/shared/lib/http";
-import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
+import { borrarPago, crearPago, listarPagos, type PagoNuevo } from "@/app/pages/Pagos/pagos.api";
+import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import Button from "@/app/components/ui/Button/Button";
 import Franja from "@/app/components/layout/Franja/Franja";
 import Caja from "@/app/components/ui/Caja/Caja";
@@ -11,8 +11,8 @@ import Dialogo, { DialogoAviso, DialogoCampo } from "@/app/components/ui/Dialogo
 import l from "../Liquidacion.module.scss";
 import { type Pago, fmt, mesLabel, MESES } from "../types";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
+import { comoErrorApi, detalleDeError, detalleObjeto } from "@/app/shared/lib/httpErrors";
 
-const PAGOS_URL = "/api/pagos/";
 const now = new Date();
 const YEAR_OPTIONS: number[] = Array.from({ length: 8 }, (_, i) => now.getFullYear() + 2 - i);
 const MES_OPTIONS = MESES.map((nombre, i) => ({ value: i + 1, label: nombre }));
@@ -47,15 +47,16 @@ const PagosList: React.FC = () => {
   const fetchPagos = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const params: Record<string, any> = { skip: 0, limit: 200 };
+    const params: Record<string, unknown> = { skip: 0, limit: 200 };
     if (filterAnio) params.anio = Number(filterAnio);
     if (filterMes) params.mes = Number(filterMes);
     if (filterEstado) params.estado = filterEstado;
     try {
-      const data = await getJSON<Pago[]>(PAGOS_URL, params);
+      const data = await listarPagos(params);
       setRows(Array.isArray(data) ? data : []);
-    } catch (e: any) {
-      setError(e?.message || "No se pudieron cargar los pagos.");
+    } catch (e) {
+      const err = comoErrorApi(e);
+      setError(err?.message || "No se pudieron cargar los pagos.");
     } finally {
       setLoading(false);
     }
@@ -74,27 +75,28 @@ const PagosList: React.FC = () => {
   const handleCreate = async () => {
     setCreating(true);
     try {
-      const body: Record<string, any> = { anio: createAnio, mes: createMes };
+      const body: PagoNuevo = { anio: createAnio, mes: createMes };
       if (createDesc.trim()) body.descripcion = createDesc.trim();
-      const created = await postJSON<Pago>(PAGOS_URL, body);
+      const created = await crearPago(body);
       setRows((prev) => [created, ...prev].sort((a, b) => {
         if (b.anio !== a.anio) return b.anio - a.anio;
         return b.mes - a.mes;
       }));
       setOpenCreate(false);
       notify("Pago creado correctamente.");
-    } catch (e: any) {
-      const status = e?.response?.status ?? e?.status;
+    } catch (e) {
+      const err = comoErrorApi(e);
+      const status = err.response?.status ?? err.status;
       if (status === 409) {
-        const detail = e?.response?.data?.detail;
-        if (detail?.reason === "pago_abierto_existe") {
-          setAlert409({ pagoId: detail.pago_id, message: detail.message });
+        const detail = detalleObjeto(e);
+        if (detail?.reason === "pago_abierto_existe" && detail.pago_id !== undefined) {
+          setAlert409({ pagoId: detail.pago_id, message: detail.message ?? "" });
           setOpenCreate(false);
         } else {
           notify(detail?.message ?? "Conflicto al crear el pago.", "error");
         }
       } else {
-        notify(e?.response?.data?.detail ?? e?.message ?? "Error al crear el pago.", "error");
+        notify(detalleDeError(e, "Error al crear el pago."), "error");
       }
     } finally {
       setCreating(false);
@@ -105,13 +107,14 @@ const PagosList: React.FC = () => {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      await delJSON(`${PAGOS_URL}${deleteTarget.id}`);
+      await borrarPago(deleteTarget.id);
       setRows((prev) => prev.filter((p) => p.id !== deleteTarget.id));
       setDeleteTarget(null);
       notify("Pago eliminado correctamente.");
-    } catch (e: any) {
-      const detail = e?.response?.data?.detail;
-      notify(typeof detail === "string" ? detail : e?.message ?? "No se pudo eliminar el pago.", "error");
+    } catch (e) {
+      const err = comoErrorApi(e);
+      const detail = err?.response?.data?.detail;
+      notify(typeof detail === "string" ? detail : err?.message ?? "No se pudo eliminar el pago.", "error");
     } finally {
       setDeleting(false);
     }

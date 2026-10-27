@@ -1,25 +1,4 @@
 @use "@/app/styles/all.scss" as *;
-
-// «Datos a mostrar»: sólo el marco del diálogo y lo propio de este modal.
-
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1200;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: $spacing-6;
-  background: rgba($carpeta-noche, 0.55);
-  backdrop-filter: blur(2px);
-
-  // En celular el panel se pega abajo, como una hoja.
-  @media (max-width: $breakpoint-sm) {
-    align-items: flex-end;
-    padding: 0;
-  }
-}
-
 .panel {
   display: flex;
   flex-direction: column;
