@@ -4,7 +4,7 @@ import { saveAs } from "@/app/shared/lib/fileSaver";
 import { getVistaPrevia } from "@/app/pages/Pagos/pagos.api";
 import Card from "@/app/components/ui/Card/Card";
 import styles from "./tabs.module.scss";
-import { fmt, mesLabel } from "../../types";
+import { fmt, mesLabel, nroFacturaMarcado } from "../../types";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 import paleta from "@/app/styles/paleta.module.scss";
@@ -16,6 +16,7 @@ type LiquidacionItem = {
   obra_social_id: number;
   obra_social_nombre: string;
   nro_factura: string | null;
+  factura_version?: number | null;
   mes_periodo: number;
   anio_periodo: number;
   total_bruto: string;
@@ -65,6 +66,30 @@ type LoteTotales = {
   total_creditos: string;
 };
 
+type AdelantoItem = {
+  adelanto_id: number;
+  estado: string;
+  obra_social_id: number;
+  obra_social_nombre: string;
+  nro_factura: string | null;
+  mes_periodo: number;
+  anio_periodo: number;
+  prestaciones: number;
+  medicos: number;
+  total_honorarios: string;
+  total_gastos: string;
+  total_bruto: string;
+};
+
+type CompensacionItem = {
+  compensacion_id: number;
+  estado: string;
+  medico_id: number;
+  medico_nombre: string;
+  leyenda: string;
+  importe: string;
+};
+
 type VistaPrevia = {
   pago_id: number;
   mes: number;
@@ -74,6 +99,8 @@ type VistaPrevia = {
   liquidaciones: { items: LiquidacionItem[]; totales: LiquidacionTotales };
   deducciones: { items: DeduccionItem[]; totales: DeduccionTotales };
   lotes: { items: LoteItem[]; totales: LoteTotales };
+  adelantos?: { items: AdelantoItem[]; totales: { total_bruto: string } };
+  compensaciones?: { items: CompensacionItem[]; totales: { a_favor: string; en_contra: string; neto: string } };
 };
 
 type Props = { pagoId: number };
@@ -115,6 +142,9 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
   if (!data) return null;
 
   const { liquidaciones, deducciones, lotes } = data;
+  const adelantos = data.adelantos ?? { items: [], totales: { total_bruto: "0" } };
+  const compensaciones = data.compensaciones ?? { items: [], totales: { a_favor: "0", en_contra: "0", neto: "0" } };
+  const conSigno = (n: number | string) => `${Number(n) < 0 ? "-" : "+"}$${fmt(Math.abs(Number(n)))}`;
 
   const lotesNormales = lotes.items.filter(
     (l) => l.tipo === "normal" || l.tipo === "sin_factura",
@@ -126,8 +156,11 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
   const sumCreditos = (items: LoteItem[]) =>
     items.reduce((acc, l) => acc + Number(l.total_creditos), 0);
 
+  // El adelanto es producción del médico: suma al total a pagar igual que una factura.
   const totalAPagar =
-    Number(liquidaciones.totales.total_neto) -
+    Number(liquidaciones.totales.total_neto) +
+    Number(adelantos.totales.total_bruto) +
+    Number(compensaciones.totales.neto) -
     Number(deducciones.totales.total_monto) +
     Number(lotes.totales.total_creditos) -
     Number(lotes.totales.total_debitos);
@@ -221,7 +254,7 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
       const r = ws.addRow([
         liq.obra_social_nombre,
         liq.obra_social_id,
-        liq.nro_factura ?? "—",
+        nroFacturaMarcado(liq.nro_factura, liq.factura_version),
         `${mesLabel(liq.mes_periodo)} ${liq.anio_periodo}`,
         Number(liq.total_bruto),
         Number(liq.total_honorarios),
@@ -251,6 +284,43 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
       styleTotals(r, [5, 6, 7, 8, 9, 10, 11]);
     }
     ws.addRow([]);
+
+    // ── Adelantos ──
+    if (adelantos.items.length > 0) {
+      addSectionHeader("Adelantos", 7);
+      const adelHead = ws.addRow(["Adelanto", "Obra Social", "Nro. Factura", "Período", "Prestaciones", "Honorarios", "Gastos", "Total"]);
+      styleHeader(adelHead);
+      adelantos.items.forEach((a) => {
+        const r = ws.addRow([
+          `#${a.adelanto_id}`,
+          a.obra_social_nombre,
+          nroFacturaMarcado(a.nro_factura, null),
+          `${mesLabel(a.mes_periodo)} ${a.anio_periodo}`,
+          a.prestaciones,
+          Number(a.total_honorarios),
+          Number(a.total_gastos),
+          Number(a.total_bruto),
+        ]);
+        applyMoneyCol(r, [6, 7, 8]);
+      });
+      const rTot = ws.addRow(["TOTAL", "", "", "", "", "", "", Number(adelantos.totales.total_bruto)]);
+      styleTotals(rTot, [8]);
+      ws.addRow([]);
+    }
+
+    // ── Compensaciones ──
+    if (compensaciones.items.length > 0) {
+      addSectionHeader("Compensaciones", 4);
+      const compHead = ws.addRow(["Compensación", "Socio", "Leyenda del recibo", "Importe"]);
+      styleHeader(compHead);
+      compensaciones.items.forEach((c) => {
+        const r = ws.addRow([`#${c.compensacion_id}`, c.medico_nombre, c.leyenda, Number(c.importe)]);
+        applyMoneyCol(r, [4]);
+      });
+      const rTot = ws.addRow(["TOTAL", "", "", Number(compensaciones.totales.neto)]);
+      styleTotals(rTot, [4]);
+      ws.addRow([]);
+    }
 
     // ── Deducciones ──
     addSectionHeader("Deducciones", 3);
@@ -477,7 +547,7 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
       ],
       liquidaciones.items.map((liq) => [
         liq.obra_social_nombre,
-        liq.nro_factura ?? "—",
+        nroFacturaMarcado(liq.nro_factura, liq.factura_version),
         `${mesLabel(liq.mes_periodo)} ${liq.anio_periodo}`,
         `$${fmt(liq.total_bruto)}`,
         `$${fmt(liq.total_honorarios)}`,
@@ -504,6 +574,35 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
           ]
         : undefined,
     );
+
+    // Adelantos
+    if (adelantos.items.length > 0) {
+      addSection(
+        "Adelantos",
+        [["Adelanto", "Obra Social", "Nro. Factura", "Período", "Prest.", "Honorarios", "Gastos", "Total"]],
+        adelantos.items.map((a) => [
+          `#${a.adelanto_id}`,
+          a.obra_social_nombre,
+          nroFacturaMarcado(a.nro_factura, null),
+          `${mesLabel(a.mes_periodo)} ${a.anio_periodo}`,
+          String(a.prestaciones),
+          `$${fmt(a.total_honorarios)}`,
+          `$${fmt(a.total_gastos)}`,
+          `$${fmt(a.total_bruto)}`,
+        ]),
+        [["TOTAL", "", "", "", "", "", "", `$${fmt(adelantos.totales.total_bruto)}`]],
+      );
+    }
+
+    // Compensaciones
+    if (compensaciones.items.length > 0) {
+      addSection(
+        "Compensaciones",
+        [["Compensación", "Socio", "Leyenda del recibo", "Importe"]],
+        compensaciones.items.map((c) => [`#${c.compensacion_id}`, c.medico_nombre, c.leyenda, conSigno(c.importe)]),
+        [["TOTAL", "", "", conSigno(compensaciones.totales.neto)]],
+      );
+    }
 
     // Deducciones
     addSection(
@@ -637,7 +736,7 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
                     </div>
                   </td>
                   <td style={{ fontFamily: "monospace", fontSize: 11 }}>
-                    {liq.nro_factura ?? "—"}
+                    {nroFacturaMarcado(liq.nro_factura, liq.factura_version)}
                   </td>
                   <td style={{ whiteSpace: "nowrap" }}>
                     {mesLabel(liq.mes_periodo)} {liq.anio_periodo}
@@ -691,6 +790,92 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
           </Tabla>
         </div>
       </Card>
+
+      {/* ── Adelantos ── */}
+      {adelantos.items.length > 0 && (
+        <>
+          <SectionTitle>Adelantos</SectionTitle>
+          <Card className={styles.tableCard} style={{ marginBottom: 28 }}>
+            <div className={styles.tableWrap}>
+              <Tabla className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Adelanto</th>
+                    <th>Obra Social</th>
+                    <th>Nro. Factura</th>
+                    <th>Período</th>
+                    <th className={styles.numCell}>Prest.</th>
+                    <th className={styles.numCell}>Honorarios</th>
+                    <th className={styles.numCell}>Gastos</th>
+                    <th className={styles.numCell}>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {adelantos.items.map((a) => (
+                    <tr key={a.adelanto_id}>
+                      <td style={{ fontWeight: 500 }}>#{a.adelanto_id}</td>
+                      <td>{a.obra_social_nombre}</td>
+                      <td>{nroFacturaMarcado(a.nro_factura, null)}</td>
+                      <td>
+                        {mesLabel(a.mes_periodo)} {a.anio_periodo}
+                      </td>
+                      <td className={styles.numCell}>{a.prestaciones}</td>
+                      <td className={styles.numCell}>${fmt(a.total_honorarios)}</td>
+                      <td className={styles.numCell}>${fmt(a.total_gastos)}</td>
+                      <td className={styles.numCell}>${fmt(a.total_bruto)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className={styles.totalsRow}>
+                    <td colSpan={7}>TOTAL</td>
+                    <td className={styles.numCell}>${fmt(adelantos.totales.total_bruto)}</td>
+                  </tr>
+                </tfoot>
+              </Tabla>
+            </div>
+          </Card>
+        </>
+      )}
+
+      {/* ── Compensaciones ── */}
+      {compensaciones.items.length > 0 && (
+        <>
+          <SectionTitle>Compensaciones</SectionTitle>
+          <Card className={styles.tableCard} style={{ marginBottom: 28 }}>
+            <div className={styles.tableWrap}>
+              <Tabla className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Compensación</th>
+                    <th>Socio</th>
+                    <th>Leyenda del recibo</th>
+                    <th className={styles.numCell}>Importe</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {compensaciones.items.map((c) => (
+                    <tr key={c.compensacion_id}>
+                      <td style={{ fontWeight: 500 }}>#{c.compensacion_id}</td>
+                      <td>{c.medico_nombre}</td>
+                      <td>{c.leyenda}</td>
+                      <td className={`${styles.numCell} ${Number(c.importe) < 0 ? styles.negative : styles.positive}`}>
+                        {conSigno(c.importe)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className={styles.totalsRow}>
+                    <td colSpan={3}>TOTAL</td>
+                    <td className={styles.numCell}>{conSigno(compensaciones.totales.neto)}</td>
+                  </tr>
+                </tfoot>
+              </Tabla>
+            </div>
+          </Card>
+        </>
+      )}
 
       {/* ── Deducciones ── */}
       <SectionTitle>Deducciones</SectionTitle>

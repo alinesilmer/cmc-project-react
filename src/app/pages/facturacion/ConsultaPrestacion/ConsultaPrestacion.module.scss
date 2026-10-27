@@ -298,16 +298,217 @@
 .fichaHero {
   padding: 1rem 1.25rem;
   display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.fichaEncabezado {
+  display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 0.625rem;
+  align-items: baseline;
+  gap: 0.25rem 0.875rem;
+}
+
+.fichaTitulo {
+  margin: 0;
+  font-family: $fuente-titulos;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: $primary-blue;
 }
 
 .fichaId {
   font-family: 'Courier New', Courier, monospace;
   font-weight: 700;
-  font-size: 1.1rem;
   color: $carpeta-noche;
+}
+
+.fichaCodigo {
+  font-size: 0.86rem;
+  color: $gray-600;
+}
+
+.fichaMeta {
+  margin: 0;
+  font-size: 0.78rem;
+  color: $tono-azul-400;
+}
+
+// Franja de estado: barra de color + título, motivo y quién/cuándo. El tono sale del modificador.
+.franja {
+  display: flex;
+  gap: 0.875rem;
+  margin-top: 0.375rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--franja-borde);
+  border-radius: 0.75rem;
+  background: var(--franja-fondo);
+}
+
+.franjaInfo { --franja-fondo: #{$secondary-blue}; --franja-borde: #{$tono-azul-100}; --franja-barra: #{$primary-blue}; --franja-texto: #{$primary-blue}; }
+.franjaOk { --franja-fondo: #{$tono-gris-50}; --franja-borde: #{$tono-verde-50-b}; --franja-barra: #{$tono-verde-500}; --franja-texto: #{$tono-verde-550}; }
+.franjaMal { --franja-fondo: #{$tono-rojo-50}; --franja-borde: #{$tono-rojo-100}; --franja-barra: #{$danger-red}; --franja-texto: #{$tono-rojo-550}; }
+.franjaMalSuave { --franja-fondo: #{$tono-rojo-50}; --franja-borde: #{$tono-rojo-150}; --franja-barra: #{$tono-rojo-150}; --franja-texto: #{$tono-rojo-550}; }
+.franjaAviso { --franja-fondo: #{$cuaderno-papel}; --franja-borde: #{$tono-naranja-150}; --franja-barra: #{$tono-naranja-450}; --franja-texto: #{$tono-naranja-550}; }
+
+.franjaBarra {
+  width: 0.375rem;
+  flex-shrink: 0;
+  border-radius: 3px;
+  background: var(--franja-barra);
+}
+
+.franjaCuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.franjaTitulos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+}
+
+.franjaTitulo {
+  font-family: $fuente-titulos;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--franja-texto);
+}
+
+.franjaSubtitulo {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--franja-texto);
+}
+
+.franjaTexto {
+  margin: 0;
+  font-size: 0.86rem;
+  color: $gray-700;
+  overflow-wrap: anywhere;
+}
+
+.franjaFirma {
+  font-size: 0.78rem;
+  color: $gray-500;
+}
+
+// Datos a la izquierda, historial a la derecha; en pantallas angostas, uno debajo del otro.
+.fichaCuerpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 0.75rem;
+  padding: 0.25rem 1.25rem 1.25rem;
+
+  .grid { padding: 0; }
+
+  @media (max-width: 1100px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.lateral {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+
+  summary { cursor: pointer; margin: 0; }
+  details[open] summary { margin-bottom: 0.5rem; }
+}
+
+.cardHistorial {
+  padding-bottom: 0.25rem;
+}
+
+// Línea de tiempo: punto de color por tipo de evento, unido por una línea.
+.tl {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tlItem {
+  --tl-color: #{$gray-400};
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0 0 0.875rem 1.375rem;
+  min-width: 0;
+
+  &::before {
+    content: "";
+    position: absolute;
+    left: 0.28rem;
+    top: 0.6rem;
+    bottom: -0.2rem;
+    width: 2px;
+    background: $gray-200;
+  }
+
+  &:last-child::before { display: none; }
+
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.3rem;
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 50%;
+    background: var(--tl-color);
+    box-shadow: 0 0 0 3px $white;
+  }
+}
+
+.tlInfo { --tl-color: #{$tono-azul-500-b}; }
+.tlOk { --tl-color: #{$tono-verde-500}; }
+.tlAviso { --tl-color: #{$tono-naranja-450}; }
+.tlMal { --tl-color: #{$tono-rojo-500}; }
+
+.tlTitulo {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: $carpeta-noche;
+}
+
+.tlMarca {
+  margin-left: 0.375rem;
+  padding: 0 0.3rem;
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: $gray-500;
+  border: 1px solid $gray-200;
+  border-radius: 4px;
+  vertical-align: 1px;
+}
+
+.tlDetalle {
+  font-size: 0.8rem;
+  color: $gray-700;
+  overflow-wrap: anywhere;
+}
+
+.tlCambios {
+  margin: 0.125rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.78rem;
+  color: $gray-600;
+  font-variant-numeric: tabular-nums;
+}
+
+.tlCampo { color: $tono-azul-400; }
+
+.tlFirma {
+  font-size: 0.74rem;
+  color: $gray-500;
 }
 
 .chip {

@@ -1,16 +1,21 @@
 import { useEffect, useState } from "react";
 import { useNotify } from "@/app/hooks/useNotify";
-import { getMedicoDetail, setMedicoExiste, updateMedico } from "../api";
+import {
+  getMedicoDetail,
+  setMedicoEstado,
+  updateMedico,
+  type EstadoCuenta,
+} from "../api";
 import type { DoctorProfileX, SeccionDatos } from "./legajo.types";
 import { getFechaIngreso, normalizePatch, mensajeDe } from "./legajo.helpers";
 
-/** Carga del legajo, estado activo/inactivo y edición de la pestaña Datos. */
+/** Carga del legajo, estado de la cuenta y edición de la pestaña Datos. */
 export function useLegajoDatos(medicoId: string, readOnly: boolean) {
   const notify = useNotify();
 
   const [data, setData] = useState<DoctorProfileX | null>(null);
   const [loading, setLoading] = useState(true);
-  const [existe, setExiste] = useState<"S" | "N">("N");
+  const [estadoCuenta, setEstadoCuenta] = useState<EstadoCuenta>("pendiente");
   const [toggleBusy, setToggleBusy] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -46,8 +51,7 @@ export function useLegajoDatos(medicoId: string, readOnly: boolean) {
           fecha_ingreso: getFechaIngreso(raw),
         };
         setData(normalized);
-        if (normalized?.existe)
-          setExiste(normalized.existe.toUpperCase() === "S" ? "S" : "N");
+        if (normalized?.estado_cuenta) setEstadoCuenta(normalized.estado_cuenta);
       } finally {
         if (alive) setLoading(false);
       }
@@ -57,13 +61,13 @@ export function useLegajoDatos(medicoId: string, readOnly: boolean) {
     };
   }, [medicoId]);
 
-  async function cambiarExistencia(checked: boolean) {
+  async function cambiarEstado(checked: boolean) {
     try {
       setToggleBusy(true);
-      const next = checked ? "S" : "N";
-      await setMedicoExiste(medicoId, next);
-      setExiste(next);
-      setData((d) => (d ? { ...d, existe: next } : d));
+      const next: EstadoCuenta = checked ? "activo" : "baja";
+      await setMedicoEstado(medicoId, next);
+      setEstadoCuenta(next);
+      setData((d) => (d ? { ...d, estado_cuenta: next } : d));
     } catch (e: unknown) {
       notify.error(mensajeDe(e) || "No se pudo actualizar el estado.");
     } finally {
@@ -116,9 +120,9 @@ export function useLegajoDatos(medicoId: string, readOnly: boolean) {
   return {
     data,
     loading,
-    existe,
+    estadoCuenta,
     toggleBusy,
-    cambiarExistencia,
+    cambiarEstado,
     isEditing,
     saving,
     draft,

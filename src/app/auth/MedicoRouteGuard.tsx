@@ -8,7 +8,7 @@ import {
   organizacionCanAccess,
 } from "./roles";
 
-/** Recorta el panel para los usuarios médicos (INGRESAR = 'D'): si piden una ruta fuera de `MEDICO_ALLOWED_PATHS` los devuelve al inicio. */
+/** Recorta el panel para los usuarios médicos (rol `medico`): si piden una ruta fuera de `MEDICO_ALLOWED_PATHS` los devuelve al inicio. */
 export default function MedicoRouteGuard() {
   const { user } = useAuth();
   const { pathname } = useLocation();

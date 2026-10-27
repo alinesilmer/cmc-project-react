@@ -7,6 +7,7 @@ export type FocusField =
   | "paciente"
   | "fecha"
   | "codigo"
+  | "autorizacion"
   | "guardar";
 
 /** Enfoca el primer campo de la lista que exista y sea enfocable, en el orden dado. */

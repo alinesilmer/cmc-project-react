@@ -51,3 +51,17 @@
   transform: translateY(-50%);
   pointer-events: none;
 }
+
+// Variante con calendario sólo en el ícono: ahí sí tiene que recibir el clic.
+.iconoBoton {
+  display: inline-flex;
+  padding: 0.25rem;
+  background: none;
+  border: 0;
+  border-radius: $radio-md;
+  cursor: pointer;
+  pointer-events: auto;
+
+  &:hover:not(:disabled) { color: $franja-azul; }
+  &:disabled { cursor: not-allowed; }
+}

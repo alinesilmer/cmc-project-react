@@ -14,13 +14,13 @@ import styles from "./DoctorProfilePage.module.scss";
 import RequirePermission from "../../auth/RequirePermission";
 import { usePermisos } from "../../auth/usePermisos";
 import { useAuth } from "../../auth/useAuth";
-import { esOrganizacion, INGRESAR_MEDICO, isMedico } from "../../auth/roles";
+import { esOrganizacion, isMedico, ROL_MEDICO } from "../../auth/roles";
 import BackButton from "@/app/components/ui/BackButton/BackButton";
 import Credencial from "./Credencial";
 import FormularioCambiosModal from "./FormularioCambiosModal";
 import ReportarCambioModal from "./ReportarCambioModal";
 import type { ReportTarget } from "./ReportarCambioModal";
-import { deleteMedico } from "./api";
+import { deleteMedico, ETIQUETA_ESTADO_CUENTA } from "./api";
 
 import Switch from "@mui/material/Switch";
 import ActionModal from "@/app/components/ui/ActionModal/ActionModal";
@@ -75,7 +75,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
   const [tab, setTab] = useState<TabKey>("datos");
 
   const datos = useLegajoDatos(medicoId, readOnly);
-  const { data, loading, existe, toggleBusy, cambiarExistencia } = datos;
+  const { data, loading, estadoCuenta, toggleBusy, cambiarEstado } = datos;
   const documentos = useLegajoDocumentos(medicoId, tab);
   const especialidades = useLegajoEspecialidades(medicoId, tab);
   const { especs } = especialidades;
@@ -84,10 +84,8 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
 
   // El personal del Colegio también tiene legajo en `listado_medico`, pero no es médico: sin "Dr./Dra." en la credencial y sin especialidades.
   const esLegajoPropio = user?.id != null && String(user.id) === medicoId;
-  const ingresarLegajo: string | null =
-    data?.ingresar ?? (esLegajoPropio ? user?.ingresar : null) ?? null;
-  const legajoEsMedico =
-    ingresarLegajo == null || ingresarLegajo === INGRESAR_MEDICO;
+  const rolLegajo: string | null = data?.rol ?? (esLegajoPropio ? user?.role : null) ?? null;
+  const legajoEsMedico = rolLegajo == null || rolLegajo === ROL_MEDICO;
 
   // Línea bajo el nombre en "Mi perfil": especialidad · matrícula · socio.
   const resumenLegajo = [
@@ -184,10 +182,10 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                     <div className={styles.headerMain}>
                       <span
                         className={`${styles.mpEstado} ${
-                          existe === "S" ? "" : styles.mpEstadoInactivo
+                          estadoCuenta === "activo" ? "" : styles.mpEstadoInactivo
                         }`}
                       >
-                        {existe === "S" ? "Activo" : "Inactivo"}
+                        {ETIQUETA_ESTADO_CUENTA[estadoCuenta]}
                       </span>
                       <h2 className={styles.name}>{data.name}</h2>
                       <p className={styles.mpSub}>{resumenLegajo}</p>
@@ -197,19 +195,19 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                     <div className={styles.headerActions}>
                       <div
                         className={styles.toggleWrap}
-                        title="Habilitar / Inhabilitar socio"
+                        title="Activar / dar de baja la cuenta (la baja cierra sus sesiones)"
                       >
                         <span
                           className={styles.muted}
                           style={{ marginRight: 8 }}
                         >
-                          {existe === "S" ? "Habilitado" : "Inhabilitado"}
+                          {ETIQUETA_ESTADO_CUENTA[estadoCuenta]}
                         </span>
                         <Switch
-                          checked={existe === "S"}
+                          checked={estadoCuenta === "activo"}
                           disabled={toggleBusy}
-                          onChange={(_e, checked) => cambiarExistencia(checked)}
-                          inputProps={{ "aria-label": "Habilitar o inhabilitar socio" }}
+                          onChange={(_e, checked) => cambiarEstado(checked)}
+                          inputProps={{ "aria-label": "Activar o dar de baja la cuenta" }}
                         />
                       </div>
 
@@ -376,9 +374,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                           documento={data.documento}
                           // Primera especialidad adherida; si no tiene, no se muestra.
                           especialidad={especs[0]?.nombre ?? null}
-                          activo={
-                            String(data.existe ?? "").toUpperCase() === "S"
-                          }
+                          activo={data.estado_cuenta === "activo"}
                           esMedico={legajoEsMedico}
                         />
                       </motion.div>

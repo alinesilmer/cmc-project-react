@@ -1,11 +1,11 @@
 // src/app/auth/roles.ts
 import type { User } from "./api";
 
-/** `listado_medico.INGRESAR` — D = médico, E = empleado del Colegio, A = administrador. */
-export const INGRESAR_MEDICO = "D";
+/** Rol RBAC del socio: es lo que decide la API, así que el front mira lo mismo. */
+export const ROL_MEDICO = "medico";
 
 export const isMedico = (user: User | null | undefined): boolean =>
-  user?.ingresar === INGRESAR_MEDICO;
+  user?.role === ROL_MEDICO;
 
 /** Prefijos de ruta del panel habilitados para un médico. */
 const MEDICO_ALLOWED_PATHS = [
@@ -45,14 +45,4 @@ export const organizacionCanAccess = (pathname: string): boolean =>
     (p) => pathname === p || pathname.startsWith(`${p}/`),
   );
 
-/** Scopes viejos que identificaban al editor web antes de RBAC (§2 del doc de backend): `web:editor` pasó a ser el rol `editor_web`. */
-const WEB_EDITOR_SCOPES_LEGACY = [
-  "website:editor",
-  "web:editor",
-  "cms:editor",
-  "website:editar",
-];
-
-export const isWebEditor = (user?: User | null) =>
-  user?.role === "editor_web" ||
-  !!user?.scopes?.some((s) => WEB_EDITOR_SCOPES_LEGACY.includes(s));
+export const isWebEditor = (user?: User | null) => user?.role === "editor_web";

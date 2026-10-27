@@ -10,6 +10,8 @@ import {
 } from "../obrasSociales.api";
 import { OBRAS_SOCIALES_KEY, useObrasSociales } from "../useObrasSociales";
 import {
+  DIA_CORTE_DESDE_ULTIMO,
+  DIA_CORTE_ULTIMO,
   EMPTY_FORM,
   PAQUETE_LABELS,
   leerPlataforma,
@@ -17,6 +19,7 @@ import {
   PLAZO_OPTIONS,
   validateObraSocialForm,
   displayCuit,
+  normalizarDiaCorte,
 } from "../obrasSociales.types";
 import type {
   ObraSocialFormData,
@@ -51,6 +54,7 @@ export default function ObrasSocialesForm() {
   const obraId = id ? Number(id) : undefined;
 
   const [form, setForm] = useState<ObraSocialFormData>(EMPTY_FORM);
+  const ultimoDia = Number(form.dia_corte) >= DIA_CORTE_DESDE_ULTIMO;
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
@@ -121,7 +125,7 @@ export default function ObrasSocialesForm() {
           replicar_galenos: false,
           replicar_nomencladores: false,
           replicar_valores: false,
-          dia_corte: String(data.dia_corte ?? 20),
+          dia_corte: normalizarDiaCorte(String(data.dia_corte ?? 20)),
           documentacion_digital: !!data.documentacion_digital,
         });
 
@@ -702,15 +706,31 @@ export default function ObrasSocialesForm() {
               <input
                 id="dia_corte"
                 type="number"
-                min={1}
-                max={28}
+                min={2}
+                max={DIA_CORTE_DESDE_ULTIMO - 1}
+                disabled={ultimoDia}
                 className={`${s.input} ${errors.dia_corte ? s.inputError : ""}`}
-                value={form.dia_corte}
-                onChange={(e) => set("dia_corte", e.target.value)}
+                value={ultimoDia ? "" : form.dia_corte}
+                placeholder={ultimoDia ? "Fin de mes" : undefined}
+                onChange={(e) => set("dia_corte", normalizarDiaCorte(e.target.value))}
               />
+              <label className={s.replicarItem}>
+                <input
+                  type="checkbox"
+                  checked={ultimoDia}
+                  onChange={(e) =>
+                    set("dia_corte", e.target.checked ? String(DIA_CORTE_ULTIMO) : EMPTY_FORM.dia_corte)
+                  }
+                />
+                <span>
+                  <strong>Último día del mes</strong>
+                  <small>Se ajusta solo a los meses de 28, 29, 30 o 31 días.</small>
+                </span>
+              </label>
               <FieldError msg={errors.dia_corte} />
               <span className={s.hint}>
-                1 = mes completo (del 1 al último día). 20 = del 20 al 20 del mes siguiente.
+                Elegí un día del 2 al 27 (20 = del 20 al 20 del mes siguiente). Del 28 en adelante se marca solo
+                «Último día del mes»: el corte cae siempre en el último día real (31, 30, 29 o 28 según el mes).
               </span>
             </div>
           </div>

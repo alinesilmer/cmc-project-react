@@ -26,6 +26,7 @@ const ReportesPage = lazy(() => import("./app/pages/Reportes/ReportesPage"));
 const DoctorsPage = lazy(() => import("./app/pages/DoctorsList/DoctorsList"));
 const SocialWorksPage = lazy(() => import("./app/pages/SocialWorkSection/SocialWorkSection"));
 const DoctorProfilePage = lazy(() => import("./app/pages/DoctorProfilePage/DoctorProfilePage"));
+const ActualizarPadronesPage = lazy(() => import("./app/pages/ActualizarPadronesPage/ActualizarPadronesPage"));
 const PadronPorSocio = lazy(() => import("./app/pages/PadronPorSocio/PadronPorSocio"));
 const UsersList = lazy(() => import("./app/pages/UsersList/UsersList"));
 // Control de calidad del padrón: sólo lectura, señala legajos con problemas.
@@ -40,7 +41,6 @@ const Boletin = lazy(() => import("./app/pages/Boletin/Boletin"));
 const AfiliadosPorObraSocialPage = lazy(() => import("./app/pages/AfiliadosPorObraSocialPage/AfiliadosPorObraSocialPage"));
 const GenerarBoletin = lazy(() => import("./app/pages/GenerarBoletin/GenerarBoletin"));
 const CambiarPassword = lazy(() => import("./app/pages/CambiarPassword/CambiarPassword"));
-const SistemaAnterior = lazy(() => import("./app/pages/SistemaAnterior/SistemaAnterior"));
 
 // Liquidación (nuevo módulo)
 const PagosList = lazy(() => import("./app/pages/Pagos/PagosList/PagosList"));
@@ -50,6 +50,10 @@ const LoteDetalle = lazy(() => import("./app/pages/Pagos/LoteDetalle/LoteDetalle
 const LoteDetalleSinFactura = lazy(() => import("./app/pages/Pagos/LoteDetalle/LoteDetalleSinFactura"));
 const DebitosCreditos = lazy(() => import("./app/pages/Pagos/DebitosCreditos/DebitosCreditos"));
 const RefacturacionesList = lazy(() => import("./app/pages/Pagos/RefacturacionesList/RefacturacionesList"));
+const Adelantos = lazy(() => import("./app/pages/Pagos/Adelantos/Adelantos"));
+const AdelantoDetalle = lazy(() => import("./app/pages/Pagos/Adelantos/AdelantoDetalle"));
+const Compensaciones = lazy(() => import("./app/pages/Pagos/Compensaciones/Compensaciones"));
+const RetencionesGanancias = lazy(() => import("./app/pages/Pagos/RetencionesGanancias/RetencionesGanancias"));
 const DeduccionesList = lazy(() => import("./app/pages/Deducciones/DeduccionesList"));
 const NuevaDeduccion = lazy(() => import("./app/pages/Deducciones/NuevaDeduccion"));
 const CobranzasPage = lazy(() => import("./app/pages/Cobranzas/CobranzasPage"));
@@ -124,7 +128,6 @@ const TxtDasuten = lazy(() => import("./app/pages/facturacion/TxtDasuten/TxtDasu
 const CompletarNomencladorNN = lazy(() => import("./app/pages/NomencladorNacional/CompletarNomencladorNN/CompletarNomencladorNN"));
 const AgregarCodigoObrasSociales = lazy(() => import("./app/pages/NomencladorNacional/AgregarCodigoObrasSociales/AgregarCodigoObrasSociales"));
 const ActualizacionesValores = lazy(() => import("./app/pages/NomencladorNacional/ActualizacionesValores/ActualizacionesValores"));
-const ImportarPreciosPdf = lazy(() => import("./app/pages/NomencladorNacional/ImportarPreciosPdf/ImportarPreciosPdf"));
 const ImportarValoresFijos = lazy(() => import("./app/pages/NomencladorNacional/ImportarValoresFijos/ImportarValoresFijos"));
 const AumentoPorcentual = lazy(() => import("./app/pages/NomencladorNacional/AumentoPorcentual/AumentoPorcentual"));
 
@@ -191,6 +194,11 @@ export default function RootRoutes() {
                 <Route path="padron-socio" element={<PadronPorSocio />} />
               </Route>
 
+              {/* Altas y bajas masivas de socios en el padrón de una obra social: el backend exige `padron:editar`. */}
+              <Route element={<RequireScope scope="padron:editar" />}>
+                <Route path="actualizar-padrones" element={<ActualizarPadronesPage />} />
+              </Route>
+
               <Route path="social-works" element={<SocialWorksPage />} />
 
               <Route element={<RequireScope scope="padron:leer" />}>
@@ -220,10 +228,17 @@ export default function RootRoutes() {
                 />
                 <Route path="refacturaciones" element={<RefacturacionesList />} />
                 <Route path="refacturaciones/:loteId" element={<LoteDetalle />} />
+                <Route path="adelantos" element={<Adelantos />} />
+                <Route path="adelantos/:adelantoId" element={<AdelantoDetalle />} />
+              </Route>
+
+              <Route element={<RequireScope scope="compensacion:leer" />}>
+                <Route path="compensaciones" element={<Compensaciones />} />
               </Route>
 
               <Route element={<RequireScope scope="deduccion:leer" />}>
                 <Route path="deducciones" element={<DeduccionesList />} />
+                <Route path="retenciones-ganancias" element={<RetencionesGanancias />} />
               </Route>
               <Route element={<RequireScope scope="deduccion:crear" />}>
                 <Route path="deducciones/nueva" element={<NuevaDeduccion />} />
@@ -368,7 +383,6 @@ export default function RootRoutes() {
                 <Route path="nomenclador/actualizaciones" element={<ActualizacionesValores />} />
               </Route>
               <Route element={<RequireScope scope="nomenclador:masivo" />}>
-                <Route path="nomenclador/importar-precios-pdf" element={<ImportarPreciosPdf />} />
                 <Route path="nomenclador/importar-valores-fijos" element={<ImportarValoresFijos />} />
                 <Route path="nomenclador/aumento-porcentual" element={<AumentoPorcentual />} />
                 <Route path="herramientas/completar-nomenclador-nn" element={<CompletarNomencladorNN />} />
@@ -429,7 +443,6 @@ export default function RootRoutes() {
               path="/panel/cambiar-password"
               element={<CambiarPassword />}
             />
-            <Route path="/panel/sistema-anterior" element={<SistemaAnterior />} />
           </Route>
           </Route>
 

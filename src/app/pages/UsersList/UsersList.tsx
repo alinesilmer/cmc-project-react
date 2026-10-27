@@ -58,10 +58,9 @@ function pickFirst(row: MedicoRow, keys: string[]): unknown {
   return "";
 }
 
-function isActiveRow(row: MedicoRow): boolean {
-  if (typeof row?.activo !== "undefined") return Boolean(Number(row.activo));
-  const ex = String(row.EXISTE ?? row.existe ?? "").trim().toUpperCase();
-  return ex === "S";
+function isActiveRow(row: any): boolean {
+  if (typeof (row as any)?.activo !== "undefined") return Boolean(Number((row as any).activo));
+  return (row as any)?.estado_cuenta === "activo";
 }
 
 function normalizeAdherente(row: MedicoRow): boolean | null {

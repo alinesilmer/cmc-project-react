@@ -31,6 +31,8 @@ interface Props {
   error?: string | null;
   /** Texto de la zona de arrastre cuando ya hay archivos. */
   textoAgregar?: string;
+  /** Sólo se pueden ver: sin agregar, reemplazar, eliminar ni reordenar (p. ej. período cerrado). */
+  soloLectura?: boolean;
 }
 
 const MAX_MB = 5;
@@ -65,8 +67,12 @@ const ORIGEN: Record<string, string> = { medico: "Lo subió el médico", colegio
  * del médico trabaja con archivos locales; el panel del Colegio, con los ya guardados).
  */
 export default function DocumentosUploader({
-  items, onAgregar, onReemplazar, onEliminar, onMover, onVer, ocupado = false, error, textoAgregar,
+  items, onAgregar, onReemplazar: onReemplazarProp, onEliminar: onEliminarProp, onMover: onMoverProp, onVer,
+  ocupado = false, error, textoAgregar, soloLectura = false,
 }: Props) {
+  const onReemplazar = soloLectura ? undefined : onReemplazarProp;
+  const onEliminar = soloLectura ? undefined : onEliminarProp;
+  const onMover = soloLectura ? undefined : onMoverProp;
   const idAgregar = useId();
   const refAgregar = useRef<HTMLInputElement>(null);
   const refReemplazar = useRef<HTMLInputElement>(null);
@@ -148,6 +154,8 @@ export default function DocumentosUploader({
         </ul>
       )}
 
+      {!soloLectura && (
+      <>
       <label
         htmlFor={idAgregar}
         className={`${styles.zona} ${arrastrando ? styles.zonaActiva : ""} ${ocupado ? styles.zonaOcupada : ""}`}
@@ -183,6 +191,8 @@ export default function DocumentosUploader({
           e.target.value = "";
         }}
       />
+      </>
+      )}
 
       {mensaje && <p className={styles.error} role="alert">{mensaje}</p>}
     </div>

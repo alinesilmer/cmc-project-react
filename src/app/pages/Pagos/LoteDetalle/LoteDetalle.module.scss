@@ -273,3 +273,150 @@
   border-top: 2px solid $gray-200;
   font-variant-numeric: tabular-nums;
 }
+
+// ── Carga rápida (barra de arriba) y edición en la tabla ──────────────────────
+.barraCarga {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  padding: $spacing-4 $spacing-5;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
+}
+
+.barraCampos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: $spacing-3 $spacing-4;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  min-width: 0;
+}
+
+.campoBuscar { flex: 2 1 18rem; }
+.campoImporte { flex: 1 1 8rem; max-width: 11rem; }
+.campoMotivo { flex: 1 1 12rem; }
+
+.motivoOtro {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+}
+
+// Débito / Crédito: dos botones pegados, el elegido en su color.
+.seg { display: flex; }
+
+.segBtn {
+  min-height: 2.75rem;
+  padding: 0 $spacing-4;
+  font-family: inherit;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $gray-700;
+  background: $white;
+  border: 1px solid $gray-300;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s, color 0.15s;
+
+  &:first-child { border-radius: $radio-md 0 0 $radio-md; }
+  &:last-child { margin-left: -1px; border-radius: 0 $radio-md $radio-md 0; }
+  &:disabled { cursor: not-allowed; opacity: 0.6; }
+}
+
+.segDebito { position: relative; color: $danger-red; background: $tono-rojo-50; border-color: $danger-red; }
+.segCredito { position: relative; color: $tono-verde-550; background: $tono-verde-50; border-color: $success-green; }
+
+.resumenSel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+  padding: $spacing-2 $spacing-4;
+  font-size: $font-size-sm;
+  color: $gray-800;
+  background: $tono-azul-50;
+  border-radius: $radio-md;
+}
+
+.resultados {
+  max-height: 15rem;
+  overflow: auto;
+  border: 1px solid $gray-200;
+  border-radius: $radio-md;
+}
+
+.totalesBarra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-2 $spacing-5;
+  font-variant-numeric: tabular-nums;
+}
+
+.agruparLbl {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-size: $font-size-sm;
+  color: $gray-700;
+  cursor: pointer;
+
+  input { accent-color: $franja-azul; cursor: pointer; }
+}
+
+.tablaScroll { overflow-x: auto; }
+
+// Fila con el nombre del médico y el subtotal de sus ajustes.
+.grupoFila td {
+  padding-top: $spacing-2;
+  padding-bottom: $spacing-2;
+  font-weight: $font-weight-semibold;
+  color: $franja-azul;
+  background: $franja-perla;
+  border-bottom: 1px solid $gray-200;
+}
+
+// Importe y motivo editables en la propia fila: sin borde hasta pasar el mouse o enfocar.
+.cell,
+.cellSelect {
+  box-sizing: border-box;
+  height: 2.25rem;
+  padding: 0 $spacing-2;
+  font-family: inherit;
+  font-size: $font-size-base;
+  color: $gray-900;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: $radio-md;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
+
+  &:hover:not(:disabled) { border-color: $gray-300; }
+
+  &:focus {
+    background: $white;
+    border-color: $franja-azul;
+    box-shadow: 0 0 0 3px rgba($franja-azul, 0.14);
+  }
+
+  &:disabled { color: $gray-500; cursor: not-allowed; }
+}
+
+.cell { width: 7.5rem; text-align: right; font-variant-numeric: tabular-nums; }
+.cellSelect { width: 11rem; cursor: pointer; }
+
+button.tipoCambiable {
+  border: 0;
+  font-family: inherit;
+  cursor: pointer;
+
+  &:hover:not(:disabled) { filter: brightness(0.95); }
+  &:disabled { cursor: not-allowed; }
+}

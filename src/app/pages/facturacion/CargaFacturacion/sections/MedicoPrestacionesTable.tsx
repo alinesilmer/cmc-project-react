@@ -8,10 +8,11 @@ import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import {
   listarPrestaciones, anularPrestacion, marcarRevisado, moverPeriodo, fetchObraSocialPorCodigo, fetchMedicos,
 } from "../../api";
-import type { PrestacionRead, Tipo } from "../../types";
+import type { MotivoEliminacion, PrestacionRead, Tipo } from "../../types";
 import { detailMessage } from "../../types";
 import { formatMoney, parseMoney } from "../../money";
 import ConfirmActionModal from "../../components/ConfirmActionModal";
+import EliminarPrestacionModal from "../../components/EliminarPrestacionModal";
 import styles from "./MedicoPrestacionesTable.module.scss";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import { viaLabel } from "@/app/pages/facturacion/utiles";
@@ -333,11 +334,13 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
     return t === "Ayudante" || t === "Pediatra";
   };
 
-  const executeEliminar = (row: PrestacionRead, onSuccess: () => void) =>
+  const executeEliminar = (
+    row: PrestacionRead, motivo: MotivoEliminacion, detalle: string | null, onSuccess: () => void,
+  ) =>
     withBusy(row.id, async () => {
       try {
         const conEquipo = !esIntegrante(row);
-        await anularPrestacion(row.id, { conEquipo });
+        await anularPrestacion(row.id, { conEquipo, motivo, detalle });
         notify(conEquipo && row.grupo_equipo_id != null ? "Prestación y equipo anulados." : "Prestación anulada.");
         // Sale de la tabla en el acto; el refetch de atrás reacomoda la paginación.
         setRows((prev) => prev.filter((r) => r.id !== row.id && !(conEquipo && row.grupo_equipo_id != null && r.grupo_equipo_id === row.grupo_equipo_id)));
@@ -384,11 +387,9 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
       }
     });
 
+  // Eliminar confirma desde su propio diálogo (con el motivo): no pasa por acá.
   const handleConfirmPending = () => {
-    if (!pendingAction) return;
-    if (pendingAction.type === "eliminar") {
-      executeEliminar(pendingAction.row, () => setPendingAction(null));
-    } else {
+    if (pendingAction?.type === "mover") {
       executeMover(pendingAction.row, pendingAction.direccion, () => setPendingAction(null));
     }
   };
@@ -666,24 +667,20 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
       </div>
 
       {pendingAction?.type === "eliminar" && (
-        <ConfirmActionModal
+        <EliminarPrestacionModal
           isOpen
-          icon={Trash2}
-          variant="danger"
-          title="Eliminar prestación"
-          message={
-            <>El ID Nº <strong>{pendingAction.row.id}</strong> — ¿confirmás anular esta prestación?</>
-          }
-          warning={
+          prestacionId={pendingAction.row.id}
+          descripcion={<>Socio {pendingAction.row.cod_medico} · código {pendingAction.row.cod_nomenclador ?? "—"}</>}
+          aviso={
             esIntegrante(pendingAction.row)
-              ? "Esta acción anula solo a este integrante del equipo y no se puede deshacer."
+              ? "Se elimina solo a este integrante del equipo. No se puede deshacer."
               : pendingAction.row.grupo_equipo_id != null
-                ? "Esta acción anula la prestación del médico y todo su equipo (ayudantes y pediatra), y no se puede deshacer."
-                : "Esta acción anula la prestación y no se puede deshacer."
+                ? "Se elimina también todo su equipo (ayudantes y pediatra), con el mismo motivo. No se puede deshacer."
+                : "No se puede deshacer. El médico deja de verla en su panel."
           }
-          confirmLabel="Eliminar"
           onClose={() => setPendingAction(null)}
-          onConfirm={handleConfirmPending}
+          onConfirm={(motivo, detalle) =>
+            executeEliminar(pendingAction.row, motivo, detalle, () => setPendingAction(null))}
           loading={busyIds.has(pendingAction.row.id)}
         />
       )}

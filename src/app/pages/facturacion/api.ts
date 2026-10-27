@@ -7,7 +7,7 @@ import type {
   PrestacionUpdate, MoverPeriodoPayload, MoverPeriodoResponse,
   CierrePreviewResponse, CierreResponse, CierrePayload, ListarPrestacionesParams,
   FacturaRead, ListarFacturasParams, FacturaDetalleResponse, ComplementoCreate,
-  ViaPractica, PrestacionFicha,
+  ViaPractica, PrestacionFicha, MotivoEliminacion,
   CargaPorUsuario, CierresPorUsuario, RegistroPorUsuarioParams, PublicarPeriodoPayload, PublicarPeriodoResponse,
   PeriodoPropio,
   RecalculoPayload, RecalculoResponse,
@@ -215,12 +215,22 @@ export const editarPrestacion = (id: number, payload: PrestacionUpdate) =>
     patchJSON<PrestacionRead>(`${BASE}/prestaciones/${id}`, payload),
   );
 
-/** `conEquipo`: si la fila es la cabecera de un equipo, anula también a sus integrantes. */
-export const anularPrestacion = (id: number, opts?: { conEquipo?: boolean }) =>
+/** `conEquipo`: si la fila es la cabecera de un equipo, anula también a sus integrantes.
+ * `motivo` es obligatorio (la API responde 422 sin él) y `detalle` también lo es con «otro». */
+export const anularPrestacion = (
+  id: number,
+  opts: { conEquipo?: boolean; motivo: MotivoEliminacion; detalle?: string | null },
+) =>
   traced(
     `DELETE /prestaciones/${id}`,
     { id, ...opts },
-    delJSON<void>(`${BASE}/prestaciones/${id}`, opts?.conEquipo ? { params: { con_equipo: true } } : undefined),
+    delJSON<void>(`${BASE}/prestaciones/${id}`, {
+      params: {
+        ...(opts.conEquipo ? { con_equipo: true } : {}),
+        motivo: opts.motivo,
+        ...(opts.detalle ? { detalle: opts.detalle } : {}),
+      },
+    }),
   );
 
 export const moverPeriodo = (payload: MoverPeriodoPayload) =>

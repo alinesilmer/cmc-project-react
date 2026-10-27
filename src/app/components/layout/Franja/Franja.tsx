@@ -18,10 +18,10 @@ type Props = {
 /** Franja azul con la que abren las pantallas del panel: el título en crema, la trama de cruces y, opcionalmente. */
 export default function Franja({ titulo, icono: Icono, lateral, children, suelta = false }: Props) {
   return (
-    <div className={`${s.franja} ${suelta ? s.suelta : ""}`}>
+    <div className={`${s.franja} ${suelta ? s.suelta : ""} ${children ? "" : s.sinPie}`}>
       <div className={s.cabeza}>
         <h1 className={s.titulo}>
-          {Icono && <Icono size={46} strokeWidth={1.8} aria-hidden="true" />}
+          {Icono && <Icono size={36} strokeWidth={1.8} aria-hidden="true" />}
           {titulo}
         </h1>
         {lateral && <div className={s.lateral}>{lateral}</div>}

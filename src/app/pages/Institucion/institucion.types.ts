@@ -30,6 +30,8 @@ export interface Institucion {
   cuit?: string | null;
   condicion_iva?: string | null;
   ingresos_brutos?: string | null;
+  /** Va en el comprobante de retención de Ganancias de cada socio. */
+  agente_retencion_ganancias?: string | null;
 
   /** 22 dígitos, sin espacios. */
   cbu?: string | null;

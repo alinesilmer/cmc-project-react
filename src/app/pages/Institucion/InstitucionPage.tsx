@@ -59,6 +59,7 @@ const CAMPOS: {
   { key: "razon_social", label: "Razón social", seccion: "fiscal", ancho: "full" },
   { key: "cuit", label: "CUIT", seccion: "fiscal", placeholder: "30-12345678-9" },
   { key: "condicion_iva", label: "Condición IVA", seccion: "fiscal" },
+  { key: "agente_retencion_ganancias", label: "Nº de agente de retención (Ganancias)", seccion: "fiscal", placeholder: "16867-351/5" },
 
   { key: "cbu", label: "CBU", seccion: "banco", ancho: "full", placeholder: "22 dígitos" },
   { key: "alias_cbu", label: "Alias", seccion: "banco" },
@@ -74,7 +75,7 @@ const CAMPOS: {
 
 // `ingresos_brutos`, `provincia` y `codigo_postal` quedan fuera de la pantalla a pedido del Colegio: el Colegio es uno solo y está en Corrientes.
 const VACIO: InstitucionInput = {
-  razon_social: "", cuit: "", condicion_iva: "", ingresos_brutos: null,
+  razon_social: "", cuit: "", condicion_iva: "", ingresos_brutos: null, agente_retencion_ganancias: "",
   cbu: "", alias_cbu: "", banco: "", titular_cuenta: "",
   domicilio: "", localidad: "", provincia: null, codigo_postal: null,
   sitio_web: "", horario_atencion: "", notas: "",
@@ -115,6 +116,7 @@ export default function InstitucionPage() {
     setForm({
       razon_social: d.razon_social ?? "", cuit: d.cuit ?? "",
       condicion_iva: d.condicion_iva ?? "",
+      agente_retencion_ganancias: d.agente_retencion_ganancias ?? "",
       cbu: d.cbu ?? "", alias_cbu: d.alias_cbu ?? "", banco: d.banco ?? "",
       titular_cuenta: d.titular_cuenta ?? "",
       domicilio: d.domicilio ?? "", localidad: d.localidad ?? "",

@@ -1,0 +1,41 @@
+@use "@/app/styles/all.scss" as *;
+
+// Retenciones de Ganancias: lo propio de la pantalla. Lo común sale de ../Liquidacion.module.scss.
+
+.intro {
+  max-width: 46rem;
+  margin: 0;
+  line-height: 1.55;
+  color: $gray-600;
+}
+
+.escala {
+  margin: $spacing-3 0 0;
+  font-size: $font-size-sm;
+  color: $gray-600;
+
+  b { font-variant-numeric: tabular-nums; color: $gray-800; }
+}
+
+.celdaDoble {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  small { font-size: $font-size-sm; color: $gray-500; }
+}
+
+.num { text-align: right; }
+
+.total td {
+  font-weight: $font-weight-semibold;
+  border-top: 2px solid $gray-200;
+}
+
+.pie {
+  max-width: 52rem;
+  margin: 0;
+  font-size: $font-size-sm;
+  line-height: 1.5;
+  color: $gray-500;
+}

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { borrarLote, crearLoteSinFactura, listarLotes, listarObrasSociales, listarPeriodosParaLotes, obtenerOCrearLote } from "@/app/pages/Pagos/pagos.api";
+import { borrarLote, crearLoteSinFactura, listarLotes, listarFacturasParaLotes, listarObrasSociales, obtenerOCrearLote } from "@/app/pages/Pagos/pagos.api";
 import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import Button from "@/app/components/ui/Button/Button";
 import Franja from "@/app/components/layout/Franja/Franja";
@@ -14,7 +14,8 @@ import type {
 import lq from "../Liquidacion.module.scss";
 import {
   type ObraSocial,
-  type PeriodoDisp,
+  type FacturaDisp,
+  etiquetaFactura,
   mesLabel,
   MESES,
   fmt,
@@ -62,10 +63,9 @@ const DebitosCreditos: React.FC = () => {
   const [obras, setObras] = useState<ObraSocial[]>([]);
   const [obrasLoading, setObrasLoading] = useState(false);
   const [addOs, setAddOs] = useState("");
-  const [periodos, setPeriodos] = useState<PeriodoDisp[]>([]);
-  const [periodosMes, setPeriodosMes] = useState("");
-  const [periodosAnio, setPeriodosAnio] = useState("");
-  const [periodosLoading, setPeriodosLoading] = useState(false);
+  const [facturas, setFacturas] = useState<FacturaDisp[]>([]);
+  const [addFactura, setAddFactura] = useState("");
+  const [facturasLoading, setFacturasLoading] = useState(false);
   const [adding, setAdding] = useState(false);
 
   // Delete modal
@@ -119,6 +119,8 @@ const DebitosCreditos: React.FC = () => {
     if (filterAnio) p.anio = filterAnio;
     if (filterEstado) p.estado = filterEstado;
     if (filterTipo) p.tipo = filterTipo;
+    // Las refacturaciones se ven sólo en su pantalla.
+    else p.excluir_tipo = "refacturacion";
     return p;
   }, [filterOs, filterMes, filterAnio, filterEstado, filterTipo]);
 
@@ -155,48 +157,33 @@ const DebitosCreditos: React.FC = () => {
   const openAddModal = () => {
     setAddOpen(true);
     setAddOs("");
-    setPeriodos([]);
-    setPeriodosMes("");
-    setPeriodosAnio("");
+    setFacturas([]);
+    setAddFactura("");
   };
 
   const handleAddOsChange = async (val: string) => {
     setAddOs(val);
-    setPeriodos([]);
-    setPeriodosMes("");
-    setPeriodosAnio("");
+    setFacturas([]);
+    setAddFactura("");
     if (!val) return;
-    setPeriodosLoading(true);
+    setFacturasLoading(true);
     try {
-      const data = await listarPeriodosParaLotes(Number(val));
-      setPeriodos(data ?? []);
+      const data = await listarFacturasParaLotes(Number(val));
+      setFacturas(data ?? []);
     } catch {
-      setPeriodos([]);
+      setFacturas([]);
     } finally {
-      setPeriodosLoading(false);
+      setFacturasLoading(false);
     }
-  };
-
-  const handlePeriodoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = e.target.value;
-    if (!val) {
-      setPeriodosMes("");
-      setPeriodosAnio("");
-      return;
-    }
-    const [anio, mes] = val.split("-");
-    setPeriodosAnio(anio);
-    setPeriodosMes(mes);
   };
 
   const handleAdd = async () => {
-    if (!addOs || !periodosMes || !periodosAnio) return;
+    if (!addOs || !addFactura) return;
     setAdding(true);
     try {
       const lote = await obtenerOCrearLote({
         obra_social_id: Number(addOs),
-        mes_periodo: Number(periodosMes),
-        anio_periodo: Number(periodosAnio),
+        factura_id: Number(addFactura),
       });
       navigate(`/panel/debitos-creditos/${lote.id}`);
     } catch (e) {
@@ -396,6 +383,7 @@ const DebitosCreditos: React.FC = () => {
           <div className={`${lq.campo} ${lq.campoAncho}`}>
             <span className={lq.rotulo}>Obra social</span>
             <AppSearchSelect
+              ordenar
               options={opcionesOs}
               value={filterOs || null}
               onChange={(val) => setFilterOs(val ? String(val) : "")}
@@ -485,6 +473,7 @@ const DebitosCreditos: React.FC = () => {
         >
           <DialogoCampo rotulo="Obra social">
             <AppSearchSelect
+              ordenar
               options={opcionesOs}
               value={addSfOs || null}
               onChange={(val) => setAddSfOs(val ? String(val) : "")}
@@ -580,7 +569,7 @@ const DebitosCreditos: React.FC = () => {
               <Button
                 variant="primary"
                 onClick={handleAdd}
-                disabled={adding || !addOs || !periodosMes || !periodosAnio}
+                disabled={adding || !addOs || !addFactura}
               >
                 {adding ? "Creando…" : "Crear o abrir lote"}
               </Button>
@@ -589,6 +578,7 @@ const DebitosCreditos: React.FC = () => {
         >
           <DialogoCampo rotulo="Obra social">
             <AppSearchSelect
+              ordenar
               options={opcionesOs}
               value={addOs || null}
               onChange={(val) => handleAddOsChange(val ? String(val) : "")}
@@ -596,26 +586,26 @@ const DebitosCreditos: React.FC = () => {
               loading={obrasLoading}
             />
           </DialogoCampo>
-          <DialogoCampo rotulo="Período" htmlFor="dc-periodo">
+          <DialogoCampo rotulo="Factura" htmlFor="dc-factura">
             {!addOs ? (
               <p className={lq.tenue}>Elegí primero la obra social.</p>
-            ) : periodosLoading ? (
-              <p className={lq.tenue}>Cargando períodos…</p>
+            ) : facturasLoading ? (
+              <p className={lq.tenue}>Cargando facturas…</p>
+            ) : facturas.length === 0 ? (
+              <p className={lq.tenue}>Esta obra social no tiene facturas cerradas sin lote.</p>
             ) : (
               <select
-                id="dc-periodo"
-                value={periodosAnio && periodosMes ? `${periodosAnio}-${periodosMes}` : ""}
-                onChange={handlePeriodoChange}
+                id="dc-factura"
+                value={addFactura}
+                onChange={(e) => setAddFactura(e.target.value)}
                 disabled={adding}
               >
-                <option value="">Elegí un período…</option>
-                {periodos.map((p) => (
-                  <option key={`${p.ANIO}-${p.MES}`} value={`${p.ANIO}-${p.MES}`}>
-                    {mesLabel(p.MES)} {p.ANIO}
-                    {p.NRO_FACT_1 ? ` — ${p.NRO_FACT_1}${p.NRO_FACT_2 ? `-${p.NRO_FACT_2}` : ""}` : ""}
+                <option value="">Elegí una factura…</option>
+                {facturas.map((f) => (
+                  <option key={f.FACTURA_ID} value={f.FACTURA_ID}>
+                    {etiquetaFactura(f)} — {mesLabel(f.MES)} {f.ANIO}
                   </option>
                 ))}
-                {periodos.length === 0 && <option disabled>Sin períodos disponibles</option>}
               </select>
             )}
           </DialogoCampo>

@@ -14,9 +14,9 @@ interface Props {
   documento?: string | number | null;
   /** Primera especialidad adherida. Sin especialidad la línea no se muestra. */
   especialidad?: string | null;
-  /** `EXISTE === 'S'` en el legajo. */
+  /** `estado_cuenta === "activo"` en el legajo. */
   activo: boolean;
-  /** `false` para el personal del Colegio (INGRESAR distinto de 'D'). */
+  /** `false` para el personal del Colegio (rol distinto de `medico`). */
   esMedico?: boolean;
 }
 

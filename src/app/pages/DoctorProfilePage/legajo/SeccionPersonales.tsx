@@ -1,5 +1,6 @@
 import { User } from "lucide-react";
 import styles from "../DoctorProfilePage.module.scss";
+import { ETIQUETA_ESTADO_CUENTA } from "../api";
 import Copiable from "./Copiable";
 import { fmt, fmtDate, getFechaIngreso, soloDigitos } from "./legajo.helpers";
 import type { SeccionProps } from "./SeccionProps";
@@ -81,11 +82,8 @@ export default function SeccionPersonales({ data, readOnly, isEditing, campos, r
               <div>
                 <span className={styles.label}>Estado</span>
                 <span>
-                  {data.existe
-                    ? String(data.existe).toUpperCase() ===
-                      "S"
-                      ? "Activo"
-                      : "Inactivo"
+                  {data.estado_cuenta
+                    ? ETIQUETA_ESTADO_CUENTA[data.estado_cuenta]
                     : "—"}
                 </span>
               </div>

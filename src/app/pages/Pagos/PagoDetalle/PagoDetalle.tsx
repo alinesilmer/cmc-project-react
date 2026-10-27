@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
-import { cerrarPago, editarPago, getPago, reabrirPago } from "@/app/pages/Pagos/pagos.api";
+import { cerrarPago, editarPago, getPago, marcarPagado, reabrirPago } from "@/app/pages/Pagos/pagos.api";
 import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import BackButton from "@/app/components/ui/BackButton/BackButton";
 import Button from "@/app/components/ui/Button/Button";
@@ -15,7 +15,7 @@ import TabResumen from "./tabs/TabResumen";
 import TabVistaPreviaPago from "./tabs/TabVistaPreviaPago";
 import TabRecibos from "./tabs/TabRecibos";
 import TabExportables from "./tabs/TabExportables";
-import { DollarSign, Lock, LockOpen, Pencil } from "lucide-react";
+import { BadgeCheck, DollarSign, Lock, LockOpen, Pencil } from "lucide-react";
 import { comoErrorApi, detalleDeError, detalleObjeto } from "@/app/shared/lib/httpErrors";
 
 type Tab =
@@ -30,7 +30,7 @@ const TABS: {
   label: string;
   disabledWhen?: (p: import("../types").Pago | null) => boolean;
 }[] = [
-  { key: "facturas", label: "Facturas" },
+  { key: "facturas", label: "Contenido del pago" },
   { key: "deducciones", label: "Deducciones" },
   { key: "preview", label: "Vista previa" },
   { key: "medico", label: "Por médico" },
@@ -38,7 +38,7 @@ const TABS: {
   {
     key: "exportables",
     label: "Exportables",
-    disabledWhen: (p) => p?.estado !== "C",
+    disabledWhen: (p) => p?.estado === "A",
   },
 ];
 
@@ -58,7 +58,7 @@ const PagoDetalle: React.FC = () => {
   // Cerrar / Reabrir
   const [actionBusy, setActionBusy] = useState(false);
   const [confirmAction, setConfirmAction] = useState<
-    "cerrar" | "reabrir" | null
+    "cerrar" | "reabrir" | "pagar" | null
   >(null);
 
   // Editar descripción
@@ -93,12 +93,15 @@ const PagoDetalle: React.FC = () => {
     if (!pagoId || !confirmAction) return;
     setActionBusy(true);
     try {
-      const updated = await (confirmAction === "cerrar" ? cerrarPago(pagoId) : reabrirPago(pagoId));
+      const accion = { cerrar: cerrarPago, pagar: marcarPagado, reabrir: reabrirPago }[confirmAction];
+      const updated = await accion(pagoId);
       setPago(updated);
       notify(
         confirmAction === "cerrar"
           ? "Pago cerrado correctamente."
-          : "Pago reabierto correctamente.",
+          : confirmAction === "pagar"
+            ? "Pago marcado como pagado. Los recibos quedaron emitidos."
+            : "Pago reabierto correctamente.",
       );
       setConfirmAction(null);
     } catch (e) {
@@ -161,17 +164,30 @@ const PagoDetalle: React.FC = () => {
         </Button>
       );
     }
-    // Estado C: botón reabrir (si hay recibos, el backend devolverá 409)
+    // Pagado: terminal, sin acciones.
+    if (pago.estado === "P") return null;
+    // Cerrado: se puede reabrir mientras no haya recibos emitidos, o marcar como pagado.
     return (
-      <Button
-        variant="ghost"
-        size="md"
-        leftIcon={<LockOpen size={18} aria-hidden="true" />}
-        onClick={() => setConfirmAction("reabrir")}
-        disabled={actionBusy}
-      >
-        Reabrir pago
-      </Button>
+      <>
+        <Button
+          variant="ghost"
+          size="md"
+          leftIcon={<LockOpen size={18} aria-hidden="true" />}
+          onClick={() => setConfirmAction("reabrir")}
+          disabled={actionBusy}
+        >
+          Reabrir pago
+        </Button>
+        <Button
+          variant="primary"
+          size="md"
+          leftIcon={<BadgeCheck size={18} aria-hidden="true" />}
+          onClick={() => setConfirmAction("pagar")}
+          disabled={actionBusy}
+        >
+          Marcar como pagado
+        </Button>
+      </>
     );
   };
 
@@ -200,8 +216,8 @@ const PagoDetalle: React.FC = () => {
 
       {pago && (
         <div className={lq.tira}>
-          <span className={`${lq.estado} ${pago.estado === "A" ? lq.abierto : lq.cerrado}`}>
-            {pago.estado === "A" ? "Abierto" : "Cerrado"}
+          <span className={`${lq.estado} ${pago.estado === "A" ? lq.abierto : pago.estado === "P" ? lq.aplicado : lq.cerrado}`}>
+            {pago.estado === "A" ? "Abierto" : pago.estado === "P" ? "Pagado" : "Cerrado"}
           </span>
           {(pago.descripcion || pago.estado === "A") && (
             <span className={lq.tiraTexto}>
@@ -279,8 +295,14 @@ const PagoDetalle: React.FC = () => {
 
       {confirmAction && (
         <Dialogo
-          titulo={confirmAction === "cerrar" ? "Cerrar pago" : "Reabrir pago"}
-          icono={confirmAction === "cerrar" ? Lock : LockOpen}
+          titulo={
+            confirmAction === "cerrar"
+              ? "Cerrar pago"
+              : confirmAction === "pagar"
+                ? "Marcar como pagado"
+                : "Reabrir pago"
+          }
+          icono={confirmAction === "cerrar" ? Lock : confirmAction === "pagar" ? BadgeCheck : LockOpen}
           onClose={actionBusy ? undefined : () => setConfirmAction(null)}
           acciones={
             <>
@@ -292,7 +314,9 @@ const PagoDetalle: React.FC = () => {
                   ? "Procesando…"
                   : confirmAction === "cerrar"
                     ? "Sí, cerrar"
-                    : "Sí, reabrir"}
+                    : confirmAction === "pagar"
+                      ? "Sí, marcar como pagado"
+                      : "Sí, reabrir"}
               </Button>
             </>
           }
@@ -300,7 +324,9 @@ const PagoDetalle: React.FC = () => {
           <p>
             {confirmAction === "cerrar"
               ? `¿Cerrar el pago de ${periodTitle}?`
-              : `¿Reabrir el pago de ${periodTitle}?`}
+              : confirmAction === "pagar"
+                ? `¿Marcar como pagado el pago de ${periodTitle}? Se emiten los recibos de todos los médicos y el pago ya no se puede reabrir.`
+                : `¿Reabrir el pago de ${periodTitle}?`}
           </p>
         </Dialogo>
       )}

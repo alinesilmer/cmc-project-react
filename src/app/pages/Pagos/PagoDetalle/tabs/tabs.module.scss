@@ -86,8 +86,8 @@
 .estadoA, .loteA, .medicoPendiente { color: $tono-azul-600; background: $tono-azul-50; }
 .estadoC, .loteC, .tipoNormal { color: $gray-600; background: $gray-100; }
 .loteL, .reciboEmitido, .medicoPagado { color: $tono-amarillo-600; background: $tono-amarillo-50-b; }
-.loteAP, .reciboPagado, .medicoLiquidado, .tipoC { color: $tono-verde-550; background: $tono-verde-50; }
-.reciboAnulado, .tipoD { color: $danger-red; background: $tono-rojo-50; }
+.loteAP, .medicoLiquidado, .tipoC { color: $tono-verde-550; background: $tono-verde-50; }
+.tipoD { color: $danger-red; background: $tono-rojo-50; }
 .tipoRefacturacion { color: $tono-naranja-550; background: $tono-naranja-100; }
 
 // ── Avisos ────────────────────────────────────────────────────────────────────

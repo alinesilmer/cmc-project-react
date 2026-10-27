@@ -13,6 +13,8 @@ interface Props {
   onEliminar: (p: Prestacion) => void;
   /** Abre la gestión de documentos de la prestación (ver, agregar, reemplazar, eliminar). */
   onDocumentos?: (p: Prestacion) => void;
+  /** Período cerrado: no se puede eliminar ni modificar la documentación, sólo verla. */
+  soloLectura?: boolean;
 }
 
 /** Hay algo que mostrar de la documentación: la exige, ya tiene archivos, o la obra social deja adjuntar la orden. */
@@ -57,6 +59,7 @@ export default function PrestacionesTable({
   permiteAdjuntarOrden = false,
   onEliminar,
   onDocumentos,
+  soloLectura = false,
 }: Props) {
   if (cargando)
     return (
@@ -120,7 +123,7 @@ export default function PrestacionesTable({
                 </td>
                 <td className={s.center}>
                   <div className={s.rowActions}>
-                    {onDocumentos && conDocumentos(p, permiteAdjuntarOrden) && (
+                    {onDocumentos && conDocumentos(p, permiteAdjuntarOrden) && (!soloLectura || p.documentos.length > 0) && (
                       <button
                         type="button"
                         className={`${s.docBtn} ${p.documentacion === "falta" ? s.docBtnFalta : p.documentos.length ? s.docBtnOk : ""}`}
@@ -131,14 +134,16 @@ export default function PrestacionesTable({
                         {textoDocumentos(p)}
                       </button>
                     )}
-                    <button
-                      type="button"
-                      className={`${s.iconBtn} ${s.iconBtnDanger}`}
-                      title="Eliminar prestación"
-                      onClick={() => onEliminar(p)}
-                    >
-                      <Trash2 size={15} />
-                    </button>
+                    {!soloLectura && (
+                      <button
+                        type="button"
+                        className={`${s.iconBtn} ${s.iconBtnDanger}`}
+                        title="Eliminar prestación"
+                        onClick={() => onEliminar(p)}
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -196,7 +201,7 @@ export default function PrestacionesTable({
             )}
 
             <div className={s.cardActions}>
-              {onDocumentos && conDocumentos(p, permiteAdjuntarOrden) && (
+              {onDocumentos && conDocumentos(p, permiteAdjuntarOrden) && (!soloLectura || p.documentos.length > 0) && (
                 <button
                   type="button"
                   className={`${s.cardBtn} ${p.documentacion === "falta" ? s.docBtnFalta : ""}`}
@@ -206,13 +211,15 @@ export default function PrestacionesTable({
                   {textoDocumentos(p)}
                 </button>
               )}
-              <button
-                type="button"
-                className={`${s.cardBtn} ${s.cardBtnDanger}`}
-                onClick={() => onEliminar(p)}
-              >
-                <Trash2 size={15} /> Eliminar
-              </button>
+              {!soloLectura && (
+                <button
+                  type="button"
+                  className={`${s.cardBtn} ${s.cardBtnDanger}`}
+                  onClick={() => onEliminar(p)}
+                >
+                  <Trash2 size={15} /> Eliminar
+                </button>
+              )}
             </div>
           </li>
         ))}

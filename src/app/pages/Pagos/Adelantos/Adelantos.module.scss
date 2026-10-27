@@ -1,0 +1,185 @@
+@use "@/app/styles/all.scss" as *;
+
+// Adelantos: el listado y el detalle. Las piezas comunes (píldoras de estado, tira, botones, paginador)
+// salen de ../Liquidacion.module.scss; acá sólo lo propio de estas dos pantallas.
+
+.intro {
+  max-width: 46rem;
+  margin: 0;
+  line-height: 1.55;
+  color: $gray-600;
+}
+
+.celdaDoble {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  small { font-size: $font-size-sm; color: $gray-500; }
+}
+
+.derecha { align-items: flex-end; text-align: right; }
+
+// ── Elegir la factura del adelanto (diálogo «Nuevo adelanto») ─────────────────
+.facturas {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  max-height: 22rem;
+  overflow-y: auto;
+}
+
+.factura {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr) auto;
+  gap: $spacing-3;
+  align-items: center;
+  padding: $spacing-3 $spacing-4;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-md;
+  cursor: pointer;
+
+  input { width: 1.125rem; height: 1.125rem; accent-color: $franja-azul; cursor: pointer; }
+  &:hover { border-color: $franja-azul; }
+}
+
+.facturaElegida { background: $tono-azul-50; border-color: $franja-azul; }
+
+// ── Detalle ───────────────────────────────────────────────────────────────────
+.seccion {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+.seccionCabeza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: $spacing-3;
+
+  h2 {
+    margin: 0;
+    font-family: $fuente-titulos;
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    color: $gray-900;
+  }
+
+  span { color: $gray-600; }
+}
+
+.tablaCaja {
+  overflow-x: auto;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
+}
+
+.filtrosPrestaciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: $spacing-4;
+  padding: $spacing-4;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
+}
+
+.buscar { flex: 2 1 18rem; }
+.medico { flex: 1 1 16rem; }
+
+.soloDisponibles {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  height: 2.75rem;
+  color: $gray-700;
+  cursor: pointer;
+
+  input { width: 1.125rem; height: 1.125rem; accent-color: $franja-azul; cursor: pointer; }
+}
+
+.celdaCheck { width: 2.6rem; padding-right: 0 !important; }
+.filaSeleccionada { background: $tono-azul-50 !important; }
+.filaBloqueada td { color: $gray-500; }
+.monto { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mono { font-family: ui-monospace, Consolas, monospace; font-size: $font-size-sm; }
+
+// Estado de una prestación de la factura.
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 1.6rem;
+  padding: 0 $spacing-3;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  white-space: nowrap;
+  border-radius: 999px;
+}
+.chipDisponible { color: $tono-verde-550; background: $tono-verde-50; }
+.chipEste { color: $tono-azul-600; background: $tono-azul-50; }
+.chipOtro { color: $tono-amarillo-600; background: $tono-amarillo-50-b; }
+.chipPagada { color: $gray-600; background: $gray-100; }
+.chipSin { color: $danger-red; background: $tono-rojo-50; }
+
+.vacio {
+  padding: $spacing-12 $spacing-5;
+  text-align: center;
+  color: $gray-500;
+}
+
+.pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+  font-size: $font-size-sm;
+  color: $gray-600;
+}
+
+.pieNav {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+
+  button {
+    height: 2.2rem;
+    padding: 0 $spacing-4;
+    font-family: inherit;
+    font-weight: $font-weight-semibold;
+    color: $franja-azul;
+    background: $white;
+    border: 1px solid $gray-300;
+    border-radius: 999px;
+    cursor: pointer;
+
+    &:hover:not(:disabled) { border-color: $franja-azul; }
+    &:disabled { opacity: 0.45; cursor: not-allowed; }
+  }
+}
+
+// Lo elegido y el botón para agregarlo: se queda abajo mientras se recorre la lista.
+.barraSeleccion {
+  position: sticky;
+  bottom: $spacing-4;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+  padding: $spacing-3 $spacing-4 $spacing-3 $spacing-5;
+  color: $white;
+  background: $franja-azul;
+  border-radius: $radio-lg;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.25);
+
+  b { font-variant-numeric: tabular-nums; }
+}
+
+.barraAcciones { display: flex; gap: $spacing-3; }

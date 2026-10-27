@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowLeftRight,
+  ArrowRightToLine,
   BarChart3,
   BookOpen,
   BookUser,
@@ -15,20 +16,22 @@ import {
   DollarSign,
   FileBoxIcon,
   FileCode2,
+  FileSpreadsheet,
   FileText,
   FileUp,
+  HandCoins,
   Gift,
   Globe,
   History,
   Home,
   HousePlus,
   Inbox,
+  Landmark,
   Layers,
   ListOrdered,
   ListPlus,
   Medal,
   Megaphone,
-  Monitor,
   Newspaper,
   Percent,
   Plus,
@@ -45,8 +48,6 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
-
-import { URL_BASE_LEGACY } from "@/app/shared/lib/urlLegacy";
 
 // ─── Modelo ───────────────────────────────────────────────────────────────────
 
@@ -141,6 +142,8 @@ export const TOP_NAV: TopEntry[] = [
           { path: `${base}/liquidation`, icon: DollarSign, label: "Pagos", perms: ["pago:leer"] },
           { path: `${base}/debitos-creditos`, icon: ArrowLeftRight, label: "Débitos y créditos", perms: ["lote:leer"] },
           { path: `${base}/refacturaciones`, icon: RotateCcw, label: "Refacturaciones", perms: ["lote:leer"] },
+          { path: `${base}/adelantos`, icon: ArrowRightToLine, label: "Adelantos", perms: ["lote:leer"] },
+          { path: `${base}/compensaciones`, icon: HandCoins, label: "Compensaciones", perms: ["compensacion:leer"] },
         ],
       },
       {
@@ -148,6 +151,7 @@ export const TOP_NAV: TopEntry[] = [
         items: [
           { path: `${base}/deducciones`, icon: Wallet, label: "Deducciones", perms: ["deduccion:leer"] },
           { path: `${base}/deducciones/nueva`, icon: Plus, label: "Nueva deducción", perms: ["deduccion:crear"] },
+          { path: `${base}/retenciones-ganancias`, icon: Landmark, label: "Retenciones de Ganancias", perms: ["deduccion:leer"] },
         ],
       },
     ],
@@ -164,6 +168,7 @@ export const TOP_NAV: TopEntry[] = [
           { path: `${base}/users`, icon: BookUser, label: "Listado de socios", perms: ["medico:leer"] },
           { path: `${base}/register-socio`, icon: UserPlus, label: "Agregar socio", perms: ["medico:crear"] },
           { path: `${base}/afiliadospadron`, icon: Newspaper, label: "Padrones", perms: ["padron:leer"] },
+          { path: `${base}/actualizar-padrones`, icon: ClipboardList, label: "Actualizar padrones", perms: ["padron:editar"] },
           { path: `${base}/cobranzas`, icon: Wallet, label: "Cobranzas", perms: ["cobranza:leer"] },
           // `solicitud:leer` para verlas; aprobar o rechazar se gatea dentro de la pantalla.
           { path: `${base}/solicitudes-cambio`, icon: Inbox, label: "Solicitudes de cambio", perms: ["solicitud:leer"] },
@@ -221,6 +226,8 @@ export const TOP_NAV: TopEntry[] = [
         heading: "Cambios masivos",
         items: [
           { path: `${base}/nomenclador/aumento-porcentual`, icon: Percent, label: "Aumento porcentual", perms: ["nomenclador:masivo"] },
+          // Excel con los valores fijos NE de una obra social: vista previa y después aplica.
+          { path: `${base}/nomenclador/importar-valores-fijos`, icon: FileSpreadsheet, label: "Importar valores fijos", perms: ["nomenclador:masivo"] },
           { path: `${base}/nomenclador/actualizar-precios`, icon: TrendingUp, label: "Actualizar unidades", perms: ["nomenclador:editar"] },
           // Completa galenos base + valores NN faltantes de una OS en $0, sin tocar lo que ya tiene.
           { path: `${base}/herramientas/completar-nomenclador-nn`, icon: DatabaseZap, label: "Completar nomenclador NN", perms: ["nomenclador:masivo"] },
@@ -264,11 +271,9 @@ export const MENU_USUARIO: MenuLink[] = [
   { path: `${base}/institucion`, icon: Building2, label: "Datos del Colegio", perms: ["catalogo:leer"] },
   { path: `${base}/admin/permissions`, icon: ShieldUser, label: "Permisos y roles", perms: ["rbac:gestionar"] },
   { path: `${base}/actividad`, icon: History, label: "Registro de actividad", perms: ["rbac:gestionar"] },
-  // Atajo hacia el sistema legacy, sin scope propio.
-  { path: `${URL_BASE_LEGACY}/principal.php`, icon: Monitor, label: "Sistema viejo", external: true },
 ];
 
-// ─── Socio (INGRESAR = 'D') ───────────────────────────────────────────────────
+// ─── Socio (rol medico) ──────────────────────────────────────────────────────────
 
 export const DOCTOR_TOP_NAV: TopEntry[] = [
   { kind: "link", path: `${base}/dashboard`, icon: Home, label: "Inicio" },

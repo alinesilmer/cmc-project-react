@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  AlertTriangle, Check, ChevronDown, Copy, Download, FileCheck2, SlidersHorizontal,
+  AlertTriangle, Check, ChevronDown, ChevronLeft, ChevronRight, Copy, Download, FileCheck2, SlidersHorizontal,
 } from "lucide-react";
 
 import { formatMoney, parseMoney } from "../money";
@@ -9,6 +9,7 @@ import { ORDEN_TIPOS } from "./vista/types";
 import { RESUMEN_TIPO_LABEL } from "./totales";
 import type { PrestacionConSocio } from "./FilaPrestacion";
 import ExportarOsBoton from "./ExportarOsBoton";
+import { usePeriodosVecinos } from "./usePeriodosVecinos";
 import BackButton from "@/app/components/ui/BackButton/BackButton";
 import styles from "./CabeceraExpediente.module.scss";
 
@@ -31,16 +32,19 @@ interface Props {
   onVista: () => void;
   onExportar: () => void;
   onVolver: () => void;
+  /** Abre otra factura de la misma obra social (período anterior o siguiente). */
+  onIrAFactura: (idFactura: number) => void;
   /** Avisa cuando la barra compacta aparece o desaparece. */
   onCompactaChange: (compacta: boolean) => void;
 }
 
 export default function CabeceraExpediente({
-  detalle, filas, onVista, onExportar, onVolver, onCompactaChange,
+  detalle, filas, onVista, onExportar, onVolver, onIrAFactura, onCompactaChange,
 }: Props) {
   const cabeceraRef = useRef<HTMLDivElement>(null);
   const [compacta, setCompacta] = useState(false);
   const [copiado, setCopiado] = useState(false);
+  const { anterior, siguiente } = usePeriodosVecinos(detalle?.cod_obra, detalle?.periodo);
 
   // La barra compacta aparece cuando la cabecera completa se fue por arriba (debajo del
   // topbar), no cuando todavía no se llegó a ella.
@@ -161,17 +165,39 @@ export default function CabeceraExpediente({
             </div>
           </div>
           <span className={styles.separador} aria-hidden="true" />
-          <div className={styles.os}>
-            <span className={styles.osNombre}>{nombreOs}</span>
-            <div className={styles.chips}>
-              <span className={`${styles.chip} ${styles.chipOs}`}>OS {detalle.cod_obra}</span>
-              <span className={`${styles.chip} ${styles.chipGris}`}>Período {detalle.periodo_label || detalle.periodo}</span>
-              <span className={`${styles.chip} ${styles.chipGris}`}>
-                {complemento ? `Complemento (versión ${detalle.version})` : "Factura original"}
-              </span>
+          <div className={`${styles.bloque} ${styles.bloqueOs}`}>
+            <span className={styles.etiquetaChica}>Obra social</span>
+            <span className={styles.valorGrande}>
+              {nombreOs} <span className={styles.valorNro}>({detalle.cod_obra})</span>
+            </span>
+          </div>
+          <span className={styles.separador} aria-hidden="true" />
+          <div className={styles.bloque}>
+            <span className={styles.etiquetaChica}>Período</span>
+            <div className={styles.periodoFila}>
+              <button
+                type="button" className={styles.flecha} disabled={!anterior}
+                onClick={() => anterior && onIrAFactura(anterior.idFactura)}
+                aria-label={anterior ? `Período anterior: ${anterior.label}` : "No hay un período anterior"}
+                title={anterior ? anterior.label : undefined}
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <span className={styles.valorGrande}>{detalle.periodo_label || detalle.periodo}</span>
+              <button
+                type="button" className={styles.flecha} disabled={!siguiente}
+                onClick={() => siguiente && onIrAFactura(siguiente.idFactura)}
+                aria-label={siguiente ? `Período siguiente: ${siguiente.label}` : "No hay un período siguiente"}
+                title={siguiente ? siguiente.label : undefined}
+              >
+                <ChevronRight size={18} />
+              </button>
             </div>
           </div>
           <div className={styles.estados}>
+            <span className={`${styles.chip} ${styles.chipGris}`}>
+              {complemento ? `Complemento (versión ${detalle.version})` : "Factura original"}
+            </span>
             <div className={styles.estadoFila}>
               <span className={styles.estadoDe}>Colegio</span>
               <span className={`${styles.chip} ${estadoChip(detalle.estado)}`}>{estadoLabel(detalle.estado)}</span>

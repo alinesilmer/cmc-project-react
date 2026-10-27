@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { borrarRecibos, cambiarEstadoRecibos, emitirTodosLosRecibos, generarRecibos, listarRecibos } from "@/app/pages/Pagos/pagos.api";
+import { borrarRecibos, generarRecibos, listarRecibos } from "@/app/pages/Pagos/pagos.api";
 import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import Button from "@/app/components/ui/Button/Button";
 import SelectableTable from "@/app/components/ui/SelectableTable/SelectableTable";
 import type { ColumnDef } from "@/app/components/ui/SelectableTable/types";
 import styles from "./tabs.module.scss";
-import { type Pago, fmt } from "../../types";
+import { type Pago, fmt, nroFacturaMarcado } from "../../types";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
 import paleta from "@/app/styles/paleta.module.scss";
@@ -46,10 +46,35 @@ type DeduccionItem = {
   nombre_deduccion: string;
   periodo_a_aplicar: string;
   total: number;
+  // Cuando el médico paga la deducción de otro socio (por ejemplo, la cuota de su esposa).
+  por_cuenta_de?: { nro_socio: number | null; nombre: string | null };
+};
+
+const nombreDeduccion = (d: DeduccionItem) =>
+  d.por_cuenta_de ? `${d.nombre_deduccion} (por pago del socio Nº ${d.por_cuenta_de.nro_socio ?? "—"})` : d.nombre_deduccion;
+
+type AdelantoRecibo = {
+  adelanto_id: number;
+  obra_social: string;
+  nro_factura: string | null;
+  factura_version: number | null;
+  periodo: string;
+  prestaciones: number;
+  total_honorarios: number;
+  total_gastos: number;
+  total: number;
+};
+
+type CompensacionRecibo = {
+  compensacion_id: number;
+  leyenda: string;
+  importe: number;
 };
 
 type Detalle = {
   liquidaciones: Record<string, LiquidacionDetalle>;
+  adelantos?: { total: number; detalle: AdelantoRecibo[] };
+  compensaciones?: { total: number; detalle: CompensacionRecibo[] };
   deducciones: { total: number; detalle: DeduccionItem[] };
 };
 
@@ -67,7 +92,7 @@ type ReciboRow = {
   pago_medico_id?: number;
   total_neto: string | number;
   emision_timestamp: string | null;
-  estado: "en_revision" | "liquidado" | "emitido" | "anulado" | "pagado" | string;
+  estado: "en_revision" | "liquidado" | "emitido" | string;
   detalle_json?: DetalleJson;
 };
 
@@ -77,14 +102,10 @@ const ESTADO_LABEL: Record<string, string> = {
   en_revision: "En revisión",
   liquidado: "Liquidado",
   emitido: "Emitido",
-  anulado: "Anulado",
-  pagado: "Pagado",
 };
 
 const estadoClass = (e: string) => {
   if (e === "emitido")    return styles.reciboEmitido;
-  if (e === "anulado")    return styles.reciboAnulado;
-  if (e === "pagado")     return styles.reciboPagado;
   if (e === "liquidado")  return styles.medicoLiquidado;
   if (e === "en_revision") return styles.medicoPendiente;
   return "";
@@ -95,17 +116,14 @@ const ESTADO_OPTIONS = [
   { value: "en_revision", label: "En revisión" },
   { value: "liquidado",   label: "Liquidado" },
   { value: "emitido",     label: "Emitido" },
-  { value: "anulado",     label: "Anulado" },
-  { value: "pagado",      label: "Pagado" },
 ];
 
 // ── Componente ────────────────────────────────────────────────────
 
 type Props = { pago: Pago; pagoId: number };
 
-const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
+const TabRecibos: React.FC<Props> = ({ pagoId }) => {
   const notify = useAppSnackbar();
-  const isClosed = pago.estado === "C";
 
   const [rows, setRows] = useState<ReciboRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -118,11 +136,6 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
   const [generarResult, setGenerarResult] = useState<number | null>(null);
   const [generarError, setGenerarError] = useState<string | null>(null);
 
-  // Modal emitir todos
-  const [emitirOpen, setEmitirOpen]     = useState(false);
-  const [emitiendo, setEmitiendo]       = useState(false);
-  const [emitirResult, setEmitirResult] = useState<number | null>(null);
-  const [emitirError, setEmitirError]   = useState<string | null>(null);
 
   // Modal eliminar
   const [deleteTarget, setDeleteTarget] = useState<ReciboRow | null>(null);
@@ -159,30 +172,6 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
       setGenerarError(detalleDeError(e, "Error al generar."));
     } finally {
       setGenerando(false);
-    }
-  };
-
-  const handleEmitirTodos = async () => {
-    setEmitiendo(true);
-    setEmitirError(null);
-    try {
-      const result = await emitirTodosLosRecibos<ReciboRow[]>(pagoId);
-      setEmitirResult(Array.isArray(result) ? result.length : 0);
-      await loadData(estadoFiltro);
-    } catch (e) {
-      setEmitirError(detalleDeError(e, "Error al emitir."));
-    } finally {
-      setEmitiendo(false);
-    }
-  };
-
-  const handleEmitirUno = async (recibo: ReciboRow) => {
-    try {
-      await cambiarEstadoRecibos(pagoId, { recibo_ids: [recibo.id], estado: "emitido" });
-      notify(`Recibo ${recibo.nro_recibo} emitido correctamente.`);
-      await loadData(estadoFiltro);
-    } catch (e) {
-      notify(detalleDeError(e, "Error al emitir."), "error");
     }
   };
 
@@ -322,6 +311,46 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
         y = finDeTabla(doc) + 16;
       }
 
+      // ── Adelantos ──
+      const adelantos = detalle.adelantos?.detalle ?? [];
+      if (adelantos.length > 0) {
+        doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(27, 86, 255);
+        doc.text("Adelantos", left, y); y += 6;
+        autoTable(doc, {
+          startY: y,
+          head: [["Adelanto / Factura", "Prest.", "Honorarios", "Gastos", "Total"]],
+          body: adelantos.map((a) => [
+            `Adelanto #${a.adelanto_id} · ${a.obra_social} — Factura N° ${nroFacturaMarcado(a.nro_factura, a.factura_version)} (${a.periodo})`,
+            String(a.prestaciones),
+            `$${fmt(a.total_honorarios)}`,
+            `$${fmt(a.total_gastos)}`,
+            `$${fmt(a.total)}`,
+          ]),
+          styles: { fontSize: 9, cellPadding: 4 },
+          headStyles: { fillColor: [27, 86, 255], textColor: 255, fontStyle: "bold" },
+          columnStyles: { 1: { halign: "right" }, 2: { halign: "right" }, 3: { halign: "right" }, 4: { halign: "right" } },
+          margin: { left, right: 40 },
+        });
+        y = finDeTabla(doc) + 16;
+      }
+
+      // ── Compensaciones (sólo la leyenda: la nota interna no sale en el recibo) ──
+      const compensaciones = detalle.compensaciones?.detalle ?? [];
+      if (compensaciones.length > 0) {
+        doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(27, 86, 255);
+        doc.text("Compensaciones", left, y); y += 6;
+        autoTable(doc, {
+          startY: y,
+          head: [["Concepto", "Importe"]],
+          body: compensaciones.map((c) => [c.leyenda, `${c.importe < 0 ? "-" : "+"}$${fmt(Math.abs(c.importe))}`]),
+          styles: { fontSize: 9, cellPadding: 5 },
+          headStyles: { fillColor: [27, 86, 255], textColor: 255, fontStyle: "bold" },
+          columnStyles: { 1: { halign: "right" } },
+          margin: { left, right: 40 },
+        });
+        y = finDeTabla(doc) + 16;
+      }
+
       // ── Deducciones ──
       const deds = detalle.deducciones.detalle;
       if (deds.length > 0) {
@@ -330,7 +359,7 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
         autoTable(doc, {
           startY: y,
           head: [["Concepto", "Período", "Total"]],
-          body: deds.map((dd) => [dd.nombre_deduccion, dd.periodo_a_aplicar, `-$${fmt(dd.total)}`]),
+          body: deds.map((dd) => [nombreDeduccion(dd), dd.periodo_a_aplicar, `-$${fmt(dd.total)}`]),
           styles: { fontSize: 9, cellPadding: 5 },
           headStyles: { fillColor: [55, 65, 81], textColor: 255, fontStyle: "bold" },
           columnStyles: { 2: { halign: "right", textColor: [185, 28, 28] } },
@@ -342,12 +371,15 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
       // ── Resumen ──
       const liqVals = Object.values(detalle.liquidaciones);
       const sumLiq  = (fn: (l: LiquidacionDetalle) => number) => liqVals.reduce((a, l) => a + fn(l), 0);
-      const totalHon = sumLiq((l) => l.total_honorarios);
-      const totalGas = sumLiq((l) => l.total_gastos);
-      const totalBru = sumLiq((l) => l.total_bruto);
+      // El adelanto es producción del médico: suma a honorarios, gastos y bruto.
+      const sumAdel = (fn: (a: AdelantoRecibo) => number) => adelantos.reduce((a, x) => a + fn(x), 0);
+      const totalHon = sumLiq((l) => l.total_honorarios) + sumAdel((a) => a.total_honorarios);
+      const totalGas = sumLiq((l) => l.total_gastos) + sumAdel((a) => a.total_gastos);
+      const totalBru = sumLiq((l) => l.total_bruto) + sumAdel((a) => a.total);
       const totalDeb = sumLiq((l) => l.debitos.total);
       const totalCrd = sumLiq((l) => l.creditos.total);
-      const totalRec = totalBru + totalCrd - totalDeb;
+      const totalComp = detalle.compensaciones?.total ?? 0;
+      const totalRec = totalBru + totalCrd - totalDeb + totalComp;
       const totalDed = detalle.deducciones.total;
       const neto     = Math.max(0, totalRec - totalDed);
 
@@ -360,6 +392,7 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
         ["Bruto",       `$${fmt(totalBru)}`],
         ["Débitos",    `-$${fmt(totalDeb)}`],
         ["Créditos",   `+$${fmt(totalCrd)}`],
+        ...(totalComp !== 0 ? [["Compensaciones", `${totalComp < 0 ? "-" : "+"}$${fmt(Math.abs(totalComp))}`]] : []),
         ["Reconocido",  `$${fmt(totalRec)}`],
         ["Deducciones",`-$${fmt(totalDed)}`],
       ];
@@ -428,7 +461,7 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
       header: "Acciones",
       render: (r) => (
         <div className={styles.rowActions}>
-          {r.estado !== "pagado" && (
+          {r.estado !== "emitido" && (
             <Button
               size="sm"
               variant="danger"
@@ -438,15 +471,6 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
             </Button>
           )}
           <BotonDescarga formato="pdf" onClick={(e) => { e.stopPropagation(); generatePDF(r); }} />
-          {isClosed && !["emitido", "anulado", "pagado"].includes(r.estado) && (
-            <Button
-              size="sm"
-              variant="primary"
-              onClick={(e) => { e.stopPropagation(); handleEmitirUno(r); }}
-            >
-              Emitir
-            </Button>
-          )}
         </div>
       ),
     },
@@ -475,14 +499,6 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
           >
             Generar / Actualizar
           </Button>
-          {isClosed && (
-            <Button
-              variant="primary"
-              onClick={() => { setEmitirResult(null); setEmitirError(null); setEmitirOpen(true); }}
-            >
-              Emitir todos
-            </Button>
-          )}
         </div>
       </div>
 
@@ -533,46 +549,6 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
                 </p>
               )}
               {generando && <p style={{ color: paleta.gray500 }}>Generando… por favor esperá.</p>}
-            </Dialogo>
-      )}
-
-      {/* Modal emitir todos */}
-      {emitirOpen && (
-        <Dialogo
-          titulo="Emitir todos los recibos"
-          onClose={() => { setEmitirOpen(false); setEmitirResult(null); setEmitirError(null); }}
-          acciones={
-            <>
-              <Button
-                variant="secondary"
-                onClick={() => { setEmitirOpen(false); setEmitirResult(null); setEmitirError(null); }}
-                disabled={emitiendo}
-              >
-                {emitirResult != null ? "Cerrar" : "Cancelar"}
-              </Button>
-              {emitirResult == null && (
-                <Button variant="primary" onClick={handleEmitirTodos} disabled={emitiendo}>
-                  {emitiendo ? "Emitiendo…" : "Emitir todos"}
-                </Button>
-              )}
-            </>
-          }
-        >
-              {emitirError && <div className={styles.errorInline}>{emitirError}</div>}
-              {emitirResult != null ? (
-                <div className={styles.successInline}>
-                  ¡Listo! Se emitieron <strong>{emitirResult}</strong> recibos.
-                </div>
-              ) : !emitiendo && (
-                <p>
-                  Se emitirán todos los recibos pendientes de este pago.
-                  <br />
-                  <span style={{ fontSize: 12, color: paleta.gray500 }}>
-                    Solo se procesan recibos en estado "en revisión" o "liquidado".
-                  </span>
-                </p>
-              )}
-              {emitiendo && <p style={{ color: paleta.gray500 }}>Procesando…</p>}
             </Dialogo>
       )}
 

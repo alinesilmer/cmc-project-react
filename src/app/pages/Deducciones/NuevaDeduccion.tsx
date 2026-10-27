@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, Plus } from "lucide-react";
 
@@ -116,13 +116,16 @@ const NuevaDeduccion: React.FC = () => {
     [descuentos]
   );
 
+  // Sólo vale la última búsqueda: al tipear rápido las anteriores llegan tarde y se descartan.
+  const ultimaBusqueda = useRef(0);
   const searchMedicos = async (q: string) => {
+    const mia = ++ultimaBusqueda.current;
     setLoadingMedicos(true);
     try {
       const rows = await fetchMedicos(q);
-      setMedicos(rows);
+      if (mia === ultimaBusqueda.current) setMedicos(rows);
     } finally {
-      setLoadingMedicos(false);
+      if (mia === ultimaBusqueda.current) setLoadingMedicos(false);
     }
   };
 
@@ -212,6 +215,7 @@ const NuevaDeduccion: React.FC = () => {
             <div className={`${lq.campo} ${s.entera}`}>
               <span className={lq.rotulo}>Concepto</span>
               <AppSearchSelect
+                ordenar
                 options={descuentoOptions}
                 value={descuentoId}
                 onChange={(id) => setDescuentoId(id as number | null)}

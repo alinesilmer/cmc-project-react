@@ -299,7 +299,7 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
     url: "https://validador.iosfa.gob.ar/Login/Login.aspx",
     requisitos: {
       titulo: "Documentación obligatoria",
-      items: ["Planilla", "Bono"],
+      items: ["Recetario con membrete o con bono", "Validación Obligatoria"],
       motivo: "Sin los dos, el Colegio Médico de Corrientes no puede presentar la prestación.",
     },
     guia: {
