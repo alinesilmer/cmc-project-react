@@ -8,6 +8,7 @@ import Button from "@/app/components/ui/Button/Button";
 import { useNotify } from "../../hooks/useNotify";
 import { crearSolicitudCambioPropia } from "../SolicitudesCambio/solicitudesCambio.api";
 import styles from "./ReportarCambioModal.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 // Topes del backend (SolicitudCambioCrearIn).
 const MAX_VALOR = 255;
@@ -104,9 +105,9 @@ const ReportarCambioModal: React.FC<Props> = ({ target, onClose, onCreated }) =>
     >
       <div className={styles.cabeza}>
         <h2 className={styles.titulo}>Reportar un dato incorrecto</h2>
-        <button type="button" className={styles.cerrar} onClick={onClose} disabled={saving} aria-label="Cerrar">
+        <BotonPlano type="button" className={styles.cerrar} onClick={onClose} disabled={saving} aria-label="Cerrar">
           <X size={16} aria-hidden="true" />
-        </button>
+        </BotonPlano>
       </div>
 
         <div className={styles.form}>

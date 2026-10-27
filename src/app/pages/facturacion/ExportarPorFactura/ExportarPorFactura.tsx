@@ -10,6 +10,7 @@ import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 // Mismo formato que las demás herramientas de exportación de Facturación.
 import styles from "../TxtUnne/TxtUnne.module.scss";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 // Con `responseType: "blob"` el detalle del error llega dentro de un Blob.
 async function mensajeDelError(e: unknown): Promise<string> {
@@ -142,10 +143,10 @@ export default function ExportarPorFactura({
             {error && <div className={styles.error}>{error}</div>}
 
             <div className={styles.acciones}>
-              <button type="button" className={styles.btn} disabled={!factura || generando} onClick={generar}>
+              <BotonPlano type="button" className={styles.btn} disabled={!factura || generando} onClick={generar}>
                 {generando ? <Cargando size={16} /> : <Download size={16} />}
                 {generando ? "Generando…" : textoBoton}
-              </button>
+              </BotonPlano>
               {hecho && <span className={styles.ok}>{hecho}</span>}
             </div>
           </>

@@ -9,6 +9,7 @@ import TablaPorObraSocial from "../components/TablaPorObraSocial";
 import Franja from "@/app/components/layout/Franja/Franja";
 import styles from "./MiRecepcion.module.scss";
 import { comoErrorApi } from "@/app/shared/lib/httpErrors";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 // Mismo tope que "detalle-medico": el backend pagina de a 200 (GET /prestaciones: limit <= 200), esto es sólo un freno de seguridad.
 const PAGE_LIMIT = 200;
@@ -94,7 +95,7 @@ const MiRecepcion: React.FC = () => {
       {hayPeriodos && (
         <div className={styles.periodos} role="group" aria-label="Período">
           {recientes.map((p) => (
-            <button
+            <BotonPlano
               key={p.periodo}
               type="button"
               aria-pressed={periodoElegido === p.periodo}
@@ -102,7 +103,7 @@ const MiRecepcion: React.FC = () => {
               onClick={() => setPeriodoElegido(p.periodo)}
             >
               {p.periodo_label}
-            </button>
+            </BotonPlano>
           ))}
           {anteriores.length > 0 && (
             <select

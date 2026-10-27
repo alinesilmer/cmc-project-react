@@ -3,6 +3,7 @@ import { Check, ChevronDown, X } from "lucide-react";
 
 import type { Responsable } from "./agenda.types";
 import s from "./Agenda.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Props = {
   /** El nombre guardado en el evento. Texto libre, puede no estar en la lista. */
@@ -49,7 +50,7 @@ export default function ResponsableSelect({ value, onChange, opciones, cargando 
           onKeyDown={(e) => e.key === "Escape" && setAbierto(false)}
         />
         {value ? (
-          <button
+          <BotonPlano
             type="button"
             className={s.selectIcon}
             title="Limpiar"
@@ -59,16 +60,16 @@ export default function ResponsableSelect({ value, onChange, opciones, cargando 
             }}
           >
             <X size={14} />
-          </button>
+          </BotonPlano>
         ) : (
-          <button
+          <BotonPlano
             type="button"
             className={s.selectIcon}
             tabIndex={-1}
             onClick={() => setAbierto((a) => !a)}
           >
             <ChevronDown size={14} />
-          </button>
+          </BotonPlano>
         )}
       </div>
 
@@ -76,7 +77,7 @@ export default function ResponsableSelect({ value, onChange, opciones, cargando 
         <ul className={s.selectMenu}>
           {filtradas.map((o) => (
             <li key={o.id}>
-              <button
+              <BotonPlano
                 type="button"
                 className={s.selectOption}
                 onClick={() => {
@@ -87,7 +88,7 @@ export default function ResponsableSelect({ value, onChange, opciones, cargando 
                 <span className={s.selectNombre}>{o.nombre}</span>
                 <span className={s.selectRol}>{o.roles.join(" · ")}</span>
                 {o.nombre === value && <Check size={13} className={s.selectCheck} />}
-              </button>
+              </BotonPlano>
             </li>
           ))}
 

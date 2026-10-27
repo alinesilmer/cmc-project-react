@@ -1,6 +1,7 @@
 import { useState, type InputHTMLAttributes, type ReactNode } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import styles from "./CampoAcceso.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Props = Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "className"> & {
   id: string;
@@ -36,7 +37,7 @@ export default function CampoAcceso({ id, etiqueta, icono, secreto = false, ayud
           {...input}
         />
         {secreto && (
-          <button
+          <BotonPlano
             type="button"
             className={styles.ojo}
             onClick={() => setVisible((v) => !v)}
@@ -46,7 +47,7 @@ export default function CampoAcceso({ id, etiqueta, icono, secreto = false, ayud
             title={visible ? "Ocultar" : "Mostrar"}
           >
             {visible ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
-          </button>
+          </BotonPlano>
         )}
       </div>
       {ayuda && (

@@ -2,12 +2,13 @@ import { Modal } from "./ModalGalenos";
 import styles from "./NomencladorGalenos.module.scss";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
 import { AlertCircle, Save } from "lucide-react";
-import ReplicarFamiliaBlock, { ErrorReplica, ResultadoReplica } from "@/app/components/molecules/ReplicarFamilia/ReplicarFamiliaBlock";
+import ReplicarFamiliaBlock, { ErrorReplica, ResultadoReplica } from "@/app/pages/NomencladorNacional/components/ReplicarFamilia/ReplicarFamiliaBlock";
 import { formatoPesos } from "@/app/shared/lib/formatos";
 import { parseMonto } from "./galenos.helpers";
 import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
 import { avisoVigenciaGaleno } from "../nomenclador.helpers";
 import type { GalenosCtx } from "./useGalenos";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 export default function ModalEditarGaleno({ ctx, editTarget }: { ctx: GalenosCtx; editTarget: NonNullable<GalenosCtx["editTarget"]> }) {
   const { setModalKind, editForm, setEditForm, savingObs, savingUnidades, savingPrecio, editErrors, setEditErrors, familiaEdit, replica, setReplica, replicaResultado, replicaError, replicaActiva, handleActualizarPrecio, handleSaveObservacion, handleActualizarUnidades } = ctx;
@@ -35,7 +36,7 @@ export default function ModalEditarGaleno({ ctx, editTarget }: { ctx: GalenosCtx
           />
         </div>
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          <button
+          <BotonPlano
             className={styles.btnGhost}
             onClick={handleSaveObservacion}
             disabled={savingObs}
@@ -46,7 +47,7 @@ export default function ModalEditarGaleno({ ctx, editTarget }: { ctx: GalenosCtx
               <Save size={13} />
             )}{" "}
             Guardar observación
-          </button>
+          </BotonPlano>
         </div>
 
         <div className={styles.sectionSep} />
@@ -120,7 +121,7 @@ export default function ModalEditarGaleno({ ctx, editTarget }: { ctx: GalenosCtx
             marginTop: 8,
           }}
         >
-          <button
+          <BotonPlano
             className={styles.btnPrimary}
             onClick={handleActualizarPrecio}
             disabled={savingPrecio}
@@ -137,7 +138,7 @@ export default function ModalEditarGaleno({ ctx, editTarget }: { ctx: GalenosCtx
                   : "Actualizar valor"}
               </>
             )}
-          </button>
+          </BotonPlano>
         </div>
         {replicaResultado?.accion === "valor" && (
           <ResultadoReplica resultados={replicaResultado.resultados} />
@@ -228,13 +229,13 @@ export default function ModalEditarGaleno({ ctx, editTarget }: { ctx: GalenosCtx
         </div>
 
         <div className={styles.modalFooter}>
-          <button
+          <BotonPlano
             className={styles.btnGhost}
             onClick={() => setModalKind(null)}
           >
             Cerrar
-          </button>
-          <button
+          </BotonPlano>
+          <BotonPlano
             className={styles.btnPrimary}
             onClick={handleActualizarUnidades}
             disabled={savingUnidades}
@@ -248,7 +249,7 @@ export default function ModalEditarGaleno({ ctx, editTarget }: { ctx: GalenosCtx
             ) : (
               "Actualizar unidades"
             )}
-          </button>
+          </BotonPlano>
         </div>
         {replicaResultado?.accion === "unidades" && (
           <ResultadoReplica resultados={replicaResultado.resultados} />

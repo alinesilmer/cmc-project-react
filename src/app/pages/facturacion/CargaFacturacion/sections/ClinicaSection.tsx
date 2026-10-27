@@ -8,6 +8,7 @@ import { eliminarClinica } from "../../api";
 import type { ClinicaOption } from "../../types";
 import comun from "../Comun.module.scss";;
 import paleta from "@/app/styles/paleta.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 interface Props {
   codClinica: number | null;
@@ -77,7 +78,7 @@ const ClinicaSection: React.FC<Props> = ({
               clinicasPrecargadas={clinicasPrecargadas ?? undefined}
             />
           </div>
-          <button
+          <BotonPlano
             type="button"
             className={comun.btnIcon}
             onClick={() => setModal("editar")}
@@ -86,8 +87,8 @@ const ClinicaSection: React.FC<Props> = ({
             aria-label="Editar clínica"
           >
             <Pencil size={15} />
-          </button>
-          <button
+          </BotonPlano>
+          <BotonPlano
             type="button"
             className={comun.btnIconDanger}
             onClick={() => { setBajaError(null); setShowBaja(true); }}
@@ -100,10 +101,10 @@ const ClinicaSection: React.FC<Props> = ({
             aria-label="Eliminar clínica del padrón"
           >
             <Trash2 size={16} />
-          </button>
-          <button type="button" className={comun.btnGhost} onClick={() => setModal("alta")} disabled={disabled}>
+          </BotonPlano>
+          <BotonPlano type="button" className={comun.btnGhost} onClick={() => setModal("alta")} disabled={disabled}>
             + Agregar clínica
-          </button>
+          </BotonPlano>
         </div>
         {/* Una clínica recién creada/elegida por este camino (no por click directo en una opción del dropdown) puede no reflejarse en el texto del combobox. */}
         {clinicaNombre && (

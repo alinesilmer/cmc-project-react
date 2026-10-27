@@ -2,6 +2,7 @@ import { Moon, Sun } from "lucide-react";
 
 import { TEMA_OSCURO_DISPONIBLE, elegirTema, useTema } from "@/app/hooks/tema";
 import s from "./BotonTema.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 /** Cambia el panel entre claro y oscuro. La elección queda en el navegador. */
 export default function BotonTema() {
@@ -13,7 +14,7 @@ export default function BotonTema() {
   const Icono = oscuro ? Sun : Moon;
 
   return (
-    <button
+    <BotonPlano
       type="button"
       className={s.boton}
       onClick={() => elegirTema(oscuro ? "claro" : "oscuro")}
@@ -21,6 +22,6 @@ export default function BotonTema() {
       aria-label={etiqueta}
     >
       <Icono size={18} strokeWidth={1.8} aria-hidden="true" />
-    </button>
+    </BotonPlano>
   );
 }

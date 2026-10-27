@@ -17,6 +17,7 @@ import styles from "./MedicoPrestacionesTable.module.scss";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import { viaLabel } from "@/app/pages/facturacion/utiles";
 import { comoErrorApi, detalleObjeto } from "@/app/shared/lib/httpErrors";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 // Esta tabla NO pagina: muestra todas las prestaciones del médico en el período que se está cargando.
 const PAGE_SIZE = 200;
@@ -474,7 +475,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                         </span>
                         <span className={styles.socioNombre}>{medicoNombre ?? "—"}</span>
                         {esEquipo && (
-                          <button
+                          <BotonPlano
                             type="button"
                             className={`${styles.teamBadge} ${abierto ? styles.teamBadgeOpen : ""}`}
                             title="Esta prestación es parte de un equipo (médico, ayudante y/o gastos)"
@@ -483,7 +484,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                             <Users size={11} />
                             Equipo quirúrgico
                             {abierto ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
-                          </button>
+                          </BotonPlano>
                         )}
                       </div>
                     </td>
@@ -569,7 +570,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                             title="Marcar como auditado"
                           />
                         </span>
-                        <button
+                        <BotonPlano
                           type="button"
                           className={`${styles.iconBtn} ${styles.iconBtnEdit}`}
                           title="Editar"
@@ -577,8 +578,8 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                           onClick={() => handleEditar(row)}
                         >
                           <Pencil size={15} />
-                        </button>
-                        <button
+                        </BotonPlano>
+                        <BotonPlano
                           type="button"
                           className={styles.iconBtn}
                           title="Replicar carga"
@@ -586,8 +587,8 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                           onClick={() => handleReplicar(row)}
                         >
                           <Copy size={15} />
-                        </button>
-                        <button
+                        </BotonPlano>
+                        <BotonPlano
                           type="button"
                           className={`${styles.iconBtn} ${styles.iconBtnMove}`}
                           title={row.revisado ? "Está marcada: desmarcala para moverla" : "Mover al período anterior"}
@@ -595,8 +596,8 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                           onClick={() => handleMoverPeriodo(row, "anterior")}
                         >
                           <ArrowLeftCircle size={16} />
-                        </button>
-                        <button
+                        </BotonPlano>
+                        <BotonPlano
                           type="button"
                           className={`${styles.iconBtn} ${styles.iconBtnMove}`}
                           title={row.revisado ? "Está marcada: desmarcala para moverla" : "Mover al período siguiente"}
@@ -604,8 +605,8 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                           onClick={() => handleMoverPeriodo(row, "siguiente")}
                         >
                           <ArrowRightCircle size={16} />
-                        </button>
-                        <button
+                        </BotonPlano>
+                        <BotonPlano
                           type="button"
                           className={`${styles.iconBtn} ${styles.iconBtnDelete}`}
                           title="Eliminar"
@@ -613,7 +614,7 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
                           onClick={() => handleEliminar(row)}
                         >
                           <Trash2 size={15} />
-                        </button>
+                        </BotonPlano>
                       </div>}
                     </td>}
                   </tr>

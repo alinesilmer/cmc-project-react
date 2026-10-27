@@ -3,6 +3,7 @@ import { useState, type KeyboardEvent } from "react";
 import Button from "@/app/components/ui/Button/Button";
 import type { Plantilla } from "../useObservaciones";
 import s from "./EditorObservacion.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const MAX = 1000;
 
@@ -58,7 +59,7 @@ export default function EditorObservacion({ nombre, inicial, plantillas, guardan
             {plantillas.map((p) => {
               const puesta = texto.includes(p.texto);
               return (
-                <button
+                <BotonPlano
                   key={p.id}
                   type="button"
                   className={`${s.chip} ${puesta ? s.chipPuesta : ""}`}
@@ -67,7 +68,7 @@ export default function EditorObservacion({ nombre, inicial, plantillas, guardan
                   onClick={() => alternar(p.texto)}
                 >
                   {p.texto}
-                </button>
+                </BotonPlano>
               );
             })}
           </div>

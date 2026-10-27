@@ -27,6 +27,7 @@ import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
 import { ESTADO_URL } from "@/app/pages/Pagos/utiles";
 import { DELETE_LOTE_URL } from "@/app/pages/Pagos/utiles";
 import { comoErrorApi } from "@/app/shared/lib/httpErrors";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const estadoLabel = (e: string) =>
   ({ A: "Abierto", C: "Cerrado", L: "En Liquidaciones", AP: "Aplicado" })[e] ?? e;
@@ -177,7 +178,7 @@ const RefacturacionesList: React.FC = () => {
       header: "Corrige",
       render: (l) =>
         l.snap_origen_id ? (
-          <button
+          <BotonPlano
             type="button"
             className={lq.enlace}
             onClick={(e) => {
@@ -186,7 +187,7 @@ const RefacturacionesList: React.FC = () => {
             }}
           >
             Lote #{l.snap_origen_id}
-          </button>
+          </BotonPlano>
         ) : (
           <span className={lq.tenue}>—</span>
         ),

@@ -3,6 +3,7 @@ import { ALargeSmall } from "lucide-react";
 import { TEXTO_TAMANOS, pasarAlSiguienteTexto, useTextoTamano, type TextoTamano } from "@/app/hooks/textoTamano";
 import base from "@/app/components/layout/BotonTema/BotonTema.module.scss";
 import s from "./BotonTexto.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const NOMBRE: Record<TextoTamano, string> = { normal: "normal", grande: "grande", "muy-grande": "muy grande" };
 
@@ -14,7 +15,7 @@ export default function BotonTexto() {
   const etiqueta = `Tamaño del texto: ${NOMBRE[tamano]}. Pasar a ${NOMBRE[siguiente]}`;
 
   return (
-    <button
+    <BotonPlano
       type="button"
       className={`${base.boton} ${s.texto}`}
       onClick={pasarAlSiguienteTexto}
@@ -27,6 +28,6 @@ export default function BotonTexto() {
           <i key={t} className={i <= nivel ? s.activo : undefined} />
         ))}
       </span>
-    </button>
+    </BotonPlano>
   );
 }

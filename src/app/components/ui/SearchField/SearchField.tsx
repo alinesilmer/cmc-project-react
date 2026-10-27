@@ -2,6 +2,7 @@ import type React from "react";
 import { Search, X } from "lucide-react";
 
 import s from "./SearchField.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 interface SearchFieldProps {
   placeholder?: string;
@@ -45,9 +46,9 @@ export default function SearchField({
         disabled={disabled}
       />
       {onClear && value && (
-        <button type="button" className={s.borrar} onClick={onClear} aria-label="Borrar la búsqueda">
+        <BotonPlano type="button" className={s.borrar} onClick={onClear} aria-label="Borrar la búsqueda">
           <X size={16} aria-hidden="true" />
-        </button>
+        </BotonPlano>
       )}
     </div>
   );

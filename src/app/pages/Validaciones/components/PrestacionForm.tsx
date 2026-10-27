@@ -11,6 +11,7 @@ import type { PasoCarga } from "./pasosCarga";
 import { usePrestacionForm } from "./usePrestacionForm";
 import type { ObraSocialConfig, PrestacionFormValues } from "../validaciones.types";
 import s from "./PrestacionForm.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 interface Props {
   os: ObraSocialConfig;
@@ -179,9 +180,9 @@ export default function PrestacionForm({ os, enviando, onSubmit, nroSocio, medic
       )}
 
       <div className={s.pie}>
-        <button type="button" className={s.limpiar} onClick={limpiar} disabled={enviando}>
+        <BotonPlano type="button" className={s.limpiar} onClick={limpiar} disabled={enviando}>
           <Trash2 size={18} aria-hidden="true" /> Limpiar
-        </button>
+        </BotonPlano>
         <Button
           submit
           leftIcon={<ShieldCheck size={22} aria-hidden="true" />}

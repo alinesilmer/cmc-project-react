@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 
 import s from "./Fichas.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Props = {
   items: { clave: string; texto: string }[];
@@ -18,17 +19,17 @@ export default function Fichas({ items, onQuitar, onLimpiar }: Props) {
         <li key={f.clave} className={s.ficha}>
           {f.texto}
           {onQuitar && (
-            <button type="button" className={s.quitar} onClick={() => onQuitar(f.clave)} aria-label={`Quitar ${f.texto}`}>
+            <BotonPlano type="button" className={s.quitar} onClick={() => onQuitar(f.clave)} aria-label={`Quitar ${f.texto}`}>
               <X size={12} aria-hidden="true" />
-            </button>
+            </BotonPlano>
           )}
         </li>
       ))}
       {onLimpiar && (
         <li>
-          <button type="button" className={s.limpiar} onClick={onLimpiar}>
+          <BotonPlano type="button" className={s.limpiar} onClick={onLimpiar}>
             Limpiar
-          </button>
+          </BotonPlano>
         </li>
       )}
     </ul>

@@ -50,7 +50,7 @@
   border-radius: $border-radius-sm;
   cursor: pointer;
 
-  &:hover { background: #d9e5fb; }
+  &:hover { background: $tono-azul-100-e; }
 }
 
 %btn-icono {
@@ -81,7 +81,7 @@
   background: $success-green;
   border-color: $success-green;
 
-  &:hover:not(:disabled) { color: $white; background: #167339; }
+  &:hover:not(:disabled) { color: $white; background: $tono-verde-750; }
 }
 
 /* El `<input>` de texto de los formularios de administración. */

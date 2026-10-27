@@ -1,6 +1,7 @@
 import type { ComponentType, MouseEvent } from "react";
 
 import s from "./BotonAccion.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Props = {
   /** Un ícono de lucide o cualquier SVG que acepte `size`. */
@@ -27,8 +28,8 @@ export default function BotonAccion({ icono: Icono, etiqueta, peligro = false, d
     );
   }
   return (
-    <button type="button" className={clases} onClick={onClick} disabled={disabled} title={etiqueta} aria-label={etiqueta}>
+    <BotonPlano type="button" className={clases} onClick={onClick} disabled={disabled} title={etiqueta} aria-label={etiqueta}>
       {icon}
-    </button>
+    </BotonPlano>
   );
 }

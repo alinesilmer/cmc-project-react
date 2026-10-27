@@ -5,6 +5,7 @@ import { BadgeCheck, Download, ShieldCheck } from "lucide-react";
 // Escudo recortado y con fondo transparente.
 import escudo from "../../assets/escudoCMC.png";
 import styles from "./Credencial.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 interface Props {
   /** NOMBRE del padrón, o apellido + nombre si vienen separados. */
@@ -106,10 +107,10 @@ const Credencial: React.FC<Props> = ({
         </div>
       </article>
 
-      <button type="button" className={styles.boton} onClick={() => window.print()}>
+      <BotonPlano type="button" className={styles.boton} onClick={() => window.print()}>
         <Download size={17} />
         Descargar credencial
-      </button>
+      </BotonPlano>
 
       <p className={styles.leyenda}>
         <ShieldCheck size={15} />

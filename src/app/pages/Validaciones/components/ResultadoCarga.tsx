@@ -3,6 +3,7 @@ import { BadgeCheck, CircleAlert, Info, X } from "lucide-react";
 import { esPendienteDeObraSocial } from "../validaciones.types";
 import type { ResultadoValidacion } from "../validaciones.types";
 import s from "./ResultadoCarga.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 interface Props {
   resultado: ResultadoValidacion;
@@ -65,9 +66,9 @@ export default function ResultadoCarga({ resultado, onCerrar }: Props) {
         )}
       </div>
 
-      <button type="button" className={s.cerrar} onClick={onCerrar} aria-label="Cerrar aviso">
+      <BotonPlano type="button" className={s.cerrar} onClick={onCerrar} aria-label="Cerrar aviso">
         <X size={20} aria-hidden="true" />
-      </button>
+      </BotonPlano>
     </div>
   );
 }

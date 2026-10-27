@@ -10,13 +10,14 @@ import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import { fetchObrasSociales } from "@/app/pages/AfiliadosPorObraSocialPage/api";
 import type { ObraSocial } from "@/app/pages/AfiliadosPorObraSocialPage/types";
 // Franja, solapas, tabla y paginación son los de «Padrones»: la pantalla se ve igual.
-import padrones from "@/app/pages/AfiliadosPorObraSocialPage/Padrones.module.scss";
+import padrones from "./PadronesBase.module.scss";
 import {
   TAMANO_PAGINA, adherirSocios, fetchCandidatos, mensajeDeError, quitarSocios,
   type Candidato, type PaginaCandidatos, type Vista,
 } from "./api";
 import SelectorObraSocial from "./SelectorObraSocial";
 import s from "./ActualizarPadrones.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Modo = "adherir" | "quitar";
 
@@ -226,7 +227,7 @@ export default function ActualizarPadronesPage() {
               const Icono = sol.icono;
               const activa = sol.id === modo;
               return (
-                <button
+                <BotonPlano
                   key={sol.id}
                   type="button"
                   role="tab"
@@ -236,7 +237,7 @@ export default function ActualizarPadronesPage() {
                 >
                   <Icono size={16} strokeWidth={1.8} aria-hidden="true" />
                   {sol.titulo}
-                </button>
+                </BotonPlano>
               );
             })}
           </div>
@@ -287,7 +288,7 @@ export default function ActualizarPadronesPage() {
               {modo === "adherir" && (
                 <div className={s.segmentos} role="group" aria-label="Qué socios mostrar">
                   {VISTAS.map((v) => (
-                    <button
+                    <BotonPlano
                       key={v.id}
                       type="button"
                       className={`${s.segmento} ${v.id === vista ? s.segmentoActivo : ""}`}
@@ -295,7 +296,7 @@ export default function ActualizarPadronesPage() {
                       onClick={() => cambiarVista(v.id)}
                     >
                       {v.titulo}
-                    </button>
+                    </BotonPlano>
                   ))}
                 </div>
               )}
@@ -384,7 +385,7 @@ export default function ActualizarPadronesPage() {
 
               {totalPaginas > 1 && (
                 <div className={padrones.pagination}>
-                  <button
+                  <BotonPlano
                     type="button"
                     className={padrones.paginationBtn}
                     onClick={() => setPagina((p) => Math.max(1, p - 1))}
@@ -392,9 +393,9 @@ export default function ActualizarPadronesPage() {
                     aria-label="Página anterior"
                   >
                     <ChevronLeft size={16} />
-                  </button>
+                  </BotonPlano>
                   <span className={s.paginaDe}>Página {pagina} de {totalPaginas}</span>
-                  <button
+                  <BotonPlano
                     type="button"
                     className={padrones.paginationBtn}
                     onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
@@ -402,7 +403,7 @@ export default function ActualizarPadronesPage() {
                     aria-label="Página siguiente"
                   >
                     <ChevronRight size={16} />
-                  </button>
+                  </BotonPlano>
                 </div>
               )}
             </>
@@ -414,12 +415,12 @@ export default function ActualizarPadronesPage() {
                 <strong>{resumen}</strong>
                 <span>{nombres}</span>
               </div>
-              <button type="button" className={s.barraLimpiar} onClick={() => setSeleccion(new Map())} disabled={cantidad === 0}>
+              <BotonPlano type="button" className={s.barraLimpiar} onClick={() => setSeleccion(new Map())} disabled={cantidad === 0}>
                 Limpiar selección
-              </button>
-              <button type="button" className={s.barraAccion} onClick={() => setConfirmando(true)} disabled={cantidad === 0 || guardando}>
+              </BotonPlano>
+              <BotonPlano type="button" className={s.barraAccion} onClick={() => setConfirmando(true)} disabled={cantidad === 0 || guardando}>
                 {accion} {modo === "adherir" ? "a" : "de"} {obra.NOMBRE}
-              </button>
+              </BotonPlano>
             </div>
           )}
         </section>

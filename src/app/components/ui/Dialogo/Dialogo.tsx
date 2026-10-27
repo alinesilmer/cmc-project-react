@@ -3,6 +3,7 @@ import { X, type LucideIcon } from "lucide-react";
 
 import MarcoModal from "@/app/components/ui/MarcoModal/MarcoModal";
 import s from "./Dialogo.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Props = {
   titulo: ReactNode;
@@ -25,9 +26,9 @@ export default function Dialogo({ titulo, icono: Icono, onClose, acciones, ancho
         {Icono && <Icono size={20} aria-hidden="true" className={s.icono} />}
         <h2 className={s.titulo}>{titulo}</h2>
         {onClose && (
-          <button type="button" className={s.cerrar} onClick={onClose} aria-label="Cerrar">
+          <BotonPlano type="button" className={s.cerrar} onClick={onClose} aria-label="Cerrar">
             <X size={18} />
-          </button>
+          </BotonPlano>
         )}
       </header>
       <div className={s.cuerpo}>{children}</div>

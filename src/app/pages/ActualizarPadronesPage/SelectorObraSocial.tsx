@@ -4,7 +4,8 @@ import { Building2, ChevronDown, Search } from "lucide-react";
 import type { ObraSocial } from "@/app/pages/AfiliadosPorObraSocialPage/types";
 import { buildOsCode, normalize } from "@/app/pages/AfiliadosPorObraSocialPage/helpers";
 // Mismo selector que «Padrones»: los estilos del desplegable se comparten.
-import styles from "@/app/pages/AfiliadosPorObraSocialPage/Padrones.module.scss";
+import styles from "./SelectorObraSocial.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const MAX_SIN_BUSCAR = 80;
 
@@ -57,7 +58,7 @@ export default function SelectorObraSocial({ obras, cargando, error, seleccionad
 
   return (
     <div className={styles.osPicker} ref={contenedor}>
-      <button
+      <BotonPlano
         type="button"
         className={styles.osButton}
         onClick={() => !cargando && setAbierto((a) => !a)}
@@ -70,7 +71,7 @@ export default function SelectorObraSocial({ obras, cargando, error, seleccionad
           {seleccionada?.NOMBRE ?? (cargando ? "Cargando…" : "Seleccioná una obra social")}
         </span>
         <ChevronDown className={`${styles.chevron} ${abierto ? styles.chevronOpen : ""}`} aria-hidden="true" />
-      </button>
+      </BotonPlano>
 
       {abierto && (
         <div className={styles.dropdown}>
@@ -99,7 +100,7 @@ export default function SelectorObraSocial({ obras, cargando, error, seleccionad
               filtradas.map((os) => {
                 const activa = seleccionada?.NRO_OBRA_SOCIAL === os.NRO_OBRA_SOCIAL;
                 return (
-                  <button
+                  <BotonPlano
                     key={os.NRO_OBRA_SOCIAL}
                     type="button"
                     className={`${styles.dropdownItem} ${activa ? styles.dropdownItemActive : ""}`}
@@ -107,7 +108,7 @@ export default function SelectorObraSocial({ obras, cargando, error, seleccionad
                   >
                     <span className={styles.dropdownItemName}>{os.NOMBRE}</span>
                     <span className={styles.dropdownItemCode}>{buildOsCode(os)}</span>
-                  </button>
+                  </BotonPlano>
                 );
               })
             )}

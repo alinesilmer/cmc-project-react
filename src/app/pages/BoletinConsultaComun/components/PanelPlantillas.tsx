@@ -3,6 +3,7 @@ import { Plus, X } from "lucide-react";
 
 import type { Plantilla } from "../useObservaciones";
 import s from "./PanelPlantillas.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 interface Props {
   plantillas: Plantilla[];
@@ -49,10 +50,10 @@ export default function PanelPlantillas({ plantillas, ocupado, onAgregar, onQuit
           placeholder="Nueva plantilla…"
           disabled={ocupado}
         />
-        <button type="button" className={s.plantillasAgregar} onClick={() => void agregar()} disabled={!nueva.trim() || ocupado}>
+        <BotonPlano type="button" className={s.plantillasAgregar} onClick={() => void agregar()} disabled={!nueva.trim() || ocupado}>
           <Plus size={16} aria-hidden="true" />
           Agregar
-        </button>
+        </BotonPlano>
       </div>
 
       {plantillas.length === 0 ? (
@@ -62,7 +63,7 @@ export default function PanelPlantillas({ plantillas, ocupado, onAgregar, onQuit
           {plantillas.map((p) => (
             <li key={p.id} className={s.plantillaItem}>
               <span className={s.plantillaTexto}>{p.texto}</span>
-              <button
+              <BotonPlano
                 type="button"
                 className={s.plantillaQuitar}
                 onClick={() => onQuitar(p)}
@@ -70,7 +71,7 @@ export default function PanelPlantillas({ plantillas, ocupado, onAgregar, onQuit
                 aria-label={`Eliminar plantilla: ${p.texto}`}
               >
                 <X size={14} aria-hidden="true" />
-              </button>
+              </BotonPlano>
             </li>
           ))}
         </ul>

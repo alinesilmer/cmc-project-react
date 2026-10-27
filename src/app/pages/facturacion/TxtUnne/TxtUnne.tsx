@@ -8,6 +8,7 @@ import { saveAs } from "@/app/shared/lib/fileSaver";
 import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 import styles from "./TxtUnne.module.scss";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const OBRA_SOCIAL_UNNE = "81";
 
@@ -166,10 +167,10 @@ export default function TxtUnne() {
             {error && <div className={styles.error}>{error}</div>}
 
             <div className={styles.acciones}>
-              <button type="button" className={styles.btn} disabled={!puedeGenerar} onClick={generar}>
+              <BotonPlano type="button" className={styles.btn} disabled={!puedeGenerar} onClick={generar}>
                 {generando ? <Cargando size={16} /> : <Download size={16} />}
                 {generando ? "Generando…" : "Descargar TXT"}
-              </button>
+              </BotonPlano>
               {hecho && <span className={styles.ok}>{hecho}</span>}
             </div>
           </>

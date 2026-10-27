@@ -3,7 +3,7 @@ import { AlertTriangle } from "lucide-react";
 
 import Paso from "@/app/components/ui/Paso/Paso";
 import c from "@/app/components/ui/Paso/Campos.module.scss";
-import MultiSelectBuscable from "@/app/components/molecules/MultiSelectBuscable/MultiSelectBuscable";
+import MultiSelectBuscable from "@/app/components/ui/MultiSelectBuscable/MultiSelectBuscable";
 
 type Props = {
   numero: number;

@@ -13,6 +13,7 @@ import { fetchMedicos } from "@/app/pages/Deducciones/api";
 import type { MedicoOption } from "@/app/pages/Deducciones/types";
 import lq from "../Liquidacion.module.scss";
 import s from "./Adelantos.module.scss";
+import paleta from "@/app/styles/paleta.module.scss";
 import { fmt, mesLabel, nroFacturaMarcado } from "../types";
 import {
   ADELANTO_ESTADO_URL,
@@ -27,6 +28,7 @@ import {
   etiquetaEstadoPrestacion,
   fechaCorta,
 } from "./utiles";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const PAGE_SIZE = 50;
 
@@ -391,7 +393,7 @@ const AdelantoDetalle: React.FC = () => {
                             {quitandoId === it.id ? (
                               <Loader2 size={16} className={lq.gira} aria-label="Quitando" />
                             ) : (
-                              <button
+                              <BotonPlano
                                 type="button"
                                 className={lq.botonIconoPeligro}
                                 title="Quitar del adelanto"
@@ -399,7 +401,7 @@ const AdelantoDetalle: React.FC = () => {
                                 onClick={() => void quitar(it.id)}
                               >
                                 <X size={16} />
-                              </button>
+                              </BotonPlano>
                             )}
                           </td>
                         )}
@@ -548,9 +550,9 @@ const AdelantoDetalle: React.FC = () => {
                     {pagina.total.toLocaleString("es-AR")}
                   </span>
                   <nav className={s.pieNav} aria-label="Paginación">
-                    <button type="button" onClick={() => setPage((p) => p - 1)} disabled={page <= 1 || cargandoPagina}>← Anterior</button>
+                    <BotonPlano type="button" onClick={() => setPage((p) => p - 1)} disabled={page <= 1 || cargandoPagina}>← Anterior</BotonPlano>
                     <span>Página {page} de {lastPage.toLocaleString("es-AR")}</span>
-                    <button type="button" onClick={() => setPage((p) => p + 1)} disabled={page >= lastPage || cargandoPagina}>Siguiente →</button>
+                    <BotonPlano type="button" onClick={() => setPage((p) => p + 1)} disabled={page >= lastPage || cargandoPagina}>Siguiente →</BotonPlano>
                   </nav>
                 </div>
               )}
@@ -569,9 +571,9 @@ const AdelantoDetalle: React.FC = () => {
                       onClick={() => setMarcadas(new Map())}
                       disabled={agregando}
                       sx={{
-                        color: "#ffffff",
+                        color: paleta.white,
                         borderColor: "rgba(255,255,255,0.65)",
-                        "&:hover": { backgroundColor: "rgba(255,255,255,0.14)", borderColor: "#ffffff" },
+                        "&:hover": { backgroundColor: "rgba(255,255,255,0.14)", borderColor: paleta.white },
                       }}
                     >
                       Limpiar

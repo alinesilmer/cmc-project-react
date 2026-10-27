@@ -36,6 +36,7 @@ import type { EstadoModal } from "./ModalImportacion";
 import { leerPlanilla } from "./planilla.parser";
 import TablaPrestaciones from "./TablaPrestaciones";
 import s from "./ImportarPrestaciones.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 /**
  * Importar prestaciones desde una planilla Excel del Colegio.
@@ -430,9 +431,9 @@ export default function ImportarPrestaciones() {
             {sugerido && periodo !== sugerido ? (
               <>
                 Sugerido: {periodoLegible(sugerido)} ·{" "}
-                <button type="button" className={s.enlace} disabled={bloqueado} onClick={() => fijarPeriodo(sugerido)}>
+                <BotonPlano type="button" className={s.enlace} disabled={bloqueado} onClick={() => fijarPeriodo(sugerido)}>
                   usar el sugerido
-                </button>
+                </BotonPlano>
               </>
             ) : sugerido ? (
               "Es el período sugerido."
@@ -482,9 +483,9 @@ export default function ImportarPrestaciones() {
               {archivo.nombre} · {archivo.filas.length} filas
             </span>
             {!bloqueado && (
-              <button type="button" className={r.limpiar} onClick={reiniciar}>
+              <BotonPlano type="button" className={r.limpiar} onClick={reiniciar}>
                 <Trash2 size={15} /> Quitar
-              </button>
+              </BotonPlano>
             )}
           </>
         )}
@@ -602,7 +603,7 @@ export default function ImportarPrestaciones() {
                     ["equipos", `Equipos · ${conteo.equipos}`],
                   ] as [Filtro, string][]
                 ).map(([clave, texto]) => (
-                  <button
+                  <BotonPlano
                     key={clave}
                     type="button"
                     className={`${s.segmento} ${filtro === clave ? s.activo : ""}`}
@@ -610,7 +611,7 @@ export default function ImportarPrestaciones() {
                     onClick={() => setFiltro(clave)}
                   >
                     {texto}
-                  </button>
+                  </BotonPlano>
                 ))}
               </div>
               <div className={s.busqueda}>

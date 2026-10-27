@@ -5,6 +5,7 @@ import Tabla from "@/app/components/ui/Tabla/Tabla";
 import styles from "../DoctorProfilePage.module.scss";
 import PagadorSelect from "./PagadorSelect";
 import type { LegajoConceptos } from "./useLegajoConceptos";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 export default function TabConceptos({ conceptos }: { conceptos: LegajoConceptos }) {
   const { sociosDescuento, sdLoading, sdError, conceptOptions, patchingId, deletingId, newRowOpen, setNewRowOpen, newConceptId, setNewConceptId, newPagadorId, setNewPagadorId, savingNew, handlePatchSocioDescuento, handleDeleteSocioDescuento, handleSaveNewSocioDescuento } = conceptos;
@@ -113,14 +114,14 @@ export default function TabConceptos({ conceptos }: { conceptos: LegajoConceptos
                         />
                       </td>
                       <td>
-                        <button
+                        <BotonPlano
                           className={styles.iconButton}
                           title="Eliminar"
                           disabled={deletingId === sd.id}
                           onClick={() => handleDeleteSocioDescuento(sd.id)}
                         >
                           <Trash2 size={15} />
-                        </button>
+                        </BotonPlano>
                       </td>
                     </tr>
                   ))

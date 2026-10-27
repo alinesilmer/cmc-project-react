@@ -14,6 +14,7 @@ import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import { motivoError } from "@/app/pages/NomencladorNacional/utiles";
 import { formatoNumero2, formatoPesos } from "@/app/shared/lib/formatos";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const aNumero = (v: string): number | null => {
   const n = parseFloat(v.replace(",", "."));
@@ -317,10 +318,10 @@ export default function AplicarNiveladoModal({
         {/* Ajustes de unidades por nivel, sólo de esta obra social. */}
         {!hecho && estado != null && modo === "calculado" && (estado.galeno_estado !== "otros_niveles" || cambio) && niveles > 0 && (
           <div className={styles.ajustes}>
-            <button type="button" className={styles.ajustesTitulo} onClick={() => setAjustesAbiertos((a) => !a)} aria-expanded={ajustesAbiertos}>
+            <BotonPlano type="button" className={styles.ajustesTitulo} onClick={() => setAjustesAbiertos((a) => !a)} aria-expanded={ajustesAbiertos}>
               <strong>Ajustar unidades para esta obra social</strong>
               <span>{ajustesAbiertos ? "Ocultar ▴" : "Mostrar ▾"}</span>
-            </button>
+            </BotonPlano>
             {ajustesAbiertos ? (
               <div className={styles.ajustesCuerpo}>
                 <p className={base.hintText}>
@@ -450,20 +451,20 @@ export default function AplicarNiveladoModal({
 
         <div className={styles.pie}>
           {!hecho && <span className={`${base.hintText} ${styles.pieNota}`}>Todo o nada: si algo falla, no se guarda ningún cambio.</span>}
-          <button type="button" className={base.btnGhost} onClick={onClose}>
+          <BotonPlano type="button" className={base.btnGhost} onClick={onClose}>
             {hecho ? "Cerrar" : "Cancelar"}
-          </button>
+          </BotonPlano>
           {!hecho && (
             <>
-              <button
+              <BotonPlano
                 type="button"
                 className={base.btnGhost}
                 disabled={os == null || !vigencia || trabajando !== null || estadoQuery.isLoading || !galenoValido}
                 onClick={() => void correr(true)}
               >
                 {trabajando === "preview" ? "Calculando…" : "Ver cambios"}
-              </button>
-              <button
+              </BotonPlano>
+              <BotonPlano
                 type="button"
                 className={cambio ? styles.btnPeligro : base.btnPrimary}
                 disabled={!hayQueAplicar || trabajando !== null}
@@ -474,7 +475,7 @@ export default function AplicarNiveladoModal({
                   : cambio
                     ? `Eliminar valores de ${cambio.desde_nombre} y crear los de ${nombre}`
                     : `Aplicar en ${osNombre}`}
-              </button>
+              </BotonPlano>
             </>
           )}
         </div>

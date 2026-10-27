@@ -1,5 +1,6 @@
 import type { FiltroActivo } from "../resumenFiltros";
 import styles from "@/app/pages/UsersList/components/FilterModal/FilterModal.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 interface Props {
   columnas: number;
@@ -13,9 +14,9 @@ export function FiltersResumen({ columnas, activos, onReset }: Props) {
     <aside className={styles.resumen}>
       <div className={styles.resumenCabeza}>
         <h3 className={styles.resumenTitulo}>Resumen</h3>
-        <button className={styles.limpiar} onClick={onReset} type="button">
+        <BotonPlano className={styles.limpiar} onClick={onReset} type="button">
           Limpiar
-        </button>
+        </BotonPlano>
       </div>
 
       <dl className={styles.resumenLista}>

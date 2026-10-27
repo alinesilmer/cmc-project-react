@@ -9,6 +9,7 @@ import comun from "./Comun.module.scss";
 import styles from "./FilaPrestacion.module.scss";;
 import { viaLabel } from "@/app/pages/facturacion/utiles";
 import { fmtFecha } from "@/app/pages/facturacion/utiles";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 // La prestación "aplanada" con los datos de su socio ya resueltos .
 export interface PrestacionConSocio extends PrestacionFacturaDetalle {
@@ -213,7 +214,7 @@ function FilaPrestacion({
                 title="Marcar como auditado"
               />
             </span>
-            <button
+            <BotonPlano
               type="button"
               className={`${styles.iconBtn} ${styles.iconBtnEdit}`}
               title="Editar"
@@ -221,8 +222,8 @@ function FilaPrestacion({
               onClick={() => acciones.onEditar(p)}
             >
               <Pencil size={14} />
-            </button>
-            <button
+            </BotonPlano>
+            <BotonPlano
               type="button"
               className={styles.iconBtn}
               title="Replicar carga"
@@ -230,10 +231,10 @@ function FilaPrestacion({
               onClick={() => acciones.onReplicar(p)}
             >
               <Copy size={14} />
-            </button>
+            </BotonPlano>
             {!esComplemento && (
               <>
-                <button
+                <BotonPlano
                   type="button"
                   className={`${styles.iconBtn} ${styles.iconBtnMove}`}
                   title={tituloMover("Mover al período anterior")}
@@ -241,8 +242,8 @@ function FilaPrestacion({
                   onClick={() => acciones.onMover(p, "anterior")}
                 >
                   <ArrowLeftCircle size={15} />
-                </button>
-                <button
+                </BotonPlano>
+                <BotonPlano
                   type="button"
                   className={`${styles.iconBtn} ${styles.iconBtnMove}`}
                   title={tituloMover("Mover al período siguiente")}
@@ -250,10 +251,10 @@ function FilaPrestacion({
                   onClick={() => acciones.onMover(p, "siguiente")}
                 >
                   <ArrowRightCircle size={15} />
-                </button>
+                </BotonPlano>
               </>
             )}
-            <button
+            <BotonPlano
               type="button"
               className={`${styles.iconBtn} ${styles.iconBtnDelete}`}
               title="Eliminar"
@@ -261,7 +262,7 @@ function FilaPrestacion({
               onClick={() => acciones.onEliminar(p)}
             >
               <Trash2 size={14} />
-            </button>
+            </BotonPlano>
           </div>
         )}
       </td>}

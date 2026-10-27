@@ -5,6 +5,7 @@ import type { ClinicaOption } from "../types";
 import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 import styles from "./AltaAfiliadoModal.module.scss";
 import MarcoModal from "@/app/components/ui/MarcoModal/MarcoModal";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 interface Props {
   isOpen: boolean;
@@ -63,9 +64,9 @@ const AltaClinicaModal: React.FC<Props> = ({ isOpen, clinica, onClose, onCreated
                     : "Cargá el nombre para poder facturar bajo esta clínica."}
                 </p>
               </div>
-              <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Cerrar" disabled={loading}>
+              <BotonPlano type="button" className={styles.closeBtn} onClick={onClose} aria-label="Cerrar" disabled={loading}>
                 <X size={16} />
-              </button>
+              </BotonPlano>
             </div>
 
             <div className={styles.body}>
@@ -86,17 +87,17 @@ const AltaClinicaModal: React.FC<Props> = ({ isOpen, clinica, onClose, onCreated
             </div>
 
             <div className={styles.footer}>
-              <button type="button" className={styles.btnGhost} onClick={onClose} disabled={loading}>
+              <BotonPlano type="button" className={styles.btnGhost} onClick={onClose} disabled={loading}>
                 Cancelar
-              </button>
-              <button
+              </BotonPlano>
+              <BotonPlano
                 type="button"
                 className={styles.btnPrimary}
                 onClick={handleSubmit}
                 disabled={!nombre.trim() || loading}
               >
                 {loading ? "Guardando…" : editando ? "Guardar" : "Dar de alta"}
-              </button>
+              </BotonPlano>
             </div>
           </MarcoModal>
       )}

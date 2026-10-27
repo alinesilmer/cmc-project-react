@@ -12,6 +12,7 @@ import { saludoSegunHora } from "@/app/shared/lib/fechas";
 import type { LogoutMotivo } from "../../auth/session";
 import Header from "@/website/components/UI/Header/Header";
 import styles from "./Login.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const MENSAJES_SALIDA: Record<LogoutMotivo, string> = {
   token_revocado: "Tu sesión se cerró, ingresá de nuevo.",
@@ -115,7 +116,7 @@ export default function Login() {
             required
           />
 
-          <button
+          <BotonPlano
             type="button"
             className={styles.olvide}
             onClick={() => setAyudaAbierta((v) => !v)}
@@ -123,13 +124,13 @@ export default function Login() {
             aria-controls="ayuda-password"
           >
             ¿Olvidaste tu contraseña?
-          </button>
+          </BotonPlano>
           <AyudaPassword abierta={ayudaAbierta} />
 
-          <button type="submit" className={styles.ingresar} disabled={cargando} aria-busy={cargando}>
+          <BotonPlano type="submit" className={styles.ingresar} disabled={cargando} aria-busy={cargando}>
             {cargando ? "Ingresando…" : "Ingresar"}
             {!cargando && <ArrowRight aria-hidden="true" />}
-          </button>
+          </BotonPlano>
         </form>
 
         <div className={styles.separador}>
@@ -137,10 +138,10 @@ export default function Login() {
         </div>
 
         <div className={styles.secundarias}>
-          <button type="button" className={styles.secundaria} onClick={() => setPdfAbierto(true)}>
+          <BotonPlano type="button" className={styles.secundaria} onClick={() => setPdfAbierto(true)}>
             <FileText aria-hidden="true" />
             Valores éticos mínimos
-          </button>
+          </BotonPlano>
           <Link to="/socios" className={styles.secundaria}>
             <CircleUserRound aria-hidden="true" />
             Quiero ser socio

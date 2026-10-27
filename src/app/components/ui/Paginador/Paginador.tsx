@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import Button from "@/app/components/ui/Button/Button";
 import s from "./Paginador.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 interface Props {
   /** Página actual, desde 1. */
@@ -90,7 +91,7 @@ export default function Paginador({
                     …
                   </span>
                 ) : (
-                  <button
+                  <BotonPlano
                     key={n}
                     type="button"
                     className={`${s.numero} ${n === pagina ? s.numeroActivo : ""}`}
@@ -99,7 +100,7 @@ export default function Paginador({
                     aria-current={n === pagina ? "page" : undefined}
                   >
                     {n}
-                  </button>
+                  </BotonPlano>
                 )
               )}
             </div>

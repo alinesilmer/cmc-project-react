@@ -27,6 +27,7 @@ import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
 import { ESTADO_URL } from "@/app/pages/Pagos/utiles";
 import { DELETE_LOTE_URL } from "@/app/pages/Pagos/utiles";
 import { comoErrorApi } from "@/app/shared/lib/httpErrors";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const estadoLabel = (e: string) =>
   ({ A: "Abierto", C: "Cerrado", L: "En Liquidaciones", AP: "Aplicado" })[e] ??
@@ -304,7 +305,7 @@ const DebitosCreditos: React.FC = () => {
             }}
           />
           {l.estado !== "L" && l.estado !== "AP" && (
-            <button
+            <BotonPlano
               type="button"
               className={lq.botonIconoPeligro}
               title="Eliminar"
@@ -315,7 +316,7 @@ const DebitosCreditos: React.FC = () => {
               }}
             >
               <Trash2 size={16} />
-            </button>
+            </BotonPlano>
           )}
         </div>
       ),

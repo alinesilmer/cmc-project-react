@@ -26,6 +26,7 @@ import {
   fechaCorta,
   importeConSigno,
 } from "./utiles";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const estadoClass = (e: string) =>
   ({
@@ -279,7 +280,7 @@ const Compensaciones: React.FC = () => {
       render: (c) =>
         c.estado === "pendiente" ? (
           <div className={lq.accionesFila}>
-            <button
+            <BotonPlano
               type="button"
               className={lq.botonIcono}
               title="Editar"
@@ -290,8 +291,8 @@ const Compensaciones: React.FC = () => {
               }}
             >
               <Pencil size={16} />
-            </button>
-            <button
+            </BotonPlano>
+            <BotonPlano
               type="button"
               className={lq.botonIconoPeligro}
               title="Anular"
@@ -303,7 +304,7 @@ const Compensaciones: React.FC = () => {
               }}
             >
               <Ban size={16} />
-            </button>
+            </BotonPlano>
           </div>
         ) : null,
     },

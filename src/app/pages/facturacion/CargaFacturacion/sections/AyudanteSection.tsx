@@ -7,6 +7,7 @@ import comun from "../Comun.module.scss";
 import styles from "./AyudanteSection.module.scss";;
 import { X } from "lucide-react";
 import { crearAyudanteLinea, montoLinea } from "./ayudante.helpers";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 export interface AyudanteLinea {
   id: string;
@@ -81,14 +82,14 @@ const AyudanteSection: React.FC<Props> = ({
               <span className={comun.sectionTitle} style={{ textTransform: "none", fontSize: "0.86rem" }}>
                 Ayudante {idx + 1}
               </span>
-              <button
+              <BotonPlano
                 type="button"
                 className={comun.removeBtn}
                 onClick={() => quitarLinea(linea.id)}
                 disabled={disabled}
               >
                 <X size={16} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> Quitar
-              </button>
+              </BotonPlano>
             </div>
 
             <div className={comun.fieldsRow}>
@@ -196,7 +197,7 @@ const AyudanteSection: React.FC<Props> = ({
         );
       })}
 
-      <button
+      <BotonPlano
         type="button"
         className={styles.addAyudanteBtn}
         onClick={agregarLinea}
@@ -205,7 +206,7 @@ const AyudanteSection: React.FC<Props> = ({
         <span style={{ fontSize: 16 }}>+</span>
         <span>Agregar ayudante</span>
         <span className={comun.sectionHint}>(valor automático: {formatMoney(precio.ayudante)})</span>
-      </button>
+      </BotonPlano>
     </div>
   );
 };

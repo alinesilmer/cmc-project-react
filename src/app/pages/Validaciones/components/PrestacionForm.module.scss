@@ -19,8 +19,8 @@
   gap: $spacing-3;
   margin: 0 $spacing-8 $spacing-5;
   padding: $spacing-4;
-  background: #fffbeb;
-  border: 2px solid #b45309;
+  background: $tono-amarillo-50-c;
+  border: 2px solid $tono-naranja-450;
   border-radius: $radio-lg;
 
   @media (max-width: $breakpoint-sm) { margin: 0 $spacing-4 $spacing-5; }
@@ -29,7 +29,7 @@
   margin: 0;
   font-size: $font-size-base;
   font-weight: $font-weight-bold;
-  color: #78350f;
+  color: $tono-naranja-600;
 }
 
 // Un bloque debajo del otro: a la izquierda el círculo con su nombre, a la derecha sus campos.

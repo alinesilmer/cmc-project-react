@@ -1,6 +1,7 @@
 import { X, Plus } from "lucide-react";
 import type { ContactoEntry } from "../obrasSociales.types";
 import s from "./ObrasSocialesForm.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -61,7 +62,7 @@ export function ContactoList({
             aria-label={tipo === "email" ? "Email" : "Teléfono"}
           />
           {entries.length > 1 && (
-            <button
+            <BotonPlano
               type="button"
               className={s.contactoRemoveBtn}
               onClick={() => remove(i)}
@@ -69,15 +70,15 @@ export function ContactoList({
               title="Eliminar"
             >
               <X size={14} />
-            </button>
+            </BotonPlano>
           )}
         </div>
       ))}
 
-      <button type="button" className={s.contactoAddBtn} onClick={add}>
+      <BotonPlano type="button" className={s.contactoAddBtn} onClick={add}>
         <Plus size={14} />
         {tipo === "email" ? "Agregar email" : "Agregar teléfono"}
-      </button>
+      </BotonPlano>
 
       {error && <span className={s.fieldError} role="alert">{error}</span>}
     </div>

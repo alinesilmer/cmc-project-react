@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 
 import styles from "./MultiSelectBuscable.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type MultiSelectOption<V extends string | number> = {
   value: V;
@@ -82,22 +83,22 @@ export default function MultiSelectBuscable<V extends string | number>({
             aria-label={`Buscar ${noun}`}
           />
         </div>
-        <button
+        <BotonPlano
           type="button"
           className={styles.btnMini}
           disabled={disabled || visibles.length === 0}
           onClick={() => selectVisibles(true)}
         >
           Seleccionar todos
-        </button>
-        <button
+        </BotonPlano>
+        <BotonPlano
           type="button"
           className={styles.btnMini}
           disabled={disabled || visibles.length === 0}
           onClick={() => selectVisibles(false)}
         >
           Desmarcar todos
-        </button>
+        </BotonPlano>
       </div>
 
       <div className={styles.list}>

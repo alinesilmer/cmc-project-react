@@ -9,6 +9,7 @@ import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 // Mismo formato que las demás herramientas de exportación de Facturación.
 import styles from "../TxtUnne/TxtUnne.module.scss";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const OBRA_SOCIAL_BOREAL = "285";
 
@@ -131,10 +132,10 @@ export default function PlanoBoreal() {
             {error && <div className={styles.error}>{error}</div>}
 
             <div className={styles.acciones}>
-              <button type="button" className={styles.btn} disabled={!factura || generando} onClick={generar}>
+              <BotonPlano type="button" className={styles.btn} disabled={!factura || generando} onClick={generar}>
                 {generando ? <Cargando size={16} /> : <Download size={16} />}
                 {generando ? "Generando…" : "Descargar Excel"}
-              </button>
+              </BotonPlano>
               {hecho && <span className={styles.ok}>{hecho}</span>}
             </div>
           </>

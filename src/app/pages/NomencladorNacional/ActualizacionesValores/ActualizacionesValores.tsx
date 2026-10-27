@@ -15,6 +15,7 @@ import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
 import s from "./ActualizacionesValores.module.scss";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -96,7 +97,7 @@ export default function ActualizacionesValores() {
 
         <div className={s.anios} role="group" aria-label="Año">
           {["", ...anios].map((a) => (
-            <button
+            <BotonPlano
               key={a || "todos"}
               type="button"
               className={`${s.anio} ${anio === a ? s.anioActivo : ""}`}
@@ -104,7 +105,7 @@ export default function ActualizacionesValores() {
               onClick={() => setAnio(a)}
             >
               {a || "Todos"}
-            </button>
+            </BotonPlano>
           ))}
         </div>
       </div>
@@ -140,7 +141,7 @@ export default function ActualizacionesValores() {
                 <tbody key={mes.mes}>
                   <tr className={s.mes}>
                     <td colSpan={5}>
-                      <button
+                      <BotonPlano
                         type="button"
                         className={s.mesBoton}
                         onClick={() => alternar(mes.mes)}
@@ -153,7 +154,7 @@ export default function ActualizacionesValores() {
                         />
                         <span className={s.mesTitulo}>{tituloMes(mes.mes)}</span>
                         <span className={s.mesCuenta}>{mes.obras_sociales.length}</span>
-                      </button>
+                      </BotonPlano>
                     </td>
                   </tr>
 

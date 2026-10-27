@@ -12,6 +12,7 @@ import marco from "./ExportFieldsModal.module.scss";
 import s from "./RecuentoModal.module.scss";;
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
 import MarcoModal from "@/app/components/ui/MarcoModal/MarcoModal";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const LIMITE_DETALLE = 50;
 
@@ -47,9 +48,9 @@ export default function RecuentoModal({
     <MarcoModal onClose={onClose} ref={panelRef} className={marco.panel} aria-labelledby="recuento-titulo">
         <header className={marco.head}>
           <h2 id="recuento-titulo" className={marco.title}>Recuento de errores · {obraSocial}</h2>
-          <button type="button" className={marco.close} onClick={onClose} aria-label="Cerrar">
+          <BotonPlano type="button" className={marco.close} onClick={onClose} aria-label="Cerrar">
             <X size={18} />
-          </button>
+          </BotonPlano>
         </header>
 
         <div className={marco.body}>
@@ -101,7 +102,7 @@ export default function RecuentoModal({
               Mira sólo las columnas elegidas en «Datos a mostrar». No modifica ningún dato.
             </span>
           </div>
-          <button type="button" className={marco.done} onClick={onClose}>Listo</button>
+          <BotonPlano type="button" className={marco.done} onClick={onClose}>Listo</BotonPlano>
         </footer>
       </MarcoModal>,
     document.body,

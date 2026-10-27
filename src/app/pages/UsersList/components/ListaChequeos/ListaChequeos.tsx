@@ -10,6 +10,7 @@ import {
 // La hoja es la del control de datos del padrón.
 import styles from "../../AuditoriaPadron.module.scss";
 import { formatoNumero } from "@/app/shared/lib/formatos";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 
 const claseSev = (s: Severidad) =>
@@ -54,7 +55,7 @@ export default function ListaChequeos<C extends ChequeoPadron>({ chequeos, abier
               const activo = abierto === c.id;
               return (
                 <article key={c.id} className={styles.chequeo}>
-                  <button
+                  <BotonPlano
                     type="button"
                     className={styles.chequeoHead}
                     onClick={() => onAbrir(activo ? null : c.id)}
@@ -76,7 +77,7 @@ export default function ListaChequeos<C extends ChequeoPadron>({ chequeos, abier
                     <span className={`${styles.casos} ${c.casos === 0 ? styles.casosCero : ""}`}>
                       {formatoNumero.format(c.casos)}
                     </span>
-                  </button>
+                  </BotonPlano>
 
                   {activo && <div className={styles.detalle}>{children(c)}</div>}
                 </article>

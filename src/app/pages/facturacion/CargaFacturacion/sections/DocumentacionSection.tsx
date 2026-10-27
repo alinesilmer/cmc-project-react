@@ -12,7 +12,8 @@ import {
   reordenarDocumentosPrestacion,
 } from "../../api";
 import type { DocumentoPrestacion } from "../../types";
-import comun from "../Comun.module.scss";;
+import comun from "../Comun.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";;
 
 interface Props {
   /** El código elegido exige documentación digital en esta obra social. */
@@ -97,7 +98,7 @@ export default function DocumentacionSection({
     <div className={comun.section}>
       <span className={comun.sectionTitle}>Documentación digital</span>
       <div>
-        <button
+        <BotonPlano
           type="button"
           className={comun.btnGhost}
           onClick={() => setAbierto(true)}
@@ -106,7 +107,7 @@ export default function DocumentacionSection({
         >
           {docs.length > 0 ? <FileText size={15} aria-hidden="true" /> : <Paperclip size={15} aria-hidden="true" />}
           {faltan ? "Documentación: falta" : `Documentación (${docs.length})`}
-        </button>
+        </BotonPlano>
       </div>
       {abierto && (
         <DocumentosModal

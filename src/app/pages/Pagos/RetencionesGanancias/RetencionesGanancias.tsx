@@ -22,6 +22,7 @@ import {
   formatCuit,
   tipoSujetoLabel,
 } from "./utiles";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const mensajeDe = (e: any, porDefecto: string) => {
   const detail = e?.response?.data?.detail;
@@ -264,7 +265,7 @@ const RetencionesGanancias: React.FC = () => {
                     <td>
                       {f.retenido > 0 && (
                         <div className={lq.accionesFila}>
-                          <button
+                          <BotonPlano
                             type="button"
                             className={lq.botonIcono}
                             title="Comprobante de retención"
@@ -273,7 +274,7 @@ const RetencionesGanancias: React.FC = () => {
                             disabled={generando !== null}
                           >
                             <FileText size={16} />
-                          </button>
+                          </BotonPlano>
                         </div>
                       )}
                     </td>

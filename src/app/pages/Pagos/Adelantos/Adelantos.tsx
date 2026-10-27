@@ -27,6 +27,7 @@ import {
   type FacturaParaAdelanto,
   estadoAdelantoLabel,
 } from "./utiles";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const OBRAS_SOCIALES_URL = "/api/obras_social/";
 
@@ -249,7 +250,7 @@ const Adelantos: React.FC = () => {
             }}
           />
           {a.estado === "A" && (
-            <button
+            <BotonPlano
               type="button"
               className={lq.botonIconoPeligro}
               title="Eliminar"
@@ -260,7 +261,7 @@ const Adelantos: React.FC = () => {
               }}
             >
               <Trash2 size={16} />
-            </button>
+            </BotonPlano>
           )}
         </div>
       ),

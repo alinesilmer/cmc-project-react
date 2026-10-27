@@ -34,6 +34,7 @@ import PaginaPasos from "@/app/components/layout/PaginaPasos/PaginaPasos";
 import BotonAccion from "@/app/components/ui/BotonAccion/BotonAccion";
 import Button from "@/app/components/ui/Button/Button";
 import SearchField from "@/app/components/ui/SearchField/SearchField";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const PAGE_SIZE = 50;
 const RUTA = "/panel/nomenclador/nivelados";
@@ -203,18 +204,18 @@ export default function NomencladoresNivelados() {
               {pestana === "codigos" && (
               <>
               <div className={styles.filtros} role="group" aria-label="Filtrar por nivel">
-                <button type="button" className={styles.chip} aria-pressed={filtro === "todos"} onClick={() => setFiltro("todos")}>
+                <BotonPlano type="button" className={styles.chip} aria-pressed={filtro === "todos"} onClick={() => setFiltro("todos")}>
                   Todos <b>{actual.total_codigos}</b>
-                </button>
+                </BotonPlano>
                 {niveles.map((n) => (
-                  <button key={n} type="button" className={styles.chip} aria-pressed={filtro === n} onClick={() => setFiltro(n)}>
+                  <BotonPlano key={n} type="button" className={styles.chip} aria-pressed={filtro === n} onClick={() => setFiltro(n)}>
                     Nivel {n} <b>{actual.por_nivel[String(n)] ?? 0}</b>
-                  </button>
+                  </BotonPlano>
                 ))}
                 {actual.con_unidades > 0 && (
-                  <button type="button" className={styles.chip} aria-pressed={filtro === "unidades"} onClick={() => setFiltro("unidades")}>
+                  <BotonPlano type="button" className={styles.chip} aria-pressed={filtro === "unidades"} onClick={() => setFiltro("unidades")}>
                     Unidades fijas <b>{actual.con_unidades}</b>
-                  </button>
+                  </BotonPlano>
                 )}
               </div>
 
@@ -462,7 +463,7 @@ function EscalaDelNomenclador({
                     onChange={(e) => cambiar(f.nivel, { ua: e.target.value, manual: true })}
                   />
                   {f.manual ? (
-                    puedeEditar && <button type="button" className={styles.link} onClick={() => cambiar(f.nivel, { manual: false, ua: "" })}>EDITADO · volver al 25 %</button>
+                    puedeEditar && <BotonPlano type="button" className={styles.link} onClick={() => cambiar(f.nivel, { manual: false, ua: "" })}>EDITADO · volver al 25 %</BotonPlano>
                   ) : <span className={base.hintText}>25 %</span>}
                 </div>
               </div>
@@ -491,12 +492,12 @@ function EscalaDelNomenclador({
               Antes de aplicar se muestra una vista previa. Las obras sociales con niveles ajustados conservan su ajuste.
             </span>
             <div className={styles.accionesEscala}>
-              <button type="button" className={base.btnGhost} disabled={guardando || escala.isFetching} onClick={() => void escala.refetch()}>
+              <BotonPlano type="button" className={base.btnGhost} disabled={guardando || escala.isFetching} onClick={() => void escala.refetch()}>
                 Descartar
-              </button>
-              <button type="button" className={base.btnPrimary} disabled={guardando || invalida} onClick={() => void guardar()}>
+              </BotonPlano>
+              <BotonPlano type="button" className={base.btnPrimary} disabled={guardando || invalida} onClick={() => void guardar()}>
                 {guardando ? "Guardando…" : recalcular ? "Guardar y ver vista previa" : "Guardar escala"}
-              </button>
+              </BotonPlano>
             </div>
           </div>
         )}
@@ -510,9 +511,9 @@ function EscalaDelNomenclador({
                 <ul>{previa.errores.map((x) => <li key={x.obra_social_nro}>{x.obra_social_nro}: {x.motivo}</li>)}</ul>
               </details>
             )}
-            <button type="button" className={base.btnPrimary} disabled={aplicando || previa.valores === 0} onClick={() => void aplicarRecalculo()}>
+            <BotonPlano type="button" className={base.btnPrimary} disabled={aplicando || previa.valores === 0} onClick={() => void aplicarRecalculo()}>
               {aplicando ? "Recalculando…" : "Recalcular ahora"}
-            </button>
+            </BotonPlano>
           </div>
         )}
       </aside>
@@ -596,7 +597,7 @@ function EspecialidadesDelNomenclador({
           ))
         )}
         {puedeEditar && !editando && (
-          <button type="button" className={base.btnGhost} onClick={abrir}>Editar</button>
+          <BotonPlano type="button" className={base.btnGhost} onClick={abrir}>Editar</BotonPlano>
         )}
       </div>
 
@@ -630,12 +631,12 @@ function EspecialidadesDelNomenclador({
             <span className={base.hintText}>
               {elegidas.size === 0 ? "Todas las especialidades" : `${elegidas.size} seleccionada${elegidas.size === 1 ? "" : "s"}`}
             </span>
-            <button type="button" className={base.btnGhost} disabled={guardando} onClick={() => setEditando(false)}>
+            <BotonPlano type="button" className={base.btnGhost} disabled={guardando} onClick={() => setEditando(false)}>
               Cancelar
-            </button>
-            <button type="button" className={base.btnPrimary} disabled={guardando} onClick={() => void guardar()}>
+            </BotonPlano>
+            <BotonPlano type="button" className={base.btnPrimary} disabled={guardando} onClick={() => void guardar()}>
               Guardar
-            </button>
+            </BotonPlano>
           </div>
         </div>
       )}
@@ -690,14 +691,14 @@ function NivelEditable({
             value={unidades}
             onChange={(e) => setUnidades(e.target.value)}
           />
-          <button
+          <BotonPlano
             type="button"
             className={base.btnGhost}
             disabled={!unidadesValidas || Number(unidades) === Number(codigo.unidades)}
             onClick={() => onGuardar(codigo, null, Number(unidades))}
           >
             Guardar
-          </button>
+          </BotonPlano>
         </>
       )}
     </div>
@@ -762,9 +763,9 @@ function AgregarCodigo({
       <select className={base.formSelect} aria-label="Nivel del código a agregar" value={nivel} onChange={(e) => setNivel(Number(e.target.value))}>
         {niveles.map((n) => <option key={n} value={n}>Nivel {n}</option>)}
       </select>
-      <button type="button" className={base.btnGhost} disabled={elegido == null || guardando} onClick={() => void agregar()}>
+      <BotonPlano type="button" className={base.btnGhost} disabled={elegido == null || guardando} onClick={() => void agregar()}>
         <Plus size={14} /> Agregar
-      </button>
+      </BotonPlano>
     </div>
   );
 }

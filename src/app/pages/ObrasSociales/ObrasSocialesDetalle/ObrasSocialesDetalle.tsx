@@ -27,6 +27,7 @@ import s from "./ObrasSocialesDetalle.module.scss";
 import Button from "@/app/components/ui/Button/Button";
 import Franja, { Solapa } from "@/app/components/layout/Franja/Franja";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type ActiveTab = "datos" | "documentos" | "historial";
 
@@ -47,7 +48,7 @@ function CopyButton({ label, value }: { label: string; value: string }) {
   };
 
   return (
-    <button
+    <BotonPlano
       type="button"
       className={`${s.copyBtn} ${copiado ? s.copyBtnDone : ""}`}
       onClick={copiar}
@@ -55,7 +56,7 @@ function CopyButton({ label, value }: { label: string; value: string }) {
       aria-label={copiado ? "Copiado" : `Copiar ${label.toLowerCase()}`}
     >
       {copiado ? <Check size={14} /> : <Copy size={14} />}
-    </button>
+    </BotonPlano>
   );
 }
 
@@ -83,13 +84,13 @@ function DocumentoCard({ doc }: { doc: Documento }) {
         <span className={s.docCardTipo}><FileText size={14} />{label}</span>
         <span className={s.docActiveBadge}>Activo</span>
       </div>
-      <button
+      <BotonPlano
         type="button"
         className={s.docLink}
         onClick={() => abrirAdjunto(doc.url).catch((e) => notify.error(e.message))}
       >
         {label}
-      </button>
+      </BotonPlano>
     </div>
   );
 }

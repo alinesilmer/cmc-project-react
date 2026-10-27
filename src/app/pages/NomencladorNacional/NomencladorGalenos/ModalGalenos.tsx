@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { X as XIcon } from "lucide-react";
 import styles from "./NomencladorGalenos.module.scss";
 import MarcoModal from "@/app/components/ui/MarcoModal/MarcoModal";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 // ─── Modal sub-component ──────────────────────────────────────────────────────
 
@@ -25,9 +26,9 @@ export function Modal({
             <h2 className={styles.modalTitle}>{title}</h2>
             {subtitle && <p className={styles.modalSubtitle}>{subtitle}</p>}
           </div>
-          <button className={styles.modalClose} onClick={onClose}>
+          <BotonPlano className={styles.modalClose} onClick={onClose}>
             <XIcon size={18} />
-          </button>
+          </BotonPlano>
         </div>
         <div className={styles.modalBody}>{children}</div>
       </MarcoModal>

@@ -11,6 +11,7 @@ import {
   Settings,
   Users,
 } from "lucide-react";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Categoria = {
   id: string;
@@ -24,9 +25,9 @@ const Chip: React.FC<{ label: string; onClick: () => void }> = ({
   label,
   onClick,
 }) => (
-  <button type="button" className={styles.chip} onClick={onClick}>
+  <BotonPlano type="button" className={styles.chip} onClick={onClick}>
     #{label}
-  </button>
+  </BotonPlano>
 );
 
 const CategoryCard: React.FC<Categoria> = ({
@@ -124,9 +125,9 @@ const Help: React.FC = () => {
               placeholder="Buscá en nuestra base de conocimiento"
               aria-label="Buscar en el centro de ayuda"
             />
-            <button onClick={onBuscar} className={styles.searchBtn}>
+            <BotonPlano onClick={onBuscar} className={styles.searchBtn}>
               Buscar
-            </button>
+            </BotonPlano>
           </div>
         </div>
 

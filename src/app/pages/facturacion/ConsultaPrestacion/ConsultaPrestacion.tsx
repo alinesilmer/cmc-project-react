@@ -19,6 +19,7 @@ import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
 import BackButton from "@/app/components/ui/BackButton/BackButton";
 import { comoErrorApi } from "@/app/shared/lib/httpErrors";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 // Igual que en MedicoPrestacionesTable: las fechas DATE de la API vienen "YYYY-MM-DD" .
 const fmtFecha = (iso: string | null | undefined): string => {
@@ -163,7 +164,7 @@ const ConsultaPrestacion: React.FC = () => {
                 onChange={(e) => setIdInput(e.target.value)}
                 onKeyDown={onIdKeyDown}
               />
-              <button
+              <BotonPlano
                 type="button"
                 className={styles.iconBtn}
                 onClick={buscarPorId}
@@ -171,7 +172,7 @@ const ConsultaPrestacion: React.FC = () => {
                 aria-label="Buscar por ID"
               >
                 <Search size={16} />
-              </button>
+              </BotonPlano>
             </div>
           </div>
 
@@ -188,7 +189,7 @@ const ConsultaPrestacion: React.FC = () => {
                 onChange={(e) => setAutInput(e.target.value)}
                 onKeyDown={onAutKeyDown}
               />
-              <button
+              <BotonPlano
                 type="button"
                 className={styles.iconBtn}
                 onClick={buscarPorAutorizacion}
@@ -196,7 +197,7 @@ const ConsultaPrestacion: React.FC = () => {
                 aria-label="Buscar por orden o autorización"
               >
                 <Search size={16} />
-              </button>
+              </BotonPlano>
             </div>
           </div>
         </div>
@@ -230,9 +231,9 @@ const ConsultaPrestacion: React.FC = () => {
               Revisá el número, o probá buscar por nro de orden / autorización si no tenés
               el ID a mano.
             </p>
-            <button type="button" className={styles.ghostBtn} onClick={volver}>
+            <BotonPlano type="button" className={styles.ghostBtn} onClick={volver}>
               Volver a buscar
-            </button>
+            </BotonPlano>
           </div>
         )}
 

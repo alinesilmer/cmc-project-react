@@ -3,6 +3,7 @@
 import type React from "react";
 import styles from "./HelpModal.module.scss";
 import { Lightbulb } from "lucide-react";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 interface HelpModalProps {
   isOpen: boolean;
@@ -23,9 +24,9 @@ const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
       <div className={styles.modalContent}>
         <div className={styles.modalHeader}>
           <h3>¿Cómo subir documentos?</h3>
-          <button className={styles.closeButton} onClick={onClose}>
+          <BotonPlano className={styles.closeButton} onClick={onClose}>
             ×
-          </button>
+          </BotonPlano>
         </div>
 
         <div className={styles.modalBody}>

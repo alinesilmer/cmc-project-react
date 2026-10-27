@@ -28,6 +28,7 @@ import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import { type Compensacion, importeConSigno } from "../../Compensaciones/utiles";
 import { type AdelantoListaRow, estadoAdelantoLabel } from "../../Adelantos/utiles";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Props = {
   pago: Pago;
@@ -325,9 +326,9 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
       {avisoCarga && (
         <div className={styles.errorBanner} role="status">
           {avisoCarga}{" "}
-          <button type="button" onClick={() => setAvisoCarga(null)} style={{ textDecoration: "underline", background: "none", border: 0, cursor: "pointer", color: "inherit" }}>
+          <BotonPlano type="button" onClick={() => setAvisoCarga(null)} style={{ textDecoration: "underline", background: "none", border: 0, cursor: "pointer", color: "inherit" }}>
             Cerrar aviso
-          </button>
+          </BotonPlano>
         </div>
       )}
 
@@ -481,7 +482,7 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
                         ) : null}
                       </td>
                       <td>{c.leyenda}</td>
-                      <td style={{ fontWeight: 700, color: Number(c.importe) < 0 ? "#b42318" : "#13623a" }}>
+                      <td style={{ fontWeight: 700, color: Number(c.importe) < 0 ? paleta.tonoRojo600D : paleta.tonoVerde750B }}>
                         {importeConSigno(c.importe)}
                       </td>
                       <td>
@@ -590,9 +591,9 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
                       padding: "10px 12px",
                       fontSize: 13,
                       lineHeight: 1.5,
-                      color: "#5c3300",
-                      background: "#fff7e6",
-                      border: "1px solid #f5d9a0",
+                      color: paleta.tonoNaranja800,
+                      background: paleta.tonoNaranja50C,
+                      border: `1px solid ${paleta.tonoNaranja200}`,
                       borderRadius: 10,
                     }}
                   >
@@ -618,8 +619,8 @@ const Resumen: React.FC<{ rotulo: string; valor: string; destacado?: boolean; no
       flexDirection: "column",
       gap: 4,
       padding: "12px 16px",
-      background: destacado ? "#eef4fc" : paleta.white,
-      border: `1px solid ${destacado ? "#c9daf0" : paleta.gray200}`,
+      background: destacado ? paleta.tonoAzul50L : paleta.white,
+      border: `1px solid ${destacado ? paleta.tonoAzul150D : paleta.gray200}`,
       borderRadius: 14,
     }}
   >

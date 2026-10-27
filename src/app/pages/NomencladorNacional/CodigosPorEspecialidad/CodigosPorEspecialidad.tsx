@@ -22,6 +22,7 @@ import Button from "@/app/components/ui/Button/Button";
 import SearchField from "@/app/components/ui/SearchField/SearchField";
 import Segmentos from "@/app/components/ui/Segmentos/Segmentos";
 import c from "@/app/components/ui/Paso/Campos.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 
 // Búsqueda sin acentos: "cardiologia" encuentra "Cardiología".
@@ -365,7 +366,7 @@ export default function CodigosPorEspecialidad() {
               aria-busy={cargandoPrecios}
             >
               {chipsOrigen.map((c) => (
-                <button
+                <BotonPlano
                   key={c.key}
                   type="button"
                   className={`${styles.chip} ${origenFiltro === c.key ? styles.chipOn : ""}`}
@@ -380,7 +381,7 @@ export default function CodigosPorEspecialidad() {
                   <span className={styles.chipN}>
                     {cargandoPrecios && c.key !== "todos" ? "·" : c.n}
                   </span>
-                </button>
+                </BotonPlano>
               ))}
             </div>
           </>

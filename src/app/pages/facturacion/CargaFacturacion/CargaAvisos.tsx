@@ -3,6 +3,7 @@ import comun from "./Comun.module.scss";
 import { AlertTriangle, ArrowLeft } from "lucide-react";
 import { versionLabel } from "../types";
 import type { CargaCtx } from "./useCargaFacturacion";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 export default function CargaAvisos({ ctx }: { ctx: CargaCtx }) {
   const { navigate, capa, isComplemento, replicarParam, isReplicando, loadingReplicar, complementoMeta, obraSocial, periodo, volverA } = ctx;
@@ -20,13 +21,13 @@ export default function CargaAvisos({ ctx }: { ctx: CargaCtx }) {
               OS: {obraSocial.nro_obra_social} · {obraSocial.nombre}
             </span>
           )}
-          <button
+          <BotonPlano
             type="button"
             className={styles.backBtn}
             onClick={() => (capa ? capa.cerrar() : navigate(volverA))}
           >
             <ArrowLeft size={15} /> Volver
-          </button>
+          </BotonPlano>
         </div>
       )}
 

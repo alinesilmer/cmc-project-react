@@ -7,6 +7,7 @@ import { X } from "lucide-react";
 import Button from "@/app/components/ui/Button/Button";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
 import s from "./ActionModal.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type ActionModalProps = {
   open: boolean;
@@ -91,9 +92,9 @@ const ActionModal: React.FC<ActionModalProps> = ({
         <h2 id={idTitulo} className={s.titulo}>
           {title}
         </h2>
-        <button type="button" className={s.cerrar} onClick={handleClose} disabled={busy} aria-label="Cerrar">
+        <BotonPlano type="button" className={s.cerrar} onClick={handleClose} disabled={busy} aria-label="Cerrar">
           <X size={18} aria-hidden="true" />
-        </button>
+        </BotonPlano>
       </div>
 
       <div className={s.cuerpo}>{children}</div>

@@ -7,6 +7,7 @@ import { OBRAS_SOCIALES_KEY } from "@/app/pages/ObrasSociales/useObrasSociales";
 import { observacionesPorOS } from "@/app/pages/BoletinMedico/boletinMedico.api";
 import DiaLimite from "./DiaLimite";
 import s from "./PanelObraSocial.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Chip = "calendario" | "info";
 
@@ -42,7 +43,7 @@ export default function PanelObraSocial({ codigo }: Props) {
   return (
     <aside className={s.panel}>
       <div className={s.chips} role="tablist" aria-label="Datos de la obra social">
-        <button
+        <BotonPlano
           type="button"
           role="tab"
           aria-selected={chip === "calendario"}
@@ -50,8 +51,8 @@ export default function PanelObraSocial({ codigo }: Props) {
           onClick={() => setChip("calendario")}
         >
           <CalendarDays size={18} aria-hidden="true" /> Calendario
-        </button>
-        <button
+        </BotonPlano>
+        <BotonPlano
           type="button"
           role="tab"
           aria-selected={chip === "info"}
@@ -64,7 +65,7 @@ export default function PanelObraSocial({ codigo }: Props) {
               {lineas.length}
             </span>
           )}
-        </button>
+        </BotonPlano>
       </div>
 
       {chip === "calendario" ? (

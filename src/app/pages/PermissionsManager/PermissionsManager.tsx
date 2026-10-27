@@ -14,6 +14,7 @@ import {
 import SearchField from "@/app/components/ui/SearchField/SearchField";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import Franja from "@/app/components/layout/Franja/Franja";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 // ---------- Mapeo visual de permisos ----------
 // Categorías por prefijo de código (mostrar ≠ almacenar)
@@ -137,7 +138,7 @@ const PermissionsManager: React.FC = () => {
               <p className={s.estado}>Sin roles</p>
             ) : (
               roles.map((r) => (
-                <button
+                <BotonPlano
                   key={r.name}
                   type="button"
                   className={`${s.rol} ${activeRole === r.name ? s.rolActivo : ""}`}
@@ -148,7 +149,7 @@ const PermissionsManager: React.FC = () => {
                   {activeRole === r.name && !loadingRolePerms && (
                     <span className={s.cuenta}>{rolePerms.length}</span>
                   )}
-                </button>
+                </BotonPlano>
               ))
             )}
           </nav>
@@ -156,7 +157,7 @@ const PermissionsManager: React.FC = () => {
           <div className={s.permisos}>
             <div className={s.categorias} role="group" aria-label="Categoría">
               {Object.entries(CATEGORY_LABEL).map(([k, v]) => (
-                <button
+                <BotonPlano
                   key={k}
                   type="button"
                   className={`${s.categoria} ${category === k ? s.categoriaActiva : ""}`}
@@ -164,7 +165,7 @@ const PermissionsManager: React.FC = () => {
                   onClick={() => setCategory(k)}
                 >
                   {v}
-                </button>
+                </BotonPlano>
               ))}
             </div>
 

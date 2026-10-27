@@ -12,6 +12,7 @@ import type { ValorDocumentoOut } from "@/app/pages/NomencladorNacional/nomencla
 import SearchField from "@/app/components/ui/SearchField/SearchField";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const PDF = "application/pdf";
 
@@ -120,7 +121,7 @@ export default function ValoresPdfTab() {
                   </td>
                   <td className={styles.fecha}>{formatFecha(doc.vigencia_desde)}</td>
                   <td>
-                    <button
+                    <BotonPlano
                       type="button"
                       className={styles.archivo}
                       title={doc.nombre_original}
@@ -130,7 +131,7 @@ export default function ValoresPdfTab() {
                     >
                       <FileText size={15} />
                       <span>{doc.nombre_original}</span>
-                    </button>
+                    </BotonPlano>
                   </td>
                   <td className={styles.nota}>{doc.descripcion || "—"}</td>
                 </tr>

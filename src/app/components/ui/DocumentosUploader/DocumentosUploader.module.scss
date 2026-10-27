@@ -43,8 +43,8 @@
   font-weight: $font-weight-bold;
   color: $white;
 }
-.tipoPdf { background: #b91c1c; }
-.tipoImg { background: #1d4ed8; }
+.tipoPdf { background: $tono-rojo-500; }
+.tipoImg { background: $tono-azul-500-b; }
 
 .nombres {
   display: flex;
@@ -89,7 +89,7 @@
   &:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 .icono { width: 2.125rem; padding: 0; }
-.peligro { color: #b91c1c; border-color: #e5b4b4; }
+.peligro { color: $tono-rojo-500; border-color: $tono-rojo-200-b; }
 
 .zona {
   display: flex;
@@ -114,5 +114,5 @@
 .error {
   margin: 0;
   font-size: $font-size-sm;
-  color: #b91c1c;
+  color: $tono-rojo-500;
 }

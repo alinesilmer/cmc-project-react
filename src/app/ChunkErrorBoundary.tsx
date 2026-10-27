@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from "react";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 // Cada deploy reemplaza `assets/*-<hash>.js` por nombres nuevos y borra los viejos (ver .github/workflows/main.yml: `rm -rf /srv/web/* && tar -xzf ...`).
 export const CHUNK_RELOAD_FLAG = "cmc-chunk-reload";
@@ -60,7 +61,7 @@ class ChunkErrorBoundary extends Component<Props, State> {
     return (
       <div style={{ padding: 40, textAlign: "center", fontFamily: "sans-serif" }}>
         <p>Ocurrió un problema al cargar la aplicación.</p>
-        <button
+        <BotonPlano
           type="button"
           onClick={() => {
             sessionStorage.removeItem(CHUNK_RELOAD_FLAG);
@@ -68,7 +69,7 @@ class ChunkErrorBoundary extends Component<Props, State> {
           }}
         >
           Reintentar
-        </button>
+        </BotonPlano>
       </div>
     );
   }

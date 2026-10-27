@@ -7,7 +7,7 @@ import { AlertCircle, ArrowRight, CheckCircle2, ListOrdered, Save } from "lucide
 import base from "../NomencladorCodigos/NomencladorCodigos.module.scss";
 import styles from "./NomencladorCodigoForm.module.scss";
 import AppSearchSelect from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
-import MultiSelectBuscable from "@/app/components/molecules/MultiSelectBuscable/MultiSelectBuscable";
+import MultiSelectBuscable from "@/app/components/ui/MultiSelectBuscable/MultiSelectBuscable";
 import EstadoCodigoPill from "../components/EstadoCodigoPill";
 import { usePermisos } from "@/app/auth/usePermisos";
 import { getEspecialidades } from "../../Especialidades/especialidades.api";
@@ -43,6 +43,7 @@ import { detalleError } from "@/app/pages/NomencladorNacional/utiles";
 import { formatoPesos } from "@/app/shared/lib/formatos";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
 import FieldError from "@/app/components/ui/FieldError/FieldError";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const LISTADO_PATH = "/panel/nomenclador/codigos";
 const CODIGOS_OS_PATH = "/panel/nomenclador/codigos-por-os";
@@ -144,12 +145,12 @@ export default function NomencladorCodigoForm() {
             <div className={`${styles.result} ${styles.resultOk}`} role="status">
               <strong>Código creado.</strong> Podés seguir ahora o más tarde desde esta ficha:
               <div className={styles.siguientes}>
-                <button type="button" className={base.btnGhost} onClick={() => irATab("especialidades")}>
+                <BotonPlano type="button" className={base.btnGhost} onClick={() => irATab("especialidades")}>
                   Definir quién puede facturarlo <ArrowRight size={14} />
-                </button>
-                <button type="button" className={base.btnGhost} onClick={() => irATab("obras")}>
+                </BotonPlano>
+                <BotonPlano type="button" className={base.btnGhost} onClick={() => irATab("obras")}>
                   Darlo de alta en obras sociales <ArrowRight size={14} />
-                </button>
+                </BotonPlano>
               </div>
             </div>
           )}
@@ -221,22 +222,22 @@ function ChecklistEtapas({ ficha, onTab }: { ficha: FichaCodigoOut; onTab: (t: T
       <div className={`${styles.etapa} ${styles.e1}`}>
         <span className={styles.etapaT}>1 · Código</span>
         <span className={styles.etapaV}>{ficha.activo ? "Activo" : "Inactivo"}</span>
-        <button type="button" className={styles.etapaL} onClick={() => onTab("datos")}>Editar datos</button>
+        <BotonPlano type="button" className={styles.etapaL} onClick={() => onTab("datos")}>Editar datos</BotonPlano>
       </div>
       <div className={`${styles.etapa} ${styles.e2}`}>
         <span className={styles.etapaT}>2 · Quién factura</span>
         <span className={styles.etapaV}>{quien}</span>
-        <button type="button" className={styles.etapaL} onClick={() => onTab("especialidades")}>Editar plantilla</button>
+        <BotonPlano type="button" className={styles.etapaL} onClick={() => onTab("especialidades")}>Editar plantilla</BotonPlano>
       </div>
       <div className={`${styles.etapa} ${styles.e3}`}>
         <span className={styles.etapaT}>3 · Alta en O.S.</span>
         <span className={styles.etapaV}>{conAlta} de {total}</span>
-        <button type="button" className={styles.etapaL} onClick={() => onTab("obras")}>{ficha.conteos.sin_alta} sin alta</button>
+        <BotonPlano type="button" className={styles.etapaL} onClick={() => onTab("obras")}>{ficha.conteos.sin_alta} sin alta</BotonPlano>
       </div>
       <div className={`${styles.etapa} ${styles.e4}`}>
         <span className={styles.etapaT}>4 · Precio</span>
         <span className={styles.etapaV}>{ficha.conteos.con_precio} de {conAlta}</span>
-        <button type="button" className={styles.etapaL} onClick={() => onTab("obras")}>{ficha.conteos.sin_precio} sin precio</button>
+        <BotonPlano type="button" className={styles.etapaL} onClick={() => onTab("obras")}>{ficha.conteos.sin_precio} sin precio</BotonPlano>
       </div>
     </div>
   );
@@ -328,7 +329,7 @@ function TabObras({
         {FILTROS.map((f) => {
           const n = f.id === "todas" ? ficha.obras_sociales.length : ficha.conteos[f.id];
           return (
-            <button
+            <BotonPlano
               key={f.id}
               type="button"
               className={`${styles.kpi} ${styles[`kpi_${f.id}`] ?? ""} ${filtro === f.id ? styles.kpiOn : ""}`}
@@ -337,7 +338,7 @@ function TabObras({
             >
               <strong>{n}</strong>
               <span>{f.label}</span>
-            </button>
+            </BotonPlano>
           );
         })}
       </div>
@@ -351,14 +352,14 @@ function TabObras({
           aria-label="Buscar obra social"
         />
         {puedeEditar && (
-          <button
+          <BotonPlano
             type="button"
             className={base.btnPrimary}
             disabled={sel.size === 0 || trabajando}
             onClick={() => darDeAlta([...sel])}
           >
             {trabajando ? <><Cargando size={14} /> Dando de alta…</> : `Dar de alta en ${sel.size} seleccionada${sel.size === 1 ? "" : "s"}`}
-          </button>
+          </BotonPlano>
         )}
       </div>
 
@@ -431,12 +432,12 @@ function TabObras({
                 <td className={styles.num}>{o.prestaciones_sin_valorizar || "—"}</td>
                 <td className={styles.acciones}>
                   {o.estado === "sin_alta" && puedeEditar && (
-                    <button type="button" className={base.btnGhost} disabled={trabajando} onClick={() => darDeAlta([o.obra_social_nro])}>
+                    <BotonPlano type="button" className={base.btnGhost} disabled={trabajando} onClick={() => darDeAlta([o.obra_social_nro])}>
                       Dar de alta
-                    </button>
+                    </BotonPlano>
                   )}
                   {o.estado === "suspendido" && puedeEditar && (
-                    <button type="button" className={base.btnGhost} onClick={() => reactivar(o.obra_social_nro)}>Reactivar</button>
+                    <BotonPlano type="button" className={base.btnGhost} onClick={() => reactivar(o.obra_social_nro)}>Reactivar</BotonPlano>
                   )}
                   {(o.estado === "sin_precio" || o.estado === "con_precio") && (
                     <>
@@ -726,9 +727,9 @@ function TabEspecialidades({
         )}
         {puedeEditar && (
           <div className={styles.actions}>
-            <button type="button" className={base.btnPrimary} onClick={guardar} disabled={guardando}>
+            <BotonPlano type="button" className={base.btnPrimary} onClick={guardar} disabled={guardando}>
               {guardando ? <><Cargando size={14} /> Guardando…</> : <><Save size={15} /> Guardar plantilla</>}
-            </button>
+            </BotonPlano>
           </div>
         )}
       </section>
@@ -777,17 +778,17 @@ function TabEspecialidades({
           )}
 
           <div className={styles.actions}>
-            <button type="button" className={base.btnGhost} disabled={osSel.length === 0 || propagando !== null} onClick={() => propagar(true)}>
+            <BotonPlano type="button" className={base.btnGhost} disabled={osSel.length === 0 || propagando !== null} onClick={() => propagar(true)}>
               {propagando === "preview" ? <><Cargando size={14} /> Calculando…</> : "Ver cambios"}
-            </button>
-            <button
+            </BotonPlano>
+            <BotonPlano
               type="button"
               className={base.btnPrimary}
               disabled={!preview || preview.dry_run === false || propagando !== null}
               onClick={() => propagar(false)}
             >
               {propagando === "aplicar" ? <><Cargando size={14} /> Actualizando…</> : `Actualizar ${osSel.length} obra${osSel.length === 1 ? "" : "s"} social${osSel.length === 1 ? "" : "es"}`}
-            </button>
+            </BotonPlano>
           </div>
         </section>
       )}

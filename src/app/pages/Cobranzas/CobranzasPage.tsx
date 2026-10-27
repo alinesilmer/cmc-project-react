@@ -37,6 +37,7 @@ import { getErrorMessage } from "@/app/shared/lib/utiles";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
 import Paginador from "@/app/components/ui/Paginador/Paginador";
 import paleta from "@/app/styles/paleta.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const PAGE_SIZE = 25;
 
@@ -336,10 +337,10 @@ const CobranzasPage: React.FC = () => {
       {/* ── Breadcrumb del drill-down ────────────────────────────── */}
       {!enLista && (
         <div className={styles.breadcrumb}>
-          <button onClick={() => cambiarTab(tab)}>
+          <BotonPlano onClick={() => cambiarTab(tab)}>
             <ChevronLeft size={15} />
             {tab === "concepto" ? "Conceptos" : "Socios"}
-          </button>
+          </BotonPlano>
           {tab === "concepto" && conceptoSel && (
             <>
               <span>/</span>
@@ -348,9 +349,9 @@ const CobranzasPage: React.FC = () => {
                   {conceptoSel.nro_colegio} · {conceptoSel.nombre}
                 </span>
               ) : (
-                <button onClick={() => setNivelConcepto("socios")}>
+                <BotonPlano onClick={() => setNivelConcepto("socios")}>
                   {conceptoSel.nro_colegio} · {conceptoSel.nombre}
-                </button>
+                </BotonPlano>
               )}
             </>
           )}

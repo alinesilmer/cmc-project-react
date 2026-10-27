@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import s from "./PendientesAlta.module.scss";
 import type { PorOSCtx } from "../useNomencladorPorOS";
 import Aviso from "@/app/components/ui/Aviso/Aviso";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const MAX_FICHAS = 30;
 
@@ -23,7 +24,7 @@ export default function PendientesAlta({ pendientes, abrirCargaPrecio, selectedN
       </span>
       <span className={s.fichas}>
         {pendientes.slice(0, MAX_FICHAS).map((p) => (
-          <button
+          <BotonPlano
             key={p.nomenclador_id}
             type="button"
             className={s.ficha}
@@ -31,7 +32,7 @@ export default function PendientesAlta({ pendientes, abrirCargaPrecio, selectedN
             onClick={() => abrirCargaPrecio(p.nomenclador_id, p.codigo, p.descripcion_colegio)}
           >
             {p.codigo}
-          </button>
+          </BotonPlano>
         ))}
         {n > MAX_FICHAS && (
           <Link to={`/panel/nomenclador/codigos-por-os?os=${selectedNroOS}`} className={s.mas}>

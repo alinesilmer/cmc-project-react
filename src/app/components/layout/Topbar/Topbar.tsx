@@ -31,6 +31,7 @@ import {
 } from "./navegacion";
 // La versión de 26 KB (160×240): acá el logo se ve chico y la barra baja en todas las pantallas.
 import Logo from "@/website/assets/images/logoCMC-web.png";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const MENU_CUENTA = "cuenta";
 const SIN_SCOPES: string[] = [];
@@ -212,7 +213,7 @@ export default function Topbar() {
         onMouseEnter={() => openMenuNow(entry.id)}
         onMouseLeave={scheduleCloseMenu}
       >
-        <button
+        <BotonPlano
           type="button"
           className={`${styles.topLink} ${active ? styles.topActive : ""} ${open ? styles.topOpen : ""}`}
           onClick={() => setOpenMenu((cur) => (cur === entry.id ? null : entry.id))}
@@ -222,7 +223,7 @@ export default function Topbar() {
         >
           {entry.label}
           <ChevronDown size={14} className={`${styles.chev} ${open ? styles.chevOpen : ""}`} />
-        </button>
+        </BotonPlano>
         {open && (
           <div className={styles.dropdown} role="menu" data-desplegable>
             <ColumnasMenu columnas={entry.columns} can={can} ruta={location.pathname} alNavegar={cerrarMenus} />
@@ -247,11 +248,11 @@ export default function Topbar() {
           </span>
         </Link>
 
-        <button type="button" className={styles.buscar} onClick={abrirBuscador} aria-label="Buscar pantalla">
+        <BotonPlano type="button" className={styles.buscar} onClick={abrirBuscador} aria-label="Buscar pantalla">
           <Search size={19} aria-hidden="true" />
           <span className={styles.buscarTexto}>¿A qué pantalla vas?</span>
           <kbd className={styles.buscarAtajo}>Ctrl K</kbd>
-        </button>
+        </BotonPlano>
 
         <div className={styles.right}>
           <BotonTexto />
@@ -272,13 +273,13 @@ export default function Topbar() {
           )}
 
           {!isAuthenticated && (
-            <button type="button" className={styles.authButton} onClick={handleAuth}>
+            <BotonPlano type="button" className={styles.authButton} onClick={handleAuth}>
               <AuthIcon size={17} />
               <span>{authLabel}</span>
-            </button>
+            </BotonPlano>
           )}
 
-          <button
+          <BotonPlano
             type="button"
             className={styles.hamburger}
             onClick={() => setMobileOpen(true)}
@@ -286,7 +287,7 @@ export default function Topbar() {
             aria-expanded={mobileOpen}
           >
             <Menu size={20} />
-          </button>
+          </BotonPlano>
         </div>
       </div>
 

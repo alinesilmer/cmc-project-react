@@ -3,6 +3,7 @@ import type { Tipo } from "../../types";
 import type { FiltroDocumentacion, FiltrosVista } from "./types";
 import s from "../export/export.module.scss";
 import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const TIPOS: Tipo[] = ["Consulta", "Practica", "Honorarios individuales", "Sanatorio"];
 
@@ -112,14 +113,14 @@ export default function FiltrosVistaSection({ filtros, onChange, prestadores, co
           <label className={s.filterLabel}>Tipo de prestación</label>
           <div className={s.chipToggleRow}>
             {TIPOS.map((t) => (
-              <button
+              <BotonPlano
                 key={t}
                 type="button"
                 className={`${s.chipToggle} ${(filtros.tipos ?? []).includes(t) ? s.chipToggleOn : ""}`}
                 onClick={() => toggleTipo(t)}
               >
                 {t}
-              </button>
+              </BotonPlano>
             ))}
           </div>
         </div>
@@ -133,7 +134,7 @@ export default function FiltrosVistaSection({ filtros, onChange, prestadores, co
                 return (
                   <span key={cod} className={s.chip}>
                     {p?.nombre ?? cod}
-                    <button type="button" className={s.chipRemove} onClick={() => toggleSocio(cod)}>×</button>
+                    <BotonPlano type="button" className={s.chipRemove} onClick={() => toggleSocio(cod)}>×</BotonPlano>
                   </span>
                 );
               })}

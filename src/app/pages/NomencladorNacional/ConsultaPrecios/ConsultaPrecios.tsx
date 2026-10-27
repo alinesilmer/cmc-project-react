@@ -11,6 +11,7 @@ import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import { useAuth } from "@/app/auth/useAuth";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 export default function ConsultaPrecios() {
   const { user } = useAuth();
@@ -205,7 +206,7 @@ export default function ConsultaPrecios() {
               ))}
             </div>
 
-            <button
+            <BotonPlano
               type="button"
               className={styles.cta}
               onClick={handleSearch}
@@ -213,7 +214,7 @@ export default function ConsultaPrecios() {
             >
               {loading ? <Cargando size={17} /> : <Search size={17} />}
               Consultar precio
-            </button>
+            </BotonPlano>
           </div>
 
           {/* ── Result column ── */}

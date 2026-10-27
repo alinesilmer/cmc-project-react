@@ -209,21 +209,21 @@
 .badgeBaja {
   display: inline-block;
   padding: $spacing-2 $spacing-4;
-  background-color: #fee2e2;
-  color: #991b1b;
+  background-color: $tono-rojo-50;
+  color: $tono-rojo-550-c;
   border-radius: $radio-sm;
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
 }
 
 .replicaOk {
-  background-color: #f0fdf4;
-  border-color: #bbf7d0;
+  background-color: $tono-verde-50-d;
+  border-color: $tono-verde-50-b;
 }
 
 .replicaAviso {
-  background-color: #fffbeb;
-  border-color: #fde68a;
+  background-color: $tono-amarillo-50-c;
+  border-color: $tono-amarillo-100;
 }
 
 .replicaLista {

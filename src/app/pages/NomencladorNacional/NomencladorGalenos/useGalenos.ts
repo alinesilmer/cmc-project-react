@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { type EditForm, type ImportForm, type ModalKind } from "./galenos.types";
 import { type GalenoOut, type GalenosImportarResult, type ObraSocialFamiliaItem, type ReplicaResultadoItem, type ReplicarGalenoFamiliaPayload } from "../nomenclador.types";
 import { today } from "./galenos.helpers";
-import { REPLICA_INICIAL, destinosReplica, type ReplicaState } from "@/app/components/molecules/ReplicarFamilia/replicaState";
+import { REPLICA_INICIAL, destinosReplica, type ReplicaState } from "@/app/pages/NomencladorNacional/components/ReplicarFamilia/replicaState";
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import { actualizarPrecioGaleno, actualizarUnidadesGaleno, deleteGaleno, getFamiliaObraSocial, getHistorialGaleno, importarGalenosDeObraSocial, listGalenos, replicarGalenoEnFamilia, updateGaleno } from "../nomenclador.api";
 import { compararGalenos } from "../nomenclador.helpers";

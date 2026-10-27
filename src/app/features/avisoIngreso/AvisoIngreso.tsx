@@ -5,6 +5,7 @@ import { useLocation } from "react-router-dom";
 import { useAuth } from "@/app/auth/useAuth";
 import { avisoPendiente, cerrarAviso, llevaAviso } from "./reglasAviso";
 import styles from "./AvisoIngreso.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const RUTA_INICIO = "/panel/dashboard";
 
@@ -35,9 +36,9 @@ export default function AvisoIngreso() {
       aria-describedby="aviso-ingreso-texto"
       slotProps={{ paper: { className: styles.aviso } }}
     >
-      <button type="button" className={styles.cerrar} onClick={cerrar} aria-label="Cerrar el mensaje">
+      <BotonPlano type="button" className={styles.cerrar} onClick={cerrar} aria-label="Cerrar el mensaje">
         <X aria-hidden="true" />
-      </button>
+      </BotonPlano>
 
       <div className={styles.cabecera} aria-hidden="true">
         <span className={styles.corazon}>

@@ -9,6 +9,7 @@ import { eliminarAfiliadoPorId } from "../../api";
 import type { AfiliadoRead } from "../../types";
 import comun from "../Comun.module.scss";;
 import paleta from "@/app/styles/paleta.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 interface Props {
   /** Afiliado elegido del padrón (por id: puede no tener número). */
@@ -80,7 +81,7 @@ const PacienteSection: React.FC<Props> = ({
                 blurOnSelect={false}
               />
             </div>
-            <button
+            <BotonPlano
               type="button"
               className={comun.btnIcon}
               onClick={() => setModal("editar")}
@@ -89,8 +90,8 @@ const PacienteSection: React.FC<Props> = ({
               aria-label="Editar afiliado"
             >
               <Pencil size={15} />
-            </button>
-            <button
+            </BotonPlano>
+            <BotonPlano
               type="button"
               className={comun.btnIconDanger}
               onClick={() => { setBajaError(null); setShowBaja(true); }}
@@ -99,10 +100,10 @@ const PacienteSection: React.FC<Props> = ({
               aria-label="Eliminar afiliado del padrón"
             >
               <Trash2 size={16} />
-            </button>
-            <button type="button" className={comun.btnGhost} onClick={() => setModal("alta")} disabled={disabled}>
+            </BotonPlano>
+            <BotonPlano type="button" className={comun.btnGhost} onClick={() => setModal("alta")} disabled={disabled}>
               + Agregar afiliado
-            </button>
+            </BotonPlano>
           </div>
           {etiqueta && (
             <span style={{ fontSize: 12, color: paleta.successGreen, fontWeight: 600 }}><Check size={14} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> {etiqueta}</span>

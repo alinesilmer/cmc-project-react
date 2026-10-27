@@ -1,5 +1,5 @@
 import styles from "./NomencladorPorOS.module.scss";
-import MultiSelectBuscable from "@/app/components/molecules/MultiSelectBuscable/MultiSelectBuscable";
+import MultiSelectBuscable from "@/app/components/ui/MultiSelectBuscable/MultiSelectBuscable";
 import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
 import type { PorOSCtx } from "./useNomencladorPorOS";
 

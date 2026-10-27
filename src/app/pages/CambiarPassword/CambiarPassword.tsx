@@ -8,6 +8,7 @@ import { requisitosPassword } from "./reglasPassword";
 import { changePassword } from "../../auth/api";
 import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 import styles from "./CambiarPassword.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const DESTACADOS: Destacado[] = [
   { icono: ShieldCheck, texto: "Sólo vos la conocés" },
@@ -103,9 +104,9 @@ export default function CambiarPassword() {
 
         <RequisitosPassword actual={actual} nueva={nueva} repetir={repetir} />
 
-        <button type="submit" className={styles.guardar} disabled={guardando} aria-busy={guardando}>
+        <BotonPlano type="submit" className={styles.guardar} disabled={guardando} aria-busy={guardando}>
           {guardando ? "Guardando…" : "Guardar contraseña"}
-        </button>
+        </BotonPlano>
       </form>
     </PantallaAcceso>
   );

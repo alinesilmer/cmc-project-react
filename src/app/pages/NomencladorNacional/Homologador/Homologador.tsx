@@ -22,6 +22,7 @@ import type { NomencladorOut } from "../nomenclador.types";
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -244,9 +245,9 @@ export default function Homologador() {
                   />
                 </div>
                 {!showAdd && (
-                  <button className={styles.btnAdd} onClick={openAdd}>
+                  <BotonPlano className={styles.btnAdd} onClick={openAdd}>
                     <Plus size={14} /> Nueva
-                  </button>
+                  </BotonPlano>
                 )}
               </div>
 
@@ -286,9 +287,9 @@ export default function Homologador() {
                           <div className={styles.selectedNom}>
                             <span className={styles.selectedNomCode}>{selectedNom.codigo}</span>
                             <span className={styles.selectedNomDesc}>{selectedNom.categoria}</span>
-                            <button className={styles.clearBtn} onClick={() => setSelectedNom(null)} type="button">
+                            <BotonPlano className={styles.clearBtn} onClick={() => setSelectedNom(null)} type="button">
                               <XIcon size={12} />
-                            </button>
+                            </BotonPlano>
                           </div>
                         ) : (
                           <div className={styles.autocompleteWrap}>
@@ -324,10 +325,10 @@ export default function Homologador() {
                     </div>
 
                     <div className={styles.addActions}>
-                      <button className={styles.btnSave} onClick={handleCreate} disabled={saving}>
+                      <BotonPlano className={styles.btnSave} onClick={handleCreate} disabled={saving}>
                         {saving ? <><Cargando size={13} /> Guardando…</> : "Guardar"}
-                      </button>
-                      <button className={styles.btnCancel} onClick={cancelAdd}>Cancelar</button>
+                      </BotonPlano>
+                      <BotonPlano className={styles.btnCancel} onClick={cancelAdd}>Cancelar</BotonPlano>
                     </div>
                   </motion.div>
                 )}
@@ -367,7 +368,7 @@ export default function Homologador() {
                         </span>
                       </div>
 
-                      <button
+                      <BotonPlano
                         className={styles.deleteBtn}
                         onClick={() => handleDelete(m)}
                         disabled={deleting === m.id}
@@ -377,7 +378,7 @@ export default function Homologador() {
                           ? <Cargando size={14} />
                           : <Trash2 size={14} />
                         }
-                      </button>
+                      </BotonPlano>
                     </div>
                   ))}
                 </div>

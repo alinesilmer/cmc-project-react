@@ -3,6 +3,7 @@ import { X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import styles from "./ConfirmActionModal.module.scss";
 import MarcoModal from "@/app/components/ui/MarcoModal/MarcoModal";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 interface Props {
   isOpen: boolean;
@@ -28,9 +29,9 @@ const ConfirmActionModal: React.FC<Props> = ({
               <Icon size={18} />
             </span>
             <h2 className={styles.title}>{title}</h2>
-            <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Cerrar" disabled={loading}>
+            <BotonPlano type="button" className={styles.closeBtn} onClick={onClose} aria-label="Cerrar" disabled={loading}>
               <X size={16} />
-            </button>
+            </BotonPlano>
           </div>
 
           <div className={styles.body}>
@@ -39,17 +40,17 @@ const ConfirmActionModal: React.FC<Props> = ({
           </div>
 
           <div className={styles.footer}>
-            <button type="button" className={styles.btnGhost} onClick={onClose} disabled={loading}>
+            <BotonPlano type="button" className={styles.btnGhost} onClick={onClose} disabled={loading}>
               Cancelar
-            </button>
-            <button
+            </BotonPlano>
+            <BotonPlano
               type="button"
               className={variant === "danger" ? styles.btnDanger : styles.btnPrimary}
               onClick={onConfirm}
               disabled={loading}
             >
               {loading ? "Procesando…" : confirmLabel}
-            </button>
+            </BotonPlano>
           </div>
         </MarcoModal>
     )}

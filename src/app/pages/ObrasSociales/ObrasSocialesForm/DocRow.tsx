@@ -7,6 +7,7 @@ import { abrirAdjunto } from "@/app/shared/lib/archivos";
 import { useNotify } from "@/app/hooks/useNotify";
 import s from "./ObrasSocialesForm.module.scss";
 import { DOC_ACCEPT, validateDocFile } from "./documentos.helpers";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 // ─── Document row (fixed types) ───────────────────────────────────────────────
 
@@ -84,15 +85,15 @@ export function DocRow({
 
       {existing && (
         <div className={s.existingFileRow}>
-          <button
+          <BotonPlano
             type="button"
             className={s.docFileLink}
             style={{ background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit", textAlign: "left" }}
             onClick={() => abrirAdjunto(existing.url).catch((e) => notify.error(e.message))}
           >
             {TIPO_DOCUMENTO_LABELS[tipo]}
-          </button>
-          <button
+          </BotonPlano>
+          <BotonPlano
             type="button"
             className={s.docHistoryBtn}
             onClick={handleDelete}
@@ -102,7 +103,7 @@ export function DocRow({
           >
             <Trash2 size={13} />
             {deleting ? "Eliminando…" : "Eliminar"}
-          </button>
+          </BotonPlano>
         </div>
       )}
 
@@ -137,14 +138,14 @@ export function DocRow({
               <div key={i} className={s.queuedFile}>
                 <span className={s.queuedFileName}>{f.name}</span>
                 <span className={s.queuedNote}>Se subirá al guardar</span>
-                <button
+                <BotonPlano
                   type="button"
                   className={s.contactoRemoveBtn}
                   onClick={() => removeFile(i)}
                   aria-label="Quitar archivo"
                 >
                   <X size={14} />
-                </button>
+                </BotonPlano>
               </div>
             ))}
           </div>

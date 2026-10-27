@@ -6,6 +6,7 @@ import { destinoObraSocial } from "../validaciones.config";
 import type { ObraSocialConfig } from "../validaciones.types";
 import Carpeta from "./Carpeta";
 import s from "./ObraSocialCard.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 interface Props {
   os: ObraSocialConfig;
@@ -29,7 +30,7 @@ export default function ObraSocialCard({ os, onAbrirGuia, onRequisitos }: Props)
       onAbrir={(tipo === "portal" || os.requisitos) && onRequisitos ? () => onRequisitos(os) : undefined}
     >
       {os.guia && onAbrirGuia && (
-        <button
+        <BotonPlano
           type="button"
           className={s.guiaChip}
           onClick={() => onAbrirGuia(os)}
@@ -37,7 +38,7 @@ export default function ObraSocialCard({ os, onAbrirGuia, onRequisitos }: Props)
         >
           <KeyRound size={16} />
           {os.guia.chip}
-        </button>
+        </BotonPlano>
       )}
     </Carpeta>
   );

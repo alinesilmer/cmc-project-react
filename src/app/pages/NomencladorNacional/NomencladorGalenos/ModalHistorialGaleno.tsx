@@ -5,6 +5,7 @@ import Tabla from "@/app/components/ui/Tabla/Tabla";
 import { formatoPesos } from "@/app/shared/lib/formatos";
 import { fmtUnidad, parseMonto } from "./galenos.helpers";
 import type { GalenosCtx } from "./useGalenos";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 export default function ModalHistorialGaleno({ ctx, historialTarget }: { ctx: GalenosCtx; historialTarget: NonNullable<GalenosCtx["historialTarget"]> }) {
   const { setModalKind, historialRows, loadingHistorial } = ctx;
@@ -79,12 +80,12 @@ export default function ModalHistorialGaleno({ ctx, historialTarget }: { ctx: Ga
           </div>
         )}
         <div className={styles.modalFooter}>
-          <button
+          <BotonPlano
             className={styles.btnGhost}
             onClick={() => setModalKind(null)}
           >
             Cerrar
-          </button>
+          </BotonPlano>
         </div>
       </Modal>
     </>

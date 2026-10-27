@@ -43,6 +43,7 @@ import { useLegajoDocumentos } from "./legajo/useLegajoDocumentos";
 import { useLegajoEspecialidades } from "./legajo/useLegajoEspecialidades";
 import { useLegajoPermisos } from "./legajo/useLegajoPermisos";
 import { mensajeDe } from "./legajo/legajo.helpers";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 // Sólo la abre el personal: que no viaje en el chunk del legajo del socio.
 const ValoresPdfTab = lazy(() => import("./ValoresPdfTab"));
@@ -242,7 +243,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                     {visibleTabs.map((k) => {
                       const TabIcon = TAB_ICONS[k];
                       return (
-                      <button
+                      <BotonPlano
                         key={k}
                         className={`${styles.tab} ${
                           tab === k ? styles.tabActive : ""
@@ -257,13 +258,13 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                             className={styles.tabUnderline}
                           />
                         )}
-                      </button>
+                      </BotonPlano>
                       );
                     })}
                     {/* Permisos es administración de RBAC, no parte del legajo: queda fuera de "Mi perfil" aunque el socio tenga rbac:gestionar. */}
                     {!readOnly && (
                       <RequirePermission scope="rbac:gestionar">
-                        <button
+                        <BotonPlano
                           className={`${styles.tab} ${
                             tab === "permisos" ? styles.tabActive : ""
                           }`}
@@ -277,7 +278,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                               className={styles.tabUnderline}
                             />
                           )}
-                        </button>
+                        </BotonPlano>
                       </RequirePermission>
                     )}
                   </div>

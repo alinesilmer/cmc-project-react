@@ -7,6 +7,7 @@ import { formatMoney } from "../money";
 import { agruparPorObraSocial } from "./agruparPorObraSocial";
 import styles from "./TablaPorObraSocial.module.scss";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 interface Props {
   prestaciones: PrestacionRead[];
@@ -85,7 +86,7 @@ const TablaPorObraSocial: React.FC<Props> = ({ prestaciones, cargando, onRowClic
               <tr className={styles.resumenRow}>
                 <td colSpan={COLUMNAS}>
                   <div className={styles.resumenContent}>
-                    <button
+                    <BotonPlano
                       type="button"
                       className={`${styles.toggleBtn} ${colapsado ? styles.toggleBtnColapsado : ""}`}
                       onClick={() => toggleGrupo(g.clave)}
@@ -93,7 +94,7 @@ const TablaPorObraSocial: React.FC<Props> = ({ prestaciones, cargando, onRowClic
                       aria-label={colapsado ? `Mostrar detalle de ${g.nombre}` : `Ocultar detalle de ${g.nombre}`}
                     >
                       <ChevronDown size={16} />
-                    </button>
+                    </BotonPlano>
                     {mostrarCodigoOS && g.clave !== "sin-os" && (
                       <span className={styles.resumenCodigo}>{g.clave}</span>
                     )}

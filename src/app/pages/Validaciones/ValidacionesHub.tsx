@@ -26,6 +26,7 @@ import type { ObraSocialListItem } from "@/app/pages/ObrasSociales/obrasSociales
 import RequisitosModal from "./components/RequisitosModal";
 import s from "./ValidacionesHub.module.scss";
 import SearchField from "@/app/components/ui/SearchField/SearchField";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Filtro = "todas" | "panel" | "externas" | "otros";
 
@@ -93,7 +94,7 @@ export default function ValidacionesHub() {
               aria-label="Filtrar obras sociales"
             >
               {FILTROS.map(({ icono: Icono, ...f }) => (
-                <button
+                <BotonPlano
                   key={f.id}
                   type="button"
                   className={`${s.filtro} ${filtro === f.id ? s.filtroActivo : ""}`}
@@ -102,7 +103,7 @@ export default function ValidacionesHub() {
                 >
                   <Icono size={18} strokeWidth={2} aria-hidden="true" />
                   {f.titulo}
-                </button>
+                </BotonPlano>
               ))}
             </div>
           </header>

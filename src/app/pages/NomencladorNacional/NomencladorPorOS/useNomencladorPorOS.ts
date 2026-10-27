@@ -3,7 +3,7 @@ import { type CodigoObraSocialOut, type ComponentePayload, type ComponentesNNSug
 import { type ComoFactura, type ComponenteForm, type EditEcuForm, type EditMetaForm, type EditMode, type ModalKind, type ModalidadValor, type PrecioForm, type PreciosExistentes, type ValorForm } from "./porOS.types";
 import { FIXED_CONCEPTOS, PAGE_SIZE, clonarPrecio, comoFacturaDe, componentesPayload, compsFromOut, errorCoseguro, erroresPrecio, firmaPrecio, formVacio, galenoNivelado, initComps, nomencladorPayload, precioDeValor } from "./porOS.helpers";
 import { parseMonto, today } from "../nomenclador.helpers";
-import { REPLICA_INICIAL, destinosReplica, type ReplicaState } from "@/app/components/molecules/ReplicarFamilia/replicaState";
+import { REPLICA_INICIAL, destinosReplica, type ReplicaState } from "@/app/pages/NomencladorNacional/components/ReplicarFamilia/replicaState";
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import { useQuery } from "@tanstack/react-query";
 import { getEspecialidades } from "../../Especialidades/especialidades.api";

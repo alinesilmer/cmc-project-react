@@ -6,6 +6,7 @@ import s from "./TablaGalenos.module.scss";
 import FilasNiveles from "./FilasNiveles";
 import type { GalenoResumenOut } from "../../nomenclador.types";
 import { grupoValorActual, montoValido, type Grupo, type ResultadoGuardado } from "../precios.helpers";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Props = {
   grupo: Grupo;
@@ -36,10 +37,10 @@ function FilaGaleno({ grupo, valor, resultado, abierto, info, cambiando, onEdita
       <tr className={grupo.visible ? undefined : s.oculto}>
         <td>
           {grupo.nivelado ? (
-            <button type="button" className={s.nombreToggle} onClick={() => onAbrir(grupo.codigo)} aria-expanded={abierto} title="Ver niveles">
+            <BotonPlano type="button" className={s.nombreToggle} onClick={() => onAbrir(grupo.codigo)} aria-expanded={abierto} title="Ver niveles">
               {abierto ? <ChevronDown size={14} aria-hidden="true" /> : <ChevronRight size={14} aria-hidden="true" />}
               {grupo.nombre}
-            </button>
+            </BotonPlano>
           ) : (
             grupo.nombre
           )}

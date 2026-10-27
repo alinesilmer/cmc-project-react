@@ -6,6 +6,7 @@ import { abrirAdjunto } from "@/app/shared/lib/archivos";
 import { useNotify } from "@/app/hooks/useNotify";
 import s from "./ObrasSocialesForm.module.scss";
 import { DOC_ACCEPT, validateDocFile } from "./documentos.helpers";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 // ─── Otros documents — dynamic list ──────────────────────────────────────────
 
@@ -129,17 +130,17 @@ export function OtrosDocList({ obraId, existingDocs, onReload, onQueueChange }: 
             </span>
             {entry.existing && <span className={s.docActiveBadge}>Archivo activo</span>}
             {!entry.existing && (
-              <button
+              <BotonPlano
                 type="button"
                 className={s.docHistoryBtn}
                 onClick={() => removeEntry(entry.tempId)}
                 aria-label="Eliminar entrada"
               >
                 <X size={13} /> Quitar
-              </button>
+              </BotonPlano>
             )}
             {entry.existing && obraId && (
-              <button
+              <BotonPlano
                 type="button"
                 className={s.docHistoryBtn}
                 onClick={() => handleDeleteExisting(entry)}
@@ -147,7 +148,7 @@ export function OtrosDocList({ obraId, existingDocs, onReload, onQueueChange }: 
                 title="Eliminar documento del servidor"
               >
                 <Trash2 size={13} /> Eliminar
-              </button>
+              </BotonPlano>
             )}
           </div>
 
@@ -163,7 +164,7 @@ export function OtrosDocList({ obraId, existingDocs, onReload, onQueueChange }: 
           />
 
           {entry.existing && (
-            <button
+            <BotonPlano
               type="button"
               className={s.docFileLink}
               style={{ background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit", textAlign: "left" }}
@@ -172,7 +173,7 @@ export function OtrosDocList({ obraId, existingDocs, onReload, onQueueChange }: 
               }
             >
               {entry.nombreCustom || "Ver archivo"}
-            </button>
+            </BotonPlano>
           )}
 
           <div className={s.uploadArea}>
@@ -211,10 +212,10 @@ export function OtrosDocList({ obraId, existingDocs, onReload, onQueueChange }: 
         </div>
       ))}
 
-      <button type="button" className={s.contactoAddBtn} onClick={addEntry}>
+      <BotonPlano type="button" className={s.contactoAddBtn} onClick={addEntry}>
         <Plus size={14} />
         Agregar documento personalizado
-      </button>
+      </BotonPlano>
     </div>
   );
 }
