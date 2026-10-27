@@ -26,6 +26,7 @@ import {
   Home,
   HousePlus,
   Inbox,
+  Landmark,
   Layers,
   ListOrdered,
   ListPlus,
@@ -150,6 +151,7 @@ export const TOP_NAV: TopEntry[] = [
         items: [
           { path: `${base}/deducciones`, icon: Wallet, label: "Deducciones", perms: ["deduccion:leer"] },
           { path: `${base}/deducciones/nueva`, icon: Plus, label: "Nueva deducción", perms: ["deduccion:crear"] },
+          { path: `${base}/retenciones-ganancias`, icon: Landmark, label: "Retenciones de Ganancias", perms: ["deduccion:leer"] },
         ],
       },
     ],

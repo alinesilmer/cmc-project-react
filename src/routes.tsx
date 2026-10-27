@@ -55,6 +55,7 @@ const RefacturacionesList = lazy(() => import("./app/pages/Pagos/Refacturaciones
 const Adelantos = lazy(() => import("./app/pages/Pagos/Adelantos/Adelantos"));
 const AdelantoDetalle = lazy(() => import("./app/pages/Pagos/Adelantos/AdelantoDetalle"));
 const Compensaciones = lazy(() => import("./app/pages/Pagos/Compensaciones/Compensaciones"));
+const RetencionesGanancias = lazy(() => import("./app/pages/Pagos/RetencionesGanancias/RetencionesGanancias"));
 const DeduccionesList = lazy(() => import("./app/pages/Deducciones/DeduccionesList"));
 const NuevaDeduccion = lazy(() => import("./app/pages/Deducciones/NuevaDeduccion"));
 const CobranzasPage = lazy(() => import("./app/pages/Cobranzas/CobranzasPage"));
@@ -243,6 +244,7 @@ export default function RootRoutes() {
 
               <Route element={<RequireScope scope="deduccion:leer" />}>
                 <Route path="deducciones" element={<DeduccionesList />} />
+                <Route path="retenciones-ganancias" element={<RetencionesGanancias />} />
               </Route>
               <Route element={<RequireScope scope="deduccion:crear" />}>
                 <Route path="deducciones/nueva" element={<NuevaDeduccion />} />
